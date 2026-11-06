@@ -1,19 +1,4 @@
 <script lang="ts">
-  /** Who else is in a space: the people and what each may do, the address field
-   *  that puts somebody new in, the one link, and whoever is waiting to be let
-   *  in. One sheet, because they are one question.
-   *
-   *  Two cards, in the order the question is actually asked: people first, since
-   *  naming somebody is what sharing usually means, and the link second, since it
-   *  is one switch about everybody at once. That is Proton Drive's shape; the
-   *  clarity inside each row - a face, a name, an address under it, and what they
-   *  may do as a menu at the far end - is Google's. Both are drawn in Orden's own
-   *  rows, tokens and motion, so it is one design on a desktop and under a thumb
-   *  rather than two.
-   *
-   *  Nothing here is confirmed: every change is asked of the server as it is made,
-   *  so there is no Done button. The cross, Escape, back and the scrim all close
-   *  it. Drawn in the box every space sheet is drawn in; see Sheet.svelte. */
   import { fade, scale } from 'svelte/transition'
   import { fileMark } from './file-mark'
   import { t } from './i18n.svelte'
@@ -31,8 +16,6 @@
   import type { Face } from './people/face'
   import { dur } from './motion'
 
-  /** What somebody may do, as the two words a person reads rather than the two
-   *  the wire uses. */
   const ROLES = $derived([
     { value: 'write', label: t('can edit') },
     { value: 'read', label: t('can view') },
@@ -41,45 +24,25 @@
   const who = $derived(share.who)
   const link = $derived(who?.link ?? null)
 
-  /** The one file this sheet is about, where it is about one file rather than the
-   *  whole space. */
   const item = $derived(share.item)
 
-  /** What the head says it is about: the file's name, else the space's. The same
-   *  words and the same shape for both - a smaller thing to share is not a
-   *  different sheet. */
   const subject = $derived(item ? shownName(nameOf(item.path)) : (share.space?.name ?? ''))
 
-  /** Whether the space this file sits in is already shared with somebody, which
-   *  is what the hint under the head is about. */
   const alreadyInTheSpace = $derived(!!share.space && isShared(share.space.root))
 
-  /** Somebody waiting to be let in, of either kind. */
   type Waiting = Sharing['requests'][number]
 
-  /** What to call somebody in a list where a guest has no account to name them.
-   *  A guest is given a name by their device and may change it, so there is
-   *  always one; a member without an account yet is named by their address. */
   function name(person: Member | Waiting): string {
     return person.email ? called({ name: person.name, email: person.email }) : (person.name ?? '')
   }
 
-  /** The line under the name. For a member it is the address, which is who they
-   *  actually are, and whether anybody has opened the space under it yet. For a
-   *  guest it is the word: a link is how they got here, and anything they typed
-   *  about themselves is what they said rather than what was proved. */
   function subtitle(person: Member): string {
     if (person.guest) return person.email ? `${person.email} · ${t('Guest')}` : t('Guest')
     return person.pending ? `${person.email} · ${t('Invited')}` : (person.email ?? '')
   }
 
-  /** What names a row, whichever kind of person it is. The same key the store
-   *  says a request is about, so the row being changed is the row that shows it. */
   const keyOf = (person: Member | Waiting) => `person:${person.guest ?? person.email ?? ''}`
 
-  /** Their face: the picture they chose, else their initial on their accent, derived
-   *  from whatever names them where they chose none, so a person is one colour on every
-   *  device; see people/Avatar.svelte. */
   const faceOf = (person: Member | Waiting | Sharing['owner'], named: string): Face => ({
     name: named,
     avatar: person.avatar ?? null,
@@ -87,7 +50,6 @@
     key: person.id ?? person.email ?? ('guest' in person ? person.guest : null) ?? '',
   })
 
-  /** A press on somebody's face is their card, where they have an account to show. */
   const pressFor = (person: { id?: string | null }) => {
     const id = person.id
     return id && !__EVEN_PLUGIN__
@@ -100,13 +62,8 @@
       : undefined
   }
 
-  /** The face, fetched with the sheet. Never in the glasses' plugin, which has no room
-   *  for faces and draws each person's initial; see docs/even.md. */
   const avatars = __EVEN_PLUGIN__ ? null : import('./people/Avatar.svelte')
 
-  /** Everything that can be done to one person, in one menu at the end of their
-   *  row: what they may do, the invitation again if they have not opened it, and
-   *  taking them out. One control per row rather than a picker and a cross.  */
   function menuFor(person: Member) {
     return [
       ...ROLES,
@@ -121,9 +78,6 @@
     else void share.setRole(person, choice as GivenRole)
   }
 
-  /** Turning the link on hands out reading and asks the owner first, which is the
-   *  careful half of both choices; the row and the switch under it are how it is
-   *  opened up. Turning it off revokes it, so the address stops opening anything. */
   function toggleLink() {
     if (share.busy) return
     if (link) void share.revoke()
@@ -136,7 +90,6 @@
   }
 </script>
 
-<!-- A person's face, or their initial where the faces are not here. -->
 {#snippet face(worn: Face, press: ((event: MouseEvent) => void) | undefined)}
   {#await avatars then got}
     {#if got}
@@ -149,9 +102,6 @@
 
 <Sheet open={share.open} title={t('Share {name}', { name: subject })} onclose={() => share.close()}>
   {#snippet mark()}
-    <!-- What the sheet is about wears its own mark: the space's badge, or - for one
-         file of it - the mark that file wears on its row in the tree, chosen icon
-         and all. Same box either way; see FileMark.svelte. -->
     {#if item}
       <FileMark mark={fileMark(item.path)} path={item.path} />
     {:else}
@@ -164,19 +114,9 @@
   {/if}
 
   {#if item && alreadyInTheSpace}
-    <!-- Two levels, one sentence, so neither is a surprise: this note can be
-         handed to one person, and everybody already in the space has it whatever
-         this sheet says. Only where the space actually is shared - a line that is
-         always there is a line nobody reads. -->
     <p class="note">{t('Everyone in the space already has it.')}</p>
   {/if}
 
-  <!-- ── The people ───────────────────────────────────────────────
-       The field first, because putting somebody in is what the sheet is opened
-       for. It is there from the first frame, before the list it belongs to has
-       arrived: it is where the keyboard lands, it is what somebody came here to
-       type in, and a field that appears a moment later is a field somebody has
-       already started typing past. -->
   <div class="card">
     <form
       class="nib-field compose"
@@ -208,8 +148,6 @@
         />
       </div>
       {#if share.email.trim()}
-        <!-- Enter does this too; the button is for a thumb, which has no
-               Enter, and for anybody who wants to see where the press goes. -->
         <button
           type="submit"
           class="send"
@@ -230,9 +168,6 @@
     {/if}
 
     {#if !who}
-      <!-- The shape of the rows while they are on their way, so the card is
-           already the size it is about to be and they arrive in place rather than
-           pushing the link under them down as they land. -->
       <div aria-hidden="true">
         {#each [0, 1, 2] as row (row)}
           <div class="row person">
@@ -246,8 +181,6 @@
         {/each}
       </div>
     {:else}
-      <!-- Somebody has followed a link that asks first. At the top of the card,
-           because it is the one thing here that is waiting on an answer. -->
       {#if who.requests.length}
         <h3>{t('Waiting')}</h3>
         {#each who.requests as person (keyOf(person))}
@@ -296,8 +229,6 @@
           class:waiting={share.waiting(keyOf(person))}
           transition:fade={{ duration: dur(130) }}
         >
-          <!-- Somebody who has not opened the space yet wears their face
-               faintly: they are in the list, and they are not here. -->
           <span class="worn" class:pending={person.pending}>
             {@render face(faceOf(person, name(person)), pressFor(person))}
           </span>
@@ -321,10 +252,6 @@
   </div>
 
   {#if who}
-    <!-- ── The link ───────────────────────────────────────────────
-         One switch about everybody at once. What it hands out and whether it
-         asks first stay where they are while it is off, greyed: the card does
-         not change shape as it is turned on, it comes to life. -->
     <div class="card">
       <div
         class="row card-head"
@@ -403,23 +330,15 @@
 </Sheet>
 
 <style>
-  /* ── The field that puts somebody in ─────────────────────────────
-     The app's one field shape, with three things inside it: what is typed, what
-     they will be allowed to do, and the press that sends it. Proton keeps the
-     role inside the field and so does this - the two belong to one another, and
-     a second control beside the field would read as a second question. */
   .compose {
     padding: 3px 3px 3px var(--space-3);
     gap: var(--space-1);
   }
 
-  /* What was typed is not an address, said by the field as well as under it. */
   .compose.bad {
     border-color: var(--danger);
   }
 
-  /* The press that sends it: quiet until there is something to send, which is
-     when it appears at all. */
   .send {
     flex: none;
     display: grid;
@@ -449,14 +368,10 @@
     background: var(--accent-hover);
   }
 
-  /* ── The people ──────────────────────────────────────────────────
-     A row with two lines of words in it, so it is as tall as they are rather
-     than as tall as one of them. */
   .person {
     padding: var(--space-1) 0;
   }
 
-  /* An invitation nobody has opened: the face, faintly. */
   .worn {
     display: contents;
   }
@@ -465,8 +380,6 @@
     opacity: 0.45;
   }
 
-  /* Somebody waiting on an answer, which is the one row here that is a question.
-     The accent behind it, at the strength a picked row wears. */
   .asking {
     margin: 0 calc(-1 * var(--space-1)) 2px;
     padding: var(--space-1);
@@ -474,15 +387,10 @@
     background: var(--accent-soft);
   }
 
-  /* A row waiting on the server it was told to change. Not disabled-looking:
-     every button in the sheet is already disabled while one is in flight, and
-     this is which of them the answer is about. */
   .waiting {
     opacity: 0.55;
   }
 
-  /* Which of these people is reading the sheet, beside their name rather than
-     under it. */
   .named {
     display: flex;
     align-items: baseline;
@@ -494,31 +402,21 @@
     color: var(--muted);
   }
 
-  /* The owner, whose role is the space rather than a choice. */
   .fixed {
     flex: none;
     padding-inline-end: var(--space-1);
     color: var(--muted);
   }
 
-  /* What somebody may do, as a word and a chevron at the end of their row rather
-     than a boxed control in every one of them; the box is `Select`'s `plain`. As
-     wide as the words need and no wider, so the names keep the room. */
   .pick {
     flex: none;
     max-width: 50%;
   }
 
-  /* ── The link ────────────────────────────────────────────────────  */
-
-  /* The word a card is headed by is as wide as the word, so the dot sits beside
-     it rather than at the far end with the switch. */
   .card-head .name {
     flex: none;
   }
 
-  /* Whether it is live, beside the word rather than spelled out: the switch
-     already says which way it is, and this is what catches the eye. */
   .dot {
     flex: none;
     width: 6px;
@@ -533,8 +431,6 @@
     background: var(--success);
   }
 
-  /* Everything the link is: shown while there is no link, so turning it on fills
-     the card in rather than growing it. */
   .linkbody {
     display: flex;
     flex-direction: column;
@@ -547,9 +443,6 @@
     pointer-events: none;
   }
 
-  /* A switch under the row it qualifies, which is why the words are quieter than
-     the sentence above them and start where they start rather than at the card's
-     own edge. */
   .asks {
     color: var(--muted-strong);
   }
@@ -559,10 +452,6 @@
     width: var(--row-height-sm);
   }
 
-  /* ── While the answer is on its way ──────────────────────────────
-     Plain blocks where the field, the faces and the words will be: enough that
-     the sheet is the right size and the wait reads as a wait rather than as an
-     empty list. */
   .bone {
     display: block;
     height: 9px;
@@ -602,17 +491,12 @@
     }
   }
 
-  /* Still, where movement is turned down: the blocks are the shape of the
-     answer, and they say that on their own. */
   @media (prefers-reduced-motion: reduce) {
     .bone {
       animation: none;
     }
   }
 
-  /* ── Under a thumb ───────────────────────────────────────────────
-     The same sheet, at the size a finger needs: the field takes the width and
-     puts the role and the press on a line of their own under what is typed. */
   :global([data-touch]) .compose {
     padding: var(--space-1) var(--space-1) var(--space-1) var(--touch-gap);
   }

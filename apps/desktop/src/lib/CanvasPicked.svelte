@@ -1,15 +1,4 @@
 <script lang="ts">
-  /** The bar over what is picked: its colour, another of it, gone, and the rest.
-   *
-   *  Four things, and they are the four a hand does to a card it has just put down.
-   *  It sits over the selection rather than at the bottom of the pane, because that
-   *  is where the hand already is and a plane is big: reaching a bar in the corner
-   *  to colour a card in the middle is a journey for one press.
-   *
-   *  The rest of what can be done is the menu behind the fourth button, which is
-   *  the same menu a right click and a long press open. One list, so nothing can be
-   *  in one of them and missing from the other. */
-
   import CanvasColours from './CanvasColours.svelte'
   import CanvasDial from './CanvasDial.svelte'
   import CanvasIcon from './CanvasIcon.svelte'
@@ -35,24 +24,13 @@
     ongroup,
     onmore,
   }: {
-    /** Where on screen, in pixels inside the plane's own element: the middle of the
-     *  top edge of what is picked. */
     at: { x: number; y: number }
-    /** Whether to hang under that point rather than over it, which is what happens
-     *  when the selection is against the top of the pane. */
     below: boolean
-    /** The colour what is picked wears, or nothing where it wears none. */
     colour: string | null
-    /** How wide the picked ink is, which is the first stroke's, or nothing where no
-     *  ink is picked: a card has no width of line to set. */
     size: number | undefined
     recent: readonly string[]
-    /** Whether the bar offers to make a frame round what is picked, to take one
-     *  apart, or neither - which is one thing picked that is not a frame. */
     grouping: 'group' | 'ungroup' | null
     oncolour: (colour: string | null) => void
-    /** `run` is this opening of the panel, so a whole drag of the dial is one step
-     *  to take back; see `edit` in canvas/store.svelte.ts. */
     onsize: (size: number, run: string) => void
     onduplicate: () => void
     ondelete: () => void
@@ -64,29 +42,17 @@
   let run = freshId()
   let over = $state<HTMLElement>()
 
-  /** How wide the bar is with whatever hangs off it, and how wide the plane it stands
-   *  on, both in pixels. */
   let wide = $state(0)
   let room = $state(0)
 
-  /** How far the bar keeps from either side of the plane, in pixels. */
   const MARGIN = 8
 
-  /** Where the middle of the bar goes: over the middle of what is picked, unless that
-   *  would hang the bar or its colours off the side of the pane - a card against the
-   *  left edge of a phone had its first colour out of reach (#350). Where the plane
-   *  is narrower than the bar, its middle. */
   const left = $derived.by(() => {
     if (!wide || !room) return at.x
     if (room < wide + 2 * MARGIN) return room / 2
     return Math.min(Math.max(at.x, wide / 2 + MARGIN), room - wide / 2 - MARGIN)
   })
 
-  // The bar and the plane it stands on, its parent, as the browser lays them out:
-  // told by an observer once layout is done, never read. Reading a width asks the
-  // browser to lay the page out there and then, and the bar comes up as Ctrl+A has
-  // just marked three thousand cards picked and moves as they are nudged - the
-  // plane laid out on the spot, the better part of a second each time (#535).
   $effect(() => {
     const bar = over
     const plane = bar?.parentElement
@@ -108,10 +74,6 @@
     oncolour(next)
   }
 
-  // A press anywhere but on this bar puts the colours away, and so do Escape and the
-  // window losing the focus, which is how every other panel in the app closes; see
-  // overlays.ts. Caught on the way down rather than waited for on the way up: the plane
-  // below stops the event at itself for its own gestures.
   $effect(() =>
     colouring
       ? overlays.show(
@@ -122,8 +84,6 @@
   )
 </script>
 
-<!-- Every pointer stops here: the plane behind would read a press as a gesture and
-     clear the very selection this bar is about. -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="over"
@@ -182,8 +142,6 @@
       <CanvasIcon node={MARKS.copy} />
     </button>
 
-    <!-- Several things made one, or one taken apart. Only when there is something to
-         do: one card picked has no group to make and no group to break. -->
     {#if grouping}
       <button
         type="button"
@@ -230,14 +188,9 @@
 </div>
 
 <style>
-  /* Over the middle of the top edge of the selection, clear of it by a step, and
-     under it instead when there is no room above. */
   .over {
     position: absolute;
     z-index: var(--z-bars);
-    /* Its own width rather than what is left of the plane past its left edge, which is
-       what an absolute box shrinks to: the left is worked out from the width, and a
-       width that followed the left would chase it. */
     width: max-content;
     display: flex;
     flex-direction: column;
@@ -327,7 +280,6 @@
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 28%, transparent);
   }
 
-  /* Nothing coloured, drawn as the ring the others fill. */
   .swatch.bare::after {
     box-shadow: inset 0 0 0 2px var(--muted);
   }

@@ -1,28 +1,4 @@
 <script lang="ts">
-  /** The canvas bar: what your hand is holding, in one row, on every device.
-   *
-   *  There was a row of small glyphs for a mouse and a second, taller bar for a
-   *  finger. Two bars is two designs and two places to fix anything, and what
-   *  really differed between them was never the pointer but the size, which the
-   *  touch scale already answers. So this is the one bar: the same buttons in the
-   *  same order everywhere, drawn bigger where a thumb has to land on them.
-   *
-   *  Left to right it is arranging, then drawing, then what a press puts on the
-   *  plane, then the colour in hand, then the two arrows. No zoom: a pinch, Ctrl and
-   *  the wheel, the keys and the menus all zoom, and three buttons for it were three
-   *  a thumb did not need on the one bar it has (#401). Pressing
-   *  the tool you are already holding opens that tool's own panel and nothing else,
-   *  which is the one gesture nobody has to be told, and the panel opens over the
-   *  button that opened it rather than in the middle of the pane.
-   *
-   *  Three pens, always three. A pen is a thing you own rather than a setting you
-   *  pick, so each slot is a whole pen: which nib, how wide, how much of the colour
-   *  lands, which colour. Nothing to add and nothing to put away.
-   *
-   *  It stops every pointer at itself. The plane behind it treats a press as a
-   *  gesture, and a bar that let one through would clear the selection its own
-   *  buttons are for. */
-
   import CanvasCatch from './CanvasCatch.svelte'
   import CanvasColours from './CanvasColours.svelte'
   import CanvasIcon from './CanvasIcon.svelte'
@@ -67,37 +43,22 @@
     canredo: boolean
     onundo: () => void
     onredo: () => void
-    /** Every stroke on the plane, gone, which is what the eraser's panel asks for. */
     onerase: () => void
-    /** Whether a press can put something on the surface: a card, a frame, a shape.
-     *  A plane's question. A page note has only the five tools that mean something
-     *  on paper, and a grid of things that a press there would never put down is a
-     *  row of buttons that do nothing (#350). */
     places?: boolean
-    /** How near the plane is, and the way back to its actual size: a small reading of
-     *  the zoom at the bar's end while it is anything but 100%, which pressed goes back
-     *  there (#369). Nothing at 100%, so the bar keeps no zoom buttons it does not need
-     *  (#401). A plane's; a page note fits its paper and says its zoom elsewhere. */
     scale?: number
     onactual?: () => void
   } = $props()
 
-  /** The zoom as a reading, where it is not the actual size. */
   const zoomed = $derived(
     scale !== undefined && onactual && Math.abs(scale - 1) >= 0.005
       ? `${String(Math.round(scale * 100))}%`
       : null,
   )
 
-  /** Whether Undo and Redo come first, which is a phone's bar: see `arrows` below. */
   const early = $derived(viewport.device === 'phone')
 
-  /** Whether there is more of the bar past either end of it, which is what the fade
-   *  at that end says: a row scrolled sideways with nothing to show it scrolls reads
-   *  as a row that ends at the edge of the screen (#350). */
   let scroller = $state<HTMLElement>()
 
-  /** Reads values for their own sake, so the effect around them follows them. */
   const follows = (..._values: unknown[]) => undefined
   let fades = $state({ start: false, end: false })
 
@@ -115,11 +76,7 @@
   $effect(() => {
     const row = scroller
     if (!row) return
-    // Measured again when the bar stands on its end, since that is the other way.
     follows(standing)
-    // By the observer, which reports once as it starts watching, after layout. Measured
-    // here and now, the bar laid the page out as it mounted: with a canvas of three
-    // thousand cards opening under it, a seventh of a second (#535).
     if (typeof ResizeObserver === 'undefined') {
       measure()
       return
@@ -130,37 +87,21 @@
     return () => watcher.disconnect()
   })
 
-  /** Which panel is open over the bar, if any. One at a time: two panels over a
-   *  drawing is a dialog box, and this is a bar. */
   type Panel = 'pen' | 'rub' | 'catch' | 'put' | 'colour'
   let open = $state<Panel | null>(null)
 
-  /** Where the panel points, in pixels from the left of the cluster: the middle of
-   *  the button that opened it. */
   let popAt = $state(0)
   let cluster = $state<HTMLElement>()
 
-  /** How far a press may drift and still be a press on the grip rather than a drag
-   *  of the bar, in pixels. */
   const A_TWITCH = 12
 
   const nib = $derived(pens.current)
   const drawing = $derived(tools.which === 'draw')
 
-  /** Which of the things a press puts on the plane is in hand, if one of them is. */
   const putting = $derived(PLACING.find((one) => one.id === tools.which))
 
-  /** Whether the bar can be moved out from under a wrist. A question only a tablet
-   *  has: a mouse has no wrist on the glass and a bar at the bottom of a phone is
-   *  where a thumb already is. */
   const movable = $derived(viewport.touch || hand.penSeen)
 
-  // Escape closes it, like everything else the app puts over a note, and so does a
-  // press anywhere but on this bar, or the window losing the focus; see overlays.ts.
-  // Caught on the way down, at the window, rather than waited for on the way up: the
-  // plane reads a press as the start of a gesture, so a panel that waited for the click
-  // stayed open through a whole stroke - and a panel over the drawing is exactly what
-  // the drawing is under. And Android's back, which is the same gesture on a phone.
   $effect(() =>
     open
       ? overlays.show(
@@ -175,8 +116,6 @@
     open = null
   }
 
-  // And a tool taken with a key shuts it too: the panel was about the tool that is no
-  // longer in hand.
   let was = tools.which
   $effect(() => {
     if (tools.which === was) return
@@ -185,9 +124,6 @@
     open = null
   })
 
-  /** Where the button that was pressed is, so the panel opens over it. Along the bar,
-   *  whichever way the bar runs: across it when it lies along an edge, down it when it
-   *  stands on its end. */
   function anchor(event: Event) {
     const button = event.currentTarget
     const box = cluster?.getBoundingClientRect()
@@ -204,16 +140,12 @@
     open = open === panel ? null : panel
   }
 
-  /** Which tools have a panel of their own, which is also which of them answer a
-   *  second press with one. */
   function panelFor(tool: Tool): Panel | null {
     if (tool === 'erase') return 'rub'
     if (tool === 'lasso') return 'catch'
     return null
   }
 
-  /** A press on a tool: it comes out, and pressing the one that is already out
-   *  opens its panel. */
   function pressTool(mark: ToolMark, event: Event) {
     tick()
     const panel = panelFor(mark.id)
@@ -239,14 +171,6 @@
     tools.pickPen(index)
   }
 
-  /** The grip: dragged, the bar comes with the finger and springs to whichever edge
-   *  it was let go nearest; pressed, it folds away. Two answers from one control,
-   *  because both are the same question about where the bar should be.
-   *
-   *  The bar follows the pointer rather than jumping between two places when it
-   *  crosses the middle: a thing being moved should be under the hand moving it, and
-   *  where it lands is answered when it is let go. Then it springs, which is what says
-   *  the edge caught it. */
   let grabbed = $state(false)
   let carried = $state.raw<{ x: number; y: number } | null>(null)
   let from = { x: 0, y: 0 }
@@ -274,7 +198,6 @@
     tick()
 
     const went = Math.hypot(event.clientX - from.x, event.clientY - from.y)
-    // Let go where it was picked up: the press meant the other thing the grip does.
     if (went < A_TWITCH) {
       carried = null
       pens.fold(true)
@@ -282,21 +205,15 @@
       return
     }
 
-    // Where the bar itself ended up rather than where the finger did, so a bar
-    // dragged by the corner of its grip still lands where it looks like it should.
     const box = cluster?.getBoundingClientRect()
     const middle = box
       ? { x: box.left + box.width / 2, y: box.top + box.height / 2 }
       : { x: event.clientX, y: event.clientY }
 
-    // The edges are the canvas's own, inside its pane, never the window's: with a side
-    // open the window's right edge is the side's, not the canvas's (#1076).
     const frame = frameOf(cluster)
     pens.dockTo(
       nearestDock({ x: middle.x - frame.left, y: middle.y - frame.top }, frame.width, frame.height),
     )
-    // And the offset let go of, which is the spring: the bar is already at its new
-    // edge, so easing the carry back to nothing is the movement that says so.
     carried = null
     open = null
   }
@@ -306,16 +223,11 @@
     carried = null
   }
 
-  /** Whether the bar stands on its end, which is what the two side edges mean. */
   const standing = $derived(upright(pens.dock))
 
-  /** The dot on the bar: the ink the pen in hand writes in. Always the pen, never
-   *  what is picked: what is picked wears its colour on its own bar, over itself,
-   *  and one question per surface is the whole of why that bar exists. */
   const swatch = $derived(shownInk(nib.colour))
 </script>
 
-<!-- Every pointer stops here. See the note at the top of the file. -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="cluster"
@@ -333,8 +245,6 @@
   oncontextmenu={(event) => event.stopPropagation()}
 >
   {#if pens.shut}
-    <!-- Folded away: the pen you were holding, and nothing else. A landscape
-         tablet gets its whole page back and the way in is still in your hand. -->
     <button
       type="button"
       class="tab"
@@ -364,9 +274,6 @@
             }}
           />
         {:else}
-          <!-- The bare dot is the ink the page itself is written in, which is what a
-               pen with no colour of its own writes and the way back to it. Drawn in
-               that ink, so it never reads as a colour it is not. -->
           <CanvasColours
             colour={nib.colour === DEFAULT_INK ? null : nib.colour}
             recent={pens.recent}
@@ -401,9 +308,6 @@
         bind:this={scroller}
         onscroll={measure}
       >
-        <!-- Back and forward again. On a phone they come first: the bar is wider
-             than the screen there, and the two a thumb wants most were the two
-             scrolled out of sight past its end (#350). -->
         {#snippet arrows()}
           <button
             type="button"
@@ -457,8 +361,6 @@
 
         <span class="split"></span>
 
-        <!-- The three pens. Each is the instrument it is, with the ink it writes
-             in under it, and the one in hand is the tinted one. -->
         {#each pens.list as one, index (index)}
           {@const out = drawing && pens.at === index}
           <button
@@ -484,13 +386,8 @@
 
         <span class="split"></span>
 
-        <!-- Words, put straight down where the next press is: on a canvas and on a page
-             note alike (#421). -->
         {@render holding(WORDS)}
 
-        <!-- What a press puts on the plane. While one of them is in hand it is that
-             one, drawn on the button, so the bar says what a press is about to do
-             and pressing it again opens the grid again. -->
         {#if places}
           <button
             type="button"
@@ -547,8 +444,6 @@
 </div>
 
 <style>
-  /* Against one edge of the pane and across it, clear of whatever the system puts
-     in the corners. */
   .cluster {
     position: absolute;
     left: var(--space-2);
@@ -557,15 +452,9 @@
     z-index: var(--z-tools);
     display: flex;
     flex-direction: column;
-    /* The bar is as wide as what is on it and no wider, centred in the pane, so a
-       tablet in landscape gets a bar and not a shelf. A phone runs out of room and
-       the same rule makes it the full width, scrolling. */
     align-items: center;
     gap: var(--space-2);
     animation: rise var(--dur-stage) var(--ease-out);
-    /* The strip is the pane's width and the bar and its panel are not: what is either
-       side of them is the plane, and takes the pointer - a stroke drawn there, and a
-       press there that closes the panel (#382). */
     pointer-events: none;
   }
 
@@ -580,8 +469,6 @@
     animation: fall var(--dur-stage) var(--ease-out);
   }
 
-  /* Against a side, standing on its end. The pane's own height rather than its
-     width, and the bar and its panel side by side instead of stacked. */
   .cluster.left,
   .cluster.right {
     left: auto;
@@ -592,9 +479,6 @@
     animation: none;
   }
 
-  /* The panel comes before the bar, so the row runs from the inner side: the bar
-     keeps to its edge and the panel opens beside it, towards the middle (#646). A
-     right-to-left row starts on the right, so there it runs the other way. */
   .cluster.left {
     left: calc(var(--space-2) + var(--inset-left, 0px));
     flex-direction: row-reverse;
@@ -613,9 +497,6 @@
     flex-direction: row-reverse;
   }
 
-  /* Let go, the bar is already at its edge and the offset it was carried by eases
-     back to nothing: that is the spring. While it is being carried there is no
-     easing at all, because it is under a finger. */
   .cluster {
     transition: translate var(--dur-slow) var(--ease-spring);
   }
@@ -639,12 +520,6 @@
     }
   }
 
-  /* A small bar over the plane, which is level 2 of the elevation model: the
-     surface, the hairline and the shadow the format bar over a selection wears,
-     and the corner that goes with them. It was drawn at `--radius-lg` - the
-     corner a surface that *replaces* part of the screen takes - which put a
-     shadow from one level and a corner from another on one box. See
-     docs/design.md. */
   .bar {
     max-width: 100%;
     display: flex;
@@ -657,12 +532,8 @@
     box-shadow: var(--shadow-md);
   }
 
-  /* Standing on its end: the same buttons in the same order, down instead of
-     across. One bar, one order, one design; only the axis turns. */
   .cluster.standing .bar {
     flex-direction: column;
-    /* As tall as the pane and no taller: a bar of fifteen buttons on a short screen
-       scrolls inside itself rather than off the end of it. */
     max-width: none;
     max-height: 100%;
   }
@@ -689,9 +560,6 @@
     rotate: 90deg;
   }
 
-  /* Beside the bar rather than over it, and never off the top or the bottom of the
-     pane: a flyout belongs next to the tool that opened it whichever way the bar
-     runs. */
   .cluster.standing .panel {
     align-self: flex-start;
     width: min(21rem, 60vw);
@@ -709,8 +577,6 @@
     height: 30px;
   }
 
-  /* One row that scrolls sideways rather than a bar that hides half of itself
-     behind a menu, which is what a phone needs and a tablet in portrait wants. */
   .scroller {
     flex: 0 1 auto;
     min-width: 0;
@@ -726,7 +592,6 @@
     display: none;
   }
 
-  /* The ends that have more past them fade out, along whichever way the bar runs. */
   .scroller.fade-start,
   .scroller.fade-end {
     --fade: 28px;
@@ -779,11 +644,6 @@
       color var(--dur-instant) var(--ease-out);
   }
 
-  /* Where there is a pointer, the bar answers it. Fifteen buttons over the plane
-     and none of them said the pointer was there: the tool in hand was tinted and
-     a press went to `--press`, so a hand moving across the bar looking for the
-     eraser got nothing back until it clicked. Every other bar, row and button in
-     the app lights on hover; this was the one that did not. */
   @media (hover: hover) {
     button:hover:not(:disabled):not(.on) {
       background: var(--surface-hover);
@@ -795,16 +655,10 @@
     background: var(--surface-press);
   }
 
-  /* The tool in hand is tinted rather than raised: one look says which one it is,
-     at a glance, from across a table. */
   button.on {
     background: var(--accent-soft);
     color: var(--accent);
   }
-
-  /* What a button that cannot be pressed looks like is the one fade in
-     base.css, not a third number here: this said 0.3 where the app says 0.4 and
-     the panel's foot said 0.5. */
 
   .split {
     flex: none;
@@ -815,8 +669,6 @@
     background: var(--line-strong);
   }
 
-  /* A tool in hand that has a panel of its own wears a corner, so that pressing it
-     again is something to be seen rather than something to be told. */
   .deeper::before {
     content: '';
     position: absolute;
@@ -828,10 +680,6 @@
     border-radius: 1px;
   }
 
-  /* A pen wears the ink it writes in as a line under it, so the row answers "which
-     one is the yellow highlighter" without being opened. The hairline round it is the
-     page's own ink at a whisper, so a pen writing in white is a white line on a light
-     bar rather than nothing at all. */
   .pen::after {
     content: '';
     position: absolute;
@@ -844,8 +692,6 @@
     box-shadow: 0 0 0 0.5px color-mix(in srgb, var(--text) 30%, transparent);
   }
 
-  /* The zoom, read, while it is not the actual size; pressed, it is again (#369). A
-     reading rather than a glyph, quiet as a caption, and only as wide as its words. */
   .actual {
     width: auto;
     min-width: 0;
@@ -856,7 +702,6 @@
     color: var(--muted);
   }
 
-  /* The colour in hand, drawn as the dot it is. */
   .swatch::after {
     content: '';
     display: block;
@@ -872,7 +717,6 @@
     scale: 1.08;
   }
 
-  /* Two lines, the way a thing that moves is drawn everywhere. */
   .grip {
     flex: none;
     display: grid;
@@ -890,8 +734,6 @@
     color: var(--accent);
   }
 
-  /* Folded: one pen against the edge, in from the corner so a thumb resting there
-     does not open it. */
   .tab {
     align-self: flex-start;
     min-width: 58px;
@@ -909,11 +751,6 @@
     border-top: none;
   }
 
-  /* The panel over the button that opened it, and never off the side of the pane:
-     a flyout beside its own tool says what it belongs to, and the middle of the
-     screen says nothing. */
-  /* The shape is `.nib-layer` in the themes package, the same as the graph's own
-     card and the two menus; what is here is where it pops out. */
   .panel {
     box-sizing: border-box;
     align-self: flex-start;
@@ -941,7 +778,6 @@
     }
   }
 
-  /* One scale for a finger, from the tokens, and the same bar. */
   :global([data-touch]) button {
     --mark: var(--touch-icon);
 

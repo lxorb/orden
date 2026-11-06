@@ -1,14 +1,4 @@
 <script lang="ts">
-  /** One hint, in a card beside the control it is about: what the control does, in
-   *  one line, and a cross that puts it away for good. Pressing the line does what
-   *  the control does, which also puts it away. Google Docs' and Notion's callout.
-   *
-   *  Whether it is on screen at all is hints.svelte.ts: one a session at most, never
-   *  in Silent mode, never again once dismissed. The caller says when it would
-   *  make sense (`when`) and where the card sits against its own box (`side`).
-   *
-   *  Callers draw it through a door, `{#await import('./HintCard.svelte')}`, and only
-   *  once `startup.settled`, so no launch fetches or draws it; see hints.svelte.ts. */
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import Cross from './Cross.svelte'
@@ -57,13 +47,8 @@
 {/if}
 
 <style>
-  /* Beside its holder, `--space-2` in from its start, hung over the window rather
-     than inside the holder, which a column that clips or slides shut would cut it with
-     (#1129, portal.ts). */
   .hint {
     position: fixed;
-    /* A step under the popovers: a hint shown while the list of spaces is open sits
-       where that list's rows are, and a press there is the row's, not the hint's (#661). */
     z-index: calc(var(--z-popover) - 1);
     display: flex;
     align-items: center;

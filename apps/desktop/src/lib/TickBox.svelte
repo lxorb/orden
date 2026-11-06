@@ -1,11 +1,4 @@
 <script lang="ts">
-  /** A box about the answer, at the start of a question's row of answers: "Always ask"
-   *  under Ctrl+N in a terminal (PromptSheet.svelte), "Don't ask again" under quitting
-   *  (quitting/QuitSheet.svelte). The task list's own box (`.nib-checkbox` in the themes
-   *  package) and its words on one line beside it, taking the room the answers leave.
-   *  One of these, so the two never drift apart again: the prompt's was drawn as an
-   *  empty pill with its words wrapped over two lines, under the sheet's rule for its
-   *  text field (#317). */
   const {
     label,
     checked,

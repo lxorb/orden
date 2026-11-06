@@ -1,19 +1,4 @@
 <script lang="ts">
-  /** A small `?` after a label, and the sentence behind it.
-   *
-   *  For the settings whose name only means something to somebody who already
-   *  knows the word - Strict CommonMark, smart punctuation - where the honest
-   *  answer is a sentence and the pane has no room for one. So the sentence is
-   *  there to be asked for: a pointer over the glyph shows it, a thumb taps it,
-   *  and the keyboard reaches it like anything else.
-   *
-   *  Not a `title`, and not a bubble of its own: the card the sentence appears in
-   *  is `.nib-bubble` in the themes package, which the name being renamed on a row
-   *  shows its reason in too. What is here is where this one sits.
-   *
-   *  The glyph's own name is the sentence, so a screen reader reads it on focus
-   *  and the bubble is decoration by the time it appears. */
-
   import Help from 'lucide/dist/esm/icons/circle-question-mark.mjs'
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -25,7 +10,6 @@
   let open = $state(false)
   let host = $state<HTMLElement>()
 
-  /** A tap anywhere else puts it away, the way a menu closes. */
   function outside(event: PointerEvent) {
     if (open && host && !host.contains(event.target as Node)) open = false
   }
@@ -33,8 +17,6 @@
 
 <svelte:window onpointerdown={outside} />
 
-<!-- A word joiner first, so no line ever breaks between the label's last word and
-     the glyph: the `?` wraps with that word instead of standing on a line alone. -->
 <span class="explain nib-mark nib-hint" bind:this={host}
   >&#8288;<button
     type="button"
@@ -82,11 +64,6 @@
 </span>
 
 <style>
-  /* In the label's own line, as a word of it, rather than a box beside the label
-     (#1052): `.nib-mark` in the themes package, which places every glyph that
-     follows words the same way - on the middle of their x-height, glued to the last
-     word, taking no room of its own on the line. What is here is its size and gap,
-     said on the label the glyph follows, and the bubble's anchor. */
   .explain {
     position: relative;
   }
@@ -100,9 +77,6 @@
     --mark-size: var(--touch-icon);
   }
 
-  /* The glyph itself: quiet enough to be passed over by somebody who knows the
-     word, and in the same slot after every label that has one, so a label
-     without one sits exactly where it did. */
   button {
     display: inline-flex;
     align-items: center;
@@ -124,8 +98,6 @@
     outline-offset: 1px;
   }
 
-  /* A mark inside a row rather than in front of a name: `--icon-sm`, which is
-     what every other such mark in the app is. It was 14px. */
   svg {
     width: var(--icon-sm);
     height: var(--icon-sm);
@@ -136,26 +108,11 @@
     stroke-linejoin: round;
   }
 
-  /* Where this one sits: under the glyph, and left-aligned to it rather than
-     centred on it, because a label sits at the left of its row, so there is room
-     that way and none the other - 8px before the glyph, which stands `--mark-gap`
-     after the words (`inset` above). Hung over the window rather than inside the
-     label, which a row that cuts its names short or a pane that scrolls would cut it
-     with (#1129, portal.ts). The card itself is `.nib-bubble`. */
   .sentence {
     position: fixed;
     z-index: var(--z-bubble);
   }
 
-  /* A thumb needs a target, and the sentence needs the width the screen has.
-     Not a whole finger's row: this sits inside one beside the words it belongs
-     to, and a 48px circle in the middle of a label would be the label's size.
-
-     So the glyph grows to Android's 24dp and the *target* grows to the 48 a
-     finger needs, invisibly, around it: what is drawn and what can be hit are
-     two different sizes, which is how a small control is aimed at without being
-     drawn big. It used to be a 26px box - a number of its own, under the floor,
-     and the only thing a finger had to land on. */
   :global([data-touch]) button::after {
     content: '';
     position: absolute;

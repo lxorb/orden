@@ -1,18 +1,4 @@
 <script lang="ts">
-  /** Who a guest is, in the corner of the one file a link gave them.
-   *
-   *  A guest alone in a shared file has none of the app round it (alone.svelte.ts), so
-   *  the foot of the panel that used to say who they are, and where they changed it, is
-   *  not there. This is all of it that is theirs: their initial on the colour their
-   *  caret wears for the others, and under it the name the others see and the way to
-   *  an account. In the top corner at the end, where the way out of full screen sits:
-   *  the canvas's bar is at the foot, and the carets held at a note's edge are at the
-   *  start. See docs/sharing.md.
-   *
-   *  A press outside it shuts it and the press that opened it does not, Escape shuts it
-   *  and so does the window losing the focus, as every popup is shut (overlays.ts); and
-   *  back does on a phone. */
-
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { accentColour } from './accents'
@@ -32,15 +18,11 @@
   let field = $state<HTMLInputElement>()
 
   const name = $derived(account.guest?.name ?? '')
-  /** The colour this device's caret is drawn in for everybody else; see rooms/who.ts. */
   const fill = $derived(accentColour(deviceAccent(), theme.current))
 
   $effect(() => closeOnBack(open, shut))
-  // Its button and what it opens are its own: a press anywhere else shuts it.
   $effect(() => (open ? overlays.show(shut, () => [corner]) : undefined))
 
-  // The name is what there is to do here, so a keyboard lands in it. Not under a finger,
-  // where it would put the keyboard over the file for somebody who came to sign in.
   $effect(() => {
     if (open && !viewport.touch) field?.select()
   })
@@ -54,8 +36,6 @@
     open = false
   }
 
-  /** Written when the field is left or Enter is pressed, as every field in the settings
-   *  is; the room's caret follows the account's name (`rooms.rename` in App.svelte). */
   async function rename(to: string) {
     if (to.trim() === name) return
     error = null
@@ -66,8 +46,6 @@
     }
   }
 
-  /** The sign-in the rest of the app opens. What a link let this device into goes with it
-   *  into the account; see `verify` in account.svelte.ts. */
   function signIn() {
     shut()
     account.open = true
@@ -114,8 +92,6 @@
 </div>
 
 <style>
-  /* In the corner the bar's own buttons were in, as the way out of full screen is, and
-     the same size: `--leave-size`. */
   .guest-corner {
     --face: var(--leave-size);
     position: absolute;
@@ -124,9 +100,6 @@
     z-index: var(--z-float);
   }
 
-  /* A thumb's target round a smaller face, flush with the top of what the system
-     leaves: a phone's note starts its words a target's height down, so the corner
-     sits above them rather than over the end of a long first line. */
   :global([data-touch]) .guest-corner {
     --face: calc(var(--touch-target) * 0.75);
     top: var(--inset-top);

@@ -1,7 +1,4 @@
 <script lang="ts">
-  /** Chrome's speaker: a page playing sound, struck through where it is muted. On a web
-   *  tab, and on the row of a space whose tabs out of sight are playing; see
-   *  workspace/SpaceSound.svelte. */
   import { fade } from 'svelte/transition'
   import { t } from './i18n.svelte'
   import { dur } from './motion'

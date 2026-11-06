@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** The join page, which is a page only when it has something to say.
-   *
-   *  Most links say nothing: they establish the session, land in the space, and
-   *  this draws nothing at all. What is left is the three moments where somebody
-   *  is owed a word - a link that asks one thing, the wait on the owner, and a
-   *  link that has stopped opening anything - and each of them is one line.
-   *
-   *  The panel is the sign-in's panel, because it is the same moment in the same
-   *  place and a second shape for it would only be a second shape. */
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { account } from './account.svelte'
@@ -20,21 +11,12 @@
   const invitation = $derived(joining.invitation)
   const who = $derived(invitation?.from ?? t('Somebody'))
 
-  /** What the link was about, when the link said. The one sentence every state
-   *  here sits under - and it names what was actually shared, which is the one
-   *  file where the link was about one and the space where it was about the
-   *  space. The same sentence either way: a smaller thing to be given is not a
-   *  different page. */
   const shared = $derived(
     invitation
       ? t('{who} shared {space} with you', { who, space: invitation.note ?? invitation.space })
       : null,
   )
 
-  /** Escape, the scrim and Close. A wait goes on out of sight, the way a request
-   *  for access does in Google Docs or Slack, and the field keeps what was typed;
-   *  the pill at the foot of the window opens either again (JoinPending.svelte). A
-   *  line that only says something is done with. */
   function close() {
     if (joining.step === 'waiting' || joining.step === 'asking') joining.close()
     else joining.dismiss()
@@ -60,8 +42,6 @@
     {/if}
 
     {#if joining.step === 'asking'}
-      <!-- One field, and either half of it will do: the owner has to have
-           something to accept. -->
       <form
         onsubmit={(event) => {
           event.preventDefault()
@@ -88,7 +68,6 @@
         <span class="pulse"></span>
         {t('Waiting for {who}', { who })}
       </p>
-      <!-- Slack's pending request: Cancel takes it back, Close leaves it asking. -->
       <div class="actions">
         <button type="button" class="nib-button is-quiet" onclick={() => void joining.cancel()}
           >{t('Cancel')}</button
@@ -123,12 +102,10 @@
 {/if}
 
 <style>
-  /* The layer behind it; see .nib-scrim in packages/themes. */
   .scrim {
     --scrim-z: var(--z-screen);
   }
 
-  /* `.nib-screen` in the themes package; see Palette.svelte. */
   .panel {
     display: flex;
     flex-direction: column;
@@ -153,7 +130,6 @@
     color: var(--text);
   }
 
-  /* Something is happening and nobody has to watch it. */
   .pulse {
     width: 7px;
     height: 7px;
@@ -175,8 +151,6 @@
     }
   }
 
-  /* With movement turned down the dot simply sits there, which still says the
-     request is out. */
   @media (prefers-reduced-motion: reduce) {
     .pulse {
       animation: none;
@@ -208,11 +182,6 @@
     color: var(--muted);
   }
 
-  /* Both buttons are `.nib-button` in the themes package: the one thing this
-     asks, and `is-quiet` for the word that only closes it. `Done` used to wear a
-     filled `--surface-2` of its own, which made it a third kind of button. */
-
-  /* The two halves of the panel's width, as the one button elsewhere has all of it. */
   .actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -225,8 +194,6 @@
     color: var(--danger);
   }
 
-  /* On the keyboard while a field has it, and scrolled rather than cut off when
-     what is left above the keys is shorter than the panel. */
   :global([data-touch]) .panel {
     top: auto;
     bottom: var(--keyboard);

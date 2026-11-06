@@ -1,22 +1,4 @@
 <script lang="ts">
-  /** What the picture of a space can be asked, in one card in its corner.
-   *
-   *  Folded away to a single button until it is wanted, because most of the time the
-   *  answer to "how should this be drawn" is "the way it already is": the settings
-   *  belong to the space and came down with it, so a reader who set them last month
-   *  wants the picture and not the controls. The same card the canvas panels are - the
-   *  surface, the hairline, the corner and the lift - because it is the same kind of
-   *  thing over the same kind of plane.
-   *
-   *  Only what changes what the picture tells you. Which notes are in it, what the
-   *  colours mean, how far apart they sit, whether a link says which way it points,
-   *  how big a note is drawn, and when. Nothing about the camera: that is the
-   *  pointer's business, and a dial for it would be a second way to do what a
-   *  scroll already does.
-   *
-   *  It writes straight to the space's own settings, so every surface that draws a
-   *  graph reads one answer; see workspace/graph-settings.svelte.ts. */
-
   import { closeOnBack } from './backstack.svelte'
   import { t } from './i18n.svelte'
   import { overlays } from './overlays'
@@ -48,10 +30,7 @@
     onscrub,
   }: {
     open: boolean
-    /** The first and last note of the space, or null where none of them has a date
-     *  to play - which is what a browser store with no times looks like. */
     span: { from: number; to: number } | null
-    /** Where the scrub bar stands, in milliseconds. */
     at: number
     playing: boolean
     onopen: (open: boolean) => void
@@ -59,8 +38,6 @@
     onscrub: (at: number) => void
   } = $props()
 
-  /** Four sliders, which is what a card of controls is. On the same 13 unit grid
-   *  every mark in the shell is drawn on; see panel-marks.ts. */
   const CARD_MARK = 'M2 3.5h9M2 9.5h9M4.6 1.9v3.2M8.4 7.9v3.2'
   const ADD_MARK = 'M6.5 3v7M3 6.5h7'
   const DROP_MARK = 'M3.8 3.8l5.4 5.4M9.2 3.8l-5.4 5.4'
@@ -70,15 +47,8 @@
   const settings = $derived(workspace.graphSettings.here)
   const spread = $derived(settings.spread)
 
-  /** Whether the forces are let out. Here rather than in the space's settings: it is
-   *  a disclosure, not a fact about the picture, and a card that remembered which of
-   *  its groups was open on every machine signed in would be syncing furniture. */
   let forcing = $state(false)
 
-  // Escape closes it, like everything else the app puts over a note; see
-  // overlays.ts, which is also what keeps this press from reaching the graph's own
-  // Escape and closing the tab underneath. So does a press past the card and its tab,
-  // and the window losing the focus. And Android's back, the same gesture on a phone.
   let corner = $state<HTMLElement>()
   $effect(() =>
     open
@@ -92,8 +62,6 @@
 
   function addGroup() {
     const held = settings.groups
-    // The next colour along, so six groups are six colours without anybody
-    // choosing: what a reader wants first is to tell them apart.
     const colour = (held.length % MOST_GROUPS) + 1
     workspace.graphSettings.set({ groups: [...held, { query: '', colour }] })
   }
@@ -110,17 +78,10 @@
     workspace.graphSettings.set({ groups: settings.groups.filter((_one, at) => at !== index) })
   }
 
-  /** The next of the six. A tap rather than a picker: there are six colours in the
-   *  theme and a group is one of them, so a row of dots or a wheel would be a
-   *  second palette over a card that has room for neither. */
   function nextColour(index: number, colour: number) {
     setGroup(index, { colour: (colour % MOST_GROUPS) + 1 })
   }
 
-  /** Keeps this view under a name of its own. Asked for a name, because a view
-   *  is a row in a list of names and "Graph" twice is two rows nobody can tell
-   *  apart. The prompt is imported where it is used, the way the bookmarks' own
-   *  rows import it: it is a sheet, and a card should not carry one. */
   async function keepView() {
     const { prompt } = await import('./prompt.svelte')
     const name = await prompt.ask({ title: t('Add view to Essentials'), confirmLabel: t('Keep') })
@@ -133,9 +94,6 @@
 <div class="corner" bind:this={corner}>
   {#if open}
     <div class="nib-layer card">
-      <!-- What the picture is narrowed to. The search's own language, so a habit
-           carries over; the placeholder is what says which three things a picture
-           can be asked about. See graph-filter.ts. -->
       <input
         class="nib-field"
         type="text"
@@ -158,12 +116,6 @@
         <span class="nib-switch" class:on={settings.orphans} aria-hidden="true"></span>
       </button>
 
-      <!-- The files the notes embed, as nodes of their own. Off unless it is asked
-           for, and beside the orphans switch because it is the same question: which
-           things are in the picture at all. Unlike every switch below it this one is
-           a different graph rather than a different drawing of one, so the
-           arrangement is made again - which is honest, since the notes have to make
-           room for the pictures. See `namesFile` in graph.ts. -->
       <button
         class="nib-row"
         role="switch"
@@ -174,11 +126,6 @@
         <span class="nib-switch" class:on={settings.attachments} aria-hidden="true"></span>
       </button>
 
-      <!-- How far the picture beside a note reaches: one link out, or five. Here
-           rather than only beside the panel it draws, because it is a fact about this
-           space's picture like everything else on the card, and it travels with the
-           space. The stepper in the Links panel writes the same setting, so the two
-           are never out of step; see Sidebar.svelte. -->
       <div class="dial">
         <span>{t('Depth')}</span>
         <input
@@ -239,20 +186,6 @@
 
       <div class="rule"></div>
 
-      <!-- Everything that decides where a note goes, folded away behind one row.
-           All four of them, because the layout has four and a reader who wants a
-           denser picture of a dense space has no other way to ask: how far apart a
-           link holds two notes, how hard the notes push, how much more of that push
-           than the arrangement does unasked, and whether the middle pulls at all.
-           See graph-layout.ts.
-
-           Folded, because these are the four a reader touches once and then leaves,
-           and a card is quiet or it is a settings panel. The twist is the file
-           tree's - one disclosure in the app, one shape; see Twist.svelte.
-
-           Each named, like the switches above, rather than a bare slider with a
-           number beside it: a dial in a pen's popover is about the pen, and a dial
-           in a card of a dozen things has to say which of them it is. -->
       <button class="nib-row" aria-expanded={forcing} onclick={() => (forcing = !forcing)}>
         <span class="nib-row-label">{t('Forces')}</span>
         <span class="chevron"><Twist open={forcing} /></span>
@@ -320,11 +253,6 @@
         </button>
       {/if}
 
-      <!-- How wide a link is drawn: thin, the look the picture has always had, and
-           thick. Three steps rather than a range, because a stroke wider than one of
-           the screen's own pixels is what costs a picture of ten thousand links its
-           frame rate: the thick step is the same hairline drawn three times a pixel
-           apart. See `LINES` in graph-paint.ts. -->
       <div class="dial">
         <span>{t('Lines')}</span>
         <input
@@ -341,12 +269,6 @@
         />
       </div>
 
-      <!-- Where the names fade in. A threshold that follows the zoom is what a
-           picture of a space wants; how dense the space is is what only its reader
-           knows, so this is where that threshold sits. One is the zoom the names have
-           always arrived at, so nothing changes until it is touched: to the left they
-           arrive while the space is still small, to the right they wait until the view
-           is in among the notes. See `LABELS_FROM` in graph-paint.ts. -->
       <div class="dial">
         <span>{t('Text fade')}</span>
         <input
@@ -386,9 +308,6 @@
       {#if span}
         <div class="rule"></div>
 
-        <!-- The space as it was written: the notes arrive in the order they were
-             made. One button and one bar, because there is one thing to say and
-             one place to say it from. -->
         <div class="time">
           <button
             class="press"
@@ -417,11 +336,6 @@
 
       <div class="rule"></div>
 
-      <!-- The card says how this picture is drawn; this is how to come back to
-           it. The space already remembers the way it was left, so a bookmark is
-           for the second way of looking at the same space: the whole of it, one
-           project, what nothing links to. It lands in the row above the file
-           list with everything else that is kept; see Bookmarks.svelte. -->
       <button class="nib-row" onclick={() => void keepView()}>
         <span class="nib-row-label">{t('Add view to Essentials')}</span>
       </button>
@@ -445,9 +359,6 @@
 </div>
 
 <style>
-  /* In the corner and against the two edges of it, clear of whatever the system
-     puts there. The bottom left, because the app's own round button is bottom
-     right on a phone and the tab strip is along the top. */
   .corner {
     position: absolute;
     inset-inline-start: var(--space-2);
@@ -457,20 +368,12 @@
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-2);
-    /* The card is as wide as it is, and the corner is only as wide as the card:
-       everything either side of it is the picture, and the picture takes the
-       pointer. */
     max-width: calc(100% - 2 * var(--space-2));
   }
 
-  /* The same card the canvas panels have, and the same `.nib-layer` in the themes
-     package that draws every layer floating over the app. One shape over a plane,
-     whichever plane it is. */
   .card {
     box-sizing: border-box;
     width: min(21rem, 100%);
-    /* Never taller than the pane it is in, so a phone scrolls the card rather
-       than losing the end of it. */
     max-height: calc(100vh - 8rem);
     max-height: calc(100dvh - 8rem);
     display: flex;
@@ -489,8 +392,6 @@
     }
   }
 
-  /* Between the four things the card holds: which notes, which colours, how it is
-     drawn, and when. */
   .rule {
     flex: none;
     height: 1px;
@@ -498,7 +399,6 @@
     background: var(--line);
   }
 
-  /* One colour group: the colour, the query, and the way to be rid of it. */
   .group {
     display: flex;
     align-items: center;
@@ -510,9 +410,6 @@
     min-width: 0;
   }
 
-  /* The colour, as the colour. Not the picker's dot: that is a 40px target with a
-     hairline and a halo, built for a row of twelve of them, and this is one tap
-     among six in a row that also holds a field. */
   .swatch {
     flex: none;
     width: var(--icon-lg);
@@ -530,7 +427,6 @@
     scale: 1.08;
   }
 
-  /* The tab the card folds away to, and the two small buttons inside it. */
   .tab,
   .drop,
   .press {
@@ -563,7 +459,6 @@
       background: var(--surface-hover);
     }
 
-    /* The tab has a surface of its own, so what a hover moves is its edge. */
     .tab:hover {
       color: var(--text-strong);
       border-color: var(--muted);
@@ -589,14 +484,11 @@
     stroke-linejoin: round;
   }
 
-  /* A triangle is a shape rather than a stroke. */
   svg.filled {
     fill: currentColor;
     stroke: none;
   }
 
-  /* The box the twist on the Forces row fills; the shape, the weight and the turn
-     are Twist.svelte's, the way they are in the two trees. */
   .chevron {
     display: block;
     flex: none;
@@ -605,8 +497,6 @@
     color: var(--muted);
   }
 
-  /* Every dial, laid out as the switches beside them are: the word at the left, the
-     control at the right, and the row the height theirs is. */
   .dial {
     display: flex;
     align-items: center;
@@ -616,11 +506,6 @@
     padding: 0 var(--row-pad);
   }
 
-  /* The word, with a width reserved for it: a card of six dials whose tracks each
-     start where their own word happens to end reads as six different controls. Wide
-     enough for the longest of the six in English, and a floor rather than a fixed
-     width - a language that spells one of them out at length needs the room more than
-     the track does, and the track shrinks to give it. */
   .dial span {
     flex: none;
     min-width: 7rem;
@@ -634,7 +519,6 @@
     min-width: 0;
   }
 
-  /* The play button and the bar it moves along. */
   .time {
     display: flex;
     align-items: center;

@@ -1,17 +1,4 @@
 <script lang="ts">
-  /** Which space this is, and the way to any other one.
-   *
-   *  The column of wordless squares down the left of the window is gone: there
-   *  were two ways to choose a space and this is the better one, because it says
-   *  the name. What the column carried comes here - every space with its own
-   *  mark, the quiet dot that says somebody else is in it, and what a space
-   *  itself offers, on the row it is about.
-   *
-   *  It opens *inside* the panel rather than floating over the app: the anchor is
-   *  always the top of the list, so the list of spaces is the width of the list
-   *  of notes and needs no measuring, no flipping at an edge and no second sheet
-   *  written for a phone. A drawer is a panel too, so a thumb gets exactly what a
-   *  pointer gets. */
   import { arrive, leave } from './slide'
   import Door from './Door.svelte'
   import NameField from './NameField.svelte'
@@ -30,20 +17,12 @@
   const here = $derived(workspace.activeSpace)
   const name = $derived(here?.name ?? t('Spaces'))
 
-  /** The names the switcher already holds, so the field can say a name is taken;
-   *  a space keeping its own name is not taking it from itself. */
   const otherSpaces = $derived(
     workspace.spaces.filter((space) => space.id !== here?.id).map((space) => space.name),
   )
 
-  /** Whether the name being typed cannot be written, which the header wears as a
-   *  hairline in red exactly as a row does; the field is what knows why. */
   let wrong = $state(false)
 
-  // Escape closes it, the way Escape closes everything else the app opens over
-  // what is under it, and so does a press past the list and its header, or the window
-  // losing the focus - which is how a press into a web page beside it is heard; see
-  // overlays.ts.
   $effect(() =>
     open
       ? overlays.show(
@@ -52,21 +31,8 @@
         )
       : undefined,
   )
-
-  // What a space wears in its badge, and which set has to be fetched to draw it,
-  // are the badge's own business: SpaceBadge.svelte.
 </script>
 
-<!-- The mark of the space you are in, for the header over the file list. Plain
-     rather than `is-on`: this is where you are, said quietly, not a row to pick
-     out of a list of them.
-
-     Keyed on the space, so changing space crosses one mark into the next rather
-     than swapping the drawing between two frames - `arrive` and `leave` with
-     nothing to slip, which is the app's own fade and is nothing at all for a
-     reader who asked for less movement; see slide.ts and motion.ts. Both marks
-     are in the page while they cross, which is what the box they share is for:
-     the name beside them must not move. -->
 {#snippet mark()}
   {#if here}
     {@const space = here}
@@ -81,9 +47,6 @@
 {/snippet}
 
 {#if here && workspace.naming?.path === here.root}
-  <!-- Renaming a space happens where its name is written, in the same field a row
-       in the list uses: the header keeps its height, its weight and its chevron,
-       and only the name becomes editable. See NameField.svelte. -->
   <div class="name" class:is-wrong={wrong}>
     {@render mark()}
     <NameField
@@ -107,8 +70,6 @@
   >
     {@render mark()}
     <span class="nib-row-label">{name}</span>
-    <!-- Said on the header as well as on the row, so a space being shared is a
-         fact you can see without opening the list of spaces to look for it. -->
     {#if here && isShared(here.root)}
       <SharedMark />
     {/if}
@@ -116,11 +77,6 @@
   </button>
 {/if}
 
-<!-- The list itself, fetched with the first press rather than carried in front of
-     the first paint, and warmed at the launch's last turn so that press finds it
-     here; see SpaceMenu.svelte and surfaces.svelte.ts. Through a door that lets it
-     play its way out, and turn round where it is when pressed again (#1067; see
-     Door.svelte). -->
 <Door {open} load={() => spacesMenu()}>
   {#snippet children(SpaceMenu)}
     <SpaceMenu close={() => (open = false)} />
@@ -128,15 +84,6 @@
 </Door>
 
 <style>
-  /* The space's name, and the whole of what the switcher is. The width of the
-     panel, less whatever else is in the head: the list it opens is the width of
-     the panel, so the control that opens it is too, and a header where only the
-     word is pressable is a header most presses miss - on a phone especially,
-     where the thumb lands wide of a short name. It was as wide as the word for a
-     while, on the argument that a full-width hover puts a grey block across the
-     header; the block is what a row does everywhere else in this panel, and
-     missing the button is worse. Still `min-width: 0`, so a long name is cut
-     rather than pushing the panel wider. */
   .name {
     flex: 1;
     min-width: 0;
@@ -168,17 +115,9 @@
     background: var(--surface-press);
   }
 
-  /* The box the space's mark sits in, in front of its name. A box of its own
-     because the two marks cross inside it: both are in the page for the length of
-     the crossing, one over the other in the single cell of a grid, so the name
-     beside them never moves. Nothing here draws the badge - that is `.nib-badge`
-     in the themes package - only where it sits. */
   .mark {
     flex: none;
     display: grid;
-    /* The name starts beside its mark at the distance every other row in the
-       panel puts between the two, while what follows the name - the shared mark,
-       the chevron - keeps the header's own tighter gap. */
     margin-inline-end: calc(var(--row-gap) - var(--space-1));
   }
 
@@ -186,23 +125,15 @@
     grid-area: 1 / 1;
   }
 
-  /* Beside the word rather than at the far end of the panel: the two are one
-     control, and a chevron floating in the middle of a bar belongs to nothing.
-     What stays full width is the button, so there is still a header-sized thing
-     to press. */
   .name .nib-row-label {
     flex: 0 1 auto;
   }
 
-  /* Says the name can be pressed, and turns over while what it opened is open.
-     `--icon-md`, the size of a mark that belongs to a name, so it grows with the
-     word under a thumb instead of staying a pointer's size beside 19px type. */
   .chevron {
     flex: none;
     width: var(--icon-md);
     height: var(--icon-md);
     color: var(--muted);
-    /* Painted, or an `svg` is filled black whatever `color` says. */
     fill: none;
     stroke: currentColor;
     stroke-width: 1.4;

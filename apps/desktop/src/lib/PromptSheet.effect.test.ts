@@ -1,12 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 
-/** A find with many answers (issue 1063: New application's "What does it run?"): every
- *  answer is in the list, a scroll or a key away, and only the rows near the view are
- *  in the page. It showed the first eight and nothing past them.
- *
- *  In the jsdom project because the sheet is drawn and keyed. */
-
 const { prompt } = await import('./prompt.svelte')
 const PromptSheet = (await import('./PromptSheet.svelte')).default
 

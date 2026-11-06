@@ -1,20 +1,4 @@
 <script lang="ts">
-  /** Deleting the account, from the row in Settings that asks for it.
-   *
-   *  The session is not enough, because the session is the thing most likely to be
-   *  in the wrong hands: pressing the row mails a fresh code to the account's own
-   *  address, and an account with a second factor is asked for that too. The codes
-   *  earn a ticket, and only then is the last question asked - so a mistyped code is
-   *  said before anybody has confirmed anything. See services/sync/src/account.ts.
-   *
-   *  What goes is the account and its synced copies. The notes on this device are
-   *  files on this device, and nothing here touches them: the app is signed out the
-   *  way the Sign out row signs it out, which stops the syncing and the rooms and
-   *  leaves every folder where it is.
-   *
-   *  Fetched on the press, like everything a pane shows only once somebody asks: the
-   *  three requests and this flow are nothing the settings need in order to open. */
-
   import { onMount } from 'svelte'
   import { fade } from 'svelte/transition'
 
@@ -25,18 +9,13 @@
 
   const { onend }: { onend: () => void } = $props()
 
-  /** The account's own spaces somebody else is in, by name: deleting the account
-   *  takes them away from those people too, which is the one thing the last question
-   *  must not leave out. */
   const shared = $derived(
     new Intl.ListFormat(i18n.language).format(
       account.spaces.filter((one) => one.role === 'owner' && one.shared).map((one) => one.name),
     ),
   )
 
-  /** The codes, or the one question after them. */
   let stage = $state<'codes' | 'sure'>('codes')
-  /** Whether the account asks for its authenticator's code as well. */
   let second = $state(false)
   let code = $state('')
   let fromApp = $state('')
@@ -45,7 +24,6 @@
   let resendIn = $state(0)
   let field = $state<HTMLInputElement | null>(null)
 
-  /** What the codes earned, spent by the last press. Not state: nothing draws it. */
   let ticket: string | null = null
 
   async function mail() {
@@ -101,8 +79,6 @@
     try {
       await request<{ ok: true }>('/v1/account', { method: 'DELETE', token, body: { ticket } })
     } catch (error) {
-      // A session the service no longer knows is an account that has already gone:
-      // an answer lost on the way back from a delete that happened.
       if (!(error instanceof ApiError && error.status === 401)) {
         wrong = message(error, 'that did not work')
         busy = false
@@ -110,15 +86,12 @@
       }
     }
 
-    // Signed out the way the Sign out row signs out, which lets go of the session
-    // before it asks anything of the network: the pane is "not signed in" from here.
     void account.signOut()
     onend()
   }
 
   let timer: ReturnType<typeof setInterval> | undefined
 
-  /** How long until another code may be asked for, counted down where it shows. */
   function countDown(seconds: number) {
     clearInterval(timer)
     resendIn = seconds
@@ -129,7 +102,6 @@
     }, 1000)
   }
 
-  // Pressing the row is asking for the code.
   onMount(() => {
     void mail()
     return () => clearInterval(timer)
@@ -206,8 +178,6 @@
 </div>
 
 <style>
-  /* The settings pane's own shapes, as Security.svelte carries them: a component
-     does not inherit the panel's scoped styles. See SettingsPanel.svelte. */
   .leaving {
     display: flex;
     flex-direction: column;
@@ -223,13 +193,10 @@
     color: var(--text-strong);
   }
 
-  /* The first of the three answers sits apart from the two that end the row. */
   .resend {
     margin-inline-end: auto;
   }
 
-  /* Six digits, so the field takes what they need and no more; the box is
-     `.nib-field.is-value` in the themes package. */
   .setting > .code {
     flex: none;
     inline-size: 8rem;

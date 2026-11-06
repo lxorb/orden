@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** The theme store, as a sheet over the settings.
-   *
-   *  A grid of live miniatures rather than a list of names: a theme is a look,
-   *  and the only honest way to offer one is to show it. Each card is the same
-   *  small note drawn with that theme's own tokens by the app's own prose rules,
-   *  so what is on the card is what the reader will get. Clicking one opens it
-   *  larger, with its palette laid out, and the one button that applies to where
-   *  that theme stands. */
-
   import { closeOnBack } from './backstack.svelte'
   import { fade, fly, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -27,9 +18,6 @@
   const STYLE_ID = 'nib-theme-miniatures'
   const PALETTE_ID = 'nib-theme-palettes'
 
-  /** The tokens the full preview lays out as swatches, in the order somebody
-   *  judging a theme reads them: the ground it sits on, the lines, the words,
-   *  the accent, then the two colours that mean something. */
   const SWATCHES = [
     '--bg',
     '--surface',
@@ -43,31 +31,18 @@
     '--success',
   ]
 
-  /** How many cards stand in for the catalogue while it is on its way. Enough
-   *  to fill the first row or two, so the sheet does not jump when they land. */
   const WAITING = [0, 1, 2, 3, 4, 5]
 
-  /** Which card is under the pointer, so a theme with both schemes can show the
-   *  other one. One piece of state for the whole grid rather than one each. */
   let hovered = $state<string | null>(null)
 
-  /** Which side of a pair the full preview is showing, once it has been asked
-   *  for. Null follows the app, which is what the grid does. */
   let previewing = $state<Scheme | null>(null)
 
-  /** The sample note, in whatever language the app is in. Built once per
-   *  language rather than once per card: thirty cards show the same note. The
-   *  preview shows more of the same one, since it has the room. */
   const sample = $derived(sampleHtml())
   const fullSample = $derived(sampleHtml(true))
 
-  // Escape closes whichever overlay is on top, and Back does the same on a
-  // phone. Inside the settings, so this is a second overlay over that one.
   $effect(() => (store.open ? overlays.show(() => store.close()) : undefined))
   $effect(() => closeOnBack(store.open, () => store.close()))
 
-  /** Writes a stylesheet into the head, or takes it away again. The app's own
-   *  way of putting a theme on the page; see theme.svelte.ts. */
   function inject(id: string, css: string) {
     let style = document.getElementById(id)
 
@@ -85,22 +60,14 @@
     if (style.textContent !== css) style.textContent = css
   }
 
-  // The miniature's rules: the app's own, re-scoped, once per session. Asked for
-  // when the gallery first opens rather than at startup, because that is when
-  // the text they are built from is worth loading.
   $effect(() => {
     if (!store.open || document.getElementById(STYLE_ID)) return
 
     void miniatureCss().then((css) => inject(STYLE_ID, css))
   })
 
-  // One block per theme and scheme, rebuilt when the catalogue changes. This is
-  // what a card is painted from: no stylesheet is fetched to draw a miniature.
   $effect(() => inject(PALETTE_ID, store.open ? paletteCss(store.themes) : ''))
 
-  // How long the grid takes from the catalogue arriving to being on the screen.
-  // Read on the frame after the cards are laid out, which is the number that
-  // matters: the mark is set where the index is parsed.
   $effect(() => {
     const themes = store.shown
     if (!store.open || !themes.length) return
@@ -109,20 +76,12 @@
       if (!performance.getEntriesByName(`${PAINT}:index`).length) return
 
       performance.measure(PAINT, `${PAINT}:index`)
-      // Taken away once it is spent, so a later re-render cannot be measured
-      // against a catalogue that arrived minutes ago.
       performance.clearMarks(`${PAINT}:index`)
     })
 
     return () => cancelAnimationFrame(frame)
   })
 
-  /** Which scheme a miniature shows.
-   *
-   *  The app's own, so the grid reads as the app reads. A theme that only states
-   *  the other one shows that instead: half a card would be no preview at all.
-   *  `wanted` is what a preview was asked to show; on the grid nothing asks, and
-   *  pointing at a pair shows its other side. */
   function schemeOf(one: StoreTheme, wanted?: Scheme | null): Scheme {
     const shows = wanted ?? theme.current
     if (!one.variants.includes(shows)) return one.variants[0] ?? shows
@@ -131,16 +90,10 @@
     return pointed && !wanted ? (shows === 'dark' ? 'light' : 'dark') : shows
   }
 
-  /** The one tag worth putting on a card. A theme that tags itself `light` is
-   *  saying what the miniature above the line already says, and saying it wrong
-   *  half the time for a pair; so the scheme words are passed over and the first
-   *  tag that describes the mood is taken instead. */
   function moodOf(one: StoreTheme): string | undefined {
     return one.tags.find((tag) => tag !== 'light' && tag !== 'dark')
   }
 
-  /** What the swatches show for the theme being previewed: whichever scheme it
-   *  is being previewed in, with the tokens it does not state left out. */
   function swatchesOf(one: StoreTheme, scheme: Scheme) {
     const palette = one.palettes[scheme]
     return SWATCHES.filter((token) => palette[token]).map((token) => ({
@@ -163,8 +116,6 @@
     onclick={() => store.close()}
   ></div>
 
-  <!-- Named by whatever heads it, which is the theme being looked at or the
-       store itself: the same words, once. -->
   <div
     class="nib-screen is-centred is-steady sheet"
     use:trap
@@ -173,10 +124,6 @@
     aria-label={store.chosen?.name ?? t('Themes')}
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
-    <!-- The head of a sheet, and not the head of the page: a bare `header` is the
-         page's banner wherever it is not inside an article or a section, so this
-         one was a second banner over the app's own. It is the row the title and the
-         find box sit in, which is nothing in itself. -->
     <header role="presentation">
       {#if store.chosen}
         <button
@@ -220,8 +167,6 @@
       {#if store.chosen}
         {@render preview(store.chosen)}
       {:else if store.loading && !store.themes.length}
-        <!-- The grid is the report: cards with nothing in them yet, in the shape
-             the real ones will take, so the sheet does not jump when they land. -->
         <div class="grid">
           {#each WAITING as slot (slot)}
             <div class="card waiting"><div class="frame"></div></div>
@@ -230,7 +175,6 @@
       {:else if store.shown.length}
         <div class="grid">
           {#each store.shown as one (one.id)}
-            <!-- What the theme is for, once rather than twice. -->
             {@const mood = moodOf(one)}
             <button
               class="card"
@@ -246,9 +190,6 @@
               onblur={() => (hovered = null)}
             >
               <div class="frame {FRAME}" data-palette={one.id} data-theme={schemeOf(one)}>
-                <!-- The same markup the renderer writes, drawn by the same
-                     rules. Ours, not the theme author's: a theme brings colours
-                     and nothing else. -->
                 <!-- eslint-disable-next-line svelte/no-at-html-tags -->
                 <div class="nib-mini-page">{@html sample}</div>
               </div>
@@ -273,9 +214,6 @@
   </div>
 {/if}
 
-<!-- Where a theme stands, as a shape rather than a sentence: a tick for one in
-     the folder, the accent for the one being used, an arrow for one the store is
-     ahead of. -->
 {#snippet mark(one: StoreTheme)}
   {#if store.updatable(one)}
     <svg class="state up" viewBox="0 0 16 16" role="img" aria-label={t('Update')}
@@ -308,7 +246,6 @@
         <div class="nib-mini-page">{@html fullSample}</div>
       </div>
 
-      <!-- A pair is looked at from both sides before it is chosen. -->
       {#if one.variants.length > 1}
         <div class="sides">
           {#each one.variants as variant (variant)}
@@ -368,9 +305,6 @@
         <p class="note bad">{t(store.error)}</p>
       {/if}
 
-      <!-- What the theme asked for and did not get. Said once, plainly, under
-           the thing it is about: a theme with one line the app will not apply is
-           still a theme, and pretending otherwise would be the lie. -->
       {#if store.refused.id === one.id && store.refused.notes.length}
         <p class="note">
           {plural(store.refused.notes.length, {
@@ -384,14 +318,11 @@
 {/snippet}
 
 <style>
-  /* The layer behind it; see .nib-scrim in packages/themes. */
   .scrim {
     --scrim-z: var(--z-store);
     --scrim-ink: 55%;
   }
 
-  /* `.nib-screen` in the themes package, a gutter inside the settings sheet it sits
-     on on every side, so the one underneath is still visibly there. */
   .sheet {
     --screen-gutter: calc(2 * var(--space-5));
     --screen-width: calc(var(--screen-panes) - 2 * var(--space-5));
@@ -445,17 +376,10 @@
     white-space: nowrap;
   }
 
-  /* The way back and the way out are `.nib-glyph` in the themes package. They
-     were a hard-coded 28px square with a 14px mark and `--radius-sm`, which made
-     them the one pair of icon buttons in the app that did not grow under a thumb
-     and did not share the corner the rest are drawn with. */
-
   .body {
     padding: var(--space-4);
     overflow-y: auto;
   }
-
-  /* ── The grid ──────────────────────────────────────────────────── */
 
   .grid {
     display: grid;
@@ -495,16 +419,12 @@
     outline-offset: 2px;
   }
 
-  /* The miniature. Its own colours come from the theme; the size is the card's
-     business, and the scale is what turns a note into a miniature of one. */
   .frame {
     --mini-scale: 0.62;
     width: 100%;
     border-bottom: 1px solid var(--line);
   }
 
-  /* Not scaled at all: the preview is the reading view at the size a note is
-     really read at, so what is being judged is the thing itself. */
   .frame.big {
     --mini-scale: 1;
     border: 1px solid var(--line);
@@ -512,7 +432,6 @@
   }
 
   .card.waiting {
-    /* Nothing to show yet, and nothing to say about it either. */
     border-style: dashed;
     opacity: 0.6;
   }
@@ -570,10 +489,6 @@
     stroke: var(--accent);
   }
 
-  /* ── The full preview ──────────────────────────────────────────── */
-
-  /* The sample takes the room; what is known about the theme stands beside it,
-     so the sheet is the same size whichever half of the store is showing. */
   .full {
     display: grid;
     grid-template-columns: 1fr 16rem;
@@ -609,11 +524,6 @@
       color var(--dur-fast) var(--ease-out);
   }
 
-  /* The side being looked at is the filled row every "this one" in the app is:
-     the surface says which, and the words go dark. The accent on a wash of itself
-     is the one combination this palette does not carry - it clears three to one
-     against a surface, not four and a half against a tint of itself. The same
-     answer the menu's chosen chip was given; see AppMenu.svelte. */
   .side.at {
     background: var(--surface-selected);
     color: var(--active-file-text-color);
@@ -625,8 +535,6 @@
     gap: 5px;
   }
 
-  /* A ring rather than a border, so the chip is only the colour it names and a
-     colour the same as the surface still has an edge. */
   .chip {
     width: 20px;
     height: 20px;
@@ -662,9 +570,6 @@
     margin-top: var(--space-1);
   }
 
-  /* Using, installing and removing a theme are `.nib-button` in the themes
-     package, the same pair every sheet in the app offers. */
-
   .note {
     margin: 0;
     font-size: var(--text-sm);
@@ -675,8 +580,6 @@
     color: var(--danger);
   }
 
-  /* On the keys while the search has them, as every sheet is; see Sheet.svelte.
-     At the foot of the screen what a search found ran on under the keyboard. */
   :global([data-touch]) .sheet {
     top: auto;
     bottom: var(--keyboard);
@@ -691,8 +594,6 @@
     grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
   }
 
-  /* No room for two columns, so the sample and what is known about it stack
-     the way every other pane does on a phone. */
   :global([data-touch]) .full {
     grid-template-columns: 1fr;
   }

@@ -1,8 +1,4 @@
 <script lang="ts">
-  /** One essential as a tile: its file's face and nothing else (`faceOf` in
-   *  file-mark.ts), the name its tooltip and its label, the open one lifted. Drawn as
-   *  `.nib-tile` in the themes package. A press is the panel's; the tile only says
-   *  which press it was (new-tab.ts). */
   import type { HTMLButtonAttributes } from 'svelte/elements'
   import { chosenIcon } from './chosen-icon'
   import { faceOf, type FileMark as Mark, initialOf } from './file-mark'
@@ -27,12 +23,8 @@
     name: string
     mark: Mark
     active: boolean
-    /** Whether the note's own tab in the strip is the one in front (#1110). */
     front: boolean
-    /** Whether its tab was unloaded from its menu (#1127): the face faded, as the
-     *  strip fades a tab's mark. */
     unloaded?: boolean
-    /** Which edge a tile let go of now would arrive at, or null for none. */
     slot: 'before' | 'after' | null
     onopen: (ask: TabAsk) => void
     onmenu: (event: MouseEvent) => void
@@ -66,8 +58,6 @@
 </button>
 
 <style>
-  /* An essential whose tab was unloaded (#1127): its face faded, as the strip fades a
-     tab's mark, until it is shown again. */
   .tile.is-unloaded > span {
     opacity: 0.45;
   }

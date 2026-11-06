@@ -1,11 +1,4 @@
 <script lang="ts">
-  /** The Search panel: a field that understands operators, the lines they
-   *  found, and a replacement to run over the ones that are ticked.
-   *
-   *  What is asked and what came back live in the search store, because a
-   *  bookmarked search runs from the row above the file list. What is here is
-   *  the field, the popup that finishes an operator's value, and the rows. */
-
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
@@ -31,23 +24,17 @@
 
   const { ongoto }: { ongoto?: ((line: number) => void) | undefined } = $props()
 
-  /** A star: the mark bookmarking wears wherever it is not a word. */
   const STAR =
     'M6.5 1.6l1.55 3.14 3.47.5-2.51 2.45.59 3.45L6.5 9.5 3.4 11.14l.59-3.45L1.48 5.24l3.47-.5z'
 
-  /** Two rows and an arrow between them: one word standing in for another. */
   const SWAP = 'M1.8 4h7.4M7.4 2.2 9.2 4 7.4 5.8M11.2 9H3.8M5.6 7.2 3.8 9l1.8 1.8'
 
   const TICK = 'M2.6 6.6 5 9l5.4-5.4'
 
-  /** Whether the space searched may be written in: one shared to be read takes no
-   *  replacement. */
   const writable = $derived(canWriteAt(workspace.activeSpace?.root ?? ''))
 
   let field = $state<HTMLInputElement>()
 
-  // The field can arrive with words already in it - a selection searched for, a
-  // bookmarked search, a tag pressed - so the caret goes after them, not before.
   $effect(() => {
     if (!field) return
     const end = field.value.length
@@ -55,13 +42,10 @@
     caret = end
   })
   let focused = $state(false)
-  /** Set by Escape, so a popup that was shut stays shut until the next
-   *  keystroke asks for it again. */
   let shut = $state(false)
   let caret = $state(0)
   let active = $state(0)
 
-  /** The folders of the space, as `path:` writes them. */
   const folders = $derived.by(() => {
     const root = workspace.activeSpace?.root
     const tree = workspace.tree
@@ -91,66 +75,40 @@
     ].sort(),
   )
 
-  /** The space's tags as the tree their slashes describe. */
   const tags = $derived(tagTree(workspace.tags))
 
-  /** Every node of it, by path, which is what `tag:` is finished with: a path is
-   *  what the operator takes, and every node of the tree is one, so `tag:nib`
-   *  offers `work/nib` as well as the tags spelled that way. */
   const tagPaths = $derived(nodesIn(tags).map((node) => node.path))
 
-  /** What the caret is finishing, and what the space has to finish it with.
-   *  Only while the field has the focus: a popup over a panel nobody is
-   *  typing in is in the way. */
   const asking = $derived(
     focused && !shut ? (completing(search.text, caret) ?? naming(search.text, caret)) : null,
   )
 
   const suggestions = $derived.by(() => {
     if (!asking) return []
-    // The operators themselves, while what is typed could still become one.
     if (asking.field === 'name') return offered(asking.typed, OPERATORS)
-    // A tag path is deep and long, so it is the one value worth finding by a
-    // handful of its letters: `wnc` offers `work/nib/canvas`. The same scorer the
-    // hit list ranks with; see search/fuzzy.ts.
     if (asking.field === 'tag') return nearest(asking.typed, tagPaths)
     return offered(asking.typed, asking.field === 'path' ? folders : names)
   })
 
-  // A question asked of another space is not this space's question. The panel
-  // is rebuilt for each space, so this says which one it is showing.
   $effect(() => {
     search.forSpace(workspace.activeSpace?.root ?? null)
   })
 
-  /** Reads a value for its own sake, so the effect around it follows that
-   *  value. Nothing wants the value itself. */
   const follows = (_value: unknown) => undefined
 
-  // A fresh list starts at the top: the row the arrow pointed at is no longer
-  // the one under it.
-  //
-  // Except a list of operator names, which starts at none of them. That list is
-  // offered rather than asked for - the reader typed a word that could still
-  // become an operator - so Enter has to keep meaning Enter until an arrow or a
-  // click says otherwise.
   $effect(() => {
     follows(suggestions)
     active = asking?.field === 'name' ? -1 : 0
   })
 
-  /** The search in the box, as something to keep. */
   const searchMark = $derived(search.asks ? workspace.bookmarks.forSearch(search.text) : null)
 
-  /** Consecutive hits from one note read as that note's hits, with its name
-   *  said once above them. */
   const groups = $derived.by(() => {
     const out: { path: string; name: string; loose: boolean; archived: boolean; hits: Hit[] }[] = []
 
     for (const hit of search.hits) {
       const last = out.at(-1)
       if (last?.path === hit.path) last.hits.push(hit)
-      // A score is what a loose match has and an exact one has not; see fuzzy.ts.
       else {
         out.push({
           path: hit.path,
@@ -162,13 +120,9 @@
       }
     }
 
-    // What the archive answered goes under what the space did: asked for, but still
-    // put away.
     return [...out.filter((group) => !group.archived), ...out.filter((group) => group.archived)]
   })
 
-  /** One line cut into what matched and what did not, so the match can be
-   *  emphasised without any markup in the string itself. */
   function pieces(text: string, ranges: Range[]) {
     const out: { text: string; mark: boolean }[] = []
     let at = 0
@@ -196,8 +150,6 @@
     search.ask(next.text)
     caret = next.caret
 
-    // The caret goes where the value ended, which is only true once Svelte has
-    // put the new text in the field.
     queueMicrotask(() => {
       field?.focus()
       field?.setSelectionRange(next.caret, next.caret)
@@ -226,8 +178,6 @@
       }
       if (event.key === 'Escape') {
         event.preventDefault()
-        // The popup and nothing else: the field keeps what is in it, and the
-        // replace field below it keeps its place.
         shut = true
         return
       }
@@ -239,9 +189,6 @@
       return
     }
 
-    // A search field's Escape, as a Mac's has it: the words first, then the field
-    // itself. The panel has no tab to leave by, so the second one goes back to
-    // the file list.
     if (event.key === 'Escape') {
       event.preventDefault()
       if (search.text) search.ask('')
@@ -249,44 +196,32 @@
     }
   }
 
-  /** The row's words, cut into what matched and what did not. */
   function shown(hit: Hit, task: { text: string; ranges: Range[] } | null) {
     return task ? pieces(task.text, task.ranges) : pieces(hit.text, hit.ranges)
   }
 
-  /** The box in a row, pressed. The row underneath it opens the note, so the
-   *  press stops here; and the box is drawn from the note rather than from
-   *  itself, so it is left alone until the write has happened. */
   function ticked(event: Event, hit: Hit) {
     event.preventDefault()
     event.stopPropagation()
     void workspace.toggleTaskAt(hit.path, hit.line).then((done) => {
-      // The note changed, so the search says what it says now.
       if (done) search.ask(search.text)
     })
   }
 
-  /** A hit pressed: its note opens at the line - in a tab of its own, beside this
-   *  one, when the press asked for one (new-tab.ts). A note left behind is not
-   *  scrolled to. */
   async function openHit(hit: Hit, press: MouseEvent) {
     const ask = tabAsk(press)
     const how = howFor(ask)
 
-    // A row with a page is a paper: it opens where the words are rather than at a
-    // line, which a paper has not got. See pdf/papers.ts.
     if (hit.page !== undefined) {
       await workspace.openPdf(hit.path, hit.page, how)
       return
     }
-    // A note with no file is its tab; see search/unsaved.ts.
     if (hit.tab !== undefined) {
       workspace.activate(hit.tab)
       ongoto?.(hit.line)
       return
     }
 
-    // The scratchpad is its card, at the line.
     if (isScratchpad(hit.path)) {
       const { scratchpad } = await import('./scratchpad/pad')
       scratchpad.show(hit.line)
@@ -298,15 +233,9 @@
   }
 </script>
 
-<!-- What the search is holding, said in one line: how many notes, how much text,
-     against what cap. Not shown to anybody - it is an attribute, and the panel
-     looks exactly as it did - but a profiler, a drive and whoever is asking why a
-     search felt slow can all read it. See search/warmth.ts. -->
 <div class="find" data-search={warm.said}>
   <div class="row">
     <div class="box">
-      <!-- The same magnifier the pill it replaces wears, in the same place: one
-           control that has become editable. -->
       <svg class="nib-field-mark mag" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
 
       <!-- svelte-ignore a11y_autofocus -->
@@ -335,15 +264,12 @@
         autofocus
       />
 
-      <!-- How many lines answered, in the field it was asked in. -->
       {#if search.asks && search.hits.length}
         <span class="found" transition:fly={{ x: 6, duration: dur(130), easing: cubicOut }}>
           {search.hits.length}
         </span>
       {/if}
 
-      <!-- The one place a bookmark is a mark rather than a word: there is no
-           row to right-click, and a star in the box says what it does. -->
       {#if searchMark}
         {@const kept = workspace.bookmarks.has(searchMark)}
         <button
@@ -371,8 +297,6 @@
       {/if}
     </div>
 
-    <!-- No replacing in a space shared to be read, which takes no write; see
-         `replaceInNotes` in workspace/note-text.ts, which passes its notes over. -->
     {#if writable}
       <button
         class="swap"
@@ -386,7 +310,6 @@
       </button>
     {/if}
 
-    <!-- The archive, asked too. Only in a space that has one. -->
     {#if workspace.archive.any || search.archived}
       <button
         class="swap"
@@ -425,9 +348,6 @@
 </div>
 
 {#if groups.length}
-  <!-- The results are one tab stop and the arrows walk them, the same as every other
-       list; see roving.ts. The rows are the lines found, not the notes they sit in:
-       the name over a group is a heading, not somewhere to stand. -->
   <ul
     use:roving={{
       rows: '.hit',
@@ -441,9 +361,6 @@
     {#each groups as group, index (`${group.path}:${index}`)}
       <li class="group">
         <div class="nib-section note">
-          <!-- One character for "near enough", where a word would be prose. The
-               place in the list already says it: the guesses are under the
-               answers. -->
           {#if group.loose}<span class="guess" title={t('Close match')}>~</span
             >{/if}{#if group.archived}<svg
               class="archived"
@@ -455,7 +372,6 @@
         {#each group.hits as hit (hit.line)}
           {@const task = hit.tab === undefined ? taskOf(hit) : null}
           <div class="line">
-            <!-- A bare row has no words to replace, so nothing to tick. -->
             {#if search.replacing && hit.tab === undefined && !hit.bare}
               <button
                 class="tick"
@@ -474,10 +390,6 @@
               onclick={(event) => void openHit(hit, event)}
               use:middleOpens={(event) => void openHit(hit, event)}
             >
-              <!-- A line that is a task shows its box, and the box works: a list
-                   of everything still to do is only a tool if it can be done
-                   from. The words after the marker, because the marker is what
-                   the box now says. -->
               {#if task}
                 <input
                   type="checkbox"
@@ -491,8 +403,6 @@
                 {#if piece.mark}<mark>{piece.text}</mark>{:else}{piece.text}{/if}
               {/each}
 
-              <!-- Which page of a paper the words are on, at the far end where a
-                   row counts things. A note has no page and says nothing. -->
               {#if hit.page !== undefined}
                 <span class="nib-row-meta">{t('Page {page}', { page: hit.page })}</span>
               {/if}
@@ -505,17 +415,10 @@
 {:else if search.asks && !search.running}
   <p class="empty-text">{t('Nothing found')}</p>
 {:else if !search.text.trim() && tags.length}
-  <!-- An empty search offers the space's own tags, which is how you find out
-       what there is to search for. As the tree their slashes describe, in the
-       file tree's own rows: `work/nib/canvas` is a path like a folder's. -->
   <TagTree nodes={tags} />
 {/if}
 
 <style>
-  /* Where the pill stood, at the same inset, so the panel does not shuffle as
-     the field takes its place. */
-  /* Where the pill it replaces stood, so nothing shuffles as the field takes
-     its place. */
   .find {
     display: flex;
     flex-direction: column;
@@ -529,30 +432,21 @@
     gap: var(--space-1);
   }
 
-  /* Holds the field and everything that sits inside or under it. */
   .box {
     position: relative;
     flex: 1;
     min-width: 0;
   }
 
-  /* The box is `.nib-field`, drawn in the themes package, which is also what
-     the pill at the top of the panel wears: the same control, now editable.
-     What is left here is the room the mark in front and the marks behind it
-     take out of it. */
   .query {
     padding-inline-start: calc(var(--row-pad) + var(--icon-md) + var(--row-gap));
     transition: padding-inline-end var(--dur-fast) var(--ease-out);
   }
 
-  /* Room for the count and the star, taken only once there is a search to
-     count or to keep. */
   .query.wide {
     padding-inline-end: 56px;
   }
 
-  /* Over the field's own left padding, so the words start where the pill's
-     words did. */
   .mag {
     position: absolute;
     inset-inline-start: var(--row-pad);
@@ -573,7 +467,6 @@
     pointer-events: none;
   }
 
-  /* Inside the field rather than beside it: it is about what is in the field. */
   .star {
     position: absolute;
     top: 50%;
@@ -607,7 +500,6 @@
     color: var(--accent);
   }
 
-  /* Filled once it is kept: the shape alone says which way it stands. */
   .star.on svg {
     fill: currentColor;
   }
@@ -616,7 +508,6 @@
     outline-offset: -1px;
   }
 
-  /* Beside the field, because it is about the field rather than in it. */
   .swap {
     flex: none;
     width: var(--row-height);
@@ -694,13 +585,10 @@
     padding: 0;
   }
 
-  /* One note's lines, under the note's name. */
   .group + .group {
     margin-top: var(--space-2);
   }
 
-  /* A note's name over its lines is the section label the rest of the app uses,
-     in the accent because it is also the thing the rows open. */
   .note {
     display: block;
     color: var(--accent);
@@ -709,15 +597,11 @@
     white-space: nowrap;
   }
 
-  /* The mark on a note found only by a near enough match. Quieter than the name
-     it sits in front of: it says which kind of answer this is, and it is not the
-     answer. */
   .guess {
     margin-inline-end: 3px;
     color: var(--muted);
   }
 
-  /* A note the archive answered with, marked in front of its name. */
   svg.archived {
     width: var(--icon-sm);
     height: var(--icon-sm);
@@ -731,8 +615,6 @@
     gap: var(--space-1);
   }
 
-  /* The row is `.nib-row`; a line of a note is read rather than tapped, so it
-     is the short one, and what it holds is one line that never wraps. */
   .hit {
     flex: 1;
     min-width: 0;
@@ -743,7 +625,6 @@
     line-height: var(--row-height-sm);
   }
 
-  /* The words that answered, marked in the line they were found on. */
   mark {
     border-radius: 3px;
     background: var(--accent-soft);
@@ -751,7 +632,6 @@
     font-weight: var(--weight-strong);
   }
 
-  /* A square that fills when it is on, which is the whole of what it says. */
   .tick {
     flex: none;
     width: var(--icon-md);
@@ -811,10 +691,6 @@
     stroke-linejoin: round;
   }
 
-  /* Everything above reads the row scale, and the row scale is restated from
-     the touch scale in one place; see tokens.css. What is left is the room the
-     count and the star need once a thumb has made them bigger, and the field's
-     own size, which has to clear where iOS zooms into a focused one. */
   :global([data-touch]) .query.wide {
     padding-inline-end: 68px;
   }

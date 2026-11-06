@@ -1,8 +1,4 @@
 <script lang="ts">
-  /** Said once, after `spaces-folder` named a folder outside Orden's own (#552): Orden no
-   *  longer opens it in place, its spaces were copied in and it was left as it was, and
-   *  Import is the way to bring in more of it. What could not be copied is named, and
-   *  said again at each launch until it is. See workspace/outside.ts. */
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
@@ -60,7 +56,6 @@
 {/if}
 
 <style>
-  /* The middle track of the notices row, as the rename notice's and KeysMoved's. */
   .toast {
     grid-column: 2;
     justify-self: center;

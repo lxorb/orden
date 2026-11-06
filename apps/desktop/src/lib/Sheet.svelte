@@ -1,20 +1,4 @@
 <script lang="ts">
-  /** The box a space's sheets are drawn in.
-   *
-   *  Sharing a space and publishing one are the same gesture from the same menu
-   *  and ask the same kind of question, so they are the same sheet: it rises in
-   *  the middle of a window and from the bottom of a phone, it is dismissed by
-   *  the scrim, by Escape, by the cross and by back, and the rows, cards and
-   *  buttons inside it are one set of shapes rather than two that drift.
-   *
-   *  Three parts: a head that says what the sheet is about and how to leave, a
-   *  body that scrolls, and cards in it. A card is a filled surface rather than a
-   *  run of rows on the sheet's own background, which is what Proton Drive and the
-   *  settings sheet on a phone both do: two or three groups on one sheet read as
-   *  groups without a word being spent on saying so.
-   *
-   *  What is here is the box and those shapes. What each sheet is about is its
-   *  own component; see ShareSheet.svelte and PublishSheet.svelte. */
   import type { Snippet } from 'svelte'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -36,25 +20,14 @@
     children,
   }: {
     open: boolean
-    /** What the sheet is about, which is its heading and what it is read out as. */
     title: string
-    /** The badge in front of the title: the space's own mark, so the sheet says
-     *  which space it is about the way the switcher does. */
     mark?: Snippet
-    /** What stays under the body rather than scrolling away with it: the one
-     *  button the sheet exists for. A sheet with a long form in it - publishing a
-     *  space is the long one - drew its Publish under the last card, and a body
-     *  that scrolls ends with a clean edge: the sheet read as finished, with the
-     *  only thing it is for out of sight below the fold. */
     foot?: Snippet
-    /** Wider than the sheets that hold a form: the sync question puts two versions of
-     *  a passage side by side. A step of the scale in tokens.css, `--screen-*`. */
     width?: string
     onclose: () => void
     children: Snippet
   } = $props()
 
-  // Escape closes it, like everything else the app puts over a note.
   $effect(() => (open ? overlays.show(onclose) : undefined))
   $effect(() => closeOnBack(open, onclose))
 </script>
@@ -72,18 +45,10 @@
     style:--screen-width={width}
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
-    <!-- The subject, then the way out, which is where every window in the world
-         keeps it. The scrim, Escape and back all close it too; nothing here is
-         confirmed, so there is no button that says Done. -->
     <div class="head">
       {#if mark}
         <span class="nib-badge" aria-hidden="true">{@render mark()}</span>
       {/if}
-      <!-- The heading of the layer, and said to be one: the sheets that hang off
-           this one head their own sections with an `h3`, and with a paragraph up
-           here the outline of the page went from the note's name straight to those.
-           The class already says the size, the weight and that it has no margin, so
-           nothing about it is drawn differently. -->
       <h2 class="title">{title}</h2>
       <button class="nib-glyph shut" aria-label={t('Close')} title={t('Close')} onclick={onclose}>
         <Cross />
@@ -101,10 +66,6 @@
 {/if}
 
 <style>
-  /* `.nib-screen` in the themes package draws it: the surface, the corner, the
-     hairline, the shadow and the centring that the palette, the prompt, the
-     sign-in panel and the invitation all had a copy of, and where it hangs and how
-     tall it may be. What is its own is which width of the scale it is. */
   .sheet {
     --screen-width: var(--screen-sheet);
 
@@ -114,9 +75,6 @@
     z-index: var(--z-sheet);
   }
 
-  /* The head stays while the cards under it scroll: on a phone the sheet is most
-     of the screen, and the name of the thing being shared is what says what all
-     of this is about. */
   .head {
     flex: none;
     display: flex;
@@ -137,12 +95,6 @@
     color: var(--text-strong);
   }
 
-  /* The way out is `.nib-glyph` in the themes package, which is the square and
-     the mark every icon button in the app is. It was a 24px square with a 13px
-     cross in it, which made the one way off a sheet the smallest glyph button
-     there was. */
-
-  /* Cards, one under the next, and the one thing that scrolls. */
   .body {
     flex: 1;
     min-height: 0;
@@ -153,9 +105,6 @@
     padding: 0 var(--space-2) var(--space-3);
   }
 
-  /* The row that does not scroll, under the body. A line above it, because the
-     body ends wherever it happens to end and the button under it has to read as
-     the sheet's own rather than as the last thing in the form. */
   .foot {
     flex: none;
     display: flex;
@@ -164,12 +113,6 @@
     border-top: 1px solid var(--line);
   }
 
-  /* ── The shapes inside ───────────────────────────────────────────
-     Written for whatever the sheet puts in itself, which is why they are
-     global: one card, one row, one field and one button, so two sheets cannot
-     disagree about what a sheet looks like. */
-
-  /* What went wrong, above whatever asked for it. */
   .sheet :global(.wrong) {
     margin: 0 var(--space-2);
     font-size: var(--text-sm);
@@ -186,8 +129,6 @@
     color: var(--muted);
   }
 
-  /* A group on the sheet: a filled surface with rows in it. Two of them side by
-     side say they are two things without a line or a word. */
   .sheet :global(.card) {
     display: flex;
     flex-direction: column;
@@ -197,20 +138,15 @@
     background: var(--surface-2);
   }
 
-  /* A label inside a card, over the rows it is about. */
   .sheet :global(.card h3) {
     padding: var(--space-2) 0 var(--space-1);
   }
 
-  /* The row a card is headed by: what the card is about, and the one control
-     that turns the whole of it on. */
   .sheet :global(.card-head) {
     font-weight: var(--weight-strong);
     color: var(--text-strong);
   }
 
-  /* Under a card's head, before the rows it governs. Full width of the card,
-     because a line that stops short of the edge is a line about one row. */
   .sheet :global(.line) {
     width: auto;
     height: 1px;
@@ -219,8 +155,6 @@
     background: var(--line);
   }
 
-  /* A column of things that are not rows: a field and what it says about
-     itself. */
   .sheet :global(.stack) {
     display: flex;
     flex-direction: column;
@@ -228,8 +162,6 @@
     width: 100%;
   }
 
-  /* What it is on the left, what may be done about it on the right, one line
-     each: the same row the settings draw. */
   .sheet :global(.row) {
     display: flex;
     align-items: center;
@@ -259,7 +191,6 @@
     text-overflow: ellipsis;
   }
 
-  /* A line under a card or a field, in the one colour it is worth saying in. */
   .sheet :global(.hint) {
     margin: 0;
     font-size: var(--text-sm);
@@ -275,7 +206,6 @@
     color: var(--danger);
   }
 
-  /* A sentence of its own, which may carry a link. */
   .sheet :global(.note) {
     margin: 0 var(--space-2);
     font-size: var(--text-sm);
@@ -287,11 +217,6 @@
     color: var(--accent);
   }
 
-  /* Something typed in: an address, a name, a domain. A box of its own, so what
-     it says when the keyboard lands in it is the themes package's answer for one
-     - the border turns, the halo lights, the ring goes. The turn is restated
-     below and only the turn: the border here is a shorthand, and a shorthand
-     naming a colour outweighs the one word the shared rule changes. */
   .sheet :global(input.field) {
     flex: 1;
     width: 100%;
@@ -310,15 +235,6 @@
     border-color: var(--accent);
   }
 
-  /* An action in a card is `.nib-action` in the themes package, and a small action
-     at the end of a row is `.nib-chip`. */
-
-  /* The one thing the sheet is for is `.nib-button` in the themes package, the
-     button every dialog in the app is pressed with. Where it sits in the row or
-     the column holding it is that sheet's business. */
-
-  /* A phone's sheet is the bottom of the screen, and everything in it is the
-     size a thumb needs. */
   :global([data-touch]) .sheet {
     top: auto;
     bottom: var(--keyboard);
@@ -333,9 +249,6 @@
     padding-bottom: var(--touch-bottom);
   }
 
-  /* The square and the mark grow with the row scale on their own; what a thumb
-     needs from this one is the bar's own padding back, so the cross sits in the
-     corner rather than a gap away from it. */
   :global([data-touch]) .shut {
     margin-inline-end: calc(-1 * var(--space-2));
   }

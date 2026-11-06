@@ -1,16 +1,4 @@
 <script lang="ts">
-  /** A row of colours as dots, the way GNOME and a Mac offer an accent: in Settings
-   *  wherever a theme offers a colour, and at the foot of the theme picker. One row
-   *  everywhere, so the dots are the same size, the same ring and the same order
-   *  wherever a colour is chosen.
-   *
-   *  Each dot is drawn in the shade the scheme on screen needs, which the caller has
-   *  already picked. `onpoint` is the picker's: a dot under the pointer is tried on
-   *  the whole app, and null gives the kept one back.
-   *
-   *  `pair` is glass's: two dots after the swatches, each the platform's colour picker,
-   *  for two colours of the reader's own - a wheel until they are, then the two colours
-   *  wearing the ring. Tried while the picker is open, kept when it closes. */
   import { t } from './i18n.svelte'
   import type { PairField, SwatchOption } from './preferences'
 
@@ -30,7 +18,6 @@
     pair?: PairField | undefined
   } = $props()
 
-  /** One of the two picked: the other stays what the row shows now. */
   function pick(which: number, colour: string, kept: boolean) {
     if (!pair) return
     const [first, second] = pair.get()
@@ -86,10 +73,6 @@
     gap: 7px;
   }
 
-  /* In a setting's value column (`.nib-setting-value.is-wrapping`, base.css): as many
-     to a line as the column holds, every line on the same columns, and the chosen
-     one's ring inside the column rather than past its end - the 4px it reaches out
-     is the room kept round the dots (#1056). */
   :global(.nib-setting-value.is-wrapping) > .swatches {
     display: grid;
     grid-template-columns: repeat(auto-fill, var(--swatch-size));
@@ -105,13 +88,8 @@
     border: none;
     border-radius: 50%;
     background: var(--swatch);
-    /* A hairline of the ink, so a pale colour - glass's pastel pairs on the light side -
-       keeps its edge on the surface it is drawn on. */
     box-shadow: inset 0 0 0 1px var(--swatch-edge);
     cursor: default;
-    /* Only the swatch under the pointer moves, and it moves plainly. The ring
-       marking the chosen one is a state rather than a movement, so it is left
-       out of the transition: it should appear, not grow. */
     transition: transform var(--dur-fast) var(--ease-out);
   }
 
@@ -121,9 +99,6 @@
     }
   }
 
-  /* A ring rather than a tick: the colour is the whole point of the control. Drawn
-     behind the dot in the dot's own paint, so a swatch that is a blend wears a ring of
-     its blend. */
   .swatch.active {
     background: none;
   }
@@ -147,8 +122,6 @@
       0 0 0 2px var(--surface);
   }
 
-  /* Two colours of one's own: a wheel of soft colours until there are, so the dot says
-     what pressing it does without a word. */
   .picked {
     overflow: visible;
     cursor: pointer;
@@ -170,7 +143,6 @@
     cursor: pointer;
   }
 
-  /* A thumb's worth each, on a touch screen. */
   :global([data-touch]) .swatches {
     --swatch-size: var(--touch-target);
     gap: 12px;

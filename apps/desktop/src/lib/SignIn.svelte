@@ -12,8 +12,6 @@
 
   const LENGTH = 6
 
-  /** An empty row of boxes. `Array.fill` answers `any[]`, which is how an
-   *  unchecked value would reach the markup. */
   const blank = () => Array.from({ length: LENGTH }, () => '')
 
   let digits = $state<string[]>(blank())
@@ -22,11 +20,8 @@
 
   const entered = $derived(digits.join(''))
 
-  /** The last code sent for checking. Without this the effect below would
-   *  resubmit the same digits every time `busy` flips back, burning attempts. */
   let submitted = $state('')
 
-  /** The second factor's other way in, for somebody without their phone. */
   let recovering = $state(false)
   let recovery = $state('')
 
@@ -34,9 +29,6 @@
     if (account.open && account.step === 'email') emailField?.focus()
   })
 
-  // Emptied on the way into either half: the second asks for six digits of its
-  // own, and the emailed code sitting in the boxes is neither an answer nor
-  // something to clear by hand.
   $effect(() => {
     if (account.step === 'code' || account.step === 'second') {
       digits = blank()
@@ -45,20 +37,12 @@
     }
   })
 
-  // Six digits is the whole code, so check it as soon as they are all there.
-  // A rejected code empties the row, ready for the next attempt.
   $effect(() => {
     if (entered.length !== LENGTH || entered === submitted) return
 
     submitted = entered
-    // Which half of the sign-in these six are is the store's to know: the emailed
-    // code, or the one out of the app. See `code` in account.svelte.ts.
     void account.code(entered).then((accepted) => {
       if (accepted) {
-        // The notes already on this machine are dealt with first, and only then
-        // is the link walked through: the answer to that question can be to
-        // erase what is here, and the space they came for must not be in it
-        // yet when it is.
         void settleLocalNotes().then(() => joining.walkThrough())
         return
       }
@@ -78,7 +62,6 @@
       return
     }
 
-    // A pasted code fills the row from wherever it landed.
     for (let offset = 0; offset < value.length && index + offset < LENGTH; offset++) {
       digits[index + offset] = value.charAt(offset)
     }
@@ -97,7 +80,6 @@
     if (event.key === 'ArrowRight' && index < LENGTH - 1) boxes[index + 1]?.focus()
   }
 
-  /** Signing in and signing up are the same emailed code, so the one word says both. */
   const heading = $derived(t('Sign in'))
 
   function close() {
@@ -106,7 +88,6 @@
     account.error = null
   }
 
-  // Back closes this before it leaves the app.
   $effect(() => (account.open ? overlays.show(() => (account.open = false)) : undefined))
   $effect(() => closeOnBack(account.open, () => (account.open = false)))
 </script>
@@ -123,8 +104,6 @@
     aria-label={heading}
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
-    <!-- Somebody sent a link here, so say what it was before asking for an
-         address: signing in is the whole of what it takes to open it. -->
     {#if joining.invitation}
       <p class="shared">
         {t('{who} shared {space} with you', {
@@ -158,11 +137,6 @@
         </button>
       </form>
     {:else if account.step === 'second'}
-      <!-- The other half, for an account with a second factor. The same six
-           boxes: what is typed into them is six digits either way, and the one
-           thing that is different is where they come from. A recovery code is
-           longer and goes in the field under them, for the day the phone is
-           gone. See services/sync/src/second.ts. -->
       <div class="code" in:fly={{ x: 14, duration: dur(200), easing: cubicOut }}>
         <p class="sent">{t('Now the code from your authenticator app')}</p>
 
@@ -247,12 +221,10 @@
 {/if}
 
 <style>
-  /* The layer behind it; see .nib-scrim in packages/themes. */
   .scrim {
     --scrim-z: var(--z-screen);
   }
 
-  /* What the link was about, above the address it asks for. */
   .shared {
     margin: 0 0 var(--space-3);
     font-size: var(--text-sm);
@@ -269,7 +241,6 @@
     text-align: center;
   }
 
-  /* `.nib-screen` in the themes package; see Palette.svelte. */
   .panel {
     z-index: var(--z-screen);
     padding: var(--space-5);
@@ -281,8 +252,6 @@
     gap: var(--space-3);
   }
 
-  /* The height from the row scale, so a thumb gets a row where it used to get
-     44px, and the room inside it on the grid. */
   input {
     width: 100%;
     min-height: var(--row-height);
@@ -301,10 +270,6 @@
   input::placeholder {
     color: var(--muted);
   }
-
-  /* The one thing this panel is for is `.nib-button` in the themes package,
-     which is where the lift on hover, the deeper fill under the finger and the
-     one fade for a button that cannot be pressed all live. */
 
   .sent {
     margin: 0 0 var(--space-4);
@@ -340,8 +305,6 @@
     }
   }
 
-  /* Asking for another code: a sentence you can press rather than a button, so
-     it is not `.nib-button` and says the whole of itself here. */
   .link {
     display: block;
     margin: var(--space-4) auto 0;
@@ -368,8 +331,6 @@
     text-align: center;
   }
 
-  /* On the keyboard while a field has it, and scrolled rather than cut off when
-     what is left above the keys is shorter than the panel. */
   :global([data-touch]) .panel {
     top: auto;
     bottom: var(--keyboard);

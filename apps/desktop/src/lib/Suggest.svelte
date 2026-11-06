@@ -1,17 +1,4 @@
 <script lang="ts">
-  /** The values an operator can take, offered under the field.
-   *
-   *  The same shape the editor puts under `[[`: one surface, one row per
-   *  value, the letters that were typed marked where they landed. Chosen on
-   *  pointerdown rather than on click, because clicking takes the focus off
-   *  the field first and a popup that has lost its field has nothing to
-   *  finish.
-   *
-   *  A value is shown as itself unless the field says otherwise: the address bar
-   *  keeps an address as the value and shows it the way a browser does, with the
-   *  page's own name after it, and each row wearing the site's mark in front, as
-   *  Chrome's omnibox rows do. See web-tab/AddressField.svelte. */
-
   import type { Snippet } from 'svelte'
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -34,27 +21,16 @@
     values: string[]
     typed: string
     active: number
-    /** The list's own id, so the field above can point at it and at the row the
-     *  arrows are on; see the combobox in Palette.svelte, which is the same shape. */
     id: string
     label: string
     onchoose: (value: string) => void
-    /** What a row reads as, where that is not the value itself. */
     shown?: (value: string) => string
-    /** A quieter second half after it, or the empty string for none. */
     aside?: (value: string) => string
-    /** What stands in front of a row, where the rows wear a mark. */
     lead?: Snippet<[string]>
-    /** Where a row's letters were found, for a field that finds them the palette's way
-     *  - spread through the words - rather than as one run; null for the run. See
-     *  palette/pieces.ts. */
     marks?: (value: string, shown: string) => Piece[] | null
-    /** A word at the end of a row saying what kind of thing it is, or the empty
-     *  string for none: a saved web note among pages of the history (#1059). */
     badge?: (value: string) => string
   } = $props()
 
-  /** The value cut into what was typed and what was not. */
   function piecesOf(value: string, text: string): Piece[] {
     const found = marks?.(value, text)
     if (found) return found
@@ -66,8 +42,6 @@
     ].filter((one) => one.text)
   }
 
-  /** The value in three parts, so the letters that were typed can be marked
-   *  where they actually sit. */
   function split(value: string) {
     const at = typed ? value.toLowerCase().indexOf(typed.trim().toLowerCase()) : -1
     if (at === -1) return { before: value, hit: '', after: '' }
@@ -80,12 +54,6 @@
   }
 </script>
 
-<!-- A box with a list under it is one control and not two, which is what the
-     palette is as well: the keyboard never leaves the field, the arrows move which
-     row the field is pointing at, and the rows are out of the tab sequence. This
-     was a plain list of buttons - nothing said it was a list of choices, nothing
-     said which one the arrows were on, and Tab walked into it one value at a
-     time. -->
 <ul
   {id}
   class="nib-layer suggest"
@@ -122,10 +90,6 @@
 </ul>
 
 <style>
-  /* A floating list of choices, so its shape is `.nib-layer` in the themes
-     package - the same corner, hairline, surface and shadow the menus have. It
-     spent `--shadow-md` where they spend `--shadow-lg`, which made the same kind
-     of thing sit at two heights. What is left here is where it hangs. */
   .suggest {
     position: absolute;
     top: calc(100% + var(--space-1));
@@ -164,8 +128,6 @@
     color: var(--text-strong);
   }
 
-  /* The words take what the mark leaves, and are cut with an ellipsis rather than
-     pushed out of the row. */
   .words {
     flex: 1;
     min-width: 0;
@@ -174,22 +136,16 @@
     text-overflow: ellipsis;
   }
 
-  /* The second half, in the grey a row's quieter half is everywhere, a word's
-     space after the first. */
   .aside {
     margin-inline-start: var(--space-2);
     color: var(--muted);
   }
 
-  /* And steps up on a lit row, which is not the page `--muted` is measured
-     against; see `.nib-row.is-on kbd` in the themes package. */
   button:hover .aside,
   button.on .aside {
     color: var(--muted-strong);
   }
 
-  /* What kind of row it is, at its end: a quiet word in a pill, as Chrome marks a
-     bookmark among history in its omnibox. */
   .badge {
     flex: none;
     padding: 0 var(--space-1);
@@ -199,7 +155,6 @@
     font-size: var(--text-xs);
   }
 
-  /* The letters that were typed, marked where they landed in the value. */
   .matched {
     color: var(--accent);
     font-weight: var(--weight-strong);

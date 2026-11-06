@@ -17,20 +17,14 @@
   import { trap } from './trap'
   import { isDesktop, platform } from './tauri'
 
-  // Back answers the question with nothing, the same as tapping away.
   $effect(() => closeOnBack(prompt.open, () => prompt.dismiss()))
 
-  /** How many rows a search through many answers shows at once. Enough to pick
-   *  from without the sheet becoming a page; the rest are a scroll away, every one of
-   *  them, and only those near the view are in the page (row-window.ts). */
   const MOST_SHOWN = 8
   const OVERSCAN = 6
-  /** A row before there is one to measure: the mark's box and its padding. */
   const LEAST = 32
 
   let cursor = $state(0)
 
-  /** The answers that match what has been typed, best first: all of them. */
   const matches = $derived(
     prompt.mode === 'find'
       ? rank(prompt.value.trim(), prompt.options, (option) => option.label)
@@ -48,7 +42,6 @@
     pinned: [cursor],
   })
   const view = $derived(windowFor(rows))
-  /** The rows in the page: the window's, and the cursor's wherever it is. */
   const drawn = $derived.by(() => {
     const out: { at: number; option: (typeof matches)[number]; away: boolean }[] = []
     const add = (at: number, away: boolean) => {
@@ -71,7 +64,6 @@
     })
   })
 
-  /** The cursor's row brought into view, as the arrows move it. */
   function reach(index: number) {
     const box = where.box
     if (!box) return
@@ -83,11 +75,8 @@
     where.refresh()
   }
 
-  /** Reads a value for its own sake, so the effect around it follows it. */
   const follows = (_value: unknown) => undefined
 
-  // A fresh set of rows starts at the top: the row the cursor pointed at is no
-  // longer the one under it.
   $effect(() => {
     follows(matches)
     cursor = 0
@@ -96,8 +85,6 @@
     })
   })
 
-  // Escape closes it, like everything else the app puts over a note; see
-  // overlays.ts.
   $effect(() => (prompt.open ? overlays.show(() => prompt.dismiss()) : undefined))
 
   function onFindKey(event: KeyboardEvent) {
@@ -116,8 +103,6 @@
     reach(to)
   }
 
-  /** A Mac's order for a row of answers: the default last, at the right edge, where
-   *  the eye and Return look for it. Elsewhere the row is the order it was asked in. */
   const mac = isDesktop && platform() === 'macos'
   const answers = $derived(
     mac
@@ -142,9 +127,6 @@
     onclick={() => prompt.dismiss()}
   ></div>
 
-  <!-- The same three the shared sheet says, from the same words it is headed
-       with: what it is, that nothing behind it can be reached while it is up, and
-       its name. See Sheet.svelte. -->
   <div
     class="nib-screen sheet"
     use:trap
@@ -163,7 +145,6 @@
       <p class="title">{prompt.title}</p>
 
       {#if prompt.mode === 'text'}
-        <!-- Selected, so a rename can be typed straight over. -->
         <input
           bind:value={prompt.value}
           placeholder={prompt.placeholder}
@@ -197,11 +178,6 @@
                     onmouseenter={() => (cursor = index)}
                     onclick={() => prompt.pick(option.id)}
                   >
-                    <!-- Where the answers are things the file list also shows, they
-                       wear the same marks here: a note that chose an icon is that
-                       icon in the tree and in the sheet that moves into it. A
-                       space wears what the switcher gives it, in the same box, so
-                       the names still read as one column. -->
                     {#if option.space}
                       <span class="space"><SpaceMark {...option.space} /></span>
                     {:else if option.picture}
@@ -231,9 +207,6 @@
 
       <div class="row">
         {#if prompt.mode === 'choose'}
-          <!-- A box about the answer itself, at the start of the row as the quit sheet
-               has its own; the keyboard lands on the answer rather than on it. See
-               `chooseTicking` in prompt.svelte.ts. -->
           {#if prompt.tick}
             <TickBox
               label={prompt.tick}
@@ -261,10 +234,6 @@
           <button type="button" class="nib-button is-quiet" onclick={() => prompt.dismiss()}
             >{t('Cancel')}</button
           >
-          <!-- Cancel takes the keyboard first, so Enter on a question about deleting
-               something keeps it; a question that says its answer is undone as
-               easily as it is given lands here instead. See `lands` in
-               prompt.svelte.ts. -->
           <button
             type="submit"
             class="nib-button"
@@ -281,7 +250,6 @@
 {/if}
 
 <style>
-  /* `.nib-screen` in the themes package; see Palette.svelte. */
   .sheet {
     --screen-width: var(--screen-ask);
 
@@ -309,9 +277,6 @@
     color: var(--muted-strong);
   }
 
-  /* The answers to a question with too many of them, narrowed by typing. The
-     gap the form puts between its children is the whole spacing here: the list
-     sits under the field like the field sits under the title. */
   .found-box {
     margin: calc(var(--space-4) * -1 + var(--space-1)) 0 0;
     overflow-y: auto;
@@ -325,7 +290,6 @@
     padding: 0;
   }
 
-  /* The cursor's row while the window is elsewhere: at its own place, out of the flow. */
   .found .away {
     position: absolute;
     left: 0;
@@ -351,10 +315,6 @@
       color var(--dur-instant) var(--ease-out);
   }
 
-  /* A space's mark in the box a file's mark sits in: the same width, so one
-     column of names, and the letter a space falls back to set at the size of the
-     marks beside it. The badge the switcher draws is not this - that is a place
-     with a name of its own, and this is a row in a list of rows. */
   .space {
     display: grid;
     place-items: center;
@@ -366,7 +326,6 @@
     color: var(--muted);
   }
 
-  /* An application's own icon, in the same box. */
   .picture {
     width: var(--icon-md);
     height: var(--icon-md);
@@ -374,7 +333,6 @@
     object-fit: contain;
   }
 
-  /* The name is what runs out of room, not the mark beside it. */
   .found-label {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -386,9 +344,6 @@
     color: var(--text-strong);
   }
 
-  /* The field a name or a search is typed into, and no other input: the box under a
-     question's answers is a checkbox, which this drew as an empty pill the width of
-     the row (#317). */
   input:not([type='checkbox']) {
     width: 100%;
     padding: 10px 12px;
@@ -411,15 +366,6 @@
     gap: var(--space-2);
   }
 
-  /* The three buttons a question ever offers are `.nib-button` in the themes
-     package: the one thing, `is-quiet` beside it, and `is-danger` where the
-     answer takes something away. They were their own three here, at
-     `--text-sm` where the sign-in panel's are `--text-base`, with no lift where
-     its lift, and with a danger press mixed towards black - which on a dark
-     theme is a press that reads as fading. */
-
-  /* Standing on the keyboard while it is up, since the field is what the sheet is
-     for; see `--keyboard` in the themes' tokens. */
   :global([data-touch]) .sheet {
     top: auto;
     bottom: var(--keyboard);
@@ -432,10 +378,6 @@
     padding-bottom: var(--touch-bottom);
   }
 
-  /* The sheet a note is renamed in, at the size the tree behind it is read at:
-     the field and the names it suggests. The buttons under them take the row
-     scale from `.nib-button` in the themes package, which is where their touch
-     size and type size are said once. */
   :global([data-touch]) input:not([type='checkbox']),
   :global([data-touch]) .title {
     font-size: var(--touch-text);

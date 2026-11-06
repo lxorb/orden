@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** What the space has put away, at the foot of the file list: the way the bookmarks
-   *  sit at its head, and the way Bear keeps its Archive at the foot of its notes.
-   *  Drawn only while something is archived, and shut until somebody opens it.
-   *
-   *  One row per thing put away, the last put away first, each saying the folder it
-   *  came out of - which is where it goes back to. An archived folder unfolds to what
-   *  it holds. A press opens the row as the file list's would; the mark at its end,
-   *  and its menu, take it back out. Nothing here deletes: an archived row is never
-   *  deleted, and Delete on one does nothing. See archiving.ts and docs/archive.md. */
   import { flip } from 'svelte/animate'
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -33,19 +24,13 @@
 
   interface Row {
     entry: Entry
-    /** How many archived folders deep, which is how far the row steps in. */
     depth: number
-    /** The folder it came out of, for a row put away on its own; null inside a
-     *  folder that was, where the folder above already says it. */
     from: string | null
-    /** What the row wears: the note a folder is drawn as, where it has one. */
     mark: Mark
     markPath: string
-    /** Whether it holds rows to unfold. */
     holds: boolean
   }
 
-  /** A folder's rows in the order a reader expects when nobody arranged them. */
   const byName = (one: Entry, other: Entry) =>
     Number(other.is_dir) - Number(one.is_dir) || one.name.localeCompare(other.name)
 
@@ -81,8 +66,6 @@
       (one, other) => (map[other] ?? 0) - (map[one] ?? 0),
     )
     for (const at of newest) {
-      // A row the space has archived and this machine has not got: removed behind
-      // the app's back, or not fetched yet. There is nothing to open.
       const entry = workspace.entryAt(insideSpace(root, at))
       if (!entry) continue
 
@@ -94,7 +77,6 @@
     return out
   })
 
-  /** Top-level rows only: what the header counts. */
   const count = $derived(rows.filter((row) => row.depth === 0).length)
 
   function open(row: Row, how: OpenHow) {
@@ -117,7 +99,6 @@
     ]
   }
 
-  /** The row a reveal asked for, scrolled to once the list is open and drawn. */
   let list = $state<HTMLElement | null>(null)
   $effect(() => {
     const wanted = archiveList.showing
@@ -128,8 +109,6 @@
     list.querySelectorAll<HTMLElement>('.row')[at]?.scrollIntoView({ block: 'nearest' })
   })
 
-  /** Rows of the file list dragged onto the archive's head are put away: the same
-   *  gesture as the menu's, where the archive is. */
   let dropping = $state(false)
 
   function over(event: DragEvent) {
@@ -168,8 +147,6 @@
   </button>
 
   {#if archiveList.open}
-    <!-- One tab stop and the arrows inside it, like every other list; see roving.ts.
-         No `remove`: an archived row is never deleted. -->
     <ul
       bind:this={list}
       transition:slide={{ duration: dur(150), easing: cubicOut }}
@@ -221,8 +198,6 @@
               </button>
             {/if}
 
-            <!-- Taking it back, one press away where the pointer already is, over the
-                 row's end so every name keeps its column; the menu says it in a word. -->
             <button
               class="end back"
               title={t('Unarchive')}
@@ -289,8 +264,6 @@
     padding-inline-start: calc(var(--row-pad) + var(--level, 0) * var(--row-indent));
   }
 
-  /* The marks at the end of a row, over its trailing edge rather than beside it, so
-     every name in the list keeps the column the file list reads in. */
   .end {
     flex: none;
     display: grid;
@@ -316,8 +289,6 @@
     transform: scale(0.94);
   }
 
-  /* The way back shows where the pointer is, and always under a finger, over the end
-     of the row and in front of a twist where the row has one. */
   .back {
     position: absolute;
     inset-inline-end: 0;

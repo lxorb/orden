@@ -1,26 +1,4 @@
 <script lang="ts">
-  /** The first run's optional questions, in a card in the corner beside the welcome
-   *  note.
-   *
-   *  A fresh start asks nothing before it opens (Emil, 2026-10-13: the welcome note
-   *  rather than a first screen), so there is no required step left to finish: the
-   *  card says the reader is all set and offers to personalize, and that is all it
-   *  does until asked. Then the questions come one at a time, the way Claude Design
-   *  asks (David, 2026-10-12): each answered or passed with Next, and Done at every
-   *  one of them, which leaves the rest at their defaults. Choosing an answer applies
-   *  it at once, so the note behind the card is already what was asked for. In a
-   *  corner and never over the note, as Notion's and Linear's getting-started cards
-   *  sit, so somebody who wants to write just writes.
-   *
-   *  Whether this is somebody who writes code is one of the questions: yes keeps the
-   *  terminals and markdown's marks under the caret, as Obsidian has them; no leaves
-   *  the terminals out and writes the way a Notion page does, until the markdown
-   *  question after it says otherwise. See `setDeveloper` in modes.svelte.ts.
-   *
-   *  Up while `settings.setup` says so: put there by the fresh start that wrote the
-   *  welcome note (first-space.svelte.ts) and by the browser build's first visit
-   *  (workspace.svelte.ts), as -1 for all set and then the index of the question
-   *  asked. The window fetches the card only then; see App.svelte. */
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
   import { account } from './account.svelte'
@@ -33,21 +11,17 @@
   import { segmented } from './slide'
   import { theme, type SchemeChoice } from './theme.svelte'
 
-  /** The optional questions, in the order they are asked. */
   const QUESTIONS = ['theme', 'developer', 'markdown'] as const
   type Question = (typeof QUESTIONS)[number]
 
-  /** What was not answered keeps its default. */
   const finish = () => (settings.setup = null)
 
-  /** Answered or passed: the next question, or done after the last. */
   function next() {
     const at = (settings.setup ?? -1) + 1
     if (at >= QUESTIONS.length) finish()
     else settings.setup = at
   }
 
-  // A reader who signs in has their answers on the account already.
   $effect(() => {
     if (account.signedIn) finish()
   })
@@ -59,9 +33,6 @@
     set: (value: string) => void
   }
 
-  /** Each optional question: what it is called, its answers, and the setting it reads
-   *  and writes - the same setters Settings uses, so an answer is saved and shared the
-   *  same way. */
   function asked(question: Question): Asked {
     switch (question) {
       case 'theme':
@@ -82,8 +53,6 @@
           set: (value) => modes.setDeveloper(value === 'yes'),
         }
       case 'markdown':
-        // Notion's page, where a mark never shows, or Obsidian's live preview, where it
-        // shows under the caret; named for what they do rather than for either app.
         return {
           label: t('Markdown'),
           options: [
@@ -161,7 +130,6 @@
 {/if}
 
 <style>
-  /* Bottom right, over the status bar's corner and clear of the note's column. */
   .card {
     position: fixed;
     inset-inline-end: var(--space-4);

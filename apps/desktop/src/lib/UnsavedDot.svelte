@@ -1,5 +1,4 @@
 <script lang="ts">
-  /** The dot of a document with no file yet; `.nib-unsaved` in the themes package. */
   import { fade } from 'svelte/transition'
   import { t } from './i18n.svelte'
   import { dur } from './motion'

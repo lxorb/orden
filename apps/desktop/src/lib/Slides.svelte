@@ -1,18 +1,4 @@
 <script lang="ts">
-  /** A note presented.
-   *
-   *  The deck covers the window with nothing on it but the slide, a hairline
-   *  saying how far through it is, and a counter that appears when the deck
-   *  moves and goes again. The slides are the note through the renderer the
-   *  reading view uses, laid out on a stage of a fixed size and scaled to
-   *  whatever screen this is - so the words never reflow between the laptop
-   *  they were written on and the projector they end up on.
-   *
-   *  Nothing here writes to the note, and the note stays open behind it: typing
-   *  in another pane, or a change a sync brought over, redraws the slide that is
-   *  up without leaving the place in the deck.
-   */
-
   import { onDestroy, tick } from 'svelte'
   import { loadEmbed } from '@orden/editor'
   import { claimsGesture } from './swipe'
@@ -55,23 +41,14 @@
 
   const { tab }: { tab: Tab } = $props()
 
-  /** How long after the last keystroke elsewhere the deck is drawn again. The
-   *  reading view's own pause, for the same reason: a burst of typing should
-   *  cost one render. */
   const REDRAW = 200
-  /** How long the counter stays up after the deck has moved. */
   const COUNTER = 1600
-  /** How long a still pointer takes to disappear. */
   const STILL = 2000
-  /** How far a finger travels before a swipe means the notes. Further than a
-   *  sideways swipe needs, because the page under it does not scroll and a short
-   *  flick up is usually somebody missing the tap. */
   const SHEET = 40
 
   let slides = $state<StageSlide[]>([])
   let place = $state<Place>(START)
   let move = $state<Move>(null)
-  /** The digits somebody is typing to jump by number, before Enter. */
   let typed = $state('')
   let notesOpen = $state(false)
   let counting = $state(false)
@@ -87,11 +64,6 @@
   const next = $derived(slides[place.slide + 1])
   const count = $derived(slides.length)
 
-  // ── The deck itself ────────────────────────────────────────────────
-
-  /** Which render is the current one, so an older one that finishes later - the
-   *  first, which waits for the parsers and the diagram drawers - cannot
-   *  overwrite it. */
   let latest = 0
   let redraw: ReturnType<typeof setTimeout> | undefined
   let drawn = false
@@ -107,13 +79,10 @@
     if (mine !== latest) return
 
     slides = built
-    // The note may have lost the slide that was up while it was being typed in.
     place = clamp(stepsOf(built), place)
     fitted = []
   }
 
-  // The first deck, and another whenever the words change under it or the scheme
-  // its diagrams were drawn for changes. Exactly what the reading view watches.
   $effect(() => {
     const reasons = [tab.note.revision, theme.current]
     if (!reasons.length) return
@@ -131,10 +100,6 @@
 
   onDestroy(() => clearTimeout(redraw))
 
-  // ── Fitting the stage, and the slide on it ─────────────────────────
-
-  // The stage is scaled to the window rather than laid out to it, which is what
-  // keeps a slide the same slide on every screen.
   $effect(() => {
     const room = deck
     if (!room) return
@@ -149,13 +114,8 @@
     return () => watcher.disconnect()
   })
 
-  /** The size each slide's text settled at, by slide, so going back to one costs
-   *  no measuring. Emptied whenever the note is drawn again. Nothing renders
-   *  from it: it is a memo, not state. */
   let fitted: (number | undefined)[] = []
 
-  /** The slide on screen, sized so it does not scroll; see slides/fit.ts. Going
-   *  back to a slide costs no measuring. */
   function fit() {
     const surface = page
     if (!surface) return
@@ -169,14 +129,9 @@
     fitted[place.slide] = fitSurface(surface)
   }
 
-  /** Whether the fonts have arrived. Until they have, every measurement is of
-   *  the fallback face and has to be taken again. Once, not per slide. */
   let facesReady = false
 
-  // Fitted as the slide appears, and again once anything that changes its height
-  // has arrived: a picture whose size the page did not know, or a maths font.
   $effect(() => {
-    // Read, not used: a new slide or a redrawn deck is what this waits for.
     const reasons = [place.slide, slides]
     if (!reasons.length) return
 
@@ -206,10 +161,6 @@
     }
   })
 
-  // Which of the slide's `+` items are out. By their place among the items the
-  // slide renders, which is what the deck parser counted; see slides.ts. An
-  // embedded note's own list is not the slide's, and the parser never saw it, so
-  // it is skipped here too.
   $effect(() => {
     const surface = page
     const waiting = current?.fragments ?? []
@@ -225,8 +176,6 @@
       item.classList.toggle('shown', shown.has(at))
     }
   })
-
-  // ── Moving ────────────────────────────────────────────────────────
 
   function go(to: Place) {
     if (to.slide === place.slide && to.step === place.step) return
@@ -244,7 +193,6 @@
     go(back(steps, place))
   }
 
-  /** Brings the counter up, and takes it down again a moment later. */
   let counter: ReturnType<typeof setTimeout> | undefined
 
   function show() {
@@ -255,10 +203,6 @@
 
   onDestroy(() => clearTimeout(counter))
 
-  // The counter is up as the deck opens, so nobody has to guess how long it is.
-  // Once: a note being typed into in another pane redraws the deck, and the
-  // counter flashing at every keystroke over there is somebody else's typing
-  // showing up on a projector.
   let counted = false
 
   $effect(() => {
@@ -269,8 +213,6 @@
   })
 
   function leave() {
-    // The caret follows onto the slide that was up: stopping to fix a word is
-    // most of why anybody leaves a deck.
     const view = views.of(tab.paneId)
     const from = current?.from
     if (view && from !== undefined && from <= view.state.doc.length) {
@@ -280,8 +222,6 @@
     present.stop()
   }
 
-  // Escape closes the deck the way it closes everything else the app puts over
-  // a note, and only when nothing newer is on top of it; see overlays.ts.
   $effect(() => overlays.show(leave))
 
   $effect(() => {
@@ -289,18 +229,12 @@
   })
 
   function onKeydown(event: KeyboardEvent) {
-    // A key held with a modifier is one of the app's own, and the app reads it
-    // off the same window: Ctrl+P is the palette, not the presenter's window.
     if (event.ctrlKey || event.metaKey || event.altKey) return
 
-    // Something over the deck has the keyboard: a field being typed into - the
-    // palette, a prompt - or a menu the arrows are walking down.
     const focused = document.activeElement
     if (focused instanceof HTMLInputElement || focused instanceof HTMLTextAreaElement) return
     if (menu.open) return
 
-    // A number, then Enter, jumps. Held as it is typed and shown where the
-    // counter is, so a slip is visible before it does anything.
     if (/^\d$/.test(event.key)) {
       event.preventDefault()
       typed = (typed + event.key).slice(-4)
@@ -308,8 +242,6 @@
       return
     }
 
-    // Shift alone is somebody about to type a capital, not a slip that should
-    // throw away the number they have started.
     const jumping = typed
     if (event.key !== 'Shift') typed = ''
 
@@ -359,14 +291,6 @@
     }
   }
 
-  /** Half the screen forwards, half back, which is how every deck anybody has
-   *  used behaves. A link is a link, though: it is followed rather than counted
-   *  as a press.
-   *
-   *  The middle button turns no page. It is a browser's "open that and leave me
-   *  here", and on a deck it is the only press that can mean nothing but the link
-   *  under it - which is what makes it safe here, where every other press is a page
-   *  turn. */
   function onClick(event: MouseEvent) {
     const target = event.target as Element | null
     if (!opensLink(event)) return
@@ -380,14 +304,8 @@
       return
     }
 
-    // The notes are read, not pressed: a tap in them is not a tap on the deck.
     if (target?.closest('.notes')) return
 
-    // A card standing in for a page somewhere else shows that page here, in the
-    // frame and the sandbox its provider needs, rather than sending the reader out
-    // of the app or turning the slide under them. The card is a link so that a
-    // published deck - which runs no script - still goes somewhere; here there is a
-    // script. The same loader every other surface presses; see web-frame.ts.
     const card = target?.closest('.embed-web')
     if (card instanceof HTMLElement && loadEmbed(card)) {
       event.preventDefault()
@@ -409,7 +327,6 @@
     else onwards()
   }
 
-  /** A finger: sideways moves the deck, upwards asks for the notes. */
   let touch: { x: number; y: number } | null = null
 
   function onTouchStart(event: TouchEvent) {
@@ -433,15 +350,12 @@
       return
     }
 
-    // Up for the notes, down to put them away again.
     if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > SHEET) {
       event.preventDefault()
       notesOpen = dy < 0
     }
   }
 
-  // The pointer disappears once it has been left alone, so a talk is the slide
-  // and nothing else.
   $effect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined
 
@@ -459,12 +373,9 @@
     }
   })
 
-  // ── The presenter's own window ─────────────────────────────────────
-
   let channel: Channel | null = null
   const started = Date.now()
 
-  /** Everything the other window draws, as one message. */
   const broadcast = $derived<Message>({
     kind: 'stage',
     stage: {
@@ -482,15 +393,11 @@
 
   $effect(() => {
     const line = presenterChannel((message) => {
-      // A window that has just opened has nothing on it and nothing about the
-      // deck is about to change, so it is told where the deck is.
       if (message.kind === 'here') {
         line.send(broadcast)
         return
       }
 
-      // The other thing it says is which way to go, so somebody reading their
-      // notes can move the deck without reaching for it.
       if (message.kind === 'move') {
         if (message.by > 0) onwards()
         else backwards()
@@ -498,8 +405,6 @@
     })
     channel = line
 
-    // On a machine with a screen the audience is not looking at, the notes
-    // belong on it and nobody should have to ask. Anywhere else `P` asks.
     void secondScreen().then((other) => {
       if (other) void openPresenter()
     })
@@ -512,12 +417,10 @@
     }
   })
 
-  // Sent whole whenever any of it changes.
   $effect(() => {
     channel?.send(broadcast)
   })
 
-  // The deck takes the keyboard the moment it opens, so the first arrow lands.
   $effect(() => {
     void tick().then(() => deck?.focus({ preventScroll: true }))
   })
@@ -529,9 +432,6 @@
 
 <svelte:window onkeydown={onKeydown} />
 
-<!-- Focusable so the keys that move a deck reach it; nothing in it is a field,
-     and there is no caret to draw. The click is read here rather than on each
-     half, because a deck has no furniture: the halves are the screen. -->
 <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
 <div
   class="deck nib-host"
@@ -570,8 +470,3 @@
     {typed || place.slide + 1}/{count}
   </div>
 </div>
-
-<!-- Every rule a slide is drawn with is in packages/themes/src/slides.css,
-     because an exported deck and a published one are drawn by the same ones and a
-     slide has to look the same in all three. `.nib-host` above is the one rule
-     that says a surface taking the keyboard so the keys reach it draws no ring. -->

@@ -1,10 +1,4 @@
 <script lang="ts">
-  /** A value beside the button that copies it.
-   *
-   *  An address, a command, a share link: the same row wherever one appears, so
-   *  it is one component rather than a copy per panel. `plain` is for a value
-   *  that is a word rather than something to be taken away, which has nothing to
-   *  copy and so has no button. */
   import CopyButton from './CopyButton.svelte'
 
   const {
@@ -14,17 +8,10 @@
     word = '',
     disabled = false,
   }: {
-    /** What is shown, and what the button copies. */
     value: string
-    /** The word before it. Absent where the row is on its own and the words
-     *  around it already say what it is. */
     label?: string
-    /** Set for a value that is a word rather than a thing to take away. */
     plain?: boolean
-    /** What the button says, where `Copy` alone is not specific enough. */
     word?: string
-    /** There is nothing here yet: a link that has not been made. The row is drawn
-     *  where it will be rather than appearing once it can be used. */
     disabled?: boolean
   } = $props()
 </script>
@@ -68,13 +55,10 @@
     text-overflow: ellipsis;
   }
 
-  /* Nothing in it yet, so it reads as the place the value will be. */
   .value.off {
     color: var(--muted);
   }
 
-  /* A word rather than a value: no field around it, and set like the words
-     beside it. */
   .value.plain {
     border-color: transparent;
     background: none;
@@ -83,9 +67,6 @@
     font-size: var(--text-sm);
   }
 
-  /* A width and not a device class: this is the panel it sits in running out of
-     room for a label and a field side by side, which happens on a desktop with
-     the window dragged in as readily as on a phone. */
   @media (max-width: 480px) {
     .copyable {
       flex-wrap: wrap;

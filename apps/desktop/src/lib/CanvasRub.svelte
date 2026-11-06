@@ -1,18 +1,4 @@
 <script lang="ts">
-  /** How the eraser is set: what it takes, and how much of it.
-   *
-   *  Two ways of rubbing out, and they are different tools rather than degrees of
-   *  one. A whole stroke goes at a touch, which is what you want over handwriting:
-   *  one letter, gone, without nibbling at the one beside it. A hole rubbed through
-   *  what is under the nib is what you want over a drawing, where half a line is
-   *  worth keeping. So both, as two named things, with the circle in the middle
-   *  showing exactly how wide the nib is about to be.
-   *
-   *  What it deliberately does not offer is a switch that spares one kind of ink,
-   *  the way Samsung's "erase highlighter only" does: leave it on by accident and
-   *  the eraser stops working on your handwriting with nothing on screen to say
-   *  why. An eraser rubs out what it is over. */
-
   import CanvasDial from './CanvasDial.svelte'
   import { LEAST_RUB, MOST_RUB, pens } from './canvas/pens.svelte'
   import { tick } from './canvas/tick'
@@ -25,7 +11,6 @@
     { whole: false, word: () => t('Area'), title: () => t('Only what is under the nib') },
   ] as const
 
-  /** The width of whichever way is on: each keeps its own. */
   const wide = $derived(pens.whole ? pens.strokeRub : pens.rub)
 
   function way(whole: boolean) {
@@ -50,8 +35,6 @@
     {/each}
   </div>
 
-  <!-- How wide, shown as the width. The circle is the nib at its real size, so
-       there is nothing to read off a number and imagine. -->
   <div class="wide">
     <span class="ring" style:width="{wide * 2}px" style:height="{wide * 2}px"></span>
 
@@ -87,7 +70,6 @@
     gap: var(--space-2);
   }
 
-  /* The nib at its real width, on the paper, beside the dial that sets it. */
   .wide {
     display: flex;
     align-items: center;
@@ -112,7 +94,6 @@
       height var(--dur-fast) var(--ease-out);
   }
 
-  /* Every stroke gone is the one destructive thing in here. */
   .all {
     min-height: 34px;
     border: none;

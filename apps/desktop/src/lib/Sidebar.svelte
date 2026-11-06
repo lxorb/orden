@@ -75,29 +75,16 @@
     ongoto,
     onmovesection,
   }: {
-    /** Which side of the window this one is. The left side is the sidebar the app
-     *  has always had; the right side is drawn only once a panel has been moved
-     *  over to it, and holds only those. See workspace.movePanel. */
     side?: PanelSide
     ongoto?: (line: number) => void
-    /** Moves a whole section of the open note, by the two places in the outline
-     *  it came from and landed on. The app owns the editor, so the edit is made
-     *  there; see `moveSection` in sections.ts for what a section is. */
     onmovesection?: (from: number, to: number) => void
   } = $props()
 
-  /** Lit while a drop would land in the space itself: over the empty stretch
-   *  below the last row, and over a row at the top of the space, which stands for
-   *  the space the way every row stands for the folder it sits in. One answer for
-   *  the whole list; see drop-target.svelte.ts. */
   const rootDrop = $derived.by(() => {
     const root = workspace.activeSpace?.root
     return root !== undefined && dropTarget.lit(root)
   })
 
-  /** The space below the tree lights only where a drop would do something: a row
-   *  already at the top of the space is not moving. The same rule the rows
-   *  themselves follow; see `takes` in Tree.svelte. */
   function overRoot(event: DragEvent) {
     const root = workspace.activeSpace?.root
     const how = landing(event, shortcuts.platform)
@@ -119,58 +106,32 @@
     if (root) dropOnList(event, root)
   }
 
-  /** A tack, seen from the side: the head, the shaft, the plate and the needle.
-   *  Here rather than in panel-marks.ts because one surface draws it; see the
-   *  note at the top of that file. */
   const HOLD_MARK = 'M4.6 2h4M6.6 2v3.2M4 5.2h5.2M6.6 5.2v5.6'
 
-  /** A square and a pen: a conversation begun again. */
   const FRESH_MARK =
     'M6 2.5H3.5a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7M9.2 2.3l1.5 1.5-4.2 4.2-2 .5.5-2z'
 
-  /** A clock turned back, every assistant's history; a list read as Properties. */
   const THREADS_MARK =
     'M2 6.5a4.5 4.5 0 1 0 4.5-4.5 4.9 4.9 0 0 0-3.4 1.4L2 4.5M2 2v2.5h2.5M6.5 4v2.5l2 1'
 
-  /** Three dots: the panel tabs there was no room for. */
   const MORE_MARK = 'M3 6.5h.1M6.5 6.5h.1M10 6.5h.1'
 
-  /** Whether this side is open. Shut, the panel stays where it is, built and laid
-   *  out, and only its column closes over it; see `.column`. */
-  /** Whether the scratchpad is one of this side's tabs: the right side's, on a desktop.
-   *  A phone's card is the one note there is, opened from the drawer's foot (#1030). */
   const padHere = $derived(side === 'right' && !viewport.touch && !__EVEN_PLUGIN__)
 
   const open = $derived(
     side === 'right' ? workspace.rightShows !== null : workspace.openOn(side) !== null,
   )
 
-  /** The panel showing on this side, which every row below reads instead of
-   *  `workspace.panel`: the left side's is that, and the right side's is its
-   *  own. Shut, it is the one that was last open, so a closing panel slides away
-   *  with its rows in it and opens again on them, rather than emptying as it goes.
-   *  The right side shut is the one it would open on, `nextRight`, which is the same
-   *  panel once it has been open and its first before then: the launch builds it shut,
-   *  and a right side built on the file list - which never lives there - was a second
-   *  tree made for nothing and torn down by the first press. */
   let lastShown: Panel = untrack(() => workspace.openOn(side)) ?? 'tree'
   const showing = $derived.by((): Panel | 'scratchpad' => {
-    // The scratchpad's card is the right side's while it is up (#1032).
     if (side === 'right' && padHere && pad.on) return 'scratchpad'
     const open = workspace.openOn(side)
     const chosen = open ?? (side === 'right' ? (workspace.nextRight ?? lastShown) : lastShown)
     if (open) lastShown = open
-    // A panel with nothing to show beside the tab in front - the Outline beside a
-    // terminal - gives its place to the side's first tab that has, and is back as soon
-    // as a tab it fills is (#1120). The side stays out, and what was chosen is kept.
     if (workspace.fills(chosen)) return chosen
     return mine.find((one) => one.id !== 'scratchpad')?.id ?? chosen
   })
 
-  /** Whether the column has come in. A panel built by the launch is already there;
-   *  one built later - opened before the launch had built it, or back after a tab
-   *  filled the window - starts shut and opens on the next frame, so it slides in
-   *  the way every other open does. */
   let entered = $state(untrack(() => !startup.reached('index')))
   onMount(() => {
     if (entered) return
@@ -179,24 +140,14 @@
   })
   const shut = $derived(!open || !entered)
 
-  /** Brought out over the note by the pointer reaching the window's edge, while the
-   *  side is shut: Zen's way (#1034; see edge-peek.svelte.ts), the left side at the start
-   *  edge and the right one at the end edge (#1038). Not opened: the note does not move,
-   *  and the side goes again once the pointer has left it. */
   const peeker = $derived(side === 'left' ? edgePeek : endPeek)
   const peek = $derived(shut && peeker.out)
-  /** Whether it is floating over the note at all, which outlasts `peek` by the slide
-   *  back. No frame waited for between the two: shut, the panel already stands past the
-   *  window's edge (see `.column.shut`), so the slide in starts on the style change that
-   *  floats it, and the first frame drawn after the pointer reached the edge has it
-   *  moving (#1034). */
   let floating = $state(false)
   $effect(() => {
     if (peek) {
       floating = true
       return
     }
-    // Opened for good, it is the column again at once, with no slide back to wait out.
     if (!shut) {
       floating = false
       return
@@ -206,15 +157,10 @@
     return () => clearTimeout(settled)
   })
 
-  /** Whether a row is being carried out of the list, which keeps it out until it lands. */
   let carrying = false
 
-  /** The column, whose top is where the edge beside it starts: the left one runs the
-   *  window's height, the right one stands under the bar. */
   let column = $state<HTMLElement>()
 
-  // Each side watches its own edge, and only with a pointer: a drawer has an edge of its
-  // own, dragged by a finger.
   $effect(() => {
     if (viewport.touch || (side === 'right' && !sideToggles.inside)) return
     const stop = peeker.watch({
@@ -238,7 +184,6 @@
           !!on &&
           !!aside?.contains(on) &&
           (on.matches('input, textarea') || on.closest('[contenteditable="true"]') !== null)
-        // Its own place on the stack is one; anything over it is a menu it opened.
         return carrying || typing || overlays.depth > 1
       },
     })
@@ -262,9 +207,6 @@
     }
   })
 
-  // Out over the note, it is a layer like any other: Escape and a press past it put it
-  // away, and a web page under it steps aside for it; see overlays.ts. Opened for good,
-  // it is no longer out.
   $effect(() =>
     peek
       ? overlays.show(
@@ -277,10 +219,6 @@
     if (!shut) untrack(() => peeker.hide())
   })
 
-  /** Whether the column is sliding, which is the only time it clips: at rest an
-   *  open panel draws past its edge wherever something of it reaches over the note.
-   *  From the change to the end of the slide, on a desktop and only where there is
-   *  a slide to wait for; see `.column`. */
   let moving = $state(false)
   let wasShut = untrack(() => shut)
   $effect.pre(() => {
@@ -296,7 +234,6 @@
   const PANELS: { id: Panel; label: string; path: string }[] = [
     { id: 'tree', label: t('Files'), path: FILES_MARK },
     { id: 'outline', label: t('Outline'), path: OUTLINE_MARK },
-    // The views are the app's alone; the glasses' plugin has no Tasks panel.
     ...(__EVEN_PLUGIN__
       ? []
       : [
@@ -307,22 +244,16 @@
     { id: 'ask', label: t('Ask'), path: ASK_MARK },
   ]
 
-  // The ✦ tab's dot is right from launch, the panel opened or not (#1064).
   $effect(() => {
     void lookAtLaunch(workspace.spaces.map((one) => one.id))
   })
 
-  /** The tabs this side holds, in the order it shows them; see
-   *  workspace.panelsOn. */
   const mine = $derived.by(() => {
     const held = workspace.panelsOn(
       side,
       PANELS.map((one) => one.id),
     )
 
-    // Only the panels with something to show beside the tab in front (#1120; see
-    // panel-tab.ts). The scratchpad last on the right, the one tab that is no panel
-    // (#1032).
     const pads: { id: Panel | 'scratchpad'; label: string; path: string }[] = padHere
       ? [{ id: 'scratchpad', label: t('Scratchpad'), path: SCRATCHPAD_MARK }]
       : []
@@ -333,35 +264,22 @@
             one.id === id &&
             workspace.fills(id) &&
             (id !== 'chats' || !!account.accountToken) &&
-            // The AI panel is the desktop's and the browser's; the glasses' plugin has none.
             (id !== 'ask' || !__EVEN_PLUGIN__),
         ),
     )
     return [...panelsHere, ...pads]
   })
 
-  /** The shortcut a panel's tab opens it with: the Files tab's command is older than
-   *  the panel's id. */
   const commandOf = (id: Panel | 'scratchpad') => `app.${id === 'tree' ? 'files' : id}`
 
-  /** The tab the first press of a double press chose: choosing one can bring it out of
-   *  More and move the row under the pointer, so the second press may land on another
-   *  tab, and the double press is about the one first pressed (#1110). */
   let firstPress: Panel | 'scratchpad' | null = null
 
-  /** A tab pressed: its panel, or the scratchpad, on this side; see `showRight`. */
   const choose = (id: Panel | 'scratchpad') =>
     id === 'scratchpad' ? workspace.showRight('scratchpad') : workspace.showPanel(id)
 
-  /** The row, its tools and a tab's mark, measured: the pill gets the row less its
-   *  `--space-1` padding and the tools, and a tab gives down to its mark and
-   *  `--space-1` either side. See tabsShown in workspace/panels.ts. */
   let rowWidth = $state(0)
   let toolsWidth = $state(0)
   let markWidth = $state(0)
-  /** The least a tab may be, which is nothing with a pointer and a thumb's width on a
-   *  touch screen (the stylesheet's `min-width` below): a tab cannot give below it, so
-   *  the count of tabs that fit is made with it. */
   let floorWidth = $state(0)
   let tablist = $state<HTMLElement>()
   $effect(() => {
@@ -376,7 +294,6 @@
     return splitTabs(mine, shown, (item) => item.id === showing)
   })
 
-  /** The tabs with no room, as a menu with their keys. */
   function showBehind(event: MouseEvent) {
     menu.show(
       event,
@@ -389,28 +306,11 @@
     )
   }
 
-  /** Whether the Links panel is showing the picture. Held here because the switch
-   *  for it is in the row of panel tabs above.
-   *
-   *  How far out it reaches is the space's, not this window's: it is a fact about
-   *  how the space is read, and the picture in the tab and the one in the panel are
-   *  two views of the same setting. See workspace/graph-settings.svelte.ts. */
   let graphing = $state(false)
   const depth = $derived(workspace.graphSettings.here.depth)
 
-  /** What the file list draws: the listing off the disk with the rows an account's
-   *  first pass has named grafted into it. See `shownTree` in workspace.svelte.ts. */
   const listing = $derived(workspace.shownTree)
 
-  /** The order the file list is read in, offered by the press that asks for it.
-   *
-   *  The rows and their seven words are next door in order-menu.ts and arrive with the
-   *  press: a window draws its file list before it does anything else, and the order in
-   *  force is already on screen without the menu being built - it is what the rows are
-   *  in. The same seam lib/ai/ask.ts holds in front of answering.ts.
-   *
-   *  The press is spent here rather than left to `menu.show`, because after the await
-   *  it is too late to stop a browser showing its own menu. */
   function showOrder(event: MouseEvent) {
     event.preventDefault()
     void import('./order-menu').then(({ orderMenu, orderTitle }) =>
@@ -418,9 +318,6 @@
     )
   }
 
-  /** A press on a panel's own tab: its rows, which panel-menu.ts holds, and for the file
-   *  list the order rows and what the list makes ahead of them. Behind doors, as the order
-   *  is, so the press is spent before the await. */
   function showTabMenu(event: MouseEvent, id: Panel, label: string) {
     event.preventDefault()
     const own = import('./panel-menu')
@@ -436,9 +333,6 @@
     )
   }
 
-  /** What the space itself offers, wherever in the panel you ask for it: the kinds of
-   *  note to make, behind the door the row menus are behind. A folder is not one of
-   *  them; see folder-notes.ts and docs/tree.md. The press is spent before the await. */
   function showSpaceMenu(event: MouseEvent) {
     event.preventDefault()
     event.stopPropagation()
@@ -447,14 +341,11 @@
     )
   }
 
-  /** What a phone's menu sheet is headed with. Left out entirely when there is
-   *  no space to name, since `title: undefined` is not the same as no title. */
   function titleOfSpace(): { title?: string } {
     const name = workspace.activeSpace?.name
     return name === undefined ? {} : { title: name }
   }
 
-  /** A bookmarked search puts its words back in the box and runs them. */
   function runBookmarked(text: string) {
     workspace.showPanel('search')
     search.ask(text)
@@ -464,37 +355,22 @@
     if (showing === 'search') void workspace.loadTags()
   })
 
-  /** Whether the panels are held on a tab, and whether this side's panel is one that
-   *  can be held at all. Both the workspace's own answers, because the palette offers
-   *  the same hold and two copies of one rule is one of them going stale; see
-   *  `holdable` there for which panels and which machines. */
   const held = $derived(workspace.held)
   const holdable = $derived(showing !== 'scratchpad' && workspace.holdable(showing))
 
-  /** The palette's keys as this reader has them, for its hint; none, no hint. */
   const paletteKey = $derived(shortcuts.hint('app.palette'))
 
-  /** Takes the reader to a line of the note the panel is about.
-   *
-   *  A panel held on a note open in another pane takes them to that pane first: a
-   *  row is pressed to go somewhere, and going somewhere means being there. The
-   *  same goes for a tab behind another in its own pane; the line is landed on
-   *  once the pane shows that note, never in the one that was in front (see
-   *  `goto` in App.svelte). */
   function jump(line: number) {
     const tab = workspace.panelTab
     if (tab && tab.id !== workspace.activeTabId) workspace.activate(tab.id)
     ongoto?.(line)
   }
 
-  /** A PDF's own contents, where the tab the panels are about is one that wrote them;
-   *  see pdf/outline.svelte.ts. */
   const contents = $derived.by(() => {
     const tab = workspace.panelTab
     return tab?.kind === 'pdf' ? (pdfOutlines.get(tab.id) ?? []) : []
   })
 
-  /** Takes the reader to a page of the PDF the panel is about, in its own pane. */
   function toPage(page: number) {
     const tab = workspace.panelTab
     if (!tab?.path) return
@@ -502,17 +378,10 @@
     workspace.gotoPage = { path: tab.path, page }
   }
 
-  /** The outline steps in and fades from the shallowest heading the note
-   *  has, so a note that starts at "##" is not drawn as one missing its
-   *  title. */
   const shallowest = $derived(
     workspace.headings.reduce((least, heading) => Math.min(least, heading.level), 6),
   )
 
-  /** The heading the caret is under: the last one that starts on or above
-   *  the caret's line. The editor keeps the caret up to date as it moves, and
-   *  on a phone it is also the only thing that says where in the note you
-   *  were, since the drawer covers the note. */
   const current = $derived.by(() => {
     if (showing !== 'outline') return -1
 
@@ -520,18 +389,12 @@
     const headings = workspace.headings
     if (!tab || !headings.length) return -1
 
-    // The editor says which line the caret is on; only a session written by an
-    // older build has to have it worked out from the newlines before it.
     const line = tab.line ?? lineOf(tab.doc, tab.cursor ?? 0)
     return headingAt(headings, line)
   })
 
   let outline = $state<HTMLElement>()
 
-  /** The row a drop would land on, which side of it the line sits, and which row
-   *  is being dragged. The same three the bookmarks keep, and for the same
-   *  reason: a drag under way will not say what it carries, only what kind of
-   *  thing it is, so the row it came from has to be remembered here. */
   let dropAt = $state<number | null>(null)
   let dropAbove = $state(false)
   let dragging = $state<number | null>(null)
@@ -547,8 +410,6 @@
   }
 
   function overSection(event: DragEvent, at: number) {
-    // Only where the drop would move something: a section held over itself, or
-    // over a heading inside it, lights nothing because it would do nothing.
     if (!isSectionDrag(event.dataTransfer)) return
     if (dragging !== null && !movesSection(workspace.headings, dragging, at)) return
 
@@ -556,8 +417,6 @@
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
 
     dropAt = at
-    // The line marks the edge the section arrives at: the top of the row when it
-    // is coming down the list, the bottom when it is going up.
     dropAbove = dragging !== null && dragging > at
   }
 
@@ -569,8 +428,6 @@
     if (from !== null) onmovesection?.(from, at)
   }
 
-  /** What a heading's own menu offers: bookmarking it, and on a touch screen the
-   *  move a drag would have made. */
   function headingMenu(at: number, text: string): MenuEntry[] {
     return [
       ...bookmarkEntry(workspace.bookmarks.forHeading(workspace.panelNote, text)),
@@ -578,11 +435,6 @@
     ]
   }
 
-  /** Moving a section where a drag is not available. A held finger opens the
-   *  menu before a drag could start and a browser fires no drag events from a
-   *  touch at all, so the menu offers the move, in the sheet every other question
-   *  uses. The same call the drop makes, so it is the same move and the same
-   *  undo. See Tree.svelte, which answers the same problem the same way. */
   function moveSectionEntries(at: number): MenuEntry[] {
     if (!viewport.touch) return []
 
@@ -609,27 +461,12 @@
     ]
   }
 
-  // The caret's heading is in view the moment the panel opens and stays there
-  // as the caret moves. Nearest, so a row already showing does not pull the
-  // list around under the finger.
   $effect(() => {
     const list = outline
     if (!list || current < 0) return
-    // `is-on` is what the row wears; it was `.active` before the row moved into
-    // the themes package, and a selector nothing matched meant the outline
-    // quietly stopped following the caret.
     list.querySelector('.row.is-on')?.scrollIntoView({ block: 'nearest' })
   })
 
-  /** Which way the panel's contents come in when the space changes: from
-   *  below when the new space sits lower in the switcher, from above when it
-   *  sits higher, so the motion agrees with the row that was pressed.
-   *
-   *  Kept by an effect rather than worked out in a derived. A derived is read on
-   *  demand and may be read twice or not at all, so a "previous value" written
-   *  down inside one is not the previous value: the direction came out wrong
-   *  whenever the panel happened to read it an extra time. Before the paint, so
-   *  the transition that is about to start is the one this decided. */
   const place = $derived(
     workspace.shownSpaces.findIndex((one) => one.id === workspace.activeSpaceId),
   )
@@ -641,18 +478,10 @@
     lastPlace = place
   })
 
-  /** What the panel holds, which stays from one space to the next. */
   let stack = $state<HTMLElement>()
 
-  /** The space whose panel is showing, so the first one arrives without moving. */
   let arrived = untrack(() => workspace.activeSpaceId)
 
-  // A new space's panel comes in from the side of the switcher it is on. Played on
-  // the panel that is already there rather than on a new one: the panel used to be
-  // rebuilt for every space, every row and every section of it made again for a
-  // frame that only needed their words changed - one task of fifty to eighty
-  // milliseconds per switch on two thousand notes. The file list keeps its rows
-  // and hands each the new space's; see `slotsFor` in row-window.ts.
   $effect(() => {
     const id = workspace.activeSpaceId
     if (id === arrived) return
@@ -663,43 +492,22 @@
         { transform: `translateY(${16 * untrack(() => direction)}px)`, opacity: 0 },
         { transform: 'none', opacity: 1 },
       ],
-      // Ease out, which is cubicOut as a browser spells it.
       { duration: dur(220), easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)' },
     )
   })
 
   const size = new SidebarWidth(() => side)
   let aside = $state<HTMLElement>()
-  /** How wide it is drawn right now, which is what the handle says it is. Measured
-   *  rather than read off the store, because until somebody has moved it the width
-   *  is the theme's and the store holds null - and a handle that says nothing about
-   *  where it is is a slider with no value. */
   let asideWidth = $state(0)
 
-  // The edge can go while a finger is still on it - Escape, the back gesture, a
-  // note chosen on a phone - and then no pointerup ever reaches it.
   $effect(() => () => size.release())
 
-  /** The edge, moved with a key. What a press means is sidebar-width.svelte.ts,
-   *  which is where the drag's own bounds already are; this only keeps the press. */
   function onEdgeKey(event: KeyboardEvent) {
     if (viewport.touch) return
     if (size.step(event.key, aside)) event.preventDefault()
   }
 </script>
 
-<!-- On a desktop the sidebar slides open and shut, and the document slides
-     with it. What moves is the column the panel stands in and nothing else: the
-     panel keeps its width, so not one row is laid out or painted again on the
-     way, and the column clips it at the edge it closes towards. It used to be the
-     panel's own width that animated, with every row truncated afresh on every
-     frame, and the whole panel built on the frame it opened and thrown away when
-     it shut: one task of 175 to 200 ms at 4x on the open, then frames of 50 to
-     120. Shut, it is hidden and inert, so nothing in it is reachable or read out.
-
-     On a phone the drawer it sits in is what moves, and this must be its full
-     width the moment it exists, or the drag that opened it measures a sidebar
-     still growing; there the column is no box at all. -->
 <div
   bind:this={column}
   class="column"
@@ -714,10 +522,6 @@
   inert={shut && !peek && !viewport.drawer}
   style:--panel-width={size.pixels !== null && !viewport.touch ? `${size.pixels}px` : undefined}
 >
-  <!-- Named, because a region of the page that has no name is one a reader cannot
-     tell from the next: the words are the space's, which is what the panel is
-     about. The right one is called what its toggle is, or the two had one name
-     (#523). -->
   <aside
     bind:this={aside}
     bind:clientWidth={asideWidth}
@@ -729,18 +533,6 @@
     class:resizing={size.dragging}
     class:right={side === 'right'}
   >
-    <!-- The strip along the right edge that changes the width. Not on a phone,
-       where the drawer is as wide as the drawer is.
-
-       A separator, which is what it is, and one a key can move: the arrows widen
-       and narrow it a step at a time, Home and End take it to either end and Enter
-       puts it back where it started - the same thing a double click does. It was a
-       `div` with a tooltip on it before, which is a control only a hand can reach
-       and nothing at all can read.
-
-       A separator that can be moved is a focusable separator, which is what a
-       window splitter is and what the practices call for; the rule below knows
-       only the kind that divides two things and is never touched. -->
     <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
     <div
       class="edge"
@@ -757,45 +549,17 @@
       onkeydown={onEdgeKey}
     ></div>
 
-    <!-- Which space this is. A panel with no subject is a list of names belonging
-       to nobody, so the name comes first and is itself the switcher: every other
-       space is a row in it, with its own mark, and there is no second column of
-       wordless squares saying the same thing. See SpaceSwitcher.svelte. -->
-    <!-- The regions of the window carry one attribute each, so the order F6 walks is
-       the order the sidebar is built in and cannot drift from it; see focus.ts.
-
-       The space's name and its switcher belong to one side of the window: a
-       second identity row on the right would be a second switcher for the same
-       space, and the right side is one region of its own. -->
     {#if side === 'left'}
       <div class="head" data-region="space">
-        <!-- Where the panel is a drawer over the note it covers the bar the sidebar
-         button sits in, so the drawer carries the same button at the same corner
-         of the screen - one component, one glyph, one movement; see
-         SidebarToggle.svelte. On a desktop the button is the panel's own wherever
-         it is, docked or brought out at the window's edge (#1038), and the bar keeps
-         only what is the window's. A panel docked by a finger, which has no edge to
-         hover, leaves the bar's own button where it is and has none of its own. -->
         {#if viewport.drawer || (!viewport.touch && sideToggles.inside)}
           <SidebarToggle unseen={swipeOpens()} />
         {/if}
 
-        <!-- It takes the rest of the head, so the whole row is the control that
-         opens the list of spaces, with nothing beside it: the pen that made a note
-         here is gone (issue #229), and a new note is its key, the palette, the file
-         list's menu and the new tab's chooser; Todos, which stood here (#1047), is
-         its key, the palette, and a double press on the right side's Todos icon
-         (#1110). -->
         <SpaceSwitcher />
       </div>
     {/if}
 
     <div class="switch" bind:clientWidth={rowWidth}>
-      <!-- Four tabs are one tab stop, and left and right move between them. They
-         change as they are arrived at, because what each of them shows is already
-         worked out and arrives without a wait - which is the rule the ARIA practices
-         give for choosing on arrival. See roving.ts. More, which the arrows reach
-         without opening, holds the tabs with no room, as VS Code's "..." does. -->
       <div
         bind:this={tablist}
         class="nib-segmented panels"
@@ -814,7 +578,6 @@
         use:segmented
       >
         {#each strip.drawn as item (item.id)}
-          <!-- `data-tab` is where a task sent to the AI panel flies to; see ai/sent-off.ts. -->
           <button
             class:on={showing === item.id}
             data-tab={item.id}
@@ -843,14 +606,11 @@
             }}
           >
             <svg viewBox="0 0 13 13"><path d={item.path} /></svg>
-            <!-- The questions agents are waiting on, which are answered in Ask's chat
-                 list (#1120). -->
             {#if item.id === 'ask' && agentMarks.waiting}
               <span class="waiting" transition:fade={{ duration: dur(140) }}>
                 {agentMarks.waiting}
               </span>
             {/if}
-            <!-- A chat with an answer not yet seen (#1064). -->
             {#if item.id === 'ask' && chatsUnread.any}
               <UnreadDot corner />
             {/if}
@@ -871,8 +631,6 @@
         {/if}
       </div>
 
-      <!-- The graph is one press away and easy to miss behind the Links tab; once
-         there are notes enough to connect, a card says so. See hints.svelte.ts. -->
       {#if !__EVEN_PLUGIN__ && side === 'left' && startup.settled}
         {#await import('./HintCard.svelte') then card}
           <card.default
@@ -885,9 +643,6 @@
         {/await}
       {/if}
 
-      <!-- The palette has no button of its own, only its keys; a keyboard is the
-         only place the card would make sense. Under the tabs, where the list starts,
-         since the palette finds what the list holds. -->
       {#if !__EVEN_PLUGIN__ && side === 'left' && paletteKey && startup.settled}
         {#await import('./HintCard.svelte') then card}
           <card.default
@@ -901,17 +656,9 @@
         {/await}
       {/if}
 
-      <!-- What a panel has to offer goes at the other end of the row its tabs are
-         in: whether a panel about one note stays on it, and whether the Links
-         panel says what it has to say as a list or as a picture. -->
       <div class="tools" bind:clientWidth={toolsWidth}>
         {#if holdable || showing === 'links'}
           {#if holdable}
-            <!-- A panel about one note usually means the note being worked in. Held,
-               it means the note it was held on, so an outline can be read on the
-               left while another note is written on the right. It lasts for the
-               sitting: a panel held on a note nobody remembers holding it on is
-               worse than one that simply follows. -->
             <button
               class="nib-glyph tool"
               class:active={held}
@@ -925,11 +672,6 @@
           {/if}
           {#if showing === 'links'}
             {#if graphing}
-              <!-- How far out the picture reaches, one link at a press and round again.
-                 The same setting the slider on the graph's own card writes, so the two
-                 are never out of step; see GraphControls.svelte, which is where the
-                 whole range is. A stepper here rather than a second slider: this is one
-                 glyph in a row of them, and the panel's tools are all presses. -->
               <button
                 class="nib-glyph depth"
                 title={t('Depth')}
@@ -955,14 +697,7 @@
             </button>
           {/if}
         {/if}
-        <!-- Which order the file list is read in. At the end of the header row, where
-         every other panel's own tools are, because it is a fact about the list under
-         it rather than about the space: one glyph, one press, seven rows, and the one
-         that is in force wears the tick. Remembered per space on this machine; the
-         order somebody arranged by hand travels with the space instead. See
-         tree-order.ts and docs/tree.md. -->
         {#if showing === 'tree' && listing}
-          <!-- Every row folded, drawn only while one is open. -->
           {#if workspace.unfolded}
             <button
               class="nib-glyph tool"
@@ -996,7 +731,6 @@
           </button>
         {/if}
         {#if showing === 'ask'}
-          <!-- New chat first, as VS Code has it, so Chats keeps the row's end. -->
           <button
             class="nib-glyph tool fresh"
             title={t('New chat')}
@@ -1020,26 +754,14 @@
             <svg viewBox="0 0 13 13"><path d={THREADS_MARK} /></svg>
           </button>
         {/if}
-        <!-- The right side's own button, at the end of its first row, which is the window's
-             edge it slides out of and back into (#1038): the bar keeps only what is the
-             window's. A drawer from the right is put away by its scrim and the bar's. -->
         {#if side === 'right' && !viewport.touch && sideToggles.inside}
           <SidebarToggle side="right" />
         {/if}
       </div>
     </div>
 
-    <!-- The same panel for every space, arriving from the side of the switcher the
-       new space is on (see `arriving`); and inside it, one panel crossing with the
-       next. The two are stacked rather than in a column, so the one going and the
-       one coming occupy the same place and the list under them does not jump; only
-       their transforms and their opacities change, which is the compositor's work
-       alone. -->
     <div class="stack" bind:this={stack}>
       {#key showing}
-        <!-- Which panel this is holding, because the body crossfades: for a moment
-             there are two of it on screen and only one of them is the one that is
-             arriving. See boxOf in focus.ts. -->
         <div
           class="body"
           data-region={side === 'left' ? 'list' : undefined}
@@ -1049,9 +771,6 @@
           in:arrive
           out:leave
         >
-          <!-- Which note the panel is held on. Only while it is held, and only
-               where holding means anything: the panel is already full of that
-               note, so this is the one line that says whose. -->
           {#if held && holdable}
             <p class="holding">{workspace.panelTab?.shown ?? ''}</p>
           {/if}
@@ -1060,35 +779,21 @@
             {#if listing}
               <Bookmarks onsearch={runBookmarked} />
 
-              <!-- A word in capitals over each group, the way every list worth
-               reading is cut up; see docs/design.md. -->
               <p class="nib-section">{t('Files')}</p>
 
-              <!-- The listing plus a row for every note an account's first pass has
-                   named and not fetched yet, which is what makes a fresh sign-in a
-                   file list rather than a wait; see `shownTree` in
-                   workspace.svelte.ts. -->
               <Tree tree={listing} />
 
-              <!-- A space with nothing in it says what to do about it. Folders can
-             still be there, which is why this counts files and not rows. Nor is a
-             space with notes on their way an empty one. Nor does one shared to be
-             read offer to write in it. -->
               {#if !workspace.files.length && !arriving.coming.size && hiddenKinds.offers('note') && canWriteAt(workspace.activeSpace?.root ?? '')}
                 <button class="empty" onclick={() => workspace.createNote()}>{t('New note')}</button
                 >
               {/if}
 
-              <!-- What the space put away, at the list's foot; see Archive.svelte. -->
               {#if !__EVEN_PLUGIN__ && workspace.archive.any}
                 {#await archiveSection() then Archive}
                   <Archive />
                 {/await}
               {/if}
 
-              <!-- The space below the last row still belongs to the space, so it
-             takes the same menu instead of swallowing the click, and accepts a
-             note dropped on it as "out of whatever folder it was in". -->
               <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
               <div
                 class="rest"
@@ -1104,23 +809,11 @@
               <button class="empty" onclick={() => newSpace()}>{t('Create a space')}</button>
             {/if}
           {:else if showing === 'outline'}
-            <!-- A page note has pages where a note has headings, and they are the
-                 same thing: the shape of what is open, and a row that goes to a part
-                 of it. So the panel shows whichever the thing in front has, in the
-                 same place, rather than growing a fourth panel nobody asked for. -->
             {#if pages.current}
-              <!-- Fetched the first time a page note is in front. It draws its
-                   thumbnails with the surface's own ink engine - one picture of a
-                   stroke - and that engine is the larger half of the canvas; see
-                   surfaces.svelte.ts, where the pages surface itself is. -->
               {#await pagesNavigator() then PagesNavigator}
                 <PagesNavigator />
               {/await}
             {:else if workspace.headings.length}
-              <!-- The same walk and the same one tab stop every list in the app
-                   has; see roving.ts. Enter goes to the heading and hands the
-                   keyboard to the note, Space goes to it and stays here, so a note
-                   can be read down heading by heading without leaving the outline. -->
               <ul
                 bind:this={outline}
                 use:roving={{
@@ -1162,8 +855,6 @@
                 {/each}
               </ul>
             {:else if contents.length}
-              <!-- A PDF's own contents, as the file wrote them (#1120): a row goes to
-                   the page the part starts on, in the viewer it is open in. -->
               <ul use:roving={{ rows: '.row', open: (row) => row.click() }}>
                 {#each contents as part, index (index)}
                   <li>
@@ -1180,9 +871,6 @@
               </ul>
             {/if}
 
-            <!-- Under the headings, because they are the same kind of thing: the
-                 shape of the note being read, and a row that jumps within it. Only
-                 when the note has any; a heading over nothing is a wall. -->
             {#if workspace.footnotes.length}
               <p class="nib-section">{t('Footnotes')}<span>{workspace.footnotes.length}</span></p>
               <ul>
@@ -1201,9 +889,6 @@
               </ul>
             {/if}
           {:else if showing === 'tasks'}
-            <!-- Inbox, Today, Upcoming, the saved views, projects and labels; fetched,
-                 with the rows behind them, the first time the tab is chosen. See
-                 docs/tasks.md 5.5. -->
             {#await tasksPanel() then TasksPanel}
               <TasksPanel {side} />
             {/await}
@@ -1220,16 +905,10 @@
               <Links {ongoto} graph={graphing} {depth} onlist={() => (graphing = false)} />
             {/await}
           {:else if showing === 'scratchpad'}
-            <!-- The scratchpad's card, as the right side's own (#1032): the side's width,
-                 and no edge of its own to drag. -->
             {#await scratchpadCard() then Card}
               <Card docked />
             {/await}
           {:else if showing === 'search'}
-            <!-- The one panel with a ranking engine behind it, fetched the first time
-                 the tab is chosen rather than carried into the first paint; see
-                 surfaces.svelte.ts. Preloaded once the launch is over, so the tab
-                 that is a keystroke away is never a wait. -->
             {#await searchPanel() then SearchPanel}
               <SearchPanel {ongoto} />
             {/await}
@@ -1238,13 +917,6 @@
       {/key}
     </div>
 
-    <!-- Who is at this device, the theme and the settings, in a quiet row at the
-       bottom of the panel: the three things the column of spaces used to carry
-       under it, which belong to the app rather than to any one note. The same
-       row on a desktop and in a drawer; see SidebarFoot.svelte.
-
-       One row for the window, on the side that has always had it: two would be
-       two accounts to read and two gears to press. -->
     {#if side === 'left'}
       <SidebarFoot />
     {/if}
@@ -1252,8 +924,6 @@
 </div>
 
 <style>
-  /* The column: as wide as the panel open, nothing shut, and the width is what
-     slides. Hidden once it has shut, and shown the moment it starts to open. */
   .column {
     flex: none;
     display: flex;
@@ -1264,8 +934,6 @@
       visibility 0s;
   }
 
-  /* The right side's panel closes towards the window's edge as the left one does,
-     so it is held against that edge and leaves past the other. */
   .column.right {
     justify-content: flex-end;
   }
@@ -1278,12 +946,6 @@
       visibility 0s var(--dur-base);
   }
 
-  /* Shut and at rest, the left panel stands past the window's edge it hides behind, with
-     its shadow: there is nothing to see of it, and the slide out over the note has its
-     start already, so it begins on the style change that floats it rather than a frame
-     after, and slides back to it once the pointer has gone. Only where it can come out:
-     a drawer's panel is placed by its drawer. The right one the same past the other edge
-     (#1038). */
   :global(:root:not([data-touch], [data-drawer])) .column.shut:not(.moving, .right, .peek) aside {
     transform: translateX(calc(var(--dir) * (-100% - var(--card-inset) - var(--space-6))));
   }
@@ -1292,11 +954,6 @@
     transform: translateX(calc(var(--dir) * (100% + var(--card-inset) + var(--space-6))));
   }
 
-  /* Brought out by the pointer at the window's edge (#1034): a card over the note, in
-     from the window's edges as the note's own card is, with its corners and its shadow,
-     rather than a slab flush with the edge. Over the note rather than beside it, so the
-     column keeps no room and nothing moves. Quick, and quickest at its start: it follows
-     the hand rather than playing at it. */
   .column.shut.floating {
     position: relative;
     visibility: visible;
@@ -1311,8 +968,6 @@
     z-index: var(--z-drawer);
     border: 0;
     border-radius: var(--card-radius);
-    /* Its own ground under its own: at rest it stands on the window's chrome and lets
-       it show through, and over the note there is no chrome under it. */
     background:
       linear-gradient(var(--side-ground), var(--side-ground)),
       linear-gradient(var(--chrome-ground), var(--chrome-ground)), var(--bg);
@@ -1320,12 +975,9 @@
       var(--card-shadow),
       0 0 0 1px var(--card-edge),
       var(--shadow-lg);
-    /* Begun a frame in: a transition is drawn at its start on the frame it begins, which
-       is a frame with nothing of the list to see yet. */
     transition: transform var(--dur-fast) var(--ease-out) -16ms;
   }
 
-  /* The right side's from the other edge, and under the bar, as its column is. */
   .column.right.shut.floating aside {
     inset-inline: auto var(--card-inset);
   }
@@ -1334,26 +986,19 @@
     transform: none;
   }
 
-  /* Clipped while it slides and while it is shut, rather than scrolled: `clip` is
-     no scroll container, so nothing inside can scroll the panel out of place in it. */
   .column.moving,
   .column.shut {
     overflow: clip;
   }
 
-  /* A hand on the edge moves it, with nothing easing behind the pointer. */
   .column.resizing {
     transition: none;
   }
 
-  /* Where the panel is a drawer or docked by a finger, the drawer and the dock
-     move it; the column is no box there and the panel is its parent's own. */
   :global([data-touch]) .column {
     display: contents;
   }
 
-  /* Docked beside the note, shut is gone from the row; opened, the dock below
-     plays again. */
   :global([data-touch]:not([data-drawer])) .column.shut aside {
     display: none;
   }
@@ -1369,16 +1014,11 @@
     background: var(--side-ground, var(--side-bar-bg-color));
   }
 
-  /* The hairline belongs between the panel and the note, so on the right side it
-     is the other edge. Nothing else about the panel changes: it is the same
-     column of the same rows, which is the whole point of one component. */
   aside.right {
     border-inline-end: 0;
     border-inline-start: 1px solid var(--chrome-seam);
   }
 
-  /* Wider than the line it sits on, so it can be caught, and drawn only while
-     it is being used: a handle that is always visible is a stripe. */
   .edge {
     position: absolute;
     top: 0;
@@ -1389,8 +1029,6 @@
     cursor: col-resize;
   }
 
-  /* The right side's handle faces the note too, which is its left edge. Both
-     the strip and the hairline inside it go over. */
   aside.right .edge {
     inset-inline-end: auto;
     inset-inline-start: -4px;
@@ -1417,13 +1055,6 @@
     background: var(--accent);
   }
 
-  /* The two rows of chrome above the list, in the order identity, view. Each is
-     `--space-1` in from the panel's edge and everything inside them is
-     `--row-pad` in from that, so the words in the header and the marks in the
-     rows below all start on one line down the panel; see docs/design.md. */
-  /* Positioned, because the list of spaces drops out of it: the head spans the
-     panel, so a list hung from it lines up with the tabs and the rows
-     under it without anything being measured. See SpaceSwitcher.svelte. */
   .head {
     position: relative;
     flex: none;
@@ -1434,14 +1065,10 @@
     padding: 0 var(--space-1);
   }
 
-  /* A Mac's traffic lights, over the head of a panel docked at the window's left
-     edge; see Titlebar.svelte. Not while the words run right to left, where this
-     panel docks at the right and the lights are over the bar instead. */
   :global([data-lights]:not([dir='rtl'])) .head {
     padding-inline-start: var(--traffic-lights);
   }
 
-  /* A panel's tools on its tabs' line. */
   .switch {
     position: relative;
     display: flex;
@@ -1450,10 +1077,6 @@
     padding: 0 var(--space-1) var(--space-2);
   }
 
-  /* The right side has no head, so its tabs are the panel's first row, straight
-     under the bar: they stand off the bar by what they stand off the list with,
-     rather than touching it (issue #247). A drawer from the right covers the bar,
-     so there they clear the status bar too, as the head does on the left. */
   aside.right .switch {
     padding-top: var(--space-2);
   }
@@ -1462,9 +1085,6 @@
     padding-top: calc(var(--space-2) + var(--inset-top));
   }
 
-  /* The tabs are the segmented control the settings sheet already uses: one
-     shape, so "this one" looks the same wherever the app says it. As wide as its
-     tabs, like the view's layout switch: a share of a wide row drew six loose marks. */
   .switch .nib-segmented {
     flex: 0 1 auto;
     min-width: 0;
@@ -1474,35 +1094,18 @@
     padding: 0 var(--space-2);
   }
 
-  /* And the tabs in it give way, which is the only thing in this row that can.
-     A flex child will not shrink below what is in it unless it is told to, and a
-     tab here is an icon with the shared control's own padding either side of it:
-     five of those do not fit beside a panel's tools, so the control shrank and its
-     tabs stayed the size they were - out of its box, over the tools, and with a
-     z-index that made them win the press. Pressing the Links panel's depth stepper
-     opened the panel beside it instead.
-     How wide a shared shape is in the row it sits in is this file's to say; how it
-     is drawn is not. See test/one-of-each.test.ts. */
   .switch .nib-segmented button {
     min-width: 0;
   }
 
-  /* Except under a thumb, where a tab is a target like every other and keeps the touch
-     floor however narrow the row: the pill sized to its tabs drew them forty pixels
-     wide on a phone, under the floor the app holds every target to (access.py). The
-     ones with no room go behind More instead; see `floorWidth` above. */
   :global([data-touch]) .switch .nib-segmented button {
     min-width: var(--touch-target);
   }
 
-  /* The mark in a tab is the one thing in the row that does not give: a squeezed
-     row is one with narrower tabs in it, not one with smaller icons. */
   .switch .nib-segmented button svg {
     flex: none;
   }
 
-  /* A browser's badge on an extension's icon, over the tab's corner: the tab is
-     already the box it is placed against (base.css). */
   .waiting {
     position: absolute;
     top: 1px;
@@ -1522,17 +1125,11 @@
     pointer-events: none;
   }
 
-  /* The tools keep their size: they are square glyph buttons, and a row that has
-     to give somewhere gives from the tabs above. At the far end of the row, so the
-     tabs keep their place whether or not the panel showing has anything to offer. */
   .tools {
     flex: none;
     margin-inline-start: auto;
   }
 
-  /* The note a held panel is about, over the panel that is about it. Quiet: the
-     panel says the same thing in more detail, and this is only here to say whose
-     note that is. */
   .holding {
     margin: 0;
     padding: 0 var(--row-pad) var(--space-1);
@@ -1549,12 +1146,6 @@
     gap: 2px;
   }
 
-  /* What is at the far end of the tab row is `.nib-glyph` in the themes package,
-     the same square as every other icon button. They used to be drawn here with
-     a width and no height and nothing said about padding, so each of them wore
-     the browser's own `1px 6px` and stretched to the row; and their hover went
-     to `--text` where every other glyph button's goes to `--text-strong`.
-     What is left is the one that says a number rather than a mark. */
   .tools button {
     font-size: var(--text-xs);
     font-variant-numeric: tabular-nums;
@@ -1569,26 +1160,18 @@
     outline-offset: -1px;
   }
 
-  /* What is left of the panel once the head and the tabs have
-     had theirs - and the ground the panels cross over. Positioned, so the one
-     going and the one coming can be in the same place for the moment they are
-     both here; a column would put them one above the other and shove the list
-     around. */
   .stack {
     position: relative;
     flex: 1;
     min-height: 0;
   }
 
-  /* A column so the filler below the tree can take the leftover height. */
   .body {
     position: absolute;
     inset: 0;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    /* A list that runs out of rows stops there, rather than handing the
-       scroll on to whatever is behind the drawer. */
     overscroll-behavior: contain;
     padding: 0 var(--space-1) var(--space-4);
   }
@@ -1599,10 +1182,6 @@
     padding: 0;
   }
 
-  /* The row is `.nib-row`, drawn once in the themes package. Each level of the
-     outline steps in and fades a little, and that is the whole hierarchy; both
-     hang off `--level`, so a phone takes a deeper step without a second set of
-     numbers in the markup. The tree is indented the same way. */
   .heading {
     position: relative;
     padding-inline-start: calc(var(--row-pad) + var(--level) * var(--row-indent));
@@ -1610,9 +1189,6 @@
     transition: transform var(--dur-fast) var(--ease-out);
   }
 
-  /* A footnote's own label, in the mark's box so every one of them starts where
-     a heading's words do. Raised and in the accent, which is how the note itself
-     draws the mark this row stands for. */
   .note-id {
     align-self: start;
     margin-top: 0.3em;
@@ -1621,9 +1197,6 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Where a section being dragged would land: along the edge it arrives at,
-     rather than a box around the row it is passing. The same line the bookmarks
-     draw for a row on its way somewhere. */
   .heading.above::before,
   .heading.below::after {
     content: '';
@@ -1647,21 +1220,17 @@
     opacity: 1;
   }
 
-  /* Only where there is a pointer to hover with: on a touch screen the nudge
-     would stick to whatever was tapped last. */
   @media (hover: hover) {
     .heading:hover {
       transform: translateX(calc(var(--dir) * 2px));
     }
   }
 
-  /* Fills whatever is left, so the whole panel responds. */
   .rest {
     flex: 1;
     min-height: var(--space-6);
   }
 
-  /* Says the drop will land, without pretending to be a row. */
   .rest.dropping {
     box-shadow: inset 0 0 0 1px var(--accent);
     border-radius: var(--radius-row);
@@ -1696,9 +1265,6 @@
     color: var(--accent);
   }
 
-  /* One weight for every drawing in the panel; how big each is comes from what
-     it is: a tab and a button wear `--icon-lg`, a mark beside words wears
-     `--icon-md`, and the chevron after a name is the smallest of the three. */
   svg {
     fill: none;
     stroke: currentColor;
@@ -1712,8 +1278,6 @@
     height: var(--icon-lg);
   }
 
-  /* A drawer is as wide as it needs to be to read a list of names in, and it
-     is never dragged wider: there is no pointer to grab the edge with. */
   :global([data-drawer]) aside {
     width: min(78vw, 20rem);
   }
@@ -1722,27 +1286,13 @@
     display: none;
   }
 
-  /* Past this width the drawer is the whole screen rather than a panel over the
-     note, and the panel is the whole of the drawer. Only where the sidebar is a
-     drawer at all: `data-narrow` is the width alone, and a desktop window
-     dragged this narrow keeps its columns. */
   :global([data-drawer][data-narrow]) aside {
     flex: 1;
     width: auto;
     min-width: 0;
-    /* The whole screen, so it is a page of its own rather than a panel beside
-       the note, and takes the note's ground rather than the lighter surface a
-       panel has next to it. */
     background: var(--bg);
   }
 
-  /* Docked beside the note on a tablet held sideways. It arrives rather than
-     appears, and on the compositor: the column itself is not animated, because
-     animating a width relays out the editor beside it on every frame.
-
-     As wide as the drawer, rather than a pointer's 252px: every part of a panel
-     read with a thumb is bigger, so the column holding them has to be. At the
-     narrower width the foot's own name ran out of room before it was finished. */
   :global([data-touch]:not([data-drawer])) aside {
     width: 20rem;
     animation: dock var(--dur-base) var(--ease-out);
@@ -1755,21 +1305,14 @@
     }
   }
 
-  /* Clear of the status bar, the way the titlebar is on the other side. That is
-     the whole of what a finger changes here: the header, the pill, the tabs and
-     every row read the row scale, and the row scale is restated from the touch
-     scale once, in tokens.css. */
   :global([data-touch]) .head {
     padding-top: var(--inset-top);
   }
 
-  /* Room under the last row. What clears the gesture bar is the foot below
-     this, which is the thing actually at the bottom of the screen. */
   :global([data-touch]) .body {
     padding-bottom: var(--space-4);
   }
 
-  /* The conversation scrolls inside itself, over a field that stays put. */
   .body[data-panel='ask'] {
     overflow: hidden;
     padding: 0;

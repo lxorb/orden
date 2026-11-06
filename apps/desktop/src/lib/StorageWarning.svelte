@@ -15,8 +15,6 @@
   )
 </script>
 
-<!-- At the start of the notices row, with the update notice at its end; see
-     `.notices` in App.svelte. -->
 {#if usage.warning}
   <div
     class="toast"
@@ -41,8 +39,6 @@
 {/if}
 
 <style>
-  /* The first track of the notices row, which floats over the foot of the panes;
-     App.svelte places it. */
   .toast {
     grid-column: 1;
     justify-self: start;

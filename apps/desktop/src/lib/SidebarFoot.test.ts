@@ -1,12 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { render } from 'svelte/server'
 
-/** The row at the bottom of the sidebar, rendered on the server as Sidebar.test
- *  renders the sidebar: what is under test is which buttons it holds. A phone or a
- *  tablet has no download (it is where the app is had) and no theme switch (light
- *  and dark are in Settings); a desktop browser keeps both. Send feedback is on every
- *  one of them, as well as in the palette (#1049, #1100). */
-
 vi.mock('./surfaces.svelte', () => ({ showFeedback: () => undefined }))
 
 const { viewport } = await import('./viewport.svelte')
@@ -22,8 +16,6 @@ afterEach(() => {
 })
 
 describe('the foot of the sidebar', () => {
-  /** #1100: the bug is back beside the settings on every device, as before #1049, and
-   *  the palette keeps its row too. */
   test('holds Send feedback on every device', () => {
     for (const device of ['desktop', 'phone', 'tablet'] as const) {
       expect(drawn(device), device).toContain('aria-label="Send feedback"')
@@ -45,8 +37,6 @@ describe('the foot of the sidebar', () => {
       expect(html).toContain('aria-label="Settings"')
     })
 
-    /** #1030: the scratchpad is the drawer's, beside the settings, where it was a switch
-     *  on every note's bar. */
     test(`on a ${device} offers the scratchpad beside the settings`, () => {
       const html = drawn(device)
       expect(html).toContain('aria-label="Scratchpad"')

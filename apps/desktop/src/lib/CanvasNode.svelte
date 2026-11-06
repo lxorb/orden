@@ -1,15 +1,4 @@
 <script lang="ts">
-  /** One card on the canvas: its frame, and whatever is inside it.
-   *
-   *  Positioned rather than laid out. Every card is absolute at the plane
-   *  coordinates the file gives it, so the surface above can move the whole plane
-   *  with one transform and the browser has no layout to redo; a card being
-   *  dragged is offset by a transform of its own, for the same reason.
-   *
-   *  The chrome is not here. Which card is picked, its handles and the dots an
-   *  edge is dragged from all belong to the surface, which is what owns the
-   *  gestures; this is the card itself. */
-
   import { onDestroy } from 'svelte'
   import {
     createEditor,
@@ -49,36 +38,21 @@
     onfollow,
   }: {
     node: CanvasNode
-    /** The canvas's own path, so a link in a card resolves from where it lives. */
     canvasPath: string | null
-    /** Whether the HTML in this plane is markup rather than the characters it is
-     *  made of. A card is a small page, and a plane arrives through a room card by
-     *  card; see trust.ts. */
     trusted: boolean
-    /** The space's folder, which is what a file node's path is relative to. */
     root: string | null
     picked: boolean
-    /** Whether the plane has been narrowed to something else, in which case this
-     *  card is still there but is not what this is about. */
     dimmed?: boolean
-    /** Whether this card is the one being written in. */
     editing: boolean
-    /** Whether the plane may not be written in, so the card's editor is for reading. */
     readOnly?: boolean
-    /** How far a drag has carried it since the pointer went down. */
     offset: { x: number; y: number }
     ontext?: (text: string) => void
     onleave?: () => void
-    /** Follows a link in a card, given the canvas so it is followed in its space. */
     onfollow?: (jump: NoteJump, press: LinkPress | undefined, from: string | null) => void
   } = $props()
 
-  /** The card's own colour, as a border and a wash. Null for one with none,
-   *  which wears the surface. */
   const colour = $derived(shownColour(node.color))
 
-  /** The words of the note a file node names, once they have arrived. Null until
-   *  then, and for a file the space no longer holds. */
   let source = $state<EmbeddedNote | null>(null)
 
   $effect(() => {
@@ -95,24 +69,13 @@
     }
   })
 
-  /** The words this node holds, whichever kind it is: a card's own, a shape's, or the
-   *  note a file card names once it has arrived. */
   const words = $derived(
     node.type === 'text' ? node.text : node.type === 'shape' ? (node.text ?? '') : source?.text,
   )
-  /** A file card shows another note, so it is markup only where that note is too. */
   const markup = $derived(trusted && !(node.type === 'file' && source?.escapeHtml !== false))
 
-  /** The card's markdown as HTML. Read from the cache next door, so a card that
-   *  has not changed costs nothing however often the plane moves. */
   const html = $derived(words ? cardHtml(words, canvasPath, markup) : '')
 
-  /** The shape's own corners, in the box's own coordinates, so the svg scales with
-   *  the node and the arithmetic stays in one place. Through the same geometry the hit
-   *  test and the export read, so a click, a picture and the screen agree.
-   *
-   *  A body comes back closed and a line comes back open, which is the only
-   *  difference between drawing one and drawing the other. */
   const drawing = $derived.by(() => {
     if (node.type !== 'shape') return null
 
@@ -123,8 +86,6 @@
     return { d: open ? d : `${d} Z`, open, points }
   })
 
-  /** How far back from the end of a line its arrow head starts, and how wide the
-   *  head is, in the box's own units. */
   const HEAD = 11
 
   const head = $derived.by(() => {
@@ -145,18 +106,10 @@
     }
   })
 
-  /** Whether the picture a file card names failed to load, which is a reference into
-   *  a space that no longer holds it: a moved file, a copy that arrived without its
-   *  attachments, a share that left them behind. Shown as a quiet placeholder, because
-   *  the card is still where somebody put it and the plane is still readable. */
   let broken = $state(false)
-  /** The account's address for a card that names its picture as a path in the space,
-   *  tried once the space had no such file; see `keptByAccount`. */
   let instead = $state<string | null>(null)
 
   $effect(() => {
-    // The card being pointed at a different file is a different question, so the
-    // path is read for its own sake and the answer starts again with it.
     if (node.type === 'file' && node.file) {
       broken = false
       instead = null
@@ -169,14 +122,11 @@
     else broken = true
   }
 
-  /** A link node's host, which is the closest thing to a title that can be known
-   *  without asking the web for one. */
   const host = $derived.by(() => {
     if (node.type !== 'link') return ''
     try {
       return new URL(node.url).hostname.replace(/^www\./, '')
     } catch {
-      // Not a URL a browser would parse, so the whole of it is the name.
       return node.url
     }
   })
@@ -184,13 +134,8 @@
   let editor: EditorView | undefined
   let typed = ''
 
-  /** The words the plane has already been given, so handing them over twice - a
-   *  flush and then the teardown that follows it - is one edit rather than two. */
   let handed: string | null = null
 
-  /** The words in the card given to the plane. What the caret leaving does, and what
-   *  anything about to read the plane asks for first: until this has run, the plane
-   *  says the card is empty. See canvas/writing.ts. */
   function hand() {
     if (typed === handed) return
 
@@ -198,9 +143,6 @@
     ontext?.(typed)
   }
 
-  /** The small editor, mounted only while this card is being written in and taken
-   *  down the moment it is not: five hundred cards must not be five hundred
-   *  editors, and the one that exists is sized to its own card. */
   function edit(host: HTMLElement) {
     if (node.type !== 'text' && node.type !== 'shape') return
 
@@ -213,11 +155,7 @@
         typed = doc.toString()
       },
       notes: links.index(canvasPath, canvasPath === null && !trusted),
-      // A `[[` picked in a card is spelled the way one picked in a note is; see
-      // composer.ts.
       writeLink: pickedLink,
-      // The plane's own answer about its HTML, which is the surface's; see
-      // trust.ts.
       trustedMarkup: trusted,
       ...(onfollow
         ? { openNote: (jump: NoteJump, press?: LinkPress) => onfollow(jump, press, canvasPath) }
@@ -225,8 +163,6 @@
       openLink: followHref,
       shortcuts: shortcuts.forEditor,
     })
-    // The surface opens no card for typing on a plane that may not be written in;
-    // should one open anyway, it is for reading, since the store drops what is typed.
     if (readOnly) setReadOnlyMode(editor, true)
     editor.focus()
     cardWriting(hand)
@@ -246,21 +182,6 @@
     editor = undefined
   })
 
-  /** The one press a rendered card has of its own: a click-to-load embed swaps its
-   *  frame in where the card was, rather than sending the reader out to the page.
-   *
-   *  The same listener the reading view and the editor's live preview use, so what a
-   *  card does is decided in one place and a canvas is not a surface with a bargain
-   *  of its own; see web-frame.ts in @orden/editor.
-   *
-   *  The press has to be taken from the surface to arrive at all. The plane asks to
-   *  be sent the rest of every contact that lands on it - a stroke has to keep
-   *  arriving after the pointer has left the pane - and a browser sends the click
-   *  after a captured contact to whatever is holding it, which is the plane and not
-   *  the card. So a contact that lands on a card with a frame still to load is the
-   *  card's alone, and the plane never hears it: pressing play is pressing play, and
-   *  such a card is dragged by the paper around it. Every other press on a card is
-   *  the surface's, exactly as it was. */
   function embeds(host: HTMLElement) {
     const held = (event: PointerEvent) => {
       const target = event.target
@@ -283,20 +204,6 @@
     }
   }
 
-  /** Escape leaves the card. Every other press is left exactly as it arrived.
-   *
-   *  This runs in the capture phase, on the box the editor is mounted inside, which
-   *  means it runs before the editor has seen the press at all - so stopping a press
-   *  here stopped it for the editor as well as for everything above. A card could not
-   *  be given a second line, because Enter never reached the editor's own keymap; nor
-   *  could it be given a bold word or an undo; and no app shortcut worked while the
-   *  caret was in one, because the press never got out of the card either.
-   *
-   *  Nothing above needs protecting from the press. The plane stands down while
-   *  something is being typed in - see `onKeyDown` in Canvas.svelte, which asks both
-   *  whether the press came out of a field and whether a card is open - and the app's
-   *  own handler is the last one to run and leaves a press the editor has already
-   *  answered alone; see `handle` in shortcuts.svelte.ts. */
   function onKey(event: KeyboardEvent) {
     if (event.key !== 'Escape') return
 
@@ -333,8 +240,6 @@
   {:else if node.type === 'file'}
     {#if isPicture(node.file)}
       {#if broken}
-        <!-- A reference into a space that no longer holds the picture. Quiet, and
-             still the size and the place somebody put it. -->
         <p class="missing">{t('Nothing here')}</p>
       {:else}
         <img
@@ -394,8 +299,6 @@
       {/if}
     </svg>
 
-    <!-- A shape in a diagram is nearly always a shape with a name in it, so it holds
-         words the way a card does, through the same renderer. -->
     {#if editing}
       <div class="editor inside" use:edit onkeydowncapture={onKey}></div>
     {:else if html}
@@ -408,8 +311,6 @@
 </div>
 
 <style>
-  /* Absolute at its own plane coordinates: the surface moves the plane, never
-     the cards. */
   .node {
     position: absolute;
     box-sizing: border-box;
@@ -418,26 +319,17 @@
     background: var(--surface);
     box-shadow: var(--shadow-sm);
     overflow: hidden;
-    /* Its size is its own, written on it, and nothing inside reaches out: so what is
-       inside is laid out, styled and painted on its own, and a page of cards made at
-       once - an undo bringing them back, a zoom into reading distance - is that many
-       small layouts rather than one of the whole plane (#535). */
     contain: strict;
-    /* The pointer belongs to the surface, which decides what a press means. */
     touch-action: none;
     transition:
       box-shadow var(--dur-fast) var(--ease-out),
       border-color var(--dur-fast) var(--ease-out);
   }
 
-  /* A card with a colour wears it as a breath of it behind the words, so a
-     coloured card still reads as paper rather than as a block of paint. */
   .node.coloured {
     background: color-mix(in srgb, var(--card-colour) 9%, var(--surface));
   }
 
-  /* Narrowed to something else: still there, still where it was, and quietly
-     out of the way. */
   .node.dimmed {
     opacity: 0.25;
   }
@@ -453,8 +345,6 @@
     box-shadow: var(--shadow-md);
   }
 
-  /* A group is room with a name on it: a frame, and nothing in the middle to
-     get in the way of what sits inside it. */
   .node.group {
     background: color-mix(in srgb, var(--card-colour, var(--muted)) 7%, transparent);
     border-style: dashed;
@@ -463,7 +353,6 @@
     overflow: visible;
   }
 
-  /* A shape is what it is drawn as: no card behind it, no frame round it. */
   .node.shape {
     background: none;
     border: none;
@@ -475,9 +364,6 @@
     box-shadow: none;
   }
 
-  /* Words with no card round them, the Text tool's (#421): only the words, in the ink of
-     the page, at the size a line of a note is. Picked, or written in, a hairline of the
-     accent says where the box is, and nothing else. */
   .node.bare,
   .node.bare.coloured {
     border-color: transparent;
@@ -508,8 +394,6 @@
     stroke-linejoin: round;
   }
 
-  /* A filled shape wears its colour as a breath of it, the way a coloured card does,
-     so words inside one are still words on paper. */
   .drawn.filled rect,
   .drawn.filled ellipse,
   .drawn.filled .body {
@@ -521,8 +405,6 @@
     stroke: none;
   }
 
-  /* The words inside a shape, over the shape and in the middle of it: a diamond with
-     a name in it is a name in a diamond, not a name beside one. */
   .inside {
     position: absolute;
     inset: 0;
@@ -533,15 +415,12 @@
     pointer-events: none;
   }
 
-  /* Being written in is the one time the words take the pointer back. */
   .editor.inside {
     pointer-events: auto;
     height: auto;
     text-align: start;
   }
 
-  /* As tall as what is in it rather than as tall as the shape, so the line being
-     typed sits where the line being read sat: in the middle. */
   .editor.inside :global(.cm-editor) {
     height: auto;
   }
@@ -569,9 +448,6 @@
     line-height: 1.55;
   }
 
-  /* A card is a page a couple of inches across, so the rendered markdown is
-     tightened rather than left at document spacing: the same shapes, closer
-     together. */
   .card.page :global(> :first-child) {
     margin-top: 0;
   }
@@ -613,8 +489,6 @@
     font-size: 0.92em;
   }
 
-  /* An embedded note is somebody else's words, so it reads a shade quieter than
-     a card of your own. */
   .embed {
     color: var(--muted-strong);
   }
@@ -668,19 +542,10 @@
     overflow: hidden;
   }
 
-  /* The editor fills the card it was mounted in, and scrolls inside it: a card
-     is as big as somebody made it, and the words go in it rather than the other
-     way about. */
   .editor :global(.cm-editor) {
     height: 100%;
   }
 
-  /* The writing surface is Typora's `#write`, which in the app is the page
-     column: a measure, a margin that centres it, and half a screen of padding
-     underneath. A card is not a page, so inside one it is the card - at the same
-     size and in the same place as the rendered words it replaces, which is what
-     makes double-clicking one read as the card opening rather than as something
-     else arriving. */
   .editor :global(#write) {
     max-width: none;
     margin: 0;

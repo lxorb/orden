@@ -1,11 +1,4 @@
 <script lang="ts">
-  /** Putting a space on the web: what of it is published, the address it answers
-   *  at, and the records a domain of one's own needs. One sheet, because they are
-   *  one question, and the same sheet sharing is drawn in: both are opened from
-   *  the space's own menu and both are about who else may read it.
-   *
-   *  What it asks of the server is publishing.svelte.ts; the box it is drawn in
-   *  is Sheet.svelte. */
   import { slide } from 'svelte/transition'
   import { domainNotice } from './domain-status'
   import { i18n, t } from './i18n.svelte'
@@ -26,26 +19,11 @@
 
   const blog = $derived(publish.blog)
   const published = $derived(publish.published)
-  /** A domain of one's own needs Cloudflare for SaaS on the shared zone, which
-   *  is not enabled; a domain entered today would wait forever. So the choice
-   *  is only shown where a space already has a domain (set by hand, served by
-   *  a route of its own), and everyone else sees the shared name alone. */
   const offerDomain = $derived(!!blog?.domain)
-  /** Wherever the blog answers, for the link under the button. */
   const liveAt = $derived(blog?.domain ?? (blog?.subdomain ? `${blog.subdomain}.orden.so` : ''))
-  /** The records for a domain: fresh from publishing, or as the listing
-   *  remembers them. */
   const records = $derived(publish.dns.length ? publish.dns : (blog?.dns ?? []))
-  /** What is happening with the domain, once the server has been asked. */
   const notice = $derived(publish.status ? domainNotice(publish.status) : null)
 
-  /** What may be published: the whole space, or one note in it.
-   *
-   *  The notes offered are the ones the app is holding, which are the notes of
-   *  the space it is showing. A sheet opened on another space offers the whole
-   *  space and whatever note it is published as already, so a choice made from
-   *  inside that space is not quietly lost: picking one note out of a space is
-   *  done in the space, which is where its notes are.  */
   const showing = $derived(publish.space?.id === workspace.activeSpaceId)
 
   const noteChoices = $derived([
@@ -67,19 +45,12 @@
         : []),
   ])
 
-  /** How many names the changed list shows of each kind. Enough to recognise
-   *  what is about to happen, few enough to read at a glance. */
   const SHOWN = 6
 
-  /** And how many answers the sheet lists before the file is the better way to
-   *  read them. */
   const SHOWN_ANSWERS = 20
 
   const when = (stamp: number) => i18n.when(stamp, { dateStyle: 'short', timeStyle: 'short' })
 
-  /** The answers as a file, saved where the reader says on a desktop and handed
-   *  to the browser to save on the web. Written by the server; see
-   *  services/sync/src/blog/form.ts. */
   async function saveAnswers() {
     const csv = await publish.answersCsv()
     if (!csv) return
@@ -94,10 +65,6 @@
     download(`${name}.csv`, { text: csv, mime: 'text/csv' })
   }
 
-  /** The folders a rule can be about: the top of the tree, where somebody thinks
-   *  in folders, plus any deeper one that already carries a rule - set here on
-   *  another day, or on another machine. Nothing is hidden, and a vault of four
-   *  hundred folders does not become four hundred rows. */
   const ruled = $derived.by(() => {
     const tops: string[] = []
     const seen = (folder: string) => {
@@ -130,38 +97,25 @@
 
   const changes = $derived(publish.changes)
 
-  /** Whether the whole space is what is about to be public, which is what the
-   *  warning above the form has to be right about: it is only everything while
-   *  the default publishes and no folder says otherwise. */
   const everything = $derived(
     publish.rules.otherwise === 'all' &&
       !publish.rules.exclude.length &&
       !publish.rules.include.length,
   )
 
-  /** The badge the icon is drawn in, so that what the site wears is the mark the
-   *  app has already drawn; see site-icon.ts. */
   let markBox = $state<HTMLElement | null>(null)
 
-  // Filled from what the account holds, and again whenever it answers with
-  // something new: publishing changes the blog under the form. A listing that
-  // only hands the same blog back leaves the form alone; see `refill`.
   $effect(() => {
     if (!publish.open) return
     publish.refill()
   })
 
-  // And asked what those rules would put on the site, once, when the sheet opens
-  // on a space that is already published: the answer is what the reader is about
-  // to change, and it should be on screen before they change anything.
   $effect(() => {
     if (!publish.open || !publish.spaceId) return
     publish.ask()
     void publish.readAnswers()
   })
 
-  // Asked after while the sheet shows a domain, and left alone as soon as it
-  // does not: the timer would otherwise keep going behind a closed sheet.
   $effect(() => {
     if (!publish.open || !blog?.domain) return
     void publish.watchDomain()
@@ -178,10 +132,6 @@
     <SpaceMark id={publish.space?.id ?? null} name={publish.space?.name ?? ''} />
   {/snippet}
 
-  <!-- The one thing this sheet is for, under the body rather than at the end of
-       it. The form is long enough to scroll on both sizes, and a body that
-       scrolls ends with a clean edge: with the button as the last card's
-       neighbour the sheet read as finished with no way to publish in sight. -->
   {#snippet foot()}
     <button
       class="nib-button go"
@@ -196,9 +146,6 @@
     <p class="wrong">{t(publish.error)}</p>
   {/if}
 
-  <!-- The consequence comes before the switch, not after it. What that
-       consequence is depends on the rules below, so it is said in the words the
-       rules make true rather than in one fixed sentence. -->
   <label class="danger-check">
     <input data-lands type="checkbox" bind:checked={publish.confirmed} disabled={published} />
     <span>
@@ -229,10 +176,6 @@
       </div>
     </div>
 
-    <!-- Which notes, which is the question a space somebody already writes in
-         has to be able to answer. A note that says `publish:` for itself is not
-         listed here: what the author wrote in the file wins, and a row that
-         could not change it would be a row that lies. -->
     {#if !publish.note}
       <h3>{t('Which notes')}</h3>
 
@@ -277,17 +220,11 @@
         </div>
       {/if}
 
-      <!-- What this will do, before it is done. An Orden site is live - the page is
-           the note - so the only thing a publish changes is which pages exist,
-           and that is what this says. -->
       {#if changes}
         <p class="note" transition:slide={{ duration: dur(160) }}>
           {t('{count} pages', { count: changes.pages })}
           {#if changes.adds.length}· {t('{count} new', { count: changes.adds.length })}{/if}
           {#if changes.removes.length}· {t('{count} gone', { count: changes.removes.length })}{/if}
-          <!-- What the site serves, against the account's own allowance: the
-               pages are notes the account already holds, so publishing them
-               takes no more room. See docs/publishing.md. -->
           {#if changes.bytes}· {readableSize(changes.bytes)}{/if}
         </p>
         {#if changes.adds.length || changes.removes.length}
@@ -306,8 +243,6 @@
       {/if}
     {/if}
 
-    <!-- One address or the other. The choice is the control, so there is no way
-         to end up asking for both. -->
     <h3>{t('Address')}</h3>
     {#if offerDomain}
       <div class="nib-segmented" role="radiogroup" aria-label={t('Address')} use:segmented>
@@ -410,10 +345,6 @@
       </div>
     {/if}
 
-    <!-- How a page of it looks to something that is not a person: a search
-         result, a link pasted into a chat, a browser tab. Each page says this for
-         itself in its own front matter; what is here is what the ones that say
-         nothing fall back on. -->
     <h3>{t('How it appears')}</h3>
 
     <div class="card">
@@ -428,15 +359,10 @@
       </label>
       <div class="row">
         <span class="name">{t('Tab icon')}</span>
-        <!-- The space's own mark, which is what the site wears: one space, one
-             icon, changed where a space's icon is changed. -->
         <span class="mark nib-badge" bind:this={markBox}>
           <SpaceMark id={publish.space?.id ?? null} name={publish.space?.name ?? ''} />
         </span>
       </div>
-      <!-- The pages are dressed in the app's own colours unless the author
-           installed a theme; then the site can wear the same one. The reader
-           still chooses light or dark on top of it. -->
       <div class="row">
         <span class="name">{t('Theme')}</span>
         <div class="pick">
@@ -461,8 +387,6 @@
       </p>
     {/if}
 
-    <!-- Somebody else's script on the page, which is the whole of what a counter
-         is, so it is said plainly and nothing is set until an author types it. -->
     <h3>{t('Visits')}</h3>
 
     <div class="card">
@@ -496,8 +420,6 @@
       )}
     </p>
 
-    <!-- A word said out loud to a room, which is what this is for; see
-         services/sync/src/blog/gate.ts. -->
     <h3>{t('Password')}</h3>
 
     <div class="card">
@@ -528,9 +450,6 @@
   {#if published && liveAt}
     <p class="note" transition:slide={{ duration: dur(180) }}>
       {t('Live at')}
-      <!-- The app talking about itself, so the browser somebody is signed in to, said
-           here rather than left to the engine: a window the app's own page asks for
-           goes nowhere. See open-link.ts. -->
       <a
         href="https://{liveAt}"
         onclick={(event) => {
@@ -540,13 +459,8 @@
       >
     </p>
 
-    <!-- What readers have typed into the forms on it. Quiet, because most sites
-         have none; see services/sync/src/blog/form.ts. -->
     {#if publish.answers.length}
       <h3>{t('Answers')}</h3>
-      <!-- How long they stay, and whether the forms have stopped taking more: the
-           service's own numbers, said in the fewest words; see
-           services/sync/src/spaces/answers.ts. -->
       {#if publish.kept}
         <p class="hint" class:bad={publish.kept.full}>
           {t('Kept for {days}', { days: t('{count} days', { count: publish.kept.days }) })}
@@ -587,8 +501,6 @@
 </Sheet>
 
 <style>
-  /* Everything the form offers goes quiet together until the warning above it
-     has been read and ticked. */
   fieldset {
     display: flex;
     flex-direction: column;
@@ -600,7 +512,6 @@
     transition: opacity var(--dur-base) var(--ease-out);
   }
 
-  /* The warning reads as a warning, and gates the controls behind it. */
   .danger-check {
     display: flex;
     gap: var(--space-3);
@@ -618,9 +529,6 @@
     color: var(--text-strong);
   }
 
-  /* `align-self`, because a native checkbox in a row that stretches is drawn as
-     tall as the sentence beside it: two lines of warning made a bar rather than
-     a box. `flex: none` holds the width and says nothing about the height. */
   .danger-check input {
     flex: none;
     align-self: start;
@@ -628,10 +536,6 @@
     accent-color: var(--accent);
   }
 
-  /* Wide enough for the longest note name a space is likely to hold. */
-  /* What a publish would change: a short list of names, the new ones and the
-     ones going away told apart by the mark in front of them rather than by
-     colour alone. */
   .changed {
     display: flex;
     flex-direction: column;
@@ -669,8 +573,6 @@
     content: '';
   }
 
-  /* One answer to a form: which page was asking, what came back, and the row
-     that takes it away. */
   .answer {
     display: flex;
     flex-wrap: wrap;
@@ -701,14 +603,10 @@
     color: var(--muted-strong);
   }
 
-  /* The space's own mark, at the size a row's control would be: it is what the
-     site wears in a browser tab. */
   .mark {
     flex: none;
   }
 
-  /* A description is a sentence rather than a word, so its field takes the rest
-     of the row. */
   .field.wide {
     flex: 1;
     min-width: 0;
@@ -720,7 +618,6 @@
     width: 13rem;
   }
 
-  /* What the typed name is followed by, which is not typed. */
   .suffix {
     flex: none;
     font-family: var(--font-mono);
@@ -728,14 +625,10 @@
     color: var(--muted);
   }
 
-  /* The segmented control is one shape for the whole app; see .nib-segmented in
-     the themes package. Here it only has to take the width it is given. */
   .nib-segmented {
     width: 100%;
   }
 
-  /* The records are as wide as a registrar writes them, and the sheet is not:
-     the table scrolls rather than the sheet. */
   .scrolls {
     width: 100%;
     overflow-x: auto;
@@ -762,9 +655,6 @@
     font-weight: var(--weight-strong);
   }
 
-  /* The one thing the sheet is for, in the sheet's own foot; see Sheet.svelte.
-     Pushed to the end of that row, which is the corner every dialog keeps its
-     confirming button in. */
   .go {
     margin-inline-start: auto;
   }
@@ -790,7 +680,6 @@
     font-size: var(--text-base);
   }
 
-  /* A thumb gets the whole width of the row. */
   :global([data-touch]) .go {
     flex: 1;
     justify-content: center;

@@ -1,25 +1,4 @@
 <script lang="ts">
-  /** The one button that opens and shuts the file list.
-   *
-   *  It lives at the left end of the title bar, where every desktop app puts it,
-   *  and in the drawer's own head on a phone and a tablet - where a drawer over the
-   *  note covers the bar the button usually sits in, so the drawer needs the same
-   *  button to shut itself with. One component because it is one control: the same
-   *  glyph, the same words, the same movement, whichever of the two it is drawn
-   *  in.
-   *
-   *  One glyph, always, and the same one: a panel with an edge down its left side.
-   *  It is not redrawn, not faded and not moved between the two states - what says
-   *  which state it is in is `aria-pressed`, the words in the tooltip, and the
-   *  panel itself being there or not.
-   *
-   *  Both of the other answers have been tried and both turned one glyph into two.
-   *  Fading the edge away left a plain window when the list was shut. Sliding the
-   *  edge into the frame did the same thing more quietly: three and a half units of
-   *  a fourteen-unit box put it on top of the frame's own border, so the shut state
-   *  read as a window with a thick left edge - a different icon, which is what it
-   *  was reported as. A button that redraws itself is a button you have to read
-   *  twice, and the state is already said three ways. */
   import { tick } from 'svelte'
   import { intoSide } from './focus'
   import { t } from './i18n.svelte'
@@ -31,20 +10,12 @@
     unseen = false,
   }: {
     side?: PanelSide
-    /** Said and not shown: where a swipe from the edge pulls the drawer out, the button is
-     *  redundant to an eye (#1066), and only a screen reader, or a keyboard Tab lands on
-     *  it with, is given it - visible while the keyboard is on it. */
     unseen?: boolean
   } = $props()
 
-  /** Whether the keyboard, rather than a finger, is on the button now. */
   let keyed = $state(false)
 
-  /** The right side is open while it shows anything, the scratchpad too (#1032). */
   const open = $derived(side === 'right' ? workspace.rightShows !== null : !!workspace.openOn(side))
-  /** Which side it is said in words, since the glyph says it only by which way it
-   *  faces: two buttons both called "Show sidebar" were two buttons nobody could tell
-   *  apart without pressing them. */
   const label = $derived(
     side === 'left'
       ? open
@@ -55,12 +26,6 @@
         : t('Show right sidebar'),
   )
 
-  /** Whether the press this button still has the keyboard from opened the side. The side
-   *  stands apart from its toggle in the page - the left one ahead of the bar, the right
-   *  one past a note Tab cannot leave - and moving either would mean rebuilding the
-   *  window's columns, so the next Tab goes there by hand, as it would go from any button
-   *  to what it just disclosed (#523). Once: a toggle Tab sent into its side every time
-   *  would be a ring with no way out, since the left side leads back to the bar. */
   let opened = false
 
   function pressed(event: MouseEvent & { currentTarget: HTMLElement }) {
@@ -69,12 +34,6 @@
     if (event.detail === 0) void handOn(event.currentTarget)
   }
 
-  /** On a desktop the button is the side's own while it is open and the bar's while it is
-   *  shut (#1038), so a key that opens or shuts the side takes away the button it was
-   *  pressed on - into a side shut and out of reach, or out of the bar. The keyboard goes
-   *  on to the side's other button, where the same key puts it back, rather than to
-   *  nowhere. A few frames at most: a side opened for the first time is built shut and
-   *  opens on the next. */
   async function handOn(from: HTMLElement, left = 8) {
     await tick()
     const lost = !from.isConnected || from.closest('[inert]') !== null
@@ -87,7 +46,6 @@
     else if (left > 0) requestAnimationFrame(() => void handOn(from, left - 1))
   }
 
-  /** Tab into the side just opened, and Shift+Tab from there back to here. */
   function onward(event: KeyboardEvent & { currentTarget: HTMLElement }) {
     if (event.key !== 'Tab' || event.shiftKey || !opened) return
     const toggle = event.currentTarget
@@ -107,9 +65,6 @@
   }
 </script>
 
-<!-- The glyph is mirrored for the right side and nothing else about it changes:
-     the edge it draws is the edge between the panel and the note, which is on the
-     other side over there. -->
 <button
   class="nib-glyph toggle"
   class:is-on={open}
@@ -134,12 +89,6 @@
 </button>
 
 <style>
-  /* The button itself is `.nib-glyph` in the themes package: the square every
-     icon button in the app is, the row's corner, the row's own hover and press,
-     and a mark that a browser's own button padding cannot squash. This used to
-     be a hard-coded 38px wide with no height and no corner at all, so it
-     stretched to the whole bar and lit a sharp-edged block where the three bars
-     beside it lit a rounded one. What is left here is only its own edge. */
   .toggle {
     align-self: center;
   }
@@ -151,9 +100,4 @@
   .toggle.right svg {
     scale: -1 1;
   }
-
-  /* The panel's edge. Drawn in one place, in both states, on every device: no
-     transform, no transition and no opacity of its own, because each of those is a
-     second drawing of the same button. The mark is constant and the state is said
-     in words; see the note at the top. */
 </style>

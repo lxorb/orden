@@ -5,12 +5,6 @@ import { describe, expect, test } from 'vitest'
 import { render } from 'svelte/server'
 import Outward from './Outward.svelte'
 
-/** The arrow after a link that leaves the app (#1061), and the mark it shares with the
- *  `?` after a setting's name (#1052): a glyph that belongs to the words before it sits
- *  on their letters, on the line of the last one, and never on a line by itself. The
- *  placing is measured in test/e2e/help-mark.py; what is here is what has to be true
- *  of the markup and the rules for it to hold anywhere the mark is drawn. */
-
 const read = (path: string) =>
   readFileSync(fileURLToPath(new URL(path, import.meta.url)), { encoding: 'utf8' })
 
@@ -28,7 +22,6 @@ const components = sources(LIB).map((path) => ({
   text: readFileSync(path, { encoding: 'utf8' }),
 }))
 
-/** The last rule for a selector in a stylesheet, up to its closing brace. */
 const rule = (css: string, selector: string) => {
   const at = css.lastIndexOf(`${selector} {`)
   expect(at, selector).toBeGreaterThan(-1)
@@ -69,8 +62,6 @@ describe('every link that leaves the app', () => {
     }
   })
 
-  /** A flex row centred the arrow on all the lines of a link that wrapped, and a rule
-   *  of the link's own for its end padding would take the room the mark keeps there. */
   test('is a run of text that leaves the end of its line to the mark', () => {
     for (const one of [
       rule(read('./SettingsPanel.svelte'), '.hint.caption .link'),
@@ -83,8 +74,6 @@ describe('every link that leaves the app', () => {
   })
 })
 
-/** One way of placing a glyph after words, kept in the themes package: the `?` and the
- *  arrow are both it, and neither places itself. */
 describe('the mark', () => {
   const base = read('../../../../packages/themes/src/base.css')
 

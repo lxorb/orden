@@ -1,10 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { render } from 'svelte/server'
 
-/** The Send feedback sheet (#1087): the form, with its way to add pictures, until the
- *  service has kept the report; then the one confirmation, with the report's page to
- *  follow. Rendered on the server, as SidebarFoot.test renders the foot. */
-
 const { feedback } = await import('./feedback.svelte')
 const FeedbackSheet = (await import('./FeedbackSheet.svelte')).default
 

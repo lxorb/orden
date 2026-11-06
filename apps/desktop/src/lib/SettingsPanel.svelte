@@ -28,7 +28,6 @@
   import Select from './Select.svelte'
   import { settings, type Section } from './settings.svelte'
   import { CATEGORIES, SHORTCUTS, shortcuts } from './shortcuts.svelte'
-  // A view's keys are in the list from the first view on; here they are in it anyway.
   import './views/task-keys'
   import { runnable } from './shortcuts/registry'
   import { glyphFor, lowMark, markFor, nameFor, toolbar } from './toolbar.svelte'
@@ -64,22 +63,14 @@
 
   const { view }: { view?: EditorView | undefined } = $props()
 
-  /** Which models the account's own key may choose, asked of the API. Built here
-   *  rather than in `preferences.ts` because the list arrives after the pane does. */
   const offered = new Offered()
 
-  /** Whether the key field is open over a key that is already set. There is no
-   *  editing a key nothing can read, so replacing one is typing a whole new one. */
   let replacingKey = $state(false)
-  /** Custom chosen and no address written for it yet, and whether the last one written
-   *  could not take a search. */
   let customising = $state(false)
   let customBad = $state(false)
 
-  /** Whether the Delete account row has been pressed, which is what opens its flow. */
   let leaving = $state(false)
 
-  /** How long a setting the palette opened on stays lit. */
   const LIT = 1400
 
   const GROUPS = $derived(sectionGroups())
@@ -88,22 +79,14 @@
   const titleOf = (id: Section) => SECTIONS.find((one) => one.id === id)?.label ?? ''
 
   let query = $state('')
-  /** Whether Settings > AI shows one agent's grant in place of its accounts. */
   let accessDetail = $state(false)
 
-  /** The generated panes, rebuilt as things change so every control shows the
-   *  value it actually has. */
   const panes = $derived(preferences(view))
   const current = $derived(panes.find((one) => one.id === settings.section))
 
-  /** Page setup is only worth anything next to the buttons that use it. */
   const exportActions = () =>
     exportCommands().filter((command) => command.id !== 'page-setup' && command.id !== 'import')
 
-  /** What the hand-written panes show, so search can land on those too: the rows
-   *  the palette finds as well (see settings/places.ts), every shortcut by name, so
-   *  searching the settings for "Bold" lands on the key that runs it as well as on
-   *  the button that does, and the export buttons. */
   const places = $derived.by((): Place[] => {
     const all: Place[] = [
       ...paneRows(),
@@ -119,40 +102,27 @@
       })),
     ]
 
-    // The pane's own name counts as a word on everything in it.
     return all.map((place) => ({ ...place, text: [...place.text, titleOf(place.section)] }))
   })
 
-  /** Searching looks across every pane at once: nobody knows which one holds
-   *  the thing they are after, which is the reason for the box. */
   const found = $derived(search(query, panes, places))
 
-  // Signing out while one of them is open would leave a pane with nothing in it.
   $effect(() => {
     if (!SECTIONS.some((one) => one.id === settings.section)) settings.section = 'account'
   })
 
-  // The theme store is a sheet over this one, so closing this one closes it too:
-  // it would otherwise be waiting there the next time the settings opened.
   $effect(() => {
     if (settings.open) return
     store.close()
     settings.landsOnField = false
   })
 
-  // And a half-done deletion goes with the pane it was started in: coming back to
-  // Account should find the row, not a flow that mails another code as it appears.
   $effect(() => {
     if (!settings.open || settings.section !== 'account') leaving = false
   })
 
-  /** The scrolling half, where the panes are. */
   let body = $state<HTMLElement>()
 
-  /** Opened on one setting - the palette's row for it - the pane scrolls it to the
-   *  middle and it is lit for a moment, so the eye lands where the reader was going.
-   *  Found by what its row says, which is the one thing a generated row and a
-   *  hand-written one have in common; see settings/places.ts. */
   $effect(() => {
     const label = landing.label
     const box = body
@@ -174,15 +144,12 @@
     return () => cancelAnimationFrame(frame)
   })
 
-  /** Opens a pane: from the list, from the search results, from anywhere. */
   function go(section: Section) {
     query = ''
     settings.section = section
     settings.listing = false
   }
 
-  /** The entry goes in Windows Explorer's own registry, so a browser cannot
-   *  offer it however Windows the machine running the browser happens to be. */
   const isWindows = isDesktop && navigator.userAgent.includes('Windows')
 
   async function rename(name: string) {
@@ -194,12 +161,9 @@
     }
   }
 
-  /** Where a value sits along a slider's track, for the filled part and the floor. */
   const fraction = (field: Extract<Field, { kind: 'slider' }>, value: number) =>
     ((value - field.min) / (field.max - field.min)) * 100
 
-  /** A dial moved: shown while it is held, kept when it is let go of, and never below
-   *  the floor its theme says - the knob stops there, on the greyed part's edge. */
   function dialled(
     field: Extract<Field, { kind: 'slider' }>,
     input: HTMLInputElement,
@@ -215,8 +179,6 @@
     else field.preview(value)
   }
 
-  /** A picture's thumbnail under a press: a drag moves its focal point, a click chooses
-   *  another, the way a phone's lock screen is pressed to change and dragged to place. */
   function placing(side: PictureSide, press: PointerEvent) {
     const thumb = press.currentTarget
     if (!(thumb instanceof HTMLElement) || press.button !== 0) return
@@ -247,26 +209,17 @@
     thumb.addEventListener('pointercancel', up)
   }
 
-  // ── Shortcuts ───────────────────────────────────────────────────
-
   const rebind = new Rebind()
   let keyFilter = $state('')
 
   const shown = (key: string | null) => (key ? showCombination(key, shortcuts.platform) : null)
 
-  /** The keyboards to choose from. Custom is in the list only while it is what
-   *  the map is: it is arrived at by rebinding a key, never chosen, and an
-   *  option that does nothing is worse than one that is not there. */
   const presetChoices = $derived([
     ...PRESETS.map((one) => ({ value: one.id, label: one.label() })),
     ...(shortcuts.preset === 'custom' ? [{ value: 'custom', label: t('Custom') }] : []),
   ])
 
-  /** Handing the whole keyboard over throws away a map somebody made by hand,
-   *  so that one case asks first. Choosing between two presets replaces
-   *  nothing anybody wrote and goes straight through. */
   async function choosePreset(id: string) {
-    // A name this version does not have changes nothing.
     const preset = presetById(id)
     if (!preset) return
 
@@ -282,9 +235,6 @@
     shortcuts.choose(preset)
   }
 
-  /** The list, grouped the way the menus group the same commands, and cut
-   *  down to what was typed in the box above it. A shortcut is looked for by
-   *  its name or by the key it is on, so both count. */
   const keyGroups = $derived.by(() => {
     const needle = keyFilter.trim().toLowerCase()
     const has = (text: string | null) => !!text && text.toLowerCase().includes(needle)
@@ -302,20 +252,11 @@
     })).filter((group) => group.rows.length)
   })
 
-  // ── Mobile ──────────────────────────────────────────────────────
-
-  /** What is typed into the box over the commands the bar can hold. */
   let barFilter = $state('')
 
-  /** Which row is being dragged along the bar, while one is, and where it would
-   *  land. The same shape the outline's sections use; see Sidebar.svelte. */
   let dragging = $state<number | null>(null)
   let dropAt = $state<number | null>(null)
 
-  /** Everything the bar could hold that it does not already, grouped the way the
-   *  shortcuts list groups the same commands - because it is the same list.
-   *  Panel and fixed entries are left out: a panel key means nothing outside the
-   *  file list, and a fixed one is a fact about the keyboard. */
   const barOffers = $derived.by(() => {
     const needle = barFilter.trim().toLowerCase()
     const held = new Set(toolbar.ids)
@@ -335,11 +276,6 @@
     })).filter((group) => group.rows.length)
   })
 
-  /** What the pull may be set to: nothing at all, then every command the bar
-   *  could hold, grouped the way the shortcuts list groups them. One choice, so
-   *  it is a select rather than a second list of rows - and on a phone the app's
-   *  select is the platform's own picker, which handles a long list better than
-   *  anything drawn here would. */
   const pullChoices = $derived([
     { value: NOTHING, label: t('Nothing') },
     ...CATEGORIES.flatMap((category) =>
@@ -370,11 +306,6 @@
     dropAt = null
   }
 
-  /** The next keystroke goes to whichever row is listening.
-   *
-   *  On the way down rather than up, and before anything else sees it: the
-   *  app's own keys are on the window too, and Ctrl+S while recording is a key
-   *  being chosen, not a note being saved. */
   $effect(() => {
     if (!rebind.listening) return
 
@@ -385,8 +316,6 @@
     }
 
     window.addEventListener('keydown', record, true)
-    // And a modifier tapped twice, which is heard as a tap rather than read off one
-    // keystroke: the pane is on top of the palette while it listens. See tapped.ts.
     const unheard = hearTaps((key) => rebind.tapped(key))
 
     return () => {
@@ -395,33 +324,23 @@
     }
   })
 
-  // Nothing is left listening behind a closed panel or a pane that moved on.
   $effect(() => {
     if (!settings.open || settings.section !== 'shortcuts') rebind.forget()
   })
 
-  // What reaches the app from other apps, asked the first time the pane is open; see
-  // global-keys.svelte.ts.
   $effect(() => {
     if (settings.open && settings.section === 'shortcuts') globalKeys.follow()
   })
 
-  /** A window that grows into place on a desktop; a page that rises from the
-   *  bottom on a phone. */
   function appear(node: Element) {
     return viewport.touch
       ? fly(node, { y: 40, duration: dur(240), easing: cubicOut })
       : scale(node, { duration: dur(200), start: 0.97, easing: cubicOut })
   }
 
-  /** The list and the pane slide past each other on a phone; a desktop shows
-   *  both and has nothing to slide. */
   const enter = (x: number) =>
     viewport.touch ? { x, duration: dur(200), easing: cubicOut } : { duration: dur(0) }
 
-  // Back closes this before it leaves the app: the pane first, then the sheet.
-  // Escape closes it, like everything else the app puts over a note; see
-  // overlays.ts.
   $effect(() => (settings.open ? overlays.show(() => (settings.open = false)) : undefined))
   $effect(() => closeOnBack(settings.open, () => (settings.open = false)))
   $effect(() => closeOnBack(settings.open && !settings.listing, () => (settings.listing = true)))
@@ -523,20 +442,11 @@
             {@render results()}
           </div>
         {:else}
-          <!-- The pane that has just been chosen comes up from below and fades
-               in, which is the movement every other swap in the app makes; see
-               slide.ts. The one before it goes at once rather than crossing with
-               it: a pane is a page of controls, and keeping a second copy of all
-               of them alive to fade one out is a cost the eye is not paid for
-               here. On a phone this is now a movement too - the list and the
-               pane already slide past each other, and this is what happens once
-               the pane is the thing on screen. -->
           {#key settings.section}
             <div class="pane" in:arrive>
               {#if !viewport.touch}
                 <h2>{titleOf(settings.section)}</h2>
               {/if}
-              <!-- What is wrong with the settings file, where its rows are (#673). -->
               {#if declared.problems.length}
                 <div class="hint bad declared-problems" role="alert">
                   <strong>{t('The settings file has a problem')}</strong>
@@ -555,12 +465,9 @@
     {/if}
   </div>
 
-  <!-- The theme store, over this sheet and only ever reached from it. -->
   <ThemeStore />
 {/if}
 
-<!-- What search turned up: each setting with its own control, captioned with
-     the pane it lives in, and the things search can only point at. -->
 {#snippet results()}
   {#if found.length}
     <div class="card">
@@ -580,13 +487,7 @@
   {/if}
 {/snippet}
 
-<!-- What every row says about itself: the setting's name, the `?` that explains
-     it where the name is not enough, and the pane it lives in when search is
-     showing it out of context. One snippet, so the glyph lands in the same slot
-     after the label on every kind of row and a row without one does not shift. -->
 {#snippet named(field: Field, where?: string)}
-  <!-- The thing the row is about, drawn as every other list draws it: a kind of tab in
-       Note types wears its file's mark. -->
   {#if field.icon}
     <span class="glyph" aria-hidden="true"><Icon icon={null} fallback={field.icon} /></span>
   {/if}
@@ -595,34 +496,19 @@
       >{field.label}{#if field.hint}<Hint text={field.hint} />{/if}</span
     >
     {#if where}<small>{where}</small>{/if}
-    <!-- Held by the settings file (#673): the value stands, and the row says why it
-         will not move; the file's path is a pointer away. -->
     {#if field.declared}{@render fileNote()}{/if}
   </span>
 {/snippet}
 
-<!-- What a row the settings file holds says under its name, whoever drew the row; the
-     file's path is a pointer away. -->
 {#snippet fileNote()}
   <small class="declared" title={declared.path}>{t('Set by the settings file')}</small>
 {/snippet}
 
-<!-- One row per setting, whatever kind it is. -->
 {#snippet row(given: Field, where?: string)}
-  <!-- Every row as the settings file leaves it (#673): one it holds says so and stays. -->
   {@const field = declared.lock(given)}
   {#if field.kind === 'switch'}
-    <!-- What the setting says now, read once. `get` reaches into a store - the
-         modes, the preferences, the theme - and this row asked it twice, the slider
-         three times, and a segmented control twice per option. Inside the branch
-         rather than above it, so each kind's answer is that kind's own type. -->
     {@const held = field.get()}
     {@const locked = field.locked?.() ?? false}
-    <!-- The whole row turns it, so there is nothing to miss, but the switch is the
-         mark at its end: a row may carry the `?` that explains it, and a switch may
-         hold nothing else anybody can press, so Enter on the `?` reached the row's
-         keys and turned the setting over (#522). A locked one is the last kind of
-         tab still offered, and stays as it is. -->
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div
       class="nib-setting setting"
@@ -655,9 +541,6 @@
     <div class="nib-setting setting sliding" class:declared={!!field.declared}>
       {@render named(field, where)}
       <span class="value">{held}{field.unit ?? ''}</span>
-      <!-- Below its floor the track is grey and the knob stops at the edge of it: the
-           words on the frame would stop reading there, and a dial that quietly did
-           nothing past a point would be a dial that lies. -->
       <input
         class="slider nib-slider"
         class:floored={least > field.min}
@@ -675,10 +558,6 @@
       />
     </div>
   {:else if field.kind === 'segmented'}
-    <!-- Two or three short words, all of them in view. The app's one segmented
-         control; see .nib-segmented in the themes package. A choice the setting
-         cannot honour right now is disabled rather than left out, so the row does
-         not change shape as themes are chosen. -->
     {@const held = field.get()}
     <div class="nib-setting setting" class:declared={!!field.declared}>
       {@render named(field, where)}
@@ -698,9 +577,6 @@
       </div>
     </div>
   {:else if field.kind === 'swatches'}
-    <!-- The one control whose options are colours rather than words: nine names
-         would say what nine dots already say. The same row of dots the theme
-         picker has at its foot; see Swatches.svelte. -->
     <div class="nib-setting setting" class:declared={!!field.declared}>
       {@render named(field, where)}
       <div class="nib-setting-value is-wrapping">
@@ -714,11 +590,6 @@
       </div>
     </div>
   {:else if field.kind === 'picture'}
-    <!-- A picture per side, shown as itself: pressing one chooses another, the way a
-         phone's wallpaper is changed by pressing the wallpaper, and dragging on it moves
-         the point the window keeps in view. The side the app is in wears the ring; the
-         other shows what it would wear, which is the first picture until it is given one
-         of its own. The cross takes a side's own picture away. -->
     <div class="nib-setting setting" class:declared={!!field.declared}>
       {@render named(field, where)}
       <span class="pictures">
@@ -758,10 +629,6 @@
       </span>
     </div>
   {:else if field.kind === 'value'}
-    <!-- Said rather than set: the version this is (#490). The whole row copies it, and
-         says so for a moment in the value's place. To a key and a reader the control is
-         the value and not the row, whose name holds a hint that is a button of its own
-         (#523). A span with a role, since words inside a button cannot be selected. -->
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div
       class="nib-setting setting pressable"
@@ -782,11 +649,7 @@
       >
     </div>
   {:else if field.kind === 'text'}
-    <!-- A line somebody types. The placeholder is what the app answers to with
-         nothing typed, so an empty field is the default put back and the reset is
-         a field that is already there rather than a button beside it. -->
     {#if field.font}
-      <!-- A face, from the families installed or by its name; see FontPicker.svelte. -->
       <div class="nib-setting setting" class:declared={!!field.declared}>
         {@render named(field, where)}
         <FontPicker
@@ -800,9 +663,6 @@
     {:else}
       <label class="nib-setting setting" class:declared={!!field.declared}>
         {@render named(field, where)}
-        <!-- `live` writes as it is typed; see the kind in preferences.ts. The other
-           kind waits for the field to be left, because half a word is a phrase
-           that matches nothing. -->
         <input
           class="nib-field is-value"
           type="text"
@@ -832,10 +692,6 @@
   {/if}
 {/snippet}
 
-<!-- Orden as the browser links from other programs open in: a desktop's alone, since a
-     phone's links are its own browser's and a page in a browser is inside one already.
-     The control is its own component because it asks the system and listens for the
-     window coming back; see settings/DefaultBrowser.svelte. -->
 {#snippet browserRow()}
   <h3>{t('Browser')}</h3>
   <div class="card">
@@ -849,8 +705,6 @@
       >
       <DefaultBrowser />
     </div>
-    <!-- Where a few words typed in the address field go: Chrome's list for the reader's
-         region, and a custom one with `%s` where the words go. See web-tab/engines.ts. -->
     <div class="nib-setting setting" class:declared={declared.holds('general.searchEngine')}>
       <span class="name"
         ><span class="what"
@@ -905,8 +759,6 @@
       </label>
     {/if}
   </div>
-  <!-- The extensions web tabs run, where the engine runs any: Windows and Linux. See
-       settings/ExtensionRows.svelte and `runsExtensions`. -->
   {#if runsExtensions}
     <h3>{t('Extensions')}</h3>
     <div class="card">
@@ -915,11 +767,6 @@
   {/if}
 {/snippet}
 
-<!-- The words the reader has said are words. Written out here rather than as
-     another kind of generated field, because there is one list like this in the
-     whole app and a new kind would be a new shape every other reader of a field
-     has to learn. Adding is mostly done where the words are met, in the menu
-     over one in the text; this is where they are read and taken back. -->
 {#snippet dictionary()}
   <h3>{t('Your words')}</h3>
   <div class="card">
@@ -962,7 +809,6 @@
   {#if current}
     {#each current.groups as group, index (index)}
       <h3>{group.title}</h3>
-      <!-- A group with nothing to set is its caption alone, not an empty card. -->
       {#if group.fields.length}
         <div class="card">
           {#each group.fields as field, index (index)}
@@ -971,8 +817,6 @@
         </div>
       {/if}
 
-      <!-- What no control on the card can say about itself. A link where the
-           words lead somewhere outside the app, plain words where they do not. -->
       {#if group.caption}
         {#if group.caption.url}
           {@const url = group.caption.url}
@@ -987,7 +831,6 @@
       {/if}
     {/each}
 
-    <!-- A desktop's alone; the glasses' plugin leaves the row and its engine out. -->
     {#if !__EVEN_PLUGIN__ && settings.section === 'general' && isDesktop}
       {@render browserRow()}
     {/if}
@@ -1008,7 +851,6 @@
       {@render glassesExtras()}
     {/if}
 
-    <!-- Everything above, back to how it came. -->
     {#if resettable(current)}
       <div class="card">
         <button class="nib-action" onclick={() => resetPane(current)}
@@ -1042,18 +884,12 @@
         </div>
       </div>
 
-      <!-- What the others see: the face, a few words, a status. Fetched with the pane;
-           see people/ProfileRows.svelte. Never in the glasses' plugin, which has no room
-           for it and shows nobody's face. -->
       {#if !__EVEN_PLUGIN__}
         {#await import('./people/ProfileRows.svelte') then rows}
           <rows.default />
         {/await}
       {/if}
 
-      <!-- Notes and images together, which is what the limit counts. Having
-           an account is what syncing means, so there is nothing to switch:
-           the pane only says where things stand. -->
       <h3>{t('Storage')}</h3>
       <div class="card">
         <div class="stack">
@@ -1087,9 +923,6 @@
         </div>
       </div>
 
-      <!-- What makes the account yours: a second code when signing in, and the
-           devices signed in now. Its own component, because the pane is two small
-           reports rather than a list of settings. -->
       <Security />
 
       <div class="card">
@@ -1101,8 +934,6 @@
               : void import('./ai/vault/leaving').then((one) => one.signOut())}
           >{t('Sign out')}</button
         >
-        <!-- Fetched by the press, like the sheets: nobody opening the settings needs
-             the flow that deletes the account. See DeleteAccount.svelte. -->
         {#if leaving}
           {#await import('./DeleteAccount.svelte') then flow}
             <flow.default onend={() => (leaving = false)} />
@@ -1114,8 +945,6 @@
         {/if}
       </div>
     {:else if account.guest}
-      <!-- A guest a link let in. There is no account here to show, and the one
-           thing they own is the name the others in the space see. -->
       <h3>{t('Account')}</h3>
       <div class="card">
         <label class="nib-setting setting">
@@ -1157,15 +986,8 @@
   {:else if settings.section === 'mobile'}
     {@render phone()}
   {:else if settings.section === 'sync'}
-    <!-- Its own component, for the same reason as the connector's: what syncing
-         is doing is a small report with two decisions in it. -->
     <SyncPane />
   {:else if settings.section === 'ai' || settings.section === 'agents' || settings.section === 'llm'}
-    <!-- One page: the accounts, in a component of their own since a provider is two or
-         three fields and a list fetched from a server; then Access, everything that can
-         reach the notes, fetched as the page opens - nothing of the agents is in the app
-         until somebody looks at them, and none of it in the glasses' plugin. While an
-         agent's grant is open, it is the page. See access/Access.svelte. -->
     {#if !accessDetail}<AiPane />{/if}
     {#if !__EVEN_PLUGIN__}
       {#await import('./access/Access.svelte') then access}
@@ -1173,25 +995,20 @@
       {/await}
     {/if}
   {:else if !__EVEN_PLUGIN__ && settings.section === 'online'}
-    <!-- Fetched as it is opened; see online/OnlinePane.svelte. -->
     {#await import('./online/OnlinePane.svelte') then pane}
       <pane.default />
     {/await}
   {:else if !__EVEN_PLUGIN__ && settings.section === 'remote'}
-    <!-- Fetched as it is opened, as Agents is; see remote/RemotePane.svelte. -->
     {#await import('./remote/RemotePane.svelte') then pane}
       <pane.default />
     {/await}
   {:else if !__EVEN_PLUGIN__ && settings.section === 'space'}
-    <!-- Fetched as it is opened, as Agents is; see settings/SpacePane.svelte. -->
     {#await import('./settings/SpacePane.svelte') then pane}
       <pane.default />
     {/await}
   {:else if settings.section === 'trash'}
     <RecentlyDeleted />
   {:else if !__EVEN_PLUGIN__ && settings.section === 'import'}
-    <!-- The first screen's rows, any time later: Notion's Settings > Import. Fetched
-         as it is opened, as Agents is. -->
     {#await import('./MigrateRows.svelte') then rows}
       <div class="card">
         <rows.default />
@@ -1200,9 +1017,6 @@
   {/if}
 {/snippet}
 
-<!-- The settings on this pane only matter once something is exported, so the ways
-     of doing it belong here rather than in the palette. Commands rather than
-     settings, which is why they are not fields. -->
 {#snippet exportExtras()}
   <h3>{t('This note')}</h3>
   <div class="card">
@@ -1214,11 +1028,7 @@
   </div>
 {/snippet}
 
-<!-- Every shortcut there is, grouped the way the menus group the same
-     commands. A row is its name, the key it is on, and a way back to the key
-     it started on; the ones that cannot be changed say why instead. -->
 {#snippet keyboard()}
-  <!-- Whose keyboard this is, before the list of what is on it. -->
   <div class="card">
     <div class="nib-setting setting">
       <span class="name"
@@ -1342,8 +1152,6 @@
   </div>
 {/snippet}
 
-<!-- What the button on the bar draws, glyph and all: a list that said L for the
-     link the bar draws as a chain was a list of some other bar. -->
 {#snippet mark(id: string)}
   {@const glyph = glyphFor(id)}
   <span class="mark">
@@ -1357,13 +1165,6 @@
   </span>
 {/snippet}
 
-<!-- The bar over the keyboard on a phone: which commands it holds and in what
-     order. The rows are the shortcuts pane's rows - a name, and the controls that
-     act on it - because they are rows about the same commands.
-
-     Dragging orders them where there is a pointer, and the two arrows order them
-     everywhere: a thumb has no drag and a keyboard has no drag either, and one
-     pair of buttons answers both. -->
 {#snippet phone()}
   <p class="lead">{t('The bar sits over the keyboard on a phone.')}</p>
 
@@ -1482,16 +1283,6 @@
   {/each}
 {/snippet}
 
-<!-- The key, the model and how hard it thinks. Written out rather than declared
-     with the rows above it because a key is a text field and the settings
-     vocabulary has none: it has a switch, a slider and a select, which is three
-     more than most panes need and one fewer than this one does.
-
-     The key is written and never read back, so the field has two faces. With no
-     key it is a field to paste one into. With a key it is a sentence saying which
-     key it is - "set, ends in ...4f2a" - and two buttons, because those are the
-     only two things anybody can do to a key they cannot see. Replace puts the
-     field back; there is no editing four characters into a key. -->
 {#snippet glassesExtras()}
   <h3>{t('Questions')}</h3>
   <div class="card">
@@ -1578,8 +1369,6 @@
     {/if}
   </div>
 
-  <!-- Said in one line, because it is the one thing somebody typing a key here
-       wants to know: where it goes, and that it does not come back. -->
   <p class="hint caption">
     {#if offered.said}{offered.said}{:else}{t(
         'Kept encrypted on your account, and never shown again.',
@@ -1588,9 +1377,6 @@
 {/snippet}
 
 {#snippet appearanceExtras()}
-  <!-- Under the theme it belongs to, without a heading of its own: it is another
-       way of choosing the same thing. Nowhere else in the app says there is a
-       store, so nobody who never opens it ever hears about it. -->
   <div class="card">
     <div class="nib-setting setting">
       <span class="name">{t('Themes')}</span>
@@ -1598,7 +1384,6 @@
     </div>
   </div>
 
-  <!-- Theme files and custom.css live in a folder, which only a desktop has. -->
   {#if isDesktop}
     <h3>{t('Custom')}</h3>
     <div class="card">
@@ -1623,25 +1408,17 @@
 {/snippet}
 
 <style>
-  /* The layer behind it; see .nib-scrim in packages/themes. */
   .scrim {
     --scrim-z: var(--z-settings);
   }
 
-  /* The shape is `.nib-screen` in the themes package - the surface, the corner,
-     the shadow, and the size: in the middle of the window at one height for every
-     pane (`is-centred`, `is-steady`), as wide as a list of panes beside a pane. What
-     is left here is the two columns inside it. */
   .sheet {
     --screen-width: var(--screen-panes);
     z-index: var(--z-settings);
-    /* Two columns: the list of panes, and the pane. */
     display: grid;
     grid-template-columns: 14rem 1fr;
     overflow: hidden;
   }
-
-  /* ── The list of panes ─────────────────────────────────────────── */
 
   nav {
     display: flex;
@@ -1653,12 +1430,6 @@
     overflow-y: auto;
   }
 
-  /* Everything in the list keeps its own height. As flex items the groups may
-     shrink, and a card that clips what overflows it - which is what gives a
-     phone's group its rounded corners - may shrink to nothing: on a screen too
-     short for the whole list they were squeezed until they fitted, which cut
-     each row in half and left the list with nothing to overflow and so nothing
-     to scroll. A list too long for its box overflows it and is scrolled. */
   nav > * {
     flex: none;
   }
@@ -1672,10 +1443,6 @@
     color: var(--text-strong);
   }
 
-  /* The box, the magnifier in it, the words and what all three do when the
-     keyboard lands are `.nib-field` in the themes package, the same one the Share
-     sheet's field and the Search panel's field are. What is left here is where it
-     sits in the column above what it searches. */
   .search {
     flex: none;
     margin-bottom: var(--space-3);
@@ -1691,15 +1458,6 @@
     margin-top: var(--space-2);
   }
 
-  /* The sections are a list of names like any other, so each is `.nib-row` in the
-     themes package: the same height, hover, press and open fill as a note in the
-     file list. They were a row of their own here, and the open one was the accent
-     on the accent's own wash - 4.07 to one on a dark theme, under the floor. */
-
-  /* Whatever a row is named, placed as one piece: a pane's own name is the app's
-     word, but the rows below hold an address, a folder, a font and a key, and
-     one of those in the other direction would otherwise take the row's
-     punctuation with it. See .nib-row-label in base.css. */
   .setting .name .what,
   .setting .value {
     unicode-bidi: isolate;
@@ -1713,19 +1471,13 @@
     stroke-linejoin: round;
   }
 
-  /* A chevron means "there is a page behind this", which only a phone has. */
   .item .chevron {
     display: none;
   }
 
-  /* A pane's name on as many lines as it needs rather than cut short: the column
-     is one width in every language, and Hausa's `Wanda aka share kwanan nan` is
-     longer than it. */
   .item .nib-row-label {
     white-space: normal;
   }
-
-  /* ── The pane ──────────────────────────────────────────────────── */
 
   .body {
     padding: var(--space-5) var(--space-6);
@@ -1759,7 +1511,6 @@
     margin-top: 0;
   }
 
-  /* A run of rows. Plain on a desktop; a phone draws the box around it. */
   .card {
     display: flex;
     flex-direction: column;
@@ -1773,10 +1524,6 @@
     width: 100%;
   }
 
-  /* Name on the left, control on the right, one line each. */
-
-  /* A row's own mark, at the size and weight the file list draws it; see
-     FileMark.svelte. */
   .setting .glyph {
     flex: none;
     width: var(--icon-md);
@@ -1794,9 +1541,6 @@
     gap: 1px;
   }
 
-  /* The name and the `?` after it as one run of text, so the glyph reads as
-     belonging to the word rather than to the row: it sits on the letters and wraps
-     with the last word, which Hint.svelte does once for every label (#1052). */
   .setting .name .what {
     display: block;
   }
@@ -1806,10 +1550,6 @@
     color: var(--muted);
   }
 
-  /* At the right of its row like every other value on the pane, and never narrower
-     than the column short choices line up in - but as wide as its words need where
-     they need more: a half cannot shrink below its word, so a groove held to one
-     width let the chosen half stand out past its end. */
   .setting .nib-segmented {
     flex: none;
     min-width: var(--setting-value);
@@ -1824,8 +1564,6 @@
     color: var(--muted);
   }
 
-  /* The version, in the type a number is read in, and selectable as text as well; as
-     wide as it needs, where a slider's number has a column of its own. */
   .setting .value.said {
     flex: none;
     width: auto;
@@ -1848,7 +1586,6 @@
     stroke-linejoin: round;
   }
 
-  /* A row that is itself a control: it shows what it does when pointed at. */
   @media (hover: hover) {
     button.setting:hover,
     .setting.pressable:hover {
@@ -1862,15 +1599,10 @@
     border-radius: var(--radius-sm);
   }
 
-  /* ── A button on the phone's bar ───────────────────────────────── */
-
   .setting.button {
     gap: var(--space-2);
   }
 
-  /* The character the button wears, drawn as the bar draws it: a small square of
-     the writing face, so the row shows what will be on the keyboard rather than
-     only what it does. */
   .setting .mark {
     flex: none;
     display: grid;
@@ -1883,8 +1615,6 @@
     font-size: var(--text-sm);
   }
 
-  /* The bar's own glyph and its dropped quotation mark, at the bar's own sizes;
-     see FormatBar.svelte. */
   .setting .mark :global(svg) {
     --mark: 1.2em;
 
@@ -1896,31 +1626,20 @@
     transform: translateY(0.2em);
   }
 
-  /* Where a dragged row would land, drawn as the line the outline's sections
-     use rather than as a moved row: nothing jumps until the drop. */
   .setting.button.landing {
     box-shadow: inset 0 2px 0 var(--accent);
   }
 
-  /* ── A setting somebody arrived at ─────────────────────────────── */
-
-  /* The palette's row for one setting opens the pane on it, lit for a moment in the
-     tint a highlight wears everywhere else. The rows have no padding of their own, so
-     the tint reaches past the words by a shadow rather than by moving anything. */
   .body :global(.nib-setting.landed) {
     border-radius: var(--radius-row);
     background: var(--accent-soft);
     box-shadow: 0 0 0 var(--space-2) var(--accent-soft);
   }
 
-  /* ── A shortcut and its key ────────────────────────────────────── */
-
   .setting.shortcut {
     gap: var(--space-2);
   }
 
-  /* The key itself is the button that changes it: nothing else to aim at,
-     and what it shows now is what it will show after. */
   .key {
     flex: none;
     min-width: 7rem;
@@ -1951,8 +1670,6 @@
     outline-offset: 2px;
   }
 
-  /* Listening: the ring says the next keystroke goes in here rather than
-     wherever it usually goes. */
   .key.listening {
     border-color: var(--accent);
     background: var(--accent-soft);
@@ -1963,22 +1680,15 @@
     color: var(--muted);
   }
 
-  /* A key that cannot be changed is written down but is not a button. */
   .key.held {
     background: none;
     color: var(--muted);
   }
 
-  /* Back to the key it came with. Present only once it is not on it, so the
-     row stays quiet until something was actually changed. */
-  /* The square is `.nib-glyph`; one with nothing to do is not there at all, so a
-     row that was never changed shows no way to change it back. */
   .revert:disabled {
     visibility: hidden;
   }
 
-  /* What is in the way, and the two ways out of it. Nothing is written until
-     one of them is pressed. */
   .clash {
     display: flex;
     align-items: center;
@@ -1995,13 +1705,6 @@
     min-width: 12rem;
   }
 
-  /* A key that may never arrive. Quiet rather than red: on a browser several of
-     the defaults carry one of these, and a column of alarms about something
-     nobody has done yet reads as breakage. Quiet is `--muted-strong`, which is a
-     colour somebody can read; the mix it used to be came out at 1.2:1 against
-     the surface, which is a warning nobody can. */
-  /* What reaches the app from other apps, where the system decides that: a command
-     to bind can be long, and wraps rather than widening the row. */
   .setting .name small.reach {
     overflow-wrap: anywhere;
   }
@@ -2015,7 +1718,6 @@
     cursor: default;
   }
 
-  /* A row the settings file holds: its control shows the value and takes no hand. */
   .setting.declared > :not(.name, .glyph) {
     pointer-events: none;
     opacity: 0.55;
@@ -2032,14 +1734,10 @@
     color: var(--muted-strong);
   }
 
-  /* A key that was turned down, which is an answer to something the reader
-     just did and belongs in the colour of a refusal. */
   .setting .name small.warn {
     color: var(--danger);
   }
 
-  /* The dial's shape is `.nib-slider` in the theme, which every dial in the app
-     wears; what is left here is how wide this one is in a row of settings. */
   .slider {
     width: 11rem;
   }
@@ -2065,15 +1763,10 @@
     line-height: 1.5;
   }
 
-  /* Under the card it explains, closer to it than the next group. */
   .hint.caption {
     margin-top: calc(-1 * var(--space-2));
   }
 
-  /* A caption that leads somewhere outside the app: the same sentence, in the
-     accent, with the arrow every other outward link in the app carries. A run of
-     text, not a flex row: the arrow sits on the letters and wraps with the last
-     word, and keeps the end of the line for itself (#1061, Outward.svelte). */
   .hint.caption .link {
     padding-block: 0;
     padding-inline-start: 0;
@@ -2098,14 +1791,10 @@
     color: var(--danger);
   }
 
-  /* Signing in is `.nib-button` in the themes package, the same button the
-     sign-in panel it opens is pressed with; here it keeps to its own width. */
   .nib-button {
     align-self: flex-start;
   }
 
-  /* What may be done about a row, at the end of it: its own width, so the name
-     beside it keeps the rest. */
   .row {
     flex: none;
     display: flex;
@@ -2113,8 +1802,6 @@
     gap: var(--space-2);
   }
 
-  /* A list of words is as long as it is, so it runs down the card rather than
-     across it and the field for another one sits under the last of them. */
   .words {
     flex-direction: column;
     align-items: stretch;
@@ -2131,8 +1818,6 @@
     gap: var(--space-2);
   }
 
-  /* The part of a dial's track its floor keeps it off: grey rather than the accent, so
-     the knob resting at its edge says why it will not go further. */
   .slider.floored::-webkit-slider-runnable-track {
     background:
       linear-gradient(var(--line-strong), var(--line-strong)) var(--dir-start) / var(--least) 100%
@@ -2141,8 +1826,6 @@
       var(--surface-3);
   }
 
-  /* The wallpaper's pictures: each the shape of a window and the size of a row's
-     control, lifted under the pointer and pressed back down like a card. */
   .pictures {
     display: flex;
     align-items: center;
@@ -2172,19 +1855,16 @@
       box-shadow var(--dur-fast) var(--ease-out);
   }
 
-  /* The side the app is in: the ring a chosen swatch wears. */
   .current .thumb {
     box-shadow:
       0 0 0 2px var(--bg),
       0 0 0 4px var(--accent);
   }
 
-  /* No picture yet: the field the theme wears without one. */
   .thumb.field {
     background-image: var(--wallpaper-field);
   }
 
-  /* The focal point, a ring the picture shows through. */
   .focus {
     position: absolute;
     width: 8px;
@@ -2197,7 +1877,6 @@
     pointer-events: none;
   }
 
-  /* A side's own picture is taken away from its corner, there under the pointer. */
   .drop {
     position: absolute;
     top: -8px;
@@ -2232,29 +1911,12 @@
     scale: 0.97;
   }
 
-  /* The storage bar is `.nib-meter` in the themes package, the one an online
-     machine's month is drawn with too. */
-
-  /* ── On a phone ────────────────────────────────────────────────── */
-
-  /* A page, not a window: the list of panes first, and the pane chosen from
-     it sliding in over it, with its own header to come back by. Everything
-     is grouped into inset cards and sized for a thumb.
-
-     Written against the class rather than a width, because the width is not
-     what decides it. The phone app is a phone whatever the screen measures
-     (see viewport.svelte.ts), so held sideways it is wider than any breakpoint
-     a stylesheet would pick: the markup showed the page, the media query did
-     not match, and the header ended up as an unstyled block in a column of a
-     window that was never meant to be there. One flag, read by both. */
   .sheet.phone {
     inset: 0;
     top: 0;
     left: 0;
     translate: none;
     width: 100%;
-    /* The last resort, for the frame before the visual viewport is measured;
-       the height the page is actually given is set from the store. */
     height: 100dvh;
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
@@ -2287,7 +1949,6 @@
     text-overflow: ellipsis;
   }
 
-  /* Without a back button before it, the title lines up with the cards. */
   .sheet.phone .bar h1.inset {
     padding-inline-start: 10px;
   }
@@ -2299,11 +1960,6 @@
     background: none;
   }
 
-  /* The row scale carries the height, the room, the corner and the type size
-     across by itself - past sixteen pixels, which is where iOS stops zooming into
-     a field on focus. What it cannot carry is the ground: the column here has none
-     of its own, so the box takes the surface the cards under it are on rather than
-     the window's. */
   .sheet.phone .search {
     margin-bottom: var(--space-4);
     background: var(--surface);
@@ -2321,16 +1977,12 @@
     margin-top: var(--space-4);
   }
 
-  /* The row's size is the touch scale already; what a grouped card asks of it is
-     square corners, and the words at full strength because the card is the list. */
   .sheet.phone .item {
     position: relative;
     border-radius: 0;
     color: var(--text);
   }
 
-  /* A hairline between rows, starting where the text does: past the row's own
-     padding, the glyph in front of it and the gap after that. */
   .sheet.phone .item + .item::before {
     content: '';
     position: absolute;
@@ -2393,15 +2045,6 @@
     font-size: var(--touch-text);
   }
 
-  /* Each step a child rather than any descendant, which is what the markup is: a row's
-     line under its name is that name's own child, and the name the row's. Said loosely,
-     four classes deep, this one rule took Svelte's style pruning 55 seconds to answer
-     (the CI test job's stalls): it walks every way a `small` could sit under a `.name` under a
-     `.setting` under the sheet, through every snippet this panel renders and every
-     component inside them, and the `?` in each written-out row (#768) multiplied the
-     ways. A cold test run compiled it inside the one process that hands every worker
-     its modules, which stopped answering for a minute, and the workers it was starting
-     timed out. See test/compile-time.test.ts. */
   .sheet.phone .setting > .name > small {
     font-size: var(--text-base);
   }
@@ -2426,15 +2069,11 @@
     border-radius: 0;
   }
 
-  /* Name and value on one line, the slider full width beneath them. */
   .sheet.phone .setting.sliding {
     flex-wrap: wrap;
     padding-bottom: 6px;
   }
 
-  /* The key's sentence and its two answers are wider than what a phone's row has
-     beside the name, so they are a line of their own under it: the sentence where
-     the words start, the answers at the end. */
   .sheet.phone .setting.keyed {
     flex-wrap: wrap;
     row-gap: var(--space-1);
@@ -2459,10 +2098,6 @@
     width: 100%;
   }
 
-  /* An action in a card is a row of the grouped list on a phone: the card's own
-     side padding, the accent, and the hairline above it. The panes drawn inside
-     this sheet - security, sync, the AI providers - hold actions too, so it is
-     said here once for all of them rather than once in each. */
   .sheet.phone :global(.nib-action) {
     position: relative;
     padding: var(--space-2) var(--touch-pad);
@@ -2477,9 +2112,6 @@
     background: var(--surface-press);
   }
 
-  /* Every one of these is something a thumb has to land on, so every one of them
-     clears the platform floor on a phone. `--touch-target` is that floor; see
-     tokens.css. */
   .sheet.phone .key {
     min-width: 5.5rem;
     min-height: var(--touch-target);

@@ -1,15 +1,4 @@
 <script lang="ts">
-  /** How the lasso catches: a loop drawn round it, or a box pulled out over it.
-   *
-   *  A loop is what a hand does over a sketch, where what you want is nowhere near
-   *  rectangular. A box is what a hand does over handwriting, where three lines of
-   *  it are a rectangle and drawing round them is work. Both, and the one you used
-   *  last is the one you get.
-   *
-   *  And whether a stroke it only half caught counts. Off, so a loop round a word
-   *  never drags away half of the word beside it; on for anybody pulling a box over
-   *  a paragraph, where the long strokes always poke out. */
-
   import { pens } from './canvas/pens.svelte'
   import { tick } from './canvas/tick'
   import { t } from './i18n.svelte'

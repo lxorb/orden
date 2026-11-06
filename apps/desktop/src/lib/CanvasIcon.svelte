@@ -1,11 +1,4 @@
 <script lang="ts">
-  /** One icon, drawn from the set the rest of the app is drawn from.
-   *
-   *  Lucide hands an icon over as a list of tags and attributes rather than as
-   *  markup, so this is the one place that turns one into an `<svg>`. Sized by
-   *  whatever it is in, through `--mark`, because a bar on a touch screen draws
-   *  the same icon bigger and nothing about the icon itself changes. */
-
   import type { IconNode } from 'lucide'
 
   const { node }: { node: IconNode } = $props()

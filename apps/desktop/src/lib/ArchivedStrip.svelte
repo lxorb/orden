@@ -1,11 +1,4 @@
 <script lang="ts">
-  /** The thin strip over something archived that was opened anyway: from a link, a
-   *  bookmark, the archive or the way back. The archive's mark and the one press that
-   *  takes it back out, the way Keep and Gmail put Unarchive on an opened item.
-   *
-   *  Writing stays allowed underneath. A note put away is not sealed, and somebody who
-   *  opened one to add a line should not have to take it out first - the lock Bear puts
-   *  on its archive is what its readers complain about. See archiving.ts. */
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { unarchive } from './archiving'

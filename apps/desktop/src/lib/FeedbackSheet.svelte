@@ -1,14 +1,4 @@
 <script lang="ts">
-  /** Send feedback (#548): what went wrong, in somebody's own words, the pictures that
-   *  show it, and a line saying what goes with it. Send is off while there is nothing
-   *  written and says it is sending while it is. Once the service says it kept the
-   *  report, the sheet says it was received and gives the report's page to follow in a
-   *  tab (#1087); never before. When it did not, the sheet says so and keeps the words
-   *  and the pictures for another try. See feedback.svelte.ts.
-   *
-   *  Pictures are pasted into the field, dropped on the sheet or picked with Add images,
-   *  shown small with a way to take each off again, and drawn afresh before they go so
-   *  nothing written beside them goes too; see feedback-pictures.ts. */
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from './backstack.svelte'
@@ -25,17 +15,14 @@
   let pictures = $state<Picture[]>([])
   let sending = $state(false)
   let error = $state<string | null>(null)
-  /** What is wrong with a picture just given, apart from what the service said. */
   let pictureError = $state<string | null>(null)
   let picker = $state<HTMLInputElement | null>(null)
 
   const received = $derived(feedback.received)
 
-  // Escape and Back close it, like everything else the app puts over a note.
   $effect(() => (feedback.open ? overlays.show(() => feedback.close()) : undefined))
   $effect(() => closeOnBack(feedback.open, () => feedback.close()))
 
-  // A fresh sheet each time it opens: nothing left from the last report.
   $effect(() => {
     if (!feedback.open) return
     text = ''
@@ -55,15 +42,12 @@
         pictures.map((one) => one.dataUrl),
       )
     } catch (thrown) {
-      // Never received: the words and the pictures stay for another try.
       error = thrown instanceof Error ? thrown.message : String(thrown)
     } finally {
       sending = false
     }
   }
 
-  /** Pictures given by any of the three ways, each made ready, as many as there is
-   *  room for. */
   async function add(files: Iterable<File>) {
     const given = picturesAmong(files)
     if (!given.length) return
@@ -85,7 +69,6 @@
     pictureError = null
   }
 
-  /** A paste that carries pictures adds them; one that carries words is the field's. */
   function pasted(event: ClipboardEvent) {
     const files = event.clipboardData ? picturesAmong(event.clipboardData.files) : []
     if (!files.length) return
@@ -241,8 +224,6 @@
 {/if}
 
 <style>
-  /* `.nib-screen` in the themes package, at the width a question takes; see
-     PromptSheet.svelte. */
   .sheet {
     --screen-width: var(--screen-ask);
 
@@ -263,7 +244,6 @@
     color: var(--text-strong);
   }
 
-  /* The field a question's sheet types into (PromptSheet.svelte), a few lines tall. */
   textarea {
     width: 100%;
     min-height: 7.5rem;
@@ -371,8 +351,6 @@
     gap: var(--space-2);
   }
 
-  /* Standing on the keyboard while it is up, as a question's sheet does; see
-     PromptSheet.svelte. */
   :global([data-touch]) .sheet {
     top: auto;
     bottom: var(--keyboard);

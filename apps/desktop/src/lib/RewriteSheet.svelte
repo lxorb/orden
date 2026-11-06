@@ -1,14 +1,4 @@
 <script lang="ts">
-  /** The sheet one rewrite happens in: the four verbs, what came back, and the two
-   *  answers to it.
-   *
-   *  A diff rather than the new text on its own, because the question a reader has is
-   *  "what did it change", not "what does it say now" - and the one place in the app
-   *  that already answers that question is the version history, so this is the same
-   *  rows in the same colours. See diff.ts and History.svelte.
-   *
-   *  The sheet is the app's one sheet; the shapes inside it are its. See
-   *  Sheet.svelte, and ai/rewriting.svelte.ts for what the buttons do. */
   import { fade } from 'svelte/transition'
   import { rewriting } from './ai/rewriting.svelte'
   import { languageNames, VERBS } from './ai/rewrite'
@@ -27,8 +17,6 @@
 </script>
 
 <Sheet open={rewriting.open} title={t('Rewrite')} onclose={() => rewriting.close()}>
-  <!-- The four, as one choice. A row of pills rather than four rows, because they
-       are four answers to one question and not four things to do. -->
   <div class="card">
     <div class="verbs">
       {#each VERBS as verb (verb.id)}
@@ -78,8 +66,6 @@
   {:else if rewriting.running}
     <p class="hint">{t('Rewriting…')}</p>
   {:else if rewriting.verb && !rewriting.trouble}
-    <!-- The model handed back what was already there. Said rather than shown as an
-         empty box, which reads as a broken one. -->
     <p class="hint">{t('No changes')}</p>
   {/if}
 
@@ -94,7 +80,6 @@
 </Sheet>
 
 <style>
-  /* The four verbs, wrapping on a narrow sheet rather than shrinking. */
   .verbs {
     display: flex;
     flex-wrap: wrap;
@@ -103,15 +88,11 @@
     padding: var(--space-1) 0;
   }
 
-  /* The one that is running or ran is `.nib-chip.is-on` in the themes package. */
-
   .pick {
     flex: none;
     width: 11rem;
   }
 
-  /* The change, in the rows the version history draws it in. Monospaced, because
-     what a rewrite did to a line is read against the line above it. */
   .diff {
     max-height: 34vh;
     overflow: auto;
@@ -124,9 +105,6 @@
     line-height: 1.6;
   }
 
-  /* One line of the change. Not `.line`, which the sheet draws as a hairline
-     between a card's rows: two rules for one name put every row of the diff on
-     top of the one above it. */
   .change {
     padding: 0 var(--space-3);
     color: var(--muted-strong);
@@ -143,7 +121,6 @@
     color: var(--text-strong);
   }
 
-  /* The tally, in the two colours the rows wear. */
   ins,
   del {
     margin-inline-end: var(--space-2);
@@ -158,8 +135,6 @@
     color: var(--danger);
   }
 
-  /* Throw it away on the left, keep it on the right, which is where every dialog
-     in the world puts the two. */
   .answers {
     display: flex;
     align-items: center;

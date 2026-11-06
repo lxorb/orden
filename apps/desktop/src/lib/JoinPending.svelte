@@ -1,12 +1,4 @@
 <script lang="ts">
-  /** A join sheet put aside, said at the foot of the window until it is answered:
-   *  the pulse and the line the sheet had, and a press opens the sheet again with
-   *  its Cancel. Slack's pending invitation and Google Docs' "request sent", which
-   *  both stay where the reader can find them rather than in a modal.
-   *
-   *  The recording pill's shape, in the same middle track; see RecordingPill.svelte
-   *  and `.notices` in App.svelte. Fetched only while something is put aside; see
-   *  surfaces.svelte.ts. */
   import Cross from './Cross.svelte'
   import { joining } from './joining.svelte'
   import { t } from './i18n.svelte'
@@ -28,8 +20,6 @@
       {#if joining.step === 'waiting'}<span class="pulse"></span>{/if}
       {said}
     </button>
-    <!-- A link nobody has asked through yet is let go of here; a wait is let go
-         of with Cancel in the sheet, which also takes the request back. -->
     {#if joining.step === 'asking'}
       <button
         type="button"
@@ -77,7 +67,6 @@
     }
   }
 
-  /* The sheet's own dot; see JoinSheet.svelte. */
   .pulse {
     width: 7px;
     height: 7px;

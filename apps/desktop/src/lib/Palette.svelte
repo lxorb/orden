@@ -1,14 +1,4 @@
 <script lang="ts">
-  /** One search over everything: the notes and every other file, the open tabs, the
-   *  bookmarks, the commands, the pages this device has visited and the settings, in
-   *  one list, each row wearing the mark its kind wears everywhere else. Opened with
-   *  Shift twice, Ctrl+O, or Ctrl+Shift+P narrowed to the commands; see the shortcut
-   *  registry.
-   *
-   *  Emil, 2026-09-30: *"for ctrl + P the search should be kinda global, I don't wanna
-   *  split between > or not, it should be all in the same thing"*. What is found and
-   *  in what order is palette/kinds.ts and palette/rank.ts; this is the field, the
-   *  list, and what a row does when it is chosen. */
   import { tick, untrack } from 'svelte'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -76,12 +66,10 @@
   }: {
     open?: boolean
     view?: EditorView | undefined
-    /** Takes the note in front to a line of it, counting from zero; see App.svelte. */
     ongoto?: (line: number) => void
   } = $props()
   /* eslint-enable prefer-const */
 
-  /* Somebody who has found the palette needs no card pointing at it. */
   $effect(() => {
     if (!__EVEN_PLUGIN__ && open)
       void import('./hints.svelte').then(({ hints }) => hints.dismiss('palette'))
@@ -95,29 +83,16 @@
   const mode = $derived(asked.mode)
   const term = $derived(asked.term)
 
-  /** A phone and a tablet have no web tab, so no pages to go to either; nor has the
-   *  glasses' plugin on any screen, whose package leaves the history and the address
-   *  rows out. */
   const browses = $derived(!__EVEN_PLUGIN__ && !viewport.touch)
 
-  /** Something was taken out of the history or the list of things used: the one
-   *  change the stores below do not say themselves. */
   let forgotten = $state(0)
 
-  /** Every command there is, built while the palette is open and not once per
-   *  keystroke: the list asks what the document goes out as, and answering that
-   *  walks every line of it. What a row says still follows the app - the labels
-   *  read the stores, so this rebuilds when one of them changes - but typing
-   *  changes none of them. */
   const commands = $derived(open ? appCommands(view) : [])
 
-  /** Every setting, read off the same lists the settings' own search reads. */
   const settingRows = $derived(
     open ? settingsOf(sectionGroups().flat(), preferences(view), places(), t('Settings')) : [],
   )
 
-  /** The open tabs, as the list needs them: a page's address read the way the
-   *  history keeps one, so the same page is known in both. */
   const tabs = $derived(
     workspace.tabs.map((tab): OpenTab => ({
       id: tab.id,
@@ -130,9 +105,6 @@
 
   const root = $derived(workspace.activeSpace?.root ?? null)
 
-  /** The machines a remote terminal reaches: a desktop's alone, read again each time the
-   *  palette opens, since the ssh config may have changed. Fetched, so neither a browser
-   *  nor the glasses' plugin carries any of it. See remote/hosts.svelte.ts. */
   let hosts = $state.raw<Host[]>([])
   $effect(() => {
     if (!open || __EVEN_PLUGIN__ || !isDesktop) return
@@ -141,8 +113,6 @@
     )
   })
 
-  /** What the stores hold, while the palette is open. The history is read here the
-   *  first time, never at launch; see visited.ts. */
   const world = $derived.by((): World | null => {
     if (!open) return null
     follows(forgotten)
@@ -169,9 +139,6 @@
 
   const all = $derived(world ? candidates(world) : [])
 
-  /** What the space archived is offered for its whole name only, the way `[[` offers
-   *  it: somebody who types all of it means that one. Per keystroke, over rows already
-   *  built, so the candidates are still built once per opening. */
   const offered = $derived.by(() => {
     const whole = term.trim().toLowerCase()
     return all.filter(
@@ -182,41 +149,29 @@
     )
   })
 
-  /** The note a `#`, a `:` or a heading typed for is about: the one in front, and
-   *  only a note - a canvas and a paper have no lines to go to. */
   const writing = $derived(workspace.active?.kind === 'note' ? view : undefined)
 
-  /** Its headings, read the first time something could want them - a `#`, or three
-   *  letters of a search - rather than on every opening. */
   const wantsHeadings = $derived(mode === 'headings' || (mode === 'everything' && term.length >= 3))
   const headings = $derived(
     open && wantsHeadings && writing ? scanHeadings(writing.state.doc.toString()) : [],
   )
   const headingRows = $derived(headingCandidates(headings, mode === 'headings'))
 
-  /** Folder and name, lower case, of every file: what a name typed would collide with. */
   const taken = $derived(
     new Set(workspace.files.map((one) => relativeTo(root ?? '', one.path).toLowerCase())),
   )
 
-  /** The note Shift+Enter would make out of what was typed, whatever else answers:
-   *  only where the words read as a name, and not one the space already has. */
-  // Not where Settings turned notes off; see kind-choice.ts. Nor in a space shared to
-  // be read, which takes no new note.
   const makes = $derived(
     mode === 'everything' && root && hiddenKinds.offers('note') && canWriteAt(root)
       ? makeable(term, taken)
       : null,
   )
 
-  /** An address typed, where it is one. */
   const address = $derived.by(() => {
     const url = browses && mode === 'everything' ? typedAddress(term) : null
     return url ? { url, shown: shownAddress(url) } : null
   })
 
-  /** The commands narrowed to, with the ones run lately first: VS Code's "recently
-   *  used". */
   function commandRows(): Row[] {
     const list = all.filter((one) => one.kind === 'command')
     if (term) return ranked(term, list)
@@ -225,8 +180,6 @@
     return recentFirst(list, lately, (one) => one.key ?? '').map((one) => one.item)
   }
 
-  /** `ssh` and a host: the hosts alone, and the destination typed where no host is it -
-   *  a terminal's own `ssh user@box` - which is kept as a host as it connects. */
   function hostRows(): Row[] {
     const list = all.filter((one) => one.kind === 'host')
     const found = term ? ranked(term, list) : list.map((one) => one.item)
@@ -235,10 +188,6 @@
     return [...found, { kind: 'connect', wanted, said: said(wanted) }]
   }
 
-  /** Messages in the reader's chats the words find (docs/chats.md 4.12), asked of the
-   *  chats' store a moment after the typing pauses and drawn under everything else; a
-   *  query with a chat's modifiers (`in:`, `from:`, `has:`) finds messages alone.
-   *  Never in the glasses' plugin, which carries no chats. */
   let messages = $state.raw<{ rows: Row[]; only: boolean; term: string }>({
     rows: [],
     only: false,
@@ -265,10 +214,8 @@
     }
   })
 
-  /** The messages found for what is typed now: none for words typed since. */
   const found = $derived(messages.term === term.trim() ? messages : { rows: [], only: false })
 
-  /** Nothing typed: the palette as a menu to browse; see palette/browse.ts. */
   const browsed = $derived(
     mode === 'everything' && !term && world
       ? browse(
@@ -282,7 +229,6 @@
     if (mode === 'commands') return commandRows()
     if (mode === 'hosts') return hostRows()
 
-    // Every heading of a long note, not the first screenful of them.
     if (mode === 'headings') return ranked(term, headingRows, headingRows.length)
 
     if (mode === 'line') {
@@ -301,7 +247,6 @@
     ]
   })
 
-  /** What a row is called. */
   function label(row: Row): string {
     switch (row.kind) {
       case 'command':
@@ -333,14 +278,10 @@
     }
   }
 
-  /** What a row says after its name, quieter: the folder where the name alone would
-   *  not do, a page's address, the pane a setting is in, the note a heading is in. */
   function whereOf(row: Row): string | null {
     switch (row.kind) {
       case 'note':
       case 'tab': {
-        // Where two share the name, or where it was the folder that matched rather
-        // than anything on the row.
         const byName = pieces(label(row), term).some((one) => one.hit)
         return row.folder && (row.shared || (term && !byName)) ? row.folder : null
       }
@@ -366,7 +307,6 @@
     }
   }
 
-  /** The key a command is on, or the line a place is. */
   function hintOf(row: Row): string | null {
     if (row.kind === 'command') return row.command.hint ?? null
     return row.kind === 'place' ? row.hint : null
@@ -374,23 +314,16 @@
 
   const dimmed = (row: Row) => row.kind === 'command' && row.command.disabled === true
 
-  /** The tab behind a tab row, for the mark the strip gives it. */
   const tabOf = (row: Extract<Row, { kind: 'tab' }>) =>
     workspace.tabs.find((one) => one.id === row.tab.id)
 
-  /** Whether a tab row is a tab with no file, which wears the strip's dot here too. */
   const unsavedTab = (row: Extract<Row, { kind: 'tab' }>) => {
     const tab = tabOf(row)
     return tab !== undefined && isDraft(tab.note)
   }
 
-  /** Reads a value for its own sake, so the effect around it follows that
-   *  value. Nothing wants the value itself. */
   const follows = (_value: unknown) => undefined
 
-  // A fresh set of results starts at the top: the row the cursor pointed at is
-  // no longer the one under it. Not when a switch was flipped where it stands,
-  // which changes no row.
   $effect(() => {
     follows(term)
     follows(mode)
@@ -401,7 +334,6 @@
     if (open) input?.focus()
   })
 
-  // Words asked for from outside, taken as they would be typed: the caret after them.
   $effect(() => {
     const words = paletteWords.words
     if (!open || words === null) return
@@ -414,19 +346,13 @@
 
   let list = $state<HTMLElement>()
 
-  // The row the arrows are on stays in view, or walking past the tenth result
-  // moves a cursor nobody can see. Nearest, so a row already showing does not pull
-  // the list around under the eye.
   $effect(() => {
     follows(cursor)
     list?.querySelector('.nib-row.is-on')?.scrollIntoView({ block: 'nearest' })
   })
 
-  /** What the app wore before a theme, a mode or an accent was tried on from here,
-   *  while one is. See palette/trying.ts. */
   let kept: Look | null = null
 
-  /** Puts on the look the row under the arrows is, or takes one off again. */
   function wear(row: Row | undefined) {
     const was = kept ?? { id: theme.id, scheme: theme.scheme, accent: theme.accent }
     const look = lookOf(row, was)
@@ -439,15 +365,11 @@
     }
   }
 
-  // The row the arrows are on, tried on while they are on it, and taken off as they
-  // leave it or the palette closes.
   $effect(() => {
     const row = open ? results[cursor] : undefined
     untrack(() => wear(row))
   })
 
-  /** The rows the middle button opens in a tab of their own: the ones that go to a
-   *  file or a page. */
   const opensTab = (row: Row) =>
     row.kind === 'note' ||
     row.kind === 'tab' ||
@@ -456,13 +378,11 @@
     row.kind === 'message' ||
     (row.kind === 'bookmark' && (row.mark.kind === 'heading' || row.mark.kind === 'block'))
 
-  /** What there is to act with; see palette/choose.ts. */
   const hands: Hands = {
     openEntry: (path, how) => void workspace.openEntry(path, how),
     openAside: (path) => void workspace.openAside(path),
     openPage: (url, ask) => {
       const opened = workspace.openPage(url, ask)
-      // A host typed with no scheme, given https: plain http where nothing answers.
       if (opened) pages.of(opened).upgrade = upgradeOf(term, url)
     },
     activate: (tab) => workspace.activate(tab),
@@ -474,8 +394,6 @@
       search.ask(words)
     },
     openGraph: (view) => {
-      // The space keeps one picture and a view is a way of looking at it; see
-      // workspace/graph-settings.svelte.ts.
       workspace.graphSettings.take(view)
       workspace.openGraph()
     },
@@ -483,8 +401,6 @@
       settings.show(section)
       landing.label = label
     },
-    // Written and opened in the folder it names under the space, made along with
-    // the note where it is not there yet.
     agents: () => {
       if (root) void import('./reserved-name.svelte').then((one) => one.openInstructions(root))
     },
@@ -502,21 +418,15 @@
   }
 
   function pick(row: Row, press?: KeyboardEvent | MouseEvent) {
-    // A look tried on and chosen is kept by its own command, not taken off again.
     if (lookOf(row, theme)) kept = null
     const chosen = choose(row, press, hands)
     if (chosen === 'nothing') return
 
-    // A note counts itself as it opens, from anywhere, so it is not counted twice
-    // here; see `remember` in workspace/device.svelte.ts.
     const key = row.kind === 'note' ? null : rowKey(row)
     if (key) frecency.use(key)
     if (chosen === 'close') dismiss()
   }
 
-  /** Takes a row out of what the palette remembers: a page out of the history and a
-   *  note off the list of recent ones, which is Chrome's Shift+Delete and VS Code's
-   *  "remove from recently opened", and anything's count of uses. */
   function forget(row: Row) {
     const key = rowKey(row)
     if (!key) return
@@ -530,42 +440,22 @@
     forgotten++
   }
 
-  /** Opens it narrowed to the commands, and says so the way a reader would: the `>`
-   *  goes in front of whatever is in the field - once, so a second press is only ever
-   *  the mode - with the caret after everything, which is the field somebody who
-   *  typed the `>` themselves would be looking at. Deleting it is the way back to
-   *  everything, so there is nothing new to learn.
-   *
-   *  The text in the box is what the mode is made of, so this writes the box rather
-   *  than raising a flag beside it: two answers to what the palette is showing is how
-   *  one ends up listing commands with nothing typed. The app calls it for the key;
-   *  see `app.commands` in the shortcut registry. */
   export async function showCommands() {
     if (!query.startsWith('>')) query = `>${query}`
     open = true
 
-    // The field is not in the page until the opening pass has run, and a caret cannot
-    // be put at the end of a value the input has not been handed yet.
     await tick()
     input?.focus()
     input?.setSelectionRange(query.length, query.length)
   }
 
-  /** Closed, and forgotten: the next opening starts on an empty field rather
-   *  than on whatever was typed last time. Escape, a tap outside, and the Shift Shift
-   *  that opened it pressed again. */
   export function dismiss() {
     open = false
     query = ''
   }
 
-  // Escape closes it, like everything else the app puts over a note; see
-  // overlays.ts.
   $effect(() => (open ? overlays.show(dismiss) : undefined))
 
-  /** A keystroke this list has answered goes no further. The app reads its own
-   *  keys off the window, and Ctrl+N there is New note: without this, stepping
-   *  down the list with Ctrl+N opens a blank note behind the palette. */
   function spend(event: KeyboardEvent) {
     event.preventDefault()
     event.stopPropagation()
@@ -584,15 +474,12 @@
       return
     }
 
-    // The two ends of a long list, without holding an arrow down. Only with a
-    // modifier: Home and End on their own belong to the words in the box.
     if ((event.key === 'Home' || event.key === 'End') && (event.ctrlKey || event.metaKey)) {
       spend(event)
       cursor = event.key === 'Home' ? 0 : Math.max(results.length - 1, 0)
       return
     }
 
-    // Chrome's key for taking a row out of what it remembers.
     if (event.key === 'Delete' && event.shiftKey) {
       const chosen = results[cursor]
       if (chosen) {
@@ -604,8 +491,6 @@
 
     if (event.key !== 'Enter') return
 
-    // Obsidian's key for a new note whatever else the name answers to: a note
-    // called `Plan` beside `Planning` is otherwise out of reach from here.
     if (event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey && makes) {
       spend(event)
       pick({ kind: 'make', make: makes })
@@ -622,7 +507,6 @@
 
 {#if open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <!-- Tapping away is the same answer as Escape, so it forgets the same. -->
   <div class="nib-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={dismiss}></div>
 
   <div
@@ -633,14 +517,6 @@
     aria-label={t('Search notes and commands')}
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
-    <!-- A box with a list under it is one control and not two: the keyboard never
-         leaves the box, and the arrows move which row the box is pointing at. That
-         is what a combobox is, and why the rows are out of the tab sequence - forty
-         notes would otherwise be forty presses of Tab between here and the note
-         behind. See docs/keyboard.md. -->
-    <!-- On a touch screen with a word beside the box that puts it away, as a
-         phone's search has: there is no Escape there, and a list long enough to
-         reach the keys leaves no dim edge to tap. -->
     <div class="field nib-field">
       <input
         bind:this={input}
@@ -662,9 +538,6 @@
     </div>
 
     {#if results.length}
-      <!-- The app's own bar rather than the platform's (#775): the list's cap is 46vh,
-           and a list that only just runs past it - by its own padding, or a pixel of a
-           row - wore a full-length platform bar over nothing left to scroll. -->
       <ul
         bind:this={list}
         use:scrollbar
@@ -679,13 +552,6 @@
           {@const head = browsed?.heads.get(index)}
           {#if head}<li role="none" class="nib-section">{head}</li>{/if}
           <li role="none">
-            <!-- A command that cannot be run right now is faded, and says it is out
-                 of anybody's hands rather than only being drawn that way: to
-                 anything reading the list it was an ordinary row in a grey nobody
-                 could read, and eight of the serious things axe-core found in this
-                 app were exactly that. Not `disabled`, which would take the row out
-                 of the list the arrows walk: the row is still there to be read, it
-                 simply does nothing. -->
             <button
               class="nib-row"
               id="nib-palette-{index}"
@@ -700,12 +566,6 @@
               onclick={(event) => pick(row, event)}
               use:middleOpens={(event) => opensTab(row) && pick(row, event)}
             >
-              <!-- Every row keeps the one box every list in the app keeps for a mark,
-                   so every name starts at the same place, and what is in the box says
-                   what the row is: the mark a file wears in the file list, the one a
-                   tab wears in the strip, a chevron for a command - the `>` the field
-                   narrows to them with - or the tick of one that is on, the drawing a
-                   pane wears in the settings, the site's mark for the web. See FileMark. -->
               {#if row.kind === 'command'}
                 {#if row.command.checked}
                   <span class="mark tick">✓</span>
@@ -763,9 +623,6 @@
           </li>
         {/each}
       </ul>
-      <!-- Typed into and nothing answered. The same words the find sheet says,
-           since it is the same question; see PromptSheet.svelte. A `#` on a note
-           with no headings says what the outline says about it. -->
     {:else if mode === 'headings' && !headings.length}
       <p class="nothing">{t('No headings in this note')}</p>
     {:else if term}
@@ -775,16 +632,10 @@
 {/if}
 
 <style>
-  /* The layer behind it; see .nib-scrim in packages/themes. */
   .scrim {
     --scrim-z: var(--z-screen);
   }
 
-  /* The shape is `.nib-screen` in the themes package - the surface, the corner,
-     the hairline and the shadow anything that replaces part of the screen wears,
-     and the centring the four of them had a copy of each, and how far down it
-     hangs and how tall it may get. What is its own is the list's width of the
-     scale, and the list giving way when the window or that height runs out. */
   .palette {
     --screen-width: var(--screen-list);
 
@@ -794,12 +645,6 @@
     overflow: hidden;
   }
 
-  /* The hairline under the box is the box's border, so the one answer a box with
-     a caret in it gives - the border turns to the accent - is already the right
-     one here and is drawn in the themes package. It used to take the ring off and
-     put nothing in its place. The box is the row around the words, which wears
-     `.nib-field` for the word a touch screen puts beside them, and keeps the one
-     line it always had rather than that class's frame. */
   .field {
     min-height: 0;
     padding: 0;
@@ -832,10 +677,6 @@
     color: var(--muted);
   }
 
-  /* As tall as the layer leaves it, under the one cap `.nib-screen` puts on every
-     layer of its kind, and cut between two rows where it has to be (#775); see
-     whole-rows.ts. It had a cap of its own as well, 46vh, from before there was one
-     rule, and the two of them fell a few pixels apart from the rows. */
   ul {
     box-sizing: border-box;
     min-height: 0;
@@ -845,15 +686,10 @@
     overflow-y: auto;
   }
 
-  /* The rows are `.nib-row`, the same row the file list is made of - the one the
-     arrow keys walk carries the same fill an open note does. */
   button.dim {
     opacity: 0.45;
   }
 
-  /* The box FileMark draws every file's mark in, for the marks that are not a
-     file's: the same size and the same hairline, so a list of every kind at once
-     reads as one list. See FileMark.svelte. */
   .mark {
     display: grid;
     place-items: center;
@@ -871,38 +707,26 @@
     opacity: 0.8;
   }
 
-  /* The panel's and the settings' own drawings, on their own grids, at the weight
-     the file marks are drawn at. */
   svg.drawn {
     stroke-width: 1.2;
     opacity: 0.8;
   }
 
-  /* The tick the menu rows carry, in the mark's box. A whole em wide: U+2713 is
-     drawn by whatever font has it, and on a page whose lang is Japanese that is a
-     CJK face, where every glyph is full width. Nine tenths of an em cut two pixels
-     off the tick's right arm, which is what scripts/locale-e2e.py reported under
-     `ja`. */
   .tick {
     min-width: 1em;
     color: var(--accent);
     stroke: none;
   }
 
-  /* A heading sits under the one it belongs to, as it does in the outline. */
   .nib-row-label {
     padding-inline-start: calc(var(--depth) * var(--space-3));
   }
 
-  /* The letters the words were found at, drawn stronger: what the eye checks a row
-     against. */
   .nib-row-label b {
     color: var(--text-strong);
     font-weight: var(--weight-strong);
   }
 
-  /* Quieter than the name, and the first thing to give way: a long path loses its
-     end before the name loses any of it. */
   .where,
   .value {
     min-width: 0;
@@ -914,13 +738,10 @@
     white-space: nowrap;
   }
 
-  /* What a setting is set to sits where a command's key does, at the far end. */
   .value {
     margin-inline-start: auto;
   }
 
-  /* The settings' own switch, drawn by the themes package, a size down to sit in a
-     row and at the far end of it. */
   .flip {
     display: flex;
     flex: none;
@@ -944,8 +765,6 @@
     letter-spacing: 0.02em;
   }
 
-  /* No taller than what the keys leave, the rows giving up the rest: the list ran on
-     under the keyboard, and the last commands in it could not be scrolled to. */
   :global([data-touch]) .palette {
     top: 0;
     left: 0;
@@ -956,16 +775,12 @@
     padding-top: var(--inset-top);
   }
 
-  /* The rows are a list like any other and take the row scale with every other
-     list; the field over them is the one thing here that does not. */
   :global([data-touch]) .field input {
     min-height: var(--touch-row);
     padding: 0 var(--touch-pad);
     font-size: var(--touch-text);
   }
 
-  /* Room for more of them, now that each is taller, and the last one clears the
-     gesture bar. */
   :global([data-touch]) ul {
     max-height: 60dvh;
     padding-bottom: var(--touch-bottom);

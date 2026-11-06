@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** Finding a word on a plane.
-   *
-   *  A canvas has no scrollbar to look down, so the only way to find something on
-   *  a big one is to be taken to it. Type, and the list underneath is what holds
-   *  the word; choose one and the plane goes there.
-   *
-   *  The editor's own find bar's shape, docked at the top of the pane, because it
-   *  is the same question asked of a different surface. */
-
   import type { Canvas } from './canvas/format'
   import { matches } from './canvas/find'
   import { t } from './i18n.svelte'
@@ -29,14 +20,12 @@
 
   const found = $derived(matches(canvas, term))
 
-  /** Reads a value for its own sake, so the effect around it follows it. */
   const follows = (_value: unknown) => undefined
 
   $effect(() => {
     field?.focus()
   })
 
-  // A new search starts at the top of its own answers.
   $effect(() => {
     follows(found.length)
     at = 0
@@ -130,10 +119,6 @@
     gap: 2px;
   }
 
-  /* A hairline that is there and is not seen until the keyboard lands in it,
-     which is what turns into the accent: the box had no border at all and took
-     the ring off itself, so there was nothing at all to find it by. The width is
-     the box's, so nothing moves when the colour arrives. */
   input {
     width: 180px;
     padding: 2px 6px;
@@ -168,7 +153,6 @@
     stroke-linejoin: round;
   }
 
-  /* What was found, under the field it was found with. */
   .hits {
     position: absolute;
     right: var(--space-3);

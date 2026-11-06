@@ -1,14 +1,4 @@
 <script lang="ts">
-  /** One kind a new tab can be, as a card: its mark drawn large, its name under it and
-   *  its letter in the corner.
-   *
-   *  Two places draw the kinds at this size - a pane with nothing open, and a new tab
-   *  under its address field - and they are one view of one card, so the two cannot
-   *  drift into two designs of the same choice. See NewHere.svelte; what the kinds are
-   *  is new-kinds.ts.
-   *
-   *  Everything a button takes is handed straight on, so the place that draws it says
-   *  what a press does and where the keyboard is. */
   import type { HTMLButtonAttributes } from 'svelte/elements'
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -25,17 +15,11 @@
     ...rest
   }: {
     one: NewKindRow
-    /** The key that picks it, drawn quietly in the corner. */
     letter?: string
-    /** Where it stands in a row that rises one card after another, for the few
-     *  milliseconds the next one waits. Absent for a card that arrives with whatever
-     *  holds it. */
     rise?: number
   } & HTMLButtonAttributes = $props()
 </script>
 
-<!-- Each rises a moment after the one before it where its place is given, and none of
-     it moves at all for somebody who has asked their system for less; see motion.ts. -->
 <button
   type="button"
   class="kind"
@@ -47,9 +31,6 @@
     easing: cubicOut,
   }}
 >
-  <!-- The kind's own mark, drawn large: nothing here chose an icon, so the mark is the
-       fallback, which is what every list that shows a kind does. See Icon.svelte and
-       FileMark.svelte. -->
   <span class="mark" aria-hidden="true"
     ><Icon icon={null} fallback={one.icon ?? MARKS[one.mark]} /></span
   >
@@ -57,11 +38,6 @@
   {#if letter}
     <kbd aria-hidden="true">{letter.toUpperCase()}</kbd>
   {/if}
-  <!-- The way to the kind's other forms, where it has any: a terminal's other shells.
-       Part of the card rather than a button of its own, so the cards stay one stop each;
-       the place that draws the card tells a press on it apart. See `showOthers` in
-       new-kinds.ts. Lucide's chevron, the one the find bar draws, so the card's two
-       drawings come out of one set. -->
   {#if one.others}
     <span class="more" data-more aria-hidden="true"
       ><span class="chevron"><Icon icon={null} fallback={ChevronDown} /></span></span
@@ -70,11 +46,6 @@
 </button>
 
 <style>
-  /* A card rather than a row: the kind is chosen with nothing else to look at, so it
-     is drawn at the size that says so. As tall as what is in it and no taller, with the
-     same room above the mark as under the name, so a row of them reads as a row of keys
-     however many kinds there are. The hairline is the app's own, and the corner is the
-     one a card wears in the theme store. */
   .kind {
     position: relative;
     display: flex;
@@ -100,17 +71,11 @@
       color var(--dur-fast) var(--ease-out);
   }
 
-  /* The row's label for its one line and the ellipsis a long language needs, but not
-     for its reach: in a row it takes the room the mark leaves, and in a column that
-     room is the card's height, which stood the name at the top of an empty box. */
   .kind .nib-row-label {
     flex: initial;
     max-width: 100%;
   }
 
-  /* Lit under the pointer, in colour only: the border stays one hairline and nothing
-     moves, so the card that lights is the same card in the same place. The ring a key
-     leaves is the app's own, drawn inside over the hairline. */
   @media (hover: hover) {
     .kind:hover {
       background: var(--surface-hover);
@@ -123,9 +88,6 @@
     background: var(--surface-press);
   }
 
-  /* Twice the size the file list draws it at, and the same stroke: the mark is what
-     says which kind this is before the word under it is read. `font-size` as well as
-     the box, because an emoji is type; see Icon.svelte. */
   .mark {
     display: block;
     flex: none;
@@ -148,10 +110,6 @@
     color: var(--accent);
   }
 
-  /* In the corner, in the type a key beside a command wears in the palette: there for
-     the hand that wants it and quiet for everybody else. As far in from the top as from
-     the side, which is the card's own padding at the side, so the letter sits on the
-     same line the name gives way at. */
   kbd {
     position: absolute;
     top: var(--space-3);
@@ -172,16 +130,6 @@
     color: var(--muted-strong);
   }
 
-  /* The letter's corner turned over: centred on the letter's own column, as far up from
-     the bottom as the letter is down from the top, in the letter's quiet colour. The
-     letter's box is one character of its type, so `ch` and `em` are read in that type
-     here too and the two stay one column in any theme's font. A target of its own for
-     the pointer, a little larger than the chevron.
-
-     Under the pointer in colour only, as the card itself is. It used to light a square
-     of its own four pixels from the edge, which the corner has no room for: it sat
-     against the hairline and the keyboard's ring, out of line with the letter
-     (issue #244). */
   .more {
     --target: calc(var(--icon-sm) + var(--space-2));
     position: absolute;
@@ -195,7 +143,6 @@
     font-size: var(--text-xs);
     color: var(--muted);
     stroke: currentColor;
-    /* The find bar's chevron's weight at this size, which is the letter's stroke. */
     stroke-width: 2.2;
     transition: color var(--dur-fast) var(--ease-out);
   }
@@ -207,8 +154,6 @@
     transition: translate var(--dur-fast) var(--ease-out);
   }
 
-  /* The accent says what a press here does: it leaves the kind's mark for the chevron,
-     so the card is not promising the usual shell while the pointer is on the others. */
   @media (hover: hover) {
     .more:hover {
       color: var(--accent);
@@ -219,8 +164,6 @@
     }
   }
 
-  /* Pressed, it drops a pixel towards the list it opens, and the card is not pressed
-     with it: the card's own press makes the usual one. */
   .more:active .chevron {
     translate: 0 1px;
   }
@@ -229,9 +172,6 @@
     background: var(--surface-hover);
   }
 
-  /* Stacked under a thumb, as the rows every other list is made of there: the mark
-     in front of the name at the size a thumb's row draws it, and the name from the
-     start of the line. */
   :global([data-touch]) .kind {
     flex-direction: row;
     justify-content: flex-start;
@@ -249,7 +189,6 @@
     font-size: var(--touch-icon);
   }
 
-  /* No keys under a thumb, and the chevron at the end of the line. */
   :global([data-touch]) kbd {
     display: none;
   }

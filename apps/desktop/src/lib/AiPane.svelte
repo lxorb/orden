@@ -1,29 +1,4 @@
 <script lang="ts">
-  /** Settings > AI: the providers and their accounts, where the keys are, the plans, and
-   *  which provider each feature asks.
-   *
-   *  Each account (two Claude Code sign-ins, a work key and one's own) is a card of its
-   *  own under its provider's name, and where a provider has several one of them is in
-   *  use: the rest wait to be switched to, here or from the palette. See ai/accounts.ts.
-   *
-   *  Its own component rather than rows in the panel's table, because a provider is
-   *  not a setting: it is two or three fields, a list fetched from a server, and one
-   *  sentence about where its key went. Six kinds and a list of them; see
-   *  ai/providers.ts.
-   *
-   *  The models are asked for rather than listed here. A table of model names in the
-   *  source is wrong by the time anybody reads it, and a model running on this
-   *  machine has a name only this machine knows. Claude Code and Codex take a name
-   *  typed, or none for the one the reader chose in the program.
-   *
-   *  A plan is the reader's own, so its row says whose and which (Max, ChatGPT) as the
-   *  program or OpenAI says it, and a sign-in happens where the plan's maker has it
-   *  happen: in the program's own login, in a terminal tab (ai/local/signin.ts), or in
-   *  the browser for ChatGPT. Nothing here reads a token or a program's files.
-   *
-   *  The one thing this pane is careful about is saying where a key is: an operating
-   *  system's own store on a desktop or a phone, and the browser's storage in a tab,
-   *  which is not the same thing and is not pretended to be. See ai/keys.ts. */
   import { onMount } from 'svelte'
   import { slide } from 'svelte/transition'
   import { accountName, vendorName } from './ai/account-words'
@@ -55,34 +30,19 @@
   import { canDictate, type Engine, engines } from './dictation/engines.svelte'
   import { local } from './dictation/local.svelte'
 
-  /** Which providers have a key on this device, by id. Asked once per provider and
-   *  again whenever one is typed: the store itself never holds a key, so "set" is a
-   *  question for the device and not for the list. */
   let keyed = $state<Record<string, boolean>>({})
-  /** The models each provider answered with, by id. */
   let models = $state<Record<string, string[]>>({})
-  /** Which provider is being asked for its models, so its row can say so. */
   let asking = $state('')
-  /** What went wrong, by provider, in that provider's own words. */
   let trouble = $state<Record<string, string>>({})
-  /** What a base URL looks like, as the address Ollama answers on. An address and
-   *  not a sentence, so it is the same in every language; named here rather than
-   *  written into the field, because a placeholder written there reads as prose
-   *  nobody translated. */
   const EXAMPLE_URL = 'http://localhost:11434'
 
-  /** The word a provider wears: Claude, OpenAI, or a compatible server's name. */
   const named = (vendor: string) => vendorName(vendor, ai.accounts)
 
-  /** Whether a provider's key is on this device, or, for ChatGPT, whether somebody is
-   *  signed in: the two are the same question to a request. */
   const ready = (provider: Provider) =>
     provider.kind === 'chatgpt'
       ? !__EVEN_PLUGIN__ && !!plans.chatgpt
       : (keyed[provider.id] ?? false)
 
-  /** Which kinds can still be added: as many keys and servers as the reader has, and a
-   *  kind that is one per installation once. */
   const addable = $derived(
     offeredKinds(isDesktop, __CLAUDE_CODE__).filter(
       (kind) => repeatable(kind) || !ai.accounts.some((one) => one.kind === kind),
@@ -90,15 +50,10 @@
   )
 
   onMount(() => {
-    // Asked as the pane opens and not from an effect: each question writes where the
-    // plan stands, and an effect that read that back would ask again for ever.
     for (const account of ai.accounts) void ask(account)
   })
 
-  /** Where an account's plan stands, asked of whoever knows: the program, in the
-   *  account's own home, or the crate. */
   async function ask(account: Provider) {
-    // The plugin offers neither (see `offeredKinds`), and leaves out what asks them.
     if (__EVEN_PLUGIN__) return
     const { kind } = account
     if (isLocal(kind)) await plans.check({ id: account.id, kind })
@@ -106,8 +61,6 @@
   }
 
   $effect(() => {
-    // Every keyed provider in the list, asked whether this device holds its key. Reruns
-    // when the list changes, which is what makes a new row say "not set" at once.
     for (const account of ai.accounts) {
       if (!isLocal(account.kind) && account.kind !== 'chatgpt') void look(account.id)
     }
@@ -115,7 +68,6 @@
 
   async function look(id: string) {
     const found = await hasKey(id).catch((error: unknown) => {
-      // A phone that would not say its word yet: not "not set", but asked again.
       if (error instanceof NoWord) void wordSaid().then(() => look(id))
       return error instanceof NoWord ? undefined : false
     })
@@ -143,8 +95,6 @@
     await look(provider.id)
   }
 
-  /** Asks a provider what it has. The one network call this pane makes on purpose:
-   *  a list of models is the first thing that tells somebody their key works. */
   async function refresh(provider: Provider) {
     if (!reachable(provider, ready(provider))) return
 
@@ -154,9 +104,6 @@
     try {
       const found = await listModels(provider)
       models = { ...models, [provider.id]: found }
-      // One where nothing has been chosen, so a provider that has just been given a key
-      // is usable without a second decision: one that can use tools, never merely the
-      // first by name (#325).
       const first = firstModel(provider.kind, found)
       if (!provider.model && first) ai.update(provider.id, { model: first })
     } catch (error) {
@@ -166,24 +113,18 @@
     }
   }
 
-  /** Where a plan's rows say what went wrong: under this provider's card. */
   const said = (provider: Provider) => (text: string) => {
     trouble = { ...trouble, [provider.id]: text }
   }
 
   function add(kind: ProviderKind) {
     const made = ai.add(kind)
-    // Asked once it is written: the crate finds a second sign-in's home in the file.
     void ai.written().then(() => ask(made))
   }
 
-  /** An account taken away, with what it keeps on this device: a key, or a second
-   *  sign-in's home, which its program signs out of first. The reader's own sign-in to a
-   *  program is theirs and stays. */
   function forget(provider: Account) {
     const { kind } = provider
     if (!isLocal(kind) && kind !== 'chatgpt') void drop(provider)
-    // The glasses' plugin has no programs, and leaves out what asks them.
     if (!__EVEN_PLUGIN__ && isLocal(kind) && provider.own) {
       void invoke('ai_cli_forget', { tool: kind, account: provider.id }).catch((error: unknown) => {
         trouble = { ...trouble, [provider.id]: message(error, t('Could not sign out.')) }
@@ -192,8 +133,6 @@
     ai.remove(provider.id)
   }
 
-  /** An allowed device let go of, after one question: the vault's key changes under it,
-   *  so it can read nothing written after (#389); see `remove` in ai/vault/vault.svelte.ts. */
   async function removeDevice(id: string, name: string) {
     const { prompt } = await import('./prompt.svelte')
     const sure = await prompt.confirm({
@@ -205,7 +144,6 @@
     if (sure) await vault.remove(id).catch(() => false)
   }
 
-  /** What a dictation road is called in its list. */
   function engineName(engine: Engine): string {
     if (engine === 'auto') return t('Auto')
     if (engine === 'local') return t('This computer')
@@ -214,8 +152,6 @@
     return ai.transcriber?.name ?? ''
   }
 
-  /** What an account is called: the name the reader gave it, else whose sign-in it is as
-   *  its program says, else its road. */
   function labelOf(provider: Account): string {
     if (provider.name) return provider.name
     const email = !__EVEN_PLUGIN__ && isLocal(provider.kind) ? plans.of(provider.id).account : null
@@ -223,7 +159,6 @@
   }
 </script>
 
-<!-- Whether a block and a rewrite ask this provider without being told. -->
 {#snippet defaulting(vendor: string)}
   {#if ai.defaultVendor === vendor}
     <span class="hint">{t('Default')}</span>
@@ -234,8 +169,6 @@
 
 <h3>{t('Accounts')}</h3>
 
-<!-- A browser keeps its keys in the vault only once the reader says so, with what that
-     costs said beside the switch. See browserVault in ai/vault/start.svelte.ts. -->
 {#if !keysAreGuarded()}
   <div class="card">
     <div
@@ -268,12 +201,6 @@
   </p>
 {/if}
 
-<!-- This device waiting for another of the reader's devices to give it the accounts: the
-     six digits the other shows too, once it has answered. Or on an account with none left
-     that could: the way to start again from here, which the account takes only then. See
-     ai/vault/vault.svelte.ts. -->
-<!-- Offered the vault by another device: the reader's yes, here, is what opens it and puts
-     this device's keys in; see `join` in ai/vault/vault.svelte.ts. -->
 {#if vault.standing === 'offered'}
   <div class="card" transition:slide={{ duration: dur(160) }}>
     <div class="nib-setting setting">
@@ -305,9 +232,6 @@
   </div>
 {/if}
 
-<!-- The devices that hold the vault's key, each of which can be let go of; see
-     `removeDevice`. Only where this device is one of them: it is the one that changes the
-     key for the others. -->
 {#if vault.standing === 'open' && vault.allowed.length}
   <h3>{t('Devices with your AI vault')}</h3>
   {#each vault.allowed as one (one.id)}
@@ -328,8 +252,6 @@
 {#if ai.accounts.length}
   {#each ai.vendors as vendor (vendor)}
     {@const mine = ai.accountsOf(vendor)}
-    <!-- A provider's name and whether a block asks it without being told, over a card for
-         each of its accounts; where it has several, one of them answers. -->
     <div class="nib-setting setting" data-vendor={vendor} transition:slide={{ duration: dur(160) }}>
       <span class="name strong"
         >{#if mine[0]}<ProviderMark account={mine[0]} />{/if}{named(vendor)}</span
@@ -402,17 +324,12 @@
           </label>
         {/if}
 
-        <!-- A plan's rows, which only a desktop offers; the plugin leaves them out whole.
-             The two kinds by name rather than `isLocal`: a call in a condition makes it a
-             derived the build cannot see through, and PlanRows would ship after all. -->
         {#if !__EVEN_PLUGIN__ && (provider.kind === 'claude-code' || provider.kind === 'codex')}
           <PlanRows {provider} kind={provider.kind} {refresh} trouble={said(provider)} />
         {:else}
           {#if !__EVEN_PLUGIN__ && provider.kind === 'chatgpt'}
             <PlanRows {provider} kind="chatgpt" {refresh} trouble={said(provider)} />
           {:else}
-            <!-- The key. Shown as set and never shown again: a field that hands a key back
-                 is a field that can copy one out of somebody else's window. -->
             <div class="nib-setting setting">
               <span class="name">{t('API key')}</span>
               {#if keyed[provider.id]}
@@ -468,7 +385,6 @@
         {/if}
 
         {#if !__EVEN_PLUGIN__ && provider.kind === 'chatgpt' && plans.chatgpt}
-          <!-- OpenAI's own words for it, beside the model it is spent on. -->
           <p class="hint">{t('Using ChatGPT plan')}</p>
         {/if}
         {#if trouble[provider.id]}
@@ -481,8 +397,6 @@
   <p class="hint">{t('No providers yet.')}</p>
 {/if}
 
-<!-- Adding one. The plans first on a desktop, then the three keyed kinds; the one that
-     can be added more than once stays here after the others have gone. -->
 <div class="card">
   {#each addable as kind (kind)}
     <button class="nib-action adding" onclick={() => add(kind)}>
@@ -492,7 +406,6 @@
   {/each}
 </div>
 
-<!-- Which provider each feature asks, once there is more than one to choose from. -->
 {#if ai.vendors.length > 1}
   <h3 transition:slide={{ duration: dur(160) }}>{t('Used for')}</h3>
   <div class="card" transition:slide={{ duration: dur(160) }}>
@@ -522,8 +435,6 @@
   </div>
 {/if}
 
-<!-- Where dictation's sound goes (#1128): chosen on this device, and until it is, asked
-     on the first press. And the model this computer hears with, where it can (#1151). -->
 {#if canDictate()}
   <h3>{t('Dictation')}</h3>
   <div class="card">
@@ -589,17 +500,12 @@
   </div>
 {/if}
 
-<!-- What a task done with AI may do and is asked (#325): in a file of its own, so the
-     glasses, which have no AI panel, carry none of it. -->
 {#if !__EVEN_PLUGIN__}
   {#await import('./ai/DoWithAiCard.svelte') then card}
     <card.default />
   {/await}
 {/if}
 
-<!-- The two things worth a sentence: where a key goes, and that an answer can be
-     wrong. The second is Anthropic's condition for Claude Code inside Orden, and true of
-     every provider; see docs/ai.md, Your own plan. -->
 <p class="hint caption">
   {#if vault.standing === 'open'}
     {t('On every device you sign in to, end-to-end encrypted.')}
@@ -611,9 +517,6 @@
 </p>
 <p class="hint caption">{t('AI can be wrong. Check the facts.')}</p>
 
-<!-- The account's own key, which is a different key for a different thing. Read
-     only here: it is set in Glasses, and it is never shown again anywhere. See
-     even/key.svelte.ts. -->
 {#if glassesKey.set}
   <h3>{t('OpenAI key')}</h3>
   <div class="card">
@@ -626,10 +529,6 @@
 {/if}
 
 <style>
-  /* The settings pane's own shapes. A section in its own component does not inherit
-     the panel's styles - those are scoped to it - so the ones this pane uses are
-     here with the panel's values, the way AccountSteps and SyncPane carry theirs. See
-     SettingsPanel.svelte. */
   h3 {
     margin: var(--space-3) 0 calc(-1 * var(--space-2));
     font-family: var(--font-ui);
@@ -643,14 +542,11 @@
     margin-top: 0;
   }
 
-  /* A run of rows. Plain on a desktop; a phone draws the box around it. */
   .card {
     display: flex;
     flex-direction: column;
     width: 100%;
   }
-
-  /* Name on the left, control on the right, one line each. */
 
   .setting .name {
     flex: 1;
@@ -659,7 +555,6 @@
     white-space: nowrap;
   }
 
-  /* What may be done about a row, at the end of it. */
   .row {
     flex: none;
     display: flex;
@@ -682,7 +577,6 @@
     padding: 0 2px;
   }
 
-  /* A provider's name over its accounts' cards, and each account's name atop its own. */
   .strong {
     font-weight: 600;
   }
@@ -699,7 +593,6 @@
     color: var(--accent);
   }
 
-  /* The code both screens show, in figures of one width. */
   .digits {
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.04em;
@@ -720,8 +613,6 @@
     border-color: var(--accent);
   }
 
-  /* A phone draws the box, the touch rows and the hairlines. The sheet is the
-     panel's, so that half of the selector is global. */
   :global(.sheet.phone) .card {
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);

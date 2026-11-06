@@ -1,20 +1,4 @@
 <script lang="ts">
-  /** The rows that bring notes over from another app, each into a space of its own:
-   *  Settings' Import pane.
-   *
-   *  The iPhone's "Transfer Your Apps & Data": a row per place the notes could come
-   *  from and nothing to read. Obsidian and Notion by name, because they are where
-   *  most people arrive from; everything else is one row, since the import tells an
-   *  `.enex` from a Logseq graph by itself (docs/import.md, "Nobody picks a format").
-   *  Each row wears its app's or its browser's logo in front of its name, Simple Icons'
-   *  drawing of it, and a folder for everything else (#1057); its button is the row's
-   *  `.nib-chip`, the one every row in Settings answers with.
-   *
-   *  Obsidian on a desktop opens on the vaults Obsidian lists, the way Arc opens on
-   *  the browsers it found; see migrating.svelte.ts. Zen, the browser, the same way
-   *  with its profiles, where it keeps more than one. And a row for every other
-   *  browser this desktop has a profile of - Firefox, Chrome, Edge, Brave, Chromium,
-   *  Vivaldi - asked as the rows are drawn, so a browser that is not there has no row. */
   import { untrack } from 'svelte'
   import FolderOpen from 'lucide/dist/esm/icons/folder-open.mjs'
   import Globe from 'lucide/dist/esm/icons/globe.mjs'
@@ -26,21 +10,14 @@
   import { takingOver } from './web/taking-over.svelte'
   import { isDesktop, isMobile } from './tauri'
 
-  /** A phone hands over files one at a time and never a folder; see
-   *  import/picking.ts. So there, a vault or a graph arrives as a zip, through
-   *  the row that takes files. */
   const folders = !isMobile
 
-  /** Zen's profiles are on this machine's disk, which only the desktop reads. */
   const zen = isDesktop
 
-  /** An app's name is its name in every language, as in the import sheet. */
   const OBSIDIAN = 'Obsidian'
   const NOTION = 'Notion'
   const ZEN = 'Zen'
 
-  /** Each browser's logo by its Simple Icons slug. Chromium has none there and wears
-   *  the globe a browser without a logo wears. */
   const BROWSER_LOGOS: Record<BrowserId, string | null> = {
     safari: 'safari',
     firefox: 'firefox',
@@ -54,7 +31,6 @@
     arc: 'arc',
   }
 
-  /** What the browser profile list is a list of: the browser of its first profile. */
   const listed = $derived(migrating.browserProfiles?.[0]?.browser ?? null)
 
   $effect(() => untrack(() => void migrating.findBrowsers()))
@@ -160,9 +136,6 @@
     </button>
   </div>
 {:else}
-  <!-- At the browser build's new address the old address comes first of all, because
-       that is where somebody who wrote in a browser left their notes; see
-       web/taking-over.svelte.ts. -->
   {#if takingOver.offered}
     <div class="nib-setting">
       {@render mark(null, Globe)}
@@ -280,10 +253,6 @@
 {/snippet}
 
 <style>
-  /* The row is `.nib-setting`, its mark `.nib-setting-mark` and its buttons
-     `.nib-chip`, all in the themes package; what is left is that a name too long
-     for the row is cut rather than wrapped, since a vault's or a profile's name is
-     a label and its path is in its tooltip. */
   .name {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -297,7 +266,6 @@
     font-size: var(--touch-text);
   }
 
-  /* What the old address answered, where its button was: the row's value. */
   .value {
     flex: none;
     color: var(--muted);

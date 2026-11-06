@@ -1,6 +1,4 @@
 <script lang="ts">
-  /** The first page of a PDF file card on a canvas. The shared paper cache draws it
-   *  once per PDF and lets the thumbnail go when nobody has it mounted. */
   import { paperOf } from './pages/paper'
   import FileMark from './FileMark.svelte'
 

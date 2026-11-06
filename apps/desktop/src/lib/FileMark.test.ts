@@ -1,17 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import { render } from 'svelte/server'
 
-/** The mark a row wears, drawn rather than described.
- *
- *  file-mark.test.ts holds the set together - every kind has a drawing, no two are
- *  the same picture. What is left is the one thing only rendering can show: that a
- *  row which chose an icon of its own wears that instead of its kind's, and that a
- *  canvas and a folder with no note in it get this for nothing, because the
- *  component reads the icon off the path rather than being handed one.
- *
- *  Where the icon is kept is three different stores; that is chosen-icon.ts's to
- *  know and this component's not to, so the reader is stood in for here. */
-
 const chosen: Record<string, string | null> = {}
 const tints: Record<string, string | null> = {}
 const papers = new Set<string>()
@@ -21,8 +10,6 @@ vi.mock('./chosen-icon', () => ({
   chosenIcon: (path: string) => chosen[path] ?? null,
   chosenTint: (path: string) => tints[path] ?? null,
   faviconFor: () => null,
-  // The rule as chosen-icon.ts has it, over the papers here; chosen-icon.test.ts holds
-  // the real one to it.
   sourceMark: (mark: string, path: string | undefined, url?: string) => ({
     mark: mark === 'pages' && path !== undefined && papers.has(path) ? 'pdf' : mark,
     icon: mark === 'web' && url ? (brands[url] ?? null) : null,
@@ -35,13 +22,8 @@ const { MARKS } = await import('./file-mark')
 type Mark = keyof typeof MARKS
 const FileMark = (await import('./FileMark.svelte')).default
 
-/** The stroked set, in place before anything is drawn. In the app it arrives a moment
- *  after the first paint and the rows redraw themselves; there is no moment to wait
- *  for here, and what the fallback looks like is the test below it. */
 iconLibrary.set = await loadIcons()
 
-/** The `d` of every stroke an icon is made of, which is what tells two drawings
- *  apart in the markup. */
 function strokes(icon: readonly (readonly [string, Record<string, unknown>])[]): string[] {
   return icon.flatMap(([, attrs]) => (typeof attrs.d === 'string' ? [attrs.d] : []))
 }
@@ -61,9 +43,6 @@ describe('a row that chose an icon of its own', () => {
     expect(body).not.toContain(strokes(MARKS.note)[0])
   })
 
-  /** A folder out of somebody's vault, whose icon the space's own map holds
-   *  because there is no note in it to keep one: the row is the plain page, and
-   *  the same one reader answers for it as for a note. See chosen-icon.ts. */
   test('a folder with no note of its own wears it in place of the plain page', () => {
     chosen.Work = 'rocket'
     const body = drawn('file', 'Work')
@@ -80,9 +59,6 @@ describe('a row that chose an icon of its own', () => {
     expect(body).not.toContain(strokes(MARKS.canvas)[0])
   })
 
-  /** Orden writes Lucide's plain name; a vault out of Obsidian's Iconize writes a
-   *  prefix per pack. Both reach the same drawing, for a canvas and a folder's map
-   *  entry as much as for a note. */
   test('however the name was spelled in the file or the map', () => {
     chosen.Work = 'LiRocket'
     chosen['Board.canvas'] = 'Rocket'
@@ -93,8 +69,6 @@ describe('a row that chose an icon of its own', () => {
     }
   })
 
-  /** An emoji is a character rather than a drawing, so it is set in the same box
-   *  instead of being stroked - and that is the same for all three kinds. */
   test('or is an emoji, set in the same box instead of stroked', () => {
     chosen.Work = '🚀'
     chosen['Board.canvas'] = '🚀'
@@ -113,7 +87,6 @@ describe('an icon with a colour on it', () => {
     tints.Work = 'violet'
     const body = drawn('file', 'Work')
 
-    // The accent's own shade for this scheme; see accents.ts.
     expect(body).toMatch(/style="[^"]*color:/)
     tints.Work = null
   })
@@ -125,8 +98,6 @@ describe('an icon with a colour on it', () => {
     tints.Work = null
   })
 
-  /** A picture is already a picture in its own colours, and painting over one would
-   *  be painting over somebody's drawing. */
   test('an emoji takes none', () => {
     chosen.Work = '🚀'
     tints.Work = 'violet'
@@ -135,8 +106,6 @@ describe('an icon with a colour on it', () => {
   })
 })
 
-/** An emoji in one colour (#1097): drawn in the text's colour, so it takes a tint as a
- *  line does, and is held back as a line is; a logo in one colour keeps its own. */
 describe('an emoji s outline', () => {
   const outline = '<path fill="currentColor" d="M1 1h30v30H1z"/>'
   const one = (body: string) => ({
@@ -183,8 +152,6 @@ describe('a row that chose nothing', () => {
     for (const stroke of strokes(MARKS.file)) expect(body).toContain(stroke)
   })
 
-  /** A name from a pack this build has never heard of, or a word somebody typed
-   *  into the front matter by hand. The row is never a blank space. */
   test('and so does a row whose icon the set does not hold', () => {
     chosen.Work = 'not-an-icon-anybody-drew'
     const body = drawn('file', 'Work')
@@ -193,8 +160,6 @@ describe('a row that chose nothing', () => {
   })
 })
 
-/** #676: a page note made from a PDF wears the PDF's mark, which is what the reader
- *  brought in; one started blank wears the page note's. */
 describe('a page note', () => {
   test('made from a PDF wears the PDF mark', () => {
     papers.add('Lecture.pages')
@@ -220,8 +185,6 @@ describe('a page note', () => {
   })
 })
 
-/** #1082: a website whose favicon has not come wears its brand's logo, by its address,
- *  rather than the plain globe; one with no brand still wears the globe. */
 describe('a website with no favicon', () => {
   const logo = '<path fill="currentColor" d="M3 3h18v18H3z"/>'
   iconLibrary.loaded = {

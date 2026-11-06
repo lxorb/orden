@@ -1,24 +1,4 @@
 <script lang="ts">
-  /** What syncing is doing, and the two decisions it needs.
-   *
-   *  Three things, in the order somebody asks for them. What happens when the
-   *  same note was written in two places, which is the one real choice; whatever
-   *  is waiting for an answer, which is the only thing here that is urgent; and
-   *  what the last few passes did, which is what somebody reads when syncing
-   *  looks stuck. Between the last two, only while there are some, the copies other
-   *  sync tools made that the account holds from before Orden left them alone.
-   *
-   *  And, at the foot, the one rescue: a space put back to how it read at a
-   *  moment. It is last because it is the thing nobody wants and somebody
-   *  occasionally needs, and it says what it would change before it changes
-   *  anything.
-   *
-   *  Sync v2 has no rule to choose (docs/sync-v2.md section 4, "What goes away"): a
-   *  note two devices rewrote asks its own question when it is on screen, so the
-   *  first section goes, what is waiting is the notes it holds, and the passes are
-   *  read from its store. Until v1 is retired, a v1 engine keeps all three as they
-   *  were. */
-
   import { fade } from 'svelte/transition'
 
   import { account } from './account.svelte'
@@ -41,23 +21,14 @@
 
   let days = $state(1)
 
-  /** How far back this account can be asked to go, in days: as far as it keeps and
-   *  no further. Setting the horizon above to a year is what puts the year in this
-   *  row; see `rollbackSteps` in modes.svelte.ts. */
   const back = $derived(rollbackSteps(modes.keepVersions))
 
-  /** Which of them is chosen. Held to the list rather than kept in step by an
-   *  effect: turning the horizon down from a year must not leave the field asking
-   *  for a year, and a derived cannot be out of date the way a written copy can. */
   const chosen = $derived(back.includes(days) ? days : (back.at(-1) ?? 1))
-  /** What the look found, and the moment it asked about: the rollback asks about the
-   *  same one, so what it puts back is what the pane said it would. */
   let asked = $state<{ notes: number; paths: string[]; more: boolean; at: number } | null>(null)
   let rolling = $state(false)
   let rolled = $state<number | null>(null)
   let wrong = $state<string | null>(null)
 
-  /** The passes as the list draws them, newest first, whichever engine ran them. */
   interface Shown {
     at: number
     space: string
@@ -67,11 +38,8 @@
     failed: string | null
   }
 
-  /** How many passes the list shows. */
   const SHOWN = 20
 
-  /** What the v2 store's log says, read when the pane opens and again after every
-   *  pass it writes. */
   let logged = $state<Shown[]>([])
 
   $effect(() => {
@@ -95,7 +63,6 @@
     }
   })
 
-  /** The store's newest passes, each named by the space the reader knows it by. */
   async function logOf(engine: Engine): Promise<Shown[]> {
     const [rows, spaces] = await engine.store.read([scan('log'), scan('spaces')])
     const nameFor = (id: string | null) => {
@@ -144,8 +111,6 @@
       const at = moment()
       const said = await api.rollback(token, spaceId, at, '', true)
       asked = {
-        // What it would change in all, which is more than one request puts back
-        // where a space is big; the pane says the number, the loop does the rest.
         notes: said.notes + (said.left ?? 0),
         paths: said.paths ?? [],
         more: said.more === true,
@@ -156,10 +121,6 @@
     }
   }
 
-  /** How many times it will ask. The server puts back four hundred notes per
-   *  request, so this is forty thousand notes, which is more than a space holds;
-   *  a ceiling all the same, because a loop that talks to a server should have
-   *  one. */
   const ROUNDS = 100
 
   async function roll() {
@@ -171,15 +132,6 @@
     rolled = 0
 
     try {
-      // Until there is nothing left. The server answers how many it wrote and
-      // whether more is waiting, because it is bounded in writes per request -
-      // and an answer of four hundred used to read as the whole space when it was
-      // the first four hundred of twelve.
-      //
-      // One moment for every round, so each asks the same question. A round that
-      // writes nothing while more is left is a note the server cannot put back
-      // (its version is gone, say): asking again would get the same answer, so
-      // the loop stops there and says how many did not go back.
       const at = asked?.at ?? moment()
       let put = 0
       let left = 0
@@ -194,7 +146,6 @@
 
       asked = left > 0 ? { notes: left, paths: [], more: false, at } : null
       if (left > 0) wrong = t('That did not work.')
-      // The notes are on the account; this is what brings them down here.
       sync.nudge()
     } catch (error) {
       wrong = error instanceof Error ? error.message : t('That did not work.')
@@ -203,8 +154,6 @@
     }
   }
 
-  /** Other sync tools' copies on the account, counted as the pane opens and when the
-   *  engine changes. */
   const copies = $derived(syncedCopies(asking.engine))
   let removing = $state(false)
   let copiesGone = $state(false)
@@ -230,9 +179,6 @@
     return path.split(/[\\/]/).slice(-2).join('/')
   }
 
-  /** How far back the account keeps a note's history. Two words rather than a
-   *  number of days: the question a reader is answering is how far back they want
-   *  to be able to go. */
   const horizons = [
     { value: String(KEEP_MONTH), label: t('A month') },
     { value: String(KEEP_YEAR), label: t('A year') },
@@ -267,9 +213,6 @@
   </p>
 {/if}
 
-<!-- How long the account keeps them. What happens in between - one an hour for
-     the first month, one a day for the next two, one a week after that - is said
-     in the line under it and in docs/sync.md. -->
 <h3>{t('History on the account')}</h3>
 
 <div class="card">
@@ -298,8 +241,6 @@
   )}
 </p>
 
-<!-- Under v2, the notes it holds: a press opens the note, and the question comes up
-     over it. -->
 {#if asking.engine && asking.held.length}
   <h3>{t('Waiting for you')}</h3>
 
@@ -335,9 +276,6 @@
   </div>
 {/if}
 
-<!-- Copies other sync tools made that the account still holds from before Orden left
-     them alone: one press takes them off it, into Recently deleted, and every file
-     stays where it is. Only while there are some. See foreign/synced.ts. -->
 {#if copies.count && !copiesGone}
   <h3 transition:fade={{ duration: dur(130) }}>{t('Conflict copies from other apps')}</h3>
 
@@ -376,7 +314,6 @@
     {/each}
   </div>
 
-  <!-- The v2 store keeps its own last thousand, so there is nothing to clear. -->
   {#if !asking.engine}
     <div class="card">
       <button class="nib-action" onclick={() => record.clear()}>{t('Clear the list')}</button>
@@ -446,10 +383,6 @@
 </div>
 
 <style>
-  /* The settings pane's own shapes. A section in its own component does not
-     inherit the panel's styles - those are scoped to it - so the ones this pane
-     uses are here with the panel's values, the way AccountSteps and RecentlyDeleted
-     carry theirs. See SettingsPanel.svelte. */
   h3 {
     margin: var(--space-3) 0 calc(-1 * var(--space-2));
     font-family: var(--font-ui);
@@ -458,22 +391,16 @@
     color: var(--muted-strong);
   }
 
-  /* The pane's first heading sits under the section's title, or at the top of
-     the sheet on a phone, where there is no title above it. The title is the
-     panel's, so that half of the selector is global. */
   h3:first-child,
   :global(h2) + h3 {
     margin-top: 0;
   }
 
-  /* A run of rows. Plain on a desktop; a phone draws the box around it. */
   .card {
     display: flex;
     flex-direction: column;
     width: 100%;
   }
-
-  /* Name on the left, control on the right, one line each. */
 
   .setting .name {
     flex: 1;
@@ -497,9 +424,6 @@
     color: var(--danger);
   }
 
-  /* A phone draws the box, the touch rows, and the hairlines between them. The
-     sheet is the panel's, so that half of the selector is global and the rows
-     are this pane's. */
   :global(.sheet.phone) .card {
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
@@ -507,8 +431,6 @@
     overflow: hidden;
   }
 
-  /* A pass sits inside the phone's box like a row, so it takes the same
-     padding: a line that runs to the edge is a line with its ends cut off. */
   :global(.sheet.phone) .pass,
   :global(.sheet.phone) .clash {
     padding: var(--space-2) var(--touch-pad);
@@ -523,9 +445,6 @@
     font-size: var(--touch-text);
   }
 
-  /* One waiting note: what it is, when it happened, and the three answers. The
-     answers are a row of their own, because on a phone three verbs do not fit
-     beside a file name. */
   .clash {
     display: flex;
     flex-wrap: wrap;
@@ -543,15 +462,12 @@
     white-space: nowrap;
   }
 
-  /* The three answers, each `.nib-chip`, the small round action at the end of a
-     row: three of them read as a choice rather than as three rows. */
   .answers {
     display: flex;
     gap: var(--space-2);
     width: 100%;
   }
 
-  /* A held note: its name, and when the other device wrote in it. */
   .held {
     gap: var(--space-3);
   }
@@ -568,8 +484,6 @@
     padding: 0 var(--touch-pad);
   }
 
-  /* One pass: when, what moved, and which space. The middle column takes the
-     room, so a failure reads as a sentence rather than as a column. */
   .pass {
     display: flex;
     align-items: baseline;

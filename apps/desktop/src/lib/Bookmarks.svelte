@@ -1,14 +1,4 @@
 <script lang="ts">
-  /** The bookmarks above the file list: notes, folders, headings and searches, in
-   *  the order they were put in and reorderable by dragging one over another.
-   *
-   *  Called Essentials on screen, Zen's word (Emil, 2026-10-13), and bookmarks in the
-   *  code and in storage, so lists kept before are read as they were. The files are a
-   *  grid of tiles, the rest rows under it; see essentials.ts.
-   *
-   *  A bookmark keeps a path the space speaks, so a note or folder that has
-   *  since been deleted simply has no row. A search points at nothing on disk
-   *  and is always there. */
   import { onMount } from 'svelte'
   import { flip } from 'svelte/animate'
   import { cubicOut } from 'svelte/easing'
@@ -43,30 +33,17 @@
 
   interface Row {
     mark: Bookmark
-    /** Where it sits in the list, which is what a drag moves. */
     at: number
-    /** How many groups deep, which is how far the row steps in. */
     depth: number
     label: string
-    /** The note a heading is in, shown muted after it. Null on every other kind. */
     note: string | null
-    /** The file the row opens, or the folder it shows. Null for a search. */
     path: string | null
-    /** The mark in front of the name, so a bookmark reads as the same kind of
-     *  thing it is in the tree below. Null for a search, which wears the
-     *  magnifier instead. */
     kind: Mark | null
     active: boolean
-    /** Whether the note's own tab in the strip is the one in front (#1110): another
-     *  state than `active`, which is the essential shown where a tab shows, and both
-     *  can hold at once. */
     front: boolean
-    /** Whether the essential's own tab was unloaded from its menu (#1127), which its
-     *  mark says the way the strip's does. */
     unloaded: boolean
   }
 
-  /** The tab an essential is open in, if it is open. */
   function essentialOf(path: string | null) {
     return path === null
       ? undefined
@@ -89,8 +66,6 @@
     return found
   })
 
-  /** One bookmark as a row, or nothing where there is nothing left to point at:
-   *  a note that has gone from the space simply has no row. */
   function rowFor(mark: Bookmark, at: number, depth: number, root: string): Row | null {
     const shared = { mark, at, depth }
 
@@ -107,8 +82,6 @@
       }
     }
 
-    // A block bookmark carries the whole of what a link into it would say, so the
-    // note is the part in front of the `#`; see forBlock in bookmarks.svelte.ts.
     const inside = mark.kind === 'block' ? (mark.path.split('#')[0] ?? '') : mark.path
     const entry = byPath.get(insideSpace(root, inside))
     if (!entry) return null
@@ -119,12 +92,7 @@
       label: named ? mark.text : rowName(entry.name, entry.is_dir),
       note: named ? rowName(entry.name, entry.is_dir) : null,
       path: entry.path,
-      // The mark the file list gives the same row: a folder that a reader
-      // bookmarked is a folder with no note of its own - one Orden nested would have
-      // been bookmarked as its note - so it wears the page with nothing written on
-      // it, quietly, exactly as it does in the tree. See file-mark.ts.
       kind: entry.is_dir ? 'file' : fileMark(entry.name),
-      // An essential is open while its own tab is in front.
       active:
         !entry.is_dir &&
         (mark.kind === 'note'
@@ -139,10 +107,6 @@
     }
   }
 
-  /** The list as it is drawn: the top of it in the order it is kept, and under
-   *  every open group the rows that say they are in it. One walk over a flat list
-   *  rather than a tree of lists, because the order of the list is the order of
-   *  the list; see bookmarks.svelte.ts. */
   const drawn = $derived.by((): Row[] => {
     const root = workspace.activeSpace?.root
     if (root === undefined) return []
@@ -166,7 +130,6 @@
     return out
   })
 
-  /** The tiles, where the grid is the look, and the rows under them. */
   const tiles = $derived(
     workspace.device.essentialTiles ? drawn.filter((row) => isTile(row.mark)) : [],
   )
@@ -174,9 +137,6 @@
     workspace.device.essentialTiles ? drawn.filter((row) => !isTile(row.mark)) : drawn,
   )
 
-  /** A tab carried out of the strip that could be a first tile, or a file carried out of
-   *  the list (#412), which the grid keeps an empty place for while there is none - for
-   *  the whole of the drag, so it is there to aim at (#417). */
   const offered = $derived.by(() => {
     if (!workspace.device.essentialTiles || !workspace.panes.dragging) return false
     if (workspace.panes.dragging.tabId === null) {
@@ -189,22 +149,16 @@
     return mark !== null && !workspace.bookmarks.has(mark)
   })
 
-  /** What a drag, a key or a drop over the tiles reckons with, fetched as the pointer,
-   *  a drag or the keyboard first comes to the bookmarks rather than in front of the
-   *  first paint; until it lands, the grid's own keys and lines wait for it. */
   const reckoning = door(() => import('./essentials.svelte'))
   let hands = $state.raw<typeof import('./essentials.svelte') | null>(null)
   const reach = () => {
     if (!hands) void reckoning().then((one) => (hands = one))
   }
-  // A drag out of the file list or the strip holds the pointer, so nothing here hears
-  // it arrive; it is asked for as the drag starts.
   $effect(() => {
     if (workspace.panes.dragging) reach()
   })
   const landing = $derived(hands?.landing ?? null)
 
-  /** Rows carried over the grid before `hands` arrived: droppable, placed once it has. */
   function early(event: DragEvent) {
     if (!isTreeDrag(event.dataTransfer)) return
     event.preventDefault()
@@ -219,16 +173,8 @@
     void reckoning().then((one) => one.keepRows(rows, at, (path) => byPath.get(path)))
   }
 
-  /** Which row is being dragged. Kept here as well as in the drag itself
-   *  because what a drag carries is sealed until it is dropped: while it is
-   *  moving, a page may ask what kinds of thing it holds and not what they
-   *  are, and the line showing where it would land has to know which way it
-   *  came from. */
   let dragging = $state<number | null>(null)
 
-  /** A row pressed: a look on one click, kept on two, and in a tab of its own with a
-   *  modifier or the middle button - which only a row naming a note has; see
-   *  new-tab.ts. */
   function open(row: Row, how: OpenHow) {
     const mark = row.mark
 
@@ -252,17 +198,12 @@
         workspace.toggleGroup(mark.path)
         break
       case 'graph':
-        // The space keeps one picture and this is a way of looking at it, so the
-        // view is written into the space's own settings and the graph is opened.
-        // Every surface that draws a graph then reads one answer, which is what
-        // it did before there were views; see workspace/graph-settings.svelte.ts.
         workspace.graphSettings.take(mark.view)
         workspace.openGraph()
         break
     }
   }
 
-  /** A plain press shows an essential in place; one asking for a tab gets one. */
   function pressed(row: Row, ask: TabAsk) {
     if (row.mark.kind === 'note' && row.path) {
       const path = row.path
@@ -275,22 +216,16 @@
     open(row, howFor(ask, { preview: true }))
   }
 
-  /** A double click keeps an essential as a tab of the strip (#1051). */
   function keepAsTab(row: Row) {
     const path = row.path
     if (path) void reckoning().then((one) => one.keepAsTab(path))
   }
 
-  /** The letters Alt goes to the essentials with, fetched once the launch has drawn
-   *  rather than in front of it, as the numbers that show them are; see
-   *  tab-strip/letters.svelte.ts. */
   let letters = $state.raw<typeof import('./tab-strip/letters.svelte') | null>(null)
   onMount(() => {
     void import('./tab-strip/letters.svelte').then((one) => (letters = one))
   })
 
-  /** The letter Alt goes to an essential with, which numbers.svelte.ts shows while Alt is
-   *  held and a screen reader says as the tile's key. */
   function letterOf(row: Row): { 'data-essential-letter'?: string; 'aria-keyshortcuts'?: string } {
     const given = letters?.essentialLetters.given
     const letter = given && row.path && isTile(row.mark) ? given[row.path] : undefined
@@ -312,9 +247,6 @@
   function over(event: DragEvent, row: Row) {
     if (!hands?.takes(event)) return
 
-    // The line marks the edge the row would arrive at, which is the near side
-    // of the target: its top when the row is coming down the list, its bottom
-    // when it is going up.
     landing?.over(row.at, dragging !== null && dragging < row.at)
   }
 
@@ -334,9 +266,6 @@
     const moving = workspace.bookmarks.list[from]
     if (!moving) return
 
-    // Onto a group is into it; anywhere else is beside the row it landed on, in
-    // whatever that row is in - so a row dropped between two rows of a group
-    // joins the group, which is what the line drawn there said it would do.
     if (row.mark.kind === 'group' && !sameBookmark(moving, row.mark)) {
       workspace.bookmarks.moveInto(moving, row.mark.path)
       workspace.openGroup(row.mark.path)
@@ -347,12 +276,8 @@
     workspace.bookmarks.move(from, row.at)
   }
 
-  /** What the menu is about, for the sheet a phone heads its menus with. */
   const titleOf = (row: Row) => (row.mark.kind === 'search' ? t('Search') : row.label)
 
-  /** What a row offers: keeping or dropping the bookmark, a new group to sort
-   *  them into, and - for a group - the two things only a group can do. Removing
-   *  a group keeps what was in it; see remove in bookmarks.svelte.ts. */
   function rowMenu(row: Row, unloading: MenuEntry[] = []): MenuEntry[] {
     const group = row.mark.kind === 'group'
 
@@ -380,9 +305,6 @@
     ]
   }
 
-  /** An essential open in a tab offers its tab's Unload too, fetched with the press
-   *  like the strip's own menu: its tab let go of, the essential kept (#1127). See
-   *  tab-strip/unloading.svelte.ts. */
   function showMenu(event: MouseEvent, row: Row) {
     const own = row.mark.kind === 'note' ? essentialOf(row.path) : undefined
     if (!own) {
@@ -416,9 +338,6 @@
 </script>
 
 {#if drawn.length || offered}
-  <!-- One tab stop for the tiles and the rows together, and the arrows inside it, the
-       same as every other list in the app; see roving.ts. Enter opens and the note
-       takes the keyboard, Space opens and leaves the keyboard here. -->
   <div
     class="bookmarks"
     onpointerenter={reach}
@@ -454,8 +373,6 @@
     }}
   >
     {#if tiles.length || offered}
-      <!-- Zen's grid; a tab carried over it is asked about in tab-strip/bookmark-drop.ts.
-           Its keys and drops are its tiles'. -->
       <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
       <ul
         class="nib-tiles tiles"
@@ -503,14 +420,9 @@
 
       <ul class="list" data-bookmark-drop={workspace.device.essentialTiles ? undefined : ''}>
         {#each rows as row (`${row.mark.kind}:${row.mark.path}:${row.mark.text}`)}
-          <!-- Whether a group is showing what is in it, once rather than twice. -->
           {@const showing = workspace.isGroupOpen(row.mark.path)}
           {@const lands = landing?.at === row.at}
           <li>
-            <!-- A group's twist and its name are two buttons rather than one,
-                 because they do two things: opening a group is not renaming it. The
-                 shape is the tag tree's, which answers the same question one panel
-                 along. -->
             <div class="line">
               {#if row.mark.kind === 'group'}
                 <button
@@ -548,18 +460,11 @@
                 ondragend={endDrag}
                 ondrop={(event) => drop(event, row)}
               >
-                <!-- Every row wears one, so every name in the panel starts at the
-                     same place: the kind the file is in the tree below, the
-                     magnifier for a search, which points at no file at all, and
-                     nothing at all for a group, whose twist is in front of it. -->
                 {#if row.kind && row.path}
                   <FileMark mark={row.kind} path={row.path} />
                 {:else if row.kind}
                   <FileMark mark={row.kind} />
                 {:else if row.mark.kind === 'graph'}
-                  <!-- The graph's own mark, which is what its tab and its command
-                       already wear: a view of the space reads as the space's picture
-                       rather than as a search. -->
                   <svg class="nib-row-mark" viewBox="0 0 13 13"><path d={GRAPH_MARK} /></svg>
                 {:else if row.mark.kind !== 'group'}
                   <svg class="nib-row-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
@@ -576,9 +481,6 @@
 {/if}
 
 <style>
-  /* The empty place for a first tile (#417) stands over the caption under it rather
-     than in front of it, the caption's height, so the rows under a drag that has just
-     begun stay where the pointer found them (#412). */
   .bookmarks {
     position: relative;
   }
@@ -607,10 +509,6 @@
     padding: 0;
   }
 
-  /* The row is `.nib-row`, drawn in the themes package. What is left here is the
-     line saying where a dragged row would land: along the edge it arrives at,
-     rather than a box around the row it is passing. */
-  /* The twist and the name, side by side. */
   .line {
     display: flex;
     align-items: center;
@@ -636,9 +534,6 @@
     flex: none;
   }
 
-  /* One step in per group, and in front of the name the width of a twist: held
-     empty for a row that has none, so every name in the list starts at the same
-     place. The tag tree does the same thing one panel along. */
   .row {
     --lead: 2px;
 
@@ -648,8 +543,6 @@
     padding-inline-start: calc(var(--level, 0) * var(--row-indent) + var(--lead));
   }
 
-  /* An essential whose tab was unloaded (#1127): its mark faded, as the strip fades
-     one. */
   .row.is-unloaded > :global(.mark) {
     opacity: 0.45;
   }

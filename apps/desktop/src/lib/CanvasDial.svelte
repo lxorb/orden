@@ -1,12 +1,4 @@
 <script lang="ts">
-  /** A number set by dragging, or nudged one step at a time.
-   *
-   *  Every dial in the canvas panels is this one: the reading first so a column of
-   *  them lines up, then a minus, the slider, and a plus. The two buttons are what
-   *  a thumb uses when the slider is too fine to land on, which at a width of half
-   *  a unit it is, and they are also the whole of how a dial is set without a
-   *  pointing device at all. */
-
   import CanvasIcon from './CanvasIcon.svelte'
   import { MARKS } from './canvas/glyphs'
   import { t } from './i18n.svelte'
@@ -24,9 +16,7 @@
     least: number
     most: number
     step: number
-    /** What the dial is, read out. */
     label: string
-    /** The value in words, which is a width in units or an alpha in per cent. */
     reading: string
     onvalue: (value: number) => void
   } = $props()
@@ -81,8 +71,6 @@
     gap: var(--space-2);
   }
 
-  /* The number first, so a column of dials lines up down the left however wide
-     the panel is. */
   .reading {
     flex: none;
     width: 3rem;

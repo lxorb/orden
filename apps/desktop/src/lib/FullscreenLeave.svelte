@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** The way back out of full screen, in the corner the bar's own buttons were in. It
-   *  fades once nothing has moved for a while - it is a way out, not part of what is being
-   *  read - and stays there faintly rather than going, because a screen with no way off it
-   *  is the one thing this must never be. Escape, back on Android and the menu row do the
-   *  same. See fullscreen.svelte.ts.
-   *
-   *  Fetched the first time full screen is, which is never as the window opens: nothing
-   *  about full screen is remembered. */
-
   import { fullscreen } from './fullscreen.svelte'
   import { t } from './i18n.svelte'
 </script>
@@ -26,9 +17,6 @@
 </button>
 
 <style>
-  /* Small, and quieter still once nothing has moved for a while - but never gone: it
-     stays reachable by a finger and by a key. Its size is `--leave-size`, which a web
-     tab's bar makes room for; see App.svelte. */
   .leave {
     position: absolute;
     top: max(var(--space-2), var(--inset-top));
@@ -49,8 +37,6 @@
       opacity var(--dur-slow) var(--ease-out),
       color var(--dur-fast) var(--ease-out),
       background var(--dur-fast) var(--ease-out);
-    /* Arrives with the screen it belongs to rather than appearing on it. In CSS, so it
-       goes with the tokens under reduced motion. */
     animation: arrive var(--dur-base) var(--ease-out);
   }
 
@@ -93,8 +79,6 @@
     stroke-linejoin: round;
   }
 
-  /* A thumb's target rather than a pointer's, drawn at the size every other icon on a
-     touch screen is. */
   :global([data-touch]) .leave svg {
     width: var(--touch-icon);
     height: var(--touch-icon);

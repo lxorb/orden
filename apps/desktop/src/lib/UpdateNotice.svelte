@@ -16,9 +16,7 @@
     ondismiss,
   }: {
     version: string
-    /** A package manager keeps this install: the notice only says what is out. */
     managed?: boolean
-    /** Unless it is apt or dnf, whose install this updates through PackageKit (#1147). */
     system?: boolean
     channel?: Channel
     ondismiss: () => void
@@ -26,14 +24,10 @@
 
   const news = $derived(managed && !system)
 
-  /** What to run in a terminal, where PackageKit could not update it. */
   let command = $state<string | null>(null)
 
-  /** How long the news stays when there is nothing to do about it; the rename
-   *  notice's, long enough to read it twice. */
   const STAYS = 6000
 
-  /** The pointer on it, or the keyboard in it, which keeps it up. */
   let pointer = $state(false)
   let keys = $state(false)
 
@@ -60,7 +54,6 @@
   })
 
   let restarting = $state(false)
-  /** Moved to Applications first where it cannot update; see app-place.ts. */
   let moving = $state(false)
 
   $effect(() => {
@@ -77,15 +70,10 @@
     } catch (error) {
       log('error', `update: ${String(error)}`)
     }
-    // Only reached if the restart failed; the app is normally gone by now.
     restarting = false
   }
 </script>
 
-<!-- The download has already happened quietly. This says so and offers the one
-     thing left to do, rather than interrupting to ask permission first. Where a
-     package manager keeps the install there is nothing to do here, so it is news:
-     a cross, and gone on its own after a while. -->
 <div
   class="notice"
   class:is-news={news}
@@ -100,7 +88,6 @@
 >
   {#if command}
     <p>{t('To update, run this in a terminal:')}</p>
-    <!-- Only ever shown after a failed update, so not part of the first paint. -->
     {#await import('./Copyable.svelte') then { default: Copyable }}
       <Copyable value={command} />
     {/await}
@@ -138,8 +125,6 @@
 </div>
 
 <style>
-  /* The last track of the notices row, which floats over the foot of the panes;
-     App.svelte places it. */
   .notice {
     grid-column: 3;
     justify-self: end;
@@ -161,13 +146,10 @@
     color: var(--text);
   }
 
-  /* The cross's box has room round the mark, so it reaches into the card's padding
-     and the mark sits where the edge of the words would. */
   .shut {
     margin-inline-end: calc(-1 * var(--space-2));
   }
 
-  /* The words, the command under them, and Later under that. */
   .notice.is-told {
     flex-direction: column;
     align-items: stretch;
@@ -183,18 +165,11 @@
     flex: none;
   }
 
-  /* Both buttons are `.nib-button` in the themes package - the accent one and
-     `is-quiet` beside it. They were their own pair here: a smaller corner, a
-     smaller type size, no lift under the pointer where the sign-in panel's
-     lifted, and a fade of 0.6 where the app's is 0.4. A notice is small, so the
-     words are the size the sentence beside them is read at. */
   .nib-button {
     padding: var(--space-1) var(--space-3);
     font-size: var(--text-sm);
   }
 
-  /* A phone has no room beside the text, so the buttons go under it and the
-     whole thing spans the row. */
   :global([data-touch]) .notice {
     grid-column: 1;
     justify-self: stretch;
@@ -213,7 +188,6 @@
     padding: 0 var(--space-4);
   }
 
-  /* News keeps its cross beside the line, at the size a finger needs. */
   :global([data-touch]) .notice.is-news {
     flex-direction: row;
     align-items: center;

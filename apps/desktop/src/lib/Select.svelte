@@ -1,10 +1,4 @@
 <script lang="ts">
-  /** A dropdown that is ours all the way down. The native `<select>` closes
-   *  the way it is told to but opens the way the operating system likes, with
-   *  a highlight in whatever blue that is. This one opens a list in the
-   *  theme's colours: under the trigger on a desktop, as a sheet from the
-   *  bottom on a phone, where a list the size of a finger is what a picker
-   *  looks like anyway. */
   import { fade, fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from './backstack.svelte'
@@ -17,15 +11,7 @@
   interface Option {
     value: string
     label: string
-    /** A choice that takes something away rather than changing it: taking
-     *  somebody out of a space. Last in the list, and in the one colour the app
-     *  says that in. */
     danger?: boolean
-    /** One thing worth knowing about this choice before it is made: the language
-     *  list uses it to say that a catalogue was written in one pass and never read
-     *  through. Drawn as a footnote mark against the name, with these words in its
-     *  tooltip and said for anybody who cannot see one. A sentence, not a
-     *  paragraph: a list of forty rows is not the place for prose. */
     note?: string
   }
 
@@ -40,23 +26,14 @@
     value: string
     options: Option[]
     onchange: (value: string) => void
-    /** Names the control for a screen reader, and heads the sheet on a phone. */
     label?: string
-    /** Borderless, with the value at the right: how a settings row shows one. */
     plain?: boolean
-    /** Set while what the control would change is out of anybody's hands: a
-     *  request about this very row is in the air. */
     disabled?: boolean
   } = $props()
 
   let open = $state(false)
-  /** Where the keyboard is in the list, and what it has been spelling; see
-   *  list-keys.ts. Its own state, and not the pointer's: a keystroke must not
-   *  choose a row the pointer merely passed over. */
   let walking = $state<Walk>({ cursor: null, typed: '', typedAt: 0 })
-  /** The row the pointer is over, which is a highlight and nothing more. */
   let hovered = $state<number | null>(null)
-  /** The list opens upward when there is no room beneath the trigger. */
   let above = $state(false)
   let host = $state<HTMLElement>()
   let list = $state<HTMLElement>()
@@ -64,12 +41,8 @@
   const current = $derived(options.find((one) => one.value === value))
   const id = `select-${Math.random().toString(36).slice(2, 8)}`
 
-  /** Which row the highlight is on: the pointer's while it is over the list, the
-   *  keyboard's otherwise. Only one row is ever lit, and which of the two lit it
-   *  is what decides what a keystroke chooses. */
   const lit = $derived(hovered ?? walking.cursor)
 
-  /** Room the list needs beneath the trigger, before it is drawn. */
   const ROW = 32
   const MOST = 280
 
@@ -78,9 +51,6 @@
     hovered = null
 
     if (host && !viewport.touch) {
-      // Measured against the nearest thing that scrolls, which is what would
-      // clip a list poking out of its bottom. Scroll containers say so with
-      // `data-scrolls`; without one, the window is the limit.
       const box = host.getBoundingClientRect()
       const scroller = host.closest('[data-scrolls]') ?? document.documentElement
       const limit = scroller.getBoundingClientRect().bottom
@@ -101,10 +71,6 @@
   }
 
   function onKey(event: KeyboardEvent) {
-    // Ctrl, Alt or Cmd and this key is a chord passing through on its way to the
-    // window, not a dropdown's Space; a picker that took it would make that chord
-    // dead for as long as the keyboard was on this control. Same rule as every
-    // other list in the app: see `chorded` in keys.ts and `onKey` in roving.ts.
     if (chorded(event)) return
 
     if (!open) {
@@ -136,31 +102,16 @@
       return
     }
 
-    // The keyboard has moved, so the pointer's highlight steps aside: whatever
-    // is lit from here on is the row a keystroke would choose.
     hovered = null
     if (walking.cursor !== null) {
       list?.children[walking.cursor]?.scrollIntoView({ block: 'nearest' })
     }
   }
 
-  // Back closes the sheet before it leaves the app.
-  // A dropdown can be over another overlay - one inside the settings, say -
-  // so Escape closes it and leaves what is underneath standing. Tapping anywhere else
-  // closes it too, the way a menu closes, and so does the window losing the focus.
   $effect(() => (open ? overlays.show(close, () => [host]) : undefined))
   $effect(() => closeOnBack(open && viewport.touch, close))
 </script>
 
-<!-- One row's name, with the footnote mark a choice can carry after it. Written
-     once and rendered in both lists - the dropdown and the phone's sheet - because
-     they are one control in two shapes and a mark on only one of them would be two
-     designs.
-
-     The mark is against the name with nothing between them, so it reads as a
-     footnote on that word. Its words are in the tooltip for a pointer and said for
-     a screen reader; the mark itself is out of the reading, since saying
-     "asterisk" would be neither. -->
 {#snippet named(option: Option)}
   <span class="text"
     >{option.label}{#if option.note}<span class="mark" title={option.note} aria-hidden="true"
@@ -171,8 +122,6 @@
 {/snippet}
 
 <div class="select" class:plain class:open bind:this={host}>
-  <!-- A select-only combobox, in ARIA's terms: a button that opens a listbox
-       and keeps the focus while the arrow keys walk the list. -->
   <button
     type="button"
     class="trigger nib-field is-value"
@@ -255,38 +204,21 @@
     width: 100%;
   }
 
-  /* The borderless one is a value at the end of a row, so it is as wide as the value
-     where a row holds it straight, and as wide as its box where a box holds it. At the
-     whole width of a row it took the row, and left the name beside it nothing:
-     Settings > Account drew Clear after a letter to a line. */
   .plain {
     width: auto;
     min-width: 0;
   }
 
-  /* The closed control is the value box every setting's field is, `.nib-field
-     is-value` in the themes package, so a dropdown and the field above it are one
-     height, one corner and one hairline (#1056). The box is said there; what is left
-     here is that it is a button holding words and a chevron. Its height comes from
-     `--row-height` through the field, which is what makes it a thumb's target: 28
-     under a pointer, 56 under a finger. */
   .trigger {
     width: 100%;
     gap: var(--space-2);
   }
 
-  /* Open, which is a state and not a focus: the list is hanging off it, and it
-     says so the way the native control does. Where the keyboard is, is the one
-     ring in the themes package - this used to draw a copy of the field's answer
-     on `:focus-visible` as well, which is two answers to one question. */
   .open .trigger {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-soft);
   }
 
-  /* A choice may be a name rather than a word of the app's own - a folder, a
-     font, a language written in its own script - so each one is placed as a
-     whole. See .nib-row-label in base.css. */
   .trigger .text,
   .list li .text,
   .sheet li button .text {
@@ -301,10 +233,6 @@
     white-space: nowrap;
   }
 
-  /* The footnote mark on a row that has something to say about itself. Quiet and
-     small, raised the way a footnote is: it says there is something to know, and
-     the something is in the tooltip, in the words a screen reader is given, and in
-     the caption under the list. The same mark in the dropdown and in the sheet. */
   .mark {
     margin-inline-start: 1px;
     color: var(--muted);
@@ -313,9 +241,6 @@
     vertical-align: super;
   }
 
-  /* A mark inside a control rather than in front of a name, which is `--icon-sm`
-     - the size the find bar's own chevron is drawn at. It was 10px, a third
-     size for one shape. */
   .chevron {
     flex: none;
     width: var(--icon-sm);
@@ -332,8 +257,6 @@
     transform: rotate(180deg);
   }
 
-  /* In a settings row: no box of its own, the value at the right edge, like
-     the value of anything else in the list. */
   .plain .trigger {
     justify-content: flex-end;
     padding: 6px 0 6px 6px;
@@ -342,9 +265,6 @@
     color: var(--muted-strong);
   }
 
-  /* As long as its words, and shorter with an ellipsis where the row has less: the
-     chevron is beside the words, so words held at the whole width put them past the
-     end of the control. */
   .plain .trigger .text {
     flex: 0 1 auto;
   }
@@ -358,12 +278,6 @@
     color: var(--text-strong);
   }
 
-  /* ── The list, on a desktop ────────────────────────────────────── */
-
-  /* A floating list of choices, so its shape is `.nib-layer` in the themes
-     package. It used to light its own surface a step brighter than the menus do
-     and spend a smaller shadow than they do, which made a dropdown and the menu
-     beside it two kinds of thing. What is left here is where it hangs. */
   .list {
     position: absolute;
     top: calc(100% + var(--space-1));
@@ -402,8 +316,6 @@
     text-overflow: ellipsis;
   }
 
-  /* The row under the pointer or the arrow keys, in the theme's own accent
-     and not the platform's. */
   .list li.cursor {
     background: var(--accent-soft);
     color: var(--text-strong);
@@ -413,8 +325,6 @@
     color: var(--text-strong);
   }
 
-  /* A choice that takes something away. The colour is the whole of the warning:
-     it is still a row in the list, and it is still one press. */
   .list li.danger,
   .sheet li button.danger {
     color: var(--danger);
@@ -435,9 +345,6 @@
     stroke-linejoin: round;
   }
 
-  /* ── The sheet, on a phone ─────────────────────────────────────── */
-
-  /* The layer behind it; see .nib-scrim in packages/themes. */
   .scrim {
     --scrim-z: var(--z-menu);
     --scrim-ink: 55%;
@@ -514,18 +421,11 @@
     height: 18px;
   }
 
-  /* A control inside a row, so the floor rather than the row size, and past
-     16px, which is where iOS stops zooming into a control on focus. */
   :global([data-touch]) .trigger {
     min-height: var(--touch-target);
     font-size: var(--touch-text);
   }
 
-  /* The borderless one too. It said `min-height: 0`, which is what a control
-     says to stop itself making the row taller - but the row it sits in is
-     already `--touch-row`, so all the zero did was leave the one thing that
-     opens the list 36px tall inside a 56px row. The floor fits inside the row
-     with ten pixels to spare, and a settings pane is mostly these. */
   :global([data-touch]) .plain .trigger {
     min-height: var(--touch-target);
     font-size: var(--touch-text);

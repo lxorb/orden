@@ -1,12 +1,4 @@
 <script lang="ts">
-  /** The panes, laid out the way the tree says: a pane, or two sides with a
-   *  divider between them, each side being a pane or another split. It renders
-   *  itself for each side, which is what makes the tree a tree.
-   *
-   *  A grid rather than flexbox, so the share of the room each side takes is
-   *  exactly the number the tree holds and the divider is a real line rather
-   *  than a gap between two floats. */
-
   import { alone } from './alone.svelte'
   import { steppedKey } from './direction'
   import { t } from './i18n.svelte'
@@ -17,13 +9,8 @@
 
   const { frame }: { frame: Frame } = $props()
 
-  /** The frame as a split, when it is one. Read here rather than narrowed in the
-   *  markup: this component names itself, and a type that refers to itself
-   *  through the component it is a prop of is one the compiler gives up on. */
   const split = $derived(frame.kind === 'split' ? frame : null)
 
-  /** Which side holds the pane filling the window, where this split holds it: the other
-   *  side and the divider go while it does. See lib/tab-fill. */
   const kept = $derived.by(() => {
     const fills = workspace.panes.fills ?? alone.pane
     return split && fills ? split.sides.findIndex((side) => paneIn(side, fills)) : -1
@@ -33,29 +20,16 @@
   let wide = $state(0)
   let tall = $state(0)
 
-  /** How far the divider can go, as `resize` holds it: a share of the room, or all of it
-   *  before the room has been measured. */
   function ends(split: Split): [number, number] {
     const room = split.along === 'row' ? wide : tall
     if (!room) return [0, 100]
     return [Math.round(clamped(0, room) * 100), Math.round(clamped(1, room) * 100)]
   }
 
-  /** How to end the drag that is on, if one is. A pane can be closed from a key
-   *  or a menu while a finger is on the divider, and then the handle goes without
-   *  ever hearing `pointerup` - which would leave the window wearing a resize
-   *  cursor, with nothing on the page selectable. */
   let dragging: (() => void) | null = null
 
   $effect(() => () => dragging?.())
 
-  /** The divider follows the pointer, and the panes stop easing while it does:
-   *  a transition on the way to where the finger already is reads as lag.
-   *
-   *  Pointer capture keeps the events coming once the pointer has left the thin
-   *  handle, which it does in the first few pixels of any drag. The room is
-   *  measured once at the start, since reading it again on every move would
-   *  measure what this drag has already done. */
   function grab(event: PointerEvent & { currentTarget: HTMLElement }, split: Split) {
     if (event.button !== 0 || !host) return
 
@@ -93,12 +67,8 @@
     handle.addEventListener('pointercancel', stop)
   }
 
-  /** How far an arrow moves the divider, as a share of the room. */
   const STEP = 0.05
 
-  /** The divider moved from the keyboard, as the sidebar's edge is: the arrows along the
-   *  split a step at a time, Home and End to either end, and Enter both sides the same
-   *  again, which is what a double click does (#523). */
   function nudge(event: KeyboardEvent, split: Split) {
     if (!host) return
     const row = split.along === 'row'
@@ -131,11 +101,8 @@
     style:grid-template-columns={split.along === 'row' && kept < 0 ? tracks(split) : undefined}
     style:grid-template-rows={split.along === 'column' && kept < 0 ? tracks(split) : undefined}
   >
-    <!-- A side as an item, not `split.sides[i]`: a pane's teardown reads it once a
-         collapsing split is null, and an item keeps the last side. -->
     {#each split.sides as side, at (side.id)}
       {#if at === 1 && kept < 0}
-        <!-- A separator a key can move, as the sidebar's edge is; see Sidebar.svelte. -->
         <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
         <div
           class="divider"
@@ -168,8 +135,6 @@
     flex: 1;
     min-width: 0;
     min-height: 0;
-    /* The share of the room eases when it changes on its own - a pane opening, a
-       double click - and not while a finger is on the divider. */
     transition:
       grid-template-columns var(--dur-base) var(--ease-out),
       grid-template-rows var(--dur-base) var(--ease-out);
@@ -179,17 +144,12 @@
     transition: none;
   }
 
-  /* Not clipped: each pane clips what it holds to its own card, and a card's shadow
-     falls into the gap. */
   .side {
     display: flex;
     min-width: 0;
     min-height: 0;
   }
 
-  /* The room between two cards, or a line one pixel wide where there are none, with
-     three pixels either side of it to take hold of: a handle you can see is a handle in
-     the way. Taken hold of, a line down its middle. */
   .divider {
     position: relative;
     background: var(--chrome-seam) center / 2px 100% no-repeat;

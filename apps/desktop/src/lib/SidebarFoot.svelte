@@ -1,28 +1,4 @@
 <script lang="ts">
-  /** Who is at this device, and the two switches that belong to the app rather
-   *  than to any note.
-   *
-   *  The bottom of the panel, in the same row height its head has, so the list
-   *  of notes sits between two bars that match. Three things and no more: the
-   *  account at the left, where a sidebar names its owner in every app that has
-   *  one; the theme and the settings at the right, where a switch goes. The
-   *  source link is not here - it is a row in the Help menu. In a browser a fourth:
-   *  the app to download, which a new reader at orden.so otherwise had to find in
-   *  the Help menu.
-   *
-   *  One component on every device. A drawer is the sidebar, so a phone gets
-   *  this row at the bottom of the drawer, clear of the gesture bar. A phone or a
-   *  tablet leaves out the download and the theme switch: it is already where the
-   *  app is had, and its light and dark are in Settings, so the row keeps to the
-   *  account, feedback and the settings. Send feedback is the palette's as well, there
-   *  as it opens (#1049; palette/browse.ts), and the bug stays here on every device
-   *  (#1100): a hand that knows where it was finds it there.
-   *
-   *  And on a phone and a tablet, the scratchpad (#1030): beside the settings, because
-   *  it is the app's like they are - the one note in no space - and a drawer's foot is
-   *  where a reader looks for what belongs to no note. A glyph like its neighbours, quiet
-   *  until wanted; it was a switch in a note's bar, where it sat on every note as if it
-   *  were the note's. On a desktop it is the right side's tab (#1032). */
   import { fade } from 'svelte/transition'
   import { account } from './account.svelte'
   import { BASE } from './api'
@@ -42,19 +18,12 @@
   import { SCRATCHPAD_MARK } from './panel-marks'
   import { scratchFromDrawer, shown as pad } from './scratchpad/is.svelte'
 
-  /** What to call whoever is here. Null while the stores are still being asked,
-   *  which is a third state and not the same as being signed out. */
   const who = $derived(account.name)
-  /** Their face, where they chose one: the small picture; see people/face.ts. */
   const face = $derived(account.user?.avatar && `${BASE}/i/${account.user.avatar.s}.webp`)
 
-  /** Every theme, each shown on the whole app while it is pointed at: a right click
-   *  on the switch, or a finger held on it. Fetched then; see theme-picker/. */
   const pick = (event: MouseEvent) =>
     void import('./theme-picker/picking.svelte').then((one) => one.pickTheme(event))
 
-  /** What the account offers, over its row: its own pane, the settings, and signing
-   *  in or out (#308). Upward from the row, which is at the bottom of the window. */
   function showAccount(event: MouseEvent) {
     const box = (event.currentTarget as HTMLElement).getBoundingClientRect()
     const at = new MouseEvent('contextmenu', { clientX: box.left, clientY: box.top })
@@ -77,17 +46,7 @@
   }
 </script>
 
-<!-- A region of the window, so F6 reaches the account, the theme and the settings
-     without a pointer; see focus.ts. -->
 <div class="foot" data-region="foot">
-  <!-- The account, which is a row rather than a glyph: a name is what says whose
-       notes these are. Signed in or not, it opens the same menu: the account's
-       pane, the settings, and signing in or out, as a sidebar's owner does in
-       every app that has one.
-
-       It waits while the stores are still being asked: signed out and not known
-       yet are different states, and on a phone the difference is the seconds the
-       app takes to answer. -->
   <button
     class="who"
     class:looking={account.restoring}
@@ -111,10 +70,6 @@
     <span class="nib-row-label">{who ?? t('Sign in')}</span>
   </button>
 
-  <!-- What an account's first pass has left to bring down, while it has any. The
-       list above is already right - the names arrive a request in - so this is the
-       whole of what is left to say, and it says it here instead of over the app.
-       It goes as soon as the pass does. See arriving.svelte.ts. -->
   {#if arriving.showing}
     <span class="coming" transition:fade={{ duration: dur(160) }} role="status" aria-live="polite">
       {arriving.said}
@@ -133,9 +88,6 @@
       </button>
     {/if}
 
-    <!-- Send feedback (#548): a bug, beside the account and the settings, on every
-         build, for whatever went wrong. See feedback.svelte.ts. Back after #1049 took
-         it to the palette alone (#1100). -->
     <button
       class="nib-glyph act"
       title={t('Send feedback')}
@@ -149,10 +101,6 @@
       >
     </button>
 
-    <!-- Off while the theme in force has only the one scheme: there is no other
-         side of it to show, and swapping it for a built-in is not the switch
-         anybody pressed. See theme.svelte.ts. Said rather than `disabled`, which
-         would swallow the right click that offers another theme. -->
     {#if !viewport.touch}
       <button
         class="nib-glyph act"
@@ -190,14 +138,12 @@
       </button>
     {/if}
 
-    <!-- No mark of syncing on it: a pass blinking in the corner was noise (#206). -->
     <button
       class="nib-glyph act"
       title={shortcuts.tooltip(t('Settings'), 'app.settings')}
       aria-label={t('Settings')}
       onclick={() => settings.show()}
     >
-      <!-- An actual gear: eight teeth around a hub. -->
       <svg class="gear" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="3.2" />
         <path
@@ -209,10 +155,6 @@
 </div>
 
 <style>
-  /* The same height as the head at the other end of the panel. Set apart by the
-     chrome's own seam (#1105): none where the window is one rounded surface (#1088),
-     which has no hard cuts, and a hairline where the window is flush (`flush` in
-     App.svelte). The row's height keeps it a row of its own either way. */
   .foot {
     position: relative;
     flex: none;
@@ -224,7 +166,6 @@
     border-top: 1px solid var(--chrome-seam);
   }
 
-  /* The account row only: a bare scoped `button` out-specifies `.nib-glyph`. */
   .who {
     display: flex;
     align-items: center;
@@ -238,8 +179,6 @@
       background var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);
 
-    /* The one part of the row that gives way: a long name is cut, the switches
-       at the other end are not. */
     flex: 1;
     min-width: 0;
     gap: var(--row-gap);
@@ -253,7 +192,6 @@
     outline-offset: -1px;
   }
 
-  /* The switches wear `.nib-glyph`'s own hover and press; this is the row's. */
   @media (hover: hover) {
     .who:hover:not(:disabled) {
       background: var(--surface-hover);
@@ -266,14 +204,10 @@
     color: var(--text-strong);
   }
 
-  /* The name starts beside its mark, the way a name in the list above starts
-     beside its own; only the room it is given differs. */
   .who .nib-row-label {
     flex: 0 1 auto;
   }
 
-  /* Whoever is here, round as every face is (people/Avatar.svelte): their picture,
-     or the letter they are known by. */
   .person {
     overflow: hidden;
     border-radius: 50%;
@@ -285,9 +219,6 @@
     object-fit: cover;
   }
 
-  /* Still asking the stores whether there is a session. Not a spinner and not a
-     sentence: the row that would sign you in simply waits, and breathes while
-     it does. */
   .looking {
     animation: looking 1.6s var(--ease-in-out) infinite;
   }
@@ -303,10 +234,6 @@
     }
   }
 
-  /* The count, between the name and the switches: quieter than either, in the
-     tabular figures every number in the app is set in so the width does not
-     flicker as it counts. It takes no room when it is not there, which is nearly
-     always. */
   .coming {
     flex: none;
     color: var(--muted);
@@ -324,8 +251,6 @@
     gap: 2px;
   }
 
-  /* The two switches are `.nib-glyph` in the themes package, which says why its
-     padding is none. */
   .act .gear {
     stroke-width: 1.6;
   }
@@ -341,9 +266,6 @@
     }
   }
 
-  /* Above whatever the system keeps at the bottom of the screen, so the last
-     row of the panel is not under the gesture bar - which the keys cover while
-     they are up, and then the room kept for it was an empty band above them. */
   :global([data-touch]) .foot {
     padding-bottom: max(0px, calc(var(--inset-bottom) - var(--keyboard, 0px)));
   }

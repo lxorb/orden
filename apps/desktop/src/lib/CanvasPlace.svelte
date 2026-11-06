@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** What a press puts on the plane: a card, a note or a picture, a link, a frame,
-   *  and the four shapes.
-   *
-   *  Eight things behind one button rather than eight buttons on the bar. A hand
-   *  that is drawing never wants any of them, and a hand that is arranging wants
-   *  one at a time, so the bar keeps the room for the pens. Each is a mark and the
-   *  word for it, laid out the way the pen's own kinds are, and the hover says
-   *  which key does it: this panel is where somebody stops using it. */
-
   import CanvasIcon from './CanvasIcon.svelte'
   import { isShape } from './canvas/format'
   import { hinted, PLACING } from './canvas/glyphs'
@@ -17,9 +8,6 @@
 
   const { onchoose }: { onchoose: (tool: Tool) => void } = $props()
 
-  /** Which of them is the first shape, so the five things a note taker puts down and
-   *  the seven a diagram is drawn out of read as two groups rather than one list of
-   *  twelve. */
   const firstShape = $derived(PLACING.findIndex((one) => isShape(one.id)))
 </script>
 
@@ -53,8 +41,6 @@
     gap: 1px;
   }
 
-  /* The line between what a note taker puts down and what a diagram is drawn out of.
-     Across both columns, so the shapes begin a row of their own. */
   .split {
     grid-column: 1 / -1;
     height: 1px;

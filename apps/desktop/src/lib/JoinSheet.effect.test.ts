@@ -1,13 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The join sheet's ways out (B540): a wait on the owner has Cancel and Close, and
- *  Escape and the scrim put it aside like Close rather than leaving the app behind
- *  it. Then the pill that brings a sheet put aside back.
- *
- *  In the jsdom project because the sheet is drawn and pressed. The store is stood
- *  in for: what it does with each press is joining.test.ts. */
-
 const store = vi.hoisted(() => ({
   step: null as string | null,
   shown: true,

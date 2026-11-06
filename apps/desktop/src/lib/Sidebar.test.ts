@@ -2,16 +2,6 @@ import { describe, expect, test, vi } from 'vitest'
 import { render } from 'svelte/server'
 import { STARTS_RIGHT } from './workspace/panels'
 
-/** What the sidebar draws: which tabs its strip holds, what the Outline makes
- *  of a note's footnotes, and who is offered the button that holds a panel on one note.
- *
- *  Rendered on the server, the way Tabs.test does beside it: what is under test is the
- *  markup, and the markup is what a reader gets. The stores are driven by hand and the
- *  two that reach a network or a `ResizeObserver` are stood in for.
- *
- *  The hold had no test at all, which is how it came to be offered on a phone while the
- *  code said it was not and the docs said it was not either. */
-
 vi.mock('./rooms.svelte', () => ({ rooms: { present: {}, following: null } }))
 vi.mock('./surfaces.svelte', () => ({
   askPanel: () => new Promise(() => undefined),
@@ -27,7 +17,6 @@ const { viewport } = await import('./viewport.svelte')
 const { agentMarks } = await import('./agent-marks.svelte')
 const Sidebar = (await import('./Sidebar.svelte')).default
 
-/** A space with one note open, which is what a panel about a note needs. */
 function open(text: string) {
   workspace.tabs = []
   workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]
@@ -40,14 +29,11 @@ function drawn(
   device: typeof viewport.device = 'desktop',
 ) {
   viewport.device = device
-  // Written rather than asked for: what these tests are about is the strip as it is
-  // drawn for a panel, not the gesture that got there.
   workspace.panel = panel
   return render(Sidebar, { props: { side: 'left' as const } }).body
 }
 
 describe('the panel tabs', () => {
-  /** The labels of one side's strip, in the order it draws them. */
   function strip(side: 'left' | 'right'): string[] {
     viewport.device = 'desktop'
     workspace.panel = 'tree'
@@ -60,9 +46,7 @@ describe('the panel tabs', () => {
   test('are the space on the left and the note in front on the right, as Obsidian has them', () => {
     open('# Head\n')
 
-    // The Tasks panel lives on the right (#1047).
     expect(strip('left')).toEqual(['Files'])
-    // And the scratchpad, the one tab on a desktop's right that is no panel (#1032).
     expect(strip('right')).toEqual(['Outline', 'Links', 'Ask', 'Tasks', 'Scratchpad'])
   })
 
@@ -77,8 +61,6 @@ describe('the panel tabs', () => {
     workspace.right = [...STARTS_RIGHT]
   })
 
-  /** The strip's row split at the end of the pill: what is in the one tablist, and
-   *  what is after it. */
   function row(panel: Parameters<typeof workspace.showPanel>[0]) {
     viewport.device = 'desktop'
     workspace.rightPanel = panel
@@ -97,10 +79,6 @@ describe('the panel tabs', () => {
     const { pill, after, html } = row('ask')
     agentMarks.heard = false
 
-    // Emil's 840 px panel: its tabs, and the Ask panel's Chats beside them looking like
-    // one more. All of them are tabs of the one list, and the scratchpad's with them
-    // (#1032), and the Tasks panel's since it lives on the right (#1047); Chats is a tool
-    // after it. Properties, Footnotes and Agents are no panels any more (#1120).
     expect(html.match(/role="tablist"/g)).toHaveLength(1)
     expect(pill.match(/role="tab"/g)).toHaveLength(5)
     expect(after).not.toContain('role="tab"')
@@ -118,8 +96,6 @@ describe('the panel tabs', () => {
     }
   })
 
-  /** The questions agents wait on are counted on the Ask tab, whose chat list is where
-   *  an agent's session is and where they are answered (#1120). */
   test('and the Ask tab counts the questions agents are waiting on', () => {
     open('# Head\n')
     agentMarks.heard = true
@@ -140,12 +116,7 @@ describe('the panel tabs', () => {
   })
 })
 
-/** The space's name is the head's one control, and the panel tabs are the only row
- *  between it and the list. */
 describe('the head of the list', () => {
-  /** A "Search this space" field stood under the tabs, and the owner asked for it
-   *  gone (issue #230): search is its key, the palette, the app menu and, on a
-   *  phone, the pull, each opening the Search panel with its own field. */
   test('has no search field over the list and no search tab, on a desktop or a phone', () => {
     open('# Head\n')
 
@@ -159,9 +130,6 @@ describe('the head of the list', () => {
     }
   })
 
-  /** A pen beside the space's name made a note, and the owner asked for it gone
-   *  (issue #229): a new note is its key, the palette, the file list's menu and the
-   *  new tab's chooser. The head is the switcher and, in a drawer, the sidebar button. */
   test('has no new note button beside the space, on a desktop or a phone', () => {
     open('# Head\n')
 
@@ -177,12 +145,9 @@ describe('the head of the list', () => {
   })
 })
 
-/** The Outline is offered beside what has parts to list, and nothing else (#1120); the
- *  table that says so is panel-tab.ts. */
 describe('the Outline', () => {
   const NOTE = 'A claim[^1] and another[^two].\n\n[^1]: the first\n\n[^two]: the second\n'
 
-  /** The right side, where the Outline lives, drawn on it. */
   function right(): string {
     viewport.device = 'desktop'
     workspace.rightPanel = 'outline'
@@ -213,17 +178,11 @@ describe('the Outline', () => {
 
     expect(html).not.toMatch(/role="tab"[^>]*aria-label="Outline"/)
     expect(html).toContain('data-panel="links"')
-    // What was chosen is kept, for the next note that has parts.
     expect(workspace.rightPanel).toBe('outline')
     workspace.rightPanel = null
   })
 })
 
-/** The button that holds a panel on one note while another is written beside it.
- *
- *  A handheld holds one document, so there is nothing to hold a panel against and
- *  opening another note closes the tab it would have been held on. The docs say it is
- *  not offered there; this is what makes that true rather than claimed. */
 describe('the button that holds a panel on a note', () => {
   const HELD = 'Stay on this note'
 
@@ -251,12 +210,6 @@ describe('the button that holds a panel on a note', () => {
     }
   })
 
-  /** A handheld is the machine, not the size of the window: `deviceFor` asks the width
-   *  only once a finger and a mobile user agent have already said it is a handheld, so a
-   *  desktop window narrowed to the width of a phone stays a desktop and still has two
-   *  panes to hold a panel between. Which is what the docs say, and - since nothing
-   *  tested it - what an audit reading a narrow window as a phone would have called a
-   *  bug. See viewport.svelte.ts and docs/mobile.md. */
   test('which is the machine and not the width, so a narrow window keeps it', () => {
     open('# Head\n')
 
@@ -276,7 +229,6 @@ describe('the button that holds a panel on a note', () => {
     expect(desktop?.label).toBe(HELD)
     expect(desktop?.disabled).toBe(false)
 
-    // Nothing to hold: a panel that is about the space, and then a handheld.
     workspace.panel = 'tree'
     expect(appCommands().find((one) => one.id === 'hold-panel')?.disabled).toBe(true)
 
@@ -295,20 +247,7 @@ describe('the button that holds a panel on a note', () => {
   })
 })
 
-/** The space in the panel's header, which is the list of spaces shut.
- *
- *  A space is named with its mark everywhere else it is named - its row in the
- *  switcher, the tab card - and the header over the file
- *  list is where it is named most. That header said the word alone, so the one place
- *  a space is always written was the one place it was never drawn. Emil: *"in the top
- *  left in the space select, you should see the icon of the current space."*
- *
- *  Asked with emoji, which are the one kind of icon that needs no set fetched: the
- *  platform's own colour font is already here. Which icon a space wears, and the
- *  letter it falls back to wherever the drawing cannot be had, is SpaceMark.test.ts
- *  beside this one. */
 describe('the space in the header', () => {
-  /** Two spaces, each with a mark of its own, the first of them open. */
   function two() {
     open('# Head\n')
     workspace.spaces = [
@@ -325,10 +264,7 @@ describe('the space in the header', () => {
     const html = drawn('tree')
 
     expect(html).toContain('📓')
-    // In the badge every surface that names a space puts its mark in, rather than
-    // loose beside the word where a letter would read as part of the name.
     expect(html).toMatch(/class="nib-badge[^"]*"[^>]*>[\s\S]{0,300}📓/)
-    // And in front of the name: the first label in the panel is the header's own.
     expect(html.indexOf('📓')).toBeLessThan(html.indexOf('nib-row-label'))
   })
 
@@ -343,8 +279,6 @@ describe('the space in the header', () => {
     expect(html).not.toContain('📓')
   })
 
-  /** What a reader who dresses a space in Settings sees: the header is drawn from
-   *  what the space wears rather than from a copy taken when it was opened. */
   test('and follows the icon the space is given', () => {
     two()
     workspace.applyIcon('/work', '📌')
@@ -355,10 +289,6 @@ describe('the space in the header', () => {
   })
 })
 
-/** Emil: the sidebar opened and shut in steps, "CHUCK CHUCK". The panel was built in
- *  the frame it was opened in and thrown away when it shut, and its own width was what
- *  slid, so every row was laid out again on every frame. Now it is built once and kept,
- *  and only the column it stands in opens and closes over it; see `.column`. */
 describe('a shut side', () => {
   test('keeps its panel, rows and all, behind a closed column nothing can reach', () => {
     open('A claim[^1].\n\n[^1]: the first\n')
@@ -390,7 +320,6 @@ describe('a shut side', () => {
   })
 })
 
-/** Two regions of one page with one name are two a reader cannot tell apart (#523). */
 describe('the two sides', () => {
   test('have a name each', () => {
     open('# Head\n')
@@ -402,8 +331,6 @@ describe('the two sides', () => {
   })
 })
 
-/** A phone and a tablet have no AI panel (#403): not its tab on the right, not a way to
- *  it from the palette or a key, and not a panel left open on it by a sitting before. */
 describe('the AI panel on a phone and a tablet', () => {
   function rightTabs(device: typeof viewport.device): string[] {
     viewport.device = device

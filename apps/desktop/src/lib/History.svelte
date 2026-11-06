@@ -21,18 +21,9 @@
   let versions = $state<Version[]>([])
   let selected = $state<Version | null>(null)
   let preview = $state('')
-  /** Which tab the version on show was read for. A version belongs to one note,
-   *  and the sheet stays open while tabs can be switched under it, so restoring
-   *  puts it back into the note it came from rather than into whatever is on
-   *  screen by then. Null while nothing has been read. */
   let previewOf = $state<Tab | null>(null)
-  /** Whether the version is shown as itself or as what it would change. The
-   *  changes are what somebody looking for a lost paragraph wants first. */
   let comparing = $state(true)
 
-  // Each read carries a flag its own effect clears on the way out, so a list or
-  // a version that arrives after the note has changed - or after the sheet has
-  // been shut - cannot land on top of a newer one.
   $effect(() => {
     if (!open) return
 
@@ -73,8 +64,6 @@
       .then((body) => {
         if (!current) return
         preview = body
-        // The version and the note it is a version of, set together, so a
-        // restore cannot pair one note's words with another note's tab.
         previewOf = tab ?? null
       })
       .catch(() => {
@@ -88,27 +77,15 @@
     }
   })
 
-  /** What this version would change, against the note as it stands now. One diff
-   *  read two ways: the lines and how many of them there are are the same walk
-   *  over the whole document, and walking it twice is a whole document twice. */
   const difference = $derived(lineDiff(preview, workspace.active?.note.text ?? ''))
   const changes = $derived(trimmed(difference))
   const counted = $derived(diffCount(difference))
 
-  /** One row of the list: a version, or the month a run of them is in. */
   interface Row {
     month?: string
     version?: Version
   }
 
-  /** The list as it is drawn: the versions, and - where the account keeps a year
-   *  of them - a heading at each change of month.
-   *
-   *  Only for a year. A month of history is one month, so a heading over the
-   *  whole of the list would say nothing; a year is twelve of them, and the
-   *  thinning means the far end is one row a week, which is a long way to scroll
-   *  without a word saying where you are. The same `.nib-section` label every
-   *  other list in the app cuts itself up with; see docs/design.md. */
   const rows = $derived.by((): Row[] => {
     if (modes.keepVersions < KEEP_YEAR) return versions.map((version) => ({ version }))
 
@@ -132,11 +109,7 @@
     return out
   })
 
-  /** Restoring is itself an edit, so the words being replaced are kept first:
-   *  putting an old version back is one more version, and undoable like any. */
   async function restore() {
-    // The tab the version on show was read for, not whichever is active now: the
-    // two are the same until somebody switches notes with the sheet open.
     const tab = previewOf
     if (!preview || !tab?.path || !canWriteIn(tab.note)) return
 
@@ -157,9 +130,6 @@
     onclick={() => (open = false)}
   ></div>
 
-  <!-- Named and said to be a dialog, like every other layer: the keyboard was
-       already trapped in here, and a trap with nothing saying what it is trapped in
-       is a reader who cannot tell why Tab stopped going anywhere. -->
   <div
     class="nib-screen is-centred is-steady sheet"
     use:trap
@@ -183,10 +153,6 @@
                 onclick={() => (selected = version)}
               >
                 <span>{when(version.at, 'medium')}</span>
-                <!-- Where it came from, said only where that is worth saying: a
-                     version this machine kept needs no label, one the account
-                     holds is worth knowing the device for, and one kept before an
-                     agent's edits the agent. -->
                 {#if version.by}
                   <em>{version.by}</em>
                 {/if}
@@ -198,9 +164,6 @@
       </ul>
 
       <div class="preview">
-        <!-- Two faces of one version: what it would change, and what it says.
-             A pair of tabs rather than a switch, because both are a way of
-             reading the same thing. -->
         <div class="faces">
           <button class:on={comparing} onclick={() => (comparing = true)}>{t('Changes')}</button>
           <button class:on={!comparing} onclick={() => (comparing = false)}>{t('Text')}</button>
@@ -224,13 +187,9 @@
             {/each}
           </div>
         {:else}
-          <!-- The version the note already says. Said here rather than in the
-               tally, so an empty box never reads as a broken one. -->
           <div class="diff same"><p class="empty">{t('No changes')}</p></div>
         {/if}
 
-        <!-- A note in a space shared to be read is the owner's to change: its
-             versions are there to read, not to put back. -->
         {#if canWriteIn(previewOf?.note)}
           <button class="nib-button" onclick={() => void restore()}>
             {t('Restore this version')}
@@ -242,8 +201,6 @@
 {/if}
 
 <style>
-  /* `.nib-screen` in the themes package, at one height whichever version is open
-     (`is-steady`): the versions and the one shown, side by side. */
   .sheet {
     --screen-width: var(--screen-pair);
 
@@ -270,9 +227,6 @@
     border-inline-end: 1px solid var(--line);
   }
 
-  /* The month a run of versions is in. The app's own section label, so a year of
-     history is cut up the way every other long list here is; the first one needs
-     no space above it. */
   .versions .month p {
     margin: var(--space-3) 0 var(--space-1);
   }
@@ -303,8 +257,6 @@
     background: var(--item-hover-bg-color);
   }
 
-  /* Each version has to be read off disk before it can be shown, so the row
-     answers first. */
   .versions button:active {
     background: var(--press);
   }
@@ -320,8 +272,6 @@
     color: var(--muted);
   }
 
-  /* The device a version came from, where the account is what kept it. Quiet
-     and in the middle, so the list still reads as a column of times. */
   .versions em {
     flex: 1;
     min-width: 0;
@@ -358,8 +308,6 @@
     white-space: pre-wrap;
   }
 
-  /* Which face of the version is showing. The same shape as the tabs elsewhere
-     in the app: a word that lights up rather than a control with a label. */
   .faces {
     display: flex;
     align-items: center;
@@ -414,8 +362,6 @@
     color: var(--danger);
   }
 
-  /* A line of the diff. The colour is the whole signal, so the gutter stays
-     quiet and the sign is the tint of the line rather than a character. */
   .diff {
     flex: 1;
     overflow: auto;
@@ -464,8 +410,6 @@
     color: var(--text-strong);
   }
 
-  /* Putting a version back is `.nib-button` in the themes package, which says its
-     size under a finger too; here it only keeps to its own width. */
   .nib-button {
     align-self: flex-start;
   }
@@ -481,8 +425,6 @@
     padding-bottom: var(--touch-bottom);
   }
 
-  /* A version is a row in a list like any other, and the button that puts one
-     back is the one thing here to press. */
   :global([data-touch]) .versions button {
     min-height: var(--touch-row);
     gap: var(--touch-gap);
@@ -490,8 +432,6 @@
     font-size: var(--touch-text);
   }
 
-  /* The two faces of a version - what it would change, and what it says - are
-     the other thing here to press. */
   :global([data-touch]) .faces button {
     min-height: var(--touch-target);
     padding: 0 var(--space-3);

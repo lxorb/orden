@@ -1,25 +1,4 @@
 <script lang="ts">
-  /** The pages of the note in front, as thumbnails, in the outline panel.
-   *
-   *  In the outline's place rather than in a panel of its own, because it is the
-   *  same thing: the shape of what is open, and a row that goes to a part of it. A
-   *  note has headings, a page note has pages, and the panel shows whichever the
-   *  thing in front has.
-   *
-   *  A thumbnail is the page drawn small: the ruling, the PDF page behind it where
-   *  there is one, and the ink on it. Drawn with the same `paintInk` the surface
-   *  paints with - one ink engine, one picture of a stroke - at the scale the
-   *  thumbnail is, so what the panel shows is what the page says and not a cartoon
-   *  of it.
-   *
-   *  Redrawn when the pages change and not while somebody is drawing on one. A page
-   *  of five thousand strokes takes a sixth of a second to rasterise, and the panel
-   *  is not what the hand is looking at; the surface's own layer is. So this waits
-   *  for the drawing to stop, the way the file does.
-   *
-   *  Reordering is a drag, the way moving a section in the outline is. Dropping a
-   *  page between two others moves the page and everything written on it. */
-
   import { moved, removed, reshaped } from '@orden/markdown/pages'
   import type { Canvas } from './canvas/format'
   import { PAPER_NAMES, PATTERNS, type PageNode, type Paper, type Pattern } from './canvas/format'
@@ -32,27 +11,17 @@
   import { pages as showing } from './pages/showing.svelte'
   import { workspace } from './workspace.svelte'
 
-  /** How wide a thumbnail is, in pixels. Narrow enough that a panel holds six or
-   *  seven of them and wide enough that a page of handwriting is recognisable as the
-   *  page it is. */
   const WIDE = 104
 
-  /** How long after the last change the thumbnails are drawn again. The same pause
-   *  the file waits, so a page being written on is rasterised once when the hand
-   *  stops rather than on every stroke. */
   const SETTLE = 600
 
-  /** Reads a value for its own sake, so the effect around it follows it. */
   const follows = (_value: unknown) => undefined
 
   const store = $derived(showing.current?.store ?? null)
   const pages = $derived(store?.pages ?? [])
-  /** The space the note is in, which is the other place a page's `file` can point. */
   const spaceRoot = $derived(workspace.rootHolding(store?.path ?? null))
-  /** Which page is being looked at, read off the store the way the status bar reads it. */
   const on = $derived(store?.showing ?? 0)
 
-  /** Which page a drag is over, and whether it would land above it. */
   let over = $state<number | null>(null)
   let above = $state(true)
 
@@ -64,14 +33,6 @@
     if (element) palette = readPalette(element)
   })
 
-  /** The canvas element each thumbnail is drawn on, by the page's id. Bound as the rows
-   *  are made, so a page taken away takes its element with it.
-   *
-   *  Deliberately not state. The drawing below reads it, and `bind:this` writes it on
-   *  every render: state here is an effect that reads and writes the same value, which
-   *  is a loop the framework stops by throwing. Nothing renders from it - it is a
-   *  handful of elements to paint on - so what redraws the thumbnails is the canvas
-   *  changing, and by the time the pause is over every row is mounted. */
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- painted into, never rendered from; see above
   const sheets = new Map<string, HTMLCanvasElement>()
 
@@ -80,7 +41,6 @@
     else sheets.delete(id)
   }
 
-  /** One thumbnail, drawn: the sheet, the PDF page behind it, then the ink. */
   async function draw(page: PageNode, element: HTMLCanvasElement) {
     const canvas = store?.canvas
     if (!canvas) return
@@ -94,8 +54,6 @@
     const ctx = element.getContext('2d')
     if (!ctx) return
 
-    // The camera the painter wants names the middle of the view, so the middle of
-    // this page is where it points; see camera.ts.
     const view = {
       camera: { x: page.x + page.width / 2, y: page.y + page.height / 2, scale },
       width: WIDE,
@@ -103,17 +61,11 @@
       ratio,
     }
 
-    // The same paper the sheet in the pane draws, asked for the same way: the page's
-    // `file` is relative to the note, and the store is what knows which note that is.
     const paper =
       page.file && page.page
         ? await paperOf({ file: page.file, note: store.path, root: spaceRoot }, page.page)
         : null
 
-    // The ink through the same painter the surface uses, pointed at this page: one
-    // description of what a stroke looks like, here as well. Onto a layer of its own
-    // when there is a paper under it, because the painter wipes what it is given -
-    // the surface's own ink layer is a layer of its own for the same reason.
     const inked = paper ? document.createElement('canvas') : element
     if (paper) {
       inked.width = element.width
@@ -131,9 +83,6 @@
     ctx.drawImage(inked, 0, 0)
   }
 
-  /** The pages drawn again once the changes have stopped. Watched through the
-   *  canvas, which is replaced whole by every edit, so this fires once per edit and
-   *  not once per stroke of a rub. */
   let timer = 0
   $effect(() => {
     follows(store?.canvas)
@@ -155,17 +104,10 @@
   }
 
   function add(after: string | null) {
-    // The store's own, because the surface adds a page too - by being scrolled past
-    // the end of the column - and two copies of "put a page in and go to it" are two
-    // things to keep in step. See `addPage` in pages/store.svelte.ts.
     const at = store?.addPage(after) ?? 0
-    // To the page that was just made, which is where somebody who added one is
-    // about to write.
     if (at) store?.turnTo(at)
   }
 
-  /** What each ruling is called. Words rather than an app's name, so they are asked
-   *  for in whatever language the app is in. */
   const WORDS: Record<Pattern, string> = {
     blank: 'Blank',
     lines: 'Lines',
@@ -173,23 +115,12 @@
     dots: 'Dots',
   }
 
-  /** And what each paper is called. A4 and Letter are the names printed on the packet
-   *  in every language; the third is not a size at all but the page that keeps going,
-   *  so it is the one that needs words. */
   const PAPER_WORDS: Record<Paper, string> = {
     a4: 'A4',
     letter: 'Letter',
     long: 'Long page',
   }
 
-  /** What the menu on a page offers: the two things somebody does to a page, the three
-   *  papers and the four rulings, with the one it wears already disabled - there is no
-   *  tick in this menu, and a row that would do nothing says so the way every other one
-   *  does.
-   *
-   *  The paper above the ruling, because it is the larger decision: how big the sheet is
-   *  and whether it ends, then what is printed on it. A long page keeps whatever height
-   *  it has already grown to; A4 and Letter go back to their own. */
   function pageMenu(page: PageNode): MenuEntry[] {
     return [
       { label: t('Add a page after this'), run: () => add(page.id) },
@@ -248,8 +179,6 @@
     const canvas = store?.canvas
     if (!page || !canvas || Number.isNaN(from)) return
 
-    // Where it lands, counted in pages after the one being moved has been taken out,
-    // which is what `moved` expects.
     const to = above ? at : at + 1
     edit(moved(canvas, page.id, to > from ? to - 1 : to))
   }
@@ -279,8 +208,6 @@
             ondragend={() => (over = null)}
             ondrop={(event) => drop(event, at)}
           >
-            <!-- The sheet, drawn small. `aria-hidden`, because what the row is is
-                 said by its label: a picture of handwriting reads out as nothing. -->
             <canvas
               aria-hidden="true"
               style:aspect-ratio="{page.width} / {page.height}"
@@ -319,8 +246,6 @@
     list-style: none;
   }
 
-  /* A thumbnail is the row: the whole sheet is the target, which is what a finger
-     wants, and the number sits in its corner the way it does on the page itself. */
   .page {
     position: relative;
     display: block;
@@ -350,8 +275,6 @@
     line-height: 1;
   }
 
-  /* The page being looked at, in the accent: the same way the outline marks the
-     heading somebody is under. */
   .page.is-on {
     border-color: var(--accent);
     box-shadow: 0 0 0 1px var(--accent);
@@ -363,8 +286,6 @@
     }
   }
 
-  /* Where a dragged page would land, as a line above or below the row it is over,
-     which is the same mark the file list and the outline use. */
   .page.above::before,
   .page.below::after {
     content: '';

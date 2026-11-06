@@ -1,47 +1,4 @@
 <script lang="ts">
-  /** A page note: sheets of paper in a column, written on with the pen.
-   *
-   *  Everything here is the canvas's. The bar is `CanvasBar`, the ink is
-   *  `CanvasInk` on its two 2d layers, a card is `CanvasNode`, another device's hand
-   *  is `CanvasHands`, the pen in your hand is the same `pens` and the same `tools`,
-   *  a stroke is built by the same `penFelt` and drawn by the same paint, and a
-   *  palm is turned away by the same `Contacts`. There is one ink engine in this app
-   *  and this is it, on paper. What this file adds is the paper: where the pages
-   *  are, which one a press lands on, and how the view moves over them.
-   *
-   *  The view is the canvas's camera with two things taken away. A page note is
-   *  read by scrolling, so the zoom starts at whatever fits the widest page across
-   *  the pane and the pan is held to the column: you cannot lose your pages off the
-   *  side of a note of pages, which is the one thing an endless plane lets you do.
-   *  Zooming in frees the horizontal pan, because then there is something to the
-   *  side to see.
-   *
-   *  **Every way a hand zooms paper.** Two fingers, Ctrl and the wheel, a trackpad
-   *  pinch (which arrives as the same wheel), a double tap, and two keys - all of
-   *  them the same `zoomAt` on the same camera, at one rate: `NOTCH` in camera.ts,
-   *  which is what the bar's own buttons step by. The keys are one modifier over
-   *  from the three every browser uses, because the app's own text size holds those
-   *  and a zoom on the same key would resize the words and the paper at once; see
-   *  docs/keyboard.md. How far the paper is zoomed is said on the paper while it is
-   *  being zoomed and then goes, because the bar is at the bottom of the pane and a
-   *  hand pinching the middle of a page is not looking there.
-   *
-   *  **The end of the column is where the next page comes from.** Carry on
-   *  scrolling past the last sheet and the silhouette of the next one rises out from
-   *  under it, on a rubber band; far enough, and letting go makes it real, in
-   *  exactly the box the silhouette was drawn in, so nothing jumps. The arithmetic
-   *  is pages/pull.ts and pure; the silhouette is PagesSlot.svelte; this file is the
-   *  events and the camera between them.
-   *
-   *  Ink, cards and pictures all belong to a page. A press in a gutter does
-   *  nothing: there is no paper there. A stroke that runs off the bottom of a page
-   *  belongs to the page the pen went down on, which is what `onPage` answers for
-   *  the surface, the export and the merge alike.
-   *
-   *  One transform for the whole column, as on a canvas: the pages are elements at
-   *  their own coordinates, the ink is two canvases over them, and a scroll moves
-   *  the transform rather than anything in it. */
-
   import { untrack } from 'svelte'
   import CanvasBar from './CanvasBar.svelte'
   import CanvasHands from './CanvasHands.svelte'
@@ -102,24 +59,14 @@
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 
-  /** The note this tab is showing. Built once from the tab it was given, exactly as
-   *  a canvas's surface is: the pane keys this component by tab. */
   const store = untrack(() => new PagesStore(tab))
 
-  /** How far a pointer may drift and still count as a tap rather than a drag. */
   const A_TWITCH = 6
 
-  /** How long a scroll has to have been quiet for the next wheel to be a new
-   *  gesture, in milliseconds. Where a gesture began is what says whether it may
-   *  reach a new page, so a wheel has to know when one ends; a pause this long
-   *  between notches is a hand that stopped and started again. */
   const A_PAUSE = 220
 
-  /** The tools that put ink down, which are the ones a palm may not have. */
   const INKING: ReadonlySet<Tool> = new Set<Tool>(['draw', 'erase', 'lasso'])
 
-  /** The tools a page note has. The five that mean something on paper; a connector and
-   *  a frame are a plane's, and there is nothing on a sheet to join. */
   const PAPER_TOOLS: ReadonlySet<Tool> = new Set<Tool>([
     'select',
     'hand',
@@ -129,14 +76,8 @@
     'words',
   ])
 
-  /** How soon after a gesture began a second finger is the paper rather than a
-   *  palm, in milliseconds. The canvas's own number and the canvas's own reason: a
-   *  stroke a moment old is given up for the pinch and an older one is not, so a
-   *  hand settling on the glass halfway through a long line leaves the line alone.
-   *  See TWO_FINGERS in canvas/pointer.ts. */
   const TWO_FINGERS = 250
 
-  /** Reads a value for its own sake, so the effect around it follows it. */
   const follows = (_value: unknown) => undefined
 
   let host = $state<HTMLElement>()
@@ -149,86 +90,44 @@
   const camera = $derived(store.camera)
   const showing = $derived(store.showing)
 
-  /** One screen pixel in plane units, which is what a dot, a handle and a name are
-   *  sized in so they are the same size on screen at every zoom. */
   const unit = $derived(1 / camera.scale)
 
   const writable = $derived(!store.readOnly)
-  /** Whether the HTML in a card on these pages is markup rather than the characters
-   *  it is made of. The same one question a canvas card asks, of the same note; see
-   *  trust.ts. */
   const trusted = $derived(trustsHtmlIn(tab.note))
 
-  /** The cards and pictures, which are everything on the plane that is not a page
-   *  and not ink. Pages draw themselves; see PagesPage.svelte. */
   const cards = $derived(canvas.nodes.filter((node) => node.type !== 'page'))
 
-  /** How far the pull past the end of the column has brought the next sheet up, in
-   *  screen pixels. Nought when nothing is being pulled, which is almost always.
-   *
-   *  Held rather than derived, because how far a wheel's pull has fallen back is a
-   *  question about the clock: the frames that answer it are `fall`. */
   let rise = $state(0)
 
-  /** The pull as it stands. Raw: it is replaced whole by every event and read for
-   *  the numbers in it. See pages/pull.ts. */
   let pull = $state.raw<Pulling>(noPull())
 
-  /** The frame the fall is waiting on, while one is. */
   let falling = 0
 
-  /** Where the next sheet would go, or null for a note nobody may add one to. */
   const slot = $derived(store.slot)
 
-  /** How far the silhouette has to come before letting go makes a page, in screen
-   *  pixels: a third of the last page as it is on screen. */
   const reach = $derived(reachFor((store.last?.height ?? 0) * camera.scale))
 
-  /** The camera the paper is drawn from and hit against: the view, with the pull's
-   *  overscroll added.
-   *
-   *  The store's camera never holds it. That one is held to the column, and the
-   *  whole of an overscroll is being past the end of it, so the two are added here
-   *  and nowhere else - and everything that draws, paints or hits reads this rather
-   *  than the camera, so a press during a pull lands where the paper looks. */
   const view = $derived<Camera>(rise ? { ...camera, y: camera.y + rise / camera.scale } : camera)
 
-  /** How big the pane is, which every sum about the view needs and only a component can
-   *  measure. The paper stays fitted across it until the reader zooms: the sidebar
-   *  opening must not push the page off the side of the pane. See `measured`. */
   $effect(() => {
     store.measured(width, height)
   })
 
-  /** The status bar's counter and the outline panel's thumbnails are elsewhere in the
-   *  window, so this surface says it is the one in front and they read the rest off its
-   *  store. Once, on the way in and on the way out: the store is the same store all the
-   *  way through, and saying so per scroll would be a write into state the bar has
-   *  already read. See pages/showing.svelte.ts. */
   $effect(() => {
     pagesState.arrived(tab.note.key, store)
     return () => pagesState.gone(tab.note.key)
   })
 
-  /** The view fitted across the widest page, once, the first time there is anything
-   *  to fit. A page note opens at the top of its first page, which is where somebody
-   *  left off writing or is about to start. */
   $effect(() => {
     if (store.framed || !width || !height || !store.widest) return
 
     store.fitWidth(false)
   })
 
-  // The hand is shared with the plane, so a card or a shape picked up on a canvas is
-  // still in it when a page note opens - and nothing on paper answers to one, so every
-  // press would do nothing and no button on the bar would be lit. The arrow instead,
-  // which is what a press on paper is when no pen is out (#350).
   $effect(() => {
     if (!PAPER_TOOLS.has(tools.which)) tools.choose('select')
   })
 
-  // Words that changed under the surface: a version restored, a copy a sync brought
-  // over, the file undo putting one back. The same one line a canvas has.
   $effect(() => {
     follows(tab.note.revision)
     store.follow()
@@ -250,8 +149,6 @@
     return () => watcher.disconnect()
   })
 
-  // The theme's own colours again whenever the theme changes: the ink layer paints
-  // on a 2d context, which has never heard of a custom property.
   $effect(() => {
     const element = host
     if (!element || typeof MutationObserver === 'undefined') return
@@ -265,16 +162,10 @@
     return () => watcher.disconnect()
   })
 
-  // A space somebody shared to read holds notes to look at, and the surface refuses
-  // the edit rather than the gesture, which is one rule for every gesture there is.
-  // A PDF read as itself has no note to write in at all, whatever its space allows.
   $effect(() => {
     store.readOnly = !canWriteIn(tab.note) || tab.kind === 'pdf'
   })
 
-  // Several devices may be writing on these pages, so the surface offers itself to
-  // the room its file is in and takes it back when the tab goes. A page note's room
-  // is a plane's room, and the same one; see rooms/kind.ts.
   $effect(() => {
     rooms.drawing(tab.note.key, store)
     return () => {
@@ -283,15 +174,10 @@
     }
   })
 
-  // Where this hand is and what it is drawing, on its way to the other devices.
   $effect(() => {
     store.shared?.hand(pointing, live)
   })
 
-  // The papers these pages are pages of, let go of when the tab goes: a PDF open for a
-  // note nobody is looking at is a worker and a pile of bitmaps that nothing will ever
-  // ask for again. Read once, on the way out, so a page added or removed while the tab
-  // is open does not tear the paper down under it.
   $effect(() => {
     const note = tab.note.path
     const root = workspace.rootHolding(note)
@@ -303,45 +189,31 @@
     }
   })
 
-  // The pane being worked in takes the keyboard, so Delete and Ctrl+Z reach the
-  // pages the way they reach an editor. Never while a card is being written in.
   $effect(() => {
     if (focused && store.editing === null) host?.focus({ preventScroll: true })
   })
 
-  // A frame nobody is waiting for any more, when the tab goes.
   $effect(() => () => {
     if (falling && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(falling)
     store.halt()
   })
 
-  /** A point in the pane, in pixels from its top left corner. */
   function screenAt(event: { clientX: number; clientY: number }): Point {
     const box = host?.getBoundingClientRect()
     return { x: event.clientX - (box?.left ?? 0), y: event.clientY - (box?.top ?? 0) }
   }
 
-  /** A point in the pane, in plane units. Against the view rather than the camera,
-   *  so a press during a pull lands on the paper where the paper looks. */
   function planeAt(event: { clientX: number; clientY: number }): Point {
     const at = screenAt(event)
     return graphPoint(view, width, height, at.x, at.y)
   }
 
-  /** What each pointer said about itself when it landed, which is how a palm is
-   *  turned away and how a nib arriving twice under two names is read as one; the
-   *  reasons are in canvas/contacts.ts, where they are a test rather than something
-   *  to try with a hand. The same object the canvas uses, and the same rules. */
   const contacts = new Contacts()
 
-  /** What kind of pointer this really is, and whether it is rubbing out. The same
-   *  one line the canvas asks, of the same glass. */
   function kindOf(event: PointerEvent) {
     return penKind(event, { penSeen: hand.penSeen, touch: viewport.touch })
   }
 
-  /** What kind of pen this is, so pressure and lean are read the way this device
-   *  reports them. */
   const stylus = new Stylus({
     agent: typeof navigator === 'undefined' ? '' : navigator.userAgent,
     touch: viewport.touch,
@@ -351,19 +223,10 @@
       typeof PointerEvent !== 'undefined' && 'getPredictedEvents' in PointerEvent.prototype,
   })
 
-  /** The gesture under way, if any. Five, which is all a page of paper needs: a
-   *  stroke, a rub, a lasso, moving the paper about, and two fingers on it.
-   *
-   *  A pan holds where it began on screen and the camera it began with, rather than
-   *  a point on the plane. The plane under the pointer moves while a pull is on the
-   *  view, so a pan measured in plane units would feed its own overscroll back into
-   *  itself and run away down the column. */
   type Gesture =
     | { kind: 'draw'; id: number; page: string; stroke: InkStroke; began: number }
     | { kind: 'erase'; id: number; run: string; last: Point; lastScreen: Point }
     | { kind: 'lasso'; id: number; points: Point[]; cards?: boolean }
-    /** A finger held still on the paper: the menu is up, and moving on from here draws
-     *  a lasso instead (#349). */
     | { kind: 'armed'; id: number; at: Point; screen: Point }
     | {
         kind: 'pan'
@@ -371,8 +234,6 @@
         screen: Point
         from: Camera
         moved: boolean
-        /** Whether the press landed on the silhouette at the end of the column, so a
-         *  press that goes nowhere adds a page. */
         onSlot: boolean
       }
     | { kind: 'drag'; id: number; from: Point; offset: Point; moved: boolean }
@@ -382,33 +243,21 @@
   let predicted = $state.raw<InkPoint[]>([])
   let pointing = $state.raw<Point | null>(null)
 
-  /** The pointer that started the gesture: where it last was on screen, so a second
-   *  finger pinches from wherever the first has got to, and when it landed, so a
-   *  stroke a moment old can be given up for the pinch and an older one cannot. The
-   *  canvas keeps exactly this; see `Driver` in canvas/pointer.ts. */
   let driver = $state.raw<{ id: number; touch: boolean; screen: Point; since: number } | null>(null)
 
-  /** The stroke under the pen, with at most one step of the browser's guess at
-   *  where the nib is going on the end of it; see leadPoint in canvas/ink.ts. */
   const live = $derived.by(() => {
     if (gesture?.kind !== 'draw') return null
     return { ...gesture.stroke, points: [...gesture.stroke.points, ...predicted] }
   })
 
-  /** What is picked, dragged by however far the drag has carried it. */
   const dragging = $derived(gesture?.kind === 'drag' ? gesture.offset : { x: 0, y: 0 })
 
-  /** The ink as it is drawn: carried along with the drag while one is under way, so
-   *  writing caught by the lasso moves under the hand rather than jumping when it
-   *  lets go. */
   const shownInk = $derived(
     dragging.x || dragging.y
       ? movedBy(canvas, store.picked, dragging.x, dragging.y).ink
       : canvas.ink,
   )
 
-  /** The box round the ink that is picked, a little larger than the strokes: a line of
-   *  writing is a few units tall, and a press on it should not have to be exact. */
   const caught = $derived.by(() => {
     const wanted = new Set(store.picked)
     const strokes = canvas.ink.filter((one) => wanted.has(one.id)).map((one) => one.id)
@@ -423,9 +272,6 @@
     }
   })
 
-  /** A pen sample, in plane units, with everything the digitiser said about it. The
-   *  same normalisation the canvas does, so an S Pen, a Pencil and a USI pen all
-   *  arrive as the same six numbers. */
   function sampleOf(event: PointerEvent, began: number): InkPoint {
     const point = planeAt(event)
     return {
@@ -436,8 +282,6 @@
     }
   }
 
-  /** Whether a point is inside a box, which is the one question the silhouette and
-   *  the cards both ask of a press. */
   function inside(
     point: Point,
     box: { x: number; y: number; width: number; height: number },
@@ -450,9 +294,6 @@
     )
   }
 
-  /** Whether a second finger takes the paper from the gesture in hand. Two fingers
-   *  mean the paper, in every tool; the one thing it will not do is throw away ink
-   *  that has been going for longer than a moment. */
   function takesOver(one: Gesture, since: number, now: number): boolean {
     if (one.kind === 'pinch') return false
     if (one.kind !== 'draw' && one.kind !== 'erase') return true
@@ -461,36 +302,22 @@
   }
 
   function onpointerdown(event: PointerEvent) {
-    // The same nib arriving twice under two names: Windows hands pen input to
-    // anything that does not ask for it as mouse input, and a mouse contact while a
-    // nib is on the glass is that nib, not a second hand.
     if (contacts.echo(event)) return
-    // A lasso held on its key is a held one now, however short the hold (#349).
     tools.used()
 
-    // The right button on a mouse starts nothing; the menu is the browser's own
-    // event. A pen holding its button is the eraser and not a right button at all.
     const { kind, eraser } = kindOf(event)
     const pen = kind === 'pen'
     if (event.button === 2 && !pen) return
 
     contacts.came(event.pointerId, { pen, eraser })
     stylus.saw(event)
-    // A pen on this glass is remembered for good: from now on the finger moves the
-    // paper about rather than writing on it. See canvas/hand.svelte.ts.
     if (pen) hand.sawPen()
 
-    // A finger that landed while a nib is down is the hand the page is being held
-    // with. It does nothing at all - not even a pan, which would drag the paper out
-    // from under the pen.
     if (kind === 'touch' && contacts.penned) return
 
     const screen = screenAt(event)
     const one = gesture
 
-    // Two fingers are the paper: whatever the first one had started, the second
-    // takes over as a pan and a pinch. Which is how a page note is zoomed with a
-    // hand, and there was no way to do it at all before.
     if (one && driver?.touch && kind === 'touch' && driver.id !== event.pointerId) {
       if (!takesOver(one, driver.since, event.timeStamp)) return
 
@@ -505,12 +332,8 @@
       return
     }
 
-    // A third finger, or a mouse pressed while something is already under way: the
-    // gesture in hand keeps the paper.
     if (one) return
 
-    // Guarded, as on the canvas: WebKit throws for a pointer it no longer counts as
-    // active, and a throw here would stop the stroke before it began.
     try {
       host?.setPointerCapture(event.pointerId)
     } catch {
@@ -522,17 +345,10 @@
     const point = planeAt(event)
     const page = pageAt(pages, point)
 
-    // Whether this contact may lay ink down: the canvas's own rule, out of the
-    // canvas's own machine, so a palm on paper and a palm on a plane are turned away
-    // by the same line. See `inks` in canvas/pointer.ts.
     const drawing = inks(kind, { penSeen: hand.penSeen, fingerDraws: hand.fingerDraws })
     const asked = eraser ? 'erase' : tools.which
     const tool = drawing || !INKING.has(asked) ? asked : 'select'
 
-    // A press in a gutter moves the paper: there is nothing there to write on, and
-    // scrolling with a finger is what somebody is doing there. A press on the
-    // silhouette at the end of the column is the one exception, and it is still a
-    // pan until it turns out to have gone nowhere.
     if (tool === 'hand' || !page) {
       gesture = {
         kind: 'pan',
@@ -548,7 +364,6 @@
 
     if (!writable) return
 
-    // Words, typed onto the paper where it was pressed (#421); see `putWords`.
     if (tool === 'words') {
       event.preventDefault()
       putWords(store, wordsAt(point))
@@ -586,9 +401,6 @@
       return
     }
 
-    // A press inside what the lasso caught moves it, with the lasso still in hand or
-    // the arrow: the ink it caught could otherwise only ever be deleted, and only from
-    // a keyboard (#350). The plane's own rule; see `lasso` in canvas/pointer.ts.
     if ((tool === 'lasso' || tool === 'select') && caught && inside(point, caught)) {
       gesture = {
         kind: 'drag',
@@ -605,8 +417,6 @@
       return
     }
 
-    // The arrow. A press on something picks it and begins a drag; a press on bare
-    // paper clears what was picked.
     const hit = cards.find((node) => inside(point, node))
 
     if (!hit) {
@@ -633,14 +443,8 @@
     }
   }
 
-  /** How much room the bar over what is picked wants above it before it hangs
-   *  under the pick instead, in pixels. The canvas's own number. */
   const ROOM = 72
 
-  /** Where the bar over the ink the lasso caught goes: over the middle of it, on
-   *  screen, or under it against the top of the pane - the canvas's bar, so paper and
-   *  plane colour, copy and delete what is picked the same way, with a finger as
-   *  well as a key (#350). Nothing while a gesture is under way. */
   const overPicked = $derived.by(() => {
     const box = caught
     if (!box || gesture || store.editing !== null) return null
@@ -653,14 +457,11 @@
     return { at: { x: left, y: below ? under : above }, below }
   })
 
-  /** The colour the picked ink is written in, or nothing where it is the page's own. */
   const pickedColour = $derived.by(() => {
     const first = canvas.ink.find((one) => store.isPicked(one.id))
     return !first || first.color === DEFAULT_INK ? null : first.color
   })
 
-  /** The picked ink in a colour; nothing at all is the page's own ink, since there
-   *  is no paper showing through a line. */
   function colourPicked(colour: string | null) {
     store.edit(coloured(canvas, store.picked, colour ?? DEFAULT_INK))
   }
@@ -672,7 +473,6 @@
     store.pickAll(made.ids)
   }
 
-  /** What is picked, gone - never a page, which is taken away from the navigator. */
   function deletePicked() {
     if (!writable) return
     const going = store.picked.filter((id) => !pages.some((page) => page.id === id))
@@ -681,8 +481,6 @@
     store.clearPicked()
   }
 
-  /** One row of the app's own, pressed: an export or printing, which the File menu and
-   *  the palette already have and which load most of what the app can load. */
   function command(id: string, label: string): MenuEntry {
     return {
       label,
@@ -694,9 +492,6 @@
     }
   }
 
-  /** What a right click or a finger held still on the paper offers: what can be done
-   *  to the ink that is picked, a page after the one under it, the two fits, and the
-   *  note out as a PDF or on paper. Only what would do something here (#350). */
   function pagesMenu(point: Point): MenuEntry[] {
     const page = pageAt(pages, point)
     const ink = writable && store.picked.some((id) => canvas.ink.some((one) => one.id === id))
@@ -718,8 +513,6 @@
             },
           ]
         : [],
-      // The two fits and one to one, which is the size the page prints at: what the
-      // percentage on the bar offered before the bar stopped zooming (#401).
       [
         { label: t('Fit width'), run: () => store.fitAgain() },
         { label: t('Fit page'), run: () => store.fitPage() },
@@ -739,8 +532,6 @@
     })
   }
 
-  /** A right click. The mouse's: a pen's barrel button is the eraser on paper, and a
-   *  finger held still is `longPress` below, so a menu never opens twice for one hold. */
   function oncontextmenu(event: MouseEvent) {
     event.preventDefault()
     const kind = (event as PointerEvent).pointerType
@@ -748,16 +539,9 @@
     showMenu(event)
   }
 
-  /** A finger held still on the paper - unless it is writing, which is a stroke that
-   *  has not moved yet rather than a press. */
   function held(event: MouseEvent) {
     const busy = gesture?.kind
     if (busy === 'draw' || busy === 'erase' || busy === 'lasso') return
-    // A finger held still on a page, with nothing under it to carry, is a lasso as well
-    // as the menu, as on the plane (#349): Emil, "holding down with your finger and
-    // then dragging after some short waiting time to get a lasso instead of a normal
-    // select". Let go, and the menu is what it was for; moved on, the menu goes and
-    // the finger draws the loop.
     const one = gesture
     const at = planeAt(event)
     gesture =
@@ -775,9 +559,6 @@
 
     const screen = screenAt(event)
 
-    // Two fingers, which have no single driver: the paper moves with the middle of
-    // them and zooms by how much further apart they are. The same arithmetic the
-    // plane's own machine does; see `pinch` in canvas/pointer.ts.
     if (one.kind === 'pinch') {
       const which = one.ids.indexOf(event.pointerId)
       if (which < 0) return
@@ -791,8 +572,6 @@
         y: (one.screens[0].y + one.screens[1].y) / 2,
       }
 
-      // How much of this movement the column can really take, in screen pixels,
-      // before any of it happens: whatever is left over is the pull.
       const room = Math.max(0, store.bottom - camera.y) * camera.scale
 
       store.camera = store.held({
@@ -800,22 +579,10 @@
         x: camera.x - (middle.x - was.x) / camera.scale,
         y: camera.y - (middle.y - was.y) / camera.scale,
       })
-      // Two fingers that stay the same distance apart are a pan, and a zoom of
-      // exactly one is not worth a camera write.
       if (one.apart > 0 && Math.abs(apart - one.apart) > 0.5) {
         store.zoomAt(middle, apart / one.apart)
       }
 
-      // And two fingers past the end of the column pull the next page, like one.
-      // On a phone that has never seen a pen the finger draws, so two fingers are
-      // how a page note is scrolled at all - which would otherwise have been the
-      // one device where this gesture could not be made.
-      //
-      // Measured from the fingers and added up, rather than from the camera the way
-      // a one-finger pan measures it. A pinch moves the camera itself as it zooms,
-      // about a point that is not the middle of the view, so the camera is no
-      // origin to measure against: what is left of the fingers' own travel after
-      // the column has had its share is the pull, and a drag back up gives it back.
       const answer = dragged(pull, {
         raw: pull.raw + Math.max(0, was.y - middle.y - room),
         reach,
@@ -833,8 +600,6 @@
     if (one.id !== event.pointerId) return
     if (driver?.id === event.pointerId) driver = { ...driver, screen }
 
-    // A pen lifted off the glass while the button was still reported down: the one
-    // thing that must not keep a stroke alive.
     if (one.kind === 'draw' && (hovering(event) || !contacts.has(event.pointerId))) {
       finish()
       return
@@ -843,8 +608,6 @@
     const point = planeAt(event)
 
     if (one.kind === 'pan') {
-      // Measured on screen, against where the pan began: the plane under the finger
-      // moves as the pull grows, and a pan measured on the plane would chase it.
       const wanted = {
         x: one.from.x - (screen.x - one.screen.x) / camera.scale,
         y: one.from.y - (screen.y - one.screen.y) / camera.scale,
@@ -852,7 +615,6 @@
       const bottom = store.bottom
       store.camera = store.held({ ...camera, ...wanted })
 
-      // Whatever the column had no room for is the pull.
       const over = Math.max(0, wanted.y - bottom) * camera.scale
       const answer = dragged(pull, { raw: over, reach, now: Date.now(), still: stillness() })
       pull = answer.pull
@@ -866,8 +628,6 @@
     }
 
     if (one.kind === 'draw') {
-      // Every sample the browser held back, so a fast line is the line the hand
-      // drew and not the four points that reached the page.
       const events = 'getCoalescedEvents' in event ? event.getCoalescedEvents() : []
       const samples = (events.length ? events : [event]).map((one) =>
         sampleOf(one, gesture?.kind === 'draw' ? gesture.began : event.timeStamp),
@@ -917,10 +677,6 @@
     contacts.went(event.pointerId)
 
     const one = gesture
-    // A finger coming off a pinch leaves the other one holding the paper, from
-    // wherever it is: two fingers were the paper and one of them still is, so the
-    // pinch becomes a pan rather than the gesture ending under a hand that has not
-    // let go. The plane does the same with its spare fingers.
     if (one?.kind === 'pinch') {
       const which = one.ids.indexOf(event.pointerId)
       if (which < 0) return
@@ -955,7 +711,6 @@
     endPull()
   }
 
-  /** The gesture, ended: one edit, or none. */
   function finish() {
     const one = gesture
     gesture = null
@@ -964,23 +719,16 @@
     if (!one) return
 
     if (one.kind === 'pan' || one.kind === 'pinch') {
-      // The pull let go of. Past the threshold it makes a page; short of it
-      // everything springs back.
       const answer = lifted(pull, { reach, now: Date.now(), still: stillness() })
       pull = answer.pull
       if (answer.makes) madePage()
       else fall()
 
-      // A press on the silhouette that went nowhere is a press on a button: the
-      // same page the pull would have made, without the pull.
       if (one.kind === 'pan' && one.onSlot && !one.moved) madePage()
       return
     }
 
     if (one.kind === 'draw') {
-      // Tidied the way the canvas tidies a finished stroke: the samples simplified
-      // to what the line actually is, which is what keeps a page of handwriting
-      // kilobytes rather than megabytes.
       const stroke = tidied(one.stroke)
       if (stroke.points.length) store.edit({ ...canvas, ink: [...canvas.ink, stroke] })
       tools.done()
@@ -998,9 +746,6 @@
     }
   }
 
-  /** One point of a rub: every stroke it touched, cut. The eraser answers under the
-   *  nib, so this edits on every point of the drag and names the drag, which is how
-   *  the whole rub is one undo step and one write; see store.svelte.ts. */
   function rub(at: Point, run: string) {
     const reach = pens.rub * unit
     let changed = false
@@ -1020,13 +765,6 @@
     if (changed) store.edit({ ...canvas, ink }, run)
   }
 
-  /** The silhouette become a sheet.
-   *
-   *  Nothing on screen moves. The page lands in exactly the box the silhouette was
-   *  drawn in, and the overscroll the pull was holding the view at is now somewhere
-   *  the view may really be - the column is a page longer - so it is handed over as
-   *  that in the same breath. Then the view slides down onto the new page, which is
-   *  where somebody who just added one is about to write. */
   function madePage() {
     const over = rise
     const number = store.addPage()
@@ -1035,15 +773,10 @@
 
     if (over) store.camera = store.held({ ...camera, y: camera.y + over / camera.scale })
     store.glideTo(number)
-    // The knock a thumb feels when the page arrives, where the platform has one.
     tick()
     said.say(t('Page {number}', { number }))
   }
 
-  /** The pull falling back, a frame at a time, until there is none of it left.
-   *
-   *  What a wheel has instead of letting go: there is no end to a scroll, so the
-   *  silhouette settles on its own a quarter of a second after the last notch. */
   function fall() {
     rise = riseOf(pull, reach, Date.now(), stillness())
     if (falling || pull.holding || typeof requestAnimationFrame !== 'function') return
@@ -1060,14 +793,11 @@
     falling = requestAnimationFrame(step)
   }
 
-  /** The pull dropped outright, for the gestures that are not it: a second finger
-   *  arriving, a pointer cancelled. */
   function endPull() {
     rise = 0
     pull = { ...pull, raw: 0, holding: false }
   }
 
-  // A Mac's trackpad pinch, which WebKit tells as gestures rather than the wheel (#410).
   $effect(() => {
     const element = host
     if (!element) return
@@ -1081,17 +811,12 @@
     event.preventDefault()
     store.halt()
 
-    // Ctrl or the pinch a trackpad reports as one: the zoom. Everything else is a
-    // scroll down the column, which is how a page note is read.
     if (event.ctrlKey || event.metaKey) {
       if (!pinching()) store.zoomAt(screenAt(event), ctrlWheelZoom(event))
       return
     }
 
     const now = Date.now()
-    // A wheel after a pause is a new gesture, and where a gesture began is what says
-    // whether it may reach a new page at all: a fling from the top of a sixty page
-    // note must not make one out of momentum. See `startedNearEnd`.
     if (!pull.holding && now - pull.at > A_PAUSE) {
       pull = began(pull, startedNearEnd(store.viewBottom, store.last), now)
     }
@@ -1104,8 +829,6 @@
       y: wanted,
     })
 
-    // Whatever the column had no room for is the pull. A wheel has no lift, so the
-    // threshold itself makes the page and the notches that follow make nothing.
     const answer = wheeled(pull, {
       delta: Math.max(0, wanted - bottom) * camera.scale,
       reach,
@@ -1120,10 +843,6 @@
   function onkeydown(event: KeyboardEvent) {
     if (store.editing !== null) return
 
-    // The bar teaches the keyboard, and it is one bar: the five tools that mean
-    // something on paper answer the very same keys they answer on a plane, off the same
-    // table and so off the same rebinding. The rest are a canvas's - there is nothing to
-    // connect on a page - and are left for whatever else wants them.
     const wanted = toolPressed(event)
     if (wanted && PAPER_TOOLS.has(wanted)) {
       event.preventDefault()
@@ -1131,7 +850,6 @@
       return
     }
 
-    // The paper's own zoom, one modifier over from the keys that resize the words.
     for (const [id, run] of [
       ['pages.zoom.in', () => store.zoomBy(NOTCH)],
       ['pages.zoom.out', () => store.zoomBy(1 / NOTCH)],
@@ -1163,9 +881,6 @@
       if (!store.picked.length || !writable) return
 
       event.preventDefault()
-      // Never a page, whatever the arrow caught: a page is taken away from the
-      // navigator, where the gesture says which sheet and not "this and everything on
-      // it". See PagesNavigator.svelte.
       const going = store.picked.filter((id) => !pages.some((page) => page.id === id))
       if (going.length) store.edit(removed(canvas, going))
       return
@@ -1181,16 +896,6 @@
     if (event.key === 'Escape') store.clearPicked()
   }
 
-  /** Two taps on the paper: the two fits, in turn.
-   *
-   *  A reader who double taps wants to see the page rather than the corner of it
-   *  they are zoomed into, and once they can see the width of it the next thing they
-   *  want is the whole of it. So the first tap fits the width and the second fits the
-   *  page, which is the one gesture a phone has for "show me this sheet".
-   *
-   *  Only with the arrow or the hand. A tap with a pen in hand is a dot and two of
-   *  them are two dots, and Chromium sends a double click for a pen tapped twice in
-   *  one place. */
   function ondblclick() {
     if (tools.which !== 'select' && tools.which !== 'hand') return
 
@@ -1201,11 +906,6 @@
   }
 </script>
 
-<!-- Named by how much paper is on it rather than by what it is, the way the canvas is
-     named by what is on the plane: "Pages" alone says nothing a reader could act on.
-     `role="application"` is what lets the paper keep its own keyboard - one letter per
-     tool, Page up and Page down to turn - and it is also what stops a reader browsing
-     the sheets, so the label is the whole of what is said about them. -->
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
@@ -1227,18 +927,12 @@
   use:longPress={held}
   style:cursor={!viewport.touch && tools.which === 'lasso' ? 'crosshair' : undefined}
 >
-  <!-- The column, moved by one transform: the pages are elements at their own
-       coordinates and a scroll is composited, whether there are two pages or four
-       hundred. The view rather than the camera, so a pull past the end of the
-       column carries the paper, the cards and the ink together. -->
   <div
     class="column"
     style:transform="translate({width / 2 - view.x * view.scale}px, {height / 2 -
       view.y * view.scale}px) scale({view.scale})"
   >
     {#each pages as page, at (page.id)}
-      <!-- The note and the space, so a page can find the paper its `file` names: the
-           same two the cards below are given, for the same reason. -->
       <PagesPage
         {page}
         number={at + 1}
@@ -1249,8 +943,6 @@
       />
     {/each}
 
-    <!-- Where the next sheet would go. At rest it is the quiet offer at the end of
-         the column; under a pull it is the page coming into being. -->
     {#if slot}
       <PagesSlot box={slot} {unit} {rise} {reach} pulling={rise > 0} />
     {/if}
@@ -1283,9 +975,6 @@
     {/if}
   </div>
 
-  <!-- The ink, on the canvas's own two layers: everything already written below,
-       the stroke under the pen above. The very same component a canvas draws with,
-       so a stroke means the same thing on paper as on a plane. -->
   <CanvasInk
     ink={shownInk}
     {live}
@@ -1326,17 +1015,11 @@
 </div>
 
 <style>
-  /* The canvas's own four lines, for the same reasons (see the plane in
-     Canvas.svelte): on an iPad a finger or a Pencil held still selected the page and
-     brought up the magnifier, and the system then took the pointer back, which
-     dropped the stroke it had begun. */
   .pages {
     position: relative;
     flex: 1;
     min-height: 0;
     overflow: hidden;
-    /* The desk the sheets lie on: see-through under a translucent theme, the sheets
-       themselves paper whatever it is, as a printed page is. */
     background: var(--content-inner, var(--surface-2));
     touch-action: none;
     user-select: none;
@@ -1346,8 +1029,6 @@
     outline: none;
   }
 
-  /* The column's origin is the plane's origin, and the transform above does the
-     rest. Nothing in here is laid out: every page and every card is absolute. */
   .column {
     position: absolute;
     inset: 0;

@@ -1,7 +1,4 @@
 <script lang="ts">
-  /** The Recently deleted pane: two lists, Spaces and Notes, each row with
-   *  the way back and the way out. Reads the account when signed in and the
-   *  device otherwise; both when the device still holds older items. */
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { relativeStep } from './ago'
@@ -13,8 +10,6 @@
 
   const DAY = 24 * 60 * 60 * 1000
 
-  // Read afresh each time the pane comes into view, not only when it is
-  // first made: the panel keeps it around while it is closed.
   $effect(() => {
     if (settings.open && settings.section === 'trash') void trash.load()
   })
@@ -22,12 +17,8 @@
   const spaces = $derived(trash.items.filter((item) => item.kind === 'space'))
   const notes = $derived(trash.items.filter((item) => item.kind !== 'space'))
 
-  /** The formatter for the language on screen, made once rather than once per row
-   *  per render: building one reads the locale data, which is the dearest thing
-   *  on this pane by a long way. */
   const relative = $derived(new Intl.RelativeTimeFormat(i18n.language, { numeric: 'auto' }))
 
-  /** "3 days ago", in the interface language. Which unit that is, is ago.ts. */
   function ago(at: number): string {
     const step = relativeStep(Date.now() - at)
     return relative.format(step.value, step.unit)
@@ -37,7 +28,6 @@
     return Math.max(1, Math.ceil((item.purgeAt - Date.now()) / DAY))
   }
 
-  /** One line under the name: where it was, when it went, when it goes. */
   function meta(item: TrashItem): string {
     return [
       item.detail,

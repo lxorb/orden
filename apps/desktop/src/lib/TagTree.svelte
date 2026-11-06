@@ -1,14 +1,4 @@
 <script lang="ts">
-  /** A space's tags, as the tree their slashes describe.
-   *
-   *  The file tree's rows, its disclosure and its indentation, because a tag path
-   *  is the same kind of thing a folder path is and nobody should have to learn a
-   *  second way of opening one. Recursive, like Tree.svelte, and for the same
-   *  reason: a tag nests as deep as somebody writes it.
-   *
-   *  A row searches. Clicking `work/nib` asks the space for `tag:work/nib`, which
-   *  is every note under it, which is the number the row was showing. */
-
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
@@ -28,8 +18,6 @@
 
   function menuFor(node: TagNode): MenuEntry[] {
     const label = workspace.undoLabel
-    // A tag is renamed or taken away in the notes of the space, and one shared to be
-    // read takes neither; see `replaceInNotes` in workspace/note-text.ts.
     const writes = canWriteAt(workspace.activeSpace?.root ?? '')
 
     return [
@@ -44,9 +32,6 @@
   }
 </script>
 
-<!-- One tab stop, the arrows inside it, and left and right on a tag that holds
-     tags - the same walk the file tree takes, because a tag path is the same kind of
-     thing a folder path is. See roving.ts. -->
 <ul
   use:roving={{
     inner: depth > 0,
@@ -68,8 +53,6 @@
   }}
 >
   {#each nodes as node (node.path)}
-    <!-- Whether this tag is showing what is under it, once: the row asked three
-         times, and the tree is every tag in the space with no window over it. -->
     {@const open = workspace.isTagOpen(node.path)}
     <li>
       <div class="line">
@@ -114,11 +97,6 @@
     padding: 0;
   }
 
-  /* The disclosure and the row are two buttons rather than one, because they do
-     two things: opening a node is not searching for it. Side by side they read as
-     the one row the file tree draws - which is `.nib-row`, in the themes
-     package; what is left here is the twist in front of it and the step per
-     level of the tag path. */
   .line {
     display: flex;
     align-items: center;
@@ -138,8 +116,6 @@
     cursor: default;
   }
 
-  /* Where a press lets the tag out, a step wider than the button either side (#402),
-     drawn nowhere: the press lands on the twist, which only turns. */
   .twist::before {
     content: '';
     position: absolute;
@@ -147,7 +123,6 @@
     inset-inline: calc(-1 * var(--space-1));
   }
 
-  /* And never narrower than a thumb, made up on the side of the name. */
   :global([data-touch]) .twist::before {
     inset-inline-end: min(
       calc(-1 * var(--space-1)),
@@ -155,8 +130,6 @@
     );
   }
 
-  /* The box the twist fills; the shape and the turn are Twist.svelte's, which the
-     file tree draws too. */
   .chevron {
     display: block;
     width: var(--icon-md);
@@ -164,9 +137,6 @@
     flex: none;
   }
 
-  /* One step per level of the tag path, and a lead in front of the label: the
-     width of the twist for a tag that has one, and the same width held empty for
-     a tag that does not, so every name starts at the same place. */
   .row {
     --lead: 2px;
     flex: 1;
