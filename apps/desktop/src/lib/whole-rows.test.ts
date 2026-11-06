@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { cutAt } from './whole-rows'
 
-/** Ctrl+O's rows on a tall window, as the palette drew them: a heading of 23 pixels and
- *  rows of 28, from the list's 4-pixel padding down (#775). */
 const HEADS = [true, false, false, true, false, false, false]
 const BOTTOMS = [27, 55, 83, 106, 134, 162, 190]
 
@@ -12,7 +10,6 @@ describe('a list cut between two rows', () => {
     expect(cutAt(BOTTOMS, HEADS, 400, 4)).toBeNull()
   })
 
-  /** The case the reader met: the room a few pixels short of the list. */
   test('a few pixels short of the list ends at the row before, not on a sliver', () => {
     expect(cutAt(BOTTOMS, HEADS, 188, 4)).toBe(166)
   })
@@ -27,7 +24,6 @@ describe('a list cut between two rows', () => {
   })
 
   test('never leaves a heading as the last thing above the cut', () => {
-    // Room for the second heading and nothing under it.
     expect(cutAt(BOTTOMS, HEADS, 110, 4)).toBe(87)
   })
 

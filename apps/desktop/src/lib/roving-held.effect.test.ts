@@ -1,13 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { roving } from './roving'
 
-/** A layer a chord opens is walked with the chord's modifiers still down (#1123). The
- *  space switcher opens on Cmd+Shift+Space on a Mac and Ctrl+Space elsewhere, and a hand
- *  that knows Cmd+Tab keeps Cmd down as it walks: every arrow under it was a chord passed
- *  on to the window, so on a Mac the switcher did not walk at all. Space under them stays
- *  the window's, the key that puts the switcher away. */
-
-/** What a Mac, Windows and Linux hold as they walk: the chord that opened the switcher. */
 const HELD: Record<string, KeyboardEventInit> = {
   'a Mac’s Cmd+Shift': { metaKey: true, shiftKey: true },
   'a Mac’s Cmd': { metaKey: true },
@@ -49,7 +42,6 @@ function mount(held: boolean) {
 
 beforeEach(() => {
   chosen = []
-  // jsdom does no layout and has no way to scroll; nothing here asks where a row went.
   HTMLElement.prototype.scrollIntoView = () => undefined
 })
 

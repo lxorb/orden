@@ -1,32 +1,13 @@
-/** Changes to the file tree, applied before the filesystem has answered.
- *
- *  Making a note, renaming one, moving one, deleting one: each is a round trip
- *  to disk and then a fresh listing of the whole folder, and until both come
- *  back the tree shows the way it was. On a local disk that is a flicker; over
- *  a synced folder, or in the browser build where the listing is rebuilt from
- *  storage, it is long enough to wonder whether the click landed. So the row
- *  moves at once and the listing that follows puts it right - it is still the
- *  truth, and an operation that failed simply undoes itself when it arrives.
- *
- *  Every function here returns a new tree rather than editing the one it was
- *  given, so the reactive state sees a change, and none of them touch the
- *  filesystem: they are what the tree would look like if the operation
- *  succeeded, which it usually does. */
-
 import { folderOf, nameOf, samePath, within } from './space-paths'
 import type { Entry } from './workspace.svelte'
 
-/** Whether `path` names something inside the folder at `base`, at any depth. */
 function under(base: string, path: string): boolean {
   if (!path.startsWith(base)) return false
 
   const next = path[base.length]
-  // A space that is the whole of its store has the separator in `base` already;
-  // see `spaces_root` in the browser build.
   return base.endsWith('/') ? path.length > base.length : next === '/' || next === '\\'
 }
 
-/** `tree` with `change` applied to the children of the folder at `path`. */
 function inFolder(tree: Entry, path: string, change: (children: Entry[]) => Entry[]): Entry {
   if (tree.path === path) return { ...tree, children: change([...tree.children]) }
   if (!path.startsWith(tree.path)) return tree
@@ -37,14 +18,6 @@ function inFolder(tree: Entry, path: string, change: (children: Entry[]) => Entr
   }
 }
 
-/** A new note or folder, in the folder it belongs to.
- *
- *  Not in any particular place in that folder: where a row sits is decided when the
- *  list is drawn, once, for all seven orders at once - see tree-order.ts - so a row
- *  added here is on the tree and lands where the chosen order puts it in the same
- *  frame. This used to sort as it inserted, which was the same rule written twice
- *  and one of the two could not have known about an order somebody arranged by
- *  hand. */
 export function withEntry(tree: Entry, entry: Entry): Entry {
   return inFolder(tree, folderOf(entry.path), (children) => [
     ...children.filter((child) => child.path !== entry.path),
@@ -52,16 +25,12 @@ export function withEntry(tree: Entry, entry: Entry): Entry {
   ])
 }
 
-/** A row that is on its way out. */
 export function withoutEntry(tree: Entry, path: string): Entry {
   return inFolder(tree, folderOf(path), (children) =>
     children.filter((child) => child.path !== path),
   )
 }
 
-/** The entry at `path`, or null: the row spelled as asked, and otherwise the row
- *  the disk would find under that spelling - `plan.md` where the listing has
- *  `Plan.md`, on a disk that calls them one file. See `samePath` in space-paths.ts. */
 export function entryAt(tree: Entry | null, path: string): Entry | null {
   return spelledAs(tree, path) ?? (tree ? spelledOtherwise(tree, path) : null)
 }
@@ -78,7 +47,6 @@ function spelledAs(tree: Entry | null, path: string): Entry | null {
   return null
 }
 
-/** The row a path names a step at a time, each name compared the one way names are. */
 function spelledOtherwise(tree: Entry, path: string): Entry | null {
   const rest = within(tree.path, path)
   if (!rest) return rest === '' ? tree : null
@@ -92,8 +60,6 @@ function spelledOtherwise(tree: Entry, path: string): Entry | null {
   return at
 }
 
-/** Every path under `entry`, itself included, rewritten from `from` to `to`.
- *  A folder takes its contents along, so the rows inside it keep working. */
 function rebased(entry: Entry, from: string, to: string): Entry {
   const path = to + entry.path.slice(from.length)
   return {
@@ -104,22 +70,6 @@ function rebased(entry: Entry, from: string, to: string): Entry {
   }
 }
 
-/** The rows for notes the account has named and this machine has not written yet.
- *
- *  The same idea as everything above, over a longer wait: a first sync knows every
- *  note's *name* one request in and spends the next half minute fetching bodies,
- *  so the list is drawn from the names and the rows fill in behind them. A row
- *  here is a row like any other - it is the file that is coming, not the row - and
- *  the folders above it are made as well, since a note the account keeps two
- *  folders deep has neither of them on this disk yet.
- *
- *  Read in name order before they go in, so the same pass lands the same way
- *  twice. No time on them: a file that is not here has no age, and the listing that
- *  follows brings the real one; which order the rows are then drawn in is
- *  tree-order.ts's, like every other row's.
- *
- *  A path the listing already holds is left alone, which is what makes this safe
- *  to apply to every pass rather than only the first. */
 export function withComing(tree: Entry, paths: readonly string[]): Entry {
   let out = tree
 
@@ -134,7 +84,6 @@ export function withComing(tree: Entry, paths: readonly string[]): Entry {
   return out
 }
 
-/** The folder at `path`, and every folder above it the listing has none for. */
 function withFolders(tree: Entry, path: string): Entry {
   if (!path || path === tree.path || entryAt(tree, path)) return tree
 
@@ -152,16 +101,12 @@ function blank(path: string, isFolder: boolean): Entry {
   }
 }
 
-/** A note or folder under its new name, or in its new folder. */
 export function withMove(tree: Entry, from: string, to: string): Entry {
   const entry = entryAt(tree, from)
   if (!entry || from === to) return tree
   return withEntry(withoutEntry(tree, from), rebased(entry, from, to))
 }
 
-/** The tree without the rows `leaving` names, a folder with everything under it: what
- *  the file list draws, and so what its keys walk. An untouched branch stays the same
- *  array, so nothing redraws for it. */
 export function withoutRows(tree: Entry, leaving: (entry: Entry) => boolean): Entry {
   const kept = pruned(tree.children, leaving)
   return kept === tree.children ? tree : { ...tree, children: kept }

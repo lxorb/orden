@@ -1,14 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** A new chat has its place before it has a tab.
- *
- *  Emil, 2026-10-08: *"A chat should never be created 'just' as a new tab with an unknown
- *  save location."* Every way of making one - Ctrl+T's M, the Chats panel's plus, the file
- *  list's New - goes through the file list: a row waits for the name in the folder it was
- *  asked in, and the name typed writes the `.chat` pointer there before the tab opens,
- *  under that name. The disk is a map and the account answers every chat with one id, so
- *  what is asked here is where the pointer is, and whether it was there before the tab. */
-
 const files = new Map<string, string>()
 const folders = new Set<string>()
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
@@ -60,8 +51,6 @@ vi.mock('./tauri', async (importOriginal) => ({
         files.set(path, text(args?.content))
         return Promise.resolve()
       case 'read_tree': {
-        // A folder that is not there will not list, which is how a name is asked of
-        // the disk (`onDisk`): answering every path as a folder made every name taken.
         const root = text(args?.root)
         return root === '/space' || folders.has(root)
           ? Promise.resolve(listing(root))
@@ -75,19 +64,16 @@ vi.mock('./tauri', async (importOriginal) => ({
   },
 }))
 
-/** The account: every chat it is asked for is the one id. */
 const asked = vi.hoisted(() => ({ spaces: [] as string[], refused: false }))
 vi.mock('./chats/http', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./chats/http')>()),
   makeChat: (space: string) => {
     asked.spaces.push(space)
-    // As `POST /v2/chats` answers a space this account may only read: a 403, thrown.
     if (asked.refused) return Promise.reject(new Error('403'))
     return Promise.resolve({ v: 1, chat: `c_${'0'.repeat(32)}` })
   },
 }))
 
-/** The roots of the spaces shared with this account to be read. */
 const readOnly = vi.hoisted(() => new Set<string>())
 vi.mock('./sharing.svelte', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./sharing.svelte')>()),
@@ -95,7 +81,6 @@ vi.mock('./sharing.svelte', async (importOriginal) => ({
     ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
-/** The chats' store, making through the real pointer code and nothing else. */
 vi.mock('./chats/store.svelte', async () => {
   const { makePointer } = await import('./chats/pointers')
   return {
@@ -128,7 +113,6 @@ const { newKinds, offeredKinds } = await import('./new-kinds')
 const { busy } = await import('./busy.svelte')
 const { makeChat } = await import('./chats/view/open')
 
-/** Each tab opened, with whether its pointer was on the disk as it opened. */
 let opened: { path: string | null; name: string; pointer: boolean }[] = []
 
 beforeEach(async () => {
@@ -160,7 +144,6 @@ beforeEach(async () => {
   await workspace.loadTree()
 })
 
-/** The name typed into the row waiting for one, and the chat it makes. */
 async function named(name: string) {
   await workspace.makeNamed(`${name}.chat`)
 }
@@ -183,8 +166,6 @@ describe('a new chat', () => {
       ?.make()
     await vi.waitFor(() => expect(workspace.naming?.making).toBe('chat'))
 
-    // The list was shown for it, the row is at the space's top, and nothing is made yet:
-    // no account call, no file, no tab.
     expect(workspace.panel).toBe('tree')
     expect(workspace.naming?.path).toBe('/space/Chat.chat')
     expect(asked.spaces).toEqual([])

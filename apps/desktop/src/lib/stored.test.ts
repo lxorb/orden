@@ -98,32 +98,8 @@ describe('writing one down', () => {
   })
 })
 
-/** One place in the app writes to storage, and this is it.
- *
- *  Not a style rule. A `setItem` throws three ways - a browser told to keep no
- *  site data, a private window with a quota of nothing, a storage that is full -
- *  and an unguarded one turns any of them into an exception in the middle of
- *  whatever was going on. A full storage once failed a whole syncing pass that
- *  way, and with it the cursor the pass had just moved; see `save` in
- *  sync.svelte.ts. What is lost when a write fails is a cache, never the state,
- *  which is in memory and true - so a store's method must not be able to throw
- *  over one.
- *
- *  Read off the source rather than written down, for the same reason i18n.test.ts
- *  reads the strings the app asks for: a list would go stale the first time
- *  somebody added a store. */
 const SOURCE = fileURLToPath(new URL('..', import.meta.url))
 
-/** The files still to convert, and who they are waiting for. The test names them
- *  rather than ignoring the folders they are in, so this list is a list of work
- *  left and gets shorter rather than older.
- *
- *  One left, and it is the odd one. The site script is the handful of lines a
- *  published page runs, bundled from these modules into the Worker
- *  (`services/sync/src/blog/script.ts`): importing this module there would pull
- *  the app's log into a public page to guard one write of the reader's own theme
- *  choice, which is a worse trade than the guard is worth. It writes inside a try
- *  of its own, and says so where it does. */
 const LEFT = ['site/site.ts']
 
 function sourceFiles(directory: string, found: string[] = []): string[] {
@@ -136,11 +112,8 @@ function sourceFiles(directory: string, found: string[] = []): string[] {
   return found
 }
 
-/** The module under test, which is the one place that may write. */
 const HERE = fileURLToPath(new URL('./stored.ts', import.meta.url))
 
-/** Every file that writes to storage itself, as a path under `src`. A test may:
- *  it stands in for a browser rather than being one. */
 function writesItself(): string[] {
   const writing = /localStorage\.(setItem|removeItem|clear)\(/
 
@@ -157,12 +130,6 @@ describe('who writes to storage', () => {
   })
 })
 
-/** Every file that reads storage itself, the same way round.
- *
- *  Reading throws one of the three ways writing does - a browser told to allow no
- *  site data refuses the getter as well - and fourteen modules had either written
- *  that try/catch out again or left it off. `storedText` is the one read, and this
- *  is what keeps it the one read. */
 function readsItself(): string[] {
   return sourceFiles(SOURCE)
     .filter((path) => path !== HERE)

@@ -11,8 +11,6 @@ import {
 import { parseCombination, sameCombination } from './keys'
 import { BROWSER_KEYS, SYSTEM_KEYS } from './shortcuts/registry'
 
-/** The store writes to the browser's storage and asks the browser what kind
- *  of machine this is, and there is neither under node. */
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -33,11 +31,6 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 
 let registry: typeof import('./shortcuts.svelte')
 
-/** The registry's graph, and the menus and palette that read it, loaded here
- *  rather than by the first `restarted()` or by the one test that asks for them:
- *  thirteen seconds of the first test was compiling, and the palette's own
- *  imports had only a test's five seconds to compile in. See
- *  docs/conventions.md. */
 await Promise.all([
   import('./shortcuts.svelte'),
   import('./modes.svelte'),
@@ -45,7 +38,6 @@ await Promise.all([
   import('./app-menu'),
 ])
 
-/** A keyboard by its name, handed over the way the Settings sheet hands one over. */
 const { PRESETS, presetById } = await import('./shortcuts/presets')
 const keyboard = (id: string) => {
   const found = presetById(id)
@@ -53,7 +45,6 @@ const keyboard = (id: string) => {
   return found
 }
 
-/** The store as a fresh start of the app would find it. */
 async function restarted() {
   vi.resetModules()
   const module = await import('./shortcuts.svelte')
@@ -66,13 +57,10 @@ beforeEach(async () => {
   registry = await restarted()
 })
 
-/** The modes store, which the Vim preset also has something to say to. Its own
- *  module, and reset with everything else by `restarted`. */
 async function currentModes() {
   return (await import('./modes.svelte')).modes
 }
 
-/** A keystroke, as the window would hand one over. */
 function press(
   key: string,
   held: {
@@ -81,7 +69,6 @@ function press(
     meta?: boolean
     alt?: boolean
     shift?: boolean
-    /** Whether a surface has already taken it, which the window's handler reads. */
     answered?: boolean
   } = {},
 ) {
@@ -105,10 +92,6 @@ describe('every shortcut there is', () => {
     expect(new Set(ids).size).toBe(ids.length)
   })
 
-  /** This is the guard the whole thing hangs on: a binding added to the
-   *  editor package without a name and a place in the settings would be a
-   *  shortcut nobody can find or change, which is the one thing this is meant
-   *  to make impossible. */
   test.each([
     ['the markdown bindings', nibBindings],
     ['the ones taken over from CodeMirror', standardBindings],
@@ -124,20 +107,11 @@ describe('every shortcut there is', () => {
     expect(unnamed.map((one) => one.id)).toEqual([])
   })
 
-  /** An app binding is read off the window and run from the entry itself, so one
-   *  with nothing to run is a row in the settings a key can be put on and a key
-   *  that then does nothing. The other scopes are run where their surface is:
-   *  the editor's by CodeMirror, the file list's and the plane's by hand. */
   test('gives every app-level one something to run', () => {
     const idle = registry.SHORTCUTS.filter((one) => one.scope === 'app' && !one.run)
     expect(idle.map((one) => one.id)).toEqual([])
   })
 
-  /** A Mac's chords are Cmd's. `Mod` is Cmd there, so a key written with `Ctrl` reaches a
-   *  Mac as Control - the key a person from Windows reaches for and a Mac person never
-   *  does - unless the entry says on purpose what a Mac presses instead (Ctrl+Tab and
-   *  Ctrl+[ are the Mac's own, as in Safari). And Option with a letter alone is a
-   *  character on a Mac's keyboard, `å` or `∂`, so it is never a key there either. */
   test('holds no Windows or Super key on Windows and Linux, by default or in a keyboard', () => {
     const windowsKey = (key: string | null, platform: 'win' | 'linux') =>
       key !== null && parseCombination(key, platform)?.meta === true
@@ -167,7 +141,6 @@ describe('every shortcut there is', () => {
   })
 
   test('on a Mac, holds Cmd rather than Control unless the entry says what a Mac presses', () => {
-    // Ctrl+Alt+Space on every system, on purpose: see the entry in registry.ts.
     const everywhere = new Set(['app.quick-add'])
     const control = registry.SHORTCUTS.filter((one) => {
       const key = defaultKeyFor(one, 'mac')
@@ -175,8 +148,6 @@ describe('every shortcut there is', () => {
     })
     expect(control.map((one) => one.id).filter((id) => !everywhere.has(id))).toEqual([])
 
-    // Read off the whole window or the note. The AI field's Option+P and Option+T are
-    // Claude Code's own on a Mac too, and only that field hears them.
     const typed = registry.SHORTCUTS.filter((one) => {
       const key = defaultKeyFor(one, 'mac')
       return one.scope !== 'panel' && key !== null && /^(Alt-)+(Shift-)?[a-z0-9]$/.test(key)
@@ -184,24 +155,18 @@ describe('every shortcut there is', () => {
     expect(typed.map((one) => `${one.id} ${String(defaultKeyFor(one, 'mac'))}`)).toEqual([])
   })
 
-  /** Not a desktop here, and a window of its own is a desktop's alone: the phone's
-   *  bar offered New window, and it was a button that did nothing. */
   test('offers nothing only a desktop has where there is no desktop', async () => {
     const { runnable } = await import('./shortcuts/registry')
     expect(runnable('app.new-window')).toBe(false)
     expect(runnable('app.palette')).toBe(true)
   })
 
-  /** Every entry sits in one of the groups the settings list draws, or it is in
-   *  the list and in none of its sections, which is a row nobody can find. */
   test('puts every one of them in a group the settings show', () => {
     const groups = new Set(registry.CATEGORIES.map((one) => one.id))
     const homeless = registry.SHORTCUTS.filter((one) => !groups.has(one.category))
     expect(homeless.map((one) => `${one.id}: ${one.category}`)).toEqual([])
   })
 
-  /** The fixed ones are in the list to be seen rather than changed, so each says
-   *  why in words, and none of them can be rebound into a real conflict. */
   test('says why each fixed key cannot be changed', () => {
     const fixed = registry.SHORTCUTS.filter((one) => one.scope === 'fixed')
     expect(fixed.length).toBeGreaterThan(0)
@@ -218,9 +183,6 @@ describe('every shortcut there is', () => {
     }
   })
 
-  /** Per platform, because a binding that is unbound on one of them carries its
-   *  key in the other platforms' fields rather than in `key`; see `bindings` in
-   *  the editor. */
   test.each(PLATFORMS)('holds a key for everything nibKeymap binds (%s)', (platform) => {
     const listed = registry.SHORTCUTS.map((one) => defaultKeyFor(one, platform))
     for (const binding of nibKeymap) {
@@ -229,30 +191,18 @@ describe('every shortcut there is', () => {
     }
   })
 
-  /** The second key for Redo, which is the one every other editor answers:
-   *  Obsidian, VS Code and Word all take Ctrl+Shift+Z, and somebody who undid one
-   *  step too far presses what those taught them rather than Ctrl+Y. Listed here as
-   *  well as in the editor's own specs because this is the list the Shortcuts pane
-   *  draws, the palette hints from, and the canvas and a page note read - all three
-   *  ask about `edit.redo.alt` by id. */
   test('answers Redo on Ctrl+Shift+Z on Windows and Linux, and on Cmd+Shift+Z on a Mac', () => {
     const found = (id: string) => registry.SHORTCUTS.find((one) => one.id === id)!
     const alt = found('edit.redo.alt')
     expect(defaultKeyFor(alt, 'win')).toBe('Ctrl-Shift-z')
     expect(defaultKeyFor(alt, 'linux')).toBe('Ctrl-Shift-z')
-    // Nothing on a Mac, where the same chord is Redo's own key rather than a second one.
     expect(defaultKeyFor(alt, 'mac')).toBeNull()
     expect(defaultKeyFor(found('edit.redo'), 'mac')).toBe('Mod-Shift-z')
 
-    // A second key, so the list marks it as one rather than showing Redo twice.
     expect(alt.alias).toBe(true)
     expect(alt.label()).toBe(found('edit.redo').label())
   })
 
-  /** Two entries on one key means one of them never fires. The contextual
-   *  ones are the exception by design: they look for a table or a picture and
-   *  give way when there is none, which is how six of them sit on the arrow
-   *  keys without taking them. */
   test.each(PLATFORMS)('starts nothing on a key something else starts on (%s)', (platform) => {
     const held = new Map<string, string>()
     const clashes: string[] = []
@@ -309,9 +259,6 @@ describe('choosing a key', () => {
     expect(shortcuts.keyFor('app.new')).toBe('Mod-Alt-n')
   })
 
-  /** The Windows key belongs to the desktop on Windows and Linux: a Hyprland launcher on
-   *  Super+Space was taken by Orden. Recorded or not, it is refused there, and a Mac's
-   *  Cmd is its own modifier and stays. */
   test('is refused where it holds the Windows key, outside a Mac', () => {
     const { shortcuts } = registry
     const on = (platform: string, key: string) => {
@@ -330,7 +277,6 @@ describe('choosing a key', () => {
     const { shortcuts } = registry
     expect(shortcuts.refuse('k')).not.toBeNull()
     expect(shortcuts.refuse('Shift-k')).not.toBeNull()
-    // A key with no character of its own is fine on its own.
     expect(shortcuts.refuse('F7')).toBeNull()
     expect(shortcuts.refuse('Mod-k')).toBeNull()
   })
@@ -355,8 +301,6 @@ describe('choosing a key', () => {
     expect(shortcuts.refuse('Enter', 'table.delete')).not.toBeNull()
   })
 
-  /** It said Ctrl, Alt or Cmd everywhere: a Cmd key on Windows, and on a Mac names
-   *  for keys that every other place on a Mac shows as signs. */
   test('and the refusal names the keys the way the platform does', () => {
     const { shortcuts } = registry
     const on = (platform: string) => {
@@ -388,15 +332,11 @@ describe('what is written down', () => {
     })
   })
 
-  /** The reason only the differences are kept: a full dump would freeze
-   *  today's defaults into the file, and the day a default changes nobody
-   *  would ever see the new one. */
   test('lets a default that changed later reach the reader', async () => {
     localStorage.setItem('nib:shortcuts', JSON.stringify({ 'format.bold': 'Mod-Alt-b' }))
     const { shortcuts } = await restarted()
 
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
-    // Everything else follows whatever the app says today.
     const italic = nibBindings.find((one) => one.id === 'format.italic')
     if (!italic) throw new Error('the editor no longer binds format.italic')
     expect(shortcuts.keyFor('format.italic')).toBe(defaultKeyFor(italic, 'win'))
@@ -438,8 +378,6 @@ describe('what is written down', () => {
     shortcuts.set('format.bold', 'Mod-Alt-b')
     shortcuts.receive({ ligatures: true })
 
-    // Signing in with a choice already made keeps it, and the account is
-    // told: nothing chosen before signing in is lost at the door.
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
   })
 })
@@ -456,7 +394,6 @@ describe('choosing a keyboard', () => {
     shortcuts.choose(keyboard('obsidian'))
 
     expect(shortcuts.preset).toBe('obsidian')
-    // The hand-made key is gone: a preset is a keyboard, not a patch.
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
     expect(shortcuts.keyFor('app.note-1')).toBe('Mod-1')
     expect(shortcuts.keyFor('paragraph.heading-1')).toBeNull()
@@ -500,10 +437,6 @@ describe('choosing a keyboard', () => {
     expect(modes.vim).toBe(false)
   })
 
-  /** Why the switch sits beside the preset in the Shortcuts pane rather than in
-   *  the editor's: modal editing is the same choice the keyboard makes, and it
-   *  can be made on its own over any of the maps without becoming a map of one's
-   *  own. */
   test('can be turned on over another keyboard without replacing it', async () => {
     const { shortcuts } = registry
     const modes = await currentModes()
@@ -516,10 +449,6 @@ describe('choosing a keyboard', () => {
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
   })
 
-  /** Modal editing changes what every key on the keyboard does, so nothing but a
-   *  hand may turn it on: not choosing another keyboard, not a name written down
-   *  by an earlier run, and not one the account carries. Whether it is on is the
-   *  modes store's own answer and travels on its own; see modes.svelte.ts. */
   describe('and modal editing', () => {
     test('stays off for every keyboard but Vim', async () => {
       const { shortcuts } = registry
@@ -604,8 +533,6 @@ describe('a map made by hand', () => {
     expect(shortcuts.preset).toBe('custom')
   })
 
-  /** An entry written before there were presets has a map and no name for it,
-   *  and a map with something in it is exactly what Custom means. */
   test('is what a map written by an older build reads as', async () => {
     localStorage.setItem('nib:shortcuts', JSON.stringify({ 'format.bold': 'Mod-Alt-b' }))
     expect((await restarted()).shortcuts.preset).toBe('custom')
@@ -707,9 +634,6 @@ describe('the keyboard', () => {
     expect(opened).toBe(1)
   })
 
-  /** Emil, 2026-10-01: *"we don't need Ctrl+P as a default shortcut for opening the
-   *  search, because we already have Shift Shift."* Ctrl+P is Print, the key every
-   *  program prints with, and the palette is never asked for on it. */
   test('prints on Ctrl+P and never opens the palette there', () => {
     const { shortcuts } = registry
     const ctrlP = press('p', { ctrl: true, code: 'KeyP' })
@@ -721,12 +645,6 @@ describe('the keyboard', () => {
     }
   })
 
-  /** A press a surface has already answered is spent.
-   *
-   *  The plane takes Ctrl+Alt+0 to fit itself and the app takes Ctrl+0 for the size, so
-   *  those two no longer meet - but the plane, the page column and the editor all hold
-   *  keys the app holds too, and every one of them says it took the press the same way.
-   *  The window's handler is the last one to run, so it stands down. */
   test('a key a surface has answered is not the app’s as well', () => {
     const { shortcuts } = registry
     let opened = 0
@@ -736,7 +654,6 @@ describe('the keyboard', () => {
 
     expect(shortcuts.handle(answered, context)).toBe(false)
     expect(opened).toBe(0)
-    // And one nothing answered still is.
     expect(shortcuts.handle(press('o', { ctrl: true, code: 'KeyO' }), context)).toBe(true)
     expect(opened).toBe(1)
   })
@@ -746,7 +663,6 @@ describe('the keyboard', () => {
     let opened = 0
     const context = { palette: () => opened++, fullscreen: () => undefined }
 
-    // Ctrl+O is the palette's third key; its first is Shift twice, below.
     shortcuts.set('app.palette.open', 'Mod-Alt-9')
 
     expect(shortcuts.handle(press('o', { ctrl: true, code: 'KeyO' }), context)).toBe(false)
@@ -756,13 +672,6 @@ describe('the keyboard', () => {
     expect(opened).toBe(1)
   })
 
-  /** The palette has two ways in and they are one command each: Ctrl+O on the notes
-   *  (Ctrl+P until 2026-10-01, which is Print now), Ctrl+Shift+P on the commands. Emil
-   *  asked for the second by name - "Ctrl + P is very very handy, I really like it.
-   *  There should be another shortcut that is for commands (so you don't have to type >
-   *  all the time, maybe Ctrl + Shift + P?)".
-   *  What the reader then sees in the field is the palette's own; see
-   *  test/effects/palette-commands.effect.test.ts. */
   test('opens the palette on the commands from a chord of its own', () => {
     const { shortcuts } = registry
     const asked: (string | undefined)[] = []
@@ -772,7 +681,6 @@ describe('the keyboard', () => {
     }
 
     expect(shortcuts.handle(press('o', { ctrl: true, code: 'KeyO' }), context)).toBe(true)
-    // Shift and the letter arrive as the capital, which is the same key.
     expect(shortcuts.handle(press('P', { ctrl: true, shift: true, code: 'KeyP' }), context)).toBe(
       true,
     )
@@ -812,9 +720,6 @@ describe('the keyboard', () => {
   })
 })
 
-/** Emil, 2026-09-30: *"Add shortcuts alt + 1, alt + 2, ... where alt + x opens the tab
- *  at position x and alt + 0 opens the last tab."* The places themselves are the
- *  effect test's; see test/effects/tab-digits.effect.test.ts. */
 describe('Alt and a digit', () => {
   const ALT = { alt: true }
   const digit = (one: number) => press(String(one), { ...ALT, code: `Digit${one}` })
@@ -828,8 +733,6 @@ describe('Alt and a digit', () => {
     expect(shortcuts.keyFor('app.note-9.alt')).toBe('Alt-0')
   })
 
-  /** A second key for the eight places and the last, which kept Ctrl+Alt: the list
-   *  shows them under the same names. The ninth place had no key before. */
   test('is a second key for the commands that had one, and the ninth place its own', () => {
     const found = (id: string) => registry.SHORTCUTS.find((one) => one.id === id)!
 
@@ -857,14 +760,12 @@ describe('Alt and a digit', () => {
       expect(shortcuts.handle(digit(one), context), `Alt+${one}`).toBe(true)
   })
 
-  /** AltGr is Ctrl and Alt on Windows, so a character typed with it is not a tab. */
   test('is never AltGr typing a character', () => {
     const { shortcuts } = registry
     const context = { palette: () => undefined, fullscreen: () => undefined }
 
     const swissAt = press('@', { ctrl: true, alt: true, code: 'Digit2' })
     expect(shortcuts.handle(swissAt, context)).toBe(false)
-    // While Ctrl+Alt and the digit itself is still the old key.
     expect(shortcuts.handle(press('2', { ctrl: true, alt: true, code: 'Digit2' }), context)).toBe(
       true,
     )
@@ -878,9 +779,6 @@ describe('Alt and a digit', () => {
     expect(shortcuts.handle(composing, context)).toBe(false)
   })
 
-  /** What it took from anybody: nothing. No default, no keyboard and no surface had a
-   *  key on Alt and a digit; strikethrough's Alt+Shift+5 is Shift and the key, and the
-   *  editor reads it before the window does. */
   test.each(PLATFORMS)('displaces no other key (%s)', (platform) => {
     const taken = registry.SHORTCUTS.filter((one) => !one.id.startsWith('app.note-')).flatMap(
       (one) => {
@@ -925,8 +823,6 @@ describe('the file list', () => {
     ).toBe(true)
   })
 
-  /** They fire where the list is, not on the window, so they are none of the
-   *  window's business even at the keys the window also uses. */
   test('is not read off the window', () => {
     const { shortcuts } = registry
     let opened = 0
@@ -937,7 +833,6 @@ describe('the file list', () => {
       fullscreen: () => undefined,
     })
 
-    // The palette's own binding answered; the list's did not come into it.
     expect(ran).toBe(true)
     expect(opened).toBe(1)
   })
@@ -978,7 +873,6 @@ describe('what a reader is shown', () => {
   })
 })
 
-/** Getting around with nothing but a keyboard; see docs/keyboard.md. */
 describe('the keys that move the keyboard about', () => {
   test('walk the regions of the window, both ways', () => {
     expect(registry.shortcuts.keyFor('app.region-next')).toBe('F6')
@@ -997,10 +891,6 @@ describe('the keys that move the keyboard about', () => {
     expect(registry.shortcuts.keyFor('space.switcher')).toBeTruthy()
   })
 
-  /** Emil, 2026-10-04: Ctrl+Space opens the switcher, and Ctrl+Shift+Space still does.
-   *  A Mac keeps Ctrl+Space for the input source and Cmd+Space for Spotlight, so there
-   *  it stays on Cmd+Shift+Space alone. The file list's own toggle moved off it to VS
-   *  Code's Ctrl+Shift+Enter, so the switcher opens from a list as well. */
   test('opens the switcher on Ctrl+Space and Ctrl+Shift+Space', () => {
     const found = (id: string) => registry.SHORTCUTS.find((one) => one.id === id)!
     const switcher = found('space.switcher')
@@ -1022,8 +912,6 @@ describe('the keys that move the keyboard about', () => {
     expect(registry.shortcuts.keyFor('app.keys')).toBeTruthy()
   })
 
-  /** Shift+Cmd+? is the search field of every Mac app's Help menu, which is where
-   *  the list is on a Mac: taking the key there took the system's own away. */
   test('but not on the key a Mac keeps for searching Help', () => {
     const keys = registry.SHORTCUTS.find((one) => one.id === 'app.keys')
     if (!keys) throw new Error('no list of keys')
@@ -1032,12 +920,6 @@ describe('the keys that move the keyboard about', () => {
     expect(defaultKeyFor(keys, 'win')).toBe('Mod-Shift-/')
   })
 
-  /** Emil, 2026-09-14: *"When you press Ctrl + T it shouldn't just be a new note, there
-   *  should be a menu (as if you would click the +) where you can decide what type."*
-   *  So Ctrl+T is a command of its own rather than a second key for New note: a new tab,
-   *  which offers the kinds under its address field; see `newTab` in workspace.svelte.ts.
-   *  And issue #213 gave Ctrl+N to the scratchpad, which moved New note one modifier
-   *  along and kept the scratchpad's old key as its second. */
   test('make a new tab on Ctrl+T, the scratchpad on Ctrl+N, and a note on Ctrl+Alt+N', () => {
     const { shortcuts } = registry
     expect(shortcuts.keyFor('app.new-kind')).toBe('Mod-t')
@@ -1047,27 +929,11 @@ describe('the keys that move the keyboard about', () => {
     expect(shortcuts.keyFor('app.new')).toBe('Mod-Alt-n')
 
     const chooser = registry.SHORTCUTS.find((one) => one.id === 'app.new-kind')
-    // Its own row in the settings and in the key list, not a second key for another
-    // row: the two do different things now.
     expect(chooser?.alias).toBeUndefined()
     expect(chooser?.label()).not.toBe(shortcuts.hint('app.new'))
     expect(registry.SHORTCUTS.some((one) => one.id === 'app.new.alt')).toBe(false)
   })
 
-  /** The rule that cost a day, in both directions.
-   *
-   *  A digit held with a modifier is read twice. CodeMirror reads a character key as
-   *  it arrived and again without the shift, because on a great many layouts the shift
-   *  is how that character is typed at all; and the app reads a chord that wants a
-   *  digit and no shift by the key underneath, for the same reason and on purpose -
-   *  that is what makes Ctrl+0 reach the text size on AZERTY. See `matchesCombination`
-   *  in keys.ts.
-   *
-   *  Either way round it comes to the same thing: `Mod-Shift-<digit>` and
-   *  `Mod-<digit>` are one press on a keyboard where the digit is the shifted
-   *  character, so nothing may hold one while anything holds the other. Both halves
-   *  are checked, because the pair that bit first was an app key shadowing an editor
-   *  one and the pair that would bite next is the other way about. */
   test.each(PLATFORMS)('never put two things on one digit through the shift (%s)', (platform) => {
     const digitsOn = (pattern: RegExp) =>
       new Map(
@@ -1089,11 +955,6 @@ describe('the keys that move the keyboard about', () => {
     expect(guilty, guilty.join(', ')).toEqual([])
   })
 
-  /** The three keys Emil asked for by name, and what they used to be.
-   *
-   *  Every browser, Obsidian and Typora change the size of the words with these, so a
-   *  reader tries them before they try a shortcut list. Pinned here because moving
-   *  them back would be a decision and not a slip. */
   test('change the size of the words, the way every browser does', () => {
     expect(registry.shortcuts.keyFor('app.zoom-in')).toBe('Mod-=')
     expect(registry.shortcuts.keyFor('app.zoom-out')).toBe('Mod--')
@@ -1105,36 +966,16 @@ describe('the keys that move the keyboard about', () => {
     expect(registry.shortcuts.keyFor('paragraph.heading-down')).toBe('Mod-Shift--')
   })
 
-  /** The third of them is Paragraph, which needs no key at all: setting a heading to
-   *  the level it already is turns it back into prose, so Ctrl+2 on a second-level
-   *  heading is the way out of one. It keeps its row in the menu, the palette and the
-   *  list, and a key can be put on it there. Ctrl+Shift+P, which it held, is the
-   *  palette on commands now. */
   test('and Paragraph needs none, because a heading key undoes itself', () => {
     expect(registry.shortcuts.keyFor('paragraph.body')).toBeNull()
     expect(registry.shortcuts.keyFor('app.commands')).toBe('Mod-Shift-p')
 
-    // Still a row that can be found and given one, like Comment.
     const entry = registry.SHORTCUTS.find((one) => one.id === 'paragraph.body')
     expect(entry?.category).toBe('paragraph')
     expect(entry?.label()).toBeTruthy()
   })
 })
 
-/** The paper's own zoom.
- *
- *  A page note is a surface with a zoom of its own, like the plane and the graph,
- *  and it cannot have the three keys every browser zooms with: those are the app's
- *  text size, they fire on the window after the surface has had the press, and one
- *  key doing both would resize the words and the paper at once. So they are one
- *  modifier over, which is the trade `canvas.fit` already made. */
-/** Full window: the tab alone in Orden's window, which stays a window.
- *
- *  Full screen's own key with Shift on it - F11 and Ctrl+Cmd+F are the screen, Shift+F11
- *  and Ctrl+Shift+Cmd+F the window - which is Sublime Text's pair for the same two jobs.
- *  No browser binds Shift+F11, so no page is used to having it, and it is a key the
- *  terminal hands to the app and the crate keeps from a page; see terminal/keys.ts and
- *  web_keys.rs. Pinned, because moving it would be a decision. */
 describe('full window', () => {
   const entry = () => registry.SHORTCUTS.find((one) => one.id === 'app.fill-tab')
 
@@ -1177,9 +1018,6 @@ describe('a question on the side, and the scratchpad', () => {
     expect(registry.shortcuts.hint('app.quick-question')).toBe('Ctrl Ctrl')
   })
 
-  /** Ctrl+N, Emil's (issue #213), which a browser keeps for its own new window - so in a
-   *  page in a browser the second key, Ctrl+Shift+X, which it was before, is the one that
-   *  reaches it. That one is no browser's and nobody else's. */
   test('the scratchpad is Ctrl+N, and Ctrl+Shift+X where a browser keeps Ctrl+N', () => {
     expect(registry.shortcuts.keyFor('app.scratchpad')).toBe('Mod-n')
     expect(registry.shortcuts.conflicts('app.scratchpad', 'Mod-n')).toEqual([])
@@ -1223,9 +1061,6 @@ describe('a page note’s zoom', () => {
     }
   })
 
-  /** Read off the paper, like the plane's own keys, so the two surfaces share
-   *  Ctrl+Alt+0 rather than being reported as a clash: only one of them is ever in
-   *  front of a reader. */
   test('is read where the paper is, and shares its keys with the plane', () => {
     for (const id of ['pages.zoom.in', 'pages.zoom.out', 'pages.fit', 'pages.add']) {
       const entry = registry.SHORTCUTS.find((one) => one.id === id)
@@ -1238,9 +1073,6 @@ describe('a page note’s zoom', () => {
     expect(registry.shortcuts.conflicts('pages.fit', 'Mod-Alt-0')).toEqual([])
   })
 
-  /** Chrome's keys over a page, read where the bar is: F5 reloads a page and still
-   *  presents a note, because only one of the two is ever in the focused pane. See
-   *  web-tab/bar-keys.ts. */
   test("is a browser's over a page, and leaves Present its F5", () => {
     const { shortcuts } = registry
     const keys = {
@@ -1294,10 +1126,6 @@ describe('a page note’s zoom', () => {
     ).toBe(true)
   })
 
-  /** The gesture is the way in - carry on scrolling past the last page - and the
-   *  silhouette at the end of the column is the button. The row is here so a reader
-   *  who wants a key can give it one, and a default would be a key taken away from
-   *  whatever else they might have wanted it for. */
   test('while adding a page and fitting one start on no key at all', () => {
     expect(registry.shortcuts.keyFor('pages.add')).toBeNull()
     expect(registry.shortcuts.keyFor('pages.fit.page')).toBeNull()
@@ -1313,16 +1141,11 @@ describe('on a Mac', () => {
     expect(shortcuts.platform).toBe('mac')
     expect(shortcuts.hint('app.new')).toBe('⌥⌘N')
     expect(shortcuts.hint('paragraph.code-block')).toBe('⇧⌘K')
-    // Cmd+Tab never reaches a window there, so the note switcher is Ctrl+Tab.
     expect(shortcuts.keyFor('app.next-note')).toBe('Ctrl-Tab')
 
     vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
   })
 
-  /** Every key that is different on a Mac, beside the key it was and still is on
-   *  Windows and Linux. The right-hand column is pinned on purpose: the Mac's own
-   *  keys are overrides, and an override that leaked into the shared key would
-   *  move a Windows reader's hands as well. */
   const MAC: [id: string, mac: string | null, elsewhere: string][] = [
     ['app.fullscreen', 'Mod-Ctrl-f', 'F11'],
     ['app.fill-tab', 'Mod-Ctrl-Shift-f', 'Shift-F11'],
@@ -1334,7 +1157,6 @@ describe('on a Mac', () => {
     ['app.previous-note.alt', 'Mod-Shift-[', 'Mod-PageUp'],
     ['app.note-1', 'Mod-1', 'Mod-Alt-1'],
     ['app.note-9', 'Mod-9', 'Mod-Alt-9'],
-    // Option and a digit types a character on a Mac, and Cmd and a digit is the tab.
     ['app.note-1.alt', null, 'Alt-1'],
     ['app.note-8.alt', null, 'Alt-8'],
     ['app.note-ninth', null, 'Alt-9'],
@@ -1361,10 +1183,6 @@ describe('on a Mac', () => {
     expect(defaultKeyFor(entry, 'linux')).toBe(elsewhere)
   })
 
-  /** The keys the Mac itself holds. A default on one of them is a key that does
-   *  nothing out of the box, and the settings would warn about the app's own
-   *  choice. The fixed ones are exempt: Quit is on the list because it is the
-   *  system's. */
   test.each(PLATFORMS)('starts nothing on a key the system keeps (%s)', (platform) => {
     const kept = registry.SHORTCUTS.filter((one) => one.scope !== 'fixed').flatMap((one) => {
       const key = defaultKeyFor(one, platform)
@@ -1396,8 +1214,6 @@ describe('on a Mac', () => {
     vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
   })
 
-  /** A Mac deletes a file with Cmd+Backspace, and a bare Backspace in a list is a
-   *  key a Mac hand presses without a second thought. */
   test('the file list deletes on Cmd+Backspace and never on a bare one', async () => {
     vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' })
     const { shortcuts } = await restarted()
@@ -1446,8 +1262,6 @@ describe('off a Mac', () => {
 })
 
 describe('a view’s keys', () => {
-  /** Put in with the first view rather than the first paint (views/task-keys.ts), and
-   *  held to everything the rest of the list is held to once they are in. */
   test('join the list when a view is drawn, named, grouped and on ids of their own', async () => {
     expect(registry.SHORTCUTS.some((one) => one.id === 'tasks.complete')).toBe(false)
     await import('./views/task-keys')

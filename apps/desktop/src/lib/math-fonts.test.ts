@@ -1,12 +1,8 @@
 import { renderMarkdown } from '@orden/markdown'
-// Both heavy libraries handed over outright. In the app a formula is set by a render
-// that has awaited them - `prepareFences` and `runExport` do - and these render
-// synchronously; see @orden/markdown/engines.
 import '@orden/markdown/eager'
 import { describe, expect, test } from 'vitest'
 import { mathCss } from './math-fonts'
 
-/** The families the stylesheet actually ships a face for. */
 function faces(css: string): string[] {
   return [...css.matchAll(/@font-face\{[^}]*?font-family:(KaTeX_[\w-]+)/g)].map(
     ([, family = '']) => family,

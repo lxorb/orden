@@ -2,7 +2,6 @@ import { documentOf, EditorState, SharedDoc, type TransactionSpec } from '@orden
 import { describe, expect, test } from 'vitest'
 import { viewShowing, WhenShown } from './views.svelte'
 
-/** A pane's one view, without a DOM, joined to whichever note it shows. */
 class Surface {
   state = EditorState.create({})
 
@@ -10,7 +9,6 @@ class Surface {
     this.state = this.state.update(spec).state
   }
 
-  /** What a pane does when another of its tabs comes to the front. */
   show(tab: Tab) {
     documentOf(this)?.leave(this)
     this.state = EditorState.create({ doc: tab.note.live.text })
@@ -30,7 +28,6 @@ class Tab {
   }
 }
 
-/** Notes A and B in one pane, B in front, and the outline held on A. */
 function heldBehind() {
   const view = new Surface()
   const a = new Tab('a', '# A one\n# A two\n')
@@ -61,7 +58,6 @@ describe('the note an outline acts on', () => {
     shown.settle()
     expect(acted).toEqual(['# A one\n# A two\n'])
 
-    // Spent: showing B and A again does not run it twice.
     view.show(b)
     view.show(a)
     shown.settle()

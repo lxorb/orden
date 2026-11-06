@@ -22,8 +22,6 @@ describe('walking a list with the keys', () => {
     expect(walked('ArrowUp', 0, 4, true)).toBe(3)
   })
 
-  /** A menu opened with the mouse has nothing under the cursor, and the first
-   *  press should land where the key was pointing rather than at the top. */
   test('starts at the end the key came from', () => {
     expect(walked('ArrowDown', null, 4)).toBe(0)
     expect(walked('ArrowUp', null, 4)).toBe(3)

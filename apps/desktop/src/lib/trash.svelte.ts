@@ -1,11 +1,3 @@
-/** Recently deleted: what was deleted in the last 14 days, and the way back.
- *
- *  Signed in, the account holds it (services/sync/src/trash.ts) so every
- *  device sees the same list. Signed out, this device holds it in its own
- *  trash folder (src-tauri/src/trash.rs, or the browser's stand-in). Both can
- *  be listed at once: what went into the device trash before signing in stays
- *  there, marked as this device's, until it is restored or ages out. */
-
 import { account } from './account.svelte'
 import { api } from './api'
 import { message, plural, t } from './i18n.svelte'
@@ -19,23 +11,17 @@ import { workspace } from './workspace.svelte'
 const KEEP_FOR = 14 * 24 * 60 * 60 * 1000
 
 export interface TrashItem {
-  /** Unique across both sources, so a list can key on it. */
   id: string
   kind: 'note' | 'folder' | 'space'
   name: string
-  /** Where it was: the folder of a note, the note count of a space. */
   detail: string
   deletedAt: number
   purgeAt: number
   source: 'account' | 'device'
-  /** The id the source knows it by. */
   ref: string
-  /** Where a thing in this device's trash goes back to. The account's own restore is
-   *  the server's to allow, so its rows have none. */
   from?: string
 }
 
-/** What the device's trash commands return. */
 interface DeviceEntry {
   id: string
   kind: string
@@ -60,7 +46,6 @@ class Trash {
       this.fromDevice(),
       account.accountToken ? this.fromAccount(account.accountToken) : Promise.resolve([]),
     ])
-    // Sync's doubles of the account's own entries go (#765); see trash-doubles.ts.
     const device =
       remote.length && found.length
         ? await (await import('./trash-doubles')).withoutDoubles(found, this.remoteNotes)
@@ -121,31 +106,20 @@ class Trash {
     return [...spaces, ...notes]
   }
 
-  /** Whether one thing may be put back where it was. Not into a space shared with this
-   *  account to be read: the owner deleting a note there is what put this device's copy
-   *  in the trash, and writing it back would be a change the sync refuses on every
-   *  pass. Deleting it for good stays, since that only takes away this device's copy. */
   restorable(item: TrashItem): boolean {
     if (item.from === undefined) return true
     const at = whereFrom(item.from)
     return at === null || canWriteAt(at)
   }
 
-  /** Puts one thing back. From the account, the next sync pass brings it down;
-   *  from the device, the tree is re-read at once. */
   async restore(item: TrashItem) {
     if (!this.restorable(item)) return
     await this.act(async () => {
       if (item.source === 'device') {
         const at = await invoke<string>('restore_trash', { id: item.ref })
-        // The undo entry that would have done the same has nothing left to do.
         workspace.undone.forget(item.ref)
         await workspace.loadSpaces()
         await workspace.loadTree()
-        // And what came back is said like any file that came to be, so the links to
-        // it resolve again at once. A space is read whole when it is opened, like
-        // any other.
-        // Sync brings back the entries it was, by the trash's id it was deleted with.
         if (item.kind !== 'space') {
           await workspace.fileCame(
             at,
@@ -169,10 +143,6 @@ class Trash {
     })
   }
 
-  /** Takes one thing away for good, ahead of its day. */
-  /** One thing, gone for good, after one question - as a Mac's Finder and an
-   *  iPhone's Files both ask it. The button sat a thumb's slip from Restore, and a
-   *  note it took could not be had back from anywhere. */
   async purge(item: TrashItem) {
     const sure = await prompt.confirm({
       title: t('Delete {name}?', { name: item.name }),
@@ -194,7 +164,6 @@ class Trash {
     })
   }
 
-  /** Everything, after one question. */
   async empty() {
     const sure = await prompt.confirm({
       title: t('Empty Recently deleted?'),
@@ -212,18 +181,11 @@ class Trash {
     })
   }
 
-  /** The device's own sweep: what has waited its 14 days goes. The account's
-   *  sweep runs on the server. */
   async sweep() {
     await invoke<number>('purge_trash_older_than', { age: KEEP_FOR }).catch(() => 0)
     if (this.loaded) await this.load()
   }
 
-  /** Does one thing to the list and reads it again, whether or not it worked.
-   *
-   *  What went wrong is said after the list is read, not before: reading starts from
-   *  no error, and saying it first had the reload wipe it - a restore the disk refused
-   *  left the row where it was and the sheet saying nothing at all. */
   private async act(work: () => Promise<void>) {
     this.busy = true
     this.error = null
@@ -242,9 +204,6 @@ class Trash {
 
 export const trash = new Trash()
 
-/** Where a device row was, as a path on this disk. The crate says it from the notes
- *  folder, the folder every space is in (`manifest_place` in trash.rs); the browser
- *  build keeps the whole path. Null where it names no space here. */
 function whereFrom(from: string): string | null {
   if (from.startsWith('/') || /^[A-Za-z]:[\\/]/.test(from)) return from
   for (const space of workspace.spaces) {

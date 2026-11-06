@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { bandOf, slides } from './tree-lift'
 
-/** A row 28 pixels tall whose top is at 100, which is what a row under a pointer
- *  is; the thumb-sized one is twice that. */
 const TOP = 100
 const TALL = 28
 
@@ -24,7 +22,6 @@ describe('which part of a row the pointer is in', () => {
   })
 
   test('half the row is still the row, at either scale the list is drawn at', () => {
-    // 28 under a pointer, 56 under a thumb; see `tokenRow` in row-window.svelte.ts.
     for (const height of [28, 56]) {
       const middle = [...Array(height).keys()].filter(
         (along) => bandOf(TOP + along, TOP, height) === 'on',

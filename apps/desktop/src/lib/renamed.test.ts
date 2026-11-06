@@ -1,7 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
-/** The rename said once, to the installs that knew the old name. */
-
 const held = new Map<string, string>()
 
 vi.stubGlobal('localStorage', {
@@ -14,10 +12,8 @@ vi.stubGlobal('localStorage', {
   },
 })
 
-/** Loaded once here rather than in the first test; see docs/conventions.md. */
 await import('./renamed.svelte')
 
-/** The notice as a fresh launch finds it. */
 async function launched() {
   vi.resetModules()
   const { renamed } = await import('./renamed.svelte')
@@ -43,7 +39,6 @@ test('is said once, however many launches follow', async () => {
 test('is never said to a fresh install, on this launch or the next', async () => {
   expect((await launched()).showing).toBe(false)
 
-  // The fresh install's own settings, written during its first run.
   held.set('nib:theme', 'dark')
   expect((await launched()).showing).toBe(false)
 })

@@ -3,9 +3,6 @@ import { beforeEach, describe, expect, test } from 'vitest'
 import { countText } from './counts'
 import { views } from './views.svelte'
 
-/** A view as far as `moved` reads one: a document and the ranges selected in it.
- *  Built by hand rather than with a real editor, because what is under test is
- *  arithmetic over the ranges and a slice of the text. */
 function viewOf(doc: string, ranges: readonly { from: number; to: number }[]): EditorView {
   return {
     state: {
@@ -52,8 +49,6 @@ describe('what a pane has selected', () => {
   })
 
   test('so the words it holds are the words of every range', () => {
-    // What the status bar shows. The joining newline keeps two ranges from
-    // reading as one word where they meet.
     views.moved(
       viewOf('one two three', [
         { from: 0, to: 3 },
@@ -71,10 +66,6 @@ describe('what a pane has selected', () => {
 })
 
 describe('a pane whose editor has gone', () => {
-  // Close the last tab in a pane with a line selected and its editor is taken apart
-  // without a word: nothing moves in a view that no longer exists. The count at the
-  // foot and the passage the Ask panel quotes read from here, and went on quoting
-  // the note that had closed.
   test('has nothing selected any more', () => {
     const view = viewOf('one two three', [{ from: 0, to: 7 }])
     views.put('pane', view)

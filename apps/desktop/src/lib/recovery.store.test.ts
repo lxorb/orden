@@ -1,8 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The store writes to the browser's storage as soon as anything is chosen, and
- *  under node there is none, so it is stood in for before the store is
- *  imported. */
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -20,7 +17,6 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-/** Every command the store sends, in order. */
 const sent = vi.hoisted(() => ({
   calls: [] as { command: string; args: Record<string, unknown> }[],
 }))
@@ -34,8 +30,6 @@ vi.mock('./tauri', () => ({
   isNative: true,
 }))
 
-/** The open notes the workspace offers versions of, each with the revision its
- *  words are at: zero for one nobody has typed in since it was opened. */
 const open = vi.hoisted(() => ({
   notes: [] as { key: string; path: string; text: string; revision: number }[],
 }))
@@ -69,7 +63,6 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-/** What the commands say, so a test reads them without the arguments. */
 const commands = () => sent.calls.map((one) => one.command)
 
 describe('the versions kept while a note is being written in', () => {
@@ -88,8 +81,6 @@ describe('the versions kept while a note is being written in', () => {
 
     const stop = recovery.start()
     sent.calls = []
-    // Awaited, because the tick keeps one note at a time: a version half
-    // written is worse than a version late.
     await vi.advanceTimersByTimeAsync(DEFAULT_MINUTES * MINUTE)
 
     expect(commands()).toEqual(['snapshot_note', 'snapshot_note'])
@@ -128,10 +119,6 @@ describe('the versions kept while a note is being written in', () => {
     stop()
   })
 
-  /** The note in a synced space is the case this has to hold for: it is written
-   *  as fast as it is typed and so is never unsaved, and it is the note somebody
-   *  is most likely to be in the middle of. What the tick follows is the words
-   *  moving, which is true of both kinds. */
   test('keeps a version again once the words have moved, and not before', async () => {
     open.notes = [{ key: 'a', path: '/notes/a.md', text: 'one', revision: 1 }]
     const stop = recovery.start()
@@ -140,7 +127,6 @@ describe('the versions kept while a note is being written in', () => {
     await vi.advanceTimersByTimeAsync(DEFAULT_MINUTES * MINUTE)
     expect(commands()).toEqual(['snapshot_note'])
 
-    // The same words a tick later: there is nothing to keep a second copy of.
     sent.calls = []
     await vi.advanceTimersByTimeAsync(DEFAULT_MINUTES * MINUTE)
     expect(commands()).toEqual([])

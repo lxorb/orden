@@ -57,69 +57,32 @@ import { opening } from './workspace/documents.svelte'
 
 const STORAGE_KEY = 'nib:modes'
 
-/** Well past any reader's own list, and a ceiling so the pattern built from it
- *  stays something a regular expression engine will take; see spelling.ts. */
 const MOST_SPELL_WORDS = 500
 const ZOOM_STEPS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2]
 
-/** Settings > Appearance > Window > Zoom (#680), Chrome's own rungs: how large the whole
- *  of the app is drawn, as VS Code's "Window: Zoom Level" and Slack's View > Zoom. The
- *  crate keeps it on this device and applies it, being the engine's page zoom; see
- *  src-tauri/src/page_scale.rs. Linux's CEF alone, the one engine that has been run with a
- *  web tab under it; a browser has its own. */
 export const INTERFACE_ZOOMS = [0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2]
 
-/** How long the account keeps what a note said before, in days. A month, which
- *  is what it always kept, or a year. The same two the service takes; see
- *  services/sync/src/versions.ts. */
 export const KEEP_MONTH = 30
 export const KEEP_YEAR = 365
 export const KEEP_VERSIONS: readonly number[] = [KEEP_MONTH, KEEP_YEAR]
 
-/** How many minutes before a task's time it reminds of itself, with -1 for not at all:
- *  Todoist's automatic reminder (docs/tasks.md 5.10). The same list the service takes,
- *  which reads it too, to push to a phone; see services/sync/src/settings.ts. */
 export const REMIND_BEFORE: readonly number[] = [0, 5, 15, 30, 60, -1]
 
-/** How far back a bulk restore could offer to go, in days, before the horizon is
- *  taken into account. */
 const ROLLBACK_STEPS: readonly number[] = [1, 7, 30, 90, 180, 365]
 
-/** The steps the Go back row offers, for a given horizon.
- *
- *  As far as the account keeps and no further: a step asking for a moment before the
- *  first version there is would answer "nothing has changed since then", which is a
- *  wrong answer rather than a refusal. So a month offers three steps and a year
- *  offers six - which is what makes choosing the year above put the year in that row.
- *
- *  Here rather than in the pane because it is the same fact the horizon is: how far
- *  back the account can answer for. See SyncPane.svelte, which draws it. */
 export function rollbackSteps(keep: number): number[] {
   return ROLLBACK_STEPS.filter((one) => one <= keep)
 }
 
-/** Writing column widths, in rem. */
 export const WIDTHS = [32, 38, 42, 50, 60, 80] as const
 
-/** How much of a note the ligature glyphs are drawn over, in the order the
- *  select offers them: off, then the narrow scope, then all of it. */
 export const LIGATURE_SCOPES: readonly LigatureScope[] = ['off', 'code', 'all']
 
-/** A ligature scope out of whatever was stored or came down from the account.
- *
- *  The setting was a switch before it was a scope, and both shapes still read:
- *  an account written by an older build says `true` for everywhere and `false`
- *  for off, and one written by a newer build reaching an older one is a string
- *  that build has never heard of, which reads as nothing said. */
 export function ligatureScope(value: unknown): LigatureScope | null {
   if (typeof value === 'boolean') return value ? 'all' : 'off'
   return LIGATURE_SCOPES.find((one) => one === value) ?? null
 }
 
-/** At which heading a new page starts on the glasses.
- *
- *  Written as the level and read as "this level and above", so two is "H2 and
- *  above" and zero is a note that runs on without breaks. */
 export const GLASSES_BREAKS = [0, 1, 2, 3, 4, 5, 6] as const
 export type GlassesBreak = (typeof GLASSES_BREAKS)[number]
 
@@ -130,9 +93,6 @@ export function glassesBreak(value: unknown): GlassesBreak | null {
 
 export const LINE_HEIGHTS = [1.5, 1.62, 1.72, 1.85, 2] as const
 
-/** Who draws the window's frame. Orden's own is the whole shape of the shell - one bar
- *  holding the menu, the sidebar toggle, the tabs and the window's three buttons - and
- *  the system's is for somebody who would rather every window on their desk agreed. */
 export const FRAMES = ['nib', 'system'] as const
 export type Frame = (typeof FRAMES)[number]
 
@@ -186,20 +146,14 @@ interface Saved {
   keepVersions: number
   remindBefore: number
   undatedInToday: boolean
-  /** `canvasTurns` before turning became the default; see `restore`. */
   turnsCanvas: boolean
   canvasTurnSnaps: boolean
   highlightTone: number | null
   hardBreaks: boolean
   linkFormat: LinkFormat
-  /** `frontMatter` before the strip became the default, and `properties` before
-   *  that; see `restore`. */
   frontMatterDrawn: PropertiesMode
 }
 
-/** The word the status bar shows for each mode modal editing has, in Vim's own
- *  case because that is what the mode is called wherever anybody learned it.
- *  Keys for `t()`, translated in every dictionary. */
 export const VIM_WORDS: Record<VimMode, string> = {
   normal: key('NORMAL'),
   insert: key('INSERT'),
@@ -207,14 +161,10 @@ export const VIM_WORDS: Record<VimMode, string> = {
   replace: key('REPLACE'),
 }
 
-/** Nearest of the steps the keyboard uses, so both routes agree. */
 function clamp(value: number, steps: readonly number[]): number {
   return steps.reduce((best, one) => (Math.abs(one - value) < Math.abs(best - value) ? one : best))
 }
 
-/** One step along a fixed list, clamped at both ends. A value that is not one
- *  of the steps - written by an older build, or set from a slider - starts from
- *  `fallback`, which is. */
 function step<T extends number>(
   steps: readonly T[],
   current: number,
@@ -226,35 +176,24 @@ function step<T extends number>(
   return steps[Math.min(steps.length - 1, Math.max(0, from + direction))] ?? fallback
 }
 
-/** Where a face the reader chose goes: the interface, the notes, the code. Each is the
- *  front of one of the three stacks in tokens.css, as `--font-<place>-chosen` (#772). */
 export type FontPlace = 'ui' | 'content' | 'mono'
 
 export const FONT_PLACES: readonly FontPlace[] = ['ui', 'content', 'mono']
 
-/** A family's name as it may go into a stylesheet: letters, digits, spaces and the few
- *  marks names carry, at most 64 of them, and nothing for anything else - a quote or a
- *  semicolon would be a stylesheet's own syntax, not a name. */
 export function familyName(value: unknown): string {
   if (!isString(value)) return ''
   const name = value.trim().replace(/\s+/g, ' ')
   return /^[\p{L}\p{N}][\p{L}\p{N} ._&+-]{0,63}$/u.test(name) ? name : ''
 }
 
-/** A stored string, when there is one worth having. */
 function text(value: unknown, fallback: string): string {
   return isString(value) && value ? value : fallback
 }
 
-/** A stored number, when it is a real one. Zero is not a size or a zoom, so it
- *  reads as nothing written. */
 function measure(value: unknown, fallback: number): number {
   return isNumber(value) && value !== 0 ? value : fallback
 }
 
-/** Which markers to draw, out of whatever was stored or came down from the
- *  account. Read switch by switch, so a build that has never heard of one of them
- *  keeps its own default rather than the whole object being thrown away. */
 function marksOf(value: unknown): Marks {
   if (!isRecord(value)) return { ...MARKS }
 
@@ -267,8 +206,6 @@ function marksOf(value: unknown): Marks {
   return out
 }
 
-/** The phrases a reader has changed, out of whatever was stored. Only strings,
- *  and only short ones: this is a spoken phrase, not a paragraph. */
 function wordsOf(value: unknown): Record<string, string> {
   if (!isRecord(value)) return {}
 
@@ -280,7 +217,6 @@ function wordsOf(value: unknown): Record<string, string> {
   return out
 }
 
-/** Where each setting starts, and what a value no setting can use falls back to. */
 export const DEFAULTS = {
   opensInSource: false,
   readOnly: false,
@@ -331,22 +267,18 @@ export const DEFAULTS = {
   properties: 'properties' as PropertiesMode,
 }
 
-/** A stored switch, or its default where what is stored is not one. */
 function on(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback
 }
 
-/** The days of versions kept, when one of the choices. */
 function keepingOf(value: unknown): number | undefined {
   return isNumber(value) && KEEP_VERSIONS.includes(value) ? value : undefined
 }
 
-/** The minutes a reminder comes early, when one of the choices. */
 function remindingOf(value: unknown): number | undefined {
   return isNumber(value) && REMIND_BEFORE.includes(value) ? value : undefined
 }
 
-/** A highlight's tone, or none, when it is one. */
 function toneOf(value: unknown): number | null | undefined {
   return isNumber(value) || value === null ? highlightTone(value).tone : undefined
 }
@@ -357,26 +289,11 @@ interface Shown {
 }
 
 class Modes {
-  /** Where a new tab starts; stored as the old window-wide `source`. */
   opensInSource = $state(DEFAULTS.opensInSource)
-  /** The note laid out as it reads, with nothing that writes to it. The reading
-   *  view is a different thing - the note through the renderer, per tab; this is
-   *  the editor with its doors locked, over every tab's source mode. Never shared
-   *  with the account: whether a note is open for writing this minute is not a
-   *  preference. */
   readOnly = $state(DEFAULTS.readOnly)
   focus = $state(DEFAULTS.focus)
-  /** The formatting marks kept out of sight while writing, so a note edits the way a
-   *  Notion page or a Word document does and the markdown stays the file's business.
-   *  Off, which is Typora's and Obsidian's live preview: a mark comes back while the
-   *  caret is inside it. The account's, because how somebody likes to write is the
-   *  same on every device. See `quietMarks` in the editor package. */
   quietMarks = $state(DEFAULTS.quietMarks)
-  /** No hints at all: the app as clean as it is for somebody who already knows it.
-   *  Off, because the people a hint is for would never look for the switch. The
-   *  account's, like the rest of how somebody likes the app; see hints.svelte.ts. */
   silent = $state(DEFAULTS.silent)
-  /** Null until answered, which counts as yes; see Personalize.svelte. */
   developer = $state<boolean | null>(null)
   typewriter = $state(DEFAULTS.typewriter)
   punctuation = $state(DEFAULTS.punctuation)
@@ -390,208 +307,55 @@ class Modes {
   interfaceZoom = $state(1)
   width = $state(DEFAULTS.width)
   lineHeight = $state(DEFAULTS.lineHeight)
-  /** The webview's own spell checker, over the writing surface. On, because a
-   *  typo is worth knowing about and nobody goes looking through settings for
-   *  the checker every other editor has running already. */
   spellcheck = $state(DEFAULTS.spellcheck)
-  /** The dictionaries a note is checked against, several at once (#771), as they were
-   *  chosen; none chosen is the reader's own language. Read and written through
-   *  spell-languages.ts, which only the spelling pane and Orden's own Chromium need. */
   spellLanguages = $state<string[]>([])
-  /** The words the reader has said are words: names, terms, a project. The
-   *  checker is turned off over each of them wherever it appears, which is what
-   *  takes the wavy line away; see spelling.ts in the editor package for why
-   *  that, and not the platform's own dictionary.
-   *
-   *  The account's rather than this machine's: a name you write about is a name
-   *  you write about on every device. */
   spellWords = $state<string[]>([])
-  /** This window over every other application's. A desktop's, and this machine's
-   *  rather than the account's: which window is in front is about the desk it is
-   *  on. */
   alwaysOnTop = $state(DEFAULTS.alwaysOnTop)
 
-  /** Who draws the frame round the window.
-   *
-   *  This machine's own, for the same reason `alwaysOnTop` is: it is about the desk the
-   *  window is on rather than about the notes in it. Somebody with a Mac and a Linux
-   *  laptop wants their system's titlebar on one and not the other.
-   *
-   *  Orden's own frame is the default and stays the default: the bar it draws holds the
-   *  menu, the sidebar toggle, the tabs and the window's three buttons, and every
-   *  measurement in the shell is taken from it. The other choice is for somebody who
-   *  asked for it. See appearance.rs, and Titlebar.svelte for the three buttons that
-   *  stand down when the system draws its own. */
   frame = $state<Frame>(DEFAULTS.frame)
-  /** The pointing hand over everything that can be pressed, as a web page draws it.
-   *  Off, which is how a desktop app draws its buttons: the arrow, with the hand kept
-   *  for a link. This machine's, for the same reason the frame is: it is about the
-   *  pointer on this desk. Said on the root as `data-pointer`; see base.css. */
   hand = $state(DEFAULTS.hand)
-  /** The tab overview over the app blurred, as it first was, rather than on Orden's own
-   *  ground (issue #331). Off: the overview is drawn on the surface the panes stand on,
-   *  so the whole of it happens inside Orden. This machine's, as the pointer is. */
   overviewBlur = $state(DEFAULTS.overviewBlur)
   flushBottom = $state(DEFAULTS.flushBottom)
-  /** The faces the reader chose to read in, where they chose one; nothing is the app's
-   *  own (#772). This machine's, since a face is something installed on one. */
   fonts = $state<Record<FontPlace, string>>({ ...DEFAULTS.fonts })
   closeBrackets = $state(DEFAULTS.closeBrackets)
-  /** `->` shown as an arrow, `<=` as a sign, and so on: nowhere, in the code of
-   *  a note, or everywhere in it. Off until chosen; the choice follows the
-   *  account. */
   ligatures = $state<LigatureScope>(DEFAULTS.ligatures)
-  /** At which heading a new page starts on the Even Realities glasses.
-   *
-   *  Two, which is H2 and above: it is what makes the panel read as a document
-   *  rather than as a scroll, because a section then begins at the top of a panel
-   *  and its heading stays in the head band for every page of it. Zero for a note
-   *  that runs on without breaks.
-   *
-   *  Every setting in this section follows the account rather than the machine.
-   *  The plugin runs on a phone and is set up on a desktop, and nobody wants to
-   *  type an API key into a WebView with a thumb. */
   glassesBreak = $state<GlassesBreak>(DEFAULTS.glassesBreak)
-  /** A gutter of the note's own line numbers down the left of the panel.
-   *
-   *  On, because they are what "go to line forty" is answered with and what tells
-   *  a reader glancing up how far into a note they are. They cost the body about
-   *  a tenth of its width, and turning them off is the one setting that rebuilds
-   *  the page; see even/screen.ts. */
   glassesLineNumbers = $state(DEFAULTS.glassesLineNumbers)
-  /** Whether the microphone is listening for commands.
-   *
-   *  Off until asked for, which is the only defensible default for a microphone:
-   *  it is turned on from the hold modal on the glasses, or here. */
   glassesVoice = $state(DEFAULTS.glassesVoice)
-  /** How much of a note's own white space reaches the panel; see `Compaction` in
-   *  @orden/glasses. One break between blocks, which is Emil's answer having read on a
-   *  pair; the default is said once, in that package. */
   glassesCompaction = $state<Compaction>(DEFAULTS.glassesCompaction)
-  /** Which of a note's markers are drawn. Rule one as it stands, until a reader
-   *  overrules it per construct; see `Marks` in @orden/glasses. */
   glassesMarks = $state<Marks>({ ...MARKS })
-  /** The phrases each spoken command answers to, where the reader has changed
-   *  them. Only the differences travel, the way the shortcuts do: a full dump
-   *  would freeze today's wording into every account that ever saved one. */
   glassesWords = $state<Record<string, string>>({})
-  /** Whether this account has ever had the plugin in front of a pair of glasses.
-   *
-   *  What the Glasses section on every other device waits for: somebody who has
-   *  never worn a pair should not be offered a pane of settings about them. Set
-   *  once, by the plugin, the first time a bridge answers. */
   glassesSeen = $state(DEFAULTS.glassesSeen)
-  /** Whether this account has ever been used on a phone or a tablet (#769).
-   *
-   *  What the Mobile section waits for, the way Glasses waits for `glassesSeen`: its
-   *  bar over the keyboard and its pull past the top are a phone's and a tablet's
-   *  alone (`viewport.touch`), and a laptop on an account that has never been on one
-   *  was offered a pane about a device it does not have. On the account, so the bar
-   *  is still put together on the desktop, with a keyboard, once there is a phone to
-   *  put it together for. Set once, by the first handheld sitting; never taken back.
-   *  See `tellOfMobile`. */
   mobileSeen = $state(DEFAULTS.mobileSeen)
-  /** Which model answers. Empty until the reader has chosen one from the list the
-   *  API itself gave; see even/models.ts. */
   glassesModel = $state(DEFAULTS.glassesModel)
-  /** How hard it is asked to think, from the API's own list. */
   glassesEffort = $state<Effort>(DEFAULTS.glassesEffort)
-  /** Modal editing. Off until chosen, follows the account, and independent of
-   *  which keyboard the shortcuts are on: the Vim preset turns it on, and the
-   *  switch in the Editor pane puts it on top of any of the others. */
   vim = $state(DEFAULTS.vim)
-  /** Which mode each editor on the page is in, while modal editing is on. The
-   *  status bar shows the one the reader is writing in. */
   readonly vimModes = new SvelteMap<EditorView, VimMode>()
-  /** Where a pasted picture is written; see attachments.ts. Follows the account
-   *  too, because it is about how someone keeps their notes rather than about
-   *  the machine they are at. */
   attachments = $state<AttachmentFolder>(DEFAULTS.attachments)
 
-  /** The paper a new page note starts on.
-   *
-   *  A4 outside North America, Letter inside it, and a long page for somebody who takes
-   *  notes in a lecture - and none of the three is something the app can guess. So it is
-   *  a choice, and this machine's own: which paper somebody writes on is a decision
-   *  about the printer in the room and the country it is in, the way the release channel
-   *  is a decision about the machine. Nothing about it is carried up.
-   *
-   *  Only what a page note *starts* as. A page added to a note takes the size of the one
-   *  it follows, and a page already written on is changed from its own menu; see
-   *  `added` and `reshaped` in @orden/markdown/pages. */
   pagesPaper = $state<Paper>(DEFAULTS.pagesPaper)
 
-  /** What a device does when the same note was written in two places. On the
-   *  account, because it is a decision about the notes rather than about the
-   *  machine; see sync/conflicts.ts. */
   conflicts = $state<ConflictRule>(DEFAULTS.conflicts)
 
-  /** How long the account keeps what a note said before, in days: a month, or a
-   *  year. On the account because that is whose storage it is, and because the
-   *  sweep that enforces it reads the same number; see services/sync/versions.ts
-   *  and docs/sync.md. */
   keepVersions = $state<number>(DEFAULTS.keepVersions)
 
-  /** The automatic reminder: minutes before a task's time, -1 for none. On the account,
-   *  because every device rings the same task and the Worker pushes it; see
-   *  lib/reminders. At the time, as Todoist starts. */
   remindBefore = $state<number>(DEFAULTS.remindBefore)
 
-  /** Whether Today holds a task with no start date, as one whose start date has come
-   *  (#408). Off, which is Todoist's Today: a start date or a deadline that has come.
-   *  On the account, because it is how somebody plans their day rather than which
-   *  machine they plan it on; the connector's Today reads it too. See `undated` in
-   *  @orden/bases' builtins.ts. */
   undatedInToday = $state(DEFAULTS.undatedInToday)
 
-  /** Whether two fingers turn a canvas (#351). */
   canvasTurns = $state(DEFAULTS.canvasTurns)
 
-  /** Whether a turned canvas snaps to its right angles (#487); see `snapped` in camera.ts. */
   canvasTurnSnaps = $state(DEFAULTS.canvasTurnSnaps)
 
-  /** Which colour the highlight button writes, as the palette tone it names, or
-   *  null for a highlight with no colour of its own - which is what Orden has always
-   *  written and so is where this starts.
-   *
-   *  The last colour chosen sticks, because marking up a paper is one colour a
-   *  dozen times rather than a fresh decision each time. On the account: it is
-   *  about how somebody marks up, not about the machine they are at. See
-   *  highlights.ts in @orden/markdown for which tone each emoji is. */
   highlightTone = $state<number | null>(DEFAULTS.highlightTone)
 
-  /** Whether a single newline breaks the line instead of being the space
-   *  CommonMark makes of it.
-   *
-   *  Off, which is CommonMark and what every other reader of the same file does
-   *  with it - a paragraph hard wrapped in the file is one paragraph. On, a note
-   *  reads the way it is typed. Either way it is the one renderer that answers, so
-   *  the reading view, an export, a card on a canvas and a published page all say
-   *  the same thing; a deck keeps its single breaks whatever this says, because a
-   *  slide is a poster. See `RenderOptions.breaks` in @orden/markdown. */
   hardBreaks = $state(DEFAULTS.hardBreaks)
 
-  /** How a link to another note is written: `[[wikilinks]]`, or markdown links
-   *  with the shortest name, a relative path or a path from the top of the space.
-   *  Wikilinks, which is what nib has always written and what survives a rename.
-   *  Reading both spellings already works either way; see link-format.ts. */
   linkFormat = $state<LinkFormat>(DEFAULTS.linkFormat)
 
-  /** What a note's front matter is drawn as: the rows it says, the YAML it is
-   *  written in, or nothing at all.
-   *
-   *  Nothing, which is where every note starts: the metadata at the top of a file
-   *  is what the app reads - the icon a note wears, its cover - and not something
-   *  to read on the way into the note. Somebody who wants to edit it in rows says
-   *  so here, and somebody whose metadata holds a shape Orden cannot read asks for
-   *  the source. The one answer is read by the editor and by the reading view, so a
-   *  note cannot say one thing written and another read; see properties.ts in
-   *  @orden/markdown and hidden-front-matter.ts in the editor. */
   properties = $state<PropertiesMode>(DEFAULTS.properties)
 
   constructor() {
-    // The editor package reports a view's mode as it changes and null when
-    // that view leaves modal editing; see packages/editor/src/vim.ts.
     onVimMode((view, mode) => {
       if (mode) this.vimModes.set(view, mode)
       else this.vimModes.delete(view)
@@ -599,20 +363,12 @@ class Modes {
   }
 
   restore() {
-    // Whether the entry holds a setting this version has not got. Written back once
-    // at the end, so that the file stops carrying it.
     let stale = false
 
-    // Field by field off an unknown, not a cast: the entry may have been
-    // written by another version of the app or edited by hand, and a mode that
-    // reads as neither on nor off should simply be the default.
     const saved = stored(STORAGE_KEY)
     if (isRecord(saved)) {
       this.opensInSource = on(saved.source, DEFAULTS.opensInSource)
       opening.source = this.opensInSource
-      // `reading` is what a build before the reading view called this.
-      // Every other switch is stored under its own name, and one never chosen keeps its
-      // default.
       for (const [name, start] of Object.entries(DEFAULTS)) {
         if (typeof start === 'boolean' && name !== 'opensInSource') {
           Object.assign(this, { [name]: on(saved[name], start) })
@@ -624,15 +380,12 @@ class Modes {
       this.zoom = measure(saved.zoom, DEFAULTS.zoom)
       this.width = measure(saved.width, DEFAULTS.width)
       this.lineHeight = measure(saved.lineHeight, DEFAULTS.lineHeight)
-      // One dictionary was `spellLanguage`, a short tag or `system`, before there
-      // could be several; written back once under the new name.
       this.spellLanguages =
         stringList(saved.spellLanguages) ??
         (isString(saved.spellLanguage) && saved.spellLanguage !== 'system'
           ? [saved.spellLanguage]
           : [])
       stale ||= 'spellLanguage' in saved
-      // A stored list with anything but words in it is dropped whole; `adopt` sifts the account's.
       this.spellWords = (stringList(saved.spellWords) ?? [])
         .filter(isSpellWord)
         .slice(0, MOST_SPELL_WORDS)
@@ -644,22 +397,12 @@ class Modes {
       if (isCompaction(saved.glassesCompaction)) this.glassesCompaction = saved.glassesCompaction
       this.glassesMarks = marksOf(saved.glassesMarks)
       this.glassesWords = wordsOf(saved.glassesWords)
-      // A setting that is gone: who scrolls the note. It offered the glasses' own
-      // scrolling, which no firmware ever did - see even/settings.ts - and Emil asked
-      // for the row to go: "effectively it should be always nib who turns the pages."
-      // Machines that chose one have it written down, so it is dropped rather than
-      // left in the entry for a later version to wonder about. Written back at the
-      // end of this method, once everything else has been read.
       stale ||= 'glassesScroll' in saved
-      // An empty name reads as none here; `adopt` takes whatever string the account says.
       this.glassesModel = text(saved.glassesModel, DEFAULTS.glassesModel)
       this.glassesEffort = isEffort(saved.glassesEffort)
         ? saved.glassesEffort
         : DEFAULTS.glassesEffort
       this.frame = frameChoice(saved.frame) ?? DEFAULTS.frame
-      // Translucency was a switch here until the glass theme was what it meant; see
-      // `adoptTranslucency` in theme.svelte.ts, which answers it once. Written back
-      // without it, so once is all.
       if (saved.translucent === true) theme.adoptTranslucency()
       stale ||= 'translucent' in saved
       if (isAttachmentFolder(saved.attachments)) this.attachments = saved.attachments
@@ -673,12 +416,6 @@ class Modes {
         content: familyName(fonts.content),
         mono: familyName(fonts.mono),
       }
-      // Kept as `frontMatterDrawn` since the strip in the note took the Properties
-      // panel's place and became the default (#1120). An older build wrote
-      // `frontMatter` down for everybody who changed any setting at all, and
-      // `properties` before that, so the hidden it said was the default rather than a
-      // choice - and hidden with no panel beside the note is metadata nobody can
-      // reach. The source was always a choice, and is kept.
       this.properties =
         'frontMatterDrawn' in saved
           ? propertiesMode(saved.frontMatterDrawn)
@@ -686,36 +423,23 @@ class Modes {
             ? 'source'
             : DEFAULTS.properties
       stale ||= 'properties' in saved || 'frontMatter' in saved
-      // Kept as `turnsCanvas` since turning became the default (#487): an older build
-      // wrote `canvasTurns` down for everybody, so its off was no choice, its on is ours.
       this.canvasTurns = on(saved.turnsCanvas, DEFAULTS.canvasTurns)
       stale ||= 'canvasTurns' in saved
     }
-    // The renderer and the one link writer are told once, here and in the setters
-    // below, rather than asked by every caller; see `setHardBreaks` in
-    // @orden/markdown and `setLinkWriting` in link-format.ts.
     setHardBreaks(this.hardBreaks)
     setLinkWriting(this.linkFormat)
     setHighlightColour(this.highlight)
     this.applyZoom()
     if (this.alwaysOnTop) this.applyAlwaysOnTop()
 
-    // The window's own, so it is put on before the first paint rather than after it: a
-    // window that came up with Orden's frame and grew the system's a moment later is a
-    // window that jumped.
     this.applyFrame()
     this.applyHand()
     this.applyFonts()
-    // And the dictionaries, to the engine that keeps a list of them. Fetched, since
-    // only a Linux desktop's engine has one; see spell-languages.ts.
     if (isDesktop) {
       const chosen = this.spellLanguages
       void import('./spell-languages').then((one) => one.tellEngine(one.inForceNow(chosen)))
     }
 
-    // Written back without whatever this version has not got; see `stale` above.
-    // From here on `persist` writes what changes, so the fields left as they are stay
-    // whatever another window has made them; see `persist`.
     this.written = isRecord(saved) ? saved : fieldsOf(this.state())
     if (stale) this.persist()
     this.hearOthers()
@@ -741,13 +465,10 @@ class Modes {
     this.persist()
   }
 
-  /** The zoom the crate keeps, asked for as Settings is drawn. */
   async askInterfaceZoom() {
     this.interfaceZoom = await invoke<number>('interface_zoom_chosen')
   }
 
-  /** Worn once the crate has kept and applied it: a refusal is the disk's, nothing has
-   *  changed, and the row goes on showing the zoom that is in force. */
   async setInterfaceZoom(factor: number) {
     await invoke('interface_zoom_choose', { factor })
       .then(() => {
@@ -756,9 +477,6 @@ class Modes {
       .catch(() => undefined)
   }
 
-  /** Tells the window. A refusal is the window manager's answer and there is
-   *  nothing to say about it: the row goes back to what the window is doing at
-   *  the next start, since nothing was written. */
   setFrame(value: string) {
     const wanted = frameChoice(value)
     if (!wanted || wanted === this.frame) return
@@ -768,12 +486,6 @@ class Modes {
     this.persist()
   }
 
-  /** The frame, asked of the crate and said on the root.
-   *
-   *  Both, because both halves have to agree: the crate is what puts a titlebar on the
-   *  window, and the attribute is what tells the shell's own bar to stop drawing the
-   *  three buttons the system is now drawing. A browser has no window to ask and no
-   *  titlebar to draw either, so the attribute is all that happens there. */
   private applyFrame() {
     document.documentElement.dataset.frame = this.frame
 
@@ -787,12 +499,8 @@ class Modes {
       .catch(() => undefined)
   }
 
-  /** Every editor on the page: one for each pane. A mode is the window's rather
-   *  than one pane's - a note locked in one pane and open in the other would be
-   *  two different notes to look at - so a change reaches all of them. */
   private readonly views = new Set<EditorView>()
 
-  /** Which tab each view shows; see Editor.svelte. */
   private readonly shown = new WeakMap<EditorView, Shown>()
 
   shows(view: EditorView, tab: Shown['tab'], kept: () => void) {
@@ -804,16 +512,11 @@ class Modes {
     return !!tab?.source && !this.readOnly
   }
 
-  /** The one the caller had in mind, and every other one there is. A view is
-   *  built fresh for every tab, so the set is what keeps the panes in step; the
-   *  argument is what makes a brand new view take the modes on the way up. */
   private each(view: EditorView | undefined, apply: (one: EditorView) => void) {
     if (view) apply(view)
     for (const one of this.views) if (one !== view) apply(one)
   }
 
-  /** Every mode as the editor package wants them, so a pane can put a whole set
-   *  of them on in one transaction; see `modeEffects`. */
   get settings(): ModeSettings {
     return {
       source: this.opensInSource && !this.readOnly,
@@ -842,12 +545,6 @@ class Modes {
     return { ...this.settings, source: tab.source && !this.readOnly }
   }
 
-  /** Re-applies every mode to a freshly created view, and keeps it.
-   *
-   *  One transaction for the seventeen of them: a view that took them one at a
-   *  time spent seventeen updates being dressed, and every one of those redrew
-   *  whatever was on screen. The two that are CSS custom properties are not
-   *  transactions at all and follow on their own. */
   apply(view: EditorView) {
     this.views.add(view)
 
@@ -857,13 +554,11 @@ class Modes {
     setLineHeight(view, this.lineHeight)
   }
 
-  /** A view that has left the page. */
   forget(view: EditorView) {
     this.views.delete(view)
     this.vimModes.delete(view)
   }
 
-  /** In this view's tab alone (#232); going on, it lifts read-only. */
   toggleSource(view?: EditorView) {
     const shown = view ? this.shown.get(view) : undefined
     if (!view || !shown) return
@@ -880,7 +575,6 @@ class Modes {
     this.persist()
   }
 
-  /** Open tabs keep theirs, as in Obsidian. */
   toggleOpensInSource() {
     this.opensInSource = !this.opensInSource
     opening.source = this.opensInSource
@@ -892,7 +586,6 @@ class Modes {
     this.persist()
   }
 
-  /** Off, each tab is back in its own source mode. */
   private lock(on: boolean, view?: EditorView) {
     this.readOnly = on
     this.each(view, (one) => {
@@ -948,20 +641,15 @@ class Modes {
     this.persist()
   }
 
-  /** A face for one place, or the app's own again with nothing. */
   setFont(place: FontPlace, family: string) {
     this.fonts = { ...this.fonts, [place]: familyName(family) }
     this.applyFonts()
-    // A new face is new widths: every editor measures its lines again rather than put
-    // the caret where the old face's letters ended.
     this.each(undefined, (one) => one.requestMeasure())
     this.persist()
   }
 
-  /** The chosen faces, put in front of the app's own stacks; see tokens.css. */
   private applyFonts() {
     const root = document.documentElement.style
-    // An empty value takes the property away, which is the app's own face again.
     for (const place of FONT_PLACES) {
       const family = this.fonts[place]
       root.setProperty(`--font-${place}-chosen`, family ? `"${family}",` : '')
@@ -997,8 +685,6 @@ class Modes {
     this.persist()
   }
 
-  /** Code fences are coloured on their own, so a light theme can hold a dark
-   *  fence and the other way round. */
   setCodeTheme(id: string, view?: EditorView) {
     this.codeTheme = id
     this.each(view, (one) => setCodeTheme(one, id))
@@ -1011,19 +697,10 @@ class Modes {
     this.persist()
   }
 
-  /** The writing surface's `lang`: the one language chosen, where only one is, and
-   *  nothing where the checker is to read several or the reader's own. */
   private get dictionary(): string | undefined {
     return this.spellLanguages.length === 1 ? this.spellLanguages[0] : undefined
   }
 
-  /** Adds a word to the reader's own list, or takes it away when it is already
-   *  there. One call for both, because the menu row and the settings row are the
-   *  same act said twice.
-   *
-   *  Kept lowercased and sorted, so the list reads as a list rather than as the
-   *  order somebody happened to meet the words in, and a word added twice in two
-   *  cases is one word. */
   toggleSpellWord(word: string, view?: EditorView) {
     const wanted = word.trim().toLowerCase()
     if (!isSpellWord(wanted)) return
@@ -1038,20 +715,16 @@ class Modes {
     this.share({ spellWords: words })
   }
 
-  /** Whether a word is already one of the reader's own. */
   knowsWord(word: string): boolean {
     return this.spellWords.includes(word.trim().toLowerCase())
   }
 
-  /** The dictionaries chosen, which spell-languages.ts works out; see `toggled` there. */
   setSpellLanguages(chosen: string[], view?: EditorView) {
     this.spellLanguages = chosen
     this.each(view, (one) => setSpellcheck(one, this.spellcheck, this.dictionary))
     this.persist()
   }
 
-  /** How much of a note the glyphs are drawn over. Said outright rather than
-   *  flipped: there are three answers, not two. */
   setLigatures(scope: string, view?: EditorView) {
     const wanted = ligatureScope(scope)
     if (!wanted || wanted === this.ligatures) return
@@ -1062,8 +735,6 @@ class Modes {
     this.share({ ligatures: wanted })
   }
 
-  /** The colour the highlight button writes from now on. A tone the palette does
-   *  not name, or none at all, is the plain highlight. */
   setHighlightTone(tone: number | null) {
     const wanted = highlightTone(tone).tone
     if (wanted === this.highlightTone) return
@@ -1074,13 +745,10 @@ class Modes {
     this.share({ highlightTone: wanted })
   }
 
-  /** The colour that button writes, as the renderer and the editor know it. */
   get highlight(): HighlightColour {
     return highlightTone(this.highlightTone)
   }
 
-  /** What a note's front matter is drawn as, everywhere a note is shown. Said
-   *  outright rather than flipped: there are three answers, not two. */
   setProperties(mode: string, view?: EditorView) {
     const wanted = propertiesMode(mode)
     if (wanted === this.properties) return
@@ -1091,7 +759,6 @@ class Modes {
     this.share({ properties: wanted })
   }
 
-  /** Whether a single newline breaks the line, everywhere a note is read. */
   toggleHardBreaks() {
     this.hardBreaks = !this.hardBreaks
     setHardBreaks(this.hardBreaks)
@@ -1099,8 +766,6 @@ class Modes {
     this.share({ hardBreaks: this.hardBreaks })
   }
 
-  /** How a link to another note is written from now on. Nothing already written
-   *  changes: both spellings are read, so a space may hold both. */
   setLinkFormat(format: string) {
     if (!isLinkFormat(format) || format === this.linkFormat) return
 
@@ -1110,8 +775,6 @@ class Modes {
     this.share({ linkFormat: format })
   }
 
-  /** Which of the two ways a note reaches the glasses. */
-  /** At which heading level a new page starts on the glasses. */
   setGlassesBreak(level: string) {
     const wanted = glassesBreak(level)
     if (wanted === null || wanted === this.glassesBreak) return
@@ -1145,8 +808,6 @@ class Modes {
     this.share({ glassesCompaction: level })
   }
 
-  /** One marker on or off. Written whole rather than as a difference, because
-   *  there are eight of them and the account holds one small object either way. */
   setGlassesMark(name: keyof Marks, on: boolean) {
     if (this.glassesMarks[name] === on) return
 
@@ -1155,12 +816,8 @@ class Modes {
     this.share({ glassesMarks: { ...this.glassesMarks } })
   }
 
-  /** What a spoken command answers to. An empty phrase is the default put back,
-   *  which is why the map holds only the differences. */
   setGlassesWord(id: string, phrase: string) {
     const wanted = phrase.trim().toLowerCase()
-    // Built rather than deleted from: an empty phrase is the default put back, and
-    // "the entries that are not this one" says that without reaching for `delete`.
     const words = Object.fromEntries(
       Object.entries(this.glassesWords).filter(([one]) => one !== id),
     )
@@ -1171,20 +828,8 @@ class Modes {
     this.share({ glassesWords: words })
   }
 
-  /** Whether the account has been told, this sitting, that a pair of glasses
-   *  answered. Not written down: what is written down is `glassesSeen`, and the
-   *  point of this is that the two are different questions. */
   private toldOfGlasses = false
 
-  /** Said by the plugin every time a pair of glasses answers, and passed on to the
-   *  account once a sitting.
-   *
-   *  Once a sitting rather than once a machine, which is what it was: the machine is
-   *  a plugin page whose own store a packed build loses - see account.svelte.ts,
-   *  which keeps the session somewhere else for exactly that reason - so "this
-   *  machine already knows" does not mean "the account has been told", and the
-   *  account is the only place the answer is any use to the desktop. Where the pull
-   *  has already shown that the account knows, nothing is sent at all. */
   sawGlasses() {
     if (this.toldOfGlasses) return
 
@@ -1217,8 +862,6 @@ class Modes {
     this.setVimKeys(!this.vim, view)
   }
 
-  /** Modal editing on or off. Said outright rather than flipped, because a
-   *  preset says which it wants rather than that it wants the other one. */
   setVimKeys(on: boolean, view?: EditorView) {
     if (on === this.vim) return
 
@@ -1228,8 +871,6 @@ class Modes {
     this.share({ vim: on })
   }
 
-  /** Which mode a view is in, for the status bar. Null while modal editing is
-   *  off, and while a view that has just been built has yet to report. */
   vimModeOf(view: EditorView | undefined): VimMode | null {
     return (view && this.vimModes.get(view)) ?? null
   }
@@ -1258,8 +899,6 @@ class Modes {
     this.share({ conflicts: rule })
   }
 
-  /** A month or a year, and nothing in between: the two the service takes, so a
-   *  number nobody offered is a horizon nobody asked for. */
   setKeepVersions(days: number) {
     const wanted = KEEP_VERSIONS.find((one) => one === days)
     if (wanted === undefined || wanted === this.keepVersions) return
@@ -1269,7 +908,6 @@ class Modes {
     this.share({ keepVersions: wanted })
   }
 
-  /** One of the automatic reminder's choices, and nothing else. */
   setRemindBefore(minutes: number) {
     if (!REMIND_BEFORE.includes(minutes) || minutes === this.remindBefore) return
 
@@ -1278,7 +916,6 @@ class Modes {
     this.share({ remindBefore: minutes })
   }
 
-  /** Whether Today holds the tasks with no start date. */
   setUndatedInToday(on: boolean) {
     if (on === this.undatedInToday) return
 
@@ -1287,7 +924,6 @@ class Modes {
     this.share({ undatedInToday: on })
   }
 
-  /** Whether two fingers turn a canvas. */
   setCanvasTurns(on: boolean) {
     if (on === this.canvasTurns) return
 
@@ -1296,7 +932,6 @@ class Modes {
     this.share({ canvasTurns: on })
   }
 
-  /** Whether a turned canvas snaps to its right angles. */
   setCanvasTurnSnaps(on: boolean) {
     if (on === this.canvasTurnSnaps) return
 
@@ -1305,46 +940,22 @@ class Modes {
     this.share({ canvasTurnSnaps: on })
   }
 
-  /** Takes over the account's settings: signing in on a new machine brings
-   *  them along, and a change made on another shows up at the next start.
-   *  What the account has not decided stays as this machine had it.
-   *
-   *  Hands back everything the account holds, settings this store knows
-   *  nothing about included, so the one request answers for all of them. The
-   *  shortcuts are taken from it in App.svelte; see shortcuts.svelte.ts. */
   async adopt(token: string): Promise<AccountSettings | null> {
-    // What this machine had said before the question went out. Anything it
-    // says while the answer is in the air is newer than the answer, so the
-    // answer stops being worth adopting: the account already has the newer
-    // value, and taking the older one back would undo the reader's own switch.
-    //
-    // Read before anything is awaited, or a choice made in the same tick as this
-    // call would be counted as older than an answer that had not left yet.
     const asked = this.sent
 
-    // Whatever this machine decided before it knew there was an account goes up
-    // first; see `share`. It is one request and only when something is owed, so an
-    // ordinary start still asks once. It is not a choice, so it is not counted as
-    // one: what `asked` is about is the reader changing their mind.
     await this.settle(token)
 
     let remote: AccountSettings
     try {
       const answer = await api.settings(token)
       remote = answer.settings
-      // Whether the account has an OpenAI key, and its last four characters. Not a
-      // setting - nothing can send it back up - but it comes back with them, so the
-      // pane and the bridge learn about it in the one request the app already
-      // makes. See even/key.svelte.ts.
       glassesKey.took(answer.key)
     } catch {
       return null
     }
 
-    // Nothing this machine has chosen since the question went out; see above.
     const unheard = this.sent === asked
 
-    // Both shapes of the setting read; see `ligatureScope`.
     const theirs = ligatureScope(remote.ligatures)
     if (theirs && unheard && theirs !== this.ligatures) {
       this.ligatures = theirs
@@ -1440,7 +1051,6 @@ class Modes {
       this.persist()
     }
 
-    // The account only ever said `properties`; the stored entry's older spelling is `restore`'s.
     const shown = remote.properties
     if (typeof shown === 'string' && unheard) {
       const wanted = propertiesMode(shown)
@@ -1458,9 +1068,6 @@ class Modes {
       this.persist()
     }
 
-    // The reader's own words. Taken whole rather than merged: the list is what
-    // the account says it is, and a word taken away on another device should
-    // stay taken away rather than being put back by this one.
     const words = remote.spellWords
     if (Array.isArray(words) && unheard) {
       const kept = words.filter(isSpellWord).slice(0, MOST_SPELL_WORDS)
@@ -1471,10 +1078,6 @@ class Modes {
       }
     }
 
-    // The Glasses section. All of it comes back down, which is the whole reason it
-    // is on the account rather than on the machine: the plugin runs on a phone and
-    // is set up on a desktop, and typing a key into a phone through a WebView is
-    // nobody's idea of an evening.
     if (unheard) this.adoptGlasses(remote)
 
     this.tellOfMobile(token, remote)
@@ -1482,14 +1085,6 @@ class Modes {
     return remote
   }
 
-  /** The Mobile section's answer, both ways (#769): taken from the account where it
-   *  says a handheld has been here, and said to it from a handheld that finds it has
-   *  not heard yet. Once a pull, which is once a launch and once a sign-in.
-   *
-   *  Said in a request of its own rather than through `share`: the Worker refuses a
-   *  whole patch over one setting it does not know, and a build that runs ahead of
-   *  the Worker it talks to - the web app's edge beside main's - would otherwise hold
-   *  every other setting owed behind this one. Refused, it is said again next time. */
   private tellOfMobile(token: string, remote: AccountSettings): void {
     if (remote.mobileSeen === true) {
       if (!this.mobileSeen) {
@@ -1505,12 +1100,6 @@ class Modes {
     void api.saveSettings(token, { mobileSeen: true }).catch(() => undefined)
   }
 
-  /** The Glasses settings, as the account has them.
-   *
-   *  Kept apart from `adopt` because it is seven fields of the same shape and one
-   *  more `if` in that method would have made it unreadable. Each is taken only
-   *  when the account actually said something about it: an account written by a
-   *  build that had no such setting says nothing, and nothing is not `false`. */
   private adoptGlasses(remote: AccountSettings): void {
     let moved = false
     const took = <T>(value: T | undefined, take: (one: T) => void) => {
@@ -1543,7 +1132,6 @@ class Modes {
     }
     if (remote.glassesSeen === true) {
       took(true, (seen) => (this.glassesSeen = seen))
-      // The account knows, so nothing here has to tell it again.
       this.toldOfGlasses = true
     }
     if (typeof remote.glassesModel === 'string') {
@@ -1556,29 +1144,10 @@ class Modes {
     if (moved) this.persist()
   }
 
-  /** How many choices this machine has made since it started. Counted whether
-   *  or not there was an account to tell, because what it is for is telling an
-   *  answer that set off earlier from one that set off later. */
   private sent = 0
 
-  /** What was decided with no session to tell, waiting for one.
-   *
-   *  Emil, on his desktop: *"I don't see the glasses setting on desktop, even though
-   *  I already had the Even plugin open."* The account said nothing about
-   *  `glassesSeen` and everything about the settings he had changed later in the same
-   *  sitting, which is the whole story: the plugin sees a pair of glasses within a
-   *  moment of starting, and on a phone the session takes seconds to come back
-   *  because it comes from the host app rather than from the page. So `sawGlasses`
-   *  ran with `accountToken` still null, the patch went nowhere, and - being already
-   *  true on that machine - it was never said again.
-   *
-   *  Anything said once and only once has that shape, so it is kept here rather than
-   *  fixed in one caller: a patch with nowhere to go waits, and goes up with the next
-   *  one that has somewhere, or on the next settings pull. */
   private owed: AccountSettings = {}
 
-  /** Tells the account, when there is one. A machine that is offline keeps
-   *  its own choice, and carries it up the moment there is somewhere to carry it. */
   private share(patch: AccountSettings) {
     this.sent++
 
@@ -1591,18 +1160,10 @@ class Modes {
     const owed = this.owed
     this.owed = {}
     void api.saveSettings(token, { ...owed, ...patch }).catch(() => {
-      // It never arrived, so it is owed again - behind anything said since, which
-      // is newer than both.
       this.owed = { ...owed, ...patch, ...this.owed }
     })
   }
 
-  /** Sends what was decided before there was an account to tell it to.
-   *
-   *  Before the pull rather than after, so that what comes back down is an account
-   *  with those decisions in it: this machine and the account then agree, instead of
-   *  the pull handing back an account that had not heard yet and `adoptGlasses`
-   *  taking that older answer. */
   private async settle(token: string): Promise<void> {
     const owed = this.owed
     if (!Object.keys(owed).length) return
@@ -1639,8 +1200,6 @@ class Modes {
     this.persist()
   }
 
-  /** The sliders in preferences set a value outright; the keyboard steps
-   *  through the same range. Both land in the same place. */
   setZoom(value: number) {
     const nearest = clamp(value, ZOOM_STEPS)
     this.zoom =
@@ -1663,7 +1222,6 @@ class Modes {
     this.persist()
   }
 
-  /** Steps through the widths rather than offering a slider of nothing. */
   stepWidth(direction: number, view?: EditorView) {
     this.width = step(WIDTHS, this.width, direction, DEFAULTS.width)
     this.each(view, (one) => setMeasure(one, this.width))
@@ -1688,10 +1246,6 @@ class Modes {
     this.persist()
   }
 
-  /** Zoom is the one metric that cannot live on the view: `--text-content` is
-   *  worked out at the root, so `--zoom` has to be set there too. Which means
-   *  nothing tells the editor its text just changed size - hence the view kept
-   *  above, and this. */
   private applyZoom() {
     document.documentElement.style.setProperty('--zoom', String(this.zoom))
     for (const one of this.views) remeasure(one)

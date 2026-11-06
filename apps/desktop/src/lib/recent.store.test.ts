@@ -1,11 +1,5 @@
 import { expect, test, vi } from 'vitest'
 
-/** The recent list is the app's own, which the palette reads. Nothing goes to the
- *  system's any more - the taskbar's Jump List, the Dock icon's menu, Recent Items -
- *  because a recent document there is a file handed back to Orden from outside, and
- *  nib opens nothing from outside its spaces. And a note an older nib opened from
- *  elsewhere is not offered again. */
-
 vi.mock('./tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./tauri')>()),
   isDesktop: true,

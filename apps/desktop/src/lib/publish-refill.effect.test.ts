@@ -1,29 +1,15 @@
 import { afterEach, expect, test, vi } from 'vitest'
 
-/** Putting a space on the web: which space the sheet is about, what it asks the
- *  server for, and what it does with the answer. The account and the network are
- *  stood in for; the store is the real one. */
-
 interface World {
-  /** Which remote space each folder mirrors, if any. */
   mirrors: Record<string, string>
-  /** Every call that was made, in order. */
   asked: string[]
-  /** Set to make the next call fail. */
   refuse: string | null
-  /** What a name check comes back with. */
   available: { available: boolean; reason?: string }
-  /** What the domain routes answer with. */
   domain: { state: string; dns: never[]; detail: string | null }
-  /** The answers the forms on the site have collected. */
   answers: { id: string; note: string; path: string; at: number; answers: Record<string, string> }[]
-  /** Whether the site's forms have stopped taking answers. */
   full: boolean
-  /** The installed theme's file, as reading it from disk answers. */
   sheet: string
-  /** What was sent up as a blob, by its hash. */
   blobs: Record<string, string>
-  /** Set to make only publishing the address fail. */
   refusePublish: string | null
 }
 
@@ -162,7 +148,6 @@ afterEach(() => {
 
 test('a space listing while the sheet is open keeps what was typed', () => {
   const shown = open()
-  // The five-minute reconcile, or any other `loadSpaces`: the same space, listed again.
   account.spaces = [remote()]
   flushSync()
   const kept = typed()
@@ -175,7 +160,6 @@ test('a space listing while the sheet is open keeps what was typed', () => {
   })
 })
 
-/** The space as a listing hands it back, with the blog put together from parts. */
 function listed(blog: Record<string, unknown>, site: Record<string, unknown> | null = null) {
   const space = remote()
   space.blog = {
@@ -197,7 +181,6 @@ function listed(blog: Record<string, unknown>, site: Record<string, unknown> | n
   return space
 }
 
-/** What the account answers the next time it is asked for its spaces. */
 function serve(space: RemoteSpace) {
   vi.spyOn(account, 'loadSpaces').mockImplementation(() => {
     account.spaces = [space]
@@ -252,7 +235,6 @@ test('a site saved under an address that was refused keeps the address and the t
   world.refusePublish = 'taken'
   await publish.publish()
   flushSync()
-  // The site went up before the address was turned away; the next listing has it.
   account.spaces = [
     listed({}, { description: 'About me', rules: { include: [], exclude: [], otherwise: 'none' } }),
   ]

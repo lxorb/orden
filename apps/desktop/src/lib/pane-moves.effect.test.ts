@@ -1,15 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Between the panes by key and by pointer (#1033): Alt+H, J, K and L take the focus and
- *  the keyboard to the pane next over, and the pane under the pointer is the active one,
- *  the keyboard following only out of a pane nobody was typing in. In the jsdom project,
- *  because what has the keyboard is the DOM's own. Which pane is next over is
- *  workspace/pane-toward.test.ts. */
-
 const state = vi.hoisted(() => ({
   focused: 'a',
   follows: true,
-  /** The tab being carried, if one is. */
   carried: [] as string[],
   web: null as string | null,
   asked: [] as { command: string; args: unknown }[],
@@ -55,7 +48,6 @@ vi.stubGlobal('CSS', { escape: (text: string) => text })
 const { followPointer, keyboardStays, movePane } = await import('./pane-moves')
 followPointer()
 
-/** Two panes, each with a note and a tab button, as Pane.svelte draws them. */
 function panes() {
   document.body.innerHTML =
     ['a', 'b']

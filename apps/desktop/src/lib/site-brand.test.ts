@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { siteBrand } from './icons'
 
-/** #1082: a website with no favicon of its own wears its brand's logo, read off its
- *  address. */
 describe('the brand a website belongs to', () => {
   test('is the name the site is registered under', () => {
     expect(siteBrand('https://github.com/lxorb/orden')).toBe('github')
@@ -17,7 +15,6 @@ describe('the brand a website belongs to', () => {
     expect(siteBrand('https://www.ebay.com.au/')).toBe('ebay')
   })
 
-  /** The few whose logo is not their name. */
   test('and the logo a site goes by where that is not its name', () => {
     expect(siteBrand('https://chatgpt.com/')).toBe('openai')
     expect(siteBrand('https://obsproject.com/download')).toBe('obsstudio')

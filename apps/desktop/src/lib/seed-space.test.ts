@@ -3,9 +3,6 @@ import { AGENTS_SEED } from './agents-seed'
 import { type Listed, untouchedSeedSpace } from './seed-space'
 import { WELCOME } from './welcome'
 
-/** #1077: whether the space a first visit was given is still nothing but the app's own
- *  seeds, decided by where it was made and what it holds - never by its name. */
-
 const ROOT = '/spaces/Notes'
 
 function file(name: string, root = ROOT): Listed {
@@ -16,7 +13,6 @@ function space(children: Listed[], root = ROOT): Listed {
   return { path: root, is_dir: true, children }
 }
 
-/** A disk of listings and words, by path. */
 function disk(trees: Record<string, Listed>, words: Record<string, string>) {
   return {
     tree: (root: string) => Promise.resolve(trees[root] ?? null),
@@ -71,10 +67,8 @@ describe('the default space', () => {
   })
 
   test('is never a space the reader made, whatever it is called', async () => {
-    // Their own Notes, made from the switcher: no fresh start marked it.
     const read = disk({ [ROOT]: space([file('AGENTS.md')]) }, SEEDS)
     expect(await untouchedSeedSpace(null, [ROOT], read)).toBeNull()
-    // And one marked elsewhere, on a device whose default space is another root.
     expect(await untouchedSeedSpace('/spaces/Other', [ROOT], read)).toBeNull()
   })
 

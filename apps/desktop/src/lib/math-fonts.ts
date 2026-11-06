@@ -1,7 +1,5 @@
 import { katexCss } from '@orden/themes/raw'
 
-/** Every KaTeX face as a `data:` URI, baked in at build time. The package is
- *  a dependency of the app, so the path is stable. */
 const FONTS = import.meta.glob<string>('/node_modules/katex/dist/fonts/*.woff2', {
   query: '?inline',
   eager: true,
@@ -10,7 +8,6 @@ const FONTS = import.meta.glob<string>('/node_modules/katex/dist/fonts/*.woff2',
 
 const FACE = /@font-face\{[^}]*\}/g
 const RULE = /([^{}]+)\{([^{}]*)\}/g
-/** `.katex` itself names its face through the `font:` shorthand. */
 const FAMILY = /font(?:-family)?:[^;]*?(KaTeX_[\w-]+)/
 
 function fontData(file: string): string | null {
@@ -18,9 +15,6 @@ function fontData(file: string): string | null {
   return entry ? entry[1] : null
 }
 
-/** For each font family, the class names whose rules ask for it. `.katex`
- *  itself is on every selector and says nothing, so the last compound of a
- *  selector is what counts: `.katex .mathfrak` needs `mathfrak` on the page. */
 function familiesByClass(css: string): Map<string, string[][]> {
   const families = new Map<string, string[][]>()
 
@@ -44,9 +38,6 @@ function familiesByClass(css: string): Map<string, string[][]> {
   return families
 }
 
-/** KaTeX's stylesheet with its fonts inside it, cut down to the faces the
- *  page actually uses. Nothing at all when the page has no maths: a document
- *  without an equation should not carry a font for one. */
 export function mathCss(html: string): string {
   if (!html.includes('class="katex')) return ''
 

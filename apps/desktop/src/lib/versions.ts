@@ -1,12 +1,3 @@
-/** A note's versions, wherever they are kept, as one list: what the versions sheet
- *  shows and what an agent's `list_versions` answers (docs/agent-native.md 8.5).
- *
- *  Two places keep them and the reader wants one list: the device's own, which is
- *  instant and goes back to before the note was ever synced, and the account's, which
- *  is the only one another machine can see. `by` is the device that wrote an account
- *  version, or the agent a version of this machine's was kept for, which is the whole
- *  of what a row has to say about where it came from. */
-
 import { account } from './account.svelte'
 import { api } from './api'
 import { sha256 } from './bytes'
@@ -17,37 +8,18 @@ interface Snapshot {
   taken_at: number
   size: number
   path: string
-  /** Who it was kept for when that was not a save: an agent, before its first edit
-   *  of the note. See history.rs. */
   source?: string | null
 }
 
-/** One version, wherever it is kept. */
 export interface Version {
   at: number
   size: number
-  /** The device's handle on it, or null for one the account holds. */
   path: string | null
   by: string
 }
 
-/** How close two versions have to be to be the same one seen twice. A push follows
- *  the write that caused it by a pass at most. Near is not enough on its own: a pass
- *  keeps a copy of the words it is about to replace at the moment another device's
- *  words arrive, so a version from elsewhere is near a local one exactly when it
- *  matters most. Nor is the device's name, which is only the kind of machine
- *  (device.ts), so two Macs share it. Only the same words are the same version. */
 const TOGETHER = 60 * 1000
 
-/** Both histories as one list, newest first.
- *
- *  A version the device kept and then pushed is one moment, and it is in both lists;
- *  the device's copy wins, because reading it costs nothing. It is that moment when
- *  the account's hash of it is the hash of a copy kept here within `TOGETHER`.
- *  Anything else the account holds - written on the phone, by Bob, by a connected
- *  app, or here before the disk was wiped - is listed in time order like any other
- *  version, however near a copy kept here it is. A server that sends no hash folds
- *  nothing: a row twice costs less than a version hidden. */
 export async function versionsOf(path: string): Promise<Version[]> {
   const mine = await invoke<Snapshot[]>('list_snapshots', { path }).catch(() => [])
   const here: Version[] = mine.map((one) => ({
@@ -68,8 +40,6 @@ export async function versionsOf(path: string): Promise<Version[]> {
     if (!held) {
       held = invoke<string>('read_snapshot', { path: copy, notePath: path }).then(
         (words) => {
-          // The editor keeps LF and a v1 push sends the file as written, which may be
-          // CRLF, so a copy is tried as kept and with either line ending.
           const lf = words.replace(/\r\n?/g, '\n')
           return Promise.all([sha256(words), sha256(lf), sha256(lf.replace(/\n/g, '\r\n'))])
         },
@@ -97,9 +67,6 @@ export async function versionsOf(path: string): Promise<Version[]> {
   return [...here, ...fromAccount].sort((one, other) => other.at - one.at)
 }
 
-/** One version's words, from wherever that version is kept. The note is named as well
- *  as the version, because the browser keeps its versions in one store and the
- *  desktop keeps each note's in a folder. */
 export async function versionText(version: Version, notePath: string): Promise<string> {
   if (version.path !== null) {
     return await invoke<string>('read_snapshot', { path: version.path, notePath })

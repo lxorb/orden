@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Pulling a note or a list down past its top. The gesture has to tell itself
- *  apart from the two movements it sits between - a scroll and the drawer's
- *  sideways drag - and it has to be a choice somebody can put away. */
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -21,7 +17,6 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-/** What a reload does where the reader is, heard: see refresh.ts. */
 const refreshing = vi.hoisted(() => ({
   calls: 0,
   answer: (): Promise<void> => Promise.resolve(),
@@ -32,7 +27,6 @@ vi.mock('./refresh', () => ({
     return refreshing.answer()
   },
 }))
-/** Whether the keyboard is up. */
 const screen = vi.hoisted(() => ({ typing: false }))
 vi.mock('./viewport.svelte', () => ({ viewport: screen }))
 
@@ -73,8 +67,6 @@ describe('whether a movement is this gesture', () => {
 
 describe('how far the surface follows', () => {
   test('less than the finger, and by less and less', () => {
-    // Rubber: the first stretch is nearly free and the rest gets heavier, which
-    // is what says something is being reached for rather than dragged.
     const near = pulled(20)
     const far = pulled(200)
 
@@ -110,7 +102,6 @@ describe('which command it runs', () => {
   })
 
   test('choosing the one it offers anyway is choosing nothing', () => {
-    // Stored as nothing, so a default that changes later still reaches here.
     pull.choose(DEFAULT_PULL)
     expect(pull.changed).toBe(false)
     expect(localStorage.getItem('nib:pull')).toBeNull()
@@ -161,7 +152,6 @@ describe('a pull let go of (#1065)', () => {
     const pressed = pull.press()
     await vi.waitFor(() => expect(refreshing.calls).toBe(1))
     expect(pull.refreshing).toBe(true)
-    // A second pull while the first is under way is the same reload.
     await pull.press()
     expect(refreshing.calls).toBe(1)
     finish()
@@ -190,7 +180,6 @@ describe('a pull let go of (#1065)', () => {
 })
 
 describe('a pull never over the reader’s words (#1065)', () => {
-  /** A surface at its top, a finger down on it and pulled down past the reach. */
   function pulledDown(): void {
     const surface = new EventTarget() as unknown as HTMLElement
     Object.assign(surface, { scrollTop: 0 })

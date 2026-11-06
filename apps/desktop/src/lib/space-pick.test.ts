@@ -15,7 +15,6 @@ describe('a number', () => {
     expect(one.go).toBe(null)
     expect(one.waits).toBe(true)
     expect(one.best).toBe(0)
-    // Space 1, 10, 11 and 12, in the list's order.
     expect(one.shown).toEqual([0, 9, 10, 11])
 
     expect(read('12', MANY)).toEqual({ shown: [11], best: 11, go: 11, waits: false })
@@ -40,8 +39,6 @@ describe('a name', () => {
     const reading = read('jo', FEW)
     expect(reading.shown).toEqual([1])
     expect(reading.best).toBe(1)
-    // Never without Enter, however few are left: a name that went by itself would
-    // take the next keystroke with it.
     expect(reading.go).toBe(null)
     expect(reading.waits).toBe(false)
   })
@@ -73,10 +70,8 @@ describe('a name', () => {
 describe('what a key types', () => {
   test('a digit by its key, and by its place on the top row while a number is typed', () => {
     expect(typedBy('3', 'Digit3', '')).toBe('3')
-    // A French keyboard's top row without Shift.
     expect(typedBy('&', 'Digit1', '')).toBe('1')
     expect(typedBy('é', 'Digit2', '1')).toBe('2')
-    // Inside a name the key is what it types.
     expect(typedBy('é', 'Digit2', 'Caf')).toBe('é')
     expect(typedBy('7', 'Numpad7', '')).toBe('7')
   })

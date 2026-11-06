@@ -30,9 +30,6 @@ describe('a path as the space speaks of it', () => {
     expect(noteName('ideas/notes.txt')).toBe('notes.txt')
   })
 
-  /** The same pair serves a path on disk, which is the whole reason there is one
-   *  pair: the tree, the undo stack, the trash and the icons all hold the path the
-   *  platform wrote, and eight modules had each worked out how to split it. */
   test('the same pair splits a path the platform wrote', () => {
     expect(folderOf('C:\\Notes\\ideas\\Plan.md')).toBe('C:\\Notes\\ideas')
     expect(nameOf('C:\\Notes\\ideas\\Plan.md')).toBe('Plan.md')
@@ -50,8 +47,6 @@ describe('a path as the space speaks of it', () => {
   test('a folder is split like anything else, trailing separator and all', () => {
     expect(folderOf('ideas/deep')).toBe('ideas')
     expect(nameOf('ideas/deep')).toBe('deep')
-    // A path written with the separator on the end names nothing; the folder it
-    // sits in is still the folder it sits in. No caller writes one.
     expect(folderOf('ideas/deep/')).toBe('ideas/deep')
     expect(nameOf('ideas/deep/')).toBe('')
   })
@@ -78,8 +73,6 @@ describe('how a markdown link writes its way to a note', () => {
   })
 })
 
-/** A path that arrived from outside the app. The phone's widget hands one back
- *  from an exported activity, so anything on the device can send one. */
 describe('an absolute path from somewhere else', () => {
   const windows = ['C:', 'Notes', 'Home'].join('\\')
   const roots = ['/notes/work', windows]
@@ -101,8 +94,6 @@ describe('an absolute path from somewhere else', () => {
   })
 
   test('and the way out of a space is the way out of this', () => {
-    // The same judgement a link gets, so one road cannot have a hole the other
-    // does not; see automation/inside.ts.
     expect(insideAnyOf(roots, '/notes/work/../../etc/passwd')).toBeNull()
     expect(insideAnyOf(roots, '/notes/work/ideas/../../../Plan.md')).toBeNull()
     expect(insideAnyOf(roots, `/notes/work/${String.fromCharCode(0)}.md`)).toBeNull()
@@ -114,10 +105,6 @@ describe('an absolute path from somewhere else', () => {
   })
 })
 
-/** What a store keyed by path will keep, which is the same reading the service
- *  does; see `staysInside` in services/sync/src/spaces/paths.ts. A column the
- *  service takes is a column this app resolves against a folder, so the two answer
- *  alike or a path arrives that cannot be resolved. */
 describe('a path a store may keep', () => {
   test('is one inside the space it belongs to', () => {
     expect(insideItsSpace('Read me.md')).toBe(true)
@@ -138,9 +125,6 @@ describe('a path a store may keep', () => {
   })
 })
 
-/** Where a file a note names could be, which is the bug a page note made from a PDF
- *  had: the pages held the paper's own name, the name was handed to the reader as it
- *  stood, no such file could be read, and every page came out blank. */
 describe('the places a file a note names could be', () => {
   const root = 'C:\\Notes\\Work'
 
@@ -172,8 +156,6 @@ describe('the places a file a note names could be', () => {
   })
 
   test('a path that climbs to a folder beside the note is still a place to look', () => {
-    // Which is what the Attachments setting writes for a picture, so a page note
-    // whose paper is kept in one folder for the whole space still draws.
     expect(placesOf('../papers/Paper.pdf', '/Work/Lectures/Paper.pages', '/Work')).toEqual([
       '/Work/Lectures/../papers/Paper.pdf',
       '/Work/../papers/Paper.pdf',

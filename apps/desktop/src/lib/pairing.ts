@@ -1,17 +1,3 @@
-/** The six digits two screens compare while a device is let in to the AI vault
- *  (ai/vault). Web logins worked theirs out here too, until they stopped travelling
- *  (#393); the vault is what is left.
- *
- *  Three steps, so that nobody between the two screens - the account's service included -
- *  can choose a key that shows the same digits: the asking device commits to its public key
- *  and a nonce (`commitment`), a device that holds the key answers with a nonce of its own,
- *  and only then does the asking device reveal its key and nonce, which both the service and
- *  the answering device check against the commitment. The digits are worked out from both
- *  keys and both nonces (`digits`), so a key swapped in had to be chosen before the answering
- *  nonce existed. The account's half of the checks is services/sync/src/pairing.ts.
- *
- *  Keys and nonces travel as base64, the way both kinds of device key already do. */
-
 const subtle = (): SubtleCrypto => globalThis.crypto.subtle
 
 function base64(bytes: Uint8Array): string {
@@ -37,20 +23,15 @@ function joined(...parts: Uint8Array[]): Uint8Array<ArrayBuffer> {
   return all
 }
 
-/** A fresh nonce for one asking, from either side. */
 export function newNonce(): string {
   return base64(globalThis.crypto.getRandomValues(new Uint8Array(32)))
 }
 
-/** What a device asking to be let in says first: SHA-256 of its key and its nonce. */
 export async function commitment(pub: string, nonce: string): Promise<string> {
   const digest = await subtle().digest('SHA-256', joined(bytesOf(pub), bytesOf(nonce)))
   return base64(new Uint8Array(digest))
 }
 
-/** The six digits both screens show: SHA-256 over what they are for, the asking device's
- *  key and nonce, and the answering device's nonce and key, read as a number, mod 10^6, in
- *  two groups of three. `purpose` keeps one use's digits apart from any other's. */
 export async function digits(
   purpose: string,
   asking: string,

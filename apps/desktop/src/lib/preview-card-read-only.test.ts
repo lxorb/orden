@@ -2,14 +2,6 @@
 import { EditorView } from '@orden/editor'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The card over a `[[link]]` is read-only wherever what is typed in it could not
- *  be written.
- *
- *  The bug this pins: the card was an editor whatever the space allowed, so in a
- *  space shared to be read a reader could type into it and the words went nowhere -
- *  the write behind it refuses there without a word. And with the window's own
- *  Read-only switch on, the card's write went through. */
-
 const home = { name: 'Home', root: '/s/Home' }
 const share = vi.hoisted(() => ({ readOnly: false }))
 const written = vi.hoisted(() => [] as string[])
@@ -40,7 +32,6 @@ vi.mock('./link-index.svelte', () => ({
 
 const { mountPreview } = await import('./preview-card')
 
-/** Mounts a card and answers its editor and what puts it away. */
 function card(readOnly = false) {
   const host = document.createElement('div')
   document.body.append(host)
@@ -55,8 +46,6 @@ function card(readOnly = false) {
   return { view, release }
 }
 
-/** Words put in the way a keystroke would, then the card put away, which is when
- *  whatever is unwritten goes to the file. */
 async function typeAndClose(one: { view: EditorView; release: () => void }) {
   one.view.dispatch({ changes: { from: one.view.state.doc.length, insert: 'more' } })
   one.release()

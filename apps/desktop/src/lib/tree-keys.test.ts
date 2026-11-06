@@ -1,19 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { treeStep, type TreeRow, TREE_MOVES } from './tree-keys'
-/** The registry, at module scope rather than inside the test that reads it.
- *
- *  It is a whole graph - the workspace, the settings, the editor's own bindings -
- *  and compiling it takes longer than a test is given when the suite is loading
- *  everything else at the same time. A module a test needs is loaded before the
- *  tests run; see docs/conventions.md. */
 import { BY_ID } from './shortcuts/registry'
 
-/** A space with a folder open in it, as the list shows it:
- *
- *      Work/            open
- *        Notes/         shut
- *        plan.md
- *      Read me.md       */
 const ROWS: TreeRow[] = [
   { path: '/s/Work', folder: true, open: true },
   { path: '/s/Work/Notes', folder: true, open: false },
@@ -33,8 +21,6 @@ describe('walking the file list', () => {
     })
   })
 
-  /** The ends do not meet: falling off the bottom of a folder into the top of
-   *  the space would lose the place somebody was reading down from. */
   test('stays where it is at either end', () => {
     expect(treeStep('ArrowDown', ROWS, '/s/Read me.md')).toEqual({
       do: 'stand',
@@ -81,8 +67,6 @@ describe('walking the file list', () => {
     expect(treeStep('ArrowRight', ROWS, '/s/Read me.md')).toBeNull()
   })
 
-  /** An open folder with nothing in it: the row after it is its neighbour, not
-   *  its child, and stepping onto that would be stepping past the folder. */
   test('has nowhere to step into an open folder that is empty', () => {
     const rows: TreeRow[] = [
       { path: '/s/Empty', folder: true, open: true },
@@ -136,8 +120,6 @@ describe('the keys the list walks with', () => {
       expect(entry, id).toBeDefined()
       expect(entry?.key, id).toBe(key)
       expect(entry?.scope, id).toBe('panel')
-      // Contextual, so sharing the arrows with the editor's own motion and with
-      // the plane's nudges is not reported as a clash.
       expect(entry?.contextual, id).toBe(true)
     }
   })

@@ -1,16 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { SpaceChange, SpaceNews } from './space-watch'
 
-/** What the watcher and the listing say, checked the way the crate says it
- *  (space_watch.rs, `what_the_window_is_told`), and the listing put back together from
- *  its chunks. */
-
 interface Heard {
   onmessage: (message: unknown) => void
 }
 
 interface Bridge {
-  /** What the crate sends down whichever channel a command was handed. */
   sent: unknown[]
   commands: { command: string; args: unknown }[]
   answer: unknown

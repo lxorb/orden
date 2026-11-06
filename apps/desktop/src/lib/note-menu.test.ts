@@ -5,7 +5,6 @@ const { menu } = await import('./menu.svelte')
 const { exportCommands } = await import('./commands')
 const { workspace } = await import('./workspace.svelte')
 
-/** The press on the dots, as much of one as the menu reads. */
 const press = {
   clientX: 4,
   clientY: 8,

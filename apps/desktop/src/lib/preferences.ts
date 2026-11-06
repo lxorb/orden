@@ -22,8 +22,6 @@ export type {
   SwatchOption,
 } from './settings/fields'
 
-/** Built against a live view so a change lands in the editor on screen. A row the
- *  settings file holds shows its value and does nothing; see settings/file.ts. */
 export function preferences(view?: EditorView): Pane[] {
   return declaredPanes(view).map((pane) => ({
     ...pane,
@@ -34,11 +32,7 @@ export function preferences(view?: EditorView): Pane[] {
   }))
 }
 
-/** The panes as they are declared, every row in somebody's hands: what the settings
- *  file is applied through, and what its schema is made from. */
 export function declaredPanes(view?: EditorView): Pane[] {
-  // One moment for every example on the pane, so the options read as one set of
-  // spellings of the same time rather than as four different times.
   const moment = new Date()
 
   return [
@@ -53,14 +47,12 @@ export function declaredPanes(view?: EditorView): Pane[] {
   ]
 }
 
-/** Whether every field in the pane knows what it started as. */
 export function resettable(pane: Pane): boolean {
   return pane.groups.every((group) =>
     group.fields.every((field) => field.kind === 'value' || field.initial !== undefined),
   )
 }
 
-/** Puts every field in the pane back to what it started as; see reset-fields.ts. */
 export function resetPane(pane: Pane) {
   resetFields(pane.groups.flatMap((group) => group.fields))
 }

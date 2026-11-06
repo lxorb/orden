@@ -11,11 +11,8 @@ const MINUTE = 60 * 1000
 const HOUR = 60 * MINUTE
 const DAY = 24 * HOUR
 
-/** A fixed afternoon, so what the policy answers never depends on the day the
- *  tests are run. */
 const NOW = new Date('2026-03-14T15:00:00Z').getTime()
 
-/** `ago` in whole hours, as the moment it was. */
 const hoursAgo = (hours: number) => NOW - hours * HOUR
 
 function kept(taken: number[], days = DEFAULT_DAYS): number[] {
@@ -50,7 +47,6 @@ describe('what the sweep keeps', () => {
   })
 
   test('one version an hour past the first day', () => {
-    // Three of them in the same hour, two days ago.
     const hour = hoursAgo(48)
     const versions = [hour, hour + 10 * MINUTE, hour + 20 * MINUTE]
 
@@ -69,7 +65,6 @@ describe('what the sweep keeps', () => {
     expect(kept(versions)).toEqual([hoursAgo(48) + MINUTE, hoursAgo(47) + MINUTE, hoursAgo(46)])
   })
 
-  /** A long note written in all day: what the size cap is for. */
   test('a version a minute for a whole day thins to a version an hour', () => {
     const versions: number[] = []
     for (let minute = 0; minute < 24 * 60; minute++) versions.push(hoursAgo(48) + minute * MINUTE)
@@ -79,8 +74,6 @@ describe('what the sweep keeps', () => {
   })
 
   test('the day either side of the line is not thinned twice', () => {
-    // Just inside the first day, where every version is kept, and just outside
-    // it, where the hour keeps one.
     const inside = NOW - DAY + MINUTE
     const outside = NOW - DAY - MINUTE
 

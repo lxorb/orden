@@ -44,7 +44,6 @@ describe('a space the account has and this machine does not', () => {
   })
 
   test('is what makes two machines agree', () => {
-    // One has Work, the other has Ideas, the account has both.
     const here = plan({
       local: [local('Work')],
       remote: [remote('Work'), remote('Ideas')],
@@ -90,16 +89,12 @@ describe('a space deleted from the account elsewhere', () => {
   })
 
   test('is uploaded again on the pass after, rather than stranded here', () => {
-    // A folder kept out of the account forever is the one thing worse than an
-    // extra upload: the two machines never agree again.
     const result = plan({ local: [local('Work')] })
 
     expect(result.upload.map((one) => one.name)).toEqual(['Work'])
   })
 
   test('is not removed on a gap alone', () => {
-    // Missing is indistinguishable from never uploaded, and guessing wrong
-    // here costs someone their writing.
     const result = plan({ local: [local('Work')], mirrors: [mirror('Work')] })
     expect(result.remove).toEqual([])
   })
@@ -129,9 +124,6 @@ describe('a space the account says was deleted', () => {
   })
 
   test('frees its name for a new space of the same name, in one pass', () => {
-    // Deleted "Work" (id-old), then a new "Work" made elsewhere (id-new). The
-    // stale folder goes and the new space is taken up together, so the space
-    // does not vanish and reappear a pass later.
     const result = plan({
       local: [local('Work')],
       remote: [remote('Work', 'id-new')],
@@ -169,8 +161,6 @@ describe('a space the account says was deleted', () => {
   })
 
   test('leaves a folder that was never mirrored alone', () => {
-    // Same name, but this machine never had it paired with that space, so
-    // there is nothing saying this folder is the one that was deleted.
     const result = plan({ local: [local('Work')], deleted: ['id-Work'] })
 
     expect(result.remove).toEqual([])
@@ -194,7 +184,6 @@ describe('two folders with the same name', () => {
 })
 
 describe('a space somebody shared', () => {
-  /** As the account lists it: somebody else's. */
   const theirs = (name: string, id = `id-${name}`) => ({ id, name, shared: true })
   const shared = (name: string, id = `id-${name}`) => ({
     root: `/spaces/${name}`,
@@ -203,9 +192,6 @@ describe('a space somebody shared', () => {
   })
 
   test('goes when it stops being listed, because the sharing was taken back', () => {
-    // No marker: the space still exists, it is simply not this account's to
-    // reach any more. Uploading the folder again would put a copy of somebody
-    // else's space into this account.
     const result = plan({ local: [local('Work')], mirrors: [shared('Work')] })
 
     expect(result.remove).toEqual(['/spaces/Work'])
@@ -221,10 +207,6 @@ describe('a space somebody shared', () => {
   })
 
   test('never takes a folder of the same name that is already here', () => {
-    // Somebody shares their Work with an account that has a folder called Work.
-    // Pairing them would put this machine's notes into somebody else's space,
-    // so the shared one is adopted into a folder of its own and the folder here
-    // goes up as the space it has always been.
     const result = plan({
       local: [local('Work')],
       remote: [theirs('Work')],
@@ -255,7 +237,6 @@ describe('a space somebody shared', () => {
     })
     expect(first.adopt).toHaveLength(1)
 
-    // The next pass, with the folder the adoption made.
     const again = plan({
       local: [local('Work'), { name: 'Work 2', root: '/spaces/Work 2' }],
       remote: [remote('Work', 'id-mine'), theirs('Work', 'id-theirs')],
@@ -277,9 +258,6 @@ describe('a space somebody shared', () => {
   })
 })
 
-/** #1077: the default space a first visit was given, still untouched, signing in. Which
- *  space that is, and whether it is untouched, is seed-space.ts's to say; here it is
- *  handed in as `untouched`. */
 describe('the untouched default space', () => {
   const NOTES = '/spaces/Notes'
 

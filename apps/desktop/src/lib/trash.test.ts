@@ -1,9 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The stores read browser storage and the platform shim the moment they are
- *  made, so both are stood in for before they are imported. The device trash
- *  is a small in-memory copy of what trash.rs does. */
-
 const DAY = 24 * 60 * 60 * 1000
 
 interface Entry {
@@ -14,17 +10,12 @@ interface Entry {
   trashedAt: number
 }
 
-/** What an invoke was given, when it is the kind of value it should be:
- *  `args` is a bag of unknowns. */
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
 
 const notes = new Map<string, string>()
-/** Notes that are there and will not read: another encoding, or a lock. */
 const unreadable = new Set<string>()
 let deviceTrash: Entry[] = []
 
-/** The one entry a test has just made. Reaching for it by index everywhere
- *  would mean checking for a gap that the line above rules out. */
 function onlyTrashed(): Entry {
   const [entry] = deviceTrash
   if (!entry) throw new Error('nothing is in the device trash')
@@ -49,8 +40,6 @@ vi.mock('./tauri', async (importOriginal) => ({
         if (command === 'write_note') notes.set(path, text(args?.content))
         return undefined
       case 'read_tree':
-        // Only the space is a folder; asking after any other path is refused,
-        // as the Rust side refuses a root that is not a folder.
         if (text(args?.root) !== '/space') throw new Error('not a folder')
         return {
           name: 'space',
@@ -98,7 +87,6 @@ vi.mock('./tauri', async (importOriginal) => ({
   },
 }))
 
-/** Spaces shared with this account to be read; see sharing.svelte.ts. */
 const readOnly = vi.hoisted(() => new Set<string>())
 vi.mock('./sharing.svelte', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./sharing.svelte')>()),
@@ -250,8 +238,6 @@ describe('signed out', () => {
   test('undoing a deletion the trash no longer holds falls back to the snapshot', async () => {
     await workspace.remove('/space/Idea.md', false)
 
-    // Recently deleted was emptied, or the daily sweep took it: the entry the
-    // undo was going to restore from is gone.
     deviceTrash = []
     calls.length = 0
 
@@ -264,7 +250,6 @@ describe('signed out', () => {
 
   test('an undo that could not happen stays on the stack to be tried again', async () => {
     await workspace.remove('/space/Idea.md', false)
-    // Nothing to restore from and nothing worth writing back.
     deviceTrash = []
     const [action] = workspace.undone.stack
     if (action?.kind !== 'delete') throw new Error('the deletion was not recorded')
@@ -273,7 +258,6 @@ describe('signed out', () => {
     await workspace.undoFileAction()
 
     expect(workspace.undone.stack).toHaveLength(1)
-    // The name as the row says it, without the ending; see note-name.ts.
     expect(workspace.undoLabel).toBe('Undo deleting Idea')
   })
 
@@ -295,8 +279,6 @@ describe('signed out', () => {
     asked.mockRestore()
   })
 
-  /** Delete now is a slip of the thumb from Restore on a phone, and what it takes
-   *  is not in the trash any more to be had back. So it asks, and a no is a no. */
   test('purging asks first, and touches nothing when the answer is no', async () => {
     await workspace.remove('/space/Idea.md', false)
     await trash.load()
@@ -318,7 +300,6 @@ describe('signed out', () => {
     const [only] = trash.items
     if (!only) throw new Error('the deleted note is not in the list')
 
-    // Swept by another window between the listing and the press.
     deviceTrash = []
     await trash.restore(only)
 
@@ -327,10 +308,6 @@ describe('signed out', () => {
     expect(trash.items).toEqual([])
   })
 
-  /** The owner deleted a note of a space shared with this account to be read, and the
-   *  sync here put the copy of it into this device's trash. Putting it back would be
-   *  writing into a space this account may only read, which the sync refuses on every
-   *  pass, so the row stays where it is and only Delete now takes it. */
   test('a note of a space shared to be read is not put back', async () => {
     await workspace.remove('/space/Idea.md', false)
     await trash.load()
@@ -353,8 +330,6 @@ describe('signed out', () => {
     asked.mockRestore()
   })
 
-  /** The crate writes where a thing was from the notes folder, the folder every space
-   *  is in (`manifest_place` in trash.rs), not as a path on this disk. */
   test('even said the way the crate says it, from the notes folder', async () => {
     await workspace.loadSpaces()
     readOnly.add('/space')
@@ -397,13 +372,8 @@ describe('signed in', () => {
   beforeEach(() => {
     account.token = 'token'
     account.user = { id: 'u', email: 'a@b.dev', name: null }
-    // And the space on the account, which is what keeps a copy of what goes.
     vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
-    // Owned by this account: a writer's delete in somebody else's space is not
-    // theirs to get back from the account.
     account.spaces = [{ id: 'remote', role: 'owner' } as RemoteSpace]
-    // And every file in it held by the account as it is here, which a delete there
-    // leans on.
     vi.spyOn(sync, 'holds').mockResolvedValue(true)
   })
 
@@ -419,8 +389,6 @@ describe('signed in', () => {
     expect(calls).not.toContain('trash_item')
   })
 
-  /** Nothing could be read, so no snapshot was taken, and the account never had
-   *  the words either: deleting the file was the end of the only copy. */
   test('a note that would not read goes to the device trash instead', async () => {
     unreadable.add('/space/Idea.md')
 
@@ -429,7 +397,6 @@ describe('signed in', () => {
     expect(calls).not.toContain('delete_note')
     expect(onlyTrashed()).toMatchObject({ kind: 'note', from: '/space/Idea.md' })
 
-    // And the undo puts it back from there.
     await workspace.undoFileAction()
     expect(deviceTrash).toEqual([])
   })

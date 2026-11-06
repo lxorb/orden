@@ -1,19 +1,5 @@
-/** Reading what an earlier run wrote down, and writing it down for the next one.
- *
- *  Storage is not a type system. The string under a key was written by some
- *  version of this app - possibly an older one, possibly one interrupted
- *  halfway - and `JSON.parse` hands back whatever it finds without an opinion
- *  about it. Casting that to the shape the code wants is how a truncated entry
- *  turns into a crash three frames later, a long way from the read.
- *
- *  So nothing here trusts what it reads. `parsed` never throws, and each of the
- *  small checks below takes an unknown and answers with the shape it
- *  recognised, dropping whatever it did not. A missing entry and a corrupt one
- *  come back the same way, which is the only sensible answer to both. */
-
 import { log } from './log'
 
-/** `JSON.parse` without the throw: null for missing text and for nonsense. */
 export function parsed(text: string | null): unknown {
   if (text === null) return null
 
@@ -24,13 +10,6 @@ export function parsed(text: string | null): unknown {
   }
 }
 
-/** What storage holds under `key`, as it was written. Reading storage itself can
- *  throw - a browser told to allow no site data refuses the getter outright - so
- *  that is caught here and reads as nothing written.
- *
- *  For the keys that hold a word rather than a shape: a language tag, a chosen
- *  preset, `yes` or `no`. Seven modules had written this same try/catch, and
- *  seven more had left it out and read the getter raw. */
 export function storedText(key: string): string | null {
   try {
     return localStorage.getItem(key)
@@ -39,27 +18,10 @@ export function storedText(key: string): string | null {
   }
 }
 
-/** The same read, parsed. A missing entry and a corrupt one both come back
- *  null. */
 export function stored(key: string): unknown {
   return parsed(storedText(key))
 }
 
-/** Writes one value down. Answers whether storage took it, and never throws.
- *
- *  Three ways a setter fails and not one of them is the caller's to handle: a
- *  browser told to keep no site data refuses the setter the way it refuses the
- *  getter above, a private window can have a quota of nothing, and a storage that
- *  is full throws on the write that would fill it. What follows in every case is
- *  that this machine forgets something between launches - never that what was being
- *  remembered did not happen, because the state itself is in memory and true. An
- *  unguarded setter turns all three into an exception in the middle of whatever was
- *  going on, which is how a full storage came to fail a whole syncing pass and, with
- *  it, the cursor that pass had just moved; see `save` in sync.svelte.ts.
- *
- *  The answer is there for the one caller that has something better to do than
- *  shrug: writing less beats writing nothing. Everyone else ignores it, and the
- *  log hears about it once; see `lost`. */
 export function keep(key: string, value: string): boolean {
   try {
     localStorage.setItem(key, value)
@@ -70,19 +32,10 @@ export function keep(key: string, value: string): boolean {
   }
 }
 
-/** Writes a value down as JSON: the one way to keep a shape, a number or a flag, read
- *  back with `stored`. A word kept with `keep` is read back with `storedText`; the two
- *  are never crossed (#1095, test/stored-pairs.test.ts), because a word read as JSON
- *  reads as nothing and the setting it was never comes back. */
 export function keepJson(key: string, value: unknown): boolean {
   return keep(key, JSON.stringify(value))
 }
 
-/** Whether the log has heard about it already. Once for the whole run: the reason
- *  is the same every time, so is what follows from it, and forty lines of that is
- *  a log nobody reads. Said at all because a machine that has stopped remembering
- *  looks from the inside exactly like one that never had anything to remember -
- *  every store carries on with what it holds, which is the state and is true. */
 let told = false
 
 function lost() {
@@ -92,19 +45,7 @@ function lost() {
   log('warn', 'storage would take no more, so some of what this machine knows is not kept')
 }
 
-/** One key's value, read and kept in memory, for a store that every window of the app
- *  shares. Each window is a copy of the app over one storage, so a value read once and
- *  written back whole was the other window's undoing: its visits lost to this one's
- *  next, a history deleted there written back from here. So it is read again whenever
- *  the text under the key is no longer what this window last read or wrote, and a
- *  change is made to what is there now rather than to what was there at the first
- *  read. Comparing the text is one read of storage, and the parse only happens when
- *  another window wrote.
- *
- *  A write storage refused is still true in memory, as with `keep`: the text this
- *  window remembers stays the one on disk, so what it holds is not thrown away. */
 export class Shared<T> {
-  /** The text this window last read or wrote, or undefined before the first read. */
   private text: string | null | undefined = undefined
   private value: T | undefined = undefined
 
@@ -113,7 +54,6 @@ export class Shared<T> {
     private readonly read: (value: unknown) => T,
   ) {}
 
-  /** What is under the key now. */
   get(): T {
     const now = storedText(this.key)
     if (this.text === undefined || now !== this.text || this.value === undefined) {
@@ -123,21 +63,17 @@ export class Shared<T> {
     return this.value
   }
 
-  /** Writes `value` down, as `text`. */
   set(value: T, text: string): void {
     this.value = value
     this.text = keep(this.key, text) ? text : storedText(this.key)
   }
 
-  /** Forgets what was read, so the next `get` reads again. */
   drop(): void {
     this.text = undefined
     this.value = undefined
   }
 }
 
-/** And forgetting one, which fails the same three ways and matters even less: a
- *  value that could not be removed is a value the next launch reads and drops. */
 export function forget(key: string): void {
   try {
     localStorage.removeItem(key)
@@ -146,22 +82,15 @@ export function forget(key: string): void {
   }
 }
 
-/** An object that is not an array and not null, so its keys can be walked. */
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-/** The strings in a list, or nothing at all when it is not a list of them.
- *  Partly-good data is dropped whole: half a list of paths is not half useful,
- *  and a caller cannot tell which half it got. */
 export function stringList(value: unknown): string[] | null {
   if (!Array.isArray(value)) return null
   return value.every((one) => typeof one === 'string') ? value : null
 }
 
-/** The entries of an object whose values pass `check`, with the rest left out.
- *  Here a bad entry is worth dropping on its own: these maps are keyed by path
- *  or by shortcut id, and one unreadable key says nothing about the others. */
 export function recordOf<T>(value: unknown, check: (one: unknown) => one is T): Record<string, T> {
   if (!isRecord(value)) return {}
 

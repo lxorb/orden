@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Putting whole spaces away (#352): out of every list of spaces and back where they
- *  were, the open one left first, never the last one in sight, and the account's list
- *  the same on every device - this device's own sent where it has not been heard yet. */
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
   return {
@@ -28,7 +24,6 @@ interface Space {
   root: string
 }
 
-/** The workspace as far as spaces go: the list, which is open, and the store. */
 const workspace = vi.hoisted(() => ({
   spaces: [] as Space[],
   activeSpaceId: null as string | null,
@@ -45,7 +40,6 @@ const workspace = vi.hoisted(() => ({
   },
 }))
 
-/** The account: what it was told, and whether it answers. */
 const told = vi.hoisted(() => ({ sent: [] as unknown[], fails: false }))
 
 vi.mock('./workspace.svelte', () => ({ workspace }))
@@ -59,7 +53,6 @@ vi.mock('./api', () => ({
     },
   },
 }))
-// The account's ids: a space of this device's own has none.
 vi.mock('./sync.svelte', () => ({
   sync: {
     remoteIdFor: (root: string) => (root === '/spaces/Local' ? null : `id-${root.slice(8)}`),
@@ -70,7 +63,6 @@ const archive = await import('./space-archive')
 
 const space = (name: string): Space => ({ id: name, name, root: `/spaces/${name}` })
 
-/** One of the workspace's spaces, by its place. */
 function at(place: number): Space {
   const found = workspace.spaces[place]
   if (!found) throw new Error(`no space at ${String(place)}`)
@@ -92,7 +84,6 @@ describe('a space put away', () => {
 
     expect(workspace.shownSpaces.map((one) => one.name)).toEqual(['Notes', 'Work', 'Local'])
     expect(archive.archivedSpaces().map((one) => one.name)).toEqual(['Old'])
-    // Nothing of the space itself changes: it is still one of the spaces.
     expect(workspace.spaces).toHaveLength(4)
 
     await archive.unarchiveSpace(at(2))

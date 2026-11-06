@@ -1,10 +1,5 @@
-/** Where a picture a note names ends up, through the one rule both faces of a note
- *  use. Driven as a page in a browser, because that is the build where the address
- *  is something this repository decides rather than something Tauri hands out. */
-
 import { describe, expect, test, vi } from 'vitest'
 
-/** The space, and the one file in it the index can find by name. */
 const found: Record<string, string> = {
   'shot.png': 'assets/shot.png',
   'deep.png': 'notes/pictures/deep.png',
@@ -21,9 +16,6 @@ const { notePicture } = await import('./note-images')
 
 describe('a picture a note names', () => {
   test('a bare name is looked for anywhere in the space, the way Obsidian looks', () => {
-    // `![[shot.png]]` from a note one folder down. The index answers with a path
-    // from the space's root, and that is the path: joined onto the note's own
-    // folder a second time, as it was, this named nowhere and nothing drew.
     expect(notePicture('shot.png', '/Work/notes/Q1.md', '')).toBe('/asset/Work/assets/shot.png')
     expect(notePicture('shot.png', '/Work/Q1.md', '')).toBe('/asset/Work/assets/shot.png')
     expect(notePicture('deep.png', '/Work/Q1.md', '')).toBe('/asset/Work/notes/pictures/deep.png')

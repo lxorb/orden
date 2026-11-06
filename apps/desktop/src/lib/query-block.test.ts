@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Hit } from '@orden/scan/search/match'
 
-/** A ` ```query ` fence answers with HTML built out of what notes say, so what is
- *  tested here is the shape of it and, above everything, that nothing a note says
- *  can become markup. */
-
 const asked: { query: unknown; excluded: unknown }[] = []
 let answering: Hit[] = []
 
@@ -102,8 +98,6 @@ describe('what a fence answers with', () => {
   })
 })
 
-/** The one thing that must never work: a note writing markup into the page that
- *  draws it. Both surfaces put this in with `innerHTML`. */
 describe('what a note says', () => {
   test('is text, never markup, in the line', async () => {
     answering = [hit({ text: 'plan <img src=x onerror=alert(1)>', ranges: [] })]
@@ -136,10 +130,6 @@ describe('what a note says', () => {
   })
 })
 
-/** A task row, which is the one row that is not simply the line it found. That a
- *  press on the box ticks it and a press on the row opens the note is driven in a
- *  browser rather than here: `pressRow` reads the markup with `closest` and this
- *  environment has no DOM to read. See test/e2e/search.py. */
 describe('a row whose line is a task', () => {
   test('shows the words rather than the marker, and a box in front of them', async () => {
     answering = [hit({ text: '- [ ] write the plan', ranges: [] })]
@@ -157,7 +147,6 @@ describe('a row whose line is a task', () => {
   })
 
   test('and the emphasis moves along with the words', async () => {
-    // `plan` sits at 16 in the whole line, and at 10 once the marker is off it.
     answering = [hit({ text: '- [ ] write the plan', ranges: [{ from: 16, to: 20 }] })]
 
     expect((await answered('plan')) ?? '').toContain('<mark>plan</mark>')

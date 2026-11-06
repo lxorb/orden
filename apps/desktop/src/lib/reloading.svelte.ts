@@ -1,11 +1,6 @@
-/** A chunk that did not arrive, heard through Vite's `vite:preloadError`. The answer is
- *  reload-when.ts, or the notices row's Reload when that did not arrive either. */
-
-/** A button held, heard from the launch on. */
 const PRESSES = ['pointerdown', 'pointerup', 'pointercancel']
 
 class Reloading {
-  /** Whether the notices row offers Reload. */
   offered = $state(false)
 
   private asking = false
@@ -15,12 +10,10 @@ class Reloading {
   private pressed = false
   private readonly holders = new Set<() => boolean>()
 
-  /** What the page must not go from under while it answers true. */
   holds(busy: () => boolean): void {
     this.holders.add(busy)
   }
 
-  /** `settled`: whether the disk has what it is owed. */
   watch(settled: () => Promise<boolean>): () => void {
     const missed = () => void this.missed(settled)
     const back = () => {
@@ -54,7 +47,6 @@ class Reloading {
       }))
       this.answered = !this.unanswered
     } catch {
-      // The answer is a chunk too.
       this.answered = true
       this.offered = true
     } finally {

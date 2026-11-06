@@ -80,7 +80,6 @@ describe('a call that waits for quiet', () => {
     soon.flush()
     expect(ran).toBe(1)
 
-    // And the timer it was waiting on does not fire a second time.
     vi.advanceTimersByTime(1000)
     expect(ran).toBe(1)
   })
@@ -115,8 +114,6 @@ describe('a call that waits for quiet', () => {
     expect(ran).toBe(2)
   })
 
-  /** A burst that never stops still runs: a note typed into without a pause for a
-   *  minute is written every couple of seconds all the same. */
   test('runs no later than its ceiling after the first call, however the calls go on', () => {
     let ran = 0
     const soon = afterQuiet(() => ran++, 100, 250)
@@ -152,7 +149,6 @@ describe('a call that waits for quiet', () => {
 })
 
 describe('a call that happens once a frame', () => {
-  /** The frames a browser would hand out, handed out on demand instead. */
   function frames() {
     let next = 1
     const waiting = new Map<number, () => void>()
@@ -165,7 +161,6 @@ describe('a call that happens once a frame', () => {
     vi.stubGlobal('cancelAnimationFrame', (id: number) => waiting.delete(id))
 
     return {
-      /** How many frames were asked for and not yet drawn or dropped. */
       get asked() {
         return waiting.size
       },

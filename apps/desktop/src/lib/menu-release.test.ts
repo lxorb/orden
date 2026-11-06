@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { released, SLOP } from './menu-release'
 
-/** A menu opened by a press still held - a Mac's and Linux's way - let go of (#368). */
 describe('a held menu let go of', () => {
   const from = { x: 100, y: 100 }
 

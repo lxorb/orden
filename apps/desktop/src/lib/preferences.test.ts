@@ -2,14 +2,6 @@ import { beforeAll, afterAll, describe, expect, test, vi } from 'vitest'
 import { inLanguageOrder } from '@orden/markdown/language-order'
 import type { Pane } from './preferences'
 
-/** The declarations the settings panes are drawn from.
- *
- *  What is checked here is the shape of the list rather than the markup: which
- *  setting carries a sentence about itself, what the two controls in Appearance
- *  offer, and what the second of them points at when the theme in force cannot
- *  show the scheme that was asked for. The panel draws one row per entry and
- *  nothing else decides any of it. */
-
 function memoryStorage(): Storage {
   const held = new Map<string, string>()
 
@@ -28,8 +20,6 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
-/** Loaded at module scope: the pane list reaches half the app, and compiling
- *  that belongs to no single test. See docs/conventions.md. */
 const { preferences, resettable } = await import('./preferences')
 const { LANGUAGES } = await import('./i18n.svelte')
 const { theme } = await import('./theme.svelte')
@@ -50,19 +40,12 @@ const field = (paneId: string, label: string) => {
   return found
 }
 
-/** One plain sentence, which is all a tooltip has room for. Its own function so
- *  that the row only the desktop shows is held to the same rule. */
 function readsAsOneSentence(hint: string, label: string) {
   expect(hint, label).toMatch(/\.$/)
   expect(hint.length, label).toBeLessThan(110)
-  // One sentence: a full stop only at the end of it. Numbered examples spell the
-  // numbers with their own stops, which is not a second sentence.
   expect(hint.replace(/\d\.(\d)?/g, ''), label).toMatch(/^[^.]*\.$/)
 }
 
-/** The `?` beside a label (#768). Every setting has one: a name says what is set, and
- *  only a sentence says what setting it does. The type holds the sentence to being
- *  there; this holds it to being one. */
 describe('the sentence behind a setting', () => {
   const every = panes.flatMap((one) => one.groups.flatMap((group) => group.fields))
 
@@ -87,8 +70,6 @@ describe('the sentence behind a setting', () => {
 })
 
 describe('the Markdown pane', () => {
-  /** On is the live preview, where a mark shows while the caret is in it; off is
-   *  Notion's and Word's way, which the account carries. */
   test('shows the markdown while writing unless asked not to', () => {
     const shown = field('markdown', 'Show markdown while writing')
     expect(shown.kind).toBe('switch')
@@ -97,8 +78,6 @@ describe('the Markdown pane', () => {
 })
 
 describe('the Note types pane', () => {
-  /** One switch per kind this device has, under the line the new tab draws it in, each
-   *  wearing its mark; and the last one on cannot be turned off. */
   test('switches each kind, in its line', () => {
     const kinds = preferences().find((one) => one.id === 'kinds')
     expect(kinds?.groups.map((group) => group.title)).toEqual(['Notes', 'Terminal', 'Web'])
@@ -123,7 +102,6 @@ describe('the Note types pane', () => {
     expect(last?.kind === 'switch' && last.locked?.()).toBe(false)
   })
 
-  /** #355: somebody who wants a kind gone from Ctrl+T looks for it by Ctrl+T. */
   test('is found by the new tab and its key', async () => {
     const { search } = await import('./settings-search')
     for (const query of ['Ctrl+T', 'new tab']) {
@@ -170,10 +148,7 @@ describe('the Appearance pane', () => {
         .find((entry) => entry.label === 'Mode')
       if (one?.kind !== 'segmented') throw new Error('the mode is a segmented control')
 
-      // Following the system and the dark it does not have are both off; the one
-      // scheme it does state is the one segment left.
       expect(one.options.map((option) => option.disabled)).toEqual([true, true, false])
-      // And it points at the one the theme has rather than at a scheme it lacks.
       expect(one.get()).toBe('light')
     } finally {
       theme.files = []
@@ -185,16 +160,6 @@ describe('the Appearance pane', () => {
     expect(resettable(pane('appearance'))).toBe(false)
   })
 
-  /** There was a third row: a More contrast switch, which painted a palette of
-   *  its own over whichever theme was in force. Contrast is a theme now, so the
-   *  pane asks the two questions it has always had and the store answers the
-   *  third.
-   *
-   *  And then whatever the theme in force offers, under them and with no heading
-   *  between: the accent is one of those, declared by the app and inherited by
-   *  every theme that does not paint over it, so it is here because it is in the
-   *  list rather than because the pane knows what an accent is. See
-   *  themes/settings.ts, and `accentSetting` in accents.ts. */
   test('and asks two questions, contrast being a theme rather than a switch', () => {
     expect(pane('appearance').groups[0]?.fields.map((one) => one.label)).toEqual([
       'Style',
@@ -203,16 +168,12 @@ describe('the Appearance pane', () => {
     ])
   })
 
-  /** The arrow over a button is a desktop app's; the hand is a web page's, and the
-   *  Claude app offers the same switch. Off until asked for. */
   test('and offers the pointing hand, off by default', () => {
     const hand = fieldsOf('appearance').find((one) => one.label === 'Pointing hand on buttons')
     expect(hand?.kind).toBe('switch')
     expect(hand?.initial).toBe(false)
   })
 
-  /** Hints are on for somebody new, who would never go looking for the switch;
-   *  Silent mode is for the one who knows the app. */
   test('and General offers Silent mode, off by default', () => {
     const silent = fieldsOf('general').find((one) => one.label === 'Silent mode')
     expect(silent?.kind).toBe('switch')
@@ -223,23 +184,11 @@ describe('the Appearance pane', () => {
     const group = pane('appearance').groups[0]
     const accent = group?.fields.find((one) => one.label === 'Accent')
 
-    // A colour is a row of swatches, which is the one control in the app whose
-    // options are painted rather than read.
     expect(accent?.kind).toBe('swatches')
     expect(accent?.kind === 'swatches' && accent.options.length).toBe(theme.accents.length)
     expect(accent?.get()).toBe(theme.accent)
   })
 
-  /** A theme that states a colour of its own withdraws the row, because swatches
-   *  over that palette would either do nothing or make the picture a lie. Not
-   *  asserted here: which settings the theme in force offers is the theme store's
-   *  question and is answered where the folder, the storage and the page are all
-   *  stood in for - see theme.test.ts, and test/e2e/glass.py for the same thing on
-   *  a real page. What this pane owes is drawing whatever it is handed. */
-
-  /** The group is the theme and both rows are about it, so neither row may be
-   *  called Theme as well: the pane read "Theme / Theme / Mode" and said nothing
-   *  about which of the two rows was which. */
   test('and names each row for what it picks rather than for the group', () => {
     const group = pane('appearance').groups[0]
     expect(group?.title).toBe('Theme')
@@ -247,10 +196,6 @@ describe('the Appearance pane', () => {
   })
 })
 
-/** Which stream of releases the machine follows. Only the desktop app installs
- *  anything, so this is the one row that is not on every build; see
- *  updates.svelte.ts. The list above is a browser's, which is why the pane list is
- *  built a second time here with the build saying it is the desktop app. */
 describe('the release channel', () => {
   let desktop: Pane[] = []
 
@@ -312,11 +257,6 @@ describe('the release channel', () => {
     const hint = row().hint
 
     readsAsOneSentence(hint, 'Release channel')
-    // The sentence is the whole warning, so it has to do three things: name both
-    // streams, since the two words in the control are all a reader has, and say
-    // which of them can break. What Unstable follows is the edge build, not a
-    // branch: it is built from unstable, and this used to pin the word `main`
-    // back when that was where it came from.
     expect(hint).toContain('Stable')
     expect(hint).toContain('Unstable')
     expect(hint).toContain('break')
@@ -330,9 +270,6 @@ describe('the release channel', () => {
   })
 })
 
-/** Which web build this browser is served (#424). The list above is a browser's, so the
- *  row is in it; which build the page is comes from the build, and choosing goes to the
- *  Worker, which keeps the choice in a cookie. See updater.ts. */
 describe('the web version', () => {
   const row = () => {
     const found = fieldsOf('general').find((one) => one.label === 'Web version')
@@ -363,7 +300,6 @@ describe('the web version', () => {
   })
 })
 
-/** Which version this is (#490): on every build, the last row of General > Updates. */
 describe('the version', () => {
   test('is the last row of Updates under General, said beside the build the browser runs', () => {
     const group = pane('general').groups.find((one) => one.title === 'Updates')
@@ -375,17 +311,7 @@ describe('the version', () => {
   })
 })
 
-/** The language list, and what each row says about itself.
- *
- *  Every catalogue but the four that were written by hand was written in one pass
- *  and never read through, and Emil asked for those to be machine-translated "and
- *  marked so in the picker". The caption under the row says it about the language
- *  already chosen, which is the one row nobody is choosing; the mark says it about
- *  every row in the list, which is where somebody about to choose can read it. */
 describe('the language picker', () => {
-  /** The one sentence a marked row carries, which is the sentence the caption
-   *  under the list says about the language already chosen: one thing said one
-   *  way. See `caption` in preferences.ts. */
   const SAID = 'Machine-translated. Corrections welcome.'
 
   const row = () => {
@@ -407,8 +333,6 @@ describe('the language picker', () => {
     expect(marked.length).toBeGreaterThan(30)
   })
 
-  /** And nothing else: the four that were read through say nothing about
-   *  themselves, and neither does following the system or English. */
   test('and leaves the hand-written ones plain', () => {
     const plain = row()
       .options.filter((one) => !one.note)
@@ -424,15 +348,10 @@ describe('the language picker', () => {
 })
 
 describe('the spelling dictionaries', () => {
-  /** The same order the app's language list keeps: the Latin names A to Z, then the
-   *  Cyrillic ones. */
   test('are offered in the order every language list keeps', () => {
     expect([...DICTIONARIES]).toEqual(inLanguageOrder(DICTIONARIES))
   })
 
-  /** Only Orden's own Chromium has a list of them to write (#771); this build is a browser,
-   *  whose checker reads its own languages, and the pane says so rather than offering
-   *  switches that turn nothing. */
   test('are the platform’s where nib cannot choose them, and the pane says so', () => {
     const spelling = pane('spelling')
     expect(spelling.groups.flatMap((group) => group.fields).map((one) => one.label)).toEqual([

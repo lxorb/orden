@@ -1,9 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Todos from its key, the palette (#1047) and the right side's Todos icon (#1110): every
- *  space's tasks in one view (#1153) as a tab, brought forward wherever it is open already. */
-
 interface FakeTab {
   id: string
   paneId: string

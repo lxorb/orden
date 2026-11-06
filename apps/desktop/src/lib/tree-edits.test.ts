@@ -5,8 +5,6 @@ import { orderedTree } from './tree-order'
 
 function file(path: string): Entry {
   return {
-    // Either separator, because a listing off a Windows disk speaks backslashes
-    // and the browser build's speaks slashes.
     name: path.slice(Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1),
     path,
     is_dir: false,
@@ -28,7 +26,6 @@ function root(): Entry {
   ])
 }
 
-/** The tree as paths, so a whole shape reads in one line. */
 function shape(entry: Entry): string[] {
   return entry.children.flatMap((child) => [child.path, ...shape(child)])
 }
@@ -39,7 +36,6 @@ describe('the rows a space has archived, left out of the list', () => {
     const kept = withoutRows(tree, (entry) => ['/N/Deep', '/N/c.md'].includes(entry.path))
 
     expect(shape(kept)).toEqual(['/N/a.md'])
-    // Nothing is taken out of the tree that was asked.
     expect(shape(tree)).toHaveLength(4)
   })
 
@@ -58,10 +54,6 @@ describe('the rows a space has archived, left out of the list', () => {
 })
 
 describe('a row put into the tree before the disk answers', () => {
-  /** Where in its folder a row lands is nobody's business here: the order the rows
-   *  are drawn in is decided over the whole listing, once, for all seven orders at
-   *  once - see tree-order.ts - so what this owes is the right folder. The last
-   *  describe in the file is the two halves together. */
   test('lands in the folder it belongs to', () => {
     expect(shape(withEntry(root(), file('/N/b.md')))).toEqual([
       '/N/Deep',
@@ -232,9 +224,6 @@ describe('rows for notes the account has named and not sent yet', () => {
 })
 
 describe('the two halves together', () => {
-  /** What the panel actually draws: a row put on the tree here, and then the tree
-   *  read in the order the space is being read in. Where the row was appended says
-   *  nothing about where it appears, which is the whole point of the split. */
   test('a row appended to its folder is drawn in the chosen order', () => {
     const grown = withEntry(root(), file('/N/b.md'))
 
@@ -253,8 +242,6 @@ describe('the two halves together', () => {
       folder === '/N' ? ['c.md', 'b.md'] : [],
     )
 
-    // The two arranged notes are above the folder, because that is where somebody
-    // put them; `a.md`, which the list says nothing about, falls in behind it.
     expect(shape(drawn)).toEqual(['/N/c.md', '/N/b.md', '/N/Deep', '/N/Deep/inner.md', '/N/a.md'])
   })
 })

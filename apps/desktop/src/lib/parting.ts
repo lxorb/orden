@@ -1,38 +1,11 @@
-/** What has to be written down before the window goes.
- *
- *  Several things in the app write their file once the hand has stopped rather than
- *  on the stroke or the letter itself, because writing it costs the size of the
- *  thing: a plane is serialised whole, and every space's graph settings are. A window
- *  closing runs no effect's teardown, so nothing would ever reach those timers, and
- *  a note's own write waits for a pause the same way - so the words would never
- *  reach the disk.
- *
- *  A register rather than a list of calls in start.ts, because the launch must not
- *  have to load a thing in order to call one function on it on the way out. Reaching
- *  for the canvas store from there put the whole ink engine in front of the first
- *  paint. Whatever is on screen has loaded itself; this is where it says it owes a
- *  write.
- *
- *  Nothing here is a place to put work. A window is going: what runs is the writes
- *  that were already due. */
-
 const owing = new Set<() => void>()
 
-/** The writes that have to happen after all of the others.
- *
- *  Turning what is on screen into words and putting those words on the disk are two
- *  writes, and the second cannot run before the first: a plane serialises itself into
- *  its document, and the document is what its write takes down. One list would leave
- *  that to the order the modules happened to load in, which is the order the reader
- *  happened to open things in. */
 const lastly = new Set<() => void>()
 
-/** Said once by whoever owes a write, when its module is first loaded. */
 export function owes(write: () => void): void {
   owing.add(write)
 }
 
-/** The same, for a write that has to come after those: see `lastly`. */
 export function owesLast(write: () => void): void {
   lastly.add(write)
 }
@@ -64,52 +37,34 @@ export function settleUp(): void {
   for (const write of ending) write()
 }
 
-/** How long a window going waits for its writes. A disk that does not answer must not
- *  hold a window open for ever, and what did not land is in the session, which the next
- *  launch writes; see `owed` in workspace/saving.svelte.ts. */
 export const GIVE_UP = 3000
 
-/** Writes on their way to the disk that are nobody's note - a terminal's last lines -
- *  which the window going waits for as it waits for a note's. */
 const underway = new Set<Promise<unknown>>()
 
-/** Said by whoever starts one. */
 export function writing(work: Promise<unknown>): void {
   const done = work.catch(() => undefined)
   underway.add(done)
   void done.then(() => underway.delete(done))
 }
 
-/** Whether one is still in the air. */
 export function stillWriting(): boolean {
   return underway.size > 0
 }
 
-/** Every one landed, those started meanwhile too. */
 export async function written(): Promise<void> {
   while (underway.size) await Promise.all(underway)
 }
 
-/** What puts the window in the tray rather than closing it, while something keeps Orden
- *  there: the reminders, while one is waiting or the reader asked (docs/tasks.md
- *  decision 6; see reminders/residency.svelte.ts). Said here for the reason everything
- *  else here is, so the close handler loads nothing to ask. Null while nothing does.
- *  The agents keep their own in agent-marks.svelte.ts; the crate holds the one tray
- *  both share (agents/shell.rs). */
 let tray: (() => Promise<boolean>) | null = null
 
-/** Said by whoever keeps Orden in the tray, and taken back with null. */
 export function keptInTray(hide: (() => Promise<boolean>) | null): void {
   tray = hide
 }
 
-/** What hides the window into the tray, if anything keeps it there. */
 export function trayKeeper(): (() => Promise<boolean>) | null {
   return tray
 }
 
-/** What would stop with the window - a shell, an AI turn - each saying whether it
- *  runs, so a close with nothing running fetches no question; see lib/quitting. */
 const running = new Set<() => boolean>()
 
 export const runs = (any: () => boolean) => void running.add(any)

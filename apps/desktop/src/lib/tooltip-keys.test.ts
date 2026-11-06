@@ -1,8 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-/** What a button's tooltip says: `shortcuts.tooltip`, the name and the key held now. */
-
-/** A Windows machine, with nothing chosen yet: the store asks the browser both. */
 vi.stubGlobal('localStorage', {
   getItem: () => null,
   setItem: () => undefined,
@@ -26,7 +23,6 @@ describe('a tooltip', () => {
 
   test('is the name alone where nothing holds a key', () => {
     expect(tooltip('Downloads')).toBe('Downloads')
-    // Random note has no key out of the box.
     expect(tooltip('Random note', 'app.random-note')).toBe('Random note')
   })
 

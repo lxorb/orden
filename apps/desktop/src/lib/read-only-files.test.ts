@@ -1,17 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The file list's gestures in a space shared with this account to be read.
- *
- *  Making, renaming, deleting, duplicating and moving all write into the space, and
- *  a space shared to be read is one nothing may be written in: the copy here would
- *  stop being the space's, and the sync refuses it on every pass (B273). The menus
- *  and keys do not offer them there, and the workspace's own calls refuse them as
- *  well, for every caller that did not look.
- *
- *  Two spaces on a map of a disk, and the share is one set of roots the sharing
- *  module answers from. Every command the disk is asked is logged, so a refusal can
- *  be told from a write that failed. */
-
 const files = new Map<string, string>()
 const asked: string[] = []
 const readOnly = vi.hoisted(() => new Set<string>())
@@ -64,7 +52,6 @@ vi.mock('./tauri', async (importOriginal) => ({
         files.delete(path)
         return { id: 't' }
       case 'read_tree': {
-        // As the crate does: a root that is not a folder is refused.
         const root = text(args?.root)
         if (!ROOTS.includes(root)) throw new Error('root is not a directory')
         return listing(root)
@@ -100,7 +87,6 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
 
-/** What the disk was asked to change, rather than to say. */
 const WRITES = /write|rename|delete|trash|copy|create|move|snapshot|bring|remove/
 const writes = () => asked.filter((command) => WRITES.test(command))
 
@@ -192,11 +178,8 @@ describe('in a space shared to be read', () => {
   })
 })
 
-/** The tab in front, read again after a call that changed it. */
 const front = () => workspace.active
 
-/** A tab with no file given one: a draft written, a web tab kept as a web note. Each
- *  is a new file in the place it is saved to (B295). */
 describe('a tab saved into a space shared to be read', () => {
   beforeEach(() => {
     readOnly.add('/theirs')
@@ -273,7 +256,6 @@ describe('a link to a note the space has not got', () => {
 })
 
 describe('an open note in a space shared to be read', () => {
-  /** What the autosave owes, written: it waits a pause after the last change. */
   async function settle() {
     await vi.advanceTimersByTimeAsync(3000)
     await workspace.writesSettled()
@@ -299,9 +281,6 @@ describe('an open note in a space shared to be read', () => {
     expect(writes()).toEqual([])
   })
 
-  // The owner's words reach a reader's open note through the document, as a room
-  // and sync v2 bring them, and the autosave is what puts them on the disk. So the
-  // write itself cannot refuse a space shared to be read; only the gestures can.
   test('still writes what the owner changed to its file', async () => {
     const tab = workspace.active
     if (!tab) throw new Error('Plan.md did not open')

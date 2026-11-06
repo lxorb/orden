@@ -1,14 +1,3 @@
-/** The rows both translucent themes offer, glass and wallpaper, written once.
- *
- *  Content: how far what is behind the frame reaches the surfaces somebody reads on.
- *  Three words, because the useful places are three - the paper as it was, the least
- *  paper the words allow, and halfway - and a dial between them would be a dial whose
- *  every other position meant nothing. What each level lays down is content-ground.ts.
- *
- *  And the two shapes each theme's own dials take: a range whose value is painted
- *  nowhere, because the frame or the picture is worked out again from it, and the tint's
- *  colour, the accent's until another is picked. */
-
 import { ACCENTS } from './accents'
 import { CONTENT_INITIAL, CONTENT_LEVELS, type ContentLevel } from './content-ground'
 import { t } from './i18n.svelte'
@@ -35,12 +24,10 @@ export function contentSetting(): ThemeSetting {
   }
 }
 
-/** The level a value names, or where a reader starts. */
 export function contentOf(value: unknown): ContentLevel {
   return CONTENT_LEVELS.find((one) => one === value) ?? CONTENT_INITIAL
 }
 
-/** A dial in per cent or pixels whose value is painted nowhere. */
 export function rangeSetting(
   id: string,
   label: string,
@@ -65,10 +52,8 @@ export function rangeSetting(
   }
 }
 
-/** The tint colour's own swatch for "the accent, whichever it is", first in the row. */
 export const ACCENT_SWATCH = 'accent'
 
-/** The Tint colour row: the accent, then every accent by name. */
 export function tintColourSetting(id: string, when: () => boolean): ThemeSetting {
   return {
     id,

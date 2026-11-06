@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { spendClick } from './spent-click'
 
-/** The window's own listeners, heard as the window would dispatch them. */
 const heard = new Map<string, Set<(event: Event) => void>>()
 
 vi.stubGlobal('window', {
@@ -13,7 +12,6 @@ vi.stubGlobal('window', {
   removeEventListener: (type: string, one: (event: Event) => void) => heard.get(type)?.delete(one),
 })
 
-/** An event the window dispatches, and whether a listener spent it. */
 function dispatch(type: string) {
   const event = {
     spent: false,

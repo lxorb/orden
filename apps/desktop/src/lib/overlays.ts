@@ -1,64 +1,22 @@
-/** What Escape closes.
- *
- *  Everything the app puts over the note is one of these: the settings, the
- *  palette, a sheet, the version history, a menu, a dropdown inside another
- *  overlay. Escape closes the one on top, which is the last one opened - and
- *  nothing but the order they were opened in knows which that is, so they are
- *  kept as a stack rather than each asked in turn.
- *
- *  A key that reaches an empty stack was never about an overlay: Escape in the
- *  file list clears the selection, Escape in the editor steps off a picture, and
- *  Escape leaves full screen, and all three still get their turn.
- *
- *  **A popup also closes when it is pressed past.** One that says what is its own -
- *  itself, and the button that opened it - is closed by a press anywhere else, and by
- *  the window losing the focus, which is also how a press into a web page is heard:
- *  the page is a native webview whose presses never reach the app's HTML, and all it
- *  tells the app is that the keyboard went (#382). The press that opened it does not
- *  close it, and a press in a popup opened over it - a submenu, a list - closes
- *  neither. A sheet says nothing of the kind, and is closed by its own scrim.
- *  The press that closed one does not open it again; see `clicked`.
- *
- *  **A second press on the control that opened one closes it** (#1039). Every layer
- *  knows its opener: the control a click opened it from - the `⋯` on a web tab's bar, a
- *  row's three dots, a picker's chip - noticed here as the click goes by, so no button
- *  has to say so and a new one cannot forget to. Pressed again, by a mouse, a finger, a
- *  pen or Enter and Space on it, the layer closes and the click is spent, rather than
- *  the press closing it and the click opening it again. The opener says the layer is
- *  open in its `aria-expanded` while it is, and Escape gives it the keyboard back.
- *
- *  **Only what is drawn over the note belongs here**, because the stack also decides
- *  whether a web page, a native webview, must hide. Full screen wants Escape and is
- *  a mode, so it is in `onKeydown` in App.svelte; see overlays.test.ts. */
-
 interface Open {
   close: () => void
-  /** What a press may land on without closing it, for a popup; none for a sheet. */
   holds: Holds | null
-  /** The control it was opened from, or null for one a key, a command or the app
-   *  itself opened. */
   from: Opener | null
-  /** What the opener's `aria-expanded` said before, to say again once it closes. */
   said: string | null
   keepsFocus: boolean
 }
 
-/** A control, as much of one as this reads and writes. */
 type Opener = Pick<Element, 'contains'> &
   Partial<Pick<Element, 'getAttribute' | 'setAttribute' | 'removeAttribute'>> & {
     focus?: () => void
   }
 
-/** What a popup holds: whatever a press may land in and leave it open. An element, as
- *  far as being inside one goes; the ones not drawn yet are nothing. */
 type Holds = () => readonly (Pick<Element, 'contains'> | null | undefined)[]
 
-/** A press, as much of one as `pressed` reads. */
 interface Pointed {
   target: EventTarget | null
 }
 
-/** As much of an Escape as this needs: enough to say the press is spent. */
 interface Press {
   preventDefault: () => void
   stopImmediatePropagation: () => void
@@ -67,33 +25,12 @@ interface Press {
 class Overlays {
   private readonly stack: Open[] = []
 
-  /** What the popups the last press shut held, and what opened them, until its click is
-   *  read. */
   private shutBy: { holds: Holds; from: Opener | null }[] = []
 
-  /** The control the click going by now landed on, for whatever it opens; see `show`. */
   private clicking: Opener | null = null
 
-  /** Who wants to hear that the stack changed.
-   *
-   *  One reader, and a plain callback rather than reactive state, because this file
-   *  is not a rune module and the thing that reads it is not drawing anything: a
-   *  web tab's page is a native webview, which draws above every pixel of HTML in
-   *  the window, so it has to be out of sight while anything of the app's is over
-   *  it. Told rather than polled, because an overlay opens and closes without a
-   *  press - a palette row opens the next one, Escape closes it - and a page that
-   *  waited for a press stayed in front of the menu until somebody clicked
-   *  something. See lib/web-tab/WebTab.svelte. */
   private readonly watchers = new Set<() => void>()
 
-  /** Puts an overlay on top, and answers how to take it off again - so the
-   *  effect that opened it can hand that straight back to Svelte. `holds` makes it a
-   *  popup: what a press may land on and leave it open.
-   *
-   *  `from` is the control it was opened from, which a second press on closes. Left
-   *  out, it is the control the click going by landed on: the layers open from an
-   *  effect, which runs before that click's task is over. A layer opened later than
-   *  that, after something was fetched, names it; see `menu.show`. */
   show(
     close: () => void,
     holds?: Holds,
@@ -116,7 +53,6 @@ class Overlays {
     }
   }
 
-  /** The opener says what it said before the layer opened. */
   private release(entry: Open) {
     const from = entry.from
     entry.from = null
@@ -125,7 +61,6 @@ class Overlays {
     else from.setAttribute('aria-expanded', entry.said === 'true' ? 'false' : entry.said)
   }
 
-  /** Hears about every overlay opening and closing, until it stops listening. */
   watch(tell: () => void): () => void {
     this.watchers.add(tell)
     return () => this.watchers.delete(tell)
@@ -135,21 +70,10 @@ class Overlays {
     for (const tell of this.watchers) tell()
   }
 
-  /** How many are open. What the tests count. */
   get depth(): number {
     return this.stack.length
   }
 
-  /** A press somewhere in the window: every popup on top that it is past closes, down
-   *  to the first that holds it or is not a popup. Called from the window on the way
-   *  down, before anything under the press can decide otherwise, and so before anything
-   *  under it can open a popup either: the press that opens one - on its way down, on
-   *  its way up, or as rows asked for first come back (issue #244) - has always been read
-   *  by then, and never closes it. See App.svelte.
-   *
-   *  Read by order, not by the press's own time: a press carries the time it was taken,
-   *  and one that waited behind a long task carries a time from before a popup that
-   *  opened in the meantime, which its time would read as the press that opened it. */
   pressed(press: Pointed) {
     this.shutBy = []
     const target = nodeOf(press)
@@ -163,14 +87,6 @@ class Overlays {
     }
   }
 
-  /** A click, on its way to what it landed on, before that has heard it.
-   *
-   *  A tap's click lands where the finger was once a popup's catch has gone: on the
-   *  button that opened it, it is spent, or it opens the popup again (#411). A click on
-   *  the control that opened a layer still open - one the press did not close, because
-   *  the popup holds its button, or Enter or Space, which press nothing down - closes
-   *  that layer and everything over it, and is spent (#1039). Any other click on a
-   *  control is noticed, for a layer it goes on to open; see `show`. */
   clicked(click: Pointed & Press) {
     const shut = this.shutBy
     this.shutBy = []
@@ -197,8 +113,6 @@ class Overlays {
     if (this.clicking) setTimeout(() => (this.clicking = null), 0)
   }
 
-  /** The window lost the focus: to another window, or to a web page, which is the one
-   *  word a press into a page sends. Every popup on top closes. */
   away() {
     for (let top = this.stack.at(-1); top?.holds && !top.keepsFocus; top = this.stack.at(-1))
       this.shut(top)
@@ -211,19 +125,6 @@ class Overlays {
     one.close()
   }
 
-  /** Closes the one on top. Answers whether there was one, so Escape can go on
-   *  to mean whatever else it means when there was not.
-   *
-   *  Taken off the stack here rather than left for the closing to take it off,
-   *  because closing is a change to some component's state and that reaches this
-   *  list a moment later: two presses in the same moment would otherwise both
-   *  close the same overlay and leave the one underneath it standing.
-   *
-   *  Handed the press, it spends it. Other surfaces read Escape off the same
-   *  window - the find bar over a note being read, and the one over a PDF, both
-   *  of which know only that their own pane has the focus - and one press that
-   *  closes the palette and the bar underneath it is one press closing two
-   *  things. */
   escape(press?: Press): boolean {
     const top = this.stack.pop()
     if (!top) return false
@@ -234,22 +135,16 @@ class Overlays {
     press?.preventDefault()
     press?.stopImmediatePropagation()
     top.close()
-    // And the keyboard back on what opened it, where the layer going took it nowhere.
     if (from?.focus) setTimeout(() => nowhere() && from.focus?.(), 0)
     return true
   }
 }
 
-/** Whether a press on `target` is in what `held` draws. Not the bare box round a popup and
- *  its button, where nothing is drawn: the canvas's pens and their panel sit in a strip
- *  the width of the pane, and a press beside the panel landed in it and left it open
- *  (#382). */
 function holds(held: Pick<Element, 'contains'> | null | undefined, target: Node): boolean {
   if (!held?.contains(target)) return false
   return held !== target || typeof getComputedStyle !== 'function' || !bare(target)
 }
 
-/** An element that draws nothing of its own: no background and no border. */
 function bare(node: Node): boolean {
   if (typeof Element === 'undefined' || !(node instanceof Element)) return false
   const style = getComputedStyle(node)
@@ -261,13 +156,11 @@ function bare(node: Node): boolean {
   )
 }
 
-/** The press is this one's: nothing else hears it. */
 function spend(press: Press) {
   press.preventDefault()
   press.stopImmediatePropagation()
 }
 
-/** What a click opens a layer from: the control it landed in. */
 const CONTROL = 'button, [role="button"], a[href], summary, [aria-haspopup]'
 
 function controlOf(target: Node): Opener | null {
@@ -275,14 +168,12 @@ function controlOf(target: Node): Opener | null {
   return element?.closest(CONTROL) ?? null
 }
 
-/** Whether the keyboard is on nothing in particular: the page itself. */
 function nowhere(): boolean {
   if (typeof document === 'undefined') return false
   const on = document.activeElement
   return !on || on === document.body || !on.isConnected
 }
 
-/** What a press landed on, where it is a node at all. */
 function nodeOf(press: Pointed): Node | null {
   return typeof Node !== 'undefined' && press.target instanceof Node ? press.target : null
 }

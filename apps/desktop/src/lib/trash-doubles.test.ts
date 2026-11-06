@@ -10,8 +10,6 @@ vi.mock('./prompt.svelte', () => ({ prompt: {} }))
 const { doublesOf } = await import('./trash-doubles')
 type Item = Parameters<typeof doublesOf>[0][number]
 
-/** The notes sync put in this device's trash for a note the account's Recently deleted
- *  holds too, listed twice until #765: found by place and by when, and nothing else. */
 describe('a device’s trash entry the account holds too', () => {
   const item = (
     id: string,

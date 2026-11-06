@@ -3,12 +3,6 @@ import type { Entry } from './workspace.svelte'
 import { shownNames } from './tree-order'
 import { movedTo, placedBeside, stepped, trimmed } from './tree-arranging'
 
-/** Where a row lands when somebody drops it, and what the folder keeps afterwards.
- *
- *  The half of the order that only a drag asks for, tested beside the module it is in:
- *  see tree-order.test.ts for the comparator, which is the half every window runs
- *  before it draws a row. */
-
 function file(name: string): Entry {
   return { name, path: `/s/${name}`, is_dir: false, modified: 0, created: 0, children: [] }
 }
@@ -89,8 +83,6 @@ describe('dropping a row beside another', () => {
   })
 
   test('below it, and the list runs only as far as the move reached', () => {
-    // `Deep, b.md` is the whole of what was arranged: what follows it falls back to
-    // where it already was, which puts `a.md` next and `c.md` after it.
     expect(placedBeside(children, [], ['a.md'], 'b.md', true)).toEqual(['Deep', 'b.md'])
     expect(shownNames(children, 'manual', ['Deep', 'b.md'])).toEqual([
       'Deep',
@@ -101,8 +93,6 @@ describe('dropping a row beside another', () => {
   })
 
   test('a folder dropped among the notes stays where it was dropped', () => {
-    // Emil: *"for the manual ordering mode in explorer, it should not be enforced
-    // that directories display above files."* Every gap is a gap to drop in.
     expect(
       shownNames(children, 'manual', placedBeside(children, [], ['Deep'], 'b.md', true)),
     ).toEqual(['a.md', 'b.md', 'Deep', 'c.md'])

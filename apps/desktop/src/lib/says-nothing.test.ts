@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { saysNothing, scanNote } from '@orden/scan/note'
 
-/** #1042. The same cases as `a_note_that_says_nothing_yet_is_bare` in links.rs, whose
- *  twin this is: the first scan is the crate's, and a saved note is read again here. */
 describe('a note that says nothing yet', () => {
   test('is whitespace, or its own name as its heading, under any front matter', () => {
     expect(saysNothing('', 'Plan')).toBe(true)

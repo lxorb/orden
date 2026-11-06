@@ -11,18 +11,14 @@ import {
 
 const WIDTH = 300
 
-// The walk reads two numbers and two declared values off each box it passes.
 vi.stubGlobal('getComputedStyle', (node: { overflowX: string; touchAction: string }) => ({
   overflowX: node.overflowX,
   touchAction: node.touchAction,
 }))
 
-/** A screen, for the two rules that measure from an edge of one. */
 const SCREEN = 1280
 vi.stubGlobal('window', { innerWidth: SCREEN })
 
-/** A box the walk can read. Cast because only the members it looks at are worth
- *  writing, and a whole Element would say nothing more. */
 function box(overflowX: string, scrollWidth: number, clientWidth = 320, touchAction = 'auto') {
   return {
     overflowX,
@@ -34,13 +30,10 @@ function box(overflowX: string, scrollWidth: number, clientWidth = 320, touchAct
   } as unknown as Element
 }
 
-/** A surface that draws: the canvas says so with `touch-action: none`. */
 function drawing(): Element {
   return box('hidden', 320, 320, 'none')
 }
 
-/** Puts each box inside the one before it, and answers the innermost, which is
- *  where a finger lands. */
 function nest(outermost: Element, ...inside: Element[]): Element {
   let around = outermost
   for (const one of inside) {
@@ -51,7 +44,6 @@ function nest(outermost: Element, ...inside: Element[]): Element {
   return around
 }
 
-/** Somewhere above everything, which is where the walk stops. */
 const host = box('visible', 320)
 
 describe('what owns the gesture under the finger', () => {
@@ -150,10 +142,6 @@ describe('where a drag may start', () => {
   })
 })
 
-/** The one number that lets the rules above serve both drawers: a distance
- *  measured from the edge the drawer in question comes out of, so no rule has to
- *  mention a side or a direction. `sign` is 1 for the drawer on the side the lines
- *  start at and -1 for the other side's. */
 describe('how far a touch is from a drawer’s own edge', () => {
   test('reading one way: the near drawer counts from the left, the far one from the right', () => {
     expect(fromEdge(40, 1, 1)).toBe(40)
@@ -165,8 +153,6 @@ describe('how far a touch is from a drawer’s own edge', () => {
     expect(fromEdge(40, -1, -1)).toBe(40)
   })
 
-  /** Which is the whole of what the edge rule needs: a tablet's trailing strip is
-   *  as near its own edge as the leading one is to the other. */
   test('so one edge rule covers both sides of a tablet', () => {
     expect(opensDrawer(fromEdge(SCREEN - 8, 1, -1), 32, false)).toBe(true)
     expect(opensDrawer(fromEdge(SCREEN / 2, 1, -1), 32, false)).toBe(false)
@@ -205,7 +191,6 @@ describe('where the drawer lands when the finger lifts', () => {
   })
 
   test('a flick opens it from barely anywhere', () => {
-    // The whole point: a short fast swipe should not need to cross the middle.
     expect(settleOpen(30, WIDTH, 1.2)).toBe(true)
   })
 

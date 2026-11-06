@@ -1,10 +1,3 @@
-/** The Search panel: what was asked, what came back, and what a replacement
- *  would do to it.
- *
- *  A store rather than state inside the panel, because two places reach it: a
- *  bookmarked search runs from the row above the file list, and the panel has
- *  to show what it asked. */
-
 import { SvelteSet } from 'svelte/reactivity'
 import type { EditorView } from '@orden/editor'
 import { revealPanel } from './focus'
@@ -18,31 +11,16 @@ import { isBoolean, isRecord, keepJson, stored } from './stored'
 import { afterQuiet } from './timing'
 import { workspace } from './workspace.svelte'
 
-/** How long after the last keystroke to ask. Long enough that a word typed at
- *  speed is one search, short enough that it does not feel like waiting. */
 const WAIT = 140
 
-/** How many hits are worth showing. Past this the panel is a second copy of
- *  the space rather than an answer. */
 const MOST = 200
 
-/** Two letters, so a single one does not fetch the whole space on its way to
- *  becoming a word. */
 const SHORTEST = 2
 
 const keyOf = (hit: Hit) => `${hit.path}:${hit.line}`
 
-/** What order the results are read in. `relevance` is the order the search
- *  itself answered in: the notes as they were walked, and the guesses ranked
- *  under them. */
 export type SearchSort = 'relevance' | 'name' | 'modified' | 'created'
 
-/** Where the order is kept, and why here rather than on the account.
- *
- *  The order a list is read in is this machine's, not the space's: it is a habit
- *  of whoever is reading rather than a fact about the notes. The file list's own
- *  sort is kept exactly here, under `nib:tree`, and this is the same question
- *  about the same space asked of a different list. */
 const SORT_KEY = 'nib:search-sort'
 
 interface Ordering {
@@ -67,50 +45,26 @@ function readOrdering(): Ordering {
 
 class Search {
   text = $state('')
-  /** Hits that answer the query as asked, in the order the notes answered. */
   found = $state<Hit[]>([])
-  /** Notes that answer it only loosely, best score first; see fuzzy.ts. */
   loose = $state<Hit[]>([])
-  /** True from the keystroke until the last note has answered. */
   running = $state(false)
-  /** Whether the replacement field is open. */
   replacing = $state(false)
   replacement = $state('')
-  /** Whether the archive answers too: off unless asked, as Bear searches its own. */
   archived = $state(false)
 
-  /** The hits the reader has turned off. Everything found is on to begin with,
-   *  so what is worth keeping is the exceptions. */
   private readonly skipped = new SvelteSet<string>()
 
-  /** The search itself, a moment after the last keystroke; see `ask`. */
   private readonly asking = afterQuiet(() => void this.run(), WAIT)
-  /** Which search is the latest. Typing outruns the disk, and answers to a
-   *  word that is no longer in the field are dropped rather than shown. */
   private round = 0
-  /** Which space the words in the field are a question about. */
   private about: string | null = null
 
   readonly query = $derived(parseQuery(this.text))
   readonly asks = $derived(this.text.trim().length >= SHORTEST && !isEmpty(this.query))
 
-  /** Everything found, exact first.
-   *
-   *  The rule, in one line: a note that answers the query keeps exactly the rows
-   *  and the order it had before there was any loose matching, and the guesses go
-   *  underneath it ranked by score. So nothing can regress - every list the app
-   *  used to show is still the top of the list it shows now - and a query that
-   *  used to find nothing is where the guesses are worth most. */
   readonly hits = $derived([...this.inOrder(this.found), ...this.inOrder(this.loose)])
 
-  /** How the results are ordered, and which way round. */
   ordering = $state<Ordering>(readOrdering())
 
-  /** When each file was made and last written, by the path a hit names it with.
-   *  From the file list, which has read it already: a hit carries no dates, and
-   *  putting them on one would be a date per row of two hundred rows about twenty
-   *  notes. Every file rather than every note, because a paper answers a search
-   *  too; see pdf/papers.ts. */
   private readonly dated = $derived.by(() => new Map(workspace.files.map((one) => [one.path, one])))
 
   showArchived(shown: boolean) {
@@ -120,20 +74,12 @@ class Search {
     if (this.asks) void this.run()
   }
 
-  /** Chooses the order. The same key again flips the direction, as the file
-   *  list's own sort does. */
   setSort(sort: SearchSort) {
     const descending = this.ordering.sort === sort ? !this.ordering.descending : false
     this.ordering = { sort, descending }
     keepJson(SORT_KEY, this.ordering)
   }
 
-  /** One run of hits in the order asked for.
-   *
-   *  The exact hits and the guesses are ordered apart and stay apart, so a guess
-   *  can never come out above an answer. Rows from one note stay together
-   *  whatever the order, because the note decides and the line breaks the tie -
-   *  which is what lets the panel go on reading a run of them as a group. */
   private inOrder<T extends Hit>(hits: readonly T[]): T[] {
     const { sort, descending } = this.ordering
     if (sort === 'relevance') return [...hits]
@@ -156,12 +102,6 @@ class Search {
     })
   }
 
-  /** What a replacement would be put into: the exact hits of notes that are still
-   *  ticked, never a website shortcut's, which the search finds too. A loose hit is
-   *  never one of them. There is nothing in its line for the query
-   *  to replace, and guessing at what somebody meant is not a thing to do to
-   *  their notes. Nor is a bare one, a note found by its path or a task found by
-   *  `task-todo:` alone, with no words on its line to put the replacement into. */
   readonly chosen = $derived(
     this.found.filter(
       (hit) =>
@@ -173,7 +113,6 @@ class Search {
     ),
   )
 
-  /** Whether a hit will be replaced. Never a bare one; see `chosen`. */
   keeps(hit: Hit): boolean {
     return !hit.bare && !this.skipped.has(keyOf(hit))
   }
@@ -184,7 +123,6 @@ class Search {
     else this.skipped.add(key)
   }
 
-  /** A new question. Every keystroke comes through here. */
   ask(text: string) {
     this.text = text
     this.about = workspace.activeSpace?.root ?? null
@@ -201,8 +139,6 @@ class Search {
     this.asking()
   }
 
-  /** Opens or shuts the replacement field. Shutting it turns every hit back
-   *  on, so opening it again never starts from somebody else's choices. */
   toggleReplace() {
     this.replacing = !this.replacing
     if (!this.replacing) this.skipped.clear()
@@ -230,9 +166,6 @@ class Search {
     this.loose = []
   }
 
-  /** The panel saying which space it is showing. A question asked of another
-   *  space is not this space's question, and the lines it found are not in
-   *  front of the reader any more. */
   forSpace(root: string | null) {
     if (this.about !== root) this.clear()
   }
@@ -249,32 +182,15 @@ class Search {
     this.empty()
     this.skipped.clear()
 
-    // The words to match loosely, or none. Nothing is relaxed while a
-    // replacement is being written: that is precision work, and a list holding
-    // rows the replacement will not touch would be a list lying about what is
-    // about to happen. See fuzzy.ts for what else is left exact.
-    //
-    // The ranking engine is fetched here rather than imported: it is the largest
-    // single module the sidebar reaches, and a window that opens on a note has not
-    // been asked anything yet. One fetch per session - the module registry holds it -
-    // and the panel it belongs to has already asked for it by the time anybody types,
-    // because the panel carries it too. See `warmDoors` in surfaces.svelte.ts.
     const { fuzzyTerms } = await import('@orden/scan/search/fuzzy')
     const terms = this.replacing ? [] : fuzzyTerms(this.query)
 
-    // Rows arrive in handfuls and go on the end, so the list fills from the
-    // top while the rest of the space is still being read. The guesses come in
-    // the last handful, already ranked; see space.ts.
-    // And the space's AGENTS.md, which is its settings' rather than a note to find.
     const excluded = [
       ...(this.archived ? workspace.excluded.of(root) : workspace.leftOutOf(root)),
       workspace.instructionsName(root),
     ]
     const { unsavedHits } = await import('./search/unsaved')
     const unsaved = unsavedHits(this.query, workspace.activeSpaceId, MOST)
-    // The scratchpad answers in every space, and never while a replacement is being
-    // written: it is no space's to replace in. Not in the glasses' plugin, which has
-    // none. See search/scratchpad.ts.
     const pad =
       this.replacing || __EVEN_PLUGIN__
         ? []
@@ -297,14 +213,11 @@ class Search {
     if (round === this.round) this.running = false
   }
 
-  /** Puts the replacement into every hit that is still ticked. */
   async replace() {
     const root = workspace.activeSpace?.root
     const chosen = this.chosen
     if (!root || !chosen.length) return
 
-    // What a replacement would do to each note, worked out where the edits are
-    // written down; fetched with the press, like the ranking above.
     const { changesFor } = await import('./search/apply')
     const changes = await changesFor(this.query, chosen, this.replacement, root, (path) =>
       workspace.noteText(path),
@@ -312,7 +225,6 @@ class Search {
 
     await workspace.replaceInNotes(changes)
 
-    // The notes have changed under the list, so the list is asked again.
     this.round++
     await this.run()
   }
@@ -320,9 +232,6 @@ class Search {
 
 export const search = new Search()
 
-/** The panel, from its key. Pressed in a note over a few selected words, it asks
- *  about them straight away; see search/seed.ts. Anywhere else it is the panel as
- *  it was left, and the same key again gives the note the keyboard back. */
 export function searchFrom(view: EditorView | undefined): void {
   const words = view?.hasFocus ? selectedWords(view.state) : null
   if (words) search.ask(words)

@@ -1,10 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 
-/** Settings, General, Terminal, on a desktop: a row for each key that is both the app's
- *  and the shell's (Emil, issue #213), which shows the answer a terminal was given and
- *  takes it back. A file of its own because the build is a desktop's here, which the
- *  other file's is not; see terminal/two-ways.ts. */
-
 const held = new Map<string, string>()
 vi.stubGlobal('localStorage', {
   getItem: (key: string) => held.get(key) ?? null,
@@ -33,8 +28,6 @@ function row(label: string) {
 }
 
 describe('a key that is both, in Settings', () => {
-  /** Every app command on a key a shell reads is both (#426), which is too many rows to
-   *  stand in a list unasked: a row is there for each one somebody has answered. */
   test('has a row for each key answered, and none for one never asked about', () => {
     expect(() => row('Ctrl+N in a terminal')).toThrow()
     expect(() => row('Ctrl+Space in a terminal')).toThrow()
@@ -73,7 +66,6 @@ describe('a key that is both, in Settings', () => {
     expect(() => row('Ctrl+N in a terminal')).toThrow()
   })
 
-  /** Moved off a key a shell reads, the row says the key the command is on now. */
   test('names the key a command is on now', () => {
     shells.setWay('app.scratchpad', 'app')
     shortcuts.set('app.scratchpad', 'Mod-Shift-y')
@@ -86,9 +78,6 @@ describe('a key that is both, in Settings', () => {
   })
 })
 
-/** The rows only a desktop has are held to the same rule as the rest (#768): a `?`
- *  with one plain sentence behind it, Memory saver's above all, which is the row the
- *  issue named. */
 describe('a desktop’s own rows', () => {
   test('each say in one sentence what they do', () => {
     shells.setWay('app.close', 'shell')

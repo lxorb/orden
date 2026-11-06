@@ -11,13 +11,10 @@ interface Entry {
 }
 
 const wrote = new Set<string>()
-/** What each note was written as. */
 const said = new Map<string, string>()
 const opened: string[] = []
 const ROOT = '/spaces/Brain'
 
-/** What the disk tree lists after the import: folders first, by name, and only the
- *  files a tab can hold, as tree.rs does. */
 function treeOf(paths: Iterable<string>): Entry {
   const root: Entry = { path: ROOT, name: 'Brain', is_dir: true, children: [] }
   for (const full of paths) {
@@ -54,7 +51,6 @@ const ws = {
   tree: null as Entry | null,
   activeSpaceId: 'old',
   added: 0,
-  /** Whether the disk refuses to make the space, as a read-only one does. */
   refusing: false,
   get files() {
     const out: Entry[] = []
@@ -98,7 +94,6 @@ vi.mock('./tauri', () => ({
   isDesktop: true,
 }))
 vi.mock('./workspace.svelte', () => ({ workspace: ws }))
-// The space a vault comes in as is this device's own, so it may be written in.
 vi.mock('./sharing.svelte', () => ({ canWriteAt: () => true }))
 vi.mock('./link-index.svelte', () => ({
   links: { noteSaved: () => undefined, cameBack: async () => undefined },
@@ -109,8 +104,6 @@ vi.mock('./settings.svelte', () => ({ settings: { open: true } }))
 vi.mock('./first-visit.svelte', () => ({
   firstVisit: { fresh: false, answered: () => undefined },
 }))
-// What carry-over.ts does to the spelling every link is written in, through
-// modes.setLinkFormat.
 vi.mock('./carry-over', async () => {
   const { setLinkWriting } = await import('./link-format')
   return {

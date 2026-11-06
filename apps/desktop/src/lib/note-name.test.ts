@@ -69,17 +69,11 @@ describe('the line a note is titled after', () => {
     expect(titleFrom(lines('\n\nplain words\nmore\n'))).toBe('plain words')
   })
 
-  /** Naming a tab is asked again on every keystroke, so it may not scale with
-   *  the note. A heading further down than anybody would title a note from is
-   *  past where this looks. */
   test('does not read the whole note looking for a heading', () => {
     const far = `${'prose\n'.repeat(200)}# Buried\n`
     expect(titleFrom(lines(far))).toBe('prose')
   })
 
-  /** The same thing said as work rather than as an answer: however many lines
-   *  are offered, only so many are ever taken. Counted, not timed - a clock
-   *  measures the machine as much as the code; see docs/conventions.md. */
   test('takes a fixed number of lines however many it is offered', () => {
     let pulled = 0
 
@@ -118,8 +112,6 @@ describe('what a draft is called on screen', () => {
     expect(draftName(lines('ring the dentist\n'))).toBe('ring the dentist')
   })
 
-  /** A tab is not a filename: a colon and a slash read perfectly well in one,
-   *  and taking them out would make two drafts about Q1 and Q2 read alike. */
   test('keeps the punctuation a filename would lose', () => {
     expect(draftName(lines('Q1: costs/savings\n'))).toBe('Q1: costs/savings')
   })
@@ -151,9 +143,6 @@ describe('the name a document is listed under', () => {
     expect(shownName('Sketch.pages')).toBe('Sketch')
   })
 
-  /** Emil, 2026-09-13: no filename endings anywhere a name is shown. A website is
-   *  written as a shortcut file in one of two formats and is known by its title,
-   *  like every other kind nib opens in a tab. */
   test('drops a website, written either way', () => {
     expect(shownName('Svelte docs.url')).toBe('Svelte docs')
     expect(shownName('Page.webloc')).toBe('Page')
@@ -163,10 +152,6 @@ describe('the name a document is listed under', () => {
     expect(shownName('Team.chat')).toBe('Team')
   })
 
-  /** Every kind Orden opens in a tab of its own is a document it named, and is shown
-   *  by its name alone: an online terminal's file read `Claude Code.term` in the list.
-   *  One file of each opener, so a kind added to `Opener` is listed here and shown
-   *  without its ending, or this fails to compile. A PDF is somebody else's file. */
   test('drops the ending of every kind a tab opens but a paper', () => {
     const one: Record<Exclude<Opener, 'pdf'>, string> = {
       note: 'Plan.md',
@@ -189,10 +174,6 @@ describe('the name a document is listed under', () => {
     }
   })
 
-  /** A paper, a picture and anything else Orden did not write are files from
-   *  somewhere else with no title behind them, so the name is the file's own -
-   *  which is what Obsidian shows and what Emil asked for on 2026-09-14. The mark
-   *  beside the row says which kind it is either way. */
   test('keeps the extension of a paper, a picture and a file it knows nothing about', () => {
     expect(shownName('Paper.pdf')).toBe('Paper.pdf')
     expect(shownName('Paper.PDF')).toBe('Paper.PDF')
@@ -211,8 +192,6 @@ describe('the name a document is listed under', () => {
     expect(shownName('v1.2 plan')).toBe('v1.2 plan')
   })
 
-  /** Taking the ending off would leave the row, the tab, the tooltip and the window
-   *  title with nothing to say at all. */
   test('keeps a name that is nothing but an ending', () => {
     expect(shownName('.md')).toBe('.md')
     expect(shownName('.canvas')).toBe('.canvas')
@@ -221,8 +200,6 @@ describe('the name a document is listed under', () => {
 })
 
 describe('the name a row of the file list is under', () => {
-  /** A folder called `Papers.pdf` is not holding a paper and one called `Notes.md`
-   *  is not a note, so a folder is called what it is called. */
   test('is the folder own name, whatever it looks like', () => {
     expect(rowName('Papers.pdf', true)).toBe('Papers.pdf')
     expect(rowName('Notes.md', true)).toBe('Notes.md')
@@ -244,8 +221,6 @@ describe('the ending a name wears', () => {
     expect(endingOf('Svelte docs.url')).toBe('.url')
   })
 
-  /** However it was written, so a rename puts back the name that is on the disk
-   *  rather than a tidied-up spelling of it. */
   test('in the case the file wrote it in', () => {
     expect(endingOf('NOTE.MD')).toBe('.MD')
     expect(endingOf('Board.CANVAS')).toBe('.CANVAS')
@@ -263,8 +238,6 @@ describe('the ending a name wears', () => {
     expect(endingOf('.url')).toBe('.url')
   })
 
-  /** A run with a space in it is part of somebody name. Reading it as an extension
-   *  is what renamed `v1.2 plan` to `v1.3 plan.2 plan`. */
   test('and nothing at all where the name wears none', () => {
     expect(endingOf('Readme')).toBeNull()
     expect(endingOf('v1.2 plan')).toBeNull()
@@ -272,10 +245,6 @@ describe('the ending a name wears', () => {
   })
 })
 
-/** The one rule, read from both ends. Whatever a list leaves off a name, a rename
- *  puts back, so every name Orden lists survives being shown and typed back
- *  unchanged - which is what keeps an ending from doubling up or going missing. The
- *  pair is `shownName` and `endingOf` here, and `nameToWrite` in naming.ts. */
 describe('what a list leaves off and a rename puts back', () => {
   const LISTED = [
     'Plan.md',
@@ -304,8 +273,6 @@ describe('what a list leaves off and a rename puts back', () => {
   })
 })
 
-/** #477: a note headed with a name Windows keeps for a device, saved under it, was the
- *  device on the reader's Windows machine. It steps aside, as sync and an import do. */
 describe('a title that is a device name', () => {
   test("is not a note's file name", () => {
     expect(nameFromContent('# NUL\n')).toBe('_NUL')

@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The question a session asks about the notes already here, and what each answer
- *  does. What counts as meeting is sync/meeting.ts's, held to the real Worker in
- *  sync/relogin.test.ts; here it is whatever the test says. */
-
 interface World {
   record: unknown
   met: { name: string; root: string }[]

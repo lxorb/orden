@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** #1110: a double press on a side's panel icon opens the panel as a tab, by one table
- *  every panel is in; its icon's menu offers the same. */
-
 const asked = vi.hoisted(() => [] as string[])
 
 vi.mock('./todos-entry', () => ({ showTodos: () => asked.push('todos') }))

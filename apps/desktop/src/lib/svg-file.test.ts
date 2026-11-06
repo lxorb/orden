@@ -1,15 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { shapesOnly } from './svg-file'
 
-/** What a drawing may hold once it is a file of its own.
- *
- *  Every case here is a shape the sweep this replaced did not have. It matched
- *  `on…="…"` in either quote and `href="…"` in double quotes, so an attribute written
- *  any other way went through it - and it named `<script>`, so every other element
- *  that embeds or animates went through it too. An allow-list read off the tag cannot
- *  be got round by writing the same thing differently. */
-
-/** A drawing with `inner` inside it, which is the shape every case takes. */
 const drawing = (inner: string) =>
   `<svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`
 
@@ -20,7 +11,6 @@ describe('a handler', () => {
 
       expect(out, said).not.toContain('onload')
       expect(out, said).not.toContain('run()')
-      // And the shape it was written on stays a shape.
       expect(out, said).toContain('<rect/>')
     }
   })
@@ -45,7 +35,6 @@ describe('a target outside the picture', () => {
       const out = shapesOnly(drawing(`<a ${said}>words</a>`))
 
       expect(out, said).not.toContain('elsewhere.example')
-      // The tag stays, and is inert with nowhere to go.
       expect(out, said).toContain('words')
     }
   })
@@ -85,8 +74,6 @@ describe('an element that is not a shape', () => {
   })
 
   test('and one nobody closed takes the rest of the drawing with it', () => {
-    // A file that cannot be read to the end is a file with no shapes in it, which
-    // `asFile` answers null for; nothing half-read is written down.
     const out = shapesOnly('<svg viewBox="0 0 10 10"><foreignObject><b>x')
     expect(out).toBe('<svg viewBox="0 0 10 10">')
   })
@@ -112,8 +99,6 @@ describe('the drawing itself', () => {
   })
 
   test('and a name written the way SVG writes it stays that way', () => {
-    // Lowercasing these is not a scrub, it is a broken drawing: SVG is case-sensitive,
-    // and a `lineargradient` is an element nothing has heard of.
     const drawn = drawing(
       '<defs><linearGradient id="g"><stop offset="0"/></linearGradient>' +
         '<clipPath id="c"><rect/></clipPath></defs>' +

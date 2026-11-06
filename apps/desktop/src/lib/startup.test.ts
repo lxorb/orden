@@ -1,15 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The order the app comes up in, as a queue. What is in the queue is covered by
- *  the stores that wait in it, and the launch as a whole by startup-order.test.ts;
- *  this is the mechanism: nothing moves before the first paint, the turns come in
- *  the stated order, and a turn that has passed is not a wait.
- *
- *  The frame and the idle callback are stood in for, because node has neither and
- *  because a test about ordering should be able to say when each of them happened. */
-
-/** Every frame and idle callback that has run, in order, as a tally a test can
- *  read: `frame` twice per `painted`, `idle` once per stage. */
 const ticks: string[] = []
 
 vi.stubGlobal('requestAnimationFrame', (run: () => void) => {
@@ -30,7 +20,6 @@ vi.stubGlobal('requestIdleCallback', (run: () => void) => {
 
 const { startup } = await import('./startup.svelte')
 
-/** Waits out the queue: a frame, then a turn per stage, each a macrotask apart. */
 async function settle() {
   for (let round = 0; round < 12; round++) await new Promise((done) => setTimeout(done, 0))
 }
@@ -52,8 +41,6 @@ describe('before the first paint', () => {
 
     await settle()
 
-    // Nothing said the screen was up, so nothing was let through - and no frame
-    // and no idle callback were asked for either.
     expect(taken).toBe(false)
     expect(ticks).toEqual([])
   })
@@ -69,8 +56,6 @@ describe('once what is on screen is painted', () => {
     await settle()
 
     expect(order).toEqual(['shown', 'index'])
-    // Two frames for one paint: the first callback runs before the pixels, the
-    // second after them.
     expect(ticks.slice(0, 2)).toEqual(['frame', 'frame'])
   })
 
@@ -83,8 +68,6 @@ describe('once what is on screen is painted', () => {
     await startup.shown()
     await settle()
 
-    // Asked for backwards, answered forwards: the order is the queue's, not the
-    // asking's.
     expect(order).toEqual(['index', 'search', 'icons', 'rooms', 'doors', 'left', 'right'])
   })
 
@@ -123,9 +106,6 @@ describe('long after the launch', () => {
     let taken = false
     await startup.turn('icons').then(() => (taken = true))
 
-    // The frame, and no idle callback: there is no queue left to be behind, but
-    // there is still whatever is on screen to be after - a second space opening is
-    // a listing that goes up before its own scan starts.
     expect(taken).toBe(true)
     expect(ticks).toEqual(['frame', 'frame'])
   })
@@ -138,7 +118,6 @@ describe('long after the launch', () => {
     await startup.shown()
     await settle()
 
-    // The frames it asked for, and not one more idle callback: seven turns, once.
     expect(ticks.filter((one) => one === 'idle')).toHaveLength(7)
     expect(ticks.length).toBe(after + 2)
   })

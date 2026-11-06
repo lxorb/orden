@@ -1,9 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The hint on a refused name: the row's bubble, by mouse and by keyboard, and what it
- *  opens. In the jsdom project because the field is drawn and pressed. */
-
 const { settings } = await import('./settings.svelte')
 const { reservedName } = await import('./reserved-name.svelte')
 const NameField = (await import('./NameField.svelte')).default
@@ -27,8 +24,6 @@ function field(props: Record<string, unknown> = {}) {
   return input
 }
 
-/** The bubble under the field, which hangs at the end of the page while it is up
- *  (portal.ts, #1129), or something in it. */
 function bubble(inside?: string): HTMLElement | null {
   const reason = document.querySelector<HTMLElement>('.nib-bubble.reason')
   return inside ? (reason?.querySelector<HTMLElement>(inside) ?? null) : reason

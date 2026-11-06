@@ -1,5 +1,3 @@
-/** Whether anything is at this path: a stamp or a folder, or in the browser, which
- *  keeps no stamps, the listing's own answer (`path_exists`, web/commands.ts). */
 import { invoke, isNative } from './tauri'
 
 export async function onDisk(path: string): Promise<boolean> {

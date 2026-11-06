@@ -1,13 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** What `nib:modes` holds, byte for byte, and what the store makes of what an older build
- *  or the account wrote: held still while the store's defaults and readers are moved
- *  about, so a move that changes a stored byte, a key's place in the entry, a migration
- *  or the moment one is written back is a failure here and not a reader's lost setting.
- *
- *  Snapshots rather than expectations written out, because the point is that nothing
- *  moves: every figure below is what the store did before anything was moved. */
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -32,7 +24,6 @@ vi.stubGlobal('document', {
   },
 })
 
-/** The account, answering whatever a test hands it. */
 const api = vi.hoisted(() => {
   const held: { answer: Record<string, unknown> } = { answer: {} }
 
@@ -52,7 +43,6 @@ const KEY = 'nib:modes'
 
 await import('./modes.svelte')
 
-/** A fresh start of the app over whatever storage holds now. */
 async function restarted() {
   vi.resetModules()
   const store = (await import('./modes.svelte')).modes
@@ -60,7 +50,6 @@ async function restarted() {
   return store
 }
 
-/** Everything storage holds, in key order. */
 function everything(): Record<string, string> {
   const out: Record<string, string> = {}
   const keys: string[] = []
@@ -69,15 +58,12 @@ function everything(): Record<string, string> {
   return out
 }
 
-/** What the store holds, as the entry it writes: a setting turned and turned back is a
- *  write of every field with nothing changed. */
 function held(store: Awaited<ReturnType<typeof restarted>>): string | null {
   store.toggleSilent()
   store.toggleSilent()
   return localStorage.getItem(KEY)
 }
 
-/** Every field away from its default, in the order the store writes them. */
 const AWAY = {
   source: true,
   readOnly: true,
@@ -223,7 +209,6 @@ describe('what an older build wrote', () => {
       localStorage.setItem(KEY, JSON.stringify(entry))
       const store = await restarted()
 
-      // What the start itself wrote back, and only then what the store holds.
       expect({ written: everything(), holds: held(store) }).toMatchSnapshot()
     })
   }

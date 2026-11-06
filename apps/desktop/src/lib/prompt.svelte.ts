@@ -2,7 +2,6 @@ import type { FileMark } from './file-mark'
 
 interface Ask {
   title: string
-  /** Prefilled text, for a rename. */
   value?: string
   placeholder?: string
   confirmLabel?: string
@@ -10,11 +9,9 @@ interface Ask {
 
 interface Confirm {
   title: string
-  /** What will happen, in one sentence. Shown under the title. */
   detail?: string
   confirmLabel?: string
   danger?: boolean
-  /** The keyboard starts on the answer rather than on Cancel, so Enter gives it. */
   lands?: boolean
 }
 
@@ -23,22 +20,9 @@ interface Choice {
   label: string
   primary?: boolean
   danger?: boolean
-  /** The mark the row wears, where the answers are things a file list also
-   *  shows. Absent for a question about anything else, and then the row is words
-   *  alone. The `id` is the path, so a row that chose an icon of its own wears it
-   *  here as well; see FileMark.svelte. */
   mark?: FileMark
-  /** The answer the keyboard starts on, so Enter gives it: the safe one, where the
-   *  other cannot be taken back. Otherwise the first in the row. */
   lands?: boolean
-  /** The space this row is, where it is a space rather than a file: the one being
-   *  looked at, or another to move something into. It wears what the switcher
-   *  gives it - the space's own icon, or its first letter - in the box a mark
-   *  would be in, so the names in the list still read as one column. */
   space?: { id: string | null; name: string }
-  /** A picture of the thing itself, in the box a mark would be in: an installed
-   *  application's own icon, as its computer sent it (a data URL; apps/make.ts). An
-   *  image draws no script, so one from another device is only ever a picture. */
   picture?: string
 }
 
@@ -48,13 +32,10 @@ interface Choose {
   options: Choice[]
 }
 
-/** A `choose` with a box under the answers that says something about the answer
- *  itself: "Always ask", under a question whose answer is otherwise kept. */
 interface ChooseTicking extends Choose {
   tick: string
 }
 
-/** One of many, found by typing rather than by reading a list of them. */
 interface Find {
   title: string
   options: Choice[]
@@ -63,9 +44,6 @@ interface Find {
 
 type Pending = { resolve: (answer: unknown) => void } | null
 
-/** One small modal for the questions the app ever asks: name this, are you sure,
- *  which of these few, and which of these many. Each resolves a promise, so the
- *  caller reads top to bottom. */
 class Prompt {
   open = $state(false)
   mode = $state<'text' | 'confirm' | 'choose' | 'find'>('text')
@@ -77,14 +55,11 @@ class Prompt {
   confirmLabel = $state('')
   danger = $state(false)
   lands = $state(false)
-  /** The box under a `chooseTicking`'s answers, and whether it is ticked; empty for
-   *  every other question, which has none. */
   tick = $state('')
   ticked = $state(false)
 
   private pending: Pending = null
 
-  /** Resolves to the typed text, or null if it was dismissed. */
   ask(options: Ask): Promise<string | null> {
     this.mode = 'text'
     this.title = options.title
@@ -109,8 +84,6 @@ class Prompt {
     return this.show().then((answer) => answer !== null)
   }
 
-  /** More than two ways to answer - resolves the chosen id, or null if the
-   *  question was dismissed, which always means "do nothing". */
   choose(options: Choose): Promise<string | null> {
     this.mode = 'choose'
     this.title = options.title
@@ -121,9 +94,6 @@ class Prompt {
     return this.show() as Promise<string | null>
   }
 
-  /** A `choose` with a box to tick under the answers, unticked as it opens. Resolves
-   *  the chosen id and whether the box was ticked, or null if the question was
-   *  dismissed. */
   async chooseTicking(options: ChooseTicking): Promise<{ id: string; ticked: boolean } | null> {
     const asked = this.choose(options)
     this.tick = options.tick
@@ -133,11 +103,6 @@ class Prompt {
     return id === null ? null : { id, ticked: this.ticked }
   }
 
-  /** Too many to read at once: the same sheet with a field above the list, and
-   *  the list narrowing as it is typed into. Resolves the chosen id, or null.
-   *
-   *  Its own mode rather than a long `choose`, because a space can hold thousands
-   *  of notes and a question with thousands of buttons is not a question. */
   find(options: Find): Promise<string | null> {
     this.mode = 'find'
     this.title = options.title
@@ -149,7 +114,6 @@ class Prompt {
     return this.show() as Promise<string | null>
   }
 
-  /** Answers a `choose` or a `find` with one of its options. */
   pick(id: string) {
     this.open = false
     this.pending?.resolve(id)
@@ -157,7 +121,6 @@ class Prompt {
   }
 
   private show(): Promise<unknown> {
-    // A second question replaces the first rather than stacking on it.
     this.pending?.resolve(null)
     this.open = true
     this.tick = ''

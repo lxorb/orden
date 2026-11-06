@@ -1,27 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Putting a space on the web: which space the sheet is about, what it asks the
- *  server for, and what it does with the answer. The account and the network are
- *  stood in for; the store is the real one. */
-
 interface World {
-  /** Which remote space each folder mirrors, if any. */
   mirrors: Record<string, string>
-  /** Every call that was made, in order. */
   asked: string[]
-  /** Set to make the next call fail. */
   refuse: string | null
-  /** What a name check comes back with. */
   available: { available: boolean; reason?: string }
-  /** What the domain routes answer with. */
   domain: { state: string; dns: never[]; detail: string | null }
-  /** The answers the forms on the site have collected. */
   answers: { id: string; note: string; path: string; at: number; answers: Record<string, string> }[]
-  /** Whether the site's forms have stopped taking answers. */
   full: boolean
-  /** The installed theme's file, as reading it from disk answers. */
   sheet: string
-  /** What was sent up as a blob, by its hash. */
   blobs: Record<string, string>
 }
 
@@ -110,15 +97,12 @@ vi.mock('./i18n.svelte', () => ({
     error instanceof Error ? error.message : fallback,
 }))
 
-// Imported once, at module scope: a hook that re-imported the store graph would
-// charge whichever test ran first for compiling it.
 import { account } from './account.svelte'
 import { publish } from './publishing.svelte'
 import { canPublish } from './sharing.svelte'
 import { theme } from './theme.svelte'
 import type { RemoteSpace } from './api'
 
-/** A space on the account, with only the fields any of this reads. */
 function remote(id: string, role: 'owner' | 'write' | 'read', blog = {}): RemoteSpace {
   return {
     id,
@@ -235,8 +219,6 @@ describe('the Publish sheet', () => {
     publish.note = 'Read me.md'
     await publish.publish()
 
-    // The site's own decisions first, then the address: one press of Publish is
-    // one statement, and the rules decide what the address then serves.
     expect(world.asked).toEqual([
       'site space-1 {"rules":{"include":[],"exclude":[],"otherwise":"all"},"description":"","theme":null,"analytics":null}',
       'publish space-1 {"subdomain":"emil","note":"Read me.md"}',
@@ -341,7 +323,6 @@ describe('the Publish sheet', () => {
     })
     expect(publish.description).toBe('Notes from the field.')
     expect(publish.hasPassword).toBe(true)
-    // Never the password itself: the account does not hand one back.
     expect(publish.password).toBe('')
   })
 
@@ -398,8 +379,6 @@ describe('the Publish sheet', () => {
     expect(publish.status?.state).toBe('active')
   })
 
-  /** A refusal to a verify is an answer: the server says which state the domain
-   *  is in, and that is what the sheet shows. */
   test('a domain that is not answering yet is a state, not a failure', async () => {
     account.spaces = [remote('space-1', 'owner', { enabled: true, domain: 'notes.example.com' })]
     publish.show(local('Notes'))
@@ -429,8 +408,6 @@ describe('the Publish sheet', () => {
   })
 })
 
-/** What the forms on a site collected, which is the one thing the sheet shows
- *  that came from somebody other than the reader of it. */
 describe('the answers a site has collected', () => {
   const one = {
     id: 'answer-1',
@@ -460,7 +437,6 @@ describe('the answers a site has collected', () => {
     await publish.readAnswers()
     expect(publish.kept).toEqual({ days: 180, full: true })
 
-    // And none of it is carried to the next space the sheet opens on.
     publish.show(local('Notes'))
     expect(publish.kept).toBeNull()
   })
@@ -499,8 +475,6 @@ describe('the answers a site has collected', () => {
   })
 
   test('and the spreadsheet is the server’s, not the sheet’s', async () => {
-    // What a column is called is decided where an answer is stored, so the file
-    // is asked for rather than assembled here.
     account.spaces = [remote('space-1', 'owner', { enabled: true, subdomain: 'field' })]
 
     publish.show(local('Notes'))
@@ -563,7 +537,6 @@ describe("the site's theme", () => {
     expect(sent()).toEqual([])
     expect(world.asked.find((one) => one.startsWith('site '))).toContain(hash)
 
-    // The store updated the theme since: the site gets the new one.
     world.sheet = WARM.replace('#1c1814', '#1b1713')
     await publish.publish()
     expect(sent()).toHaveLength(1)

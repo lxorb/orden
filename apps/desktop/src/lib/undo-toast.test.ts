@@ -2,8 +2,6 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import { nextBatch, UNDO_LINGER, undoToast } from './undo-toast.svelte'
 import type { FileAction } from './workspace/undo.svelte'
 
-/** When the toast is up, what it offers, and what its one press takes back. */
-
 const deleted = (path: string): FileAction => ({ kind: 'delete', path, content: '' })
 const moved = (from: string): FileAction => ({ kind: 'move', from, to: `Archive/${from}` })
 const renamed = (from: string): FileAction => ({ kind: 'rename', from, to: `${from}!` })
@@ -17,8 +15,6 @@ describe('what the toast offers', () => {
     expect(nextBatch([], [two], [one, two])).toEqual([two])
   })
 
-  /** Putting a row away and taking it back are quiet gestures whose row leaves the
-   *  list, the way a delete's does: Gmail's archive is the toast's own model. */
   test('an archiving is offered either way round', () => {
     const put: FileAction = {
       kind: 'archive',
@@ -33,14 +29,11 @@ describe('what the toast offers', () => {
     expect(nextBatch([put], [back], [put, back])).toEqual([back])
   })
 
-  /** A rename is made in the field it was typed in, and a replacement from the find
-   *  bar: neither is a surprise to take back from a toast. */
   test('nothing else is', () => {
     const one = renamed('A.md')
     expect(nextBatch([], [one], [one])).toEqual([])
   })
 
-  /** Deleting three selected notes records three deletes, one after another. */
   test('the same kind while it is up joins it', () => {
     const [a, b, c] = [deleted('A.md'), deleted('B.md'), deleted('C.md')]
     let batch = nextBatch([], [a], [a])
@@ -48,7 +41,6 @@ describe('what the toast offers', () => {
     batch = nextBatch(batch, [c], [a, b, c])
     expect(batch).toEqual([a, b, c])
 
-    // Or all at once, when they landed between two looks.
     expect(nextBatch([], [a, b, c], [a, b, c])).toEqual([a, b, c])
   })
 
@@ -60,8 +52,6 @@ describe('what the toast offers', () => {
     expect(nextBatch([a], [c], [a, c])).toEqual([])
   })
 
-  /** The Undo row in a menu took the newest back: the toast has one fewer to offer,
-   *  and none once they are all back. */
   test('an undo from elsewhere takes the action off it', () => {
     const [a, b] = [deleted('A.md'), deleted('B.md')]
     expect(nextBatch([a, b], [], [a])).toEqual([a])
@@ -86,7 +76,6 @@ describe('the toast', () => {
     expect(undoToast.kind).toBe('move')
   })
 
-  /** And an older action coming back to the top after an undo is not one either. */
   test('an action back on top after an undo does not bring it back', () => {
     const [a, b] = [deleted('A.md'), renamed('B.md')]
     undoToast.heard([a])
@@ -137,13 +126,10 @@ describe('the toast', () => {
     await undoToast.undo(store)
 
     expect(undone).toEqual([b, a])
-    // The rename underneath was not the toast's.
     expect(stack).toHaveLength(1)
     expect(undoToast.kind).toBeNull()
   })
 
-  /** An undo that could not happen leaves the action on top; the older ones under it
-   *  are not reached past it. */
   test('stops at an action that would not go back', async () => {
     const [a, b] = [deleted('A.md'), deleted('B.md')]
     const stack = [a, b]

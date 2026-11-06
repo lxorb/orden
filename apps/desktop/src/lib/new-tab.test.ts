@@ -1,13 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { besideAt, howFor, linkAsk, type Press, tabAsk } from './new-tab'
 
-/** Which press asks for a tab of its own, and what an open makes of it.
- *
- *  Every surface that opens something reads its press through `tabAsk`, so these are
- *  the browser's convention held down once: the file list, a link, a search hit and
- *  the palette cannot drift apart without one of these failing. The tests run off a
- *  Mac, where the modifier is Ctrl. */
-
 const PLAIN: Press = { button: 0, ctrlKey: false, metaKey: false, shiftKey: false }
 
 function ask(press: Partial<Press>, shiftOpens = false) {

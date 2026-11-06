@@ -2,11 +2,6 @@
 import { describe, expect, test } from 'vitest'
 import { onTwist } from './tree-keys'
 
-/** The twist at the end of a row is pressed on more than its mark (#402): the press
- *  on it, or on the strip round it, shows what the row holds and opens nothing. What the
- *  strip is drawn as is test/tree-twist.test.ts's, and how wide it is on a laid-out
- *  page test/e2e/tree-caret.py's. */
-
 document.body.innerHTML = `
   <button class="nib-row row">
     <span class="mark"></span><span class="nib-row-label">Trip</span>

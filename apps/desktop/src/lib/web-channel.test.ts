@@ -1,9 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-/** Which web build a page says it is, and the move to the other (#424). The build says
- *  it, never the cookie; the Worker sets the cookie and serves the page again, so the
- *  switch is an address. See services/sync/src/channel.ts. */
-
 const where = vi.hoisted(() => ({ native: false }))
 vi.mock('./tauri', () => ({
   get isNative() {

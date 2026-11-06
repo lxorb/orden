@@ -3,7 +3,6 @@ import { describe, expect, test } from 'vitest'
 import type { Field } from './preferences'
 import { resetFields } from './reset-fields'
 
-/** Every value written, in order, so a test can see what a reset touched. */
 function recorder() {
   const written: unknown[] = []
   return { written, write: (value: unknown) => void written.push(value) }

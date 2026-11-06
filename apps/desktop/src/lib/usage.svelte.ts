@@ -1,29 +1,18 @@
 import { api } from './api'
 import { account } from './account.svelte'
 
-/** Where the warning starts. Close enough that there is time to do something,
- *  far enough that it is not nagging. */
 export const NEARLY_FULL = 0.9
 
-/** How much of the account's gigabyte is spoken for. Refreshed after anything
- *  that could have changed it rather than on a timer, so a settings page left
- *  open costs nothing. */
 class Usage {
   used = $state(0)
   limit = $state(0)
-  /** Dismissed by hand; the warning stays away until the next session or until
-   *  usage climbs again. */
   dismissed = $state(false)
-  /** Whether sync last heard the account say it has no room for a file: the file waits,
-   *  so the warning shows whatever the numbers say. */
   full = $state(false)
 
   readonly fraction = $derived(this.limit ? this.used / this.limit : 0)
   readonly nearlyFull = $derived(this.limit > 0 && this.fraction >= NEARLY_FULL)
   readonly warning = $derived((this.nearlyFull || this.full) && !this.dismissed)
 
-  /** What sync heard: a file the account had no room for, or room again. Newly full is
-   *  worth saying again, with the numbers as they are now. */
   syncFull(full: boolean) {
     if (full === this.full) return
     this.full = full
@@ -42,7 +31,6 @@ class Usage {
 
     try {
       const { used, limit } = await api.usage(token)
-      // Climbing further past the line is worth saying again.
       if (limit && used / limit > this.fraction) this.dismissed = false
 
       this.used = used
@@ -56,9 +44,6 @@ class Usage {
 
 export const usage = new Usage()
 
-/** Nothing refreshes these once there is no account to ask about, so without this
- *  the warning in the corner would go on saying how full somebody else's account
- *  was, over an app that is signed out. */
 account.forgetWithSession(() => {
   usage.used = 0
   usage.limit = 0
@@ -66,7 +51,6 @@ account.forgetWithSession(() => {
   usage.full = false
 })
 
-/** Bytes as something a person reads, in the units they expect from a disk. */
 export function readableSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
 

@@ -25,7 +25,6 @@ function folder(name: string, children: Entry[] = []): Entry {
   return { ...file(name), path: `/s/${name}`, is_dir: true, children }
 }
 
-/** The names of what an order put where, so a whole answer reads in one line. */
 const names = (entries: readonly Entry[]) => entries.map((one) => one.name)
 
 describe('comparing two names the way a reader reads them', () => {
@@ -62,8 +61,6 @@ describe('the order a folder is drawn in', () => {
 
   test('puts the folders first, whatever the key', () => {
     for (const mode of SORT_MODES) {
-      // Manual as well, while nobody has moved a row: it falls back to where the
-      // other six leave the list, so choosing it changes nothing on the screen.
       const shown = names(ordered(tree, mode, []))
       expect(shown.slice(0, 2).sort(byName), mode).toEqual(['Alpha', 'Zed'])
     }

@@ -2,10 +2,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { rowsOfText } from '@orden/bases/rows'
 import { todayOf } from '@orden/bases'
 
-/** The reader's own hands on their to-dos: a line added to the inbox, a box ticked the
- *  way the Tasks plugin ticks one, and Today. Against a space of fake files, written
- *  through the replacement every note edit takes. */
-
 const files = new Map<string, string>()
 const home = { name: 'Home', root: '/s/Home' }
 const work = { name: 'Work', root: '/s/Work' }
@@ -24,8 +20,6 @@ vi.mock('./workspace.svelte', () => ({
   },
 }))
 
-// The reader's own space, unless a test shares it with them to be read. What adding a
-// task refuses there is quick-add/write.test.ts's; a tick is here.
 const share = vi.hoisted(() => ({ readOnly: false }))
 vi.mock('./sharing.svelte', () => ({
   canWriteAt: () => !share.readOnly,
@@ -35,8 +29,6 @@ vi.mock('./sharing.svelte', () => ({
 
 vi.mock('./workspace/note-text', () => ({
   noteText: (_ws: unknown, path: string) => Promise.resolve(files.get(path) ?? null),
-  // As the real one: a note in a space shared to be read is passed over, and the
-  // answer is how many were written.
   replaceInNotes: (_ws: unknown, changes: { path: string; after: string }[]) => {
     if (share.readOnly) return Promise.resolve(0)
     for (const one of changes) files.set(one.path, one.after)
@@ -62,8 +54,6 @@ vi.mock('./rows/rows.svelte', () => ({
 
 const { addTask, listed, tickTask } = await import('./task-actions')
 
-// The wall clock's day, as a tick writes it: an ISO string is UTC's, a day behind or
-// ahead around midnight.
 const today = todayOf()
 
 beforeEach(() => {
@@ -111,8 +101,6 @@ describe("the reader's own task actions", () => {
     expect(lines[2]).toBe(`- [x] Water the plants 🔁 every day 📅 ${today} ✅ ${today}`)
   })
 
-  // Today lists the tasks of every space, a space shared to be read among them, and
-  // ticking one there would write a note the sync refuses on every pass (B274).
   test('nothing ticked in a space shared to be read', async () => {
     const { tasks } = await listed()
     const was = files.get('/s/Home/Plan.md')

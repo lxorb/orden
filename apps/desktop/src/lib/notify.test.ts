@@ -1,6 +1,3 @@
-/** A desktop's notices: what the crate is asked to show, and a press it heard answered
- *  by the notice it was on and by no other. */
-
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const world = vi.hoisted(() => ({
@@ -25,7 +22,6 @@ vi.mock('./own-window', () => ({
 
 const { notify, show, unshow } = await import('./notify')
 
-/** The id the crate was handed for the last notice shown. */
 function lastId(): string {
   const notice = world.asked.at(-1)?.args?.notice as { id: string }
   return notice.id

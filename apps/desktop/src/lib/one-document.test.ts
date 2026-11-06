@@ -1,22 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** One document at a time, where there is room for one.
- *
- *  A phone and a tablet hold a single document: a strip of tabs on a screen that
- *  narrow says less the more it holds, so opening a note, a canvas or a paper
- *  puts away the one that was there. What this covers is that nothing is lost in
- *  the trade - the document that went is on the closed stack with its words, and
- *  back brings it straight back - and that a desktop is left exactly as it was.
- *
- *  The device is the store's own field, set here rather than measured: what a
- *  window this size is has its own tests, in viewport.test.ts. */
-
 const notes = new Map<string, string>()
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
 
-/** A PDF becomes its page note the first time it is opened, out of the page sizes
- *  pdf.js reads off it, and node has no pdf.js: the paper here is one A4 page. */
 vi.mock('./pdf/document', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./pdf/document')>()),
   pageSizes: () => Promise.resolve([{ width: 794, height: 1123 }]),
@@ -37,7 +24,6 @@ vi.mock('./tauri', async (importOriginal) => ({
       case 'list_spaces':
         return [{ name: 'space', path: '/space' }]
       case 'read_tree':
-        // As the crate does: a root that is not the space, the one folder here, is refused.
         if (args?.root !== '/space') throw new Error('root is not a directory')
         return {
           name: 'space',
@@ -71,7 +57,6 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
 const { viewport } = await import('./viewport.svelte')
 
-/** What is open, by the name each tab shows, in the order they stand in. */
 const open = () => workspace.tabs.map((tab) => tab.shown)
 
 beforeEach(() => {
@@ -128,8 +113,6 @@ describe('a phone and a tablet', () => {
     await workspace.openCanvas('/space/Plan.canvas')
     expect(open()).toEqual(['Plan'])
 
-    // A paper opens as its page note, which is the document that takes the place of
-    // the plane; see `openPdf` in workspace.svelte.ts.
     await workspace.openPdf('/space/Paper.pdf')
     expect(open()).toEqual(['Paper'])
     expect(workspace.active?.kind).toBe('pages')
@@ -157,8 +140,6 @@ describe('a phone and a tablet', () => {
     await workspace.reopenClosed()
     expect(open()).toEqual(['One'])
 
-    // The one that was showing went on the stack in its turn, so the way back
-    // is a line rather than a pair of notes swapping places.
     await workspace.reopenClosed()
     expect(open()).toEqual(['Two'])
   })
@@ -290,8 +271,6 @@ describe('a phone and a tablet', () => {
 
     expect(workspace.panes.count).toBe(1)
     expect(open()).toEqual([kept])
-    // Nothing is lost: what was open is on the stack, so each of them can be
-    // brought back - and the notes themselves were in a space all along.
     expect(workspace.closed.stack.length).toBeGreaterThanOrEqual(2)
   })
 })

@@ -22,15 +22,11 @@ describe('where a document came from', () => {
     expect(from({ pasted: true })).toBe('paste')
   })
 
-  /** A guest session sees nothing it wrote: every space in it came down somebody
-   *  else's link, and the words in them are that somebody's. */
   test('is a guest, whatever else is true of it', () => {
     expect(from({ guest: true })).toBe('guest')
     expect(from({ guest: true, shared: false })).toBe('guest')
   })
 
-  /** A note in a shared space that has also been pasted into is doubtful for two
-   *  reasons, and either is enough. */
   test('names the most doubtful of what it knows', () => {
     expect(from({ guest: true, pasted: true, shared: true, peers: true })).toBe('guest')
     expect(from({ pasted: true, shared: true, peers: true })).toBe('paste')

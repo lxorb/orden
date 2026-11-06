@@ -1,14 +1,6 @@
 import { afterEach, beforeEach, describe, expect, type Mock, test, vi } from 'vitest'
 import { entryOf, verdict } from './reload-when'
 
-/** A piece of the app that did not arrive, found by hunt-7: one chunk lost to a deploy
- *  under an open tab or to a flaky network, and the palette, the right-click menu, the
- *  prompt sheet, sign-in and the format bar were dead until a reload nobody knew to do.
- *  What is under test is what the page does about it; the doors themselves are
- *  test/effects/doors.effect.test.ts. */
-
-/** The page Vite writes, with the two scripts in front of the entry that a build has: an
- *  inline one that is not a module, and none that is. */
 function page(entry: string): string {
   return [
     '<!doctype html><html><head>',
@@ -51,7 +43,6 @@ describe('what a missing piece calls for', () => {
   })
 })
 
-/** The page, as far as the store reads it. */
 const RUNNING = '/assets/index-old.js'
 const HANDS_OFF = 3000
 
@@ -99,7 +90,6 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-/** The store and the overlay stack, fresh for each test, watching with `settled`. */
 async function watching(settled: () => Promise<boolean> = () => Promise.resolve(true)) {
   const { reloading } = await import('./reloading.svelte')
   const { overlays } = await import('./overlays')
@@ -107,7 +97,6 @@ async function watching(settled: () => Promise<boolean> = () => Promise.resolve(
   return { reloading, overlays, stop }
 }
 
-/** What Vite's loader raises when a dynamic import in the build fails. */
 function failedImport() {
   events.dispatchEvent(new Event('vite:preloadError'))
 }

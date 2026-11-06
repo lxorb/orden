@@ -1,11 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { putsAway } from './sheet-pull'
 
-/** Where a sheet pulled down by its head goes when the finger lifts: away, or back.
- *
- *  An iPhone's sheets are put away by pulling them down from the top, and a short
- *  quick pull is as good as a long slow one. The menus a phone shows here drew the
- *  grip that says so and did nothing when it was pulled. */
 describe('a sheet let go of', () => {
   test('goes back after a little pull, slowly', () => {
     expect(putsAway(30, 600, 0.1)).toBe(false)

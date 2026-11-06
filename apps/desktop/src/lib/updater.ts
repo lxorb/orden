@@ -4,27 +4,13 @@ import { isNumber, isRecord, isString } from './stored'
 import { invoke, isDesktop, isNative } from './tauri'
 import { waited } from './timing'
 
-/** The two streams of releases a machine can follow: the tagged releases, or the
- *  build of every push to main. Which endpoint each one looks at is decided in the
- *  crate - see src-tauri/src/updates.rs - because the plugin's `check()` here
- *  takes no endpoints and would always read the same list. */
 const CHANNELS = ['stable', 'unstable'] as const
 export type Channel = (typeof CHANNELS)[number]
 
-/** A channel out of whatever was stored or came off a control. Anything else is
- *  the stable one: following the releases is where every install starts, and the
- *  safe answer to a value nobody wrote. */
 export function asChannel(value: unknown): Channel {
   return CHANNELS.find((one) => one === value) ?? 'stable'
 }
 
-/** Which web build this page is: the release, or the edge of `unstable` (#424). Null
- *  in the desktop and phone apps, which follow a channel of their own (above), and in
- *  the glasses' plugin, which has none.
- *
- *  Said by the build, which the deploy makes with `VITE_ORDEN_CHANNEL=unstable` for
- *  the edge, and not by the cookie that chose it: the cookie says what was asked for,
- *  and a browser that asked for an edge nobody deployed is served the release. */
 export const webChannel: Channel | null =
   isNative || __EVEN_PLUGIN__
     ? null
@@ -32,26 +18,17 @@ export const webChannel: Channel | null =
       ? 'unstable'
       : 'stable'
 
-/** The browser moved to the other web build. The Worker sets or clears the cookie that
- *  picks it and answers with the page again, which is the reload; see
- *  services/sync/src/channel.ts. */
 export function switchWebChannel(to: Channel): void {
   if (to === webChannel) return
   location.href = `?channel=${to}`
 }
 
-/** A downloaded update, waiting to be put in place on the way out. Closing one
- *  gives back the installer's bytes, which the crate is holding. */
 let staged: { version: string; install(): Promise<void>; close(): Promise<void> } | null = null
 
 export const ready = () => staged !== null
 
-/** The version waiting to be installed, if one has been downloaded. */
 export const stagedVersion = () => staged?.version ?? null
 
-/** The package manager that keeps this install - `scoop`, `brew` and the rest - or null
- *  where the app updates itself. Asked once, by the first look rather than the launch;
- *  see src-tauri/src/package_manager.rs. */
 let keeper: Promise<string | null> | null = null
 
 export function managedBy(): Promise<string | null> {
@@ -62,21 +39,14 @@ export function managedBy(): Promise<string | null> {
   return keeper
 }
 
-/** The managers of a `.deb` and an `.rpm`, whose install the app updates through the
- *  system's PackageKit when the notice is pressed (#1147); every other manager's install
- *  is only told. See src-tauri/src/system_update.rs. */
 const SYSTEM = new Set(['apt', 'dnf'])
 
 export const updatedBySystem = (manager: string | null) => manager !== null && SYSTEM.has(manager)
 
-/** The newer version an install a package manager keeps was told of. Never downloaded:
- *  the manager installs it. */
 let announced: string | null = null
 
 export const announcedVersion = () => announced
 
-/** What `check_update` answers with: the fields the updater plugin builds its own
- *  `Update` from, `rid` being the update itself, kept in the crate. */
 interface Found {
   rid: number
   currentVersion: string
@@ -84,8 +54,6 @@ interface Found {
   rawJson: Record<string, unknown>
 }
 
-/** The command's answer, checked rather than cast. A version that came back
- *  half-written is no version at all, and reads here as nothing found. */
 function found(value: unknown): Found | null {
   if (!isRecord(value)) return null
 
@@ -96,19 +64,7 @@ function found(value: unknown): Found | null {
   return { rid, currentVersion, version, rawJson }
 }
 
-/** Fetches a new version in the background if the channel has one; where a package
- *  manager keeps the install, only finds it.
- *
- *  Only downloads: installing here would restart the app under whoever is
- *  typing. The installer runs on quit instead, so the new version is simply
- *  what starts next time.
- *
- *  Only ever a higher version, whichever channel is being followed: the updater
- *  compares semver, so a machine that has just left the rolling stream is not
- *  handed the older release as an update. It stays on the build it has until a
- *  release passes it. */
 export async function stageUpdate(channel: Channel): Promise<string | null> {
-  // The glasses' plugin is updated by the phone's app, and leaves this road out.
   if (__EVEN_PLUGIN__ || !isDesktop || staged) return null
 
   try {
@@ -118,7 +74,6 @@ export async function stageUpdate(channel: Channel): Promise<string | null> {
     const { Update } = await import('@tauri-apps/plugin-updater')
     const update = new Update(one)
 
-    // Its manager's to install, so only said; and, like a download, said once a run.
     if (await managedBy()) {
       void update.close().catch(() => undefined)
       if (update.version === announced) return null
@@ -130,18 +85,10 @@ export async function stageUpdate(channel: Channel): Promise<string | null> {
     staged = update
     return update.version
   } catch {
-    // No network, no release yet, or a signature that did not verify. Any of
-    // those simply means carrying on with the version already installed.
     return null
   }
 }
 
-/** Throws away what was downloaded instead of installing it.
- *
- *  What a machine does with a build it fetched from the channel it has just left:
- *  a build of main is not what somebody who has asked for the releases wants
- *  started next time. Closing it hands back the installer's bytes as well, which
- *  are megabytes rather than a handle. */
 export async function discard() {
   const going = staged
   staged = null
@@ -155,18 +102,10 @@ export async function discard() {
   }
 }
 
-/** Puts the update in place and starts the new version straight away, for
- *  someone who would rather not wait until the next launch.
- *
- *  On Windows the installer takes the app down itself, so the relaunch below is
- *  only reached on the platforms where it does not. What a close would write is
- *  written and waited for first, as a close waits; see start.ts. */
 export async function restartToUpdate(install = true) {
-  // What runs stops with the restart, and is asked about first; see lib/quitting.
   if (!__EVEN_PLUGIN__ && !(await (await import('./quitting/ask')).mayStop('restart'))) return
   settleUp()
   await Promise.race([written(), waited(GIVE_UP)])
-  // Not on a failed install, which would start the same version again.
   if (install && !(await installStaged())) return
 
   try {
@@ -178,11 +117,6 @@ export async function restartToUpdate(install = true) {
   }
 }
 
-/** Runs the staged installer. Called as the app closes, so nothing is
- *  interrupted; the update is in place for the next launch. Answers whether it was.
- *
- *  On Windows that ends every window, so the crate says whether this one may: `closing` is
- *  one window going rather than the whole app. See `update_may_install` in lifecycle.rs. */
 export async function installStaged(closing = false): Promise<boolean> {
   if (!staged) return false
   if (!(await invoke<boolean>('update_may_install', { closing }).catch(() => true))) {
@@ -194,9 +128,7 @@ export async function installStaged(closing = false): Promise<boolean> {
     await staged.install()
     return true
   } catch (error) {
-    // The working version stays, and is offered again; said, so a failure is seen.
     log('error', `update: ${error instanceof Error ? error.message : String(error)}`)
-    // Still here, so the installer did not end anything, and another window may try.
     void invoke('update_install_failed').catch(() => undefined)
     return false
   } finally {
@@ -206,24 +138,18 @@ export async function installStaged(closing = false): Promise<boolean> {
 
 const HANDING = 'nib:update-handed'
 
-/** What was downloaded goes with this window, and the last one closing is what installs:
- *  so the others look now. One that closes before it has downloaded leaves it to the next
- *  run. */
 function handOn() {
   const channel = new BroadcastChannel(HANDING)
   channel.postMessage(null)
   channel.close()
 }
 
-/** `look` runs when another window hands on. Answers how to stop. */
 export function hearHandedOn(look: () => void): () => void {
   const channel = new BroadcastChannel(HANDING)
   channel.onmessage = () => look()
   return () => channel.close()
 }
 
-/** Another window's installer is about to end this one: what is owed is waited for, as a
- *  window going waits, and the crate told. See `before_installer` in lifecycle.rs. */
 export async function settledForInstaller(owed: () => Promise<unknown>): Promise<void> {
   await Promise.race([owed().catch(() => undefined), waited(GIVE_UP)])
   await invoke('update_settled').catch(() => undefined)

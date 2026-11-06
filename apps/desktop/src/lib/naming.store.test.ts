@@ -1,24 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Naming a row, through the store that owns the tree.
- *
- *  What a name may be is naming.test.ts, which is pure. This is the other half:
- *  that making a note, a canvas or a folder puts a row in the list and writes
- *  nothing until that row has a name, that leaving the row empty makes nothing at
- *  all, that a rename in flight survives the listing sync brings and goes when
- *  the file does. The disk is a map, so what was written is a list of paths.
- *
- *  The store reads storage and the platform shim the moment it is made, so both
- *  are stood in for before it is imported. */
-
-/** The disk: what is on it, and what the store asked of it. */
 const files = new Map<string, string>()
 const folders = new Set<string>()
-/** Files that are on the disk and will not read: another program holds them, or
- *  they are not UTF-8. The crate fails the read and still stamps the file. */
 const locked = new Set<string>()
 const sent: string[] = []
-/** Files on the disk outside every space, which only a PDF opened with nib is read from. */
 const outside = new Map<string, string>()
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
@@ -43,9 +28,6 @@ function entry(path: string, isFolder: boolean): Entry {
   }
 }
 
-/** The listing, built from the paths on the disk the way the crate builds it from
- *  a folder: folders first, then names in order, and a paper a page note holds left
- *  out unless it is asked for (`held_paper` in src-tauri/src/paths.rs). */
 function listing(root: string, papers = false): Entry {
   const tree = entry(root, true)
   const at = new Map<string, Entry>([[root, tree]])
@@ -91,9 +73,6 @@ vi.mock('./tauri', async (importOriginal) => ({
         if (locked.has(path))
           throw new Error(`could not read ${path}: stream did not contain valid UTF-8`)
         const held = files.get(path)
-        // The crate fails on a file that is not there, and what the store does
-        // about a note that has not been written yet depends on that: see `open`
-        // and `openRow`, which open the empty page a folder's note would be.
         if (held === undefined) throw new Error(`no such note: ${path}`)
         return held
       }
@@ -106,15 +85,11 @@ vi.mock('./tauri', async (importOriginal) => ({
       case 'rename_note': {
         const from = text(args?.from)
         const to = text(args?.to)
-        // The crate refuses rather than replacing what is there, and case-insensitively
-        // on two of the three platforms; see `rename_note` in src-tauri/src/notes.rs.
         const held = [...files.keys(), ...folders].some(
           (one) =>
             one.toLowerCase() === to.toLowerCase() && one.toLowerCase() !== from.toLowerCase(),
         )
         if (held) throw new Error('something already lives there')
-        // Nor a PDF where a page note would take it for its paper, unless the move is the
-        // one that means it: a PDF turned into its page note; see `paper_in_the_way`.
         const holder = to.replace(/\.pdf$/i, '')
         if (/\.pages\.pdf$/i.test(to) && files.has(holder) && args?.hold !== true) {
           throw new Error(`${holder} is already there`)
@@ -125,7 +100,6 @@ vi.mock('./tauri', async (importOriginal) => ({
           files.set(to, was)
         }
         if (folders.delete(from)) folders.add(to)
-        // A page note's paper follows it; see `move_held` in paths.rs.
         const paper = files.get(`${from}.pdf`)
         if (from.endsWith('.pages') && paper !== undefined) {
           files.delete(`${from}.pdf`)
@@ -140,7 +114,6 @@ vi.mock('./tauri', async (importOriginal) => ({
         const from = text(args?.from)
         const to = text(args?.to)
         const under = (one: string, root: string) => one === root || one.startsWith(`${root}/`)
-        // Never over anything, like the crate; see `copy_path` in notes.rs.
         if ([...files.keys(), ...folders].some((one) => under(one, to))) {
           throw new Error('something already lives there')
         }
@@ -155,7 +128,6 @@ vi.mock('./tauri', async (importOriginal) => ({
       }
       case 'delete_note':
         files.delete(path)
-        // And a page note's paper with it; see `drop_held` in paths.rs.
         if (path.endsWith('.pages')) files.delete(`${path}.pdf`)
         return undefined
       case 'delete_folder':
@@ -165,9 +137,6 @@ vi.mock('./tauri', async (importOriginal) => ({
         }
         return undefined
       case 'trash_item': {
-        // Taken off the disk into this device's trash, a page note's paper with it,
-        // as an undone copy or a note made here goes; see `bin` in workspace.svelte.ts
-        // and trash.rs. What the trash holds is not asked about here.
         const under = (one: string) => one === path || one.startsWith(`${path}/`)
         for (const one of [...files.keys()]) if (under(one)) files.delete(one)
         if (path.endsWith('.pages')) files.delete(`${path}.pdf`)
@@ -187,7 +156,6 @@ vi.mock('./tauri', async (importOriginal) => ({
         return new TextEncoder().encode(held).buffer
       }
       case 'read_tree': {
-        // As the crate does: a root that is not a folder is refused.
         const root = text(args?.root)
         if (!folders.has(root) && ![...files.keys()].some((one) => one.startsWith(`${root}/`))) {
           throw new Error('root is not a directory')
@@ -203,9 +171,6 @@ vi.mock('./tauri', async (importOriginal) => ({
   },
 }))
 
-/** A PDF becomes its page note out of the page sizes pdf.js reads off it, and node
- *  has no pdf.js: a paper here is two pages, A4 and Letter, unless it says it is not a
- *  PDF at all. */
 vi.mock('./pdf/document', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./pdf/document')>()),
   pageSizes: (path: string) =>
@@ -256,14 +221,12 @@ const { account } = await import('./account.svelte')
 const { isDraft } = await import('./workspace/drafts')
 type RemoteSpace = import('./api').RemoteSpace
 
-/** A file dropped from outside the app, at `path` inside what was dropped. */
 const dropped = (path: string, words: string) => ({
   name: path.split('/').pop() ?? path,
   webkitRelativePath: path.includes('/') ? path : '',
   arrayBuffer: () => Promise.resolve(new TextEncoder().encode(words).buffer),
 })
 
-/** Every path the list shows, in the order it shows them. */
 function rows(): string[] {
   const out: string[] = []
   const walk = (one: { children: { path: string; children: unknown[] }[] }) => {
@@ -305,8 +268,6 @@ describe('making a note', () => {
       appending: false,
       making: 'note',
     })
-    // Folders first, then the names in order: the row is where the listing would
-    // put it rather than at the end of the list.
     expect(rows()).toEqual([
       '/space/Work',
       '/space/Work/Plan.md',
@@ -325,7 +286,6 @@ describe('making a note', () => {
     expect(workspace.naming).toBeNull()
     expect(workspace.active?.path).toBe('/space/Second quarter.md')
 
-    // The row it was named on has gone with it; the note is the only one left.
     expect(rows()).not.toContain('/space/Untitled.md')
     expect(rows()).toContain('/space/Second quarter.md')
   })
@@ -340,8 +300,6 @@ describe('making a note', () => {
     expect(workspace.tabs).toHaveLength(0)
   })
 
-  /** The plus at the end of the tab strip, and the one a phone puts over the note:
-   *  a gesture that made nothing at all would read as a gesture that failed. */
   test('and with no list on screen it is made straight away, under a stepped name', async () => {
     workspace.panel = null
     await workspace.createNote()
@@ -359,14 +317,10 @@ describe('making a note', () => {
   })
 })
 
-/** The only way a folder is made at all, and nothing in the app calls it that:
- *  a note goes inside a note. See folder-notes.ts and docs/tree.md. */
 describe('making a note inside a note', () => {
   test('nests the note it goes inside first, and names the new one on its row', async () => {
     await workspace.createInside('/space/Beta.md')
 
-    // `Beta.md` is `Beta/Beta.md` now, which is the folder-note layout Obsidian
-    // reads, and the row waiting for a name is beside it.
     expect(files.has('/space/Beta/Beta.md')).toBe(true)
     expect(files.has('/space/Beta.md')).toBe(false)
     expect(workspace.naming?.path).toBe('/space/Beta/Untitled.md')
@@ -381,9 +335,6 @@ describe('making a note inside a note', () => {
     expect(workspace.naming).toBeNull()
   })
 
-  /** A row that is already a folder - one Orden nested, or one out of somebody's
-   *  vault - only gets the new note. Nothing is written to make it a folder note,
-   *  because nobody asked for that. */
   test('while a folder only gets the note, and no note of its own', async () => {
     await workspace.createInside('/space/Work')
 
@@ -401,10 +352,6 @@ describe('making a note inside a note', () => {
   })
 })
 
-/** A folder that came from outside Orden has no note of its own until somebody
- *  writes one. Opening its row opens the note it would be, and looking is not
- *  writing: the file appears when there are words in it, which is the ordinary
- *  save. */
 describe('opening a row that is a folder', () => {
   test('opens the note it holds of its own name', async () => {
     files.set('/space/Work/Work.md', '# Work')
@@ -423,11 +370,6 @@ describe('opening a row that is a folder', () => {
     expect(sent.filter((one) => one.startsWith('write_note'))).toEqual([])
   })
 
-  // The first words written into that empty page make its file, and the list has to
-  // hear of it: nothing else lists the space again. Without it the row went on being
-  // drawn as a folder nobody had written in, and the note was missing from every
-  // list read off the tree - the switcher, the search, the links - until something
-  // else happened to list the space.
   test('and the words written into that empty page are a note the list holds', async () => {
     await workspace.openRow('/space/Work')
     workspace.active?.note.live.replace('# Work\n\nwhat the folder is for')
@@ -437,10 +379,6 @@ describe('opening a row that is a folder', () => {
     expect(workspace.notes.map((one) => one.path)).toContain('/space/Work/Work.md')
   })
 
-  // Only where the list has the folder: a file in a folder it leaves out, a settings
-  // folder behind a dot, is written like any other and leaves the list alone - not a
-  // row, and not a list made again on every save, which is what a whole new tree is
-  // to everything drawn from it.
   test('but a note in a folder the list leaves out leaves the list alone', async () => {
     await workspace.open('/space/.hidden/Notes.md', { blank: true })
     const listed = workspace.tree
@@ -472,9 +410,6 @@ describe('opening a row that is a folder', () => {
     expect(unread.shown).toBe(false)
   })
 
-  // The list is a listing and a listing is behind the disk: a note another program
-  // wrote into the folder a moment ago is not a row yet. Opened as the empty page
-  // the folder would be, the first keystroke saved over it.
   test('and a folder note the list has not seen, which will not read, is never an empty page', async () => {
     locked.add('/space/Work/Work.md')
 
@@ -497,9 +432,6 @@ describe('making a canvas', () => {
 })
 
 describe('opening a canvas whose file is not JSON', () => {
-  // A stray comma after a hand edit. The file is there, so it is refused the way a file
-  // that is there and will not read is: an empty plane drawn over it would be the first
-  // write, and that write would be the end of what the file held (#534).
   test('opens nothing, says so, and leaves the file as it was', async () => {
     const words = '{"nodes":[{"id":"a","type":"text","text":"precious"}],"edges":[],}'
     files.set('/space/Board.canvas', words)
@@ -519,8 +451,6 @@ describe('opening a canvas whose file is not JSON', () => {
 })
 
 describe('opening a page note whose file is not JSON', () => {
-  // A page note is a canvas with pages in it, and read the same way: a blank plane
-  // drawn over one that will not read would take its pages, its ink and its paper.
   test('opens nothing, says so, and leaves the file as it was', async () => {
     const words =
       '{"nodes":[{"id":"p","type":"file","file":"Lecture.pages.pdf","x":0,"y":0,"width":10,"height":10}],"edges":[],}'
@@ -549,16 +479,12 @@ describe('renaming a row that exists', () => {
     expect(workspace.naming).toBeNull()
   })
 
-  /** The field is opened by a menu, by F2 and by making a note, and two of those
-   *  can happen while the list is not what the sidebar is showing. */
   test('but only where there is a row to type in', () => {
     workspace.panel = 'search'
     workspace.startRenaming('/space/Beta.md')
     expect(workspace.naming).toBeNull()
   })
 
-  /** The header is over every panel, so the space's name has a field wherever the
-   *  sidebar is open; see Sidebar.svelte. */
   test('while a space is named in the header, which any open panel has', () => {
     workspace.panel = 'search'
     workspace.startRenaming('/space')
@@ -570,12 +496,6 @@ describe('renaming a row that exists', () => {
     expect(workspace.naming).toBeNull()
   })
 
-  /** A page note and a canvas are one format - a plane of cards and ink, the page note
-   *  with its pages over it - so a page note renamed to a canvas's name is that plane
-   *  as a canvas, and a canvas renamed the other way is a page note. The tab showing it
-   *  used to go on being the old kind, and so did opening the file again, because the
-   *  open document answered for the path whatever kind it had been opened as: the
-   *  pages drive caught it (a renamed page note opened as 'pages'). */
   test('a page note renamed to a canvas is shown as the canvas it now is', async () => {
     const plane =
       '{"nodes":[{"id":"a","type":"text","text":"A card","x":0,"y":0,"width":200,"height":80}],"edges":[]}'
@@ -589,20 +509,15 @@ describe('renaming a row that exists', () => {
     expect(workspace.active?.path).toBe('/space/Deck.canvas')
     expect(workspace.active?.doc).toBe(plane)
 
-    // And opening it again is the same tab, as the canvas.
     await workspace.openEntry('/space/Deck.canvas')
     expect(workspace.tabs.filter((one) => one.path === '/space/Deck.canvas')).toHaveLength(1)
     expect(workspace.active?.kind).toBe('canvas')
 
-    // And the rename put back is the page note again.
     await workspace.undoFileAction()
     expect(workspace.active?.path).toBe('/space/Deck.pages')
     expect(workspace.active?.kind).toBe('pages')
   })
 
-  // A note's words are not a plane: shown as a canvas they would be an empty one, and a
-  // stroke on it would write that plane over them. So a note renamed to a plane's name
-  // goes on showing its words until it is opened again.
   test('but a note renamed to a canvas keeps showing its words', async () => {
     await workspace.openEntry('/space/Beta.md')
     await workspace.rename('/space/Beta.md', 'Beta.canvas')
@@ -628,8 +543,6 @@ describe('a listing arriving while a name is being typed', () => {
     expect(workspace.naming?.path).toBe('/space/Beta.md')
   })
 
-  /** A note deleted on another machine, or by another window: the row is gone, so
-   *  there is nothing left to rename and nothing to commit a name onto. */
   test('but cancels a rename whose file has gone', async () => {
     workspace.startRenaming('/space/Beta.md')
     files.delete('/space/Beta.md')
@@ -647,12 +560,6 @@ describe('the names beside a row', () => {
   })
 })
 
-/** A website made from the file list: the one row that wrote its ending twice.
- *
- *  The field puts the row's own ending back before it commits, as it does for every
- *  kind, so what arrives here is `Blog.url` - and the name was then read as a title
- *  and given a second `.url`. The row said `Blog.url`, which is the ending Emil kept
- *  seeing in the list. */
 describe('making a website', () => {
   test('writes the name once, ending and all', async () => {
     await workspace.createWebsite()
@@ -664,8 +571,6 @@ describe('making a website', () => {
     expect([...files.keys()]).not.toContain('/space/Blog.url.url')
   })
 
-  /** The shortcut keeps the title in a key of its own, and that is what the bar and
-   *  the tab read before a page has loaded. */
   test('and the title inside it is the name, not the file name', async () => {
     await workspace.createWebsite()
     await workspace.makeNamed('Blog.url')
@@ -675,9 +580,6 @@ describe('making a website', () => {
   })
 })
 
-/** Duplicating: the word goes beside the name rather than after the ending, and the
- *  name steps like every other name the app writes. A second copy used to be written
- *  straight over the first. */
 describe('duplicating a file', () => {
   test('puts the word beside the name and keeps the ending', async () => {
     await workspace.duplicate('/space/Beta.md')
@@ -696,9 +598,6 @@ describe('duplicating a file', () => {
     ])
   })
 
-  /** A name that is nothing but an ending has no stem to put the word beside, and the
-   *  old rule made ` copy.md` - a name starting with a space, which the trash then
-   *  refuses to restore. */
   test('and a name that is only an ending copies to a name', async () => {
     files.set('/space/.md', '# only an ending')
     await workspace.loadTree()
@@ -717,8 +616,6 @@ describe('duplicating a file', () => {
   })
 })
 
-/** Copying rows: a paste, a Ctrl-drag and Ctrl+D are all this, and a copy lands
- *  under a name nothing has, as one thing to undo. See workspace/copying.ts. */
 describe('copying rows', () => {
   test('keeps the name in another folder and says copy beside itself', async () => {
     await workspace.copyMany(['/space/Beta.md'], '/space/Work')
@@ -790,8 +687,6 @@ describe('doing a file operation again', () => {
   })
 })
 
-/** Files dropped on the list from outside the app: written in, words as words and
- *  everything else as bytes, stepping aside from a name already here. */
 describe('files dropped from outside', () => {
   test('arrive in the folder, a folder with everything in it', async () => {
     await workspace.bringIn(
@@ -924,7 +819,6 @@ describe('a PDF opened with nib', () => {
   })
 })
 
-/** The pages a page note on the disk has, and the paper each names. */
 function pagesIn(path: string): { file: string | undefined; subpath: string | undefined }[] {
   const nodes = (JSON.parse(files.get(path) ?? '{}') as { nodes?: Record<string, unknown>[] }).nodes
   return (nodes ?? [])
@@ -935,8 +829,6 @@ function pagesIn(path: string): { file: string | undefined; subpath: string | un
     }))
 }
 
-/** A page note an older build wrote beside its PDF: every page names the PDF, and
- *  one stroke of ink is on the first. */
 const BESIDE = JSON.stringify({
   nodes: [
     {
@@ -958,9 +850,6 @@ const BESIDE = JSON.stringify({
   },
 })
 
-/** Issue #400: a PDF is one thing, its page note, and not a PDF with a page note
- *  beside it. The paper's bytes move into the note's keeping, under the note's name
- *  with `.pdf` after it, which the list does not show. See pages/from-pdf.ts. */
 describe('a PDF becomes the page note that holds it', () => {
   test('dropped on the list on its own, it lands as its page note', async () => {
     await workspace.bringIn([dropped('Lecture 4.pdf', '%PDF lecture')], '/space/Work')
@@ -970,7 +859,6 @@ describe('a PDF becomes the page note that holds it', () => {
     expect(rows()).not.toContain('/space/Work/Lecture 4.pages.pdf')
     expect(files.get('/space/Work/Lecture 4.pages.pdf')).toBe('%PDF lecture')
     expect(files.has('/space/Work/Lecture 4.pdf')).toBe(false)
-    // Every page of the paper, each naming the paper the note holds.
     expect(pagesIn('/space/Work/Lecture 4.pages')).toEqual([
       { file: 'Lecture 4.pages.pdf', subpath: '#page=1' },
       { file: 'Lecture 4.pages.pdf', subpath: '#page=2' },
@@ -1001,7 +889,6 @@ describe('a PDF becomes the page note that holds it', () => {
     expect(workspace.active?.kind).toBe('pages')
     expect(rows()).toContain('/space/Work/Paper.pages')
     expect(rows()).not.toContain('/space/Work/Paper.pdf')
-    // Moved, not copied: one copy of the bytes.
     expect(files.has('/space/Work/Paper.pdf')).toBe(false)
     expect(files.get('/space/Work/Paper.pages.pdf')).toBe('%PDF paper')
   })
@@ -1031,8 +918,6 @@ describe('a PDF becomes the page note that holds it', () => {
     expect(workspace.active?.path).toBe('/space/Lecture.pages')
     expect(rows()).not.toContain('/space/Lecture.pdf')
     expect(files.get('/space/Lecture.pages.pdf')).toBe('%PDF lecture')
-    // Nothing in the note is written: its ink, and its pages naming the PDF by the
-    // name it had, which the paper the note holds now answers to.
     expect(files.get('/space/Lecture.pages')).toBe(BESIDE)
   })
 
@@ -1073,7 +958,6 @@ describe('a PDF becomes the page note that holds it', () => {
     expect(rows()).toContain('/space/Broken.pdf')
   })
 
-  // A click that opens nothing and says nothing reads as the app being broken (#540).
   test('and opens nothing, which it says', async () => {
     files.set('/space/Broken.pdf', 'not a pdf')
 
@@ -1093,8 +977,6 @@ describe('a PDF becomes the page note that holds it', () => {
   })
 })
 
-/** Two kinds under one name: `Note.md` beside `Note.canvas` is two rows saying
- *  `Note`, told apart by the mark in front of them. Neither may be written over. */
 describe('a name two kinds share', () => {
   beforeEach(async () => {
     files.set('/space/Note.md', '# Note')
@@ -1109,8 +991,6 @@ describe('a name two kinds share', () => {
     expect(files.get('/space/Note.md')).toBe('# Note')
   })
 
-  /** Which is what the field asks about: the name that would be written, against the
-   *  names in the folder. `Note` beside `Note.canvas` is free; `Note.canvas` is not. */
   test('and the field knows which of the two a name would take', () => {
     const beside = workspace.namesBeside('/space/Note.canvas')
     expect(nameFault({ typed: 'Note', extension: '.canvas', taken: beside })).toBeNull()
@@ -1118,8 +998,6 @@ describe('a name two kinds share', () => {
   })
 })
 
-/** What the palette offers to take back, which has to call the file what the row
- *  calls it. */
 describe('the undo the palette offers', () => {
   test('names the file the way the row names it', async () => {
     files.set('/space/Sketch.pages', '{}')
@@ -1133,19 +1011,6 @@ describe('the undo the palette offers', () => {
   })
 })
 
-/** A file that moved reaches the account as itself.
- *
- *  The account keeps a note under an id rather than under its name, and everything
- *  that outlives one sitting hangs off that id: the version history, the room every
- *  device in the note joins, what a published link points at. Nothing used to tell
- *  the account anything, so the next pass read the move off the folder as one note
- *  being created and another deleted - a new id, and the note's history ending where
- *  its name changed.
- *
- *  Said by the two operations that move a file rather than by whoever asked for one,
- *  because the askers are what keep being added: the field in this list, a drag, the
- *  palette, an automation, an undo, a folder that stopped holding anything. See
- *  `movedOnAccount` in workspace.svelte.ts and `movedHere` in sync/pass.ts. */
 describe('what the account is told about a file that moved', () => {
   afterEach(() => vi.restoreAllMocks())
 
@@ -1176,9 +1041,6 @@ describe('what the account is told about a file that moved', () => {
   })
 })
 
-/** A rename the disk refuses - something already there, a name that differs only in
- *  case - used to leave the row wearing a name nothing answered to, because the row
- *  moves before the rename is asked for and nothing put it back. */
 describe('a rename the disk refuses', () => {
   test('leaves the row under the name it has', async () => {
     files.set('/space/Taken.md', '# Taken')
@@ -1202,15 +1064,9 @@ describe('a rename the disk refuses', () => {
   })
 })
 
-/** Signed in, a delete goes to the account outright, since the account keeps a copy
- *  for 14 days. That copy is only there for what the account was handed: a space on
- *  no account, a copy made offline or before the next push, and the words typed into
- *  it, were gone for good. */
 describe('signed in', () => {
   beforeEach(() => {
     Object.defineProperty(account, 'signedIn', { get: () => true, configurable: true })
-    // Owned by this account: a writer's delete in somebody else's space is not
-    // theirs to get back from the account.
     account.spaces = [{ id: 'remote', role: 'owner' } as RemoteSpace]
   })
 
@@ -1273,9 +1129,6 @@ describe('signed in', () => {
     expect(sent).toContain('delete_folder /space/Work')
   })
 
-  // The space being on the account is not the account holding everything in it.
-  // Sync never hands it a dotfile, and a file dropped in offline or since the last
-  // push it has not been handed yet: deleted outright, those were gone for good.
   test('a folder holding a dotfile goes to the trash', async () => {
     vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
     vi.spyOn(sync, 'holds').mockResolvedValue(true)

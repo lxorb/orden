@@ -1,12 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** A note made out of words from somewhere else - an AI chat saved, a web clip, a
- *  canvas card, a kept agent session - lands in the space through `noteFrom`. In a
- *  space shared with this account to be read it must land nowhere: the copy here
- *  would stop being the space's, and the sync refuses it on every pass (B269).
- *
- *  The disk is a map, and the share is one flag the sharing module answers from. */
-
 const files = new Map<string, string>()
 const share = vi.hoisted(() => ({ readOnly: false }))
 
@@ -28,7 +21,6 @@ vi.mock('./tauri', async (importOriginal) => ({
         files.set(path, text(args?.content))
         return undefined
       case 'read_tree': {
-        // As the crate does: a root that is not a folder is refused.
         const root = text(args?.root)
         if (root !== '/space') throw new Error('root is not a directory')
         const children = [...files.keys()]

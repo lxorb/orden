@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** A page note's paper is `<name>.pages.pdf` beside it, and a PDF of that name already
- *  there is somebody's own - macOS Pages names every PDF it saves that way (#538). So a
- *  name for a page note is taken where its paper's would be. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../../test/disk').Disk | null }))
 
 vi.mock('./tauri', async (importOriginal) => ({

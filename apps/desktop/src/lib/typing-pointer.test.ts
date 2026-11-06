@@ -1,7 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The three kinds of element the rule tells apart, stood in for: this project has
- *  no page, and what is read off an element here is four fields. */
 class FakeElement {
   isContentEditable = false
 }
@@ -20,7 +18,6 @@ vi.stubGlobal('HTMLTextAreaElement', FakeTextArea)
 
 const { HIDDEN, TypingPointer, takesWords, writes } = await import('./typing-pointer')
 
-/** A note's writing surface: editable text. */
 const note = Object.assign(new FakeElement(), { isContentEditable: true })
 
 interface Key {
@@ -43,12 +40,10 @@ function key({ key, target = note, altGraph = false, ...held }: Key): KeyboardEv
     ...held,
     getModifierState: (name: string) => name === 'AltGraph' && altGraph,
   }
-  // The fields the rule reads, which is all a key is to it.
   return event as unknown as KeyboardEvent
 }
 
 function pointer(type: string, fields: Partial<PointerEvent> = {}): PointerEvent {
-  // The same, for a pointer.
   return {
     type,
     pointerType: 'mouse',
@@ -60,8 +55,6 @@ function pointer(type: string, fields: Partial<PointerEvent> = {}): PointerEvent
   } as PointerEvent
 }
 
-/** The root the class goes on, and the window the move is listened on, both kept
- *  as what was done to them. */
 const classes = new Set<string>()
 const root = {
   classList: {
@@ -82,7 +75,6 @@ const hidden = () => classes.has(HIDDEN)
 beforeEach(() => {
   classes.clear()
   listened.clear()
-  // Stood in for, like the elements: only `classList` is ever touched.
   typing = new TypingPointer(root as unknown as Element, listening, false)
 })
 
@@ -159,7 +151,6 @@ describe('the pointer', () => {
   test('comes back on the first move that moves, and stops listening for it', () => {
     typing.handleEvent(key({ key: 'a' }))
 
-    // The engine re-reading a still pointer after the page moved under it.
     typing.handleEvent(pointer('pointermove'))
     expect(hidden()).toBe(true)
 
@@ -232,7 +223,6 @@ describe('the pointer', () => {
         remove: () => changes++,
       },
     }
-    // Stood in for, as above.
     const counted = new TypingPointer(counting as unknown as Element, listening, false)
 
     for (let n = 0; n < 100; n++) counted.handleEvent(key({ key: 'a' }))

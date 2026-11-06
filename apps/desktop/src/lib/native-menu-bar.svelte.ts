@@ -1,27 +1,3 @@
-/** The Mac's menu bar, put up and kept true.
- *
- *  native-menu.ts says what the strip is; this makes Tauri menu items of it, sets it
- *  as the application's menu, and keeps it describing the moment. Only ever loaded
- *  on a Mac, from App.svelte, and not before the first paint.
- *
- *  **Keeping it true.** The in-window menu is built as it opens, so its ticks and
- *  greys are always the moment's. A native menu cannot be asked to do that - Tauri
- *  says nothing when one opens - so this watches what the rows are made of and
- *  catches up when any of it changes, and again whenever the window comes to the
- *  front. What is watched is a short list of cheap values (`signature`) rather than
- *  the whole menu, because building the rows reads the note: Export asks what the
- *  document is, which flushes it and reads every character of it, and doing that on
- *  every keystroke would be the app getting slower as the note gets longer. Almost
- *  everything that does change is a tick or a grey, and that is told to the one row
- *  in place; the strip is built again only when a row comes or goes. See
- *  `changesBetween`.
- *
- *  **Which window.** There is one menu bar and there may be several windows, each
- *  with a page of its own and its own idea of what is open. The window in front
- *  owns the bar: each builds its own strip, with ids of its own so each row's
- *  action comes back to the page that made it, and sets it as the app's menu as it
- *  comes to the front. */
-
 import type { EditorView } from '@orden/editor'
 import type {
   CheckMenuItem,
@@ -64,7 +40,6 @@ import { afterQuiet } from './timing'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
 
-/** What the rows need that only App.svelte has. */
 export interface MenuBarContext {
   view?: EditorView | undefined
   onpalette(): void
@@ -72,19 +47,12 @@ export interface MenuBarContext {
   app: AppContext
 }
 
-/** The app's name, which the Mac writes into its own rows: About Orden, Quit
- *  Orden. The bold title of the menu itself is the bundle's name, `productName`,
- *  which says the same. */
 const NAME = 'Orden'
 
-/** How long a burst of changes is let settle before the strip catches up with it.
- *  Switching tabs changes four of the values watched at once, and that is one pass
- *  rather than four. Short enough that nobody reaches the menu bar inside it. */
 const SETTLE = 60
 
 type Native = TauriMenuItem | CheckMenuItem | PredefinedMenuItem | Submenu
 
-/** The objects one strip is made of, gathered while it is built. */
 interface Built {
   made: Native[]
   byId: Map<string, Native>
@@ -92,13 +60,11 @@ interface Built {
   help: Submenu | null
 }
 
-/** Whether another document window is open, whose strip may be the one up. */
 async function othersOpen(): Promise<boolean> {
   const { getAllWindows } = await import('@tauri-apps/api/window')
   return documentWindows((await getAllWindows()).map((one) => one.label)) > 1
 }
 
-/** Lets the crate drop the objects of a strip nobody shows any more. */
 async function close(objects: { close(): Promise<void> }[]): Promise<void> {
   await Promise.all(objects.map((one) => one.close().catch(() => undefined)))
 }
@@ -120,16 +86,11 @@ function words(): MenuBarWords {
   }
 }
 
-/** Everything the rows are made of that can change while the app is open, read so
- *  that the effect below hears when any of it does. Cheap on purpose; see the top
- *  of this file. A value missing from here is caught up with the next time the
- *  window comes to the front. */
 function signature(context: MenuBarContext): unknown[] {
   const active = workspace.active
 
   return [
     context.view,
-    // A translated word, which is how the language is read.
     t('File'),
     shortcuts.overrides,
     workspace.activeTabId,
@@ -154,8 +115,6 @@ function signature(context: MenuBarContext): unknown[] {
   ]
 }
 
-/** A row that runs a registry entry, labelled the way the registry labels it unless
- *  `row` says otherwise. */
 function entryRow(id: string, context: MenuBarContext, row: Partial<MenuItem> = {}): MenuItem {
   return {
     label: BY_ID.get(id)?.label() ?? id,
@@ -165,9 +124,6 @@ function entryRow(id: string, context: MenuBarContext, row: Partial<MenuItem> = 
   }
 }
 
-/** File's rows that only the strip has: the in-window menu leaves them to their keys,
- *  and here a key is only a key as a row; see `file` in native-menu.ts. Greyed on the
- *  values `signature` watches. */
 function fileRows(context: MenuBarContext): MenuBarSources['file'] {
   const open = !!workspace.active
 
@@ -186,12 +142,8 @@ function fileRows(context: MenuBarContext): MenuBarSources['file'] {
   }
 }
 
-/** The keys a web tab is reloaded and stepped by, which run from anywhere: with the page
- *  holding the keyboard a key reaches the app only as a row; see `viewRows` in
- *  native-menu.ts. */
 const RELOADING = new Set(['web.reload', 'web.fresh', 'web.back', 'web.forward'])
 
-/** View's rows for a web tab in front, greyed with anything else; see `viewRows`. */
 function reloadRows(context: MenuBarContext): MenuItem[] {
   const web = workspace.active?.kind === 'web'
   const step = (how: 'reload' | 'fresh') => () => {
@@ -202,8 +154,6 @@ function reloadRows(context: MenuBarContext): MenuItem[] {
   return [
     entryRow('web.reload', context, { disabled: !web, run: step('reload') }),
     entryRow('web.fresh', context, { disabled: !web, run: step('fresh') }),
-    // Only with a page in front, rather than grey: Cmd and a bracket is what a note indents
-    // with, and a row in the way of the key is the key gone from the note (#397).
     ...(web
       ? [
           entryRow('web.back', context, { run: () => workspace.goBack() }),
@@ -217,14 +167,8 @@ class MenuBar {
   private context: MenuBarContext | null = null
   private label = ''
   private menu: Menu | null = null
-  /** This strip's Window menu, which AppKit is told about as the strip goes up. */
   private windows: Submenu | null = null
-  /** The Window menu this page last told AppKit about. AppKit adds a line of its own
-   *  to a menu each time it is told that menu is the Window menu, told before or not,
-   *  so a strip's is told once; see `raise`. */
   private told: Submenu | null = null
-  /** This strip's Help menu. Told again with every raise: AppKit adds nothing to it
-   *  for being told, and another window's may have been told since. */
   private help: Submenu | null = null
   private made: Native[] = []
   private byId = new Map<string, Native>()
@@ -232,14 +176,11 @@ class MenuBar {
   private live = new Map<string, NativeItem>()
   private runs = new Map<string, () => void>()
   private front = false
-  /** One pass at a time: a strip half built when the next change arrives is
-   *  finished before that change is looked at. */
   private passing: Promise<void> = Promise.resolve()
   private seen: SeenKey | null = null
 
   private readonly soon = afterQuiet(() => this.pass(), SETTLE)
 
-  /** Starts it, for the page's whole life. */
   async follow(context: () => MenuBarContext): Promise<void> {
     const frame = await currentWindow()
     const { getCurrentWindow } = await import('@tauri-apps/api/window')
@@ -247,10 +188,6 @@ class MenuBar {
     this.label = own.label
     this.front = await own.isFocused()
 
-    // What the page did with each key it saw, read when a row's action arrives:
-    // by then every handler has run. Capture, so nothing can stop it being seen. Not
-    // a key a row handed the page itself (`standIn`), which nobody pressed: one the
-    // page let pass would swallow the same key pressed again a moment later.
     window.addEventListener(
       'keydown',
       (event) => {
@@ -276,8 +213,6 @@ class MenuBar {
     })
   }
 
-  /** Catches the strip up. `raise` sets it as the app's menu even where nothing
-   *  about it changed, which is what coming to the front needs. */
   private pass(raise = false): void {
     this.passing = this.passing.then(() => this.catchUp(raise)).catch(() => undefined)
   }
@@ -306,9 +241,6 @@ class MenuBar {
       flatten(entries).flatMap((one) => (one.kind === 'item' ? [[one.id, one]] : [])),
     )
 
-    // Another window's strip may have been told it holds the Window menu since this
-    // one was, and telling this one again would add AppKit's line to it again. A
-    // strip built afresh has a Window menu nobody has told anything yet.
     const fresh = raise && this.told !== null && (await othersOpen())
     const changes = this.menu && !fresh ? changesBetween(this.shown, entries) : null
     if (changes) await this.patch(changes)
@@ -318,9 +250,6 @@ class MenuBar {
     if (this.front && (raise || !changes)) await this.raise()
   }
 
-  /** Makes this window's strip the one across the top of the screen. The Window
-   *  menu is said again with it: there is one of those for the whole app too, and
-   *  another window's may have been the last one said. */
   private async raise(): Promise<void> {
     await this.menu?.setAsAppMenu()
     await this.help?.setAsHelpMenuForNSApp()
@@ -330,7 +259,6 @@ class MenuBar {
     }
   }
 
-  /** Ids of this window's own, so an action finds its way back to this page. */
   private idOf(id: string): string {
     return `${this.label}/${id}`
   }
@@ -362,8 +290,6 @@ class MenuBar {
     )
   }
 
-  /** A whole new strip. What is up stays up, and stays the one patched, until the
-   *  new one is complete: a strip that failed halfway is thrown away, not shown. */
   private async build(entries: NativeEntry[]): Promise<void> {
     const { Menu } = await import('@tauri-apps/api/menu')
     const built: Built = { made: [], byId: new Map(), windows: null, help: null }
@@ -392,8 +318,6 @@ class MenuBar {
     if (entry.kind === 'rule') {
       made = await api.PredefinedMenuItem.new({ item: 'Separator' })
     } else if (entry.kind === 'system') {
-      // About with nothing said, so AppKit fills the panel from the bundle: the
-      // name, the icon, the version the release was built as.
       const item = entry.item === 'About' ? { About: null } : entry.item
       made = await api.PredefinedMenuItem.new({ item, text: entry.text })
     } else if (entry.kind === 'submenu') {
@@ -426,20 +350,13 @@ class MenuBar {
     return made
   }
 
-  /** A row was chosen, by a click or by its key. See the top of native-menu.ts for
-   *  why each of the three questions is asked. */
   private dispatch(id: string): void {
     const entry = this.live.get(id)
     const run = this.runs.get(id)
     if (!entry || !run) return
 
-    // The page had this key and let it pass: the app declined it.
     if (entry.key && letPass(entry.key, this.seen, performance.now())) return
 
-    // A row of the note's acts on the note only while the note has the keyboard; see
-    // `keyRuns`. With the keyboard in a web tab a row of the window's runs, and
-    // brings the keyboard back with it, the way the same key does on Windows: see
-    // web_keys.rs.
     const away = !document.hasFocus()
     if (entry.standIn) {
       this.standIn(entry.standIn, entry.key, away)
@@ -453,14 +370,6 @@ class MenuBar {
     run()
   }
 
-  /** A row in place of one of AppKit's: Undo, Redo, Select All. See the top of
-   *  native-menu.ts.
-   *
-   *  Its key goes to whatever in the page has the keyboard, as the key itself would
-   *  have anywhere but a Mac, so the note's history, a canvas's and a deck's each
-   *  answer it. What nothing takes goes on to AppKit's own action for whatever has
-   *  the keyboard: a field's own typing, or, with the keyboard in a web tab, the
-   *  site, which the page is not asked about at all. */
   private standIn(action: StandIn, key: string | null, away: boolean): void {
     const keystroke = key ? keystrokeOf(key) : null
     if (!away && keystroke) {
@@ -469,15 +378,9 @@ class MenuBar {
       if (event.defaultPrevented) return
     }
 
-    // Nothing to be done about one that fails: it is the key doing nothing, which is
-    // what it did before.
     void invoke('hand_to_keyboard', { action }).catch(() => undefined)
   }
 
-  /** The window's full screen and the app's, kept saying the same thing. The app's
-   *  own already asks for the Mac's native full screen, its own Space; this is the
-   *  other direction, for a window taken out of it by the green button or by the
-   *  system's own row. See `leftFullscreen`. */
   private followFullscreen(frame: Awaited<ReturnType<typeof currentWindow>>): void {
     let was = false
     void frame.isFullscreen().then((now) => (was = now))
@@ -490,8 +393,6 @@ class MenuBar {
   }
 }
 
-/** Puts the Mac's menu bar up and keeps it true for as long as the page lives.
- *  `context` is read inside an effect, so what it reads is watched too. */
 export function followMenuBar(context: () => MenuBarContext): void {
   void new MenuBar().follow(context)
 }

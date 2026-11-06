@@ -34,7 +34,6 @@ const KEYS: Record<string, string> = {
   'edit.select-all': 'Mod-a',
   'edit.paste-plain': 'Mod-Shift-v',
   'format.bold': 'Mod-b',
-  // A second row on a key a system row holds.
   'format.clash': 'Mod-q',
 }
 
@@ -127,7 +126,6 @@ function menu(entries: NativeEntry[], id: string): NativeSubmenu {
   return found
 }
 
-/** A menu's rows the way they read: a word, or a line for a rule. */
 function read(submenu: NativeSubmenu): string[] {
   return submenu.items.map((one) => {
     if (one.kind === 'rule') return '---'
@@ -187,8 +185,6 @@ describe('a key as a Mac menu row writes it', () => {
   })
 })
 
-/** The palette is Shift twice, and a key equivalent is a chord: its row says the
- *  second key, which is Cmd+P under the VS Code and Notion keyboards. */
 describe('a key a menu row can show', () => {
   const keys: Record<string, string | null> = {
     'app.palette': 'Shift Shift',
@@ -243,10 +239,6 @@ describe('the strip', () => {
     expect(read(menu(bar(), 'file'))).not.toContain('Settings')
   })
 
-  /** The in-window File menu is Export, Print and Version history and nothing else
-   *  (Emil, 2026-09-30). A Mac's keeps what a Mac's File menu has, and with a web tab
-   *  in front a key is only a key there as a row - but no Open File and no Open
-   *  Recent: nib opens nothing from outside its spaces. */
   test('File has the making and closing rows around the in-window menu’s', () => {
     const file = menu(bar(), 'file')
     expect(read(file)).toEqual([
@@ -285,7 +277,6 @@ describe('the strip', () => {
     ])
   })
 
-  /** AppKit's Undo reached WebKit's history, which holds only what was typed. */
   test('and its Undo, Redo and Select All are the app’s, standing in for the system’s', () => {
     const edit = menu(bar(), 'edit')
     expect(itemIn(edit, 'Undo')).toMatchObject({
@@ -301,7 +292,6 @@ describe('the strip', () => {
     expect(itemIn(edit, 'Paste as plain text').standIn).toBeUndefined()
   })
 
-  /** A canvas has no note behind it, and its own undo is what the key is for. */
   test('which serve whatever has the keyboard, so the note cannot grey them', () => {
     const greyed: MenuGroup = {
       id: 'edit',
@@ -330,8 +320,6 @@ describe('the strip', () => {
     expect(itemIn(window, 'Next note').accelerator).toBe('Ctrl+Tab')
   })
 
-  /** Shift+Cmd+? is the search field at the top of every Mac app's Help menu, and
-   *  AppKit puts it there only in a menu it is told is Help, or one titled in English. */
   test('Help is the system’s, and opens with the list of keys', () => {
     const help = menu(bar(), 'help')
     expect(help.role).toBe('help')
@@ -369,17 +357,12 @@ describe('the strip', () => {
   test('knows a row of the window’s from a row of the note’s', () => {
     expect(itemIn(menu(bar(), 'file'), 'Close note').anywhere).toBe(true)
     expect(itemIn(menu(bar(), 'format'), 'Bold').anywhere).toBe(false)
-    // A row with no command at all is only ever clicked.
     expect(itemIn(menu(bar(), 'file'), 'Version history')).toMatchObject({
       anywhere: true,
       key: null,
     })
   })
 
-  /** #344: a web tab's page holding the keyboard is never offered Cmd+R, and
-   *  `WKWebView` has no reload of its own on it, so the key reaches the app only as a row
-   *  - one that runs with the keyboard in the page, which is where it goes after the
-   *  first reload. */
   test('ends View with reloading a web tab, on its keys, from anywhere', () => {
     const reloading = sources({
       viewRows: [row('Reload', 'web.reload'), row('Hard reload', 'web.fresh', { disabled: true })],
@@ -401,9 +384,6 @@ describe('the strip', () => {
     expect(keyRuns(itemIn(view, 'Reload').anywhere, 'away')).toBe(true)
   })
 
-  /** #397: Cmd+[ and Cmd+] are a browser's back and forward, and a row is how a key gets
-   *  out of a page on a Mac. Cmd+[ is a note's indent, so the rows exist only while a web
-   *  tab is in front; see `reloadRows`. */
   test('takes back and forward on the brackets, from anywhere, as rows', () => {
     const stepping = sources({
       viewRows: [row('Back', 'web.back'), row('Forward', 'web.forward')],
@@ -417,8 +397,6 @@ describe('the strip', () => {
     expect(keyRuns(itemIn(view, 'Back').anywhere, 'page')).toBe(true)
   })
 
-  /** Focus moved to a note in another pane: the rows go, and with them the key the note
-   *  indents with. A strip whose rows differ is built again rather than told. */
   test('builds the strip again when back and forward come or go', () => {
     const keyFor = (command: string) =>
       ({ 'web.back': 'Mod-[', 'web.forward': 'Mod-]' })[command] ?? KEYS[command] ?? null
@@ -537,9 +515,6 @@ describe('full screen, left by the window', () => {
   })
 })
 
-/** Each document window builds a strip of its own, and AppKit adds a line to a menu
- *  every time it is told that menu is the Window menu. How many strips there are
- *  decides whether a window coming back to the front needs a fresh one. */
 describe('the windows that have a strip of their own', () => {
   test('are the first window and the ones opened after it', () => {
     expect(documentWindows(['main'])).toBe(1)
@@ -552,11 +527,6 @@ describe('the windows that have a strip of their own', () => {
   })
 })
 
-/** On macOS 26 a key a row holds never reaches the page: the menu bar answers it
- *  first, so a Cmd+B typed into the Search panel's field arrived as the Bold row
- *  and bolded the note behind the field. A row of the note's pressed by its key runs
- *  only while the note has the keyboard, which is when the editor's own keymap would
- *  have run it; a row of the window's runs from anywhere. */
 describe('a row pressed by its key', () => {
   test('of the window’s runs wherever the keyboard is', () => {
     expect(keyRuns(true, 'note')).toBe(true)
@@ -586,7 +556,6 @@ describe('a key a stand-in hands the page', () => {
     expect(keystrokeOf('Mod-Space')).toMatchObject({ key: ' ', code: 'Space' })
   })
 
-  /** It has to be the very key the page is waiting for. */
   test('is matched by the combination and read back as it', () => {
     for (const written of ['Mod-z', 'Mod-Shift-z', 'Mod-a', 'Mod-Alt-5', 'Mod-Shift-/', 'Mod--']) {
       const keystroke = keystrokeOf(written)
@@ -602,9 +571,6 @@ describe('a key a stand-in hands the page', () => {
   })
 })
 
-/** A Mac writes a menu's rows in title case in English, puts an ellipsis on the ones
- *  that ask for something before they act, and keeps finding in a submenu of Edit.
- *  The strip wrote the app's own sentence-case labels as they were, with none of it. */
 describe('the words a Mac writes its menus in', () => {
   test('title case leaves the small words small, and the first and last never', () => {
     expect(titled('Bring all to front')).toBe('Bring All to Front')

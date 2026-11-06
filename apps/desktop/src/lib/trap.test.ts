@@ -1,18 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { trap } from './trap'
 
-/** Who holds the keyboard while a layer is open, and who has it once the layer
- *  has gone.
- *
- *  The second half is the one with a bug in it. A menu entry can open something
- *  that wants the keyboard - a row's name field - and the entry that opened it is
- *  still fading out when the layer is taken off the page. Handing the keyboard
- *  back then takes it off the field, and a name field that loses the keyboard
- *  commits what is in it; for a row being made that is nothing, so the row goes
- *  and New note made no note. */
-
-/** A stand-in for an element, with only what the trap reads. `focus` records
- *  itself on the document, which is what `activeElement` answers. */
 interface Fake {
   tagName: string
   isConnected: boolean
@@ -58,8 +46,6 @@ function fake(tagName: string, children: Fake[] = []): Fake {
   return one
 }
 
-/** A document whose `activeElement` is whatever was focused last, so the trap
- *  reads the same answer a browser would give it. */
 function pretendDocument(body: Fake, root: Fake) {
   vi.stubGlobal('document', {
     get activeElement() {
@@ -70,9 +56,6 @@ function pretendDocument(body: Fake, root: Fake) {
   })
 }
 
-/** The trap tests `from instanceof HTMLElement`, which in this environment has to
- *  be something the fakes pass. Not a class: `instanceof` asks the right-hand
- *  side for `Symbol.hasInstance`, and anything can answer. */
 function pretendHTMLElement() {
   vi.stubGlobal('HTMLElement', {
     [Symbol.hasInstance]: (value: unknown) =>
@@ -117,9 +100,6 @@ describe('the keyboard while a layer is open', () => {
     expect(node.focused).toBe(1)
   })
 
-  /** Opened by a finger, a menu showed its first row ringed, as the row already
-   *  chosen. The box of a menu is there to hold the keyboard for its rows, and
-   *  wears no ring. */
   test('under a thumb a menu keeps it itself, and a sheet still hands it on', () => {
     const body = fake('BODY')
     const root = fake('HTML')
@@ -169,8 +149,6 @@ describe('the keyboard once the layer has gone', () => {
     const node = layer([fake('BUTTON')])
     const held = open(node)
 
-    // What a browser answers once the thing that held it has been taken off the
-    // page, which is what the layer's own outro does to its rows.
     active = body
     held.destroy()
     expect(opener.focused).toBe(2)
@@ -187,8 +165,6 @@ describe('the keyboard once the layer has gone', () => {
     const node = layer([fake('BUTTON')])
     const held = open(node)
 
-    // The field a menu entry opened, which took the keyboard while the menu was
-    // still fading. Handing it back here is what made New note make nothing.
     const field = fake('INPUT')
     field.focus()
 
@@ -206,8 +182,6 @@ describe('the keyboard once the layer has gone', () => {
     pretendDocument(body, root)
     pretendHTMLElement()
 
-    // What the app's page last had focused, before a site in a web tab took the
-    // keyboard; the crate hands it back to the site once the layer has gone.
     opener.focus()
     const held = open(layer([fake('BUTTON')]))
     active = body

@@ -2,10 +2,6 @@
 import { afterEach, describe, expect, test } from 'vitest'
 import { hang, inSight, placeOf } from './portal'
 
-/** A bubble hung over the window from what it is about (#1129); see portal.ts. Where it
- *  goes is a sum, tested here; that it is drawn whole in the app is measured in
- *  test/e2e/bubbles.py. */
-
 const at = { left: 100, top: 100, right: 300, bottom: 120 }
 const size = { width: 150, height: 40 }
 const room = { width: 1000, height: 800 }

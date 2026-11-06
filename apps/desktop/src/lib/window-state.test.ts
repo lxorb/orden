@@ -1,19 +1,13 @@
 import { describe, expect, test } from 'vitest'
 import { type Resizable, WindowState } from './window-state.svelte'
 
-/** A window under our own hand: it can be maximised and restored, and it tells
- *  whoever is listening whenever its size changes - which is how a real one
- *  behaves whether the change came from a button, a drag or a keyboard. */
 class FakeWindow implements Resizable {
   maximized = false
   fullscreen = false
-  /** How many listeners are on it, so a teardown can be checked. */
   listeners = 0
-  /** How often it has been asked, so nothing is asking on every frame. */
   asked = 0
 
   private readonly told = new Set<() => void>()
-  /** Set to refuse the toggle, the way a window manager may. */
   stubborn = false
 
   isMaximized(): Promise<boolean> {
@@ -40,7 +34,6 @@ class FakeWindow implements Resizable {
     })
   }
 
-  /** What dragging the window, snapping it, or double clicking its bar does. */
   resize(maximized: boolean, fullscreen = this.fullscreen) {
     this.maximized = maximized
     this.fullscreen = fullscreen
@@ -48,7 +41,6 @@ class FakeWindow implements Resizable {
   }
 }
 
-/** Lets every promise the tracker is waiting on land. */
 const settled = () => new Promise((done) => setTimeout(done, 0))
 
 describe('whether the window is maximised', () => {
@@ -71,7 +63,6 @@ describe('whether the window is maximised', () => {
     await settled()
     expect(state.maximized).toBe(false)
 
-    // A double click on the bar, or Win and an arrow key.
     window.resize(true)
     await settled()
 
@@ -132,7 +123,6 @@ describe('whether the window is maximised', () => {
 
     expect(window.listeners).toBe(0)
 
-    // And nothing it says afterwards is written down.
     window.resize(true)
     await settled()
     expect(state.maximized).toBe(false)
@@ -168,8 +158,6 @@ describe('whether the window is maximised', () => {
   })
 })
 
-/** A Mac hides its traffic lights in full screen, and the bar stops keeping room
- *  for them; see Titlebar.svelte. */
 describe('whether the window is full screen', () => {
   test('follows the window in and out of it', async () => {
     const window = new FakeWindow()

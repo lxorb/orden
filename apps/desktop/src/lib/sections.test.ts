@@ -4,13 +4,11 @@ import { moveSection, movesSection, sectionSpan } from './sections'
 
 const NOTE = ['# One', 'first', '', '## Under one', 'nested', '', '# Two', 'second', ''].join('\n')
 
-/** The note with a move applied, which is what the editor would end up holding. */
 function moved(text: string, from: number, to: number): string | null {
   const headings = scanHeadings(text)
   const made = moveSection(text, headings, from, to)
   if (!made) return null
 
-  // Applied back to front, so the earlier offsets are still the note's own.
   let out = text
   for (const change of [...made.changes].sort((a, b) => b.from - a.from)) {
     out = out.slice(0, change.from) + change.insert + out.slice(change.to)
@@ -47,8 +45,6 @@ describe('which moves are moves at all', () => {
   })
 
   test('but never onto itself, or into itself', () => {
-    // Dropping "One" onto the heading nested inside it would be putting a
-    // section inside itself, which is not a move.
     expect(movesSection(headings, 0, 0)).toBe(false)
     expect(movesSection(headings, 0, 1)).toBe(false)
   })
@@ -71,9 +67,7 @@ describe('moving one', () => {
   test('takes the whole of it, children and all', () => {
     const out = moved(NOTE, 0, 2) ?? ''
     expect(out).toContain('## Under one')
-    // Once, not twice.
     expect(out.match(/## Under one/g)).toHaveLength(1)
-    // And every word the note had is still in it.
     expect(scanHeadings(out).map((one) => one.text)).toEqual(['Two', 'One', 'Under one'])
   })
 
@@ -83,8 +77,6 @@ describe('moving one', () => {
   })
 
   test('and never leaves a section running into the one below it', () => {
-    // The last section of a note may have no line break at the end of it; put
-    // in front of another one, it would have swallowed that one's heading.
     const note = '# One\nfirst\n\n# Two\nsecond'
     expect(moved(note, 1, 0)).toBe('# Two\nsecond\n# One\nfirst\n\n')
   })
@@ -94,7 +86,6 @@ describe('moving one', () => {
     const made = moveSection(NOTE, headings, 0, 2)
 
     expect(made?.changes).toHaveLength(2)
-    // One of them takes nothing away, and one of them puts nothing in.
     expect(made?.changes.filter((one) => one.insert === '')).toHaveLength(1)
     expect(made?.changes.filter((one) => one.from === one.to)).toHaveLength(1)
   })
@@ -103,7 +94,6 @@ describe('moving one', () => {
 describe('the caret', () => {
   test('travels with the section it was in', () => {
     const headings = scanHeadings(NOTE)
-    // On the `f` of "first", six characters into the note.
     const made = moveSection(NOTE, headings, 0, 2, 6)
     const out = moved(NOTE, 0, 2) ?? ''
 
@@ -114,7 +104,6 @@ describe('the caret', () => {
     const headings = scanHeadings(NOTE)
     const made = moveSection(NOTE, headings, 0, 2, NOTE.length - 1)
 
-    // Unchanged: outside the moving words, so the change set maps it.
     expect(made?.caret).toBe(NOTE.length - 1)
   })
 })

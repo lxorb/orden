@@ -3,13 +3,6 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 import { extensionOf, nameFault, nameToCommit, nameToWrite } from './naming'
 
-/** What a name may be, read as a list of names.
- *
- *  The field on a row asks these between two keystrokes, so every answer here is
- *  a sentence the row can show and nothing here touches a disk. The last block
- *  reads the crate: the device names are stated in two languages and would
- *  otherwise drift into two different answers to the same question. */
-
 const beside = (...taken: string[]) => taken
 
 describe('a name that cannot be written', () => {
@@ -32,18 +25,13 @@ describe('a name that cannot be written', () => {
   })
 
   test('or a control code, which no platform takes', () => {
-    // Inside the name rather than at the end of it, which the commit trims off.
     expect(nameFault({ ...naming, typed: `Pl${String.fromCharCode(9)}an` })).toBe('illegal')
   })
 
-  /** Windows drops it without a word, so the file would be under a name other
-   *  than the one that was typed. */
   test('or ends with a dot', () => {
     expect(nameFault({ ...naming, typed: 'Plan.' })).toBe('trailing')
   })
 
-  /** A trailing space is not a fault: it is what a name arrives with while
-   *  somebody is typing the next word, and the commit trims it. */
   test('though a space on the end is only a space on the end', () => {
     expect(nameFault({ ...naming, typed: 'Plan ' })).toBeNull()
     expect(nameToWrite('Plan ', '.md')).toBe('Plan.md')
@@ -53,16 +41,11 @@ describe('a name that cannot be written', () => {
     expect(nameFault({ ...naming, typed: 'NUL' })).toBe('reserved')
     expect(nameFault({ ...naming, typed: 'nul' })).toBe('reserved')
     expect(nameFault({ ...naming, typed: 'com4' })).toBe('reserved')
-    // The crate looks at the part in front of the first dot, and so does this.
     expect(nameFault({ ...naming, typed: 'NUL.old' })).toBe('reserved')
-    // And with spaces before the dot, which Windows drops.
     expect(nameFault({ ...naming, typed: 'CON .md' })).toBe('reserved')
-    // The ports Windows numbers in superscript, the ports numbered nought, and the
-    // console's own two.
     for (const typed of ['COM¹', 'lpt².md', 'COM0', 'LPT0', 'CONIN$', 'conout$']) {
       expect(nameFault({ ...naming, typed }), typed).toBe('reserved')
     }
-    // And a name that merely starts with those letters is a name.
     expect(nameFault({ ...naming, typed: 'Console' })).toBeNull()
   })
 })
@@ -74,22 +57,15 @@ describe('a name already in the folder', () => {
     expect(nameFault({ typed: 'Notes', extension: '.md', taken })).toBeNull()
   })
 
-  /** Two of the three platforms the app runs on say those are one file, so a
-   *  rename that only changes the case would fail on arrival. */
   test('whatever the case it is written in', () => {
     expect(nameFault({ typed: 'plan', extension: '.md', taken: beside('Plan.md') })).toBe('taken')
   })
 
-  /** And APFS says the same of `Ü` typed as one letter and `Ü` a Mac tool wrote
-   *  as two, so those are one name too. */
   test('however its letters are composed', () => {
     const taken = beside('U\u0308bersicht.md')
     expect(nameFault({ typed: 'Übersicht', extension: '.md', taken })).toBe('taken')
   })
 
-  /** A page note's paper is `<name>.pages.pdf` beside it, held out of the list, so a
-   *  PDF given that name beside `<name>.pages` would become the note's paper - and a
-   *  page note given `<name>.pages` beside a PDF of that name would take it. */
   test('and so is a name a page note and its paper would share', () => {
     expect(
       nameFault({ typed: 'Lecture.pages', extension: '.pdf', taken: beside('Lecture.pages') }),
@@ -108,15 +84,11 @@ describe('a name already in the folder', () => {
     ).toBeNull()
   })
 
-  /** Which is the folder-note layout: `A.md` becomes `A/A.md`, and a note beside
-   *  the folder of its own name is the pair the whole convention is made of. */
   test('but a folder of the same name is not, because a note may sit beside one', () => {
     expect(nameFault({ typed: 'A', extension: '.md', taken: beside('A') })).toBeNull()
     expect(nameFault({ typed: 'A', extension: '', taken: beside('A.md') })).toBeNull()
   })
 
-  /** The row's own name is left out by whoever asks; if it were not, no name
-   *  could ever be kept and every rename would open onto a red row. */
   test('and a row keeps its own name, since the caller leaves it out', () => {
     expect(nameFault({ typed: 'Plan', extension: '.md', taken: beside('Other.md') })).toBeNull()
   })
@@ -137,30 +109,22 @@ describe('the extension a commit puts back', () => {
     expect(extensionOf('Readme', false)).toBe('.md')
   })
 
-  /** A paper is shown with its extension, so the field hands it back and a second
-   *  copy of it would make `paper.pdf.pdf`. */
   test('is not added twice when the field already holds it', () => {
     expect(nameToWrite('paper.pdf', '.pdf')).toBe('paper.pdf')
     expect(nameToWrite('other', '.pdf')).toBe('other.pdf')
   })
 
-  /** The file's spelling and not the reader's. `NOTE.MD` renamed by typing `Note.md`
-   *  asks the disk for a name it already has under another spelling, which both
-   *  Windows and a Mac refuse - and the row wore the name it could not have. */
   test('is the one the file wrote, whatever case the field holds it in', () => {
     expect(nameToWrite('paper.PDF', '.pdf')).toBe('paper.pdf')
     expect(nameToWrite('NOTE.md', '.MD')).toBe('NOTE.MD')
     expect(nameToWrite('Note.MD', '.md')).toBe('Note.md')
   })
 
-  /** A run with a space in it is part of somebody's name, so renaming `v1.2 plan`
-   *  no longer asks for `v1.3 plan.2 plan`. */
   test('is nothing a dot in the middle of a name made up', () => {
     expect(extensionOf('v1.2 plan.md', false)).toBe('.md')
     expect(nameToWrite('v1.3 plan', extensionOf('v1.2 plan.md', false))).toBe('v1.3 plan.md')
   })
 
-  /** The ending the list took off, read back by the same rule; see note-name.ts. */
   test('is the ending the list leaves off', () => {
     expect(extensionOf('Board.canvas', false)).toBe('.canvas')
     expect(extensionOf('Sketch.pages', false)).toBe('.pages')
@@ -183,26 +147,17 @@ describe('leaving the field', () => {
     expect(nameToCommit({ ...naming, typed: 'Taken' })).toBeNull()
   })
 
-  /** So a blur is safe to treat as a commit, which is what every file manager
-   *  does: nothing to write is nothing to write, and the row is as it was. */
   test('does nothing with a name nobody changed', () => {
     expect(nameToCommit({ ...naming, typed: 'Plan' })).toBeNull()
     expect(nameToCommit({ ...naming, typed: '  Plan  ' })).toBeNull()
   })
 
-  /** A row that is being made starts with nothing, and a row that was never
-   *  named is a row that makes nothing. */
   test('and nothing with an empty field on a row that is being made', () => {
     expect(nameToCommit({ ...naming, was: '', typed: '' })).toBeNull()
     expect(nameToCommit({ ...naming, was: '', typed: 'Fresh' })).toBe('Fresh.md')
   })
 })
 
-/** A file wearing its ending twice, which an earlier build wrote for a website made
- *  from the file list: `Blog.url.url`, shown as `Blog.url`. Deleting the `.url` the
- *  row shows asks for `Blog.url`, which is what the name the row showed builds back
- *  up into as well - so the rename was taken for no change and nothing happened.
- *  Emil, 2026-09-27. */
 describe('renaming a file whose name the row cannot say back', () => {
   const site = { extension: '.url', taken: [], was: 'Blog.url', current: 'Blog.url.url' }
 
@@ -227,8 +182,6 @@ describe('renaming a file whose name the row cannot say back', () => {
     expect(nameToCommit({ ...plain, typed: 'Blog.URL' })).toBeNull()
   })
 
-  /** The ending is the file's kind, so taking it off the name never takes it off
-   *  the file: a website stays a website, a canvas a canvas. */
   test('never leaves a file without its ending', () => {
     for (const ending of ['.url', '.webloc', '.canvas', '.pages', '.md', '.markdown']) {
       const one = { extension: ending, taken: [], was: 'Thing', current: `Thing${ending}` }
@@ -238,10 +191,6 @@ describe('renaming a file whose name the row cannot say back', () => {
   })
 })
 
-/** The device names are held in two languages: the crate refuses them when the
- *  rename lands, and this module refuses them while the name is being typed. Two
- *  copies of one list is two answers waiting to disagree, so this reads the
- *  crate and holds them to the same one. */
 describe('the names the crate keeps for devices', () => {
   const paths = readFileSync(
     fileURLToPath(new URL('../../src-tauri/src/paths.rs', import.meta.url)),
@@ -259,8 +208,6 @@ describe('the names the crate keeps for devices', () => {
       expect(nameFault({ typed: name, extension: '.md', taken: [] }), name).toBe('reserved')
     }
 
-    // And nothing this refuses is missing from the crate: a name the field takes
-    // and the rename then throws out is the failure this module exists to stop.
     const refused = ['CON', 'NUL', 'CONIN$', 'CONOUT$', 'COM0', 'COM9', 'COM³', 'LPT¹'].filter(
       (name) => !crate.includes(name),
     )

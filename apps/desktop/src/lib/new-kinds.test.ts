@@ -1,15 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The one list of kinds a new tab can be.
- *
- *  Five places offered these and no two offered the same set: the strip's plus had
- *  four, the File menu the same four with no phone in mind, the sidebar's two menus
- *  three with page notes left out. Two places draw them now - a new tab under its
- *  address field and a pane with nothing open - so what this pins is that there is one
- *  list, in the lines Emil gave it (issue #213). */
-
-/** The store reads the browser's storage the moment it is made, and there is none
- *  under node - which is why it is imported below rather than at the top. */
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -27,8 +17,6 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-/** An online terminal's maker asks the account for a session; here it only says it was
- *  asked. See online/open.ts. */
 const online = vi.hoisted(() => ({ made: null as string[] | null }))
 vi.mock('./online/open', () => ({
   openOnline: () => {
@@ -36,7 +24,6 @@ vi.mock('./online/open', () => ({
     return Promise.resolve(null)
   },
 }))
-// And an application's asks which of the reader's computers it runs on; see apps/make.ts.
 vi.mock('./apps/make', () => ({
   makeApplication: () => {
     online.made?.push('application')
@@ -61,19 +48,11 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-/** Every maker stood in for, and a note of which one was asked. Nothing here writes
- *  a file: what a kind does is its own test, and what this asks is which of them a
- *  row reaches. */
 function makers(): string[] {
   const made: string[] = []
 
-  // The openers that make a tab and no file, which is what every row here does now;
-  // `createCanvas` and the two beside it are the file list's own gesture and write a
-  // named file. See newCanvas in workspace.svelte.ts.
   vi.spyOn(workspace, 'openBlank').mockImplementation(() => void made.push('note'))
   vi.spyOn(workspace, 'newCanvas').mockImplementation(async () => void made.push('canvas'))
-  // A web note lands on the search engine this device chose, so it is the opener a
-  // known address goes through rather than the one that makes an empty tab (#354).
   vi.spyOn(workspace, 'openPage').mockImplementation((url: string) => {
     made.push(`web ${url}`)
     return null
@@ -96,9 +75,6 @@ describe('the kinds a new tab can be', () => {
     ])
   })
 
-  /** *"Note, Canvas, Page Note | Terminal, Remote, Online Terminal | Web Note, Private Web
-   *  Note"*: what is written, what runs, the web - with a line a page has nothing in left
-   *  out rather than drawn empty. */
   test('stand in three lines: what is written, what runs, and the web', () => {
     expect(kindLines(newKinds()).map((line) => line.map((one) => one.kind))).toEqual([
       ['note', 'canvas', 'pages'],
@@ -118,8 +94,6 @@ describe('the kinds a new tab can be', () => {
     ])
   })
 
-  /** The shape the file list and the tab strip already draw for the kind, so the
-   *  buttons in an empty pane and the rows in a list say the same thing. */
   test('each wears the mark its own files wear', () => {
     expect(newKinds().map((one) => one.mark)).toEqual([
       'note',
@@ -131,8 +105,6 @@ describe('the kinds a new tab can be', () => {
     ])
   })
 
-  /** A website is a bookmark on a phone: it opens in the phone's own browser, so
-   *  there is no tab to make and the row would answer nothing. */
   test('leave the website out on a phone', () => {
     viewport.device = 'phone'
     expect(newKinds().map((one) => one.kind)).toEqual([
@@ -144,7 +116,6 @@ describe('the kinds a new tab can be', () => {
     ])
   })
 
-  /** And on a tablet, which hands every page to the system's browser as well (#206). */
   test('and on a tablet', () => {
     viewport.device = 'tablet'
     expect(newKinds().map((one) => one.kind)).toEqual([
@@ -160,8 +131,6 @@ describe('the kinds a new tab can be', () => {
     const made = makers()
     for (const one of newKinds()) one.make()
 
-    // The online terminal's maker and the search engine are fetched, so they arrive
-    // after the ones behind them.
     await vi.waitFor(() =>
       expect([...made].sort()).toEqual([
         'application',
@@ -174,10 +143,6 @@ describe('the kinds a new tab can be', () => {
     )
   })
 
-  /** Emil, #354: *"if you click on web note in the Ctrl + T menu, then it should open
-   *  your configured search engine"*. The press was already the choice, so a second
-   *  empty field with the same kinds under it again answered nothing. The engine's own
-   *  page, not its results page for no words; see `engineHome` in web-tab/engines.ts. */
   test('a web note opens the search engine this device chose', async () => {
     const made = makers()
     const { searchEngine } = await import('./web-tab/search-engine.svelte')
@@ -191,8 +156,6 @@ describe('the kinds a new tab can be', () => {
     searchEngine.choose('google')
   })
 
-  /** The pane whose plus was pressed takes the keyboard first, so a plus in the other
-   *  pane does not open its note over here. */
   test('in the pane that asked', () => {
     makers()
     const focused = vi.spyOn(workspace, 'focusPane').mockImplementation(() => undefined)
@@ -209,8 +172,6 @@ describe('the kinds a new tab can be', () => {
     expect(focused).not.toHaveBeenCalled()
   })
 
-  /** A letter each on its card, and no two the same, or a key would have two kinds to
-   *  make. See NewHere.svelte. */
   test('each answers a letter of its own', () => {
     const letters = newKinds().map((one) => one.letter)
 

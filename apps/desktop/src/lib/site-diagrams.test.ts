@@ -1,22 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The diagrams a published space carries: which fences are one, what a drawing
- *  has to look like before it can be a file of its own, and what a publish sends.
- *
- *  Mermaid is not run here - it needs a browser, and the drive in
- *  apps/desktop/test/e2e/site.py is where a real drawing reaches a real page.
- *  What this holds is everything around it. */
-
 interface World {
-  /** Every file of the space, by path, and what is in it. */
   files: Record<string, string>
-  /** Every blob that went up, by the name it went up under. */
   sent: Record<string, string>
-  /** What each of those said its name was hashed from. */
   said: Record<string, string>
-  /** Which drawings the drawer refuses. */
   refuse: Set<string>
-  /** What storage holds, standing in for the browser's. */
   kept: Record<string, string>
 }
 
@@ -91,9 +79,6 @@ vi.mock('./stored', () => ({
   },
 }))
 
-/** Mermaid needs a browser, so the drawer is stood in for: one small SVG of the
- *  shape mermaid writes, with the scheme's own colour in it so the two schemes are
- *  different bytes the way real ones are. */
 vi.mock('./diagrams', () => ({
   drawDiagram: (code: string, language: string, scheme: 'light' | 'dark') => {
     if (world.refuse.has(code)) return Promise.reject(new Error('mermaid said no'))
@@ -126,7 +111,6 @@ describe('which fences a space has to draw', () => {
   test('is every diagram in it, once each', () => {
     const found = diagramFences([
       `# One\n\n${FENCE}`,
-      // The same diagram again is the same picture: the name is the fence.
       `# Two\n\n${FENCE}`,
       '# Three\n\n```sequence\nAda->Grace: hello\n```\n',
     ])
@@ -191,14 +175,12 @@ describe('a drawing as a file of its own', () => {
     expect(file).not.toContain('onload')
     expect(file).not.toContain('onclick')
     expect(file).not.toContain('elsewhere.example')
-    // A link inside the picture is a place in the picture, and stays.
     expect(file).toContain('href="#inside"')
   })
 
   test('is nothing at all where there is no drawing to make a file of', () => {
     expect(asFile('')).toBeNull()
     expect(asFile('Syntax error in graph')).toBeNull()
-    // No viewBox is no size, and a file with no size is the 300-by-150 box.
     expect(asFile('<svg xmlns="http://www.w3.org/2000/svg"><g/></svg>')).toBeNull()
   })
 })
@@ -235,8 +217,6 @@ describe('what a publish sends', () => {
     }
   })
 
-  /** The store hashes it again before it keeps a picture under a name that is not
-   *  the hash of the picture (#518). */
   test('says what each name was hashed from', async () => {
     world.files = { 'One.md': `# One\n\n${FENCE}` }
     await pushDiagrams('token', SPACE, '/vault/space')

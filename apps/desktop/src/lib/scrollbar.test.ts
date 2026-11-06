@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { contentPerThumb, thumbFor, type Track } from './scrollbar'
 
-/** A note four screens long in a 400 pixel window, unless a test says otherwise. */
 function track(patch: Partial<Track> = {}): Track {
   return { content: 1600, visible: 400, at: 0, track: 400, least: 28, ...patch }
 }
@@ -16,12 +15,9 @@ describe('the thumb', () => {
     expect(thumbFor(track({ content: 401 }))).toBeNull()
   })
 
-  /** A palette whose rows all show and whose own padding runs past its cap: four
-   *  pixels the browser counts as content, and nothing a reader can scroll to (#775). */
   test('has nothing to say when only the scroller’s own padding runs past', () => {
     expect(thumbFor(track({ content: 404, slack: 4 }))).toBeNull()
     expect(thumbFor(track({ content: 405, slack: 4 }))).toBeNull()
-    // A row's worth past the padding is something to scroll to.
     expect(thumbFor(track({ content: 432, slack: 4 }))).not.toBeNull()
   })
 
@@ -42,7 +38,6 @@ describe('the thumb', () => {
   test('is never too small to grab, however long the note', () => {
     const shape = thumbFor(track({ content: 400_000 }))
     expect(shape?.size).toBe(28)
-    // And it still reaches the bottom, on the room a shortened thumb leaves.
     expect(thumbFor(track({ content: 400_000, at: 399_600 }))?.offset).toBe(372)
   })
 
@@ -59,7 +54,6 @@ describe('the thumb', () => {
 
 describe('dragging the thumb', () => {
   test('moves the content by the same share of it', () => {
-    // 300 pixels of room in the bar for 1200 pixels of note.
     expect(contentPerThumb(track())).toBe(4)
   })
 

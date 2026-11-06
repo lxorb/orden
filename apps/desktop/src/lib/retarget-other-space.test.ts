@@ -1,11 +1,6 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 import { scanNote } from '@orden/scan/note'
 
-/** Links that follow a note renamed or moved in a space that is not the open one
- *  (B405). A rename in A undone after switching to B puts the file back, and the
- *  links that followed it have to be put back as well: rewritten against the open
- *  space, nothing was, and A's notes kept pointing at a name nothing answered to. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../../test/disk').Disk | null }))
 
 vi.mock('./tauri', async (importOriginal) => ({

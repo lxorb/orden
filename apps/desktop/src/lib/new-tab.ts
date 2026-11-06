@@ -1,13 +1,5 @@
-/** Whether a press asked for a tab of its own, and whether to go there: Chrome's rule,
- *  kept the same on every surface that opens something. Ctrl+click (Cmd on a Mac) and
- *  the middle button open a tab behind, beside this one; with Shift, in front. Shift
- *  alone does too where it means nothing else, since an Orden window is a second
- *  workspace rather than one page. A plain click is the surface's own. See
- *  docs/web-tabs.md, "A link in a tab of its own". */
-
 import { linkModifier } from '@orden/editor'
 
-/** A `MouseEvent` or a `KeyboardEvent`; a key has no button, and is the main one. */
 export interface Press {
   button?: number
   ctrlKey: boolean
@@ -16,13 +8,10 @@ export interface Press {
   altKey?: boolean
 }
 
-/** Nothing beyond the surface's own click, a tab left behind, or a tab to go to. */
 export type TabAsk = 'plain' | 'behind' | 'front'
 
-/** And for a link to a note, a pane to the right as well. */
 export type LinkAsk = TabAsk | 'aside'
 
-/** The middle button, in the DOM's numbering. */
 const MIDDLE = 1
 
 export function tabAsk(press: Press, shiftOpens = false): TabAsk {
@@ -30,31 +19,21 @@ export function tabAsk(press: Press, shiftOpens = false): TabAsk {
   return shiftOpens && press.shiftKey ? 'front' : 'plain'
 }
 
-/** What a press on a link to a note asked for. Ctrl+Alt+click (Cmd+Alt on a Mac) is a
- *  pane to the right, which is Obsidian's chord for it and the palette's with Enter;
- *  everything else is Chrome's rule above. */
 export function linkAsk(press: Press): LinkAsk {
   return press.altKey && linkModifier(press) ? 'aside' : tabAsk(press)
 }
 
-/** How a listing opens a file, as `openEntry` takes it. */
 export interface OpenHow {
   activate?: boolean
   preview?: boolean
-  /** In the strip right after the tab it was opened from, as a browser puts a tab a
-   *  link opened, rather than at the end. */
   beside?: boolean
 }
 
-/** What an ask makes of the surface's own plain open. A tab asked for is never the
- *  preview. */
 export function howFor(ask: TabAsk, plain: OpenHow = {}): OpenHow {
   if (ask === 'plain') return plain
   return ask === 'behind' ? { activate: false, beside: true } : { beside: true }
 }
 
-/** Where along a strip a tab opened beside `opener` goes: after it, and after the tab
- *  last opened from it, so a run lands in the order pressed. Null is the end. */
 export function besideAt(
   strip: readonly { id: string }[],
   opener: string,
@@ -67,8 +46,6 @@ export function besideAt(
   return Math.max(from, last) + 1
 }
 
-/** The middle button on a row that opens: the open on its `auxclick`, and nothing of
- *  the platform's own on the press, where Windows scrolls and X11 pastes. */
 export function middleOpens(node: HTMLElement, open: (event: MouseEvent) => void) {
   let current = open
 

@@ -1,24 +1,3 @@
-/** One tab stop per list, and the arrows inside it.
- *
- *  A list of names is not a row of buttons. A space with four hundred notes in it
- *  put four hundred stops in the tab sequence, so Tab out of the file list took
- *  four hundred presses to reach the note - which is why every app that has lists
- *  keeps them out of it. Discord says so in as many words ("these things can have
- *  hundreds of entries at a time"), and the ARIA practices say the tab sequence
- *  holds one element of a composite widget and the arrows move inside it.
- *
- *  So: exactly one row of a list answers Tab, and it is the row that matters -
- *  the note you have open, the heading the caret is under - not the top of the
- *  list. The arrows walk, letters spell a name, Enter opens and the note takes the
- *  keyboard, Space opens without leaving, and Escape hands the keyboard back to
- *  the note, because the note is where people live.
- *
- *  One action for every `.nib-row` list there is: the file tree, the bookmarks
- *  above it, the outline, the tags, the search results, the backlinks, the strip
- *  of notes. The walk itself is walk.ts and the spelling is list-keys.ts, both of
- *  which are pure and tested; what is here is the part that has to hold a real
- *  element and move a real focus. */
-
 import { steppedKey } from './direction'
 import { focusEditor } from './focus'
 import { chorded } from './keys'
@@ -26,98 +5,33 @@ import { spelled, type Spelling } from './list-keys'
 import { overlays } from './overlays'
 import { walked } from './walk'
 
-/** A list too long to keep in the page.
- *
- *  A space of three thousand notes mounts the twenty rows in view and leaves the
- *  rest as height; see row-window.ts. So the walk cannot be a walk over elements -
- *  End has to reach a row that does not exist yet, and a letter has to spell a name
- *  nothing in the page is wearing. What the walk is over instead is the list
- *  itself, counted and numbered by whoever draws it, and the one thing this asks of
- *  the page is `reach`: put row n there, and say when it is.
- *
- *  Absent for every other list in the app, which is short enough to be all in the
- *  page at once and is walked by its own elements. */
 interface LongList {
-  /** How many rows the list has, mounted or not. */
   count: () => number
-  /** Which row this element is, or -1 for one the list no longer holds. */
   indexOf: (row: HTMLElement) => number
-  /** What each row reads as, in order: the whole list, for spelling a name. */
   labels: () => string[]
-  /** Puts row n in the page and answers the element once it is there, or null
-   *  where there is no such row. */
   reach: (index: number) => Promise<HTMLElement | null>
 }
 
 export interface RovingOptions {
-  /** A list drawn inside another list of the same kind, which the outermost one
-   *  walks. The tag tree draws one of itself per tag, and two handlers reading one
-   *  press would step twice. The file list is flat and has no use for it; see
-   *  tree-flat.ts. */
   inner?: boolean
-  /** A list that runs left to right rather than down: the strip of notes, the row
-   *  of panel tabs. Its arrows are left and right, and it leaves up and down alone,
-   *  which is what the ARIA practices ask of a horizontal widget - those two keys
-   *  are how the page underneath is scrolled. */
   across?: boolean
-  /** Which descendants are the rows. */
   rows?: string
-  /** The row the keyboard starts on, so Tab into a list arrives at the note that
-   *  is open rather than at the first name in it. The ARIA practices say the same:
-   *  a list where something is chosen is entered at the chosen thing. */
   current?: string
-  /** Whether the two ends meet. A menu wraps, because that is how a hand reaches
-   *  the last row of a long one; a list of files does not, because falling off the
-   *  bottom of a folder into its top loses somebody's place. */
   wrap?: boolean
-  /** The standard name of the key a press stands for, where a reader may have
-   *  rebound it: the file list's four arrows are in the registry. Null for a key
-   *  the list knows nothing about; absent for a list whose keys are not anybody's
-   *  to change, which reads the name off the event. */
   keyOf?: (event: KeyboardEvent) => string | null
-  /** What a row reads as, for spelling a name. Its words, by default. */
   label?: (row: HTMLElement) => string
-  /** Left and right, where a list holds lists. True when the press was spent. */
   sideways?: (key: string, row: HTMLElement) => boolean
-  /** Enter: the row, opened, after which the note takes the keyboard. A click by
-   *  default, so a list says what a row does in one place and not two. */
   open?: (row: HTMLElement) => void
-  /** Space: the row, opened, with the keyboard left in the list, so a folder can
-   *  be walked and read down. Enter's answer where a list has no second one. */
   peek?: (row: HTMLElement) => void
-  /** Delete: the row, taken off the list. */
   remove?: (row: HTMLElement) => void
-  /** Shift+F10 and the menu key: the row's own menu, at the row. */
   menu?: (row: HTMLElement, at: MouseEvent) => void
-  /** Escape. True when the list had something of its own to give back - a
-   *  selection to clear - and the note therefore keeps waiting. */
   leave?: () => boolean
-  /** Chosen by arriving, for a list where arriving is free. The panel tabs are:
-   *  the outline of the note in front is already worked out, so an arrow along the
-   *  tabs may as well show it. The strip of notes is not - each of those is a file
-   *  to read off a disk - so there an arrow moves and Enter opens.
-   *
-   *  Which is the rule the ARIA practices give: activate on arrival as long as
-   *  what arrives does so without a wait. */
   follow?: (row: HTMLElement) => void
-  /** Rows inside a row that leave the tab sequence with it: the cross on a tab.
-   *  Reached with the arrows, and with the key that acts on the row instead. */
   quiet?: string
-  /** A list whose rows are not all in the page; see LongList. */
   long?: LongList
-  /** A layer a chord opens, whose modifiers may still be down as the hand walks it: the
-   *  space switcher, Cmd+Shift+Space on a Mac and Ctrl+Space elsewhere. A hand that knows
-   *  Cmd+Tab keeps Cmd down and walks with the arrows, and every arrow under it was a
-   *  chord passed on to the window, so on a Mac the switcher did not walk at all (#1123).
-   *  Here the arrows, Home, End and Enter are the list's under Ctrl, Alt or Cmd as well.
-   *  Never Space, which with the chord's modifiers is the key that puts the layer away. */
   held?: boolean
 }
 
-/** Which keys walk a list, and what each of them is in the one vocabulary the walk
- *  is written in; see walk.ts. A list that runs across is a list that runs down,
- *  turned on its side, so right is down and left is up and there is one walk for
- *  both. */
 const DOWN: Record<string, string> = {
   ArrowDown: 'ArrowDown',
   ArrowUp: 'ArrowUp',
@@ -132,10 +46,8 @@ const ACROSS: Record<string, string> = {
   End: 'End',
 }
 
-/** The two that mean the same thing in every list there has ever been. */
 const ENDS = new Set(['Home', 'End'])
 
-/** The keys a layer opened by a chord takes under the chord's modifiers; see `held`. */
 const HELD = new Set(['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter'])
 
 export function roving(node: HTMLElement, options: RovingOptions = {}) {
@@ -152,17 +64,8 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
 
   const labelOf = (row: HTMLElement) => (settings.label ? settings.label(row) : row.textContent)
 
-  /** A row whose name is being typed. It is a `div` rather than the button a row
-   *  usually is, because a button cannot hold a field, and it is not a row to press
-   *  either: the field in it is what the keyboard is for. So it is not the list's
-   *  tab stop - the field already is one - and putting a tabindex on it left an
-   *  extra stop in the sequence with no name on it at all, which a reader walking
-   *  the panel arrived at and was told nothing about. See NameField.svelte. */
   const naming = (row: HTMLElement) => row.querySelector('input, textarea') !== null
 
-  /** The one row Tab answers: whichever has the keyboard, else the one the list
-   *  says is current, else the first. Everything else is reachable but not
-   *  stopped on, which is the roving tabindex the practices describe. */
   function apply() {
     const rows = rowsOf()
     if (!rows.length) return
@@ -177,9 +80,6 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
       else row.tabIndex = row === stop ? 0 : -1
     }
 
-    // Anywhere in the list, not inside a row: the cross that shuts a tab is the
-    // row's neighbour rather than something in it, and looking for it inside each
-    // row is how Tab into the strip landed on Close instead of on the note.
     if (settings.quiet) {
       for (const one of node.querySelectorAll<HTMLElement>(settings.quiet)) one.tabIndex = -1
     }
@@ -196,26 +96,16 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
     settings.follow?.(row)
   }
 
-  /** The row a press came from. */
   function rowOf(event: Event): HTMLElement | null {
     const from = event.target instanceof Element ? event.target.closest(rowsSelector()) : null
     return from instanceof HTMLElement && node.contains(from) ? from : null
   }
 
   function onKey(event: KeyboardEvent) {
-    // A name being typed into the list is a text field, and the arrows, Escape
-    // and the letters belong to the words in it.
     if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
       return
     }
 
-    // A key under Ctrl, Alt or Cmd is a chord on its way to the window and not this
-    // list's key at all. Every key below is read off the event by name, and the
-    // window's handler gives way to a press something else has already spent - so
-    // for as long as this was not asked, Ctrl+Shift+Space opened the space switcher
-    // from everywhere in the app except a list, and a list is where Tab lands. The
-    // rule was already here, on the letters at the bottom of this function; it was
-    // only ever half applied. See `chorded` in keys.ts.
     const bare = !chorded(event) || (settings.held === true && HELD.has(event.key))
 
     const long = settings.long
@@ -223,17 +113,6 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
     const row = rowOf(event)
     const at = row ? (long ? long.indexOf(row) : rows.indexOf(row)) : -1
     const count = long ? long.count() : rows.length
-    // The two ends of a list are not anybody's to rebind, and the registry says so
-    // in as many words: see `fixed.lists`. So they are read off the event even in a
-    // list whose arrows do come from the registry.
-    // In reading terms: in a list that runs across, and in a tree that opens to
-    // one side, the two sideways keys trade places under an interface that reads
-    // right to left. See `steppedKey` in direction.ts.
-    //
-    // `keyOf` is the one path a chord may come down: it answers the registry, which
-    // matches the modifiers exactly, so a reader who binds the tree's own walk to
-    // Mod-ArrowDown is obeyed. A list that reads the event itself only ever means
-    // the bare key.
     const own = bare ? event.key : null
     const pressed = ENDS.has(event.key) ? own : settings.keyOf ? settings.keyOf(event) : own
     const key = pressed === null ? null : steppedKey(pressed)
@@ -252,10 +131,6 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
       return
     }
 
-    // Everything below here is read off the event by name, so none of it is a chord
-    // and a chord that got this far is on its way to the window. Shift is not a
-    // modifier as far as this goes - the menu key is Shift+F10 - so the case that
-    // wants it asks for it itself. See `bare` above.
     if (!bare) return
 
     switch (event.key) {
@@ -267,8 +142,6 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
         return
 
       case ' ':
-        // Taken either way, so a space meant for the list never scrolls the page
-        // underneath it.
         if (!row) return
         event.preventDefault()
         if (settings.peek) settings.peek(row)
@@ -292,16 +165,10 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
         return
 
       case 'Escape':
-        // One level back and nothing else: the list gives up its selection first,
-        // and once it has none the keyboard goes back to the note. Never an action
-        // - an Escape that changes something is the one key nobody can undo.
         if (settings.leave?.()) {
           event.preventDefault()
           return
         }
-        // A list in a layer - the space switcher, a menu - is closed by Escape, and the
-        // layer hands the keyboard back to whatever opened it (trap.ts): the file list,
-        // a terminal, a page. Sending it to the note as well took it from them.
         if (overlays.depth > 0) return
         event.preventDefault()
         focusEditor()
@@ -311,8 +178,6 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
         break
     }
 
-    // A letter spells a name, which is how a list of four hundred is reached
-    // without four hundred presses of an arrow.
     if (event.key.length !== 1) return
 
     const labels = long ? long.labels() : rows.map(labelOf)
@@ -322,10 +187,6 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
     if (next.found >= 0 && went(next.found)) event.preventDefault()
   }
 
-  /** Puts the keyboard on row n, wherever it is. In a short list that is the
-   *  element; in a long one the row may not be in the page yet, and `reach` is
-   *  what puts it there - a frame later, which is why the press is taken now and
-   *  the focus moves when the row arrives. False for a row the list has not got. */
   function went(index: number): boolean {
     const long = settings.long
     if (!long) {
@@ -344,8 +205,6 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
     return true
   }
 
-  /** A press with the pointer moves the tab stop too, or the keyboard and the
-   *  hand disagree about where the list is. The practices call this out by name. */
   function onFocusIn() {
     apply()
   }
@@ -370,9 +229,6 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
   }
 }
 
-/** A press where the row is, so the menu a key asks for arrives where the menu a
- *  right click asks for would have. The menu takes a mouse event because that is
- *  what a menu is opened by; this is the same event, from a key. */
 function atRow(row: HTMLElement): MouseEvent {
   const box = row.getBoundingClientRect()
 

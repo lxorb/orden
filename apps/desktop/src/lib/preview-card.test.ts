@@ -1,15 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { caretFor } from './preview-card'
 
-/** Where the caret stands when a glance card opens.
- *
- *  The bug this is here to keep from coming back. The card is an editor, and an
- *  editor shows the block the caret is in as the markdown it is; a link that names
- *  the whole note put the caret at character nought, which in a note with metadata
- *  is inside the front matter. So a glance at such a note opened on three lines of
- *  raw YAML, with none of the rows it draws for everybody else - while every block
- *  below it drew perfectly. It read as a renderer missing its extensions and was a
- *  caret standing in the wrong place. */
 describe('where a glance opens', () => {
   const matter = '---\ntitle: Everything\ntags:\n  - one\n---\n\n# Everything\n\nWords.\n'
 
@@ -30,8 +21,6 @@ describe('where a glance opens', () => {
     expect(caretFor({ path: 'Everything.md', text: matter, at: heading })).toBe(heading)
   })
 
-  /** Three dashes that never close are not front matter, and a note that begins
-   *  with a rule is a note like any other. */
   test('and a note that only looks like it has some opens at the top', () => {
     const rule = '---\n\nA line under nothing.\n'
     expect(caretFor({ path: 'Rule.md', text: rule, at: 0 })).toBe(0)

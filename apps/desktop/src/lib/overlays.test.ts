@@ -4,7 +4,6 @@ import { fileURLToPath } from 'node:url'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { overlays } from './overlays'
 
-/** One overlay: whether it is open, and how it is closed. */
 function sheet() {
   const it = { open: true, closed: 0 }
   const off = overlays.show(() => {
@@ -15,8 +14,6 @@ function sheet() {
   return { ...it, off, state: it }
 }
 
-/** An Escape, as much of one as `escape` reads: whether it was answered, and
- *  whether it goes on to the listeners after this one. */
 function keystroke() {
   const press = {
     defaultPrevented: false,
@@ -62,8 +59,6 @@ describe('escape', () => {
     const settings = sheet()
     const dropdown = sheet()
 
-    // Two presses in the same moment: closing is a change to a component's own
-    // state, which reaches this list a moment later.
     overlays.escape()
     overlays.escape()
 
@@ -74,10 +69,6 @@ describe('escape', () => {
     dropdown.off()
   })
 
-  /** A press that closed an overlay is spent. Other things on the page read
-   *  Escape off the same window - the find bar over a note being read, the one
-   *  over a PDF - and a key that closed the palette must not also shut the bar
-   *  underneath it. */
   test('takes the keystroke with it, so nothing else acts on the same press', () => {
     const one = sheet()
     const press = keystroke()
@@ -97,10 +88,6 @@ describe('escape', () => {
     expect(press.stopped).toBe(false)
   })
 
-  /** Four deep: a full-screen deck, a sheet, the settings and a dropdown inside
-   *  them. One press closes one, newest first, and the fourth press has nothing
-   *  left to close - the deck goes last, which is what puts the caret back on
-   *  the slide somebody stopped at. */
   test('unwinds a deep stack one press at a time, newest first', () => {
     const closed: string[] = []
     const offs = ['deck', 'sheet', 'settings', 'dropdown'].map((name) =>
@@ -128,7 +115,6 @@ describe('escape', () => {
     const settings = sheet()
     const dropdown = sheet()
 
-    // The pane behind the dropdown was closed by something other than Escape.
     settings.off()
 
     expect(overlays.escape()).toBe(true)
@@ -139,10 +125,7 @@ describe('escape', () => {
   })
 })
 
-/** A popup closes when it is pressed past, and when the window loses the focus - which
- *  is also how a press into a web page is heard (#382). */
 describe('a press past a popup', () => {
-  /** Enough of a DOM for `contains`: a node, and the nodes inside it. */
   class Box {
     readonly inside: Box[] = []
     constructor(readonly parent: Box | null = null) {
@@ -156,7 +139,6 @@ describe('a press past a popup', () => {
 
   vi.stubGlobal('Node', Box)
 
-  /** A popup on the stack: itself, the button that opened it, and whether it is open. */
   function popup(opener = new Box()) {
     const box = new Box()
     const it = { open: true, box, opener }
@@ -192,8 +174,6 @@ describe('a press past a popup', () => {
     off()
   })
 
-  /** The press that opens one is read on its way down, before anything under it has
-   *  opened anything; the popup is on the stack only after. */
   test('is not closed by the press that opened it', () => {
     const opener = new Box()
     overlays.pressed(press(opener))
@@ -203,8 +183,6 @@ describe('a press past a popup', () => {
     off()
   })
 
-  /** A press that waited behind a long task carries a time from before the popup
-   *  opened, and is still a press past it. */
   test('is closed by a press however long it waited to be read', () => {
     const { it } = popup()
     const queued = { target: new Box() as unknown as EventTarget, timeStamp: 0 }
@@ -220,7 +198,6 @@ describe('a press past a popup', () => {
     overlays.pressed(press(new Box(child.it.box)))
     expect([parent.it.open, child.it.open]).toEqual([true, true])
 
-    // On the parent, past the submenu: the submenu goes and the parent stays.
     overlays.pressed(press(new Box(parent.it.box)))
     expect([parent.it.open, child.it.open]).toEqual([true, false])
 
@@ -238,9 +215,6 @@ describe('a press past a popup', () => {
     off()
   })
 
-  /** #411: a popup that lays a catch over the window is closed on the tap's way down,
-   *  and the click that tap goes on to make lands on whatever is under the finger once
-   *  the catch is gone - on a phone, the button that opened it. */
   describe('and the click of the press that closed it', () => {
     const click = (target: unknown) => {
       const said = { target: target as EventTarget, spent: false }
@@ -271,7 +245,6 @@ describe('a press past a popup', () => {
       overlays.clicked(elsewhere)
       expect(elsewhere.spent).toBe(false)
 
-      // The press after, on the button: its own, which opens it again.
       overlays.pressed(press(it.opener))
       const again = click(it.opener)
       overlays.clicked(again)
@@ -319,21 +292,10 @@ describe('a press past a popup', () => {
   })
 })
 
-/** The second question the stack answers: whether a web page has to be out of sight.
- *
- *  A web tab's page is a native webview, which draws above every pixel of HTML in the
- *  window, so the pane hides it - and holds its still picture instead - while anything
- *  is on this stack. That is right for a layer somebody opened over the note and will
- *  close again, and wrong for anything that stays up without being asked for: the
- *  update notice was one, and the page went blank for as long as it stood. So every
- *  caller is named here with what it is, and a new one fails this until somebody has
- *  said which kind it is. See `covered` in lib/web-tab/WebTab.svelte. */
 describe('what hides a web page', () => {
   const src = fileURLToPath(new URL('..', import.meta.url))
   const read = (path: string) => readFileSync(join(src, path), 'utf8')
 
-  /** Every file that puts something on the stack, and what it puts there. Each is drawn
-   *  over the note, opened by a press or by a site's question, and closed again. */
   const LAYERS: Record<string, string> = {
     'App.svelte': 'a panel slid over the note as a drawer',
     'lib/AppMenuPanel.svelte': 'menu',
@@ -369,7 +331,6 @@ describe('what hides a web page', () => {
     'lib/quick-add/QuickAddSheet.svelte': 'dialog',
     'lib/quitting/QuitSheet.svelte': 'dialog',
     'lib/remote/HostPicker.svelte': 'dialog',
-    // Only while it would hang over a page, and gone the moment the pointer leaves.
     'lib/tab-strip/hover-card.svelte.ts': 'the card under a tab the pointer rests on',
     'lib/save-place/SavePlace.svelte': 'where a tab with no file is saved, under the tab',
     'lib/settings/BrowserThemes.svelte': 'sheet',
@@ -388,7 +349,6 @@ describe('what hides a web page', () => {
     'lib/web-tab/WebSite.svelte': 'bubble',
   }
 
-  /** What stays up without being asked for, and so may never hide a page. */
   const FURNITURE = [
     'lib/UpdateNotice.svelte',
     'lib/RenameNotice.svelte',
@@ -422,8 +382,6 @@ describe('what hides a web page', () => {
 
   test('it is in one row, written once', () => {
     const app = read('App.svelte')
-    // Written once, as a snippet: the row is drawn over the panes, or over the drawer
-    // as well where the panels are one.
     const row = app.slice(app.indexOf('class="notices"'))
     const end = row.indexOf('{/snippet}')
 
@@ -440,10 +398,6 @@ describe('what hides a web page', () => {
     }
   })
 
-  /** A toast in a row of its own under the panes shoved every tab up by its height
-   *  as it came and back down as it went (#218). So the row floats, over the foot of
-   *  the panes, and a web page under it is cut round each card in it rather than
-   *  hidden; see web-tab/covers.ts. */
   test('the row floats over the panes rather than taking room from them', () => {
     const app = read('App.svelte')
     const panes = app.slice(app.indexOf('class="panes"'))
@@ -457,9 +411,6 @@ describe('what hides a web page', () => {
     expect(rule).toMatch(/pointer-events:\s*none/)
   })
 
-  /** Where the panels are a drawer, the note slides off the screen to show the list,
-   *  and a row inside the note went with it: the Undo for a file deleted from the
-   *  list was off the side of a phone, where nobody could see it or press it. */
   test('where the panels are a drawer it is over the list and the note, not in the note', () => {
     const app = read('App.svelte')
     const main = app.slice(app.indexOf('<div class="middle"'), app.indexOf('</main>'))

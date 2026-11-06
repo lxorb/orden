@@ -2,9 +2,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { EditorView } from '@orden/editor'
 import { familyName, glassesBreak, KEEP_MONTH, KEEP_YEAR, rollbackSteps } from './modes.svelte'
 
-/** The store writes to the browser's storage the moment anything is toggled,
- *  and sets the zoom on the document element. Under node there is neither, so
- *  both are stood in for before the store is imported. */
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -21,10 +18,6 @@ function memoryStorage(): Storage {
 }
 
 vi.stubGlobal('localStorage', memoryStorage())
-/** The root element, as far as this store reaches into it: a property it sets for the
- *  text size, and two attributes the window's own settings say out loud for the
- *  stylesheet to read. Both are readable here, because what the app draws from is what
- *  a test about them should look at. */
 const styled = new Map<string, string>()
 const root = {
   style: { setProperty: (name: string, value: string) => void styled.set(name, value) },
@@ -40,16 +33,11 @@ const root = {
 
 vi.stubGlobal('document', { documentElement: root })
 
-/** What the two modes under test were last told. The editor's own side of
- *  them is tested in packages/editor; what matters here is that the store
- *  says the same thing to a view as it says in the menu. */
 const told = vi.hoisted(() => ({
   calls: [] as { mode: string; on: boolean }[],
-  /** The same, with the view each was said to, for the modes that are a pane's own. */
   views: [] as { view: unknown; mode: string; on: boolean }[],
 }))
 
-/** What the crate answers about the interface's zoom. */
 const crate = vi.hoisted(() => ({ refuses: false, asked: [] as unknown[] }))
 
 vi.mock('./tauri', async (importOriginal) => {
@@ -75,8 +63,6 @@ vi.mock('@orden/editor', async (importOriginal) => ({
     told.views.push({ view, mode: 'source', on })
   },
   setVim: (_view: unknown, on: boolean) => told.calls.push({ mode: 'vim', on }),
-  // A view built later takes every mode at once rather than one at a time, so
-  // this is where the store says what it holds to a fresh editor.
   modeEffects: (settings: { readOnly: boolean; source: boolean; vim: boolean }) => {
     told.calls.push({ mode: 'read-only', on: settings.readOnly })
     told.calls.push({ mode: 'source', on: settings.source })
@@ -85,8 +71,6 @@ vi.mock('@orden/editor', async (importOriginal) => ({
   },
 }))
 
-/** The account, standing still. One object across module resets, so a test can
- *  swap a call out and the store made afterwards still sees it. */
 const api = vi.hoisted(() => {
   const empty: Held = {}
 
@@ -96,7 +80,6 @@ const api = vi.hoisted(() => {
   }
 })
 
-/** As much of the account's settings as these tests are about. */
 interface Held {
   ligatures?: boolean | string
   attachments?: string
@@ -116,7 +99,6 @@ vi.mock('./api', async (importOriginal) => ({
   api,
 }))
 
-/** Everything the other mode setters reach for on a view, and nothing else. */
 function surface() {
   const view = {
     state: { readOnly: false },
@@ -140,12 +122,8 @@ function surface() {
 
 let modes: typeof import('./modes.svelte').modes
 
-/** The store's graph, loaded here rather than by the first `restarted()`, which
- *  is a hook with a budget: whichever test ran first spent thirty seconds of it
- *  compiling. See docs/conventions.md. */
 await import('./modes.svelte')
 
-/** The store as a fresh start of the app would find it. */
 async function restarted() {
   vi.resetModules()
   const store = (await import('./modes.svelte')).modes
@@ -192,11 +170,6 @@ describe('read-only mode', () => {
   })
 })
 
-/** The Glasses section, which only the Even Hub plugin shows.
- *
- *  Written against the live store and the validator rather than through a module
- *  restart: the restart harness in this file is already at its timeout, and what
- *  is worth pinning here is the rule, not the reload. */
 describe('the glasses settings', () => {
   const saved = () =>
     JSON.parse(localStorage.getItem('nib:modes') ?? '{}') as Record<string, unknown>
@@ -206,11 +179,6 @@ describe('the glasses settings', () => {
     expect(modes.glassesLineNumbers).toBe(true)
   })
 
-  /** Two settings the glasses section used to have and has not got: the page
-   *  number, and who scrolls. Both are one behaviour now - the app cuts the note
-   *  into panels and turns them, and the number always means a page - so neither
-   *  is a field, and a value left in storage by a version that had them is dropped
-   *  rather than read. See even/settings.ts. */
   test('carry no scroll mode, and drop one an older version wrote down', async () => {
     localStorage.setItem(
       'nib:modes',
@@ -280,11 +248,6 @@ describe('the glasses settings', () => {
   })
 })
 
-/** Smart punctuation, which used to be on because Typora has it on.
- *
- *  It changes the file rather than the way the file is drawn, and the dashes did
- *  it worst: a deck Emil wrote held an em dash where every slide break should
- *  have been. So it is off, and a reader who never chose keeps it off. */
 describe('smart punctuation', () => {
   test('starts off', () => {
     expect(modes.punctuation).toBe(false)
@@ -317,8 +280,6 @@ describe('the ligature scope', () => {
     expect((await restarted()).ligatures).toBe('code')
   })
 
-  /** A switch is what an entry written before the scope existed says, and a
-   *  scope this build has never heard of is what one written after it might. */
   test('reads a switch written by an older build', async () => {
     localStorage.setItem('nib:modes', JSON.stringify({ ligatures: true }))
     expect((await restarted()).ligatures).toBe('all')
@@ -372,8 +333,6 @@ describe('modal editing', () => {
     expect(told.calls).toContainEqual({ mode: 'vim', on: true })
   })
 
-  /** A preset says which it wants rather than that it wants the other one, so
-   *  choosing the same preset twice does not turn modal editing off again. */
   test('is said outright rather than flipped', () => {
     modes.setVimKeys(true)
     modes.setVimKeys(true)
@@ -389,11 +348,6 @@ describe('modal editing', () => {
     expect(modes.vimModeOf(undefined)).toBeNull()
   })
 
-  /** The one setting in the app that changes what every key on the keyboard
-   *  does. A reader who did not ask for it and does not know the word is left
-   *  with an editor that swallows what they type, so nothing may turn it on but
-   *  a hand: not a default, not an absent value, not a restart, not a fresh
-   *  view, and not an account that has never said anything about it. */
   describe('only ever turns on by hand', () => {
     test('on a machine with nothing written down', () => {
       expect(modes.vim).toBe(false)
@@ -439,8 +393,6 @@ describe('modal editing', () => {
     })
   })
 
-  /** The words the status bar shows, which the editor package reports the
-   *  modes for; every one of them is translated in all four dictionaries. */
   test('has a word for every mode it has', async () => {
     const { VIM_WORDS } = await import('./modes.svelte')
     expect(Object.values(VIM_WORDS)).toEqual(['NORMAL', 'INSERT', 'VISUAL', 'REPLACE'])
@@ -540,12 +492,10 @@ describe('the pointing hand', () => {
 })
 
 describe('source mode, per tab', () => {
-  /** A tab as far as source mode goes, and the session writes it asked for. */
   function tab(source = false) {
     return { source, written: 0 }
   }
 
-  /** A pane's view, told which tab it is showing, as Editor.svelte tells it. */
   function showing(one: ReturnType<typeof tab>) {
     const view = surface()
     modes.apply(view)
@@ -553,7 +503,6 @@ describe('source mode, per tab', () => {
     return view
   }
 
-  /** What one view was last told about source mode, read off the calls to it. */
   function lastSource(view: EditorView): boolean | undefined {
     return told.views.filter((one) => one.view === view && one.mode === 'source').at(-1)?.on
   }
@@ -662,7 +611,6 @@ describe('read-only mode and source mode', () => {
 
     expect(modes.readOnly).toBe(false)
     expect(modes.sourceIn(writtenView)).toBe(true)
-    // The pane that was raw before the lock is raw again under it lifting.
     expect(modes.sourceIn(rawView)).toBe(true)
   })
 
@@ -693,8 +641,6 @@ describe('read-only mode and source mode', () => {
 })
 
 describe('taking over what the account holds', () => {
-  /** Answers the account's settings, but only once released - so a choice can
-   *  be made on this machine while the answer is still in the air. */
   function heldAnswer(settings: Held) {
     let release: () => void = () => undefined
     const held = new Promise<void>((resolve) => {
@@ -787,8 +733,6 @@ describe('taking over what the account holds', () => {
     expect(modes.ligatures).toBe('code')
   })
 
-  /** The ligature setting was a switch before it was a scope, and an account
-   *  written by that build still says so. */
   test('reads a switch from an older build as a scope', async () => {
     const { release, settingsCall } = heldAnswer({ ligatures: true })
     api.settings = settingsCall
@@ -828,9 +772,6 @@ describe('taking over what the account holds', () => {
     api.settings = settingsCall
 
     const adopted = modes.adopt('token')
-    // The reader picks a scope and goes back to off before the account answers.
-    // The answer is older than that, and `setLigatures` has already sent this
-    // machine's choice up.
     modes.setLigatures('code')
     modes.setLigatures('off')
 
@@ -840,10 +781,6 @@ describe('taking over what the account holds', () => {
     expect(modes.ligatures).toBe('off')
   })
 
-  /** An account is read by every version of the app at once, and a build that
-   *  had no such setting says nothing about it. Nothing is not `false`, and it is
-   *  certainly not `true`: only an account that says so outright may turn modal
-   *  editing on. */
   test('says nothing about modal editing unless the account does', async () => {
     for (const settings of [{}, { ligatures: 'all' }, { attachments: 'note' }] as Held[]) {
       const store = await restarted()
@@ -919,12 +856,6 @@ describe('taking over what the account holds', () => {
     expect(modes.attachments).toBe('space')
   })
 
-  /** Emil, on his desktop: *"I don't see the glasses setting on desktop, even though I
-   *  already had the Even plugin open."* His account said nothing about `glassesSeen`
-   *  and plenty about the glasses settings he changed later in the same sitting, which
-   *  is the whole story: the plugin sees a pair within a moment of starting, the
-   *  session on a phone takes seconds to come back from the host app, and a patch with
-   *  nowhere to go was dropped for good. */
   test('carries up what was decided before the session came back', async () => {
     const patches: Held[] = []
     api.saveSettings = async (_token: string, patch: Held) => {
@@ -934,8 +865,6 @@ describe('taking over what the account holds', () => {
     const { release, settingsCall } = heldAnswer({})
     api.settings = settingsCall
 
-    // A plugin at the moment it starts: a pair of glasses has answered and there is
-    // no session to tell yet.
     modes.sawGlasses()
     expect(modes.glassesSeen).toBe(true)
     expect(patches).toEqual([])
@@ -974,9 +903,6 @@ describe('taking over what the account holds', () => {
     expect(patches).toEqual([{ glassesSeen: true }, { glassesSeen: true }])
   })
 
-  /** The desktop half of the round trip: the flag comes down, the pane appears, and
-   *  nothing on this machine says it again. See services/sync/test/settings.test.ts
-   *  for the round trip through the Worker itself. */
   test('takes it from the account, and then has nothing left to say', async () => {
     const patches: Held[] = []
     api.saveSettings = async (_token: string, patch: Held) => {
@@ -996,8 +922,6 @@ describe('taking over what the account holds', () => {
     expect(patches).toEqual([])
   })
 
-  /** The Mobile section waits for a handheld on the account (#769): a reader on a
-   *  NixOS laptop, *"I am on the laptop but I see mobile tab, should it be hidden?"* */
   describe('a phone or a tablet on the account', () => {
     async function adoptedOn(device: 'desktop' | 'phone', account: Held) {
       const patches: Held[] = []
@@ -1032,8 +956,6 @@ describe('taking over what the account holds', () => {
       expect(await adoptedOn('phone', { mobileSeen: true })).toEqual([])
     })
 
-    /** The web app's edge talks to main's Worker, which may not know the setting yet
-     *  and refuses a whole patch over it: nothing else may wait behind it. */
     test('is never owed with the other settings when the account refuses it', async () => {
       api.saveSettings = async () => {
         throw new Error('unknown setting mobileSeen')
@@ -1043,8 +965,6 @@ describe('taking over what the account holds', () => {
       viewport.device = 'phone'
       await modes.adopt('token')
 
-      // A switch turned with no session to tell, and then the next pull: what was owed
-      // goes up alone, and the handheld is said again, apart from it.
       modes.toggleSilent()
       const patches: Held[] = []
       api.saveSettings = async (_token: string, patch: Held) => {
@@ -1076,9 +996,6 @@ describe('where a pasted picture goes', () => {
   })
 })
 
-/** The row reaches as far as the account keeps and no further: a step asking for a
- *  moment before the first version there is would answer "nothing has changed since
- *  then", which is a wrong answer rather than a refusal. */
 describe('how far back a bulk restore offers to go', () => {
   test('is three steps while the account keeps a month', () => {
     expect(rollbackSteps(KEEP_MONTH)).toEqual([1, 7, 30])
@@ -1106,11 +1023,6 @@ describe('how far back a bulk restore offers to go', () => {
   })
 })
 
-/** The paper a new page note starts on.
- *
- *  A4 outside North America and Letter inside it, and neither of those is something an
- *  app can guess from a locale it was never told. So it is a choice, and a choice this
- *  machine keeps: which paper somebody writes on is about their printer. */
 describe('the paper new page notes start on', () => {
   test('is A4 until somebody says otherwise', () => {
     expect(modes.pagesPaper).toBe('a4')
@@ -1131,14 +1043,6 @@ describe('the paper new page notes start on', () => {
   })
 })
 
-/** The window's own two settings: who draws the frame, and whether the desk shows
- *  through it.
- *
- *  Both are this machine's, both are said on the root element for the stylesheet to
- *  read, and both are put on again when the app starts - a window that came up with
- *  nib's frame and grew the system's a moment later is a window that jumped. The crate
- *  is the other half and is not here: there is no window under node, and `isDesktop` is
- *  false, so what this can ask about is the store and the root. */
 describe('the window’s own frame', () => {
   test('is nib’s own until somebody says otherwise', () => {
     expect(modes.frame).toBe('nib')
@@ -1164,14 +1068,10 @@ describe('the window’s own frame', () => {
   })
 })
 
-/** Translucency was a switch here, and under any theme but glass it showed next to
- *  nothing; glass is what it means now. What a reader is given for it is the theme
- *  store's answer (see theme.test.ts); this is that it is asked once and then gone. */
 describe('translucency, which the glass theme is now', () => {
   const saved = () =>
     JSON.parse(localStorage.getItem('nib:modes') ?? '{}') as Record<string, unknown>
 
-  /** The store as a launch finds it, with the theme's answer listened to. */
   async function restartedAsking() {
     vi.resetModules()
     const { theme } = await import('./theme.svelte')
@@ -1190,7 +1090,6 @@ describe('translucency, which the glass theme is now', () => {
 
     expect(adopt).toHaveBeenCalledOnce()
     expect(saved()).not.toHaveProperty('translucent')
-    // So the next launch asks nothing.
     expect(await restartedAsking()).not.toHaveBeenCalled()
   })
 
@@ -1202,10 +1101,6 @@ describe('translucency, which the glass theme is now', () => {
   })
 })
 
-/** What a note's front matter is drawn as. The strip at the top of the note is where a
- *  reader starts (#1120), and an entry written before it was can say `hidden` - or
- *  `properties` before that - without anybody having chosen it: every build wrote the
- *  whole entry down whenever any setting moved. */
 describe('the front matter', () => {
   const saved = () =>
     JSON.parse(localStorage.getItem('nib:modes') ?? '{}') as Record<string, unknown>
@@ -1246,7 +1141,6 @@ describe('the front matter', () => {
   })
 })
 
-/** A face the reader chose, in front of the app's own (#772). */
 describe('the faces to read in', () => {
   test('are the app’s own until one is chosen', () => {
     expect(modes.fonts).toEqual({ ui: '', content: '', mono: '' })
@@ -1267,7 +1161,6 @@ describe('the faces to read in', () => {
     expect(styled.get('--font-mono-chosen')).toBe('"JetBrains Mono",')
   })
 
-  /** A name goes into the root's style as it is written, so a name is all it may be. */
   test('are names and nothing a stylesheet would read as its own', () => {
     expect(familyName('  Noto   Sans  ')).toBe('Noto Sans')
     expect(familyName('Source Code Pro')).toBe('Source Code Pro')

@@ -17,16 +17,6 @@ const folder = (path: string, children: Entry[]): Entry => ({
   children,
 })
 
-/** A space with a note that holds notes, a note that holds one of those, and a
- *  folder out of somebody's vault with no note of its own:
- *
- *      Work            a note holding notes, drawn as Work/Work.md
- *        Notes         another, drawn as Work/Notes/Notes.md
- *          deep.md
- *        plan.md
- *      Projects        a folder nobody has written in
- *        one.md
- *      Read me.md      */
 const WORK = folder('/s/Work', [
   file('/s/Work/Work.md'),
   folder('/s/Work/Notes', [file('/s/Work/Notes/Notes.md'), file('/s/Work/Notes/deep.md')]),
@@ -50,9 +40,6 @@ describe('the file list as one flat list of rows', () => {
     expect(shown()).toEqual(['/s/Work', '/s/Projects', '/s/Read me.md'])
   })
 
-  /** A note that holds notes is one row, not a folder and a note: the note the
-   *  folder is named after is the row, so the walk steps past it the way the eye
-   *  does. See folder-notes.ts. */
   test('and never the note a row is itself drawn as', () => {
     expect(shown('/s/Work')).toEqual([
       '/s/Work',
@@ -74,8 +61,6 @@ describe('the file list as one flat list of rows', () => {
     ])
   })
 
-  /** A folder out of a vault has no note of its own, so everything in it is a row,
-   *  including a note of the folder's own name would be if there were one. */
   test('and a folder nobody has written in shows all of what it holds', () => {
     expect(shown('/s/Projects')).toEqual([
       '/s/Work',
@@ -93,10 +78,6 @@ describe('the file list as one flat list of rows', () => {
     expect(flatRows(null, open())).toEqual([])
   })
 
-  /** The space itself is no row, so a note at its top named the way a folder's own
-   *  note is - `Index`, or the space's own name - has no row to be drawn as either.
-   *  It used to be left out all the same, and a note somebody had just made at the
-   *  top of their space was nowhere in the list. */
   test('a note at the top of the space is a row whatever it is called', () => {
     const top = folder('/s/Notes', [
       file('/s/Notes/Index.md'),
@@ -112,7 +93,6 @@ describe('the file list as one flat list of rows', () => {
   })
 })
 
-/** What a twist's slide is measured in: how many rows appear or go when it turns. */
 describe('how many rows a note holds open', () => {
   test('counts what the row discloses and not the note it is drawn as', () => {
     expect(heldRows(WORK, open('/s/Work'))).toBe(2)
@@ -138,10 +118,7 @@ describe('where each row is', () => {
   })
 })
 
-/** What the Collapse button, the twist and the keys all ask (#1081): a row that is
- *  drawn and holds rows, turned - not whatever this machine remembers as open. */
 describe('a row that stands open', () => {
-  /** A folder holding its own note and nothing else, which is a note on screen. */
   const LEAF = folder('/s/Lone', [file('/s/Lone/Lone.md')])
   const EMPTY = folder('/s/Empty', [])
   const WITH_LEAVES = folder('/s', [LEAF, EMPTY, PROJECTS])

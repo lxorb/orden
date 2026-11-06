@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { GIVE_UP } from './parting'
 
-/** The look for a new version where a package manager keeps the install: the version
- *  is found, and nothing is fetched, because the manager installs it. See
- *  src-tauri/src/package_manager.rs for which managers are known. */
-
 const world = vi.hoisted(() => ({
   manager: null as string | null,
   version: '1.4.0',
@@ -41,7 +37,6 @@ vi.mock('./tauri', () => ({
     if (command === 'install_manager') return Promise.resolve(world.manager)
     if (command === 'system_update') {
       world.systemUpdates.push(args)
-      // The crate's error, serialised: fields on what the promise is rejected with.
       const not = world.notUpdated
       return not ? Promise.reject(Object.assign(new Error(not.reason), not)) : Promise.resolve(null)
     }
@@ -129,8 +124,6 @@ describe('where a package manager keeps the install', () => {
   })
 })
 
-/** A `.deb` or an `.rpm`: the notice installs through PackageKit and restarts (#1147);
- *  see src-tauri/src/system_update.rs. */
 describe('where the system updates the install', () => {
   test('is apt and dnf, and no other manager', () => {
     expect(
@@ -179,8 +172,6 @@ describe('where the app updates itself', () => {
   })
 })
 
-/** On Windows the installer ends the process with every window in it, so the crate says
- *  whether this window may start it; see `update_may_install` in lifecycle.rs. */
 describe('the installer on the way out', () => {
   test('a window told no leaves the update alone', async () => {
     await updater.stageUpdate('stable')
@@ -228,8 +219,6 @@ describe('the installer on the way out', () => {
   })
 })
 
-/** What a window does when another one is about to start the installer: its writes
- *  land, then the crate hears, and a disk that does not answer does not hold it up. */
 describe('settling for another window s installer', () => {
   test('says so once what is owed has landed', async () => {
     let landed: () => void = () => undefined

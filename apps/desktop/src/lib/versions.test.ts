@@ -31,8 +31,6 @@ beforeEach(() => {
 })
 
 test("another Mac's version stays listed beside the copy kept here when it arrived", async () => {
-  // Both machines are "Mac desktop". What this one kept of its own words when Bob's
-  // arrived, and Bob's words, pushed fifteen seconds before.
   held.snapshots = [{ taken_at: 1_000_020_000, size: 9, path: '/h/1.md' }]
   held.words = new Map([['/h/1.md', 'the owner']])
   held.account = [
@@ -48,7 +46,6 @@ test("another Mac's version stays listed beside the copy kept here when it arriv
 })
 
 test('a push of the words kept here is that copy, listed once, whoever named it', async () => {
-  // A room settled for this device's own typing names it "Mac", not "Mac desktop".
   held.snapshots = [{ taken_at: 1_000_000_000, size: 9, path: '/h/1.md' }]
   held.words = new Map([['/h/1.md', 'the owner']])
   held.account = [{ at: 1_000_004_000, size: 9, by: 'Mac', hash: await sha256('the owner') }]

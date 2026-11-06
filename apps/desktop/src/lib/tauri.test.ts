@@ -1,22 +1,7 @@
-/** Which operating system the app thinks it is on, and what it does when it cannot
- *  tell.
- *
- *  `platform()` is a property read on a global the os plugin's Rust half writes before
- *  the first script runs - read rather than imported, because importing the plugin for
- *  that one line brings the whole IPC core into the first paint; see tauri.ts. A global
- *  read is the one thing that can fail quietly, and this is what stops it: inside the
- *  app an empty answer is a sentence in the console naming the global, so every drive
- *  in test/e2e goes red the day Tauri renames it, and a page in a browser - which has
- *  no such plugin - says nothing at all.
- *
- *  Each case loads the module again with a window of its own, because which build this
- *  is is decided when the module is loaded. */
-
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
 type Tauri = typeof import('./tauri')
 
-/** A page with a Tauri behind it, and whatever the os plugin left on it. */
 async function onTauri(os?: { platform?: string }): Promise<Tauri> {
   vi.resetModules()
   ;(globalThis as { window?: unknown }).window = {
@@ -27,7 +12,6 @@ async function onTauri(os?: { platform?: string }): Promise<Tauri> {
   return import('./tauri')
 }
 
-/** And a page in a browser, which has neither global. */
 async function inBrowser(): Promise<Tauri> {
   vi.resetModules()
   ;(globalThis as { window?: unknown }).window = {}
@@ -60,11 +44,6 @@ describe('which operating system this is', () => {
     expect(said).not.toHaveBeenCalled()
   })
 
-  /** The failure this is here for: the plugin gone from the crate, or Tauri renaming
-   *  what it writes. Answering the empty string quietly would turn a phone into a
-   *  desktop - no share arriving, no dictation row, no widget - with nothing on screen
-   *  to say why, so it is said out loud instead, and the sentence names the global so
-   *  whoever reads it knows what to look for. */
   test('and a Tauri page that cannot say so writes the global’s name to the console', async () => {
     const said = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const { platform } = await onTauri()
@@ -92,10 +71,6 @@ describe('which operating system this is', () => {
   })
 })
 
-/** Where a link outside the app goes: the phone app hands it to the system, which opens
- *  the reader's own browser (the opener plugin's `ACTION_VIEW` on Android), and a page in a
- *  browser opens a tab beside itself. A web note goes the same way off the desktop app
- *  (#206); see `openWeb` in workspace.svelte.ts. */
 describe('a link out of the app', () => {
   afterEach(() => {
     vi.doUnmock('@tauri-apps/plugin-opener')

@@ -1,6 +1,3 @@
-/** What a reload is where the reader is (#1065): a web tab's page asked again, and a
- *  sync now for anything else, which says so where it did not get through. */
-
 import { beforeEach, expect, test, vi } from 'vitest'
 
 const place = vi.hoisted(() => ({ active: null as { id: string; kind: string } | null }))

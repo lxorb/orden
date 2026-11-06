@@ -8,7 +8,6 @@ import {
   toggled,
 } from './spell-languages'
 
-/** The dictionaries a note is checked in, several at once (#771). */
 describe('the dictionary a language reads in', () => {
   test('is its own where Chromium has one', () => {
     expect(dictionaryFor('de-DE')).toBe('de-DE')
@@ -49,7 +48,6 @@ describe('the list as it was stored', () => {
 })
 
 describe('what an older build chose', () => {
-  /** One dictionary, by a short tag, was `spellLanguage` before there could be several. */
   test('reads as the dictionary its tag names', () => {
     expect(inForceNow(['de'])).toEqual(['de-DE'])
     expect(inForceNow(['de', 'fr-FR'])).toEqual(['de-DE', 'fr-FR'])

@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The space a random note is chosen from, stood in for: which notes it lists,
- *  which is open, and what it leaves out. The real store reads a disk and an
- *  account, and what is under test here is only the choosing. */
 const space = {
   notes: [] as { path: string }[],
   active: null as { path: string | null } | null,
@@ -60,8 +57,6 @@ describe('choosing one', () => {
 
 describe('a random note of the space', () => {
   test('is never the open note, a file that is not a note, or one left out', () => {
-    // Plan is open, Hidden is excluded, Old is archived, and the PDF and the plane
-    // are files beside the notes.
     expect(randomChoices()).toEqual([at('Ideas.md')])
   })
 

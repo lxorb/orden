@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { keepsSystemMenu } from './system-menu'
 
-/** A right click is pictured by what it landed on, as the window's handler sees it. */
 function on(tagName: string, type?: string): EventTarget {
   return { tagName, type } as unknown as EventTarget
 }
@@ -18,7 +17,6 @@ describe('the system menu', () => {
     expect(keepsSystemMenu(on('INPUT', 'checkbox'), 'macos')).toBe(false)
   })
 
-  /** The note has a menu of its own, and so does every row that has one at all. */
   test('nor anywhere that is not a field', () => {
     expect(keepsSystemMenu(on('DIV'), 'macos')).toBe(false)
     expect(keepsSystemMenu(null, 'macos')).toBe(false)

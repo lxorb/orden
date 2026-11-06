@@ -2,11 +2,6 @@ import { frame, unframe } from '@orden/sync-core/wire'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { get, put, scan } from './sync2/store'
 
-/** The native store's half of the bridge: every call reaches the command it is meant
- *  for, a batch goes up as one envelope of bytes, and an answer is read however the
- *  platform delivered it. The crate's half of the same envelope is sync_store/wire.rs,
- *  and `the_envelope_is_the_one_sync_core_speaks` there pins the two to each other. */
-
 interface Calls {
   made: { command: string; args: unknown }[]
   answer: unknown

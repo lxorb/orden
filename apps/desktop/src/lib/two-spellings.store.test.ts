@@ -1,15 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** `Plan.md` and `plan.md` on a disk that calls them one file.
- *
- *  Windows and a Mac look a name up without its case, so a link, a caller or a sitting
- *  written down elsewhere can name a note in a spelling its listing does not have, and
- *  the disk answers it. Compared as written, that was a second note: a second document
- *  over the same file, whose writes replaced the first's, a second room, and a second
- *  row. It is one note, spelled the way the listing spells it; see space-paths.ts.
- *
- *  And a disk that tells case apart keeps them two, which is what Linux does. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../../test/disk').Disk | null }))
 
 vi.mock('./tauri', async (importOriginal) => ({
@@ -31,7 +21,6 @@ const { answeredCase, samePath, within } = await import('./space-paths')
 
 const ROOT = '/space'
 
-/** Every path the list shows. */
 function rows(): string[] {
   const out: string[] = []
   const walk = (one: { children: { path: string; children: unknown[] }[] }) => {
@@ -69,7 +58,6 @@ describe('on a disk that sets case aside', () => {
 
     expect(workspace.documents).toHaveLength(1)
     expect(workspace.documents[0]?.path).toBe(`${ROOT}/Plan.md`)
-    // A room is joined per open document; see `openNotes` and rooms.svelte.ts.
     expect(workspace.openNotes).toHaveLength(1)
     expect(workspace.tabs).toHaveLength(1)
 

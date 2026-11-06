@@ -1,15 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 
-/** Giving a note a cover writes the note's own words, so it goes through
- *  everything a write goes through: the version before it is kept, a note open in a
- *  pane takes the words in its editor rather than off the disk, and the lot is one
- *  thing to undo. This stands a disk and a browser store in for the ones under node
- *  and imports the workspace after them, the way file-icon.test does beside it - and
- *  for the same reason.
- *
- *  The choosing is not here: a file chooser is a dialog the machine owns and a test
- *  has no way to answer one. `setCover` is the writing on its own. */
-
 const SPACE: Record<string, string> = {
   '/space/plain.md': '# Plain\n\nwords\n',
   '/space/titled.md': '---\ntitle: Titled\n---\n\n# Titled\n',
@@ -102,8 +92,6 @@ describe('the cover a note is given', () => {
   })
 
   test('replaces the picture that was there, and puts its band back in the middle', async () => {
-    // A band is a place in one picture: keeping the old number over a new
-    // photograph is a crop somebody chose of something they have not seen.
     fresh()
     await setCover('/space/covered.md', 'assets/new.jpg')
 
@@ -115,8 +103,6 @@ describe('the cover a note is given', () => {
     await setCover('/space/covered.md', 'assets/new.jpg')
 
     const touched = sent.filter((one) => one.path === '/space/covered.md')
-    // Read for the change, and again just before it is written; see `writeClosed`
-    // in workspace/note-text.ts.
     expect(touched.map((one) => one.command)).toEqual([
       'read_note',
       'read_note',
@@ -158,8 +144,6 @@ describe('taking a note’s cover away', () => {
   })
 })
 
-/** The half a file on disk cannot show: a note somebody is reading while its cover
- *  changes. The words arrive in the editor, and the note stays saved. */
 describe('a note that is open while its cover changes', () => {
   test('takes the change in its own document, and stays saved', async () => {
     fresh()

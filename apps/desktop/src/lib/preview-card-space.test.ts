@@ -1,11 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, expect, test, vi } from 'vitest'
 
-/** A hover card over `[[Plan]]` in `A/Note.md` while space B is active, both spaces
- *  holding a Plan.md (B388). The card shows A's Plan, read through A's index; it has to
- *  be A's Plan it writes back to, and only when somebody typed in it. Written to the
- *  active space's path on every close, A's words went over B's note unasked. */
-
 const A = { id: 'a', name: 'A', root: '/home/me/A' }
 const B = { id: 'b', name: 'B', root: '/home/me/B' }
 const written: { path: string; after: string }[] = []

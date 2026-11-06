@@ -1,6 +1,3 @@
-/** Whether to say the app's new name, asked before anything of this run is written;
- *  why and to whom is in RenameNotice.svelte, which is fetched only to say it. */
-
 import { keep, storedText } from './stored'
 
 const KEY = 'nib:renamed'

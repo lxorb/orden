@@ -1,12 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 
-/** Web data, offered for a web note's row and its tab, in a space shared to be read.
- *
- *  Both of its choices write the note's file - Separate puts an id of its own into it,
- *  Global takes it out - and a space shared to be read is one nothing may be written
- *  in (B288). So it is not offered there, in the row's menu or the tab's, which both
- *  draw it from `webDataEntry`. The desktop app's alone, so this test is that build. */
-
 const writable = { yes: true }
 
 vi.mock('./tauri', async (importOriginal) => ({

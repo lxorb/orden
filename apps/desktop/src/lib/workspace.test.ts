@@ -1,12 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The store reads the browser's storage the moment it is made, and reads
- *  notes through the platform shim. Under node there is neither, so both are
- *  stood in for first - which is why the store is imported further down
- *  rather than at the top. */
-
-/** A canvas with one stroke on it, as the format writes one. What a plane that
- *  has been drawn on and saved looks like on disk. */
 const DRAWN =
   '{\n\t"nodes": [],\n\t"edges": [],\n\t"nib": {\n\t\t"version": 1,\n\t\t"ink": [' +
   '{ "id": "s1", "tool": "pen", "color": "1", "size": 6, "points": [0, 0, 0.5, 0, 0, 0, 10, 10, 0.5, 0, 0, 8] }' +
@@ -17,48 +10,29 @@ const notes: Record<string, string> = {
   '/space/b.md': '# b',
   '/space/c.md': '# Quarter plan\n\ntext\n\n## Why it works\n\nmore\n',
   '/space/plan.canvas': DRAWN,
-  // Two files opened from the computer, outside every space this machine knows of.
   '/elsewhere/outside.md': '# outside',
   '/elsewhere/beside it.md': '# beside it',
 }
 
-/** One of those files, which is what "outside" means: nothing but this disk is
- *  holding it, and something else may be writing it too. */
 const OUTSIDE = '/elsewhere/outside.md'
 
-/** The path an invoke was given, or an empty one: `args` is a bag of unknowns
- *  and a path that is not a string is not a path. */
 const pathOf = (args?: Record<string, unknown>) => (typeof args?.path === 'string' ? args.path : '')
 
-/** Every command the store sent, in order, so a test can say what was written
- *  and what was kept before it. */
 const sent: { command: string; path: string; content: string }[] = []
 
-/** What each command was given, for the few tests that need more than its path. */
 const given: { command: string; args: Record<string, unknown> | undefined }[] = []
 
-/** Whether each store copy was told to the rest of the app while it ran. */
 const copyingSeen: boolean[] = []
 
-/** A write held open, for a test about what happens while one is in the air:
- *  writing a file is a round trip, and somebody may type during it. */
-/** A read held open too, for a test about what happens while one is in the air.
- *  One path only: a gesture that reads every open note has to be caught in the
- *  middle of reading one of them, and the test's own reads must not hang with it. */
 const holding: { write: Promise<void> | null; read: Promise<void> | null; readPath: string } = {
   write: null,
   read: null,
   readPath: '',
 }
 
-/** This device's Recently deleted, as the crate keeps it: what a closed tab with no
- *  file left there. */
 const trash: { id: string; path: string; content: string }[] = []
-/** What the disk answers when a space is listed; left empty, the listing is nothing. */
 const disk: { tree: unknown } = { tree: undefined }
 
-// The desktop app, the one build that holds a web note's page in a tab of its own;
-// see `openWeb` in the workspace.
 vi.mock('./tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./tauri')>()),
   isDesktop: true,
@@ -69,14 +43,11 @@ vi.mock('./tauri', async (importOriginal) => ({
       content: typeof args?.content === 'string' ? args.content : '',
     })
     given.push({ command, args })
-    // Whether the store a copy reads is held as in use while it is read; see own-data.ts.
     if (command === 'web_copy') {
       const { isCopying } = await import('./web-tab/web-data.svelte')
       copyingSeen.push(isCopying(String(args?.from).replace(/^note_/, '')))
     }
 
-    // The crate's judge: nib opens nothing from outside its spaces but its own two
-    // settings files, and the stamp is where the window asks; see `openable`.
     if (command === 'file_stamp' && pathOf(args).startsWith('/elsewhere/')) {
       throw new Error(`${pathOf(args)} is outside the notes folder`)
     }
@@ -96,7 +67,6 @@ vi.mock('./tauri', async (importOriginal) => ({
     if (command === 'read_note' && holding.read && holding.readPath === pathOf(args)) {
       await holding.read
     }
-    // The browser's listing, answering for the notes here and the folders they are in.
     if (command === 'path_exists') {
       const at = pathOf(args)
       return Object.keys(notes).some((one) => one === at || one.startsWith(`${at}/`))
@@ -111,19 +81,11 @@ vi.mock('./tauri', async (importOriginal) => ({
   },
 }))
 
-/** The sheet, scripted: every question is answered from here and written down, so a
- *  test can say that nothing was asked - which, now that nothing is ever saved by hand,
- *  is what closing a tab, a pane or the window must come to. */
 const sheet = {
   asked: [] as string[],
-  /** What `choose` answers, or null for dismissed. */
   answer: null as string | null,
 }
 
-/** The page note an older build wrote beside `paper.pdf`, its one page naming the
- *  paper: what opening the paper takes for its own, moving the paper in under it.
- *  Fresh page notes are made out of pdf.js's reading of the paper, which node has not
- *  got; see pages/from-pdf.test.ts and naming.store.test.ts for those. */
 const BESIDE_PAPER = JSON.stringify({
   nodes: [
     {
@@ -150,8 +112,6 @@ vi.mock('./prompt.svelte', () => ({
   },
 }))
 
-/** Save's layer, which a tab with unsaved words closed with Save opens: the tab it was
- *  asked for, and what it calls once that tab has its file. */
 const placing = vi.hoisted(() => ({
   asked: [] as { tab: string | null; saved: (() => void) | undefined }[],
 }))
@@ -203,7 +163,6 @@ const {
 } = await import('./scratchpad/is.svelte')
 type Entry = import('./workspace.svelte').Entry
 
-/** A single click in the file list, and the tab it lands in. */
 async function preview(path: string) {
   await workspace.open(path, { preview: true })
   const tab = workspace.tabs.find((one) => one.path === path)
@@ -211,26 +170,15 @@ async function preview(path: string) {
   return tab
 }
 
-// Every test drives the clock, so the writes the workspace waits out - the session
-// four hundred milliseconds after a tab moves, a note's autosave a second after a
-// keystroke, both of which end in a write to storage - land on a clock the afterEach
-// drops rather than on real timers that wake in a later test and write over what it
-// set up. The describes that time one of those writes themselves say so with their
-// own useFakeTimers, which this leaves to them. See afterEach.
 beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
 })
 
 afterEach(async () => {
-  // Whatever a test typed goes down before the next one runs, rather than landing
-  // in the middle of it: the next tab brought forward writes everything waiting.
   holding.write = null
   holding.read = null
   await workspace.writesSettled()
 
-  // Drop whatever a test left waiting before the next one runs; dropping is not
-  // firing, so a stale write never lands. Real again on the way out, and a test's
-  // own useRealTimers has run before this, so this only tidies what it left.
   if (vi.isFakeTimers()) vi.clearAllTimers()
   vi.useRealTimers()
 })
@@ -270,11 +218,6 @@ describe('keeping a preview tab', () => {
     expect(workspace.previewTabId).toBe(second.id)
   })
 
-  /** A preview takes its next note on rather than being handed another, which is
-   *  only honest while the preview is the one view of that document. Split into a
-   *  second pane it is not: there are two tabs on one document, and a note taken on
-   *  here moves the pane beside it to a note nobody asked it for. The same hole
-   *  `walk` had, reached by the other door. */
   test('is not taken over while a second pane is showing its note', async () => {
     const looking = await preview('/space/a.md')
     workspace.split('row')
@@ -283,7 +226,6 @@ describe('keeping a preview tab', () => {
     if (!beside) throw new Error('the split did not happen')
     expect(beside.note).toBe(looking.note)
 
-    // Back in the pane the preview is in, and another row clicked.
     workspace.focusPane(looking.paneId)
     const next = await preview('/space/b.md')
 
@@ -317,7 +259,6 @@ describe('keeping a preview tab', () => {
     const tab = await preview('/space/a.md')
     const keep = vi.spyOn(workspace, 'keep')
 
-    // What a keystroke amounts to: the document changes, and it says so.
     tab.note.live.replace('# a, changed')
 
     expect(keep).toHaveBeenCalledWith(tab.id)
@@ -336,22 +277,14 @@ describe('keeping a preview tab', () => {
   })
 })
 
-/** Emil: "browser tabs should open in the same italic way with the same behaviour
- *  as notes when just clicked". One preview for every kind of file, so a website, a
- *  plane, a page note and a paper clicked past in the list take one tab between them
- *  and the note they are clicked past to. */
 describe('previewing every kind of file', () => {
   const SITE = '/space/site.url'
   const OTHER_SITE = '/space/other.url'
   const DECK = '/space/deck.pages'
   const PAPER = '/space/paper.pdf'
-  /** A paper opens as the page note it becomes, which is the tab a click on the
-   *  paper's row lands in; see `openPdf` in workspace.svelte.ts. */
   const PAPER_PAGES = '/space/paper.pages'
   const PLANE = '/space/plan.canvas'
 
-  /** A single click on a row of the list, whatever the row is. `opens` is the file
-   *  the tab ends up at, which is the row itself for every kind but a paper. */
   async function look(path: string, opens = path) {
     await workspace.openEntry(path, { preview: true })
     const tab = workspace.tabs.find((one) => one.path === opens)
@@ -365,7 +298,6 @@ describe('previewing every kind of file', () => {
     notes[SITE] = '[InternetShortcut]\r\nURL=https://example.com/\r\n'
     notes[OTHER_SITE] = '[InternetShortcut]\r\nURL=https://example.org/\r\n'
     notes[DECK] = '{}'
-    // The paper's page note from an older build, which the first open takes in.
     notes[PAPER_PAGES] = BESIDE_PAPER
     workspace.tabs = []
     workspace.activeTabId = null
@@ -419,7 +351,6 @@ describe('previewing every kind of file', () => {
     await look(DECK)
     expect(paths()).toEqual([DECK])
 
-    // A paper previews as the page note it opens, not as a tab of its own.
     const paper = await look(PAPER, PAPER_PAGES)
     expect(paths()).toEqual([PAPER_PAGES])
     expect(workspace.previewTabId).toBe(paper.id)
@@ -467,7 +398,6 @@ describe('previewing every kind of file', () => {
 })
 
 describe('picking a space from the switcher', () => {
-  // A switch changes what the window shows, never its frame (#1123).
   test('leaves a closed sidebar closed', async () => {
     workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
     workspace.panel = null
@@ -484,12 +414,7 @@ describe('picking a space from the switcher', () => {
   })
 })
 
-/** Which side of the window each panel sits on. The whole of what this has to be
- *  right about is that a window nobody has arranged is the window it always was:
- *  everything on the left, and no right side at all. */
 describe('the two sides of the window', () => {
-  // The store is one store for the whole file, and this is the state these tests
-  // are about: every one of them starts from the window nobody has arranged.
   beforeEach(() => {
     workspace.right = []
     workspace.rightPanel = null
@@ -510,7 +435,6 @@ describe('the two sides of the window', () => {
 
     workspace.movePanel('outline', 'right')
     expect(workspace.sideOf('outline')).toBe('right')
-    // The side it left is not left showing a panel that is no longer on it.
     expect(workspace.panel).toBeNull()
     expect(workspace.rightPanel).toBe('outline')
   })
@@ -531,7 +455,6 @@ describe('the two sides of the window', () => {
     expect(workspace.openOn('left')).toBe('tree')
     expect(workspace.openOn('right')).toBe('outline')
 
-    // Pressing the one already showing shuts that side and leaves the other.
     workspace.togglePanel('outline')
     expect(workspace.openOn('right')).toBeNull()
     expect(workspace.openOn('left')).toBe('tree')
@@ -540,12 +463,6 @@ describe('the two sides of the window', () => {
     expect(workspace.openOn('left')).toBeNull()
   })
 
-  /** The switch and the showing are two gestures, and the names say which is
-   *  which. They were one method called `showPanel`, which shut the panel it was
-   *  asked for whenever that panel was the one already open: the File list row of
-   *  the menu, a website's bookmarks row and the drag that pulls the drawer out all
-   *  took the file list away instead of opening it, and every drive that asks for
-   *  the file list on the way in lost the list it had just asked for. */
   test('asking for the panel that is already showing leaves it showing', () => {
     workspace.showPanel('tree')
     workspace.showPanel('tree')
@@ -632,9 +549,6 @@ describe('the right side’s button', () => {
   })
 })
 
-/** Emil, 2026-10-13: "should be EITHER right sidebar or scratchpad, never both". The
- *  scratchpad's card is the quick one, so it goes over the right side and the side comes
- *  back as the card goes; the side asked for, by any road, puts the card away. */
 describe('the right side and the scratchpad take turns', () => {
   beforeEach(() => {
     workspace.right = [...STARTS_RIGHT]
@@ -668,8 +582,6 @@ describe('the right side and the scratchpad take turns', () => {
     }
   })
 
-  /** #1032: the side's one button shuts the side whole, the card and what is under it,
-   *  and does not turn the card into the panel under it. */
   test('the button over a kept panel shuts the side whole, and nothing comes back', () => {
     workspace.showPanel('ask')
     pad.show(false)
@@ -707,8 +619,6 @@ describe('the right side and the scratchpad take turns', () => {
     expect(workspace.rightShows).toBeNull()
   })
 
-  /** #1030: a phone's drawer opens it over the note through the same door, and puts
-   *  itself away; pressed again, the card goes and nothing comes back from under it. */
   test('the drawer opens it out of the way of itself, and shuts it the same way', () => {
     workspace.panel = 'tree'
     workspace.rightPanel = 'outline'
@@ -753,7 +663,6 @@ describe('the right side and the scratchpad take turns', () => {
   })
 
   test('a layout written with both open comes back with only the card', () => {
-    // What a session and the card's own record say after a build that let both stand.
     workspace.rightPanel = 'outline'
     pad.on = true
     expect(workspace.openOn('right')).toBeNull()
@@ -789,10 +698,6 @@ describe('selecting several rows', () => {
     workspace.clearSelection()
   })
 
-  /** The listing here is handed over in the order it was written down, and the rows
-   *  come back in the order the space is read in - folders first, then the names -
-   *  because that is decided over the listing rather than by whoever read it; see
-   *  tree-order.ts. */
   test('the rows shown, top to bottom, follow open folders', () => {
     expect(workspace.visibleRows()).toEqual([
       '/space/f',
@@ -873,7 +778,6 @@ describe('selecting several rows', () => {
     spy.mockRestore()
   })
 
-  /** One press of Delete on a selection is one Ctrl+Z (#399). */
   test('and deleting several is one step to undo', async () => {
     const spy = vi.spyOn(workspace, 'remove').mockImplementation(async (path: string) => {
       workspace.undone.record({ kind: 'delete', path, content: '' })
@@ -899,13 +803,6 @@ describe('selecting several rows', () => {
   })
 })
 
-/** A note that holds notes. What the rule is lives in folder-notes.ts; this is
- *  the store doing it: the folder is made by moving the note into it, the rows
- *  dropped on it follow, and the last row dragged back out takes the folder away
- *  again.
- *
- *  No space is open, so the listing that follows every move is a no-op and what
- *  is left is the tree the store keeps in front of the disk; see tree-edits.ts. */
 describe('nesting a note in a note', () => {
   const note = (path: string): Entry => ({
     name: path.split('/').pop()!,
@@ -924,8 +821,6 @@ describe('nesting a note in a note', () => {
     children,
   })
 
-  /** Every path the tree shows, folders and notes alike, so a test can say what
-   *  the sidebar would draw. */
   const shown = (entry: Entry | null): string[] =>
     !entry
       ? []
@@ -956,13 +851,10 @@ describe('nesting a note in a note', () => {
     expect(workspace.visibleRows()).toEqual(['/space/a', '/space/a/d.md'])
   })
 
-  /** The row holds rows, which is what the two arrows act on; what it opens is
-   *  `openRow`'s to work out, so the walk does not carry it. */
   test('and the row says it holds rows, for the arrows that fold it', async () => {
     await workspace.moveMany(['/space/d.md'], '/space/a')
     const row = workspace.visibleTree().find((one) => one.path === '/space/a')
 
-    // Open, because a drop that nested a note opens the row it landed on.
     expect(row).toEqual({ path: '/space/a', folder: true, open: true })
   })
 
@@ -970,8 +862,6 @@ describe('nesting a note in a note', () => {
     await workspace.moveMany(['/space/d.md'], '/space/a')
     await workspace.moveMany(['/space/a/d.md'], '/space')
 
-    // Read the way the panel reads it: a row put back on the tree is appended to its
-    // folder, and where it then sits is the chosen order's to say.
     expect(shown(workspace.shownTree)).toEqual(['/space/a.md', '/space/d.md'])
   })
 
@@ -985,8 +875,6 @@ describe('nesting a note in a note', () => {
     ).toEqual(['/space/a'])
   })
 
-  /** The note that went in first and the rows that followed it are one drop, and one
-   *  undo takes them out again with the folder they made (#399). */
   test('a drop that nests is one step, and undoing it takes the folder away', async () => {
     await workspace.moveMany(['/space/d.md'], '/space/a')
     expect(workspace.undone.last).toMatchObject({
@@ -1142,7 +1030,6 @@ describe('a note found in the file list', () => {
     expect(workspace.revealing).toBe('/space/work/plans/q3.md')
   })
 
-  /** Its folder's row is the note, so that row is found without unfolding it. */
   test('a note its folder is drawn as unfolds only what holds that folder', () => {
     workspace.revealNote('/space/work/plans/plans.md')
     expect(workspace.device.expanded).toEqual({ '/space/work': true })
@@ -1196,10 +1083,6 @@ describe('a note found in the file list', () => {
   })
 })
 
-/** The Collapse button above the file list shows while folding would change what is
- *  on screen, and only then (#1081). It used to ask what this machine remembers as
- *  open, which kept folders that were deleted, moved, renamed or emptied, and folders
- *  under one that was shut: the button stayed up over a list with every row shut. */
 describe('whether the file list has anything to fold', () => {
   const note = (path: string): Entry => ({
     name: path.split('/').pop()!,
@@ -1350,8 +1233,6 @@ describe('where a note was last looked at', () => {
     await workspace.open('/space/a.md')
     const tab = workspace.tabs.find((one) => one.path === '/space/a.md')!
     workspace.noteView(tab.id, 3, 0, 1, 1)
-    // The same caret and the same scroll: only what is folded has changed, and
-    // that is the whole of what there is to record.
     workspace.noteView(tab.id, 3, 0, 1, 1, [[1, 6]])
 
     expect(tab.folds).toEqual([[1, 6]])
@@ -1375,8 +1256,6 @@ describe('where a note was last looked at', () => {
 
   test('only the notes most recently looked at are kept', () => {
     workspace.tabs = []
-    // A place is stamped with the moment it was recorded, and which are the
-    // newest is the whole question here.
     let clock = Date.now()
     const now = vi.spyOn(Date, 'now').mockImplementation(() => ++clock)
 
@@ -1392,7 +1271,6 @@ describe('where a note was last looked at', () => {
       workspace.noteView(tab.id, index, index)
     }
 
-    // The session is written on a timer; activating a tab writes it now.
     workspace.activate(last)
     now.mockRestore()
 
@@ -1401,7 +1279,6 @@ describe('where a note was last looked at', () => {
     }
     const kept = Object.keys(saved.positions ?? {})
 
-    // The record outlives every tab in it, so it has to stop growing somewhere.
     expect(kept).toHaveLength(300)
     expect(kept).toContain('/space/319.md')
     expect(kept).not.toContain('/space/0.md')
@@ -1448,9 +1325,6 @@ describe('the ids tabs are known by', () => {
   })
 })
 
-/** A pane beside the first one, holding `note` and nothing else. The split opens
- *  the same note in both, the way it does in the app; closing that copy leaves
- *  one note in each pane, which is what most of these tests are about. */
 async function beside(note: string) {
   workspace.split('row')
   const copy = workspace.active
@@ -1458,33 +1332,18 @@ async function beside(note: string) {
   if (copy) workspace.close(copy.id)
 }
 
-/** One empty pane, whatever the last test left behind. */
 function onePane() {
   workspace.collapsePanes()
   workspace.tabs = []
   workspace.previewTabId = null
 }
 
-/** Back and forward along one tab's trail.
- *
- *  A trail is where this tab has been this afternoon, and stepping along it is a
- *  note being opened like any other - which is exactly what it was not. It read the
- *  file and had the tab's own document take the note on, going around the one place
- *  that answers what a file is open as. So two things could happen, and both are one
- *  note's words under another note's name: stepping back to a note another pane is
- *  showing made a second set of words over that file, and stepping back in a tab
- *  whose document a second pane shares moved that pane to the note as well.
- *
- *  One file is one document, whichever door the file is reached by. See
- *  workspace/open.ts, and `walk`. */
 describe('walking back along a trail', () => {
   beforeEach(() => {
     onePane()
   })
 
   test('joins the document the note is already open as', async () => {
-    // A click in the list, a click on the next row, and the first note opened for
-    // real: one tab that has looked at two notes, and one holding the first.
     const looking = await preview('/space/a.md')
     await preview('/space/b.md')
     await workspace.open('/space/a.md')
@@ -1503,7 +1362,6 @@ describe('walking back along a trail', () => {
   test('and leaves the pane that shares this tab’s document where it was', async () => {
     const looking = await preview('/space/a.md')
     await preview('/space/b.md')
-    // The same note in a second pane: one document, two tabs.
     workspace.split('row')
 
     const other = workspace.tabs.find((one) => one.id !== looking.id)
@@ -1513,7 +1371,6 @@ describe('walking back along a trail', () => {
     await workspace.walk(0, looking.id)
 
     expect(looking.path).toBe('/space/a.md')
-    // The other pane is still reading what it was reading.
     expect(other.path).toBe('/space/b.md')
     expect(other.note).not.toBe(looking.note)
   })
@@ -1615,7 +1472,6 @@ describe('a note in two panes', () => {
     expect(workspace.tabs).toHaveLength(2)
 
     const [left, right] = workspace.tabs
-    // Two tabs, one document: that is the whole of it.
     expect(left?.note).toBe(right?.note)
     expect(right?.paneId).not.toBe(left?.paneId)
     expect(workspace.active?.id).not.toBe(first?.id)
@@ -1672,13 +1528,6 @@ describe('a note in two panes', () => {
     expect(workspace.twins(workspace.panes.focusedId)).toEqual([])
   })
 
-  /** Dragging the divider must disturb nothing but the divider.
-   *
-   *  It used to rebuild the arrangement around the new share, and every pane in
-   *  it heard about that: each editor was registered and dressed again on every
-   *  pointer move, which reconfigured the language and threw away the parse of
-   *  whatever note was in it. That is what showed as a note going raw while the
-   *  divider was moving. */
   test('a resize leaves the arrangement and its panes as they were', async () => {
     await workspace.open('/space/a.md')
     workspace.split('row')
@@ -1695,8 +1544,6 @@ describe('a note in two panes', () => {
     expect(split.fraction).toBeCloseTo(0.31)
   })
 
-  /** Issue #232: source mode is each pane's own, Obsidian's way. A split starts as
-   *  the tab it was made from, and from then on the two are two. */
   test('splits off in the face the note was in, and each keeps its own', async () => {
     await workspace.open('/space/a.md')
     const [left] = workspace.tabs
@@ -1757,9 +1604,6 @@ describe('closing what is in a pane', () => {
     expect(workspace.tabs).toHaveLength(1)
   })
 
-  /** Emil, 2026-09-14: *"it should be possible to have no note open (there should not
-   *  always open a new one)."* So the last pane stays and stays empty; what fills it is
-   *  the kinds a new tab could be, as buttons. See NewHere.svelte. */
   test('the last pane stays, and nothing is made to fill it', async () => {
     await workspace.open('/space/a.md')
     const only = workspace.active
@@ -1801,9 +1645,6 @@ describe('closing what is in a pane', () => {
   })
 })
 
-/** A tab an older build wrote down as pinned (#1041): the strip has no pinning any more,
- *  every tab not in front looking pinned already, so such a tab comes back as any other,
- *  where it was, and nothing about it is written down again. */
 describe('a tab a session wrote as pinned', () => {
   beforeEach(() => {
     onePane()
@@ -1846,14 +1687,6 @@ describe('a tab a session wrote as pinned', () => {
   })
 })
 
-/** Nothing open is a state the window is allowed to be in.
- *
- *  Emil, 2026-09-14: *"it should be possible to have no note open (there should not
- *  always open a new one). Cause then there should just be options between the
- *  different note types which would then create the corresponding note if clicked."*
- *  Four places used to make a blank note rather than leave the window empty; the
- *  buttons a pane shows instead are NewHere.svelte, and what they make is the one list
- *  the plus and Ctrl+T read. */
 describe('a window with nothing open', () => {
   beforeEach(() => {
     onePane()
@@ -1861,8 +1694,6 @@ describe('a window with nothing open', () => {
     workspace.activeSpaceId = 'one'
   })
 
-  /** An arrangement remembers paths, and a note can be gone by the time it is read
-   *  back. What used to happen then was a blank note nobody asked for. */
   test('is what an arrangement whose notes have all gone leaves behind', async () => {
     await workspace.applyLayout({
       frame: {
@@ -1902,9 +1733,6 @@ describe('a window with nothing open', () => {
     expect(workspace.panes.count).toBe(1)
   })
 
-  /** The pane that stays names no tab. It went on naming the last one it had shown,
-   *  which nothing drew but Cmd+W read: on a Mac that key closes a window with
-   *  nothing left in it, and it went on closing a tab that was no longer there. */
   test('and the pane that stays names no tab as the one it shows', async () => {
     await workspace.open('/space/a.md')
     const [only] = workspace.tabs
@@ -1919,8 +1747,6 @@ describe('a tab dropped on another pane', () => {
     onePane()
   })
 
-  /** Two panes: the first holds a and c, the second holds b and is the one
-   *  being worked in. What every drop below starts from. */
   async function twoPanes() {
     await workspace.open('/space/a.md')
     await workspace.open('/space/c.md')
@@ -1935,8 +1761,6 @@ describe('a tab dropped on another pane', () => {
 
   test('lands in the strip at the place it was let go of', async () => {
     const { first, moving } = await twoPanes()
-    // A second tab in the pane it leaves, so that pane stays and the strip it
-    // lands in is the only thing that changed.
     workspace.openBlank()
 
     workspace.dropTab(moving.id, { kind: 'strip', paneId: first.id, at: 1 })
@@ -1973,8 +1797,6 @@ describe('a tab dropped on another pane', () => {
     expect(workspace.active?.id).toBe(moving.id)
   })
 
-  /** The last tab of a pane onto the other pane's strip: the two panes merge,
-   *  which is what closing that tab would have done to the arrangement. */
   test('takes the pane it emptied with it, and the layout closes up', async () => {
     const { first, second, moving } = await twoPanes()
 
@@ -2013,7 +1835,6 @@ describe('a tab dropped on another pane', () => {
 
     const [left, right] = workspace.panes.all
     expect(workspace.panes.count).toBe(2)
-    // Laid out left to right, so the pane the drop made comes first.
     expect(left?.id).not.toBe(only.id)
     expect(right?.id).toBe(only.id)
     expect(workspace.tabsIn(left?.id ?? '').map((tab) => tab.path)).toEqual(['/space/c.md'])
@@ -2066,7 +1887,6 @@ describe('the sides a pane offers a drop', () => {
 
     expect(workspace.canLand('left', only.id, alone.id)).toBe(false)
     expect(workspace.canLand('bottom', only.id, alone.id)).toBe(false)
-    // A note out of the file list leaves no pane behind, so it may.
     expect(workspace.canLand('left', only.id, null)).toBe(true)
   })
 
@@ -2290,7 +2110,6 @@ describe('a note being read', () => {
 
     expect(tab.anchor).toBe(22)
     expect(tab.scroll).toBe(240)
-    // The reading view has no caret to move, so the tab keeps the one it had.
     expect(tab.cursor).toBe(12)
   })
 
@@ -2307,7 +2126,6 @@ describe('a note being read', () => {
 })
 
 describe('a replacement across the space', () => {
-  /** What the panel works out before anything is written; see search/apply. */
   const change = (path: string, before: string, after: string) => ({
     path,
     before,
@@ -2326,8 +2144,6 @@ describe('a replacement across the space', () => {
   test('keeps what each note said before it writes what it says now', async () => {
     await workspace.replaceInNotes([change('/space/a.md', '# a', '# alpha')])
 
-    // Read again first, in case it was written since; see `writeClosed` in
-    // workspace/note-text.ts.
     const written = sent.filter((one) => one.path === '/space/a.md')
     expect(written.map((one) => one.command)).toEqual(['read_note', 'snapshot_note', 'write_note'])
     expect(written[1]?.content).toBe('# a')
@@ -2393,11 +2209,6 @@ describe('a replacement across the space', () => {
   })
 })
 
-/** Closing never asks. Every note writes itself a moment after its last keystroke,
- *  so there is nothing a question on the way out could be about: whatever a tab was
- *  waiting to write goes down as it closes, and a pane and the window go the same
- *  way. Emil, 2026-09-30: *"I don't want there to be any manual saving anymore. Only
- *  autosaving, that's it."* */
 describe('closing, which never asks anything', () => {
   beforeEach(() => {
     onePane()
@@ -2409,7 +2220,6 @@ describe('closing, which never asks anything', () => {
     sent.length = 0
   })
 
-  /** A note open with something typed into it that has not been written. */
   async function dirty(path: string) {
     await workspace.open(path)
     const tab = workspace.tabs.find((one) => one.path === path)
@@ -2460,7 +2270,6 @@ describe('closing, which never asks anything', () => {
     expect(written()).toEqual([[OUTSIDE, '# outside, typed']])
   })
 
-  /** The window waits for its writes before it goes; see start.ts. */
   test('and the window going has nothing left to wait for once the writes are down', async () => {
     await dirty('/space/a.md')
     await dirty('/space/b.md')
@@ -2478,16 +2287,6 @@ describe('closing, which never asks anything', () => {
   })
 })
 
-/** A tab with no file, of every kind there is.
- *
- *  Emil, 2026-09-14: *"if you create a new webnote by clicking the plus for a new tab,
- *  then it should open it as a tab and not create it in the sidebar. Same for canvas and
- *  page notes."* And 2026-09-30: no saving at all. So a new note, plane or deck is a
- *  tab and nothing else until something is put in it, and then it is a file in the
- *  space with no question asked. A web tab is a browser tab: nothing is written until
- *  somebody keeps it. */
-/** Issue #1040: a new tab nothing was done with goes once it is left, without a trace
- *  and without moving the reader. When it is asked is workspace/blank-tabs.svelte.ts. */
 describe('a new tab left alone', () => {
   beforeEach(() => {
     onePane()
@@ -2497,7 +2296,6 @@ describe('a new tab left alone', () => {
     agentMarks.opened = {}
   })
 
-  /** A new tab, and another tab in front of the same pane after it. */
   function leftForAnother() {
     workspace.newTab()
     const blank = workspace.active
@@ -2538,7 +2336,6 @@ describe('a new tab left alone', () => {
     expect(open(blank.id)).toBe(true)
   })
 
-  /** #1070: what an agent opened is the agent's, and never pulled from under it. */
   test('stays where an agent opened it', () => {
     const { blank } = leftForAnother()
     agentMarks.opened = { [blank.id]: 'Claude' }
@@ -2547,13 +2344,11 @@ describe('a new tab left alone', () => {
   })
 
   test('in front of a pane left for another goes, and the keyboard stays where it went', () => {
-    // Written in, or opening the new tab would drop it as scaffolding.
     workspace.openUnsaved('note', 'first').note.dirty = true
     const left = workspace.panes.focusedId
     workspace.newTab()
     const blank = workspace.active
     if (!blank) throw new Error('no new tab')
-    // A split shows the tab in front beside itself, a second new tab behind the note.
     workspace.split('row')
     const right = workspace.panes.focusedId
     workspace.openUnsaved('note', 'beside').note.dirty = true
@@ -2565,9 +2360,7 @@ describe('a new tab left alone', () => {
     expect(workspace.showing(left)?.doc).toBe('first')
   })
 
-  /** A split the reader made is not taken away with the tab. */
   test('stays as the only tab of a pane on screen', () => {
-    // Written in, or opening the new tab would drop it as scaffolding.
     workspace.openUnsaved('note', 'first').note.dirty = true
     const left = workspace.panes.focusedId
     workspace.split('row')
@@ -2600,7 +2393,6 @@ describe('a new tab', () => {
     expect(workspace.active?.kind).toBe('canvas')
     expect(workspace.active?.path).toBeNull()
     expect(written()).toEqual([])
-    // The words are there for the surface to read, in memory and nowhere else.
     expect(workspace.active?.doc).toContain('"nodes"')
     expect(workspace.active?.shown).toBe('Untitled')
   })
@@ -2614,8 +2406,6 @@ describe('a new tab', () => {
     expect(workspace.active?.shown).toBe('Untitled')
   })
 
-  /** A browser tab, which is what a web tab is: the page is live, the bar is the
-   *  window's own, and no shortcut is written until somebody says to keep it. */
   test('and a new website is a tab with no shortcut behind it', () => {
     workspace.openWebsite()
 
@@ -2624,8 +2414,6 @@ describe('a new tab', () => {
     expect(written()).toEqual([])
   })
 
-  /** Emil, issue #213: Ctrl+T and the plus make the same thing, a web tab with nowhere to
-   *  go, whose pane offers the kinds under its address field. */
   test('Ctrl+T and the plus are a new tab with nowhere to go yet', () => {
     workspace.newTab()
 
@@ -2634,8 +2422,6 @@ describe('a new tab', () => {
     expect(tab && workspace.isNewTab(tab)).toBe(true)
   })
 
-  /** Issue #241: a browser's new tab is a New tab, not a "Website" - and so is one a
-   *  sitting before wrote down under that name. */
   test('and is called New tab until it goes somewhere', () => {
     workspace.newTab()
     const tab = workspace.active
@@ -2652,7 +2438,6 @@ describe('a new tab', () => {
     expect(tab.shown).toBe('Example Domain')
   })
 
-  /** Chrome's and Firefox's Ctrl+Shift+T reach past a new tab nothing was done in. */
   test('and closed with nothing on it, is not brought back', async () => {
     workspace.close(workspace.openPage('https://example.com/') ?? '')
     workspace.newTab()
@@ -2663,7 +2448,6 @@ describe('a new tab', () => {
     expect(workspace.tabs.map((one) => one.address)).toEqual(['https://example.com/'])
   })
 
-  /** Chrome's new tab page: what is chosen on it is opened in its place. */
   test('and a kind chosen on it takes its place in the strip, leaving nothing behind', async () => {
     await workspace.newCanvas()
     const before = workspace.active
@@ -2679,12 +2463,9 @@ describe('a new tab', () => {
     expect(strip.map((one) => one.inPrivate)).toEqual([false, true])
     expect(strip[0]?.id).toBe(before.id)
     expect(workspace.active).toMatchObject({ inPrivate: true })
-    // Nothing was ever on it, so there is nothing to bring back.
     expect(workspace.closed.stack).toEqual([])
   })
 
-  /** An address typed into it is a page somebody went to, which a later choice made
-   *  elsewhere is not to take away. */
   test('but not once it has somewhere to go', () => {
     workspace.newTab()
     const chosenOn = workspace.active
@@ -2697,8 +2478,6 @@ describe('a new tab', () => {
     expect(workspace.tabs.map((one) => one.id)).toContain(chosenOn.id)
   })
 
-  /** A choice given up on - Remote's host picker put away - is not kept for the next tab
-   *  opened some other way. */
   test('and a choice is spent by the next tab, whatever it is', () => {
     workspace.newTab()
     const chosenOn = workspace.active
@@ -2713,7 +2492,6 @@ describe('a new tab', () => {
     expect(workspace.tabs).toContain(second)
   })
 
-  /** A tab a link opened behind is not chosen: the new tab stays in front. */
   test('nor by a tab that opens behind it', () => {
     workspace.newTab()
     const chosenOn = workspace.active
@@ -2726,9 +2504,6 @@ describe('a new tab', () => {
     expect(workspace.active).toBe(chosenOn)
   })
 
-  /** A tablet hands every page to the system's browser, as a phone does (#206): a link
-   *  pressed in a note and a new web tab make no tab there, and a desktop still draws
-   *  both. Where the link's address goes instead is `placeFor` in open-link.ts. */
   test('a tablet draws no page: a link and a new web tab make no tab there', () => {
     const was = viewport.device
     try {
@@ -2748,7 +2523,6 @@ describe('a new tab', () => {
     }
   })
 
-  /** Where there is no web tab to make, Ctrl+T is Ctrl+D's view itself. */
   test('a phone has no web tab, so a new tab there is the kinds in the pane itself', () => {
     const was = viewport.device
     viewport.device = 'phone'
@@ -2763,8 +2537,6 @@ describe('a new tab', () => {
     }
   })
 
-  /** A tab and nothing else, however much is in it, until somebody gives it a place:
-   *  the words are the session's, the way VS Code's hot exit keeps an untitled editor. */
   test('a note stays a tab with no file however much is written, and asks nothing', async () => {
     workspace.openBlank()
     const tab = workspace.active
@@ -2797,7 +2569,6 @@ describe('a new tab', () => {
     ])
   })
 
-  /** Where a new note has always gone, and under its first line, when nobody says. */
   test('saved with nothing said, goes to the root of the space it was opened in', async () => {
     workspace.spaces = [
       { id: 's', name: 'Notes', root: '/space' },
@@ -2814,8 +2585,6 @@ describe('a new tab', () => {
     expect(tab.path).toBe('/space/Weekly review.md')
   })
 
-  /** An import and a file uploaded into the browser arrive with words and a name,
-   *  and are files from the start. */
   test('that arrives with words is a file at once, under the name it came with', async () => {
     workspace.openBlank('Report', '# Quarterly\n\nwords')
     await vi.advanceTimersByTimeAsync(0)
@@ -2872,7 +2641,6 @@ describe('a new tab', () => {
     expect(workspace.closed.any).toBe(false)
   })
 
-  /** A browser closes a tab without a question; the words are kept twice over. */
   test('closed with words asks nothing, and keeps them for Ctrl+Shift+T and Recently deleted', async () => {
     trash.length = 0
     workspace.openBlank()
@@ -2892,12 +2660,9 @@ describe('a new tab', () => {
     const back = workspace.tabs.at(-1)
     expect(back?.doc).toBe('# Plan\n\nwords')
     expect(back?.path).toBeNull()
-    // Back in the tab, and so no longer in Recently deleted as well.
     expect(trash).toEqual([])
   })
 
-  /** Put back as a note from Recently deleted, it is a note in the space now, and the
-   *  closed tab is not a second copy of it to reopen. */
   test('restored from Recently deleted, is not reopened as well', async () => {
     trash.length = 0
     workspace.openBlank()
@@ -2913,7 +2678,6 @@ describe('a new tab', () => {
     expect(workspace.tabs).toEqual([])
   })
 
-  /** A web tab closes like a browser tab: no question, whatever the page is. */
   test('while a website closes without a question either way', () => {
     workspace.openWebsite()
     const tab = workspace.active
@@ -2925,8 +2689,6 @@ describe('a new tab', () => {
     expect(workspace.tabs).toEqual([])
   })
 
-  /** The shortcut holds the address the tab is on and is named after the page. See
-   *  @orden/scan/shortcut. */
   test('a website is saved as a shortcut holding the address it is on', async () => {
     workspace.openWebsite()
     const tab = workspace.active
@@ -2942,7 +2704,6 @@ describe('a new tab', () => {
     const wrote = written()
     expect(wrote.map((one) => one.path)).toEqual(['/space/Example the page.url'])
     expect(wrote[0]!.content).toContain('URL=https://example.com/a')
-    // The same tab, in place: what changed is which file the document is of.
     expect(tab.path).toBe('/space/Example the page.url')
   })
 
@@ -2958,12 +2719,6 @@ describe('a new tab', () => {
     expect(written()[0]!.content).toContain('Title=Later')
   })
 
-  /** One file is one document, and keeping a website is a document being given a
-   *  file - the one place in the app where that happens to a document that already
-   *  exists. A listing is a round trip behind what is open, so two tabs kept in the
-   *  same instant once read the same listing and were handed the same name. The name
-   *  is asked for at the moment of writing, against what is open as well as what is
-   *  listed, and claimed before the write begins. See workspace/open.ts. */
   test('never lands two websites on one file', async () => {
     workspace.openWebsite()
     const first = workspace.active
@@ -2995,10 +2750,6 @@ describe('a new tab', () => {
     expect(written().map((one) => one.path)).toEqual(['/space/Example.url'])
   })
 
-  /** Emil, 2026-10-03: *"Still getting a lot of name-clash files for web notes."* A
-   *  page kept under the name of a web note on the same site, that no tab is showing,
-   *  is that note written again; a `Example 2.url` beside it is a clash file by another
-   *  name. See `keepWeb` in workspace/placing.ts. */
   test('a website kept under the name of a web note on its own site is that note', async () => {
     notes['/space/Example.url'] =
       '[InternetShortcut]\r\nURL=https://www.example.com/\r\nTitle=Example\r\nNib-Added=2026-09-01T00:00:00.000Z\r\nNib-Icon=data:kept\r\n'
@@ -3020,12 +2771,6 @@ describe('a new tab', () => {
     }
   })
 
-  /** A tab with no file opened from a Separate web note (a link out of it) keeps its
-   *  pages apart. Saved as a new note it stays Separate, with web data of its own: it
-   *  used to be written with none, and the page was built again in the shared store.
-   *  Never with the source note's id, since a note set back to Global clears its store,
-   *  and that would sign the other note out and delete what it kept: in a copy of that
-   *  store, so the page is still signed in where it was. */
   test('a tab with its note’s own web data is saved Separate, under an id of its own', async () => {
     workspace.openWebsite()
     const tab = workspace.active
@@ -3038,8 +2783,6 @@ describe('a new tab', () => {
       const wrote = written()[before]!.content
       expect(wrote).toMatch(/Nib-Data=[0-9a-f]{16}/)
       expect(wrote).not.toContain('Nib-Data=0123456789abcdef')
-      // And the new store is a copy of the one the tab was in, made before the file
-      // that moves the page there is written: the saved tab stays signed in.
       const own = /Nib-Data=([0-9a-f]{16})/.exec(wrote)![1]!
       const copy = sent.findIndex((one) => one.command === 'web_copy')
       const write = sent.findIndex(
@@ -3060,8 +2803,6 @@ describe('a new tab', () => {
     }
   })
 
-  /** Kept over a web note of the same site, the note's own choice stands: a Global
-   *  note is not made Separate by the tab that was saved over it. */
   test('a tab with web data of its own saved over a Global note leaves it Global', async () => {
     notes['/space/Global.url'] =
       '[InternetShortcut]\r\nURL=https://example.org/\r\nTitle=Global\r\n'
@@ -3081,8 +2822,6 @@ describe('a new tab', () => {
     }
   })
 
-  /** A browser brings back the tabs it had, and so does this: the words of a document
-   *  with no file exist in the session and nowhere else. See `draftOf`. */
   test('an untouched one comes back after a restart', async () => {
     await workspace.newPages()
 
@@ -3091,9 +2830,6 @@ describe('a new tab', () => {
   })
 })
 
-/** Emil, 2026-10-15 (#359): *"when closing something that's unsaved (e.g. a note) then
- *  you should get a warning modal"*. A tab with no file and words in it asks, once for
- *  every such tab a gesture closes; nothing else does. See workspace/closing-unsaved.ts. */
 describe('closing a tab with unsaved words', () => {
   beforeEach(() => {
     onePane()
@@ -3195,8 +2931,6 @@ describe('a note writes itself, wherever it is', () => {
     onePane()
     workspace.spaces = [
       { id: 's', name: 'Notes', root: '/space' },
-      // The space a browser seeds on a first visit, which is there before any
-      // account is.
       { id: 'w', name: 'Read me', root: '/Notes' },
     ]
     workspace.activeSpaceId = 's'
@@ -3207,13 +2941,10 @@ describe('a note writes itself, wherever it is', () => {
   })
 
   afterEach(async () => {
-    // Whatever was waiting to be written goes down now rather than in the middle
-    // of the next test.
     await workspace.writesSettled()
     vi.useRealTimers()
   })
 
-  /** A note open with something typed into it. */
   async function typedIn(path: string) {
     await workspace.open(path)
     const tab = workspace.tabs.find((one) => one.path === path)
@@ -3263,8 +2994,6 @@ describe('a note writes itself, wherever it is', () => {
   })
 
   test('signing out changes nothing about it: a space is a space', async () => {
-    // Nothing here has ever been told about an account, which is the state a
-    // browser on a first visit and a desktop nobody has signed in on are both in.
     await typedIn(WELCOME)
 
     await vi.advanceTimersByTimeAsync(400)
@@ -3276,9 +3005,6 @@ describe('a note writes itself, wherever it is', () => {
   test('a file typed in while it was being written is written again', async () => {
     const tab = await typedIn('/space/a.md')
 
-    // Writing a file is a round trip, and a keystroke can land inside it. What
-    // went down is the words as they were when the write began; the ones typed
-    // after that are the next write's.
     let release: () => void = () => undefined
     holding.write = new Promise<void>((resolve) => {
       release = resolve
@@ -3291,7 +3017,6 @@ describe('a note writes itself, wherever it is', () => {
     await writing
     holding.write = null
 
-    // Ctrl+S waits for everything owed, the keystroke from inside its own write too.
     expect(tab.dirty).toBe(false)
     expect(written()).toEqual(['/space/a.md', '/space/a.md'])
   })
@@ -3307,12 +3032,6 @@ describe('a note writes itself, wherever it is', () => {
     expect(sheet.asked).toEqual([])
   })
 
-  /** A rename landing inside a write used to move the file out from under it, and
-   *  the write put the old name back beside the new one.
-   *
-   *  A note whose heading is not its name: this disk keeps nothing it is sent, so a
-   *  note re-read after its write says `# a` again, and a rename rewrites a heading
-   *  that is still the note's old name and writes it too. */
   test('a rename during a write waits for it, and one file is left, with the words', async () => {
     const tab = await typedIn('/space/c.md')
 
@@ -3341,7 +3060,6 @@ describe('a note writes itself, wherever it is', () => {
   test('file recovery is offered a version of every note with a file', async () => {
     await typedIn('/space/a.md')
     await typedIn(OUTSIDE)
-    // Nowhere to keep a version of, so nothing to offer.
     workspace.openBlank()
 
     expect(workspace.worthKeeping.map((one) => one.path)).toEqual(['/space/a.md', OUTSIDE])
@@ -3425,7 +3143,6 @@ describe('reopening the tab that was closed last', () => {
 
     workspace.close(first.id)
     workspace.close(second.id)
-    // As if the file had been deleted while the tab was closed.
     const kept = notes['/space/b.md'] ?? ''
     delete notes['/space/b.md']
 
@@ -3470,12 +3187,6 @@ describe('reopening the tab that was closed last', () => {
   })
 })
 
-/** Stepping off the welcome note.
- *
- *  A browser opens it because a first visit has nothing else to read. Signing in
- *  changes that, and nothing was watching: the workspace restores seconds before
- *  the account does, so somebody who signed in was left looking at "Welcome to
- *  Orden" with their own notes in the sidebar beside it. */
 describe('the welcome note, once there are real notes', () => {
   const WELCOME = '/Notes/Read me.md'
 
@@ -3491,7 +3202,6 @@ describe('the welcome note, once there are real notes', () => {
     notes[WELCOME] = ''
   })
 
-  /** What the sidebar holds once a space has been pulled down. */
   function listing(paths: string[]) {
     vi.spyOn(workspace, 'notes', 'get').mockReturnValue(
       paths.map((path) => ({ path, name: path.split('/').pop() ?? path })) as never,
@@ -3510,8 +3220,6 @@ describe('the welcome note, once there are real notes', () => {
   })
 
   test('stays when it is the only note there is', async () => {
-    // Nothing has arrived yet. Closing it would leave a blank page, which is
-    // worse than a welcome.
     listing([WELCOME])
 
     await workspace.open(WELCOME)
@@ -3532,7 +3240,6 @@ describe('the welcome note, once there are real notes', () => {
   })
 
   test('stays when something else is open beside it', async () => {
-    // Two tabs is somebody having said what they want on screen.
     listing([WELCOME, '/space/a.md'])
     await workspace.open(WELCOME)
     await workspace.open('/space/a.md')
@@ -3544,8 +3251,6 @@ describe('the welcome note, once there are real notes', () => {
 })
 
 describe('a canvas that comes back after a restart', () => {
-  /** The session as it is written down: one pane holding one tab, with the words
-   *  left out of it, which is what a file that is on disk is written as. */
   function drafted(kind: 'note' | 'canvas' | 'pdf', path: string) {
     return {
       frame: {
@@ -3577,9 +3282,6 @@ describe('a canvas that comes back after a restart', () => {
   })
 
   test('is filled from its file, the way a note is', async () => {
-    // The session writes no copy of words that are already on disk, so a kind
-    // left out of the re-read comes back as an empty plane: every stroke still
-    // in the file and none of them on screen.
     await workspace.applyLayout(drafted('canvas', '/space/plan.canvas'))
 
     const tab = workspace.tabs.find((one) => one.path === '/space/plan.canvas')
@@ -3589,8 +3291,6 @@ describe('a canvas that comes back after a restart', () => {
   })
 
   test('keeps a plane that was drawn on and never saved', async () => {
-    // The other half of the same rule: what is on disk never lands on words
-    // nobody has written down yet.
     const held = drafted('canvas', '/space/plan.canvas')
     const [only] = held.frame.pane.tabs
     if (!only) throw new Error('the draft holds no tab')
@@ -3604,9 +3304,6 @@ describe('a canvas that comes back after a restart', () => {
     expect(tab?.note.dirty).toBe(true)
   })
 
-  /** A sitting written before papers opened as page notes holds a tab of kind
-   *  `pdf`. There is no such surface any more, so the restore brings the paper's
-   *  page note forward in its place; see `restore` in workspace.svelte.ts. */
   test('a paper from an older sitting comes back as its page note', async () => {
     notes['/space/paper.pages'] = BESIDE_PAPER
 
@@ -3616,8 +3313,6 @@ describe('a canvas that comes back after a restart', () => {
       expect(workspace.tabs.find((one) => one.path === '/space/paper.pdf')).toBeUndefined()
       const tab = workspace.tabs.find((one) => one.path === '/space/paper.pages')
       expect(tab?.kind).toBe('pages')
-      // The words come off the disk, not out of the sitting: a `pdf` draft never
-      // held any.
       expect(tab?.note.dirty).toBe(false)
     } finally {
       delete notes['/space/paper.pages']
@@ -3637,11 +3332,6 @@ describe('a canvas that comes back after a restart', () => {
   })
 })
 
-/** A sitting written by an older nib, which opened files from anywhere on the disk.
- *  nib opens nothing from outside its spaces now, so a tab on such a file does not
- *  come back - not clean, not with words unwritten in it, not as a paper - and the
- *  rest of the sitting does. The app's own settings files are the exception the
- *  crate makes, and they come back. */
 describe('a tab on a file outside every space, after the update', () => {
   function drafted(tabs: { kind: 'note' | 'pdf'; path: string; dirty?: boolean }[]) {
     return {
@@ -3686,18 +3376,13 @@ describe('a tab on a file outside every space, after the update', () => {
     )
 
     expect(workspace.tabs.map((one) => one.path)).toEqual(['/space/a.md', '/config/custom.css'])
-    // Nothing of the file was read, and nothing was written over it.
     const touched = sent.filter((one) => one.path.startsWith('/elsewhere/'))
     expect(touched.map((one) => one.command)).not.toContain('read_note')
     expect(touched.map((one) => one.command)).not.toContain('write_note')
   })
 })
 
-/** A launch paints the frame and opens the session behind it, on purpose: the
- *  window is up and taking keys while the notes are still being read. So the
- *  arrangement lands a second into a sitting somebody has already started. */
 describe('a panel asked for while the session is still arriving', () => {
-  /** One pane, one note, and a sidebar the arrangement wants. */
   function drafted(panel: 'tree' | 'search' | null) {
     return {
       frame: {
@@ -3739,20 +3424,16 @@ describe('a panel asked for while the session is still arriving', () => {
   test('is what stays, rather than what the arrangement said', async () => {
     workspace.panel = 'tree'
 
-    // The note's own read, caught in the middle: this is the second the window is
-    // already up in.
     let release: () => void = () => undefined
     holding.readPath = '/space/a.md'
     holding.read = new Promise<void>((resolve) => {
       release = resolve
     })
 
-    // The session arriving, which is the caller nobody asked.
     const arriving = workspace.applyLayout(drafted('tree'), false)
     await Promise.resolve()
     await Promise.resolve()
 
-    // The search key, pressed while the notes are still coming.
     workspace.showPanel('search')
 
     release()
@@ -3767,8 +3448,6 @@ describe('a panel asked for while the session is still arriving', () => {
     expect(workspace.panel).toBe('tree')
   })
 
-  /** The other caller: an arrangement somebody chose by name brings its own
-   *  sidebar, whatever they had open before they chose it. */
   test('an arrangement chosen by name brings its own sidebar', async () => {
     workspace.showPanel('search')
     expect(workspace.panel).toBe('search')
@@ -3779,12 +3458,7 @@ describe('a panel asked for while the session is still arriving', () => {
   })
 })
 
-/** The other half of the same second: a note opened while the session is still
- *  being read. The arrangement used to replace what was open, so the note closed
- *  itself again a moment after it opened - which is what find-bar.py had to hold
- *  still for. */
 describe('a note opened while the session is still arriving', () => {
-  /** One pane holding one note, which is what a session is written as. */
   function drafted(path: string) {
     return {
       frame: {
@@ -3821,7 +3495,6 @@ describe('a note opened while the session is still arriving', () => {
     await workspace.open('/space/b.md')
     expect(workspace.active?.path).toBe('/space/b.md')
 
-    // The session, arriving by itself with another note in it.
     await workspace.applyLayout(drafted('/space/a.md'), false)
 
     expect(workspace.tabs.map((tab) => tab.path)).toContain('/space/b.md')
@@ -3836,8 +3509,6 @@ describe('a note opened while the session is still arriving', () => {
     expect(workspace.active?.path).toBe('/space/a.md')
   })
 
-  /** And the caller that is a choice: a named arrangement is what somebody asked to
-   *  see, so it still replaces whatever was open. */
   test('but an arrangement chosen by name still replaces what is open', async () => {
     await workspace.open('/space/b.md')
 
@@ -3847,21 +3518,7 @@ describe('a note opened while the session is still arriving', () => {
   })
 })
 
-/** Which of a pane's notes is in front when the window comes back.
- *
- *  A pane writes down the one it was showing as an index into its own strip, since
- *  ids are handed out fresh on every run, and that index is the only record there
- *  is of it. The arrangement honoured it and then a line below reached for the
- *  first tab in the pane and put that one in front instead - so a window always
- *  came back on the first note in the strip, however long somebody had been
- *  reading the third, and a saved arrangement opened on its first note rather than
- *  the one it names.
- *
- *  Emil met it as pictures that had gone: pictures.py pasted three into a note,
- *  reloaded, and photographed the welcome note, which has none. Both callers of
- *  `applyLayout` are here because one line served both. */
 describe('the note a window comes back on', () => {
-  /** Two notes in one pane, with the second of them the one that was showing. */
   function drafted(active: number) {
     return {
       frame: {
@@ -3912,7 +3569,6 @@ describe('the note a window comes back on', () => {
     await workspace.open('/space/b.md')
     const written = workspace.layout()
 
-    // A window with nothing in it, which is what the arrangement arrives into.
     onePane()
 
     await workspace.applyLayout(written, false)
@@ -3920,9 +3576,6 @@ describe('the note a window comes back on', () => {
     expect(workspace.active?.path).toBe('/space/b.md')
   })
 
-  /** And the pane that ends up showing nothing still takes the first note it has:
-   *  an arrangement with no notes in it, and a note whose words were not on the disk
-   *  yet carried into it. */
   test('is the first in the strip only where the pane was left showing nothing', async () => {
     await workspace.open('/space/c.md')
     workspace.active?.note.live.replace('# unwritten words')
@@ -3952,8 +3605,6 @@ describe('what a document is called on screen', () => {
     expect(workspace.active?.shown).toBe('plan')
   })
 
-  /** A paper has no tab of its own any more: it opens as its page note, and that
-   *  note is named the way every page note is. */
   test('is the page note a paper opens', async () => {
     notes['/space/paper.pages'] = BESIDE_PAPER
 
@@ -3997,14 +3648,6 @@ describe('what a document is called on screen', () => {
     expect(workspace.active?.shown).toBe('Untitled')
   })
 
-  /** A draft is asked what it is called on every keystroke, so what it reads has
-   *  to be a fixed amount of it. A page pasted out of a browser arrives as one
-   *  line of a hundred thousand characters, and the first line is exactly the one
-   *  a title is read from - so the bound is on characters as well as on lines.
-   *
-   *  Said as what it does rather than as how long it takes: a heading sitting
-   *  past that many characters is not found, even though it is well within the
-   *  forty lines a title may be on. See TITLE_CHARS. */
   test('reads a fixed amount of a draft, however long its first line is', () => {
     workspace.openBlank()
     const tab = workspace.active
@@ -4016,8 +3659,6 @@ describe('what a document is called on screen', () => {
     expect(tab.shown.startsWith('word word')).toBe(true)
   })
 
-  /** A file opened from the computer in the browser build has a name of its own
-   *  and no path to save back to. The name it came with wins. */
   test('is the name a draft came with, where it came with one', () => {
     workspace.openBlank('Report', '# Something else entirely\n')
     expect(workspace.active?.shown).toBe('Report')
@@ -4056,20 +3697,10 @@ describe('a click in the file list landing inside a gesture that re-reads the no
     holding.readPath = ''
   })
 
-  /** Renaming a note rewrites every link to it and then brings every open note up
-   *  to what is now on disk - one read per open document, which is a click's worth
-   *  of time. A single click in that moment moves the preview tab on to another
-   *  note, in the same document, and the read that was in the air is a read of the
-   *  note it came from.
-   *
-   *  Those words have nowhere to go. Landing them would leave the document holding
-   *  one note's text under another note's name, clean, and the next keystroke would
-   *  write that pair to disk and carry it up to every other device. */
   test('does not land the note it came from in the note it moved to', async () => {
     const tab = await preview('/space/a.md')
     expect(tab.note.text).toBe('# a')
 
-    // The re-read of the previewed note, caught in the middle.
     let release: () => void = () => undefined
     holding.readPath = '/space/a.md'
     holding.read = new Promise<void>((resolve) => {
@@ -4077,11 +3708,9 @@ describe('a click in the file list landing inside a gesture that re-reads the no
     })
 
     const renaming = workspace.rename('/space/c.md', 'renamed.md')
-    // Long enough for the rename to have reached the held read.
     await Promise.resolve()
     await Promise.resolve()
 
-    // The click. One tab, one document, another note.
     const moved = await preview('/space/b.md')
     expect(moved.id).toBe(tab.id)
     expect(moved.note.path).toBe('/space/b.md')
@@ -4089,16 +3718,12 @@ describe('a click in the file list landing inside a gesture that re-reads the no
     release()
     await renaming
 
-    // The note that is up, and only its own words.
     expect(moved.note.path).toBe('/space/b.md')
     expect(moved.note.text).toBe('# b')
     expect(moved.note.dirty).toBe(false)
   })
 })
 
-/** The number goes before the extension, and the extension is the last dot of the
- *  file's own name. Not this store's rule any more but `freePath`'s, the one every
- *  other part of the app steps a taken name aside with; see @orden/markdown/paths. */
 describe('a new file stepping aside from a name the folder already has', () => {
   const row = (path: string, children?: Entry[]): Entry => ({
     name: path.split('/').pop()!,
@@ -4117,7 +3742,6 @@ describe('a new file stepping aside from a name the folder already has', () => {
     workspace.activeSpaceId = 's'
   })
 
-  /** The path the new note was written to. */
   async function madeIn(folder: string, named: string) {
     sent.length = 0
     await workspace.createNote(folder, named)
@@ -4129,28 +3753,17 @@ describe('a new file stepping aside from a name the folder already has', () => {
     expect(await madeIn('/space', 'Plan.md')).toBe('/space/Plan 2.md')
   })
 
-  /** A name that is nothing but an extension is a name. This store's own copy read
-   *  `.hidden` as an extension of nothing and wrote ` 2.hidden`, a file whose name
-   *  begins with a space - the same bug the import's copy had. */
   test('and a dot-file keeps the whole of its name', async () => {
     workspace.tree = row('/space', [row('/space/.hidden')])
     expect(await madeIn('/space', '.hidden')).toBe('/space/.hidden 2')
   })
 
-  /** The dot that counts is the file's own. A folder with a dot in its name is not
-   *  an extension of the note inside it. */
   test('and a folder with a dot in its name keeps its own', async () => {
     workspace.tree = row('/space', [row('/space/v1.2', [row('/space/v1.2/Note')])])
     expect(await madeIn('/space/v1.2', 'Note')).toBe('/space/v1.2/Note 2')
   })
 
-  /** A note named after the moment it was made steps aside the same way. Two of
-   *  them in one minute is the only way the moment is taken, and this used to be the
-   *  one name in the app spelled `202609130412-2.md` - a numbering nothing else
-   *  writes and nothing else would predict. */
   test('and a note named after the moment reads the same rule', async () => {
-    // The year rather than the minute, so the name the store will reach for is
-    // known here without racing the clock for it.
     const taken = `${noteId('YYYY')}.md`
     workspace.tree = row('/space', [row(`/space/${taken}`)])
 
@@ -4164,8 +3777,6 @@ describe('a new file stepping aside from a name the folder already has', () => {
 })
 
 describe('following a link to a note the space has not got', () => {
-  /** The jump a wikilink makes when the index resolved nothing: no path of its
-   *  own, only what the link said. */
   const asked = (target: string) => ({
     path: null,
     target,
@@ -4200,9 +3811,6 @@ describe('following a link to a note the space has not got', () => {
     expect(sent.find((one) => one.command === 'write_note')?.path).toBe('/space/Road.md')
   })
 
-  /** The index misses notes that are there: a dot folder is never scanned, and a note
-   *  that is not UTF-8 or too big to read is skipped. A miss is not an absence, and a
-   *  note made over one of those would be the end of what it held. */
   test('opens a note the index never read, and writes nothing over it', async () => {
     notes['/space/.github/CONTRIBUTING.md'] = '# How to contribute\n\nWhat the team wrote.\n'
     await workspace.followLink(asked('.github/CONTRIBUTING'))
@@ -4211,10 +3819,6 @@ describe('following a link to a note the space has not got', () => {
     expect(workspace.tabs.map((tab) => tab.path)).toEqual(['/space/.github/CONTRIBUTING.md'])
   })
 
-  /** What a link says is somebody's prose: a note out of a shared space, a room, a
-   *  sync pull or a paste can name a path that climbs out of the space, and the note
-   *  made under that name would be a file somewhere else on the machine written
-   *  over. Nothing is written and nothing is opened. */
   test('and writes nothing at all for a link that climbs out of the space', async () => {
     for (const target of [
       '../../../.bashrc',
@@ -4233,9 +3837,6 @@ describe('following a link to a note the space has not got', () => {
   })
 })
 
-/** Stacking is a pane's own answer: how the notes in *this* pane are laid out, which is
- *  why a long note read down the left and three short ones stacked on the right is the
- *  point of it rather than a thing the window does. */
 describe('a pane that lays its notes out as columns', () => {
   test('starts as every pane starts, which is one document with a strip over it', async () => {
     await workspace.open('/space/a.md')
@@ -4286,17 +3887,7 @@ describe('a pane that lays its notes out as columns', () => {
   })
 })
 
-/** One file, one document.
- *
- *  Opening a note reads it, and a read is a round trip: the tab that would say the
- *  file is already open is not there until it comes back. Two opens of one path that
- *  overlap therefore each built one of everything, and then one file had two
- *  documents over it - each honest about its own words, both reporting theirs as
- *  that file's, and whichever was written last was what the file ended up saying.
- *  That is one person's writing replacing another's, which is the worst thing this
- *  app can do, and it is what every test here is about. */
 describe('two opens of one path', () => {
-  /** The file's read, held open, so the second open begins inside the first. */
   function held(path: string): () => void {
     let release: () => void = () => undefined
     holding.readPath = path
@@ -4306,7 +3897,6 @@ describe('two opens of one path', () => {
     return release
   }
 
-  /** The documents open over one file. Two of them is the bug. */
   const over = (path: string) => workspace.documents.filter((one) => one.path === path)
 
   beforeEach(() => {
@@ -4361,9 +3951,6 @@ describe('two opens of one path', () => {
     expect(over('/space/plan.canvas')).toHaveLength(1)
   })
 
-  /** The launch race. A session is read a note at a time and goes into the window
-   *  when the last one lands, so a note clicked in that second is opened against a
-   *  window that says nothing is open yet. */
   test('one of them from a session still being read', async () => {
     const drafted = {
       frame: {
@@ -4392,7 +3979,6 @@ describe('two opens of one path', () => {
     const release = held('/space/a.md')
     const arriving = workspace.applyLayout(drafted, false)
     await Promise.resolve()
-    // The click, while the session's own read of the same note is still in the air.
     const clicked = workspace.open('/space/a.md')
     release()
     await Promise.all([arriving, clicked])
@@ -4400,16 +3986,12 @@ describe('two opens of one path', () => {
     expect(over('/space/a.md')).toHaveLength(1)
   })
 
-  /** The sharpest edge of it: a lookup by path answers the first document it finds,
-   *  so words that arrive for a file reach one of the two and the other keeps its
-   *  own - dirty, and on its way back over the file at the next save. */
   test('so words arriving for the file reach every pane showing it', async () => {
     const release = held('/space/a.md')
     const both = Promise.all([workspace.open('/space/a.md'), workspace.open('/space/a.md')])
     release()
     await both
 
-    // Another program wrote the file, or a sync brought it over.
     workspace.reload('/space/a.md', '# a, from elsewhere')
     workspace.flush()
 
@@ -4419,9 +4001,6 @@ describe('two opens of one path', () => {
     }
   })
 
-  /** And the fourth of them: a room is named after the document, so two documents
-   *  over one file were two of this device's own clients in one room, seeded from
-   *  texts that had already parted company. */
   test('and one file is one room, because it is one document', async () => {
     const release = held('/space/a.md')
     const both = Promise.all([workspace.open('/space/a.md'), workspace.open('/space/a.md')])
@@ -4433,10 +4012,6 @@ describe('two opens of one path', () => {
   })
 })
 
-/** A path that changes moves the document rather than leaving a second one at the
- *  name it had. Every one of these is the same gesture underneath - the document's
- *  own `path` is the only place a file's name is written down - which is why there
- *  is nothing here to keep in step. */
 describe('a file that changes its name', () => {
   beforeEach(() => {
     workspace.tabs = []
@@ -4462,10 +4037,6 @@ describe('a file that changes its name', () => {
     expect(workspace.documentAt('/space/renamed.md')).toBe(note)
   })
 
-  /** Every way a path changes owes the bookmarks what it owes the tabs and the
-   *  index. A bookmark keeps the path it was made with, so a note renamed, dragged
-   *  into a folder or put back by an undo left its bookmark on a name nothing
-   *  answered to, and its row was gone from the list. */
   test('takes its bookmark with it, and an undo takes it back', async () => {
     const mark = (path: string) => ({ kind: 'note' as const, path, text: '' })
     workspace.bookmarks.toggle(mark('a.md'))
@@ -4486,8 +4057,6 @@ describe('a file that changes its name', () => {
     workspace.bookmarks.toggle(mark('a.md'))
   })
 
-  /** And opening it under the new name is opening what is open, not a second
-   *  document over the same file. */
   test('so opening it again under that name opens what is open', async () => {
     await workspace.open('/space/a.md')
     notes['/space/renamed.md'] = notes['/space/a.md'] ?? ''
@@ -4499,15 +4068,6 @@ describe('a file that changes its name', () => {
   })
 })
 
-/** A website written when a website was a note is a `.md` file with `url:` at the
- *  top of it, and which opener its row runs depends on whether the link index has
- *  read it yet: as a note until the pass catches up, as a website afterwards. So one
- *  file can be asked for as a note and then as a website within a sitting.
- *
- *  That used to make two documents over it - the note's words in one, the shortcut's
- *  three lines in the other - and the conversion rewrote the file under the note
- *  that was still open on it. Emil: *"switched from a web note tab to a normal note
- *  tab and then it had some strange web note tab content in it."* */
 describe('a file asked for as a note and then as a website', () => {
   const WEB_NOTE = '/space/site.md'
 
@@ -4533,13 +4093,10 @@ describe('a file asked for as a note and then as a website', () => {
 
     expect(workspace.documents.filter((one) => one.path === WEB_NOTE)).toHaveLength(1)
     expect(workspace.documentAt(WEB_NOTE)).toBe(note)
-    // And nothing was written under the document that was open on it.
     expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
   })
 })
 
-/** An address typed into a website's bar goes into its file in the file's own format:
- *  a `.webloc` a Mac wrote stays a plist a Mac reads, its other keys and all (#370). */
 describe('an address typed into a website bar', () => {
   beforeEach(() => {
     workspace.tabs = []
@@ -4590,11 +4147,6 @@ describe('an address typed into a website bar', () => {
   })
 })
 
-/** A website the app writes itself is a file `[[its name]]` reaches the moment it is
- *  written, like a note is. Nothing rescans a space while it is open, so the index
- *  knows what the writer tells it - and the website made from the file list, the
- *  address typed into its bar and the Ctrl+S that first saves one all wrote straight
- *  to the disk and told it nothing: `[[Docs]]` found no Docs until the next launch. */
 describe('a website the app writes', () => {
   const LINKING = '/space/One.md'
 
@@ -4602,8 +4154,6 @@ describe('a website the app writes', () => {
     onePane()
     workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
     workspace.activeSpaceId = 'one'
-    // The launch's turns, taken at once: the index reads a space after the first
-    // paint, and a test has no paint to wait for.
     void startup.shown()
     await links.build('/space')
     links.noteSaved(LINKING, 'see [[Docs]] and [[Docs.url]]')
@@ -4625,8 +4175,6 @@ describe('a website the app writes', () => {
     links.noteGone('/space/Docs.url')
   })
 
-  // A file the scan never saw - one a sync brought down after it - is the index's to
-  // hear about the moment the app writes it, and aiming the bar writes it.
   test('and is linked once its bar is aimed somewhere', async () => {
     notes['/space/Docs.url'] = '[InternetShortcut]\r\nURL=https://svelte.dev/\r\n'
     await workspace.openWeb('/space/Docs.url')
@@ -4657,10 +4205,6 @@ describe('a website the app writes', () => {
   })
 })
 
-/** The one tab that previews a note moves its document on to whatever is clicked
- *  next, which is a document arriving at a path rather than being opened at it. A
- *  note that is already open is never the one it moves on to: the pane showing it
- *  comes forward instead. */
 describe('a preview landing on a note that is already open', () => {
   beforeEach(() => {
     workspace.tabs = []
@@ -4682,13 +4226,10 @@ describe('a preview landing on a note that is already open', () => {
 
     expect(workspace.documents.filter((one) => one.path === '/space/a.md')).toHaveLength(1)
     expect(workspace.documentAt('/space/a.md')).toBe(first)
-    // The preview tab is still on the note it was previewing.
     expect(previewed.path).toBe('/space/b.md')
   })
 })
 
-/** The rows of a tab's own menu that act on more than the tab: Chrome's, VS Code's
- *  and Obsidian's, which Orden's menu had only two of. See tab-strip/menu.ts. */
 describe('what a tab s own menu does to the strip', () => {
   const entry = (path: string, children: Entry[] = [], isDir = false): Entry => ({
     name: path.split('/').pop() ?? path,
@@ -4742,7 +4283,6 @@ describe('what a tab s own menu does to the strip', () => {
     expect(workspace.closesAround(id('/space/a.md'), 'all')).toBe(3)
   })
 
-  /** Chrome's duplicate: right after the tab, in front, at the same place. */
   test('duplicates a tab right after it, on the same document and the same place', async () => {
     const id = await opened('/space/a.md', '/space/b.md')
     const original = workspace.tabs.find((one) => one.id === id('/space/a.md'))
@@ -4768,8 +4308,6 @@ describe('what a tab s own menu does to the strip', () => {
     expect(workspace.tabs).toHaveLength(1)
   })
 
-  /** VS Code's "move editor into next group", which makes the group when there is
-   *  none. */
   test('moves a tab into a new pane beside its own when there is no other', async () => {
     const id = await opened('/space/a.md', '/space/b.md')
 
@@ -4800,8 +4338,6 @@ describe('what a tab s own menu does to the strip', () => {
     expect(workspace.panes.count).toBe(1)
   })
 
-  /** Renaming from a tab is renaming on the file's own row, with the list brought
-   *  out and the folder down to the row opened. */
   test('renames on the file s own row, with the file list out and its folder open', async () => {
     workspace.tree = entry(
       '/space',
@@ -4820,8 +4356,6 @@ describe('what a tab s own menu does to the strip', () => {
     workspace.cancelNaming()
   })
 
-  /** A folder that is also a note is one row, named for the folder; renaming it
-   *  there renames both. See folder-notes.ts. */
   test('renames a folder s own note on the folder s row', async () => {
     workspace.tree = entry(
       '/space',
@@ -4847,9 +4381,6 @@ describe('what a tab s own menu does to the strip', () => {
   })
 })
 
-/** A tab asked for with Ctrl+click, the middle button or Ctrl+Enter: beside the tab
- *  in front, never the preview, and in front of the reader only when Shift said so.
- *  The press is read in new-tab.ts; this is what every open does with the answer. */
 describe('a tab asked for with a modifier', () => {
   const strip = () => workspace.tabs.map((one) => one.path ?? one.address)
   const jump = (path: string) => ({ path, target: path, heading: null, block: null, page: null })
@@ -4937,7 +4468,6 @@ describe('a tab asked for with a modifier', () => {
 
   test('and makes the note there when the space has none by that name', async () => {
     await workspace.open('/space/a.md')
-    // What the disk answers once the note is written; the mock writes nothing.
     notes['/space/New.md'] = '# New\n\n'
 
     try {
@@ -5022,11 +4552,6 @@ describe('a tab asked for with a modifier', () => {
   })
 })
 
-/** Whose web data a page is built in, which is the space the tab belongs to: the one
- *  holding its file, and for a tab with no file the one it was opened in. Emil,
- *  2026-09-30: *"unsaved web tabs should use the current store of the current space.
- *  And a note should always use the data saving option from the space that it is
- *  from."* */
 describe('the space a tab belongs to', () => {
   const WORK = { id: 'w', name: 'Work', root: '/work' }
   const HOME = { id: 'h', name: 'Home', root: '/space' }
@@ -5076,7 +4601,6 @@ describe('the space a tab belongs to', () => {
     expect(workspace.spaceOf(tab.note)).toBe('w')
   })
 
-  /** A link followed out of a work page stays signed in as work. */
   test('is, for a page opened out of a tab, that tab’s space', () => {
     workspace.openWebsite()
     const from = workspace.active
@@ -5103,9 +4627,6 @@ describe('the space a tab belongs to', () => {
   })
 })
 
-/** Emil, 2026-09-30: *"it should NEVER be possible that we have the same web note open
- *  multiple times within one nib session."* One check in the strip itself, so every
- *  door is held to it; see `secondWebTabs` in workspace/open.ts. */
 describe('a web note', () => {
   const SITE = '/space/Site.url'
 
@@ -5120,14 +4641,12 @@ describe('a web note', () => {
     delete notes['/space/Site.url']
   })
 
-  /** Every tab over the web note's file, which is never more than one. */
   const onSite = () => workspace.tabs.filter((one) => one.path === SITE)
 
   async function openSite() {
     await workspace.openWeb(SITE)
     const tab = workspace.active
     if (tab?.path !== SITE) throw new Error('the site did not open')
-    // Where the reading got to, which the page says and the session remembers.
     pages.of(tab.id).url = 'https://example.com/deep'
     tab.address = 'https://example.com/deep'
     return tab
@@ -5183,7 +4702,6 @@ describe('a web note', () => {
     const tab = await openSite()
     workspace.split('row', tab.id)
     const layout = workspace.layout()
-    // As a build before this one wrote it: both tabs on the file.
     for (const pane of panesOf(layout.frame)) {
       for (const draft of pane.tabs) {
         draft.path = SITE
@@ -5198,7 +4716,6 @@ describe('a web note', () => {
     expect(workspace.tabs).toHaveLength(2)
   })
 
-  /** Markdown notes are out of it: a note may still be shown twice. */
   test('a note may still be in two panes', async () => {
     await workspace.open('/space/a.md')
     workspace.split('row')
@@ -5207,8 +4724,6 @@ describe('a web note', () => {
   })
 })
 
-/** A note with no file is its space's though it is on no disk, so a search of the
- *  space finds it where its words are; see search/unsaved.ts. */
 describe('a search of the space', () => {
   beforeEach(() => {
     onePane()
@@ -5231,9 +4746,6 @@ describe('a search of the space', () => {
   })
 })
 
-/** Zen's Essentials: a press on a tile shows the file where a tab shows, with no tab in
- *  the strip, and the view stays loaded behind whatever comes in front of it. See
- *  essentials.ts. */
 describe('an essential', () => {
   beforeEach(() => {
     onePane()
@@ -5284,7 +4796,6 @@ describe('an essential', () => {
     keep('/space/a.md')
     await (await import('./essentials.svelte')).openEssential('/space/a.md')
     keep('/space/a.md')
-    // Heard through the essentials' own module, which the change fetches.
     await workspace.bookmarks.offered
     await new Promise((done) => setTimeout(done))
 
@@ -5328,8 +4839,6 @@ describe('an essential', () => {
   })
 })
 
-/** #346: a web note that keeps its own web data keeps it as an essential, however it got
- *  there and when it goes back. */
 describe('an essential of a web note with web data of its own', () => {
   const SITE = '/space/site.url'
   const OWN = '3f9a0c17e2b4d685'
@@ -5431,8 +4940,6 @@ describe('an essential asked for in a tab', () => {
   })
 })
 
-/** B515: a page note's paper is on disk beside it and in no operation, so what search
- *  holds of its words has to hear of it through the note. See pdf/papers.ts. */
 describe('the words of the paper a page note holds', () => {
   const papers = () => import('./pdf/papers')
   const hits = async (root: string) => {
@@ -5479,8 +4986,6 @@ describe('the words of the paper a page note holds', () => {
   })
 })
 
-/** The file at the top of a space that agents read: a real file on the disk, shown as a
- *  field in the space's settings rather than as a note; see settings/SpacePane.svelte. */
 describe('a space and its AGENTS.md', () => {
   const entry = (path: string, children: Entry[] | null = null): Entry => ({
     name: path.split('/').at(-1) ?? '',
@@ -5670,16 +5175,11 @@ describe('a space and its AGENTS.md', () => {
   })
 })
 
-/** #1079: whichever way a pane's tab in front goes, the pane shows the tab used last of
- *  those left, and only where none has been in front the neighbour of the one that went.
- *  One rule, `successorOf` in panes.svelte.ts; each way in comes through it. */
 describe('the tab a pane comes back to', () => {
   beforeEach(() => {
     onePane()
   })
 
-  /** One pane holding a, b and c, a in front and `before` the one used before it: b to
-   *  tell it from the end of the strip, c from the neighbour of a. */
   async function strip(before: 'b' | 'c' = 'c') {
     for (const name of ['a', 'b', 'c']) await workspace.open(`/space/${name}.md`)
     const id = (name: string) => workspace.tabs.find((tab) => tab.name === `${name}.md`)?.id ?? ''

@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from './note-id'
 
-/** A fixed moment, so the assertions read the same in every timezone: the
- *  formats spell local time, which is what somebody naming a note means by it. */
 const AT = new Date(2026, 8, 7, 4, 5, 6)
 
 describe('the name a unique note gets', () => {

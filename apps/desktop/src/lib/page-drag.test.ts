@@ -1,9 +1,3 @@
-/** The script that runs a drag in the app's own page on Linux (src-tauri/src/page_drag.js),
- *  in a document of its own. What the engine does not give a test: a drag event, a transfer
- *  and what is under the pointer. Events raised by a script are never trusted, so the
- *  engine's own `dragstart` is the one marked `native`. The steps at rest are called by hand
- *  rather than waited for. A drag that has lost its pointer must never land (#427). */
-
 import { readFileSync } from 'node:fs'
 import { JSDOM } from 'jsdom'
 import { describe, expect, test } from 'vitest'
@@ -67,7 +61,6 @@ function page(html = '') {
     })
   }
   const byId = (id: string) => document.getElementById(id)!
-  // A row that takes what is dragged over it, as the file list's do.
   for (const type of ['dragenter', 'dragover']) {
     byId('folder').addEventListener(type, (event) => {
       event.preventDefault()

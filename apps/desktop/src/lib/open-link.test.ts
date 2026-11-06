@@ -3,22 +3,8 @@ import { type Press, tabAsk } from './new-tab'
 import { type LinkPlace, opensLink, placeFor, settingsPane, webHref } from './open-link'
 import { viewport } from './viewport.svelte'
 
-/** Which press on a link goes where.
- *
- *  The decision is the whole of the feature - the rest is a tab being made - and it
- *  is the part somebody will one day be tempted to change on one surface only, so it
- *  lives in one pure function with these around it. Two things are being held down:
- *  that the browser's own modifiers keep their browser meanings, and that nothing a
- *  tab may not hold is ever handed to one.
- *
- *  `holdsPages` is passed rather than read, so every case here says which build it is
- *  about: a desktop that has somewhere to put a page, or a phone that does not. */
-
-/** Nothing held down, the main button: what a reader does without thinking. */
 const PLAIN: Press = { button: 0, ctrlKey: false, metaKey: false, shiftKey: false }
 
-/** A press read the way `followHref` reads it - Shift on its own means something on
- *  a link - and then placed. */
 function place(href: string, press: Partial<Press> = {}, holdsPages = true): LinkPlace {
   return placeFor(href, tabAsk({ ...PLAIN, ...press }, true), holdsPages)
 }
@@ -83,9 +69,6 @@ describe('what never becomes a tab', () => {
   })
 })
 
-/** Which builds have somewhere to put a page, read off the device when nobody says:
- *  the desktop alone. A tablet hands a page to the system's browser as a phone does
- *  (#206), where it used to draw it in a frame inside Orden. */
 describe('where a page may go', () => {
   const was = viewport.device
   afterEach(() => {
@@ -130,9 +113,6 @@ describe('reading the press', () => {
   })
 })
 
-/** The last line of a welcome note seeded 2026-10-13 to 2026-10-20, which opens
- *  Settings > Import rather than leaving the app for a scheme nobody else answers.
- *  See welcome.ts. */
 describe('a link to a settings pane', () => {
   test('opens Import, however it is spelled', () => {
     expect(settingsPane('nib://settings/import')).toBe('import')

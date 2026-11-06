@@ -1,20 +1,3 @@
-/** What the files of the spaces that are not open wear: a note's chosen icon and its
- *  colour, a website's mark and where it points, and whether a page note holds its PDF.
- *
- *  The link index holds these for the open space and no other - it is a scan of one
- *  space - so a tab, a bookmark or a search hit from another space asked it and got
- *  nothing, and a note wore its chosen icon only while its own space was the open one.
- *  Emil, 2026-10-03. So a file outside the open space is read once, on its own, the
- *  first time a mark asks about it, and what it wears is kept here by its path until
- *  it is saved, moved or gone, or the open space changes (which is when what was the
- *  open space's index stops speaking for its files). See chosen-icon.ts, the one door
- *  every mark goes through.
- *
- *  Read rather than scanned: a front matter key or two for a note, a few lines for a
- *  website, the `nib` key for a plane - never the space. And a chat's pointer in any
- *  space, open or not, and an online terminal's file, since no scan reads either: a line
- *  of JSON each. */
-
 import { frontMatterValue } from '@orden/markdown/front-matter'
 import {
   isCanvasTarget,
@@ -30,16 +13,12 @@ import { isMarkdownPath, noteName, pathKey, within } from './space-paths'
 import { invoke } from './tauri'
 import { readWebFile } from '@orden/scan/shortcut'
 
-/** What one file wears, in the link index's own words for each. */
 interface Worn {
   icon: string | null
   iconColor: string | null
   favicon: string | null
   address: string | null
-  /** A page note made from a PDF, which wears its mark (#676). */
   paper: boolean
-  /** A note that says nothing yet, which wears the empty page (#1042); see
-   *  `saysNothing` in scan-note.ts. */
   bare: boolean
 }
 
@@ -52,8 +31,6 @@ const NOTHING: Worn = {
   bare: false,
 }
 
-/** Whether a file can wear anything at all: a folder, a picture and a PDF cannot,
- *  and are never read. */
 function wears(path: string): boolean {
   return (
     isMarkdownPath(path) ||
@@ -65,13 +42,11 @@ function wears(path: string): boolean {
   )
 }
 
-/** What a file's words say it wears. */
 async function wornBy(path: string, content: string): Promise<Worn> {
   if (isWebTarget(path)) {
     const said = readWebFile(path, content)
     return {
       ...NOTHING,
-      // The icon the reader chose over the site's mark (#1098).
       icon: said?.chosen ?? null,
       iconColor: said?.chosenColour ?? null,
       favicon: said?.icon ?? null,
@@ -79,14 +54,12 @@ async function wornBy(path: string, content: string): Promise<Worn> {
     }
   }
 
-  // The glasses' plugin carries no chats, nor their reader.
   if (isChatTarget(path)) {
     if (__EVEN_PLUGIN__) return NOTHING
     const pointer = (await import('@orden/chats/pointer')).chatOf(content)
     return { ...NOTHING, icon: pointer?.icon ?? null, iconColor: pointer?.iconColor ?? null }
   }
 
-  // An online terminal's file, a line of JSON, in any space (#1110).
   if (isTermTarget(path)) {
     if (__EVEN_PLUGIN__) return NOTHING
     const term = (await import('@orden/online/term')).termOf(content)
@@ -107,26 +80,16 @@ async function wornBy(path: string, content: string): Promise<Worn> {
   }
 }
 
-/** Whether a page note's paper is on the disk; fetched, so the first paint carries none. */
 async function holdsItsPaper(path: string): Promise<boolean> {
   const [{ onDisk }, { paperOf }] = await Promise.all([import('./on-disk'), import('./pages/held')])
   return onDisk(paperOf(path))
 }
 
 class Elsewhere {
-  /** By `pathKey`, so two spellings of one file are one entry. */
   private readonly held = new SvelteMap<string, Worn>()
-  /** Every file asked about, by key, with the path it was asked under. Plain rather
-   *  than state: a mark asks from inside a derivation, which may read state and never
-   *  write it, so the read is started a microtask later and only its answer lands in
-   *  `held`. */
   private readonly asked = new Map<string, string>()
-  /** Bumped by `clear`, so a read that was in the air when everything was let go of
-   *  does not land afterwards. */
   private round = 0
 
-  /** What the file at this path wears, or null until it has been read - which this
-   *  starts, and whose answer redraws whatever asked. */
   of(path: string): Worn | null {
     if (!wears(path)) return null
 
@@ -143,15 +106,12 @@ class Elsewhere {
   private async read(path: string, key: string, round: number) {
     const [content, paper] = await Promise.all([
       invoke<string>('read_note', { path }).catch(() => null),
-      // The glasses' plugin opens no page note.
       !__EVEN_PLUGIN__ && isPagesTarget(path) ? holdsItsPaper(path) : false,
     ])
     const worn = content === null ? NOTHING : await wornBy(path, content)
     if (round === this.round) this.held.set(key, { ...worn, paper })
   }
 
-  /** A file outside the open space written by this app: what it wears now. Only for
-   *  one somebody has already asked about; the rest are read when they are. */
   saved(path: string, content: string) {
     const key = pathKey(path)
     if (!this.held.has(key) || !wears(path)) return
@@ -163,8 +123,6 @@ class Elsewhere {
     })
   }
 
-  /** A file or folder that moved or went: everything at it or under it is read again
-   *  when it is next asked about. */
   forget(path: string) {
     for (const [key, asked] of [...this.asked]) {
       if (within(path, asked) === null) continue
@@ -173,9 +131,6 @@ class Elsewhere {
     }
   }
 
-  /** All of it, for a space that has just opened: what was the open space's index
-   *  no longer speaks for its files, and what was read about the new one is the
-   *  index's to say now. */
   clear() {
     this.round++
     this.held.clear()

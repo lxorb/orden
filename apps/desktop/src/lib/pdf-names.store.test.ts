@@ -1,10 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** A page note's paper is `<name>.pages.pdf` beside it, so a PDF of that name put
- *  beside a page note `<name>.pages` is taken for its paper: hidden from the list, drawn
- *  over, and deleted with the note. macOS Pages names every PDF it saves that way, so a
- *  name for a PDF is taken where the page note it would belong to is there. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../../test/disk').Disk | null }))
 
 vi.mock('./tauri', async (importOriginal) => ({

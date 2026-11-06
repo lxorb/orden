@@ -1,32 +1,22 @@
 import { dur } from './motion'
 
-/** A sheet on a phone put away by pulling it down from its head, as an iPhone's
- *  are. The menus drew the grip and pulling it did nothing. */
-
-/** Pixels of pull that mean nothing, however quick: a thumb settling. */
 const TWITCH = 12
 
-/** Far enough for a slow pull: a quarter of the sheet, at most a thumb's length. */
 const SHARE = 0.25
 const THUMB = 120
 
-/** Pixels a millisecond at which a pull is a flick. */
 const FLICK = 0.5
 
-/** How far below its top a pull may start; below are rows a finger scrolls. */
 const HEAD = 64
 
 const SETTLE = 220
 
-/** Whether a sheet let go of after `pulled` pixels at `speed` goes away. */
 export function putsAway(pulled: number, height: number, speed: number): boolean {
   if (pulled <= TWITCH) return false
   if (speed >= FLICK) return true
   return pulled >= Math.min(height * SHARE, THUMB)
 }
 
-/** The gesture on the sheet. A touch on a control is the control's; `translate`
- *  because the sheet's way in is drawn with `transform`. Handed null, it is off. */
 export function pullsAway(node: HTMLElement, close: (() => void) | null) {
   let closing = close
   let from: number | null = null
@@ -51,7 +41,6 @@ export function pullsAway(node: HTMLElement, close: (() => void) | null) {
     const touch = event.touches[0]
     if (from === null || !touch) return
 
-    // The page under the sheet must not scroll with it.
     event.preventDefault()
     const elapsed = event.timeStamp - lastAt
     if (elapsed > 0) speed = (touch.clientY - lastY) / elapsed

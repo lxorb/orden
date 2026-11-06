@@ -1,20 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** What the app knows about who may do what in a space, and the sheet that
- *  changes it. The account, the mirrors and the network are stood in for; what
- *  is under test is the reading of a role and what each control on the sheet
- *  actually asks for. */
-
 interface Held {
-  /** An address, for somebody invited by one; null for a guest. */
   email: string | null
-  /** A guest id, for somebody a link let in; null for a member by address. */
   guest: string | null
   name: string | null
   role: string
 }
 
-/** Somebody in a space, as the sheet hands them back to the store. */
 const member = (email: string, role = 'write') => ({
   email,
   guest: null,
@@ -24,7 +16,6 @@ const member = (email: string, role = 'write') => ({
 })
 const guest = (id: string, name: string, role = 'write') => ({ email: null, guest: id, name, role })
 
-/** Who may reach one share, as the account answers it. */
 interface Who {
   owner: { email: string; name: string | null }
   members: (Held & { pending: boolean })[]
@@ -33,48 +24,23 @@ interface Who {
 }
 
 interface World {
-  /** Which remote space each folder mirrors, if any. */
   mirrors: Record<string, string>
-  /** Folders that are spaces on this machine and mirror nothing yet, as every
-   *  folder looks before the sync has started. */
   locals: string[]
-  /** What the sync store kept of this account's role in each paired folder, as a
-   *  launch reads it before the account's listing has come back. */
   kept: Record<string, string>
-  /** What every share call answers with. */
   sharing: Who
-  /** What a call about one file answers with instead, by the file's id. Which is
-   *  what lets a test tell two shares apart: the whole point of the sheet is that
-   *  the list in front of the reader is the list of the thing it is headed with. */
   sharingOf: Record<string, Who>
-  /** Whether answers are held in the air rather than landing at once, so a test
-   *  can move the world under a request that has already gone. */
   holding: boolean
-  /** The answers being held, in the order they were asked for; see `land`. */
   held: (() => void)[]
-  /** Set to make the next call fail. */
   refuse: string | null
-  /** What the refusal comes back as. 404 is the space saying the change had
-   *  already happened. */
   refuseStatus: number
-  /** Every share call that was made, in order. */
   asked: string[]
-  /** The open tabs, as much of each as `othersIn` reads: a path and the key its
-   *  document's room is counted under. */
   tabs: { path: string | null; note: { key: string } }[]
-  /** What the account holds for each path on this machine: the note's id, which
-   *  is what a share about one file names. */
   notes: Record<string, string>
-  /** What `GET /v1/shared` answers: the files other people shared on their own. */
   shared: SharedItem[]
-  /** The words each of those files comes down with. */
   words: Record<string, string>
-  /** What hears a file operation, as the workspace tells one; see workspace/file-ops.ts. */
   followers: ((op: FileOp) => unknown)[]
-  /** Every shared file that was opened, and every one whose tabs were closed. */
   opened: { id: string; name: string; path: string; text: string }[]
   closed: string[]
-  /** Which shared files have a tab right now, as the workspace would answer. */
   showing: string[]
 }
 
@@ -110,9 +76,6 @@ vi.mock('./api', async (importOriginal) => {
   const answer = (what: string, who = world.sharing) => {
     world.asked.push(what)
 
-    // What the call answers is decided now, as a server decides it: a test that
-    // clears the refusal after the press is asking about the press, not about
-    // what the server thought a moment later.
     const refuse = world.refuse
     const status = world.refuseStatus
     const settle = () =>
@@ -125,9 +88,6 @@ vi.mock('./api', async (importOriginal) => {
     })
   }
 
-  /** Which share a call was about, as the calls themselves say it: the space, or
-   *  one file of it. Written into what the test reads, so a control that forgot
-   *  to carry the file it is about is a call that says the wrong thing. */
   const about = (item: string) => (item ? ` about ${item}` : '')
 
   return {
@@ -164,19 +124,11 @@ vi.mock('./api', async (importOriginal) => {
       },
       signOut: () => Promise.resolve({ ok: true as const }),
 
-      // The files other people shared on their own, and the two things that can
-      // be done with one: read its words, and hand it back.
-      // Not written into `asked`: the listing rides along with the spaces on
-      // every pass, and a ledger of what a control asked for should not fill up
-      // with a read nobody pressed anything for.
       shared: () => {
         if (world.refuse) {
           return Promise.reject(new original.ApiError(world.refuseStatus, world.refuse))
         }
 
-        // Read as it stands now, and held in the air if the test is holding: a
-        // listing is the whole list at once, and what it answers with is the list
-        // as it was when it was asked.
         const listing = { shared: world.shared }
         if (!world.holding) return Promise.resolve(listing)
 
@@ -226,8 +178,6 @@ vi.mock('./workspace.svelte', () => ({
       world.opened.push({ id: item.id, name: item.name, path: item.path, text }),
     closeShared: (id: string) => world.closed.push(id),
     showingShared: (id: string) => world.showing.includes(id),
-    // What pairing a space somebody shared asks of the workspace: a folder of its
-    // own, named for the space.
     adoptSpace: (name: string) => Promise.resolve(name),
     applyIcon: () => null,
     applySpaceOrder: () => false,
@@ -243,8 +193,6 @@ vi.mock('./i18n.svelte', () => ({
     error instanceof Error ? error.message : fallback,
 }))
 
-// Imported once, at module scope: a hook that re-imported the store graph would
-// charge whichever test ran first for compiling it.
 import { account } from './account.svelte'
 import { rooms } from './rooms.svelte'
 import { accentFor } from './accents'
@@ -275,11 +223,9 @@ import type { NoteDoc } from './workspace/documents.svelte'
 import type { FileOp } from './workspace/file-ops'
 import { memoryStorage } from '../../test/disk'
 
-/** What a launch reads back of the last one: the roles remembered by folder. */
 const storage = memoryStorage()
 vi.stubGlobal('localStorage', storage)
 
-/** A space on the account, with only the fields any of this reads. */
 function remote(
   id: string,
   role: 'owner' | 'write' | 'read',
@@ -289,7 +235,6 @@ function remote(
   return { id, name: id, role, shared, sharedItems } as RemoteSpace
 }
 
-/** One file somebody else shared on its own, as the account hands it over. */
 function sharedFile(id: string, path: string, owner: string, role = 'write'): SharedItem {
   return {
     id,
@@ -304,10 +249,6 @@ function sharedFile(id: string, path: string, owner: string, role = 'write'): Sh
 
 const local = (name: string) => ({ id: name, name, root: name })
 
-/** Lets answers that are being held in the air land, in the order named - `land(1,
- *  0)` is the second request coming back before the first, and `land()` is all of
- *  them in the order they were asked for. Whatever is not named stays in the air,
- *  and anything asked for in the meantime joins the queue behind it. */
 async function land(...order: number[]) {
   const held = world.held
   const when = order.length ? order : held.map((_one, at) => at)
@@ -315,8 +256,6 @@ async function land(...order: number[]) {
 
   for (const at of when) {
     held[at]?.()
-    // Several turns per answer: what it sets off can be another round trip, and
-    // the queue it joins has to be there before the next one lands.
     for (let turn = 0; turn < 6; turn++) await Promise.resolve()
   }
 }
@@ -345,8 +284,6 @@ beforeEach(() => {
   world.closed = []
   world.showing = []
   rooms.present = {}
-  // The list asks again on its own while it holds anything; no test wants
-  // yesterday's timer still running in it.
   sharedWithYou.stop()
   sharedWithYou.items = []
 
@@ -388,8 +325,6 @@ describe('the addresses in the field', () => {
   })
 })
 
-/** The square with somebody's initial in it. Derived rather than picked, because
- *  two people looking at the same list have to see the same colours. */
 describe('the colour somebody wears in the list', () => {
   test('is the same colour for the same person, every time', () => {
     expect(accentFor('ada@example.com', 'dark')).toBe(accentFor('ada@example.com', 'dark'))
@@ -400,7 +335,6 @@ describe('the colour somebody wears in the list', () => {
     expect(accentFor('ada@example.com', 'dark')).not.toBe(accentFor('bob@example.com', 'dark'))
   })
 
-  /** Which colour is theirs, which shade of it is the reader's; see accents.ts. */
   test('and the shade the scheme in front of the reader needs', () => {
     expect(accentFor('ada@example.com', 'dark')).not.toBe(accentFor('ada@example.com', 'light'))
   })
@@ -412,8 +346,6 @@ describe('the colour somebody wears in the list', () => {
 
 describe('what may be done in a space', () => {
   test('is the account holder’s own until the account says otherwise', () => {
-    // A folder no pass has paired with anything is this machine's. So is every
-    // folder on a machine that is signed out.
     expect(roleOf('Notes')).toBe('owner')
     expect(isShared('Notes')).toBe(false)
     expect(canWriteAt('Notes/plan.md')).toBe(true)
@@ -445,8 +377,6 @@ describe('what may be done in a space', () => {
   })
 
   test('answers for the space’s own folder as for a note inside it', () => {
-    // What makes a new note asks of the folder it goes in, and the space’s top is the
-    // folder most of them go in.
     world.mirrors = { Notes: 'space-1' }
     account.spaces = [remote('space-1', 'read', true)]
 
@@ -461,9 +391,6 @@ describe('what may be done in a space', () => {
   })
 })
 
-/** The seconds of every launch before the account's listing comes back, and the
- *  whole of a launch with no network: the role is not in memory yet, and what may
- *  be done has to come from what this device kept, or be nothing until it is known. */
 describe('what may be done before the account has listed its spaces', () => {
   test('is what the sync store kept for a space shared to read', () => {
     world.mirrors = { Theirs: 'space-1' }
@@ -483,8 +410,6 @@ describe('what may be done before the account has listed its spaces', () => {
   })
 
   test('is nothing for a paired space whose role nobody kept', () => {
-    // A folder the account has a copy of could be anybody's. Until somebody says
-    // whose, it is looked at and not written in.
     world.mirrors = { Notes: 'space-1' }
 
     expect(roleOf('Notes')).toBe(null)
@@ -516,8 +441,6 @@ describe('what may be done before the account has listed its spaces', () => {
     account.spaces = [remote('space-1', 'read', true), remote('space-2', 'owner')]
     await account.loadSpaces()
 
-    // The next launch, offline: the account never says who this is, so the sync
-    // never starts and no folder is paired with anything yet.
     account.spaces = []
     account.listed = false
     world.mirrors = {}
@@ -528,9 +451,6 @@ describe('what may be done before the account has listed its spaces', () => {
     expect(canWriteAt('Mine/plan.md')).toBe(true)
   })
 
-  /** Offline, or in the seconds before the account answers, nothing is paired yet
-   *  and the role kept for the reader's own space is `owner`. Who else is in it is
-   *  what the last listing said, kept beside the role. */
   test('counts the reader’s own shared space as shared, from what the last listing kept', async () => {
     world.mirrors = { Team: 'space-1', Solo: 'space-2', Items: 'space-3' }
     world.notes = { 'Items/plan.md': 'n1', 'Items/other.md': 'n2' }
@@ -553,13 +473,9 @@ describe('what may be done before the account has listed its spaces', () => {
     expect(reachedByOthers('Solo/plan.md')).toBe(false)
     expect(reachedByOthers('Items/plan.md')).toBe(true)
     expect(reachedByOthers('Items/other.md')).toBe(false)
-    // A note the store cannot name yet could be the one that was shared.
     expect(reachedByOthers('Items/new.md')).toBe(true)
   })
 
-  /** What an answer listing many notes of a space asks (an agent's search, its tree):
-   *  a space with one note shared on its own counts, and so does one the listing has
-   *  not named yet, offline included. */
   test('answers for a whole space as its notes would, before and after the listing', async () => {
     world.mirrors = { Team: 'space-1', Solo: 'space-2', Items: 'space-3' }
     world.notes = { 'Items/plan.md': 'n1' }
@@ -585,8 +501,6 @@ describe('what may be done before the account has listed its spaces', () => {
     expect(reachedByOthersIn('Solo')).toBe(false)
   })
 
-  /** The listing can answer before the sync has paired anything, which is an ordinary
-   *  launch: the listing then names no folder, and what the last one kept still says. */
   test('counts it as shared while the listing is in and nothing is paired yet', async () => {
     world.mirrors = { Team: 'space-1' }
     account.spaces = [remote('space-1', 'owner', true)]
@@ -601,9 +515,6 @@ describe('what may be done before the account has listed its spaces', () => {
     expect(reachedByOthers('Local/plan.md')).toBe(false)
   })
 
-  /** A space joined in this session: the listing that names it comes before the
-   *  pairing that gives it a folder. Quit before the next listing, and the next
-   *  launch, offline, still has to know the folder is somebody else's. */
   test('keeps what the listing said of a space paired after it, for the next launch', async () => {
     world.mirrors = { Local: 'space-0' }
     account.spaces = [
@@ -640,8 +551,6 @@ describe('what may be done before the account has listed its spaces', () => {
     expect(reachedByOthers('Local/plan.md')).toBe(false)
   })
 
-  /** A space renamed here: the folder changes, and the account is not asked again
-   *  until the next listing. What was kept follows the folder. */
   test('keeps what the listing said of a space renamed after it, for the next launch', async () => {
     world.mirrors = { Team: 'space-1' }
     account.spaces = [remote('space-1', 'owner', true)]
@@ -662,8 +571,6 @@ describe('what may be done before the account has listed its spaces', () => {
     expect(trustsHtmlAt('Crew/weekly.md')).toBe(false)
   })
 
-  /** Left, or deleted: the folder goes, and a folder of the same name made before the
-   *  next listing is a new one of the reader's own. */
   test('forgets what was kept of a space once its folder goes', async () => {
     world.mirrors = { Theirs: 'space-1' }
     account.spaces = [remote('space-1', 'read', true)]
@@ -690,7 +597,6 @@ describe('what may be done before the account has listed its spaces', () => {
 
     expect(roleOf('Team')).toBe('owner')
     expect(reachedByOthers('Team/weekly.md')).toBe(true)
-    // A folder nothing was ever kept for is the reader's own, signed in or not.
     expect(reachedByOthers('Local/plan.md')).toBe(false)
   })
 
@@ -707,13 +613,6 @@ describe('what may be done before the account has listed its spaces', () => {
   })
 })
 
-/** The mark on a note's row in the file list, which is the same mark a shared
- *  space wears in the switcher.
- *
- *  Asked of the rooms rather than of the account on purpose: a note in a shared
- *  space that nobody else has open is not a note being worked in with somebody,
- *  and one mark repeated down every row of a shared space says nothing about any
- *  row in it. */
 describe('whether somebody else is in a note', () => {
   const open = (path: string, key: string) => ({ path, note: { key } })
 
@@ -738,9 +637,6 @@ describe('whether somebody else is in a note', () => {
   })
 
   test('is nobody for a note nothing has opened, which is most of them', () => {
-    // A room is joined for an open file, so nothing on this machine knows who is
-    // in a note it has never opened. That is the honest answer rather than a
-    // guess from which space the note sits in.
     rooms.present = { k1: 3 }
     expect(othersIn('Notes/never-opened.md')).toBe(false)
   })
@@ -753,10 +649,7 @@ describe('whether somebody else is in a note', () => {
   })
 })
 
-/** Which is what decides whether the HTML in it is markup or is words. The rule
- *  itself is trust.ts; this is the app answering it about a real space. */
 describe('where a document’s words came from', () => {
-  /** As much of a document as any of this reads. */
   const document = (path: string | null, pasted = false, shared: string | null = null) =>
     ({ path, key: 'k1', pasted, shared }) as unknown as NoteDoc
 
@@ -781,8 +674,6 @@ describe('where a document’s words came from', () => {
     expect(trustsHtmlIn(document('Notes/plan.md'))).toBe(false)
   })
 
-  /** A space this account did not make is somebody else's whether or not the
-   *  sheet has got round to saying it is shared. */
   test('is the space, for one somebody shared with the reader', () => {
     world.mirrors = { Notes: 'space-1' }
     account.spaces = [remote('space-1', 'read')]
@@ -790,9 +681,6 @@ describe('where a document’s words came from', () => {
     expect(originOfDocument(document('Notes/plan.md'))).toBe('space')
   })
 
-  /** A file somebody shared on its own has no path here - there is no copy of
-   *  it on this machine - so where it sits cannot say whose it is. Its share
-   *  does: it is one note out of somebody else's space. */
   test('is the space, for one file somebody shared with the reader on its own', () => {
     expect(originOfDocument(document(null, false, 'item-1'))).toBe('space')
     expect(trustsHtmlIn(document(null, false, 'item-1'))).toBe(false)
@@ -825,8 +713,6 @@ describe('where a document’s words came from', () => {
     }
   })
 
-  /** A note of the reader's own space handed to somebody on its own, with leave to
-   *  write by default: the space has nobody else in it, the note does. */
   test('is the space, for a note of the reader’s own shared on its own', () => {
     world.mirrors = { Notes: 'space-1' }
     world.notes = { 'Notes/plan.md': 'n1' }
@@ -839,8 +725,6 @@ describe('where a document’s words came from', () => {
     expect(reachedByOthers('Notes/other.md')).toBe(false)
   })
 
-  /** Before the listing is in, a paired space kept as the reader's own may still be
-   *  shared with somebody: the role is kept on this device, who else is in it is not. */
   test('is the space, for a paired space of the reader’s own before the listing is in', () => {
     world.mirrors = { Notes: 'space-1' }
     world.kept = { Notes: 'owner' }
@@ -861,8 +745,6 @@ describe('where a document’s words came from', () => {
     expect(reachedByOthers('Local/plan.md')).toBe(false)
   })
 
-  /** The other device in a room is this same person's, unless somebody else can
-   *  reach the space at all. */
   test('is still the reader’s own with a second device in an unshared space', () => {
     world.mirrors = { Notes: 'space-1' }
     account.spaces = [remote('space-1', 'owner')]
@@ -876,9 +758,6 @@ describe('where a document’s words came from', () => {
   })
 })
 
-/** Somebody who could write in the reader's own space wrote into it and then left, or
- *  was taken out. What they wrote is still there, so the space is still reached by
- *  others until its owner says it is theirs again. */
 describe('a space somebody has left', () => {
   test('stays reached by others, as the account says it once was', () => {
     world.mirrors = { Home: 'space-1' }
@@ -927,7 +806,6 @@ describe('a space somebody has left', () => {
     expect(reachedByOthers('Home/evil.md')).toBe(true)
     expect(reachedByOthers('Home/shared.md')).toBe(true)
 
-    // And on a launch before the listing.
     account.spaces = []
     account.listed = false
     world.mirrors = {}
@@ -962,7 +840,6 @@ describe('a space somebody has left', () => {
     expect(reachedByOthers('Home/evil.md')).toBe(false)
     expect(canTrustAgain(space)).toBe(false)
 
-    // And stays so on the next listing and the next launch.
     await account.loadSpaces()
     expect(reachedByOthers('Home/evil.md')).toBe(false)
     account.spaces = []
@@ -1043,7 +920,6 @@ describe('the Share sheet', () => {
     await share.invite()
 
     expect(world.asked).toEqual(['invite Ada@example.com as read to space-1'])
-    // The field is empty again, ready for the next one.
     expect(share.email).toBe('')
   })
 
@@ -1054,8 +930,6 @@ describe('the Share sheet', () => {
     expect(world.asked).toEqual([])
   })
 
-  /** Every address in the field, at the role beside it: a list pasted out of a
-   *  mail client is one press, not four. */
   test('invites everybody in the field, in the order they were typed', async () => {
     share.email = 'ada@example.com, bob@example.com grace@example.com'
     share.role = 'read'
@@ -1069,8 +943,6 @@ describe('the Share sheet', () => {
     expect(share.email).toBe('')
   })
 
-  /** What has not gone in stays where it can be seen. Three invited and one
-   *  silently lost is the failure this is written against. */
   test('keeps whatever has not gone in when one of them is refused', async () => {
     share.email = 'ada@example.com, bob@example.com, grace@example.com'
     world.refuse = 'that is as many people as one space holds'
@@ -1081,7 +953,6 @@ describe('the Share sheet', () => {
     expect(share.email).toBe('ada@example.com, bob@example.com, grace@example.com')
   })
 
-  /** An at sign is not something to wait on a round trip for. */
   test('says so about something that is not an address, and asks nothing', async () => {
     share.email = 'nonsense'
     await share.invite()
@@ -1110,8 +981,6 @@ describe('the Share sheet', () => {
     expect(share.email).toBe('ada@example.com')
   })
 
-  /** The same route the first invitation took, which mints a fresh link and
-   *  writes a fresh mail; see services/sync/src/spaces/share.ts. */
   test('sends the invitation again to somebody who has not opened it', async () => {
     await share.resend({ email: 'ada@example.com', guest: null, role: 'read' })
 
@@ -1150,8 +1019,6 @@ describe('the Share sheet', () => {
     expect(world.asked).toEqual(['link read approval', 'link write open', 'revoke'])
   })
 
-  /** A new address for the space and the old one dead, under one press: the sheet
-   *  never shows the moment in between where there is no link at all. */
   test('resets the link by revoking it and making another like it', async () => {
     await share.reset('write', 'open')
 
@@ -1183,8 +1050,6 @@ describe('the Share sheet', () => {
     expect(share.who?.members).toHaveLength(1)
   })
 
-  /** Every control on the sheet goes quiet while one of them is in the air, so a
-   *  second press cannot ask for the same change twice. */
   test('takes one change at a time, and says which row it is about', async () => {
     world.sharing.members = [member('ada@example.com')]
     await share.show(local('Notes'))
@@ -1195,7 +1060,6 @@ describe('the Share sheet', () => {
     expect(share.waiting('person:ada@example.com')).toBe(true)
     expect(share.waiting('person:bob@example.com')).toBe(false)
 
-    // A second press, which the screen has already refused.
     expect(await share.remove(member('ada@example.com'))).toBe(false)
     await removing
 
@@ -1205,8 +1069,6 @@ describe('the Share sheet', () => {
     ])
   })
 
-  /** Somebody who is no longer in the space has already gone, which is what the
-   *  press asked for. The list is simply older than the space. */
   test('reads the list again rather than complaining when they are already out', async () => {
     world.sharing.members = [member('ada@example.com')]
     await share.show(local('Notes'))
@@ -1231,10 +1093,6 @@ describe('the Share sheet', () => {
   })
 })
 
-/** Sharing one file rather than the whole space. The same store, the same sheet
- *  and the same calls, with the note's id carried alongside: what a control asks
- *  for has to say which of the two it is about, or an owner changing who may read
- *  one note would be changing who may read the space. */
 describe('the sheet about one file', () => {
   beforeEach(() => {
     world.mirrors = { Notes: 'space-1' }
@@ -1256,8 +1114,6 @@ describe('the sheet about one file', () => {
     expect(world.asked).toEqual(['read space-1'])
   })
 
-  /** Every control, because forgetting one is the bug that cannot be seen: the
-   *  sheet would look right and be about the wrong thing. */
   test('carries the file through every control on it', async () => {
     await share.showItem(local('Notes'), 'Notes/plan.md')
     world.asked = []
@@ -1302,25 +1158,10 @@ describe('the sheet about one file', () => {
   })
 })
 
-/** Two sheets inside one round trip.
- *
- *  The sheet is opened from a row's menu, from a tab, from the palette and from a
- *  web tab, and each of those is one press. So opening it on one note, closing it
- *  and opening it on another before the first list has come back is an ordinary
- *  minute rather than a quick one - and the reading of that minute has to be that
- *  the list under a name is that name's list.
- *
- *  What it used to be: the second sheet never asked at all, because every control
- *  goes quiet while one request is in flight and the first sheet's read was one.
- *  So the first file's people and the first file's invite link were drawn under the
- *  second file's name, for as long as the sheet stayed open, and Remove sent
- *  somebody who was never in the second file against the second file's id. */
 describe('a sheet opened on another file while the first is still being read', () => {
   const PLAN = 'Notes/plan.md'
   const DIARY = 'Notes/diary.md'
 
-  /** One share, as the account answers it: who is in it, and the link it hands
-   *  out. Two of these tell the two files apart. */
   const shareOf = (email: string, url: string): Who => ({
     owner: { email: 'owner@example.com', name: 'Emil' },
     members: [member(email)],
@@ -1328,8 +1169,6 @@ describe('a sheet opened on another file while the first is still being read', (
     link: { url, role: 'read', mode: 'open' },
   })
 
-  /** The sheet opened on the plan, closed, and opened on the diary before a word
-   *  has come back about either. */
   const twoSheets = () => {
     const first = share.showItem(local('Notes'), PLAN)
     share.close()
@@ -1377,8 +1216,6 @@ describe('a sheet opened on another file while the first is still being read', (
   test('and the first answer landing leaves the sheet waiting on its own', async () => {
     const both = twoSheets()
 
-    // Only the first comes back. The sheet in front of the reader is still being
-    // read, so it says so rather than drawing somebody else's list.
     await land(0)
     expect(share.who).toBeNull()
     expect(share.waiting('sheet')).toBe(true)
@@ -1401,8 +1238,6 @@ describe('a sheet opened on another file while the first is still being read', (
     expect(world.asked).toEqual(['remove bob@example.com about note-2'])
   })
 
-  /** The same hole one step further in. A change that turns out to have happened
-   *  already reads the list again, and that read is a round trip like any other. */
   test('and a list read again after a change had already happened is dropped as well', async () => {
     world.holding = false
     await share.showItem(local('Notes'), PLAN)
@@ -1412,12 +1247,9 @@ describe('a sheet opened on another file while the first is still being read', (
     world.refuseStatus = 404
     const removing = share.remove(member('ada@example.com'))
 
-    // The removal comes back saying she had already gone, which sends the sheet
-    // to read the plan's list again.
     world.refuse = null
     await land()
 
-    // And while that read is in the air, the sheet is pointed at the diary.
     const second = share.showItem(local('Notes'), DIARY)
     await land()
     await Promise.all([removing, second])
@@ -1437,9 +1269,6 @@ describe('the mark on a file shared on its own', () => {
     expect(isSharedItem('Notes/other.md')).toBe(false)
   })
 
-  /** The two marks are about two things and neither implies the other. A space
-   *  everybody is in says so on the space; one note handed to one person says so
-   *  on the note. */
   test('and is not the same fact as the space being shared', () => {
     world.mirrors = { Notes: 'space-1' }
     world.notes = { 'Notes/plan.md': 'note-1' }
@@ -1475,8 +1304,6 @@ describe('whether a file can be shared from here', () => {
   })
 })
 
-/** The other side of it: the files other people shared on their own, which sit
- *  in no space this account can reach and so live at the foot of the switcher. */
 describe('the files other people shared with you', () => {
   test('arrive grouped under whoever shared them, in the order they came', async () => {
     world.shared = [
@@ -1522,9 +1349,6 @@ describe('the files other people shared with you', () => {
     expect(world.opened).toHaveLength(1)
   })
 
-  /** Revoking. The row goes on the next pass and the tab goes with it: the words
-   *  were never this machine's, and a tab on a room that will not have it back is
-   *  not a document. */
   test('stop being listed once they are taken back, and their tabs close', async () => {
     world.shared = [sharedFile('n1', 'Plans/meeting.md', 'Ada')]
     await sharedWithYou.load()
@@ -1559,10 +1383,6 @@ describe('the files other people shared with you', () => {
     expect(world.closed).toEqual([])
   })
 
-  /** The listing is the whole list at once and the rows change one at a time, which
-   *  is the same shape as everything else in this file: a pass that was already in
-   *  the air when a file was handed back used to put the row back, tab and all,
-   *  until the next pass a quarter of a minute later. */
   test('and one handed back while a listing was in the air stays gone', async () => {
     world.shared = [
       sharedFile('n1', 'Plans/meeting.md', 'Ada'),

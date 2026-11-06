@@ -2,17 +2,6 @@ import { glassCss } from '@orden/themes/glass'
 import { wallpaperCss } from '@orden/themes/wallpaper'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The theme and the scheme, which are two choices and not one.
- *
- *  A theme has a dark side or a light one or both; which of them the app is
- *  showing is a choice beside it. These are about that separation: what the
- *  dropdown offers, what the scheme is when the theme in force cannot show the one
- *  that was asked for, what an older device's storage means, and what happens to
- *  the list when the themes folder will not answer.
- *
- *  Run against the real store with the folder, the storage and the page stood in
- *  for: under node there is none of the three. */
-
 function memoryStorage(): Storage {
   const held = new Map<string, string>()
 
@@ -30,28 +19,17 @@ function memoryStorage(): Storage {
 
 let kept = memoryStorage()
 
-/** What the system is asking for, and whoever asked to be told when it changes.
- *  Two questions and not one: a room that is light and a reader who needs more
- *  contrast have nothing to do with each other, and the stub answered both with
- *  `light` until the second one had a consequence. */
 const media = {
   light: false,
   contrast: false,
   listeners: [] as ((event: { matches: boolean }) => void)[],
 }
 
-/** What the page says it is wearing. Held here rather than reached for through
- *  the stubbed document, so a test can read it the way it reads the storage. */
 let dataset: Record<string, string> = {}
-/** What the cascade would answer for a custom property, which is where a theme's
- *  own declarations are read from, and what the app wrote onto the root, which is
- *  where its answers go. Two halves of one page; see themes/settings.ts. */
 let resolves: Record<string, string> = {}
 let painted: Record<string, string> = {}
-/** The last `<style>` the app made, so a test can read what it put on the page. */
 let style: { id: string; textContent: string; remove: () => void } | null = null
 
-/** The system changes its mind, which is what following it has to notice. */
 function systemPrefers(light: boolean) {
   media.light = light
   for (const listener of media.listeners) listener({ matches: light })
@@ -69,8 +47,6 @@ function stubs() {
 
   vi.stubGlobal('localStorage', kept)
   vi.stubGlobal('window', {
-    // Answered by which question was asked. A blind stub made every test that
-    // arranged a light room into a test of the contrast query as well.
     matchMedia: (query: string) => ({
       get matches() {
         return query.includes('contrast') ? media.contrast : media.light
@@ -104,31 +80,22 @@ function stubs() {
   })
 }
 
-/** The stylesheet the app put on the page, which is how a built-in theme that brings
- *  its own palette is told from one that has a file to read. */
 function injected(): string {
   return style?.textContent ?? ''
 }
 
 stubs()
 
-/** The themes folder, as the commands see it, and whether reading it works at
- *  all: a browser that refuses storage and a page asking for a chunk that is no
- *  longer served both come back here as a rejection. */
 const folder = vi.hoisted(() => ({
   files: new Map<string, string>(),
   listing: true,
   reading: true,
 }))
 
-/** Which system the window is on, and what the crate was asked about the material
- *  behind it and answered. Windows unless a test says otherwise: glass is offered
- *  where there is a material for it to stand on. */
 interface Host {
   platform: string
   material: string | null
   asked: { on: boolean; dark: boolean; said?: string | undefined; kind?: unknown }[]
-  /** What the crate was told to keep for the next launch. */
   remembered: string[]
 }
 
@@ -145,7 +112,6 @@ vi.mock('./tauri', () => ({
   platform: () => host.platform,
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     if (command === 'set_translucency') {
-      // With what the page was saying as it asked, which is the order that matters.
       host.asked.push({
         on: args.on === true,
         dark: args.dark === true,
@@ -188,9 +154,6 @@ vi.mock('./insets', () => ({ tintSystemBars: () => undefined }))
 
 const { chosenFirst, theme } = await import('./theme.svelte')
 const { stamped } = await import('./themes/stamp')
-// What the store fetches as a theme is worn, fetched before any test rather than by the
-// first that wears one: `settled` below counts turns, and compiling a module cold on a
-// loaded machine took more of them than it allows.
 await Promise.all([
   import('@orden/themes/glass'),
   import('./glass/settings'),
@@ -201,7 +164,6 @@ await Promise.all([
   import('./themes/declared'),
 ])
 
-/** A theme that states both schemes, and one that states a single one. */
 const PAIR = `[data-theme=light] { --bg: #fff; }\n[data-theme=dark] { --bg: #000; }`
 const ONLY_LIGHT = `[data-theme=light] { color-scheme: light; --bg: #fff; }`
 
@@ -212,9 +174,6 @@ function installed(id: string, name: string, css: string, version = '1.0.0') {
 beforeEach(() => {
   vi.unstubAllGlobals()
   stubs()
-  // An install that has been opened before, on the built-in, and already moved to the
-  // first look once, which is what every test here is about but the first look's own;
-  // see 'a first launch' and 'an install on the built-in'.
   kept.setItem('nib:theme', 'default')
   kept.setItem('nib:theme-moved', 'yes')
 
@@ -258,9 +217,6 @@ describe('what the dropdown offers', () => {
     expect(theme.all).toHaveLength(4)
   })
 
-  /** Contrast is a mode in every sense that matters and a theme in the way it is
-   *  built, which is what keeps it out of every other theme's way. It carries its own
-   *  stylesheet, so a first launch with no network can still be answered with it. */
   test('the built-in contrast theme brings its own palette rather than a file', () => {
     const found = theme.all.find((one) => one.id === 'contrast')
 
@@ -268,8 +224,6 @@ describe('what the dropdown offers', () => {
     expect(found?.css).toContain("[data-theme='light']")
     expect(found?.css).toContain("[data-theme='dark']")
     expect(found?.variants).toEqual(['dark', 'light'])
-    // Its own accent, so the reader's colour is not painted over the palette the row
-    // showed. Read off the sheet by `paintsOver` rather than written down beside it.
     expect(found?.css).toMatch(/--accent\s*:/)
   })
 
@@ -338,7 +292,6 @@ describe('a theme with one scheme', () => {
     theme.select('file:warm-paper')
 
     expect(theme.current).toBe('light')
-    // The choice itself is untouched, so the theme it was made for still has it.
     expect(theme.scheme).toBe('dark')
   })
 
@@ -361,7 +314,6 @@ describe('a theme with one scheme', () => {
     theme.select('file:warm-paper')
     expect(theme.shown).toBe('light')
 
-    // And the choice comes back with a theme that can honour it.
     theme.select('default')
     expect(theme.shown).toBe('dark')
   })
@@ -414,10 +366,6 @@ describe('the switch in the panel foot', () => {
   })
 })
 
-/** Dark, Light and Match the system were rows in the theme dropdown, and the
- *  side of a theme that stated both was kept on its own. Every one of those means
- *  the built-in theme and a scheme, and a device that has not been opened since
- *  has to come up saying what it said before. */
 describe('what an older device wrote down', () => {
   test('a theme of dark means Default, in the dark', () => {
     kept.setItem('nib:theme', 'dark')
@@ -469,12 +417,6 @@ describe('what an older device wrote down', () => {
   })
 })
 
-/** The bug: themes installed from the store went missing from the dropdown.
- *
- *  Nothing had deleted them. One failed read of the folder emptied the list, and
- *  because the theme in force was then not in it, the choice was written away as
- *  though the file had been deleted - so it did not come back on the next launch
- *  either. A folder that will not answer says nothing about what is in it. */
 describe('a folder that will not answer', () => {
   test('leaves the themes already found where they are', async () => {
     installed('rose', 'Rose', PAIR)
@@ -526,15 +468,11 @@ describe('a folder that will not answer', () => {
   })
 })
 
-/** The theme picker tries a look on the whole app while it is pointed at, and a
- *  try is a frame's work: the sheet a file theme is painted with is the one the
- *  folder was read for, not a second read, and nothing is written down. */
 describe('a look shown and not kept', () => {
   test('paints a file theme in the frame it is asked for, with no read in between', async () => {
     installed('rose', 'Rose', PAIR)
     await theme.reload()
 
-    // A read now would come back empty; a sheet already held does not need one.
     folder.reading = false
     theme.select('file:rose')
 
@@ -571,13 +509,9 @@ describe('a look shown and not kept', () => {
     expect(theme.id).toBe('default')
     expect(theme.scheme).toBe('system')
     expect(theme.accent).toBe('violet')
-    // Following the system again, which is asking for the dark.
     expect(dataset.theme).toBe('dark')
   })
 
-  // The palette tries on the row under its arrows each time its rows are worked out,
-  // and a theme's rows are worked out from what it wears: a preview that wore the look
-  // again looped until Svelte gave up on the page.
   test('the look already on is not put on again', async () => {
     installed('rose', 'Rose', PAIR)
     await theme.reload()
@@ -598,7 +532,6 @@ describe('an installed theme across a restart', () => {
     kept.setItem('nib:theme', 'file:rose')
     kept.setItem('nib:theme-scheme', 'light')
 
-    // What a launch does: read what was written down, then read the folder.
     theme.init()
     await theme.reload()
 
@@ -615,9 +548,6 @@ describe('an installed theme across a restart', () => {
   })
 })
 
-/** The store had a copy of the contrast theme under the same id, and two Contrasts in
- *  the dropdown were one too many (Emil, 2026-10-13). A copy still in the folder is the
- *  built-in: not listed, not offered an update, and nobody who chose it loses it. */
 describe('a store copy of the contrast theme', () => {
   test('is not a second card', async () => {
     installed('contrast', 'Contrast', PAIR, '2.0.1')
@@ -660,11 +590,6 @@ describe('a store copy of the contrast theme', () => {
   })
 })
 
-/** Contrast was a switch beside the mode, with a palette of its own painted over
- *  whichever theme was in force. It is a theme the app ships with now, which leaves
- *  the launch one thing to do about it: a reader whose system asks for more contrast is
- *  answered with it, once, and shown where it was chosen so putting it back is one
- *  press. Nothing is fetched, because the launch that needs it most is a first one. */
 describe('answering a system that asks for more contrast', () => {
   test('is made to a fresh install whose system asks for more contrast', () => {
     media.contrast = true
@@ -677,8 +602,6 @@ describe('answering a system that asks for more contrast', () => {
     theme.init()
 
     expect(theme.offerContrast).toBe(false)
-    // Nothing written down, on purpose: a system that starts asking next month
-    // still gets the one offer.
     expect(kept.getItem('nib:contrast-offered')).toBe(null)
   })
 
@@ -688,7 +611,6 @@ describe('answering a system that asks for more contrast', () => {
     expect(theme.offerContrast).toBe(true)
     expect(kept.getItem('nib:contrast-offered')).toBe('yes')
 
-    // A second launch, on a machine still asking for it.
     theme.offerContrast = false
     theme.init()
 
@@ -705,9 +627,6 @@ describe('answering a system that asks for more contrast', () => {
   })
 
   test('and never over a theme the reader had already chosen for themselves', async () => {
-    // A reader who has a theme has answered the question about how their screen looks.
-    // The offer is for a fresh install, and a launch that repainted somebody's chosen
-    // look because their system asks for contrast would be the app overruling them.
     installed('rose', 'Rose', PAIR)
     await theme.reload()
     theme.select('file:rose')
@@ -728,23 +647,13 @@ describe('answering a system that asks for more contrast', () => {
   })
 })
 
-/** Whatever a stylesheet was fetched for is on the page by now. The glass theme's
- *  sheet arrives through a dynamic import, which is a promise however local it is. */
 const settled = async (done?: () => boolean) => {
-  // Polled rather than counted in turns: what is being waited for is a dynamic
-  // import - the glass theme's stylesheet, or the grammar a theme declares its
-  // settings in - and how many turns one of those takes is the machine's
-  // business. A fixed number of microtasks passed alone and failed under a full
-  // suite, which is the worst kind of test there is.
   for (let turn = 0; turn < 400; turn++) {
     await new Promise((next) => setTimeout(next, 1))
     if (!done || done()) return
   }
 }
 
-/** Emil, 2026-10-12: glass, following the system, is what nib opens in until somebody
- *  chooses otherwise, and nobody who has chosen anything is moved off it. In green since
- *  2026-10-13, and in yellow the day before. */
 describe('a first launch', () => {
   beforeEach(() => {
     kept.removeItem('nib:theme')
@@ -759,7 +668,6 @@ describe('a first launch', () => {
     expect(theme.accent).toBe('green')
     expect(injected()).toBe(glassCss)
     expect(painted['--accent']).toBe('#3fcf8e')
-    // On the material, where there is one.
     expect(host.asked.at(-1)?.on).toBe(true)
   })
 
@@ -817,9 +725,6 @@ describe('a first launch', () => {
   })
 })
 
-/** Emil, 2026-10-13: an install an older build left on the built-in - which it wrote
- *  down for everybody, chosen or not - moves to the first look once, keeping what the
- *  reader did choose, and is never moved again. */
 describe('an install on the built-in', () => {
   beforeEach(() => {
     kept.removeItem('nib:theme-moved')
@@ -834,8 +739,6 @@ describe('an install on the built-in', () => {
     expect(kept.getItem('nib:theme-moved')).toBe('yes')
   })
 
-  /** #1102: the window's corners are always rounded, and a Square chosen before is
-   *  taken out of what is kept the first time it is read, the rest left as it was. */
   test('drops a setting the app no longer has, once, and keeps the rest', () => {
     kept.setItem(
       'nib:theme-settings',
@@ -895,8 +798,6 @@ describe('an install on the built-in', () => {
   })
 })
 
-/** Emil, 2026-10-13: the first look's accent is green, and an install yellow only
- *  because the first look gave it that turns green once; a yellow somebody picked stays. */
 describe('an accent the first look gave', () => {
   beforeEach(() => {
     kept.removeItem('nib:theme')
@@ -956,9 +857,6 @@ describe('an accent the first look gave', () => {
   })
 })
 
-/** A theme that declares one dial of its own, and the answer the cascade would
- *  give for it. Both halves, because a declaration is a name in the file and a
- *  value on the page; see themes/settings.ts. */
 const DIALLED = `:root { --nib-setting-warmth: range "Warmth" 0 100 40 %; }`
 const WARMTH = { '--nib-setting-warmth': 'range "Warmth" 0 100 40 %' }
 
@@ -976,8 +874,6 @@ describe('the settings a theme offers', () => {
 
     expect(theme.accent).toBe('teal')
     expect(painted['--accent']).toBe('#33c7ba')
-    // Six and not one: the hover, the press, the wash, the rule and the selection
-    // move with the colour, which is the whole reason a setting paints a map.
     expect(Object.keys(painted).sort()).toEqual([
       '--accent',
       '--accent-hover',
@@ -994,11 +890,8 @@ describe('the settings a theme offers', () => {
     theme.select('contrast')
     await settled()
 
-    // The accent's row goes, and with it the app's last setting here.
     expect(theme.settings.map((one) => one.id)).toEqual([])
     expect(theme.accentIsTheme).toBe(true)
-    // And taken off the page with the row: a theme chosen from a picture of
-    // itself must not be wearing the last theme's colour.
     expect(painted).toEqual({})
   })
 
@@ -1023,8 +916,6 @@ describe('the settings a theme offers', () => {
     theme.select('file:rose')
     await settled()
 
-    // Rose states no accent, so it inherits the app's - and inherits the answer
-    // with it. A setting a theme declares is that theme's and is filed under it.
     expect(theme.settings.map((one) => one.id)).toEqual(['accent'])
     expect(theme.accent).toBe('pink')
   })
@@ -1067,9 +958,6 @@ describe('the settings a theme offers', () => {
     await settled(() => theme.settings.length > 1)
     theme.set('warmth', 75)
 
-    // The theme is updated and the dial is gone. Nothing is thrown away: what was
-    // chosen stays written down, so a theme that brings the dial back - or a
-    // reader who puts the older file back - finds the answer still there.
     folder.files.clear()
     installed('warm', 'Warm', ':root { --bg: #201510; }')
     resolves = {}
@@ -1109,8 +997,6 @@ describe('the settings a theme offers', () => {
 })
 
 describe('the glass theme', () => {
-  // The material is fetched by the store the first time a theme asks for it, and keeps
-  // what it last asked for; a fresh one per test, as each launch has.
   beforeEach(() => {
     vi.resetModules()
   })
@@ -1129,7 +1015,6 @@ describe('the glass theme', () => {
       ['linux', true],
     ] as const) {
       host.platform = platform
-      // The list is derived; asking it again is enough once the platform has moved.
       theme.files = [...theme.files]
       expect(
         theme.all.some((one) => one.id === 'glass'),
@@ -1153,9 +1038,6 @@ describe('the glass theme', () => {
     await settled(() => injected().includes('--glass-chrome'))
 
     expect(injected()).toBe(glassCss)
-    // No accent of its own: glass is a window and not a palette, so the row of
-    // swatches stays and the reader's colour shows on it.
-    // Kept inside a part of the frame in the other scheme, rather than stated.
     expect(glassCss).not.toMatch(/--accent\s*:(?!\s*inherit)/)
     expect(theme.accentIsTheme).toBe(false)
   })
@@ -1166,7 +1048,6 @@ describe('the glass theme', () => {
     theme.select('glass')
     await settled(() => dataset.translucent !== undefined)
 
-    // The material first, and the page says so only once the crate has answered.
     expect(host.asked.at(-1)).toEqual({ on: true, dark: true, said: undefined, kind: 'mica-alt' })
     expect(dataset.translucent).toBe('mica')
     expect(kept.getItem('nib:material')).toBe('mica')
@@ -1225,15 +1106,12 @@ describe('the glass theme', () => {
     theme.select('default')
     await settled(() => host.asked.at(-1)?.on === false)
 
-    // Before the crate is asked: a page with a transparent ground and no material
-    // under it is somebody's desk behind the words.
     expect(host.asked.at(-1)).toEqual({ on: false, dark: true, said: undefined })
     expect(dataset.translucent).toBeUndefined()
     expect(kept.getItem('nib:material')).toBeNull()
   })
 
   test('a launch that cannot tell what it stood on asks for the material off', async () => {
-    // Storage cleared under a crate that put the material back from its own file.
     theme.init()
     await settled(() => host.asked.length > 0)
 
@@ -1243,7 +1121,6 @@ describe('the glass theme', () => {
   test('and one that stood on a colour asks nothing at all', async () => {
     kept.setItem('nib:ground', 'rgb(14, 16, 19)')
     theme.init()
-    // As long as an ask would take to arrive, and then some.
     await settled(() => host.asked.length > 0)
 
     expect(host.asked).toEqual([])
@@ -1259,7 +1136,6 @@ describe('the glass theme', () => {
     theme.preview('default', 'dark', 'violet')
     await settled(() => dataset.translucent === undefined)
     expect(dataset.translucent).toBeUndefined()
-    // Shown, not kept: nothing about the material is written down for a launch.
     expect(kept.getItem('nib:material')).toBeNull()
   })
 
@@ -1268,7 +1144,6 @@ describe('the glass theme', () => {
     theme.select('glass')
     await settled(() => injected() === glassCss)
 
-    // A launch: a page with nothing on it, and the storage the last one left.
     const storage = kept
     stubs()
     kept = storage
@@ -1276,7 +1151,6 @@ describe('the glass theme', () => {
     theme.id = 'default'
     theme.init()
 
-    // On the frame the launch paints, with no promise in between.
     expect(injected()).toBe(glassCss)
   })
 
@@ -1308,7 +1182,6 @@ describe('a dial being dragged', () => {
 })
 
 describe('the wallpaper theme', () => {
-  /** Its dials, in the order Appearance draws them. */
   const DIALS = [
     'blur',
     'dim',
@@ -1320,7 +1193,6 @@ describe('the wallpaper theme', () => {
     'empty',
     'content',
   ]
-  /** What a chosen picture leaves written down; see wallpaper/held.ts. */
   const HELD = {
     picture: 'data:image/png;base64,iVBORw0KGgo=',
     blur: 28,
@@ -1328,7 +1200,6 @@ describe('the wallpaper theme', () => {
     light: { floor: 0.61, ground: '#e9ecf2' },
   }
 
-  // The store is one for the whole file, and keeps the sheet it fetched last.
   beforeEach(() => theme.rewear('wallpaper'))
 
   test('is offered everywhere, since the page draws it rather than the platform', () => {
@@ -1353,7 +1224,6 @@ describe('the wallpaper theme', () => {
 
     expect(injected()).not.toContain('--wallpaper-picture:')
     expect(injected()).toContain('--nib-dim: 10%;')
-    // The reader's accent stays theirs: the field without a picture is made of it.
     expect(wallpaperCss).not.toMatch(/--accent\s*:/)
     expect(theme.accentIsTheme).toBe(false)
   })
@@ -1383,7 +1253,6 @@ describe('the wallpaper theme', () => {
     theme.id = 'default'
     theme.init()
 
-    // On the frame the launch paints: the early sheet is the picture as well.
     expect(injected()).toContain(`url("${HELD.picture}")`)
   })
 
@@ -1394,7 +1263,6 @@ describe('the wallpaper theme', () => {
 
     kept.setItem('nib:wallpaper', JSON.stringify(HELD))
     theme.rewear('wallpaper')
-    // The Blur row is under the reader's pointer while this happens.
     expect(theme.settings.some((one) => one.id === 'blur')).toBe(true)
     await settled(() => injected().includes('--wallpaper-picture:'))
     expect(theme.settings.map((one) => one.id)).toEqual(['accent', ...DIALS])
@@ -1424,8 +1292,6 @@ describe('the wallpaper theme', () => {
   })
 })
 
-/** What a reader who had the old switch on is given, once; see modes.svelte.ts, which
- *  asks. */
 describe('translucency, which was a switch before it was glass', () => {
   test('under the built-in theme is glass', () => {
     theme.init()
@@ -1452,8 +1318,6 @@ describe('translucency, which was a switch before it was glass', () => {
   })
 })
 
-/** The reader's face beats a theme's (#772): a theme that states a stack of its own still
- *  has the reader's face at the head of it. */
 describe('a theme’s own faces', () => {
   test('keep the reader’s in front of a stack the theme states', () => {
     expect(chosenFirst(':root {\n  --font-content: Georgia, serif;\n}')).toBe(

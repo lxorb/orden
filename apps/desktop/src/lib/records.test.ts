@@ -17,10 +17,6 @@ describe('a map filled in from storage that answered late', () => {
   })
 })
 
-/** The part of every per-space store that is about the account: reading each space's
- *  value back with the account it was folded into, and the rule for meeting the
- *  account's copy. What each store keeps and how it folds are that store's tests. */
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -64,7 +60,6 @@ describe('reading every space back', () => {
   })
 })
 
-/** Sets of letters, folded as a union. */
 const LETTERS: Folding<string[]> = {
   fold: (theirs, mine) => [...theirs, ...mine.filter((one) => !theirs.includes(one))],
   same: (one, other) => one.join() === other.join(),

@@ -1,52 +1,27 @@
-/** The space folders as the crate watches and lists them (src-tauri/src/space_watch.rs),
- *  typed and checked: what the sync engine reads foreign edits, renames and deletes out
- *  of, and with no engine workspace/outside.svelte.ts. Inside the app only; a browser has no folders to watch.
- *
- *  Every path is spelled the way the root was handed over, so it joins and compares with
- *  the paths the rest of the app holds. `id` is a file's identity: the same through a
- *  rename or a move to another folder, different for a file deleted and made again, and
- *  opaque, so the only thing to do with two of them is compare them. */
-
 import { Channel, invoke } from './native'
 
-/** One file or folder. */
 export interface Listed {
   path: string
   dir: boolean
-  /** Bytes; 0 for a folder. */
   size: number
-  /** Milliseconds since the epoch. */
   mtime: number
   id: string | null
   unlisted?: true
 }
 
-/** One answer about one path. A folder that arrives brings a `created` for everything
- *  in it; a folder renamed or removed is one answer for everything in it. A path that
- *  holds a file before and after is `modified`, even when the file was replaced, which
- *  is how every editor saves. */
 export type SpaceChange =
   | ({ kind: 'created' | 'modified' } & Listed)
   | { kind: 'removed'; path: string; dir: boolean; id: string | null }
   | ({ kind: 'renamed'; from: string } & Listed)
 
-/** What happened in one space since the last message. */
 export interface SpaceNews {
   root: string
   changes: SpaceChange[]
-  /** The watch knows this space afresh: list it with `scanSpace` to catch up. Said once
-   *  for every space as the watch starts, and again whenever the watcher lost events. */
   scan: boolean
-  /** The folder is not there any more and is no longer watched. Never a reason to
-   *  delete anything: a space renamed in Explorer is gone from here too. */
   gone: boolean
-  /** Said with a scan where not all of the space could be watched: a folder nobody may
-   *  read, or the system's limit of watched folders reached (#481). */
   unwatched?: 'folders' | 'limit'
 }
 
-/** Watches `roots` (spaces, by their folders) and hands every message to `heard`,
- *  replacing whatever watch was running. Resolves once the watch is armed. */
 export function watchSpaces(
   roots: readonly string[],
   heard: (news: SpaceNews) => void,
@@ -73,8 +48,6 @@ export function onUnwatched(listener: () => void): () => void {
   return () => letGo.delete(listener)
 }
 
-/** Everything in a space, each folder before what is in it. `each` hears the listing a
- *  chunk at a time as it arrives. */
 export function scanSpace(root: string, each?: (chunk: Listed[]) => void): Promise<Listed[]> {
   return new Promise((resolve, reject) => {
     const all: Listed[] = []
@@ -93,15 +66,10 @@ export function scanSpace(root: string, each?: (chunk: Listed[]) => void): Promi
   })
 }
 
-/** The identity of the file or folder at `path` in a space, or null when nothing is
- *  there. */
 export async function fileIdentity(path: string): Promise<string | null> {
   const id: unknown = await invoke('file_identity', { path })
   return typeof id === 'string' ? id : null
 }
-
-// ---------------------------------------------------------------------------
-// Checks
 
 type Loose = Record<string, unknown>
 
@@ -147,7 +115,6 @@ function changeOf(value: unknown): SpaceChange | null {
   }
 }
 
-/** A watcher message, checked, or null. */
 export function newsOf(value: unknown): SpaceNews | null {
   if (!record(value)) return null
   const { root, changes, scan, gone, unwatched } = value
@@ -160,7 +127,6 @@ export function newsOf(value: unknown): SpaceNews | null {
   return news
 }
 
-/** A chunk of a listing, checked, or null. */
 export function listingOf(value: unknown): { listed: Listed[]; done: boolean } | null {
   if (!record(value) || !Array.isArray(value.listed) || typeof value.done !== 'boolean') {
     return null

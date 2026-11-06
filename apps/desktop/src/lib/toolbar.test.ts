@@ -1,11 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** What the phone's format bar holds. The list is the reader's and it goes on
- *  the account, so what matters here is that it is a list of commands this
- *  version can actually press, that nothing is on it twice, and that a bar
- *  nobody has touched is stored as nothing at all - which is what lets the
- *  default change later and reach everybody. */
-
 const world = vi.hoisted(() => ({ saved: [] as unknown[] }))
 
 vi.mock('./api', async (importOriginal) => {
@@ -22,8 +16,6 @@ vi.mock('./api', async (importOriginal) => {
   }
 })
 
-/** This device's own store, in memory: the same stand-in the account's tests
- *  use, because a store is what a choice is written to. */
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -57,8 +49,6 @@ describe('the bar as it arrives', () => {
   })
 
   test('and every one of them is a command something can press', () => {
-    // The ids are the shortcuts' own, so a typo here is a button that does
-    // nothing rather than a test that fails somewhere else.
     expect(usable([...DEFAULT_TOOLBAR])).toEqual([...DEFAULT_TOOLBAR])
   })
 })
@@ -119,7 +109,6 @@ describe('what a stored or received list may be', () => {
   })
 
   test('a bar with nothing on it is a bar somebody chose', () => {
-    // The keyboard's own row and nothing above it, which is a choice.
     expect(usable([])).toEqual([])
   })
 
@@ -138,8 +127,6 @@ describe('what a button wears', () => {
   })
 
   test('and the first letter of its name where it has none', () => {
-    // Upper case, because the marks are: a lower-case letter among them would
-    // read as a typo.
     expect(markFor('app.settings')).toBe('S')
     expect(markFor('paragraph.table')).toBe('T')
   })
@@ -152,8 +139,6 @@ describe('what a button wears', () => {
 
 describe('the account', () => {
   test('is told when the list changes, and told null for the default', () => {
-    // Signed out there is nobody to tell, which is the case under test here:
-    // what matters is that nothing throws and the list is still the reader's.
     toolbar.add('paragraph.table')
     toolbar.reset()
 

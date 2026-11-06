@@ -2,9 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { type Filling, fills } from './panel-tab'
 import { TAB_KINDS, type TabKind } from './workspace/tab-kinds'
 
-/** The one table's other question (#1120): beside which tabs a panel has anything to
- *  show, which the row of panel tabs asks of every panel. */
-
 const tab = (kind: TabKind, more: Partial<Filling> = {}): Filling => ({
   kind,
   markdown: kind === 'note',
@@ -35,7 +32,6 @@ describe('the panels a tab fills', () => {
     expect(fills('outline', tab('note', { headings: 2 }))).toBe(true)
     expect(fills('outline', tab('note', { footnotes: 1 }))).toBe(true)
     expect(fills('outline', tab('note'))).toBe(false)
-    // A code file opens as a note, and its `#` lines are no headings.
     expect(fills('outline', tab('note', { markdown: false, headings: 3 }))).toBe(false)
   })
 

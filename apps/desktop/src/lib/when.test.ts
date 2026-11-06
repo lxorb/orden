@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { when } from './when'
 
-/** A moment as the history sheet and the sync pane both say one. Local times on
- *  both sides, because "today" is the reader's today. */
 describe('a moment, said shortly', () => {
   const now = new Date(2026, 8, 28, 18, 30)
   const time = (at: Date) => new Intl.DateTimeFormat('en', { timeStyle: 'short' }).format(at)

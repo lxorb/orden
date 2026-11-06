@@ -1,16 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 
-/** The launch, in order. One rule, and this is where it is held: the file list is
- *  on screen before anything reads a note.
- *
- *  A harness rather than a unit test, because the thing under test is an order
- *  across four stores. Every command the launch sends is recorded with what was
- *  true when it was sent - whether the tree was up, and how many frames the browser
- *  had painted - so the assertions can be about the sequence rather than about any
- *  one call. See startup.svelte.ts, and `restore` in workspace.svelte.ts. */
-
-/** How many frames the stubbed browser has painted. `startup.shown` asks for two
- *  per paint, so anything sent at nought was sent before the first one. */
 let frames = 0
 
 vi.stubGlobal('requestAnimationFrame', (run: () => void) => {
@@ -26,14 +15,11 @@ vi.stubGlobal('requestIdleCallback', (run: () => void) => {
   return 0
 })
 
-/** A space with enough notes in it that reading them all would be noticed. */
 const NOTES = Array.from({ length: 40 }, (_, at) => `note-${String(at).padStart(2, '0')}.md`)
 
 interface Sent {
   command: string
-  /** Whether the file list had something to draw when this was sent. */
   listed: boolean
-  /** Frames painted by then. */
   frames: number
 }
 
@@ -41,13 +27,9 @@ const sent: Sent[] = []
 
 vi.mock('./tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./tauri')>()),
-  // The desktop path, so the launch does not reach for the browser's storage,
-  // which node has none of.
   isNative: true,
   isDesktop: false,
   invoke: async (command: string, args?: Record<string, unknown>) => {
-    // Read before answering: what matters is what was true at the moment the app
-    // asked, not by the time it had its answer.
     const { workspace } = await import('./workspace.svelte')
     sent.push({ command, listed: !!workspace.tree, frames })
 
@@ -106,14 +88,10 @@ const { workspace } = await import('./workspace.svelte')
 const { links } = await import('./link-index.svelte')
 const { startup } = await import('./startup.svelte')
 
-/** Waits out the idle queue behind the first paint. */
 async function settle() {
   for (let round = 0; round < 12; round++) await new Promise((done) => setTimeout(done, 0))
 }
 
-/** One launch, and everything it sent. Run once: a store is a singleton and a
- *  second launch would be restoring over the first. Copied, because the recording
- *  carries on and what happened during the launch has to stay what it was. */
 const started = await (async () => {
   await workspace.restore()
   await settle()
@@ -143,7 +121,6 @@ describe('the launch', () => {
 
     const first = launch[at('read_note')]
     expect(first?.listed).toBe(true)
-    // Two callbacks for the paint that put the tree on screen.
     expect(first?.frames).toBe(2)
   })
 
@@ -152,7 +129,6 @@ describe('the launch', () => {
 
     expect(scan?.listed).toBe(true)
     expect(scan?.frames).toBeGreaterThanOrEqual(2)
-    // And after the open note, which is the one read anybody is waiting on.
     expect(at('scan_links')).toBeGreaterThan(at('read_note'))
   })
 
@@ -167,9 +143,6 @@ describe('the launch', () => {
   })
 })
 
-/** And then a second space, with the launch long over: the same rule where there
- *  is no queue left to hold anything. The listing lands and goes up, and the scan
- *  of every body in the new space starts after the frame that put it there. */
 const switched = await (async () => {
   sent.length = 0
   const other = workspace.spaces.find((one) => one.root === '/other')
@@ -193,7 +166,6 @@ describe('opening a second space, with the launch long over', () => {
     const scan = switched.find((one) => one.command === 'scan_links')
 
     expect(scan?.listed).toBe(true)
-    // A frame went out between the two, which is the rows appearing.
     expect(scan?.frames ?? 0).toBeGreaterThan(listing?.frames ?? 0)
   })
 
