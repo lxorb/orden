@@ -86,6 +86,7 @@ def edit(page: Page, note: str, old: str, new: str) -> bool:
         [SPACE, note],
     )
     if not opened:
+        failed(f"{note} did not open to write {new[:40]!r}")
         return False
     page.wait_for_function(
         "(name) => window.nibApp.workspace.active?.name === name && !!window.nib",
@@ -104,6 +105,8 @@ def edit(page: Page, note: str, old: str, new: str) -> bool:
     )
     page.wait_for_timeout(150)
     page.evaluate("async () => { await window.nibApp.workspace.writeNow() }")
+    if not done:
+        failed(f"{note} did not hold {old!r} to write over")
     return bool(done)
 
 def notes_here(page: Page) -> dict[str, str]:
@@ -185,6 +188,15 @@ def main() -> int:
             settled(page, f"[{which}] the first pass")
 
         away, stays = pages["away"], pages["stays"]
+        kept = away.evaluate(
+            """async () => {
+              const ws = window.nibApp.workspace
+              let read = 0
+              for (const note of ws.notes) if ((await ws.noteText(note.path)) !== null) read += 1
+              return read
+            }"""
+        )
+        say(f"machine away read {kept} notes while online, so a browser keeps their words")
         DRIVE.preload(away, harness.WORKER_DIST)
         away.context.set_offline(True)
         say(f"machine away is offline; writing in {NOTES} notes on both sides")

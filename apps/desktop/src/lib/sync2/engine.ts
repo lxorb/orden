@@ -21,7 +21,7 @@ import { holdsDocument } from './kinds'
 import { holderOf } from '../pages/held'
 import { waitsForBytes } from './files'
 import { foldIn } from './ingest'
-import { away, keepingChange, type LettingGo, trim, usedChanges } from './keeping'
+import { away, awayUnder, keepingChange, type LettingGo, trim, usedChanges } from './keeping'
 import { isLocal, localPass } from './local'
 import { settle, type SpaceState, windowsPath } from './places'
 import { pass, type Passed, pullNow, resting } from './pass'
@@ -284,18 +284,42 @@ export class Engine implements AskedEngine {
       const entry = placed?.space.at(placed.path)
       if (!placed || !entry) return false
       if (entry.local_path) return true
-      const { space } = placed
-      if (!away(space, entry)) return false
-      this.core.asked.add(entry.id)
-      const life = this.core.life
-      if (!(await pullNow(this.core, space, new Set([entry.id]), () => this.core.life === life)))
-        return false
-      if (!entry.local_path) return false
-      this.core.asked.delete(entry.id)
-      const doc = await this.core.doc(entry.id)
-      await this.core.commit(usedChanges(this.core, space, entry.id, doc?.text().length))
-      return true
+      if (!away(placed.space, entry)) return false
+      return this.bring(placed.space, [entry])
     })
+  }
+
+  private async bring(space: SpaceState, entries: readonly EntryRow[]): Promise<boolean> {
+    if (!entries.length) return true
+    const ids = new Set(entries.map((one) => one.id))
+    for (const id of ids) this.core.asked.add(id)
+    const life = this.core.life
+    if (!(await pullNow(this.core, space, ids, () => this.core.life === life))) return false
+    if (entries.some((one) => !one.local_path)) return false
+    let changes: Change[] = []
+    for (const one of entries) {
+      this.core.asked.delete(one.id)
+      const doc = await this.core.doc(one.id)
+      changes = usedChanges(this.core, space, one.id, doc?.text().length)
+    }
+    await this.core.commit(changes)
+    return true
+  }
+
+  private async carryAway(was: Placed, now: Placed): Promise<boolean> {
+    const left = awayUnder(was.space, was.path)
+    if (!left.length) return true
+    if (!(await this.bring(was.space, left))) return false
+    const { world } = this.core
+    for (const one of left) {
+      const rest = one.local_path.slice(was.path.length)
+      await world.disk.move(
+        world.join(was.space.row.root, one.local_path),
+        world.join(now.space.row.root, `${now.path}${rest}`),
+        'file',
+      )
+    }
+    return true
   }
 
   keptIds(spaceId: string): string[] {
@@ -377,6 +401,11 @@ export class Engine implements AskedEngine {
       return
     }
     if (was.space !== now.space) {
+      if (!(await this.carryAway(was, now))) {
+        const kind = was.space.at(was.path)?.kind === 'folder' ? 'folder' : 'file'
+        await this.core.world.disk.move(to, from, kind)
+        return
+      }
       const inside = atOrUnder(was.space, was.path)
         .map((entry) => ({ kind: entry.kind, rest: entry.local_path.slice(was.path.length) }))
         .sort((a, b) => a.rest.split('/').length - b.rest.split('/').length)
@@ -403,6 +432,10 @@ export class Engine implements AskedEngine {
   async moving(from: string, to: string, run: () => Promise<void>): Promise<void> {
     const was = this.placed(from)
     const now = this.placed(to)
+    if (was && was.space !== now?.space) {
+      await this.leaving(was, run)
+      return
+    }
     const entry = was?.space.at(was.path)
     if (
       !was ||
@@ -433,6 +466,19 @@ export class Engine implements AskedEngine {
       release()
     }
     await this.core.use(() => this.settle(space))
+  }
+
+  private async leaving(was: Placed, run: () => Promise<void>): Promise<void> {
+    const { space } = was
+    const here = await this.core.use(() => this.bring(space, awayUnder(space, was.path)))
+    if (!here)
+      throw new Error(`${was.path} is not all on this device, and the account could not be reached`)
+    const release = this.handle(atOrUnder(space, was.path), [])
+    try {
+      await run()
+    } finally {
+      release()
+    }
   }
 
   async removing(path: string, run: () => Promise<unknown>): Promise<void> {
