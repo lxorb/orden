@@ -2,7 +2,7 @@
 
 Emil: "can I somehow see the current version of orden currently?" In the web app, on a
 desktop's screen and on a phone's: Settings > General > Updates ends with Version, the
-build beside the channel it was served; a press copies the version alone and says so.
+build and the commit it was made from (#1112) beside the channel it was served; a press copies the version alone and says so.
 Shift Shift and "about" or "version" finds the same row, saying the version, and Enter
 copies it with the list still up.
 
@@ -12,6 +12,7 @@ copies it with the list still up.
 from __future__ import annotations
 
 import json
+import subprocess
 
 from playwright.sync_api import Browser, Page
 
@@ -28,8 +29,13 @@ PHONE = (
 
 ROW = ".sheet .setting.pressable"
 
-#: What a build made with no version given says: the one in tauri.conf.json.
-VERSION = json.loads((harness.APP / "src-tauri" / "tauri.conf.json").read_text(encoding="utf-8"))["version"]
+#: What a build made with no version given says: the one in tauri.conf.json, and on the
+#: web the commit it was built from beside it (#1112), as vite.config.ts reads it.
+RELEASE = json.loads((harness.APP / "src-tauri" / "tauri.conf.json").read_text(encoding="utf-8"))["version"]
+COMMIT = subprocess.run(
+    ["git", "rev-parse", "--short", "HEAD"], cwd=harness.APP, capture_output=True, text=True, check=False
+).stdout.strip()
+VERSION = f"{RELEASE} ({COMMIT})" if COMMIT else RELEASE
 
 
 def fresh(browser: Browser, finger: bool) -> Page:
