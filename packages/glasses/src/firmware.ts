@@ -249,53 +249,43 @@ function pieces(text: string): string[] {
   return out
 }
 
-function chop(word: string, inner: number): string[] {
-  const out: string[] = []
-  let line = ''
-
-  for (const letter of word) {
-    if (line !== '' && measure(line + letter) > inner) {
-      out.push(line)
-      line = ''
-    }
-    line += letter
-  }
-
-  if (line) out.push(line)
-  return out
-}
-
 function broken(text: string, inner: number, hang: string): string[] {
   const whole = fold(text)
   if (whole === '') return ['']
   if (measure(whole) <= inner) return [whole]
 
-  const under = Math.max(SPACE, inner - measure(hang))
   const out: string[] = []
   let line = ''
 
-  const room = () => (out.length === 0 ? inner : under)
+  const lead = measure(hang)
+  const shown = (row: string) => (out.length === 0 ? row : hang + row)
+  const fits = (row: string) => measure(shown(row.trimEnd())) <= inner
+  const bare = () => line.trim() === '' || (out.length === 0 && measure(line.trimEnd()) <= lead)
   const push = () => {
-    const row = line.trimEnd()
-    out.push(out.length === 0 ? row : hang + row)
+    out.push(shown(line.trimEnd()))
     line = ''
   }
 
   for (const piece of pieces(whole)) {
-    const together = line + piece
-    if (line !== '' && measure(together.trimEnd()) > room()) push()
-
-    if (measure(piece.trimEnd()) > room()) {
-      const parts = chop(piece.trimEnd(), room())
-      for (const part of parts.slice(0, -1)) {
-        line = part
-        push()
-      }
-      line = parts.at(-1) ?? ''
+    if (fits(line + piece)) {
+      line += piece
       continue
     }
 
-    line += piece
+    if (!bare()) push()
+    if (fits(line + piece)) {
+      line += piece
+      continue
+    }
+
+    const word = piece.trimEnd()
+    let held = !bare()
+    for (const letter of word) {
+      if (held && !fits(line + letter)) push()
+      line += letter
+      held = true
+    }
+    line += piece.slice(word.length)
   }
 
   if (line.trimEnd() !== '' || out.length === 0) push()
