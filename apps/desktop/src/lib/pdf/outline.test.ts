@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { readOutline } from './outline.svelte'
 
-/** A PDF's own contents, read off pdf.js as the Outline lists them (#1120). */
-
 const ref = (page: number) => ({ num: page * 10, gen: 0 })
 
 function docWith(outline: unknown) {

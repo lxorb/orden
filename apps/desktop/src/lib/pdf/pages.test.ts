@@ -13,9 +13,7 @@ import {
   topOfPage,
 } from './pages'
 
-/** US Letter in PDF points, which is what a page's size arrives as. */
 const LETTER: Size = { width: 612, height: 792 }
-/** At zoom 1 a page is the size it would be printed. */
 const HEIGHT = Math.floor(792 * PDF_TO_CSS)
 const WIDTH = Math.floor(612 * PDF_TO_CSS)
 
@@ -44,7 +42,6 @@ describe('laying the pages out', () => {
     expect(boxes[0]?.height).toBe(HEIGHT)
     expect(boxes[1]?.height).toBe(Math.floor(400 * PDF_TO_CSS))
     expect(boxes[2]?.height).toBe(HEIGHT)
-    // And the ones after it move up by the difference.
     expect(boxes[2]?.top).toBe(GAP + HEIGHT + GAP + Math.floor(400 * PDF_TO_CSS) + GAP)
   })
 
@@ -68,7 +65,6 @@ describe('which pages are worth drawing', () => {
   })
 
   test('a page part of which shows counts as showing', () => {
-    // Scrolled so that the very bottom of page one is still in the box.
     const at = GAP + HEIGHT - 5
     expect(nearby(boxes, at, view).from).toBe(0)
   })
@@ -104,7 +100,6 @@ describe('which page the reader is on', () => {
   })
 
   test('whichever there is more of, where two of them show', () => {
-    // A hair past the middle of the seam between pages two and three.
     const seam = GAP + 2 * (HEIGHT + GAP)
     expect(pageAt(boxes, seam - 100, 600)).toBe(3)
     expect(pageAt(boxes, seam - 500, 600)).toBe(2)

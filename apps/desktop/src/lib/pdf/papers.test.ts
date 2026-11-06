@@ -1,23 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Searching the papers that have been read.
- *
- *  A page's words arrive as pdf.js hands them over - a list of runs, one per span
- *  it drew - and a row is a window on the page rather than a line of it, because a
- *  page has no lines.
- *
- *  The store under the second half of this is a Map: what is asserted there is that
- *  a paper read in one sitting answers in the next, and that a file which has
- *  changed under its words does not. */
-
 const store = vi.hoisted(() => ({
   records: new Map<string, string>(),
-  /** How many records have been read out of it, so "once per space" is a number
-   *  rather than a hope. */
   reads: 0,
-  /** Run as each record is read back, after the store has answered and before the
-   *  answer lands. Which is what lets a test move a paper under a walk that is
-   *  already in the air - the shape of this bug and the only way to drive it. */
   reading: null as ((path: string) => void) | null,
 }))
 
@@ -29,8 +14,6 @@ vi.mock('../tauri', () => ({
 
     switch (command) {
       case 'read_paper_text': {
-        // The store answers as it stood when it was asked, which is the whole of
-        // the race: whatever happens next happens while this is on its way back.
         store.reads += 1
         const content = store.records.get(at) ?? ''
         store.reading?.(at)
@@ -70,8 +53,6 @@ const { shownName } = await import('../note-name')
 
 const ROOT = '/space'
 
-/** One page, as the viewer would have read it: the words broken into the spans a
- *  PDF is actually drawn in. */
 const page = (text: string) => text.split(' ')
 
 const found = (source: string, excluded: readonly string[] = []) =>
@@ -84,8 +65,6 @@ beforeEach(() => {
   store.reading = null
 })
 
-// The viewer writes a paper down a moment after the last page was read, so the
-// timer it sets goes with the sitting the test was.
 afterEach(() => {
   forgetPapers()
 })
@@ -183,11 +162,8 @@ describe('a space where nothing has been read', () => {
 describe('a paper read in an earlier sitting', () => {
   const PAPER = `${ROOT}/papers/Ink.pdf`
 
-  /** What the file list says about the paper: one path, one moment. */
   const listed = (modified: number) => new Map([[PAPER, modified]])
 
-  /** The launch's own pass: the file list says what it says, and then the store is
-   *  read back against it. */
   const readBack = async (modified: number) => {
     papersListed(ROOT, listed(modified))
     await papersFor(ROOT)
@@ -198,7 +174,6 @@ describe('a paper read in an earlier sitting', () => {
     paperRead(PAPER, 3, page('a study of ink on paper and its wear'))
     await writePapers()
 
-    // The restart: nothing in memory, and the store still holding the words.
     forgetPapers()
     expect(found('ink')).toEqual([])
 
@@ -218,7 +193,6 @@ describe('a paper read in an earlier sitting', () => {
     await readBack(10)
     store.reads = 0
 
-    // The same space again is the promise that was kept, not a second read.
     await papersFor(ROOT)
     await papersFor(ROOT)
     expect(store.reads).toBe(0)
@@ -240,7 +214,6 @@ describe('a paper read in an earlier sitting', () => {
     paperRead(PAPER, 1, page('ink as it was'))
     expect(found('ink')).toHaveLength(1)
 
-    // The same path, another file.
     paperOpened(PAPER, 'def', 12)
     expect(found('ink')).toEqual([])
   })
@@ -249,9 +222,7 @@ describe('a paper read in an earlier sitting', () => {
     paperRead(PAPER, 1, page('ink from nowhere'))
     await writePapers()
 
-    // It answers, because its words are here.
     expect(found('ink')).toHaveLength(1)
-    // And nothing was written down, because nothing could say which file it was.
     expect(store.records.size).toBe(0)
   })
 
@@ -267,14 +238,6 @@ describe('a paper read in an earlier sitting', () => {
   })
 })
 
-/** A space still being read back.
- *
- *  The read-back is a walk of the store with a round trip per paper, and the space
- *  does not hold still for it: a PDF can be deleted, renamed, or moved with the
- *  folder it sits in while the walk is in the air. What it read is the store as it
- *  stood when it asked, so landing it as it comes puts a paper back under a path
- *  that has nothing at it - and a search then answers with its pages, on a row that
- *  opens nothing, for the rest of the sitting. */
 describe('a paper that changes while the store is being read back', () => {
   const PAPER = `${ROOT}/papers/Ink.pdf`
   const listed = (modified: number) => new Map([[PAPER, modified]])
@@ -284,8 +247,6 @@ describe('a paper that changes while the store is being read back', () => {
     await papersFor(ROOT)
   }
 
-  /** One paper taken down in an earlier sitting and nothing in memory, which is
-   *  the state a read-back starts from. */
   const takenDown = async () => {
     paperOpened(PAPER, 'abc', 10)
     paperRead(PAPER, 1, page('a study of ink on paper and its wear'))
@@ -347,8 +308,6 @@ describe('a paper that changes while the store is being read back', () => {
     await readBack(10)
     expect(found('ink')).toEqual([])
 
-    // The paper is back at that path, with its words taken down again. Nothing
-    // that was written down while the last walk was in the air is still in the way.
     store.reading = null
     paperOpened(PAPER, 'abc', 10)
     paperRead(PAPER, 1, page('ink once more'))
@@ -356,13 +315,6 @@ describe('a paper that changes while the store is being read back', () => {
   })
 })
 
-/** Which of the two reads of the store actually runs.
- *
- *  It is read back once per space, and two callers ask for it: the launch's own
- *  pass, which has the file list in hand, and a search, which has only the root. A
- *  query fence in the note the app opens is a search before the launch's pass has
- *  had its turn, so whichever of them got there first used to decide whether a
- *  record was held against the file at all. */
 describe('a space read back before the file list has said anything', () => {
   const PAPER = `${ROOT}/papers/Ink.pdf`
   const listed = (modified: number) => new Map([[PAPER, modified]])
@@ -386,7 +338,6 @@ describe('a space read back before the file list has said anything', () => {
     papersListed(ROOT, listed(11))
     expect(found('ink')).toEqual([])
 
-    // And the store is not read back into memory behind it either.
     await papersFor(ROOT)
     expect(found('ink')).toEqual([])
   })
@@ -416,15 +367,10 @@ describe('a space read back before the file list has said anything', () => {
   })
 })
 
-/** What the store does once every write in the air has landed. */
 const settled = () => new Promise((done) => setTimeout(done, 0))
 
-/** A list that read the space's top folder and found these page notes. */
 const walked = (notes: string[], folders: string[] = [ROOT]) => ({ notes, folders })
 
-/** A page note's paper sits beside it as `Lecture.pages.pdf`, and the file list shows
- *  only the note. A rename, a move or a delete names the note, and the paper goes
- *  with it on disk (`move_held` in paths.rs), so its words have to go with it here. */
 describe('the paper a page note holds', () => {
   const NOTE = `${ROOT}/Lecture.pages`
   const PAPER = `${ROOT}/Lecture.pages.pdf`
@@ -518,8 +464,6 @@ describe('the paper a page note holds', () => {
     expect(store.records.has(PAPER)).toBe(true)
   })
 
-  // A list that could not be read - a disk not mounted, a space past the crate's
-  // bound - is no list at all, and says nothing about which notes are gone.
   test('is kept where the list could not be read at all', async () => {
     forgetPapers()
     papersListed(ROOT, new Map(), null)
@@ -545,7 +489,6 @@ describe('the paper a page note holds', () => {
     expect(store.records.has(hidden)).toBe(true)
   })
 
-  // A paper whose note has gone is a PDF again, and the list shows it as one.
   test('is kept as a PDF of its own where the list has it as a file', async () => {
     forgetPapers()
     papersListed(ROOT, new Map([[PAPER, 1]]), walked([]))
@@ -557,7 +500,6 @@ describe('the paper a page note holds', () => {
   })
 })
 
-/** A folder, or a whole space, names none of the papers inside it. */
 describe('papers inside a folder or a space', () => {
   const PAPER = `${ROOT}/Week/Ink.pdf`
   const NOTED = `${ROOT}/Week/Optics.pages.pdf`

@@ -1,17 +1,4 @@
-/** pdf.js, and one PDF read through it.
- *
- *  The only file that touches the library, and the only one that knows where the
- *  bytes come from: the desktop hands them over from disk, the browser out of its
- *  own store. Everything above this works in pages, boxes and quads.
- *
- *  The library is imported when the first PDF is opened and not before. It is
- *  larger than the whole app around it, so a window that never opens a PDF never
- *  pays for one: the import below is what puts it in a chunk of its own. */
-
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist'
-// The worker is shipped as an asset of the build, so the URL is settled at build
-// time and is the same one under Vite and inside the app bundle. Asking for the
-// URL rather than importing the module keeps the worker out of the page.
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import legacyWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'
 import { door } from '@orden/markdown/door'
@@ -20,14 +7,6 @@ import { PDF_TO_CSS } from './pages'
 
 type Library = typeof import('pdfjs-dist')
 
-/** Whether this engine runs the current pdf.js, which calls `Promise.try`,
- *  `Uint8Array.fromBase64` and `Math.sumPrecise` without asking whether they are
- *  there. A Mac's WebKit is as old as its macOS and has all three only from Safari
- *  18.2, so an older Mac reads PDFs through the legacy build pdf.js ships for
- *  exactly this, the way Firefox's own viewer is shipped to older browsers. Asked
- *  of the engine rather than of the platform, so a Linux WebKit that lags behind is
- *  covered by the same question. Both builds are chunks of their own and a window
- *  only ever fetches one. */
 export function current(scope: object = globalThis): boolean {
   const has = (name: string, member: string) => {
     const owner: unknown = Reflect.get(scope, name)
@@ -41,8 +20,6 @@ export function current(scope: object = globalThis): boolean {
   return has('Promise', 'try') && has('Uint8Array', 'fromBase64') && has('Math', 'sumPrecise')
 }
 
-/** The library, loaded once per window, or again after a load that failed; see
- *  door.ts in @orden/markdown. */
 export const pdfjs: () => Promise<Library> = door(() =>
   (current()
     ? import('pdfjs-dist').then((library) => ({ library, worker: workerUrl }))
@@ -56,69 +33,38 @@ export const pdfjs: () => Promise<Library> = door(() =>
   }),
 )
 
-/** Whether pdf.js may hand a PDF's JPEG images to the engine's own `ImageDecoder`
- *  rather than decode them itself. Not on WebKit: its decoder takes the content process
- *  down on some ordinary scans (a Word script printed through Distiller, eight pages of
- *  twenty-seven), and the worker every page of that paper shares goes with it, so the
- *  whole note stays a stack of empty sheets. pdf.js's own decoder reads them all.
- *  Asked of the user agent, because a decoder that is there and crashes looks, to any
- *  feature test, exactly like one that works. */
 export function decodesImages(agent: string = navigator.userAgent): boolean {
   const webkit = agent.includes('AppleWebKit/') && !/(Chrome|Chromium|CriOS|Edg)\//.test(agent)
   return !webkit
 }
 
-/** Starts reading a PDF's bytes, with what this engine can be trusted with. Every
- *  document the app opens goes through here; see `decodesImages`. */
 export function loading(library: Library, data: Uint8Array) {
   return library.getDocument({ data, isImageDecoderSupported: decodesImages() })
 }
 
-/** A PDF that is open, and the one way to close it. */
 export interface OpenPdf {
   doc: PDFDocumentProxy
-  /** What the file's bytes hash to, which is what says a paper's words belong to
-   *  this file and not to whatever used to be at this path; see pdf/text-cache.ts.
-   *  Taken here because this is the one moment the bytes are in hand: the worker
-   *  takes them below, and hashing a thirty megabyte paper a second time to find
-   *  out what it is would cost what the whole cache saves. */
   hash: string
-  /** Gives the worker and the bytes back. The loading task rather than the
-   *  document is what owns them, which is why closing lives here. */
   close: () => Promise<void>
 }
 
-/** Opens a PDF in a space. The library and the bytes are fetched at the same
- *  time, because the first page cannot be drawn until both are here. */
 export async function openDocument(path: string): Promise<OpenPdf> {
   const [library, data] = await Promise.all([pdfjs(), fileBytes(path)])
   return await opening(library, data)
 }
 
-/** A PDF that is bytes in hand rather than a file of the space: the paper of a page
- *  note fetched from the account (pages/carried.ts). */
 export async function openBytes(data: Uint8Array): Promise<OpenPdf> {
   return await opening(await pdfjs(), data)
 }
 
 async function opening(library: Library, data: Uint8Array): Promise<OpenPdf> {
-  // Before the bytes are handed over, and off the main thread: the digest of a
-  // paper is a few milliseconds where the read that just finished was hundreds.
-  // The same digest, over the same bytes, that the mirror addresses a paper by.
   const hash = await sha256(data)
 
-  // The bytes are handed to the worker, which takes ownership of them: after
-  // this the copy on this side is empty, and one document costs one copy.
   const task = loading(library, data)
 
   return { doc: await task.promise, hash, close: () => task.destroy() }
 }
 
-/** Every page's size in CSS pixels, out of a PDF of the space or out of bytes an
- *  import holds and has not written yet. Read out of each page's own dictionary and
- *  nothing drawn, so a book of four hundred pages is a read of the file rather than
- *  four hundred renders - which is what lets a PDF become a page note at once, and the
- *  Import sheet say what it is about to make before it makes it. */
 export async function pageSizes(
   from: string | Uint8Array,
 ): Promise<{ width: number; height: number }[]> {
@@ -126,8 +72,6 @@ export async function pageSizes(
     typeof from === 'string'
       ? await openDocument(from)
       : await pdfjs().then((library) => {
-          // A copy, because the worker takes the bytes and the import still needs
-          // them to write the file with.
           const task = loading(library, from.slice())
           return task.promise.then((doc) => ({ doc, close: () => task.destroy() }))
         })
@@ -146,13 +90,6 @@ export async function pageSizes(
   }
 }
 
-/** The words of a page, as the strings pdf.js lays one span out for: the same
- *  list, in the same order, that a rendered text layer holds in
- *  `textContentItemsStr`. That is what lets a match found in a page nobody is
- *  looking at be painted over the very nodes once it is on screen.
- *
- *  Reading them costs no drawing at all, which is what lets the find bar count
- *  through a document of three hundred pages. */
 export async function textOf(page: PDFPageProxy): Promise<string[]> {
   const content = await page.getTextContent()
   return content.items.flatMap((item) => ('str' in item ? [item.str] : []))

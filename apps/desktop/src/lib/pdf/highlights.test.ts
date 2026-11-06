@@ -34,9 +34,6 @@ function mark(over: Partial<Highlight> = {}): Highlight {
 
 describe('the sidecar', () => {
   test('is named after the PDF, under the name the Rust side writes', () => {
-    // Two constants, one name. The Rust half is what makes the file follow the
-    // PDF on a rename and go with it on a delete; if the two ever drift apart the
-    // marks would be written where nothing looks for them.
     const paths = readFileSync(
       fileURLToPath(new URL('../../../src-tauri/src/paths.rs', import.meta.url)),
       'utf8',
@@ -86,8 +83,6 @@ describe('the sidecar', () => {
       version: 1,
       highlights: [
         mark(),
-        // No page, no quads, a quad of the wrong length, a quad that is not
-        // numbers: four entries that are not marks.
         { ...mark({ id: 'x' }), page: 0 },
         { ...mark({ id: 'y' }), quads: [] },
         { ...mark({ id: 'z' }), quads: [[1, 2, 3]] },
@@ -125,7 +120,6 @@ describe('a sidecar this build did not write', () => {
     const sheet = readSheet(JSON.stringify({ version: 99, highlights: [mark()] }))
 
     expect(frozen(sheet)).toBe(true)
-    // What it does hold is still shown; it is the writing that stops.
     expect(sheet.highlights).toHaveLength(1)
   })
 
@@ -139,8 +133,6 @@ describe('a sidecar this build did not write', () => {
   })
 })
 
-/** A page drawn at twice its size: pdf.js flips the y axis, so the transform
- *  carries the page's height. */
 const TWICE: Transform = [2, 0, 0, -2, 0, 792 * 2]
 
 describe('a mark on the page it is drawn on', () => {
@@ -176,8 +168,6 @@ describe('a mark on the page it is drawn on', () => {
   })
 
   test('all four corners, so a turned page comes out right', () => {
-    // A transform that swaps the axes, which is what a rotated page's does: a
-    // reading that only turned two corners would come out inside out.
     const turned: Transform = [0, 1, 1, 0, 0, 0]
 
     expect(boxOf([10, 20, 30, 20, 30, 40, 10, 40], toViewport(turned))).toEqual({
@@ -208,7 +198,6 @@ describe('the boxes a selection covers', () => {
   })
 
   test('are one band per line, however many runs the browser split it into', () => {
-    // `the **word** here` is three rectangles and one line.
     expect(joinRuns([box(10, 100, 30, 14), box(40, 100, 40, 14), box(80, 100, 25, 14)])).toEqual([
       box(10, 100, 95, 14),
     ])

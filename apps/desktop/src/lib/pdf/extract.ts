@@ -1,26 +1,3 @@
-/** Reading the papers nobody has opened, in idle time.
- *
- *  A paper answers a search once its words have been taken down, and the viewer
- *  takes them down for the pages somebody has looked at. This is the other half:
- *  the papers in a space that have never been opened get read once, in the
- *  background, and are answerable from then on and after every restart.
- *
- *  Every rule here is about staying out of the way:
- *
- *  - Never on the critical path. It starts at the search stage of the launch,
- *    which is after the file list is painted, after the link index's turn and after
- *    the notes have been read; see startup.svelte.ts.
- *  - One paper at a time, and a breath between pages, so a three hundred page book
- *    is three hundred short tasks rather than one long one.
- *  - Nothing at all where the device has asked to be left alone: a browser that
- *    says the connection is metered is a browser saying this is not the moment to
- *    spend anything, and the papers will still be there next time.
- *  - Bounded by what the store holds; see text-cache.ts. A paper already taken
- *    down is skipped by its stamp, so this costs nothing on the second launch.
- *
- *  The pages go through papers.ts, which is what a search reads and what writes
- *  them down. */
-
 import { isPagesTarget, isPdfTarget } from '@orden/markdown/links'
 import { breathe } from '../breathe'
 import { holderOf } from '../pages/held'
@@ -33,25 +10,15 @@ import { openDocument, textOf } from './document'
 import { paperOpened, paperRead, papersFor, papersListed, type Walked, writePapers } from './papers'
 import { paperText } from './text-cache'
 
-/** How many pages of one paper are worth taking down. A book is a book; past this
- *  the search answers about the front of it, which is where a reader is. */
 const PAGES = 400
 
-/** Which space is being read, so that opening another one stops this one. */
 let reading: string | null = null
 
-/** Whether the device has asked not to be spent. `saveData` is the one thing a
- *  browser says plainly about that, and a phone that sets it is a phone asking for
- *  its battery back as much as for its bytes. */
 function sparing(): boolean {
   const connection = (navigator as { connection?: { saveData?: boolean } }).connection
   return connection?.saveData === true
 }
 
-/** The page notes a space's list has, and the folders it actually read, for telling
- *  a paper whose note has gone from one whose folder nobody looked in. A folder the
- *  crate could not read is in the list as `unlisted`, with nothing under it, and says
- *  nothing about what is in it. See `Walked` in papers.ts. */
 export function walkedOf(root: string, tree: Entry): Walked {
   const notes: string[] = []
   const folders: string[] = [root]
@@ -69,12 +36,6 @@ export function walkedOf(root: string, tree: Entry): Walked {
   return { notes, folders }
 }
 
-/** What a space's papers answer, made ready: what was taken down before comes
- *  back, and what has never been read is read.
- *
- *  Called where the file list lands, beside the note cache's own warming, and
- *  never awaited by anything on screen. `tree` is null where the list could not be
- *  read, which says nothing about which page notes are there. */
 export async function readPapers(
   root: string,
   files: readonly Entry[],
@@ -83,23 +44,13 @@ export async function readPapers(
   reading = root
   const papers = files.filter((one) => isPdfTarget(one.name))
   const stamps = new Map(papers.map((one) => [one.path, one.modified]))
-  // And which page notes there are, so the paper of one that has gone - renamed or
-  // deleted in a sitting that did not let go of its words - is dropped rather than
-  // read back. See `papersListed`.
   const notes = tree ? walkedOf(root, tree) : null
 
-  // Said before the turn is waited for, not after it. This is the one thing in the
-  // app that knows when each of these files was last written, and a search asked
-  // before this pass gets its turn - a query fence in the note the app opens is
-  // exactly that - has to be held to it too. See `papersListed`.
   papersListed(root, stamps, notes)
 
   await startup.turn('search')
   if (reading !== root) return
 
-  // A paper a page note holds is the note's and is not in the list, but its words are
-  // the space's as much as any PDF's; so the list is asked for them once, here, where
-  // nothing on screen waits. See pages/held.ts.
   if (files.some((one) => isPagesTarget(one.name))) {
     const held = await heldPapers(root, files)
     if (reading !== root) return
@@ -108,8 +59,6 @@ export async function readPapers(
     papers.push(...held)
   }
 
-  // What earlier sittings took down, first: it is a read of a row rather than of a
-  // PDF, and it is what makes the first search of a space answer about papers.
   mark(`papers: ${papers.length} in the space`)
   await papersFor(root)
   if (reading !== root || sparing()) return
@@ -117,8 +66,6 @@ export async function readPapers(
   for (const paper of papers) {
     if (reading !== root) return
 
-    // A paper the store already holds for this file is nothing to read again. The
-    // stamp is the cheap half of the question; the hash below is the honest one.
     if (await paperText(paper.path, paper.modified)) continue
 
     await readOne(paper)
@@ -129,8 +76,6 @@ export async function readPapers(
   mark('papers read')
 }
 
-/** The papers the page notes among `files` hold, as the list has them when asked for
- *  them too. */
 export async function heldPapers(root: string, files: readonly Entry[]): Promise<Entry[]> {
   const notes = new Set(
     files.filter((one) => isPagesTarget(one.name)).map((one) => pathKey(one.path)),
@@ -150,12 +95,7 @@ export async function heldPapers(root: string, files: readonly Entry[]): Promise
   return out
 }
 
-/** One paper, page by page. Its words are held in memory as they arrive, the way
- *  the viewer's are, so a search running while this is going on sees the pages
- *  that have been read so far. */
 async function readOne(paper: Entry): Promise<void> {
-  // A paper that cannot be opened is not a failure to report: it is a file the
-  // search will not answer about, and the viewer will say so if anybody opens it.
   const held = await openDocument(paper.path).catch(() => null)
   if (!held) return
 
@@ -168,8 +108,6 @@ async function readOne(paper: Entry): Promise<void> {
 
       const page = await held.doc.getPage(number)
       paperRead(paper.path, number, await textOf(page))
-      // Read for its words and not to be looked at, so what pdf.js kept for the
-      // page goes straight back.
       page.cleanup()
       await breathe()
     }

@@ -1,7 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The list as the crate answers it asked for every file: two page notes, the paper
- *  each holds, and a PDF of nobody's. */
 const tree = {
   name: 'space',
   path: '/space',
@@ -71,7 +69,6 @@ vi.mock('../tauri', async (importOriginal) => ({
   },
 }))
 
-/** What the pass tells papers.ts, which is all the wiring there is to see. */
 const told = vi.hoisted(() => ({ listed: [] as unknown[][] }))
 
 vi.mock('./papers', () => ({
@@ -93,7 +90,6 @@ beforeEach(() => {
 
 describe('the papers page notes hold', () => {
   test('are read for, though the list leaves them out, for the notes it shows', async () => {
-    // The list as the window has it: the notes, and the paper of nobody's.
     const listed = [tree.children[0]!, tree.children[2]!.children[0]!, tree.children[3]!]
 
     const held = await heldPapers('/space', listed)
@@ -109,8 +105,6 @@ describe('the papers page notes hold', () => {
   })
 })
 
-/** Which page notes a space has is what tells a paper whose note has gone from one
- *  whose folder was never looked in; see `Walked` in papers.ts. */
 describe('the page notes the pass reports', () => {
   const listed = [tree.children[0]!, tree.children[2]!.children[0]!, tree.children[3]!]
 
@@ -133,8 +127,6 @@ describe('the page notes the pass reports', () => {
     await readPapers('/space', listed, tree)
     vi.unstubAllGlobals()
 
-    // Once before the turn and once with the papers the notes hold, the same notes
-    // both times.
     expect(told.listed.map((one) => one[2])).toEqual([
       walkedOf('/space', tree),
       walkedOf('/space', tree),

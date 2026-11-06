@@ -2,9 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { locate, placesOf } from '../reading/find'
 import { textOfRuns, wordsOfRuns } from './find'
 
-/** The spans pdf.js lays a page's runs out in. Only `firstChild` and its
- *  `nodeType` are ever looked at, so a stand-in carrying those is enough to state
- *  the arithmetic without a DOM to build one in. */
 function divs(...runs: (string | null)[]): HTMLElement[] {
   return runs.map(
     (run) =>
@@ -21,7 +18,6 @@ describe("a page's words", () => {
   })
 
   test('and a match may run across two of them, which is why they are joined', () => {
-    // `the **word**` is two runs and one phrase.
     expect(placesOf(textOfRuns(['the wo', 'rd here']), 'word')).toEqual([4])
   })
 })

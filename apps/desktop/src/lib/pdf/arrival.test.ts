@@ -1,6 +1,3 @@
-/** Where a PDF opened with nib goes: in place inside a space, else into the space that
- *  is open. See arrival.ts. */
-
 import { expect, test } from 'vitest'
 import { arrivalOf } from './arrival'
 
@@ -55,7 +52,6 @@ test('a space shared to be read takes nothing: the first that may be written in 
     root: home.root,
   })
   expect(arrivalOf('/tmp/a.pdf', spaces, 'work', () => false)).toBeNull()
-  // One already inside such a space still opens where it is: nothing is copied.
   expect(arrivalOf('C:\\Users\\me\\Documents\\Nib\\Work\\a.pdf', spaces, 'home', mine)?.kind).toBe(
     'open',
   )

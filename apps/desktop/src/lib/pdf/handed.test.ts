@@ -1,19 +1,12 @@
-/** PDFs another program opened with nib, as the window takes them: each in the viewer,
- *  in the space it is in, as the copy the open space holds, or as a page note nobody has
- *  saved, the ones the app was started for and the ones that arrive while it runs. See
- *  handed.ts. */
-
 import { beforeEach, expect, test, vi } from 'vitest'
 
 interface World {
   asked: string[]
-  /** What `take_startup_pdfs` answers with. */
   waiting: unknown
   heard: ((event: { payload: unknown }) => void) | null
   done: string[]
   active: string | null
   same: string | null
-  /** The roots of spaces shared with this account to be read. */
   readOnly: string[]
 }
 

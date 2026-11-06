@@ -1,9 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { current, decodesImages } from './document'
 
-/** Which pdf.js a window loads. The current build calls a handful of the newest
- *  built-ins without asking whether they are there, and a Mac's WebKit is as old as
- *  its macOS; see `current` in document.ts. */
 describe('which pdf.js this engine can run', () => {
   const modern = {
     Promise: { try: () => undefined },
@@ -23,8 +20,6 @@ describe('which pdf.js this engine can run', () => {
   )
 })
 
-/** Whether pdf.js may use the engine's own image decoder. WebKit's crashes on some
- *  ordinary JPEG scans and takes every page of the paper with it; see `decodesImages`. */
 describe("whose image decoder a PDF's pictures go through", () => {
   const MAC =
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)'
