@@ -108,6 +108,12 @@ export async function openSession(
     },
     output: channel,
   })
+  let last: Promise<unknown> = Promise.resolve()
+  const inTurn = <T>(run: () => Promise<T>): Promise<T> => {
+    const next = last.then(run)
+    last = next.catch(() => undefined)
+    return next
+  }
   return {
     id,
     opening,
@@ -115,11 +121,11 @@ export async function openSession(
       return ended
     },
     async say(say) {
-      await invoke('ai_cli_say', { id, say })
+      await inTurn(() => invoke('ai_cli_say', { id, say }))
     },
     async close() {
       ended = true
-      await invoke('ai_cli_close', { id }).catch(() => undefined)
+      await inTurn(() => invoke('ai_cli_close', { id })).catch(() => undefined)
     },
   }
 }

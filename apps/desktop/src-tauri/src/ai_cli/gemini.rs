@@ -29,6 +29,7 @@ pub struct Launch {
 struct Held {
     session: Mutex<Option<String>>,
     running: Mutex<Option<Running>>,
+    ended: AtomicBool,
 }
 
 fn lock<T>(held: &Mutex<T>) -> MutexGuard<'_, T> {
@@ -102,6 +103,9 @@ impl Gemini {
 
     fn turn(&self, text: &str) -> Result<(), String> {
         let mut running = lock(&self.held.running);
+        if self.held.ended.load(Ordering::SeqCst) {
+            return Err("Gemini CLI has been closed".into());
+        }
         if running.is_some() {
             return Err("Gemini CLI is still answering".into());
         }
@@ -157,9 +161,12 @@ impl Gemini {
     }
 
     pub fn stop(&self) {
-        if let Some(running) = lock(&self.held.running).take() {
+        let mut running = lock(&self.held.running);
+        self.held.ended.store(true, Ordering::SeqCst);
+        if let Some(running) = running.take() {
             running.stop();
         }
+        drop(running);
         let _ = std::fs::remove_dir_all(&self.files);
     }
 }
@@ -282,5 +289,37 @@ mod tests {
         assert!(!init.ended);
         assert!(said_in(r#"{"type":"result","status":"success"}"#).is_some_and(|one| one.ended));
         assert!(said_in("not json").is_none());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_turn_said_after_it_was_closed_starts_nothing() {
+        let started = Arc::new(AtomicBool::new(false));
+        let heard = Arc::clone(&started);
+        let launch = Launch {
+            base: Box::new(|_: &[String]| {
+                let mut command = Command::new("sh");
+                command.args(["-c", "cat"]);
+                command
+            }),
+            folder: dir("closed"),
+            caps: Caps::from_help("--output-format"),
+            token: None,
+            thread: None,
+            mode: None,
+            without: Vec::new(),
+        };
+        let output: Output = Arc::new(move |_| heard.store(true, Ordering::SeqCst));
+        let gemini = Gemini::start(launch, "one", None, Duration::from_secs(30), None, output)
+            .expect("started");
+        gemini.stop();
+        let said = gemini.say(Say::Turn {
+            text: "hello".into(),
+            images: Vec::new(),
+        });
+        assert!(said.is_err_and(|why| why.contains("closed")));
+        assert!(lock(&gemini.held.running).is_none());
+        std::thread::sleep(Duration::from_millis(200));
+        assert!(!started.load(Ordering::SeqCst));
     }
 }
