@@ -1,4 +1,5 @@
 import { isWebAddress } from './address'
+import { TOP_LEVEL_DOMAINS } from './tlds'
 
 export const SEARCH = 'https://www.google.com/search?q=%s'
 
@@ -57,8 +58,22 @@ function noName(typed: string): boolean {
   return /\.\d+$/.test(name) && !/^\d{1,3}(?:\.\d{1,3}){3}$/.test(name)
 }
 
+function namesASite(typed: string): boolean {
+  const name = typed.split(/[/?#:]/, 1)[0] ?? ''
+  if (typed.length > name.length || name.startsWith('[')) return true
+
+  let host: string
+  try {
+    host = new URL(`http://${name}`).hostname
+  } catch {
+    return false
+  }
+  const last = host.split('.').at(-1) ?? ''
+  return isOwnHost(host) || /^\d+$/.test(last) || TOP_LEVEL_DOMAINS.has(last)
+}
+
 function isHost(typed: string): boolean {
-  if (!HOST.test(typed) || CLOCK.test(typed) || noName(typed)) return false
+  if (!HOST.test(typed) || CLOCK.test(typed) || noName(typed) || !namesASite(typed)) return false
   const word = /^([a-z\d-]+):\d/i.exec(typed)?.[1]
   return !word || !NOT_HOSTS.has(word.toLowerCase())
 }
