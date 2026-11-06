@@ -1,5 +1,5 @@
 import { INBOX_PATH } from '@orden/bases/inbox'
-import { api, BASE } from '../api'
+import { api, BASE, BYTES_WITHIN, fetchInTime } from '../api'
 import { fileBytes, sha256, toBase64 } from '../bytes'
 import { deviceName } from '../device'
 import { keptShaped, mountOf } from '../internal/roots'
@@ -158,8 +158,20 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[] | 
   return out
 }
 
+const BYTES = /^\/v2\/(blobs|files)\//
+
 function reachingOf(token: () => string | null) {
-  return { base: BASE, token, device: deviceName, fetch: (request: Request) => fetch(request) }
+  return {
+    base: BASE,
+    token,
+    device: deviceName,
+    fetch: (request: Request) =>
+      fetchInTime(
+        request,
+        {},
+        BYTES.test(new URL(request.url).pathname) ? BYTES_WITHIN : undefined,
+      ),
+  }
 }
 
 export function readingFor(token: () => string | null): Reading {
