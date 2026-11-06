@@ -133,8 +133,9 @@ const HELD = /classList\.contains\(\s*f?(["'`])((?:\\.|(?!\1).)*)\1/g
 const NOT_OURS = /^(?:cm-|ytp-|vp-)/
 
 /** Everything in one piece of a selector that the app no longer writes anywhere. */
-function strangers(part: string): string[] {
+function strangers(selector: string): string[] {
   const gone: string[] = []
+  const part = selector.replace(/(["'])(?:\\.|(?!\1).)*\1/g, '""')
 
   for (const found of part.matchAll(/\.(-?[A-Za-z_][\w-]*)/g)) {
     const name = caught(found)
