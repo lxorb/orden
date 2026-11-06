@@ -1258,7 +1258,7 @@ class Workspace {
   }
 
   closeShared(id: string) {
-    for (const tab of this.tabs.filter((one) => one.note.shared === id)) this.close(tab.id)
+    this.closeEach(this.tabs.filter((one) => one.note.shared === id).map((tab) => tab.id))
   }
 
   private document(start: DocumentStart): NoteDoc {
@@ -1648,7 +1648,10 @@ class Workspace {
     const held = this.opened.at(path)
     if (held) {
       if (await this.handedOut(path)) {
-        for (const tab of this.tabs.filter((one) => one.note === held)) this.close(tab.id, false)
+        this.closeEach(
+          this.tabs.filter((one) => one.note === held).map((tab) => tab.id),
+          false,
+        )
         return
       }
       this.showTab(held, how)
@@ -2469,8 +2472,11 @@ class Workspace {
     const going = this.tabs.filter((one) => ids.includes(one.id))
     if (!(await this.mayClose(going))) return
 
-    const batch = Date.now()
-    for (const one of going) this.close(one.id, true, batch)
+    this.closeEach(
+      going.map((one) => one.id),
+      true,
+      Date.now(),
+    )
   }
 
   closesAround(id: string, which: Around): number {
@@ -2502,8 +2508,18 @@ class Workspace {
   }
 
   close(id: string, reopenable = true, batch?: number) {
+    if (this.shut(id, reopenable, batch)) this.persist()
+  }
+
+  closeEach(ids: readonly string[], reopenable = true, batch?: number) {
+    let shut = false
+    for (const id of ids) shut = this.shut(id, reopenable, batch) || shut
+    if (shut) this.persist()
+  }
+
+  private shut(id: string, reopenable: boolean, batch?: number): boolean {
     const tab = this.tabs.find((one) => one.id === id)
-    if (!tab) return
+    if (!tab) return false
 
     const paneId = tab.paneId
     const at = this.tabsIn(paneId).findIndex((one) => one.id === id)
@@ -2526,17 +2542,13 @@ class Workspace {
     if (this.previewTabId === id) this.previewTabId = null
     this.saving.closed(tab.note)
 
-    if (!this.panes.at(paneId)) {
-      this.persist()
-      return
-    }
+    if (!this.panes.at(paneId)) return true
     const left = this.tabsIn(paneId)
     const showing = this.panes.at(paneId)?.activeTabId === id ? null : this.showing(paneId)
 
     if (!paneStays(left.length, showing)) {
       if (this.closePaneOf(paneId)) this.panes.activate(paneId, null)
-      this.persist()
-      return
+      return true
     }
 
     if (this.panes.at(paneId)?.activeTabId === id) {
@@ -2548,8 +2560,7 @@ class Workspace {
         ),
       )
     }
-
-    this.persist()
+    return true
   }
 
   private closePaneOf(paneId: string): boolean {
@@ -3949,7 +3960,11 @@ class Workspace {
     const tabs = this.heldIn(paneId)
     if (!(await this.mayClose(tabs))) return
 
-    for (const tab of tabs) this.close(tab.id)
+    this.closeEach(
+      tabs.map((tab) => tab.id),
+      true,
+      Date.now(),
+    )
   }
 
   twins(paneId: string): string[] {

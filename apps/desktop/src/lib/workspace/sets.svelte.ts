@@ -349,7 +349,7 @@ class Sets {
       this.on = GLOBAL
       return
     }
-    for (const tab of this.tabsOf(space)) workspace.close(tab.id)
+    workspace.closeEach(this.tabsOf(space).map((tab) => tab.id))
     this.aside = without(this.aside, space)
   }
 }
