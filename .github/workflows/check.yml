@@ -129,6 +129,9 @@ jobs:
       - name: The launch hands the thread back
         run: NIB_SKIP_BUILD=1 python3 apps/desktop/test/e2e/long-tasks.py
 
+      - name: A thousand pages open at once
+        run: NIB_SKIP_BUILD=1 python3 apps/desktop/test/e2e/big-pdf.py
+
       - name: Nothing is laid out so it cannot be read
         run: NIB_SKIP_BUILD=1 python3 apps/desktop/test/e2e/layout-sweep.py
 

@@ -6,6 +6,8 @@ import { paperPlaces } from './held'
 
 const SCALE = 2
 
+const ROUGH = 0.5
+
 const MOST_PIXELS = 16 * 1024 * 1024
 
 const KEPT = 24
@@ -18,11 +20,26 @@ export interface Paper {
 
 interface Held {
   open: Promise<OpenPdf>
-  drawn: Map<number, Promise<Paper | null>>
-  recent: number[]
+  drawn: Map<string, Promise<Paper | null>>
+  recent: string[]
+  gone: boolean
+}
+
+interface Job {
+  one: Held
+  number: number
+  density: number
+  wanted: number
+  forever: boolean
+  aside: boolean
+  settle: (paper: Paper | null) => void
 }
 
 const held = new Map<string, Held>()
+
+const queue: Job[] = []
+
+let pumping = false
 
 export interface PaperAt {
   file: string
@@ -36,22 +53,99 @@ function keyOf(at: PaperAt): string {
   return at.shared ? [...places, `#${at.shared}`].join('\n') : places.join('\n')
 }
 
-export function paperOf(at: PaperAt, number: number): Promise<Paper | null> {
-  const one = heldOf(at)
-  if (!one) return Promise.resolve(null)
+export function densityFor(onScreen: number): number {
+  return onScreen <= ROUGH ? ROUGH : SCALE
+}
 
-  const already = one.drawn.get(number)
+export function paperOf(
+  at: PaperAt,
+  number: number,
+  signal?: AbortSignal,
+  aside = false,
+  density = SCALE,
+): Promise<Paper | null> {
+  const one = heldOf(at)
+  if (!one || signal?.aborted) return Promise.resolve(null)
+
+  const key = `${String(number)}@${String(density)}`
+  const waiting = queue.find((job) => job.one === one && keyOfJob(job) === key)
+  const already = one.drawn.get(key)
   if (already) {
-    touch(one, number)
+    if (waiting) {
+      wants(waiting, signal)
+      waiting.aside &&= aside
+    } else touch(one, key)
     return already
   }
 
-  const drawing = draw(one, number).catch(() => null)
-  one.drawn.set(number, drawing)
-  touch(one, number)
-  forgetOldest(one)
+  const asked = new Promise<Paper | null>((settle) => {
+    const job: Job = { one, number, density, wanted: 0, forever: false, aside, settle }
+    wants(job, signal)
+    queue.push(job)
+  })
+  one.drawn.set(key, asked)
+  void pump()
 
-  return drawing
+  return asked
+}
+
+function wants(job: Job, signal: AbortSignal | undefined) {
+  if (!signal) {
+    job.forever = true
+    return
+  }
+
+  job.wanted++
+  signal.addEventListener('abort', () => letGo(job), { once: true })
+}
+
+function letGo(job: Job) {
+  job.wanted--
+  if (job.forever || job.wanted > 0) return
+
+  const at = queue.indexOf(job)
+  if (at < 0) return
+
+  queue.splice(at, 1)
+  job.one.drawn.delete(keyOfJob(job))
+  job.settle(null)
+}
+
+function keyOfJob(job: Job): string {
+  return `${String(job.number)}@${String(job.density)}`
+}
+
+function next(): Job | undefined {
+  const at = queue.findIndex((job) => !job.aside)
+  return queue.splice(at < 0 ? 0 : at, 1)[0]
+}
+
+async function pump() {
+  if (pumping) return
+  pumping = true
+
+  try {
+    for (let job = next(); job; job = next()) {
+      const paper = await draw(job.one, job.number, job.density).catch(() => null)
+      if (job.one.gone) {
+        paper?.image.close()
+        job.settle(null)
+        continue
+      }
+      if (!paper) job.one.drawn.delete(keyOfJob(job))
+      else {
+        touch(job.one, keyOfJob(job))
+        forgetOldest(job.one)
+      }
+      job.settle(paper)
+    }
+  } finally {
+    pumping = false
+  }
+}
+
+export function paperAhead(at: PaperAt): void {
+  heldOf(at)
 }
 
 export async function paperIsLocked(at: PaperAt): Promise<boolean> {
@@ -67,7 +161,7 @@ function heldOf(at: PaperAt): Held | null {
 
   const known = held.get(key)
   if (known) return known
-  const made: Held = { open: opened(at), drawn: new Map(), recent: [] }
+  const made: Held = { open: opened(at), drawn: new Map(), recent: [], gone: false }
   made.open.catch(() => {
     if (held.get(key) === made) held.delete(key)
   })
@@ -105,10 +199,10 @@ async function accountIdOf(note: string): Promise<string | null> {
   return sync.tracked(note)?.id ?? null
 }
 
-function touch(one: Held, number: number) {
-  const at = one.recent.indexOf(number)
+function touch(one: Held, key: string) {
+  const at = one.recent.indexOf(key)
   if (at >= 0) one.recent.splice(at, 1)
-  one.recent.push(number)
+  one.recent.push(key)
 }
 
 function forgetOldest(one: Held) {
@@ -122,35 +216,56 @@ function forgetOldest(one: Held) {
   }
 }
 
-async function draw(one: Held, number: number): Promise<Paper | null> {
+async function draw(one: Held, number: number, density: number): Promise<Paper | null> {
   const opened = await one.open
   if (number < 1 || number > opened.doc.numPages) return null
 
   const page = await opened.doc.getPage(number)
   const wanted = page.getViewport({ scale: PDF_TO_CSS })
 
-  const area = wanted.width * wanted.height * SCALE * SCALE
-  const scale = area > MOST_PIXELS ? SCALE * Math.sqrt(MOST_PIXELS / area) : SCALE
+  const area = wanted.width * wanted.height * density * density
+  const scale = area > MOST_PIXELS ? density * Math.sqrt(MOST_PIXELS / area) : density
   const view = page.getViewport({ scale: PDF_TO_CSS * scale })
 
-  const paper = document.createElement('canvas')
-  paper.width = Math.max(1, Math.round(view.width))
-  paper.height = Math.max(1, Math.round(view.height))
-
-  const ctx = paper.getContext('2d')
-  if (!ctx) {
+  const paper = sheetOf(Math.max(1, Math.round(view.width)), Math.max(1, Math.round(view.height)))
+  const ctx = paper?.getContext('2d') ?? null
+  if (!paper || !ctx) {
     page.cleanup()
     return null
   }
 
-  await page.render({ canvas: paper, canvasContext: ctx, viewport: view }).promise
-  page.cleanup()
+  try {
+    await page.render({
+      canvas: paper as HTMLCanvasElement,
+      canvasContext: ctx as CanvasRenderingContext2D,
+      viewport: view,
+    }).promise
+  } finally {
+    page.cleanup()
+  }
 
   return {
-    image: await createImageBitmap(paper),
+    image:
+      'transferToImageBitmap' in paper
+        ? paper.transferToImageBitmap()
+        : await createImageBitmap(paper),
     width: Math.round(wanted.width),
     height: Math.round(wanted.height),
   }
+}
+
+let offscreen: boolean | undefined
+
+function sheetOf(width: number, height: number): HTMLCanvasElement | OffscreenCanvas | null {
+  offscreen ??=
+    typeof OffscreenCanvas === 'function' && !!new OffscreenCanvas(1, 1).getContext('2d')
+  if (offscreen) return new OffscreenCanvas(width, height)
+  if (typeof document === 'undefined') return null
+
+  const paper = document.createElement('canvas')
+  paper.width = width
+  paper.height = height
+  return paper
 }
 
 export function forgetPaper(at: PaperAt) {
@@ -159,6 +274,13 @@ export function forgetPaper(at: PaperAt) {
   if (!one) return
 
   held.delete(key)
+  one.gone = true
+  for (let at = queue.length - 1; at >= 0; at--) {
+    const job = queue[at]
+    if (job?.one !== one) continue
+    queue.splice(at, 1)
+    job.settle(null)
+  }
   for (const drawing of one.drawn.values()) void drawing.then((paper) => paper?.image.close())
   void one.open.then((opened) => opened.close()).catch(() => undefined)
 }
