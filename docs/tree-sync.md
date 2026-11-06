@@ -45,7 +45,7 @@ the same tree. An operation carries its own id, so one that arrives twice is app
 | two names one folder cannot both hold | The second is numbered (`Plan 2.md`), compared as the disk compares names: case and accents folded. |
 | move and delete | A move made without having seen the delete brings the entry back; a move the device made knowing of the delete cannot, since it no longer shows the entry. |
 | delete of a folder and a change inside it | Whatever another device created, moved in, renamed, restored or edited inside since the deleting device last looked stays, and keeps the folder. |
-| edit and delete | The edit wins: a delete of a note whose words changed since the deleting device last pulled them is refused, and that device puts the note back. |
+| edit and delete | The edit wins: a delete of a note whose words changed since the deleting device last pulled them is refused, and that device puts the note back. Words that land on a deleted note bring it back with its folders, and nobody saw that, the writer included: a delete of a folder around it by the writer, made before its device heard the note was back, leaves the note and the folder. |
 | a rename, move or restore and a delete that had not seen it | The other change wins, as an edit does: a delete takes only what its device had seen. A device's own changes never stand against its own delete, and neither does the account's bookkeeping (folders made from paths at the move to v2). Nor do they hide another device's: a change of the deleting device's own made since, a restore or words, does not let its delete take a change by somebody else it had never seen. |
 | delete and restore | The restore brings the entry back under its id, with its folders. A restore of something already back still counts as that person's change, so a delete that had not seen it leaves the entry. |
 | two creates of the day's note | One note, both texts merged (docs/sync-v2.md 5.9). |
@@ -300,8 +300,13 @@ words come down again by the next pull, what the file said kept as a version whe
 differ. One made here whose making has not gone yet loses the delete behind it instead,
 its words its file's, and where a delete of a folder around it waits to go as well, it
 goes up as a restore behind that delete too; one the account never heard of, or no
-longer has, is made again under its id with what its file says. A file put back by no
-such word, or where something else is now, is a file made.
+longer has, is made again under its id with what its file says. One this device shows
+again already, another device's change having brought it back here meanwhile, stays
+where it is and goes up as a `restore` too, which a delete this device has not heard of
+yet does not stand against; its copy out of the trash goes the way a file the account no
+longer shows goes, a version kept, and what this device had inside it that is not here
+is moved into where it is. A file put back by no such word, or where something else is
+now, is a file made.
 
 What waits in the outbox is folded before it goes (`coalesce` in
 @orden/sync-core/outbox): a create and a delete of one entry, the account having heard
@@ -374,14 +379,30 @@ a delete only by what left the device's tree, so a delete a person asked for aft
 restore, which the device's own view of the rules kept and the account, knowing more,
 took, read as the restore lost. It now counts what the delete asked for as well.
 
+Fifty thousand engine seeds found two more, both fixed. A restore of something this
+device showed again already, another device's move or restore having brought it back
+here, said nothing to the account, so a delete it had not heard of yet took it (tree
+seeds 15786, 19363); and a folder deleted here while a pass was under way, refused by the
+device's own view of the rules and so put back on its disk, came to the same restore
+(21591, 25006). And a folder deleted on a device whose words had just brought a note in
+it back on the account, its push's answer lost, took the note and those words, because
+the account counted the note's coming back as that device's own change and so as seen
+(23076).
+
 ## Known gaps
 
 What is still open:
 
-- **Engine tree seeds past the first ten thousand.** Seeds 15786, 19363, 21591 and
-  25006 lose a restore and 23076 loses words, with the engine as every device, as they
-  did before the fold kept restores; not looked into yet. In 15786 the restore is of a
-  note another device's move had already brought back on this device in another folder.
+- **A device cannot tell its own changes in the feed.** The feed names who changed an
+  entry by the account's device id, which the app does not know as its own, so the rules
+  a device applies to what it shows count its own acknowledged changes as somebody
+  else's. A folder deleted here before the feed has said back what this device made in
+  it shows as kept, and is put back on the disk, until the account answers the delete.
+
+- **Words that brought a note back, against an older account.** The rule that a writer's
+  own words bringing a note back are not its sight of it (above) is in
+  `@orden/sync-core/tree` and takes effect when the Worker is released; until then a
+  folder deleted as in seed 23076 still takes the note.
 
 - **An older app's drag in a folder that has places is not read.** Builds from before
   places still keep the order per folder path as a list of names (`arranged`, synced

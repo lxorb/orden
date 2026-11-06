@@ -330,6 +330,27 @@ describe('tree operations', () => {
     expect(folders()[0]?.deleted).toBe(0)
   })
 
+  test('leave a note in a deleted folder that its own words brought back unseen', async () => {
+    const id = await made('Plan.md', 'first\n')
+    const { cursor } = await ops([op('mkdir', { id: 'f', parent: null, name: 'Folder' })])
+    await one(op('move', { id, parent: 'f' }, cursor))
+    await one(op('delete', { id }, (await feed()).cursor), other)
+    const gone = (await feed()).cursor
+
+    const put = await call(env, `/v1/notes/${id}`, {
+      method: 'PUT',
+      token,
+      body: { content: 'first\nmine\n', baseVersion: row(id).version },
+    })
+    expect(put.status, put.text).toBe(200)
+    expect(row(id).deleted).toBe(0)
+
+    expect(await one(op('delete', { id: 'f' }, gone))).toMatchObject({ refused: 'edited' })
+    expect(row(id).deleted).toBe(0)
+    expect(folders()[0]?.deleted).toBe(0)
+    expect(await one(op('delete', { id: 'f' }, (await feed()).cursor))).toMatchObject({ ok: true })
+  })
+
   test("refuse a delete that had not seen another device's restore, though its own came since", async () => {
     const { cursor } = await ops([
       op('create', { id: 'n', kind: 'note', parent: null, name: 'n.md' }),

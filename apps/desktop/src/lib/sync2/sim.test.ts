@@ -338,9 +338,12 @@ describe('the tree walked at random, the engine as every device', () => {
    *  account never brought it back: 2412 said only the outer folder's restore, its delete
    *  already on its way and taking the inner one with it; 9654 put the folder back beside
    *  one its trash did not see on the disk; 8388 had made the outer folder too, and its
-   *  delete folded every one of them away as never made, the restore with them (#1068). */
-  test.each([2412, 9654, 8388])(
-    'seed %i of the tree on many devices brings back what was restored',
+   *  delete folded every one of them away as never made, the restore with them. In 15786,
+   *  19363, 21591 and 25006 another device's change had brought it back here already, and
+   *  the restore said nothing; in 23076 this device's words had brought a note back on the
+   *  account unseen, and its delete of the folder took them (#1068). */
+  test.each([2412, 9654, 8388, 15786, 19363, 21591, 25006, 23076])(
+    'seed %i of the tree on many devices loses no restore and no words',
     async (seed) => {
       const report = await simulate({
         ...crowded(seed, 'tree'),

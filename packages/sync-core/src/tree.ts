@@ -417,13 +417,14 @@ export function applyOp(state: TreeState, op: Op, context: OpContext): OpResult 
 export function contentChanged(state: TreeState, id: string, device?: string): number {
   const entry = state.entries.get(id)
   if (!entry) return state.cursor
-  if (entry.deleted) {
+  const revived = entry.deleted
+  if (revived) {
     reviveAbove(state, entry.parent, device)
     revive(state, entry, device)
   }
   if (entry.seq !== entry.docSeq || entry.placedSeq === undefined) {
     entry.placedSeq = entry.seq
-    if (entry.by === undefined) delete entry.placedBy
+    if (entry.by === undefined || revived) delete entry.placedBy
     else entry.placedBy = entry.by
   }
   changed(state, entry, device)
