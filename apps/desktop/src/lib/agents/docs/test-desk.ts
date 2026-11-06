@@ -1,8 +1,3 @@
-/** A stand-in for the app, for the tests of this folder: a disk, documents that are
- *  really open - a `NoteDoc` with its live shared text - and panes on them that can be
- *  typed in, pressed Ctrl+Z in and looked at. What the app does with these is what
- *  the real desk in index.ts does; see desk.ts. */
-
 import {
   agentsOf,
   documentOf,
@@ -19,8 +14,6 @@ import type { Desk, Space } from './desk'
 
 const SPACE: Space = { id: 's1', name: 'Space', root: '/space' }
 
-/** A pane on a document: a state and a dispatch, joined to the document the way an
- *  editor is, with the carets extension so an agent's caret can be seen. */
 export class Pane {
   state: EditorState
 
@@ -48,12 +41,10 @@ export class Pane {
     return this.state.selection.main.head
   }
 
-  /** A keystroke, the way the editor hands one over; see editor.ts. */
   type(at: number, insert: string) {
     this.change({ from: at, insert }, at + insert.length)
   }
 
-  /** Words taken out, the caret left where they were. */
   erase(from: number, to: number) {
     this.change({ from, to }, from)
   }
@@ -77,7 +68,6 @@ export class Pane {
   }
 }
 
-/** A space with notes on its disk, some of them open. Paths are relative to it. */
 export function deskWith(notes: Record<string, string>, open: readonly string[] = []) {
   const disk = new Map(Object.entries(notes).map(([path, text]) => [`${SPACE.root}/${path}`, text]))
   const documents = new Map<string, NoteDoc>()
@@ -85,9 +75,7 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
   const written: { changes: readonly Change[]; keeping: Keeping | undefined }[] = []
   const kept: { path: string; content: string; source: string }[] = []
   let front: Pane | null = null
-  /** The scratchpad's words, which a reader may write in between a read and a write. */
   const pad = { text: '', wrote: 0 }
-  /** The next write of a closed note refused, as a file changed in the air is. */
   const refusing = { next: false }
 
   const opened = (path: string, caret = 0): Pane => {
@@ -149,9 +137,7 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
     kept,
     pad,
     refusing,
-    /** Opens a note that was closed, as a pane on a new document. */
     open: opened,
-    /** A tab holding a note with no file, as a pane on it. */
     draft: (tab: string, text: string): Pane => {
       const note = new NoteDoc(
         { kind: 'note', path: null, name: 'Untitled', text, dirty: false },
@@ -160,7 +146,6 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
       drafts.set(tab, note)
       return new Pane(note, 0)
     },
-    /** Closes a note: its pane and its document go, and the disk keeps its words. */
     close: (path: string) => {
       const at = `${SPACE.root}/${path}`
       const note = documents.get(at)

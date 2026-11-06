@@ -1,18 +1,9 @@
-/** The system clipboard: `system_clipboard` (docs/agent-native.md 8.14, #1078), as a VS Code
- *  extension's `env.clipboard` reads and writes it.
- *
- *  Its own scope, `clipboard`, which the reader's own agents hold and a third party is
- *  granted: what was copied last may be anything, a password included. Reading answers
- *  the words as the clipboard's, never the reader's (9.6); writing replaces them, and in
- *  `confirm` mode asks first as every write does (#1072). */
-
 import type { AgentAnswer } from '../../automation/caller'
 import { copyText } from '../../clipboard'
 import { asked } from './asks'
 import { type Call, done, need, text } from './call'
 import { Refused } from './problem'
 
-/** The most of the clipboard a read answers, and a write takes. */
 const MOST = 1_000_000
 
 export async function clipboard(call: Call): Promise<AgentAnswer> {

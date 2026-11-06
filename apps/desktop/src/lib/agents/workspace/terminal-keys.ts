@@ -1,18 +1,9 @@
-/** What an agent types into one of the reader's terminals, and what it reads back off
- *  one, as bytes and as words. Pure; see terminal-tab.ts.
- *
- *  Keys by name rather than as escapes, so an agent says `Ctrl+C` and never has to know
- *  that an arrow is two different sequences depending on what the program in front
- *  asked for (application cursor keys, which vim and less switch on). */
-
 import { type Os, onTheList, osOf, startsOnlyOne } from './shell-text'
 
 export function shellOs(online: boolean, platform: string): Os {
   return online ? 'unix' : osOf(platform)
 }
 
-/** The keys an agent may press, and what each sends. Nothing that opens a picker,
- *  nothing the app itself is bound to: these reach the shell and nothing else. */
 const KEYS: Record<string, string> = {
   Enter: '\r',
   Tab: '\t',
@@ -28,17 +19,12 @@ const KEYS: Record<string, string> = {
   'Ctrl+Z': '\x1a',
 }
 
-/** The keys an agent may name, in the order a refusal lists them. */
 export const KEY_NAMES = Object.keys(KEYS)
 
-/** The arrows, which are a final letter after the prefix the program asked for. */
 const ARROWS = new Set(['Up', 'Down', 'Right', 'Left'])
 
-/** The one key that may be pressed without asking: an interrupt stops what an agent
- *  started, and starts nothing. */
 const FREE = new Set(['Ctrl+C'])
 
-/** What a list of key names sends, or the first name that is not one. */
 export function keyBytes(
   names: readonly string[],
   applicationCursor: boolean,
@@ -53,11 +39,6 @@ export function keyBytes(
   return { bytes }
 }
 
-/** Whether typing runs without asking the reader: exactly one command line, the first
- *  program on the agent's own list, ended with Enter and nothing else - the rule
- *  `run_terminal` keeps (docs/agent-native.md 9.3) - or an interrupt and nothing else.
- *  Anything typed without Enter asks too: the Enter that runs it could come in the next
- *  call, where there is no command left to judge. */
 export function typesFreely(
   text: string,
   enter: boolean,
@@ -71,15 +52,11 @@ export function typesFreely(
   return onTheList(text, programs, os)
 }
 
-/** One row of a terminal's buffer, as xterm.js hands it over. */
 export interface Row {
   isWrapped: boolean
   translateToString(trimRight?: boolean): string
 }
 
-/** The lines of a buffer from row `from` on, as a person reads them: a line the screen
- *  wrapped is one line again, the right edge's spaces gone, and the empty rows under the
- *  last thing printed left out. `most` lines at the end, at the most. */
 export function linesOf(
   rows: { length: number; getLine(at: number): Row | undefined },
   from: number,

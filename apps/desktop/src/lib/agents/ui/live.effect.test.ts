@@ -22,11 +22,6 @@ const { agentOpen } = await import('../../ai/sidebar/agent-open.svelte')
 const { FakeCrate } = await import('./fake')
 const { ended, start } = await import('./live.svelte')
 
-/** An outside agent's question, said where the reader is (#1120): a notification for
- *  each one, which opens the agent's session in the Ask panel and is taken back once
- *  the question is answered. The row in the chat list is driven by
- *  test/e2e/agent-activity.py. */
-
 afterEach(() => {
   ended()
   shown.notices = []

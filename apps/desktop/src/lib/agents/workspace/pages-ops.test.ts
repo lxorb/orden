@@ -1,7 +1,3 @@
-/** A page note as an agent reads and changes it: the pages in order, each card's page,
- *  a card put on a page by the page's own corner, and the three page operations the page
- *  menu makes (docs/pages.md). */
-
 import { type Canvas, type CanvasNode } from '@orden/markdown/canvas'
 import { emptyPages, pagesOf } from '@orden/markdown/pages'
 import { describe, expect, test } from 'vitest'
@@ -19,7 +15,6 @@ function refusal(run: () => unknown): string {
   return 'applied'
 }
 
-/** A note of `count` blank A4 pages, laid out in their column. */
 function note(count: number): Canvas {
   let canvas = emptyPages()
   for (let at = 1; at < count; at++) canvas = applied(canvas, [{ op: 'add_page' }]).canvas
@@ -40,7 +35,6 @@ describe('reading a page note', () => {
     expect(read.pages.map((one) => one.number)).toEqual([1, 2, 3])
     expect(read.pages[1]).toMatchObject({ id: second?.id, paper: 'a4' })
     expect(read.nodes).toEqual([expect.objectContaining({ id: made[0], page: 2 })])
-    // A page is in the list of pages, not among the cards.
     expect(read.nodes.some((one) => (one as { type: string }).type === 'page')).toBe(false)
   })
 })
@@ -94,7 +88,6 @@ describe('changing one', () => {
     expect(pagesOf(gone)).toHaveLength(2)
     expect(card(gone, written.made[0] ?? '')).toBeUndefined()
 
-    // `remove` on a page's id is the same as remove_page.
     expect(pagesOf(applied(gone, [{ op: 'remove', id: last?.id }]).canvas)).toHaveLength(1)
   })
 

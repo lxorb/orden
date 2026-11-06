@@ -1,17 +1,3 @@
-/** The tree of a space, as an agent reads and tidies it: `list_notes`, `move_file`,
- *  `trash_file` and `create_folder` (docs/agent-native.md 5.3, 5.4).
- *
- *  In the space that is open each is the file list's own act, so it is the same move
- *  a drag makes (every link rewritten, one step to undo, the row where it went) and the
- *  same delete the row's menu makes (to Recently deleted, a version kept first). In a
- *  space the reader is not in, the same acts are done where the space is, with nothing
- *  in the window moved: the move is the crate's rename with the links rewritten through
- *  that space's own index, and every store that keeps a file by its path is told of the
- *  space it is in. See `movedAway`.
- *
- *  Nothing here deletes for good: there is no verb for it. Archived files are hidden
- *  from the list unless asked for, and are never trashed. */
-
 import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@orden/markdown/links'
 import type { AgentAnswer } from '../../automation/caller'
 import { movedIn, movedPath, ONTO_INSTRUCTIONS, ontoInstructions } from '../../automation/acts'
@@ -36,7 +22,6 @@ import {
   writableAt,
 } from './spaces'
 
-/** What a file is, as `list_notes` says it and filters by. */
 const KINDS = ['note', 'canvas', 'page', 'pdf', 'web', 'file'] as const
 type Kind = (typeof KINDS)[number]
 
@@ -48,14 +33,9 @@ function kindOf(path: string): Kind {
   return isMarkdownPath(path) ? 'note' : 'file'
 }
 
-/** As many rows as the account's connector answers at once, and as many as may be
- *  asked for. */
 const ROWS = 1000
 const MOST_ROWS = 5000
 
-/** The tree of a place: the window's own for the space it shows, which is what the
- *  file list draws, and the disk's for any other, read the way a space is read when
- *  it opens, hidden files left out. */
 export async function treeOf(place: Place): Promise<Entry | null> {
   if (place.open) return workspace.tree
 
@@ -65,13 +45,10 @@ export async function treeOf(place: Place): Promise<Entry | null> {
   }).catch(() => null)
 }
 
-/** The row at a path of a place, or null. */
 export async function entryIn(place: Place, relative: string): Promise<Entry | null> {
   return entryAt(await treeOf(place), onDisk(place, relative))
 }
 
-/** The row an agent named: the path as it said it, or the note of that name when it
- *  left `.md` off, the way a link names one. */
 async function named(place: Place, asked: string): Promise<{ relative: string; entry: Entry }> {
   const relative = judgedForWriting(asked)
   const entry = await entryIn(place, relative)
@@ -121,7 +98,6 @@ export async function listNotes(call: Call): Promise<AgentAnswer> {
   const tree = await treeOf(place)
   if (tree) walk(tree)
 
-  // In the order a person reads a list of names in: case aside, numbers as numbers.
   rows.sort((one, other) =>
     one.path.localeCompare(other.path, undefined, { sensitivity: 'base', numeric: true }),
   )
@@ -133,7 +109,6 @@ export async function moveFile(call: Call): Promise<AgentAnswer> {
   const { relative: from, entry } = await named(place, need(call, 'path'))
   const to = movedPath(from, judgedForWriting(need(call, 'to')), entry.is_dir)
 
-  // Said with the space, so a later Undo moves it back there (lib/ai/review/files.ts).
   if (to === from) return done({ from, to, space: place.space.id })
   if (entry.is_dir && to.startsWith(`${from}/`)) {
     throw new Refused('bad_arguments', `${from} cannot go inside itself`)
@@ -158,26 +133,12 @@ export async function moveFile(call: Call): Promise<AgentAnswer> {
   return done({ from, to, space: place.space.id })
 }
 
-/** A move in a space the reader is not in: the same obligations the tree's own rename
- *  owes, met where that space is. The links are rewritten against that space's index as
- *  it was before the move, which is the only way to find what pointed at the old name;
- *  see `renameFile` in workspace.svelte.ts, which this follows step for step. Then the
- *  move is said the way every file operation is, and everything kept by path hears it
- *  of the space the path is in - that space's index among them; see
- *  workspace/file-ops.ts.
- *
- *  Not on the reader's own undo, which is about the space in front of them. */
 async function movedAway(place: Place, from: string, to: string, folder: boolean): Promise<void> {
   const index = await indexOf(place)
 
-  // Under way until it is told; see `move` in workspace.svelte.ts.
   await moving(to, () =>
-    // After whatever write of a note open in it is in the air; see `holdingUnder` in
-    // workspace/saving.svelte.ts.
     workspace.holdingUnder(from, async () => {
       await workspace.renameOnDisk(from, to, folder ? 'folder' : 'file')
-      // A rewrite that fails leaves the note moved all the same, and told so; see
-      // `retargetMoved` in workspace.svelte.ts.
       await index
         .retarget(from, to, place.space.root, undefined, { moved: true })
         .catch(() => undefined)
@@ -197,8 +158,6 @@ export async function trashFile(call: Call): Promise<AgentAnswer> {
   }
   writableAt(place, path)
 
-  // What the agent read is what it meant to throw away: a note the reader has written
-  // in since is not that note any more.
   const rev = maybe(call, 'if_rev')
   if (rev !== null && !entry.is_dir) {
     const words = await workspace.noteText(path)
@@ -207,8 +166,6 @@ export async function trashFile(call: Call): Promise<AgentAnswer> {
     }
   }
 
-  // A file in a tab goes with its tab, and a tab closing in front of the reader is their
-  // screen changing; one behind it only leaves the strip.
   const shown = workspace.tabs.some(
     (tab) =>
       tab.path !== null &&

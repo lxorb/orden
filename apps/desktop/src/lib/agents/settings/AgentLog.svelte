@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** What one agent did: its sessions out of the audit log, newest first, each opening
-   *  as the list of its calls (docs/agent-native.md 9.5).
-   *
-   *  A few sessions and a way to see earlier ones, because this sits above the agent's
-   *  permissions and a month of an unsupervised agent is not a list anybody scrolls
-   *  past. A call reads as it does in the agent's session - a word, what it was about,
-   *  and when - and a session is kept the way the panel keeps one: into the note in
-   *  front, or into a note of its own. Clear takes the agent's calls out of the log on
-   *  this machine, and asks first. */
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { i18n, plural, t } from '../../i18n.svelte'
@@ -24,14 +15,12 @@
 
   const { pane, grant }: { pane: AgentsPane; grant: Grant } = $props()
 
-  /** How many sessions show before Show earlier. */
   const FIRST = 3
 
   const sessions = $derived(sessionsOf(pane.calls, grant.id))
   let shown = $state(FIRST)
   let opened = $state<number | null>(null)
 
-  /** The note in front, by its name, which is where a session is added. */
   const front = $derived(workspace.active?.kind === 'note' ? workspace.active.shown : null)
 
   const span = $derived(
@@ -42,12 +31,10 @@
 
   async function earlier() {
     shown += FIRST
-    // The log is read a day at a time; a session further back is a day not read yet.
     while (sessions.length < shown && pane.earlier) await pane.readEarlier()
   }
 
   async function keep(session: Session) {
-    // The panel's note reads its calls newest first, as the panel lists them.
     await keepInNote(sessionMarkdown(grant.name, [...session.calls].reverse()))
     settings.open = false
   }
@@ -131,8 +118,6 @@
     list-style: none;
   }
 
-  /* A call as the agent's session lists one: the word, what it was about, and when, at
-     the far end where the times make a column. See AgentSession.svelte in lib/agents/ui. */
   li {
     display: flex;
     align-items: baseline;

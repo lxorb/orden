@@ -1,13 +1,3 @@
-/** A note's versions: `list_versions` and `restore_version` (docs/agent-native.md 5.3,
- *  8.5).
- *
- *  The versions sheet's own list (lib/versions.ts): this device's and the account's,
- *  newest first, each saying who it was kept for. Putting one back asks the reader
- *  first, since it replaces what the note says now (9.3, deleting for good), and is then
- *  a write like any other of an agent's: the words it replaces are kept as a version
- *  of their own first, and it lands as the smallest edit, one step the reader can undo,
- *  around whatever they are typing. */
-
 import type { AgentAnswer } from '../../automation/caller'
 import { invoke } from '../../tauri'
 import { type Version, versionsOf, versionText } from '../../versions'
@@ -19,7 +9,6 @@ import { Refused } from './problem'
 import { judged, onDisk, type Place, placeOf, sharedSource, writableAt } from './spaces'
 import { notePath } from '../../space-paths'
 
-/** A version's name as an agent hands it back: where it is kept and when. */
 function idOf(version: Version): string {
   return `${version.path === null ? 'account' : 'device'}:${version.at}`
 }
@@ -48,9 +37,6 @@ export async function listVersions(call: Call): Promise<AgentAnswer> {
 
 export async function restoreVersion(call: Call): Promise<AgentAnswer> {
   const { place, relative, path } = noteOf(call)
-  // Its own `noteOf` serves `list_versions` too, which only reads, so the write is
-  // checked here: in a space shared to be read the words would be dropped unsaved on a
-  // closed note, and saved anyway on an open one.
   writableAt(place, path)
   const wanted = need(call, 'version')
   const version = (await versionsOf(path)).find((one) => idOf(one) === wanted)
@@ -66,7 +52,6 @@ export async function restoreVersion(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, 'deleting', `Put back ${relative} as it was at ${when}`)
   if (question) return question
 
-  // The words about to be replaced, kept first and said to be the agent's doing.
   const agent = call.caller.agent
   await invoke('snapshot_note', { path, content: now, source: agent?.name }).catch(() => undefined)
 

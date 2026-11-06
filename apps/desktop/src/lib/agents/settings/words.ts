@@ -1,10 +1,3 @@
-/** What Settings > Agents calls each part of a grant, in the reader's language.
- *
- *  One table, so a scope is called the same thing on its switch, in search and in a
- *  question, and so the words are read in one place when the grant grows another
- *  scope. What a scope reaches, said as what the agent may do, never the protocol's
- *  name for it: nobody grants `workspace.focus`, they let it bring a tab to the front. */
-
 import { t } from '../../i18n.svelte'
 import type { Category, Scope, SiteRule } from '../verbs'
 import type { Limit, ScopeGroup } from './grant'
@@ -54,7 +47,6 @@ export const SCOPE_WORDS: Record<Scope, () => string> = {
   agents: () => t('Start helpers on your AI accounts'),
 }
 
-/** The questions, as the thing the agent is about to do. */
 export const CATEGORY_WORDS: Record<Category, () => string> = {
   paying: () => t('Paying'),
   sending: () => t('Sending messages'),
@@ -72,7 +64,6 @@ export const CATEGORY_WORDS: Record<Category, () => string> = {
   pairing: () => t('Connect'),
 }
 
-/** A site's rule as its state, the way a site's permissions read in its bubble. */
 export const RULE_WORDS: Record<SiteRule, () => string> = {
   allow: () => t('Allowed'),
   deny: () => t('Blocked'),
@@ -86,7 +77,6 @@ export const LIMIT_WORDS: Record<Limit, () => string> = {
   memory: () => t('Browser memory limit'),
 }
 
-/** A limit's value as its row says it: memory in GB, and Off where there is none. */
 export function limitValue(limit: Limit, value: number): string {
   if (limit !== 'memory') return String(value)
   return value === 0 ? t('Off') : `${String(Math.round((value / 1024) * 10) / 10)} GB`

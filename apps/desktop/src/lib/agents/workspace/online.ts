@@ -1,13 +1,3 @@
-/** The reader's online machine, to an agent: `workspace_tabs` `list` and `new` of `kind`
- *  `online` (docs/agent-native.md 8.9, online-terminal.md 4.10).
- *
- *  `list` is Settings › Online terminal read: whether the account may have a machine, the
- *  machine's state, and its sessions with the tab or the file that opens each. `new` is
- *  Ctrl+T's Online terminal pressed for the reader: a new session on their own machine,
- *  made and woken if need be, in a tab behind the one in front. A terminal on somebody
- *  else's machine is their `.term` in a space, which `open` opens. What the account
- *  refuses, the agent is told with its reason, and nobody is shown a sheet. */
-
 import type { AgentAnswer } from '../../automation/caller'
 import { account } from '../../account.svelte'
 import { listed, type Listed, type Refused as Why } from '../../online/calls'
@@ -23,7 +13,6 @@ import { Refused } from './problem'
 import * as view from './reader-view'
 import { reachable, tabsInReach } from './spaces'
 
-/** What each refusal is to an agent: the reader's to grant, or the machine's to lift. */
 const WHY: Record<Why, [Refused['code'], string]> = {
   'signed-out': ['not_granted', 'the reader is signed out; an online terminal is their account’s'],
   list: ['not_granted', 'online terminals are not open to the reader’s account yet'],
@@ -40,15 +29,12 @@ function refusedOf(why: Why): Refused {
   return new Refused(code, `${why}: ${words}`)
 }
 
-/** `new`: a session of the reader's own, in a tab of its own; the answer's id is the tab
- *  `read_terminal`, `type_terminal` and `run_terminal` take. */
 export async function newOnline(call: Call): Promise<Tab | null> {
   const made = await view.openOnline(call)
   if (typeof made === 'string') throw refusedOf(made)
   return made
 }
 
-/** `list`: the machine and its sessions. */
 export async function listOnline(call: Call): Promise<AgentAnswer> {
   if (!account.accountToken) throw refusedOf('signed-out')
   await machine.refresh()
@@ -60,7 +46,6 @@ export async function listOnline(call: Call): Promise<AgentAnswer> {
   return done(
     {
       allowed: known?.allowed === true,
-      // None yet: the first `new` makes it.
       machine: mine ? { id: mine.id, state: mine.state, held: mine.held } : null,
       ...(sessions === null
         ? { sessions_unknown: true }
@@ -70,8 +55,6 @@ export async function listOnline(call: Call): Promise<AgentAnswer> {
   )
 }
 
-/** A session as the agent may know it: the tab open on it, or the file that opens it in a
- *  space it reaches. One whose file is in a space beyond its grant does not exist to it. */
 function sessionOf(call: Call, one: Listed) {
   const file = one.term !== null && opens(one) ? runner.fileOf(one.term) : null
   const space = file === null ? null : reachable(call).find((it) => within(it.root, file) !== null)

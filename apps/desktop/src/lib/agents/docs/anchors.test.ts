@@ -2,13 +2,11 @@ import { describe, expect, test } from 'vitest'
 import { type Anchor, headingPath, headingsIn, readAnchor, resolve } from './anchors'
 import { DocError } from './problem'
 
-/** What an anchor names, as the words it covers. */
 function named(text: string, anchor: Anchor, selected: { from: number; to: number } | null = null) {
   const place = resolve(anchor, text, selected)
   return text.slice(place.from, place.to)
 }
 
-/** The problem an anchor is refused with, and the sentence. */
 function refused(text: string, anchor: Anchor): { code: string; message: string; count: number } {
   try {
     resolve(anchor, text)
@@ -65,17 +63,17 @@ describe('a quote', () => {
 
 describe('a heading', () => {
   const NOTE = [
-    '# Plan', // 0
+    '# Plan',
     'intro',
     '',
-    '## Later', // 3
+    '## Later',
     'under plan',
     '',
-    '### Details', // 6
+    '### Details',
     'deep',
     '',
-    '# Log', // 9
-    '## Later', // 10
+    '# Log',
+    '## Later',
     'under log',
     '',
     '```',

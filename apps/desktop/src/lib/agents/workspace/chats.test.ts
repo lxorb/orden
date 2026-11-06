@@ -1,9 +1,3 @@
-/** The chats' verbs (docs/chats.md 4.14), against the chats' store in memory and a
- *  window with two spaces, one of which the agent was not granted: a chat outside the
- *  grant does not exist, somebody else's words come back inside an untrusted mark, a
- *  post where others read asks first in Approve mode and never in Agent mode, a chat
- *  with yourself and a draft never ask, and a reader of the space may say nothing. */
-
 import type { Who } from '@orden/chats'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { callerOf, type Caller, READER } from '../../automation/caller'
@@ -20,7 +14,6 @@ vi.mock('../../workspace.svelte', () => ({
   workspace: { spaces: [team, secret, third], activeSpace: team, activeSpaceId: 'team' },
 }))
 
-/** What `agents_ask` was asked, and what it answers next. */
 const asked: Record<string, unknown>[] = []
 let answer: Record<string, unknown> = { status: 'ok', result: {} }
 

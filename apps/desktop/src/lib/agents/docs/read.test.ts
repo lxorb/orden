@@ -66,10 +66,7 @@ describe('a note, read', () => {
       [{ task: 'Call Anna' }, true],
       [{ task: 'Buy milk', nth: 2 }, false],
     ])
-    expect(read.blocks).toEqual([
-      // The run of lines the name sits in, heading and all, as a link to it reads it.
-      { anchor: { block: 'idea' }, line: 7, text: 'Later' },
-    ])
+    expect(read.blocks).toEqual([{ anchor: { block: 'idea' }, line: 7, text: 'Later' }])
 
     const lines = NOTE.split('\n')
     const rows = [...(read.outline ?? []), ...(read.tasks ?? []), ...(read.blocks ?? [])]

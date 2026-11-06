@@ -1,8 +1,3 @@
-/** A session kept: written into the note in front, after a blank line, or into a note of
- *  its own that then opens. What Add to note does in the agent's session and in
- *  Settings > Agents alike, so the two keep a session the same way (docs/agent-native.md
- *  9.5). */
-
 import { workspace } from '../../workspace.svelte'
 
 export async function keepInNote(text: string): Promise<void> {

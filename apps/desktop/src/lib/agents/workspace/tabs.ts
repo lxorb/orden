@@ -1,20 +1,3 @@
-/** Where the reader is, and their tabs: `get_context`, `workspace_tabs`, and the
- *  crate's `agent.reader_tabs` (docs/agent-native.md 5.1, 5.4, 13.1).
- *
- *  An agent may look at everything here with `context` or `workspace`, and may change
- *  what is on the reader's screen only with `workspace.focus`. Making a tab, opening a
- *  note or a page, renaming one, saving one: all of it lands behind the tab in front
- *  unless asked otherwise, the way a browser opens a link with Ctrl held, so the strip
- *  grows and nothing the reader is looking at moves. Bringing a tab to the front,
- *  closing the one they are reading, splitting a pane, the graph (which only opens in
- *  front), and anything in another space - whose tabs are not in this window until the
- *  reader goes there - are the screen changing, and ask for that scope (7.2).
- *
- *  Every kind of tab is listed with its id, which the verbs of its kind take: a note's
- *  (`read_note`, `edit_note`), a canvas's and a page note's (`read_canvas`,
- *  `edit_canvas`), a terminal's (`read_terminal`, `type_terminal`) and a web tab's (every
- *  `browser_` tool). */
-
 import { documentOf } from '@orden/editor'
 import type { AgentAnswer } from '../../automation/caller'
 import { folderOf, nameOf, relativeTo, within } from '../../space-paths'
@@ -55,26 +38,20 @@ import * as view from './reader-view'
 import { tabWithId } from './tab-target'
 import { entryIn, moveFile } from './tree'
 
-/** The longest selection handed over whole; the rest is said to be there. */
 const LONGEST_SELECTION = 20_000
 
-/** What a new tab can be, as `workspace_tabs` `new` names them. */
 const NEW_KINDS = ['note', 'canvas', 'pages', 'web', 'terminal', 'online'] as const
 type NewKind = (typeof NEW_KINDS)[number]
 
-/** Whether a tab is the one in front of its pane. */
 function front(tab: Tab): boolean {
   return workspace.showing(tab.paneId)?.id === tab.id
 }
 
-/** A web tab's address as it stands: the page's, or the file's before it has one. */
 function addressOf(tab: Tab): string | null {
   if (tab.kind !== 'web') return null
   return pages.addressOf(tab.id) ?? workspace.webAddressOf(tab)
 }
 
-/** One tab as an agent reads it: what it is, what it is called, where its file or page
- *  is, which pane it is in, and the few states that change what may be done with it. */
 function tabOf(tab: Tab) {
   const root = workspace.activeSpace?.root
   const url = addressOf(tab)
@@ -83,8 +60,6 @@ function tabOf(tab: Tab) {
     id: tab.id,
     kind: tab.kind,
     title: tab.shown,
-    // Relative to the active space, which a tab of another space is not in: its path
-    // from here would be this machine's whole one.
     ...(tab.path !== null && root && !outside && within(root, tab.path) !== null
       ? { path: relativeTo(root, tab.path) }
       : {}),
@@ -92,7 +67,6 @@ function tabOf(tab: Tab) {
     pane: tab.paneId,
     front: front(tab),
     selected: tab.id === workspace.activeTabId,
-    // A note, canvas or page note with no file yet: read and edited by this tab's id.
     ...(isDraft(tab.note) ? { unsaved: true } : {}),
     ...(workspace.previewTabId === tab.id ? { preview: true } : {}),
     ...(tab.note.shared !== null ? { shared: true } : {}),
@@ -101,8 +75,6 @@ function tabOf(tab: Tab) {
   }
 }
 
-/** What the reader has selected and can see in a note tab that is in front, lines
- *  counted from zero. Null where the note is not on screen. */
 function inNote(tab: Tab) {
   const view = views.of(tab.paneId)
   if (!view || documentOf(view) !== tab.note.live) return null
@@ -126,11 +98,6 @@ function inNote(tab: Tab) {
   }
 }
 
-/** What is selected inside the tab the reader has selected, in that kind's own terms:
- *  words and the caret in a note, the objects picked on a canvas or a page note, the
- *  words selected in a terminal, the page a PDF is on. Null for a kind with nothing to
- *  select that Orden can see - a web page's selection is the page's, which `browser_`
- *  tools read. */
 async function selectionIn(tab: Tab): Promise<unknown> {
   switch (TAB_KINDS[tab.kind].selection) {
     case 'words':
@@ -150,20 +117,14 @@ async function selectionIn(tab: Tab): Promise<unknown> {
     case 'page':
       return tab.page === undefined ? null : { page: tab.page }
 
-    // A view's rows are the tasks verbs' to read; a view has no selection of its own.
     case null:
       return null
   }
 }
 
 export async function getContext(call: Call): Promise<AgentAnswer> {
-  // The space the caller's calls that name none work in: an AI panel thread's own, which
-  // the tabs in front are not in when the reader has moved on, so each row then says its
-  // space and the model names it to reach the note a tab shows.
   const place = placeOf(call)
   const open = workspace.activeSpace
-  // The tabs are the space in front's: none of them for a grant that does not reach it,
-  // which still hears where its own thread works.
   if (open?.id !== place.space.id && !reachable(call).some((one) => one.id === open?.id)) {
     const nothing = { space: place.space.name, selected: null, selection: null, tabs: [] }
     return done({ ...nothing, typing: false }, sharedSource(place))
@@ -183,8 +144,6 @@ export async function getContext(call: Call): Promise<AgentAnswer> {
     typing: last !== null && Date.now() - last < TYPING,
   }
 
-  // A page's title, what a terminal printed and the words of a space somebody else
-  // writes in are not the reader's words.
   const outside =
     tab?.kind === 'terminal' ? 'tab titles and terminal output' : named ? 'tab titles' : null
   return done(
@@ -193,18 +152,14 @@ export async function getContext(call: Call): Promise<AgentAnswer> {
   )
 }
 
-/** Whether a tab's title is somebody else's words: a page's, or the program a terminal
- *  is running. */
 function namedOutside(call: Call): boolean {
   return tabsInReach(call).some((one) => TAB_KINDS[one.kind].outsideTitle)
 }
 
-/** The tab a call names by id. */
 function tabNamed(call: Call): Tab {
   return tabWithId(call, need(call, 'tab'))
 }
 
-/** A tab made or opened, answered as its row; null where nothing came of it. */
 function answered(tab: Tab | null | undefined, place?: Place): AgentAnswer {
   return done(
     tab ? tabOf(tab) : null,
@@ -212,7 +167,6 @@ function answered(tab: Tab | null | undefined, place?: Place): AgentAnswer {
   )
 }
 
-/** Where a tab's words came from, by its own note rather than the space in front. */
 function sourceOfTab(tab: Tab): string | null {
   return docSource({ path: tab.path, shared: tab.note.shared })
 }
@@ -232,13 +186,11 @@ function keptSite(call: Call, url: string): string | null {
   return rule === 'deny' || rule === 'agent-store' ? covering.bare : null
 }
 
-/** A site as an address names it, as `named` in policy.rs does. */
 function siteNamed(site: string): string {
   const bare = site.trim().replace(/^\*\./, '').replace(/\.+$/, '')
   return (hostOf(`http://${bare}/`) ?? bare).replace(/\.+$/, '').toLowerCase()
 }
 
-/** An address an agent may open in one of the reader's tabs. */
 function webOf(call: Call, url: string): string {
   if (!isWebAddress(url)) throw new Refused('bad_arguments', `${url} is not a web address`)
   const kept = keptSite(call, url)
@@ -247,13 +199,10 @@ function webOf(call: Call, url: string): string {
   return url
 }
 
-/** A page in a tab of the reader's: behind the tab in front unless asked for the front;
- *  see reader-view.ts. */
 function openPage(call: Call, url: string): AgentAnswer {
   return answered(view.openPage(call, webOf(call, url)))
 }
 
-/** The sections of Settings an agent may open it at, as the sheet names them. */
 const SECTIONS: readonly Section[] = [
   'general',
   'editor',
@@ -267,9 +216,6 @@ const SECTIONS: readonly Section[] = [
   'export',
 ]
 
-/** Settings, in front, at a section: a sheet over the window rather than a tab, so it
- *  is only ever in front, and what is in it is read and written by `read_setting` and
- *  `write_setting`. */
 function showSettings(call: Call): AgentAnswer {
   const asked = maybe(call, 'section') ?? 'general'
   const section = SECTIONS.find((one) => one === asked)
@@ -279,14 +225,12 @@ function showSettings(call: Call): AgentAnswer {
   return done({ settings: section })
 }
 
-/** `open`: a file of a space, a page, the graph, the scratchpad or Settings. */
 async function openSomething(call: Call): Promise<AgentAnswer> {
   const url = maybe(call, 'url')
   if (url !== null) return openPage(call, url)
 
   const shown = maybe(call, 'view')
   if (shown === 'graph') return answered(view.showGraph(call))
-  // A card and never a tab: up, with the keyboard only for an agent that may take it.
   if (shown === 'scratchpad') return view.showScratchpad(call)
   if (shown === 'settings') return showSettings(call)
   if (shown !== null) throw new Refused('bad_arguments', 'view is graph, scratchpad or settings')
@@ -305,7 +249,6 @@ async function openSomething(call: Call): Promise<AgentAnswer> {
   return answered(tab, place)
 }
 
-/** The kind a `new` asks for. */
 function newKindOf(call: Call): NewKind {
   const kind = maybe(call, 'kind') ?? 'note'
   const found = NEW_KINDS.find((one) => one === kind)
@@ -314,14 +257,9 @@ function newKindOf(call: Call): NewKind {
   return found
 }
 
-/** `new`: a tab with no file, of any kind, behind the tab in front - the plus in the
- *  strip, pressed for the reader. A note's words, a page's address, a terminal's shell
- *  and folder may come with it; a note, a canvas and a page note stay unsaved, with the
- *  dot, until somebody saves them (`save`). */
 async function newTab(call: Call): Promise<AgentAnswer> {
   const kind = newKindOf(call)
   const place = placeFor(call, null)
-  // Whether it is asked for in front, refused here before anything is made.
   view.asksFront(call, 'a new tab in front')
 
   const question = await asked(call, null, `A new ${kind} tab`)
@@ -334,8 +272,6 @@ async function newTab(call: Call): Promise<AgentAnswer> {
       return openPage(call, url)
     }
 
-    // Only made: its shell starts when it is first shown, or typed into, which is
-    // `type_terminal`'s and asks the way it does.
     case 'terminal': {
       const { shells } = await import('../../terminal/shells.svelte')
       const list = await shells.ask()
@@ -354,7 +290,6 @@ async function newTab(call: Call): Promise<AgentAnswer> {
       return answered(await view.openTerminal(call, shell.id, folder))
     }
 
-    // A session on the reader's own machine, as Ctrl+T's Online terminal makes one.
     case 'online': {
       const { newOnline } = await import('./online')
       return answered(await newOnline(call))
@@ -373,8 +308,6 @@ async function newTab(call: Call): Promise<AgentAnswer> {
 
     case 'note': {
       const made = view.openUnsaved(call, 'note', '')
-      // The words go in as the agent's own edit, so they are one step to undo with its
-      // caret on them, the way every agent edit is.
       const words = text(call, 'content')
       if (words) await notes.writeNote(writerOf(call), { path: '', tab: made.id }, words)
       return answered(made)
@@ -382,10 +315,6 @@ async function newTab(call: Call): Promise<AgentAnswer> {
   }
 }
 
-/** `rename`: a tab's name. A file's is a rename of the file, every link rewritten and
- *  one step to undo, through the same move `move_file` makes; an unsaved note's is the
- *  name it will be offered when it is saved; a terminal's is the strip's own rename,
- *  kept through a restart (terminal/rename.ts). A page's title is the page's. */
 async function renameTab(call: Call): Promise<AgentAnswer> {
   const tab = tabNamed(call)
   const name = need(call, 'name').trim()
@@ -417,9 +346,6 @@ async function renameTab(call: Call): Promise<AgentAnswer> {
   return answered(tab)
 }
 
-/** `save`: an unsaved tab given a file at a path in the open space - a note, a canvas
- *  or a page note written there, a web tab kept there as a web note - the way Save and
- *  a drop on a folder do. A name that is taken is given the next number, as Save does. */
 async function saveTab(call: Call): Promise<AgentAnswer> {
   const tab = tabNamed(call)
   if (!isUnsaved(tab.note)) throw new Refused('exists', `tab ${tab.id} has a file already`)
@@ -441,8 +367,6 @@ async function saveTab(call: Call): Promise<AgentAnswer> {
 
 export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
   const op = need(call, 'op')
-  // The reader's tabs belong to the space they are in; an agent that may not reach it
-  // has no business with them.
   placeFor(call, null)
 
   switch (op) {
@@ -512,10 +436,6 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
   }
 }
 
-/** The reader's web tabs of every space's set, for the crate, which acts in them with
- *  `browser.reader`: the tab's id, its page, the space it belongs to and whether it is
- *  in front. A tab of a set out of sight is the reader's as much as one on screen, and an
- *  agent reaches it the same way (docs/agent-native.md 7). */
 export function readerTabs(): ReaderTab[] {
   return workspace.tabs
     .filter((tab) => tab.kind === 'web')
@@ -534,14 +454,8 @@ export function readerTabs(): ReaderTab[] {
     })
 }
 
-/** How long a tab lent to an agent stays lent with no mark of the agent's on it: past
- *  the mark's own lapse, for a call refused before the crate said it was acting. */
 const LENT_UNMARKED = ACTIVE_FOR + 5_000
 
-/** A reader's tab lent to the crate for an agent's call (`agent.lend`): its page made
- *  to run out of sight, built first where the tab has none - which a tab of a set out
- *  of sight may never have had - with what its pane would have told it. See
- *  web-tab/lending.ts. */
 export async function lendTab(id: string): Promise<null> {
   const tab = workspace.tabs.find((one) => one.id === id && one.kind === 'web')
   if (!tab) return null

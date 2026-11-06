@@ -4,10 +4,6 @@ import type { AgentEvent, Overview } from '../verbs'
 import { ACTIVE_FOR, nextLapse, sameMarks, wornAt } from './marks'
 import { heard, nothing, overviewed, type Seen, wrote } from './seen'
 
-/** The frame and the tab mark are three states said with a colour: acting, stopped,
- *  none. These walk a tab through each way in and out of them, event by event, the way
- *  the crate says them. */
-
 const colour = (agent: string) => `colour-of-${agent}`
 
 function after(events: AgentEvent[], at = 1000): Seen {
@@ -39,8 +35,6 @@ describe('a reader tab an agent acts in', () => {
   test('keeps acting whatever the reader does there: nothing they do takes it', () => {
     const seen = after([acting])
 
-    // The reader pressed and typed in the page meanwhile, which the crate does not even
-    // say: the mark is the agent's for as long as it keeps calling.
     heard(seen, { ...acting, verb: 'browser_type' }, 1000 + ACTIVE_FOR - 1)
     expect(wornAt(seen, 1000 + ACTIVE_FOR + 10, colour).t1?.stopped).toBe(false)
   })

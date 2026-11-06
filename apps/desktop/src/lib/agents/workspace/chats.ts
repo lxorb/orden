@@ -1,21 +1,3 @@
-/** The chats' verbs: `list_chats`, `read_chat`, `search_chats`, `draft_message`,
- *  `post_message` and `react` (docs/chats.md 4.14).
- *
- *  Everything goes through the chats' store, the one every surface reads and the one
- *  write path every message takes (lib/chats/api.ts), so an agent's message is placed,
- *  drawn and synced exactly as one typed. What is decided here is what a row cannot say:
- *
- *  - **Which chats exist.** Those whose pointer is in a space the grant reaches; a chat
- *    whose space it does not reach is absent from every list and every lookup, as such
- *    a space is (9.6).
- *  - **Whose words.** The answers are `@orden/chats/agent`'s text, the connector's too:
- *    every message the reader did not write comes inside an untrusted mark naming the
- *    chat and the person, so another person's words are never an agent's instructions.
- *  - **What asks.** A post or a reaction in a chat anybody else reads is Publishing
- *    (docs/agent-native.md 9.3): asked in Approve mode, never in Agent mode, with
- *    "Always in this chat" as the third answer. The chat with yourself asks nothing. A
- *    draft never asks: it waits in the composer for the reader to press Send. */
-
 import { may, type Message, type Who } from '@orden/chats'
 import { chatsText, hitsText, type Listed, messagesText, type Reading } from '@orden/chats/agent'
 import { type AgentAnswer, threadSpaceOf } from '../../automation/caller'
@@ -27,12 +9,9 @@ import { Refused } from './problem'
 import { openChat } from './reader-view'
 import { placeFor, reachable } from './spaces'
 
-/** The most messages one `read_chat` answers, and one `search_chats`. */
 const MOST_READ = 200
 const MOST_FOUND = 50
 
-/** The chats' store, once it has the account's list: fetched with the first of these
- *  verbs, waited for a few seconds at the most on a launch an agent called into early. */
 async function chatsStore(): Promise<Chats> {
   const { chats } = await import('../../chats/store.svelte')
   for (let waited = 0; !chats.ready && waited < 8000; waited += 100) {
@@ -42,14 +21,12 @@ async function chatsStore(): Promise<Chats> {
   return chats
 }
 
-/** A chat an agent may see, with its space's name. */
 interface Seen {
   entry: ChatEntry
   name: string
   space: string
 }
 
-/** The chats whose space the grant reaches, newest first. */
 function seenBy(call: Call, store: Chats): Seen[] {
   const spaces = reachable(call)
   return store.list.flatMap((entry) => {
@@ -58,11 +35,6 @@ function seenBy(call: Call, store: Chats): Seen[] {
   })
 }
 
-/** The chat a call names, by its id or its name (with or without `#`): where two spaces
- *  have one by the name, the one of the space its AI panel thread works in, or for a call
- *  from no thread, the space in front's. Where that still leaves several, they are named
- *  back by id rather than chosen between: a message goes to whoever is in the chat, and
- *  a thread's message does not go by which tab is up. */
 function chatFor(call: Call, store: Chats): Seen {
   const named = need(call, 'chat')
   const folded = named.replace(/^#/, '').trim().toLowerCase()
@@ -88,7 +60,6 @@ function chatFor(call: Call, store: Chats): Seen {
   return found
 }
 
-/** How the answers name people: by the chat's own names for them. */
 async function readingOf(store: Chats, chats: readonly string[]): Promise<Reading> {
   const names = new Map<Who, string>()
   for (const chat of chats) {
@@ -99,7 +70,6 @@ async function readingOf(store: Chats, chats: readonly string[]): Promise<Readin
   return { me: store.me, nameOf: (who) => names.get(who) ?? who }
 }
 
-/** `list_chats`: the chats, a line each, the unread ones alone with `unread`. */
 export async function listChats(call: Call): Promise<AgentAnswer> {
   const store = await chatsStore()
   const space = maybe(call, 'space')
@@ -119,15 +89,12 @@ export async function listChats(call: Call): Promise<AgentAnswer> {
   return done(chatsText(listed))
 }
 
-/** The place in the log of a message a call names, or a refusal saying it is not there. */
 async function seqOf(store: Chats, chat: Seen, message: string): Promise<number> {
   const [found] = await store.history(chat.entry.id, { around: message, limit: 1 })
   if (!found) throw new Refused('not_found', `#${chat.name} has no message ${message}`)
   return found.seq
 }
 
-/** `read_chat`: the newest messages, or those around, before or after one, or one
- *  message's replies; oldest first. */
 export async function readChat(call: Call): Promise<AgentAnswer> {
   const store = await chatsStore()
   const chat = chatFor(call, store)
@@ -153,8 +120,6 @@ export async function readChat(call: Call): Promise<AgentAnswer> {
   return done(messagesText(chat.name, messages, await readingOf(store, [id])))
 }
 
-/** `search_chats`: the language of the search panel (4.12), over the chats the grant
- *  reaches, newest first. */
 export async function searchChats(call: Call): Promise<AgentAnswer> {
   const store = await chatsStore()
   const query = need(call, 'query')
@@ -169,27 +134,22 @@ export async function searchChats(call: Call): Promise<AgentAnswer> {
   return done(hitsText(hits, reading))
 }
 
-/** A chat the reader may say things in, or a refusal saying they may only read it. */
 function mayPost(chat: Seen): void {
   if (!may(chat.entry.role, 'post', chat.entry.meta.posting)) {
     throw new Refused('read_only', `the reader may only read #${chat.name}`)
   }
 }
 
-/** Publishing's question, where anybody else reads the chat: null to go ahead. */
 function askFirst(call: Call, chat: Seen, summary: string): Promise<AgentAnswer | null> {
   if (chat.entry.members <= 1) return Promise.resolve(null)
   return asked(call, 'publishing', summary, `chat:${chat.entry.id}`)
 }
 
-/** Who wrote it for the reader, which the message carries: the agent's name. */
 function viaOf(call: Call): { via: { agent: string } } | Record<string, never> {
   const agent = call.caller.agent
   return agent ? { via: { agent: agent.name } } : {}
 }
 
-/** `draft_message`: words into the reader's composer for the chat, never sent. The chat
- *  opens behind the tab in front where it is not open, so the draft is one press away. */
 export async function draftMessage(call: Call): Promise<AgentAnswer> {
   const store = await chatsStore()
   const chat = chatFor(call, store)
@@ -204,7 +164,6 @@ export async function draftMessage(call: Call): Promise<AgentAnswer> {
   return done(`Drafted in #${chat.name}. The reader sends it.`)
 }
 
-/** `post_message`: a message, or a reply, sent as the reader by way of the agent. */
 export async function postMessage(call: Call): Promise<AgentAnswer> {
   const store = await chatsStore()
   const chat = chatFor(call, store)
@@ -226,7 +185,6 @@ export async function postMessage(call: Call): Promise<AgentAnswer> {
   return done(`Posted in #${chat.name} as ${id}.`)
 }
 
-/** `react`: one emoji on a message, or taken off with `on` false. */
 export async function react(call: Call): Promise<AgentAnswer> {
   const store = await chatsStore()
   const chat = chatFor(call, store)

@@ -8,15 +8,12 @@ import { revOf } from './rev'
 import { deskWith } from './test-desk'
 import { touchedBy } from './touched'
 
-/** An agent editing notes while somebody writes in them. Every test has its own
- *  agent, because what an agent did is kept for the session. */
 let made = 0
 function anAgent(name = 'Claude Code') {
   made++
   return { id: `agent-${String(made)}`, name }
 }
 
-/** What an edit is refused with. */
 async function refusal(pending: Promise<unknown>): Promise<string> {
   try {
     await pending
@@ -39,10 +36,8 @@ describe('an edit to an open note', () => {
     ])
 
     expect(pane.text).toBe('ALPHA ONE beta gamma')
-    // Four characters more in front of it, and nothing else about it moved.
     expect(pane.caret).toBe(20)
     expect(answer).toEqual({ path: 'plan.md', rev: revOf(pane.text), edits: 1, lines: [0] })
-    // Unsaved until the note writes itself, like anything typed.
     expect(pane.note.dirty).toBe(true)
   })
 
@@ -128,8 +123,6 @@ describe('an edit to an open note', () => {
   })
 })
 
-/** Where the reader has been writing in the last two seconds, an edit waits for them
- *  to pause; see docs/agent-native.md 8.3. */
 describe('the reader’s typing wins', () => {
   beforeEach(() => {
     vi.useFakeTimers()
@@ -250,8 +243,6 @@ describe('an edit to a closed note', () => {
     ])
   })
 
-  /** The file changed in the same moment, and the write left it alone: the agent is told
-   *  so rather than told it is done, and its first version is still to be kept. */
   test('says so when the write was refused, and nothing is recorded', async () => {
     const { desk, written, fileOf, refusing } = deskWith({ 'log.md': '- [ ] one\n' })
     const agent = anAgent()
@@ -286,7 +277,6 @@ describe('an edit to a closed note', () => {
     expect(await undoAgent(desk, agent, { path: 'log.md' })).toEqual({ undone: 0 })
     expect(fileOf('log.md')).toBe('one\n\n two')
 
-    // Still there to take back: nothing went.
     expect(await undoAgent(desk, agent, { path: 'log.md' })).toEqual({ undone: 1 })
     expect(fileOf('log.md')).toBe('one')
   })
@@ -332,8 +322,6 @@ describe('the whole of a note, written', () => {
   })
 })
 
-/** "Undo the agent's edits" takes back everything one agent did to one note, mapped
- *  through what the reader did since, so every word of theirs stays (8.5). */
 describe('taking an agent’s edits back', () => {
   test('keeps every character the reader typed in between, even inside what it wrote', async () => {
     vi.useFakeTimers()
@@ -346,9 +334,7 @@ describe('taking an agent’s edits back', () => {
     await edit([{ at: { quote: 'Intro.' }, insert_after: ' Agent adds this.' }])
     pane.type(0, 'Reader: ')
     await edit([{ at: { quote: 'Body' }, replace: 'Main' }])
-    // The reader writes inside the agent's own words.
     pane.type(pane.text.indexOf('adds') + 5, 'kindly ')
-    // Right where the reader is writing, so it waits for them to pause first.
     const waiting = edit([
       { at: { quote: 'adds kindly this' }, replace: 'adds kindly this, and more' },
     ])
@@ -389,7 +375,6 @@ describe('taking an agent’s edits back', () => {
 
     pane.undo()
     expect(pane.text).toBe('a\n\nb\n\nc')
-    // And they are the agent's to take back again.
     await undoAgent(desk, agent, { path: 'plan.md' })
     expect(pane.text).toBe('a')
   })
@@ -408,7 +393,6 @@ describe('taking an agent’s edits back', () => {
     ])
     pane.undo()
     expect(pane.text).toBe('one base')
-    // And the palette offers taking back only the one that is left.
     const mine = touchedBy('/space/plan.md').filter((one) => one.id === agent.id)
     expect(mine.map((one) => one.edits)).toEqual([1])
 
@@ -443,7 +427,6 @@ describe('taking an agent’s edits back', () => {
     await editNote(desk, agent, { path: 'log.md' }, [
       { at: { end: true }, insert_after: 'agent line' },
     ])
-    // Something else writes the note meanwhile.
     disk.set('/space/log.md', `top\n${fileOf('log.md') ?? ''}`)
 
     expect(await undoAgent(desk, agent, { path: 'log.md' })).toEqual({ undone: 1 })
@@ -467,9 +450,6 @@ describe('taking an agent’s edits back', () => {
   })
 })
 
-/** A new tab is a note of its space with no file yet (workspace/drafts.ts): an agent
- *  reaches it by the tab `get_context` lists, and its edits land in the words on screen
- *  like any open note's, with nothing kept on a disk it is not on. */
 describe('a note with no file yet', () => {
   test('is read and edited by its tab, as one step, and keeps no version', async () => {
     const { desk, draft, kept } = deskWith({})
@@ -496,9 +476,6 @@ describe('a note with no file yet', () => {
   })
 })
 
-/** The scratchpad is a card and never a tab, and the same note from every space: an
- *  agent names it `tab: "scratchpad"`, and its words go through its own road - the
- *  card's editor while it is up, its file always - rather than a space's. */
 describe('the scratchpad', () => {
   const PAD = { path: '', tab: SCRATCHPAD_TAB, pad: '/app/Scratchpad.md' }
 
@@ -527,7 +504,6 @@ describe('the scratchpad', () => {
     pad.text = 'alpha'
     const padText = desk.padText.bind(desk)
     let first = true
-    // The reader's keystroke, landing between the agent's read and its write.
     desk.padText = async () => {
       const words = await padText()
       if (first) {

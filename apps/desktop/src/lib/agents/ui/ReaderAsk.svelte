@@ -1,8 +1,4 @@
 <script lang="ts">
-  /** One question an agent put to the reader with `ask_reader` (#1078): its words, and
-   *  either a button per answer it offers or a line to type one in, and a way to put it
-   *  away unanswered. The approval card's frame, so the panel reads as one kind of
-   *  thing asked. */
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from '../../i18n.svelte'

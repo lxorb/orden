@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** The outside agents at the top of the chat list (#1120): one row each for an agent
-   *  connected over MCP - Claude Code, a script - or one that went quiet with a question
-   *  or a page still open. Its spark in its own colour, turning while it acts; its name;
-   *  a small mark while it is connected; and what it is asking, where it is asking
-   *  something, which is the one thing about it that wants the reader. Pressed, its
-   *  session takes the conversation's place; see AgentSession.svelte.
-   *
-   *  Fetched with the list only once an agent has been heard in this run; see
-   *  Threads.svelte. */
   import { t } from '../../i18n.svelte'
   import { agentOpen } from '../../ai/sidebar/agent-open.svelte'
   import { chat } from '../../ai/sidebar/chat.svelte'
@@ -23,7 +14,6 @@
       const last = activity.seen.doing[agent]
       const asks = [
         ...activity.questions.filter((one) => one.agent === agent).map((one) => one.summary),
-        // What it asked with `ask_reader` (#1078) wants the reader as much.
         ...asking.of(agent).map((one) => one.message),
       ]
       return {
@@ -100,13 +90,11 @@
     unicode-bidi: isolate;
   }
 
-  /* The question in the row: the line that wants the reader, in the accent. */
   .asking {
     color: var(--accent);
     font-size: var(--text-xs);
   }
 
-  /* How many questions wait: the count the panel tabs' own wore, in the accent. */
   .asks {
     flex: none;
     min-width: 15px;
@@ -121,8 +109,6 @@
     text-align: center;
   }
 
-  /* Connected: a dot, the size of the unread dot beside a chat, in the colour every
-     list in the app says "live" with. */
   .connected {
     flex: none;
     width: 6px;

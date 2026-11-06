@@ -1,12 +1,4 @@
 <script lang="ts">
-  /** One question an agent's call raised (docs/agent-native.md 9.3): the site it is
-   *  about, the one line the crate wrote from the page itself, and the reader's answer.
-   *
-   *  A site's permission bubble in the panel's width: the same words for the same two
-   *  answers (see web-tab/WebAsk.svelte), and a third, "Always on this site", where the
-   *  question is about a site. A step asked of the reader is not asked the same way,
-   *  because it is not a yes or a no: the agent asks the reader to do one step in a tab,
-   *  so the answers are to go there and to say it is done. */
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import FileMark from '../../FileMark.svelte'
@@ -20,15 +12,10 @@
 
   const { activity, approval }: { activity: Activity; approval: Approval } = $props()
 
-  /** A chat the question is about, whose "Always" is for that chat (docs/chats.md 4.14):
-   *  its name is in the summary, so the head names the agent. */
   const chat = $derived(approval.site?.startsWith('chat:') === true)
 
-  /** The site, as its name: a question may carry a whole address. */
   const site = $derived(approval.site === undefined || chat ? null : hostOf(approval.site))
 
-  /** The site's own mark, where one of the reader's tabs has found it or this device has
-   *  seen it before. Nothing is fetched for a question: a globe stands in. */
   const icon = $derived.by(() => {
     const tab = approval.tab
     const web =
@@ -37,8 +24,6 @@
   })
   let marked = $state(true)
 
-  /** Whether a press is on its way, so a second press on the same answer is not a
-   *  second call. */
   let answering = $state(false)
 
   async function answer(allow: boolean, always = false) {
@@ -51,7 +36,6 @@
     }
   }
 
-  /** Where the step is to be done: the reader's tab, or the agent's own made one. */
   function goThere() {
     const tab = approval.tab
     if (tab === undefined) return
@@ -91,9 +75,6 @@
     {/if}
   </div>
   {#if (site !== null || chat) && approval.category !== 'takeover' && approval.category !== 'showing'}
-    <!-- The third answer, under the two: a promise about every question to come on the
-         site, or in the chat, rather than an answer to this one, so it is the quietest
-         of them. -->
     <button class="always" disabled={answering} onclick={() => void answer(true, true)}>
       {chat ? t('Always in this chat') : t('Always on this site')}
     </button>
@@ -101,8 +82,6 @@
 </div>
 
 <style>
-  /* The bubble's own card, in the panel rather than floating: the same border, the
-     same ground, the same padding. */
   .question {
     display: flex;
     flex-direction: column;
@@ -147,8 +126,6 @@
     overflow-wrap: anywhere;
   }
 
-  /* The answers at the end of the row, as every sheet puts them, wrapping in a narrow
-     panel rather than cutting a word. */
   .rows {
     display: flex;
     flex-wrap: wrap;

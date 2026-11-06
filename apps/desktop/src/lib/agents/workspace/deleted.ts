@@ -1,15 +1,3 @@
-/** Recently deleted, as an agent reaches it: `recently_deleted` lists what went and puts
- *  one thing back (docs/agent-native.md 5.4).
- *
- *  The list is the panel's own (trash.svelte.ts): the account's for a reader signed in,
- *  this device's trash folder besides, newest first. Putting one back is the panel's
- *  Restore, so it lands where it was, said as a file that came to be, and the undo step
- *  that would have done the same is forgotten. Nothing here deletes for good: emptying
- *  the list is the reader's, by hand.
- *
- *  What a grant does not reach is not there: a note of a space it may not reach is in no
- *  list, and a whole space only for an agent that reaches every space. */
-
 import type { AgentAnswer } from '../../automation/caller'
 import { folderOf, insideSpace, within } from '../../space-paths'
 import type { TrashItem } from '../../trash.svelte'
@@ -18,9 +6,6 @@ import { type Call, done, need } from './call'
 import { Refused } from './problem'
 import { reachable } from './spaces'
 
-/** Where an item was, as an agent reads it: the space's name and the folder in it, for
- *  a note or a folder of a space this agent reaches; null for one of a space it does
- *  not, which it is not shown. */
 function whereOf(call: Call, item: TrashItem): string | null {
   const spaces = reachable(call)
   if (item.kind === 'space') {
@@ -28,13 +13,10 @@ function whereOf(call: Call, item: TrashItem): string | null {
     return agent === null || agent.spaces === 'all' ? '' : null
   }
 
-  // The account says the space by name.
   if (item.source === 'account') {
     const [space = '', ...folder] = item.detail.split(' / ')
     return spaces.some((one) => one.name === space) ? [space, ...folder].join('/') : null
   }
-  // This device's trash says where a thing was from the notes folder, which is the
-  // folder every space of it is in.
   for (const space of spaces) {
     const inside = within(space.root, insideSpace(folderOf(space.root), item.detail))
     if (inside !== null) return inside ? `${space.name}/${inside}` : space.name
@@ -42,7 +24,6 @@ function whereOf(call: Call, item: TrashItem): string | null {
   return null
 }
 
-/** The list, as far as this agent reaches. */
 async function listed(call: Call) {
   const { trash } = await import('../../trash.svelte')
   await trash.load()
@@ -75,7 +56,6 @@ export async function recentlyDeleted(call: Call): Promise<AgentAnswer> {
   const found = rows.find((row) => row.id === id)
   if (!found) throw new Refused('not_found', `nothing called ${id} is in Recently deleted`)
 
-  // Refused before the reader is asked, as the panel greys its Restore there.
   const { trash } = await import('../../trash.svelte')
   if (!trash.restorable(found.item)) {
     throw new Refused('read_only', `${found.from} is shared with you to read`)

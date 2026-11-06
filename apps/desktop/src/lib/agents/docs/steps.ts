@@ -1,46 +1,23 @@
-/** One agent's edits of one note, kept so that all of them can be taken back at once
- *  without taking back a word the reader wrote in between.
- *
- *  The bookkeeping is CodeMirror's own history's (`@codemirror/commands`), over the
- *  edits of one agent instead of every edit: each step holds the change that takes it
- *  back, correct for the words as they would be with every later step taken back
- *  first. A change that is not one of these steps - the reader typing, another agent,
- *  another device - is carried into the newest step at once, and into the ones under
- *  it only when the one above them goes, as `mapped`. That is what makes it right
- *  when two of an agent's edits touch the same words: taking back the newest first
- *  and then the one before, each through what happened after it, never leaves a
- *  character of the first behind in the hole the second left.
- *
- *  Yjs's `UndoManager` with the agent as its tracked origin is the same thing, and it
- *  is what these become under sync v2; see docs/agent-native.md 8.10. Pure. */
-
 import { ChangeSet, type Heard, type Text } from '@orden/editor'
 
 type ChangeDesc = ChangeSet['desc']
 
-/** A span of words, in the offsets of one text. */
 interface Range {
   from: number
   to: number
 }
 
-/** Where a change wrote, in the words after it: what it put in, and a point where it
- *  only took words out. */
 function written(change: ChangeSet): Range[] {
   const ranges: Range[] = []
   change.iterChangedRanges((_fromA, _toA, from, to) => ranges.push({ from, to }))
   return ranges
 }
 
-/** A span carried through a change after it. */
 function mapped(range: Range, change: ChangeSet): Range {
   const from = change.mapPos(range.from, 1)
   return { from, to: Math.max(from, change.mapPos(range.to, -1)) }
 }
 
-/** Whether a change rewrites any of the words in `ranges`, in the words before it: it
- *  takes out or replaces some of them, or writes into the middle of them. Writing
- *  right beside them is not rewriting them. */
 function touches(change: ChangeSet, ranges: readonly Range[]): boolean {
   let met = false
   change.iterChangedRanges((from, to) => {
@@ -53,17 +30,11 @@ function touches(change: ChangeSet, ranges: readonly Range[]): boolean {
 }
 
 interface Step {
-  /** The marks the edits carried into the reader's history, which say when the
-   *  reader's own Ctrl+Z has taken them back. */
   ids: readonly string[]
-  /** What takes it back. */
   changes: ChangeSet
-  /** What happened after it that the steps under it have not been carried through,
-   *  as seen from the words with this step taken back. */
   mapped: ChangeDesc | null
 }
 
-/** One step carried through a change made after it. */
 function carried(step: Step, mapping: ChangeDesc): Step {
   const before = mapping.mapDesc(step.changes, true)
   return {
@@ -73,8 +44,6 @@ function carried(step: Step, mapping: ChangeDesc): Step {
   }
 }
 
-/** A change carried into the newest step, and a step it emptied dropped, the next one
- *  down taking its place: `addMappingToBranch` in CodeMirror's history. */
 function carriedInto(steps: readonly Step[], mapping: ChangeDesc): Step[] {
   let length = steps.length
   let through = mapping
@@ -86,7 +55,6 @@ function carriedInto(steps: readonly Step[], mapping: ChangeDesc): Step[] {
     const step = carried(top, through)
     if (!step.changes.empty) return [...steps.slice(0, length - 1), step]
 
-    // Nothing of it left to take back: whatever it did is gone already.
     through = step.mapped ?? through
     length--
   }
@@ -96,20 +64,16 @@ function carriedInto(steps: readonly Step[], mapping: ChangeDesc): Step[] {
 
 export class Steps {
   private steps: Step[] = []
-  /** The steps the reader's own Ctrl+Z took back, which their redo brings back. */
   private readonly undone = new Set<string>()
 
-  /** How many edits there are to take back. */
   get size(): number {
     return this.steps.length
   }
 
-  /** An edit of this agent's, just made: the change it was, and the words before it. */
   push(ids: readonly string[], changes: ChangeSet, before: Text) {
     this.steps.push({ ids, changes: changes.invert(before), mapped: null })
   }
 
-  /** The steps as they stand, answering the way back to them. */
   saved(): () => void {
     const steps = [...this.steps]
     const undone = [...this.undone]
@@ -120,15 +84,11 @@ export class Steps {
     }
   }
 
-  /** A change made after the steps that is not one of them. */
   carry(change: ChangeDesc) {
     if (change.empty || !this.steps.length) return
     this.steps = carriedInto(this.steps, change)
   }
 
-  /** A change as a document heard it. Answers whether it was one of these steps being
-   *  taken back or put back by the reader's history, which is the history's business
-   *  and not a change to carry the steps through. */
   heard(heard: Heard): boolean {
     const back = heard.marks.filter((mark) => mark.undone).map((mark) => mark.id)
     const again = heard.marks.filter((mark) => !mark.undone).map((mark) => mark.id)
@@ -149,9 +109,6 @@ export class Steps {
     return false
   }
 
-  /** Every step taken back, newest first, as one change, and forgotten. Null when
-   *  there is nothing to take back. The ids come with it, so the change can carry
-   *  them into the history and a Ctrl+Z of the whole of it puts them all back. */
   takeAll(): { changes: ChangeSet; ids: string[] } | null {
     let total: ChangeSet | null = null
     const ids: string[] = []
@@ -165,27 +122,14 @@ export class Steps {
     return total ? { changes: total, ids } : null
   }
 
-  /** The ids of every step there is to take back, oldest first. */
   get ids(): string[] {
     return this.steps.flatMap((step) => [...step.ids])
   }
 
-  /** Some of the steps taken back and the rest left standing, as one change against
-   *  `words` (what the note says now), and forgotten: the review's Undo of one change,
-   *  and a rewind of one thread's edits among another's.
-   *
-   *  Done the way a history would do it by hand: every step down to the lowest one
-   *  asked for is taken back, then each one above it that was not asked for is put
-   *  back again, carried through what was taken out underneath it. A step put back
-   *  that touches the words a taken one wrote depends on it - it rewrote them - and
-   *  is taken too rather than put back on top of nothing; the ids answered say which
-   *  went. Where nothing touches, this is each taken step's inverse carried through
-   *  everything since, so every later word, the reader's and the agent's, stays. */
   take(wanted: ReadonlySet<string>, words: Text): { changes: ChangeSet; ids: string[] } | null {
     const lowest = this.steps.findIndex((step) => step.ids.some((id) => wanted.has(id)))
     if (lowest === -1) return null
 
-    // Down to the lowest asked for, each with the words it takes back from.
     const popped: { step: Step; at: Text }[] = []
     let doc = words
     let total = ChangeSet.empty(words.length)
@@ -197,9 +141,6 @@ export class Steps {
       doc = top.changes.apply(doc)
     }
 
-    // Back up again, oldest first. `toNow` turns the words as they were with this
-    // step in place into what they are now; `hot` is where taken steps wrote, in the
-    // same words.
     const taken: string[] = []
     const again: { ids: readonly string[]; changes: ChangeSet; before: Text }[] = []
     let toNow = ChangeSet.empty(doc.length)

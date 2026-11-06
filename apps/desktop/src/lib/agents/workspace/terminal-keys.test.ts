@@ -1,7 +1,3 @@
-/** What an agent types into the reader's terminal and reads back off it: keys as the
- *  bytes a program expects, the one rule for what goes without asking, and a buffer as
- *  the lines a person reads. */
-
 import { describe, expect, test } from 'vitest'
 import { keyBytes, linesOf, type Row, shellOs, typesFreely } from './terminal-keys'
 
@@ -64,7 +60,6 @@ describe('what goes without asking', () => {
     expect(typesFreely('git log | sh', true, [], programs, 'unix')).toBe(false)
     expect(typesFreely('git status', false, [], programs, 'unix')).toBe(false)
     expect(typesFreely('git status', true, ['Enter'], programs, 'unix')).toBe(false)
-    // An Enter alone runs whatever was typed before it, which is not here to judge.
     expect(typesFreely('', true, [], programs, 'unix')).toBe(false)
     expect(typesFreely('', false, ['Enter'], programs, 'unix')).toBe(false)
     expect(typesFreely('', false, ['Up'], programs, 'unix')).toBe(false)

@@ -1,19 +1,3 @@
-/** An agent reading a note: the words as the reader has them.
- *
- *  Through `noteText`, which prefers the open document over the disk, so a note in a
- *  pane is read with the words not yet saved; with the one line ending the editor
- *  holds, so what an agent quotes back is what an anchor finds. Every answer carries
- *  `rev`, a name for these exact words, and an anchor for every heading, task and
- *  block, which is what the agent hands back to say where an edit goes. For the note
- *  in front of the reader it can also say what they have selected, where the caret
- *  is, which lines are on screen and whether they are typing right now, so "rewrite
- *  this paragraph" is about the paragraph they mean. See docs/agent-native.md 8.1.
- *
- *  The outline, the tasks and the blocks are read by the grammar the link index and
- *  the editor read them by (@orden/markdown), properties by the reader the rows above a
- *  note use, links and backlinks off the index, the same answers the automation
- *  verbs give (`automation/answers.ts`). */
-
 import type { EditorView } from '@orden/editor'
 import { blocksOf, lines } from '@orden/markdown/links'
 import { type Property, readProperties } from '@orden/markdown/properties'
@@ -25,7 +9,6 @@ import { TYPING } from './edit'
 import { DocError } from './problem'
 import { revOf } from './rev'
 
-/** What a read may carry besides `rev`. */
 const INCLUDES = [
   'text',
   'outline',
@@ -39,11 +22,8 @@ const INCLUDES = [
 
 type Include = (typeof INCLUDES)[number]
 
-/** What a read carries when the agent does not say: the words and every anchor in
- *  them, which is what an edit needs and costs one pass over the note. */
 const PLAIN: readonly Include[] = ['text', 'outline', 'tasks', 'blocks']
 
-/** The parts an agent asked for, checked. */
 function readIncludes(value: unknown): readonly Include[] {
   if (value === undefined || value === null) return PLAIN
   if (!Array.isArray(value)) throw new DocError('bad_include', value, 'include is a list')
@@ -55,7 +35,6 @@ function readIncludes(value: unknown): readonly Include[] {
   })
 }
 
-/** A heading as an agent reads it, with the anchor that names it. */
 interface OutlineRow {
   anchor: Anchor
   level: number
@@ -72,11 +51,9 @@ interface TaskRow {
 interface BlockRow {
   anchor: Anchor
   line: number
-  /** The first words of it, so the list reads. */
   text: string
 }
 
-/** Where the reader is, in the note in front of them. Lines count from zero. */
 interface Where {
   from: number
   to: number
@@ -89,9 +66,7 @@ export interface NoteRead {
   path: string
   space: string
   rev: string
-  /** Whether a pane has it open, which is when unsaved words are part of it. */
   open: boolean
-  /** Whether the reader wrote in it within the last two seconds. */
   typing: boolean
   text?: string
   outline?: OutlineRow[]
@@ -100,12 +75,9 @@ export interface NoteRead {
   properties?: Property[]
   links?: unknown[]
   backlinks?: unknown[]
-  /** Null when the note is not the one in front of the reader. */
   selection?: Where | null
 }
 
-/** Several things with one name get a number each, from one, in the order they sit;
- *  one thing alone does not need one. */
 function numbered<T>(rows: readonly T[], nameOf: (row: T) => string): (number | undefined)[] {
   const seen = new Map<string, number>()
   const total = new Map<string, number>()
@@ -162,7 +134,6 @@ function blocksIn(text: string): BlockRow[] {
   )
 }
 
-/** Where the reader is in a view, when it is the one in front of them. */
 function whereIn(view: EditorView): Where {
   const { state } = view
   const { from, to, head } = state.selection.main
@@ -183,7 +154,6 @@ function whereIn(view: EditorView): Where {
   }
 }
 
-/** Whether the reader has written in a note within the last two seconds. */
 function typingIn(open: NoteDoc | null): boolean {
   const last = open?.live.readerAt ?? null
   return last !== null && Date.now() - last < TYPING

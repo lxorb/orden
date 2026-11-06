@@ -1,14 +1,5 @@
-/** The crate's agent verbs, their answers and its events, as the window reads them.
- *
- *  A mirror of `src-tauri/src/agents/verbs.rs` and `grants.rs`, types only: the crate
- *  answers every one of these itself, and the window hears the events on
- *  `nib://agent`. `verbs.test.ts` holds the list of names to the crate's table, so a
- *  verb cannot be added on one side only. See docs/agent-native.md 13.1. */
-
-/** The event the crate's news arrives on. */
 export const AGENT_EVENT = 'nib://agent'
 
-/** Every verb the crate answers, in the crate's order. */
 export const BROWSER_VERBS = [
   'browser_tabs',
   'browser_open',
@@ -46,12 +37,8 @@ export const BROWSER_VERBS = [
   'agent_bye',
 ] as const
 
-/** A verb the crate answers. */
 export type BrowserVerb = (typeof BROWSER_VERBS)[number]
 
-/** The window's verbs an agent may call, with the scope each needs at the least; the
- *  crate refuses anything else from an agent before the window hears it. The window's
- *  dispatcher is handed the caller's `Grant` as `agent` beside the verb. */
 export const AGENT_WINDOW_VERBS: Readonly<Record<string, Scope | null>> = {
   get_context: 'context',
   list_spaces: null,
@@ -106,25 +93,13 @@ export const AGENT_WINDOW_VERBS: Readonly<Record<string, Scope | null>> = {
   agent_result: 'agents',
 }
 
-/** The window's verbs the crate asks on an agent's behalf. Each is optional: a window
- *  that does not answer gets the crate's own best answer instead. */
 export const CRATE_ASKS = {
-  /** Answers `ReaderTab[]`: the reader's web tabs of every space's set, with their
-   *  space and whether in front and on screen. */
   readerTabs: 'agent.reader_tabs',
-  /** Takes `{ tab }`: a reader's tab lent to an agent, its page built or thawed and kept
-   *  running out of sight while it is not on screen. Answers once the page is there. */
   lend: 'agent.lend',
-  /** Takes `StoreAsk`, answers `StoreSaid`: which store the reader's tabs of a space
-   *  use for an address, as `web-data.ts` decides. */
   storeFor: 'agent.store_for',
-  /** Takes `{ html, url }`, answers the markdown `@orden/markdown/from-html` makes. */
   markdown: 'agent.markdown',
 } as const
 
-// ---- the grant ------------------------------------------------------------------------
-
-/** What an agent may reach. */
 export type Scope =
   | 'context'
   | 'notes.read'
@@ -150,7 +125,6 @@ export type Scope =
   | 'editor'
   | 'applications'
 
-/** What a question is about (9.3), and the questions Orden asks for itself. */
 export type Category =
   | 'paying'
   | 'sending'
@@ -167,10 +141,8 @@ export type Category =
   | 'takeover'
   | 'pairing'
 
-/** What a grant says about one site. */
 export type SiteRule = 'allow' | 'deny' | 'agent-store'
 
-/** An agent, as `agents_read` answers and `agents_write` takes it. */
 export interface Grant {
   id: string
   name: string
@@ -178,30 +150,20 @@ export interface Grant {
   scopes: Scope[]
   spaces: 'all' | string[]
   sites: Record<string, SiteRule>
-  /** The sites `browser.script` reaches. */
   scripts: string[]
   mode: 'unsupervised' | 'confirm'
-  /** A category left out asks. */
   asks: Partial<Record<Category, boolean>>
-  /** "Always on this site". */
   always: Record<string, Category[]>
-  /** The programs `run_terminal` starts without asking. */
   programs: string[]
-  /** `memory` is the browser's MB past which it opens no tab; 0 is none (#333). */
   limits: { tabs: number; calls: number; navigations: number; memory: number }
-  /** Milliseconds since 1970. */
   created: number
 }
 
-/** `agents_mint`: a grant made by hand, with its token, said once. */
 export interface Minted {
   grant: Grant
   token: string
 }
 
-// ---- answers --------------------------------------------------------------------------
-
-/** Why a call was not done. */
 export type Code =
   | 'unsupported_on_this_engine'
   | 'bad_arguments'
@@ -217,7 +179,6 @@ export type Code =
   | 'no_dialog'
   | 'denied'
 
-/** A dialog a page is holding open. */
 export interface Dialog {
   kind: 'alert' | 'confirm' | 'prompt' | 'beforeunload' | 'sign_in' | 'certificate'
   message: string
@@ -226,16 +187,13 @@ export interface Dialog {
   open_ms: number
 }
 
-/** Every answer the crate gives. */
 export type Answer =
   | { status: 'ok'; result: unknown; untrusted?: string; dialog?: Dialog }
   | { status: 'needs_approval'; approval: string; summary: string }
   | { status: 'error'; code: Code; message: string; dialog?: Dialog }
 
-/** Which store an agent tab is in. */
 export type Store = 'reader' | 'agent' | 'space'
 
-/** A reader's web tab. */
 export interface ReaderTab {
   id: string
   title: string
@@ -245,7 +203,6 @@ export interface ReaderTab {
   on_screen: boolean
 }
 
-/** An agent's own tab. */
 export interface AgentTab {
   id: string
   url: string
@@ -255,22 +212,18 @@ export interface AgentTab {
   parked: boolean
 }
 
-/** `agent.store_for`'s arguments. */
 export interface StoreAsk {
   space?: string
   url: string
 }
 
-/** `agent.store_for`'s answer: `null` for the store every space shares. */
 export interface StoreSaid {
   space: string
   store: string | null
 }
 
-/** Where a question has got to. */
 export type ApprovalAnswer = 'pending' | 'allowed' | 'denied' | 'expired' | 'done'
 
-/** A question the reader is asked. */
 export interface Approval {
   id: string
   agent: string
@@ -279,26 +232,16 @@ export interface Approval {
   summary: string
   site?: string
   tab?: string
-  /** The verb whose call asked. */
   verb?: string
-  /** Milliseconds since 1970. */
   asked: number
   answer: ApprovalAnswer
 }
 
-/** `browser_open`'s answer: the store is the agent's own when the site is kept to it,
- *  whatever was asked. */
 export interface Opened {
   tab: string
   store: Store
 }
 
-// ---- the window's commands ------------------------------------------------------------
-
-/** The commands the window calls the crate with: the settings pane (`agents_read`,
- *  `agents_write`, `agents_mint`, the log's days and its Clear), the agents' sessions,
- *  and `capture_to_note`'s reading of a page (`agents_capture`). Each answers only Orden's
- *  own window. */
 export const AGENT_COMMANDS = [
   'agents_read',
   'agents_write',
@@ -318,22 +261,15 @@ export const AGENT_COMMANDS = [
   'agents_hold',
 ] as const
 
-/** `agents_state`: everything the agents' rows and sessions draw from at once; the events keep it
- *  current after. `tabs` are `[agent, tab]` pairs. */
 export interface Overview {
   agents: Grant[]
   tabs: [string, AgentTab][]
   approvals: Approval[]
   stopped: boolean
-  /** The agents stopped one at a time, beside the stop for all of them. */
   halted: string[]
-  /** The agents that called in the last ten minutes and did not say goodbye. */
   connected: string[]
 }
 
-/** The words the crate says in the reader's language: the tray's rows and the
- *  notifications it raises. The window hands them over, since only it has the
- *  catalogues. */
 export interface ShellWords {
   show: string
   stop: string
@@ -344,13 +280,9 @@ export interface ShellWords {
   pairing: string
 }
 
-/** What `agents_capture` reads a page as: the article for a clip, a picture with every
- *  filled secret field painted over, or a PDF on the reader's paper. */
 export const CAPTURE_AS = ['clip', 'screenshot', 'pdf'] as const
 export type CaptureAs = (typeof CAPTURE_AS)[number]
 
-/** `agents_capture`'s result, inside an `ok` answer marked with the page's address: the
- *  one of `html`, `png` and `pdf` that was asked for, the last two as base64. */
 export interface Captured {
   url: string
   title: string
@@ -359,9 +291,6 @@ export interface Captured {
   pdf?: string
 }
 
-// ---- events ---------------------------------------------------------------------------
-
-/** The crate's news, on `AGENT_EVENT`. */
 export type AgentEvent =
   | { kind: 'acting'; agent: string; tab: string; verb: string }
   | { kind: 'paused'; agent: string }

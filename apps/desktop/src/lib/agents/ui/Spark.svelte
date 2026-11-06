@@ -1,7 +1,4 @@
 <script lang="ts">
-  /** An agent's mark: the spark every assistant in Orden wears, filled with the agent's
-   *  own colour, which is its caret's and its frame's too. Turning while it acts,
-   *  still and muted while it is paused; see marks.ts for which is which. */
   import { ASK_MARK } from '../../panel-marks'
 
   const {
@@ -42,8 +39,6 @@
     stroke: var(--muted);
   }
 
-  /* The loading mark's own turn, a turn a second, so an agent at work reads as the
-     same kind of waiting a page on its way does. */
   .turning {
     animation: turn 1s linear infinite;
   }

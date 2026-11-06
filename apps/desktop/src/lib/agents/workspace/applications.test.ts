@@ -1,7 +1,3 @@
-/** The reader's applications as an agent uses them (issue 1063, step 7): listed, started,
- *  seen and used through the tab's own connection, and only while this device holds
- *  them - held elsewhere, refused, and never taken over. */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { InputEvent } from '@orden/online/apps'
 import { callerOf } from '../../automation/caller'

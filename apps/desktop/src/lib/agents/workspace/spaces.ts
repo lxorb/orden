@@ -1,15 +1,3 @@
-/** Which space an agent's verb is about, answered without ever switching to it.
- *
- *  The command line switches to a space it names, "because the result has to be
- *  visible" (docs/automation.md), and it keeps doing so. An agent working while the
- *  reader writes in another space must not change the reader's screen, so an agent's
- *  verbs read and write a space where it is: the space in the window is answered from
- *  what the window already holds, and any other one from the disk and the crate, with
- *  nothing in the window moved. See docs/agent-native.md 8.6.
- *
- *  And a space the grant does not reach does not exist: it is absent from every list
- *  and every lookup of it fails exactly as a name nobody has would (9.6). */
-
 import { INBOX_PATH } from '@orden/bases/inbox'
 import { threadSpaceOf } from '../../automation/caller'
 import { insideOnly } from '../../automation/inside'
@@ -19,20 +7,16 @@ import { type Space, type Tab, workspace } from '../../workspace.svelte'
 import { type Call, maybe } from './call'
 import { Refused } from './problem'
 
-/** A space as a verb works in it. */
 export interface Place {
   space: Space
-  /** Whether it is the space in the window, whose tree, index and tabs are live. */
   open: boolean
 }
 
-/** Whether the caller may reach this space. The reader reaches every one. */
 function reaches(call: Call, space: Space): boolean {
   const agent = call.caller.agent
   return agent === null || agent.spaces === 'all' || agent.spaces.includes(space.name)
 }
 
-/** The spaces the caller may reach, in the switcher's order. */
 export function reachable(call: Call): Space[] {
   return workspace.spaces.filter((space) => reaches(call, space))
 }
@@ -45,9 +29,6 @@ export function tabsInReach(call: Call): Tab[] {
   return workspace.tabs.filter((tab) => reached.has(workspace.spaceOf(tab.note) ?? ''))
 }
 
-/** The space a verb names by id or name, or the one in the window when it names none.
- *  Never switches: the answer says whether it is the one open, and the verb decides
- *  what that means for it. */
 export function placeFor(call: Call, named: string | null): Place {
   const open = workspace.activeSpace
 
@@ -66,18 +47,12 @@ export function placeFor(call: Call, named: string | null): Place {
   return { space: found, open: found.id === open?.id }
 }
 
-/** The space a verb about notes and files works in: the one it names, else the one its AI
- *  panel thread works in, which stays where it was started when the reader moves to
- *  another (docs/ai-sidebar.md 4.11), else the one in the window. A verb about the tabs
- *  in the window asks `placeFor(call, null)` instead: those are the front space's. */
 export function placeOf(call: Call): Place {
   const named = maybe(call, 'space')
   if (named !== null) return placeFor(call, named)
 
   const id = threadSpaceOf(call.caller)
   if (!id) return placeFor(call, null)
-  // A thread's space deleted or left since it started is no reason to write in the one
-  // in front, whose notes of the same name are somebody else's work.
   const home = workspace.spaces.find((one) => one.id === id)
   if (!home)
     throw new Refused('no_such_space', 'the space this thread works in is gone: say which space')
@@ -87,8 +62,6 @@ export function placeOf(call: Call): Place {
   return { space: home, open: home.id === workspace.activeSpace?.id }
 }
 
-/** A path an agent named, judged the way every path from outside the app is: relative,
- *  no `..`, nothing a file name cannot hold. See automation/inside.ts. */
 export function judged(asked: string): string {
   const safe = insideOnly(asked)
   if (safe === null) throw new Refused('bad_arguments', `${asked} is not a path inside the space`)
@@ -96,10 +69,6 @@ export function judged(asked: string): string {
   return safe
 }
 
-/** The same, for a path the verb is about to change: nothing under a folder whose name
- *  starts with a dot either, which is where a space keeps what is not the reader's
- *  writing (a tool's settings, a repository), and what the file list does not show.
- *  Bar one: the space's own inbox (`INBOX_PATH`), where a task with no note goes. */
 export function judgedForWriting(asked: string): string {
   const safe = judged(asked)
   if (safe === INBOX_PATH) return safe
@@ -110,19 +79,11 @@ export function judgedForWriting(asked: string): string {
   return safe
 }
 
-/** Where the words of a place came from when somebody else can write them too: a
- *  space shared with others, or a note of it shared on its own, which an agent reads
- *  as data and never as what to do (docs/agent-native.md 9.6). Asked of the one note a
- *  verb read where it read one, else of the space as a whole, with the rule raw HTML
- *  and AGENTS.md go by (`reachedByOthers`). Null for the reader's own. */
 export function sharedSource(place: Place, relative = ''): string | null {
   if (relative) return docSource({ path: onDisk(place, relative), shared: null })
   return reachedByOthersIn(place.space.root) ? `shared space ${place.space.name}` : null
 }
 
-/** The same for a document in a tab, by its own note: a tab outlives a switch to
- *  another space, and one somebody shared with the reader has no path here, so its
- *  share says it. */
 export function docSource(doc: { path: string | null; shared: string | null }): string | null {
   if (doc.shared !== null) return 'note shared with you'
   const path = doc.path
@@ -134,15 +95,10 @@ export function docSource(doc: { path: string | null; shared: string | null }): 
   return `shared note ${space ? relativeTo(space.root, path) : nameOf(path)}`
 }
 
-/** Where a path of a place is on this disk. */
 export function onDisk(place: Place, relative: string): string {
   return insideSpace(place.space.root, relative)
 }
 
-/** Refuses a write in a space shared with this account to read, so the agent is told
- *  why rather than the write landing, or being dropped without a word. Every verb that
- *  writes asks this before it asks the reader, and the primitives that write (`made`,
- *  an attachment kept) ask it again, so a verb that forgets is still refused. */
 export function writableAt(place: Place, path: string): void {
   if (!canWriteAt(path)) {
     throw new Refused('read_only', `${place.space.name} is shared with you to read`)

@@ -1,16 +1,4 @@
 <script lang="ts">
-  /** One agent: what it did, what it may reach, where, and what it asks first
-   *  (docs/agent-native.md 9.1 to 9.6).
-   *
-   *  Chrome's page for one site and the Privacy pane of a Mac, which are the two places
-   *  people already decide what something may do: a switch for each thing, grouped by
-   *  what it reaches, and nothing on the page that is not a decision or a fact. What it
-   *  did comes first, because that is what somebody opens an agent to find out after it
-   *  has worked for an hour; the one sentence above it is the lethal trifecta (9.6),
-   *  said where it is true and nowhere else.
-   *
-   *  Every change goes through `pane.change`, which writes it to what the crate holds
-   *  (see pane.svelte.ts), so a switch here is the grant, not a copy of it. */
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
   import Cross from '../../Cross.svelte'
   import { i18n, t } from '../../i18n.svelte'
@@ -55,7 +43,6 @@
   const change = (edit: (one: Grant) => Grant) => void pane.change(grant.id, edit)
 
   const spaceNames = $derived(workspace.spaces.map((one) => one.name))
-  /** The spaces a switch is shown for: those there are, and any a grant still names. */
   const listedSpaces = $derived(
     grant.spaces === 'all'
       ? spaceNames
@@ -64,8 +51,6 @@
 
   const sites = $derived(sitesOf(grant))
 
-  /** A chat said "Always in this chat" to, by its name: its id is what the grant keeps
-   *  (`chat:<id>`). The chats' store is fetched only for a grant that has one. */
   let chatNames = $state.raw<Record<string, string>>({})
   $effect(() => {
     if (!sites.some((one) => one.site.startsWith('chat:'))) return
@@ -83,19 +68,14 @@
     })),
   )
 
-  /** A typed address as the site it is about, the public suffix list fetched the first
-   *  time it is asked. */
   const siteTyped = async (typed: string) => typedSite(typed, await registrable())
 
-  /** A program as typed: its name, or the path to it. */
   const programTyped = (typed: string) => Promise.resolve(typed.trim() || null)
 
-  /** A word added to one of the grant's lists, or taken from it. */
   const listing = (list: 'scripts' | 'programs', on: boolean) => (word: string) => {
     change((one) => withListed(one, list, word, on))
   }
 
-  /** A site typed into the list of rules: blocked, unless it has a rule already. */
   function addSite(site: string) {
     change((one) => withSite(one, site, one.sites[site] ?? 'deny'))
   }
@@ -116,20 +96,16 @@
     await pane.remove(grant.id)
   }
 
-  /** A row that is itself a switch: Space and Enter press it, as a button would. */
   function pressed(event: KeyboardEvent, then: () => void) {
     if (event.key !== ' ' && event.key !== 'Enter') return
     event.preventDefault()
     then()
   }
 
-  /** A slider being dragged: shown as it moves, and written once, where it is let go,
-   *  rather than a write to the crate for every step of the drag. */
   let moving = $state<{ limit: Limit; value: number } | null>(null)
 
   const limitOf = (limit: Limit) => (moving?.limit === limit ? moving.value : grant.limits[limit])
 
-  /** How much of a limit's track is filled, up to its thumb. */
   const fraction = (limit: Limit) =>
     ((limitOf(limit) - LIMITS[limit].min) / (LIMITS[limit].max - LIMITS[limit].min)) * 100
 </script>
@@ -193,11 +169,6 @@
 <h3>{t('Activity')}</h3>
 <AgentLog {pane} {grant} />
 
-<!-- A client connected over MCP has Full permissions: the agent on the other end has a
-     permission system of its own and answers for what it does, so Orden asks it nothing
-     and there is nothing to switch (#1099; `connected` in src-tauri/src/agents/mod.rs).
-     Its spaces, its blocked sites and its limits are the reader's own and stay. The AI
-     sidebar's own agents ask as their thread's mode says, and reach what these grant. -->
 {#if !sidebars(grant)}
   <p class="connected">
     {t(
@@ -341,8 +312,6 @@
 </div>
 
 <style>
-  /* Back to the list: the square is `.nib-glyph`; it stands out into the margin by
-     the room round its arrow, so the arrow lines up with the title above. */
   .back {
     margin-inline-start: -6px;
   }
@@ -367,7 +336,6 @@
     color: var(--muted);
   }
 
-  /* The name is written where it is read, as a space's is renamed in place. */
   .title {
     width: 100%;
     margin-inline-start: -7px;
@@ -394,8 +362,6 @@
     background: var(--bg);
   }
 
-  /* The one warning on the page, in the colour a callout warns in. */
-  /* What a client connected over MCP is told instead of switches: quiet words. */
   .connected {
     margin: 0;
     font-family: var(--font-ui);
@@ -427,8 +393,6 @@
     stroke-linejoin: round;
   }
 
-  /* A site's name, and under it the questions allowed there for good, each the
-     button that takes it back: Claude in Chrome's approved sites. */
   .always {
     display: flex;
     flex-wrap: wrap;

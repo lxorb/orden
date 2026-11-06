@@ -1,15 +1,4 @@
 <script lang="ts">
-  /** An outside agent's session, in the Ask panel where a conversation would be (#1120,
-   *  docs/agent-native.md 9.5): who it is and what it is doing now, the questions it is
-   *  waiting on, its own tabs, and the session as a list of what it did, with the three
-   *  things to do about it - Stop, Add to note, Undo.
-   *
-   *  The log costs a read, so it is read when the session opens and again while the
-   *  agent is at work - after the last of a burst of calls, at most once a second -
-   *  rather than on a clock.
-   *
-   *  No headings: the mark and the name say whose it is, and the list reads as a list of
-   *  what happened because every row is a time, a word and a name. */
   import { onMount } from 'svelte'
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -29,26 +18,20 @@
 
   const activity = started()
 
-  /** How many calls of the session are drawn until the reader asks for the rest. */
   const FIRST = 12
-  /** How often the log is read again at most, while calls keep coming. */
   const LOG_EVERY = 1000
 
   const name = $derived(activity.nameOf(agent))
   const colour = $derived(activity.colourOf(agent))
   const stopped = $derived(activity.stopped(agent))
   const questions = $derived(activity.questions.filter((one) => one.agent === agent))
-  /** What it asked the reader with `ask_reader`, still waiting (#1078). */
   const asked = $derived(asking.of(agent))
   const tabs = $derived(Object.values(activity.seen.tabs).filter((one) => one.agent === agent))
   const calls = $derived(activity.callsOf(agent))
   const undoable = $derived(activity.undoable(agent) !== null)
-  /** The note in front, by its name, which is where Add to puts the session. */
   const front = $derived(workspace.active?.kind === 'note' ? workspace.active.shown : null)
   let all = $state(false)
 
-  /** What it is doing now: its last call in a word, and what the call was about. Only
-   *  while it is at it; an agent that has gone quiet is just its name. */
   const doing = $derived.by(() => {
     const last = activity.seen.doing[agent]
     if (!last || activity.now - last.at >= ACTIVE_FOR) return null
@@ -60,7 +43,6 @@
     return about ? `${word} · ${about}` : word
   })
 
-  /** When this agent's last call was, which is when the log has a line more. */
   const latest = $derived(activity.seen.doing[agent]?.at ?? 0)
 
   let reading: ReturnType<typeof setTimeout> | undefined
@@ -75,7 +57,6 @@
     return () => clearTimeout(reading)
   })
 
-  /** A tab's name, whichever kind: an agent's own, or one of the reader's. */
   function titleOf(tab: string): string | null {
     const own = activity.seen.tabs[tab]
     if (own) return own.title || own.url
@@ -120,8 +101,6 @@
     <ReaderAsk {question} />
   {/each}
 
-  <!-- Its own pages, by name: a press makes one a tab of the reader's, beside the one in
-       front, without loading it again (6.7). -->
   {#if tabs.length}
     <ul class="tabs">
       {#each tabs as tab (tab.id)}
@@ -227,8 +206,6 @@
     list-style: none;
   }
 
-  /* A row of the log: the word, what it was about, and when, at the far end where the
-     times make a column. */
   .call {
     display: flex;
     align-items: baseline;

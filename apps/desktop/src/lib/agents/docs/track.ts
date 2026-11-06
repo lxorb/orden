@@ -1,17 +1,3 @@
-/** One agent's edits of one note in this session, kept in step with the note.
- *
- *  `Steps` knows what taking them back means; this keeps it told. While the note is
- *  open it listens to the document, so every change after an edit - the reader's
- *  typing, another agent, the room - is carried into the steps as it happens, and
- *  the reader's own Ctrl+Z of an edit is heard as that rather than as a change. While
- *  it is closed there is nothing to listen to, so the words the steps last knew are
- *  kept, and whatever the note says when it is next touched is carried through as
- *  the one span it differs by. A note closed and opened again is caught up the same
- *  way and listened to again.
- *
- *  The listening costs a mapping of one step per change, and exists only for notes
- *  an agent has written in. */
-
 import { ChangeSet, type Heard, type Mark, Text } from '@orden/editor'
 import { fold } from '@orden/rooms/fold'
 import type { NoteDoc } from '../../workspace/documents.svelte'
@@ -20,22 +6,16 @@ import { Steps } from './steps'
 
 let minted = 0
 
-/** How an agent's edit is named in the reader's history. */
 const AGENT_EVENT = 'agent'
 
-/** And taking an agent's edits back. */
 const UNDO_EVENT = 'undo.agent'
 
-/** The words as a rope, for a change that has to be turned round against them. */
 function ropeOf(words: string): Text {
   return Text.of(words.split('\n'))
 }
 
 type ChangeDesc = ChangeSet['desc']
 
-/** Where one edit is in the note now: the words it put in, from `from` to `to`, and
- *  the words it took out there; `inserted` is what it put in as it wrote it. What the
- *  review marks and counts; see lib/ai/review. */
 export interface Span {
   from: number
   to: number
@@ -43,7 +23,6 @@ export interface Span {
   inserted: string
 }
 
-/** The spans of a change, in the words after it. */
 function spansOf(changes: ChangeSet, before: Text): Span[] {
   const spans: Span[] = []
   changes.iterChanges((fromA, toA, from, to, inserted) => {
@@ -52,15 +31,12 @@ function spansOf(changes: ChangeSet, before: Text): Span[] {
   return spans
 }
 
-/** A span carried through a change after it; null when nothing of it is left. Words
- *  typed right at either edge stay outside it. */
 function spanThrough(span: Span, change: ChangeDesc): Span | null {
   const from = change.mapPos(span.from, 1)
   const to = Math.max(from, change.mapPos(span.to, -1))
   return to > from || span.removed ? { ...span, from, to } : null
 }
 
-/** Edits as the replacements that make them. */
 function replacementsOf(changes: ChangeSet): Replacement[] {
   const edits: Replacement[] = []
   changes.iterChanges((from, to, _fromB, _toB, inserted) => {
@@ -72,32 +48,19 @@ function replacementsOf(changes: ChangeSet): Replacement[] {
 export class Track {
   readonly steps = new Steps()
   private held: { note: NoteDoc; stop: () => void } | null = null
-  /** The words the steps last knew, while no document is being listened to. */
   private seen: string | null = null
-  /** True while this track is making a change itself, which it does not hear. */
   private making = false
-  /** How many steps were last said; see `told`. */
   private said = 0
-  /** Where each edit still there to take back is now, by id. */
   private readonly where = new Map<string, Span[]>()
-  /** When each was made. */
   private readonly when = new Map<string, number>()
-  /** The AI panel thread each was made for, where its call said one. */
   private readonly whose = new Map<string, string>()
-  /** What putting back edits taken out by `undoSome` would do, by the caller's name
-   *  for that take, carried through everything since: a rewind's Redo. */
   private readonly takenBack = new Map<string, { ids: string[]; changes: ChangeSet }>()
 
-  /** `told` hears how many edits there are to take back whenever that changes -
-   *  the agent writing, the reader's Ctrl+Z taking one back, everything taken back
-   *  at once - so the palette offers taking back only what is there. */
   constructor(
     private readonly prefix: string,
     private readonly told: (edits: number) => void,
   ) {}
 
-  /** A name for the next edit's mark: unique in this session. `thread` is the AI panel
-   *  thread it is made for, where the call said one. */
   nextId(thread?: string): string {
     minted++
     const id = `${this.prefix}:${String(minted)}`
@@ -105,14 +68,11 @@ export class Track {
     return id
   }
 
-  /** Brings the steps up to the note as it is now: `open` is the document it is open
-   *  as, or null, and `words` what it says. */
   catchUp(open: NoteDoc | null, words: string) {
     if (open && this.held?.note === open) return
     this.letGo()
 
     if (this.seen !== null && this.seen !== words) {
-      // What the document remembers is exact; otherwise the one span they differ by.
       const since = open?.live.since(this.seen) ?? null
       const span = since ? null : fold(this.seen, words)
       this.carry(since?.desc ?? ChangeSet.of(span ? [span] : [], this.seen.length).desc)
@@ -123,9 +83,6 @@ export class Track {
     this.tell()
   }
 
-  /** An edit of this agent's into the open note: one transaction, its own step in the
-   *  reader's Ctrl+Z, marked so the reader taking it back is heard. Synchronous, so
-   *  nothing can come between the words it was resolved against and this. */
   applyOpen(note: NoteDoc, edits: readonly Replacement[], id: string): ChangeSet {
     this.catchUp(note, note.live.text.toString())
     const before = note.live.text
@@ -137,43 +94,31 @@ export class Track {
     return changes
   }
 
-  /** An edit of this agent's written into a closed note: `before` the words it was
-   *  resolved against, which the track was caught up to, and `after` what was
-   *  written. */
   recordClosed(before: string, edits: readonly Replacement[], after: string, id: string) {
     this.seen = after
     this.recorded(id, ChangeSet.of(edits, before.length), ropeOf(before))
   }
 
-  /** Listens to `open`, the note this track is of as it is open now, brought up to it
-   *  first where it was not listening to it: a note closed and opened again since. */
   follow(open: NoteDoc) {
     if (this.held?.note !== open) this.catchUp(open, open.live.text.toString())
   }
 
-  /** The ids of the edits there are to take back, oldest first. */
   get ids(): string[] {
     return this.steps.ids
   }
 
-  /** Where an edit is in the note now, as of the last change this track heard. */
   spansOf(id: string): readonly Span[] {
     return this.where.get(id) ?? []
   }
 
-  /** When an edit was made, in milliseconds since 1970. */
   madeAt(id: string): number {
     return this.when.get(id) ?? 0
   }
 
-  /** The AI panel thread an edit was made for, or null where its call said none. */
   threadOf(id: string): string | null {
     return this.whose.get(id) ?? null
   }
 
-  /** Some of the edits taken back, as one transaction in the open note: the review's
-   *  Undo. Answers the ids that went, which include any later edit that rewrote their
-   *  words. `token` names the take, for `putBackOpen`. */
   undoSomeOpen(note: NoteDoc, ids: ReadonlySet<string>, token?: string): string[] {
     this.catchUp(note, note.live.text.toString())
     const before = note.live.text
@@ -188,8 +133,6 @@ export class Track {
     return some.ids
   }
 
-  /** What a closed note's words being written will change here, and the way back if
-   *  they are not: the steps were counted gone, and could not be asked for again. */
   private saved(): () => void {
     const steps = this.steps.saved()
     const seen = this.seen
@@ -197,8 +140,6 @@ export class Track {
     const takenBack = [...this.takenBack]
     return () => {
       steps()
-      // A note opened while the write was in the air is heard from again by `catchUp`,
-      // which goes through what it says now from these words.
       this.letGo()
       this.seen = seen
       this.where.clear()
@@ -209,8 +150,6 @@ export class Track {
     }
   }
 
-  /** The same against a closed note's words, as the edits that do it. `refused` for a
-   *  write that did not happen. */
   undoSomeClosed(
     words: string,
     ids: ReadonlySet<string>,
@@ -228,8 +167,6 @@ export class Track {
     return { edits: replacementsOf(some.changes), after, ids: some.ids, refused }
   }
 
-  /** What `token` took back, put back into the open note as one edit of this agent's,
-   *  carried through everything since. Answers the ids that came back. */
   putBackOpen(note: NoteDoc, token: string): string[] {
     this.catchUp(note, note.live.text.toString())
     const back = this.takenBack.get(token)
@@ -245,7 +182,6 @@ export class Track {
     return back.ids
   }
 
-  /** The same for a closed note: the edits to write, and the words they make. */
   putBackClosed(
     words: string,
     token: string,
@@ -263,17 +199,14 @@ export class Track {
     return { edits: replacementsOf(back.changes), after, ids: back.ids, refused }
   }
 
-  /** Whether `token` has anything to put back. */
   holds(token: string): boolean {
     return this.takenBack.has(token)
   }
 
-  /** Forgets what a take could put back: the next message was sent. */
   forgetTaken(token: string) {
     this.takenBack.delete(token)
   }
 
-  /** An edit of this agent's, made: a step, and where its words are. */
   private recorded(ids: string | readonly string[], changes: ChangeSet, before: Text) {
     const all = typeof ids === 'string' ? [ids] : [...ids]
     this.mapSpans(changes.desc)
@@ -287,8 +220,6 @@ export class Track {
     this.tell()
   }
 
-  /** Edits taken back by one change: the spans of the rest carried through it, and
-   *  what would put them back kept under `token`. */
   private tookBack(ids: readonly string[], changes: ChangeSet, before: Text, token?: string) {
     for (const id of ids) this.where.delete(id)
     this.mapSpans(changes.desc)
@@ -297,7 +228,6 @@ export class Track {
     this.tell()
   }
 
-  /** Every step, span and put-back carried through a change that is not a step. */
   private carry(change: ChangeDesc) {
     this.steps.carry(change)
     this.mapSpans(change)
@@ -320,8 +250,6 @@ export class Track {
     }
   }
 
-  /** Every step taken back as one change, applied to the open note as one
-   *  transaction. Answers how many edits it took back. */
   undoOpen(note: NoteDoc): number {
     this.catchUp(note, note.live.text.toString())
     const before = note.live.text
@@ -336,8 +264,6 @@ export class Track {
     return all.ids.length
   }
 
-  /** Every step taken back against a closed note's words, as the edits that do it.
-   *  The caller writes them; the track takes the result as what it last knew. */
   undoClosed(
     words: string,
   ): { edits: Replacement[]; after: string; count: number; refused: () => void } | null {
@@ -380,7 +306,6 @@ export class Track {
   private heard(heard: Heard) {
     if (this.making) return
 
-    // The document took another note on: what it says now is not this note's.
     if (heard.by === 'switch') {
       this.seen = heard.before.toString()
       this.held?.stop()
@@ -390,7 +315,6 @@ export class Track {
 
     const had = new Set(this.steps.ids)
     if (this.steps.heard(heard)) {
-      // The reader's own Ctrl+Z took some back, or their redo put some back.
       this.mapSpans(heard.changes.desc)
       this.mapTaken(heard.changes.desc)
       const now = this.steps.ids
@@ -404,7 +328,6 @@ export class Track {
   }
 
   private tell() {
-    // A step the reader's changes emptied is gone from the steps; so is its place.
     if (this.where.size > this.steps.ids.length) {
       const ids = new Set(this.steps.ids)
       for (const id of this.where.keys()) if (!ids.has(id)) this.where.delete(id)

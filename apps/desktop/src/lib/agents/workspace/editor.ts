@@ -1,22 +1,3 @@
-/** A note's editor, as a VS Code extension's `TextEditor`: `note_editor` (docs/agent-native.md
- *  8.15, #1078).
- *
- *  Its own scope, `editor`. The tab is a note's tab of the reader's, shown in its pane -
- *  an editor exists only there:
- *
- *  - `selection` reads the selections, the main one first, by line (from 1) and
- *    character (from 0); `select` sets them, several carets where there are several.
- *    That moves the reader's caret, so it needs `workspace.focus`, as `reveal` (a line
- *    brought into view) does (#1070).
- *  - `mark` draws the agent's marks - an underline with a message, as an extension's
- *    diagnostics are - in place of the ones it had in that note, and `clear_marks` takes
- *    them away. They are the agent's alone, kept for the note and drawn again in every
- *    editor that shows it, moved with the words in each, and they go when the agent goes:
- *    stopped, or connected no longer.
- *  - `fold` and `unfold` a line's block, as its arrow does.
- *
- *  The other kinds of note have tools of their own (canvas, pages, PDFs, tables, tasks). */
-
 import { type EditorView, showLine } from '@orden/editor'
 import {
   type AgentMark,
@@ -36,18 +17,14 @@ import { type Call, done, need, needScope } from './call'
 import { Refused } from './problem'
 import { namedTab } from './tab-target'
 
-/** The most marks an agent draws in one note. */
 const MOST_MARKS = 500
 
-/** Every agent's marks, by agent and then by the note they are in. */
 const kept = new Map<string, Map<string, AgentMark[]>>()
 
-/** The note a tab shows, as marks are kept by it. */
 function noteOf(tab: Tab): string {
   return tab.note.path ?? `tab:${tab.id}`
 }
 
-/** Every editor on the page showing a note, with the tab it shows. */
 function editorsOf(note: string): EditorView[] {
   return workspace.tabs.flatMap((tab) => {
     if (noteOf(tab) !== note || workspace.showing(tab.paneId) !== tab) return []
@@ -56,7 +33,6 @@ function editorsOf(note: string): EditorView[] {
   })
 }
 
-/** An editor built fresh draws the marks kept for its note. */
 function drawn(paneId: string, view: EditorView): void {
   const tab = workspace.showing(paneId)
   if (!tab) return
@@ -67,7 +43,6 @@ function drawn(paneId: string, view: EditorView): void {
   }
 }
 
-/** An agent's marks in a note replaced, and drawn where it is shown. */
 function marked(agent: string, note: string, marks: AgentMark[]): void {
   const notes = kept.get(agent) ?? new Map<string, AgentMark[]>()
   if (marks.length) notes.set(note, marks)
@@ -78,7 +53,6 @@ function marked(agent: string, note: string, marks: AgentMark[]): void {
   for (const view of editorsOf(note)) setAgentMarks(view, agent, marks)
 }
 
-/** Every mark of every agent but these taken away: the others went, or were stopped. */
 export function keepMarksOf(agents: ReadonlySet<string>): void {
   for (const [agent, notes] of [...kept]) {
     if (agents.has(agent)) continue
@@ -86,7 +60,6 @@ export function keepMarksOf(agents: ReadonlySet<string>): void {
   }
 }
 
-/** A place an agent gave, read. */
 function placeIn(value: unknown, name: string): AgentPlace {
   const record =
     typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {}

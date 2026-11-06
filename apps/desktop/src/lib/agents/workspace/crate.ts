@@ -1,11 +1,3 @@
-/** What the crate asks the window on an agent's behalf (docs/agent-native.md 13.1):
- *  `agent.reader_tabs`, `agent.lend`, `agent.store_for` and `agent.markdown`. Each is
- *  optional - the crate answers from what it knows when the window does not - and each
- *  is only the window saying or doing what it already would: which of its tabs are
- *  pages, a tab's page kept running while an agent acts in it, which store a
- *  space keeps a site's logins in, and a page's HTML through the clipper's converter,
- *  so an agent reads a page as the words a clip of it would have. */
-
 import type { Said } from '../../automation/args'
 import { said } from '../../automation/args'
 import { READER } from '../../automation/caller'
@@ -14,10 +6,6 @@ import type { StoreSaid } from '../verbs'
 import { placeFor } from './spaces'
 import { lendTab, readerTabs } from './tabs'
 
-/** Which store the reader's tabs of a space use for an address: the one every page
- *  shares, since a space no longer keeps one of its own (#239, web-tab/web-data.svelte.ts).
- *  A web note that keeps its own web data is the note's, and no address reaches it. The
- *  space is still answered, the open one when none is named. */
 async function storeFor(args: Said): Promise<StoreSaid> {
   const place = placeFor({ verb: 'agent.store_for', args, caller: READER }, said(args, 'space'))
   const { webData } = await import('../../web-tab/web-data.svelte')
@@ -25,8 +13,6 @@ async function storeFor(args: Said): Promise<StoreSaid> {
   return { space: place.space.name, store: await webData.store(null) }
 }
 
-/** A page's HTML as the markdown a clip of it would say: a snapshot the clip's reader
- *  wrote is read for its article first, the way the clip button reads it. */
 async function markdown(args: Said): Promise<string> {
   const html = typeof args.html === 'string' ? args.html : ''
   if (!html.trim()) return ''

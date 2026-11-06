@@ -21,7 +21,6 @@ describe('the pane over the crate', () => {
     expect(pane.program).toContain('nib.exe')
     expect(pane.last.get('claude-code')).toBe(now - 39 * 60_000)
     expect(pane.last.get('codex')).toBe(now - 26 * 60 * 60 * 1000)
-    // Nothing of the script's in thirty days: every day was read looking for it.
     expect(pane.last.has('nightly-backup')).toBe(false)
     expect(pane.earlier).toBe(false)
   })
@@ -38,7 +37,6 @@ describe('the pane over the crate', () => {
     expect(kept?.scopes).toContain('terminal')
     expect(kept?.sites).toEqual({ 'bank.example': 'agent-store' })
     expect(pane.grants).toEqual(fake.grants)
-    // Who it was made for and when are the crate's facts, whatever the pane sends.
     await pane.change('claude-code', (grant) => ({ ...grant, client: 'Somebody', created: 9 }))
     expect(fake.grants[0]?.client).toBe('Claude Code')
     expect(fake.grants[0]?.created).toBe(1)
@@ -49,7 +47,6 @@ describe('the pane over the crate', () => {
     fake.pair('Claude Code', 1)
     const pane = await opened(fake)
 
-    // Paired behind the pane's back, with no event heard: the pane's own list is old.
     fake.grants.push(ownGrant('codex', 'Codex', 2))
     await pane.change('claude-code', (grant) => withScope(grant, 'settings', true))
 
@@ -66,7 +63,6 @@ describe('the pane over the crate', () => {
     const second = pane.change('claude-code', (grant) => withScope(grant, 'settings', true))
     expect(pane.grants[0]?.scopes).toEqual(expect.arrayContaining(['terminal', 'settings']))
     await first
-    // The first write is back, and the second still on screen.
     expect(pane.grants[0]?.scopes).toEqual(expect.arrayContaining(['terminal', 'settings']))
     await second
     expect(fake.grants[0]?.scopes).toEqual(expect.arrayContaining(['terminal', 'settings']))
@@ -141,7 +137,6 @@ describe('the pane over the crate', () => {
 
 describe('the fake is the crate', () => {
   it('puts the pane in reach where there is no crate, which is how a drive sees it', () => {
-    // A test runs where there is no window of Tauri's, so nothing offers the pane.
     expect(reach.offered).toBe(false)
     const fake = standIn()
     expect(reach.standIn).toBe(fake)

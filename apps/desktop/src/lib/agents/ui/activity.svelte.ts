@@ -1,12 +1,3 @@
-/** The activity store: what the window knows about agents, and every press the reader
- *  can make about them.
- *
- *  What an event means is `seen.ts`; which tab wears what is `marks.ts`; this holds the
- *  two together as state and answers the presses - Stop, Resume, Allow, Show, Add to
- *  note, Undo - by asking the crate, whose answer comes back as an event like everyone
- *  else's. So a press in one window is seen in every window, and
- *  nothing here guesses at what the crate will say. */
-
 import { accentFor } from '../../accents'
 import type { TabAct } from '../../agent-marks.svelte'
 import { theme } from '../../theme.svelte'
@@ -21,27 +12,18 @@ import { heard, isStopped, nothing, overviewed, type Seen, wrote } from './seen'
 import type { Source } from './source'
 
 export class Activity {
-  /** What is known. */
   seen = $state<Seen>(nothing())
 
-  /** The moment the marks are read at. Moved on by every event and by the timer that
-   *  lets an acting tab go; see `ACTIVE_FOR` in marks.ts. */
   now = $state(Date.now())
 
-  /** Today's audit log, as the crate wrote it. */
   lines = $state<readonly unknown[]>([])
 
-  /** Whether the agents' pages live in this window, which is where Show can put them. */
   holds = $state(false)
 
   constructor(readonly source: Source) {}
 
-  /** The events heard while the overview was on its way, applied again over it: the
-   *  overview is what the crate held when it answered, and a pause said meanwhile is
-   *  newer than that. Null once it has arrived. */
   private meanwhile: AgentEvent[] | null = null
 
-  /** Everything at once, from the crate. */
   async load(): Promise<void> {
     this.meanwhile = []
     try {
@@ -55,24 +37,16 @@ export class Activity {
     }
   }
 
-  /** The questions the reader is answering in this window, whose Show this window puts up
-   *  itself once the answer is in (`answer`). */
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping, never drawn
   private answering = new Set<string>()
 
-  /** The agent tabs this window has shown, each once. */
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping, never drawn
   private shown = new Set<string>()
 
-  /** One event. */
   hear(event: AgentEvent): void {
     const now = Date.now()
     this.meanwhile?.push(event)
     heard(this.seen, event, now)
-    // A Show nobody was asked about - an agent with Full permissions asks nothing (#372) -
-    // is put up by the window that holds the pages, behind the tab in front: the agent
-    // never takes the reader's screen (#1070). The reader goes to it from its mark or
-    // the panel.
     const said = event.kind === 'answered' ? event.approval : null
     if (
       said?.answer === 'allowed' &&
@@ -85,9 +59,6 @@ export class Activity {
     }
     this.now = now
 
-    // An agent this window has not met - paired since it arrived - is read, so it has
-    // its name and its colour rather than its id. Only the grants: the rest of what the
-    // crate answers is older than the events that came in while it was answering.
     if (event.kind === 'connected' && event.agents.some((one) => !this.grantOf(one))) {
       void this.source
         .state()
@@ -96,7 +67,6 @@ export class Activity {
     }
   }
 
-  /** An agent wrote in a note: every tab showing it wears the mark. */
   wrote(note: NoteDoc, agent: string): void {
     const now = Date.now()
     wrote(
@@ -108,12 +78,9 @@ export class Activity {
     this.now = now
   }
 
-  /** Today's log, read again. */
   async readLog(): Promise<void> {
     this.lines = await this.source.log(today())
   }
-
-  // ---- who and what --------------------------------------------------------------
 
   grantOf(agent: string): Grant | undefined {
     return this.seen.agents.find((one) => one.id === agent)
@@ -123,14 +90,10 @@ export class Activity {
     return this.grantOf(agent)?.name ?? agent
   }
 
-  /** The colour an agent wears, which is its caret's in a note: the same function of
-   *  its name, so one agent is one colour everywhere. See presence.ts. */
   colourOf(agent: string): string {
     return accentFor(this.nameOf(agent), theme.current)
   }
 
-  /** The agents the panel lists: every one connected, and any with a question or a tab
-   *  though it went quiet. */
   get listed(): string[] {
     const seen = this.seen
     const ids = [
@@ -141,36 +104,26 @@ export class Activity {
     return ids.filter((one, at) => ids.indexOf(one) === at)
   }
 
-  /** One agent's session, newest first. */
   callsOf(agent: string): Call[] {
     return callsOf(this.lines, agent)
   }
 
-  /** Whether an agent is stopped. */
   stopped(agent: string): boolean {
     return isStopped(this.seen, agent)
   }
 
-  /** The questions waiting, pairings apart: those are asked in a bubble of their own. */
   get questions(): Approval[] {
     return this.seen.approvals.filter((one) => one.category !== 'pairing')
   }
 
-  // ---- presses ---------------------------------------------------------------------
-
-  /** The stop: every agent, or one. */
   async stop(agent?: string): Promise<void> {
     await this.source.stop(agent)
   }
 
-  /** The stop given back: every agent's, or one's. */
   async resume(agent?: string): Promise<void> {
     await this.source.resume(agent)
   }
 
-  /** A press on a tab's mark or a row of its menu: the agent acting there stopped, or
-   *  resumed - its own stop, or everybody's when that is what holds it. The same stop as
-   *  its row in the panel; nothing about the tab itself is the agent's to give back. */
   async act(tab: string, what: TabAct): Promise<void> {
     const agent = this.seen.acting[tab]?.agent
     if (agent === undefined) return
@@ -180,7 +133,6 @@ export class Activity {
     else if (this.seen.stopped !== null) await this.source.resume()
   }
 
-  /** The reader's answer to a question. Allowing a Show shows the tab. */
   async answer(approval: Approval, allow: boolean, always = false): Promise<void> {
     this.answering.add(approval.id)
     const answered = await this.source.answer(approval.id, allow, always)
@@ -189,10 +141,6 @@ export class Activity {
     }
   }
 
-  /** An agent's tab made a tab of the reader's, beside the one in front, without
-   *  loading it again (6.7). It goes on being acted in, framed. In front only where the
-   *  reader pressed for it (`front`: its thumbnail, their own Allow); one the agent shows
-   *  of itself lands behind, wearing the agent's mark (#1070). */
   async show(agentTab: string, front = true): Promise<void> {
     const held = this.seen.tabs[agentTab]
     if (!held || this.shown.has(agentTab)) return
@@ -210,26 +158,20 @@ export class Activity {
     await pages.adopt(id, () => this.source.adopt(agentTab, id))
   }
 
-  /** The reader's tab a question is about, brought to the front. */
   goTo(tab: string): void {
     if (workspace.tabs.some((one) => one.id === tab)) workspace.activate(tab)
   }
 
-  /** The session written into the note in front, or into a note of its own. */
   async addToNote(agent: string): Promise<void> {
     await this.readLog()
     await keepInNote(sessionMarkdown(this.nameOf(agent), this.callsOf(agent)))
   }
 
-  /** The note in front, if the agent has edits of its own to take back in it: what
-   *  Undo is about. The same list the palette's Undo rows read; see touched.ts. */
   undoable(agent: string): string | null {
     const path = workspace.active?.path ?? null
     return touchedBy(path).some((one) => one.id === agent) ? path : null
   }
 
-  /** Takes back everything one agent wrote in the note in front, keeping the reader's
-   *  own words since; see lib/agents/docs. */
   async undo(agent: string): Promise<void> {
     const path = this.undoable(agent)
     if (path === null) return

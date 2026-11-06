@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { laidOut, pagesAsked, quadsOver, quoteIn, type Run } from './pdf-text'
 import { Refused } from './problem'
 
-/** A line of runs as pdf.js hands them over: words, where each starts, how wide. */
 function line(y: number, ...parts: [string, number, number][]): Run[] {
   return parts.map(([str, x, width]) => ({
     str,
@@ -50,11 +49,9 @@ describe('a quote on a page', () => {
     const quads = quadsOver(runs, place.from, place.to)
     expect(quads).toHaveLength(2)
 
-    // `fox` is the last three of the nine characters of its run.
     const [first] = quads
     expect(first?.[0]).toBeCloseTo(172 + 90 * (6 / 9))
     expect(first?.[2]).toBeCloseTo(262)
-    // Above the baseline at the top, below it at the bottom.
     expect(first?.[1]).toBeGreaterThan(700)
     expect(first?.[5]).toBeLessThan(700)
   })

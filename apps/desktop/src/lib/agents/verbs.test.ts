@@ -31,7 +31,6 @@ import {
   type StoreSaid,
 } from './verbs'
 
-/** The crate's own file, read as text: the mirror is held to it rather than to a copy. */
 function crate(name: string): string {
   return readFileSync(
     fileURLToPath(new URL(`../../../src-tauri/src/agents/${name}`, import.meta.url)),
@@ -97,8 +96,6 @@ describe('the mirror of the crate agent verbs', () => {
   })
 
   it('reads the shapes the crate writes', () => {
-    // The crate's own serialisations, as its tests pin them; typed here so a shape that
-    // changes on one side fails to compile on this one.
     const asked: Answer = { status: 'needs_approval', approval: 'a17', summary: 'Place order' }
     const paused: AgentEvent = { kind: 'paused', agent: 'claude-code' }
     const grant: Grant = {

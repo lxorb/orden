@@ -1,18 +1,9 @@
-/** A crate that holds its grants and its log in memory and does as grants.rs does, for
- *  the tests of the pane and the drive that photographs it (docs/agent-native.md 13.1).
- *
- *  The same answers as the real one where the pane depends on them: `write` keeps who a
- *  grant was made for and when, drops what the list leaves out and never adds a grant
- *  it did not make; `mint` names an agent the way `free_id` does and hands it the
- *  third-party defaults. A drive reaches it as `window.nibApp.agents`; see App.svelte. */
-
 import { isRecord } from '../../stored'
 import type { Grant, Minted } from '../verbs'
 import type { AgentsCrate, Heard } from './crate'
 import { ownGrant, thirdPartyGrant } from './grant'
 import { reach } from './reach.svelte'
 
-/** An id made from a client's name and free among `taken`: `free_id` in grants.rs. */
 export function freeId(client: string, taken: readonly string[]): string {
   let stem = ''
   for (const one of client.toLowerCase()) {
@@ -33,12 +24,9 @@ const copy = <T>(value: T): T => structuredClone(value)
 
 export class FakeCrate implements AgentsCrate {
   grants: Grant[] = []
-  /** The log by day, each line as the crate writes one. */
   log = new Map<string, unknown[]>()
   path: string | null = 'C:\\Users\\you\\AppData\\Local\\Nib\\nib.exe'
-  /** How many times the list was written. */
   writes = 0
-  /** What the next call throws, once. */
   failing: Error | null = null
   private listeners = new Set<(event: Heard) => void>()
 
@@ -106,13 +94,10 @@ export class FakeCrate implements AgentsCrate {
     return Promise.resolve(() => this.listeners.delete(on))
   }
 
-  /** News from the crate, as `nib://agent` would bring it. */
   emit(event: Heard) {
     for (const one of this.listeners) one(event)
   }
 
-  /** A client paired through `nib mcp` and allowed: a grant with the reader's own
-   *  defaults, and the answer the pane hears. */
   pair(client: string, at = Date.now()): Grant {
     const grant = ownGrant(
       freeId(
@@ -127,7 +112,6 @@ export class FakeCrate implements AgentsCrate {
     return grant
   }
 
-  /** A call written into the log, on its UTC day, and why it was refused if it was. */
   called(
     agent: string,
     verb: string,
@@ -142,8 +126,6 @@ export class FakeCrate implements AgentsCrate {
   }
 }
 
-/** The fake, filled the way a week of Emil's would be, for the drive: his own two
- *  clients and a script given a token, a morning's research and an evening's. */
 export function seeded(now = Date.now()): FakeCrate {
   const fake = new FakeCrate()
   const hour = 60 * 60 * 1000
@@ -188,8 +170,6 @@ export function seeded(now = Date.now()): FakeCrate {
   return fake
 }
 
-/** Puts a fake in front of the pane, and the pane in the list where there is no crate:
- *  the drive's way in on a build that runs in a browser. */
 export function standIn(fake: FakeCrate = seeded()): FakeCrate {
   reach.standIn = fake
   return fake

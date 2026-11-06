@@ -4,16 +4,12 @@ import { editNote, putBackAt, tracksMoved, tracksOf, undoAgent, undoSomeAt } fro
 import { touchedBy } from './touched'
 import { deskWith } from './test-desk'
 
-/** Taking back some of an agent's edits and leaving the rest: the review's Undo of
- *  one change, and a rewind. Every test has its own agent: what one did is kept for
- *  the session. */
 let made = 0
 function anAgent() {
   made++
   return { id: `some-${String(made)}`, name: 'Orden · Claude' }
 }
 
-/** The ids of the agent's edits of a note, oldest first. */
 function idsOf(agent: { id: string }, path: string): string[] {
   return tracksOf(agent.id).get(`/space/${path}`)?.ids ?? []
 }
@@ -39,7 +35,6 @@ describe('one change taken back among others', () => {
     expect(pane.text).toBe('> one two THREE four')
     expect(idsOf(agent, 'a.md')).toHaveLength(1)
 
-    // The rest is still the agent's to take back, the reader's words staying.
     await undoAgent(desk, agent, { path: 'a.md' })
     expect(pane.text).toBe('> one two three four')
   })
@@ -113,7 +108,6 @@ describe('one change taken back among others', () => {
     const back = await putBackAt(desk, agent, note, 'rewind-1')
     expect(back).toHaveLength(1)
     expect(pane.text).toBe('zero one TWO')
-    // Spent: a second Redo has nothing to put back.
     expect(await putBackAt(desk, agent, note, 'rewind-1')).toEqual([])
   })
 })

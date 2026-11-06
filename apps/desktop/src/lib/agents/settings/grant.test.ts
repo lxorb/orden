@@ -73,7 +73,6 @@ describe('the defaults', () => {
       fileURLToPath(new URL('../../../../src-tauri/src/agents/grants.rs', import.meta.url)),
       'utf8',
     )
-    // The three scopes `Grant::own` leaves out, and the ones `third_party` takes away.
     expect(crate).toMatch(
       /Scope::BrowserScript\s*\|\s*Scope::BrowserStorage\s*\|\s*Scope::Settings\s*\)/,
     )
@@ -93,7 +92,6 @@ describe('a switch means what it says', () => {
       'browser.reader',
       'browser.storage',
     ])
-    // Scripts reach through either browser: the plain one, which is the narrower.
     expect(withScope(only(), 'browser.script', true).scopes).toEqual(['browser', 'browser.script'])
     expect(withScope(only('browser.reader'), 'browser.script', true).scopes).toEqual([
       'browser.reader',
@@ -149,9 +147,6 @@ describe('the rest of a grant', () => {
     expect(withLimit(own(), 'memory', 99999).limits.memory).toBe(32768)
   })
 
-  /** #333: the browser's memory was capped at 3 GB for every agent, whatever the
-   *  machine had. No grant starts with a ceiling, a grant written before there was one
-   *  reads as none, and the reader can still set one and take it away again. */
   it('sets no memory ceiling unless the reader does', () => {
     expect(own().limits.memory).toBe(0)
     expect(thirdPartyGrant('script', 'A script', 1).limits.memory).toBe(0)

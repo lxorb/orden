@@ -1,13 +1,9 @@
-/** The crate's news, read rather than trusted: an event is a boundary like any other,
- *  and one this build does not know the shape of is dropped rather than half applied. */
-
 import type { AgentEvent, Approval } from '../verbs'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-/** A list of strings, or null for anything else. */
 function strings(value: unknown): string[] | null {
   if (!Array.isArray(value)) return null
 
@@ -30,13 +26,10 @@ function readApproval(value: unknown): Approval | null {
     typeof summary === 'string' &&
     typeof asked === 'number' &&
     typeof answer === 'string'
-    ? // Its fields checked above; `category` and `answer` are the crate's own enums, and
-      // one this build has never heard of is shown as a question like any other.
-      (value as unknown as Approval)
+    ? (value as unknown as Approval)
     : null
 }
 
-/** One event, or null. */
 export function readEvent(value: unknown): AgentEvent | null {
   if (!isRecord(value)) return null
 

@@ -1,17 +1,3 @@
-/** An agent reading and editing notes, as a collaborator would: the interface the
- *  window's agent verbs call. See docs/agent-native.md 8.1 to 8.5 and 13.1.
- *
- *  Three calls and the one that writes a whole note: `readNote`, `editNote`,
- *  `writeNote` and `undoAgent`. This implementation works on today's editor - the
- *  open document's shared state, a CodeMirror transaction, the change sets the
- *  history keeps. Under sync v2 an agent is one more peer on a note's Yjs document
- *  instead (8.10): its own client id, anchors as `Y.RelativePosition`s, `UndoManager`
- *  tracking its origin, awareness for its caret. That peer is a second `NoteDocs`,
- *  and nothing that calls these has to change.
- *
- *  The one module here that reaches the workspace, and it is only ever imported on
- *  the first agent call: nothing of lib/agents is in the first paint. */
-
 import { documentOf } from '@orden/editor'
 import { links } from '../../link-index.svelte'
 import { isScratchpad } from '../../scratchpad/is.svelte'
@@ -58,7 +44,6 @@ workspace.fileOps.follow((op) => {
   )
 })
 
-/** What an agent can do with notes. */
 export interface NoteDocs {
   readNote(at: NoteAt, include?: unknown): Promise<NoteRead>
   editNote(agent: Agent, at: NoteAt, edits: unknown, ifRev?: string): Promise<NoteEdited>
@@ -66,7 +51,6 @@ export interface NoteDocs {
   undoAgent(agent: Agent, at: NoteAt): Promise<{ undone: number }>
 }
 
-/** The app itself, as the docs see it. */
 const desk: Desk = {
   get spaces() {
     return workspace.spaces
@@ -98,13 +82,10 @@ const desk: Desk = {
   scheme: () => theme.current,
 }
 
-/** A call naming the scratchpad, with where it is on this disk: asked once a run, and
- *  only of a call that names it. */
 async function padded(at: NoteAt): Promise<NoteAt> {
   return at.tab === SCRATCHPAD_TAB ? { ...at, pad: await scratchpad.where() } : at
 }
 
-/** The notes of this window, on today's editor. */
 export const notes: NoteDocs = {
   readNote: async (at, include) => readNote(desk, await padded(at), include),
   editNote: async (agent, at, edits, ifRev) =>
@@ -114,15 +95,11 @@ export const notes: NoteDocs = {
   undoAgent: async (agent, at) => undoAgent(desk, agent, await padded(at)),
 }
 
-/** Takes back one agent's edits in the note at `path`, a path on this disk: what the
- *  palette's row and the agent's session in Ask ask, about the note in front. */
 export async function undoAgentIn(agent: Agent, path: string): Promise<{ undone: number }> {
   const note = locatedAt(path)
   return note ? undoAt(desk, agent, note) : { undone: 0 }
 }
 
-/** The note at `path`, a path on this disk or a draft's `unsaved:` key, as the
- *  space it is in names it; null for one that is not there. */
 function locatedAt(path: string) {
   if (isScratchpad(path)) return located(desk, { path: '', tab: SCRATCHPAD_TAB, pad: path })
   if (path.startsWith('unsaved:')) {
@@ -137,8 +114,6 @@ function locatedAt(path: string) {
   return null
 }
 
-/** Some of one agent's edits of the note at `path` taken back (the review's Undo, a
- *  rewind): the ids that went. */
 export async function undoSomeIn(
   agent: Agent,
   path: string,
@@ -149,7 +124,6 @@ export async function undoSomeIn(
   return note ? undoSomeAt(desk, agent, note, ids, token) : []
 }
 
-/** What a rewind took back of one agent's edits of the note at `path`, put back. */
 export async function putBackIn(agent: Agent, path: string, token: string): Promise<string[]> {
   const note = locatedAt(path)
   return note ? putBackAt(desk, agent, note, token) : []

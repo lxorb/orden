@@ -1,7 +1,4 @@
 // @vitest-environment jsdom
-/** A note's editor as an agent uses it (#1078): its selections, marks kept for the note
- *  and drawn again in an editor built later, folds, and the reader's screen moved only
- *  when the agent may move it. */
 
 import { EditorState, EditorView } from '@orden/editor'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
@@ -109,7 +106,6 @@ describe('a note’s editor', () => {
     )
     expect(document.querySelector('.cm-agent-mark-warning')?.getAttribute('title')).toBe('the?')
 
-    // The pane shows another note and then this one again, in an editor built fresh.
     for (const view of open.splice(0)) view.destroy()
     editorFor('p1', 'teh plan\nsecond line\n')
     expect(document.querySelector('.cm-agent-mark-warning')?.getAttribute('title')).toBe('the?')

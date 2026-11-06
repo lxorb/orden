@@ -1,11 +1,6 @@
-/** A PDF page's words as pdf.js lays them out, and a quote found among them. Pure: the
- *  arithmetic of where words sit, apart from the PDF they sit in; see pdf.ts. */
-
 import type { Quad } from '../../pdf/highlights'
 import { Refused } from './problem'
 
-/** The pages a call asks for, `1-3,7` as a printer's dialog says it, in order and each
- *  once; every page when it asks for none. */
 export function pagesAsked(said: string | null, count: number): number[] {
   if (said === null) return Array.from({ length: count }, (_, at) => at + 1)
 
@@ -24,13 +19,11 @@ export function pagesAsked(said: string | null, count: number): number[] {
   return [...pages].sort((one, other) => one - other)
 }
 
-/** One run of text as pdf.js lays it out: its words and where they sit. */
 export interface Run {
   str: string
   transform: number[]
   width: number
   height: number
-  /** Whether the line ends after it, as pdf.js says. */
   hasEOL?: boolean
 }
 
@@ -51,9 +44,6 @@ export function runsOf(items: readonly unknown[]): Run[] {
   })
 }
 
-/** A page's words as one string, and where each run starts in it. The runs of two lines
- *  are kept apart by a line break, which pdf.js does not write, so the last word of one
- *  line and the first of the next are two words. */
 export function laidOut(runs: readonly Run[]): { text: string; starts: number[] } {
   let text = ''
   const starts: number[] = []
@@ -71,9 +61,6 @@ export function laidOut(runs: readonly Run[]): { text: string; starts: number[] 
   return { text, starts }
 }
 
-/** Words compared the way a reader compares them: spaces and line breaks of any kind
- *  and length are one space. Answers the folded words and, for each of their
- *  characters, where it came from. */
 function folded(text: string): { text: string; at: number[] } {
   let out = ''
   const at: number[] = []
@@ -97,8 +84,6 @@ function folded(text: string): { text: string; at: number[] } {
   return { text: out, at }
 }
 
-/** Where a quote is on a page, as the characters of `laidOut` it covers, every place
- *  it is when there is more than one. */
 export function quoteIn(runs: readonly Run[], quote: string): { from: number; to: number }[] {
   const whole = folded(laidOut(runs).text)
   const wanted = folded(quote).text
@@ -114,9 +99,6 @@ export function quoteIn(runs: readonly Run[], quote: string): { from: number; to
   return found
 }
 
-/** The boxes a stretch of a page's characters covers, one per line, as quads in PDF
- *  user space: each run's share of its own width, from its baseline down to its
- *  descender and up to its ascender, and the pieces on one line joined into one band. */
 export function quadsOver(runs: readonly Run[], from: number, to: number): Quad[] {
   const lines = new Map<number, { left: number; right: number; top: number; bottom: number }>()
   const { starts } = laidOut(runs)

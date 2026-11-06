@@ -1,7 +1,3 @@
-/** An agent's operations on a canvas, and how they meet the reader's own drawing: in
- *  a room through the plane's Yjs document, object by object, and in a file through
- *  the merge two devices' copies get. See docs/agent-native.md 8.7. */
-
 import { type Canvas, type CanvasNode, emptyCanvas } from '@orden/markdown/canvas'
 import { merged, stamped } from '@orden/markdown/canvas-merge'
 import { pushPlane, readPlane, seedPlane } from '@orden/rooms/plane'
@@ -46,7 +42,6 @@ describe('the operations', () => {
 
     const added = canvas.nodes.find((one) => one.id === made[0])
     expect(added).toMatchObject({ type: 'text', text: 'New idea', x: 0 })
-    // Under the lowest card, never over the reader's work.
     expect(added?.y).toBeGreaterThanOrEqual(60)
     expect(textOf(canvas, 'a')).toBe('Alpha')
     expect(canvas.nodes.find((one) => one.id === 'b')).toMatchObject({ x: 500, y: 20 })
@@ -62,7 +57,6 @@ describe('the operations', () => {
 
     const gone = applied(canvas, [{ op: 'remove', id: 'a' }]).canvas
     expect(gone.nodes.map((one) => one.id)).not.toContain('a')
-    // A card takes its connections with it.
     expect(gone.edges).toEqual([])
   })
 
@@ -90,8 +84,6 @@ describe('the operations', () => {
   })
 })
 
-/** Two devices on one plane, joined by hand the way a room joins them: whatever one
- *  writes the other is given. */
 function joined(start: Canvas): [Y.Doc, Y.Doc] {
   const reader = new Y.Doc()
   const agent = new Y.Doc()
@@ -112,8 +104,6 @@ describe('an agent edit beside the reader drawing', () => {
     const start = plane(card('a', 0, 0), card('b', 400, 0))
     const [reader, agent] = joined(start)
 
-    // At the same moment: the reader drags card a, the agent rewrites card b and adds
-    // one, each against the plane as they had it.
     const theirs = readPlane(reader)
     const moved = stamped(theirs, movedBy(theirs, ['a'], 80, 40), 2000)
     reader.transact(() => pushPlane(reader, theirs, moved), 'here')
@@ -159,7 +149,6 @@ describe('an agent edit beside the reader drawing', () => {
     const { canvas } = applied(before, [{ op: 'add_card', text: 'Agent' }])
     const mine = stamped(before, canvas, 2000)
 
-    // The reader drew a card of their own in the meantime, and it was written.
     const written = stamped(
       before,
       { ...before, nodes: [...before.nodes, card('r', 0, 300)] },

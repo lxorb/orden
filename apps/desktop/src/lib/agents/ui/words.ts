@@ -1,11 +1,3 @@
-/** What an agent is doing, in one word: the verb it called, said the way somebody
- *  watching would say it.
- *
- *  Fifty-odd verbs come to ten words, because the reader wants to know whether it
- *  is reading, writing or pressing things, not which of five ways of reading a page it
- *  chose. The verbs that are bookkeeping - asking for its own status, pairing, saying
- *  goodbye - have no word and are not shown as something it did. */
-
 import { key, t } from '../../i18n.svelte'
 
 const OPENING = key('Opening')
@@ -16,7 +8,6 @@ const WRITING = key('Writing')
 const WAITING = key('Waiting')
 const RUNNING = key('Running')
 
-/** Each verb's word, untranslated: the key its row is filed under. */
 const WORDS: Readonly<Record<string, string>> = {
   browser_tabs: READING,
   browser_open: OPENING,
@@ -82,7 +73,6 @@ const WORDS: Readonly<Record<string, string>> = {
   run_terminal: RUNNING,
   read_terminal: READING,
   type_terminal: TYPING,
-  // The crate's own verbs beyond the browser (#1078): each said in the activity panel too.
   files: key('Files'),
   process: RUNNING,
   http: key('Web requests'),
@@ -100,7 +90,6 @@ const WORDS: Readonly<Record<string, string>> = {
   react: WRITING,
 }
 
-/** The word for a verb, translated, or null for bookkeeping. */
 export function wordFor(verb: string): string | null {
   const word = WORDS[verb]
   return word === undefined ? null : t(word)

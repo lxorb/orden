@@ -1,28 +1,3 @@
-/** The reader's applications, as an agent uses them: `application_tabs` (issue 1063, step 7;
- *  docs/agent-native.md 8.18, docs/apps.md).
- *
- *  Its own scope, `applications`, which the reader's own agents hold and a third party
- *  is granted. An application is a tab of the reader's (`workspace_tabs` opens its
- *  file); its session is the tab's, so the agent acts through the very connection the
- *  tab holds:
- *
- *  - `list`: the application tabs, where each runs and how it stands.
- *  - `start`, `stop`, `restart` on its host.
- *  - `picture`: the frame the tab receives now, as a PNG in the display's pixels.
- *  - `input`: moves, clicks, presses, the wheel, keys and text, in those pixels.
- *
- *  **The lock is the reader's.** Everything but `list` goes only while this device
- *  holds the application: its host takes input, Start, Stop and Restart from the holder
- *  alone (the relay passes nothing else), so an agent here drives an application on
- *  another computer only while this one holds it. Held elsewhere, it is refused as
- *  `by_hand`: Take over is the reader's to press, in the tab, and no agent presses it.
- *  Nothing reaches a real mouse or keyboard: input goes over the picture's own channel
- *  into the application's display, as the holder's does.
- *
- *  Asked as #1072 decided: in `confirm` mode a start, stop, restart or any input asks
- *  first, with "Always" for that application; Full permissions asks nothing. What the
- *  picture shows is the application's, never the reader's words (9.6). */
-
 import type { InputEvent } from '@orden/online/apps'
 import type { AgentAnswer } from '../../automation/caller'
 import { shownName } from '../../note-name'
@@ -33,14 +8,11 @@ import { asked } from './asks'
 import { type Call, done, need } from './call'
 import { Refused } from './problem'
 
-/** The most input events one call sends, and the longest text. */
 const MOST_EVENTS = 200
 const MOST_TEXT = 2000
 
-/** The buttons, by the number the host plays them as (`MouseEvent.button`). */
 const BUTTONS: Readonly<Record<string, number>> = { left: 0, middle: 1, right: 2 }
 
-/** The modifiers a key may be held with, by the names a chord says them in. */
 const MODIFIERS: Readonly<Record<string, { key: string; code: string }>> = {
   ctrl: { key: 'Control', code: 'ControlLeft' },
   control: { key: 'Control', code: 'ControlLeft' },
@@ -103,7 +75,6 @@ export async function applicationTabs(call: Call): Promise<AgentAnswer> {
   throw new Refused('bad_arguments', 'op is list, start, stop, restart, picture or input')
 }
 
-/** The application tab a call names. */
 function applicationTab(call: Call): Tab {
   const id = need(call, 'tab')
   const tab = workspace.tabs.find((one) => one.id === id)
@@ -114,7 +85,6 @@ function applicationTab(call: Call): Tab {
   return tab
 }
 
-/** Refused unless this device holds it: Take over is the reader's alone. */
 function held(tab: Tab, session: Session): void {
   if (session.holds) return
   const status = session.status
@@ -127,7 +97,6 @@ function held(tab: Tab, session: Session): void {
   throw new Refused('failed', `${named(tab)} is not held here (${status.is}): ask again shortly`)
 }
 
-/** One tab as `list` says it. */
 function listed(tab: Tab, session: Session | null) {
   const status = session?.status ?? null
   return {
@@ -147,7 +116,6 @@ function named(tab: Tab): string {
   return tab.path ? shownName(nameOf(tab.path)) : tab.id
 }
 
-/** What "Always" is kept under for one application: its file. */
 function siteOf(tab: Tab): string {
   return `application:${tab.path ?? tab.id}`
 }
@@ -156,8 +124,6 @@ function word(op: 'start' | 'stop' | 'restart'): string {
   return op === 'start' ? 'Start' : op === 'stop' ? 'Stop' : 'Restart'
 }
 
-/** A call's `events`, as the host plays them: each checked, a chord pressed and let go
- *  in order, a click as its press and release. */
 export function inputOf(said: unknown): InputEvent[] {
   if (!Array.isArray(said) || said.length === 0) {
     throw new Refused('bad_arguments', 'say events, a list of what to do')
@@ -223,9 +189,6 @@ function eventsOf(one: unknown, at: number): InputEvent[] {
   }
 }
 
-/** A key, or a chord such as `Ctrl+Shift+S`: the modifiers pressed, the key pressed and
- *  let go, the modifiers let go, each by a key of its own so the host lets go of what
- *  it pressed. */
 function chord(said: unknown, bad: (why: string) => Refused): InputEvent[] {
   if (typeof said !== 'string' || said.trim() === '') throw bad('say key, such as Enter or Ctrl+S')
   const parts = said.split('+').map((one) => one.trim())

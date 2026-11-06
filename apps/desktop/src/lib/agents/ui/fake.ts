@@ -1,12 +1,3 @@
-/** A crate in memory: the agents' half of the app, answering the activity UI the way
- *  `src-tauri/src/agents` does and telling it the same news.
- *
- *  For the tests, and for the drive of the browser build, which has no crate. It keeps
- *  the crate's rules where the UI can see them - a first stop pauses and a second
- *  closes the tabs, a tab shown is no longer the agent's - and nothing the UI cannot
- *  see. Every call it is asked is written down
- *  in `asked`, so a test can say what a press did. */
-
 import type {
   AgentEvent,
   AgentTab,
@@ -18,7 +9,6 @@ import type {
 } from '../verbs'
 import type { Source } from './source'
 
-/** A grant with the defaults the crate gives the reader's own agents. */
 function grantFor(id: string, name: string): Grant {
   return {
     id,
@@ -46,7 +36,6 @@ function grantFor(id: string, name: string): Grant {
 }
 
 export class FakeCrate implements Source {
-  /** What the crate holds. */
   readonly overview: Overview = {
     agents: [],
     tabs: [],
@@ -56,35 +45,26 @@ export class FakeCrate implements Source {
     connected: [],
   }
 
-  /** Every call the UI made, in order. */
   readonly asked: { command: string; args: unknown[] }[] = []
 
-  /** The audit log, one day of it. */
   readonly lines: Record<string, unknown>[] = []
 
-  /** What the shell was last told. */
   told: { key: string | null; words: ShellWords } | null = null
 
-  /** Whether this window holds the agents' pages, and whether it was hidden. */
   holding = true
   hidden = false
 
   private hearing: ((event: AgentEvent) => void) | null = null
   private next = 1
 
-  /** Where the news goes: the UI's `hear`. */
   listen(hear: (event: AgentEvent) => void): void {
     this.hearing = hear
   }
 
-  /** News, said. */
   emit(event: AgentEvent): void {
     this.hearing?.(event)
   }
 
-  // ---- scripted: what an agent does --------------------------------------------------
-
-  /** An agent connects. */
   connect(id: string, name: string): Grant {
     const grant = this.overview.agents.find((one) => one.id === id) ?? grantFor(id, name)
     if (!this.overview.agents.includes(grant)) this.overview.agents.push(grant)
@@ -93,7 +73,6 @@ export class FakeCrate implements Source {
     return grant
   }
 
-  /** An agent opens a tab of its own. */
   open(agent: string, url: string, title = ''): AgentTab {
     const tab: AgentTab = {
       id: `a${String(this.next++)}`,
@@ -108,15 +87,11 @@ export class FakeCrate implements Source {
     return tab
   }
 
-  /** An agent calls a verb on a tab. */
   act(agent: string, tab: string, verb: string, args: Record<string, unknown> = {}): void {
     this.lines.push({ at: Date.now(), agent, verb, tab, args, status: 'ok', ms: 20 })
     this.emit({ kind: 'acting', agent, tab, verb })
   }
 
-  /** An agent's call needs asking. */
-  /** A question an agent with Full permissions would have raised, answered as it is raised
-   *  (the crate's `approvals::granted`): nobody is asked. */
   granted(agent: string, category: Category, summary: string, tab?: string): Approval {
     const approval: Approval = {
       id: `q${String(this.next++)}`,
@@ -151,12 +126,9 @@ export class FakeCrate implements Source {
     return approval
   }
 
-  /** A client asking to become an agent (9.1). */
   pair(client: string): Approval {
     return this.ask('', 'pairing', client)
   }
-
-  // ---- the Source: what the UI asks ------------------------------------------------
 
   state(): Promise<Overview> {
     this.asked.push({ command: 'state', args: [] })

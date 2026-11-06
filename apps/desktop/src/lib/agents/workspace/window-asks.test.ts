@@ -1,6 +1,3 @@
-/** The clipboard and the questions an agent puts to the reader (#1078): each asked as
- *  #1072 decided, and a question waited for, answered, put away or asked about again. */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { callerOf } from '../../automation/caller'
 
@@ -70,7 +67,6 @@ describe('the clipboard', () => {
       result: { written: 2 },
     })
     expect(copied).toEqual(['hi'])
-    // Unsupervised, nothing asks.
     expect(asked).toEqual([])
   })
 

@@ -3,7 +3,6 @@ import { applied } from '../../search/replace'
 import { plan, readEdits } from './edits'
 import { DocError } from './problem'
 
-/** A text with the edits applied, the way the transaction would leave it. */
 function edited(
   text: string,
   edits: unknown,
@@ -70,8 +69,6 @@ describe('several edits in one call', () => {
   })
 })
 
-/** Beside a task is a line, beside a section or a block a paragraph: somebody adding
- *  one more presses Enter first. */
 describe('what goes in beside a line or a paragraph', () => {
   test('after a task is a line of its own', () => {
     expect(edited('- [ ] a\n- [ ] b\n', [{ at: { task: 'a' }, insert_after: '- [ ] new' }])).toBe(

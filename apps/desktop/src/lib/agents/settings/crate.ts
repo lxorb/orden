@@ -1,14 +1,3 @@
-/** What Settings > Agents asks the crate, as one interface (docs/agent-native.md 13.1).
- *
- *  The grants (`agents_read`, `agents_write`, `agents_mint`), the audit log a day at a
- *  time (`agents_log_days`, `agents_log`, `agents_log_clear`), the program a client runs
- *  as `nib mcp` (`mcp_program`), and the crate's news on `nib://agent`. One interface so
- *  the pane is the same pane over the real crate and over `fake.ts`, which the tests
- *  and the drive that photographs it hand it instead.
- *
- *  Everything that arrives is read rather than trusted: an answer from the crate is a
- *  boundary like any other, and a grant the pane misread would be written back wrong. */
-
 import { isRecord } from '../../stored'
 import { invoke } from '../../tauri'
 import {
@@ -23,18 +12,12 @@ import {
 
 export interface AgentsCrate {
   read(): Promise<Grant[]>
-  /** The whole list, as the crate keeps it: a grant left out is removed, token and all. */
   write(grants: Grant[]): Promise<Grant[]>
   mint(name: string): Promise<Minted>
-  /** The days the log has, newest first. */
   days(): Promise<string[]>
-  /** One day of the log, oldest first, as the crate wrote it. */
   day(day: string): Promise<unknown[]>
-  /** One agent's calls out of the log, or every call. */
   clear(agent: string | null): Promise<void>
-  /** The path a client runs as `nib mcp`, or null where there is none to say. */
   program(): Promise<string | null>
-  /** The crate's news, until the answer is called. */
   hear(on: (event: Heard) => void): Promise<() => void>
 }
 
@@ -47,7 +30,6 @@ const strings = (value: unknown): string[] =>
 const count = (value: unknown, fallback: number): number =>
   typeof value === 'number' && Number.isFinite(value) ? value : fallback
 
-/** As much of the crate's news as the pane acts on: which kind, and whose. */
 export interface Heard {
   kind: AgentEvent['kind']
   agent: string | null
@@ -64,7 +46,6 @@ const KINDS: readonly AgentEvent['kind'][] = [
   'stopped',
 ]
 
-/** An event's kind and agent: its own, or its question's. */
 function readHeard(value: unknown): Heard | null {
   if (!isRecord(value)) return null
   const kind = known(KINDS, value.kind)
@@ -118,7 +99,6 @@ const CATEGORIES: readonly Category[] = [
 
 const RULES: readonly SiteRule[] = ['allow', 'deny', 'agent-store']
 
-/** A grant as the crate serialises one (grants.rs), or null for anything else. */
 export function readGrant(value: unknown): Grant | null {
   if (!isRecord(value)) return null
   const {
@@ -186,7 +166,6 @@ function readMinted(value: unknown): Minted {
   return { grant, token }
 }
 
-/** The crate itself. */
 export const tauriCrate: AgentsCrate = {
   read: async () => readGrants(await invoke<unknown>('agents_read')),
   write: async (grants) => readGrants(await invoke<unknown>('agents_write', { grants })),
@@ -197,7 +176,6 @@ export const tauriCrate: AgentsCrate = {
     return Array.isArray(lines) ? lines.map((line: unknown) => line) : []
   },
   clear: (agent) => invoke('agents_log_clear', { agent }),
-  // Asked of `nib mcp`'s own half of the crate; a build without it has no line to copy.
   program: () =>
     invoke<unknown>('mcp_program').then(
       (path) => (typeof path === 'string' && path ? path : null),

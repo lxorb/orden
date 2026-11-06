@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** A short list somebody keeps by hand: the sites scripts may run on, the programs
-   *  the terminal starts without asking. The dictionary's shape in the Spelling pane -
-   *  the words, each of which is the button that takes it away, and a field for one
-   *  more under them - because it is the same thing: a list read and taken back here,
-   *  added to by typing.
-   *
-   *  What was typed is read by `parse` first, which answers the word to keep or
-   *  nothing; nothing leaves the field as it was, marked, so the reader can see what
-   *  was not taken and put it right. */
   import Cross from '../../Cross.svelte'
   import Hint from '../../Hint.svelte'
   import { t } from '../../i18n.svelte'
@@ -69,8 +60,6 @@
 </div>
 
 <style>
-  /* A list runs down the card rather than across it, and the field for another one
-     sits under the last of them: the Spelling pane's dictionary. */
   .words {
     flex-direction: column;
     align-items: stretch;
@@ -84,7 +73,6 @@
     gap: var(--space-2);
   }
 
-  /* The value box every setting's is, across the list rather than in the column. */
   .words > .add {
     inline-size: auto;
   }

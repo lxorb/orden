@@ -1,5 +1,3 @@
-/** A command line and what a terminal printed, as words. Pure; see terminal.ts. */
-
 export type Os = 'windows' | 'unix'
 
 export function osOf(platform: string): Os {
@@ -569,21 +567,10 @@ export function onTheList(command: string, programs: readonly string[], os: Os):
   return words !== null && argumentsStay(program.toLowerCase(), words.slice(1))
 }
 
-/** Whether a line starts only its first program: no second command after a `;`, an
- *  `&` or a `|`, nothing run inside it with backticks, `$(`, `(` or PowerShell's `@{`, no
- *  file written or read with `>` or `<`, nothing out of the history with `!`, and no word
- *  the shell makes into others (`$X`, `{a,b}`, `*`, `?`, `[`), which is how an option gets
- *  past the list of them in `onTheList`. Only such a line can be
- *  let through for being on an agent's list; `git status; rm -rf ~` starts `git` and is
- *  not one. Nor is a line with a control or a separator character anywhere: typed into a
- *  shell, Ctrl+U clears what came before it, Ctrl+O runs it, a backspace rubs it out and
- *  a tab completes it, so the words before Enter are not the words that run. */
 export function startsOnlyOne(command: string): boolean {
   return !/[;&|`<>!(){}$*?[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]|(?! )\p{Zs}/u.test(command)
 }
 
-/** What a terminal printed, as words: the escapes that colour and move things on a
- *  screen taken out, a carriage return taken out, and nothing else changed. */
 export function plainOf(printed: string): string {
   let out = ''
 
@@ -592,11 +579,9 @@ export function plainOf(printed: string): string {
     if (code === 27) {
       const next = printed[at + 1]
       if (next === '[') {
-        // Control sequence: parameters, then one final character.
         at += 2
         while (at < printed.length && !/[@-~]/.test(printed[at] ?? '')) at++
       } else if (next === ']') {
-        // Operating system command, ended by a bell or by ESC \.
         at += 2
         while (at < printed.length) {
           if (printed.charCodeAt(at) === 7) break

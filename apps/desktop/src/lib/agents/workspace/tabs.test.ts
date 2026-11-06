@@ -1,18 +1,7 @@
-/** Every kind of tab, as an agent sees and works it: where the reader is and what they
- *  have selected, a tab of each kind made behind the one in front, a page, the graph and
- *  the scratchpad's card shown, a tab renamed and saved, a note, a canvas and a terminal
- *  reached by the tab's id - and, the core of it, what none of these does without
- *  `workspace.focus`: change what the reader is looking at (docs/agent-native.md 5.4).
- *
- *  The window is a stand-in that writes down what it was asked, the way
- *  workspace.test.ts stands one in. */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { callerOf, type Caller } from '../../automation/caller'
 
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
-
-// ---- the window ------------------------------------------------------------------------
 
 const work = { id: 'work', name: 'Work', root: '/s/Work' }
 
@@ -48,7 +37,6 @@ function tab(id: string, kind: string, path: string | null, more: Partial<FakeTa
 }
 
 let tabs: FakeTab[] = []
-/** The tab in front of each pane. */
 const showing: Record<string, string> = {}
 
 const workspace = {
@@ -62,7 +50,6 @@ const workspace = {
   previewTabId: null as string | null,
   panes: {
     focusedId: 'p1',
-    /** Two panes side by side: p1 on the left, p2 on the right. */
     frame: {
       kind: 'split',
       id: 's1',
@@ -138,24 +125,19 @@ const workspace = {
 
 vi.mock('../../workspace.svelte', () => ({ workspace }))
 
-/** What `agents_ask` answers next. */
 let answer: Record<string, unknown> = { status: 'ok', result: {} }
 const asked: { command: string; args: Record<string, unknown> }[] = []
-/** Files on the disk that are no note, so `noteText` does not read them: a PDF of the
- *  person's own, named the way a page note's paper is. */
 const others = new Set(['/s/Work/Report.pages.pdf'])
 
 vi.mock('../../tauri', async (original) => ({
   ...(await original<typeof import('../../tauri')>()),
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     asked.push({ command, args })
-    // The browser has no stamps; its listing answers. See on-disk.ts.
     if (command === 'path_exists') return Promise.resolve(others.has(String(args.path)))
     return Promise.resolve(command === 'agents_ask' ? answer : null)
   },
 }))
 
-/** Whether the open space is shared with this account only to read, set by a test. */
 let readOnly = false
 vi.mock('../../sharing.svelte', () => ({
   isShared: () => false,
@@ -164,7 +146,6 @@ vi.mock('../../sharing.svelte', () => ({
   reachedByOthersIn: () => false,
   canWriteAt: () => !readOnly,
 }))
-/** Notes somebody else can write, set by a test. */
 const othersWrite = new Set<string>()
 vi.mock('../../web-tab/pages.svelte', () => ({ pages: { addressOf: () => null } }))
 vi.mock('../../views.svelte', () => ({ views: { of: () => null } }))
@@ -177,7 +158,6 @@ vi.mock('../../settings.svelte', () => ({ settings }))
 const openDocument = vi.fn((_path: string) => Promise.reject(new Error('no PDF here')))
 vi.mock('../../pdf/document', () => ({ openDocument }))
 
-/** Recently deleted: a note of this space, one of a space the agent does not reach. */
 const trash = {
   error: null as string | null,
   items: [
@@ -224,7 +204,6 @@ const docs = {
 }
 vi.mock('../docs', async () => ({ ...(await import('../docs/problem')), notes: docs }))
 
-/** The canvas drawn on screen, by document. */
 const card = { id: 'card-1', type: 'text', text: 'Idea', x: 0, y: 0, width: 200, height: 60 }
 const drawn = {
   picked: ['card-1'],
@@ -256,7 +235,6 @@ vi.mock('../../terminal/open', () => ({ openTerminal }))
 const renameTerminal = vi.fn((_tab: unknown, _name: string) => Promise.resolve())
 vi.mock('../../terminal/rename', () => ({ renameTerminal }))
 
-/** Which tabs have a shell running. */
 const running = new Set<string>()
 vi.mock('../../terminal/running', () => ({
   shellRunning: (id: string) => running.has(id),
@@ -267,7 +245,6 @@ vi.mock('../../terminal/history', () => ({
     Promise.resolve({ cols: 80, rows: 24, at: 7, text: '\x1b[32mbuilt\x1b[0m\r\nok\r\n' }),
 }))
 
-/** A screen: its rows, what was typed into it, and what it prints back. */
 const screen = {
   rows: ['PS C:\\> git status', 'On branch main', ''],
   typed: [] as string[],
@@ -295,8 +272,6 @@ const term = {
   },
   onWriteParsed: () => ({ dispose: () => undefined }),
 }
-/** An online terminal's session as an agent finds it (#1125): what stands in its way,
- *  and what pressing the app's own keys would have done. */
 const online = {
   blocked: null as { why: string; lasting: boolean } | null,
   held: false,
@@ -310,7 +285,6 @@ vi.mock('../../terminal/sessions.svelte', () => ({
     return {
       term: {
         ...term,
-        // Enter under an online terminal's card is Take over: never an agent's to press.
         input: (data: string) => {
           if (isOnline && online.blocked) online.taken += 1
           else term.input(data)
@@ -342,8 +316,6 @@ vi.mock('../../terminal/sessions.svelte', () => ({
   },
 }))
 
-/** The reader's account and online machine (#1125): signed in, allowed, a machine
- *  awake with one session saved as Build.term and one not saved, set by a test. */
 const account = { accountToken: 'token' as string | null }
 vi.mock('../../account.svelte', async (original) => {
   const real = await original<typeof import('../../account.svelte')>()
@@ -367,7 +339,6 @@ vi.mock('../../online/calls', () => ({ listed }))
 vi.mock('../../sync2/runner.svelte', () => ({
   runner: { fileOf: (id: string) => (id === 'f1' ? '/s/Work/Build.term' : null) },
 }))
-/** What the account answers a new online terminal: a tab on a new session, or why not. */
 let making: string | null = null
 const madeOnline = vi.fn((_beside: string | null, _activate: boolean) => {
   if (making) return Promise.resolve(making)
@@ -381,8 +352,6 @@ const madeOnline = vi.fn((_beside: string | null, _activate: boolean) => {
 vi.mock('../../online/open', () => ({ madeOnline }))
 
 const { runAgentVerb } = await import('./index')
-
-// ---- the agent ---------------------------------------------------------------------------
 
 const EVERY = ['context', 'notes.read', 'notes.write', 'tree', 'workspace', 'terminal']
 
@@ -437,8 +406,6 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-// ---- the tests ---------------------------------------------------------------------------
-
 describe('where the reader is', () => {
   test('every tab, of every kind, with its pane and its state', async () => {
     const said = (await call('get_context', {})) as { result: Record<string, unknown> }
@@ -455,9 +422,6 @@ describe('where the reader is', () => {
     })
   })
 
-  /** Tabs are shared across spaces, so a note of another space can be open. Its path
-   *  relative to the active space is the whole local path, which names this machine's
-   *  folders and nothing an agent can reach by it (B385). */
   test("a tab of another space gives no path, rather than this machine's whole one", async () => {
     const outside = workspace.outside
     workspace.outside = (path: string) => !/^\/s\/(Work|Home)\//.test(path)
@@ -484,8 +448,6 @@ describe('where the reader is', () => {
     })
   })
 
-  /** A note somebody shared with the reader on its own has no path here, so its share
-   *  says whose words it holds (docs/agent-native.md 9.6). */
   test('a note shared with the reader, in front, is read as data', async () => {
     const theirs = tab('theirs', 'note', null, { shown: 'Their plan' })
     theirs.note.shared = 'item-1'
@@ -494,7 +456,6 @@ describe('where the reader is', () => {
     expect(await call('get_context', {})).toMatchObject({ untrusted: 'note shared with you' })
   })
 
-  /** Tabs outlive a space switch: the tab in front is judged by its own note. */
   test('a tab of a shared space, in front of the reader’s own, is read as data', async () => {
     tabs.push(tab('team', 'note', '/s/Team/Plan.md', { shown: 'Plan' }))
     workspace.activeTabId = 'team'
@@ -513,7 +474,6 @@ describe('a tab of every kind, made behind the reader', () => {
       await call('workspace_tabs', { op: 'new', kind: 'note', content: 'Hello' }),
     ).toMatchObject({ result: { id: 'new-note', unsaved: true } })
     expect(workspace.openUnsaved).toHaveBeenLastCalledWith('note', '', undefined, 'n1', false)
-    // The words go in as the agent's own edit, by the tab.
     expect(docs.writeNote).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'Claude Code' }),
       { path: '', tab: 'new-note' },
@@ -601,7 +561,6 @@ describe('opening', () => {
     await call('workspace_tabs', { op: 'open', view: 'graph' }, agent(focusing))
     expect(workspace.openGraph).toHaveBeenCalled()
 
-    // The scratchpad is its card, never a tab, and behind leaves the keyboard alone.
     expect(await call('workspace_tabs', { op: 'open', view: 'scratchpad' })).toMatchObject({
       result: { scratchpad: true },
     })
@@ -655,7 +614,6 @@ describe('naming and saving', () => {
 })
 
 describe('a file of every kind', () => {
-  /** What was written where, by `write_note`. */
   const written = () =>
     Object.fromEntries(
       asked
@@ -692,8 +650,6 @@ describe('a file of every kind', () => {
   })
 
   test('never a page note beside a PDF it would take for its paper', async () => {
-    // A blank `Report.pages` beside the person's `Report.pages.pdf` held that PDF as
-    // its paper: hidden from the file list, and gone with the note when it was deleted.
     expect(await call('create_note', { path: 'Report', kind: 'pages' })).toMatchObject({
       code: 'exists',
     })
@@ -733,8 +689,6 @@ describe('a note and a canvas, by their tab', () => {
     expect(workspace.open).not.toHaveBeenCalled()
   })
 
-  /** A model asked to read Inbox.md called read_note with that path and
-   *  `tab: "scratchpad"`, and read the scratchpad's empty page as the note (#325). */
   test('a path and a tab that name two notes are refused, and one note named twice is read', async () => {
     docs.readNote.mockClear()
     for (const tab of ['scratchpad', 'n1', 'd1']) {
@@ -858,7 +812,6 @@ describe('tabs moved and panes arranged (#1078)', () => {
 })
 
 describe('the reader terminals', () => {
-  /** An online terminal of the reader's (#1055), beside the local one. */
   const withOnline = () =>
     tabs.push(tab('o1', 'terminal', '/s/Work/Build.term', { shown: 'Build', doc: '' }))
 
@@ -915,7 +868,6 @@ describe('the reader terminals', () => {
     expect(screen.typed).toEqual(['git log\r'])
     expect(said).toMatchObject({ result: { tab: 'o1', typed: 'git log + Enter' } })
 
-    // Asked as a local one asks (#1072).
     answer = { status: 'needs_approval', approval: 'a3', summary: 'rm' }
     expect(await call('type_terminal', { tab: 'o1', text: 'rm -rf build' })).toMatchObject({
       status: 'needs_approval',
@@ -953,7 +905,6 @@ describe('the reader terminals', () => {
     })
     expect(online.taken).toBe(0)
     expect(screen.typed).toEqual([])
-    // Its last screen is still read, and said to be that.
     expect(await call('read_terminal', { tab: 'o1' })).toMatchObject({
       result: { tab: 'o1', last_screen: true },
     })
@@ -993,7 +944,6 @@ describe('the reader terminals', () => {
     })
     expect(madeOnline).toHaveBeenCalledWith('n1', false)
 
-    // The same tab every terminal tool takes, reached through its session's own socket.
     expect(
       await call('type_terminal', { tab: 'online-new', text: 'git log', wait_ms: 1 }),
     ).toMatchObject({ result: { tab: 'online-new', typed: 'git log + Enter' } })
@@ -1059,7 +1009,6 @@ describe('the reader terminals', () => {
       untrusted: 'tab titles and terminal output',
     })
 
-    // A session whose file is in a space beyond the grant does not exist to the agent.
     const elsewhere = agent(EVERY, { spaces: ['Other'] })
     workspace.activeSpace = { id: 'other', name: 'Other', root: '/s/Other' }
     workspace.spaces.push(workspace.activeSpace)

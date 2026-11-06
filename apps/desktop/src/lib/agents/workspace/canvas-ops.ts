@@ -1,8 +1,3 @@
-/** What an agent does to a canvas, as operations on its objects by id, and what it
- *  reads of one. Pure: the objects nobody named come back as the very same objects,
- *  which is what the surface, the stamp and the room all rely on to tell what changed.
- *  See canvas.ts for where the operations are applied. */
-
 import {
   type Canvas,
   type CanvasNode,
@@ -16,7 +11,6 @@ import { settled } from '@orden/markdown/pages'
 import { hasPages, pageIn, pageOperation, placeOnPage } from './pages-ops'
 import { Refused } from './problem'
 
-/** A canvas as an agent reads it: JSON Canvas's two lists, and how much ink. */
 export function readable(canvas: Canvas) {
   return { nodes: canvas.nodes, edges: canvas.edges, ink: canvas.ink.length }
 }
@@ -42,8 +36,6 @@ function nodeIn(canvas: Canvas, id: string | null): CanvasNode {
   return found
 }
 
-/** Where a card with no place asked for goes: under everything already on the plane,
- *  a card's height apart, so it is never on top of the reader's work. */
 function freePlace(canvas: Canvas): { x: number; y: number } {
   if (!canvas.nodes.length) return { x: 0, y: 0 }
 
@@ -52,7 +44,6 @@ function freePlace(canvas: Canvas): { x: number; y: number } {
   return { x: left, y: bottom + DEFAULT_HEIGHT }
 }
 
-/** Which sides two cards meet on: the ones facing each other, across or down. */
 function sidesBetween(from: CanvasNode, to: CanvasNode): [Side, Side] {
   const dx = to.x + to.width / 2 - (from.x + from.width / 2)
   const dy = to.y + to.height / 2 - (from.y + from.height / 2)
@@ -61,8 +52,6 @@ function sidesBetween(from: CanvasNode, to: CanvasNode): [Side, Side] {
   return dy >= 0 ? ['bottom', 'top'] : ['top', 'bottom']
 }
 
-/** The page an operation puts something on, for a page note, or null where it names
- *  none. A canvas has no pages to name. */
 function pageNamed(canvas: Canvas, op: Record<string, unknown>) {
   if (op.page === undefined) return null
   if (!hasPages(canvas)) throw new Refused('bad_arguments', 'a canvas has no pages')
@@ -70,23 +59,14 @@ function pageNamed(canvas: Canvas, op: Record<string, unknown>) {
   return pageIn(canvas, op.page)
 }
 
-/** What an agent may say as an operation, in the words a refusal lists them in. */
 const OPS =
   'add_card, edit_text, move, connect, remove, and in a page note add_page, remove_page, move_page'
 
-/** The operations on a canvas, applied one after the other, and the ids of what they
- *  made. Pure: the objects nobody named come back as the very same objects, which is
- *  what the surface, the stamp and the room all rely on to tell what changed.
- *
- *  A page note takes the page operations too (pages-ops.ts), and a card's `page`,
- *  which measures its `x` and `y` from that page's corner. */
 export function applied(canvas: Canvas, ops: unknown): { canvas: Canvas; made: string[] } {
   if (!Array.isArray(ops) || !ops.length) {
     throw new Refused('bad_arguments', 'ops is a list of at least one operation')
   }
 
-  // A page note in the column the reader sees it in, which a page's `x` and `y` are
-  // measured from; a canvas comes back as itself.
   let now = settled(canvas)
   const made: string[] = []
 
@@ -165,7 +145,6 @@ export function applied(canvas: Canvas, ops: unknown): { canvas: Canvas; made: s
         if (id === null || !there)
           throw new Refused('not_found', `there is no ${String(id)} on the canvas`)
 
-        // A page goes with what is written on it, and never the last one.
         const page = now.nodes.find((node) => node.id === id)?.type === 'page'
         now = page
           ? (pageOperation(now, { op: 'remove_page', id })?.canvas ?? now)

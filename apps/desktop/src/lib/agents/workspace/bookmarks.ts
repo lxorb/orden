@@ -1,12 +1,3 @@
-/** The bookmarks above the file list: `bookmarks` with `list`, `add` and `remove`
- *  (docs/agent-native.md 5.4).
- *
- *  The space's own list (workspace/bookmarks.svelte.ts), of whichever space is named:
- *  it is kept per space and by root, so another space's list is read and written where
- *  it is kept, and it reaches the account and every machine the way the reader's own
- *  bookmarking does. An agent keeps notes, folders, headings and searches; groups and
- *  graph views are the reader's arrangement of the list and are left to them. */
-
 import type { AgentAnswer } from '../../automation/caller'
 import { notePath } from '../../space-paths'
 import { type Bookmark, MOST_BOOKMARKS, sameBookmark } from '../../workspace/bookmarks.svelte'
@@ -17,8 +8,6 @@ import { Refused } from './problem'
 import { judged, type Place, placeOf } from './spaces'
 import { entryIn } from './tree'
 
-/** The bookmark a call describes: a search by its query, a heading by its note and its
- *  words, a note or a folder by its path, which has to be there. */
 async function bookmarkOf(call: Call, place: Place): Promise<Bookmark> {
   const query = maybe(call, 'query')
   if (query !== null) return { kind: 'search', path: '', text: query }
@@ -37,7 +26,6 @@ async function bookmarkOf(call: Call, place: Place): Promise<Bookmark> {
   return { kind: entry.is_dir ? 'folder' : 'note', path, text: '' }
 }
 
-/** A bookmark as an agent reads it. */
 function shown(mark: Bookmark) {
   return {
     kind: mark.kind,
@@ -71,8 +59,6 @@ export async function bookmarks(call: Call): Promise<AgentAnswer> {
     }
 
     case 'remove': {
-      // Named the way it was added, or by the path or the query alone, which is what
-      // `list` hands out.
       const mark = await bookmarkOf(call, place).catch(() => null)
       const found =
         held.find((one) => mark !== null && sameBookmark(one, mark)) ??

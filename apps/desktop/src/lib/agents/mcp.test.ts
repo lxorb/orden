@@ -34,7 +34,6 @@ describe('the line that adds Orden to a client', () => {
 })
 
 describe("the MCP server's tools", () => {
-  /** The table `nib mcp` lists from, read as the crate includes it. */
   const table = JSON.parse(
     readFileSync(
       fileURLToPath(new URL('../../../src-tauri/src/mcp/tools.json', import.meta.url)),

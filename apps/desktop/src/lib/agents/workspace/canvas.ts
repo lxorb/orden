@@ -1,24 +1,3 @@
-/** Canvases and page notes: `read_canvas` and `edit_canvas` (docs/agent-native.md 8.7).
- *
- *  A canvas is JSON Canvas, and that is what an agent reads: its cards with their ids,
- *  words and places, and the connections between them. A stroke of ink is thousands of
- *  points nobody can read, so the ink is said as how many strokes there are.
- *
- *  An edit is operations on objects by id - add a card, change its words, move it,
- *  connect two, remove one - made with the surface's own edits (canvas/edits.ts), so
- *  it touches exactly the objects it names and nothing else. Where it goes decides how
- *  it meets the reader's drawing:
- *
- *  - a plane on screen: one edit of the surface itself, made in the same breath as it
- *    is worked out, so whatever the reader drew a moment before is in what it is worked
- *    out from; one step for Ctrl+Z like any gesture, and into the room's Yjs document
- *    through the room's binding when the plane is in one (rooms/plane-bind.ts), where
- *    it merges with every other device object by object;
- *  - a canvas open but not drawn, or closed, or drawn in a tab and never saved: the file's words, stamped, and merged with
- *    whatever the file says by the time it is written, by the same object-by-object
- *    merge two devices' copies get (canvas-merge.ts), so a change that landed while the
- *    agent was working is kept rather than written over. */
-
 import type { AgentAnswer } from '../../automation/caller'
 import { type Canvas, merged, readCanvas as parse, stamped, writeCanvas } from '../../canvas/format'
 import { canWriteAt } from '../../sharing.svelte'
@@ -44,15 +23,10 @@ import {
   sharedSource,
 } from './spaces'
 
-/** A canvas a call names: a `.canvas` or `.pages` file of a space it may reach, by its
- *  path, or by `tab` - which also reaches one drawn in a tab and not saved yet. */
 interface Target {
   place: Place
-  /** Its path in the space, or the empty string for one with no file. */
   relative: string
-  /** Where it is on this disk; null for one with no file. */
   path: string | null
-  /** The document of one with no file, which only its tab holds. */
   draft: NoteDoc | null
 }
 
@@ -74,15 +48,11 @@ function canvasOf(call: Call, writing: boolean): Target {
   return { place, relative, path, draft: null }
 }
 
-/** The kinds a canvas verb takes a tab of: the two planes. */
 const PLANES = kindsWhere((one) => one.plane)
 
-/** The canvas or page note in a tab: by its file when it has one, as though the path
- *  had been said, and otherwise the document the tab holds. */
 function canvasInTab(call: Call, writing: boolean): Target {
   const { tab, place, relative } = namedTab(call, PLANES, 'a canvas or page note')
   if (relative !== null) {
-    // The tab's own space, said: one the call names none of is the thread's otherwise.
     const args = { ...call.args, tab: null, path: relative, space: place.space.id }
     return canvasOf({ ...call, args }, writing)
   }
@@ -95,13 +65,10 @@ function canvasInTab(call: Call, writing: boolean): Target {
   return { place, relative: '', path: null, draft: tab.note }
 }
 
-/** The document a canvas is open as: its tab's for one with no file. */
 function openAs(target: Target): NoteDoc | null {
   return target.draft ?? (target.path === null ? null : workspace.documentAt(target.path))
 }
 
-/** The plane on screen for a canvas, when there is one. Fetched with the first canvas
- *  question: the store is a surface's worth of code. */
 async function drawnAt(target: Target) {
   const open = openAs(target)
   if (!open) return null
@@ -110,8 +77,6 @@ async function drawnAt(target: Target) {
   return CanvasStore.drawing(open, workspace.tabs)
 }
 
-/** The canvas as it stands: the plane on screen, the open document's words, or the
- *  file's. */
 async function canvasAt(target: Target): Promise<Canvas> {
   const drawn = await drawnAt(target)
   if (drawn) return drawn.canvas
@@ -131,12 +96,10 @@ async function canvasAt(target: Target): Promise<Canvas> {
   return parse(words)
 }
 
-/** Whose page note it is: a `.pages` file, or a page note in a tab. */
 function isPages(target: Target): boolean {
   return target.draft ? target.draft.kind === 'pages' : isPagesTarget(target.relative)
 }
 
-/** What a target is called in an answer and a question. */
 function nameOf(target: Target, call: Call): string {
   return target.relative || `tab ${maybe(call, 'tab') ?? ''}`
 }
@@ -153,8 +116,6 @@ export async function readCanvas(call: Call): Promise<AgentAnswer> {
 
 export async function editCanvas(call: Call): Promise<AgentAnswer> {
   const target = canvasOf(call, true)
-  // Worked out once against the canvas as it stands, to refuse what cannot be done
-  // before the reader is asked anything.
   applied(await canvasAt(target), call.args.ops)
 
   const named = nameOf(target, call)
@@ -165,8 +126,6 @@ export async function editCanvas(call: Call): Promise<AgentAnswer> {
   return done({ path: target.relative, made })
 }
 
-/** The operations into the canvas where it is, worked out against what it holds at
- *  that moment; see the top of this file. Answers the ids of what they made. */
 async function edited(target: Target, ops: unknown, source: string | undefined): Promise<string[]> {
   const drawn = await drawnAt(target)
   if (drawn) {
@@ -191,7 +150,6 @@ async function edited(target: Target, ops: unknown, source: string | undefined):
   const done = applied(before, ops)
   const mine = stamped(before, done.canvas, Date.now())
 
-  // Whatever landed in the file while this was being worked out is kept beside it.
   const now = await invoke<string>('read_note', { path }).catch(() => was)
   const kept = now === was ? mine : merged(mine, parse(now))
 

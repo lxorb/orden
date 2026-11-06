@@ -1,18 +1,3 @@
-/** A command in a shell: `run_terminal` (docs/agent-native.md 8.9).
- *
- *  A terminal is the whole machine, so this is its own scope, off unless the reader
- *  grants it, and even then a command whose program is not on the agent's own list asks
- *  the reader first, in either mode (9.3). The shell is one of the shells the crate
- *  found (the one Settings chose), started in a folder of a space the agent reaches,
- *  through the terminal's own commands (src-tauri/src/terminal.rs): the window never
- *  names a program, an argument or a variable, and neither does an agent - it types a
- *  line into a shell, as a person at the keyboard would, and `exit` after it.
- *
- *  No tab: the command runs in a session of its own that nobody is shown, and what it
- *  printed comes back, cleaned of the escapes a screen would draw, as the terminal's
- *  words rather than the reader's (9.6). A command that runs past its time is ended.
- *  The reader's own command line never reaches a shell (docs/terminal.md). */
-
 import type { AgentAnswer } from '../../automation/caller'
 import { Channel, invoke } from '../../native'
 import { shells } from '../../terminal/shells.svelte'
@@ -24,12 +9,9 @@ import { Refused } from './problem'
 import { onTheList, osOf, plainOf, startsOnlyOne } from './shell-text'
 import { judged, onDisk, placeOf } from './spaces'
 
-/** How long a command may run when the agent does not say, and at the most. */
 const WAIT = 60_000
 const MOST_WAIT = 600_000
 
-/** How much of what it printed comes back: the end of it, which is where a build or a
- *  test run says how it went. */
 const MOST_OUTPUT = 100_000
 
 export async function runTerminal(call: Call): Promise<AgentAnswer> {
@@ -39,8 +21,6 @@ export async function runTerminal(call: Call): Promise<AgentAnswer> {
   const command = need(call, 'command')
   if (/[\r\n]/.test(command)) throw new Refused('bad_arguments', 'one command line at a time')
 
-  // One of the reader's terminals, local or online, is typed into as `type_terminal`
-  // types (#1125): one way for every kind of terminal.
   if (maybe(call, 'tab') !== null) {
     const { runInTab } = await import('./terminal-tab')
     return runInTab(call)
@@ -74,9 +54,6 @@ export async function runTerminal(call: Call): Promise<AgentAnswer> {
   )
 }
 
-/** The command typed into a fresh shell and `exit` after it, and everything it printed
- *  until the shell ended or the time ran out. `exit` is null for a shell that was ended
- *  because it had not. */
 function session(
   shell: string,
   folder: string,
@@ -95,8 +72,6 @@ function session(
       if (message instanceof ArrayBuffer) {
         const bytes = new Uint8Array(message)
         printed += decoder.decode(bytes, { stream: true })
-        // Said at once, since nothing draws it: the crate holds back past a megabyte
-        // nobody has seen.
         void invoke('pty_seen', { id, bytes: bytes.length }).catch(() => undefined)
         return
       }

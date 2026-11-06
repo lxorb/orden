@@ -1,15 +1,3 @@
-/** The settings an agent may read and change: `read_setting` and `write_setting`
- *  (docs/agent-native.md 8.8).
- *
- *  Every setting Settings has a row for, by the name the settings file sets it by
- *  (`appearance.accent`, `editor.textSize`, `shortcuts.new-note`: #673's keys, #1078),
- *  read freely and written only with `settings` and the reader's say; and a short list of
- *  older names beside them. Never the account, the sync, the AI keys, the agents' own
- *  grants or anything in `automation.json` - none of those has a row with a name, so
- *  there is no name to ask for them by. Each is written through the row's own control,
- *  so what changes is what the pane would have changed; one the settings file holds is
- *  the file's, and refused. A pane's name alone (`appearance`) lists its settings. */
-
 import type { AgentAnswer } from '../../automation/caller'
 import { ACCENTS } from '../../accents'
 import { CATALOGUE_IDS, i18n } from '../../i18n.svelte'
@@ -21,14 +9,10 @@ import { asked } from './asks'
 import { type Call, done, need } from './call'
 import { Refused } from './problem'
 
-/** One setting: what it says now, and how it is changed. `write` is handed the value
- *  as the agent sent it, refuses what the setting cannot be, and answers the change
- *  itself, which is made only once the reader has said yes. */
 interface Setting {
   about: string
   read: (call: Call) => unknown
   write: (value: unknown, call: Call) => Change | Promise<Change>
-  /** What it may be, where that is a short list. */
   choices?: readonly string[]
 }
 
@@ -56,7 +40,6 @@ function numberIn(value: unknown, choices: readonly number[], name: string): num
   return found
 }
 
-/** A switch the editor turns with a toggle, set to what was asked. */
 function toggled(read: () => boolean, toggle: () => void, about: string): Setting {
   return {
     about,
@@ -163,14 +146,11 @@ const SETTINGS: Record<string, Setting> = {
   },
 }
 
-/** Every row Settings has with a name, fetched with the first call that needs them. */
 async function rows(): Promise<Field[]> {
   const { declarations } = await import('../../settings/declarations')
   return declarations()
 }
 
-/** A row of Settings, by its name, as a setting: read and written through its own control,
- *  and held to what the settings file's schema says it may be. */
 async function declaredSetting(key: string, all: Field[]): Promise<Setting | null> {
   const { refusal, schemaOf } = await import('../../settings/file-schema')
   const named = all.filter((one) => one.key === key)
@@ -204,7 +184,6 @@ async function declaredSetting(key: string, all: Field[]): Promise<Setting | nul
       return () => {
         if (schema.type === 'list') {
           const listed = value as string[]
-          // Those in the list on first, so the last one on is never turned off on the way.
           const members = [...named].sort(
             (a, b) =>
               Number(listed.includes(b.member ?? '')) - Number(listed.includes(a.member ?? '')),
@@ -216,13 +195,11 @@ async function declaredSetting(key: string, all: Field[]): Promise<Setting | nul
   }
 }
 
-/** A row set to `value` where it differs, since a switch's setter may be a toggle. */
 function put(field: Field, value: unknown): void {
   const one = field as unknown as { get(): unknown; set(value: unknown): void }
   if (one.get() !== value) one.set(value)
 }
 
-/** The setting a call names, or a refusal that says how they are named. */
 async function settingOf(call: Call): Promise<{ key: string; setting: Setting }> {
   const key = need(call, 'key')
   const setting = SETTINGS[key] ?? (await declaredSetting(key, await rows()))
@@ -236,7 +213,6 @@ async function settingOf(call: Call): Promise<{ key: string; setting: Setting }>
   return { key, setting }
 }
 
-/** A pane's settings, by its name: every row whose name starts with it. */
 async function paneOf(prefix: string, call: Call): Promise<AgentAnswer | null> {
   const all = await rows()
   const keys = [

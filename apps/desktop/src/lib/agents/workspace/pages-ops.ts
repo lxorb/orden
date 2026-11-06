@@ -1,12 +1,3 @@
-/** What an agent reads of a page note, and the three things it does to its pages.
- *
- *  A page note is a canvas with pages among its objects (docs/pages.md), so a card, a
- *  connection and a stroke are canvas-ops.ts's. What a canvas has no word for is the
- *  column: which page an object is on, and a page put in, taken out or moved in the
- *  order. Those are `@orden/markdown/pages`' own four, the ones the page menu makes, so an
- *  agent's new page has the size and ruling of the one it follows, a page taken out takes
- *  what was written on it, and the last page is never taken away. Pure. */
-
 import {
   added,
   moved,
@@ -18,8 +9,6 @@ import {
 import type { Canvas, CanvasNode, PageNode } from '../../canvas/format'
 import { Refused } from './problem'
 
-/** Where an agent's card goes on a page when it says no place: inside the margin a
- *  person leaves, under whatever is on the page already. */
 const MARGIN = 40
 
 interface Box {
@@ -29,17 +18,11 @@ interface Box {
   height: number
 }
 
-/** The number of the page a thing is on, counting from one, by where its top left
- *  corner is - the same question a stroke is asked, by where the pen went down. Null
- *  for something beside the column. */
 function pageNumberOf(pages: readonly PageNode[], box: Box): number | null {
   const at = pages.findIndex((page) => onPage({ points: [{ x: box.x, y: box.y }] }, page))
   return at < 0 ? null : at + 1
 }
 
-/** A page note as an agent reads it: the pages in order, and every other object with
- *  the page it is on. Laid out first, the way the surface lays a note out as it opens,
- *  so a file another device wrote reads in the same column the reader sees. */
 export function readablePages(canvas: Canvas) {
   const laid = settled(canvas)
   const pages = pagesOf(laid)
@@ -63,8 +46,6 @@ export function readablePages(canvas: Canvas) {
   }
 }
 
-/** The page an operation names by its number (from one) or its id, in a page note
- *  already laid out. */
 export function pageIn(canvas: Canvas, named: unknown): PageNode {
   const pages = pagesOf(canvas)
   const found =
@@ -76,8 +57,6 @@ export function pageIn(canvas: Canvas, named: unknown): PageNode {
   return found
 }
 
-/** Where a card goes on a page: at `x`, `y` measured from the page's corner when the
- *  agent says them, and otherwise inside the margin under what the page holds. */
 export function placeOnPage(
   canvas: Canvas,
   page: PageNode,
@@ -95,12 +74,10 @@ export function placeOnPage(
   return { x: page.x + MARGIN, y: Math.min(lowest, page.y + page.height - MARGIN) }
 }
 
-/** Whether a canvas holds pages at all, which is what lets the page operations in. */
 export function hasPages(canvas: Canvas): boolean {
   return pagesOf(canvas).length > 0
 }
 
-/** One of the three page operations, or null for an operation that is not one. */
 export function pageOperation(
   canvas: Canvas,
   op: Record<string, unknown>,
