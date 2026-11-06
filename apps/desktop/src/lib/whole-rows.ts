@@ -22,10 +22,11 @@ export function wholeRows(list: HTMLElement, _rows?: unknown) {
     const room = list.clientHeight
     if (list.scrollHeight <= room) return
 
-    const top = list.getBoundingClientRect().top - list.scrollTop
+    const box = list.getBoundingClientRect()
+    const scale = box.height && list.offsetHeight ? box.height / list.offsetHeight : 1
     const rows = [...list.children]
     const cut = cutAt(
-      rows.map((one) => one.getBoundingClientRect().bottom - top),
+      rows.map((one) => (one.getBoundingClientRect().bottom - box.top) / scale + list.scrollTop),
       rows.map((one) => one.classList.contains('nib-section')),
       room,
       parseFloat(getComputedStyle(list).paddingBottom) || 0,

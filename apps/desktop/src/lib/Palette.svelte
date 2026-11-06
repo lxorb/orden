@@ -646,6 +646,7 @@
   }
 
   .field {
+    flex: none;
     min-height: 0;
     padding: 0;
     border: none;
