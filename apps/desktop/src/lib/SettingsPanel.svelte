@@ -1414,7 +1414,7 @@
     --screen-width: var(--screen-panes);
     z-index: var(--z-settings);
     display: grid;
-    grid-template-columns: 14rem 1fr;
+    grid-template-columns: clamp(10rem, 32%, 14rem) minmax(0, 1fr);
     overflow: hidden;
   }
 
@@ -1550,7 +1550,7 @@
 
   .setting .nib-segmented {
     flex: none;
-    min-width: var(--setting-value);
+    min-width: min(var(--setting-value), 100%);
   }
 
   .setting .value {

@@ -10,8 +10,8 @@ const SOURCE = readFileSync(
 const RULE = /\.setting \.nib-segmented \{([^}]*)\}/.exec(SOURCE)?.[1]
 
 describe('a segmented setting', () => {
-  test('is never narrower than the column its short choices line up in', () => {
-    expect(RULE).toMatch(/min-width:\s*var\(--setting-value\)/)
+  test('is never narrower than the column its short choices line up in, while the row is wider', () => {
+    expect(RULE).toMatch(/min-width:\s*min\(var\(--setting-value\),\s*100%\)/)
   })
 
   test('and grows to its words rather than holding them to one width', () => {

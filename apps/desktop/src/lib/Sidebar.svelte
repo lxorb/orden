@@ -962,7 +962,7 @@
     flex: none;
     display: flex;
     min-height: 0;
-    width: var(--panel-width, var(--sidebar-width));
+    width: min(var(--panel-width, var(--sidebar-width)), var(--panel-room, 100vw));
     transition:
       width var(--dur-base) var(--ease-out),
       visibility 0s;
@@ -1039,7 +1039,7 @@
 
   aside {
     position: relative;
-    width: var(--panel-width, var(--sidebar-width));
+    width: min(var(--panel-width, var(--sidebar-width)), var(--panel-room, 100vw));
     flex: none;
     display: flex;
     flex-direction: column;
