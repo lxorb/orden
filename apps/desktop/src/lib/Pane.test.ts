@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { conversationKey } from './chats/conversation-key'
 import { TAB_KINDS } from './workspace/tab-kinds'
 
 /** What fills a pane is fetched the first time a tab of its kind is in front: a
@@ -24,6 +25,7 @@ describe('a surface a pane is filled with', () => {
       'applicationSurface',
       'canvasSurface',
       'chatSurface',
+      'conversationSurface',
       'emptySurface',
       'graphSurface',
       'pagesSurface',
@@ -35,6 +37,16 @@ describe('a surface a pane is filled with', () => {
       'viewSurface',
       'webSurface',
     ])
+  })
+
+  test("tells another service's conversation by the words its tab is opened with", () => {
+    const surfaces = readFileSync(
+      fileURLToPath(new URL('./surfaces.svelte.ts', import.meta.url)),
+      'utf8',
+    )
+    const key = conversationKey({ provider: 'mail', account: 'a', conversation: 'c' })
+    const head = key.slice(0, key.indexOf('\n'))
+    expect(surfaces).toContain(`words.startsWith('${head}\\n')`)
   })
 
   test('offers a reload where it could not be fetched, rather than a blank pane', () => {

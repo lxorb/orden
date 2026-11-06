@@ -3025,4 +3025,8 @@ export const ar: Dictionary = {
   'Not on this device': 'ليست على هذا الجهاز',
   'Not on this device. It opens once you are online again.':
     'ليست على هذا الجهاز. ستُفتح عندما تعود إلى الاتصال بالإنترنت.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'خادم IMAP',
+  'SMTP server': 'خادم SMTP',
+  'User name': 'اسم المستخدم',
 }

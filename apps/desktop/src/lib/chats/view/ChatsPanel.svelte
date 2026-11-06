@@ -20,8 +20,13 @@
   import { faceOf, nameOf } from './people'
   import { saved } from './saved.svelte'
   import { store } from './source.svelte'
-  import { connected } from '../connected.svelte'
+  import { connected, type Linked } from '../connected.svelte'
   import { ORDEN } from '../providers/orden'
+  import { newestFirst } from '@orden/chats/provider'
+  import { PROVIDERS } from '../accounts.svelte'
+  import { host } from '../providers/host'
+  import { accounts, openConversation } from '../linked'
+  import ConnectForm from './ConnectForm.svelte'
 
   let query = $state('')
   let showing = $state<'chats' | 'activity' | 'saved'>('chats')
@@ -36,6 +41,27 @@
       .flatMap((row) => byId.get(row.conversation.id) ?? [])
       .filter((one) => (one.name ?? '').toLowerCase().includes(asked))
   })
+  const offered = PROVIDERS.filter((one) => one.available(host))
+  let connecting = $state(false)
+
+  accounts.start()
+
+  function conversationsOf(one: Linked) {
+    const asked = query.trim().toLowerCase()
+    return one.conversations
+      .filter(
+        (it) =>
+          !asked ||
+          (it.title ?? '').toLowerCase().includes(asked) ||
+          it.people.some(
+            (person) =>
+              person.name.toLowerCase().includes(asked) ||
+              (person.handle ?? '').toLowerCase().includes(asked),
+          ),
+      )
+      .sort(newestFirst)
+  }
+
   const mentions = $derived(store().list.reduce((sum, one) => sum + one.mentions, 0))
   const now = Date.now()
 
@@ -129,6 +155,70 @@
         {/if}
       </button>
     {/each}
+
+    {#if offered.length}
+      <div class="section">
+        <p class="nib-section">{t('Accounts')}</p>
+        <button
+          type="button"
+          class="nib-glyph add"
+          aria-label={t('Connect')}
+          title={t('Connect')}
+          onclick={() => (connecting = !connecting)}><Glyph name="attach" /></button
+        >
+      </div>
+      {#if connecting && offered[0]}
+        <ConnectForm provider={offered[0]} done={() => (connecting = false)} />
+      {/if}
+      {#each accounts.failed as one (`${one.provider}:${one.account}`)}
+        <p class="nib-row failed" title={one.reason}>
+          <span class="nib-row-label">{one.account}</span>
+          <span class="nib-row-meta">{t('Signed out')}</span>
+        </p>
+      {/each}
+      {#each connected.linked as one (`${one.provider.id}:${one.account.id}`)}
+        <div class="account">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="mark"
+            ><path d={one.provider.icon} /></svg
+          >
+          <span class="nib-row-label">{one.account.label}</span>
+          {#if one.status === 'offline'}<span class="nib-row-meta">{t('Offline')}</span>
+          {:else if one.status === 'signed-out'}<span class="nib-row-meta">{t('Signed out')}</span>
+          {/if}
+          <button
+            type="button"
+            class="nib-glyph add"
+            aria-label={t('Disconnect')}
+            title={t('Disconnect')}
+            onclick={() => void accounts.disconnect(one.provider.id, one.account.id)}
+            ><Glyph name="close" /></button
+          >
+        </div>
+        {#each conversationsOf(one) as conversation (conversation.id)}
+          {@const unread = conversation.unread > 0}
+          <button
+            type="button"
+            class="nib-row entry"
+            class:unread
+            onclick={() =>
+              openConversation(
+                {
+                  provider: one.provider.id,
+                  account: one.account.id,
+                  conversation: conversation.id,
+                },
+                conversation.title ?? conversation.people[0]?.name ?? one.provider.name,
+              )}
+          >
+            <span class="nib-row-label"
+              >{conversation.title ??
+                conversation.people.map((person) => person.name).join(', ')}</span
+            >
+            {#if unread}<span class="nib-row-meta count">{amount(conversation.unread)}</span>{/if}
+          </button>
+        {/each}
+      {/each}
+    {/if}
   {:else}
     <button type="button" class="nib-row back" onclick={() => (showing = 'chats')}>
       <span class="nib-row-mark"><Glyph name="left" /></span>
@@ -190,6 +280,31 @@
 
   .count {
     font-variant-numeric: tabular-nums;
+  }
+
+  .account {
+    --glyph-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: var(--space-2) 0 0;
+    color: var(--muted-strong);
+    font-size: var(--text-sm);
+  }
+
+  .mark {
+    width: var(--icon-md);
+    height: var(--icon-md);
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .failed {
+    color: var(--muted);
   }
 
   .badge {

@@ -2894,4 +2894,8 @@ export const ja: Dictionary = {
   'Not on this device': 'このデバイスにはありません',
   'Not on this device. It opens once you are online again.':
     'このデバイスにはありません。オンラインに戻ると開きます。',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP サーバー',
+  'SMTP server': 'SMTP サーバー',
+  'User name': 'ユーザー名',
 }

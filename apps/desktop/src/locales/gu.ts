@@ -2906,4 +2906,8 @@ export const gu: Dictionary = {
   'Not on this device': 'આ ઉપકરણ પર નથી',
   'Not on this device. It opens once you are online again.':
     'આ ઉપકરણ પર નથી. તમે ફરી ઑનલાઇન થશો ત્યારે તે ખુલશે.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP સર્વર',
+  'SMTP server': 'SMTP સર્વર',
+  'User name': 'વપરાશકર્તા નામ',
 }

@@ -218,6 +218,9 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             app.state::<Installer>().gone(&label);
             // Its terminals go with it; see terminal.rs.
             crate::terminal::window_gone(app, &label);
+            if let Some(sockets) = app.try_state::<crate::mail_socket::MailSockets>() {
+                sockets.end_where(&label);
+            }
             crate::ai_cli::window_gone(app, &label);
             // The last window has answered yes. With the presenter's window still
             // open the loop would not end by itself, so it is ended here. A window

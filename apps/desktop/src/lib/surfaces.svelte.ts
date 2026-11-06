@@ -100,6 +100,16 @@ export const tasksPanel = held(() =>
 export const chatSurface = held(() =>
   __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./chats/view/ChatTab.svelte'),
 )
+/** Whether a channel tab's words name another service's conversation (#321); see
+ *  chats/conversation-key.ts, which writes them. */
+export function conversationIn(words: string): boolean {
+  return !__EVEN_PLUGIN__ && words.startsWith('connected-chat\n')
+}
+export const conversationSurface = held(() =>
+  __EVEN_PLUGIN__
+    ? new Promise<never>(() => undefined)
+    : import('./chats/view/ConversationTab.svelte'),
+)
 export const chatsPanel = held(() =>
   __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./chats/view/ChatsPanel.svelte'),
 )

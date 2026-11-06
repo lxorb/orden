@@ -2960,4 +2960,8 @@ export const sw: Dictionary = {
   'Not on this device': 'Haipo kwenye kifaa hiki',
   'Not on this device. It opens once you are online again.':
     'Haipo kwenye kifaa hiki. Itafunguka utakapokuwa mtandaoni tena.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'Seva ya IMAP',
+  'SMTP server': 'Seva ya SMTP',
+  'User name': 'Jina la mtumiaji',
 }

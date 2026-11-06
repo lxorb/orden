@@ -2963,4 +2963,8 @@ export const ha: Dictionary = {
   'Not on this device': 'Ba ya kan wannan na’ura',
   'Not on this device. It opens once you are online again.':
     'Ba ya kan wannan na’ura. Zai buɗe da zarar kun dawo kan intanet.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'Sabar IMAP',
+  'SMTP server': 'Sabar SMTP',
+  'User name': 'Sunan mai amfani',
 }

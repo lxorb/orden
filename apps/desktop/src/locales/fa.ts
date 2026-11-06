@@ -2923,4 +2923,8 @@ export const fa: Dictionary = {
   'Not on this device': 'روی این دستگاه نیست',
   'Not on this device. It opens once you are online again.':
     'روی این دستگاه نیست. وقتی دوباره آنلاین شوید باز می‌شود.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'سرور IMAP',
+  'SMTP server': 'سرور SMTP',
+  'User name': 'نام کاربری',
 }

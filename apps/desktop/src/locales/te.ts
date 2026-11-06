@@ -2933,4 +2933,8 @@ export const te: Dictionary = {
   'Not on this device': 'ఈ పరికరంలో లేదు',
   'Not on this device. It opens once you are online again.':
     'ఈ పరికరంలో లేదు. మీరు మళ్లీ ఆన్‌లైన్‌కి రాగానే ఇది తెరుచుకుంటుంది.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP సర్వర్',
+  'SMTP server': 'SMTP సర్వర్',
+  'User name': 'వినియోగదారు పేరు',
 }

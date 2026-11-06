@@ -2859,4 +2859,8 @@ export const th: Dictionary = {
   'Not on this device': 'ไม่ได้อยู่ในอุปกรณ์นี้',
   'Not on this device. It opens once you are online again.':
     'ไม่ได้อยู่ในอุปกรณ์นี้ จะเปิดได้เมื่อคุณกลับมาออนไลน์',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'เซิร์ฟเวอร์ IMAP',
+  'SMTP server': 'เซิร์ฟเวอร์ SMTP',
+  'User name': 'ชื่อผู้ใช้',
 }

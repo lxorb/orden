@@ -2920,4 +2920,8 @@ export const hi: Dictionary = {
   'Not on this device': 'इस डिवाइस पर नहीं है',
   'Not on this device. It opens once you are online again.':
     'इस डिवाइस पर नहीं है। आपके फिर से ऑनलाइन होते ही यह खुलेगा।',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP सर्वर',
+  'SMTP server': 'SMTP सर्वर',
+  'User name': 'उपयोगकर्ता नाम',
 }

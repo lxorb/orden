@@ -2829,4 +2829,8 @@ export const zhHant: Dictionary = {
     '音訊傳送到這台裝置的語音辨識，可能會使用其製造商的伺服器',
   'Not on this device': '不在此裝置上',
   'Not on this device. It opens once you are online again.': '不在此裝置上。重新連線後即可開啟。',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP 伺服器',
+  'SMTP server': 'SMTP 伺服器',
+  'User name': '使用者名稱',
 }

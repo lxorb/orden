@@ -2915,4 +2915,8 @@ export const ur: Dictionary = {
   'Not on this device': 'اس آلے پر نہیں',
   'Not on this device. It opens once you are online again.':
     'اس آلے پر نہیں۔ جیسے ہی آپ دوبارہ آن لائن ہوں گے، یہ کھل جائے گا۔',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP سرور',
+  'SMTP server': 'SMTP سرور',
+  'User name': 'صارف نام',
 }

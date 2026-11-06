@@ -2989,4 +2989,8 @@ export const ptPT: Dictionary = {
   'Not on this device': 'Não está neste dispositivo',
   'Not on this device. It opens once you are online again.':
     'Não está neste dispositivo. Abre assim que voltar a estar online.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'Servidor IMAP',
+  'SMTP server': 'Servidor SMTP',
+  'User name': 'Nome de utilizador',
 }

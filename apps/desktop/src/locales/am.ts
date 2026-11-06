@@ -2860,4 +2860,8 @@ export const am: Dictionary = {
   'Not on this device': 'በዚህ መሣሪያ ላይ የለም',
   'Not on this device. It opens once you are online again.':
     'በዚህ መሣሪያ ላይ የለም። እንደገና መስመር ላይ ሲሆኑ ይከፈታል።',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP አገልጋይ',
+  'SMTP server': 'SMTP አገልጋይ',
+  'User name': 'የተጠቃሚ ስም',
 }

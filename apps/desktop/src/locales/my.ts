@@ -2911,4 +2911,8 @@ export const my: Dictionary = {
   'Not on this device': 'ဤစက်ပေါ်တွင် မရှိပါ',
   'Not on this device. It opens once you are online again.':
     'ဤစက်ပေါ်တွင် မရှိပါ။ အွန်လိုင်းပြန်ဖြစ်သည့်အခါ ပွင့်ပါမည်။',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP ဆာဗာ',
+  'SMTP server': 'SMTP ဆာဗာ',
+  'User name': 'အသုံးပြုသူအမည်',
 }

@@ -3010,4 +3010,8 @@ export const uk: Dictionary = {
   'Not on this device': 'Немає на цьому пристрої',
   'Not on this device. It opens once you are online again.':
     'Немає на цьому пристрої. Відкриється, щойно ви знову будете в мережі.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'Сервер IMAP',
+  'SMTP server': 'Сервер SMTP',
+  'User name': 'Ім’я користувача',
 }

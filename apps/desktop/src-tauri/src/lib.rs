@@ -136,6 +136,9 @@ mod linux;
 #[cfg(all(target_os = "linux", feature = "cef"))]
 mod chromium_pump;
 mod logs;
+// The bytes the chats' mail provider speaks IMAP and SMTP over; see mail_socket.rs.
+#[cfg(desktop)]
+mod mail_socket;
 mod matcher;
 // `nib mcp`, the server an agent's client runs; main.rs hands it the process before
 // anything below starts.
@@ -569,6 +572,10 @@ macro_rules! desktop_commands {
             secrets::secret_write,
             shell_menu::new_menu_registered,
             shell_menu::set_new_menu,
+            mail_socket::mail_socket_open,
+            mail_socket::mail_socket_write,
+            mail_socket::mail_socket_tls,
+            mail_socket::mail_socket_close,
             terminal::terminal_shells,
             terminal::pty_spawn,
             terminal::pty_write,
@@ -830,6 +837,9 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(desktop)]
     let builder = builder.manage(apps_host::Hosted::default());
 
+    #[cfg(desktop)]
+    let builder = builder.manage(mail_socket::MailSockets::default());
+
     // The model local dictation has open; see dictation.rs.
     #[cfg(desktop)]
     let builder = builder.manage(std::sync::Arc::new(dictation::Loaded::default()));
@@ -920,6 +930,9 @@ fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
         if payload.event() == tauri::webview::PageLoadEvent::Started {
             if let Some(waiting) = webview.try_state::<endpoint::Waiting>() {
                 waiting.forget(webview.label());
+            }
+            if let Some(sockets) = webview.try_state::<mail_socket::MailSockets>() {
+                sockets.end_where(webview.label());
             }
         }
     });

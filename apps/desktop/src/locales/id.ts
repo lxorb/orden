@@ -2918,4 +2918,8 @@ export const id: Dictionary = {
   'Not on this device': 'Tidak ada di perangkat ini',
   'Not on this device. It opens once you are online again.':
     'Tidak ada di perangkat ini. Akan terbuka saat Anda kembali online.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'Server IMAP',
+  'SMTP server': 'Server SMTP',
+  'User name': 'Nama pengguna',
 }

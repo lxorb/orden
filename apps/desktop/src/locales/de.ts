@@ -2982,4 +2982,8 @@ export const de: Dictionary = {
   'Not on this device': 'Nicht auf diesem Gerät',
   'Not on this device. It opens once you are online again.':
     'Nicht auf diesem Gerät. Öffnet sich, sobald du wieder online bist.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP-Server',
+  'SMTP server': 'SMTP-Server',
+  'User name': 'Benutzername',
 }

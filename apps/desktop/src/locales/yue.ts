@@ -2819,4 +2819,8 @@ export const yue: Dictionary = {
     '聲音會傳去呢部裝置嘅語音辨識，可能會用到製造商嘅伺服器',
   'Not on this device': '唔喺呢部裝置度',
   'Not on this device. It opens once you are online again.': '唔喺呢部裝置度。你再上線就會打開。',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP 伺服器',
+  'SMTP server': 'SMTP 伺服器',
+  'User name': '用戶名稱',
 }

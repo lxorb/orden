@@ -2982,4 +2982,8 @@ export const fil: Dictionary = {
   'Not on this device': 'Wala sa device na ito',
   'Not on this device. It opens once you are online again.':
     'Wala sa device na ito. Magbubukas ito kapag online ka na ulit.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP server',
+  'SMTP server': 'SMTP server',
+  'User name': 'Username',
 }

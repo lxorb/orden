@@ -2902,4 +2902,8 @@ export const jv: Dictionary = {
   'Not on this device': 'Ora ana ing piranti iki',
   'Not on this device. It opens once you are online again.':
     'Ora ana ing piranti iki. Bakal kabuka yen sampeyan wis online maneh.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'Server IMAP',
+  'SMTP server': 'Server SMTP',
+  'User name': 'Jeneng pangguna',
 }

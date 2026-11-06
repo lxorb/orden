@@ -2915,4 +2915,8 @@ export const bn: Dictionary = {
   'Not on this device': 'এই ডিভাইসে নেই',
   'Not on this device. It opens once you are online again.':
     'এই ডিভাইসে নেই। আপনি আবার অনলাইনে এলে এটি খুলবে।',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP সার্ভার',
+  'SMTP server': 'SMTP সার্ভার',
+  'User name': 'ব্যবহারকারীর নাম',
 }

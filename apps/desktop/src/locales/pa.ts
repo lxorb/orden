@@ -2929,4 +2929,8 @@ export const pa: Dictionary = {
   'Not on this device': 'ਇਸ ਡਿਵਾਈਸ ’ਤੇ ਨਹੀਂ',
   'Not on this device. It opens once you are online again.':
     'ਇਸ ਡਿਵਾਈਸ ’ਤੇ ਨਹੀਂ। ਤੁਹਾਡੇ ਮੁੜ ਔਨਲਾਈਨ ਹੁੰਦੇ ਹੀ ਇਹ ਖੁੱਲ੍ਹੇਗਾ।',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP ਸਰਵਰ',
+  'SMTP server': 'SMTP ਸਰਵਰ',
+  'User name': 'ਵਰਤੋਂਕਾਰ ਨਾਮ',
 }

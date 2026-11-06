@@ -2891,4 +2891,8 @@ export const vi: Dictionary = {
   'Not on this device': 'Không có trên thiết bị này',
   'Not on this device. It opens once you are online again.':
     'Không có trên thiết bị này. Sẽ mở khi bạn trực tuyến trở lại.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'Máy chủ IMAP',
+  'SMTP server': 'Máy chủ SMTP',
+  'User name': 'Tên người dùng',
 }

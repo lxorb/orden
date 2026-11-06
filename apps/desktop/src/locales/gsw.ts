@@ -2941,4 +2941,8 @@ export const gsw: Dictionary = {
   'Not on this device': 'Nöd uf däm Gräät',
   'Not on this device. It opens once you are online again.':
     'Nöd uf däm Gräät. Es gaht uf, sobald du wider online bisch.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP-Server',
+  'SMTP server': 'SMTP-Server',
+  'User name': 'Benutzername',
 }

@@ -2919,4 +2919,8 @@ export const ps: Dictionary = {
   'Not on this device': 'په دې وسیله کې نشته',
   'Not on this device. It opens once you are online again.':
     'په دې وسیله کې نشته. کله چې بیا آنلاین شئ، خلاصېږي.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP سرور',
+  'SMTP server': 'SMTP سرور',
+  'User name': 'کارن نوم',
 }

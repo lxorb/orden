@@ -2939,4 +2939,8 @@ export const tr: Dictionary = {
   'Not on this device': 'Bu cihazda değil',
   'Not on this device. It opens once you are online again.':
     'Bu cihazda değil. Yeniden çevrimiçi olduğunuzda açılır.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP sunucusu',
+  'SMTP server': 'SMTP sunucusu',
+  'User name': 'Kullanıcı adı',
 }

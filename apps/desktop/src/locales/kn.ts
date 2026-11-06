@@ -2954,4 +2954,8 @@ export const kn: Dictionary = {
   'Not on this device': 'ಈ ಸಾಧನದಲ್ಲಿ ಇಲ್ಲ',
   'Not on this device. It opens once you are online again.':
     'ಈ ಸಾಧನದಲ್ಲಿ ಇಲ್ಲ. ನೀವು ಮತ್ತೆ ಆನ್‌ಲೈನ್‌ಗೆ ಬಂದಾಗ ಇದು ತೆರೆಯುತ್ತದೆ.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP ಸರ್ವರ್',
+  'SMTP server': 'SMTP ಸರ್ವರ್',
+  'User name': 'ಬಳಕೆದಾರ ಹೆಸರು',
 }

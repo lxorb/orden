@@ -2826,4 +2826,8 @@ export const zhHans: Dictionary = {
     '音频发送到这台设备的语音识别，可能会使用其制造商的服务器',
   'Not on this device': '不在此设备上',
   'Not on this device. It opens once you are online again.': '不在此设备上。重新联网后即可打开。',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP 服务器',
+  'SMTP server': 'SMTP 服务器',
+  'User name': '用户名',
 }

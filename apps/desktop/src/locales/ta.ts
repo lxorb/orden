@@ -2971,4 +2971,8 @@ export const ta: Dictionary = {
   'Not on this device': 'இந்தச் சாதனத்தில் இல்லை',
   'Not on this device. It opens once you are online again.':
     'இந்தச் சாதனத்தில் இல்லை. நீங்கள் மீண்டும் இணையத்தில் வந்ததும் இது திறக்கும்.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP சேவையகம்',
+  'SMTP server': 'SMTP சேவையகம்',
+  'User name': 'பயனர் பெயர்',
 }

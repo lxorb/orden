@@ -2917,4 +2917,8 @@ export const ms: Dictionary = {
   'Not on this device': 'Tiada pada peranti ini',
   'Not on this device. It opens once you are online again.':
     'Tiada pada peranti ini. Ia akan dibuka sebaik sahaja anda dalam talian semula.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'Pelayan IMAP',
+  'SMTP server': 'Pelayan SMTP',
+  'User name': 'Nama pengguna',
 }

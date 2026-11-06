@@ -2965,4 +2965,8 @@ export const ml: Dictionary = {
   'Not on this device': 'ഈ ഉപകരണത്തിൽ ഇല്ല',
   'Not on this device. It opens once you are online again.':
     'ഈ ഉപകരണത്തിൽ ഇല്ല. വീണ്ടും ഓൺലൈനായാൽ ഇത് തുറക്കും.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP സെർവർ',
+  'SMTP server': 'SMTP സെർവർ',
+  'User name': 'ഉപയോക്തൃനാമം',
 }

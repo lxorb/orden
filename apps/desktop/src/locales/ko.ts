@@ -2882,4 +2882,8 @@ export const ko: Dictionary = {
   'Not on this device': '이 기기에 없음',
   'Not on this device. It opens once you are online again.':
     '이 기기에 없습니다. 다시 온라인 상태가 되면 열립니다.',
+  // Another chat service connected: its servers (#321)
+  'IMAP server': 'IMAP 서버',
+  'SMTP server': 'SMTP 서버',
+  'User name': '사용자 이름',
 }
