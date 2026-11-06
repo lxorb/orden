@@ -1,10 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { type Entry, linesOf, placeIn } from './entry'
 
-/** What quick add writes and where a note takes it: one more item of the list a note
- *  ends in, a list of its own after a paragraph, the end of a heading's section, and a
- *  heading made where the note has none by that name (docs/tasks.md 5.6). */
-
 const entry = (fields: Partial<Entry['fields']> = {}, more: Partial<Entry> = {}): Entry => ({
   text: 'Call mum',
   fields: { tags: [], remind: [], ...fields },
@@ -25,7 +21,6 @@ describe('the line', () => {
         }),
       ),
     ).toEqual([
-      // The day is the day it starts: `🛫` (#371).
       '- [ ] Call mum [time:: 16:00] [remind:: 30m] #family 🔺 🔁 every week on Sunday 🛫 2026-10-08',
     ])
   })
@@ -39,7 +34,6 @@ describe('the line', () => {
   })
 })
 
-/** The note with the lines put where `placeIn` says. */
 function placed(note: string, lines: string[], heading?: string) {
   const at = placeIn(note, lines, heading)
   const after = note.slice(0, at.at) + at.insert + note.slice(at.at)

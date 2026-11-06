@@ -1,19 +1,8 @@
-/** Where quick add may write.
- *
- *  A task goes into the reader's one inbox, a note of the space in front, or the space
- *  it was handed (#1153), and a space shared with this account to be read is one nothing
- *  may be written in: the copy here would stop being the space's, and the sync would
- *  refuse the change on every pass. So the add writes nothing there, the way the file
- *  list's menu offers nothing to make there. A task that names no note goes to the inbox
- *  of the first space that takes it instead, the way one from Shortcuts does; one that
- *  names a note, or was handed a space, is refused, and the field keeps it. */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const SPACE = '/Theirs'
 const MINE = '/Mine'
 
-/** The spaces shared with this account to be read, by root, and those shared by it. */
 const readOnly = new Set<string>()
 const shared = new Set<string>()
 vi.mock('../sharing.svelte', () => ({
@@ -72,7 +61,6 @@ vi.mock('../rows/inbox-note', () => ({
 
 const { addTask } = await import('./write')
 
-/** A task as the grammar reads `Call Ada`, with `>` naming `note` where one is given. */
 function entry(note?: string) {
   return { text: 'Call Ada', fields: { remind: [], tags: [] }, ...(note ? { note } : {}) }
 }

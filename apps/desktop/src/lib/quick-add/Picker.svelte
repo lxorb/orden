@@ -1,10 +1,4 @@
 <script lang="ts">
-  /** A field's rows (pickers.ts), floating under the control that asked: the app's own
-   *  `.nib-layer` of `.nib-row`s, so it reads as every other menu. Its own component
-   *  rather than the app's context menu, which carries the workspace with it and has no
-   *  place in the global window.
-   *
-   *  The arrows walk it, Enter takes a row, Escape and a press outside put it away. */
   import { onMount, tick } from 'svelte'
   import { fade } from 'svelte/transition'
   import { LAYER } from '../motion'
@@ -17,7 +11,6 @@
     onclose,
   }: {
     rows: MenuEntry[]
-    /** Where the control that asked is, on the screen. */
     at: DOMRect
     onclose: () => void
   } = $props()
@@ -55,9 +48,6 @@
   }
 </script>
 
-<!-- A press anywhere else is the same answer as Escape, and nothing more: a tap's
-     click, which comes after the catch has gone, is spent rather than opening the
-     chip under the finger again (#411; see spent-click.ts). -->
 <div
   class="catch"
   data-covers="all"
@@ -102,7 +92,6 @@
 </ul>
 
 <style>
-  /* A menu's rung, over the sheet it was opened from, and the catch the step under it. */
   .catch {
     position: fixed;
     inset: 0;

@@ -1,9 +1,3 @@
-/** A chip pressed in a note: its field's choices, in the app's own menu at the chip,
- *  out of the same lists quick add offers (pickers.ts), so a day is picked the same way
- *  in a note as in quick add (docs/tasks.md 5.7). What is picked is handed back as the
- *  change to the task, which the editor writes as one edit of the characters that
- *  change. */
-
 import { todayOf } from '@orden/bases'
 import {
   deadlineField,
@@ -18,7 +12,6 @@ import { t } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry, menu } from '../menu.svelte'
 import { dayRows, durationRows, priorityRows, remindRows } from './pickers'
 
-/** The rules a repeat chip offers, in the Tasks plugin's own words. */
 const RULES: [string, () => string][] = [
   ['every day', () => t('Every day')],
   ['every weekday', () => t('Every weekday')],
@@ -38,8 +31,6 @@ function repeatRows(current: string | undefined, set: (rule: string | null) => v
   ]
 }
 
-/** The rows for one chip's field. The date is the day the task starts and the deadline
- *  its deadline, each read and written as the note's space reads a `📅` (#371). */
 function rowsFor(
   field: string,
   fields: TaskFields,
@@ -84,7 +75,6 @@ function rowsFor(
   }
 }
 
-/** Shows the field's choices at the chip. */
 export function pickField(
   field: string,
   fields: TaskFields,
@@ -94,6 +84,5 @@ export function pickField(
 ): void {
   const rows = rowsFor(field, fields, at, due, change)
   if (!rows.length) return
-  // The menu opens where a press would have opened it: under the chip's start.
   menu.show(new MouseEvent('contextmenu', { clientX: at.left, clientY: at.bottom }), rows)
 }

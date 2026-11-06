@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { heard } from './channel'
 
-/** A message over the channel is a value crossing a boundary: checked once, here. */
-
 describe('what the global window and the app say', () => {
   const task = { text: 'Call mum', fields: { tags: ['family'], remind: [{ before: 15 }] } }
 

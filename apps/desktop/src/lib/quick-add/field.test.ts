@@ -1,9 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { carried, chosen, pastedLines, piecesOf, suggestions, tokenAt, without } from './field'
 
-/** The field's bookkeeping: the line cut into words and chips, the spans pressed back
- *  into words following an edit, and a chip taken out when a control picks its field. */
-
 describe('the line as runs', () => {
   test('words and chips, in order, each where it was typed', () => {
     const text = 'Call mum tomorrow p1'

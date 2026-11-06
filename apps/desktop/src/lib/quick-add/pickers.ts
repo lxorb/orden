@@ -1,12 +1,3 @@
-/** The rows a task's field is picked from, for somebody who would rather click than
- *  type: a day, a priority, a reminder, a duration, a note. One list each, drawn by
- *  quick add's own popover and by the menu a chip in a note opens, so a day is picked
- *  the same way everywhere (docs/tasks.md 5.6, 5.7).
- *
- *  Rows of `menu-item.ts`, which every list in the app shares; each row hands its
- *  answer to `set` and nothing else. A day nobody has a row for is the system's own
- *  calendar (`askNative`), as a date property's field is. */
-
 import { addDays, weekday } from '@orden/bases'
 import type { Priority, Remind } from '@orden/markdown/task-line'
 import { t } from '../i18n.svelte'
@@ -14,17 +5,13 @@ import { DIVIDER, type MenuEntry } from '../menu-item'
 import { dayWords, durationLabel, remindLabel } from './labels'
 import { nextMonday } from '../views/days'
 
-/** A day and a time, or neither. */
 export interface When {
   due?: string | undefined
   time?: string | undefined
 }
 
-/** The coming Saturday, today counted. */
 const weekendOf = (today: string) => addDays(today, (6 - weekday(today) + 7) % 7)
 
-/** A field of the system's own, opened over `anchor` and answered with what was picked:
- *  `YYYY-MM-DD` or `HH:MM`, or null where it was put away. */
 function askNative(
   type: 'date' | 'time',
   value: string | undefined,
@@ -59,20 +46,16 @@ function askNative(
     try {
       field.showPicker()
     } catch {
-      // A webview without the system's picker answers nothing rather than throwing
-      // at whoever asked; the row simply did not pick.
       done(null)
     }
   })
 }
 
-/** The day rows: today, tomorrow, next week, the weekend, any day, a time, none. */
 export function dayRows(
   current: When,
   today: string,
   set: (when: { due: string | null; time?: string | null }) => void,
   anchor: () => DOMRect,
-  /** Whether a time can be set as well: a deadline is a day. */
   timed = true,
 ): MenuEntry[] {
   const day = (due: string) => ({
@@ -80,7 +63,6 @@ export function dayRows(
     checked: current.due === due,
     run: () => set({ due }),
   })
-  // The weekend is left out where it is today or tomorrow, which already have a row.
   const weekend = weekendOf(today)
   return [
     day(today),
@@ -111,7 +93,6 @@ export function dayRows(
   ]
 }
 
-/** p1 to p4, in the priorities' own tones. */
 export function priorityRows(current: Priority, set: (priority: Priority) => void): MenuEntry[] {
   return ([1, 2, 3, 4] as const).map((level) => ({
     label: t('Priority {level}', { level }),
@@ -120,7 +101,6 @@ export function priorityRows(current: Priority, set: (priority: Priority) => voi
   }))
 }
 
-/** Reminders: at the time and before it where there is a time, a morning otherwise. */
 export function remindRows(
   current: readonly Remind[],
   when: When,
@@ -149,7 +129,6 @@ export function remindRows(
   ]
 }
 
-/** How long it takes. */
 export function durationRows(
   current: number | undefined,
   set: (minutes: number | null) => void,
@@ -164,7 +143,6 @@ export function durationRows(
   ]
 }
 
-/** Where it lands: the inbox, then the notes offered, by name. */
 export function whereRows(
   current: string | undefined,
   notes: readonly string[],
@@ -181,8 +159,6 @@ export function whereRows(
   ]
 }
 
-/** Labels: every one the space's tasks carry, the task's own ticked, a press giving it
- *  or taking it away. A label nobody has used yet is typed as `#label`. */
 export function tagRows(
   current: readonly string[],
   known: readonly string[],

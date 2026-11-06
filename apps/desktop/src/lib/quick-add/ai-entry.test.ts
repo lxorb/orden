@@ -2,8 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { entryFrom, entryMessages } from './ai-entry'
 import { linesOf } from './entry'
 
-/** Add with AI (#328): the reply kept only as far as it checks out. */
-
 const SAID =
   'oh man I gotta do the laundry. I can do it from tomorrow and should be done by eow at the latest.'
 const TAGS = ['home', 'chores']

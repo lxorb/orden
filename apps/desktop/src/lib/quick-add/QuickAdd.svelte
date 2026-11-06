@@ -1,26 +1,4 @@
 <script lang="ts">
-  /** Quick add's field: one line, its recognised words drawn as chips where they were
-   *  typed, and a row of controls under it that show what was understood and pick it
-   *  for somebody who would rather click (docs/tasks.md 5.6).
-   *
-   *  The line is a plain input whose letters are drawn by the layer under it, so a chip
-   *  can wear the accent's tint without the field becoming a rich-text editor: the input
-   *  keeps the caret, the selection and every key a text field has. A chip pressed is
-   *  words again (Todoist's undo), and Backspace into one takes it apart by changing its
-   *  words.
-   *
-   *  A word typed after `#`, `@` or `%` is offered the space's labels, after `>` its
-   *  notes, after `>Note/` that note's headings, as Todoist offers its projects, labels
-   *  and sections: ↑ ↓ walk them, Enter or Tab takes one, Escape puts them away.
-   *
-   *  Enter adds and keeps the field for the next task, Shift+Enter or ↓ opens a line for
-   *  the description, Ctrl+Enter adds and opens the note at the task, Escape closes.
-   *  Several lines pasted at once ask whether they are one task or one each, Todoist's
-   *  question. The same field edits a task where a view asks it to (`mode: 'edit'`),
-   *  holding what the task says in its controls; a field in a list (`oncancel`) has the
-   *  Cancel beside its button. What happens to the task is the caller's (`onsubmit`): the
-   *  sheet writes it, a view writes or changes it, the global window hands it to the app.
-   *  A caller that answers `false` took nothing, and the field keeps what was typed. */
   import type { Priority } from '@orden/markdown/task-line'
   import { parseQuickAdd, type QuickFields } from '@orden/bases/language'
   import { todayOf } from '@orden/bases'
@@ -74,42 +52,25 @@
     provider = null,
     dictates = true,
   }: {
-    /** The app's language first; English is always read too. */
     langs: readonly string[]
-    /** The space's notes by name, for `>` and the where control. */
     notes?: readonly string[]
-    /** The labels the space's tasks already carry, for the labels control. */
     tags?: readonly string[]
     prefill?: Prefill
-    /** Whether typed words are read as fields at all (Settings, Smart dates). */
     smart?: boolean
-    /** Adding a task, or changing the one the prefill says. */
     mode?: 'add' | 'edit'
-    /** `false` where the task went nowhere, so the field keeps it. */
     onsubmit: (entry: Entry, open: boolean) => unknown
     onclose: () => void
-    /** A field standing in a list: Cancel beside its button. */
     oncancel?: () => void
-    /** A picker opened or put away: the global window grows to hold it. */
     onpicking?: (open: boolean) => void
-    /** A note's headings, by the name `>` gives it, for `/`. */
     headingsOf?: (note: string) => readonly string[]
-    /** The model Add with AI asks; without one there is no such button. */
     provider?: Provider | null
-    /** Whether the field offers dictation (#1128). Not over other apps: the global
-     *  window's webview answers no microphone, and it hides the moment the system's
-     *  permission prompt takes the focus. */
     dictates?: boolean
   } = $props()
 
-  // What the opener knew, taken once: the field is made again for every opening.
   let text = $state(untrack(() => prefill.text ?? ''))
   let description = $state<string | null>(untrack(() => prefill.description ?? null))
-  /** Spans turned back into words. */
   let keep = $state<Span[]>(untrack(() => [...(prefill.keep ?? [])]))
-  /** What the task's line escaped, which stays words as the words around it change. */
   let escaped = $state<Span[]>(untrack(() => [...(prefill.escaped ?? [])]))
-  /** What the controls picked, over whatever the words say. `null` takes a field away. */
   let picked = $state<{
     due?: string | null
     time?: string | null
@@ -125,10 +86,8 @@
   let mirror = $state<HTMLElement>()
   let words = $state<HTMLTextAreaElement>()
   let asking = $state<{ rows: MenuEntry[]; at: DOMRect } | null>(null)
-  /** Lines pasted at once, waiting for the answer to one task or one each. */
   let pasted = $state<string[] | null>(null)
 
-  /** The line as last seen, so the spans turned back follow an edit. */
   let seen = untrack(() => prefill.text ?? '')
 
   const today = $derived(todayOf())
@@ -139,7 +98,6 @@
   )
   const pieces = $derived(piecesOf(text, read.chips))
 
-  /** The fields as they will be written: the prefill, then the words, then the picks. */
   const fields = $derived.by((): QuickFields => {
     const given = prefill.fields ?? {}
     const out: QuickFields = {
@@ -175,12 +133,8 @@
 
   onMount(() => input?.focus())
 
-  /** The field dictated words go into: the line, or the description once it was the
-   *  one typed in last. */
   let spoken = $state<HTMLInputElement | HTMLTextAreaElement>()
 
-  /** Quick add as dictation sees it: the note the task goes to and the space's labels
-   *  and notes, the names a task is likely to say. */
   const voiceField: Dictates = {
     field: () => spoken ?? input,
     words: () => [
@@ -190,7 +144,6 @@
     ],
   }
 
-  // The spans turned back into words move with the words around them.
   $effect(() => {
     const now = text
     if (now === seen) return
@@ -199,15 +152,12 @@
     seen = now
   })
 
-  /** The layer of letters follows the field as a long line scrolls in it. */
   function follow() {
     if (input && mirror) mirror.scrollLeft = input.scrollLeft
     caret = input && input.selectionStart === input.selectionEnd ? (input.selectionStart ?? -1) : -1
   }
 
-  /** Where the caret is in the line, or -1 while words are selected. */
   let caret = $state(-1)
-  /** The word the suggestions were put away for, by where it starts. */
   let dismissed = $state(-1)
   let active = $state(0)
 
@@ -222,12 +172,10 @@
     }
     return suggestions(token.query, tags)
   })
-  // A new list of suggestions starts at its first.
   $effect.pre(() => {
     if (offered.length >= 0) active = 0
   })
 
-  /** The suggestion chosen: its words in place of what was typed, the caret after it. */
   function take(value: string) {
     const field = input
     if (!token || !field) return
@@ -239,7 +187,6 @@
     })
   }
 
-  /** The keys the suggestions have while they are up; true when one was theirs. */
   function suggestKey(event: KeyboardEvent): boolean {
     if (!offered.length || event.isComposing) return false
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
@@ -264,7 +211,6 @@
     return false
   }
 
-  /** A press on a chip makes it words again: Todoist's undo of a misread. */
   function pressed(event: PointerEvent) {
     if (!mirror) return
     for (const chip of mirror.querySelectorAll<HTMLElement>('[data-chip]')) {
@@ -282,8 +228,6 @@
     }
   }
 
-  /** A control's pick wins over the words that said the same field: those words go,
-   *  rather than staying in the task as words. */
   function dropChip(kind: string) {
     const chip = read.chips.find((one) => one.kind === kind)
     if (!chip) return
@@ -296,7 +240,6 @@
     asking = { rows, at: target.getBoundingClientRect() }
   }
 
-  // Said as it changes, so a window no taller than its field can make room for the list.
   $effect(() => onpicking?.(asking !== null))
 
   const anchor = () => asking?.at ?? input?.getBoundingClientRect() ?? new DOMRect()
@@ -395,7 +338,6 @@
     )
   }
 
-  /** The entry the field holds now, or null while it holds no words. */
   function entryOf(said: string, own: QuickFields): Entry | null {
     if (!said) return null
     const entry: Entry = { text: said, fields: own }
@@ -416,16 +358,9 @@
     input?.focus()
   }
 
-  /** Add with AI waiting for the model's answer. */
   let thinking = $state(false)
-  /** A task handed over and not yet answered: the global window waits on the app, which
-   *  can take a while, and the words are still in the field all that time. */
   let sending = false
 
-  /** Hands the task over, once. The field is emptied only once the task is in, so one
-   *  refused - in a space shared to be read - stays where it was typed rather than
-   *  going nowhere; and only where it still holds the words handed over, so whatever
-   *  was typed during the wait is not wiped with them. */
   async function handOver(entry: Entry, open: boolean, typed: string) {
     sending = true
     try {
@@ -441,8 +376,6 @@
     await handOver(entry, open, text)
   }
 
-  /** Add with AI (#328): the task the model makes of the line, with the field's labels and
-   *  its note where it has one; the plain task where the model makes none. */
   async function submitAi(asked: Provider) {
     if (thinking || sending) return
     const typed = text
@@ -459,8 +392,6 @@
     await handOver(entry, false, typed)
   }
 
-  /** Several lines pasted: one task each, read the way a typed line is, with what the
-   *  controls picked for all of them. */
   async function submitEach() {
     if (sending) return
     const lines = pasted ?? []
@@ -473,7 +404,6 @@
           ? { ...fields, ...said.fields, tags: [...new Set([...fields.tags, ...said.fields.tags])] }
           : fields
         const entry = entryOf(said ? said.text || line : line, own)
-        // The lines not yet in are asked about again rather than dropped.
         if (entry && (await onsubmit(entry, false)) === false) {
           pasted = lines.slice(index)
           return
@@ -495,7 +425,6 @@
 
   function openDescription() {
     description ??= ''
-    // The line is drawn on the next turn, and only then can it take the caret.
     void tick().then(() => words?.focus())
   }
 
@@ -525,8 +454,6 @@
     void submit(event.ctrlKey || event.metaKey)
   }
 
-  /** Backspace on an empty description takes the line away again; ↑ at its first line
-   *  goes back to the words. */
   function wordsKey(event: KeyboardEvent) {
     if (event.key === 'Backspace' && description === '') {
       event.preventDefault()
@@ -730,14 +657,10 @@
     padding: var(--space-3);
   }
 
-  /* The field and the layer of letters under it are one box: the same font, the same
-     padding, the same width, so every letter the layer draws sits under the one the
-     field holds. */
   .line {
     position: relative;
   }
 
-  /* What a word could be, under the line, over whatever is below it. */
   .suggest {
     position: absolute;
     top: calc(100% + var(--space-1));
@@ -781,9 +704,6 @@
     outline: none;
   }
 
-  /* The palette's line: a hairline under the words that turns when the keyboard
-     lands, which is the answer a box you type into gives (base.css, Fields), and not
-     the halo as well. */
   .line {
     border-bottom: 1px solid var(--line);
     transition: border-color var(--dur-fast) var(--ease-out);
@@ -807,8 +727,6 @@
     color: transparent;
   }
 
-  /* The accent's tint, padded by a shadow rather than by padding, which would move
-     every letter after it away from the field's own. */
   .chip {
     border-radius: var(--radius-sm);
     background: var(--accent-soft);

@@ -1,8 +1,4 @@
 <script lang="ts">
-  /** Quick add inside the app: the field, over whatever is open, where the palette
-   *  stands, so choosing Add task in the palette reads as its field turning into this
-   *  one. Opened by its key, the palette's row and a view's add button; see
-   *  asked.svelte.ts. Enter keeps it up for the next task, as Todoist's does. */
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from '../backstack.svelte'
@@ -21,12 +17,9 @@
   const root = $derived(workspace.activeSpace?.root ?? null)
   const notes = $derived(quickAdd.open && root ? noteNames(root) : [])
 
-  // Escape closes it, like everything else the app puts over a note; see overlays.ts.
-  // And a phone's back, which closes every layer.
   $effect(() => (quickAdd.open ? overlays.show(() => quickAdd.hide()) : undefined))
   $effect(() => closeOnBack(quickAdd.open, () => quickAdd.hide()))
 
-  /** Put away only once the task is in, so one that went nowhere stays in the field. */
   async function added(entry: Entry, open: boolean): Promise<boolean> {
     const went = (await addTask(entry, { open })) !== null
     if (went && open) quickAdd.hide()

@@ -1,9 +1,3 @@
-/** Which note a `>` in quick add names.
- *
- *  The space's list holds more than notes: a chat, a canvas, a website shortcut. A
- *  task line written into one of those is a file spoiled, so only a note is one a `>`
- *  can name; words naming anything else make the note a link would make. */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const SPACE = '/Mine'

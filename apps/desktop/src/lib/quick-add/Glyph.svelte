@@ -1,7 +1,4 @@
 <script lang="ts">
-  /** A Lucide mark, stroked: what Icon.svelte draws for a fallback, without the three
-   *  icon sets behind it, which the global quick add window has no use for and would
-   *  carry into the one page that has to open in a blink. */
   import type { IconNode } from '../icons'
 
   const { icon }: { icon: IconNode } = $props()

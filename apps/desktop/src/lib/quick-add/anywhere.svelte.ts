@@ -1,15 +1,3 @@
-/** Quick add over every other app: the key handed to the system, and the tasks the
- *  global window sends written (docs/tasks.md 5.6).
- *
- *  The key is the app's own (`app.quick-add`, Ctrl+Alt+Space unless the reader moved it)
- *  and is held only while Settings' From any app is on. The crate registers it and opens
- *  the small window it shows (src-tauri/src/quick_add.rs); the window reads its line
- *  itself and hands the task here, where the workspace is, so it is written the way
- *  every other task is.
- *
- *  Several windows of the app may be open and each starts this. One of them answers,
- *  the one holding the lock; when it closes, the next takes the lock and the key. */
-
 import { untrack } from 'svelte'
 import { accelerator } from '../accelerator'
 import { i18n } from '../i18n.svelte'
@@ -22,7 +10,6 @@ import { quickAdd } from './asked.svelte'
 import { ANSWERING, CHANNEL, heard, type Said } from './channel'
 import { addTask, noteNames } from './write'
 
-/** Starts answering, once this window holds the lock; answers the way to stop. */
 export function listen(): () => void {
   const stopping = new AbortController()
   let stopKey: (() => void) | null = null
@@ -38,8 +25,6 @@ export function listen(): () => void {
         smart: quickAdd.smart,
       } satisfies Said)
     } else if (said.kind === 'task') {
-      // The window waits for this before it goes, so a task that went nowhere stays
-      // in its field.
       const tell = (ok: boolean) =>
         channel?.postMessage({ kind: 'added', id: said.id, ok } satisfies Said)
       void addTask(said.entry, { open: said.open }).then(
@@ -70,7 +55,6 @@ export function listen(): () => void {
         })
       })
     })
-    // Held for as long as this window answers.
     return new Promise<void>((resolve) =>
       stopping.signal.addEventListener('abort', () => resolve()),
     )

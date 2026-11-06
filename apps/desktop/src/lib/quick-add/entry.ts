@@ -1,30 +1,15 @@
-/** Quick add's entry, the app's half: what a view's add button already knows. The
- *  entry itself, its line and where it goes in a note are the engine's, shared with
- *  every other way a task comes in (@orden/bases/tasks, agent/entry.ts there). */
-
 import type { QuickFields } from '@orden/bases/language'
 
 export { type Entry, linesOf, placeIn } from '@orden/bases/tasks'
 
-/** What a view's add button already knows: its note, its tag, its day. A task typed
- *  there lands where the view is looking, unless the words say otherwise. A chat's
- *  message made a task brings its words and a link back to it as the description
- *  (docs/chats.md 4.13). */
 export interface Prefill {
   note?: string
   tags?: string[]
   due?: string
   text?: string
   description?: string
-  /** The heading it goes under: the section a view's add row stands in. */
   heading?: string
-  /** What a task already says, for the field that edits it (or the column a view's add
-   *  row stands in: a priority). The words win over it, and the controls over both. */
   fields?: Partial<QuickFields>
-  /** Spans of `text` that stay words however they read: what a task's line escaped,
-   *  `#tips` where it says `\#tips`, so a Save that changed nothing keeps them words. */
   escaped?: { from: number; to: number }[]
-  /** Spans of `text` that are words, never read as fields: a task's own words in the
-   *  field that edits it, so only what is typed there is read. */
   keep?: { from: number; to: number }[]
 }

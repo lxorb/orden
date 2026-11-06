@@ -1,9 +1,3 @@
-/** What the app does for a task line in a note (`tasks` on the editor's note index):
- *  the engine's tick, a chip's choices in the app's menu, and a date typed in words read
- *  by quick add's grammar (docs/tasks.md 5.7). Fetched the first time a note asks, never
- *  in the first paint; see `tasks` in link-index.svelte.ts, which stands in for it until
- *  then. */
-
 import type { TaskHelp } from '@orden/editor'
 import { dayWords, todayHere } from '@orden/editor/task-days'
 import { tick, todayOf } from '@orden/bases'
