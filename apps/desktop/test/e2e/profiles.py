@@ -141,8 +141,10 @@ def main() -> int:
         owner.evaluate("() => window.nibApp.settings.show('account')")
         change = owner.get_by_role("button", name="Change", exact=True)
         change.wait_for(timeout=30_000)
+        # Where there may be a camera, Change is a menu of the two ways in (#1056).
+        change.click()
         with owner.expect_file_chooser() as chosen:
-            change.click()
+            owner.get_by_role("menuitem", name="Choose a picture").click()
         chosen.value.set_files(str(picture()))
 
         sheet = owner.get_by_role("dialog", name="Profile picture")
