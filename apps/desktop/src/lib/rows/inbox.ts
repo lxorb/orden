@@ -76,7 +76,6 @@ export const inboxes: KeptByPath = {
     const was = relativeTo(root, from)
     const after = movedTo(now, was, relativeTo(root, to), root)
     if (after === null) return
-    // Into another space, the note is no longer this space's to be its inbox.
     setInbox(root, into !== undefined && into !== null && !samePath(into, root) ? INBOX : after)
   },
   gone(path, root) {

@@ -29,8 +29,6 @@ PHONE = (
 
 ROW = ".sheet .setting.pressable"
 
-#: What a build made with no version given says: the one in tauri.conf.json, and on the
-#: web the commit it was built from beside it (#1112), as vite.config.ts reads it.
 RELEASE = json.loads((harness.APP / "src-tauri" / "tauri.conf.json").read_text(encoding="utf-8"))["version"]
 COMMIT = subprocess.run(
     ["git", "rev-parse", "--short", "HEAD"], cwd=harness.APP, capture_output=True, text=True, check=False

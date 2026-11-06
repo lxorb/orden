@@ -59,7 +59,6 @@ def drive(browser: Browser) -> None:
         say("the tree shows no root AGENTS.md")
 
         new_row(page, "agents")
-        # Hung over the window from the name since #1129, outside the row.
         hint = page.locator(".reason.held button")
         hint.wait_for()
         hint.evaluate(

@@ -22,7 +22,6 @@ export class FakeMail {
   user = 'emil@example.org'
   password = 'right horse'
   idle = true
-  /** Whether it takes SASL PLAIN in the command, or only LOGIN. */
   sasl = true
   private readonly idlers = new Set<() => void>()
   private readonly servers: Server[] = []
@@ -96,7 +95,6 @@ export class FakeMail {
         say(`* CAPABILITY ${caps}`)
         say(`${tag} OK done`)
       } else if (command === 'LOGIN') {
-        // A quoted string is 7-bit (RFC 3501): 8-bit words come as a literal.
         if (/[\u0080-\uffff]/.test(rest)) {
           say(`${tag} BAD 8-bit characters in a quoted string`)
           return

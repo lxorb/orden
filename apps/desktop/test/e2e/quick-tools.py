@@ -61,8 +61,6 @@ class Model(http.server.BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self) -> None:  # noqa: N802
-        """The models it has, which the app asks a provider for as an account is set up
-        and as a chat picks one."""
         body = json.dumps({"object": "list", "data": [{"id": "heron", "object": "model"}]}).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
