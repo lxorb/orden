@@ -1336,9 +1336,14 @@ function holds(tail: string): boolean {
  *  (Pane.svelte, surfaces.svelte.ts). Measured 3,684,441 in 400.
  *
  *  Lowered on 2026-11-06, to 3,128,900, for #1045: the packages and services carry no
- *  comments. Measured 3,128,559 in 400. */
-const BUDGET = 3_128_900
-const MOST_FILES = 401
+ *  comments. Measured 3,128,559 in 400.
+ *
+ *  Raised on 2026-11-06, to 3,141,000 in 404 files, for #1165: what the reader protected
+ *  and which of it is open, asked before a pane draws anything, and the rows that protect
+ *  and lock (protect/protection.svelte.ts, protect/unlocked.svelte.ts, protect/entries.ts).
+ *  Measured 3,140,501 in 403. */
+const BUDGET = 3_141_000
+const MOST_FILES = 404
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

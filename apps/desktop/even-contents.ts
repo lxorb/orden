@@ -698,10 +698,14 @@ export function partOf(file: string, catalogue: boolean): Part {
  *
  *  Lowered on 2026-11-06 for #1045, the packages without their comments: the code to
  *  6,034,900, measured 6,034,520.
+ *
+ *  Raised on 2026-11-06 for #1165, what the reader protected and which of it is open,
+ *  which the plugin carries without its lock screen (protect/): the code to 6,040,600,
+ *  measured 6,040,085, and the catalogues to 1,021,300, measured 1,021,055.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_034_900,
-  catalogues: 1_020_700,
+  code: 6_040_600,
+  catalogues: 1_021_300,
   styles: 293_500,
   fonts: 260_000,
   pages: 40_000,
