@@ -1,14 +1,3 @@
-/** Which spaces on this device would meet different words in the account's space of
- *  the same name, were they to join it.
- *
- *  Asked only about notes of unknown standing - another account's, or ones no pass has
- *  seen; see returning.ts. A space meets its namesake when one of its notes is at a
- *  path the account's space also has, with other words, and those words are not simply
- *  an older version the account once held (`behind`, sync/ancestry.ts). A note the
- *  account lacks is only added; a canvas, a page note or a web note settles into one
- *  either way (sync/pass.ts); the app's own untouched welcome note and AGENTS.md are
- *  nobody's writing. None of those is a reason to ask. */
-
 import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@orden/markdown/links'
 import { inForeignCopy } from '@orden/sync-core/foreign'
 import { isUntouchedAgents } from '../agents-seed'
@@ -31,7 +20,6 @@ export interface There {
   role: string
 }
 
-/** The spaces here, out of `local`, that would meet different words in the account. */
 export async function meeting(
   token: string,
   local: readonly Here[],
@@ -39,7 +27,6 @@ export async function meeting(
 ): Promise<Here[]> {
   const met: Here[] = []
   for (const space of local) {
-    // Paired by name only with a space of the account's own; see space-plan.ts.
     const namesake = remote.find((one) => one.role === 'owner' && one.name === space.name)
     if (namesake && (await meets(token, space.root, namesake.id))) met.push(space)
   }
@@ -66,7 +53,6 @@ async function meets(token: string, root: string, spaceId: string): Promise<bool
       continue
     }
 
-    // Either line ending, as the pass reads one (`holdsSameWords` in pass.ts).
     const hashes = [await sha256(content)]
     if (content.includes('\r')) hashes.push(await sha256(unixLines(content)))
     if (!hashes.includes(theirs.hash)) {
@@ -79,7 +65,6 @@ async function meets(token: string, root: string, spaceId: string): Promise<bool
   return differing.some((one) => !older.has(one.id))
 }
 
-/** Every live note the account's space holds, by path. */
 async function notesOf(
   token: string,
   spaceId: string,
@@ -98,8 +83,6 @@ async function notesOf(
   }
 }
 
-/** Whether a file is words two people could have written differently: a note, not a
- *  plane or a web note that settles into one, nor a PDF, nor another tool's copy. */
 function words(path: string): boolean {
   return (
     !isPdfTarget(path) &&

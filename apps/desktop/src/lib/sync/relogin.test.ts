@@ -1,14 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Signing out, writing, and signing back in, on fake devices against the real
- *  Worker: the service's own routes over real SQL (services/sync/test/harness.ts),
- *  reached through the app's own client, with a disk per device in memory. One test
- *  per row of the table in docs/sync.md, "Signing back in".
- *
- *  Every row holds the same three things: whether signing in asks, that no word
- *  either side wrote is lost, and that no copy appears beside a note where nothing
- *  overlapped. */
-
 const world = vi.hoisted(() => {
   interface Entry {
     name: string
@@ -19,7 +10,6 @@ const world = vi.hoisted(() => {
     children: Entry[]
   }
 
-  /** One machine: its files, and the versions its saves kept of each. */
   class Device {
     disk = new Map<string, string>()
     kept = new Map<string, string[]>()
@@ -97,9 +87,6 @@ vi.mock('../tauri', async (importOriginal) => ({
   invoke: world.invoke,
 }))
 
-/** The Worker and its test harness, out of services/sync. Named through a variable so
- *  the app's type check, which holds the app to the browser's types, does not walk
- *  into a Worker held to Cloudflare's; the shapes this file uses are spelled below. */
 const SERVICE = new URL('../../../../../services/sync/', import.meta.url).href
 interface Env {
   db: { exec(sql: string): void }
@@ -152,7 +139,6 @@ afterEach(() => {
   env.close()
 })
 
-/** A person: a session on the account, and the id it is known by. */
 async function person(email: string) {
   const token = await signIn(env, email)
   const me = await call<{ user?: { id: string } }>(env, '/v1/me', { token })
@@ -167,21 +153,17 @@ async function spaceOf(token: string, name = 'Plans'): Promise<string> {
   return made.json.space?.id ?? ''
 }
 
-/** One pass, as sync.svelte.ts runs it: take what the account has, then offer. */
 async function pass(device: Device, mirror: Mirror, token: string) {
   world.use(device)
   await pull(mirror, token, NOBODY)
   await push(mirror, token, NOBODY)
 }
 
-/** A keystroke and the save after it, which keeps the words it replaces first, as
- *  workspace/saving.svelte.ts does. */
 function types(device: Device, path: string, content: string) {
   device.keep(path, device.disk.get(path) ?? '')
   device.disk.set(path, content)
 }
 
-/** What the record a sign-out leaves behind reads as on the next launch. */
 function storedThrough(mirror: Mirror, whose: string) {
   const written: unknown = JSON.parse(
     JSON.stringify({ account: whose, seen: true, mirrors: { [mirror.root]: mirror } }),
@@ -192,7 +174,6 @@ function storedThrough(mirror: Mirror, whose: string) {
   return { saved, mirror: back }
 }
 
-/** The account's copy of the only note at `path` in a space. */
 async function accountHolds(token: string, spaceId: string, path = 'plan.md') {
   const page = await call<{ notes: { id: string; path: string; deleted: boolean }[] }>(
     env,
@@ -209,8 +190,6 @@ async function accountHolds(token: string, spaceId: string, path = 'plan.md') {
   return { paths: live.map((one) => one.path).sort(), id: note?.id ?? '', ...body?.json }
 }
 
-/** Another device of the same person writing on the account: a whole new body on top
- *  of the version it read. */
 async function elsewhere(token: string, spaceId: string, content: string) {
   const held = await accountHolds(token, spaceId)
   await call(env, `/v1/notes/${held.id}`, {
@@ -220,7 +199,6 @@ async function elsewhere(token: string, spaceId: string, content: string) {
   })
 }
 
-/** Whether signing in on `device` asks, as settling.ts decides it. */
 async function asks(
   device: Device,
   token: string,
@@ -239,7 +217,6 @@ async function asks(
   return asksOnReturn(base, met.length > 0)
 }
 
-/** A device that synced `content` with the account and then signed out. */
 async function syncedThenSignedOut(content: string) {
   const me = await person('me@nib.dev')
   const spaceId = await spaceOf(me.token)
@@ -248,12 +225,10 @@ async function syncedThenSignedOut(content: string) {
   const mirror = newMirror(spaceId, ROOT)
   await pass(laptop, mirror, me.token)
 
-  // Signing out ends the session on the account; the record stays on the device.
   await call(env, '/v1/auth/signout', { token: me.token, body: {} })
   return { me, spaceId, laptop, ...storedThrough(mirror, me.id) }
 }
 
-/** Five minutes on, so the account keeps the next write as a version of its own. */
 function later() {
   env.db.exec('update note_versions set at = at - 600000')
 }
@@ -304,7 +279,6 @@ describe('signing back in to the same account', () => {
     const start = '# Plan\n\nfirst line\n\nsecond line\n'
     const { spaceId, laptop, saved, mirror } = await syncedThenSignedOut(start)
     later()
-    // Written by something that keeps no version of its own: another editor.
     laptop.disk.set(NOTE, '# Plan\n\nfirst line, here\n\nsecond line\n')
     laptop.kept.clear()
     await elsewhere((await person('me@nib.dev')).token, spaceId, `${start}\nthird, there\n`)
@@ -375,7 +349,6 @@ describe('signing in with notes of unknown standing', () => {
     later()
     await elsewhere((await person('me@nib.dev')).token, spaceId, '# Plan\n\none\ntwo\n')
 
-    // The record went (a browser's storage cleared), the files stayed.
     const back = await person('me@nib.dev')
     expect(await asks(laptop, back.token, back.id, null)).toBe(false)
 

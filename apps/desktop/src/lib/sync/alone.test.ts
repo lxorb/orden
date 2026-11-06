@@ -1,18 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** One device, one note, one copy.
- *
- *  Emil's words, which are the whole specification of this file: "if there's just a
- *  single device editing a note there should never be conflicts". So everything below
- *  drives exactly one machine through the things a person does - type, wait for a
- *  pass, type again, rename, close the app in the middle of one - and asserts the same
- *  invariant every time: one note here, one note on the account, and nothing called
- *  "from another device" anywhere.
- *
- *  Which is a different question from the one mirror.test.ts asks. That file is about
- *  two devices meeting and is right to keep both copies. This one is about the case
- *  where there is nobody to meet, and a second copy is never an answer. */
-
 const { ApiError } = await import('../api')
 
 const fake = vi.hoisted(() => {
@@ -37,12 +24,7 @@ const fake = vi.hoisted(() => {
   const disk = new Map<string, string>()
   const remote = new Map<string, Remote>()
   let seq = 0
-  /** Set to make the next write to the account land and then answer with a broken
-   *  connection: the account moved on and this machine never heard how. */
   let loseTheAnswer = false
-  /** What happens between a write leaving this machine and the account answering it.
-   *  Where a room's settle lands when it lands inside a push; see `settles`. Fires
-   *  once, because the moment it stands for happens once. */
   let between: (() => void) | null = null
 
   function meanwhile() {
@@ -72,7 +54,6 @@ const fake = vi.hoisted(() => {
       return Promise.resolve(undefined as T)
     }
 
-    // The shape the crate answers; see `file_stamp` in notes.rs.
     if (command === 'file_stamp') {
       const held = disk.get(path)
       return Promise.resolve((held === undefined ? null : { modified: 0, len: held.length }) as T)
@@ -123,9 +104,6 @@ const fake = vi.hoisted(() => {
     }
   }
 
-  /** The account, answering the way services/sync/src/notes.ts answers: one live
-   *  note per path, a write names the version it edited, and a mismatch is a 409
-   *  carrying what is held. */
   const api = {
     changes: async (_token: string, _spaceId: string, since: number) => {
       const notes = [...remote.values()]
@@ -208,9 +186,6 @@ const fake = vi.hoisted(() => {
     return note.id
   }
 
-  /** The account's copy written by something that is not this pass: the room this
-   *  note is open in, settling what was typed into it. The version and the cursor
-   *  move on exactly as they do for a push, which is what the room's settle is. */
   function settles(path: string, content: string) {
     const note = [...remote.values()].find((one) => one.path === path && !one.deleted)
     if (!note) throw new Error(`no note at ${path}`)
@@ -262,7 +237,6 @@ beforeEach(() => {
   fake.reset()
 })
 
-/** One machine, one space, one note both sides already agree about. */
 async function alone(path: string, content: string) {
   const id = fake.addRemote(path, content)
   fake.disk.set(`${ROOT}/${path}`, content)
@@ -274,24 +248,19 @@ async function alone(path: string, content: string) {
   return { mirror, id }
 }
 
-/** A keystroke, then the pause that writes the file; see workspace/saving.svelte.ts. */
 function types(path: string, content: string) {
   fake.disk.set(`${ROOT}/${path}`, content)
 }
 
-/** One pass of the loop, in the order sync.svelte.ts runs it. `rooms` is the rooms
- *  store as the pass asks it: note by note, as it reaches each one. */
 async function pass(mirror: Mirror, rooms: Joined = NOBODY) {
   await pull(mirror, 'token', rooms)
   await push(mirror, 'token', rooms)
 }
 
-/** What the machine holds, so a second copy under any name shows up. */
 function files(): string[] {
   return [...fake.disk.keys()].sort()
 }
 
-/** What the account holds, tombstones left out. */
 function account(): string[] {
   return [...fake.remote.values()]
     .filter((one) => !one.deleted)
@@ -299,11 +268,6 @@ function account(): string[] {
     .sort()
 }
 
-/** The mirror as a launch reads it back, through storage and JSON - so a field a
- *  pass keeps in memory and never writes down does not quietly hold a test up.
- *
- *  `caches: false` is the blob a full storage takes instead of the whole table,
- *  exactly as `withoutCaches` in sync.svelte.ts writes it. */
 function reloaded(mirror: Mirror, { caches = true } = {}): Mirror {
   const written = JSON.parse(
     JSON.stringify(caches ? mirror : { ...mirror, notes: {}, files: {}, dropped: true }),
@@ -328,11 +292,6 @@ describe('one device typing in one note', () => {
     expect(account()).toEqual(['Plan.md'])
   })
 
-  /** The one that Emil sees. A push lands on the account and the answer never gets
-   *  back - a connection dropped, a worker that took too long, a laptop lid. The
-   *  account has moved on, this machine's entry has not, and the next keystroke makes
-   *  the file differ from both. Read as "two writers", which is one writer and a lost
-   *  reply. */
   test('makes no second copy when a push lands and its answer is lost', async () => {
     const { mirror } = await alone('Plan.md', '# Plan\n')
 
@@ -340,7 +299,6 @@ describe('one device typing in one note', () => {
     fake.lose()
     await expect(push(mirror, 'token', NOBODY)).rejects.toThrow()
 
-    // The hand carries on typing, because nothing on screen said anything happened.
     types('Plan.md', '# Plan\none\ntwo\n')
     await pass(mirror)
 
@@ -349,9 +307,6 @@ describe('one device typing in one note', () => {
     expect(fake.disk.get(`${ROOT}/Plan.md`)).toBe('# Plan\none\ntwo\n')
   })
 
-  /** And the same thing a launch later. What the pass wrote down has to be a record a
-   *  restart can read: a hash held only in memory answers nothing after a crash, which
-   *  is one of the two ways this shows up at all. */
   test('makes no second copy when the lost answer is a launch ago', async () => {
     const { mirror } = await alone('Plan.md', '# Plan\n')
 
@@ -359,8 +314,6 @@ describe('one device typing in one note', () => {
     fake.lose()
     await expect(push(mirror, 'token', NOBODY)).rejects.toThrow()
 
-    // The failed pass writes itself down and the window closes; see `run` in
-    // sync.svelte.ts, which saves what a pass got through before it fell over.
     const next = reloaded(mirror)
     types('Plan.md', '# Plan\none\ntwo\n')
     await pass(next)
@@ -369,9 +322,6 @@ describe('one device typing in one note', () => {
     expect(account()).toEqual(['Plan.md'])
   })
 
-  /** And when storage was full, which drops the note cache and keeps the cursor on
-   *  purpose; see `withoutCaches` in sync.svelte.ts. Every note then reads as one the
-   *  account has never been told about. */
   test('makes no second copy when a full storage dropped the note cache', async () => {
     const { mirror } = await alone('Plan.md', '# Plan\n')
 
@@ -386,8 +336,6 @@ describe('one device typing in one note', () => {
     expect(account()).toEqual(['Plan.md'])
   })
 
-  /** A note renamed while it is being written in. The file leaves under one name and
-   *  arrives under another, and the account has to end up holding one of them. */
   test('makes one note when the note is renamed between keystrokes', async () => {
     const { mirror } = await alone('Plan.md', '# Plan\n')
 
@@ -405,36 +353,12 @@ describe('one device typing in one note', () => {
     expect(account()).toEqual(['Notes on the plan.md'])
   })
 
-  /** A second way one device makes two files, proven here and NOT closed by this
-   *  change - `test.fails` holds it, so the day somebody mends it this line is what
-   *  says so.
-   *
-   *  The mirror is keyed by the file's name in the space, and the note's id on the
-   *  account only rides along inside the entry. So every question about identity is
-   *  really "did the path change" - and the pass has one guard for it: a path the
-   *  mirror knows whose file has gone is a rename rather than a note this machine has
-   *  never seen, and the old name is not written back.
-   *
-   *  The guard is an entry. Take the entry away - a table storage would not hold - and
-   *  the account's copy of the old name is a note this machine has never heard of,
-   *  which the pass puts on the disk beside the renamed one. Two files, one note, one
-   *  device, and no conflict involved: this is the plain arrival path rather than the
-   *  conflict path, which is why the copy wears the old name rather than another
-   *  device's.
-   *
-   *  It cannot be mended by asking the entries a better question, because there are no
-   *  entries: with the table gone the app cannot tell "renamed here" from "new there"
-   *  for any path at all. What it wants is for the table not to be droppable - it is
-   *  the only record of what this device has seen, and it lives in a five megabyte
-   *  store shared with everything else in the app. See `dropped` in mirror.ts. */
   test.fails('does not put the old name back when a rename outran the mirror', async () => {
     const { mirror } = await alone('Plan.md', '# Plan\n')
 
-    // Renamed here, and the pass that would have told the account never ran.
     fake.disk.delete(`${ROOT}/Plan.md`)
     types('Notes on the plan.md', '# Notes on the plan\n')
 
-    // A launch whose stored mirror is from before any of it.
     const next = reloaded({ ...mirror, notes: {}, cursor: 0 }, { caches: false })
     await pass(next)
 
@@ -442,26 +366,12 @@ describe('one device typing in one note', () => {
     expect(account()).toEqual(['Notes on the plan.md'])
   })
 
-  /** The note is open in a tab, so it is in a room, and the room carries what is
-   *  typed into it up to the account itself - keystroke by keystroke, without
-   *  waiting for a pass. A pass leaves such a note alone for exactly that reason;
-   *  see `Joined` in pass.ts.
-   *
-   *  Both channels are this one machine. The room is this device's writing going up
-   *  a letter at a time and the push is the same words going up as a file, so the
-   *  account moving on under a push is this device meeting itself - never a second
-   *  writer, however far the two versions have drifted apart in the seconds a pass
-   *  takes. */
   test('makes no second copy when its room settles while the push is in the air', async () => {
     const { mirror, id } = await alone('Plan.md', '# Plan\n')
     const room = new Set<string>()
 
     types('Plan.md', '# Plan\none\n')
 
-    // The pass asked the rooms store a moment ago and the room had not settled yet,
-    // so the file goes up naming the version this machine last read. The settle
-    // lands while that write is in the air: the account is a version on before the
-    // answer comes back, and what it holds is what this same hand typed.
     fake.meanwhile(() => {
       room.add(id)
       fake.settles('Plan.md', '# Plan\none\n')
@@ -472,8 +382,6 @@ describe('one device typing in one note', () => {
     expect(account()).toEqual(['Plan.md'])
   })
 
-  /** And the pass has learned where the account got to, so the note goes on being
-   *  carried the moment its tab closes and there is no room to carry it. */
   test('offers the note again once its room has gone', async () => {
     const { mirror, id } = await alone('Plan.md', '# Plan\n')
     const room = new Set<string>()
@@ -485,8 +393,6 @@ describe('one device typing in one note', () => {
     })
     await pass(mirror, room)
 
-    // The tab closes, the room goes with it, and the file is the only way what is
-    // typed next travels.
     room.clear()
     types('Plan.md', '# Plan\none\ntwo\n')
     await pass(mirror, room)
@@ -496,10 +402,6 @@ describe('one device typing in one note', () => {
     expect([...fake.remote.values()][0]?.content).toBe('# Plan\none\ntwo\n')
   })
 
-  /** A note made here while the account was out of reach, offered once the account is
-   *  back. The account already holds it - the create that answered 409 is the pass
-   *  before this one, whose answer was lost - and it is the same words plus whatever
-   *  was typed since. */
   test('makes no second copy when a create landed and its answer was lost', async () => {
     const mirror = newMirror('s-one', ROOT)
     types('Plan.md', '# Plan\n')

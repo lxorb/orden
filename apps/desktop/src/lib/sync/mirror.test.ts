@@ -1,14 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** One space moved between a disk and an account that both live in memory, driven
- *  a pass at a time. What this file is about is the one decision a pass has to
- *  make - both sides changed, now what - and how the answer changes for a note
- *  that is open in a room.
- *
- *  The loop around it, and the pairing of folders with spaces, are tested next
- *  door in sync.test.ts against the whole store. Here `pull` and `push` are called
- *  directly, because which notes are in rooms is something they are handed. */
-
 const { ApiError } = await import('../api')
 
 const fake = vi.hoisted(() => {
@@ -28,39 +19,24 @@ const fake = vi.hoisted(() => {
     version: number
     seq: number
     deleted: boolean
-    /** When the account says it was last written, in milliseconds. */
     updatedAt?: number
   }
 
   const disk = new Map<string, string>()
   const remote = new Map<string, Remote>()
   const calls: string[] = []
-  /** Every note whose body the pass asked the account for, in the order it did. */
   const fetched: string[] = []
-  /** The version history, as the platforms keep it: every note's earlier words,
-   *  oldest first, under the note they are versions of. What the sheet lists and
-   *  what Restore puts back; see recovery.svelte.ts. */
   const history = new Map<string, string[]>()
-  /** When each file here was last written, as the crate stamps it; a file with
-   *  none was written at the dawn of time. */
   const modified = new Map<string, number>()
-  /** Files that are there and will not read: another encoding, or a lock. */
   const unreadable = new Set<string>()
-  /** What the account answers a delete with, where it does not simply take it. */
-  /** Told after every rename, as the disk then stands: where a quit could fall. */
   const renamed: { hook: (() => void) | null } = { hook: null }
   const refusing: { delete: Error | null; moving: Set<string> } = {
     delete: null,
     moving: new Set(),
   }
-  /** How many more times a file reads before it stops, as one moved away mid-pass
-   *  does; a file with no count reads every time. */
   const readsLeft = new Map<string, number>()
-  /** The blobs the account holds bytes for, by hash, and every hash put up. */
   const blobs = new Set<string>()
   const blobsPut: string[] = []
-  /** This device's trash, by the id each thing put in it was given: where it was and
-   *  what it said. See src-tauri/src/trash.rs. */
   const trash = new Map<string, { path: string; content: string }>()
   let seq = 0
 
@@ -71,9 +47,6 @@ const fake = vi.hoisted(() => {
 
     if (command === 'read_note') {
       const held = disk.get(path)
-      // Rejected rather than thrown, the way the platform shim answers: a pass
-      // catches the promise, and a file that is not there is the ordinary case
-      // of a note arriving from another machine.
       if (held === undefined) return Promise.reject(new Error(`no such file: ${path}`))
       if (unreadable.has(path)) {
         return Promise.reject(new Error(`stream did not contain valid UTF-8: ${path}`))
@@ -81,7 +54,6 @@ const fake = vi.hoisted(() => {
       return Promise.resolve(held as T)
     }
 
-    // The shape the crate answers, not a bare time; see `file_stamp` in notes.rs.
     if (command === 'file_stamp') {
       const held = disk.get(path)
       if (held === undefined) return Promise.resolve(null as T)
@@ -97,27 +69,18 @@ const fake = vi.hoisted(() => {
     if (command === 'snapshot_note') {
       const content = text(args.content)
       const kept = history.get(path) ?? []
-      // Both platforms drop a version that repeats the one before it, and neither
-      // keeps one of a note that says nothing; see src-tauri/src/history.rs and
-      // web/commands.ts.
       if (content.trim() && kept.at(-1) !== content) history.set(path, [...kept, content])
       return Promise.resolve(undefined as T)
     }
 
-    // The versions a merge looks for its base in. None, here: this file is about
-    // the rules for two copies nothing can merge, and relogin.test.ts holds the merge
-    // to the real Worker.
     if (command === 'list_snapshots') return Promise.resolve([] as T)
 
-    // The crate's rename: refused onto a name that is taken, and a page note's paper
-    // goes with it; see `rename_note` and `move_held` in src-tauri/src/notes.rs.
     if (command === 'rename_note') {
       const from = text(args.from)
       const to = text(args.to)
       calls.push(`rename ${from} ${to}`)
       const held = disk.get(from)
       if (held === undefined) return Promise.reject(new Error(`no such file: ${from}`))
-      // A file another program holds open, which Windows will not rename.
       if (refusing.moving.has(from)) return Promise.reject(new Error(`${from} is in use`))
       if (disk.has(to)) return Promise.reject(new Error(`${to} is already there`))
 
@@ -170,7 +133,6 @@ const fake = vi.hoisted(() => {
 
     if (command === 'read_tree') {
       const root = text(args.root)
-      // A name with a dot in front is hidden, as the crate's tree hides it.
       const children = [...disk.keys()]
         .filter((one) => one.startsWith(`${root}/`) && !one.split('/').pop()?.startsWith('.'))
         .sort()
@@ -197,8 +159,6 @@ const fake = vi.hoisted(() => {
     throw new Error(`no such command: ${command}`)
   }
 
-  /** The account’s own hash, worked out the way the service works it out, so a
-   *  pass comparing hashes is comparing real ones. */
   async function hashOf(content: string): Promise<string> {
     const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(content))
     return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
@@ -232,8 +192,6 @@ const fake = vi.hoisted(() => {
     readNote: async (_token: string, id: string) => {
       const note = remote.get(id)
       if (!note) throw new Error('no such note')
-      // Kept apart from `calls`, which is what the writes are counted in: the
-      // order bodies are asked for in is its own question.
       fetched.push(note.path)
       return { note: await present(note), content: note.content }
     },
@@ -254,9 +212,6 @@ const fake = vi.hoisted(() => {
     createNote: async (_token: string, _spaceId: string, path: string, content: string) => {
       calls.push(`createNote ${path}`)
 
-      // A space holds one live note per path, so the service answers 409 with the
-      // note that is already there rather than making a second one; see
-      // services/sync/src/notes.ts. That is a pairing, not a failure.
       const taken = [...remote.values()].find((one) => one.path === path && !one.deleted)
       if (taken) {
         throw new ApiError(409, 'a note already lives there', {
@@ -265,7 +220,6 @@ const fake = vi.hoisted(() => {
         })
       }
 
-      // Named for its path, unless a note that has since moved on already is.
       const named = `n-${path}`
       const note: Remote = {
         id: remote.has(named) ? `${named}-${seq + 1}` : named,
@@ -285,8 +239,6 @@ const fake = vi.hoisted(() => {
       if (note) Object.assign(note, { deleted: true, seq: ++seq })
       return Promise.resolve({ ok: true as const })
     },
-    // The account keeps a row only for a file it holds the bytes of, and names the
-    // hashes it has none for; see services/sync/src/spaces/files.ts.
     saveSpaceFiles: (_token: string, _spaceId: string, files: { hash: string }[]) =>
       Promise.resolve({
         files: [],
@@ -297,27 +249,21 @@ const fake = vi.hoisted(() => {
       blobsPut.push(hash)
       return Promise.resolve({ ok: true as const })
     },
-    // An account that keeps no history: no copy here is ever only behind it, and no
-    // base is ever found for a merge.
     said: () => Promise.resolve({ said: [] as string[] }),
     saidAs: () => Promise.reject(new ApiError(404, 'no such version')),
   }
 
-  /** A note the account holds, and what its next version will be called. */
   function addRemote(path: string, content: string): string {
     const note: Remote = { id: `n-${path}`, path, content, version: 1, seq: ++seq, deleted: false }
     remote.set(note.id, note)
     return note.id
   }
 
-  /** Another device's delete, as the account keeps it: a tombstone in the changes. */
   function deleteRemote(id: string) {
     const note = remote.get(id)
     if (note) Object.assign(note, { deleted: true, version: note.version + 1, seq: ++seq })
   }
 
-  /** Another device's rename, as the account keeps it: the same row under a new
-   *  path, and no tombstone for the old one; see services/sync/src/notes.ts. */
   function renameRemote(id: string, path: string, content?: string) {
     const note = remote.get(id)
     if (!note) return
@@ -392,8 +338,6 @@ beforeEach(() => {
   fake.reset()
 })
 
-/** A space paired with the account, with one note that both sides agree about and
- *  a mirror that has already seen it. */
 async function paired(path: string, content: string) {
   const id = fake.addRemote(path, content)
   fake.disk.set(`${ROOT}/${path}`, content)
@@ -405,30 +349,13 @@ async function paired(path: string, content: string) {
   return { mirror, id }
 }
 
-/** Whether a conflict copy was written anywhere on the disk. */
 function conflicts(): string[] {
   return [...fake.disk.keys()].filter((path) => path.includes('from another device'))
 }
 
-/** A rename keeps the note's identity on the account.
- *
- *  A note is a row up there with an id, and everything that outlives one sitting
- *  hangs off that id: the version history, the room every device in the note joins,
- *  what a published link points at. A rename changes the name of a file; it is not a
- *  note ending and another beginning.
- *
- *  Nothing used to tell the account, and the next pass read the move off the folder
- *  instead - the new name a note it had never seen, the old one a path with no file.
- *  That is a create and a delete: a fresh uuid, the history severed, the open room
- *  named after an id nothing answers to, and - where the filesystem does not care
- *  about case - a rename that only changed case going up as a brand new note. The
- *  pass reading it off the folder is still what happens when nobody could be told,
- *  which is the last test here. */
 describe('a note renamed on this machine', () => {
   const HERE = '# One' + String.fromCharCode(10)
 
-  /** The rename, as the workspace does it: the file leaves one name and arrives
-   *  under another, and the account is told which note that was. */
   function renameOnDisk(from: string, to: string) {
     const held = fake.disk.get(`${ROOT}/${from}`) ?? ''
     fake.disk.delete(`${ROOT}/${from}`)
@@ -441,7 +368,6 @@ describe('a note renamed on this machine', () => {
 
     expect(await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`)).toBe(true)
 
-    // One request, and it is the note being renamed rather than a new one.
     expect(fake.calls).toEqual(['writeNote Two.md'])
     expect(fake.remote.get(id)?.path).toBe('Two.md')
     expect(fake.remote.get(id)?.deleted).toBe(false)
@@ -465,10 +391,6 @@ describe('a note renamed on this machine', () => {
     ])
   })
 
-  /** Where the filesystem does not care about case - Windows, and a Mac unless
-   *  somebody asked otherwise - `One.md` and `one.md` are one file. The account
-   *  does care, so a create and a delete over that pair is two rows over one file,
-   *  and which of them wins the next pass is a coin toss. */
   test('and a rename that only changes case is the same note, not another one', async () => {
     const { mirror, id } = await paired('One.md', HERE)
     renameOnDisk('One.md', 'one.md')
@@ -482,18 +404,10 @@ describe('a note renamed on this machine', () => {
     expect(mirror.notes['one.md']?.id).toBe(id)
   })
 
-  /** A note somebody is reading is the note they rename, and a note somebody is
-   *  reading is the note a room is carrying: the room writes it up keystroke by
-   *  keystroke, so the version the last pass wrote down is behind by the time the
-   *  name changes. The room names the note by its id and never says where it lives,
-   *  so this is the only thing that can move it - and what it moves is what the room
-   *  wrote. */
   test('and follows a room that moved past this machine while the name changed', async () => {
     const { mirror, id } = await paired('One.md', HERE)
     renameOnDisk('One.md', 'Two.md')
 
-    // The room settled twice since the last pass, so the version the mirror holds is
-    // not the one the account is on.
     const THEIRS = '# One, and a sentence somebody typed' + String.fromCharCode(10)
     fake.editRemote(id, THEIRS)
     const stale = fake.api.writeNote
@@ -509,17 +423,10 @@ describe('a note renamed on this machine', () => {
     }
 
     expect(fake.remote.get(id)?.path).toBe('Two.md')
-    // The room's words, at the new name: nothing it wrote was rolled back to the
-    // file this machine happened to hold.
     expect(fake.remote.get(id)?.content).toBe(THEIRS)
     expect(mirror.notes['Two.md']?.id).toBe(id)
   })
 
-  /** The version the rename lost to need not be a room: another device can have
-   *  written the note while this one, still holding the older words, renamed it. The
-   *  account's copy is moved to the new name all the same, but this machine has never
-   *  held those words, so they are not something the two agree on. Recorded as agreed,
-   *  the next push sent the older file over them with no 409 and nothing kept. */
   describe('and another device wrote in it while the name changed', () => {
     const THEIRS =
       '# One' + String.fromCharCode(10) + 'typed on the other device' + String.fromCharCode(10)
@@ -578,7 +485,6 @@ describe('a note renamed on this machine', () => {
     })
   })
 
-  /** A folder is the same move said once per note under it. */
   test('and a note waiting to be settled keeps the copy nobody has looked at', async () => {
     const { mirror, id } = await paired('One.md', HERE)
     fake.disk.set(`${ROOT}/One.md`, `${HERE}here\n`)
@@ -591,9 +497,7 @@ describe('a note renamed on this machine', () => {
       asked.push(one),
     )
 
-    // Renamed on the account, still with the words the question is about.
     expect(fake.remote.get(id)).toMatchObject({ path: 'Two.md', content: `${HERE}there\n` })
-    // And the question holds the words and the version the account was read at.
     expect(asked).toEqual([
       expect.objectContaining({
         path: `${ROOT}/Two.md`,
@@ -615,7 +519,6 @@ describe('a note renamed on this machine', () => {
     fake.refusing.delete = null
     const reading = fake.api.readNote
     fake.api.readNote = () => Promise.reject(new TypeError('Failed to fetch'))
-    // Written down, to be told again: see `untold` in mirror.ts.
     expect(
       await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`, new Set([id])),
     ).toBe(true)
@@ -645,17 +548,13 @@ describe('a note renamed on this machine', () => {
     const writing = fake.api.writeNote
     fake.api.readNote = () => Promise.reject(new TypeError('Failed to fetch'))
     fake.api.writeNote = () => Promise.reject(new TypeError('Failed to fetch'))
-    // The rename, while away, told with the note held. Then the answer, still away:
-    // the question is let go of and the move told again with nothing held.
     await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`, new Set([id]))
     await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`, new Set())
     fake.api.readNote = reading
-    // Back, and the account refuses a write on a version it has moved past.
     fake.api.writeNote = async (token, noteId, path, content, base) => {
       if (base !== fake.remote.get(noteId)?.version) throw new ApiError(409, 'a version behind', {})
       return writing(token, noteId, path, content, base)
     }
-    // The other device writes again meanwhile.
     fake.editRemote(id, `${HERE}there\nand more there\n`)
     fake.calls.length = 0
 
@@ -672,7 +571,6 @@ describe('a note renamed on this machine', () => {
       path: 'Two.md',
       content: `${HERE}there\nand more there\n`,
     })
-    // The newer words are asked about again, at the note's new name.
     expect(clashes).toEqual([
       expect.objectContaining({
         path: `${ROOT}/Two.md`,
@@ -694,7 +592,6 @@ describe('a note renamed on this machine', () => {
     fake.api.readNote = () => Promise.reject(new TypeError('Failed to fetch'))
     await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`, new Set([id]))
     fake.api.readNote = reading
-    // A new, unrelated note under the freed name.
     fake.disk.set(`${ROOT}/One.md`, '# Shopping\nmilk\n')
     fake.calls.length = 0
 
@@ -728,7 +625,6 @@ describe('a note renamed on this machine', () => {
     renameOnDisk('Two.md', 'Three.md')
     await movedHere(mirror, 'token', `${ROOT}/Two.md`, `${ROOT}/Three.md`, new Set([id]))
     fake.api.readNote = reading
-    // Written down and read back, as a launch in between would.
     const back = readMirror(ROOT, JSON.parse(JSON.stringify(mirror)))!
 
     const clashes: Clash[] = []
@@ -774,7 +670,6 @@ describe('a note renamed on this machine', () => {
     const writing = fake.api.writeNote
     fake.api.writeNote = () => Promise.reject(new ApiError(503, 'busy', {}))
     await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`)
-    // A push before the next pull leaves both names alone.
     await push(mirror, 'token', NOBODY)
     fake.api.writeNote = writing
 
@@ -814,8 +709,6 @@ describe('a note renamed on this machine', () => {
     expect(fake.remote.get(id)).toMatchObject({ path: 'One.md', deleted: false })
   })
 
-  /** The clock, moved on by hand: how long a rename has gone untold is what says
-   *  an account that keeps failing will not take it. */
   function clock() {
     let now = Date.UTC(2026, 9, 26, 9)
     const spy = vi.spyOn(Date, 'now').mockImplementation(() => now)
@@ -842,7 +735,6 @@ describe('a note renamed on this machine', () => {
       try {
         using time = clock()
         await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`)
-        // A pass every two seconds while the outage lasts, each one failing.
         for (let one = 0; one < 8; one++) {
           time.on(2_000)
           await pull(mirror, 'token', NOBODY).catch(() => false)
@@ -872,14 +764,12 @@ describe('a note renamed on this machine', () => {
     try {
       using time = clock()
       await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`)
-      // A launch after hours away is one failure, not hours of them.
       time.on(6 * 60 * 60_000)
       await pull(mirror, 'token', NOBODY)
       expect(mirror.untold?.[id]?.failing).toEqual({
         since: Date.now() - 6 * 60 * 60_000,
         times: 2,
       })
-      // And kept across a launch.
       const back = readMirror(ROOT, JSON.parse(JSON.stringify(mirror)))!
       expect(back.untold).toEqual(mirror.untold)
       for (let one = 0; one < 30 && mirror.untold; one++) {
@@ -905,7 +795,6 @@ describe('a note renamed on this machine', () => {
     const writing = fake.api.writeNote
     const asking = fake.api.changes
     fake.api.writeNote = () => Promise.reject(new ApiError(503, 'this room is not answering', {}))
-    // One note a page.
     fake.api.changes = async (token, spaceId, since) => {
       const all = await asking(token, spaceId, since)
       const first = all.notes[0]
@@ -913,7 +802,6 @@ describe('a note renamed on this machine', () => {
     }
     try {
       await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`)
-      // Another device writes in the note, and then makes a note of its own.
       fake.editRemote(id, `${HERE}there\n`)
       fake.addRemote('Other.md', '# Other\n')
 
@@ -934,7 +822,6 @@ describe('a note renamed on this machine', () => {
     try {
       renameOnDisk('One.md', 'Meeting.md')
       await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Meeting.md`)
-      // The next new note takes the freed name, and is renamed in turn.
       fake.disk.set(`${ROOT}/One.md`, '# Ideas\nnew\n')
       renameOnDisk('One.md', 'Ideas.md')
       await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Ideas.md`)
@@ -1050,7 +937,6 @@ describe('a note renamed on this machine', () => {
     } finally {
       fake.api.writeNote = writing
     }
-    // Back under its old name by another program, which nothing here hears of.
     renameOnDisk('Meeting.md', 'One.md')
     fake.calls.length = 0
 
@@ -1092,8 +978,6 @@ describe('a note renamed on this machine', () => {
     await pull(mirror, 'token', NOBODY)
     await push(mirror, 'token', NOBODY)
 
-    // Nothing anybody wrote is lost: the new note's words are on the disk and on
-    // the account, and the renamed note's words with them.
     expect(fake.disk.get(`${ROOT}/One.md`)).toBe('# Ideas\nnew\n')
     const alive = [...fake.remote.values()].filter((one) => !one.deleted)
     expect(alive.map((one) => one.content)).toContain('# Ideas\nnew\n')
@@ -1160,15 +1044,9 @@ describe('a note renamed on this machine', () => {
 
     expect(fake.calls).toEqual(['writeNote Shelved/One.md'])
     expect(mirror.notes['Shelved/One.md']?.id).toBe('n-Kept/One.md')
-    // A name that merely starts with the folder's is not under it.
     expect(mirror.notes['Keptish.md']?.id).toBe('n-Keptish.md')
   })
 
-  /** And the account that could not be told: signed out, or a request that never
-   *  landed. The mirror is left exactly as it was and the pass reads the move off
-   *  the folder the way it always has - the new name a note it has never seen, the
-   *  old one a path with no file. The identity is lost, which is what makes telling
-   *  the account worth doing, but nothing else is. */
   test('while a rename nobody could be told about is still read off the folder', async () => {
     const { mirror } = await paired('One.md', HERE)
     renameOnDisk('One.md', 'Two.md')
@@ -1182,17 +1060,10 @@ describe('a note renamed on this machine', () => {
     expect(alive).toEqual(['Two.md'])
   })
 
-  /** And with the pass in the order the loop runs it. The account’s own listing still
-   *  carries the old note - the cursor is behind it until a pass moves it on - so the
-   *  pull sees a note whose file is not here, which is exactly what a rename looks
-   *  like from that side. */
   test('and is not brought back by the pull that runs before that push', async () => {
     const { mirror, id } = await paired('One.md', HERE)
     renameOnDisk('One.md', 'Two.md')
 
-    // The account a version ahead of the entry, which is what a note that was open
-    // in a room looks like - the room wrote it up there, keystroke by keystroke - and
-    // is what makes the pull look at the note again rather than skip it by version.
     fake.editRemote(id, HERE)
     mirror.cursor = 0
 
@@ -1217,7 +1088,6 @@ describe('a note both sides changed', () => {
 
     expect(conflicts()).toHaveLength(1)
     expect(fake.disk.get(conflicts()[0] ?? '')).toBe('base\nwritten there\n')
-    // Ours stays where it was, and is sent up as the newer version next.
     expect(fake.disk.get(`${ROOT}/note.md`)).toBe('base\nwritten here\n')
   })
 
@@ -1230,8 +1100,6 @@ describe('a note both sides changed', () => {
     await pull(mirror, 'token', new Set([id]))
 
     expect(conflicts()).toEqual([])
-    // The room settled the two before either became a file, so what comes down is
-    // simply what the note now says.
     expect(fake.disk.get(`${ROOT}/note.md`)).toBe('base\nwritten here\nwritten there\n')
   })
 
@@ -1241,7 +1109,6 @@ describe('a note both sides changed', () => {
 
     expect(await push(mirror, 'token', new Set([id]))).toBe(false)
     expect(fake.calls).toEqual([])
-    // And the account’s copy is untouched: the room is what writes it.
     expect(fake.remote.get(id)?.content).toBe('base\n')
   })
 
@@ -1255,10 +1122,6 @@ describe('a note both sides changed', () => {
   })
 })
 
-/** The same disagreement, when somebody chose to be asked about it. Nothing is
- *  touched until they answer: not the file here, not the copy up there, and no copy
- *  beside either. `both` is the block above and `newest` is further down. See
- *  sync/conflicts.ts. */
 describe('a note both sides changed, when somebody chose to be asked', () => {
   async function disagreeing() {
     const both = await paired('note.md', 'base\n')
@@ -1286,8 +1149,6 @@ describe('a note both sides changed, when somebody chose to be asked', () => {
     expect(fake.disk.get(`${ROOT}/note.md`)).toBe('base\nwritten here\n')
     expect(conflicts()).toEqual([])
     expect(fake.calls).toEqual([])
-    // The version is seen, so the pass stops asking; the empty hash is no body the two
-    // sides agree on, which a room joining the note reads as "ask again".
     expect(mirror.notes['note.md']).toEqual({ id, version: 2, hash: '' })
   })
 
@@ -1302,7 +1163,6 @@ describe('a note both sides changed, when somebody chose to be asked', () => {
 })
 
 describe('a canvas both sides drew on', () => {
-  /** Two planes with one stroke each, as files. */
   const plane = (id: string) =>
     `{\n\t"nodes": [],\n\t"edges": [],\n\t"nib": {\n\t\t"version": 1,\n\t\t"ink": [{ "id": "${id}", "tool": "pen", "color": "1", "size": 6, "points": [0, 0, 0.5, 0, 0, 0, 4, 4, 0.5, 0, 0, 8] }],\n\t\t"at": { "${id}": 1000 }\n\t}\n}\n`
 
@@ -1324,8 +1184,6 @@ describe('a canvas both sides drew on', () => {
     const { mirror, id } = await paired('Board.canvas', plane('base'))
     fake.disk.set(`${ROOT}/Board.canvas`, plane('here'))
 
-    // Every stroke was already carried by the room, so sending the file would be a
-    // second writer for one plane.
     expect(await push(mirror, 'token', new Set([id]))).toBe(false)
     expect(fake.calls).toEqual([])
     expect(fake.remote.get(id)?.content).toBe(plane('base'))
@@ -1352,11 +1210,6 @@ describe('a note only one side changed', () => {
   })
 })
 
-/** A page note is JSON Canvas with pages among its nodes, and it travels the way
- *  a canvas travels: up as a note, merged rather than copied, and down onto every
- *  other machine. The server's list of endings left `.pages` out, so a page note
- *  was refused on every pass and stayed on the one device that wrote it; see
- *  NOTE_PATH in services/sync/src/notes.ts. This is that road, from this side. */
 describe('a page note', () => {
   const paper = (id: string) =>
     `{
@@ -1387,8 +1240,6 @@ describe('a page note', () => {
     expect(fake.disk.get(`${ROOT}/Journal.pages`)).toBe(paper('elsewhere'))
   })
 
-  /** The same merge a canvas gets, because it is the same file: two devices that
-   *  drew on one page keep both hands rather than one winning. */
   test('is merged rather than copied when both sides drew on it', async () => {
     const { mirror, id } = await paired('Journal.pages', paper('base'))
 
@@ -1411,8 +1262,6 @@ describe('a path the account named', () => {
 
     await pull(mirror, 'token', NOBODY)
 
-    // Nothing on the disk, and nothing tracked: a note that cannot be placed
-    // inside the space is not a note to place.
     expect(fake.calls).toEqual([])
     expect([...fake.disk.keys()]).toEqual([])
   })
@@ -1442,9 +1291,6 @@ describe('a page of changes that never ends', () => {
     const asking = fake.api.changes
     let asked = 0
 
-    // A page that says there is more and hands back the cursor it was given.
-    // Following it is a pass that never finishes: the light stays on, the loop
-    // never sets its next timer, and a first sync never lets anybody in.
     fake.api.changes = (_token: string, _spaceId: string, since: number) => {
       asked += 1
       if (asked > 3) throw new Error('asked forever')
@@ -1474,7 +1320,6 @@ describe('a file inside a space', () => {
   })
 })
 
-/** What the version history holds for one note, oldest first. */
 function versions(path: string): string[] {
   return fake.history.get(`${ROOT}/${path}`) ?? []
 }
@@ -1486,10 +1331,6 @@ describe('words arriving from the account', () => {
 
     await pull(mirror, 'token', NOBODY)
 
-    // The file is what the account says, and what it said before is a version -
-    // the same history a save keeps, so the sheet lists it and Restore puts it
-    // back. Before this, an overwrite from the account was the one overwrite that
-    // left nothing behind on the machine it happened on.
     expect(fake.disk.get(`${ROOT}/note.md`)).toBe('what another device says\n')
     expect(versions('note.md')).toEqual(['the writing that was here\n'])
   })
@@ -1497,8 +1338,6 @@ describe('words arriving from the account', () => {
   test('keep a version of a note this machine had written in', async () => {
     const { mirror, id } = await paired('note.md', 'base\n')
 
-    // Both sides moved, so the account’s copy lands beside ours - and ours is now
-    // one edit further on than the version the pass kept before it.
     fake.disk.set(`${ROOT}/note.md`, 'base\nwritten here\n')
     fake.editRemote(id, 'base\nwritten there\n')
 
@@ -1511,8 +1350,6 @@ describe('words arriving from the account', () => {
   test('do not land on a conflict copy from earlier the same day', async () => {
     const { mirror, id } = await paired('note.md', 'base\n')
 
-    // Two conflicts on one note in one day. The copies are named after the day,
-    // so the second is written to the name the first is under.
     fake.disk.set(`${ROOT}/note.md`, 'base\nwritten here\n')
     fake.editRemote(id, 'base\nthe first thing they said\n')
     await pull(mirror, 'token', NOBODY)
@@ -1523,7 +1360,6 @@ describe('words arriving from the account', () => {
     const copy = conflicts()[0] ?? ''
     expect(conflicts()).toHaveLength(1)
     expect(fake.disk.get(copy)).toBe('base\nthe second thing they said\n')
-    // And the one it replaced is still reachable.
     expect(fake.history.get(copy)).toEqual(['base\nthe first thing they said\n'])
   })
 
@@ -1537,17 +1373,11 @@ describe('words arriving from the account', () => {
 
     await pull(mirror, 'token', NOBODY)
 
-    // A canvas is written over rather than copied beside, so the version is the
-    // only way back to the plane as this machine had it.
     expect(versions('Board.canvas')).toEqual([drawn('here')])
   })
 })
 
 describe('a note the mirror has no entry for', () => {
-  /** A space the account holds, and a folder here that already has the notes in
-   *  it, with nothing written down about the two. What a phone whose storage was
-   *  truncated wakes up to, and what pairing a folder with a space of the same
-   *  name looks like on the first pass. */
   function unrecorded(path: string, here: string, there: string) {
     const id = fake.addRemote(path, there)
     fake.disk.set(`${ROOT}/${path}`, here)
@@ -1559,9 +1389,6 @@ describe('a note the mirror has no entry for', () => {
 
     await pull(mirror, 'token', NOBODY)
 
-    // Nothing recorded is not the same as nothing written here. Before this, the
-    // account’s copy simply landed on top and the writing was gone from the one
-    // machine that had it.
     expect(fake.disk.get(`${ROOT}/note.md`)).toBe('what I wrote here\n')
     expect(conflicts()).toHaveLength(1)
     expect(fake.disk.get(conflicts()[0] ?? '')).toBe('what the account holds\n')
@@ -1581,13 +1408,10 @@ describe('a note the mirror has no entry for', () => {
 
     await pull(mirror, 'token', NOBODY)
 
-    // A mirror that lost its entries mends itself: the note is found agreeing
-    // rather than judged, so there is no copy, and no write either.
     expect(conflicts()).toEqual([])
     expect(fake.calls).toEqual([])
     expect(versions('note.md')).toEqual([])
 
-    // And it is tracked from here on, so the next pass has something to compare.
     expect(await push(mirror, 'token', NOBODY)).toBe(false)
   })
 
@@ -1596,9 +1420,6 @@ describe('a note the mirror has no entry for', () => {
 
     await pull(mirror, 'token', NOBODY)
 
-    // The app keeps whatever line ending a file already had, so its bytes never
-    // hash to what the account holds however exactly the two agree. A copy beside
-    // every note in the folder is not what that means.
     expect(conflicts()).toEqual([])
     expect(fake.disk.get(`${ROOT}/note.md`)).toBe('one\r\ntwo\r\n')
   })
@@ -1609,7 +1430,6 @@ describe('a note the mirror has no entry for', () => {
 
     await pull(mirror, 'token', NOBODY)
 
-    // The seed the app wrote is nobody's writing, so it is not worth a copy.
     expect(conflicts()).toEqual([])
     expect(fake.disk.get(`${ROOT}/${WELCOME_NAME}`)).toBe('# the account’s own read me\n')
   })
@@ -1619,17 +1439,13 @@ describe('a note the mirror has no entry for', () => {
 
     await pull(mirror, 'token', new Set([id]))
 
-    // The room settled the two character by character before either of them was
-    // ever a file, so what comes down is simply what the note now says.
     expect(conflicts()).toEqual([])
     expect(fake.disk.get(`${ROOT}/note.md`)).toBe('what the room settled\n')
-    // And the words it replaced are still a version.
     expect(versions('note.md')).toEqual(['what I wrote here\n'])
   })
 })
 
 describe('a first pass, with somebody waiting on it', () => {
-  /** A space this machine has nothing of, the way a fresh sign-in finds one. */
   function untouched(...names: string[]) {
     for (const name of names) fake.addRemote(name, `# ${name}\n`)
     return newMirror('s-one', ROOT)
@@ -1645,7 +1461,6 @@ describe('a first pass, with somebody waiting on it', () => {
       wrote: () => fetchedWhen.push(said.length),
     })
 
-    // One listing, with all three in it, and nothing had landed by then.
     expect(said).toEqual([[`${ROOT}/one.md`, `${ROOT}/Work/two.md`, `${ROOT}/three.md`]])
     expect(fetchedWhen).toEqual([1, 1, 1])
   })
@@ -1657,8 +1472,6 @@ describe('a first pass, with somebody waiting on it', () => {
 
     await pull(mirror, 'token', NOBODY, { listed: (paths) => said.push(paths) })
 
-    // The same names the pass would write, and a name that climbs out of the space
-    // is not one of them; see `placeable`.
     expect(said).toEqual([[`${ROOT}/one.md`]])
   })
 
@@ -1688,7 +1501,6 @@ describe('a first pass, with somebody waiting on it', () => {
     await pull(mirror, 'token', NOBODY, { wanted: new Set(['open.md']) })
 
     expect(fake.fetched[0]).toBe('open.md')
-    // And every other note still comes down, in the order the account sent them.
     expect(fake.fetched).toEqual(['open.md', 'one.md', 'two.md', 'four.md'])
   })
 
@@ -1715,10 +1527,6 @@ describe('a first pass, with somebody waiting on it', () => {
 })
 
 describe('the newest copy standing', () => {
-  /** The rule that lets the later of two copies stand. The file's stamp is an
-   *  object with a time in it, and it used to be compared with the account's time
-   *  as though it were a number - which it never is, so the copy here won every
-   *  conflict, however much later the other one had been written. */
   const newest = { rule: 'newest' as const }
 
   test('is the account’s copy when that was written after the file here', async () => {
@@ -1730,7 +1538,6 @@ describe('the newest copy standing', () => {
     await pull(mirror, 'token', NOBODY, newest)
 
     expect(fake.disk.get(`${ROOT}/note.md`)).toBe('base\nwritten there, later\n')
-    // And the words that lost are a version, as the rule promises.
     expect(versions('note.md')).toEqual(['base\nwritten here\n'])
     expect(conflicts()).toEqual([])
   })
@@ -1756,8 +1563,6 @@ describe('a file that is there but will not read', () => {
 
     await pull(newMirror('s-one', ROOT), 'token', NOBODY)
 
-    // Nothing could be read, so no version could be kept: writing over it would
-    // have been the end of the only copy.
     expect(fake.disk.get(`${ROOT}/note.md`)).toBe('written in some other encoding\n')
     expect(fake.calls).toEqual([])
   })
@@ -1782,8 +1587,6 @@ describe('a delete the account did not take', () => {
     fake.refusing.delete = new TypeError('Failed to fetch')
     await push(mirror, 'token', NOBODY)
 
-    // The connection dropped, so the account still holds the note - and the pull
-    // that runs before the next push must not read that as a note to bring down.
     fake.refusing.delete = null
     await pull(mirror, 'token', NOBODY)
     expect(fake.disk.has(`${ROOT}/note.md`)).toBe(false)
@@ -1805,11 +1608,6 @@ describe('a delete the account did not take', () => {
   })
 })
 
-/** Another device deleted a note this one holds. Words typed here since the last pass
- *  are words that device never saw, so the edit beats the delete and goes back up; a
- *  note nobody wrote in here goes, a version of it kept, and the account's Recently
- *  deleted is where it comes back from - not this device's as well, where it was listed
- *  a second time (#765). */
 describe('a note deleted on another device', () => {
   const live = () =>
     [...fake.remote.values()].filter((one) => !one.deleted).map((one) => [one.path, one.content])
@@ -1881,9 +1679,6 @@ describe('a note deleted on another device', () => {
     expect(fake.calls).toEqual([])
   })
 
-  /** A room carries every keystroke up as it is typed, so the account - and its
-   *  Recently deleted - already holds what the file says, however far the file has
-   *  moved from the last pass. */
   test('goes when its room already carried the writing up', async () => {
     const { mirror, id } = await paired('Plan.md', '# Plan\n')
     fake.disk.set(`${ROOT}/Plan.md`, '# Plan\ntyped in the room\n')
@@ -1895,9 +1690,6 @@ describe('a note deleted on another device', () => {
     expect(fake.calls).toEqual([`delete ${ROOT}/Plan.md`])
   })
 
-  /** A delete names a note, not a path. The name can belong to another note by the
-   *  time the delete arrives - one made there since, that a create here was paired
-   *  with - and that note's file is not the deleted one's to take. */
   test('leaves alone a file another note holds under that name by now', async () => {
     const { mirror, id } = await paired('Plan.md', '# Plan\n')
     fake.remote.set('n-earlier', {
@@ -1917,10 +1709,6 @@ describe('a note deleted on another device', () => {
   })
 })
 
-/** The account keeps one row per note and changes its path in place, so a rename on
- *  another device arrives as the same id under a new name, with nothing said about
- *  the old one. Matched by path alone, it came down as a second file beside the
- *  first; deleting the stale one then deleted the live note on every device. */
 describe('a note renamed on another device', () => {
   test('is moved here rather than written beside the old name', async () => {
     const { mirror, id } = await paired('One.md', '# One\n')
@@ -1988,8 +1776,6 @@ describe('a note renamed on another device', () => {
     expect(fake.disk.get(`${ROOT}/Two.md`)).toBe('# One\n')
   })
 
-  /** Notes that traded names there, while this device was away: each one's new name
-   *  is still another's here, so one waits aside while the other moves. */
   async function trading(names: string[]) {
     const ids = names.map((name) => fake.addRemote(name, `# ${name}\n`))
     for (const name of names) fake.disk.set(`${ROOT}/${name}`, `# ${name}\n`)
@@ -1997,7 +1783,6 @@ describe('a note renamed on another device', () => {
     await pull(mirror, 'token', NOBODY)
     fake.calls.length = 0
 
-    // Each note takes the next one's name.
     ids.forEach((id, at) => fake.renameRemote(id, names[(at + 1) % names.length]!))
     await pull(mirror, 'token', NOBODY)
     await push(mirror, 'token', NOBODY)
@@ -2022,7 +1807,6 @@ describe('a note renamed on another device', () => {
     })
   }
 
-  /** Two notes that swapped names there, paired here before the swap. */
   async function swapping() {
     const names = ['A.md', 'B.md']
     const ids = names.map((name) => fake.addRemote(name, `# ${name}\n`))
@@ -2035,7 +1819,6 @@ describe('a note renamed on another device', () => {
     return { mirror, ids }
   }
 
-  /** What a swap that went through leaves: each note's words under its own id. */
   function swapped(ids: string[]) {
     expect(fake.disk.get(`${ROOT}/B.md`)).toBe('# A.md\n')
     expect(fake.disk.get(`${ROOT}/A.md`)).toBe('# B.md\n')
@@ -2046,7 +1829,6 @@ describe('a note renamed on another device', () => {
 
   test('finishes a swap cut short after one note was set aside', async () => {
     const { mirror, ids } = await swapping()
-    // What storage holds is the last pass's record; this one quit after A went aside.
     const saved = structuredClone(mirror)
     fake.disk.delete(`${ROOT}/A.md`)
     fake.disk.set(`${ROOT}/.nib-moving-${ids[0]}-A.md`, '# A.md\n')
@@ -2058,10 +1840,6 @@ describe('a note renamed on another device', () => {
     expect(fake.calls.filter((one) => /^(writeNote|createNote|deleteNote)/.test(one))).toEqual([])
   })
 
-  /** Every point a quit can cut a round short at: after each time the record was
-   *  written down, and after each rename before it was. The next pass, from the record
-   *  and the disk as they then stood, finishes the round with each note's words under
-   *  its own id. */
   for (const names of [
     ['A.md', 'B.md'],
     ['A.md', 'B.md', 'C.md'],
@@ -2125,8 +1903,6 @@ describe('a note renamed on another device', () => {
       await pull(mirror, 'token', NOBODY)
       ids.forEach((id, at) => fake.renameRemote(id, names[(at + 1) % names.length]!))
 
-      // An open document of each note, following what it is told the way the
-      // workspace's open documents do, one move after the other.
       const open = names.map((name) => ({ words: `# ${name}\n`, path: `${ROOT}/${name}` }))
       await pull(mirror, 'token', NOBODY, {
         moved: (from, to) => {
@@ -2140,7 +1916,6 @@ describe('a note renamed on another device', () => {
 
   test('finishes a swap with only the record from before it, one note aside and one moved', async () => {
     const { mirror, ids } = await swapping()
-    // A went aside and B took its name; then the app quit, and storage kept nothing new.
     fake.disk.set(`${ROOT}/.nib-moving-${ids[0]}-A.md`, '# A.md\n')
     fake.disk.set(`${ROOT}/A.md`, '# B.md\n')
     fake.disk.delete(`${ROOT}/B.md`)
@@ -2220,7 +1995,6 @@ describe('a note renamed on another device', () => {
     await pull(mirror, 'token', NOBODY)
     await push(mirror, 'token', NOBODY)
 
-    // Nothing crossed from one note to the other, here or on the account.
     expect(fake.disk.get(`${ROOT}/A.md`)).toBe('# A.md\n')
     expect(fake.disk.get(`${ROOT}/B.md`)).toBe('# B.md\n')
     expect(fake.remote.get(ids[0]!)?.content).toBe('# A.md\n')
@@ -2244,7 +2018,6 @@ describe('a note renamed on another device', () => {
     await pull(mirror, 'token', NOBODY)
     await push(mirror, 'token', NOBODY)
 
-    // Nothing written here is lost, and the live note is never deleted.
     expect(fake.disk.get(`${ROOT}/One.md`)).toBe('# One\n')
     expect(fake.disk.get(`${ROOT}/Two.md`)).toBe('# Another two\n')
     expect(fake.remote.get(id)?.deleted).toBe(false)
@@ -2263,10 +2036,6 @@ describe('a note renamed on another device', () => {
   })
 })
 
-/** A web note is a browser tab written down, and two devices browsing one site write
- *  it seconds apart. Emil, 2026-10-03: *"Still getting a lot of name-clash files for
- *  web notes."* So a web note is never kept twice, under any rule: the newer copy
- *  stands and what only the older one said comes across. See web-tab/settle.ts. */
 describe('a web note both sides changed', () => {
   const site = (url: string, extra = '') =>
     `[InternetShortcut]\r\nURL=${url}\r\nTitle=Docs\r\nNib-Added=2026-09-01T00:00:00.000Z\r\n${extra}`
@@ -2289,7 +2058,6 @@ describe('a web note both sides changed', () => {
 
       expect(conflicts()).toEqual([])
       expect(clashes).toEqual([])
-      // The account's copy was written last, so the reading is where it got to.
       const settled = fake.disk.get(`${ROOT}/Docs.url`) ?? ''
       expect(settled).toContain('URL=https://docs.dev/b')
       expect(settled).toContain('Nib-Icon=data:image/png;base64,AA')
@@ -2318,7 +2086,6 @@ describe('a web note both sides changed', () => {
     fake.disk.set(`${ROOT}/Docs.url`, site('https://docs.dev/here', 'Nib-Icon=data:here\r\n'))
     const mirror = newMirror('s-one', ROOT)
 
-    // The create is refused with the note already there, which pairs the two.
     await push(mirror, 'token', NOBODY)
 
     expect(conflicts()).toEqual([])
@@ -2328,9 +2095,6 @@ describe('a web note both sides changed', () => {
   })
 })
 
-/** The copies earlier passes made of web notes, folded back into them. One that is
- *  the same note goes - into this device's trash, and off the account - and one that
- *  points somewhere else is a note of its own and is never touched. See web-copies.ts. */
 describe('a web note’s old copies', () => {
   const site = (url: string, extra = '') =>
     `[InternetShortcut]\r\nURL=${url}\r\nTitle=Docs\r\nNib-Added=2026-09-01T00:00:00.000Z\r\n${extra}`
@@ -2347,7 +2111,6 @@ describe('a web note’s old copies', () => {
 
     expect(conflicts()).toEqual([])
     expect(fake.disk.get(`${ROOT}/Docs.url`)).toContain('Nib-Icon=data:theirs')
-    // To the trash, never for good, and off the account so other devices lose it too.
     expect([...fake.trash.values()].map((one) => one.path).sort()).toEqual(
       [`${ROOT}/${COPY}`, second].sort(),
     )
@@ -2366,14 +2129,9 @@ describe('a web note’s old copies', () => {
   })
 })
 
-/** A copy another sync tool made beside a note is never carried, either way, and
- *  never deleted from a disk: Proton Drive syncing the same folder once wrote seven
- *  `(# Name clash … #)` copies of one note and this pass spread them to every device.
- *  See @orden/sync-core/foreign. */
 describe('another sync tool’s copy', () => {
   const CLASH = 'Plan (# Name clash 2026-10-05 a1b2c3C #).md'
 
-  /** A mirror from before Orden knew better: it tracks the copy as a note. */
   async function tracking() {
     const id = fake.addRemote(CLASH, 'theirs\n')
     fake.disk.set(`${ROOT}/${CLASH}`, 'theirs\n')
@@ -2458,9 +2216,6 @@ describe('another sync tool’s copy', () => {
   })
 })
 
-/** A paper goes up as a blob, and the mirror records the hash it was sent as: what
- *  `holds` reads to say a delete can be left to the account. A paper that stopped
- *  reading between being hashed and being sent was never sent. */
 describe('a paper the account was never sent', () => {
   test('is not recorded as sent, and goes up on the next pass', async () => {
     fake.disk.set(`${ROOT}/paper.pdf`, '%PDF')

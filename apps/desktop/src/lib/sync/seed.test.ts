@@ -1,18 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { WELCOME, WELCOME_NAME } from '../welcome'
 
-/** The welcome note, and the three rules that keep it out of somebody's account.
- *
- *  Emil: "on the plugin every time I open it it creates and syncs the default note
- *  onto my account. This is so annoying." A packed plugin's storage is empty on
- *  every launch, so the shim read every launch as a first visit, wrote the note, and
- *  a pass offered it to the account - putting it back each time he deleted it.
- *
- *  Any one of the three fixes it, and all three are here because each is a different
- *  way of being wrong about the same thing: the plugin never seeds, a device is
- *  seeded once, and an untouched seed never travels. This file is the third, and the
- *  pairing that goes with it; the first two are next door in web/commands.test.ts. */
-
 const fake = vi.hoisted(() => {
   interface Entry {
     name: string
@@ -177,7 +165,6 @@ beforeEach(() => {
   fake.reset()
 })
 
-/** Every path the account holds a live note at. */
 function held(): string[] {
   return [...fake.remote.values()]
     .filter((one) => !one.deleted)
@@ -236,9 +223,6 @@ describe('the welcome note, on its way to an account', () => {
   })
 })
 
-/** The account holds one live note per path and says so with a 409. Before this it
- *  threw and took the whole pass with it, and the pass came round again to throw
- *  again. */
 describe('a path the account already holds', () => {
   test('is paired rather than made twice, and nothing is sent', async () => {
     fake.addRemote('plan.md', 'The plan.\n')
@@ -248,7 +232,6 @@ describe('a path the account already holds', () => {
     const moved = await push(mirror, 'token', NOBODY)
 
     expect(held()).toEqual(['plan.md'])
-    // Tried once, refused, and recorded as the note it is. Nothing was written.
     expect(fake.calls).toEqual(['createNote plan.md'])
     expect(mirror.notes['plan.md']?.id).toBe('n-plan.md')
     expect(moved).toBe(false)
@@ -273,8 +256,6 @@ describe('a path the account already holds', () => {
 
     await push(mirror, 'token', NOBODY)
 
-    // Theirs beside ours on the disk, and ours is what the account now holds:
-    // neither is dropped, which is the rule this file has always kept.
     const copies = [...fake.disk.keys()].filter((one) => one.includes('from another device'))
     expect(copies).toHaveLength(1)
     expect(fake.disk.get(copies[0] ?? '')).toBe('Their plan.\n')
