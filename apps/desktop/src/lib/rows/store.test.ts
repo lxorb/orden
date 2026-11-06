@@ -4,13 +4,9 @@ import { scanNote, type ScannedNote, type SpaceLinks } from '@orden/scan/note'
 import { scanRows } from '@orden/bases/scan'
 import { type Host, type RowsChange, RowsStore } from './store'
 
-/** The rows of every space, driven by a stand-in for the app: disks of words, a link
- *  index of the open space, and the file operations told by hand. */
-
 const WORK = '/spaces/Work'
 const HOME = '/spaces/Home'
 
-/** A note as `scan_links` reads one, rows' fields and all. */
 function scanned(path: string, content: string): ScannedNote {
   return {
     ...scanNote(path, content),
@@ -23,14 +19,10 @@ interface Rig {
   store: RowsStore
   disk: Map<string, string>
   heard: RowsChange[]
-  /** Lets the next scan of a root answer. */
   answer: (root: string) => void
-  /** Settles everything in the air. */
   settled: () => Promise<void>
 }
 
-/** A store over disks of notes, by absolute path. The open space is `open`, whose
- *  notes the link index already holds; every other space waits on `answer`. */
 function rig(
   disk: Record<string, string>,
   open: string | null = null,
@@ -44,7 +36,6 @@ function rig(
       .map(([path, text]) => scanned(path.slice(root.length + 1), text))
 
   const host: Host = {
-    // A whole space answers when the test says; a folder of one at once.
     scan: (root) =>
       new Promise<SpaceLinks>((go) => {
         const answer = () => go({ notes: notesOf(root), files: [] })
@@ -88,8 +79,6 @@ const tasks = (rows: readonly Row[]) =>
     .map((row) => `${row.space}:${row.path}:${row.task?.text}`)
 
 describe('the rows of every space', () => {
-  /** What the account said of a note a browser keeps no words of (#1126) is that
-   *  note's rows, in any space, as a save is. */
   test('take what the account says of a note kept away', async () => {
     const { store, answer, settled } = rig({ [`${WORK}/Plan.md`]: '- [ ] Ship it\n' })
     store.spacesAre([{ root: WORK, name: 'Work' }])
@@ -99,7 +88,6 @@ describe('the rows of every space', () => {
 
     store.indexed(WORK, [
       scanned('Away.md', '- [ ] Call the bank\n'),
-      // A scan without the rows' fields is the index's alone, and changes no rows.
       scanNote('Bare.md', '- [ ] Not a row\n'),
     ])
     expect(tasks(store.of())).toEqual(['Work:Plan.md:Ship it', 'Work:Away.md:Call the bank'])
@@ -107,8 +95,6 @@ describe('the rows of every space', () => {
     expect(tasks(store.of())).toHaveLength(2)
   })
 
-  /** A `📅` is a deadline in an Obsidian vault and a start date anywhere else (#371):
-   *  the rows say which, and a note saved later is read the same way. */
   test("an Obsidian vault's tasks say their 📅 is a deadline", async () => {
     const { store, answer, settled } = rig(
       {
@@ -187,7 +173,6 @@ describe('the rows of every space', () => {
     expect(heard[0]?.path).toBe('Plan.md')
     expect(heard[0]?.removed).toHaveLength(2)
     expect(heard[0]?.added).toHaveLength(3)
-    // Its creation time is kept; what it was written at is now.
     expect(store.of()[0]?.file.ctime).toBe(1)
     expect(store.of()[0]?.file.mtime).toBe(42)
   })
@@ -200,8 +185,6 @@ describe('the rows of every space', () => {
     store.spacesAre([{ root: WORK, name: 'Work' }])
     await settled()
 
-    // A link rewrite writes the moved note at its new path, and says so, before the
-    // move is told; see `retargetIn` in link-index.svelte.ts.
     const after = '- [ ] Read [s](../A/Spec.md)\n'
     disk.delete(`${WORK}/A/Plan.md`)
     disk.set(`${WORK}/B/Plan.md`, after)
@@ -215,7 +198,6 @@ describe('the rows of every space', () => {
     })
 
     expect(tasks(store.of())).toEqual(['Work:B/Plan.md:Read [s](../A/Spec.md)'])
-    // Made when the note was, not when the rewrite wrote it.
     expect(store.of().map((row) => row.file.ctime)).toEqual([1, 1])
   })
 
@@ -276,7 +258,6 @@ describe('the rows of every space', () => {
     })
     const moved = heard.find((one) => one.path === 'Archive/Projects/Launch v2.md')
     expect(moved?.from?.path).toBe('Projects/Launch v2.md')
-    // A note only written is told without one.
     store.saved(`${WORK}/New.md`, 'x\n')
     expect(heard.at(-1)?.from).toBeUndefined()
   })
@@ -344,7 +325,6 @@ describe('the rows of every space', () => {
     store.spacesAre([{ root: HOME, name: 'Home' }])
     await settled()
 
-    // The read is in the air: a note saved, one deleted, one moved.
     store.saved(`${HOME}/Kept.md`, '- [x] Kept\n')
     void store.follow({ op: 'removed', path: `${HOME}/Gone.md`, kind: 'file', root: HOME })
     disk.delete(`${HOME}/Old/Moved.md`)
@@ -356,7 +336,6 @@ describe('the rows of every space', () => {
       kind: 'folder',
       root: HOME,
     })
-    // The scan read the disk before the moves.
     disk.set(`${HOME}/Gone.md`, '- [ ] Gone\n')
     disk.set(`${HOME}/Old/Moved.md`, '- [ ] Moved\n')
     disk.delete(`${HOME}/New/Moved.md`)
@@ -410,7 +389,6 @@ describe('the rows of every space', () => {
   test('a note the index read again without its rows is read once more', async () => {
     const files = { [`${WORK}/Plan.md`]: '- [ ] Saved since\n' }
     const { store, settled } = rig(files, WORK)
-    // The index's copy of a note saved after its scan carries no rows' fields.
     const host = (store as unknown as { host: Host }).host
     const open = host.open.bind(host)
     host.open = () => ({ ...open(), notes: () => [scanNote('Plan.md', '- [ ] Saved since\n')] })
@@ -443,7 +421,6 @@ describe('a space’s AGENTS.md, which its settings edit', () => {
 describe("a space's own notes, which no scan reads (#1044)", () => {
   const INBOX = '.Inbox.md'
 
-  /** A host whose scan leaves out dotted names, as `scan_links` does. */
   function hidden(disk: Record<string, string>) {
     const files = new Map(Object.entries(disk))
     const host: Host = {

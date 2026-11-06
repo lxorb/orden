@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ar: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'كل شيء جاهز',
   Personalize: 'تخصيص',
   Clean: 'نظيف',
@@ -10,12 +9,10 @@ export const ar: Dictionary = {
   'Do you write code?': 'هل تكتب الكود؟',
   Yes: 'نعم',
   No: 'لا',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'من التطبيقات الأخرى: {key}',
   'From other apps: set in your system settings': 'من التطبيقات الأخرى: يُحدَّد في إعدادات النظام',
   'From other apps: bind {command} in your system settings':
     'من التطبيقات الأخرى: اربط {command} في إعدادات النظام',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'الأساسيات',
   'Add to Essentials': 'أضف إلى الأساسيات',
   'Remove from Essentials': 'إزالة من الأساسيات',
@@ -23,20 +20,16 @@ export const ar: Dictionary = {
   'Add blocks to Essentials': 'أضف الكتل إلى الأساسيات',
   'Add view to Essentials': 'أضف العرض إلى الأساسيات',
   'Open tabs and Essentials': 'فتح علامات التبويب والأساسيات',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'أصبح nibeditor الآن Orden',
   'Notes from nibeditor.com': 'ملاحظات من nibeditor.com',
   'Nothing there': 'لا يوجد شيء هناك',
-  // AI: the three permission modes
   'Full permissions': 'أذونات كاملة',
   'Auto mode': 'الوضع التلقائي',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'أذونات كاملة: لا يُسأل عن شيء ولا يُعاد إليك شيء، ولا حتى تسجيل الدخول أو الدفع أو الإرسال أو الحذف',
-  // Import: Zen's tabs
   'Import from Zen': 'استيراد من Zen',
   'Containers stay in Zen': 'تبقى الحاويات في Zen',
   'Zen’s tabs could not be read.': 'تعذّرت قراءة علامات تبويب Zen.',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'تبقى الحاويات في Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     'يبحث {browser} باستخدام {engine}: اختره في الإعدادات للبحث به هنا أيضًا',
@@ -66,38 +59,29 @@ export const ar: Dictionary = {
   'Reading List': 'قائمة القراءة',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'يحفظ macOS علامات تبويب Safari وإشاراته المرجعية خلف الوصول الكامل للقرص. فعّل Orden هناك، ثم اطلب مجددًا.',
-  // Settings: note types
   'Page note': 'ملاحظة صفحات',
   'Web note': 'ملاحظة ويب',
   'Private tab': 'علامة تبويب خاصة',
   'Note types': 'أنواع الملاحظات',
-  // Tasks: Upcoming's weeks
   'Previous week': 'الأسبوع السابق',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'إضافة مشروع أعلاه',
   'Add project below': 'إضافة مشروع أدناه',
   'Projects folder': 'مجلد المشاريع',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'تخطٍّ',
   'Complete forever': 'إكمال نهائيًا',
-  // Tasks: comments
   Comments: 'التعليقات',
-  // Tasks: filters
   Filters: 'عوامل التصفية',
   'Add filter': 'إضافة عامل تصفية',
   'Edit filter': 'تعديل عامل التصفية',
-  // Tasks: a project's sections
   'Add section': 'إضافة قسم',
   '{name} (copy)': '{name} (نسخة)',
   'Its tasks are deleted with it.': 'تُحذف مهامه معه.',
-  // Tasks: keys, selection and the undo toast
   Completed: 'اكتملت',
   'Remove date': 'إزالة التاريخ',
   'Next task': 'المهمة التالية',
   'Previous task': 'المهمة السابقة',
   'Add task at the top': 'إضافة مهمة في الأعلى',
   '{count} selected': 'تم تحديد {count}',
-  // Tasks: the Display menu
   Display: 'العرض',
   'Completed tasks': 'المهام المكتملة',
   Smart: 'ذكي',
@@ -109,20 +93,16 @@ export const ar: Dictionary = {
   'Reset all': 'إعادة تعيين الكل',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'يعرض التخطيط المهام كقائمة أو لوحة أو تقويم. يقسمها التجميع إلى مجموعات هي أعمدة اللوحة. يرتب الترتيب كل مجموعة. تخفي عوامل التصفية ما لا تحتاج إليه. ويُحفظ كل ذلك لهذا العرض.',
-  // Tasks: several lines pasted into quick add
   'One task': 'مهمة واحدة',
   'One per line': 'واحدة لكل سطر',
   'Add with AI': 'إضافة بالذكاء الاصطناعي',
-  // Tasks: the projects in the panel
   Favorites: 'المفضلة',
   'Add project': 'إضافة مشروع',
   'Add sub-project': 'إضافة مشروع فرعي',
-  // Tasks: the task view
   'Sub-tasks': 'المهام الفرعية',
   'Add sub-task': 'إضافة مهمة فرعية',
   'New label': 'تسمية جديدة',
   'No deadline': 'بلا موعد نهائي',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'إعادة الجدولة',
   'Later this week': 'لاحقًا هذا الأسبوع',
   'This weekend': 'عطلة نهاية هذا الأسبوع',
@@ -139,22 +119,18 @@ export const ar: Dictionary = {
   Reopen: 'إعادة الفتح',
   Schedule: 'جدولة',
   'Open in note': 'فتح في الملاحظة',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'تطبيق آخر',
   'Import from Obsidian': 'استيراد من Obsidian',
   'Import from Notion': 'استيراد من Notion',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'تلميحات',
   'Silent mode': 'الوضع الصامت',
   'See how your notes connect.': 'شاهد كيف ترتبط ملاحظاتك.',
   'Press {key} to find anything, notes and commands alike.':
     'اضغط {key} للعثور على أي شيء، ملاحظات وأوامر على حد سواء.',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'إظهار ماركداون أثناء الكتابة',
   'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'المؤشر',
   'Pointing hand on buttons': 'يد مشيرة فوق الأزرار',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'إضافة مهمة',
   'Apple Shortcuts': 'Apple الاختصارات',
   Tomorrow: 'غدًا',
@@ -183,7 +159,6 @@ export const ar: Dictionary = {
   'Every week': 'كل أسبوع',
   'Every month': 'كل شهر',
   'Every year': 'كل سنة',
-  // Files and notes
   Save: 'حفظ',
   'New note': 'ملاحظة جديدة',
   'Random note': 'ملاحظة عشوائية',
@@ -211,8 +186,6 @@ export const ar: Dictionary = {
   'Release to add a page': 'أفلت لإضافة صفحة',
   'Page {number}': 'الصفحة {number}',
   'The paper could not be read': 'تعذّر قراءة الورق',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'صفحة طويلة',
@@ -252,7 +225,6 @@ export const ar: Dictionary = {
   'Choose a picture': 'اختيار صورة',
   'Remove picture': 'إزالة الصورة',
   'That picture could not be read.': 'تعذّرت قراءة تلك الصورة.',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'التشبع',
   Tint: 'الصبغة',
   'Tint colour': 'لون الصبغة',
@@ -380,7 +352,6 @@ export const ar: Dictionary = {
   'Merge into…': 'دمج في…',
   'Split at caret': 'تقسيم عند المؤشر',
   'Extract selection': 'استخراج التحديد',
-  // Panels and navigation
   Bookmarks: 'الإشارات المرجعية',
   'New group': 'مجموعة جديدة',
   'Remove group': 'إزالة المجموعة',
@@ -434,8 +405,6 @@ export const ar: Dictionary = {
   'Sort by name': 'الترتيب حسب الاسم',
   'Sort by modified': 'الترتيب حسب التعديل',
   'Sort by created': 'الترتيب حسب الإنشاء',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'ترتيب الملفات',
   'Name, A to Z': 'الاسم، من أ إلى ي',
   'Name, Z to A': 'الاسم، من ي إلى أ',
@@ -446,7 +415,6 @@ export const ar: Dictionary = {
   Manual: 'يدوي',
   'Show hidden files': 'إظهار الملفات المخفية',
   'Hide hidden files': 'إخفاء الملفات المخفية',
-  // Writing
   Bold: 'عريض',
   Italic: 'مائل',
   Strikethrough: 'يتوسطه خط',
@@ -559,11 +527,9 @@ export const ar: Dictionary = {
   'Horizontal rule': 'خط أفقي',
   'Page break': 'فاصل صفحات',
   'Tidy up this note': 'تنظيم هذه الملاحظة',
-  // PDFs
   'Copy a link': 'نسخ رابط',
   'That PDF could not be opened': 'تعذّر فتح ملف PDF',
   'That file could not be read': 'تعذّرت قراءة ذلك الملف',
-  // Modes and view
   Reading: 'القراءة',
   'Leave reading': 'إنهاء القراءة',
   Present: 'العرض',
@@ -603,7 +569,6 @@ export const ar: Dictionary = {
   'Zoom in': 'تكبير العرض',
   'Zoom out': 'تصغير العرض',
   'Actual size': 'الحجم الفعلي',
-  // Appearance
   Accent: 'اللون المميز',
   'Tidy up': 'ترتيب',
   'Blur the app behind the tab overview': 'تمويه التطبيق خلف عرض علامات التبويب',
@@ -738,7 +703,6 @@ export const ar: Dictionary = {
   'Switch theme': 'تبديل السمة',
   Style: 'النمط',
   Mode: 'الوضع',
-  // The window's own edges; see appearance.rs
   Window: 'النافذة',
   'Orden’s own': 'الخاص بـ Orden',
   'The system’s': 'الخاص بالنظام',
@@ -749,7 +713,6 @@ export const ar: Dictionary = {
   'Edit custom CSS': 'تحرير CSS المخصص',
   'Edit snippets': 'تحرير المقتطفات',
   'Reload themes and custom CSS': 'إعادة تحميل السمات وCSS المخصص',
-  // The theme store, and the sample note its cards show
   Themes: 'السمات',
   Browse: 'استعراض',
   'Search themes': 'بحث في السمات',
@@ -839,7 +802,6 @@ export const ar: Dictionary = {
   'Code only': 'في الكود فقط',
   Everywhere: 'في كل مكان',
   Attachments: 'المرفقات',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'ملاحظات الصفحات',
   'New pages': 'الصفحات الجديدة',
   'Assets folder of the space': 'مجلد ملفات المساحة',
@@ -891,7 +853,6 @@ export const ar: Dictionary = {
   'Machine-translated. Corrections welcome.': 'ترجمة آلية. التصحيحات مرحّب بها.',
   'The glasses show English.': 'النظارات تعرض الإنجليزية.',
   'Match the app': 'مطابقة التطبيق',
-  // Settings
   Settings: 'الإعدادات',
   Account: 'الحساب',
   Publish: 'نشر',
@@ -921,7 +882,6 @@ export const ar: Dictionary = {
   },
   Update: 'تحديث',
   'Live at': 'منشور على',
-  // Publishing
   'Publish {name}': 'نشر {name}',
   'What to publish': 'ما يُنشر',
   'The whole space': 'المساحة كاملة',
@@ -940,7 +900,6 @@ export const ar: Dictionary = {
   Value: 'القيمة',
   available: 'متاح',
   'checking…': 'جارٍ التحقق…',
-  // LLM
   'Connect an LLM to your notes': 'ربط نموذج لغوي بملاحظاتك',
   'Sign in first - the connector reaches the notes in your account.':
     'سجّل الدخول أولًا - الرابط يصل إلى ملاحظات حسابك.',
@@ -989,7 +948,6 @@ export const ar: Dictionary = {
   'For a client that takes a JSON block instead of a URL.': 'لعميل يأخذ كتلة JSON بدلًا من عنوان.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'العميل الذي لا يستطيع تسجيل الدخول يُعطى رمزًا مميزًا بدلًا من ذلك. ويُعرض مرة واحدة فقط.',
-  // Export
   'Plain text': 'نص عادي',
   'Markdown with the pictures': 'Markdown مع الصور',
   'HTML without styles': 'HTML بلا أنماط',
@@ -1008,13 +966,11 @@ export const ar: Dictionary = {
   Margin: 'الهامش',
   Header: 'رأس الصفحة',
   Footer: 'تذييل الصفحة',
-  // History
   'Version history': 'سجل النسخ',
   'Copy link to this note': 'نسخ رابط هذه الملاحظة',
   'that link could not be followed': 'تعذّر فتح هذا الرابط',
   'No earlier versions yet.': 'لا نسخ سابقة بعد.',
   'Restore this version': 'استعادة هذه النسخة',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'توجد ملاحظة هناك بالفعل',
   'enter a valid email address': 'أدخل عنوان بريد صحيحًا',
   'give the space a name': 'أعطِ المساحة اسمًا',
@@ -1045,7 +1001,6 @@ export const ar: Dictionary = {
   'could not publish': 'تعذّر النشر',
   'could not create a token': 'تعذّر إنشاء رمز مميز',
   'that did not work': 'لم ينجح ذلك',
-  // Settings on a phone, display names, one blog address
   Back: 'رجوع',
   'Display name': 'الاسم المعروض',
   'Your name': 'اسمك',
@@ -1065,7 +1020,6 @@ export const ar: Dictionary = {
   Spelling: 'الإملاء',
   Checking: 'التدقيق',
   Dictionary: 'القاموس',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'في انتظار ظهور السجل.',
   'Certificate issued.': 'تم إصدار الشهادة.',
   'Cloudflare could not set this domain up.': 'تعذّر على Cloudflare إعداد هذا النطاق.',
@@ -1076,7 +1030,6 @@ export const ar: Dictionary = {
   'Cloudflare has blocked this domain': 'حظر Cloudflare هذا النطاق',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'في جذر النطاق، استخدم سجل ALIAS أو ANAME، أو تسطيح CNAME، إن لم يسمح مزوّدك بسجل CNAME هناك.',
-  // Shortcuts
   Shortcuts: 'الاختصارات',
   'Search shortcuts': 'بحث في الاختصارات',
   'Second key': 'المفتاح الثاني',
@@ -1241,7 +1194,6 @@ export const ar: Dictionary = {
   Delegated: 'تم التفويض',
   'Code theme: {name}': 'سمة الكود: {name}',
   'Delete a layout': 'حذف تخطيط',
-  // Keyboards and modal editing
   Default: 'افتراضي',
   'Vim keys': 'مفاتيح Vim',
   'Follow the link': 'اتباع الرابط',
@@ -1253,11 +1205,9 @@ export const ar: Dictionary = {
   INSERT: 'إدراج',
   VISUAL: 'تحديد',
   REPLACE: 'استبدال',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'صفحة {page} من {count} على النظارات',
   'Reaching the glasses': 'الوصول إلى النظارات',
   'The glasses are not keeping up': 'النظارات لا تلحق',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'إضافة',
   Select: 'تحديد',
   Pan: 'تحريك',
@@ -1287,7 +1237,6 @@ export const ar: Dictionary = {
   Calligraphy: 'قلم خطّ',
   'Width {number}': 'العرض {number}',
   'Finger draws': 'الإصبع يرسم',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'العرض',
   Opacity: 'العتامة',
   Colour: 'اللون',
@@ -1331,23 +1280,19 @@ export const ar: Dictionary = {
   'Export as PNG': 'تصدير كـ PNG',
   'Export as SVG': 'تصدير كـ SVG',
   'Export as PDF': 'تصدير كـ PDF',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'استيراد PDF',
   'Choose how to add the pages to the canvas.': 'اختر كيف تُضاف الصفحات إلى اللوحة.',
   'Single page': 'صفحة واحدة',
   'All pages': 'كل الصفحات',
   'Choose a page': 'اختر صفحة',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'حذف المحدد',
   'Nudge left': 'دفع لليسار',
   'Nudge right': 'دفع لليمين',
   'Nudge up': 'دفع لأعلى',
   'Nudge down': 'دفع لأسفل',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'مفتوحة في مكان آخر أيضًا',
   Shared: 'مشتركة',
   Browser: 'المتصفح',
-  // Sharing a space with other people
   Share: 'مشاركة',
   'Share {name}': 'مشاركة {name}',
   'Share this space': 'مشاركة هذه المساحة',
@@ -1391,14 +1336,12 @@ export const ar: Dictionary = {
   'Shared with you': 'مشتركة معك',
   'That link does not open anything': 'هذا الرابط لا يفتح شيئًا',
   'Ask for another one.': 'اطلب رابطًا آخر.',
-  // Somebody a share link let in, who has no account
   Guest: 'زائر',
   'Ask to join': 'طلب الانضمام',
   Asking: 'جارٍ الطلب',
   'Waiting for {who}': 'في انتظار {who}',
   '{who} did not let you in': '{who} لم يسمح لك بالدخول',
   'What the others in this space see.': 'ما يراه الآخرون في هذه المساحة.',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'التحديثات',
   'Release channel': 'قناة الإصدار',
   Stable: 'مستقر',
@@ -1408,8 +1351,6 @@ export const ar: Dictionary = {
   'Web version': 'إصدار الويب',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'المستقر هو تطبيق الويب المنشور، وغير المستقر هو أحدث بنية وقد يتعطل.',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'استيراد',
   'Convert syntax': 'تحويل الصياغة',
   'In this note': 'في هذه الملاحظة',
@@ -1547,8 +1488,6 @@ export const ar: Dictionary = {
   'Undo the import': 'التراجع عن الاستيراد',
   'Choose an export': 'اختيار تصدير',
   Under: 'تحت',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'مزامنة',
   'When the same note was written twice': 'عند كتابة الملاحظة نفسها مرتين',
   'On two devices': 'على جهازين',
@@ -1625,7 +1564,6 @@ export const ar: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'تبقى الملاحظات على هذا الجهاز؛ يُحذف الحساب ونسخه المتزامنة فقط.',
   'Also gone for everyone in {spaces}.': 'ويختفي أيضًا لدى كل من في {spaces}.',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'الملاحظة',
   '{space} panel': 'لوحة {space}',
   'Panel width': 'عرض اللوحة',
@@ -1636,7 +1574,6 @@ export const ar: Dictionary = {
   'What is selected': 'ما هو محدد',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'اللوحة: {cards} بطاقة، {links} رابط، {drawings} رسم',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'ذكاء اصطناعي',
   Providers: 'المزوّدون',
   'Make default': 'تعيين كافتراضي',
@@ -1662,7 +1599,6 @@ export const ar: Dictionary = {
   'Add an AI provider in Settings first.': 'أضف مزوّد ذكاء اصطناعي في الإعدادات أولاً.',
   'The model did not answer.': 'لم يجب الطراز.',
   'The connection closed before the answer was finished.': 'انقطع الاتصال قبل اكتمال الإجابة.',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'بلغت خطة {plan} لديك حدها حتى {time}.',
   'Your {plan} plan is at its limit for now.': 'بلغت خطة {plan} لديك حدها في الوقت الحالي.',
   'Your {plan} plan is near its limit.': 'اقتربت خطة {plan} لديك من حدها.',
@@ -1688,7 +1624,6 @@ export const ar: Dictionary = {
   Shorter: 'أقصر',
   Longer: 'أطول',
   'Fix grammar': 'تصحيح القواعد',
-  // The AI sidebar's commands
   'A cited report': 'تقرير موثّق',
   'A helper in the background': 'مساعد في الخلفية',
   'A side question': 'سؤال جانبي',
@@ -1790,7 +1725,6 @@ export const ar: Dictionary = {
   'Markdown, shortest name': 'Markdown، أقصر اسم',
   'Markdown, relative path': 'Markdown، مسار نسبي',
   'Markdown, path in the space': 'Markdown، مسار في المساحة',
-  // Publishing part one.
   'The folders you choose become public.': 'تصبح المجلدات التي تختارها عامة.',
   'Anyone with the address can read what is published, drafts included.':
     'كل من يعرف العنوان يقرأ ما نُشر، بما في ذلك المسوّدات.',
@@ -1816,11 +1750,9 @@ export const ar: Dictionary = {
   'Remove the password': 'إزالة كلمة السر',
   'Scan this with your authenticator app, then type its code.':
     'امسح هذا بتطبيق المصادقة ثم اكتب رمزه.',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'صورة',
   Dictate: 'إملاء',
   'Add to {name}': 'إضافة إلى {name}',
-  // Web tabs
   Reload: 'إعادة التحميل',
   'Hard reload': 'إعادة تحميل كاملة',
   'Open in the browser': 'فتح في المتصفح',
@@ -1835,7 +1767,6 @@ export const ar: Dictionary = {
   'Playing audio': 'يشغّل صوتًا',
   Muted: 'مكتوم',
   'Developer tools': 'أدوات المطوّرين',
-  // Recording, meetings and what a model wrote
   Record: 'تسجيل',
   Recording: 'تسجيل',
   'Stop recording': 'إيقاف التسجيل',
@@ -1856,7 +1787,6 @@ export const ar: Dictionary = {
     'ذلك التسجيل أطول من أن يُحوَّل إلى كلمات دفعة واحدة.',
   'That is as much as one recording may hold.': 'هذا أقصى ما يحمله تسجيل واحد.',
   'Nothing could be heard in that recording.': 'لم يُسمع شيء في ذلك التسجيل.',
-  // Publishing part two.
   Spreadsheet: 'جدول بيانات',
   'The app’s own': 'الخاص بالتطبيق',
   'publish.css and publish.js in this space dress the site.':
@@ -1872,14 +1802,12 @@ export const ar: Dictionary = {
   'Save as CSV': 'حفظ بصيغة CSV',
   'Kept for {days}': 'تُحفظ لمدة {days}',
   Full: 'ممتلئ',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'تعذّر إرسال البريد - حاول مرة أخرى',
   'start again - that took too long': 'ابدأ من جديد - استغرق ذلك وقتًا طويلًا',
   'sign in to do that': 'سجّل الدخول لفعل ذلك',
   'that is not something a token can do': 'هذا ليس ما يفعله رمز مميز',
   'something went wrong here - try again': 'حدث خطأ هنا - حاول مرة أخرى',
   'this service cannot keep a secret safely': 'هذه الخدمة لا تحفظ سرًا بأمان',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only':
     'صور وملفات PDF وملفات css أو js الخاصة بالموقع فقط',
   'that file is too big': 'الملف كبير جدًا',
@@ -1890,13 +1818,11 @@ export const ar: Dictionary = {
   'that is more than a space keeps about its graph': 'هذا أكثر مما تحفظه مساحة عن رسمها البياني',
   'that is more folder icons than a space holds': 'هذه أيقونات مجلدات أكثر مما تحتمله مساحة',
   'that is more than a site keeps': 'هذا أكثر مما يحفظه موقع',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'لا أحد بهذا العنوان',
   'nobody by that name': 'لا أحد بهذا الاسم',
   'nobody is waiting by that name': 'لا أحد ينتظر بهذا الاسم',
   'this space is yours': 'هذه المساحة لك',
   'that link is busy, try again in a minute': 'الرابط مشغول، حاول بعد دقيقة',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'لا نسخة كهذه',
   'this note was shared with you, not its folder': 'شُوركت معك هذه الملاحظة، لا مجلدها',
   'nothing to restore': 'لا شيء للاستعادة',
@@ -1904,7 +1830,6 @@ export const ar: Dictionary = {
   'nothing to delete': 'لا شيء للحذف',
   'this room is not answering - try again': 'هذه الغرفة لا تجيب - حاول مرة أخرى',
   'rooms are not running here': 'الغرف لا تعمل هنا',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'متجر السمات لا يجيب',
   'that is not a theme': 'هذه ليست سمة',
   'no such theme': 'لا سمة كهذه',
@@ -1916,10 +1841,8 @@ export const ar: Dictionary = {
   'that is more than a spoken command': 'هذا أكثر من أمر منطوق',
   'that is a lot of listening - try again later': 'استماع كثير - حاول لاحقًا',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% نص',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'الهاتف',
   'The bar sits over the keyboard on a phone.': 'يظهر الشريط فوق لوحة المفاتيح على الهاتف.',
   'On the bar': 'على الشريط',
@@ -1933,31 +1856,25 @@ export const ar: Dictionary = {
   'A pull past the top runs': 'سحبة بعد الأعلى تشغّل',
   Nothing: 'لا شيء',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'احتفاظ',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'نقل إلى اليمين',
   'Move to the left': 'نقل إلى اليسار',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'السجل على الحساب',
   'Keep versions': 'حفظ النسخ',
   'A month': 'شهر',
   'A year': 'سنة',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'كل شيء من اليوم الأخير، ثم واحدة كل ساعة، وواحدة كل يوم بعد شهر، وواحدة كل أسبوع بعد ثلاثة.',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'وصلت هذه الملاحظة إلى أقصى حجم يمكن أن تبلغه ملاحظة في غرفة.',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'علامة تبويب جديدة',
   'Full screen': 'ملء الشاشة',
   'Print…': 'طباعة…',
   'Share…': 'مشاركة…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'يريد',
   'Don’t allow': 'عدم السماح',
   Allow: 'سماح',
@@ -1974,7 +1891,6 @@ export const ar: Dictionary = {
   'Use your MIDI devices': 'استخدام أجهزة MIDI',
   'Manage windows on all your displays': 'إدارة النوافذ على جميع شاشات أجهزتك',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'معلومات الموقع',
   Downloads: 'التنزيلات',
   'Downloading {name}': 'جارٍ تنزيل {name}',
@@ -2001,11 +1917,9 @@ export const ar: Dictionary = {
   'Turn into': 'تحويل إلى',
   Foldable: 'قابل للطي',
   'Starts folded': 'يبدأ مطويًا',
-  // Where a space keeps what websites store
   'Web data': 'بيانات الويب',
   Global: 'عامّ',
   Site: 'الموقع',
-  // The Mac's menu bar
   'About {name}': 'حول {name}',
   Services: 'الخدمات',
   'Hide {name}': 'إخفاء {name}',
@@ -2013,7 +1927,6 @@ export const ar: Dictionary = {
   'Show all': 'إظهار الكل',
   'Quit {name}': 'إنهاء {name}',
   'Bring all to front': 'إحضار الكل إلى المقدمة',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'التراجع عن النسخ',
   'Devices with your AI vault': 'الأجهزة التي تحمل خزنة الذكاء الاصطناعي',
   'This device': 'هذا الجهاز',
@@ -2029,13 +1942,11 @@ export const ar: Dictionary = {
   'Select down': 'التحديد للأسفل',
   'Select up': 'التحديد للأعلى',
   'Select or deselect': 'تحديد أو إلغاء التحديد',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'فتح في علامة تبويب جديدة',
   'Open to the side': 'فتح بجانبه',
   'Open all': 'فتح الكل',
   'Show in the file list': 'إظهار في قائمة الملفات',
   'Collapse the file list': 'طي قائمة الملفات',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'توسيع التحديد',
   'Shrink the selection': 'تضييق التحديد',
   'Insert a line above': 'إدراج سطر أعلاه',
@@ -2049,18 +1960,15 @@ export const ar: Dictionary = {
   'Duplicate the block': 'تكرار الكتلة',
   'Move the block up': 'نقل الكتلة لأعلى',
   'Move the block down': 'نقل الكتلة لأسفل',
-  // The editor's menu on a link and a picture
   'Copy link address': 'نسخ عنوان الرابط',
   'Edit link': 'تعديل الرابط',
   'Remove link': 'إزالة الرابط',
   'Copy picture': 'نسخ الصورة',
   'Open picture': 'فتح الصورة',
   'Delete picture': 'حذف الصورة',
-  // A file dropped into a note
   'Storing the file': 'جارٍ حفظ الملف',
   'That file is larger than a note can keep.': 'هذا الملف أكبر مما تستطيع الملاحظة الاحتفاظ به.',
   'That file could not be kept.': 'تعذّر الاحتفاظ بهذا الملف.',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'طرفية جديدة',
   'Command Prompt': 'موجه الأوامر',
   Terminal: 'الطرفية',
@@ -2089,11 +1997,8 @@ export const ar: Dictionary = {
     many: 'لصق {count} سطرًا؟',
     other: 'لصق {count} سطر؟',
   },
-  // Orden as the default browser
   'Default browser': 'المتصفح الافتراضي',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': 'تراجع عن تعديلات {name}',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'أرشفة',
   Unarchive: 'إلغاء الأرشفة',
   Archived: 'مؤرشف',
@@ -2110,7 +2015,6 @@ export const ar: Dictionary = {
     many: '{count} عنصرًا مؤرشفًا بالداخل',
     other: '{count} عنصر مؤرشف بالداخل',
   },
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'الشريط الجانبي الأيسر',
   'Right sidebar': 'الشريط الجانبي الأيمن',
   'Ask about this space': 'اسأل عن هذه المساحة',
@@ -2121,7 +2025,6 @@ export const ar: Dictionary = {
   'Ask again': 'اسأل مجددًا',
   'Continue when the limit resets': 'المتابعة عند تجدد الحد',
   'Continues at {time}': 'يتابع عند {time}',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'اسأل عن أي شيء، @ للإضافة، / للمزيد',
   'What can I help with?': 'كيف يمكنني المساعدة؟',
   'Add photos and files': 'إضافة صور وملفات',
@@ -2189,12 +2092,9 @@ export const ar: Dictionary = {
   Closed: 'أغلق',
   Ran: 'شغّل',
   Changed: 'غيّر',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': 'هذا {device}',
   '{name} is back: {device} was writing in it': 'عادت {name}: كان {device} يكتب فيها',
   'Changes to {name} are not syncing': 'التغييرات على {name} لا تتم مزامنتها',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'الفتح',
   Pressing: 'النقر',
   Typing: 'الإدخال',
@@ -2209,17 +2109,13 @@ export const ar: Dictionary = {
   'Agent tabs closed': 'أُغلقت علامات تبويب الوكلاء',
   'Orden is still running for your agents': 'لا يزال Orden يعمل لوكلائك',
   '{client} wants to connect': '{client} يريد الاتصال',
-  // Web logins that travel, and the devices of an account
   'no such device': 'لا يوجد جهاز كهذا',
   'give the device a name': 'أعطِ الجهاز اسمًا',
   'that computer is no longer waiting': 'ذلك الحاسوب لم يعد ينتظر',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'لا يوجد ملف كهذا',
   'too many changes at once - try again in a minute':
     'تغييرات كثيرة جدًا دفعة واحدة - حاول مرة أخرى بعد دقيقة',
   'that is more than a space keeps about its tree': 'هذا أكثر مما تحتفظ به المساحة عن شجرتها',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'الوكلاء على هذا الحاسوب',
   'Your account’s connector': 'موصّل حسابك',
   'Orden asks you once, the first time it connects.': 'يسألك Orden مرة واحدة، عند أول اتصال.',
@@ -2292,12 +2188,9 @@ export const ar: Dictionary = {
     many: '{count} استدعاءً',
     other: '{count} استدعاء',
   },
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'سؤال سريع',
   Scratchpad: 'Scratchpad',
   'Add to note': 'إضافة إلى الملاحظة',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'الإضافات',
   'Add extension': 'إضافة إضافة',
   'Manage extensions': 'إدارة الإضافات',
@@ -2315,7 +2208,6 @@ export const ar: Dictionary = {
   'Did not load': 'لم يتم التحميل',
   Permissions: 'الأذونات',
   Options: 'الخيارات',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'عن بُعد',
   'Add host': 'إضافة مضيف',
   Reconnect: 'إعادة الاتصال',
@@ -2323,11 +2215,8 @@ export const ar: Dictionary = {
   'No group': 'بلا مجموعة',
   'Not an address': 'ليس عنوانًا',
   'Could not connect to {host}': 'تعذّر الاتصال بـ {host}',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'إرسال الصورة',
   'Could not send the image': 'تعذّر إرسال الصورة',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': {
     few: 'و{count} تعديلات بعده',
     many: 'و{count} تعديلات بعده',
@@ -2344,8 +2233,6 @@ export const ar: Dictionary = {
   'Pages, terminals and moves are not undone': 'لا يُتراجع عن الصفحات والطرفيات والنقل',
   Rewind: 'إرجاع',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'محرك البحث',
   History: 'السجل',
   'Search history': 'سجلّ البحث',
@@ -2369,14 +2256,12 @@ export const ar: Dictionary = {
   'New private tab': 'علامة تبويب خاصة جديدة',
   'All spaces': 'كل المساحات',
   'the data could not be deleted': 'تعذّر حذف البيانات',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'غفوة',
   Reminders: 'التذكيرات',
   'Reminders ring while Orden is open': 'ترن التذكيرات ما دام Orden مفتوحًا',
   Automatic: 'تلقائي',
   'Stay in the tray': 'البقاء في شريط النظام',
   'Exact alarms': 'منبهات دقيقة',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'المهام',
   'Plan my day': 'خطّط يومي',
   'Add a task': 'أضف مهمة',
@@ -2387,8 +2272,6 @@ export const ar: Dictionary = {
   'Done tasks too': 'والمهام المنجزة أيضًا',
   'As a task': 'كمهمة',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'المهام',
   Ascending: 'تصاعدي',
   Descending: 'تنازلي',
@@ -2473,8 +2356,6 @@ export const ar: Dictionary = {
   'Without a value': 'بلا قيمة',
   'With a value': 'بقيمة',
   Unique: 'فريدة',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'ملاحظة جديدة من قالب',
   Automations: 'عمليات تلقائية',
   'Row added': 'أُضيف صف',
@@ -2503,7 +2384,6 @@ export const ar: Dictionary = {
   Form: 'نموذج',
   Formula: 'صيغة',
   'Blocked by {task}': 'محظورة بسبب {task}',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'التنبيه قبل الخروج',
   'When something runs': 'عند تشغيل شيء ما',
   'Quit {name}?': 'إنهاء {name}؟',
@@ -2514,16 +2394,13 @@ export const ar: Dictionary = {
   'Quit anyway': 'الخروج على أي حال',
   'Restart anyway': 'إعادة التشغيل على أي حال',
   'Close anyway': 'الإغلاق على أي حال',
-  // The online terminal
   'Online terminal': 'طرفية عبر الإنترنت',
   'New online terminal': 'طرفية جديدة عبر الإنترنت',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'جهاز آخر',
   'Taken over by {device}': 'استولى عليه {device}',
   'Open on {device} since {time}': 'مفتوح على {device} منذ {time}',
   'Take over': 'استلام',
   'Take back': 'استعادة',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'تطبيق جديد',
   Application: 'تطبيق',
   'This application’s file is damaged': 'ملف هذا التطبيق تالف',
@@ -2628,8 +2505,6 @@ export const ar: Dictionary = {
   'Compare with original': 'قارن بالأصل',
   'Conflict copies from other apps': 'نسخ تعارض من تطبيقات أخرى',
   'Remove from sync': 'إزالة من المزامنة',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'الملف الشخصي',
   Change: 'تغيير',
   'Take photo': 'التقاط صورة',
@@ -2654,7 +2529,6 @@ export const ar: Dictionary = {
   'that picture could not be opened': 'تعذّر فتح تلك الصورة',
   'the camera could not be opened': 'تعذّر فتح الكاميرا',
   'that picture is too big': 'تلك الصورة كبيرة جدًا',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'محادثة',
   Reply: 'رد',
   Replies: 'الردود',
@@ -2673,7 +2547,6 @@ export const ar: Dictionary = {
   'Also send to {chat}': 'أرسل أيضًا إلى {chat}',
   'Skin tone': 'لون البشرة',
   'Deleted account': 'حساب محذوف',
-  // Chats: notifications
   Mute: 'كتم',
   Unmute: 'إلغاء الكتم',
   'New message': 'رسالة جديدة',
@@ -2683,7 +2556,6 @@ export const ar: Dictionary = {
   Weekdays: 'أيام العمل',
   Starts: 'يبدأ',
   Ends: 'ينتهي',
-  // Chats: everywhere
   'Read chats': 'قراءة الدردشات',
   'Post in chats': 'الكتابة في الدردشات',
   'Always in this chat': 'دائمًا في هذه الدردشة',
@@ -2695,14 +2567,12 @@ export const ar: Dictionary = {
   'Search this chat': 'البحث في هذه الدردشة',
   'Add as task': 'إضافة كمهمة',
   'Save as note': 'حفظ كملاحظة',
-  // Appearance: glass's own pairs of colours
   Dawn: 'فجر',
   Lagoon: 'بحيرة',
   Lilac: 'ليلكي',
   Peach: 'خوخي',
   Sage: 'مريمية',
   Mist: 'ضباب',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'قاعدة بيانات جديدة',
   'New page': 'صفحة جديدة',
   'Not started': 'لم يبدأ',
@@ -2728,7 +2598,6 @@ export const ar: Dictionary = {
   Large: 'كبير',
   Both: 'كلاهما',
   'Shown on cards': 'معروضة على البطاقات',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'يزامن مفاتيح الذكاء الاصطناعي في هذا المتصفح مع أجهزتك الأخرى عبر الخزنة.',
   'Which of your AI accounts this feature asks.':
@@ -2956,7 +2825,6 @@ export const ar: Dictionary = {
   'Some changes may not be noticed': 'قد لا تُلاحَظ بعض التغييرات',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'بلغ النظام حدّه من المجلدات المراقَبة، لذا قد لا يلاحظ Orden كل تغيير تجريه برامج أخرى في مساحاتك. رفع fs.inotify.max_user_watches يصلح ذلك.',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'أتنقل المحادثة {name} إلى {space}؟',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'سيتمكن كل من في {space} من قراءة السجل كاملًا، ويفقده من في {from}.',
@@ -2995,7 +2863,6 @@ export const ar: Dictionary = {
   'One colour': 'بلون واحد',
   'Web icons': 'أيقونات الويب',
   'Sites you visit will appear here': 'ستظهر هنا المواقع التي تزورها',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'الإملاء',
   'Dictate with': 'الإملاء عبر',
   'Where your voice goes to be turned into words.': 'إلى أين يذهب صوتك ليتحول إلى كلمات.',
@@ -3025,11 +2892,9 @@ export const ar: Dictionary = {
   'Not on this device': 'ليست على هذا الجهاز',
   'Not on this device. It opens once you are online again.':
     'ليست على هذا الجهاز. ستُفتح عندما تعود إلى الاتصال بالإنترنت.',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'خادم IMAP',
   'SMTP server': 'خادم SMTP',
   'User name': 'اسم المستخدم',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'عاجل',
   Important: 'مهم',
   'If time': 'إن توفر الوقت',

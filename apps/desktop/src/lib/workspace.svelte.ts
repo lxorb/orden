@@ -133,9 +133,6 @@ import { pages } from './web-tab/pages.svelte'
 import { agentMarks } from './agent-marks.svelte'
 import { besideAt, howFor, type LinkAsk, type OpenHow, type TabAsk } from './new-tab'
 
-/** Whether a path is the AGENTS.md at the top of the space at `root`: one file, however
- *  it is spelled, on a disk that sets case aside, and on one that does not, the spelling
- *  agents read, with an `agents.md` beside it a note of its own. */
 function isInstructions(root: string, path: string): boolean {
   return samePath(path, joinPath(root, AGENTS_NAME), root)
 }
@@ -147,61 +144,35 @@ export interface Entry {
   modified: number
   created: number
   children: Entry[]
-  /** Taken off this Mac by iCloud; see icloud.svelte.ts. */
   evicted?: boolean
-  /** A folder the listing did not read into; see `walk` in tree.rs. */
   unlisted?: boolean
-  /** A page note holding a paper, made from a PDF; see `paper` in tree.rs. */
   paper?: boolean
 }
 
-/** What the listing itself is asked for. One field, because the order the rows are
- *  drawn in is no longer a question for whoever reads the disk: it is decided once,
- *  in tree-order.ts, over the listing that came back. Which files exist at all still
- *  is a question for the read. */
 export interface TreeOptions {
   showHidden: boolean
 }
 
-/** A space is a folder today and a synced collection once accounts land. */
 export interface Space {
   id: string
   name: string
   root: string
 }
 
-/** A document is the words and a tab is one pane's view of them; both live in
- *  workspace/documents.svelte.ts, and are named here because half the app asks
- *  the workspace for a tab. */
 export type { NoteDoc, Tab, TabKind } from './workspace/documents.svelte'
 
 export type Panel = 'tree' | 'outline' | 'search' | 'tasks' | 'chats' | 'links' | 'ask'
 
-/** Which side of the window a panel sits on; where each starts is
- *  workspace/panels.ts. Its own name because `Side` is already a pane's drop zone, which has four of them; see
- *  workspace/zones.ts. */
 export type PanelSide = 'left' | 'right'
 
-/** The six things the file list makes, each of which arrives as a row waiting
- *  for a name; see `startNaming`.
- *
- *  No folder among them. A note that holds notes is how a space is organised, so
- *  the folders on disk are made by nesting and by nothing else; see
- *  folder-notes.ts and docs/tree.md. */
 export type NewKind = 'note' | 'canvas' | 'pages' | 'web' | 'chat' | 'database'
 
-/** A row of the file list waiting for a name, or a space's own name in the header
- *  being typed. One at a time, whichever it is; see `startNaming`. */
 export interface Naming {
   path: string
   appending: boolean
   making: NewKind | null
 }
 
-/** What a row of each kind is called while it has no name: never shown, since
- *  the field it arrives in is empty, but the row is in the tree and the tree is
- *  keyed and sorted by paths. It is also the name the thing is made under where
- *  there is no list to type in at all. */
 const PLACEHOLDER: Record<NewKind, string> = {
   note: 'Untitled.md',
   canvas: 'Untitled.canvas',
@@ -215,34 +186,18 @@ export type { Heading } from './outline'
 
 const STORAGE_KEY = 'nib:workspace'
 const TREE_KEY = 'nib:tree'
-// Short enough that a crash costs a moment's typing, long enough that the strip
-// is not serialised on every keystroke.
 const SESSION_DELAY = 400
-/** The most words of a document with a file the session copies: longer than a book,
- *  a fifth of what storage holds. A plane of ten thousand strokes is seven million. */
 const WORDS_KEPT = 1_000_000
 
-/** How far back one tab remembers. Longer than anybody follows a link in one
- *  sitting, short enough that a trail is never what a session is made of. */
 const TRAIL = 30
 
 const unread = (path: string) => import('./unread.svelte').then((one) => one.unread.there(path))
-/** A space made, renamed or deleted; see workspace/space-changes.ts. */
 const changes = () => import('./workspace/space-changes')
-/** What an essential's tile does, fetched with the first one; see essentials.svelte.ts. */
 const essentials = () => import('./essentials.svelte')
-/** Whether a pane whose strip has emptied stays: while it shows an essential. */
 const paneStays = (strip: number, showing: Tab | null) =>
   strip > 0 || (showing?.essential ?? null) !== null
-/** The spaces' own tab sets, fetched by the first space that keeps one. */
 const sets = () => import('./workspace/sets.svelte').then((one) => one.sets)
 
-/** Which line of a note a followed link lands on: the heading it names, or the
- *  line the block name sits on. Null when the note holds neither, which leaves
- *  the note opened where it was left rather than somewhere arbitrary.
- *
- *  A heading is matched by its own words and by the anchor it becomes, so
- *  `[[Note#Some Heading]]` and `[x](Note.md#some-heading)` reach the same one. */
 function lineOfTarget(doc: string, jump: NoteJump): number | null {
   if (jump.block !== null) {
     return blockIds(doc).find((one) => one.id === jump.block)?.line ?? null
@@ -254,24 +209,15 @@ function lineOfTarget(doc: string, jump: NoteJump): number | null {
 
 function readTreeOptions(): TreeOptions {
   const saved = stored(TREE_KEY)
-  // A build older than this one wrote a sort key and a direction here as well, for
-  // the whole app rather than per space. They are ignored: the order is now the
-  // space's own, with the account; see `SpaceSorting` in workspace/arranged.svelte.ts.
   if (!isRecord(saved)) return { showHidden: false }
 
   return { showHidden: saved.showHidden === true }
 }
 
-/** A map read within one call and thrown away. Not one of Svelte's: nothing
- *  renders from these, and a reactive map would only cost the app the wrappers. */
 function emptyMap<T>(): Map<string, T> {
   return new Map<string, T>()
 }
 
-/** What the space's papers are known to say, fetched rather than carried: the launch
- *  reads them after the first paint (pdf/extract.ts), and a path that moves or goes
- *  before then has nothing held under it yet - the words kept on disk are forgotten
- *  all the same, a moment later. */
 function papers(): Promise<typeof import('./pdf/papers')> {
   return import('./pdf/papers')
 }
@@ -281,69 +227,41 @@ async function viewOfExplorer(tab: Tab): Promise<import('./explorer/view.svelte'
   return viewOf(tab)
 }
 
-/** A background fetch nobody waits for that did not arrive: a chunk missing after an
- *  update, which reloading.svelte.ts answers, or a page going away while it was still
- *  coming in - a test's environment torn down under a space it had only just listed.
- *  Either way there is nobody left to tell, so it is let go rather than left as a
- *  rejection nothing handles. */
 function unfetched(): void {
   // Answered by reloading.svelte.ts.
 }
 
-/** Whether a tab is worth remembering once closed: not a new tab with nothing in it,
- *  which would put back something nobody ever wrote. See workspace/drafts.ts. */
 function worthReopening(tab: Tab): boolean {
-  // A private tab is forgotten the moment it closes; see web-tab/private.ts. And a new
-  // tab that never went anywhere had nothing on it, so Ctrl+Shift+T reaches past it to
-  // the tab before, as Chrome's and Firefox's do.
   return !tab.inPrivate && !tab.nowhere && (!isDraft(tab.note) || hasWords(tab.note))
 }
 
-/** A tab with no file and words in it, which closing asks about. */
 const unsaved = (tab: Tab) => isDraft(tab.note) && hasWords(tab.note)
 
 class Workspace {
-  /** PDFs on their way to being page notes; see `pageNoteForPdf`. */
   private readonly pdfPageNotes = new Map<string, Promise<string | null>>()
   spaces = $state<Space[]>([])
   activeSpaceId = $state<string | null>(null)
-  /** The spaces put away whole; see workspace/archived-spaces.svelte.ts. */
   readonly archivedSpaces = new ArchivedSpaces()
 
-  /** Every space that is not put away, in the reader's order: what every list of spaces
-   *  offers, and what reads across them. `spaces` is all of them, which sync, a path's
-   *  space and a link still need. */
   get shownSpaces(): Space[] {
     return this.spaces.filter((one) => !this.archivedSpaces.has(one.root))
   }
 
-  /** The space's listing. Raw, because it is only ever replaced whole - every edit
-   *  of it builds a new tree; see tree-edits.ts - and a deep proxy over a listing of
-   *  thousands of entries charged every walk of it a signal per field read: the
-   *  file list's rows, the palette and every folder's own note, all at once as a
-   *  space switch landed. */
   tree = $state.raw<Entry | null>(null)
-  /** Every tab in the window, whichever pane it sits in. One flat list, because
-   *  half of what the app asks is "is this note open" rather than "where": a tab
-   *  says which pane it is in, and a pane's strip is the tabs that name it. A tab
-   *  whose pane is not on screen is in a space's set put aside; see sets.svelte.ts. */
   private strip = $state<Tab[]>([])
 
   get tabs(): Tab[] {
     return this.strip
   }
 
-  /** One tab per web note of them; see `secondWebTabs` in workspace/open.ts. */
   set tabs(next: Tab[]) {
     const before = this.strip
     this.strip = next
     for (const [tab, keeper] of secondWebTabs(before, next)) this.asUnsaved(tab, keeper)
   }
 
-  /** A tab over a web note made a web tab with no file at `keeper`'s page. */
   asUnsaved(tab: Tab, keeper: Tab) {
     const url = pages.addressOf(keeper.id) ?? keeper.address ?? this.webAddressOf(keeper)
-    // On the note's web data still, or the page it was on would be signed out of.
     tab.apart = apartOf(keeper)
     tab.note = this.document({
       kind: 'web',
@@ -357,81 +275,26 @@ class Workspace {
     pages.of(tab.id).url = url
     pages.of(tab.id).title = pages.of(keeper.id).title || tab.note.name
   }
-  /** How the panes are arranged and which one has the focus; see
-   *  workspace/panes.svelte.ts. */
   readonly panes = new Panes(() => {
     this.scheduleSession()
-    // Another tab brought forward, or another pane: whatever was being written in
-    // goes down now rather than a pause later.
     this.saving.hurry()
   })
-  /** Arrangements someone has named; see workspace/layouts.svelte.ts. */
   readonly layouts = new Layouts()
-  // Hidden until asked for, the way Typora starts.
   panel = $state<Panel | null>(null)
-  /** Whether somebody has chosen a sidebar since this window opened.
-   *
-   *  A launch paints the frame and reads the session behind it, on purpose, so the
-   *  window is up and taking keys while the notes are still being read. The session
-   *  landing a moment later used to write its own sidebar over the one the reader
-   *  had just asked for: pressing the search key in the first second left the file
-   *  list on screen. So a session opens the sidebar it remembers only while nobody
-   *  has said otherwise; see `restore` and `applyLayout`.
-   *
-   *  Read while the session is arriving and cleared by the arrangement that lands,
-   *  because that is the moment the question is settled: what happens afterwards is
-   *  a sitting, and a sitting's sidebar is whatever it was last told.
-   *
-   *  Not `$state`: nothing on screen reads it, and the session's own writes would
-   *  otherwise be a dependency of everything that draws a panel. */
   private panelChosen = false
-  /** Which panels this window keeps on the right, in the order its strip shows
-   *  them, and which of them is open: the homes in workspace/panels.ts until
-   *  somebody moves one, and nothing open until somebody asks. Kept under the
-   *  scratchpad's card, so what shows is `openOn('right')`.
-   *
-   *  Per window rather than per account: which side a panel sits on is a fact
-   *  about this screen, the way the sidebar's width is. */
   right = $state<Panel[]>(panels.rightFrom(undefined))
   rightPanel = $state<Panel | null>(null)
-  /** What the right side showed last, so its button goes back there. Nothing on
-   *  screen reads it. */
   lastRight: Panel | null = null
-  /** The one tab holding a file that is only being looked at, of whatever kind:
-   *  a note, a website, a canvas, a page note or a PDF. See `previewIn`. */
   previewTabId = $state<string | null>(null)
-  /** The tab last opened beside another, and which one it was opened from, so the
-   *  next opened from the same tab lands after it; see `besideAt` in new-tab.ts. */
   private besideLast: { opener: string; tab: string } | null = null
-  /** A new tab a kind was chosen on, waiting for that kind to take its place; see
-   *  `chosenOn`. */
   private choosing: string | null = null
-  /** The file an essential's tile is opening, whose tab is one as it lands. */
   essentialComing: string | null = null
-  /** The row a name is being typed on, in place: a row that exists and is being
-   *  renamed, or a fresh one that nothing on disk answers to yet, waiting for the
-   *  name that will make it. `making` says which, and what to make.
-   *
-   *  Held by the path the row is drawn under, which is what the list keys its rows
-   *  by, so a listing arriving from sync mid-word leaves the field alone; see
-   *  `keepNaming`. `appending` says the name it starts with is something to add to
-   *  rather than to replace: a note that was just made with a name of its own - a
-   *  unique note's timestamp - is waiting for a title after it, not instead of it.
-   *
-   *  The space's name in the header takes the same field, held under the space's
-   *  root, because it is the same gesture on the same kind of name. */
   naming = $state<Naming | null>(null)
   treeOptions = $state<TreeOptions>(readTreeOptions())
-  /** The last handful of file operations; see workspace/undo. */
   readonly undone = new FileActions()
-  /** The tabs this window has closed, newest last; see workspace/closed. */
   readonly closed = new ClosedTabs()
   tags = $state<SpaceTag[]>([])
-  /** What this machine remembers about the list: which folders are open, what
-   *  was opened lately, the icon each space wears. See workspace/device. */
   readonly device = new DeviceView()
-  /** The notes, folders, headings and searches kept above the file list. Per
-   *  space, and on the account when there is one; see workspace/bookmarks. */
   readonly bookmarks = new Bookmarks(
     () => this.activeSpace?.root ?? null,
     () => {
@@ -439,32 +302,14 @@ class Workspace {
         void essentials().then((one) => one.kept())
     },
   )
-  /** The icon each folder of the space wears. Per space and on the account for
-   *  the same reasons the bookmarks are, and here rather than in the file itself
-   *  because a folder has no file; see workspace/folder-icons. */
   readonly folderIcons = new FolderIcons(() => this.activeSpace?.root ?? null)
-  /** The order somebody arranged each folder's rows into, where they arranged one.
-   *  Beside the folder icons because it is the same kind of thing and kept in the
-   *  same way, for the same reason: a folder has no file to keep it in, and the order
-   *  is a fact about the space's notes rather than about this machine. See
-   *  workspace/arranged. */
   readonly arranged = new Arranged(() => this.activeSpace?.root ?? null)
-  /** How the picture of this space is drawn. Beside the folder icons because it is
-   *  the same kind of thing: one space's own settings, kept on the account so
-   *  every machine draws it the same way. */
   readonly graphSettings = new SpaceGraphSettings(() => this.activeSpace?.root ?? null)
-  /** Which order each space's file list is read in, with the account; see
-   *  `SpaceSorting` in workspace/arranged.svelte.ts (#423). */
   readonly sorting = new SpaceSorting(() => this.activeSpace?.root ?? null)
-  /** The notes and folders this space leaves out of its search, its graph and its
-   *  unlinked mentions. Beside the other two because it is the same kind of thing:
-   *  one space's own settings, kept on the account so every machine agrees. */
   readonly excluded = new Excluded(() => this.activeSpace?.root ?? null)
-  /** What the space has put away; see workspace/archive. */
   readonly archive = new Archive(() => this.activeSpace?.root ?? null)
   readonly protection = protection
 
-  /** What the space's own lists leave out: what a reader excluded, and the archive. */
   leftOutOf(root: string): string[] {
     return [...this.excluded.of(root), ...this.archive.keysOf(root)]
   }
@@ -474,54 +319,36 @@ class Workspace {
     return root === undefined ? [] : [...this.leftOutOf(root), this.instructionsName(root)]
   }
 
-  /** The file at the top of a space as what leaves it out of a search has to say it, which
-   *  is by the exact name: as the listing spells it, where that is the space listed. */
   instructionsName(root: string): string {
     const tree = samePath(this.tree?.path, root) ? this.tree : null
     const listed = tree?.children.find((one) => !one.is_dir && isInstructions(root, one.path))
     return listed?.name ?? AGENTS_NAME
   }
 
-  /** Whether a path is a space's AGENTS.md: the file at its top that its settings edit,
-   *  spelled as agents read it. One in a folder is a note like any other. */
   instructionsAt(path: string): boolean {
     const root = this.rootHolding(path)
     return root !== null && isInstructions(root, path)
   }
-  /** Rows picked in the tree with Ctrl or Shift; see workspace/selection. */
   private readonly picked = new Selection()
-  /** Writing what is open down, and a new tab becoming a file; see
-   *  workspace/saving. */
   private readonly saving = new Saving(this)
-  /** The strip of tabs, written after a pause in the typing; see timing.ts. */
   private readonly session = afterQuiet(() => this.persist(), SESSION_DELAY)
 
-  /** One document per file, and the one place a document is made; see
-   *  workspace/open.ts. Everything that opens a file goes through it, because two
-   *  documents over one file are two notes wearing one name. */
   readonly opened = new OpenDocuments(
     () => this.tabs,
     (start) => new NoteDoc(start, (note) => this.saving.edited(note)),
   )
 
-  /** Where each note was last being read; see workspace/positions.ts. */
   positions = new Positions()
 
-  /** Every file operation, said once by the operation that did it; see
-   *  workspace/file-ops.ts. */
   readonly fileOps = new FileOps()
 
   constructor() {
-    // Everything here kept by path follows what the operations say, and nothing an
-    // operation does names one of them. The open documents first, so that anything
-    // asking about a note between two followers already meets its new path.
     this.fileOps.follow((op) => this.opened.follow(op, (id) => this.close(id)))
     this.fileOps.follow((op) => this.saving.follow(op))
     this.fileOps.follow((op) => this.positions.follow(op))
     this.fileOps.follow((op) => this.device.follow(op))
     this.fileOps.follow((op) => this.closed.follow(op))
     this.fileOps.follow((op) => this.undone.follow(op))
-    // An essential follows its file before the Essentials hear, or they would release it.
     this.fileOps.follow((op) => {
       if (op.op !== 'moved' || op.kind === 'space') return
       for (const tab of this.tabs) {
@@ -548,8 +375,6 @@ class Workspace {
       this.fileOps.follow(keeping(store))
     }
     this.fileOps.follow((op) => links.follow(op))
-    // A paper's words follow it, and a page note's paper follows the note; a space
-    // renamed or deleted takes every paper under its root. See pdf/papers.ts.
     this.fileOps.follow((op) => {
       if (op.op === 'moved') {
         void papers().then(({ paperMoved }) => paperMoved(op.from, op.to), unfetched)
@@ -557,7 +382,6 @@ class Workspace {
         void papers().then(({ paperGone }) => paperGone(op.path), unfetched)
       }
     })
-    // A board's manual order names its cards by path, so it follows them as links do.
     this.fileOps.follow((op) => {
       const tree = this.tree
       if (op.op !== 'moved' || op.kind === 'space' || !op.root || !tree || op.heard) return
@@ -572,12 +396,8 @@ class Workspace {
   readonly activeSpace = $derived(
     this.spaces.find((space) => space.id === this.activeSpaceId) ?? null,
   )
-  /** The tab showing in the pane that has the focus. Every key and every
-   *  palette command means this one. */
   readonly active = $derived(this.tabs.find((tab) => tab.id === this.activeTabId) ?? null)
 
-  /** Which tab that is. Setting it shows a tab and moves the focus to the pane
-   *  it is in, which is what every caller means by it. */
   get activeTabId(): string | null {
     return this.panes.focused.activeTabId
   }
@@ -585,7 +405,6 @@ class Workspace {
   set activeTabId(id: string | null) {
     const tab = id === null ? null : (this.tabs.find((one) => one.id === id) ?? null)
     if (id !== null && !tab) return
-    // In a set out of sight, which comes forward with its space.
     if (tab && !this.panes.at(tab.paneId)) {
       void sets().then((one) => one.reveal(tab.id))
       return
@@ -596,57 +415,29 @@ class Workspace {
     this.panes.activate(paneId, tab?.id ?? null)
   }
 
-  /** One pane's strip, in the order the tabs were opened; never an essential. */
   tabsIn(paneId: string): Tab[] {
     return this.tabs.filter((tab) => tab.paneId === paneId && !tab.essential)
   }
 
-  /** Every tab a pane holds, its essentials too. */
   heldIn(paneId: string): Tab[] {
     return this.tabs.filter((tab) => tab.paneId === paneId)
   }
 
-  /** Every open document, once each however many panes are showing it.
-   *
-   *  The five members below this comment are the store's own rather than the app's:
-   *  nothing outside lib/workspace reads them, and the modules beside this one -
-   *  workspace/undoing.ts and its neighbours - are what they are not private for. */
   get documents(): NoteDoc[] {
     return this.opened.all
   }
 
-  /** The document a file is open as, or null when nothing is showing it.
-   *
-   *  The lookup every path-addressed thing goes through: words arriving for a file,
-   *  a rename, a replacement run across the space, an undone one. There is one
-   *  answer because there is one document per file; see workspace/open.ts. */
   documentAt(path: string): NoteDoc | null {
     const open = this.opened.at(path)
-    // A view tab over a `.base` file holds which view it is, not the file's words: the
-    // file is read and written past it, as any closed file is. See lib/views/source.ts.
-    // So does a chat's tab over its `.chat` pointer, which shows the account's messages
-    // and holds none of the file's words: an icon chosen for an open chat was measured
-    // against its empty text and never written (#227).
     return open && !TAB_KINDS[open.kind].fileDocument ? null : open
   }
 
-  /** Every open file that has words of its own and a path behind it, once each
-   *  however many panes show it. What the rooms store follows, so that a file being
-   *  worked in on two devices joins the room the moment it is open on either; see
-   *  rooms.svelte.ts.
-   *
-   *  Notes and canvases. The graph is drawn from the notes rather than written in,
-   *  and a PDF is read; neither has anything for a room to hold. */
   get openNotes(): { key: string; path: string; note: NoteDoc }[] {
     return this.documents
       .filter((note) => holdsWords(note.kind) && (note.path !== null || note.shared !== null))
       .map((note) => ({ key: note.key, path: note.path ?? '', note }))
   }
 
-  /** The note being read, named the way a link names it: relative to the space.
-   *  Falls back to the last note that was read, so a tab holding no note - the
-   *  graph of the space - still knows which note it was opened from and can mark
-   *  it. Null when there is no space, or nothing has been read in it. */
   readonly relativeNote = $derived.by((): string | null => {
     const root = this.activeSpace?.root
     const path = this.active?.path ?? this.recent[0] ?? null
@@ -655,22 +446,10 @@ class Workspace {
     return within(root, path)
   })
 
-  /** The tab a side panel is held on, or null while the panels follow whichever
-   *  pane has the keyboard.
-   *
-   *  A tab and not a note: the outline of the tab you are reading in, so that a
-   *  tab which moves on to another note takes its outline with it. It lives for
-   *  the sitting and is not written down - a panel held on a note you cannot
-   *  remember holding it on is worse than one that simply follows. */
   heldTabId = $state<string | null>(null)
 
-  /** The tab the outline and the links are about: the one they were held on,
-   *  while it is still open, and otherwise the one being worked in. */
   readonly panelTab = $derived(this.tabs.find((tab) => tab.id === this.heldTabId) ?? this.active)
 
-  /** That tab's note, named the way a link names it. What the links panel and a
-   *  bookmarked heading are about; the graph of the whole space keeps following
-   *  the pane, since it is a picture of everything rather than of one note. */
   readonly panelNote = $derived.by((): string | null => {
     const root = this.activeSpace?.root
     const path = this.panelTab?.path ?? null
@@ -679,33 +458,16 @@ class Workspace {
     return within(root, path)
   })
 
-  /** Holds the panels on a tab, or lets them follow again. */
   holdPanel(tabId: string | null) {
     this.heldTabId = tabId
   }
 
-  /** Whether the panels are held on a tab rather than following the pane. */
   readonly held = $derived(!!this.heldTabId && this.panelTab?.id === this.heldTabId)
 
-  /** Whether a panel is one that can be held: the four that are about one note. The
-   *  files are the space's and a search is the space's, so neither has a note to be held
-   *  on.
-   *
-   *  Not on a handheld, which holds one document at a time: there is nothing to hold a
-   *  panel against, and opening another note closes the tab the panel would have been
-   *  held on. What decides a handheld is the machine - a finger and a mobile user agent -
-   *  rather than the width of the window, so a narrow window on a desktop still offers it
-   *  and still means something. See `deviceFor` in viewport.svelte.ts and docs/mobile.md.
-   *
-   *  Here rather than in the panel that draws the button, because the palette asks the
-   *  same question and two copies of one rule is one of them going stale. */
   holdable(panel: Panel | null): boolean {
     return !viewport.touch && (panel === 'outline' || panel === 'links')
   }
 
-  /** The panel a hold would be about: whichever side has one that can be held, the left
-   *  first. Null where neither has, which is what the palette's row reads to know there
-   *  is nothing to hold. */
   readonly holdablePanel = $derived.by((): Panel | null => {
     for (const panel of [this.panel, this.openOn('right')]) {
       if (this.holdable(panel)) return panel
@@ -714,20 +476,10 @@ class Workspace {
     return null
   })
 
-  /** Reading it walks the whole note, so it deliberately follows `tab.doc` and
-   *  not the editor: that one only catches up when the typing pauses, which is
-   *  as often as an outline needs to move. Lazy as every derived is, so it is read
-   *  only while a side with the Outline in its row of tabs is out (`panelFilling`). */
   readonly headings = $derived.by(() => scanHeadings(this.markdownOfPanel))
 
-  /** The note's footnotes, under its headings in the outline panel: both are the
-   *  shape of the note being read rather than anything about the space around it,
-   *  and both jump within it. Lazy for the same reason the headings are, and it
-   *  gives up on the first pass over a note with no `[^` in it at all. */
   readonly footnotes = $derived.by(() => scanFootnotes(this.markdownOfPanel))
 
-  /** What the tab the panels are about holds, as far as they ask, which is which of
-   *  them it fills (#1120); see panel-tab.ts. */
   readonly panelFilling = $derived.by((): Filling | null => {
     const tab = this.panelTab
     if (!tab) return null
@@ -740,23 +492,15 @@ class Workspace {
     }
   })
 
-  /** Whether a panel has anything to show beside the tab the panels are about. */
   fills(panel: Panel): boolean {
     return fills(panel, this.panelFilling)
   }
 
-  /** The text of the panel's note where it is markdown, which is all the outline reads.
-   *  A canvas or a page note is JSON, whose every edit had its whole file walked for
-   *  headings it cannot have: a tenth of a second per nudge, on a plane of eight
-   *  thousand cards (#535). */
   private get markdownOfPanel(): string {
     const tab = this.panelTab
     return tab?.kind === 'note' && !this.protection.locked(tab.path) ? tab.doc : ''
   }
 
-  /** Every file in the space, flattened: the notes, and the PDFs and canvases
-   *  beside them, which are the three things a tab can hold. What quick open
-   *  lists. */
   readonly files = $derived.by((): Entry[] => {
     const out: Entry[] = []
     const walk = (entry: Entry) => {
@@ -766,41 +510,18 @@ class Workspace {
       }
     }
     if (this.tree) walk(this.tree)
-    // Not the space's AGENTS.md, which is a setting; `tree` still holds it, and that is
-    // what sync, an agent's listing and every lookup by path read.
     const root = this.tree?.path
     return root === undefined ? out : out.filter((one) => !isInstructions(root, one.path))
   })
 
-  /** The notes among them. What everything that means words asks for: which note
-   *  to merge into, which note a space is published as, which names a search
-   *  completes. A PDF is a file to read and a canvas is a plane to arrange notes
-   *  on; neither is a note to write in. */
   readonly notes = $derived(this.files.filter((one) => !isTabFile(one.name)))
 
-  /** The tree as the file list draws it: what is on disk, plus a row for every
-   *  note the account has named and the pass has not fetched yet.
-   *
-   *  Two values rather than one, because the difference matters everywhere else.
-   *  `tree` is the disk, and it is what a push reads, what a search walks, what a
-   *  rename edits and what says whether a space is empty: a row for a file that is
-   *  not there yet would be a lie to every one of them. This one is only ever
-   *  drawn. See `withComing` in tree-edits.ts and arriving.svelte.ts.
-   *
-   *  And it is the one place the chosen order is applied. The listing arrives in
-   *  whatever order the disk was read in; this puts every folder of it into the order
-   *  the space is being read in, so the rows the panel draws, the rows the keyboard
-   *  walks and the rows a Shift-click ranges over cannot disagree about which row is
-   *  row forty. Derived, so a tree that has not changed is sorted once however many
-   *  times it is read; see tree-order.ts. */
   readonly shownTree = $derived.by((): Entry | null => {
     const coming =
       this.tree && arriving.coming.size ? withComing(this.tree, [...arriving.coming]) : this.tree
     if (!coming) return null
 
     const root = coming.path
-    // An application is developer mode's alone (docs/apps.md): elsewhere its file is
-    // synced and kept, and no row.
     const coder = modes.coder
     const listed = withoutRows(
       coming,
@@ -813,7 +534,6 @@ class Workspace {
     )
   })
 
-  /** Whether a file is kept in this space's Essentials. */
   inEssentials(path: string): boolean {
     const root = this.activeSpace?.root
     if (root === undefined || !within(root, path)) return false
@@ -822,8 +542,6 @@ class Workspace {
     return this.bookmarks.list.some((one) => one.kind === 'note' && samePath(one.path, at))
   }
 
-  /** The tree without the files kept in the Essentials, which are drawn there (#345);
-   *  see docs/tree.md. */
   private unkept(tree: Entry): Entry {
     const root = this.activeSpace?.root
     const kept = this.bookmarks.list.filter((one) => one.kind === 'note').map((one) => one.path)
@@ -836,7 +554,6 @@ class Workspace {
     })
   }
 
-  /** The tree without what the space has archived. */
   private unarchived(tree: Entry): Entry {
     const root = this.activeSpace?.root
     const keys = root === undefined ? null : this.archive.keysOf(root)
@@ -845,26 +562,14 @@ class Workspace {
     return withoutRows(tree, (entry) => keys.has(relativeTo(root, entry.path)))
   }
 
-  /** Which order this space's file list is read in. By name until somebody chooses
-   *  otherwise, per space and with the account; see `SpaceSorting` in
-   *  workspace/arranged.svelte.ts. */
   readonly sortMode = $derived<SortMode>(
     this.activeSpace ? this.sorting.of(this.activeSpace.root) : 'name',
   )
 
-  /** Whether an account's first pass is running and there is still nothing of
-   *  theirs on screen: no space, no listing, no tree.
-   *
-   *  The one moment that is worth taking the whole surface for, and the test for
-   *  it is here because this is what knows. Any one of the three is a file list,
-   *  and a file list means the pass belongs in the panel's foot as a count rather
-   *  than over everything. See FirstSync.svelte and arriving.svelte.ts. */
   readonly nothingToShow = $derived(
     arriving.showing && !this.spaces.length && !this.tree && !arriving.coming.size,
   )
 
-  /** Whether the launch has read the spaces and the session. Until then an empty
-   *  list says nothing, and the space chooser waits for it. */
   restored = $state(false)
 
   async restore() {
@@ -873,24 +578,14 @@ class Workspace {
       await this.readSitting()
     } finally {
       this.restored = true
-      // What the crate read ahead that no question took; see workspace/ahead.ts.
       ahead.forgetAhead()
     }
   }
 
   private async readSitting() {
-    // The browser build starts empty, so give a first visit something to read.
-    //
-    // Never in the plugin. Its page is served from a local port picked afresh
-    // every launch, so its storage is empty every launch and every launch reads
-    // as a first visit: the seed was written again, and syncing offered it to the
-    // account again, putting it back each time Emil deleted it. A signed-in plugin
-    // brings the account's notes and a signed-out one shows the sign-in; neither
-    // wants a welcome note. See welcome.ts.
     if (!isNative && !isPlugin()) {
       try {
         const { seed } = await import('./web/commands')
-        // What the old address's handoff waits for; see first-visit.svelte.ts.
         if (await seed()) {
           ;(await import('./first-visit.svelte')).firstVisit.seeded()
           settings.setup = -1
@@ -914,14 +609,9 @@ class Workspace {
       await this.loadSpaces()
       if (this.activeSpaceId) await this.loadTree()
 
-      // The list is on screen before a body is read; see startup.svelte.ts.
       await startup.shown()
       markPainted('tree painted')
 
-      // A first visit opens what it was given rather than a blank page - unless
-      // something is open already. The list goes out above this line and the window
-      // takes keys from then on, so a note somebody opened in that second is theirs
-      // and this is not the moment to put another one in front of it.
       if (!this.tabs.length) {
         const first = this.files[0]
         if (first) await this.openEntry(first.path)
@@ -929,9 +619,6 @@ class Workspace {
 
       void this.takeWhatWasLeft(slot)
 
-      // Nothing to open, and nothing is made up: a pane with no tab shows the kinds
-      // a new one could be, which is a choice rather than a note nobody asked for.
-      // See NewHere.svelte.
       return
     }
 
@@ -939,9 +626,6 @@ class Workspace {
     this.positions = new Positions(state.positions ?? {})
     this.closed.restore(state.closed ?? [])
     this.setsRead = state.sets
-    // The sidebar comes back the way it was left, on both sides - unless somebody
-    // has already asked for one in the second the window has been up; see
-    // `panelChosen`.
     if (!this.panelChosen) {
       this.panel = panels.leftPanelFrom(state.panel)
       this.rightPanel = state.rightPanel ?? null
@@ -950,16 +634,10 @@ class Workspace {
     this.lastRight ??= state.lastRight ?? null
     this.activeSpaceId = state.activeSpace ?? this.spaces[0]?.id ?? null
 
-    // The folder wins over what was remembered, so the two cannot drift apart.
     await this.loadSpaces()
 
     if (this.activeSpaceId) await this.loadTree()
 
-    // The note that was in front, drawn as it was left, in the frame the list goes out
-    // in: its editor is built after the notes are read. Its words are the ones read
-    // ahead where the crate read them, and one read here where it did not - a phone, a
-    // browser - which is the note the launch reads next anyway. See
-    // first-screen.svelte.ts.
     await firstScreen.arm(state, async (front) =>
       front.path === null
         ? null
@@ -967,17 +645,9 @@ class Workspace {
           invoke<string>('read_note', { path: front.path }).catch(() => null)),
     )
 
-    // The one line in the launch that matters most. Everything above is a folder
-    // listing and a string of settings; everything below reads a note - the open
-    // one, and on a slow disk several of them - and awaiting it in the same run of
-    // microtasks is what used to keep the file list off the screen until the last
-    // of them came back. The frame goes out here instead, with the tree in it, and
-    // the notes are read into a window somebody can already see and scroll. See
-    // startup.svelte.ts, which also starts the queue behind this.
     await startup.shown()
     markPainted('tree painted')
 
-    // Nobody asked for this one: it is the sitting that was, arriving.
     if (state.layout) await this.applyLayout(state.layout, false)
     else if (state.tabs?.length) await this.restoreStrip(state.tabs, state.active ?? 0)
     else {
@@ -987,23 +657,13 @@ class Workspace {
       this.arriving = null
     }
 
-    // A note always opens for writing. Which face was up belongs to the sitting
-    // that was, not to the note; a named layout is the one thing that says
-    // otherwise, and that is chosen rather than restored. See `applyLayout`.
     for (const tab of this.tabs) tab.reading = false
-    // And the spaces' own sets behind it, at the launch's last turn.
     if (state.sets !== undefined) void startup.turn('doors').then(sets)
 
-    // A phone and a tablet show one document at a time, so a session written on
-    // a desktop arrives as the one that had the focus; see `oneDocument`.
     this.oneDocument()
 
     void this.takeWhatWasLeft(slot)
 
-    // And whatever the sitting left in the pane, on screen: the last of the three paints
-    // a launch is made of, after the shell and the file list. Which is a note, or the
-    // empty pane of somebody who closed everything before they quit - either way it is
-    // the frame the launch ends on.
     markPainted('active tab painted')
   }
 
@@ -1051,46 +711,22 @@ class Workspace {
     }
   }
 
-  /** Drafts as tabs. A file that was clean is re-read from disk, so an edit made
-   *  elsewhere shows up; one that was not is restored from its draft and stays
-   *  dirty. Replacing somebody's unwritten words with what happens to be on disk is
-   *  the one thing this must never do.
-   *
-   *  A canvas is read back exactly as a note is, because its words are a file's
-   *  words too. The session writes no copy of words that are on disk, so a kind
-   *  left out of the re-read comes back with nothing in it: a plane with every
-   *  stroke still in the file and none of them on screen.
-   *
-   *  Which document each draft comes back as is `already` below and the open
-   *  documents themselves; nothing is carried between the panes here, because one
-   *  document per file is the workspace's own answer now rather than a map this
-   *  method passes along. See workspace/open.ts. */
   private async tabsFrom(drafts: Draft[], paneId: string): Promise<Tab[]> {
     return [...new Set(await this.tabsAlong(drafts, paneId))].filter((one) => one !== null)
   }
 
-  /** The same, one place for each draft: null where a draft could not come back, so an
-   *  index the session counted along the drafts still finds its tab - the one that was
-   *  in front - when a tab before it in the strip has gone, and the tab it folded into where
-   *  there is one, so a tab appears there twice. */
   private async tabsAlong(drafts: Draft[], paneId: string): Promise<(Tab | null)[]> {
     return this.opened.arranging(async () => {
       const made: (Tab | null)[] = []
 
       for (const written of drafts) {
-        // Spelled as the listing spells it, whatever the sitting wrote down.
         let draft = written.path ? { ...written, path: this.spelled(written.path) } : written
 
-        // Older sessions kept PDFs in their own viewer tabs. Their paper now has
-        // the same page note a fresh open creates, so restore that note in place.
         if (draft.kind === 'pdf' && draft.path) {
           if (!(await this.opens(draft.path))) {
             made.push(null)
             continue
           }
-          // In a space shared to be read the paper comes back as it opens there: the
-          // note holding it if there is one, and the paper as itself where there is not.
-          // Elsewhere turning it answers the note holding it, and takes in one beside it.
           const writable = await this.mayTurn(draft.path)
           const held = writable ? null : await this.heldBy(draft.path)
           const turned = writable || held !== null
@@ -1105,23 +741,17 @@ class Workspace {
             : { ...draft, dirty: false, doc }
         }
 
-        // The space's AGENTS.md is its settings' now, so a clean tab of it goes. One with
-        // words unsaved is put back as it was, and is written and closed like any other.
         if (draft.path && !draft.dirty && this.instructionsAt(draft.path)) {
           made.push(null)
           continue
         }
 
-        // Off the desktop app a web note is the browser's (`openSite`, #206), and a phone
-        // or a tablet draws no page at all: a tab of one an older sitting left goes.
         const away = viewport.touch || (!!draft.path && draft.address !== undefined)
         if (draft.kind === 'web' && !isDesktop && away) {
           made.push(null)
           continue
         }
 
-        // A tab from a sitting before nib stopped opening files from outside its
-        // spaces goes quietly: nothing in nib opens that file any more.
         if (draft.path && !(await this.opens(draft.path))) {
           log('info', `restore: ${draft.path} is outside every space, so its tab is not put back`)
           made.push(null)
@@ -1142,9 +772,6 @@ class Workspace {
           continue
         }
 
-        // A file that was clean is read again, so an edit made elsewhere shows up,
-        // and the read is the round trip a second open of the same file waits out. One
-        // with unwritten words is read as well: the file may have gone on without them.
         const open = { read: false }
         const note =
           holdsWords(draft.kind) && draft.path
@@ -1169,27 +796,15 @@ class Workspace {
           continue
         }
 
-        // Deleted or moved while Orden was away, and no words of its own to keep.
         made.push(note ? this.viewOf(note, paneId, draft) : null)
       }
 
-      // Words that came back without their file having them - a window that was
-      // killed before the pause, a tab closed a moment after its last keystroke -
-      // go down now. A draft's stay in the session until it is given a place.
       for (const tab of made) if (tab?.note.dirty) this.saving.owed(tab.note)
 
       return made
     })
   }
 
-  /** The document a draft is a view of, if it is open already: the one it shares a
-   *  document with, or the one at its path.
-   *
-   *  The key has to agree with the path as well. It names a document rather than a
-   *  note, and the one tab that previews a note moves its document on to another
-   *  all day - so a key that once meant this note can now mean whatever that tab is
-   *  showing, and a tab built on it would wear this draft's name over that note's
-   *  words. */
   private sameDocument(draft: Draft): NoteDoc | null {
     const shared = draft.share ? this.opened.withKey(draft.share) : null
     if (shared && samePath(shared.path, draft.path)) return shared
@@ -1264,7 +879,6 @@ class Workspace {
     return note
   }
 
-  /** One draft's document, read from its file. Null for a file that has gone. */
   private async drafted(draft: Draft): Promise<NoteDoc | null> {
     const path = draft.path
     if (path === null) return null
@@ -1273,9 +887,6 @@ class Workspace {
       (await ahead.noteAhead(path)) ??
       (await invoke<string>('read_note', { path }).catch(() => null))
     if (text === null) return null
-    // A canvas or a page note whose text stopped being one while Orden was closed is
-    // not put back as a blank plane, which its first stroke would write over the
-    // file: it is refused as its open refuses it (`openCanvas`, `openDeck`).
     if (draft.kind === 'canvas' || draft.kind === 'pages') {
       const { parseAhead } = await import('./canvas/format')
       if (!parseAhead(text)) return unread(path).then(() => null)
@@ -1305,15 +916,10 @@ class Workspace {
     return tab
   }
 
-  /** One flat strip of tabs, which is how a session written before there were
-   *  panes reads. All of it goes into the one pane there is. */
   private async restoreStrip(drafts: Draft[], active: number) {
     const paneId = this.panes.focusedId
     const restored = await this.tabsFrom(drafts, paneId)
 
-    // Which tab was showing is read off the strip as it was written down. A tab a
-    // session wrote as pinned, when there was pinning (until #1041), is a tab like any
-    // other, where it was.
     this.panes.activate(paneId, (restored[active] ?? restored[0])?.id ?? null)
     this.tabs = [
       ...restored,
@@ -1322,29 +928,10 @@ class Workspace {
     this.arriving = null
   }
 
-  /** Puts an arrangement in place: the panes, the notes in each of them, which
-   *  one has the focus, and the sidebar. The session on the way in, and a named
-   *  layout whenever one is chosen.
-   *
-   *  A note with unwritten words that the arrangement says nothing about is not
-   *  thrown away: it lands in the pane that ends up with the focus. Arranging
-   *  what is open is never a reason to lose what somebody wrote.
-   *
-   *  Nor is it a reason to undo what somebody asked for. Reading the notes takes a
-   *  file each, and the window is up and taking keys while that happens. `asked`
-   *  is which of the two callers this is: an arrangement somebody chose brings its
-   *  own sidebar, and the session, which arrives by itself, opens the sidebar it
-   *  remembers only while nobody has chosen one. See `panelChosen`. */
   async applyLayout(layout: Layout, asked = true) {
-    // Every document this makes is held open until the arrangement is in the
-    // window, and not only for the pane that made it: a second pane showing the
-    // same note wants the same document, and a note clicked while this is still
-    // reading has to find the one it already read rather than open a second.
     await this.opened.arranging(async () => this.arrange(await this.built(layout), layout, asked))
   }
 
-  /** An arrangement's panes and their tabs, read back: a session's, a named layout's,
-   *  and a space's own set (workspace/sets.svelte.ts). */
   async built(layout: Layout): Promise<{ frame: Frame; made: Tab[] }> {
     const showing = emptyMap<string | null>()
     const made: Tab[] = []
@@ -1352,13 +939,6 @@ class Workspace {
     for (const draft of panesOf(layout.frame)) {
       const along = await this.tabsAlong(draft.tabs, draft.id)
       const tabs = [...new Set(along)].filter((one) => one !== null)
-      // Which tab was showing first, since that index counts along the strip as the
-      // arrangement wrote it down - along the drafts, so a tab before it that could
-      // not come back moves nothing - and the one after it where it is the one that
-      // went; then the kept tabs to the head of it, which is where a run of them
-      // belongs however the entry was written. See pinning.ts.
-      // The pane's order of use as it was written down, behind whatever has been used
-      // since; and where the tab it showed did not come back, the one used before it.
       const order = (draft.recent ?? []).flatMap((at) => {
         const one = along[at]
         return one ? [one.id] : []
@@ -1383,7 +963,6 @@ class Workspace {
 
     let frame: Frame = frameOf(layout.frame, (draft) => showing.get(draft.id) ?? null)
 
-    // A pane whose notes have all gone takes no room.
     for (const empty of panesIn(frame)) {
       if (!made.some((tab) => tab.paneId === empty.id)) frame = withoutPane(frame, empty.id)
     }
@@ -1392,20 +971,9 @@ class Workspace {
   }
 
   private arrange({ frame, made }: { frame: Frame; made: Tab[] }, layout: Layout, asked: boolean) {
-    // A space's set out of sight stays as it is; see workspace/sets.svelte.ts.
     const aside = this.tabs.filter((tab) => !this.panes.at(tab.paneId))
     const open = this.tabs.filter((tab) => !aside.includes(tab))
 
-    // What is open, read here rather than at the top: every line above this reads a
-    // note, and the window has been up and taking keys the whole time.
-    //
-    // A layout somebody chose is what they want on screen, so it replaces what is
-    // open and only unwritten words are carried over. The session is not chosen - it
-    // arrives a second into a sitting that has already begun - so everything open is
-    // kept and whatever is in front stays in front. A note opened in that second
-    // used to be closed again a moment later, and a drive had to hold still for a
-    // second and a half to work around it; a note closed in it stays closed, which
-    // is why this is read now and not before.
     const rescued = asked ? open.filter((tab) => tab.dirty) : open
     const inFront = asked ? null : this.active
 
@@ -1431,25 +999,13 @@ class Workspace {
       if (made.some((one) => one.note === tab.note)) continue
 
       tab.paneId = this.panes.focusedId
-      // At the end of the strip.
       this.tabs = this.placed(tab, this.panes.focusedId, null)
     }
 
-    // The document that was in front when the session arrived, put back in front -
-    // by its own tab, or by the arrangement's if that opened the same note.
     const still =
       inFront &&
       (this.tabs.includes(inFront) ? inFront : this.tabs.find((one) => one.note === inFront.note))
 
-    // Only where the arrangement left the focused pane showing nothing: a pane
-    // writes down the tab it was showing as an index into its own strip, that index
-    // is the only record of it - ids are handed out fresh every run - and it has
-    // already been honoured a few lines above. Reaching for the first tab here
-    // whatever the pane said is how every launch came back on the first note in the
-    // strip however long somebody had been reading the third, and how choosing a
-    // saved arrangement landed on its first note rather than the one it names. Emil
-    // met it as pictures that had gone: the note was there and another note was in
-    // front of it.
     if (still) this.activeTabId = still.id
     else if (!this.activeTabId && this.tabs.length) {
       this.activeTabId = this.panes.successorOf(
@@ -1457,36 +1013,25 @@ class Workspace {
       )
     }
 
-    // A phone and a tablet show one document at a time.
     this.oneDocument()
 
-    // The tabs were replaced rather than closed one by one, so any page behind one
-    // that has gone is a webview with nothing left to place it; see pages.svelte.ts.
     pages.keepOnly(this.tabs.map((tab) => tab.id))
     this.persist()
   }
 
-  /** The arrangement as it is written down. What the session holds, and what
-   *  "Save layout" keeps a copy of under a name; another frame is a space's set out of
-   *  sight. */
   layout(frame = this.panes.frame, focused = this.panes.focusedId, panel = this.panel): Layout {
     this.flush()
 
     return {
       frame: frameDraft(frame, (pane) => {
-        // A private tab is never written down: a restart does not bring it back, as a
-        // browser's private window does not come back. See web-tab/private.ts.
         const tabs = [
           ...this.tabsIn(pane.id).filter((tab) => !tab.inPrivate),
           ...[...this.puttingAway].filter((tab) => tab.paneId === pane.id),
         ]
-        // A pane put down with Ctrl+D writes the tab it showed last: showing nothing
-        // is a moment's view, like a menu being open, and a launch brings the work back.
         const ids = tabs.map((tab) => tab.id)
         const shown = pane.activeTabId ?? this.panes.lastOf(ids)
         return {
           tabs: tabs.map((tab) => this.draftOf(tab)),
-          // The pane's order of use, so a launch comes back to it (#1079).
           recent: this.panes.used.flatMap((id) => {
             const at = ids.indexOf(id)
             return at < 0 ? [] : [at]
@@ -1508,19 +1053,6 @@ class Workspace {
       kind: tab.kind,
       path: tab.path,
       name: tab.name,
-      // Only unwritten words are worth writing down: a note that is on disk is
-      // re-read from there on the way back in (see `tabsFrom`), so its copy here
-      // would never be looked at, and copying a large one every time the typing
-      // pauses is not free.
-      //
-      // A document with no file is the exception whether or not it has been typed in:
-      // this is the only place its words exist, so an untouched new plane that is
-      // clean still has a blank plane's worth of JSON to come back as. A browser
-      // restores the tabs it had, and so does this.
-      //
-      // One with a file and more words than `WORDS_KEPT` comes back from its file,
-      // which is a pause behind it: storage refuses a copy that size, after it has
-      // cost its whole length to write out, on every pause.
       doc: copied ? tab.doc : '',
       dirty: copied && tab.dirty,
       ...(copied && tab.dirty && tab.path !== null && tab.note.onDisk !== null
@@ -1530,8 +1062,6 @@ class Workspace {
       scroll: tab.scroll ?? 0,
       anchor: tab.anchor,
       ...(tab.folds?.length ? { folds: tab.folds } : {}),
-      // Which document this is a view of, so two panes on one note come back as
-      // one note rather than as two copies of it.
       share: tab.note.key,
       ...(tab.reading ? { reading: true } : {}),
       ...(tab.kind === 'note' ? { source: tab.source } : {}),
@@ -1552,7 +1082,6 @@ class Workspace {
       activeSpace: this.activeSpaceId,
       layout: this.arriving ? arrivingWith(this.arriving, this.layout()) : this.layout(),
       panel: this.panel,
-      // Even empty: every panel moved off the right is an arrangement too.
       right: [...this.right],
       known: [...panels.PANELS],
       ...(this.rightPanel ? { rightPanel: this.rightPanel } : {}),
@@ -1566,9 +1095,6 @@ class Workspace {
 
     if (this.slot !== 0 || this.arriving) return written
 
-    // And what the next launch will ask for first, for the crate to read while the
-    // webview starts: this space's tree and the notes a restore reads off the disk,
-    // the one in front first. See workspace/ahead.ts.
     const reads = this.tabs.filter((tab) => tab.path && !tab.dirty && holdsWords(tab.kind))
     const front = this.active
     ahead.plan({
@@ -1582,18 +1108,13 @@ class Workspace {
     return written
   }
 
-  /** The spaces' sets out of sight, as read; sets.svelte.ts writes them once fetched. */
   setsRead: unknown
   setsWritten = (): unknown => this.setsRead
 
-  /** Writes the session soon rather than now, so a burst of typing costs one
-   *  write instead of one per keystroke. */
   scheduleSession() {
     this.session()
   }
 
-  /** Where the caret and the scroll are. Recorded as they move, because after
-   *  a crash there is no chance to write them down on the way out. */
   noteView(
     id: string,
     cursor: number,
@@ -1605,8 +1126,6 @@ class Workspace {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab) return
     if (tab.line !== line) tab.line = line
-    // Folding moves neither the caret nor the scroll, so it has to be part of
-    // what makes this worth writing down or it would be swallowed here.
     if (
       tab.cursor === cursor &&
       tab.scroll === scroll &&
@@ -1624,9 +1143,6 @@ class Workspace {
     this.scheduleSession()
   }
 
-  /** Which page of a PDF is being read, and how far it is zoomed. What a note
-   *  keeps in `noteView`, a PDF keeps here: it is where the tab reopens, and which
-   *  page a link copied out of the document names. */
   notePdf(id: string, page: number, zoom: number | undefined) {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab || (tab.page === page && tab.zoom === zoom)) return
@@ -1636,10 +1152,6 @@ class Workspace {
     this.scheduleSession()
   }
 
-  /** Where a pane that is only reading has got to. The caret is not the reading
-   *  view's to move, so the tab keeps the one it had; the place is what changes,
-   *  and it is the same place the editor puts back when the note is written in
-   *  again - which is what makes the switch read as one page changing its skin. */
   notePlace(id: string, scroll: number, anchor: number) {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab) return
@@ -1647,21 +1159,14 @@ class Workspace {
     this.noteView(id, tab.cursor ?? 0, scroll, anchor, tab.line)
   }
 
-  /** Turns a note tab between writing and reading. The focused tab unless one is
-   *  named, since that is what every key and every menu row means by "this note".
-   *  The graph is not a note and has no other face. */
   toggleReading(tabId: string = this.activeTabId ?? '') {
     const tab = this.tabs.find((one) => one.id === tabId)
     if (tab?.kind !== 'note') return
 
     tab.reading = !tab.reading
-    // Reading a note is not writing in it, so a preview tab that is being read
-    // is still only being previewed; nothing else about the tab changes.
     this.scheduleSession()
   }
 
-  /** A new note, a tab until it is given a place (workspace/drafts.ts); one arriving
-   *  with words and a name, an import, is a file from the start, in the space `home`. */
   openBlank(name = UNTITLED, doc = '', home: string | null = this.activeSpaceId) {
     const note = this.document({
       kind: 'note',
@@ -1676,7 +1181,6 @@ class Workspace {
     if (doc) void this.placeAtHome(note)
   }
 
-  /** A draft written where it goes with nobody asked; see `draftHome`. */
   private async placeAtHome(note: NoteDoc): Promise<void> {
     const home = await this.draftHome(note.home).catch(() => null)
     if (home === null) return
@@ -1685,42 +1189,17 @@ class Workspace {
     })
   }
 
-  /** A new plane, and a new stack of paper: a tab, and nothing else.
-   *
-   *  No file in the space and no row in the list until it is saved, which is what a
-   *  new note is and what Emil asked for the other three to be: *"if you create a new
-   *  webnote by clicking the plus for a new tab, then it should open it as a tab and
-   *  not create it in the sidebar. Same for canvas and page notes."* See
-   *  workspace/drafts.ts.
-   *
-   *  Clean rather than dirty, like the blank page a window starts with: an untouched
-   *  plane has nothing in it to write. The words are what a blank one says, so the
-   *  surface has something to read and the session has something to keep; see
-   *  `draftOf` and NewHere.svelte.
-   *
-   *  The two makers beside these - `createCanvas` and `createPages` - are the file
-   *  list's own gesture and still write a named file where they are asked to. */
   async newCanvas() {
-    // What an empty plane says, fetched with the first one asked for; see createCanvas.
     const { blankCanvas } = await import('./canvas/format')
     this.openUnsaved('canvas', blankCanvas())
   }
 
   async newPages() {
     const { blankPages } = await import('@orden/markdown/pages')
-    // The paper the reader chose, which the workspace has no opinion about.
     const { modes } = await import('./modes.svelte')
     this.openUnsaved('pages', blankPages(modes.pagesPaper))
   }
 
-  /** One document with no file, in a tab of its own. The blank note goes if there is
-   *  one, which is what opening anything real does; see `dropScaffolding`. A terminal
-   *  is one too, named for its shell and put `beside` the one it was opened from; see
-   *  terminal/open.ts.
-   *
-   *  `activate` false puts it in the strip behind the tab in front, the way a browser
-   *  opens a tab with Ctrl held: what an agent makes for the reader without moving their
-   *  screen (docs/agent-native.md 5.4). Nothing in front changes, so nothing goes. */
   openUnsaved(
     kind: 'note' | 'canvas' | 'pages' | 'terminal' | 'application' | 'explorer',
     text: string,
@@ -1745,18 +1224,6 @@ class Workspace {
     return tab
   }
 
-  /** A file somebody shared on its own, in a tab of its own.
-   *
-   *  No path, because there is no file here and there is not going to be one: it
-   *  is one note out of somebody else's space, and writing a copy of it into a
-   *  folder of ours is what sharing exists in order not to do. The words come
-   *  down once to fill the tab and travel through the file's room from then on,
-   *  which is also what writes them into the owner's space; see rooms.svelte.ts
-   *  and docs/sharing.md.
-   *
-   *  One tab per shared file, the way a canvas and the graph are one: asking for
-   *  one that is already open brings it forward. Its kind is read off its name on the
-   *  account, as a file of our own is off its path. */
   openShared(item: { id: string; name: string; path: string }, text: string) {
     const existing = this.documents.find((one) => one.shared === item.id)
     const open = existing ? this.tabs.find((tab) => tab.note.key === existing.key) : undefined
@@ -1782,40 +1249,22 @@ class Workspace {
     this.showNote()
   }
 
-  /** Whether a file somebody shared is open right now, so the switcher's row can
-   *  say which one is being read. */
   showingShared(id: string): boolean {
     return this.documents.some((one) => one.shared === id)
   }
 
-  /** A shared file that is no longer shared: every tab of it goes.
-   *
-   *  The calm answer a revoked space already gives, said about one file. Nothing
-   *  is asked and nothing is kept: the words were never this machine's, and a tab
-   *  left open on a room that will not have it back is a tab that quietly stops
-   *  being a document. */
   closeShared(id: string) {
     for (const tab of this.tabs.filter((one) => one.note.shared === id)) this.close(tab.id)
   }
 
-  /** A document, made once per file however many things ask for it at once and
-   *  wired so that every change to it - a keystroke in any pane, an undo, a picture
-   *  dropped in - reaches the app exactly once. See workspace/open.ts, which is
-   *  where the wiring above this lives and which this hands straight through to. */
   private document(start: DocumentStart): NoteDoc {
     return this.opened.make(start)
   }
 
-  /** Whether a file is outside every space, which is a file nib opens nothing of -
-   *  but for the app's own two settings files; see `opens`. */
   outside(path: string): boolean {
     return !this.spaces.some((one) => within(one.root, path) !== null)
   }
 
-  /** Whether nib opens a file: a note in a space, or one of the app's own two
-   *  settings files, Edit custom CSS and Edit snippets, which only the crate can
-   *  name. Asked of the crate only for a path outside every space, so a note in one
-   *  costs nothing; a refusal is its answer. See `openable` in paths.rs. */
   private async opens(path: string): Promise<boolean> {
     if (!this.outside(path)) return true
     return invoke('file_stamp', { path }).then(
@@ -1824,9 +1273,6 @@ class Workspace {
     )
   }
 
-  /** The folder a new tab is saved into unless somebody picks another: the root of the
-   *  space it was opened in while that is still here, else the space on screen. A
-   *  machine with none gets its first, as Obsidian's first launch ends in a vault. */
   async draftHome(home: string | null = null): Promise<string | null> {
     if (!this.activeSpace) await this.loadSpaces()
 
@@ -1837,8 +1283,6 @@ class Workspace {
     return made?.root ?? null
   }
 
-  /** The space a document belongs to, by id: the one holding its file, else the one
-   *  it was opened in; see `home` in workspace/documents.svelte.ts. */
   spaceOf(note: NoteDoc): string | null {
     const path = note.path
     if (path === null) return note.home ?? this.activeSpaceId
@@ -1847,25 +1291,14 @@ class Workspace {
     return holding?.id ?? this.activeSpaceId
   }
 
-  /** A file a new tab has just become, in the list and among the notes opened lately
-   *  before the disk has it: the same optimistic row every other new file gets. */
   born(path: string) {
     this.showEntry(this.freshEntry(path, false))
     this.remember(path)
   }
 
-  /** A file just written over, in a list sorted by when things changed: the row
-   *  moves as it would have at the next listing. Nothing in any other order, where
-   *  the row is exactly where it was, and never a listing of the whole space per
-   *  write. */
   touched(path: string) {
     const entry = this.entryAt(path)
 
-    // Written for the first time without being born: the note a folder is drawn as,
-    // opened as the empty page it would be and then written in. The list has never
-    // read it, and nothing else will list the space again, so it is the row a draft
-    // gets - where the list holds the folder it is in. A file of another space, of no
-    // space, or of a folder the list leaves out is not a row of this list.
     if (!entry) {
       const folder = folderOf(path)
       if (samePath(folder, this.tree?.path) || this.entryAt(folder)?.is_dir) this.born(path)
@@ -1875,8 +1308,6 @@ class Workspace {
     if (this.sortMode.startsWith('modified')) this.showEntry({ ...entry, modified: Date.now() })
   }
 
-  /** Puts a tab in its pane and shows it. On a phone and a tablet the tab that
-   *  was there goes as this one arrives; see `onlyOne`. */
   private add(tab: Tab, activate = true, opener: string | null = null): Tab {
     if (this.essentialComing !== null && samePath(tab.path, this.essentialComing)) {
       tab.essential = this.essentialComing
@@ -1892,39 +1323,21 @@ class Workspace {
       this.panes.activate(tab.paneId, tab.id)
       this.onlyOne(tab)
     }
-    // Gone without a trace: nothing was ever on it, and the closed tabs are for things
-    // somebody had.
     if (chosenOn) this.close(chosenOn.id, false)
 
     return tab
   }
 
-  /** Ctrl+T and the plus: a new tab, the way a browser makes one. A tab with an address
-   *  field that has the keyboard, and under it the kinds a tab can be, which the pane
-   *  draws where a page would be; one chosen there takes this tab's place. Emil, issue
-   *  #213: *"it should show the same view as when pressed Ctrl + D with the only
-   *  difference being that the navbar at the top where you can enter a url is still
-   *  there"*. Where there is no web tab to make - a phone, the glasses' plugin - it is
-   *  Ctrl+D's view itself, as where Settings turned web notes off. See WebTab.svelte and
-   *  NewHere.svelte. */
   newTab(paneId: string = this.panes.focusedId) {
     this.focusPane(paneId)
     if (hiddenKinds.offers('web')) this.openWebsite()
     else this.deselect(paneId)
   }
 
-  /** A kind was chosen on a new tab's page: the tab it makes next takes that tab's
-   *  place in the strip, as a site chosen on Chrome's new tab page does, rather than
-   *  leaving an empty tab behind it. Kept until the next tab arrives, because some kinds
-   *  arrive after a question - Remote asks which host. */
   chosenOn(tabId: string) {
     this.choosing = tabId
   }
 
-  /** The new tab `tab` takes the place of, and the end of waiting for one: while that
-   *  tab is still in front of the same pane and still has nowhere to go. Anything else
-   *  that happened in the meantime - an address typed into it, another tab brought
-   *  forward - means the choice was given up, and the tab is left as it is. */
   private chosenFor(tab: Tab): Tab | null {
     const id = this.choosing
     if (id === null) return null
@@ -1935,30 +1348,14 @@ class Workspace {
     return chosenOn?.paneId === tab.paneId && inFront && this.isNewTab(chosenOn) ? chosenOn : null
   }
 
-  /** Whether a tab is a new tab: a web tab with no file and nowhere to go yet, which
-   *  is where the kinds are offered. A private one is a page somebody asked for on
-   *  purpose, and has only its address field. See WebTab.svelte. */
   isNewTab(tab: Tab): boolean {
     return tab.nowhere && !tab.inPrivate && !pages.addressOf(tab.id)
   }
 
-  /** Whether a tab is a new tab nothing was done with (#1040): a new tab, with no words
-   *  half typed into its address field and no agent's name on it. The one judgement of
-   *  it; see `closeLeftBlank`. */
   isBlankTab(tab: Tab): boolean {
     return this.isNewTab(tab) && !pages.typedInto(tab.id) && !(tab.id in agentMarks.opened)
   }
 
-  /** Every new tab nothing was done with that is no longer the one being worked in goes
-   *  (#1040): left for another tab, another pane or another space, or by something opened
-   *  elsewhere. Without a trace, as a new tab a kind was chosen on goes (`chosenFor`):
-   *  the closed tabs are for things somebody had. Closing one that is out of sight or
-   *  behind moves nothing on screen, and one still in front of a pane the reader has left
-   *  gives way to the tab that pane used last (#1079), with the keyboard where it is.
-   *
-   *  Not the only tab of a pane on screen, which would take the pane with it: a split the
-   *  reader made stays. Heard after every change of what is being worked in, a turn late,
-   *  so the address field has said what it held; see workspace/blank-tabs.svelte.ts. */
   closeLeftBlank() {
     const here = this.activeTabId
     for (const tab of this.tabs) {
@@ -1968,36 +1365,16 @@ class Workspace {
     }
   }
 
-  /** The tab a tab asked for beside another is opened from: the one in front of its
-   *  pane. Null for a tab that goes at the end. */
   private openedFrom(how: OpenHow, paneId: string): string | null {
     return how.beside ? (this.panes.at(paneId)?.activeTabId ?? null) : null
   }
 
-  /** The strip with a tab put right after the tab it was opened from, the way a
-   *  browser puts a tab a link opened: next to where the reader is rather than at the
-   *  far end. See `besideAt`. */
   private besideOf(tab: Tab, opener: string): Tab[] {
     const previous = this.besideLast?.opener === opener ? this.besideLast.tab : null
     this.besideLast = { opener, tab: tab.id }
     return this.placed(tab, tab.paneId, besideAt(this.tabsIn(tab.paneId), opener, previous))
   }
 
-  /** One document open at a time, which is what a phone and a tablet get: a
-   *  strip of tabs on a screen that narrow is more than it can say, and the
-   *  thing being read is the only thing there is room for. So opening a note, a
-   *  canvas or a paper puts away the one that was there rather than standing it
-   *  beside it.
-   *
-   *  Nothing is lost. What was open goes on the closed stack with its words, so
-   *  back brings it straight back, and a note in a space was written down before
-   *  it was closed - the account has it whatever this window shows.
-   *
-   *  A draft with words is written down first, where Save would offer: there is no
-   *  strip to keep it in and no question that could be asked of a tap on something
-   *  else, so it is a note, as what is typed into Apple Notes or Google Keep is.
-   *
-   *  A desktop keeps every tab and every pane it has always had. */
   private onlyOne(kept: Tab) {
     if (!viewport.touch) return
 
@@ -2030,10 +1407,6 @@ class Workspace {
     this.persist()
   }
 
-  /** One pane, one document: what a phone and a tablet come down to, wherever an
-   *  arrangement arrives from - a session, a saved layout, or a window that has
-   *  just become one of those devices. The pane that had the focus is the one
-   *  kept, with the document that was showing in it. */
   oneDocument() {
     if (!viewport.touch) return
 
@@ -2042,10 +1415,6 @@ class Workspace {
     if (kept) this.onlyOne(kept)
   }
 
-  /** A view of rows - Today, a project, a `.base` file - in a tab of its own, the way
-   *  the graph is one: `words` say which view (lib/views/spec.ts) and `path` is the
-   *  base file it shows, or null for a view nib ships. Whether one is open already is the views'
-   *  question, asked before this; see lib/views/open.ts. */
   openView(
     words: string,
     name: string,
@@ -2062,9 +1431,6 @@ class Workspace {
     return tab
   }
 
-  /** The graph of the whole space, as a tab of its own. One at a time: a second
-   *  picture of the same space says the same thing, so asking again brings the
-   *  one already there forward. */
   openGraph() {
     const paneId = this.panes.focusedId
     const existing = this.tabs.find((tab) => tab.kind === 'graph' && tab.paneId === paneId)
@@ -2084,7 +1450,6 @@ class Workspace {
     this.persist()
   }
 
-  /** The AI panel in a tab, one a window; see ai/sidebar/ChatPanel.svelte. */
   openChat() {
     const was = this.tabs.find((tab) => tab.kind === 'chat')
     if (was) this.panes.activate(was.paneId, was.id)
@@ -2095,30 +1460,20 @@ class Workspace {
     this.persist()
   }
 
-  /** A PDF opens as its page note, made the first time; see pages/from-pdf.ts. A
-   *  page note, or the paper one holds, opens that note. `page` counts from one, and
-   *  null means wherever the page note was left. */
   async openPdf(asked: string, page: number | null = null, how: OpenHow = {}) {
-    // The glasses' plugin has no page surface. Links and search hits use this too,
-    // rather than going through `openerFor`.
     if (__EVEN_PLUGIN__) return
 
     const path = this.spelled(asked)
-    // A page note holding the paper already is the one to open, wherever it is: a
-    // search hit or a link names the paper, and the ink is on the note.
     const held = isPagesTarget(path) ? path : await this.heldBy(path)
     if (held) {
       await this.openPages(held, page, how)
       return
     }
-    // A space shared to be read may not have the page note written into it, nor the
-    // paper renamed under one: the paper opens as itself instead, in memory.
     if (!(await this.mayTurn(path))) {
       await this.openPaper(path, page, how)
       return
     }
     const pageNote = await this.pageNoteForPdf(path)
-    // A paper pdf.js will not read, broken or behind a password: no tab, and the reader told.
     if (!pageNote) {
       await unread(path)
       return
@@ -2126,7 +1481,6 @@ class Workspace {
     await this.openPages(pageNote, page, how)
   }
 
-  /** The page note on disk holding a PDF, or null; see `noteHolding` in from-pdf.ts. */
   private async heldBy(path: string): Promise<string | null> {
     const [{ noteHolding }, { onDisk }] = await Promise.all([
       import('./pages/from-pdf'),
@@ -2139,17 +1493,11 @@ class Workspace {
     })
   }
 
-  /** Whether a PDF may be turned into its page note where it lies, which writes a note
-   *  and renames the paper. Fetched rather than imported: sharing.svelte.ts reaches
-   *  this module through the sync. */
   private async mayTurn(path: string): Promise<boolean> {
     const { canWriteAt } = await import('./sharing.svelte')
     return canWriteAt(path)
   }
 
-  /** A PDF read as itself, in a space it may not be turned in: a tab of kind `pdf`
-   *  holding the pages its note would have, which the pages surface draws. That kind
-   *  holds no words of a file's, so it is never saved and joins no room. */
   private async openPaper(path: string, page: number | null, how: OpenHow) {
     const tab = this.showTab(
       await this.opened.opening(path, async () => {
@@ -2169,7 +1517,6 @@ class Workspace {
     if (tab && page !== null && tab.page !== page) this.gotoPage = { path, page }
   }
 
-  /** The pages a PDF read as itself shows, or null where pdf.js could not read it. */
   private async paperText(path: string): Promise<string | null> {
     const [{ asItself }, { pageSizes }] = await Promise.all([
       import('./pages/from-pdf'),
@@ -2181,8 +1528,6 @@ class Workspace {
     })
   }
 
-  /** The page note a PDF is, or null where it could not be read. One at a time per
-   *  paper. */
   pageNoteForPdf(asked: string): Promise<string | null> {
     const path = this.spelled(asked)
     const existing = this.pdfPageNotes.get(path)
@@ -2199,11 +1544,7 @@ class Workspace {
     return making
   }
 
-  /** pages/from-pdf.ts, and this space for it to turn a PDF in: moved through
-   *  `renameFile`, so what is kept by path follows the paper. */
   private async turning(path: string) {
-    // Every road that turns a PDF comes through here, so a space shared to be read is
-    // refused once for all of them rather than at each door.
     if (!(await this.mayTurn(path))) throw new Error(`${path} is in a space shared to be read`)
     const [from, { turningIn }] = await Promise.all([
       import('./pages/from-pdf'),
@@ -2215,29 +1556,13 @@ class Workspace {
     return { from, how }
   }
 
-  /** A canvas in the space, in a tab of its own. One tab per canvas, the way the
-   *  graph is one: asking for a plane that is already open brings it forward.
-   *
-   *  Its words are the JSON in the file, so the tab holds a document exactly as a
-   *  note's tab does: whether it keeps itself, the mark, Ctrl+S and the closing
-   *  question all work here without knowing what a canvas is. What differs is the
-   *  surface drawn on top of those words. */
   async openCanvas(asked: string, how: OpenHow = {}) {
-    // Not in the glasses' plugin, which has no plane to draw: a link asks here
-    // directly rather than through `openerFor`. See `canvasSurface`.
     if (__EVEN_PLUGIN__) return
 
     const path = this.spelled(asked)
     this.showTab(await this.opened.opening(path, () => this.openPlane(path, how)), how)
   }
 
-  /** Brings the pane showing a document forward, and answers the tab it is in.
-   *  What every opener ends with, whether this call did the opening or found the
-   *  file already open. Null for a file that could not be opened at all.
-   *
-   *  Opened for real rather than looked at, the tab stays, whichever tab it is: the
-   *  same rule `open` keeps for a note, so a double click on the row of a website
-   *  that is only being previewed keeps it the way it keeps a note. */
   private showTab(note: NoteDoc | null, how: OpenHow = {}): Tab | null {
     const tab = note && this.tabOf(note)
     if (!tab) return null
@@ -2250,19 +1575,11 @@ class Workspace {
     return tab
   }
 
-  /** The tab showing a document: one on screen before one in a set out of sight. */
   private tabOf(note: NoteDoc): Tab | undefined {
     const all = this.tabs.filter((one) => one.note === note)
     return all.find((one) => this.panes.at(one.paneId)) ?? all[0]
   }
 
-  /** A tab an open has just made, put in its pane: in the preview's place when the
-   *  open was only a look, beside the tab in front when it was asked for with a
-   *  modifier, and at the end of the strip otherwise. Every opener of a file ends its
-   *  making here, so no kind of file can forget the preview.
-   *
-   *  A tab left behind the reader closes no blank note: the blank note may be the page
-   *  they are looking at. */
   private arrive(tab: Tab, how: OpenHow) {
     const activate = how.activate !== false
     this.add(tab, activate, this.openedFrom(how, tab.paneId))
@@ -2270,10 +1587,6 @@ class Workspace {
     if (activate) this.dropScaffolding(tab)
   }
 
-  /** The preview tab the next look may take the place of, or null where there is
-   *  none to take: one only being looked at, in the pane being worked in, holding
-   *  nothing unwritten, and the one view of its document - taking over a tab another
-   *  pane is also showing would change what that pane shows. */
   private replaceablePreview(): Tab | null {
     return (
       this.tabs.find(
@@ -2286,23 +1599,6 @@ class Workspace {
     )
   }
 
-  /** Makes a freshly made tab the preview, in the place of the one that was.
-   *
-   *  One mechanism for every kind of file, because the rule is about looking rather
-   *  than about what is looked at: a website previewed goes when a note is clicked,
-   *  and a note previewed goes when a website is. A note replacing a note never gets
-   *  here - it takes the preview tab's document on instead, which keeps the editor
-   *  it is drawn in; see `openNote`.
-   *
-   *  The tab that goes is closed the plain way, so a web tab's page goes with it and
-   *  no browser is left running behind the strip with its sound on. It is not put on
-   *  the closed stack: a look the next look replaced is not a tab anybody closed, and
-   *  a note taken over in place never was either.
-   *
-   *  The page is not handed from the old web tab to the new one. It could be - one
-   *  webview pointed at the next address - but its back button would then walk into
-   *  the previous website, which is a different file, and the trail and the place a
-   *  web tab keeps are kept by file. A new file is a new page, as in a browser. */
   private previewIn(tab: Tab) {
     const was = this.replaceablePreview()
     if (was && was.id !== tab.id) {
@@ -2314,25 +1610,11 @@ class Workspace {
     this.previewTabId = tab.id
   }
 
-  /** The document one open of a canvas comes to. Only `openCanvas` calls it, and
-   *  only through the one open. */
   private async openPlane(path: string, how: OpenHow): Promise<NoteDoc | null> {
     const text = await invoke<string>('read_note', { path }).catch(() => null)
-    // Gone, or unreadable. A canvas that cannot be read is not a blank plane to
-    // draw on: saving one over it would take the file with it.
     if (text === null) return unread(path).then(() => null)
 
-    // The plane read here and the thread handed over before the tab is built, so
-    // the parse and the surface's mount are two tasks rather than one. A canvas of
-    // ten thousand strokes is 2.8 MB of JSON, thirty milliseconds of parse, and it
-    // used to land in the same task as the mount. Fetched rather than imported: the
-    // canvas format is not in the graph a window that opens on a note evaluates,
-    // and it is not going in it - see test/weight.test.ts. `parseAhead` says why
-    // this is not a worker.
     const { parseAhead } = await import('./canvas/format')
-    // Text that is not a canvas will not read either: a stray comma or a truncated
-    // save, and a plane drawn over it would take the file with it. Blank text is a
-    // new plane.
     if (!parseAhead(text)) return unread(path).then(() => null)
     await nextTask()
 
@@ -2346,8 +1628,6 @@ class Workspace {
     const tab = new Tab(file, this.panes.focusedId)
     this.arrive(tab, how)
 
-    // The notes a canvas holds are links out of it, which is what the Links
-    // panel shows while the canvas is the tab being looked at.
     links.canvasRead(path, text)
 
     this.remember(path)
@@ -2355,24 +1635,10 @@ class Workspace {
     return file
   }
 
-  /** A website in the space, in a tab of its own: a shortcut file, drawn as the page
-   *  it points at rather than as the three lines in the file. One tab per file, the
-   *  way a canvas is one.
-   *
-   *  Only the desktop app draws the page; elsewhere the browser opens it, which is
-   *  the answer rather than a gap. A phone app's webview has no extensions, no ad
-   *  blocking and none of the reader's logins, and Tauri has no child webviews there;
-   *  a nib in a browser tab opens a tab beside itself. The file stays a bookmark in
-   *  the space. See docs/web-tabs.md. */
   async openWeb(asked: string, how: OpenHow = {}) {
-    // Not in front of a pair of glasses, for the reason a canvas is not: there is no
-    // page on seven lines of a heads-up display, and the viewer is not in that build
-    // at all. See vite.even.config.ts.
     if (isPlugin()) return
 
     const path = this.spelled(asked)
-    // Already open, before anything is written: the conversion below makes a file. Off
-    // the desktop app such a tab is an older sitting's frame inside Orden (#206): it goes.
     const held = this.opened.at(path)
     if (held) {
       if (await this.handedOut(path)) {
@@ -2382,7 +1648,6 @@ class Workspace {
       this.showTab(held, how)
       return
     }
-    // Or open in another window, which shows it instead; see web-tab/one-window.
     if (isDesktop) {
       const windows = await import('./web-tab/one-window.svelte')
       if (windows.heldElsewhere(path)) {
@@ -2391,14 +1656,6 @@ class Workspace {
       }
     }
 
-    // A website written when a website was a note becomes a shortcut the first time
-    // it is opened, and it is the shortcut that opens. A note that turns out not to
-    // be one - somebody took the line out - opens as the note it is. The conversion
-    // is fetched by the first such note rather than carried: only a space an older
-    // nib wrote has any, and a window opens on a note. See test/weight.test.ts.
-    // Not in a space shared to be read, where writing the shortcut and putting the note
-    // in the trash would both change what the owner left (B288): the note stays as it
-    // is, and the page it points at opens in a tab with no file, which writes nothing.
     if (!isWebTarget(path) && !(await this.writableAt(path))) {
       await this.browseOldWebsite(path, how)
       return
@@ -2414,12 +1671,8 @@ class Workspace {
     this.showTab(await this.opened.opening(opening, () => this.openSite(opening, how)), how)
   }
 
-  /** A website written in the old format, in a space shared to be read: the address
-   *  read out of the note and opened as a page with no file, or the note itself where
-   *  it says none. Off the desktop app the browser has the page, as for a shortcut. */
   private async browseOldWebsite(path: string, how: OpenHow) {
     const text = await invoke<string>('read_note', { path }).catch(() => null)
-    // Fetched, with the conversion it stands in for; see test/weight.test.ts.
     const { webUrlOf } = await import('./web-tab/note')
     const url = webUrlOf(text)
     if (url === null) {
@@ -2430,7 +1683,6 @@ class Workspace {
     if (!isDesktop || this.openPage(url) === null) await openExternal(url)
   }
 
-  /** A web note's address given to the browser off the desktop app; whether it was. */
   private async handedOut(path: string): Promise<boolean> {
     if (isDesktop) return false
     const text = await invoke<string>('read_note', { path }).catch(() => null)
@@ -2441,20 +1693,13 @@ class Workspace {
     return true
   }
 
-  /** The document one open of a website comes to. Only `openWeb` calls it, and only
-   *  through the one open. */
   private async openSite(opening: string, how: OpenHow): Promise<NoteDoc | null> {
     const text = await invoke<string>('read_note', { path: opening }).catch(() => null)
     const said = readWebFile(opening, text)
-    // Gone, or a `.webloc` that would not read or says no address - a binary plist,
-    // say. This app never writes one, so it is not an empty shortcut waiting for its
-    // address: it says so the way a canvas that will not read does, and opens nothing.
     if (said === null && /\.webloc$/i.test(opening.trim())) {
       return unread(opening).then(() => null)
     }
 
-    // A shortcut with no address yet opens in a tab, for its bar; a phone and a tablet
-    // have none.
     if (!isDesktop && (said || viewport.touch)) {
       if (said) await openExternal(said.url)
       this.remember(opening)
@@ -2471,9 +1716,6 @@ class Workspace {
     const tab = new Tab(file, this.panes.focusedId)
     if (said) tab.address = said.url
 
-    // What the file says, so the bar reads as the page before the page has answered:
-    // the address it points at, and the title it was written with - which is the
-    // file's own name where the file does not say.
     const page = pages.of(tab.id)
     page.url = said?.url ?? null
     page.title = said?.title ?? shownName(nameOf(opening))
@@ -2485,29 +1727,14 @@ class Workspace {
     return file
   }
 
-  /** Every website still written as a note, converted where it stands; see
-   *  web-tab/convert. Answers how many there were, for the palette. */
   async convertWebsites(): Promise<number> {
-    // Not a space shared to be read: each note would gain a shortcut beside it and go
-    // to the trash (B288). The palette greys the row there; this is for any other caller.
     const root = this.activeSpace?.root
     if (!root || !(await this.writableAt(root))) return 0
     const { convertWebsites } = await import('./web-tab/convert')
     return convertWebsites(this)
   }
 
-  /** A web tab with nowhere to go yet: what "Open a website" and Ctrl+T make. The
-   *  address field takes the keyboard, and nothing is written: browsing leaves no
-   *  file behind until somebody saves the page; see `save`.
-   *
-   *  No file first, because this is the gesture that starts with an address rather
-   *  than with a name: a folder of `Untitled` shortcuts is what asking for a name
-   *  first would leave behind. The file list's own gesture asks for the name, because
-   *  there the row is the thing being made; see `createWebsite`. */
   openWebsite(inPrivate = false) {
-    // Not on a phone or a tablet, which hand every page to the system's browser (#206);
-    // nor in the glasses' plugin, whose package has no web tab to draw; see
-    // `webSurface` in surfaces.svelte.ts.
     if (__EVEN_PLUGIN__ || viewport.touch) return
 
     const file = this.document({
@@ -2519,7 +1746,6 @@ class Workspace {
       home: this.activeSpaceId,
     })
     const tab = new Tab(file, this.panes.focusedId)
-    // A private tab; see web-tab/private.ts.
     tab.inPrivate = inPrivate
     pages.of(tab.id).inPrivate = inPrivate
     this.add(tab)
@@ -2528,34 +1754,13 @@ class Workspace {
     this.persist()
   }
 
-  /** A page somebody pressed a link to, as a tab in this window.
-   *
-   *  The address is already known, which is what makes this the other half of
-   *  `openWebsite`: there is nothing to type, so the tab arrives on the page. Whether
-   *  it arrives in front of the reader or only in the strip is the browser's own rule
-   *  about which modifier was held, decided in open-link.ts and not here.
-   *
-   *  Nothing is written down. A tab with no file is a browser tab until somebody keeps
-   *  it as a web note, which is exactly what a link followed and closed again deserves:
-   *  a folder full of `.url` files nobody asked for is what writing here would leave
-   *  behind. See `save`.
-   *
-   *  A press with a modifier puts the tab beside the one it was pressed in, as a
-   *  browser does; see new-tab.ts. `opener` is for a page asking for a window of its
-   *  own - `target="_blank"`, a Ctrl+click inside the page - so the tab lands beside
-   *  that page, in its pane, rather than wherever the interface last had focus. */
   openPage(url: string, ask: TabAsk = 'plain', opener?: string): string | null {
-    // A phone and a tablet draw no page inside nib: the system's browser has it (#206).
     if (__EVEN_PLUGIN__ || viewport.touch) return null
 
-    // A phone and a tablet hold one document, so there is no behind for a tab to be
-    // in: one put there would be one the reader has no strip to find it in. See
-    // `onlyOne`.
     const back = ask === 'behind' && !viewport.touch
     const from = this.tabs.find((one) => one.id === opener)
     const pane = from?.paneId ?? this.panes.focusedId
 
-    // Out of a tab, in that tab's space and so its web data; see `spaceOf`.
     const source = from ?? this.active
     const file = this.document({
       kind: 'web',
@@ -2568,22 +1773,16 @@ class Workspace {
     const tab = new Tab(file, pane)
     tab.address = url
 
-    // The site, so the strip and the bar read as the page before the page has
-    // answered - the same three lines `openSite` writes for a website with a file.
     const page = pages.of(tab.id)
     page.url = url
     page.title = plainOrigin(url)
-    // A link out of a private tab opens privately, as one out of a private window does.
     tab.inPrivate = from?.inPrivate === true
     page.inPrivate = tab.inPrivate
-    // And in its web data, as a link out of a Firefox container stays in the container.
     tab.apart = from ? apartOf(from) : null
 
     this.add(tab, !back, from?.id ?? this.openedFrom(howFor(ask), pane))
     if (!back) {
       this.showNote()
-      // Only for a tab in front: a page arriving behind the reader is not a reason to
-      // close the blank note they are looking at.
       this.dropScaffolding(tab)
     }
 
@@ -2591,8 +1790,6 @@ class Workspace {
     return tab.id
   }
 
-  /** A website in a folder, named before it has an address, and opened; see
-   *  web-tab/new-site.ts. */
   async createWebsite(folder?: string, named?: string) {
     if (__EVEN_PLUGIN__ || viewport.touch) return
 
@@ -2607,41 +1804,26 @@ class Workspace {
     await this.openWeb(path)
   }
 
-  /** The address a web tab's file says, or null for a tab with no file yet and for
-   *  one whose file has no address in it. */
   webAddressOf(tab: Tab): string | null {
     if (tab.kind !== 'web' || tab.path === null) return null
     return readWebFile(tab.path, tab.doc)?.url ?? null
   }
 
-  /** The reader typed an address into the bar; see web-tab/aimed.ts. */
   async webAimed(tab: Tab, url: string) {
     const { aimed } = await import('./web-tab/aimed')
     await aimed(this, tab, url)
   }
 
-  /** The page a web tab went to, written down for the session so a restart comes
-   *  back on it. Not into the file: following a link is browsing, and the file says
-   *  where the document points. */
   webWalked(tab: Tab, url: string) {
     if (tab.address === url) return
 
-    // A new tab going somewhere is called after the site until the page says what it
-    // is called, as a tab a link opened is; see `openPage` and `webNamed`.
     if (tab.nowhere && !pages.of(tab.id).title) tab.name = plainOrigin(url)
     tab.address = url
     this.scheduleSession()
   }
 
-  /** Which tabs are being saved, so a second Save of one does not write two files. */
   private readonly keeping = new Set<string>()
 
-  /** What the strip calls a website nobody has kept: whatever the page calls itself.
-   *
-   *  A tab with no file is a browser tab, so it wears the page's own title and the
-   *  page's own mark and there is nothing on disk saying either. A tab that has a file
-   *  is left alone: a page renaming its own file as somebody reads it would be a file
-   *  moving under every link to it. */
   webNamed(tab: Tab, title: string) {
     if (tab.kind !== 'web' || tab.path !== null) return
 
@@ -2649,12 +1831,7 @@ class Workspace {
     if (named && tab.name !== named) tab.name = named
   }
 
-  /** A tab with no file given one, in place: a draft written in `folder` as `file`, a
-   *  web tab kept there as a shortcut. `folder` defaults to `draftHome`, `file` to the
-   *  name it offers; a note's row is the folder it would become, as a drop on it nests.
-   *  Answers the path, or null where nothing was saved. See workspace/drafts.ts. */
   async save(tab: Tab, folder?: string, file?: string): Promise<string | null> {
-    // A private tab leaves no web note behind; see web-tab/private.ts.
     if (!isUnsaved(tab.note) || tab.inPrivate || this.keeping.has(tab.id)) return null
     this.keep(tab.id)
 
@@ -2679,7 +1856,6 @@ class Workspace {
       this.persist()
       return saved
     } catch (error) {
-      // The tab keeps its words and its dot, and Save can be asked again.
       log('error', `save: ${tab.path ?? 'a draft'} - ${String(error)}`)
       return null
     } finally {
@@ -2687,14 +1863,7 @@ class Workspace {
     }
   }
 
-  /** A page note in the space, in a tab of its own. The same three lines a canvas
-   *  gets, and for the same reason: its words are the JSON in the file, so the tab
-   *  holds a document exactly as a note's tab does and everything that crosses
-   *  between words and a file works here without knowing what a page is.
-   *
-   *  `page` counts from one, and null means wherever the tab was left. */
   async openPages(asked: string, page: number | null = null, how: OpenHow = {}) {
-    // Not in the plugin either, for the canvas's reason. See `pagesSurface`.
     if (__EVEN_PLUGIN__) return
 
     const path = this.spelled(asked)
@@ -2703,17 +1872,12 @@ class Workspace {
       await this.opened.opening(path, () => this.openDeck(path, page, how)),
       how,
     )
-    // A deck already open turns to the page the link named. One opening at it is
-    // already there, which is what the page it was given says.
     if (tab && page !== null && tab.page !== page) this.gotoPage = { path, page }
   }
 
-  /** An older build's page note beside its PDF takes the PDF in; asked only where the
-   *  list has that PDF and the note is not open. */
   private async holdPaperBeside(path: string) {
     const pdf = path.replace(/\.pages$/i, '.pdf')
     if (this.opened.at(path) || !this.files.some((one) => samePath(one.path, pdf))) return
-    // Taking the PDF in renames it, which a space shared to be read may not have.
     if (!(await this.mayTurn(path))) return
 
     await this.turning(path)
@@ -2723,16 +1887,9 @@ class Workspace {
       })
   }
 
-  /** The document one open of a page note comes to. Only `openPages` calls it, and
-   *  only through the one open. */
   private async openDeck(path: string, page: number | null, how: OpenHow): Promise<NoteDoc | null> {
     const text = await invoke<string>('read_note', { path }).catch(() => null)
-    // Gone, or unreadable. A page note that cannot be read is not blank paper to
-    // write on: saving one over it would take the file with it.
     if (text === null) return unread(path).then(() => null)
-    // Nor is one whose text is not a canvas, which it is with pages in it: a stray
-    // comma or a truncated save reads as no pages at all, and the first stroke would
-    // write that over its pages, its ink and its paper, as `openCanvas` says.
     const { parseAhead } = await import('./canvas/format')
     if (!parseAhead(text)) return unread(path).then(() => null)
 
@@ -2747,9 +1904,6 @@ class Workspace {
     if (page !== null) tab.page = page
     this.arrive(tab, how)
 
-    // A page note made from a PDF names that PDF on every page, which is a link out
-    // of it: the same scan a canvas's file nodes go through, because they are file
-    // nodes.
     links.canvasRead(path, text)
 
     this.remember(path)
@@ -2757,23 +1911,12 @@ class Workspace {
     return file
   }
 
-  /** Makes a page note in a folder and opens it. The row asks for the name first
-   *  where there is a list to ask in, exactly as a note's and a canvas's do. */
   async createPages(folder?: string, named?: string) {
     const dir = folder ?? this.activeSpace?.root
     if (!dir || !(await this.writableAt(dir))) return
     if (named === undefined && this.startNaming('pages', dir)) return
 
-    // What an empty stack of paper says, fetched with the first one asked for. The
-    // pages engine is a surface's worth of code, and a window that opens on a note has
-    // no stack of paper to read; see surfaces.svelte.ts, where the surface itself comes
-    // through.
     const { blankPages } = await import('@orden/markdown/pages')
-    // And the paper the reader chose, which the workspace has no opinion about: A4
-    // outside North America and Letter inside it are both right, so the store is asked
-    // rather than a size assumed. Fetched here rather than imported at the top because
-    // this file is about files and that one is about the reader; see the same move for
-    // the sync pass in workspace/note-text.ts.
     const { modes } = await import('./modes.svelte')
 
     const path = joinPath(dir, await this.freeNameOnDisk(dir, named ?? PLACEHOLDER.pages))
@@ -2800,34 +1943,12 @@ class Workspace {
     this.persist()
   }
 
-  /** Which page of a PDF a followed link asked for. Read and taken down by the
-   *  pane showing that PDF, the way `goto` is by the one showing a note. */
   gotoPage = $state<{ path: string; page: number } | null>(null)
 
-  /** Opens whatever a row of the file list names: a PDF or a canvas in its own
-   *  kind of tab, anything else as a note. Every way in from a listing goes
-   *  through here - the tree, the palette, a bookmark, the Links panel, the graph
-   *  - so none of them can open a paper or a plane as text.
-   *
-   *  `open` itself stays about notes: a note is what the caret, the preview tab
-   *  and every word typed belong to. */
-  /** Steps off the welcome note once the account has brought real notes down.
-   *
-   *  A browser build opens the welcome note because on a first visit there is
-   *  nothing else to read. Signing in changes that, and nothing was watching:
-   *  the workspace restores seconds before the account does, so somebody who
-   *  signs in is left looking at "Welcome to Orden" with their own notes in the
-   *  sidebar beside it.
-   *
-   *  Only when the welcome note is the only thing open and untouched. Somebody
-   *  who has written in it, or opened something beside it, has said what they
-   *  want on screen. */
   async leaveTheWelcomeNote(): Promise<void> {
     const only = this.tabs.length === 1 ? this.tabs[0] : null
     if (!only || !samePath(only.path, WELCOME_PATH) || only.dirty) return
 
-    // Where they were last, if that note is still there, and otherwise the first
-    // note that is theirs.
     const mine = this.notes.filter((one) => !samePath(one.path, WELCOME_PATH))
     const back = this.recent.find((path) => mine.some((one) => samePath(one.path, path)))
     const next = back ?? mine[0]?.path
@@ -2837,16 +1958,12 @@ class Workspace {
     this.close(only.id)
   }
 
-  /** A tab brought in front from outside its strip - an essential's tile - the drawer
-   *  going as it does for an open. */
   front(id: string) {
     this.activeTabId = id
     this.showNote()
     this.persist()
   }
 
-  /** Another view of a document already open, in the pane being worked in: the
-   *  essential's own of a file the strip has, or the strip's of an essential's. */
   secondView(note: NoteDoc, how: OpenHow, essential: string | null = null): Tab {
     const tab = new Tab(note, this.panes.focusedId)
     tab.essential = essential
@@ -2858,17 +1975,11 @@ class Workspace {
   }
 
   async openEntry(path: string, options: OpenHow = {}) {
-    // Which kind of tab this path is for, or null where this build has no surface
-    // for it - a PDF, a canvas or a page note in the plugin. Every reason is in
-    // `openerFor`; making the tab is the class's own, below.
     const opener = openerFor(path, (one) => links.urlOf(one) !== null, {
       evenBuild: __EVEN_PLUGIN__,
       isPlugin: isPlugin(),
     })
 
-    // A single click previews whatever the row is, not only a note: a website, a
-    // plane or a paper clicked past in the list is as much a look as a note is, and
-    // a strip that filled with every site somebody glanced at was what Emil saw.
     switch (opener) {
       case null:
         return
@@ -2885,7 +1996,6 @@ class Workspace {
         await this.openCanvas(path, options)
         return
       case 'view': {
-        // Never the glasses' (openers.ts), and a fetch only never called still ships.
         if (__EVEN_PLUGIN__) return
         const { openBaseFile } = await import('./views/open')
         openBaseFile(path, options)
@@ -2906,13 +2016,6 @@ class Workspace {
     }
   }
 
-  /** Drops the blank untitled tab a window starts with, now that something real
-   *  is open. Compared by id, because `this.tabs` holds reactive proxies and
-   *  `=== tab` on the object just pushed is never true.
-   *
-   *  A tab that is not a note is never scaffolding: the graph of the space has no
-   *  path and no words either, and closing it behind the reader's back
-   *  because they opened a note would be a surprise. */
   private dropScaffolding(kept: Tab) {
     for (const other of this.tabsIn(kept.paneId)) {
       if (other.id === kept.id || other.kind !== 'note' || other.path !== null || other.dirty) {
@@ -2923,19 +2026,15 @@ class Workspace {
     }
   }
 
-  /** Reads the spaces folder, which is the truth about which spaces exist; see
-   *  workspace/spaces. */
   async loadSpaces() {
     await spaces.loadSpaces(this)
     mark('spaces listed')
   }
 
-  /** A space the account has that this machine does not. */
   async adoptSpace(name: string, fresh = false): Promise<string | null> {
     return (await changes()).adoptSpace(this, name, fresh)
   }
 
-  /** Creates a space folder under the one the app owns, and opens it. */
   async addSpace(name: string) {
     return (await changes()).addSpace(this, name)
   }
@@ -2944,13 +2043,10 @@ class Workspace {
     await (await changes()).renameSpace(this, id, name)
   }
 
-  /** Drops the dragged space in front of `beforeId`, or at the end for null.
-   *  Answers whether anything actually moved, so a drag onto itself is quiet. */
   moveSpace(id: string, beforeId: string | null): boolean {
     return spaces.moveSpace(this, id, beforeId)
   }
 
-  /** Takes the account's order, which is the one the other machines see. */
   applySpaceOrder(names: string[]): boolean {
     return spaces.applySpaceOrder(this, names)
   }
@@ -2959,13 +2055,10 @@ class Workspace {
     await spaces.selectSpace(this, id)
   }
 
-  /** The switcher's way in, which is every switch's: the sidebars stay as they are
-   *  (#1123). */
   async showSpace(id: string) {
     await spaces.selectSpace(this, id)
   }
 
-  /** Deletes the space's folder, or puts it in this device's trash. */
   async deleteSpace(id: string, keep = false) {
     await (await changes()).deleteSpace(this, id, keep)
   }
@@ -2984,15 +2077,8 @@ class Workspace {
     }
     this.saving.across?.listed()
 
-    // The three marks around this read are the launch's largest single step on a space
-    // of a few thousand notes, and they are three rather than one so that the answer
-    // says where: `tree asked` to `tree walked` is the disk, `tree walked` to here is
-    // the bridge and the parse, and here to `tree painted` is the rows. See tree.rs.
     mark('tree read')
 
-    // And whether this space's disk tells `Plan.md` from `plan.md`, once, in the
-    // index's turn: nothing but the listing goes before the first frame. See
-    // space-paths.ts and startup.svelte.ts.
     void startup.turn('index').then(() =>
       askCase(
         root,
@@ -3000,32 +2086,15 @@ class Workspace {
       ),
     )
 
-    // Rows that went away take themselves out of the selection.
     this.picked.keepOnly((path) => !!this.entryAt(path))
     this.keepOpenRows(root)
     this.keepNaming()
 
-    // And a note the account named that has since landed is the listing's row now
-    // rather than a place held for it; see arriving.svelte.ts.
     arriving.prune((path) => !!this.entryAt(path))
 
-    // The link index is of a space, so it is built when the space's tree is - after
-    // it, and not awaited. The tree is what is on screen; a scan that reads every
-    // note in the space must neither hold it up nor start in the same breath, which
-    // on a space of a few thousand notes is the same thing. Opening a second space
-    // is the case that is not the launch: see `turn` in startup.svelte.ts, which is
-    // what makes the frame with the rows in it go out first either way.
     if (!samePath(links.rootOf(), root)) {
       void links.build(root)
-      // And the search holds the space it is about to be asked about, a turn after
-      // the index; see search/warm.svelte.ts, which is fetched for it rather than
-      // carried into the first paint, since its turn is after that anyway. The papers
-      // of the space are the same question about the files the notes sit beside: what
-      // was read of them before comes back, and what has never been opened is read in
-      // idle time.
       void import('./search/warm.svelte').then(({ warm }) => warm.forSpace(root), unfetched)
-      // Imported here rather than at the top, so that a window which never opens a
-      // PDF never loads the module that reads one.
       const listed = this.files
       const tree = this.tree
       void import('./pdf/extract').then(
@@ -3035,12 +2104,6 @@ class Workspace {
     }
   }
 
-  /** The order this space's list is read in.
-   *
-   *  Nothing is read off the disk again: the listing in memory is the listing, and
-   *  which order it is drawn in is arithmetic over it. So the rows are in their new
-   *  places in the frame the menu closes in - a round trip is what this used to cost,
-   *  and on a synced folder it was long enough to wonder whether the press landed. */
   setSort(mode: SortMode) {
     this.sorting.set(mode)
   }
@@ -3055,41 +2118,26 @@ class Workspace {
     void this.loadTree()
   }
 
-  /** Moves a note or folder into another folder; `how`, see undo.svelte.ts. */
   async move(from: string, intoFolder: string, how?: 'follows' | 'nests' | 'carries') {
     const name = nameOf(from)
     const target = joinPath(intoFolder, name)
 
     if (samePath(target, from) || within(from, intoFolder) !== null) return
-    // Out of a space shared to be read is a delete there, and into one a write.
     if (!(await this.writableAt(from, intoFolder))) return
 
-    // Into another space, the chats a pointer names move first; see chat-leaving.ts.
     const leaving = this.spaces.find((one) => within(one.root, from) !== null)
     let back = () => Promise.resolve()
     if (leaving && within(leaving.root, intoFolder) === null) {
       back = await (await import('./workspace/chat-leaving')).chatsCarried(from, intoFolder)
     }
 
-    // The row is in its new folder as soon as the drop lands.
     const kind = this.kindAt(from)
     this.showMove(from, target)
 
-    // One step to undo, the folder it may unnest included; see undo.svelte.ts.
     await this.undone.batch(async () => {
-      // After whatever write of anything open in it is in the air, and with every
-      // write of those held until the documents have been told where they went; see
-      // `holdingUnder` in workspace/saving.svelte.ts. Unnesting is a move of its
-      // own, so it comes after the hold rather than inside it.
-      // Said to be under way until it is told, so the rewrite's write of the note at
-      // its new path is not taken for a note just made; see views/moving.ts.
       const { moving } = await import('./views/moving')
       await moving(target, () =>
         this.saving.holdingUnder(from, async () => {
-          // And back where it was if the move did not happen - something already
-          // there, a file that has gone. The listing is what the tree really is, and
-          // until it is read again the row is sitting in a folder that does not hold
-          // it; see `remove`, which puts a row back the same way.
           try {
             await this.renameOnDisk(from, target, kind)
           } catch (error) {
@@ -3098,8 +2146,6 @@ class Workspace {
             throw error
           }
 
-          // A note that moved is a note every link to it has to be pointed at again;
-          // see `renameFile`, including why this comes before everything is told.
           const rewrote = await this.retargetMoved(from, target)
           this.undone.record({
             kind: 'move',
@@ -3117,13 +2163,6 @@ class Workspace {
     this.persist()
   }
 
-  /** A folder that has stopped holding anything but its own note, which is a
-   *  folder that has stopped being one: the note comes back up to where the folder
-   *  was and the folder goes, so dragging the last row out of a nested note leaves
-   *  a note and nothing else behind. See `unnesting` in folder-notes.ts.
-   *
-   *  Never the space's own root: `entryAt` answers nothing for it, so a space that
-   *  happens to hold a note of its own name stays a space. */
   private async unnest(folder: string) {
     const entry = this.entryAt(folder)
     const back = entry && unnesting(entry)
@@ -3132,24 +2171,12 @@ class Workspace {
 
     await this.move(back.note, back.into, 'follows')
 
-    // The row goes as the note comes up rather than a round trip later: an empty
-    // folder standing under the note it used to hold reads as half a move.
     this.hideEntry(back.folder)
 
-    // Only if there is nothing at all left in it. The tree leaves out the dotted
-    // files and the pictures beside a note, so a folder that looks empty here may
-    // still hold the picture the note was written around; see
-    // `remove_empty_folder` in src-tauri/src/notes.rs, which refuses rather than
-    // taking one with it.
     await invoke('remove_empty_folder', { path: back.folder }).catch(() => undefined)
     await this.loadTree()
   }
 
-  /** `preview` opens the way a single click in the file list does: one tab,
-   *  reused by the next preview, and kept only until something is typed in it. */
-  /** A drawer covers the note, so choosing one means wanting to see it: the
-   *  drawer goes. A sidebar docked beside the note is not in the way and
-   *  stays, which is how a tablet on its side reads. */
   private showNote() {
     if (!viewport.drawer || !this.panel) return
 
@@ -3157,15 +2184,6 @@ class Workspace {
     this.persist()
   }
 
-  /** Opens what a row of the file list stands for: the file itself, or - for a row
-   *  that is a folder - the note that row is drawn as, which may not be written
-   *  yet.
-   *
-   *  Every row opens something, because every row is a note or a file; the twist
-   *  at the end of a row is what shows the rows under it. A folder out of
-   *  somebody's vault has no note of its own until somebody writes in it, so this
-   *  opens the empty page it is: nothing is written by looking, and the first
-   *  keystroke is what makes the file. See folder-notes.ts and docs/tree.md. */
   async openRow(path: string, options: OpenHow = {}) {
     const entry = this.entryAt(path)
     if (!entry) return
@@ -3177,15 +2195,11 @@ class Workspace {
 
   async open(asked: string, options: OpenHow & { blank?: boolean; asNote?: boolean } = {}) {
     const path = this.spelled(asked)
-    // Its card, wherever it is opened from; a tab only where one is asked for by name -
-    // the right side's icon pressed twice (#1110) - and, once there is one, that tab.
     if (isScratchpad(path) && !options.asNote && !this.opened.at(path)) {
       const { scratchpad } = await import('./scratchpad/pad')
       scratchpad.show()
       return
     }
-    // Nor the space's AGENTS.md: its field, the way the scratchpad is its card. A tab an
-    // earlier version left with words unsaved is still that tab.
     if (this.instructionsAt(path) && !this.opened.at(path)) {
       if (options.activate !== false) {
         const root = this.rootHolding(path)
@@ -3194,17 +2208,10 @@ class Workspace {
       return
     }
 
-    // One open of a file at a time, whoever asked: a second click on the row, a link
-    // followed twice, a note clicked while the session is still reading that very
-    // note. A file already open answers with its document and reads nothing; one
-    // still being read is waited out. Either way what comes back is the file's one
-    // document, and the tab showing it is the tab this open is about. See
-    // workspace/open.ts.
     const note = await this.opened.opening(path, () => this.openNote(path, options))
     const tab = note && this.tabOf(note)
     if (!tab) return
 
-    // Opening for real what was only being looked at makes it stay.
     if (!options.preview) this.keep(tab.id)
     if (options.activate !== false) {
       this.activeTabId = tab.id
@@ -3212,25 +2219,12 @@ class Workspace {
     }
   }
 
-  /** The document one open of a note comes to: the file read, and put in a tab or
-   *  taken on by the tab that previews notes. Null for a file that cannot be
-   *  opened at all. Only `open` above calls it, and only through the one open. */
   private async openNote(
     path: string,
     options: OpenHow & { blank?: boolean },
   ): Promise<NoteDoc | null> {
     const found = await invoke<string>('read_note', { path }).catch(() => null)
 
-    // A row the first pass has named whose body has not come down yet. It opens,
-    // because a row that does nothing when it is clicked reads as broken, and it
-    // opens saying what it is waiting for rather than as an empty note: an empty
-    // note is something to type into, and typing into this one would be writing
-    // over the copy on its way. See `arrived`, which finishes it.
-    //
-    // Before the blank below, and for the same reason: a note on its way is not a
-    // note nobody has written.
-    // And one this browser keeps no words of, which the read could not fetch: the
-    // account was out of reach. It fills in the same way once it is fetched (#1126).
     if (found === null && (arriving.coming.has(path) || keptAway.at(path))) {
       const waiting = this.document({
         kind: 'note',
@@ -3248,26 +2242,10 @@ class Workspace {
       return waiting
     }
 
-    // Gone, or there and unreadable, which says so: no tab either way. Only a note
-    // not there yet opens blank - for a folder whose note nobody has written.
     const doc = found ?? ((await unread(path)) || !options.blank ? null : '')
     if (doc === null) return null
     const unwritten = found === null
 
-    // A preview reuses the one preview tab rather than opening another, and only
-    // when that tab is in the pane being worked in: taking over a tab in another
-    // pane would change a note nobody was looking at.
-    //
-    // And only while the preview is the one view of its document. Taking a note on
-    // is the document being pointed at another file rather than the tab being handed
-    // another document, so a preview that was split into a second pane would move
-    // that pane to a note nobody asked it for - the same hole `walk` had, reached by
-    // the other door. Such a tab simply stops being the preview: the note opening
-    // gets a tab of its own, and that one is the preview from here.
-    //
-    // A preview of another kind - a website, a plane - has no editor to hand the note
-    // to, so the note gets a tab of its own and that one takes the preview's place;
-    // see `previewIn`.
     const previewing = options.preview ? this.replaceablePreview() : null
     const reusable = previewing?.kind === 'note' ? previewing : null
 
@@ -3276,8 +2254,6 @@ class Workspace {
       if (unwritten) reusable.note.onDisk = null
       this.walked(reusable, path)
       this.placeAt(reusable, path)
-      // A note arriving in the preview tab is a note opening, and a note opens
-      // for writing however the tab was left.
       reusable.reading = false
 
       this.remember(path)
@@ -3303,16 +2279,10 @@ class Workspace {
     return note
   }
 
-  /** A path as the listing spells it, which is how the disk spells it: `plan.md`
-   *  asked for where the list has `Plan.md` opens `Plan.md`, so a file is one
-   *  document, in one room, on one row, however a link or a caller spelled it - the
-   *  way git goes on remembering `Makefile` when a listing says `makefile`. A file
-   *  the listing does not hold yet is as it was asked for. */
   private spelled(path: string): string {
     return this.entryAt(path)?.path ?? path
   }
 
-  /** Where the note was last being read on this device. */
   private placeAt(tab: Tab, path: string) {
     const place = this.positions.of(path)
     tab.cursor = place.cursor
@@ -3321,12 +2291,7 @@ class Workspace {
     tab.folds = place.folds
   }
 
-  /** A note named the way the space speaks of it, which is how the link index and
-   *  the graph name them, opened the way a row in the file list opens: a look on
-   *  one click, a tab of its own on two or with a modifier. */
   openRelative(relative: string, how: OpenHow, from: string | null = null) {
-    // Relative to the space of `from` where one is given: a link in a chat of another
-    // space names that space's note.
     const root = this.rootHolding(from)
     if (!root) return
 
@@ -3338,17 +2303,10 @@ class Workspace {
     this.persist()
   }
 
-  /** Ctrl+D: the pane shows nothing, and every tab in it stays open. Emil, 2026-09-30:
-   *  *"Effectively it just deselects the currently selected tab."* What it shows then
-   *  is what a pane with no tabs shows (NewHere.svelte), and a click, a digit or Ctrl+Tab
-   *  brings a tab back. */
   deselect(paneId: string = this.panes.focusedId) {
     this.panes.deselect(paneId)
   }
 
-  /** Ctrl+Shift+D: Ctrl+D in every pane at once, and the same key again brings each
-   *  pane's tab back - the one it showed last - where none of them shows one. Emil,
-   *  2026-10-03. The pane being worked in stays the one being worked in. */
   deselectAll() {
     const panes = this.panes.all
     if (panes.some((one) => one.activeTabId !== null)) {
@@ -3363,23 +2321,15 @@ class Workspace {
     }
   }
 
-  /** Which pane a key or a command is talking about. */
   focusPane(id: string) {
     this.panes.focus(id)
   }
 
-  /** The tab a pane is showing, which is what the pane is about. */
   showing(paneId: string): Tab | null {
     const id = this.panes.at(paneId)?.activeTabId
     return (id ? this.tabs.find((tab) => tab.id === id) : null) ?? null
   }
 
-  /** Writes a note down as where this tab now is.
-   *
-   *  What was ahead of it is dropped, the way it is in anything that goes back
-   *  and forward: arriving somewhere new from halfway along a trail makes the
-   *  rest of that trail a road not taken. Arriving where it already is changes
-   *  nothing, so opening the same note twice does not fill the trail with it. */
   private walked(tab: Tab, path: string) {
     if (samePath(tab.trail[tab.at], path)) return
 
@@ -3388,25 +2338,6 @@ class Workspace {
     tab.at = tab.trail.length - 1
   }
 
-  /** Shows the note this tab was on before this one, or the one it came back
-   *  from. `to` is where along the trail to land, which the two steps and the
-   *  list behind the back arrow all say for themselves.
-   *
-   *  A step is an opening like any other, and goes through the one place that says
-   *  what a file is open as: the tab is pointed at that file's document - the one
-   *  that is already open on it, or one made from the file here - and the editor
-   *  keeps its own state per note, so the caret lands where it was left in the note
-   *  being returned to.
-   *
-   *  It used to read the file and have the tab's own document take the note on,
-   *  which went around all of that. Two things came of it and both are one note's
-   *  words under another note's name: a step back to a note another pane was
-   *  showing made a second set of words over one file, and a step back in a tab
-   *  whose document a second pane shared moved that pane to the note as well. See
-   *  workspace/open.ts.
-   *
-   *  A note that has gone from the disk is dropped from the trail rather than
-   *  reported: it is a road that is no longer there. */
   async walk(to: number, id: string | null = this.activeTabId) {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab || to < 0 || to >= tab.trail.length || to === tab.at) return
@@ -3422,30 +2353,17 @@ class Workspace {
       return
     }
 
-    // The file was already open, so this step joins what is showing it. `stepped`
-    // has done this for a file it read itself, before the open was let go of.
     tab.note = note
     tab.at = to
     this.placeAt(tab, path)
     tab.reading = false
 
-    // Walking back does not make a tab stay: a tab that was only being looked at
-    // is still only being looked at two notes ago, and taking the preview away
-    // here would give the next click in the file list a tab of its own - and the
-    // trail with it.
     this.activeTabId = tab.id
     this.showNote()
     this.remember(path)
     this.persist()
   }
 
-  /** The document one step along a trail comes to, put in the tab that stepped.
-   *  Only `walk` calls it, and only through the one open.
-   *
-   *  The tab is pointed at the document inside the open rather than after it, for
-   *  the reason the open exists: what is open is the tabs, so a document that is in
-   *  no tab yet is a file nothing says is open - and the next opener of it would
-   *  read the file a second time. */
   private async stepped(tab: Tab, path: string): Promise<NoteDoc | null> {
     const text = await invoke<string>('read_note', { path }).catch(() => null)
     if (text === null) return unread(path).then(() => null)
@@ -3455,8 +2373,6 @@ class Workspace {
     return note
   }
 
-  /** A zoom row or key with a page in front is the page's size, as in Chrome: true where it
-   *  was, and false where it is the words' size as it is anywhere else. */
   zoomPage(step: 'in' | 'out' | 'reset'): boolean {
     const tab = this.active
     if (tab?.kind !== 'web' || !pages.of(tab.id).live) return false
@@ -3465,8 +2381,6 @@ class Workspace {
     return true
   }
 
-  /** One step back, and one step on - or, for an arrow pressed with the middle button
-   *  or a modifier, that step opened in a tab of its own; see `stepAside`. */
   goBack(id: string | null = this.activeTabId, ask: TabAsk = 'plain') {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab) return
@@ -3475,8 +2389,6 @@ class Workspace {
       return
     }
 
-    // In a web tab the trail is the page's own history, which is the browser's
-    // meaning of the same key rather than a second one; see web-tab/pages.svelte.ts.
     if (tab.kind === 'web') void pages.step(tab.id, 'back')
     else if (!__EVEN_PLUGIN__ && tab.kind === 'explorer')
       void viewOfExplorer(tab).then((view) => view.back())
@@ -3497,9 +2409,6 @@ class Workspace {
     else void this.walk(tab.at + 1, tab.id)
   }
 
-  /** Where a step along a tab's trail would land, opened in a tab of its own beside
-   *  it and the tab itself left where it is: Chrome's middle click on its arrows. A
-   *  page's trail is the crate's, and asked for; a note tab's is its own. */
   private async stepAside(tab: Tab, by: -1 | 1, ask: TabAsk) {
     if (tab.kind === 'web') {
       const url = await pages.stepAddress(tab.id, by)
@@ -3511,43 +2420,26 @@ class Workspace {
     if (path !== undefined) await this.openEntry(path, howFor(ask))
   }
 
-  /** Makes a tab that was only previewing its note stay: the italic goes, and
-   *  the next single click in the file list gets a tab of its own instead of
-   *  taking this one over. Every way of keeping a preview ends up here -
-   *  typing in it, opening the note for real from the list, a double click or
-   *  "Keep open" on the tab itself - so they cannot drift apart. Asking about
-   *  a tab that is not the preview changes nothing. */
   keep(id: string) {
     if (this.previewTabId === id) this.previewTabId = null
   }
 
-  /** Closes a tab somebody asked to close: the cross on the tab, Ctrl+W, the menu row
-   *  and the palette. A note with a file writes itself, and what it was waiting to
-   *  write goes down as its tab closes; see `closed` in workspace/saving.svelte.ts. A
-   *  tab with no file and words asks first, and so does a terminal running something;
-   *  see `mayClose`. `close` below stays the plain operation, which is what everything
-   *  that closes a tab because the note has gone away needs. */
   async closeAsking(id: string) {
     const tab = this.tabs.find((one) => one.id === id)
     if (tab && (await this.mayClose([tab]))) this.close(id)
   }
 
-  /** The tab being worked in, closed. What Ctrl+W, the palette and `:q` all mean by
-   *  closing. */
   async closeActive() {
     const tab = this.active
     if (tab) await this.closeAsking(tab.id)
   }
 
-  /** The tabs of a pane around one; which tabs is workspace/closing-around.ts. */
   async closeAround(id: string, which: Around) {
     const tab = this.tabs.find((one) => one.id === id)
     const going = tab ? closedAround(this.tabsIn(tab.paneId), id, which) : []
     await this.closeMany(going.map((one) => one.id))
   }
 
-  /** Several tabs closed by one gesture, which one Reopen closed tab brings back, as in
-   *  Firefox. */
   async closeMany(ids: readonly string[]) {
     const going = this.tabs.filter((one) => ids.includes(one.id))
     if (!(await this.mayClose(going))) return
@@ -3561,10 +2453,6 @@ class Workspace {
     return tab ? closedAround(this.tabsIn(tab.paneId), id, which).length : 0
   }
 
-  /** Whether a set of tabs may all go. A note with a file writes itself; unsaved words
-   *  ask (workspace/closing-unsaved.ts), and a terminal running something or an online
-   *  terminal saved nowhere asks (terminal/closing.ts), each once for all of them. The
-   *  window going asks its own; see lib/quitting. */
   private async mayClose(closing: readonly Tab[]): Promise<boolean> {
     if (__EVEN_PLUGIN__) return true
     if (closing.some(unsaved)) {
@@ -3576,31 +2464,18 @@ class Workspace {
     return mayEnd(closing, this.tabs)
   }
 
-  /** Every write that is owed, done and waited for: what the window waits on before
-   *  it goes, and what Ctrl+S is. See start.ts and `writeNow` in
-   *  workspace/saving.svelte.ts. */
   async writeNow() {
     await this.saving.writeNow()
   }
 
-  /** The same wait without the version Ctrl+S keeps: the window going. */
   async writesSettled() {
     await this.saving.settled()
   }
 
-  /** Whether anything is waiting to be written or being written now. */
   get writing(): boolean {
     return this.saving.writing
   }
 
-  /** Closes a tab. Every close goes through here: the cross on the tab, Ctrl+W, the
-   *  menu row, the palette, and everything that closes a tab because its note has
-   *  gone away. Nothing is asked, and what the note was waiting to write goes down now;
-   *  see `closed` in workspace/saving.svelte.ts. A draft with words keeps them on the
-   *  closed stack and in Recently deleted; see workspace/placing.ts.
-   *
-   *  `reopenable` false is for a tab nobody closed - a preview the next look took
-   *  the place of - which the closed stack has no business bringing back. */
   close(id: string, reopenable = true, batch?: number) {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab) return
@@ -3608,8 +2483,6 @@ class Workspace {
     const paneId = tab.paneId
     const at = this.tabsIn(paneId).findIndex((one) => one.id === id)
 
-    // The words as they stand, since a tab closed a moment after its last keystroke
-    // has to bring that back with it.
     this.flush()
     if (reopenable && worthReopening(tab)) {
       this.closed.record({
@@ -3622,15 +2495,12 @@ class Workspace {
       if (last && isDraft(tab.note)) void this.trashWords(tab.note)
     }
 
-    // The page is a webview of its own, and a tab that has gone is not holding a
-    // browser open behind it.
     if (tab.kind === 'web') pages.forget(tab.id)
 
     this.tabs = this.tabs.filter((one) => one.id !== id)
     if (this.previewTabId === id) this.previewTabId = null
     this.saving.closed(tab.note)
 
-    // A set out of sight is put right as it comes back; see sets.svelte.ts.
     if (!this.panes.at(paneId)) {
       this.persist()
       return
@@ -3638,19 +2508,12 @@ class Workspace {
     const left = this.tabsIn(paneId)
     const showing = this.panes.at(paneId)?.activeTabId === id ? null : this.showing(paneId)
 
-    // The last tab of a pane takes the pane with it, and the pane beside it takes the
-    // room. The last pane of all stays, and stays empty: what it shows is the kinds a
-    // new tab could be, which is what Emil asked for - "it should be possible to have
-    // no note open (there should not always open a new one)". See NewHere.svelte. One
-    // showing an essential stays.
     if (!paneStays(left.length, showing)) {
-      // The last pane of all names no tab, rather than the one that has just gone.
       if (this.closePaneOf(paneId)) this.panes.activate(paneId, null)
       this.persist()
       return
     }
 
-    // The tab used last in this pane, as after every way a tab leaves (#1079).
     if (this.panes.at(paneId)?.activeTabId === id) {
       this.panes.activate(
         paneId,
@@ -3664,8 +2527,6 @@ class Workspace {
     this.persist()
   }
 
-  /** Closes a pane, its essentials going to the pane that takes the room; true for the
-   *  last pane, which cannot. */
   private closePaneOf(paneId: string): boolean {
     const held = this.heldIn(paneId)
     if (!this.panes.close(paneId)) return true
@@ -3674,23 +2535,10 @@ class Workspace {
     return false
   }
 
-  /** The tab that was closed last, back where it was: in the pane it was closed
-   *  from while that pane is still there, at its own place in the strip, with
-   *  whatever words it held that its file had not been given yet. With it, every
-   *  tab the same gesture closed; see `closeMany`.
-   *
-   *  A note that has since been deleted cannot come back, so the entry is spent
-   *  and the one under it is tried: reaching past a note that is gone is what
-   *  somebody pressing the key twice means.
-   *
-   *  Nothing is dropped to make room for it. Reopening is not opening a note in
-   *  the usual sense, and closing the blank page somebody is looking at because
-   *  they asked for a tab back would be a surprise. */
   async reopenClosed() {
     for (let batch = this.closed.take(); batch.length; batch = this.closed.take()) {
       let back: { tab: Tab; paneId: string } | null = null
       for (const closed of batch) {
-        // A draft's words come back out of Recently deleted; see workspace/placing.ts.
         const trashed = closed.trashed
         if (trashed !== undefined) {
           const { untrash } = await import('./workspace/placing')
@@ -3718,16 +2566,12 @@ class Workspace {
 
       this.panes.activate(back.paneId, back.tab.id)
       this.panes.focus(back.paneId)
-      // Where there is room for one document, the one coming back takes the
-      // place of the one on screen - and that one goes on the stack in its turn,
-      // so back and forward walk the same line.
       this.onlyOne(back.tab)
       this.persist()
       return
     }
   }
 
-  /** A closed draft's words, into Recently deleted as well; see workspace/placing.ts. */
   private async trashWords(note: NoteDoc) {
     const { trashWords } = await import('./workspace/placing')
     await trashWords(this, note).catch((error: unknown) => {
@@ -3735,12 +2579,6 @@ class Workspace {
     })
   }
 
-  /** The flat list with a tab put at a place in a pane's strip: `at` counts along
-   *  that strip, so the place in the flat list is the one the tab that now holds
-   *  the spot occupies. Past the end of the strip, or `null`, means last.
-   *
-   *  The tab itself is taken out first, so this both puts a new one in and moves
-   *  one that is already open. */
   private placed(tab: Tab, paneId: string, at: number | null): Tab[] {
     const rest = this.tabs.filter((one) => one.id !== tab.id)
     const strip = rest.filter((one) => one.paneId === paneId)
@@ -3751,8 +2589,6 @@ class Workspace {
     return [...rest.slice(0, index), tab, ...rest.slice(index)]
   }
 
-  /** Brings every open note's words up to what its views hold. Everything that
-   *  reads the text of a note calls this first. */
   flush() {
     this.saving.flush()
   }
@@ -3761,34 +2597,20 @@ class Workspace {
     this.saving.wordsNow()
   }
 
-  /** Text put into a note from somewhere other than the editor: a version
-   *  restored from the history, a note pulled in by a sync. */
   replace(text: string, target?: Tab) {
     this.saving.replace(text, target)
   }
 
-  /** A version put back from the history, which a canvas takes whole (#533).
-   *
-   *  Refused for a note in a space shared to be read: putting a version back is an
-   *  edit, and the autosave would write it into the owner's space. The write itself
-   *  cannot refuse it, because the owner's own changes reach an open note there and
-   *  are written by that same autosave; see read-only-files.test.ts. */
   async restoreVersion(text: string, target?: Tab) {
     const path = (target ?? this.active)?.path
     if (path && !(await this.writableAt(path))) return
     this.saving.restoreVersion(text, target)
   }
 
-  /** The open notes a version could be kept of; see recovery.svelte.ts. */
   get worthKeeping(): { key: string; path: string; text: string; revision: number }[] {
     return this.saving.worthKeeping
   }
 
-  /** Notes opened lately, for the palette, newest first: the app's own list and no
-   *  system's, since a recent document on the taskbar or in the Dock is a file handed
-   *  back to nib from outside, which it no longer opens. Only the ones in a space, so a
-   *  note opened from elsewhere by an older nib is not offered again, and without what
-   *  has since been archived. */
   get recent(): string[] {
     return this.device.recent.filter(
       (path) =>
@@ -3802,29 +2624,20 @@ class Workspace {
     this.device.remember(path)
   }
 
-  /** The icon a space shows in the switcher, if it has been given one. Keyed by
-   *  folder rather than id, so it survives the ids being handed out again. */
   iconFor(spaceId: string | null): string | null {
     const space = this.spaces.find((entry) => entry.id === spaceId)
     return space ? this.device.iconOf(space.root) : null
   }
 
-  /** The colour that icon is drawn in, or null for the plain foreground. */
   tintFor(spaceId: string | null): string | null {
     const space = this.spaces.find((entry) => entry.id === spaceId)
     return space ? this.device.tintOf(space.root) : null
   }
 
-  /** An icon and its colour as they came down from the account, and the colour this
-   *  machine holds that the account has not heard - which is what asks for it to be
-   *  sent up. Which of the two copies wins is next door, in workspace/device. */
   applyIcon(root: string, name: string | null, tint?: string | null): string | null {
     return this.device.applyIcon(root, name, tint)
   }
 
-  /** The icon a folder of the open space wears and the colour it is drawn in, or
-   *  none. Beside `setIcon` because the picker reaches both through here and the two
-   *  differ only in where the value is kept; see workspace/folder-icons. */
   setFolderIcon(path: string, value: string | null, tint: string | null = null) {
     this.folderIcons.set(path, value, value === null ? null : readTint(tint))
   }
@@ -3836,13 +2649,9 @@ class Workspace {
     const colour = name === null ? null : readTint(tint)
     this.device.setIcon(space.root, name, colour)
 
-    // Imported here rather than at the top: syncing reads the workspace, and
-    // the two would import each other.
     void import('./sync.svelte').then(({ sync }) => sync.pushIcon(space.root, name, colour))
   }
 
-  /** The picked rows. The tree reads it; every change to it goes through the
-   *  four calls below, so the anchor a Shift range counts from stays right. */
   get selection(): string[] {
     return this.picked.paths
   }
@@ -3851,17 +2660,14 @@ class Workspace {
     return this.picked.has(path)
   }
 
-  /** A plain click: that row alone. */
   select(path: string) {
     this.picked.select(path)
   }
 
-  /** Ctrl-click: in or out, leaving the rest as it is. */
   toggleSelect(path: string) {
     this.picked.toggle(path)
   }
 
-  /** Shift-click: from the anchor to here, in the order the rows are shown. */
   selectRange(path: string) {
     this.picked.range(path, this.visibleRows())
   }
@@ -3870,8 +2676,6 @@ class Workspace {
     this.picked.all(this.visibleRows())
   }
 
-  /** Shift and an arrow: the selection stretched from the row the keyboard was on
-   *  to the next one. */
   extendSelection(from: string, to: string) {
     this.picked.extend(from, to, this.visibleRows())
   }
@@ -3880,14 +2684,6 @@ class Workspace {
     this.picked.clear()
   }
 
-  /** Every row the tree shows, top to bottom, and which of them are folders
-   *  standing open: a folder's children only while it is open, which is what
-   *  Shift-click, Ctrl+A and the arrow keys all mean by "the next one".
-   *
-   *  The list the panel draws, which is `shownTree` and so includes the rows an
-   *  account's first pass has named and not fetched yet: the keys walk what is on
-   *  screen, and the window that mounts a slice of those rows counts them from the
-   *  same list. One list, numbered once; see tree-flat.ts. */
   visibleTree(): TreeRow[] {
     return flatRows(this.shownTree, (path) => this.isExpanded(path)).map(({ entry }) => ({
       path: entry.path,
@@ -3896,19 +2692,14 @@ class Workspace {
     }))
   }
 
-  /** The same rows, as the paths on them. */
   visibleRows(): string[] {
     return this.visibleTree().map((row) => row.path)
   }
 
-  /** What a drag from `path` carries: the whole selection when the row is part
-   *  of it, the row alone otherwise. */
   dragPayload(path: string): string[] {
     return this.picked.dragging(path)
   }
 
-  /** The notes a drag out of the list carries, as paths in the space: what a drop on a
-   *  note's words links (wikilink/drop.ts in the editor), and a drop on a chat. */
   carriedNotes(transfer: DataTransfer | null): readonly string[] {
     const root = this.activeSpace?.root
     return root ? linkedFiles(this.tree, root, carriedRows(transfer)) : []
@@ -3924,16 +2715,10 @@ class Workspace {
   }
 
   async moveMany(paths: string[], intoFolder: string, undoing = false): Promise<boolean> {
-    // A note called AGENTS in a folder stays one, and moves between folders; at the top
-    // of a space it would stop being a note and become the setting. Only an Undo puts one
-    // back; see `movedIn` in automation/acts.ts, which refuses an agent's the same way.
     if (!undoing && this.refusedAsInstructions(paths, intoFolder)) {
       this.clearSelection()
       return false
     }
-    // All or nothing, and before the folder a drop on a note makes: a move that left
-    // half a selection behind, or nested a note it then put nothing in, is not one
-    // anybody asked for. `move` refuses each of them as well.
     if (!(await this.writableAt(intoFolder, ...paths))) {
       this.clearSelection()
       return false
@@ -3956,26 +2741,15 @@ class Workspace {
     return false
   }
 
-  /** A drop on a note lands in the folder that note is about to become, so the
-   *  note goes in first and what was dropped on it follows: `A.md` becomes
-   *  `A/A.md`, and the folder is open afterwards because otherwise the row a note
-   *  was just dragged into swallowed it without a word. See folder-notes.ts. The
-   *  same for a move, a copy and files from outside the app. */
   private async nestFor(intoFolder: string, arriving: string[]) {
     const nesting = noteToNest(this.tree, intoFolder)
     if (!nesting || arriving.includes(nesting)) return
 
-    // The folder is on the tree before the note is in it. Otherwise the row
-    // blinks out - the note has left and the folder it went into does not exist
-    // yet - and comes back a round trip later; see tree-edits.ts.
     this.showEntry(this.freshEntry(intoFolder, true))
     await this.move(nesting, intoFolder, 'nests')
     this.device.expand(intoFolder)
   }
 
-  /** Copies rows into a folder: a paste, or a drag with Ctrl held. What copying
-   *  means is workspace/copying.ts, fetched with the first copy: a window that
-   *  never copies anything never reads it. */
   async copyMany(paths: string[], intoFolder: string) {
     if (!(await this.writableAt(intoFolder))) return
     await this.nestFor(intoFolder, paths)
@@ -3984,7 +2758,6 @@ class Workspace {
     await this.copied(await copyRows(this, rows), intoFolder)
   }
 
-  /** A second copy of each row, beside the first. */
   async duplicateMany(paths: string[]) {
     const { copyRows } = await import('./workspace/copying')
     const rows = outermost(await this.writableOf(paths)).map((from) => ({
@@ -3994,7 +2767,6 @@ class Workspace {
     await this.copied(await copyRows(this, rows), null)
   }
 
-  /** Files dropped on the list from outside the app, copied into a folder. */
   async bringIn(files: readonly Picked[], intoFolder: string) {
     if (!(await this.writableAt(intoFolder))) return
     await this.nestFor(intoFolder, [])
@@ -4017,10 +2789,6 @@ class Workspace {
     await drafts?.keepPaper(this, note, path)
   }
 
-  /** What every copy ends with: the listing read again, the folder the rows went
-   *  into open, and the rows that arrived picked, which is where Explorer and VS
-   *  Code leave them - the next key acts on what was just made. And the account
-   *  hears sooner than it would have, the way it does after an import. */
   private async copied(landed: string[], into: string | null) {
     if (!landed.length) return
 
@@ -4044,30 +2812,20 @@ class Workspace {
     this.clearSelection()
   }
 
-  /** Whether a file may be written at every one of these paths: none of them in a
-   *  space shared with this account to be read. Writing there would make the copy
-   *  here stop being the space's, and the sync refuses it on every pass, so every
-   *  call below that makes, renames, moves, copies or deletes asks this first rather
-   *  than trusting each menu and key to have looked. Fetched, as sharing.svelte.ts
-   *  reads this store. */
   private async writableAt(...paths: string[]): Promise<boolean> {
     const { canWriteAt } = await import('./sharing.svelte')
     return paths.every((path) => canWriteAt(path))
   }
 
-  /** The paths of these that may be written at; see `writableAt`. */
   private async writableOf(paths: readonly string[]): Promise<string[]> {
     const { canWriteAt } = await import('./sharing.svelte')
     return paths.filter((path) => canWriteAt(path))
   }
 
-  /** The rows of a selection that may be deleted, which is what its menu counts. */
   deletable(paths: readonly string[]): string[] {
     return outermost([...paths]).filter((path) => !this.keepsArchived(path))
   }
 
-  /** Whether deleting this row would delete something archived, which never happens.
-   *  Asked of the space holding it: the local endpoint may name any space. */
   keepsArchived(path: string): boolean {
     const root = this.spaces.find((one) => withinSpace(one.root, path) !== null)?.root
     return root !== undefined && this.archive.holdsIn(root, path)
@@ -4078,12 +2836,6 @@ class Workspace {
     return found && !samePath(found.path, this.tree?.path) ? found : null
   }
 
-  /** A row put into the tree, taken out of it, or moved within it, before the
-   *  filesystem has been asked. The listing that follows every one of these
-   *  operations is what the tree really is; this is so the click is answered in
-   *  the same frame it happened, rather than after a round trip and a re-read
-   *  of the whole folder. An operation that fails undoes itself when the
-   *  listing arrives. */
   showEntry(entry: Entry) {
     if (this.tree) this.tree = withEntry(this.tree, entry)
   }
@@ -4109,8 +2861,6 @@ class Workspace {
     if (tree && !samePath(tree.path, path) && entryAt(tree, path)) this.hideEntry(path)
   }
 
-  /** A row for something that is about to exist. The times are now, which is
-   *  what sorting by "created" or "modified" would put it under anyway. */
   freshEntry(path: string, isFolder: boolean): Entry {
     const at = Date.now()
     return {
@@ -4139,12 +2889,6 @@ class Workspace {
     this.device.toggleTag(path)
   }
 
-  /** Whether a group of bookmarks is open, and opening or shutting one.
-   *
-   *  On this machine, like the folders in the tree: which groups somebody has
-   *  open is how they are looking at the list this afternoon, while the groups
-   *  themselves are what they chose to keep and travel with the account. See
-   *  device.svelte.ts. */
   isGroupOpen(id: string): boolean {
     return this.device.isGroupOpen(id)
   }
@@ -4157,11 +2901,6 @@ class Workspace {
     if (!this.device.isGroupOpen(id)) this.device.toggleGroup(id)
   }
 
-  /** Opens a note and lands on the block a bookmark names.
-   *
-   *  The whole of what a link would say is in the path - `Plan.md#^a1b2c3` or
-   *  `Plan.md#The plan` - so this is the same walk a followed link makes, from a
-   *  row instead of from a link. */
   async openAtBlock(target: string, how: OpenHow = {}) {
     const root = this.activeSpace?.root
     if (!root) return
@@ -4185,13 +2924,10 @@ class Workspace {
     if (line !== null) this.goto = { path, line }
   }
 
-  /** Opens a folder and every folder on the way down to it, so a bookmarked
-   *  folder can be shown where it sits rather than only named. */
   revealFolder(path: string) {
     const root = this.activeSpace?.root
     if (root === undefined || within(root, path) === null) return
 
-    // Each step down is a folder of its own, and its own row to open.
     let here = root
     for (const part of relativeTo(root, path).split('/')) {
       here = joinPath(here, part)
@@ -4199,22 +2935,17 @@ class Workspace {
     }
   }
 
-  /** The note the file list is to scroll to; Tree.svelte clears it. */
   revealing = $state<string | null>(null)
 
-  /** The note in front, or the one named, unfolded to and scrolled to in the file
-   *  list. A folder's own note is the folder's row. */
   revealNote(path = this.active?.path) {
     const root = this.activeSpace?.root
     if (!path || root === undefined || withinSpace(root, path) === null) return
 
-    // Its row is its tile, above the list (#345).
     if (this.inEssentials(path)) {
       this.showPanel('tree')
       return
     }
 
-    // An archived note's row is in the archive, at the list's foot.
     if (!__EVEN_PLUGIN__ && this.archive.has(path)) {
       this.showPanel('tree')
       void import('./archive-list.svelte').then(({ archiveList }) => archiveList.show(path))
@@ -4228,14 +2959,6 @@ class Workspace {
     this.revealing = path
   }
 
-  /** What this machine remembers as open in a space, against the listing just read:
-   *  a folder that was deleted, moved or renamed somewhere this app did not hear of
-   *  (another device, through sync), or a note whose last child went, is no longer
-   *  remembered, and one remembered under another spelling of its name is kept under
-   *  the listing's. The rest is kept, including a folder under one that is shut, so
-   *  opening that one again brings its rows back the way they were. Against the disk
-   *  and the notes still arriving rather than the rows drawn: a folder kept out of
-   *  the list by the archive or the Essentials still exists. */
   private keepOpenRows(root: string) {
     const tree = this.tree
     if (!tree || !samePath(tree.path, root)) return
@@ -4247,22 +2970,15 @@ class Workspace {
     })
   }
 
-  /** Every row of the open space folded. */
   foldList() {
     const root = this.activeSpace?.root
     if (root !== undefined) this.device.foldUnder(root)
   }
 
-  /** Whether folding the list would change anything: a row it draws stands open.
-   *  Asked of the rows rather than of what this machine remembers as open, which can
-   *  name a row that is not drawn or holds nothing (#1081); see `standsOpen`. */
   get unfolded(): boolean {
     return anyOpen(this.shownTree, (path) => this.isExpanded(path))
   }
 
-  /** Opens a note and lands on one of its headings, the way a link into a
-   *  heading does: the note that was just loaded says which line the words are
-   *  on, because a bookmark keeps the words and not the line. */
   async openAtHeading(relative: string, heading: string, how: OpenHow = {}) {
     const root = this.activeSpace?.root
     if (!root) return
@@ -4275,64 +2991,39 @@ class Workspace {
     if (line !== null) this.goto = { path, line }
   }
 
-  /** The space's tags, for the tree above the search field; see
-   *  workspace/note-text. */
   async loadTags() {
     await text.loadTags(this)
   }
 
-  /** Renames a tag, and everything under it, in every note of the space. */
   async retagNotes(from: string, to: string | null): Promise<number> {
     return text.retagNotes(this, from, to)
   }
 
-  /** A note's words as they stand: what is on screen when it is open, and what
-   *  is on disk otherwise. */
   async noteText(path: string): Promise<string | null> {
     return text.noteText(this, path)
   }
 
-  /** Ticks or clears the box on one line of a note, without opening it. */
   async toggleTaskAt(path: string, line: number, hash?: string): Promise<boolean> {
     return text.toggleTaskAt(this, path, line, hash)
   }
 
-  /** Writes a replacement across the space, as one thing to undo. `keeping` says
-   *  which versions are kept on the way; see workspace/note-text.ts, including why a
-   *  note in a space shared to be read is passed over. Answers how many were written. */
   async replaceInNotes(changes: readonly Change[], keeping?: text.Keeping): Promise<number> {
     return text.replaceInNotes(this, changes, keeping)
   }
 
-  /** Writes the whole of one note that nobody has open, as the one span it changed
-   *  by: what the editor in a hover card saves with. */
   async writeNoteText(path: string, before: string, after: string) {
     await text.writeNoteText(this, path, before, after)
   }
 
-  /** Makes a note in a folder.
-   *
-   *  With no name it is the file list's own gesture: a row goes into the tree
-   *  waiting to be named, and nothing is written until it has a name, which is
-   *  what Finder, Explorer and VS Code all do. Where there is no list to type in -
-   *  the sidebar shut, another panel open, the plus at the end of the tab strip -
-   *  the note is made under a stepped `Untitled` straight away, because a gesture
-   *  that made nothing at all would read as one that failed. */
   async createNote(folder?: string, named?: string) {
     const dir = folder ?? this.activeSpace?.root
     if (!dir || !(await this.writableAt(dir))) return
     if (named === undefined && this.startNaming('note', dir)) return
 
-    // Opens with its own name as the title, so there is something to write
-    // under rather than an empty page. The one wait is a stamp of the name: the
-    // listing is not the disk; see `freeNameOnDisk`.
     const name = await this.freeNameOnDisk(dir, named ?? PLACEHOLDER.note)
     const path = joinPath(dir, name)
     const content = `# ${shownName(name)}\n\n`
 
-    // The row, the tab and the caret are all there before the file is. Making
-    // a note is the one thing that should never feel like waiting for a disk,
-    // and everything below knows what the note will say.
     this.showEntry(this.freshEntry(path, false))
     if (!samePath(dir, this.activeSpace?.root)) this.device.expand(dir)
 
@@ -4354,21 +3045,11 @@ class Workspace {
     this.persist()
   }
 
-  /** A note made out of words that were somewhere else: a canvas card that has
-   *  outgrown its box. Answers the path it was written to, relative to nothing,
-   *  or null when there is no space to write it in.
-   *
-   *  No tab and no renaming: the card it came from is still what the reader is
-   *  looking at, and a note that opened over the plane would take them away from
-   *  it. The name is stepped like every other new file's.
-   *
-   *  Null too in a space shared to be read; see `writableAt`. */
   async noteFrom(text: string, folder?: string): Promise<string | null> {
     const dir = folder ?? this.activeSpace?.root
     if (!dir || !(await this.writableAt(dir))) return null
 
     const stem = nameFromContent(text) ?? UNTITLED
-    // A card's folder can be one in a space that is not on screen.
     const path = joinPath(dir, await this.freeNameOnDisk(dir, `${stem}.md`))
     this.showEntry(this.freshEntry(path, false))
 
@@ -4379,19 +3060,11 @@ class Workspace {
     return path
   }
 
-  /** Makes a canvas in a folder and opens it. The row asks for the name first
-   *  where there is a list to ask in, exactly as a note's does; once it has one
-   *  the file is written straight away, so the plane on screen and the file on
-   *  disk say the same thing from the first frame. */
   async createCanvas(folder?: string, named?: string) {
     const dir = folder ?? this.activeSpace?.root
     if (!dir || !(await this.writableAt(dir))) return
     if (named === undefined && this.startNaming('canvas', dir)) return
 
-    // What an empty plane says, fetched with the first one asked for: the reader and
-    // writer for JSON Canvas are a surface's worth of code, and a window that opens on
-    // a note has no plane to read. The surface itself comes through surfaces.svelte.ts,
-    // and the index reads a plane through scan-canvas.ts, which is fetched the same way.
     const { blankCanvas } = await import('./canvas/format')
 
     const path = joinPath(dir, await this.freeNameOnDisk(dir, named ?? PLACEHOLDER.canvas))
@@ -4418,18 +3091,6 @@ class Workspace {
     this.persist()
   }
 
-  /** A note inside a note, which is the one way a space is organised.
-   *
-   *  The row's own gesture for what a drag does: `A.md` becomes `A/A.md` and the
-   *  new note arrives beside it, waiting for a name. A row that is already a
-   *  folder - one Orden nested, or one out of somebody's vault - only gets the new
-   *  note, and a row that can hold nothing gets nothing: a PDF or a picture is not
-   *  a place.
-   *
-   *  Nesting is `moveMany` with nothing to move, which is the one call the drop
-   *  makes: it is the folder-note rule in one place, with the same rows put in
-   *  optimistically and the same undo. See folder-notes.ts. `make` is
-   *  another kind, from the row's submenu. */
   async createInside(path: string, make = (folder: string): unknown => this.createNote(folder)) {
     const entry = this.entryAt(path)
     if (!entry || !(await this.writableAt(path))) return
@@ -4443,51 +3104,21 @@ class Workspace {
     })
   }
 
-  /** A name nothing in the folder answers to: the one asked for, or the one asked
-   *  for with a number after it. Every new file steps its name the same way, and a
-   *  name typed into a row goes through it as well - the field can only know what
-   *  the listing it was drawn from held, and a note that arrived from sync a moment
-   *  ago would otherwise be written over.
-   *
-   *  How it steps is `freePath`, which is the one numbering in the app: a clip, an
-   *  import, an export and a note coming back out of Recently deleted all read it.
-   *  Its own copy took the last dot of the name for an extension however little was
-   *  in front of it, so `.hidden` came back as ` 2.hidden`. */
   freeName(dir: string, wanted: string, except?: string): string {
-    // By key rather than as written: on a disk that looks `plan.md` up as `Plan.md`
-    // the one is taken by the other, and writing it would be writing over it.
     const taken = pathKeys(this.everyPath(), dir)
     if (except !== undefined) taken.delete(pathKey(except, dir))
     const has = (name: string) => taken.has(pathKey(joinPath(dir, name), dir))
-    // A page note's paper lands beside it as `<name>.pdf`, and a PDF already there is
-    // somebody's own (#538), so that name is taken too. And the other way round: a PDF
-    // `<name>.pages.pdf` beside a page note `<name>.pages` is taken for its paper.
     return freePath(
       wanted,
       (candidate) =>
         has(candidate) ||
-        // No new note takes the name, whatever words it came from; see `isAgentsName`.
         isAgentsName(candidate) ||
         (/\.pages$/i.test(candidate) && has(`${candidate}.pdf`)) ||
         (/\.pages\.pdf$/i.test(candidate) && has(candidate.slice(0, -'.pdf'.length))),
     )
   }
 
-  /** `freeName`, with the disk asked too: the name every gesture that writes a new
-   *  file takes. `freeName` knows only the listing on screen, and that is not the
-   *  disk. Tabs outlive a space switch, so `Ideas.md` in the other space came back
-   *  free and was written over; and the listing leaves out what is named with a dot
-   *  unless hidden files are shown, so `.notes/Plan.md` did too. Stepped like a
-   *  draft's place; see `claim` in saving.svelte.ts.
-   *
-   *  A name is taken by the other half of its pair as well. A page note landing
-   *  beside a PDF named as its paper takes that PDF for its own, and deleting the
-   *  note deletes the PDF; a paper landing beside a page note of its name is hidden
-   *  in it the same way. The listing that would have shown either is not there for
-   *  a dot folder or another space, so the disk is asked for both. */
   async freeNameOnDisk(dir: string, wanted: string): Promise<string> {
-    // Fetched here rather than imported at the top, as `claim` fetches it: this file
-    // is in the first paint, and a new file is not.
     const { pairOf } = await import('./pages/held')
     const found: string[] = []
     for (;;) {
@@ -4504,15 +3135,6 @@ class Workspace {
     }
   }
 
-  /** Every path in the open space. `notes` holds only files; this counts the
-   *  folders between them too.
-   *
-   *  And the files that are open or on their way to being open. The tree is a
-   *  listing, and a listing is a round trip behind what the app has done: a file
-   *  written a moment ago is a document with a path and not yet a row, and a file
-   *  being written this instant is neither. Said here rather than at each of the
-   *  eight gestures that ask for a name, because the gestures are what keep being
-   *  added; see `paths` in workspace/open.ts. */
   private everyPath(): Set<string> {
     const out = this.opened.paths
     const walk = (entry: Entry) => {
@@ -4526,15 +3148,8 @@ class Workspace {
     return out
   }
 
-  /** Opens the name field on a row that already exists, which is what renaming is.
-   *
-   *  Pointless where the field would not be on screen, and each of the two places
-   *  it appears has its own answer to that: a row needs the file list, and the
-   *  space's name is in the header over every panel, so it needs only that the
-   *  sidebar is open at all. */
   startRenaming(path: string, appending = false) {
     const inHeader = this.spaces.some((space) => samePath(space.root, path))
-    // The file list on whichever side it was moved to.
     const listed = this.openOn(this.sideOf('tree')) === 'tree'
     if (!(inHeader ? this.panel !== null : listed)) return
 
@@ -4542,24 +3157,13 @@ class Workspace {
     this.naming = { path, appending, making: null }
   }
 
-  /** Whether a tab's file has a row in the file list, or the tab is a terminal, which is
-   *  renamed where its name is written; see tab-strip/ops.ts. */
   canRenameFromTab(tab: Tab): boolean {
     return tab.kind === 'terminal' || (tab.path !== null && this.entryAt(tab.path) !== null)
   }
 
-  /** A row for something that does not exist yet, waiting for the name that will
-   *  make it. Answers whether the list took it: with no file list on screen there
-   *  is nowhere to type, and the caller makes the thing itself.
-   *
-   *  The row is the optimistic insert every other file operation does, one step
-   *  earlier: in its sorted place and folder, that folder open, before anything is on
-   *  disk. */
   startNaming(kind: NewKind, dir: string): boolean {
     if (this.panel !== 'tree' || !this.tree) return false
 
-    // A second gesture before the first had a name leaves no row behind it: a row
-    // nobody named is a row for something that was never made.
     this.cancelNaming()
 
     const path = joinPath(dir, this.freeName(dir, PLACEHOLDER[kind]))
@@ -4570,9 +3174,6 @@ class Workspace {
     return true
   }
 
-  /** The row that was waiting for a name, made. The placeholder row goes first and
-   *  the create puts the real one back, so a write that fails leaves nothing
-   *  behind. */
   async makeNamed(name: string) {
     const naming = this.naming
     if (!naming?.making) return
@@ -4590,22 +3191,12 @@ class Workspace {
     else if (!__EVEN_PLUGIN__) await (await import('./chats/view/open')).makeChat(dir, name)
   }
 
-  /** The field is done and there is nothing to write: Escape, a name that cannot
-   *  be written, or a name nobody changed. A row that was being made goes with it,
-   *  since nothing was ever created. */
   cancelNaming() {
     const naming = this.naming
     this.naming = null
     if (naming?.making) this.hideEntry(naming.path)
   }
 
-  /** Keeps the row a name is being typed on across a fresh listing.
-   *
-   *  A row that is being made is on no disk, so the listing that just arrived does
-   *  not hold it and it is put back; without that, a sync pass landing mid-word
-   *  would take the field out from under the caret. A row being renamed that the
-   *  listing no longer holds is a file that has gone - deleted on another machine -
-   *  and the field goes with it rather than committing a name onto nothing. */
   private keepNaming() {
     const naming = this.naming
     if (!naming) return
@@ -4617,10 +3208,6 @@ class Workspace {
     }
   }
 
-  /** What else is in the folder a row sits in, so the field can say a name is
-   *  taken before the rename fails on it. The row's own name is left out: keeping
-   *  it would make every name its own duplicate and every rename open onto a red
-   *  row. */
   namesBeside(path: string): string[] {
     const folder = entryAt(this.tree, folderOf(path))
     return (folder?.children ?? [])
@@ -4632,35 +3219,21 @@ class Workspace {
     const clean = name.trim()
     if (!clean || clean.includes('/') || clean.includes('\\')) return
 
-    // Spelled the same, not the same file: a name that only changes its case is a
-    // rename, and the crate respells it; see `respell` in notes.rs.
     const target = joinPath(folderOf(path), clean)
     if (sameSpelling(target, path) || !(await this.writableAt(path))) return
 
-    // After whatever write of it is in the air, so the write cannot put the old name
-    // back beside the new one - and of everything open inside it, for a folder.
     await this.saving.holdingUnder(path, () => this.renameFile(path, target, true))
   }
 
-  /** One file operation on everything open at or under `path`; see `holdingUnder` in
-   *  workspace/saving.svelte.ts. */
   holdingUnder(path: string, run: () => Promise<void>): Promise<void> {
     return this.saving.holdingUnder(path, run)
   }
 
-  /** A move sync makes of everything open at or under `path`; see `holdingWrites` in
-   *  workspace/saving.svelte.ts. */
   holdingWrites<T>(path: string, run: () => Promise<T>, stalled: () => Promise<T>): Promise<T> {
     return this.saving.holdingWrites(path, run, stalled)
   }
 
-  /** One file under another name in the same folder, and everything that owes: the
-   *  row, the links to it, and what everything kept by path hears; see `fileMoved`.
-   *  `undoable` is whether somebody did it - a row renamed - or the note's own words
-   *  did; only the first is a step to undo and a heading to rewrite. `hold`: a PDF
-   *  turned into its page note; see `rename_note`. */
   private async renameFile(path: string, target: string, undoable: boolean, hold = false) {
-    // Under way until it is told; see `move`.
     const { moving } = await import('./views/moving')
     await moving(target, () => this.renamingFile(path, target, undoable, hold))
   }
@@ -4668,16 +3241,9 @@ class Workspace {
   private async renamingFile(path: string, target: string, undoable: boolean, hold: boolean) {
     const kind = this.kindAt(path)
 
-    // The new name is on the row before the rename has happened; the listing
-    // that follows is what settles it.
     this.showMove(path, target)
     if (undoable) this.naming = null
 
-    // And back under the name it had if the rename did not happen. The field refuses
-    // a name the listing it was drawn from held, so what is left here is a race - a
-    // note that arrived from sync, a name that differs from this one only in case,
-    // which is the same file to Windows and to a Mac - and the row wore a name
-    // nothing answered to until the next listing. See `move` and `remove`.
     try {
       await this.renameOnDisk(path, target, kind, hold ? { hold } : {})
     } catch (error) {
@@ -4685,9 +3251,6 @@ class Workspace {
       throw error
     }
 
-    // Every link to the note now points at a name nothing answers to, so they
-    // are rewritten, silently, as Obsidian does. Recorded on the action so that
-    // undoing the rename undoes the rewrite with it.
     const rewrote = await this.retargetMoved(path, target)
     if (undoable) {
       this.undone.record({
@@ -4701,18 +3264,8 @@ class Workspace {
     const note = this.opened.at(path)
     if (note) {
       note.flush()
-      // A new note is written with its own name as the heading, so renaming it
-      // straight afterwards would otherwise leave `# Untitled` at the top. Only
-      // while the heading still is the old name; an edited one is the author's.
-      // Never for a note its own words renamed: the heading is where the name came
-      // from.
       const was = `# ${shownName(nameOf(path))}`
       if (undoable && (note.text === was || note.text.startsWith(was + '\n'))) {
-        // Nobody typed this, so it goes in the way any other outside edit does. But
-        // it is not what the file says, so it is owed the way typing is: a note with
-        // nothing waiting used to take it quietly and stay clean, the tab saying
-        // `# Groceries` and the file keeping `# Untitled`. Written once the rename
-        // lets go of the note; see `holdingUnder`.
         note.replace(`# ${shownName(nameOf(target))}${note.text.slice(was.length)}`, note.dirty)
         note.dirty = true
         this.saving.owed(note)
@@ -4724,9 +3277,6 @@ class Workspace {
     this.persist()
   }
 
-  /** A file or a folder moved on the disk (`rename_note`), said to sync by what is
-   *  there before the disk has it; see `doing` in workspace/file-ops.ts. Everything
-   *  kept by path still hears of it after, from `fileMoved`. */
   async renameOnDisk(from: string, to: string, kind: Kind, how: { hold?: boolean } = {}) {
     const op = {
       op: 'moved',
@@ -4741,10 +3291,6 @@ class Workspace {
     )
   }
 
-  /** Every link to a note that has moved pointed at it again; whether any was. A rewrite
-   *  that fails leaves the note moved all the same, so the move goes on as one: told, a
-   *  step to undo, and the tree read again; with nothing said to have been rewritten, so
-   *  the undo points no link that was already dangling at the old name. Otherwise the rows would hold it at both paths and take it for a new note. */
   private async retargetMoved(from: string, to: string): Promise<boolean> {
     try {
       return (await this.retarget(from, to, { moved: true })) > 0
@@ -4754,30 +3300,21 @@ class Workspace {
     }
   }
 
-  /** Whether a row is a folder or a file, asked before it moves. */
   private kindAt(path: string): 'file' | 'folder' {
     return this.entryAt(path)?.is_dir === true ? 'folder' : 'file'
   }
 
-  /** A file, a folder or a space that moved, went or came to be without being
-   *  written word by word (a copy, a delete undone, something back out of Recently
-   *  deleted), said once to everything kept by path; see workspace/file-ops.ts. A move
-   *  after its links are rewritten, never before: finding what pointed at the old name
-   *  means resolving it against the space as it was. Each store hears of the path's
-   *  own space, which an agent's may not be (8.6 in docs/agent-native.md). */
   async fileMoved(from: string, to: string, kind: Kind) {
     const root = kind === 'space' ? from : this.rootHolding(from)
     const into = kind === 'space' ? to : this.rootHolding(to)
     await this.fileOps.tell({ op: 'moved', from, to, kind, root, into })
   }
 
-  /** `back`: the word to put it back by; see workspace/file-ops.ts. */
   async fileGone(path: string, kind: Kind, back?: string) {
     const root = this.rootHolding(path)
     await this.fileOps.tell({ op: 'removed', path, kind, root, ...(back ? { back } : {}) })
   }
 
-  /** `back`: a delete put back, by the word it was said with. */
   async fileCame(
     path: string,
     kind: 'file' | 'folder',
@@ -4797,26 +3334,16 @@ class Workspace {
     })
   }
 
-  /** The root of the space holding `path`, else the active one's. Asked by anything
-   *  that writes a path relative to a space on behalf of a file that may not be in the
-   *  active one: tabs are shared across spaces, so a canvas of one space stays open
-   *  while another is active, and its cards are relative to its own. */
   rootHolding(path: string | null): string | null {
     if (path === null) return this.activeSpace?.root ?? null
     const holding = this.spaces.find((one) => within(one.root, path) !== null)
     return holding?.root ?? this.activeSpace?.root ?? null
   }
 
-  /** `source`: an agent the last version is kept for (docs/agent-native.md 8.5). */
   async remove(path: string, isFolder: boolean, source?: string) {
-    // Nothing archived is deleted, and nothing in a space shared to be read; the
-    // menus and keys never ask, and this is for a caller that did not look.
     if (this.keepsArchived(path) || !(await this.writableAt(path))) return
 
     await this.undone.batch(async () => {
-      // Gone from the tree before the snapshot has been taken and the file has
-      // been moved: three round trips is a long time for a row to sit there
-      // looking as though the delete had not registered.
       this.hideEntry(path)
 
       const kept = await this.bin(path, isFolder, { source })
@@ -4824,19 +3351,14 @@ class Workspace {
 
       await this.fileGone(path, isFolder ? 'folder' : 'file', kept?.trashId ?? kept?.back)
       await this.loadTree()
-      // The row deleted may have been the last thing keeping a nested note nested.
       await this.unnest(folderOf(path))
     })
   }
 
-  /** Deletes, answering what puts it back; recorded by the caller. See `Binning`. */
   async bin(path: string, isFolder: boolean, how: Binning = {}): Promise<Kept | null> {
     const { source, madeHere = false } = how
     this.saving.wordsNow()
     await Promise.race([this.saving.settled(), waited(GIVE_UP)])
-    // A deleted note keeps one last snapshot, so the delete is recoverable. A PDF
-    // is bytes and not words: there is no snapshot of one, so the only thing that
-    // can put it back is the trash.
     const words = !isFolder && !isPdfTarget(path)
     let content: string | null = null
     if (words) {
@@ -4844,14 +3366,7 @@ class Workspace {
       if (content) await invoke('snapshot_note', { path, content, source }).catch(() => undefined)
     }
 
-    // Unreadable means no snapshot and never synced: only the trash can keep it, and
-    // only the trash keeps a page note's paper with it.
     const unread = words && content === null
-    // Signed in, the account keeps a copy for 14 days; signed out, this
-    // device does, in its own trash folder (see trash.svelte.ts).
-    // But only of what it was handed, which a space on no account, a file made
-    // offline or since the last push, or a dotfile is not. Those go to this device's
-    // trash: a folder's notes and a paper have no snapshot, and outright they were lost.
     const toAccount =
       account.signedIn &&
       !madeHere &&
@@ -4861,9 +3376,6 @@ class Workspace {
     const held =
       toAccount && isFolder ? await (await import('./workspace/undoing')).heldIn(path) : null
 
-    // Said to sync before the disk has it, with the word to put it back by: the trash's
-    // id for it, or one of its own for a delete the account keeps; see `doing` in
-    // workspace/file-ops.ts.
     const gone = {
       op: 'removed',
       path,
@@ -4892,42 +3404,23 @@ class Workspace {
       })
       return { content: content ?? '', trashId, ...(isFolder ? { folder: true } : {}) }
     } catch (error) {
-      // The row was hidden before the file was asked to go, so a delete that
-      // did not happen has to put it back: the listing is what the tree really
-      // is, and until it is read again the row is simply missing.
       await this.loadTree()
       throw error
     }
   }
 
-  /** Whether the account holds a copy of what a path is, so a delete can go to it.
-   *  The space being on the account is not enough: a file dropped in offline or
-   *  since the last push, and a dotfile, which sync never hands it, are on this
-   *  device alone, and so is what was written since. A folder counts only if
-   *  everything under it is held, and only a note goes: the account's Recently
-   *  deleted gives back nothing else, so a paper or a picture goes to the trash.
-   *  Nor from a space somebody else owns: theirs is the Recently deleted it lands in. */
   private async accountHolds(path: string, isFolder: boolean): Promise<boolean> {
     if (!isFolder && !isMarkdownPath(path)) return false
     const root = this.rootHolding(path)
     if (!root) return false
     const { sync } = await import('./sync.svelte')
     const id = sync.remoteIdFor(root)
-    // Asked of the listing rather than of `roleOf`, which takes a space it cannot
-    // find for this account's own: a space not listed yet is nobody's to leave to.
     if (account.spaces.find((one) => one.id === id)?.role !== 'owner') return false
     if (!isFolder) return sync.holds(path)
     const { accountHoldsAll } = await import('./workspace/undoing')
     return accountHoldsAll(path, (one, how) => sync.holds(one, how))
   }
 
-  /** Puts the last file operation back; what each kind means going back is
-   *  workspace/undoing.ts, and what is on the stack is workspace/undo.svelte.ts.
-   *  Fetched with the first undo, like the redo beside it: a window opens on a note
-   *  and not on a file operation to take back. See test/weight.test.ts.
-   *
-   *  `only`: this step and no other, for whoever offered it. A gesture still landing goes
-   *  on top of it while this waits. */
   async undoFileAction(only?: FileAction) {
     await this.inTurn(async () => {
       if (!(await this.landedFor(() => void this.undoFileAction(only)))) return
@@ -4937,7 +3430,6 @@ class Workspace {
     })
   }
 
-  /** Does the last undone file operation again; see workspace/redoing.ts. */
   async redoFileAction() {
     await this.inTurn(async () => {
       if (!(await this.landedFor(() => void this.redoFileAction()))) return
@@ -4953,19 +3445,12 @@ class Workspace {
     return false
   }
 
-  /** Undos and redos one at a time, each after the one before has landed. */
   private turn: Promise<void> = Promise.resolve()
   private inTurn(work: () => Promise<void>): Promise<void> {
     this.turn = this.turn.then(work, work)
     return this.turn
   }
 
-  /** A note the first pass has just written, by the path it landed at.
-   *
-   *  A tab that was holding its place takes the words and becomes an ordinary
-   *  note. Only that case: a note already open with words of its own is the
-   *  syncing loop's business and is settled by the mirror rather than here. See
-   *  `pull` in sync/pass.ts, which says when each body lands. */
   async arrived(path: string) {
     const waiting = this.tabs.filter((tab) => tab.coming && samePath(tab.path, path))
     if (!waiting.length) return
@@ -4977,36 +3462,20 @@ class Workspace {
     for (const tab of waiting) tab.coming = false
   }
 
-  /** Text written to a note from outside the editor, put into the document if it
-   *  is open, which puts it into every pane showing it. */
   reload(path: string, content: string) {
     this.opened.at(path)?.replace(content, false)
   }
 
-  /** Rewrites every link in the space that points at `from` so it points at `to`.
-   *  Answers how many notes were touched, so a caller can record whether there is
-   *  anything to put back. */
   async retarget(from: string, to: string, how: Retargeting = {}): Promise<number> {
-    // The space the note is in, which an undo or a redo done after switching spaces,
-    // or a rename from a tab of another space, is not the active one.
     const root = this.rootHolding(from)
     if (!root) return 0
 
     const touched = await links.retarget(from, to, root, (path) => this.documentAt(path), how)
 
-    // A note on screen may be one of the notes that was rewritten.
     this.flush()
     for (const note of this.documents) {
       if (!note.path || note.dirty) continue
 
-      // The file this document is on, which of its notes that is, and where its
-      // words had got to, all read before the file is. This is one round trip per
-      // open document, which is a click's worth of time, and a click in the file
-      // list moves the preview tab on to another note: words read for one note
-      // must never land on another. A keystroke in that moment is the same
-      // question with a shorter answer - what is on disk is no longer this note's
-      // news, and landing it would take the keystroke with it. See
-      // NoteDoc.arrivals.
       const path = note.path
       const holding = note.arrivals
       const revision = note.revision
@@ -5022,21 +3491,7 @@ class Workspace {
     return touched
   }
 
-  /** Follows a link between notes: opens the note, goes to the heading or the
-   *  block it names, and makes the note when the space has none.
-   *
-   *  Where the caret ends up is worked out from the note that has just been
-   *  loaded rather than from the index, because the index knows a heading's words
-   *  and not which line they are on - and the note on disk is the authority.
-   *
-   *  `ask` is what the press held down: with a modifier the file opens in a tab
-   *  beside this one, behind it or in front, and with Alt as well in a pane to the
-   *  right; see new-tab.ts. */
   async followLink(jump: NoteJump, ask: LinkAsk = 'plain', from?: string | null) {
-    // The note the link sits in, which its path is relative to the space of. Not
-    // always the tab in front - a scratchpad, a task's description in the task view, a
-    // chat - and not always in the active space, since tabs are shared across spaces.
-    // The front tab only where a caller cannot say.
     const source = from === undefined ? (this.active?.path ?? null) : from
     const root = this.rootHolding(source)
     if (!root) return
@@ -5046,16 +3501,12 @@ class Workspace {
     }
     const how = howFor(ask)
 
-    // A PDF, a canvas and a page note are files: a link to one the space does not
-    // hold is a link to nothing, never a reason to make a note under that name.
     if (isPdfTarget(jump.target)) {
       if (jump.path) await this.openPdf(insideSpace(root, jump.path), jump.page, how)
       return
     }
 
     if (isPagesTarget(jump.target)) {
-      // `#page=3` means the same thing here as it does in a PDF, because it is the
-      // same question about the same kind of thing; see links.ts.
       if (jump.path) await this.openPages(insideSpace(root, jump.path), jump.page, how)
       return
     }
@@ -5070,11 +3521,6 @@ class Workspace {
       : await this.linkedOrMade(jump, root, source)
     if (!path) return
 
-    // A website opens as the page it points at, which is what its row in the file
-    // list does; `[[Svelte docs]]` is a link to the document and the document is the
-    // page, whether the file is a shortcut or one of the notes websites used to be.
-    // A heading or a block in such a link means nothing, and the early return is the
-    // honest answer to it.
     if (isWebTarget(path) || links.urlOf(path) !== null) {
       await this.openWeb(path, how)
       return
@@ -5084,10 +3530,6 @@ class Workspace {
     this.landOn(path, jump)
   }
 
-  /** A link followed into a pane to the right, as Ctrl+Alt+click does in Obsidian and
-   *  the link's own menu offers: the same note, made where the link would make it,
-   *  and the same heading, through `openAside`. A PDF opens there at its first page,
-   *  which is where a file carried into a pane opens. */
   private async followAside(jump: NoteJump, root: string, source: string | null) {
     const path = jump.path
       ? insideSpace(root, jump.path)
@@ -5100,7 +3542,6 @@ class Workspace {
     this.landOn(path, jump)
   }
 
-  /** The heading or the block a followed link named, gone to in the note it opened. */
   private landOn(asked: string, jump: NoteJump) {
     if (jump.heading === null && jump.block === null) return
 
@@ -5110,17 +3551,8 @@ class Workspace {
     if (line !== null) this.goto = { path, line }
   }
 
-  /** Where a followed link asked to land: which note, and which line of it. Read
-   *  and cleared by the app, which is what owns the editor's scroll. */
   goto = $state<{ path: string; line: number } | null>(null)
 
-  /** The note a link names but the space has not got. Made where a link would
-   *  look for it: in the folder the link says, or beside the note that links to
-   *  it when it says none. */
-  /** A link the index answered nothing for: the note it names once the space it was
-   *  written in has been read, else made. A note of another space still open is
-   *  resolved against an index read the first time it asks, and a press before that
-   *  lands would otherwise make a note over the one that is there. */
   private async linkedOrMade(
     jump: NoteJump,
     root: string,
@@ -5130,44 +3562,27 @@ class Workspace {
     return known === null ? this.makeLinked(jump.target, root, source) : insideSpace(root, known)
   }
 
-  /** A note made for a link to nothing, beside `source`, the note the link is in. */
   private async makeLinked(
     target: string,
     root: string,
     source: string | null,
   ): Promise<string | null> {
     const slashed = target.replace(/[\\]/g, '/')
-    // Two slashes are no path from the top and name nothing; see `resolveNote`.
     if (slashed.trimStart().startsWith('//')) return null
     const clean = slashed.replace(/^\/+|\/+$/g, '')
     if (!clean) return null
 
-    // A path from the top of the space, `[[/Road]]`, is made there (B543).
     const inside = source === null ? null : withinSpace(root, source)
     const here = inside === null || slashed.trimStart().startsWith('/') ? '' : folderOf(inside)
     const relative = clean.includes('/') || !here ? clean : `${here}/${clean}`
 
-    // What a link says is somebody's prose. A note out of a shared space, a room,
-    // a sync pull or a paste can say `[[../../../.bashrc]]`, and a note made under
-    // that name is a file written over somewhere else on the machine - `write_note`
-    // takes any path the app hands it and folds the `..` away rather than refusing
-    // it. So the same function the local endpoint and every `nib://` link are
-    // judged by decides this too: one rule for the three roads a path somebody
-    // else wrote takes into a space. See automation/inside.ts.
     const safe = insideOnly(isMarkdownPath(relative) ? relative : `${relative}.md`)
     if (safe === null) return null
 
-    // A link in a space shared to be read names a note only its owner may make, so
-    // following it there opens nothing rather than writing into their space.
     const path = insideSpace(root, safe)
-    // The index's miss is not the disk's: a dot folder is never scanned, and a note
-    // that is not UTF-8 or too big to read is skipped. So the disk is asked, and a
-    // note that is there is opened - or refused by the open, if it would not read -
-    // rather than written over with a heading.
     if (await onDisk(path)) return path
 
     if (!(await this.writableAt(path))) return null
-    // What nobody may name a note, a link cannot either; see `isAgentsName`.
     if (isAgentsName(nameOf(path))) {
       void import('./reserved-name.svelte').then((one) => one.reservedName.tell(root))
       return null
@@ -5179,38 +3594,24 @@ class Workspace {
     return path
   }
 
-  /** Appends this note into another, deletes it, and points every link that came
-   *  here at the note it went into; see workspace/composing. */
   async mergeInto(from: string, into: string) {
     await composing.mergeInto(this, from, into)
   }
 
-  /** Everything from the caret on becomes a note of its own, with a link left in
-   *  its place. */
   async splitAtCaret(at: number) {
     await composing.splitAtCaret(this, at)
   }
 
-  /** The selection becomes a note of its own, with a link in its place. */
   async extractSelection(from: number, to: number) {
     await composing.extractSelection(this, from, to)
   }
 
-  /** A note whose name is the moment it was made, so nothing ever collides with
-   *  it and no link to it ever has to be rewritten. The format is the reader's;
-   *  see note-id.ts and the Editor settings. */
   async createUniqueNote(format: string, folder?: string) {
     const dir = folder ?? this.activeSpace?.root
     if (!dir || !(await this.writableAt(dir))) return
 
-    // Two notes made in the same minute is the one way a moment can be taken, and
-    // it steps aside the way every other name in the app does - `Name 2.md`,
-    // through `freePath`. Its own numbering said `Name-2.md`, a spelling nothing
-    // else in the app writes.
     const name = await this.freeNameOnDisk(dir, `${noteId(format)}.md`)
 
-    // Opens with an empty heading and the caret in it: the name is settled, so
-    // the only thing left to do is say what the note is about.
     const path = joinPath(dir, name)
     const content = '# '
 
@@ -5230,9 +3631,6 @@ class Workspace {
     this.showNote()
     this.remember(path)
     this.dropScaffolding(tab)
-    // The name is settled and the row is waiting for a title after it; typing
-    // one leaves `202609070155 Some title.md`, and pressing Enter with nothing
-    // typed leaves the timestamp alone.
     this.startRenaming(path, true)
 
     await writeFile(path, content)
@@ -5240,33 +3638,18 @@ class Workspace {
     this.persist()
   }
 
-  /** What undoing would do, phrased for a menu. Null when there is nothing. */
   get undoLabel(): string | null {
     return this.undone.label
   }
 
-  /** Whether a file change undone can be done again. */
   get canRedo(): boolean {
     return this.undone.canRedo
   }
 
-  /** A second copy of a file, beside the first.
-   *
-   *  `Plan.md` copies to `Plan copy.md`: the word goes beside the name rather than
-   *  after the ending, so the copy is still a note in a vault opened next door, and
-   *  `copyName` is where that is said. Through `freeName` like every other name the
-   *  app writes, because a second copy used to be written straight over the first -
-   *  `write_note` replaces what is there, and nothing asked.
-   *
-   *  The same copy a paste makes, which is bytes rather than words: a PDF and a
-   *  folder drawn as its note duplicate as well, and the copy is one undo away. See
-   *  workspace/copying.ts. */
   async duplicate(path: string) {
     await this.duplicateMany([path])
   }
 
-  /** The three panel fields together, for the rules next door to work out the
-   *  next set of; see workspace/panels. */
   private get sides(): Sides {
     return { panel: this.panel, rightPanel: this.rightPanel, right: this.right, covered: pad.on }
   }
@@ -5276,40 +3659,28 @@ class Workspace {
     this.rightPanel = next.rightPanel
     this.right = next.right
     if (next.rightPanel) this.lastRight = next.rightPanel
-    // The right side asked for puts the scratchpad away.
     if (pad.on && !next.covered) pad.hide()
-    // Every deliberate showing, shutting and moving of a panel comes through here,
-    // which is what makes this the one place a choice is noted; see `panelChosen`.
     this.panelChosen = true
     this.persist()
   }
 
-  /** Which side a panel lives on. Left unless it was moved. */
   sideOf(panel: Panel): PanelSide {
     return panels.sideOf(this.right, panel)
   }
 
-  /** The panel open on one side, which is what that side's tab strip marks and
-   *  what its body draws: none on the right under the scratchpad; see panels.ts. */
   openOn(side: PanelSide): Panel | null {
     const open = panels.openOn(this.sides, side)
     return open && this.offers(open) ? open : null
   }
 
-  /** Which tabs one side holds, in the order the strip shows them. */
   panelsOn(side: PanelSide, every: readonly Panel[]): Panel[] {
     return panels.panelsOn(this.right, side, every).filter((one) => this.offers(one))
   }
 
-  /** Whether this device has a panel at all: a phone and a tablet have no AI panel,
-   *  its tab or any way to it (#403). */
   offers(panel: Panel): boolean {
     return panel !== 'ask' || !viewport.touch
   }
 
-  /** The panel the right side shows when something asks it to open: whatever is
-   *  open or was last open there, else its first. One rule for the bar's button, the
-   *  key and the thumb that pulls the drawer out. Nothing once every panel has left. */
   get nextRight(): Panel | null {
     const last = this.lastRight
     const right = this.right.filter((one) => this.offers(one))
@@ -5317,19 +3688,6 @@ class Workspace {
     return open ?? (last && right.includes(last) ? last : right[0]) ?? null
   }
 
-  /** Shows a panel. Asking for the one already showing leaves it showing, which is
-   *  what a method called `show` has to mean.
-   *
-   *  It used to be the switch below, and every caller that meant "show" had to
-   *  remember: two of them did, with `if (workspace.panel !== panel)` in front of
-   *  the call, and the rest took the file list away instead of opening it - the
-   *  menu's own File list row, the bookmarks row of a website, the drag that pulls
-   *  the drawer out. The drives met it hardest, because a drive asks for the file
-   *  list on every launch and the sitting before it left the file list open: they
-   *  spent a minute each waiting for rows they had just closed.
-   *
-   *  So the fact is held here rather than by everybody who asks for it, and the
-   *  gesture that switches says switch; see `togglePanel`. */
   showPanel(next: Panel) {
     if (!this.offers(next)) return
     this.unfill()
@@ -5338,55 +3696,34 @@ class Workspace {
     this.sides = panels.showing(this.sides, next)
   }
 
-  /** Shows a panel, or shuts it where it is already the one showing: a side's own
-   *  button and key, which are about the side.
-   *
-   *  Not a panel's tab. The tabs are in the side they switch, so pressing the one in
-   *  front shut the side it was in - the whole bar gone from under the pointer, on a
-   *  press that meant "this one" (#770). A tab selects, as every tab does; the side is
-   *  shut by its button, its key or its edge.
-   *
-   *  A switch belongs to a control somebody is looking at, which knows what it is
-   *  showing. The rule itself is `showing` in workspace/panels.ts, which answers
-   *  what the two sides are after the press. */
   togglePanel(next: Panel) {
     if (!this.offers(next)) return
     if (this.unfill() && this.openOn(this.sideOf(next)) === next) return
     this.sides = panels.showing(this.sides, next)
   }
 
-  /** A tab filling the window hides both sides, so a side asked for is the window asked
-   *  back for, with its sides as they were; see lib/tab-fill. Answers whether one was. */
   private unfill(): boolean {
     if (this.panes.fills === null) return false
     this.panes.fills = null
     return true
   }
 
-  /** Shuts a side whichever panel is in it. */
   closePanel(side: PanelSide = 'left') {
     if (!this.openOn(side)) return
 
     this.sides = panels.closing(this.sides, side)
   }
 
-  /** Moves a panel to the other side, and takes its open state with it. */
   movePanel(panel: Panel, side: PanelSide) {
     this.sides = panels.moving(this.sides, panel, side)
   }
 
-  /** What the right side shows: the scratchpad's card, one of its panels, or nothing
-   *  (#1032). The card goes over the panel kept under it, so it is the card while it
-   *  is up. */
   get rightShows(): Panel | 'scratchpad' | null {
     return pad.on ? 'scratchpad' : this.openOn('right')
   }
 
-  /** What the right side showed when it was last shut, which it opens on again. */
   private rightLast: Panel | 'scratchpad' | null = null
 
-  /** Shows the scratchpad or a panel on the right: the side's own tabs, the
-   *  scratchpad's key. One of the two, never both; see workspace/panels.ts. */
   showRight(what: Panel | 'scratchpad', take = true) {
     if (what !== 'scratchpad') {
       this.showPanel(what)
@@ -5396,8 +3733,6 @@ class Workspace {
     if (!pad.on) pad.show(take)
   }
 
-  /** Shuts the right side whatever it shows, the card and the panel under it both, so
-   *  nothing comes back from under what was shut (#1032). */
   closeRight() {
     const shows = this.rightShows
     if (shows === null) return
@@ -5405,11 +3740,6 @@ class Workspace {
     this.sides = { ...this.sides, rightPanel: null, covered: false }
   }
 
-  /** Opens or shuts one side: the left on the file list. The right is one side
-   *  whatever it holds (#1032): shut whole if it shows anything, the scratchpad or a
-   *  panel, and otherwise opened on what it showed last - the scratchpad, or
-   *  `nextRight`. The one rule for the bar's button, the key and the menu. Nothing while
-   *  the tab overview is up, whose canvas is where the sides were (Emil, #331 round 4). */
   toggleSidebar(side: PanelSide = 'left') {
     if (tabOverview.open) return
     if (side === 'right') {
@@ -5433,12 +3763,6 @@ class Workspace {
     this.persist()
   }
 
-  /** The note beside itself, or below itself: another view of the same document
-   *  in a pane of its own, opened where this one is being read so the split
-   *  starts as two windows onto the same place.
-   *
-   *  Nothing happens on a phone, where there is one pane and the commands for
-   *  this are not offered. */
   split(along: Along, tabId?: string) {
     if (viewport.touch) return
 
@@ -5453,20 +3777,16 @@ class Workspace {
     beside.scroll = tab.scroll
     beside.anchor = tab.anchor
     beside.folds = tab.folds
-    // As Obsidian's split does.
     beside.source = tab.source
 
     this.add(beside)
     this.persist()
   }
 
-  /** The graph is one to a pane, and a phone has one document; see tab-strip/ops.ts. */
   canDuplicateTab(tab: Tab): boolean {
     return !viewport.touch && tab.kind !== 'graph'
   }
 
-  /** Whether a pane can still be split that way, which is what hides the entry
-   *  rather than offering one that does nothing. */
   canSplit(along: Along, tabId?: string): boolean {
     if (viewport.touch) return false
 
@@ -5474,19 +3794,11 @@ class Workspace {
     return !!tab && this.panes.splittable(along, tab.paneId)
   }
 
-  /** A tab dragged into a pane, at a place in its strip: `at` counts along that
-   *  strip, and past its end - or left out - means last, which is where a tab
-   *  dropped on the note rather than on the strip belongs.
-   *
-   *  The pane it came from goes if that was its last tab, which is the same rule
-   *  as closing one: dragging the last tab of a pane onto another pane's strip
-   *  is how the two are merged. */
   moveTab(id: string, paneId: string, at: number | null = null) {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab || !this.panes.at(paneId)) return
 
     const from = tab.paneId
-    // Dropped back where it already is, with no place asked for: nothing moved.
     if (from === paneId && at === null) return
 
     const was = this.tabsIn(from).findIndex((one) => one.id === id)
@@ -5497,7 +3809,6 @@ class Workspace {
       const left = this.tabsIn(from)
       if (!paneStays(left.length, this.showing(from))) this.closePaneOf(from)
       else if (this.panes.at(from)?.activeTabId === id) {
-        // The pane it left shows the tab used there last, not its first (#1079).
         this.panes.activate(
           from,
           this.panes.successorOf(
@@ -5512,8 +3823,6 @@ class Workspace {
     this.persist()
   }
 
-  /** A tab dropped where the last drag told it: at a place in a strip, in the
-   *  middle of a pane, or against one of its sides, which makes a pane there. */
   dropTab(id: string, landing: Landing) {
     if (!this.tabs.some((one) => one.id === id)) return
 
@@ -5530,8 +3839,6 @@ class Workspace {
     if (made) this.moveTab(id, made.id)
   }
 
-  /** Another pane to carry a tab to, or room beside its own and a tab left behind
-   *  in it; see tab-strip/ops.ts. */
   canMoveToOtherPane(id: string): boolean {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab || viewport.touch) return false
@@ -5539,12 +3846,6 @@ class Workspace {
     return this.panes.count > 1 || this.canLand('right', tab.paneId, id)
   }
 
-  /** Notes dragged out of the file list onto a pane, opened where they were
-   *  dropped: at their place in that pane's strip, or in a pane made against the
-   *  side they were held against.
-   *
-   *  Opened first and split afterwards, so a note that turns out not to be there
-   *  to open cannot leave a pane behind with nothing in it. */
   async dropNotes(paths: string[], landing: Landing) {
     if (!this.panes.at(landing.paneId)) return
     this.panes.focus(landing.paneId)
@@ -5568,14 +3869,6 @@ class Workspace {
     if (made) for (const id of opened) this.moveTab(id, made.id)
   }
 
-  /** A file opened in a pane of its own to the right of the one in front: VS Code's
-   *  quick open does it for Ctrl+Enter and Obsidian's switcher for Ctrl+Alt+Enter.
-   *
-   *  A file that is not open yet is opened and carried over, the way a row dropped on
-   *  that side is. One that is open already becomes a second view of itself there,
-   *  as `split` makes one, rather than being taken away from the pane it is in. Where
-   *  no pane can be made - a phone, a pane split as far as it goes - it is the
-   *  ordinary open. */
   async openAside(path: string) {
     const from = this.panes.focusedId
     if (viewport.touch || this.instructionsAt(path) || !this.panes.splittable('row', from)) {
@@ -5588,7 +3881,6 @@ class Workspace {
       await this.dropNotes([path], { kind: 'pane', paneId: from, zone: 'right' })
       return
     }
-    // A web note is open once, where it is; see `secondWebTabs` in workspace/open.ts.
     if (open.kind === 'web') {
       this.showTab(open.note)
       return
@@ -5601,10 +3893,6 @@ class Workspace {
     this.persist()
   }
 
-  /** Whether a tab dropped against that side of a pane would do anything: the
-   *  pane has to be able to split that way, and the tab must not be the only one
-   *  in the pane being split, which would empty that pane and close it again the
-   *  moment the new one opened. What decides which zones a pane offers. */
   canLand(side: Side, paneId: string, tabId: string | null): boolean {
     if (viewport.touch || !this.panes.splittable(alongOf(side), paneId)) return false
 
@@ -5612,9 +3900,6 @@ class Workspace {
     return !(tab?.paneId === paneId && this.tabsIn(paneId).length < 2)
   }
 
-  /** A pane and everything in it, asking only about a terminal running something
-   *  among its tabs. The last pane cannot go: a window with none has nowhere to show a
-   *  note. */
   async closePane(paneId: string = this.panes.focusedId) {
     if (this.panes.count < 2) return
 
@@ -5624,8 +3909,6 @@ class Workspace {
     for (const tab of tabs) this.close(tab.id)
   }
 
-  /** The other panes showing the note this one is showing. What the link toggle
-   *  appears for, and what a linked pane scrolls with. */
   twins(paneId: string): string[] {
     const note = this.showing(paneId)?.note
     if (!note) return []
@@ -5635,37 +3918,26 @@ class Workspace {
       .map((one) => one.id)
   }
 
-  /** The link between the panes showing one note, on or off. One toggle for the
-   *  pair rather than one each: it is one relationship, and a pane that says it
-   *  is linked while its twin says it is not would be a lie in one of them. */
   toggleLink(paneId: string) {
     const on = !(this.panes.at(paneId)?.linked ?? false)
     for (const id of [paneId, ...this.twins(paneId)]) this.panes.setLinked(id, on)
   }
 
-  /** Whether a pane may lay its notes out as columns at all: it has to hold more than
-   *  one note, and the machine has to be one that holds more than one document. A
-   *  handheld holds one, so there is nothing to put beside anything. */
   canStack(paneId: string = this.panes.focusedId): boolean {
     if (viewport.touch) return false
 
     return this.tabsIn(paneId).filter((tab) => tab.kind === 'note' && !tab.reading).length > 1
   }
 
-  /** Whether a pane is stacked. */
   stacked(paneId: string = this.panes.focusedId): boolean {
     return this.panes.at(paneId)?.stacked ?? false
   }
 
-  /** Lays a pane's notes out as columns, or puts them back to one document with a strip
-   *  of names over it. A pane's own answer, and remembered with the pane. */
   toggleStacked(paneId: string = this.panes.focusedId) {
     this.panes.setStacked(paneId, !this.stacked(paneId))
     this.persist()
   }
 
-  /** One pane again, with everything in it: what a phone gets, since there is no
-   *  room there to put two notes beside each other. */
   collapsePanes() {
     if (this.panes.count < 2) return
 
@@ -5676,7 +3948,6 @@ class Workspace {
     this.persist()
   }
 
-  /** Keeps the arrangement under a name; see workspace/layouts.svelte.ts. */
   saveLayout(name: string) {
     this.layouts.save(name, this.layout())
   }
@@ -5698,7 +3969,6 @@ class Workspace {
 
 export const workspace = new Workspace()
 
-// Handed over rather than imported: the index and the workspace read each other.
 links.archivedIn = (root) => workspace.archive.keysOf(root)
 links.spaceOf = (path) => workspace.rootHolding(path)
 links.lockedAt = (path) => workspace.protection.locked(path)

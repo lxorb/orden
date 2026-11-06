@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const id: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'Semua siap',
   Personalize: 'Personalisasi',
   Clean: 'Bersih',
@@ -10,12 +9,10 @@ export const id: Dictionary = {
   'Do you write code?': 'Apakah Anda menulis kode?',
   Yes: 'Ya',
   No: 'Tidak',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Dari aplikasi lain: {key}',
   'From other apps: set in your system settings': 'Dari aplikasi lain: atur di pengaturan sistem',
   'From other apps: bind {command} in your system settings':
     'Dari aplikasi lain: tetapkan {command} di pengaturan sistem',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Esensial',
   'Add to Essentials': 'Tambahkan ke Esensial',
   'Remove from Essentials': 'Hapus dari Esensial',
@@ -23,20 +20,16 @@ export const id: Dictionary = {
   'Add blocks to Essentials': 'Tambahkan blok-blok ke Esensial',
   'Add view to Essentials': 'Tambahkan tampilan ke Esensial',
   'Open tabs and Essentials': 'Membuka tab dan Esensial',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor kini bernama Orden',
   'Notes from nibeditor.com': 'Catatan dari nibeditor.com',
   'Nothing there': 'Tidak ada apa-apa',
-  // AI: the three permission modes
   'Full permissions': 'Izin penuh',
   'Auto mode': 'Mode otomatis',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'Izin penuh: tidak ada yang ditanyakan atau dikembalikan kepada Anda, bahkan masuk, membayar, mengirim, atau menghapus',
-  // Import: Zen's tabs
   'Import from Zen': 'Impor dari Zen',
   'Containers stay in Zen': 'Kontainer tetap di Zen',
   'Zen’s tabs could not be read.': 'Tab Zen tidak dapat dibaca.',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'Kontainer tetap di Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} mencari dengan {engine}: pilih di Pengaturan untuk mencari dengannya di sini juga',
@@ -59,38 +52,29 @@ export const id: Dictionary = {
   'Reading List': 'Daftar Bacaan',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS menyimpan tab dan markah Safari di balik Akses Disk Penuh. Nyalakan Orden di sana, lalu coba lagi.',
-  // Settings: note types
   'Page note': 'Catatan halaman',
   'Web note': 'Catatan web',
   'Private tab': 'Tab pribadi',
   'Note types': 'Jenis catatan',
-  // Tasks: Upcoming's weeks
   'Previous week': 'Minggu sebelumnya',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'Tambah proyek di atas',
   'Add project below': 'Tambah proyek di bawah',
   'Projects folder': 'Folder proyek',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'Lewati',
   'Complete forever': 'Selesaikan selamanya',
-  // Tasks: comments
   Comments: 'Komentar',
-  // Tasks: filters
   Filters: 'Filter',
   'Add filter': 'Tambah filter',
   'Edit filter': 'Ubah filter',
-  // Tasks: a project's sections
   'Add section': 'Tambah bagian',
   '{name} (copy)': '{name} (salinan)',
   'Its tasks are deleted with it.': 'Tugas-tugasnya ikut terhapus.',
-  // Tasks: keys, selection and the undo toast
   Completed: 'Selesai',
   'Remove date': 'Hapus tanggal',
   'Next task': 'Tugas berikutnya',
   'Previous task': 'Tugas sebelumnya',
   'Add task at the top': 'Tambah tugas di atas',
   '{count} selected': '{count} dipilih',
-  // Tasks: the Display menu
   Display: 'Tampilan',
   'Completed tasks': 'Tugas selesai',
   Smart: 'Cerdas',
@@ -102,20 +86,16 @@ export const id: Dictionary = {
   'Reset all': 'Atur ulang semua',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'Tata letak menampilkan tugas sebagai daftar, papan, atau kalender. Pengelompokan membaginya ke dalam grup, yaitu kolom-kolom papan. Pengurutan mengurutkan setiap grup. Filter menyembunyikan yang tidak Anda perlukan. Semuanya disimpan untuk tampilan ini.',
-  // Tasks: several lines pasted into quick add
   'One task': 'Satu tugas',
   'One per line': 'Satu per baris',
   'Add with AI': 'Tambah dengan AI',
-  // Tasks: the projects in the panel
   Favorites: 'Favorit',
   'Add project': 'Tambah proyek',
   'Add sub-project': 'Tambah subproyek',
-  // Tasks: the task view
   'Sub-tasks': 'Subtugas',
   'Add sub-task': 'Tambah subtugas',
   'New label': 'Label baru',
   'No deadline': 'Tanpa tenggat',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'Jadwalkan ulang',
   'Later this week': 'Nanti minggu ini',
   'This weekend': 'Akhir pekan ini',
@@ -132,22 +112,18 @@ export const id: Dictionary = {
   Reopen: 'Buka kembali',
   Schedule: 'Jadwalkan',
   'Open in note': 'Buka di catatan',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Aplikasi lain',
   'Import from Obsidian': 'Impor dari Obsidian',
   'Import from Notion': 'Impor dari Notion',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'Petunjuk',
   'Silent mode': 'Mode senyap',
   'See how your notes connect.': 'Lihat bagaimana catatan Anda saling terhubung.',
   'Press {key} to find anything, notes and commands alike.':
     'Tekan {key} untuk menemukan apa saja, catatan maupun perintah.',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Tampilkan Markdown saat menulis',
   'Open notes in source mode': 'Buka catatan dalam mode sumber',
   Pointer: 'Penunjuk',
   'Pointing hand on buttons': 'Tangan penunjuk pada tombol',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Tambah tugas',
   'Apple Shortcuts': 'Apple Pintasan',
   Tomorrow: 'Besok',
@@ -173,7 +149,6 @@ export const id: Dictionary = {
   'Every week': 'Setiap minggu',
   'Every month': 'Setiap bulan',
   'Every year': 'Setiap tahun',
-  // Files and notes
   Save: 'Simpan',
   'New note': 'Catatan baru',
   'Random note': 'Catatan acak',
@@ -201,8 +176,6 @@ export const id: Dictionary = {
   'Release to add a page': 'Lepas untuk menambah halaman',
   'Page {number}': 'Halaman {number}',
   'The paper could not be read': 'Kertas tidak dapat dibaca',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'Halaman panjang',
@@ -245,7 +218,6 @@ export const id: Dictionary = {
   'Choose a picture': 'Pilih gambar',
   'Remove picture': 'Hapus gambar',
   'That picture could not be read.': 'Gambar itu tidak bisa dibaca.',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'Saturasi',
   Tint: 'Rona',
   'Tint colour': 'Warna rona',
@@ -373,7 +345,6 @@ export const id: Dictionary = {
   'Merge into…': 'Gabungkan ke…',
   'Split at caret': 'Pisahkan di kursor',
   'Extract selection': 'Ambil pilihan',
-  // Panels and navigation
   Bookmarks: 'Markah',
   'New group': 'Grup baru',
   'Remove group': 'Hapus grup',
@@ -427,8 +398,6 @@ export const id: Dictionary = {
   'Sort by name': 'Urutkan menurut nama',
   'Sort by modified': 'Urutkan menurut perubahan',
   'Sort by created': 'Urutkan menurut pembuatan',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'Urutan berkas',
   'Name, A to Z': 'Nama, A ke Z',
   'Name, Z to A': 'Nama, Z ke A',
@@ -439,7 +408,6 @@ export const id: Dictionary = {
   Manual: 'Manual',
   'Show hidden files': 'Tampilkan berkas tersembunyi',
   'Hide hidden files': 'Sembunyikan berkas tersembunyi',
-  // Writing
   Bold: 'Tebal',
   Italic: 'Miring',
   Strikethrough: 'Coret',
@@ -524,11 +492,9 @@ export const id: Dictionary = {
   'Horizontal rule': 'Garis mendatar',
   'Page break': 'Pemisah halaman',
   'Tidy up this note': 'Rapikan catatan ini',
-  // PDFs
   'Copy a link': 'Salin tautan',
   'That PDF could not be opened': 'PDF itu tidak dapat dibuka',
   'That file could not be read': 'File itu tidak dapat dibaca',
-  // Modes and view
   Reading: 'Membaca',
   'Leave reading': 'Keluar dari mode baca',
   Present: 'Presentasikan',
@@ -568,7 +534,6 @@ export const id: Dictionary = {
   'Zoom in': 'Perbesar',
   'Zoom out': 'Perkecil',
   'Actual size': 'Ukuran asli',
-  // Appearance
   Accent: 'Warna aksen',
   'Tidy up': 'Rapikan',
   'Blur the app behind the tab overview': 'Buramkan aplikasi di balik ikhtisar tab',
@@ -696,7 +661,6 @@ export const id: Dictionary = {
   'Switch theme': 'Ganti tema',
   Style: 'Gaya',
   Mode: 'Mode',
-  // The window's own edges; see appearance.rs
   Window: 'Jendela',
   'Orden’s own': 'Milik Orden',
   'The system’s': 'Milik sistem',
@@ -707,7 +671,6 @@ export const id: Dictionary = {
   'Edit custom CSS': 'Sunting CSS kustom',
   'Edit snippets': 'Sunting potongan',
   'Reload themes and custom CSS': 'Muat ulang tema dan CSS kustom',
-  // The theme store, and the sample note its cards show
   Themes: 'Tema',
   Browse: 'Jelajahi',
   'Search themes': 'Cari tema',
@@ -784,7 +747,6 @@ export const id: Dictionary = {
   'Code only': 'Hanya kode',
   Everywhere: 'Di mana saja',
   Attachments: 'Lampiran',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Catatan halaman',
   'New pages': 'Halaman baru',
   'Assets folder of the space': 'Folder aset ruang',
@@ -836,7 +798,6 @@ export const id: Dictionary = {
   'Machine-translated. Corrections welcome.': 'Terjemahan mesin. Koreksi diterima.',
   'The glasses show English.': 'Kacamata menampilkan bahasa Inggris.',
   'Match the app': 'Ikuti aplikasi',
-  // Settings
   Settings: 'Pengaturan',
   Account: 'Akun',
   Publish: 'Terbitkan',
@@ -859,7 +820,6 @@ export const id: Dictionary = {
   '{count} spaces sync to your account.': '{count} ruang disinkronkan ke akun Anda.',
   Update: 'Perbarui',
   'Live at': 'Tayang di',
-  // Publishing
   'Publish {name}': 'Terbitkan {name}',
   'What to publish': 'Apa yang diterbitkan',
   'The whole space': 'Seluruh ruang',
@@ -878,7 +838,6 @@ export const id: Dictionary = {
   Value: 'Nilai',
   available: 'tersedia',
   'checking…': 'memeriksa…',
-  // LLM
   'Connect an LLM to your notes': 'Hubungkan LLM ke catatan Anda',
   'Sign in first - the connector reaches the notes in your account.':
     'Masuk dahulu - penghubung menjangkau catatan di akun Anda.',
@@ -931,7 +890,6 @@ export const id: Dictionary = {
     'Untuk klien yang menerima blok JSON bukan URL.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'Klien yang tidak dapat masuk bisa diberi token. Token ditampilkan sekali saja.',
-  // Export
   'Plain text': 'Teks biasa',
   'Markdown with the pictures': 'Markdown dengan gambar',
   'HTML without styles': 'HTML tanpa gaya',
@@ -950,13 +908,11 @@ export const id: Dictionary = {
   Margin: 'Margin',
   Header: 'Kepala halaman',
   Footer: 'Kaki halaman',
-  // History
   'Version history': 'Riwayat versi',
   'Copy link to this note': 'Salin tautan ke catatan ini',
   'that link could not be followed': 'tautan itu tidak dapat diikuti',
   'No earlier versions yet.': 'Belum ada versi sebelumnya.',
   'Restore this version': 'Pulihkan versi ini',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'sudah ada catatan di situ',
   'enter a valid email address': 'masukkan alamat email yang sah',
   'give the space a name': 'beri nama ruang itu',
@@ -990,7 +946,6 @@ export const id: Dictionary = {
   'could not publish': 'tidak dapat menerbitkan',
   'could not create a token': 'tidak dapat membuat token',
   'that did not work': 'itu tidak berhasil',
-  // Settings on a phone, display names, one blog address
   Back: 'Kembali',
   'Display name': 'Nama tampilan',
   'Your name': 'Nama Anda',
@@ -1010,7 +965,6 @@ export const id: Dictionary = {
   Spelling: 'Ejaan',
   Checking: 'Pemeriksaan',
   Dictionary: 'Kamus',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'Menunggu rekaman muncul.',
   'Certificate issued.': 'Sertifikat diterbitkan.',
   'Cloudflare could not set this domain up.': 'Cloudflare tidak dapat menyiapkan domain ini.',
@@ -1021,7 +975,6 @@ export const id: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare memblokir domain ini',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'Di akar domain, pakai rekaman ALIAS atau ANAME, atau CNAME flattening, jika penyedia Anda tidak mengizinkan CNAME di sana.',
-  // Shortcuts
   Shortcuts: 'Pintasan',
   'Search shortcuts': 'Cari pintasan',
   'Second key': 'Tombol kedua',
@@ -1188,7 +1141,6 @@ export const id: Dictionary = {
   Delegated: 'Didelegasikan',
   'Code theme: {name}': 'Tema kode: {name}',
   'Delete a layout': 'Hapus tata letak',
-  // Keyboards and modal editing
   Default: 'Bawaan',
   'Vim keys': 'Tombol Vim',
   'Follow the link': 'Ikuti tautan',
@@ -1200,11 +1152,9 @@ export const id: Dictionary = {
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
   REPLACE: 'REPLACE',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'Halaman {page}/{count} di kacamata',
   'Reaching the glasses': 'Menghubungi kacamata',
   'The glasses are not keeping up': 'Kacamata tidak mengikuti',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'Tambah',
   Select: 'Pilih',
   Pan: 'Geser',
@@ -1234,7 +1184,6 @@ export const id: Dictionary = {
   Calligraphy: 'Kaligrafi',
   'Width {number}': 'Lebar {number}',
   'Finger draws': 'Jari menggambar',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'Lebar',
   Opacity: 'Kepekatan',
   Colour: 'Warna',
@@ -1278,23 +1227,19 @@ export const id: Dictionary = {
   'Export as PNG': 'Ekspor sebagai PNG',
   'Export as SVG': 'Ekspor sebagai SVG',
   'Export as PDF': 'Ekspor sebagai PDF',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'Impor PDF',
   'Choose how to add the pages to the canvas.': 'Pilih cara menambahkan halaman ke kanvas.',
   'Single page': 'Satu halaman',
   'All pages': 'Semua halaman',
   'Choose a page': 'Pilih halaman',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'Hapus yang dipilih',
   'Nudge left': 'Dorong ke kiri',
   'Nudge right': 'Dorong ke kanan',
   'Nudge up': 'Dorong ke atas',
   'Nudge down': 'Dorong ke bawah',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'Terbuka juga di tempat lain',
   Shared: 'Dibagikan',
   Browser: 'Peramban',
-  // Sharing a space with other people
   Share: 'Bagikan',
   'Share {name}': 'Bagikan {name}',
   'Share this space': 'Bagikan ruang ini',
@@ -1338,14 +1283,12 @@ export const id: Dictionary = {
   'Shared with you': 'Dibagikan dengan Anda',
   'That link does not open anything': 'Tautan itu tidak membuka apa pun',
   'Ask for another one.': 'Mintalah yang lain.',
-  // Somebody a share link let in, who has no account
   Guest: 'Tamu',
   'Ask to join': 'Minta ikut',
   Asking: 'Meminta',
   'Waiting for {who}': 'Menunggu {who}',
   '{who} did not let you in': '{who} tidak mengizinkan Anda masuk',
   'What the others in this space see.': 'Yang dilihat orang lain di ruang ini.',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'Pembaruan',
   'Release channel': 'Saluran rilis',
   Stable: 'Stabil',
@@ -1355,8 +1298,6 @@ export const id: Dictionary = {
   'Web version': 'Versi web',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'Stabil adalah aplikasi web yang dirilis, Tidak stabil adalah build terbaru dan bisa rusak.',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'Impor',
   'Convert syntax': 'Konversi sintaks',
   'In this note': 'Di catatan ini',
@@ -1447,8 +1388,6 @@ export const id: Dictionary = {
   'Undo the import': 'Batalkan impor',
   'Choose an export': 'Pilih sebuah ekspor',
   Under: 'Di bawah',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'Sinkronisasi',
   'When the same note was written twice': 'Saat catatan yang sama ditulis dua kali',
   'On two devices': 'Di dua perangkat',
@@ -1505,7 +1444,6 @@ export const id: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'Catatan di perangkat ini tetap ada; hanya akun dan salinan yang disinkronkan yang hilang.',
   'Also gone for everyone in {spaces}.': 'Juga hilang untuk semua orang di {spaces}.',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'Catatan',
   '{space} panel': 'Panel {space}',
   'Panel width': 'Lebar panel',
@@ -1516,7 +1454,6 @@ export const id: Dictionary = {
   'What is selected': 'Yang dipilih',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'Kanvas: {cards} kartu, {links} tautan, {drawings} gambar',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'Penyedia',
   'Make default': 'Jadikan bawaan',
@@ -1544,7 +1481,6 @@ export const id: Dictionary = {
   'The model did not answer.': 'Model tidak menjawab.',
   'The connection closed before the answer was finished.':
     'Koneksi tertutup sebelum jawaban selesai.',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'Paket {plan} Anda mencapai batas hingga {time}.',
   'Your {plan} plan is at its limit for now.': 'Paket {plan} Anda mencapai batas untuk saat ini.',
@@ -1571,7 +1507,6 @@ export const id: Dictionary = {
   Shorter: 'Lebih pendek',
   Longer: 'Lebih panjang',
   'Fix grammar': 'Perbaiki tata bahasa',
-  // The AI sidebar's commands
   'A cited report': 'Laporan dengan sitasi',
   'A helper in the background': 'Pembantu di latar',
   'A side question': 'Pertanyaan sampingan',
@@ -1673,7 +1608,6 @@ export const id: Dictionary = {
   'Markdown, shortest name': 'Markdown, nama terpendek',
   'Markdown, relative path': 'Markdown, jalur relatif',
   'Markdown, path in the space': 'Markdown, jalur di ruang',
-  // Publishing part one.
   'The folders you choose become public.': 'Folder yang Anda pilih menjadi publik.',
   'Anyone with the address can read what is published, drafts included.':
     'Siapa pun dengan alamatnya dapat membaca yang diterbitkan, termasuk draf.',
@@ -1699,11 +1633,9 @@ export const id: Dictionary = {
   'Remove the password': 'Hapus sandi',
   'Scan this with your authenticator app, then type its code.':
     'Pindai ini dengan aplikasi autentikator Anda, lalu ketik kodenya.',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'Foto',
   Dictate: 'Dikte',
   'Add to {name}': 'Tambahkan ke {name}',
-  // Web tabs
   Reload: 'Muat ulang',
   'Hard reload': 'Muat ulang penuh',
   'Open in the browser': 'Buka di peramban',
@@ -1718,7 +1650,6 @@ export const id: Dictionary = {
   'Playing audio': 'Memutar audio',
   Muted: 'Dibisukan',
   'Developer tools': 'Alat developer',
-  // Recording, meetings and what a model wrote
   Record: 'Rekam',
   Recording: 'Rekaman',
   'Stop recording': 'Hentikan rekaman',
@@ -1739,7 +1670,6 @@ export const id: Dictionary = {
     'Rekaman itu terlalu panjang untuk diubah menjadi kata sekali jalan.',
   'That is as much as one recording may hold.': 'Sebanyak itulah yang dimuat satu rekaman.',
   'Nothing could be heard in that recording.': 'Tidak ada yang terdengar di rekaman itu.',
-  // Publishing part two.
   Spreadsheet: 'Lembar kerja',
   'The app’s own': 'Milik aplikasi',
   'publish.css and publish.js in this space dress the site.':
@@ -1755,7 +1685,6 @@ export const id: Dictionary = {
   'Save as CSV': 'Simpan sebagai CSV',
   'Kept for {days}': 'Disimpan {days}',
   Full: 'Penuh',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'tidak dapat mengirim surat - coba lagi',
   'start again - that took too long': 'mulai lagi - itu terlalu lama',
   'sign in to do that': 'masuk untuk melakukannya',
@@ -1763,7 +1692,6 @@ export const id: Dictionary = {
   'something went wrong here - try again': 'ada yang salah di sini - coba lagi',
   'this service cannot keep a secret safely':
     'layanan ini tidak dapat menyimpan rahasia dengan aman',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only': 'hanya gambar, PDF, dan css atau js milik situs',
   'that file is too big': 'berkas itu terlalu besar',
   'that is more settings than an account holds':
@@ -1779,13 +1707,11 @@ export const id: Dictionary = {
   'that is more folder icons than a space holds':
     'itu lebih banyak ikon folder daripada yang ditampung sebuah ruang',
   'that is more than a site keeps': 'itu lebih dari yang disimpan sebuah situs',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'tidak ada siapa pun di alamat itu',
   'nobody by that name': 'tidak ada siapa pun dengan nama itu',
   'nobody is waiting by that name': 'tidak ada yang menunggu dengan nama itu',
   'this space is yours': 'ruang ini milik Anda',
   'that link is busy, try again in a minute': 'tautan itu sedang sibuk, coba lagi semenit lagi',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'tidak ada versi itu',
   'this note was shared with you, not its folder':
     'catatan ini dibagikan dengan Anda, bukan foldernya',
@@ -1794,7 +1720,6 @@ export const id: Dictionary = {
   'nothing to delete': 'tidak ada yang dihapus',
   'this room is not answering - try again': 'ruang ini tidak menjawab - coba lagi',
   'rooms are not running here': 'ruang bersama tidak berjalan di sini',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'toko tema tidak menjawab',
   'that is not a theme': 'itu bukan tema',
   'no such theme': 'tidak ada tema itu',
@@ -1806,10 +1731,8 @@ export const id: Dictionary = {
   'that is more than a spoken command': 'itu lebih dari sebuah perintah ucapan',
   'that is a lot of listening - try again later': 'itu banyak mendengarkan - coba lagi nanti',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% teks',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'Ponsel',
   'The bar sits over the keyboard on a phone.': 'Di ponsel bilah berada di atas papan ketik.',
   'On the bar': 'Di bilah',
@@ -1823,31 +1746,25 @@ export const id: Dictionary = {
   'A pull past the top runs': 'Tarikan melewati atas menjalankan',
   Nothing: 'Tidak ada',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'Simpan',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'Pindahkan ke kanan',
   'Move to the left': 'Pindahkan ke kiri',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'Riwayat di akun',
   'Keep versions': 'Simpan versi',
   'A month': 'Satu bulan',
   'A year': 'Satu tahun',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Semua dari hari terakhir, lalu satu per jam, satu per hari setelah satu bulan, dan satu per minggu setelah tiga.',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Catatan ini sudah sebesar ukuran maksimum catatan di sebuah ruang.',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'Tab baru',
   'Full screen': 'Layar penuh',
   'Print…': 'Cetak…',
   'Share…': 'Bagikan…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'ingin',
   'Don’t allow': 'Jangan izinkan',
   Allow: 'Izinkan',
@@ -1864,7 +1781,6 @@ export const id: Dictionary = {
   'Use your MIDI devices': 'Menggunakan perangkat MIDI Anda',
   'Manage windows on all your displays': 'Mengelola jendela di semua layar Anda',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'Informasi situs',
   Downloads: 'Unduhan',
   'Downloading {name}': 'Mengunduh {name}',
@@ -1891,11 +1807,9 @@ export const id: Dictionary = {
   'Turn into': 'Ubah menjadi',
   Foldable: 'Dapat dilipat',
   'Starts folded': 'Mulai terlipat',
-  // Where a space keeps what websites store
   'Web data': 'Data web',
   Global: 'Bersama',
   Site: 'Situs',
-  // The Mac's menu bar
   'About {name}': 'Tentang {name}',
   Services: 'Layanan',
   'Hide {name}': 'Sembunyikan {name}',
@@ -1903,7 +1817,6 @@ export const id: Dictionary = {
   'Show all': 'Tampilkan semua',
   'Quit {name}': 'Keluar dari {name}',
   'Bring all to front': 'Bawa semua ke depan',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Batalkan penyalinan',
   'Devices with your AI vault': 'Perangkat dengan brankas AI Anda',
   'This device': 'Perangkat ini',
@@ -1918,13 +1831,11 @@ export const id: Dictionary = {
   'Select down': 'Pilih ke bawah',
   'Select up': 'Pilih ke atas',
   'Select or deselect': 'Pilih atau batalkan pilihan',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'Buka di tab baru',
   'Open to the side': 'Buka di samping',
   'Open all': 'Buka semua',
   'Show in the file list': 'Tampilkan di daftar file',
   'Collapse the file list': 'Ciutkan daftar file',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'Perluas pilihan',
   'Shrink the selection': 'Persempit pilihan',
   'Insert a line above': 'Sisipkan baris di atas',
@@ -1938,19 +1849,16 @@ export const id: Dictionary = {
   'Duplicate the block': 'Duplikat blok',
   'Move the block up': 'Pindahkan blok ke atas',
   'Move the block down': 'Pindahkan blok ke bawah',
-  // The editor's menu on a link and a picture
   'Copy link address': 'Salin alamat tautan',
   'Edit link': 'Edit tautan',
   'Remove link': 'Hapus tautan',
   'Copy picture': 'Salin gambar',
   'Open picture': 'Buka gambar',
   'Delete picture': 'Hapus gambar',
-  // A file dropped into a note
   'Storing the file': 'Menyimpan file',
   'That file is larger than a note can keep.':
     'File itu lebih besar dari yang dapat disimpan catatan.',
   'That file could not be kept.': 'File itu tidak dapat disimpan.',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'Terminal baru',
   'Command Prompt': 'Command Prompt',
   Terminal: 'Terminal',
@@ -1972,11 +1880,8 @@ export const id: Dictionary = {
   'Saved nowhere, a session kept running is found again in Settings, {pane}.':
     'Tidak disimpan di mana pun; sesi yang tetap berjalan bisa ditemukan lagi di Pengaturan, {pane}.',
   'Paste {count} lines?': 'Tempel {count} baris?',
-  // Orden as the default browser
   'Default browser': 'Peramban bawaan',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Urungkan suntingan {name}',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'Arsipkan',
   Unarchive: 'Batal arsipkan',
   Archived: 'Diarsipkan',
@@ -1986,7 +1891,6 @@ export const id: Dictionary = {
   'Nothing archived is deleted': 'Tidak ada yang diarsipkan yang dihapus',
   'Show them': 'Tampilkan',
   '{count} archived items inside': '{count} item diarsipkan di dalamnya',
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'Bilah sisi kiri',
   'Right sidebar': 'Bilah sisi kanan',
   'Ask about this space': 'Tanyakan tentang ruang ini',
@@ -1997,7 +1901,6 @@ export const id: Dictionary = {
   'Ask again': 'Tanya lagi',
   'Continue when the limit resets': 'Lanjutkan saat batas diatur ulang',
   'Continues at {time}': 'Berlanjut pukul {time}',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Tanyakan apa saja, @ untuk menambah, / untuk lainnya',
   'What can I help with?': 'Apa yang bisa saya bantu?',
   'Add photos and files': 'Tambahkan foto dan file',
@@ -2065,13 +1968,10 @@ export const id: Dictionary = {
   Closed: 'Ditutup',
   Ran: 'Dijalankan',
   Changed: 'Diubah',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': '{device} ini',
   '{name} is back: {device} was writing in it':
     '{name} kembali: {device} sedang menulis di dalamnya',
   'Changes to {name} are not syncing': 'Perubahan pada {name} tidak disinkronkan',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Membuka',
   Pressing: 'Menekan',
   Typing: 'Mengetik',
@@ -2086,18 +1986,14 @@ export const id: Dictionary = {
   'Agent tabs closed': 'Tab agen ditutup',
   'Orden is still running for your agents': 'Orden masih berjalan untuk agen Anda',
   '{client} wants to connect': '{client} ingin terhubung',
-  // Web logins that travel, and the devices of an account
   'no such device': 'tidak ada perangkat itu',
   'give the device a name': 'beri perangkat itu nama',
   'that computer is no longer waiting': 'komputer itu tidak menunggu lagi',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'file tidak ada',
   'too many changes at once - try again in a minute':
     'terlalu banyak perubahan sekaligus - coba lagi dalam satu menit',
   'that is more than a space keeps about its tree':
     'itu lebih dari yang disimpan sebuah ruang tentang pohonnya',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'Agen di komputer ini',
   'Your account’s connector': 'Konektor akunmu',
   'Orden asks you once, the first time it connects.':
@@ -2166,12 +2062,9 @@ export const id: Dictionary = {
   'Pages a minute': 'Halaman per menit',
   'Browser memory limit': 'Batas memori browser',
   '{count} calls': '{count} panggilan',
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'Pertanyaan cepat',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Tambahkan ke catatan',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'Ekstensi',
   'Add extension': 'Tambahkan ekstensi',
   'Manage extensions': 'Kelola ekstensi',
@@ -2191,7 +2084,6 @@ export const id: Dictionary = {
   'Did not load': 'Tidak dimuat',
   Permissions: 'Izin',
   Options: 'Opsi',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'Jarak jauh',
   'Add host': 'Tambah host',
   Reconnect: 'Hubungkan ulang',
@@ -2199,11 +2091,8 @@ export const id: Dictionary = {
   'No group': 'Tanpa grup',
   'Not an address': 'Bukan alamat',
   'Could not connect to {host}': 'Tidak dapat terhubung ke {host}',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'Mengirim gambar',
   'Could not send the image': 'Tidak dapat mengirim gambar',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': 'dan {count} sesudahnya',
   'Restore notes and conversation': 'Pulihkan catatan dan percakapan',
   'Restore conversation': 'Pulihkan percakapan',
@@ -2213,8 +2102,6 @@ export const id: Dictionary = {
   'Pages, terminals and moves are not undone': 'Halaman, terminal, dan pemindahan tidak diurungkan',
   Rewind: 'Mundurkan',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'Mesin telusur',
   History: 'Histori',
   'Search history': 'Telusuri histori',
@@ -2238,14 +2125,12 @@ export const id: Dictionary = {
   'New private tab': 'Tab pribadi baru',
   'All spaces': 'Semua ruang',
   'the data could not be deleted': 'Data tidak dapat dihapus',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Tunda',
   Reminders: 'Pengingat',
   'Reminders ring while Orden is open': 'Pengingat berbunyi selama Orden terbuka',
   Automatic: 'Otomatis',
   'Stay in the tray': 'Tetap di baki sistem',
   'Exact alarms': 'Alarm tepat',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'Tugas',
   'Plan my day': 'Rencanakan hariku',
   'Add a task': 'Tambah tugas',
@@ -2257,8 +2142,6 @@ export const id: Dictionary = {
   'Done tasks too': 'Termasuk tugas selesai',
   'As a task': 'Sebagai tugas',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'Tugas',
   Ascending: 'Naik',
   Descending: 'Turun',
@@ -2343,8 +2226,6 @@ export const id: Dictionary = {
   'Without a value': 'Tanpa nilai',
   'With a value': 'Dengan nilai',
   Unique: 'Unik',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'Catatan baru dari templat',
   Automations: 'Otomatisasi',
   'Row added': 'Baris ditambahkan',
@@ -2373,7 +2254,6 @@ export const id: Dictionary = {
   Form: 'Formulir',
   Formula: 'Rumus',
   'Blocked by {task}': 'Diblokir oleh {task}',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'Peringatkan sebelum keluar',
   'When something runs': 'Saat ada yang berjalan',
   'Quit {name}?': 'Keluar dari {name}?',
@@ -2384,16 +2264,13 @@ export const id: Dictionary = {
   'Quit anyway': 'Tetap keluar',
   'Restart anyway': 'Tetap mulai ulang',
   'Close anyway': 'Tetap tutup',
-  // The online terminal
   'Online terminal': 'Terminal online',
   'New online terminal': 'Terminal online baru',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'perangkat lain',
   'Taken over by {device}': 'Diambil alih oleh {device}',
   'Open on {device} since {time}': 'Terbuka di {device} sejak {time}',
   'Take over': 'Ambil alih',
   'Take back': 'Ambil kembali',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'Aplikasi baru',
   Application: 'Aplikasi',
   'This application’s file is damaged': 'File aplikasi ini rusak',
@@ -2503,8 +2380,6 @@ export const id: Dictionary = {
   'Compare with original': 'Bandingkan dengan aslinya',
   'Conflict copies from other apps': 'Salinan konflik dari aplikasi lain',
   'Remove from sync': 'Keluarkan dari sinkronisasi',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'Profil',
   Change: 'Ubah',
   'Take photo': 'Ambil foto',
@@ -2529,7 +2404,6 @@ export const id: Dictionary = {
   'that picture could not be opened': 'gambar itu tidak bisa dibuka',
   'the camera could not be opened': 'kamera tidak bisa dibuka',
   'that picture is too big': 'gambar itu terlalu besar',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'Obrolan',
   Reply: 'Balas',
   Replies: 'Balasan',
@@ -2548,7 +2422,6 @@ export const id: Dictionary = {
   'Also send to {chat}': 'Kirim juga ke {chat}',
   'Skin tone': 'Warna kulit',
   'Deleted account': 'Akun terhapus',
-  // Chats: notifications
   Mute: 'Bisukan',
   Unmute: 'Bunyikan',
   'New message': 'Pesan baru',
@@ -2558,7 +2431,6 @@ export const id: Dictionary = {
   Weekdays: 'Hari kerja',
   Starts: 'Mulai',
   Ends: 'Selesai',
-  // Chats: everywhere
   'Read chats': 'Membaca obrolan',
   'Post in chats': 'Menulis di obrolan',
   'Always in this chat': 'Selalu di obrolan ini',
@@ -2570,14 +2442,12 @@ export const id: Dictionary = {
   'Search this chat': 'Cari di obrolan ini',
   'Add as task': 'Tambahkan sebagai tugas',
   'Save as note': 'Simpan sebagai catatan',
-  // Appearance: glass's own pairs of colours
   Dawn: 'Fajar',
   Lagoon: 'Laguna',
   Lilac: 'Lila',
   Peach: 'Persik',
   Sage: 'Sage',
   Mist: 'Kabut',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'Database baru',
   'New page': 'Halaman baru',
   'Not started': 'Belum dimulai',
@@ -2603,7 +2473,6 @@ export const id: Dictionary = {
   Large: 'Besar',
   Both: 'Keduanya',
   'Shown on cards': 'Ditampilkan di kartu',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'Menyinkronkan kunci AI browser ini dengan perangkat Anda yang lain melalui brankas.',
   'Which of your AI accounts this feature asks.': 'Akun AI Anda mana yang ditanya oleh fitur ini.',
@@ -2847,7 +2716,6 @@ export const id: Dictionary = {
   'Some changes may not be noticed': 'Beberapa perubahan mungkin tak terlihat',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'Sistem sudah mencapai batas folder yang dipantau, jadi Orden mungkin tak melihat setiap perubahan yang dibuat program lain di ruang Anda. Menaikkan fs.inotify.max_user_watches memperbaikinya.',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Pindahkan obrolan {name} ke {space}?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'Semua orang di {space} lalu bisa membaca seluruh riwayat, dan orang-orang di {from} kehilangannya.',
@@ -2887,7 +2755,6 @@ export const id: Dictionary = {
   'One colour': 'Satu warna',
   'Web icons': 'Ikon web',
   'Sites you visit will appear here': 'Situs yang Anda kunjungi akan muncul di sini',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'Dikte',
   'Dictate with': 'Dikte dengan',
   'Where your voice goes to be turned into words.':
@@ -2918,11 +2785,9 @@ export const id: Dictionary = {
   'Not on this device': 'Tidak ada di perangkat ini',
   'Not on this device. It opens once you are online again.':
     'Tidak ada di perangkat ini. Akan terbuka saat Anda kembali online.',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'Server IMAP',
   'SMTP server': 'Server SMTP',
   'User name': 'Nama pengguna',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'Mendesak',
   Important: 'Penting',
   'If time': 'Jika sempat',

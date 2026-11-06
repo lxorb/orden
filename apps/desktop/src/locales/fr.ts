@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fr: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'Tout est prêt',
   Personalize: 'Personnaliser',
   Clean: 'Épuré',
@@ -10,13 +9,11 @@ export const fr: Dictionary = {
   'Do you write code?': 'Vous écrivez du code ?',
   Yes: 'Oui',
   No: 'Non',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Depuis les autres apps : {key}',
   'From other apps: set in your system settings':
     'Depuis les autres apps : à définir dans les réglages du système',
   'From other apps: bind {command} in your system settings':
     'Depuis les autres apps : associez {command} dans les réglages du système',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Essentials',
   'Add to Essentials': 'Ajouter aux Essentials',
   'Remove from Essentials': 'Retirer des Essentials',
@@ -24,20 +21,16 @@ export const fr: Dictionary = {
   'Add blocks to Essentials': 'Ajouter les blocs aux Essentials',
   'Add view to Essentials': 'Ajouter la vue aux Essentials',
   'Open tabs and Essentials': 'Ouvrir des onglets et les Essentials',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor s’appelle désormais Orden',
   'Notes from nibeditor.com': 'Notes de nibeditor.com',
   'Nothing there': 'Il n’y a rien',
-  // AI: the three permission modes
   'Full permissions': 'Autorisations complètes',
   'Auto mode': 'Mode automatique',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'Autorisations complètes : rien n’est demandé ni rendu, pas même la connexion, le paiement, l’envoi ou la suppression',
-  // Import: Zen's tabs
   'Import from Zen': 'Importer depuis Zen',
   'Containers stay in Zen': 'Les conteneurs restent dans Zen',
   'Zen’s tabs could not be read.': 'Les onglets de Zen n’ont pas pu être lus.',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'Les conteneurs restent dans Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} recherche avec {engine} : choisissez-le dans les Réglages pour l’utiliser ici aussi',
@@ -66,38 +59,29 @@ export const fr: Dictionary = {
   'Reading List': 'Liste de lecture',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS garde les onglets et les signets de Safari derrière l’accès complet au disque. Activez Orden à cet endroit, puis réessayez.',
-  // Settings: note types
   'Page note': 'Note en pages',
   'Web note': 'Note web',
   'Private tab': 'Onglet privé',
   'Note types': 'Types de note',
-  // Tasks: Upcoming's weeks
   'Previous week': 'Semaine précédente',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'Ajouter un projet au-dessus',
   'Add project below': 'Ajouter un projet en dessous',
   'Projects folder': 'Dossier des projets',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'Passer',
   'Complete forever': 'Terminer définitivement',
-  // Tasks: comments
   Comments: 'Commentaires',
-  // Tasks: filters
   Filters: 'Filtres',
   'Add filter': 'Ajouter un filtre',
   'Edit filter': 'Modifier le filtre',
-  // Tasks: a project's sections
   'Add section': 'Ajouter une section',
   '{name} (copy)': '{name} (copie)',
   'Its tasks are deleted with it.': 'Ses tâches sont supprimées avec elle.',
-  // Tasks: keys, selection and the undo toast
   Completed: 'Terminée',
   'Remove date': 'Retirer la date',
   'Next task': 'Tâche suivante',
   'Previous task': 'Tâche précédente',
   'Add task at the top': 'Ajouter une tâche en haut',
   '{count} selected': '{count} sélectionnées',
-  // Tasks: the Display menu
   Display: 'Affichage',
   'Completed tasks': 'Tâches terminées',
   Smart: 'Intelligent',
@@ -109,20 +93,16 @@ export const fr: Dictionary = {
   'Reset all': 'Tout réinitialiser',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'La disposition affiche les tâches en liste, en tableau ou en calendrier. Le regroupement les répartit en groupes, qui sont les colonnes d’un tableau. Le tri ordonne chaque groupe. Les filtres masquent ce dont vous n’avez pas besoin. Tout est conservé pour cette vue.',
-  // Tasks: several lines pasted into quick add
   'One task': 'Une tâche',
   'One per line': 'Une par ligne',
   'Add with AI': 'Ajouter avec l’IA',
-  // Tasks: the projects in the panel
   Favorites: 'Favoris',
   'Add project': 'Ajouter un projet',
   'Add sub-project': 'Ajouter un sous-projet',
-  // Tasks: the task view
   'Sub-tasks': 'Sous-tâches',
   'Add sub-task': 'Ajouter une sous-tâche',
   'New label': 'Nouvelle étiquette',
   'No deadline': 'Sans échéance',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'Reprogrammer',
   'Later this week': 'Plus tard cette semaine',
   'This weekend': 'Ce week-end',
@@ -139,22 +119,18 @@ export const fr: Dictionary = {
   Reopen: 'Rouvrir',
   Schedule: 'Planifier',
   'Open in note': 'Ouvrir dans la note',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Une autre app',
   'Import from Obsidian': 'Importer depuis Obsidian',
   'Import from Notion': 'Importer depuis Notion',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'Astuces',
   'Silent mode': 'Mode silencieux',
   'See how your notes connect.': 'Voyez comment vos notes sont reliées.',
   'Press {key} to find anything, notes and commands alike.':
     'Appuyez sur {key} pour tout trouver, notes comme commandes.',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Afficher le Markdown pendant la saisie',
   'Open notes in source mode': 'Ouvrir les notes en mode source',
   Pointer: 'Pointeur',
   'Pointing hand on buttons': 'Main pointeuse sur les boutons',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Ajouter une tâche',
   'Apple Shortcuts': 'Apple Raccourcis',
   Tomorrow: 'Demain',
@@ -181,7 +157,6 @@ export const fr: Dictionary = {
   'Every week': 'Chaque semaine',
   'Every month': 'Chaque mois',
   'Every year': 'Chaque année',
-  // Files and notes
   Save: 'Enregistrer',
   'New note': 'Nouvelle note',
   'Random note': 'Note au hasard',
@@ -209,8 +184,6 @@ export const fr: Dictionary = {
   'Release to add a page': 'Relâchez pour ajouter une page',
   'Page {number}': 'Page {number}',
   'The paper could not be read': 'Le papier n’a pas pu être lu',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'Page longue',
@@ -253,7 +226,6 @@ export const fr: Dictionary = {
   'Choose a picture': 'Choisir une image',
   'Remove picture': 'Retirer l’image',
   'That picture could not be read.': 'Impossible de lire cette image.',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'Saturation',
   Tint: 'Teinte',
   'Tint colour': 'Couleur de teinte',
@@ -382,7 +354,6 @@ export const fr: Dictionary = {
   'Merge into…': 'Fusionner dans…',
   'Split at caret': 'Diviser au curseur',
   'Extract selection': 'Extraire la sélection',
-  // Panels and navigation
   Bookmarks: 'Signets',
   'New group': 'Nouveau groupe',
   'Remove group': 'Supprimer le groupe',
@@ -436,8 +407,6 @@ export const fr: Dictionary = {
   'Sort by name': 'Trier par nom',
   'Sort by modified': 'Trier par modification',
   'Sort by created': 'Trier par création',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'Ordre des fichiers',
   'Name, A to Z': 'Nom, de A à Z',
   'Name, Z to A': 'Nom, de Z à A',
@@ -448,7 +417,6 @@ export const fr: Dictionary = {
   Manual: 'Manuel',
   'Show hidden files': 'Afficher les fichiers masqués',
   'Hide hidden files': 'Masquer les fichiers cachés',
-  // Writing
   Bold: 'Gras',
   Italic: 'Italique',
   Strikethrough: 'Barré',
@@ -541,11 +509,9 @@ export const fr: Dictionary = {
   'Horizontal rule': 'Ligne horizontale',
   'Page break': 'Saut de page',
   'Tidy up this note': 'Mettre au propre',
-  // PDFs
   'Copy a link': 'Copier un lien',
   'That PDF could not be opened': 'Ce PDF n’a pas pu être ouvert',
   'That file could not be read': 'Ce fichier n’a pas pu être lu',
-  // Modes and view
   Reading: 'Lecture',
   'Leave reading': 'Quitter la lecture',
   Present: 'Présenter',
@@ -585,7 +551,6 @@ export const fr: Dictionary = {
   'Zoom in': 'Agrandir',
   'Zoom out': 'Réduire',
   'Actual size': 'Taille réelle',
-  // Appearance
   Accent: 'Couleur',
   'Tidy up': 'Ranger',
   'Blur the app behind the tab overview': 'Flouter l’app derrière la vue des onglets',
@@ -713,7 +678,6 @@ export const fr: Dictionary = {
   'Switch theme': 'Changer de thème',
   Style: 'Style',
   Mode: 'Mode',
-  // The window's own edges; see appearance.rs
   Window: 'Fenêtre',
   'Orden’s own': 'Celui de Orden',
   'The system’s': 'Celui du système',
@@ -724,7 +688,6 @@ export const fr: Dictionary = {
   'Edit custom CSS': 'Modifier le CSS personnalisé',
   'Edit snippets': 'Modifier les extraits',
   'Reload themes and custom CSS': 'Recharger les thèmes et le CSS',
-  // The theme store, and the sample note its cards show
   Themes: 'Thèmes',
   Browse: 'Parcourir',
   'Search themes': 'Chercher un thème',
@@ -806,7 +769,6 @@ export const fr: Dictionary = {
   'Code only': 'Code uniquement',
   Everywhere: 'Partout',
   Attachments: 'Pièces jointes',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Notes en pages',
   'New pages': 'Nouvelles pages',
   'Assets folder of the space': 'Dossier des médias de l’espace',
@@ -858,7 +820,6 @@ export const fr: Dictionary = {
   'Machine-translated. Corrections welcome.': 'Traduit automatiquement. Corrections bienvenues.',
   'The glasses show English.': 'Les lunettes affichent l’anglais.',
   'Match the app': 'Comme l’application',
-  // Settings
   Settings: 'Réglages',
   Account: 'Compte',
   Publish: 'Publier',
@@ -885,7 +846,6 @@ export const fr: Dictionary = {
   },
   Update: 'Mettre à jour',
   'Live at': 'En ligne sur',
-  // Publishing
   'Publish {name}': 'Publier {name}',
   'What to publish': 'Ce qui est publié',
   'The whole space': 'L’espace entier',
@@ -905,7 +865,6 @@ export const fr: Dictionary = {
   Value: 'Valeur',
   available: 'disponible',
   'checking…': 'vérification…',
-  // LLM
   'Connect an LLM to your notes': 'Connecter un LLM à vos notes',
   'Sign in first - the connector reaches the notes in your account.':
     'Connectez-vous d’abord - le connecteur accède aux notes de votre compte.',
@@ -958,7 +917,6 @@ export const fr: Dictionary = {
     'Pour un client qui prend un bloc JSON plutôt qu’une URL.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'Un client qui ne peut pas se connecter peut recevoir un jeton à la place. Il n’est affiché qu’une fois.',
-  // Export
   'Plain text': 'Texte',
   'Markdown with the pictures': 'Markdown avec les images',
   'HTML without styles': 'HTML sans styles',
@@ -977,13 +935,11 @@ export const fr: Dictionary = {
   Margin: 'Marge',
   Header: 'En-tête',
   Footer: 'Pied de page',
-  // History
   'Version history': 'Historique des versions',
   'Copy link to this note': 'Copier le lien vers cette note',
   'that link could not be followed': 'ce lien n’a pas pu être suivi',
   'No earlier versions yet.': 'Aucune version antérieure.',
   'Restore this version': 'Restaurer cette version',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'Une note se trouve déjà là',
   'enter a valid email address': 'Entrez une adresse e-mail valide',
   'give the space a name': 'Donnez un nom à l’espace',
@@ -1017,7 +973,6 @@ export const fr: Dictionary = {
   'could not publish': 'La publication a échoué',
   'could not create a token': 'La création du jeton a échoué',
   'that did not work': 'Cela n’a pas fonctionné',
-  // Settings on a phone, display names, one blog address
   Back: 'Retour',
   'Display name': 'Nom d’affichage',
   'Your name': 'Votre nom',
@@ -1037,7 +992,6 @@ export const fr: Dictionary = {
   Spelling: 'Orthographe',
   Checking: 'Vérification',
   Dictionary: 'Dictionnaire',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'En attente de l’enregistrement.',
   'Certificate issued.': 'Certificat émis.',
   'Cloudflare could not set this domain up.': 'Cloudflare n’a pas pu configurer ce domaine.',
@@ -1049,7 +1003,6 @@ export const fr: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare a bloqué ce domaine',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'À la racine d’un domaine, utilisez un enregistrement ALIAS ou ANAME, ou l’aplatissement CNAME, si votre fournisseur n’y autorise pas de CNAME.',
-  // Shortcuts
   Shortcuts: 'Raccourcis',
   'Search shortcuts': 'Rechercher un raccourci',
   'Second key': 'Deuxième touche',
@@ -1215,7 +1168,6 @@ export const fr: Dictionary = {
   Delegated: 'Délégué',
   'Code theme: {name}': 'Thème du code : {name}',
   'Delete a layout': 'Supprimer une disposition',
-  // Keyboards and modal editing
   Default: 'Par défaut',
   'Vim keys': 'Touches Vim',
   'Follow the link': 'Suivre le lien',
@@ -1227,11 +1179,9 @@ export const fr: Dictionary = {
   INSERT: 'INSERTION',
   VISUAL: 'VISUEL',
   REPLACE: 'REMPLACER',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'Page {page} sur {count} dans les lunettes',
   'Reaching the glasses': 'Connexion aux lunettes',
   'The glasses are not keeping up': 'Les lunettes ne suivent plus',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'Ajouter',
   Select: 'Sélectionner',
   Pan: 'Déplacer la vue',
@@ -1261,7 +1211,6 @@ export const fr: Dictionary = {
   Calligraphy: 'Calligraphie',
   'Width {number}': 'Épaisseur {number}',
   'Finger draws': 'Le doigt dessine',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'Largeur',
   Opacity: 'Opacité',
   Colour: 'Couleur',
@@ -1305,23 +1254,19 @@ export const fr: Dictionary = {
   'Export as PNG': 'Exporter en PNG',
   'Export as SVG': 'Exporter en SVG',
   'Export as PDF': 'Exporter en PDF',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'Importer un PDF',
   'Choose how to add the pages to the canvas.': 'Choisissez comment ajouter les pages au canevas.',
   'Single page': 'Une seule page',
   'All pages': 'Toutes les pages',
   'Choose a page': 'Choisir une page',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'Supprimer la sélection',
   'Nudge left': 'Décaler à gauche',
   'Nudge right': 'Décaler à droite',
   'Nudge up': 'Décaler vers le haut',
   'Nudge down': 'Décaler vers le bas',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'Ouvert ailleurs aussi',
   Shared: 'Partagé',
   Browser: 'Navigateur',
-  // Sharing a space with other people
   Share: 'Partager',
   'Share {name}': 'Partager {name}',
   'Share this space': 'Partager cet espace',
@@ -1365,14 +1310,12 @@ export const fr: Dictionary = {
   'Shared with you': 'Partagé avec vous',
   'That link does not open anything': 'Ce lien n’ouvre rien',
   'Ask for another one.': 'Demandez-en un autre.',
-  // Somebody a share link let in, who has no account
   Guest: 'Invité',
   'Ask to join': 'Demander à rejoindre',
   Asking: 'Demande',
   'Waiting for {who}': 'En attente de {who}',
   '{who} did not let you in': '{who} ne vous a pas laissé entrer',
   'What the others in this space see.': 'Ce que voient les autres dans cet espace.',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'Mises à jour',
   'Release channel': 'Canal de mise à jour',
   Stable: 'Stable',
@@ -1382,8 +1325,6 @@ export const fr: Dictionary = {
   'Web version': 'Version web',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'Stable est l’app web publiée, Instable est le build le plus récent et peut casser.',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'Importer',
   'Convert syntax': 'Convertir la syntaxe',
   'In this note': 'Dans cette note',
@@ -1500,8 +1441,6 @@ export const fr: Dictionary = {
   'Undo the import': 'Annuler l’import',
   'Choose an export': 'Choisir un export',
   Under: 'Dans',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'Synchronisation',
   'When the same note was written twice': 'Quand une note a été écrite deux fois',
   'On two devices': 'Sur deux appareils',
@@ -1570,7 +1509,6 @@ export const fr: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'Les notes de cet appareil restent ; seuls le compte et ses copies synchronisées s’en vont.',
   'Also gone for everyone in {spaces}.': 'Disparaît aussi pour tout le monde dans {spaces}.',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'La note',
   '{space} panel': 'Panneau {space}',
   'Panel width': 'Largeur du panneau',
@@ -1581,7 +1519,6 @@ export const fr: Dictionary = {
   'What is selected': 'Ce qui est sélectionné',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'Toile : {cards} cartes, {links} liens, {drawings} dessins',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'IA',
   Providers: 'Fournisseurs',
   'Make default': 'Par défaut',
@@ -1609,7 +1546,6 @@ export const fr: Dictionary = {
   'The model did not answer.': 'Le modèle n’a pas répondu.',
   'The connection closed before the answer was finished.':
     'La connexion s’est fermée avant la fin de la réponse.',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'Votre forfait {plan} a atteint sa limite jusqu’à {time}.',
   'Your {plan} plan is at its limit for now.':
@@ -1638,7 +1574,6 @@ export const fr: Dictionary = {
   Shorter: 'Plus court',
   Longer: 'Plus long',
   'Fix grammar': 'Corriger la grammaire',
-  // The AI sidebar's commands
   'A cited report': 'Un rapport cité',
   'A helper in the background': 'Un assistant en arrière-plan',
   'A side question': 'Une question annexe',
@@ -1740,7 +1675,6 @@ export const fr: Dictionary = {
   'Markdown, shortest name': 'Markdown, nom le plus court',
   'Markdown, relative path': 'Markdown, chemin relatif',
   'Markdown, path in the space': 'Markdown, chemin dans l’espace',
-  // Publishing part one.
   'The folders you choose become public.': 'Les dossiers choisis deviennent publics.',
   'Anyone with the address can read what is published, drafts included.':
     'Qui a l’adresse lit tout ce qui est publié, brouillons compris.',
@@ -1766,11 +1700,9 @@ export const fr: Dictionary = {
   'Remove the password': 'Retirer le mot de passe',
   'Scan this with your authenticator app, then type its code.':
     'Scannez ceci avec votre application d’authentification, puis saisissez son code.',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'Photographie',
   Dictate: 'Dicter',
   'Add to {name}': 'Ajouter à {name}',
-  // Web tabs
   Reload: 'Recharger',
   'Hard reload': 'Actualisation forcée',
   'Open in the browser': 'Ouvrir dans le navigateur',
@@ -1785,7 +1717,6 @@ export const fr: Dictionary = {
   'Playing audio': 'Lecture audio en cours',
   Muted: 'Son coupé',
   'Developer tools': 'Outils de développement',
-  // Recording, meetings and what a model wrote
   Record: 'Enregistrer',
   Recording: 'Enregistrement',
   'Stop recording': 'Arrêter l’enregistrement',
@@ -1806,7 +1737,6 @@ export const fr: Dictionary = {
     'Cet enregistrement est trop long pour être transcrit d’un seul coup.',
   'That is as much as one recording may hold.': 'Un enregistrement ne peut pas contenir davantage.',
   'Nothing could be heard in that recording.': 'Rien n’a pu être entendu dans cet enregistrement.',
-  // Publishing part two.
   Spreadsheet: 'Tableur',
   'The app’s own': 'Celui de l’application',
   'publish.css and publish.js in this space dress the site.':
@@ -1822,14 +1752,12 @@ export const fr: Dictionary = {
   'Save as CSV': 'Enregistrer en CSV',
   'Kept for {days}': 'Conservées {days}',
   Full: 'Complet',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'l’envoi du message a échoué - réessayez',
   'start again - that took too long': 'recommencez - cela a pris trop de temps',
   'sign in to do that': 'connectez-vous pour faire cela',
   'that is not something a token can do': 'un jeton ne peut pas faire cela',
   'something went wrong here - try again': 'quelque chose s’est mal passé ici - réessayez',
   'this service cannot keep a secret safely': 'ce service ne peut pas garder un secret en sécurité',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only':
     'images, PDF et le css ou js propre à un site uniquement',
   'that file is too big': 'ce fichier est trop volumineux',
@@ -1844,13 +1772,11 @@ export const fr: Dictionary = {
   'that is more folder icons than a space holds':
     'cela fait plus d’icônes de dossier qu’un espace n’en garde',
   'that is more than a site keeps': 'cela fait plus qu’un site n’en garde',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'personne à cette adresse',
   'nobody by that name': 'personne de ce nom',
   'nobody is waiting by that name': 'personne de ce nom n’attend',
   'this space is yours': 'cet espace est le vôtre',
   'that link is busy, try again in a minute': 'ce lien est occupé, réessayez dans une minute',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'cette version n’existe pas',
   'this note was shared with you, not its folder':
     'cette note vous a été partagée, pas son dossier',
@@ -1859,7 +1785,6 @@ export const fr: Dictionary = {
   'nothing to delete': 'rien à supprimer',
   'this room is not answering - try again': 'cette salle ne répond pas - réessayez',
   'rooms are not running here': 'les salles ne fonctionnent pas ici',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'la boutique de thèmes ne répond pas',
   'that is not a theme': 'ce n’est pas un thème',
   'no such theme': 'ce thème n’existe pas',
@@ -1875,10 +1800,8 @@ export const fr: Dictionary = {
   'that is a lot of listening - try again later':
     'cela fait beaucoup d’écoute - réessayez plus tard',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': 'texte à {percent} %',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'Mobile',
   'The bar sits over the keyboard on a phone.':
     'La barre se place au-dessus du clavier sur un téléphone.',
@@ -1893,31 +1816,25 @@ export const fr: Dictionary = {
   'A pull past the top runs': 'Tirer au-delà du haut lance',
   Nothing: 'Rien',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'Garder',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'Déplacer à droite',
   'Move to the left': 'Déplacer à gauche',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'Historique sur le compte',
   'Keep versions': 'Garder les versions',
   'A month': 'Un mois',
   'A year': 'Un an',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Tout du dernier jour, puis une par heure, une par jour après un mois, une par semaine après trois.',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Cette note atteint la taille maximale d’une note dans une salle.',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'Nouvel onglet',
   'Full screen': 'Plein écran',
   'Print…': 'Imprimer…',
   'Share…': 'Partager…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'souhaite',
   'Don’t allow': 'Ne pas autoriser',
   Allow: 'Autoriser',
@@ -1934,7 +1851,6 @@ export const fr: Dictionary = {
   'Use your MIDI devices': 'Utiliser vos appareils MIDI',
   'Manage windows on all your displays': 'Gérer les fenêtres sur tous vos écrans',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'Informations sur le site',
   Downloads: 'Téléchargements',
   'Downloading {name}': 'Téléchargement de {name}',
@@ -1961,11 +1877,9 @@ export const fr: Dictionary = {
   'Turn into': 'Transformer en',
   Foldable: 'Repliable',
   'Starts folded': 'Replié au départ',
-  // Where a space keeps what websites store
   'Web data': 'Données web',
   Global: 'Global',
   Site: 'Site',
-  // The Mac's menu bar
   'About {name}': 'À propos de {name}',
   Services: 'Services',
   'Hide {name}': 'Masquer {name}',
@@ -1973,7 +1887,6 @@ export const fr: Dictionary = {
   'Show all': 'Tout afficher',
   'Quit {name}': 'Quitter {name}',
   'Bring all to front': 'Tout ramener au premier plan',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Annuler la copie',
   'Devices with your AI vault': 'Appareils avec votre coffre IA',
   'This device': 'Cet appareil',
@@ -1988,13 +1901,11 @@ export const fr: Dictionary = {
   'Select down': 'Sélectionner vers le bas',
   'Select up': 'Sélectionner vers le haut',
   'Select or deselect': 'Sélectionner ou désélectionner',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'Ouvrir dans un nouvel onglet',
   'Open to the side': 'Ouvrir à côté',
   'Open all': 'Tout ouvrir',
   'Show in the file list': 'Afficher dans la liste des fichiers',
   'Collapse the file list': 'Replier la liste des fichiers',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'Étendre la sélection',
   'Shrink the selection': 'Réduire la sélection',
   'Insert a line above': 'Insérer une ligne au-dessus',
@@ -2008,18 +1919,15 @@ export const fr: Dictionary = {
   'Duplicate the block': 'Dupliquer le bloc',
   'Move the block up': 'Monter le bloc',
   'Move the block down': 'Descendre le bloc',
-  // The editor's menu on a link and a picture
   'Copy link address': 'Copier l’adresse du lien',
   'Edit link': 'Modifier le lien',
   'Remove link': 'Retirer le lien',
   'Copy picture': 'Copier l’image',
   'Open picture': 'Ouvrir l’image',
   'Delete picture': 'Supprimer l’image',
-  // A file dropped into a note
   'Storing the file': 'Enregistrement du fichier',
   'That file is larger than a note can keep.': 'Ce fichier est trop volumineux pour une note.',
   'That file could not be kept.': 'Ce fichier n’a pas pu être conservé.',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'Nouveau terminal',
   'Command Prompt': 'Invite de commandes',
   Terminal: 'Terminal',
@@ -2045,11 +1953,8 @@ export const fr: Dictionary = {
     many: 'Coller {count} de lignes ?',
     other: 'Coller {count} lignes ?',
   },
-  // Orden as the default browser
   'Default browser': 'Navigateur par défaut',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Annuler les modifications de {name}',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'Archiver',
   Unarchive: 'Désarchiver',
   Archived: 'Archivé',
@@ -2063,7 +1968,6 @@ export const fr: Dictionary = {
     many: '{count} d’éléments archivés dedans',
     other: '{count} éléments archivés dedans',
   },
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'Barre latérale gauche',
   'Right sidebar': 'Barre latérale droite',
   'Ask about this space': 'Poser une question sur cet espace',
@@ -2074,7 +1978,6 @@ export const fr: Dictionary = {
   'Ask again': 'Redemander',
   'Continue when the limit resets': 'Continuer quand la limite sera réinitialisée',
   'Continues at {time}': 'Reprend à {time}',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Demandez, @ pour ajouter, / pour plus',
   'What can I help with?': 'Comment puis-je vous aider ?',
   'Add photos and files': 'Ajouter des photos et des fichiers',
@@ -2142,12 +2045,9 @@ export const fr: Dictionary = {
   Closed: 'Fermé',
   Ran: 'Exécuté',
   Changed: 'Changé',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': '{device} (cet appareil)',
   '{name} is back: {device} was writing in it': '{name} est de retour : {device} y écrivait',
   'Changes to {name} are not syncing': 'Les modifications de {name} ne sont pas synchronisées',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Ouverture',
   Pressing: 'Clic',
   Typing: 'Saisie',
@@ -2162,18 +2062,14 @@ export const fr: Dictionary = {
   'Agent tabs closed': 'Onglets des agents fermés',
   'Orden is still running for your agents': 'Orden continue de tourner pour vos agents',
   '{client} wants to connect': '{client} veut se connecter',
-  // Web logins that travel, and the devices of an account
   'no such device': 'Cet appareil n’existe pas',
   'give the device a name': 'Donnez un nom à l’appareil',
   'that computer is no longer waiting': 'Cet ordinateur n’attend plus',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'Ce fichier n’existe pas',
   'too many changes at once - try again in a minute':
     'Trop de modifications à la fois - réessayez dans une minute',
   'that is more than a space keeps about its tree':
     'C’est plus que ce qu’un espace garde sur son arborescence',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'Agents sur cet ordinateur',
   'Your account’s connector': 'Connecteur de votre compte',
   'Orden asks you once, the first time it connects.':
@@ -2245,12 +2141,9 @@ export const fr: Dictionary = {
     many: '{count} d’appels',
     other: '{count} appels',
   },
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'Question rapide',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Ajouter à la note',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'Extensions',
   'Add extension': 'Ajouter l’extension',
   'Manage extensions': 'Gérer les extensions',
@@ -2270,7 +2163,6 @@ export const fr: Dictionary = {
   'Did not load': 'Non chargée',
   Permissions: 'Autorisations',
   Options: 'Options',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'Distant',
   'Add host': 'Ajouter un hôte',
   Reconnect: 'Reconnecter',
@@ -2278,11 +2170,8 @@ export const fr: Dictionary = {
   'No group': 'Aucun groupe',
   'Not an address': 'Pas une adresse',
   'Could not connect to {host}': 'Impossible de se connecter à {host}',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'Envoi de l’image',
   'Could not send the image': 'Impossible d’envoyer l’image',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': {
     many: 'et {count} après',
     one: 'et {count} après',
@@ -2297,8 +2186,6 @@ export const fr: Dictionary = {
     'Les pages, terminaux et déplacements ne sont pas annulés',
   Rewind: 'Revenir en arrière',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'Moteur de recherche',
   History: 'Historique',
   'Search history': 'Rechercher dans l’historique',
@@ -2322,14 +2209,12 @@ export const fr: Dictionary = {
   'New private tab': 'Nouvel onglet privé',
   'All spaces': 'Tous les espaces',
   'the data could not be deleted': 'Impossible de supprimer les données',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Répéter',
   Reminders: 'Rappels',
   'Reminders ring while Orden is open': 'Les rappels sonnent tant que Orden est ouvert',
   Automatic: 'Automatique',
   'Stay in the tray': 'Rester dans la zone de notification',
   'Exact alarms': 'Alarmes exactes',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'Tâches',
   'Plan my day': 'Planifier ma journée',
   'Add a task': 'Ajouter une tâche',
@@ -2341,8 +2226,6 @@ export const fr: Dictionary = {
   'Done tasks too': 'Tâches terminées aussi',
   'As a task': 'En tâche',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'Tâches',
   Ascending: 'Croissant',
   Descending: 'Décroissant',
@@ -2427,8 +2310,6 @@ export const fr: Dictionary = {
   'Without a value': 'Sans valeur',
   'With a value': 'Avec valeur',
   Unique: 'Uniques',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'Nouvelle note depuis un modèle',
   Automations: 'Automatisations',
   'Row added': 'Ligne ajoutée',
@@ -2457,7 +2338,6 @@ export const fr: Dictionary = {
   Form: 'Formulaire',
   Formula: 'Formule',
   'Blocked by {task}': 'Bloquée par {task}',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'Avertir avant de quitter',
   'When something runs': 'Quand quelque chose tourne',
   'Quit {name}?': 'Quitter {name} ?',
@@ -2468,16 +2348,13 @@ export const fr: Dictionary = {
   'Quit anyway': 'Quitter quand même',
   'Restart anyway': 'Redémarrer quand même',
   'Close anyway': 'Fermer quand même',
-  // The online terminal
   'Online terminal': 'Terminal en ligne',
   'New online terminal': 'Nouveau terminal en ligne',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'un autre appareil',
   'Taken over by {device}': 'Repris par {device}',
   'Open on {device} since {time}': 'Ouvert sur {device} depuis {time}',
   'Take over': 'Reprendre la main',
   'Take back': 'Récupérer',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'Nouvelle application',
   Application: 'Application',
   'This application’s file is damaged': 'Le fichier de cette application est endommagé',
@@ -2588,8 +2465,6 @@ export const fr: Dictionary = {
   'Compare with original': 'Comparer avec l’original',
   'Conflict copies from other apps': 'Copies en conflit d’autres apps',
   'Remove from sync': 'Retirer de la synchronisation',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'Profil',
   Change: 'Changer',
   'Take photo': 'Prendre une photo',
@@ -2614,7 +2489,6 @@ export const fr: Dictionary = {
   'that picture could not be opened': 'impossible d’ouvrir cette image',
   'the camera could not be opened': 'impossible d’ouvrir la caméra',
   'that picture is too big': 'cette image est trop grande',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'Discussion',
   Reply: 'Répondre',
   Replies: 'Réponses',
@@ -2633,7 +2507,6 @@ export const fr: Dictionary = {
   'Also send to {chat}': 'Envoyer aussi dans {chat}',
   'Skin tone': 'Teint',
   'Deleted account': 'Compte supprimé',
-  // Chats: notifications
   Mute: 'Mettre en sourdine',
   Unmute: 'Réactiver',
   'New message': 'Nouveau message',
@@ -2643,7 +2516,6 @@ export const fr: Dictionary = {
   Weekdays: 'En semaine',
   Starts: 'Début',
   Ends: 'Fin',
-  // Chats: everywhere
   'Read chats': 'Lire les discussions',
   'Post in chats': 'Écrire dans les discussions',
   'Always in this chat': 'Toujours dans cette discussion',
@@ -2655,14 +2527,12 @@ export const fr: Dictionary = {
   'Search this chat': 'Rechercher dans cette discussion',
   'Add as task': 'Ajouter comme tâche',
   'Save as note': 'Enregistrer comme note',
-  // Appearance: glass's own pairs of colours
   Dawn: 'Aube',
   Lagoon: 'Lagon',
   Lilac: 'Lilas',
   Peach: 'Pêche',
   Sage: 'Sauge',
   Mist: 'Brume',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'Nouvelle base de données',
   'New page': 'Nouvelle page',
   'Not started': 'Pas commencé',
@@ -2688,7 +2558,6 @@ export const fr: Dictionary = {
   Large: 'Grande',
   Both: 'Les deux',
   'Shown on cards': 'Affiché sur les cartes',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'Synchronise les clés IA de ce navigateur avec vos autres appareils via le coffre.',
   'Which of your AI accounts this feature asks.':
@@ -2936,7 +2805,6 @@ export const fr: Dictionary = {
   'Some changes may not be noticed': 'Certaines modifications pourraient passer inaperçues',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'Le système a atteint sa limite de dossiers surveillés : Orden pourrait ne pas remarquer toutes les modifications que d’autres programmes font dans vos espaces. Augmenter fs.inotify.max_user_watches règle le problème.',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Déplacer la discussion {name} vers {space} ?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'Tout le monde dans {space} pourra alors lire tout l’historique, et les personnes de {from} le perdront.',
@@ -2977,7 +2845,6 @@ export const fr: Dictionary = {
   'One colour': 'Une couleur',
   'Web icons': 'Icônes web',
   'Sites you visit will appear here': 'Les sites que vous visitez apparaîtront ici',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'Dictée',
   'Dictate with': 'Dicter avec',
   'Where your voice goes to be turned into words.':
@@ -3009,11 +2876,9 @@ export const fr: Dictionary = {
   'Not on this device': 'Pas sur cet appareil',
   'Not on this device. It opens once you are online again.':
     'Pas sur cet appareil. Elle s’ouvrira dès que vous serez de nouveau en ligne.',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'Serveur IMAP',
   'SMTP server': 'Serveur SMTP',
   'User name': 'Nom d’utilisateur',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'Urgent',
   Important: 'Important',
   'If time': 'Si j’ai le temps',

@@ -1,6 +1,4 @@
 <script lang="ts">
-  /** Connecting an account of another chat service (#321): the questions its provider
-   *  asks. Secrets go to the vault; the rest stays on this device. */
   import type { ChatProvider } from '@orden/chats/provider'
   import { t } from '../../i18n.svelte'
   import { accounts } from '../linked'

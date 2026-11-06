@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ur: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'سب تیار ہے',
   Personalize: 'اپنی مرضی کے مطابق بنائیں',
   Clean: 'صاف',
@@ -10,12 +9,10 @@ export const ur: Dictionary = {
   'Do you write code?': 'کیا آپ کوڈ لکھتے ہیں؟',
   Yes: 'ہاں',
   No: 'نہیں',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'دوسری ایپس سے: {key}',
   'From other apps: set in your system settings': 'دوسری ایپس سے: سسٹم سیٹنگز میں طے کریں',
   'From other apps: bind {command} in your system settings':
     'دوسری ایپس سے: سسٹم سیٹنگز میں {command} مقرر کریں',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'ضروری',
   'Add to Essentials': 'ضروری میں شامل کریں',
   'Remove from Essentials': 'ضروری سے ہٹائیں',
@@ -23,20 +20,16 @@ export const ur: Dictionary = {
   'Add blocks to Essentials': 'بلاکس ضروری میں شامل کریں',
   'Add view to Essentials': 'منظر ضروری میں شامل کریں',
   'Open tabs and Essentials': 'ٹیبز اور ضروری کھولنا',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor اب Orden ہے',
   'Notes from nibeditor.com': 'nibeditor.com سے نوٹس',
   'Nothing there': 'وہاں کچھ نہیں',
-  // AI: the three permission modes
   'Full permissions': 'مکمل اجازتیں',
   'Auto mode': 'خودکار موڈ',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'مکمل اجازتیں: کچھ نہیں پوچھا جاتا نہ آپ کو واپس سونپا جاتا ہے، سائن ان، ادائیگی، بھیجنا یا حذف کرنا بھی نہیں',
-  // Import: Zen's tabs
   'Import from Zen': 'Zen سے امپورٹ کریں',
   'Containers stay in Zen': 'کنٹینر Zen ہی میں رہتے ہیں',
   'Zen’s tabs could not be read.': 'Zen کے ٹیب پڑھے نہیں جا سکے۔',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'کنٹینر Firefox ہی میں رہتے ہیں',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} سے تلاش کرتا ہے: یہاں بھی اس سے تلاش کرنے کے لیے ترتیبات میں اسے منتخب کریں',
@@ -63,38 +56,29 @@ export const ur: Dictionary = {
   'Reading List': 'ریڈنگ لسٹ',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS سفاری کے ٹیب اور بُک مارکس کو فل ڈسک ایکسیس کے پیچھے رکھتا ہے۔ وہاں Orden آن کریں، پھر دوبارہ کوشش کریں۔',
-  // Settings: note types
   'Page note': 'صفحات والا نوٹ',
   'Web note': 'ویب نوٹ',
   'Private tab': 'نجی ٹیب',
   'Note types': 'نوٹ کی اقسام',
-  // Tasks: Upcoming's weeks
   'Previous week': 'پچھلا ہفتہ',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'اوپر پروجیکٹ شامل کریں',
   'Add project below': 'نیچے پروجیکٹ شامل کریں',
   'Projects folder': 'پروجیکٹس فولڈر',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'چھوڑیں',
   'Complete forever': 'ہمیشہ کے لیے مکمل کریں',
-  // Tasks: comments
   Comments: 'تبصرے',
-  // Tasks: filters
   Filters: 'فلٹرز',
   'Add filter': 'فلٹر شامل کریں',
   'Edit filter': 'فلٹر میں ترمیم کریں',
-  // Tasks: a project's sections
   'Add section': 'حصہ شامل کریں',
   '{name} (copy)': '{name} (نقل)',
   'Its tasks are deleted with it.': 'اس کے کام بھی ساتھ مٹ جائیں گے۔',
-  // Tasks: keys, selection and the undo toast
   Completed: 'مکمل ہو گیا',
   'Remove date': 'تاریخ ہٹائیں',
   'Next task': 'اگلا کام',
   'Previous task': 'پچھلا کام',
   'Add task at the top': 'اوپر کام شامل کریں',
   '{count} selected': '{count} منتخب',
-  // Tasks: the Display menu
   Display: 'نمائش',
   'Completed tasks': 'مکمل کام',
   Smart: 'سمارٹ',
@@ -106,20 +90,16 @@ export const ur: Dictionary = {
   'Reset all': 'سب ری سیٹ کریں',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'لے آؤٹ کاموں کو فہرست، بورڈ یا کیلنڈر کے طور پر دکھاتا ہے۔ گروپ بندی انہیں گروپوں میں بانٹتی ہے، جو بورڈ کے کالم ہیں۔ ترتیب ہر گروپ کو ترتیب دیتی ہے۔ فلٹر وہ چھپاتے ہیں جس کی آپ کو ضرورت نہیں۔ یہ سب اس منظر کے لیے رکھا جاتا ہے۔',
-  // Tasks: several lines pasted into quick add
   'One task': 'ایک کام',
   'One per line': 'ہر سطر کا ایک',
   'Add with AI': 'AI سے شامل کریں',
-  // Tasks: the projects in the panel
   Favorites: 'پسندیدہ',
   'Add project': 'پروجیکٹ شامل کریں',
   'Add sub-project': 'ذیلی پروجیکٹ شامل کریں',
-  // Tasks: the task view
   'Sub-tasks': 'ذیلی کام',
   'Add sub-task': 'ذیلی کام شامل کریں',
   'New label': 'نیا لیبل',
   'No deadline': 'کوئی آخری تاریخ نہیں',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'دوبارہ وقت مقرر کریں',
   'Later this week': 'اس ہفتے بعد میں',
   'This weekend': 'اس ہفتے کے آخر',
@@ -136,22 +116,18 @@ export const ur: Dictionary = {
   Reopen: 'دوبارہ کھولیں',
   Schedule: 'وقت مقرر کریں',
   'Open in note': 'نوٹ میں کھولیں',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'کوئی اور ایپ',
   'Import from Obsidian': 'Obsidian سے امپورٹ کریں',
   'Import from Notion': 'Notion سے امپورٹ کریں',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'اشارے',
   'Silent mode': 'خاموش موڈ',
   'See how your notes connect.': 'دیکھیں آپ کے نوٹس کیسے جڑے ہیں۔',
   'Press {key} to find anything, notes and commands alike.':
     'نوٹس اور کمانڈز، کچھ بھی تلاش کرنے کے لیے {key} دبائیں۔',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'لکھتے وقت مارک ڈاؤن دکھائیں',
   'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'پوائنٹر',
   'Pointing hand on buttons': 'بٹنوں پر اشارہ کرتا ہاتھ',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'کام شامل کریں',
   'Apple Shortcuts': 'Apple شارٹ کٹس',
   Tomorrow: 'آئندہ کل',
@@ -177,7 +153,6 @@ export const ur: Dictionary = {
   'Every week': 'ہر ہفتے',
   'Every month': 'ہر مہینے',
   'Every year': 'ہر سال',
-  // Files and notes
   Save: 'محفوظ کریں',
   'New note': 'نیا نوٹ',
   'Random note': 'بے ترتیب نوٹ',
@@ -205,8 +180,6 @@ export const ur: Dictionary = {
   'Release to add a page': 'صفحہ شامل کرنے کے لیے چھوڑیں',
   'Page {number}': 'صفحہ {number}',
   'The paper could not be read': 'کاغذ نہیں پڑھا جا سکا',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'لیٹر',
   'Long page': 'لمبا صفحہ',
@@ -249,7 +222,6 @@ export const ur: Dictionary = {
   'Choose a picture': 'ایک تصویر منتخب کریں',
   'Remove picture': 'تصویر ہٹائیں',
   'That picture could not be read.': 'وہ تصویر پڑھی نہیں جا سکی۔',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'رنگ کی گہرائی',
   Tint: 'رنگت',
   'Tint colour': 'رنگت کا رنگ',
@@ -377,7 +349,6 @@ export const ur: Dictionary = {
   'Merge into…': 'اس میں ضم کریں…',
   'Split at caret': 'کرسر پر تقسیم کریں',
   'Extract selection': 'انتخاب الگ کریں',
-  // Panels and navigation
   Bookmarks: 'بک مارکس',
   'New group': 'نیا گروپ',
   'Remove group': 'گروپ ہٹائیں',
@@ -431,8 +402,6 @@ export const ur: Dictionary = {
   'Sort by name': 'نام کے مطابق ترتیب',
   'Sort by modified': 'تبدیلی کے مطابق ترتیب',
   'Sort by created': 'تخلیق کے مطابق ترتیب',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'فائلوں کی ترتیب',
   'Name, A to Z': 'نام، الف سے ی',
   'Name, Z to A': 'نام، ی سے الف',
@@ -443,7 +412,6 @@ export const ur: Dictionary = {
   Manual: 'ہاتھ سے',
   'Show hidden files': 'پوشیدہ فائلیں دکھائیں',
   'Hide hidden files': 'پوشیدہ فائلیں چھپائیں',
-  // Writing
   Bold: 'جلی',
   Italic: 'ترچھا',
   Strikethrough: 'خط زدہ',
@@ -528,11 +496,9 @@ export const ur: Dictionary = {
   'Horizontal rule': 'افقی لکیر',
   'Page break': 'صفحہ توڑ',
   'Tidy up this note': 'یہ نوٹ سنواریں',
-  // PDFs
   'Copy a link': 'ایک لنک نقل کریں',
   'That PDF could not be opened': 'یہ PDF نہیں کھل سکی',
   'That file could not be read': 'یہ فائل پڑھی نہیں جا سکی',
-  // Modes and view
   Reading: 'پڑھائی',
   'Leave reading': 'پڑھائی سے نکلیں',
   Present: 'پیش کریں',
@@ -572,7 +538,6 @@ export const ur: Dictionary = {
   'Zoom in': 'زوم اِن',
   'Zoom out': 'زوم آؤٹ',
   'Actual size': 'اصل سائز',
-  // Appearance
   Accent: 'نمایاں رنگ',
   'Tidy up': 'ترتیب دیں',
   'Blur the app behind the tab overview': 'ٹیب جائزے کے پیچھے ایپ کو دھندلا کریں',
@@ -700,7 +665,6 @@ export const ur: Dictionary = {
   'Switch theme': 'تھیم بدلیں',
   Style: 'انداز',
   Mode: 'موڈ',
-  // The window's own edges; see appearance.rs
   Window: 'ونڈو',
   'Orden’s own': 'Orden کا اپنا',
   'The system’s': 'سسٹم کا',
@@ -711,7 +675,6 @@ export const ur: Dictionary = {
   'Edit custom CSS': 'اپنی CSS میں ترمیم',
   'Edit snippets': 'اسنپٹس میں ترمیم',
   'Reload themes and custom CSS': 'تھیمز اور CSS دوبارہ لوڈ کریں',
-  // The theme store, and the sample note its cards show
   Themes: 'تھیمز',
   Browse: 'براؤز کریں',
   'Search themes': 'تھیمز تلاش کریں',
@@ -791,7 +754,6 @@ export const ur: Dictionary = {
   'Code only': 'صرف کوڈ میں',
   Everywhere: 'ہر جگہ',
   Attachments: 'منسلکات',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'صفحات والے نوٹ',
   'New pages': 'نئے صفحات',
   'Assets folder of the space': 'اسپیس کا اثاثہ فولڈر',
@@ -843,7 +805,6 @@ export const ur: Dictionary = {
   'Machine-translated. Corrections welcome.': 'مشینی ترجمہ۔ تصحیح خوش آمدید۔',
   'The glasses show English.': 'چشمہ انگریزی دکھاتا ہے۔',
   'Match the app': 'ایپ کے مطابق',
-  // Settings
   Settings: 'ترتیبات',
   Account: 'اکاؤنٹ',
   Publish: 'شائع کریں',
@@ -869,7 +830,6 @@ export const ur: Dictionary = {
   },
   Update: 'اپ ڈیٹ',
   'Live at': 'یہاں شائع',
-  // Publishing
   'Publish {name}': '{name} شائع کریں',
   'What to publish': 'کیا شائع کریں',
   'The whole space': 'پورا اسپیس',
@@ -888,7 +848,6 @@ export const ur: Dictionary = {
   Value: 'قدر',
   available: 'دستیاب',
   'checking…': 'جانچ ہو رہی ہے…',
-  // LLM
   'Connect an LLM to your notes': 'اپنے نوٹس سے LLM جوڑیں',
   'Sign in first - the connector reaches the notes in your account.':
     'پہلے سائن ان کریں - کنیکٹر آپ کے اکاؤنٹ کے نوٹس تک پہنچتا ہے۔',
@@ -939,7 +898,6 @@ export const ur: Dictionary = {
     'اس کلائنٹ کے لیے جو URL کی جگہ JSON بلاک لیتا ہے۔',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'جو کلائنٹ سائن ان نہیں کر سکتا اسے ٹوکن دیا جا سکتا ہے۔ وہ صرف ایک بار دکھایا جاتا ہے۔',
-  // Export
   'Plain text': 'سادہ متن',
   'Markdown with the pictures': 'تصاویر کے ساتھ Markdown',
   'HTML without styles': 'بغیر اسٹائل HTML',
@@ -958,13 +916,11 @@ export const ur: Dictionary = {
   Margin: 'کنارہ',
   Header: 'سرِ صفحہ',
   Footer: 'ذیلِ صفحہ',
-  // History
   'Version history': 'ورژن کی تاریخ',
   'Copy link to this note': 'اس نوٹ کا لنک نقل کریں',
   'that link could not be followed': 'اس لنک پر نہیں جا سکے',
   'No earlier versions yet.': 'ابھی پہلے کا کوئی ورژن نہیں۔',
   'Restore this version': 'یہ ورژن بحال کریں',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'وہاں پہلے سے ایک نوٹ ہے',
   'enter a valid email address': 'درست ای میل پتہ لکھیں',
   'give the space a name': 'اسپیس کو نام دیں',
@@ -995,7 +951,6 @@ export const ur: Dictionary = {
   'could not publish': 'شائع نہیں ہو سکا',
   'could not create a token': 'ٹوکن نہیں بن سکا',
   'that did not work': 'یہ کام نہیں کر سکا',
-  // Settings on a phone, display names, one blog address
   Back: 'واپس',
   'Display name': 'ظاہری نام',
   'Your name': 'آپ کا نام',
@@ -1015,7 +970,6 @@ export const ur: Dictionary = {
   Spelling: 'ہجے',
   Checking: 'جانچ',
   Dictionary: 'لغت',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'ریکارڈ کے ظاہر ہونے کا انتظار ہے۔',
   'Certificate issued.': 'سرٹیفکیٹ جاری ہوا۔',
   'Cloudflare could not set this domain up.': 'Cloudflare یہ ڈومین ترتیب نہیں دے سکا۔',
@@ -1026,7 +980,6 @@ export const ur: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare نے یہ ڈومین بلاک کر دیا',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'ڈومین کی جڑ پر ALIAS یا ANAME ریکارڈ، یا CNAME flattening استعمال کریں، اگر آپ کا فراہم کنندہ وہاں CNAME کی اجازت نہ دے۔',
-  // Shortcuts
   Shortcuts: 'شارٹ کٹس',
   'Search shortcuts': 'شارٹ کٹ تلاش کریں',
   'Second key': 'دوسری کلید',
@@ -1192,7 +1145,6 @@ export const ur: Dictionary = {
   Delegated: 'سپرد کیا',
   'Code theme: {name}': 'کوڈ تھیم: {name}',
   'Delete a layout': 'لے آؤٹ حذف کریں',
-  // Keyboards and modal editing
   Default: 'طے شدہ',
   'Vim keys': 'Vim کلیدیں',
   'Follow the link': 'لنک پر جائیں',
@@ -1204,11 +1156,9 @@ export const ur: Dictionary = {
   INSERT: 'اندراج',
   VISUAL: 'انتخاب',
   REPLACE: 'تبدیل',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'چشمے پر صفحہ {page}/{count}',
   'Reaching the glasses': 'چشمے تک پہنچ رہا ہے',
   'The glasses are not keeping up': 'چشمہ ساتھ نہیں دے رہا',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'شامل کریں',
   Select: 'منتخب کریں',
   Pan: 'کھسکائیں',
@@ -1238,7 +1188,6 @@ export const ur: Dictionary = {
   Calligraphy: 'خطاطی',
   'Width {number}': 'چوڑائی {number}',
   'Finger draws': 'انگلی سے ڈرا',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'چوڑائی',
   Opacity: 'غیر شفافیت',
   Colour: 'رنگ',
@@ -1282,23 +1231,19 @@ export const ur: Dictionary = {
   'Export as PNG': 'PNG میں ایکسپورٹ کریں',
   'Export as SVG': 'SVG میں ایکسپورٹ کریں',
   'Export as PDF': 'PDF میں ایکسپورٹ کریں',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'PDF امپورٹ کریں',
   'Choose how to add the pages to the canvas.': 'منتخب کریں کہ صفحات کینوس پر کیسے شامل ہوں۔',
   'Single page': 'ایک صفحہ',
   'All pages': 'تمام صفحات',
   'Choose a page': 'ایک صفحہ منتخب کریں',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'منتخب حذف کریں',
   'Nudge left': 'بائیں سرکائیں',
   'Nudge right': 'دائیں سرکائیں',
   'Nudge up': 'اوپر سرکائیں',
   'Nudge down': 'نیچے سرکائیں',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'کہیں اور بھی کھلا ہے',
   Shared: 'مشترکہ',
   Browser: 'براؤزر',
-  // Sharing a space with other people
   Share: 'شیئر کریں',
   'Share {name}': '{name} شیئر کریں',
   'Share this space': 'یہ اسپیس شیئر کریں',
@@ -1343,14 +1288,12 @@ export const ur: Dictionary = {
   'Shared with you': 'آپ کے ساتھ شیئر',
   'That link does not open anything': 'یہ لنک کچھ نہیں کھولتا',
   'Ask for another one.': 'دوسرا منگوائیں۔',
-  // Somebody a share link let in, who has no account
   Guest: 'مہمان',
   'Ask to join': 'شامل ہونے کی درخواست',
   Asking: 'درخواست جا رہی ہے',
   'Waiting for {who}': '{who} کا انتظار',
   '{who} did not let you in': '{who} نے اندر نہیں آنے دیا',
   'What the others in this space see.': 'اس اسپیس میں باقی لوگ جو دیکھتے ہیں۔',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'اپ ڈیٹس',
   'Release channel': 'ریلیز چینل',
   Stable: 'مستحکم',
@@ -1360,8 +1303,6 @@ export const ur: Dictionary = {
   'Web version': 'ویب ورژن',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'مستحکم جاری کردہ ویب ایپ ہے، غیر مستحکم سب سے نیا بلڈ ہے اور خراب ہو سکتا ہے۔',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'امپورٹ',
   'Convert syntax': 'ساخت تبدیل کریں',
   'In this note': 'اس نوٹ میں',
@@ -1457,8 +1398,6 @@ export const ur: Dictionary = {
   'Undo the import': 'امپورٹ واپس لیں',
   'Choose an export': 'ایکسپورٹ منتخب کریں',
   Under: 'کے نیچے',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'سنک',
   'When the same note was written twice': 'جب ایک ہی نوٹ دو بار لکھا جائے',
   'On two devices': 'دو ڈیوائسز پر',
@@ -1520,7 +1459,6 @@ export const ur: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'اس ڈیوائس کے نوٹس رہیں گے؛ صرف اکاؤنٹ اور اس کی ہم آہنگ کاپیاں جائیں گی۔',
   'Also gone for everyone in {spaces}.': '{spaces} میں سب کے لیے بھی چلا جائے گا۔',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'نوٹ',
   '{space} panel': '{space} کا پینل',
   'Panel width': 'پینل کی چوڑائی',
@@ -1531,7 +1469,6 @@ export const ur: Dictionary = {
   'What is selected': 'منتخب شدہ',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'کینوس: {cards} کارڈ، {links} لنک، {drawings} خاکے',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'فراہم کنندگان',
   'Make default': 'طے شدہ بنائیں',
@@ -1558,7 +1495,6 @@ export const ur: Dictionary = {
   'The model did not answer.': 'ماڈل نے جواب نہیں دیا۔',
   'The connection closed before the answer was finished.':
     'جواب مکمل ہونے سے پہلے کنکشن بند ہو گیا۔',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'آپ کا {plan} پلان {time} تک حد پر ہے۔',
   'Your {plan} plan is at its limit for now.': 'آپ کا {plan} پلان فی الحال حد پر ہے۔',
   'Your {plan} plan is near its limit.': 'آپ کا {plan} پلان حد کے قریب ہے۔',
@@ -1585,7 +1521,6 @@ export const ur: Dictionary = {
   Shorter: 'مختصر',
   Longer: 'طویل',
   'Fix grammar': 'قواعد درست کریں',
-  // The AI sidebar's commands
   'A cited report': 'ماخذ کے ساتھ رپورٹ',
   'A helper in the background': 'پس منظر میں مددگار',
   'A side question': 'ضمنی سوال',
@@ -1687,7 +1622,6 @@ export const ur: Dictionary = {
   'Markdown, shortest name': 'Markdown، مختصر ترین نام',
   'Markdown, relative path': 'Markdown، نسبتی راستہ',
   'Markdown, path in the space': 'Markdown، اسپیس میں راستہ',
-  // Publishing part one.
   'The folders you choose become public.': 'منتخب فولڈر عوامی ہو جاتے ہیں۔',
   'Anyone with the address can read what is published, drafts included.':
     'جس کے پاس پتہ ہو وہ شائع شدہ سب کچھ پڑھ سکتا ہے، مسودے بھی۔',
@@ -1713,11 +1647,9 @@ export const ur: Dictionary = {
   'Remove the password': 'پاس ورڈ ہٹائیں',
   'Scan this with your authenticator app, then type its code.':
     'اسے اپنی توثیق ایپ سے اسکین کریں، پھر اس کا کوڈ لکھیں۔',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'تصویر',
   Dictate: 'بول کر لکھوائیں',
   'Add to {name}': '{name} میں شامل کریں',
-  // Web tabs
   Reload: 'دوبارہ لوڈ کریں',
   'Hard reload': 'مکمل طور پر دوبارہ لوڈ کریں',
   'Open in the browser': 'براؤزر میں کھولیں',
@@ -1732,7 +1664,6 @@ export const ur: Dictionary = {
   'Playing audio': 'آڈیو چل رہی ہے',
   Muted: 'آواز بند ہے',
   'Developer tools': 'ڈویلپر ٹولز',
-  // Recording, meetings and what a model wrote
   Record: 'ریکارڈ کریں',
   Recording: 'ریکارڈنگ',
   'Stop recording': 'ریکارڈنگ روکیں',
@@ -1753,7 +1684,6 @@ export const ur: Dictionary = {
     'وہ ریکارڈنگ ایک ہی بار میں الفاظ میں بدلنے کے لیے بہت طویل ہے۔',
   'That is as much as one recording may hold.': 'ایک ریکارڈنگ میں اتنا ہی سما سکتا ہے۔',
   'Nothing could be heard in that recording.': 'اس ریکارڈنگ میں کچھ سنا نہ گیا۔',
-  // Publishing part two.
   Spreadsheet: 'اسپریڈ شیٹ',
   'The app’s own': 'ایپ کا اپنا',
   'publish.css and publish.js in this space dress the site.':
@@ -1769,14 +1699,12 @@ export const ur: Dictionary = {
   'Save as CSV': 'CSV کے طور پر محفوظ کریں',
   'Kept for {days}': '{days} تک رکھے جاتے ہیں',
   Full: 'بھرا ہوا',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'میل نہیں بھیجی جا سکی - دوبارہ کوشش کریں',
   'start again - that took too long': 'دوبارہ شروع کریں - بہت دیر لگ گئی',
   'sign in to do that': 'یہ کرنے کے لیے سائن ان کریں',
   'that is not something a token can do': 'یہ ٹوکن کے کرنے کا کام نہیں',
   'something went wrong here - try again': 'یہاں کچھ غلط ہو گیا - دوبارہ کوشش کریں',
   'this service cannot keep a secret safely': 'یہ سروس راز محفوظ نہیں رکھ سکتی',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only': 'صرف تصاویر، PDF اور سائٹ کا اپنا css یا js',
   'that file is too big': 'یہ فائل بہت بڑی ہے',
   'that is more settings than an account holds': 'یہ اکاؤنٹ کی گنجائش سے زیادہ ترتیبات ہیں',
@@ -1786,13 +1714,11 @@ export const ur: Dictionary = {
   'that is more than a space keeps about its graph': 'یہ اسپیس کے گراف کی گنجائش سے زیادہ ہے',
   'that is more folder icons than a space holds': 'یہ اسپیس کی گنجائش سے زیادہ فولڈر آئیکن ہیں',
   'that is more than a site keeps': 'یہ اُس سے زیادہ ہے جو ایک سائٹ رکھتی ہے',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'اس پتے پر کوئی نہیں',
   'nobody by that name': 'اس نام کا کوئی نہیں',
   'nobody is waiting by that name': 'اس نام کا کوئی منتظر نہیں',
   'this space is yours': 'یہ اسپیس آپ کا ہے',
   'that link is busy, try again in a minute': 'یہ لنک مصروف ہے، ایک منٹ بعد کوشش کریں',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'ایسا ورژن نہیں',
   'this note was shared with you, not its folder': 'یہ نوٹ آپ کے ساتھ شیئر ہوا، اس کا فولڈر نہیں',
   'nothing to restore': 'بحال کرنے کو کچھ نہیں',
@@ -1800,7 +1726,6 @@ export const ur: Dictionary = {
   'nothing to delete': 'حذف کرنے کو کچھ نہیں',
   'this room is not answering - try again': 'یہ روم جواب نہیں دے رہا - دوبارہ کوشش کریں',
   'rooms are not running here': 'یہاں رومز نہیں چل رہے',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'تھیم اسٹور جواب نہیں دے رہا',
   'that is not a theme': 'یہ تھیم نہیں ہے',
   'no such theme': 'ایسی تھیم نہیں',
@@ -1813,10 +1738,8 @@ export const ur: Dictionary = {
   'that is more than a spoken command': 'یہ بولی گئی کمانڈ سے زیادہ ہے',
   'that is a lot of listening - try again later': 'بہت زیادہ سننا - بعد میں کوشش کریں',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% متن',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'موبائل',
   'The bar sits over the keyboard on a phone.': 'فون پر پٹی کی بورڈ کے اوپر رہتی ہے۔',
   'On the bar': 'پٹی پر',
@@ -1830,31 +1753,25 @@ export const ur: Dictionary = {
   'A pull past the top runs': 'اوپر سے کھینچنے پر چلے',
   Nothing: 'کچھ نہیں',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'رکھیں',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'دائیں منتقل کریں',
   'Move to the left': 'بائیں منتقل کریں',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'اکاؤنٹ پر تاریخ',
   'Keep versions': 'ورژن رکھیں',
   'A month': 'ایک ماہ',
   'A year': 'ایک سال',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'پچھلے دن کا سب کچھ، پھر ہر گھنٹے ایک، ایک ماہ بعد روز ایک، اور تین ماہ بعد ہفتے میں ایک۔',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'یہ نوٹ اُتنا بڑا ہو گیا ہے جتنا کسی روم میں کوئی نوٹ ہو سکتا ہے۔',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'نیا ٹیب',
   'Full screen': 'پوری اسکرین',
   'Print…': 'پرنٹ کریں…',
   'Share…': 'شیئر کریں…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'چاہتی ہے کہ',
   'Don’t allow': 'اجازت نہ دیں',
   Allow: 'اجازت دیں',
@@ -1870,7 +1787,6 @@ export const ur: Dictionary = {
   'Use your MIDI devices': 'اپنے MIDI آلات استعمال کریں',
   'Manage windows on all your displays': 'اپنے سبھی ڈسپلیز پر ونڈوز کا نظم کریں',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'سائٹ کی معلومات',
   Downloads: 'ڈاؤن لوڈز',
   'Downloading {name}': '{name} ڈاؤن لوڈ ہو رہا ہے',
@@ -1897,11 +1813,9 @@ export const ur: Dictionary = {
   'Turn into': 'میں بدلیں',
   Foldable: 'تہ کیا جا سکتا ہے',
   'Starts folded': 'تہ شدہ شروع',
-  // Where a space keeps what websites store
   'Web data': 'ویب ڈیٹا',
   Global: 'مشترکہ',
   Site: 'سائٹ',
-  // The Mac's menu bar
   'About {name}': '{name} کے بارے میں',
   Services: 'خدمات',
   'Hide {name}': '{name} چھپائیں',
@@ -1909,7 +1823,6 @@ export const ur: Dictionary = {
   'Show all': 'سب دکھائیں',
   'Quit {name}': '{name} بند کریں',
   'Bring all to front': 'سب کو سامنے لائیں',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'نقل واپس لیں',
   'Devices with your AI vault': 'آپ کے AI والٹ والی ڈیوائسز',
   'This device': 'یہ ڈیوائس',
@@ -1924,13 +1837,11 @@ export const ur: Dictionary = {
   'Select down': 'نیچے کی طرف منتخب کریں',
   'Select up': 'اوپر کی طرف منتخب کریں',
   'Select or deselect': 'منتخب کریں یا انتخاب ہٹائیں',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'نئے ٹیب میں کھولیں',
   'Open to the side': 'ساتھ میں کھولیں',
   'Open all': 'سب کھولیں',
   'Show in the file list': 'فائل فہرست میں دکھائیں',
   'Collapse the file list': 'فائل فہرست سمیٹیں',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'انتخاب بڑھائیں',
   'Shrink the selection': 'انتخاب گھٹائیں',
   'Insert a line above': 'اوپر ایک سطر داخل کریں',
@@ -1944,18 +1855,15 @@ export const ur: Dictionary = {
   'Duplicate the block': 'بلاک کی نقل بنائیں',
   'Move the block up': 'بلاک اوپر لے جائیں',
   'Move the block down': 'بلاک نیچے لے جائیں',
-  // The editor's menu on a link and a picture
   'Copy link address': 'لنک کا پتہ نقل کریں',
   'Edit link': 'لنک میں ترمیم کریں',
   'Remove link': 'لنک ہٹائیں',
   'Copy picture': 'تصویر نقل کریں',
   'Open picture': 'تصویر کھولیں',
   'Delete picture': 'تصویر حذف کریں',
-  // A file dropped into a note
   'Storing the file': 'فائل محفوظ ہو رہی ہے',
   'That file is larger than a note can keep.': 'یہ فائل اس سے بڑی ہے جتنی ایک نوٹ رکھ سکتا ہے۔',
   'That file could not be kept.': 'یہ فائل رکھی نہ جا سکی۔',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'نیا ٹرمینل',
   'Command Prompt': 'کمانڈ پرامپٹ',
   Terminal: 'ٹرمینل',
@@ -1977,11 +1885,8 @@ export const ur: Dictionary = {
   'Saved nowhere, a session kept running is found again in Settings, {pane}.':
     'کہیں محفوظ نہیں؛ چلتا چھوڑا گیا سیشن دوبارہ ترتیبات، {pane} میں ملے گا۔',
   'Paste {count} lines?': { one: '{count} سطر چسپاں کریں؟', other: '{count} سطریں چسپاں کریں؟' },
-  // Orden as the default browser
   'Default browser': 'طے شدہ براؤزر',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} کی ترامیم کالعدم کریں',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'آرکائیو کریں',
   Unarchive: 'آرکائیو سے نکالیں',
   Archived: 'آرکائیو ہو گیا',
@@ -1994,7 +1899,6 @@ export const ur: Dictionary = {
     one: '{count} آرکائیو شدہ آئٹم اندر',
     other: '{count} آرکائیو شدہ آئٹمز اندر',
   },
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'بائیں سائیڈ بار',
   'Right sidebar': 'دائیں سائیڈ بار',
   'Ask about this space': 'اس اسپیس کے بارے میں پوچھیں',
@@ -2005,7 +1909,6 @@ export const ur: Dictionary = {
   'Ask again': 'دوبارہ پوچھیں',
   'Continue when the limit resets': 'حد ری سیٹ ہونے پر جاری رکھیں',
   'Continues at {time}': '{time} پر جاری رہے گا',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'کچھ بھی پوچھیں، شامل کرنے کے لیے @، مزید کے لیے /',
   'What can I help with?': 'میں کیا مدد کر سکتا ہوں؟',
   'Add photos and files': 'تصاویر اور فائلیں شامل کریں',
@@ -2073,12 +1976,9 @@ export const ur: Dictionary = {
   Closed: 'بند کیا',
   Ran: 'چلایا',
   Changed: 'بدلا',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': 'یہ {device}',
   '{name} is back: {device} was writing in it': '{name} واپس آ گیا: {device} اس میں لکھ رہا تھا',
   'Changes to {name} are not syncing': '{name} میں تبدیلیاں سنک نہیں ہو رہیں',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'کھولنا',
   Pressing: 'دبانا',
   Typing: 'ٹائپ کرنا',
@@ -2093,18 +1993,14 @@ export const ur: Dictionary = {
   'Agent tabs closed': 'ایجنٹ ٹیب بند ہو گئے',
   'Orden is still running for your agents': 'آپ کے ایجنٹوں کے لیے Orden اب بھی چل رہا ہے',
   '{client} wants to connect': '{client} جڑنا چاہتا ہے',
-  // Web logins that travel, and the devices of an account
   'no such device': 'ایسا کوئی آلہ نہیں',
   'give the device a name': 'آلے کو نام دیں',
   'that computer is no longer waiting': 'وہ کمپیوٹر اب انتظار نہیں کر رہا',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'ایسی کوئی فائل نہیں',
   'too many changes at once - try again in a minute':
     'ایک ساتھ بہت زیادہ تبدیلیاں - ایک منٹ بعد دوبارہ کوشش کریں',
   'that is more than a space keeps about its tree':
     'یہ اس سے زیادہ ہے جتنا ایک اسپیس اپنے ٹری کے بارے میں رکھتا ہے',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'اس کمپیوٹر پر ایجنٹس',
   'Your account’s connector': 'آپ کے اکاؤنٹ کا کنیکٹر',
   'Orden asks you once, the first time it connects.':
@@ -2175,12 +2071,9 @@ export const ur: Dictionary = {
     one: '{count} کال',
     other: '{count} کالز',
   },
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'فوری سوال',
   Scratchpad: 'Scratchpad',
   'Add to note': 'نوٹ میں شامل کریں',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'ایکسٹینشنز',
   'Add extension': 'ایکسٹینشن شامل کریں',
   'Manage extensions': 'ایکسٹینشنز کا نظم کریں',
@@ -2199,7 +2092,6 @@ export const ur: Dictionary = {
   'Did not load': 'لوڈ نہیں ہوا',
   Permissions: 'اجازتیں',
   Options: 'اختیارات',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'ریموٹ',
   'Add host': 'ہوسٹ شامل کریں',
   Reconnect: 'دوبارہ جڑیں',
@@ -2207,11 +2099,8 @@ export const ur: Dictionary = {
   'No group': 'کوئی گروپ نہیں',
   'Not an address': 'یہ پتہ نہیں ہے',
   'Could not connect to {host}': '{host} سے نہیں جڑ سکے',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'تصویر بھیجی جا رہی ہے',
   'Could not send the image': 'تصویر نہیں بھیج سکے',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': {
     one: 'اور اس کے بعد کا {count}',
     other: 'اور اس کے بعد کے {count}',
@@ -2224,8 +2113,6 @@ export const ur: Dictionary = {
   'Pages, terminals and moves are not undone': 'صفحات، ٹرمینل اور منتقلیاں کالعدم نہیں ہوتیں',
   Rewind: 'پیچھے جائیں',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'تلاش انجن',
   History: 'سرگزشت',
   'Search history': 'تلاش کی سرگزشت',
@@ -2249,14 +2136,12 @@ export const ur: Dictionary = {
   'New private tab': 'نیا نجی ٹیب',
   'All spaces': 'تمام اسپیسز',
   'the data could not be deleted': 'ڈیٹا حذف نہیں کیا جا سکا',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'اسنوز',
   Reminders: 'یاددہانیاں',
   'Reminders ring while Orden is open': 'Orden کھلا ہونے تک یاددہانیاں بجتی ہیں',
   Automatic: 'خودکار',
   'Stay in the tray': 'ٹرے میں رہیں',
   'Exact alarms': 'درست الارم',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'کام',
   'Plan my day': 'میرا دن پلان کریں',
   'Add a task': 'کام شامل کریں',
@@ -2268,8 +2153,6 @@ export const ur: Dictionary = {
   'Done tasks too': 'مکمل کام بھی',
   'As a task': 'بطور کام',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'کام',
   Ascending: 'صعودی',
   Descending: 'نزولی',
@@ -2354,8 +2237,6 @@ export const ur: Dictionary = {
   'Without a value': 'بغیر قدر',
   'With a value': 'قدر کے ساتھ',
   Unique: 'منفرد',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'سانچے سے نیا نوٹ',
   Automations: 'خودکار عمل',
   'Row added': 'قطار شامل ہوئی',
@@ -2384,7 +2265,6 @@ export const ur: Dictionary = {
   Form: 'فارم',
   Formula: 'فارمولا',
   'Blocked by {task}': '{task} کا انتظار',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'باہر نکلنے سے پہلے خبردار کریں',
   'When something runs': 'جب کچھ چل رہا ہو',
   'Quit {name}?': '{name} بند کریں؟',
@@ -2395,16 +2275,13 @@ export const ur: Dictionary = {
   'Quit anyway': 'پھر بھی بند کریں',
   'Restart anyway': 'پھر بھی دوبارہ شروع کریں',
   'Close anyway': 'پھر بھی بند کریں',
-  // The online terminal
   'Online terminal': 'آن لائن ٹرمینل',
   'New online terminal': 'نیا آن لائن ٹرمینل',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'کوئی اور آلہ',
   'Taken over by {device}': '{device} نے لے لیا',
   'Open on {device} since {time}': '{time} سے {device} پر کھلا',
   'Take over': 'سنبھالیں',
   'Take back': 'واپس لیں',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'نئی ایپلیکیشن',
   Application: 'ایپلیکیشن',
   'This application’s file is damaged': 'اس ایپلیکیشن کی فائل خراب ہے',
@@ -2512,8 +2389,6 @@ export const ur: Dictionary = {
   'Compare with original': 'اصل سے موازنہ کریں',
   'Conflict copies from other apps': 'دوسری ایپس کی تنازع نقلیں',
   'Remove from sync': 'سنک سے ہٹائیں',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'پروفائل',
   Change: 'بدلیں',
   'Take photo': 'تصویر کھینچیں',
@@ -2538,7 +2413,6 @@ export const ur: Dictionary = {
   'that picture could not be opened': 'وہ تصویر کھل نہیں سکی',
   'the camera could not be opened': 'کیمرا کھل نہیں سکا',
   'that picture is too big': 'وہ تصویر بہت بڑی ہے',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'چیٹ',
   Reply: 'جواب دیں',
   Replies: 'جوابات',
@@ -2557,7 +2431,6 @@ export const ur: Dictionary = {
   'Also send to {chat}': '{chat} میں بھی بھیجیں',
   'Skin tone': 'جلد کی رنگت',
   'Deleted account': 'حذف شدہ اکاؤنٹ',
-  // Chats: notifications
   Mute: 'خاموش کریں',
   Unmute: 'آواز کھولیں',
   'New message': 'نیا پیغام',
@@ -2567,7 +2440,6 @@ export const ur: Dictionary = {
   Weekdays: 'کام کے دن',
   Starts: 'شروع',
   Ends: 'اختتام',
-  // Chats: everywhere
   'Read chats': 'چیٹس پڑھنا',
   'Post in chats': 'چیٹس میں لکھنا',
   'Always in this chat': 'ہمیشہ اس چیٹ میں',
@@ -2579,14 +2451,12 @@ export const ur: Dictionary = {
   'Search this chat': 'اس چیٹ میں تلاش کریں',
   'Add as task': 'کام کے طور پر شامل کریں',
   'Save as note': 'نوٹ کے طور پر محفوظ کریں',
-  // Appearance: glass's own pairs of colours
   Dawn: 'سحر',
   Lagoon: 'لیگون',
   Lilac: 'بنفشی',
   Peach: 'آڑو',
   Sage: 'سیج',
   Mist: 'دھند',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'نیا ڈیٹابیس',
   'New page': 'نیا صفحہ',
   'Not started': 'شروع نہیں ہوا',
@@ -2612,7 +2482,6 @@ export const ur: Dictionary = {
   Large: 'بڑا',
   Both: 'دونوں',
   'Shown on cards': 'کارڈز پر دکھائے گئے',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'اس براؤزر کی AI کلیدیں والٹ کے ذریعے آپ کی دوسری ڈیوائسز کے ساتھ ہم آہنگ کرتا ہے۔',
   'Which of your AI accounts this feature asks.': 'یہ فیچر آپ کے کس AI اکاؤنٹ سے پوچھتا ہے۔',
@@ -2844,7 +2713,6 @@ export const ur: Dictionary = {
   'Some changes may not be noticed': 'کچھ تبدیلیاں شاید نظر نہ آئیں',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'سسٹم میں دیکھے جانے والے فولڈرز کی حد پوری ہو چکی ہے، اس لیے دوسرے پروگرام آپ کی اسپیسز میں جو تبدیلیاں کرتے ہیں Orden شاید سب کو نہ دیکھ سکے۔ fs.inotify.max_user_watches بڑھانے سے یہ ٹھیک ہوتا ہے۔',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'چیٹ {name} کو {space} میں منتقل کریں؟',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'پھر {space} میں ہر کوئی پوری تاریخ پڑھ سکے گا، اور {from} کے لوگ اسے کھو دیں گے۔',
@@ -2884,7 +2752,6 @@ export const ur: Dictionary = {
   'One colour': 'ایک رنگ',
   'Web icons': 'ویب آئیکنز',
   'Sites you visit will appear here': 'آپ جن سائٹس پر جاتے ہیں وہ یہاں دکھائی دیں گی',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'املا',
   'Dictate with': 'اس سے املا کریں',
   'Where your voice goes to be turned into words.':
@@ -2915,11 +2782,9 @@ export const ur: Dictionary = {
   'Not on this device': 'اس آلے پر نہیں',
   'Not on this device. It opens once you are online again.':
     'اس آلے پر نہیں۔ جیسے ہی آپ دوبارہ آن لائن ہوں گے، یہ کھل جائے گا۔',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'IMAP سرور',
   'SMTP server': 'SMTP سرور',
   'User name': 'صارف نام',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'فوری',
   Important: 'اہم',
   'If time': 'وقت ملے تو',

@@ -30,14 +30,6 @@ const told = vi.hoisted(() => vi.fn())
 vi.mock('../notify', () => ({ notify: told }))
 const { watchFolders } = await import('./watching')
 
-/** The engine's own promises, held to one device with an account in memory (the
- *  simulator kit's reference one): what a keystroke costs, what a crash loses, when a
- *  client id turns over, what an open note hears from another device, and that a held
- *  note neither goes up nor takes anything in (docs/sync-v2.md sections 5.2 to 5.4 and
- *  9.3), that a full store loses nothing (road 7), that a refused push waits rather than
- *  asking every pass, and that the folder watcher never hears the engine's own folder as
- *  a new one. The simulator's walks are sim.test.ts and walks/walk.ts. */
-
 const ROOT = '/device/space'
 const SPACE = 'sim'
 
@@ -47,14 +39,11 @@ interface Device {
   account: ReferenceAccount
   routes: string[]
   online: boolean
-  /** Routes this device's requests go unanswered on, as if each were lost. */
   unanswered: Set<string>
   engine: Engine
   launch(): Promise<Engine>
 }
 
-/** One device holding the simulator's two seeded notes, the way a migrated one does, or
- *  the notes it is handed; none is a device that has never synced the space. */
 async function device(
   account = new ReferenceAccount(new Clock(), SEEDED),
   id = 'd0',
@@ -93,8 +82,6 @@ async function device(
       put('docs', {
         id: note.id,
         epoch: 1,
-        // One client id per device per note: two devices sharing one would be two
-        // different operations under one name.
         client_id: hash32(id, note.id, index),
         confirmed,
         confirmed_sv: Y.encodeStateVectorFromUpdateV2(confirmed),
@@ -146,12 +133,10 @@ async function device(
 
 const PLAN = 'n1'
 
-/** Long enough for what an answer sets going to have landed. */
 function settled(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 20))
 }
 
-/** Every text the disk keeps as a version on this device, from now on. */
 function keptOn(disk: Disk): string[] {
   const kept: string[] = []
   disk.keep = (_path, text) => {
@@ -178,7 +163,6 @@ describe('a keystroke', () => {
     expect(one.store.writes).toBe(writes)
     expect(one.disk.files).toEqual(files)
     expect(one.routes).toEqual([])
-    // The pause writes it, once.
     await one.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')
     expect(one.store.writes).toBe(writes + 1)
   })
@@ -232,7 +216,6 @@ describe('a crash', () => {
     await one.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')
     doc?.live?.transact(() => doc?.live?.getText(TEXT).insert(0, 'lost '), HERE)
 
-    // Gone at once: nothing flushed, the session never said it ended cleanly.
     one.engine.stop()
     const again = await one.launch()
     doc = await again.hold(PLAN)
@@ -389,15 +372,12 @@ describe('an open note', () => {
     await here.engine.pass(SPACE)
 
     expect(note.text.toString()).toBe(`${SEEDED[0]?.text ?? ''}From there.`)
-    // One small edit at the end, not the whole note replaced.
     expect(arrived).toEqual([
       [{ from: SEEDED[0]?.text.length, to: SEEDED[0]?.text.length, insert: 'From there.' }],
     ])
   })
 
   test('meeting a document that moved too, the side a small overlap loses is kept as a version', async () => {
-    // The note and the document each changed the same word: the rule settles it without
-    // asking, one side's word stands, and the other's was in no version at all.
     const one = await device()
     one.online = false
     const seeded = SEEDED[0]?.text ?? ''
@@ -538,10 +518,6 @@ describe('words that reach the document while a note and its document are brough
 })
 
 describe('an open note held apart from its document (#543)', () => {
-  /** The document and the note each written over, differently, while the note was
-   *  closed: the rule asks, the note is held, and it is not joined to the document until
-   *  the question is answered. Joined, a keystroke at the end of the note went into the
-   *  document at the note's place, inside a word of the document's (`wr!itten`). */
   async function heldApart() {
     const one = await device()
     const doc = await one.engine.hold(PLAN)
@@ -621,7 +597,6 @@ describe('a meeting classified off this thread', () => {
     await there.engine.pass(SPACE)
     await type(here, 'From here. ', 'start')
 
-    // The worker's answer arrives after another word was typed.
     let asked = 0
     here.engine.core.world.classify = async (one) => {
       asked += 1
@@ -674,8 +649,6 @@ describe('a held note', () => {
 })
 
 describe('a push the account refuses', () => {
-  /** A device whose pushes are answered `refused` while `why` is set, and whose clock
-   *  the test moves. */
   async function refusing(why: DocRefusal) {
     const one = await device()
     const world = one.engine.core.world
@@ -724,14 +697,10 @@ describe('a push the account refuses', () => {
     await one.engine.pass(SPACE)
     expect(pushes()).toBe(3)
     expect(await logged()).toHaveLength(1)
-    // The words never left.
     expect((await one.engine.core.doc(PLAN))?.text().startsWith('kept ')).toBe(true)
   })
 
   test('in a space this device may only read lets the edit go, kept as a version, and takes the owner’s words again', async () => {
-    // Another program changed a reader's file. The account refuses it with `role` for as
-    // long as the space is read only, and a pull never lands on pending edits, so kept
-    // pending it would have stood between this device and every later word of the owner's.
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const reader = await device(account, 'd0')
     const owner = await device(account, 'd1')
@@ -769,7 +738,6 @@ describe('a push the account refuses', () => {
     expect(one.disk.files.get(`${ROOT}/Plan.md`)).toBe(await textOn(one.account, PLAN))
     expect(await logged()).toEqual(['you can only read this space'])
 
-    // Nothing is left to push, so nothing waits.
     await one.engine.pass(SPACE)
     expect(pushes()).toBe(1)
     expect(one.engine.waiting(SPACE)).toBe(false)
@@ -833,10 +801,6 @@ describe('an outbox folded while offline', () => {
   })
 
   test('a note moved into a folder made and deleted here is deleted on the account too', async () => {
-    // The folder and its delete cancel before the account hears of either, and what was
-    // only moved into it is deleted instead - a delete the fold makes, under an op id of
-    // its own that no row of the outbox had yet. Left unwritten, it never went, and the
-    // account kept a note this device had thrown away.
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const here = await device(account)
     here.online = false
@@ -858,10 +822,6 @@ describe('an outbox folded while offline', () => {
   })
 
   test('a note made in a new folder in the same millisecond keeps its folder across a relaunch', async () => {
-    // The folder's mkdir and the note's create are queued in one step, at one clock
-    // reading. Read back after a relaunch they must still come in the order they were
-    // made, whatever their ids: ids that sort the create first make it refused `gone`
-    // and made again at the top of the space. The ids here are chosen to sort that way.
     let drawn = 0
     const random = vi.spyOn(Math, 'random').mockImplementation(() => (drawn += 1) * 1e-6)
     try {
@@ -893,9 +853,6 @@ describe('an outbox folded while offline', () => {
 
 describe('a folder deleted here', () => {
   test('leaves a note in it whose words this device never pulled, and the folder with it (#435)', async () => {
-    // Another device made a folder and a note in it. This one read the list and has not
-    // pulled the note's words, so the note has no file here yet; deleting the folder took
-    // the note, words and all, with nothing kept. Seed 207340730 of the long walks.
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const there = await device(account, 'd0')
     const here = await device(account, 'd1')
@@ -1009,14 +966,12 @@ describe('a delete put back (#1068)', () => {
     await here.engine.moved(`${ROOT}/Plan.md`, `${ROOT}/Work/Plan.md`)
     await here.engine.pass(SPACE)
 
-    // Into the trash, and the account hears of the delete.
     const words = here.disk.files.get(`${ROOT}/Work/Plan.md`) ?? ''
     await here.disk.remove(`${ROOT}/Work`)
     await here.engine.removed(`${ROOT}/Work`, 'trash-1')
     await here.engine.pass(SPACE)
     expect((await account.view()).entries.map((entry) => entry.id)).not.toContain(PLAN)
 
-    // Out of the trash, where it was.
     await here.disk.mkdir(`${ROOT}/Work`)
     await here.disk.write(`${ROOT}/Work/Plan.md`, words)
     expect(await here.engine.restored(`${ROOT}/Work`, 'trash-1')).toBe(true)
@@ -1059,7 +1014,6 @@ describe('a delete put back (#1068)', () => {
     await here.engine.removed(`${ROOT}/Plan.md`, 'trash-1')
     await here.engine.pass(SPACE)
 
-    // Moved by a device that had not heard of the delete, which brings it back.
     await there.disk.mkdir(`${ROOT}/Work`)
     await there.engine.created(`${ROOT}/Work`, true)
     await there.disk.move(`${ROOT}/Plan.md`, `${ROOT}/Work/Plan.md`)
@@ -1068,7 +1022,6 @@ describe('a delete put back (#1068)', () => {
     await here.engine.pass(SPACE)
     expect(here.disk.files.has(`${ROOT}/Work/Plan.md`)).toBe(true)
 
-    // Deleted again by a third, which this device has not heard of when it asks for it back.
     await third.engine.pass(SPACE)
     await third.disk.remove(`${ROOT}/Work/Plan.md`)
     await third.engine.removed(`${ROOT}/Work/Plan.md`)
@@ -1106,7 +1059,6 @@ describe('a delete put back (#1068)', () => {
     await here.engine.removed(`${ROOT}/Work`, 'trash-1')
     await here.engine.pass(SPACE)
 
-    // Renamed by a device that had not heard of the delete: the folder alone comes back.
     await there.disk.move(`${ROOT}/Work`, `${ROOT}/Old`)
     await there.engine.moved(`${ROOT}/Work`, `${ROOT}/Old`)
     await there.engine.pass(SPACE)
@@ -1145,8 +1097,6 @@ describe('a note the account will not make under its id (#1068)', () => {
     await there.engine.removed(`${ROOT}/Gone.md`)
     await there.engine.pass(SPACE)
 
-    // A note made here under an id the account already holds as somebody's tombstone:
-    // an id carried from a store the account does not know of.
     const here = await device(account, 'd0')
     await here.disk.write(`${ROOT}/Idea.md`, 'ship it mk7q')
     const made = (await here.engine.created(`${ROOT}/Idea.md`, false, 'ship it mk7q')) ?? ''
@@ -1178,7 +1128,6 @@ describe('a move to another space', () => {
   const WORK = 'work'
   const WORK_ROOT = '/device/work'
 
-  /** A device holding the seeded space and an empty second one, offline. */
   async function twoSpaces(): Promise<Device> {
     const here = await device()
     here.engine.stop()
@@ -1193,7 +1142,6 @@ describe('a move to another space', () => {
     return here
   }
 
-  /** What a space holds, live, as path and kind. */
   function held(here: Device, space: string): string[] {
     const state = here.engine.core.spaces.get(space)
     if (!state) return []
@@ -1220,8 +1168,6 @@ describe('a move to another space', () => {
   })
 
   test('takes a folder with everything in it, each as the kind it was (#413)', async () => {
-    // The other space's tree had never heard of anything in the folder, and only the
-    // folder was made there: the account, and every other device, had it empty.
     const here = await twoSpaces()
     await here.disk.mkdir(`${ROOT}/Trip`)
     await here.engine.created(`${ROOT}/Trip`, true)
@@ -1280,8 +1226,6 @@ describe('the folder watcher', () => {
       ready: () => true,
       changed: () => undefined,
     })
-    // The folder is made for the note moving into it, and the watcher says so while the
-    // pass is still on its way to writing down where that folder is.
     const mkdir = here.disk.mkdir.bind(here.disk)
     let echoed: Promise<void> = Promise.resolve()
     here.disk.mkdir = async (path) => {
@@ -1368,7 +1312,6 @@ describe('the folder watcher', () => {
     },
   )
 
-  /** A watch whose messages the test says, and a way to wait for them to be read. */
   function listening(engine: Engine) {
     const heard: ((news: SpaceNews) => void)[] = []
     watch.mockImplementation((_roots: readonly string[], hear: (news: SpaceNews) => void) => {
@@ -1406,8 +1349,6 @@ describe('the folder watcher', () => {
     const here = await device(account, 'd0')
     const { say, stop } = listening(here.engine)
 
-    // The watcher's word on a rename can come as the old file gone and a new one made,
-    // and it came before the file list had said what it did: a delete and a new note.
     await here.engine.moving(`${ROOT}/Plan.md`, `${ROOT}/Goals.md`, async () => {
       await here.disk.move(`${ROOT}/Plan.md`, `${ROOT}/Goals.md`)
       await say(removed(`${ROOT}/Plan.md`), created(`${ROOT}/Goals.md`))
@@ -1432,7 +1373,6 @@ describe('the folder watcher', () => {
     await here.engine.moving(`${ROOT}/Plan.md`, `${ROOT}/Goals.md`, () =>
       here.disk.move(`${ROOT}/Plan.md`, `${ROOT}/Goals.md`),
     )
-    // A new note at the old name, and only then the watcher's word on the rename.
     await here.disk.write(`${ROOT}/Plan.md`, 'fresh mk3z')
     const fresh = await here.engine.created(`${ROOT}/Plan.md`, false, 'fresh mk3z')
     await say(removed(`${ROOT}/Plan.md`), created(`${ROOT}/Goals.md`))
@@ -1491,7 +1431,6 @@ describe('the folder watcher', () => {
 
     const here = await device(account, 'd0')
     const { say, stop } = listening(here.engine)
-    // The watcher's word comes before the file list has said it made the note.
     await here.disk.write(`${ROOT}/2026-11-04.md`, 'here mk2z')
     await say(created(`${ROOT}/2026-11-04.md`))
     await here.engine.created(`${ROOT}/2026-11-04.md`, false, 'here mk2z', '')
@@ -1587,8 +1526,6 @@ describe('the folder watcher', () => {
     watched.stop()
   })
 
-  /** #481: past the system's limit of watched folders, the watch says so with its scan,
-   *  and the reader is told once a run, however often it is said. */
   test('tells the reader once when the limit of watched folders is reached', async () => {
     const here = await device()
     const heard: ((news: SpaceNews) => void)[] = []
@@ -1615,10 +1552,6 @@ describe('the folder watcher', () => {
   })
 
   test('watches a space paired after it started, once', async () => {
-    // A device's first v2 launch starts the engine with no space in its store; the
-    // spaces are paired by the first pass, after the watch began. Watched by the roots it
-    // had at the start, it heard nothing for the whole session, and every edit another
-    // program made - or one made while offline - stayed off the account.
     const here = await device()
     watch.mockReset()
     watch.mockImplementation(() => Promise.resolve())
@@ -1638,10 +1571,6 @@ describe('the folder watcher', () => {
   })
 })
 
-/** What a pairing says before the store has it. The roles the reader keeps for the next
- *  launch are written with the pairing (space-pairing.ts), ahead of the commit that
- *  stores it, so the folder a space is at has to be the core's word in the same moment
- *  it is paired or moved. */
 describe('a pairing not committed yet', () => {
   test('is already the folder the space is at, joined and then renamed', async () => {
     const here = await device()
@@ -1658,10 +1587,6 @@ describe('a pairing not committed yet', () => {
   })
 })
 
-/** A copy another sync tool made beside a note: never made on the account, never
- *  written onto a disk that does not have it, never sent when it changes, and never
- *  taken off a disk when the account lets go of one - which happens only when somebody
- *  asks, from the Sync pane. See @orden/sync-core/foreign. */
 describe('another sync tool’s copy', () => {
   const CLASH = 'Plan (# Name clash 2026-10-05 a1b2c3C #).md'
   const WITH_CLASH: readonly Seeded[] = [...SEEDED, { id: 'n9', name: CLASH, text: 'theirs\n' }]
@@ -1737,11 +1662,6 @@ describe('another sync tool’s copy', () => {
   })
 })
 
-/** Another program's copy of a plane that does not parse - cut short mid-write, or left
- *  with a merge's conflict markers - is not a plane with nothing on it: folded in, every
- *  node would go out as deleted, to every device. It is left for its program to finish,
- *  and the document keeps what it held (as v1's merge counts an unreadable side for
- *  nothing, and `openCanvas` refuses to open one). */
 describe('another program’s unreadable canvas', () => {
   test('is not folded in as an empty plane', async () => {
     const one = await device()
@@ -1761,10 +1681,6 @@ describe('another program’s unreadable canvas', () => {
     expect((await one.engine.core.doc(id))?.text()).toContain('keep me')
   })
 
-  /** Words another program wrote into a canvas - or into a canvas entry renamed to
-   *  `.md`, which is still one - cannot go into its plane. They are not dropped without
-   *  a word: the file is kept as a version on this device, and the reader is told once
-   *  that it is not syncing. */
   test('keeps words written into it, and says once that they do not sync', async () => {
     const one = await device()
     const path = `${ROOT}/Board.canvas`
@@ -1791,8 +1707,6 @@ describe('another program’s unreadable canvas', () => {
     expect((await one.engine.core.doc(id))?.text()).toContain('keep me')
   })
 
-  /** A program that saves by emptying the file before it writes it leaves it with
-   *  nothing in it for a moment, and a watcher can hear that moment. */
   test('nor is one emptied for a moment by a save', async () => {
     const one = await device()
     const path = `${ROOT}/Board.canvas`

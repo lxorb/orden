@@ -1,16 +1,3 @@
-/** The rows of every space, as the app has them: the store (store.ts) put on the app's
- *  own scan, its saves and its file operations, and the one write path.
- *
- *  Fetched at the end of the launch order (see start.ts), never in the first paint, and
- *  whoever asks for rows before then fetches it a moment sooner: importing this is
- *  starting it. The open space's rows are the link index's scan; every other space is
- *  read after it, one at a time. See docs/tasks.md 5.3 and 7.1:
- *
- *    rows.of(space?)            every row, of one space (by name or root) or of all
- *    rows.watch(listener)       each file's rows as they change; answers the way to stop
- *    rows.write(row, change)    a property or a task field, one edit, one undo
- *    rows.inbox(root?)          the space's inbox, made the first time it is asked */
-
 import type { Row } from '@orden/bases'
 import { untrack } from 'svelte'
 import { breathe } from '../breathe'
@@ -42,34 +29,23 @@ const store = new RowsStore({
   vault: isVault,
 })
 
-// Every write in any space says itself to the link index, and every file operation
-// to everything kept by path; the rows hear both, and nothing that writes names them.
 links.hearSaves((path, content) => store.saved(path, content))
 links.hearIndexed((root, scans) => store.indexed(root, scans))
 workspace.fileOps.follow((op) => store.follow(op))
 workspace.fileOps.follow(keeping(inboxes))
 workspace.fileOps.follow(keeping(projectFolders))
 
-// An `Inbox.md` Orden made before the space had an inbox of its own is taken into it,
-// once the space is read and whenever one arrives (#1044); see inbox-move.ts. Never in
-// the glasses' plugin, which writes nothing of the kind.
 if (!__EVEN_PLUGIN__) {
   store.watch((change) => void import('./inbox-moving').then((one) => one.heard(change)))
 }
 
-// The spaces as the window has them: a new one read, one gone forgotten, one renamed
-// renamed. Handed over untracked, so the store's own reads are never this effect's.
 $effect.root(() => {
   $effect(() => {
-    // An archived space's rows are no list's; see workspace/archived-spaces.svelte.ts.
     const spaces = workspace.shownSpaces.map(({ root, name }) => ({ root, name }))
     untrack(() => store.spacesAre(spaces))
   })
 })
 
-// A space's bases at work while Orden runs (automations, ids, repeating templates) start
-// with the rows they read, and never in the glasses' plugin, which has no rows; see
-// views/runner.svelte.ts.
 if (!__EVEN_PLUGIN__) void import('../views/runner.svelte')
 
 export const rows = {
@@ -84,21 +60,17 @@ export const rows = {
     return store.ready
   },
 
-  /** The one write path; see write.ts. Answers whether anything was written. */
   async write(row: Row, change: RowChange): Promise<boolean> {
     const root = store.rootOf(row)
     if (root === null) return false
     return writeRow(workspace, insideSpace(root, row.path), row, change)
   },
 
-  /** The inbox of a space (the reader's one inbox where none is named, rows/home.svelte.ts) as
-   *  a path on this disk, made the first time it is needed; null where there is none. */
   async inbox(root: string | null = homeRoot()): Promise<string | null> {
     if (root === null) return null
     return inboxNote(root)
   },
 
-  /** Every space's inbox, relative to it: what the Inbox view filters on. */
   inboxes(): { space: string; path: string }[] {
     return workspace.shownSpaces.map((one) => ({ space: one.name, path: inboxOf(one.root) }))
   },

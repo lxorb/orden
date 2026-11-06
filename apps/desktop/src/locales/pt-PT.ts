@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptPT: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'Tudo pronto',
   Personalize: 'Personalizar',
   Clean: 'Limpo',
@@ -10,13 +9,11 @@ export const ptPT: Dictionary = {
   'Do you write code?': 'Escreve código?',
   Yes: 'Sim',
   No: 'Não',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'A partir de outras apps: {key}',
   'From other apps: set in your system settings':
     'A partir de outras apps: definir nas definições do sistema',
   'From other apps: bind {command} in your system settings':
     'A partir de outras apps: associe {command} nas definições do sistema',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Essenciais',
   'Add to Essentials': 'Adicionar aos Essenciais',
   'Remove from Essentials': 'Remover dos Essenciais',
@@ -24,20 +21,16 @@ export const ptPT: Dictionary = {
   'Add blocks to Essentials': 'Adicionar blocos aos Essenciais',
   'Add view to Essentials': 'Adicionar vista aos Essenciais',
   'Open tabs and Essentials': 'Abrir separadores e Essenciais',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'O nibeditor chama-se agora Orden',
   'Notes from nibeditor.com': 'Notas do nibeditor.com',
   'Nothing there': 'Não há nada',
-  // AI: the three permission modes
   'Full permissions': 'Permissões totais',
   'Auto mode': 'Modo automático',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'Permissões totais: nada é perguntado nem devolvido a si, nem sequer iniciar sessão, pagar, enviar ou eliminar',
-  // Import: Zen's tabs
   'Import from Zen': 'Importar do Zen',
   'Containers stay in Zen': 'Os contentores ficam no Zen',
   'Zen’s tabs could not be read.': 'Não foi possível ler os separadores do Zen.',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'Os contentores ficam no Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     'O {browser} pesquisa com {engine}: escolha-o nas Definições para pesquisar com ele aqui também',
@@ -65,38 +58,29 @@ export const ptPT: Dictionary = {
   'Reading List': 'Lista de leitura',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'O macOS guarda os separadores e os marcadores do Safari atrás do Acesso total ao disco. Ative o Orden aí e tente novamente.',
-  // Settings: note types
   'Page note': 'Nota de páginas',
   'Web note': 'Nota da web',
   'Private tab': 'Separador privado',
   'Note types': 'Tipos de nota',
-  // Tasks: Upcoming's weeks
   'Previous week': 'Semana anterior',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'Adicionar projeto acima',
   'Add project below': 'Adicionar projeto abaixo',
   'Projects folder': 'Pasta de projetos',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'Saltar',
   'Complete forever': 'Concluir para sempre',
-  // Tasks: comments
   Comments: 'Comentários',
-  // Tasks: filters
   Filters: 'Filtros',
   'Add filter': 'Adicionar filtro',
   'Edit filter': 'Editar filtro',
-  // Tasks: a project's sections
   'Add section': 'Adicionar secção',
   '{name} (copy)': '{name} (cópia)',
   'Its tasks are deleted with it.': 'As tarefas são eliminadas com ela.',
-  // Tasks: keys, selection and the undo toast
   Completed: 'Concluída',
   'Remove date': 'Remover data',
   'Next task': 'Tarefa seguinte',
   'Previous task': 'Tarefa anterior',
   'Add task at the top': 'Adicionar tarefa no topo',
   '{count} selected': '{count} selecionadas',
-  // Tasks: the Display menu
   Display: 'Visualização',
   'Completed tasks': 'Tarefas concluídas',
   Smart: 'Inteligente',
@@ -108,20 +92,16 @@ export const ptPT: Dictionary = {
   'Reset all': 'Repor tudo',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'O esquema mostra as tarefas como lista, quadro ou calendário. O agrupamento divide-as em grupos, que são as colunas de um quadro. A ordenação ordena cada grupo. Os filtros ocultam o que não precisa. Tudo fica guardado para esta vista.',
-  // Tasks: several lines pasted into quick add
   'One task': 'Uma tarefa',
   'One per line': 'Uma por linha',
   'Add with AI': 'Adicionar com IA',
-  // Tasks: the projects in the panel
   Favorites: 'Favoritos',
   'Add project': 'Adicionar projeto',
   'Add sub-project': 'Adicionar subprojeto',
-  // Tasks: the task view
   'Sub-tasks': 'Subtarefas',
   'Add sub-task': 'Adicionar subtarefa',
   'New label': 'Nova etiqueta',
   'No deadline': 'Sem prazo',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'Reagendar',
   'Later this week': 'Ainda esta semana',
   'This weekend': 'Este fim de semana',
@@ -138,22 +118,18 @@ export const ptPT: Dictionary = {
   Reopen: 'Reabrir',
   Schedule: 'Agendar',
   'Open in note': 'Abrir na nota',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Outra app',
   'Import from Obsidian': 'Importar do Obsidian',
   'Import from Notion': 'Importar do Notion',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'Dicas',
   'Silent mode': 'Modo silencioso',
   'See how your notes connect.': 'Veja como as suas notas se ligam.',
   'Press {key} to find anything, notes and commands alike.':
     'Prima {key} para encontrar qualquer coisa, notas e comandos.',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Mostrar Markdown ao escrever',
   'Open notes in source mode': 'Abrir notas no modo fonte',
   Pointer: 'Ponteiro',
   'Pointing hand on buttons': 'Mão a apontar nos botões',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Adicionar tarefa',
   'Apple Shortcuts': 'Apple Atalhos',
   Tomorrow: 'Amanhã',
@@ -179,7 +155,6 @@ export const ptPT: Dictionary = {
   'Every week': 'Todas as semanas',
   'Every month': 'Todos os meses',
   'Every year': 'Todos os anos',
-  // Files and notes
   Save: 'Guardar',
   'New note': 'Nova nota',
   'Random note': 'Nota aleatória',
@@ -207,8 +182,6 @@ export const ptPT: Dictionary = {
   'Release to add a page': 'Largue para adicionar uma página',
   'Page {number}': 'Página {number}',
   'The paper could not be read': 'O papel não pôde ser lido',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Carta',
   'Long page': 'Página longa',
@@ -251,7 +224,6 @@ export const ptPT: Dictionary = {
   'Choose a picture': 'Escolher uma imagem',
   'Remove picture': 'Remover imagem',
   'That picture could not be read.': 'Não foi possível ler essa imagem.',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'Saturação',
   Tint: 'Tonalidade',
   'Tint colour': 'Cor da tonalidade',
@@ -380,7 +352,6 @@ export const ptPT: Dictionary = {
   'Merge into…': 'Juntar a…',
   'Split at caret': 'Dividir no cursor',
   'Extract selection': 'Extrair a seleção',
-  // Panels and navigation
   Bookmarks: 'Marcadores',
   'New group': 'Novo grupo',
   'Remove group': 'Remover o grupo',
@@ -434,8 +405,6 @@ export const ptPT: Dictionary = {
   'Sort by name': 'Ordenar por nome',
   'Sort by modified': 'Ordenar por alteração',
   'Sort by created': 'Ordenar por criação',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'Ordem dos ficheiros',
   'Name, A to Z': 'Nome, de A a Z',
   'Name, Z to A': 'Nome, de Z a A',
@@ -446,7 +415,6 @@ export const ptPT: Dictionary = {
   Manual: 'Manual',
   'Show hidden files': 'Mostrar ficheiros ocultos',
   'Hide hidden files': 'Ocultar ficheiros ocultos',
-  // Writing
   Bold: 'Negrito',
   Italic: 'Itálico',
   Strikethrough: 'Rasurado',
@@ -543,11 +511,9 @@ export const ptPT: Dictionary = {
   'Horizontal rule': 'Linha horizontal',
   'Page break': 'Quebra de página',
   'Tidy up this note': 'Arrumar esta nota',
-  // PDFs
   'Copy a link': 'Copiar uma ligação',
   'That PDF could not be opened': 'Não foi possível abrir esse PDF',
   'That file could not be read': 'Não foi possível ler esse ficheiro',
-  // Modes and view
   Reading: 'Leitura',
   'Leave reading': 'Sair da leitura',
   Present: 'Apresentar',
@@ -587,7 +553,6 @@ export const ptPT: Dictionary = {
   'Zoom in': 'Ampliar',
   'Zoom out': 'Reduzir',
   'Actual size': 'Tamanho real',
-  // Appearance
   Accent: 'Destaque',
   'Tidy up': 'Arrumar',
   'Blur the app behind the tab overview': 'Desfocar a app por trás da vista geral dos separadores',
@@ -715,7 +680,6 @@ export const ptPT: Dictionary = {
   'Switch theme': 'Mudar de tema',
   Style: 'Estilo',
   Mode: 'Modo',
-  // The window's own edges; see appearance.rs
   Window: 'Janela',
   'Orden’s own': 'Do Orden',
   'The system’s': 'Do sistema',
@@ -726,7 +690,6 @@ export const ptPT: Dictionary = {
   'Edit custom CSS': 'Editar o CSS próprio',
   'Edit snippets': 'Editar os fragmentos',
   'Reload themes and custom CSS': 'Recarregar os temas e o CSS',
-  // The theme store, and the sample note its cards show
   Themes: 'Temas',
   Browse: 'Explorar',
   'Search themes': 'Procurar temas',
@@ -807,7 +770,6 @@ export const ptPT: Dictionary = {
   'Code only': 'Só no código',
   Everywhere: 'Em tudo',
   Attachments: 'Anexos',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Notas de páginas',
   'New pages': 'Páginas novas',
   'Assets folder of the space': 'Pasta de recursos do espaço',
@@ -859,7 +821,6 @@ export const ptPT: Dictionary = {
   'Machine-translated. Corrections welcome.': 'Traduzido automaticamente. Agradecem-se correções.',
   'The glasses show English.': 'Os óculos mostram inglês.',
   'Match the app': 'Como a aplicação',
-  // Settings
   Settings: 'Definições',
   Account: 'Conta',
   Publish: 'Publicar',
@@ -886,7 +847,6 @@ export const ptPT: Dictionary = {
   },
   Update: 'Atualizar',
   'Live at': 'No ar em',
-  // Publishing
   'Publish {name}': 'Publicar {name}',
   'What to publish': 'O que publicar',
   'The whole space': 'O espaço inteiro',
@@ -905,7 +865,6 @@ export const ptPT: Dictionary = {
   Value: 'Valor',
   available: 'disponível',
   'checking…': 'a verificar…',
-  // LLM
   'Connect an LLM to your notes': 'Conectar um LLM às notas',
   'Sign in first - the connector reaches the notes in your account.':
     'Iniciar sessão primeiro - o conector alcança as notas da conta.',
@@ -958,7 +917,6 @@ export const ptPT: Dictionary = {
     'Para um cliente que aceita um bloco JSON em vez de um URL.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'A um cliente que não consegue iniciar sessão pode dar-se um token. Só é mostrado uma vez.',
-  // Export
   'Plain text': 'Texto simples',
   'Markdown with the pictures': 'Markdown com as imagens',
   'HTML without styles': 'HTML sem estilos',
@@ -977,13 +935,11 @@ export const ptPT: Dictionary = {
   Margin: 'Margem',
   Header: 'Cabeçalho',
   Footer: 'Rodapé',
-  // History
   'Version history': 'Histórico de versões',
   'Copy link to this note': 'Copiar ligação para esta nota',
   'that link could not be followed': 'não foi possível seguir essa ligação',
   'No earlier versions yet.': 'Ainda sem versões anteriores.',
   'Restore this version': 'Restaurar esta versão',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'já há uma nota aí',
   'enter a valid email address': 'esse endereço de e-mail não é válido',
   'give the space a name': 'o espaço precisa de um nome',
@@ -1014,7 +970,6 @@ export const ptPT: Dictionary = {
   'could not publish': 'não foi possível publicar',
   'could not create a token': 'não foi possível criar um token',
   'that did not work': 'isso não funcionou',
-  // Settings on a phone, display names, one blog address
   Back: 'Voltar',
   'Display name': 'Nome a apresentar',
   'Your name': 'Nome',
@@ -1034,7 +989,6 @@ export const ptPT: Dictionary = {
   Spelling: 'Ortografia',
   Checking: 'Verificação',
   Dictionary: 'Dicionário',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'À espera de que o registo apareça.',
   'Certificate issued.': 'Certificado emitido.',
   'Cloudflare could not set this domain up.': 'A Cloudflare não conseguiu configurar este domínio.',
@@ -1045,7 +999,6 @@ export const ptPT: Dictionary = {
   'Cloudflare has blocked this domain': 'A Cloudflare bloqueou este domínio',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'Na raiz de um domínio, usar um registo ALIAS ou ANAME, ou o nivelamento de CNAME, se o fornecedor não permitir um CNAME aí.',
-  // Shortcuts
   Shortcuts: 'Atalhos',
   'Search shortcuts': 'Procurar atalhos',
   'Second key': 'Segunda tecla',
@@ -1212,7 +1165,6 @@ export const ptPT: Dictionary = {
   Delegated: 'Delegado',
   'Code theme: {name}': 'Tema do código: {name}',
   'Delete a layout': 'Eliminar uma disposição',
-  // Keyboards and modal editing
   Default: 'Predefinido',
   'Vim keys': 'Teclas do Vim',
   'Follow the link': 'Seguir a ligação',
@@ -1224,11 +1176,9 @@ export const ptPT: Dictionary = {
   INSERT: 'INSERIR',
   VISUAL: 'VISUAL',
   REPLACE: 'SUBSTITUIR',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'Página {page} de {count} nos óculos',
   'Reaching the glasses': 'A ligar aos óculos',
   'The glasses are not keeping up': 'Os óculos não estão a acompanhar',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'Adicionar',
   Select: 'Selecionar',
   Pan: 'Mover a vista',
@@ -1258,7 +1208,6 @@ export const ptPT: Dictionary = {
   Calligraphy: 'Caligrafia',
   'Width {number}': 'Espessura {number}',
   'Finger draws': 'O dedo desenha',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'Espessura',
   Opacity: 'Opacidade',
   Colour: 'Cor',
@@ -1302,23 +1251,19 @@ export const ptPT: Dictionary = {
   'Export as PNG': 'Exportar como PNG',
   'Export as SVG': 'Exportar como SVG',
   'Export as PDF': 'Exportar como PDF',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'Importar PDF',
   'Choose how to add the pages to the canvas.': 'Escolha como adicionar as páginas à tela.',
   'Single page': 'Uma página',
   'All pages': 'Todas as páginas',
   'Choose a page': 'Escolher uma página',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'Eliminar o que está selecionado',
   'Nudge left': 'Deslocar para a esquerda',
   'Nudge right': 'Deslocar para a direita',
   'Nudge up': 'Deslocar para cima',
   'Nudge down': 'Deslocar para baixo',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'Aberta noutro lado também',
   Shared: 'Partilhada',
   Browser: 'Navegador',
-  // Sharing a space with other people
   Share: 'Partilhar',
   'Share {name}': 'Partilhar {name}',
   'Share this space': 'Partilhar este espaço',
@@ -1362,14 +1307,12 @@ export const ptPT: Dictionary = {
   'Shared with you': 'Partilhado consigo',
   'That link does not open anything': 'Essa ligação não abre nada',
   'Ask for another one.': 'Pedir outra.',
-  // Somebody a share link let in, who has no account
   Guest: 'Visitante',
   'Ask to join': 'Pedir para entrar',
   Asking: 'A pedir',
   'Waiting for {who}': 'À espera de {who}',
   '{who} did not let you in': '{who} não deu acesso',
   'What the others in this space see.': 'O que os outros neste espaço veem.',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'Atualizações',
   'Release channel': 'Canal de versões',
   Stable: 'Estável',
@@ -1379,8 +1322,6 @@ export const ptPT: Dictionary = {
   'Web version': 'Versão web',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'Estável é a app web lançada; Instável é a compilação mais recente e pode falhar.',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'Importar',
   'Convert syntax': 'Converter a sintaxe',
   'In this note': 'Nesta nota',
@@ -1496,8 +1437,6 @@ export const ptPT: Dictionary = {
   'Undo the import': 'Anular a importação',
   'Choose an export': 'Escolher uma exportação',
   Under: 'Dentro de',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'Sincronização',
   'When the same note was written twice': 'Quando a mesma nota foi escrita duas vezes',
   'On two devices': 'Em dois dispositivos',
@@ -1561,7 +1500,6 @@ export const ptPT: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'As notas deste dispositivo ficam; só a conta e as suas cópias sincronizadas desaparecem.',
   'Also gone for everyone in {spaces}.': 'Também desaparece para todos em {spaces}.',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'A nota',
   '{space} panel': 'Painel de {space}',
   'Panel width': 'Largura do painel',
@@ -1572,7 +1510,6 @@ export const ptPT: Dictionary = {
   'What is selected': 'O que está selecionado',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'Tela: {cards} cartões, {links} ligações, {drawings} desenhos',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'IA',
   Providers: 'Fornecedores',
   'Make default': 'Tornar predefinido',
@@ -1600,7 +1537,6 @@ export const ptPT: Dictionary = {
   'The model did not answer.': 'O modelo não respondeu.',
   'The connection closed before the answer was finished.':
     'A ligação foi fechada antes de a resposta terminar.',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'O seu plano {plan} atingiu o limite até às {time}.',
   'Your {plan} plan is at its limit for now.': 'O seu plano {plan} atingiu o limite por agora.',
@@ -1628,7 +1564,6 @@ export const ptPT: Dictionary = {
   Shorter: 'Mais curto',
   Longer: 'Mais longo',
   'Fix grammar': 'Corrigir a gramática',
-  // The AI sidebar's commands
   'A cited report': 'Um relatório citado',
   'A helper in the background': 'Um assistente em segundo plano',
   'A side question': 'Uma pergunta lateral',
@@ -1730,7 +1665,6 @@ export const ptPT: Dictionary = {
   'Markdown, shortest name': 'Markdown, nome mais curto',
   'Markdown, relative path': 'Markdown, caminho relativo',
   'Markdown, path in the space': 'Markdown, caminho no espaço',
-  // Publishing part one.
   'The folders you choose become public.': 'As pastas escolhidas ficam públicas.',
   'Anyone with the address can read what is published, drafts included.':
     'Quem tiver o endereço lê o que está publicado, rascunhos incluídos.',
@@ -1756,11 +1690,9 @@ export const ptPT: Dictionary = {
   'Remove the password': 'Remover a palavra-passe',
   'Scan this with your authenticator app, then type its code.':
     'Leia isto com a sua aplicação de autenticação e escreva o código.',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'Fotografia',
   Dictate: 'Ditar',
   'Add to {name}': 'Adicionar a {name}',
-  // Web tabs
   Reload: 'Recarregar',
   'Hard reload': 'Recarregamento forçado',
   'Open in the browser': 'Abrir no navegador',
@@ -1775,7 +1707,6 @@ export const ptPT: Dictionary = {
   'Playing audio': 'A reproduzir áudio',
   Muted: 'Sem som',
   'Developer tools': 'Ferramentas de programador',
-  // Recording, meetings and what a model wrote
   Record: 'Gravar',
   Recording: 'Gravação',
   'Stop recording': 'Parar a gravação',
@@ -1797,7 +1728,6 @@ export const ptPT: Dictionary = {
     'Essa gravação é demasiado longa para transformar em palavras de uma vez.',
   'That is as much as one recording may hold.': 'É tudo o que cabe numa gravação.',
   'Nothing could be heard in that recording.': 'Nada se ouviu nessa gravação.',
-  // Publishing part two.
   Spreadsheet: 'Folha de cálculo',
   'The app’s own': 'O da aplicação',
   'publish.css and publish.js in this space dress the site.':
@@ -1813,14 +1743,12 @@ export const ptPT: Dictionary = {
   'Save as CSV': 'Guardar como CSV',
   'Kept for {days}': 'Guardadas durante {days}',
   Full: 'Cheio',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'não foi possível enviar o correio - tentar de novo',
   'start again - that took too long': 'começar de novo - isso demorou demasiado',
   'sign in to do that': 'iniciar sessão para fazer isso',
   'that is not something a token can do': 'um token não faz isso',
   'something went wrong here - try again': 'algo correu mal aqui - tentar de novo',
   'this service cannot keep a secret safely': 'este serviço não guarda um segredo em segurança',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only': 'só imagens, PDF e o css ou js do próprio sítio',
   'that file is too big': 'esse ficheiro é demasiado grande',
   'that is more settings than an account holds': 'são mais definições do que uma conta guarda',
@@ -1832,14 +1760,12 @@ export const ptPT: Dictionary = {
   'that is more folder icons than a space holds':
     'são mais ícones de pasta do que um espaço guarda',
   'that is more than a site keeps': 'isso é mais do que um sítio guarda',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'ninguém com esse endereço',
   'nobody by that name': 'ninguém com esse nome',
   'nobody is waiting by that name': 'ninguém com esse nome está à espera',
   'this space is yours': 'este espaço é desta conta',
   'that link is busy, try again in a minute':
     'essa ligação está ocupada, tentar dentro de um minuto',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'não há essa versão',
   'this note was shared with you, not its folder': 'esta nota foi partilhada, não a pasta dela',
   'nothing to restore': 'nada para restaurar',
@@ -1847,7 +1773,6 @@ export const ptPT: Dictionary = {
   'nothing to delete': 'nada para eliminar',
   'this room is not answering - try again': 'esta sala não responde - tentar de novo',
   'rooms are not running here': 'as salas não funcionam aqui',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'a loja de temas não responde',
   'that is not a theme': 'isso não é um tema',
   'no such theme': 'não há esse tema',
@@ -1861,10 +1786,8 @@ export const ptPT: Dictionary = {
   'that is more than a spoken command': 'isso é mais do que um comando falado',
   'that is a lot of listening - try again later': 'é muita escuta - tentar mais tarde',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% de texto',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'Telemóvel',
   'The bar sits over the keyboard on a phone.': 'No telemóvel a barra fica sobre o teclado.',
   'On the bar': 'Na barra',
@@ -1878,31 +1801,25 @@ export const ptPT: Dictionary = {
   'A pull past the top runs': 'Puxar além do topo executa',
   Nothing: 'Nada',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'Guardar',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'Mover para a direita',
   'Move to the left': 'Mover para a esquerda',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'Histórico na conta',
   'Keep versions': 'Guardar versões',
   'A month': 'Um mês',
   'A year': 'Um ano',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Tudo do último dia, depois uma por hora, uma por dia após um mês e uma por semana após três.',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Esta nota está no tamanho máximo que uma nota numa sala pode ter.',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'Novo separador',
   'Full screen': 'Ecrã inteiro',
   'Print…': 'Imprimir…',
   'Share…': 'Partilhar…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'quer',
   'Don’t allow': 'Não permitir',
   Allow: 'Permitir',
@@ -1919,7 +1836,6 @@ export const ptPT: Dictionary = {
   'Use your MIDI devices': 'Usar os seus dispositivos MIDI',
   'Manage windows on all your displays': 'Gerir janelas em todos os seus ecrãs',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'Informações do Website',
   Downloads: 'Transferências',
   'Downloading {name}': 'A transferir {name}',
@@ -1946,11 +1862,9 @@ export const ptPT: Dictionary = {
   'Turn into': 'Transformar em',
   Foldable: 'Recolhível',
   'Starts folded': 'Começa recolhido',
-  // Where a space keeps what websites store
   'Web data': 'Dados da web',
   Global: 'Global',
   Site: 'Site',
-  // The Mac's menu bar
   'About {name}': 'Acerca do {name}',
   Services: 'Serviços',
   'Hide {name}': 'Ocultar {name}',
@@ -1958,7 +1872,6 @@ export const ptPT: Dictionary = {
   'Show all': 'Mostrar tudo',
   'Quit {name}': 'Sair do {name}',
   'Bring all to front': 'Trazer tudo para a frente',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Desfazer a cópia',
   'Devices with your AI vault': 'Dispositivos com o seu cofre de IA',
   'This device': 'Este dispositivo',
@@ -1974,13 +1887,11 @@ export const ptPT: Dictionary = {
   'Select down': 'Selecionar para baixo',
   'Select up': 'Selecionar para cima',
   'Select or deselect': 'Selecionar ou desmarcar',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'Abrir num novo separador',
   'Open to the side': 'Abrir ao lado',
   'Open all': 'Abrir tudo',
   'Show in the file list': 'Mostrar na lista de ficheiros',
   'Collapse the file list': 'Recolher a lista de ficheiros',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'Expandir a seleção',
   'Shrink the selection': 'Reduzir a seleção',
   'Insert a line above': 'Inserir uma linha acima',
@@ -1994,19 +1905,16 @@ export const ptPT: Dictionary = {
   'Duplicate the block': 'Duplicar o bloco',
   'Move the block up': 'Subir o bloco',
   'Move the block down': 'Descer o bloco',
-  // The editor's menu on a link and a picture
   'Copy link address': 'Copiar endereço da ligação',
   'Edit link': 'Editar ligação',
   'Remove link': 'Remover ligação',
   'Copy picture': 'Copiar imagem',
   'Open picture': 'Abrir imagem',
   'Delete picture': 'Eliminar imagem',
-  // A file dropped into a note
   'Storing the file': 'A guardar o ficheiro',
   'That file is larger than a note can keep.':
     'Esse ficheiro é maior do que uma nota consegue guardar.',
   'That file could not be kept.': 'Não foi possível guardar esse ficheiro.',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'Novo terminal',
   'Command Prompt': 'Linha de Comandos',
   Terminal: 'Terminal',
@@ -2032,11 +1940,8 @@ export const ptPT: Dictionary = {
     many: 'Colar {count} de linhas?',
     other: 'Colar {count} linhas?',
   },
-  // Orden as the default browser
   'Default browser': 'Navegador predefinido',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Anular as edições de {name}',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'Arquivar',
   Unarchive: 'Desarquivar',
   Archived: 'Arquivado',
@@ -2050,7 +1955,6 @@ export const ptPT: Dictionary = {
     many: '{count} de itens arquivados lá dentro',
     other: '{count} itens arquivados lá dentro',
   },
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'Barra lateral esquerda',
   'Right sidebar': 'Barra lateral direita',
   'Ask about this space': 'Perguntar acerca deste espaço',
@@ -2061,7 +1965,6 @@ export const ptPT: Dictionary = {
   'Ask again': 'Perguntar de novo',
   'Continue when the limit resets': 'Continuar quando o limite for reposto',
   'Continues at {time}': 'Continua às {time}',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Pergunte o que quiser, @ para anexar, / para mais',
   'What can I help with?': 'Como posso ajudar?',
   'Add photos and files': 'Adicionar fotografias e ficheiros',
@@ -2129,12 +2032,9 @@ export const ptPT: Dictionary = {
   Closed: 'Fechou',
   Ran: 'Executou',
   Changed: 'Alterou',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': 'Este {device}',
   '{name} is back: {device} was writing in it': '{name} voltou: {device} estava a escrever nela',
   'Changes to {name} are not syncing': 'As alterações em {name} não estão a ser sincronizadas',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Abertura',
   Pressing: 'Clique',
   Typing: 'Introdução',
@@ -2149,18 +2049,14 @@ export const ptPT: Dictionary = {
   'Agent tabs closed': 'Separadores dos agentes fechados',
   'Orden is still running for your agents': 'O Orden continua a funcionar para os seus agentes',
   '{client} wants to connect': '{client} quer ligar-se',
-  // Web logins that travel, and the devices of an account
   'no such device': 'esse dispositivo não existe',
   'give the device a name': 'dê um nome ao dispositivo',
   'that computer is no longer waiting': 'esse computador já não está à espera',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'esse ficheiro não existe',
   'too many changes at once - try again in a minute':
     'demasiadas alterações de uma vez - tentar daqui a um minuto',
   'that is more than a space keeps about its tree':
     'é mais do que um espaço guarda sobre a sua árvore',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'Agentes neste computador',
   'Your account’s connector': 'Conector da sua conta',
   'Orden asks you once, the first time it connects.':
@@ -2232,12 +2128,9 @@ export const ptPT: Dictionary = {
     many: '{count} de chamadas',
     other: '{count} chamadas',
   },
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'Pergunta rápida',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Adicionar à nota',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'Extensões',
   'Add extension': 'Adicionar extensão',
   'Manage extensions': 'Gerir extensões',
@@ -2257,7 +2150,6 @@ export const ptPT: Dictionary = {
   'Did not load': 'Não foi carregada',
   Permissions: 'Permissões',
   Options: 'Opções',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'Remoto',
   'Add host': 'Adicionar anfitrião',
   Reconnect: 'Voltar a ligar',
@@ -2265,11 +2157,8 @@ export const ptPT: Dictionary = {
   'No group': 'Sem grupo',
   'Not an address': 'Não é um endereço',
   'Could not connect to {host}': 'Não foi possível ligar a {host}',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'A enviar a imagem',
   'Could not send the image': 'Não foi possível enviar a imagem',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': {
     many: 'e {count} depois',
     one: 'e {count} depois',
@@ -2283,8 +2172,6 @@ export const ptPT: Dictionary = {
   'Pages, terminals and moves are not undone': 'Páginas, terminais e movimentos não são anulados',
   Rewind: 'Recuar',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'Motor de pesquisa',
   History: 'Histórico',
   'Search history': 'Pesquisar histórico',
@@ -2308,14 +2195,12 @@ export const ptPT: Dictionary = {
   'New private tab': 'Novo separador privado',
   'All spaces': 'Todos os espaços',
   'the data could not be deleted': 'Não foi possível eliminar os dados',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Adiar',
   Reminders: 'Lembretes',
   'Reminders ring while Orden is open': 'Os lembretes tocam enquanto o Orden está aberto',
   Automatic: 'Automático',
   'Stay in the tray': 'Ficar na área de notificação',
   'Exact alarms': 'Alarmes exatos',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'Tarefas',
   'Plan my day': 'Planear o meu dia',
   'Add a task': 'Adicionar uma tarefa',
@@ -2327,8 +2212,6 @@ export const ptPT: Dictionary = {
   'Done tasks too': 'Também as tarefas concluídas',
   'As a task': 'Como tarefa',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'Tarefas',
   Ascending: 'Crescente',
   Descending: 'Decrescente',
@@ -2413,8 +2296,6 @@ export const ptPT: Dictionary = {
   'Without a value': 'Sem valor',
   'With a value': 'Com valor',
   Unique: 'Únicos',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'Nova nota a partir de modelo',
   Automations: 'Automatizações',
   'Row added': 'Linha adicionada',
@@ -2443,7 +2324,6 @@ export const ptPT: Dictionary = {
   Form: 'Formulário',
   Formula: 'Fórmula',
   'Blocked by {task}': 'Bloqueada por {task}',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'Avisar antes de sair',
   'When something runs': 'Quando algo estiver a correr',
   'Quit {name}?': 'Sair do {name}?',
@@ -2454,16 +2334,13 @@ export const ptPT: Dictionary = {
   'Quit anyway': 'Sair mesmo assim',
   'Restart anyway': 'Reiniciar mesmo assim',
   'Close anyway': 'Fechar mesmo assim',
-  // The online terminal
   'Online terminal': 'Terminal online',
   'New online terminal': 'Novo terminal online',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'outro dispositivo',
   'Taken over by {device}': 'Assumido por {device}',
   'Open on {device} since {time}': 'Aberto em {device} desde as {time}',
   'Take over': 'Assumir',
   'Take back': 'Retomar',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'Nova aplicação',
   Application: 'Aplicação',
   'This application’s file is damaged': 'O ficheiro desta aplicação está danificado',
@@ -2574,8 +2451,6 @@ export const ptPT: Dictionary = {
   'Compare with original': 'Comparar com o original',
   'Conflict copies from other apps': 'Cópias em conflito de outras apps',
   'Remove from sync': 'Tirar da sincronização',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'Perfil',
   Change: 'Alterar',
   'Take photo': 'Tirar fotografia',
@@ -2600,7 +2475,6 @@ export const ptPT: Dictionary = {
   'that picture could not be opened': 'não foi possível abrir a imagem',
   'the camera could not be opened': 'não foi possível abrir a câmara',
   'that picture is too big': 'a imagem é demasiado grande',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'Conversa',
   Reply: 'Responder',
   Replies: 'Respostas',
@@ -2619,7 +2493,6 @@ export const ptPT: Dictionary = {
   'Also send to {chat}': 'Enviar também para {chat}',
   'Skin tone': 'Tom de pele',
   'Deleted account': 'Conta eliminada',
-  // Chats: notifications
   Mute: 'Silenciar',
   Unmute: 'Reativar som',
   'New message': 'Nova mensagem',
@@ -2629,7 +2502,6 @@ export const ptPT: Dictionary = {
   Weekdays: 'Dias úteis',
   Starts: 'Começa',
   Ends: 'Termina',
-  // Chats: everywhere
   'Read chats': 'Ler conversas',
   'Post in chats': 'Escrever em conversas',
   'Always in this chat': 'Sempre nesta conversa',
@@ -2641,14 +2513,12 @@ export const ptPT: Dictionary = {
   'Search this chat': 'Pesquisar nesta conversa',
   'Add as task': 'Adicionar como tarefa',
   'Save as note': 'Guardar como nota',
-  // Appearance: glass's own pairs of colours
   Dawn: 'Madrugada',
   Lagoon: 'Lagoa',
   Lilac: 'Lilás',
   Peach: 'Pêssego',
   Sage: 'Salva',
   Mist: 'Névoa',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'Nova base de dados',
   'New page': 'Nova página',
   'Not started': 'Não iniciado',
@@ -2674,7 +2544,6 @@ export const ptPT: Dictionary = {
   Large: 'Grande',
   Both: 'Ambos',
   'Shown on cards': 'Mostrado nos cartões',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'Sincroniza as chaves de IA deste browser com os seus outros dispositivos através do cofre.',
   'Which of your AI accounts this feature asks.':
@@ -2918,7 +2787,6 @@ export const ptPT: Dictionary = {
   'Some changes may not be noticed': 'Algumas alterações podem passar despercebidas',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'O sistema atingiu o limite de pastas observadas, por isso o Orden pode não reparar em todas as alterações que outros programas fazem nos seus espaços. Aumentar fs.inotify.max_user_watches resolve.',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Mover a conversa {name} para {space}?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'Todos em {space} poderão ler todo o histórico, e as pessoas em {from} perdem-no.',
@@ -2958,7 +2826,6 @@ export const ptPT: Dictionary = {
   'One colour': 'Uma cor',
   'Web icons': 'Ícones da web',
   'Sites you visit will appear here': 'Os sites que visitar aparecerão aqui',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'Ditado',
   'Dictate with': 'Ditar com',
   'Where your voice goes to be turned into words.':
@@ -2989,11 +2856,9 @@ export const ptPT: Dictionary = {
   'Not on this device': 'Não está neste dispositivo',
   'Not on this device. It opens once you are online again.':
     'Não está neste dispositivo. Abre assim que voltar a estar online.',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'Servidor IMAP',
   'SMTP server': 'Servidor SMTP',
   'User name': 'Nome de utilizador',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'Urgente',
   Important: 'Importante',
   'If time': 'Se houver tempo',

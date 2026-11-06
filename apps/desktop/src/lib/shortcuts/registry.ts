@@ -1,15 +1,3 @@
-/** Every shortcut the app has, and what each is called.
- *
- *  A list rather than a scattering of keymaps: a key nobody can find in the
- *  settings is a key nobody can change, and this is what makes finding one
- *  possible. Half of it comes from the editor package, which declares its own
- *  bindings with stable ids; the words for those live here, where the
- *  dictionaries are, and shortcuts.test.ts fails if either half grows without
- *  the other.
- *
- *  Data only. What a reader has chosen instead, and what happens when a key is
- *  pressed, is the store next door. */
-
 import {
   type BindingSpec,
   type EditorView,
@@ -27,8 +15,6 @@ import { askQuickly } from '../ai/quick-door'
 import { showQuickAdd, toggleTabOverview } from '../surfaces.svelte'
 import { toggleScratchpad } from '../scratchpad/is.svelte'
 import { hiddenKinds, settings } from '../settings.svelte'
-// The space actions are already in the first chunk, since the sidebar and the app
-// menu both reach them, so this costs nothing to load early.
 import { stepSpace } from '../space-actions'
 import { present } from '../slides/present.svelte'
 import { picks } from '../tab-strip/drag.svelte'
@@ -38,19 +24,12 @@ import { workspace } from '../workspace.svelte'
 import type { Toward } from '../workspace/pane-tree'
 import { type Around, closeAfterLabel } from '../workspace/closing-around'
 
-/** What Ctrl+Shift+A asks the AI panel before it opens it: whether the press was the
- *  panel's own (its field had the keyboard, so the press means the thread list). Set by
- *  the panel while it is on screen; here rather than in a module of the panel's, which
- *  would be one more file in the first paint. */
 let askAgain: (() => boolean) | null = null
 
-/** The panel's answer to Ctrl+Shift+A, while it is on screen; null as it goes. */
 export function hearAgain(answer: (() => boolean) | null): void {
   askAgain = answer
 }
 
-/** Where an entry sits in the list. The first five are the app's own menus,
- *  so a reader looking for Bold looks under Format either way. */
 export type Category =
   | 'file'
   | 'edit'
@@ -81,58 +60,29 @@ export const CATEGORIES: { id: Category; label: () => string }[] = [
   { id: 'fixed', label: () => t('Fixed keys') },
 ]
 
-/** What an app-level shortcut needs that only the running app has: the view
- *  on screen, and the two things that live in App.svelte's own state. */
 export interface AppContext {
   view?: EditorView | undefined
-  /** Opens the palette; `'commands'` is a `>` in its field, narrowed to them. With
-   *  `again`, a palette already up is put away instead: see `tapped`. */
   palette(mode?: 'commands', again?: boolean): void
   fullscreen(): void
-  /** Asked by a modifier tapped twice rather than by a chord. Shift Shift with the
-   *  palette up puts it away, the way the press that opened a layer closes it again
-   *  (Emil, 2026-10-03); a chord keeps what it does in the palette's own field. See
-   *  tapped.ts. */
   tapped?: boolean
 }
 
-/** One shortcut, whole: what it is called, where it belongs, which key it
- *  starts on, and how it runs.
- *
- *  `scope` is the difference that matters for conflicts. An `app` binding is
- *  read off the window and fires wherever the focus is, so it shadows an
- *  `editor` binding on the same key rather than sharing it. A `panel` one is
- *  read inside the file list and only while the focus is in it. A `fixed` one
- *  cannot be changed at all and is here to be seen: a key that is spoken for
- *  and a reason why, rather than a gap in the list. */
 export interface Shortcut {
   id: string
   label: () => string
   category: Category
   scope: 'app' | 'editor' | 'panel' | 'fixed'
   key: string | null
-  /** Absent where the platform has nothing of its own to say, which is how the
-   *  editor's own specs read - and `defaultKeyFor` tells absent from null. */
   mac?: string | null
   win?: string | null
   linux?: string | null
-  /** Gives way when what it is looking for is not there, so it can share a
-   *  key without being in anyone's way. See BindingSpec in the editor. */
   contextual?: boolean
-  /** A second key for a command that already has one. */
   alias?: boolean
-  /** Why it cannot be changed. Present only on the fixed ones. */
   why?: () => string
   run?: (context: AppContext) => void
-  /** What it acts on is a desktop's alone - a window of its own - so nothing else
-   *  offers it for a bar or a pull; see `runnable`. */
   desktop?: boolean
 }
 
-/** The other half of every binding the editor package declares: what it is
- *  called, and which group of the list it belongs to. The keys and the
- *  commands live over there; the words live here, where the dictionaries
- *  are. An id in one and not the other fails shortcuts.test.ts. */
 const EDITOR_ENTRIES: Record<string, [Category, () => string]> = {
   'format.bold': ['format', () => t('Bold')],
   'format.italic': ['format', () => t('Italic')],
@@ -169,8 +119,6 @@ const EDITOR_ENTRIES: Record<string, [Category, () => string]> = {
   'paragraph.toc': ['paragraph', () => t('Table of contents')],
   'paragraph.front-matter': ['paragraph', () => t('Front matter')],
 
-  // Folding is not an edit: it changes what is on screen and never the note, so
-  // it reads with the other things View decides. See fold.ts in the editor.
   'view.fold': ['view', () => t('Fold')],
   'view.fold-all': ['view', () => t('Fold everything')],
   'view.fold-more': ['view', () => t('Fold more')],
@@ -232,7 +180,6 @@ const EDITOR_ENTRIES: Record<string, [Category, () => string]> = {
   'image.step-down': ['picture', () => t('Step off the picture downwards')],
 }
 
-/** The editor's bindings, in the order the editor installs them. */
 const EDITOR_SPECS: BindingSpec[] = [
   ...nibBindings,
   ...standardBindings,
@@ -249,9 +196,6 @@ function fromEditor(spec: BindingSpec): Shortcut {
     category: named ? named[0] : 'edit',
     scope: 'editor',
     key: spec.key,
-    // Only what the spec actually carries. A platform key that is absent means
-    // "use `key`", while one set to null means "no key on this platform", and
-    // copying an absent one over as undefined would blur the two.
     ...(spec.mac === undefined ? {} : { mac: spec.mac }),
     ...(spec.win === undefined ? {} : { win: spec.win }),
     ...(spec.linux === undefined ? {} : { linux: spec.linux }),
@@ -260,15 +204,6 @@ function fromEditor(spec: BindingSpec): Shortcut {
   }
 }
 
-/** Runs an export through the very row the palette and the File menu run, so a
- *  key can never do something the menu does not. Imported when the key is
- *  pressed: the command list reaches half the app, and this file is loaded
- *  before anything is on screen.
- *
- *  A key bound to a format the thing on screen does not go out as does nothing: a
- *  canvas has no Word file in it, and the row is either not on the list or on it
- *  and greyed out. Nothing to report, either - the answer is the greyed row in
- *  the menu, not a message about a key. */
 function runExport(id: ExportId) {
   void import('../commands').then(({ exportCommands }) => {
     const command = exportCommands().find((one) => one.id === `export-${id}`)
@@ -276,9 +211,6 @@ function runExport(id: ExportId) {
   })
 }
 
-/** Printing, through the same row the File menu and the palette press, and
- *  imported when the key is pressed for the same reason as the export above: the
- *  renderer behind it is most of what the app can load. */
 function runPrint() {
   void import('../commands').then(({ appCommands }) => {
     const command = appCommands().find((one) => one.id === 'print')
@@ -286,13 +218,8 @@ function runPrint() {
   })
 }
 
-/** Asked at the press rather than as this module loads, so a test can be a Mac. */
 const onMac = () => isDesktop && platform() === 'macos'
 
-/** Runs an app-level command. The two that need the component say so through
- *  the context; everything else reaches the stores directly, the way the
- *  command palette does. */
-/** The four ways between the panes, the letter each is on and what it is called. */
 const PANE_WAYS: readonly [Toward, string, () => string][] = [
   ['left', 'h', () => t('Pane to the left')],
   ['down', 'j', () => t('Pane below')],
@@ -301,11 +228,6 @@ const PANE_WAYS: readonly [Toward, string, () => string][] = [
 ]
 
 const APP_ENTRIES: Shortcut[] = [
-  // Ctrl+Alt+N since Ctrl+N went to the scratchpad (Emil, issue #213): the same letter,
-  // one modifier further, and nothing else in the app or any keyboard held it. AltGr
-  // typing a letter is never this chord; see `typedWithAltGr` in keys.ts. The file list
-  // reads the same key for a note in the folder it is on; see Tree.svelte. The keyboards
-  // that have New note on Ctrl+N put it back there; see presets.ts.
   {
     id: 'app.new',
     label: () => t('New note'),
@@ -316,10 +238,6 @@ const APP_ENTRIES: Shortcut[] = [
       if (hiddenKinds.offers('note')) workspace.openBlank()
     },
   },
-  // Ctrl+T is a new tab, as in every browser: the kinds a tab can be under an address
-  // field that has the keyboard, which is what the plus makes too (Emil, issue #213).
-  // See `newTab` in workspace.svelte.ts and NewHere.svelte. A terminal asks once whether
-  // the key is this or the shell's; see terminal/two-ways.ts.
   {
     id: 'app.new-kind',
     label: () => t('New tab'),
@@ -329,23 +247,15 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => workspace.newTab(),
   },
   {
-    // No key since the private tab took Chrome's for it (docs/backlog.md, Q3): Ctrl+N is
-    // a new note here, so New window keeps its row and the palette's, and a reader may
-    // give it a key.
     id: 'app.new-window',
     label: () => t('New window'),
     category: 'file',
     scope: 'app',
     key: null,
     run: () => void invoke('new_window').catch(() => undefined),
-    // A phone has the one window and no command for another: its bar offered a
-    // button that did nothing. The palette's row is greyed on the same condition.
     desktop: true,
   },
   {
-    // Chrome's Ctrl+Shift+N, a new Incognito window, is a private tab here: a page that
-    // writes nothing down and forgets everything with its last tab; see
-    // web-tab/private.ts. A desktop's alone, which is where a web tab is a page of Orden's.
     id: 'app.new-private',
     label: () => t('New private tab'),
     category: 'file',
@@ -357,7 +267,6 @@ const APP_ENTRIES: Shortcut[] = [
     },
     desktop: true,
   },
-  // Obsidian's Random note. No key out of the box, as there; see random-note.ts.
   {
     id: 'app.random-note',
     label: () => t('Random note'),
@@ -372,9 +281,6 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'file',
     scope: 'app',
     key: 'Mod-w',
-    // On a Mac the same key closes the window once nothing is left in it to close,
-    // as it does in Safari and VS Code there. A pane put down with Ctrl+D still has
-    // its tabs, so there it closes nothing. A pick of tabs goes whole, as in Chrome.
     run: () => {
       const pick = picks.loaded
       const many = pick?.chosen.of(workspace.panes.focusedId) ?? []
@@ -385,8 +291,6 @@ const APP_ENTRIES: Shortcut[] = [
     },
   },
   {
-    // Every Mac app's File menu has it under the same key with Shift, and so does a
-    // browser's and VS Code's on Windows and Linux.
     id: 'app.close-window',
     label: () => t('Close window'),
     category: 'file',
@@ -396,16 +300,6 @@ const APP_ENTRIES: Shortcut[] = [
     desktop: true,
   },
   {
-    // The key every browser goes back with, and the one the editor's own syntax
-    // motion was quietly holding on Windows and Linux until this took it; see
-    // keymap.ts in @orden/editor.
-    //
-    // A Mac cannot have either pair. Alt and an arrow there is a word at a time
-    // and has been for forty years, and Cmd and a bracket - which is what a Mac
-    // browser uses - is indenting here. So it is the brackets under the other
-    // modifier, which nothing on that platform is using, and which is a key
-    // anybody who wants the browser's own can change in Settings.
-    // Obsidian's Mac back, Cmd+Opt and an arrow, is the pane split here.
     id: 'app.back',
     label: () => t('Back'),
     category: 'view',
@@ -415,12 +309,6 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => workspace.goBack(),
   },
   {
-    // A browser's key for its address bar, which is what a web tab's field is.
-    //
-    // Read where the surface is rather than off the window, which is what lets it
-    // share the key the editor selects a line with: a pane showing a page has no
-    // editor in it, and a pane showing a note never sees this. The same arrangement
-    // the canvas's own keys have; see WebBar.svelte and `shortcuts.pressed`.
     id: 'web.address',
     label: () => t('Address'),
     category: 'view',
@@ -429,8 +317,6 @@ const APP_ENTRIES: Shortcut[] = [
     contextual: true,
   },
   {
-    // Read by the tab, so a note keeps Ctrl+Shift+I for a picture. In a page the
-    // engine answers both keys itself.
     id: 'web.devtools',
     label: () => t('Developer tools'),
     category: 'view',
@@ -449,9 +335,6 @@ const APP_ENTRIES: Shortcut[] = [
     alias: true,
   },
   {
-    // Chrome's History, Ctrl+H, and Cmd+Y on a Mac, where Cmd+H hides the app. Read by the
-    // bar where a page is, like the address key, so a note keeps Ctrl+H for Replace. In a
-    // page it is the page's first, as in Chrome; see web_opens.rs.
     id: 'web.history',
     label: () => t('History'),
     category: 'view',
@@ -461,7 +344,6 @@ const APP_ENTRIES: Shortcut[] = [
     contextual: true,
   },
   {
-    // Chrome's Delete browsing data, Ctrl+Shift+Delete; Cmd+Shift+Backspace on a Mac.
     id: 'web.clear-data',
     label: () => t('Delete browsing data'),
     category: 'view',
@@ -471,7 +353,6 @@ const APP_ENTRIES: Shortcut[] = [
     contextual: true,
   },
   {
-    // Chrome's Mute site has no key; a reader may give it one.
     id: 'web.mute',
     label: () => t('Mute site'),
     category: 'view',
@@ -489,7 +370,6 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => workspace.goForward(),
   },
   {
-    // The key a browser and Obsidian both use for it, so no hand has to be told.
     id: 'app.reopen',
     label: () => t('Reopen closed tab'),
     category: 'file',
@@ -497,8 +377,6 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Shift-t',
     run: () => void workspace.reopenClosed(),
   },
-  // A tab's own menu, for a reader who wants a key: Chrome gives these none, and
-  // VS Code's are two-stroke chords. See tab-strip/menu.ts.
   {
     id: 'app.close-right',
     label: () => closeAfterLabel(),
@@ -532,21 +410,6 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => settings.show(),
   },
   {
-    // Every key there is, which is this list, in the pane that can also change
-    // them. One list and not two: a compact sheet of "the keys worth knowing"
-    // would be a second copy of half of this, and the copy is the one that goes
-    // stale. It is searchable, it says which key each thing is on right now
-    // rather than which key it shipped on, and every row can be rebound where it
-    // is read.
-    //
-    // Discord and half the web open theirs with Ctrl+/. Here that is Source mode
-    // and has been since the first version, so this is the shifted one, which on
-    // most keyboards is the question mark - which is what asking for help looks
-    // like.
-    //
-    // Except on a Mac, where Shift+Cmd+? is the system's in every app: the search
-    // field AppKit puts at the top of the Help menu. There the list is the first row
-    // of Help instead, with no key out of the box.
     id: 'app.keys',
     label: () => t('Keyboard shortcuts'),
     category: 'file',
@@ -556,11 +419,6 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => settings.show('shortcuts'),
   },
   {
-    // The note on paper, on the key every program prints with. It was the palette's
-    // second key until Emil, 2026-10-01: *"we don't need Ctrl+P as a default shortcut
-    // for opening the search, because we already have Shift Shift"* - and a Ctrl+P
-    // nothing answered would have printed the app's own window. A web tab's page has
-    // it first, as in a browser: web_keys.rs never takes it.
     id: 'app.print',
     label: () => t('Print'),
     category: 'file',
@@ -568,13 +426,6 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-p',
     run: () => runPrint(),
   },
-  // One row per export there is, in the list's own fixed order, so the settings
-  // show every row the File menu and the palette can. All of them are here
-  // whatever is open, because a key is bound once and pressed with anything in
-  // front of it; a key for a format this document does not go out as does
-  // nothing. None of them starts on a key: fourteen defaults would eat the file
-  // category, and somebody who exports to one format every day is exactly the
-  // person who will bind it.
   ...EXPORT_KEYS.map((id): Shortcut => ({
     id: `export.${id}`,
     label: () => labelOf(id),
@@ -583,8 +434,6 @@ const APP_ENTRIES: Shortcut[] = [
     key: null,
     run: () => runExport(id),
   })),
-  // Cmd+Tab is the Mac's own application switcher and never reaches a window,
-  // so there the note switcher is Ctrl+Tab, which is what a Mac browser uses.
   {
     id: 'app.next-note',
     label: () => t('Next note'),
@@ -603,9 +452,6 @@ const APP_ENTRIES: Shortcut[] = [
     mac: 'Ctrl-Shift-Tab',
     run: () => cycleTab(-1, true),
   },
-  // Chrome's other pair for the same walk, which a hand that lives in a browser
-  // reaches for as often as Ctrl+Tab.
-  // On a Mac it is Safari's, Chrome's and VS Code's Cmd+Shift and a bracket.
   {
     id: 'app.next-note.alt',
     label: () => t('Next note'),
@@ -626,8 +472,6 @@ const APP_ENTRIES: Shortcut[] = [
     alias: true,
     run: () => cycleTab(-1),
   },
-  // The strip's own order, by key: Chrome's Ctrl+Shift+PageUp and PageDown, one
-  // slot at a time, the same movement dragging the tab makes.
   {
     id: 'app.move-tab-left',
     label: () => t('Move tab left'),
@@ -644,13 +488,6 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Shift-PageDown',
     run: () => moveTab(1),
   },
-  // Emil, 2026-09-30: *"add Ctrl + D as a shortcut. Effectively it just deselects the
-  // currently selected tab."* The pane shows nothing and every tab stays open. It took
-  // the key from Select word, which has none now (the VS Code keyboard gives it back),
-  // and from the file list's Duplicate, which is a row of the row's menu: putting a tab
-  // down is harmless where a copy writes files, and Explorer's own Ctrl+D deletes. A
-  // page and a plane with something picked answer it first; see web_opens.rs and
-  // canvas/actions.ts.
   {
     id: 'app.deselect-tab',
     label: () => t('Deselect tab'),
@@ -659,10 +496,6 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-d',
     run: () => workspace.deselect(),
   },
-  // Emil, 2026-10-03: the same in every pane, and the key again brings them all back.
-  // On Ctrl+Shift+D under every keyboard: none of the four binds it - VS Code's Run and
-  // Debug is a view Orden has not got - and it is answered in a page and a terminal as
-  // the window answers it; see web_opens.rs and terminal/keys.ts.
   {
     id: 'app.deselect-all',
     label: () => t('Deselect all tabs'),
@@ -671,7 +504,6 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Shift-d',
     run: () => workspace.deselectAll(),
   },
-  // F2 on a tab, the file list's key, read by the strip itself.
   {
     id: 'tabs.rename',
     label: () => t('Rename'),
@@ -680,8 +512,6 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'F2',
     contextual: true,
   },
-  // The panes. Named for what they do rather than for the key they are on, since
-  // a later batch maps Obsidian's own keys onto the same actions.
   {
     id: 'pane.split-right',
     label: () => t('Split right'),
@@ -698,8 +528,6 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Alt-ArrowDown',
     run: () => workspace.split('column'),
   },
-  // VS Code's "move editor into next group" is Ctrl+Alt+Right, which is Split right
-  // here; with Shift, the split takes the tab along rather than a copy.
   {
     id: 'pane.move-tab',
     label: () => t('Move to other pane'),
@@ -716,9 +544,6 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Alt-o',
     run: () => workspace.panes.focusNext(),
   },
-  // Vim's four ways between the panes, with Alt in place of Ctrl+W (#1033): the pane
-  // next over on that side, and the keyboard with it. None on a Mac, where Option and a
-  // letter types a character; see pane-moves.ts.
   ...PANE_WAYS.map(([toward, letter, label]): Shortcut => ({
     id: `pane.focus-${toward}`,
     label,
@@ -728,8 +553,6 @@ const APP_ENTRIES: Shortcut[] = [
     mac: null,
     run: () => void import('../pane-moves').then((one) => one.movePane(toward)),
   })),
-  // Every tab at once, as windows on a canvas: Alt tapped twice, as Shift twice is the
-  // palette (issue #331). The key again puts them away; see overview/Overview.svelte.
   {
     id: 'app.tab-overview',
     label: () => t('Tabs'),
@@ -738,7 +561,6 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Alt Alt',
     run: () => toggleTabOverview(),
   },
-  // Shift twice, JetBrains' key and Emil's, and Ctrl+O. See tapped.ts.
   {
     id: 'app.palette',
     label: () => t('Command palette'),
@@ -747,8 +569,6 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Shift Shift',
     run: (context) => context.palette(undefined, context.tapped),
   },
-  // With no key of its own: Shift twice is the palette's, and Ctrl+P is Print. The
-  // keyboards that have the palette on another key put it here; see presets.ts.
   {
     id: 'app.palette.alt',
     label: () => t('Command palette'),
@@ -758,10 +578,6 @@ const APP_ENTRIES: Shortcut[] = [
     alias: true,
     run: (context) => context.palette(undefined, context.tapped),
   },
-  // Ctrl+O as well, which is what a hand reaches for to open something, and what is
-  // there to open is in a space: nib opens nothing from outside its spaces. Obsidian's
-  // Ctrl+O is its quick switcher, which is this palette on the notes, so the key
-  // lands where a vault app's hand expects it. It was Open file, which is gone.
   {
     id: 'app.palette.open',
     label: () => t('Command palette'),
@@ -771,7 +587,6 @@ const APP_ENTRIES: Shortcut[] = [
     alias: true,
     run: (context) => context.palette(undefined, context.tapped),
   },
-  // Where every editor puts its commands, as Emil asked; Paragraph gave it up.
   {
     id: 'app.commands',
     label: () => t('Commands'),
@@ -780,7 +595,6 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Shift-p',
     run: (context) => context.palette('commands'),
   },
-  // With no key of its own: the Obsidian keyboard's Ctrl+P. See presets.ts.
   {
     id: 'app.commands.alt',
     label: () => t('Commands'),
@@ -790,10 +604,6 @@ const APP_ENTRIES: Shortcut[] = [
     alias: true,
     run: (context) => context.palette('commands'),
   },
-  // Quick add, from anywhere in the app; once nib is running the same key opens it over
-  // every other app as well (quick-add/anywhere.ts). Ctrl+Alt+Space on every system: on
-  // a Mac Cmd+Ctrl+Space is the emoji picker and Cmd+Space is Spotlight. See
-  // docs/tasks.md 5.6 and 5.16.
   {
     id: 'app.quick-add',
     label: () => t('Add task'),
@@ -802,8 +612,6 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Ctrl-Alt-Space',
     run: () => showQuickAdd(),
   },
-  // Todoist's own key, read by the Tasks panel and a view where no field has the
-  // keyboard, which is the only place a bare letter can be a command.
   {
     id: 'tasks.quick-add',
     label: () => t('Add task'),
@@ -821,7 +629,6 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Shift-l',
     run: () => workspace.toggleSidebar(),
   },
-  // The other side, on VS Code's own key for its secondary side bar.
   {
     id: 'app.right-sidebar',
     label: () => t('Right sidebar'),
@@ -830,24 +637,6 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Alt-b',
     run: () => workspace.toggleSidebar('right'),
   },
-  // The four panels. One key each, and the same key back: it opens the panel and
-  // puts the keyboard in it, and pressing it again while the keyboard is already
-  // there gives the note the keyboard back. Two keys for one journey - one to go
-  // and one nobody remembers for coming back - is how a panel becomes somewhere
-  // you get stuck.
-  //
-  // Letters rather than the digits they were on. Ctrl+Shift and a digit is not a
-  // key a text editor can spend: on a layout where the digit itself is the shifted
-  // character - French, and every other AZERTY - the editor underneath reads the
-  // press as Ctrl and the digit and sets a heading level, so Ctrl+Shift+3 both
-  // opened the file list and turned the line into a heading. A letter cannot be
-  // read that way round, because the shifted letter and the letter are different
-  // names for the key. See runHandlers in @codemirror/view.
-  //
-  // Obsidian ships `file-explorer:open` and `outline:open` with no key at all and
-  // Notion has nothing of the kind, so three of these are Orden's own; Ctrl+Shift+E
-  // for the files is what VS Code puts its explorer on, and Ctrl+Shift+F for
-  // search is already Obsidian's.
   {
     id: 'app.files',
     label: () => t('Files'),
@@ -856,7 +645,6 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Shift-e',
     run: () => revealPanel('tree'),
   },
-  // No default chord, as in Obsidian and VS Code.
   {
     id: 'app.reveal',
     label: () => t('Show in the file list'),
@@ -890,9 +678,6 @@ const APP_ENTRIES: Shortcut[] = [
     run: (context) => searchFrom(context.view),
   },
   {
-    // Reload where the reader is (#1065): a web tab's page again, or a sync now for
-    // everything else. What a pull down past the top does to begin with; no key, since
-    // F5 and Ctrl+R are already a page's reload. See refresh.ts.
     id: 'app.refresh',
     label: () => t('Reload'),
     category: 'view',
@@ -902,8 +687,6 @@ const APP_ENTRIES: Shortcut[] = [
       void import('../refresh').then(({ refreshHere }) => refreshHere()).catch(() => undefined),
   },
   {
-    // What links here and what this links to. On B for the backlinks half, which
-    // is what the panel is called everywhere else; L is the sidebar's own key.
     id: 'app.links',
     label: () => t('Links'),
     category: 'view',
@@ -911,14 +694,9 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Shift-b',
     run: () => revealPanel('links'),
   },
-  // Inbox, Today and the rest (docs/tasks.md 5.16). Y, the next letter no chord held:
-  // T is a new tab's and K the palette's in every browser.
-  // The views are the app's alone; the glasses' plugin has no Tasks panel.
   ...(__EVEN_PLUGIN__
     ? []
     : [
-        // Todos as a tab (#1047), as a double press on the right side's Todos icon does
-        // (#1110); a single press there opens the Tasks panel.
         {
           id: 'app.tasks',
           label: () => t('Tasks'),
@@ -927,7 +705,6 @@ const APP_ENTRIES: Shortcut[] = [
           key: 'Mod-Shift-y',
           run: () => void import('../todos-entry').then(({ showTodos }) => showTodos()),
         } satisfies Shortcut,
-        // The Chats panel, and two keys a chat answers itself (docs/chats.md 4.16).
         {
           id: 'app.chats',
           label: () => t('Chats'),
@@ -967,16 +744,10 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-a',
-    // Pressed again in the panel's field, the thread list (docs/ai-sidebar.md 4.11);
-    // pressed in the list, back to the note, as every panel's key goes.
     run: () => {
       if (!askAgain?.()) revealPanel('ask')
     },
   },
-  // The selection into the AI panel's field as `@Note:12-14`: the words as they are now,
-  // which go with the next message whatever is selected then. Ctrl+Alt+K, since Alt+K is
-  // the pane above (#1033), and Cmd+Opt+K on a Mac, where Option+K types a character (a
-  // German keyboard's °).
   {
     id: 'app.ask-selection',
     label: () => t('Selection to the AI panel'),
@@ -987,12 +758,6 @@ const APP_ENTRIES: Shortcut[] = [
       if (!__EVEN_PLUGIN__) void import('../ai/sidebar/quote').then((one) => one.quoteSelection())
     },
   },
-  // A question on the side, Claude Code's /btw: a field in the middle of the window
-  // with the note's selection, the note or the page in front going along, answered in
-  // place and gone with Escape. Ctrl pressed twice on its own, Cmd twice on a Mac, the
-  // shape Claude's own quick entry and JetBrains' Run Anything have: no chord a note,
-  // a shell or a site is using, and heard over a web page by the page's own script and
-  // inside a terminal by the window, so it is free everywhere. See ai/quick.svelte.ts.
   {
     id: 'app.quick-question',
     label: () => t('Quick question'),
@@ -1001,11 +766,6 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod Mod',
     run: () => askQuickly(),
   },
-  // The one note in no space, its card up and away again: Ctrl+N, Emil's (issue #213),
-  // which no browser lets a page keep. Ctrl+Shift+X, its key before, stays as its second:
-  // a terminal hands Ctrl+Shift to the app without asking, where Ctrl+N is a key the
-  // shell reads too and is asked about once; see terminal/two-ways.ts and
-  // scratchpad/pad.ts.
   {
     id: 'app.scratchpad',
     label: () => t('Scratchpad'),
@@ -1023,8 +783,6 @@ const APP_ENTRIES: Shortcut[] = [
     alias: true,
     run: () => toggleScratchpad(),
   },
-  // The strip at the top of the note, opened and with the keyboard on it (#1120). No
-  // key of its own; a row to put one on.
   {
     id: 'app.properties',
     label: () => t('Properties'),
@@ -1034,8 +792,6 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => void import('../show-properties').then((one) => one.showNoteProperties()),
   },
   {
-    // The stop for every agent (docs/agent-native.md 9.5), from any app while one is
-    // connected, so three modifiers nobody presses by accident; see lib/agents/ui.
     id: 'agents.stop',
     label: () => t('Stop agents'),
     category: 'view',
@@ -1047,16 +803,6 @@ const APP_ENTRIES: Shortcut[] = [
     },
     desktop: true,
   },
-  // Round the regions of the window: the sidebar's header, its panel tabs, the
-  // list, the strip of notes, the note, the bar under it.
-  //
-  // The one key Tab cannot be. Tab indents in a note - Obsidian and Notion both
-  // spend it that way, and a markdown editor has to - so there has to be a key
-  // that walks out of the note, and F6 is the one every hand already has: Windows
-  // cycles a window's elements with it, VS Code moves between its parts with it,
-  // and Discord moves between its sections with it. Shift+F6 goes back.
-  // A Mac keeps it, as VS Code does there: Ctrl+F6 is the system's, and a laptop
-  // has Fn+F6.
   {
     id: 'app.region-next',
     label: () => t('Next section'),
@@ -1073,9 +819,6 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Shift-F6',
     run: () => void stepRegionFocus(-1),
   },
-  // The spaces. Discord switches servers with Ctrl+Alt and an arrow, which is the
-  // same shape of thing; here both of those arrows are the panes', so the two keys
-  // every app uses for the one before and the one after take it instead.
   {
     id: 'space.previous',
     label: () => t('Previous space'),
@@ -1093,16 +836,6 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => stepSpace(1),
   },
   {
-    // The switcher in the middle of the window, and away again: a digit for a space's
-    // number, a name and Enter. On the space bar, because that is where the word is
-    // written: Ctrl+Space (Emil, 2026-10-04), which no browser binds. Kept off Ctrl and
-    // a digit, which are the tabs as in every browser (Arc spends them on its spaces),
-    // and off Ctrl+K, which is a site's own palette. A page is offered it first (Sheets
-    // selects a column with it, Colab and VS Code on the web complete), an input method
-    // that toggles on it takes it before the window, and a terminal keeps it for the
-    // shell, which reads it as NUL; Ctrl+Shift+Space below is the switcher there. A Mac
-    // has Ctrl+Space for the input source and Cmd+Space for Spotlight, so there it is
-    // Cmd+Shift+Space alone. See space-picker.svelte.ts and docs/keyboard.md.
     id: 'space.switcher',
     label: () => t('Spaces'),
     category: 'view',
@@ -1112,8 +845,6 @@ const APP_ENTRIES: Shortcut[] = [
     run: toggleSpacePicker,
   },
   {
-    // Its first key, kept: the one a terminal hands over, since a shell has no use for
-    // the Shift. On a Mac it is the only key, above.
     id: 'space.switcher.alt',
     label: () => t('Spaces'),
     category: 'view',
@@ -1136,9 +867,6 @@ const APP_ENTRIES: Shortcut[] = [
     },
   },
   {
-    // The space drawn as a map of its links. No key out of the box - it opens
-    // from the panel's tabs and the palette - and here so a preset that has one for it
-    // has somewhere to put it. Obsidian's is Ctrl+G.
     id: 'app.graph',
     label: () => t('Graph'),
     category: 'view',
@@ -1160,8 +888,6 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'F8',
-    // F8 to F10 are media keys on a Mac and Obsidian has none, so there these
-    // sit on Ctrl+Cmd beside Enter Full Screen, as Finder's Ctrl+Cmd+S does.
     mac: 'Mod-Ctrl-o',
     run: (context) => modes.toggleFocus(context.view),
   },
@@ -1175,8 +901,6 @@ const APP_ENTRIES: Shortcut[] = [
     run: (context) => modes.toggleTypewriter(context.view),
   },
   {
-    // The note through the renderer, per tab. Obsidian's key for the same
-    // thing, and the one a hand reaches for without being told.
     id: 'app.reading',
     label: () => t('Reading'),
     category: 'view',
@@ -1185,13 +909,6 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => workspace.toggleReading(),
   },
   {
-    // The note as a deck, full screen, with nothing else on it. F5 because that
-    // is the key every hand already knows for starting a presentation, and
-    // because the app's other view keys are already along that row. Obsidian's
-    // own Slides plugin ships no key at all, so no preset takes this one back.
-    // A browser keeps F5 for reloading, which the settings list warns about; the
-    // palette and the View menu are the way in there. Over a page it is `web.reload`.
-    // On a Mac, Keynote's Play Slideshow.
     id: 'app.present',
     label: () => t('Present'),
     category: 'view',
@@ -1201,8 +918,6 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => present.toggle(),
   },
   {
-    // The editor with its doors locked, which is a different thing; see
-    // setReadOnlyMode in the editor package.
     id: 'app.read-only',
     label: () => t('Read-only'),
     category: 'view',
@@ -1217,11 +932,9 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'F11',
-    // F11 is Show Desktop on a Mac; Ctrl+Cmd+F is its Enter Full Screen.
     mac: 'Mod-Ctrl-f',
     run: (context) => context.fullscreen(),
   },
-  // The tab alone in the window, which stays a window; see lib/tab-fill.
   {
     id: 'app.fill-tab',
     label: () => t('Full window'),
@@ -1231,12 +944,6 @@ const APP_ENTRIES: Shortcut[] = [
     mac: 'Mod-Ctrl-Shift-f',
     run: () => void import('../tab-fill/fill').then((one) => one.toggleFill()),
   },
-  // The three keys every browser and every editor changes the size of the words
-  // with. They are the note's own text size here - `--zoom`, never the webview's; see
-  // text-size.ts - and they are these three keys because a reader who wants bigger
-  // words does not read a shortcut list first. Heading up, heading down and Paragraph
-  // used to hold them and are one modifier over now; see keymap.ts in the editor. Over a
-  // web page they zoom the page, as in Chrome; see web-tab/bar-keys.ts.
   {
     id: 'app.zoom-in',
     label: () => t('Zoom in'),
@@ -1254,11 +961,6 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => workspace.zoomPage('out') || modes.stepZoom(-1),
   },
   {
-    // A digit, which is the one kind of key a layout puts behind Shift: on AZERTY the
-    // nought is Shift and the top row, so Ctrl+0 arrives with Shift down. It is
-    // matched by the key underneath rather than by the character, which is what every
-    // browser does with its own Ctrl+0; see `matchesCombination` in keys.ts and the
-    // digit rule in shortcuts.test.ts.
     id: 'app.zoom-reset',
     label: () => t('Actual size'),
     category: 'view',
@@ -1268,18 +970,10 @@ const APP_ENTRIES: Shortcut[] = [
   },
 ]
 
-/** The ninth digit, which is the last tab rather than the ninth. */
 const LAST = 8
 
 const noteAt = (index: number) => t('Note {number}', { number: index + 1 })
 
-/** The notes of the pane being worked in, by number. Eight of them and then the
- *  last, which is Chrome's rule and Obsidian's: nobody counts nine along a strip,
- *  but everybody knows which tab is the last one.
- *
- *  Alt as well as Ctrl, because Ctrl and a digit is a heading level in the
- *  editor and has been since the first version. On a Mac the two trade places:
- *  Cmd and a digit is the tab in Obsidian and Safari. */
 const NUMBERED: Shortcut[] = Array.from({ length: 9 }, (_unused, index) => ({
   id: `app.note-${index + 1}`,
   label: () => (index === LAST ? t('Last note') : noteAt(index)),
@@ -1290,11 +984,7 @@ const NUMBERED: Shortcut[] = Array.from({ length: 9 }, (_unused, index) => ({
   run: () => showTab(index === LAST ? 'last' : index),
 }))
 
-/** Emil, 2026-09-30: *"alt + x opens the tab at position x and alt + 0 opens the last
- *  tab."* Second keys of the eight places and the last; the ninth place is its own. None
- *  on a Mac, where Option and a digit types a character and Cmd has the tabs. */
 const ALT_NUMBERED: Shortcut[] = Array.from({ length: 10 }, (_unused, index): Shortcut => {
-  // Along the top row: one to nine, then the nought.
   const digit = (index + 1) % 10
   const at = digit === 0 ? 'last' : index
   const ninth = at === LAST
@@ -1311,19 +1001,12 @@ const ALT_NUMBERED: Shortcut[] = Array.from({ length: 10 }, (_unused, index): Sh
   }
 })
 
-/** The tab at a place along the focused pane's strip, counting from nought, or the
- *  last one. Pinned tabs count, as in Chrome, and a place past the end is nothing, as
- *  Chrome's Ctrl+1 to 8 are. Also Chrome's own Ctrl and a digit while a page is in
- *  front, where no heading is waiting for it; see WebBar.svelte. */
 export function showTab(at: number | 'last') {
   const tabs = workspace.tabsIn(workspace.panes.focusedId)
   const tab = at === 'last' ? tabs.at(-1) : tabs[at]
   if (tab) workspace.activate(tab.id)
 }
 
-/** The file list's own keys. They are read where the list is - see
- *  Tree.svelte - and only fire while the focus is in it, which is why they
- *  can hold Ctrl+A and Delete without being in the way of the editor's. */
 const PANEL_ENTRIES: Shortcut[] = [
   {
     id: 'tree.select-all',
@@ -1341,7 +1024,6 @@ const PANEL_ENTRIES: Shortcut[] = [
     key: 'Escape',
     contextual: true,
   },
-  // Cmd+Backspace on a Mac, as in Finder and Obsidian; a bare one deletes nothing.
   {
     id: 'tree.delete',
     label: () => t('Delete the selected files'),
@@ -1361,10 +1043,6 @@ const PANEL_ENTRIES: Shortcut[] = [
     contextual: true,
     alias: true,
   },
-  // Walking the list. Contextual, like the plane's own arrows, so sharing the
-  // four of them with the editor's motion is not reported as a clash: they only
-  // mean anything while the focus is in the list. The walk itself is
-  // tree-keys.ts and the rows are Tree.svelte.
   {
     id: 'tree.down',
     label: () => t('Next file'),
@@ -1405,8 +1083,6 @@ const PANEL_ENTRIES: Shortcut[] = [
     key: 'Enter',
     contextual: true,
   },
-  // Finder renames on Return, which opens in every list here (roving.ts), so a
-  // Mac has Cmd+Return.
   {
     id: 'tree.rename',
     label: () => t('Rename'),
@@ -1416,11 +1092,6 @@ const PANEL_ENTRIES: Shortcut[] = [
     mac: 'Mod-Enter',
     contextual: true,
   },
-  // The selection from the keyboard, the way Explorer and VS Code build one: Shift and
-  // an arrow take the next row too, VS Code's Ctrl+Shift+Enter puts the row in or takes
-  // it out (Explorer's Ctrl+Space is the space switcher, from a list too). The
-  // clipboard, undo, redo and a new note are the app's own keys read in the list; see
-  // `fileKey` in Tree.svelte.
   {
     id: 'tree.extend-down',
     label: () => t('Select down'),
@@ -1445,8 +1116,6 @@ const PANEL_ENTRIES: Shortcut[] = [
     key: 'Mod-Shift-Enter',
     contextual: true,
   },
-  // No key: Ctrl+D puts the tab down, in the list as everywhere else. The row's menu
-  // has Duplicate, and a reader who wants Finder's Cmd+D back can give it one.
   {
     id: 'tree.duplicate',
     label: () => t('Duplicate'),
@@ -1455,13 +1124,6 @@ const PANEL_ENTRIES: Shortcut[] = [
     key: null,
     contextual: true,
   },
-  // Moving a row within the order somebody arranged, which is the one of the
-  // list's seven orders a key can change: the other six are rules the notes
-  // themselves decide. Alt and an arrow, because the plain arrows walk the list and
-  // because it is the key every list that can be rearranged uses. Contextual, like
-  // the walk itself, so sharing it with the editor's own move-a-line-up is not
-  // reported as a clash: it only means anything while the focus is in the list, and
-  // only in Manual. See `moveInOrder` in tree-lift.ts.
   {
     id: 'tree.move-up',
     label: () => t('Move up'),
@@ -1478,10 +1140,6 @@ const PANEL_ENTRIES: Shortcut[] = [
     key: 'Alt-ArrowDown',
     contextual: true,
   },
-  // The row's own menu, which every row in every list already has on a right
-  // click and a held finger. Shift+F10 is the key a window manager has used for it
-  // for thirty years, and the key beside the right Ctrl is the one with the picture
-  // of a menu printed on it.
   {
     id: 'list.menu',
     label: () => t('Menu for this row'),
@@ -1501,12 +1159,6 @@ const PANEL_ENTRIES: Shortcut[] = [
   },
 ]
 
-/** The plane's own keys. Read where the plane is - see Canvas.svelte - and only
- *  while it is the surface in front, which is why they can hold a bare letter
- *  and the arrows without being in the way of anything anybody is typing.
- *
- *  Contextual, like the file list's, so they share Delete and the arrows with it
- *  rather than being reported as a clash with it. */
 const CANVAS_ENTRIES: Shortcut[] = (
   [
     ['canvas.tool.select', () => t('Select'), 'v'],
@@ -1515,8 +1167,6 @@ const CANVAS_ENTRIES: Shortcut[] = (
     ['canvas.tool.erase', () => t('Erase'), 'e'],
     ['canvas.tool.lasso', () => t('Lasso'), 'q'],
     ['canvas.tool.text', () => t('Card'), 'c'],
-    // Words with no card round them (#421). Not T, which Triangle has had since the
-    // shapes came: W for the words, free on every board this one is read beside.
     ['canvas.tool.words', () => t('Text'), 'w'],
     ['canvas.tool.file', () => t('Note'), 'n'],
     ['canvas.tool.picture', () => t('Picture'), 'i'],
@@ -1533,24 +1183,11 @@ const CANVAS_ENTRIES: Shortcut[] = (
     ['canvas.group', () => t('Group'), 'g'],
     ['canvas.ungroup', () => t('Ungroup'), 'u'],
     ['canvas.delete', () => t('Delete what is picked'), 'Delete'],
-    // Figma's, Excalidraw's and tldraw's, and shared with Deselect tab: the plane
-    // takes it only with something picked, so the press is spent or let go whole.
     ['canvas.duplicate', () => t('Duplicate'), 'Mod-d'],
-    // One modifier over from the 0 a zoom is reset with everywhere else, because the
-    // app's own text size holds that one now: the press is read off the plane and goes
-    // on to the window afterwards, so leaving both there would fit the plane and resize
-    // the words from one key. The same trade the plane's Ctrl+1 makes under the
-    // Obsidian preset; see presets.ts.
     ['canvas.fit', () => t('Fit the canvas'), 'Mod-Alt-0'],
-    // And the zoom itself on the two keys beside it, the page note's own: the bar no
-    // longer has buttons for it, and a reader without a wheel or a pinch still zooms
-    // (#401).
     ['canvas.zoom.in', () => t('Zoom in'), 'Mod-Alt-='],
     ['canvas.zoom.out', () => t('Zoom out'), 'Mod-Alt--'],
-    // Back to 100% (#369): the bar's reading of the zoom does it, and a reader who wants
-    // a key gives it one. Ctrl+0 is the app's text size, and Ctrl+Alt+0 the fit.
     ['canvas.zoom.actual', () => t('Actual size'), null],
-    // Upright again (#351).
     ['canvas.upright', () => t('Turn upright'), 'Mod-Alt-r'],
     ['canvas.frame', () => t('Zoom to what is picked'), 'Mod-1'],
     ['canvas.find', () => t('Find on the canvas'), 'Mod-f'],
@@ -1572,22 +1209,6 @@ const CANVAS_ENTRIES: Shortcut[] = (
   contextual: true,
 }))
 
-/** A page note's own keys: the zoom, and adding a page.
- *
- *  Read where the paper is - see Pages.svelte - and only while it is the surface
- *  in front, like the plane's above. Contextual for the same reason: they share
- *  Ctrl+Alt+0 with the plane's Fit, and only one of the two surfaces is ever in
- *  front of a reader.
- *
- *  One modifier over from the keys every browser zooms with, because the app's own
- *  text size holds those: Ctrl+=, Ctrl+- and Ctrl+0 make the words bigger
- *  everywhere, including over a page note, and a zoom on one of these keys would
- *  resize the words and the paper from one press. See docs/keyboard.md, which
- *  states the digit rule once, and `canvas.fit`, which made the same trade.
- *
- *  Adding a page has no key at all. The gesture is the way in - carry on scrolling
- *  past the last page - and the silhouette at the end of the column is the button;
- *  this row is here so a reader who wants a key can give it one. */
 const PAGES_ENTRIES: Shortcut[] = (
   [
     ['pages.zoom.in', () => t('Zoom in'), 'Mod-Alt-='],
@@ -1605,8 +1226,6 @@ const PAGES_ENTRIES: Shortcut[] = (
   contextual: true,
 }))
 
-// Cmd+1 and Cmd+Shift and a bracket are the tabs' on a Mac, and the plane answers
-// first, so these move there: beside Fit, and to Figma's Cmd+Opt and a bracket.
 const MAC_CANVAS: Record<string, string> = {
   'canvas.frame': 'Mod-Alt-1',
   'canvas.front': 'Mod-Alt-]',
@@ -1617,9 +1236,6 @@ for (const entry of CANVAS_ENTRIES) {
   if (mac) entry.mac = mac
 }
 
-/** A web tab's other keys, Chrome's, read by the bar in the focused pane before the
- *  window is: F5 is Present over a note, and a pane showing a page has no note. See
- *  web-tab/bar-keys.ts. A Mac types a character with Alt+D. */
 const WEB_ENTRIES: Shortcut[] = (
   [
     ['web.address.alt', () => t('Address'), 'Alt-d', null],
@@ -1628,9 +1244,6 @@ const WEB_ENTRIES: Shortcut[] = (
     ['web.fresh', () => t('Hard reload'), 'Mod-Shift-r', undefined],
     ['web.fresh.alt', () => t('Hard reload'), 'Mod-F5', null],
     ['web.stop', () => t('Stop'), 'Escape', undefined],
-    // Chrome's on a Mac, where Cmd and a bracket is a note's indent and `app.back` lives one
-    // modifier over. A row while a page is in front; see `reloadRows` in
-    // native-menu-bar.svelte.ts. Everywhere else `app.back` is already Chrome's.
     ['web.back', () => t('Back'), null, 'Mod-['],
     ['web.forward', () => t('Forward'), null, 'Mod-]'],
   ] as const
@@ -1645,9 +1258,6 @@ const WEB_ENTRIES: Shortcut[] = (
   ...(id.endsWith('.alt') ? { alias: true } : {}),
 }))
 
-/** The AI panel's field (docs/ai-sidebar.md 4.12). Read by the field itself, where the
- *  focus is, so each is contextual: Ctrl+N there is a new thread and a new note
- *  everywhere else, Ctrl+O unfolds the rows there and opens the palette elsewhere. */
 const AI_ENTRIES: Shortcut[] = (
   [
     ['ai.mode', () => t('Next mode'), 'Shift-Tab'],
@@ -1667,9 +1277,6 @@ const AI_ENTRIES: Shortcut[] = (
   contextual: true,
 }))
 
-/** Dictation into the field that has the keyboard (#1128): the chat composer, quick add
- *  and the quick question. Read by the field itself, so it is contextual; a tap toggles
- *  and a hold is push-to-talk (dictation/keys.ts). */
 const FIELD_ENTRIES: Shortcut[] = [
   {
     id: 'field.dictate',
@@ -1691,17 +1298,12 @@ CANVAS_ENTRIES.push({
   alias: true,
 })
 
-/** The switcher in the middle of the window, up or away. Fetched with the dialog, which
- *  the launch's last turn has already done by the first press. */
 function toggleSpacePicker() {
   void import('../space-picker.svelte').then(({ spacePicker }) => spacePicker.toggle())
 }
 
-// Both fetched as the launch ends; see `warmDoors`.
 const tabOps = () => import('../tab-strip/ops')
 
-/** Kept once fetched, so a step lands in the frame of its press and a held Ctrl is
- *  still held when it does. */
 let cycling: typeof import('../tab-cycle.svelte') | null = null
 
 function cycleTab(direction: number, mayUseOrder = false) {
@@ -1721,11 +1323,6 @@ function closeAroundActive(which: Around) {
   if (id) void workspace.closeAround(id, which)
 }
 
-/** The tab being read, one slot along its own strip: the same movement dragging
- *  it makes, for a hand that would rather not. It stops at either end rather than
- *  wrapping round, as Chrome's does: walking a strip is a loop, moving a tab is a
- *  rearrangement, and a key that carried the first tab of forty to the far end
- *  because it was pressed once too often would be a key nobody could trust. */
 function moveTab(direction: number) {
   const paneId = workspace.panes.focusedId
   const tabs = workspace.tabsIn(paneId)
@@ -1737,13 +1334,6 @@ function moveTab(direction: number) {
   workspace.moveTab(tab.id, paneId, slot)
 }
 
-/** Keys that are spoken for and cannot be handed to something else.
- *
- *  They are in the list rather than left out of it, because a shortcut that
- *  is missing from a list of every shortcut reads as an oversight. Each says
- *  why: the clipboard belongs to the system, and the keys that move the caret
- *  and delete characters are how a text editor works rather than choices
- *  anybody made. */
 export const FIXED_ENTRIES: Shortcut[] = [
   {
     id: 'fixed.cut',
@@ -1855,7 +1445,6 @@ const EXPLORER_ENTRIES: Shortcut[] = (
   ...(id.endsWith('.alt') ? { alias: true } : {}),
 }))
 
-/** Every shortcut there is, in the order the settings list shows them. */
 export const SHORTCUTS: Shortcut[] = [
   ...APP_ENTRIES,
   ...NUMBERED,
@@ -1875,18 +1464,6 @@ export const BY_ID = new Map(SHORTCUTS.map((one) => [one.id, one]))
 
 const EDITOR_BY_ID = new Map(EDITOR_SPECS.map((one) => [one.id, one]))
 
-/** Runs whatever an id names, and answers whether there was anything to run.
- *
- *  The registry holds both halves of every command already - the app entries
- *  carry their own `run`, and the editor's keep theirs in the specs the keymap
- *  is built from - so a button that presses a command by id presses the same
- *  thing the key does rather than a second copy of it. What the phone's format
- *  bar is made of; see toolbar.svelte.ts.
- *
- *  False for an id nothing answers to, for an editor command with no editor on
- *  screen, and for the panel and fixed entries: a panel key only means anything
- *  inside the file list, and a fixed one is a fact about the keyboard rather
- *  than a command. */
 export function runEntry(id: string, context: AppContext): boolean {
   const spec = EDITOR_BY_ID.get(id)
   if (spec) {
@@ -1905,8 +1482,6 @@ export function runEntry(id: string, context: AppContext): boolean {
   return true
 }
 
-/** Whether an id is one `runEntry` can press at all, here, which is what the
- *  settings offer and what a saved list is cleaned against. */
 export function runnable(id: string): boolean {
   if (EDITOR_BY_ID.has(id)) return true
 
@@ -1914,10 +1489,6 @@ export function runnable(id: string): boolean {
   return !!entry && entry.scope === 'app' && !!entry.run && (isDesktop || !entry.desktop)
 }
 
-/** Combinations the machine underneath usually swallows. Not a refusal - the
- *  app cannot know what a given system does with a given key - but a warning
- *  beside the binding, so nobody sets a key and wonders why nothing happens.
- *  The Globe key's chords are missing because it never reaches a page. */
 export const SYSTEM_KEYS: Record<Platform, string[]> = {
   mac: [
     'Mod-q',
@@ -1950,8 +1521,6 @@ export const SYSTEM_KEYS: Record<Platform, string[]> = {
   linux: ['Alt-F4', 'Alt-Tab'],
 }
 
-/** And the ones a browser keeps for itself. Only a worry in the browser: the
- *  packaged app has no tabs to close and no developer tools to open. */
 export const BROWSER_KEYS = [
   'F12',
   'F5',

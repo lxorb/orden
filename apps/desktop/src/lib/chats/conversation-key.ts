@@ -1,5 +1,3 @@
-/** What a tab of another service's conversation keeps as its words (#321). */
-
 const HEAD = 'connected-chat\n'
 
 export interface ConversationKey {

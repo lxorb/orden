@@ -1,12 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-/** The terminal among the kinds a new tab can be, on the desktop that has one, and
- *  Remote beside it.
- *
- *  A test of its own because it is the one kind that depends on the build: the node
- *  project runs as a page with no crate, where a terminal is never offered - which is
- *  what the other file pins. Here the build is a desktop's. */
-
 const store = new Map<string, string>()
 vi.stubGlobal('localStorage', {
   getItem: (key: string) => store.get(key) ?? null,
@@ -57,8 +50,6 @@ describe('a terminal, as a kind a new tab can be', () => {
     ])
   })
 
-  /** Every terminal is for somebody who writes code: Developer mode off leaves the whole
-   *  line out. See `developer` in modes.svelte.ts. */
   test('is left out, with Remote and Online, for somebody who does not write code', async () => {
     const { modes } = await import('./modes.svelte')
     modes.developer = false
@@ -73,8 +64,6 @@ describe('a terminal, as a kind a new tab can be', () => {
     }
   })
 
-  /** T is the new tab's own key, so the terminal's is R - Run, on Windows, for thirty
-   *  years - and no two kinds share one. */
   test('on R, its own letter', () => {
     const letters = newKinds().map((one) => one.letter)
     expect(terminalKind()?.letter).toBe('r')
@@ -87,8 +76,6 @@ describe('a terminal, as a kind a new tab can be', () => {
     expect(terminal?.label()).toBe('New terminal')
   })
 
-  /** Offered wherever there is a desktop, a narrow window included: a shell is the
-   *  machine's, not the layout's. */
   test('whatever the window’s width', () => {
     const was = viewport.device
     viewport.device = 'phone'
@@ -104,7 +91,6 @@ describe('a terminal, as a kind a new tab can be', () => {
     expect(focused).toHaveBeenCalledWith('a-pane')
   })
 
-  /** VS Code's `+ ˅`: the row makes the default, and the others are a chevron away. */
   test('and any other shell a chevron away', async () => {
     const more = terminalKind()?.others
     expect(more).toBeDefined()
@@ -126,8 +112,6 @@ describe('a terminal, as a kind a new tab can be', () => {
   })
 })
 
-/** Emil, 2026-10-03: Remote is a card of its own beside Terminal, and the terminal's
- *  chooser keeps only the shells of this machine. */
 describe('Remote, beside it', () => {
   test('on S, wearing the server, and opening the host picker for the pane that asked', async () => {
     const remote = newKinds().find((one) => one.kind === 'remote')

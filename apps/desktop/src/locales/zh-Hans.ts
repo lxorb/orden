@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHans: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': '一切就绪',
   Personalize: '个性化',
   Clean: '简洁',
@@ -10,12 +9,10 @@ export const zhHans: Dictionary = {
   'Do you write code?': '你写代码吗？',
   Yes: '是',
   No: '否',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': '从其他应用：{key}',
   'From other apps: set in your system settings': '从其他应用：在系统设置中设定',
   'From other apps: bind {command} in your system settings':
     '从其他应用：在系统设置中绑定 {command}',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: '常驻项',
   'Add to Essentials': '添加到常驻项',
   'Remove from Essentials': '从常驻项中移除',
@@ -23,20 +20,16 @@ export const zhHans: Dictionary = {
   'Add blocks to Essentials': '将这些块添加到常驻项',
   'Add view to Essentials': '将视图添加到常驻项',
   'Open tabs and Essentials': '打开标签页和常驻项',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor现已更名为Orden',
   'Notes from nibeditor.com': '来自nibeditor.com的笔记',
   'Nothing there': '那里什么都没有',
-  // AI: the three permission modes
   'Full permissions': '完全权限',
   'Auto mode': '自动模式',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     '完全权限：不会询问或交还给你任何事，登录、付款、发送和删除也不例外',
-  // Import: Zen's tabs
   'Import from Zen': '从 Zen 导入',
   'Containers stay in Zen': '容器保留在 Zen 中',
   'Zen’s tabs could not be read.': '无法读取 Zen 的标签页。',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': '容器保留在 Firefox 中',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} 使用 {engine} 搜索：在设置中选择它，即可在这里也用它搜索',
@@ -59,38 +52,29 @@ export const zhHans: Dictionary = {
   'Reading List': '阅读列表',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS 将 Safari 的标签页和书签放在“完全磁盘访问权限”之后。请在那里打开 Orden，然后再试一次。',
-  // Settings: note types
   'Page note': '分页笔记',
   'Web note': '网页笔记',
   'Private tab': '无痕标签页',
   'Note types': '笔记类型',
-  // Tasks: Upcoming's weeks
   'Previous week': '上一周',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': '在上方添加项目',
   'Add project below': '在下方添加项目',
   'Projects folder': '项目文件夹',
-  // Tasks: a repeating task skipped or done for good
   Skip: '跳过',
   'Complete forever': '永久完成',
-  // Tasks: comments
   Comments: '评论',
-  // Tasks: filters
   Filters: '筛选器',
   'Add filter': '添加筛选器',
   'Edit filter': '编辑筛选器',
-  // Tasks: a project's sections
   'Add section': '添加分区',
   '{name} (copy)': '{name}（副本）',
   'Its tasks are deleted with it.': '其中的任务会一并删除。',
-  // Tasks: keys, selection and the undo toast
   Completed: '已完成',
   'Remove date': '移除日期',
   'Next task': '下一个任务',
   'Previous task': '上一个任务',
   'Add task at the top': '在顶部添加任务',
   '{count} selected': '已选 {count} 项',
-  // Tasks: the Display menu
   Display: '显示',
   'Completed tasks': '已完成任务',
   Smart: '智能',
@@ -102,20 +86,16 @@ export const zhHans: Dictionary = {
   'Reset all': '全部重置',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     '布局将任务显示为列表、看板或日历。分组将任务分成若干组，即看板的列。排序为每一组排好顺序。筛选会隐藏你不需要的内容。所有这些都会为此视图保留。',
-  // Tasks: several lines pasted into quick add
   'One task': '一个任务',
   'One per line': '每行一个',
   'Add with AI': '用 AI 添加',
-  // Tasks: the projects in the panel
   Favorites: '收藏',
   'Add project': '添加项目',
   'Add sub-project': '添加子项目',
-  // Tasks: the task view
   'Sub-tasks': '子任务',
   'Add sub-task': '添加子任务',
   'New label': '新标签',
   'No deadline': '无截止日期',
-  // Tasks: the row's menu and the scheduler
   Reschedule: '重新安排',
   'Later this week': '本周晚些时候',
   'This weekend': '本周末',
@@ -132,22 +112,18 @@ export const zhHans: Dictionary = {
   Reopen: '重新打开',
   Schedule: '安排',
   'Open in note': '在笔记中打开',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': '其他应用',
   'Import from Obsidian': '从 Obsidian 导入',
   'Import from Notion': '从 Notion 导入',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: '提示',
   'Silent mode': '安静模式',
   'See how your notes connect.': '查看你的笔记如何相互关联。',
   'Press {key} to find anything, notes and commands alike.':
     '按 {key} 查找任何内容,笔记和命令皆可。',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': '书写时显示 Markdown',
   'Open notes in source mode': '以源码模式打开笔记',
   Pointer: '指针',
   'Pointing hand on buttons': '按钮上显示手形指针',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': '添加任务',
   'Apple Shortcuts': 'Apple 快捷指令',
   Tomorrow: '明天',
@@ -173,7 +149,6 @@ export const zhHans: Dictionary = {
   'Every week': '每周',
   'Every month': '每月',
   'Every year': '每年',
-  // Files and notes
   Save: '保存',
   'New note': '新建笔记',
   'Random note': '随机笔记',
@@ -201,8 +176,6 @@ export const zhHans: Dictionary = {
   'Release to add a page': '松开添加页面',
   'Page {number}': '第 {number} 页',
   'The paper could not be read': '无法读取纸张',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: '信纸',
   'Long page': '长页',
@@ -245,7 +218,6 @@ export const zhHans: Dictionary = {
   'Choose a picture': '选择图片',
   'Remove picture': '移除图片',
   'That picture could not be read.': '无法读取该图片。',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: '饱和度',
   Tint: '色调',
   'Tint colour': '色调颜色',
@@ -373,7 +345,6 @@ export const zhHans: Dictionary = {
   'Merge into…': '合并到…',
   'Split at caret': '在光标处拆分',
   'Extract selection': '提取所选内容',
-  // Panels and navigation
   Bookmarks: '书签',
   'New group': '新建分组',
   'Remove group': '移除分组',
@@ -427,8 +398,6 @@ export const zhHans: Dictionary = {
   'Sort by name': '按名称排序',
   'Sort by modified': '按修改时间排序',
   'Sort by created': '按创建时间排序',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': '文件排序方式',
   'Name, A to Z': '名称，A 到 Z',
   'Name, Z to A': '名称，Z 到 A',
@@ -439,7 +408,6 @@ export const zhHans: Dictionary = {
   Manual: '手动',
   'Show hidden files': '显示隐藏文件',
   'Hide hidden files': '不显示隐藏文件',
-  // Writing
   Bold: '加粗',
   Italic: '斜体',
   Strikethrough: '删除线',
@@ -524,11 +492,9 @@ export const zhHans: Dictionary = {
   'Horizontal rule': '分隔线',
   'Page break': '分页符',
   'Tidy up this note': '整理此笔记',
-  // PDFs
   'Copy a link': '复制链接',
   'That PDF could not be opened': '无法打开该PDF',
   'That file could not be read': '无法读取该文件',
-  // Modes and view
   Reading: '阅读',
   'Leave reading': '退出阅读',
   Present: '演示',
@@ -568,7 +534,6 @@ export const zhHans: Dictionary = {
   'Zoom in': '放大',
   'Zoom out': '缩小',
   'Actual size': '实际大小',
-  // Appearance
   Accent: '强调色',
   'Tidy up': '整理',
   'Blur the app behind the tab overview': '在标签页总览后模糊应用',
@@ -692,7 +657,6 @@ export const zhHans: Dictionary = {
   'Switch theme': '切换主题',
   Style: '样式',
   Mode: '模式',
-  // The window's own edges; see appearance.rs
   Window: '窗口',
   'Orden’s own': 'Orden 自己的',
   'The system’s': '系统的',
@@ -703,7 +667,6 @@ export const zhHans: Dictionary = {
   'Edit custom CSS': '编辑自定义CSS',
   'Edit snippets': '编辑代码片段',
   'Reload themes and custom CSS': '重新加载主题和自定义CSS',
-  // The theme store, and the sample note its cards show
   Themes: '主题',
   Browse: '浏览',
   'Search themes': '搜索主题',
@@ -779,7 +742,6 @@ export const zhHans: Dictionary = {
   'Code only': '仅代码',
   Everywhere: '所有位置',
   Attachments: '附件',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': '分页笔记',
   'New pages': '新建页面',
   'Assets folder of the space': '空间的附件文件夹',
@@ -831,7 +793,6 @@ export const zhHans: Dictionary = {
   'Machine-translated. Corrections welcome.': '机器翻译，欢迎指正。',
   'The glasses show English.': '眼镜显示英文。',
   'Match the app': '与应用一致',
-  // Settings
   Settings: '设置',
   Account: '账户',
   Publish: '发布',
@@ -854,7 +815,6 @@ export const zhHans: Dictionary = {
   '{count} spaces sync to your account.': '{count}个空间会同步到你的账户。',
   Update: '更新',
   'Live at': '访问地址',
-  // Publishing
   'Publish {name}': '发布{name}',
   'What to publish': '发布内容',
   'The whole space': '整个空间',
@@ -873,7 +833,6 @@ export const zhHans: Dictionary = {
   Value: '值',
   available: '可用',
   'checking…': '检查中…',
-  // LLM
   'Connect an LLM to your notes': '将LLM连接到你的笔记',
   'Sign in first - the connector reaches the notes in your account.':
     '请先登录，连接器读取的是你账户中的笔记。',
@@ -921,7 +880,6 @@ export const zhHans: Dictionary = {
   'For a client that takes a JSON block instead of a URL.': '适用于接受JSON配置而非URL的客户端。',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     '无法登录的客户端可以改用令牌。令牌只显示一次。',
-  // Export
   'Plain text': '纯文本',
   'Markdown with the pictures': '带图片的Markdown',
   'HTML without styles': '不带样式的HTML',
@@ -940,13 +898,11 @@ export const zhHans: Dictionary = {
   Margin: '页边距',
   Header: '页眉',
   Footer: '页脚',
-  // History
   'Version history': '版本历史',
   'Copy link to this note': '复制此笔记的链接',
   'that link could not be followed': '无法打开该链接',
   'No earlier versions yet.': '还没有更早的版本。',
   'Restore this version': '恢复此版本',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': '那里已经有一篇笔记',
   'enter a valid email address': '请输入有效的邮箱地址',
   'give the space a name': '请为空间起个名称',
@@ -977,7 +933,6 @@ export const zhHans: Dictionary = {
   'could not publish': '无法发布',
   'could not create a token': '无法创建令牌',
   'that did not work': '操作没有成功',
-  // Settings on a phone, display names, one blog address
   Back: '返回',
   'Display name': '显示名称',
   'Your name': '你的名称',
@@ -997,7 +952,6 @@ export const zhHans: Dictionary = {
   Spelling: '拼写',
   Checking: '检查',
   Dictionary: '词典',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': '正在等待记录生效。',
   'Certificate issued.': '证书已签发。',
   'Cloudflare could not set this domain up.': 'Cloudflare无法配置此域名。',
@@ -1008,7 +962,6 @@ export const zhHans: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare已封禁此域名',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     '如果服务商不允许在域名根部使用CNAME，请改用ALIAS或ANAME记录，或CNAME展平。',
-  // Shortcuts
   Shortcuts: '快捷键',
   'Search shortcuts': '搜索快捷键',
   'Second key': '第二个键',
@@ -1167,7 +1120,6 @@ export const zhHans: Dictionary = {
   Delegated: '已委派',
   'Code theme: {name}': '代码主题：{name}',
   'Delete a layout': '删除布局',
-  // Keyboards and modal editing
   Default: '默认',
   'Vim keys': 'Vim按键',
   'Follow the link': '打开链接',
@@ -1179,11 +1131,9 @@ export const zhHans: Dictionary = {
   INSERT: '插入',
   VISUAL: '可视',
   REPLACE: '替换',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': '眼镜第{page}/{count}页',
   'Reaching the glasses': '正在连接眼镜',
   'The glasses are not keeping up': '眼镜跟不上',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: '添加',
   Select: '选择',
   Pan: '平移',
@@ -1213,7 +1163,6 @@ export const zhHans: Dictionary = {
   Calligraphy: '书法笔',
   'Width {number}': '粗细{number}',
   'Finger draws': '手指绘制',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: '粗细',
   Opacity: '不透明度',
   Colour: '颜色',
@@ -1257,23 +1206,19 @@ export const zhHans: Dictionary = {
   'Export as PNG': '导出为PNG',
   'Export as SVG': '导出为SVG',
   'Export as PDF': '导出为PDF',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': '导入 PDF',
   'Choose how to add the pages to the canvas.': '选择页面怎么加到画布上。',
   'Single page': '单页',
   'All pages': '所有页面',
   'Choose a page': '选择一页',
-  // The canvas: what its own keys are called
   'Delete what is picked': '删除所选',
   'Nudge left': '向左微移',
   'Nudge right': '向右微移',
   'Nudge up': '向上微移',
   'Nudge down': '向下微移',
-  // Writing in a note on several devices at once
   'Also open elsewhere': '也在别处打开',
   Shared: '已共享',
   Browser: '浏览器',
-  // Sharing a space with other people
   Share: '共享',
   'Share {name}': '共享{name}',
   'Share this space': '共享此空间',
@@ -1317,14 +1262,12 @@ export const zhHans: Dictionary = {
   'Shared with you': '与你共享',
   'That link does not open anything': '该链接打不开任何内容',
   'Ask for another one.': '请索取一个新的。',
-  // Somebody a share link let in, who has no account
   Guest: '访客',
   'Ask to join': '申请加入',
   Asking: '申请中',
   'Waiting for {who}': '等待{who}',
   '{who} did not let you in': '{who}没有让你加入',
   'What the others in this space see.': '此空间中其他人看到的内容。',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: '更新',
   'Release channel': '发布通道',
   Stable: '稳定版',
@@ -1334,8 +1277,6 @@ export const zhHans: Dictionary = {
   'Web version': '网页版',
   'Stable is the released web app; Unstable is the newest build and can break.':
     '稳定版是已发布的网页版，开发版是最新的构建，可能出问题。',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: '导入',
   'Convert syntax': '转换语法',
   'In this note': '在此笔记中',
@@ -1419,8 +1360,6 @@ export const zhHans: Dictionary = {
   'Undo the import': '撤销导入',
   'Choose an export': '选择导出文件',
   Under: '位于',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: '同步',
   'When the same note was written twice': '同一篇笔记被写了两次时',
   'On two devices': '在两台设备上',
@@ -1476,7 +1415,6 @@ export const zhHans: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     '此设备上的笔记会保留；只有账户及其同步副本会被删除。',
   'Also gone for everyone in {spaces}.': '{spaces} 中的所有人也将失去它。',
-  // Said and not shown: what a reader is told about a surface
   'The note': '笔记',
   '{space} panel': '{space}面板',
   'Panel width': '面板宽度',
@@ -1487,7 +1425,6 @@ export const zhHans: Dictionary = {
   'What is selected': '所选内容',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     '画布：{cards}张卡片、{links}条连线、{drawings}处绘制',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: '服务商',
   'Make default': '设为默认',
@@ -1513,7 +1450,6 @@ export const zhHans: Dictionary = {
   'Add an AI provider in Settings first.': '请先在设置中添加AI服务商。',
   'The model did not answer.': '模型没有回答。',
   'The connection closed before the answer was finished.': '回答结束前连接已关闭。',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': '你的 {plan} 套餐已达上限，{time} 恢复。',
   'Your {plan} plan is at its limit for now.': '你的 {plan} 套餐目前已达上限。',
   'Your {plan} plan is near its limit.': '你的 {plan} 套餐即将达到上限。',
@@ -1539,7 +1475,6 @@ export const zhHans: Dictionary = {
   Shorter: '更短',
   Longer: '更长',
   'Fix grammar': '修正语法',
-  // The AI sidebar's commands
   'A cited report': '带引用的报告',
   'A helper in the background': '后台助手',
   'A side question': '附带问题',
@@ -1641,7 +1576,6 @@ export const zhHans: Dictionary = {
   'Markdown, shortest name': 'Markdown，最短名称',
   'Markdown, relative path': 'Markdown，相对路径',
   'Markdown, path in the space': 'Markdown，空间内路径',
-  // Publishing part one.
   'The folders you choose become public.': '所选文件夹将公开。',
   'Anyone with the address can read what is published, drafts included.':
     '知道地址的任何人都能读到已发布的内容，包括草稿。',
@@ -1667,11 +1601,9 @@ export const zhHans: Dictionary = {
   'Remove the password': '移除密码',
   'Scan this with your authenticator app, then type its code.':
     '用验证器应用扫描此码，然后输入它给出的验证码。',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: '照片',
   Dictate: '语音输入',
   'Add to {name}': '添加到 {name}',
-  // Web tabs
   Reload: '重新加载',
   'Hard reload': '硬性重新加载',
   'Open in the browser': '在浏览器中打开',
@@ -1686,7 +1618,6 @@ export const zhHans: Dictionary = {
   'Playing audio': '正在播放音频',
   Muted: '已静音',
   'Developer tools': '开发者工具',
-  // Recording, meetings and what a model wrote
   Record: '录音',
   Recording: '录音',
   'Stop recording': '停止录音',
@@ -1706,7 +1637,6 @@ export const zhHans: Dictionary = {
   'That recording is too long to turn into words in one go.': '该录音太长，无法一次转成文字。',
   'That is as much as one recording may hold.': '一段录音最多就这么多。',
   'Nothing could be heard in that recording.': '该录音中听不到任何声音。',
-  // Publishing part two.
   Spreadsheet: '电子表格',
   'The app’s own': '应用自带的',
   'publish.css and publish.js in this space dress the site.':
@@ -1722,14 +1652,12 @@ export const zhHans: Dictionary = {
   'Save as CSV': '存为 CSV',
   'Kept for {days}': '保留{days}',
   Full: '已满',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': '邮件发送失败，请重试',
   'start again - that took too long': '耗时过长，请重新开始',
   'sign in to do that': '请登录后再操作',
   'that is not something a token can do': '令牌无法执行此操作',
   'something went wrong here - try again': '这里出了点问题，请重试',
   'this service cannot keep a secret safely': '此服务无法安全保存密钥',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only': '仅支持图片、PDF 以及站点自己的 css 或 js',
   'that file is too big': '该文件太大',
   'that is more settings than an account holds': '设置项超出账户上限',
@@ -1739,13 +1667,11 @@ export const zhHans: Dictionary = {
   'that is more than a space keeps about its graph': '关系图数据超出空间上限',
   'that is more folder icons than a space holds': '文件夹图标数超出空间上限',
   'that is more than a site keeps': '超出了一个站点所能保存的数量',
-  // Sharing a space, and being let into one.
   'nobody by that address': '没有使用该地址的人',
   'nobody by that name': '没有叫这个名字的人',
   'nobody is waiting by that name': '没有叫这个名字的人在等待',
   'this space is yours': '此空间属于你',
   'that link is busy, try again in a minute': '该链接正忙，请稍后重试',
-  // Versions, the bin, and a room two people write in.
   'no such version': '没有该版本',
   'this note was shared with you, not its folder': '与你共享的是此笔记，不是它所在的文件夹',
   'nothing to restore': '没有可恢复的内容',
@@ -1753,7 +1679,6 @@ export const zhHans: Dictionary = {
   'nothing to delete': '没有可删除的内容',
   'this room is not answering - try again': '此房间没有响应，请重试',
   'rooms are not running here': '此处未启用房间',
-  // The theme store, and asking a model something.
   'the theme store is not answering': '主题商店没有响应',
   'that is not a theme': '这不是一个主题',
   'no such theme': '没有该主题',
@@ -1765,10 +1690,8 @@ export const zhHans: Dictionary = {
   'that is more than a spoken command': '这超出了一条语音命令的长度',
   'that is a lot of listening - try again later': '收音过于频繁，请稍后重试',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '文字 {percent}%',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: '手机',
   'The bar sits over the keyboard on a phone.': '在手机上，工具条位于键盘上方。',
   'On the bar': '在条上',
@@ -1782,31 +1705,25 @@ export const zhHans: Dictionary = {
   'A pull past the top runs': '从顶部再下拉则运行',
   Nothing: '无',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: '保留',
 
-  // Which side of the window a panel sits on.
   'Move to the right': '移到右侧',
   'Move to the left': '移到左侧',
 
-  // How long the account keeps what a note said before.
   'History on the account': '账户上的历史',
   'Keep versions': '保留版本',
   'A month': '一个月',
   'A year': '一年',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     '最近一天的全部，之后每小时一个，一个月后每天一个，三个月后每周一个。',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     '这则笔记已达到房间中笔记可以达到的最大大小。',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': '新建标签页',
   'Full screen': '全屏',
   'Print…': '打印…',
   'Share…': '共享…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': '想要',
   'Don’t allow': '不允许',
   Allow: '允许',
@@ -1822,7 +1739,6 @@ export const zhHans: Dictionary = {
   'Use your MIDI devices': '使用您的 MIDI 设备',
   'Manage windows on all your displays': '管理您的所有显示屏上的窗口',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': '网站信息',
   Downloads: '下载',
   'Downloading {name}': '正在下载 {name}',
@@ -1849,11 +1765,9 @@ export const zhHans: Dictionary = {
   'Turn into': '转换为',
   Foldable: '可折叠',
   'Starts folded': '默认折叠',
-  // Where a space keeps what websites store
   'Web data': '网站数据',
   Global: '全局',
   Site: '网站',
-  // The Mac's menu bar
   'About {name}': '关于{name}',
   Services: '服务',
   'Hide {name}': '隐藏{name}',
@@ -1861,7 +1775,6 @@ export const zhHans: Dictionary = {
   'Show all': '全部显示',
   'Quit {name}': '退出{name}',
   'Bring all to front': '前置全部窗口',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': '撤销复制',
   'Devices with your AI vault': '拥有你 AI 保险库的设备',
   'This device': '此设备',
@@ -1876,13 +1789,11 @@ export const zhHans: Dictionary = {
   'Select down': '向下选择',
   'Select up': '向上选择',
   'Select or deselect': '选择或取消选择',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': '在新标签页中打开',
   'Open to the side': '在侧边打开',
   'Open all': '全部打开',
   'Show in the file list': '在文件列表中显示',
   'Collapse the file list': '折叠文件列表',
-  // Lines, case and the selection a step at a time
   'Expand the selection': '扩大选择范围',
   'Shrink the selection': '缩小选择范围',
   'Insert a line above': '在上方插入行',
@@ -1896,18 +1807,15 @@ export const zhHans: Dictionary = {
   'Duplicate the block': '复制此块',
   'Move the block up': '上移此块',
   'Move the block down': '下移此块',
-  // The editor's menu on a link and a picture
   'Copy link address': '复制链接地址',
   'Edit link': '编辑链接',
   'Remove link': '移除链接',
   'Copy picture': '复制图片',
   'Open picture': '打开图片',
   'Delete picture': '删除图片',
-  // A file dropped into a note
   'Storing the file': '正在存储文件',
   'That file is larger than a note can keep.': '该文件超出了笔记可保存的大小。',
   'That file could not be kept.': '无法保存该文件。',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': '新建终端',
   'Command Prompt': '命令提示符',
   Terminal: '终端',
@@ -1929,11 +1837,8 @@ export const zhHans: Dictionary = {
   'Saved nowhere, a session kept running is found again in Settings, {pane}.':
     '未保存在任何地方；保持运行的会话可在“设置”的“{pane}”中再次找到。',
   'Paste {count} lines?': '粘贴 {count} 行？',
-  // Orden as the default browser
   'Default browser': '默认浏览器',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': '撤销 {name} 的编辑',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: '归档',
   Unarchive: '取消归档',
   Archived: '已归档',
@@ -1943,7 +1848,6 @@ export const zhHans: Dictionary = {
   'Nothing archived is deleted': '已归档的内容不会被删除',
   'Show them': '显示',
   '{count} archived items inside': '其中有 {count} 个已归档项目',
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': '左侧边栏',
   'Right sidebar': '右侧边栏',
   'Ask about this space': '就此空间提问',
@@ -1954,7 +1858,6 @@ export const zhHans: Dictionary = {
   'Ask again': '再问一次',
   'Continue when the limit resets': '上限恢复后继续',
   'Continues at {time}': '{time} 继续',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': '随便问，@ 添加，/ 更多',
   'What can I help with?': '有什么可以帮忙的？',
   'Add photos and files': '添加照片和文件',
@@ -2022,12 +1925,9 @@ export const zhHans: Dictionary = {
   Closed: '已关闭',
   Ran: '已运行',
   Changed: '已更改',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': '这台{device}',
   '{name} is back: {device} was writing in it': '{name} 已恢复：{device} 正在其中写作',
   'Changes to {name} are not syncing': '{name} 的更改未同步',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: '打开',
   Pressing: '点击',
   Typing: '输入',
@@ -2042,16 +1942,12 @@ export const zhHans: Dictionary = {
   'Agent tabs closed': '已关闭智能体标签页',
   'Orden is still running for your agents': 'Orden 仍在为你的智能体运行',
   '{client} wants to connect': '{client} 想要连接',
-  // Web logins that travel, and the devices of an account
   'no such device': '没有这个设备',
   'give the device a name': '请为设备命名',
   'that computer is no longer waiting': '那台电脑已不再等待',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': '没有这个文件',
   'too many changes at once - try again in a minute': '一次更改过多，请一分钟后再试',
   'that is more than a space keeps about its tree': '超出了空间能为其目录树保存的内容',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': '这台电脑上的代理',
   'Your account’s connector': '你账号的连接器',
   'Orden asks you once, the first time it connects.': '首次连接时，Orden 会问你一次。',
@@ -2116,12 +2012,9 @@ export const zhHans: Dictionary = {
   'Pages a minute': '每分钟页面数',
   'Browser memory limit': '浏览器内存上限',
   '{count} calls': '{count} 次调用',
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': '快速提问',
   Scratchpad: 'Scratchpad',
   'Add to note': '添加到笔记',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: '扩展程序',
   'Add extension': '添加扩展程序',
   'Manage extensions': '管理扩展程序',
@@ -2139,7 +2032,6 @@ export const zhHans: Dictionary = {
   'Did not load': '未加载',
   Permissions: '权限',
   Options: '选项',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: '远程',
   'Add host': '添加主机',
   Reconnect: '重新连接',
@@ -2147,11 +2039,8 @@ export const zhHans: Dictionary = {
   'No group': '无分组',
   'Not an address': '不是地址',
   'Could not connect to {host}': '无法连接到 {host}',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': '正在发送图片',
   'Could not send the image': '无法发送图片',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': '以及之后的 {count} 处',
   'Restore notes and conversation': '恢复笔记和对话',
   'Restore conversation': '恢复对话',
@@ -2161,8 +2050,6 @@ export const zhHans: Dictionary = {
   'Pages, terminals and moves are not undone': '网页、终端和移动不会撤销',
   Rewind: '回退',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': '搜索引擎',
   History: '历史记录',
   'Search history': '搜索记录',
@@ -2186,14 +2073,12 @@ export const zhHans: Dictionary = {
   'New private tab': '新建无痕标签页',
   'All spaces': '所有空间',
   'the data could not be deleted': '无法删除数据',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: '稍后提醒',
   Reminders: '提醒',
   'Reminders ring while Orden is open': '提醒仅在 Orden 打开时响起',
   Automatic: '自动',
   'Stay in the tray': '保留在托盘中',
   'Exact alarms': '精确闹钟',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': '待办',
   'Plan my day': '规划我的一天',
   'Add a task': '添加任务',
@@ -2204,8 +2089,6 @@ export const zhHans: Dictionary = {
   'Done tasks too': '包括已完成的任务',
   'As a task': '作为任务',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: '任务',
   Ascending: '升序',
   Descending: '降序',
@@ -2290,8 +2173,6 @@ export const zhHans: Dictionary = {
   'Without a value': '无值',
   'With a value': '有值',
   Unique: '唯一',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': '从模板新建笔记',
   Automations: '自动化',
   'Row added': '已添加行',
@@ -2320,7 +2201,6 @@ export const zhHans: Dictionary = {
   Form: '表单',
   Formula: '公式',
   'Blocked by {task}': '被 {task} 阻塞',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': '退出前提醒',
   'When something runs': '有程序运行时',
   'Quit {name}?': '退出 {name}？',
@@ -2331,16 +2211,13 @@ export const zhHans: Dictionary = {
   'Quit anyway': '仍要退出',
   'Restart anyway': '仍要重新启动',
   'Close anyway': '仍要关闭',
-  // The online terminal
   'Online terminal': '在线终端',
   'New online terminal': '新建在线终端',
-  // One device at a time on an online terminal (issue 1055)
   'another device': '另一台设备',
   'Taken over by {device}': '已被 {device} 接管',
   'Open on {device} since {time}': '自 {time} 起在 {device} 上打开',
   'Take over': '接管',
   'Take back': '收回',
-  // Applications, in developer mode (docs/apps.md)
   'New application': '新建应用程序',
   Application: '应用程序',
   'This application’s file is damaged': '此应用程序的文件已损坏',
@@ -2443,8 +2320,6 @@ export const zhHans: Dictionary = {
   'Compare with original': '与原文件比较',
   'Conflict copies from other apps': '其他应用的冲突副本',
   'Remove from sync': '移出同步',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: '个人资料',
   Change: '更改',
   'Take photo': '拍照',
@@ -2469,7 +2344,6 @@ export const zhHans: Dictionary = {
   'that picture could not be opened': '无法打开该图片',
   'the camera could not be opened': '无法打开相机',
   'that picture is too big': '该图片太大',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: '对话',
   Reply: '回复',
   Replies: '回复',
@@ -2488,7 +2362,6 @@ export const zhHans: Dictionary = {
   'Also send to {chat}': '同时发送到 {chat}',
   'Skin tone': '肤色',
   'Deleted account': '已删除的账户',
-  // Chats: notifications
   Mute: '静音',
   Unmute: '取消静音',
   'New message': '新消息',
@@ -2498,7 +2371,6 @@ export const zhHans: Dictionary = {
   Weekdays: '工作日',
   Starts: '开始',
   Ends: '结束',
-  // Chats: everywhere
   'Read chats': '读取聊天',
   'Post in chats': '在聊天中发言',
   'Always in this chat': '在此聊天中始终允许',
@@ -2510,14 +2382,12 @@ export const zhHans: Dictionary = {
   'Search this chat': '在此聊天中搜索',
   'Add as task': '添加为任务',
   'Save as note': '保存为笔记',
-  // Appearance: glass's own pairs of colours
   Dawn: '黎明',
   Lagoon: '泻湖',
   Lilac: '丁香',
   Peach: '蜜桃',
   Sage: '鼠尾草',
   Mist: '薄雾',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': '新建数据库',
   'New page': '新建页面',
   'Not started': '未开始',
@@ -2543,7 +2413,6 @@ export const zhHans: Dictionary = {
   Large: '大',
   Both: '两者',
   'Shown on cards': '在卡片上显示',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     '通过保险库将此浏览器的 AI 密钥与你的其他设备同步。',
   'Which of your AI accounts this feature asks.': '此功能向你的哪个 AI 账户提问。',
@@ -2759,7 +2628,6 @@ export const zhHans: Dictionary = {
   'Some changes may not be noticed': '部分更改可能不会被察觉',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     '系统监视文件夹的数量已达上限，因此 Orden 可能无法察觉其他程序对你空间所做的每处更改。调高 fs.inotify.max_user_watches 即可解决。',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': '将对话 {name} 移动到 {space}？',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     '之后 {space} 中的所有人都能阅读全部历史，{from} 中的人将失去它。',
@@ -2797,7 +2665,6 @@ export const zhHans: Dictionary = {
   'One colour': '单色',
   'Web icons': '网站图标',
   'Sites you visit will appear here': '你访问过的网站会显示在这里',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: '听写',
   'Dictate with': '听写方式',
   'Where your voice goes to be turned into words.': '你的声音被送往何处以转换成文字。',
@@ -2826,11 +2693,9 @@ export const zhHans: Dictionary = {
     '音频发送到这台设备的语音识别，可能会使用其制造商的服务器',
   'Not on this device': '不在此设备上',
   'Not on this device. It opens once you are online again.': '不在此设备上。重新联网后即可打开。',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'IMAP 服务器',
   'SMTP server': 'SMTP 服务器',
   'User name': '用户名',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: '紧急',
   Important: '重要',
   'If time': '有空再看',

@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHantHK: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': '一切就緒',
   Personalize: '個人化',
   Clean: '簡潔',
@@ -10,12 +9,10 @@ export const zhHantHK: Dictionary = {
   'Do you write code?': '你有寫程式嗎？',
   Yes: '是',
   No: '否',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': '從其他 App：{key}',
   'From other apps: set in your system settings': '從其他 App：喺系統設定中設定',
   'From other apps: bind {command} in your system settings':
     '從其他 App：喺系統設定中綁定 {command}',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Essentials',
   'Add to Essentials': '新增至 Essentials',
   'Remove from Essentials': '從 Essentials 中移除',
@@ -23,20 +20,16 @@ export const zhHantHK: Dictionary = {
   'Add blocks to Essentials': '將這些區塊新增至 Essentials',
   'Add view to Essentials': '將檢視新增至 Essentials',
   'Open tabs and Essentials': '開啟分頁及 Essentials',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor現已改名為Orden',
   'Notes from nibeditor.com': '來自nibeditor.com的筆記',
   'Nothing there': '那裡甚麼都沒有',
-  // AI: the three permission modes
   'Full permissions': '完整權限',
   'Auto mode': '自動模式',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     '完整權限：不會詢問或交還給你任何事，登入、付款、傳送和刪除也不例外',
-  // Import: Zen's tabs
   'Import from Zen': '從 Zen 匯入',
   'Containers stay in Zen': '容器會留在 Zen',
   'Zen’s tabs could not be read.': '無法讀取 Zen 的分頁。',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': '容器會留在 Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} 使用 {engine} 搜尋：在設定中選擇它，即可在這裡也用它搜尋',
@@ -59,38 +52,29 @@ export const zhHantHK: Dictionary = {
   'Reading List': '閱讀列表',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS 將 Safari 的分頁和書籤放在「完全磁碟取用權限」之後。請在那裡開啟 Orden，然後再試一次。',
-  // Settings: note types
   'Page note': '分頁筆記',
   'Web note': '網頁筆記',
   'Private tab': '私密分頁',
   'Note types': '筆記類型',
-  // Tasks: Upcoming's weeks
   'Previous week': '上一星期',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': '在上方新增項目',
   'Add project below': '在下方新增項目',
   'Projects folder': '項目資料夾',
-  // Tasks: a repeating task skipped or done for good
   Skip: '跳過',
   'Complete forever': '永久完成',
-  // Tasks: comments
   Comments: '留言',
-  // Tasks: filters
   Filters: '篩選器',
   'Add filter': '新增篩選器',
   'Edit filter': '編輯篩選器',
-  // Tasks: a project's sections
   'Add section': '新增分區',
   '{name} (copy)': '{name}（副本）',
   'Its tasks are deleted with it.': '其中的任務會一併刪除。',
-  // Tasks: keys, selection and the undo toast
   Completed: '已完成',
   'Remove date': '移除日期',
   'Next task': '下一個任務',
   'Previous task': '上一個任務',
   'Add task at the top': '在頂部新增任務',
   '{count} selected': '已選 {count} 項',
-  // Tasks: the Display menu
   Display: '顯示',
   'Completed tasks': '已完成任務',
   Smart: '智能',
@@ -102,20 +86,16 @@ export const zhHantHK: Dictionary = {
   'Reset all': '全部重設',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     '版面將工作顯示為清單、看板或日曆。分組將工作分成若干組，即看板的欄。排序為每一組排好次序。篩選會隱藏你不需要的內容。所有設定都會為此檢視保留。',
-  // Tasks: several lines pasted into quick add
   'One task': '一個任務',
   'One per line': '每行一個',
   'Add with AI': '用 AI 新增',
-  // Tasks: the projects in the panel
   Favorites: '我的最愛',
   'Add project': '新增專案',
   'Add sub-project': '新增子專案',
-  // Tasks: the task view
   'Sub-tasks': '子任務',
   'Add sub-task': '新增子任務',
   'New label': '新標籤',
   'No deadline': '沒有截止日期',
-  // Tasks: the row's menu and the scheduler
   Reschedule: '重新安排',
   'Later this week': '本星期稍後',
   'This weekend': '這個週末',
@@ -132,22 +112,18 @@ export const zhHantHK: Dictionary = {
   Reopen: '重新開啟',
   Schedule: '安排',
   'Open in note': '在筆記中開啟',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': '其他 App',
   'Import from Obsidian': '從 Obsidian 匯入',
   'Import from Notion': '從 Notion 匯入',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: '提示',
   'Silent mode': '安靜模式',
   'See how your notes connect.': '查看你的筆記如何互相連結。',
   'Press {key} to find anything, notes and commands alike.':
     '按 {key} 尋找任何內容,筆記和指令皆可。',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': '書寫時顯示 Markdown',
   'Open notes in source mode': '以源代碼模式開啟筆記',
   Pointer: '指標',
   'Pointing hand on buttons': '按鈕上顯示手形指標',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': '新增任務',
   'Apple Shortcuts': 'Apple 捷徑',
   Tomorrow: '明天',
@@ -173,7 +149,6 @@ export const zhHantHK: Dictionary = {
   'Every week': '每星期',
   'Every month': '每月',
   'Every year': '每年',
-  // Files and notes
   Save: '儲存',
   'New note': '新增筆記',
   'Random note': '隨機筆記',
@@ -201,8 +176,6 @@ export const zhHantHK: Dictionary = {
   'Release to add a page': '放手加一頁',
   'Page {number}': '第 {number} 頁',
   'The paper could not be read': '無法讀取紙張',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: '信紙',
   'Long page': '長頁',
@@ -245,7 +218,6 @@ export const zhHantHK: Dictionary = {
   'Choose a picture': '選擇圖片',
   'Remove picture': '移除圖片',
   'That picture could not be read.': '無法讀取該圖片。',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: '飽和度',
   Tint: '色調',
   'Tint colour': '色調顏色',
@@ -373,7 +345,6 @@ export const zhHantHK: Dictionary = {
   'Merge into…': '合併到…',
   'Split at caret': '在光標處拆分',
   'Extract selection': '提取所選內容',
-  // Panels and navigation
   Bookmarks: '書籤',
   'New group': '新增分組',
   'Remove group': '移除分組',
@@ -427,8 +398,6 @@ export const zhHantHK: Dictionary = {
   'Sort by name': '按名稱排序',
   'Sort by modified': '按修改時間排序',
   'Sort by created': '按建立時間排序',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': '檔案排列次序',
   'Name, A to Z': '名稱，A 至 Z',
   'Name, Z to A': '名稱，Z 至 A',
@@ -439,7 +408,6 @@ export const zhHantHK: Dictionary = {
   Manual: '手動排列',
   'Show hidden files': '顯示隱藏檔案',
   'Hide hidden files': '不顯示隱藏檔案',
-  // Writing
   Bold: '粗體',
   Italic: '斜體',
   Strikethrough: '刪除線',
@@ -524,11 +492,9 @@ export const zhHantHK: Dictionary = {
   'Horizontal rule': '分隔線',
   'Page break': '分頁符',
   'Tidy up this note': '整理此筆記',
-  // PDFs
   'Copy a link': '複製連結',
   'That PDF could not be opened': '無法開啟該PDF',
   'That file could not be read': '無法讀取該檔案',
-  // Modes and view
   Reading: '閱讀',
   'Leave reading': '離開閱讀',
   Present: '演示',
@@ -568,7 +534,6 @@ export const zhHantHK: Dictionary = {
   'Zoom in': '放大',
   'Zoom out': '縮小',
   'Actual size': '實際大小',
-  // Appearance
   Accent: '強調色',
   'Tidy up': '整理',
   'Blur the app behind the tab overview': '在分頁總覽後模糊應用程式',
@@ -692,7 +657,6 @@ export const zhHantHK: Dictionary = {
   'Switch theme': '切換主題',
   Style: '樣式',
   Mode: '模式',
-  // The window's own edges; see appearance.rs
   Window: '視窗',
   'Orden’s own': 'Orden 自己的',
   'The system’s': '系統的',
@@ -703,7 +667,6 @@ export const zhHantHK: Dictionary = {
   'Edit custom CSS': '編輯自定義CSS',
   'Edit snippets': '編輯代碼片段',
   'Reload themes and custom CSS': '重新載入主題和自定義CSS',
-  // The theme store, and the sample note its cards show
   Themes: '主題',
   Browse: '瀏覽',
   'Search themes': '搜尋主題',
@@ -779,7 +742,6 @@ export const zhHantHK: Dictionary = {
   'Code only': '僅代碼',
   Everywhere: '所有位置',
   Attachments: '附件',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': '分頁筆記',
   'New pages': '新增頁面',
   'Assets folder of the space': '空間的附件檔案夾',
@@ -831,7 +793,6 @@ export const zhHantHK: Dictionary = {
   'Machine-translated. Corrections welcome.': '機器翻譯，歡迎指正。',
   'The glasses show English.': '眼鏡顯示英文。',
   'Match the app': '跟隨應用程式',
-  // Settings
   Settings: '設定',
   Account: '帳戶',
   Publish: '發佈',
@@ -854,7 +815,6 @@ export const zhHantHK: Dictionary = {
   '{count} spaces sync to your account.': '有{count}個空間會同步到你的帳戶。',
   Update: '更新',
   'Live at': '網址',
-  // Publishing
   'Publish {name}': '發佈{name}',
   'What to publish': '發佈的範圍',
   'The whole space': '整個空間',
@@ -873,7 +833,6 @@ export const zhHantHK: Dictionary = {
   Value: '值',
   available: '可用',
   'checking…': '檢查中…',
-  // LLM
   'Connect an LLM to your notes': '將LLM連接到你的筆記',
   'Sign in first - the connector reaches the notes in your account.':
     '請先登入，連接器讀取的是你帳戶中的筆記。',
@@ -921,7 +880,6 @@ export const zhHantHK: Dictionary = {
   'For a client that takes a JSON block instead of a URL.': '適用於接受JSON設定而非網址的客戶端。',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     '無法登入的客戶端可以改用令牌。令牌只顯示一次。',
-  // Export
   'Plain text': '純文字',
   'Markdown with the pictures': '含圖片的Markdown',
   'HTML without styles': '不含樣式的HTML',
@@ -940,13 +898,11 @@ export const zhHantHK: Dictionary = {
   Margin: '邊距',
   Header: '頁眉',
   Footer: '頁腳',
-  // History
   'Version history': '版本歷史',
   'Copy link to this note': '複製此筆記的連結',
   'that link could not be followed': '無法開啟該連結',
   'No earlier versions yet.': '還沒有更早的版本。',
   'Restore this version': '還原此版本',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': '那裏已經有一篇筆記',
   'enter a valid email address': '請輸入有效的電郵地址',
   'give the space a name': '請為空間取個名稱',
@@ -977,7 +933,6 @@ export const zhHantHK: Dictionary = {
   'could not publish': '無法發佈',
   'could not create a token': '無法建立令牌',
   'that did not work': '沒有成功',
-  // Settings on a phone, display names, one blog address
   Back: '返回',
   'Display name': '顯示名稱',
   'Your name': '你的名字',
@@ -997,7 +952,6 @@ export const zhHantHK: Dictionary = {
   Spelling: '拼寫',
   Checking: '檢查',
   Dictionary: '詞典',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': '正在等待記錄生效。',
   'Certificate issued.': '證書已簽發。',
   'Cloudflare could not set this domain up.': 'Cloudflare無法設定此域名。',
@@ -1008,7 +962,6 @@ export const zhHantHK: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare已封鎖此域名',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     '若服務商不允許在域名根層使用CNAME，請改用ALIAS或ANAME記錄，或CNAME攤平。',
-  // Shortcuts
   Shortcuts: '快捷鍵',
   'Search shortcuts': '搜尋快捷鍵',
   'Second key': '第二個鍵',
@@ -1167,7 +1120,6 @@ export const zhHantHK: Dictionary = {
   Delegated: '已委派',
   'Code theme: {name}': '代碼主題：{name}',
   'Delete a layout': '刪除佈局',
-  // Keyboards and modal editing
   Default: '預設',
   'Vim keys': 'Vim按鍵',
   'Follow the link': '開啟連結',
@@ -1179,11 +1131,9 @@ export const zhHantHK: Dictionary = {
   INSERT: '插入',
   VISUAL: '視覺',
   REPLACE: '替換',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': '眼鏡第{page}/{count}頁',
   'Reaching the glasses': '正在連上眼鏡',
   'The glasses are not keeping up': '眼鏡跟不上',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: '新增',
   Select: '選取',
   Pan: '平移',
@@ -1213,7 +1163,6 @@ export const zhHantHK: Dictionary = {
   Calligraphy: '書法筆',
   'Width {number}': '粗細{number}',
   'Finger draws': '手指繪製',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: '粗細',
   Opacity: '不透明度',
   Colour: '顏色',
@@ -1257,23 +1206,19 @@ export const zhHantHK: Dictionary = {
   'Export as PNG': '匯出為PNG',
   'Export as SVG': '匯出為SVG',
   'Export as PDF': '匯出為PDF',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': '匯入 PDF',
   'Choose how to add the pages to the canvas.': '選擇頁面怎樣加到畫布上。',
   'Single page': '單頁',
   'All pages': '所有頁面',
   'Choose a page': '選擇一頁',
-  // The canvas: what its own keys are called
   'Delete what is picked': '刪除所選範圍',
   'Nudge left': '向左微移',
   'Nudge right': '向右微移',
   'Nudge up': '向上微移',
   'Nudge down': '向下微移',
-  // Writing in a note on several devices at once
   'Also open elsewhere': '也在別處開啟',
   Shared: '已分享',
   Browser: '瀏覽器',
-  // Sharing a space with other people
   Share: '分享',
   'Share {name}': '分享{name}',
   'Share this space': '分享此空間',
@@ -1317,14 +1262,12 @@ export const zhHantHK: Dictionary = {
   'Shared with you': '與你分享',
   'That link does not open anything': '該連結打不開任何東西',
   'Ask for another one.': '請索取新的一個。',
-  // Somebody a share link let in, who has no account
   Guest: '訪客',
   'Ask to join': '申請加入',
   Asking: '申請中',
   'Waiting for {who}': '等待{who}',
   '{who} did not let you in': '{who}沒有讓你加入',
   'What the others in this space see.': '此空間裏其他人看到的內容。',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: '更新',
   'Release channel': '發佈通道',
   Stable: '穩定版',
@@ -1334,8 +1277,6 @@ export const zhHantHK: Dictionary = {
   'Web version': '網頁版',
   'Stable is the released web app; Unstable is the newest build and can break.':
     '穩定版是已發佈的網頁版，開發版是最新的建置，可能會壞掉。',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: '匯入',
   'Convert syntax': '轉換語法',
   'In this note': '在此筆記中',
@@ -1418,8 +1359,6 @@ export const zhHantHK: Dictionary = {
   'Undo the import': '復原這次匯入',
   'Choose an export': '選擇匯出檔',
   Under: '位於',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: '同步',
   'When the same note was written twice': '同一篇筆記被寫了兩次時',
   'On two devices': '在兩部裝置上',
@@ -1475,7 +1414,6 @@ export const zhHantHK: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     '此裝置上的筆記會保留；只有帳戶及其已同步的副本會被刪除。',
   'Also gone for everyone in {spaces}.': '{spaces} 中的所有人亦會失去它。',
-  // Said and not shown: what a reader is told about a surface
   'The note': '筆記',
   '{space} panel': '{space}面板',
   'Panel width': '面板寬度',
@@ -1486,7 +1424,6 @@ export const zhHantHK: Dictionary = {
   'What is selected': '所選內容',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     '畫布：{cards}張卡片、{links}條連線、{drawings}處繪製',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: '服務商',
   'Make default': '設為預設',
@@ -1512,7 +1449,6 @@ export const zhHantHK: Dictionary = {
   'Add an AI provider in Settings first.': '請先在設定中新增AI服務商。',
   'The model did not answer.': '模型沒有回答。',
   'The connection closed before the answer was finished.': '回答完成前連線已關閉。',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': '你的 {plan} 計劃已達上限，{time} 恢復。',
   'Your {plan} plan is at its limit for now.': '你的 {plan} 計劃目前已達上限。',
   'Your {plan} plan is near its limit.': '你的 {plan} 計劃即將達到上限。',
@@ -1538,7 +1474,6 @@ export const zhHantHK: Dictionary = {
   Shorter: '更短',
   Longer: '更長',
   'Fix grammar': '修正語法',
-  // The AI sidebar's commands
   'A cited report': '附引報告',
   'A helper in the background': '背景幫手',
   'A side question': '附帶問題',
@@ -1640,7 +1575,6 @@ export const zhHantHK: Dictionary = {
   'Markdown, shortest name': 'Markdown，最短名稱',
   'Markdown, relative path': 'Markdown，相對路徑',
   'Markdown, path in the space': 'Markdown，空間內路徑',
-  // Publishing part one.
   'The folders you choose become public.': '揀咗嘅資料夾會公開。',
   'Anyone with the address can read what is published, drafts included.':
     '知道網址嘅任何人都讀得到已發佈嘅內容，包括草稿。',
@@ -1666,11 +1600,9 @@ export const zhHantHK: Dictionary = {
   'Remove the password': '移除密碼',
   'Scan this with your authenticator app, then type its code.':
     '用驗證器應用程式掃描此碼，然後輸入佢給出嘅驗證碼。',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: '相片',
   Dictate: '語音輸入',
   'Add to {name}': '加入 {name}',
-  // Web tabs
   Reload: '重新載入',
   'Hard reload': '強制重新載入',
   'Open in the browser': '在瀏覽器開啟',
@@ -1685,7 +1617,6 @@ export const zhHantHK: Dictionary = {
   'Playing audio': '正在播放音訊',
   Muted: '已靜音',
   'Developer tools': '開發人員工具',
-  // Recording, meetings and what a model wrote
   Record: '錄音',
   Recording: '錄音',
   'Stop recording': '停止錄音',
@@ -1705,7 +1636,6 @@ export const zhHantHK: Dictionary = {
   'That recording is too long to turn into words in one go.': '嗰段錄音太長，一次轉唔成文字。',
   'That is as much as one recording may hold.': '一段錄音最多就得咁多。',
   'Nothing could be heard in that recording.': '嗰段錄音聽唔到任何聲音。',
-  // Publishing part two.
   Spreadsheet: '電子表格',
   'The app’s own': '應用自帶嘅',
   'publish.css and publish.js in this space dress the site.':
@@ -1721,14 +1651,12 @@ export const zhHantHK: Dictionary = {
   'Save as CSV': '存為 CSV',
   'Kept for {days}': '保留{days}',
   Full: '已滿',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': '無法發出郵件，請再試一次',
   'start again - that took too long': '花太久了，請重新開始',
   'sign in to do that': '請登入後再做這件事',
   'that is not something a token can do': '令牌無法做這件事',
   'something went wrong here - try again': '這裏出了問題，請再試一次',
   'this service cannot keep a secret safely': '此服務無法安全保存密鑰',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only': '只接受圖片、PDF 同網站自己嘅 css 或 js',
   'that file is too big': '該檔案太大',
   'that is more settings than an account holds': '設定項超過帳戶上限',
@@ -1738,13 +1666,11 @@ export const zhHantHK: Dictionary = {
   'that is more than a space keeps about its graph': '關係圖數據超過空間上限',
   'that is more folder icons than a space holds': '檔案夾圖標數超過空間上限',
   'that is more than a site keeps': '超出咗一個網站可以保存嘅數量',
-  // Sharing a space, and being let into one.
   'nobody by that address': '沒有用這個地址的人',
   'nobody by that name': '沒有叫這個名字的人',
   'nobody is waiting by that name': '沒有叫這個名字的人在等待',
   'this space is yours': '此空間是你的',
   'that link is busy, try again in a minute': '該連結正忙，請過一分鐘再試',
-  // Versions, the bin, and a room two people write in.
   'no such version': '沒有該版本',
   'this note was shared with you, not its folder': '與你分享的是此筆記，不是它所在的檔案夾',
   'nothing to restore': '沒有可還原的東西',
@@ -1752,7 +1678,6 @@ export const zhHantHK: Dictionary = {
   'nothing to delete': '沒有可刪除的東西',
   'this room is not answering - try again': '此房間沒有回應，請再試一次',
   'rooms are not running here': '這裏沒有啟用房間',
-  // The theme store, and asking a model something.
   'the theme store is not answering': '主題商店沒有回應',
   'that is not a theme': '這不是主題',
   'no such theme': '沒有該主題',
@@ -1764,10 +1689,8 @@ export const zhHantHK: Dictionary = {
   'that is more than a spoken command': '這超過一句語音命令的長度',
   'that is a lot of listening - try again later': '聽得太頻密了，請稍後再試',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '文字 {percent}%',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: '手機',
   'The bar sits over the keyboard on a phone.': '在手機上，工具列位於鍵盤上方。',
   'On the bar': '在列上',
@@ -1781,31 +1704,25 @@ export const zhHantHK: Dictionary = {
   'A pull past the top runs': '從頂端再下拉則執行',
   Nothing: '無',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: '保留',
 
-  // Which side of the window a panel sits on.
   'Move to the right': '移到右邊',
   'Move to the left': '移到左邊',
 
-  // How long the account keeps what a note said before.
   'History on the account': '帳戶上的歷史',
   'Keep versions': '保留版本',
   'A month': '一個月',
   'A year': '一年',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     '最近一天的全部，之後每小時一個，一個月後每天一個，三個月後每週一個。',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     '這則筆記已達到房間中筆記可以達到的最大大小。',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': '新分頁',
   'Full screen': '全螢幕',
   'Print…': '打印…',
   'Share…': '分享…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': '要求以下權限',
   'Don’t allow': '不允許',
   Allow: '允許',
@@ -1821,7 +1738,6 @@ export const zhHantHK: Dictionary = {
   'Use your MIDI devices': '使用您的 MIDI 裝置',
   'Manage windows on all your displays': '在您所有的顯示屏上管理視窗',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': '網站資料',
   Downloads: '下載',
   'Downloading {name}': '正在下載 {name}',
@@ -1848,11 +1764,9 @@ export const zhHantHK: Dictionary = {
   'Turn into': '轉換為',
   Foldable: '可摺疊',
   'Starts folded': '預設摺疊',
-  // Where a space keeps what websites store
   'Web data': '網站數據',
   Global: '全域',
   Site: '網站',
-  // The Mac's menu bar
   'About {name}': '關於{name}',
   Services: '服務',
   'Hide {name}': '隱藏{name}',
@@ -1860,7 +1774,6 @@ export const zhHantHK: Dictionary = {
   'Show all': '顯示全部',
   'Quit {name}': '結束{name}',
   'Bring all to front': '全部移至最前',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': '復原複製',
   'Devices with your AI vault': '擁有你 AI 保險庫的裝置',
   'This device': '此裝置',
@@ -1875,13 +1788,11 @@ export const zhHantHK: Dictionary = {
   'Select down': '向下選取',
   'Select up': '向上選取',
   'Select or deselect': '選取或取消選取',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': '在新分頁中開啟',
   'Open to the side': '在側邊開啟',
   'Open all': '全部開啟',
   'Show in the file list': '在檔案列表中顯示',
   'Collapse the file list': '收合檔案列表',
-  // Lines, case and the selection a step at a time
   'Expand the selection': '擴大選取範圍',
   'Shrink the selection': '縮小選取範圍',
   'Insert a line above': '在上方插入一行',
@@ -1895,18 +1806,15 @@ export const zhHantHK: Dictionary = {
   'Duplicate the block': '複製此區塊',
   'Move the block up': '此區塊上移',
   'Move the block down': '此區塊下移',
-  // The editor's menu on a link and a picture
   'Copy link address': '複製連結地址',
   'Edit link': '編輯連結',
   'Remove link': '移除連結',
   'Copy picture': '複製圖片',
   'Open picture': '開啟圖片',
   'Delete picture': '刪除圖片',
-  // A file dropped into a note
   'Storing the file': '正在儲存檔案',
   'That file is larger than a note can keep.': '此檔案超過筆記可保存的大小。',
   'That file could not be kept.': '無法保存此檔案。',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': '新增終端機',
   'Command Prompt': '命令提示字元',
   Terminal: '終端機',
@@ -1928,11 +1836,8 @@ export const zhHantHK: Dictionary = {
   'Saved nowhere, a session kept running is found again in Settings, {pane}.':
     '未儲存在任何地方；保持運行的工作階段可在「設定」的「{pane}」中再次找到。',
   'Paste {count} lines?': '要貼上 {count} 行嗎？',
-  // Orden as the default browser
   'Default browser': '預設瀏覽器',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': '還原 {name} 的編輯',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: '封存',
   Unarchive: '取消封存',
   Archived: '已封存',
@@ -1942,7 +1847,6 @@ export const zhHantHK: Dictionary = {
   'Nothing archived is deleted': '已封存的內容不會被刪除',
   'Show them': '顯示',
   '{count} archived items inside': '其中有 {count} 個已封存項目',
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': '左側邊欄',
   'Right sidebar': '右側邊欄',
   'Ask about this space': '就此空間提問',
@@ -1953,7 +1857,6 @@ export const zhHantHK: Dictionary = {
   'Ask again': '再問一次',
   'Continue when the limit resets': '上限恢復後繼續',
   'Continues at {time}': '{time} 繼續',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': '隨意發問，@ 加入，/ 更多',
   'What can I help with?': '有甚麼可以幫忙？',
   'Add photos and files': '加入相片和檔案',
@@ -2021,12 +1924,9 @@ export const zhHantHK: Dictionary = {
   Closed: '已關閉',
   Ran: '已執行',
   Changed: '已更改',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': '這部{device}',
   '{name} is back: {device} was writing in it': '{name} 已恢復：{device} 正在其中寫作',
   'Changes to {name} are not syncing': '{name} 的更改未有同步',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: '開啟',
   Pressing: '按下',
   Typing: '輸入',
@@ -2041,16 +1941,12 @@ export const zhHantHK: Dictionary = {
   'Agent tabs closed': '已關閉代理分頁',
   'Orden is still running for your agents': 'Orden 仍在為你的代理運作',
   '{client} wants to connect': '{client} 想連線',
-  // Web logins that travel, and the devices of an account
   'no such device': '沒有這部裝置',
   'give the device a name': '請為裝置命名',
   'that computer is no longer waiting': '那部電腦已不再等候',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': '沒有這個檔案',
   'too many changes at once - try again in a minute': '一次變更過多，請一分鐘後再試',
   'that is more than a space keeps about its tree': '超出了空間能為其目錄樹保存的內容',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': '這部電腦上的代理',
   'Your account’s connector': '你帳戶的連接器',
   'Orden asks you once, the first time it connects.': '首次連線時，Orden 會問你一次。',
@@ -2115,12 +2011,9 @@ export const zhHantHK: Dictionary = {
   'Pages a minute': '每分鐘頁面數',
   'Browser memory limit': '瀏覽器記憶體上限',
   '{count} calls': '{count} 次呼叫',
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': '快速提問',
   Scratchpad: 'Scratchpad',
   'Add to note': '加入筆記',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: '擴充功能',
   'Add extension': '新增擴充功能',
   'Manage extensions': '管理擴充功能',
@@ -2139,7 +2032,6 @@ export const zhHantHK: Dictionary = {
   'Did not load': '未能載入',
   Permissions: '權限',
   Options: '選項',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: '遠端',
   'Add host': '新增主機',
   Reconnect: '重新連線',
@@ -2147,11 +2039,8 @@ export const zhHantHK: Dictionary = {
   'No group': '無群組',
   'Not an address': '不是位址',
   'Could not connect to {host}': '無法連線到 {host}',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': '正在傳送圖片',
   'Could not send the image': '無法傳送圖片',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': '以及之後的 {count} 處',
   'Restore notes and conversation': '還原筆記和對話',
   'Restore conversation': '還原對話',
@@ -2161,8 +2050,6 @@ export const zhHantHK: Dictionary = {
   'Pages, terminals and moves are not undone': '網頁、終端機和移動不會復原',
   Rewind: '倒帶',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': '搜尋引擎',
   History: '記錄',
   'Search history': '搜尋記錄',
@@ -2186,14 +2073,12 @@ export const zhHantHK: Dictionary = {
   'New private tab': '新增私密分頁',
   'All spaces': '所有空間',
   'the data could not be deleted': '無法刪除資料',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: '稍後提醒',
   Reminders: '提醒',
   'Reminders ring while Orden is open': '提醒僅在 Orden 開啟時響起',
   Automatic: '自動',
   'Stay in the tray': '保留在系統匣',
   'Exact alarms': '精確鬧鐘',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': '待辦',
   'Plan my day': '規劃我的一天',
   'Add a task': '新增任務',
@@ -2204,8 +2089,6 @@ export const zhHantHK: Dictionary = {
   'Done tasks too': '包括已完成的任務',
   'As a task': '作為任務',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: '任務',
   Ascending: '遞增',
   Descending: '遞減',
@@ -2290,8 +2173,6 @@ export const zhHantHK: Dictionary = {
   'Without a value': '沒有值',
   'With a value': '有值',
   Unique: '獨一',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': '從範本新增筆記',
   Automations: '自動化',
   'Row added': '已新增列',
@@ -2320,7 +2201,6 @@ export const zhHantHK: Dictionary = {
   Form: '表單',
   Formula: '公式',
   'Blocked by {task}': '被 {task} 阻擋',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': '結束前提醒',
   'When something runs': '有程式運行時',
   'Quit {name}?': '結束{name}？',
@@ -2331,16 +2211,13 @@ export const zhHantHK: Dictionary = {
   'Quit anyway': '仍要結束',
   'Restart anyway': '仍要重新啟動',
   'Close anyway': '仍要關閉',
-  // The online terminal
   'Online terminal': '網上終端機',
   'New online terminal': '新增網上終端機',
-  // One device at a time on an online terminal (issue 1055)
   'another device': '另一部裝置',
   'Taken over by {device}': '已被 {device} 接管',
   'Open on {device} since {time}': '自 {time} 起在 {device} 上開啟',
   'Take over': '接管',
   'Take back': '取回',
-  // Applications, in developer mode (docs/apps.md)
   'New application': '新增應用程式',
   Application: '應用程式',
   'This application’s file is damaged': '此應用程式的檔案已損壞',
@@ -2443,8 +2320,6 @@ export const zhHantHK: Dictionary = {
   'Compare with original': '與原檔案比較',
   'Conflict copies from other apps': '其他 App 的衝突副本',
   'Remove from sync': '移出同步',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: '個人檔案',
   Change: '更改',
   'Take photo': '拍照',
@@ -2469,7 +2344,6 @@ export const zhHantHK: Dictionary = {
   'that picture could not be opened': '無法開啟該圖片',
   'the camera could not be opened': '無法開啟相機',
   'that picture is too big': '該圖片太大',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: '對話',
   Reply: '回覆',
   Replies: '回覆',
@@ -2488,7 +2362,6 @@ export const zhHantHK: Dictionary = {
   'Also send to {chat}': '同時傳送到 {chat}',
   'Skin tone': '膚色',
   'Deleted account': '已刪除的帳戶',
-  // Chats: notifications
   Mute: '靜音',
   Unmute: '取消靜音',
   'New message': '新訊息',
@@ -2498,7 +2371,6 @@ export const zhHantHK: Dictionary = {
   Weekdays: '平日',
   Starts: '開始',
   Ends: '結束',
-  // Chats: everywhere
   'Read chats': '讀取聊天',
   'Post in chats': '在聊天中發言',
   'Always in this chat': '在此聊天中一律允許',
@@ -2510,14 +2382,12 @@ export const zhHantHK: Dictionary = {
   'Search this chat': '在此聊天中搜尋',
   'Add as task': '新增為任務',
   'Save as note': '儲存為筆記',
-  // Appearance: glass's own pairs of colours
   Dawn: '黎明',
   Lagoon: '潟湖',
   Lilac: '丁香',
   Peach: '蜜桃',
   Sage: '鼠尾草',
   Mist: '薄霧',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': '新增資料庫',
   'New page': '新增頁面',
   'Not started': '未開始',
@@ -2543,7 +2413,6 @@ export const zhHantHK: Dictionary = {
   Large: '大',
   Both: '兩者',
   'Shown on cards': '在卡片上顯示',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     '透過保險庫將此瀏覽器的 AI 密鑰與你的其他裝置同步。',
   'Which of your AI accounts this feature asks.': '此功能向你的哪個 AI 帳戶提問。',
@@ -2761,7 +2630,6 @@ export const zhHantHK: Dictionary = {
   'Some changes may not be noticed': '部分更改可能不會被察覺',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     '系統監察資料夾的數量已達上限，因此 Orden 可能無法察覺其他程式對你空間所作的每處更改。調高 fs.inotify.max_user_watches 即可解決。',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': '將對話 {name} 移到 {space}？',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     '之後 {space} 中的所有人都能閱讀全部紀錄，{from} 中的人將失去它。',
@@ -2798,7 +2666,6 @@ export const zhHantHK: Dictionary = {
   'One colour': '單色',
   'Web icons': '網站圖示',
   'Sites you visit will appear here': '你瀏覽過的網站會在這裡顯示',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: '聽寫',
   'Dictate with': '聽寫方式',
   'Where your voice goes to be turned into words.': '你的聲音會被送往何處以轉換成文字。',
@@ -2827,11 +2694,9 @@ export const zhHantHK: Dictionary = {
     '音訊傳送到這部裝置的語音辨識，可能會使用其製造商的伺服器',
   'Not on this device': '不在此裝置上',
   'Not on this device. It opens once you are online again.': '不在此裝置上。重新連線後即可開啟。',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'IMAP 伺服器',
   'SMTP server': 'SMTP 伺服器',
   'User name': '用戶名稱',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: '緊急',
   Important: '重要',
   'If time': '有空再看',

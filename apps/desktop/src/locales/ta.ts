@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ta: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'எல்லாம் தயார்',
   Personalize: 'தனிப்பயனாக்கு',
   Clean: 'சுத்தம்',
@@ -10,13 +9,11 @@ export const ta: Dictionary = {
   'Do you write code?': 'நீங்கள் குறியீடு எழுதுவீர்களா?',
   Yes: 'ஆம்',
   No: 'இல்லை',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'பிற ஆப்களிலிருந்து: {key}',
   'From other apps: set in your system settings':
     'பிற ஆப்களிலிருந்து: சிஸ்டம் அமைப்புகளில் அமைக்கவும்',
   'From other apps: bind {command} in your system settings':
     'பிற ஆப்களிலிருந்து: சிஸ்டம் அமைப்புகளில் {command} ஐ இணைக்கவும்',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'அத்தியாவசியங்கள்',
   'Add to Essentials': 'அத்தியாவசியங்களில் சேர்',
   'Remove from Essentials': 'அத்தியாவசியங்களிலிருந்து அகற்று',
@@ -24,20 +21,16 @@ export const ta: Dictionary = {
   'Add blocks to Essentials': 'தொகுதிகளை அத்தியாவசியங்களில் சேர்',
   'Add view to Essentials': 'காட்சியை அத்தியாவசியங்களில் சேர்',
   'Open tabs and Essentials': 'தாவல்களையும் அத்தியாவசியங்களையும் திறத்தல்',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor இப்போது Orden',
   'Notes from nibeditor.com': 'nibeditor.com இலிருந்து குறிப்புகள்',
   'Nothing there': 'அங்கே எதுவும் இல்லை',
-  // AI: the three permission modes
   'Full permissions': 'முழு அனுமதிகள்',
   'Auto mode': 'தானியங்கு பயன்முறை',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'முழு அனுமதிகள்: எதுவும் கேட்கப்படாது அல்லது உங்களிடம் திருப்பித் தரப்படாது, உள்நுழைவு, பணம் செலுத்துதல், அனுப்புதல், நீக்குதல் கூட',
-  // Import: Zen's tabs
   'Import from Zen': 'Zen-இலிருந்து இறக்குமதி செய்',
   'Containers stay in Zen': 'கண்டெய்னர்கள் Zen-இலேயே இருக்கும்',
   'Zen’s tabs could not be read.': 'Zen தாவல்களைப் படிக்க முடியவில்லை.',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'கண்டெய்னர்கள் Firefox-இலேயே இருக்கும்',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} மூலம் தேடுகிறது: இங்கேயும் அதைக் கொண்டு தேட அமைப்புகளில் அதைத் தேர்வுசெய்யவும்',
@@ -63,38 +56,29 @@ export const ta: Dictionary = {
   'Reading List': 'படிக்கும் பட்டியல்',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS Safari-இன் தாவல்களையும் புத்தகக்குறிகளையும் முழு வட்டு அணுகலுக்குப் பின்னால் வைத்திருக்கிறது. அங்கே Orden-ஐ இயக்கி, மீண்டும் கேளுங்கள்.',
-  // Settings: note types
   'Page note': 'பக்கக் குறிப்பு',
   'Web note': 'இணையக் குறிப்பு',
   'Private tab': 'தனிப்பட்ட தாவல்',
   'Note types': 'குறிப்பு வகைகள்',
-  // Tasks: Upcoming's weeks
   'Previous week': 'முந்தைய வாரம்',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'மேலே திட்டத்தைச் சேர்',
   'Add project below': 'கீழே திட்டத்தைச் சேர்',
   'Projects folder': 'திட்டங்கள் கோப்புறை',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'தவிர்',
   'Complete forever': 'நிரந்தரமாக முடி',
-  // Tasks: comments
   Comments: 'கருத்துகள்',
-  // Tasks: filters
   Filters: 'வடிகட்டிகள்',
   'Add filter': 'வடிகட்டியைச் சேர்',
   'Edit filter': 'வடிகட்டியைத் திருத்து',
-  // Tasks: a project's sections
   'Add section': 'பகுதியைச் சேர்',
   '{name} (copy)': '{name} (நகல்)',
   'Its tasks are deleted with it.': 'அதன் பணிகளும் சேர்ந்து நீக்கப்படும்.',
-  // Tasks: keys, selection and the undo toast
   Completed: 'முடிந்தது',
   'Remove date': 'தேதியை நீக்கு',
   'Next task': 'அடுத்த பணி',
   'Previous task': 'முந்தைய பணி',
   'Add task at the top': 'மேலே பணியைச் சேர்',
   '{count} selected': '{count} தேர்ந்தெடுக்கப்பட்டன',
-  // Tasks: the Display menu
   Display: 'காட்சி',
   'Completed tasks': 'முடிந்த பணிகள்',
   Smart: 'ஸ்மார்ட்',
@@ -106,20 +90,16 @@ export const ta: Dictionary = {
   'Reset all': 'அனைத்தையும் மீட்டமை',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'தளவமைப்பு பணிகளைப் பட்டியல், பலகை அல்லது நாட்காட்டியாகக் காட்டும். குழுவாக்கம் அவற்றைக் குழுக்களாகப் பிரிக்கும்; அவையே பலகையின் நெடுவரிசைகள். வரிசைப்படுத்தல் ஒவ்வொரு குழுவையும் ஒழுங்குபடுத்தும். வடிப்பான்கள் உங்களுக்குத் தேவையில்லாததை மறைக்கும். இவை அனைத்தும் இந்தக் காட்சிக்காக வைக்கப்படும்.',
-  // Tasks: several lines pasted into quick add
   'One task': 'ஒரு பணி',
   'One per line': 'வரிக்கு ஒன்று',
   'Add with AI': 'AI மூலம் சேர்',
-  // Tasks: the projects in the panel
   Favorites: 'பிடித்தவை',
   'Add project': 'திட்டத்தைச் சேர்',
   'Add sub-project': 'துணைத் திட்டத்தைச் சேர்',
-  // Tasks: the task view
   'Sub-tasks': 'துணைப் பணிகள்',
   'Add sub-task': 'துணைப் பணியைச் சேர்',
   'New label': 'புதிய லேபிள்',
   'No deadline': 'காலக்கெடு இல்லை',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'மீண்டும் திட்டமிடு',
   'Later this week': 'இந்த வாரம் பின்னர்',
   'This weekend': 'இந்த வார இறுதி',
@@ -136,22 +116,18 @@ export const ta: Dictionary = {
   Reopen: 'மீண்டும் திற',
   Schedule: 'திட்டமிடு',
   'Open in note': 'குறிப்பில் திற',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'வேறு ஆப்',
   'Import from Obsidian': 'Obsidian-இலிருந்து இறக்குமதி செய்',
   'Import from Notion': 'Notion-இலிருந்து இறக்குமதி செய்',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'குறிப்புகள்',
   'Silent mode': 'அமைதி பயன்முறை',
   'See how your notes connect.': 'உங்கள் குறிப்புகள் எப்படி இணைந்துள்ளன என்று பாருங்கள்.',
   'Press {key} to find anything, notes and commands alike.':
     'குறிப்புகளும் கட்டளைகளும், எதையும் கண்டுபிடிக்க {key} அழுத்தவும்.',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'எழுதும்போது மார்க்டவுனைக் காட்டு',
   'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'சுட்டி',
   'Pointing hand on buttons': 'பொத்தான்களில் சுட்டும் கை',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'பணியைச் சேர்',
   'Apple Shortcuts': 'Apple ஷார்ட்கட்கள்',
   Tomorrow: 'நாளை',
@@ -177,7 +153,6 @@ export const ta: Dictionary = {
   'Every week': 'ஒவ்வொரு வாரமும்',
   'Every month': 'ஒவ்வொரு மாதமும்',
   'Every year': 'ஒவ்வொரு ஆண்டும்',
-  // Files and notes
   Save: 'சேமி',
   'New note': 'புதிய குறிப்பு',
   'Random note': 'சீரற்ற குறிப்பு',
@@ -205,8 +180,6 @@ export const ta: Dictionary = {
   'Release to add a page': 'பக்கம் சேர்க்க விடுங்கள்',
   'Page {number}': 'பக்கம் {number}',
   'The paper could not be read': 'தாளைப் படிக்க முடியவில்லை',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'லெட்டர்',
   'Long page': 'நீண்ட பக்கம்',
@@ -249,7 +222,6 @@ export const ta: Dictionary = {
   'Choose a picture': 'ஒரு படத்தைத் தேர்வுசெய்',
   'Remove picture': 'படத்தை அகற்று',
   'That picture could not be read.': 'அந்தப் படத்தைப் படிக்க முடியவில்லை.',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'நிறச்செறிவு',
   Tint: 'சாயல்',
   'Tint colour': 'சாயல் நிறம்',
@@ -377,7 +349,6 @@ export const ta: Dictionary = {
   'Merge into…': 'இதனுள் இணை…',
   'Split at caret': 'நிலைக்குறியில் பிரி',
   'Extract selection': 'தேர்வைப் பிரித்தெடு',
-  // Panels and navigation
   Bookmarks: 'புத்தகக்குறிகள்',
   'New group': 'புதிய குழு',
   'Remove group': 'குழுவை அகற்று',
@@ -431,8 +402,6 @@ export const ta: Dictionary = {
   'Sort by name': 'பெயர்ப்படி வரிசைப்படுத்து',
   'Sort by modified': 'மாற்றியபடி வரிசைப்படுத்து',
   'Sort by created': 'உருவாக்கியபடி வரிசைப்படுத்து',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'கோப்புகளின் வரிசை',
   'Name, A to Z': 'பெயர், அ முதல் ன வரை',
   'Name, Z to A': 'பெயர், ன முதல் அ வரை',
@@ -443,7 +412,6 @@ export const ta: Dictionary = {
   Manual: 'கையால்',
   'Show hidden files': 'மறைந்த கோப்புகளைக் காட்டு',
   'Hide hidden files': 'மறைந்த கோப்புகளை மறை',
-  // Writing
   Bold: 'தடிமன்',
   Italic: 'சாய்வு',
   Strikethrough: 'குறுக்குக்கோடு',
@@ -528,11 +496,9 @@ export const ta: Dictionary = {
   'Horizontal rule': 'கிடைக்கோடு',
   'Page break': 'பக்கப் பிரிப்பு',
   'Tidy up this note': 'இந்தக் குறிப்பை ஒழுங்குசெய்',
-  // PDFs
   'Copy a link': 'ஒரு இணைப்பை நகலெடு',
   'That PDF could not be opened': 'அந்த PDF ஐத் திறக்க முடியவில்லை',
   'That file could not be read': 'அந்தக் கோப்பைப் படிக்க முடியவில்லை',
-  // Modes and view
   Reading: 'வாசிப்பு',
   'Leave reading': 'வாசிப்பை விடு',
   Present: 'காட்சியிடு',
@@ -572,7 +538,6 @@ export const ta: Dictionary = {
   'Zoom in': 'பெரிதாக்கு',
   'Zoom out': 'சிறிதாக்கு',
   'Actual size': 'உண்மை அளவு',
-  // Appearance
   Accent: 'சிறப்பு நிறம்',
   'Tidy up': 'ஒழுங்குபடுத்து',
   'Blur the app behind the tab overview': 'தாவல் மேலோட்டத்தின் பின்னால் செயலியை மங்கலாக்கு',
@@ -700,7 +665,6 @@ export const ta: Dictionary = {
   'Switch theme': 'தீம் மாற்று',
   Style: 'பாங்கு',
   Mode: 'நிலை',
-  // The window's own edges; see appearance.rs
   Window: 'சாளரம்',
   'Orden’s own': 'Orden-இன் சொந்தம்',
   'The system’s': 'கணினியின்',
@@ -711,7 +675,6 @@ export const ta: Dictionary = {
   'Edit custom CSS': 'தனிப்பயன் CSS ஐத் திருத்து',
   'Edit snippets': 'துணுக்குகளைத் திருத்து',
   'Reload themes and custom CSS': 'தீம்களையும் தனிப்பயன் CSS ஐயும் மீண்டும் ஏற்று',
-  // The theme store, and the sample note its cards show
   Themes: 'தீம்கள்',
   Browse: 'உலாவு',
   'Search themes': 'தீம்களைத் தேடு',
@@ -791,7 +754,6 @@ export const ta: Dictionary = {
   'Code only': 'குறியீட்டில் மட்டும்',
   Everywhere: 'எல்லா இடத்திலும்',
   Attachments: 'இணைப்புக் கோப்புகள்',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'பக்கக் குறிப்புகள்',
   'New pages': 'புதிய பக்கங்கள்',
   'Assets folder of the space': 'இடத்தின் இணைப்புக் கோப்புறை',
@@ -844,7 +806,6 @@ export const ta: Dictionary = {
     'இயந்திர மொழிபெயர்ப்பு. திருத்தங்கள் வரவேற்கப்படுகின்றன.',
   'The glasses show English.': 'கண்ணாடி ஆங்கிலத்தில் காட்டும்.',
   'Match the app': 'செயலியின்படி',
-  // Settings
   Settings: 'அமைப்புகள்',
   Account: 'கணக்கு',
   Publish: 'வெளியிடு',
@@ -870,7 +831,6 @@ export const ta: Dictionary = {
   },
   Update: 'புதுப்பி',
   'Live at': 'நேரலையில்',
-  // Publishing
   'Publish {name}': '{name} வெளியிடு',
   'What to publish': 'எதை வெளியிடுவது',
   'The whole space': 'முழு இடம்',
@@ -890,7 +850,6 @@ export const ta: Dictionary = {
   Value: 'மதிப்பு',
   available: 'கிடைக்கிறது',
   'checking…': 'சரிபார்க்கிறது…',
-  // LLM
   'Connect an LLM to your notes': 'உங்கள் குறிப்புகளுடன் LLM ஐ இணை',
   'Sign in first - the connector reaches the notes in your account.':
     'முதலில் உள்நுழையவும் - இணைப்பி உங்கள் கணக்கில் உள்ள குறிப்புகளை அணுகும்.',
@@ -943,7 +902,6 @@ export const ta: Dictionary = {
     'URL க்குப் பதிலாக JSON தொகுதியை ஏற்கும் கிளையண்டுக்கு.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'உள்நுழைய முடியாத கிளையண்டுக்கு டோக்கன் தரலாம். அது ஒரே ஒரு முறை மட்டும் காட்டப்படும்.',
-  // Export
   'Plain text': 'வெற்று உரை',
   'Markdown with the pictures': 'படங்களுடன் Markdown',
   'HTML without styles': 'பாணிகள் இல்லாத HTML',
@@ -962,13 +920,11 @@ export const ta: Dictionary = {
   Margin: 'விளிம்பு',
   Header: 'மேற்பகுதி',
   Footer: 'அடிப்பகுதி',
-  // History
   'Version history': 'பதிப்பு வரலாறு',
   'Copy link to this note': 'இந்தக் குறிப்பின் இணைப்பை நகலெடு',
   'that link could not be followed': 'அந்த இணைப்பைப் பின்தொடர முடியவில்லை',
   'No earlier versions yet.': 'இன்னும் பழைய பதிப்புகள் இல்லை.',
   'Restore this version': 'இந்தப் பதிப்பை மீட்டெடு',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'அங்கே ஏற்கெனவே ஒரு குறிப்பு உள்ளது',
   'enter a valid email address': 'சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும்',
   'give the space a name': 'இடத்திற்கு ஒரு பெயர் கொடுக்கவும்',
@@ -1005,7 +961,6 @@ export const ta: Dictionary = {
   'could not publish': 'வெளியிட முடியவில்லை',
   'could not create a token': 'டோக்கனை உருவாக்க முடியவில்லை',
   'that did not work': 'அது வேலை செய்யவில்லை',
-  // Settings on a phone, display names, one blog address
   Back: 'பின்',
   'Display name': 'காட்டும் பெயர்',
   'Your name': 'உங்கள் பெயர்',
@@ -1025,7 +980,6 @@ export const ta: Dictionary = {
   Spelling: 'எழுத்துப்பிழை',
   Checking: 'சரிபார்க்கிறது',
   Dictionary: 'அகராதி',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'பதிவு தோன்றக் காத்திருக்கிறது.',
   'Certificate issued.': 'சான்றிதழ் வழங்கப்பட்டது.',
   'Cloudflare could not set this domain up.': 'இந்த டொமைனை Cloudflare அமைக்க முடியவில்லை.',
@@ -1037,7 +991,6 @@ export const ta: Dictionary = {
   'Cloudflare has blocked this domain': 'இந்த டொமைனை Cloudflare தடுத்துள்ளது',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'டொமைனின் வேரில் உங்கள் வழங்குநர் CNAME ஐ அனுமதிக்கவில்லை எனில், ALIAS அல்லது ANAME பதிவை, அல்லது CNAME flattening ஐப் பயன்படுத்தவும்.',
-  // Shortcuts
   Shortcuts: 'குறுக்குவழிகள்',
   'Search shortcuts': 'குறுக்குவழிகளைத் தேடு',
   'Second key': 'இரண்டாம் விசை',
@@ -1204,7 +1157,6 @@ export const ta: Dictionary = {
   Delegated: 'ஒப்படைத்தது',
   'Code theme: {name}': 'குறியீட்டுத் தீம்: {name}',
   'Delete a layout': 'தளவமைப்பை நீக்கு',
-  // Keyboards and modal editing
   Default: 'இயல்புநிலை',
   'Vim keys': 'Vim விசைகள்',
   'Follow the link': 'இணைப்பைப் பின்தொடர்',
@@ -1216,11 +1168,9 @@ export const ta: Dictionary = {
   INSERT: 'செருகல்',
   VISUAL: 'காட்சி',
   REPLACE: 'மாற்றல்',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'கண்ணாடியில் {count} இல் {page} பக்கம்',
   'Reaching the glasses': 'கண்ணாடியை அணுகுகிறது',
   'The glasses are not keeping up': 'கண்ணாடி ஈடுகொடுக்கவில்லை',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'சேர்',
   Select: 'தேர்ந்தெடு',
   Pan: 'நகர்வு',
@@ -1250,7 +1200,6 @@ export const ta: Dictionary = {
   Calligraphy: 'எழுத்தோவியம்',
   'Width {number}': 'அகலம் {number}',
   'Finger draws': 'விரல் வரையும்',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'அகலம்',
   Opacity: 'ஒளிபுகாமை',
   Colour: 'நிறம்',
@@ -1294,24 +1243,20 @@ export const ta: Dictionary = {
   'Export as PNG': 'PNG ஆக ஏற்றுமதி செய்',
   'Export as SVG': 'SVG ஆக ஏற்றுமதி செய்',
   'Export as PDF': 'PDF ஆக ஏற்றுமதி செய்',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'PDF இறக்குமதி',
   'Choose how to add the pages to the canvas.':
     'பக்கங்களை கேன்வாஸில் எப்படி சேர்க்க வேண்டும் என்பதைத் தேர்ந்தெடு.',
   'Single page': 'ஒரு பக்கம்',
   'All pages': 'எல்லா பக்கங்களும்',
   'Choose a page': 'ஒரு பக்கத்தைத் தேர்ந்தெடு',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'தேர்ந்ததை நீக்கு',
   'Nudge left': 'இடப்புறம் தள்ளு',
   'Nudge right': 'வலப்புறம் தள்ளு',
   'Nudge up': 'மேலே தள்ளு',
   'Nudge down': 'கீழே தள்ளு',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'வேறு இடத்திலும் திறந்துள்ளது',
   Shared: 'பகிரப்பட்டது',
   Browser: 'உலாவி',
-  // Sharing a space with other people
   Share: 'பகிர்',
   'Share {name}': '{name} பகிர்',
   'Share this space': 'இந்த இடத்தைப் பகிர்',
@@ -1356,14 +1301,12 @@ export const ta: Dictionary = {
   'Shared with you': 'உங்களுடன் பகிரப்பட்டது',
   'That link does not open anything': 'அந்த இணைப்பு எதையும் திறக்காது',
   'Ask for another one.': 'மற்றொன்றைக் கேட்கவும்.',
-  // Somebody a share link let in, who has no account
   Guest: 'விருந்தினர்',
   'Ask to join': 'சேர அனுமதி கேள்',
   Asking: 'கேட்கிறது',
   'Waiting for {who}': '{who} க்காகக் காத்திருக்கிறது',
   '{who} did not let you in': '{who} உங்களை அனுமதிக்கவில்லை',
   'What the others in this space see.': 'இந்த இடத்தில் மற்றவர்கள் பார்ப்பது.',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'புதுப்பிப்புகள்',
   'Release channel': 'வெளியீட்டு சேனல்',
   Stable: 'நிலையானது',
@@ -1373,8 +1316,6 @@ export const ta: Dictionary = {
   'Web version': 'வலைப் பதிப்பு',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'நிலையானது வெளியிடப்பட்ட வலை ஆப்; நிலையற்றது புதிய பில்ட், உடையவும் கூடும்.',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'இறக்குமதி',
   'Convert syntax': 'தொடரியலை மாற்று',
   'In this note': 'இந்தக் குறிப்பில்',
@@ -1478,8 +1419,6 @@ export const ta: Dictionary = {
   'Undo the import': 'இறக்குமதியைச் செயல்தவிர்',
   'Choose an export': 'ஏற்றுமதியைத் தேர்ந்தெடு',
   Under: 'இதன் கீழ்',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'ஒத்திசை',
   'When the same note was written twice': 'ஒரே குறிப்பு இருமுறை எழுதப்பட்டால்',
   'On two devices': 'இரு சாதனங்களில்',
@@ -1541,7 +1480,6 @@ export const ta: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'இந்தச் சாதனத்திலுள்ள குறிப்புகள் இருக்கும்; கணக்கும் அதன் ஒத்திசைத்த நகல்களும் மட்டுமே போகும்.',
   'Also gone for everyone in {spaces}.': '{spaces} இல் உள்ள அனைவருக்கும் இதுவும் போகும்.',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'குறிப்பு',
   '{space} panel': '{space} பலகம்',
   'Panel width': 'பலக அகலம்',
@@ -1552,7 +1490,6 @@ export const ta: Dictionary = {
   'What is selected': 'தேர்ந்தது என்ன',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'கேன்வாஸ்: {cards} அட்டைகள், {links} இணைப்புகள், {drawings} ஓவியங்கள்',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'வழங்குநர்கள்',
   'Make default': 'இயல்புநிலையாக்கு',
@@ -1580,7 +1517,6 @@ export const ta: Dictionary = {
   'The model did not answer.': 'மாடல் பதிலளிக்கவில்லை.',
   'The connection closed before the answer was finished.':
     'பதில் முடிவதற்கு முன் இணைப்பு மூடப்பட்டது.',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'உங்கள் {plan} திட்டம் {time} வரை வரம்பை எட்டியுள்ளது.',
   'Your {plan} plan is at its limit for now.':
@@ -1609,7 +1545,6 @@ export const ta: Dictionary = {
   Shorter: 'சுருக்கமாக',
   Longer: 'விரிவாக',
   'Fix grammar': 'இலக்கணத்தைச் சரிசெய்',
-  // The AI sidebar's commands
   'A cited report': 'மேற்கோளிட்ட அறிக்கை',
   'A helper in the background': 'பின்னணியில் உதவியாளர்',
   'A side question': 'பக்கக் கேள்வி',
@@ -1711,7 +1646,6 @@ export const ta: Dictionary = {
   'Markdown, shortest name': 'Markdown, மிகக் குறுகிய பெயர்',
   'Markdown, relative path': 'Markdown, தொடர்புப் பாதை',
   'Markdown, path in the space': 'Markdown, இடத்தில் உள்ள பாதை',
-  // Publishing part one.
   'The folders you choose become public.': 'நீ தேர்வு செய்யும் கோப்புறைகள் பொதுவாகும்.',
   'Anyone with the address can read what is published, drafts included.':
     'முகவரி உள்ள எவரும் வெளியிடப்பட்டதைப் படிக்கலாம், வரைவுகளையும்.',
@@ -1737,11 +1671,9 @@ export const ta: Dictionary = {
   'Remove the password': 'கடவுச்சொல்லை நீக்கு',
   'Scan this with your authenticator app, then type its code.':
     'இதை உன் அங்கீகரிப்புச் செயலியில் வருடி, பின் அதன் குறியீட்டை உள்ளிடு.',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'புகைப்படம்',
   Dictate: 'சொல்லி எழுது',
   'Add to {name}': '{name} இல் சேர்',
-  // Web tabs
   Reload: 'மீண்டும் ஏற்று',
   'Hard reload': 'முழுமையாக மீண்டும் ஏற்று',
   'Open in the browser': 'உலாவியில் திற',
@@ -1756,7 +1688,6 @@ export const ta: Dictionary = {
   'Playing audio': 'ஒலி இயங்குகிறது',
   Muted: 'ஒலியடக்கப்பட்டது',
   'Developer tools': 'டெவலப்பர் கருவிகள்',
-  // Recording, meetings and what a model wrote
   Record: 'பதிவு செய்',
   Recording: 'பதிவு',
   'Stop recording': 'பதிவை நிறுத்து',
@@ -1777,7 +1708,6 @@ export const ta: Dictionary = {
     'ஒரே முறையில் சொற்களாக மாற்ற அந்தப் பதிவு மிக நீளம்.',
   'That is as much as one recording may hold.': 'ஒரு பதிவில் இதுவே அதிகபட்சம்.',
   'Nothing could be heard in that recording.': 'அந்தப் பதிவில் எதுவும் கேட்கவில்லை.',
-  // Publishing part two.
   Spreadsheet: 'விரிதாள்',
   'The app’s own': 'செயலியின் சொந்தம்',
   'publish.css and publish.js in this space dress the site.':
@@ -1793,14 +1723,12 @@ export const ta: Dictionary = {
   'Save as CSV': 'CSV ஆகச் சேமி',
   'Kept for {days}': '{days} வைக்கப்படும்',
   Full: 'நிரம்பியது',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'அஞ்சலை அனுப்ப முடியவில்லை - மீண்டும் முயற்சிக்கவும்',
   'start again - that took too long': 'மீண்டும் தொடங்கவும் - அது மிக நேரம் எடுத்தது',
   'sign in to do that': 'அதைச் செய்ய உள்நுழையவும்',
   'that is not something a token can do': 'அது டோக்கனால் செய்ய முடிவதல்ல',
   'something went wrong here - try again': 'இங்கே ஏதோ தவறாகிவிட்டது - மீண்டும் முயற்சிக்கவும்',
   'this service cannot keep a secret safely': 'இந்தச் சேவை ரகசியத்தைப் பாதுகாப்பாக வைக்க முடியாது',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only':
     'படங்கள், PDF கள், தளத்தின் சொந்த css அல்லது js மட்டும்',
   'that file is too big': 'அந்தக் கோப்பு மிகப் பெரியது',
@@ -1812,14 +1740,12 @@ export const ta: Dictionary = {
   'that is more folder icons than a space holds':
     'ஒரு இடம் வைக்கும் அளவைவிட அதிக கோப்புறைச் சின்னங்கள்',
   'that is more than a site keeps': 'ஒரு தளம் வைத்துக்கொள்வதை விட இது அதிகம்',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'அந்த முகவரியில் யாரும் இல்லை',
   'nobody by that name': 'அந்தப் பெயரில் யாரும் இல்லை',
   'nobody is waiting by that name': 'அந்தப் பெயரில் யாரும் காத்திருக்கவில்லை',
   'this space is yours': 'இந்த இடம் உங்களுடையது',
   'that link is busy, try again in a minute':
     'அந்த இணைப்பு பணியில் உள்ளது, ஒரு நிமிடத்தில் முயற்சிக்கவும்',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'அப்படி ஒரு பதிப்பு இல்லை',
   'this note was shared with you, not its folder':
     'இந்தக் குறிப்பு உங்களுடன் பகிரப்பட்டது, அதன் கோப்புறை இல்லை',
@@ -1828,7 +1754,6 @@ export const ta: Dictionary = {
   'nothing to delete': 'நீக்க எதுவும் இல்லை',
   'this room is not answering - try again': 'இந்த அறை பதிலளிக்கவில்லை - மீண்டும் முயற்சிக்கவும்',
   'rooms are not running here': 'இங்கே அறைகள் இயங்கவில்லை',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'தீம் கடை பதிலளிக்கவில்லை',
   'that is not a theme': 'அது தீம் இல்லை',
   'no such theme': 'அப்படி ஒரு தீம் இல்லை',
@@ -1842,10 +1767,8 @@ export const ta: Dictionary = {
   'that is more than a spoken command': 'அது பேசும் கட்டளையைவிட அதிகம்',
   'that is a lot of listening - try again later': 'அது நிறைய கேட்டல் - பிறகு முயற்சிக்கவும்',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% உரை',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'கைபேசி',
   'The bar sits over the keyboard on a phone.': 'கைபேசியில் பட்டை விசைப்பலகைக்கு மேலே இருக்கும்.',
   'On the bar': 'பட்டையில்',
@@ -1859,31 +1782,25 @@ export const ta: Dictionary = {
   'A pull past the top runs': 'மேலிருந்து இழுத்தால் இயங்கும்',
   Nothing: 'ஒன்றுமில்லை',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'வை',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'வலப்புறம் நகர்த்து',
   'Move to the left': 'இடப்புறம் நகர்த்து',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'கணக்கில் வரலாறு',
   'Keep versions': 'பதிப்புகளை வை',
   'A month': 'ஒரு மாதம்',
   'A year': 'ஒரு ஆண்டு',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'கடந்த நாளின் அனைத்தும், பிறகு மணிக்கு ஒன்று, ஒரு மாதத்திற்குப் பிறகு நாளுக்கு ஒன்று, மூன்றுக்குப் பிறகு வாரத்திற்கு ஒன்று.',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'ஒரு அறையில் ஒரு குறிப்பு எவ்வளவு பெரியதாக இருக்க முடியுமோ அந்த அளவை இந்தக் குறிப்பு அடைந்துவிட்டது.',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'புதிய தாவல்',
   'Full screen': 'முழுத்திரை',
   'Print…': 'அச்சிடு…',
   'Share…': 'பகிர்…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'பின்வருவனவற்றைச் செய்ய விரும்புகிறது',
   'Don’t allow': 'அனுமதிக்காதே',
   Allow: 'அனுமதி',
@@ -1901,7 +1818,6 @@ export const ta: Dictionary = {
   'Use your MIDI devices': 'உங்கள் MIDI சாதனங்களைப் பயன்படுத்த',
   'Manage windows on all your displays': 'உங்கள் டிஸ்ப்ளேக்கள் அனைத்திலும் சாளரங்களை நிர்வகிக்க',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'தள விவரங்கள்',
   Downloads: 'பதிவிறக்கங்கள்',
   'Downloading {name}': '{name} பதிவிறக்கப்படுகிறது',
@@ -1928,11 +1844,9 @@ export const ta: Dictionary = {
   'Turn into': 'ஆக மாற்று',
   Foldable: 'மடக்கக்கூடியது',
   'Starts folded': 'மடித்த நிலையில் தொடங்கும்',
-  // Where a space keeps what websites store
   'Web data': 'இணையத் தரவு',
   Global: 'பகிரப்பட்டது',
   Site: 'தளம்',
-  // The Mac's menu bar
   'About {name}': '{name} பற்றி',
   Services: 'சேவைகள்',
   'Hide {name}': '{name} ஐ மறை',
@@ -1940,7 +1854,6 @@ export const ta: Dictionary = {
   'Show all': 'அனைத்தையும் காட்டு',
   'Quit {name}': '{name} இலிருந்து வெளியேறு',
   'Bring all to front': 'அனைத்தையும் முன்னே கொண்டுவா',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'நகலெடுத்ததைச் செயல்தவிர்',
   'Devices with your AI vault': 'உங்கள் AI பெட்டகம் உள்ள சாதனங்கள்',
   'This device': 'இந்தச் சாதனம்',
@@ -1956,13 +1869,11 @@ export const ta: Dictionary = {
   'Select down': 'கீழ்நோக்கித் தேர்ந்தெடு',
   'Select up': 'மேல்நோக்கித் தேர்ந்தெடு',
   'Select or deselect': 'தேர்ந்தெடு அல்லது தேர்வை நீக்கு',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'புதிய தாவலில் திற',
   'Open to the side': 'பக்கத்தில் திற',
   'Open all': 'அனைத்தையும் திற',
   'Show in the file list': 'கோப்புப் பட்டியலில் காட்டு',
   'Collapse the file list': 'கோப்புப் பட்டியலைச் சுருக்கு',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'தேர்வை விரிவாக்கு',
   'Shrink the selection': 'தேர்வைச் சுருக்கு',
   'Insert a line above': 'மேலே ஒரு வரியைச் செருகு',
@@ -1976,19 +1887,16 @@ export const ta: Dictionary = {
   'Duplicate the block': 'தொகுதியை நகலாக்கு',
   'Move the block up': 'தொகுதியை மேலே நகர்த்து',
   'Move the block down': 'தொகுதியை கீழே நகர்த்து',
-  // The editor's menu on a link and a picture
   'Copy link address': 'இணைப்பு முகவரியை நகலெடு',
   'Edit link': 'இணைப்பைத் திருத்து',
   'Remove link': 'இணைப்பை அகற்று',
   'Copy picture': 'படத்தை நகலெடு',
   'Open picture': 'படத்தைத் திற',
   'Delete picture': 'படத்தை நீக்கு',
-  // A file dropped into a note
   'Storing the file': 'கோப்பு சேமிக்கப்படுகிறது',
   'That file is larger than a note can keep.':
     'ஒரு குறிப்பு வைத்திருக்கக்கூடியதை விட அந்தக் கோப்பு பெரியது.',
   'That file could not be kept.': 'அந்தக் கோப்பை வைத்திருக்க முடியவில்லை.',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'புதிய முனையம்',
   'Command Prompt': 'கட்டளைத் தூண்டி',
   Terminal: 'முனையம்',
@@ -2010,11 +1918,8 @@ export const ta: Dictionary = {
   'Saved nowhere, a session kept running is found again in Settings, {pane}.':
     'எங்கும் சேமிக்கப்படவில்லை; இயங்க விடப்பட்ட அமர்வை மீண்டும் அமைப்புகள், {pane} இல் காணலாம்.',
   'Paste {count} lines?': { one: '{count} வரியை ஒட்டவா?', other: '{count} வரிகளை ஒட்டவா?' },
-  // Orden as the default browser
   'Default browser': 'இயல்புநிலை உலாவி',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} செய்த திருத்தங்களைச் செயல்தவிர்',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'காப்பகப்படுத்து',
   Unarchive: 'காப்பகத்திலிருந்து எடு',
   Archived: 'காப்பகப்படுத்தப்பட்டது',
@@ -2027,7 +1932,6 @@ export const ta: Dictionary = {
     one: 'உள்ளே {count} காப்பக உருப்படி',
     other: 'உள்ளே {count} காப்பக உருப்படிகள்',
   },
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'இடது பக்கப்பட்டி',
   'Right sidebar': 'வலது பக்கப்பட்டி',
   'Ask about this space': 'இந்த இடத்தைப் பற்றிக் கேள்',
@@ -2038,7 +1942,6 @@ export const ta: Dictionary = {
   'Ask again': 'மீண்டும் கேள்',
   'Continue when the limit resets': 'வரம்பு மீட்டமைந்ததும் தொடர்',
   'Continues at {time}': '{time} மணிக்குத் தொடரும்',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'எதையும் கேளுங்கள், சேர்க்க @, மேலும் /',
   'What can I help with?': 'நான் எதில் உதவலாம்?',
   'Add photos and files': 'படங்களையும் கோப்புகளையும் சேர்',
@@ -2106,13 +2009,10 @@ export const ta: Dictionary = {
   Closed: 'மூடியது',
   Ran: 'இயக்கியது',
   Changed: 'மாற்றியது',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': 'இந்த {device}',
   '{name} is back: {device} was writing in it':
     '{name} திரும்பி வந்தது: {device} அதில் எழுதிக்கொண்டிருந்தது',
   'Changes to {name} are not syncing': '{name} இல் செய்த மாற்றங்கள் ஒத்திசைக்கப்படவில்லை',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'திறத்தல்',
   Pressing: 'அழுத்துதல்',
   Typing: 'தட்டச்சு',
@@ -2127,18 +2027,14 @@ export const ta: Dictionary = {
   'Agent tabs closed': 'முகவர் தாவல்கள் மூடப்பட்டன',
   'Orden is still running for your agents': 'உங்கள் முகவர்களுக்காக Orden இன்னும் இயங்குகிறது',
   '{client} wants to connect': '{client} இணைய விரும்புகிறது',
-  // Web logins that travel, and the devices of an account
   'no such device': 'அப்படி ஒரு சாதனம் இல்லை',
   'give the device a name': 'சாதனத்திற்கு ஒரு பெயர் கொடுங்கள்',
   'that computer is no longer waiting': 'அந்தக் கணினி இனி காத்திருக்கவில்லை',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'அப்படி ஒரு கோப்பு இல்லை',
   'too many changes at once - try again in a minute':
     'ஒரே நேரத்தில் அதிக மாற்றங்கள் - ஒரு நிமிடம் கழித்து மீண்டும் முயலவும்',
   'that is more than a space keeps about its tree':
     'ஓர் இடம் தன் மரத்தைப் பற்றி வைத்திருப்பதை விட இது அதிகம்',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'இந்தக் கணினியில் உள்ள முகவர்கள்',
   'Your account’s connector': 'உங்கள் கணக்கின் இணைப்பான்',
   'Orden asks you once, the first time it connects.':
@@ -2210,12 +2106,9 @@ export const ta: Dictionary = {
     one: '{count} அழைப்பு',
     other: '{count} அழைப்புகள்',
   },
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'விரைவுக் கேள்வி',
   Scratchpad: 'Scratchpad',
   'Add to note': 'குறிப்பில் சேர்',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'நீட்டிப்புகள்',
   'Add extension': 'நீட்டிப்பைச் சேர்',
   'Manage extensions': 'நீட்டிப்புகளை நிர்வகி',
@@ -2235,7 +2128,6 @@ export const ta: Dictionary = {
   'Did not load': 'ஏற்றப்படவில்லை',
   Permissions: 'அனுமதிகள்',
   Options: 'விருப்பங்கள்',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'தொலைநிலை',
   'Add host': 'ஹோஸ்ட்டைச் சேர்',
   Reconnect: 'மீண்டும் இணை',
@@ -2243,11 +2135,8 @@ export const ta: Dictionary = {
   'No group': 'குழு இல்லை',
   'Not an address': 'முகவரி அல்ல',
   'Could not connect to {host}': '{host} உடன் இணைக்க முடியவில்லை',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'படத்தை அனுப்புகிறது',
   'Could not send the image': 'படத்தை அனுப்ப முடியவில்லை',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': {
     one: 'மற்றும் அதன் பின் {count}',
     other: 'மற்றும் அதன் பின் {count}',
@@ -2261,8 +2150,6 @@ export const ta: Dictionary = {
     'பக்கங்கள், டெர்மினல்கள், நகர்த்தல்கள் செயல்தவிர்க்கப்படாது',
   Rewind: 'பின்செல்',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'தேடல் இன்ஜின்',
   History: 'இதுவரை பார்த்தவை',
   'Search history': 'தேடல் வரலாறு',
@@ -2286,14 +2173,12 @@ export const ta: Dictionary = {
   'New private tab': 'புதிய தனிப்பட்ட தாவல்',
   'All spaces': 'எல்லா ஸ்பேஸ்களும்',
   'the data could not be deleted': 'தரவை நீக்க முடியவில்லை',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'உறக்கநிலை',
   Reminders: 'நினைவூட்டல்கள்',
   'Reminders ring while Orden is open': 'Orden திறந்திருக்கும்போது நினைவூட்டல்கள் ஒலிக்கும்',
   Automatic: 'தானியங்கு',
   'Stay in the tray': 'ட்ரேயில் இருக்கவும்',
   'Exact alarms': 'துல்லியமான அலாரங்கள்',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'பணிகள்',
   'Plan my day': 'என் நாளைத் திட்டமிடு',
   'Add a task': 'பணியைச் சேர்',
@@ -2305,8 +2190,6 @@ export const ta: Dictionary = {
   'Done tasks too': 'முடிந்த பணிகளும்',
   'As a task': 'பணியாக',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'பணிகள்',
   Ascending: 'ஏறுவரிசை',
   Descending: 'இறங்குவரிசை',
@@ -2391,8 +2274,6 @@ export const ta: Dictionary = {
   'Without a value': 'மதிப்பு இல்லாதவை',
   'With a value': 'மதிப்புள்ளவை',
   Unique: 'தனித்துவமானவை',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'வார்ப்புருவிலிருந்து புதிய குறிப்பு',
   Automations: 'தானியக்கங்கள்',
   'Row added': 'வரிசை சேர்க்கப்பட்டது',
@@ -2421,7 +2302,6 @@ export const ta: Dictionary = {
   Form: 'படிவம்',
   Formula: 'சூத்திரம்',
   'Blocked by {task}': '{task} காரணமாகத் தடைபட்டது',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'வெளியேறும் முன் எச்சரி',
   'When something runs': 'ஏதாவது இயங்கும்போது',
   'Quit {name}?': '{name} இலிருந்து வெளியேறவா?',
@@ -2432,16 +2312,13 @@ export const ta: Dictionary = {
   'Quit anyway': 'பரவாயில்லை, வெளியேறு',
   'Restart anyway': 'பரவாயில்லை, மீள்தொடங்கு',
   'Close anyway': 'பரவாயில்லை, மூடு',
-  // The online terminal
   'Online terminal': 'ஆன்லைன் முனையம்',
   'New online terminal': 'புதிய ஆன்லைன் முனையம்',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'வேறொரு சாதனம்',
   'Taken over by {device}': '{device} எடுத்துக்கொண்டது',
   'Open on {device} since {time}': '{time} முதல் {device} இல் திறந்துள்ளது',
   'Take over': 'எடுத்துக்கொள்',
   'Take back': 'திரும்பப் பெறு',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'புதிய பயன்பாடு',
   Application: 'பயன்பாடு',
   'This application’s file is damaged': 'இந்தப் பயன்பாட்டின் கோப்பு சேதமடைந்துள்ளது',
@@ -2550,8 +2427,6 @@ export const ta: Dictionary = {
   'Compare with original': 'மூலத்துடன் ஒப்பிடு',
   'Conflict copies from other apps': 'பிற ஆப்களின் முரண் நகல்கள்',
   'Remove from sync': 'ஒத்திசைவிலிருந்து நீக்கு',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'சுயவிவரம்',
   Change: 'மாற்று',
   'Take photo': 'புகைப்படம் எடு',
@@ -2576,7 +2451,6 @@ export const ta: Dictionary = {
   'that picture could not be opened': 'அந்தப் படத்தைத் திறக்க முடியவில்லை',
   'the camera could not be opened': 'கேமராவைத் திறக்க முடியவில்லை',
   'that picture is too big': 'அந்தப் படம் மிகப் பெரியது',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'அரட்டை',
   Reply: 'பதிலளி',
   Replies: 'பதில்கள்',
@@ -2595,7 +2469,6 @@ export const ta: Dictionary = {
   'Also send to {chat}': '{chat}-க்கும் அனுப்பு',
   'Skin tone': 'தோல் நிறம்',
   'Deleted account': 'நீக்கப்பட்ட கணக்கு',
-  // Chats: notifications
   Mute: 'ஒலியடக்கு',
   Unmute: 'ஒலியை இயக்கு',
   'New message': 'புதிய செய்தி',
@@ -2605,7 +2478,6 @@ export const ta: Dictionary = {
   Weekdays: 'வேலை நாட்கள்',
   Starts: 'தொடக்கம்',
   Ends: 'முடிவு',
-  // Chats: everywhere
   'Read chats': 'அரட்டைகளைப் படித்தல்',
   'Post in chats': 'அரட்டைகளில் எழுதுதல்',
   'Always in this chat': 'இந்த அரட்டையில் எப்போதும்',
@@ -2617,14 +2489,12 @@ export const ta: Dictionary = {
   'Search this chat': 'இந்த அரட்டையில் தேடு',
   'Add as task': 'பணியாகச் சேர்',
   'Save as note': 'குறிப்பாகச் சேமி',
-  // Appearance: glass's own pairs of colours
   Dawn: 'விடியல்',
   Lagoon: 'காயல்',
   Lilac: 'லைலாக்',
   Peach: 'பீச்',
   Sage: 'சேஜ்',
   Mist: 'மூடுபனி',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'புதிய தரவுத்தளம்',
   'New page': 'புதிய பக்கம்',
   'Not started': 'தொடங்கவில்லை',
@@ -2650,7 +2520,6 @@ export const ta: Dictionary = {
   Large: 'பெரியது',
   Both: 'இரண்டும்',
   'Shown on cards': 'அட்டைகளில் காட்டப்படுபவை',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'இந்த உலாவியின் AI சாவிகளை பெட்டகத்தின் வழியாக உங்கள் பிற சாதனங்களுடன் ஒத்திசைக்கிறது.',
   'Which of your AI accounts this feature asks.':
@@ -2899,7 +2768,6 @@ export const ta: Dictionary = {
   'Some changes may not be noticed': 'சில மாற்றங்கள் கவனிக்கப்படாமல் போகலாம்',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'கணினி கண்காணிக்கும் கோப்புறைகளின் வரம்பை எட்டிவிட்டது, எனவே பிற நிரல்கள் உங்கள் இடங்களில் செய்யும் ஒவ்வொரு மாற்றத்தையும் Orden கவனிக்காமல் போகலாம். fs.inotify.max_user_watches ஐ உயர்த்தினால் சரியாகும்.',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'அரட்டை {name} ஐ {space} க்கு நகர்த்தவா?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'அப்போது {space} இல் உள்ள அனைவரும் முழு வரலாற்றையும் படிக்கலாம், {from} இல் உள்ளவர்கள் அதை இழப்பார்கள்.',
@@ -2940,7 +2808,6 @@ export const ta: Dictionary = {
   'One colour': 'ஒற்றை நிறம்',
   'Web icons': 'இணைய ஐகான்கள்',
   'Sites you visit will appear here': 'நீங்கள் பார்வையிடும் தளங்கள் இங்கே தோன்றும்',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'சொல்வதை எழுதுதல்',
   'Dictate with': 'இதன் மூலம் சொல்லி எழுது',
   'Where your voice goes to be turned into words.':
@@ -2971,11 +2838,9 @@ export const ta: Dictionary = {
   'Not on this device': 'இந்தச் சாதனத்தில் இல்லை',
   'Not on this device. It opens once you are online again.':
     'இந்தச் சாதனத்தில் இல்லை. நீங்கள் மீண்டும் இணையத்தில் வந்ததும் இது திறக்கும்.',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'IMAP சேவையகம்',
   'SMTP server': 'SMTP சேவையகம்',
   'User name': 'பயனர் பெயர்',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'அவசரம்',
   Important: 'முக்கியம்',
   'If time': 'நேரம் இருந்தால்',

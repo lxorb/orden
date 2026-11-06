@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const uk: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'Усе готово',
   Personalize: 'Налаштувати під себе',
   Clean: 'Чистий',
@@ -10,13 +9,11 @@ export const uk: Dictionary = {
   'Do you write code?': 'Ви пишете код?',
   Yes: 'Так',
   No: 'Ні',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'З інших застосунків: {key}',
   'From other apps: set in your system settings':
     'З інших застосунків: задається в налаштуваннях системи',
   'From other apps: bind {command} in your system settings':
     'З інших застосунків: призначте {command} у налаштуваннях системи',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Основне',
   'Add to Essentials': 'Додати до основного',
   'Remove from Essentials': 'Вилучити з основного',
@@ -24,20 +21,16 @@ export const uk: Dictionary = {
   'Add blocks to Essentials': 'Додати блоки до основного',
   'Add view to Essentials': 'Додати вигляд до основного',
   'Open tabs and Essentials': 'Відкривати вкладки й основне',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor тепер називається Orden',
   'Notes from nibeditor.com': 'Нотатки з nibeditor.com',
   'Nothing there': 'Там нічого немає',
-  // AI: the three permission modes
   'Full permissions': 'Повний доступ',
   'Auto mode': 'Автоматичний режим',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'Повний доступ: нічого не питається і не передається вам, навіть вхід, оплата, надсилання чи видалення',
-  // Import: Zen's tabs
   'Import from Zen': 'Імпорт з Zen',
   'Containers stay in Zen': 'Контейнери залишаються в Zen',
   'Zen’s tabs could not be read.': 'Не вдалося прочитати вкладки Zen.',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'Контейнери залишаються в Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} шукає через {engine}: виберіть його в налаштуваннях, щоб шукати так і тут',
@@ -66,38 +59,29 @@ export const uk: Dictionary = {
   'Reading List': 'Список читання',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS тримає вкладки й закладки Safari за повним доступом до диска. Увімкніть там Orden і спробуйте знову.',
-  // Settings: note types
   'Page note': 'Нотатка зі сторінками',
   'Web note': 'Вебнотатка',
   'Private tab': 'Приватна вкладка',
   'Note types': 'Типи нотаток',
-  // Tasks: Upcoming's weeks
   'Previous week': 'Попередній тиждень',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'Додати проєкт вище',
   'Add project below': 'Додати проєкт нижче',
   'Projects folder': 'Тека проєктів',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'Пропустити',
   'Complete forever': 'Виконати назавжди',
-  // Tasks: comments
   Comments: 'Коментарі',
-  // Tasks: filters
   Filters: 'Фільтри',
   'Add filter': 'Додати фільтр',
   'Edit filter': 'Змінити фільтр',
-  // Tasks: a project's sections
   'Add section': 'Додати розділ',
   '{name} (copy)': '{name} (копія)',
   'Its tasks are deleted with it.': 'Завдання розділу видаляться разом із ним.',
-  // Tasks: keys, selection and the undo toast
   Completed: 'Виконано',
   'Remove date': 'Прибрати дату',
   'Next task': 'Наступне завдання',
   'Previous task': 'Попереднє завдання',
   'Add task at the top': 'Додати завдання нагору',
   '{count} selected': 'Вибрано: {count}',
-  // Tasks: the Display menu
   Display: 'Вигляд',
   'Completed tasks': 'Виконані завдання',
   Smart: 'Розумне',
@@ -109,20 +93,16 @@ export const uk: Dictionary = {
   'Reset all': 'Скинути все',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'Макет показує завдання списком, дошкою або календарем. Групування ділить їх на групи, які є стовпцями дошки. Сортування впорядковує кожну групу. Фільтри приховують те, що вам не потрібно. Усе це зберігається для цього подання.',
-  // Tasks: several lines pasted into quick add
   'One task': 'Одне завдання',
   'One per line': 'По одному на рядок',
   'Add with AI': 'Додати з ШІ',
-  // Tasks: the projects in the panel
   Favorites: 'Вибране',
   'Add project': 'Додати проєкт',
   'Add sub-project': 'Додати підпроєкт',
-  // Tasks: the task view
   'Sub-tasks': 'Підзавдання',
   'Add sub-task': 'Додати підзавдання',
   'New label': 'Нова мітка',
   'No deadline': 'Без терміну',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'Перенести',
   'Later this week': 'Пізніше цього тижня',
   'This weekend': 'Цих вихідних',
@@ -139,22 +119,18 @@ export const uk: Dictionary = {
   Reopen: 'Відкрити знову',
   Schedule: 'Запланувати',
   'Open in note': 'Відкрити в нотатці',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Інший застосунок',
   'Import from Obsidian': 'Імпорт з Obsidian',
   'Import from Notion': 'Імпорт з Notion',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'Підказки',
   'Silent mode': 'Тихий режим',
   'See how your notes connect.': 'Подивіться, як пов’язані ваші нотатки.',
   'Press {key} to find anything, notes and commands alike.':
     'Натисніть {key}, щоб знайти будь-що: нотатки й команди.',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Показувати Markdown під час набору',
   'Open notes in source mode': 'Відкривати нотатки в режимі вихідного коду',
   Pointer: 'Вказівник',
   'Pointing hand on buttons': 'Вказівна рука над кнопками',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Додати завдання',
   'Apple Shortcuts': 'Apple Швидкі команди',
   Tomorrow: 'Завтра',
@@ -180,7 +156,6 @@ export const uk: Dictionary = {
   'Every week': 'Щотижня',
   'Every month': 'Щомісяця',
   'Every year': 'Щороку',
-  // Files and notes
   Save: 'Зберегти',
   'New note': 'Нова нотатка',
   'Random note': 'Випадкова нотатка',
@@ -208,8 +183,6 @@ export const uk: Dictionary = {
   'Release to add a page': 'Відпустіть, щоб додати сторінку',
   'Page {number}': 'Сторінка {number}',
   'The paper could not be read': 'Не вдалося прочитати папір',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'Довга сторінка',
@@ -252,7 +225,6 @@ export const uk: Dictionary = {
   'Choose a picture': 'Вибрати зображення',
   'Remove picture': 'Прибрати зображення',
   'That picture could not be read.': 'Не вдалося прочитати це зображення.',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'Насиченість',
   Tint: 'Відтінок',
   'Tint colour': 'Колір відтінку',
@@ -380,7 +352,6 @@ export const uk: Dictionary = {
   'Merge into…': 'Об’єднати з…',
   'Split at caret': 'Розділити за курсором',
   'Extract selection': 'Видобути виділене',
-  // Panels and navigation
   Bookmarks: 'Закладки',
   'New group': 'Нова група',
   'Remove group': 'Прибрати групу',
@@ -434,8 +405,6 @@ export const uk: Dictionary = {
   'Sort by name': 'За назвою',
   'Sort by modified': 'За зміною',
   'Sort by created': 'За створенням',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'Порядок файлів',
   'Name, A to Z': 'Назва, від А до Я',
   'Name, Z to A': 'Назва, від Я до А',
@@ -446,7 +415,6 @@ export const uk: Dictionary = {
   Manual: 'Вручну',
   'Show hidden files': 'Показати сховані файли',
   'Hide hidden files': 'Сховати сховані файли',
-  // Writing
   Bold: 'Жирний',
   Italic: 'Курсив',
   Strikethrough: 'Перекреслений',
@@ -551,11 +519,9 @@ export const uk: Dictionary = {
   'Horizontal rule': 'Горизонтальна лінія',
   'Page break': 'Розрив сторінки',
   'Tidy up this note': 'Упорядкувати нотатку',
-  // PDFs
   'Copy a link': 'Копіювати посилання',
   'That PDF could not be opened': 'Не вдалося відкрити цей PDF',
   'That file could not be read': 'Не вдалося прочитати цей файл',
-  // Modes and view
   Reading: 'Читання',
   'Leave reading': 'Вийти з читання',
   Present: 'Показ',
@@ -595,7 +561,6 @@ export const uk: Dictionary = {
   'Zoom in': 'Збільшити',
   'Zoom out': 'Зменшити',
   'Actual size': 'Справжній розмір',
-  // Appearance
   Accent: 'Акцент',
   'Tidy up': 'Упорядкувати',
   'Blur the app behind the tab overview': 'Розмивати застосунок за оглядом вкладок',
@@ -727,7 +692,6 @@ export const uk: Dictionary = {
   'Switch theme': 'Змінити тему',
   Style: 'Стиль',
   Mode: 'Режим',
-  // The window's own edges; see appearance.rs
   Window: 'Вікно',
   'Orden’s own': 'Orden',
   'The system’s': 'Системна',
@@ -738,7 +702,6 @@ export const uk: Dictionary = {
   'Edit custom CSS': 'Змінити свій CSS',
   'Edit snippets': 'Змінити сніпети',
   'Reload themes and custom CSS': 'Перезавантажити теми та свій CSS',
-  // The theme store, and the sample note its cards show
   Themes: 'Теми',
   Browse: 'Огляд',
   'Search themes': 'Пошук тем',
@@ -825,7 +788,6 @@ export const uk: Dictionary = {
   'Code only': 'Лише в коді',
   Everywhere: 'Усюди',
   Attachments: 'Вкладення',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Нотатки зі сторінками',
   'New pages': 'Нові сторінки',
   'Assets folder of the space': 'Папка ресурсів простору',
@@ -877,7 +839,6 @@ export const uk: Dictionary = {
   'Machine-translated. Corrections welcome.': 'Машинний переклад. Виправлення вітаються.',
   'The glasses show English.': 'Окуляри показують англійську.',
   'Match the app': 'Як у програмі',
-  // Settings
   Settings: 'Налаштування',
   Account: 'Акаунт',
   Publish: 'Опублікувати',
@@ -905,7 +866,6 @@ export const uk: Dictionary = {
   },
   Update: 'Оновити',
   'Live at': 'Доступно на',
-  // Publishing
   'Publish {name}': 'Опублікувати {name}',
   'What to publish': 'Що публікувати',
   'The whole space': 'Увесь простір',
@@ -924,7 +884,6 @@ export const uk: Dictionary = {
   Value: 'Значення',
   available: 'вільно',
   'checking…': 'перевірка…',
-  // LLM
   'Connect an LLM to your notes': 'Підключити LLM до нотаток',
   'Sign in first - the connector reaches the notes in your account.':
     'Спершу потрібно увійти - коннектор звертається до нотаток в акаунті.',
@@ -977,7 +936,6 @@ export const uk: Dictionary = {
     'Для клієнта, якому потрібен блок JSON замість адреси.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'Клієнту, який не вміє входити, можна дати токен. Він показується лише один раз.',
-  // Export
   'Plain text': 'Звичайний текст',
   'Markdown with the pictures': 'Markdown із малюнками',
   'HTML without styles': 'HTML без стилів',
@@ -996,13 +954,11 @@ export const uk: Dictionary = {
   Margin: 'Поля',
   Header: 'Верхній колонтитул',
   Footer: 'Нижній колонтитул',
-  // History
   'Version history': 'Історія версій',
   'Copy link to this note': 'Копіювати посилання на цю нотатку',
   'that link could not be followed': 'за цим посиланням не вдалося перейти',
   'No earlier versions yet.': 'Поки немає попередніх версій.',
   'Restore this version': 'Відновити цю версію',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'там уже є нотатка',
   'enter a valid email address': 'введіть правильну адресу пошти',
   'give the space a name': 'дайте простору назву',
@@ -1034,7 +990,6 @@ export const uk: Dictionary = {
   'could not publish': 'не вдалося опублікувати',
   'could not create a token': 'не вдалося створити токен',
   'that did not work': 'не вийшло',
-  // Settings on a phone, display names, one blog address
   Back: 'Назад',
   'Display name': 'Відображуване ім’я',
   'Your name': 'Ваше ім’я',
@@ -1054,7 +1009,6 @@ export const uk: Dictionary = {
   Spelling: 'Орфографія',
   Checking: 'Перевірка',
   Dictionary: 'Словник',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'Очікування появи запису.',
   'Certificate issued.': 'Сертифікат видано.',
   'Cloudflare could not set this domain up.': 'Cloudflare не зміг налаштувати цей домен.',
@@ -1065,7 +1019,6 @@ export const uk: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare заблокував цей домен',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'У корені домену використайте запис ALIAS або ANAME чи вирівнювання CNAME, якщо провайдер не дозволяє там CNAME.',
-  // Shortcuts
   Shortcuts: 'Гарячі клавіші',
   'Search shortcuts': 'Пошук гарячих клавіш',
   'Second key': 'Друга клавіша',
@@ -1231,7 +1184,6 @@ export const uk: Dictionary = {
   Delegated: 'Доручено',
   'Code theme: {name}': 'Тема коду: {name}',
   'Delete a layout': 'Видалити макет',
-  // Keyboards and modal editing
   Default: 'За умовчанням',
   'Vim keys': 'Клавіші Vim',
   'Follow the link': 'Перейти за посиланням',
@@ -1243,11 +1195,9 @@ export const uk: Dictionary = {
   INSERT: 'ВСТАВКА',
   VISUAL: 'ВИДІЛЕННЯ',
   REPLACE: 'ЗАМІНА',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'Сторінка {page} з {count} на окулярах',
   'Reaching the glasses': 'Підключення до окулярів',
   'The glasses are not keeping up': 'Окуляри не встигають',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'Додати',
   Select: 'Виділити',
   Pan: 'Зсунути вид',
@@ -1277,7 +1227,6 @@ export const uk: Dictionary = {
   Calligraphy: 'Каліграфія',
   'Width {number}': 'Товщина {number}',
   'Finger draws': 'Палець малює',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'Товщина',
   Opacity: 'Непрозорість',
   Colour: 'Колір',
@@ -1321,23 +1270,19 @@ export const uk: Dictionary = {
   'Export as PNG': 'Експорт у PNG',
   'Export as SVG': 'Експорт у SVG',
   'Export as PDF': 'Експорт у PDF',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'Імпорт PDF',
   'Choose how to add the pages to the canvas.': 'Виберіть, як додати сторінки на полотно.',
   'Single page': 'Одна сторінка',
   'All pages': 'Усі сторінки',
   'Choose a page': 'Вибрати сторінку',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'Видалити вибране',
   'Nudge left': 'Зсунути ліворуч',
   'Nudge right': 'Зсунути праворуч',
   'Nudge up': 'Зсунути вгору',
   'Nudge down': 'Зсунути вниз',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'Відкрито й в іншому місці',
   Shared: 'Спільний доступ',
   Browser: 'Браузер',
-  // Sharing a space with other people
   Share: 'Поділитися',
   'Share {name}': 'Поділитися {name}',
   'Share this space': 'Поділитися простором',
@@ -1381,14 +1326,12 @@ export const uk: Dictionary = {
   'Shared with you': 'Поділилися з вами',
   'That link does not open anything': 'Це посилання нічого не відкриває',
   'Ask for another one.': 'Запросіть інше.',
-  // Somebody a share link let in, who has no account
   Guest: 'Гість',
   'Ask to join': 'Попросити доступ',
   Asking: 'Запит',
   'Waiting for {who}': 'Очікування {who}',
   '{who} did not let you in': '{who} не дав вам доступ',
   'What the others in this space see.': 'Те, що бачать інші в цьому просторі.',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'Оновлення',
   'Release channel': 'Канал випусків',
   Stable: 'Стабільний',
@@ -1398,8 +1341,6 @@ export const uk: Dictionary = {
   'Web version': 'Веб-версія',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'Стабільний - випущений веб-застосунок, нестабільний - найновіша збірка і може ламатися.',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'Імпорт',
   'Convert syntax': 'Перетворити синтаксис',
   'In this note': 'У цій нотатці',
@@ -1521,8 +1462,6 @@ export const uk: Dictionary = {
   'Undo the import': 'Скасувати імпорт',
   'Choose an export': 'Вибрати експорт',
   Under: 'Усередині',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'Синхронізація',
   'When the same note was written twice': 'Коли одну нотатку змінили двічі',
   'On two devices': 'На двох пристроях',
@@ -1593,7 +1532,6 @@ export const uk: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'Нотатки на цьому пристрої залишаться; зникнуть лише акаунт і його синхронізовані копії.',
   'Also gone for everyone in {spaces}.': 'Також зникне для всіх у {spaces}.',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'Нотатка',
   '{space} panel': 'Панель простору {space}',
   'Panel width': 'Ширина панелі',
@@ -1604,7 +1542,6 @@ export const uk: Dictionary = {
   'What is selected': 'Виділене',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'Полотно: карток {cards}, посилань {links}, малюнків {drawings}',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'ШІ',
   Providers: 'Постачальники',
   'Make default': 'Зробити основним',
@@ -1631,7 +1568,6 @@ export const uk: Dictionary = {
   'The model did not answer.': 'Модель не відповіла.',
   'The connection closed before the answer was finished.':
     'З’єднання закрилося до завершення відповіді.',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'Ваш план {plan} вичерпано до {time}.',
   'Your {plan} plan is at its limit for now.': 'Ваш план {plan} поки що вичерпано.',
   'Your {plan} plan is near its limit.': 'Ваш план {plan} майже вичерпано.',
@@ -1658,7 +1594,6 @@ export const uk: Dictionary = {
   Shorter: 'Коротше',
   Longer: 'Довше',
   'Fix grammar': 'Виправити граматику',
-  // The AI sidebar's commands
   'A cited report': 'Звіт із цитуванням',
   'A helper in the background': 'Помічник у фоновому режимі',
   'A side question': 'Додаткове питання',
@@ -1760,7 +1695,6 @@ export const uk: Dictionary = {
   'Markdown, shortest name': 'Markdown, найкоротша назва',
   'Markdown, relative path': 'Markdown, відносний шлях',
   'Markdown, path in the space': 'Markdown, шлях у просторі',
-  // Publishing part one.
   'The folders you choose become public.': 'Вибрані теки стають загальнодоступними.',
   'Anyone with the address can read what is published, drafts included.':
     'Будь-хто з адресою читає опубліковане, включно з чернетками.',
@@ -1786,11 +1720,9 @@ export const uk: Dictionary = {
   'Remove the password': 'Прибрати пароль',
   'Scan this with your authenticator app, then type its code.':
     'Відскануйте це застосунком-автентифікатором і введіть його код.',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'Фото',
   Dictate: 'Диктувати',
   'Add to {name}': 'Додати до {name}',
-  // Web tabs
   Reload: 'Оновити',
   'Hard reload': 'Жорстке перезавантаження',
   'Open in the browser': 'Відкрити в браузері',
@@ -1805,7 +1737,6 @@ export const uk: Dictionary = {
   'Playing audio': 'Відтворюється звук',
   Muted: 'Звук вимкнено',
   'Developer tools': 'Інструменти розробника',
-  // Recording, meetings and what a model wrote
   Record: 'Записати',
   Recording: 'Запис',
   'Stop recording': 'Зупинити запис',
@@ -1826,7 +1757,6 @@ export const uk: Dictionary = {
     'Цей запис завеликий, щоб перетворити його на слова за раз.',
   'That is as much as one recording may hold.': 'Стільки вміщує один запис.',
   'Nothing could be heard in that recording.': 'У цьому записі нічого не було чути.',
-  // Publishing part two.
   Spreadsheet: 'Таблиця даних',
   'The app’s own': 'Як у застосунку',
   'publish.css and publish.js in this space dress the site.':
@@ -1842,14 +1772,12 @@ export const uk: Dictionary = {
   'Save as CSV': 'Зберегти як CSV',
   'Kept for {days}': 'Зберігаються {days}',
   Full: 'Заповнено',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'не вдалося надіслати лист - спробуйте знову',
   'start again - that took too long': 'почніть знову - це тривало надто довго',
   'sign in to do that': 'увійдіть, щоб це зробити',
   'that is not something a token can do': 'токен так не може',
   'something went wrong here - try again': 'тут щось пішло не так - спробуйте знову',
   'this service cannot keep a secret safely': 'ця служба не може надійно зберігати секрет',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only': 'лише зображення, PDF та власні css чи js сайту',
   'that file is too big': 'цей файл завеликий',
   'that is more settings than an account holds': 'більше налаштувань акаунт не вміщує',
@@ -1859,13 +1787,11 @@ export const uk: Dictionary = {
   'that is more than a space keeps about its graph': 'більше про свій граф простір не зберігає',
   'that is more folder icons than a space holds': 'більше значків папок простір не вміщує',
   'that is more than a site keeps': 'це більше, ніж зберігає сайт',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'за цією адресою нікого немає',
   'nobody by that name': 'з таким іменем нікого немає',
   'nobody is waiting by that name': 'з таким іменем ніхто не чекає',
   'this space is yours': 'цей простір ваш',
   'that link is busy, try again in a minute': 'це посилання зайняте, спробуйте за хвилину',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'такої версії немає',
   'this note was shared with you, not its folder': 'з вами поділилися нотаткою, а не її папкою',
   'nothing to restore': 'нічого відновлювати',
@@ -1873,7 +1799,6 @@ export const uk: Dictionary = {
   'nothing to delete': 'нічого видаляти',
   'this room is not answering - try again': 'ця кімната не відповідає - спробуйте знову',
   'rooms are not running here': 'кімнати тут не працюють',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'магазин тем не відповідає',
   'that is not a theme': 'це не тема',
   'no such theme': 'такої теми немає',
@@ -1887,10 +1812,8 @@ export const uk: Dictionary = {
   'that is a lot of listening - try again later':
     'надто багато прослуховування - спробуйте пізніше',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% тексту',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'Телефон',
   'The bar sits over the keyboard on a phone.': 'На телефоні смужка стоїть над клавіатурою.',
   'On the bar': 'На смужці',
@@ -1904,31 +1827,25 @@ export const uk: Dictionary = {
   'A pull past the top runs': 'Потягування за верх запускає',
   Nothing: 'Нічого',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'Залишити',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'Перенести праворуч',
   'Move to the left': 'Перенести ліворуч',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'Історія в обліковому записі',
   'Keep versions': 'Зберігати версії',
   'A month': 'Місяць',
   'A year': 'Рік',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Усе за останню добу, потім по одній на годину, після місяця по одній на день, а після трьох по одній на тиждень.',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Ця нотатка досягла найбільшого розміру, який може мати нотатка в кімнаті.',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'Нова вкладка',
   'Full screen': 'На весь екран',
   'Print…': 'Друк…',
   'Share…': 'Поділитися…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'хоче',
   'Don’t allow': 'Не дозволяти',
   Allow: 'Дозволити',
@@ -1944,7 +1861,6 @@ export const uk: Dictionary = {
   'Use your MIDI devices': 'Використовувати пристрої MIDI',
   'Manage windows on all your displays': 'Керувати вікнами на всіх ваших екранах',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'Інформація про сайт',
   Downloads: 'Завантаження',
   'Downloading {name}': 'Завантаження {name}',
@@ -1971,11 +1887,9 @@ export const uk: Dictionary = {
   'Turn into': 'Перетворити в',
   Foldable: 'Згортуваний',
   'Starts folded': 'Відкривається згорнутим',
-  // Where a space keeps what websites store
   'Web data': 'Дані сайтів',
   Global: 'Спільні',
   Site: 'Сайт',
-  // The Mac's menu bar
   'About {name}': 'Про {name}',
   Services: 'Служби',
   'Hide {name}': 'Сховати {name}',
@@ -1983,7 +1897,6 @@ export const uk: Dictionary = {
   'Show all': 'Показати всі',
   'Quit {name}': 'Вийти з {name}',
   'Bring all to front': 'Усе на передній план',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Скасувати копіювання',
   'Devices with your AI vault': 'Пристрої з вашим сховищем ШІ',
   'This device': 'Цей пристрій',
@@ -1998,13 +1911,11 @@ export const uk: Dictionary = {
   'Select down': 'Виділити вниз',
   'Select up': 'Виділити вгору',
   'Select or deselect': 'Виділити або зняти виділення',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'Відкрити в новій вкладці',
   'Open to the side': 'Відкрити поруч',
   'Open all': 'Відкрити всі',
   'Show in the file list': 'Показати в списку файлів',
   'Collapse the file list': 'Згорнути список файлів',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'Розширити виділення',
   'Shrink the selection': 'Звузити виділення',
   'Insert a line above': 'Вставити рядок вище',
@@ -2018,18 +1929,15 @@ export const uk: Dictionary = {
   'Duplicate the block': 'Дублювати блок',
   'Move the block up': 'Перемістити блок вище',
   'Move the block down': 'Перемістити блок нижче',
-  // The editor's menu on a link and a picture
   'Copy link address': 'Копіювати адресу посилання',
   'Edit link': 'Змінити посилання',
   'Remove link': 'Вилучити посилання',
   'Copy picture': 'Копіювати малюнок',
   'Open picture': 'Відкрити малюнок',
   'Delete picture': 'Видалити малюнок',
-  // A file dropped into a note
   'Storing the file': 'Файл зберігається',
   'That file is larger than a note can keep.': 'Цей файл більший, ніж може зберігати нотатка.',
   'That file could not be kept.': 'Не вдалося зберегти цей файл.',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'Новий термінал',
   'Command Prompt': 'Командний рядок',
   Terminal: 'Термінал',
@@ -2056,11 +1964,8 @@ export const uk: Dictionary = {
     many: 'Вставити {count} рядків?',
     other: 'Вставити {count} рядка?',
   },
-  // Orden as the default browser
   'Default browser': 'Браузер за умовчанням',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Скасувати правки {name}',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'Архівувати',
   Unarchive: 'Повернути з архіву',
   Archived: 'В архіві',
@@ -2075,7 +1980,6 @@ export const uk: Dictionary = {
     many: '{count} архівних елементів усередині',
     other: '{count} архівного елемента всередині',
   },
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'Ліва бічна панель',
   'Right sidebar': 'Права бічна панель',
   'Ask about this space': 'Запитати про цей простір',
@@ -2086,7 +1990,6 @@ export const uk: Dictionary = {
   'Ask again': 'Запитати знову',
   'Continue when the limit resets': 'Продовжити, коли ліміт оновиться',
   'Continues at {time}': 'Продовжить о {time}',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Запитайте що завгодно, @ щоб додати, / для команд',
   'What can I help with?': 'Чим я можу допомогти?',
   'Add photos and files': 'Додати фото й файли',
@@ -2154,12 +2057,9 @@ export const uk: Dictionary = {
   Closed: 'Закрито',
   Ran: 'Виконано',
   Changed: 'Змінено',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': '{device} (цей пристрій)',
   '{name} is back: {device} was writing in it': '{name} повернулася: у ній писав {device}',
   'Changes to {name} are not syncing': 'Зміни в {name} не синхронізуються',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Відкриття',
   Pressing: 'Натискання',
   Typing: 'Введення',
@@ -2174,17 +2074,13 @@ export const uk: Dictionary = {
   'Agent tabs closed': 'Вкладки агентів закрито',
   'Orden is still running for your agents': 'Orden і далі працює для ваших агентів',
   '{client} wants to connect': '{client} хоче під’єднатися',
-  // Web logins that travel, and the devices of an account
   'no such device': 'Такого пристрою немає',
   'give the device a name': 'Дайте пристрою назву',
   'that computer is no longer waiting': 'Цей комп’ютер більше не чекає',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'такого файлу немає',
   'too many changes at once - try again in a minute': 'забагато змін одразу - спробуйте за хвилину',
   'that is more than a space keeps about its tree':
     'це більше, ніж простір зберігає про своє дерево',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'Агенти на цьому комп’ютері',
   'Your account’s connector': 'Конектор вашого акаунта',
   'Orden asks you once, the first time it connects.':
@@ -2257,12 +2153,9 @@ export const uk: Dictionary = {
     many: '{count} викликів',
     other: '{count} виклику',
   },
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'Швидке запитання',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Додати до нотатки',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'Розширення',
   'Add extension': 'Додати розширення',
   'Manage extensions': 'Керувати розширеннями',
@@ -2282,7 +2175,6 @@ export const uk: Dictionary = {
   'Did not load': 'Не завантажено',
   Permissions: 'Дозволи',
   Options: 'Параметри',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'Віддалений',
   'Add host': 'Додати хост',
   Reconnect: 'Перепідключитися',
@@ -2290,11 +2182,8 @@ export const uk: Dictionary = {
   'No group': 'Без групи',
   'Not an address': 'Це не адреса',
   'Could not connect to {host}': 'Не вдалося підключитися до {host}',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'Надсилання зображення',
   'Could not send the image': 'Не вдалося надіслати зображення',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': {
     few: 'і ще {count} після неї',
     many: 'і ще {count} після неї',
@@ -2309,8 +2198,6 @@ export const uk: Dictionary = {
   'Pages, terminals and moves are not undone': 'Сторінки, термінали й переміщення не скасовуються',
   Rewind: 'Перемотати назад',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'Пошукова система',
   History: 'Історія',
   'Search history': 'Пошук в історії',
@@ -2334,14 +2221,12 @@ export const uk: Dictionary = {
   'New private tab': 'Нова приватна вкладка',
   'All spaces': 'Усі простори',
   'the data could not be deleted': 'Не вдалося видалити дані',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Відкласти',
   Reminders: 'Нагадування',
   'Reminders ring while Orden is open': 'Нагадування лунають, поки Orden відкритий',
   Automatic: 'Автоматично',
   'Stay in the tray': 'Залишатися в треї',
   'Exact alarms': 'Точні будильники',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'Завдання',
   'Plan my day': 'Спланувати мій день',
   'Add a task': 'Додати завдання',
@@ -2353,8 +2238,6 @@ export const uk: Dictionary = {
   'Done tasks too': 'І виконані завдання',
   'As a task': 'Як завдання',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'Завдання',
   Ascending: 'За зростанням',
   Descending: 'За спаданням',
@@ -2439,8 +2322,6 @@ export const uk: Dictionary = {
   'Without a value': 'Без значення',
   'With a value': 'Зі значенням',
   Unique: 'Унікальні',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'Нова нотатка з шаблону',
   Automations: 'Автоматизації',
   'Row added': 'Додано рядок',
@@ -2469,7 +2350,6 @@ export const uk: Dictionary = {
   Form: 'Форма',
   Formula: 'Формула',
   'Blocked by {task}': 'Чекає: {task}',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'Попереджати перед виходом',
   'When something runs': 'Коли щось запущено',
   'Quit {name}?': 'Вийти з {name}?',
@@ -2480,16 +2360,13 @@ export const uk: Dictionary = {
   'Quit anyway': 'Все одно вийти',
   'Restart anyway': 'Все одно перезапустити',
   'Close anyway': 'Все одно закрити',
-  // The online terminal
   'Online terminal': 'Онлайн-термінал',
   'New online terminal': 'Новий онлайн-термінал',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'інший пристрій',
   'Taken over by {device}': 'Перехоплено пристроєм {device}',
   'Open on {device} since {time}': 'Відкрито на {device} з {time}',
   'Take over': 'Перехопити',
   'Take back': 'Повернути',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'Нова програма',
   Application: 'Програма',
   'This application’s file is damaged': 'Файл цієї програми пошкоджено',
@@ -2599,8 +2476,6 @@ export const uk: Dictionary = {
   'Compare with original': 'Порівняти з оригіналом',
   'Conflict copies from other apps': 'Конфліктні копії інших застосунків',
   'Remove from sync': 'Прибрати із синхронізації',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'Профіль',
   Change: 'Змінити',
   'Take photo': 'Зробити фото',
@@ -2625,7 +2500,6 @@ export const uk: Dictionary = {
   'that picture could not be opened': 'не вдалося відкрити зображення',
   'the camera could not be opened': 'не вдалося відкрити камеру',
   'that picture is too big': 'зображення завелике',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'Чат',
   Reply: 'Відповісти',
   Replies: 'Відповіді',
@@ -2644,7 +2518,6 @@ export const uk: Dictionary = {
   'Also send to {chat}': 'Надіслати також у {chat}',
   'Skin tone': 'Тон шкіри',
   'Deleted account': 'Видалений обліковий запис',
-  // Chats: notifications
   Mute: 'Вимкнути звук',
   Unmute: 'Увімкнути звук',
   'New message': 'Нове повідомлення',
@@ -2654,7 +2527,6 @@ export const uk: Dictionary = {
   Weekdays: 'Будні',
   Starts: 'Початок',
   Ends: 'Кінець',
-  // Chats: everywhere
   'Read chats': 'Читати чати',
   'Post in chats': 'Писати в чати',
   'Always in this chat': 'Завжди в цьому чаті',
@@ -2666,14 +2538,12 @@ export const uk: Dictionary = {
   'Search this chat': 'Шукати в цьому чаті',
   'Add as task': 'Додати як завдання',
   'Save as note': 'Зберегти як нотатку',
-  // Appearance: glass's own pairs of colours
   Dawn: 'Світанок',
   Lagoon: 'Лагуна',
   Lilac: 'Бузок',
   Peach: 'Персик',
   Sage: 'Шавлія',
   Mist: 'Туман',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'Нова база даних',
   'New page': 'Нова сторінка',
   'Not started': 'Не розпочато',
@@ -2699,7 +2569,6 @@ export const uk: Dictionary = {
   Large: 'Велике',
   Both: 'Обидва',
   'Shown on cards': 'Показано на картках',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'Синхронізує ключі ШІ цього браузера з іншими вашими пристроями через сховище.',
   'Which of your AI accounts this feature asks.':
@@ -2939,7 +2808,6 @@ export const uk: Dictionary = {
   'Some changes may not be noticed': 'Деякі зміни можуть залишитися непоміченими',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'Система досягла межі відстежуваних тек, тож Orden може не помітити всіх змін, які інші програми вносять у ваші простори. Збільште fs.inotify.max_user_watches, щоб це виправити.',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Перемістити чат {name} до {space}?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'Тоді всі в {space} зможуть прочитати всю історію, а люди в {from} її втратять.',
@@ -2979,7 +2847,6 @@ export const uk: Dictionary = {
   'One colour': 'Одноколірні',
   'Web icons': 'Значки сайтів',
   'Sites you visit will appear here': 'Тут з’являться сайти, які ви відвідуєте',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'Диктування',
   'Dictate with': 'Диктувати через',
   'Where your voice goes to be turned into words.':
@@ -3010,11 +2877,9 @@ export const uk: Dictionary = {
   'Not on this device': 'Немає на цьому пристрої',
   'Not on this device. It opens once you are online again.':
     'Немає на цьому пристрої. Відкриється, щойно ви знову будете в мережі.',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'Сервер IMAP',
   'SMTP server': 'Сервер SMTP',
   'User name': 'Ім’я користувача',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'Терміново',
   Important: 'Важливо',
   'If time': 'Якщо буде час',

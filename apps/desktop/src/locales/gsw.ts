@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gsw: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'Alles parat',
   Personalize: 'Aapasse',
   Clean: 'Uufgruumt',
@@ -10,13 +9,11 @@ export const gsw: Dictionary = {
   'Do you write code?': 'Schriibsch du Code?',
   Yes: 'Ja',
   No: 'Nei',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Us andere Apps: {key}',
   'From other apps: set in your system settings':
     'Us andere Apps: i de Systemiistellige feschtlege',
   'From other apps: bind {command} in your system settings':
     'Us andere Apps: {command} i de Systemiistellige zuewiise',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Essentials',
   'Add to Essentials': 'Zu de Essentials tue',
   'Remove from Essentials': 'Us de Essentials neh',
@@ -24,20 +21,16 @@ export const gsw: Dictionary = {
   'Add blocks to Essentials': 'Blöck zu de Essentials tue',
   'Add view to Essentials': 'Aasicht zu de Essentials tue',
   'Open tabs and Essentials': 'Tabs und Essentials uftue',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor heisst jetzt Orden',
   'Notes from nibeditor.com': 'Notize vo nibeditor.com',
   'Nothing there': 'Det häts nüt',
-  // AI: the three permission modes
   'Full permissions': 'Volli Berächtigunge',
   'Auto mode': 'Automatische Modus',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'Volli Berächtigunge: Nüt wird gfrogt oder dir zruggäh, au nöd Aamälde, Zahle, Schicke oder Lösche',
-  // Import: Zen's tabs
   'Import from Zen': 'Us Zen importiere',
   'Containers stay in Zen': 'D Container blibe im Zen',
   'Zen’s tabs could not be read.': 'D Tabs vo Zen hend nöd chöne gläse werde.',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'D Container blibe im Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} suecht mit {engine}: Wähl s i de Iistellige, zum au do demit z sueche',
@@ -64,38 +57,29 @@ export const gsw: Dictionary = {
   'Reading List': 'Leseliste',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS bhaltet d Tabs und Lesezeiche vo Safari hinter em Vollzuegriff uf d Festplatte. Schalt Orden det ii und probiers nomal.',
-  // Settings: note types
   'Page note': 'Siitenotiz',
   'Web note': 'Webnotiz',
   'Private tab': 'Private Tab',
   'Note types': 'Notiztype',
-  // Tasks: Upcoming's weeks
   'Previous week': 'Vorherigi Wuche',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'Projekt drüber hinzuefüege',
   'Add project below': 'Projekt drunder hinzuefüege',
   'Projects folder': 'Projektordner',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'Überspringe',
   'Complete forever': 'Für immer erledige',
-  // Tasks: comments
   Comments: 'Kommentär',
-  // Tasks: filters
   Filters: 'Filter',
   'Add filter': 'Filter hinzuefüege',
   'Edit filter': 'Filter bearbeite',
-  // Tasks: a project's sections
   'Add section': 'Abschnitt hinzuefüege',
   '{name} (copy)': '{name} (Kopie)',
   'Its tasks are deleted with it.': 'Sini Ufgabe wärded mitglöscht.',
-  // Tasks: keys, selection and the undo toast
   Completed: 'Erledigt',
   'Remove date': 'Datum entfärne',
   'Next task': 'Nächschti Ufgaab',
   'Previous task': 'Vorherigi Ufgaab',
   'Add task at the top': 'Ufgaab obe hinzuefüege',
   '{count} selected': '{count} uusgwäält',
-  // Tasks: the Display menu
   Display: 'Aazeig',
   'Completed tasks': 'Erledigti Ufgabe',
   Smart: 'Gschiid',
@@ -107,20 +91,16 @@ export const gsw: Dictionary = {
   'Reset all': 'Alles zruggsetze',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'S Layout zeigt d Ufgabe als Lischte, Board oder Kalender. D Gruppierig teilt si i Gruppe, das sind d Spalte vomene Board. D Sortierig ordnet jedi Gruppe. Filter blände us, was du nöd bruchsch. Alles wird für die Aasicht gmerkt.',
-  // Tasks: several lines pasted into quick add
   'One task': 'Ei Ufgab',
   'One per line': 'Eini pro Ziile',
   'Add with AI': 'Mit KI hinzuefüege',
-  // Tasks: the projects in the panel
   Favorites: 'Favorite',
   'Add project': 'Projekt dezuetue',
   'Add sub-project': 'Underprojekt dezuetue',
-  // Tasks: the task view
   'Sub-tasks': 'Underufgabe',
   'Add sub-task': 'Underufgab dezuetue',
   'New label': 'Neus Label',
   'No deadline': 'Kei Frischt',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'Neu plane',
   'Later this week': 'Spöter die Wuche',
   'This weekend': 'Das Wuchenänd',
@@ -137,22 +117,18 @@ export const gsw: Dictionary = {
   Reopen: 'Wider uftue',
   Schedule: 'Plane',
   'Open in note': 'I de Notiz uftue',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Anderi App',
   'Import from Obsidian': 'Us Obsidian importiere',
   'Import from Notion': 'Us Notion importiere',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'Hiwiis',
   'Silent mode': 'Ruemodus',
   'See how your notes connect.': 'Lueg, wie dini Notize zämehanged.',
   'Press {key} to find anything, notes and commands alike.':
     'Drück {key}, zum alles finde, Notize wie Befähl.',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Markdown bim Schriibe zeige',
   'Open notes in source mode': 'Notize im Quälltextmodus öffne',
   Pointer: 'Muuszeiger',
   'Pointing hand on buttons': 'Zeigendi Hand über Chnöpf',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Ufgaab hinzuefüege',
   'Apple Shortcuts': 'Apple Kurzbefähl',
   Tomorrow: 'Morn',
@@ -178,7 +154,6 @@ export const gsw: Dictionary = {
   'Every week': 'Jedi Wuche',
   'Every month': 'Jede Monet',
   'Every year': 'Jedes Jaar',
-  // Files and notes
   Save: 'Spichere',
   'New note': 'Nöii Notiz',
   'Random note': 'Zuefälligi Notiz',
@@ -206,8 +181,6 @@ export const gsw: Dictionary = {
   'Release to add a page': 'Loslah, zum e Siite hinzuefüege',
   'Page {number}': 'Siite {number}',
   'The paper could not be read': 'S Papier het mer nöd chöne läse',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'Langi Siite',
@@ -250,7 +223,6 @@ export const gsw: Dictionary = {
   'Choose a picture': 'Bild uswähle',
   'Remove picture': 'Bild entferne',
   'That picture could not be read.': 'Das Bild hät mer nöd chöne läse.',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'Sättigung',
   Tint: 'Tönig',
   'Tint colour': 'Tönigsfarb',
@@ -378,7 +350,6 @@ export const gsw: Dictionary = {
   'Merge into…': 'Zsammelege mit…',
   'Split at caret': 'Am Cursor uftrenne',
   'Extract selection': 'Uswahl uselöse',
-  // Panels and navigation
   Bookmarks: 'Lesezeiche',
   'New group': 'Neui Gruppe',
   'Remove group': 'Gruppe entferne',
@@ -432,8 +403,6 @@ export const gsw: Dictionary = {
   'Sort by name': 'Nach Name sortiere',
   'Sort by modified': 'Nach Änderig sortiere',
   'Sort by created': 'Nach Erstellig sortiere',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'Reihefolg vo de Dateie',
   'Name, A to Z': 'Name, A bis Z',
   'Name, Z to A': 'Name, Z bis A',
@@ -444,7 +413,6 @@ export const gsw: Dictionary = {
   Manual: 'Vo Hand',
   'Show hidden files': 'Versteckti Dateie zeige',
   'Hide hidden files': 'Versteckti Dateie uusblände',
-  // Writing
   Bold: 'Fett',
   Italic: 'Kursiv',
   Strikethrough: 'Durestriche',
@@ -529,11 +497,9 @@ export const gsw: Dictionary = {
   'Horizontal rule': 'Trennlinie',
   'Page break': 'Sitteumbruch',
   'Tidy up this note': 'Notiz ufruume',
-  // PDFs
   'Copy a link': 'Link kopiere',
   'That PDF could not be opened': 'Das PDF hät me nöd chöne uufmache',
   'That file could not be read': 'Die Datei hät me nöd chöne läse',
-  // Modes and view
   Reading: 'Läse',
   'Leave reading': 'Läse verlaa',
   Present: 'Präsentiere',
@@ -573,7 +539,6 @@ export const gsw: Dictionary = {
   'Zoom in': 'Vergrössere',
   'Zoom out': 'Verchlinere',
   'Actual size': 'Originalgrössi',
-  // Appearance
   Accent: 'Akzänt',
   'Tidy up': 'Ufrume',
   'Blur the app behind the tab overview': 'App hinder de Tab-Übersicht verschwumme',
@@ -701,7 +666,6 @@ export const gsw: Dictionary = {
   'Switch theme': 'Design wächsle',
   Style: 'Stil',
   Mode: 'Modus',
-  // The window's own edges; see appearance.rs
   Window: 'Fänschter',
   'Orden’s own': 'Vo Orden',
   'The system’s': 'Vom Syschtem',
@@ -712,7 +676,6 @@ export const gsw: Dictionary = {
   'Edit custom CSS': 'Eiges CSS bearbeite',
   'Edit snippets': 'Textbaustei bearbeite',
   'Reload themes and custom CSS': 'Designs und eiges CSS neu lade',
-  // The theme store, and the sample note its cards show
   Themes: 'Designs',
   Browse: 'Umeluege',
   'Search themes': 'Designs sueche',
@@ -792,7 +755,6 @@ export const gsw: Dictionary = {
   'Code only': 'Nur im Code',
   Everywhere: 'Überall',
   Attachments: 'Aahäng',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Siitenotize',
   'New pages': 'Nöii Siite',
   'Assets folder of the space': 'Medieordner vo de Ablag',
@@ -844,7 +806,6 @@ export const gsw: Dictionary = {
   'Machine-translated. Corrections welcome.': 'Maschinell übersetzt. Korrekture willkomme.',
   'The glasses show English.': 'D Brille zeigt Änglisch.',
   'Match the app': 'Wie d App',
-  // Settings
   Settings: 'Iistellige',
   Account: 'Konto',
   Publish: 'Veröffentliche',
@@ -870,7 +831,6 @@ export const gsw: Dictionary = {
   },
   Update: 'Aktualisiere',
   'Live at': 'Erreichbar under',
-  // Publishing
   'Publish {name}': '{name} veröffentliche',
   'What to publish': 'Was veröffentlicht wird',
   'The whole space': 'Di ganz Ablag',
@@ -889,7 +849,6 @@ export const gsw: Dictionary = {
   Value: 'Wert',
   available: 'verfüegbar',
   'checking…': 'wird prüeft…',
-  // LLM
   'Connect an LLM to your notes': 'Es LLM mit dine Notize verbinde',
   'Sign in first - the connector reaches the notes in your account.':
     'Mäld di zerscht aa - de Connector chunnt a d Notize i dim Konto.',
@@ -941,7 +900,6 @@ export const gsw: Dictionary = {
     'Für en Client, wo statt ere URL en JSON-Block nimmt.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'En Client, wo sich nöd cha aamälde, überchunnt statt däm es Token. Es wird nume eimal zeigt.',
-  // Export
   'Plain text': 'Text',
   'Markdown with the pictures': 'Markdown mit Bilder',
   'HTML without styles': 'HTML ohni Stil',
@@ -960,13 +918,11 @@ export const gsw: Dictionary = {
   Margin: 'Rand',
   Header: 'Chopfzile',
   Footer: 'Fuesszile',
-  // History
   'Version history': 'Versionsverlauf',
   'Copy link to this note': 'Link zu dere Notiz kopiere',
   'that link could not be followed': 'dem Link het me nöd chönne folge',
   'No earlier versions yet.': 'No kei früechere Versione.',
   'Restore this version': 'Die Version zrugg hole',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'Det liit scho e Notiz',
   'enter a valid email address': 'Gib e gültigi E-Mail-Adrässe ii',
   'give the space a name': 'Gib de Ablag en Name',
@@ -999,7 +955,6 @@ export const gsw: Dictionary = {
   'could not publish': 'Veröffentliche het nöd klappt',
   'could not create a token': 'Token mache het nöd klappt',
   'that did not work': 'Das het nöd klappt',
-  // Settings on a phone, display names, one blog address
   Back: 'Zrugg',
   'Display name': 'Aazeigname',
   'Your name': 'Din Name',
@@ -1019,7 +974,6 @@ export const gsw: Dictionary = {
   Spelling: 'Rächtschriibig',
   Checking: 'Prüefig',
   Dictionary: 'Wörterbuech',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'Wartet, bis de Iitrag sichtbar isch.',
   'Certificate issued.': 'Zertifikat usgstellt.',
   'Cloudflare could not set this domain up.': 'Cloudflare het d Domain nöd chöne iirichte.',
@@ -1030,7 +984,6 @@ export const gsw: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare het d Domain gsperrt',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'A de Wurzle vo de Domain nimm en ALIAS- oder ANAME-Iitrag oder CNAME-Flattening, falls din Aabieter dert kei CNAME erlaubt.',
-  // Shortcuts
   Shortcuts: 'Tastechürzel',
   'Search shortcuts': 'Tastechürzel sueche',
   'Second key': 'Zwöiti Taste',
@@ -1196,7 +1149,6 @@ export const gsw: Dictionary = {
   Delegated: 'Übergeh',
   'Code theme: {name}': 'Code-Design: {name}',
   'Delete a layout': 'Es Layout lösche',
-  // Keyboards and modal editing
   Default: 'Standard',
   'Vim keys': 'Vim-Taschte',
   'Follow the link': 'Em Link naa',
@@ -1208,11 +1160,9 @@ export const gsw: Dictionary = {
   INSERT: 'IIFÜEGE',
   VISUAL: 'VISUELL',
   REPLACE: 'ERSETZE',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'Siite {page} vo {count} uf de Brülle',
   'Reaching the glasses': 'Verbindig zur Brülle',
   'The glasses are not keeping up': 'D Brülle chunnt nöd naa',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'Hinzuefüege',
   Select: 'Uswähle',
   Pan: 'Verschiebe',
@@ -1242,7 +1192,6 @@ export const gsw: Dictionary = {
   Calligraphy: 'Kalligrafie',
   'Width {number}': 'Breiti {number}',
   'Finger draws': 'Finger zeichnet',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'Breiti',
   Opacity: 'Deckchraft',
   Colour: 'Farb',
@@ -1286,23 +1235,19 @@ export const gsw: Dictionary = {
   'Export as PNG': 'Als PNG exportiere',
   'Export as SVG': 'Als SVG exportiere',
   'Export as PDF': 'Als PDF exportiere',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'PDF importiere',
   'Choose how to add the pages to the canvas.': 'Wähl, wie d Siite uf d Liinwand chöme.',
   'Single page': 'Einzelni Siite',
   'All pages': 'Alli Siite',
   'Choose a page': 'Siite uswähle',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'Uswahl lösche',
   'Nudge left': 'Nach links schiebe',
   'Nudge right': 'Nach rächts schiebe',
   'Nudge up': 'Nach obe schiebe',
   'Nudge down': 'Nach une schiebe',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'Au susch no offe',
   Shared: 'Teilt',
   Browser: 'Browser',
-  // Sharing a space with other people
   Share: 'Teile',
   'Share {name}': '{name} teile',
   'Share this space': 'Die Ablag teile',
@@ -1346,14 +1291,12 @@ export const gsw: Dictionary = {
   'Shared with you': 'Mit dir teilt',
   'That link does not open anything': 'Dä Link macht nüt uf',
   'Ask for another one.': 'Frag nachemene neue.',
-  // Somebody a share link let in, who has no account
   Guest: 'Gascht',
   'Ask to join': 'Um Iilass bitte',
   Asking: 'Fragt',
   'Waiting for {who}': 'Wartet uf {who}',
   '{who} did not let you in': '{who} hät di nöd iiglaa',
   'What the others in this space see.': 'Was die andere i dem Bereich gsehnd.',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'Updates',
   'Release channel': 'Update-Kanal',
   Stable: 'Stabil',
@@ -1363,8 +1306,6 @@ export const gsw: Dictionary = {
   'Web version': 'Web-Version',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'Stabil isch d veröffentlichti Web-App, Instabil de neuschti Build und cha kaputt gaa.',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'Importiere',
   'Convert syntax': 'Syntax umschriibe',
   'In this note': 'I dere Notiz',
@@ -1463,8 +1404,6 @@ export const gsw: Dictionary = {
   'Undo the import': 'Import zrugnäh',
   'Choose an export': 'Export uuswähle',
   Under: 'Under',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'Sync',
   'When the same note was written twice': 'Wenn e Notiz zweimal gschribe worde isch',
   'On two devices': 'Uf zwei Grät',
@@ -1526,7 +1465,6 @@ export const gsw: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'D Notize uf däm Grät bliibed; nume s Konto und sini synchronisierte Kopie gönd.',
   'Also gone for everyone in {spaces}.': 'Au weg für alli i {spaces}.',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'D Notiz',
   '{space} panel': 'Bereich {space}',
   'Panel width': 'Breiti vom Bereich',
@@ -1537,7 +1475,6 @@ export const gsw: Dictionary = {
   'What is selected': 'Was uusgwählt isch',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'Leinwand: {cards} Charte, {links} Verbindige, {drawings} Zeichnige',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'KI',
   Providers: 'Aabieter',
   'Make default': 'As Standard',
@@ -1565,7 +1502,6 @@ export const gsw: Dictionary = {
   'The model did not answer.': 'S Modäll hät nöd gantwortet.',
   'The connection closed before the answer was finished.':
     'D Verbindig isch abbroche, bevor d Antwort fertig gsi isch.',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'Dis {plan}-Abo isch bis {time} am Limit.',
   'Your {plan} plan is at its limit for now.': 'Dis {plan}-Abo isch für de Momänt am Limit.',
   'Your {plan} plan is near its limit.': 'Dis {plan}-Abo isch fascht am Limit.',
@@ -1592,7 +1528,6 @@ export const gsw: Dictionary = {
   Shorter: 'Chürzer',
   Longer: 'Länger',
   'Fix grammar': 'Grammatik korrigiere',
-  // The AI sidebar's commands
   'A cited report': 'E zitierte Bericht',
   'A helper in the background': 'E Helfer im Hintergrund',
   'A side question': 'E Nebenfrage',
@@ -1694,7 +1629,6 @@ export const gsw: Dictionary = {
   'Markdown, shortest name': 'Markdown, chürzischte Name',
   'Markdown, relative path': 'Markdown, relative Pfad',
   'Markdown, path in the space': 'Markdown, Pfad im Ruum',
-  // Publishing part one.
   'The folders you choose become public.': 'Die usgwählte Ordner wärde öffentlich.',
   'Anyone with the address can read what is published, drafts included.':
     'Wer d Adrässe hät, list alles Veröffentlichti, Entwürf inklusive.',
@@ -1720,11 +1654,9 @@ export const gsw: Dictionary = {
   'Remove the password': 'Passwort entferne',
   'Scan this with your authenticator app, then type its code.':
     'Scann das mit dinere Authenticator-App und tipp dänn de Code.',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'Foti',
   Dictate: 'Diktiere',
   'Add to {name}': 'Zu {name} dezuetue',
-  // Web tabs
   Reload: 'Neu lade',
   'Hard reload': 'Vollständig neu lade',
   'Open in the browser': 'Im Browser ufmache',
@@ -1739,7 +1671,6 @@ export const gsw: Dictionary = {
   'Playing audio': 'Spilt Ton ab',
   Muted: 'Stummgschaltet',
   'Developer tools': 'Entwicklertools',
-  // Recording, meetings and what a model wrote
   Record: 'Ufnäh',
   Recording: 'Ufnahm',
   'Stop recording': 'Ufnahm beände',
@@ -1760,7 +1691,6 @@ export const gsw: Dictionary = {
     'Die Ufnahm isch z lang zum sie i eim Zug i Text umwandle.',
   'That is as much as one recording may hold.': 'Meh gaht i ei Ufnahm nöd ine.',
   'Nothing could be heard in that recording.': 'I dere Ufnahm isch nüt z ghööre.',
-  // Publishing part two.
   Spreadsheet: 'Tabälle',
   'The app’s own': 'Das vo de App',
   'publish.css and publish.js in this space dress the site.':
@@ -1776,14 +1706,12 @@ export const gsw: Dictionary = {
   'Save as CSV': 'Als CSV spichere',
   'Kept for {days}': '{days} lang ufbewahrt',
   Full: 'Voll',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'D Mail hät me nöd chöne schicke - probier s nomal',
   'start again - that took too long': 'Fang nomal a - das hät z lang duuret',
   'sign in to do that': 'Mäld di a, zum das z mache',
   'that is not something a token can do': 'Das cha en Token nöd mache',
   'something went wrong here - try again': 'Da isch öppis schiefgange - probier s nomal',
   'this service cannot keep a secret safely': 'Dä Dienst cha es Gheimnis nöd sicher ufbewahre',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only':
     'Nur Bilder, PDFs und s eigene css oder js vo ere Site',
   'that file is too big': 'Die Datei isch z gross',
@@ -1796,13 +1724,11 @@ export const gsw: Dictionary = {
   'that is more folder icons than a space holds':
     'Das sind mee Ordnersymbol, als en Ablag ufbewahrt',
   'that is more than a site keeps': 'Das isch mee, als en Site ufbewahrt',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'Niemer under dere Adress',
   'nobody by that name': 'Niemer mit dem Name',
   'nobody is waiting by that name': 'Niemer mit dem Name wartet',
   'this space is yours': 'Die Ablag ghört dir',
   'that link is busy, try again in a minute': 'Dä Link isch bsetzt, probier s i ere Minute nomal',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'Die Version gits nöd',
   'this note was shared with you, not its folder':
     'Die Notiz isch mit dir gteilt worde, nöd ire Ordner',
@@ -1811,7 +1737,6 @@ export const gsw: Dictionary = {
   'nothing to delete': 'Nüt zum Lösche',
   'this room is not answering - try again': 'Dä Ruum antwortet nöd - probier s nomal',
   'rooms are not running here': 'Rüüm laufed da nöd',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'Dä Design-Store antwortet nöd',
   'that is not a theme': 'Das isch kes Design',
   'no such theme': 'Das Design gits nöd',
@@ -1825,10 +1750,8 @@ export const gsw: Dictionary = {
   'that is more than a spoken command': 'Das isch mee als en Sprachbefehl',
   'that is a lot of listening - try again later': 'Das isch vil Zuelose - probier s spöter nomal',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% Schrift',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'Mobil',
   'The bar sits over the keyboard on a phone.': 'Di Leischte sitzt überem Tastefäld am Händy.',
   'On the bar': 'Uf de Leischte',
@@ -1842,31 +1765,25 @@ export const gsw: Dictionary = {
   'A pull past the top runs': 'Zieh über de Afang startet',
   Nothing: 'Nüt',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'Behalte',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'Uf rechts',
   'Move to the left': 'Uf links',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'Verlauf ufem Konto',
   'Keep versions': 'Versione behalte',
   'A month': 'En Monet',
   'A year': 'Es Jahr',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Alles vom letzte Tag, dänn eini pro Stund, nach eim Monet eini pro Tag, nach drü eini pro Wuche.',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Die Notiz isch so gross, wie e Notiz in eme Ruum cha wärde.',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'Nöie Tab',
   'Full screen': 'Vollbild',
   'Print…': 'Drucke…',
   'Share…': 'Teile…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'wott',
   'Don’t allow': 'Nöd erlaube',
   Allow: 'Erlaube',
@@ -1883,7 +1800,6 @@ export const gsw: Dictionary = {
   'Use your MIDI devices': 'Dini MIDI-Grät bruuche',
   'Manage windows on all your displays': 'Fänschter uf allne Bildschirm verwalte',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'Website-Infos',
   Downloads: 'Downloads',
   'Downloading {name}': '{name} wird abeglade',
@@ -1910,11 +1826,9 @@ export const gsw: Dictionary = {
   'Turn into': 'Umwandle i',
   Foldable: 'Zämmefaltbar',
   'Starts folded': 'Faht zuegfaltet aa',
-  // Where a space keeps what websites store
   'Web data': 'Webdate',
   Global: 'Global',
   Site: 'Websiite',
-  // The Mac's menu bar
   'About {name}': 'Über {name}',
   Services: 'Dienscht',
   'Hide {name}': '{name} uusbländä',
@@ -1922,7 +1836,6 @@ export const gsw: Dictionary = {
   'Show all': 'Alli ybländä',
   'Quit {name}': '{name} beändä',
   'Bring all to front': 'Alli nach vorne bringä',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Kopie zurücknehmen',
   'Devices with your AI vault': 'Grät mit dim KI-Tresor',
   'This device': 'Das Grät',
@@ -1937,13 +1850,11 @@ export const gsw: Dictionary = {
   'Select down': 'Nach unten auswählen',
   'Select up': 'Nach oben auswählen',
   'Select or deselect': 'Auswählen oder abwählen',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'Im neue Tab öffne',
   'Open to the side': 'Dänebe öffne',
   'Open all': 'Alli öffne',
   'Show in the file list': 'I de Dateilischte zeige',
   'Collapse the file list': 'Dateilischte zuechlappe',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'Uswahl erwiitere',
   'Shrink the selection': 'Uswahl verchliinere',
   'Insert a line above': 'Zyyle drüber iifüege',
@@ -1957,18 +1868,15 @@ export const gsw: Dictionary = {
   'Duplicate the block': 'De Block verdopple',
   'Move the block up': 'De Block ufe schiebe',
   'Move the block down': 'De Block abe schiebe',
-  // The editor's menu on a link and a picture
   'Copy link address': 'Linkadrässe kopiere',
   'Edit link': 'Link bearbeite',
   'Remove link': 'Link entferne',
   'Copy picture': 'Bild kopiere',
   'Open picture': 'Bild öffne',
   'Delete picture': 'Bild lösche',
-  // A file dropped into a note
   'Storing the file': 'Datei wird gspeicheret',
   'That file is larger than a note can keep.': 'Die Datei isch grösser, als e Notiz cha bhalte.',
   'That file could not be kept.': 'Die Datei het nöd chöne gspeicheret werde.',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'Neus Terminal',
   'Command Prompt': 'Iigabeufforderig',
   Terminal: 'Terminal',
@@ -1990,11 +1898,8 @@ export const gsw: Dictionary = {
   'Saved nowhere, a session kept running is found again in Settings, {pane}.':
     'Niene gspeicheret: E Sitzig, wo witerlauft, findsch wider under Iistellige, {pane}.',
   'Paste {count} lines?': { one: '{count} Ziile iifüege?', other: '{count} Ziile iifüege?' },
-  // Orden as the default browser
   'Default browser': 'Standardbrowser',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Änderige vo {name} rückgängig mache',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'Archiviere',
   Unarchive: 'Us em Archiv hole',
   Archived: 'Archiviert',
@@ -2007,7 +1912,6 @@ export const gsw: Dictionary = {
     one: '{count} archivierte Iitrag drin',
     other: '{count} archivierti Iiträg drin',
   },
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'Linggi Sitteleiste',
   'Right sidebar': 'Rächti Sitteleiste',
   'Ask about this space': 'Öppis zu dere Ablag frage',
@@ -2018,7 +1922,6 @@ export const gsw: Dictionary = {
   'Ask again': 'Nomol frage',
   'Continue when the limit resets': 'Wiiter, sobald s Limit zrugggsetzt isch',
   'Continues at {time}': 'Gaht um {time} wiiter',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Frög öppis, @ zum Aahänke, / für meh',
   'What can I help with?': 'Wobi chan ich hälfe?',
   'Add photos and files': 'Fotis und Dateie hinzuefüege',
@@ -2086,12 +1989,9 @@ export const gsw: Dictionary = {
   Closed: 'Zuegmacht',
   Ran: 'Usgfüehrt',
   Changed: 'Gänderet',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': '{device} (das Grät)',
   '{name} is back: {device} was writing in it': '{name} isch zrugg: {device} het drin gschribe',
   'Changes to {name} are not syncing': 'Änderige a {name} wärded nöd synchronisiert',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Ufmache',
   Pressing: 'Drücke',
   Typing: 'Tippe',
@@ -2106,18 +2006,14 @@ export const gsw: Dictionary = {
   'Agent tabs closed': 'Agänte-Tabs zuegmacht',
   'Orden is still running for your agents': 'Orden lauft für dini Agänte wiiter',
   '{client} wants to connect': '{client} wott sich verbinde',
-  // Web logins that travel, and the devices of an account
   'no such device': 'Das Gerät gits nöd',
   'give the device a name': 'Gib em Gerät en Name',
   'that computer is no longer waiting': 'De Computer wartet nüme',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'Die Datei gits nöd',
   'too many changes at once - try again in a minute':
     'Z vill Änderige uf eimal - probier s in ere Minute no einisch',
   'that is more than a space keeps about its tree':
     'Das isch meh, als en Bereich über sin Baum bhaltet',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'Agänte uf däm Computer',
   'Your account’s connector': 'Connector vo dim Konto',
   'Orden asks you once, the first time it connects.':
@@ -2188,12 +2084,9 @@ export const gsw: Dictionary = {
     one: '{count} Ufruef',
     other: '{count} Ufrüef',
   },
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'Schnälli Frag',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Zur Notiz hinzuefüege',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'Erwiiterige',
   'Add extension': 'Erwiiterig hinzuefüege',
   'Manage extensions': 'Erwiiterige verwalte',
@@ -2212,7 +2105,6 @@ export const gsw: Dictionary = {
   'Did not load': 'Nöd glade',
   Permissions: 'Berächtigunge',
   Options: 'Optione',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'Remote',
   'Add host': 'Host hinzuefüege',
   Reconnect: 'Nöi verbinde',
@@ -2220,11 +2112,8 @@ export const gsw: Dictionary = {
   'No group': 'Kei Gruppe',
   'Not an address': 'Kei Adrässe',
   'Could not connect to {host}': 'Kei Verbindig zu {host}',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'Bild wird gschickt',
   'Could not send the image': 'Bild het nöd chöne gschickt wärde',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': {
     one: 'und {count} dänah',
     other: 'und {count} dänah',
@@ -2238,8 +2127,6 @@ export const gsw: Dictionary = {
     'Siite, Terminals und Verschiebige wärde nöd zrugggnoh',
   Rewind: 'Zruggspuele',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'Suchmaschine',
   History: 'Verlauf',
   'Search history': 'Suchverlauf',
@@ -2263,14 +2150,12 @@ export const gsw: Dictionary = {
   'New private tab': 'Neue private Tab',
   'All spaces': 'Alli Bereich',
   'the data could not be deleted': 'D Date händ nöd chönne glöscht werde',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Schlummere',
   Reminders: 'Erinnerige',
   'Reminders ring while Orden is open': 'Erinnerige lüütet, solang Orden offe isch',
   Automatic: 'Automatisch',
   'Stay in the tray': 'Im Infobereich bliibe',
   'Exact alarms': 'Gnaui Wecker',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'Ufgabe',
   'Plan my day': 'Mii Tag plane',
   'Add a task': 'Ufgab dezuetue',
@@ -2282,8 +2167,6 @@ export const gsw: Dictionary = {
   'Done tasks too': 'Au erledigti Ufgabe',
   'As a task': 'Als Ufgab',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'Ufgabe',
   Ascending: 'Ufstiigend',
   Descending: 'Abstiigend',
@@ -2368,8 +2251,6 @@ export const gsw: Dictionary = {
   'Without a value': 'Ohni Wert',
   'With a value': 'Mit Wert',
   Unique: 'Eidüütig',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'Neui Notiz us Vorlag',
   Automations: 'Automatione',
   'Row added': 'Ziile drzuegfüegt',
@@ -2398,7 +2279,6 @@ export const gsw: Dictionary = {
   Form: 'Formular',
   Formula: 'Formle',
   'Blocked by {task}': 'Wartet uf {task}',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'Vor em Beände warne',
   'When something runs': 'Wenn öppis lauft',
   'Quit {name}?': '{name} beände?',
@@ -2409,16 +2289,13 @@ export const gsw: Dictionary = {
   'Quit anyway': 'Trotzdem beände',
   'Restart anyway': 'Trotzdem neu starte',
   'Close anyway': 'Trotzdem zuemache',
-  // The online terminal
   'Online terminal': 'Online-Terminal',
   'New online terminal': 'Neus Online-Terminal',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'es anders Grät',
   'Taken over by {device}': 'Übernoo vo {device}',
   'Open on {device} since {time}': 'Offe uf {device} sit {time}',
   'Take over': 'Übernää',
   'Take back': 'Zrugghole',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'Neui Aawändig',
   Application: 'Aawändig',
   'This application’s file is damaged': 'D Datei vo dere Aawändig isch kaputt',
@@ -2526,8 +2403,6 @@ export const gsw: Dictionary = {
   'Compare with original': 'Mit em Original verglyche',
   'Conflict copies from other apps': 'Konfliktkopie vo andere Apps',
   'Remove from sync': 'Us em Sync näh',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'Profil',
   Change: 'Ändere',
   'Take photo': 'Foti mache',
@@ -2552,7 +2427,6 @@ export const gsw: Dictionary = {
   'that picture could not be opened': 'das Bild het nöd chöne göffnet wärde',
   'the camera could not be opened': 'd Kamera het nöd chöne göffnet wärde',
   'that picture is too big': 'das Bild isch z gross',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'Chat',
   Reply: 'Antworte',
   Replies: 'Antworte',
@@ -2571,7 +2445,6 @@ export const gsw: Dictionary = {
   'Also send to {chat}': 'Au i {chat} schicke',
   'Skin tone': 'Hutfarb',
   'Deleted account': 'Glöschts Konto',
-  // Chats: notifications
   Mute: 'Stummschalte',
   Unmute: 'Stummschaltig ufhebe',
   'New message': 'Neui Nachricht',
@@ -2581,7 +2454,6 @@ export const gsw: Dictionary = {
   Weekdays: 'Wärchtigs',
   Starts: 'Fangt aa',
   Ends: 'Hört uf',
-  // Chats: everywhere
   'Read chats': 'Chats läse',
   'Post in chats': 'I Chats schriibe',
   'Always in this chat': 'Immer i dem Chat',
@@ -2593,14 +2465,12 @@ export const gsw: Dictionary = {
   'Search this chat': 'Dä Chat dursueche',
   'Add as task': 'Als Ufgab hinzuefüege',
   'Save as note': 'Als Notiz speichere',
-  // Appearance: glass's own pairs of colours
   Dawn: 'Morgerot',
   Lagoon: 'Lagune',
   Lilac: 'Flieder',
   Peach: 'Pfirsich',
   Sage: 'Salbei',
   Mist: 'Näbel',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'Nöii Datebank',
   'New page': 'Nöii Siite',
   'Not started': 'Nonig aagfange',
@@ -2626,7 +2496,6 @@ export const gsw: Dictionary = {
   Large: 'Gross',
   Both: 'Beides',
   'Shown on cards': 'Uf de Charte zeigt',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'Glicht d KI-Schlüssel vo däm Browser über de Tresor mit dine andere Gräät ab.',
   'Which of your AI accounts this feature asks.': 'Weles vo dine KI-Konti die Funktion fragt.',
@@ -2870,7 +2739,6 @@ export const gsw: Dictionary = {
   'Some changes may not be noticed': 'Gwüssi Änderige merkt mer villicht nöd',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'S System hät sini Gränze für überwachti Ordner erreicht, drum merkt Orden villicht nöd jedi Änderig, wo anderi Programm i dine Bereich mached. fs.inotify.max_user_watches uufehaa behebt das.',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Chat {name} uf {space} verschiebe?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'Alli in {space} chönd dänn de ganz Verlauf läse, und d Lüüt in {from} verlüüred en.',
@@ -2910,7 +2778,6 @@ export const gsw: Dictionary = {
   'One colour': 'Eifarbig',
   'Web icons': 'Web-Symbol',
   'Sites you visit will appear here': 'Websites, wo du bsuechsch, erschiined da',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'Diktiere',
   'Dictate with': 'Diktiere mit',
   'Where your voice goes to be turned into words.':
@@ -2941,11 +2808,9 @@ export const gsw: Dictionary = {
   'Not on this device': 'Nöd uf däm Gräät',
   'Not on this device. It opens once you are online again.':
     'Nöd uf däm Gräät. Es gaht uf, sobald du wider online bisch.',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'IMAP-Server',
   'SMTP server': 'SMTP-Server',
   'User name': 'Benutzername',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'Dringend',
   Important: 'Wichtig',
   'If time': 'Wenn Ziit isch',

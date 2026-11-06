@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const th: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'พร้อมแล้ว',
   Personalize: 'ปรับแต่ง',
   Clean: 'สะอาดตา',
@@ -10,12 +9,10 @@ export const th: Dictionary = {
   'Do you write code?': 'คุณเขียนโค้ดไหม?',
   Yes: 'ใช่',
   No: 'ไม่',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'จากแอปอื่น: {key}',
   'From other apps: set in your system settings': 'จากแอปอื่น: ตั้งในการตั้งค่าระบบ',
   'From other apps: bind {command} in your system settings':
     'จากแอปอื่น: กำหนด {command} ในการตั้งค่าระบบ',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Essentials',
   'Add to Essentials': 'เพิ่มไปยัง Essentials',
   'Remove from Essentials': 'นำออกจาก Essentials',
@@ -23,20 +20,16 @@ export const th: Dictionary = {
   'Add blocks to Essentials': 'เพิ่มบล็อกทั้งหมดไปยัง Essentials',
   'Add view to Essentials': 'เพิ่มมุมมองไปยัง Essentials',
   'Open tabs and Essentials': 'เปิดแท็บและ Essentials',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor เปลี่ยนชื่อเป็น Orden แล้ว',
   'Notes from nibeditor.com': 'โน้ตจาก nibeditor.com',
   'Nothing there': 'ไม่มีอะไรที่นั่น',
-  // AI: the three permission modes
   'Full permissions': 'สิทธิ์เต็ม',
   'Auto mode': 'โหมดอัตโนมัติ',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'สิทธิ์เต็ม: ไม่ถามและไม่ส่งคืนให้คุณ แม้แต่การลงชื่อเข้าใช้ การชำระเงิน การส่ง หรือการลบ',
-  // Import: Zen's tabs
   'Import from Zen': 'นำเข้าจาก Zen',
   'Containers stay in Zen': 'คอนเทนเนอร์ยังอยู่ใน Zen',
   'Zen’s tabs could not be read.': 'อ่านแท็บของ Zen ไม่ได้',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'คอนเทนเนอร์ยังอยู่ใน Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} ค้นหาด้วย {engine}: เลือกในการตั้งค่าเพื่อค้นหาด้วยสิ่งนั้นที่นี่ด้วย',
@@ -59,38 +52,29 @@ export const th: Dictionary = {
   'Reading List': 'รายการอ่าน',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS เก็บแท็บและบุ๊กมาร์กของ Safari ไว้หลังการเข้าถึงดิสก์เต็มรูปแบบ เปิด Orden ที่นั่นแล้วลองอีกครั้ง',
-  // Settings: note types
   'Page note': 'โน้ตแบบหน้า',
   'Web note': 'โน้ตเว็บ',
   'Private tab': 'แท็บส่วนตัว',
   'Note types': 'ประเภทโน้ต',
-  // Tasks: Upcoming's weeks
   'Previous week': 'สัปดาห์ก่อนหน้า',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'เพิ่มโปรเจกต์ด้านบน',
   'Add project below': 'เพิ่มโปรเจกต์ด้านล่าง',
   'Projects folder': 'โฟลเดอร์โปรเจกต์',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'ข้าม',
   'Complete forever': 'เสร็จถาวร',
-  // Tasks: comments
   Comments: 'ความคิดเห็น',
-  // Tasks: filters
   Filters: 'ตัวกรอง',
   'Add filter': 'เพิ่มตัวกรอง',
   'Edit filter': 'แก้ไขตัวกรอง',
-  // Tasks: a project's sections
   'Add section': 'เพิ่มส่วน',
   '{name} (copy)': '{name} (สำเนา)',
   'Its tasks are deleted with it.': 'งานในนั้นจะถูกลบไปด้วย',
-  // Tasks: keys, selection and the undo toast
   Completed: 'เสร็จแล้ว',
   'Remove date': 'เอาวันที่ออก',
   'Next task': 'งานถัดไป',
   'Previous task': 'งานก่อนหน้า',
   'Add task at the top': 'เพิ่มงานไว้บนสุด',
   '{count} selected': 'เลือกแล้ว {count}',
-  // Tasks: the Display menu
   Display: 'การแสดงผล',
   'Completed tasks': 'งานที่เสร็จแล้ว',
   Smart: 'อัจฉริยะ',
@@ -102,20 +86,16 @@ export const th: Dictionary = {
   'Reset all': 'รีเซ็ตทั้งหมด',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'เลย์เอาต์แสดงงานเป็นรายการ บอร์ด หรือปฏิทิน การจัดกลุ่มแบ่งงานเป็นกลุ่ม ซึ่งเป็นคอลัมน์ของบอร์ด การเรียงลำดับจัดลำดับแต่ละกลุ่ม ตัวกรองซ่อนสิ่งที่คุณไม่ต้องการ ทั้งหมดนี้จะถูกเก็บไว้สำหรับมุมมองนี้',
-  // Tasks: several lines pasted into quick add
   'One task': 'งานเดียว',
   'One per line': 'บรรทัดละงาน',
   'Add with AI': 'เพิ่มด้วย AI',
-  // Tasks: the projects in the panel
   Favorites: 'รายการโปรด',
   'Add project': 'เพิ่มโปรเจกต์',
   'Add sub-project': 'เพิ่มโปรเจกต์ย่อย',
-  // Tasks: the task view
   'Sub-tasks': 'งานย่อย',
   'Add sub-task': 'เพิ่มงานย่อย',
   'New label': 'ป้ายใหม่',
   'No deadline': 'ไม่มีกำหนดส่ง',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'กำหนดเวลาใหม่',
   'Later this week': 'ภายหลังในสัปดาห์นี้',
   'This weekend': 'สุดสัปดาห์นี้',
@@ -132,22 +112,18 @@ export const th: Dictionary = {
   Reopen: 'เปิดอีกครั้ง',
   Schedule: 'กำหนดเวลา',
   'Open in note': 'เปิดในโน้ต',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'แอปอื่น',
   'Import from Obsidian': 'นำเข้าจาก Obsidian',
   'Import from Notion': 'นำเข้าจาก Notion',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'คำแนะนำ',
   'Silent mode': 'โหมดเงียบ',
   'See how your notes connect.': 'ดูว่าโน้ตของคุณเชื่อมโยงกันอย่างไร',
   'Press {key} to find anything, notes and commands alike.':
     'กด {key} เพื่อค้นหาทุกอย่าง ทั้งโน้ตและคำสั่ง',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'แสดง Markdown ขณะเขียน',
   'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'ตัวชี้',
   'Pointing hand on buttons': 'มือชี้บนปุ่ม',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'เพิ่มงาน',
   'Apple Shortcuts': 'Apple คำสั่งลัด',
   Tomorrow: 'พรุ่งนี้',
@@ -173,7 +149,6 @@ export const th: Dictionary = {
   'Every week': 'ทุกสัปดาห์',
   'Every month': 'ทุกเดือน',
   'Every year': 'ทุกปี',
-  // Files and notes
   Save: 'บันทึก',
   'New note': 'โน้ตใหม่',
   'Random note': 'โน้ตแบบสุ่ม',
@@ -201,8 +176,6 @@ export const th: Dictionary = {
   'Release to add a page': 'ปล่อยเพื่อเพิ่มหน้า',
   'Page {number}': 'หน้า {number}',
   'The paper could not be read': 'อ่านกระดาษไม่ได้',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'หน้ายาว',
@@ -245,7 +218,6 @@ export const th: Dictionary = {
   'Choose a picture': 'เลือกรูปภาพ',
   'Remove picture': 'เอารูปภาพออก',
   'That picture could not be read.': 'อ่านรูปภาพนั้นไม่ได้',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'ความอิ่มตัว',
   Tint: 'โทนสี',
   'Tint colour': 'สีของโทน',
@@ -373,7 +345,6 @@ export const th: Dictionary = {
   'Merge into…': 'รวมเข้ากับ…',
   'Split at caret': 'แยกที่เคอร์เซอร์',
   'Extract selection': 'แยกส่วนที่เลือกออก',
-  // Panels and navigation
   Bookmarks: 'บุ๊กมาร์ก',
   'New group': 'กลุ่มใหม่',
   'Remove group': 'ลบกลุ่ม',
@@ -427,8 +398,6 @@ export const th: Dictionary = {
   'Sort by name': 'เรียงตามชื่อ',
   'Sort by modified': 'เรียงตามวันแก้ไข',
   'Sort by created': 'เรียงตามวันสร้าง',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'ลำดับของไฟล์',
   'Name, A to Z': 'ชื่อ ก ถึง ฮ',
   'Name, Z to A': 'ชื่อ ฮ ถึง ก',
@@ -439,7 +408,6 @@ export const th: Dictionary = {
   Manual: 'จัดเอง',
   'Show hidden files': 'แสดงไฟล์ที่ซ่อน',
   'Hide hidden files': 'ซ่อนไฟล์ที่ซ่อน',
-  // Writing
   Bold: 'ตัวหนา',
   Italic: 'ตัวเอน',
   Strikethrough: 'ขีดฆ่า',
@@ -524,11 +492,9 @@ export const th: Dictionary = {
   'Horizontal rule': 'เส้นคั่น',
   'Page break': 'ตัวแบ่งหน้า',
   'Tidy up this note': 'จัดระเบียบโน้ตนี้',
-  // PDFs
   'Copy a link': 'คัดลอกลิงก์',
   'That PDF could not be opened': 'เปิด PDF นั้นไม่ได้',
   'That file could not be read': 'อ่านไฟล์นั้นไม่ได้',
-  // Modes and view
   Reading: 'อ่าน',
   'Leave reading': 'ออกจากโหมดอ่าน',
   Present: 'นำเสนอ',
@@ -568,7 +534,6 @@ export const th: Dictionary = {
   'Zoom in': 'ขยาย',
   'Zoom out': 'ย่อ',
   'Actual size': 'ขนาดจริง',
-  // Appearance
   Accent: 'สีเน้น',
   'Tidy up': 'จัดระเบียบ',
   'Blur the app behind the tab overview': 'เบลอแอปด้านหลังภาพรวมแท็บ',
@@ -695,7 +660,6 @@ export const th: Dictionary = {
   'Switch theme': 'สลับธีม',
   Style: 'สไตล์',
   Mode: 'โหมด',
-  // The window's own edges; see appearance.rs
   Window: 'หน้าต่าง',
   'Orden’s own': 'ของ Orden',
   'The system’s': 'ของระบบ',
@@ -706,7 +670,6 @@ export const th: Dictionary = {
   'Edit custom CSS': 'แก้ CSS ของคุณ',
   'Edit snippets': 'แก้สนิปเพ็ต',
   'Reload themes and custom CSS': 'โหลดธีมและ CSS ใหม่',
-  // The theme store, and the sample note its cards show
   Themes: 'ธีม',
   Browse: 'เลือกดู',
   'Search themes': 'ค้นหาธีม',
@@ -782,7 +745,6 @@ export const th: Dictionary = {
   'Code only': 'โค้ดเท่านั้น',
   Everywhere: 'ทุกที่',
   Attachments: 'ไฟล์แนบ',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'โน้ตแบบหน้า',
   'New pages': 'หน้าใหม่',
   'Assets folder of the space': 'โฟลเดอร์แอสเซตของพื้นที่',
@@ -834,7 +796,6 @@ export const th: Dictionary = {
   'Machine-translated. Corrections welcome.': 'แปลด้วยเครื่อง ยินดีรับการแก้ไข',
   'The glasses show English.': 'แว่นแสดงเป็นภาษาอังกฤษ',
   'Match the app': 'ตามแอป',
-  // Settings
   Settings: 'ตั้งค่า',
   Account: 'บัญชี',
   Publish: 'เผยแพร่',
@@ -857,7 +818,6 @@ export const th: Dictionary = {
   '{count} spaces sync to your account.': '{count} พื้นที่ซิงก์กับบัญชีของคุณ',
   Update: 'อัปเดต',
   'Live at': 'ออนไลน์ที่',
-  // Publishing
   'Publish {name}': 'เผยแพร่ {name}',
   'What to publish': 'เผยแพร่อะไร',
   'The whole space': 'ทั้งพื้นที่',
@@ -876,7 +836,6 @@ export const th: Dictionary = {
   Value: 'ค่า',
   available: 'ว่าง',
   'checking…': 'กำลังตรวจ…',
-  // LLM
   'Connect an LLM to your notes': 'เชื่อม LLM กับโน้ตของคุณ',
   'Sign in first - the connector reaches the notes in your account.':
     'เข้าสู่ระบบก่อน - ตัวเชื่อมจะเข้าถึงโน้ตในบัญชีของคุณ',
@@ -927,7 +886,6 @@ export const th: Dictionary = {
     'สำหรับไคลเอนต์ที่รับบล็อก JSON แทน URL',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'ไคลเอนต์ที่เข้าสู่ระบบไม่ได้ให้ใช้โทเคนแทน แสดงครั้งเดียวเท่านั้น',
-  // Export
   'Plain text': 'ข้อความล้วน',
   'Markdown with the pictures': 'Markdown พร้อมรูป',
   'HTML without styles': 'HTML ไม่มีสไตล์',
@@ -946,13 +904,11 @@ export const th: Dictionary = {
   Margin: 'ขอบ',
   Header: 'หัวกระดาษ',
   Footer: 'ท้ายกระดาษ',
-  // History
   'Version history': 'ประวัติเวอร์ชัน',
   'Copy link to this note': 'คัดลอกลิงก์ของโน้ตนี้',
   'that link could not be followed': 'เปิดลิงก์นั้นไม่ได้',
   'No earlier versions yet.': 'ยังไม่มีเวอร์ชันก่อนหน้า',
   'Restore this version': 'กู้คืนเวอร์ชันนี้',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'มีโน้ตอยู่ที่นั่นแล้ว',
   'enter a valid email address': 'กรอกอีเมลที่ใช้ได้',
   'give the space a name': 'ตั้งชื่อพื้นที่',
@@ -983,7 +939,6 @@ export const th: Dictionary = {
   'could not publish': 'เผยแพร่ไม่ได้',
   'could not create a token': 'สร้างโทเคนไม่ได้',
   'that did not work': 'ทำไม่สำเร็จ',
-  // Settings on a phone, display names, one blog address
   Back: 'ย้อนกลับ',
   'Display name': 'ชื่อที่แสดง',
   'Your name': 'ชื่อของคุณ',
@@ -1003,7 +958,6 @@ export const th: Dictionary = {
   Spelling: 'การสะกด',
   Checking: 'กำลังตรวจ',
   Dictionary: 'พจนานุกรม',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'กำลังรอเรคคอร์ดปรากฏ',
   'Certificate issued.': 'ออกใบรับรองแล้ว',
   'Cloudflare could not set this domain up.': 'Cloudflare ตั้งโดเมนนี้ไม่ได้',
@@ -1014,7 +968,6 @@ export const th: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare บล็อกโดเมนนี้',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'ที่รูทของโดเมน ให้ใช้เรคคอร์ด ALIAS หรือ ANAME หรือ CNAME flattening ถ้าผู้ให้บริการไม่ยอมให้ใช้ CNAME ที่นั่น',
-  // Shortcuts
   Shortcuts: 'ทางลัด',
   'Search shortcuts': 'ค้นหาทางลัด',
   'Second key': 'ปุ่มที่สอง',
@@ -1175,7 +1128,6 @@ export const th: Dictionary = {
   Delegated: 'มอบหมายแล้ว',
   'Code theme: {name}': 'ธีมโค้ด: {name}',
   'Delete a layout': 'ลบเลย์เอาต์',
-  // Keyboards and modal editing
   Default: 'ค่าเริ่มต้น',
   'Vim keys': 'ปุ่มแบบ Vim',
   'Follow the link': 'เปิดลิงก์',
@@ -1187,11 +1139,9 @@ export const th: Dictionary = {
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
   REPLACE: 'REPLACE',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'หน้า {page} จาก {count} บนแว่น',
   'Reaching the glasses': 'กำลังติดต่อแว่น',
   'The glasses are not keeping up': 'แว่นตามไม่ทัน',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'เพิ่ม',
   Select: 'เลือก',
   Pan: 'เลื่อนมุมมอง',
@@ -1221,7 +1171,6 @@ export const th: Dictionary = {
   Calligraphy: 'ปากกาคัดลายมือ',
   'Width {number}': 'ความหนา {number}',
   'Finger draws': 'นิ้ววาดได้',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'ความหนา',
   Opacity: 'ความทึบ',
   Colour: 'สี',
@@ -1265,23 +1214,19 @@ export const th: Dictionary = {
   'Export as PNG': 'ส่งออกเป็น PNG',
   'Export as SVG': 'ส่งออกเป็น SVG',
   'Export as PDF': 'ส่งออกเป็น PDF',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'นำเข้า PDF',
   'Choose how to add the pages to the canvas.': 'เลือกวิธีเพิ่มหน้าลงบนแคนวาส',
   'Single page': 'หน้าเดียว',
   'All pages': 'ทุกหน้า',
   'Choose a page': 'เลือกหน้า',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'ลบสิ่งที่เลือก',
   'Nudge left': 'ขยับซ้าย',
   'Nudge right': 'ขยับขวา',
   'Nudge up': 'ขยับขึ้น',
   'Nudge down': 'ขยับลง',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'เปิดอยู่ที่อื่นด้วย',
   Shared: 'แชร์แล้ว',
   Browser: 'เบราว์เซอร์',
-  // Sharing a space with other people
   Share: 'แชร์',
   'Share {name}': 'แชร์ {name}',
   'Share this space': 'แชร์พื้นที่นี้',
@@ -1325,14 +1270,12 @@ export const th: Dictionary = {
   'Shared with you': 'แชร์กับคุณ',
   'That link does not open anything': 'ลิงก์นั้นไม่เปิดอะไรเลย',
   'Ask for another one.': 'ขออันใหม่',
-  // Somebody a share link let in, who has no account
   Guest: 'ผู้มาเยือน',
   'Ask to join': 'ขอเข้าร่วม',
   Asking: 'กำลังขอ',
   'Waiting for {who}': 'กำลังรอ {who}',
   '{who} did not let you in': '{who} ไม่ให้คุณเข้า',
   'What the others in this space see.': 'สิ่งที่คนอื่นในพื้นที่นี้เห็น',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'อัปเดต',
   'Release channel': 'ช่องทางอัปเดต',
   Stable: 'เสถียร',
@@ -1342,8 +1285,6 @@ export const th: Dictionary = {
   'Web version': 'เวอร์ชันเว็บ',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'เสถียรคือเว็บแอปที่ปล่อยแล้ว ไม่เสถียรคือบิลด์ล่าสุดและอาจเสีย',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'นำเข้า',
   'Convert syntax': 'แปลงไวยากรณ์',
   'In this note': 'ในโน้ตนี้',
@@ -1429,8 +1370,6 @@ export const th: Dictionary = {
   'Undo the import': 'เลิกนำเข้า',
   'Choose an export': 'เลือกไฟล์ส่งออก',
   Under: 'ใต้',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'ซิงก์',
   'When the same note was written twice': 'เมื่อโน้ตเดียวกันถูกเขียนสองที่',
   'On two devices': 'บนสองเครื่อง',
@@ -1486,7 +1425,6 @@ export const th: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'โน้ตในอุปกรณ์นี้ยังอยู่ จะหายไปเฉพาะบัญชีและสำเนาที่ซิงค์ไว้เท่านั้น',
   'Also gone for everyone in {spaces}.': 'จะหายไปสำหรับทุกคนใน {spaces} ด้วย',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'โน้ต',
   '{space} panel': 'แผงของ {space}',
   'Panel width': 'ความกว้างแผง',
@@ -1497,7 +1435,6 @@ export const th: Dictionary = {
   'What is selected': 'ส่วนที่เลือก',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'ผ้าใบ: การ์ด {cards} ลิงก์ {links} ภาพวาด {drawings}',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'ผู้ให้บริการ',
   'Make default': 'ตั้งเป็นค่าเริ่มต้น',
@@ -1523,7 +1460,6 @@ export const th: Dictionary = {
   'Add an AI provider in Settings first.': 'เพิ่มผู้ให้บริการ AI ในการตั้งค่าก่อน',
   'The model did not answer.': 'โมเดลไม่ตอบ',
   'The connection closed before the answer was finished.': 'การเชื่อมต่อปิดลงก่อนที่คำตอบจะเสร็จ',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'แพ็กเกจ {plan} ของคุณถึงขีดจำกัดจนถึง {time}',
   'Your {plan} plan is at its limit for now.': 'แพ็กเกจ {plan} ของคุณถึงขีดจำกัดแล้วในตอนนี้',
   'Your {plan} plan is near its limit.': 'แพ็กเกจ {plan} ของคุณใกล้ถึงขีดจำกัด',
@@ -1549,7 +1485,6 @@ export const th: Dictionary = {
   Shorter: 'สั้นลง',
   Longer: 'ยาวขึ้น',
   'Fix grammar': 'แก้ไวยากรณ์',
-  // The AI sidebar's commands
   'A cited report': 'รายงานพร้อมอ้างอิง',
   'A helper in the background': 'ผู้ช่วยเบื้องหลัง',
   'A side question': 'คำถามข้างเคียง',
@@ -1651,7 +1586,6 @@ export const th: Dictionary = {
   'Markdown, shortest name': 'Markdown ชื่อสั้นสุด',
   'Markdown, relative path': 'Markdown เส้นทางสัมพัทธ์',
   'Markdown, path in the space': 'Markdown เส้นทางในสเปซ',
-  // Publishing part one.
   'The folders you choose become public.': 'โฟลเดอร์ที่เลือกจะเป็นสาธารณะ',
   'Anyone with the address can read what is published, drafts included.':
     'ใครมีที่อยู่ก็อ่านสิ่งที่เผยแพร่ได้ รวมถึงฉบับร่าง',
@@ -1677,11 +1611,9 @@ export const th: Dictionary = {
   'Remove the password': 'เอารหัสผ่านออก',
   'Scan this with your authenticator app, then type its code.':
     'สแกนสิ่งนี้ด้วยแอปยืนยันตัวตนแล้วพิมพ์รหัสของมัน',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'รูปถ่าย',
   Dictate: 'พูดตามคำบอก',
   'Add to {name}': 'เพิ่มไปที่ {name}',
-  // Web tabs
   Reload: 'โหลดใหม่',
   'Hard reload': 'โหลดใหม่ทั้งหมด',
   'Open in the browser': 'เปิดในเบราว์เซอร์',
@@ -1696,7 +1628,6 @@ export const th: Dictionary = {
   'Playing audio': 'กำลังเล่นเสียง',
   Muted: 'ปิดเสียงอยู่',
   'Developer tools': 'เครื่องมือสำหรับนักพัฒนาซอฟต์แวร์',
-  // Recording, meetings and what a model wrote
   Record: 'บันทึกเสียง',
   Recording: 'การบันทึก',
   'Stop recording': 'หยุดบันทึก',
@@ -1717,7 +1648,6 @@ export const th: Dictionary = {
     'ไฟล์เสียงนั้นยาวเกินกว่าจะเปลี่ยนเป็นข้อความในครั้งเดียว',
   'That is as much as one recording may hold.': 'หนึ่งไฟล์เสียงรับได้เท่านี้',
   'Nothing could be heard in that recording.': 'ในไฟล์เสียงนั้นไม่ได้ยินอะไร',
-  // Publishing part two.
   Spreadsheet: 'สเปรดชีต',
   'The app’s own': 'ของแอปเอง',
   'publish.css and publish.js in this space dress the site.':
@@ -1733,14 +1663,12 @@ export const th: Dictionary = {
   'Save as CSV': 'บันทึกเป็น CSV',
   'Kept for {days}': 'เก็บไว้ {days}',
   Full: 'เต็ม',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ส่งเมลไม่ได้ - ลองใหม่',
   'start again - that took too long': 'เริ่มใหม่ - ใช้เวลานานเกินไป',
   'sign in to do that': 'เข้าสู่ระบบเพื่อทำสิ่งนั้น',
   'that is not something a token can do': 'โทเคนทำสิ่งนั้นไม่ได้',
   'something went wrong here - try again': 'มีอะไรผิดพลาดที่นี่ - ลองใหม่',
   'this service cannot keep a secret safely': 'บริการนี้เก็บรหัสลับอย่างปลอดภัยไม่ได้',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only': 'รูป PDF และ css หรือ js ของเว็บเท่านั้น',
   'that file is too big': 'ไฟล์นั้นใหญ่เกินไป',
   'that is more settings than an account holds': 'การตั้งค่ามากกว่าที่บัญชีเก็บได้',
@@ -1750,13 +1678,11 @@ export const th: Dictionary = {
   'that is more than a space keeps about its graph': 'มากกว่าที่พื้นที่เก็บเรื่องกราฟได้',
   'that is more folder icons than a space holds': 'ไอคอนโฟลเดอร์มากกว่าที่พื้นที่เก็บได้',
   'that is more than a site keeps': 'มากกว่าที่เว็บเก็บได้',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'ไม่มีใครใช้อีเมลนั้น',
   'nobody by that name': 'ไม่มีใครชื่อนั้น',
   'nobody is waiting by that name': 'ไม่มีใครชื่อนั้นกำลังรอ',
   'this space is yours': 'พื้นที่นี้เป็นของคุณ',
   'that link is busy, try again in a minute': 'ลิงก์นั้นไม่ว่าง ลองใหม่ในอีกหนึ่งนาที',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'ไม่มีเวอร์ชันนั้น',
   'this note was shared with you, not its folder': 'โน้ตนี้ถูกแชร์กับคุณ ไม่ใช่โฟลเดอร์ของมัน',
   'nothing to restore': 'ไม่มีอะไรให้กู้คืน',
@@ -1764,7 +1690,6 @@ export const th: Dictionary = {
   'nothing to delete': 'ไม่มีอะไรให้ลบ',
   'this room is not answering - try again': 'ห้องนี้ไม่ตอบ - ลองใหม่',
   'rooms are not running here': 'ที่นี่ไม่เปิดใช้ห้อง',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'ร้านธีมไม่ตอบ',
   'that is not a theme': 'นั่นไม่ใช่ธีม',
   'no such theme': 'ไม่มีธีมนั้น',
@@ -1776,10 +1701,8 @@ export const th: Dictionary = {
   'that is more than a spoken command': 'นั่นเกินกว่าคำสั่งเสียงหนึ่งคำสั่ง',
   'that is a lot of listening - try again later': 'ฟังมากเกินไป - ลองใหม่ภายหลัง',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% ของข้อความ',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'มือถือ',
   'The bar sits over the keyboard on a phone.': 'บนมือถือแถบจะอยู่เหนือแป้นพิมพ์',
   'On the bar': 'บนแถบ',
@@ -1793,31 +1716,25 @@ export const th: Dictionary = {
   'A pull past the top runs': 'ลากเลยด้านบนแล้วสั่ง',
   Nothing: 'ไม่มี',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'เก็บ',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'ย้ายไปขวา',
   'Move to the left': 'ย้ายไปซ้าย',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'ประวัติบนบัญชี',
   'Keep versions': 'เก็บเวอร์ชัน',
   'A month': 'หนึ่งเดือน',
   'A year': 'หนึ่งปี',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'ทั้งหมดของวันล่าสุด แล้วชั่วโมงละหนึ่ง หลังหนึ่งเดือนวันละหนึ่ง และหลังสามเดือนสัปดาห์ละหนึ่ง',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'บันทึกนี้ใหญ่ที่สุดเท่าที่บันทึกในห้องจะเป็นได้แล้ว',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'แท็บใหม่',
   'Full screen': 'เต็มหน้าจอ',
   'Print…': 'พิมพ์…',
   'Share…': 'แชร์…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'ต้องการที่จะ',
   'Don’t allow': 'ไม่อนุญาต',
   Allow: 'อนุญาต',
@@ -1833,7 +1750,6 @@ export const th: Dictionary = {
   'Use your MIDI devices': 'ใช้อุปกรณ์ MIDI ของคุณ',
   'Manage windows on all your displays': 'จัดการหน้าต่างบนจอแสดงผลทั้งหมดของคุณ',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'ข้อมูลเว็บไซต์',
   Downloads: 'ดาวน์โหลด',
   'Downloading {name}': 'กำลังดาวน์โหลด {name}',
@@ -1860,11 +1776,9 @@ export const th: Dictionary = {
   'Turn into': 'เปลี่ยนเป็น',
   Foldable: 'พับได้',
   'Starts folded': 'เริ่มแบบพับ',
-  // Where a space keeps what websites store
   'Web data': 'ข้อมูลเว็บ',
   Global: 'ทั้งหมด',
   Site: 'เว็บไซต์',
-  // The Mac's menu bar
   'About {name}': 'เกี่ยวกับ {name}',
   Services: 'บริการ',
   'Hide {name}': 'ซ่อน {name}',
@@ -1872,7 +1786,6 @@ export const th: Dictionary = {
   'Show all': 'แสดงทั้งหมด',
   'Quit {name}': 'ออกจาก {name}',
   'Bring all to front': 'นำทั้งหมดมาไว้ด้านหน้า',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'เลิกทำการคัดลอก',
   'Devices with your AI vault': 'อุปกรณ์ที่มีห้องนิรภัย AI ของคุณ',
   'This device': 'อุปกรณ์นี้',
@@ -1887,13 +1800,11 @@ export const th: Dictionary = {
   'Select down': 'เลือกลง',
   'Select up': 'เลือกขึ้น',
   'Select or deselect': 'เลือกหรือยกเลิกการเลือก',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'เปิดในแท็บใหม่',
   'Open to the side': 'เปิดด้านข้าง',
   'Open all': 'เปิดทั้งหมด',
   'Show in the file list': 'แสดงในรายการไฟล์',
   'Collapse the file list': 'ยุบรายการไฟล์',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'ขยายส่วนที่เลือก',
   'Shrink the selection': 'ย่อส่วนที่เลือก',
   'Insert a line above': 'แทรกบรรทัดด้านบน',
@@ -1907,18 +1818,15 @@ export const th: Dictionary = {
   'Duplicate the block': 'ทำสำเนาบล็อก',
   'Move the block up': 'ย้ายบล็อกขึ้น',
   'Move the block down': 'ย้ายบล็อกลง',
-  // The editor's menu on a link and a picture
   'Copy link address': 'คัดลอกที่อยู่ลิงก์',
   'Edit link': 'แก้ไขลิงก์',
   'Remove link': 'เอาลิงก์ออก',
   'Copy picture': 'คัดลอกรูป',
   'Open picture': 'เปิดรูป',
   'Delete picture': 'ลบรูป',
-  // A file dropped into a note
   'Storing the file': 'กำลังจัดเก็บไฟล์',
   'That file is larger than a note can keep.': 'ไฟล์นี้ใหญ่เกินกว่าที่โน้ตจะเก็บได้',
   'That file could not be kept.': 'เก็บไฟล์นี้ไม่ได้',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'เทอร์มินัลใหม่',
   'Command Prompt': 'พรอมต์คำสั่ง',
   Terminal: 'เทอร์มินัล',
@@ -1940,11 +1848,8 @@ export const th: Dictionary = {
   'Saved nowhere, a session kept running is found again in Settings, {pane}.':
     'ไม่ได้บันทึกไว้ที่ใด เซสชันที่ปล่อยให้ทำงานต่อจะพบได้อีกในการตั้งค่า {pane}',
   'Paste {count} lines?': 'วาง {count} บรรทัดหรือไม่',
-  // Orden as the default browser
   'Default browser': 'เบราว์เซอร์ค่าเริ่มต้น',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': 'เลิกทำการแก้ไขของ {name}',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'เก็บถาวร',
   Unarchive: 'เลิกเก็บถาวร',
   Archived: 'เก็บถาวรแล้ว',
@@ -1954,7 +1859,6 @@ export const th: Dictionary = {
   'Nothing archived is deleted': 'สิ่งที่เก็บถาวรจะไม่ถูกลบ',
   'Show them': 'แสดง',
   '{count} archived items inside': 'มี {count} รายการที่เก็บถาวรอยู่ข้างใน',
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'แถบข้างซ้าย',
   'Right sidebar': 'แถบข้างขวา',
   'Ask about this space': 'ถามเกี่ยวกับพื้นที่นี้',
@@ -1965,7 +1869,6 @@ export const th: Dictionary = {
   'Ask again': 'ถามอีกครั้ง',
   'Continue when the limit resets': 'ทำต่อเมื่อขีดจำกัดรีเซ็ต',
   'Continues at {time}': 'ทำต่อเวลา {time}',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ถามอะไรก็ได้ @ เพื่อแนบ / เพื่อดูเพิ่ม',
   'What can I help with?': 'ให้ช่วยอะไรดี?',
   'Add photos and files': 'เพิ่มรูปภาพและไฟล์',
@@ -2033,12 +1936,9 @@ export const th: Dictionary = {
   Closed: 'ปิดแล้ว',
   Ran: 'เรียกใช้แล้ว',
   Changed: 'เปลี่ยนแล้ว',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': '{device} เครื่องนี้',
   '{name} is back: {device} was writing in it': '{name} กลับมาแล้ว: {device} กำลังเขียนอยู่ในนั้น',
   'Changes to {name} are not syncing': 'การเปลี่ยนแปลงใน {name} ไม่ได้ซิงค์',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'เปิด',
   Pressing: 'กด',
   Typing: 'พิมพ์',
@@ -2053,18 +1953,14 @@ export const th: Dictionary = {
   'Agent tabs closed': 'ปิดแท็บของเอเจนต์แล้ว',
   'Orden is still running for your agents': 'Orden ยังทำงานอยู่เพื่อเอเจนต์ของคุณ',
   '{client} wants to connect': '{client} ต้องการเชื่อมต่อ',
-  // Web logins that travel, and the devices of an account
   'no such device': 'ไม่มีอุปกรณ์นี้',
   'give the device a name': 'ตั้งชื่อให้อุปกรณ์',
   'that computer is no longer waiting': 'คอมพิวเตอร์เครื่องนั้นไม่ได้รอแล้ว',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'ไม่มีไฟล์นี้',
   'too many changes at once - try again in a minute':
     'มีการเปลี่ยนแปลงพร้อมกันมากเกินไป - ลองอีกครั้งในอีกหนึ่งนาที',
   'that is more than a space keeps about its tree':
     'นั่นมากกว่าที่พื้นที่เก็บเกี่ยวกับโครงสร้างของมันได้',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'เอเจนต์ในคอมพิวเตอร์เครื่องนี้',
   'Your account’s connector': 'ตัวเชื่อมต่อของบัญชีคุณ',
   'Orden asks you once, the first time it connects.':
@@ -2131,12 +2027,9 @@ export const th: Dictionary = {
   'Pages a minute': 'หน้าต่อนาที',
   'Browser memory limit': 'ขีดจำกัดหน่วยความจำของเบราว์เซอร์',
   '{count} calls': '{count} การเรียก',
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'คำถามด่วน',
   Scratchpad: 'Scratchpad',
   'Add to note': 'เพิ่มลงในโน้ต',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'ส่วนขยาย',
   'Add extension': 'เพิ่มส่วนขยาย',
   'Manage extensions': 'จัดการส่วนขยาย',
@@ -2155,7 +2048,6 @@ export const th: Dictionary = {
   'Did not load': 'โหลดไม่สำเร็จ',
   Permissions: 'สิทธิ์',
   Options: 'ตัวเลือก',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'ระยะไกล',
   'Add host': 'เพิ่มโฮสต์',
   Reconnect: 'เชื่อมต่อใหม่',
@@ -2163,11 +2055,8 @@ export const th: Dictionary = {
   'No group': 'ไม่มีกลุ่ม',
   'Not an address': 'ไม่ใช่ที่อยู่',
   'Could not connect to {host}': 'เชื่อมต่อกับ {host} ไม่ได้',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'กำลังส่งรูป',
   'Could not send the image': 'ส่งรูปไม่ได้',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': 'และอีก {count} รายการหลังจากนั้น',
   'Restore notes and conversation': 'กู้คืนโน้ตและบทสนทนา',
   'Restore conversation': 'กู้คืนบทสนทนา',
@@ -2177,8 +2066,6 @@ export const th: Dictionary = {
   'Pages, terminals and moves are not undone': 'หน้าเว็บ เทอร์มินัล และการย้ายจะไม่ถูกเลิกทำ',
   Rewind: 'ย้อนกลับ',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'เครื่องมือค้นหา',
   History: 'ประวัติการเข้าชม',
   'Search history': 'ประวัติการค้นหา',
@@ -2202,14 +2089,12 @@ export const th: Dictionary = {
   'New private tab': 'แท็บส่วนตัวใหม่',
   'All spaces': 'ทุกพื้นที่',
   'the data could not be deleted': 'ลบข้อมูลไม่ได้',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'เลื่อนปลุก',
   Reminders: 'การเตือน',
   'Reminders ring while Orden is open': 'การเตือนจะดังขณะที่ Orden เปิดอยู่',
   Automatic: 'อัตโนมัติ',
   'Stay in the tray': 'อยู่ในถาดระบบ',
   'Exact alarms': 'การปลุกที่แม่นยำ',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'สิ่งที่ต้องทำ',
   'Plan my day': 'วางแผนวันของฉัน',
   'Add a task': 'เพิ่มงาน',
@@ -2221,8 +2106,6 @@ export const th: Dictionary = {
   'Done tasks too': 'รวมงานที่เสร็จแล้ว',
   'As a task': 'เป็นงาน',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'งาน',
   Ascending: 'จากน้อยไปมาก',
   Descending: 'จากมากไปน้อย',
@@ -2307,8 +2190,6 @@ export const th: Dictionary = {
   'Without a value': 'ไม่มีค่า',
   'With a value': 'มีค่า',
   Unique: 'ไม่ซ้ำ',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'โน้ตใหม่จากแม่แบบ',
   Automations: 'การทำงานอัตโนมัติ',
   'Row added': 'เพิ่มแถวแล้ว',
@@ -2337,7 +2218,6 @@ export const th: Dictionary = {
   Form: 'แบบฟอร์ม',
   Formula: 'สูตร',
   'Blocked by {task}': 'รอ {task}',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'เตือนก่อนออก',
   'When something runs': 'เมื่อมีบางอย่างทำงานอยู่',
   'Quit {name}?': 'ออกจาก {name}?',
@@ -2348,16 +2228,13 @@ export const th: Dictionary = {
   'Quit anyway': 'ออกเลย',
   'Restart anyway': 'เริ่มใหม่เลย',
   'Close anyway': 'ปิดเลย',
-  // The online terminal
   'Online terminal': 'เทอร์มินัลออนไลน์',
   'New online terminal': 'เทอร์มินัลออนไลน์ใหม่',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'อุปกรณ์อื่น',
   'Taken over by {device}': '{device} รับช่วงไปแล้ว',
   'Open on {device} since {time}': 'เปิดอยู่บน {device} ตั้งแต่ {time}',
   'Take over': 'รับช่วง',
   'Take back': 'เอาคืน',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'แอปพลิเคชันใหม่',
   Application: 'แอปพลิเคชัน',
   'This application’s file is damaged': 'ไฟล์ของแอปพลิเคชันนี้เสียหาย',
@@ -2465,8 +2342,6 @@ export const th: Dictionary = {
   'Compare with original': 'เทียบกับต้นฉบับ',
   'Conflict copies from other apps': 'สำเนาขัดแย้งจากแอปอื่น',
   'Remove from sync': 'นำออกจากการซิงก์',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'โปรไฟล์',
   Change: 'เปลี่ยน',
   'Take photo': 'ถ่ายรูป',
@@ -2491,7 +2366,6 @@ export const th: Dictionary = {
   'that picture could not be opened': 'เปิดรูปนั้นไม่ได้',
   'the camera could not be opened': 'เปิดกล้องไม่ได้',
   'that picture is too big': 'รูปนั้นใหญ่เกินไป',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'แชต',
   Reply: 'ตอบกลับ',
   Replies: 'การตอบกลับ',
@@ -2510,7 +2384,6 @@ export const th: Dictionary = {
   'Also send to {chat}': 'ส่งไปที่ {chat} ด้วย',
   'Skin tone': 'สีผิว',
   'Deleted account': 'บัญชีที่ถูกลบ',
-  // Chats: notifications
   Mute: 'ปิดเสียง',
   Unmute: 'เปิดเสียง',
   'New message': 'ข้อความใหม่',
@@ -2520,7 +2393,6 @@ export const th: Dictionary = {
   Weekdays: 'วันทำงาน',
   Starts: 'เริ่ม',
   Ends: 'สิ้นสุด',
-  // Chats: everywhere
   'Read chats': 'อ่านแชท',
   'Post in chats': 'เขียนในแชท',
   'Always in this chat': 'ในแชทนี้เสมอ',
@@ -2532,14 +2404,12 @@ export const th: Dictionary = {
   'Search this chat': 'ค้นหาในแชทนี้',
   'Add as task': 'เพิ่มเป็นงาน',
   'Save as note': 'บันทึกเป็นโน้ต',
-  // Appearance: glass's own pairs of colours
   Dawn: 'รุ่งอรุณ',
   Lagoon: 'ลากูน',
   Lilac: 'ไลแลค',
   Peach: 'พีช',
   Sage: 'เสจ',
   Mist: 'หมอก',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'ฐานข้อมูลใหม่',
   'New page': 'หน้าใหม่',
   'Not started': 'ยังไม่เริ่ม',
@@ -2565,7 +2435,6 @@ export const th: Dictionary = {
   Large: 'ใหญ่',
   Both: 'ทั้งสองแบบ',
   'Shown on cards': 'แสดงบนการ์ด',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'ซิงก์คีย์ AI ของเบราว์เซอร์นี้กับอุปกรณ์อื่นของคุณผ่านห้องนิรภัย',
   'Which of your AI accounts this feature asks.': 'บัญชี AI ของคุณที่ฟีเจอร์นี้ใช้ถาม',
@@ -2790,7 +2659,6 @@ export const th: Dictionary = {
   'Some changes may not be noticed': 'การเปลี่ยนแปลงบางอย่างอาจไม่ถูกสังเกต',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'ระบบถึงขีดจำกัดของโฟลเดอร์ที่เฝ้าดูแล้ว Orden จึงอาจไม่เห็นการเปลี่ยนแปลงทุกอย่างที่โปรแกรมอื่นทำในพื้นที่ของคุณ เพิ่มค่า fs.inotify.max_user_watches เพื่อแก้ไข',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'ย้ายแชต {name} ไปยัง {space} ไหม',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'ทุกคนใน {space} จะอ่านประวัติทั้งหมดได้ และคนใน {from} จะไม่เห็นอีก',
@@ -2829,7 +2697,6 @@ export const th: Dictionary = {
   'One colour': 'สีเดียว',
   'Web icons': 'ไอคอนเว็บ',
   'Sites you visit will appear here': 'เว็บไซต์ที่คุณเข้าชมจะแสดงที่นี่',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'การพิมพ์ด้วยเสียง',
   'Dictate with': 'พิมพ์ด้วยเสียงผ่าน',
   'Where your voice goes to be turned into words.': 'เสียงของคุณถูกส่งไปที่ใดเพื่อแปลงเป็นข้อความ',
@@ -2859,11 +2726,9 @@ export const th: Dictionary = {
   'Not on this device': 'ไม่ได้อยู่ในอุปกรณ์นี้',
   'Not on this device. It opens once you are online again.':
     'ไม่ได้อยู่ในอุปกรณ์นี้ จะเปิดได้เมื่อคุณกลับมาออนไลน์',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'เซิร์ฟเวอร์ IMAP',
   'SMTP server': 'เซิร์ฟเวอร์ SMTP',
   'User name': 'ชื่อผู้ใช้',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'ด่วน',
   Important: 'สำคัญ',
   'If time': 'ถ้ามีเวลา',

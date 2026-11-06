@@ -1,6 +1,3 @@
-/** What Orden lends a chat provider (#321): the vault for its secrets, and on the desktop
- *  a mail connection through the crate (src-tauri/src/mail_socket.rs). */
-
 import type { Host, Socket, SocketAsk } from '@orden/chats/provider'
 import { forgetKey, readSecret, writeSecret } from '../../ai/keys'
 import { toBase64 } from '../../bytes'

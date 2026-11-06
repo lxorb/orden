@@ -1,57 +1,26 @@
-/** Every kind of tab and what it does, one entry each: the places that used to ask
- *  `kind === ...` ask the entry, and a new kind is a new entry that must answer every
- *  trait. Questions about one kind by name stay with that kind's own code. */
-
 import type { FileMark } from '../file-mark'
 
 export interface TabKindTraits {
-  /** Its words are a file's words (`holdsWords`). */
   readonly words: boolean
-  /** The ending a draft of it is saved under, if any (drafts.ts). */
   readonly extension: string | null
-  /** The bar under the note is drawn over it (`hasStatusBar`). */
   readonly statusBar: boolean
-  /** The file mark it wears, null for no file (`markOf`). */
   readonly mark: FileMark | null
-  /** The glyph worn where `mark` is null (TabMark.svelte). */
   readonly glyph: 'graph' | 'ask' | null
-  /** Its mark is drawn by what runs in it (TabMark.svelte). */
   readonly liveMark: boolean
-  /** The pane draws the editor for it (`writing` in Pane.svelte). */
   readonly editor: boolean
-  /** It takes a dropped note itself (`ownSurface` in Pane.svelte). */
   readonly takesDrops: boolean
-  /** It has its own bar with a way to add (`ownBar` in App.svelte). */
   readonly ownBar: boolean
-  /** The document over its file is the file's words (`documentAt`). */
   readonly fileDocument: boolean
-  /** One of the two planes, canvas and page note (`rekind` in open.ts). */
   readonly plane: boolean
-  /** What it goes out as (`exportKindOf`). */
   readonly exports: 'note' | 'canvas' | 'pages' | 'file' | 'none'
-  /** What an agent is told is selected in it (`selectionIn`). */
   readonly selection: 'words' | 'drawing' | 'terminal' | 'page' | null
-  /** Its title is somebody else's words (`namedOutside`). */
   readonly outsideTitle: boolean
-  /** How the tab overview draws its window while it is not in front (#331; see
-   *  overview/WindowFace.svelte): `reading`, its words as they are now through the
-   *  reading renderer, from the line it was left at, sharp at any zoom; `scrollback`, the
-   *  last of its screen as written down (terminal/history.ts); `photograph`, the
-   *  engine's picture of a page nothing else can draw again; `picture`, what it last
-   *  drew, kept (overview/faces.ts), until it has a way of its own to be drawn from
-   *  what it holds. */
   readonly preview: 'reading' | 'scrollback' | 'photograph' | 'picture'
-  /** The panels about the tab in front it can fill (#1120; see panel-tab.ts): the
-   *  Outline, where what it holds has parts - a note's headings, a page note's pages, a
-   *  PDF's own contents - and the Links, where it is something in the space a note can
-   *  link to. The rest of the panels are about the space and fill beside anything. */
   readonly panels: readonly TabPanel[]
 }
 
-/** The panels that are about the tab in front rather than about the space. */
 export type TabPanel = 'outline' | 'links'
 
-/** The kinds, in the order a written session has always listed them. */
 export const TAB_KINDS = {
   note: {
     words: true,
@@ -233,8 +202,6 @@ export const TAB_KINDS = {
     preview: 'picture',
     panels: [],
   },
-  /** An application running on one of the reader's devices, by its `.application` file
-   *  (docs/apps.md). */
   application: {
     words: false,
     extension: null,
@@ -250,8 +217,6 @@ export const TAB_KINDS = {
     exports: 'none',
     selection: null,
     outsideTitle: false,
-    // What it last drew, kept: the application's state and who holds it. The picture
-    // the host streams (step 4) is a video frame nothing here can draw again.
     preview: 'picture',
     panels: [],
   },
@@ -275,18 +240,14 @@ export const TAB_KINDS = {
   },
 } as const satisfies Record<string, TabKindTraits>
 
-/** What a tab holds; see documents.svelte.ts for what each kind is. */
 export type TabKind = keyof typeof TAB_KINDS
 
-/** Every kind, in the table's order. */
 const KINDS = Object.keys(TAB_KINDS) as readonly TabKind[]
 
-/** Whether a string names a kind of tab. */
 export function isTabKind(value: unknown): value is TabKind {
   return typeof value === 'string' && Object.hasOwn(TAB_KINDS, value)
 }
 
-/** The kinds a trait holds for, in the table's order. */
 export function kindsWhere(trait: (traits: TabKindTraits) => boolean): TabKind[] {
   return KINDS.filter((kind) => trait(TAB_KINDS[kind]))
 }

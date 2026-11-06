@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const vi: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'Đã sẵn sàng',
   Personalize: 'Cá nhân hóa',
   Clean: 'Gọn gàng',
@@ -10,12 +9,10 @@ export const vi: Dictionary = {
   'Do you write code?': 'Bạn có viết code không?',
   Yes: 'Có',
   No: 'Không',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Từ ứng dụng khác: {key}',
   'From other apps: set in your system settings': 'Từ ứng dụng khác: đặt trong cài đặt hệ thống',
   'From other apps: bind {command} in your system settings':
     'Từ ứng dụng khác: gán {command} trong cài đặt hệ thống',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Mục chính',
   'Add to Essentials': 'Thêm vào mục chính',
   'Remove from Essentials': 'Gỡ khỏi mục chính',
@@ -23,20 +20,16 @@ export const vi: Dictionary = {
   'Add blocks to Essentials': 'Thêm các khối vào mục chính',
   'Add view to Essentials': 'Thêm chế độ xem vào mục chính',
   'Open tabs and Essentials': 'Mở thẻ và mục chính',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor giờ là Orden',
   'Notes from nibeditor.com': 'Ghi chú từ nibeditor.com',
   'Nothing there': 'Không có gì ở đó',
-  // AI: the three permission modes
   'Full permissions': 'Toàn quyền',
   'Auto mode': 'Chế độ tự động',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'Toàn quyền: không hỏi và không giao lại cho bạn điều gì, kể cả đăng nhập, thanh toán, gửi hay xóa',
-  // Import: Zen's tabs
   'Import from Zen': 'Nhập từ Zen',
   'Containers stay in Zen': 'Các ngăn chứa vẫn ở lại Zen',
   'Zen’s tabs could not be read.': 'Không thể đọc các thẻ của Zen.',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'Các ngăn chứa vẫn ở lại Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} tìm kiếm bằng {engine}: chọn nó trong Cài đặt để tìm bằng nó ở đây nữa',
@@ -61,38 +54,29 @@ export const vi: Dictionary = {
   'Reading List': 'Danh sách đọc',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS giữ các tab và dấu trang của Safari sau Quyền truy cập toàn bộ ổ đĩa. Hãy bật Orden ở đó rồi thử lại.',
-  // Settings: note types
   'Page note': 'Ghi chú nhiều trang',
   'Web note': 'Ghi chú web',
   'Private tab': 'Thẻ riêng tư',
   'Note types': 'Loại ghi chú',
-  // Tasks: Upcoming's weeks
   'Previous week': 'Tuần trước',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'Thêm dự án phía trên',
   'Add project below': 'Thêm dự án phía dưới',
   'Projects folder': 'Thư mục dự án',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'Bỏ qua',
   'Complete forever': 'Hoàn thành vĩnh viễn',
-  // Tasks: comments
   Comments: 'Bình luận',
-  // Tasks: filters
   Filters: 'Bộ lọc',
   'Add filter': 'Thêm bộ lọc',
   'Edit filter': 'Sửa bộ lọc',
-  // Tasks: a project's sections
   'Add section': 'Thêm mục',
   '{name} (copy)': '{name} (bản sao)',
   'Its tasks are deleted with it.': 'Các việc trong đó cũng bị xoá theo.',
-  // Tasks: keys, selection and the undo toast
   Completed: 'Đã xong',
   'Remove date': 'Bỏ ngày',
   'Next task': 'Việc sau',
   'Previous task': 'Việc trước',
   'Add task at the top': 'Thêm việc lên đầu',
   '{count} selected': 'Đã chọn {count}',
-  // Tasks: the Display menu
   Display: 'Hiển thị',
   'Completed tasks': 'Việc đã xong',
   Smart: 'Thông minh',
@@ -104,20 +88,16 @@ export const vi: Dictionary = {
   'Reset all': 'Đặt lại tất cả',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'Bố cục hiển thị công việc dưới dạng danh sách, bảng hoặc lịch. Nhóm chia chúng thành các nhóm, chính là các cột của bảng. Sắp xếp sắp thứ tự từng nhóm. Bộ lọc ẩn những gì bạn không cần. Tất cả được giữ cho chế độ xem này.',
-  // Tasks: several lines pasted into quick add
   'One task': 'Một việc',
   'One per line': 'Mỗi dòng một việc',
   'Add with AI': 'Thêm bằng AI',
-  // Tasks: the projects in the panel
   Favorites: 'Yêu thích',
   'Add project': 'Thêm dự án',
   'Add sub-project': 'Thêm dự án con',
-  // Tasks: the task view
   'Sub-tasks': 'Việc con',
   'Add sub-task': 'Thêm việc con',
   'New label': 'Nhãn mới',
   'No deadline': 'Không có hạn chót',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'Lên lịch lại',
   'Later this week': 'Mấy hôm nữa trong tuần',
   'This weekend': 'Cuối tuần này',
@@ -134,22 +114,18 @@ export const vi: Dictionary = {
   Reopen: 'Mở lại',
   Schedule: 'Lên lịch',
   'Open in note': 'Mở trong ghi chú',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Ứng dụng khác',
   'Import from Obsidian': 'Nhập từ Obsidian',
   'Import from Notion': 'Nhập từ Notion',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'Gợi ý',
   'Silent mode': 'Chế độ im lặng',
   'See how your notes connect.': 'Xem các ghi chú của bạn liên kết với nhau thế nào.',
   'Press {key} to find anything, notes and commands alike.':
     'Nhấn {key} để tìm mọi thứ, cả ghi chú lẫn lệnh.',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Hiện Markdown khi viết',
   'Open notes in source mode': 'Mở ghi chú ở chế độ nguồn',
   Pointer: 'Con trỏ',
   'Pointing hand on buttons': 'Bàn tay chỉ trên các nút',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Thêm việc',
   'Apple Shortcuts': 'Apple Phím tắt',
   Tomorrow: 'Ngày mai',
@@ -175,7 +151,6 @@ export const vi: Dictionary = {
   'Every week': 'Mỗi tuần',
   'Every month': 'Mỗi tháng',
   'Every year': 'Mỗi năm',
-  // Files and notes
   Save: 'Lưu',
   'New note': 'Ghi chú mới',
   'Random note': 'Ghi chú ngẫu nhiên',
@@ -203,8 +178,6 @@ export const vi: Dictionary = {
   'Release to add a page': 'Thả để thêm trang',
   'Page {number}': 'Trang {number}',
   'The paper could not be read': 'Không đọc được giấy',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'Trang dài',
@@ -247,7 +220,6 @@ export const vi: Dictionary = {
   'Choose a picture': 'Chọn hình ảnh',
   'Remove picture': 'Gỡ hình ảnh',
   'That picture could not be read.': 'Không đọc được hình ảnh đó.',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'Độ bão hòa',
   Tint: 'Sắc màu',
   'Tint colour': 'Màu sắc',
@@ -375,7 +347,6 @@ export const vi: Dictionary = {
   'Merge into…': 'Gộp vào…',
   'Split at caret': 'Tách tại con trỏ',
   'Extract selection': 'Trích phần đã chọn',
-  // Panels and navigation
   Bookmarks: 'Dấu trang',
   'New group': 'Nhóm mới',
   'Remove group': 'Xoá nhóm',
@@ -429,8 +400,6 @@ export const vi: Dictionary = {
   'Sort by name': 'Sắp theo tên',
   'Sort by modified': 'Sắp theo ngày sửa',
   'Sort by created': 'Sắp theo ngày tạo',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'Thứ tự tệp',
   'Name, A to Z': 'Tên, A đến Z',
   'Name, Z to A': 'Tên, Z đến A',
@@ -441,7 +410,6 @@ export const vi: Dictionary = {
   Manual: 'Thủ công',
   'Show hidden files': 'Hiện tệp ẩn',
   'Hide hidden files': 'Ẩn tệp ẩn',
-  // Writing
   Bold: 'Đậm',
   Italic: 'Nghiêng',
   Strikethrough: 'Gạch ngang',
@@ -526,11 +494,9 @@ export const vi: Dictionary = {
   'Horizontal rule': 'Đường kẻ ngang',
   'Page break': 'Ngắt trang',
   'Tidy up this note': 'Dọn gọn ghi chú này',
-  // PDFs
   'Copy a link': 'Sao chép liên kết',
   'That PDF could not be opened': 'Không mở được PDF đó',
   'That file could not be read': 'Không đọc được tệp đó',
-  // Modes and view
   Reading: 'Đọc',
   'Leave reading': 'Thoát chế độ đọc',
   Present: 'Trình chiếu',
@@ -570,7 +536,6 @@ export const vi: Dictionary = {
   'Zoom in': 'Phóng to',
   'Zoom out': 'Thu nhỏ',
   'Actual size': 'Cỡ thật',
-  // Appearance
   Accent: 'Màu nhấn',
   'Tidy up': 'Sắp xếp gọn',
   'Blur the app behind the tab overview': 'Làm mờ ứng dụng phía sau tổng quan thẻ',
@@ -697,7 +662,6 @@ export const vi: Dictionary = {
   'Switch theme': 'Đổi chủ đề',
   Style: 'Kiểu',
   Mode: 'Chế độ',
-  // The window's own edges; see appearance.rs
   Window: 'Cửa sổ',
   'Orden’s own': 'Của Orden',
   'The system’s': 'Của hệ thống',
@@ -708,7 +672,6 @@ export const vi: Dictionary = {
   'Edit custom CSS': 'Sửa CSS riêng',
   'Edit snippets': 'Sửa đoạn CSS',
   'Reload themes and custom CSS': 'Tải lại chủ đề và CSS riêng',
-  // The theme store, and the sample note its cards show
   Themes: 'Chủ đề',
   Browse: 'Duyệt',
   'Search themes': 'Tìm chủ đề',
@@ -785,7 +748,6 @@ export const vi: Dictionary = {
   'Code only': 'Chỉ trong mã',
   Everywhere: 'Mọi nơi',
   Attachments: 'Tệp kèm',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Ghi chú nhiều trang',
   'New pages': 'Trang mới',
   'Assets folder of the space': 'Thư mục tài nguyên của không gian',
@@ -837,7 +799,6 @@ export const vi: Dictionary = {
   'Machine-translated. Corrections welcome.': 'Dịch bằng máy. Rất mong được sửa.',
   'The glasses show English.': 'Kính hiển thị tiếng Anh.',
   'Match the app': 'Theo ứng dụng',
-  // Settings
   Settings: 'Cài đặt',
   Account: 'Tài khoản',
   Publish: 'Xuất bản',
@@ -860,7 +821,6 @@ export const vi: Dictionary = {
   '{count} spaces sync to your account.': '{count} không gian đồng bộ với tài khoản của bạn.',
   Update: 'Cập nhật',
   'Live at': 'Đang chạy tại',
-  // Publishing
   'Publish {name}': 'Xuất bản {name}',
   'What to publish': 'Xuất bản những gì',
   'The whole space': 'Cả không gian',
@@ -880,7 +840,6 @@ export const vi: Dictionary = {
   Value: 'Giá trị',
   available: 'còn trống',
   'checking…': 'đang kiểm tra…',
-  // LLM
   'Connect an LLM to your notes': 'Kết nối một LLM với ghi chú của bạn',
   'Sign in first - the connector reaches the notes in your account.':
     'Đăng nhập trước - bộ kết nối truy cập ghi chú trong tài khoản của bạn.',
@@ -931,7 +890,6 @@ export const vi: Dictionary = {
     'Cho ứng dụng nhận một khối JSON thay vì URL.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'Ứng dụng không đăng nhập được thì đưa token. Token chỉ hiện một lần.',
-  // Export
   'Plain text': 'Văn bản thuần',
   'Markdown with the pictures': 'Markdown kèm ảnh',
   'HTML without styles': 'HTML không kiểu',
@@ -950,13 +908,11 @@ export const vi: Dictionary = {
   Margin: 'Lề',
   Header: 'Đầu trang',
   Footer: 'Chân trang',
-  // History
   'Version history': 'Lịch sử phiên bản',
   'Copy link to this note': 'Sao chép liên kết đến ghi chú này',
   'that link could not be followed': 'không thể mở liên kết đó',
   'No earlier versions yet.': 'Chưa có phiên bản cũ.',
   'Restore this version': 'Phục hồi phiên bản này',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'đã có ghi chú ở đó',
   'enter a valid email address': 'nhập địa chỉ email hợp lệ',
   'give the space a name': 'đặt tên cho không gian',
@@ -988,7 +944,6 @@ export const vi: Dictionary = {
   'could not publish': 'không xuất bản được',
   'could not create a token': 'không tạo được token',
   'that did not work': 'không thành công',
-  // Settings on a phone, display names, one blog address
   Back: 'Quay lại',
   'Display name': 'Tên hiển thị',
   'Your name': 'Tên của bạn',
@@ -1008,7 +963,6 @@ export const vi: Dictionary = {
   Spelling: 'Chính tả',
   Checking: 'Đang kiểm tra',
   Dictionary: 'Từ điển',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'Đang chờ bản ghi xuất hiện.',
   'Certificate issued.': 'Đã cấp chứng chỉ.',
   'Cloudflare could not set this domain up.': 'Cloudflare không thiết lập được tên miền này.',
@@ -1019,7 +973,6 @@ export const vi: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare đã chặn tên miền này',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'Ở gốc tên miền, dùng bản ghi ALIAS hoặc ANAME, hoặc CNAME flattening, nếu nhà cung cấp không cho dùng CNAME ở đó.',
-  // Shortcuts
   Shortcuts: 'Phím tắt',
   'Search shortcuts': 'Tìm phím tắt',
   'Second key': 'Phím thứ hai',
@@ -1183,7 +1136,6 @@ export const vi: Dictionary = {
   Delegated: 'Đã giao',
   'Code theme: {name}': 'Chủ đề mã: {name}',
   'Delete a layout': 'Xoá một bố cục',
-  // Keyboards and modal editing
   Default: 'Mặc định',
   'Vim keys': 'Phím Vim',
   'Follow the link': 'Mở liên kết',
@@ -1195,11 +1147,9 @@ export const vi: Dictionary = {
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
   REPLACE: 'REPLACE',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'Trang {page}/{count} trên kính',
   'Reaching the glasses': 'Đang kết nối kính',
   'The glasses are not keeping up': 'Kính không theo kịp',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'Thêm',
   Select: 'Chọn',
   Pan: 'Di khung nhìn',
@@ -1229,7 +1179,6 @@ export const vi: Dictionary = {
   Calligraphy: 'Bút thư pháp',
   'Width {number}': 'Độ dày {number}',
   'Finger draws': 'Ngón tay vẽ',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'Độ dày',
   Opacity: 'Độ mờ',
   Colour: 'Màu',
@@ -1273,23 +1222,19 @@ export const vi: Dictionary = {
   'Export as PNG': 'Xuất thành PNG',
   'Export as SVG': 'Xuất thành SVG',
   'Export as PDF': 'Xuất thành PDF',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'Nhập PDF',
   'Choose how to add the pages to the canvas.': 'Chọn cách thêm các trang vào canvas.',
   'Single page': 'Một trang',
   'All pages': 'Tất cả các trang',
   'Choose a page': 'Chọn một trang',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'Xoá phần đã chọn',
   'Nudge left': 'Nhích sang trái',
   'Nudge right': 'Nhích sang phải',
   'Nudge up': 'Nhích lên',
   'Nudge down': 'Nhích xuống',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'Cũng đang mở ở nơi khác',
   Shared: 'Đã chia sẻ',
   Browser: 'Trình duyệt',
-  // Sharing a space with other people
   Share: 'Chia sẻ',
   'Share {name}': 'Chia sẻ {name}',
   'Share this space': 'Chia sẻ không gian này',
@@ -1333,14 +1278,12 @@ export const vi: Dictionary = {
   'Shared with you': 'Được chia sẻ với bạn',
   'That link does not open anything': 'Liên kết đó không mở được gì',
   'Ask for another one.': 'Xin một liên kết khác.',
-  // Somebody a share link let in, who has no account
   Guest: 'Khách',
   'Ask to join': 'Xin vào',
   Asking: 'Đang xin',
   'Waiting for {who}': 'Đang chờ {who}',
   '{who} did not let you in': '{who} không cho bạn vào',
   'What the others in this space see.': 'Những gì người khác trong không gian này thấy.',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'Cập nhật',
   'Release channel': 'Kênh phát hành',
   Stable: 'Ổn định',
@@ -1350,8 +1293,6 @@ export const vi: Dictionary = {
   'Web version': 'Phiên bản web',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'Ổn định là ứng dụng web đã phát hành, Không ổn định là bản dựng mới nhất và có thể lỗi.',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'Nhập',
   'Convert syntax': 'Chuyển cú pháp',
   'In this note': 'Trong ghi chú này',
@@ -1439,8 +1380,6 @@ export const vi: Dictionary = {
   'Undo the import': 'Hoàn tác lần nhập',
   'Choose an export': 'Chọn một bản xuất',
   Under: 'Dưới',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'Đồng bộ',
   'When the same note was written twice': 'Khi cùng một ghi chú bị viết hai lần',
   'On two devices': 'Trên hai thiết bị',
@@ -1497,7 +1436,6 @@ export const vi: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'Ghi chú trên thiết bị này vẫn còn; chỉ tài khoản và các bản sao đã đồng bộ mất đi.',
   'Also gone for everyone in {spaces}.': 'Cũng mất đi với mọi người trong {spaces}.',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'Ghi chú',
   '{space} panel': 'Bảng của {space}',
   'Panel width': 'Chiều rộng bảng',
@@ -1508,7 +1446,6 @@ export const vi: Dictionary = {
   'What is selected': 'Phần đã chọn',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'Canvas: {cards} thẻ, {links} liên kết, {drawings} hình vẽ',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'Nhà cung cấp',
   'Make default': 'Đặt làm mặc định',
@@ -1536,7 +1473,6 @@ export const vi: Dictionary = {
   'The model did not answer.': 'Mô hình không trả lời.',
   'The connection closed before the answer was finished.':
     'Kết nối đã đóng trước khi câu trả lời hoàn tất.',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'Gói {plan} của bạn đã chạm giới hạn đến {time}.',
   'Your {plan} plan is at its limit for now.': 'Gói {plan} của bạn tạm thời đã chạm giới hạn.',
@@ -1563,7 +1499,6 @@ export const vi: Dictionary = {
   Shorter: 'Ngắn hơn',
   Longer: 'Dài hơn',
   'Fix grammar': 'Sửa ngữ pháp',
-  // The AI sidebar's commands
   'A cited report': 'Báo cáo có trích dẫn',
   'A helper in the background': 'Trợ lý nền',
   'A side question': 'Câu hỏi phụ',
@@ -1665,7 +1600,6 @@ export const vi: Dictionary = {
   'Markdown, shortest name': 'Markdown, tên ngắn nhất',
   'Markdown, relative path': 'Markdown, đường dẫn tương đối',
   'Markdown, path in the space': 'Markdown, đường dẫn trong không gian',
-  // Publishing part one.
   'The folders you choose become public.': 'Các thư mục bạn chọn trở thành công khai.',
   'Anyone with the address can read what is published, drafts included.':
     'Ai có địa chỉ đều đọc được những gì đã xuất bản, kể cả bản nháp.',
@@ -1691,11 +1625,9 @@ export const vi: Dictionary = {
   'Remove the password': 'Bỏ mật khẩu',
   'Scan this with your authenticator app, then type its code.':
     'Quét mã này bằng ứng dụng xác thực rồi nhập mã của nó.',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'Ảnh',
   Dictate: 'Đọc chính tả',
   'Add to {name}': 'Thêm vào {name}',
-  // Web tabs
   Reload: 'Tải lại',
   'Hard reload': 'Tải lại toàn bộ',
   'Open in the browser': 'Mở trong trình duyệt',
@@ -1710,7 +1642,6 @@ export const vi: Dictionary = {
   'Playing audio': 'Đang phát âm thanh',
   Muted: 'Đã tắt tiếng',
   'Developer tools': 'Công cụ cho nhà phát triển',
-  // Recording, meetings and what a model wrote
   Record: 'Ghi âm',
   Recording: 'Bản ghi',
   'Stop recording': 'Dừng ghi âm',
@@ -1731,7 +1662,6 @@ export const vi: Dictionary = {
     'Bản ghi đó quá dài để chuyển thành chữ một lần.',
   'That is as much as one recording may hold.': 'Một bản ghi chỉ chứa được đến vậy.',
   'Nothing could be heard in that recording.': 'Không nghe thấy gì trong bản ghi đó.',
-  // Publishing part two.
   Spreadsheet: 'Bảng tính',
   'The app’s own': 'Của chính ứng dụng',
   'publish.css and publish.js in this space dress the site.':
@@ -1748,14 +1678,12 @@ export const vi: Dictionary = {
   'Save as CSV': 'Lưu thành CSV',
   'Kept for {days}': 'Lưu trong {days}',
   Full: 'Đã đầy',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'không gửi được thư - thử lại',
   'start again - that took too long': 'bắt đầu lại - việc đó quá lâu',
   'sign in to do that': 'đăng nhập để làm việc đó',
   'that is not something a token can do': 'token không làm được việc đó',
   'something went wrong here - try again': 'có gì sai ở đây - thử lại',
   'this service cannot keep a secret safely': 'dịch vụ này không giữ khoá bí mật an toàn được',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only': 'chỉ ảnh, PDF và css hoặc js của chính trang',
   'that file is too big': 'tệp đó quá lớn',
   'that is more settings than an account holds': 'nhiều cài đặt hơn một tài khoản chứa được',
@@ -1767,13 +1695,11 @@ export const vi: Dictionary = {
   'that is more folder icons than a space holds':
     'nhiều biểu tượng thư mục hơn một không gian chứa được',
   'that is more than a site keeps': 'nhiều hơn mức một trang giữ được',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'không có ai ở địa chỉ đó',
   'nobody by that name': 'không có ai tên đó',
   'nobody is waiting by that name': 'không có ai tên đó đang chờ',
   'this space is yours': 'không gian này là của bạn',
   'that link is busy, try again in a minute': 'liên kết đó đang bận, thử lại sau một phút',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'không có phiên bản đó',
   'this note was shared with you, not its folder':
     'ghi chú này được chia sẻ với bạn, không phải thư mục của nó',
@@ -1782,7 +1708,6 @@ export const vi: Dictionary = {
   'nothing to delete': 'không có gì để xoá',
   'this room is not answering - try again': 'phòng này không trả lời - thử lại',
   'rooms are not running here': 'phòng không chạy ở đây',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'kho chủ đề không trả lời',
   'that is not a theme': 'cái đó không phải chủ đề',
   'no such theme': 'không có chủ đề đó',
@@ -1795,10 +1720,8 @@ export const vi: Dictionary = {
   'that is more than a spoken command': 'cái đó dài hơn một lệnh nói',
   'that is a lot of listening - try again later': 'nghe nhiều quá - thử lại sau',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% văn bản',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'Điện thoại',
   'The bar sits over the keyboard on a phone.': 'Trên điện thoại, thanh nằm trên bàn phím.',
   'On the bar': 'Trên thanh',
@@ -1812,31 +1735,25 @@ export const vi: Dictionary = {
   'A pull past the top runs': 'Kéo quá đầu trang sẽ chạy',
   Nothing: 'Không có gì',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'Giữ',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'Chuyển sang phải',
   'Move to the left': 'Chuyển sang trái',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'Lịch sử trên tài khoản',
   'Keep versions': 'Giữ các phiên bản',
   'A month': 'Một tháng',
   'A year': 'Một năm',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Tất cả của ngày cuối, rồi mỗi giờ một bản, sau một tháng mỗi ngày một bản, và sau ba tháng mỗi tuần một bản.',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Ghi chú này đã lớn hết mức mà một ghi chú trong một phòng có thể lớn.',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'Thẻ mới',
   'Full screen': 'Toàn màn hình',
   'Print…': 'In…',
   'Share…': 'Chia sẻ…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'muốn',
   'Don’t allow': 'Không cho phép',
   Allow: 'Cho phép',
@@ -1853,7 +1770,6 @@ export const vi: Dictionary = {
   'Use your MIDI devices': 'Sử dụng thiết bị MIDI của bạn',
   'Manage windows on all your displays': 'Quản lý các cửa sổ trên tất cả màn hình của bạn',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'Thông tin trang web',
   Downloads: 'Tệp đã tải xuống',
   'Downloading {name}': 'Đang tải xuống {name}',
@@ -1880,11 +1796,9 @@ export const vi: Dictionary = {
   'Turn into': 'Biến thành',
   Foldable: 'Có thể gập',
   'Starts folded': 'Mở ra đã gập',
-  // Where a space keeps what websites store
   'Web data': 'Dữ liệu web',
   Global: 'Chung',
   Site: 'Trang web',
-  // The Mac's menu bar
   'About {name}': 'Giới thiệu về {name}',
   Services: 'Dịch vụ',
   'Hide {name}': 'Ẩn {name}',
@@ -1892,7 +1806,6 @@ export const vi: Dictionary = {
   'Show all': 'Hiện tất cả',
   'Quit {name}': 'Thoát {name}',
   'Bring all to front': 'Đưa tất cả ra trước',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Hoàn tác việc sao chép',
   'Devices with your AI vault': 'Thiết bị có kho AI của bạn',
   'This device': 'Thiết bị này',
@@ -1907,13 +1820,11 @@ export const vi: Dictionary = {
   'Select down': 'Chọn xuống',
   'Select up': 'Chọn lên',
   'Select or deselect': 'Chọn hoặc bỏ chọn',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'Mở trong thẻ mới',
   'Open to the side': 'Mở bên cạnh',
   'Open all': 'Mở tất cả',
   'Show in the file list': 'Hiện trong danh sách tệp',
   'Collapse the file list': 'Thu gọn danh sách tệp',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'Mở rộng vùng chọn',
   'Shrink the selection': 'Thu hẹp vùng chọn',
   'Insert a line above': 'Chèn một dòng phía trên',
@@ -1927,18 +1838,15 @@ export const vi: Dictionary = {
   'Duplicate the block': 'Tạo bản sao khối',
   'Move the block up': 'Chuyển khối lên',
   'Move the block down': 'Chuyển khối xuống',
-  // The editor's menu on a link and a picture
   'Copy link address': 'Sao chép địa chỉ liên kết',
   'Edit link': 'Sửa liên kết',
   'Remove link': 'Gỡ liên kết',
   'Copy picture': 'Sao chép ảnh',
   'Open picture': 'Mở ảnh',
   'Delete picture': 'Xóa ảnh',
-  // A file dropped into a note
   'Storing the file': 'Đang lưu tệp',
   'That file is larger than a note can keep.': 'Tệp này lớn hơn mức một ghi chú có thể lưu giữ.',
   'That file could not be kept.': 'Không thể lưu giữ tệp này.',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'Terminal mới',
   'Command Prompt': 'Dấu nhắc Lệnh',
   Terminal: 'Terminal',
@@ -1960,11 +1868,8 @@ export const vi: Dictionary = {
   'Saved nowhere, a session kept running is found again in Settings, {pane}.':
     'Không được lưu ở đâu; phiên vẫn chạy có thể tìm lại trong Cài đặt, {pane}.',
   'Paste {count} lines?': 'Dán {count} dòng?',
-  // Orden as the default browser
   'Default browser': 'Trình duyệt mặc định',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Hoàn tác các chỉnh sửa của {name}',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'Lưu trữ',
   Unarchive: 'Bỏ lưu trữ',
   Archived: 'Đã lưu trữ',
@@ -1974,7 +1879,6 @@ export const vi: Dictionary = {
   'Nothing archived is deleted': 'Không gì đã lưu trữ bị xóa',
   'Show them': 'Hiển thị',
   '{count} archived items inside': '{count} mục đã lưu trữ bên trong',
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'Thanh bên trái',
   'Right sidebar': 'Thanh bên phải',
   'Ask about this space': 'Hỏi về không gian này',
@@ -1985,7 +1889,6 @@ export const vi: Dictionary = {
   'Ask again': 'Hỏi lại',
   'Continue when the limit resets': 'Tiếp tục khi giới hạn được đặt lại',
   'Continues at {time}': 'Tiếp tục lúc {time}',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Hỏi bất cứ điều gì, @ để thêm, / để xem thêm',
   'What can I help with?': 'Tôi có thể giúp gì?',
   'Add photos and files': 'Thêm ảnh và tệp',
@@ -2053,12 +1956,9 @@ export const vi: Dictionary = {
   Closed: 'Đã đóng',
   Ran: 'Đã chạy',
   Changed: 'Đã đổi',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': '{device} này',
   '{name} is back: {device} was writing in it': '{name} đã quay lại: {device} đang viết trong đó',
   'Changes to {name} are not syncing': 'Các thay đổi trong {name} không được đồng bộ',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Mở',
   Pressing: 'Nhấn',
   Typing: 'Gõ',
@@ -2073,18 +1973,14 @@ export const vi: Dictionary = {
   'Agent tabs closed': 'Đã đóng các tab của tác tử',
   'Orden is still running for your agents': 'Orden vẫn chạy cho các tác tử của bạn',
   '{client} wants to connect': '{client} muốn kết nối',
-  // Web logins that travel, and the devices of an account
   'no such device': 'không có thiết bị đó',
   'give the device a name': 'đặt tên cho thiết bị',
   'that computer is no longer waiting': 'máy tính đó không còn chờ nữa',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'không có tệp này',
   'too many changes at once - try again in a minute':
     'quá nhiều thay đổi cùng lúc - hãy thử lại sau một phút',
   'that is more than a space keeps about its tree':
     'con số đó vượt quá những gì một không gian lưu giữ về cây của nó',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'Tác tử trên máy tính này',
   'Your account’s connector': 'Trình kết nối của tài khoản',
   'Orden asks you once, the first time it connects.':
@@ -2152,12 +2048,9 @@ export const vi: Dictionary = {
   'Pages a minute': 'Trang mỗi phút',
   'Browser memory limit': 'Giới hạn bộ nhớ trình duyệt',
   '{count} calls': '{count} lượt gọi',
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'Câu hỏi nhanh',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Thêm vào ghi chú',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'Tiện ích',
   'Add extension': 'Thêm tiện ích',
   'Manage extensions': 'Quản lý tiện ích',
@@ -2176,7 +2069,6 @@ export const vi: Dictionary = {
   'Did not load': 'Không tải được',
   Permissions: 'Quyền',
   Options: 'Tùy chọn',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'Từ xa',
   'Add host': 'Thêm máy chủ',
   Reconnect: 'Kết nối lại',
@@ -2184,11 +2076,8 @@ export const vi: Dictionary = {
   'No group': 'Không có nhóm',
   'Not an address': 'Không phải địa chỉ',
   'Could not connect to {host}': 'Không thể kết nối tới {host}',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'Đang gửi ảnh',
   'Could not send the image': 'Không thể gửi ảnh',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': 'và {count} sau đó',
   'Restore notes and conversation': 'Khôi phục ghi chú và cuộc trò chuyện',
   'Restore conversation': 'Khôi phục cuộc trò chuyện',
@@ -2199,8 +2088,6 @@ export const vi: Dictionary = {
     'Trang, terminal và việc di chuyển không được hoàn tác',
   Rewind: 'Tua lại',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'Công cụ tìm kiếm',
   History: 'Nhật ký',
   'Search history': 'Nhật ký tìm kiếm',
@@ -2224,14 +2111,12 @@ export const vi: Dictionary = {
   'New private tab': 'Thẻ riêng tư mới',
   'All spaces': 'Mọi không gian',
   'the data could not be deleted': 'Không xoá được dữ liệu',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Báo lại',
   Reminders: 'Lời nhắc',
   'Reminders ring while Orden is open': 'Lời nhắc chỉ đổ chuông khi Orden đang mở',
   Automatic: 'Tự động',
   'Stay in the tray': 'Ở lại khay hệ thống',
   'Exact alarms': 'Báo thức chính xác',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'Việc cần làm',
   'Plan my day': 'Lên kế hoạch ngày của tôi',
   'Add a task': 'Thêm việc',
@@ -2243,8 +2128,6 @@ export const vi: Dictionary = {
   'Done tasks too': 'Cả việc đã xong',
   'As a task': 'Thành việc cần làm',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'Công việc',
   Ascending: 'Tăng dần',
   Descending: 'Giảm dần',
@@ -2329,8 +2212,6 @@ export const vi: Dictionary = {
   'Without a value': 'Không có giá trị',
   'With a value': 'Có giá trị',
   Unique: 'Duy nhất',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'Ghi chú mới từ mẫu',
   Automations: 'Tự động hóa',
   'Row added': 'Đã thêm hàng',
@@ -2359,7 +2240,6 @@ export const vi: Dictionary = {
   Form: 'Biểu mẫu',
   Formula: 'Công thức',
   'Blocked by {task}': 'Bị chặn bởi {task}',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'Cảnh báo trước khi thoát',
   'When something runs': 'Khi có tiến trình đang chạy',
   'Quit {name}?': 'Thoát {name}?',
@@ -2370,16 +2250,13 @@ export const vi: Dictionary = {
   'Quit anyway': 'Vẫn thoát',
   'Restart anyway': 'Vẫn khởi động lại',
   'Close anyway': 'Vẫn đóng',
-  // The online terminal
   'Online terminal': 'Terminal trực tuyến',
   'New online terminal': 'Terminal trực tuyến mới',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'một thiết bị khác',
   'Taken over by {device}': 'Đã bị {device} tiếp quản',
   'Open on {device} since {time}': 'Đang mở trên {device} từ {time}',
   'Take over': 'Tiếp quản',
   'Take back': 'Lấy lại',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'Ứng dụng mới',
   Application: 'Ứng dụng',
   'This application’s file is damaged': 'Tệp của ứng dụng này bị hỏng',
@@ -2486,8 +2363,6 @@ export const vi: Dictionary = {
   'Compare with original': 'So sánh với bản gốc',
   'Conflict copies from other apps': 'Bản xung đột từ ứng dụng khác',
   'Remove from sync': 'Bỏ khỏi đồng bộ',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'Hồ sơ',
   Change: 'Đổi',
   'Take photo': 'Chụp ảnh',
@@ -2512,7 +2387,6 @@ export const vi: Dictionary = {
   'that picture could not be opened': 'không mở được ảnh đó',
   'the camera could not be opened': 'không mở được máy ảnh',
   'that picture is too big': 'ảnh đó quá lớn',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'Trò chuyện',
   Reply: 'Trả lời',
   Replies: 'Các trả lời',
@@ -2531,7 +2405,6 @@ export const vi: Dictionary = {
   'Also send to {chat}': 'Gửi cả vào {chat}',
   'Skin tone': 'Màu da',
   'Deleted account': 'Tài khoản đã xóa',
-  // Chats: notifications
   Mute: 'Tắt tiếng',
   Unmute: 'Bật tiếng',
   'New message': 'Tin nhắn mới',
@@ -2541,7 +2414,6 @@ export const vi: Dictionary = {
   Weekdays: 'Ngày thường',
   Starts: 'Bắt đầu',
   Ends: 'Kết thúc',
-  // Chats: everywhere
   'Read chats': 'Đọc trò chuyện',
   'Post in chats': 'Viết trong trò chuyện',
   'Always in this chat': 'Luôn trong cuộc trò chuyện này',
@@ -2553,14 +2425,12 @@ export const vi: Dictionary = {
   'Search this chat': 'Tìm trong cuộc trò chuyện này',
   'Add as task': 'Thêm thành việc cần làm',
   'Save as note': 'Lưu thành ghi chú',
-  // Appearance: glass's own pairs of colours
   Dawn: 'Bình minh',
   Lagoon: 'Đầm phá',
   Lilac: 'Tử đinh hương',
   Peach: 'Đào',
   Sage: 'Xô thơm',
   Mist: 'Sương mù',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'Cơ sở dữ liệu mới',
   'New page': 'Trang mới',
   'Not started': 'Chưa bắt đầu',
@@ -2586,7 +2456,6 @@ export const vi: Dictionary = {
   Large: 'Lớn',
   Both: 'Cả hai',
   'Shown on cards': 'Hiển thị trên thẻ',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'Đồng bộ khoá AI của trình duyệt này với các thiết bị khác của bạn qua kho.',
   'Which of your AI accounts this feature asks.':
@@ -2820,7 +2689,6 @@ export const vi: Dictionary = {
   'Some changes may not be noticed': 'Một số thay đổi có thể không được nhận ra',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'Hệ thống đã chạm giới hạn số thư mục được theo dõi, nên Orden có thể không thấy mọi thay đổi mà chương trình khác tạo trong không gian của bạn. Tăng fs.inotify.max_user_watches sẽ khắc phục.',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Chuyển cuộc trò chuyện {name} tới {space}?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'Khi đó mọi người trong {space} có thể đọc toàn bộ lịch sử, và những người trong {from} mất quyền xem.',
@@ -2860,7 +2728,6 @@ export const vi: Dictionary = {
   'One colour': 'Một màu',
   'Web icons': 'Biểu tượng web',
   'Sites you visit will appear here': 'Các trang bạn truy cập sẽ hiện ở đây',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'Đọc chính tả',
   'Dictate with': 'Đọc chính tả bằng',
   'Where your voice goes to be turned into words.':
@@ -2891,11 +2758,9 @@ export const vi: Dictionary = {
   'Not on this device': 'Không có trên thiết bị này',
   'Not on this device. It opens once you are online again.':
     'Không có trên thiết bị này. Sẽ mở khi bạn trực tuyến trở lại.',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'Máy chủ IMAP',
   'SMTP server': 'Máy chủ SMTP',
   'User name': 'Tên người dùng',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'Khẩn cấp',
   Important: 'Quan trọng',
   'If time': 'Nếu có thời gian',

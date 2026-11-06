@@ -1,16 +1,3 @@
-/** The tasks' and bases' verbs: `list_tasks`, `add_task`, `update_task`, `query_base`,
- *  `add_row`, `edit_rows` and `edit_base` (docs/tasks.md 5.15).
- *
- *  What a call means is `@orden/bases/agent`, the half the account connector shares; this
- *  is the rest, on the road every note verb takes. A list reads the rows of the spaces
- *  the grant reaches, every one of them unless a space is named, because Today has to
- *  see a task wherever it was written. A change is read off the note as it is on screen
- *  and written back as the agent's own edit of that note (`notes.writeNote`), so the
- *  reader's typing wins, the agent's caret shows, the AI sidebar's review keeps or
- *  undoes it, and one undo takes a tick and its recurring task's next line back
- *  together. A space the grant does not reach does not exist, and one shared to read is
- *  refused before anything is asked. */
-
 import { type Base, type Context, INBOX_PATH, type Row } from '@orden/bases'
 import { seen } from './guarded'
 import { meansInbox } from '@orden/bases/inbox'
@@ -65,30 +52,24 @@ import {
   writableAt,
 } from './spaces'
 
-/** The rows store, fetched with the first of these verbs: importing it starts it. */
 async function rowsStore() {
   const { rows } = await import('../../rows/rows.svelte')
-  // A launch an agent called into before every space was read: wait for the read, a
-  // few seconds at the most, rather than answer from half the spaces.
   for (let waited = 0; !rows.ready && waited < 8000; waited += 100) {
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
   return rows
 }
 
-/** The engine's sentence as a refusal an agent can act on. */
 function refused(error: unknown): never {
   if (error instanceof AgentError) throw new Refused(error.code, error.message)
   throw error
 }
 
-/** What the engine is asked against: the reader's clock, who "me" is. */
 async function contextOf(): Promise<Context> {
   const { account } = await import('../../account.svelte')
   return { ...clockOf(new Date()), ...(account.name ? { me: account.name } : {}) }
 }
 
-/** The spaces a call is about: the one it names, or every one the grant reaches. */
 function spacesOf(call: Call): Place[] {
   const named = maybe(call, 'space')
   if (named !== null) return [placeFor(call, named)]
@@ -96,13 +77,11 @@ function spacesOf(call: Call): Place[] {
   return reachable(call).map((space) => ({ space, open: space.id === open }))
 }
 
-/** Where a call's words come from when somebody else can write them too. */
 function sourceOf(places: readonly Place[]): string | null {
   const shared = places.filter((place) => reachedByOthersIn(place.space.root))
   return shared.length ? `shared space ${shared.map((one) => one.space.name).join(', ')}` : null
 }
 
-/** A `.base` file a call names, read, in the space it names. */
 async function baseAt(
   call: Call,
   name = 'path',
@@ -162,8 +141,6 @@ export async function listTasks(call: Call): Promise<AgentAnswer> {
   }
 }
 
-/** Reads a note, works out its new words and writes them as the agent's edit, reading
- *  again where the reader typed in it meanwhile. */
 async function rewritten<T>(
   call: Call,
   note: ReturnType<typeof noteOf>,
@@ -182,7 +159,6 @@ async function rewritten<T>(
   }
 }
 
-/** The note a call names under `name`, for writing, with `.md` where it has no ending. */
 function writableNote(call: Call, path: string) {
   return noteOf({ ...call, args: { ...call.args, tab: null, path } }, true)
 }
@@ -198,8 +174,6 @@ async function inboxPlace(call: Call, place: Place): Promise<Place> {
 export async function addTask(call: Call): Promise<AgentAnswer> {
   const front = placeOf(call)
   const { rows } = await import('../../rows/rows.svelte')
-  // Quick add's grammar over the words, in the reader's language and then every other it
-  // reads (`quickWords`), knowing the space's notes for `>Note`.
   const { i18n } = await import('../../i18n.svelte')
   const names = rows
     .of(front.space.name)
@@ -215,7 +189,6 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
   const { fields } = read
   const named = maybe(call, 'note') ?? read.note ?? null
   const place = named === null ? await inboxPlace(call, front) : front
-  // The space's inbox where no note is named, made by the write below if it is not there.
   const inbox = rows.inboxes().find((one) => one.space === place.space.name)?.path ?? INBOX_PATH
   const path = named === null ? inbox : await namedOrInbox(place, named)
   const note = writableNote({ ...call, args: { ...call.args, space: place.space.id } }, path)
@@ -267,8 +240,6 @@ export async function updateTask(call: Call): Promise<AgentAnswer> {
   if (question) return question
 
   const { today } = clockOf(new Date())
-  // A comment under it (#325): what an agent asks about a task it could not finish, or
-  // what it did; the task view's own kind of comment, stamped now. In the same edit.
   const comment = typeof call.args.comment === 'string' ? call.args.comment.trim() : ''
   try {
     let said = await rewritten(call, note, (text) => {
@@ -298,8 +269,6 @@ export async function updateTask(call: Call): Promise<AgentAnswer> {
   }
 }
 
-/** The note a task names, or the space's inbox where it says "Inbox" and the space has
- *  no note called that (#1044): so a task sent to the Inbox by name makes no `Inbox.md`. */
 async function namedOrInbox(place: Place, named: string): Promise<string> {
   if (!meansInbox(named)) return named
   const { rows } = await import('../../rows/rows.svelte')
@@ -310,9 +279,6 @@ async function namedOrInbox(place: Place, named: string): Promise<string> {
   return rows.inboxes().find((one) => one.space === place.space.name)?.path ?? INBOX_PATH
 }
 
-/** `move_to`: the task and everything under it into another note, or under another
- *  heading of its own. Two notes are two edits, the new one written first, so a task
- *  is never in neither. */
 async function moved(
   call: Call,
   place: Place,
@@ -398,20 +364,16 @@ export async function queryBase(call: Call): Promise<AgentAnswer> {
   }
 }
 
-/** A path that is free: the name, else the name with the first number after it that is. */
 async function freePath(place: Place, folder: string, name: string): Promise<string> {
   for (let counter = 1; counter < 100; counter++) {
     const file = counter === 1 ? `${name}.md` : `${name} ${counter}.md`
     const relative = folder ? `${folder}/${file}` : file
-    // Free means nothing is there, which a failed read does not say: a note that
-    // would not read is there all the same, and the name is taken.
     const path = onDisk(place, relative)
     if ((await workspace.noteText(path)) === null && !(await there(path))) return relative
   }
   throw new Refused('exists', `${name} is taken a hundred times over in ${folder || 'the space'}`)
 }
 
-/** The words of a base's template note, `[[Templates/Bug]]`, or nothing. */
 async function templateOf(place: Place, base: Base, rows: readonly Row[]): Promise<string> {
   const link = base.nib.template
     ?.replace(/^\[\[|\]\]$/g, '')
@@ -493,7 +455,6 @@ export async function editRows(call: Call): Promise<AgentAnswer> {
 
 export async function editBase(call: Call): Promise<AgentAnswer> {
   const { place, relative, text, base } = await baseAt(call)
-  // `baseAt` serves the verbs that only read a base too, so the write is checked here.
   writableAt(place, onDisk(place, relative))
   const next = (() => {
     try {

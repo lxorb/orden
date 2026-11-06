@@ -1,43 +1,3 @@
-/** The kinds of document a new tab can be: one list, and the only one.
- *
- *  Five places offered these and no two of them offered the same set. The tab
- *  strip's plus had four, the File menu had the same four with no phone in mind,
- *  the sidebar's two menus had three and left page notes out, and the palette had
- *  six. A reader who found a kind in one place and looked for it in another found
- *  a different list, which is not one design; and there are two places that draw it
- *  now - a new tab, which Ctrl+T, the plus and the palette make, and a pane with
- *  nothing open - so the list has to be somewhere they can both read it.
- *
- *  Data and one call each. What a kind is called, which mark it wears and what
- *  makes one, in the order a reader is offered them: a note first, which is what a
- *  strip is mostly filled with.
- *
- *  Every one but a chat opens a tab and writes nothing until somebody saves it. The file
- *  list's own New rows are the other gesture and make a named file where they are asked
- *  to, and a chat is always made that way; see chats/view/open.ts.
- *
- *  Emil, 2026-09-13: *"When you press on the plus for creating a new tab, then you
- *  should be able to choose between the different things (note, canvas, web note
- *  etc.)"*, and 2026-09-14: *"When you press Ctrl + T it shouldn't just be a new
- *  note, there should be a menu (as if you would click the +) where you can decide
- *  what type."*, and 2026-09-27: *"Ctrl + T should always open a webpage by default
- *  [...] we need an other modal, not just a small one but a proper modal in the centre
- *  of the screen."* And 2026-09-30: *"add terminal as a new type of thing that you can
- *  open when creating a new tab [...] if there are different kinds of terminals [...]
- *  then you should be able to choose"*. A terminal is the one kind that is a session
- *  rather than a document, and the one with more than one way to make it: the row makes
- *  the default shell and its chevron lists the rest; see `others` and docs/terminal.md.
- *
- *  And issue #213: Ctrl+T and the plus are one gesture, a new tab whose pane offers
- *  these under its address field, in three lines - *"Note, Canvas, Page Note | Terminal,
- *  Remote, Online Terminal | Web Note, Private Web Note"* - each with its letter. The
- *  order below is those lines read one after another, and `line` says where each
- *  breaks; see NewHere.svelte.
- *
- *  Which kinds a device has, and which of those a reader turned off in Settings › Note
- *  types, is `hiddenKinds` in settings.svelte.ts, which the places that make one without
- *  this list - the file list, the palette, the keys - ask too. */
-
 import type { IconNode } from 'lucide'
 import type { FileMark } from './file-mark'
 import { hiddenKinds, type KindName, kindsHere } from './settings.svelte'
@@ -48,62 +8,36 @@ import { canWriteAt } from './sharing.svelte'
 import { shells } from './terminal/shells.svelte'
 import { workspace } from './workspace.svelte'
 
-/** The three lines the kinds stand in: what is written, what runs, and the web. */
 type KindLine = 'write' | 'run' | 'web'
 
 export interface NewKindRow {
   kind: KindName
-  /** Which line it stands in; see `KindLine`. */
   line: KindLine
-  /** What a press on it says; see `kindLabel`. */
   label: () => string
-  /** The shape the file list and the tab strip already draw for this kind, so the
-   *  buttons in an empty pane wear what the rows wear; see file-mark.ts. */
   mark: FileMark
-  /** A drawing of its own, for the one kind no file wears: an online terminal. */
   icon?: IconNode
-  /** The key that picks it where the kinds are offered: its own first letter, as the
-   *  code names it rather than as a language spells it, so the key is the same key in
-   *  every one of them and the card can show it. See NewHere.svelte. */
   letter: string
-  /** Makes one. In the pane named, where a caller has one - the pane whose plus was
-   *  pressed takes the keyboard first - and otherwise in whichever pane has it. */
   make: (paneId?: string) => void
-  /** The other ways to make one, for a kind that has more than one: a terminal's other
-   *  shells. Pressing the row still makes the usual one, as VS Code's `+` does beside
-   *  its `˅`; these are a chevron away. See `showOthers`. */
   others?: (paneId?: string) => Promise<MenuEntry[]>
-  /** Gets those ready, for a chooser that has just opened: finding the shells is a
-   *  question to the machine, asked when a chooser first needs it and not at launch. */
   ready?: () => void
 }
 
-/** Makes one in the pane that asked, so a plus in the other pane does not open its
- *  note over here. */
 function inPane(paneId: string | undefined, make: () => unknown) {
   if (paneId !== undefined) workspace.focusPane(paneId)
   void make()
 }
 
-/** Every kind this device can make, Settings or no Settings: what the Note types pane
- *  lists. A function rather than a constant: a phone has fewer, and what device this is
- *  can change under a window being resized. Which kinds a device has is `kindsHere`. */
 export function newKinds(): NewKindRow[] {
   return kindsHere().map((kind) => ROWS[kind]())
 }
 
-/** The kinds offered where they are made: every one this device has that nobody turned
- *  off in Settings. See kind-choice.ts. */
 export function offeredKinds(): NewKindRow[] {
   const shown = hiddenKinds.shown
-  // A chat is made in the space at once, so one shared to be read is not offered it.
-  // The others open as drafts and are saved where the reader chooses.
   const root = workspace.activeSpace?.root
   const chats = !root || canWriteAt(root)
   return newKinds().filter((one) => shown.includes(one.kind) && (chats || one.kind !== 'chat'))
 }
 
-/** Each kind's row. Which of them a device has is `kindsHere`, so nothing here asks. */
 const ROWS: Record<KindName, () => NewKindRow> = {
   note: () => ({
     kind: 'note',
@@ -129,9 +63,6 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     letter: 'p',
     make: (paneId) => inPane(paneId, () => workspace.newPages()),
   }),
-  // A chat with the space's people, made by the account; M, since C is the canvas's.
-  // At the end of the things that are written, which a chat is too. See
-  // docs/chats.md 4.13.
   chat: () => ({
     kind: 'chat',
     line: 'write',
@@ -154,15 +85,9 @@ const ROWS: Record<KindName, () => NewKindRow> = {
         inPane(paneId, () => import('./explorer/open').then((one) => one.openExplorer()))
     },
   }),
-  // R, because T is the new tab's own key, and R is what Run has been on Windows for
-  // thirty years. See docs/terminal.md.
   terminal: () => terminalRow(),
-  // Another machine's shell, beside it: a host picked, not a shell. S for SSH.
   remote: () => remoteRow(),
-  // A shell on the reader's own machine in the cloud. O for Online. See
-  // docs/online-terminal.md 4.10.
   online: () => onlineRow(),
-  // An application on one of the reader's computers (docs/apps.md). A for Application.
   application: () => ({
     kind: 'application',
     line: 'run',
@@ -174,12 +99,6 @@ const ROWS: Record<KindName, () => NewKindRow> = {
         inPane(paneId, () => import('./apps/make').then(({ makeApplication }) => makeApplication()))
     },
   }),
-  // On the search engine this device chose, which is where a browser's new tab lands.
-  // Emil, #354: *"if you click on web note in the Ctrl + T menu, then it should open
-  // your configured search engine"*. The press was already a choice of kind, so a
-  // second empty field with the kinds under it again is a press that answered nothing.
-  // The engine is fetched with the press, as a chat's maker is: the choice reaches
-  // typed.ts, which is not in front of the first paint. See web-tab/engines.ts.
   web: () => ({
     kind: 'web',
     line: 'web',
@@ -193,8 +112,6 @@ const ROWS: Record<KindName, () => NewKindRow> = {
         ),
       ),
   }),
-  // A private tab, beside the website it is one of. I for Incognito, Chrome's word for
-  // it, since P is the page note's. See web-tab/private.ts.
   private: () => ({
     kind: 'private',
     line: 'web',
@@ -205,8 +122,6 @@ const ROWS: Record<KindName, () => NewKindRow> = {
   }),
 }
 
-/** The kinds in their lines, in order, leaving out a line a device has none of: a
- *  browser has no shell of its own, a phone no website. */
 export function kindLines(kinds: readonly NewKindRow[]): NewKindRow[][] {
   const lines: KindLine[] = ['write', 'run', 'web']
   return lines
@@ -214,7 +129,6 @@ export function kindLines(kinds: readonly NewKindRow[]): NewKindRow[][] {
     .filter((line) => line.length > 0)
 }
 
-/** Lucide's cloud, with square-terminal's prompt inside it: a shell somewhere else. */
 const ONLINE: IconNode = [
   ['path', { d: 'M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z' }],
   ['path', { d: 'm7.5 11.5 2 1.75-2 1.75' }],
@@ -266,10 +180,6 @@ function terminalRow(): NewKindRow {
   }
 }
 
-/** A kind's other ways, as a menu at the card that was asked: the chevron on it, or Shift
- *  held as it was chosen. `before` runs as one of them is chosen - a new tab saying it is
- *  the tab the choice takes the place of. False for a kind that has no others, which the
- *  caller then makes as usual. */
 export function showOthers(
   one: NewKindRow,
   card: Element,
@@ -279,11 +189,6 @@ export function showOthers(
   const others = one.others
   if (!others) return false
 
-  // The rows are a question to the machine - which shells it has - so the menu opens a
-  // moment after the press rather than in it, and at the card rather than at a pointer
-  // this may not have one of. The press is still on its way to the window as it opens,
-  // and a press past a menu is what shuts it; that the press which opened it is not the
-  // press that shuts it is `pressed` in overlays.ts (issue #244).
   const box = card.getBoundingClientRect()
   void others(paneId).then((rows) => {
     const at = new MouseEvent('contextmenu', { clientX: box.left, clientY: box.bottom })

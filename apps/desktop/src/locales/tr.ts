@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const tr: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'Her şey hazır',
   Personalize: 'Kişiselleştir',
   Clean: 'Sade',
@@ -10,13 +9,11 @@ export const tr: Dictionary = {
   'Do you write code?': 'Kod yazıyor musunuz?',
   Yes: 'Evet',
   No: 'Hayır',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Diğer uygulamalardan: {key}',
   'From other apps: set in your system settings':
     'Diğer uygulamalardan: sistem ayarlarında belirlenir',
   'From other apps: bind {command} in your system settings':
     'Diğer uygulamalardan: {command} komutunu sistem ayarlarında atayın',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Temel öğeler',
   'Add to Essentials': 'Temel öğelere ekle',
   'Remove from Essentials': 'Temel öğelerden kaldır',
@@ -24,20 +21,16 @@ export const tr: Dictionary = {
   'Add blocks to Essentials': 'Blokları temel öğelere ekle',
   'Add view to Essentials': 'Görünümü temel öğelere ekle',
   'Open tabs and Essentials': 'Sekmeleri ve temel öğeleri açma',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor artık Orden',
   'Notes from nibeditor.com': 'nibeditor.com’daki notlar',
   'Nothing there': 'Orada hiçbir şey yok',
-  // AI: the three permission modes
   'Full permissions': 'Tam izinler',
   'Auto mode': 'Otomatik mod',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'Tam izinler: hiçbir şey sorulmaz ya da size geri verilmez; oturum açma, ödeme, gönderme veya silme bile',
-  // Import: Zen's tabs
   'Import from Zen': 'Zen’den içe aktar',
   'Containers stay in Zen': 'Kapsayıcılar Zen’de kalır',
   'Zen’s tabs could not be read.': 'Zen’in sekmeleri okunamadı.',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'Kapsayıcılar Firefox’ta kalır',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser}, {engine} ile arar: burada da onunla aramak için Ayarlar’dan seçin',
@@ -64,38 +57,29 @@ export const tr: Dictionary = {
   'Reading List': 'Okuma Listesi',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS, Safari’nin sekmelerini ve yer işaretlerini Tam Disk Erişimi’nin arkasında tutar. Orden’ı orada açıp yeniden deneyin.',
-  // Settings: note types
   'Page note': 'Sayfalı not',
   'Web note': 'Web notu',
   'Private tab': 'Gizli sekme',
   'Note types': 'Not türleri',
-  // Tasks: Upcoming's weeks
   'Previous week': 'Önceki hafta',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'Üste proje ekle',
   'Add project below': 'Alta proje ekle',
   'Projects folder': 'Proje klasörü',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'Atla',
   'Complete forever': 'Kalıcı olarak tamamla',
-  // Tasks: comments
   Comments: 'Yorumlar',
-  // Tasks: filters
   Filters: 'Filtreler',
   'Add filter': 'Filtre ekle',
   'Edit filter': 'Filtreyi düzenle',
-  // Tasks: a project's sections
   'Add section': 'Bölüm ekle',
   '{name} (copy)': '{name} (kopya)',
   'Its tasks are deleted with it.': 'Görevleri de onunla birlikte silinir.',
-  // Tasks: keys, selection and the undo toast
   Completed: 'Tamamlandı',
   'Remove date': 'Tarihi kaldır',
   'Next task': 'Sonraki görev',
   'Previous task': 'Önceki görev',
   'Add task at the top': 'En üste görev ekle',
   '{count} selected': '{count} seçildi',
-  // Tasks: the Display menu
   Display: 'Görünüm',
   'Completed tasks': 'Tamamlanan görevler',
   Smart: 'Akıllı',
@@ -107,20 +91,16 @@ export const tr: Dictionary = {
   'Reset all': 'Tümünü sıfırla',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'Düzen görevleri liste, pano veya takvim olarak gösterir. Gruplama onları panonun sütunları olan gruplara ayırır. Sıralama her grubu düzenler. Filtreler ihtiyacınız olmayanı gizler. Hepsi bu görünüm için saklanır.',
-  // Tasks: several lines pasted into quick add
   'One task': 'Tek görev',
   'One per line': 'Satır başına bir',
   'Add with AI': 'YZ ile ekle',
-  // Tasks: the projects in the panel
   Favorites: 'Favoriler',
   'Add project': 'Proje ekle',
   'Add sub-project': 'Alt proje ekle',
-  // Tasks: the task view
   'Sub-tasks': 'Alt görevler',
   'Add sub-task': 'Alt görev ekle',
   'New label': 'Yeni etiket',
   'No deadline': 'Son tarih yok',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'Yeniden planla',
   'Later this week': 'Bu hafta daha sonra',
   'This weekend': 'Bu hafta sonu',
@@ -137,22 +117,18 @@ export const tr: Dictionary = {
   Reopen: 'Yeniden aç',
   Schedule: 'Planla',
   'Open in note': 'Notta aç',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Başka bir uygulama',
   'Import from Obsidian': 'Obsidian’dan içe aktar',
   'Import from Notion': 'Notion’dan içe aktar',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'İpuçları',
   'Silent mode': 'Sessiz mod',
   'See how your notes connect.': 'Notlarınızın nasıl bağlandığını görün.',
   'Press {key} to find anything, notes and commands alike.':
     'Notlar ve komutlar, her şeyi bulmak için {key} tuşlarına basın.',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Yazarken Markdown’u göster',
   'Open notes in source mode': 'Notları kaynak kipinde aç',
   Pointer: 'İşaretçi',
   'Pointing hand on buttons': 'Düğmelerde işaret eden el',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Görev ekle',
   'Apple Shortcuts': 'Apple Kestirmeler',
   Tomorrow: 'Yarın',
@@ -178,7 +154,6 @@ export const tr: Dictionary = {
   'Every week': 'Her hafta',
   'Every month': 'Her ay',
   'Every year': 'Her yıl',
-  // Files and notes
   Save: 'Kaydet',
   'New note': 'Yeni not',
   'Random note': 'Rastgele not',
@@ -206,8 +181,6 @@ export const tr: Dictionary = {
   'Release to add a page': 'Sayfa eklemek için bırakın',
   'Page {number}': 'Sayfa {number}',
   'The paper could not be read': 'Kâğıt okunamadı',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'Uzun sayfa',
@@ -250,7 +223,6 @@ export const tr: Dictionary = {
   'Choose a picture': 'Resim seç',
   'Remove picture': 'Resmi kaldır',
   'That picture could not be read.': 'Bu resim okunamadı.',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'Doygunluk',
   Tint: 'Renk tonu',
   'Tint colour': 'Ton rengi',
@@ -378,7 +350,6 @@ export const tr: Dictionary = {
   'Merge into…': 'Şununla birleştir…',
   'Split at caret': 'İmleçte böl',
   'Extract selection': 'Seçimi çıkar',
-  // Panels and navigation
   Bookmarks: 'Yer imleri',
   'New group': 'Yeni grup',
   'Remove group': 'Grubu kaldır',
@@ -432,8 +403,6 @@ export const tr: Dictionary = {
   'Sort by name': 'Ada göre sırala',
   'Sort by modified': 'Değiştirilmeye göre sırala',
   'Sort by created': 'Oluşturulmaya göre sırala',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'Dosyaların sırası',
   'Name, A to Z': 'Ad, A’dan Z’ye',
   'Name, Z to A': 'Ad, Z’den A’ya',
@@ -444,7 +413,6 @@ export const tr: Dictionary = {
   Manual: 'Elle',
   'Show hidden files': 'Gizli dosyaları göster',
   'Hide hidden files': 'Gizli dosyaları gizle',
-  // Writing
   Bold: 'Kalın',
   Italic: 'İtalik',
   Strikethrough: 'Üstü çizili',
@@ -529,11 +497,9 @@ export const tr: Dictionary = {
   'Horizontal rule': 'Yatay çizgi',
   'Page break': 'Sayfa sonu',
   'Tidy up this note': 'Bu notu düzenle',
-  // PDFs
   'Copy a link': 'Bağlantı kopyala',
   'That PDF could not be opened': 'Bu PDF açılamadı',
   'That file could not be read': 'Bu dosya okunamadı',
-  // Modes and view
   Reading: 'Okuma',
   'Leave reading': 'Okumadan çık',
   Present: 'Sun',
@@ -573,7 +539,6 @@ export const tr: Dictionary = {
   'Zoom in': 'Yakınlaştır',
   'Zoom out': 'Uzaklaştır',
   'Actual size': 'Gerçek boyut',
-  // Appearance
   Accent: 'Vurgu rengi',
   'Tidy up': 'Düzenle',
   'Blur the app behind the tab overview':
@@ -702,7 +667,6 @@ export const tr: Dictionary = {
   'Switch theme': 'Temayı değiştir',
   Style: 'Stil',
   Mode: 'Kip',
-  // The window's own edges; see appearance.rs
   Window: 'Pencere',
   'Orden’s own': 'Orden’in kendi',
   'The system’s': 'Sistemin',
@@ -713,7 +677,6 @@ export const tr: Dictionary = {
   'Edit custom CSS': 'Özel CSS’i düzenle',
   'Edit snippets': 'Parçacıkları düzenle',
   'Reload themes and custom CSS': 'Temaları ve özel CSS’i yeniden yükle',
-  // The theme store, and the sample note its cards show
   Themes: 'Temalar',
   Browse: 'Gözat',
   'Search themes': 'Temalarda ara',
@@ -793,7 +756,6 @@ export const tr: Dictionary = {
   'Code only': 'Yalnızca kod',
   Everywhere: 'Her yerde',
   Attachments: 'Ekler',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Sayfalı notlar',
   'New pages': 'Yeni sayfalar',
   'Assets folder of the space': 'Alanın varlıklar klasörü',
@@ -845,7 +807,6 @@ export const tr: Dictionary = {
   'Machine-translated. Corrections welcome.': 'Makine çevirisi. Düzeltmeler beklenir.',
   'The glasses show English.': 'Gözlük İngilizce gösterir.',
   'Match the app': 'Uygulamayla aynı',
-  // Settings
   Settings: 'Ayarlar',
   Account: 'Hesap',
   Publish: 'Yayımla',
@@ -871,7 +832,6 @@ export const tr: Dictionary = {
   },
   Update: 'Güncelle',
   'Live at': 'Yayında',
-  // Publishing
   'Publish {name}': '{name} yayımla',
   'What to publish': 'Ne yayımlanacak',
   'The whole space': 'Tüm alan',
@@ -890,7 +850,6 @@ export const tr: Dictionary = {
   Value: 'Değer',
   available: 'uygun',
   'checking…': 'denetleniyor…',
-  // LLM
   'Connect an LLM to your notes': 'Notlarınıza bir LLM bağlayın',
   'Sign in first - the connector reaches the notes in your account.':
     'Önce oturum açın - bağlayıcı hesabınızdaki notlara erişir.',
@@ -943,7 +902,6 @@ export const tr: Dictionary = {
     'URL yerine bir JSON bloğu alan istemciler için.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'Oturum açamayan bir istemciye bunun yerine bir belirteç verilebilir. Yalnızca bir kez gösterilir.',
-  // Export
   'Plain text': 'Düz metin',
   'Markdown with the pictures': 'Resimlerle markdown',
   'HTML without styles': 'Biçemsiz HTML',
@@ -962,13 +920,11 @@ export const tr: Dictionary = {
   Margin: 'Kenar boşluğu',
   Header: 'Üst bilgi',
   Footer: 'Alt bilgi',
-  // History
   'Version history': 'Sürüm geçmişi',
   'Copy link to this note': 'Bu notun bağlantısını kopyala',
   'that link could not be followed': 'bu bağlantı izlenemedi',
   'No earlier versions yet.': 'Henüz eski sürüm yok.',
   'Restore this version': 'Bu sürümü geri yükle',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'orada zaten bir not var',
   'enter a valid email address': 'geçerli bir e-posta adresi girin',
   'give the space a name': 'alana bir ad verin',
@@ -999,7 +955,6 @@ export const tr: Dictionary = {
   'could not publish': 'yayımlanamadı',
   'could not create a token': 'belirteç oluşturulamadı',
   'that did not work': 'bu işe yaramadı',
-  // Settings on a phone, display names, one blog address
   Back: 'Geri',
   'Display name': 'Görünen ad',
   'Your name': 'Adınız',
@@ -1019,7 +974,6 @@ export const tr: Dictionary = {
   Spelling: 'Yazım',
   Checking: 'Denetleme',
   Dictionary: 'Sözlük',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'Kaydın görünmesi bekleniyor.',
   'Certificate issued.': 'Sertifika verildi.',
   'Cloudflare could not set this domain up.': 'Cloudflare bu alan adını kuramadı.',
@@ -1030,7 +984,6 @@ export const tr: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare bu alan adını engelledi',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'Bir alan adının kökünde, sağlayıcınız orada CNAME’e izin vermiyorsa ALIAS veya ANAME kaydı ya da CNAME düzleştirme kullanın.',
-  // Shortcuts
   Shortcuts: 'Kısayollar',
   'Search shortcuts': 'Kısayollarda ara',
   'Second key': 'İkinci tuş',
@@ -1197,7 +1150,6 @@ export const tr: Dictionary = {
   Delegated: 'Devredildi',
   'Code theme: {name}': 'Kod teması: {name}',
   'Delete a layout': 'Bir düzeni sil',
-  // Keyboards and modal editing
   Default: 'Öntanımlı',
   'Vim keys': 'Vim tuşları',
   'Follow the link': 'Bağlantıyı izle',
@@ -1209,11 +1161,9 @@ export const tr: Dictionary = {
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
   REPLACE: 'REPLACE',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'Gözlükte sayfa {page}/{count}',
   'Reaching the glasses': 'Gözlüğe ulaşılıyor',
   'The glasses are not keeping up': 'Gözlük yetişemiyor',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'Ekle',
   Select: 'Seç',
   Pan: 'Kaydır',
@@ -1243,7 +1193,6 @@ export const tr: Dictionary = {
   Calligraphy: 'Hat kalemi',
   'Width {number}': 'Genişlik {number}',
   'Finger draws': 'Parmak çizer',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'Genişlik',
   Opacity: 'Saydamlık',
   Colour: 'Renk',
@@ -1287,23 +1236,19 @@ export const tr: Dictionary = {
   'Export as PNG': 'PNG olarak aktar',
   'Export as SVG': 'SVG olarak aktar',
   'Export as PDF': 'PDF olarak aktar',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'PDF içe aktar',
   'Choose how to add the pages to the canvas.': 'Sayfaların tuvale nasıl ekleneceğini seçin.',
   'Single page': 'Tek sayfa',
   'All pages': 'Tüm sayfalar',
   'Choose a page': 'Bir sayfa seçin',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'Seçileni sil',
   'Nudge left': 'Sola it',
   'Nudge right': 'Sağa it',
   'Nudge up': 'Yukarı it',
   'Nudge down': 'Aşağı it',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'Başka yerde de açık',
   Shared: 'Paylaşıldı',
   Browser: 'Tarayıcı',
-  // Sharing a space with other people
   Share: 'Paylaş',
   'Share {name}': '{name} paylaş',
   'Share this space': 'Bu alanı paylaş',
@@ -1347,14 +1292,12 @@ export const tr: Dictionary = {
   'Shared with you': 'Sizinle paylaşıldı',
   'That link does not open anything': 'Bu bağlantı bir şey açmıyor',
   'Ask for another one.': 'Bir yenisini isteyin.',
-  // Somebody a share link let in, who has no account
   Guest: 'Konuk',
   'Ask to join': 'Katılmak için sor',
   Asking: 'Soruluyor',
   'Waiting for {who}': '{who} bekleniyor',
   '{who} did not let you in': '{who} sizi içeri almadı',
   'What the others in this space see.': 'Bu alandaki diğerlerinin gördüğü.',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'Güncellemeler',
   'Release channel': 'Sürüm kanalı',
   Stable: 'Kararlı',
@@ -1364,8 +1307,6 @@ export const tr: Dictionary = {
   'Web version': 'Web sürümü',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'Kararlı yayımlanan web uygulamasıdır, Kararsız en yeni yapıdır ve bozulabilir.',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'İçe aktar',
   'Convert syntax': 'Sözdizimini dönüştür',
   'In this note': 'Bu notta',
@@ -1463,8 +1404,6 @@ export const tr: Dictionary = {
   'Undo the import': 'İçe aktarmayı geri al',
   'Choose an export': 'Bir dışa aktarma seçin',
   Under: 'Altında',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'Eşitleme',
   'When the same note was written twice': 'Aynı not iki kez yazıldığında',
   'On two devices': 'İki aygıtta',
@@ -1523,7 +1462,6 @@ export const tr: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'Bu cihazdaki notlar kalır; yalnızca hesap ve eşitlenmiş kopyaları gider.',
   'Also gone for everyone in {spaces}.': '{spaces} içindeki herkes için de gider.',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'Not',
   '{space} panel': '{space} paneli',
   'Panel width': 'Panel genişliği',
@@ -1534,7 +1472,6 @@ export const tr: Dictionary = {
   'What is selected': 'Seçili olan',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'Tuval: {cards} kart, {links} bağlantı, {drawings} çizim',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'YZ',
   Providers: 'Sağlayıcılar',
   'Make default': 'Öntanımlı yap',
@@ -1561,7 +1498,6 @@ export const tr: Dictionary = {
   'Add an AI provider in Settings first.': 'Önce Ayarlar’da bir YZ sağlayıcısı ekleyin.',
   'The model did not answer.': 'Model yanıt vermedi.',
   'The connection closed before the answer was finished.': 'Yanıt bitmeden bağlantı kapandı.',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     '{plan} planınız {time} saatine kadar sınırında.',
   'Your {plan} plan is at its limit for now.': '{plan} planınız şimdilik sınırında.',
@@ -1589,7 +1525,6 @@ export const tr: Dictionary = {
   Shorter: 'Daha kısa',
   Longer: 'Daha uzun',
   'Fix grammar': 'Dil bilgisini düzelt',
-  // The AI sidebar's commands
   'A cited report': 'Alıntılı bir rapor',
   'A helper in the background': 'Arka planda bir yardımcı',
   'A side question': 'Yan bir soru',
@@ -1691,7 +1626,6 @@ export const tr: Dictionary = {
   'Markdown, shortest name': 'Markdown, en kısa ad',
   'Markdown, relative path': 'Markdown, göreli yol',
   'Markdown, path in the space': 'Markdown, alandaki yol',
-  // Publishing part one.
   'The folders you choose become public.': 'Seçtiğiniz klasörler herkese açık olur.',
   'Anyone with the address can read what is published, drafts included.':
     'Adresi bilen herkes, taslaklar dahil yayımlananı okuyabilir.',
@@ -1717,11 +1651,9 @@ export const tr: Dictionary = {
   'Remove the password': 'Parolayı kaldır',
   'Scan this with your authenticator app, then type its code.':
     'Bunu kimlik doğrulayıcı uygulamanızla tarayıp verdiği kodu yazın.',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'Fotoğraf',
   Dictate: 'Dikte et',
   'Add to {name}': '{name} içine ekle',
-  // Web tabs
   Reload: 'Yeniden yükle',
   'Hard reload': 'Sert yeniden yükleme',
   'Open in the browser': 'Tarayıcıda aç',
@@ -1736,7 +1668,6 @@ export const tr: Dictionary = {
   'Playing audio': 'Ses çalıyor',
   Muted: 'Sessiz',
   'Developer tools': 'Geliştirici araçları',
-  // Recording, meetings and what a model wrote
   Record: 'Kaydet',
   Recording: 'Kayıt',
   'Stop recording': 'Kaydı durdur',
@@ -1757,7 +1688,6 @@ export const tr: Dictionary = {
     'Bu kayıt, bir kerede sözcüklere çevrilemeyecek kadar uzun.',
   'That is as much as one recording may hold.': 'Bir kayıt en çok bu kadar tutar.',
   'Nothing could be heard in that recording.': 'Bu kayıtta hiçbir şey duyulmadı.',
-  // Publishing part two.
   Spreadsheet: 'Hesap tablosu',
   'The app’s own': 'Uygulamanın kendi',
   'publish.css and publish.js in this space dress the site.':
@@ -1773,14 +1703,12 @@ export const tr: Dictionary = {
   'Save as CSV': 'CSV olarak kaydet',
   'Kept for {days}': '{days} saklanır',
   Full: 'Dolu',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'posta gönderilemedi - yine deneyin',
   'start again - that took too long': 'yeniden başlayın - bu çok uzun sürdü',
   'sign in to do that': 'bunu yapmak için oturum açın',
   'that is not something a token can do': 'bunu bir belirteç yapamaz',
   'something went wrong here - try again': 'burada bir şey ters gitti - yine deneyin',
   'this service cannot keep a secret safely': 'bu hizmet bir sırrı güvenle tutamıyor',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only':
     'yalnızca resim, PDF ve sitenin kendi css ya da js dosyası',
   'that file is too big': 'bu dosya çok büyük',
@@ -1794,13 +1722,11 @@ export const tr: Dictionary = {
   'that is more folder icons than a space holds':
     'bu, bir alanın tutabileceğinden çok klasör simgesi',
   'that is more than a site keeps': 'bu bir sitenin tuttuğundan fazla',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'bu adreste kimse yok',
   'nobody by that name': 'bu adda kimse yok',
   'nobody is waiting by that name': 'bu adla bekleyen kimse yok',
   'this space is yours': 'bu alan sizin',
   'that link is busy, try again in a minute': 'bu bağlantı meşgul, bir dakika sonra deneyin',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'böyle bir sürüm yok',
   'this note was shared with you, not its folder': 'bu not sizinle paylaşıldı, klasörü değil',
   'nothing to restore': 'geri yüklenecek bir şey yok',
@@ -1808,7 +1734,6 @@ export const tr: Dictionary = {
   'nothing to delete': 'silinecek bir şey yok',
   'this room is not answering - try again': 'bu oda yanıt vermiyor - yine deneyin',
   'rooms are not running here': 'odalar burada çalışmıyor',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'tema mağazası yanıt vermiyor',
   'that is not a theme': 'bu bir tema değil',
   'no such theme': 'böyle bir tema yok',
@@ -1822,10 +1747,8 @@ export const tr: Dictionary = {
   'that is more than a spoken command': 'bu bir sesli komuttan fazlası',
   'that is a lot of listening - try again later': 'bu çok dinleme - sonra yine deneyin',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% metin',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'Telefon',
   'The bar sits over the keyboard on a phone.': 'Telefonda çubuk klavyenin üstünde durur.',
   'On the bar': 'Çubukta',
@@ -1839,31 +1762,25 @@ export const tr: Dictionary = {
   'A pull past the top runs': 'Üstten çekmek şunu çalıştırır',
   Nothing: 'Hiçbiri',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'Sakla',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'Sağa taşı',
   'Move to the left': 'Sola taşı',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'Hesapta geçmiş',
   'Keep versions': 'Sürümleri sakla',
   'A month': 'Bir ay',
   'A year': 'Bir yıl',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Son günün tamamı, sonra saatte bir, bir aydan sonra günde bir, üç aydan sonra haftada bir.',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Bu not, bir odadaki bir notun olabileceği en büyük boyutta.',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'Yeni sekme',
   'Full screen': 'Tam ekran',
   'Print…': 'Yazdır…',
   'Share…': 'Paylaş…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'şunu yapmak istiyor',
   'Don’t allow': 'İzin verme',
   Allow: 'İzin ver',
@@ -1879,7 +1796,6 @@ export const tr: Dictionary = {
   'Use your MIDI devices': 'MIDI cihazlarınızı kullanma',
   'Manage windows on all your displays': 'Tüm ekranlarınızda pencereleri yönetme',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'Site bilgileri',
   Downloads: 'İndirilenler',
   'Downloading {name}': '{name} indiriliyor',
@@ -1906,11 +1822,9 @@ export const tr: Dictionary = {
   'Turn into': 'Şuna dönüştür',
   Foldable: 'Katlanabilir',
   'Starts folded': 'Katlı başlar',
-  // Where a space keeps what websites store
   'Web data': 'Web verileri',
   Global: 'Ortak',
   Site: 'Site',
-  // The Mac's menu bar
   'About {name}': '{name} hakkında',
   Services: 'Servisler',
   'Hide {name}': '{name} uygulamasını gizle',
@@ -1918,7 +1832,6 @@ export const tr: Dictionary = {
   'Show all': 'Tümünü göster',
   'Quit {name}': '{name} uygulamasından çık',
   'Bring all to front': 'Tümünü öne getir',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Kopyalamayı geri al',
   'Devices with your AI vault': 'Yapay zekâ kasanız olan cihazlar',
   'This device': 'Bu cihaz',
@@ -1934,13 +1847,11 @@ export const tr: Dictionary = {
   'Select down': 'Aşağı doğru seç',
   'Select up': 'Yukarı doğru seç',
   'Select or deselect': 'Seç veya seçimi kaldır',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'Yeni sekmede aç',
   'Open to the side': 'Yanında aç',
   'Open all': 'Tümünü aç',
   'Show in the file list': 'Dosya listesinde göster',
   'Collapse the file list': 'Dosya listesini daralt',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'Seçimi genişlet',
   'Shrink the selection': 'Seçimi daralt',
   'Insert a line above': 'Üste satır ekle',
@@ -1954,18 +1865,15 @@ export const tr: Dictionary = {
   'Duplicate the block': 'Bloğu çoğalt',
   'Move the block up': 'Bloğu yukarı taşı',
   'Move the block down': 'Bloğu aşağı taşı',
-  // The editor's menu on a link and a picture
   'Copy link address': 'Bağlantı adresini kopyala',
   'Edit link': 'Bağlantıyı düzenle',
   'Remove link': 'Bağlantıyı kaldır',
   'Copy picture': 'Resmi kopyala',
   'Open picture': 'Resmi aç',
   'Delete picture': 'Resmi sil',
-  // A file dropped into a note
   'Storing the file': 'Dosya kaydediliyor',
   'That file is larger than a note can keep.': 'Bu dosya bir notun tutabileceğinden büyük.',
   'That file could not be kept.': 'Bu dosya saklanamadı.',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'Yeni terminal',
   'Command Prompt': 'Komut İstemi',
   Terminal: 'Terminal',
@@ -1990,11 +1898,8 @@ export const tr: Dictionary = {
     one: '{count} satır yapıştırılsın mı?',
     other: '{count} satır yapıştırılsın mı?',
   },
-  // Orden as the default browser
   'Default browser': 'Öntanımlı tarayıcı',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} düzenlemelerini geri al',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'Arşivle',
   Unarchive: 'Arşivden çıkar',
   Archived: 'Arşivlendi',
@@ -2007,7 +1912,6 @@ export const tr: Dictionary = {
     one: 'İçeride {count} arşivlenmiş öğe',
     other: 'İçeride {count} arşivlenmiş öğe',
   },
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'Sol kenar çubuğu',
   'Right sidebar': 'Sağ kenar çubuğu',
   'Ask about this space': 'Bu alan hakkında sor',
@@ -2018,7 +1922,6 @@ export const tr: Dictionary = {
   'Ask again': 'Yeniden sor',
   'Continue when the limit resets': 'Sınır sıfırlanınca devam et',
   'Continues at {time}': '{time} saatinde devam edecek',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Her şeyi sor, eklemek için @, fazlası için /',
   'What can I help with?': 'Nasıl yardımcı olabilirim?',
   'Add photos and files': 'Fotoğraf ve dosya ekle',
@@ -2086,12 +1989,9 @@ export const tr: Dictionary = {
   Closed: 'Kapatıldı',
   Ran: 'Çalıştırıldı',
   Changed: 'Değiştirildi',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': 'Bu {device}',
   '{name} is back: {device} was writing in it': '{name} geri geldi: {device} içine yazıyordu',
   'Changes to {name} are not syncing': '{name} üzerindeki değişiklikler eşitlenmiyor',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Açma',
   Pressing: 'Tıklama',
   Typing: 'Giriş',
@@ -2106,18 +2006,14 @@ export const tr: Dictionary = {
   'Agent tabs closed': 'Ajan sekmeleri kapatıldı',
   'Orden is still running for your agents': 'Orden ajanlarınız için çalışmaya devam ediyor',
   '{client} wants to connect': '{client} bağlanmak istiyor',
-  // Web logins that travel, and the devices of an account
   'no such device': 'böyle bir cihaz yok',
   'give the device a name': 'cihaza bir ad verin',
   'that computer is no longer waiting': 'o bilgisayar artık beklemiyor',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'böyle bir dosya yok',
   'too many changes at once - try again in a minute':
     'aynı anda çok fazla değişiklik - bir dakika sonra yine deneyin',
   'that is more than a space keeps about its tree':
     'bu, bir alanın ağacı hakkında tuttuğundan fazla',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'Bu bilgisayardaki ajanlar',
   'Your account’s connector': 'Hesabının bağlayıcısı',
   'Orden asks you once, the first time it connects.': 'Orden ilk bağlandığında sana bir kez sorar.',
@@ -2187,12 +2083,9 @@ export const tr: Dictionary = {
     one: '{count} çağrı',
     other: '{count} çağrı',
   },
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'Hızlı soru',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Nota ekle',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'Uzantılar',
   'Add extension': 'Uzantı ekle',
   'Manage extensions': 'Uzantıları yönet',
@@ -2212,7 +2105,6 @@ export const tr: Dictionary = {
   'Did not load': 'Yüklenmedi',
   Permissions: 'İzinler',
   Options: 'Seçenekler',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'Uzak',
   'Add host': 'Sunucu ekle',
   Reconnect: 'Yeniden bağlan',
@@ -2220,11 +2112,8 @@ export const tr: Dictionary = {
   'No group': 'Grup yok',
   'Not an address': 'Adres değil',
   'Could not connect to {host}': '{host} sunucusuna bağlanılamadı',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'Resim gönderiliyor',
   'Could not send the image': 'Resim gönderilemedi',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': {
     one: 've sonrasındaki {count}',
     other: 've sonrasındaki {count}',
@@ -2237,8 +2126,6 @@ export const tr: Dictionary = {
   'Pages, terminals and moves are not undone': 'Sayfalar, terminaller ve taşımalar geri alınmaz',
   Rewind: 'Geri sar',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'Arama motoru',
   History: 'Geçmiş',
   'Search history': 'Arama geçmişi',
@@ -2262,14 +2149,12 @@ export const tr: Dictionary = {
   'New private tab': 'Yeni gizli sekme',
   'All spaces': 'Tüm alanlar',
   'the data could not be deleted': 'Veriler silinemedi',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Ertele',
   Reminders: 'Hatırlatıcılar',
   'Reminders ring while Orden is open': 'Hatırlatıcılar Orden açıkken çalar',
   Automatic: 'Otomatik',
   'Stay in the tray': 'Sistem tepsisinde kal',
   'Exact alarms': 'Tam zamanlı alarmlar',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'Yapılacaklar',
   'Plan my day': 'Günümü planla',
   'Add a task': 'Görev ekle',
@@ -2281,8 +2166,6 @@ export const tr: Dictionary = {
   'Done tasks too': 'Tamamlanan görevler de',
   'As a task': 'Görev olarak',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'Görevler',
   Ascending: 'Artan',
   Descending: 'Azalan',
@@ -2367,8 +2250,6 @@ export const tr: Dictionary = {
   'Without a value': 'Değersiz',
   'With a value': 'Değerli',
   Unique: 'Benzersiz',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'Şablondan yeni not',
   Automations: 'Otomasyonlar',
   'Row added': 'Satır eklendi',
@@ -2397,7 +2278,6 @@ export const tr: Dictionary = {
   Form: 'Form',
   Formula: 'Formül',
   'Blocked by {task}': '{task} bekleniyor',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'Çıkmadan önce uyar',
   'When something runs': 'Bir şey çalışırken',
   'Quit {name}?': '{name} uygulamasından çıkılsın mı?',
@@ -2408,16 +2288,13 @@ export const tr: Dictionary = {
   'Quit anyway': 'Yine de çık',
   'Restart anyway': 'Yine de yeniden başlat',
   'Close anyway': 'Yine de kapat',
-  // The online terminal
   'Online terminal': 'Çevrimiçi terminal',
   'New online terminal': 'Yeni çevrimiçi terminal',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'başka bir cihaz',
   'Taken over by {device}': '{device} devraldı',
   'Open on {device} since {time}': '{time} saatinden beri {device} üzerinde açık',
   'Take over': 'Devral',
   'Take back': 'Geri al',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'Yeni uygulama',
   Application: 'Uygulama',
   'This application’s file is damaged': 'Bu uygulamanın dosyası bozuk',
@@ -2528,8 +2405,6 @@ export const tr: Dictionary = {
   'Compare with original': 'Orijinalle karşılaştır',
   'Conflict copies from other apps': 'Diğer uygulamaların çakışma kopyaları',
   'Remove from sync': 'Eşitlemeden çıkar',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'Profil',
   Change: 'Değiştir',
   'Take photo': 'Fotoğraf çek',
@@ -2554,7 +2429,6 @@ export const tr: Dictionary = {
   'that picture could not be opened': 'bu resim açılamadı',
   'the camera could not be opened': 'kamera açılamadı',
   'that picture is too big': 'bu resim çok büyük',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'Sohbet',
   Reply: 'Yanıtla',
   Replies: 'Yanıtlar',
@@ -2573,7 +2447,6 @@ export const tr: Dictionary = {
   'Also send to {chat}': '{chat} sohbetine de gönder',
   'Skin tone': 'Ten rengi',
   'Deleted account': 'Silinmiş hesap',
-  // Chats: notifications
   Mute: 'Sessize al',
   Unmute: 'Sesi aç',
   'New message': 'Yeni mesaj',
@@ -2583,7 +2456,6 @@ export const tr: Dictionary = {
   Weekdays: 'Hafta içi',
   Starts: 'Başlangıç',
   Ends: 'Bitiş',
-  // Chats: everywhere
   'Read chats': 'Sohbetleri okuma',
   'Post in chats': 'Sohbetlere yazma',
   'Always in this chat': 'Bu sohbette her zaman',
@@ -2595,14 +2467,12 @@ export const tr: Dictionary = {
   'Search this chat': 'Bu sohbette ara',
   'Add as task': 'Görev olarak ekle',
   'Save as note': 'Not olarak kaydet',
-  // Appearance: glass's own pairs of colours
   Dawn: 'Şafak',
   Lagoon: 'Lagün',
   Lilac: 'Leylak',
   Peach: 'Şeftali',
   Sage: 'Adaçayı',
   Mist: 'Sis',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'Yeni veritabanı',
   'New page': 'Yeni sayfa',
   'Not started': 'Başlanmadı',
@@ -2628,7 +2498,6 @@ export const tr: Dictionary = {
   Large: 'Büyük',
   Both: 'İkisi de',
   'Shown on cards': 'Kartlarda gösterilen',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'Bu tarayıcının yapay zekâ anahtarlarını kasa üzerinden diğer cihazlarınızla eşitler.',
   'Which of your AI accounts this feature asks.':
@@ -2868,7 +2737,6 @@ export const tr: Dictionary = {
   'Some changes may not be noticed': 'Bazı değişiklikler fark edilmeyebilir',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'Sistem izlenen klasör sınırına ulaştı, bu yüzden Orden diğer programların alanlarınızda yaptığı her değişikliği fark etmeyebilir. fs.inotify.max_user_watches değerini artırmak bunu düzeltir.',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': '{name} sohbeti {space} alanına taşınsın mı?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'Bundan sonra {space} içindeki herkes tüm geçmişi okuyabilir ve {from} içindekiler onu kaybeder.',
@@ -2908,7 +2776,6 @@ export const tr: Dictionary = {
   'One colour': 'Tek renk',
   'Web icons': 'Web simgeleri',
   'Sites you visit will appear here': 'Ziyaret ettiğiniz siteler burada görünür',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'Dikte',
   'Dictate with': 'Şununla dikte et',
   'Where your voice goes to be turned into words.':
@@ -2939,11 +2806,9 @@ export const tr: Dictionary = {
   'Not on this device': 'Bu cihazda değil',
   'Not on this device. It opens once you are online again.':
     'Bu cihazda değil. Yeniden çevrimiçi olduğunuzda açılır.',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'IMAP sunucusu',
   'SMTP server': 'SMTP sunucusu',
   'User name': 'Kullanıcı adı',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'Acil',
   Important: 'Önemli',
   'If time': 'Vakit olursa',

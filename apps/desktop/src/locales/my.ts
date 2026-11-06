@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const my: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'အားလုံး အသင့်ဖြစ်ပါပြီ',
   Personalize: 'စိတ်ကြိုက်ပြင်ရန်',
   Clean: 'ရှင်းလင်း',
@@ -10,12 +9,10 @@ export const my: Dictionary = {
   'Do you write code?': 'ကုဒ်ရေးပါသလား?',
   Yes: 'ဟုတ်ကဲ့',
   No: 'မဟုတ်ပါ',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'အခြားအက်ပ်များမှ: {key}',
   'From other apps: set in your system settings': 'အခြားအက်ပ်များမှ: စနစ်ဆက်တင်များတွင် သတ်မှတ်ပါ',
   'From other apps: bind {command} in your system settings':
     'အခြားအက်ပ်များမှ: စနစ်ဆက်တင်များတွင် {command} ကို ချိတ်ပါ',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'မရှိမဖြစ်များ',
   'Add to Essentials': 'မရှိမဖြစ်များသို့ ထည့်ပါ',
   'Remove from Essentials': 'မရှိမဖြစ်များမှ ဖယ်ပါ',
@@ -23,20 +20,16 @@ export const my: Dictionary = {
   'Add blocks to Essentials': 'ဘလောက်များကို မရှိမဖြစ်များသို့ ထည့်ပါ',
   'Add view to Essentials': 'မြင်ကွင်းကို မရှိမဖြစ်များသို့ ထည့်ပါ',
   'Open tabs and Essentials': 'တဘ်များနှင့် မရှိမဖြစ်များကို ဖွင့်ခြင်း',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor သည် ယခု Orden ဖြစ်ပါပြီ',
   'Notes from nibeditor.com': 'nibeditor.com မှ မှတ်စုများ',
   'Nothing there': 'ဘာမှမရှိပါ',
-  // AI: the three permission modes
   'Full permissions': 'ခွင့်ပြုချက် အပြည့်',
   'Auto mode': 'အလိုအလျောက် မုဒ်',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'ခွင့်ပြုချက် အပြည့်- ဝင်ရောက်ခြင်း၊ ပေးချေခြင်း၊ ပို့ခြင်း၊ ဖျက်ခြင်းပင် ဘာမျှ မမေးပါ၊ သင့်ထံ ပြန်မပေးပါ',
-  // Import: Zen's tabs
   'Import from Zen': 'Zen မှ သွင်းပါ',
   'Containers stay in Zen': 'ကွန်တိန်နာများ Zen တွင် ကျန်ရစ်သည်',
   'Zen’s tabs could not be read.': 'Zen ၏ တဘ်များကို ဖတ်၍ မရပါ။',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'ကွန်တိန်နာများ Firefox တွင် ကျန်ရစ်သည်',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} သည် {engine} ဖြင့် ရှာသည်- ဤနေရာတွင်လည်း ၎င်းဖြင့် ရှာရန် ဆက်တင်များတွင် ရွေးပါ',
@@ -61,38 +54,29 @@ export const my: Dictionary = {
   'Reading List': 'ဖတ်ရန်စာရင်း',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS သည် Safari ၏ တဘ်များနှင့် စာမှတ်များကို Full Disk Access နောက်တွင် ထားသည်။ ထိုနေရာတွင် Orden ကို ဖွင့်ပြီး ထပ်မံ တောင်းဆိုပါ။',
-  // Settings: note types
   'Page note': 'စာမျက်နှာမှတ်စု',
   'Web note': 'ဝဘ်မှတ်စု',
   'Private tab': 'တဘ်သီးသန့်',
   'Note types': 'မှတ်စုအမျိုးအစားများ',
-  // Tasks: Upcoming's weeks
   'Previous week': 'ယခင် အပတ်',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'အပေါ်တွင် ပရောဂျက် ထည့်ရန်',
   'Add project below': 'အောက်တွင် ပရောဂျက် ထည့်ရန်',
   'Projects folder': 'ပရောဂျက်များ ဖိုင်တွဲ',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'ကျော်ရန်',
   'Complete forever': 'အပြီးသတ် ပြီးစီးရန်',
-  // Tasks: comments
   Comments: 'မှတ်ချက်များ',
-  // Tasks: filters
   Filters: 'စစ်ထုတ်မှုများ',
   'Add filter': 'စစ်ထုတ်မှု ထည့်ရန်',
   'Edit filter': 'စစ်ထုတ်မှု ပြင်ရန်',
-  // Tasks: a project's sections
   'Add section': 'အပိုင်း ထည့်ရန်',
   '{name} (copy)': '{name} (မိတ္တူ)',
   'Its tasks are deleted with it.': '၎င်း၏ လုပ်ငန်းများလည်း အတူ ဖျက်ပစ်မည်။',
-  // Tasks: keys, selection and the undo toast
   Completed: 'ပြီးစီးပြီ',
   'Remove date': 'ရက်စွဲ ဖယ်ရှားရန်',
   'Next task': 'နောက် လုပ်ငန်း',
   'Previous task': 'ရှေ့ လုပ်ငန်း',
   'Add task at the top': 'အပေါ်တွင် လုပ်ငန်း ထည့်ရန်',
   '{count} selected': '{count} ခု ရွေးထားသည်',
-  // Tasks: the Display menu
   Display: 'ပြသပုံ',
   'Completed tasks': 'ပြီးစီးသော လုပ်ငန်းများ',
   Smart: 'စမတ်',
@@ -104,20 +88,16 @@ export const my: Dictionary = {
   'Reset all': 'အားလုံး ပြန်သတ်မှတ်ရန်',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'အပြင်အဆင်သည် လုပ်ငန်းများကို စာရင်း၊ ဘုတ် သို့မဟုတ် ပြက္ခဒိန်အဖြစ် ပြသည်။ အုပ်စုဖွဲ့ခြင်းသည် ၎င်းတို့ကို အုပ်စုများအဖြစ် ခွဲပြီး ဘုတ်၏ ကော်လံများ ဖြစ်သည်။ စီခြင်းသည် အုပ်စုတစ်ခုစီကို စီစဉ်သည်။ စစ်ထုတ်မှုများသည် မလိုအပ်သည်ကို ဖျောက်ထားသည်။ ယင်းအားလုံးကို ဤမြင်ကွင်းအတွက် သိမ်းထားသည်။',
-  // Tasks: several lines pasted into quick add
   'One task': 'လုပ်ငန်းတစ်ခု',
   'One per line': 'တစ်ကြောင်းလျှင် တစ်ခု',
   'Add with AI': 'AI ဖြင့် ထည့်ပါ',
-  // Tasks: the projects in the panel
   Favorites: 'အကြိုက်ဆုံးများ',
   'Add project': 'ပရောဂျက် ထည့်',
   'Add sub-project': 'ပရောဂျက်ခွဲ ထည့်',
-  // Tasks: the task view
   'Sub-tasks': 'လုပ်ငန်းခွဲများ',
   'Add sub-task': 'လုပ်ငန်းခွဲ ထည့်',
   'New label': 'တံဆိပ်အသစ်',
   'No deadline': 'နောက်ဆုံးရက် မရှိ',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'အချိန်ပြန်သတ်မှတ်',
   'Later this week': 'ဤအပတ်နောက်ပိုင်း',
   'This weekend': 'ဤအပတ်ကုန်',
@@ -134,22 +114,18 @@ export const my: Dictionary = {
   Reopen: 'ပြန်ဖွင့်',
   Schedule: 'အချိန်သတ်မှတ်',
   'Open in note': 'မှတ်စုတွင် ဖွင့်',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'အခြားအက်ပ်',
   'Import from Obsidian': 'Obsidian မှ သွင်းပါ',
   'Import from Notion': 'Notion မှ သွင်းပါ',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'အကြံပြုချက်များ',
   'Silent mode': 'တိတ်ဆိတ်မုဒ်',
   'See how your notes connect.': 'သင့်မှတ်စုများ မည်သို့ ချိတ်ဆက်ထားသည်ကို ကြည့်ပါ။',
   'Press {key} to find anything, notes and commands alike.':
     'မှတ်စုနှင့် အမိန့်များ အားလုံးကို ရှာရန် {key} ကိုနှိပ်ပါ။',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'ရေးနေစဉ် Markdown ကိုပြပါ',
   'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'ညွှန်ပြချက်',
   'Pointing hand on buttons': 'ခလုတ်များပေါ်တွင် ညွှန်ပြသောလက်',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'လုပ်ငန်း ထည့်ရန်',
   'Apple Shortcuts': 'Apple ဖြတ်လမ်းများ',
   Tomorrow: 'မနက်ဖြန်',
@@ -175,7 +151,6 @@ export const my: Dictionary = {
   'Every week': 'အပတ်တိုင်း',
   'Every month': 'လတိုင်း',
   'Every year': 'နှစ်တိုင်း',
-  // Files and notes
   Save: 'သိမ်းဆည်း',
   'New note': 'မှတ်စုအသစ်',
   'Random note': 'ကျပန်းမှတ်စု',
@@ -203,8 +178,6 @@ export const my: Dictionary = {
   'Release to add a page': 'စာမျက်နှာ ထည့်ရန် လွှတ်ပါ',
   'Page {number}': 'စာမျက်နှာ {number}',
   'The paper could not be read': 'စာရွက်ကို ဖတ်လို့မရပါ',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'ရှည်သောစာမျက်နှာ',
@@ -247,7 +220,6 @@ export const my: Dictionary = {
   'Choose a picture': 'ပုံရွေးရန်',
   'Remove picture': 'ပုံကို ဖယ်ရှားရန်',
   'That picture could not be read.': 'ထိုပုံကို ဖတ်၍မရပါ။',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'အရောင်ပြည့်ဝမှု',
   Tint: 'အရောင်ဟပ်',
   'Tint colour': 'ဟပ်မည့်အရောင်',
@@ -376,7 +348,6 @@ export const my: Dictionary = {
   'Merge into…': 'သို့ပေါင်း…',
   'Split at caret': 'ကာဆာနေရာတွင်ခွဲ',
   'Extract selection': 'ရွေးထားသည်ကိုခွဲထုတ်',
-  // Panels and navigation
   Bookmarks: 'စာမှတ်များ',
   'New group': 'အုပ်စုအသစ်',
   'Remove group': 'အုပ်စုဖျက်',
@@ -430,8 +401,6 @@ export const my: Dictionary = {
   'Sort by name': 'အမည်အလိုက်စီ',
   'Sort by modified': 'ပြင်ချိန်အလိုက်စီ',
   'Sort by created': 'ဖန်တီးချိန်အလိုက်စီ',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'ဖိုင်များ၏ အစီအစဉ်',
   'Name, A to Z': 'အမည်၊ က မှ အ',
   'Name, Z to A': 'အမည်၊ အ မှ က',
@@ -442,7 +411,6 @@ export const my: Dictionary = {
   Manual: 'ကိုယ်တိုင်စီ',
   'Show hidden files': 'ဖျောက်ထားသောဖိုင်ပြ',
   'Hide hidden files': 'ဖျောက်ထားသောဖိုင်ဖျောက်',
-  // Writing
   Bold: 'စာလုံးထူ',
   Italic: 'စာလုံးစောင်း',
   Strikethrough: 'ဖျက်မျဉ်း',
@@ -527,11 +495,9 @@ export const my: Dictionary = {
   'Horizontal rule': 'အလျားလိုက်မျဉ်း',
   'Page break': 'စာမျက်နှာအဆုံး',
   'Tidy up this note': 'ဤမှတ်စုကိုသပ်ရပ်စေ',
-  // PDFs
   'Copy a link': 'လင့်ကူးယူ',
   'That PDF could not be opened': 'ထို PDF ဖွင့်မရပါ',
   'That file could not be read': 'ထိုဖိုင်ကို ဖတ်မရပါ',
-  // Modes and view
   Reading: 'ဖတ်မုဒ်',
   'Leave reading': 'ဖတ်မုဒ်မှထွက်',
   Present: 'တင်ပြ',
@@ -571,7 +537,6 @@ export const my: Dictionary = {
   'Zoom in': 'ချဲ့',
   'Zoom out': 'ချုံ့',
   'Actual size': 'အမှန်အရွယ်',
-  // Appearance
   Accent: 'အသားပေးအရောင်',
   'Tidy up': 'စနစ်တကျ စီရန်',
   'Blur the app behind the tab overview': 'တက်ဘ် ခြုံငုံကြည့်ရှုမှု နောက်ရှိ အက်ပ်ကို ဝါးစေရန်',
@@ -700,7 +665,6 @@ export const my: Dictionary = {
   'Switch theme': 'အပြင်အဆင်ပြောင်း',
   Style: 'စတိုင်',
   Mode: 'မုဒ်',
-  // The window's own edges; see appearance.rs
   Window: 'ဝင်းဒိုး',
   'Orden’s own': 'Orden ၏ကိုယ်ပိုင်',
   'The system’s': 'စနစ်၏',
@@ -711,7 +675,6 @@ export const my: Dictionary = {
   'Edit custom CSS': 'ကိုယ်ပိုင် CSS ပြင်',
   'Edit snippets': 'CSS အတိုအထွာပြင်',
   'Reload themes and custom CSS': 'အပြင်အဆင်နှင့် CSS ပြန်တင်',
-  // The theme store, and the sample note its cards show
   Themes: 'အပြင်အဆင်များ',
   Browse: 'ကြည့်ရှု',
   'Search themes': 'အပြင်အဆင်ရှာ',
@@ -788,7 +751,6 @@ export const my: Dictionary = {
   'Code only': 'ကုဒ်တွင်သာ',
   Everywhere: 'အားလုံးတွင်',
   Attachments: 'တွဲဖိုင်များ',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'စာမျက်နှာမှတ်စုများ',
   'New pages': 'စာမျက်နှာအသစ်များ',
   'Assets folder of the space': 'အလုပ်ခွင်၏ပစ္စည်းဖိုင်တွဲ',
@@ -840,7 +802,6 @@ export const my: Dictionary = {
   'Machine-translated. Corrections welcome.': 'စက်ဖြင့်ဘာသာပြန်။ အမှားပြင်ချက်ကြိုဆို။',
   'The glasses show English.': 'မျက်မှန်တွင် အင်္ဂလိပ်ဘာသာ ပြသသည်။',
   'Match the app': 'အက်ပ်အတိုင်း',
-  // Settings
   Settings: 'ဆက်တင်',
   Account: 'အကောင့်',
   Publish: 'ထုတ်ပြန်',
@@ -863,7 +824,6 @@ export const my: Dictionary = {
   '{count} spaces sync to your account.': 'အလုပ်ခွင် {count} ခုသင့်အကောင့်သို့ချိန်ကိုက်သည်။',
   Update: 'အပ်ဒိတ်',
   'Live at': 'တင်ထားသည်',
-  // Publishing
   'Publish {name}': '{name} တင်ပါ',
   'What to publish': 'ဘာတင်မလဲ',
   'The whole space': 'နေရာအားလုံး',
@@ -882,7 +842,6 @@ export const my: Dictionary = {
   Value: 'တန်ဖိုး',
   available: 'လွတ်သည်',
   'checking…': 'စစ်နေသည်…',
-  // LLM
   'Connect an LLM to your notes': 'သင့်မှတ်စုများနှင့် LLM ချိတ်ပါ',
   'Sign in first - the connector reaches the notes in your account.':
     'ဦးစွာဝင်ပါ - ချိတ်ဆက်သူသည် သင့်အကောင့်ရှိ မှတ်စုများကို ရောက်သည်။',
@@ -933,7 +892,6 @@ export const my: Dictionary = {
     'URL အစား JSON ဘလောက် လက်ခံသော ကလိုင်းရင့်အတွက်။',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'ဝင်မရသော ကလိုင်းရင့်ကို အစားထိုး တိုကင်ပေးနိုင်သည်။ တစ်ကြိမ်သာ ပြသည်။',
-  // Export
   'Plain text': 'ရိုးရိုးစာ',
   'Markdown with the pictures': 'ပုံများပါသော markdown',
   'HTML without styles': 'အပြင်အဆင်မပါ HTML',
@@ -952,13 +910,11 @@ export const my: Dictionary = {
   Margin: 'အနားသတ်',
   Header: 'ထိပ်စာ',
   Footer: 'အောက်ခြေစာ',
-  // History
   'Version history': 'ဗားရှင်းမှတ်တမ်း',
   'Copy link to this note': 'ဤမှတ်စု၏လင့်ကူးပါ',
   'that link could not be followed': 'ထိုလင့်ကို လိုက်မရပါ',
   'No earlier versions yet.': 'ယခင်ဗားရှင်း မရှိသေးပါ။',
   'Restore this version': 'ဤဗားရှင်းကို ပြန်ယူပါ',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'ထိုနေရာတွင် မှတ်စုရှိပြီးသား',
   'enter a valid email address': 'မှန်သောအီးမေးလ်လိပ်စာ ထည့်ပါ',
   'give the space a name': 'နေရာကို နာမည်ပေးပါ',
@@ -989,7 +945,6 @@ export const my: Dictionary = {
   'could not publish': 'တင်မရပါ',
   'could not create a token': 'တိုကင် ဖန်တီးမရပါ',
   'that did not work': 'ထိုအရာ အလုပ်မလုပ်ပါ',
-  // Settings on a phone, display names, one blog address
   Back: 'ပြန်',
   'Display name': 'ပြသနာမည်',
   'Your name': 'သင့်နာမည်',
@@ -1009,7 +964,6 @@ export const my: Dictionary = {
   Spelling: 'စာလုံးပေါင်း',
   Checking: 'စစ်ဆေးမှု',
   Dictionary: 'အဘိဓာန်',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'မှတ်တမ်းပေါ်လာရန် စောင့်နေသည်။',
   'Certificate issued.': 'လက်မှတ်ထုတ်ပေးပြီ။',
   'Cloudflare could not set this domain up.': 'Cloudflare ဤဒိုမိန်းကို စီစဉ်မရပါ။',
@@ -1020,7 +974,6 @@ export const my: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare ဤဒိုမိန်းကို ပိတ်ထားသည်',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'ဒိုမိန်းအရင်းတွင် သင့်ပေးသူ CNAME ကို ခွင့်မပြုပါက ALIAS သို့ ANAME မှတ်တမ်း၊ သို့ CNAME flattening အသုံးပြုပါ။',
-  // Shortcuts
   Shortcuts: 'အတိုကောက်များ',
   'Search shortcuts': 'အတိုကောက်ရှာပါ',
   'Second key': 'ဒုတိယခလုတ်',
@@ -1187,7 +1140,6 @@ export const my: Dictionary = {
   Delegated: 'လွှဲအပ်ခဲ့သည်',
   'Code theme: {name}': 'ကုဒ်အပြင်အဆင်: {name}',
   'Delete a layout': 'အပြင်အဆင်ဖျက်ပါ',
-  // Keyboards and modal editing
   Default: 'မူရင်း',
   'Vim keys': 'Vim ခလုတ်များ',
   'Follow the link': 'လင့်ကို လိုက်ပါ',
@@ -1199,11 +1151,9 @@ export const my: Dictionary = {
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
   REPLACE: 'REPLACE',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'မျက်မှန်တွင် စာမျက်နှာ {page}/{count}',
   'Reaching the glasses': 'မျက်မှန်ကို ဆက်သွယ်နေသည်',
   'The glasses are not keeping up': 'မျက်မှန် မလိုက်နိုင်ပါ',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'ထည့်ပါ',
   Select: 'ရွေးပါ',
   Pan: 'ရွှေ့ပါ',
@@ -1233,7 +1183,6 @@ export const my: Dictionary = {
   Calligraphy: 'လက်ရေးလှ',
   'Width {number}': 'အကျယ် {number}',
   'Finger draws': 'လက်ချောင်းဆွဲသည်',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'အကျယ်',
   Opacity: 'မှုန်ဝါးမှု',
   Colour: 'အရောင်',
@@ -1277,24 +1226,20 @@ export const my: Dictionary = {
   'Export as PNG': 'PNG အဖြစ်ထုတ်ပါ',
   'Export as SVG': 'SVG အဖြစ်ထုတ်ပါ',
   'Export as PDF': 'PDF အဖြစ်ထုတ်ပါ',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'PDF သွင်းပါ',
   'Choose how to add the pages to the canvas.':
     'စာမျက်နှာများကို ကန်ဗတ်ပေါ် မည်သို့ထည့်မည်ကို ရွေးပါ။',
   'Single page': 'စာမျက်နှာ တစ်မျက်နှာ',
   'All pages': 'စာမျက်နှာအားလုံး',
   'Choose a page': 'စာမျက်နှာ ရွေးပါ',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'ရွေးထားသည်ကို ဖျက်ပါ',
   'Nudge left': 'ဘယ်သို့ အနည်းငယ်တွန်းပါ',
   'Nudge right': 'ညာသို့ အနည်းငယ်တွန်းပါ',
   'Nudge up': 'အထက်သို့ အနည်းငယ်တွန်းပါ',
   'Nudge down': 'အောက်သို့ အနည်းငယ်တွန်းပါ',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'အခြားနေရာတွင်လည်း ဖွင့်ထားသည်',
   Shared: 'မျှဝေထားသည်',
   Browser: 'ဘရောက်ဇာ',
-  // Sharing a space with other people
   Share: 'မျှဝေပါ',
   'Share {name}': '{name} မျှဝေပါ',
   'Share this space': 'ဤနေရာကို မျှဝေပါ',
@@ -1338,14 +1283,12 @@ export const my: Dictionary = {
   'Shared with you': 'သင့်နှင့် မျှဝေထားသည်',
   'That link does not open anything': 'ထိုလင့်သည် မည်သည့်အရာမျှ မဖွင့်ပါ',
   'Ask for another one.': 'အခြားတစ်ခု တောင်းပါ။',
-  // Somebody a share link let in, who has no account
   Guest: 'ဧည့်သည်',
   'Ask to join': 'ဝင်ခွင့်တောင်းပါ',
   Asking: 'တောင်းနေသည်',
   'Waiting for {who}': '{who} ကို စောင့်နေသည်',
   '{who} did not let you in': '{who} သင့်ကို ဝင်ခွင့်မပြုပါ',
   'What the others in this space see.': 'ဤနေရာရှိ အခြားသူများ မြင်သည်။',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'အသစ်များ',
   'Release channel': 'ထုတ်လွှင့်လမ်းကြောင်း',
   Stable: 'တည်ငြိမ်',
@@ -1355,8 +1298,6 @@ export const my: Dictionary = {
   'Web version': 'ဝဘ်ဗားရှင်း',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'တည်ငြိမ်သည် ထုတ်လွှင့်ပြီး ဝဘ်အက်ပ်ဖြစ်သည်၊ မတည်ငြိမ်သည် နောက်ဆုံး build ဖြစ်၍ ပျက်နိုင်သည်။',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'သွင်းပါ',
   'Convert syntax': 'ဝါစဂ္ဂပြောင်းပါ',
   'In this note': 'ဤမှတ်စုတွင်',
@@ -1443,8 +1384,6 @@ export const my: Dictionary = {
   'Undo the import': 'သွင်းမှုကို ပြန်ပါ',
   'Choose an export': 'ထုတ်မှုတစ်ခုရွေးပါ',
   Under: 'အောက်တွင်',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'ချိန်ကိုက်မှု',
   'When the same note was written twice': 'တူသောမှတ်စုကို နှစ်ကြိမ်ရေးသောအခါ',
   'On two devices': 'စက်နှစ်လုံးတွင်',
@@ -1501,7 +1440,6 @@ export const my: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'ဤစက်ပေါ်ရှိ မှတ်စုများ ကျန်နေမည်။ အကောင့်နှင့် ချိန်ကိုက်ထားသော မိတ္တူများသာ ပျောက်မည်။',
   'Also gone for everyone in {spaces}.': '{spaces} ထဲရှိ လူတိုင်းအတွက်လည်း ပျောက်မည်။',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'မှတ်စု',
   '{space} panel': '{space} အကန့်',
   'Panel width': 'အကန့်အကျယ်',
@@ -1512,7 +1450,6 @@ export const my: Dictionary = {
   'What is selected': 'ရွေးထားသည်',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'ကမ္ဗာ: ကတ် {cards}၊ လင့် {links}၊ ပုံ {drawings}',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'ပေးသူများ',
   'Make default': 'မူရင်းအဖြစ်ထားပါ',
@@ -1539,7 +1476,6 @@ export const my: Dictionary = {
   'Add an AI provider in Settings first.': 'ဦးစွာ ဆက်တင်တွင် AI ပေးသူ ထည့်ပါ။',
   'The model did not answer.': 'မော်ဒယ် မဖြေပါ။',
   'The connection closed before the answer was finished.': 'အဖြေ မပြီးမီ ချိတ်ဆက်မှု ပိတ်သွားသည်။',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'သင်၏ {plan} အစီအစဉ်သည် {time} အထိ ကန့်သတ်ချက်ပြည့်နေသည်။',
   'Your {plan} plan is at its limit for now.':
@@ -1568,7 +1504,6 @@ export const my: Dictionary = {
   Shorter: 'ပိုတို',
   Longer: 'ပိုရှည်',
   'Fix grammar': 'သဒ္ဒါပြင်ပါ',
-  // The AI sidebar's commands
   'A cited report': 'ကိုးကားချက်ပါ အစီရင်ခံစာ',
   'A helper in the background': 'နောက်ကွယ်ရှိ အကူ',
   'A side question': 'ဘေးထွက်မေးခွန်း',
@@ -1670,7 +1605,6 @@ export const my: Dictionary = {
   'Markdown, shortest name': 'markdown၊ အတိုဆုံးနာမည်',
   'Markdown, relative path': 'markdown၊ ဆက်စပ်လမ်းကြောင်း',
   'Markdown, path in the space': 'markdown၊ နေရာအတွင်းလမ်းကြောင်း',
-  // Publishing part one.
   'The folders you choose become public.': 'ရွေးသော ဖိုလ်ဒါများ အများမြင်ဖြစ်သည်။',
   'Anyone with the address can read what is published, drafts included.':
     'လိပ်စာရှိသူတိုင်း တင်ထားသည်ကို မူကြမ်းအပါအဝင် ဖတ်နိုင်သည်။',
@@ -1696,11 +1630,9 @@ export const my: Dictionary = {
   'Remove the password': 'စကားဝှက်ဖယ်ပါ',
   'Scan this with your authenticator app, then type its code.':
     'ဤအရာကို အတည်ပြုအက်ပ်ဖြင့် စကင်ဖတ်၍ ကုဒ်ကို ရိုက်ပါ။',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'ဓာတ်ပုံ',
   Dictate: 'အသံဖြင့်ရေးပါ',
   'Add to {name}': '{name} သို့ထည့်ပါ',
-  // Web tabs
   Reload: 'ပြန်ဖွင့်ပါ',
   'Hard reload': 'အပြည့်အဝ ပြန်ဖွင့်ပါ',
   'Open in the browser': 'ဘရောက်ဇာတွင်ဖွင့်ပါ',
@@ -1715,7 +1647,6 @@ export const my: Dictionary = {
   'Playing audio': 'အသံဖွင့်နေသည်',
   Muted: 'အသံပိတ်ထား',
   'Developer tools': 'ဆော့ဖ်ဝဲရေးသူ ကိရိယာများ',
-  // Recording, meetings and what a model wrote
   Record: 'အသံသွင်းပါ',
   Recording: 'အသံဖိုင်',
   'Stop recording': 'အသံသွင်းမှုရပ်ပါ',
@@ -1736,7 +1667,6 @@ export const my: Dictionary = {
     'ထိုအသံဖိုင်သည် တစ်ကြိမ်တည်း စာအဖြစ်ပြောင်းရန် အလွန်ရှည်သည်။',
   'That is as much as one recording may hold.': 'အသံဖိုင်တစ်ခု ဤမျှသာ ဆံ့သည်။',
   'Nothing could be heard in that recording.': 'ထိုအသံဖိုင်တွင် မည်သည့်အသံမျှ မကြားပါ။',
-  // Publishing part two.
   Spreadsheet: 'စာရင်းဇယား',
   'The app’s own': 'အက်ပ်၏ ကိုယ်ပိုင်',
   'publish.css and publish.js in this space dress the site.':
@@ -1754,7 +1684,6 @@ export const my: Dictionary = {
   'Save as CSV': 'CSV အဖြစ် သိမ်းမည်',
   'Kept for {days}': '{days} သိမ်းထားသည်',
   Full: 'ပြည့်နေပြီ',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'စာပို့မရပါ - ထပ်စမ်းပါ',
   'start again - that took too long': 'ပြန်စပါ - အလွန်ကြာသွားပြီ',
   'sign in to do that': 'ထိုအရာလုပ်ရန် ဝင်ပါ',
@@ -1762,7 +1691,6 @@ export const my: Dictionary = {
   'something went wrong here - try again': 'ဤနေရာတွင် အမှားတစ်ခုဖြစ်သည် - ထပ်စမ်းပါ',
   'this service cannot keep a secret safely':
     'ဤဝန်ဆောင်မှုသည် လှျို့ဝှက်ချက်ကို လုံခြုံစွာ မထားနိုင်ပါ',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only':
     'ပုံ၊ PDF နှင့် ဆိုက်၏ ကိုယ်ပိုင် css သို့မဟုတ် js သာ',
   'that file is too big': 'ထိုဖိုင် အလွန်ကြီးသည်',
@@ -1773,13 +1701,11 @@ export const my: Dictionary = {
   'that is more than a space keeps about its graph': 'ထိုအရာ နေရာက ဂရပ်အတွက် ထားသည်ထက် ပိုသည်',
   'that is more folder icons than a space holds': 'ထိုအရာ နေရာဆံ့သော ဖိုလ်ဒါအိုင်ကွန်ထက် ပိုသည်',
   'that is more than a site keeps': 'ဆိုက်တစ်ခု သိမ်းနိုင်သည်ထက် ပိုသည်',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'ထိုလိပ်စာတွင် မည်သူမျှ မရှိပါ',
   'nobody by that name': 'ထိုနာမည်ဖြင့် မည်သူမျှ မရှိပါ',
   'nobody is waiting by that name': 'ထိုနာမည်ဖြင့် စောင့်နေသူ မရှိပါ',
   'this space is yours': 'ဤနေရာ သင့်ပိုင်ဖြစ်သည်',
   'that link is busy, try again in a minute': 'ထိုလင့် အလုပ်ရှုပ်နေသည်၊ တစ်မိနစ်အကြာ ထပ်စမ်းပါ',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'ထိုဗားရှင်း မရှိပါ',
   'this note was shared with you, not its folder':
     'ဤမှတ်စုကို သင့်နှင့် မျှဝေခဲ့သည်၊ ၏ဖိုလ်ဒါကို မဟုတ်ပါ',
@@ -1788,7 +1714,6 @@ export const my: Dictionary = {
   'nothing to delete': 'ဖျက်စရာ မရှိပါ',
   'this room is not answering - try again': 'ဤအခန်း မဖြေပါ - ထပ်စမ်းပါ',
   'rooms are not running here': 'ဤနေရာတွင် အခန်းများ မလည်ပတ်ပါ',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'အပြင်အဆင်စတိုး မဖြေပါ',
   'that is not a theme': 'ထိုအရာ အပြင်အဆင် မဟုတ်ပါ',
   'no such theme': 'ထိုအပြင်အဆင် မရှိပါ',
@@ -1800,10 +1725,8 @@ export const my: Dictionary = {
   'that is more than a spoken command': 'ထိုအရာ အသံအမိန့်တစ်ခုထက် ပိုသည်',
   'that is a lot of listening - try again later': 'ထိုအရာ နားဆင်မှုများလွန်းသည် - နောက်မှ စမ်းပါ',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% စာ',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'ဖုန်း',
   'The bar sits over the keyboard on a phone.': 'ဖုန်းတွင် ဘားသည် ကီးဘုတ်အပေါ်တွင် ရှိသည်။',
   'On the bar': 'ဘားပေါ်တွင်',
@@ -1817,31 +1740,25 @@ export const my: Dictionary = {
   'A pull past the top runs': 'အပေါ်မှ ဆွဲလွန်လျှင် အလုပ်လုပ်မည်',
   Nothing: 'မရှိ',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'ထားပါ',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'ညာဘက် ရွှေ့ပါ',
   'Move to the left': 'ဘယ်ဘက် ရွှေ့ပါ',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'အကောင့်ပေါ်ရှိ မှတ်တမ်း',
   'Keep versions': 'ဗားရှင်းများ ထားပါ',
   'A month': 'တစ်လ',
   'A year': 'တစ်နှစ်',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'နောက်ဆုံးတစ်ရက်အားလုံး၊ ထို့နောက် နာရီတစ်ခုလျှင် တစ်ခု၊ တစ်လအကြာတွင် ရက်တစ်ခုလျှင် တစ်ခု၊ သုံးလအကြာတွင် အပတ်တစ်ခုလျှင် တစ်ခု။',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'ဤမှတ်စုသည် အခန်းတစ်ခုအတွင်း မှတ်စုတစ်ခု ရှိနိုင်သည့် အကြီးဆုံးအရွယ်အစား ဖြစ်သည်။',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'တဘ် အသစ်',
   'Full screen': 'မျက်နှာပြင် အပြည့်',
   'Print…': 'ပုံနှိပ်ပါ…',
   'Share…': 'မျှဝေပါ…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'က ပြုလုပ်လိုသည်မှာ',
   'Don’t allow': 'ခွင့်မပြုပါ',
   Allow: 'ခွင့်ပြုရန်',
@@ -1858,7 +1775,6 @@ export const my: Dictionary = {
   'Use your MIDI devices': 'သင့် MIDI စက်များ အသုံးပြုရန်',
   'Manage windows on all your displays': 'သင့်ဖန်သားပြင်အားလုံးတွင် ဝင်းဒိုးများ စီမံရန်',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'ဆိုက် အချက်အလက်များ',
   Downloads: 'ဒေါင်းလုဒ်များ',
   'Downloading {name}': '{name} ကို ဒေါင်းလုဒ်လုပ်နေသည်',
@@ -1885,11 +1801,9 @@ export const my: Dictionary = {
   'Turn into': 'အဖြစ် ပြောင်းပါ',
   Foldable: 'ချိတ်ခေါက်နိုင်',
   'Starts folded': 'ခေါက်ပြီး စတင်',
-  // Where a space keeps what websites store
   'Web data': 'ဝဘ်ဒေတာ',
   Global: 'အားလုံးမျှဝေ',
   Site: 'ဆိုက်',
-  // The Mac's menu bar
   'About {name}': '{name} အကြောင်း',
   Services: 'ဝန်ဆောင်မှုများ',
   'Hide {name}': '{name} ကို ဖျောက်ရန်',
@@ -1897,7 +1811,6 @@ export const my: Dictionary = {
   'Show all': 'အားလုံးပြရန်',
   'Quit {name}': '{name} မှ ထွက်ရန်',
   'Bring all to front': 'အားလုံးကို ရှေ့သို့ယူရန်',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'ကူးယူမှုကို ပြန်ဖျက်',
   'Devices with your AI vault': 'သင်၏ AI သေတ္တာရှိသော စက်များ',
   'This device': 'ဤစက်',
@@ -1912,13 +1825,11 @@ export const my: Dictionary = {
   'Select down': 'အောက်သို့ ရွေး',
   'Select up': 'အထက်သို့ ရွေး',
   'Select or deselect': 'ရွေး သို့မဟုတ် ရွေးချယ်မှုဖြုတ်',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'တဘ်အသစ်တွင် ဖွင့်',
   'Open to the side': 'ဘေးတွင် ဖွင့်',
   'Open all': 'အားလုံး ဖွင့်',
   'Show in the file list': 'ဖိုင်စာရင်းတွင် ပြ',
   'Collapse the file list': 'ဖိုင်စာရင်း ခေါက်သိမ်း',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'ရွေးချယ်မှု ချဲ့',
   'Shrink the selection': 'ရွေးချယ်မှု ချုံ့',
   'Insert a line above': 'အထက်တွင် လိုင်းထည့်',
@@ -1932,18 +1843,15 @@ export const my: Dictionary = {
   'Duplicate the block': 'ဘလောက်ကို မိတ္တူပွား',
   'Move the block up': 'ဘလောက်ကို အထက်ရွှေ့ပါ',
   'Move the block down': 'ဘလောက်ကို အောက်ရွှေ့ပါ',
-  // The editor's menu on a link and a picture
   'Copy link address': 'လင့်လိပ်စာ ကူးယူ',
   'Edit link': 'လင့် ပြင်',
   'Remove link': 'လင့် ဖယ်',
   'Copy picture': 'ပုံ ကူးယူ',
   'Open picture': 'ပုံ ဖွင့်',
   'Delete picture': 'ပုံ ဖျက်',
-  // A file dropped into a note
   'Storing the file': 'ဖိုင် သိမ်းနေသည်',
   'That file is larger than a note can keep.': 'ထိုဖိုင်သည် မှတ်စုတစ်ခု သိမ်းနိုင်သည်ထက် ကြီးသည်။',
   'That file could not be kept.': 'ထိုဖိုင်ကို သိမ်း၍ မရပါ။',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'တာမင်နယ် အသစ်',
   'Command Prompt': 'Command Prompt',
   Terminal: 'တာမင်နယ်',
@@ -1965,11 +1873,8 @@ export const my: Dictionary = {
   'Saved nowhere, a session kept running is found again in Settings, {pane}.':
     'မည်သည့်နေရာတွင်မျှ မသိမ်းထားပါ။ ဆက်လည်ပတ်ထားသော ဆက်ရှင်ကို ဆက်တင်များ၊ {pane} တွင် ပြန်တွေ့နိုင်သည်။',
   'Paste {count} lines?': 'စာကြောင်း {count} ကြောင်း ကူးထည့်မလား?',
-  // Orden as the default browser
   'Default browser': 'မူရင်း ဘရောက်ဇာ',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ၏ ပြင်ဆင်မှုများကို ပြန်ဖျက်ရန်',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'မှတ်တမ်းတင်',
   Unarchive: 'မှတ်တမ်းမှ ပြန်ထုတ်',
   Archived: 'မှတ်တမ်းတင်ပြီး',
@@ -1979,7 +1884,6 @@ export const my: Dictionary = {
   'Nothing archived is deleted': 'မှတ်တမ်းတင်ထားသည့် မည်သည့်အရာမှ မဖျက်ပါ',
   'Show them': 'ပြပါ',
   '{count} archived items inside': 'အတွင်း၌ မှတ်တမ်းတင်ထားသော အရာ {count} ခု',
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'ဘယ်ဘေးတန်း',
   'Right sidebar': 'ညာဘေးတန်း',
   'Ask about this space': 'ဤအလုပ်ခွင်အကြောင်းမေးပါ',
@@ -1990,7 +1894,6 @@ export const my: Dictionary = {
   'Ask again': 'ထပ်မေးရန်',
   'Continue when the limit resets': 'ကန့်သတ်ချက် ပြန်စသောအခါ ဆက်လုပ်ရန်',
   'Continues at {time}': '{time} တွင် ဆက်လုပ်မည်',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ဘာမဆိုမေးပါ၊ ထည့်ရန် @၊ ပိုမိုရန် /',
   'What can I help with?': 'ဘာကူညီပေးရမလဲ။',
   'Add photos and files': 'ဓာတ်ပုံနှင့် ဖိုင်များ ထည့်ပါ',
@@ -2058,13 +1961,10 @@ export const my: Dictionary = {
   Closed: 'ပိတ်ခဲ့',
   Ran: 'လုပ်ဆောင်ခဲ့',
   Changed: 'ပြောင်းခဲ့',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': 'ဤ {device}',
   '{name} is back: {device} was writing in it':
     '{name} ပြန်ရောက်လာပါပြီ: {device} က ၎င်းထဲတွင် ရေးနေခဲ့သည်',
   'Changes to {name} are not syncing': '{name} ရှိ ပြောင်းလဲမှုများကို စင့်ခ်မလုပ်ပါ',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'ဖွင့်နေသည်',
   Pressing: 'နှိပ်နေသည်',
   Typing: 'ရိုက်နေသည်',
@@ -2079,18 +1979,14 @@ export const my: Dictionary = {
   'Agent tabs closed': 'အေးဂျင့် တက်ဘ်များ ပိတ်လိုက်ပြီ',
   'Orden is still running for your agents': 'သင့်အေးဂျင့်များအတွက် Orden ဆက်လည်ပတ်နေသည်',
   '{client} wants to connect': '{client} ချိတ်ဆက်လိုသည်',
-  // Web logins that travel, and the devices of an account
   'no such device': 'ထိုစက် မရှိပါ',
   'give the device a name': 'စက်ကို အမည်ပေးပါ',
   'that computer is no longer waiting': 'ထိုကွန်ပျူတာ စောင့်မနေတော့ပါ',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'ထိုဖိုင် မရှိပါ',
   'too many changes at once - try again in a minute':
     'တစ်ကြိမ်တည်း ပြောင်းလဲမှု များလွန်းသည် - တစ်မိနစ်အကြာ ထပ်ကြိုးစားပါ',
   'that is more than a space keeps about its tree':
     '၎င်းသည် အလုပ်ခွင်တစ်ခုက ၎င်း၏သစ်ပင်ဖွဲ့စည်းပုံအကြောင်း သိမ်းထားသည်ထက် များသည်',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'ဤကွန်ပျူတာပေါ်ရှိ အေးဂျင့်များ',
   'Your account’s connector': 'သင့်အကောင့်၏ ချိတ်ဆက်ကိရိယာ',
   'Orden asks you once, the first time it connects.':
@@ -2160,12 +2056,9 @@ export const my: Dictionary = {
   'Pages a minute': 'တစ်မိနစ်လျှင် စာမျက်နှာ',
   'Browser memory limit': 'ဘရောက်ဇာ မှတ်ဉာဏ် ကန့်သတ်ချက်',
   '{count} calls': 'ခေါ်ဆိုမှု {count} ခု',
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'အမြန်မေးခွန်း',
   Scratchpad: 'Scratchpad',
   'Add to note': 'မှတ်စုထဲ ထည့်',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'တိုးချဲ့မှုများ',
   'Add extension': 'တိုးချဲ့မှု ထည့်ရန်',
   'Manage extensions': 'တိုးချဲ့မှုများ စီမံရန်',
@@ -2185,7 +2078,6 @@ export const my: Dictionary = {
   'Did not load': 'မဖွင့်နိုင်ပါ',
   Permissions: 'ခွင့်ပြုချက်များ',
   Options: 'ရွေးချယ်စရာများ',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'အဝေးမှ',
   'Add host': 'ဟို့စ် ထည့်ရန်',
   Reconnect: 'ပြန်ချိတ်ဆက်ရန်',
@@ -2193,11 +2085,8 @@ export const my: Dictionary = {
   'No group': 'အုပ်စုမရှိ',
   'Not an address': 'လိပ်စာ မဟုတ်ပါ',
   'Could not connect to {host}': '{host} သို့ ချိတ်ဆက်၍ မရပါ',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'ပုံပို့နေသည်',
   'Could not send the image': 'ပုံကို ပို့၍ မရပါ',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': 'နှင့် ၎င်းနောက် {count} ခု',
   'Restore notes and conversation': 'မှတ်စုများနှင့် စကားဝိုင်းကို ပြန်ယူရန်',
   'Restore conversation': 'စကားဝိုင်းကို ပြန်ယူရန်',
@@ -2208,8 +2097,6 @@ export const my: Dictionary = {
     'စာမျက်နှာ၊ တာမီနယ်နှင့် ရွှေ့ခြင်းများကို ပြန်မဖျက်ပါ',
   Rewind: 'နောက်ပြန်ရစ်ရန်',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'ရှာဖွေရေး အင်ဂျင်',
   History: 'မှတ်တမ်း',
   'Search history': 'ရှာဖွေမှု မှတ်တမ်း',
@@ -2233,14 +2120,12 @@ export const my: Dictionary = {
   'New private tab': 'တဘ်သီးသန့် အသစ်',
   'All spaces': 'နေရာအားလုံး',
   'the data could not be deleted': 'ဒေတာကို ဖျက်၍မရပါ',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'ခဏဆိုင်း',
   Reminders: 'သတိပေးချက်များ',
   'Reminders ring while Orden is open': 'Orden ဖွင့်ထားစဉ် သတိပေးချက်များ မြည်သည်',
   Automatic: 'အလိုအလျောက်',
   'Stay in the tray': 'ထရေးတွင် ဆက်ရှိနေရန်',
   'Exact alarms': 'တိကျသော နှိုးစက်များ',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'လုပ်ရန်များ',
   'Plan my day': 'ကျွန်ုပ်၏နေ့ကို စီစဉ်ပါ',
   'Add a task': 'လုပ်ငန်း ထည့်ပါ',
@@ -2252,8 +2137,6 @@ export const my: Dictionary = {
   'Done tasks too': 'ပြီးသောလုပ်ငန်းများပါ',
   'As a task': 'လုပ်ငန်းအဖြစ်',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'လုပ်ငန်းများ',
   Ascending: 'ငယ်စဉ်ကြီးလိုက်',
   Descending: 'ကြီးစဉ်ငယ်လိုက်',
@@ -2338,8 +2221,6 @@ export const my: Dictionary = {
   'Without a value': 'တန်ဖိုး မရှိ',
   'With a value': 'တန်ဖိုး ရှိ',
   Unique: 'တစ်မူထူး',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'ပုံစံခွက်မှ မှတ်စု အသစ်',
   Automations: 'အလိုအလျောက် လုပ်ဆောင်ချက်များ',
   'Row added': 'အတန်း ထည့်ပြီး',
@@ -2368,7 +2249,6 @@ export const my: Dictionary = {
   Form: 'ဖောင်',
   Formula: 'ပုံသေနည်း',
   'Blocked by {task}': '{task} ကို စောင့်နေသည်',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'မထွက်မီ သတိပေးပါ',
   'When something runs': 'တစ်ခုခု လည်ပတ်နေချိန်',
   'Quit {name}?': '{name} မှ ထွက်မလား?',
@@ -2379,16 +2259,13 @@ export const my: Dictionary = {
   'Quit anyway': 'မည်သို့ပင်ဖြစ်စေ ထွက်ပါ',
   'Restart anyway': 'မည်သို့ပင်ဖြစ်စေ ပြန်စပါ',
   'Close anyway': 'မည်သို့ပင်ဖြစ်စေ ပိတ်ပါ',
-  // The online terminal
   'Online terminal': 'အွန်လိုင်း တာမင်နယ်',
   'New online terminal': 'အွန်လိုင်း တာမင်နယ် အသစ်',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'အခြားစက်',
   'Taken over by {device}': '{device} က ယူသွားသည်',
   'Open on {device} since {time}': '{time} မှစ၍ {device} တွင် ဖွင့်ထားသည်',
   'Take over': 'လွှဲယူရန်',
   'Take back': 'ပြန်ယူရန်',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'အပလီကေးရှင်းအသစ်',
   Application: 'အပလီကေးရှင်း',
   'This application’s file is damaged': 'ဤအပလီကေးရှင်း၏ ဖိုင် ပျက်စီးနေသည်',
@@ -2497,8 +2374,6 @@ export const my: Dictionary = {
   'Compare with original': 'မူရင်းနှင့် နှိုင်းယှဉ်ပါ',
   'Conflict copies from other apps': 'အခြားအက်ပ်များမှ ပဋိပက္ခ မိတ္တူများ',
   'Remove from sync': 'ချိန်ကိုက်မှုမှ ဖယ်ရှားပါ',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'ပရိုဖိုင်',
   Change: 'ပြောင်းရန်',
   'Take photo': 'ဓာတ်ပုံရိုက်ရန်',
@@ -2523,7 +2398,6 @@ export const my: Dictionary = {
   'that picture could not be opened': 'ထိုပုံကို ဖွင့်၍မရပါ',
   'the camera could not be opened': 'ကင်မရာကို ဖွင့်၍မရပါ',
   'that picture is too big': 'ထိုပုံ ကြီးလွန်းသည်',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'ချတ်',
   Reply: 'ပြန်စာ',
   Replies: 'ပြန်စာများ',
@@ -2542,7 +2416,6 @@ export const my: Dictionary = {
   'Also send to {chat}': '{chat} သို့လည်း ပို့ရန်',
   'Skin tone': 'အသားအရောင်',
   'Deleted account': 'ဖျက်ထားသောအကောင့်',
-  // Chats: notifications
   Mute: 'အသံပိတ်',
   Unmute: 'အသံဖွင့်',
   'New message': 'မက်ဆေ့ချ်အသစ်',
@@ -2552,7 +2425,6 @@ export const my: Dictionary = {
   Weekdays: 'ရုံးဖွင့်ရက်',
   Starts: 'စတင်',
   Ends: 'ပြီးဆုံး',
-  // Chats: everywhere
   'Read chats': 'ချက်များ ဖတ်ရန်',
   'Post in chats': 'ချက်များတွင် ရေးရန်',
   'Always in this chat': 'ဤချက်တွင် အမြဲ',
@@ -2564,14 +2436,12 @@ export const my: Dictionary = {
   'Search this chat': 'ဤချက်တွင် ရှာရန်',
   'Add as task': 'လုပ်ငန်းအဖြစ် ထည့်ရန်',
   'Save as note': 'မှတ်စုအဖြစ် သိမ်းရန်',
-  // Appearance: glass's own pairs of colours
   Dawn: 'အရုဏ်',
   Lagoon: 'ရေအိုင်',
   Lilac: 'လီလက်',
   Peach: 'မက်မွန်',
   Sage: 'ဆေ့ချ်',
   Mist: 'မြူ',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'ဒေတာဘေ့စ်အသစ်',
   'New page': 'စာမျက်နှာအသစ်',
   'Not started': 'မစရသေး',
@@ -2597,7 +2467,6 @@ export const my: Dictionary = {
   Large: 'ကြီး',
   Both: 'နှစ်ခုလုံး',
   'Shown on cards': 'ကတ်များပေါ်တွင် ပြသ',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'ဤဘရောက်ဇာ၏ AI ကီးများကို သေတ္တာမှတစ်ဆင့် သင်၏ အခြားစက်များနှင့် ချိန်ကိုက်သည်။',
   'Which of your AI accounts this feature asks.':
@@ -2839,7 +2708,6 @@ export const my: Dictionary = {
   'Some changes may not be noticed': 'ပြောင်းလဲမှုအချို့ကို မသိနိုင်ပါ',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'စနစ်၏ စောင့်ကြည့်ဖိုင်တွဲ ကန့်သတ်ချက် ပြည့်သွားသဖြင့် အခြားပရိုဂရမ်များ သင့်နေရာများတွင် ပြုလုပ်သော ပြောင်းလဲမှုတိုင်းကို Orden မသိနိုင်ပါ။ fs.inotify.max_user_watches ကို တိုးပါက ပြေလည်သည်။',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'ချတ် {name} ကို {space} သို့ ရွှေ့မလား',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'ထို့နောက် {space} ရှိ လူတိုင်း မှတ်တမ်းအားလုံးကို ဖတ်နိုင်ပြီး {from} ရှိ လူများ ဆုံးရှုံးမည်။',
@@ -2880,7 +2748,6 @@ export const my: Dictionary = {
   'One colour': 'အရောင်တစ်ရောင်',
   'Web icons': 'ဝဘ် အိုင်ကွန်များ',
   'Sites you visit will appear here': 'သင်ဝင်ကြည့်သော ဆိုက်များ ဤနေရာတွင် ပေါ်လာပါမည်',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'အသံဖြင့်စာရိုက်ခြင်း',
   'Dictate with': 'ဤဖြင့် အသံဖြင့်စာရိုက်ရန်',
   'Where your voice goes to be turned into words.':
@@ -2911,11 +2778,9 @@ export const my: Dictionary = {
   'Not on this device': 'ဤစက်ပေါ်တွင် မရှိပါ',
   'Not on this device. It opens once you are online again.':
     'ဤစက်ပေါ်တွင် မရှိပါ။ အွန်လိုင်းပြန်ဖြစ်သည့်အခါ ပွင့်ပါမည်။',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'IMAP ဆာဗာ',
   'SMTP server': 'SMTP ဆာဗာ',
   'User name': 'အသုံးပြုသူအမည်',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'အရေးပေါ်',
   Important: 'အရေးကြီး',
   'If time': 'အချိန်ရလျှင်',

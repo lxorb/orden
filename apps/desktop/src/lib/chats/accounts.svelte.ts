@@ -1,7 +1,3 @@
-/** The accounts of other chat services the reader connected (#321): which ones, kept on
- *  this device without their secrets, and their secrets in the vault. Linked into
- *  `connected` the first time the Chats panel or one of their conversations opens. */
-
 import type { ChatProvider, Host } from '@orden/chats/provider'
 import { secretName } from '@orden/chats/provider'
 import { mailProvider } from '@orden/chats/mail'
@@ -57,7 +53,6 @@ export class Accounts {
     keepJson(KEY, next)
   }
 
-  /** Links every saved account, once. */
   start(): void {
     if (this.started) return
     this.started = true
@@ -87,7 +82,6 @@ export class Accounts {
     }
   }
 
-  /** Connects a new account: answers why it could not, or null. */
   async connect(
     providerId: string,
     values: Readonly<Record<string, string>>,

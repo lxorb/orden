@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptBR: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'Tudo pronto',
   Personalize: 'Personalizar',
   Clean: 'Limpo',
@@ -10,13 +9,11 @@ export const ptBR: Dictionary = {
   'Do you write code?': 'Você escreve código?',
   Yes: 'Sim',
   No: 'Não',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'De outros apps: {key}',
   'From other apps: set in your system settings':
     'De outros apps: defina nas configurações do sistema',
   'From other apps: bind {command} in your system settings':
     'De outros apps: associe {command} nas configurações do sistema',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Essenciais',
   'Add to Essentials': 'Adicionar aos Essenciais',
   'Remove from Essentials': 'Remover dos Essenciais',
@@ -24,20 +21,16 @@ export const ptBR: Dictionary = {
   'Add blocks to Essentials': 'Adicionar blocos aos Essenciais',
   'Add view to Essentials': 'Adicionar visualização aos Essenciais',
   'Open tabs and Essentials': 'Abrir abas e Essenciais',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor agora se chama Orden',
   'Notes from nibeditor.com': 'Notas do nibeditor.com',
   'Nothing there': 'Não há nada',
-  // AI: the three permission modes
   'Full permissions': 'Permissões totais',
   'Auto mode': 'Modo automático',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'Permissões totais: nada é perguntado nem devolvido a você, nem mesmo entrar, pagar, enviar ou excluir',
-  // Import: Zen's tabs
   'Import from Zen': 'Importar do Zen',
   'Containers stay in Zen': 'Os contêineres ficam no Zen',
   'Zen’s tabs could not be read.': 'Não foi possível ler as abas do Zen.',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'Os contêineres ficam no Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     'O {browser} pesquisa com {engine}: escolha-o nos Ajustes para pesquisar com ele aqui também',
@@ -65,38 +58,29 @@ export const ptBR: Dictionary = {
   'Reading List': 'Lista de Leitura',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'O macOS guarda as abas e os favoritos do Safari atrás do Acesso Total ao Disco. Ative o Orden lá e tente de novo.',
-  // Settings: note types
   'Page note': 'Nota de páginas',
   'Web note': 'Nota da web',
   'Private tab': 'Guia privada',
   'Note types': 'Tipos de nota',
-  // Tasks: Upcoming's weeks
   'Previous week': 'Semana anterior',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'Adicionar projeto acima',
   'Add project below': 'Adicionar projeto abaixo',
   'Projects folder': 'Pasta de projetos',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'Pular',
   'Complete forever': 'Concluir para sempre',
-  // Tasks: comments
   Comments: 'Comentários',
-  // Tasks: filters
   Filters: 'Filtros',
   'Add filter': 'Adicionar filtro',
   'Edit filter': 'Editar filtro',
-  // Tasks: a project's sections
   'Add section': 'Adicionar seção',
   '{name} (copy)': '{name} (cópia)',
   'Its tasks are deleted with it.': 'As tarefas dela são excluídas junto.',
-  // Tasks: keys, selection and the undo toast
   Completed: 'Concluída',
   'Remove date': 'Remover data',
   'Next task': 'Próxima tarefa',
   'Previous task': 'Tarefa anterior',
   'Add task at the top': 'Adicionar tarefa no topo',
   '{count} selected': '{count} selecionadas',
-  // Tasks: the Display menu
   Display: 'Exibição',
   'Completed tasks': 'Tarefas concluídas',
   Smart: 'Inteligente',
@@ -108,20 +92,16 @@ export const ptBR: Dictionary = {
   'Reset all': 'Redefinir tudo',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'O layout mostra as tarefas como lista, quadro ou calendário. O agrupamento as divide em grupos, que são as colunas de um quadro. A ordenação ordena cada grupo. Os filtros ocultam o que você não precisa. Tudo fica guardado para esta visualização.',
-  // Tasks: several lines pasted into quick add
   'One task': 'Uma tarefa',
   'One per line': 'Uma por linha',
   'Add with AI': 'Adicionar com IA',
-  // Tasks: the projects in the panel
   Favorites: 'Favoritos',
   'Add project': 'Adicionar projeto',
   'Add sub-project': 'Adicionar subprojeto',
-  // Tasks: the task view
   'Sub-tasks': 'Subtarefas',
   'Add sub-task': 'Adicionar subtarefa',
   'New label': 'Nova etiqueta',
   'No deadline': 'Sem prazo',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'Reagendar',
   'Later this week': 'Ainda nesta semana',
   'This weekend': 'Neste fim de semana',
@@ -138,22 +118,18 @@ export const ptBR: Dictionary = {
   Reopen: 'Reabrir',
   Schedule: 'Agendar',
   'Open in note': 'Abrir na nota',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Outro app',
   'Import from Obsidian': 'Importar do Obsidian',
   'Import from Notion': 'Importar do Notion',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'Dicas',
   'Silent mode': 'Modo silencioso',
   'See how your notes connect.': 'Veja como suas notas se conectam.',
   'Press {key} to find anything, notes and commands alike.':
     'Pressione {key} para encontrar qualquer coisa, notas e comandos.',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Mostrar Markdown ao escrever',
   'Open notes in source mode': 'Abrir notas no modo fonte',
   Pointer: 'Ponteiro',
   'Pointing hand on buttons': 'Mão apontando nos botões',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Adicionar tarefa',
   'Apple Shortcuts': 'Apple Atalhos',
   Tomorrow: 'Amanhã',
@@ -179,7 +155,6 @@ export const ptBR: Dictionary = {
   'Every week': 'Toda semana',
   'Every month': 'Todo mês',
   'Every year': 'Todo ano',
-  // Files and notes
   Save: 'Salvar',
   'New note': 'Nova nota',
   'Random note': 'Nota aleatória',
@@ -207,8 +182,6 @@ export const ptBR: Dictionary = {
   'Release to add a page': 'Solte para adicionar uma página',
   'Page {number}': 'Página {number}',
   'The paper could not be read': 'O papel não pôde ser lido',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Carta',
   'Long page': 'Página longa',
@@ -251,7 +224,6 @@ export const ptBR: Dictionary = {
   'Choose a picture': 'Escolher uma imagem',
   'Remove picture': 'Remover imagem',
   'That picture could not be read.': 'Não foi possível ler essa imagem.',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'Saturação',
   Tint: 'Tonalidade',
   'Tint colour': 'Cor da tonalidade',
@@ -379,7 +351,6 @@ export const ptBR: Dictionary = {
   'Merge into…': 'Juntar com…',
   'Split at caret': 'Dividir no cursor',
   'Extract selection': 'Extrair a seleção',
-  // Panels and navigation
   Bookmarks: 'Favoritos',
   'New group': 'Novo grupo',
   'Remove group': 'Remover o grupo',
@@ -433,8 +404,6 @@ export const ptBR: Dictionary = {
   'Sort by name': 'Ordenar por nome',
   'Sort by modified': 'Ordenar por modificação',
   'Sort by created': 'Ordenar por criação',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'Ordem dos arquivos',
   'Name, A to Z': 'Nome, de A a Z',
   'Name, Z to A': 'Nome, de Z a A',
@@ -445,7 +414,6 @@ export const ptBR: Dictionary = {
   Manual: 'Manual',
   'Show hidden files': 'Mostrar arquivos ocultos',
   'Hide hidden files': 'Ocultar arquivos ocultos',
-  // Writing
   Bold: 'Negrito',
   Italic: 'Itálico',
   Strikethrough: 'Tachado',
@@ -538,11 +506,9 @@ export const ptBR: Dictionary = {
   'Horizontal rule': 'Linha horizontal',
   'Page break': 'Quebra de página',
   'Tidy up this note': 'Arrumar esta nota',
-  // PDFs
   'Copy a link': 'Copiar um link',
   'That PDF could not be opened': 'Não foi possível abrir esse PDF',
   'That file could not be read': 'Não foi possível ler esse arquivo',
-  // Modes and view
   Reading: 'Leitura',
   'Leave reading': 'Sair da leitura',
   Present: 'Apresentar',
@@ -582,7 +548,6 @@ export const ptBR: Dictionary = {
   'Zoom in': 'Ampliar',
   'Zoom out': 'Reduzir',
   'Actual size': 'Tamanho real',
-  // Appearance
   Accent: 'Destaque',
   'Tidy up': 'Organizar',
   'Blur the app behind the tab overview': 'Desfocar o app atrás da visão geral das abas',
@@ -710,7 +675,6 @@ export const ptBR: Dictionary = {
   'Switch theme': 'Trocar de tema',
   Style: 'Estilo',
   Mode: 'Modo',
-  // The window's own edges; see appearance.rs
   Window: 'Janela',
   'Orden’s own': 'Do Orden',
   'The system’s': 'Do sistema',
@@ -721,7 +685,6 @@ export const ptBR: Dictionary = {
   'Edit custom CSS': 'Editar o CSS próprio',
   'Edit snippets': 'Editar os trechos',
   'Reload themes and custom CSS': 'Recarregar os temas e o CSS',
-  // The theme store, and the sample note its cards show
   Themes: 'Temas',
   Browse: 'Explorar',
   'Search themes': 'Pesquisar temas',
@@ -802,7 +765,6 @@ export const ptBR: Dictionary = {
   'Code only': 'Só no código',
   Everywhere: 'Em tudo',
   Attachments: 'Anexos',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Notas de páginas',
   'New pages': 'Páginas novas',
   'Assets folder of the space': 'Pasta de recursos do espaço',
@@ -854,7 +816,6 @@ export const ptBR: Dictionary = {
   'Machine-translated. Corrections welcome.': 'Traduzido automaticamente. Correções bem-vindas.',
   'The glasses show English.': 'Os óculos mostram inglês.',
   'Match the app': 'Como o app',
-  // Settings
   Settings: 'Configurações',
   Account: 'Conta',
   Publish: 'Publicar',
@@ -881,7 +842,6 @@ export const ptBR: Dictionary = {
   },
   Update: 'Atualizar',
   'Live at': 'No ar em',
-  // Publishing
   'Publish {name}': 'Publicar {name}',
   'What to publish': 'O que publicar',
   'The whole space': 'O espaço inteiro',
@@ -900,7 +860,6 @@ export const ptBR: Dictionary = {
   Value: 'Valor',
   available: 'disponível',
   'checking…': 'verificando…',
-  // LLM
   'Connect an LLM to your notes': 'Conectar um LLM às notas',
   'Sign in first - the connector reaches the notes in your account.':
     'Entrar primeiro - o conector alcança as notas da conta.',
@@ -952,7 +911,6 @@ export const ptBR: Dictionary = {
     'Para um cliente que aceita um bloco JSON em vez de uma URL.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'Um cliente que não consegue entrar pode receber um token. Ele é mostrado só uma vez.',
-  // Export
   'Plain text': 'Texto puro',
   'Markdown with the pictures': 'Markdown com as imagens',
   'HTML without styles': 'HTML sem estilos',
@@ -971,13 +929,11 @@ export const ptBR: Dictionary = {
   Margin: 'Margem',
   Header: 'Cabeçalho',
   Footer: 'Rodapé',
-  // History
   'Version history': 'Histórico de versões',
   'Copy link to this note': 'Copiar link para esta nota',
   'that link could not be followed': 'não foi possível seguir esse link',
   'No earlier versions yet.': 'Ainda sem versões anteriores.',
   'Restore this version': 'Restaurar esta versão',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'já há uma nota aí',
   'enter a valid email address': 'esse endereço de e-mail não é válido',
   'give the space a name': 'o espaço precisa de um nome',
@@ -1009,7 +965,6 @@ export const ptBR: Dictionary = {
   'could not publish': 'não foi possível publicar',
   'could not create a token': 'não foi possível criar um token',
   'that did not work': 'isso não funcionou',
-  // Settings on a phone, display names, one blog address
   Back: 'Voltar',
   'Display name': 'Nome de exibição',
   'Your name': 'Nome',
@@ -1029,7 +984,6 @@ export const ptBR: Dictionary = {
   Spelling: 'Ortografia',
   Checking: 'Verificação',
   Dictionary: 'Dicionário',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'Esperando o registro aparecer.',
   'Certificate issued.': 'Certificado emitido.',
   'Cloudflare could not set this domain up.': 'A Cloudflare não conseguiu configurar este domínio.',
@@ -1040,7 +994,6 @@ export const ptBR: Dictionary = {
   'Cloudflare has blocked this domain': 'A Cloudflare bloqueou este domínio',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'Na raiz de um domínio, usar um registro ALIAS ou ANAME, ou o achatamento de CNAME, se o provedor não permitir um CNAME ali.',
-  // Shortcuts
   Shortcuts: 'Atalhos',
   'Search shortcuts': 'Pesquisar atalhos',
   'Second key': 'Segunda tecla',
@@ -1206,7 +1159,6 @@ export const ptBR: Dictionary = {
   Delegated: 'Delegado',
   'Code theme: {name}': 'Tema do código: {name}',
   'Delete a layout': 'Excluir um layout',
-  // Keyboards and modal editing
   Default: 'Padrão',
   'Vim keys': 'Teclas do Vim',
   'Follow the link': 'Seguir o link',
@@ -1218,11 +1170,9 @@ export const ptBR: Dictionary = {
   INSERT: 'INSERIR',
   VISUAL: 'VISUAL',
   REPLACE: 'SUBSTITUIR',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'Página {page} de {count} nos óculos',
   'Reaching the glasses': 'Conectando aos óculos',
   'The glasses are not keeping up': 'Os óculos não estão acompanhando',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'Adicionar',
   Select: 'Selecionar',
   Pan: 'Mover a vista',
@@ -1252,7 +1202,6 @@ export const ptBR: Dictionary = {
   Calligraphy: 'Caligrafia',
   'Width {number}': 'Espessura {number}',
   'Finger draws': 'O dedo desenha',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'Espessura',
   Opacity: 'Opacidade',
   Colour: 'Cor',
@@ -1296,23 +1245,19 @@ export const ptBR: Dictionary = {
   'Export as PNG': 'Exportar como PNG',
   'Export as SVG': 'Exportar como SVG',
   'Export as PDF': 'Exportar como PDF',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'Importar PDF',
   'Choose how to add the pages to the canvas.': 'Escolha como adicionar as páginas ao quadro.',
   'Single page': 'Uma página',
   'All pages': 'Todas as páginas',
   'Choose a page': 'Escolher uma página',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'Excluir o que está selecionado',
   'Nudge left': 'Deslocar à esquerda',
   'Nudge right': 'Deslocar à direita',
   'Nudge up': 'Deslocar para cima',
   'Nudge down': 'Deslocar para baixo',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'Aberta em outro lugar também',
   Shared: 'Compartilhada',
   Browser: 'Navegador',
-  // Sharing a space with other people
   Share: 'Compartilhar',
   'Share {name}': 'Compartilhar {name}',
   'Share this space': 'Compartilhar este espaço',
@@ -1356,14 +1301,12 @@ export const ptBR: Dictionary = {
   'Shared with you': 'Compartilhado com você',
   'That link does not open anything': 'Esse link não abre nada',
   'Ask for another one.': 'Pedir outro.',
-  // Somebody a share link let in, who has no account
   Guest: 'Visitante',
   'Ask to join': 'Pedir para entrar',
   Asking: 'Pedindo',
   'Waiting for {who}': 'Aguardando {who}',
   '{who} did not let you in': '{who} não deu acesso',
   'What the others in this space see.': 'O que os outros neste espaço veem.',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'Atualizações',
   'Release channel': 'Canal de versões',
   Stable: 'Estável',
@@ -1373,8 +1316,6 @@ export const ptBR: Dictionary = {
   'Web version': 'Versão web',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'Estável é o app web lançado; Instável é a compilação mais recente e pode quebrar.',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'Importar',
   'Convert syntax': 'Converter a sintaxe',
   'In this note': 'Nesta nota',
@@ -1484,8 +1425,6 @@ export const ptBR: Dictionary = {
   'Undo the import': 'Desfazer a importação',
   'Choose an export': 'Escolher uma exportação',
   Under: 'Dentro de',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'Sincronização',
   'When the same note was written twice': 'Quando a mesma nota foi escrita duas vezes',
   'On two devices': 'Em dois dispositivos',
@@ -1549,7 +1488,6 @@ export const ptBR: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'As notas deste dispositivo ficam; só a conta e as cópias sincronizadas dela vão embora.',
   'Also gone for everyone in {spaces}.': 'Também some para todos em {spaces}.',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'A nota',
   '{space} panel': 'Painel de {space}',
   'Panel width': 'Largura do painel',
@@ -1560,7 +1498,6 @@ export const ptBR: Dictionary = {
   'What is selected': 'O que está selecionado',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'Quadro: {cards} cartões, {links} links, {drawings} desenhos',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'IA',
   Providers: 'Provedores',
   'Make default': 'Tornar padrão',
@@ -1588,7 +1525,6 @@ export const ptBR: Dictionary = {
   'The model did not answer.': 'O modelo não respondeu.',
   'The connection closed before the answer was finished.':
     'A conexão foi encerrada antes de a resposta terminar.',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'Seu plano {plan} atingiu o limite até {time}.',
   'Your {plan} plan is at its limit for now.': 'Seu plano {plan} atingiu o limite por enquanto.',
   'Your {plan} plan is near its limit.': 'Seu plano {plan} está perto do limite.',
@@ -1615,7 +1551,6 @@ export const ptBR: Dictionary = {
   Shorter: 'Mais curto',
   Longer: 'Mais longo',
   'Fix grammar': 'Corrigir a gramática',
-  // The AI sidebar's commands
   'A cited report': 'Um relatório com citações',
   'A helper in the background': 'Um ajudante em segundo plano',
   'A side question': 'Uma pergunta lateral',
@@ -1717,7 +1652,6 @@ export const ptBR: Dictionary = {
   'Markdown, shortest name': 'Markdown, nome mais curto',
   'Markdown, relative path': 'Markdown, caminho relativo',
   'Markdown, path in the space': 'Markdown, caminho no espaço',
-  // Publishing part one.
   'The folders you choose become public.': 'As pastas escolhidas ficam públicas.',
   'Anyone with the address can read what is published, drafts included.':
     'Quem tiver o endereço lê o que está publicado, inclusive rascunhos.',
@@ -1743,11 +1677,9 @@ export const ptBR: Dictionary = {
   'Remove the password': 'Remover a senha',
   'Scan this with your authenticator app, then type its code.':
     'Escaneie isto com seu app autenticador e digite o código.',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'Foto',
   Dictate: 'Ditar',
   'Add to {name}': 'Adicionar a {name}',
-  // Web tabs
   Reload: 'Recarregar',
   'Hard reload': 'Recarregamento forçado',
   'Open in the browser': 'Abrir no navegador',
@@ -1762,7 +1694,6 @@ export const ptBR: Dictionary = {
   'Playing audio': 'Reproduzindo áudio',
   Muted: 'Sem som',
   'Developer tools': 'Ferramentas do desenvolvedor',
-  // Recording, meetings and what a model wrote
   Record: 'Gravar',
   Recording: 'Gravação',
   'Stop recording': 'Parar a gravação',
@@ -1784,7 +1715,6 @@ export const ptBR: Dictionary = {
     'Essa gravação é longa demais para transformar em palavras de uma vez.',
   'That is as much as one recording may hold.': 'Isso é tudo o que cabe em uma gravação.',
   'Nothing could be heard in that recording.': 'Nada pôde ser ouvido nessa gravação.',
-  // Publishing part two.
   Spreadsheet: 'Planilha',
   'The app’s own': 'O do app',
   'publish.css and publish.js in this space dress the site.':
@@ -1800,14 +1730,12 @@ export const ptBR: Dictionary = {
   'Save as CSV': 'Salvar como CSV',
   'Kept for {days}': 'Guardadas por {days}',
   Full: 'Cheio',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'não foi possível enviar o e-mail - tentar de novo',
   'start again - that took too long': 'começar de novo - isso demorou demais',
   'sign in to do that': 'entrar para fazer isso',
   'that is not something a token can do': 'um token não faz isso',
   'something went wrong here - try again': 'algo deu errado aqui - tentar de novo',
   'this service cannot keep a secret safely': 'este serviço não guarda um segredo com segurança',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only': 'só imagens, PDF e o css ou js do próprio site',
   'that file is too big': 'esse arquivo é grande demais',
   'that is more settings than an account holds': 'são mais configurações do que uma conta guarda',
@@ -1819,13 +1747,11 @@ export const ptBR: Dictionary = {
   'that is more folder icons than a space holds':
     'são mais ícones de pasta do que um espaço guarda',
   'that is more than a site keeps': 'isso é mais do que um site guarda',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'ninguém com esse endereço',
   'nobody by that name': 'ninguém com esse nome',
   'nobody is waiting by that name': 'ninguém com esse nome está esperando',
   'this space is yours': 'este espaço é desta conta',
   'that link is busy, try again in a minute': 'esse link está ocupado, tentar num minuto',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'não há essa versão',
   'this note was shared with you, not its folder': 'esta nota foi compartilhada, não a pasta dela',
   'nothing to restore': 'nada para restaurar',
@@ -1833,7 +1759,6 @@ export const ptBR: Dictionary = {
   'nothing to delete': 'nada para excluir',
   'this room is not answering - try again': 'esta sala não responde - tentar de novo',
   'rooms are not running here': 'as salas não funcionam aqui',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'a loja de temas não responde',
   'that is not a theme': 'isso não é um tema',
   'no such theme': 'não há esse tema',
@@ -1847,10 +1772,8 @@ export const ptBR: Dictionary = {
   'that is more than a spoken command': 'isso é mais que um comando falado',
   'that is a lot of listening - try again later': 'é muita escuta - tentar mais tarde',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% de texto',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'Celular',
   'The bar sits over the keyboard on a phone.': 'No celular a barra fica sobre o teclado.',
   'On the bar': 'Na barra',
@@ -1864,31 +1787,25 @@ export const ptBR: Dictionary = {
   'A pull past the top runs': 'Puxar além do topo executa',
   Nothing: 'Nada',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'Guardar',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'Mover para a direita',
   'Move to the left': 'Mover para a esquerda',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'Histórico na conta',
   'Keep versions': 'Guardar versões',
   'A month': 'Um mês',
   'A year': 'Um ano',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Tudo do último dia, depois uma por hora, uma por dia após um mês e uma por semana após três.',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Esta nota está do tamanho máximo que uma nota em uma sala pode ter.',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'Nova guia',
   'Full screen': 'Tela cheia',
   'Print…': 'Imprimir…',
   'Share…': 'Compartilhar…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'quer',
   'Don’t allow': 'Não permitir',
   Allow: 'Permitir',
@@ -1905,7 +1822,6 @@ export const ptBR: Dictionary = {
   'Use your MIDI devices': 'Usar seus dispositivos MIDI',
   'Manage windows on all your displays': 'Gerenciar janelas em todas as telas',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'Informações do site',
   Downloads: 'Downloads',
   'Downloading {name}': 'Baixando {name}',
@@ -1932,11 +1848,9 @@ export const ptBR: Dictionary = {
   'Turn into': 'Transformar em',
   Foldable: 'Recolhível',
   'Starts folded': 'Começa recolhido',
-  // Where a space keeps what websites store
   'Web data': 'Dados da web',
   Global: 'Global',
   Site: 'Site',
-  // The Mac's menu bar
   'About {name}': 'Sobre o {name}',
   Services: 'Serviços',
   'Hide {name}': 'Ocultar {name}',
@@ -1944,7 +1858,6 @@ export const ptBR: Dictionary = {
   'Show all': 'Mostrar tudo',
   'Quit {name}': 'Encerrar {name}',
   'Bring all to front': 'Trazer tudo para a frente',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Desfazer a cópia',
   'Devices with your AI vault': 'Dispositivos com o seu cofre de IA',
   'This device': 'Este dispositivo',
@@ -1960,13 +1873,11 @@ export const ptBR: Dictionary = {
   'Select down': 'Selecionar para baixo',
   'Select up': 'Selecionar para cima',
   'Select or deselect': 'Selecionar ou desmarcar',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'Abrir em nova aba',
   'Open to the side': 'Abrir ao lado',
   'Open all': 'Abrir tudo',
   'Show in the file list': 'Mostrar na lista de arquivos',
   'Collapse the file list': 'Recolher a lista de arquivos',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'Expandir a seleção',
   'Shrink the selection': 'Reduzir a seleção',
   'Insert a line above': 'Inserir uma linha acima',
@@ -1980,19 +1891,16 @@ export const ptBR: Dictionary = {
   'Duplicate the block': 'Duplicar o bloco',
   'Move the block up': 'Subir o bloco',
   'Move the block down': 'Descer o bloco',
-  // The editor's menu on a link and a picture
   'Copy link address': 'Copiar endereço do link',
   'Edit link': 'Editar link',
   'Remove link': 'Remover link',
   'Copy picture': 'Copiar imagem',
   'Open picture': 'Abrir imagem',
   'Delete picture': 'Excluir imagem',
-  // A file dropped into a note
   'Storing the file': 'Armazenando o arquivo',
   'That file is larger than a note can keep.':
     'Esse arquivo é maior do que uma nota consegue guardar.',
   'That file could not be kept.': 'Não foi possível guardar esse arquivo.',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'Novo terminal',
   'Command Prompt': 'Prompt de Comando',
   Terminal: 'Terminal',
@@ -2018,11 +1926,8 @@ export const ptBR: Dictionary = {
     many: 'Colar {count} de linhas?',
     other: 'Colar {count} linhas?',
   },
-  // Orden as the default browser
   'Default browser': 'Navegador padrão',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Desfazer as edições de {name}',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'Arquivar',
   Unarchive: 'Desarquivar',
   Archived: 'Arquivado',
@@ -2036,7 +1941,6 @@ export const ptBR: Dictionary = {
     many: '{count} de itens arquivados dentro',
     other: '{count} itens arquivados dentro',
   },
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'Barra lateral esquerda',
   'Right sidebar': 'Barra lateral direita',
   'Ask about this space': 'Perguntar sobre este espaço',
@@ -2047,7 +1951,6 @@ export const ptBR: Dictionary = {
   'Ask again': 'Perguntar de novo',
   'Continue when the limit resets': 'Continuar quando o limite for renovado',
   'Continues at {time}': 'Continua às {time}',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Pergunte qualquer coisa, @ para anexar, / para mais',
   'What can I help with?': 'Como posso ajudar?',
   'Add photos and files': 'Adicionar fotos e arquivos',
@@ -2115,12 +2018,9 @@ export const ptBR: Dictionary = {
   Closed: 'Fechou',
   Ran: 'Executou',
   Changed: 'Alterou',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': 'Este {device}',
   '{name} is back: {device} was writing in it': '{name} voltou: {device} estava escrevendo nela',
   'Changes to {name} are not syncing': 'As alterações em {name} não estão sendo sincronizadas',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Abertura',
   Pressing: 'Clique',
   Typing: 'Digitação',
@@ -2135,18 +2035,14 @@ export const ptBR: Dictionary = {
   'Agent tabs closed': 'Abas dos agentes fechadas',
   'Orden is still running for your agents': 'O Orden continua rodando para seus agentes',
   '{client} wants to connect': '{client} quer se conectar',
-  // Web logins that travel, and the devices of an account
   'no such device': 'esse dispositivo não existe',
   'give the device a name': 'dê um nome ao dispositivo',
   'that computer is no longer waiting': 'esse computador não está mais esperando',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'esse arquivo não existe',
   'too many changes at once - try again in a minute':
     'alterações demais de uma vez - tentar daqui a um minuto',
   'that is more than a space keeps about its tree':
     'é mais do que um espaço guarda sobre sua árvore',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'Agentes neste computador',
   'Your account’s connector': 'Conector da sua conta',
   'Orden asks you once, the first time it connects.':
@@ -2218,12 +2114,9 @@ export const ptBR: Dictionary = {
     many: '{count} de chamadas',
     other: '{count} chamadas',
   },
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'Pergunta rápida',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Adicionar à nota',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'Extensões',
   'Add extension': 'Adicionar extensão',
   'Manage extensions': 'Gerenciar extensões',
@@ -2243,7 +2136,6 @@ export const ptBR: Dictionary = {
   'Did not load': 'Não carregou',
   Permissions: 'Permissões',
   Options: 'Opções',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'Remoto',
   'Add host': 'Adicionar host',
   Reconnect: 'Reconectar',
@@ -2251,11 +2143,8 @@ export const ptBR: Dictionary = {
   'No group': 'Sem grupo',
   'Not an address': 'Não é um endereço',
   'Could not connect to {host}': 'Não foi possível conectar a {host}',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'Enviando a imagem',
   'Could not send the image': 'Não foi possível enviar a imagem',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': {
     many: 'e {count} depois',
     one: 'e {count} depois',
@@ -2270,8 +2159,6 @@ export const ptBR: Dictionary = {
     'Páginas, terminais e movimentações não são desfeitos',
   Rewind: 'Voltar',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'Mecanismo de pesquisa',
   History: 'Histórico',
   'Search history': 'Histórico de pesquisa',
@@ -2295,14 +2182,12 @@ export const ptBR: Dictionary = {
   'New private tab': 'Nova guia privada',
   'All spaces': 'Todos os espaços',
   'the data could not be deleted': 'Não foi possível excluir os dados',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Adiar',
   Reminders: 'Lembretes',
   'Reminders ring while Orden is open': 'Os lembretes tocam enquanto o Orden está aberto',
   Automatic: 'Automático',
   'Stay in the tray': 'Ficar na bandeja',
   'Exact alarms': 'Alarmes exatos',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'Tarefas',
   'Plan my day': 'Planejar meu dia',
   'Add a task': 'Adicionar uma tarefa',
@@ -2314,8 +2199,6 @@ export const ptBR: Dictionary = {
   'Done tasks too': 'Tarefas concluídas também',
   'As a task': 'Como tarefa',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'Tarefas',
   Ascending: 'Crescente',
   Descending: 'Decrescente',
@@ -2400,8 +2283,6 @@ export const ptBR: Dictionary = {
   'Without a value': 'Sem valor',
   'With a value': 'Com valor',
   Unique: 'Únicos',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'Nova nota a partir de modelo',
   Automations: 'Automações',
   'Row added': 'Linha adicionada',
@@ -2430,7 +2311,6 @@ export const ptBR: Dictionary = {
   Form: 'Formulário',
   Formula: 'Fórmula',
   'Blocked by {task}': 'Bloqueada por {task}',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'Avisar antes de sair',
   'When something runs': 'Quando algo estiver em execução',
   'Quit {name}?': 'Sair do {name}?',
@@ -2441,16 +2321,13 @@ export const ptBR: Dictionary = {
   'Quit anyway': 'Sair mesmo assim',
   'Restart anyway': 'Reiniciar mesmo assim',
   'Close anyway': 'Fechar mesmo assim',
-  // The online terminal
   'Online terminal': 'Terminal online',
   'New online terminal': 'Novo terminal online',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'outro dispositivo',
   'Taken over by {device}': 'Assumido por {device}',
   'Open on {device} since {time}': 'Aberto em {device} desde {time}',
   'Take over': 'Assumir',
   'Take back': 'Retomar',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'Novo aplicativo',
   Application: 'Aplicativo',
   'This application’s file is damaged': 'O arquivo deste aplicativo está danificado',
@@ -2561,8 +2438,6 @@ export const ptBR: Dictionary = {
   'Compare with original': 'Comparar com o original',
   'Conflict copies from other apps': 'Cópias em conflito de outros apps',
   'Remove from sync': 'Tirar da sincronização',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'Perfil',
   Change: 'Alterar',
   'Take photo': 'Tirar foto',
@@ -2587,7 +2462,6 @@ export const ptBR: Dictionary = {
   'that picture could not be opened': 'não foi possível abrir a imagem',
   'the camera could not be opened': 'não foi possível abrir a câmera',
   'that picture is too big': 'a imagem é grande demais',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'Conversa',
   Reply: 'Responder',
   Replies: 'Respostas',
@@ -2606,7 +2480,6 @@ export const ptBR: Dictionary = {
   'Also send to {chat}': 'Enviar também para {chat}',
   'Skin tone': 'Tom de pele',
   'Deleted account': 'Conta excluída',
-  // Chats: notifications
   Mute: 'Silenciar',
   Unmute: 'Reativar som',
   'New message': 'Nova mensagem',
@@ -2616,7 +2489,6 @@ export const ptBR: Dictionary = {
   Weekdays: 'Dias úteis',
   Starts: 'Começa',
   Ends: 'Termina',
-  // Chats: everywhere
   'Read chats': 'Ler conversas',
   'Post in chats': 'Escrever em conversas',
   'Always in this chat': 'Sempre nesta conversa',
@@ -2628,14 +2500,12 @@ export const ptBR: Dictionary = {
   'Search this chat': 'Pesquisar nesta conversa',
   'Add as task': 'Adicionar como tarefa',
   'Save as note': 'Salvar como nota',
-  // Appearance: glass's own pairs of colours
   Dawn: 'Amanhecer',
   Lagoon: 'Lagoa',
   Lilac: 'Lilás',
   Peach: 'Pêssego',
   Sage: 'Sálvia',
   Mist: 'Névoa',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'Novo banco de dados',
   'New page': 'Nova página',
   'Not started': 'Não iniciado',
@@ -2661,7 +2531,6 @@ export const ptBR: Dictionary = {
   Large: 'Grande',
   Both: 'Ambos',
   'Shown on cards': 'Exibido nos cartões',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'Sincroniza as chaves de IA deste navegador com seus outros dispositivos pelo cofre.',
   'Which of your AI accounts this feature asks.':
@@ -2904,7 +2773,6 @@ export const ptBR: Dictionary = {
   'Some changes may not be noticed': 'Algumas mudanças podem passar despercebidas',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'O sistema chegou ao limite de pastas observadas, então o Orden pode não perceber todas as mudanças que outros programas fazem nos seus espaços. Aumentar fs.inotify.max_user_watches resolve.',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Mover a conversa {name} para {space}?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'Todos em {space} poderão ler todo o histórico, e as pessoas em {from} o perderão.',
@@ -2944,7 +2812,6 @@ export const ptBR: Dictionary = {
   'One colour': 'Uma cor',
   'Web icons': 'Ícones da web',
   'Sites you visit will appear here': 'Os sites que você visitar aparecerão aqui',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'Ditado',
   'Dictate with': 'Ditar com',
   'Where your voice goes to be turned into words.': 'Para onde vai sua voz para virar texto.',
@@ -2974,11 +2841,9 @@ export const ptBR: Dictionary = {
   'Not on this device': 'Não está neste dispositivo',
   'Not on this device. It opens once you are online again.':
     'Não está neste dispositivo. Abre assim que você estiver online de novo.',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'Servidor IMAP',
   'SMTP server': 'Servidor SMTP',
   'User name': 'Nome de usuário',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'Urgente',
   Important: 'Importante',
   'If time': 'Se der tempo',

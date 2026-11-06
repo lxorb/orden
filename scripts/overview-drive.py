@@ -30,7 +30,6 @@ FAR, STILL = 24.0, 1.5
 WIDE = 10
 MOST = 0.6
 
-
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_: Any) -> None:
         pass
@@ -41,7 +40,6 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_header("content-length", str(len(PAGE)))
         self.end_headers()
         self.wfile.write(PAGE)
-
 
 if sys.platform == "win32":
     import ctypes
@@ -177,7 +175,6 @@ else:
             xdo("mousemove", str(x), str(y))
             xdo("click", "4" if notches > 0 else "5")
 
-
 class App:
     def __init__(self, port: int, secret: str) -> None:
         self.port, self.secret = port, secret
@@ -196,7 +193,6 @@ class App:
             return {"error": str(error)}
         return answer.get("value") if answer.get("ok", answer.get("status") == "ok") else answer
 
-
 def endpoint(config: pathlib.Path, pid: int, secret: str) -> App:
     path = config / "automation.json"
     until = time.monotonic() + 120
@@ -209,7 +205,6 @@ def endpoint(config: pathlib.Path, pid: int, secret: str) -> App:
             pass
         time.sleep(0.25)
     raise SystemExit(f"the app never wrote {path}")
-
 
 class Film:
 
@@ -230,7 +225,6 @@ class Film:
         self.going = False
         self.thread.join()
         return self.frames
-
 
 LOG = """
 (() => {
@@ -263,7 +257,6 @@ TAKE = "(() => { const got = window.__ov; window.__ov = null; return got })()"
 TOGGLE = "document.querySelector('button.nib-glyph.overview')?.click(); return true"
 SHOWN = "document.querySelector('button.nib-glyph.overview')?.getAttribute('aria-pressed') === 'true'"
 
-
 def toggled(app: App, desk: Desk, up: bool, pressed: list[tuple[float, str]]) -> str:
 
     what = "open" if up else "close"
@@ -276,15 +269,12 @@ def toggled(app: App, desk: Desk, up: bool, pressed: list[tuple[float, str]]) ->
     app.eval(TOGGLE)
     return "button"
 
-
 def small(image: Image.Image) -> numpy.ndarray:
     return numpy.asarray(image.convert("L").resize((CELLS[0] * 20, CELLS[1] * 20)), dtype=numpy.float32)
-
 
 def cells(a: numpy.ndarray, b: numpy.ndarray) -> list[float]:
     diff = numpy.abs(a - b).reshape(CELLS[1], 20, CELLS[0], 20).mean(axis=(1, 3))
     return [float(one) for one in diff.ravel()]
-
 
 def distinct(smalls: list[numpy.ndarray]) -> list[int]:
 
@@ -293,7 +283,6 @@ def distinct(smalls: list[numpy.ndarray]) -> list[int]:
         if max(cells(smalls[kept[-1]], smalls[i])) >= 0.5:
             kept.append(i)
     return kept
-
 
 def flashes(smalls: list[numpy.ndarray], kept: list[int]) -> list[tuple[int, int, int, float]]:
 
@@ -314,7 +303,6 @@ def flashes(smalls: list[numpy.ndarray], kept: list[int]) -> list[tuple[int, int
                 found.append((kept[k], length, len(far), round(max(far), 1)))
     return found
 
-
 def pops(smalls: list[numpy.ndarray], kept: list[int], times: list[float], pressed: list[float]) -> list[tuple[int, float, float]]:
 
     found = []
@@ -329,7 +317,6 @@ def pops(smalls: list[numpy.ndarray], kept: list[int], times: list[float], press
             found.append((i, round(moved, 1), round(times[i] - since)))
     return found
 
-
 def sheet(frames: list[tuple[float, Image.Image]], path: pathlib.Path) -> None:
     across = 10
     w, h = 256, 160
@@ -338,7 +325,6 @@ def sheet(frames: list[tuple[float, Image.Image]], path: pathlib.Path) -> None:
     for index, (_, one) in enumerate(frames):
         out.paste(one.resize((w, h)), ((index % across) * w, (index // across) * h))
     out.save(path, quality=80)
-
 
 def judged(name: str, frames: list[tuple[float, Image.Image]], log: dict[str, Any], pressed: list[tuple[float, str]], hole: dict[str, float] | None, out: pathlib.Path, scale: float) -> list[str]:
     wrong: list[str] = []
@@ -405,7 +391,6 @@ def judged(name: str, frames: list[tuple[float, Image.Image]], log: dict[str, An
     (folder / "log.json").write_text(json.dumps({"times": times, "steps": steps, "pressed": pressed, **log}, indent=1), encoding="utf-8")
     return wrong
 
-
 def round_trip(app: App, desk: Desk, name: str, hole: dict[str, float] | None, out: pathlib.Path, scale: float) -> list[str]:
     desk.forward()
     box = desk.box()
@@ -431,7 +416,6 @@ def round_trip(app: App, desk: Desk, name: str, hole: dict[str, float] | None, o
         log = {"frames": [], "puts": [], "said": log}
     print(f"[{name}] opened and closed by {how}", flush=True)
     return judged(name, frames, log, pressed, hole, out, scale)
-
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -522,7 +506,6 @@ def main() -> int:
     (args.out / "wrong.json").write_text(json.dumps(wrong, indent=1), encoding="utf-8")
     print(f"{len(wrong)} wrong", flush=True)
     return 1 if wrong else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

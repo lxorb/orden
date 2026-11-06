@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const kn: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'ಎಲ್ಲವೂ ಸಿದ್ಧ',
   Personalize: 'ವೈಯಕ್ತೀಕರಿಸಿ',
   Clean: 'ಸ್ವಚ್ಛ',
@@ -10,13 +9,11 @@ export const kn: Dictionary = {
   'Do you write code?': 'ನೀವು ಕೋಡ್ ಬರೆಯುತ್ತೀರಾ?',
   Yes: 'ಹೌದು',
   No: 'ಇಲ್ಲ',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'ಇತರ ಆ್ಯಪ್‌ಗಳಿಂದ: {key}',
   'From other apps: set in your system settings':
     'ಇತರ ಆ್ಯಪ್‌ಗಳಿಂದ: ಸಿಸ್ಟಮ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಹೊಂದಿಸಿ',
   'From other apps: bind {command} in your system settings':
     'ಇತರ ಆ್ಯಪ್‌ಗಳಿಂದ: ಸಿಸ್ಟಮ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ {command} ಜೋಡಿಸಿ',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'ಅಗತ್ಯಗಳು',
   'Add to Essentials': 'ಅಗತ್ಯಗಳಿಗೆ ಸೇರಿಸಿ',
   'Remove from Essentials': 'ಅಗತ್ಯಗಳಿಂದ ತೆಗೆದುಹಾಕಿ',
@@ -24,20 +21,16 @@ export const kn: Dictionary = {
   'Add blocks to Essentials': 'ಬ್ಲಾಕ್‌ಗಳನ್ನು ಅಗತ್ಯಗಳಿಗೆ ಸೇರಿಸಿ',
   'Add view to Essentials': 'ನೋಟವನ್ನು ಅಗತ್ಯಗಳಿಗೆ ಸೇರಿಸಿ',
   'Open tabs and Essentials': 'ಟ್ಯಾಬ್‌ಗಳು ಮತ್ತು ಅಗತ್ಯಗಳನ್ನು ತೆರೆಯುವುದು',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor ಈಗ Orden',
   'Notes from nibeditor.com': 'nibeditor.com ನಿಂದ ಟಿಪ್ಪಣಿಗಳು',
   'Nothing there': 'ಅಲ್ಲಿ ಏನೂ ಇಲ್ಲ',
-  // AI: the three permission modes
   'Full permissions': 'ಪೂರ್ಣ ಅನುಮತಿಗಳು',
   'Auto mode': 'ಸ್ವಯಂ ಮೋಡ್',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'ಪೂರ್ಣ ಅನುಮತಿಗಳು: ಏನನ್ನೂ ಕೇಳುವುದಿಲ್ಲ ಅಥವಾ ನಿಮಗೆ ಹಿಂತಿರುಗಿಸುವುದಿಲ್ಲ, ಸೈನ್ ಇನ್, ಪಾವತಿ, ಕಳುಹಿಸುವಿಕೆ ಅಥವಾ ಅಳಿಸುವಿಕೆಯೂ ಸಹ',
-  // Import: Zen's tabs
   'Import from Zen': 'Zen ನಿಂದ ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
   'Containers stay in Zen': 'ಕಂಟೇನರ್‌ಗಳು Zen ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
   'Zen’s tabs could not be read.': 'Zen ಟ್ಯಾಬ್‌ಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ.',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'ಕಂಟೇನರ್‌ಗಳು Firefox ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} ಮೂಲಕ ಹುಡುಕುತ್ತದೆ: ಇಲ್ಲಿಯೂ ಅದರಿಂದ ಹುಡುಕಲು ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಅದನ್ನು ಆರಿಸಿ',
@@ -65,38 +58,29 @@ export const kn: Dictionary = {
   'Reading List': 'ಓದುವ ಪಟ್ಟಿ',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS Safariಯ ಟ್ಯಾಬ್‌ಗಳು ಮತ್ತು ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳನ್ನು ಪೂರ್ಣ ಡಿಸ್ಕ್ ಪ್ರವೇಶದ ಹಿಂದೆ ಇಡುತ್ತದೆ. ಅಲ್ಲಿ Orden ಆನ್ ಮಾಡಿ, ನಂತರ ಮತ್ತೆ ಕೇಳಿ.',
-  // Settings: note types
   'Page note': 'ಪುಟ ಟಿಪ್ಪಣಿ',
   'Web note': 'ಜಾಲ ಟಿಪ್ಪಣಿ',
   'Private tab': 'ಖಾಸಗಿ ಟ್ಯಾಬ್',
   'Note types': 'ಟಿಪ್ಪಣಿ ಪ್ರಕಾರಗಳು',
-  // Tasks: Upcoming's weeks
   'Previous week': 'ಹಿಂದಿನ ವಾರ',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'ಮೇಲೆ ಯೋಜನೆ ಸೇರಿಸಿ',
   'Add project below': 'ಕೆಳಗೆ ಯೋಜನೆ ಸೇರಿಸಿ',
   'Projects folder': 'ಯೋಜನೆಗಳ ಫೋಲ್ಡರ್',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'ಬಿಟ್ಟುಬಿಡಿ',
   'Complete forever': 'ಶಾಶ್ವತವಾಗಿ ಪೂರ್ಣಗೊಳಿಸಿ',
-  // Tasks: comments
   Comments: 'ಕಾಮೆಂಟ್‌ಗಳು',
-  // Tasks: filters
   Filters: 'ಫಿಲ್ಟರ್‌ಗಳು',
   'Add filter': 'ಫಿಲ್ಟರ್ ಸೇರಿಸಿ',
   'Edit filter': 'ಫಿಲ್ಟರ್ ಸಂಪಾದಿಸಿ',
-  // Tasks: a project's sections
   'Add section': 'ವಿಭಾಗ ಸೇರಿಸಿ',
   '{name} (copy)': '{name} (ನಕಲು)',
   'Its tasks are deleted with it.': 'ಅದರ ಕಾರ್ಯಗಳೂ ಜೊತೆಗೆ ಅಳಿಸಲ್ಪಡುತ್ತವೆ.',
-  // Tasks: keys, selection and the undo toast
   Completed: 'ಪೂರ್ಣಗೊಂಡಿದೆ',
   'Remove date': 'ದಿನಾಂಕ ತೆಗೆದುಹಾಕಿ',
   'Next task': 'ಮುಂದಿನ ಕಾರ್ಯ',
   'Previous task': 'ಹಿಂದಿನ ಕಾರ್ಯ',
   'Add task at the top': 'ಮೇಲೆ ಕಾರ್ಯ ಸೇರಿಸಿ',
   '{count} selected': '{count} ಆಯ್ಕೆಯಾಗಿವೆ',
-  // Tasks: the Display menu
   Display: 'ಪ್ರದರ್ಶನ',
   'Completed tasks': 'ಪೂರ್ಣಗೊಂಡ ಕಾರ್ಯಗಳು',
   Smart: 'ಸ್ಮಾರ್ಟ್',
@@ -108,20 +92,16 @@ export const kn: Dictionary = {
   'Reset all': 'ಎಲ್ಲವನ್ನೂ ಮರುಹೊಂದಿಸಿ',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'ಲೇಔಟ್ ಕಾರ್ಯಗಳನ್ನು ಪಟ್ಟಿ, ಬೋರ್ಡ್ ಅಥವಾ ಕ್ಯಾಲೆಂಡರ್ ಆಗಿ ತೋರಿಸುತ್ತದೆ. ಗುಂಪುಗೊಳಿಸುವಿಕೆ ಅವುಗಳನ್ನು ಗುಂಪುಗಳಾಗಿ ವಿಭಜಿಸುತ್ತದೆ, ಅವು ಬೋರ್ಡ್‌ನ ಕಾಲಮ್‌ಗಳು. ವಿಂಗಡಣೆ ಪ್ರತಿ ಗುಂಪನ್ನು ಕ್ರಮಗೊಳಿಸುತ್ತದೆ. ಫಿಲ್ಟರ್‌ಗಳು ನಿಮಗೆ ಬೇಡವಾದುದನ್ನು ಮರೆಮಾಡುತ್ತವೆ. ಇವೆಲ್ಲವೂ ಈ ವೀಕ್ಷಣೆಗಾಗಿ ಉಳಿಯುತ್ತವೆ.',
-  // Tasks: several lines pasted into quick add
   'One task': 'ಒಂದು ಕಾರ್ಯ',
   'One per line': 'ಪ್ರತಿ ಸಾಲಿಗೆ ಒಂದು',
   'Add with AI': 'AI ಮೂಲಕ ಸೇರಿಸಿ',
-  // Tasks: the projects in the panel
   Favorites: 'ಮೆಚ್ಚಿನವು',
   'Add project': 'ಯೋಜನೆ ಸೇರಿಸಿ',
   'Add sub-project': 'ಉಪಯೋಜನೆ ಸೇರಿಸಿ',
-  // Tasks: the task view
   'Sub-tasks': 'ಉಪಕಾರ್ಯಗಳು',
   'Add sub-task': 'ಉಪಕಾರ್ಯ ಸೇರಿಸಿ',
   'New label': 'ಹೊಸ ಲೇಬಲ್',
   'No deadline': 'ಗಡುವು ಇಲ್ಲ',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'ಮರುನಿಗದಿಪಡಿಸಿ',
   'Later this week': 'ಈ ವಾರ ನಂತರ',
   'This weekend': 'ಈ ವಾರಾಂತ್ಯ',
@@ -138,22 +118,18 @@ export const kn: Dictionary = {
   Reopen: 'ಮತ್ತೆ ತೆರೆಯಿರಿ',
   Schedule: 'ನಿಗದಿಪಡಿಸಿ',
   'Open in note': 'ಟಿಪ್ಪಣಿಯಲ್ಲಿ ತೆರೆಯಿರಿ',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'ಬೇರೆ ಆ್ಯಪ್',
   'Import from Obsidian': 'Obsidian ನಿಂದ ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
   'Import from Notion': 'Notion ನಿಂದ ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'ಸುಳಿವುಗಳು',
   'Silent mode': 'ಮೌನ ಮೋಡ್',
   'See how your notes connect.': 'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳು ಹೇಗೆ ಸಂಪರ್ಕಗೊಂಡಿವೆ ನೋಡಿ.',
   'Press {key} to find anything, notes and commands alike.':
     'ಟಿಪ್ಪಣಿಗಳು ಮತ್ತು ಆಜ್ಞೆಗಳು, ಏನನ್ನಾದರೂ ಹುಡುಕಲು {key} ಒತ್ತಿ.',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'ಬರೆಯುವಾಗ ಮಾರ್ಕ್‌ಡೌನ್ ತೋರಿಸಿ',
   'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'ಪಾಯಿಂಟರ್',
   'Pointing hand on buttons': 'ಬಟನ್‌ಗಳ ಮೇಲೆ ಸೂಚಿಸುವ ಕೈ',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'ಕಾರ್ಯ ಸೇರಿಸಿ',
   'Apple Shortcuts': 'Apple ಶಾರ್ಟ್‌ಕಟ್‌ಗಳು',
   Tomorrow: 'ನಾಳೆ',
@@ -179,7 +155,6 @@ export const kn: Dictionary = {
   'Every week': 'ಪ್ರತಿ ವಾರ',
   'Every month': 'ಪ್ರತಿ ತಿಂಗಳು',
   'Every year': 'ಪ್ರತಿ ವರ್ಷ',
-  // Files and notes
   Save: 'ಉಳಿಸಿ',
   'New note': 'ಹೊಸ ಟಿಪ್ಪಣಿ',
   'Random note': 'ಯಾದೃಚ್ಛಿಕ ಟಿಪ್ಪಣಿ',
@@ -207,8 +182,6 @@ export const kn: Dictionary = {
   'Release to add a page': 'ಪುಟ ಸೇರಿಸಲು ಬಿಡಿ',
   'Page {number}': 'ಪುಟ {number}',
   'The paper could not be read': 'ಕಾಗದವನ್ನು ಓದಲು ಆಗಲಿಲ್ಲ',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'ಲೆಟರ್',
   'Long page': 'ಉದ್ದದ ಪುಟ',
@@ -251,7 +224,6 @@ export const kn: Dictionary = {
   'Choose a picture': 'ಚಿತ್ರವನ್ನು ಆರಿಸಿ',
   'Remove picture': 'ಚಿತ್ರವನ್ನು ತೆಗೆದುಹಾಕಿ',
   'That picture could not be read.': 'ಆ ಚಿತ್ರವನ್ನು ಓದಲಾಗಲಿಲ್ಲ.',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'ಸ್ಯಾಚುರೇಶನ್',
   Tint: 'ಛಾಯೆ',
   'Tint colour': 'ಛಾಯೆಯ ಬಣ್ಣ',
@@ -379,7 +351,6 @@ export const kn: Dictionary = {
   'Merge into…': 'ಇದರೊಳಗೆ ವಿಲೀನ…',
   'Split at caret': 'ಕರ್ಸರ್ ಬಳಿ ವಿಭಜಿಸಿ',
   'Extract selection': 'ಆಯ್ಕೆಯನ್ನು ಬೇರ್ಪಡಿಸಿ',
-  // Panels and navigation
   Bookmarks: 'ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು',
   'New group': 'ಹೊಸ ಗುಂಪು',
   'Remove group': 'ಗುಂಪು ತೆಗೆಯಿರಿ',
@@ -433,8 +404,6 @@ export const kn: Dictionary = {
   'Sort by name': 'ಹೆಸರು ಪ್ರಕಾರ ಕ್ರಮ',
   'Sort by modified': 'ಬದಲಾದ ದಿನಾಂಕ ಪ್ರಕಾರ ಕ್ರಮ',
   'Sort by created': 'ರಚಿಸಿದ ದಿನಾಂಕ ಪ್ರಕಾರ ಕ್ರಮ',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'ಫೈಲ್‌ಗಳ ಕ್ರಮ',
   'Name, A to Z': 'ಹೆಸರು, ಅ ಇಂದ ಹ',
   'Name, Z to A': 'ಹೆಸರು, ಹ ಇಂದ ಅ',
@@ -445,7 +414,6 @@ export const kn: Dictionary = {
   Manual: 'ಕೈಯಿಂದ',
   'Show hidden files': 'ಅಡಗಿದ ಫೈಲ್‌ಗಳನ್ನು ತೋರಿಸಿ',
   'Hide hidden files': 'ಅಡಗಿದ ಫೈಲ್‌ಗಳನ್ನು ಮರೆಮಾಡಿ',
-  // Writing
   Bold: 'ದಪ್ಪ',
   Italic: 'ಇಟಾಲಿಕ್',
   Strikethrough: 'ಅಡ್ಡಗೀಟು',
@@ -533,11 +501,9 @@ export const kn: Dictionary = {
   'Horizontal rule': 'ಅಡ್ಡಗೆರೆ',
   'Page break': 'ಪುಟ ವಿರಾಮ',
   'Tidy up this note': 'ಈ ಟಿಪ್ಪಣಿಯನ್ನು ಸರಿಪಡಿಸಿ',
-  // PDFs
   'Copy a link': 'ಒಂದು ಲಿಂಕ್ ನಕಲಿಸಿ',
   'That PDF could not be opened': 'ಆ PDF ತೆರೆಯಲಾಗಲಿಲ್ಲ',
   'That file could not be read': 'ಆ ಫೈಲ್ ಓದಲಾಗಲಿಲ್ಲ',
-  // Modes and view
   Reading: 'ಓದುವಿಕೆ',
   'Leave reading': 'ಓದುವಿಕೆ ಬಿಡಿ',
   Present: 'ಪ್ರಸ್ತುತಪಡಿಸಿ',
@@ -577,7 +543,6 @@ export const kn: Dictionary = {
   'Zoom in': 'ದೊಡ್ಡದಾಗಿಸಿ',
   'Zoom out': 'ಚಿಕ್ಕದಾಗಿಸಿ',
   'Actual size': 'ನಿಜ ಗಾತ್ರ',
-  // Appearance
   Accent: 'ಆಕ್ಸೆಂಟ್ ಬಣ್ಣ',
   'Tidy up': 'ಅಚ್ಚುಕಟ್ಟು ಮಾಡಿ',
   'Blur the app behind the tab overview': 'ಟ್ಯಾಬ್ ಅವಲೋಕನದ ಹಿಂದೆ ಆ್ಯಪ್ ಅನ್ನು ಮಸುಕಾಗಿಸಿ',
@@ -706,7 +671,6 @@ export const kn: Dictionary = {
   'Switch theme': 'ಥೀಮ್ ಬದಲಿಸಿ',
   Style: 'ಶೈಲಿ',
   Mode: 'ಮೋಡ್',
-  // The window's own edges; see appearance.rs
   Window: 'ವಿಂಡೋ',
   'Orden’s own': 'Orden ನದೇ',
   'The system’s': 'ಸಿಸ್ಟಂನದು',
@@ -717,7 +681,6 @@ export const kn: Dictionary = {
   'Edit custom CSS': 'ಕಸ್ಟಮ್ CSS ಸಂಪಾದಿಸಿ',
   'Edit snippets': 'ಸ್ನಿಪ್ಪೆಟ್‌ಗಳನ್ನು ಸಂಪಾದಿಸಿ',
   'Reload themes and custom CSS': 'ಥೀಮ್ ಮತ್ತು ಕಸ್ಟಮ್ CSS ಮರುಲೋಡ್ ಮಾಡಿ',
-  // The theme store, and the sample note its cards show
   Themes: 'ಥೀಮ್‌ಗಳು',
   Browse: 'ಬ್ರೌಸ್ ಮಾಡಿ',
   'Search themes': 'ಥೀಮ್‌ಗಳನ್ನು ಹುಡುಕಿ',
@@ -797,7 +760,6 @@ export const kn: Dictionary = {
   'Code only': 'ಕೋಡ್‌ನಲ್ಲಿ ಮಾತ್ರ',
   Everywhere: 'ಎಲ್ಲೆಡೆ',
   Attachments: 'ಲಗತ್ತುಗಳು',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'ಪುಟ ಟಿಪ್ಪಣಿಗಳು',
   'New pages': 'ಹೊಸ ಪುಟಗಳು',
   'Assets folder of the space': 'ಸ್ಪೇಸ್‌ನ ಲಗತ್ತು ಫೋಲ್ಡರ್',
@@ -849,7 +811,6 @@ export const kn: Dictionary = {
   'Machine-translated. Corrections welcome.': 'ಯಂತ್ರ ಅನುವಾದ. ತಿದ್ದುಪಡಿಗಳಿಗೆ ಸ್ವಾಗತ.',
   'The glasses show English.': 'ಕನ್ನಡಕ ಇಂಗ್ಲಿಷ್ ತೋರಿಸುತ್ತದೆ.',
   'Match the app': 'ಅಪ್ಲಿಕೇಶನ್ ಪ್ರಕಾರ',
-  // Settings
   Settings: 'ಸೆಟ್ಟಿಂಗ್‌ಗಳು',
   Account: 'ಖಾತೆ',
   Publish: 'ಪ್ರಕಟಿಸಿ',
@@ -875,7 +836,6 @@ export const kn: Dictionary = {
   },
   Update: 'ಅಪ್‌ಡೇಟ್',
   'Live at': 'ಲೈವ್ ವಿಳಾಸ',
-  // Publishing
   'Publish {name}': '{name} ಪ್ರಕಟಿಸಿ',
   'What to publish': 'ಏನನ್ನು ಪ್ರಕಟಿಸಬೇಕು',
   'The whole space': 'ಇಡೀ ಸ್ಪೇಸ್',
@@ -895,7 +855,6 @@ export const kn: Dictionary = {
   Value: 'ಮೌಲ್ಯ',
   available: 'ಲಭ್ಯವಿದೆ',
   'checking…': 'ಪರಿಶೀಲಿಸುತ್ತಿದೆ…',
-  // LLM
   'Connect an LLM to your notes': 'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳಿಗೆ LLM ಸಂಪರ್ಕಿಸಿ',
   'Sign in first - the connector reaches the notes in your account.':
     'ಮೊದಲು ಸೈನ್ ಇನ್ ಮಾಡಿ - ಕನೆಕ್ಟರ್ ನಿಮ್ಮ ಖಾತೆಯ ಟಿಪ್ಪಣಿಗಳನ್ನು ತಲುಪುತ್ತದೆ.',
@@ -947,7 +906,6 @@ export const kn: Dictionary = {
     'URL ಬದಲಿಗೆ JSON ಬ್ಲಾಕ್ ತೆಗೆದುಕೊಳ್ಳುವ ಕ್ಲೈಂಟ್‌ಗಾಗಿ.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'ಸೈನ್ ಇನ್ ಆಗಲಾಗದ ಕ್ಲೈಂಟ್‌ಗೆ ಟೋಕನ್ ಕೊಡಬಹುದು. ಅದು ಒಮ್ಮೆ ಮಾತ್ರ ತೋರಿಸಲಾಗುತ್ತದೆ.',
-  // Export
   'Plain text': 'ಸಾದಾ ಪಠ್ಯ',
   'Markdown with the pictures': 'ಚಿತ್ರಗಳೊಂದಿಗೆ Markdown',
   'HTML without styles': 'ಶೈಲಿ ಇಲ್ಲದ HTML',
@@ -966,13 +924,11 @@ export const kn: Dictionary = {
   Margin: 'ಅಂಚು',
   Header: 'ಹೆಡರ್',
   Footer: 'ಫೂಟರ್',
-  // History
   'Version history': 'ಆವೃತ್ತಿ ಇತಿಹಾಸ',
   'Copy link to this note': 'ಈ ಟಿಪ್ಪಣಿಯ ಲಿಂಕ್ ನಕಲಿಸಿ',
   'that link could not be followed': 'ಆ ಲಿಂಕ್ ಅನುಸರಿಸಲಾಗಲಿಲ್ಲ',
   'No earlier versions yet.': 'ಇನ್ನೂ ಹಿಂದಿನ ಆವೃತ್ತಿಗಳಿಲ್ಲ.',
   'Restore this version': 'ಈ ಆವೃತ್ತಿಯನ್ನು ಮರುಸ್ಥಾಪಿಸಿ',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'ಅಲ್ಲಿ ಈಗಾಗಲೇ ಒಂದು ಟಿಪ್ಪಣಿ ಇದೆ',
   'enter a valid email address': 'ಸರಿಯಾದ ಇಮೇಲ್ ವಿಳಾಸ ನಮೂದಿಸಿ',
   'give the space a name': 'ಸ್ಪೇಸ್‌ಗೆ ಒಂದು ಹೆಸರು ಕೊಡಿ',
@@ -1004,7 +960,6 @@ export const kn: Dictionary = {
   'could not publish': 'ಪ್ರಕಟಿಸಲಾಗಲಿಲ್ಲ',
   'could not create a token': 'ಟೋಕನ್ ರಚಿಸಲಾಗಲಿಲ್ಲ',
   'that did not work': 'ಅದು ಕೆಲಸ ಮಾಡಲಿಲ್ಲ',
-  // Settings on a phone, display names, one blog address
   Back: 'ಹಿಂದೆ',
   'Display name': 'ಪ್ರದರ್ಶನ ಹೆಸರು',
   'Your name': 'ನಿಮ್ಮ ಹೆಸರು',
@@ -1024,7 +979,6 @@ export const kn: Dictionary = {
   Spelling: 'ಕಾಗುಣಿತ',
   Checking: 'ಪರಿಶೀಲಿಸುತ್ತಿದೆ',
   Dictionary: 'ನಿಘಂಟು',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'ದಾಖಲೆ ಕಾಣಿಸಲು ಕಾಯುತ್ತಿದೆ.',
   'Certificate issued.': 'ಪ್ರಮಾಣಪತ್ರ ನೀಡಲಾಗಿದೆ.',
   'Cloudflare could not set this domain up.': 'ಈ ಡೊಮೇನ್ ಅನ್ನು Cloudflare ಹೊಂದಿಸಲಾಗಲಿಲ್ಲ.',
@@ -1035,7 +989,6 @@ export const kn: Dictionary = {
   'Cloudflare has blocked this domain': 'ಈ ಡೊಮೇನ್ ಅನ್ನು Cloudflare ನಿರ್ಬಂಧಿಸಿದೆ',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'ಡೊಮೇನ್ ಮೂಲದಲ್ಲಿ ನಿಮ್ಮ ಪೂರೈಕೆದಾರರು CNAME ಅನುಮತಿಸದಿದ್ದರೆ, ALIAS ಅಥವಾ ANAME ದಾಖಲೆ, ಅಥವಾ CNAME flattening ಬಳಸಿ.',
-  // Shortcuts
   Shortcuts: 'ಶಾರ್ಟ್‌ಕಟ್‌ಗಳು',
   'Search shortcuts': 'ಶಾರ್ಟ್‌ಕಟ್ ಹುಡುಕಿ',
   'Second key': 'ಎರಡನೇ ಕೀ',
@@ -1201,7 +1154,6 @@ export const kn: Dictionary = {
   Delegated: 'ವಹಿಸಲಾಗಿದೆ',
   'Code theme: {name}': 'ಕೋಡ್ ಥೀಮ್: {name}',
   'Delete a layout': 'ಲೇಔಟ್ ಅಳಿಸಿ',
-  // Keyboards and modal editing
   Default: 'ಡಿಫಾಲ್ಟ್',
   'Vim keys': 'Vim ಕೀಗಳು',
   'Follow the link': 'ಲಿಂಕ್ ಅನುಸರಿಸಿ',
@@ -1213,11 +1165,9 @@ export const kn: Dictionary = {
   INSERT: 'ಸೇರಿಸುವಿಕೆ',
   VISUAL: 'ದೃಶ್ಯ',
   REPLACE: 'ಬದಲಾವಣೆ',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'ಕನ್ನಡಕದಲ್ಲಿ {count}ರಲ್ಲಿ {page} ಪುಟ',
   'Reaching the glasses': 'ಕನ್ನಡಕ ತಲುಪುತ್ತಿದೆ',
   'The glasses are not keeping up': 'ಕನ್ನಡಕ ಹಿಂದುಳಿಯುತ್ತಿದೆ',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'ಸೇರಿಸಿ',
   Select: 'ಆಯ್ಕೆಮಾಡಿ',
   Pan: 'ಪ್ಯಾನ್',
@@ -1247,7 +1197,6 @@ export const kn: Dictionary = {
   Calligraphy: 'ಕ್ಯಾಲಿಗ್ರಫಿ',
   'Width {number}': 'ಅಗಲ {number}',
   'Finger draws': 'ಬೆರಳು ಚಿತ್ರಿಸುತ್ತದೆ',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'ಅಗಲ',
   Opacity: 'ಒಪಾಸಿಟಿ',
   Colour: 'ಬಣ್ಣ',
@@ -1291,24 +1240,20 @@ export const kn: Dictionary = {
   'Export as PNG': 'PNG ಆಗಿ ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಮಾಡಿ',
   'Export as SVG': 'SVG ಆಗಿ ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಮಾಡಿ',
   'Export as PDF': 'PDF ಆಗಿ ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಮಾಡಿ',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'PDF ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
   'Choose how to add the pages to the canvas.':
     'ಪುಟಗಳನ್ನು ಕ್ಯಾನ್ವಾಸ್‌ಗೆ ಹೇಗೆ ಸೇರಿಸಬೇಕು ಎಂದು ಆಯ್ಕೆಮಾಡಿ.',
   'Single page': 'ಒಂದು ಪುಟ',
   'All pages': 'ಎಲ್ಲಾ ಪುಟಗಳು',
   'Choose a page': 'ಪುಟವನ್ನು ಆಯ್ಕೆಮಾಡಿ',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'ಆಯ್ದದನ್ನು ಅಳಿಸಿ',
   'Nudge left': 'ಎಡಕ್ಕೆ ಕೊಂಚ ಸರಿಸಿ',
   'Nudge right': 'ಬಲಕ್ಕೆ ಕೊಂಚ ಸರಿಸಿ',
   'Nudge up': 'ಮೇಲಕ್ಕೆ ಕೊಂಚ ಸರಿಸಿ',
   'Nudge down': 'ಕೆಳಕ್ಕೆ ಕೊಂಚ ಸರಿಸಿ',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'ಬೇರೆಡೆಯೂ ತೆರೆದಿದೆ',
   Shared: 'ಹಂಚಲಾಗಿದೆ',
   Browser: 'ಬ್ರೌಸರ್',
-  // Sharing a space with other people
   Share: 'ಹಂಚಿ',
   'Share {name}': '{name} ಹಂಚಿ',
   'Share this space': 'ಈ ಸ್ಪೇಸ್ ಹಂಚಿ',
@@ -1353,14 +1298,12 @@ export const kn: Dictionary = {
   'Shared with you': 'ನಿಮ್ಮೊಂದಿಗೆ ಹಂಚಲಾಗಿದೆ',
   'That link does not open anything': 'ಆ ಲಿಂಕ್ ಏನನ್ನೂ ತೆರೆಯುವುದಿಲ್ಲ',
   'Ask for another one.': 'ಇನ್ನೊಂದನ್ನು ಕೇಳಿ.',
-  // Somebody a share link let in, who has no account
   Guest: 'ಅತಿಥಿ',
   'Ask to join': 'ಸೇರಲು ಕೇಳಿ',
   Asking: 'ಕೇಳುತ್ತಿದೆ',
   'Waiting for {who}': '{who} ಗಾಗಿ ಕಾಯುತ್ತಿದೆ',
   '{who} did not let you in': '{who} ನಿಮ್ಮನ್ನು ಒಳಗೆ ಬಿಡಲಿಲ್ಲ',
   'What the others in this space see.': 'ಈ ಸ್ಪೇಸ್‌ನಲ್ಲಿ ಉಳಿದವರು ನೋಡುವುದು.',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'ಅಪ್‌ಡೇಟ್‌ಗಳು',
   'Release channel': 'ಬಿಡುಗಡೆ ಚಾನೆಲ್',
   Stable: 'ಸ್ಥಿರ',
@@ -1370,8 +1313,6 @@ export const kn: Dictionary = {
   'Web version': 'ವೆಬ್ ಆವೃತ್ತಿ',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'ಸ್ಥಿರ ಬಿಡುಗಡೆಯಾದ ವೆಬ್ ಆ್ಯಪ್; ಅಸ್ಥಿರ ಹೊಸ ಬಿಲ್ಡ್, ಮುರಿಯಲೂಬಹುದು.',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'ಇಂಪೋರ್ಟ್',
   'Convert syntax': 'ಸಿಂಟ್ಯಾಕ್ಸ್ ಪರಿವರ್ತಿಸಿ',
   'In this note': 'ಈ ಟಿಪ್ಪಣಿಯಲ್ಲಿ',
@@ -1470,8 +1411,6 @@ export const kn: Dictionary = {
   'Undo the import': 'ಇಂಪೋರ್ಟ್ ರದ್ದುಗೊಳಿಸಿ',
   'Choose an export': 'ಒಂದು ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಆಯ್ಕೆಮಾಡಿ',
   Under: 'ಇದರ ಕೆಳಗೆ',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'ಸಿಂಕ್',
   'When the same note was written twice': 'ಒಂದೇ ಟಿಪ್ಪಣಿಯನ್ನು ಎರಡು ಬಾರಿ ಬರೆದಾಗ',
   'On two devices': 'ಎರಡು ಸಾಧನಗಳಲ್ಲಿ',
@@ -1533,7 +1472,6 @@ export const kn: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'ಈ ಸಾಧನದಲ್ಲಿನ ಟಿಪ್ಪಣಿಗಳು ಉಳಿಯುತ್ತವೆ; ಖಾತೆ ಮತ್ತು ಅದರ ಸಿಂಕ್ ಮಾಡಿದ ಪ್ರತಿಗಳು ಮಾತ್ರ ಹೋಗುತ್ತವೆ.',
   'Also gone for everyone in {spaces}.': '{spaces} ನಲ್ಲಿರುವ ಎಲ್ಲರಿಗೂ ಹೋಗುತ್ತದೆ.',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'ಟಿಪ್ಪಣಿ',
   '{space} panel': '{space} ಪ್ಯಾನೆಲ್',
   'Panel width': 'ಪ್ಯಾನೆಲ್ ಅಗಲ',
@@ -1544,7 +1482,6 @@ export const kn: Dictionary = {
   'What is selected': 'ಆಯ್ಕೆಯಾದದ್ದು',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'ಕ್ಯಾನ್ವಾಸ್: {cards} ಕಾರ್ಡ್‌ಗಳು, {links} ಲಿಂಕ್‌ಗಳು, {drawings} ರೇಖಾಚಿತ್ರಗಳು',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'ಪೂರೈಕೆದಾರರು',
   'Make default': 'ಡಿಫಾಲ್ಟ್ ಮಾಡಿ',
@@ -1571,7 +1508,6 @@ export const kn: Dictionary = {
   'Add an AI provider in Settings first.': 'ಮೊದಲು ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ AI ಪೂರೈಕೆದಾರ ಸೇರಿಸಿ.',
   'The model did not answer.': 'ಮಾದರಿ ಉತ್ತರಿಸಲಿಲ್ಲ.',
   'The connection closed before the answer was finished.': 'ಉತ್ತರ ಮುಗಿಯುವ ಮೊದಲೇ ಸಂಪರ್ಕ ಮುಚ್ಚಿತು.',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'ನಿಮ್ಮ {plan} ಪ್ಲಾನ್ {time} ವರೆಗೆ ಮಿತಿ ತಲುಪಿದೆ.',
   'Your {plan} plan is at its limit for now.': 'ನಿಮ್ಮ {plan} ಪ್ಲಾನ್ ಸದ್ಯಕ್ಕೆ ಮಿತಿ ತಲುಪಿದೆ.',
@@ -1599,7 +1535,6 @@ export const kn: Dictionary = {
   Shorter: 'ಚಿಕ್ಕದಾಗಿ',
   Longer: 'ದೊಡ್ಡದಾಗಿ',
   'Fix grammar': 'ವ್ಯಾಕರಣ ಸರಿಪಡಿಸಿ',
-  // The AI sidebar's commands
   'A cited report': 'ಉಲ್ಲೇಖಿತ ವರದಿ',
   'A helper in the background': 'ಹಿನ್ನೆಲೆಯ ಸಹಾಯಕ',
   'A side question': 'ಪಕ್ಕದ ಪ್ರಶ್ನೆ',
@@ -1701,7 +1636,6 @@ export const kn: Dictionary = {
   'Markdown, shortest name': 'Markdown, ಅತಿ ಚಿಕ್ಕ ಹೆಸರು',
   'Markdown, relative path': 'Markdown, ಸಂಬಂಧಿತ ಪಾತ್',
   'Markdown, path in the space': 'Markdown, ಸ್ಪೇಸ್‌ನ ಪಾತ್',
-  // Publishing part one.
   'The folders you choose become public.': 'ನೀನು ಆಯ್ದ ಫೋಲ್ಡರ್‌ಗಳು ಸಾರ್ವಜನಿಕವಾಗುತ್ತವೆ.',
   'Anyone with the address can read what is published, drafts included.':
     'ವಿಳಾಸ ಇರುವ ಯಾರಾದರೂ ಪ್ರಕಟವಾದದ್ದನ್ನು ಓದಬಹುದು, ಕರಡುಗಳನ್ನೂ.',
@@ -1727,11 +1661,9 @@ export const kn: Dictionary = {
   'Remove the password': 'ಪಾಸ್‌ವರ್ಡ್ ತೆಗೆ',
   'Scan this with your authenticator app, then type its code.':
     'ಇದನ್ನು ನಿನ್ನ ದೃಢೀಕರಣ ಆ್ಯಪ್‌ನಿಂದ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ, ಆಮೇಲೆ ಅದರ ಕೋಡ್ ಬರೆ.',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'ಚಿತ್ರ',
   Dictate: 'ಹೇಳಿ ಬರೆಸು',
   'Add to {name}': '{name} ಗೆ ಸೇರಿಸು',
-  // Web tabs
   Reload: 'ಮತ್ತೆ ಲೋಡ್ ಮಾಡು',
   'Hard reload': 'ಪೂರ್ಣವಾಗಿ ಮತ್ತೆ ಲೋಡ್ ಮಾಡು',
   'Open in the browser': 'ಬ್ರೌಸರ್‌ನಲ್ಲಿ ತೆರೆ',
@@ -1746,7 +1678,6 @@ export const kn: Dictionary = {
   'Playing audio': 'ಆಡಿಯೊ ಪ್ಲೇ ಆಗುತ್ತಿದೆ',
   Muted: 'ಮ್ಯೂಟ್ ಆಗಿದೆ',
   'Developer tools': 'ಡೆವಲಪರ್ ಪರಿಕರಗಳು',
-  // Recording, meetings and what a model wrote
   Record: 'ಧ್ವನಿಮುದ್ರಿಸು',
   Recording: 'ಧ್ವನಿಮುದ್ರಣ',
   'Stop recording': 'ಧ್ವನಿಮುದ್ರಣ ನಿಲ್ಲಿಸು',
@@ -1767,7 +1698,6 @@ export const kn: Dictionary = {
     'ಒಂದೇ ಸಲಕ್ಕೆ ಪದಗಳಾಗಿ ಮಾಡಲು ಆ ಧ್ವನಿಮುದ್ರಣ ತುಂಬಾ ಉದ್ದ.',
   'That is as much as one recording may hold.': 'ಒಂದು ಧ್ವನಿಮುದ್ರಣದಲ್ಲಿ ಇಷ್ಟೇ ಹಿಡಿಯುತ್ತದೆ.',
   'Nothing could be heard in that recording.': 'ಆ ಧ್ವನಿಮುದ್ರಣದಲ್ಲಿ ಏನೂ ಕೇಳಿಸಲಿಲ್ಲ.',
-  // Publishing part two.
   Spreadsheet: 'ಸ್ಪ್ರೆಡ್‌ಶೀಟ್',
   'The app’s own': 'ಆ್ಯಪ್‌ನ ಸ್ವಂತ',
   'publish.css and publish.js in this space dress the site.':
@@ -1783,14 +1713,12 @@ export const kn: Dictionary = {
   'Save as CSV': 'CSV ಆಗಿ ಉಳಿಸು',
   'Kept for {days}': '{days} ಇರಿಸಲಾಗುತ್ತದೆ',
   Full: 'ತುಂಬಿದೆ',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ಮೇಲ್ ಕಳುಹಿಸಲಾಗಲಿಲ್ಲ - ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
   'start again - that took too long': 'ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ - ಅದು ತುಂಬಾ ಸಮಯ ತೆಗೆದುಕೊಂಡಿತು',
   'sign in to do that': 'ಅದನ್ನು ಮಾಡಲು ಸೈನ್ ಇನ್ ಮಾಡಿ',
   'that is not something a token can do': 'ಅದು ಟೋಕನ್ ಮಾಡಬಹುದಾದ್ದಲ್ಲ',
   'something went wrong here - try again': 'ಇಲ್ಲಿ ಏನೋ ತಪ್ಪಾಯಿತು - ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
   'this service cannot keep a secret safely': 'ಈ ಸೇವೆ ರಹಸ್ಯವನ್ನು ಸುರಕ್ಷಿತವಾಗಿ ಇಡಲಾಗದು',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only': 'ಚಿತ್ರ, PDF ಮತ್ತು ತಾಣದ ಸ್ವಂತ css ಅಥವಾ js ಮಾತ್ರ',
   'that file is too big': 'ಆ ಫೈಲ್ ತುಂಬಾ ದೊಡ್ಡದು',
   'that is more settings than an account holds': 'ಒಂದು ಖಾತೆ ಹಿಡಿಯುವುದಕ್ಕಿಂತ ಹೆಚ್ಚು ಸೆಟ್ಟಿಂಗ್‌ಗಳು',
@@ -1802,13 +1730,11 @@ export const kn: Dictionary = {
   'that is more folder icons than a space holds':
     'ಒಂದು ಸ್ಪೇಸ್ ಹಿಡಿಯುವುದಕ್ಕಿಂತ ಹೆಚ್ಚು ಫೋಲ್ಡರ್ ಐಕಾನ್‌ಗಳು',
   'that is more than a site keeps': 'ಒಂದು ತಾಣ ಇಟ್ಟುಕೊಳ್ಳುವುದಕ್ಕಿಂತ ಹೆಚ್ಚು',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'ಆ ವಿಳಾಸದಲ್ಲಿ ಯಾರೂ ಇಲ್ಲ',
   'nobody by that name': 'ಆ ಹೆಸರಿನಲ್ಲಿ ಯಾರೂ ಇಲ್ಲ',
   'nobody is waiting by that name': 'ಆ ಹೆಸರಿನಲ್ಲಿ ಯಾರೂ ಕಾಯುತ್ತಿಲ್ಲ',
   'this space is yours': 'ಈ ಸ್ಪೇಸ್ ನಿಮ್ಮದು',
   'that link is busy, try again in a minute': 'ಆ ಲಿಂಕ್ ಕಾರ್ಯನಿರತವಾಗಿದೆ, ಒಂದು ನಿಮಿಷದಲ್ಲಿ ಪ್ರಯತ್ನಿಸಿ',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'ಅಂತಹ ಆವೃತ್ತಿ ಇಲ್ಲ',
   'this note was shared with you, not its folder':
     'ಈ ಟಿಪ್ಪಣಿ ನಿಮ್ಮೊಂದಿಗೆ ಹಂಚಲಾಗಿದೆ, ಅದರ ಫೋಲ್ಡರ್ ಅಲ್ಲ',
@@ -1817,7 +1743,6 @@ export const kn: Dictionary = {
   'nothing to delete': 'ಅಳಿಸಲು ಏನೂ ಇಲ್ಲ',
   'this room is not answering - try again': 'ಈ ಕೊಠಡಿ ಉತ್ತರಿಸುತ್ತಿಲ್ಲ - ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
   'rooms are not running here': 'ಇಲ್ಲಿ ಕೊಠಡಿಗಳು ಚಾಲನೆಯಲ್ಲಿಲ್ಲ',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'ಥೀಮ್ ಸ್ಟೋರ್ ಉತ್ತರಿಸುತ್ತಿಲ್ಲ',
   'that is not a theme': 'ಅದು ಥೀಮ್ ಅಲ್ಲ',
   'no such theme': 'ಅಂತಹ ಥೀಮ್ ಇಲ್ಲ',
@@ -1830,10 +1755,8 @@ export const kn: Dictionary = {
   'that is more than a spoken command': 'ಅದು ಮಾತಿನ ಕಮಾಂಡ್‌ಗಿಂತ ಹೆಚ್ಚು',
   'that is a lot of listening - try again later': 'ಅದು ತುಂಬಾ ಕೇಳುವಿಕೆ - ನಂತರ ಪ್ರಯತ್ನಿಸಿ',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% ಪಠ್ಯ',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'ಮೊಬೈಲ್',
   'The bar sits over the keyboard on a phone.': 'ಫೋನ್‌ನಲ್ಲಿ ಪಟ್ಟಿ ಕೀಬೋರ್ಡ್ ಮೇಲೆ ಇರುತ್ತದೆ.',
   'On the bar': 'ಪಟ್ಟಿಯಲ್ಲಿ',
@@ -1847,31 +1770,25 @@ export const kn: Dictionary = {
   'A pull past the top runs': 'ಮೇಲಿನಿಂದ ಎಳೆದರೆ ಚಲಿಸುತ್ತದೆ',
   Nothing: 'ಏನೂ ಇಲ್ಲ',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'ಇರಿಸಿ',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'ಬಲಕ್ಕೆ ಸರಿಸಿ',
   'Move to the left': 'ಎಡಕ್ಕೆ ಸರಿಸಿ',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'ಖಾತೆಯಲ್ಲಿ ಇತಿಹಾಸ',
   'Keep versions': 'ಆವೃತ್ತಿಗಳನ್ನು ಇರಿಸಿ',
   'A month': 'ಒಂದು ತಿಂಗಳು',
   'A year': 'ಒಂದು ವರ್ಷ',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'ಕೊನೆಯ ದಿನದ ಎಲ್ಲವೂ, ನಂತರ ಗಂಟೆಗೆ ಒಂದು, ಒಂದು ತಿಂಗಳ ನಂತರ ದಿನಕ್ಕೆ ಒಂದು, ಮೂರು ತಿಂಗಳ ನಂತರ ವಾರಕ್ಕೆ ಒಂದು.',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'ಈ ನೋಟ್ ಒಂದು ಕೋಣೆಯಲ್ಲಿ ನೋಟ್ ಆಗಬಹುದಾದ ಗರಿಷ್ಠ ಗಾತ್ರವನ್ನು ತಲುಪಿದೆ.',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'ಹೊಸ ಟ್ಯಾಬ್',
   'Full screen': 'ಪೂರ್ಣ ಪರದೆ',
   'Print…': 'ಮುದ್ರಿಸಿ…',
   'Share…': 'ಹಂಚಿ…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'ಗೆ ಅನುಮತಿ ಬೇಕಿದೆ',
   'Don’t allow': 'ಅನುಮತಿಸಬೇಡಿ',
   Allow: 'ಅನುಮತಿಸಿ',
@@ -1888,7 +1805,6 @@ export const kn: Dictionary = {
   'Use your MIDI devices': 'ನಿಮ್ಮ MIDI ಸಾಧನಗಳನ್ನು ಬಳಸಿ',
   'Manage windows on all your displays': 'ನಿಮ್ಮ ಎಲ್ಲಾ ಡಿಸ್ಪ್ಲೇಗಳಲ್ಲಿ ವಿಂಡೋಗಳನ್ನು ನಿರ್ವಹಿಸಿ',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'ಸೈಟ್ ಮಾಹಿತಿ',
   Downloads: 'ಡೌನ್‌ಲೋಡ್‌ಗಳು',
   'Downloading {name}': '{name} ಡೌನ್‌ಲೋಡ್ ಆಗುತ್ತಿದೆ',
@@ -1915,11 +1831,9 @@ export const kn: Dictionary = {
   'Turn into': 'ಆಗಿ ಮಾಡಿ',
   Foldable: 'ಮಡಚಬಹುದು',
   'Starts folded': 'ಮಡಚಿ ಆರಂಭ',
-  // Where a space keeps what websites store
   'Web data': 'ವೆಬ್ ಡೇಟಾ',
   Global: 'ಹಂಚಿಕೊಂಡ',
   Site: 'ಸೈಟ್',
-  // The Mac's menu bar
   'About {name}': '{name} ಕುರಿತು',
   Services: 'ಸೇವೆಗಳು',
   'Hide {name}': '{name} ಮರೆಮಾಡಿ',
@@ -1927,7 +1841,6 @@ export const kn: Dictionary = {
   'Show all': 'ಎಲ್ಲವನ್ನೂ ತೋರಿಸಿ',
   'Quit {name}': '{name} ತ್ಯಜಿಸಿ',
   'Bring all to front': 'ಎಲ್ಲವನ್ನೂ ಮುಂದೆ ತನ್ನಿ',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'ನಕಲನ್ನು ರದ್ದುಗೊಳಿಸಿ',
   'Devices with your AI vault': 'ನಿಮ್ಮ AI ವಾಲ್ಟ್ ಇರುವ ಸಾಧನಗಳು',
   'This device': 'ಈ ಸಾಧನ',
@@ -1943,13 +1856,11 @@ export const kn: Dictionary = {
   'Select down': 'ಕೆಳಗೆ ಆಯ್ಕೆಮಾಡಿ',
   'Select up': 'ಮೇಲೆ ಆಯ್ಕೆಮಾಡಿ',
   'Select or deselect': 'ಆಯ್ಕೆಮಾಡಿ ಅಥವಾ ಆಯ್ಕೆ ರದ್ದುಮಾಡಿ',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'ಹೊಸ ಟ್ಯಾಬ್‌ನಲ್ಲಿ ತೆರೆಯಿರಿ',
   'Open to the side': 'ಪಕ್ಕದಲ್ಲಿ ತೆರೆಯಿರಿ',
   'Open all': 'ಎಲ್ಲವನ್ನೂ ತೆರೆಯಿರಿ',
   'Show in the file list': 'ಫೈಲ್ ಪಟ್ಟಿಯಲ್ಲಿ ತೋರಿಸಿ',
   'Collapse the file list': 'ಫೈಲ್ ಪಟ್ಟಿಯನ್ನು ಮಡಚಿ',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'ಆಯ್ಕೆಯನ್ನು ವಿಸ್ತರಿಸಿ',
   'Shrink the selection': 'ಆಯ್ಕೆಯನ್ನು ಕುಗ್ಗಿಸಿ',
   'Insert a line above': 'ಮೇಲೆ ಒಂದು ಸಾಲು ಸೇರಿಸಿ',
@@ -1963,19 +1874,16 @@ export const kn: Dictionary = {
   'Duplicate the block': 'ಬ್ಲಾಕ್ ನಕಲು ಮಾಡಿ',
   'Move the block up': 'ಬ್ಲಾಕ್ ಅನ್ನು ಮೇಲಕ್ಕೆ ಸರಿಸಿ',
   'Move the block down': 'ಬ್ಲಾಕ್ ಅನ್ನು ಕೆಳಕ್ಕೆ ಸರಿಸಿ',
-  // The editor's menu on a link and a picture
   'Copy link address': 'ಲಿಂಕ್ ವಿಳಾಸ ನಕಲಿಸಿ',
   'Edit link': 'ಲಿಂಕ್ ಸಂಪಾದಿಸಿ',
   'Remove link': 'ಲಿಂಕ್ ತೆಗೆದುಹಾಕಿ',
   'Copy picture': 'ಚಿತ್ರ ನಕಲಿಸಿ',
   'Open picture': 'ಚಿತ್ರ ತೆರೆಯಿರಿ',
   'Delete picture': 'ಚಿತ್ರ ಅಳಿಸಿ',
-  // A file dropped into a note
   'Storing the file': 'ಫೈಲ್ ಉಳಿಸಲಾಗುತ್ತಿದೆ',
   'That file is larger than a note can keep.':
     'ಈ ಫೈಲ್ ಒಂದು ಟಿಪ್ಪಣಿ ಇಟ್ಟುಕೊಳ್ಳಬಹುದಾದಕ್ಕಿಂತ ದೊಡ್ಡದು.',
   'That file could not be kept.': 'ಈ ಫೈಲ್ ಇಟ್ಟುಕೊಳ್ಳಲು ಆಗಲಿಲ್ಲ.',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'ಹೊಸ ಟರ್ಮಿನಲ್',
   'Command Prompt': 'ಕಮಾಂಡ್ ಪ್ರಾಂಪ್ಟ್',
   Terminal: 'ಟರ್ಮಿನಲ್',
@@ -2000,11 +1908,8 @@ export const kn: Dictionary = {
     one: '{count} ಸಾಲನ್ನು ಅಂಟಿಸಬೇಕೆ?',
     other: '{count} ಸಾಲುಗಳನ್ನು ಅಂಟಿಸಬೇಕೆ?',
   },
-  // Orden as the default browser
   'Default browser': 'ಡಿಫಾಲ್ಟ್ ಬ್ರೌಸರ್',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ಅವರ ಸಂಪಾದನೆಗಳನ್ನು ರದ್ದುಮಾಡಿ',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'ಆರ್ಕೈವ್ ಮಾಡಿ',
   Unarchive: 'ಆರ್ಕೈವ್‌ನಿಂದ ತೆಗೆಯಿರಿ',
   Archived: 'ಆರ್ಕೈವ್ ಮಾಡಲಾಗಿದೆ',
@@ -2017,7 +1922,6 @@ export const kn: Dictionary = {
     one: 'ಒಳಗೆ {count} ಆರ್ಕೈವ್ ಮಾಡಿದ ಐಟಂ',
     other: 'ಒಳಗೆ {count} ಆರ್ಕೈವ್ ಮಾಡಿದ ಐಟಂಗಳು',
   },
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'ಎಡ ಸೈಡ್‌ಬಾರ್',
   'Right sidebar': 'ಬಲ ಸೈಡ್‌ಬಾರ್',
   'Ask about this space': 'ಈ ಸ್ಪೇಸ್ ಬಗ್ಗೆ ಕೇಳಿ',
@@ -2028,7 +1932,6 @@ export const kn: Dictionary = {
   'Ask again': 'ಮತ್ತೆ ಕೇಳಿ',
   'Continue when the limit resets': 'ಮಿತಿ ಮರುಹೊಂದಿದಾಗ ಮುಂದುವರಿಸಿ',
   'Continues at {time}': '{time} ಕ್ಕೆ ಮುಂದುವರಿಯುತ್ತದೆ',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ಏನಾದರೂ ಕೇಳಿ, ಸೇರಿಸಲು @, ಇನ್ನಷ್ಟಕ್ಕೆ /',
   'What can I help with?': 'ನಾನು ಏನು ಸಹಾಯ ಮಾಡಲಿ?',
   'Add photos and files': 'ಫೋಟೋಗಳು ಮತ್ತು ಫೈಲ್‌ಗಳನ್ನು ಸೇರಿಸಿ',
@@ -2096,13 +1999,10 @@ export const kn: Dictionary = {
   Closed: 'ಮುಚ್ಚಿತು',
   Ran: 'ಚಲಾಯಿಸಿತು',
   Changed: 'ಬದಲಿಸಿತು',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': 'ಈ {device}',
   '{name} is back: {device} was writing in it':
     '{name} ಮರಳಿ ಬಂದಿದೆ: {device} ಅದರಲ್ಲಿ ಬರೆಯುತ್ತಿತ್ತು',
   'Changes to {name} are not syncing': '{name} ನಲ್ಲಿನ ಬದಲಾವಣೆಗಳು ಸಿಂಕ್ ಆಗುತ್ತಿಲ್ಲ',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'ತೆರೆಯುವಿಕೆ',
   Pressing: 'ಒತ್ತುವಿಕೆ',
   Typing: 'ಟೈಪಿಂಗ್',
@@ -2117,18 +2017,14 @@ export const kn: Dictionary = {
   'Agent tabs closed': 'ಏಜೆಂಟ್ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಮುಚ್ಚಲಾಗಿದೆ',
   'Orden is still running for your agents': 'ನಿಮ್ಮ ಏಜೆಂಟ್‌ಗಳಿಗಾಗಿ Orden ಇನ್ನೂ ಚಾಲನೆಯಲ್ಲಿದೆ',
   '{client} wants to connect': '{client} ಸಂಪರ್ಕಿಸಲು ಬಯಸುತ್ತದೆ',
-  // Web logins that travel, and the devices of an account
   'no such device': 'ಅಂತಹ ಸಾಧನ ಇಲ್ಲ',
   'give the device a name': 'ಸಾಧನಕ್ಕೆ ಹೆಸರು ನೀಡಿ',
   'that computer is no longer waiting': 'ಆ ಕಂಪ್ಯೂಟರ್ ಇನ್ನು ಕಾಯುತ್ತಿಲ್ಲ',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'ಅಂತಹ ಫೈಲ್ ಇಲ್ಲ',
   'too many changes at once - try again in a minute':
     'ಒಮ್ಮೆಗೇ ತುಂಬಾ ಬದಲಾವಣೆಗಳು - ಒಂದು ನಿಮಿಷದ ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
   'that is more than a space keeps about its tree':
     'ಇದು ಒಂದು ಸ್ಪೇಸ್ ತನ್ನ ಟ್ರೀ ಬಗ್ಗೆ ಇಟ್ಟುಕೊಳ್ಳುವುದಕ್ಕಿಂತ ಹೆಚ್ಚು',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿರುವ ಏಜೆಂಟ್‌ಗಳು',
   'Your account’s connector': 'ನಿಮ್ಮ ಖಾತೆಯ ಕನೆಕ್ಟರ್',
   'Orden asks you once, the first time it connects.':
@@ -2200,12 +2096,9 @@ export const kn: Dictionary = {
     one: '{count} ಕರೆ',
     other: '{count} ಕರೆಗಳು',
   },
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'ತ್ವರಿತ ಪ್ರಶ್ನೆ',
   Scratchpad: 'Scratchpad',
   'Add to note': 'ಟಿಪ್ಪಣಿಗೆ ಸೇರಿಸಿ',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'ವಿಸ್ತರಣೆಗಳು',
   'Add extension': 'ವಿಸ್ತರಣೆ ಸೇರಿಸಿ',
   'Manage extensions': 'ವಿಸ್ತರಣೆಗಳನ್ನು ನಿರ್ವಹಿಸಿ',
@@ -2225,7 +2118,6 @@ export const kn: Dictionary = {
   'Did not load': 'ಲೋಡ್ ಆಗಲಿಲ್ಲ',
   Permissions: 'ಅನುಮತಿಗಳು',
   Options: 'ಆಯ್ಕೆಗಳು',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'ರಿಮೋಟ್',
   'Add host': 'ಹೋಸ್ಟ್ ಸೇರಿಸಿ',
   Reconnect: 'ಮತ್ತೆ ಸಂಪರ್ಕಿಸಿ',
@@ -2233,11 +2125,8 @@ export const kn: Dictionary = {
   'No group': 'ಗುಂಪು ಇಲ್ಲ',
   'Not an address': 'ವಿಳಾಸವಲ್ಲ',
   'Could not connect to {host}': '{host} ಗೆ ಸಂಪರ್ಕಿಸಲಾಗಲಿಲ್ಲ',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'ಚಿತ್ರ ಕಳುಹಿಸುತ್ತಿದೆ',
   'Could not send the image': 'ಚಿತ್ರವನ್ನು ಕಳುಹಿಸಲಾಗಲಿಲ್ಲ',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': {
     one: 'ಮತ್ತು ಅದರ ನಂತರದ {count}',
     other: 'ಮತ್ತು ಅದರ ನಂತರದ {count}',
@@ -2251,8 +2140,6 @@ export const kn: Dictionary = {
     'ಪುಟಗಳು, ಟರ್ಮಿನಲ್‌ಗಳು ಮತ್ತು ಸರಿಸುವಿಕೆಗಳು ರದ್ದಾಗುವುದಿಲ್ಲ',
   Rewind: 'ಹಿಂದಕ್ಕೆ',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'ಹುಡುಕಾಟ ಇಂಜಿನ್',
   History: 'ಇತಿಹಾಸ',
   'Search history': 'ಹುಡುಕಾಟ ಇತಿಹಾಸ',
@@ -2276,14 +2163,12 @@ export const kn: Dictionary = {
   'New private tab': 'ಹೊಸ ಖಾಸಗಿ ಟ್ಯಾಬ್',
   'All spaces': 'ಎಲ್ಲಾ ಸ್ಪೇಸ್‌ಗಳು',
   'the data could not be deleted': 'ಡೇಟಾ ಅಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'ಸ್ನೂಜ್',
   Reminders: 'ಜ್ಞಾಪನೆಗಳು',
   'Reminders ring while Orden is open': 'Orden ತೆರೆದಿರುವಾಗ ಜ್ಞಾಪನೆಗಳು ರಿಂಗ್ ಆಗುತ್ತವೆ',
   Automatic: 'ಸ್ವಯಂಚಾಲಿತ',
   'Stay in the tray': 'ಟ್ರೇನಲ್ಲಿ ಇರಿ',
   'Exact alarms': 'ನಿಖರ ಅಲಾರಂಗಳು',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'ಕೆಲಸಗಳು',
   'Plan my day': 'ನನ್ನ ದಿನವನ್ನು ಯೋಜಿಸು',
   'Add a task': 'ಕೆಲಸ ಸೇರಿಸಿ',
@@ -2295,8 +2180,6 @@ export const kn: Dictionary = {
   'Done tasks too': 'ಮುಗಿದ ಕೆಲಸಗಳೂ',
   'As a task': 'ಕೆಲಸವಾಗಿ',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'ಕಾರ್ಯಗಳು',
   Ascending: 'ಏರಿಕೆ ಕ್ರಮ',
   Descending: 'ಇಳಿಕೆ ಕ್ರಮ',
@@ -2381,8 +2264,6 @@ export const kn: Dictionary = {
   'Without a value': 'ಮೌಲ್ಯವಿಲ್ಲದ',
   'With a value': 'ಮೌಲ್ಯವಿರುವ',
   Unique: 'ಅನನ್ಯ',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'ಟೆಂಪ್ಲೇಟ್‌ನಿಂದ ಹೊಸ ಟಿಪ್ಪಣಿ',
   Automations: 'ಸ್ವಯಂಚಾಲನೆಗಳು',
   'Row added': 'ಸಾಲು ಸೇರಿಸಲಾಗಿದೆ',
@@ -2411,7 +2292,6 @@ export const kn: Dictionary = {
   Form: 'ಫಾರ್ಮ್',
   Formula: 'ಸೂತ್ರ',
   'Blocked by {task}': '{task} ಗಾಗಿ ತಡೆಹಿಡಿಯಲಾಗಿದೆ',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'ತ್ಯಜಿಸುವ ಮೊದಲು ಎಚ್ಚರಿಸಿ',
   'When something runs': 'ಏನಾದರೂ ರನ್ ಆಗುತ್ತಿರುವಾಗ',
   'Quit {name}?': '{name} ತ್ಯಜಿಸಬೇಕೆ?',
@@ -2422,16 +2302,13 @@ export const kn: Dictionary = {
   'Quit anyway': 'ಆದರೂ ತ್ಯಜಿಸಿ',
   'Restart anyway': 'ಆದರೂ ಮರುಪ್ರಾರಂಭಿಸಿ',
   'Close anyway': 'ಆದರೂ ಮುಚ್ಚಿ',
-  // The online terminal
   'Online terminal': 'ಆನ್‌ಲೈನ್ ಟರ್ಮಿನಲ್',
   'New online terminal': 'ಹೊಸ ಆನ್‌ಲೈನ್ ಟರ್ಮಿನಲ್',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'ಇನ್ನೊಂದು ಸಾಧನ',
   'Taken over by {device}': '{device} ತೆಗೆದುಕೊಂಡಿದೆ',
   'Open on {device} since {time}': '{time} ರಿಂದ {device} ನಲ್ಲಿ ತೆರೆದಿದೆ',
   'Take over': 'ವಹಿಸಿಕೊಳ್ಳಿ',
   'Take back': 'ಹಿಂಪಡೆಯಿರಿ',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'ಹೊಸ ಅಪ್ಲಿಕೇಶನ್',
   Application: 'ಅಪ್ಲಿಕೇಶನ್',
   'This application’s file is damaged': 'ಈ ಅಪ್ಲಿಕೇಶನ್‌ನ ಫೈಲ್ ಹಾಳಾಗಿದೆ',
@@ -2539,8 +2416,6 @@ export const kn: Dictionary = {
   'Compare with original': 'ಮೂಲದೊಂದಿಗೆ ಹೋಲಿಸಿ',
   'Conflict copies from other apps': 'ಇತರ ಆಪ್‌ಗಳ ಸಂಘರ್ಷ ನಕಲುಗಳು',
   'Remove from sync': 'ಸಿಂಕ್‌ನಿಂದ ತೆಗೆದುಹಾಕಿ',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'ಪ್ರೊಫೈಲ್',
   Change: 'ಬದಲಿಸಿ',
   'Take photo': 'ಫೋಟೋ ತೆಗೆಯಿರಿ',
@@ -2565,7 +2440,6 @@ export const kn: Dictionary = {
   'that picture could not be opened': 'ಆ ಚಿತ್ರವನ್ನು ತೆರೆಯಲಾಗಲಿಲ್ಲ',
   'the camera could not be opened': 'ಕ್ಯಾಮೆರಾ ತೆರೆಯಲಾಗಲಿಲ್ಲ',
   'that picture is too big': 'ಆ ಚಿತ್ರ ತುಂಬಾ ದೊಡ್ಡದಾಗಿದೆ',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'ಚಾಟ್',
   Reply: 'ಉತ್ತರಿಸಿ',
   Replies: 'ಉತ್ತರಗಳು',
@@ -2584,7 +2458,6 @@ export const kn: Dictionary = {
   'Also send to {chat}': '{chat}ಗೂ ಕಳುಹಿಸಿ',
   'Skin tone': 'ಚರ್ಮದ ಬಣ್ಣ',
   'Deleted account': 'ಅಳಿಸಿದ ಖಾತೆ',
-  // Chats: notifications
   Mute: 'ಮ್ಯೂಟ್ ಮಾಡಿ',
   Unmute: 'ಅನ್‌ಮ್ಯೂಟ್ ಮಾಡಿ',
   'New message': 'ಹೊಸ ಸಂದೇಶ',
@@ -2594,7 +2467,6 @@ export const kn: Dictionary = {
   Weekdays: 'ಕೆಲಸದ ದಿನಗಳು',
   Starts: 'ಆರಂಭ',
   Ends: 'ಅಂತ್ಯ',
-  // Chats: everywhere
   'Read chats': 'ಚಾಟ್‌ಗಳನ್ನು ಓದುವುದು',
   'Post in chats': 'ಚಾಟ್‌ಗಳಲ್ಲಿ ಬರೆಯುವುದು',
   'Always in this chat': 'ಈ ಚಾಟ್‌ನಲ್ಲಿ ಯಾವಾಗಲೂ',
@@ -2606,14 +2478,12 @@ export const kn: Dictionary = {
   'Search this chat': 'ಈ ಚಾಟ್‌ನಲ್ಲಿ ಹುಡುಕಿ',
   'Add as task': 'ಕೆಲಸವಾಗಿ ಸೇರಿಸಿ',
   'Save as note': 'ಟಿಪ್ಪಣಿಯಾಗಿ ಉಳಿಸಿ',
-  // Appearance: glass's own pairs of colours
   Dawn: 'ಮುಂಜಾನೆ',
   Lagoon: 'ಲಗೂನ್',
   Lilac: 'ಲೈಲಾಕ್',
   Peach: 'ಪೀಚ್',
   Sage: 'ಸೇಜ್',
   Mist: 'ಮಂಜು',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'ಹೊಸ ಡೇಟಾಬೇಸ್',
   'New page': 'ಹೊಸ ಪುಟ',
   'Not started': 'ಪ್ರಾರಂಭಿಸಿಲ್ಲ',
@@ -2639,7 +2509,6 @@ export const kn: Dictionary = {
   Large: 'ದೊಡ್ಡ',
   Both: 'ಎರಡೂ',
   'Shown on cards': 'ಕಾರ್ಡ್‌ಗಳಲ್ಲಿ ತೋರಿಸಲಾಗಿದೆ',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'ಈ ಬ್ರೌಸರ್‌ನ AI ಕೀಗಳನ್ನು ವಾಲ್ಟ್ ಮೂಲಕ ನಿಮ್ಮ ಇತರ ಸಾಧನಗಳೊಂದಿಗೆ ಸಿಂಕ್ ಮಾಡುತ್ತದೆ.',
   'Which of your AI accounts this feature asks.':
@@ -2883,7 +2752,6 @@ export const kn: Dictionary = {
   'Some changes may not be noticed': 'ಕೆಲವು ಬದಲಾವಣೆಗಳು ಗಮನಕ್ಕೆ ಬಾರದಿರಬಹುದು',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'ಸಿಸ್ಟಮ್ ವೀಕ್ಷಿಸುವ ಫೋಲ್ಡರ್‌ಗಳ ಮಿತಿ ತಲುಪಿದೆ, ಹಾಗಾಗಿ ಇತರ ಪ್ರೋಗ್ರಾಂಗಳು ನಿಮ್ಮ ಸ್ಪೇಸ್‌ಗಳಲ್ಲಿ ಮಾಡುವ ಎಲ್ಲ ಬದಲಾವಣೆಗಳನ್ನು Orden ಗಮನಿಸದಿರಬಹುದು. fs.inotify.max_user_watches ಹೆಚ್ಚಿಸಿದರೆ ಸರಿಯಾಗುತ್ತದೆ.',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'ಚಾಟ್ {name} ಅನ್ನು {space} ಗೆ ಸರಿಸಬೇಕೆ?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'ಆಗ {space} ನಲ್ಲಿರುವ ಎಲ್ಲರೂ ಸಂಪೂರ್ಣ ಇತಿಹಾಸವನ್ನು ಓದಬಹುದು, ಮತ್ತು {from} ನಲ್ಲಿರುವವರು ಅದನ್ನು ಕಳೆದುಕೊಳ್ಳುತ್ತಾರೆ.',
@@ -2923,7 +2791,6 @@ export const kn: Dictionary = {
   'One colour': 'ಒಂದೇ ಬಣ್ಣ',
   'Web icons': 'ವೆಬ್ ಐಕಾನ್‌ಗಳು',
   'Sites you visit will appear here': 'ನೀವು ಭೇಟಿ ನೀಡುವ ಸೈಟ್‌ಗಳು ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತವೆ',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'ಉಕ್ತಲೇಖನ',
   'Dictate with': 'ಇದರಿಂದ ಉಕ್ತಲೇಖನ',
   'Where your voice goes to be turned into words.':
@@ -2954,11 +2821,9 @@ export const kn: Dictionary = {
   'Not on this device': 'ಈ ಸಾಧನದಲ್ಲಿ ಇಲ್ಲ',
   'Not on this device. It opens once you are online again.':
     'ಈ ಸಾಧನದಲ್ಲಿ ಇಲ್ಲ. ನೀವು ಮತ್ತೆ ಆನ್‌ಲೈನ್‌ಗೆ ಬಂದಾಗ ಇದು ತೆರೆಯುತ್ತದೆ.',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'IMAP ಸರ್ವರ್',
   'SMTP server': 'SMTP ಸರ್ವರ್',
   'User name': 'ಬಳಕೆದಾರ ಹೆಸರು',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'ತುರ್ತು',
   Important: 'ಮುಖ್ಯ',
   'If time': 'ಸಮಯವಿದ್ದರೆ',

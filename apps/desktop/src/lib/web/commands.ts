@@ -1,6 +1,3 @@
-/** The desktop app's command surface, served from the browser's own storage.
- *  Same names, same shapes - so every call site works on both. */
-
 import { holderOf, paperOf } from '../pages/held'
 import { SIDECAR } from '../pdf/highlights'
 import { staleSnapshots } from '../recovery'
@@ -58,62 +55,31 @@ interface Entry {
   modified: number
   created: number
   children: Entry[]
-  /** A page note holding a paper; see `paper` in the desktop's tree.rs. */
   paper?: boolean
-  /** A file this browser keeps no words of, fetched when it is opened (#1126). The
-   *  name a Mac's listing gives a file iCloud took away, which is the same fact. */
   evicted?: boolean
 }
 
 interface TreeOptions {
   showHidden?: boolean
-  /** The papers page notes hold, which the list leaves out; see `papers` in the
-   *  desktop's tree.rs. */
   papers?: boolean
-  /** Every file, pictures too; see `every` in the desktop's tree.rs. */
   every?: boolean
 }
 
 const now = () => Date.now()
 
-/** The most a note may be for the app to read it, in bytes of UTF-8, and what a note
- *  past it is refused with: the desktop's `MOST_NOTE_BYTES` and `TOO_LARGE` in
- *  notes.rs, which say why the number is this one. The sentence is the account's
- *  own, so every catalogue already carries it. */
 export const MOST_NOTE_BYTES = 64 * 1024 * 1024
 export const TOO_LARGE = 'that note is too large'
 
-/** Whether a note is past that ceiling, counted the way the desktop counts it.
- *
- *  A UTF-16 unit is one byte of UTF-8 at the least and three at the most, so only a
- *  note between a third of the ceiling and the ceiling itself has to be encoded to
- *  know: every note anybody writes answers from its length alone. */
 function tooLarge(content: string): boolean {
   if (content.length > MOST_NOTE_BYTES) return true
   if (content.length * 3 <= MOST_NOTE_BYTES) return false
   return new TextEncoder().encode(content).byteLength > MOST_NOTE_BYTES
 }
 
-/** How much of a space one chunk of the link scan reads and reads through before
- *  letting go of the thread, in characters of the files themselves.
- *
- *  Characters rather than notes, because reading the links out of a note costs what
- *  the note is long. A chunk was 128 notes, which for notes of four kilobytes is
- *  half a megabyte and fifty to seventy milliseconds of a task, and for a chunk that
- *  held a canvas of seven megabytes was a third of a second. A quarter of a megabyte
- *  is twenty to thirty. A file longer than this is a chunk on its own: what it costs
- *  is its own, and nothing else waits behind it. */
 export const SCANNED_AT_ONCE = 256 * 1024
 
-/** What a file counts for where the listing does not say how long it is: the share
- *  of a chunk each note had when a chunk was 128 notes, so a listing written before
- *  it kept sizes is read the way it always was. See `StatRow` in store.ts. */
 const UNSIZED = SCANNED_AT_ONCE / 128
 
-/** The paths whose words are read, in order, in runs of about `SCANNED_AT_ONCE`
- *  characters each. A run is one stretch of the store, so a file between two of its
- *  paths is read with them: one whose words are not wanted ends the run before it
- *  unless it is small enough not to matter, and is in none. */
 function chunksOf(
   paths: readonly string[],
   sizes: ReadonlyMap<string, number>,
@@ -148,13 +114,6 @@ function chunksOf(
   return out
 }
 
-/** Whether a file is one the tree shows: a note, a PDF beside one, a canvas, a page
- *  note, a website, a base, a chat's pointer (docs/chats.md 4.2), an online terminal
- *  (issue 1055) or an application (docs/apps.md). The same kinds the desktop's `read_tree` lists, and for the
- *  same reason - they are the things a tab can hold. A page note was left out of
- *  both lists, which left one drawn in a tab and nowhere else: no row in the file
- *  list, nothing for a search to read, and nothing for the mirror to send up, since
- *  the mirror walks this tree. */
 function listed(path: string): boolean {
   return (
     isMarkdown(path) ||
@@ -169,26 +128,13 @@ function listed(path: string): boolean {
   )
 }
 
-/** Where a PDF's highlights are kept. The desktop's command derives this on the
- *  Rust side; here the store is a flat map of paths, so it is derived in front of
- *  it. */
 function sidecarOf(path: string): string {
   return `${normalise(path)}${SIDECAR}`
 }
 
-/** Builds the folder tree from the flat list of paths.
- *
- *  From the listing rather than from the notes, which is the whole of why the file
- *  list is on screen before anything has been read: a space of three thousand
- *  notes answers this in one small read instead of handing back three thousand
- *  bodies to have their names taken off them. Notes and pictures alike, since a
- *  path has one stat wherever the file itself lives. See web/store.ts. */
 async function tree(root: string, options: TreeOptions = {}, raw = false): Promise<Entry> {
   const base = normalise(root)
   const rows = (await stats.all()).filter((row) => within(base, row.path))
-  // And what this browser keeps no words of, listed as it is, with the cloud a file
-  // somewhere else wears (#1126; away.svelte.ts). Never for the engine, which lists
-  // what is here.
   const away = new Set<string>()
   if (!raw) {
     const here = new Set(rows.map((row) => row.path))
@@ -220,8 +166,6 @@ async function tree(root: string, options: TreeOptions = {}, raw = false): Promi
   }
 
   const top = make(base)
-  // A page note's paper is part of the note beside it, so the list shows the note;
-  // one whose note has gone is a PDF again. See pages/held.ts.
   const present = new Set(rows.map((row) => row.path))
   const held = (path: string) => {
     const holder = holderOf(path)
@@ -230,7 +174,6 @@ async function tree(root: string, options: TreeOptions = {}, raw = false): Promi
 
   for (const row of rows) {
     if (basename(row.path) === KEEP) {
-      // The marker only exists to keep its folder on the tree.
       make(parent(row.path))
       continue
     }
@@ -251,11 +194,6 @@ async function tree(root: string, options: TreeOptions = {}, raw = false): Promi
     })
   }
 
-  // Folders first, then the names, and nothing about which order the reader chose:
-  // that is decided over the listing, once, in the app's own tree-order.ts, the same
-  // way it is decided over the one the Rust crate answers with. What this owes is an
-  // answer that is the same twice, since a map is walked in whatever order it was
-  // filled in.
   const sort = (entry: Entry) => {
     entry.children.sort((a, b) => {
       if (a.is_dir !== b.is_dir) return a.is_dir ? -1 : 1
@@ -268,12 +206,6 @@ async function tree(root: string, options: TreeOptions = {}, raw = false): Promi
   return top
 }
 
-/** Whether the app reads the file at a path as words (`read_note`, `read_highlights`):
- *  a document of any kind, a base, a PDF's highlights. On the desktop that is one
- *  disk; here words live in `files` and pictures in `assets`, and sync carries some
- *  of these as bytes (`kindOfName` in sync-core makes a base and a sidecar a file).
- *  Whatever arrives as bytes for one of them goes to `files`, so there is one place
- *  each path's words are, whoever wrote them. */
 export function readsAsText(path: string): boolean {
   return (
     isMarkdown(path) ||
@@ -284,7 +216,6 @@ export function readsAsText(path: string): boolean {
   )
 }
 
-/** Words written as base64, the way `write_bytes` and `save_asset` are handed them. */
 function wordsOf(base64: string): string {
   const binary = atob(base64)
   const bytes = new Uint8Array(binary.length)
@@ -298,22 +229,16 @@ function base64Of(words: string): string {
   return btoa(binary)
 }
 
-/** Bytes for a path: words into `files` for a path the app reads as words, a picture
- *  into `assets` for any other. A row an earlier build left in the other store goes,
- *  so nothing reads the old one back. */
 async function writeBytes(path: string, base64: string, type: string) {
   const at = normalise(path)
   if (!readsAsText(at)) {
     await assets.put({ path: at, type, data: base64, modified: now() })
     return
   }
-  // Before the words, since dropping an asset drops the listing of its path too.
   if (await assets.get(at)) await assets.remove(at)
   await writeNote(at, wordsOf(base64))
 }
 
-/** The words at a path the app reads as words, moving them over from `assets` where
- *  an earlier build put them: the newer of the two stands, and the asset goes. */
 async function textRow(path: string): Promise<FileRow | undefined> {
   const at = normalise(path)
   const file = await files.get(at)
@@ -323,7 +248,6 @@ async function textRow(path: string): Promise<FileRow | undefined> {
 
   await assets.remove(at)
   if (file && file.modified >= asset.modified) {
-    // The listing went with the asset; the file's own row puts it back.
     await files.put(file)
     return file
   }
@@ -332,9 +256,6 @@ async function textRow(path: string): Promise<FileRow | undefined> {
 }
 
 async function writeNote(path: string, content: string) {
-  // A plane's marks go into its listing with it, so the scan of the space never has
-  // to read the plane for them; see `scanLinks`. Read to its icon and no further,
-  // for a plane this app wrote; see scan-canvas.ts.
   await files.write(
     normalise(path),
     content,
@@ -343,8 +264,6 @@ async function writeNote(path: string, content: string) {
   )
 }
 
-/** Everything under `from` moves, so renaming a folder takes its notes along -
- *  and the files beside them, which is how a PDF's own highlights follow it. */
 async function renameNote(from: string, to: string, hold = false, alone = false, raw = false) {
   const source = normalise(from)
   const target = normalise(to)
@@ -356,53 +275,33 @@ async function renameNote(from: string, to: string, hold = false, alone = false,
     return
   }
 
-  // Before anything moves; see `paperInTheWay`. `hold` is the window turning a PDF into
-  // its page note, the one move that may put a PDF where a page note takes it.
   const turning = hold && isPdf(target) && parent(source) === parent(target)
   const there = await paperInTheWay(source, target)
   if (there && !turning) throw new Error(`${there} is already there`)
 
   const pictures = await moveAssets(source, target)
 
-  // `occupied` and not `files.get`: a folder has no row of its own, so asking
-  // only about an exact path would let a note be renamed onto a folder and
-  // land inside it, taking the folder's name and hiding what was in it.
   if (await occupied(target, raw)) throw new Error('something already lives there')
 
   const rows = (await files.all()).filter(
     (row) => row.path === source || row.path.startsWith(`${source}/`),
   )
 
-  // A PDF on its own is a row of the asset store alone, and has moved already; its
-  // highlights follow it, as they do on a desktop, unless sync is moving the one file
-  // (see `alone` on `rename_note` in notes.rs).
   if (!rows.length && pictures) {
     if (isPdf(source) && !alone) await moveHighlights(source, target)
     return
   }
-  // A note this browser keeps no words of has no row to move: its move is the engine's
-  // operation, made before this one (#1126).
   if (!rows.length && keptAway.under(source).length) return
   if (!rows.length) throw new Error('nothing to rename')
 
-  // One transaction for the lot. Row by row, a browser closed halfway through
-  // renaming a folder would leave half its notes under the old name and half
-  // under the new, with no way to tell which.
   await files.move(
     rows.map((row) => ({ ...row, path: target + row.path.slice(source.length), modified: now() })),
     rows.map((row) => row.path),
   )
 
-  // A page note's paper follows the note, as `move_held` has it on a desktop, sync's move
-  // too: sync carries the paper with the note and never as an entry of its own (#551).
-  // Its highlights are one, which sync moves by a move of their own.
   if (isPages(source)) await renamePaper(paperOf(source), paperOf(target), !alone)
 }
 
-/** `renameNote` in a store that keeps folders of its own (#1068, step 4c): the same
- *  refusals, and then each thing moved as one step there - the file or the folder with
- *  everything in it, a PDF's highlights, a page note's paper - so nothing moved changes
- *  its identity on the way. */
 async function renameInTree(
   tree: TreeRows,
   source: string,
@@ -426,18 +325,12 @@ async function renameInTree(
   }
 }
 
-/** What goes with a file that moved, moved after it, where it is and its new name is
- *  free: quiet otherwise, as `renamePaper` is. Answers whether it moved. */
 async function besideInTree(tree: TreeRows, source: string, target: string): Promise<boolean> {
   if (!(await stats.holds(source)) || (await stats.holds(target))) return false
   await tree.move(source, target)
   return true
 }
 
-/** The file a rename or a copy of `source` to `target` would put a page note and its
- *  paper together with, or null: for a page note, a PDF already where its paper would
- *  go, which is somebody's own; for a PDF, the page note that would take it for its
- *  paper (#538). See `paper_in_the_way` in paths.rs. */
 async function paperInTheWay(source: string, target: string): Promise<string | null> {
   if (isPages(target)) {
     const paper = paperOf(target)
@@ -448,9 +341,6 @@ async function paperInTheWay(source: string, target: string): Promise<string | n
   return holder && (await files.get(holder)) ? holder : null
 }
 
-/** A page note's paper, and the paper's own highlights, under the note's new name.
- *  Quiet where there is none, and where the name is taken: the note has moved, and a
- *  paper that could not follow is listed as the PDF it is rather than lost. */
 async function renamePaper(source: string, target: string, highlights = true) {
   const paper = await assets.get(source)
   if (!paper || (await assets.get(target))) return
@@ -460,16 +350,11 @@ async function renamePaper(source: string, target: string, highlights = true) {
   if (highlights) await moveHighlights(source, target)
 }
 
-/** A PDF's highlights, under the name the PDF has now. */
 async function moveHighlights(source: string, target: string) {
   const side = await files.get(sidecarOf(source))
   if (side) await files.move([{ ...side, path: sidecarOf(target), modified: now() }], [side.path])
 }
 
-/** The desktop's `copy_path`: a note, a file or a folder and everything under it,
- *  copied, from both stores - a PDF is a row in the asset store and its highlights a
- *  row in the note store beside it. Never over anything, and never into itself,
- *  which is what the desktop refuses too. */
 async function copyPath(from: string, to: string) {
   const source = normalise(from)
   const target = normalise(to)
@@ -483,15 +368,12 @@ async function copyPath(from: string, to: string) {
   const there = await paperInTheWay(source, target)
   if (there) throw new Error(`${there} is already there`)
 
-  // What this browser keeps no words of is fetched first: a copy is of the words.
   for (const away of keptAway.under(source)) {
     if (!(await keptAway.bringBack(away.path))) throw new Error(NOT_HERE)
   }
 
   const under = (one: string) => one === source || one.startsWith(`${source}/`)
   const copied = (one: string) => target + one.slice(source.length)
-  // By path first, and only what is under the source read: every picture in the store
-  // was read, and decoded, to copy one note.
   const notes = await rowsOf((await files.paths()).filter(under), files.get)
   const pictures = await rowsOf((await assets.paths()).filter(under), assets.get)
   if (!notes.length && !pictures.length) throw new Error('nothing to copy')
@@ -504,7 +386,6 @@ async function copyPath(from: string, to: string) {
   await copyHeld(source, target)
 }
 
-/** The rows at `paths`, read one at a time, leaving out any gone meanwhile. */
 async function rowsOf<T>(paths: readonly string[], get: (path: string) => Promise<T | undefined>) {
   const out: T[] = []
   for (const path of paths) {
@@ -514,8 +395,6 @@ async function rowsOf<T>(paths: readonly string[], get: (path: string) => Promis
   return out
 }
 
-/** What a file holds, copied with it: a PDF's highlights, and a page note's paper
- *  with the paper's own highlights. */
 async function copyHeld(source: string, target: string) {
   if (isPages(source)) {
     const paper = await assets.get(paperOf(source))
@@ -542,11 +421,6 @@ async function removeFolder(path: string) {
   for (const one of (await assets.paths()).filter(under)) await assets.remove(one)
 }
 
-/** The desktop's `remove_empty_folder`: gone only if nothing whatever is left
- *  inside it. Here a folder is only the paths under it plus the marker that keeps
- *  an empty one on the tree, so "empty" means the marker and nothing else - and a
- *  picture or a PDF still under it leaves the folder standing, which is the
- *  refusal the desktop's `fs::remove_dir` makes for the same reason. */
 async function removeEmptyFolder(path: string) {
   const base = normalise(path)
   const inside = (one: string) => one.startsWith(`${base}/`)
@@ -561,10 +435,6 @@ async function removeEmptyFolder(path: string) {
   for (const one of held) await files.remove(one)
 }
 
-/** The files beside the notes, moved with them. A PDF is a row in the asset store
- *  rather than in the note store, so a rename that only walked the notes would
- *  leave the paper behind under a folder that no longer exists. Answers how many
- *  moved. */
 async function moveAssets(source: string, target: string): Promise<number> {
   const rows = (await assets.all()).filter(
     (row) => row.path === source || row.path.startsWith(`${source}/`),
@@ -577,9 +447,6 @@ async function moveAssets(source: string, target: string): Promise<number> {
   return rows.length
 }
 
-/** Recently deleted, the browser's way: rows move under `/.trash/<id>/` and a
- *  manifest in the meta store says what each was and where it came from.
- *  The same commands as the desktop's trash.rs, so the app never branches. */
 const TRASH = '/.trash'
 
 interface TrashEntry {
@@ -588,20 +455,11 @@ interface TrashEntry {
   name: string
   from: string
   trashedAt: number
-  /** Deleted by sync, which leaves a PDF's highlights out of the slot; see trash.rs. */
   apart?: boolean
 }
 
 let trashCounter = 0
 
-/** One row of the manifest, or nothing when it is not one.
- *
- *  The manifest is a string in the browser's own storage: written by some version
- *  of this app, possibly by one interrupted halfway. Read as the shape the code
- *  wants, half an entry is a throw on the way into Recently deleted - which is
- *  the one place somebody goes to get a note back. So a bad row costs itself and
- *  the rest of the list still opens; see stored.ts, which says the same thing
- *  about the same problem. */
 function entryOf(value: unknown): TrashEntry | null {
   if (!isRecord(value)) return null
 
@@ -612,14 +470,11 @@ function entryOf(value: unknown): TrashEntry | null {
   return { id, kind, name, from, trashedAt, ...(apart === true ? { apart } : {}) }
 }
 
-/** Every trashed thing: this browser's, and what each store with a tree of its own holds
- *  in its own trash. */
 async function trashEntries(): Promise<TrashEntry[]> {
   const kept = (await Promise.all(trees().map((tree) => tree.trash.list()))).flat()
   return [...(await ownTrash()), ...kept]
 }
 
-/** The store with a tree of its own whose trash holds `id`, or null for this browser's. */
 async function trashOf(id: string): Promise<TreeRows | null> {
   for (const tree of trees()) {
     if ((await tree.trash.list()).some((one) => one.id === id)) return tree
@@ -627,8 +482,6 @@ async function trashOf(id: string): Promise<TreeRows | null> {
   return null
 }
 
-/** This browser's own trash: what its manifest says. None on a desktop, which keeps
- *  only what is mounted as rows. */
 async function ownTrash(): Promise<TrashEntry[]> {
   if (!keepsOwnRows()) return []
   const held = parsed((await meta.get('trash')) ?? null)
@@ -637,7 +490,6 @@ async function ownTrash(): Promise<TrashEntry[]> {
   return held.map(entryOf).filter((one): one is TrashEntry => one !== null)
 }
 
-/** This browser's manifest, written again without whatever a tree keeps itself. */
 async function saveTrash(entries: TrashEntry[]) {
   const kept = new Set(
     (await Promise.all(trees().map((tree) => tree.trash.list()))).flat().map((one) => one.id),
@@ -647,29 +499,19 @@ async function saveTrash(entries: TrashEntry[]) {
 
 async function occupied(path: string, raw = false): Promise<boolean> {
   if (await files.get(path)) return true
-  // A note this browser keeps no words of is there all the same (#1126).
   if (!raw && keptAway.under(path).length) return true
   return (await files.paths()).some((one) => one.startsWith(`${path}/`))
 }
 
-/** Whether anything is at `path` for the trash to take or give back: a note, a folder
- *  of them, or a picture or a PDF, which live in the asset store alone. Not
- *  `occupied`, which a rename asks after moving the pictures already. Asking only of
- *  the notes refused a picture deleted on another device, and sync v2 asked again on
- *  every pass and got no further. */
 async function holds(path: string): Promise<boolean> {
   if ((await occupied(path)) || (await assets.get(path))) return true
   return (await assets.paths()).some((one) => one.startsWith(`${path}/`))
 }
 
-/** `path` if nothing is there, else `name 2`, `name 3`... - before the
- *  extension for a note, after the name for a folder or a space. */
 async function freeSpot(path: string, isFile: boolean): Promise<string> {
   return firstSpot(path, isFile, async (one) => !(await taken(one)))
 }
 
-/** The first of `path`, `name 2`, `name 3`... that `fits`; see `first_spot` in
- *  paths.rs. */
 async function firstSpot(
   path: string,
   isFile: boolean,
@@ -689,9 +531,6 @@ async function firstSpot(
   }
 }
 
-/** Whether a name is taken: by something there, by a page note and its paper,
- *  `X.pages` and `X.pages.pdf`, which take each other's name, or by highlights a gone
- *  PDF left; see `taken` in paths.rs. */
 async function taken(path: string): Promise<boolean> {
   if ((await holds(path)) || (await pairedTaken(path))) return true
   return isPdf(path) && !!(await files.get(sidecarOf(path)))
@@ -703,7 +542,6 @@ async function pairedTaken(path: string): Promise<boolean> {
   return false
 }
 
-/** `alone` is sync's delete, which leaves a PDF's highlights; see `trash_item`. */
 async function trashItem(path: string, kind: string, alone = false): Promise<TrashEntry> {
   const source = normalise(path)
   if (source === '/' || source.startsWith(TRASH)) throw new Error('that cannot be deleted')
@@ -727,8 +565,6 @@ async function trashItem(path: string, kind: string, alone = false): Promise<Tra
   return entry
 }
 
-/** `trashItem` in a store with a tree of its own: the thing and what goes with it into
- *  that store's trash in one step, as a rename into the trash takes them here. */
 async function trashInTree(
   tree: TreeRows,
   source: string,
@@ -749,8 +585,6 @@ async function trashInTree(
   return { ...entry, from: source }
 }
 
-/** Words that never had a file, in the trash as a note deleted from `path` would be;
- *  see `trash_words` in trash.rs. */
 async function trashWords(path: string, content: string): Promise<TrashEntry> {
   const source = normalise(path)
   if (source === '/' || source.startsWith(TRASH)) throw new Error('that cannot be deleted')
@@ -792,8 +626,6 @@ async function restoreTrash(id: string): Promise<string> {
     throw new Error('it is already gone')
   }
 
-  // A PDF sync deleted apart from its highlights rejoins them where they came back ahead
-  // of it, rather than step aside from them as another PDF's; see `restore_target`.
   const target =
     entry.apart && (await rejoinsHighlights(entry.from))
       ? entry.from
@@ -803,8 +635,6 @@ async function restoreTrash(id: string): Promise<string> {
   return target
 }
 
-/** Whether only highlights are at `pdf`, nothing else and no page note taking it for its
- *  paper; see `rejoins_highlights` in paths.rs. */
 async function rejoinsHighlights(pdf: string): Promise<boolean> {
   if (!isPdf(pdf) || (await holds(pdf)) || (await pairedTaken(pdf))) return false
   return !!(await files.get(sidecarOf(pdf)))
@@ -823,14 +653,9 @@ async function purgeTrash(id: string) {
 async function spaceList() {
   const names = new Set<string>()
 
-  // Paths, because a space is a folder name: this is the first thing the app asks
-  // for on the way up and it used to hand back every note in the browser to find
-  // out how many folders there were.
-  // With what this browser keeps no words of (#1126): a space may be nothing else yet.
   const away = keptAway.all().map((one) => normalise(one.path))
   for (const path of [...(await files.paths()), ...away]) {
     const space = spaceOf(path)
-    // A dot folder is the app's own, not a space: Recently deleted lives in one.
     if (space !== '/' && !basename(space).startsWith('.')) names.add(space)
   }
 
@@ -839,16 +664,6 @@ async function spaceList() {
     .map((path) => ({ name: basename(path), path }))
 }
 
-/** Every tag in a space and how many times it is written, as the command has always
- *  answered.
- *
- *  Nothing in the app asks any more. The tag tree is built from the link index,
- *  which already holds each note's tags from the one pass that reads the space, and
- *  the number beside a tag there is the notes carrying it rather than the uses of it;
- *  see `tagCounts` in link-index.svelte.ts. This stays because the command exists on
- *  both platforms and the crate still answers it this way - and reading every body in
- *  a space to count them is exactly what the index was there to stop, so a new caller
- *  should reach for the index instead. */
 async function spaceTags(root: string) {
   const rows = (await files.all()).filter(
     (row) => within(normalise(root), row.path) && isMarkdown(row.path),
@@ -858,7 +673,6 @@ async function spaceTags(root: string) {
   for (const row of rows) {
     for (const tag of tagsIn(row.content)) counts.set(tag, (counts.get(tag) ?? 0) + 1)
   }
-  // A note kept away counts each of its tags once, which is what its scan holds (#1126).
   for (const away of keptAway.under(root)) {
     for (const tag of keptAway.scanOf(away.id)?.tags ?? []) {
       counts.set(tag, (counts.get(tag) ?? 0) + 1)
@@ -870,30 +684,12 @@ async function spaceTags(root: string) {
     .sort((a, b) => b.count - a.count || (a.tag < b.tag ? -1 : 1))
 }
 
-/** The browser's answer to the desktop's `scan_links`, which reads a whole space
- *  in one pass. Here the space is a store of rows rather than a folder of files;
- *  each note is read by `scanNote`, which is also what the index uses for a note
- *  that has just been saved.
- *
- *  A stretch of the space at a time, with the thread let go of between them. The
- *  whole store at once was one task of two thirds of a second on a space of three
- *  thousand notes, which is two thirds of a second of somebody's keystrokes
- *  appearing all at once when it ended - and it happens on the launch, while they
- *  are reading the note it opened. In chunks it is the same work in short tasks
- *  with room for a keystroke between them, and nothing is held twice: the names
- *  and their sizes come first, cheaply, and only a chunk's bodies are in hand. See
- *  `SCANNED_AT_ONCE` for how much a chunk is.
- *
- *  Off the launch's critical path as well; see `build` in link-index.svelte.ts and
- *  startup.svelte.ts. */
 async function scanLinks(root: string): Promise<SpaceLinks> {
   const base = normalise(root)
   const relative = (path: string) => path.slice(base === '/' ? 1 : base.length + 1)
 
   const notes: SpaceLinks['notes'] = []
   const beside: string[] = []
-  // The app's own files, the inbox among them, are no note of the space's to scan, as
-  // they are none of the crate's.
   const paths = (await files.paths()).filter(
     (path) => within(base, path) && !hiddenUnder(base, path),
   )
@@ -904,15 +700,10 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
     if (row.size !== undefined) sizes.set(row.path, row.size)
     if (row.plane) marked.set(row.path, row.plane)
   }
-  // A plane or a page note nobody has sized yet may be megabytes; see `chunksOf`.
   for (const path of paths) {
     if (!sizes.has(path) && (isCanvas(path) || isPages(path))) sizes.set(path, Infinity)
   }
 
-  // Whose words are read: a note's and a website's, and a canvas's only where its
-  // listing does not say yet what the index wants of it - its icon, for a row of the
-  // tree, and the notes its cards are. The desktop's `scan_links` reads a canvas for
-  // the same two on the same pass. Everything else is a name beside the notes.
   const read = (path: string) =>
     isMarkdown(path) || isWebTarget(path) || (isCanvas(path) && !marked.has(path))
 
@@ -920,18 +711,13 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
     if (read(path)) continue
 
     const marks = marked.get(path)
-    // A `.keep` is scaffolding rather than a file somebody put in the space, and a
-    // PDF's highlights are part of the PDF.
     if (marks) notes.push(markedPlane(relative(path), marks))
     else if (basename(path) !== KEEP && !path.endsWith(SIDECAR)) beside.push(path)
   }
 
-  // What the listing did not know and this pass found out, so the next pass knows.
   const learnt: { path: string; modified: number; size: number; plane?: PlaneMarks }[] = []
 
   for (const chunk of chunksOf(paths, sizes, read)) {
-    // Every path in the space sorts together, so the stretch between the first and
-    // the last of a chunk is that chunk and whatever small file lies between.
     for (const row of await files.between(chunk[0] ?? '', chunk.at(-1) ?? '')) {
       const found = { path: row.path, modified: row.modified, size: row.content.length }
 
@@ -946,7 +732,6 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
       if (!read(row.path)) continue
 
       if (isMarkdown(row.path)) {
-        // With what the rows of the space ride on, as the crate's scan carries it.
         notes.push({
           ...scanNote(relative(row.path), row.content),
           ...scanRows(row.content),
@@ -955,10 +740,6 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
         continue
       }
 
-      // A website is both: a file beside the notes, so `[[Svelte docs.url]]`
-      // resolves, and a row in the index, so `[[Svelte docs]]` does and the graph
-      // has a node for it. Its one line worth reading is the favicon the file list
-      // draws in front of the row; see scanShortcut.
       notes.push(scanShortcut(relative(row.path), row.content))
       beside.push(row.path)
     }
@@ -966,12 +747,8 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
     await breathe()
   }
 
-  // A size that is not written down is a chunk of the old length next time, which
-  // is how every chunk was read before sizes were kept: nothing to report.
   if (learnt.length) await stats.learn(learnt).catch(() => undefined)
 
-  // And what this browser keeps no words of, as the account said each reads (#1126;
-  // away.svelte.ts): its scan where one has come, and its name until then.
   const here = new Set(paths)
   for (const away of keptAway.under(base)) {
     const path = normalise(away.path)
@@ -981,11 +758,9 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
     const said = keptAway.scanOf(away.id)
     const scan = said ? rehomed(said, at) : unread(at, stamp)
     if (scan) notes.push(scan)
-    // A website is a file beside the notes as well, as above.
     if (!scan || isWebTarget(path)) beside.push(path)
   }
 
-  // Pictures live in their own store here, and only their names are wanted.
   const pictures = (await assets.paths()).filter(
     (path) => within(base, path) && !hiddenUnder(base, path),
   )
@@ -1001,9 +776,6 @@ const KEEP_SNAPSHOTS = 40
 async function snapshot(path: string, content: string, source: string | undefined) {
   const notePath = normalise(path)
   const said = source ? { source: source.trim().slice(0, 64) } : {}
-  // Nothing to keep when the words have not moved since the last version, which
-  // is what the disk side does too; see src-tauri/src/history.rs. That version is
-  // then the one kept, and says who for.
   const last = await snapshots.newest(notePath)
   if (last?.content === content) {
     if (source) await snapshots.put({ ...last, ...said })
@@ -1018,8 +790,6 @@ async function snapshot(path: string, content: string, source: string | undefine
   }
 }
 
-/** The retention sweep, by the same policy the desktop sweeps by: see
- *  recovery.ts, which both sides read it from. */
 async function purgeSnapshots(days: number): Promise<number> {
   const all = await snapshots.all()
   const byNote = new Map<string, { id?: number; taken_at: number }[]>()
@@ -1050,21 +820,12 @@ async function purgeSnapshots(days: number): Promise<number> {
   return dropped
 }
 
-/* ── Themes ───────────────────────────────────────────────────────── */
-
-/** Installed themes live under a shared prefix, which is this storage's version
- *  of the folder the desktop keeps them in. */
 const THEMES = 'themes/'
 
-/** The same shape the crate insists an id has, for the same reason: here it
- *  becomes a key rather than a path, and a key that could be anything would
- *  let a theme write over `custom.css`. */
 const THEME_ID = /^[a-z0-9][a-z0-9-]{0,38}$/
 
 const themeKey = (id: string) => `${THEMES}${id}.css`
 
-/** `night-owl` becomes `Night owl`, the way the crate labels a theme file.
- *  Only what a theme with no stamp of its own is called. */
 function humanise(stem: string): string {
   const spaced = stem.replace(/[-_]/g, ' ')
   return spaced.charAt(0).toUpperCase() + spaced.slice(1)
@@ -1096,23 +857,12 @@ async function removeTheme(id: string): Promise<void> {
   await meta.remove(themeKey(id))
 }
 
-/* ── Papers ───────────────────────────────────────────────────────── */
-
-/** The words taken out of a PDF live under a shared prefix, which is this
- *  storage's version of the folder the desktop keeps them in; see papers.rs.
- *
- *  The size is part of the key. Listing the store is how the app holds it to a
- *  bound, and a listing that had to read every record to find out how big it is
- *  would read the megabytes it exists to avoid reading - so the keys carry it, and
- *  there is no second row to fall out of step with the first. */
 const PAPERS = 'papers/'
 
-/** How much of one paper may be kept, the same ceiling the crate holds. */
 const PAPER_LIMIT = 4 * 1024 * 1024
 
 const paperKey = (path: string, size: number) => `${PAPERS}${size}:${path}`
 
-/** Every record the store holds, from the keys and nothing else. */
 async function paperRecords(): Promise<{ key: string; path: string; size: number }[]> {
   const keys = (await meta.keys()).filter(
     (key): key is string => typeof key === 'string' && key.startsWith(PAPERS),
@@ -1123,7 +873,6 @@ async function paperRecords(): Promise<{ key: string; path: string; size: number
     const at = rest.indexOf(':')
     const size = Number(rest.slice(0, at))
     const path = rest.slice(at + 1)
-    // A key nobody here wrote is a key nobody here reads.
     if (at < 1 || !Number.isFinite(size) || !path) return []
 
     return [{ key, path, size }]
@@ -1137,14 +886,11 @@ async function readPaperText(path: string): Promise<string> {
   return found ? ((await meta.get(found.key)) ?? '') : ''
 }
 
-/** One paper's words written down, or taken away again when nothing is sent. */
 async function writePaperText(path: string, content: string): Promise<void> {
   if (!isPdf(path)) throw new Error(`${path} is not a PDF`)
   if (content.length > PAPER_LIMIT) throw new Error(`${path} would keep too much`)
 
   const wanted = normalise(path)
-  // Whatever was held for this paper goes first, however large it was: the size is
-  // in the key, so writing a record again means writing a new key.
   for (const one of await paperRecords()) {
     if (one.path === wanted) await meta.remove(one.key)
   }
@@ -1152,15 +898,10 @@ async function writePaperText(path: string, content: string): Promise<void> {
   if (content) await meta.put(paperKey(wanted, content.length), content)
 }
 
-/** Where the scratchpad is kept: the desktop keeps it beside `custom.css`. */
 const SCRATCHPAD = '/.nib/Scratchpad.md'
 
-/** Commands the browser genuinely cannot serve. Each returns the shape that
- *  makes the interface hide the feature rather than break on it. */
 const UNSUPPORTED: Record<string, unknown> = {
   has_pandoc: false,
-  // A page's notes come out of its own storage, which has no stamps: a note that
-  // would not read is simply not there. See unread.svelte.ts.
   file_stamp: null,
   mcp_config: null,
   new_menu_registered: false,
@@ -1182,8 +923,6 @@ export async function webInvoke<T>(
 
   switch (command) {
     case 'read_note': {
-      // A note this browser keeps no words of is fetched first (#1126); the engine's own
-      // read is of what is here.
       let row = await textRow(path)
       if (!row && args.raw !== true && keptAway.at(path)) {
         if (!(await keptAway.bringBack(path))) throw new Error(NOT_HERE)
@@ -1199,18 +938,12 @@ export async function webInvoke<T>(
       return undefined as T
 
     case 'write_bytes':
-      // A file whose path the caller chose, which is what an import's pictures
-      // and papers are. `save_asset` below is the same write with the app's own
-      // naming rule in front of it, for a picture that was pasted rather than
-      // brought along.
       await writeBytes(path, args.base64 as string, assetType(path))
       return undefined as T
 
     case 'delete_note':
       await files.remove(normalise(path))
       await assets.remove(normalise(path))
-      // A PDF's highlights are part of it, and a page note's paper is part of the
-      // note, and neither has anything left to describe.
       if (isPdf(path)) await files.remove(sidecarOf(path))
       if (isPages(path)) {
         await assets.remove(paperOf(normalise(path)))
@@ -1233,7 +966,6 @@ export async function webInvoke<T>(
       return undefined as T
 
     case 'create_folder':
-      // A folder is only real once it holds something.
       await writeNote(join(path, KEEP), '')
       return undefined as T
 
@@ -1248,21 +980,13 @@ export async function webInvoke<T>(
     case 'read_tree':
       return (await tree(root, args.options ?? {}, args.raw === true)) as T
 
-    // A note, a picture or a folder at this path: what the desktop's stamp answers,
-    // and its folders too. See on-disk.ts.
     case 'path_exists':
       if (args.raw !== true && keptAway.under(path).length) return true as T
       return (await stats.holds(normalise(path))) as T
 
-    // A row let go of because this browser keeps only the words it uses (#1126): gone
-    // from here as no delete is, with nothing kept and nothing told but the listing.
     case 'let_go_note':
       await files.remove(normalise(path))
       return undefined as T
-
-    // Searching a space is not here: it runs in a worker, because reading every
-    // note and scoring every line of them on this thread is keystrokes that do
-    // not appear. See web/search-client.ts, which search/space.ts calls instead.
 
     case 'space_tags':
       return (await spaceTags(root)) as T
@@ -1345,18 +1069,12 @@ export async function webInvoke<T>(
 
     case 'save_asset': {
       const bytes = args.bytes as number[]
-      // A name and never a path: `a/b.png` would be a folder `a`. See `safe_name`.
       const given = ((args.name as string) || `pasted-${now()}.png`).replace(/[/\\]/g, '-')
-      // `CON.png` is a device on Windows; see `safe_name` in assets.rs.
       const name = isReserved(given) ? `_${given}` : given
       const notePath = args.notePath as string
-      // Relative to the note's own folder, as the desktop command takes it; see
-      // attachments.ts for which of the three it is.
       const relative = ((args.folder as string | undefined) ?? 'assets').replace(/^\/+|\/+$/g, '')
 
       const folder = join(parent(notePath), relative)
-      // The same limit the desktop command holds a folder to: a picture of this
-      // note goes somewhere in this note's space and nowhere else.
       const space = spaceOf(notePath)
       if (folder !== space && !within(space, folder)) {
         throw new Error(`${relative} is not a folder inside the space`)
@@ -1365,9 +1083,6 @@ export async function webInvoke<T>(
       let binary = ''
       for (const byte of bytes) binary += String.fromCharCode(byte)
 
-      // The same picture again is the one copy, at whichever name it stepped aside to,
-      // unless it is a page note's paper; anything else steps aside. See `stored` in
-      // assets.rs.
       const data = btoa(binary)
       const same = async (one: string) =>
         (await assets.get(one))?.data === data && !(isPdf(one) && (await pairedTaken(one)))
@@ -1379,9 +1094,6 @@ export async function webInvoke<T>(
       const file = basename(target)
       if (await same(target)) return (relative ? `${relative}/${file}` : file) as T
 
-      // What the name says it is rather than the extension with `image/` in front:
-      // `image/svg` draws nothing, and the asset worker hands this row straight to an
-      // `<img>`. See asset-route.ts. A text kind goes where it is read (`writeBytes`).
       await writeBytes(target, data, assetType(file))
 
       return (relative ? `${relative}/${file}` : file) as T
@@ -1412,14 +1124,10 @@ export async function webInvoke<T>(
       return (await paperRecords()).map(({ path: at, size }) => ({ path: at, size })) as T
 
     case 'read_asset': {
-      // Words read as bytes, which is how sync sends a base or a PDF's highlights.
       const words = readsAsText(path) ? await textRow(path) : undefined
       if (words) return `data:${assetType(path)};base64,${base64Of(words.content)}` as T
       const row = await assets.get(normalise(path))
       if (!row) throw new Error('no such image')
-      // The name first, the row second: a row written before the name was asked
-      // says `image/svg`, and an export that inlines that inlines a picture
-      // nothing draws.
       return `data:${assetType(path, row.type)};base64,${row.data}` as T
     }
 
@@ -1444,9 +1152,6 @@ export async function webInvoke<T>(
     }
 
     case 'read_snapshot': {
-      // Every note's versions rather than one note's: the row is asked for by
-      // the id the listing gave out, and the caller has no reason to say which
-      // note it belongs to twice.
       const id = Number(path)
       const found = Number.isInteger(id) ? await snapshots.get(id) : undefined
       return (found?.content ?? '') as T
@@ -1474,8 +1179,6 @@ export async function webInvoke<T>(
     case 'read_snippets':
       return ((await meta.get('snippets.json')) ?? '{}') as T
 
-    // The one note in no space, made the first time it is asked for. In a dot folder,
-    // which is the app's own rather than a space; see `spaceList`.
     case 'scratchpad_path': {
       if (!(await files.get(SCRATCHPAD))) await writeNote(SCRATCHPAD, '')
       return SCRATCHPAD as T
@@ -1485,16 +1188,10 @@ export async function webInvoke<T>(
       window.open(location.href, '_blank')
       return undefined as T
 
-    // Another tab of the app asked for a web note this one has open. A page cannot
-    // bring its own browser tab forward; asking is the most it may do.
     case 'show_window':
       window.focus()
       return undefined as T
 
-    // An AI provider's key. A browser has no keychain and no hardware store, so it
-    // goes where everything else the page keeps goes, under a prefix of its own, and
-    // the AI pane says plainly that the browser is holding it. See ai/keys.ts, and
-    // src-tauri/src/secrets.rs for what the desktop does instead.
     case 'secret_read':
       return ((await meta.get(secretKey(args.name as string))) ?? null) as T
 
@@ -1512,28 +1209,14 @@ export async function webInvoke<T>(
   }
 }
 
-/** Where a provider's key sits among the rows. Prefixed so the themes, the custom
- *  CSS and the snippets that share this store cannot be reached by asking for a
- *  provider, and so a key is recognisable as one to anybody clearing site data. */
 function secretKey(name: string): string {
   return `ai-key/${name}`
 }
 
-/** True once anything has been written, so a first visit can be seeded. */
 async function hasContent(): Promise<boolean> {
   return (await files.paths()).length > 0
 }
 
-/** The welcome note, once per device.
- *
- *  Two gates, and the first is the one that was missing. Emptiness says what is
- *  here now; it does not say whether this device has been introduced, and reading
- *  it as though it did is how a reader who deleted every note gets the welcome
- *  note back - and, signed in, gets it in their account. So the answer is written
- *  down, and written down whichever way this went: a device that already had notes
- *  has been introduced too. See seeded.ts and welcome.ts.
- *
- *  Answers whether it wrote the note just now, which is what a first visit is. */
 export async function seed(): Promise<boolean> {
   if (await wasSeeded()) return false
 
@@ -1544,8 +1227,6 @@ export async function seed(): Promise<boolean> {
 
   await writeNote(WELCOME_PATH, WELCOME)
   await markSeeded()
-  // The browser's default space, so signing in can tell it from one the reader made
-  // (#1077).
   markSeedSpace(`/${WELCOME_SPACE}`)
   return true
 }

@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': '搞掂晒',
   Personalize: '個人化',
   Clean: '簡潔',
@@ -10,12 +9,10 @@ export const yue: Dictionary = {
   'Do you write code?': '你寫唔寫程式？',
   Yes: '係',
   No: '唔係',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': '喺其他 App：{key}',
   'From other apps: set in your system settings': '喺其他 App：喺系統設定度設定',
   'From other apps: bind {command} in your system settings':
     '喺其他 App：喺系統設定度綁定 {command}',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Essentials',
   'Add to Essentials': '加入 Essentials',
   'Remove from Essentials': '從 Essentials 移除',
@@ -23,20 +20,16 @@ export const yue: Dictionary = {
   'Add blocks to Essentials': '將區塊全部加入 Essentials',
   'Add view to Essentials': '將檢視加入 Essentials',
   'Open tabs and Essentials': '開分頁同 Essentials',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor而家叫做Orden',
   'Notes from nibeditor.com': '嚟自nibeditor.com嘅筆記',
   'Nothing there': '嗰度乜都冇',
-  // AI: the three permission modes
   'Full permissions': '完整權限',
   'Auto mode': '自動模式',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     '完整權限：乜都唔會問或者交返俾你，連登入、付款、傳送同刪除都係',
-  // Import: Zen's tabs
   'Import from Zen': '由 Zen 匯入',
   'Containers stay in Zen': '容器留喺 Zen',
   'Zen’s tabs could not be read.': '讀唔到 Zen 嘅分頁。',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': '容器留喺 Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} 用 {engine} 搜尋：喺設定揀佢，喺呢度都用佢搜尋',
@@ -59,38 +52,29 @@ export const yue: Dictionary = {
   'Reading List': '閱讀列表',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS 將 Safari 嘅分頁同書籤放咗喺「完全磁碟取用權限」後面。喺嗰度開咗 Orden，再試多次。',
-  // Settings: note types
   'Page note': '分頁筆記',
   'Web note': '網頁筆記',
   'Private tab': '私人分頁',
   'Note types': '筆記類型',
-  // Tasks: Upcoming's weeks
   'Previous week': '上一個星期',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': '喺上面加項目',
   'Add project below': '喺下面加項目',
   'Projects folder': '項目資料夾',
-  // Tasks: a repeating task skipped or done for good
   Skip: '跳過',
   'Complete forever': '永久完成',
-  // Tasks: comments
   Comments: '留言',
-  // Tasks: filters
   Filters: '篩選',
   'Add filter': '加篩選',
   'Edit filter': '改篩選',
-  // Tasks: a project's sections
   'Add section': '加分區',
   '{name} (copy)': '{name}（副本）',
   'Its tasks are deleted with it.': '入面嘅任務會一齊刪除。',
-  // Tasks: keys, selection and the undo toast
   Completed: '已完成',
   'Remove date': '移除日期',
   'Next task': '下一個任務',
   'Previous task': '上一個任務',
   'Add task at the top': '喺最頂加任務',
   '{count} selected': '揀咗 {count} 個',
-  // Tasks: the Display menu
   Display: '顯示',
   'Completed tasks': '已完成任務',
   Smart: '智能',
@@ -102,20 +86,16 @@ export const yue: Dictionary = {
   'Reset all': '全部重設',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     '版面將工作顯示成清單、看板或者日曆。分組將佢哋分成組，即係看板嘅欄。排序排好每一組。篩選器收埋你唔需要嘅嘢。全部都會為呢個檢視保留。',
-  // Tasks: several lines pasted into quick add
   'One task': '一個任務',
   'One per line': '每行一個',
   'Add with AI': '用 AI 新增',
-  // Tasks: the projects in the panel
   Favorites: '最愛',
   'Add project': '加專案',
   'Add sub-project': '加子專案',
-  // Tasks: the task view
   'Sub-tasks': '子任務',
   'Add sub-task': '加子任務',
   'New label': '新標籤',
   'No deadline': '冇限期',
-  // Tasks: the row's menu and the scheduler
   Reschedule: '改期',
   'Later this week': '今個禮拜遲啲',
   'This weekend': '今個週末',
@@ -132,22 +112,18 @@ export const yue: Dictionary = {
   Reopen: '重新打開',
   Schedule: '排期',
   'Open in note': '喺筆記度打開',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': '其他 app',
   'Import from Obsidian': '由 Obsidian 匯入',
   'Import from Notion': '由 Notion 匯入',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: '提示',
   'Silent mode': '靜音模式',
   'See how your notes connect.': '睇吓你啲筆記點樣連埋一齊。',
   'Press {key} to find anything, notes and commands alike.':
     '撳 {key} 就搵到任何嘢,筆記同指令都得。',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': '寫嘢嗰陣顯示 Markdown',
   'Open notes in source mode': '用源代碼模式打開筆記',
   Pointer: '指標',
   'Pointing hand on buttons': '喺按鈕上面顯示指住嘅手',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': '加任務',
   'Apple Shortcuts': 'Apple 捷徑',
   Tomorrow: '聽日',
@@ -173,7 +149,6 @@ export const yue: Dictionary = {
   'Every week': '每個禮拜',
   'Every month': '每個月',
   'Every year': '每年',
-  // Files and notes
   Save: '儲存',
   'New note': '新增筆記',
   'Random note': '隨機筆記',
@@ -201,8 +176,6 @@ export const yue: Dictionary = {
   'Release to add a page': '放手就加一頁',
   'Page {number}': '第 {number} 頁',
   'The paper could not be read': '讀唔到張紙',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: '信紙',
   'Long page': '長頁',
@@ -245,7 +218,6 @@ export const yue: Dictionary = {
   'Choose a picture': '揀一張圖片',
   'Remove picture': '移除圖片',
   'That picture could not be read.': '讀唔到嗰張圖片。',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: '飽和度',
   Tint: '色調',
   'Tint colour': '色調顏色',
@@ -373,7 +345,6 @@ export const yue: Dictionary = {
   'Merge into…': '合併到…',
   'Split at caret': '喺光標處拆分',
   'Extract selection': '提取揀咗嘅內容',
-  // Panels and navigation
   Bookmarks: '書籤',
   'New group': '新增分組',
   'Remove group': '移除分組',
@@ -427,8 +398,6 @@ export const yue: Dictionary = {
   'Sort by name': '按名稱排序',
   'Sort by modified': '按修改時間排序',
   'Sort by created': '按建立時間排序',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': '檔案嘅排列次序',
   'Name, A to Z': '名稱，A 排到 Z',
   'Name, Z to A': '名稱，Z 排到 A',
@@ -439,7 +408,6 @@ export const yue: Dictionary = {
   Manual: '自己排',
   'Show hidden files': '顯示隱藏檔案',
   'Hide hidden files': '唔顯示隱藏檔案',
-  // Writing
   Bold: '粗體',
   Italic: '斜體',
   Strikethrough: '刪除線',
@@ -524,11 +492,9 @@ export const yue: Dictionary = {
   'Horizontal rule': '分隔線',
   'Page break': '分頁符',
   'Tidy up this note': '整理呢篇筆記',
-  // PDFs
   'Copy a link': '複製連結',
   'That PDF could not be opened': '冇辦法開啟嗰個PDF',
   'That file could not be read': '冇辦法讀取嗰個檔案',
-  // Modes and view
   Reading: '閱讀',
   'Leave reading': '離開閱讀',
   Present: '演示',
@@ -568,7 +534,6 @@ export const yue: Dictionary = {
   'Zoom in': '放大',
   'Zoom out': '縮小',
   'Actual size': '實際大小',
-  // Appearance
   Accent: '強調色',
   'Tidy up': '整理',
   'Blur the app behind the tab overview': '喺分頁總覽後面模糊個 app',
@@ -692,7 +657,6 @@ export const yue: Dictionary = {
   'Switch theme': '切換主題',
   Style: '樣式',
   Mode: '模式',
-  // The window's own edges; see appearance.rs
   Window: '視窗',
   'Orden’s own': 'Orden 自己嘅',
   'The system’s': '系統嘅',
@@ -703,7 +667,6 @@ export const yue: Dictionary = {
   'Edit custom CSS': '編輯自定義CSS',
   'Edit snippets': '編輯代碼片段',
   'Reload themes and custom CSS': '重新載入主題同自定義CSS',
-  // The theme store, and the sample note its cards show
   Themes: '主題',
   Browse: '瀏覽',
   'Search themes': '搜尋主題',
@@ -779,7 +742,6 @@ export const yue: Dictionary = {
   'Code only': '僅代碼',
   Everywhere: '所有位置',
   Attachments: '附件',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': '分頁筆記',
   'New pages': '新增頁面',
   'Assets folder of the space': '空間嘅附件檔案夾',
@@ -831,7 +793,6 @@ export const yue: Dictionary = {
   'Machine-translated. Corrections welcome.': '機器翻譯，歡迎指正。',
   'The glasses show English.': '眼鏡顯示英文。',
   'Match the app': '跟隨應用程式',
-  // Settings
   Settings: '設定',
   Account: '帳戶',
   Publish: '發佈',
@@ -854,7 +815,6 @@ export const yue: Dictionary = {
   '{count} spaces sync to your account.': '有{count}個空間會同步到你嘅帳戶。',
   Update: '更新',
   'Live at': '網址',
-  // Publishing
   'Publish {name}': '發佈{name}',
   'What to publish': '發佈嘅範圍',
   'The whole space': '整個空間',
@@ -873,7 +833,6 @@ export const yue: Dictionary = {
   Value: '值',
   available: '可用',
   'checking…': '檢查中…',
-  // LLM
   'Connect an LLM to your notes': '將LLM連接到你嘅筆記',
   'Sign in first - the connector reaches the notes in your account.':
     '請先登入，連接器讀取嘅係你帳戶中嘅筆記。',
@@ -921,7 +880,6 @@ export const yue: Dictionary = {
   'For a client that takes a JSON block instead of a URL.': '適用於接受JSON設定而非網址嘅客戶端。',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     '冇辦法登入嘅客戶端可以改用令牌。令牌只顯示一次。',
-  // Export
   'Plain text': '純文字',
   'Markdown with the pictures': '含圖片嘅Markdown',
   'HTML without styles': '唔含樣式嘅HTML',
@@ -940,13 +898,11 @@ export const yue: Dictionary = {
   Margin: '邊距',
   Header: '頁眉',
   Footer: '頁腳',
-  // History
   'Version history': '版本歷史',
   'Copy link to this note': '複製呢篇筆記嘅連結',
   'that link could not be followed': '冇辦法開啟嗰個連結',
   'No earlier versions yet.': '仲冇更早嘅版本。',
   'Restore this version': '還原呢個版本',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': '嗰度已經有一篇筆記',
   'enter a valid email address': '請輸入有效嘅電郵地址',
   'give the space a name': '請為空間取個名稱',
@@ -977,7 +933,6 @@ export const yue: Dictionary = {
   'could not publish': '冇辦法發佈',
   'could not create a token': '冇辦法建立令牌',
   'that did not work': '冇成功',
-  // Settings on a phone, display names, one blog address
   Back: '返回',
   'Display name': '顯示名稱',
   'Your name': '你嘅名字',
@@ -997,7 +952,6 @@ export const yue: Dictionary = {
   Spelling: '拼寫',
   Checking: '檢查',
   Dictionary: '詞典',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': '正在等待記錄生效。',
   'Certificate issued.': '證書已簽發。',
   'Cloudflare could not set this domain up.': 'Cloudflare冇辦法設定呢個域名。',
@@ -1008,7 +962,6 @@ export const yue: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare已封鎖呢個域名',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     '若服務商唔允許喺域名根層用CNAME，請改用ALIAS或ANAME記錄，或CNAME攤平。',
-  // Shortcuts
   Shortcuts: '快捷鍵',
   'Search shortcuts': '搜尋快捷鍵',
   'Second key': '第二個鍵',
@@ -1167,7 +1120,6 @@ export const yue: Dictionary = {
   Delegated: '交咗出去',
   'Code theme: {name}': '代碼主題：{name}',
   'Delete a layout': '刪除佈局',
-  // Keyboards and modal editing
   Default: '預設',
   'Vim keys': 'Vim按鍵',
   'Follow the link': '開啟連結',
@@ -1179,11 +1131,9 @@ export const yue: Dictionary = {
   INSERT: '插入',
   VISUAL: '視覺',
   REPLACE: '替換',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': '眼鏡第{page}/{count}頁',
   'Reaching the glasses': '正在連上眼鏡',
   'The glasses are not keeping up': '眼鏡跟唔上',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: '新增',
   Select: '揀選',
   Pan: '平移',
@@ -1213,7 +1163,6 @@ export const yue: Dictionary = {
   Calligraphy: '書法筆',
   'Width {number}': '粗細{number}',
   'Finger draws': '手指繪製',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: '粗細',
   Opacity: '不透明度',
   Colour: '顏色',
@@ -1257,23 +1206,19 @@ export const yue: Dictionary = {
   'Export as PNG': '匯出為PNG',
   'Export as SVG': '匯出為SVG',
   'Export as PDF': '匯出為PDF',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': '匯入 PDF',
   'Choose how to add the pages to the canvas.': '揀頁面點樣擺上畫布。',
   'Single page': '單一頁',
   'All pages': '所有頁面',
   'Choose a page': '揀一頁',
-  // The canvas: what its own keys are called
   'Delete what is picked': '刪除揀咗嘅範圍',
   'Nudge left': '向左微移',
   'Nudge right': '向右微移',
   'Nudge up': '向上微移',
   'Nudge down': '向下微移',
-  // Writing in a note on several devices at once
   'Also open elsewhere': '都喺別處開啟',
   Shared: '已分享',
   Browser: '瀏覽器',
-  // Sharing a space with other people
   Share: '分享',
   'Share {name}': '分享{name}',
   'Share this space': '分享呢個空間',
@@ -1317,14 +1262,12 @@ export const yue: Dictionary = {
   'Shared with you': '同你分享',
   'That link does not open anything': '嗰個連結打唔開任何嘢',
   'Ask for another one.': '請索取新嘅一個。',
-  // Somebody a share link let in, who has no account
   Guest: '訪客',
   'Ask to join': '申請加入',
   Asking: '申請中',
   'Waiting for {who}': '等待{who}',
   '{who} did not let you in': '{who}冇讓你加入',
   'What the others in this space see.': '呢個空間入面其他人睇到嘅內容。',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: '更新',
   'Release channel': '發佈通道',
   Stable: '穩定版',
@@ -1334,8 +1277,6 @@ export const yue: Dictionary = {
   'Web version': '網頁版',
   'Stable is the released web app; Unstable is the newest build and can break.':
     '穩定版係已發佈嘅網頁版，開發版係最新嘅建置，可能會壞掉。',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: '匯入',
   'Convert syntax': '轉換語法',
   'In this note': '喺呢篇筆記中',
@@ -1417,8 +1358,6 @@ export const yue: Dictionary = {
   'Undo the import': '復原呢次匯入',
   'Choose an export': '揀匯出檔',
   Under: '位於',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: '同步',
   'When the same note was written twice': '同一篇筆記被寫咗兩次時',
   'On two devices': '喺兩部裝置上',
@@ -1474,7 +1413,6 @@ export const yue: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     '呢部裝置上嘅筆記會保留；只有帳戶同佢已同步嘅副本會冇咗。',
   'Also gone for everyone in {spaces}.': '{spaces} 入面每個人都會冇埋。',
-  // Said and not shown: what a reader is told about a surface
   'The note': '筆記',
   '{space} panel': '{space}面板',
   'Panel width': '面板寬度',
@@ -1485,7 +1423,6 @@ export const yue: Dictionary = {
   'What is selected': '揀咗嘅內容',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     '畫布：{cards}張卡片、{links}條連線、{drawings}處繪製',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: '服務商',
   'Make default': '設為預設',
@@ -1511,7 +1448,6 @@ export const yue: Dictionary = {
   'Add an AI provider in Settings first.': '請先喺設定中新增AI服務商。',
   'The model did not answer.': '模型冇回答。',
   'The connection closed before the answer was finished.': '答案未完連線就斷咗。',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': '你嘅 {plan} 計劃已經用到上限，{time} 恢復。',
   'Your {plan} plan is at its limit for now.': '你嘅 {plan} 計劃暫時用到上限。',
   'Your {plan} plan is near its limit.': '你嘅 {plan} 計劃就快用到上限。',
@@ -1536,7 +1472,6 @@ export const yue: Dictionary = {
   Shorter: '更短',
   Longer: '更長',
   'Fix grammar': '修正語法',
-  // The AI sidebar's commands
   'A cited report': '有引文嘅報告',
   'A helper in the background': '背景助手',
   'A side question': '旁枝問題',
@@ -1637,7 +1572,6 @@ export const yue: Dictionary = {
   'Markdown, shortest name': 'Markdown，最短名稱',
   'Markdown, relative path': 'Markdown，相對路徑',
   'Markdown, path in the space': 'Markdown，空間內路徑',
-  // Publishing part one.
   'The folders you choose become public.': '揀咗嘅資料夾會公開。',
   'Anyone with the address can read what is published, drafts included.':
     '知道網址嘅任何人都讀得到已發佈嘅內容，包括草稿。',
@@ -1663,11 +1597,9 @@ export const yue: Dictionary = {
   'Remove the password': '移除密碼',
   'Scan this with your authenticator app, then type its code.':
     '用驗證器應用程式掃描呢個碼，然後輸入佢畀出嘅驗證碼。',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: '相片',
   Dictate: '語音輸入',
   'Add to {name}': '加入 {name}',
-  // Web tabs
   Reload: '重新載入',
   'Hard reload': '強制重新載入',
   'Open in the browser': '喺瀏覽器開啟',
@@ -1682,7 +1614,6 @@ export const yue: Dictionary = {
   'Playing audio': '播緊聲音',
   Muted: '已靜音',
   'Developer tools': '開發人員工具',
-  // Recording, meetings and what a model wrote
   Record: '錄音',
   Recording: '錄音',
   'Stop recording': '停止錄音',
@@ -1702,7 +1633,6 @@ export const yue: Dictionary = {
   'That recording is too long to turn into words in one go.': '嗰段錄音太長，一次轉唔成文字。',
   'That is as much as one recording may hold.': '一段錄音最多就得咁多。',
   'Nothing could be heard in that recording.': '嗰段錄音聽唔到任何聲音。',
-  // Publishing part two.
   Spreadsheet: '電子表格',
   'The app’s own': '應用自帶嘅',
   'publish.css and publish.js in this space dress the site.':
@@ -1718,14 +1648,12 @@ export const yue: Dictionary = {
   'Save as CSV': '存為 CSV',
   'Kept for {days}': '保留{days}',
   Full: '已滿',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': '冇辦法發出郵件，請再試一次',
   'start again - that took too long': '花太久喇，請重新開始',
   'sign in to do that': '請登入後再做呢件事',
   'that is not something a token can do': '令牌冇辦法做呢件事',
   'something went wrong here - try again': '呢度出咗問題，請再試一次',
   'this service cannot keep a secret safely': '呢個服務冇辦法安全保存密鑰',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only': '只接受圖片、PDF 同網站自己嘅 css 或 js',
   'that file is too big': '嗰個檔案太大',
   'that is more settings than an account holds': '設定項超過帳戶上限',
@@ -1735,13 +1663,11 @@ export const yue: Dictionary = {
   'that is more than a space keeps about its graph': '關係圖數據超過空間上限',
   'that is more folder icons than a space holds': '檔案夾圖標數超過空間上限',
   'that is more than a site keeps': '超出咗一個網站可以保存嘅數量',
-  // Sharing a space, and being let into one.
   'nobody by that address': '冇用呢個地址嘅人',
   'nobody by that name': '冇叫呢個名字嘅人',
   'nobody is waiting by that name': '冇叫呢個名字嘅人等緊',
   'this space is yours': '呢個空間係你嘅',
   'that link is busy, try again in a minute': '嗰個連結正忙，請過一分鐘再試',
-  // Versions, the bin, and a room two people write in.
   'no such version': '冇嗰個版本',
   'this note was shared with you, not its folder': '同你分享嘅係呢篇筆記，唔係佢所在嘅檔案夾',
   'nothing to restore': '冇可還原嘅嘢',
@@ -1749,7 +1675,6 @@ export const yue: Dictionary = {
   'nothing to delete': '冇可刪除嘅嘢',
   'this room is not answering - try again': '呢個房間冇回應，請再試一次',
   'rooms are not running here': '呢度冇啟用房間',
-  // The theme store, and asking a model something.
   'the theme store is not answering': '主題商店冇回應',
   'that is not a theme': '呢個唔係主題',
   'no such theme': '冇嗰個主題',
@@ -1761,10 +1686,8 @@ export const yue: Dictionary = {
   'that is more than a spoken command': '呢個超過一句語音命令嘅長度',
   'that is a lot of listening - try again later': '聽得太頻密喇，請等一陣再試',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '文字 {percent}%',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: '手機',
   'The bar sits over the keyboard on a phone.': '喺手機上，工具列位於鍵盤上方。',
   'On the bar': '喺列上',
@@ -1778,31 +1701,25 @@ export const yue: Dictionary = {
   'A pull past the top runs': '從頂端再下拉則執行',
   Nothing: '無',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: '保留',
 
-  // Which side of the window a panel sits on.
   'Move to the right': '移到右邊',
   'Move to the left': '移到左邊',
 
-  // How long the account keeps what a note said before.
   'History on the account': '帳戶上嘅歷史',
   'Keep versions': '保留版本',
   'A month': '一個月',
   'A year': '一年',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     '最近一天嘅全部，之後每小時一個，一個月後每天一個，三個月後每週一個。',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     '呢則筆記已達到房間中筆記可以達到嘅最大大小。',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': '新分頁',
   'Full screen': '全螢幕',
   'Print…': '打印…',
   'Share…': '分享…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': '要求以下權限',
   'Don’t allow': '唔允許',
   Allow: '允許',
@@ -1818,7 +1735,6 @@ export const yue: Dictionary = {
   'Use your MIDI devices': '用你嘅 MIDI 裝置',
   'Manage windows on all your displays': '喺你所有嘅顯示屏上管理視窗',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': '網站資料',
   Downloads: '下載',
   'Downloading {name}': '下載緊 {name}',
@@ -1845,11 +1761,9 @@ export const yue: Dictionary = {
   'Turn into': '轉換為',
   Foldable: '可摺疊',
   'Starts folded': '預設摺疊',
-  // Where a space keeps what websites store
   'Web data': '網站資料',
   Global: '全域',
   Site: '網站',
-  // The Mac's menu bar
   'About {name}': '關於{name}',
   Services: '服務',
   'Hide {name}': '隱藏{name}',
@@ -1857,7 +1771,6 @@ export const yue: Dictionary = {
   'Show all': '全部顯示',
   'Quit {name}': '結束{name}',
   'Bring all to front': '全部擺到最前',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': '復原複製',
   'Devices with your AI vault': '有你 AI 保險庫嘅裝置',
   'This device': '呢部裝置',
@@ -1872,13 +1785,11 @@ export const yue: Dictionary = {
   'Select down': '向下選取',
   'Select up': '向上選取',
   'Select or deselect': '選取或取消選取',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': '喺新分頁開',
   'Open to the side': '喺側邊開',
   'Open all': '全部開',
   'Show in the file list': '喺檔案列表度顯示',
   'Collapse the file list': '收埋檔案列表',
-  // Lines, case and the selection a step at a time
   'Expand the selection': '擴大揀選範圍',
   'Shrink the selection': '縮細揀選範圍',
   'Insert a line above': '喺上面加一行',
@@ -1892,18 +1803,15 @@ export const yue: Dictionary = {
   'Duplicate the block': '複製呢個區塊',
   'Move the block up': '呢個區塊上移',
   'Move the block down': '呢個區塊下移',
-  // The editor's menu on a link and a picture
   'Copy link address': '複製連結地址',
   'Edit link': '編輯連結',
   'Remove link': '移除連結',
   'Copy picture': '複製圖片',
   'Open picture': '打開圖片',
   'Delete picture': '刪除圖片',
-  // A file dropped into a note
   'Storing the file': '儲存緊檔案',
   'That file is larger than a note can keep.': '呢個檔案大過筆記可以保存嘅上限。',
   'That file could not be kept.': '保存唔到呢個檔案。',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': '新終端機',
   'Command Prompt': '命令提示字元',
   Terminal: '終端機',
@@ -1925,11 +1833,8 @@ export const yue: Dictionary = {
   'Saved nowhere, a session kept running is found again in Settings, {pane}.':
     '冇存喺任何地方；保持運行嘅工作階段可以喺設定、{pane}度再搵到。',
   'Paste {count} lines?': '要貼上 {count} 行嗎？',
-  // Orden as the default browser
   'Default browser': '預設瀏覽器',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': '復原 {name} 嘅編輯',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: '封存',
   Unarchive: '取消封存',
   Archived: '已封存',
@@ -1939,7 +1844,6 @@ export const yue: Dictionary = {
   'Nothing archived is deleted': '封存咗嘅嘢唔會被刪除',
   'Show them': '顯示',
   '{count} archived items inside': '入面有 {count} 個封存咗嘅項目',
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': '左邊嘅側邊欄',
   'Right sidebar': '右邊嘅側邊欄',
   'Ask about this space': '問下呢個空間嘅嘢',
@@ -1950,7 +1854,6 @@ export const yue: Dictionary = {
   'Ask again': '再問一次',
   'Continue when the limit resets': '上限恢復之後繼續',
   'Continues at {time}': '{time} 繼續',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': '隨便問，@ 加嘢，/ 睇多啲',
   'What can I help with?': '有咩可以幫到你？',
   'Add photos and files': '加相同檔案',
@@ -2018,12 +1921,9 @@ export const yue: Dictionary = {
   Closed: '閂咗',
   Ran: '行咗',
   Changed: '改咗',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': '呢部{device}',
   '{name} is back: {device} was writing in it': '{name} 返嚟咗：{device} 啱啱喺入面寫緊嘢',
   'Changes to {name} are not syncing': '{name} 嘅更改冇同步到',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: '開緊',
   Pressing: '撳緊',
   Typing: '打緊字',
@@ -2038,16 +1938,12 @@ export const yue: Dictionary = {
   'Agent tabs closed': '代理嘅分頁閂咗',
   'Orden is still running for your agents': 'Orden 仲喺度幫你啲代理做嘢',
   '{client} wants to connect': '{client} 想連接',
-  // Web logins that travel, and the devices of an account
   'no such device': '冇呢部裝置',
   'give the device a name': '幫裝置改個名',
   'that computer is no longer waiting': '嗰部電腦已經唔再等',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': '冇呢個檔案',
   'too many changes at once - try again in a minute': '一次改得太多，請一分鐘後再試',
   'that is more than a space keeps about its tree': '超出咗空間可以為佢嘅目錄樹保存嘅內容',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': '呢部電腦上面嘅代理',
   'Your account’s connector': '你帳戶嘅連接器',
   'Orden asks you once, the first time it connects.': '第一次連線嘅時候，Orden 會問你一次。',
@@ -2112,12 +2008,9 @@ export const yue: Dictionary = {
   'Pages a minute': '每分鐘頁數',
   'Browser memory limit': '瀏覽器記憶體上限',
   '{count} calls': '{count} 次呼叫',
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': '快問',
   Scratchpad: 'Scratchpad',
   'Add to note': '加入筆記',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: '擴充功能',
   'Add extension': '加入擴充功能',
   'Manage extensions': '管理擴充功能',
@@ -2135,7 +2028,6 @@ export const yue: Dictionary = {
   'Did not load': '載入唔到',
   Permissions: '權限',
   Options: '選項',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: '遠端',
   'Add host': '加主機',
   Reconnect: '重新連線',
@@ -2143,11 +2035,8 @@ export const yue: Dictionary = {
   'No group': '冇群組',
   'Not an address': '唔係地址',
   'Could not connect to {host}': '連唔到 {host}',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': '正在傳送圖片',
   'Could not send the image': '傳送唔到圖片',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': '同之後嘅 {count} 個',
   'Restore notes and conversation': '還原筆記同對話',
   'Restore conversation': '還原對話',
@@ -2157,8 +2046,6 @@ export const yue: Dictionary = {
   'Pages, terminals and moves are not undone': '網頁、終端機同移動唔會復原',
   Rewind: '倒帶',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': '搜尋引擎',
   History: '記錄',
   'Search history': '搜尋記錄',
@@ -2182,14 +2069,12 @@ export const yue: Dictionary = {
   'New private tab': '新增私人分頁',
   'All spaces': '所有空間',
   'the data could not be deleted': '刪除唔到資料',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: '稍後提醒',
   Reminders: '提醒',
   'Reminders ring while Orden is open': 'Orden 開住嘅時候提醒先會響',
   Automatic: '自動',
   'Stay in the tray': '留喺系統匣',
   'Exact alarms': '準確鬧鐘',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': '待辦',
   'Plan my day': '計劃我嘅一日',
   'Add a task': '加任務',
@@ -2200,8 +2085,6 @@ export const yue: Dictionary = {
   'Done tasks too': '連埋做完嘅任務',
   'As a task': '當任務',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: '任務',
   Ascending: '由細到大',
   Descending: '由大到細',
@@ -2286,8 +2169,6 @@ export const yue: Dictionary = {
   'Without a value': '冇值',
   'With a value': '有值',
   Unique: '獨一',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': '由範本開新筆記',
   Automations: '自動化',
   'Row added': '加咗一行',
@@ -2316,7 +2197,6 @@ export const yue: Dictionary = {
   Form: '表格',
   Formula: '公式',
   'Blocked by {task}': '等緊 {task}',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': '退出前提醒',
   'When something runs': '有嘢運行緊嗰陣',
   'Quit {name}?': '結束{name}？',
@@ -2327,16 +2207,13 @@ export const yue: Dictionary = {
   'Quit anyway': '照樣結束',
   'Restart anyway': '照樣重新啟動',
   'Close anyway': '照樣關閉',
-  // The online terminal
   'Online terminal': '網上終端機',
   'New online terminal': '新網上終端機',
-  // One device at a time on an online terminal (issue 1055)
   'another device': '另一部裝置',
   'Taken over by {device}': '已被 {device} 接手',
   'Open on {device} since {time}': '自 {time} 起喺 {device} 開咗',
   'Take over': '接手',
   'Take back': '攞返',
-  // Applications, in developer mode (docs/apps.md)
   'New application': '新應用程式',
   Application: '應用程式',
   'This application’s file is damaged': '呢個應用程式嘅檔案壞咗',
@@ -2439,8 +2316,6 @@ export const yue: Dictionary = {
   'Compare with original': '同原本比較',
   'Conflict copies from other apps': '其他 app 嘅衝突副本',
   'Remove from sync': '唔再同步',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: '個人檔案',
   Change: '更改',
   'Take photo': '影相',
@@ -2465,7 +2340,6 @@ export const yue: Dictionary = {
   'that picture could not be opened': '開唔到呢張圖',
   'the camera could not be opened': '開唔到相機',
   'that picture is too big': '呢張圖太大',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: '傾偈',
   Reply: '回覆',
   Replies: '回覆',
@@ -2484,7 +2358,6 @@ export const yue: Dictionary = {
   'Also send to {chat}': '都發去{chat}',
   'Skin tone': '膚色',
   'Deleted account': '刪咗嘅帳戶',
-  // Chats: notifications
   Mute: '靜音',
   Unmute: '取消靜音',
   'New message': '新訊息',
@@ -2494,7 +2367,6 @@ export const yue: Dictionary = {
   Weekdays: '平日',
   Starts: '開始',
   Ends: '結束',
-  // Chats: everywhere
   'Read chats': '睇傾偈',
   'Post in chats': '喺傾偈度講嘢',
   'Always in this chat': '喺呢個傾偈度一律准',
@@ -2506,14 +2378,12 @@ export const yue: Dictionary = {
   'Search this chat': '喺呢個傾偈度搵',
   'Add as task': '加做任務',
   'Save as note': '儲存做筆記',
-  // Appearance: glass's own pairs of colours
   Dawn: '黎明',
   Lagoon: '潟湖',
   Lilac: '丁香',
   Peach: '蜜桃',
   Sage: '鼠尾草',
   Mist: '薄霧',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': '新增資料庫',
   'New page': '新增頁面',
   'Not started': '未開始',
@@ -2539,7 +2409,6 @@ export const yue: Dictionary = {
   Large: '大',
   Both: '兩樣都要',
   'Shown on cards': '喺卡片上面顯示',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     '經保險庫將呢個瀏覽器嘅 AI 密鑰同你其他裝置同步。',
   'Which of your AI accounts this feature asks.': '呢個功能會問你邊個 AI 帳戶。',
@@ -2753,7 +2622,6 @@ export const yue: Dictionary = {
   'Some changes may not be noticed': '有啲改動可能留意唔到',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     '系統監察資料夾嘅上限已經到咗，所以 Orden 可能留意唔到其他程式喺你啲空間入面做嘅每個改動。提高 fs.inotify.max_user_watches 就得。',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': '將傾偈 {name} 移去 {space}？',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     '咁 {space} 入面每個人都睇到成個紀錄，{from} 啲人就冇得再睇。',
@@ -2790,7 +2658,6 @@ export const yue: Dictionary = {
   'One colour': '單色',
   'Web icons': '網站圖示',
   'Sites you visit will appear here': '你去過嘅網站會喺度出現',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: '語音輸入',
   'Dictate with': '用呢個語音輸入',
   'Where your voice goes to be turned into words.': '你把聲轉做文字時會傳去邊度。',
@@ -2819,11 +2686,9 @@ export const yue: Dictionary = {
     '聲音會傳去呢部裝置嘅語音辨識，可能會用到製造商嘅伺服器',
   'Not on this device': '唔喺呢部裝置度',
   'Not on this device. It opens once you are online again.': '唔喺呢部裝置度。你再上線就會打開。',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'IMAP 伺服器',
   'SMTP server': 'SMTP 伺服器',
   'User name': '用戶名稱',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: '緊急',
   Important: '重要',
   'If time': '有時間先',

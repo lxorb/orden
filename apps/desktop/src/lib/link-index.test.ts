@@ -4,36 +4,15 @@ import { scanNote } from '@orden/scan/note'
 import type { Hit } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
 
-/** The index reads a space through the platform shim. Under node there is none,
- *  so a folder of notes stands in for one - which is why the store is imported
- *  further down rather than at the top. */
-
 const ROOT = '/space'
 
 let notes: Record<string, string> = {}
 let files: string[] = []
-/** Every note that was written, so a rewrite can be read back. */
 let written: string[] = []
-/** How many notes have been read off the "disk" since the space was built. The
- *  index exists so that a surface drawn from the whole space does not read it again;
- *  a count says whether one did, where a clock says what the machine was doing. */
 let reads = 0
-/** Something that happens the moment a note is written: a save landing while a
- *  rewrite is still going through the space. */
 let afterWrite: ((relative: string) => void) | null = null
-/** Every note a snapshot was taken of, so "one snapshot per touched note" is a
- *  thing the test can see rather than a thing the comment claims. */
 let snapshots: string[] = []
-/** Notes the "disk" will not write: read-only, or held by another program. */
 const unwritable = new Set<string>()
-/** Scans held open, by the space each is of: the rows it will answer with, and the
- *  hand that lets it answer. Empty unless a test is standing in the gap between a
- *  space being asked for and its rows arriving - which is where the app lives for
- *  the first second of every space, and where everything in `a space still being
- *  read` goes wrong.
- *
- *  A queue per space, because a space closed and opened again is two scans of one
- *  root and the whole point of one of these tests. See `opening`. */
 const holding = new Map<string, { rows: unknown; gate: Promise<void>; taken: () => void }[]>()
 
 const stringOf = (args: Record<string, unknown> | undefined, name: string) => {
@@ -48,14 +27,8 @@ vi.mock('./tauri', async (importOriginal) => ({
 
     switch (command) {
       case 'scan_links': {
-        // A scan reads the space as it was when it was asked. A held one says so
-        // out loud: its rows were taken before the test touched anything and are
-        // handed over whenever the test lets go, so everything the index is told
-        // meanwhile is news the scan cannot have.
         const scan = holding.get(stringOf(args, 'root'))?.shift()
         if (!scan) {
-          // Any folder in the space can be read on its own, the way the desktop's
-          // `scan_links` reads one: the rows are relative to that folder.
           const root = stringOf(args, 'root')
           const folder = root.startsWith(`${ROOT}/`) ? `${root.slice(ROOT.length + 1)}/` : ''
           const inside = (one: string) => one.startsWith(folder)
@@ -97,10 +70,7 @@ vi.mock('./tauri', async (importOriginal) => ({
   },
 }))
 
-/** The spaces shared with this account to be read, by root. What may be written
- *  where is sharing.svelte.ts's, which wants an account a unit test has none of. */
 const readOnly = new Set<string>()
-/** The notes somebody else may have written, by path: shared on their own, say. */
 const theirs = new Set<string>()
 vi.mock('./sharing.svelte', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./sharing.svelte')>()),
@@ -108,10 +78,6 @@ vi.mock('./sharing.svelte', async (importOriginal) => ({
   trustsHtmlAt: (path: string | null) => path === null || !theirs.has(path),
 }))
 
-/** The space search, stood in for. The index asks it for the mentions of a note,
- *  and the real one is either behind the Rust crate or inside a worker; neither is
- *  here. What matters is the shape of the question and the answer, so the matcher
- *  the app actually uses runs over the notes this file holds. */
 vi.mock('./search/space', () => ({
   searchSpace: async (
     _root: string,
@@ -148,9 +114,6 @@ vi.mock('./search/space', () => ({
 const { links } = await import('./link-index.svelte')
 const { startup } = await import('./startup.svelte')
 
-// A space is scanned once its file list is on screen, which is what the launch
-// says for itself; here it is said once so a scan is not waiting on a frame that
-// never comes. See startup.svelte.ts.
 void startup.shown()
 
 async function space(contents: Record<string, string>, others: string[] = []) {
@@ -162,16 +125,6 @@ async function space(contents: Record<string, string>, others: string[] = []) {
   await links.build(ROOT)
 }
 
-/** A space whose scan is still in the air, and the hand that lands it.
- *
- *  What the first second of any space looks like from the inside: the walk has
- *  been done and its rows have not arrived, and the app is saving, deleting and
- *  moving notes meanwhile. Awaited until the scan has actually been asked for, so
- *  everything a test does next is news the rows cannot hold; `land` hands them
- *  over and waits for them to be taken.
- *
- *  Held by space, so a test can have two of them open at once - which is how a
- *  space opened and left while its rows were still coming is written down. */
 async function opening(
   contents: Record<string, string>,
   root = ROOT,
@@ -227,14 +180,9 @@ describe('backlinks', () => {
       'Three.md': 'nothing to do with it',
     })
 
-    // The file's own name. What a row shows is `shownName` of it, read once by
-    // whatever draws the row; see note-name.ts and HitList.svelte.
     expect(links.backlinks(at('Plan.md')).map((one) => one.name)).toEqual(['One.md', 'Two.md'])
   })
 
-  /** The panel used to take an ending off a name an ending had already come off of,
-   *  so a note called `a.canvas.md` read `a` here and `a.canvas` in the file list,
-   *  the palette and the tab strip. */
   test('name a note the one way every other list names it', async () => {
     await space({
       'Plan.md': '# Plan',
@@ -263,13 +211,10 @@ describe('backlinks', () => {
       'ideas/One.md': 'see [[Plan]]',
     })
 
-    // Written beside the folder's own Plan, so that is the one it means.
     expect(links.backlinks(at('ideas/Plan.md')).map((one) => one.path)).toEqual(['ideas/One.md'])
     expect(links.backlinks(at('Plan.md'))).toEqual([])
   })
 
-  /** `/Road.md` is a path from the top of the space, as the reading view follows
-   *  it, and as Obsidian and every markdown reader read one. */
   test('a markdown link from the top of the space reaches the note there', async () => {
     await space({
       'Road.md': '# Road',
@@ -295,9 +240,6 @@ describe('backlinks', () => {
     expect(notes['B/x.md']).toBe('see [About](/about) and [i](/index.md)')
   })
 
-  /** A link that named the path exactly reaches by that path alone: read as the end
-   *  of a path, `../Road.md` left alone would open the `B/Road.md` beside it once the
-   *  `Road.md` it named had moved. */
   test('a relative markdown link to a note that moves keeps reaching it', async () => {
     await space({
       'Road.md': '# Road',
@@ -317,7 +259,6 @@ describe('backlinks', () => {
     await space({
       'Plan.md': 'the one at the top',
       'ideas/Plan.md': 'the one in the folder',
-      // The extension alone does not say which; the folder does.
       'ideas/One.md': 'see [[ideas/Plan]] and not [[Plan.md]]',
     })
 
@@ -359,8 +300,6 @@ describe('links out', () => {
     expect(links.outgoing(at('One.md'))).toEqual([])
   })
 
-  /** What `touch "$(printf 'U\xcc\x88bersicht.md')"` leaves on a Mac: the name as the
-   *  disk keeps it, a `U` and a combining mark, while the link is typed with one `Ü`. */
   test('reach a note whose name the disk keeps decomposed, and back', async () => {
     const decomposed = 'Übersicht.md'
     await space({ [decomposed]: '# Overview', 'One.md': 'see [[Übersicht]]' })
@@ -429,16 +368,12 @@ describe('a note saved keeps the index up to date', () => {
   test('the index handed to the editor is the same object until it changes', async () => {
     await space({ 'Plan.md': '# Plan', 'One.md': '# One' })
 
-    // Compared by identity on the other side, so that a keystroke somewhere in
-    // the app does not redraw every link on screen.
     const first = links.index(at('Plan.md'))
     expect(links.index(at('Plan.md'))).toBe(first)
 
     links.noteSaved(at('One.md'), '# One changed')
     expect(links.index(at('Plan.md'))).not.toBe(first)
 
-    // And a different note being open is a different index, since which note is
-    // open decides what `[[#Heading]]` and an ambiguous name mean.
     expect(links.index(at('One.md'))).not.toBe(links.index(at('Plan.md')))
   })
 
@@ -450,12 +385,6 @@ describe('a note saved keeps the index up to date', () => {
     expect(await links.index(null).read('Plan.md')).toBe('# Changed')
   })
 
-  /** A website is a file the app writes as the reading moves: the keeper brings the
-   *  `.url` up to date and the site's own mark arrives in it, which is what the row
-   *  in the file list draws instead of the plain globe. Written while the app is
-   *  running, so nothing rescans the space - and a row that waits for the next launch
-   *  to wear the favicon is a row that says the wrong thing all afternoon. See
-   *  web-tab/keep.ts. */
   test('a website written while the app runs hands the row the site’s own mark', async () => {
     await space({ 'Plan.md': '# Plan' })
     const site = at('A site.url')
@@ -468,8 +397,6 @@ describe('a note saved keeps the index up to date', () => {
     )
 
     expect(links.faviconOf(site)).toBe('https://a.example/icon.png')
-    // And where it points, which is what this device's own sight of the site is
-    // looked up by; see `favicons` in web-tab/pages.svelte.ts.
     expect(links.shortcutOf(site)).toBe('https://a.example/read')
   })
 
@@ -490,21 +417,10 @@ describe('a note saved keeps the index up to date', () => {
   })
 })
 
-/** The first second of a space, which is the one the app spends every launch in:
- *  the rows have been read off the disk and have not arrived yet, and notes are
- *  being written, deleted and moved the whole time.
- *
- *  What the rows say about the space is older than what the index has been told
- *  since, and taking them as the answer threw the news away - silently, and for
- *  good, because nothing reads a space twice while it is open. That is a `[[` list
- *  that holds a different subset of the space on every launch. */
 describe('a space still being read', () => {
   test('keeps a note written while the rows were in the air', async () => {
     const scan = await opening({ 'Plan.md': '# Plan' })
 
-    // Written after the walk went past, which is where a new note lands for the
-    // whole of a launch: a note made out of a canvas card, one the account has
-    // just brought down, one somebody typed.
     links.noteSaved(at('One.md'), 'see [[Plan]]')
     await scan.land()
 
@@ -538,9 +454,6 @@ describe('a space still being read', () => {
     expect(links.backlinks(at('Plan.md')).map((one) => one.path)).toEqual(['deep/One.md'])
   })
 
-  /** A file is news the rows cannot hold as much as a note is: one deleted or
-   *  renamed while they were in the air came back with them under the name it no
-   *  longer has, and a link to it went on resolving. */
   test('does not bring back a file deleted or moved while the rows were in the air', async () => {
     const scan = await opening({ 'One.md': 'see [[report.pdf]]' }, ROOT, [
       'Docs.url',
@@ -563,10 +476,6 @@ describe('a space still being read', () => {
     expect(links.index(null).files).toContain('talk.webm')
   })
 
-  /** A `[[` list that offers a note from the space somebody has just left is worse
-   *  than one that is late: the index says which space it is of the moment it is
-   *  asked to read one, so until the rows land it holds nothing rather than the
-   *  last space's notes under this space's name. */
   test('holds nothing of the space before it', async () => {
     await space({ 'Theirs.md': '# Theirs', 'One.md': 'see [[Theirs]]' })
     expect(links.index(null).notes).toHaveLength(2)
@@ -579,7 +488,6 @@ describe('a space still being read', () => {
     expect(links.index(null).notes.map((one) => one.path)).toEqual(['Mine.md'])
   })
 
-  /** Two spaces opened one after the other, the first's rows landing last. */
   test('drops the rows of a space that is no longer open', async () => {
     const first = await opening({ 'Theirs.md': '# Theirs' }, '/one')
     const second = await opening({ 'Mine.md': '# Mine' }, '/two')
@@ -591,10 +499,6 @@ describe('a space still being read', () => {
     expect(links.index(null).notes.map((one) => one.path)).toEqual(['Mine.md'])
   })
 
-  /** And the same space closed and opened again, which a root cannot tell apart
-   *  from one space read once: both scans are of `/one`, and the older one's rows
-   *  are still older. A scan carries its own number for exactly this; see
-   *  `build`. */
   test('drops the rows of a scan the space has already been read again since', async () => {
     const first = await opening({ 'Old.md': '# Old' }, '/one')
     links.clear()
@@ -607,9 +511,6 @@ describe('a space still being read', () => {
     expect(links.index(null).notes.map((one) => one.path)).toEqual(['New.md', 'Fresh.md'])
   })
 
-  /** A plane is read through a module that is fetched, so a space can open between
-   *  the asking and the reading. Fetched here first, so that what the app's own
-   *  `import` waits for is a microtask rather than a disk this test cannot time. */
   test('does not take a plane read in the space before it', async () => {
     await import('@orden/scan/canvas')
     await space({ 'Plan.md': '# Plan' })
@@ -621,8 +522,6 @@ describe('a space still being read', () => {
     expect(links.index(null).notes.map((one) => one.path)).toEqual(['Mine.md'])
   })
 
-  /** Every card on a plane is drawn from the index, so a new list of notes is every
-   *  card drawn again: a stroke saved must leave it as it was. */
   test('keeps its notes as they were when a plane is saved with only ink changed', async () => {
     const { scanCanvas } = await import('@orden/scan/canvas')
     await space({ 'Plan.md': '# Plan' })
@@ -649,8 +548,6 @@ describe('a space still being read', () => {
     expect(links.index(null).notes).toBe(before)
   })
 
-  /** The other way a scan stops being the one anybody is waiting for: the window
-   *  has no space open at all any more. */
   test('leaves a window with no space open empty when the rows land', async () => {
     const scan = await opening({ 'Plan.md': '# Plan' })
     links.clear()
@@ -672,10 +569,6 @@ describe('a space still being read', () => {
     expect(links.scanning).toBe(false)
   })
 
-  /** Whoever waits for the scan waits for *their* scan. The one field that says
-   *  how a waiter is told belongs to whichever space asked last, so a scan that
-   *  finds itself out of date used to let go of the new space's waiters on its way
-   *  out - and the tag tree read an index that held nothing yet. */
   test('does not let go of the next space’s waiters on its own way out', async () => {
     const first = await opening({ 'Theirs.md': '# Theirs' }, '/one')
     const second = await opening({ 'Mine.md': '# Mine' }, '/two')
@@ -694,9 +587,6 @@ describe('a space still being read', () => {
 })
 
 describe('a space of two thousand notes', () => {
-  /** Two frames. Measured here at 3 ms cold and under 1 ms warm, so this is a
-   *  ceiling with room for a loaded runner, not the expectation. */
-
   const many = () => {
     const built: Record<string, string> = { 'Plan.md': '# Plan' }
     for (let one = 0; one < 2000; one++) {
@@ -711,8 +601,6 @@ describe('a space of two thousand notes', () => {
   test('answers for a large space', async () => {
     await space(many())
 
-    // Measured by hand at 3 ms cold; a clock in a test only reports the
-    // machine's mood, so the answers are what is checked.
     expect(links.backlinks(at('Plan.md'))).toHaveLength(400)
     expect(links.outgoing(at('folder0/Note 0.md'))).toHaveLength(2)
   })
@@ -734,8 +622,6 @@ describe('what the editor is told about the tags', () => {
     })
 
     expect(links.index(null).tags).toEqual([
-      // A note counts once for a tag however often it writes it, and a nested
-      // tag counts towards every level above it.
       { tag: 'work', notes: 2 },
       { tag: 'reading', notes: 1 },
       { tag: 'work/nib', notes: 1 },
@@ -759,14 +645,10 @@ describe('the blocks the whole space holds', () => {
     })
 
     expect(await links.searchBlocks('second half', 10)).toEqual([
-      // The name is the link's, not the row's: what is shown is what the line says.
       { path: 'Plan.md', line: 2, text: 'the second half of it', id: 'a1b2c3' },
     ])
   })
 
-  /** The desktop's search reads a website shortcut's words too, and a shortcut is
-   *  a file of `key=value` lines: a name written onto one of them is a title, a
-   *  date or an icon spoiled, and a link to it points nowhere. */
   test('are only ever a note’s, never a website shortcut’s', async () => {
     await space({
       'Plan.md': '# Plan\n\nsvelte docs to read\n',
@@ -791,8 +673,6 @@ describe('the blocks the whole space holds', () => {
     })
 
     const { workspace } = await import('./workspace.svelte')
-    // The list itself is kept per space on the device, and there is no space open
-    // here: what matters is that the search is asked to skip what it holds.
     const left = vi.spyOn(workspace.excluded, 'of').mockReturnValue(['archive'])
 
     try {
@@ -806,9 +686,6 @@ describe('the blocks the whole space holds', () => {
 })
 
 describe('renaming a note rewrites the links to it', () => {
-  /** A canvas is JSON: its file cards name a note by path, and a text card's words
-   *  sit inside a string. Rewritten as text, the cards kept the old path and a name
-   *  with a quote in it ended the string early, which is a plane that no longer opens. */
   test('on a canvas, its file cards and its text cards alike, as JSON', async () => {
     const card = { x: 0, y: 0, width: 10, height: 10 }
     const board = JSON.stringify({
@@ -862,7 +739,6 @@ describe('renaming a note rewrites the links to it', () => {
     unwritable.add('Locked.md')
 
     try {
-      // Thrown, it undid the move that asked for it; see pages/from-pdf.ts.
       const touched = await links.retarget(at('Plan.md'), at('Roadmap.md'), ROOT)
 
       expect(touched).toBe(2)
@@ -894,8 +770,6 @@ describe('renaming a note rewrites the links to it', () => {
   test('rewriting back is the same rewrite the other way round', async () => {
     await space({ 'Plan.md': '# Plan', 'One.md': 'see [[Plan]] now' })
 
-    // The order the app does it in: the links are found against the space as it
-    // was, and only then is the index told the note moved.
     await links.retarget(at('Plan.md'), at('Roadmap.md'), ROOT)
     links.notesMoved(at('Plan.md'), at('Roadmap.md'))
 
@@ -905,11 +779,6 @@ describe('renaming a note rewrites the links to it', () => {
     expect(notes['One.md']).toBe('see [[Plan]] now')
   })
 
-  /** A website is listed among the space's files as well as among its notes, and a
-   *  link spelled with its ending is answered from the files. Renaming one used to
-   *  write its ending into every link that had left it off, and the files kept the
-   *  old name - so putting the name back found nothing to put back. Emil,
-   *  2026-09-27. */
   test('a website renamed and put back keeps each link as it was written', async () => {
     const site = '[InternetShortcut]\r\nURL=https://svelte.dev/\r\n'
     const before = 'see [[Docs]], [[Docs.url]] and [the docs](Docs.url)'
@@ -924,8 +793,6 @@ describe('renaming a note rewrites the links to it', () => {
     expect(notes['One.md']).toBe(before)
   })
 
-  /** The same for every file a link names by its ending: a PDF in a folder that
-   *  moved answers to its new place at once, not after the next scan. */
   test('a file that moved is found where it went', async () => {
     await space({ 'One.md': 'see [[report.pdf]]' }, ['Papers/report.pdf'])
 
@@ -934,10 +801,6 @@ describe('renaming a note rewrites the links to it', () => {
     expect(links.fileNamed('report.pdf')).toBe('Archive/report.pdf')
   })
 
-  /** A bare `[[Plan]]` rewritten to `[[Road]]` opened another folder's `Road.md`
-   *  once the space held one nearer to the link, or shallower: the rename sent the
-   *  link to a note nobody renamed. Written with as much of the path as it takes to
-   *  reach the renamed note, the way Obsidian writes one (B543). */
   test('onto a name another folder holds, with as much path as reaches it', async () => {
     await space({
       'A/Plan.md': '# Plan',
@@ -952,7 +815,6 @@ describe('renaming a note rewrites the links to it', () => {
     expect(notes['B/x.md']).toBe(
       'see [[A/Road]], [[A/Road#Intro|the plan]], [[A/Road#^b1]] and [p](../A/Road.md)',
     )
-    // Beside the renamed note, the bare name still reaches it.
     expect(notes['A/y.md']).toBe('see [[Road]]')
     expect(links.outgoing(at('B/x.md')).map((one) => one.to)).toEqual([
       'A/Road.md',
@@ -977,9 +839,6 @@ describe('renaming a note rewrites the links to it', () => {
     expect(links.outgoing(at('x.md'))[0]?.to).toBe('Projects/Road.md')
   })
 
-  /** No name nor path reaches a note at the top of the space from beside a
-   *  namesake, since a path is read as the end of one: only a path from the top,
-   *  written with a leading slash, does. */
   test('at the top of the space, onto a name a folder holds', async () => {
     await space({
       'Plan.md': '# Plan',
@@ -1010,8 +869,6 @@ describe('renaming a note rewrites the links to it', () => {
     expect(links.outgoing(at('B/x.md'))[0]?.to).toBe('Road.md')
   })
 
-  /** A path written out is read as the end of one too, so it can lose to a deeper
-   *  folder of the same name beside the link. */
   test('a path written out, onto a name a nested folder beside it holds', async () => {
     await space({
       'A/Plan.md': '# Plan',
@@ -1060,9 +917,6 @@ describe('renaming a note rewrites the links to it', () => {
   })
 })
 
-/** A link spelled with its ending - `[[Docs.url]]`, `[[report.pdf]]` - is answered
- *  from the files beside the notes, and a delete used to leave them alone: the link
- *  went on resolving to a file that was no longer there until the next scan. */
 describe('a file deleted and put back', () => {
   const SITE = '[InternetShortcut]\r\nURL=https://svelte.dev/\r\n'
 
@@ -1115,8 +969,6 @@ describe('a file deleted and put back', () => {
     expect(links.backlinks(at('Papers/Notes.md')).map((one) => one.path)).toEqual(['One.md'])
   })
 
-  /** A website converted from a note, or written for the first time, is a file the
-   *  space holds from the moment it is written, not from the next scan. */
   test('a website written is a file there to link to', async () => {
     await space({ 'One.md': 'see [[Docs.url]]' })
 
@@ -1168,9 +1020,6 @@ describe('naming a block of another note', () => {
     expect(notes['Plan.md']).toBe(`# Plan\r\n\r\nfirst line\r\nsecond line ^${id ?? ''}\r\n`)
   })
 
-  /** A tab of another space is handed the open space's notes, so the root asked
-   *  about may be one shared to be read: its copy here would stop being the space's,
-   *  and the sync would refuse the change on every pass. */
   test('names nothing in a space shared to be read, and writes nothing there', async () => {
     await space({ 'Plan.md': '# Plan\n\na line\n' })
     readOnly.add(ROOT)
@@ -1185,8 +1034,6 @@ describe('naming a block of another note', () => {
   })
 })
 
-/** What an embed, a canvas file card and an export bring in: the note's words, and
- *  whether its own HTML is words, which is the note's answer and not the page's. */
 describe('the note an embed names', () => {
   test('says whether its HTML is words, by where it sits', async () => {
     await space({ 'Plan.md': '<b>mine</b>', 'Shared/Theirs.md': '<form>x</form>' })
@@ -1217,8 +1064,6 @@ describe('a picture named by an embed', () => {
   })
 })
 
-/** The icon a row wears, which rides along on the same pass. A file list asks
- *  this once per row, so what it must never be is a read of the file. */
 describe('the icon a note says it wears', () => {
   test('comes off the scan of the space', async () => {
     await space({
@@ -1243,8 +1088,6 @@ describe('the icon a note says it wears', () => {
   test('by the path a row knows, wherever the row is', async () => {
     await space({ 'ideas/Plan.md': '---\nicon: rocket\n---\n' })
 
-    // The tree knows where the file is; a bookmark and a search hit know it
-    // relative to the space.
     expect(links.iconOf(at('ideas/Plan.md'))).toBe('rocket')
     expect(links.iconOf('ideas/Plan.md')).toBe('rocket')
   })
@@ -1266,12 +1109,6 @@ describe('the icon a note says it wears', () => {
   })
 })
 
-/** The tags of a space, counted off the index rather than read off the disk.
- *
- *  Asking the space read every body again to count them - twenty-two megabytes of
- *  strings on the thread the search panel was opening on. The scan that finds a
- *  note's links writes down its tags on the way past, so the answer is already in
- *  hand. What is counted here is rows read: none. */
 describe("a space's tags", () => {
   test('come off the index without a row being read', async () => {
     await space({
@@ -1281,15 +1118,12 @@ describe("a space's tags", () => {
     })
 
     const before = reads
-    // A row per level: Plan is one note under `work` and under `work/nib` both, and
-    // it is one note under `work` whether it wrote the tag once or twice.
     expect(links.spaceTags).toEqual([
       { tag: 'paper', notes: 2 },
       { tag: 'work', notes: 1 },
       { tag: 'work/nib', notes: 1 },
     ])
 
-    // Not one note read to answer it, however many times it is asked.
     expect(links.spaceTags).toEqual(links.spaceTags)
     expect(reads - before).toBe(0)
   })
@@ -1297,7 +1131,6 @@ describe("a space's tags", () => {
   test('count the notes carrying one, not the times it was written', async () => {
     await space({ 'Plan.md': '#work #work #work\n', 'Ink.md': '#Work\n' })
 
-    // Three uses in one note and one in another, spelled two ways: two notes.
     expect(links.spaceTags).toEqual([{ tag: 'work', notes: 2 }])
   })
 
@@ -1323,8 +1156,6 @@ describe("a space's tags", () => {
   test('and are the same list the editor is handed for its own popup', async () => {
     await space({ 'Plan.md': '#work/nib\n', 'Ink.md': '#paper\n' })
 
-    // One answer, two surfaces: the `#` completion reads it off the index it is
-    // handed, and the tag tree reads it off the store. Neither counts its own.
     expect(links.index(at('Plan.md')).tags).toEqual(links.spaceTags)
     expect(links.spaceTags).toEqual([
       { tag: 'paper', notes: 1 },
@@ -1334,17 +1165,7 @@ describe("a space's tags", () => {
   })
 })
 
-/** What drawing a page of links costs, counted.
- *
- *  Every surface that draws one asks `targetOf`, and the thing it must not do is
- *  ask the space about each link in turn. The reading view used to: it filtered
- *  every note in the space per link, so a note of eighteen hundred links over five
- *  thousand notes compared nine million paths to draw one page - 1.7 seconds of the
- *  five that page took, all of it folding paths. Counted rather than timed, for the
- *  reason the counter's own comment gives. */
 describe('resolving a page of links', () => {
-  /** A space of five hundred notes, and one note linking to three hundred of them,
-   *  which is the shape of a long note with a link every few lines. */
   async function page() {
     const contents: Record<string, string> = {}
     for (let one = 0; one < 500; one++) contents[`note-${one}.md`] = `# Note ${one}\n`
@@ -1359,15 +1180,11 @@ describe('resolving a page of links', () => {
 
   test('compares the links, not the links times the space', async () => {
     const targets = await page()
-    // What asking the space per link walks, per link: all of it.
     expect(links.index(at('long.md')).notes).toHaveLength(501)
 
     const before = links.examined
     for (const target of targets) links.targetOf(at('long.md'), { kind: 'wikilink', target })
 
-    // One candidate per link and no more: three hundred comparisons, against the
-    // hundred and fifty thousand the same page cost when every link asked the
-    // whole space.
     expect(links.examined - before).toBe(targets.length)
   })
 
@@ -1379,8 +1196,6 @@ describe('resolving a page of links', () => {
       for (const target of targets) links.targetOf(at('long.md'), { kind: 'wikilink', target })
     }
 
-    // Five passes over the same page, and only the first one asks: what a target
-    // means is remembered until the space changes.
     expect(links.examined - before).toBe(targets.length)
   })
 
@@ -1407,9 +1222,6 @@ describe('resolving a page of links', () => {
   })
 })
 
-/** A folder renamed or moved takes every note in it along, and a link that spelled
- *  out a path through the folder used to be left on the old one: `retarget` only
- *  asked which links named the folder itself, and no link does. */
 describe('a folder renamed', () => {
   test('rewrites the links that spell out a path through it, and no others', async () => {
     const card = { x: 0, y: 0, width: 10, height: 10 }
@@ -1443,7 +1255,6 @@ describe('a folder renamed', () => {
 
     expect(touched).toBe(2)
     expect(notes['One.md']).toBe('see [[Work/Plan]] and [p](Work/Plan.md) and ![](Work/shot.png)\n')
-    // A bare name still finds the note wherever its folder went.
     expect(notes['Bare.md']).toBe('see [[Plan]] and [p](Plan.md)\n')
     const after = JSON.parse(notes['Board.canvas'] ?? '') as { nodes: Record<string, string>[] }
     expect(after.nodes.map((one) => one.file)).toEqual(['Work/Plan.md', 'Work/shot.png'])
@@ -1460,14 +1271,11 @@ describe('a folder renamed', () => {
     await links.retarget(at('Projects'), at('Area/Projects'), ROOT, () => null, { moved: true })
 
     expect(notes['Area/Projects/Plan.md']).toBe(
-      // The wikilink still names its note by the end of its path.
       'see [o](../../Other.md), [s](Sub.md) and [[Projects/Sub]]\n',
     )
   })
 })
 
-/** A note moved to another folder took its relative links with it unchanged, and
- *  each then named a path beside its new folder that held nothing. */
 describe('a note moved to another folder', () => {
   test('keeps its pictures and markdown links reaching their files', async () => {
     await space(
@@ -1511,9 +1319,6 @@ describe('a note moved to another folder', () => {
   })
 })
 
-/** A note with one link to rewrite has every link in it read again, and the others
- *  pointing into what moved were written over as well: an alias as the filename, a
- *  name in another case in the case of the file. */
 describe('a folder renamed, in a note that also links into it by other names', () => {
   test('rewrites the path and leaves an alias and another case as written', async () => {
     await space({
@@ -1538,8 +1343,6 @@ describe('a folder renamed, in a note that also links into it by other names', (
   })
 })
 
-/** The resolver reads a target trimmed and a markdown path without its trailing
- *  slash; the rewrite asked about the target as written, so it never found these. */
 describe('a link written with spaces inside its brackets or a slash at its end', () => {
   test('is rewritten when the picture it names is renamed', async () => {
     await space({ 'One.md': '![[ abc.png ]] ![](assets/abc.png/)\n' }, ['assets/abc.png'])
@@ -1560,9 +1363,6 @@ describe('a link written with spaces inside its brackets or a slash at its end',
   })
 })
 
-/** A rewrite tells the index what it wrote once it has gone through the whole space,
- *  and a note saved after it was rewritten and before the pass ended had its newer
- *  words put back to what the pass wrote: its new links went missing from the index. */
 describe('a note saved while a folder rename is still rewriting the space', () => {
   test('keeps what was saved in the index', async () => {
     await space({

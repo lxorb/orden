@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const bn: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'সব প্রস্তুত',
   Personalize: 'নিজের মতো সাজান',
   Clean: 'পরিচ্ছন্ন',
@@ -10,12 +9,10 @@ export const bn: Dictionary = {
   'Do you write code?': 'আপনি কি কোড লেখেন?',
   Yes: 'হ্যাঁ',
   No: 'না',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'অন্য অ্যাপ থেকে: {key}',
   'From other apps: set in your system settings': 'অন্য অ্যাপ থেকে: সিস্টেম সেটিংসে ঠিক করুন',
   'From other apps: bind {command} in your system settings':
     'অন্য অ্যাপ থেকে: সিস্টেম সেটিংসে {command} যুক্ত করুন',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'প্রয়োজনীয়',
   'Add to Essentials': 'প্রয়োজনীয়-তে যোগ করুন',
   'Remove from Essentials': 'প্রয়োজনীয় থেকে সরান',
@@ -23,20 +20,16 @@ export const bn: Dictionary = {
   'Add blocks to Essentials': 'ব্লকগুলো প্রয়োজনীয়-তে যোগ করুন',
   'Add view to Essentials': 'ভিউটি প্রয়োজনীয়-তে যোগ করুন',
   'Open tabs and Essentials': 'ট্যাব ও প্রয়োজনীয় খোলা',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor এখন Orden',
   'Notes from nibeditor.com': 'nibeditor.com থেকে নোট',
   'Nothing there': 'সেখানে কিছু নেই',
-  // AI: the three permission modes
   'Full permissions': 'সম্পূর্ণ অনুমতি',
   'Auto mode': 'স্বয়ংক্রিয় মোড',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'সম্পূর্ণ অনুমতি: কিছুই জিজ্ঞাসা করা হয় না বা আপনাকে ফেরত দেওয়া হয় না, সাইন ইন, অর্থপ্রদান, পাঠানো বা মোছাও নয়',
-  // Import: Zen's tabs
   'Import from Zen': 'Zen থেকে ইমপোর্ট',
   'Containers stay in Zen': 'কন্টেইনারগুলো Zen-এ থেকে যায়',
   'Zen’s tabs could not be read.': 'Zen-এর ট্যাবগুলো পড়া গেল না।',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'কন্টেইনারগুলো Firefox-এ থেকে যায়',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} দিয়ে খোঁজে: এখানেও এটি দিয়ে খুঁজতে সেটিংসে এটি বেছে নিন',
@@ -63,38 +56,29 @@ export const bn: Dictionary = {
   'Reading List': 'রিডিং লিস্ট',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS Safari-র ট্যাব আর বুকমার্ক ফুল ডিস্ক অ্যাক্সেসের পেছনে রাখে। সেখানে Orden চালু করুন, তারপর আবার চেষ্টা করুন।',
-  // Settings: note types
   'Page note': 'পাতার নোট',
   'Web note': 'ওয়েব নোট',
   'Private tab': 'ব্যক্তিগত ট্যাব',
   'Note types': 'নোটের ধরন',
-  // Tasks: Upcoming's weeks
   'Previous week': 'আগের সপ্তাহ',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'উপরে প্রকল্প যোগ করুন',
   'Add project below': 'নিচে প্রকল্প যোগ করুন',
   'Projects folder': 'প্রকল্পের ফোল্ডার',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'এড়িয়ে যান',
   'Complete forever': 'চিরতরে সম্পন্ন করুন',
-  // Tasks: comments
   Comments: 'মন্তব্য',
-  // Tasks: filters
   Filters: 'ফিল্টার',
   'Add filter': 'ফিল্টার যোগ করুন',
   'Edit filter': 'ফিল্টার সম্পাদনা',
-  // Tasks: a project's sections
   'Add section': 'অংশ যোগ করুন',
   '{name} (copy)': '{name} (অনুলিপি)',
   'Its tasks are deleted with it.': 'এর কাজগুলোও মুছে যাবে।',
-  // Tasks: keys, selection and the undo toast
   Completed: 'সম্পন্ন',
   'Remove date': 'তারিখ সরান',
   'Next task': 'পরের কাজ',
   'Previous task': 'আগের কাজ',
   'Add task at the top': 'উপরে কাজ যোগ করুন',
   '{count} selected': '{count}টি নির্বাচিত',
-  // Tasks: the Display menu
   Display: 'প্রদর্শন',
   'Completed tasks': 'সম্পন্ন কাজ',
   Smart: 'স্মার্ট',
@@ -106,20 +90,16 @@ export const bn: Dictionary = {
   'Reset all': 'সব রিসেট করুন',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'লেআউট কাজগুলো তালিকা, বোর্ড বা ক্যালেন্ডার হিসেবে দেখায়। গ্রুপ করা এগুলোকে দলে ভাগ করে, যেগুলো বোর্ডের কলাম। সাজানো প্রতিটি দলকে ক্রমে সাজায়। ফিল্টার যা দরকার নেই তা লুকায়। এ সবই এই ভিউয়ের জন্য রাখা হয়।',
-  // Tasks: several lines pasted into quick add
   'One task': 'একটি কাজ',
   'One per line': 'প্রতি লাইনে একটি',
   'Add with AI': 'AI দিয়ে যোগ করুন',
-  // Tasks: the projects in the panel
   Favorites: 'প্রিয়',
   'Add project': 'প্রকল্প যোগ করুন',
   'Add sub-project': 'উপ-প্রকল্প যোগ করুন',
-  // Tasks: the task view
   'Sub-tasks': 'উপ-কাজ',
   'Add sub-task': 'উপ-কাজ যোগ করুন',
   'New label': 'নতুন লেবেল',
   'No deadline': 'শেষ সময়সীমা নেই',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'পুনরায় নির্ধারণ',
   'Later this week': 'এই সপ্তাহে পরে',
   'This weekend': 'এই সপ্তাহান্তে',
@@ -136,22 +116,18 @@ export const bn: Dictionary = {
   Reopen: 'আবার খুলুন',
   Schedule: 'নির্ধারণ করুন',
   'Open in note': 'নোটে খুলুন',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'অন্য অ্যাপ',
   'Import from Obsidian': 'Obsidian থেকে ইমপোর্ট',
   'Import from Notion': 'Notion থেকে ইমপোর্ট',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'ইঙ্গিত',
   'Silent mode': 'নীরব মোড',
   'See how your notes connect.': 'দেখুন আপনার নোটগুলো কীভাবে যুক্ত।',
   'Press {key} to find anything, notes and commands alike.':
     'নোট ও কমান্ড, যেকোনো কিছু খুঁজতে {key} চাপুন।',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'লেখার সময় মার্কডাউন দেখান',
   'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'পয়েন্টার',
   'Pointing hand on buttons': 'বোতামের উপর নির্দেশক হাত',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'কাজ যোগ করুন',
   'Apple Shortcuts': 'Apple শর্টকাট',
   Tomorrow: 'আগামীকাল',
@@ -180,7 +156,6 @@ export const bn: Dictionary = {
   'Every week': 'প্রতি সপ্তাহ',
   'Every month': 'প্রতি মাস',
   'Every year': 'প্রতি বছর',
-  // Files and notes
   Save: 'সেভ',
   'New note': 'নতুন নোট',
   'Random note': 'এলোমেলো নোট',
@@ -208,8 +183,6 @@ export const bn: Dictionary = {
   'Release to add a page': 'পৃষ্ঠা যোগ করতে ছেড়ে দিন',
   'Page {number}': 'পাতা {number}',
   'The paper could not be read': 'কাগজটি পড়া যায়নি',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'লেটার',
   'Long page': 'লম্বা পাতা',
@@ -249,7 +222,6 @@ export const bn: Dictionary = {
   'Choose a picture': 'একটি ছবি বেছে নিন',
   'Remove picture': 'ছবি সরান',
   'That picture could not be read.': 'ছবিটি পড়া যায়নি।',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'স্যাচুরেশন',
   Tint: 'আভা',
   'Tint colour': 'আভার রং',
@@ -377,7 +349,6 @@ export const bn: Dictionary = {
   'Merge into…': 'এতে মার্জ…',
   'Split at caret': 'কার্সরে ভাগ',
   'Extract selection': 'নির্বাচন আলাদা',
-  // Panels and navigation
   Bookmarks: 'বুকমার্ক',
   'New group': 'নতুন গ্রুপ',
   'Remove group': 'গ্রুপ সরান',
@@ -431,8 +402,6 @@ export const bn: Dictionary = {
   'Sort by name': 'নাম অনুযায়ী',
   'Sort by modified': 'বদলের সময় অনুযায়ী',
   'Sort by created': 'তৈরির সময় অনুযায়ী',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'ফাইলের ক্রম',
   'Name, A to Z': 'নাম, অ থেকে হ',
   'Name, Z to A': 'নাম, হ থেকে অ',
@@ -443,7 +412,6 @@ export const bn: Dictionary = {
   Manual: 'হাতে সাজানো',
   'Show hidden files': 'লুকানো ফাইল দেখান',
   'Hide hidden files': 'লুকানো ফাইল লুকান',
-  // Writing
   Bold: 'বোল্ড',
   Italic: 'ইটালিক',
   Strikethrough: 'স্ট্রাইকথ্রু',
@@ -528,11 +496,9 @@ export const bn: Dictionary = {
   'Horizontal rule': 'আড়াআড়ি রেখা',
   'Page break': 'পৃষ্ঠা বিরতি',
   'Tidy up this note': 'এই নোট গোছান',
-  // PDFs
   'Copy a link': 'লিংক কপি',
   'That PDF could not be opened': 'PDF খোলা গেল না',
   'That file could not be read': 'ফাইলটি পড়া গেল না',
-  // Modes and view
   Reading: 'পড়া',
   'Leave reading': 'পড়া বন্ধ',
   Present: 'উপস্থাপন',
@@ -572,7 +538,6 @@ export const bn: Dictionary = {
   'Zoom in': 'জুম ইন',
   'Zoom out': 'জুম আউট',
   'Actual size': 'আসল আকার',
-  // Appearance
   Accent: 'অ্যাকসেন্ট',
   'Tidy up': 'গুছিয়ে নিন',
   'Blur the app behind the tab overview': 'ট্যাব ওভারভিউয়ের পেছনে অ্যাপ ঝাপসা করুন',
@@ -700,7 +665,6 @@ export const bn: Dictionary = {
   'Switch theme': 'থিম বদল',
   Style: 'ধরন',
   Mode: 'মোড',
-  // The window's own edges; see appearance.rs
   Window: 'উইন্ডো',
   'Orden’s own': 'Orden-এর নিজের',
   'The system’s': 'সিস্টেমের',
@@ -711,7 +675,6 @@ export const bn: Dictionary = {
   'Edit custom CSS': 'কাস্টম CSS এডিট',
   'Edit snippets': 'স্নিপেট এডিট',
   'Reload themes and custom CSS': 'থিম ও কাস্টম CSS রিলোড',
-  // The theme store, and the sample note its cards show
   Themes: 'থিম',
   Browse: 'ব্রাউজ',
   'Search themes': 'থিম খোঁজ',
@@ -791,7 +754,6 @@ export const bn: Dictionary = {
   'Code only': 'শুধু কোডে',
   Everywhere: 'সব জায়গায়',
   Attachments: 'অ্যাটাচমেন্ট',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'পাতার নোট',
   'New pages': 'নতুন পাতা',
   'Assets folder of the space': 'স্পেসের অ্যাসেট ফোল্ডার',
@@ -843,7 +805,6 @@ export const bn: Dictionary = {
   'Machine-translated. Corrections welcome.': 'যন্ত্রে অনুবাদ করা। সংশোধন স্বাগত।',
   'The glasses show English.': 'চশমা ইংরেজিতে দেখায়।',
   'Match the app': 'অ্যাপ অনুযায়ী',
-  // Settings
   Settings: 'সেটিংস',
   Account: 'অ্যাকাউন্ট',
   Publish: 'প্রকাশ',
@@ -869,7 +830,6 @@ export const bn: Dictionary = {
   },
   Update: 'আপডেট',
   'Live at': 'লাইভ আছে',
-  // Publishing
   'Publish {name}': '{name} প্রকাশ',
   'What to publish': 'কী প্রকাশ হবে',
   'The whole space': 'পুরো স্পেস',
@@ -888,7 +848,6 @@ export const bn: Dictionary = {
   Value: 'মান',
   available: 'পাওয়া যাবে',
   'checking…': 'দেখা হচ্ছে…',
-  // LLM
   'Connect an LLM to your notes': 'আপনার নোটে LLM যোগ করুন',
   'Sign in first - the connector reaches the notes in your account.':
     'আগে সাইন ইন করুন - কানেক্টর আপনার অ্যাকাউন্টের নোটে পৌঁছায়।',
@@ -939,7 +898,6 @@ export const bn: Dictionary = {
     'যে ক্লায়েন্ট URL-এর বদলে JSON ব্লক নেয়, তার জন্য।',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'যে ক্লায়েন্ট সাইন ইন করতে পারে না, তাকে বদলে টোকেন দেওয়া যায়। এটি একবারই দেখানো হয়।',
-  // Export
   'Plain text': 'সাধারণ টেক্সট',
   'Markdown with the pictures': 'ছবিসহ Markdown',
   'HTML without styles': 'স্টাইল ছাড়া HTML',
@@ -958,13 +916,11 @@ export const bn: Dictionary = {
   Margin: 'মার্জিন',
   Header: 'হেডার',
   Footer: 'ফুটার',
-  // History
   'Version history': 'ভার্সন ইতিহাস',
   'Copy link to this note': 'এই নোটের লিঙ্ক কপি করুন',
   'that link could not be followed': 'ওই লিঙ্কে যাওয়া গেল না',
   'No earlier versions yet.': 'এখনো আগের কোনো ভার্সন নেই।',
   'Restore this version': 'এই ভার্সন ফেরান',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'ওখানে আগেই একটি নোট আছে',
   'enter a valid email address': 'সঠিক ইমেইল ঠিকানা দিন',
   'give the space a name': 'স্পেসের একটি নাম দিন',
@@ -995,7 +951,6 @@ export const bn: Dictionary = {
   'could not publish': 'প্রকাশ করা গেল না',
   'could not create a token': 'টোকেন তৈরি করা গেল না',
   'that did not work': 'এটি কাজ করল না',
-  // Settings on a phone, display names, one blog address
   Back: 'পিছনে',
   'Display name': 'প্রদর্শন নাম',
   'Your name': 'আপনার নাম',
@@ -1015,7 +970,6 @@ export const bn: Dictionary = {
   Spelling: 'বানান',
   Checking: 'পরীক্ষা',
   Dictionary: 'অভিধান',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'রেকর্ড দেখা যাওয়ার অপেক্ষা।',
   'Certificate issued.': 'সার্টিফিকেট দেওয়া হয়েছে।',
   'Cloudflare could not set this domain up.': 'Cloudflare এই ডোমেইন সেট করতে পারল না।',
@@ -1026,7 +980,6 @@ export const bn: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare এই ডোমেইন আটকে দিয়েছে',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'ডোমেইনের মূলে আপনার প্রোভাইডার CNAME না দিলে ALIAS বা ANAME রেকর্ড, কিংবা CNAME ফ্ল্যাটেনিং ব্যবহার করুন।',
-  // Shortcuts
   Shortcuts: 'শর্টকাট',
   'Search shortcuts': 'শর্টকাট খোঁজ',
   'Second key': 'দ্বিতীয় কী',
@@ -1191,7 +1144,6 @@ export const bn: Dictionary = {
   Delegated: 'অর্পণ করা হয়েছে',
   'Code theme: {name}': 'কোড থিম: {name}',
   'Delete a layout': 'লেআউট মুছুন',
-  // Keyboards and modal editing
   Default: 'ডিফল্ট',
   'Vim keys': 'Vim কী',
   'Follow the link': 'লিংকে যান',
@@ -1203,11 +1155,9 @@ export const bn: Dictionary = {
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
   REPLACE: 'REPLACE',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'চশমায় পৃষ্ঠা {page}/{count}',
   'Reaching the glasses': 'চশমায় পৌঁছানো হচ্ছে',
   'The glasses are not keeping up': 'চশমা সঙ্গে পারছে না',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'যোগ',
   Select: 'নির্বাচন',
   Pan: 'প্যান',
@@ -1237,7 +1187,6 @@ export const bn: Dictionary = {
   Calligraphy: 'ক্যালিগ্রাফি',
   'Width {number}': 'চওড়া {number}',
   'Finger draws': 'আঙুলে আঁকা',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'চওড়া',
   Opacity: 'অপাসিটি',
   Colour: 'রং',
@@ -1281,23 +1230,19 @@ export const bn: Dictionary = {
   'Export as PNG': 'PNG হিসেবে এক্সপোর্ট',
   'Export as SVG': 'SVG হিসেবে এক্সপোর্ট',
   'Export as PDF': 'PDF হিসেবে এক্সপোর্ট',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'PDF ইমপোর্ট',
   'Choose how to add the pages to the canvas.': 'পৃষ্ঠাগুলি ক্যানভাসে কীভাবে যোগ হবে বেছে নিন।',
   'Single page': 'একটি পৃষ্ঠা',
   'All pages': 'সব পৃষ্ঠা',
   'Choose a page': 'পৃষ্ঠা বেছে নিন',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'নির্বাচিত অংশ মুছুন',
   'Nudge left': 'বাঁয়ে ঠেলুন',
   'Nudge right': 'ডানে ঠেলুন',
   'Nudge up': 'উপরে ঠেলুন',
   'Nudge down': 'নিচে ঠেলুন',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'অন্যখানেও খোলা',
   Shared: 'শেয়ার করা',
   Browser: 'ব্রাউজার',
-  // Sharing a space with other people
   Share: 'শেয়ার',
   'Share {name}': '{name} শেয়ার',
   'Share this space': 'এই স্পেস শেয়ার',
@@ -1341,14 +1286,12 @@ export const bn: Dictionary = {
   'Shared with you': 'আপনার সঙ্গে শেয়ার করা',
   'That link does not open anything': 'এই লিংক কিছু খোলে না',
   'Ask for another one.': 'আরেকটি চান।',
-  // Somebody a share link let in, who has no account
   Guest: 'অতিথি',
   'Ask to join': 'যোগ দিতে চান',
   Asking: 'জিজ্ঞাসা করা হচ্ছে',
   'Waiting for {who}': '{who}-র জন্য অপেক্ষা',
   '{who} did not let you in': '{who} আপনাকে ঢুকতে দেননি',
   'What the others in this space see.': 'এই স্পেসের বাকিরা যা দেখে।',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'আপডেট',
   'Release channel': 'রিলিজ চ্যানেল',
   Stable: 'স্টেবল',
@@ -1358,8 +1301,6 @@ export const bn: Dictionary = {
   'Web version': 'ওয়েব সংস্করণ',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'স্টেবল প্রকাশিত ওয়েব অ্যাপ, আনস্টেবল সবচেয়ে নতুন বিল্ড, আর ভেঙে যেতে পারে।',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'ইমপোর্ট',
   'Convert syntax': 'সিনট্যাক্স বদল',
   'In this note': 'এই নোটে',
@@ -1455,8 +1396,6 @@ export const bn: Dictionary = {
   'Undo the import': 'ইমপোর্ট আনডু',
   'Choose an export': 'একটি এক্সপোর্ট বাছুন',
   Under: 'এর নিচে',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'সিংক',
   'When the same note was written twice': 'একই নোট দুবার লেখা হলে',
   'On two devices': 'দুই ডিভাইসে',
@@ -1518,7 +1457,6 @@ export const bn: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'এই ডিভাইসের নোটগুলো থেকে যাবে; শুধু অ্যাকাউন্ট আর তার সিঙ্ক করা কপিগুলো যাবে।',
   'Also gone for everyone in {spaces}.': '{spaces}-এর সবার জন্যও মুছে যাবে।',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'নোট',
   '{space} panel': '{space} প্যানেল',
   'Panel width': 'প্যানেলের প্রস্থ',
@@ -1529,7 +1467,6 @@ export const bn: Dictionary = {
   'What is selected': 'যা নির্বাচিত',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'ক্যানভাস: {cards} কার্ড, {links} লিঙ্ক, {drawings} আঁকা',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'প্রদানকারী',
   'Make default': 'ডিফল্ট করুন',
@@ -1556,7 +1493,6 @@ export const bn: Dictionary = {
   'The model did not answer.': 'মডেল উত্তর দেয়নি।',
   'The connection closed before the answer was finished.':
     'উত্তর শেষ হওয়ার আগেই সংযোগ বন্ধ হয়ে গেছে।',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'আপনার {plan} প্ল্যান {time} পর্যন্ত সীমায় পৌঁছেছে।',
   'Your {plan} plan is at its limit for now.': 'আপনার {plan} প্ল্যান আপাতত সীমায় পৌঁছেছে।',
@@ -1583,7 +1519,6 @@ export const bn: Dictionary = {
   Shorter: 'ছোট',
   Longer: 'বড়',
   'Fix grammar': 'ব্যাকরণ ঠিক করুন',
-  // The AI sidebar's commands
   'A cited report': 'উদ্ধৃত প্রতিবেদন',
   'A helper in the background': 'পেছনে চলা সহকারী',
   'A side question': 'পার্শ্ব প্রশ্ন',
@@ -1685,7 +1620,6 @@ export const bn: Dictionary = {
   'Markdown, shortest name': 'Markdown, সবচেয়ে ছোট নাম',
   'Markdown, relative path': 'Markdown, আপেক্ষিক পথ',
   'Markdown, path in the space': 'Markdown, স্পেসে পথ',
-  // Publishing part one.
   'The folders you choose become public.': 'বেছে নেওয়া ফোল্ডার সর্বজনীন হয়।',
   'Anyone with the address can read what is published, drafts included.':
     'ঠিকানা জানা যে কেউ প্রকাশিত সব পড়তে পারে, খসড়াও।',
@@ -1711,11 +1645,9 @@ export const bn: Dictionary = {
   'Remove the password': 'পাসওয়ার্ড সরান',
   'Scan this with your authenticator app, then type its code.':
     'এটি আপনার অথেনটিকেটর অ্যাপে স্ক্যান করুন, তারপর তার কোড লিখুন।',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'ছবি',
   Dictate: 'বলে লেখান',
   'Add to {name}': '{name}-এ যোগ করুন',
-  // Web tabs
   Reload: 'আবার লোড করুন',
   'Hard reload': 'পুরোপুরি আবার লোড করুন',
   'Open in the browser': 'ব্রাউজারে খুলুন',
@@ -1730,7 +1662,6 @@ export const bn: Dictionary = {
   'Playing audio': 'অডিও চলছে',
   Muted: 'মিউট করা',
   'Developer tools': 'ডেভেলপার টুল',
-  // Recording, meetings and what a model wrote
   Record: 'রেকর্ড করুন',
   Recording: 'রেকর্ডিং',
   'Stop recording': 'রেকর্ডিং থামান',
@@ -1751,7 +1682,6 @@ export const bn: Dictionary = {
     'ওই রেকর্ডিং একবারে কথায় বদলানোর জন্য বেশি লম্বা।',
   'That is as much as one recording may hold.': 'একটি রেকর্ডিংয়ে এতটুকুই ধরে।',
   'Nothing could be heard in that recording.': 'ওই রেকর্ডিংয়ে কিছু শোনা গেল না।',
-  // Publishing part two.
   Spreadsheet: 'স্প্রেডশিট',
   'The app’s own': 'অ্যাপের নিজের',
   'publish.css and publish.js in this space dress the site.':
@@ -1767,14 +1697,12 @@ export const bn: Dictionary = {
   'Save as CSV': 'CSV হিসেবে রাখুন',
   'Kept for {days}': '{days} রাখা হয়',
   Full: 'পূর্ণ',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'মেইল পাঠানো গেল না - আবার চেষ্টা করুন',
   'start again - that took too long': 'আবার শুরু করুন - অনেক সময় লেগেছে',
   'sign in to do that': 'এটি করতে সাইন ইন করুন',
   'that is not something a token can do': 'টোকেন দিয়ে এটি করা যায় না',
   'something went wrong here - try again': 'এখানে কিছু ভুল হয়েছে - আবার চেষ্টা করুন',
   'this service cannot keep a secret safely': 'এই সার্ভিস গোপন কী নিরাপদে রাখতে পারে না',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only': 'শুধু ছবি, PDF ও সাইটের নিজের css বা js',
   'that file is too big': 'ফাইলটি অনেক বড়',
   'that is more settings than an account holds': 'একটি অ্যাকাউন্টে এর বেশি সেটিংস ধরে না',
@@ -1784,13 +1712,11 @@ export const bn: Dictionary = {
   'that is more than a space keeps about its graph': 'একটি স্পেস তার গ্রাফ নিয়ে এর বেশি রাখে না',
   'that is more folder icons than a space holds': 'একটি স্পেসে এর বেশি ফোল্ডার আইকন ধরে না',
   'that is more than a site keeps': 'একটি সাইট যা রাখে তার চেয়ে বেশি',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'এই ঠিকানায় কেউ নেই',
   'nobody by that name': 'এই নামে কেউ নেই',
   'nobody is waiting by that name': 'এই নামে কেউ অপেক্ষায় নেই',
   'this space is yours': 'এই স্পেস আপনার',
   'that link is busy, try again in a minute': 'লিংকটি ব্যস্ত, এক মিনিট পরে চেষ্টা করুন',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'এমন ভার্সন নেই',
   'this note was shared with you, not its folder':
     'এই নোট আপনার সঙ্গে শেয়ার করা হয়েছে, এর ফোল্ডার নয়',
@@ -1799,7 +1725,6 @@ export const bn: Dictionary = {
   'nothing to delete': 'মোছার কিছু নেই',
   'this room is not answering - try again': 'এই রুম সাড়া দিচ্ছে না - আবার চেষ্টা করুন',
   'rooms are not running here': 'এখানে রুম চলছে না',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'থিম স্টোর সাড়া দিচ্ছে না',
   'that is not a theme': 'এটি থিম নয়',
   'no such theme': 'এমন থিম নেই',
@@ -1811,10 +1736,8 @@ export const bn: Dictionary = {
   'that is more than a spoken command': 'এটি একটি বলা কমান্ডের চেয়ে বেশি',
   'that is a lot of listening - try again later': 'অনেক শোনা - পরে আবার চেষ্টা করুন',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% লেখা',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'মোবাইল',
   'The bar sits over the keyboard on a phone.': 'ফোনে বারটি কীবোর্ডের উপরে থাকে।',
   'On the bar': 'বারে',
@@ -1828,31 +1751,25 @@ export const bn: Dictionary = {
   'A pull past the top runs': 'উপর থেকে টানলে চলবে',
   Nothing: 'কিছুই নয়',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'রাখুন',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'ডানে সরান',
   'Move to the left': 'বাঁয়ে সরান',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'অ্যাকাউন্টে ইতিহাস',
   'Keep versions': 'সংস্করণ রাখুন',
   'A month': 'এক মাস',
   'A year': 'এক বছর',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'শেষ দিনের সবকিছু, তারপর ঘণ্টায় একটি, এক মাস পরে দিনে একটি, আর তিন মাস পরে সপ্তাহে একটি।',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'একটি রুমে একটি নোট যত বড় হতে পারে, এই নোটটি তত বড় হয়ে গেছে।',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'নতুন ট্যাব',
   'Full screen': 'পূর্ণ স্ক্রীণ',
   'Print…': 'প্রিন্ট…',
   'Share…': 'শেয়ার…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'চায়',
   'Don’t allow': 'অনুমতি দেবেন না',
   Allow: 'অনুমতি দিন',
@@ -1868,7 +1785,6 @@ export const bn: Dictionary = {
   'Use your MIDI devices': 'আপনার MIDI ডিভাইস ব্যবহার করুন',
   'Manage windows on all your displays': 'আপনার সব ডিসপ্লেতে উইন্ডো ম্যানেজ করুন',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'সাইটের তথ্য',
   Downloads: 'ডাউনলোড',
   'Downloading {name}': '{name} ডাউনলোড হচ্ছে',
@@ -1895,11 +1811,9 @@ export const bn: Dictionary = {
   'Turn into': 'বদলান',
   Foldable: 'ভাঁজযোগ্য',
   'Starts folded': 'ভাঁজ করা শুরু',
-  // Where a space keeps what websites store
   'Web data': 'ওয়েব ডেটা',
   Global: 'সবার জন্য',
   Site: 'সাইট',
-  // The Mac's menu bar
   'About {name}': '{name} সম্পর্কে',
   Services: 'পরিষেবা',
   'Hide {name}': '{name} লুকান',
@@ -1907,7 +1821,6 @@ export const bn: Dictionary = {
   'Show all': 'সব দেখান',
   'Quit {name}': '{name} বন্ধ করুন',
   'Bring all to front': 'সব সামনে আনুন',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'কপি আনডু করুন',
   'Devices with your AI vault': 'আপনার AI ভল্ট থাকা ডিভাইস',
   'This device': 'এই ডিভাইস',
@@ -1922,13 +1835,11 @@ export const bn: Dictionary = {
   'Select down': 'নিচের দিকে নির্বাচন',
   'Select up': 'উপরের দিকে নির্বাচন',
   'Select or deselect': 'নির্বাচন বা নির্বাচন বাতিল',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'নতুন ট্যাবে খুলুন',
   'Open to the side': 'পাশে খুলুন',
   'Open all': 'সব খুলুন',
   'Show in the file list': 'ফাইলের তালিকায় দেখান',
   'Collapse the file list': 'ফাইলের তালিকা গুটিয়ে নিন',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'নির্বাচন বড় করুন',
   'Shrink the selection': 'নির্বাচন ছোট করুন',
   'Insert a line above': 'উপরে একটি লাইন যোগ করুন',
@@ -1942,18 +1853,15 @@ export const bn: Dictionary = {
   'Duplicate the block': 'ব্লক ডুপ্লিকেট করুন',
   'Move the block up': 'ব্লক উপরে সরান',
   'Move the block down': 'ব্লক নিচে সরান',
-  // The editor's menu on a link and a picture
   'Copy link address': 'লিংকের ঠিকানা কপি',
   'Edit link': 'লিংক সম্পাদনা',
   'Remove link': 'লিংক সরান',
   'Copy picture': 'ছবি কপি',
   'Open picture': 'ছবি খুলুন',
   'Delete picture': 'ছবি মুছুন',
-  // A file dropped into a note
   'Storing the file': 'ফাইল রাখা হচ্ছে',
   'That file is larger than a note can keep.': 'ফাইলটি একটি নোট যতটা রাখতে পারে তার চেয়ে বড়।',
   'That file could not be kept.': 'ফাইলটি রাখা গেল না।',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'নতুন টার্মিনাল',
   'Command Prompt': 'কমান্ড প্রম্পট',
   Terminal: 'টার্মিনাল',
@@ -1978,11 +1886,8 @@ export const bn: Dictionary = {
     one: '{count}টি লাইন পেস্ট করবেন?',
     other: '{count}টি লাইন পেস্ট করবেন?',
   },
-  // Orden as the default browser
   'Default browser': 'ডিফল্ট ব্রাউজার',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name}-এর সম্পাদনা পূর্বাবস্থায় ফেরান',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'আর্কাইভ করুন',
   Unarchive: 'আর্কাইভ থেকে সরান',
   Archived: 'আর্কাইভ করা হয়েছে',
@@ -1995,7 +1900,6 @@ export const bn: Dictionary = {
     one: 'ভিতরে {count}টি আর্কাইভ করা আইটেম',
     other: 'ভিতরে {count}টি আর্কাইভ করা আইটেম',
   },
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'বাম সাইডবার',
   'Right sidebar': 'ডান সাইডবার',
   'Ask about this space': 'এই স্পেস নিয়ে প্রশ্ন করুন',
@@ -2006,7 +1910,6 @@ export const bn: Dictionary = {
   'Ask again': 'আবার জিজ্ঞাসা করুন',
   'Continue when the limit resets': 'সীমা নতুন হলে চালিয়ে যান',
   'Continues at {time}': '{time}-এ চালিয়ে যাবে',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'যা খুশি জিজ্ঞেস করুন, যোগ করতে @, আরও জন্য /',
   'What can I help with?': 'কীভাবে সাহায্য করতে পারি?',
   'Add photos and files': 'ছবি ও ফাইল যোগ করুন',
@@ -2074,12 +1977,9 @@ export const bn: Dictionary = {
   Closed: 'বন্ধ করেছে',
   Ran: 'চালিয়েছে',
   Changed: 'বদলেছে',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': 'এই {device}',
   '{name} is back: {device} was writing in it': '{name} ফিরে এসেছে: {device} এতে লিখছিল',
   'Changes to {name} are not syncing': '{name}-এর পরিবর্তনগুলো সিঙ্ক হচ্ছে না',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'খোলা',
   Pressing: 'চাপা',
   Typing: 'টাইপ করা',
@@ -2094,18 +1994,14 @@ export const bn: Dictionary = {
   'Agent tabs closed': 'এজেন্টের ট্যাব বন্ধ হয়েছে',
   'Orden is still running for your agents': 'আপনার এজেন্টদের জন্য Orden এখনও চলছে',
   '{client} wants to connect': '{client} সংযোগ করতে চায়',
-  // Web logins that travel, and the devices of an account
   'no such device': 'এমন ডিভাইস নেই',
   'give the device a name': 'ডিভাইসটির একটি নাম দিন',
   'that computer is no longer waiting': 'সেই কম্পিউটারটি আর অপেক্ষা করছে না',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'এমন কোনো ফাইল নেই',
   'too many changes at once - try again in a minute':
     'একসাথে অনেক বেশি পরিবর্তন - এক মিনিট পরে আবার চেষ্টা করুন',
   'that is more than a space keeps about its tree':
     'একটি স্পেস তার ট্রি সম্পর্কে যতটা রাখে, এটি তার চেয়ে বেশি',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'এই কম্পিউটারের এজেন্ট',
   'Your account’s connector': 'আপনার অ্যাকাউন্টের কানেক্টর',
   'Orden asks you once, the first time it connects.':
@@ -2175,12 +2071,9 @@ export const bn: Dictionary = {
     one: '{count}টি কল',
     other: '{count}টি কল',
   },
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'ছোট প্রশ্ন',
   Scratchpad: 'Scratchpad',
   'Add to note': 'নোটে যোগ করুন',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'এক্সটেনশন',
   'Add extension': 'এক্সটেনশন যোগ করুন',
   'Manage extensions': 'এক্সটেনশন পরিচালনা করুন',
@@ -2199,7 +2092,6 @@ export const bn: Dictionary = {
   'Did not load': 'লোড হয়নি',
   Permissions: 'অনুমতি',
   Options: 'বিকল্প',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'রিমোট',
   'Add host': 'হোস্ট যোগ করুন',
   Reconnect: 'আবার সংযোগ করুন',
@@ -2207,11 +2099,8 @@ export const bn: Dictionary = {
   'No group': 'কোনো গ্রুপ নেই',
   'Not an address': 'এটি ঠিকানা নয়',
   'Could not connect to {host}': '{host}-এ সংযোগ করা যায়নি',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'ছবি পাঠানো হচ্ছে',
   'Could not send the image': 'ছবি পাঠানো যায়নি',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': {
     one: 'এবং এর পরের {count}টি',
     other: 'এবং এর পরের {count}টি',
@@ -2224,8 +2113,6 @@ export const bn: Dictionary = {
   'Pages, terminals and moves are not undone': 'পেজ, টার্মিনাল ও সরানো পূর্বাবস্থায় ফেরে না',
   Rewind: 'পিছিয়ে যান',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'সার্চ ইঞ্জিন',
   History: 'ইতিহাস',
   'Search history': 'সার্চের ইতিহাস',
@@ -2249,14 +2136,12 @@ export const bn: Dictionary = {
   'New private tab': 'নতুন ব্যক্তিগত ট্যাব',
   'All spaces': 'সব স্পেস',
   'the data could not be deleted': 'ডেটা মোছা যায়নি',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'স্নুজ',
   Reminders: 'রিমাইন্ডার',
   'Reminders ring while Orden is open': 'Orden খোলা থাকলে রিমাইন্ডার বাজে',
   Automatic: 'স্বয়ংক্রিয়',
   'Stay in the tray': 'ট্রেতে থাকুন',
   'Exact alarms': 'নির্ভুল অ্যালার্ম',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'কাজ',
   'Plan my day': 'আমার দিন পরিকল্পনা করুন',
   'Add a task': 'কাজ যোগ করুন',
@@ -2268,8 +2153,6 @@ export const bn: Dictionary = {
   'Done tasks too': 'সম্পন্ন কাজও',
   'As a task': 'কাজ হিসেবে',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'কাজ',
   Ascending: 'ঊর্ধ্বক্রম',
   Descending: 'অধঃক্রম',
@@ -2354,8 +2237,6 @@ export const bn: Dictionary = {
   'Without a value': 'মান ছাড়া',
   'With a value': 'মান সহ',
   Unique: 'অনন্য',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'টেমপ্লেট থেকে নতুন নোট',
   Automations: 'স্বয়ংক্রিয় কাজ',
   'Row added': 'সারি যোগ হয়েছে',
@@ -2384,7 +2265,6 @@ export const bn: Dictionary = {
   Form: 'ফর্ম',
   Formula: 'সূত্র',
   'Blocked by {task}': '{task}-এর জন্য আটকে',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'প্রস্থানের আগে সতর্ক করুন',
   'When something runs': 'কিছু চললে',
   'Quit {name}?': '{name} বন্ধ করবেন?',
@@ -2395,16 +2275,13 @@ export const bn: Dictionary = {
   'Quit anyway': 'তবুও বন্ধ করুন',
   'Restart anyway': 'তবুও রিস্টার্ট করুন',
   'Close anyway': 'তবুও বন্ধ করুন',
-  // The online terminal
   'Online terminal': 'অনলাইন টার্মিনাল',
   'New online terminal': 'নতুন অনলাইন টার্মিনাল',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'অন্য একটি ডিভাইস',
   'Taken over by {device}': '{device} নিয়ে নিয়েছে',
   'Open on {device} since {time}': '{time} থেকে {device}-এ খোলা',
   'Take over': 'নিয়ে নিন',
   'Take back': 'ফিরিয়ে নিন',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'নতুন অ্যাপ্লিকেশন',
   Application: 'অ্যাপ্লিকেশন',
   'This application’s file is damaged': 'এই অ্যাপ্লিকেশনের ফাইল নষ্ট',
@@ -2512,8 +2389,6 @@ export const bn: Dictionary = {
   'Compare with original': 'মূলের সাথে তুলনা করুন',
   'Conflict copies from other apps': 'অন্য অ্যাপের দ্বন্দ্ব কপি',
   'Remove from sync': 'সিংক থেকে সরান',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'প্রোফাইল',
   Change: 'বদলান',
   'Take photo': 'ছবি তুলুন',
@@ -2538,7 +2413,6 @@ export const bn: Dictionary = {
   'that picture could not be opened': 'ছবিটি খোলা যায়নি',
   'the camera could not be opened': 'ক্যামেরা খোলা যায়নি',
   'that picture is too big': 'ছবিটি খুব বড়',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'চ্যাট',
   Reply: 'উত্তর',
   Replies: 'উত্তরগুলো',
@@ -2557,7 +2431,6 @@ export const bn: Dictionary = {
   'Also send to {chat}': '{chat}-এও পাঠান',
   'Skin tone': 'ত্বকের রং',
   'Deleted account': 'মুছে ফেলা অ্যাকাউন্ট',
-  // Chats: notifications
   Mute: 'মিউট করুন',
   Unmute: 'আনমিউট করুন',
   'New message': 'নতুন বার্তা',
@@ -2567,7 +2440,6 @@ export const bn: Dictionary = {
   Weekdays: 'কর্মদিবস',
   Starts: 'শুরু',
   Ends: 'শেষ',
-  // Chats: everywhere
   'Read chats': 'চ্যাট পড়া',
   'Post in chats': 'চ্যাটে লেখা',
   'Always in this chat': 'এই চ্যাটে সবসময়',
@@ -2579,14 +2451,12 @@ export const bn: Dictionary = {
   'Search this chat': 'এই চ্যাটে খুঁজুন',
   'Add as task': 'কাজ হিসেবে যোগ করুন',
   'Save as note': 'নোট হিসেবে সংরক্ষণ করুন',
-  // Appearance: glass's own pairs of colours
   Dawn: 'ভোর',
   Lagoon: 'উপহ্রদ',
   Lilac: 'লাইলাক',
   Peach: 'পিচ',
   Sage: 'সেজ',
   Mist: 'কুয়াশা',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'নতুন ডেটাবেস',
   'New page': 'নতুন পৃষ্ঠা',
   'Not started': 'শুরু হয়নি',
@@ -2612,7 +2482,6 @@ export const bn: Dictionary = {
   Large: 'বড়',
   Both: 'দুটোই',
   'Shown on cards': 'কার্ডে দেখানো',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'ভল্টের মাধ্যমে এই ব্রাউজারের AI কী আপনার অন্য ডিভাইসগুলোর সাথে সিংক করে।',
   'Which of your AI accounts this feature asks.':
@@ -2844,7 +2713,6 @@ export const bn: Dictionary = {
   'Some changes may not be noticed': 'কিছু পরিবর্তন হয়তো ধরা পড়বে না',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'সিস্টেমে নজর রাখা ফোল্ডারের সীমা পূর্ণ, তাই অন্য প্রোগ্রাম আপনার স্পেসে যে পরিবর্তন করে তার সব Orden হয়তো ধরতে পারবে না। fs.inotify.max_user_watches বাড়ালে ঠিক হয়।',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'চ্যাট {name} {space}-এ সরাবেন?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'তখন {space}-এর সবাই পুরো ইতিহাস পড়তে পারবে, আর {from}-এর লোকেরা তা হারাবে।',
@@ -2884,7 +2752,6 @@ export const bn: Dictionary = {
   'One colour': 'এক রঙে',
   'Web icons': 'ওয়েব আইকন',
   'Sites you visit will appear here': 'আপনি যে সাইটগুলিতে যান সেগুলি এখানে দেখা যাবে',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'শ্রুতলিপি',
   'Dictate with': 'যা দিয়ে শ্রুতলিপি',
   'Where your voice goes to be turned into words.':
@@ -2915,11 +2782,9 @@ export const bn: Dictionary = {
   'Not on this device': 'এই ডিভাইসে নেই',
   'Not on this device. It opens once you are online again.':
     'এই ডিভাইসে নেই। আপনি আবার অনলাইনে এলে এটি খুলবে।',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'IMAP সার্ভার',
   'SMTP server': 'SMTP সার্ভার',
   'User name': 'ব্যবহারকারীর নাম',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'জরুরি',
   Important: 'গুরুত্বপূর্ণ',
   'If time': 'সময় থাকলে',

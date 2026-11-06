@@ -1,38 +1,3 @@
-//! Agents: programs that drive Orden on the reader's behalf, through the local endpoint.
-//! The design is docs/agent-native.md; this is its crate half.
-//!
-//! One responsibility a file:
-//!
-//! | file | what it owns |
-//! | --- | --- |
-//! | `verbs` | every verb's name, arguments and answer, and the events: the contract |
-//! | `grants` | who may drive Orden and how far, and their tokens |
-//! | `policy` | what an agent may do, and what it asks first, read from the page |
-//! | `approvals` | the questions, and the reader's answers |
-//! | `limits`, `stop` | how fast, and the stop |
-//! | `log` | every call, written down |
-//! | `tabs`, `quiet` | the agent's own tabs nobody sees, and everything they may not do |
-//! | `engines` | which engine a page is on, and the one interface every act goes through |
-//! | `cdp`, `page`, `snapshot`, `keys` | the `DevTools` Protocol, and every act through it |
-//! | `scripts` | what every engine runs in a page to read it, and the secrets painted over |
-//! | `browser`, `reader` | the browser verbs, on the agent's tabs and the reader's |
-//! | `capture` | a page read for the window's `capture_to_note` |
-//! | `memory` | the engine's memory |
-//! | `shell` | what the app around the window does for agents - the tray, the stop key, the notifications, the window kept |
-//!
-//! **Nothing at launch.** Not a thread, not a file read, not a webview: the state below
-//! is made on the first request that names an agent verb or carries an agent's token,
-//! and an installation nobody pairs an agent with never makes it (11).
-//!
-//! **Every engine drives a page through one interface, and the verbs are the same on
-//! each** (#1092). `WebView2` and Orden's own Chromium speak the `DevTools` Protocol
-//! (`cdp`, `page`); `WKWebView` is driven through its own calls (`engines/webkit.rs`).
-//! Every verb is decided once, in `browser`, and done through `engines::Engine`; what an
-//! engine cannot do answers `unsupported_on_this_engine` with the reason from that
-//! engine's table (section 12, and `engines`). The parts that are only reading and
-//! deciding - the policy, the snapshot's shape, the keys - are built and tested
-//! everywhere.
-
 #[cfg_attr(
     not(any(windows, feature = "cef")),
     allow(
@@ -116,8 +81,6 @@ pub mod shell;
 
 #[cfg(any(windows, feature = "cef", target_os = "macos"))]
 mod browser;
-// The one door to the DevTools Protocol on a page of either Chromium; the web store merge
-// uses it too (see web_state/cdp.rs).
 #[cfg(any(windows, feature = "cef"))]
 pub(crate) mod cdp;
 #[cfg(any(windows, feature = "cef", target_os = "macos"))]
@@ -135,7 +98,6 @@ mod page;
 mod quiet;
 #[cfg(any(windows, feature = "cef", target_os = "macos"))]
 mod reader;
-// What every engine runs in a page, and makes of what it answers (#1092).
 #[cfg(any(windows, feature = "cef", target_os = "macos"))]
 #[cfg_attr(
     any(windows, feature = "cef"),
@@ -167,33 +129,24 @@ use tauri::AppHandle;
 use grants::{Grant, Grants, Scope};
 use verbs::{Answer, Approval, ApprovalAnswer, ApprovalState, Category, Code, Paired, Verb};
 
-/// Everything the crate keeps about agents, made on the first agent request.
 #[derive(Default)]
 pub struct Agents {
-    /// Who may drive Orden.
     pub grants: Grants,
 }
 
-/// The one `Agents`, made the first time anything asks.
 pub(crate) static AGENTS: OnceLock<Agents> = OnceLock::new();
 
-/// The agents' state, made now if nothing has asked before.
 pub fn state(_app: &AppHandle) -> &'static Agents {
     AGENTS.get_or_init(Agents::default)
 }
 
-/// Who is calling.
 #[derive(Clone, Debug)]
 pub enum Caller {
-    /// The installation's secret: the reader's own command line, with everything. Its
-    /// tabs are filed under `cli`.
     Reader,
-    /// An agent, by its grant.
     Agent(Box<Grant>),
 }
 
 impl Caller {
-    /// The id its tabs, questions and log lines are filed under.
     pub fn id(&self) -> &str {
         match self {
             Caller::Reader => "cli",
@@ -201,7 +154,6 @@ impl Caller {
         }
     }
 
-    /// Whether it may reach a scope. The reader's own command line reaches every one.
     pub fn holds(&self, scope: Scope) -> bool {
         match self {
             Caller::Reader => true,
@@ -209,8 +161,6 @@ impl Caller {
         }
     }
 
-    /// What the window is told about the caller alongside a verb it answers, so its
-    /// dispatcher can check scopes and spaces itself. `None` for the reader.
     pub fn told(&self) -> Option<Value> {
         match self {
             Caller::Reader => None,
@@ -226,9 +176,6 @@ impl Caller {
     }
 }
 
-/// Who a bearer token belongs to, other than the installation's secret: an agent, or
-/// nobody. A client paired over MCP has Full permissions (`connected`); a token the app
-/// lent one of the sidebar's own sessions is that provider's agent in that session's mode.
 pub fn caller_for(app: &AppHandle, token: &str) -> Option<Caller> {
     if let Some(grant) = state(app).grants.by_token(app, token) {
         return Some(Caller::Agent(Box::new(connected(grant))));
@@ -236,23 +183,11 @@ pub fn caller_for(app: &AppHandle, token: &str) -> Option<Caller> {
     crate::ai_agent::lent(app, token).map(|grant| Caller::Agent(Box::new(grant)))
 }
 
-/// A client that connected over MCP (#1099), as every guard reads it: Full permissions.
-/// The agent on the other end - Claude Code, Codex - has a permission system of its own,
-/// which the reader set up there and which is answerable for what it does; Orden asking
-/// again was a second question for every call, all the time. So it is never asked,
-/// handed a step back, or refused on the grounds of the grant: the one decision is
-/// `Grant::holds` and `Grant::asks` (#1072), which `Mode::Autonomous` answers, and no
-/// tool has a rule of its own. What the reader set as limits of their own still holds -
-/// the spaces it reaches, the sites they blocked (`policy::site_allowed`), the calls a
-/// minute - and so does what is never handed to a model whoever asks: a password's
-/// value, a card's number. Only the reader's own agents connect: the endpoint answers on
-/// this machine alone, and a client is paired once by the reader's Allow (9.1).
 fn connected(mut grant: Grant) -> Grant {
     grant.mode = grants::Mode::Autonomous;
     grant
 }
 
-/// Answers one verb of the crate's own, and writes it in the log.
 pub fn answer(app: &AppHandle, caller: &Caller, verb: Verb, args: Value) -> Answer {
     shell::start(app);
     let started = Instant::now();
@@ -263,8 +198,6 @@ pub fn answer(app: &AppHandle, caller: &Caller, verb: Verb, args: Value) -> Answ
     answered
 }
 
-/// Writes a call in the log: the crate's own verbs from `answer`, the window's from the
-/// endpoint.
 pub fn logged(
     app: &AppHandle,
     caller: &Caller,
@@ -274,8 +207,6 @@ pub fn logged(
     answered: &Answer,
     started: Instant,
 ) {
-    // Every call but the goodbye, which would otherwise count as the agent still being
-    // here the moment after it left.
     if let Caller::Agent(grant) = caller {
         if verb != "agent_bye" {
             shell::heard(app, &grant.id);
@@ -300,7 +231,6 @@ pub fn logged(
     );
 }
 
-/// One verb, answered.
 fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
     #[cfg(any(windows, feature = "cef", target_os = "macos"))]
     tabs::back(caller.id());
@@ -342,19 +272,15 @@ fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
                 Ok(true) => said_waiting(app, caller, "calls"),
                 Ok(false) => {}
             }
-            // Files anywhere need no engine: answered here, on every desktop (#1078).
             if let Verb::Files(asked) = &browsing {
                 return files::answer(app, caller, asked);
             }
-            // So do programs (#1078).
             if let Verb::Process(asked) = &browsing {
                 return process::answer(app, caller, asked, since);
             }
-            // And requests to any site (#1078).
             if let Verb::Http(asked) = &browsing {
                 return http::answer(app, caller, asked, since);
             }
-            // And the system around the app (#1078).
             if let Verb::System(asked) = &browsing {
                 return system::answer(app, caller, asked);
             }
@@ -363,13 +289,11 @@ fn run(app: &AppHandle, caller: &Caller, verb: Verb) -> Answer {
     }
 }
 
-/// The browser's verbs, where the engine can answer them.
 #[cfg(any(windows, feature = "cef", target_os = "macos"))]
 fn browse(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer {
     browser::answer(app, caller, verb, since)
 }
 
-/// A phone: no agent tabs at all, so no verb pretends.
 #[cfg(not(any(windows, feature = "cef", target_os = "macos")))]
 fn browse(_app: &AppHandle, _caller: &Caller, verb: Verb, _since: u64) -> Answer {
     Answer::error(
@@ -381,7 +305,6 @@ fn browse(_app: &AppHandle, _caller: &Caller, verb: Verb, _since: u64) -> Answer
     )
 }
 
-/// Counts a navigation against the agent's limit, waiting for room.
 #[cfg_attr(
     not(any(windows, feature = "cef", target_os = "macos")),
     allow(
@@ -401,7 +324,6 @@ fn count_navigation(caller: &Caller, since: u64) -> Result<(), Answer> {
     }
 }
 
-/// One line in the log for a burst of calls that had to wait.
 fn said_waiting(app: &AppHandle, caller: &Caller, what: &str) {
     logged(
         app,
@@ -414,7 +336,6 @@ fn said_waiting(app: &AppHandle, caller: &Caller, what: &str) {
     );
 }
 
-/// `agent_status`.
 fn status(app: &AppHandle, caller: &Caller) -> Answer {
     let Caller::Agent(grant) = caller else {
         return Answer::error(
@@ -438,12 +359,8 @@ fn status(app: &AppHandle, caller: &Caller) -> Answer {
     })
 }
 
-/// The longest a pairing waits for the reader inside one call.
 const LONGEST_PAIRING_WAIT: Duration = Duration::from_secs(300);
 
-/// `agent_pair`: a client asking to become an agent (9.1). The reader is asked once; an
-/// allowed pairing answers the token to the call that comes after it, or to the call
-/// still waiting.
 fn pair_client(app: &AppHandle, caller: &Caller, pair: &verbs::Pair) -> Answer {
     if !matches!(caller, Caller::Reader) {
         return Answer::error(
@@ -487,12 +404,8 @@ fn pair_client(app: &AppHandle, caller: &Caller, pair: &verbs::Pair) -> Answer {
     }
 }
 
-/// What a pairing's question is filed under: nobody's yet.
 const PAIRING: &str = "";
 
-/// Whether an agent may send a window verb at all, and what it needs to: the crate's
-/// half of the check, before the window's own. A verb of the command line's that is
-/// not an agent's (`files.write`, `eval`) is never handed on for an agent.
 pub fn may_ask_the_window(caller: &Caller, verb: &str) -> Result<(), String> {
     let Caller::Agent(_) = caller else {
         return Ok(());
@@ -518,9 +431,6 @@ pub fn may_ask_the_window(caller: &Caller, verb: &str) -> Result<(), String> {
     }
 }
 
-/// Whether a command came from the app's own page: a document window's, never a web
-/// page's, whatever the capabilities say. The same rule the terminal holds itself to; an
-/// agent's page answering its own questions is the thing this is here to make impossible.
 pub(crate) fn from_the_app(webview: &tauri::Webview) -> Result<(), String> {
     if crate::launch::is_document_window(webview.label()) {
         Ok(())
@@ -529,9 +439,6 @@ pub(crate) fn from_the_app(webview: &tauri::Webview) -> Result<(), String> {
     }
 }
 
-/// The stop: every call in flight cancelled, every agent paused, and on a second press
-/// every agent's tabs closed. Answers whether they were. With an agent named, that one
-/// agent stopped and nobody else, which closes nothing.
 #[tauri::command]
 pub fn agents_stop(
     webview: tauri::Webview,
@@ -548,7 +455,6 @@ pub fn agents_stop(
     })
 }
 
-/// The stop lifted: everybody's when no agent is named, or one agent's own.
 #[tauri::command]
 pub fn agents_resume(
     webview: tauri::Webview,
@@ -560,10 +466,6 @@ pub fn agents_resume(
     Ok(())
 }
 
-/// A file dialog an agent's command would open, answered by the path the agent gave
-/// instead (#1078): the file read or written only where `files` would let it be - the
-/// scope, never behind a fence, and the question it raises. Answers `{"path"}` made
-/// absolute, the question, or why not.
 #[tauri::command(async)]
 pub fn agents_dialog_path(
     webview: tauri::Webview,
@@ -585,8 +487,6 @@ pub fn agents_dialog_path(
     };
     match files::reachable(&app, &Caller::Agent(Box::new(grant)), &path, op) {
         Ok(path) => {
-            // What the dialog's pick would have let the app's writers and readers reach,
-            // which `write_bytes`, `write_note` and the import stand behind.
             crate::paths::picked_for_an_agent(&app, &files::pick_reach(&app, &path));
             Answer::ok(serde_json::json!({ "path": path.display().to_string() }))
         }
@@ -594,7 +494,6 @@ pub fn agents_dialog_path(
     }
 }
 
-/// The reader's answer to a question: Allow or Don't allow, and "Always on this site".
 #[tauri::command(async)]
 pub fn agents_answer(
     webview: tauri::Webview,
@@ -623,10 +522,6 @@ pub fn question_category(id: &str) -> Option<(verbs::Category, Option<String>)> 
     approvals::any(id).map(|one| (one.category, one.site))
 }
 
-/// A question the window raises for one of its own verbs on an agent's behalf (writing
-/// a setting, publishing): `ok` when the reader already allowed this very call, which
-/// spends the allowance, or said "Always" for what `site` names (`chat:<id>`, a chat
-/// the reader let the agent post in for good), and `needs_approval` otherwise.
 #[tauri::command(async)]
 pub fn agents_ask(
     webview: tauri::Webview,
@@ -667,8 +562,6 @@ pub fn agents_ask(
     )
 }
 
-/// Everything the activity panel draws from, at once: the agents, their tabs, the
-/// questions waiting and who is stopped. The events keep it current after.
 #[tauri::command(async)]
 pub fn agents_state(webview: tauri::Webview, app: AppHandle) -> Result<Overview, String> {
     from_the_app(&webview)?;
@@ -695,24 +588,16 @@ pub fn agents_state(webview: tauri::Webview, app: AppHandle) -> Result<Overview,
     })
 }
 
-/// What `agents_state` answers.
 #[derive(Serialize)]
 pub struct Overview {
-    /// Every agent.
     pub agents: Vec<Grant>,
-    /// Every agent tab, with its agent.
     pub tabs: Vec<(String, verbs::AgentTab)>,
-    /// Every question waiting.
     pub approvals: Vec<Approval>,
-    /// Whether the stop is pressed.
     pub stopped: bool,
-    /// The agents stopped one at a time.
     pub halted: Vec<String>,
-    /// The agents connected now.
     pub connected: Vec<String>,
 }
 
-/// One day of the audit log, oldest first, for the activity panel and Add to note.
 #[tauri::command(async)]
 pub fn agents_log(
     webview: tauri::Webview,
@@ -723,15 +608,12 @@ pub fn agents_log(
     Ok(log::read_day(&app, &day))
 }
 
-/// The days the audit log has, newest first, for Settings > Agents' sessions.
 #[tauri::command(async)]
 pub fn agents_log_days(webview: tauri::Webview, app: AppHandle) -> Result<Vec<String>, String> {
     from_the_app(&webview)?;
     Ok(log::days(&app))
 }
 
-/// The reader's Clear in Settings > Agents: one agent's calls out of the audit log, or
-/// every call when no agent is named.
 #[tauri::command(async)]
 pub fn agents_log_clear(
     webview: tauri::Webview,
@@ -742,8 +624,6 @@ pub fn agents_log_clear(
     log::clear(&app, agent.as_deref())
 }
 
-/// An agent's tab made a tab of the reader's, without loading it again (6.7): the
-/// window has made the reader's tab `tab` for it, and places the page as it places any.
 #[tauri::command(async)]
 pub fn agents_adopt(
     webview: tauri::Webview,
@@ -761,9 +641,6 @@ pub fn agents_adopt(
     }
 }
 
-/// A page read for the window's `capture_to_note` (5.4), on the agent's behalf: `agent`
-/// is the grant the window's dispatcher was handed with the call, and none for the
-/// reader's own command line. `page` is the reader's paper, for a PDF. See `capture`.
 #[tauri::command(async)]
 pub fn agents_capture(
     webview: tauri::Webview,
@@ -812,12 +689,9 @@ mod tests {
         assert!(may_ask_the_window(&agent, "eval").is_err());
         assert!(may_ask_the_window(&agent, "list_spaces").is_ok());
 
-        // The reader's own command line is not an agent.
         assert!(may_ask_the_window(&Caller::Reader, "files.write").is_ok());
     }
 
-    /// #1099: whatever the grant kept says, a client connected over MCP is asked nothing
-    /// and holds every scope, while the reader's blocked sites and spaces still hold.
     #[test]
     fn a_client_connected_over_mcp_is_asked_nothing() {
         let mut kept = Grant::third_party("codex".into(), "Codex");

@@ -13,7 +13,6 @@ const PAGE_KEY = 'nib:page'
 const APPEARANCE_KEY = 'nib:export-appearance'
 const NOTE_ID_KEY = 'nib:note-id'
 
-/** How an exported page is coloured: light, dark, or as the app looks now. */
 type ExportAppearance = 'light' | 'dark' | 'app'
 
 export type Section =
@@ -41,39 +40,25 @@ export type Section =
 class Settings {
   open = $state(false)
   section = $state<Section>('general')
-  /** On a phone the panes are a list first and a page second: this is whether
-   *  the list is showing rather than one of them. A desktop shows both. */
   listing = $state(true)
-  /** The version-history sheet, which is its own overlay. */
   historyOpen = $state(false)
-  /** The first run's optional questions: -1 all set, else the one asked; Personalize.svelte. */
   setup = $state<number | null>(null)
 
-  /** Whether pandoc is on this machine, which decides the export list. */
   pandoc = $state(false)
 
-  /** Paper and running text for export. A note's front matter overrules it. */
   page = $state<PageSetup>({ ...DEFAULT_PAGE_SETUP })
 
-  /** Light by default: a document is read on paper, or sent to someone whose
-   *  screen is not this one. */
   exportAppearance = $state<ExportAppearance>('light')
 
-  /** Whether Explorer's "New" menu offers a markdown document. Windows only. */
   newMenu = $state(false)
 
-  /** How "New unique note" spells the moment it names a note after. Only that
-   *  command uses it; every other note is named by whoever writes it. */
   noteIdFormat = $state(DEFAULT_ID_FORMAT)
 
-  /** What went wrong, wherever a pane or an action wants to say so. */
   error = $state<string | null>(null)
 
   restore() {
     connectors.restore()
 
-    // Field by field, so a paper size this build has never heard of costs the
-    // reader their paper and not their margins as well.
     const saved = stored(PAGE_KEY)
     if (isRecord(saved)) {
       this.page = {
@@ -86,8 +71,6 @@ class Settings {
       }
     }
 
-    // Only a format this build knows how to fill in, so a value written by a
-    // later one cannot leave every unique note sharing a name.
     const format = storedText(NOTE_ID_KEY)
     if (format && ID_FORMATS.includes(format)) this.noteIdFormat = format
 
@@ -109,7 +92,6 @@ class Settings {
     }
   }
 
-  /** Adds or removes Explorer's "New ▸ Markdown Document" entry. */
   async setNewMenu(enabled: boolean) {
     if (!isDesktop) return
 
@@ -137,7 +119,6 @@ class Settings {
     keep(APPEARANCE_KEY, appearance)
   }
 
-  /** Reads `snippets.json` into the editor's completion source. */
   async loadSnippets() {
     if (!isNative) return
 
@@ -150,25 +131,15 @@ class Settings {
 
       setSnippets(usable)
     } catch {
-      // A malformed file simply means no snippets, not a broken editor.
       setSnippets({})
     }
   }
 
-  /** Where in a pane it was asked to open: Access, for what used to be panes of their
-   *  own. Read and cleared by the part it names. */
   at = $state<'access' | null>(null)
 
-  /** Which space the Space pane is about where it was asked for one, by its root; the
-   *  one in front otherwise. */
   space = $state<string | null>(null)
-  /** The hint on a refused name: the Space pane puts the caret in its field. Any other
-   *  way into the settings, or out of them, takes it back. */
   landsOnField = $state(false)
 
-  /** Opens on General, or on the list of panes where the screen is a phone's.
-   *  Asked for by name, a pane opens straight away on both. Agents and LLM access are
-   *  Settings > AI's Access now, and a link to either still lands there. */
   show(section?: Section, space: string | null = null, landsOnField = false) {
     this.space = space
     this.landsOnField = landsOnField
@@ -184,9 +155,6 @@ class Settings {
 
 export const settings = new Settings()
 
-/** Kinds of tab Settings › Note types turned off: nothing offers to make one, and a file
- *  of one still opens. Here, with the settings the first paint reads; set and synced in
- *  kind-choice.ts. */
 export const KINDS_KEY = 'nib:hidden-kinds'
 
 export type KindName =
@@ -208,10 +176,8 @@ export function kindsHere(): KindName[] {
   const web = !viewport.touch
   const here: KindName[] = ['note', 'canvas', 'pages']
   if (account.accountToken) here.push('chat')
-  // Every terminal is for somebody who writes code; see `developer` in modes.svelte.ts.
   if (isDesktop && modes.coder) here.push('terminal', 'remote')
   if (modes.coder) here.push('online')
-  // An application on one of the reader's computers, used from any device (docs/apps.md).
   if (modes.coder) here.push('application')
   if (isDesktop) here.push('explorer')
   if (web) here.push('web')
@@ -219,7 +185,6 @@ export function kindsHere(): KindName[] {
   return here
 }
 
-/** Or the first, if none is left. */
 export function shownOf(here: readonly KindName[], hidden: readonly string[]): KindName[] {
   const shown = here.filter((kind) => !hidden.includes(kind))
   return shown.length ? shown : here.slice(0, 1)

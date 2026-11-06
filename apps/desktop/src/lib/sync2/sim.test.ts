@@ -1,16 +1,8 @@
-/** The engine as the simulator's devices (docs/sync-v2.md section 12): every scripted
- *  road of section 1 that used to end in a second file or in lost words, pinned so it
- *  cannot come back, then the random walks on the unkind network, all against the kit's
- *  reference account. The same scripts against the Worker's own routes and rooms are in
- *  services/sync/test/sync2-engine.test.ts, and ten thousand seeds are
- *  `pnpm --filter @orden/desktop sim:long` (walks/walk.ts). */
-
 import { describe, expect, test } from 'vitest'
 import { CALM, crowded, markersIn, type Report, simulate, type Step } from '@orden/sync-core/sim'
 import { EngineDevice } from './sim-device'
 import { walked } from './walks/walk'
 
-/** Waits long enough for everything in the air to land. */
 const settle: Step = { t: 'wait', ticks: 40 }
 
 function run(script: readonly Step[]): Promise<Report> {
@@ -28,7 +20,6 @@ function textOf(report: Report, name: string): string {
   return entry ? (report.account.texts[entry.id] ?? '') : ''
 }
 
-/** Plan.md is the first of the seeded notes by id, so a pick of 0 lands on it. */
 const PLAN = 0
 
 describe('scripted roads, the engine as every device', () => {
@@ -149,8 +140,6 @@ describe('scripted roads, the engine as every device', () => {
   })
 
   test("the space's own inbox made on two devices is one inbox with every task of both, once", async () => {
-    // #1044: a task added on each device while apart makes the hidden inbox on each, and
-    // both had moved the same old inbox in. One inbox, every task once, nothing asked.
     const made = (device: number, marker: string): Step => ({
       t: 'act',
       device,
@@ -246,28 +235,12 @@ describe('scripted roads, the engine as every device', () => {
 })
 
 describe('random walks, the engine as every device', () => {
-  /** What a CI run walks beside the rest of the suite; the long run is walks/walk.ts. */
   const SEEDS = 300
 
   test(`${String(SEEDS)} seeds hold every check`, async () => {
     expect(await walked(1, SEEDS)).toEqual([])
   }, 600_000)
 
-  /** Seeds a nightly walk failed on, walked on every run from then on: the nightly walk
-   *  never walks a seed twice, so nothing else would notice one failing again.
-   *
-   *  - 207340730: a folder deleted on a device that had read the list but not pulled the
-   *    words of a note in it took the note, words and all (#435).
-   *  - 207384677: two devices that each moved the same passage settling a meeting put it
-   *    in the note twice, and a day's note renamed before it went was merged into another
-   *    note of that name (#436).
-   *  - 644000557: a note one device renamed, never having seen another move it into a
-   *    folder, was taken with that folder when the first deleted it (#514).
-   *  - 611000297, 622002257: a passage two devices each put back over a deletion, and a
-   *    word two sides each moved, were said twice (#530).
-   *  - 1111002428: words one device typed in front of a word the other wrote around, put
-   *    behind that word, glued to it, and its neighbour said twice by the next merge
-   *    (#779). */
   const ONCE_FAILED = [207340730, 207384677, 644000557, 611000297, 622002257, 1111002428]
 
   test.each(ONCE_FAILED)('seed %i, which once failed, holds every check', async (seed) => {
@@ -275,10 +248,6 @@ describe('random walks, the engine as every device', () => {
   })
 })
 
-/** The tree walked at random (#1068): moves, renames, deletes and restores crossing on
- *  four devices, the engine as every one. A restore here is what the app's trash does -
- *  the files put back where they were, or beside what took their name, and the engine
- *  told by the word the delete was said with - so what was deleted comes back as itself. */
 describe('the tree walked at random, the engine as every device', () => {
   const SEEDS = 40
 
@@ -302,10 +271,7 @@ describe('the tree walked at random, the engine as every device', () => {
     expect(failed).toEqual([])
   }, 600_000)
 
-  /** The road #1068 names: a note moved into a folder and deleted on one device while
-   *  another, offline, still has it where it was. Deleted everywhere, once. */
   test('a note moved and deleted on one device is deleted on the one that was away', async () => {
-    // Live entries are picked in id order: the folder (a UUID) before n1 and n2.
     const NOTE = 0.4
     const report = await run([
       { t: 'act', device: 0, action: { t: 'mkdir', folder: null, name: 'Work' } },
@@ -330,18 +296,9 @@ describe('the tree walked at random, the engine as every device', () => {
   })
 
   test('a note restored from the trash comes back as itself', async () => {
-    // Seed 3 restores the seeded Plan.md (n1) on one device.
     expect(await treeWalk(3)).toEqual([])
   })
 
-  /** Each restored, while away, a folder made inside one this device deleted, and the
-   *  account never brought it back: 2412 said only the outer folder's restore, its delete
-   *  already on its way and taking the inner one with it; 9654 put the folder back beside
-   *  one its trash did not see on the disk; 8388 had made the outer folder too, and its
-   *  delete folded every one of them away as never made, the restore with them. In 15786,
-   *  19363, 21591 and 25006 another device's change had brought it back here already, and
-   *  the restore said nothing; in 23076 this device's words had brought a note back on the
-   *  account unseen, and its delete of the folder took them (#1068). */
   test.each([2412, 9654, 8388, 15786, 19363, 21591, 25006, 23076])(
     'seed %i of the tree on many devices loses no restore and no words',
     async (seed) => {
@@ -362,10 +319,6 @@ test('seed 49850 of the order on many devices keeps the words in a folder moved 
   expect(report.failures).toEqual([])
 })
 
-/** Rows dragged among the rest of their folders as well as the tree walked (#1068): every
- *  device ends with each row where the account has it, so two people arranging one
- *  folder at once both keep what they did. The engine as every device, the drag said to
- *  it by name as the file list says it (`arrange`). */
 describe('rows arranged at random, the engine as every device', () => {
   const SEEDS = 30
 

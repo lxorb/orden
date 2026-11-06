@@ -1,22 +1,9 @@
 <script lang="ts" module>
-  /** What each note's window was drawn from last, and what it drew, by tab: a window
-   *  drawn again from the same words is drawn at once, never a frame after it is shown. */
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read as a window is drawn, never rendered
   const drawnBefore = new Map<string, { key: string; html: string }>()
 </script>
 
 <script lang="ts">
-  /** What a window of the overview shows: what its tab would show, drawn the size its
-   *  pane is and made small by the window (issue #331).
-   *
-   *  The tab in front of a pane is the pane itself, under the window (Overview.svelte),
-   *  and has none of this. Any other is drawn the way its kind says (`preview` in
-   *  workspace/tab-kinds.ts): a note from its words as they are now, through the reading
-   *  renderer, from the line it was left at; a terminal from the last of its screen as
-   *  written down (previews.ts); a web page from its last photograph; anything else from
-   *  the picture kept of it the last time it was on screen (faces.svelte.ts). With
-   *  nothing to draw from, it is its mark, its name and where it is from. */
-
   import { untrack } from 'svelte'
   import { fade } from 'svelte/transition'
   import { dur } from '../motion'
@@ -40,25 +27,18 @@
     flying = false,
   }: {
     tab: Tab
-    /** The picture kept of it, if there is one. */
     face: Face | null
     width: number
     height: number
     drawing?: (done: Promise<unknown>) => void
-    /** Whether the windows are on their way: nothing a window shows changes meanwhile,
-     *  and what came in the while is drawn once they are where they go. */
     flying?: boolean
   } = $props()
 
-  /** How its kind is drawn while it is not in front. */
   const how = $derived(TAB_KINDS[tab.kind].preview)
   const locked = $derived(workspace.protection.locked(tab.path))
 
-  /** As much of a note as a window can show at most: a screenful from where it was left.
-   *  A note of a hundred thousand words is not rendered whole to show one screen. */
   const START = 6000
 
-  /** What the note is read from, and how: the same again is drawn from what was drawn. */
   const reading = $derived.by(() => {
     if (how !== 'reading' || locked) return null
     const text = readingFrom(tab.doc, tab.anchor, START)
@@ -107,7 +87,6 @@
     const now = latestShot
     if (!flying) shot = now
   })
-  /** The photograph the engine has decoded, which is drawn over the mark once it is. */
   let decodedShot = $state<string | null>(null)
 
   let kept = $state(untrack(() => face))
@@ -116,7 +95,6 @@
     if (!flying) kept = now
   })
 
-  /** A terminal's last lines, as written down. */
   let readScreen = $state<{ text: string; cols: number } | null>(null)
   $effect(() => {
     if (how !== 'scrollback' || locked) return
@@ -135,8 +113,6 @@
     if (!flying) screen = now
   })
 
-  /** A kept picture drawn again, at the size it was taken and made the window's width,
-   *  its scrollers where they were. */
   function drawn(node: HTMLElement, kept: Face) {
     const draw = (one: Face) => {
       if (one.html) drawInto(node, one.html)
@@ -164,7 +140,6 @@
 
   const arrive = { duration: dur(160) }
 
-  /** Where a tab with no picture is from: a page's site, a file's folder. */
   const whence = $derived.by(() => {
     if (tab.kind === 'web') {
       try {
@@ -228,15 +203,12 @@
     pointer-events: none;
   }
 
-  /* The reading view's column, at the pane's own size. */
   .read {
     height: 100%;
     overflow: hidden;
     padding-top: var(--space-6);
   }
 
-  /* A kept picture: the pane as it was, at its own size, made the window's width from
-     its top left. */
   .kept {
     position: absolute;
     top: 0;
@@ -252,8 +224,6 @@
     height: 100%;
   }
 
-  /* A terminal's last lines, in the terminal's own face, from the bottom up as a screen
-     fills. */
   .screen {
     display: flex;
     flex-direction: column;
@@ -296,7 +266,6 @@
     font-size: calc(2.4 * var(--text-base));
   }
 
-  /* The tab's mark, four times the strip's. */
   .big {
     display: flex;
     scale: 4;

@@ -1,14 +1,3 @@
-//! The copy of `tauri-runtime-cef` Linux builds from (linux/tauri-runtime-cef), read as
-//! text: whatever it asks for an X window, a missing one is never a crash (#1085).
-//!
-//! A web tab's browser being closed has no X window left - CEF destroys it before the
-//! browser is gone - and the crate asserted there was one: a placement, a show or a hide
-//! that reached the browser as it closed stopped the app, and made the step of the sway
-//! drive that closes web tabs one after another fail now and then. The crate's own
-//! `known` is where every X window it asks for is read through, and none of them may be
-//! unwrapped, expected or asserted. Read on every platform, since it is a file like any
-//! other; built only on Linux.
-
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -16,15 +5,12 @@ fn root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("linux/tauri-runtime-cef")
 }
 
-/// A file of the tree as text, with Windows' line ends made `\n` as a checkout there may
-/// write them.
 fn read(path: &Path) -> String {
     fs::read_to_string(path)
         .unwrap_or_else(|error| panic!("{} is not there: {error}", path.display()))
         .replace("\r\n", "\n")
 }
 
-/// Each Rust file of the crate's Linux platform code, with the tests at its end left out.
 fn linux_sources() -> Vec<(PathBuf, String)> {
     let folder = root().join("src/platform/linux");
     let mut found: Vec<(PathBuf, String)> = fs::read_dir(&folder)
@@ -77,7 +63,6 @@ fn no_x_window_asked_for_is_asserted_expected_or_unwrapped() {
 fn the_browsers_window_is_read_through_one_place() {
     let webview = read(&root().join("src/platform/linux/webview.rs"));
     let code = webview.split("#[cfg(test)]").next().unwrap_or_default();
-    // Once in `xid`, and nowhere else: every caller asks `xid` and does nothing on `None`.
     assert_eq!(code.matches("self.host.window_handle()").count(), 1);
     assert!(code.contains("fn xid(&self) -> Option<xlib::Window>"));
 }
@@ -103,10 +88,6 @@ fn linux_builds_the_patched_copy_at_the_pinned_version() {
     );
 }
 
-/// #1148: a sign-in's popup, and an extension's tab, were Chromium's whole window, tab
-/// strip, address bar and "Sign in to Chromium?" and all, which a desktop showed as
-/// Chromium; and every window GTK made carried no `WM_CLASS`, so no desktop could put it
-/// under Orden's name and icon.
 #[test]
 fn every_window_is_orden_s_and_none_chromium_s() {
     let runtime = read(&root().join("src/runtime.rs"));
@@ -125,16 +106,12 @@ fn every_window_is_orden_s_and_none_chromium_s() {
     assert!(class.contains("(xlib.XSetClassHint)("));
     let popup = read(&root().join("src/popup.rs"));
     assert!(popup.contains("crate::platform::linux::name_popup(host.window_handle());"));
-    // And a window Chrome's own UI opens - an extension's tab - is closed, never shown.
     let process = read(&root().join("src/cef_impl/client/process.rs"));
     assert!(process.contains("fn default_client(&self) -> Option<Client>"));
     let unhosted = read(&root().join("src/cef_impl/client/unhosted.rs"));
     assert!(unhosted.contains("host.close_browser(1);"));
 }
 
-/// #1161: closing an extension's tab as Chrome's own UI made it dropped the tabs the reader
-/// asked for - a popup's button for the extension's dashboard - and the page an extension
-/// opens about its own install. Its address is handed over first, and opened as a tab.
 #[test]
 fn a_tab_chrome_s_own_ui_opens_is_handed_over_before_it_is_closed() {
     let process = read(&root().join("src/cef_impl/client/process.rs"));
@@ -150,7 +127,6 @@ fn a_tab_chrome_s_own_ui_opens_is_handed_over_before_it_is_closed() {
         .find("host.close_browser(1);")
         .expect("the browser is closed");
     assert!(browsing < handing && handing < closing);
-    // And its window is off the screen from the moment it is made.
     assert!(unhosted.contains("crate::platform::linux::put_out_of_sight(host.window_handle());"));
     let runtime = read(&root().join("src/runtime.rs"));
     assert!(runtime.contains("pub fn on_unhosted_tab<F>(mut self, handler: F) -> Self"));

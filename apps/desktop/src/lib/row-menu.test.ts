@@ -1,17 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { de } from '../locales/de'
 
-/** What a row of the file list offers, read as a list of labels.
- *
- *  The point of the test is what is not there: no row anywhere offers to make a
- *  folder, because nothing in the interface is one. What is there is one menu for
- *  every row - a note, a note that holds notes, a folder out of somebody's vault,
- *  a PDF - differing only in the entries that mean something for it.
- *
- *  The store reads storage the moment it is made, so that is stood in for before
- *  it is imported; the entries run here keep what they change in memory, so
- *  nothing reaches a disk. */
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -28,15 +17,8 @@ function memoryStorage(): Storage {
 }
 vi.stubGlobal('localStorage', memoryStorage())
 
-/** Whether the file the row stands for is one the account could hand to somebody:
- *  its space is the account's own and the account has a copy of the file. That is
- *  sharing.svelte.ts's to work out from an account and a sync that a unit test has
- *  neither of, so it is stood in for - and both answers are worth a menu, because
- *  a row offers the word only while there is something to share. */
 const shareable = { yes: false }
 
-/** Whether the space may be written in, which is what archiving asks: a space shared
- *  to be read keeps its archive as its owner left it. */
 const writable = { yes: true }
 
 vi.mock('./sharing.svelte', () => ({
@@ -72,15 +54,12 @@ function folder(path: string, children: Entry[] = []): Entry {
   }
 }
 
-/** A space holding all four kinds of row: a note, a note that holds notes, a
- *  folder nobody has written a note in, and a paper. */
 const nested = folder('/s/A', [note('/s/A/A.md'), note('/s/A/B.md')])
 const plain = folder('/s/Projects', [note('/s/Projects/plan.md')])
 const loose = note('/s/loose.md')
 const paper = note('/s/paper.pdf')
 const tree = folder('/s', [nested, plain, loose, paper])
 
-/** The labels the menu offers, dividers left out. */
 function labels(entry: Entry): string[] {
   return rowMenu(entry).flatMap((one) => (one === null ? [] : [one.label]))
 }
@@ -106,9 +85,6 @@ describe('every row', () => {
     }
   })
 
-  /** Which is also the whole of the German dictionary's word for one: a label that
-   *  came back saying "Ordner" would be a folder in the interface in another
-   *  language. */
   test('and the word is gone from the dictionaries too', () => {
     for (const entry of rows) {
       for (const label of labels(entry)) {
@@ -128,8 +104,6 @@ describe('every row', () => {
     }
   })
 
-  // A row is dragged into a folder or onto a space in the switcher, and the palette
-  // asks where (#303); a finger has no drag, and its held press opens this menu.
   test('moves on a touch screen only', () => {
     for (const entry of rows) expect(labels(entry), entry.path).not.toContain('Move')
 
@@ -164,7 +138,6 @@ describe('a note', () => {
 })
 
 describe('a note, with chats to send it to', () => {
-  /** Dragged onto a chat instead (#416); the palette and a selection's menu still send. */
   test('offers no Send to chat', async () => {
     const { account } = await import('./account.svelte')
     Object.defineProperty(account, 'accountToken', { value: 'signed in' })
@@ -172,14 +145,10 @@ describe('a note, with chats to send it to', () => {
   })
 })
 
-/** New note inside makes a note; its chevron offers every kind the file list's New
- *  rows make, each made inside the row (#380). */
 describe('new note inside', () => {
   test('offers every kind, each made in the row', async () => {
     const row = rowMenu(plain).find((one) => one?.label === 'New note inside')
     const kinds = (await row?.more?.()) ?? []
-    // A chat is offered too where the chat kind is turned on, which depends on state
-    // other files of the suite leave; the four below are offered either way.
     expect(kinds.map((one) => one?.label).filter((label) => label !== 'New chat')).toEqual([
       'New note',
       'New canvas',
@@ -198,16 +167,12 @@ describe('new note inside', () => {
 })
 
 describe('a note that holds notes', () => {
-  /** A copy of the folder, with its note renamed to match; see copying.ts. */
   test('is the same menu', () => {
     expect(labels(nested)).toEqual(labels(loose))
   })
 })
 
 describe('a folder nobody has written a note in', () => {
-  /** The same menu, less the things that need a file: a cover, and a pane to show
-   *  it in beside another. An icon it can still have, because a folder with no note
-   *  keeps one in the space's own map; front matter needs somewhere to be written. */
   test('offers exactly what a note offers, less the cover and the side', () => {
     expect(labels(plain)).toEqual(
       labels(nested).filter((one) => one !== 'Set cover' && one !== 'Open to the side'),
@@ -216,9 +181,6 @@ describe('a folder nobody has written a note in', () => {
 })
 
 describe('a chat', () => {
-  /** A chat keeps its icon in its `.chat` pointer, so it is offered the icon a note
-   *  is; not the cover, since a chat has no page for a picture to go across the top
-   *  of. See `iconEntries` and docs/icons.md. */
   test('can wear an icon, and nothing else a note looks like', () => {
     const said = labels(note('/s/Team.chat'))
 
@@ -229,8 +191,6 @@ describe('a chat', () => {
 })
 
 describe('a paper', () => {
-  /** Nowhere to keep an icon, and a paper cannot hold a note. It copies as the
-   *  bytes it is. So the menu is what every row can do and nothing else. */
   test('holds nothing, wears nothing and duplicates as a paper', () => {
     expect(labels(paper)).toEqual([
       'Open',
@@ -245,8 +205,6 @@ describe('a paper', () => {
   })
 })
 
-/** A file on an account the reader owns, which is the only row that has anybody
- *  to be handed to; see sharing.svelte.ts. */
 describe('a file the account has a copy of', () => {
   test('says who else may have it, beside what the space says about it', () => {
     shareable.yes = true
@@ -267,8 +225,6 @@ describe('a file the account has a copy of', () => {
     ])
   })
 
-  /** The row is the folder and the note in one, and the note is the file: the
-   *  share is about that, which is the same path the icon is written in. */
   test('and a note that holds notes is shared as the note it is drawn as', () => {
     shareable.yes = true
 
@@ -334,9 +290,6 @@ describe('a row that is part of a selection of several', () => {
   })
 })
 
-/** A space shared with this account to be read is one nothing may be written in: the
- *  copy here would stop being the space's, and the sync refuses it on every pass. So a
- *  row there opens and is looked at, and offers nothing that writes (B273). */
 describe('a space shared to be read', () => {
   const WRITING = [
     'New note inside',
@@ -399,9 +352,6 @@ describe('the archive', () => {
   })
 })
 
-/** A copy another sync tool made beside a note: the same menu, and one more entry that
- *  puts the two side by side, while the note it was made of is there to compare with.
- *  See @orden/sync-core/foreign. */
 describe('another sync tool’s copy', () => {
   const clash = note('/s/loose (# Name clash 2026-10-05 a1b2c3C #).md')
   const orphan = note('/s/gone (# Name clash 2026-10-05 a1b2c3C #).md')
@@ -448,9 +398,6 @@ describe('another sync tool’s copy', () => {
   })
 })
 
-/** Nothing on a row leaves it out of search any more; Archive puts a note out of the
- *  way. A row a space left out before keeps the way back, so nothing stays out with
- *  none. See `searchAgainEntry`. */
 describe('search', () => {
   test('is never left out from a row', () => {
     for (const entry of [nested, plain, loose, paper]) {
@@ -473,8 +420,6 @@ describe('search', () => {
   })
 })
 
-/** Undo is Ctrl+Z on the list, the toast and the palette's row, never a row of
- *  this menu. */
 describe('the undo', () => {
   test('is not in a row’s menu, nor a selection’s', () => {
     const undo = vi.spyOn(workspace, 'undoLabel', 'get').mockReturnValue('Undo deleting plan')

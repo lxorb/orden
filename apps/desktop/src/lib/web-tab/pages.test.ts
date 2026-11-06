@@ -1,11 +1,3 @@
-/** A page is built somewhere else now, and this is what follows from that.
- *
- *  It used to be built inline: the crate answered the window on the window's own
- *  thread, so nothing could happen in between. That is exactly what froze the app -
- *  see src-tauri/src/web_tabs.rs - and the fix means the wait is real. A pane can be
- *  dragged while a page is on its way, a tab can be switched away from, and a tab can
- *  be closed altogether, all before the crate answers. Every one of those is here. */
-
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import type { Tab } from '../workspace.svelte'
@@ -17,8 +9,6 @@ interface Call {
 
 const calls: Call[] = []
 
-/** Where the reading got to is kept in this device's storage, and there is none
- *  under node; a map stands in for one. See place.ts. */
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -36,47 +26,28 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-/** A window for the store to listen on. The two listeners the window keeps are started
- *  with the first page in it, and a desktop with no window is not a thing the app can
- *  be; see `listen`. Nothing reads anything off it - the runtime's own `listen` is
- *  mocked below - so an empty object is the whole of what this needs to be. */
 vi.stubGlobal('window', {})
 
-/** A frame, for a cut that waits for the frame that draws its layer; see `cover`. */
 vi.stubGlobal('requestAnimationFrame', (go: () => void) => setTimeout(go, 0))
 
-/** What `web_open` is waiting for. The test resolves it, so "while the page is
- *  being built" is a state this file can stand in and look around from. */
 let building: (() => void) | null = null
 
-/** Whether the crate refuses to build one at all, which is the card. */
 let refuse = false
 
-/** What the page says when it is asked where it has got to. */
 let looked: Record<string, unknown> | null = null
 
-/** A freeze or a thaw the crate has not answered yet, while a test holds one. */
 let pausing: Promise<void> | null = null
 
-/** Whether a page asked where it has got to holds its answer, and the answers held: a
- *  page being closed under the question never gives one, and the store waits out its
- *  clock instead. See `whereIs`. */
 let holdingLooks = false
 const heldLooks: (() => void)[] = []
 
-/** Whether the engine refuses to freeze a page, as WebView2 does one in a call. */
 let refusing = false
 
-/** A photograph the engine has not answered yet, while a test holds one. */
 let photographing: Promise<void> | null = null
 
-/** The picture the engine hands back for a photograph. */
 let photo: string | null = null
 
-/** Whether the crate says it cuts the app's layers out of a page, as the system's engine
- *  on Windows does (see src-tauri/src/web_cut.rs), or draws pages under the app (#1137). */
 let cuts: boolean | 'under' = false
-/** And per tab, where a test has said so: a window with both kinds of page in it. */
 const cutsOf = new Map<string, boolean | 'under'>()
 
 vi.mock('../tauri', async (importOriginal) => ({
@@ -102,12 +73,8 @@ vi.mock('../tauri', async (importOriginal) => ({
   },
 }))
 
-/** What the window is listening for, by name, so a test can say a page moved. The
- *  crate is the only thing that raises these in the app. */
 const heard = new Map<string, (event: { payload: unknown }) => void>()
 
-// The window hears about pages through one listener, which under node has nothing
-// to listen to.
 vi.mock('../own-window', () => ({
   hearHere: (name: string, tell: (event: { payload: unknown }) => void) => {
     heard.set(name, tell)
@@ -117,11 +84,6 @@ vi.mock('../own-window', () => ({
 
 const { cardCorner, pages, readChosen, readOpening } = await import('./pages.svelte')
 
-// What the window's listeners are fetched with, behind the first page; see `listen` in
-// pages.svelte.ts. Fetched here first: a whole gate compiles them cold on a busy
-// machine, and that has outlasted even ten seconds of waiting inside a test. So is the
-// web data store every build waits for before it asks for a page, with the merge it
-// fetches on the way; see `store` in web-data.svelte.ts.
 await Promise.all([
   import('./web-data.svelte').then((one) => one.webData.merged()),
   import('./permissions.svelte'),
@@ -135,7 +97,6 @@ const SITE = 'https://example.com/'
 const PANE = { x: 0, y: 0, width: 800, height: 600 }
 const MOVED = { x: 260, y: 40, width: 540, height: 600 }
 
-/** Waits until the crate has been asked for a page and is holding the answer. */
 async function asked(): Promise<() => void> {
   for (let tries = 0; tries < 200; tries += 1) {
     if (building) return building
@@ -144,7 +105,6 @@ async function asked(): Promise<() => void> {
   throw new Error('no page was ever asked for')
 }
 
-/** Waits until a page has been asked where it has got to and is holding the answer. */
 async function looks(): Promise<() => void> {
   for (let tries = 0; tries < 200; tries += 1) {
     const held = heldLooks.shift()
@@ -154,14 +114,6 @@ async function looks(): Promise<() => void> {
   throw new Error('no page was ever asked where it was')
 }
 
-/** Waits until the window is listening for `name`, and hands back what it heard with.
- *
- *  The listeners are started with the first page and fetched on the way - see `listen`
- *  in pages.svelte.ts - so `nib://web-tab` is three imports behind the first of them,
- *  and nothing in the store waits for the last. Nor can a count of turns: in a whole
- *  gate those imports are compiled cold on a busy machine, which has outlasted every
- *  test that runs before the first one here to listen. So this waits for the listener
- *  itself. */
 async function hearing(name: string): Promise<(event: { payload: unknown }) => void> {
   return vi.waitFor(
     () => {
@@ -173,7 +125,6 @@ async function hearing(name: string): Promise<(event: { payload: unknown }) => v
   )
 }
 
-/** Lets everything that was waiting on a microtask run. */
 async function settle(): Promise<void> {
   for (let turns = 0; turns < 5; turns += 1) await new Promise<void>((go) => setTimeout(go, 0))
 }
@@ -189,8 +140,6 @@ function last(command: string): Record<string, unknown> | undefined {
 beforeEach(async () => {
   pages.forget('a')
   pages.forget('b')
-  // A close asks the page where it got to before it takes it down, so the last
-  // test's tabs are still closing for a turn or two; see `closing`.
   await settle()
   calls.length = 0
   building = null
@@ -204,8 +153,6 @@ beforeEach(async () => {
 })
 
 describe('while a page is being built', () => {
-  /** A new tab has no address, and its first build is refused; an address typed while
-   *  that refusal is on its way is built at once rather than left on the card. */
   test('an address given while a blank tab is being refused is built', async () => {
     refuse = true
     const shown = pages.show('a', '', PANE)
@@ -231,8 +178,6 @@ describe('while a page is being built', () => {
     const shown = pages.show('a', SITE, PANE)
     const arrive = await asked()
 
-    // The pane moved a frame later. The crate is already building one, and a second
-    // webview under the same label is not a thing that can exist.
     void pages.show('a', SITE, MOVED)
     await settle()
     expect(commands().filter((one) => one === 'web_open')).toHaveLength(1)
@@ -241,7 +186,6 @@ describe('while a page is being built', () => {
     await shown
     await settle()
 
-    // And it lands where the pane has got to rather than where it was asked from.
     expect(last('web_place')).toMatchObject({ tab: 'a', pane: MOVED, visible: true })
   })
 
@@ -251,7 +195,6 @@ describe('while a page is being built', () => {
 
     pages.hide('a', PANE)
     await settle()
-    // Nothing to hide yet: there is no page to place until there is a page.
     expect(commands()).toEqual(['web_open'])
 
     arrive()
@@ -270,7 +213,6 @@ describe('while a page is being built', () => {
     await shown
     await settle()
 
-    // Twice: once when the tab went, and once for the page that arrived after it.
     expect(commands()).toEqual(['web_open', 'web_close', 'web_close'])
   })
 })
@@ -297,19 +239,6 @@ test('a page that was built is placed and shown', async () => {
   expect(last('web_open')).toMatchObject({ tab: 'a', url: SITE, pane: PANE })
 })
 
-/** A tab whose pane is measured while something of the app's is still over it.
- *
- *  This is what "browser tabs take an eternity to load" was. Every way of opening a
- *  website except clicking its row in the file list goes through a layer - the
- *  palette, the app menu, the chooser Ctrl+T opens - and a layer that has closed is
- *  still in the document for the fifth of a second it takes to play its way out. The
- *  pane mounted under it, the hit test said covered, and the page was not asked for at
- *  all; nothing asked again, because the rectangle had not changed. The tab sat on an
- *  empty pane until the reader clicked something.
- *
- *  So what is over the hole decides how the page is placed and never whether there is
- *  one: the page is built, and built out of sight, because a native webview drawn over
- *  a menu is the other half of the same bug. See `show` and `look` in WebTab.svelte. */
 describe('a page asked for while something is over the pane', () => {
   test('is built anyway', async () => {
     const shown = pages.show('a', SITE, PANE, false)
@@ -330,15 +259,9 @@ describe('a page asked for while something is over the pane', () => {
     await settle()
 
     expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, visible: false })
-    // And nothing is photographed: a page built this moment has nothing on it worth
-    // standing in for it, and a photograph is the most expensive thing the crate does.
     expect(commands()).not.toContain('web_shot')
   })
 
-  /** Emil, 2026-10-13: the page of a tab opened while the update notice was up, or
-   *  while the card of the tab just pressed was, stayed an empty pane until the layer
-   *  went. The page arrived hidden, and the pane, whose box had not changed, never said
-   *  anything again. */
   test('and where the engine cuts, it arrives with the layer cut out of it', async () => {
     cuts = true
     const over = {
@@ -373,9 +296,6 @@ describe('a page asked for while something is over the pane', () => {
   })
 })
 
-/** An engine that draws its pages under the window's HTML (#1137): whatever of the app's
- *  is over a page is drawn over it, so the page is never hidden or photographed for it,
- *  and what is over it only takes its input. */
 describe('a page drawn under the app', () => {
   const over = {
     cut: { all: false, hollows: [{ x: 500, y: 520, width: 280, height: 60, radius: 8 }] },
@@ -476,14 +396,6 @@ describe('a page drawn under the app', () => {
   })
 })
 
-/** A page arriving is one photograph, however many times the engine says so.
- *
- *  The crate reports where a page is again whenever its title or its mark arrives, so
- *  a page landing is three reports in a few milliseconds. Each of them threw the still
- *  picture away and asked for another, and a photograph is a fifth of a second of the
- *  window's own thread - three of them at once, in the breath the reader is watching
- *  the page appear. Counted rather than timed: the count is the same number on a busy
- *  machine as on an idle one. */
 test('a page that lands is photographed once, not once per report', async () => {
   const shown = pages.show('a', SITE, PANE)
   const arrive = await asked()
@@ -502,13 +414,6 @@ test('a page that lands is photographed once, not once per report', async () => 
   expect(commands().filter((one) => one === 'web_shot')).toHaveLength(1)
 })
 
-/** The site's mark, as the engine says it.
- *
- *  Emil, 2026-09-28: *"sometimes whatsapp just doesn't get its icon and keeps at the
- *  default icon."* The engine now says a page's mark every time it changes, as the
- *  picture itself, and the tab follows every one of them - WhatsApp redraws its mark
- *  with an unread count. The file keeps only the one each load arrived with, so an
- *  unread count never rewrites the note. See web_icons.rs. */
 describe("a page's mark", () => {
   const PLAIN = 'data:image/png;base64,cGxhaW4='
   const BADGED = 'data:image/png;base64,YmFkZ2Vk'
@@ -530,7 +435,6 @@ describe("a page's mark", () => {
     return { load, mark, page: pages.of('a') }
   }
 
-  /** The clock the window's own rule reads, moved by hand. */
   let now = 0
   beforeEach(() => {
     now = 1_000_000
@@ -553,8 +457,6 @@ describe("a page's mark", () => {
     expect(page.kept).toBe(PLAIN)
   })
 
-  // web.whatsapp.com's own shape: the site's `/favicon.ico` while the page loads, and
-  // its real mark added by a script a moment after the load.
   test('a mark set just after the load is still the one it arrived with', async () => {
     const { load, mark, page } = await loaded()
 
@@ -595,8 +497,6 @@ describe("a page's mark", () => {
     expect(page.icon).toBeNull()
     expect(page.kept).toBe(PLAIN)
 
-    // A mark that arrives after the page said it had none is still one it arrived
-    // with: an empty answer is never kept.
     mark(NEW)
     expect(page.icon).toBe(NEW)
     expect(page.kept).toBe(NEW)
@@ -613,13 +513,6 @@ describe("a page's mark", () => {
   })
 })
 
-/** A tab closed on the page somebody was reading.
- *
- *  Where the reading got to is this device's, kept by the note's path, so opening the
- *  note again lands back on it - which is the whole of what makes a web note a browser
- *  tab rather than a bookmark. Switching away wrote it down; closing the tab in front
- *  of you did not, so the one case a reader actually presses Ctrl+W in lost the place
- *  and the trail. See `forget` and place.ts. */
 describe('a tab closed while its page is in front', () => {
   const FILE = '/space/A site.url'
   const PLACE = {
@@ -673,7 +566,6 @@ describe('a tab closed while its page is in front', () => {
 })
 
 describe('where a page keeps what the site stores', () => {
-  /** A private tab's page is the engine's private mode, in no space's store. */
   test('a private page is built private, in the store every space shares', async () => {
     const page = pages.of('a')
     page.inPrivate = true
@@ -720,7 +612,6 @@ describe('where a page keeps what the site stores', () => {
     await rebuilt
     await settle()
 
-    // The note's page is built again, where it was, in its own store; the other is left.
     expect(calls.filter((one) => one.command === 'web_close').map((one) => one.args.tab)).toEqual([
       'a',
     ])
@@ -733,9 +624,6 @@ describe('where a page keeps what the site stores', () => {
     pages.of('a').own = null
   })
 
-  /** #409: "when I switch an open tab to separate web data, it then loads forever until I
-   *  close and reopen it". The menu and the pane both ask for the move; the second used to
-   *  close the page the first had just built in the new store. */
   test('a note turned apart twice at once is moved once, and its new page stays', async () => {
     const shown = pages.show('a', SITE, PANE)
     ;(await asked())()
@@ -744,11 +632,8 @@ describe('where a page keeps what the site stores', () => {
     calls.length = 0
     holdingLooks = true
 
-    // The menu that wrote the file, and the pane that read it change.
     const fromMenu = pages.rehouse('a', '3f9a0c17e2b4d685', 'kept apart')
     const fromPane = pages.rehouse('a', '3f9a0c17e2b4d685', 'kept apart')
-    // The first look answers; any other is held until the page is being built again, which
-    // is when the closing page's silence used to run out.
     ;(await looks())()
     const rebuilt = await asked()
     holdingLooks = false
@@ -778,7 +663,6 @@ describe('where a page keeps what the site stores', () => {
     const moving = pages.rehouse('a', '3f9a0c17e2b4d685')
     ;(await looks())()
     holdingLooks = false
-    // The old page is no longer live, and the pane looks again, as WebTab.svelte does.
     await vi.waitFor(() => expect(pages.of('a').live).toBe(false))
     const looking = pages.show('a', SITE, MOVED)
     ;(await asked())()
@@ -794,7 +678,6 @@ describe('where a page keeps what the site stores', () => {
     const shown = pages.show('a', SITE, PANE)
     const first = await asked()
     building = null
-    // Not live yet: there is nothing to move, and the page is built where it set out for.
     void pages.rehouse('a', '3f9a0c17e2b4d685', 'kept apart')
     first()
     await shown
@@ -824,10 +707,6 @@ describe('where a page keeps what the site stores', () => {
   })
 })
 
-/** Emil, 2026-10-01: *"When I cycle with Ctrl+Tab through my tabs, some of them fully
- *  reload every time."* A seventh running page parked the one looked at longest ago. A
- *  page out of sight is frozen now and comes back as it was; only Memory saver ever
- *  takes one down. See resting.ts. */
 describe('a page out of sight', () => {
   const TABS = ['t0', 't1', 't2', 't3', 't4', 't5', 't6', 't7']
   const MINUTES = 60_000
@@ -843,7 +722,6 @@ describe('a page out of sight', () => {
     await settle()
   })
 
-  /** A tab whose page has been built, on screen. */
   async function built(tab: string, url = SITE): Promise<void> {
     building = null
     const shown = pages.show(tab, url, PANE)
@@ -851,13 +729,11 @@ describe('a page out of sight', () => {
     await shown
   }
 
-  /** Out of sight for this long. */
   function away(tab: string, minutes: number): void {
     pages.hide(tab, PANE)
     pages.of(tab).looked = Date.now() - minutes * MINUTES
   }
 
-  /** Each freeze (true) and thaw (false) the crate was asked for, for one tab. */
   function lulls(tab: string): unknown[] {
     return calls
       .filter((one) => one.command === 'web_pause' && one.args.tab === tab)
@@ -876,7 +752,6 @@ describe('a page out of sight', () => {
     }
     pages.retime()
 
-    // Ten hours out of sight, and eight of them: every one frozen, and none closed.
     await vi.waitFor(() => expect(TABS.map((tab) => lulls(tab))).toEqual(TABS.map(() => [true])))
     expect(commands()).not.toContain('web_close')
     expect(TABS.every((tab) => pages.of(tab).live)).toBe(true)
@@ -910,7 +785,6 @@ describe('a page out of sight', () => {
     for (const tab of ['t0', 't1', 't2', 't3', 't4']) away(tab, 30)
     pages.retime()
 
-    // The one with nothing going on is frozen; the others go on running.
     await vi.waitFor(() => expect(lulls('t4')).toEqual([true]))
     expect(['t0', 't1', 't2', 't3'].map((tab) => lulls(tab))).toEqual([[], [], [], []])
     grants.remember(siteOf(CALL), 'camera', null)
@@ -963,7 +837,6 @@ describe('a page out of sight', () => {
     pages.retime()
     await vi.waitFor(() => expect(lulls('t0')).toEqual([true]))
 
-    // Ctrl+Tab comes round to it while the crate is still freezing it.
     const showing = pages.show('t0', SITE, PANE)
     await settle()
     expect(lulls('t0')).toEqual([true])
@@ -990,7 +863,6 @@ describe('a page out of sight', () => {
     expect(page.shot).toBeNull()
     expect(commands()).toContain('web_shot')
 
-    // One from a moment ago is the page as it is, and stays.
     page.shot = 'data:image/png;base64,new'
     page.shotAt = Date.now()
     calls.length = 0
@@ -1007,7 +879,6 @@ describe('a page out of sight', () => {
     const shooting = pages.shoot('t0')
     calls.length = 0
 
-    // The press that switches tabs photographed the page on its way.
     pages.hide('t0', PANE)
     await settle()
     const out = calls.filter((one) => one.command === 'web_place')
@@ -1027,7 +898,6 @@ describe('a page out of sight', () => {
     photo = 'data:image/png;base64,late'
     pages.of('t0').shot = null
 
-    // The clock runs out first, and the menu goes up over the pane with no picture yet.
     await pages.shoot('t0')
     expect(pages.of('t0').shot).toBeNull()
 
@@ -1053,14 +923,12 @@ describe('a page out of sight', () => {
   test('a freeze the engine refused leaves the page running, and is asked again later', async () => {
     await built('t0')
     refusing = true
-    // Judged as it goes out of sight, once it has said where it is.
     away('t0', 30)
     await vi.waitFor(() => expect(lulls('t0')).toEqual([true]))
     await settle()
 
     expect(pages.of('t0').frozen).toBe(false)
     expect(pages.of('t0').resting).toBeDefined()
-    // Shown again, it is placed and nothing is woken: it was never frozen.
     calls.length = 0
     await pages.show('t0', SITE, PANE)
     expect(commands()).toEqual(['web_place'])
@@ -1090,7 +958,6 @@ describe('a page out of sight', () => {
         away(tab, 20 - at)
       }
 
-      // Six kept: the two away longest go as the seventh and eighth are built.
       await vi.waitFor(() =>
         expect(calls.filter((one) => one.command === 'web_close').map((one) => one.args)).toEqual([
           { tab: 't0', keep: true },
@@ -1116,7 +983,6 @@ describe('a page out of sight', () => {
     test('never a page on screen, nor one under a menu, however many there are', async () => {
       await memorySaver('maximum')
       for (const tab of TABS) await built(tab)
-      // One under a layer of the app's: hidden, and still the tab in front of its pane.
       await pages.show('t0', SITE, PANE, false)
       for (const tab of TABS) pages.of(tab).looked = Date.now() - 600 * MINUTES
       pages.retime()
@@ -1143,9 +1009,6 @@ describe('a page out of sight', () => {
   })
 })
 
-/** A page asking for a window of its own, as the crate tells it: which tab, where, and
- *  whether the press that asked left the tab behind. Read, not trusted; see
- *  src-tauri/src/web_opens.rs for how the crate knows. */
 describe('what a page asking for a window says', () => {
   test('carries whether the tab goes behind', () => {
     expect(readOpening({ tab: 't', url: 'https://example.com/', behind: true })).toEqual({
@@ -1174,12 +1037,7 @@ describe('what a page asking for a window says', () => {
   })
 })
 
-/** #1088: a page fills the bottom of a rounded card, so each placement says the card's
- *  corner, as the frame's token has it where the panes are, for the page's own two bottom
- *  corners; full screen makes it nothing. */
 describe("the card's corner a page is placed with", () => {
-  /** A window whose panes stand in a card with corners `radius` across, as the frame's
-   *  token says; only the two names `cardCorner` reads, set and taken away again. */
   function frame(radius: string) {
     const panes = {}
     Object.assign(globalThis, {
@@ -1250,8 +1108,6 @@ describe("the card's corner a page is placed with", () => {
   })
 })
 
-/** #1080: a press in a web tab's page never reaches the app's own page, so the crate says
- *  which page was chosen, and its tab and pane become the ones being worked in. */
 describe('a page a person presses in or types into', () => {
   let did: string[] = []
   let inFront = 'a'
@@ -1282,7 +1138,6 @@ describe('a page a person presses in or types into', () => {
     chosen({ payload: { tab: 'b' } })
     await vi.waitFor(() => expect(did).toEqual(['activate b']))
 
-    // Pressed again, or the keyboard coming in after the press: nothing more to do.
     chosen({ payload: { tab: 'b' } })
     await settle()
     expect(did).toEqual(['activate b'])
@@ -1303,7 +1158,6 @@ describe('a page a person presses in or types into', () => {
 describe('a tab that closes itself when its download starts', () => {
   const FILE = 'https://example.com/slides.pdf'
 
-  /** What the workspace was asked to do, in order, and the tab it has in front. */
   let did: string[] = []
   let inFront = 'b'
 
@@ -1325,7 +1179,6 @@ describe('a tab that closes itself when its download starts', () => {
     vi.restoreAllMocks()
   })
 
-  /** Tab `a` is open; a link in it opens `b`, which is shown and starts a file in it. */
   async function downloadFromB(id: number): Promise<void> {
     const shownA = pages.show('a', SITE, PANE)
     const arriveA = await asked()
@@ -1363,7 +1216,6 @@ describe('a tab that closes itself when its download starts', () => {
   })
 })
 
-/** #791: a page whose process died was a white box for good, with nothing to press. */
 describe('a page whose process died', () => {
   async function livePage(tab: string) {
     const shown = pages.show(tab, SITE, PANE)
@@ -1442,8 +1294,6 @@ describe('a page whose process died', () => {
     expect(pages.of('left').crashed).toBe(false)
   })
 
-  /** #1093: a page that did not arrive, and that the engine drew nothing for, goes the
-   *  same way, at the address it was going to, with the engine's words for why. */
   test('one that did not arrive goes the same way, says why, and comes back with Reload', async () => {
     await livePage('failing')
     calls.length = 0
@@ -1526,8 +1376,6 @@ describe('a page whose process died', () => {
   })
 })
 
-/** #1127: a page parked out of sight - from its tab's menu, or by Memory saver - is
- *  asked where it is first, and the tab can be chosen again while it answers. */
 describe('a page parked out of sight', () => {
   async function livePage(tab: string) {
     const shown = pages.show(tab, SITE, PANE)

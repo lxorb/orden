@@ -1,17 +1,3 @@
-/** PDFs: `read_pdf` and `pdf_highlights` (docs/agent-native.md 8.7).
- *
- *  A PDF's words are what the search already takes down of it (pdf/text-cache.ts,
- *  `papers.rs` in the crate), read from there when the pages asked for are there and
- *  from the PDF itself, through pdf.js, when they are not. A PDF came from somewhere
- *  else, so its words come back marked as the PDF's (9.6).
- *
- *  A highlight is the viewer's own mark in the sidecar beside the PDF
- *  (pdf/highlights.ts), anchored the way a person's is: by the words it covers. The
- *  agent names the words, and the boxes are worked out from where pdf.js lays those
- *  words out on the page, in PDF user space, so the mark lands on them at any zoom and
- *  in any other reader of the sidecar. An open viewer reads the sheet again at once;
- *  see pdf/sheets.svelte.ts. */
-
 import { isPdfTarget } from '@orden/markdown/links'
 import { readable } from './guarded'
 import type { AgentAnswer } from '../../automation/caller'
@@ -26,15 +12,12 @@ import { Refused } from './problem'
 import { judged, onDisk, type Place, placeOf } from './spaces'
 import { namedTab } from './tab-target'
 
-/** How much of a PDF one read hands over. */
 const MOST_CHARACTERS = 200_000
 
 function pdfOf(call: Call): { place: Place; relative: string; path: string } {
-  // A PDF's tab is its file, as though the path had been said.
   if (maybe(call, 'tab') !== null) {
     const { place, relative } = namedTab(call, ['pdf'], 'a PDF')
     if (relative === null) throw new Refused('by_hand', 'that PDF is outside every space')
-    // The tab's own space, said: one the call names none of is the thread's otherwise.
     return pdfOf({
       ...call,
       args: { ...call.args, tab: null, path: relative, space: place.space.id },
@@ -49,7 +32,6 @@ function pdfOf(call: Call): { place: Place; relative: string; path: string } {
   return { place, relative, path: onDisk(place, relative) }
 }
 
-/** A PDF open for reading, and the one way to let it go. */
 async function opened(path: string) {
   const { openDocument } = await import('../../pdf/document')
   return openDocument(path).catch(() => {
@@ -67,7 +49,6 @@ export async function readPdf(call: Call): Promise<AgentAnswer> {
     let characters = 0
     let truncated = false
 
-    // What the search took down of this very file first, and the PDF for the rest.
     const { paperText } = await import('../../pdf/text-cache')
     const kept = new Map((await paperText(path, undefined, held.hash))?.pages ?? [])
 
@@ -135,7 +116,6 @@ export async function pdfHighlights(call: Call): Promise<AgentAnswer> {
         throw new Refused('failed', 'the highlights beside that PDF were written by a newer nib')
       }
       marksWritten(path)
-      // The sidecar has no place for a comment, and saying nothing would say it was kept.
       const comment = maybe(call, 'comment') === null ? {} : { comment: 'not kept' }
       return done({ id: mark.id, page: mark.page, text: mark.text, ...comment })
     }
@@ -145,8 +125,6 @@ export async function pdfHighlights(call: Call): Promise<AgentAnswer> {
   }
 }
 
-/** Which of the viewer's colours a highlight wears (`COLOURS`): the accent, green or
- *  yellow, by name or by its place in the list; the accent for anything else. */
 function colourOf(said: unknown): number {
   const named = ['accent', 'green', 'yellow'].indexOf(String(said).trim().toLowerCase())
   if (named !== -1) return named
@@ -155,8 +133,6 @@ function colourOf(said: unknown): number {
   return Number.isInteger(at) && at >= 0 && at < COLOURS.length ? at : 0
 }
 
-/** The highlight a call asks for: its words found on the page it names, or on the one
- *  page of the PDF that holds them. */
 async function markOf(call: Call, path: string): Promise<Highlight> {
   const quote = need(call, 'quote')
   const asked = Number(call.args.page)

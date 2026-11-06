@@ -1,11 +1,3 @@
-/** How rows arrive in a folder of the file list from somewhere else: a paste and a
- *  drop. Either moves the list's own rows or copies them, and a drop can bring in
- *  files from outside the app.
- *
- *  The clipboard is the app's own rather than the system's, as VS Code's explorer
- *  keeps it: what it holds is paths in a space. A cut row is drawn faint until the
- *  paste moves it; a copy pastes as often as asked. */
-
 import {
   caughtFiles,
   dragged,
@@ -37,7 +29,6 @@ class FileClipboard {
     return this.cutting.has(path)
   }
 
-  /** A cut moves, once; a copy copies. Rows gone since are left out. */
   async paste(into: string) {
     const paths = this.paths.filter((one) => workspace.entryAt(one) !== null)
     const outside = this.paths.filter(
@@ -59,21 +50,17 @@ class FileClipboard {
 
 export const fileClipboard = new FileClipboard()
 
-/** Rows measured before a change and slid after (#412); Tree.svelte fills it in. */
 export const listMotion: {
   before: () => Map<string, number> | null
   after: (was: Map<string, number> | null) => void
 } = { before: () => null, after: () => undefined }
 
-/** A change of the list's rows, slid. */
 export function moving(change: () => void): void {
   const was = listMotion.before()
   change()
   listMotion.after(was)
 }
 
-/** A drop on a row, or on the stretch under the rows: moved, copied with Ctrl held,
- *  or files from outside copied in. */
 export function dropOnList(event: DragEvent, folder: string) {
   const transfer = event.dataTransfer
   if (transfer && isExplorerDrag(transfer) && !isTreeDrag(transfer) && !__EVEN_PLUGIN__) {
@@ -81,8 +68,6 @@ export function dropOnList(event: DragEvent, folder: string) {
     void import('./explorer/changes').then(({ carry }) => carry(null, paths, folder, 'copy'))
     return
   }
-  // A phone has no Explorer to drop from, and the glasses plugin carries no walk of
-  // a dropped folder; see vite.even.config.ts.
   if (transfer && isFileDrop(transfer) && !__EVEN_PLUGIN__) {
     const caught = caughtFiles(transfer)
     void import('./import/picking')
@@ -91,8 +76,6 @@ export function dropOnList(event: DragEvent, folder: string) {
     return
   }
 
-  // A link out of a page, kept as a web note where it was let go; read now, while the
-  // drop still holds it. See web-tab/dropped-site.ts.
   if (transfer && isLinkDrop(transfer) && !__EVEN_PLUGIN__) {
     const list = transfer.getData('text/uri-list')
     const html = transfer.getData('text/html')
@@ -102,7 +85,6 @@ export function dropOnList(event: DragEvent, folder: string) {
     return
   }
 
-  // A tile, out of the Essentials into this folder (#412).
   const tile = landing(event, shortcuts.platform) && isBookmarkDrag(transfer)
   const at = tile ? draggedBookmark(transfer) : null
   if (at !== null) {

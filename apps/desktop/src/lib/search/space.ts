@@ -1,16 +1,3 @@
-/** Asking a whole space for its hits, in the order the notes answer.
- *
- *  One call, however many notes: the parsed query goes over as a tree and the
- *  space is read once. What comes back arrives in handfuls rather than at the
- *  end, so the first rows are on screen while the last folder is still being
- *  read. In the app those handfuls are an event from the crate; in the browser
- *  they come from a worker, which is where the notes are read and scored so that
- *  neither the reading nor the scoring is a keystroke that does not appear.
- *
- *  Loose hits are the exception to arriving as they are found: a guess is worth
- *  showing in the order the scores put it, and the scores are not all in until
- *  the space has been read. Both sides send them last; see fuzzy.ts. */
-
 import { internal, invoke, isNative } from '../tauri'
 import type { FuzzyHit } from '@orden/scan/search/fuzzy'
 import type { Hit } from '@orden/scan/search/match'
@@ -18,19 +5,13 @@ import type { Query } from '@orden/scan/search/query'
 
 const HITS = 'nib://search-hits'
 
-/** One handful, as both sides send it. */
 export interface Found {
   hits: Hit[]
   loose: FuzzyHit[]
 }
 
-/** How many rows the papers may fill. A paper answers once per page, so a query
- *  every page of a long one holds would otherwise be the whole list; the notes are
- *  what a space is mostly made of. */
 const PAPERS = 20
 
-/** Which search a handful belongs to. Typing outruns the disk, and answers to a
- *  word that is no longer in the field would otherwise land in the list. */
 let asked = 0
 
 export async function searchSpace(
@@ -39,10 +20,6 @@ export async function searchSpace(
   terms: string[],
   limit: number,
   onFound: (found: Found) => void,
-  /** The notes and folders the space leaves out, relative to it. Skipped before
-   *  the note is read on both sides, which is the whole point of leaving one out:
-   *  an archive of two thousand notes should cost a search nothing rather than cost
-   *  it a read and then a filter. See workspace/excluded.svelte.ts. */
   excluded: readonly string[] = [],
 ): Promise<void> {
   const { workspace } = await import('../workspace.svelte')
@@ -54,24 +31,11 @@ export async function searchSpace(
     const open = (one: { path: string }) => !workspace.protection.locked(one.path)
     onFound = (found) => told({ hits: found.hits.filter(open), loose: found.loose.filter(open) })
   }
-  // The papers answer first, and from memory: their words are not on disk as text,
-  // so neither walk below has anything to read. What was taken down in an earlier
-  // sitting is read back once per space and per listing of it rather than per
-  // search - every call after the first awaits that one's promise - so this is a
-  // wait only for the first question about a space, and one row per paper rather
-  // than a PDF taken apart.
-  //
-  // Nothing about the files is passed in here on purpose. A search has the root and
-  // nothing else, and a read-back that trusted whatever the store held because its
-  // caller could not say otherwise is how a PDF replaced on disk used to answer with
-  // its old text. What the file list says is written down where it is known; see
-  // `papersListed` in pdf/papers.ts.
   const { papersFor, searchPapers } = await import('../pdf/papers')
   await papersFor(root)
   const papers = searchPapers(root, query, PAPERS, excluded)
   if (papers.length) onFound({ hits: papers, loose: [] })
 
-  // The space's own inbox, which every walk below leaves out as hidden (#1044).
   const inbox = await (await import('./inbox')).inboxHits(root, query, limit)
   if (inbox.length) onFound({ hits: inbox, loose: [] })
 
@@ -89,13 +53,11 @@ export async function searchSpace(
       },
       excluded,
     )
-    // And what this browser keeps no words of, searched by the account (#1126).
     const { keptAway } = await import('../web/away.svelte')
     await keptAway.search(root, query, terms, limit - found, onFound, excluded)
     return
   }
 
-  // A space Orden keeps itself is searched over its rows, as the browser's is (#1068).
   if (internal.routed) {
     const { searchInternal } = await import('../internal/search')
     if (await searchInternal(root, query, terms, limit, onFound, excluded)) return
@@ -103,9 +65,6 @@ export async function searchSpace(
 
   const id = ++asked
   const { hearHere } = await import('../own-window')
-  // An event is a boundary, so what it carries is read rather than trusted: a
-  // handful from a crate that has not learnt about loose hits yet is a handful
-  // of exact ones.
   const stop = await hearHere<{ id: number; hits?: Hit[]; loose?: FuzzyHit[] }>(HITS, (event) => {
     const batch = event.payload
     if (batch.id !== id) return

@@ -1,34 +1,4 @@
 #!/usr/bin/env python3
-"""A real extension, on Linux where Orden's own Chromium runs it: seen in the web bar and in
-Settings, and removed from them both and from the engine. #789: an extension could be
-installed there and then neither seen nor removed, the bar's button, its bubble and the
-list in Settings being Windows' alone.
-
-Run with Orden up on a web tab (EXTENSIONS=1 in scripts/wayland-launch.sh), started with
-the run's own small extension loaded (`--load-extension`, through `NIB_CEF_ARGS`). With
-`installed`: the engine's list has to hold it, the web bar's bubble and Settings > General
-have to name it, and `extensions_remove` has to take it away - out of the engine's list
-and out of Settings. With `again`, after the app is started again without it: the list
-has to stay empty.
-
-#1161: a tab the extension opens - `chrome.tabs.create` from its background and from its
-popup, and `window.open` from its popup - has to open as one tab of Orden's, in the pane
-the reader is in, and no window of Chromium's own may appear meanwhile: since #1148 such a
-tab was closed as Chrome's own UI made it, and before that it was a whole Chromium window.
-One asked for as Orden starts - `runtime.onInstalled` as the launch loads the extension -
-Chromium itself refuses with "No current window" and makes no browser, so there is nothing
-to hand over (measured 2026-11-06); the background is asked once the app is up.
-
-#1155: a Firefox add-on, installed from addons.mozilla.org by its link. With
-`firefox-install`: `extensions_install` has to install it as a Firefox add-on that starts
-with the next launch, which Settings has to say, since this engine loads one only as it
-starts. With `firefox-run`, after the app is started again: the engine has to run it, its
-background page as an offscreen document with the Firefox layer in it, and its button in
-the web bar has to open its popup, drawn, with `browser` and Firefox's own API in it - read
-over the engine's debugging port (scripts/devtools.py), which presses nothing.
-
-    python3 scripts/extensions-drive.py <out folder> <installed|again|firefox-install|firefox-run> <name>
-"""
 
 import json
 import os
@@ -42,15 +12,12 @@ OUT, PHASE, NAME = Path(sys.argv[1]), sys.argv[2], sys.argv[3]
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
 failures = []
 
-#: A Firefox add-on with a popup and a background page, as a reader would paste it.
 FIREFOX = "https://addons.mozilla.org/en-US/firefox/addon/sponsorblock/"
 DEBUG_PORT = int(os.environ.get("NIB_CEF_DEBUG_PORT", "9339"))
-
 
 def fail(what):
     print(f"::error::{PHASE}: {what}")
     failures.append(what)
-
 
 def endpoint():
     for _ in range(120):
@@ -63,9 +30,7 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
-
 
 def run(code, timeout=10):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
@@ -84,7 +49,6 @@ def run(code, timeout=10):
             time.sleep(1)
     return None
 
-
 def listed():
     said = run("window.__TAURI_INTERNALS__.invoke('extensions_list').then((all) => JSON.stringify(all))", 40)
     try:
@@ -92,10 +56,8 @@ def listed():
     except (TypeError, ValueError):
         return None
 
-
 def ours(all_of):
     return [one for one in all_of or [] if one.get("name") == NAME]
-
 
 def settings_rows():
     run("(nib.settings.show('general'), 'shown')")
@@ -109,17 +71,13 @@ def settings_rows():
         time.sleep(0.5)
     return None
 
-
 def closed():
     run("(nib.settings.hide ? nib.settings.hide() : (nib.settings.open = false), 'closed')")
     time.sleep(0.5)
 
-
 CLASS = os.environ.get("CLASS", "nib")
 
-
 def strangers():
-    """The X11 windows sway has not under the app's name, or titled as Chromium's."""
 
     def walk(node):
         if node.get("pid") and node.get("type") in ("con", "floating_con") and node.get("shell") == "xwayland":
@@ -136,26 +94,19 @@ def strangers():
     except (OSError, subprocess.CalledProcessError, ValueError):
         return []
 
-
 def listing(code):
-    """What a `JSON.stringify` the window ran comes to, or None."""
     try:
         return json.loads(run(code))
     except (TypeError, ValueError):
         return None
 
-
 def tabs_at(address):
-    """The panes of the tabs on `address`."""
     return listing(
         "JSON.stringify(nib.workspace.tabs"
         f".filter((tab) => tab.address === {json.dumps(address)}).map((tab) => tab.paneId))"
     )
 
-
 def opened_as_a_tab(address, pane, what, seconds=20):
-    """Whether `address` came to be one tab, in `pane`, with no window of Chromium's own on
-    the way. Waits a moment more once it is there, for a second one."""
     strange, panes = set(), None
     for _ in range(seconds * 2):
         strange.update(strangers())
@@ -179,9 +130,7 @@ def opened_as_a_tab(address, pane, what, seconds=20):
     print(f"installed: {what} opened one tab of Orden's, in the reader's pane")
     return True
 
-
 def reader_tab():
-    """The reader's own web tab, on the run's page, and its pane: opened if none is."""
     find = (
         "JSON.stringify(nib.workspace.tabs.filter((tab) => (tab.address ?? '').startsWith('http'))"
         ".map((tab) => [tab.id, tab.paneId]))"
@@ -195,9 +144,7 @@ def reader_tab():
         raise SystemExit(f"::error::{PHASE}: the reader's own web tab is not there")
     return found[0]
 
-
 def popup_of(one, front):
-    """The extension's popup, opened from its button over the reader's own tab."""
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from devtools import Session, targets
 
@@ -227,7 +174,6 @@ def popup_of(one, front):
     fail(f"its popup did not open: {[each.get('url') for each in targets(DEBUG_PORT)]}")
     return None
 
-
 def from_popup(one, front, code, address, pane, what):
     page = popup_of(one, front)
     if not page:
@@ -236,13 +182,11 @@ def from_popup(one, front, code, address, pane, what):
         said = page.call("Runtime.evaluate", {"expression": code, "userGesture": True, "returnByValue": True})
         page.close()
     except OSError:
-        # The popup closes as it opens a window, as a browser's does, before it answers.
         said = {}
     if "error" in said or said.get("exceptionDetails"):
         fail(f"{what}: the popup could not ask: {said}")
         return
     opened_as_a_tab(address, pane, what)
-
 
 if PHASE == "installed":
     found = []
@@ -386,8 +330,6 @@ elif PHASE == "firefox-run":
         if said != '[true,"function"]':
             fail(f"its background page has not the Firefox layer: {said!r}")
 
-    # Its page about its own install, if it opens one as SponsorBlock does: a tab of
-    # Orden's, never Chromium's own window (#1148, #1161).
     strange, welcome = set(), []
     for _ in range(30):
         strange.update(strangers())

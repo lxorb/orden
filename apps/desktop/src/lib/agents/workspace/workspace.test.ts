@@ -1,12 +1,3 @@
-/** An agent in the workspace, verb by verb, against a window that has two spaces and a
- *  third the agent was not granted, with Work open and Home not.
- *
- *  The window is a stand-in the way the automation tests stand one in (see
- *  automation/acts.test.ts): the workspace, the crate, the index of a space and the
- *  search are fakes that write down what they were asked, so each test can say what an
- *  agent's verb did and - the core of it - what it did not: switch the reader's space,
- *  or touch the tabs in front of them (docs/agent-native.md 8.6). */
-
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { answerThreadSpaces, callerOf, type Caller, READER } from '../../automation/caller'
 import { AGENT_WINDOW_VERBS } from '../verbs'
@@ -30,17 +21,12 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
-// ---- the window ------------------------------------------------------------------------
-
 const work = { id: 'work', name: 'Work', root: '/s/Work' }
 const home = { id: 'home', name: 'Home', root: '/s/Home' }
 const secret = { id: 'secret', name: 'Secret', root: '/s/Secret' }
 
-/** Every file of every space, by its path on this disk. */
 const files = new Map<string, string>()
 const folders = new Set<string>()
-/** Files that are there and will not read as text: written in Windows-1252 by another
- *  program, over the size the crate reads, or held by a cloud that is offline. */
 const unreadable = new Set<string>()
 
 interface Entry {
@@ -52,7 +38,6 @@ interface Entry {
   children: Entry[]
 }
 
-/** A space's tree as `read_tree` answers it. */
 function treeOf(root: string): Entry {
   const top: Entry = { name: root, path: root, is_dir: true, modified: 0, created: 0, children: [] }
   const at = new Map<string, Entry>([[root, top]])
@@ -75,7 +60,6 @@ function treeOf(root: string): Entry {
   return top
 }
 
-/** What the reader has open, which no agent verb in another space may change. */
 const tabs = [
   {
     id: 't1',
@@ -118,7 +102,6 @@ const workspace = {
     return treeOf(this.activeSpace?.root ?? '')
   },
   tabs,
-  // p3 is a pane of a set out of sight: another space's own tabs.
   panes: { focusedId: 'p1', at: (id: string) => (id === 'p3' ? null : { id }) },
   spaceOf: (note: { home?: string }) => note.home ?? 'work',
   activeTabId: 't1',
@@ -158,12 +141,9 @@ const workspace = {
     remove: vi.fn(),
   },
   documentAt: () => null,
-  // The one sentence every file operation is said as, heard for real by whatever
-  // follows it; see workspace/file-ops.ts.
   fileOps: new FileOps(),
   holdingUnder: vi.fn((_path: string, run: () => Promise<void>) => run()),
   undone: { moved: () => undefined },
-  // The disk's part of a move, which the store says to sync first.
   renameOnDisk: vi.fn(async (from: string, to: string) => {
     const { invoke } = await import('../../tauri')
     await invoke('rename_note', { from, to })
@@ -175,18 +155,14 @@ const workspace = {
 
 vi.mock('../../workspace.svelte', () => ({ workspace }))
 
-/** Everything the crate was asked, by command. */
 const asked: { command: string; args: Record<string, unknown> }[] = []
-/** What `agents_ask` answers next: the reader already allowed it, or a question. */
 let answer: Record<string, unknown> = { status: 'ok', result: {} }
 
-/** The page as the crate reads it for a capture: the article, or a file as base64. */
 const PAGE = {
   url: 'https://docs.example/a',
   title: 'A page',
   html: '<article><p>Words of the page.</p></article>',
 }
-/** What `agents_capture` answers next. */
 let captured: Record<string, unknown> = {}
 function reads(result: Record<string, unknown>) {
   captured = { status: 'ok', result: { ...PAGE, ...result }, untrusted: PAGE.url }
@@ -256,14 +232,10 @@ vi.mock('../../sharing.svelte', () => ({
   roleOf: (root: string) => (readOnly.has(root) ? 'read' : 'owner'),
 }))
 
-/** Notes of a space nobody else is in that somebody else can write all the same: one
- *  shared on its own, set by a test. */
 const othersWrite = new Set<string>()
 
-/** The roots of the spaces shared with this account to read, set by a test. */
 const readOnly = new Set<string>()
 
-/** What each space's index was asked, by root. */
 const indexed: { root: string; asked: string; args: unknown[] }[] = []
 
 vi.mock('../../link-index.svelte', () => {
@@ -318,7 +290,6 @@ vi.mock('../../link-index.svelte', () => {
 
 vi.mock('@orden/scan/search/query', () => ({ parseQuery: (text: string) => ({ text }) }))
 
-/** Which roots were searched. */
 const searched: string[] = []
 
 vi.mock('../../search/space', () => ({
@@ -346,8 +317,6 @@ vi.mock('../../search/space', () => ({
   },
 }))
 
-/** The notes' own verbs (lib/agents/docs), which have tests of their own: here, what
- *  they were handed. */
 const docs = {
   readNote: vi.fn((at: { path: string; space: string }) => {
     const root = [work, home, secret].find((one) => one.id === at.space)?.root ?? ''
@@ -403,7 +372,6 @@ vi.mock('../../commands', () => ({
 }))
 const ran: string[] = []
 
-/** Settings' rows with a name, as declarations.ts gathers them (#1078). */
 const rows = {
   focus: false,
   accent: 'violet',
@@ -450,7 +418,6 @@ vi.mock('../../settings/declarations', () => ({
     ]),
 }))
 
-/** The page a lent tab has, as the pages store keeps it. */
 const lentPage: Record<string, unknown> = { url: null, space: null }
 const lending = { lend: vi.fn(() => Promise.resolve()), unlend: vi.fn() }
 vi.mock('../../web-tab/lending', () => lending)
@@ -475,7 +442,6 @@ vi.mock('../../versions', () => ({
 
 vi.mock('../../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 
-/** The PDFs opened for reading, by their path on this disk; none of them reads. */
 const openDocument = vi.hoisted(() =>
   vi.fn((_path: string) => Promise.reject(new Error('no PDF here'))),
 )
@@ -485,7 +451,6 @@ vi.mock('../../terminal/shells.svelte', () => ({
   shells: { ask: () => Promise.resolve([]), chosen: { id: 'pwsh', name: 'PowerShell' } },
 }))
 
-// The rows of every space, read off the files as the rows store would read them.
 vi.mock('../../rows/rows.svelte', async () => {
   const { rowsOfText } = await import('@orden/bases/rows')
   const spaces = [work, home, secret]
@@ -507,13 +472,10 @@ vi.mock('../../rows/rows.svelte', async () => {
   }
 })
 
-/** What `agents_log` holds for today. */
 let log: unknown[] = []
 
 const { runAgentVerb, AGENT_VERBS, answerTheCrate } = await import('./index')
 const { forgetIndexes } = await import('./links')
-
-// ---- the agent ---------------------------------------------------------------------------
 
 const EVERY = [
   'context',
@@ -567,8 +529,6 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-// ---- the tests ---------------------------------------------------------------------------
-
 describe('the verbs', () => {
   test('are the crate list, every one', () => {
     expect([...AGENT_VERBS].sort()).toEqual(Object.keys(AGENT_WINDOW_VERBS).sort())
@@ -620,7 +580,6 @@ describe('another space, without switching', () => {
         { path: 'Recipes.md', kind: 'note' },
         { path: 'Soup.md', kind: 'note' },
       ],
-      // Somebody else writes in Home: its names are data.
       untrusted: 'shared space Home',
     })
     expect(asked).toContainEqual({
@@ -630,7 +589,6 @@ describe('another space, without switching', () => {
 
     const found = await call('search_notes', { space: 'Home', query: 'soup' })
     expect(searched).toEqual(['/s/Home'])
-    // The archived note is left out, as the Search panel leaves it out.
     expect(found).toMatchObject({
       result: [
         { space: 'Home', path: 'Recipes.md', line: 1 },
@@ -649,12 +607,10 @@ describe('another space, without switching', () => {
     await call('move_file', { space: 'Home', path: 'Soup.md', to: 'Food/Soup' })
 
     expect(files.has('/s/Home/Food/Soup.md')).toBe(true)
-    // After whatever write of the note is in the air, as a move made here.
     expect(workspace.holdingUnder).toHaveBeenCalledWith('/s/Home/Soup.md', expect.anything())
     expect(indexed).toContainEqual({
       root: '/s/Home',
       asked: 'retarget',
-      // The note itself went, so its own links are written where it went.
       args: ['/s/Home/Soup.md', '/s/Home/Food/Soup.md', '/s/Home', undefined, { moved: true }],
     })
     expect(workspace.fileMoved).toHaveBeenCalledWith(
@@ -662,13 +618,11 @@ describe('another space, without switching', () => {
       '/s/Home/Food/Soup.md',
       'file',
     )
-    // And the index of Home hears it the way every store does: said once, followed.
     expect(indexed).toContainEqual({
       root: '/s/Home',
       asked: 'notesMoved',
       args: ['/s/Home/Soup.md', '/s/Home/Food/Soup.md'],
     })
-    // The tree's own rename is the open space's, and its undo the reader's.
     expect(workspace.rename).not.toHaveBeenCalled()
     expect(workspace.moveMany).not.toHaveBeenCalled()
   })
@@ -689,7 +643,6 @@ describe('another space, without switching', () => {
   })
 
   test('the space that is open takes the tree own rename', async () => {
-    // Said with the space it ran in, which a later Undo moves it back in.
     expect(await call('move_file', { path: 'Plan.md', to: 'Old plan' })).toMatchObject({
       result: { from: 'Plan.md', to: 'Old plan.md', space: 'work' },
     })
@@ -707,7 +660,6 @@ describe('another space, without switching', () => {
         message: 'there is no space called Secret',
       })
     }
-    // Searching everywhere is everywhere it may reach.
     await call('search_notes', { query: 'diary' })
     expect(searched).toEqual(['/s/Work', '/s/Home'])
   })
@@ -884,8 +836,6 @@ describe('the reader tabs', () => {
   })
 
   test('nothing an agent does moves the reader, whatever it may (#1070)', async () => {
-    // An agent that holds everything, workspace.focus included, while the reader is in
-    // Plan.md: what it opens or makes lands behind, and the front is never touched.
     const everything = agent({ mode: 'autonomous' })
     vi.mocked(workspace.openEntry).mockClear()
     for (const [verb, args] of [
@@ -945,7 +895,6 @@ describe('what asks the reader first', () => {
 
     answer = { status: 'ok', result: {} }
     await call('restore_version', { space: 'Home', path: 'Soup', version: 'device:1000' })
-    // What it replaced kept first, said to be the agent's doing, then one edit.
     expect(asked).toContainEqual({
       command: 'snapshot_note',
       args: {
@@ -1007,7 +956,6 @@ describe('what asks the reader first', () => {
     })
     await vi.waitFor(() => expect(ran).toContain('export-pdf:/home/me/out.pdf'))
 
-    // A question or a refusal the crate raises is the answer, and the dialog is put away.
     answer = { status: 'needs_approval', approval: 'a9', summary: 'Write out.pdf' }
     expect(
       await call('run_command', { id: 'export-pdf', path: '~/out.pdf' }, agent()),
@@ -1122,7 +1070,6 @@ describe('what asks the reader first', () => {
     })
     expect(docs.editNote).not.toHaveBeenCalled()
 
-    // A read asks nothing.
     asked.length = 0
     await call('read_note', { space: 'Home', path: 'Soup' }, careful)
     expect(asked.some((one) => one.command === 'agents_ask')).toBe(false)
@@ -1148,8 +1095,6 @@ describe('what asks the reader first', () => {
 })
 
 describe('the AI sidebar’s two modes that act', () => {
-  /** Every change a note, the tree or the app can be asked for (the scheme set to one it
-   *  is not yet), and two reads. */
   const changes = (scheme: string): [string, Record<string, unknown>][] => [
     [
       'edit_note',
@@ -1196,7 +1141,6 @@ describe('the AI sidebar’s two modes that act', () => {
     for (const id of ['close-window', 'new-window']) {
       expect(await call('run_command', { id }, acting), id).not.toMatchObject({ code: 'by_hand' })
     }
-    // Any other mode keeps them to the reader, as does the reader's own command line.
     expect(await call('run_command', { id: 'close-window' })).toMatchObject({ code: 'by_hand' })
   })
 
@@ -1226,8 +1170,6 @@ describe('the notes, on the road', () => {
     expect(await call('read_note', { path: 'Plan' })).not.toHaveProperty('untrusted')
   })
 
-  /** Work is nobody else's, but its plan was shared on its own, so somebody else writes
-   *  in it: the verbs ask who can reach the note, not whether the space is shared. */
   test('a note shared on its own is read as data, and so is a listing of its space', async () => {
     othersWrite.add('/s/Work/Plan.md')
     try {
@@ -1262,7 +1204,6 @@ describe('the notes, on the road', () => {
   })
 
   test('a property given as words is written as those words, not what YAML reads bare', async () => {
-    // `yes` bare is a boolean, `012` a number, and `a, b` two members of the list.
     await call('set_property', { space: 'Home', path: 'Soup', key: 'status', value: 'yes' })
     expect(docs.writeNote).toHaveBeenLastCalledWith(
       expect.anything(),
@@ -1293,7 +1234,6 @@ describe('the notes, on the road', () => {
       '---\npriorität: Hoch\n---\n# Soup\n\n- [ ] Buy milk\n',
       'r1',
     )
-    // Names front matter would read as a shorter key, a comment and a list item.
     for (const key of ['a: b', '#tags', '- tags'])
       expect(
         await call('set_property', { space: 'Home', path: 'Soup', key, value: 'x' }),
@@ -1310,8 +1250,6 @@ describe('the notes, on the road', () => {
     )
   })
 
-  /** Every thread of a provider writes as one agent, so the edit says which thread
-   *  asked: the review takes it back with that thread's rewind and no other's. */
   test('an edit says the AI panel thread that asked for it', async () => {
     const asker = callerOf(
       {
@@ -1376,7 +1314,6 @@ describe('the notes, on the road', () => {
 })
 
 describe('a page into a note', () => {
-  /** The one crate call a capture made, if any. */
   const capture = () => asked.find((one) => one.command === 'agents_capture')?.args
   const saved = () => asked.find((one) => one.command === 'save_asset')?.args
 
@@ -1385,7 +1322,6 @@ describe('a page into a note', () => {
     vi.setSystemTime(new Date('2026-09-30T10:00:00.000Z'))
     try {
       const answered = await call('capture_to_note', { tab: 'w1', as: 'clip' })
-      // The note is named after the page, so the answer is the page's words too.
       expect(answered).toMatchObject({
         result: { path: 'A page.md', created: true },
         untrusted: 'https://docs.example/a',
@@ -1423,7 +1359,6 @@ describe('a page into a note', () => {
     reads({ html: undefined, pdf: btoa('%PDF-1.7') })
     await call('capture_to_note', { tab: 'a1', as: 'pdf' })
 
-    // The A4 and the 20 mm the app's page setup starts on.
     expect(capture()).toMatchObject({
       shape: 'pdf',
       fullPage: false,
@@ -1470,7 +1405,6 @@ describe('a page into a note', () => {
 
   test('a reader tab in a space the agent may not reach is not there', async () => {
     expect(
-      // Into Home, which it may reach, from a tab of Work, which it may not.
       await call(
         'capture_to_note',
         { tab: 'w1', as: 'clip', space: 'Home' },
@@ -1572,7 +1506,6 @@ describe('what the crate asks', () => {
           front: false,
           on_screen: true,
         },
-        // In a set out of sight, and as much the reader's as one on screen.
         {
           id: 'w2',
           title: 'Bank',
@@ -1596,7 +1529,6 @@ describe('what the crate asks', () => {
       path: '/s/Work/Docs.url',
     })
 
-    // Not a web tab, or no tab at all: nothing is lent.
     lending.lend.mockClear()
     await answerTheCrate('agent.lend', { tab: 't1' })
     await answerTheCrate('agent.lend', { tab: 'gone' })
@@ -1659,7 +1591,6 @@ describe('to-dos and bases', () => {
       fields: { due: '2026-10-06' },
     })
     expect(files.get('/s/Home/.Inbox.md')).toBe('- [ ] Call mum ⏫ 📅 2026-10-06\n')
-    // No file the reader did not make is put into the space (#1044).
     expect(files.has('/s/Home/Inbox.md')).toBe(false)
     expect(added).toMatchObject({
       result: { space: 'Home', at: expect.stringMatching(/^\.Inbox\.md#0:/) as unknown },
@@ -1712,7 +1643,6 @@ describe('to-dos and bases', () => {
   test('a task in German words is read in an English app, as the connector reads it', async () => {
     await call('add_task', { space: 'Home', text: 'Zahnarzt anrufen morgen um 15 Uhr' })
     expect(files.get('/s/Home/.Inbox.md')).toMatch(
-      // The day said is the day it starts: `🛫` (#371).
       /^- \[ \] Zahnarzt anrufen \[time:: 15:00\] 🛫 \d{4}-\d{2}-\d{2}\n$/u,
     )
   })
@@ -1808,8 +1738,6 @@ describe('to-dos and bases', () => {
     expect(files.has('/s/Home/Inbox.md')).toBe(false)
   })
 
-  /** #325: an agent doing a task with AI asks about it on the task itself, as the
-   *  reader comments on one, and flags it; the comment is in the same edit. */
   test('a comment written under the task, with its tag, in one edit', async () => {
     const { taskHash } = await import('@orden/bases')
     const at = `Thesis.md#1:${taskHash('Write the intro')}`
@@ -1889,7 +1817,6 @@ describe('to-dos and bases', () => {
 })
 
 describe('a space shared to be read', () => {
-  /** The files as they are, to say afterwards that none of them changed. */
   const before = () => new Map(files)
   const writes = () =>
     asked.filter((one) => ['write_note', 'save_asset', 'snapshot_note'].includes(one.command))
@@ -2041,9 +1968,6 @@ describe('a note an agent names with a dot in it', () => {
   })
 })
 
-/** An AI panel thread works in the space it was started in (docs/ai-sidebar.md 4.11), so
- *  a call of it that names no space is about that space, not the one in front: a
- *  `/batch` helper of a Home thread keeps to Home's notes when the reader moves to Work. */
 describe('a panel thread works in its own space', () => {
   const fromHome = () =>
     callerOf(
@@ -2090,8 +2014,6 @@ describe('a panel thread works in its own space', () => {
     expect(files.get('/s/Work/Broth.md')).toBe('# Broth\n')
   })
 
-  /** A tab's file is in the tab's space, the one in front: said by its tab alone from a
-   *  thread in another space, it is never the thread space's file at the same path. */
   describe('a tab of the space in front, named by its id', () => {
     const away = [
       { ...tabs[0], id: 'c9', kind: 'canvas', path: '/s/Work/board.canvas', shown: 'board' },

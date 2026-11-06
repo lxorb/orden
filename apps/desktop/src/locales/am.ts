@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const am: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'ሁሉም ዝግጁ ነው',
   Personalize: 'ግላዊ አድርግ',
   Clean: 'ንጹህ',
@@ -10,12 +9,10 @@ export const am: Dictionary = {
   'Do you write code?': 'ኮድ ይጽፋሉ?',
   Yes: 'አዎ',
   No: 'አይ',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'ከሌሎች መተግበሪያዎች፦ {key}',
   'From other apps: set in your system settings': 'ከሌሎች መተግበሪያዎች፦ በስርዓት ቅንብሮች ውስጥ ያዘጋጁ',
   'From other apps: bind {command} in your system settings':
     'ከሌሎች መተግበሪያዎች፦ {command}ን በስርዓት ቅንብሮች ውስጥ ይመድቡ',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'አስፈላጊዎች',
   'Add to Essentials': 'ወደ አስፈላጊዎች አክል',
   'Remove from Essentials': 'ከአስፈላጊዎች አስወግድ',
@@ -23,20 +20,16 @@ export const am: Dictionary = {
   'Add blocks to Essentials': 'ብሎኮቹን ወደ አስፈላጊዎች አክል',
   'Add view to Essentials': 'እይታውን ወደ አስፈላጊዎች አክል',
   'Open tabs and Essentials': 'ትሮችን እና አስፈላጊዎችን መክፈት',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor አሁን Orden ነው',
   'Notes from nibeditor.com': 'ከnibeditor.com የመጡ ማስታወሻዎች',
   'Nothing there': 'እዚያ ምንም የለም',
-  // AI: the three permission modes
   'Full permissions': 'ሙሉ ፈቃዶች',
   'Auto mode': 'ራስ-ሰር ሁነታ',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'ሙሉ ፈቃዶች፦ ምንም አይጠየቅም ወይም ወደ እርስዎ አይመለስም፣ መግባት፣ መክፈል፣ መላክ ወይም መሰረዝ እንኳ',
-  // Import: Zen's tabs
   'Import from Zen': 'ከZen አምጣ',
   'Containers stay in Zen': 'ኮንቴይነሮች በZen ውስጥ ይቀራሉ',
   'Zen’s tabs could not be read.': 'የZen ትሮች ሊነበቡ አልቻሉም።',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'ኮንቴይነሮች በFirefox ውስጥ ይቀራሉ',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} በ{engine} ይፈልጋል፦ እዚህም በእሱ ለመፈለግ በቅንብሮች ውስጥ ይምረጡት',
@@ -62,38 +55,29 @@ export const am: Dictionary = {
   'Reading List': 'የንባብ ዝርዝር',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS የSafari ትሮችን እና ዕልባቶችን ከሙሉ የዲስክ መዳረሻ ጀርባ ያስቀምጣል። እዚያ Ordenን ያብሩ፣ ከዚያ እንደገና ይጠይቁ።',
-  // Settings: note types
   'Page note': 'የገጾች ማስታወሻ',
   'Web note': 'የድረ ገጽ ማስታወሻ',
   'Private tab': 'የግል ትር',
   'Note types': 'የማስታወሻ ዓይነቶች',
-  // Tasks: Upcoming's weeks
   'Previous week': 'ያለፈው ሳምንት',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'ከላይ ፕሮጀክት አክል',
   'Add project below': 'ከታች ፕሮጀክት አክል',
   'Projects folder': 'የፕሮጀክቶች አቃፊ',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'ዝለል',
   'Complete forever': 'ለዘለቄታው አጠናቅ',
-  // Tasks: comments
   Comments: 'አስተያየቶች',
-  // Tasks: filters
   Filters: 'ማጣሪያዎች',
   'Add filter': 'ማጣሪያ አክል',
   'Edit filter': 'ማጣሪያ አርትዕ',
-  // Tasks: a project's sections
   'Add section': 'ክፍል አክል',
   '{name} (copy)': '{name} (ቅጂ)',
   'Its tasks are deleted with it.': 'ተግባራቱ አብረው ይጠፋሉ።',
-  // Tasks: keys, selection and the undo toast
   Completed: 'ተጠናቋል',
   'Remove date': 'ቀኑን አስወግድ',
   'Next task': 'ቀጣይ ተግባር',
   'Previous task': 'ቀዳሚ ተግባር',
   'Add task at the top': 'ከላይ ተግባር አክል',
   '{count} selected': '{count} ተመርጠዋል',
-  // Tasks: the Display menu
   Display: 'አቀራረብ',
   'Completed tasks': 'የተጠናቀቁ ተግባራት',
   Smart: 'ብልጥ',
@@ -105,20 +89,16 @@ export const am: Dictionary = {
   'Reset all': 'ሁሉንም ዳግም አስጀምር',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'አቀማመጥ ተግባሮቹን እንደ ዝርዝር፣ ሰሌዳ ወይም ቀን መቁጠሪያ ያሳያል። መቧደን በቡድኖች ይከፍላቸዋል፤ እነዚህም የሰሌዳ ዓምዶች ናቸው። መደርደር እያንዳንዱን ቡድን ያስተካክላል። ማጣሪያዎች የማያስፈልግዎትን ይደብቃሉ። ሁሉም ለዚህ እይታ ይቀመጣል።',
-  // Tasks: several lines pasted into quick add
   'One task': 'አንድ ተግባር',
   'One per line': 'በየመስመሩ አንድ',
   'Add with AI': 'በAI ጨምር',
-  // Tasks: the projects in the panel
   Favorites: 'ተወዳጆች',
   'Add project': 'ፕሮጀክት አክል',
   'Add sub-project': 'ንዑስ ፕሮጀክት አክል',
-  // Tasks: the task view
   'Sub-tasks': 'ንዑስ ተግባራት',
   'Add sub-task': 'ንዑስ ተግባር አክል',
   'New label': 'አዲስ መለያ',
   'No deadline': 'የመጨረሻ ቀን የለም',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'እንደገና መድብ',
   'Later this week': 'በዚህ ሳምንት በኋላ',
   'This weekend': 'በዚህ ሳምንት መጨረሻ',
@@ -135,21 +115,17 @@ export const am: Dictionary = {
   Reopen: 'እንደገና ክፈት',
   Schedule: 'መድብ',
   'Open in note': 'በማስታወሻው ውስጥ ክፈት',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'ሌላ መተግበሪያ',
   'Import from Obsidian': 'ከObsidian አምጣ',
   'Import from Notion': 'ከNotion አምጣ',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'ጠቃሚ ምክሮች',
   'Silent mode': 'ጸጥታ ሁነታ',
   'See how your notes connect.': 'ማስታወሻዎችዎ እንዴት እንደሚገናኙ ይመልከቱ።',
   'Press {key} to find anything, notes and commands alike.': 'ማስታወሻዎችንም ትዕዛዞችንም ለማግኘት {key} ይጫኑ።',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'ማርክዳውን በመጻፍ ጊዜ አሳይ',
   'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'ጠቋሚ',
   'Pointing hand on buttons': 'በአዝራሮች ላይ የሚጠቁም እጅ',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'ተግባር አክል',
   'Apple Shortcuts': 'Apple አቋራጮች',
   Tomorrow: 'ነገ',
@@ -178,7 +154,6 @@ export const am: Dictionary = {
   'Every week': 'በየሳምንቱ',
   'Every month': 'በየወሩ',
   'Every year': 'በየዓመቱ',
-  // Files and notes
   Save: 'አስቀምጥ',
   'New note': 'አዲስ ማስታወሻ',
   'Random note': 'የዘፈቀደ ማስታወሻ',
@@ -205,8 +180,6 @@ export const am: Dictionary = {
   'Release to add a page': 'ገጽ ለመጨመር ይልቀቁ',
   'Page {number}': 'ገጽ {number}',
   'The paper could not be read': 'ወረቀቱን ማንበብ አልተቻለም',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'ሌተር',
   'Long page': 'ረጅም ገጽ',
@@ -246,7 +219,6 @@ export const am: Dictionary = {
   'Choose a picture': 'ምስል ምረጥ',
   'Remove picture': 'ምስሉን አስወግድ',
   'That picture could not be read.': 'ያ ምስል ሊነበብ አልቻለም።',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'የቀለም ሙሌት',
   Tint: 'ቅልም',
   'Tint colour': 'የቅልም ቀለም',
@@ -374,7 +346,6 @@ export const am: Dictionary = {
   'Merge into…': 'ወደዚህ አዋህድ…',
   'Split at caret': 'በጠቋሚው ላይ ክፈል',
   'Extract selection': 'የተመረጠውን አውጣ',
-  // Panels and navigation
   Bookmarks: 'ምልክቶች',
   'New group': 'አዲስ ቡድን',
   'Remove group': 'ቡድን አስወግድ',
@@ -428,8 +399,6 @@ export const am: Dictionary = {
   'Sort by name': 'በስም አስተካክል',
   'Sort by modified': 'በተለወጠበት አስተካክል',
   'Sort by created': 'በተፈጠረበት አስተካክል',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'የፋይሎች ቅደም ተከተል',
   'Name, A to Z': 'ስም፣ ከሀ እስከ ፐ',
   'Name, Z to A': 'ስም፣ ከፐ እስከ ሀ',
@@ -440,7 +409,6 @@ export const am: Dictionary = {
   Manual: 'በእጅ',
   'Show hidden files': 'የተደበቁ ፋይሎች አሳይ',
   'Hide hidden files': 'የተደበቁ ፋይሎች ደብቅ',
-  // Writing
   Bold: 'ደማቅ',
   Italic: 'ዘንበል',
   Strikethrough: 'የተሰረዘ',
@@ -525,11 +493,9 @@ export const am: Dictionary = {
   'Horizontal rule': 'አግድም መስመር',
   'Page break': 'የገጽ መለያ',
   'Tidy up this note': 'ይህን ማስታወሻ አስተካክል',
-  // PDFs
   'Copy a link': 'አገናኝ አባዛ',
   'That PDF could not be opened': 'ያ PDF መከፈት አልቻለም',
   'That file could not be read': 'ያ ፋይል መነበብ አልቻለም',
-  // Modes and view
   Reading: 'ንባብ',
   'Leave reading': 'ከንባብ ውጣ',
   Present: 'አቅርብ',
@@ -569,7 +535,6 @@ export const am: Dictionary = {
   'Zoom in': 'አቅርብ',
   'Zoom out': 'አራርቅ',
   'Actual size': 'እውነተኛ መጠን',
-  // Appearance
   Accent: 'የማጉላት ቀለም',
   'Tidy up': 'አስተካክል',
   'Blur the app behind the tab overview': 'ከትሮች አጠቃላይ እይታ በስተጀርባ መተግበሪያውን አደብዝዝ',
@@ -694,7 +659,6 @@ export const am: Dictionary = {
   'Switch theme': 'ገጽታ ቀይር',
   Style: 'ቅጥ',
   Mode: 'ዘዴ',
-  // The window's own edges; see appearance.rs
   Window: 'መስኮት',
   'Orden’s own': 'የOrden ራሱ',
   'The system’s': 'የሥርዓቱ',
@@ -705,7 +669,6 @@ export const am: Dictionary = {
   'Edit custom CSS': 'የራስ CSS አስተካክል',
   'Edit snippets': 'ቁርጥራጭ አስተካክል',
   'Reload themes and custom CSS': 'ገጽታዎችና የራስ CSS እንደገና ጫን',
-  // The theme store, and the sample note its cards show
   Themes: 'ገጽታዎች',
   Browse: 'ቃኝ',
   'Search themes': 'ገጽታ ፈልግ',
@@ -784,7 +747,6 @@ export const am: Dictionary = {
   'Code only': 'ኮድ ብቻ',
   Everywhere: 'በሁሉም ቦታ',
   Attachments: 'አባሪዎች',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'የገጾች ማስታወሻዎች',
   'New pages': 'አዲስ ገጾች',
   'Assets folder of the space': 'የቦታው የንብረት ፎልደር',
@@ -836,7 +798,6 @@ export const am: Dictionary = {
   'Machine-translated. Corrections welcome.': 'በማሽን የተተረጎመ። ማስተካከያ በደስታ ይቀበላል።',
   'The glasses show English.': 'መነጽሮቹ በእንግሊዝኛ ያሳያሉ።',
   'Match the app': 'መተግበሪያውን ተከተል',
-  // Settings
   Settings: 'ማስተካከያ',
   Account: 'መዝገብ',
   Publish: 'አሳትም',
@@ -862,7 +823,6 @@ export const am: Dictionary = {
   },
   Update: 'አሻሽል',
   'Live at': 'በአየር ላይ',
-  // Publishing
   'Publish {name}': '{name} አሳትም',
   'What to publish': 'ምን ይታተም',
   'The whole space': 'ሙሉ ቦታው',
@@ -881,7 +841,6 @@ export const am: Dictionary = {
   Value: 'ዋጋ',
   available: 'ክፍት',
   'checking…': 'በማረጋገጥ ላይ…',
-  // LLM
   'Connect an LLM to your notes': 'LLM ከማስታወሻዎችህ አገናኝ',
   'Sign in first - the connector reaches the notes in your account.':
     'መጀመሪያ ግባ - አገናኙ በመዝገብህ ያሉትን ማስታወሻዎች ይደርሳል።',
@@ -929,7 +888,6 @@ export const am: Dictionary = {
   'For a client that takes a JSON block instead of a URL.': 'በአድራሻ ምትክ የJSON ብሎክ ለሚቀበል ደንበኛ።',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'መግባት የማይችል ደንበኛ በምትኩ መለያ ሊሰጠው ይችላል። አንድ ጊዜ ብቻ ይታያል።',
-  // Export
   'Plain text': 'ተራ ጽሑፍ',
   'Markdown with the pictures': 'markdown ከምስሎች ጋር',
   'HTML without styles': 'HTML ያለ ቅጥ',
@@ -948,13 +906,11 @@ export const am: Dictionary = {
   Margin: 'ኅዳግ',
   Header: 'የገጽ ራስ',
   Footer: 'የገጽ ግርጌ',
-  // History
   'Version history': 'የቅጂ ታሪክ',
   'Copy link to this note': 'የዚህ ማስታወሻ አገናኝ አባዛ',
   'that link could not be followed': 'ያን አገናኝ መከተል አልተቻለም',
   'No earlier versions yet.': 'እስካሁን ቀደምት ቅጂ የለም።',
   'Restore this version': 'ይህን ቅጂ መልስ',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'እዚያ አስቀድሞ ማስታወሻ አለ',
   'enter a valid email address': 'ትክክለኛ የኢሜይል አድራሻ አስገባ',
   'give the space a name': 'ለቦታው ስም ስጥ',
@@ -985,7 +941,6 @@ export const am: Dictionary = {
   'could not publish': 'ማሳተም አልተቻለም',
   'could not create a token': 'መለያ መፍጠር አልተቻለም',
   'that did not work': 'ያ አልሠራም',
-  // Settings on a phone, display names, one blog address
   Back: 'ተመለስ',
   'Display name': 'የሚታይ ስም',
   'Your name': 'ስምህ',
@@ -1005,7 +960,6 @@ export const am: Dictionary = {
   Spelling: 'ፊደል አጻጻፍ',
   Checking: 'ማረም',
   Dictionary: 'መዝገበ ቃላት',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'መዝገቡ እንዲታይ በመጠበቅ ላይ።',
   'Certificate issued.': 'ምስክር ወረቀት ተሰጥቷል።',
   'Cloudflare could not set this domain up.': 'Cloudflare ይህን ጎራ ማዘጋጀት አልቻለም።',
@@ -1016,7 +970,6 @@ export const am: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare ይህን ጎራ አግዷል',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'በጎራ ሥር ላይ፣ አቅራቢህ እዚያ CNAME ካልፈቀደ የALIAS ወይም ANAME መዝገብ፣ ወይም CNAME flattening ተጠቀም።',
-  // Shortcuts
   Shortcuts: 'አቋራጮች',
   'Search shortcuts': 'አቋራጭ ፈልግ',
   'Second key': 'ሁለተኛ ቁልፍ',
@@ -1177,7 +1130,6 @@ export const am: Dictionary = {
   Delegated: 'ተሰጥቷል',
   'Code theme: {name}': 'የኮድ ገጽታ: {name}',
   'Delete a layout': 'አቀማመጥ አጥፋ',
-  // Keyboards and modal editing
   Default: 'ነባር',
   'Vim keys': 'የVim ቁልፎች',
   'Follow the link': 'አገናኙን ተከተል',
@@ -1189,11 +1141,9 @@ export const am: Dictionary = {
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
   REPLACE: 'REPLACE',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'በመነጽሩ ላይ ገጽ {page}/{count}',
   'Reaching the glasses': 'መነጽሩ ላይ በመድረስ ላይ',
   'The glasses are not keeping up': 'መነጽሩ አልደረሰበትም',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'ጨምር',
   Select: 'ምረጥ',
   Pan: 'አንሸራትት',
@@ -1223,7 +1173,6 @@ export const am: Dictionary = {
   Calligraphy: 'ውብ ጽሕፈት',
   'Width {number}': 'ስፋት {number}',
   'Finger draws': 'ጣት ይስላል',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'ስፋት',
   Opacity: 'ጥቅጥቅነት',
   Colour: 'ቀለም',
@@ -1267,23 +1216,19 @@ export const am: Dictionary = {
   'Export as PNG': 'እንደ PNG ላክ',
   'Export as SVG': 'እንደ SVG ላክ',
   'Export as PDF': 'እንደ PDF ላክ',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'PDF አምጣ',
   'Choose how to add the pages to the canvas.': 'ገጾቹ ወደ ሸራው እንዴት እንዲጨመሩ ይምረጡ።',
   'Single page': 'ነጠላ ገጽ',
   'All pages': 'ሁሉም ገጾች',
   'Choose a page': 'ገጽ ይምረጡ',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'የተመረጠውን አጥፋ',
   'Nudge left': 'ወደ ግራ ገፋ',
   'Nudge right': 'ወደ ቀኝ ገፋ',
   'Nudge up': 'ወደ ላይ ገፋ',
   'Nudge down': 'ወደ ታች ገፋ',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'በሌላ ቦታም ተከፍቷል',
   Shared: 'ተጋርቷል',
   Browser: 'አሳሽ',
-  // Sharing a space with other people
   Share: 'አጋራ',
   'Share {name}': '{name} አጋራ',
   'Share this space': 'ይህን ቦታ አጋራ',
@@ -1327,14 +1272,12 @@ export const am: Dictionary = {
   'Shared with you': 'ከእርስዎ ጋር ተጋርቷል',
   'That link does not open anything': 'ያ አገናኝ ምንም አይከፍትም',
   'Ask for another one.': 'ሌላ ጠይቅ።',
-  // Somebody a share link let in, who has no account
   Guest: 'እንግዳ',
   'Ask to join': 'ለመቀላቀል ጠይቅ',
   Asking: 'በመጠየቅ ላይ',
   'Waiting for {who}': '{who}ን በመጠበቅ ላይ',
   '{who} did not let you in': '{who} እንድትገባ አልፈቀደም',
   'What the others in this space see.': 'በዚህ ቦታ ሌሎች የሚያዩት።',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'ማሻሻያዎች',
   'Release channel': 'የልቀት መስመር',
   Stable: 'የተረጋጋ',
@@ -1344,8 +1287,6 @@ export const am: Dictionary = {
   'Web version': 'የድር ዕትም',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'የተረጋጋ የተለቀቀው የድር መተግበሪያ ነው፣ ያልተረጋጋ አዲሱ ግንባታ ነው እና ሊሰበር ይችላል።',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'አምጣ',
   'Convert syntax': 'አገባብ ቀይር',
   'In this note': 'በዚህ ማስታወሻ',
@@ -1438,8 +1379,6 @@ export const am: Dictionary = {
   'Undo the import': 'ማምጣቱን መልስ',
   'Choose an export': 'ልኬት ምረጥ',
   Under: 'ከሥር',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'ማመሳሰል',
   'When the same note was written twice': 'አንድ ማስታወሻ ሁለት ጊዜ ሲጻፍ',
   'On two devices': 'በሁለት መሣሪያ ላይ',
@@ -1498,7 +1437,6 @@ export const am: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'በዚህ መሣሪያ ላይ ያሉ ማስታወሻዎች ይቆያሉ፤ መዝገቡ እና የተመሳሰሉ ቅጂዎቹ ብቻ ይጠፋሉ።',
   'Also gone for everyone in {spaces}.': 'በ{spaces} ውስጥ ላሉ ሁሉም ይጠፋል።',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'ማስታወሻው',
   '{space} panel': 'የ{space} ሰሌዳ',
   'Panel width': 'የሰሌዳ ስፋት',
@@ -1509,7 +1447,6 @@ export const am: Dictionary = {
   'What is selected': 'የተመረጠው',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'ሸራ፦ {cards} ካርድ፣ {links} አገናኝ፣ {drawings} ሥዕል',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'አቅራቢዎች',
   'Make default': 'ነባር አድርግ',
@@ -1535,7 +1472,6 @@ export const am: Dictionary = {
   'Add an AI provider in Settings first.': 'መጀመሪያ በማስተካከያ የAI አቅራቢ ጨምር።',
   'The model did not answer.': 'ሞዴሉ አልመለሰም።',
   'The connection closed before the answer was finished.': 'መልሱ ከማለቁ በፊት ግንኙነቱ ተዘጋ።',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'የእርስዎ {plan} ዕቅድ እስከ {time} ድረስ ገደቡ ላይ ደርሷል።',
   'Your {plan} plan is at its limit for now.': 'የእርስዎ {plan} ዕቅድ ለጊዜው ገደቡ ላይ ደርሷል።',
   'Your {plan} plan is near its limit.': 'የእርስዎ {plan} ዕቅድ ወደ ገደቡ ተቃርቧል።',
@@ -1561,7 +1497,6 @@ export const am: Dictionary = {
   Shorter: 'አሳጥር',
   Longer: 'አርዝም',
   'Fix grammar': 'ሰዋስው አስተካክል',
-  // The AI sidebar's commands
   'A cited report': 'ምንጭ የተጠቀሰበት ዘገባ',
   'A helper in the background': 'ከበስተጀርባ ያለ ረዳት',
   'A side question': 'የጎን ጥያቄ',
@@ -1663,7 +1598,6 @@ export const am: Dictionary = {
   'Markdown, shortest name': 'markdown፣ አጭሩ ስም',
   'Markdown, relative path': 'markdown፣ አንጻራዊ መንገድ',
   'Markdown, path in the space': 'markdown፣ በቦታው ውስጥ መንገድ',
-  // Publishing part one.
   'The folders you choose become public.': 'የመረጥካቸው ፎልደሮች ለሕዝብ ይሆናሉ።',
   'Anyone with the address can read what is published, drafts included.':
     'አድራሻውን ያለው ሁሉ የታተመውን፣ ንድፎችንም ጨምሮ ማንበብ ይችላል።',
@@ -1689,11 +1623,9 @@ export const am: Dictionary = {
   'Remove the password': 'የይለፍ ቃሉን አስወግድ',
   'Scan this with your authenticator app, then type its code.':
     'ይህን በማረጋገጫ መተግበሪያህ ቃኝ፣ ከዚያ ኮዱን ጻፍ።',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'ፎቶ',
   Dictate: 'ተናገር',
   'Add to {name}': 'ወደ {name} ጨምር',
-  // Web tabs
   Reload: 'እንደገና ጫን',
   'Hard reload': 'ሙሉ በሙሉ እንደገና ጫን',
   'Open in the browser': 'በአሳሽ ክፈት',
@@ -1708,7 +1640,6 @@ export const am: Dictionary = {
   'Playing audio': 'ድምጽ እያጫወተ ነው',
   Muted: 'ድምጸ-ከል ተደርጓል',
   'Developer tools': 'የገንቢ መሣሪያዎች',
-  // Recording, meetings and what a model wrote
   Record: 'ቅረጽ',
   Recording: 'ቀረጻ',
   'Stop recording': 'ቀረጻውን አቁም',
@@ -1729,7 +1660,6 @@ export const am: Dictionary = {
     'ያ ቀረጻ በአንድ ጊዜ ወደ ቃላት ለመለወጥ በጣም ረጅም ነው።',
   'That is as much as one recording may hold.': 'አንድ ቀረጻ የሚይዘው ያን ያህል ነው።',
   'Nothing could be heard in that recording.': 'በዚያ ቀረጻ ውስጥ ምንም አልተሰማም።',
-  // Publishing part two.
   Spreadsheet: 'የተመን ሉህ',
   'The app’s own': 'የመተግበሪያው ራሱ',
   'publish.css and publish.js in this space dress the site.':
@@ -1745,14 +1675,12 @@ export const am: Dictionary = {
   'Save as CSV': 'እንደ CSV አስቀምጥ',
   'Kept for {days}': 'ለ{days} ይቀመጣል',
   Full: 'ሞልቷል',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ደብዳቤ መላክ አልተቻለም - እንደገና ሞክር',
   'start again - that took too long': 'እንደገና ጀምር - ያ በጣም ረዘመ',
   'sign in to do that': 'ያን ለማድረግ ግባ',
   'that is not something a token can do': 'ያ መለያ ሊያደርገው የሚችል አይደለም',
   'something went wrong here - try again': 'እዚህ አንድ ስህተት ሆነ - እንደገና ሞክር',
   'this service cannot keep a secret safely': 'ይህ አገልግሎት ምስጢር አስተማማኝ በሆነ መንገድ መያዝ አይችልም',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only': 'ምስሎች፣ PDF እና የጣቢያው ራሱ css ወይም js ብቻ',
   'that file is too big': 'ያ ፋይል በጣም ትልቅ ነው',
   'that is more settings than an account holds': 'ያ መዝገብ ከሚይዘው ማስተካከያ በለጠ',
@@ -1762,13 +1690,11 @@ export const am: Dictionary = {
   'that is more than a space keeps about its graph': 'ያ ቦታ ስለ ግራፉ ከሚይዘው በለጠ',
   'that is more folder icons than a space holds': 'ያ ቦታ ከሚይዘው የፎልደር ምልክት በለጠ',
   'that is more than a site keeps': 'ይህ ጣቢያ ከሚያስቀምጠው በላይ ነው',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'በዚያ አድራሻ ማንም የለም',
   'nobody by that name': 'በዚያ ስም ማንም የለም',
   'nobody is waiting by that name': 'በዚያ ስም የሚጠብቅ ማንም የለም',
   'this space is yours': 'ይህ ቦታ የእርስዎ ነው',
   'that link is busy, try again in a minute': 'ያ አገናኝ ተይዟል፣ ከደቂቃ በኋላ ሞክር',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'እንዲህ ያለ ቅጂ የለም',
   'this note was shared with you, not its folder': 'ይህ ማስታወሻ ከእርስዎ ጋር ተጋርቷል፣ ፎልደሩ አይደለም',
   'nothing to restore': 'የሚመለስ ምንም የለም',
@@ -1776,7 +1702,6 @@ export const am: Dictionary = {
   'nothing to delete': 'የሚጠፋ ምንም የለም',
   'this room is not answering - try again': 'ይህ ክፍል አይመልስም - እንደገና ሞክር',
   'rooms are not running here': 'ክፍሎች እዚህ አይሠሩም',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'የገጽታ መሸጫ አይመልስም',
   'that is not a theme': 'ያ ገጽታ አይደለም',
   'no such theme': 'እንዲህ ያለ ገጽታ የለም',
@@ -1788,10 +1713,8 @@ export const am: Dictionary = {
   'that is more than a spoken command': 'ያ ከአንድ የድምፅ ትዕዛዝ በለጠ',
   'that is a lot of listening - try again later': 'ያ ብዙ ማዳመጥ ነው - ቆይተህ ሞክር',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% ጽሑፍ',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'ስልክ',
   'The bar sits over the keyboard on a phone.': 'በስልክ ላይ አሞሌው ከቁልፍ ሰሌዳው በላይ ይቀመጣል።',
   'On the bar': 'በአሞሌው ላይ',
@@ -1805,31 +1728,25 @@ export const am: Dictionary = {
   'A pull past the top runs': 'ከላይ ማለፍ ያስኬዳል',
   Nothing: 'ምንም',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'አቆይ',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'ወደ ቀኝ አንቀሳቅስ',
   'Move to the left': 'ወደ ግራ አንቀሳቅስ',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'በመዝገቡ ላይ ታሪክ',
   'Keep versions': 'ዕትሞችን አቆይ',
   'A month': 'አንድ ወር',
   'A year': 'አንድ ዓመት',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'የመጨረሻው ቀን ሁሉ፣ ከዚያ በሰዓት አንድ፣ ከወር በኋላ በቀን አንድ፣ ከሦስት ወር በኋላ በሳምንት አንድ።',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'ይህ ማስታወሻ በክፍል ውስጥ ማስታወሻ ሊሆን የሚችለውን ከፍተኛ መጠን ደርሷል።',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'አዲስ ትር',
   'Full screen': 'ሙሉ ማያ ገፅ',
   'Print…': 'አትም…',
   'Share…': 'አጋራ…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'የሚከተሉትን ማድረግ ይፈልጋል',
   'Don’t allow': 'አትፍቀድ',
   Allow: 'ፍቀድ',
@@ -1845,7 +1762,6 @@ export const am: Dictionary = {
   'Use your MIDI devices': 'የMIDI መሣሪያዎችዎን ይጠቀሙ',
   'Manage windows on all your displays': 'በሁሉም የእርስዎ ማሳያዎች ላይ መስኮቶችን ማስተዳደር',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'የጣቢያ መረጃ',
   Downloads: 'ውርዶች',
   'Downloading {name}': '{name} በማውረድ ላይ',
@@ -1872,11 +1788,9 @@ export const am: Dictionary = {
   'Turn into': 'ቀይር',
   Foldable: 'ሊታጠፍ የሚችል',
   'Starts folded': 'ተጣጥፎ ይጀምራል',
-  // Where a space keeps what websites store
   'Web data': 'የድር ውሂብ',
   Global: 'የጋራ',
   Site: 'ጣቢያ',
-  // The Mac's menu bar
   'About {name}': 'ስለ {name}',
   Services: 'አገልግሎቶች',
   'Hide {name}': '{name}ን ደብቅ',
@@ -1884,7 +1798,6 @@ export const am: Dictionary = {
   'Show all': 'ሁሉንም አሳይ',
   'Quit {name}': 'ከ{name} ውጣ',
   'Bring all to front': 'ሁሉንም ወደ ፊት አምጣ',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'ቅጂውን መልስ',
   'Devices with your AI vault': 'የAI ካዝናዎ ያላቸው መሣሪያዎች',
   'This device': 'ይህ መሣሪያ',
@@ -1899,13 +1812,11 @@ export const am: Dictionary = {
   'Select down': 'ወደ ታች ምረጥ',
   'Select up': 'ወደ ላይ ምረጥ',
   'Select or deselect': 'ምረጥ ወይም ምርጫ አንሳ',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'በአዲስ ትር ክፈት',
   'Open to the side': 'ከጎን ክፈት',
   'Open all': 'ሁሉንም ክፈት',
   'Show in the file list': 'በፋይል ዝርዝሩ ውስጥ አሳይ',
   'Collapse the file list': 'የፋይል ዝርዝሩን ሰብስብ',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'ምርጫውን አስፋ',
   'Shrink the selection': 'ምርጫውን አጥብብ',
   'Insert a line above': 'ከላይ መስመር አስገባ',
@@ -1919,18 +1830,15 @@ export const am: Dictionary = {
   'Duplicate the block': 'ብሎኩን አባዛ',
   'Move the block up': 'ብሎኩን ወደ ላይ አንቀሳቅስ',
   'Move the block down': 'ብሎኩን ወደ ታች አንቀሳቅስ',
-  // The editor's menu on a link and a picture
   'Copy link address': 'የአገናኙን አድራሻ አባዛ',
   'Edit link': 'አገናኙን አርትዕ',
   'Remove link': 'አገናኙን አስወግድ',
   'Copy picture': 'ምስሉን አባዛ',
   'Open picture': 'ምስሉን ክፈት',
   'Delete picture': 'ምስሉን አጥፋ',
-  // A file dropped into a note
   'Storing the file': 'ፋይሉ እየተቀመጠ ነው',
   'That file is larger than a note can keep.': 'ይህ ፋይል ማስታወሻ ሊይዘው ከሚችለው በላይ ትልቅ ነው።',
   'That file could not be kept.': 'ይህን ፋይል ማስቀመጥ አልተቻለም።',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'አዲስ ተርሚናል',
   'Command Prompt': 'የትዕዛዝ መስመር',
   Terminal: 'ተርሚናል',
@@ -1952,11 +1860,8 @@ export const am: Dictionary = {
   'Saved nowhere, a session kept running is found again in Settings, {pane}.':
     'የትም አልተቀመጠም፤ እንዲሠራ የተተወ ክፍለ ጊዜ በቅንብሮች፣ {pane} ውስጥ እንደገና ይገኛል።',
   'Paste {count} lines?': { one: '{count} መስመር ይለጠፍ?', other: '{count} መስመሮች ይለጠፉ?' },
-  // Orden as the default browser
   'Default browser': 'ነባር አሳሽ',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ያደረጋቸውን ለውጦች ቀልብስ',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'በማህደር አስቀምጥ',
   Unarchive: 'ከማህደር አውጣ',
   Archived: 'በማህደር ተቀምጧል',
@@ -1969,7 +1874,6 @@ export const am: Dictionary = {
     one: 'በውስጡ {count} በማህደር የተቀመጠ ንጥል',
     other: 'በውስጡ {count} በማህደር የተቀመጡ ንጥሎች',
   },
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'የግራ ጎን ሰሌዳ',
   'Right sidebar': 'የቀኝ ጎን ሰሌዳ',
   'Ask about this space': 'ስለዚህ ቦታ ጠይቅ',
@@ -1980,7 +1884,6 @@ export const am: Dictionary = {
   'Ask again': 'እንደገና ጠይቅ',
   'Continue when the limit resets': 'ገደቡ ሲታደስ ቀጥል',
   'Continues at {time}': '{time} ላይ ይቀጥላል',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ማንኛውንም ይጠይቁ፣ ለማከል @፣ ለተጨማሪ /',
   'What can I help with?': 'በምን ልረዳዎት?',
   'Add photos and files': 'ፎቶዎችንና ፋይሎችን ያክሉ',
@@ -2048,12 +1951,9 @@ export const am: Dictionary = {
   Closed: 'ዘጋ',
   Ran: 'አሄደ',
   Changed: 'ቀየረ',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': 'ይህ {device}',
   '{name} is back: {device} was writing in it': '{name} ተመልሷል: {device} በውስጡ እየጻፈ ነበር',
   'Changes to {name} are not syncing': 'በ{name} ላይ ያሉ ለውጦች እየተመሳሰሉ አይደሉም',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'መክፈት',
   Pressing: 'መጫን',
   Typing: 'መተየብ',
@@ -2068,17 +1968,13 @@ export const am: Dictionary = {
   'Agent tabs closed': 'የወኪል ትሮች ተዘግተዋል',
   'Orden is still running for your agents': 'Orden ለወኪሎችዎ አሁንም እየሰራ ነው',
   '{client} wants to connect': '{client} መገናኘት ይፈልጋል',
-  // Web logins that travel, and the devices of an account
   'no such device': 'እንዲህ ያለ መሣሪያ የለም',
   'give the device a name': 'ለመሣሪያው ስም ስጠው',
   'that computer is no longer waiting': 'ያ ኮምፒውተር ከእንግዲህ እየጠበቀ አይደለም',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'እንዲህ ያለ ፋይል የለም',
   'too many changes at once - try again in a minute':
     'በአንድ ጊዜ በጣም ብዙ ለውጦች - ከአንድ ደቂቃ በኋላ እንደገና ሞክር',
   'that is more than a space keeps about its tree': 'ይህ አንድ ቦታ ስለ ዛፉ ከሚይዘው በላይ ነው',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'በዚህ ኮምፒውተር ላይ ያሉ ወኪሎች',
   'Your account’s connector': 'የመለያዎ ማገናኛ',
   'Orden asks you once, the first time it connects.': 'Orden ለመጀመሪያ ጊዜ ሲገናኝ አንድ ጊዜ ይጠይቅዎታል።',
@@ -2146,12 +2042,9 @@ export const am: Dictionary = {
     one: '{count} ጥሪ',
     other: '{count} ጥሪዎች',
   },
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'ፈጣን ጥያቄ',
   Scratchpad: 'Scratchpad',
   'Add to note': 'ወደ ማስታወሻ አክል',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'ቅጥያዎች',
   'Add extension': 'ቅጥያ አክል',
   'Manage extensions': 'ቅጥያዎችን አስተዳድር',
@@ -2169,7 +2062,6 @@ export const am: Dictionary = {
   'Did not load': 'አልተጫነም',
   Permissions: 'ፈቃዶች',
   Options: 'አማራጮች',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'ርቀት',
   'Add host': 'አስተናጋጅ አክል',
   Reconnect: 'እንደገና አገናኝ',
@@ -2177,11 +2069,8 @@ export const am: Dictionary = {
   'No group': 'ቡድን የለም',
   'Not an address': 'አድራሻ አይደለም',
   'Could not connect to {host}': 'ከ{host} ጋር መገናኘት አልተቻለም',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'ምስሉን በመላክ ላይ',
   'Could not send the image': 'ምስሉን መላክ አልተቻለም',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': {
     one: 'እና ከዚያ በኋላ ያለ {count}',
     other: 'እና ከዚያ በኋላ ያሉ {count}',
@@ -2194,8 +2083,6 @@ export const am: Dictionary = {
   'Pages, terminals and moves are not undone': 'ገጾች፣ ተርሚናሎች እና ማንቀሳቀሶች አይቀለበሱም',
   Rewind: 'ወደ ኋላ መልስ',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'የፍለጋ ፕሮግራም',
   History: 'ታሪክ',
   'Search history': 'የፍለጋ ታሪክ',
@@ -2219,14 +2106,12 @@ export const am: Dictionary = {
   'New private tab': 'አዲስ የግል ትር',
   'All spaces': 'ሁሉም ቦታዎች',
   'the data could not be deleted': 'ውሂቡ ሊሰረዝ አልቻለም',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'አሸልብ',
   Reminders: 'አስታዋሾች',
   'Reminders ring while Orden is open': 'አስታዋሾች Orden ክፍት ሲሆን ይደውላሉ',
   Automatic: 'ራስ-ሰር',
   'Stay in the tray': 'በትሪው ውስጥ ቆይ',
   'Exact alarms': 'ትክክለኛ ማንቂያዎች',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'የሚሠሩ',
   'Plan my day': 'ቀኔን አቅድ',
   'Add a task': 'ሥራ አክል',
@@ -2237,8 +2122,6 @@ export const am: Dictionary = {
   'Done tasks too': 'የተጠናቀቁ ሥራዎችም',
   'As a task': 'እንደ ሥራ',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'ተግባራት',
   Ascending: 'ወደ ላይ',
   Descending: 'ወደ ታች',
@@ -2323,8 +2206,6 @@ export const am: Dictionary = {
   'Without a value': 'እሴት የሌላቸው',
   'With a value': 'እሴት ያላቸው',
   Unique: 'ልዩ',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'ከአብነት አዲስ ማስታወሻ',
   Automations: 'ራስ-ሰር ተግባሮች',
   'Row added': 'ረድፍ ታክሏል',
@@ -2353,7 +2234,6 @@ export const am: Dictionary = {
   Form: 'ቅጽ',
   Formula: 'ቀመር',
   'Blocked by {task}': 'በ{task} ታግዷል',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'ከመውጣት በፊት አስጠንቅቅ',
   'When something runs': 'የሆነ ነገር ሲሄድ',
   'Quit {name}?': 'ከ{name} ይውጣ?',
@@ -2364,16 +2244,13 @@ export const am: Dictionary = {
   'Quit anyway': 'ቢሆንም ውጣ',
   'Restart anyway': 'ቢሆንም እንደገና አስነሳ',
   'Close anyway': 'ቢሆንም ዝጋ',
-  // The online terminal
   'Online terminal': 'የመስመር ላይ ተርሚናል',
   'New online terminal': 'አዲስ የመስመር ላይ ተርሚናል',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'ሌላ መሣሪያ',
   'Taken over by {device}': 'በ{device} ተወስዷል',
   'Open on {device} since {time}': 'ከ{time} ጀምሮ በ{device} ላይ ክፍት',
   'Take over': 'ተረከብ',
   'Take back': 'መልሰህ ውሰድ',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'አዲስ መተግበሪያ',
   Application: 'መተግበሪያ',
   'This application’s file is damaged': 'የዚህ መተግበሪያ ፋይል ተበላሽቷል',
@@ -2477,8 +2354,6 @@ export const am: Dictionary = {
   'Compare with original': 'ከዋናው ጋር አወዳድር',
   'Conflict copies from other apps': 'ከሌሎች መተግበሪያዎች የመጡ የግጭት ቅጂዎች',
   'Remove from sync': 'ከማመሳሰል አስወግድ',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'መገለጫ',
   Change: 'ቀይር',
   'Take photo': 'ፎቶ አንሳ',
@@ -2503,7 +2378,6 @@ export const am: Dictionary = {
   'that picture could not be opened': 'ያ ስዕል ሊከፈት አልቻለም',
   'the camera could not be opened': 'ካሜራው ሊከፈት አልቻለም',
   'that picture is too big': 'ያ ስዕል በጣም ትልቅ ነው',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'ውይይት',
   Reply: 'መልስ',
   Replies: 'መልሶች',
@@ -2522,7 +2396,6 @@ export const am: Dictionary = {
   'Also send to {chat}': 'ወደ {chat} ደግሞ ላክ',
   'Skin tone': 'የቆዳ ቀለም',
   'Deleted account': 'የተሰረዘ መለያ',
-  // Chats: notifications
   Mute: 'ድምፅ አጥፋ',
   Unmute: 'ድምፅ አብራ',
   'New message': 'አዲስ መልዕክት',
@@ -2532,7 +2405,6 @@ export const am: Dictionary = {
   Weekdays: 'የሥራ ቀናት',
   Starts: 'ይጀምራል',
   Ends: 'ያበቃል',
-  // Chats: everywhere
   'Read chats': 'ውይይቶችን ማንበብ',
   'Post in chats': 'በውይይቶች መጻፍ',
   'Always in this chat': 'ሁልጊዜ በዚህ ውይይት',
@@ -2544,14 +2416,12 @@ export const am: Dictionary = {
   'Search this chat': 'በዚህ ውይይት ፈልግ',
   'Add as task': 'እንደ ተግባር አክል',
   'Save as note': 'እንደ ማስታወሻ አስቀምጥ',
-  // Appearance: glass's own pairs of colours
   Dawn: 'ንጋት',
   Lagoon: 'ሐይቅ',
   Lilac: 'ሊላክ',
   Peach: 'ኮክ',
   Sage: 'ሴጅ',
   Mist: 'ጭጋግ',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'አዲስ ዳታቤዝ',
   'New page': 'አዲስ ገጽ',
   'Not started': 'አልተጀመረም',
@@ -2577,7 +2447,6 @@ export const am: Dictionary = {
   Large: 'ትልቅ',
   Both: 'ሁለቱም',
   'Shown on cards': 'በካርዶች ላይ የሚታዩ',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'የዚህን አሳሽ የAI ቁልፎች በካዝናው በኩል ከሌሎች መሣሪያዎችዎ ጋር ያመሳስላል።',
   'Which of your AI accounts this feature asks.': 'ይህ ባህሪ ከAI መለያዎችዎ የትኛውን እንደሚጠይቅ።',
@@ -2793,7 +2662,6 @@ export const am: Dictionary = {
   'Some changes may not be noticed': 'አንዳንድ ለውጦች ላይታዩ ይችላሉ',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'የሥርዓቱ የሚከታተሉ አቃፊዎች ገደብ ደርሷል፤ ስለዚህ Orden ሌሎች ፕሮግራሞች በቦታዎችዎ የሚያደርጉትን ሁሉ ለውጥ ላያስተውል ይችላል። fs.inotify.max_user_watchesን ማሳደግ ያስተካክለዋል።',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'ውይይቱ {name} ወደ {space} ይዛወር?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'ከዚያ በ{space} ያሉ ሁሉ ሙሉ ታሪኩን ማንበብ ይችላሉ፣ በ{from} ያሉትም ያጡታል።',
@@ -2831,7 +2699,6 @@ export const am: Dictionary = {
   'One colour': 'ባለ አንድ ቀለም',
   'Web icons': 'የድር አዶዎች',
   'Sites you visit will appear here': 'የሚጎበኟቸው ድረ ገጾች እዚህ ይታያሉ',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'ቃል መጻፍ',
   'Dictate with': 'በዚህ ይጻፍ',
   'Where your voice goes to be turned into words.': 'ድምጽዎ ወደ ቃላት ለመቀየር የሚሄድበት።',
@@ -2860,11 +2727,9 @@ export const am: Dictionary = {
   'Not on this device': 'በዚህ መሣሪያ ላይ የለም',
   'Not on this device. It opens once you are online again.':
     'በዚህ መሣሪያ ላይ የለም። እንደገና መስመር ላይ ሲሆኑ ይከፈታል።',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'IMAP አገልጋይ',
   'SMTP server': 'SMTP አገልጋይ',
   'User name': 'የተጠቃሚ ስም',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'አስቸኳይ',
   Important: 'አስፈላጊ',
   'If time': 'ጊዜ ካለ',

@@ -1,38 +1,3 @@
-//! A website in a tab: one child webview per web tab, placed over the pane that
-//! shows it.
-//!
-//! Tauri can put a second webview inside a window and give it bounds of its own,
-//! so a page sits exactly where the pane is and nothing else about the window
-//! changes. That is the only embedding on a desktop that renders a site the way a
-//! browser does: a frame cannot, because a great deal of the web refuses to be
-//! framed. The engine is the system's - `WebView2` on Windows, which is Chromium,
-//! and `WKWebView` on macOS, which is `WebKit` and not Chromium however the tab is
-//! asked for. See docs/web-tabs.md.
-//!
-//! What the window may do with one of these is deliberately small: make it, move
-//! it, show it, hide it, send it to an address, step its history, read the page
-//! for a clip, and close it. The window says where the pane is; nothing here
-//! knows what a pane is.
-//!
-//! **What a page in a window costs the rest of the crate.** Tauri's
-//! `get_webview_window` only answers for a window whose webviews are all itself -
-//! `Window::is_webview_window` is that test - so from the moment a web tab puts a
-//! second webview in the window, `get_webview_window("main")` answers nothing at
-//! all. Anything that asked that way stopped working while a website was open: the
-//! command line said the app had no window, a `nib://` link never raised it, and a
-//! second launch handed its file over to a window that was never brought forward.
-//! So nothing in this crate asks for the window that way. `get_window` is the call,
-//! because a window is what all of them wanted; `get_webview` is for a webview by
-//! label, which is how this module finds a page.
-//!
-//! The site gets nothing of the app. It is granted no command, because the
-//! capabilities name the app's own webviews rather than the windows they sit in
-//! and because a remote origin matches no capability here (see
-//! capabilities/default.json); and the page's own world is handed nothing at all - no
-//! global, no script, no channel - because every script the runtime registered is taken
-//! back before the page is sent to the site and Orden's own run in a world of their own.
-//! See `web_worlds.rs`.
-
 use std::collections::{HashMap, HashSet};
 use std::sync::{Mutex, PoisonError};
 
@@ -43,25 +8,16 @@ use tauri::{
     WebviewUrl,
 };
 
-/// What a web tab's webview is labelled: this in front of the tab's own id, so a
-/// label says which tab it belongs to and nothing else in the window can be
-/// mistaken for one.
 pub(crate) const LABEL: &str = "web-";
 
-/// Whether a webview is one of the web's own - a tab's page, or the page that holds
-/// the session open - rather than the app's.
 #[cfg(any(windows, target_os = "macos", feature = "cef"))]
 pub(crate) fn is_page(label: &str) -> bool {
     label.starts_with(LABEL) || adopted_label(label)
 }
 
-/// The labels of the pages that are private right now, for what goes through every web
-/// tab of a window without having built them; see `web_cookies.rs`.
 static PRIVATE: Mutex<std::collections::BTreeSet<String>> =
     Mutex::new(std::collections::BTreeSet::new());
 
-/// Says whether the page about to be built under `label` is private. A label is reused
-/// when a tab's page is built again, so this is said every time.
 fn mark_private(label: &str, private: bool) {
     let mut marked = PRIVATE.lock().unwrap_or_else(PoisonError::into_inner);
     if private {
@@ -71,7 +27,6 @@ fn mark_private(label: &str, private: bool) {
     }
 }
 
-/// Whether a web tab's page is a private one.
 #[cfg_attr(
     not(any(windows, target_os = "macos", feature = "cef")),
     allow(
@@ -86,12 +41,8 @@ pub(crate) fn is_private(label: &str) -> bool {
         .contains(label)
 }
 
-/// Pages a tab took over rather than built, by the tab's id: an agent's page the reader
-/// was shown (docs/agent-native.md 6.7), which becomes a tab of the reader's without
-/// loading again. Every other tab's page is `web-<tab>`.
 static ADOPTED: Mutex<Option<HashMap<String, String>>> = Mutex::new(None);
 
-/// The label of a tab's page: the page it took over, or its own.
 pub(crate) fn label_of(tab: &str) -> String {
     ADOPTED
         .lock()
@@ -100,7 +51,6 @@ pub(crate) fn label_of(tab: &str) -> String {
         .unwrap_or_else(|| format!("{LABEL}{tab}"))
 }
 
-/// Whether a label is a page some tab took over.
 fn adopted_label(label: &str) -> bool {
     ADOPTED.lock().is_ok_and(|held| {
         held.as_ref()
@@ -108,24 +58,14 @@ fn adopted_label(label: &str) -> bool {
     })
 }
 
-/// What the window hears a page chosen by a person on; see `page_chosen`.
 const CHOSEN: &str = "nib://web-chosen";
 
-/// A person pressed in a tab's page, or the page took the keyboard: its tab and its pane
-/// are the ones being worked in now, as a press anywhere in the app's own page makes its
-/// pane's (#1080). The one way every engine says so - the engine's own word that the page
-/// has the keyboard (`keyboard::page_took`), the app's own page finding the keyboard gone
-/// to a page (`keyboard_went`, which is a Mac's word), and a press heard in the page itself
-/// (`web_opens.rs`), which is what tells it where the page had the keyboard already and
-/// the window system says nothing. `page` is the webview's label; one that is no tab's,
-/// the app's own page or an agent's, chooses nothing.
 pub(crate) fn page_chosen(app: &AppHandle, window: &str, page: &str) {
     if let Some(tab) = tab_of(page) {
         let _ = app.emit_to(window, CHOSEN, serde_json::json!({ "tab": tab }));
     }
 }
 
-/// The tab a webview is the page of, or nothing for one of the app's own.
 pub(crate) fn tab_of(label: &str) -> Option<String> {
     let adopted = ADOPTED.lock().ok().and_then(|held| {
         held.as_ref()?
@@ -136,10 +76,6 @@ pub(crate) fn tab_of(label: &str) -> Option<String> {
     adopted.or_else(|| label.strip_prefix(LABEL).map(str::to_string))
 }
 
-/// Makes an existing page the page of a reader's tab, and gives it what a reader's tab
-/// has: the browser's keys, the page-first keys, full screen, finding, downloads and the
-/// permission bubble. The window places it as it places any tab's page, with `web_place`,
-/// and `web_open` finds it there rather than building another.
 #[cfg_attr(
     not(all(windows, not(feature = "cef"))),
     allow(dead_code, reason = "only WebView2 has agent tabs to show")
@@ -150,16 +86,10 @@ pub(crate) fn hand_page_to(app: &AppHandle, tab: &str, label: &str, store: Optio
             .insert(tab.to_string(), label.to_string());
     }
     listening(app, tab, store, None);
-    // Its loads and its title, said to the window as a built page's are.
     #[cfg(all(windows, not(feature = "cef")))]
     reported(app, tab, label);
 }
 
-/// What an adopted page does, said to the window the way `reporting` says it for a page
-/// a tab built: each load started and ended, and the title. The builder's own hooks were
-/// the agent's, so these are the engine's events on the page itself, answered on the
-/// window's thread from what the engine hands the event rather than by asking the
-/// webview, which from inside an engine event would wait on itself.
 #[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
@@ -193,7 +123,6 @@ fn reported(app: &AppHandle, tab: &str, label: &str) {
             let (app, tab, label) = (app.clone(), tab.clone(), label.clone());
             NavigationCompletedEventHandler::create(Box::new(move |sender, _| {
                 let mut url = PWSTR::null();
-                // Safe: the engine's own object, on the window's thread.
                 let url = sender.and_then(|core| unsafe {
                     core.Source(&raw mut url).ok()?;
                     Some(webview2_com::take_pwstr(url))
@@ -206,7 +135,6 @@ fn reported(app: &AppHandle, tab: &str, label: &str) {
             let (app, tab, label) = (app.clone(), tab.clone(), label.clone());
             DocumentTitleChangedEventHandler::create(Box::new(move |sender, _| {
                 let (mut url, mut title) = (PWSTR::null(), PWSTR::null());
-                // Safe: as above.
                 let read = sender.and_then(|core| unsafe {
                     core.Source(&raw mut url).ok()?;
                     core.DocumentTitle(&raw mut title).ok()?;
@@ -221,8 +149,6 @@ fn reported(app: &AppHandle, tab: &str, label: &str) {
                 Ok(())
             }))
         };
-        // Safe: the controller is this webview's, on its own thread; the engine holds the
-        // handlers for as long as the webview lives.
         unsafe {
             if let Ok(core) = platform.controller().CoreWebView2() {
                 let mut token = 0i64;
@@ -234,8 +160,6 @@ fn reported(app: &AppHandle, tab: &str, label: &str) {
     });
 }
 
-/// A window an adopted page asked for, handed to the window as a tab beside it: the
-/// page's own handler for that belonged to the agent. Nothing for a page no tab took.
 #[cfg_attr(
     not(all(windows, not(feature = "cef"))),
     allow(dead_code, reason = "only WebView2 has agent tabs to show")
@@ -268,7 +192,6 @@ pub(crate) fn opened_from_adopted(app: &AppHandle, label: &str, url: &str) {
     );
 }
 
-/// Forgets that a tab took a page over, once the page is gone.
 fn unadopt(tab: &str) {
     if let Ok(mut held) = ADOPTED.lock() {
         if let Some(all) = held.as_mut() {
@@ -277,59 +200,24 @@ fn unadopt(tab: &str) {
     }
 }
 
-/// The window's own page, which shares its label with the window it is in.
 const MAIN: &str = "main";
 
-/// The event the window hears whenever a page moves: which tab, where it is, what
-/// it calls itself, and whether there is anywhere to step.
 const MOVED: &str = "nib://web-tab";
 
-/// The event the window hears when a site asks for something it has to be given: the
-/// camera, the microphone, where you are, notifications, the clipboard to read.
-///
-/// Only `WebView2` and `WKWebView` raise the request this carries, so on Linux nothing
-/// emits it; the same `cfg_attr` `pdf.rs` uses for its own platform-only type.
 #[cfg_attr(
     any(not(any(windows, target_os = "macos")), feature = "cef"),
     allow(dead_code)
 )]
 const ASKED: &str = "nib://web-ask";
 
-/// The event the window hears when a page asks for a window of its own, carrying
-/// the tab that asked and the address it wants. The window answers it with a tab,
-/// which is what a browser answers `target="_blank"` with; see `on_new_window`.
 const OPENED: &str = "nib://web-open";
 
-/// What the window hears a blocked window on; see `popup_blocked`.
 const BLOCKED: &str = "nib://web-blocked";
 
-/// The largest page a clip reads, in characters. A note the account would refuse
-/// is worse than a clip that stops early, and 4 MB is what the API takes.
 const LONGEST_PAGE: usize = 4_000_000;
 
-/// The page a tab's webview is built on before it is sent anywhere.
-///
-/// A tab is built here and navigated afterwards, because the runtime's scripts have to be
-/// taken back off the webview before the site's first document is created, and a webview
-/// built on the site would be racing the network to do it; see `web_worlds.rs`. It is
-/// never somewhere a tab has been, so nothing is said about it.
 const BLANK: &str = "about:blank";
 
-/// Puts a revived page back where the reading was.
-///
-/// It is there from before the page's own first script - in nib's own world, where the
-/// page cannot see it; see `web_worlds.rs` - and does its work when the document is
-/// ready: a scroll offset set before there is a document to scroll is
-/// an offset set on nothing. Three times, because a page that lays itself out in
-/// stages - a font, a picture without a size, a script that writes the body - is
-/// shorter than its final self when the document is first ready, and a browser
-/// restoring a tab does exactly the same thing.
-///
-/// Only for the page it was left on: `__PLACE__` carries the address, and a tab that
-/// followed a link on the way in is a tab whose place is not this page's. And only in
-/// the page itself, never in a frame inside it - `window.top` is the test - because a
-/// frame that scrolled itself to the page's offset would be a frame scrolled somewhere
-/// nobody asked for.
 const PLACE: &str = r"(function () {
   var want = __PLACE__
   if (!want || window.top !== window) return
@@ -351,20 +239,6 @@ const PLACE: &str = r"(function () {
   }, { once: true })
 })()";
 
-/// Where the page is now: the address, and how far down it the reading has got.
-///
-/// Read out of the page rather than kept as it scrolls, because a page scrolling is
-/// the one thing about a web tab the app cannot see - the wheel goes to the webview
-/// and nothing of ours hears it - and asking once, when the tab is left, is the whole
-/// of what is needed to open it again where it was.
-/// The answer is the object itself and not a string of one: what the engine hands back
-/// is already JSON, so a script that stringifies its own answer is an answer wrapped
-/// twice and a `Looked` that will not parse. The reader beside this one has always
-/// returned an object for the same reason.
-///
-/// And whether a field holds something typed and not sent, which a page taken down for
-/// memory would lose: Memory saver leaves such a page running, as Chrome's does with a
-/// partly filled form (lib/web-tab/resting.ts).
 const LOOKED: &str = r"(function () {
   try {
     var edited = Array.prototype.some.call(document.querySelectorAll('input, textarea'), function (one) {
@@ -376,39 +250,16 @@ const LOOKED: &str = r"(function () {
   }
 })()";
 
-/// The page, read for a clip: a snapshot of the document as the reader sees it, or of
-/// what they selected, which the window runs the clipper's own extractor over. See
-/// `web_tabs/reader.js`, which says what it writes and why the page's half is small.
 const READER: &str = include_str!("web_tabs/reader.js");
 
-/// Where a page has been in one tab, and where along it the tab is.
-///
-/// Kept here rather than asked of the engine, because neither `WebView2` nor
-/// `WKWebView` tells Tauri whether a page can go back, and a back arrow that is
-/// always lit is an arrow that lies half the time.
-///
-/// It outlives the webview. A parked tab keeps its trail, so the arrows over a page
-/// that has just been revived are right from the first frame rather than dead until
-/// somebody follows a link - and stepping one of them walks the trail rather than the
-/// engine's own history, which a revived webview has none of. See `engine`.
 #[derive(Default)]
 struct Trail {
     urls: Vec<String>,
     at: usize,
-    /// Whether the engine's own history is this trail.
-    ///
-    /// True for a webview that has only been sent where the page and the address bar
-    /// sent it: `history.back()` is then the right call, and the engine takes the
-    /// place on the page and the half-filled form back with it. False from the moment
-    /// this crate navigates a step itself - which is how a revived page steps, its
-    /// engine holding no history at all - because a `history.back()` after one of
-    /// those goes the wrong way: the step put a *new* entry on the engine's stack.
     engine: bool,
 }
 
 impl Trail {
-    /// The trail a parked tab was parked with, restored under a webview that has just
-    /// been built. Its own history is empty, so every step from here is a navigation.
     fn restored(urls: Vec<String>, at: usize) -> Self {
         let at = at.min(urls.len().saturating_sub(1));
         Self {
@@ -418,16 +269,11 @@ impl Trail {
         }
     }
 
-    /// The address `by` steps along the trail - back where it is negative - for a tab
-    /// whose engine cannot step itself, and for the history under the arrows.
     fn step_to(&self, by: isize) -> Option<&String> {
         self.at
             .checked_add_signed(by)
             .and_then(|there| self.urls.get(there))
     }
-    /// A page that has arrived. A step back or forward lands on the address next
-    /// to where the trail is, and anything else is somewhere new, which forgets
-    /// whatever was ahead.
     fn visited(&mut self, url: &str) {
         if self.urls.get(self.at).is_some_and(|here| here == url) {
             return;
@@ -460,10 +306,6 @@ impl Trail {
     }
 }
 
-/// The app's builder with what web tabs keep in it: the trail of every tab, every page
-/// following its window as the window is resized (`web_follow.rs`), and - on
-/// the system's engine on Windows and on a Mac - a window that waits, as it closes, for
-/// its tabs' logins to be made to last; see `web_cookies.rs`. Orden's own Chromium too.
 pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::Engine> {
     #[cfg(any(windows, target_os = "macos", feature = "cef"))]
     let builder = builder.on_window_event(crate::web_cookies::leaving);
@@ -472,22 +314,12 @@ pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::
         .manage(WebTabs::default())
 }
 
-/// Every web tab this app has open: where each of them has been, and which of them
-/// is in the middle of being given a page.
 #[derive(Default)]
 pub struct WebTabs {
     trails: Mutex<HashMap<String, Trail>>,
-    /// The tabs whose webview is being built at this moment.
-    ///
-    /// A page is no longer built on the thread the request arrived on, so two
-    /// placements a frame apart are two calls in the air at once - and the label
-    /// both of them would build a webview under is the same label. The first to
-    /// arrive takes the tab; the second is told the tab is busy, which is what it
-    /// would have been told a moment later anyway.
     opening: Mutex<HashSet<String>>,
 }
 
-/// A tab taken for one build; see `claimed`.
 struct Claim<'a> {
     tabs: &'a WebTabs,
     tab: &'a str,
@@ -500,37 +332,28 @@ impl Drop for Claim<'_> {
 }
 
 impl WebTabs {
-    /// Takes a tab for one build, or says that somebody already has it.
     fn claim(&self, tab: &str) -> bool {
         self.opening
             .lock()
             .is_ok_and(|mut busy| busy.insert(tab.to_string()))
     }
 
-    /// Takes a tab for one build, given back when what it returns goes, whichever way the
-    /// build ended: a store that could not be had stopped one on its way and left the tab
-    /// taken, and every later open was told it was already opening a page.
     fn claimed<'a>(&'a self, tab: &'a str) -> Option<Claim<'a>> {
         self.claim(tab).then_some(Claim { tabs: self, tab })
     }
 
-    /// Gives it back, whether the page arrived or not.
     fn built(&self, tab: &str) {
         if let Ok(mut busy) = self.opening.lock() {
             busy.remove(tab);
         }
     }
 
-    /// A page a tab has arrived on, on the trail kept for that tab.
     fn walked(&self, tab: &str, url: &str) {
         if let Ok(mut trails) = self.trails.lock() {
             trails.entry(tab.to_string()).or_default().visited(url);
         }
     }
 
-    /// The trail a tab was parked with, put back under the webview that has just been
-    /// built for it. An empty one is no trail at all, which is a tab being opened for
-    /// the first time.
     fn restore(&self, tab: &str, urls: Vec<String>, at: usize) {
         if urls.is_empty() {
             return;
@@ -541,8 +364,6 @@ impl WebTabs {
         }
     }
 
-    /// Where this tab has been and where along it it is, for the window to write down
-    /// against the note.
     fn walk(&self, tab: &str) -> (Vec<String>, usize) {
         self.trails
             .lock()
@@ -551,14 +372,6 @@ impl WebTabs {
             .unwrap_or_default()
     }
 
-    /// Where a step goes: the address to send the tab to, or `None` for a tab whose
-    /// own engine can take the step. Stepping by address is what a revived page does,
-    /// and from the first one this tab does it for good; see `Trail::engine`.
-    ///
-    /// A step of more than one - a row of the history under the arrows - lands on an
-    /// address that is not next to where the trail was, which `Trail::visited` would
-    /// take for somewhere new and cut everything ahead of it off for. So the trail is
-    /// moved there first, and the page arriving finds it already in place.
     fn stepping(&self, tab: &str, by: isize) -> Option<String> {
         let mut trails = self.trails.lock().ok()?;
         let trail = trails.get_mut(tab)?;
@@ -572,7 +385,6 @@ impl WebTabs {
     }
 }
 
-/// Where the pane is, in the window's own coordinates, as the window measured it.
 #[derive(Deserialize)]
 pub struct Pane {
     x: f64,
@@ -581,11 +393,6 @@ pub struct Pane {
     height: f64,
 }
 
-/// What the window is told when a page moves.
-///
-/// A field that says nothing is a field the window leaves as it was: the title arrives
-/// later than the address and on its own, and an empty one here is "no news" rather
-/// than "gone". The site's mark is an event of its own; see `web_icons.rs`.
 #[derive(Clone, Serialize)]
 struct Moved {
     tab: String,
@@ -596,9 +403,6 @@ struct Moved {
     loading: bool,
 }
 
-/// What the window is told when a page asks for a window of its own: which tab
-/// asked, so the tab it gets lands beside it, where it wants to go, and whether the
-/// press that asked left it behind; see `web_opens.rs`.
 #[derive(Clone, Serialize)]
 struct Opening {
     tab: String,
@@ -606,36 +410,22 @@ struct Opening {
     behind: bool,
 }
 
-/// What a window a page asked for at a size of its own is labelled, in front of a
-/// number. Neither `web-`, so nothing takes it for a tab's page, nor anything the
-/// capabilities name, so it is granted nothing; see `popup`.
 #[cfg(not(feature = "cef"))]
 const POPUP: &str = "popup-";
 
-/// Where a page was left, and where it is put back.
 #[derive(Clone, Copy, Deserialize, Serialize)]
 pub struct Place {
     x: f64,
     y: f64,
 }
 
-/// What a tab that has been parked - or closed and opened again tomorrow - is handed
-/// back when its page is built: the place the reading was at, and the trail behind it.
-///
-/// One argument rather than three, because they are one thing: everything about where
-/// this tab had got to before the webview under it went away.
 #[derive(Deserialize)]
 pub struct Revived {
-    /// Where the reading was on the page, or `None` for a page being opened rather
-    /// than revived.
     place: Option<Place>,
-    /// Where the tab had been, oldest first.
     trail: Vec<String>,
-    /// Where along that it was.
     at: usize,
 }
 
-/// What the page says about where it is, read by `LOOKED`.
 #[derive(Deserialize)]
 struct Looked {
     url: String,
@@ -645,15 +435,6 @@ struct Looked {
     edited: bool,
 }
 
-/// What a site has asked for, on its way to the window.
-///
-/// `id` is what the answer comes back with: the request is held open in the engine
-/// while the reader decides, and the only thing either side needs to agree on is which
-/// request is being answered.
-///
-/// Built only where a permission request is raised, which is Windows and macOS; on
-/// Linux the ask module is a stub and nothing constructs this, so it is allowed to be
-/// dead there.
 #[cfg_attr(
     any(not(any(windows, target_os = "macos")), feature = "cef"),
     allow(dead_code)
@@ -666,8 +447,6 @@ struct Asked {
     kind: String,
 }
 
-/// Where a tab is, for the window to write down against the note: the page, the place
-/// on it, and the trail behind it.
 #[derive(Serialize)]
 pub struct Look {
     url: String,
@@ -678,8 +457,6 @@ pub struct Look {
     edited: bool,
 }
 
-/// A page as a clip reads it: where it is, what it calls itself, and the HTML of
-/// the part worth keeping.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Clipped {
     url: String,
@@ -687,32 +464,17 @@ pub struct Clipped {
     html: String,
 }
 
-/// Which way a step goes.
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Step {
     Back,
     Forward,
     Reload,
-    /// Chrome's Ctrl+Shift+R: the page again, past the cache.
     Fresh,
-    /// The cross the reload glyph turns into while a page is coming.
     Stop,
 }
 
-/// Whether an address is one a web tab may go to.
-///
-/// Only the web, and never the app: `file:` would read this machine, a scheme the
-/// system knows would hand the page to another application, and the app's own
-/// origins would put Orden inside the tab with the site's script beside it. What
-/// somebody typed is turned into an address by the window (see
-/// `lib/web-tab/typed.ts`); this is the rule that cannot be talked round,
-/// because it is also what every link inside the page is judged by, and every
-/// link another program hands nib as the browser (`web_handed.rs`).
 pub(crate) fn allowed(url: &Url) -> bool {
-    // Chrome's "View page source" is a page's own address behind `view-source:`, and it
-    // is judged as that address: the source of anything a tab may open, and nothing
-    // else. The engine's menu asks for it as a window, which is a tab here.
     if url.scheme() == "view-source" {
         return url
             .as_str()
@@ -735,23 +497,10 @@ pub(crate) fn app_host(host: &str) -> bool {
     )
 }
 
-/// Whether a tab may be on `url`: the web, or a page of an extension that is installed -
-/// its options page, opened as a tab, and the pages it opens from there. Only for a tab's
-/// own navigation; another program handing Orden an address is held to `allowed` alone.
 pub(crate) fn tab_may_open(url: &Url) -> bool {
     allowed(url) || crate::extensions::ours(url)
 }
 
-/// Whether a frame inside a tab's page may be on `url` (#1093): what a tab may open, and
-/// the documents a page makes for its own frames - `about:blank`, `about:srcdoc`, a
-/// `data:` page and a `blob:` of a site's own - which are the page's own content rather
-/// than anywhere it goes.
-///
-/// Asked only where the engine asks about a frame's navigation at all. `WKWebView` asks
-/// its one navigation delegate about every frame, and wry hands each to the tab's rule,
-/// which refused every one of those four: a sign-in in a frame, an editor's preview or an
-/// embed drawn from a `blob:` stayed an empty box on a Mac while it worked everywhere
-/// else, where a frame's navigation is never the tab's to judge. See `web_page/webkit.rs`.
 #[cfg_attr(
     not(all(target_os = "macos", not(feature = "cef"))),
     allow(dead_code, reason = "only WKWebView asks about a frame's navigation")
@@ -760,7 +509,6 @@ pub(crate) fn frame_may_open(url: &Url) -> bool {
     match url.scheme() {
         "about" => matches!(url.path(), "blank" | "srcdoc"),
         "data" => true,
-        // `blob:https://site/id`: a site's own, and only one a tab may be on.
         "blob" => {
             Url::parse(url.path()).is_ok_and(|inner| inner.scheme() != "blob" && allowed(&inner))
         }
@@ -768,8 +516,6 @@ pub(crate) fn frame_may_open(url: &Url) -> bool {
     }
 }
 
-/// Opens `url` as a tab beside `tab`, in front: what an extension's popup does with a
-/// link pressed in it or a page of its own it opens; see extensions/popup.rs.
 pub(crate) fn open_as_tab(app: &AppHandle, window: &str, tab: &str, url: &Url) {
     let payload = Opening {
         tab: tab.to_string(),
@@ -779,9 +525,6 @@ pub(crate) fn open_as_tab(app: &AppHandle, window: &str, tab: &str, url: &Url) {
     let _ = app.emit_to(window, OPENED, payload);
 }
 
-/// Opens `url` in a tab beside `tab`, behind it or in front: what the window does with a
-/// window a page asked for, and what nib's own Chromium does with a link pressed for a
-/// tab of its own, which never becomes a window request there; see `web_opens.rs`.
 #[cfg(feature = "cef")]
 pub(crate) fn opened_beside(app: &AppHandle, window: &str, tab: &str, url: &str, behind: bool) {
     let Some(address) = Url::parse(url).ok().as_ref().and_then(handed_over) else {
@@ -795,61 +538,20 @@ pub(crate) fn opened_beside(app: &AppHandle, window: &str, tab: &str, url: &str,
     let _ = app.emit_to(window, OPENED, payload);
 }
 
-/// The address the window opens as a tab of its own for a window the page asked
-/// for, or `None` for a window it does not get.
-///
-/// The same rule the tab itself is held to, because the request is the page's
-/// either way: `window.open` is a scheme of the page's choosing, and whatever is
-/// registered for one is another application. So `nib://` would be a site driving
-/// this app through its own links, `smb://` would be a site asking this machine to
-/// authenticate somewhere, and a scheme another program registered is a site
-/// starting that program - none of which the tab may do by navigating, and none
-/// of which it may do by asking for a window either. A page is handed over and
-/// everything else is dropped, which is what the engine would have done with it
-/// had nothing here been listening.
 fn handed_over(url: &Url) -> Option<String> {
     tab_may_open(url).then(|| url.to_string())
 }
 
-/// What a window a page asks for becomes: the one rule every engine's new-window
-/// handler answers by (#1074).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) enum Becomes {
-    /// A tab beside the page, at this address: a link, or what a person pressed for.
     Tab(String),
-    /// A window of the page's own, which the engine builds, so the page keeps it: what
-    /// `window.open` hands back, `window.opener` in it, and the two talking.
     Window,
-    /// Not opened, as Chrome does not open a window nobody pressed for, and said: the tab's
-    /// bar offers the address (`popup_blocked`).
     Blocked(String),
-    /// Nothing: an address no tab may be on.
     Nothing,
 }
 
-/// Whether this build's pages say which windows a person pressed for - every link, plain
-/// or with Ctrl, Shift or the middle button, which the script in nib's world in the page
-/// answers itself (`web_opens.rs`) - so that what is left is the page's own `window.open`
-/// or form. `WKWebView` runs no such script, and says nothing.
 const PRESSES_SAID: bool = cfg!(any(windows, feature = "cef"));
 
-/// What a request for a window becomes (#1074): the one rule each engine's handler answers
-/// by.
-///
-/// A tab for what a person pressed for (`said`): a link, which is what a browser opens a
-/// tab for. A window the page asked for itself with no press behind it (`unasked`) is
-/// blocked, as Chrome blocks it, and the tab's bar offers it. An extension's own page is a
-/// tab too: the extension asked for it - `chrome.tabs.create`, which `WebView2` may raise
-/// as a page's request for a window - and no site's sign-in reports back from one (#1161).
-/// Anything else the page asked for itself - `window.open`, with or without a size, on an
-/// address or on `about:blank`, a form sent to `target="_blank"` - is a window of its own
-/// built by the engine, because only that hands the page what it asked for: the window
-/// back, with `window.opener` in it, which a sign-in reports back through and a blank
-/// window is sent or written into. A tab built afresh at the address answered `null`, kept
-/// no opener, and asked for a form's address by GET. A tab cannot hold an engine's own
-/// window, so it is a window. Where the pages say nothing of presses, a web address with
-/// nothing more stays a tab, as before.
-/// An address no tab may be on opens nothing; see `handed_over`.
 pub(crate) fn becomes(url: &Url, sized: bool, said: bool, unasked: bool) -> Becomes {
     if said {
         return handed_over(url).map_or(Becomes::Nothing, Becomes::Tab);
@@ -866,10 +568,6 @@ pub(crate) fn becomes(url: &Url, sized: bool, said: bool, unasked: bool) -> Beco
     handed_over(url).map_or(Becomes::Nothing, Becomes::Tab)
 }
 
-/// Says to its window that the page in `tab` was kept from opening a window at `url`, as
-/// Chrome keeps a page from one nobody pressed for: the tab's bar offers it (#1074). Every
-/// engine's block comes here - the request `WebView2` raises for it, and the one Chromium
-/// refused before Orden heard of it, which the page's own world says (`web_opens.rs`).
 pub(crate) fn popup_blocked(app: &AppHandle, window: &str, tab: &str, url: &str) {
     let Some(address) = Url::parse(url).ok().as_ref().and_then(handed_over) else {
         return;
@@ -882,32 +580,10 @@ pub(crate) fn popup_blocked(app: &AppHandle, window: &str, tab: &str, url: &str)
     let _ = app.emit_to(window, BLOCKED, payload);
 }
 
-/// Whether a page asked for a window on nothing yet, which it is about to send somewhere
-/// or write into itself.
 fn blank(url: &Url) -> bool {
     url.scheme() == "about" && url.path() == "blank"
 }
 
-/// A window a page asked for at a size of its own, as a window: the page that opened
-/// it keeps hold of it, which is the whole of how a sign-in in a popup reports back -
-/// `window.opener`, and the popup closing itself. A tab could hold the page but not the
-/// hold, and the sign-in never finished.
-///
-/// Framed and at the size asked for, and on the opener's own store, which is what
-/// `window_features` hands it: the engine refuses a new window on any other, and a
-/// sign-in in a store the page is not in would be a sign-in to nothing. Handed nothing
-/// of the app's and kept to the web like a tab's page - a sign-in page is exactly the
-/// kind that breaks on a global it did not expect - and labelled so it is granted
-/// nothing. What it asks for in turn opens as a tab beside the page that opened it. It
-/// closes when its page does; see `WindowCloseRequested` in wry.
-///
-/// A private tab's is private. `window_features` hands over the opener's environment and
-/// says nothing of its mode, and wry builds a controller as `incognito` says with no regard
-/// for the opener: left at false, a private tab's sign-in was offered the profile that
-/// lasts (#791). Private on the same environment is the opener's own private session.
-///
-/// The system's engines' alone: Orden's own Chromium builds such a window itself, opener
-/// and all (`becomes`).
 #[cfg(not(feature = "cef"))]
 fn popup(
     app: &AppHandle,
@@ -931,8 +607,6 @@ fn popup(
         .window_features(features)
         .incognito(private)
         .title(url.host_str().unwrap_or_default())
-        // The page takes its own drops, as a tab's does, and a file dropped on a site
-        // is no pick in the system's dialog; see `window_builder` in launch.rs.
         .disable_drag_drop_handler()
         .on_navigation(allowed)
         .on_new_window(move |url, _| {
@@ -950,16 +624,8 @@ fn popup(
             let _ = window.set_title(&title);
         });
 
-    // Where the page asked for it, unless this run's windows were sent off the screen - a
-    // drive's, see placement.rs: then after them, whatever `left` and `top` the page
-    // named, and without the keyboard. A sign-in page is exactly what a drive of the web
-    // opens, and a window of its own in front of whoever is working is the one thing a
-    // drive must never do. See `built`.
     let window = crate::placement::built(building).ok()?;
 
-    // Cleared before it is handed back, which is before the engine sends it anywhere:
-    // this runs on the window's own thread, where `with_webview` answers inline, and the
-    // engine navigates the popup only once the request it came from is answered.
     #[cfg(windows)]
     {
         let closing = window.clone();
@@ -972,7 +638,6 @@ fn popup(
     Some(window)
 }
 
-/// The address, read and judged, or a reason it is not one.
 fn address(url: &str) -> Result<Url, String> {
     let parsed = Url::parse(url).map_err(|error| format!("that is not an address: {error}"))?;
     if tab_may_open(&parsed) {
@@ -982,30 +647,17 @@ fn address(url: &str) -> Result<Url, String> {
     }
 }
 
-/// The reader script, told whether it is after a selection.
 pub(crate) fn reader(selection: bool) -> String {
     READER
         .replace("__SELECTION__", if selection { "yes" } else { "no" })
         .replace("__LONGEST__", &LONGEST_PAGE.to_string())
 }
 
-/// nib's own scripts for a page: on `WebView2` a link pressed for a tab of its own and
-/// the keys a page lets go by (see `web_opens.rs`), a swipe over it (`web_swipe.rs`),
-/// and - for a tab being revived - the
-/// place the reading was left at. Empty for a page that needs none of them.
-///
-/// They run in nib's own world, where the page can neither see them nor trip over them;
-/// see `web_worlds.rs`. Under nib's own Chromium they run in the page's own world, as the
-/// builder's initialization script.
-///
-/// One string, because a builder is handed one script and two calls to it on one
-/// builder is a thing this crate should not have to be sure about.
 fn opening(place: Option<Place>, url: &str) -> String {
     let want = place.and_then(|one| {
         serde_json::to_string(&serde_json::json!({ "url": url, "x": one.x, "y": one.y })).ok()
     });
 
-    // And on Windows' two engines, what a swipe over the page says; see web_swipe.rs.
     #[cfg(all(windows, not(feature = "cef")))]
     let mut scripts = vec![
         crate::web_opens::SCRIPT.to_string(),
@@ -1024,60 +676,12 @@ fn opening(place: Option<Place>, url: &str) -> String {
         scripts.push(PLACE.replace("__PLACE__", &one));
     }
 
-    // The semicolon is load bearing, and it cost an afternoon. Every script here is
-    // `(function () { ... })()`, and JavaScript has no statement boundary between `})()`
-    // and `(function`: the parser reads the second one as an argument list applied to
-    // whatever the first returned, so the first ran, the place was evaluated as a
-    // function expression, and the call threw `undefined is not a function` before the
-    // place was ever put back. A revived page opened at the top and nothing said why; see
-    // scripts/web-switch-probe.py, which is what caught it.
     scripts
         .iter()
         .flat_map(|one| [one.as_str(), ";\n"])
         .collect()
 }
 
-/// The one browser session every web tab shares, kept alive for as long as the app
-/// runs.
-///
-/// A web tab is a browser tab, and a browser tab keeps you logged in across being
-/// closed and opened again because the browser process behind it - and the session in
-/// it - outlives the tab. Emil, 2026-09-13: *"When I close and then reopen a web note,
-/// all state is lost. For example, when I log in, then I would be logged out. That
-/// should not be the case."* It was lost because each tab's webview carried a
-/// `WebView2` environment of its own: closing the tab dropped the environment, and with
-/// it the live session - the cookies a login holds in memory, and anything not yet
-/// flushed. The `web` folder on disk always survived (the environment flushes to it as
-/// it is dropped), but the session did not, so a login kept in a session cookie signed
-/// out. The store on disk was already shared and persistent; the *session* was per tab.
-///
-/// So every tab of the run is built on one environment instead. The first web tab builds
-/// it on whatever folder `engine::web_store` points it at; every later tab is handed the
-/// same one, so all of them share a single browser session exactly as tabs in a browser
-/// do, and closing a note and opening it again is not a new session.
-///
-/// It is a COM object of the window's own thread and may be touched from nowhere else,
-/// so it lives in a thread local on that thread - the shape `ask` uses for the requests
-/// it holds open - and every page is built inside `run_on_main_thread`, which is that
-/// thread. The first environment is captured in `listening`, once, as the page is
-/// built.
-///
-/// The system engine's only: under Orden's own Chromium there is nothing to share, because
-/// that runtime is one browser process by construction. See src/engine.rs.
-///
-/// **One per store.** A space that keeps its web data apart has stores of its own (see
-/// `web_stores.rs`), each a user data folder of its own and so an environment of its own:
-/// one folder is one environment, and the engine refuses a webview built on another
-/// folder's. So the environments are kept by store - the shared one under no name - and
-/// a tab is handed the one its own store was built on.
-///
-/// Only the shared store has the page that holds its session open. A store of its own
-/// is a browser process of its own, and one of those held open for every site anybody
-/// had opened would be the cost of a browser per site until nib quits; its process ends
-/// with its last tab instead, which is what it does in a browser too. A login there is
-/// kept all the same, because a session cookie is given an expiry as a page loads (see
-/// `web_cookies.rs`) - so the environment it was built on is let go when its process
-/// ends, and the next tab of that store starts a new one.
 #[cfg(all(windows, not(feature = "cef")))]
 mod session {
     use std::cell::RefCell;
@@ -1090,30 +694,18 @@ mod session {
     use windows_core::Interface as _;
 
     thread_local! {
-        /// The environment of each store, on the window's own thread and nowhere else,
-        /// with the shared store under the empty name. A `RefCell` rather than a lock
-        /// because there is only ever one thread in here.
         static ENV: RefCell<HashMap<String, ICoreWebView2Environment>> =
             RefCell::new(HashMap::new());
     }
 
-    /// The name a store is kept under here: the empty one for the store every space
-    /// shares.
     fn key(store: Option<&str>) -> String {
         store.unwrap_or_default().to_string()
     }
 
-    /// The environment every web tab in this store shares, if one has been built yet.
-    /// `None` before the first web tab of the store, which is the tab that builds it.
     pub fn shared(store: Option<&str>) -> Option<ICoreWebView2Environment> {
         ENV.with_borrow(|held| held.get(&key(store)).cloned())
     }
 
-    /// Keeps the first environment built for a store, and only the first: every later
-    /// tab of the store is handed this one, so the store's tabs share one session.
-    /// Called as each page is built.
-    ///
-    /// A store of its own lets go of it again when its browser process ends; see above.
     #[allow(
         unsafe_code,
         reason = "the process ending is WebView2's own event, reached through its COM interfaces"
@@ -1136,9 +728,6 @@ mod session {
             ENV.with_borrow_mut(|held| held.remove(&named));
             Ok(())
         }));
-        // Safe: the environment is this thread's, and the handler is held by the engine
-        // for as long as the environment is. An environment too old to say when its
-        // process ends is kept for the run, which is what every store did before.
         unsafe {
             if let Ok(env) = env.cast::<ICoreWebView2Environment5>() {
                 let mut token = 0i64;
@@ -1147,9 +736,6 @@ mod session {
         }
     }
 
-    /// Whether a page of `store` can be built without the window waiting on a browser
-    /// that does not answer: the shared store's browser is asked through the page that
-    /// holds its session open, and one not started yet answers. See `web_answers.rs`.
     pub fn answering(app: &tauri::AppHandle, store: Option<&str>) -> Result<(), String> {
         use tauri::Manager as _;
         let answers = store.is_some()
@@ -1163,28 +749,8 @@ mod session {
         Err(crate::web_answers::NOT_ANSWERING.to_owned())
     }
 
-    /// What the page that holds the session open is called. Under the same `web-` prefix
-    /// every page in a tab wears, so no capability reaches it either; a tab would have to
-    /// be called `session` for the two to collide, and a tab's id is made rather than
-    /// chosen.
     const ANCHOR: &str = "web-session";
 
-    /// Opens the page nobody sees, and keeps the environment it was built on.
-    ///
-    /// **Holding the environment is not enough**, which took a measurement to learn.
-    /// `WebView2` ends a profile's session when the last webview on it closes, however
-    /// long the environment object is kept alive - so a clone of it kept here left two
-    /// tabs open at once sharing one session (they do) and the session gone the moment
-    /// the last of them went (it was). Measured both ways by
-    /// scripts/web-session-probe.py: `two tabs share one session` true, `session kept on
-    /// reopen` false. What a browser has and this did not is a process that outlives the
-    /// tabs.
-    ///
-    /// So one webview on the profile is never closed, and the session it holds open is
-    /// the one every tab is built on. It loads `about:blank`, so what it costs is a
-    /// controller and no page; it is a pixel wide, hidden, and never placed again. The
-    /// price is that a run which has opened one website keeps a browser process until the
-    /// app quits, which is what a browser does with its own window.
     pub fn anchor(window: &tauri::Window, app: &tauri::AppHandle) {
         use tauri::Manager as _;
 
@@ -1196,17 +762,10 @@ mod session {
             return;
         };
 
-        // Never the keyboard: wry hands every new webview the focus unless told otherwise,
-        // and this one is built by the first page of the run, which may be an agent's,
-        // opened while somebody types in a note. The keys went to a page of one pixel
-        // that nobody can see; the agent harness's keyboard check caught it.
         let builder = tauri::WebviewBuilder::new(ANCHOR, tauri::WebviewUrl::External(blank))
             .focused(false)
             .disable_drag_drop_handler();
 
-        // The same store every tab's page is given, through the same seam: which folder
-        // that is belongs to the engine this build runs on and not to this module, and
-        // the session is only shared if both are the one profile. See src/engine.rs.
         let Ok(builder) = crate::engine::web_store(builder, app, None) else {
             return;
         };
@@ -1219,27 +778,12 @@ mod session {
         );
 
         if let Ok(view) = made {
-            // Out of sight for good: it is a session and not a page.
             let _ = view.hide();
-            // On the window's own thread already, so this runs inline; a clone of the
-            // environment is what every tab after this is built on.
             let _ = view.with_webview(|platform| keep(None, platform.environment()));
         }
     }
 }
 
-/// A tab's page built in the window, on the window's own thread, which is the only one
-/// that may build one.
-///
-/// Built on the one session the run shares, so closing a note and opening it again keeps
-/// the login and the cookies the way a browser tab does. The session is held open by a
-/// page nobody sees rather than by this tab, because `WebView2` ends it with the last
-/// webview on the profile however long the environment is kept; see `session::anchor`,
-/// which is opened once here and never closed.
-///
-/// And a page of the store every space shares is built by that store's browser, which the
-/// window's thread would wait on with the whole app behind it: where it does not answer,
-/// the page is refused and asked for again later instead. See `web_answers.rs`.
 fn page_built(
     window: &tauri::Window,
     builder: WebviewBuilder<crate::Engine>,
@@ -1256,7 +800,6 @@ fn page_built(
     #[cfg(not(all(windows, not(feature = "cef"))))]
     let _ = (app, store);
 
-    // Edge by edge in the screen's pixels, as every placement after it; see web_follow.rs.
     let bounds = crate::web_follow::Bounds::from(pane);
     let scale = crate::page_scale::of(window).unwrap_or(1.0);
     let (left, top, width, height) = crate::web_follow::edges(bounds, scale);
@@ -1267,14 +810,10 @@ fn page_built(
         PhysicalSize::new(width, height),
     )
     .map_err(|error| format!("that page could not be opened: {error}"))?;
-    // Under the app's own page, where this build draws it there; see web_cut/under.rs.
     #[cfg(target_os = "macos")]
     crate::web_cut::under::lower(window, &view);
     crate::page_style::worn(&view);
-    // In the app's scheme from the start, not the system's; see page_scheme.rs.
     crate::page_scheme::wear(&view);
-    // At the desktop's scale from the start, where that is not the engine's; see
-    // page_scale.rs. A zoom the reader chose comes after, times it.
     let zoom = crate::page_scale::web(1.0);
     if (zoom - 1.0).abs() > 0.01 {
         let _ = view.set_zoom(zoom);
@@ -1284,12 +823,6 @@ fn page_built(
     Ok(())
 }
 
-/// Starts the browser process every web tab shares while the window's own page is still
-/// loading, where the launch will put a website on screen: the page that holds the shared
-/// session open (`session::anchor`) is the first thing building that website would do,
-/// and the window's thread spends a third of a second and more on it. Done here it
-/// overlaps the window's page coming up instead of following it; the tab's own build
-/// then finds it there. See `ahead::start`, which says whether a website is coming.
 #[cfg(all(windows, not(feature = "cef")))]
 pub(crate) fn warm(app: &AppHandle) {
     let anchoring = app.clone();
@@ -1302,21 +835,9 @@ pub(crate) fn warm(app: &AppHandle) {
     });
 }
 
-/// Every other engine starts nothing ahead.
 #[cfg(all(desktop, not(all(windows, not(feature = "cef")))))]
 pub(crate) fn warm(_app: &AppHandle) {}
 
-/// The builder, pointed at the one session its store shares - and the shared store's
-/// session opened, if this is the first page of the run.
-///
-/// Both halves are `session`'s: the page nobody sees, which holds the shared session open
-/// past the last tab closing, and the environment every tab of a store is then built on. On the window's
-/// own thread, because that is where a page is built and the only thread the engine's own
-/// objects may be touched from.
-///
-/// The system engine's only, like `session` itself: under Orden's own Chromium there is no
-/// environment to hand round - that runtime is one browser process by construction - and
-/// `tauri::Wry` is not even a type there. See src/engine.rs.
 #[cfg(all(windows, not(feature = "cef")))]
 pub(crate) fn on_shared_session(
     builder: WebviewBuilder<tauri::Wry>,
@@ -1332,31 +853,19 @@ pub(crate) fn on_shared_session(
     }
 }
 
-/// Keeps the environment a page of an agent's was built on as its store's, the way a
-/// tab's page is kept in `listening`, so the store's next page shares its session.
 #[cfg(all(windows, not(feature = "cef")))]
 pub(crate) fn keep_session(store: Option<&str>, platform: &tauri::webview::PlatformWebview) {
     session::keep(store, platform.environment());
 }
 
-/// Which profile a tab's page is built in, as the window says it.
 #[derive(Debug, Default, Deserialize)]
 pub struct Profile {
-    /// The store its cookies and storage go in: the one every space shares, or one its
-    /// space keeps apart; see `web_stores.rs`.
     store: Option<String>,
-    /// A private tab's page, which keeps nothing anywhere: the engine's own private mode -
-    /// `WebView2`'s `InPrivate` profile on the shared session, a data store of the page's
-    /// own that nothing writes to disk on a Mac and on Linux, a profile with no folder on
-    /// Orden's own Chromium - in the store every space shares, which it reads nothing of and
-    /// writes nothing to. See lib/web-tab/private.ts.
     #[serde(default)]
     private: bool,
 }
 
 impl Profile {
-    /// The store, checked before anything is built because it is about to become a
-    /// folder name, and whether the page is private.
     fn checked(&self) -> Result<(Option<String>, bool), String> {
         if self.private {
             return Ok((None, true));
@@ -1366,33 +875,6 @@ impl Profile {
     }
 }
 
-/// The webview for one tab, built and attached to the window that asked.
-///
-/// Async, and the building itself posted to the window's own event loop. Both
-/// halves are the fix for a freeze that took the whole app with it, and both are
-/// needed:
-///
-/// A command that is not `async` runs inline inside the callback `WebView2` hands the
-/// app its IPC in. Building a child webview from in there is a deadlock, not a
-/// stall: the platform creates a `WebView2` controller asynchronously, wry waits for
-/// it by running a nested message loop (`webview2_com::wait_with_pump`), and the
-/// engine will not deliver a completion callback to a thread that is already inside
-/// one of its own event handlers. So the pump spins, the handler never returns, the
-/// request that started it is never answered, and the window's thread is gone: no
-/// menu opens, no key answers, nothing repaints. That is what "nib freezes and the
-/// buttons do nothing" was.
-///
-/// `async` alone moves the command off that callback and onto the async runtime.
-/// The nested wait then has to happen somewhere the engine is not inside a handler,
-/// and that place is the event loop's own turn: `run_on_main_thread`, with the
-/// answer coming back over a channel once the controller exists. Calling `add_child`
-/// straight from this thread would post the same message without waiting, which
-/// loses the one thing the window needs to know - whether there is a page to place.
-///
-/// The answer says whether this build cuts the app's layers out of a page
-/// (`web_cut.rs`), as `web_place`'s does: the first page of a window is built before
-/// anything has been placed, and a layer it arrives under is cut round from its first
-/// frame.
 #[tauri::command]
 pub async fn web_open(
     webview: Webview,
@@ -1409,9 +891,6 @@ pub async fn web_open(
     let app = webview.app_handle().clone();
 
     if app.get_webview(&label).is_some() {
-        // A page closed while it was still fetching a file is kept, out of sight, until
-        // the file is in; a tab opened again in the meantime has its page already. And an
-        // agent's page the reader was shown is already this tab's page, loaded.
         if crate::downloads::revive(&app, &tab) || adopted_label(&label) {
             return Ok(crate::web_cut::layering(&label));
         }
@@ -1422,14 +901,8 @@ pub async fn web_open(
         return Err("that tab is already opening a page".into());
     };
 
-    // Where this tab had been, back under the webview being built for it: a tab being
-    // revived keeps its arrows, and stepping one of them walks this rather than an
-    // engine history that is empty.
     tabs.restore(&tab, revived.trail, revived.at);
 
-    // Orden's own scripts for the page, and where the page is built: on the blank page, and
-    // sent to the site once the runtime's scripts are off it and these are in Orden's own
-    // world, on either engine (see `listening` and web_worlds.rs).
     let scripts = crate::page_style::with(opening(revived.place, &url));
     let (built_on, onward) = (
         Url::parse(BLANK).map_err(|error| format!("that page could not be opened: {error}"))?,
@@ -1438,9 +911,6 @@ pub async fn web_open(
 
     let starting = (app.clone(), tab.clone());
     let builder = WebviewBuilder::new(label, WebviewUrl::External(built_on))
-        // A new tab has the keyboard, as in a browser - but not in a run sent off the
-        // screen, where a page given the keyboard activates its window; see
-        // `keyboard_to` in placement.rs.
         .focused(crate::placement::away().is_none())
         .on_navigation(move |to| {
             let going = tab_may_open(to);
@@ -1449,44 +919,25 @@ pub async fn web_open(
             }
             going
         })
-        // The page takes its own drops. A file dropped on a site is the site's
-        // business, and the app is not in the middle of it.
         .disable_drag_drop_handler();
 
-    // Ctrl and the wheel, Ctrl and a sign, and a pinch zoom the page, the engine's own
-    // way and the page's handlers first, as in Chrome. Off in every webview unless asked
-    // for, and still off in the app's own page, where Ctrl and the wheel size a note's
-    // words. `WebView2`'s alone: elsewhere Tauri would put a zoom script of its own into
-    // the site. What the zoom is kept as is web_page.rs's.
     #[cfg(all(windows, not(feature = "cef")))]
     let builder = builder.zoom_hotkeys_enabled(true);
 
-    // Where the site's own storage goes, decided once by the engine this build runs
-    // on rather than here: a store the app's own session is not in under the system
-    // engine, in the folder web tabs have always used and unchanged to the byte; the
-    // browsing profile, which is a different Chromium profile from the interface's,
-    // under Orden's own engine. One call, so this file no longer knows which platform
-    // or which engine it is. See src/engine.rs.
-    // A private page is in memory and gone with the last of them; see `Profile`.
     mark_private(&label_of(&tab), private);
     let builder = crate::engine::web_store(builder, &app, store.as_deref())?.incognito(private);
 
     let builder = windows_asked(builder, &app, &tab, webview.window().label(), private);
 
-    // A file the page hands over is saved the way a browser saves it, by the engine on
-    // this webview's own profile, and the window is told; see downloads.rs.
     let builder = crate::downloads::saving(builder, &app, &tab, webview.window().label());
 
-    // Where the page has got to, and what it is called, said to the window.
     let builder = reporting(builder, &app, &tab, private);
 
     let window = webview.window();
     let (sending, mut waiting) = tauri::async_runtime::channel::<Result<(), String>>(1);
 
-    // The handle and the store the page is built through, moved into the build.
     let (building, storing) = (app.clone(), store.clone());
     let posted = app.run_on_main_thread(move || {
-        // One build, one answer: a full channel would be an answer already sent.
         let _ = sending.try_send(page_built(
             &window,
             builder,
@@ -1497,9 +948,6 @@ pub async fn web_open(
     });
 
     let made = match posted {
-        // The window's thread is the only one that may build a page, so a window
-        // that cannot be reached is a tab with no page rather than an error worth
-        // a message: the pane shows the card, which offers the site in a browser.
         Err(error) => Err(format!("that page could not be opened: {error}")),
         Ok(()) => waiting
             .recv()
@@ -1511,8 +959,6 @@ pub async fn web_open(
     made?;
     crate::keyboard::built(&label_of(&tab));
 
-    // One notch of the wheel over the page is one notch, wherever the keyboard is; from
-    // the first page of the run. See web_wheel.rs.
     #[cfg(all(windows, not(feature = "cef")))]
     crate::web_wheel::arm();
 
@@ -1521,7 +967,6 @@ pub async fn web_open(
     Ok(crate::web_cut::layering(&label_of(&tab)))
 }
 
-/// A tab's builder, with every window its page asks for answered by `becomes` (#1074).
 fn windows_asked(
     builder: WebviewBuilder<crate::Engine>,
     app: &AppHandle,
@@ -1529,40 +974,18 @@ fn windows_asked(
     holder: &str,
     private: bool,
 ) -> WebviewBuilder<crate::Engine> {
-    // Only the system's engines build a window of their own, private as the tab is.
     #[cfg(feature = "cef")]
     let _ = private;
     let opening = app.clone();
     let asking = tab.to_string();
     let holder = holder.to_string();
-    // What the page asked for, unnamed: the type is the runtime's, and on Orden's
-    // own Chromium it carries two type parameters where the system's engine's
-    // carries none. The closure infers it either way; naming it would compile on
-    // one engine only. See src/engine.rs and docs/browser.md.
     builder.on_new_window(move |url: Url, features| {
-        // A window the page asks for - `target="_blank"`, `window.open`, a Ctrl+click
-        // or the middle button on a link - becomes a tab in this window, which is what
-        // a browser answers it with and the whole of Orden being one. It used to leave
-        // for the system browser, which made a browser that sent you to another
-        // browser on the commonest link on the web.
-        //
-        // The engine still gets no second webview of its own: one over the pane would
-        // be a window with no frame and no way to close it. The address is handed to
-        // the interface instead, and the interface opens a tab beside the one that
-        // asked - behind it or in front, as the press said; see web_opens.rs and
-        // `openPage` in workspace.svelte.ts.
-        //
-        // Read before anything is refused, so it is about this request and no later one.
         #[cfg(windows)]
         let hushed = crate::extensions::welcome::taken(&asking);
         let said = crate::web_opens::taken(&asking);
-        // One of nib's own asks under a window name - a key the page let go by, a swipe -
-        // which `web_opens.rs` has already answered: never a window of its own.
         if crate::web_opens::ours(&asking) {
             return NewWindowResponse::Deny;
         }
-        // Nobody pressed for it, and an extension has just arrived in this store: the page
-        // it opens about its own install, which never opens; see extensions/welcome.rs.
         #[cfg(windows)]
         if hushed {
             return NewWindowResponse::Deny;
@@ -1576,12 +999,8 @@ fn windows_asked(
                 return NewWindowResponse::Deny;
             }
             Becomes::Tab(address) => address,
-            // The engine's own window on Orden's own Chromium: CEF keeps the opener, the
-            // window `window.open` answers with, and a form's own request.
             #[cfg(feature = "cef")]
             Becomes::Window => return NewWindowResponse::Allow,
-            // A window of its own on the system's engines, on the opener's own store; one
-            // that could not be built is a tab, like any other window asked for.
             #[cfg(not(feature = "cef"))]
             Becomes::Window => {
                 if let Some(window) = popup(&opening, &url, features, &asking, &holder, private) {
@@ -1604,22 +1023,16 @@ fn windows_asked(
     })
 }
 
-/// A tab's builder, with what the page does said to the window: each load started and
-/// ended, the site's own mark, and the title as it changes. Every page load is also
-/// where a login a sign-in left in a session cookie is made to last; see
-/// `web_cookies.rs`.
 fn reporting(
     builder: WebviewBuilder<crate::Engine>,
     app: &AppHandle,
     tab: &str,
     private: bool,
 ) -> WebviewBuilder<crate::Engine> {
-    // Only the engines whose cookies are given an expiry have anything to leave alone.
     #[cfg(not(any(windows, target_os = "macos", feature = "cef")))]
     let _ = private;
     let moved = tab.to_string();
     let sending = app.clone();
-    // Where the page last said it was, for the title to be reported against.
     let seen = std::sync::Arc::new(Mutex::new(String::new()));
     let noting = seen.clone();
     let builder = builder.on_page_load(move |view, payload| {
@@ -1641,9 +1054,6 @@ fn reporting(
         }
         crate::page_style::worn(&view);
 
-        // Every step of a sign-in that goes through pages ends here, so this is where
-        // a login it left in a session cookie is made to last; see web_cookies.rs.
-        // Never a private page's: what it signed in to ends with it.
         #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
         if !private {
             let _ = view.with_webview(|platform| crate::web_cookies::keep(&platform, || ()));
@@ -1653,9 +1063,6 @@ fn reporting(
             crate::web_cookies::keep(&view, || ());
         }
 
-        // An engine that cannot say when the page's mark changes is asked for it once
-        // the page is there, which is when a browser puts the site's icon on the tab.
-        // `WebView2` says so itself, from inside the page's own profile; see web_icons.rs.
         #[cfg(all(not(windows), not(feature = "cef")))]
         {
             let marked = sending.clone();
@@ -1668,8 +1075,6 @@ fn reporting(
                 }
             });
         }
-        // Orden's own Chromium asks in nib's world, from a thread of its own; see
-        // web_worlds.rs.
         #[cfg(feature = "cef")]
         {
             let marked = sending.clone();
@@ -1695,14 +1100,6 @@ fn reporting(
     })
 }
 
-/// Where a page is, asked from inside one of its own events.
-///
-/// The system's engine answers `url()` from the webview at once, and does so for a page
-/// that moved without loading (an address a site's own script wrote), so it is asked.
-/// Orden's own Chromium runs a page's events on the thread that `url()` would wait on - a
-/// question that never comes back, and a window that never answers again: measured on
-/// Windows as the whole app wedged a second after its first web tab, on a fresh profile
-/// every time. There the page's last load says where it is instead.
 fn address_now(view: &Webview, seen: &Mutex<String>) -> String {
     #[cfg(not(feature = "cef"))]
     {
@@ -1716,22 +1113,7 @@ fn address_now(view: &Webview, seen: &Mutex<String>) -> String {
     }
 }
 
-/// Starts listening for what the site in this tab asks to be given, and then sends the
-/// page to the site from the blank page it was built on.
-///
-/// After the build, because it is the engine's own event on the webview that has just
-/// been made, and on the window's thread, because that is the only thread the engine's
-/// objects may be touched from. See `ask`.
-///
-/// `onward` is the site and Orden's own scripts for it. Listening first and sending
-/// second, both in one turn of the window's thread and in that order: a `WebView2` page
-/// whose permission request finds nothing listening waits for ever, so nothing may reach
-/// the site before the listeners are on; and clearing the page runs a nested message
-/// pump, so a navigation posted from elsewhere would be dispatched in the middle of it -
-/// the site's first document arriving before the runtime's scripts were off.
 fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(Url, String)>) {
-    // Only `WebView2` keeps an environment per store; see `session`. And only the
-    // system's engines build on the blank page; see web_worlds.rs.
     #[cfg(not(all(windows, not(feature = "cef"))))]
     let _ = store;
 
@@ -1739,8 +1121,6 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
         return;
     };
 
-    // Orden's own Chromium clears the page and sends it on from a thread of its own, since
-    // every step waits for the page's agent, which answers on the window's thread.
     #[cfg(feature = "cef")]
     if let Some((address, scripts)) = onward.clone() {
         let clearing = view.clone();
@@ -1751,8 +1131,6 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
         );
         std::thread::spawn(move || {
             crate::web_worlds::asking(&clearing, &hearing, &named, &holder);
-            // How far each of its downloads has got, and the way to stop one; see
-            // `progress` in downloads.rs.
             crate::downloads::follow(&clearing, &hearing, &holder);
             let cleared = crate::web_worlds::sent(&clearing, &address, &scripts);
             crate::trace::mark(&format!("web tab: {}", cleared.said()));
@@ -1765,37 +1143,19 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
     let named = tab.to_string();
     let _ = on_the_page(app, &label_of(tab), move |view| {
         let _ = crate::engine::with_platform!(view, move |platform| {
-            // The session every web tab shares is the environment the first page was built
-            // on, captured here once and handed to every tab after it, so a note closed and
-            // opened again keeps its login; see `session`. Kept before `ask` looks at the
-            // page because both want the one thread this runs on.
             #[cfg(all(windows, not(feature = "cef")))]
             session::keep(store.as_deref(), platform.environment());
-            // The store's extensions, handed to its profile the first time a page is built
-            // there this run; see extensions/webview2.rs.
             #[cfg(all(windows, not(feature = "cef")))]
             crate::extensions::webview2::seen(&asking, store.as_deref(), &platform);
-            // And a window asked for in it while an extension arrives, held back unless a
-            // person asked: the page an extension opens about its own install; see
-            // extensions/welcome.rs.
             #[cfg(windows)]
             crate::extensions::welcome::listen(&platform, store.as_deref(), &named);
-            // The browser's own chords, which the page is never offered, on a page in any
-            // store; see web_keys.rs.
             crate::web_keys::listen(&platform, asking.clone(), window.clone());
-            // Whether it has the keyboard, which is where it goes back to; see keyboard.rs.
             crate::keyboard::page(&asking, &platform, &label, &window);
-            // How a window it asks for was pressed for; see web_opens.rs.
             crate::web_opens::listen(&platform, asking.clone(), named.clone(), window.clone());
-            // Its sound, its full screen and its zoom; see web_page.rs. And finding in it;
-            // see web_find.rs.
             crate::web_page::listen(&platform, asking.clone(), named.clone(), window.clone());
             crate::web_find::listen(&platform, asking.clone(), named.clone(), window.clone());
             crate::downloads::listen(&platform, asking.clone(), window.clone());
-            // The site's own mark, followed for as long as the page is open; see
-            // web_icons.rs.
             crate::web_icons::listen(&platform, asking.clone(), named.clone(), window.clone());
-            // Its `alert`, `confirm` and `prompt`, in Orden's own card; see web_dialogs.rs.
             crate::web_dialogs::listen(&platform, asking.clone(), named.clone(), window.clone());
             ask::listen(&platform, asking, named, window);
 
@@ -1808,40 +1168,12 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
     });
 }
 
-/// Starts listening on the window's own page, which is the app itself.
-///
-/// The other half of `listening`, and the reason it exists: a `WebView2` webview with
-/// nothing listening for `PermissionRequested` answers such a request with neither an
-/// allow nor a deny, and `getUserMedia` there does not fail - it never settles at all.
-/// Every web tab had this listener from the first version; the window's own page never
-/// did, so the app's own microphone request waited for ever. The pill sat at 0:00, no
-/// file was written, and nothing was said, because nothing had gone wrong yet.
-///
-/// The app's own page is allowed outright. Pressing Record *is* the answer: a second
-/// bubble inside Orden asking whether Orden may use the microphone would be the app asking
-/// the reader to confirm what they just pressed, and the permission that matters - the
-/// one the system keeps - is not this one. Anything else in this webview is refused,
-/// which is what the whole webview did before: a site inside a note is in an iframe
-/// here rather than in a tab of its own, and a frame in somebody's note is not the
-/// thing to hand a camera to. A site in a web tab is asked about properly, in its own
-/// webview, through `listening`.
-///
-/// Once, at setup, before the window is shown; see `ready` in lib.rs.
 pub fn hearing(app: &AppHandle) {
-    // The webview by label rather than the webview-window: they share the label `main`,
-    // and this one keeps answering after a web tab has put a second webview in the
-    // window. See the note at the top of this file.
     let Some(view) = app.get_webview(MAIN) else {
-        // Nothing to listen on, which would mean the microphone answers nothing again.
-        // Said in the launch trace, because it is exactly the kind of thing that is
-        // invisible until somebody presses Record; see trace.rs.
         crate::trace::mark("microphone: no webview to listen on");
         return;
     };
 
-    // Where the app's own page is served from, which is the one question the handler
-    // asks of a request: the two the runtime uses are constants below, and this is the
-    // third - the dev server a development build is served by, which the config names.
     let ours: Vec<String> = app
         .config()
         .build
@@ -1850,31 +1182,14 @@ pub fn hearing(app: &AppHandle) {
         .map(|url| vec![origin_of(url.as_str())])
         .unwrap_or_default();
 
-    // On the window's own thread, which is the only thread the engine's objects may be
-    // touched from; the same move `listening` makes for the same reason.
     let _ = view.with_webview(move |platform| {
         ask::own(&platform, ours);
         crate::trace::mark("microphone: listening on the window's own page");
     });
 }
 
-/// The origins the app's own page is ever served from.
-///
-/// Windows serves the bundle from `http://tauri.localhost` and the other two desktops
-/// from `tauri://localhost`. Written out because they are the runtime's own two
-/// addresses and there is nothing to ask for them; a development build is served by a
-/// dev server instead, and the config knows that one by name.
-///
-/// Not the webview's own `url()`, and that is the whole reason this list exists: at
-/// setup - which is the only moment the listener can be attached, because a page that
-/// asked before anything was listening waits for ever - the engine may still answer
-/// `about:blank`, and a window whose own page it could not name would have its
-/// microphone refused. Measured: it does.
 const OURS: [&str; 2] = ["http://tauri.localhost", "tauri://localhost"];
 
-/// Where a URL's origin ends: the scheme, the host and the port, and nothing after
-/// them. Written out rather than parsed, because both sides arrive as strings the
-/// engine wrote and everything from the third slash on is the path.
 fn origin_of(url: &str) -> String {
     match url.find("://") {
         Some(at) => match url[at + 3..].find('/') {
@@ -1885,11 +1200,6 @@ fn origin_of(url: &str) -> String {
     }
 }
 
-/// Whether a request came from the app's own page rather than from something inside it.
-///
-/// `known` is what the build adds to the two constants above - the dev server, in a
-/// development build. Nothing at all is nobody: a request with no origin to speak of is
-/// not the app's.
 #[cfg_attr(
     any(not(any(windows, target_os = "macos")), feature = "cef"),
     allow(
@@ -1906,22 +1216,16 @@ fn is_ours(known: &[String], asked: &str) -> bool {
     OURS.contains(&origin.as_str()) || known.contains(&origin)
 }
 
-/// The kinds a `WKWebView` capture request is, in the window's words, in the order
-/// they are asked about. Both at once is two questions, one after the other, because
-/// the window's bubble - like Chrome's - remembers each for the site on its own.
 #[cfg(any(test, all(target_os = "macos", not(feature = "cef"))))]
 fn capture_kinds(kind: isize) -> &'static [&'static str] {
     match kind {
         0 => &["camera"],
         1 => &["microphone"],
         2 => &["camera", "microphone"],
-        // A kind this app has never heard of is a kind nobody can be asked about.
         _ => &[],
     }
 }
 
-/// The origin a frame's request came from, the way `WebView2` writes it: the
-/// scheme, the host, and the port where it is not the scheme's own.
 #[cfg(any(test, all(target_os = "macos", not(feature = "cef"))))]
 fn origin_written(protocol: &str, host: &str, port: isize) -> String {
     if port > 0 {
@@ -1931,25 +1235,12 @@ fn origin_written(protocol: &str, host: &str, port: isize) -> String {
     }
 }
 
-/// A page on its way, said the moment it sets off.
-///
-/// The engine's own "started" arrives only once the site has begun to answer, which on
-/// a slow site is seconds after the press: the reload glyph stayed a reload for all of
-/// them, and a cross that appears once there is nothing left to stop is no cross at
-/// all. Chrome's turns the moment a navigation starts, so this does too. No address -
-/// that is still the old page's until the new one arrives, and an empty one is "no
-/// news" to the window - so a load stopped before it answered leaves the bar as it was.
 fn started(app: &AppHandle, tab: &str) {
     if let Some(view) = app.get_webview(&label_of(tab)) {
         say(app, &view, tab, "", None, true);
     }
 }
 
-/// Says where a page is, to the window that holds it and to nothing else.
-///
-/// The blank page a tab is built on is not somewhere it has been, so nothing is said
-/// about it: the bar would wear `about:blank` for a moment and the back arrow would light
-/// for it for good.
 fn say(
     app: &AppHandle,
     view: &Webview,
@@ -1958,8 +1249,6 @@ fn say(
     title: Option<String>,
     loading: bool,
 ) {
-    // Neither is a page anybody sent the tab to: the blank page it is built on, and the
-    // one nib's own Chromium builds every browser on before that; see engine.rs.
     if url == BLANK || crate::engine::internal(url) {
         return;
     }
@@ -1984,39 +1273,9 @@ fn say(
         loading,
     };
 
-    // To the window's own webview, by label, rather than to everything: the page
-    // in the tab is one of the webviews a plain emit would reach.
     let _ = app.emit_to(view.window().label(), MOVED, payload);
 }
 
-/// Puts the page where the pane is, and shows or hides it.
-///
-/// One command for both, because the pane says both in the same breath: a tab that
-/// is not the one on top has no bounds worth setting, and a tab that has just come
-/// forward has to be placed before it is shown, or it appears for a frame where the
-/// last one was.
-///
-/// This one and the three under it stay on the window's own thread - not `async`,
-/// which is what moves a command off it - because each is a single call into the
-/// engine and the engine takes them nowhere else: bounds, visibility, an address, a
-/// line of script. None of them waits for the platform to answer, so none of them
-/// runs a nested message loop, which is the one thing that cannot be done from inside
-/// `WebView2`'s own callback. `web_open` is the one that waits, and it is the one that
-/// had to move; see the note above it. `web_close` had to move as well, for the
-/// opposite reason; see the note above that. A placement is also asked for on every
-/// drag of a pane divider, where a hop onto the async runtime and back would be two
-/// hops for one `SetBounds`.
-///
-/// Two things ride along with the rectangle. `frame` is where the hole sat in the
-/// window's layout, which is what lets the page follow the window's own resize and a
-/// placement measured before a resize land where that layout is now (`web_follow.rs`).
-/// `cut` is what of the page the app's layers are over, taken out of the page instead of
-/// the page hidden (`web_cut.rs`). The answer says whether this build cuts at all; a window
-/// told no hides the page under a layer, with its still picture, as it always has.
-/// `corner` is the corner of the card the page fills, in the window's own units, which
-/// the page's two bottom corners take (#1088); nothing for a square one. `opacity` is how
-/// much of a page drawn under the app shows, the hole's own (`web_visual.rs`, and
-/// `web_cut/under.rs` on a Mac).
 #[tauri::command]
 #[allow(
     clippy::too_many_arguments,
@@ -2034,10 +1293,6 @@ pub fn web_place(
 ) -> Result<crate::web_cut::Layering, String> {
     let view = found(&app, &tab)?;
 
-    // A page whose browser does not answer is neither shown nor told it is hidden: either
-    // would wait on that browser with the whole app stopped behind it. Out of sight it is
-    // put by its holder, which is this process's own window; shown, the window asks
-    // again. See web_answers.rs.
     let answering = {
         let _doing = crate::stall::doing("web_place: asked");
         crate::web_answers::answers(&view)
@@ -2052,9 +1307,6 @@ pub fn web_place(
         return Ok(crate::web_cut::layering(view.label()));
     }
 
-    // Where the layout the window measured puts the page at the window's size now, which
-    // is where it was measured unless the window has been resized since; see
-    // web_follow.rs.
     let window = view.window();
     let bounds = crate::web_follow::placed(
         &window,
@@ -2066,27 +1318,18 @@ pub fn web_place(
     let scale = crate::page_scale::of(&window)
         .map_err(|error| format!("that page could not be placed: {error}"))?;
     let (_, _, width, height) = crate::web_follow::edges(bounds, scale);
-    // A page going out of sight goes before it is moved, and is not drawn white on the
-    // way; see page_hide.rs.
     if !visible {
         let _doing = crate::stall::doing("web_place: hidden");
         crate::page_hide::out_of_sight(&view);
         view.hide()
             .map_err(|error| format!("that page could not be hidden: {error}"))?;
     }
-    // Each step says itself while it runs, so a stall names the one that waited; see
-    // stall.rs.
     {
         let _doing = crate::stall::doing("web_place: bounds");
         crate::web_follow::put(&view, bounds, scale)
             .map_err(|error| format!("that page could not be placed: {error}"))?;
     }
 
-    // What of the page the app's own layers are over, cut out of it rather than the page
-    // hidden; see web_cut.rs. Asked before the page is shown, so a page coming back under
-    // a layer never draws a frame over it.
-    // Drawn under the app, its corner and how much of it shows; see web_visual.rs, and
-    // web_cut/under.rs on a Mac.
     #[cfg(all(windows, not(feature = "cef")))]
     if crate::web_visual::is_drawn_under(view.label()) {
         crate::web_visual::visual_corner(&view, corner.unwrap_or(0.0), scale);
@@ -2110,14 +1353,11 @@ pub fn web_place(
 
     if visible {
         let _doing = crate::stall::doing("web_place: shown");
-        // Nothing of the X server's own drawn as it comes back; see page_hide.rs.
         crate::page_hide::no_ground(&view);
         view.show()
             .map_err(|error| format!("that page could not be shown: {error}"))?;
     }
 
-    // A page shown again after a layer that closed over it may be owed the keyboard; see
-    // keyboard.rs. A page under a layer is not shown to the keyboard: the layer has it.
     let _doing = crate::stall::doing("web_place: keyboard");
     #[cfg(feature = "cef")]
     if visible && cut.is_some() {
@@ -2138,7 +1378,6 @@ impl From<&Pane> for crate::web_follow::Bounds {
     }
 }
 
-/// Sends a tab to an address.
 #[tauri::command]
 pub fn web_navigate(app: AppHandle, tab: String, url: String) -> Result<(), String> {
     let at = address(&url)?;
@@ -2147,23 +1386,6 @@ pub fn web_navigate(app: AppHandle, tab: String, url: String) -> Result<(), Stri
         .map_err(|error| format!("that address could not be opened: {error}"))
 }
 
-/// Back, forward, or the same page again.
-///
-/// For a page that has been running all along the history is the page's own, so the
-/// step is taken in the page: neither `WebView2` nor `WKWebView` hands Tauri a Go
-/// Back, and `history.back()` is what a browser's own button calls - it also takes the
-/// place on the page and the half-filled form back with it, which no navigation can.
-///
-/// For a page that has just been revived there is no history in the engine to step:
-/// the webview is a minute old and the trail behind the tab is half an hour of
-/// reading. So the step is an address off the trail this crate keeps, and from the
-/// first of those this tab steps that way for good; see `Trail::engine`.
-///
-/// Reload goes through the engine either way, which is the one of the three it offers;
-/// loading past the cache and stopping are the engine's too, see `web_reload.rs`.
-///
-/// `by` is how many steps back or forward, for a row of the history under the arrows,
-/// and one when it is not said.
 #[tauri::command]
 pub fn web_step(
     app: AppHandle,
@@ -2194,22 +1416,11 @@ pub fn web_step(
         .map_err(|error| format!("that page could not be stepped: {error}"))
 }
 
-/// Where a tab has been and where along it it is, for the history under a held Back
-/// or Forward. Nothing is asked of the page, so a page busy in a loop of its own still
-/// lists where it came from.
 #[tauri::command]
 pub fn web_trail(tabs: tauri::State<'_, WebTabs>, tab: String) -> (Vec<String>, usize) {
     tabs.walk(&tab)
 }
 
-/// Where the tab is: the page, how far down it the reading has got, and the trail
-/// behind it.
-///
-/// Asked when a tab is left and before it is parked, and written down by the window
-/// against the note rather than against this visit to it - so opening the note again
-/// tomorrow lands on this page at this place. The scroll offset has to be read out of
-/// the page, because a page scrolling is the one thing about a web tab the app cannot
-/// see.
 #[tauri::command]
 pub async fn web_look(
     app: AppHandle,
@@ -2243,8 +1454,6 @@ pub async fn web_look(
     })
 }
 
-/// Puts the page somewhere on itself. For a drive, which has no wheel to turn: see
-/// scripts/web-switch-probe.py.
 #[tauri::command]
 pub fn web_scroll(app: AppHandle, tab: String, x: f64, y: f64) -> Result<(), String> {
     found(&app, &tab)?
@@ -2252,7 +1461,6 @@ pub fn web_scroll(app: AppHandle, tab: String, x: f64, y: f64) -> Result<(), Str
         .map_err(|error| format!("that page could not be scrolled: {error}"))
 }
 
-/// How large the page is drawn, as a browser's own zoom: 1 is a hundred per cent.
 #[tauri::command]
 pub fn web_zoom(app: AppHandle, tab: String, factor: f64) -> Result<(), String> {
     found(&app, &tab)?
@@ -2260,19 +1468,6 @@ pub fn web_zoom(app: AppHandle, tab: String, factor: f64) -> Result<(), String> 
         .map_err(|error| format!("that page could not be zoomed: {error}"))
 }
 
-/// The engine's own print dialog, for the page in the tab.
-///
-/// `window.print()` rather than anything of the app's: what a page prints as is the
-/// engine's business, the dialog is the one the reader knows from their browser, and
-/// Orden's own printing is about a note.
-///
-/// Except on a Mac, where `window.print()` is not the engine's at all: Tauri replaces it
-/// in every webview with a call into the app, `plugin:webview|print`, and a site's
-/// origin is refused every call into the app - so the row did nothing. There the tab's
-/// own print operation is run instead, as the sheet Safari shows; see `pdf::print_sheet`.
-///
-/// Async, because the Mac's print operation reaches the filesystem on the way to its
-/// sheet, and a command that may wait is kept off the thread that draws the window.
 #[tauri::command]
 pub async fn web_print(app: AppHandle, tab: String) -> Result<(), String> {
     let view = found(&app, &tab)?;
@@ -2291,25 +1486,12 @@ pub async fn web_print(app: AppHandle, tab: String) -> Result<(), String> {
         .map_err(|error| format!("that page could not be printed: {error}"))
 }
 
-/// The engine's developer tools for the page in the tab: F12 and Ctrl+Shift+I pressed
-/// in the app rather than in the page, which the engine already answers itself. Only
-/// the pages have them; Orden's own window does not in a build that ships.
 #[tauri::command]
 pub fn web_devtools(app: AppHandle, tab: String) -> Result<(), String> {
     found(&app, &tab)?.open_devtools();
     Ok(())
 }
 
-/// The page, read for a clip.
-///
-/// In nib's own world where the engine offers one - `WebView2`'s and nib's Chromium's,
-/// through the protocol (see `web_worlds.rs`) - so a page that has wrapped `cloneNode`,
-/// `querySelectorAll` or `getSelection` neither sees the read nor changes what it
-/// answers. In the page's own world otherwise, and wherever that world would not
-/// answer: a clip read a little less privately is better than no clip.
-///
-/// Either way the answer comes back through the engine and never through the app's IPC,
-/// which is what lets a page be read without the page being given anything to call.
 #[tauri::command]
 pub async fn web_clip(app: AppHandle, tab: String, selection: bool) -> Result<Clipped, String> {
     let view = found(&app, &tab)?;
@@ -2324,8 +1506,6 @@ pub async fn web_clip(app: AppHandle, tab: String, selection: bool) -> Result<Cl
     in_the_page(&view, script).await
 }
 
-/// The reader's answer from nib's world in the page, or `None` where this engine has no
-/// such world or it did not answer.
 #[cfg(feature = "cef")]
 async fn in_our_world(view: &Webview, script: &str) -> Option<serde_json::Value> {
     let (view, script) = (view.clone(), script.to_string());
@@ -2335,7 +1515,6 @@ async fn in_our_world(view: &Webview, script: &str) -> Option<serde_json::Value>
         .flatten()
 }
 
-/// The reader's answer from nib's world in the page, through `WebView2`'s protocol.
 #[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
@@ -2345,18 +1524,16 @@ async fn in_our_world(view: &Webview, script: &str) -> Option<serde_json::Value>
     let (sending, mut waiting) = tauri::async_runtime::channel::<Option<String>>(1);
     let script = script.to_string();
 
-    view.with_webview(move |platform| {
-        // Safe: the controller is this page's, asked on the window's own thread, which is
-        // where `with_webview` runs this.
-        match unsafe { platform.controller().CoreWebView2() } {
+    view.with_webview(
+        move |platform| match unsafe { platform.controller().CoreWebView2() } {
             Ok(core) => crate::web_worlds::evaluate(&core, script, move |answer| {
                 let _ = sending.try_send(answer);
             }),
             Err(_) => {
                 let _ = sending.try_send(None);
             }
-        }
-    })
+        },
+    )
     .ok()?;
 
     let answer = waiting.recv().await.flatten()?;
@@ -2366,9 +1543,6 @@ async fn in_our_world(view: &Webview, script: &str) -> Option<serde_json::Value>
         .cloned()
 }
 
-/// The two `WebKit` engines put Orden's scripts in a world of Orden's own as the page is
-/// built, and offer no way to run one there afterwards through what wry hands out; see
-/// `web_worlds.rs`. A clip there is read in the page's world.
 #[cfg(all(not(windows), not(feature = "cef")))]
 #[allow(
     clippy::unused_async,
@@ -2378,12 +1552,10 @@ async fn in_our_world(_view: &Webview, _script: &str) -> Option<serde_json::Valu
     None
 }
 
-/// The reader's answer from the page's own world, through the engine's script callback.
 async fn in_the_page(view: &Webview, script: String) -> Result<Clipped, String> {
     let (sending, mut waiting) = tauri::async_runtime::channel::<String>(1);
 
     view.eval_with_callback(script, move |answer| {
-        // One page, one answer: a full channel is an answer already sent.
         let _ = sending.try_send(answer);
     })
     .map_err(|error| format!("that page could not be read: {error}"))?;
@@ -2397,28 +1569,6 @@ async fn in_the_page(view: &Webview, script: String) -> Result<Clipped, String> 
         .map_err(|error| format!("that page could not be read: {error}"))
 }
 
-/// Takes the page away.
-///
-/// Two callers and two meanings, which is what `keep` says. A tab being **parked** to
-/// give the memory back keeps its trail, because the tab is still open and looking at
-/// it again has to put the arrows back the way they were. A tab being **closed** keeps
-/// nothing: nobody is coming back to it.
-///
-/// Async, and the closing posted to the window's own event loop, because a close that
-/// ran inline froze the whole app. A command that is not `async` runs inside the
-/// callback `WebView2` hands the app its IPC in, and that callback is also delivered
-/// *inside* the nested message loop `web_open` runs while the engine builds a page:
-/// the pump that waits for the new controller dispatches the window's messages, the
-/// window's IPC among them. Clicking one website after another in the file list is
-/// exactly that - the previewed tab is closed while the next one's page is being
-/// built - and a controller closed from in there never came back: the pump never
-/// finished, the old page kept playing, and nothing in the window answered again.
-///
-/// The event loop's own turn is not nested in anything: tao holds back what is posted
-/// to it while it is busy inside a turn of its own, which is where `web_open` builds.
-/// So the close waits for the page being built rather than cutting into it. And it is
-/// waited for here, so a tab parked and opened again at once finds its old page gone
-/// rather than still there; see `web_open`, which refuses a tab that has one.
 #[tauri::command]
 pub async fn web_close(
     app: AppHandle,
@@ -2435,10 +1585,6 @@ pub async fn web_close(
     let posted = app.run_on_main_thread(move || {
         let _doing = crate::stall::doing("web_close");
         if let Some(view) = closing.get_webview(&label) {
-            // A page still fetching a file stays until the file is in, out of sight; the
-            // engine stops reporting a download whose webview has gone. See
-            // `downloads::linger`.
-            // Its find and its dialogs go with it, whichever way the page goes.
             crate::web_find::forget(&named);
             crate::web_dialogs::forget(&named);
             crate::keyboard::closed(view.label());
@@ -2446,8 +1592,6 @@ pub async fn web_close(
             crate::web_cut::uncut(view.label());
             #[cfg(feature = "cef")]
             let_go(view.label());
-            // A page whose browser does not answer is put out of sight now and closed
-            // once it does, rather than the app waiting on it; see web_answers.rs.
             if !crate::web_answers::answers(&view) {
                 crate::web_answers::said(&closing);
                 crate::web_answers::put_away(&view);
@@ -2460,15 +1604,12 @@ pub async fn web_close(
         }
         let _ = sending.try_send(());
     });
-    // A window that cannot be reached has no page left in it to close.
     if posted.is_ok() {
         let _ = waiting.recv().await;
     }
 
     if let Ok(mut open) = tabs.trails.lock() {
         if keep {
-            // The engine's history goes with the webview, so the trail that is left is
-            // one every step has to walk by address.
             if let Some(trail) = open.get_mut(&tab) {
                 trail.engine = false;
             }
@@ -2480,30 +1621,11 @@ pub async fn web_close(
     Ok(())
 }
 
-/// A still picture of the page as it is now, as a `data:` address the window can put
-/// in the pane.
-///
-/// The whole of why this exists: a native webview draws above every pixel of HTML in
-/// the window, so anything the app opens over a page means hiding the page - and a pane
-/// that went blank under every menu was the worst thing about a web tab. The window
-/// asks for this first, paints it in the hole, and then hides the webview, so what is
-/// behind the menu is the page.
-///
-/// `WebView2` has `CapturePreview`, `WKWebView` has `takeSnapshot` and CEF has the
-/// `DevTools` protocol's `Page.captureScreenshot`, which are the engine photographing itself and the only
-/// way to get at those pixels: the app's own webview cannot draw the page and nothing
-/// outside the process may copy the screen - least of all on Wayland. Without one the page
-/// went under every menu with nothing in its place, an empty pane under the menu bar's
-/// menus (Hyprland, 2026-10-14). Where there is no way in at all - the BSDs -
-/// the answer is `None`, which the window reads as "keep your own ground".
 #[tauri::command]
 pub async fn web_shot(app: AppHandle, tab: String) -> Result<Option<String>, String> {
     photographed(found(&app, &tab)?).await
 }
 
-/// CEF: the page's own compositor frame, through the `DevTools` protocol, which hands back
-/// the PNG already encoded. Called from a thread that may wait, as every call into the
-/// protocol is.
 #[cfg(feature = "cef")]
 async fn photographed(view: Webview) -> Result<Option<String>, String> {
     let taken = tauri::async_runtime::spawn_blocking(move || {
@@ -2528,7 +1650,6 @@ async fn photographed(view: Webview) -> Result<Option<String>, String> {
     })
 }
 
-/// The system's engines: their own photograph of the page, as a PNG.
 #[cfg(not(feature = "cef"))]
 async fn photographed(view: Webview) -> Result<Option<String>, String> {
     let (sending, mut waiting) = tauri::async_runtime::channel::<Option<Vec<u8>>>(1);
@@ -2555,20 +1676,11 @@ async fn photographed(view: Webview) -> Result<Option<String>, String> {
     }))
 }
 
-/// What a site asked for, answered.
-///
-/// The request has been sitting open in the engine since the bubble went up - a
-/// deferral is the engine's own way of saying "I will wait" - and this is the window
-/// letting it go, with the answer the reader gave or the one they gave this site the
-/// last time it asked. Posted onto the window's own thread because that is the only
-/// thread the engine's objects may be touched from; see `ask`.
 #[tauri::command]
 pub fn web_answer(app: AppHandle, id: u64, allow: bool) {
     let _ = app.run_on_main_thread(move || ask::answer(id, allow));
 }
 
-/// Closes the page in a tab, for a page that was kept until its downloads were in; see
-/// `web_close`.
 pub(crate) fn close_page(app: &AppHandle, tab: &str) {
     if let Some(view) = app.get_webview(&label_of(tab)) {
         #[cfg(feature = "cef")]
@@ -2580,17 +1692,11 @@ pub(crate) fn close_page(app: &AppHandle, tab: &str) {
     }
 }
 
-/// What Orden's own Chromium keeps about a page it speaks to, let go of as the page closes,
-/// so a tab opened again under the same label is a new page to it; see
-/// `engine/devtools.rs`.
 #[cfg(feature = "cef")]
 fn let_go(label: &str) {
     crate::engine::devtools::let_go_of(label);
 }
 
-/// The webview for a tab, or a reason there is none. A tab whose page has been
-/// unloaded to give the memory back is the ordinary case rather than a failure, and
-/// the window opens it again instead of reporting anything.
 pub(crate) fn found(app: &AppHandle, tab: &str) -> Result<Webview, String> {
     app.get_webview(&label_of(tab))
         .ok_or_else(|| "that tab has no page open".to_string())
@@ -2609,34 +1715,6 @@ pub(crate) fn on_the_page(
     })
 }
 
-/// Asking the reader what a site may do, the way a browser asks.
-///
-/// The engine raises a request when the page calls the API - `getUserMedia`,
-/// `geolocation.getCurrentPosition`, `Notification.requestPermission`,
-/// `clipboard.readText` - and that is the only honest moment to ask, because it is the
-/// moment the reader pressed something on the site. So the request is **held open**
-/// while the window puts Chrome's bubble under the address bar, and answered when they
-/// press Allow or Block, or at once from what they told this site last time.
-///
-/// Three things make this work and each is load bearing:
-///
-/// * **A deferral.** `GetDeferral` tells the engine to wait. The alternative - deciding
-///   here and now - would mean either refusing everything or running a message loop
-///   inside the engine's own event handler, which is the freeze this file spent a day
-///   on; see `web_open`.
-/// * **One thread.** Everything the engine hands out here belongs to the window's
-///   thread and may not be touched from another, so the requests waiting for an answer
-///   are kept in a thread local on that thread and `web_answer` posts itself there.
-///   That is also why none of this needs to be `Send`.
-/// * **The window decides.** What a site was allowed lives where the reader's other
-///   choices live - this device's own storage, per origin - so the crate asks and does
-///   not remember. See `lib/web-tab/permissions.svelte.ts`.
-//
-// `WebView2`'s own, reached through its controller - so not on Orden's own Chromium,
-// where the webview `with_webview` hands out is the runtime's erased one and has no
-// controller to ask. Under that flag the stub below answers instead, the way it does on
-// a Mac, and Chromium's own prompt is what replaces it; see src/engine.rs, and section
-// 5 of docs/browser.md, where a browser asking for the camera is the browser's job.
 #[cfg(all(windows, not(feature = "cef")))]
 mod ask {
     use std::cell::RefCell;
@@ -2660,26 +1738,17 @@ mod ask {
 
     use super::{Asked, ASKED};
 
-    /// One request the reader has not answered yet: the engine's own two objects, held
-    /// exactly as long as the bubble is up.
     struct Waiting {
         args: ICoreWebView2PermissionRequestedEventArgs,
         deferral: ICoreWebView2Deferral,
     }
 
     thread_local! {
-        /// The requests waiting for an answer, on the window's own thread and nowhere
-        /// else. A `RefCell` rather than a lock because there is only ever one thread
-        /// in here.
         static WAITING: RefCell<HashMap<u64, Waiting>> = RefCell::new(HashMap::new());
     }
 
-    /// What the next request is called. Across threads, because the id is the only
-    /// thing about a request that leaves this thread.
     static NEXT: AtomicU64 = AtomicU64::new(1);
 
-    /// What the window calls each kind. Chrome's own words for them, because the bubble
-    /// says "wants to use your camera" and the window is what writes that sentence.
     fn named(kind: COREWEBVIEW2_PERMISSION_KIND) -> Option<&'static str> {
         match kind {
             COREWEBVIEW2_PERMISSION_KIND_CAMERA => Some("camera"),
@@ -2692,21 +1761,15 @@ mod ask {
             COREWEBVIEW2_PERMISSION_KIND_LOCAL_FONTS => Some("fonts"),
             COREWEBVIEW2_PERMISSION_KIND_MIDI_SYSTEM_EXCLUSIVE_MESSAGES => Some("midi"),
             COREWEBVIEW2_PERMISSION_KIND_WINDOW_MANAGEMENT => Some("windows"),
-            // A kind this app has never heard of is a kind nobody can be asked about.
             _ => None,
         }
     }
 
-    /// Starts listening on one webview. Called on the window's thread, once, as the
-    /// page is built.
     #[allow(
         unsafe_code,
         reason = "a permission request is one of WebView2's own events, and its objects are reached through COM"
     )]
     pub fn listen(webview: &PlatformWebview, app: AppHandle, tab: String, window: String) {
-        // Safe: the controller is the one this window owns, every object below is used
-        // only on this thread, and the handler outlives the call because WebView2 holds
-        // it.
         unsafe {
             let Ok(core) = webview.controller().CoreWebView2() else {
                 return;
@@ -2723,8 +1786,6 @@ mod ask {
                         return Ok(());
                     }
                     let Some(kind) = named(kind) else {
-                        // Nothing the window can put a sentence on screen about, so it is
-                        // refused the way everything used to be.
                         let _ = args.SetState(COREWEBVIEW2_PERMISSION_STATE_DENY);
                         return Ok(());
                     };
@@ -2769,24 +1830,11 @@ mod ask {
         }
     }
 
-    /// Starts listening on the window's own page, where the page is the app.
-    ///
-    /// The same event and the same one call to register for it; what differs is the
-    /// answer. There is nobody to ask: the reader pressed Record, and this is that press
-    /// arriving at the engine. So the app's own origin is allowed on the spot - no
-    /// deferral, nothing held, nothing emitted - and every other origin in this webview
-    /// is refused, which is what the whole webview did before this listener existed. A
-    /// site in a web tab has a webview of its own and is asked about properly there.
-    ///
-    /// Camera as well as microphone, because dictation and a recording are the same
-    /// press to the engine and a reader who has been asked once has been asked.
     #[allow(
         unsafe_code,
         reason = "a permission request is one of WebView2's own events, and its objects are reached through COM"
     )]
     pub fn own(webview: &PlatformWebview, ours: Vec<String>) {
-        // Safe: the controller is this window's, the handler is used only on this
-        // thread, and WebView2 holds it for as long as the webview lives.
         unsafe {
             let Ok(core) = webview.controller().CoreWebView2() else {
                 return;
@@ -2817,10 +1865,6 @@ mod ask {
                     );
                     let allow = mine && asked_for;
 
-                    // What was asked for and what it was told, in the launch trace: a
-                    // permission refused is exactly the kind of thing that is invisible
-                    // from the window, where all a reader sees is a clock that does not
-                    // move. Free unless the trace is switched on; see trace.rs.
                     crate::trace::mark(&format!(
                         "microphone: {origin} asked for {kind:?} and was {}",
                         if allow { "allowed" } else { "refused" }
@@ -2840,21 +1884,15 @@ mod ask {
         }
     }
 
-    /// The answer, given to the engine. On the window's own thread, which is where the
-    /// request has been waiting.
     #[allow(
         unsafe_code,
         reason = "the request and its deferral are WebView2's own objects"
     )]
     pub fn answer(id: u64, allow: bool) {
         let Some(waiting) = WAITING.with_borrow_mut(|held| held.remove(&id)) else {
-            // Answered twice, or the page went away with the question. Nothing to let
-            // go of either way.
             return;
         };
 
-        // Safe: both objects came from this thread's own event and are used here and
-        // nowhere else.
         unsafe {
             let _ = waiting.args.SetState(if allow {
                 COREWEBVIEW2_PERMISSION_STATE_ALLOW
@@ -2866,21 +1904,6 @@ mod ask {
     }
 }
 
-// `WKWebView`'s own, on the system's engine on a Mac.
-//
-// wry answers a site's capture request itself, and its answer is yes: its UI delegate
-// calls the decision handler with `WKPermissionDecisionGrant` for every origin and
-// every frame, so a site in a web tab was handed the camera and the microphone without
-// a word, and so was a frame inside somebody's note in the window's own page. The only
-// prompt anybody saw was the system's, once, for Orden itself. See `request_media_
-// capture_permission` in wry's `wry_web_view_ui_delegate.rs`.
-//
-// wry has no setting for it and no hook to answer it through, so the webview is given a
-// UI delegate of this module's own, which answers the one question and hands every
-// other one - the file picker, a window the page asked for - to wry's own delegate
-// unchanged. `WebKit` asks a delegate which methods it has once, as it is set, so the
-// forwarding says yes to exactly what wry's delegate says yes to, and the one method
-// this module has.
 #[cfg(all(target_os = "macos", not(feature = "cef")))]
 mod ask {
     use std::cell::RefCell;
@@ -2902,9 +1925,6 @@ mod ask {
 
     use super::{Asked, ASKED};
 
-    /// Who is answering in one webview: the reader, through the window, for a web tab;
-    /// or nobody, for the window's own page, where the app's own origin is allowed and
-    /// everything else is refused. The same split `WebView2`'s two listeners make.
     enum Answering {
         Tab {
             app: AppHandle,
@@ -2916,16 +1936,12 @@ mod ask {
         },
     }
 
-    /// What the delegate holds: wry's delegate, to hand everything else to, and who
-    /// answers.
     struct Held {
         inner: Option<Retained<ProtocolObject<dyn WKUIDelegate>>>,
         answering: Answering,
     }
 
     define_class!(
-        /// The web tab's UI delegate: the capture question answered here, and every
-        /// other question passed to wry's own delegate.
         #[unsafe(super(NSObject))]
         #[thread_kind = MainThreadOnly]
         #[name = "NibWebCaptureDelegate"]
@@ -2935,7 +1951,6 @@ mod ask {
         unsafe impl NSObjectProtocol for Gate {}
 
         unsafe impl WKUIDelegate for Gate {
-            /// A site has asked for the camera, the microphone, or both.
             #[unsafe(method(webView:requestMediaCapturePermissionForOrigin:initiatedByFrame:type:decisionHandler:))]
             fn request_media_capture_permission(
                 &self,
@@ -2950,14 +1965,11 @@ mod ask {
         }
 
         impl Gate {
-            /// Yes for what this delegate has and for what wry's has, and no for the
-            /// rest, which is what `WebKit` reads once as the delegate is set.
             #[unsafe(method(respondsToSelector:))]
             fn responds_to_selector(&self, selector: Sel) -> bool {
                 forwards(self, selector)
             }
 
-            /// Everything this delegate does not answer itself goes to wry's.
             #[unsafe(method(forwardingTargetForSelector:))]
             fn forwarding_target_for_selector(&self, _selector: Sel) -> *mut AnyObject {
                 self.ivars()
@@ -2970,14 +1982,11 @@ mod ask {
         }
     );
 
-    /// Whether the gate answers a selector, itself or through wry's delegate.
     #[allow(
         unsafe_code,
         reason = "the superclass's own answer is asked for through the Objective-C runtime"
     )]
     fn forwards(gate: &Gate, selector: Sel) -> bool {
-        // SAFETY: `respondsToSelector:` is `NSObject`'s, takes a selector and answers a
-        // boolean; this is the superclass being asked what it has.
         let own: bool = unsafe { msg_send![super(gate), respondsToSelector: selector] };
         own || gate
             .ivars()
@@ -2986,9 +1995,6 @@ mod ask {
             .is_some_and(|inner| inner.respondsToSelector(selector))
     }
 
-    /// One request the reader has not answered yet: the engine's decision handler, held
-    /// exactly as long as the bubble is up, and what is still to be asked for it - the
-    /// microphone, when a site asked for both and the camera has just been allowed.
     struct Waiting {
         decide: RcBlock<dyn Fn(WKPermissionDecision)>,
         then: Option<&'static str>,
@@ -2999,28 +2005,18 @@ mod ask {
     }
 
     thread_local! {
-        /// The requests waiting for an answer, on the main thread and nowhere else,
-        /// like the `WebView2` ones.
         static WAITING: RefCell<HashMap<u64, Waiting>> = RefCell::new(HashMap::new());
     }
 
-    /// What the next request is called.
     static NEXT: AtomicU64 = AtomicU64::new(1);
 
-    /// The key the gate is kept under on its webview. Its address is the key; what is
-    /// in it does not matter.
     static KEPT: u8 = 0;
 
-    /// The origin of the frame that asked. The frame's rather than the page's, as
-    /// `WebView2` reports it: a frame inside a site is somebody else, and a frame the
-    /// site did not give the camera to is refused by the engine before it gets here.
     #[allow(
         unsafe_code,
         reason = "a frame's security origin is read through the Objective-C runtime"
     )]
     fn origin_of(frame: &WKFrameInfo) -> String {
-        // SAFETY: the frame is the one the engine handed this callback, alive for its
-        // length, on the main thread.
         unsafe {
             let origin = frame.securityOrigin();
             super::origin_written(
@@ -3031,7 +2027,6 @@ mod ask {
         }
     }
 
-    /// The request, answered at once or held open while the window asks.
     fn requested(
         answering: &Answering,
         frame: &WKFrameInfo,
@@ -3075,8 +2070,6 @@ mod ask {
         }
     }
 
-    /// Keeps a request open and tells the window what it is for. A window that cannot
-    /// be told is a site refused, not one left waiting for ever.
     fn hold(waiting: Waiting, kind: &str) {
         let id = NEXT.fetch_add(1, Ordering::Relaxed);
         let said = Asked {
@@ -3093,7 +2086,6 @@ mod ask {
         }
     }
 
-    /// Gives a webview the gate, in front of whatever delegate wry gave it.
     #[allow(
         unsafe_code,
         reason = "a WKWebView's UI delegate is set, and kept alive, through the Objective-C runtime"
@@ -3103,15 +2095,10 @@ mod ask {
             return;
         };
 
-        // SAFETY: the pointer is the WKWebView wry built for this webview, alive for as
-        // long as the webview is, and this runs on the main thread where it belongs.
         let Some(view) = (unsafe { Retained::retain(webview.inner().cast::<WKWebView>()) }) else {
             return;
         };
 
-        // SAFETY: reading and setting a delegate on the main thread. The gate is kept
-        // alive by the webview itself below, because `WebKit` holds its UI delegate
-        // weakly; wry's own delegate is held both by wry and by the gate.
         unsafe {
             let inner = view.UIDelegate();
             let gate = Gate::alloc(mtm).set_ivars(Held { inner, answering });
@@ -3127,21 +2114,14 @@ mod ask {
         }
     }
 
-    /// Starts answering a web tab's capture requests through the window. Called on the
-    /// main thread, once, as the page is built.
     pub fn listen(webview: &PlatformWebview, app: AppHandle, tab: String, window: String) {
         guard(webview, Answering::Tab { app, tab, window });
     }
 
-    /// Starts answering the window's own page: the app's own origin is allowed, as on
-    /// Windows, and a frame inside a note is refused - where wry would have handed it
-    /// the camera.
     pub fn own(webview: &PlatformWebview, ours: Vec<String>) {
         guard(webview, Answering::Own { ours });
     }
 
-    /// The answer, given to the engine - or, for a site that asked for both and has
-    /// just been allowed the camera, the second question put to the window.
     pub fn answer(id: u64, allow: bool) {
         let Some(mut waiting) = WAITING.with_borrow_mut(|held| held.remove(&id)) else {
             return;
@@ -3162,33 +2142,18 @@ mod ask {
     }
 }
 
-// Every build but the two system engines that can be asked: Linux, and Orden's own
-// Chromium, where the erased webview has no controller to reach through. See the two
-// above.
 #[cfg(any(not(any(windows, target_os = "macos")), feature = "cef"))]
 mod ask {
     use tauri::webview::PlatformWebview;
     use tauri::AppHandle;
 
-    /// `WebKitGTK` has the same event under another name - a `permission-request`
-    /// signal - and it is not reachable through what wry hands out. Until it is, a
-    /// site there is answered by the engine's own default; said out loud in
-    /// docs/web-tabs.md.
     pub fn listen(_webview: &PlatformWebview, _app: AppHandle, _tab: String, _window: String) {}
 
-    /// And the window's own page is answered by whatever the platform does on its own.
-    /// Nothing to attach, and nothing that hangs for want of it: it is `WebView2` that
-    /// waits for ever when nothing is listening.
     pub fn own(_webview: &PlatformWebview, _ours: Vec<String>) {}
 
-    /// Nothing was ever asked here, so nothing is ever answered.
     pub fn answer(_id: u64, _allow: bool) {}
 }
 
-// `CapturePreview` is `WebView2`'s, reached through its controller, so this is the
-// same story as `ask` above: not on Orden's own Chromium, where the stub answers `None`
-// and the window keeps its own ground under an overlay. Chromium can photograph a page
-// over the DevTools Protocol, which is batch 8's; see docs/browser.md.
 #[cfg(all(windows, not(feature = "cef")))]
 mod shot {
     use tauri::async_runtime::Sender;
@@ -3200,7 +2165,6 @@ mod shot {
         IStream, StructuredStorage::CreateStreamOnHGlobal, STREAM_SEEK_END, STREAM_SEEK_SET,
     };
 
-    /// Asks the engine to photograph itself. The answer arrives later, on the channel.
     #[allow(
         unsafe_code,
         reason = "CapturePreview is reached through WebView2's COM interfaces, and the picture comes back in a COM stream"
@@ -3209,18 +2173,12 @@ mod shot {
         webview: &PlatformWebview,
         done: Sender<Option<Vec<u8>>>,
     ) -> Result<(), String> {
-        // Safe: the controller comes from the webview this window owns, the stream is
-        // made here and read only after the engine says it is written, and the handler
-        // outlives the call because WebView2 holds it.
         unsafe {
             let core = webview
                 .controller()
                 .CoreWebView2()
                 .map_err(|error| error.to_string())?;
 
-            // A stream that allocates for itself - a null handle is what asks for that -
-            // and frees itself when the last hold on it goes, which is when this
-            // closure has read it.
             let stream: IStream = CreateStreamOnHGlobal(HGLOBAL(std::ptr::null_mut()), true)
                 .map_err(|error| error.to_string())?;
 
@@ -3243,12 +2201,8 @@ mod shot {
         }
     }
 
-    /// The bytes out of a stream the engine wrote a picture into: a photograph here,
-    /// and a page's favicon in `web_icons.rs`.
     #[allow(unsafe_code, reason = "a COM stream is read through its own interface")]
     pub fn png(stream: &IStream) -> Option<Vec<u8>> {
-        // Safe: the stream was written by the engine before this is called, and every
-        // length below is the one the stream itself reports.
         unsafe {
             let mut end = 0u64;
             stream.Seek(0, STREAM_SEEK_END, Some(&raw mut end)).ok()?;
@@ -3261,9 +2215,6 @@ mod shot {
 
             let mut bytes = vec![0u8; size];
             let mut read = 0u32;
-            // `Read` answers with an HRESULT rather than a result, because a stream that
-            // gave less than it was asked for is `S_FALSE` and not a failure. How much
-            // arrived is the answer that matters.
             let got = stream.Read(
                 bytes.as_mut_ptr().cast(),
                 u32::try_from(size).ok()?,
@@ -3279,9 +2230,6 @@ mod shot {
     }
 }
 
-// `WKWebView`'s own snapshot, on the system's engine on a Mac: the same still picture
-// `CapturePreview` takes on Windows, so an overlay over a page shows the page rather than
-// a blank pane.
 #[cfg(all(target_os = "macos", not(feature = "cef")))]
 mod shot {
     use block2::RcBlock;
@@ -3292,11 +2240,8 @@ mod shot {
     use tauri::async_runtime::Sender;
     use tauri::webview::PlatformWebview;
 
-    /// The largest picture handed to the window, as on Windows.
     const LARGEST: usize = 32 * 1024 * 1024;
 
-    /// Asks the engine to photograph the page as it is on screen. The answer arrives
-    /// later, on the channel, once `WebKit` has drawn it.
     #[allow(
         unsafe_code,
         reason = "WKWebView's snapshot is reached through the Objective-C runtime, from the pointer wry hands out"
@@ -3305,25 +2250,18 @@ mod shot {
         webview: &PlatformWebview,
         done: Sender<Option<Vec<u8>>>,
     ) -> Result<(), String> {
-        // SAFETY: the pointer is the WKWebView wry built for this tab, alive for as long
-        // as the tab's page is, and this runs on the main thread where it belongs.
         let view = unsafe { Retained::retain(webview.inner().cast::<WKWebView>()) }
             .ok_or("there is no page to photograph")?;
 
         let handler = RcBlock::new(move |image: *mut NSImage, _error: *mut NSError| {
-            // SAFETY: the engine hands this block either an image or nothing, alive for
-            // the block's length.
             let bytes = unsafe { image.as_ref() }.and_then(png);
             let _ = done.try_send(bytes);
         });
 
-        // SAFETY: the webview is used on its own thread, no configuration means the
-        // whole of what is on screen, and the engine copies the block and calls it once.
         unsafe { view.takeSnapshotWithConfiguration_completionHandler(None, &handler) };
         Ok(())
     }
 
-    /// The picture as a PNG, which is what the window puts in the pane.
     #[allow(
         unsafe_code,
         reason = "a bitmap is encoded through AppKit's Objective-C interface"
@@ -3331,7 +2269,6 @@ mod shot {
     fn png(image: &NSImage) -> Option<Vec<u8>> {
         let tiff = image.TIFFRepresentation()?;
         let bitmap = NSBitmapImageRep::imageRepWithData(&tiff)?;
-        // SAFETY: an empty dictionary is a valid set of encoding properties.
         let data = unsafe {
             bitmap.representationUsingType_properties(
                 NSBitmapImageFileType::PNG,
@@ -3344,23 +2281,14 @@ mod shot {
     }
 }
 
-/// A picture out of the stream the engine wrote it into, for the favicon a page is
-/// showing as much as for a photograph of it; see `web_icons.rs`.
 #[cfg(all(windows, not(feature = "cef")))]
 pub(crate) use shot::png as read_stream;
 
-// Platforms without a system-engine snapshot API: the BSDs. CEF photographs itself
-// through the DevTools protocol, in `web_shot`.
 #[cfg(not(any(windows, target_os = "macos", feature = "cef")))]
 mod shot {
     use tauri::async_runtime::Sender;
     use tauri::webview::PlatformWebview;
 
-    /// No way in.
-    ///
-    /// The `Result` is never an `Err` here, which clippy would flag on its own - but the
-    /// signature has to match the Windows one `web_shot` calls, where the engine's own
-    /// failures are real.
     #[allow(
         clippy::unnecessary_wraps,
         reason = "the signature matches the Windows photograph, which does fail"
@@ -3382,12 +2310,6 @@ mod tests {
     };
     use tauri::Url;
 
-    /// #1074: every way a page asks for a window, and what it becomes. What a person
-    /// pressed for is a tab; what the page opened itself with no press behind it is
-    /// blocked and said; anything else the page opened itself is the engine's own window,
-    /// Asked from a command's thread, what reads a page's window lands behind the page's
-    /// close, and on Linux the runtime asserts on the window that has gone by then: Ctrl+W
-    /// through web tabs coming up took the whole app down (`scripts/closing-drive.py`).
     #[test]
     fn what_reads_a_page_from_a_command_thread_goes_by_the_windows_own() {
         let tabs = include_str!("web_tabs.rs").replace('\r', "");
@@ -3415,44 +2337,34 @@ mod tests {
         }
     }
 
-    /// opener and all, so `window.open` hands the page what it asked for; nothing else is
-    /// opened.
     #[test]
     fn a_window_a_page_asks_for_becomes_what_it_needs() {
         let at = |text: &str| Url::parse(text).expect("an address");
         let site = "https://accounts.example/o/oauth2/auth?client_id=1";
         let web = |text: &str| Becomes::Tab(text.to_string());
 
-        // A link, plain or pressed with Ctrl, Shift or the middle button: a tab.
         assert_eq!(
             becomes(&at("https://example.com/a"), false, true, false),
             web("https://example.com/a")
         );
         assert_eq!(becomes(&at(site), true, true, false), web(site));
-        // window.open(url, name, 'width=500,height=600'): a sign-in that reports back.
         assert_eq!(becomes(&at(site), true, false, false), Becomes::Window);
-        // window.open('about:blank') or window.open(), then sent somewhere or written in.
         assert_eq!(becomes(&at(BLANK), false, false, false), Becomes::Window);
         assert_eq!(
             becomes(&at("about:blank#x"), false, false, false),
             Becomes::Window
         );
-        // window.open(url) with nothing more - a sign-in that opens so too - keeps its
-        // opener where the pages say which windows were pressed for, and is a tab where
-        // they cannot.
         let plain = becomes(&at(site), false, false, false);
         if super::PRESSES_SAID {
             assert_eq!(plain, Becomes::Window);
         } else {
             assert_eq!(plain, web(site));
         }
-        // With no press behind it: blocked, and offered.
         assert_eq!(
             becomes(&at(site), true, false, true),
             Becomes::Blocked(site.to_string())
         );
         assert_eq!(becomes(&at(BLANK), false, false, true), Becomes::Nothing);
-        // An address no tab may be on opens nothing.
         for refused in ["nib://open?x", "file:///etc/passwd", "javascript:alert(1)"] {
             assert_eq!(
                 becomes(&at(refused), false, true, false),
@@ -3468,8 +2380,6 @@ mod tests {
         assert_eq!(becomes(&at(BLANK), false, true, false), Becomes::Nothing);
     }
 
-    /// #1161: an extension's own page asked for as a window - `chrome.tabs.create`, as
-    /// `WebView2` may raise it - is a tab, never a window of its own.
     #[test]
     fn an_extension_s_own_page_becomes_a_tab() {
         let id = "abcdefghijklmnopabcdefghijklmnop";
@@ -3487,8 +2397,6 @@ mod tests {
         Url::parse(url).expect("an address")
     }
 
-    /// A page is private for as long as it is built so: a label comes back when a tab's
-    /// page is built again, and the new page is what counts.
     #[test]
     fn a_page_is_private_as_it_was_last_built() {
         let label = "web-private-test";
@@ -3499,8 +2407,6 @@ mod tests {
         assert!(!super::is_private(label));
     }
 
-    /// A private page is in the store every space shares, whatever store was asked for,
-    /// and a store asked for is checked before it is a folder.
     #[test]
     fn a_private_page_is_in_no_space_s_store() {
         let read = |said: &str| serde_json::from_str::<Profile>(said).expect("a profile");
@@ -3517,19 +2423,11 @@ mod tests {
         assert!(read(r#"{"store":"../web"}"#).checked().is_err());
     }
 
-    /// Who the window's own page will be given the microphone for.
-    ///
-    /// One question, asked of the address the request carried: the app's own page is the
-    /// reader pressing Record, and everything else in that webview is a frame inside
-    /// somebody's note. A frame in a note is not the thing to hand a camera to, and a
-    /// site that wants one opens in a web tab, where it is asked about properly.
     #[test]
     fn the_window_own_page_is_the_app() {
-        // What Windows serves the bundle from, and what the other two desktops do.
         assert!(is_ours(&[], "http://tauri.localhost/"));
         assert!(is_ours(&[], "http://tauri.localhost"));
         assert!(is_ours(&[], "tauri://localhost/index.html"));
-        // And a development build, which is served by a dev server the config names.
         let dev = vec!["http://localhost:1420".to_string()];
         assert!(is_ours(&dev, "http://localhost:1420/"));
     }
@@ -3539,17 +2437,12 @@ mod tests {
         assert!(!is_ours(&[], "https://tauri.localhost/"));
         assert!(!is_ours(&[], "http://tauri.localhost.example.com/"));
         assert!(!is_ours(&[], "http://evil.example/"));
-        // A port is part of an origin: a dev server and something else on this machine
-        // are two different places.
         let dev = vec!["http://localhost:1420".to_string()];
         assert!(!is_ours(&dev, "http://localhost:8080/"));
-        // Nothing to speak of is not the app.
         assert!(!is_ours(&[], ""));
         assert!(!is_ours(&[], "about:blank"));
     }
 
-    /// `WKWebView`'s three capture kinds, as the window's bubble names them. Both at
-    /// once is two questions, the camera first; anything else is refused unasked.
     #[test]
     fn a_capture_request_is_asked_about_kind_by_kind() {
         assert_eq!(capture_kinds(0), ["camera"]);
@@ -3559,8 +2452,6 @@ mod tests {
         assert!(capture_kinds(-1).is_empty());
     }
 
-    /// A security origin written the way the window and `is_ours` read one: a port only
-    /// where it is not the scheme's own, which `WebKit` says with a zero.
     #[test]
     fn a_security_origin_is_written_as_an_origin() {
         assert_eq!(
@@ -3594,7 +2485,6 @@ mod tests {
         assert!(!allowed(&at("data:text/html,<p>hi")));
     }
 
-    /// #1093: a frame holds what the page makes for it, and nothing a tab may not open.
     #[test]
     fn a_frame_holds_the_page_s_own_documents_and_nothing_a_tab_may_not_open() {
         for own in [
@@ -3617,7 +2507,6 @@ mod tests {
         ] {
             assert!(!frame_may_open(&at(never)), "{never}");
         }
-        // And a tab's own rule is what it was.
         assert!(!allowed(&at("about:blank")));
     }
 
@@ -3636,7 +2525,6 @@ mod tests {
             handed_over(&at("view-source:https://example.com/a")),
             Some("view-source:https://example.com/a".to_string())
         );
-        // And the source of nothing a tab may open is nothing either.
         assert!(!allowed(&at("view-source:file:///C:/notes/Idea.md")));
         assert!(!allowed(&at("view-source:http://tauri.localhost/")));
         assert!(!allowed(&at(
@@ -3652,14 +2540,10 @@ mod tests {
             Some("https://example.com/a".to_string())
         );
 
-        // The app's own scheme: a site asking for a window is a site asking this
-        // app to do something, and the system would hand it straight over.
         assert!(handed_over(&at("nib://command?id=record")).is_none());
-        // And the rest of what a machine has registered.
         assert!(handed_over(&at("file:///C:/notes/Idea.md")).is_none());
         assert!(handed_over(&at("smb://example.com/share")).is_none());
         assert!(handed_over(&at("ms-officecmd:x")).is_none());
-        // The app's own origins, which are refused for the tab and here.
         assert!(handed_over(&at("http://tauri.localhost/index.html")).is_none());
     }
 
@@ -3712,15 +2596,12 @@ mod tests {
 
     #[test]
     fn a_row_of_the_history_is_a_jump_that_keeps_the_trail() {
-        // A page built on one address, which the engine's own history holds from there.
         let tabs = WebTabs::default();
         tabs.restore("t", vec!["https://a.example/".into()], 0);
         for url in ["https://b.example/", "https://c.example/"] {
             tabs.walked("t", url);
         }
 
-        // Two back, in the engine's own history: the engine takes the step, and the
-        // trail is already where the page will say it has arrived.
         assert_eq!(tabs.stepping("t", -2), None);
         tabs.walked("t", "https://a.example/");
         assert_eq!(
@@ -3735,7 +2616,6 @@ mod tests {
             )
         );
 
-        // Nowhere past either end.
         assert_eq!(tabs.stepping("t", -1), None);
         assert_eq!(tabs.stepping("t", 3), None);
         assert_eq!(tabs.walk("t").1, 0);
@@ -3766,13 +2646,6 @@ mod tests {
         );
     }
 
-    /// Orden's own scripts for a page declare nothing and touch nothing of the page's
-    /// world: no global written, deleted or redefined, no prototype patched, none of the
-    /// runtime's names. Each is a function called on the spot, so it leaves no name
-    /// behind at the top level of whichever world it runs in - the page's own, under
-    /// Orden's own Chromium. What a browser asks about - the camera, the
-    /// microphone, the hardware buses, the credential store - is the engine's to raise
-    /// and the window's to answer, never a script's to hide; see `ask`.
     #[test]
     fn nib_s_page_scripts_leave_the_page_s_world_alone() {
         for scripts in [
@@ -3799,9 +2672,6 @@ mod tests {
         }
     }
 
-    /// On `WebView2` a page opened for the first time is handed the keys and the middle
-    /// button, and what a swipe over it says, in nib's own world, and nothing else; see
-    /// `web_worlds.rs`.
     #[cfg(all(windows, not(feature = "cef")))]
     #[test]
     fn a_page_is_handed_the_keys_script_and_nothing_else() {
@@ -3815,7 +2685,6 @@ mod tests {
         );
     }
 
-    /// Orden's own Chromium hands a page the same script, asking through its binding.
     #[cfg(feature = "cef")]
     #[test]
     fn a_page_on_chromium_is_handed_the_keys_script_and_nothing_else() {
@@ -3833,24 +2702,18 @@ mod tests {
         );
     }
 
-    /// And every other engine is handed nothing at all until there is a place to put
-    /// back.
     #[cfg(all(not(windows), not(feature = "cef")))]
     #[test]
     fn a_page_is_handed_nothing() {
         assert_eq!(opening(None, "https://a.example/page"), "");
     }
 
-    /// The blank page a tab is built on is not somewhere anybody opens a tab, nor a
-    /// window a page may ask for.
     #[test]
     fn nobody_opens_a_tab_on_the_blank_page() {
         assert!(address(BLANK).is_err());
         assert!(handed_over(&at(BLANK)).is_none());
     }
 
-    /// A revived tab is put back where the reading was, and one that is being opened
-    /// for the first time is handed no place at all.
     #[test]
     fn a_revived_page_carries_the_place_it_was_left_at() {
         let opened = opening(None, "https://a.example/page");
@@ -3862,9 +2725,6 @@ mod tests {
         assert!(revived.contains("\"url\":\"https://a.example/page\""));
         assert!(revived.contains("940"));
 
-        // And the two halves are two statements. Without the semicolon the parser reads
-        // `})()` followed by `(function` as a call, which threw before the place was put
-        // back and opened every revived page at the top; see `opening`.
         assert!(revived.contains("})();"));
         assert!(!revived.contains("})()\n(function"));
     }
@@ -3874,18 +2734,13 @@ mod tests {
         let tabs = WebTabs::default();
 
         assert!(tabs.claim("a"));
-        // The second placement of the same tab, a frame later, while the first is
-        // still waiting for its controller. Two builds would be two webviews under
-        // one label.
         assert!(!tabs.claim("a"));
-        // Another tab is another page and is nobody's business.
         assert!(tabs.claim("b"));
 
         tabs.built("a");
         assert!(tabs.claim("a"));
     }
 
-    /// #791: `crate::engine::web_store(...)?` left the tab taken for good.
     #[test]
     fn a_build_given_up_on_the_way_gives_the_tab_back() {
         fn build(tabs: &WebTabs) -> Result<(), String> {
@@ -3899,8 +2754,6 @@ mod tests {
         assert!(tabs.claim("a"));
     }
 
-    /// #791: `popup`'s window is `cfg(windows)` and takes the engine to run, so this holds
-    /// the one word that keeps a private sign-in out of the profile that lasts.
     #[test]
     fn a_private_tab_s_popup_is_private() {
         let source = include_str!("web_tabs.rs");
@@ -3948,9 +2801,6 @@ mod tests {
         assert!(!reader(true).contains("__SELECTION__"));
     }
 
-    /// What the window reads a snapshot by: the doctype in front, and the mark on the
-    /// root a selection wears (packages/markdown/src/snapshot.ts). And no field's value,
-    /// the rule an agent's markup is held to, since an agent reads articles with this.
     #[test]
     fn the_reader_writes_the_marks_the_window_reads_it_by() {
         let said = reader(true);

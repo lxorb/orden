@@ -1,5 +1,3 @@
-/** The reader's other chat accounts, and opening one of their conversations (#321). */
-
 import type { OpenHow } from '../new-tab'
 import { workspace } from '../workspace.svelte'
 import { Accounts } from './accounts.svelte'

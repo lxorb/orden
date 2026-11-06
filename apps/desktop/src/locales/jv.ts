@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const jv: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'Kabeh wis siyap',
   Personalize: 'Atur dhewe',
   Clean: 'Resik',
@@ -10,12 +9,10 @@ export const jv: Dictionary = {
   'Do you write code?': 'Apa sampeyan nulis kode?',
   Yes: 'Iya',
   No: 'Ora',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Saka aplikasi liya: {key}',
   'From other apps: set in your system settings': 'Saka aplikasi liya: atur ing setelan sistem',
   'From other apps: bind {command} in your system settings':
     'Saka aplikasi liya: pasang {command} ing setelan sistem',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Penting',
   'Add to Essentials': 'Tambahake menyang Penting',
   'Remove from Essentials': 'Busak saka Penting',
@@ -23,20 +20,16 @@ export const jv: Dictionary = {
   'Add blocks to Essentials': 'Tambahake blok-blok menyang Penting',
   'Add view to Essentials': 'Tambahake tampilan menyang Penting',
   'Open tabs and Essentials': 'Mbukak tab lan Penting',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor saiki jenenge Orden',
   'Notes from nibeditor.com': 'Cathetan saka nibeditor.com',
   'Nothing there': 'Ora ana apa-apa',
-  // AI: the three permission modes
   'Full permissions': 'Idin lengkap',
   'Auto mode': 'Mode otomatis',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'Idin lengkap: ora ana sing ditakoni utawa dibalekake menyang sampeyan, sanajan mlebu, mbayar, ngirim utawa mbusak',
-  // Import: Zen's tabs
   'Import from Zen': 'Impor saka Zen',
   'Containers stay in Zen': 'Kontainer tetep ana ing Zen',
   'Zen’s tabs could not be read.': 'Tab Zen ora bisa diwaca.',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'Kontainer tetep ana ing Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} nggolèk nganggo {engine}: pilih ing Setelan kanggo nggolèk nganggo kuwi ing kéné uga',
@@ -59,38 +52,29 @@ export const jv: Dictionary = {
   'Reading List': 'Dhaptar Wacan',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS nyimpen tab lan tandha buku Safari ing mburine Akses Disk Lengkap. Uripna Orden ing kana, banjur jaluk maneh.',
-  // Settings: note types
   'Page note': 'Cathetan kaca',
   'Web note': 'Cathetan web',
   'Private tab': 'Tab pribadi',
   'Note types': 'Jinis cathetan',
-  // Tasks: Upcoming's weeks
   'Previous week': 'Minggu sadurunge',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'Tambah proyek ing ndhuwur',
   'Add project below': 'Tambah proyek ing ngisor',
   'Projects folder': 'Folder proyek',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'Lewati',
   'Complete forever': 'Rampungake saklawase',
-  // Tasks: comments
   Comments: 'Komentar',
-  // Tasks: filters
   Filters: 'Saringan',
   'Add filter': 'Tambah saringan',
   'Edit filter': 'Owahi saringan',
-  // Tasks: a project's sections
   'Add section': 'Tambah bagean',
   '{name} (copy)': '{name} (salinan)',
   'Its tasks are deleted with it.': 'Tugas-tugasé uga dibusak.',
-  // Tasks: keys, selection and the undo toast
   Completed: 'Rampung',
   'Remove date': 'Busak tanggal',
   'Next task': 'Tugas sabanjure',
   'Previous task': 'Tugas sadurunge',
   'Add task at the top': 'Tambah tugas ing ndhuwur',
   '{count} selected': '{count} dipilih',
-  // Tasks: the Display menu
   Display: 'Tampilan',
   'Completed tasks': 'Tugas rampung',
   Smart: 'Pinter',
@@ -102,20 +86,16 @@ export const jv: Dictionary = {
   'Reset all': 'Atur ulang kabèh',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'Tata letak nuduhaké tugas minangka dhaftar, papan utawa tanggalan. Pangelompokan mbagi dadi klompok, yaiku kolom-kolom papan. Urutan ngurutaké saben klompok. Filter ndhelikaké sing ora kok butuhaké. Kabèh disimpen kanggo tampilan iki.',
-  // Tasks: several lines pasted into quick add
   'One task': 'Siji tugas',
   'One per line': 'Siji saben baris',
   'Add with AI': 'Tambah nganggo AI',
-  // Tasks: the projects in the panel
   Favorites: 'Favorit',
   'Add project': 'Tambah proyek',
   'Add sub-project': 'Tambah sub-proyek',
-  // Tasks: the task view
   'Sub-tasks': 'Sub-tugas',
   'Add sub-task': 'Tambah sub-tugas',
   'New label': 'Label anyar',
   'No deadline': 'Tanpa wates wektu',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'Jadwal maneh',
   'Later this week': 'Mengko minggu iki',
   'This weekend': 'Akhir minggu iki',
@@ -132,22 +112,18 @@ export const jv: Dictionary = {
   Reopen: 'Bukak maneh',
   Schedule: 'Jadwalake',
   'Open in note': 'Bukak ing cathetan',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Aplikasi liyane',
   'Import from Obsidian': 'Impor saka Obsidian',
   'Import from Notion': 'Impor saka Notion',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'Pitedah',
   'Silent mode': 'Mode sepi',
   'See how your notes connect.': 'Delengen kepiye cathetan sampeyan nyambung.',
   'Press {key} to find anything, notes and commands alike.':
     'Pencet {key} kanggo nemokake apa wae, cathetan utawa prentah.',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Tampilaké Markdown nalika nulis',
   'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'Penuding',
   'Pointing hand on buttons': 'Tangan nuding ing tombol',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Tambah tugas',
   'Apple Shortcuts': 'Apple Trabasan',
   Tomorrow: 'Sesuk',
@@ -173,7 +149,6 @@ export const jv: Dictionary = {
   'Every week': 'Saben minggu',
   'Every month': 'Saben sasi',
   'Every year': 'Saben taun',
-  // Files and notes
   Save: 'Simpen',
   'New note': 'Cathetan anyar',
   'Random note': 'Cathetan acak',
@@ -201,8 +176,6 @@ export const jv: Dictionary = {
   'Release to add a page': 'Culna kanggo nambah kaca',
   'Page {number}': 'Kaca {number}',
   'The paper could not be read': 'Kertas ora bisa diwaca',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'Kaca dawa',
@@ -245,7 +218,6 @@ export const jv: Dictionary = {
   'Choose a picture': 'Pilih gambar',
   'Remove picture': 'Busak gambar',
   'That picture could not be read.': 'Gambar kuwi ora bisa diwaca.',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'Saturasi',
   Tint: 'Semu warna',
   'Tint colour': 'Warna semu',
@@ -373,7 +345,6 @@ export const jv: Dictionary = {
   'Merge into…': 'Gabungake menyang…',
   'Split at caret': 'Pisahake ing kursor',
   'Extract selection': 'Methik pilihan',
-  // Panels and navigation
   Bookmarks: 'Tandha buku',
   'New group': 'Grup anyar',
   'Remove group': 'Busak grup',
@@ -427,8 +398,6 @@ export const jv: Dictionary = {
   'Sort by name': 'Urutake miturut jeneng',
   'Sort by modified': 'Urutake miturut owahan',
   'Sort by created': 'Urutake miturut digawe',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'Urutan berkas',
   'Name, A to Z': 'Jeneng, A tekan Z',
   'Name, Z to A': 'Jeneng, Z tekan A',
@@ -439,7 +408,6 @@ export const jv: Dictionary = {
   Manual: 'Manual',
   'Show hidden files': 'Tuduhake berkas sing diumpetake',
   'Hide hidden files': 'Umpetake berkas sing diumpetake',
-  // Writing
   Bold: 'Kandel',
   Italic: 'Miring',
   Strikethrough: 'Coretan',
@@ -524,11 +492,9 @@ export const jv: Dictionary = {
   'Horizontal rule': 'Garis mendhatar',
   'Page break': 'Pamisah kaca',
   'Tidy up this note': 'Rapikake cathetan iki',
-  // PDFs
   'Copy a link': 'Salin pranala',
   'That PDF could not be opened': 'PDF kuwi ora bisa dibukak',
   'That file could not be read': 'File kuwi ora bisa diwaca',
-  // Modes and view
   Reading: 'Maca',
   'Leave reading': 'Metu saka maca',
   Present: 'Aturake',
@@ -568,7 +534,6 @@ export const jv: Dictionary = {
   'Zoom in': 'Gedhekake',
   'Zoom out': 'Cilikake',
   'Actual size': 'Ukuran asli',
-  // Appearance
   Accent: 'Warna panandes',
   'Tidy up': 'Rapèkaké',
   'Blur the app behind the tab overview': 'Burekaké aplikasi ing mburi ringkesan tab',
@@ -697,7 +662,6 @@ export const jv: Dictionary = {
   'Switch theme': 'Ganti tema',
   Style: 'Gaya',
   Mode: 'Mode',
-  // The window's own edges; see appearance.rs
   Window: 'Jendhela',
   'Orden’s own': 'Duwèké Orden',
   'The system’s': 'Duwèké sistem',
@@ -708,7 +672,6 @@ export const jv: Dictionary = {
   'Edit custom CSS': 'Sunting CSS dhewe',
   'Edit snippets': 'Sunting cuplikan',
   'Reload themes and custom CSS': 'Emot maneh tema lan CSS dhewe',
-  // The theme store, and the sample note its cards show
   Themes: 'Tema',
   Browse: 'Jelajah',
   'Search themes': 'Golek tema',
@@ -785,7 +748,6 @@ export const jv: Dictionary = {
   'Code only': 'Mung kode',
   Everywhere: 'Ing ngendi wae',
   Attachments: 'Lampiran',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Cathetan kaca',
   'New pages': 'Kaca anyar',
   'Assets folder of the space': 'Folder aset papan',
@@ -837,7 +799,6 @@ export const jv: Dictionary = {
   'Machine-translated. Corrections welcome.': 'Terjemahan mesin. Koreksi ditampa.',
   'The glasses show English.': 'Tesmak nuduhake basa Inggris.',
   'Match the app': 'Manut aplikasi',
-  // Settings
   Settings: 'Setelan',
   Account: 'Akun',
   Publish: 'Terbitake',
@@ -860,7 +821,6 @@ export const jv: Dictionary = {
   '{count} spaces sync to your account.': '{count} papan diselarasake karo akun sampeyan.',
   Update: 'Anyari',
   'Live at': 'Tampil ing',
-  // Publishing
   'Publish {name}': 'Terbitake {name}',
   'What to publish': 'Apa sing diterbitake',
   'The whole space': 'Sakabehing papan',
@@ -880,7 +840,6 @@ export const jv: Dictionary = {
   Value: 'Nilai',
   available: 'kasedhiya',
   'checking…': 'mriksa…',
-  // LLM
   'Connect an LLM to your notes': 'Sambungake LLM menyang cathetan sampeyan',
   'Sign in first - the connector reaches the notes in your account.':
     'Mlebu dhisik - panyambung nggayuh cathetan ing akun sampeyan.',
@@ -932,7 +891,6 @@ export const jv: Dictionary = {
     'Kanggo klien sing nampa blok JSON tinimbang URL.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'Klien sing ora bisa mlebu bisa diwenehi token. Ditampilake mung sepisan.',
-  // Export
   'Plain text': 'Teks lugu',
   'Markdown with the pictures': 'Markdown karo gambare',
   'HTML without styles': 'HTML tanpa gaya',
@@ -951,13 +909,11 @@ export const jv: Dictionary = {
   Margin: 'Wates',
   Header: 'Sirah kaca',
   Footer: 'Sikil kaca',
-  // History
   'Version history': 'Riwayat versi',
   'Copy link to this note': 'Salin pranala cathetan iki',
   'that link could not be followed': 'pranala kuwi ora bisa dituruti',
   'No earlier versions yet.': 'Durung ana versi sadurunge.',
   'Restore this version': 'Balekake versi iki',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'wis ana cathetan ing kono',
   'enter a valid email address': 'lebokake alamat email sing bener',
   'give the space a name': 'wenehi papan jeneng',
@@ -989,7 +945,6 @@ export const jv: Dictionary = {
   'could not publish': 'ora bisa nerbitake',
   'could not create a token': 'ora bisa nggawe token',
   'that did not work': 'kuwi ora kasil',
-  // Settings on a phone, display names, one blog address
   Back: 'Bali',
   'Display name': 'Jeneng tampilan',
   'Your name': 'Jeneng sampeyan',
@@ -1009,7 +964,6 @@ export const jv: Dictionary = {
   Spelling: 'Ejaan',
   Checking: 'Pamriksan',
   Dictionary: 'Bausastra',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'Ngenteni rekamane katon.',
   'Certificate issued.': 'Sertifikat wis diwenehake.',
   'Cloudflare could not set this domain up.': 'Cloudflare ora bisa nyetel domain iki.',
@@ -1020,7 +974,6 @@ export const jv: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare wis mblokir domain iki',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'Ing oyod domain, gunakake rekaman ALIAS utawa ANAME, utawa CNAME flattening, yen panyedhiya sampeyan ora ngulehake CNAME ing kono.',
-  // Shortcuts
   Shortcuts: 'Dalan cekak',
   'Search shortcuts': 'Golek dalan cekak',
   'Second key': 'Tombol kapindho',
@@ -1185,7 +1138,6 @@ export const jv: Dictionary = {
   Delegated: 'Dipasrahake',
   'Code theme: {name}': 'Tema kode: {name}',
   'Delete a layout': 'Busak tata letak',
-  // Keyboards and modal editing
   Default: 'Gawan',
   'Vim keys': 'Tombol Vim',
   'Follow the link': 'Tut pranalane',
@@ -1197,11 +1149,9 @@ export const jv: Dictionary = {
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
   REPLACE: 'REPLACE',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'Kaca {page}/{count} ing tesmak',
   'Reaching the glasses': 'Nggayuh tesmak',
   'The glasses are not keeping up': 'Tesmake ora bisa ngetutake',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'Tambah',
   Select: 'Pilih',
   Pan: 'Geser',
@@ -1231,7 +1181,6 @@ export const jv: Dictionary = {
   Calligraphy: 'Kaligrafi',
   'Width {number}': 'Amba {number}',
   'Finger draws': 'Driji nggambar',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'Amba',
   Opacity: 'Kandel warna',
   Colour: 'Warna',
@@ -1275,23 +1224,19 @@ export const jv: Dictionary = {
   'Export as PNG': 'Ekspor minangka PNG',
   'Export as SVG': 'Ekspor minangka SVG',
   'Export as PDF': 'Ekspor minangka PDF',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'Impor PDF',
   'Choose how to add the pages to the canvas.': 'Pilih carane nambahake kaca menyang kanvas.',
   'Single page': 'Siji kaca',
   'All pages': 'Kabeh kaca',
   'Choose a page': 'Pilih kaca',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'Busak sing dipilih',
   'Nudge left': 'Sunggi ngiwa',
   'Nudge right': 'Sunggi nengen',
   'Nudge up': 'Sunggi munggah',
   'Nudge down': 'Sunggi mudhun',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'Uga dibukak ing papan liya',
   Shared: 'Wis dibagi',
   Browser: 'Panjelajah',
-  // Sharing a space with other people
   Share: 'Bagi',
   'Share {name}': 'Bagi {name}',
   'Share this space': 'Bagi papan iki',
@@ -1335,14 +1280,12 @@ export const jv: Dictionary = {
   'Shared with you': 'Dibagi karo sampeyan',
   'That link does not open anything': 'Pranala kuwi ora mbukak apa-apa',
   'Ask for another one.': 'Njaluk liyane.',
-  // Somebody a share link let in, who has no account
   Guest: 'Tamu',
   'Ask to join': 'Njaluk melu',
   Asking: 'Njaluk',
   'Waiting for {who}': 'Ngenteni {who}',
   '{who} did not let you in': '{who} ora ngulehake sampeyan mlebu',
   'What the others in this space see.': 'Sing dideleng liyane ing papan iki.',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'Pambaruan',
   'Release channel': 'Saluran wedalan',
   Stable: 'Mantep',
@@ -1352,8 +1295,6 @@ export const jv: Dictionary = {
   'Web version': 'Versi web',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'Mantep yaiku aplikasi web sing wis diwedalake, Ora mantep yaiku build paling anyar lan bisa rusak.',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'Impor',
   'Convert syntax': 'Owahi sintaksis',
   'In this note': 'Ing cathetan iki',
@@ -1442,8 +1383,6 @@ export const jv: Dictionary = {
   'Undo the import': 'Balekake impor',
   'Choose an export': 'Pilih ekspor',
   Under: 'Ing ngisor',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'Panyelarasan',
   'When the same note was written twice': 'Nalika cathetan sing padha ditulis kaping pindho',
   'On two devices': 'Ing piranti loro',
@@ -1500,7 +1439,6 @@ export const jv: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'Cathetan ing piranti iki tetep ana; mung akun lan salinan sing disinkronake sing ilang.',
   'Also gone for everyone in {spaces}.': 'Uga ilang kanggo kabeh wong ing {spaces}.',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'Cathetan',
   '{space} panel': 'Panel {space}',
   'Panel width': 'Amba panel',
@@ -1511,7 +1449,6 @@ export const jv: Dictionary = {
   'What is selected': 'Sing dipilih',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'Kanvas: {cards} kartu, {links} pranala, {drawings} gambar',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'Panyedhiya',
   'Make default': 'Dadekake gawan',
@@ -1539,7 +1476,6 @@ export const jv: Dictionary = {
   'The model did not answer.': 'Modele ora mangsuli.',
   'The connection closed before the answer was finished.':
     'Sambungan ketutup sadurunge wangsulan rampung.',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'Paket {plan} sampeyan wis tekan wates nganti {time}.',
   'Your {plan} plan is at its limit for now.': 'Paket {plan} sampeyan wis tekan wates saiki.',
@@ -1566,7 +1502,6 @@ export const jv: Dictionary = {
   Shorter: 'Luwih cendhek',
   Longer: 'Luwih dawa',
   'Fix grammar': 'Ndandani paramasastra',
-  // The AI sidebar's commands
   'A cited report': 'Laporan kanthi sitiran',
   'A helper in the background': 'Pitulung ing latar mburi',
   'A side question': 'Pitakon sisih',
@@ -1668,7 +1603,6 @@ export const jv: Dictionary = {
   'Markdown, shortest name': 'Markdown, jeneng paling cendhek',
   'Markdown, relative path': 'Markdown, dalan relatif',
   'Markdown, path in the space': 'Markdown, dalan ing papan',
-  // Publishing part one.
   'The folders you choose become public.': 'Folder sing dipilih dadi umum.',
   'Anyone with the address can read what is published, drafts included.':
     'Sapa wae sing duwe alamat bisa maca sing diterbitake, kalebu draf.',
@@ -1694,11 +1628,9 @@ export const jv: Dictionary = {
   'Remove the password': 'Busak tembung sandhi',
   'Scan this with your authenticator app, then type its code.':
     'Pindai iki nganggo aplikasi autentikator, banjur tulis kodene.',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'Foto',
   Dictate: 'Didikte',
   'Add to {name}': 'Tambahake menyang {name}',
-  // Web tabs
   Reload: 'Emot maneh',
   'Hard reload': 'Emot maneh kabeh',
   'Open in the browser': 'Bukak ing panjelajah',
@@ -1713,7 +1645,6 @@ export const jv: Dictionary = {
   'Playing audio': 'Muter swara',
   Muted: 'Dibisokake',
   'Developer tools': 'Piranti pangembang',
-  // Recording, meetings and what a model wrote
   Record: 'Rekam',
   Recording: 'Rekaman',
   'Stop recording': 'Mandhegake rekaman',
@@ -1734,7 +1665,6 @@ export const jv: Dictionary = {
     'Rekaman kuwi dawa banget kanggo diowahi dadi tembung sepisanan.',
   'That is as much as one recording may hold.': 'Semono sing bisa dimuat siji rekaman.',
   'Nothing could be heard in that recording.': 'Ing rekaman kuwi ora ana sing keprungu.',
-  // Publishing part two.
   Spreadsheet: 'Lembar itungan',
   'The app’s own': 'Duwèkè aplikasi',
   'publish.css and publish.js in this space dress the site.':
@@ -1750,14 +1680,12 @@ export const jv: Dictionary = {
   'Save as CSV': 'Simpen minangka CSV',
   'Kept for {days}': 'Disimpen {days}',
   Full: 'Kebak',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ora bisa ngirim layang - coba maneh',
   'start again - that took too long': 'wiwiti maneh - kuwi suwe banget',
   'sign in to do that': 'mlebu kanggo nindakake kuwi',
   'that is not something a token can do': 'kuwi dudu sing bisa ditindakake token',
   'something went wrong here - try again': 'ana sing kleru ing kene - coba maneh',
   'this service cannot keep a secret safely': 'layanan iki ora bisa nyimpen wadi kanthi aman',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only': 'mung gambar, PDF, lan css utawa js duwèkè situs',
   'that file is too big': 'berkas kuwi gedhe banget',
   'that is more settings than an account holds':
@@ -1772,13 +1700,11 @@ export const jv: Dictionary = {
   'that is more folder icons than a space holds':
     'kuwi luwih akeh ikon folder tinimbang sing diemot papan',
   'that is more than a site keeps': 'kuwi luwih saka sing disimpen situs',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'ora ana sapa-sapa ing alamat kuwi',
   'nobody by that name': 'ora ana sapa-sapa kanthi jeneng kuwi',
   'nobody is waiting by that name': 'ora ana sing ngenteni kanthi jeneng kuwi',
   'this space is yours': 'papan iki duwekmu',
   'that link is busy, try again in a minute': 'pranala kuwi lagi sibuk, coba maneh sak menit',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'ora ana versi kuwi',
   'this note was shared with you, not its folder':
     'cathetan iki dibagi karo sampeyan, dudu foldere',
@@ -1787,7 +1713,6 @@ export const jv: Dictionary = {
   'nothing to delete': 'ora ana sing dibusak',
   'this room is not answering - try again': 'kamar iki ora mangsuli - coba maneh',
   'rooms are not running here': 'kamar ora mlaku ing kene',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'toko tema ora mangsuli',
   'that is not a theme': 'kuwi dudu tema',
   'no such theme': 'ora ana tema kuwi',
@@ -1799,10 +1724,8 @@ export const jv: Dictionary = {
   'that is more than a spoken command': 'kuwi luwih saka sak printah swara',
   'that is a lot of listening - try again later': 'kuwi kakehan ngrungokake - coba maneh mengko',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% tulisan',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'Telpon',
   'The bar sits over the keyboard on a phone.':
     'Ing telpon, palang ana ing sandhuwuré papan tombol.',
@@ -1817,31 +1740,25 @@ export const jv: Dictionary = {
   'A pull past the top runs': 'Sèrèdan ngliwati ndhuwur nglakokaké',
   Nothing: 'Ora ana',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'Simpen',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'Pindhah menyang tengen',
   'Move to the left': 'Pindhah menyang kiwa',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'Riwayat ing akun',
   'Keep versions': 'Simpen vèrsi',
   'A month': 'Sesasi',
   'A year': 'Setaun',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Kabèh saka dina pungkasan, banjur siji saben jam, siji saben dina sawisé sesasi, lan siji saben minggu sawisé telung sasi.',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Cathetan iki wis gedhé kaya ukuran paling gedhé cathetan ing sawijining ruang.',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'Tab anyar',
   'Full screen': 'Layar wutuh',
   'Print…': 'Cetak…',
   'Share…': 'Bagi…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'pengin',
   'Don’t allow': 'Aja diulehake',
   Allow: 'Ulehake',
@@ -1858,7 +1775,6 @@ export const jv: Dictionary = {
   'Use your MIDI devices': 'Nganggo piranti MIDI sampeyan',
   'Manage windows on all your displays': 'Ngatur jendhela ing kabeh layar sampeyan',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'Informasi situs',
   Downloads: 'Undhuhan',
   'Downloading {name}': 'Ngundhuh {name}',
@@ -1885,11 +1801,9 @@ export const jv: Dictionary = {
   'Turn into': 'Owahi dadi',
   Foldable: 'Bisa dilempit',
   'Starts folded': 'Wiwit kelempit',
-  // Where a space keeps what websites store
   'Web data': 'Data web',
   Global: 'Bebarengan',
   Site: 'Situs',
-  // The Mac's menu bar
   'About {name}': 'Babagan {name}',
   Services: 'Layanan',
   'Hide {name}': 'Delikake {name}',
@@ -1897,7 +1811,6 @@ export const jv: Dictionary = {
   'Show all': 'Tampilake kabeh',
   'Quit {name}': 'Metu saka {name}',
   'Bring all to front': 'Gawa kabeh menyang ngarep',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Balekake salinan',
   'Devices with your AI vault': 'Piranti sing duwe brankas AI sampeyan',
   'This device': 'Piranti iki',
@@ -1912,13 +1825,11 @@ export const jv: Dictionary = {
   'Select down': 'Pilih mudhun',
   'Select up': 'Pilih munggah',
   'Select or deselect': 'Pilih utawa batalake pilihan',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'Bukak ing tab anyar',
   'Open to the side': 'Bukak ing sandhing',
   'Open all': 'Bukak kabeh',
   'Show in the file list': 'Tuduhake ing dhaptar berkas',
   'Collapse the file list': 'Lempit dhaptar berkas',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'Ambakake pilihan',
   'Shrink the selection': 'Ciutake pilihan',
   'Insert a line above': 'Lebokake larik ing ndhuwur',
@@ -1932,19 +1843,16 @@ export const jv: Dictionary = {
   'Duplicate the block': 'Tulad blok',
   'Move the block up': 'Munggahake blok',
   'Move the block down': 'Mudhunake blok',
-  // The editor's menu on a link and a picture
   'Copy link address': 'Salin alamat pranala',
   'Edit link': 'Sunting pranala',
   'Remove link': 'Busak pranala',
   'Copy picture': 'Salin gambar',
   'Open picture': 'Bukak gambar',
   'Delete picture': 'Busak gambar',
-  // A file dropped into a note
   'Storing the file': 'Nyimpen berkas',
   'That file is larger than a note can keep.':
     'Berkas iki luwih gedhe tinimbang sing bisa disimpen cathetan.',
   'That file could not be kept.': 'Berkas iki ora bisa disimpen.',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'Terminal anyar',
   'Command Prompt': 'Command Prompt',
   Terminal: 'Terminal',
@@ -1966,11 +1874,8 @@ export const jv: Dictionary = {
   'Saved nowhere, a session kept running is found again in Settings, {pane}.':
     'Ora disimpen ing ngendi-endi; sesi sing tetep mlaku bisa ditemokaké manèh ing Setélan, {pane}.',
   'Paste {count} lines?': 'Tempel {count} baris?',
-  // Orden as the default browser
   'Default browser': 'Panjelajah gawan',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Wurungaké suntingan {name}',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'Arsipaké',
   Unarchive: 'Wetokaké saka arsip',
   Archived: 'Wis diarsipaké',
@@ -1980,7 +1885,6 @@ export const jv: Dictionary = {
   'Nothing archived is deleted': 'Ora ana sing diarsipaké sing dibusak',
   'Show them': 'Tuduhaké',
   '{count} archived items inside': '{count} item diarsipaké ing njero',
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'Bar sisih kiwa',
   'Right sidebar': 'Bar sisih tengen',
   'Ask about this space': 'Takon bab papan iki',
@@ -1991,7 +1895,6 @@ export const jv: Dictionary = {
   'Ask again': 'Takon maneh',
   'Continue when the limit resets': 'Terusake yen wates wis direset',
   'Continues at {time}': 'Diterusake jam {time}',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Takon apa wae, @ kanggo nambah, / kanggo liyane',
   'What can I help with?': 'Apa sing bisa dakbantu?',
   'Add photos and files': 'Tambah foto lan file',
@@ -2059,12 +1962,9 @@ export const jv: Dictionary = {
   Closed: 'Ditutup',
   Ran: 'Dilakokake',
   Changed: 'Diganti',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': '{device} iki',
   '{name} is back: {device} was writing in it': '{name} bali: {device} lagi nulis ing kono',
   'Changes to {name} are not syncing': 'Owah-owahan ing {name} ora disinkronake',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Mbukak',
   Pressing: 'Mencet',
   Typing: 'Ngetik',
@@ -2079,18 +1979,14 @@ export const jv: Dictionary = {
   'Agent tabs closed': 'Tab agen ditutup',
   'Orden is still running for your agents': 'Orden isih mlaku kanggo agen sampeyan',
   '{client} wants to connect': '{client} kepengin nyambung',
-  // Web logins that travel, and the devices of an account
   'no such device': 'ora ana piranti kuwi',
   'give the device a name': 'wenehi jeneng piranti',
   'that computer is no longer waiting': 'komputer kuwi wis ora ngenteni',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'ora ana berkas kaya ngono',
   'too many changes at once - try again in a minute':
     'kakehan owah-owahan bebarengan - jajal maneh sakwise semenit',
   'that is more than a space keeps about its tree':
     'kuwi luwih akeh tinimbang sing disimpen papan babagan wite',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'Agen ing komputer iki',
   'Your account’s connector': 'Konektor akunmu',
   'Orden asks you once, the first time it connects.':
@@ -2158,12 +2054,9 @@ export const jv: Dictionary = {
   'Pages a minute': 'Kaca saben menit',
   'Browser memory limit': 'Wates memori browser',
   '{count} calls': '{count} panggilan',
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'Pitakon cepet',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Tambahake menyang cathetan',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'Ekstensi',
   'Add extension': 'Tambah ekstensi',
   'Manage extensions': 'Atur ekstensi',
@@ -2182,7 +2075,6 @@ export const jv: Dictionary = {
   'Did not load': 'Ora kemot',
   Permissions: 'Idin',
   Options: 'Pilihan',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'Jarak adoh',
   'Add host': 'Tambah host',
   Reconnect: 'Sambung maneh',
@@ -2190,11 +2082,8 @@ export const jv: Dictionary = {
   'No group': 'Tanpa grup',
   'Not an address': 'Dudu alamat',
   'Could not connect to {host}': 'Ora bisa nyambung menyang {host}',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'Ngirim gambar',
   'Could not send the image': 'Ora bisa ngirim gambar',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': 'lan {count} sawisé',
   'Restore notes and conversation': 'Balèkaké cathetan lan obrolan',
   'Restore conversation': 'Balèkaké obrolan',
@@ -2204,8 +2093,6 @@ export const jv: Dictionary = {
   'Pages, terminals and moves are not undone': 'Kaca, terminal lan pamindhahan ora diwurungaké',
   Rewind: 'Mundur',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'Mesin telusur',
   History: 'Riwayat',
   'Search history': 'Telusuri riwayat',
@@ -2229,14 +2116,12 @@ export const jv: Dictionary = {
   'New private tab': 'Tab pribadi anyar',
   'All spaces': 'Kabeh ruang',
   'the data could not be deleted': 'Data ora bisa dibusak',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Tundha',
   Reminders: 'Pangéling',
   'Reminders ring while Orden is open': 'Pangéling muni nalika Orden kabuka',
   Automatic: 'Otomatis',
   'Stay in the tray': 'Tetep ing baki',
   'Exact alarms': 'Alarm pas',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'Tugas',
   'Plan my day': 'Rancang dinaku',
   'Add a task': 'Tambah tugas',
@@ -2248,8 +2133,6 @@ export const jv: Dictionary = {
   'Done tasks too': 'Tugas rampung uga',
   'As a task': 'Dadi tugas',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'Tugas',
   Ascending: 'Munggah',
   Descending: 'Mudhun',
@@ -2334,8 +2217,6 @@ export const jv: Dictionary = {
   'Without a value': 'Tanpa nilai',
   'With a value': 'Kanthi nilai',
   Unique: 'Unik',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'Cathetan anyar saka cithakan',
   Automations: 'Otomatisasi',
   'Row added': 'Baris ditambahake',
@@ -2364,7 +2245,6 @@ export const jv: Dictionary = {
   Form: 'Formulir',
   Formula: 'Rumus',
   'Blocked by {task}': 'Diblokir dening {task}',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'Élingaké sadurungé metu',
   'When something runs': 'Yèn ana sing mlaku',
   'Quit {name}?': 'Metu saka {name}?',
@@ -2375,16 +2255,13 @@ export const jv: Dictionary = {
   'Quit anyway': 'Tetep metu',
   'Restart anyway': 'Tetep wiwiti maneh',
   'Close anyway': 'Tetep tutup',
-  // The online terminal
   'Online terminal': 'Terminal online',
   'New online terminal': 'Terminal online anyar',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'piranti liya',
   'Taken over by {device}': 'Dijupuk {device}',
   'Open on {device} since {time}': 'Kabukak ing {device} wiwit {time}',
   'Take over': 'Jupuk alih',
   'Take back': 'Jupuk maneh',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'Aplikasi anyar',
   Application: 'Aplikasi',
   'This application’s file is damaged': 'Berkas aplikasi iki rusak',
@@ -2491,8 +2368,6 @@ export const jv: Dictionary = {
   'Compare with original': 'Bandhingake karo asline',
   'Conflict copies from other apps': 'Salinan konflik saka aplikasi liya',
   'Remove from sync': 'Copot saka panyelarasan',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'Profil',
   Change: 'Ganti',
   'Take photo': 'Njupuk foto',
@@ -2517,7 +2392,6 @@ export const jv: Dictionary = {
   'that picture could not be opened': 'gambar kuwi ora bisa dibukak',
   'the camera could not be opened': 'kamera ora bisa dibukak',
   'that picture is too big': 'gambar kuwi kegedhen',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'Obrolan',
   Reply: 'Wangsuli',
   Replies: 'Wangsulan',
@@ -2536,7 +2410,6 @@ export const jv: Dictionary = {
   'Also send to {chat}': 'Kirim uga menyang {chat}',
   'Skin tone': 'Warna kulit',
   'Deleted account': 'Akun sing wis dibusak',
-  // Chats: notifications
   Mute: 'Bisokake',
   Unmute: 'Uripake swara',
   'New message': 'Pesen anyar',
@@ -2546,7 +2419,6 @@ export const jv: Dictionary = {
   Weekdays: 'Dina kerja',
   Starts: 'Wiwit',
   Ends: 'Rampung',
-  // Chats: everywhere
   'Read chats': 'Maca obrolan',
   'Post in chats': 'Nulis ing obrolan',
   'Always in this chat': 'Tansah ing obrolan iki',
@@ -2558,14 +2430,12 @@ export const jv: Dictionary = {
   'Search this chat': 'Golek ing obrolan iki',
   'Add as task': 'Tambahake minangka tugas',
   'Save as note': 'Simpen minangka cathetan',
-  // Appearance: glass's own pairs of colours
   Dawn: 'Esuk',
   Lagoon: 'Laguna',
   Lilac: 'Lila',
   Peach: 'Persik',
   Sage: 'Sage',
   Mist: 'Pedhut',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'Database anyar',
   'New page': 'Kaca anyar',
   'Not started': 'Durung diwiwiti',
@@ -2591,7 +2461,6 @@ export const jv: Dictionary = {
   Large: 'Gedhe',
   Both: 'Loro-lorone',
   'Shown on cards': 'Ditampilake ing kertu',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'Nyelarasake kunci AI browser iki karo piranti sampeyan liyane liwat brankas.',
   'Which of your AI accounts this feature asks.':
@@ -2831,7 +2700,6 @@ export const jv: Dictionary = {
   'Some changes may not be noticed': 'Sawetara owah-owahan bisa uga ora katon',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'Sistem wis tekan wates folder sing dipantau, dadi Orden bisa uga ora weruh saben owah-owahan sing digawe program liya ing ruang sampeyan. Ngundhakake fs.inotify.max_user_watches ndandani iki.',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Pindhah obrolan {name} menyang {space}?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'Kabeh wong ing {space} banjur bisa maca kabeh riwayat, lan wong ing {from} kelangan.',
@@ -2871,7 +2739,6 @@ export const jv: Dictionary = {
   'One colour': 'Siji werna',
   'Web icons': 'Lambang web',
   'Sites you visit will appear here': 'Situs sing sampeyan bukak bakal katon ing kene',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'Dikte',
   'Dictate with': 'Dikte nganggo',
   'Where your voice goes to be turned into words.':
@@ -2902,11 +2769,9 @@ export const jv: Dictionary = {
   'Not on this device': 'Ora ana ing piranti iki',
   'Not on this device. It opens once you are online again.':
     'Ora ana ing piranti iki. Bakal kabuka yen sampeyan wis online maneh.',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'Server IMAP',
   'SMTP server': 'Server SMTP',
   'User name': 'Jeneng pangguna',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'Penting banget',
   Important: 'Penting',
   'If time': 'Yen ana wektu',

@@ -1,27 +1,11 @@
-/** A ` ```tasks ` fence: the Tasks plugin's own query block, answered by the rows
- *  engine where it stands, so a note written for Obsidian's Tasks shows its list in Orden
- *  too (docs/tasks.md 5.7).
- *
- *  The block is read as a view (`readTasksQuery` in @orden/bases: `not done`, `due before
- *  tomorrow`, `group by heading`, `sort by priority`, `limit 10`) and answered over the
- *  rows of the space in front. Drawn in the query fence's shapes, for the reason that
- *  file gives: the same rows, the same live box, and one reading of a press
- *  (`pressRow` in query-block.ts), which ticks a box through the engine and opens a row
- *  at its line. A line the engine cannot read is said under the list rather than
- *  guessed at, and the fence keeps its source either way. */
-
 import type { Answer, Row } from '@orden/bases'
 import { escapeAll } from '@orden/markdown/html'
 import { shownName } from './note-name'
 import { trustsHtmlAt } from './sharing.svelte'
 import { insideSpace } from './space-paths'
 
-/** How many rows a fence in a note is worth; see query-block.ts. */
 const MOST = 50
 
-/** The rows of the space at `root`, once they have been read: the space the fence's
- *  note is in, which a note still open from another space is not the active one; the
- *  space in front where a caller cannot say. */
 async function rowsOfSpace(
   root: string | null,
 ): Promise<{ rows: readonly Row[]; root: string } | null> {
@@ -39,7 +23,6 @@ async function rowsOfSpace(
         stop()
         resolve()
       })
-      // A space with nothing left to read says nothing at all.
       setTimeout(() => {
         stop()
         resolve()
@@ -49,7 +32,6 @@ async function rowsOfSpace(
   return { rows: rows.shown(space.name), root: space.root }
 }
 
-/** One row: the box and the words, carrying the note and the line it is. */
 function row(task: Row, root: string): string {
   const fields = task.task
   if (!fields || !task.anchor) return ''
@@ -61,7 +43,6 @@ function row(task: Row, root: string): string {
   return `<button type="button" class="nib-row is-short" ${where} ${title}>${box}${escapeAll(fields.text)}</button>`
 }
 
-/** The answer as the fence's HTML. */
 function drawn(
   answer: Answer,
   root: string,
@@ -89,7 +70,6 @@ function drawn(
   return `<div class="nib-query">${body}${unreadLines}</div>`
 }
 
-/** What one fence answers with, or null where there is nothing to answer from. */
 export async function tasksRowsHtml(
   code: string,
   nothing: string,

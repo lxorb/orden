@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gu: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'બધું તૈયાર છે',
   Personalize: 'વ્યક્તિગત બનાવો',
   Clean: 'સ્વચ્છ',
@@ -10,12 +9,10 @@ export const gu: Dictionary = {
   'Do you write code?': 'શું તમે કોડ લખો છો?',
   Yes: 'હા',
   No: 'ના',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'બીજી ઍપ્સમાંથી: {key}',
   'From other apps: set in your system settings': 'બીજી ઍપ્સમાંથી: સિસ્ટમ સેટિંગ્સમાં નક્કી કરો',
   'From other apps: bind {command} in your system settings':
     'બીજી ઍપ્સમાંથી: સિસ્ટમ સેટિંગ્સમાં {command} જોડો',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'આવશ્યક',
   'Add to Essentials': 'આવશ્યકમાં ઉમેરો',
   'Remove from Essentials': 'આવશ્યકમાંથી દૂર કરો',
@@ -23,20 +20,16 @@ export const gu: Dictionary = {
   'Add blocks to Essentials': 'બ્લોક્સ આવશ્યકમાં ઉમેરો',
   'Add view to Essentials': 'દૃશ્ય આવશ્યકમાં ઉમેરો',
   'Open tabs and Essentials': 'ટૅબ અને આવશ્યક ખોલો',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor હવે Orden છે',
   'Notes from nibeditor.com': 'nibeditor.com પરથી નોંધો',
   'Nothing there': 'ત્યાં કંઈ નથી',
-  // AI: the three permission modes
   'Full permissions': 'પૂર્ણ પરવાનગીઓ',
   'Auto mode': 'સ્વચાલિત મોડ',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'પૂર્ણ પરવાનગીઓ: કંઈ પૂછાતું નથી કે તમને પાછું સોંપાતું નથી, સાઇન ઇન, ચુકવણી, મોકલવું કે કાઢી નાખવું પણ નહીં',
-  // Import: Zen's tabs
   'Import from Zen': 'Zen માંથી આયાત કરો',
   'Containers stay in Zen': 'કન્ટેનર Zen માં જ રહે છે',
   'Zen’s tabs could not be read.': 'Zen ના ટૅબ વાંચી શકાયા નહીં.',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'કન્ટેનર Firefox માં જ રહે છે',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} વડે શોધે છે: અહીં પણ તેનાથી શોધવા સેટિંગ્સમાં તેને પસંદ કરો',
@@ -62,38 +55,29 @@ export const gu: Dictionary = {
   'Reading List': 'વાંચન સૂચિ',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS Safariના ટૅબ અને બુકમાર્ક ફુલ ડિસ્ક ઍક્સેસ પાછળ રાખે છે. ત્યાં Orden ચાલુ કરો, પછી ફરી પૂછો.',
-  // Settings: note types
   'Page note': 'પાનાંવાળી નોંધ',
   'Web note': 'વેબ નોંધ',
   'Private tab': 'ખાનગી ટૅબ',
   'Note types': 'નોંધના પ્રકાર',
-  // Tasks: Upcoming's weeks
   'Previous week': 'પાછલું અઠવાડિયું',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'ઉપર પ્રોજેક્ટ ઉમેરો',
   'Add project below': 'નીચે પ્રોજેક્ટ ઉમેરો',
   'Projects folder': 'પ્રોજેક્ટ્સ ફોલ્ડર',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'છોડો',
   'Complete forever': 'હંમેશ માટે પૂર્ણ કરો',
-  // Tasks: comments
   Comments: 'ટિપ્પણીઓ',
-  // Tasks: filters
   Filters: 'ફિલ્ટર',
   'Add filter': 'ફિલ્ટર ઉમેરો',
   'Edit filter': 'ફિલ્ટર સંપાદિત કરો',
-  // Tasks: a project's sections
   'Add section': 'વિભાગ ઉમેરો',
   '{name} (copy)': '{name} (નકલ)',
   'Its tasks are deleted with it.': 'તેનાં કાર્યો પણ સાથે કાઢી નખાશે.',
-  // Tasks: keys, selection and the undo toast
   Completed: 'પૂર્ણ',
   'Remove date': 'તારીખ દૂર કરો',
   'Next task': 'આગળનું કાર્ય',
   'Previous task': 'પાછળનું કાર્ય',
   'Add task at the top': 'ઉપર કાર્ય ઉમેરો',
   '{count} selected': '{count} પસંદ કર્યાં',
-  // Tasks: the Display menu
   Display: 'પ્રદર્શન',
   'Completed tasks': 'પૂર્ણ કાર્યો',
   Smart: 'સ્માર્ટ',
@@ -105,20 +89,16 @@ export const gu: Dictionary = {
   'Reset all': 'બધું રીસેટ કરો',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'લેઆઉટ કાર્યોને યાદી, બોર્ડ અથવા કૅલેન્ડર તરીકે બતાવે છે. જૂથબંધી તેમને જૂથોમાં વહેંચે છે, જે બોર્ડના કૉલમ છે. ગોઠવણી દરેક જૂથને ક્રમમાં મૂકે છે. ફિલ્ટર તમને જરૂર ન હોય તે છુપાવે છે. આ બધું આ દૃશ્ય માટે રાખવામાં આવે છે.',
-  // Tasks: several lines pasted into quick add
   'One task': 'એક કાર્ય',
   'One per line': 'દરેક લીટીએ એક',
   'Add with AI': 'AI વડે ઉમેરો',
-  // Tasks: the projects in the panel
   Favorites: 'મનપસંદ',
   'Add project': 'પ્રોજેક્ટ ઉમેરો',
   'Add sub-project': 'પેટા-પ્રોજેક્ટ ઉમેરો',
-  // Tasks: the task view
   'Sub-tasks': 'પેટા-કાર્યો',
   'Add sub-task': 'પેટા-કાર્ય ઉમેરો',
   'New label': 'નવું લેબલ',
   'No deadline': 'કોઈ સમયમર્યાદા નથી',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'ફરી સમય નક્કી કરો',
   'Later this week': 'આ અઠવાડિયે પછી',
   'This weekend': 'આ સપ્તાહાંતે',
@@ -135,22 +115,18 @@ export const gu: Dictionary = {
   Reopen: 'ફરી ખોલો',
   Schedule: 'સમય નક્કી કરો',
   'Open in note': 'નોંધમાં ખોલો',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'બીજી એપ',
   'Import from Obsidian': 'Obsidian માંથી આયાત કરો',
   'Import from Notion': 'Notion માંથી આયાત કરો',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'સંકેતો',
   'Silent mode': 'શાંત મોડ',
   'See how your notes connect.': 'તમારી નોંધો કેવી રીતે જોડાયેલી છે તે જુઓ.',
   'Press {key} to find anything, notes and commands alike.':
     'નોંધો અને આદેશો, કંઈપણ શોધવા {key} દબાવો.',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'લખતી વખતે માર્કડાઉન બતાવો',
   'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'પોઇન્ટર',
   'Pointing hand on buttons': 'બટનો પર નિર્દેશ કરતો હાથ',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'કાર્ય ઉમેરો',
   'Apple Shortcuts': 'Apple શૉર્ટકટ',
   Tomorrow: 'આવતીકાલે',
@@ -176,7 +152,6 @@ export const gu: Dictionary = {
   'Every week': 'દર અઠવાડિયે',
   'Every month': 'દર મહિને',
   'Every year': 'દર વર્ષે',
-  // Files and notes
   Save: 'સાચવો',
   'New note': 'નવી નોંધ',
   'Random note': 'યાદૃચ્છિક નોંધ',
@@ -204,8 +179,6 @@ export const gu: Dictionary = {
   'Release to add a page': 'પાનું ઉમેરવા છોડો',
   'Page {number}': 'પાનું {number}',
   'The paper could not be read': 'કાગળ વાંચી શકાયો નહીં',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'લેટર',
   'Long page': 'લાંબું પાનું',
@@ -248,7 +221,6 @@ export const gu: Dictionary = {
   'Choose a picture': 'ચિત્ર પસંદ કરો',
   'Remove picture': 'ચિત્ર દૂર કરો',
   'That picture could not be read.': 'તે ચિત્ર વાંચી શકાયું નથી.',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'સંતૃપ્તિ',
   Tint: 'છાંટ',
   'Tint colour': 'છાંટનો રંગ',
@@ -376,7 +348,6 @@ export const gu: Dictionary = {
   'Merge into…': 'આમાં જોડો…',
   'Split at caret': 'કર્સર પર છૂટું પાડો',
   'Extract selection': 'પસંદગી કાઢો',
-  // Panels and navigation
   Bookmarks: 'બુકમાર્ક',
   'New group': 'નવો સમૂહ',
   'Remove group': 'સમૂહ કાઢો',
@@ -430,8 +401,6 @@ export const gu: Dictionary = {
   'Sort by name': 'નામ પ્રમાણે ગોઠવો',
   'Sort by modified': 'ફેરફાર પ્રમાણે ગોઠવો',
   'Sort by created': 'બન્યાની તારીખ પ્રમાણે ગોઠવો',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'ફાઇલોનો ક્રમ',
   'Name, A to Z': 'નામ, અ થી હ',
   'Name, Z to A': 'નામ, હ થી અ',
@@ -442,7 +411,6 @@ export const gu: Dictionary = {
   Manual: 'હાથે ગોઠવેલ',
   'Show hidden files': 'છુપી ફાઇલો બતાવો',
   'Hide hidden files': 'છુપી ફાઇલો છુપાવો',
-  // Writing
   Bold: 'જાડું',
   Italic: 'ત્રાંસું',
   Strikethrough: 'છેકેલું',
@@ -527,11 +495,9 @@ export const gu: Dictionary = {
   'Horizontal rule': 'આડી લીટી',
   'Page break': 'પાના વિભાજન',
   'Tidy up this note': 'આ નોંધ સરખી કરો',
-  // PDFs
   'Copy a link': 'કડી નકલ કરો',
   'That PDF could not be opened': 'એ PDF ખોલી શકાયું નહીં',
   'That file could not be read': 'એ ફાઇલ વાંચી શકાઈ નહીં',
-  // Modes and view
   Reading: 'વાંચન',
   'Leave reading': 'વાંચનમાંથી બહાર',
   Present: 'રજૂ કરો',
@@ -571,7 +537,6 @@ export const gu: Dictionary = {
   'Zoom in': 'મોટું કરો',
   'Zoom out': 'નાનું કરો',
   'Actual size': 'ખરું માપ',
-  // Appearance
   Accent: 'ઉપસાવ રંગ',
   'Tidy up': 'વ્યવસ્થિત કરો',
   'Blur the app behind the tab overview': 'ટૅબ ઝાંખી પાછળ ઍપને ઝાંખી કરો',
@@ -699,7 +664,6 @@ export const gu: Dictionary = {
   'Switch theme': 'થીમ બદલો',
   Style: 'શૈલી',
   Mode: 'રીત',
-  // The window's own edges; see appearance.rs
   Window: 'વિન્ડો',
   'Orden’s own': 'Orden નું પોતાનું',
   'The system’s': 'સિસ્ટમનું',
@@ -710,7 +674,6 @@ export const gu: Dictionary = {
   'Edit custom CSS': 'પોતાનું CSS સંપાદિત કરો',
   'Edit snippets': 'ટુકડા સંપાદિત કરો',
   'Reload themes and custom CSS': 'થીમ અને પોતાનું CSS ફરી લાવો',
-  // The theme store, and the sample note its cards show
   Themes: 'થીમ',
   Browse: 'જુઓ',
   'Search themes': 'થીમ શોધો',
@@ -790,7 +753,6 @@ export const gu: Dictionary = {
   'Code only': 'ફક્ત કોડ',
   Everywhere: 'બધે',
   Attachments: 'જોડાણ',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'પાનાંવાળી નોંધો',
   'New pages': 'નવાં પાનાં',
   'Assets folder of the space': 'જગ્યાનું સામગ્રી ફોલ્ડર',
@@ -842,7 +804,6 @@ export const gu: Dictionary = {
   'Machine-translated. Corrections welcome.': 'યાંત્રિક અનુવાદ. સુધારા આવકાર્ય.',
   'The glasses show English.': 'ચશ્માં અંગ્રેજી બતાવે છે.',
   'Match the app': 'એપ પ્રમાણે',
-  // Settings
   Settings: 'ગોઠવણ',
   Account: 'ખાતું',
   Publish: 'પ્રકાશિત કરો',
@@ -868,7 +829,6 @@ export const gu: Dictionary = {
   },
   Update: 'સુધારો',
   'Live at': 'આ પર જીવંત',
-  // Publishing
   'Publish {name}': '{name} પ્રકાશિત કરો',
   'What to publish': 'શું પ્રકાશિત કરવું',
   'The whole space': 'આખી જગ્યા',
@@ -887,7 +847,6 @@ export const gu: Dictionary = {
   Value: 'મૂલ્ય',
   available: 'ઉપલબ્ધ',
   'checking…': 'તપાસે છે…',
-  // LLM
   'Connect an LLM to your notes': 'તમારી નોંધો સાથે LLM જોડો',
   'Sign in first - the connector reaches the notes in your account.':
     'પહેલાં સાઇન ઇન કરો - જોડનાર તમારા ખાતાની નોંધો સુધી પહોંચે છે.',
@@ -938,7 +897,6 @@ export const gu: Dictionary = {
     'URLને બદલે JSON બ્લૉક લેતા ક્લાયન્ટ માટે.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'સાઇન ઇન ન કરી શકે તેવા ક્લાયન્ટને ટોકન આપી શકાય. તે એક જ વાર બતાવાય છે.',
-  // Export
   'Plain text': 'સાદું લખાણ',
   'Markdown with the pictures': 'ચિત્રો સાથે markdown',
   'HTML without styles': 'શૈલી વિનાનું HTML',
@@ -957,13 +915,11 @@ export const gu: Dictionary = {
   Margin: 'હાંસિયો',
   Header: 'શીર્ષપટ્ટી',
   Footer: 'તળપટ્ટી',
-  // History
   'Version history': 'આવૃત્તિ ઇતિહાસ',
   'Copy link to this note': 'આ નોંધની કડી નકલ કરો',
   'that link could not be followed': 'એ કડી અનુસરાઈ નહીં',
   'No earlier versions yet.': 'હજી પહેલાંની આવૃત્તિ નથી.',
   'Restore this version': 'આ આવૃત્તિ પાછી લાવો',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'ત્યાં પહેલેથી નોંધ છે',
   'enter a valid email address': 'માન્ય ઈમેલ સરનામું લખો',
   'give the space a name': 'જગ્યાને નામ આપો',
@@ -994,7 +950,6 @@ export const gu: Dictionary = {
   'could not publish': 'પ્રકાશિત થઈ શક્યું નહીં',
   'could not create a token': 'ટોકન બની શક્યું નહીં',
   'that did not work': 'એ ચાલ્યું નહીં',
-  // Settings on a phone, display names, one blog address
   Back: 'પાછળ',
   'Display name': 'દેખાતું નામ',
   'Your name': 'તમારું નામ',
@@ -1014,7 +969,6 @@ export const gu: Dictionary = {
   Spelling: 'જોડણી',
   Checking: 'તપાસ',
   Dictionary: 'શબ્દકોશ',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'રેકોર્ડ દેખાવાની વાટ જુએ છે.',
   'Certificate issued.': 'પ્રમાણપત્ર અપાયું.',
   'Cloudflare could not set this domain up.': 'Cloudflare આ ડોમેન ગોઠવી શક્યું નહીં.',
@@ -1025,7 +979,6 @@ export const gu: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflareએ આ ડોમેન રોક્યું છે',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'ડોમેનના મૂળમાં, જો તમારો પ્રદાતા ત્યાં CNAME માન્ય ન રાખે તો ALIAS કે ANAME રેકોર્ડ, કે CNAME flattening વાપરો.',
-  // Shortcuts
   Shortcuts: 'ટૂંકાં માર્ગ',
   'Search shortcuts': 'ટૂંકાં માર્ગ શોધો',
   'Second key': 'બીજી કી',
@@ -1190,7 +1143,6 @@ export const gu: Dictionary = {
   Delegated: 'સોંપ્યું',
   'Code theme: {name}': 'કોડ થીમ: {name}',
   'Delete a layout': 'માંડણી કાઢો',
-  // Keyboards and modal editing
   Default: 'મૂળ',
   'Vim keys': 'Vim કીઓ',
   'Follow the link': 'કડી અનુસરો',
@@ -1202,11 +1154,9 @@ export const gu: Dictionary = {
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
   REPLACE: 'REPLACE',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'ચશ્માં પર પાનું {page}/{count}',
   'Reaching the glasses': 'ચશ્માં સુધી પહોંચે છે',
   'The glasses are not keeping up': 'ચશ્માં સાથે રહી શકતાં નથી',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'ઉમેરો',
   Select: 'પસંદ કરો',
   Pan: 'ખસેડો',
@@ -1236,7 +1186,6 @@ export const gu: Dictionary = {
   Calligraphy: 'સુલેખન',
   'Width {number}': 'જાડાઈ {number}',
   'Finger draws': 'આંગળી દોરે છે',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'જાડાઈ',
   Opacity: 'ઘનતા',
   Colour: 'રંગ',
@@ -1280,23 +1229,19 @@ export const gu: Dictionary = {
   'Export as PNG': 'PNG તરીકે નિકાસ કરો',
   'Export as SVG': 'SVG તરીકે નિકાસ કરો',
   'Export as PDF': 'PDF તરીકે નિકાસ કરો',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'PDF આયાત કરો',
   'Choose how to add the pages to the canvas.': 'પાનાં કેનવાસમાં કેવી રીતે ઉમેરવાં તે પસંદ કરો.',
   'Single page': 'એક પાનું',
   'All pages': 'બધાં પાનાં',
   'Choose a page': 'પાનું પસંદ કરો',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'પસંદ કરેલું કાઢો',
   'Nudge left': 'ડાબે સહેજ ખસેડો',
   'Nudge right': 'જમણે સહેજ ખસેડો',
   'Nudge up': 'ઉપર સહેજ ખસેડો',
   'Nudge down': 'નીચે સહેજ ખસેડો',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'બીજે પણ ખુલ્લું',
   Shared: 'વહેંચેલું',
   Browser: 'બ્રાઉઝર',
-  // Sharing a space with other people
   Share: 'વહેંચો',
   'Share {name}': '{name} વહેંચો',
   'Share this space': 'આ જગ્યા વહેંચો',
@@ -1340,14 +1285,12 @@ export const gu: Dictionary = {
   'Shared with you': 'તમારી સાથે વહેંચેલું',
   'That link does not open anything': 'એ કડી કંઈ ખોલતી નથી',
   'Ask for another one.': 'બીજી માંગો.',
-  // Somebody a share link let in, who has no account
   Guest: 'મહેમાન',
   'Ask to join': 'જોડાવા માંગો',
   Asking: 'માંગે છે',
   'Waiting for {who}': '{who}ની વાટ',
   '{who} did not let you in': '{who}એ તમને અંદર આવવા દીધા નહીં',
   'What the others in this space see.': 'આ જગ્યામાં બીજા જે જુએ છે તે.',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'સુધારા',
   'Release channel': 'પ્રકાશન માર્ગ',
   Stable: 'સ્થિર',
@@ -1357,8 +1300,6 @@ export const gu: Dictionary = {
   'Web version': 'વેબ આવૃત્તિ',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'સ્થિર પ્રકાશિત વેબ એપ છે, અસ્થિર સૌથી નવું બિલ્ડ છે અને તૂટી શકે.',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'આયાત',
   'Convert syntax': 'વાક્યરચના બદલો',
   'In this note': 'આ નોંધમાં',
@@ -1452,8 +1393,6 @@ export const gu: Dictionary = {
   'Undo the import': 'આયાત પાછી લો',
   'Choose an export': 'નિકાસ પસંદ કરો',
   Under: 'નીચે',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'સમન્વય',
   'When the same note was written twice': 'એક જ નોંધ બે વાર લખાઈ ત્યારે',
   'On two devices': 'બે ઉપકરણ પર',
@@ -1512,7 +1451,6 @@ export const gu: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'આ ડિવાઇસ પરની નોંધો રહેશે; ફક્ત ખાતું અને તેની સિંક કરેલી નકલો જશે.',
   'Also gone for everyone in {spaces}.': '{spaces}માં બધા માટે પણ જશે.',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'નોંધ',
   '{space} panel': '{space} પૅનલ',
   'Panel width': 'પૅનલની પહોળાઈ',
@@ -1523,7 +1461,6 @@ export const gu: Dictionary = {
   'What is selected': 'જે પસંદ કરેલું છે',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'કેનવાસ: {cards} કાર્ડ, {links} કડી, {drawings} ચિત્ર',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'પ્રદાતા',
   'Make default': 'મૂળ બનાવો',
@@ -1550,7 +1487,6 @@ export const gu: Dictionary = {
   'The model did not answer.': 'મોડેલે જવાબ આપ્યો નહીં.',
   'The connection closed before the answer was finished.':
     'જવાબ પૂરો થાય તે પહેલાં કનેક્શન બંધ થઈ ગયું.',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'તમારો {plan} પ્લાન {time} સુધી મર્યાદા પર છે.',
   'Your {plan} plan is at its limit for now.': 'તમારો {plan} પ્લાન હાલ મર્યાદા પર છે.',
   'Your {plan} plan is near its limit.': 'તમારો {plan} પ્લાન મર્યાદાની નજીક છે.',
@@ -1577,7 +1513,6 @@ export const gu: Dictionary = {
   Shorter: 'ટૂંકું',
   Longer: 'લાંબું',
   'Fix grammar': 'વ્યાકરણ સુધારો',
-  // The AI sidebar's commands
   'A cited report': 'ઉલ્લેખિત અહેવાલ',
   'A helper in the background': 'પાછળથી મદદગાર',
   'A side question': 'સાઇડ પ્રશ્ન',
@@ -1679,7 +1614,6 @@ export const gu: Dictionary = {
   'Markdown, shortest name': 'markdown, સૌથી ટૂંકું નામ',
   'Markdown, relative path': 'markdown, સાપેક્ષ પથ',
   'Markdown, path in the space': 'markdown, જગ્યામાં પથ',
-  // Publishing part one.
   'The folders you choose become public.': 'પસંદ કરેલાં ફોલ્ડર જાહેર થાય છે.',
   'Anyone with the address can read what is published, drafts included.':
     'સરનામું હોય તે કોઈ પણ પ્રકાશિત બધું વાંચી શકે, ખરડા પણ.',
@@ -1705,11 +1639,9 @@ export const gu: Dictionary = {
   'Remove the password': 'પાસવર્ડ કાઢો',
   'Scan this with your authenticator app, then type its code.':
     'આને તમારી પ્રમાણક ઍપથી સ્કૅન કરો, પછી તેનો કોડ લખો.',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'ફોટો',
   Dictate: 'બોલીને લખાવો',
   'Add to {name}': '{name} માં ઉમેરો',
-  // Web tabs
   Reload: 'ફરી લાવો',
   'Hard reload': 'પૂરેપૂરું ફરી લાવો',
   'Open in the browser': 'બ્રાઉઝરમાં ખોલો',
@@ -1724,7 +1656,6 @@ export const gu: Dictionary = {
   'Playing audio': 'ઑડિયો વાગી રહ્યો છે',
   Muted: 'મ્યૂટ છે',
   'Developer tools': 'ડેવલપર સાધનો',
-  // Recording, meetings and what a model wrote
   Record: 'રેકૉર્ડ કરો',
   Recording: 'રેકૉર્ડિંગ',
   'Stop recording': 'રેકૉર્ડિંગ રોકો',
@@ -1745,7 +1676,6 @@ export const gu: Dictionary = {
     'એ રેકૉર્ડિંગ એક જ વારમાં શબ્દોમાં ફેરવવા બહુ લાંબું છે.',
   'That is as much as one recording may hold.': 'એક રેકૉર્ડિંગમાં આટલું જ સમાય.',
   'Nothing could be heard in that recording.': 'એ રેકૉર્ડિંગમાં કંઈ સંભળાયું નહીં.',
-  // Publishing part two.
   Spreadsheet: 'સ્પ્રેડશીટ',
   'The app’s own': 'ઍપનું પોતાનું',
   'publish.css and publish.js in this space dress the site.':
@@ -1761,14 +1691,12 @@ export const gu: Dictionary = {
   'Save as CSV': 'CSV તરીકે સાચવો',
   'Kept for {days}': '{days} સુધી રાખવામાં આવે છે',
   Full: 'ભરાઈ ગયું',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ટપાલ મોકલી શકાઈ નહીં - ફરી પ્રયત્ન કરો',
   'start again - that took too long': 'ફરી શરૂ કરો - એમાં બહુ વાર લાગી',
   'sign in to do that': 'એ કરવા સાઇન ઇન કરો',
   'that is not something a token can do': 'એ ટોકન કરી શકે એવું નથી',
   'something went wrong here - try again': 'અહીં કંઈ ખોટું થયું - ફરી પ્રયત્ન કરો',
   'this service cannot keep a secret safely': 'આ સેવા ગુપ્ત વસ્તુ સલામત રાખી શકતી નથી',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only': 'ફક્ત ચિત્ર, PDF અને સાઇટનું પોતાનું css કે js',
   'that file is too big': 'એ ફાઇલ બહુ મોટી છે',
   'that is more settings than an account holds': 'ખાતું જેટલી ગોઠવણ રાખે તેથી એ વધુ છે',
@@ -1779,13 +1707,11 @@ export const gu: Dictionary = {
     'જગ્યા પોતાના ગ્રાફ વિશે જેટલું રાખે તેથી એ વધુ છે',
   'that is more folder icons than a space holds': 'જગ્યા જેટલાં ફોલ્ડર આઇકન રાખે તેથી એ વધુ છે',
   'that is more than a site keeps': 'એક સાઇટ રાખે તેથી વધુ છે',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'એ સરનામે કોઈ નથી',
   'nobody by that name': 'એ નામે કોઈ નથી',
   'nobody is waiting by that name': 'એ નામે કોઈ વાટ જોતું નથી',
   'this space is yours': 'આ જગ્યા તમારી છે',
   'that link is busy, try again in a minute': 'એ કડી વ્યસ્ત છે, એક મિનિટ પછી પ્રયત્ન કરો',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'એવી આવૃત્તિ નથી',
   'this note was shared with you, not its folder': 'આ નોંધ તમારી સાથે વહેંચાઈ, તેનું ફોલ્ડર નહીં',
   'nothing to restore': 'પાછું લાવવા કંઈ નથી',
@@ -1793,7 +1719,6 @@ export const gu: Dictionary = {
   'nothing to delete': 'કાઢવા કંઈ નથી',
   'this room is not answering - try again': 'આ ખંડ જવાબ આપતો નથી - ફરી પ્રયત્ન કરો',
   'rooms are not running here': 'અહીં ખંડ ચાલતા નથી',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'થીમ સ્ટોર જવાબ આપતું નથી',
   'that is not a theme': 'એ થીમ નથી',
   'no such theme': 'એવી થીમ નથી',
@@ -1805,10 +1730,8 @@ export const gu: Dictionary = {
   'that is more than a spoken command': 'એ એક બોલાયેલા આદેશથી વધુ છે',
   'that is a lot of listening - try again later': 'એ બહુ સાંભળવું છે - પછી પ્રયત્ન કરો',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% લખાણ',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'મોબાઇલ',
   'The bar sits over the keyboard on a phone.': 'ફોન પર પટ્ટી કીબોર્ડ ઉપર રહે છે.',
   'On the bar': 'પટ્ટી પર',
@@ -1822,31 +1745,25 @@ export const gu: Dictionary = {
   'A pull past the top runs': 'ઉપરથી ખેંચતાં ચાલે',
   Nothing: 'કંઈ નહીં',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'રાખો',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'જમણે ખસેડો',
   'Move to the left': 'ડાબે ખસેડો',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'ખાતા પર ઇતિહાસ',
   'Keep versions': 'આવૃત્તિઓ રાખો',
   'A month': 'એક મહિનો',
   'A year': 'એક વર્ષ',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'છેલ્લા દિવસનું બધું, પછી કલાકે એક, એક મહિના પછી દિવસે એક, અને ત્રણ પછી અઠવાડિયે એક.',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'આ નોંધ રૂમમાં કોઈ નોંધ જેટલી મોટી થઈ શકે તેટલી મોટી થઈ ગઈ છે.',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'નવું ટૅબ',
   'Full screen': 'પૂર્ણ સ્ક્રીન',
   'Print…': 'છાપો…',
   'Share…': 'વહેંચો…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'ને આ પરવાનગીની જરૂર છે',
   'Don’t allow': 'મંજૂરી આપશો નહીં',
   Allow: 'મંજૂરી આપો',
@@ -1862,7 +1779,6 @@ export const gu: Dictionary = {
   'Use your MIDI devices': 'તમારા MIDI ડિવાઇસનો ઉપયોગ કરો',
   'Manage windows on all your displays': 'તમારા બધા ડિસ્પ્લે પર વિન્ડો મેનેજ કરો',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'સાઇટની માહિતી',
   Downloads: 'ડાઉનલોડ્સ',
   'Downloading {name}': '{name} ડાઉનલોડ થઈ રહ્યું છે',
@@ -1889,11 +1805,9 @@ export const gu: Dictionary = {
   'Turn into': 'માં ફેરવો',
   Foldable: 'વાળી શકાય',
   'Starts folded': 'વાળેલું શરૂ થાય',
-  // Where a space keeps what websites store
   'Web data': 'વેબ ડેટા',
   Global: 'સહિયારું',
   Site: 'સાઇટ',
-  // The Mac's menu bar
   'About {name}': '{name} વિશે',
   Services: 'સેવાઓ',
   'Hide {name}': '{name} છુપાવો',
@@ -1901,7 +1815,6 @@ export const gu: Dictionary = {
   'Show all': 'બધું બતાવો',
   'Quit {name}': '{name} બંધ કરો',
   'Bring all to front': 'બધું આગળ લાવો',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'નકલ પાછી લો',
   'Devices with your AI vault': 'તમારા AI વૉલ્ટ વાળાં ઉપકરણો',
   'This device': 'આ ઉપકરણ',
@@ -1916,13 +1829,11 @@ export const gu: Dictionary = {
   'Select down': 'નીચે તરફ પસંદ કરો',
   'Select up': 'ઉપર તરફ પસંદ કરો',
   'Select or deselect': 'પસંદ કરો અથવા પસંદગી કાઢો',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'નવા ટૅબમાં ખોલો',
   'Open to the side': 'બાજુમાં ખોલો',
   'Open all': 'બધું ખોલો',
   'Show in the file list': 'ફાઇલ યાદીમાં બતાવો',
   'Collapse the file list': 'ફાઇલ યાદી સંકેલો',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'પસંદગી વધારો',
   'Shrink the selection': 'પસંદગી ઘટાડો',
   'Insert a line above': 'ઉપર લીટી ઉમેરો',
@@ -1936,18 +1847,15 @@ export const gu: Dictionary = {
   'Duplicate the block': 'બ્લૉકની નકલ કરો',
   'Move the block up': 'બ્લૉક ઉપર ખસેડો',
   'Move the block down': 'બ્લૉક નીચે ખસેડો',
-  // The editor's menu on a link and a picture
   'Copy link address': 'કડીનું સરનામું નકલ કરો',
   'Edit link': 'કડી સંપાદિત કરો',
   'Remove link': 'કડી દૂર કરો',
   'Copy picture': 'ચિત્રની નકલ કરો',
   'Open picture': 'ચિત્ર ખોલો',
   'Delete picture': 'ચિત્ર કાઢી નાખો',
-  // A file dropped into a note
   'Storing the file': 'ફાઇલ સાચવી રહ્યા છીએ',
   'That file is larger than a note can keep.': 'આ ફાઇલ નોંધ રાખી શકે તેના કરતાં મોટી છે.',
   'That file could not be kept.': 'આ ફાઇલ રાખી શકાઈ નહીં.',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'નવું ટર્મિનલ',
   'Command Prompt': 'કમાન્ડ પ્રોમ્પ્ટ',
   Terminal: 'ટર્મિનલ',
@@ -1969,11 +1877,8 @@ export const gu: Dictionary = {
   'Saved nowhere, a session kept running is found again in Settings, {pane}.':
     'ક્યાંય સાચવેલું નથી; ચાલુ રાખેલું સત્ર ફરી સેટિંગ્સ, {pane}માં મળશે.',
   'Paste {count} lines?': { one: '{count} લાઇન પેસ્ટ કરવી?', other: '{count} લાઇનો પેસ્ટ કરવી?' },
-  // Orden as the default browser
   'Default browser': 'મૂળ બ્રાઉઝર',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ના ફેરફારો પૂર્વવત્ કરો',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'આર્કાઇવ કરો',
   Unarchive: 'આર્કાઇવમાંથી કાઢો',
   Archived: 'આર્કાઇવ કર્યું',
@@ -1986,7 +1891,6 @@ export const gu: Dictionary = {
     one: 'અંદર {count} આર્કાઇવ કરેલી આઇટમ',
     other: 'અંદર {count} આર્કાઇવ કરેલી આઇટમ',
   },
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'ડાબી બાજુપટ્ટી',
   'Right sidebar': 'જમણી બાજુપટ્ટી',
   'Ask about this space': 'આ જગ્યા વિશે પૂછો',
@@ -1997,7 +1901,6 @@ export const gu: Dictionary = {
   'Ask again': 'ફરી પૂછો',
   'Continue when the limit resets': 'મર્યાદા ફરી શરૂ થાય ત્યારે ચાલુ રાખો',
   'Continues at {time}': '{time} એ ચાલુ થશે',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'કંઈ પણ પૂછો, ઉમેરવા @, વધુ માટે /',
   'What can I help with?': 'હું કેવી રીતે મદદ કરી શકું?',
   'Add photos and files': 'ફોટા અને ફાઇલો ઉમેરો',
@@ -2065,12 +1968,9 @@ export const gu: Dictionary = {
   Closed: 'બંધ કર્યું',
   Ran: 'ચલાવ્યું',
   Changed: 'બદલ્યું',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': 'આ {device}',
   '{name} is back: {device} was writing in it': '{name} પાછી આવી: {device} તેમાં લખી રહ્યું હતું',
   'Changes to {name} are not syncing': '{name} માં થયેલા ફેરફારો સિંક થતા નથી',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'ખોલવું',
   Pressing: 'દબાવવું',
   Typing: 'ટાઇપ કરવું',
@@ -2085,18 +1985,14 @@ export const gu: Dictionary = {
   'Agent tabs closed': 'એજન્ટની ટૅબ બંધ થઈ',
   'Orden is still running for your agents': 'તમારા એજન્ટ માટે Orden હજી ચાલે છે',
   '{client} wants to connect': '{client} જોડાવા માંગે છે',
-  // Web logins that travel, and the devices of an account
   'no such device': 'એવું ઉપકરણ નથી',
   'give the device a name': 'ઉપકરણને નામ આપો',
   'that computer is no longer waiting': 'તે કમ્પ્યુટર હવે રાહ જોતું નથી',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'આવી કોઈ ફાઇલ નથી',
   'too many changes at once - try again in a minute':
     'એકસાથે ઘણા બધા ફેરફાર - એક મિનિટ પછી ફરી પ્રયાસ કરો',
   'that is more than a space keeps about its tree':
     'આ એક જગ્યા તેના વૃક્ષ વિશે રાખે છે તેના કરતાં વધુ છે',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'આ કમ્પ્યુટર પરના એજન્ટ',
   'Your account’s connector': 'તમારા ખાતાનું કનેક્ટર',
   'Orden asks you once, the first time it connects.':
@@ -2166,12 +2062,9 @@ export const gu: Dictionary = {
     one: '{count} કૉલ',
     other: '{count} કૉલ',
   },
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'ઝડપી પ્રશ્ન',
   Scratchpad: 'Scratchpad',
   'Add to note': 'નોંધમાં ઉમેરો',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'એક્સ્ટેન્શન',
   'Add extension': 'એક્સ્ટેન્શન ઉમેરો',
   'Manage extensions': 'એક્સ્ટેન્શન મેનેજ કરો',
@@ -2191,7 +2084,6 @@ export const gu: Dictionary = {
   'Did not load': 'લોડ થયું નથી',
   Permissions: 'પરવાનગીઓ',
   Options: 'વિકલ્પો',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'રિમોટ',
   'Add host': 'હોસ્ટ ઉમેરો',
   Reconnect: 'ફરી કનેક્ટ કરો',
@@ -2199,11 +2091,8 @@ export const gu: Dictionary = {
   'No group': 'કોઈ જૂથ નથી',
   'Not an address': 'સરનામું નથી',
   'Could not connect to {host}': '{host} સાથે કનેક્ટ થઈ શક્યું નહીં',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'ચિત્ર મોકલે છે',
   'Could not send the image': 'ચિત્ર મોકલી શકાયું નહીં',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': {
     one: 'અને તેના પછીનું {count}',
     other: 'અને તેના પછીના {count}',
@@ -2216,8 +2105,6 @@ export const gu: Dictionary = {
   'Pages, terminals and moves are not undone': 'પેજ, ટર્મિનલ અને ખસેડવું પૂર્વવત્ થતું નથી',
   Rewind: 'પાછળ જાઓ',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'શોધ એન્જિન',
   History: 'ઇતિહાસ',
   'Search history': 'શોધ ઇતિહાસ',
@@ -2241,14 +2128,12 @@ export const gu: Dictionary = {
   'New private tab': 'નવું ખાનગી ટૅબ',
   'All spaces': 'બધી સ્પેસ',
   'the data could not be deleted': 'ડેટા ડિલીટ કરી શકાયો નથી',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'સ્નૂઝ',
   Reminders: 'રિમાઇન્ડર',
   'Reminders ring while Orden is open': 'Orden ખુલ્લું હોય ત્યારે રિમાઇન્ડર વાગે છે',
   Automatic: 'આપમેળે',
   'Stay in the tray': 'ટ્રેમાં રહો',
   'Exact alarms': 'ચોક્કસ અલાર્મ',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'કાર્યો',
   'Plan my day': 'મારો દિવસ આયોજિત કરો',
   'Add a task': 'કાર્ય ઉમેરો',
@@ -2260,8 +2145,6 @@ export const gu: Dictionary = {
   'Done tasks too': 'પૂર્ણ થયેલાં કાર્યો પણ',
   'As a task': 'કાર્ય તરીકે',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'કાર્યો',
   Ascending: 'ચડતા ક્રમમાં',
   Descending: 'ઊતરતા ક્રમમાં',
@@ -2346,8 +2229,6 @@ export const gu: Dictionary = {
   'Without a value': 'મૂલ્ય વગર',
   'With a value': 'મૂલ્ય સાથે',
   Unique: 'અનન્ય',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'નમૂનામાંથી નવી નોંધ',
   Automations: 'સ્વચાલન',
   'Row added': 'પંક્તિ ઉમેરાઈ',
@@ -2376,7 +2257,6 @@ export const gu: Dictionary = {
   Form: 'ફોર્મ',
   Formula: 'સૂત્ર',
   'Blocked by {task}': '{task} માટે અટકેલું',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'બહાર નીકળતા પહેલાં ચેતવો',
   'When something runs': 'કંઈક ચાલતું હોય ત્યારે',
   'Quit {name}?': '{name} બંધ કરવું?',
@@ -2387,16 +2267,13 @@ export const gu: Dictionary = {
   'Quit anyway': 'છતાં બહાર નીકળો',
   'Restart anyway': 'છતાં ફરી શરૂ કરો',
   'Close anyway': 'છતાં બંધ કરો',
-  // The online terminal
   'Online terminal': 'ઑનલાઇન ટર્મિનલ',
   'New online terminal': 'નવું ઑનલાઇન ટર્મિનલ',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'બીજું ઉપકરણ',
   'Taken over by {device}': '{device} એ લઈ લીધું',
   'Open on {device} since {time}': '{time} થી {device} પર ખુલ્લું',
   'Take over': 'લઈ લો',
   'Take back': 'પાછું લો',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'નવી એપ્લિકેશન',
   Application: 'એપ્લિકેશન',
   'This application’s file is damaged': 'આ એપ્લિકેશનની ફાઇલ બગડી ગઈ છે',
@@ -2505,8 +2382,6 @@ export const gu: Dictionary = {
   'Compare with original': 'મૂળ સાથે સરખાવો',
   'Conflict copies from other apps': 'અન્ય ઍપની સંઘર્ષ નકલો',
   'Remove from sync': 'સમન્વયમાંથી દૂર કરો',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'પ્રોફાઇલ',
   Change: 'બદલો',
   'Take photo': 'ફોટો લો',
@@ -2531,7 +2406,6 @@ export const gu: Dictionary = {
   'that picture could not be opened': 'તે ચિત્ર ખોલી શકાયું નહીં',
   'the camera could not be opened': 'કૅમેરા ખોલી શકાયો નહીં',
   'that picture is too big': 'તે ચિત્ર ખૂબ મોટું છે',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'ચેટ',
   Reply: 'જવાબ આપો',
   Replies: 'જવાબો',
@@ -2550,7 +2424,6 @@ export const gu: Dictionary = {
   'Also send to {chat}': '{chat}માં પણ મોકલો',
   'Skin tone': 'ત્વચાનો રંગ',
   'Deleted account': 'કાઢી નાખેલું ખાતું',
-  // Chats: notifications
   Mute: 'મ્યૂટ કરો',
   Unmute: 'અનમ્યૂટ કરો',
   'New message': 'નવો સંદેશ',
@@ -2560,7 +2433,6 @@ export const gu: Dictionary = {
   Weekdays: 'કામકાજના દિવસો',
   Starts: 'શરૂ',
   Ends: 'અંત',
-  // Chats: everywhere
   'Read chats': 'ચેટ વાંચવી',
   'Post in chats': 'ચેટમાં લખવું',
   'Always in this chat': 'આ ચેટમાં હંમેશા',
@@ -2572,14 +2444,12 @@ export const gu: Dictionary = {
   'Search this chat': 'આ ચેટમાં શોધો',
   'Add as task': 'કાર્ય તરીકે ઉમેરો',
   'Save as note': 'નોંધ તરીકે સાચવો',
-  // Appearance: glass's own pairs of colours
   Dawn: 'પરોઢ',
   Lagoon: 'લગૂન',
   Lilac: 'લાઇલેક',
   Peach: 'પીચ',
   Sage: 'સેજ',
   Mist: 'ધુમ્મસ',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'નવો ડેટાબેઝ',
   'New page': 'નવું પાનું',
   'Not started': 'શરૂ નથી થયું',
@@ -2605,7 +2475,6 @@ export const gu: Dictionary = {
   Large: 'મોટું',
   Both: 'બંને',
   'Shown on cards': 'કાર્ડ પર દેખાય છે',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'આ બ્રાઉઝરની AI કી વૉલ્ટ દ્વારા તમારાં બીજાં ઉપકરણો સાથે સમન્વયિત કરે છે.',
   'Which of your AI accounts this feature asks.': 'આ સુવિધા તમારાં કયા AI ખાતાને પૂછે છે.',
@@ -2835,7 +2704,6 @@ export const gu: Dictionary = {
   'Some changes may not be noticed': 'કેટલાક ફેરફારો કદાચ ધ્યાનમાં ન આવે',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'સિસ્ટમની જોવાતા ફોલ્ડરોની મર્યાદા પૂરી થઈ ગઈ છે, તેથી બીજા પ્રોગ્રામ તમારી સ્પેસમાં કરે તે દરેક ફેરફાર Orden કદાચ ન જુએ. fs.inotify.max_user_watches વધારવાથી સુધરે છે.',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'ચેટ {name} ને {space} માં ખસેડવી?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'પછી {space} માં બધા આખો ઇતિહાસ વાંચી શકશે, અને {from} ના લોકો તે ગુમાવશે.',
@@ -2875,7 +2743,6 @@ export const gu: Dictionary = {
   'One colour': 'એક રંગ',
   'Web icons': 'વેબ આઇકન',
   'Sites you visit will appear here': 'તમે મુલાકાત લો છો તે સાઇટ અહીં દેખાશે',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'શ્રુતલેખન',
   'Dictate with': 'આના વડે શ્રુતલેખન',
   'Where your voice goes to be turned into words.':
@@ -2906,11 +2773,9 @@ export const gu: Dictionary = {
   'Not on this device': 'આ ઉપકરણ પર નથી',
   'Not on this device. It opens once you are online again.':
     'આ ઉપકરણ પર નથી. તમે ફરી ઑનલાઇન થશો ત્યારે તે ખુલશે.',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'IMAP સર્વર',
   'SMTP server': 'SMTP સર્વર',
   'User name': 'વપરાશકર્તા નામ',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'તાકીદનું',
   Important: 'મહત્વનું',
   'If time': 'સમય હોય તો',

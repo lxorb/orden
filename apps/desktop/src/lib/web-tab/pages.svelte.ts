@@ -1,32 +1,3 @@
-/** The page each web tab is on, and the webview drawing it.
- *
- *  A web tab is a pane with a hole in it. On a desktop the page is not in the
- *  document at all: it is a second webview inside the same window, placed over the
- *  rectangle the pane leaves for it, because a frame cannot show most of the web -
- *  the sites worth reading refuse to be framed, and a tab that showed a refusal
- *  where the page should be would not be a tab. So the pane measures itself and this
- *  tells the crate where to put the page; see src-tauri/src/web_tabs.rs.
- *
- *  In a browser there is no second webview to place, and the state here is the same
- *  state with nothing behind it: the address, the title, and whether the pane is
- *  holding the card or the frame the reader asked for. One store for both builds, so
- *  the bar above the page is one bar.
- *
- *  **A web note is a browser tab.** While the app is running, an open web tab keeps
- *  its page: switching to a note and back hides the webview and shows it again, and
- *  never closes it, because closing one is a browser process and a load of the site
- *  and everything the reader had done on the page. Where the tab is - the address,
- *  the place on the page, the trail behind it - is kept whether the page is running or
- *  not, so reopening the note tomorrow on another machine opens the page that was
- *  open and not the site's front door. Which half is kept where is one rule, written
- *  down in docs/web-tabs.md: the address is in the file, because that is the document
- *  and it syncs; the place and the trail are this device's, because they are about
- *  this screen.
- *
- *  A page out of sight is frozen, never closed for it: see resting.ts. Only Memory saver
- *  parks one - the webview goes, the tab keeps everything about itself - and looking at
- *  a parked tab again opens the page where it was, at the place it was at. */
-
 import { landed } from '../glass/chrome.svelte'
 import { isNumber, isRecord, isString, stored, storedText } from '../stored'
 import { invoke, isDesktop } from '../tauri'
@@ -39,84 +10,45 @@ import { placeOf, placeKept } from './place'
 import type { Upgrade } from './upgrade'
 import type { HalfTyped } from './typed'
 
-/** This device's history, asked for by the first page that says where it is rather
- *  than carried: this store is in front of the first paint, because the workspace
- *  names a new web note's title through it, and the history is not. Every call waits
- *  on the one import, so what the pages say lands in the order they said it. See
- *  visited.ts and test/weight.test.ts. */
 function history(): Promise<typeof import('./visited').visited> {
   return import('./visited').then((module) => module.visited)
 }
 
-/** Which store a page keeps its web data in, asked for the same way and for the same
- *  reason: the first page is the first thing that needs it. See web-data.svelte.ts. */
 function stores(): Promise<typeof import('./web-data.svelte').webData> {
   return import('./web-data.svelte').then((module) => module.webData)
 }
 
-/** A page's `alert`, `confirm` and `prompt`, asked for the same way: no page can open
- *  one before a page is open, so the store is not carried in front of the first paint.
- *  See dialogs.svelte.ts and test/weight.test.ts. */
 function pageDialogs(): Promise<typeof import('./dialogs.svelte')> {
   return import('./dialogs.svelte')
 }
 
-/** A closed tab's dialogs, cancelled. Never in the glasses' plugin, which opens no page
- *  and so leaves the store out of its package. */
 function dropDialogs(tab: string): void {
   if (!__EVEN_PLUGIN__) void pageDialogs().then(({ dialogs }) => dialogs.dropped(tab))
 }
 
-/** What a site may use, asked for the same way: no site can ask before a page is open,
- *  and a tab closed before any did has nothing to take back. See permissions.svelte.ts. */
 function pagePermissions(): Promise<typeof import('./permissions.svelte')> {
   return import('./permissions.svelte')
 }
 
-/** A closed tab's questions, dropped, and the private session's answers with them once
- *  no private tab is left; never in the glasses' plugin, as above. */
 function dropGrants(tab: string, privateLeft: boolean): void {
   if (!__EVEN_PLUGIN__)
     void pagePermissions().then(({ grants }) => grants.dropped(tab, privateLeft))
 }
 
-/** What becomes of a page out of sight, fetched with the first one; see sleeping.ts. */
 function sleeping() {
   return import('./sleeping')
 }
 
-/** How far outside the window a page is put while it waits to be hidden; see `aside`. */
 export const OUT_OF_THE_WAY = 20_000
 
-/** How long a still picture of a page stands for the page. Under half a second, so
- *  two overlays in a row share one and a page that has scrolled since is
- *  photographed again. */
 const SHOT_KEEPS = 400
 
-/** How long the page is given to say where it is before it is parked anyway. Half a
- *  second: the answer is a line of script in the page's own document, and a page that
- *  has not answered in that long is a page busy with something of its own. */
 const LOOK_WAITS = 500
 
-/** How long the engine is given to photograph itself, for a caller that waits for it.
- *
- *  A page is normally photographed on the press that is about to open something over it
- *  and again as it finishes loading, which costs the overlay nothing at all: the picture
- *  is already there. No layer waits for one any more (#1124) - the page goes the frame the
- *  layer comes, and a picture still on its way lands under it - so this is the cap for
- *  the callers that do want the picture before going on, a tab's hover card on an engine
- *  that cannot cut among them. Set from what the engine actually takes, which is about
- *  105 ms for a pane-sized PNG on this machine. */
 const SHOT_WAITS = 300
 
-/** How long after a page has loaded its mark still counts as the one it arrived with,
- *  which is the one its file keeps. Three seconds: a site that sets its mark with a
- *  script does it in the breath after the load - web.whatsapp.com adds its own 1.3 s
- *  after it, measured - and one that redraws its mark with an unread count does it when
- *  a message comes, which is later than that. */
 const ARRIVES = 3000
 
-/** Where the pane left room for the page, in the window's own pixels. */
 export interface Rect {
   x: number
   y: number
@@ -124,36 +56,23 @@ export interface Rect {
   height: number
 }
 
-/** Where the hole sat in the window's layout when it was measured: the window's size,
- *  the area every pane shares and the pane the hole is in. What lets the crate move the
- *  page in the window's own resize, and put a placement that crossed a resize where its
- *  layout is now rather than where it was; see src-tauri/src/web_follow.rs. */
 export interface Frame {
   window: { width: number; height: number }
   area: Rect
   pane: Rect
 }
 
-/** What a pane says about its page beside the rectangle: what of the app is over the
- *  page, and where the hole sits in the layout. */
 export interface Over {
   cut: Cut | null
   frame: Frame | null
-  /** How much of the page shows where it is drawn under the app (`'under'`): the hole's
-   *  own opacity, its ancestors' included. One where it is not said. */
   opacity?: number
   corner?: number
 }
 
-/** All of a page under the app's layers, said here rather than taken from covers.ts, which
- *  is not in front of the first paint. */
 const WHOLE: Cut = { all: true, hollows: [] }
 
-/** Nothing over the page, and no layout to follow. */
 const NOTHING: Over = { cut: null, frame: null }
 
-/** One placement as the crate is told it. `away` is a page put out of the window while
- *  its picture is taken, which is no news about where the pane is. */
 interface Placement {
   pane: Rect
   visible: boolean
@@ -164,29 +83,15 @@ interface Placement {
   corner?: number | undefined
 }
 
-/** How the engine layers a page with the app's own HTML, which the crate says with every
- *  page it builds and every placement:
- *
- *  - `'under'`: the page is drawn under the window's HTML, which is transparent where the
- *    page shows, so every layer of the app is simply drawn over the live page. The cut is
- *    still told, and means where the page takes no input. See underlay.ts and #1137.
- *  - `'cut'`: the page is drawn over the HTML, and the app's layers are cut out of it
- *    (src-tauri/src/web_cut.rs); the crate's answer is `true`.
- *  - `'hide'`: the page is hidden behind its still picture under a layer, which every
- *    build can do, and is what a page is until the crate has said. */
 export type Layering = 'under' | 'cut' | 'hide'
 
 let layering = $state<Layering>('hide')
 
-/** The crate's answer for `page`, as its layering and the engine's latest. Each page is
- *  said for on its own: on Windows a page an agent built and a tab took over is a page of
- *  the other kind until it is built again. */
 function heard(page: Page, said: unknown): void {
   layering = said === 'under' ? 'under' : said === true ? 'cut' : 'hide'
   page.layering = layering
 }
 
-/** Where a page is, its trail, and whether a field in it is typed into; see `web_look`. */
 interface Looked {
   url: string
   x: number
@@ -196,38 +101,17 @@ interface Looked {
   edited?: boolean
 }
 
-/** Which way a step goes, as the crate names them: `fresh` is Chrome's Ctrl+Shift+R,
- *  the page again past the cache, and `stop` the cross the reload glyph turns into
- *  while a page is coming. */
 export type Step = 'back' | 'forward' | 'reload' | 'fresh' | 'stop'
 
-/** Where a page should be and whether it should be seen at all: what the pane asked
- *  for while the page was still being built.
- *
- *  Building one is not instant. The crate answers when the platform has handed it a
- *  webview, and in that time the pane can have moved, the tab can have stopped being
- *  the one showing, or the tab can have been closed altogether - so what the pane
- *  asked for in the meantime is kept and applied, rather than assumed not to have
- *  happened. */
 interface Wanted {
   pane: Rect
   visible: boolean
-  /** Why it is out of sight, for the one case where the two answers differ: something
-   *  of the app's is over the page, which leaves the tab in front and nothing counting
-   *  down for it. A tab that was switched away from is the other, and that one starts
-   *  the countdown to being frozen. */
   covering: boolean
-  /** What else the pane said; see `Over`. */
   over: Over
 }
 
-/** What a browser build is showing in the pane: the card that stands for the page,
- *  or the frame the reader asked for. A desktop has neither - the page is a webview
- *  of its own; see frame.ts for why a browser is asked at all. */
 export type Framing = 'card' | 'frame'
 
-/** What the crate says when a page moves. Read rather than trusted: an event is a
- *  boundary like any other. */
 interface Moved {
   tab: string
   url: string
@@ -253,9 +137,6 @@ function readMoved(value: unknown): Moved | null {
   }
 }
 
-/** What the crate says when a page's mark changes: which tab, and the picture, as an
- *  address nothing has to fetch again - or the empty string for a page with none. See
- *  web_icons.rs. */
 interface Iconed {
   tab: string
   icon: string
@@ -270,20 +151,12 @@ function readIconed(value: unknown): Iconed | null {
   return { tab: said.tab, icon: said.icon }
 }
 
-/** What the crate says when a page asks for a window of its own: which tab asked,
- *  where it wants to go, and whether the reader asked for it behind - a Ctrl+click,
- *  the middle button, the page's own "open in a new tab" - or in front. Read rather
- *  than trusted, like everything else that crosses that line - and this one carries an
- *  address a site chose, so the rule about which addresses a tab may hold is asked
- *  again on the side that would open one. */
 interface Opening {
   tab: string
   url: string
   behind: boolean
 }
 
-/** The tab a page chosen by a press or by the keyboard is the page of, as the crate says
- *  it; see `page_chosen` in web_tabs.rs. */
 export function readChosen(value: unknown): string | null {
   return typeof value === 'object' &&
     value !== null &&
@@ -292,18 +165,12 @@ export function readChosen(value: unknown): string | null {
     : null
 }
 
-/** A tab whose page a person is working in made the one being worked in: its pane takes
- *  the focus and shows it, which is what a press in a pane of the app's own does. Nothing
- *  where it is already. */
 export async function chooseTab(tab: string): Promise<void> {
   const { workspace } = await import('../workspace.svelte')
   if (workspace.activeTabId === tab || !workspace.tabs.some((one) => one.id === tab)) return
   workspace.activate(tab)
 }
 
-/** The corner of the card a page fills, in the window's own pixels: the frame's token
- *  where the panes are (#1088), which full screen makes nothing. The page's own
- *  bottom corners take it, so it stands in the card rather than out of its corners. */
 export function cardCorner(within?: Element | null): number {
   if (typeof document === 'undefined') return 0
   const card = within?.closest('[data-pane]')
@@ -323,212 +190,91 @@ export function readOpening(value: unknown): Opening | null {
     : null
 }
 
-/** One web tab's page. */
 export class Page {
-  /** Where the page is. The tab's own address until the page says otherwise, so a
-   *  tab restored from a session knows where it is going before it gets there. */
   url = $state<string | null>(null)
-  /** What the page calls itself, or the empty string before it has said. */
   title = $state('')
-  /** An address half typed into the tab's field, waiting while another tab is in front
-   *  (#381): the tab's own, gone with it. Plain, since only the field reads it, as it is
-   *  built. See AddressField.svelte. */
   halfTyped: HalfTyped | null = null
-  /** See WebBar.svelte (#381). */
   keyboard: 'address' | 'page' | null = null
   seen = false
-  /** The site's own mark as the page shows it now, as an address the window draws
-   *  without fetching anything: the picture the engine chose for the page, from inside
-   *  the page's own profile. It follows the page, so a site that redraws its mark with
-   *  an unread count is redrawn here too. See web_icons.rs.
-   *
-   *  Null until the page has said, and the tab strip draws the one the file
-   *  remembered until then - so a tab has the site's mark before the page is there
-   *  and on a machine that has never opened it. */
   icon = $state<string | null>(null)
-  /** The mark the page arrived with: the last one it showed between its load
-   *  beginning and `ARRIVES` after the load ended, which is the one its file keeps.
-   *  Not every one after that, because a mark a site redraws with an unread count
-   *  would rewrite the note - and sync it - on every message; the next visit brings a
-   *  site's new mark to the file instead. See keep.ts and shortcut.ts. */
   kept = $state<string | null>(null)
-  /** Until when the mark the page shows is the one it arrived with, as a time; while
-   *  it is loading, for ever. Not drawn. */
   arriving = Infinity
   back = $state(false)
   forward = $state(false)
   loading = $state(false)
-  /** Whether a webview could be made for this tab at all.
-   *
-   *  False only when the crate refused to build one - a platform where a second
-   *  webview is not to be had, or an address it would not open. The pane then shows
-   *  the card a browser build shows, because that is the one surface with somewhere
-   *  to send the reader. Given a new address it is worth trying again. */
   openable = $state(true)
-  /** Whether the page's process died under it. The pane offers it again rather than build
-   *  it on its own: a page that crashes as it loads would crash for ever. See `ended`. */
   crashed = $state(false)
-  /** Why the page is not there, where it is because it did not arrive rather than because
-   *  its process died: the address it was going to and the engine's words for why. The
-   *  pane's card says it; see `failed`. */
   failure = $state<NotArrived | null>(null)
-  /** Whether the build on its way is a crashed page being offered again, whose refusal is
-   *  that same offer once more rather than the card for a platform with no webview. */
   rebuilding = false
-  /** What a browser build has in the pane. The card until the reader presses it,
-   *  and the frame from then on: one press per tab, because saying yes to a site is
-   *  about the tab rather than about each page in it. Never read on a desktop. */
   framing = $state<Framing>('card')
 
-  /** Whether there is a webview behind this tab at the moment. */
   live = $state(false)
 
-  /** Whether one is being built at this moment.
-   *
-   *  Not reactive and not drawn: the bar and the hole are on screen from the first
-   *  frame, and a page arriving is the page appearing. This is here so that a second
-   *  placement while the first is in the air does not ask for a second webview under
-   *  the same label; the crate refuses that too, and this saves the round trip. */
   opening = false
 
-  /** What the pane asked for while the page was being built. */
   wanted: Wanted | null = null
 
-  /** Every placement of this page, one in the air at a time; see latest.ts. */
   placing: Latest<Placement> | null = null
 
-  /** The placement sent last, so one asked again after its browser did not answer is
-   *  dropped once the pane has said something newer. Not drawn. */
   sent: Placement | null = null
 
-  /** The https address the bar chose for a host typed with no scheme, while the page has
-   *  not yet arrived there: plain http is tried when nothing answers. Not drawn; see
-   *  upgrade.ts. */
   upgrade: Upgrade | null = null
 
-  /** Set while the address field is being typed in, so the page reporting a new
-   *  title does not rewrite what somebody is halfway through typing. */
   typing = $state(false)
 
-  /** A still picture of the page, as a data address, from the last time anything was
-   *  about to be drawn over it.
-   *
-   *  A native webview cannot be drawn under the window's own HTML, so a menu over a
-   *  page means hiding the page - and a pane that went blank under every menu was the
-   *  worst thing about a web tab. The picture is what the hole holds while the page is
-   *  out of sight, which is also what stands in while a parked page is loading again,
-   *  so nothing about an overlay or a revival flashes. */
   shot = $state<string | null>(null)
-  /** How the engine layers this page with the window's HTML; see `layering`. */
   layering = $state<Layering>('hide')
   heldAt = $state.raw<Placement | null>(null)
-  /** When that picture was taken, so two overlays in a row share one. */
   shotAt = 0
-  /** The picture being taken at this moment, if one is.
-   *
-   *  Photographing a page is the most expensive thing the crate does for one - a fifth
-   *  of a second, measured - and the engine says where a page is several times in the
-   *  breath after it loads: once for the load, once for the title and once for the
-   *  mark. Each of those used to throw the picture away and ask for another, so a page
-   *  arriving cost three photographs at once. One at a time, and the ones behind it
-   *  wait for the one in front rather than asking again. */
   shooting: Promise<void> | null = null
 
-  /** Whether the webview is on screen at this moment.
-   *
-   *  Not drawn and not reactive: it is here so that nothing photographs a page that is
-   *  out of sight. A hidden webview has no composited frame to hand over, and a blank
-   *  picture would be worse than none - it is what the pane holds under the next menu. */
   shown = false
 
-  /** The file this tab is showing, or null for a tab with no file yet. Set by the
-   *  pane, because the store keeps what is about the page and the tab keeps what is
-   *  about the document - and where the reading got to is kept by path, so that
-   *  closing the tab and opening the note tomorrow lands back on it. See place.ts. */
   path: string | null = null
 
-  /** Where the engine last said the page is. `url` stops following it while the address
-   *  field is typed in, and a mark belongs to the page rather than to the field, so it is
-   *  filed under this; see `favicons`. Not drawn. */
   at: string | null = null
 
-  /** Where the first load in this tab finished, or null before it has. What the
-   *  page leaving it is measured against, which is what keeps a previewed website;
-   *  see used.ts. Not drawn, and read only alongside `url`, which is. */
   landed: string | null = null
 
-  /** Whether a document of the page's own has arrived: the engine named one. A tab a
-   *  page asked for whose only address turned out to be a file never has one, and that
-   *  is the tab a browser closes again; see `downloaded`. Not drawn. */
   titled = false
 
-  /** Which space the tab belongs to. Set by the pane, which knows the space the way it
-   *  knows the file. */
   space: string | null = null
 
-  /** The web note's own web data, as its file says; see web-data.svelte.ts. */
   own: string | null = null
 
-  /** Where the pane last put the page, so a page built again in another store goes back
-   *  where it was; see `restore`. */
   pane: Rect | null = null
 
-  /** Said under the bar for a moment; see `rehouse`. */
   notice = $state<string | null>(null)
 
-  /** Something on the page would not play, for want of a decoder, and the reader has not
-   *  shut the bar that offers the browser; see web_media.rs. Until the page moves. */
   unplayable = $state(false)
 
-  /** A window the page asked for without a press that could have asked for it, which the
-   *  engine blocked as Chrome blocks one, and the address it would have opened: the bar
-   *  offers it, until the page moves or the reader shuts the bar (#1074). */
   blocked = $state<string | null>(null)
 
-  /** When this tab was last looked at: when it went out of sight, for one that has. */
   looked = Date.now()
 
-  /** The countdown to being frozen or parked, running while nobody is looking at this
-   *  tab; see resting.ts. */
   resting: ReturnType<typeof setTimeout> | undefined
 
-  /** Whether the engine was asked to freeze the page. Not drawn. */
   frozen = false
-  /** Every freeze and thaw, one after the other; see `lull`. */
   lulling = Promise.resolve()
-  /** Whether a field was typed into and not sent, as the page said when it was left. */
   edited = false
-  /** When it last stopped being heard; see heard.ts. */
   heard = 0
-  /** A private tab's page: the engine's private mode, and nothing of it written down -
-   *  no history, no mark, no place - and never parked, which would end its session. Set
-   *  as the tab is made and never after; see private.ts. */
   inPrivate = false
-  /** The store the page was built in; see `restore`. */
   store: string | null | undefined
-  /** Every move to another store, one after the other; see `rehouse`. */
   rehousing = Promise.resolve()
 
-  /** The page's mark has changed. Empty is a page with none, which leaves the tab
-   *  the file's mark again and the file its own. */
   marked(icon: string) {
     this.icon = icon || null
     if (icon && Date.now() <= this.arriving) this.kept = icon
   }
 
-  /** A load began or ended, which opens the window a mark arrives in or starts it
-   *  closing. */
   loaded(loading: boolean) {
     this.arriving = loading ? Infinity : Date.now() + ARRIVES
   }
 
-  /** Whether the tab is on screen in its pane, page or no page. Not drawn. */
   onScreen = false
 
-  /** An agent is at work in it: out of sight, never hidden. See lending.ts. */
   lent = false
 
-  /** What the engine says beside where the page is; see heard.ts. */
   playing = $state(false)
   muted = $state(false)
   filling = $state(false)
@@ -537,41 +283,18 @@ export class Page {
 }
 
 class Pages {
-  /** Which tab has which page.
-   *
-   *  A plain map, deliberately, and this is the one line in the file worth being sure
-   *  about. Nothing draws the collection: what a pane draws is one `Page`, and every
-   *  field of a page that anything reads is `$state` of its own. A reactive map would
-   *  add nothing to that and would take the app down, because a pane asks for its
-   *  page from a `$derived` - the tab under a pane can be swapped - and a reaction may
-   *  not write to state that was made outside it. Making a page the first time it is
-   *  asked for would then throw `state_unsafe_mutation` while Svelte was flushing,
-   *  which abandons the batch and leaves the window drawn and no longer reactive: no
-   *  menu opens and no button answers. See test/effects/web-pages.effect.test.ts. */
   private readonly held = new Map<string, Page>()
 
-  /** Started once, on the first web tab, and never taken down: the window hears
-   *  about every page in it through one listener. A promise, so a build waits
-   *  for it: a quick page spoke before a flag's listeners were in place (#777). */
   private listening: Promise<void> | null = null
 
-  /** Every tab's page, for whatever walks them all. */
   each(): [string, Page][] {
     return [...this.held.entries()]
   }
 
-  /** The state for a tab, made the first time it is asked for. */
   of(tabId: string): Page {
     const found = this.held.get(tabId)
     if (found) return found
 
-    // The window's two listeners, started with the first page in the window rather
-    // than with the first placement. They are a fetch and two round trips, and they
-    // used to sit in front of `web_open` on the one path that decides how long a site
-    // takes to appear: nine milliseconds of a hundred and forty, spent doing something
-    // that had nothing to do with this tab. Asked for here they are answered by the
-    // time a pane has measured itself. Nothing is awaited - a listener that is not
-    // ready yet is one the placement still waits for; see `show`.
     void this.listen()
 
     const made = new Page()
@@ -579,25 +302,18 @@ class Pages {
     return made
   }
 
-  /** The mark a tab's page shows now, or null for a tab with no page or no mark yet.
-   *  Never makes a page, so a row of the file list may ask it; see chosen-icon.ts. */
   iconOf(tabId: string): string | null {
     return this.held.get(tabId)?.icon ?? null
   }
 
-  /** Whether a tab's page is on its way somewhere. Never makes a page. */
   loadingOf(tabId: string): boolean {
     return this.held.get(tabId)?.loading ?? false
   }
 
-  /** Whether an agent has been lent the tab's page; see lending.ts. Never makes a page. */
   lentOf(tabId: string): boolean {
     return this.held.get(tabId)?.lent ?? false
   }
 
-  /** Whether parking the page now would lose something (#1127): a field typed into and
-   *  not sent, as the page says when asked, or a load still on its way - a form being
-   *  sent among them. False for a tab with no page running. Never makes a page. */
   async losing(tabId: string): Promise<boolean> {
     const page = this.held.get(tabId)
     if (!page?.live) return false
@@ -605,31 +321,14 @@ class Pages {
     return page.edited || page.loading
   }
 
-  /** What the tab is pointing at, for the session and for the bar. */
   addressOf(tabId: string): string | null {
     return this.held.get(tabId)?.url ?? null
   }
 
-  /** Whether words half typed into the tab's address field wait for it (#381), which a
-   *  new tab left alone keeps it for (#1040). Asked without making the tab's state. */
   typedInto(tabId: string): boolean {
     return (this.held.get(tabId)?.halfTyped ?? null) !== null
   }
 
-  /** Puts the page where the pane says, opening it if it is not there, and lets it be
-   *  seen unless something of the app's is over it.
-   *
-   *  One call for the whole of "this tab is showing, and this is its rectangle",
-   *  because that is one fact: the pane says it on every resize and on every scroll,
-   *  and a page that had to be opened, then placed, then shown would flash where the
-   *  last one was.
-   *
-   *  **What is over the hole decides how the page is placed and never whether there is
-   *  one.** It used to decide both - a covered pane asked for no page at all - and that
-   *  is what "browser tabs take an eternity to load" was: every way of opening a
-   *  website except clicking its row goes through a layer, the pane is measured while
-   *  that layer is still playing its way out, and the one moment the page was ever
-   *  asked for was spent on a hit test. See `look` in WebTab.svelte. */
   async show(
     tabId: string,
     url: string,
@@ -657,8 +356,6 @@ class Pages {
       return
     }
 
-    // A page already on its way. Where the pane is now is where it will be put when
-    // it arrives; see `place`.
     if (page.opening) {
       page.wanted = { pane, visible, covering: !visible, over }
       return
@@ -667,10 +364,6 @@ class Pages {
     await this.build(tabId, page, pane, visible, over)
   }
 
-  /** An agent's page handed to a tab just made for it, without loading it again
-   *  (docs/agent-native.md 6.7). The page counts as on its way until `handing` answers,
-   *  so the pane's first look is kept rather than answered with a second page; one the
-   *  crate could not hand over (parked) is built the ordinary way. */
   async adopt(tabId: string, handing: () => Promise<void>): Promise<void> {
     const page = this.of(tabId)
     if (!isDesktop) {
@@ -700,13 +393,6 @@ class Pages {
     else await this.build(tabId, page, wanted.pane, wanted.visible, wanted.over)
   }
 
-  /** The webview for a tab, and then whatever happened while it was being built.
-   *
-   *  The crate builds a page on the window's own thread and answers when the platform
-   *  has handed it one, which is long enough for the pane to have moved, for the tab
-   *  to have been switched away from, or for the tab to have been closed. None of
-   *  those used to be possible - the command was answered inline, which is what froze
-   *  the window - so all three are answered here now. */
   async build(
     tabId: string,
     page: Page,
@@ -716,34 +402,18 @@ class Pages {
   ): Promise<void> {
     page.opening = true
 
-    // Out of sight from the frame it arrives in, where something of the app's is over
-    // the hole: a native webview draws above every pixel of HTML in the window, so a
-    // page built under a menu would be a page in front of it. Said here rather than
-    // after the build because the build is what takes the time, and the pane is free to
-    // say something else while it happens; the tail below applies whichever came last.
     if (!visible) page.wanted = { pane, visible, covering: true, over }
 
-    // Where this tab was left, if it is the page being opened: a parked tab comes back
-    // at the place it was parked at, and a note opened again tomorrow comes back at the
-    // place the reading got to. The crate restores it inside the page as it loads,
-    // which is the only moment it can be done without a jump; see web_tabs.rs.
-    // Only when it is this page's place: a tab that followed a link on the way in is a
-    // tab whose place belongs to the page it came from.
     const kept = placeOf(page.path)
     const here = kept?.url === page.url ? kept : null
     const place = here ? { x: here.x, y: here.y } : null
     const trail = here?.trail ?? []
 
     page.pane = pane
-    // The address this build is for. A new tab's first build has none and is refused,
-    // and an address typed while that refusal is on its way is a page to build next.
     const tried = page.url
-    // And the web data it is for: a note turned Separate or back while this page is on its
-    // way has it moved once it arrives, below.
     const forOwn = page.own
 
     try {
-      // The note's own store, or the shared one; see web-data.svelte.ts.
       const store = page.inPrivate ? null : await (await stores()).store(forOwn)
       const said = await invoke<boolean | 'under' | undefined>('web_open', {
         tab: tabId,
@@ -752,24 +422,15 @@ class Pages {
         revived: { place, trail, at: kept?.at ?? Math.max(0, trail.length - 1) },
         profile: { store, private: page.inPrivate },
       })
-      // Said with the page as well as with every placement, because the first page of a
-      // window is built before anything has been placed, and a layer over it then would
-      // be answered as though the engine could not cut.
       heard(page, said)
       page.live = true
       page.openable = true
       page.frozen = false
       page.rebuilding = false
       page.store = store
-      // A webview the crate has just built is on screen at the rectangle it was built
-      // at: nothing has to place it to make that true, and the first thing drawn over
-      // the page would otherwise photograph nothing. See `shoot`.
       page.shown = true
       void this.bound()
     } catch (error) {
-      // The store's browser did not answer, and the crate did not build on it rather than
-      // stop the app to wait: the page is asked for again in a moment, where the tab still
-      // wants one. Nothing about the tab changes meanwhile.
       if (error === NOT_ANSWERING) {
         setTimeout(() => {
           const asking = this.held.get(tabId) === page && !page.live && !page.opening
@@ -778,10 +439,6 @@ class Pages {
         }, ASK_AGAIN)
         return
       }
-      // No webview to be had here. Reported by the pane rather than by a message:
-      // it shows the card, which offers the page in the reader's own browser.
-      // The label is cleared first: the crate refuses a second page under a label that
-      // has one, and a page nothing places any more is drawn over the whole app.
       await invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
       if (page.rebuilding) {
         page.rebuilding = false
@@ -793,42 +450,26 @@ class Pages {
 
     const wanted = page.wanted
     page.wanted = null
-    // Its process died while it was on its way, which `ended` could only note.
     if (page.live && page.crashed) {
       await this.ended(tabId)
       return
     }
     if (!page.live) {
-      // Sent somewhere while the last address was being refused: built there now, rather
-      // than left on a card nothing would ask again. A new tab typed into the moment it
-      // opened was that card.
       const moved = page.url !== tried && page.openable && this.held.get(tabId) === page
       if (moved && wanted) await this.build(tabId, page, wanted.pane, wanted.visible, wanted.over)
       return
     }
 
-    // The tab was closed while its page was being built. Nothing is left to place it,
-    // and a page nothing places is a browser running behind the window.
     if (this.held.get(tabId) !== page) {
       page.live = false
       await invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
       return
     }
 
-    // Its note was turned Separate or back while it was on its way, which `rehouse` could
-    // not move a page that was not there yet for. Not waited for: a move builds a page.
     if (page.own !== forOwn && !page.inPrivate) void this.rehouse(tabId, page.own)
 
     if (!wanted) return
     if (wanted.visible) await this.place(tabId, wanted.pane, true, false, wanted.over)
-    // Something of the app's is over the hole. Where the engine cuts, the layer is cut
-    // out of the page as it would be out of a page that had been there all along. It
-    // used to be hidden outright here, and the pane had nothing to say again - its box
-    // was the box it had said - so a page that arrived under the update notice, or under
-    // the card of the tab just pressed, was an empty pane until the layer went (Emil,
-    // 2026-10-13: "completely black until you click it away"). Where it cannot, the page
-    // is out of sight, still the tab in front so nothing counts down for it, and nothing
-    // is photographed: a page built this moment has nothing on it worth standing in.
     else if (wanted.covering)
       await this.place(
         tabId,
@@ -837,21 +478,9 @@ class Pages {
         page.layering === 'under' || (page.layering === 'cut' && wanted.over.cut !== null),
         wanted.over,
       )
-    // Out of sight, and counting down to being frozen: the countdown that should have
-    // started when the tab was switched away from found no page to start it on.
     else this.hide(tabId, wanted.pane)
   }
 
-  /** Where the page sits, and whether it is on screen at all.
-   *
-   *  A page is hidden for two quite different reasons and closed for neither. The tab
-   *  is not the one showing, which is `hide`; or something of the app's is over it,
-   *  which is `covering` - and that one asks for a picture of the page as it goes, so
-   *  what the pane holds under the menu is the page rather than nothing.
-   *
-   *  **`live` gates showing a page and never hiding one.** It is only the window's
-   *  belief, and a page wrongly believed gone was left drawn over the whole app; see
-   *  docs/web-tabs.md. Hiding a page that has gone costs one refused call. */
   async place(
     tabId: string,
     pane: Rect,
@@ -859,15 +488,10 @@ class Pages {
     covering = false,
     over: Over = NOTHING,
   ): Promise<void> {
-    // The glasses' plugin places no page, and leaves all of this out of its package.
     if (__EVEN_PLUGIN__) return
     const page = this.held.get(tabId)
     if (!isDesktop || !page) return
 
-    // The page is still being built. Where it goes, and whether it is seen at all, is
-    // what the pane says now rather than what it said when the page was asked for: a
-    // tab switched away from while its page was on its way must not have the page
-    // arrive over the tab that took its place.
     if (page.opening) {
       page.wanted = { pane, visible, covering, over }
       return
@@ -875,8 +499,6 @@ class Pages {
 
     if (!page.live && visible) return
 
-    // Drawn under the app: a layer over the page is drawn over it, so a page covered is a
-    // page still shown, with the layer's shape - or all of it - taken out of its input.
     if (page.layering === 'under' && page.live) {
       const shown = visible || covering
       const cut = !shown ? null : covering ? (over.cut ?? WHOLE) : over.cut
@@ -891,19 +513,11 @@ class Pages {
       return
     }
 
-    // Something of the app's is over the page, and the crate can cut it out of the page:
-    // the page stays on screen round it. See `cover`.
     if (covering && page.layering === 'cut' && page.live && over.cut) {
       await this.cover(tabId, page, pane, over)
       return
     }
 
-    // Something is over the page, so it goes now, in the frame the layer is drawn in
-    // (#1124), and its picture is asked for on the way: the engine is handed the frame it
-    // has before it is told to hide it, and the picture lands under the layer. It used to
-    // wait for the picture first, up to `SHOT_WAITS`, with the page drawn over the menu or
-    // the sheet all that time. Most of the time the press that opened the layer has
-    // already asked for one; see `pressed` in WebTab.svelte.
     if (covering) void this.shoot(tabId)
 
     await this.put(tabId, page, {
@@ -915,25 +529,8 @@ class Pages {
     })
   }
 
-  /** The page with the app's layers cut out of it, on screen round them; see
-   *  src-tauri/src/web_cut.rs.
-   *
-   *  A menu, a card or a popover is cut out in its own shape and nothing else of the page
-   *  changes. A sheet over its scrim covers all of the page, and the page's still picture
-   *  is what the scrim dims.
-   *
-   *  **Told at once, in the frame the layer is first drawn in** (#1124). The cut used to
-   *  wait two frames for the layer to be drawn, and a sheet over a page with no picture
-   *  yet cut only the sheet out until the picture was in - a third of a second and more
-   *  of the page drawn over the scrim, over the tab overview, over everything a sheet
-   *  dims. On Windows that was the page in front of the overview for the whole of its way
-   *  out. Now the page is cut in the same breath as the layer arrives, and the picture is
-   *  asked for alongside: it lands under the scrim a moment later, and until then the
-   *  scrim is over the pane's own ground, which is never the page in front of it. */
   private async cover(tabId: string, page: Page, pane: Rect, over: Over): Promise<void> {
     if (__EVEN_PLUGIN__ || !over.cut) return
-    // A picture for the hole to hold under the layer: where none is there yet behind a
-    // layer that fades in, and a fresh one under a scrim, which stands for all of it.
     if (page.shot === null || over.cut.all) void this.shoot(tabId)
     await this.put(tabId, page, {
       pane,
@@ -944,15 +541,12 @@ class Pages {
     })
   }
 
-  /** One placement, behind whatever is in the air; see latest.ts. A refused one is the
-   *  next show's to find out about, so it is not thrown at the caller. */
   private async put(tabId: string, page: Page, one: Placement): Promise<void> {
     if (__EVEN_PLUGIN__) return
     page.placing ??= new Latest((sent) => this.send(tabId, page, sent))
     await page.placing.put(one).catch(() => undefined)
   }
 
-  /** The placement itself, and what the page is now that it has landed. */
   private async send(tabId: string, page: Page, one: Placement): Promise<void> {
     if (__EVEN_PLUGIN__) return
     page.sent = one
@@ -968,26 +562,17 @@ class Pages {
       })
       heard(page, said)
     } catch (error) {
-      // The page's browser did not answer, and the crate left the page where it was rather
-      // than stop the app to wait for it. The page is alive: it is placed again in a
-      // moment, unless the pane has said something newer since.
       if (error === NOT_ANSWERING) {
         setTimeout(() => {
           if (this.held.get(tabId) === page && page.sent === one) void this.put(tabId, page, one)
         }, ASK_AGAIN)
         throw error
       }
-      // The webview has gone, and the next show opens it again. Only a refused show may
-      // conclude that: a page wrongly thought gone is built again, where one wrongly
-      // given up on is left over the app.
       if (one.visible && !one.away) page.live = false
       throw error
     }
     if (one.away) return
 
-    // A picture is of one size of page. Shown at another - a divider moved, the window
-    // was resized - it would leave a band of empty pane under the next menu,
-    // so it goes and the next cover waits for a fresh one.
     if (
       one.visible &&
       (page.pane?.width !== one.pane.width || page.pane.height !== one.pane.height)
@@ -998,13 +583,10 @@ class Pages {
     page.shown = one.visible
   }
 
-  /** Whether the app's layers can be drawn over a live page, cut out of it or over it,
-   *  rather than the page hidden for them; see `layering`. */
   get cuts(): boolean {
     return layering !== 'hide'
   }
 
-  /** Whether pages are drawn under the app's HTML; see `layering`. */
   get under(): boolean {
     return layering === 'under'
   }
@@ -1052,12 +634,6 @@ class Pages {
     if (!this.still) page.heldAt = null
   }
 
-  /** The tab is no longer the one showing.
-   *
-   *  The page goes out of sight and **goes on running**: a web note is a browser tab,
-   *  so coming back to it is not a load. What starts here is the countdown to being
-   *  frozen, and a note of where the reading had got to, which is what makes reopening
-   *  the note tomorrow land on this page at this place. */
   hide(tabId: string, pane: Rect) {
     const page = this.held.get(tabId)
     if (!page) return
@@ -1068,19 +644,9 @@ class Pages {
     else void this.place(tabId, pane, false)
     if (!isDesktop) return
 
-    // Counted once the page has said whether something is typed into it.
     void this.look(tabId).then(() => this.rest(tabId))
   }
 
-  /** A page being photographed as its tab is left, out of the way until the picture has
-   *  landed and hidden then.
-   *
-   *  The press that switches tabs is also the press that photographs the page (see
-   *  `pressed` in WebTab.svelte), and WebView2 hidden halfway through a photograph keeps
-   *  the page from ever freezing: `TrySuspend` answers that it did and the page runs on,
-   *  measured with scripts/no-reload-probe.py. Hidden after the picture it freezes. So
-   *  the page leaves the pane at once - placed far outside the window, which draws none
-   *  of it - and is hidden the moment the picture is in, unless it was shown again. */
   async aside(tabId: string, page: Page, pane: Rect): Promise<void> {
     const away = { ...pane, x: -OUT_OF_THE_WAY, y: -OUT_OF_THE_WAY }
     await this.put(tabId, page, { pane: away, visible: true, frame: null, cut: null, away: true })
@@ -1092,7 +658,6 @@ class Pages {
     ;(await sleeping()).rest(this, tabId)
   }
 
-  /** Freezes a page out of sight, whatever it is doing: Hidden tabs' Pause. */
   freeze(tabId: string) {
     const page = this.held.get(tabId)
     if (!isDesktop || !page?.live || page.frozen || page.onScreen || page.lent) return
@@ -1100,7 +665,6 @@ class Pages {
     void sleeping().then((one) => one.lull(this, tabId, page, true))
   }
 
-  /** Lets a frozen page run again, and counts its time out of sight from now. */
   async thaw(tabId: string): Promise<void> {
     const page = this.held.get(tabId)
     if (!page?.frozen) return page?.lulling
@@ -1112,20 +676,11 @@ class Pages {
     return thawed
   }
 
-  /** Memory saver changed: every page is judged by it again. */
   retime() {
     for (const [id, page] of this.held) if (!page.onScreen) void this.rest(id)
     void this.bound()
   }
 
-  /** Parks the page and keeps the tab: the webview goes and everything about where the
-   *  tab is stays, so looking at it again opens the page it was on at the place it was
-   *  at. Memory saver's, a tab's menu's (#1127), and a login's that went to another
-   *  computer.
-   *
-   *  `hidden` is a park of a page out of sight, which a page shown again while it was
-   *  being asked where it is outlives: a tab chosen as it was being parked keeps its page
-   *  rather than showing none. A move to another store parks the page on screen. */
   async park(tabId: string, hidden = false): Promise<void> {
     const page = this.held.get(tabId)
     if (!page?.live) return
@@ -1137,16 +692,9 @@ class Pages {
     page.loading = false
     page.playing = false
     clearTimeout(page.resting)
-    // The trail stays in the crate, so the arrows over a page that has just been
-    // revived are right from the first frame.
     await invoke('web_close', { tab: tabId, keep: true }).catch(() => undefined)
   }
 
-  /** The page's process has died. What is left is an engine's empty white box, so it goes
-   *  the way a parked page goes, with the trail kept, and the pane offers the page again.
-   *  Not asked where it was: nothing is there to answer, and the last place written stays.
-   *  A page already on its way out says this too, and is nobody's news. One on its way in
-   *  is noted, and goes the same way as it arrives; see `build`. */
   async ended(tabId: string): Promise<void> {
     const page = this.held.get(tabId)
     if (page?.opening) page.crashed = true
@@ -1164,23 +712,14 @@ class Pages {
     await invoke('web_close', { tab: tabId, keep: true }).catch(() => undefined)
   }
 
-  /** The page did not arrive, and the engine drew nothing for it: on a Mac a failed load
-   *  left the tab empty under a spinner that never stopped - black in a dark theme
-   *  (#1093). It goes the way a page whose process died goes, at the address it was going
-   *  to, and the pane says why and offers it again; Reload builds it there. */
   async failed(tabId: string, not: NotArrived): Promise<void> {
     const page = this.held.get(tabId)
     if (!page?.live) return
-    // Where it was going, where the engine said; the tab's own address where it did not -
-    // never nothing, which is a new tab's (#1093).
     if (isWebAddress(not.url)) page.url = not.url
     page.failure = { ...not, url: page.url ?? not.url }
     await this.ended(tabId)
   }
 
-  /** Reads where the page has got to and writes it down for this device, and whether
-   *  something is typed into it. Quiet about failure: a page that has gone is a page
-   *  whose place was already written when it went. */
   private async look(tabId: string): Promise<void> {
     const page = this.held.get(tabId)
     const said = await this.whereIs(tabId)
@@ -1197,13 +736,6 @@ class Pages {
     })
   }
 
-  /** Where a live page is, and the trail behind it, or null for a page that has gone,
-   *  is frozen or will not say.
-   *
-   *  Raced against a clock, because the answer comes out of the page itself: a page
-   *  busy in a loop of its own answers nothing, and parking is what takes the memory
-   *  back - so a page that will not say where it is is parked without its place rather
-   *  than left running for ever. A frozen one cannot have moved since it said. */
   private async whereIs(tabId: string): Promise<Looked | null> {
     const page = this.held.get(tabId)
     if (!isDesktop || !page?.live || page.frozen) return null
@@ -1214,34 +746,19 @@ class Pages {
         new Promise<null>((go) => setTimeout(() => go(null), LOOK_WAITS)),
       ])
     } catch {
-      // Nothing to read. The next look answers, or the tab has closed.
       return null
     }
   }
 
-  /** The address one step back or on would land on, for the arrow pressed with the
-   *  middle button or a modifier, which opens it in a tab of its own the way Chrome
-   *  does; see `workspace.stepAside`. Null where there is no step to take. */
   async stepAddress(tabId: string, by: -1 | 1): Promise<string | null> {
     const said = await this.whereIs(tabId)
     return said?.trail[said.at + by] ?? null
   }
 
-  /** A still picture of the page as it is now, kept on the page's state for the hole to
-   *  hold while the webview is out of sight.
-   *
-   *  Taken on the press that is about to open something over the page - which is what
-   *  the pane calls this on, and the last moment at which the page is both current and
-   *  visible - and once more, with a cap on the wait, for an overlay that arrived
-   *  without a press. One picture per few hundred milliseconds, so a menu and the sheet
-   *  it opens share one. */
   async shoot(tabId: string): Promise<void> {
     const page = this.held.get(tabId)
     if (!isDesktop || !page?.live || !page.shown) return
     if (page.shot && Date.now() - page.shotAt < SHOT_KEEPS) return
-    // One at a time. The picture already being taken is this page as it is now, and a
-    // second engine capture alongside it is a fifth of a second of the window's own
-    // thread spent twice for one answer; see `shooting`.
     if (page.shooting) return page.shooting
 
     const taking = this.photograph(page, tabId)
@@ -1253,9 +770,6 @@ class Pages {
     }
   }
 
-  /** A swipe begun over the page, which stands as its picture under the arrow: one older
-   *  than `SHOT_KEEPS` put aside for a fresh one, which a page scrolled since would jump
-   *  back from. See back-swipe/SwipeArrow.svelte. */
   freshen(tabId: string): void {
     const page = this.held.get(tabId)
     if (!page || (page.shot && Date.now() - page.shotAt < SHOT_KEEPS)) return
@@ -1263,13 +777,10 @@ class Pages {
     void this.shoot(tabId)
   }
 
-  /** The picture itself, raced against a clock. Split from `shoot` so that the one
-   *  going on at the moment is something a second caller can wait for. */
   private async photograph(page: Page, tabId: string): Promise<void> {
     const { url, pane, shotAt } = page
     const same = (now: Rect | null) => now?.width === pane?.width && now?.height === pane?.height
     const asked = invoke<string | null>('web_shot', { tab: tabId })
-    // Kept if late, unless the page moved on: else an empty pane under the menu.
     void asked.then(
       (said) => {
         if (said && page.shotAt === shotAt && page.url === url && same(page.pane)) {
@@ -1280,10 +791,6 @@ class Pages {
       () => undefined,
     )
     try {
-      // Raced against a clock, because the overlay is behind the page until this
-      // answers: the engine photographs itself in a handful of milliseconds or it is
-      // not going to, and a menu waiting on a picture is worse than a menu over an
-      // empty pane.
       await Promise.race([asked, new Promise<null>((go) => setTimeout(() => go(null), SHOT_WAITS))])
     } catch {
       // A platform with no way to photograph a webview. The hole keeps its own
@@ -1291,42 +798,29 @@ class Pages {
     }
   }
 
-  /** This tab has just been looked at: nothing is counting down for it, and it is the
-   *  newest thing in the window. */
   private wake(page: Page) {
     clearTimeout(page.resting)
     page.resting = undefined
     page.looked = Date.now()
   }
 
-  /** Memory saver's cap, kept as one more page is built; see sleeping.ts. */
   private async bound(): Promise<void> {
     ;(await sleeping()).bound(this)
   }
 
-  /** Somewhere else, in this tab. */
   async go(tabId: string, url: string, upgrade: Upgrade | null = null): Promise<void> {
     const page = this.of(tabId)
     if (!isWebAddress(url)) return
 
-    // Only the visit the bar chose https for may fall back from it; any other is the
-    // address it says. See upgrade.ts.
     page.upgrade = upgrade
     page.url = url
     page.openable = true
     page.crashed = false
     page.failure = null
-    // The title, the mark and the picture all belonged to the page that was there.
-    // Until the new one says what it is called the bar shows the site, which is true
-    // of both.
     page.title = ''
     page.icon = null
     page.shot = null
 
-    // A browser build shows the page in whatever the pane already holds: a frame is
-    // told where to go by its `src`, which the component watches `url` for, and a
-    // card that has not been pressed stays a card. The frame's document is the site's
-    // and says nothing back, so going there is the whole of the visit it can see.
     if (!isDesktop) {
       void this.saw(tabId, url, '')
       return
@@ -1342,14 +836,8 @@ class Pages {
     }
   }
 
-  /** Back, forward, or the same page again. The same keys a note tab steps its own
-   *  trail with; see `workspace.goBack`. `by` is how many steps back or forward, for a
-   *  row of the history under the arrows. */
   async step(tabId: string, step: Step, by = 1): Promise<void> {
     const page = this.held.get(tabId)
-    // Reload over a page that crashed is the page again: the pane builds it once the hole
-    // is back, on a label that has to be free, and the first close may not have got there.
-    // See `ended`.
     if (page?.crashed && (step === 'reload' || step === 'fresh')) {
       await invoke('web_close', { tab: tabId, keep: true }).catch(() => undefined)
       page.rebuilding = true
@@ -1358,16 +846,11 @@ class Pages {
       return
     }
     if (!isDesktop || !page?.live) return
-    // Back, forward or reload is a visit of its own; see `go`.
     page.upgrade = null
 
-    // Nor is a refused step; see `place`.
     await invoke('web_step', { tab: tabId, step, by }).catch(() => undefined)
   }
 
-  /** Where this tab has been and where along it it is, for the history under a held
-   *  arrow; see `trailSteps` in menu.ts. Nothing for a page that is not running, whose
-   *  arrows are not lit either. */
   async trail(tabId: string): Promise<{ urls: string[]; at: number }> {
     const none = { urls: [], at: 0 }
     if (!isDesktop || !this.held.get(tabId)?.live) return none
@@ -1377,23 +860,16 @@ class Pages {
       .catch(() => none)
   }
 
-  /** How large the page is drawn: a browser's own zoom, on the tab it was asked for.
-   *  See `ZOOMS` in menu.ts for the ladder the rows step along. */
   async zoom(tabId: string, factor: number): Promise<void> {
     if (!isDesktop || !this.held.get(tabId)?.live) return
     await invoke('web_zoom', { tab: tabId, factor }).catch(() => undefined)
   }
 
-  /** The engine's own print dialog for the page - the one the reader knows from their
-   *  browser, rather than anything of Orden's, which is about a note. */
   async print(tabId: string): Promise<void> {
     if (!isDesktop || !this.held.get(tabId)?.live) return
     await invoke('web_print', { tab: tabId }).catch(() => undefined)
   }
 
-  /** The page, read for a clip: where it is, what it is called, and the HTML of the
-   *  part worth keeping. Null where there is nothing to read, which is a browser
-   *  build - a frame's document belongs to the site and not to us. */
   async read(
     tabId: string,
     selection: boolean,
@@ -1407,39 +883,20 @@ class Pages {
         selection,
       })
     } catch {
-      // A page that cannot be read is a clip of what the app knows about it: the
-      // address and the title, which is what a browser build always writes. See
-      // clip.ts.
       return null
     }
   }
 
-  /** A page the tab has been to, in the history of the tab's space; see visited.ts. */
   private async saw(tabId: string, url: string, title: string): Promise<void> {
-    // A private tab writes no history; see private.ts.
     if (this.held.get(tabId)?.inPrivate) return
     const [visited, webData] = await Promise.all([history(), stores()])
     visited.saw(webData.history(), tabId, url, title)
   }
 
-  /** The web notes kept apart among the tabs; see clearing.ts. */
   apart(): string[] {
     return [...this.held.values()].map((page) => page.own).filter((one) => one !== null)
   }
 
-  /** The web note keeps its own web data now, or no longer does: a running page is
-   *  parked and built again in that store, where it was, and `said` shown for a moment,
-   *  since the site may have signed out. A webview's store is fixed when it is built.
-   *
-   *  **One move at a time, each finding the page where the last one left it** (#409).
-   *  Turning a note Separate asks twice - the menu that wrote the file (own-data.ts), and
-   *  the pane that read the file change (WebTab.svelte) - and the two used to run side
-   *  by side. The second parked a page the first was already parking: it asked the
-   *  closing page where it had got to, waited out `LOOK_WAITS` for an answer that never
-   *  came, and then closed the page the first had just built in the new store - which
-   *  the first went on to call live. The tab believed in a page that had gone, spinning
-   *  on the load it had begun, until somebody closed it by hand. Now the second finds the
-   *  page already in the store it asks for, and does nothing. */
   rehouse(tabId: string, own: string | null, said: string | null = null): Promise<void> {
     const page = this.held.get(tabId)
     if (!page) return Promise.resolve()
@@ -1449,10 +906,6 @@ class Pages {
     return moving
   }
 
-  /** One of `rehouse`'s moves. The page counts as on its way for the whole of it, from
-   *  the park to the build: the pane looks again the moment the old page is no longer
-   *  live, and that look says where the new page goes rather than asking for a second
-   *  one beside it; see `show`. */
   private async moved(tabId: string, page: Page, said: string | null): Promise<void> {
     if (this.held.get(tabId) !== page || page.inPrivate) return
     const store = await (await stores()).store(page.own)
@@ -1474,14 +927,10 @@ class Pages {
     page.notice = said
   }
 
-  /** Whether a private tab's page is still open: the private session lasts as long. */
   private anyPrivate(): boolean {
     return [...this.held.values()].some((page) => page.inPrivate)
   }
 
-  /** The tab has closed. The webview goes with it, and so does the trail: a tab
-   *  somebody closed is not a tab anybody is coming back to. Where the reading got to
-   *  stays on the device, because the note can be opened again. */
   forget(tabId: string) {
     const page = this.held.get(tabId)
     if (!page) return
@@ -1502,16 +951,6 @@ class Pages {
     void this.closing(tabId)
   }
 
-  /** Where the reading got to, written down before the webview goes.
-   *
-   *  A tab switched away from has already had its place written by `hide`, and a
-   *  parked one by `park` - but the tab a reader closes is usually the one in front of
-   *  them, and that road wrote nothing: the page was taken down with the place still
-   *  only inside it, so opening the note again landed at the top of the site with no
-   *  trail behind the arrows. The place is read first and the page closed after,
-   *  because `look` asks the page itself and a webview that has gone answers nothing.
-   *  The tab is out of the map before the close either way, so nothing draws a page
-   *  that is on its way out. */
   private async closing(tabId: string): Promise<void> {
     await this.look(tabId)
 
@@ -1521,12 +960,6 @@ class Pages {
     await invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
   }
 
-  /** Every page whose tab has gone, closed.
-   *
-   *  For the one way tabs disappear without being closed one at a time: an
-   *  arrangement put in place over the top of them - a saved layout, a session, a
-   *  window becoming a phone. A webview nothing is left to place is a browser
-   *  running behind an app with nowhere to draw it. */
   keepOnly(ids: readonly string[]) {
     const kept = new Set(ids)
     for (const tabId of [...this.held.keys()]) {
@@ -1534,15 +967,8 @@ class Pages {
     }
   }
 
-  /** The tabs opened because a page asked for a window, and the tab that asked for
-   *  each: the ones a download may take away again, and where the reader goes back to
-   *  when it does. */
   private readonly asked = new Map<string, string>()
 
-  /** The tab a page asked for, beside the page that asked and in its pane: behind it
-   *  or in front, as the press that asked said. */
-  /** The window a page was blocked from opening, opened as a tab in front of it: the
-   *  bar's Open. */
   openBlocked(tabId: string): void {
     const page = this.held.get(tabId)
     const url = page?.blocked
@@ -1557,15 +983,6 @@ class Pages {
     if (opened !== null) this.asked.set(opened, said.tab)
   }
 
-  /** A download has started in a tab.
-   *
-   *  A tab a page opened for a link that turned out to be a file is an empty tab with
-   *  nothing to show, and a browser takes it away the moment the file starts -
-   *  `target="_blank"` on a download link is common, and Moodle's own resource links
-   *  are one. So the reader is put back on the page that asked and the empty tab
-   *  closes; its webview stays out of sight until the file is in, because that webview
-   *  is what is fetching it (see `linger` in src-tauri/src/downloads.rs). Only that
-   *  kind of tab: one the reader opened, or one that has shown a page, stays. */
   private async downloaded(tabId: string): Promise<void> {
     const page = this.held.get(tabId)
     const opener = this.asked.get(tabId)
@@ -1575,90 +992,47 @@ class Pages {
     await closeItself(tabId, opener)
   }
 
-  /** Five listeners for the window, started by the first web tab that needs them:
-   *  where every page in the window has got to, what every site in it has asked for,
-   *  which of them has asked for a window of its own, the browser's own keys pressed
-   *  in one, and what they are downloading. */
   private listen(): Promise<void> {
-    // A window to listen on, because that is what the runtime's own `listen` needs and
-    // this is now started with the first page in the window rather than with the first
-    // placement: a test that says it is a desktop without putting a document under it
-    // reaches here, where it never used to. The same guard tauri.ts puts on the line
-    // that decides which platform this is, and for the same reason. The glasses'
-    // plugin is never a desktop, and says so first so its package leaves all of it out.
     if (__EVEN_PLUGIN__ || !isDesktop || typeof window === 'undefined') return Promise.resolve()
     this.listening ??= (async () => {
       const { hearHere: listen } = await import('../own-window')
 
-      // A site has asked for the camera, the microphone, where you are, notifications or
-      // the clipboard to read. The request is held open in the engine until this is
-      // answered, which is what lets the reader be asked at the moment they pressed
-      // something rather than in a menu beforehand; see permissions.svelte.ts.
       const { grants, readAsked } = await pagePermissions()
       await listen('nib://web-ask', (event) => {
-        // Whether the page that asked is private is the page's to say: the answer is
-        // then the private session's, and kept nowhere (#787).
         const said = readAsked(event.payload)
         const page = said ? this.held.get(said.tab) : undefined
         if (said && page) grants.heard({ ...said, privately: page.inPrivate })
       })
 
-      // A page has opened `alert`, `confirm` or `prompt`, or asks before it is left. Its
-      // script waits for the answer, which the card over the pane gives; see
-      // dialogs.svelte.ts and web_dialogs.rs.
       const { dialogs, readDialog } = await pageDialogs()
       await listen('nib://web-dialog', (event) => {
         const said = readDialog(event.payload)
         if (said && this.held.has(said.tab)) dialogs.heard(said)
       })
 
-      // A page has asked for a window of its own - `target="_blank"`, `window.open`, a
-      // Ctrl+click or the middle button on a link. Every browser answers that with a tab,
-      // so this one does: beside the page that asked, in its pane, and in front unless
-      // the reader asked for it behind. The crate refuses the engine its second webview
-      // and hands the address over; see `on_new_window` in web_tabs.rs.
-      //
-      // Opened through an import rather than a name at the top, because the workspace
-      // is what holds this store: asking for it by name here would be a circle.
       await listen('nib://web-open', (event) => {
         const said = readOpening(event.payload)
         if (said && this.held.has(said.tab)) void this.openAsked(said)
       })
-      // A person pressed in a tab's page, or the page took the keyboard: its tab and pane
-      // are the ones being worked in, as a press in the app's own page makes its pane's
-      // (#1080; `page_chosen` in web_tabs.rs). A press into a page never reaches this page.
       await listen('nib://web-chosen', (event) => {
         const tab = readChosen(event.payload)
         if (tab !== null && this.held.has(tab)) void chooseTab(tab)
       })
-      // A window the page asked for on its own, blocked the way Chrome blocks it: said on
-      // the tab's bar, which offers it (#1074; `popup_blocked` in web_tabs.rs).
       await listen('nib://web-blocked', (event) => {
         const said = readOpening(event.payload)
         const page = said && this.held.get(said.tab)
         if (said && page) page.blocked = said.url
       })
-      // A key the browser keeps for itself, pressed while a page had the keyboard: played
-      // on the window as the key it was, so it means what it means everywhere else. See
-      // keys.ts and web_keys.rs. Fetched with the first page rather than carried, like
-      // the listening itself.
       const { readPressed, replay } = await import('./keys')
       await listen('nib://web-key', (event) => {
         const one = readPressed(event.payload)
         if (one) replay(one)
       })
-      // A file one of the pages is saving has started, moved or ended; the crate saves it
-      // and this only keeps the list the bar draws. See downloads.svelte.ts. Fetched here
-      // rather than imported at the top, so the first paint does not carry it: nothing is
-      // downloaded before a page is open.
       const { downloads, readDownload } = await import('./downloads.svelte')
       await listen('nib://web-download', (event) => {
         const said = readDownload(event.payload)
         if (said && downloads.heard(said)) void this.downloaded(said.tab)
       })
-      // A page's mark has changed, which the engine says for as long as the page is open,
-      // and it is the device's mark for that page from now on; see `favicons`. A page
-      // with none says nothing about the one it had: a page on its way says none too.
       await listen('nib://web-icon', (event) => {
         const said = readIconed(event.payload)
         const page = said ? this.held.get(said.tab) : undefined
@@ -1666,16 +1040,11 @@ class Pages {
 
         page.marked(said.icon)
         const at = page.at ?? page.url
-        // Never a private page's: it writes nothing down; see private.ts.
         if (said.icon && !page.inPrivate) {
           void import('./favicons').then((one) => one.saw(at, said.icon))
-          // And the account's, for the icon picker's Web icons on every device (#1054).
           const title = page.title
           void import('./site-icons.svelte').then((one) => one.siteIcons.saw(at, title, said.icon))
         }
-        // And under where the tab's file points, which its row asks once the tab has
-        // closed: a site that moved on within itself - another Slack channel - would leave
-        // the row the mark it had there. See `faviconFor` in chosen-icon.ts.
         const path = page.path
         if (said.icon && path) {
           void Promise.all([import('./favicons'), import('../chosen-icon')]).then(([one, files]) =>
@@ -1683,7 +1052,6 @@ class Pages {
           )
         }
       })
-      // Sound, full screen, zoom and find, and a page that did not arrive; see heard.ts.
       await (
         await import('./heard')
       ).listening(
@@ -1707,8 +1075,6 @@ class Pages {
           page.blocked = null
         }
         page.loading = said.loading
-        // A load beginning is a page arriving, and the mark it settles on is the one the
-        // file keeps.
         if (said.loading !== was) page.loaded(said.loading)
         page.back = said.back
         page.forward = said.forward
@@ -1718,26 +1084,13 @@ class Pages {
           page.title = said.title
           page.titled = true
         }
-        // Where the tab has got to is a page it has been to, for the address field to
-        // offer; see visited.ts.
         if (said.url) void this.saw(said.tab, said.url, said.title)
 
-        // The page has arrived, so the picture of the last one is no longer a picture of
-        // this page - and the new one is taken now rather than when something is waiting
-        // for it. Nothing is drawn from either while the webview is on top.
-        //
-        // On the moment it stops loading rather than on every report that it is not
-        // loading. The engine says where a page is again whenever its title arrives, and
-        // with the mark that was three reports in the eight milliseconds after a page lands,
-        // and each of them threw the picture away and asked for another: three engine
-        // captures at once, a fifth of a second each, on the window's own thread in the
-        // breath the reader is watching the page appear.
         if (was && !said.loading) {
           page.landed ??= page.url
           page.shot = null
           void this.shoot(said.tab)
         }
-        // And what the page stands on, which glass's frame takes; see glass/chrome.svelte.ts.
         if ((was || moved) && !said.loading) landed(said.tab)
       })
     })()
@@ -1747,34 +1100,17 @@ class Pages {
 
 export const pages = new Pages()
 
-/** The marks pages have shown, kept for the next launch: the one favicon cache.
- *
- *  Emil, 2026-09-30: *"When I restart nib all the icons from previously opened websites
- *  are gone [...] But they could be cached."* Chrome's Favicons database, kept small: a
- *  page (its origin and path) maps to a picture stored once, and a page never seen
- *  borrows its origin's last mark - Chrome's `fallback_to_host`, Firefox's root icon -
- *  never the registrable site's, since mail and docs under one domain are two products.
- *  Shared by every space: it is only asked about an address a surface already shows,
- *  and no page can read it. The reading is here, synchronous, so a restored tab's first
- *  frame has its mark; the writing is fetched with the first mark; see favicons.ts. */
-
-/** Which picture each page and origin showed last, and when it was last wanted. */
 export const MARKS = 'nib:favicons'
-/** One picture, under its own id. */
 export const MARK = 'nib:favicon:'
 
-/** A picture the window draws as it stands, no larger than web_icons.rs sends one. */
 export function drawable(picture: string): boolean {
   return (
     picture.length <= 22 * 1024 && /^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/]+=*$/i.test(picture)
   )
 }
 
-/** A page's picture and when it was last shown or drawn. */
 export type Seen = [picture: string, used: number]
 
-/** The two keys an address is looked for under, the page first, or null for anything
- *  that is not a web page. */
 export function keysOf(url: string | null | undefined): [string, string] | null {
   if (!url) return null
 
@@ -1788,19 +1124,14 @@ export function keysOf(url: string | null | undefined): [string, string] | null 
   }
 }
 
-/** Not private, because favicons.ts writes what this reads. */
 class Favicons {
-  /** Moved on every change, so every mark drawn from here is drawn again. */
   changed = $state(0)
-  /** Each picture's length, and so which have a key of their own in storage. */
   readonly sizes = new Map<string, number>()
-  /** Pictures read or seen this run, and those seen and not yet written. */
   readonly pictures = new Map<string, string | null>()
   readonly unwritten = new Map<string, string>()
 
   private held: Map<string, Seen> | null = null
 
-  /** The index, read on the first ask. */
   index(): Map<string, Seen> {
     if (this.held) return this.held
 
@@ -1829,10 +1160,7 @@ class Favicons {
     return found
   }
 
-  /** The mark last seen at `url`, else at its origin, else null. Drawing one is a use,
-   *  written down once a day. */
   of(url: string | null | undefined): string | null {
-    // Read, so whatever asked is asked again when a page shows a new mark.
     const keys = this.changed >= 0 ? keysOf(url) : null
     if (!keys) return null
 
@@ -1854,9 +1182,6 @@ class Favicons {
 
 export const favicons = new Favicons()
 
-/** The one answer to which picture a site wears: the live page's own, else the last one
- *  this device saw at the address, else the one a file wrote down, else null for the
- *  globe. Every surface that draws a site's mark asks this and nothing else. */
 export function siteMark(
   live: string | null | undefined,
   url: string | null | undefined,

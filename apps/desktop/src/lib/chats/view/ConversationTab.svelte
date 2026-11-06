@@ -1,6 +1,4 @@
 <script lang="ts">
-  /** A conversation of another chat service in a tab (#321): its messages, oldest at the
-   *  top, the files they carry, and a reply. Ctrl+Enter sends. */
   import type { ProviderMessage } from '@orden/chats/provider'
   import { onDestroy } from 'svelte'
   import { downloadStarted } from '../../downloads/started'

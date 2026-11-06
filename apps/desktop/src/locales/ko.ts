@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': '준비 완료',
   Personalize: '맞춤 설정',
   Clean: '깔끔하게',
@@ -10,12 +9,10 @@ export const ko: Dictionary = {
   'Do you write code?': '코드를 작성하시나요?',
   Yes: '예',
   No: '아니요',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': '다른 앱에서: {key}',
   'From other apps: set in your system settings': '다른 앱에서: 시스템 설정에서 지정',
   'From other apps: bind {command} in your system settings':
     '다른 앱에서: 시스템 설정에서 {command} 지정',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: '에센셜',
   'Add to Essentials': '에센셜에 추가',
   'Remove from Essentials': '에센셜에서 제거',
@@ -23,20 +20,16 @@ export const ko: Dictionary = {
   'Add blocks to Essentials': '블록들을 에센셜에 추가',
   'Add view to Essentials': '보기를 에센셜에 추가',
   'Open tabs and Essentials': '탭과 에센셜 열기',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor가 Orden으로 바뀌었습니다',
   'Notes from nibeditor.com': 'nibeditor.com의 노트',
   'Nothing there': '아무것도 없습니다',
-  // AI: the three permission modes
   'Full permissions': '전체 권한',
   'Auto mode': '자동 모드',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     '전체 권한: 로그인, 결제, 보내기, 삭제까지 아무것도 묻거나 넘기지 않습니다',
-  // Import: Zen's tabs
   'Import from Zen': 'Zen에서 가져오기',
   'Containers stay in Zen': '컨테이너는 Zen에 남습니다',
   'Zen’s tabs could not be read.': 'Zen의 탭을 읽을 수 없습니다.',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': '컨테이너는 Firefox에 남습니다',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser}은(는) {engine}(으)로 검색합니다: 여기서도 쓰려면 설정에서 선택하세요',
@@ -60,38 +53,29 @@ export const ko: Dictionary = {
   'Reading List': '읽기 목록',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS는 Safari의 탭과 북마크를 전체 디스크 접근 권한 뒤에 둡니다. 그곳에서 Orden을 켠 다음 다시 시도하세요.',
-  // Settings: note types
   'Page note': '페이지 노트',
   'Web note': '웹 노트',
   'Private tab': '비공개 탭',
   'Note types': '노트 유형',
-  // Tasks: Upcoming's weeks
   'Previous week': '이전 주',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': '위에 프로젝트 추가',
   'Add project below': '아래에 프로젝트 추가',
   'Projects folder': '프로젝트 폴더',
-  // Tasks: a repeating task skipped or done for good
   Skip: '건너뛰기',
   'Complete forever': '영구 완료',
-  // Tasks: comments
   Comments: '댓글',
-  // Tasks: filters
   Filters: '필터',
   'Add filter': '필터 추가',
   'Edit filter': '필터 편집',
-  // Tasks: a project's sections
   'Add section': '섹션 추가',
   '{name} (copy)': '{name} (사본)',
   'Its tasks are deleted with it.': '안의 작업도 함께 삭제됩니다.',
-  // Tasks: keys, selection and the undo toast
   Completed: '완료됨',
   'Remove date': '날짜 제거',
   'Next task': '다음 작업',
   'Previous task': '이전 작업',
   'Add task at the top': '맨 위에 할 일 추가',
   '{count} selected': '{count}개 선택됨',
-  // Tasks: the Display menu
   Display: '보기',
   'Completed tasks': '완료된 작업',
   Smart: '스마트',
@@ -103,20 +87,16 @@ export const ko: Dictionary = {
   'Reset all': '모두 초기화',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     '레이아웃은 작업을 목록, 보드 또는 캘린더로 보여 줍니다. 그룹화는 작업을 그룹으로 나누며, 이 그룹이 보드의 열이 됩니다. 정렬은 각 그룹의 순서를 정합니다. 필터는 필요 없는 것을 숨깁니다. 모두 이 보기에 저장됩니다.',
-  // Tasks: several lines pasted into quick add
   'One task': '작업 하나',
   'One per line': '줄마다 하나',
   'Add with AI': 'AI로 추가',
-  // Tasks: the projects in the panel
   Favorites: '즐겨찾기',
   'Add project': '프로젝트 추가',
   'Add sub-project': '하위 프로젝트 추가',
-  // Tasks: the task view
   'Sub-tasks': '하위 작업',
   'Add sub-task': '하위 작업 추가',
   'New label': '새 라벨',
   'No deadline': '마감 없음',
-  // Tasks: the row's menu and the scheduler
   Reschedule: '일정 변경',
   'Later this week': '이번 주 후반',
   'This weekend': '이번 주말',
@@ -133,22 +113,18 @@ export const ko: Dictionary = {
   Reopen: '다시 열기',
   Schedule: '일정 잡기',
   'Open in note': '노트에서 열기',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': '다른 앱',
   'Import from Obsidian': 'Obsidian에서 가져오기',
   'Import from Notion': 'Notion에서 가져오기',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: '힌트',
   'Silent mode': '조용한 모드',
   'See how your notes connect.': '노트가 어떻게 연결되는지 보세요.',
   'Press {key} to find anything, notes and commands alike.':
     '{key}를 누르면 노트와 명령을 모두 찾을 수 있어요.',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': '작성 중 마크다운 표시',
   'Open notes in source mode': '노트를 소스 모드로 열기',
   Pointer: '포인터',
   'Pointing hand on buttons': '버튼 위에서 손가락 포인터',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': '할 일 추가',
   'Apple Shortcuts': 'Apple 단축어',
   Tomorrow: '내일',
@@ -174,7 +150,6 @@ export const ko: Dictionary = {
   'Every week': '매주',
   'Every month': '매월',
   'Every year': '매년',
-  // Files and notes
   Save: '저장',
   'New note': '새 노트',
   'Random note': '무작위 노트',
@@ -202,8 +177,6 @@ export const ko: Dictionary = {
   'Release to add a page': '놓아서 페이지 추가',
   'Page {number}': '{number}쪽',
   'The paper could not be read': '용지를 읽을 수 없습니다',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: '레터',
   'Long page': '긴 페이지',
@@ -246,7 +219,6 @@ export const ko: Dictionary = {
   'Choose a picture': '사진 선택',
   'Remove picture': '사진 제거',
   'That picture could not be read.': '그 사진을 읽을 수 없습니다.',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: '채도',
   Tint: '색조',
   'Tint colour': '색조 색상',
@@ -374,7 +346,6 @@ export const ko: Dictionary = {
   'Merge into…': '병합할 곳…',
   'Split at caret': '커서에서 분할',
   'Extract selection': '선택 부분 추출',
-  // Panels and navigation
   Bookmarks: '북마크',
   'New group': '새 그룹',
   'Remove group': '그룹 제거',
@@ -428,8 +399,6 @@ export const ko: Dictionary = {
   'Sort by name': '이름순 정렬',
   'Sort by modified': '수정일순 정렬',
   'Sort by created': '생성일순 정렬',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': '파일 정렬 순서',
   'Name, A to Z': '이름, 오름차순',
   'Name, Z to A': '이름, 내림차순',
@@ -440,7 +409,6 @@ export const ko: Dictionary = {
   Manual: '직접 정렬',
   'Show hidden files': '숨긴 파일 보이기',
   'Hide hidden files': '숨긴 파일 숨기기',
-  // Writing
   Bold: '굵게',
   Italic: '기울임',
   Strikethrough: '취소선',
@@ -525,11 +493,9 @@ export const ko: Dictionary = {
   'Horizontal rule': '구분선',
   'Page break': '페이지 나누기',
   'Tidy up this note': '이 노트 정리',
-  // PDFs
   'Copy a link': '링크 복사',
   'That PDF could not be opened': '그 PDF를 열 수 없었습니다',
   'That file could not be read': '그 파일을 읽을 수 없었습니다',
-  // Modes and view
   Reading: '읽기',
   'Leave reading': '읽기 끝내기',
   Present: '발표',
@@ -569,7 +535,6 @@ export const ko: Dictionary = {
   'Zoom in': '확대',
   'Zoom out': '축소',
   'Actual size': '실제 크기',
-  // Appearance
   Accent: '강조색',
   'Tidy up': '정리',
   'Blur the app behind the tab overview': '탭 개요 뒤의 앱 흐리게 하기',
@@ -696,7 +661,6 @@ export const ko: Dictionary = {
   'Switch theme': '테마 바꾸기',
   Style: '스타일',
   Mode: '모드',
-  // The window's own edges; see appearance.rs
   Window: '창',
   'Orden’s own': 'Orden의 것',
   'The system’s': '시스템의 것',
@@ -707,7 +671,6 @@ export const ko: Dictionary = {
   'Edit custom CSS': '사용자 CSS 편집',
   'Edit snippets': '스니펫 편집',
   'Reload themes and custom CSS': '테마와 사용자 CSS 다시 불러오기',
-  // The theme store, and the sample note its cards show
   Themes: '테마',
   Browse: '둘러보기',
   'Search themes': '테마 검색',
@@ -784,7 +747,6 @@ export const ko: Dictionary = {
   'Code only': '코드만',
   Everywhere: '모든 곳',
   Attachments: '첨부',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': '페이지 노트',
   'New pages': '새 페이지',
   'Assets folder of the space': '공간의 자료 폴더',
@@ -836,7 +798,6 @@ export const ko: Dictionary = {
   'Machine-translated. Corrections welcome.': '기계 번역입니다. 수정을 환영합니다.',
   'The glasses show English.': '안경에는 영어로 표시됩니다.',
   'Match the app': '앱에 맞춤',
-  // Settings
   Settings: '설정',
   Account: '계정',
   Publish: '게시',
@@ -859,7 +820,6 @@ export const ko: Dictionary = {
   '{count} spaces sync to your account.': '공간 {count}개가 계정과 동기화됩니다.',
   Update: '업데이트',
   'Live at': '게시 주소',
-  // Publishing
   'Publish {name}': '{name} 게시',
   'What to publish': '게시할 대상',
   'The whole space': '공간 전체',
@@ -878,7 +838,6 @@ export const ko: Dictionary = {
   Value: '값',
   available: '사용 가능',
   'checking…': '확인 중…',
-  // LLM
   'Connect an LLM to your notes': '노트에 LLM 연결',
   'Sign in first - the connector reaches the notes in your account.':
     '먼저 로그인하세요 - 커넥터는 계정의 노트에 접근합니다.',
@@ -929,7 +888,6 @@ export const ko: Dictionary = {
     'URL 대신 JSON 블록을 받는 클라이언트용.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     '로그인할 수 없는 클라이언트에는 토큰을 줄 수 있습니다. 한 번만 표시됩니다.',
-  // Export
   'Plain text': '일반 텍스트',
   'Markdown with the pictures': '그림이 있는 마크다운',
   'HTML without styles': '스타일 없는 HTML',
@@ -948,13 +906,11 @@ export const ko: Dictionary = {
   Margin: '여백',
   Header: '머리글',
   Footer: '바닥글',
-  // History
   'Version history': '버전 기록',
   'Copy link to this note': '이 노트의 링크 복사',
   'that link could not be followed': '그 링크를 따라갈 수 없었습니다',
   'No earlier versions yet.': '아직 이전 버전이 없습니다.',
   'Restore this version': '이 버전 복원',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': '거기에 이미 노트가 있습니다',
   'enter a valid email address': '올바른 이메일 주소를 입력하세요',
   'give the space a name': '공간에 이름을 지정하세요',
@@ -986,7 +942,6 @@ export const ko: Dictionary = {
   'could not publish': '게시할 수 없습니다',
   'could not create a token': '토큰을 만들 수 없습니다',
   'that did not work': '되지 않았습니다',
-  // Settings on a phone, display names, one blog address
   Back: '뒤로',
   'Display name': '표시 이름',
   'Your name': '이름',
@@ -1006,7 +961,6 @@ export const ko: Dictionary = {
   Spelling: '철자',
   Checking: '검사',
   Dictionary: '사전',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': '레코드가 나타나기를 기다리는 중.',
   'Certificate issued.': '인증서가 발급되었습니다.',
   'Cloudflare could not set this domain up.': 'Cloudflare가 이 도메인을 설정할 수 없었습니다.',
@@ -1017,7 +971,6 @@ export const ko: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare가 이 도메인을 차단했습니다',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     '도메인 루트에서 공급자가 CNAME을 허용하지 않으면 ALIAS나 ANAME 레코드, 또는 CNAME 평탄화를 쓰세요.',
-  // Shortcuts
   Shortcuts: '바로 가기',
   'Search shortcuts': '바로 가기 검색',
   'Second key': '두 번째 키',
@@ -1181,7 +1134,6 @@ export const ko: Dictionary = {
   Delegated: '맡김',
   'Code theme: {name}': '코드 테마: {name}',
   'Delete a layout': '레이아웃 삭제',
-  // Keyboards and modal editing
   Default: '기본',
   'Vim keys': 'Vim 키',
   'Follow the link': '링크 따라가기',
@@ -1193,11 +1145,9 @@ export const ko: Dictionary = {
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
   REPLACE: 'REPLACE',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': '글래스 {count}쪽 중 {page}쪽',
   'Reaching the glasses': '글래스에 연결 중',
   'The glasses are not keeping up': '글래스가 따라오지 못합니다',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: '추가',
   Select: '선택',
   Pan: '이동',
@@ -1227,7 +1177,6 @@ export const ko: Dictionary = {
   Calligraphy: '캘리그래피',
   'Width {number}': '굵기 {number}',
   'Finger draws': '손가락으로 그리기',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: '굵기',
   Opacity: '불투명도',
   Colour: '색',
@@ -1271,23 +1220,19 @@ export const ko: Dictionary = {
   'Export as PNG': 'PNG로 내보내기',
   'Export as SVG': 'SVG로 내보내기',
   'Export as PDF': 'PDF로 내보내기',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'PDF 가져오기',
   'Choose how to add the pages to the canvas.': '페이지를 캔버스에 어떻게 추가할지 고르세요.',
   'Single page': '한 페이지',
   'All pages': '모든 페이지',
   'Choose a page': '페이지 고르기',
-  // The canvas: what its own keys are called
   'Delete what is picked': '선택한 것 삭제',
   'Nudge left': '왼쪽으로 조금',
   'Nudge right': '오른쪽으로 조금',
   'Nudge up': '위로 조금',
   'Nudge down': '아래로 조금',
-  // Writing in a note on several devices at once
   'Also open elsewhere': '다른 곳에서도 열려 있음',
   Shared: '공유됨',
   Browser: '브라우저',
-  // Sharing a space with other people
   Share: '공유',
   'Share {name}': '{name} 공유',
   'Share this space': '이 공간 공유',
@@ -1331,14 +1276,12 @@ export const ko: Dictionary = {
   'Shared with you': '나와 공유됨',
   'That link does not open anything': '그 링크는 아무것도 열지 않습니다',
   'Ask for another one.': '다른 것을 요청하세요.',
-  // Somebody a share link let in, who has no account
   Guest: '손님',
   'Ask to join': '참여 요청',
   Asking: '요청 중',
   'Waiting for {who}': '{who}를 기다리는 중',
   '{who} did not let you in': '{who}가 들여보내지 않았습니다',
   'What the others in this space see.': '이 공간의 다른 사람에게 보이는 것.',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: '업데이트',
   'Release channel': '릴리스 채널',
   Stable: '안정',
@@ -1348,8 +1291,6 @@ export const ko: Dictionary = {
   'Web version': '웹 버전',
   'Stable is the released web app; Unstable is the newest build and can break.':
     '안정은 출시된 웹 앱이고, 불안정은 가장 새로운 빌드이며 깨질 수 있습니다.',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: '가져오기',
   'Convert syntax': '문법 변환',
   'In this note': '이 노트에서',
@@ -1436,8 +1377,6 @@ export const ko: Dictionary = {
   'Undo the import': '가져오기 취소',
   'Choose an export': '내보내기 파일 고르기',
   Under: '아래',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: '동기화',
   'When the same note was written twice': '같은 노트를 두 번 썼을 때',
   'On two devices': '두 기기에서',
@@ -1494,7 +1433,6 @@ export const ko: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     '이 기기의 노트는 남고, 계정과 동기화된 사본만 사라집니다.',
   'Also gone for everyone in {spaces}.': '{spaces}의 모든 사람에게서도 사라집니다.',
-  // Said and not shown: what a reader is told about a surface
   'The note': '노트',
   '{space} panel': '{space} 패널',
   'Panel width': '패널 너비',
@@ -1505,7 +1443,6 @@ export const ko: Dictionary = {
   'What is selected': '선택한 것',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     '캔버스: 카드 {cards}개, 링크 {links}개, 그림 {drawings}개',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: '공급자',
   'Make default': '기본으로 설정',
@@ -1532,7 +1469,6 @@ export const ko: Dictionary = {
   'The model did not answer.': '모델이 답하지 않았습니다.',
   'The connection closed before the answer was finished.':
     '답변이 끝나기 전에 연결이 끊어졌습니다.',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     '{plan} 요금제가 {time}까지 한도에 도달했습니다.',
   'Your {plan} plan is at its limit for now.': '{plan} 요금제가 지금은 한도에 도달했습니다.',
@@ -1560,7 +1496,6 @@ export const ko: Dictionary = {
   Shorter: '더 짧게',
   Longer: '더 길게',
   'Fix grammar': '문법 고치기',
-  // The AI sidebar's commands
   'A cited report': '인용된 보고서',
   'A helper in the background': '백그라운드의 도우미',
   'A side question': '곁가지 질문',
@@ -1662,7 +1597,6 @@ export const ko: Dictionary = {
   'Markdown, shortest name': '마크다운, 가장 짧은 이름',
   'Markdown, relative path': '마크다운, 상대 경로',
   'Markdown, path in the space': '마크다운, 공간 안의 경로',
-  // Publishing part one.
   'The folders you choose become public.': '고른 폴더가 공개됩니다.',
   'Anyone with the address can read what is published, drafts included.':
     '주소를 아는 누구나 초안까지 포함해 게시된 것을 읽을 수 있습니다.',
@@ -1688,11 +1622,9 @@ export const ko: Dictionary = {
   'Remove the password': '암호 제거',
   'Scan this with your authenticator app, then type its code.':
     '인증 앱으로 이것을 스캔한 뒤 그 코드를 입력하세요.',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: '사진',
   Dictate: '음성 입력',
   'Add to {name}': '{name}에 추가',
-  // Web tabs
   Reload: '다시 불러오기',
   'Hard reload': '강력 새로고침',
   'Open in the browser': '브라우저에서 열기',
@@ -1707,7 +1639,6 @@ export const ko: Dictionary = {
   'Playing audio': '오디오 재생 중',
   Muted: '음소거됨',
   'Developer tools': '개발자 도구',
-  // Recording, meetings and what a model wrote
   Record: '녹음',
   Recording: '녹음',
   'Stop recording': '녹음 정지',
@@ -1728,7 +1659,6 @@ export const ko: Dictionary = {
     '그 녹음은 한 번에 글로 옮기기에 너무 깁니다.',
   'That is as much as one recording may hold.': '한 녹음에 담을 수 있는 최대입니다.',
   'Nothing could be heard in that recording.': '그 녹음에서 아무 소리도 들리지 않았습니다.',
-  // Publishing part two.
   Spreadsheet: '스프레드시트',
   'The app’s own': '앱 자체의 것',
   'publish.css and publish.js in this space dress the site.':
@@ -1744,14 +1674,12 @@ export const ko: Dictionary = {
   'Save as CSV': 'CSV로 저장',
   'Kept for {days}': '{days} 동안 보관',
   Full: '가득 참',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': '메일을 보낼 수 없었습니다 - 다시 하세요',
   'start again - that took too long': '다시 시작하세요 - 너무 오래 걸렸습니다',
   'sign in to do that': '그것을 하려면 로그인하세요',
   'that is not something a token can do': '토큰으로는 할 수 없는 일입니다',
   'something went wrong here - try again': '여기서 문제가 생겼습니다 - 다시 하세요',
   'this service cannot keep a secret safely': '이 서비스는 비밀을 안전하게 보관할 수 없습니다',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only': '이미지, PDF, 사이트 자체의 css 또는 js만',
   'that file is too big': '그 파일은 너무 큽니다',
   'that is more settings than an account holds': '계정이 담을 수 있는 설정보다 많습니다',
@@ -1762,13 +1690,11 @@ export const ko: Dictionary = {
     '공간이 그래프에 대해 보관하는 것보다 많습니다',
   'that is more folder icons than a space holds': '공간이 담을 수 있는 폴더 아이콘보다 많습니다',
   'that is more than a site keeps': '사이트가 보관하는 양을 넘습니다',
-  // Sharing a space, and being let into one.
   'nobody by that address': '그 주소에는 아무도 없습니다',
   'nobody by that name': '그 이름의 사람이 없습니다',
   'nobody is waiting by that name': '그 이름으로 기다리는 사람이 없습니다',
   'this space is yours': '이 공간은 내 것입니다',
   'that link is busy, try again in a minute': '그 링크가 사용 중입니다. 잠시 뒤 다시 하세요',
-  // Versions, the bin, and a room two people write in.
   'no such version': '그런 버전이 없습니다',
   'this note was shared with you, not its folder': '이 노트만 공유되었고 그 폴더는 아닙니다',
   'nothing to restore': '복원할 것이 없습니다',
@@ -1776,7 +1702,6 @@ export const ko: Dictionary = {
   'nothing to delete': '삭제할 것이 없습니다',
   'this room is not answering - try again': '이 방이 응답하지 않습니다 - 다시 하세요',
   'rooms are not running here': '여기서는 방이 돌아가지 않습니다',
-  // The theme store, and asking a model something.
   'the theme store is not answering': '테마 스토어가 응답하지 않습니다',
   'that is not a theme': '테마가 아닙니다',
   'no such theme': '그런 테마가 없습니다',
@@ -1788,10 +1713,8 @@ export const ko: Dictionary = {
   'that is more than a spoken command': '음성 명령으로는 너무 깁니다',
   'that is a lot of listening - try again later': '듣기가 너무 많습니다 - 나중에 다시 하세요',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '텍스트 {percent}%',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: '모바일',
   'The bar sits over the keyboard on a phone.': '휴대폰에서는 막대가 키보드 위에 놓입니다.',
   'On the bar': '막대에',
@@ -1805,31 +1728,25 @@ export const ko: Dictionary = {
   'A pull past the top runs': '맨 위에서 더 당기면 실행',
   Nothing: '없음',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: '남기기',
 
-  // Which side of the window a panel sits on.
   'Move to the right': '오른쪽으로 옮기기',
   'Move to the left': '왼쪽으로 옮기기',
 
-  // How long the account keeps what a note said before.
   'History on the account': '계정의 기록',
   'Keep versions': '버전 보관',
   'A month': '한 달',
   'A year': '한 해',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     '지난 하루는 모두, 그다음은 시간마다 하나, 한 달 뒤에는 하루에 하나, 세 달 뒤에는 주마다 하나.',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     '이 노트는 룸에서 노트가 가질 수 있는 최대 크기입니다.',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': '새 탭',
   'Full screen': '전체화면',
   'Print…': '인쇄…',
   'Share…': '공유…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': '에서 다음 권한을 요청합니다',
   'Don’t allow': '허용 안함',
   Allow: '허용',
@@ -1845,7 +1762,6 @@ export const ko: Dictionary = {
   'Use your MIDI devices': 'MIDI 기기 사용',
   'Manage windows on all your displays': '모든 디스플레이의 창 관리',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': '사이트 정보',
   Downloads: '다운로드',
   'Downloading {name}': '{name} 다운로드 중',
@@ -1872,11 +1788,9 @@ export const ko: Dictionary = {
   'Turn into': '형식 바꾸기',
   Foldable: '접을 수 있음',
   'Starts folded': '접힌 채로 시작',
-  // Where a space keeps what websites store
   'Web data': '웹 데이터',
   Global: '전체',
   Site: '사이트',
-  // The Mac's menu bar
   'About {name}': '{name}에 관하여',
   Services: '서비스',
   'Hide {name}': '{name} 가리기',
@@ -1884,7 +1798,6 @@ export const ko: Dictionary = {
   'Show all': '모두 보기',
   'Quit {name}': '{name} 종료',
   'Bring all to front': '모두 앞으로 가져오기',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': '복사 실행 취소',
   'Devices with your AI vault': 'AI 보관함이 있는 기기',
   'This device': '이 기기',
@@ -1899,13 +1812,11 @@ export const ko: Dictionary = {
   'Select down': '아래로 선택',
   'Select up': '위로 선택',
   'Select or deselect': '선택 또는 선택 해제',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': '새 탭에서 열기',
   'Open to the side': '옆에 열기',
   'Open all': '모두 열기',
   'Show in the file list': '파일 목록에서 보기',
   'Collapse the file list': '파일 목록 접기',
-  // Lines, case and the selection a step at a time
   'Expand the selection': '선택 영역 확장',
   'Shrink the selection': '선택 영역 축소',
   'Insert a line above': '위에 줄 삽입',
@@ -1919,18 +1830,15 @@ export const ko: Dictionary = {
   'Duplicate the block': '블록 복제',
   'Move the block up': '블록을 위로 이동',
   'Move the block down': '블록을 아래로 이동',
-  // The editor's menu on a link and a picture
   'Copy link address': '링크 주소 복사',
   'Edit link': '링크 편집',
   'Remove link': '링크 제거',
   'Copy picture': '그림 복사',
   'Open picture': '그림 열기',
   'Delete picture': '그림 삭제',
-  // A file dropped into a note
   'Storing the file': '파일 저장 중',
   'That file is larger than a note can keep.': '이 파일은 노트에 담을 수 있는 크기보다 큽니다.',
   'That file could not be kept.': '이 파일을 보관할 수 없습니다.',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': '새 터미널',
   'Command Prompt': '명령 프롬프트',
   Terminal: '터미널',
@@ -1952,11 +1860,8 @@ export const ko: Dictionary = {
   'Saved nowhere, a session kept running is found again in Settings, {pane}.':
     '어디에도 저장되지 않았습니다. 계속 실행된 세션은 설정의 {pane}에서 다시 찾을 수 있습니다.',
   'Paste {count} lines?': '{count}줄을 붙여넣을까요?',
-  // Orden as the default browser
   'Default browser': '기본 브라우저',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name}의 편집 실행 취소',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: '보관',
   Unarchive: '보관 취소',
   Archived: '보관됨',
@@ -1966,7 +1871,6 @@ export const ko: Dictionary = {
   'Nothing archived is deleted': '보관한 항목은 삭제되지 않습니다',
   'Show them': '보기',
   '{count} archived items inside': '안에 보관된 항목 {count}개',
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': '왼쪽 사이드바',
   'Right sidebar': '오른쪽 사이드바',
   'Ask about this space': '이 공간에 대해 질문하기',
@@ -1977,7 +1881,6 @@ export const ko: Dictionary = {
   'Ask again': '다시 묻기',
   'Continue when the limit resets': '한도가 초기화되면 계속',
   'Continues at {time}': '{time}에 계속합니다',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': '무엇이든 물어보세요. @ 추가, / 더 보기',
   'What can I help with?': '무엇을 도와드릴까요?',
   'Add photos and files': '사진 및 파일 추가',
@@ -2045,13 +1948,10 @@ export const ko: Dictionary = {
   Closed: '닫음',
   Ran: '실행함',
   Changed: '바꿈',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': '이 {device}',
   '{name} is back: {device} was writing in it':
     '{name}이(가) 돌아왔습니다: {device}에서 쓰고 있었습니다',
   'Changes to {name} are not syncing': '{name}의 변경 사항이 동기화되지 않고 있습니다',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: '열기',
   Pressing: '누르기',
   Typing: '입력',
@@ -2066,18 +1966,14 @@ export const ko: Dictionary = {
   'Agent tabs closed': '에이전트 탭이 닫힘',
   'Orden is still running for your agents': '에이전트를 위해 Orden이 계속 실행 중입니다',
   '{client} wants to connect': '{client}이(가) 연결하려고 합니다',
-  // Web logins that travel, and the devices of an account
   'no such device': '그런 기기가 없습니다',
   'give the device a name': '기기 이름을 지정하세요',
   'that computer is no longer waiting': '그 컴퓨터는 더 이상 기다리지 않습니다',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': '그런 파일이 없습니다',
   'too many changes at once - try again in a minute':
     '한 번에 변경이 너무 많습니다 - 1분 뒤에 다시 하세요',
   'that is more than a space keeps about its tree':
     '스페이스가 트리에 대해 보관할 수 있는 양을 넘습니다',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': '이 컴퓨터의 에이전트',
   'Your account’s connector': '계정의 커넥터',
   'Orden asks you once, the first time it connects.': '처음 연결할 때 Orden이 한 번 묻습니다.',
@@ -2142,12 +2038,9 @@ export const ko: Dictionary = {
   'Pages a minute': '분당 페이지',
   'Browser memory limit': '브라우저 메모리 한도',
   '{count} calls': '호출 {count}회',
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': '빠른 질문',
   Scratchpad: 'Scratchpad',
   'Add to note': '노트에 추가',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: '확장 프로그램',
   'Add extension': '확장 프로그램 추가',
   'Manage extensions': '확장 프로그램 관리',
@@ -2166,7 +2059,6 @@ export const ko: Dictionary = {
   'Did not load': '로드되지 않음',
   Permissions: '권한',
   Options: '옵션',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: '원격',
   'Add host': '호스트 추가',
   Reconnect: '다시 연결',
@@ -2174,11 +2066,8 @@ export const ko: Dictionary = {
   'No group': '그룹 없음',
   'Not an address': '주소가 아닙니다',
   'Could not connect to {host}': '{host}에 연결할 수 없습니다',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': '이미지 보내는 중',
   'Could not send the image': '이미지를 보낼 수 없습니다',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': '및 그 뒤 {count}개',
   'Restore notes and conversation': '노트와 대화 복원',
   'Restore conversation': '대화 복원',
@@ -2188,8 +2077,6 @@ export const ko: Dictionary = {
   'Pages, terminals and moves are not undone': '페이지, 터미널, 이동은 되돌리지 않습니다',
   Rewind: '되감기',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': '검색엔진',
   History: '방문 기록',
   'Search history': '검색 기록',
@@ -2213,14 +2100,12 @@ export const ko: Dictionary = {
   'New private tab': '새 비공개 탭',
   'All spaces': '모든 공간',
   'the data could not be deleted': '데이터를 삭제할 수 없습니다',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: '다시 알림',
   Reminders: '리마인더',
   'Reminders ring while Orden is open': 'Orden이 열려 있는 동안 리마인더가 울립니다',
   Automatic: '자동',
   'Stay in the tray': '트레이에 상주',
   'Exact alarms': '정확한 알람',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': '할 일',
   'Plan my day': '오늘 계획 세우기',
   'Add a task': '할 일 추가',
@@ -2232,8 +2117,6 @@ export const ko: Dictionary = {
   'Done tasks too': '완료한 할 일도',
   'As a task': '할 일로',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: '할 일',
   Ascending: '오름차순',
   Descending: '내림차순',
@@ -2318,8 +2201,6 @@ export const ko: Dictionary = {
   'Without a value': '값 없음',
   'With a value': '값 있음',
   Unique: '고유',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': '템플릿으로 새 노트',
   Automations: '자동화',
   'Row added': '행 추가됨',
@@ -2348,7 +2229,6 @@ export const ko: Dictionary = {
   Form: '양식',
   Formula: '수식',
   'Blocked by {task}': '{task} 대기 중',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': '종료 전에 경고',
   'When something runs': '실행 중인 항목이 있을 때',
   'Quit {name}?': '{name}을(를) 종료할까요?',
@@ -2359,16 +2239,13 @@ export const ko: Dictionary = {
   'Quit anyway': '그래도 종료',
   'Restart anyway': '그래도 다시 시작',
   'Close anyway': '그래도 닫기',
-  // The online terminal
   'Online terminal': '온라인 터미널',
   'New online terminal': '새 온라인 터미널',
-  // One device at a time on an online terminal (issue 1055)
   'another device': '다른 기기',
   'Taken over by {device}': '{device}에서 가져갔습니다',
   'Open on {device} since {time}': '{time}부터 {device}에서 열려 있음',
   'Take over': '가져오기',
   'Take back': '되찾기',
-  // Applications, in developer mode (docs/apps.md)
   'New application': '새 애플리케이션',
   Application: '애플리케이션',
   'This application’s file is damaged': '이 애플리케이션의 파일이 손상되었습니다',
@@ -2478,8 +2355,6 @@ export const ko: Dictionary = {
   'Compare with original': '원본과 비교',
   'Conflict copies from other apps': '다른 앱의 충돌 사본',
   'Remove from sync': '동기화에서 제외',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: '프로필',
   Change: '변경',
   'Take photo': '사진 찍기',
@@ -2504,7 +2379,6 @@ export const ko: Dictionary = {
   'that picture could not be opened': '그 사진을 열 수 없습니다',
   'the camera could not be opened': '카메라를 열 수 없습니다',
   'that picture is too big': '그 사진이 너무 큽니다',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: '채팅',
   Reply: '답장',
   Replies: '답장',
@@ -2523,7 +2397,6 @@ export const ko: Dictionary = {
   'Also send to {chat}': '{chat}에도 보내기',
   'Skin tone': '피부색',
   'Deleted account': '삭제된 계정',
-  // Chats: notifications
   Mute: '알림 끄기',
   Unmute: '알림 켜기',
   'New message': '새 메시지',
@@ -2533,7 +2406,6 @@ export const ko: Dictionary = {
   Weekdays: '평일',
   Starts: '시작',
   Ends: '종료',
-  // Chats: everywhere
   'Read chats': '채팅 읽기',
   'Post in chats': '채팅에 쓰기',
   'Always in this chat': '이 채팅에서 항상',
@@ -2545,14 +2417,12 @@ export const ko: Dictionary = {
   'Search this chat': '이 채팅에서 검색',
   'Add as task': '할 일로 추가',
   'Save as note': '노트로 저장',
-  // Appearance: glass's own pairs of colours
   Dawn: '새벽',
   Lagoon: '라군',
   Lilac: '라일락',
   Peach: '피치',
   Sage: '세이지',
   Mist: '안개',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': '새 데이터베이스',
   'New page': '새 페이지',
   'Not started': '시작 전',
@@ -2578,7 +2448,6 @@ export const ko: Dictionary = {
   Large: '크게',
   Both: '둘 다',
   'Shown on cards': '카드에 표시',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     '이 브라우저의 AI 키를 보관함을 통해 다른 기기와 동기화합니다.',
   'Which of your AI accounts this feature asks.': '이 기능이 질문을 보내는 AI 계정입니다.',
@@ -2811,7 +2680,6 @@ export const ko: Dictionary = {
   'Some changes may not be noticed': '일부 변경 사항을 놓칠 수 있습니다',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     '시스템의 감시 폴더 수가 한도에 도달해, 다른 프로그램이 스페이스에서 만든 변경 사항을 Orden이 모두 알아차리지 못할 수 있습니다. fs.inotify.max_user_watches 값을 늘리면 해결됩니다.',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': '채팅 {name}을(를) {space}(으)로 옮길까요?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     '그러면 {space}의 모든 사람이 전체 기록을 읽을 수 있고, {from}의 사람들은 볼 수 없게 돼요.',
@@ -2851,7 +2719,6 @@ export const ko: Dictionary = {
   'One colour': '단색',
   'Web icons': '웹 아이콘',
   'Sites you visit will appear here': '방문한 사이트가 여기에 표시됩니다',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: '받아쓰기',
   'Dictate with': '받아쓰기 방법',
   'Where your voice goes to be turned into words.':
@@ -2882,11 +2749,9 @@ export const ko: Dictionary = {
   'Not on this device': '이 기기에 없음',
   'Not on this device. It opens once you are online again.':
     '이 기기에 없습니다. 다시 온라인 상태가 되면 열립니다.',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'IMAP 서버',
   'SMTP server': 'SMTP 서버',
   'User name': '사용자 이름',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: '긴급',
   Important: '중요',
   'If time': '시간 나면',

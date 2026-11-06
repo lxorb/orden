@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const hi: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'सब तैयार है',
   Personalize: 'अपने हिसाब से बनाएँ',
   Clean: 'साफ़',
@@ -10,12 +9,10 @@ export const hi: Dictionary = {
   'Do you write code?': 'क्या आप कोड लिखते हैं?',
   Yes: 'हाँ',
   No: 'नहीं',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'दूसरे ऐप्स से: {key}',
   'From other apps: set in your system settings': 'दूसरे ऐप्स से: सिस्टम सेटिंग्स में तय करें',
   'From other apps: bind {command} in your system settings':
     'दूसरे ऐप्स से: सिस्टम सेटिंग्स में {command} जोड़ें',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'ज़रूरी',
   'Add to Essentials': 'ज़रूरी में जोड़ें',
   'Remove from Essentials': 'ज़रूरी से हटाएँ',
@@ -23,20 +20,16 @@ export const hi: Dictionary = {
   'Add blocks to Essentials': 'ब्लॉक्स ज़रूरी में जोड़ें',
   'Add view to Essentials': 'दृश्य ज़रूरी में जोड़ें',
   'Open tabs and Essentials': 'टैब और ज़रूरी खोलना',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor अब Orden है',
   'Notes from nibeditor.com': 'nibeditor.com से नोट्स',
   'Nothing there': 'वहाँ कुछ नहीं है',
-  // AI: the three permission modes
   'Full permissions': 'पूरी अनुमतियाँ',
   'Auto mode': 'स्वचालित मोड',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'पूरी अनुमतियाँ: कुछ भी पूछा या आपको वापस नहीं सौंपा जाता, साइन इन, भुगतान, भेजना या हटाना भी नहीं',
-  // Import: Zen's tabs
   'Import from Zen': 'Zen से इंपोर्ट करें',
   'Containers stay in Zen': 'कंटेनर Zen में ही रहते हैं',
   'Zen’s tabs could not be read.': 'Zen के टैब पढ़े नहीं जा सके।',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'कंटेनर Firefox में ही रहते हैं',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} से खोजता है: यहाँ भी इससे खोजने के लिए इसे सेटिंग्स में चुनें',
@@ -63,38 +56,29 @@ export const hi: Dictionary = {
   'Reading List': 'रीडिंग लिस्ट',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS Safari के टैब और बुकमार्क फ़ुल डिस्क ऐक्सेस के पीछे रखता है। वहाँ Orden चालू करें, फिर दोबारा कोशिश करें।',
-  // Settings: note types
   'Page note': 'पृष्ठ नोट',
   'Web note': 'वेब नोट',
   'Private tab': 'निजी टैब',
   'Note types': 'नोट के प्रकार',
-  // Tasks: Upcoming's weeks
   'Previous week': 'पिछला सप्ताह',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'ऊपर प्रोजेक्ट जोड़ें',
   'Add project below': 'नीचे प्रोजेक्ट जोड़ें',
   'Projects folder': 'प्रोजेक्ट फ़ोल्डर',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'छोड़ें',
   'Complete forever': 'हमेशा के लिए पूरा करें',
-  // Tasks: comments
   Comments: 'टिप्पणियाँ',
-  // Tasks: filters
   Filters: 'फ़िल्टर',
   'Add filter': 'फ़िल्टर जोड़ें',
   'Edit filter': 'फ़िल्टर बदलें',
-  // Tasks: a project's sections
   'Add section': 'अनुभाग जोड़ें',
   '{name} (copy)': '{name} (प्रति)',
   'Its tasks are deleted with it.': 'इसके कार्य भी साथ में मिट जाएँगे।',
-  // Tasks: keys, selection and the undo toast
   Completed: 'पूरा हुआ',
   'Remove date': 'तारीख हटाएँ',
   'Next task': 'अगला कार्य',
   'Previous task': 'पिछला कार्य',
   'Add task at the top': 'ऊपर कार्य जोड़ें',
   '{count} selected': '{count} चुने गए',
-  // Tasks: the Display menu
   Display: 'प्रदर्शन',
   'Completed tasks': 'पूरे किए गए कार्य',
   Smart: 'स्मार्ट',
@@ -106,20 +90,16 @@ export const hi: Dictionary = {
   'Reset all': 'सब रीसेट करें',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'लेआउट कामों को सूची, बोर्ड या कैलेंडर के रूप में दिखाता है। समूहीकरण उन्हें समूहों में बाँटता है, जो बोर्ड के कॉलम हैं। क्रम हर समूह को क्रम में रखता है। फ़िल्टर वह छिपाते हैं जिसकी आपको ज़रूरत नहीं। यह सब इस व्यू के लिए रखा जाता है।',
-  // Tasks: several lines pasted into quick add
   'One task': 'एक कार्य',
   'One per line': 'हर पंक्ति पर एक',
   'Add with AI': 'AI से जोड़ें',
-  // Tasks: the projects in the panel
   Favorites: 'पसंदीदा',
   'Add project': 'प्रोजेक्ट जोड़ें',
   'Add sub-project': 'उप-प्रोजेक्ट जोड़ें',
-  // Tasks: the task view
   'Sub-tasks': 'उप-कार्य',
   'Add sub-task': 'उप-कार्य जोड़ें',
   'New label': 'नया लेबल',
   'No deadline': 'कोई समय-सीमा नहीं',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'फिर से तय करें',
   'Later this week': 'इस सप्ताह बाद में',
   'This weekend': 'इस सप्ताहांत',
@@ -136,22 +116,18 @@ export const hi: Dictionary = {
   Reopen: 'फिर से खोलें',
   Schedule: 'तय करें',
   'Open in note': 'नोट में खोलें',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'कोई और ऐप',
   'Import from Obsidian': 'Obsidian से इंपोर्ट करें',
   'Import from Notion': 'Notion से इंपोर्ट करें',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'संकेत',
   'Silent mode': 'मौन मोड',
   'See how your notes connect.': 'देखें कि आपके नोट कैसे जुड़े हैं।',
   'Press {key} to find anything, notes and commands alike.':
     'नोट और कमांड, कुछ भी खोजने के लिए {key} दबाएँ।',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'लिखते समय मार्कडाउन दिखाएँ',
   'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'पॉइंटर',
   'Pointing hand on buttons': 'बटनों पर इशारा करता हाथ',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'कार्य जोड़ें',
   'Apple Shortcuts': 'Apple शॉर्टकट',
   Tomorrow: 'कल',
@@ -177,7 +153,6 @@ export const hi: Dictionary = {
   'Every week': 'हर सप्ताह',
   'Every month': 'हर महीने',
   'Every year': 'हर साल',
-  // Files and notes
   Save: 'सहेजें',
   'New note': 'नया नोट',
   'Random note': 'यादृच्छिक नोट',
@@ -205,8 +180,6 @@ export const hi: Dictionary = {
   'Release to add a page': 'पृष्ठ जोड़ने के लिए छोड़ें',
   'Page {number}': 'पृष्ठ {number}',
   'The paper could not be read': 'कागज़ पढ़ा नहीं जा सका',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'लेटर',
   'Long page': 'लंबा पृष्ठ',
@@ -249,7 +222,6 @@ export const hi: Dictionary = {
   'Choose a picture': 'एक चित्र चुनें',
   'Remove picture': 'चित्र हटाएँ',
   'That picture could not be read.': 'वह चित्र पढ़ा नहीं जा सका।',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'संतृप्ति',
   Tint: 'टिंट',
   'Tint colour': 'टिंट का रंग',
@@ -377,7 +349,6 @@ export const hi: Dictionary = {
   'Merge into…': 'इसमें मिलाएँ…',
   'Split at caret': 'कर्सर पर बाँटें',
   'Extract selection': 'चयन निकालें',
-  // Panels and navigation
   Bookmarks: 'बुकमार्क',
   'New group': 'नया समूह',
   'Remove group': 'समूह निकालें',
@@ -431,8 +402,6 @@ export const hi: Dictionary = {
   'Sort by name': 'नाम से क्रम',
   'Sort by modified': 'बदलाव से क्रम',
   'Sort by created': 'बनने से क्रम',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'फ़ाइलों का क्रम',
   'Name, A to Z': 'नाम, अ से ह',
   'Name, Z to A': 'नाम, ह से अ',
@@ -443,7 +412,6 @@ export const hi: Dictionary = {
   Manual: 'हाथ से',
   'Show hidden files': 'छिपी फ़ाइलें दिखाएँ',
   'Hide hidden files': 'छिपी फ़ाइलें छिपाएँ',
-  // Writing
   Bold: 'बोल्ड',
   Italic: 'इटैलिक',
   Strikethrough: 'स्ट्राइकथ्रू',
@@ -528,11 +496,9 @@ export const hi: Dictionary = {
   'Horizontal rule': 'आड़ी रेखा',
   'Page break': 'पेज विराम',
   'Tidy up this note': 'यह नोट व्यवस्थित करें',
-  // PDFs
   'Copy a link': 'लिंक कॉपी करें',
   'That PDF could not be opened': 'वह PDF खुल नहीं सका',
   'That file could not be read': 'वह फ़ाइल पढ़ी नहीं जा सकी',
-  // Modes and view
   Reading: 'पठन',
   'Leave reading': 'पठन से बाहर',
   Present: 'प्रस्तुत करें',
@@ -572,7 +538,6 @@ export const hi: Dictionary = {
   'Zoom in': 'ज़ूम इन',
   'Zoom out': 'ज़ूम आउट',
   'Actual size': 'वास्तविक आकार',
-  // Appearance
   Accent: 'एक्सेंट',
   'Tidy up': 'व्यवस्थित करें',
   'Blur the app behind the tab overview': 'टैब अवलोकन के पीछे ऐप को धुंधला करें',
@@ -701,7 +666,6 @@ export const hi: Dictionary = {
   'Switch theme': 'थीम बदलें',
   Style: 'शैली',
   Mode: 'मोड',
-  // The window's own edges; see appearance.rs
   Window: 'विंडो',
   'Orden’s own': 'Orden का अपना',
   'The system’s': 'सिस्टम का',
@@ -712,7 +676,6 @@ export const hi: Dictionary = {
   'Edit custom CSS': 'कस्टम CSS संपादित करें',
   'Edit snippets': 'स्निपेट संपादित करें',
   'Reload themes and custom CSS': 'थीम और कस्टम CSS फिर लोड करें',
-  // The theme store, and the sample note its cards show
   Themes: 'थीम',
   Browse: 'ब्राउज़ करें',
   'Search themes': 'थीम खोजें',
@@ -792,7 +755,6 @@ export const hi: Dictionary = {
   'Code only': 'केवल कोड',
   Everywhere: 'हर जगह',
   Attachments: 'अटैचमेंट',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'पृष्ठ नोट',
   'New pages': 'नए पृष्ठ',
   'Assets folder of the space': 'स्पेस का एसेट फ़ोल्डर',
@@ -844,7 +806,6 @@ export const hi: Dictionary = {
   'Machine-translated. Corrections welcome.': 'मशीन से अनुवादित। सुधार का स्वागत है।',
   'The glasses show English.': 'चश्मा अंग्रेज़ी दिखाता है।',
   'Match the app': 'ऐप के अनुसार',
-  // Settings
   Settings: 'सेटिंग्स',
   Account: 'खाता',
   Publish: 'प्रकाशित करें',
@@ -870,7 +831,6 @@ export const hi: Dictionary = {
   },
   Update: 'अपडेट करें',
   'Live at': 'लाइव यहाँ',
-  // Publishing
   'Publish {name}': '{name} प्रकाशित करें',
   'What to publish': 'क्या प्रकाशित करें',
   'The whole space': 'पूरा स्पेस',
@@ -890,7 +850,6 @@ export const hi: Dictionary = {
   Value: 'मान',
   available: 'उपलब्ध',
   'checking…': 'जाँच रहे हैं…',
-  // LLM
   'Connect an LLM to your notes': 'अपने नोट से LLM जोड़ें',
   'Sign in first - the connector reaches the notes in your account.':
     'पहले साइन इन करें - कनेक्टर आपके खाते के नोट तक पहुँचता है।',
@@ -941,7 +900,6 @@ export const hi: Dictionary = {
     'उस क्लाइंट के लिए जो URL के बजाय JSON ब्लॉक लेता है।',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'जो क्लाइंट साइन इन नहीं कर सकता उसे टोकन दिया जा सकता है। यह केवल एक बार दिखता है।',
-  // Export
   'Plain text': 'सादा टेक्स्ट',
   'Markdown with the pictures': 'चित्रों के साथ Markdown',
   'HTML without styles': 'बिना स्टाइल HTML',
@@ -960,13 +918,11 @@ export const hi: Dictionary = {
   Margin: 'हाशिया',
   Header: 'हेडर',
   Footer: 'फ़ुटर',
-  // History
   'Version history': 'वर्शन इतिहास',
   'Copy link to this note': 'इस नोट का लिंक कॉपी करें',
   'that link could not be followed': 'उस लिंक पर नहीं जा सके',
   'No earlier versions yet.': 'अभी कोई पुराना वर्शन नहीं।',
   'Restore this version': 'यह वर्शन बहाल करें',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'वहाँ पहले से एक नोट है',
   'enter a valid email address': 'सही ईमेल पता लिखें',
   'give the space a name': 'स्पेस को नाम दें',
@@ -998,7 +954,6 @@ export const hi: Dictionary = {
   'could not publish': 'प्रकाशित नहीं हो सका',
   'could not create a token': 'टोकन नहीं बन सका',
   'that did not work': 'वह काम नहीं आया',
-  // Settings on a phone, display names, one blog address
   Back: 'पीछे',
   'Display name': 'प्रदर्शित नाम',
   'Your name': 'आपका नाम',
@@ -1018,7 +973,6 @@ export const hi: Dictionary = {
   Spelling: 'वर्तनी',
   Checking: 'जाँच',
   Dictionary: 'शब्दकोश',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'रिकॉर्ड दिखने का इंतज़ार है।',
   'Certificate issued.': 'प्रमाणपत्र जारी हुआ।',
   'Cloudflare could not set this domain up.': 'Cloudflare यह डोमेन सेट नहीं कर सका।',
@@ -1029,7 +983,6 @@ export const hi: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare ने यह डोमेन रोक दिया है',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'डोमेन की जड़ पर ALIAS या ANAME रिकॉर्ड लें, या CNAME फ़्लैटनिंग, अगर आपका प्रदाता वहाँ CNAME नहीं देता।',
-  // Shortcuts
   Shortcuts: 'शॉर्टकट',
   'Search shortcuts': 'शॉर्टकट खोजें',
   'Second key': 'दूसरी कुंजी',
@@ -1195,7 +1148,6 @@ export const hi: Dictionary = {
   Delegated: 'सौंपा',
   'Code theme: {name}': 'कोड थीम: {name}',
   'Delete a layout': 'लेआउट हटाएँ',
-  // Keyboards and modal editing
   Default: 'डिफ़ॉल्ट',
   'Vim keys': 'Vim कुंजियाँ',
   'Follow the link': 'लिंक पर जाएँ',
@@ -1207,11 +1159,9 @@ export const hi: Dictionary = {
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
   REPLACE: 'REPLACE',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'चश्मे पर {count} में पेज {page}',
   'Reaching the glasses': 'चश्मे तक पहुँच रहे हैं',
   'The glasses are not keeping up': 'चश्मा साथ नहीं दे पा रहा',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'जोड़ें',
   Select: 'चुनें',
   Pan: 'सरकाएँ',
@@ -1241,7 +1191,6 @@ export const hi: Dictionary = {
   Calligraphy: 'सुलेख',
   'Width {number}': 'चौड़ाई {number}',
   'Finger draws': 'उँगली से ड्रॉ',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'चौड़ाई',
   Opacity: 'ओपैसिटी',
   Colour: 'रंग',
@@ -1285,23 +1234,19 @@ export const hi: Dictionary = {
   'Export as PNG': 'PNG में एक्सपोर्ट करें',
   'Export as SVG': 'SVG में एक्सपोर्ट करें',
   'Export as PDF': 'PDF में एक्सपोर्ट करें',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'PDF इंपोर्ट करें',
   'Choose how to add the pages to the canvas.': 'पेज कैनवास में कैसे जोड़ें, चुनें।',
   'Single page': 'एक पेज',
   'All pages': 'सभी पेज',
   'Choose a page': 'पेज चुनें',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'चुना हुआ हटाएँ',
   'Nudge left': 'ज़रा बाएँ',
   'Nudge right': 'ज़रा दाएँ',
   'Nudge up': 'ज़रा ऊपर',
   'Nudge down': 'ज़रा नीचे',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'कहीं और भी खुला',
   Shared: 'साझा',
   Browser: 'ब्राउज़र',
-  // Sharing a space with other people
   Share: 'साझा करें',
   'Share {name}': '{name} साझा करें',
   'Share this space': 'यह स्पेस साझा करें',
@@ -1346,14 +1291,12 @@ export const hi: Dictionary = {
   'Shared with you': 'आपके साथ साझा',
   'That link does not open anything': 'वह लिंक कुछ नहीं खोलता',
   'Ask for another one.': 'दूसरा मँगाएँ।',
-  // Somebody a share link let in, who has no account
   Guest: 'अतिथि',
   'Ask to join': 'जुड़ने को कहें',
   Asking: 'पूछ रहे हैं',
   'Waiting for {who}': '{who} का इंतज़ार',
   '{who} did not let you in': '{who} ने अंदर नहीं आने दिया',
   'What the others in this space see.': 'इस स्पेस में बाकी लोग जो देखते हैं।',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'अपडेट',
   'Release channel': 'रिलीज़ चैनल',
   Stable: 'स्थिर',
@@ -1363,8 +1306,6 @@ export const hi: Dictionary = {
   'Web version': 'वेब संस्करण',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'स्थिर जारी हुआ वेब ऐप है, अस्थिर सबसे नया बिल्ड है और टूट सकता है।',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'इंपोर्ट',
   'Convert syntax': 'सिंटैक्स बदलें',
   'In this note': 'इस नोट में',
@@ -1458,8 +1399,6 @@ export const hi: Dictionary = {
   'Undo the import': 'इंपोर्ट पूर्ववत करें',
   'Choose an export': 'एक्सपोर्ट चुनें',
   Under: 'इसके नीचे',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'सिंक',
   'When the same note was written twice': 'जब एक ही नोट दो बार लिखा गया',
   'On two devices': 'दो डिवाइस पर',
@@ -1518,7 +1457,6 @@ export const hi: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'इस डिवाइस के नोट बने रहेंगे; सिर्फ़ खाता और उसकी सिंक की गई प्रतियाँ हटेंगी।',
   'Also gone for everyone in {spaces}.': '{spaces} में सभी के लिए भी हट जाएगा।',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'नोट',
   '{space} panel': '{space} का पैनल',
   'Panel width': 'पैनल की चौड़ाई',
@@ -1529,7 +1467,6 @@ export const hi: Dictionary = {
   'What is selected': 'चुना हुआ भाग',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'कैनवास: {cards} कार्ड, {links} लिंक, {drawings} चित्र',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'प्रदाता',
   'Make default': 'डिफ़ॉल्ट बनाएँ',
@@ -1557,7 +1494,6 @@ export const hi: Dictionary = {
   'The model did not answer.': 'मॉडल ने उत्तर नहीं दिया।',
   'The connection closed before the answer was finished.':
     'उत्तर पूरा होने से पहले कनेक्शन बंद हो गया.',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'आपका {plan} प्लान {time} तक अपनी सीमा पर है।',
   'Your {plan} plan is at its limit for now.': 'आपका {plan} प्लान अभी अपनी सीमा पर है।',
   'Your {plan} plan is near its limit.': 'आपका {plan} प्लान अपनी सीमा के करीब है।',
@@ -1584,7 +1520,6 @@ export const hi: Dictionary = {
   Shorter: 'छोटा',
   Longer: 'लंबा',
   'Fix grammar': 'व्याकरण सुधारें',
-  // The AI sidebar's commands
   'A cited report': 'स्रोतयुक्त रिपोर्ट',
   'A helper in the background': 'पृष्ठभूमि में सहायक',
   'A side question': 'साइड सवाल',
@@ -1686,7 +1621,6 @@ export const hi: Dictionary = {
   'Markdown, shortest name': 'Markdown, सबसे छोटा नाम',
   'Markdown, relative path': 'Markdown, सापेक्ष पथ',
   'Markdown, path in the space': 'Markdown, स्पेस में पथ',
-  // Publishing part one.
   'The folders you choose become public.': 'आपके चुने फ़ोल्डर सार्वजनिक हो जाते हैं।',
   'Anyone with the address can read what is published, drafts included.':
     'जिसके पास पता है वह प्रकाशित सब पढ़ सकता है, ड्राफ़्ट भी।',
@@ -1712,11 +1646,9 @@ export const hi: Dictionary = {
   'Remove the password': 'पासवर्ड हटाएँ',
   'Scan this with your authenticator app, then type its code.':
     'इसे अपने प्रमाणक ऐप से स्कैन करें, फिर उसका कोड लिखें।',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'फ़ोटो',
   Dictate: 'बोलकर लिखवाएँ',
   'Add to {name}': '{name} में जोड़ें',
-  // Web tabs
   Reload: 'फिर लोड करें',
   'Hard reload': 'पूरी तरह फिर लोड करें',
   'Open in the browser': 'ब्राउज़र में खोलें',
@@ -1731,7 +1663,6 @@ export const hi: Dictionary = {
   'Playing audio': 'ऑडियो चल रहा है',
   Muted: 'म्यूट है',
   'Developer tools': 'डेवलपर टूल',
-  // Recording, meetings and what a model wrote
   Record: 'रिकॉर्ड करें',
   Recording: 'रिकॉर्डिंग',
   'Stop recording': 'रिकॉर्डिंग रोकें',
@@ -1752,7 +1683,6 @@ export const hi: Dictionary = {
     'वह रिकॉर्डिंग एक बार में शब्दों में बदलने के लिए बहुत लंबी है।',
   'That is as much as one recording may hold.': 'एक रिकॉर्डिंग में इतना ही समाता है।',
   'Nothing could be heard in that recording.': 'उस रिकॉर्डिंग में कुछ सुनाई नहीं दिया।',
-  // Publishing part two.
   Spreadsheet: 'स्प्रेडशीट',
   'The app’s own': 'ऐप का अपना',
   'publish.css and publish.js in this space dress the site.':
@@ -1768,14 +1698,12 @@ export const hi: Dictionary = {
   'Save as CSV': 'CSV के रूप में सहेजें',
   'Kept for {days}': '{days} तक रखे जाते हैं',
   Full: 'भरा हुआ',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'मेल नहीं भेज सके - फिर कोशिश करें',
   'start again - that took too long': 'फिर शुरू करें - बहुत समय लगा',
   'sign in to do that': 'वह करने के लिए साइन इन करें',
   'that is not something a token can do': 'वह टोकन से नहीं हो सकता',
   'something went wrong here - try again': 'यहाँ कुछ गड़बड़ हुई - फिर कोशिश करें',
   'this service cannot keep a secret safely': 'यह सेवा गुप्त कुंजी सुरक्षित नहीं रख सकती',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only': 'केवल छवियाँ, PDF और साइट का अपना css या js',
   'that file is too big': 'वह फ़ाइल बहुत बड़ी है',
   'that is more settings than an account holds': 'यह एक खाते की सेटिंग्स से ज़्यादा है',
@@ -1786,13 +1714,11 @@ export const hi: Dictionary = {
     'यह एक स्पेस के ग्राफ़ के बारे में रखे से ज़्यादा है',
   'that is more folder icons than a space holds': 'यह एक स्पेस के फ़ोल्डर आइकन से ज़्यादा है',
   'that is more than a site keeps': 'यह उससे अधिक है जितना एक साइट रखती है',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'उस पते पर कोई नहीं',
   'nobody by that name': 'उस नाम का कोई नहीं',
   'nobody is waiting by that name': 'उस नाम का कोई इंतज़ार में नहीं',
   'this space is yours': 'यह स्पेस आपका है',
   'that link is busy, try again in a minute': 'वह लिंक व्यस्त है, एक मिनट में फिर कोशिश करें',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'ऐसा कोई वर्शन नहीं',
   'this note was shared with you, not its folder': 'यह नोट आपके साथ साझा हुआ, इसका फ़ोल्डर नहीं',
   'nothing to restore': 'बहाल करने के लिए कुछ नहीं',
@@ -1800,7 +1726,6 @@ export const hi: Dictionary = {
   'nothing to delete': 'हटाने के लिए कुछ नहीं',
   'this room is not answering - try again': 'यह रूम जवाब नहीं दे रहा - फिर कोशिश करें',
   'rooms are not running here': 'यहाँ रूम नहीं चल रहे',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'थीम स्टोर जवाब नहीं दे रहा',
   'that is not a theme': 'वह थीम नहीं है',
   'no such theme': 'ऐसी कोई थीम नहीं',
@@ -1813,10 +1738,8 @@ export const hi: Dictionary = {
   'that is more than a spoken command': 'यह एक बोले गए कमांड से ज़्यादा है',
   'that is a lot of listening - try again later': 'बहुत सुनना हो गया - बाद में कोशिश करें',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% पाठ',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'मोबाइल',
   'The bar sits over the keyboard on a phone.': 'फ़ोन पर पट्टी कीबोर्ड के ऊपर रहती है।',
   'On the bar': 'पट्टी पर',
@@ -1830,31 +1753,25 @@ export const hi: Dictionary = {
   'A pull past the top runs': 'ऊपर से खींचने पर चले',
   Nothing: 'कुछ नहीं',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'रखें',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'दाईं ओर ले जाएँ',
   'Move to the left': 'बाईं ओर ले जाएँ',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'खाते पर इतिहास',
   'Keep versions': 'संस्करण रखें',
   'A month': 'एक महीना',
   'A year': 'एक साल',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'पिछले दिन का सब कुछ, फिर हर घंटे एक, एक महीने बाद रोज़ एक, और तीन महीने बाद हफ़्ते में एक।',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'यह नोट उतना बड़ा हो गया है जितना किसी रूम में कोई नोट हो सकता है।',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'नया टैब',
   'Full screen': 'फ़ुल स्क्रीन',
   'Print…': 'प्रिंट करें…',
   'Share…': 'साझा करें…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'को अनुमति चाहिए',
   'Don’t allow': 'अनुमति न दें',
   Allow: 'अनुमति दें',
@@ -1870,7 +1787,6 @@ export const hi: Dictionary = {
   'Use your MIDI devices': 'अपने एमआईडीआई डिवाइस इस्तेमाल करें',
   'Manage windows on all your displays': 'आपके सभी डिसप्ले पर विंडो मैनेज करना',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'साइट जानकारी',
   Downloads: 'डाउनलोड',
   'Downloading {name}': '{name} डाउनलोड हो रहा है',
@@ -1897,11 +1813,9 @@ export const hi: Dictionary = {
   'Turn into': 'में बदलें',
   Foldable: 'मोड़ा जा सकता है',
   'Starts folded': 'मुड़ा हुआ शुरू',
-  // Where a space keeps what websites store
   'Web data': 'वेब डेटा',
   Global: 'साझा',
   Site: 'साइट',
-  // The Mac's menu bar
   'About {name}': '{name} के बारे में',
   Services: 'सेवाएँ',
   'Hide {name}': '{name} छिपाएँ',
@@ -1909,7 +1823,6 @@ export const hi: Dictionary = {
   'Show all': 'सभी दिखाएँ',
   'Quit {name}': '{name} बंद करें',
   'Bring all to front': 'सभी को सामने लाएँ',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'कॉपी पूर्ववत करें',
   'Devices with your AI vault': 'आपके AI वॉल्ट वाले डिवाइस',
   'This device': 'यह डिवाइस',
@@ -1924,13 +1837,11 @@ export const hi: Dictionary = {
   'Select down': 'नीचे की ओर चुनें',
   'Select up': 'ऊपर की ओर चुनें',
   'Select or deselect': 'चुनें या चयन हटाएँ',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'नए टैब में खोलें',
   'Open to the side': 'बगल में खोलें',
   'Open all': 'सब खोलें',
   'Show in the file list': 'फ़ाइल सूची में दिखाएँ',
   'Collapse the file list': 'फ़ाइल सूची समेटें',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'चयन बढ़ाएँ',
   'Shrink the selection': 'चयन घटाएँ',
   'Insert a line above': 'ऊपर एक पंक्ति डालें',
@@ -1944,18 +1855,15 @@ export const hi: Dictionary = {
   'Duplicate the block': 'ब्लॉक की नकल बनाएँ',
   'Move the block up': 'ब्लॉक ऊपर ले जाएँ',
   'Move the block down': 'ब्लॉक नीचे ले जाएँ',
-  // The editor's menu on a link and a picture
   'Copy link address': 'लिंक का पता कॉपी करें',
   'Edit link': 'लिंक संपादित करें',
   'Remove link': 'लिंक हटाएँ',
   'Copy picture': 'चित्र कॉपी करें',
   'Open picture': 'चित्र खोलें',
   'Delete picture': 'चित्र मिटाएँ',
-  // A file dropped into a note
   'Storing the file': 'फ़ाइल सहेजी जा रही है',
   'That file is larger than a note can keep.': 'यह फ़ाइल उससे बड़ी है जितनी एक नोट रख सकता है।',
   'That file could not be kept.': 'यह फ़ाइल रखी नहीं जा सकी।',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'नया टर्मिनल',
   'Command Prompt': 'कमांड प्रॉम्प्ट',
   Terminal: 'टर्मिनल',
@@ -1977,11 +1885,8 @@ export const hi: Dictionary = {
   'Saved nowhere, a session kept running is found again in Settings, {pane}.':
     'कहीं सहेजा नहीं गया; चलता छोड़ा गया सत्र फिर से सेटिंग्स, {pane} में मिलेगा।',
   'Paste {count} lines?': { one: '{count} पंक्ति चिपकाएँ?', other: '{count} पंक्तियाँ चिपकाएँ?' },
-  // Orden as the default browser
   'Default browser': 'डिफ़ॉल्ट ब्राउज़र',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} के संपादन पूर्ववत करें',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'संग्रहित करें',
   Unarchive: 'संग्रह से निकालें',
   Archived: 'संग्रहित',
@@ -1994,7 +1899,6 @@ export const hi: Dictionary = {
     one: '{count} संग्रहित आइटम अंदर',
     other: '{count} संग्रहित आइटम अंदर',
   },
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'बायाँ साइडबार',
   'Right sidebar': 'दायाँ साइडबार',
   'Ask about this space': 'इस स्पेस के बारे में पूछें',
@@ -2005,7 +1909,6 @@ export const hi: Dictionary = {
   'Ask again': 'फिर से पूछें',
   'Continue when the limit resets': 'सीमा रीसेट होने पर जारी रखें',
   'Continues at {time}': '{time} पर जारी रहेगा',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'कुछ भी पूछें, जोड़ने के लिए @, और के लिए /',
   'What can I help with?': 'मैं किसमें मदद करूँ?',
   'Add photos and files': 'फ़ोटो और फ़ाइलें जोड़ें',
@@ -2073,12 +1976,9 @@ export const hi: Dictionary = {
   Closed: 'बंद किया',
   Ran: 'चलाया',
   Changed: 'बदला',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': 'यह {device}',
   '{name} is back: {device} was writing in it': '{name} वापस आ गया: {device} उसमें लिख रहा था',
   'Changes to {name} are not syncing': '{name} में किए गए बदलाव सिंक नहीं हो रहे हैं',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'खोलना',
   Pressing: 'दबाना',
   Typing: 'टाइप करना',
@@ -2093,18 +1993,14 @@ export const hi: Dictionary = {
   'Agent tabs closed': 'एजेंट टैब बंद हुए',
   'Orden is still running for your agents': 'आपके एजेंटों के लिए Orden अभी भी चल रहा है',
   '{client} wants to connect': '{client} जुड़ना चाहता है',
-  // Web logins that travel, and the devices of an account
   'no such device': 'ऐसा कोई डिवाइस नहीं',
   'give the device a name': 'डिवाइस को नाम दें',
   'that computer is no longer waiting': 'वह कंप्यूटर अब इंतज़ार नहीं कर रहा',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'ऐसी कोई फ़ाइल नहीं',
   'too many changes at once - try again in a minute':
     'एक साथ बहुत सारे बदलाव - एक मिनट बाद फिर कोशिश करें',
   'that is more than a space keeps about its tree':
     'यह उससे ज़्यादा है जितना एक स्पेस अपने ट्री के बारे में रखता है',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'इस कंप्यूटर पर एजेंट',
   'Your account’s connector': 'आपके खाते का कनेक्टर',
   'Orden asks you once, the first time it connects.':
@@ -2174,12 +2070,9 @@ export const hi: Dictionary = {
     one: '{count} कॉल',
     other: '{count} कॉल',
   },
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'छोटा सवाल',
   Scratchpad: 'Scratchpad',
   'Add to note': 'नोट में जोड़ें',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'एक्सटेंशन',
   'Add extension': 'एक्सटेंशन जोड़ें',
   'Manage extensions': 'एक्सटेंशन प्रबंधित करें',
@@ -2198,7 +2091,6 @@ export const hi: Dictionary = {
   'Did not load': 'लोड नहीं हुआ',
   Permissions: 'अनुमतियां',
   Options: 'विकल्प',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'रिमोट',
   'Add host': 'होस्ट जोड़ें',
   Reconnect: 'फिर से कनेक्ट करें',
@@ -2206,11 +2098,8 @@ export const hi: Dictionary = {
   'No group': 'कोई समूह नहीं',
   'Not an address': 'यह पता नहीं है',
   'Could not connect to {host}': '{host} से कनेक्ट नहीं हो सका',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'छवि भेजी जा रही है',
   'Could not send the image': 'छवि नहीं भेजी जा सकी',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': {
     one: 'और उसके बाद का {count}',
     other: 'और उसके बाद के {count}',
@@ -2223,8 +2112,6 @@ export const hi: Dictionary = {
   'Pages, terminals and moves are not undone': 'पेज, टर्मिनल और स्थानांतरण पूर्ववत नहीं होते',
   Rewind: 'पीछे जाएँ',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'सर्च इंजन',
   History: 'इतिहास',
   'Search history': 'खोज इतिहास',
@@ -2248,14 +2135,12 @@ export const hi: Dictionary = {
   'New private tab': 'नया निजी टैब',
   'All spaces': 'सभी स्पेस',
   'the data could not be deleted': 'डेटा मिटाया नहीं जा सका',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'स्नूज़',
   Reminders: 'रिमाइंडर',
   'Reminders ring while Orden is open': 'Orden खुला रहने पर रिमाइंडर बजते हैं',
   Automatic: 'स्वचालित',
   'Stay in the tray': 'ट्रे में रहें',
   'Exact alarms': 'सटीक अलार्म',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'कार्य',
   'Plan my day': 'मेरा दिन प्लान करें',
   'Add a task': 'कार्य जोड़ें',
@@ -2267,8 +2152,6 @@ export const hi: Dictionary = {
   'Done tasks too': 'पूरे हुए कार्य भी',
   'As a task': 'कार्य के रूप में',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'कार्य',
   Ascending: 'आरोही',
   Descending: 'अवरोही',
@@ -2353,8 +2236,6 @@ export const hi: Dictionary = {
   'Without a value': 'बिना मान',
   'With a value': 'मान सहित',
   Unique: 'अद्वितीय',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'टेम्पलेट से नया नोट',
   Automations: 'स्वचालन',
   'Row added': 'पंक्ति जोड़ी गई',
@@ -2383,7 +2264,6 @@ export const hi: Dictionary = {
   Form: 'फ़ॉर्म',
   Formula: 'फ़ॉर्मूला',
   'Blocked by {task}': '{task} से रुका हुआ',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'बाहर निकलने से पहले चेतावनी दें',
   'When something runs': 'जब कुछ चल रहा हो',
   'Quit {name}?': '{name} बंद करें?',
@@ -2394,16 +2274,13 @@ export const hi: Dictionary = {
   'Quit anyway': 'फिर भी बंद करें',
   'Restart anyway': 'फिर भी रीस्टार्ट करें',
   'Close anyway': 'फिर भी बंद करें',
-  // The online terminal
   'Online terminal': 'ऑनलाइन टर्मिनल',
   'New online terminal': 'नया ऑनलाइन टर्मिनल',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'कोई दूसरा डिवाइस',
   'Taken over by {device}': '{device} ने ले लिया',
   'Open on {device} since {time}': '{time} से {device} पर खुला',
   'Take over': 'अपने हाथ लें',
   'Take back': 'वापस लें',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'नया एप्लिकेशन',
   Application: 'एप्लिकेशन',
   'This application’s file is damaged': 'इस एप्लिकेशन की फ़ाइल खराब है',
@@ -2512,8 +2389,6 @@ export const hi: Dictionary = {
   'Compare with original': 'मूल से तुलना करें',
   'Conflict copies from other apps': 'अन्य ऐप्स की टकराव प्रतियाँ',
   'Remove from sync': 'सिंक से हटाएँ',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'प्रोफ़ाइल',
   Change: 'बदलें',
   'Take photo': 'फ़ोटो लें',
@@ -2538,7 +2413,6 @@ export const hi: Dictionary = {
   'that picture could not be opened': 'वह चित्र खुल नहीं सका',
   'the camera could not be opened': 'कैमरा खुल नहीं सका',
   'that picture is too big': 'वह चित्र बहुत बड़ा है',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'चैट',
   Reply: 'जवाब दें',
   Replies: 'जवाब',
@@ -2557,7 +2431,6 @@ export const hi: Dictionary = {
   'Also send to {chat}': '{chat} में भी भेजें',
   'Skin tone': 'त्वचा का रंग',
   'Deleted account': 'हटाया गया खाता',
-  // Chats: notifications
   Mute: 'म्यूट करें',
   Unmute: 'अनम्यूट करें',
   'New message': 'नया संदेश',
@@ -2567,7 +2440,6 @@ export const hi: Dictionary = {
   Weekdays: 'कार्यदिवस',
   Starts: 'शुरू',
   Ends: 'समाप्त',
-  // Chats: everywhere
   'Read chats': 'चैट पढ़ना',
   'Post in chats': 'चैट में लिखना',
   'Always in this chat': 'इस चैट में हमेशा',
@@ -2579,14 +2451,12 @@ export const hi: Dictionary = {
   'Search this chat': 'इस चैट में खोजें',
   'Add as task': 'काम के रूप में जोड़ें',
   'Save as note': 'नोट के रूप में सहेजें',
-  // Appearance: glass's own pairs of colours
   Dawn: 'भोर',
   Lagoon: 'लैगून',
   Lilac: 'बकाइन',
   Peach: 'आड़ू',
   Sage: 'सेज',
   Mist: 'धुंध',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'नया डेटाबेस',
   'New page': 'नया पेज',
   'Not started': 'शुरू नहीं हुआ',
@@ -2612,7 +2482,6 @@ export const hi: Dictionary = {
   Large: 'बड़ा',
   Both: 'दोनों',
   'Shown on cards': 'कार्ड पर दिखाए गए',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'इस ब्राउज़र की AI कुंजियों को वॉल्ट के ज़रिए आपके दूसरे डिवाइस से सिंक करता है।',
   'Which of your AI accounts this feature asks.': 'यह सुविधा आपके किस AI खाते से पूछती है।',
@@ -2848,7 +2717,6 @@ export const hi: Dictionary = {
   'Some changes may not be noticed': 'कुछ बदलाव शायद पकड़े न जाएँ',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'सिस्टम में देखे जा रहे फ़ोल्डरों की सीमा पूरी हो गई है, इसलिए दूसरे प्रोग्राम आपके स्पेस में जो बदलाव करते हैं, Orden शायद उन सब पर ध्यान न दे। fs.inotify.max_user_watches बढ़ाने से यह ठीक होता है।',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'चैट {name} को {space} में ले जाएँ?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'तब {space} में हर कोई पूरा इतिहास पढ़ सकेगा, और {from} के लोग इसे खो देंगे।',
@@ -2889,7 +2757,6 @@ export const hi: Dictionary = {
   'One colour': 'एक रंग',
   'Web icons': 'वेब आइकन',
   'Sites you visit will appear here': 'आप जिन साइटों पर जाते हैं, वे यहाँ दिखेंगी',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'श्रुतलेख',
   'Dictate with': 'इससे बोलकर लिखें',
   'Where your voice goes to be turned into words.':
@@ -2920,11 +2787,9 @@ export const hi: Dictionary = {
   'Not on this device': 'इस डिवाइस पर नहीं है',
   'Not on this device. It opens once you are online again.':
     'इस डिवाइस पर नहीं है। आपके फिर से ऑनलाइन होते ही यह खुलेगा।',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'IMAP सर्वर',
   'SMTP server': 'SMTP सर्वर',
   'User name': 'उपयोगकर्ता नाम',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'अत्यावश्यक',
   Important: 'महत्वपूर्ण',
   'If time': 'समय मिले तो',

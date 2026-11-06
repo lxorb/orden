@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ha: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'Komai ya shirya',
   Personalize: 'Keɓance',
   Clean: 'Mai tsabta',
@@ -10,13 +9,11 @@ export const ha: Dictionary = {
   'Do you write code?': 'Kuna rubuta code?',
   Yes: 'Eh',
   No: "A'a",
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Daga wasu manhajoji: {key}',
   'From other apps: set in your system settings':
     'Daga wasu manhajoji: saita a cikin saitunan tsarin',
   'From other apps: bind {command} in your system settings':
     'Daga wasu manhajoji: ɗaura {command} a cikin saitunan tsarin',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Muhimmai',
   'Add to Essentials': 'Ƙara zuwa Muhimmai',
   'Remove from Essentials': 'Cire daga Muhimmai',
@@ -24,20 +21,16 @@ export const ha: Dictionary = {
   'Add blocks to Essentials': 'Ƙara tubalai zuwa Muhimmai',
   'Add view to Essentials': 'Ƙara kallo zuwa Muhimmai',
   'Open tabs and Essentials': 'Buɗe shafuka da Muhimmai',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor yanzu shi ne Orden',
   'Notes from nibeditor.com': 'Bayanai daga nibeditor.com',
   'Nothing there': 'Babu komai a can',
-  // AI: the three permission modes
   'Full permissions': 'Cikakken izini',
   'Auto mode': 'Yanayin kai-tsaye',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'Cikakken izini: ba a tambayar komai ko mayar maka da shi, ko shiga, biya, aikawa ko gogewa ma',
-  // Import: Zen's tabs
   'Import from Zen': 'Shigo daga Zen',
   'Containers stay in Zen': 'Kwantenoni suna zama a Zen',
   'Zen’s tabs could not be read.': 'Ba a iya karanta shafukan Zen ba.',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'Kwantenoni suna zama a Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} yana bincike da {engine}: zaɓe shi a Saituna don bincike da shi a nan ma',
@@ -64,38 +57,29 @@ export const ha: Dictionary = {
   'Reading List': 'Jerin Karatu',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS yana ajiye shafuka da alamun shafi na Safari a bayan Cikakken Damar Diski. Kunna Orden a can, sannan ku sake nema.',
-  // Settings: note types
   'Page note': 'Bayanin kula na shafuka',
   'Web note': 'Bayanin yanar gizo',
   'Private tab': 'Shafi na sirri',
   'Note types': "Nau'ikan bayanin kula",
-  // Tasks: Upcoming's weeks
   'Previous week': 'Makon da ya gabata',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'Ƙara aiki a sama',
   'Add project below': 'Ƙara aiki a ƙasa',
   'Projects folder': 'Fayil ɗin ayyuka',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'Tsallake',
   'Complete forever': 'Kammala har abada',
-  // Tasks: comments
   Comments: 'Sharhi',
-  // Tasks: filters
   Filters: 'Matattara',
   'Add filter': 'Ƙara matattara',
   'Edit filter': 'Gyara matattara',
-  // Tasks: a project's sections
   'Add section': 'Ƙara sashe',
   '{name} (copy)': '{name} (kwafi)',
   'Its tasks are deleted with it.': 'Za a goge ayyukansa tare da shi.',
-  // Tasks: keys, selection and the undo toast
   Completed: 'An kammala',
   'Remove date': 'Cire kwanan wata',
   'Next task': 'Aiki na gaba',
   'Previous task': 'Aikin baya',
   'Add task at the top': 'Ƙara aiki a sama',
   '{count} selected': 'An zaɓi {count}',
-  // Tasks: the Display menu
   Display: 'Nuni',
   'Completed tasks': 'Ayyukan da aka kammala',
   Smart: 'Mai wayo',
@@ -107,20 +91,16 @@ export const ha: Dictionary = {
   'Reset all': 'Sake saita duka',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'Tsari yana nuna ayyuka a matsayin jeri, allo ko kalanda. Tarawa tana raba su zuwa rukuni, waɗanda su ne ginshiƙan allo. Jerawa tana jera kowane rukuni. Matattara suna ɓoye abin da ba ka buƙata. Ana adana duka don wannan duba.',
-  // Tasks: several lines pasted into quick add
   'One task': 'Aiki ɗaya',
   'One per line': 'Ɗaya kowane layi',
   'Add with AI': 'Ƙara da AI',
-  // Tasks: the projects in the panel
   Favorites: 'Waɗanda aka fi so',
   'Add project': 'Ƙara aiki',
   'Add sub-project': 'Ƙara ƙaramin aiki',
-  // Tasks: the task view
   'Sub-tasks': 'Ƙananan ayyuka',
   'Add sub-task': 'Ƙara ƙaramin aiki',
   'New label': 'Sabon lakabi',
   'No deadline': "Babu wa'adi",
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'Sake tsarawa',
   'Later this week': 'Daga baya a wannan makon',
   'This weekend': 'Karshen wannan makon',
@@ -137,22 +117,18 @@ export const ha: Dictionary = {
   Reopen: 'Sake buɗewa',
   Schedule: 'Tsara lokaci',
   'Open in note': 'Buɗe a cikin bayani',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Wata manhaja',
   'Import from Obsidian': 'Shigo daga Obsidian',
   'Import from Notion': 'Shigo daga Notion',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'Shawarwari',
   'Silent mode': 'Yanayin shiru',
   'See how your notes connect.': 'Duba yadda bayananka suke haɗe.',
   'Press {key} to find anything, notes and commands alike.':
     'Danna {key} don nemo komai, bayanai da umarni duka.',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Nuna Markdown yayin rubutu',
   'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'Mai nuni',
   'Pointing hand on buttons': 'Hannun nuni a kan maɓallai',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Ƙara aiki',
   'Apple Shortcuts': 'Apple Gajerun hanyoyi',
   Tomorrow: 'Gobe',
@@ -178,7 +154,6 @@ export const ha: Dictionary = {
   'Every week': 'Kowane mako',
   'Every month': 'Kowane wata',
   'Every year': 'Kowace shekara',
-  // Files and notes
   Save: 'Ajiye',
   'New note': 'Sabuwar bayanin kula',
   'Random note': 'Bayanin kula na bazata',
@@ -206,8 +181,6 @@ export const ha: Dictionary = {
   'Release to add a page': 'Saki don ƙara shafi',
   'Page {number}': 'Shafi {number}',
   'The paper could not be read': 'Ba a iya karanta takardar ba',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'Shafi mai tsawo',
@@ -250,7 +223,6 @@ export const ha: Dictionary = {
   'Choose a picture': 'Zaɓi hoto',
   'Remove picture': 'Cire hoton',
   'That picture could not be read.': 'Ba a iya karanta wannan hoton ba.',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'Zurfin launi',
   Tint: 'Ɗan launi',
   'Tint colour': 'Launin ɗan launi',
@@ -379,7 +351,6 @@ export const ha: Dictionary = {
   'Merge into…': 'Haɗa cikin…',
   'Split at caret': 'Raba a wurin alamar rubutu',
   'Extract selection': 'Cire zaɓin',
-  // Panels and navigation
   Bookmarks: 'Alamun shafi',
   'New group': 'Sabon rukuni',
   'Remove group': 'Cire rukuni',
@@ -433,8 +404,6 @@ export const ha: Dictionary = {
   'Sort by name': 'Tsara bisa suna',
   'Sort by modified': 'Tsara bisa sauyi',
   'Sort by created': 'Tsara bisa ƙirƙira',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'Tsarin fayiloli',
   'Name, A to Z': 'Suna, A zuwa Z',
   'Name, Z to A': 'Suna, Z zuwa A',
@@ -445,7 +414,6 @@ export const ha: Dictionary = {
   Manual: 'Da hannu',
   'Show hidden files': 'Nuna fayilolin da aka ɓoye',
   'Hide hidden files': 'Ɓoye fayilolin da aka ɓoye',
-  // Writing
   Bold: 'Kauri',
   Italic: 'Karkata',
   Strikethrough: 'Layi a tsakiya',
@@ -533,11 +501,9 @@ export const ha: Dictionary = {
   'Horizontal rule': 'Layi kwance',
   'Page break': 'Karyewar shafi',
   'Tidy up this note': 'Tsara wannan bayanin kula',
-  // PDFs
   'Copy a link': 'Kwafa haɗi',
   'That PDF could not be opened': 'Ba a iya buɗe wannan PDF ba',
   'That file could not be read': 'Ba a iya karanta wannan fayil ba',
-  // Modes and view
   Reading: 'Karatu',
   'Leave reading': 'Fita daga karatu',
   Present: 'Gabatar',
@@ -577,7 +543,6 @@ export const ha: Dictionary = {
   'Zoom in': 'Kusanto',
   'Zoom out': 'Nesanto',
   'Actual size': 'Girman gaske',
-  // Appearance
   Accent: 'Launin nuni',
   'Tidy up': 'Tsara',
   'Blur the app behind the tab overview': 'Dushe manhaja a bayan bayyani na shafuka',
@@ -704,7 +669,6 @@ export const ha: Dictionary = {
   'Switch theme': 'Sauya kamanni',
   Style: 'Salo',
   Mode: 'Yanayi',
-  // The window's own edges; see appearance.rs
   Window: 'Taga',
   'Orden’s own': 'Na Orden',
   'The system’s': 'Na tsarin',
@@ -715,7 +679,6 @@ export const ha: Dictionary = {
   'Edit custom CSS': 'Gyara CSS na kanka',
   'Edit snippets': 'Gyara guntuwa',
   'Reload themes and custom CSS': 'Sake ɗauko kamanni da CSS na kanka',
-  // The theme store, and the sample note its cards show
   Themes: 'Kamanni',
   Browse: 'Bincika',
   'Search themes': 'Nemi kamanni',
@@ -795,7 +758,6 @@ export const ha: Dictionary = {
   'Code only': 'Lamba kawai',
   Everywhere: "Ko'ina",
   Attachments: 'Abubuwan haɗe',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Bayanin kula na shafuka',
   'New pages': 'Sabbin shafuka',
   'Assets folder of the space': 'Babban fayil na kayan wurin',
@@ -847,7 +809,6 @@ export const ha: Dictionary = {
   'Machine-translated. Corrections welcome.': 'Fassarar inji. Ana maraba da gyara.',
   'The glasses show English.': 'Tabarau yana nuna Turanci.',
   'Match the app': 'Bi manhajar',
-  // Settings
   Settings: 'Saituna',
   Account: 'Asusu',
   Publish: 'Wallafa',
@@ -873,7 +834,6 @@ export const ha: Dictionary = {
   },
   Update: 'Sabunta',
   'Live at': 'Kai tsaye a',
-  // Publishing
   'Publish {name}': 'Wallafa {name}',
   'What to publish': 'Abin da za a wallafa',
   'The whole space': 'Duk wurin',
@@ -893,7 +853,6 @@ export const ha: Dictionary = {
   Value: 'Daraja',
   available: 'akwai',
   'checking…': 'ana duba…',
-  // LLM
   'Connect an LLM to your notes': 'Haɗa LLM da bayanan kulanka',
   'Sign in first - the connector reaches the notes in your account.':
     'Shiga da farko - mai haɗin yana kai wa bayanan kula na asusunka.',
@@ -946,7 +905,6 @@ export const ha: Dictionary = {
     'Ga abokin ciniki da ke karɓar sashen JSON maimakon URL.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'Abokin ciniki da ba zai iya shiga ba za a iya ba shi alama. Ana nuna ta sau ɗaya kawai.',
-  // Export
   'Plain text': 'Rubutu mai sauƙi',
   'Markdown with the pictures': 'Markdown tare da hotuna',
   'HTML without styles': 'HTML ba tare da salo',
@@ -965,13 +923,11 @@ export const ha: Dictionary = {
   Margin: 'Gefe',
   Header: 'Kai na shafi',
   Footer: 'Ƙasan shafi',
-  // History
   'Version history': 'Tarihin sigogi',
   'Copy link to this note': 'Kwafa haɗin wannan bayanin kula',
   'that link could not be followed': 'ba a iya bin wannan haɗin ba',
   'No earlier versions yet.': 'Babu sigogin baya tukuna.',
   'Restore this version': 'Mayar da wannan siga',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'akwai bayanin kula a can',
   'enter a valid email address': 'shigar da adireshin imel mai inganci',
   'give the space a name': 'ba wurin suna',
@@ -1005,7 +961,6 @@ export const ha: Dictionary = {
   'could not publish': 'ba a iya wallafawa ba',
   'could not create a token': 'ba a iya ƙirƙiri alama ba',
   'that did not work': 'wannan bai yi aiki ba',
-  // Settings on a phone, display names, one blog address
   Back: 'Baya',
   'Display name': 'Sunan bayyanawa',
   'Your name': 'Sunanka',
@@ -1025,7 +980,6 @@ export const ha: Dictionary = {
   Spelling: 'Rubutun kalma',
   Checking: 'Duba',
   Dictionary: 'Ƙamus',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'Ana jiran rikodin ya bayyana.',
   'Certificate issued.': 'An bayar da takardar shaida.',
   'Cloudflare could not set this domain up.': 'Cloudflare ba ta iya saita wannan yankin yanar ba.',
@@ -1037,7 +991,6 @@ export const ha: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare ta toshe wannan yankin yanar',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'A tushen yankin yanar, yi amfani da rikodin ALIAS ko ANAME, ko CNAME flattening, idan mai ba ka hidima bai bar CNAME a can ba.',
-  // Shortcuts
   Shortcuts: 'Gajerun hanyoyi',
   'Search shortcuts': 'Nemi gajerun hanyoyi',
   'Second key': 'Maɓalli na biyu',
@@ -1203,7 +1156,6 @@ export const ha: Dictionary = {
   Delegated: 'An danka',
   'Code theme: {name}': 'Kamannin lamba: {name}',
   'Delete a layout': 'Share tsari',
-  // Keyboards and modal editing
   Default: 'Na asali',
   'Vim keys': 'Maɓallan Vim',
   'Follow the link': 'Bi haɗin',
@@ -1215,11 +1167,9 @@ export const ha: Dictionary = {
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
   REPLACE: 'REPLACE',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'Shafi {page}/{count} a tabarau',
   'Reaching the glasses': 'Ana kai wa tabarau',
   'The glasses are not keeping up': 'Tabarau ba sa cin gaba',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'Ƙara',
   Select: 'Zaɓi',
   Pan: 'Zamewa',
@@ -1249,7 +1199,6 @@ export const ha: Dictionary = {
   Calligraphy: 'Kyakkyawan rubutu',
   'Width {number}': 'Faɗi {number}',
   'Finger draws': 'Yatsa na zana',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'Faɗi',
   Opacity: 'Kauri na launi',
   Colour: 'Launi',
@@ -1293,23 +1242,19 @@ export const ha: Dictionary = {
   'Export as PNG': 'Fitar a matsayin PNG',
   'Export as SVG': 'Fitar a matsayin SVG',
   'Export as PDF': 'Fitar a matsayin PDF',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'Shigar da PDF',
   'Choose how to add the pages to the canvas.': 'Zaɓi yadda za a saka shafukan a kanbas.',
   'Single page': 'Shafi ɗaya',
   'All pages': 'Dukkan shafuka',
   'Choose a page': 'Zaɓi shafi',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'Share abin da aka zaɓa',
   'Nudge left': 'Tura hagu',
   'Nudge right': 'Tura dama',
   'Nudge up': 'Tura sama',
   'Nudge down': 'Tura ƙasa',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'An buɗe shi a wani wuri ma',
   Shared: 'An raba',
   Browser: 'Birawuza',
-  // Sharing a space with other people
   Share: 'Raba',
   'Share {name}': 'Raba {name}',
   'Share this space': 'Raba wannan wurin',
@@ -1354,14 +1299,12 @@ export const ha: Dictionary = {
   'Shared with you': 'An raba da kai',
   'That link does not open anything': 'Wannan haɗin bai buɗe komai ba',
   'Ask for another one.': 'Nemi wani.',
-  // Somebody a share link let in, who has no account
   Guest: 'Baƙo',
   'Ask to join': 'Nemi shiga',
   Asking: 'Ana nema',
   'Waiting for {who}': 'Ana jiran {who}',
   '{who} did not let you in': '{who} bai bar ka shiga ba',
   'What the others in this space see.': 'Abin da sauran a wannan wurin suke ganin.',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'Sabuntawa',
   'Release channel': 'Tashar fitarwa',
   Stable: 'Kwanciyar hankali',
@@ -1371,8 +1314,6 @@ export const ha: Dictionary = {
   'Web version': 'Sigar yanar gizo',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'Kwanciyar hankali ita ce fitacciyar manhajar yanar gizo, Ba kwanciyar hankali ginin mafi sabo ne kuma zai iya lalacewa.',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'Shigar',
   'Convert syntax': 'Juya tsarin rubutu',
   'In this note': 'A wannan bayanin kula',
@@ -1477,8 +1418,6 @@ export const ha: Dictionary = {
   'Undo the import': 'Mayar da shigarwa',
   'Choose an export': 'Zaɓi fitarwa',
   Under: 'Ƙarƙashin',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'Daidaitawa',
   'When the same note was written twice': 'Lokacin da aka rubuta bayanin kula ɗaya sau biyu',
   'On two devices': "A na'urori biyu",
@@ -1541,7 +1480,6 @@ export const ha: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'Bayanan kula a wannan na’ura za su zauna; asusun da kwafinsa da aka daidaita ne kawai za su tafi.',
   'Also gone for everyone in {spaces}.': 'Zai tafi ga kowa da ke cikin {spaces} ma.',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'Bayanin kula',
   '{space} panel': 'Fanon {space}',
   'Panel width': 'Faɗin fanon',
@@ -1552,7 +1490,6 @@ export const ha: Dictionary = {
   'What is selected': 'Abin da aka zaɓa',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'Kanbas: kati {cards}, haɗi {links}, zane {drawings}',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'Masu bayarwa',
   'Make default': 'Sa na asali',
@@ -1579,7 +1516,6 @@ export const ha: Dictionary = {
   'Add an AI provider in Settings first.': 'Ƙara mai bayar da AI a Saituna da farko.',
   'The model did not answer.': 'Samfurin bai amsa ba.',
   'The connection closed before the answer was finished.': 'Haɗin ya rufe kafin amsar ta ƙare.',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'Tsarin {plan} naka ya kai iyakarsa har zuwa {time}.',
   'Your {plan} plan is at its limit for now.': 'Tsarin {plan} naka ya kai iyakarsa a yanzu.',
@@ -1607,7 +1543,6 @@ export const ha: Dictionary = {
   Shorter: 'Gajarta',
   Longer: 'Tsawaita',
   'Fix grammar': 'Gyara nahawu',
-  // The AI sidebar's commands
   'A cited report': 'Rahoto mai ambato',
   'A helper in the background': 'Mataimaki a bango',
   'A side question': 'Tambaya ta gefe',
@@ -1709,7 +1644,6 @@ export const ha: Dictionary = {
   'Markdown, shortest name': 'Markdown, suna mafi gajarta',
   'Markdown, relative path': 'Markdown, hanya ta dangi',
   'Markdown, path in the space': 'Markdown, hanya a wurin',
-  // Publishing part one.
   'The folders you choose become public.': "Manyan fayilolin da ka zaɓa sun zama na jama'a.",
   'Anyone with the address can read what is published, drafts included.':
     'Kowa mai adireshin zai iya karanta abin da aka wallafa, har da waɗanda ba a gama ba.',
@@ -1735,11 +1669,9 @@ export const ha: Dictionary = {
   'Remove the password': 'Cire kalmar sirri',
   'Scan this with your authenticator app, then type its code.':
     'Leƙa wannan da manhajar tabbatarwa, sannan rubuta lambarta.',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'Hoto',
   Dictate: 'Furta',
   'Add to {name}': 'Ƙara zuwa {name}',
-  // Web tabs
   Reload: 'Sake ɗauko',
   'Hard reload': 'Sake ɗauko gaba ɗaya',
   'Open in the browser': 'Buɗe a birawuza',
@@ -1754,7 +1686,6 @@ export const ha: Dictionary = {
   'Playing audio': 'Ana kunna sauti',
   Muted: 'An kashe sauti',
   'Developer tools': 'Kayan aikin masu haɓakawa',
-  // Recording, meetings and what a model wrote
   Record: 'Yi rikodi',
   Recording: 'Rikodi',
   'Stop recording': 'Tsaya rikodi',
@@ -1776,7 +1707,6 @@ export const ha: Dictionary = {
     'Wannan rikodin ya yi tsawo sosai don mayar da shi kalmomi lokaci ɗaya.',
   'That is as much as one recording may hold.': 'Haka ne kawai rikodi ɗaya zai iya ɗauka.',
   'Nothing could be heard in that recording.': 'Ba a ji komai a wannan rikodin ba.',
-  // Publishing part two.
   Spreadsheet: 'Takardar lissafi',
   'The app’s own': 'Na manhajar kanta',
   'publish.css and publish.js in this space dress the site.':
@@ -1793,14 +1723,12 @@ export const ha: Dictionary = {
   'Save as CSV': 'Ajiye a matsayin CSV',
   'Kept for {days}': 'Ana ajiye su na {days}',
   Full: 'Ya cika',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ba a iya aika imel ba - sake gwadawa',
   'start again - that took too long': 'sake farawa - wannan ya ɗauki lokaci mai tsawo',
   'sign in to do that': 'shiga don yin haka',
   'that is not something a token can do': 'wannan ba abin da alama za ta iya yi ba',
   'something went wrong here - try again': 'wani abu ya lalace nan - sake gwadawa',
   'this service cannot keep a secret safely': 'wannan hidimar ba za ta iya riƙe asiri lafiya ba',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only': 'hotuna, PDF da css ko js na shafin kawai',
   'that file is too big': 'wannan fayil ya yi girma sosai',
   'that is more settings than an account holds': 'wannan saituna sun fi abin da asusu ke riƙe',
@@ -1812,14 +1740,12 @@ export const ha: Dictionary = {
   'that is more folder icons than a space holds':
     'wannan alamun babban fayil sun fi abin da wuri ke riƙe',
   'that is more than a site keeps': 'hakan ya fi abin da shafi ke ajiye',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'babu kowa a wannan adireshin',
   'nobody by that name': 'babu kowa da wannan suna',
   'nobody is waiting by that name': 'babu wanda ke jira da wannan suna',
   'this space is yours': 'wannan wurin naka ne',
   'that link is busy, try again in a minute':
     'wannan haɗin yana aiki, sake gwadawa bayan minti ɗaya',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'babu irin wannan siga',
   'this note was shared with you, not its folder':
     'an raba wannan bayanin kula da kai, ba babban fayilsa ba',
@@ -1828,7 +1754,6 @@ export const ha: Dictionary = {
   'nothing to delete': 'babu abin sharewa',
   'this room is not answering - try again': 'wannan ɗakin bai amsa ba - sake gwadawa',
   'rooms are not running here': 'ɗakuna ba sa aiki nan',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'kantin kamanni bai amsa ba',
   'that is not a theme': 'wannan ba kamanni ba',
   'no such theme': 'babu irin wannan kamanni',
@@ -1843,10 +1768,8 @@ export const ha: Dictionary = {
   'that is a lot of listening - try again later':
     'wannan saurara ta yi yawa - sake gwadawa daga baya',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% rubutu',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'Waya',
   'The bar sits over the keyboard on a phone.': 'A waya sandar tana kan madannai.',
   'On the bar': 'A kan sanda',
@@ -1860,31 +1783,25 @@ export const ha: Dictionary = {
   'A pull past the top runs': 'Jan sama yana tafiyar da',
   Nothing: 'Babu',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'Ajiye',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'Matsa dama',
   'Move to the left': 'Matsa hagu',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'Tarihi a asusun',
   'Keep versions': 'Ajiye juyi',
   'A month': 'Wata daya',
   'A year': 'Shekara daya',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Duk na ranar da ta gabata, sannan daya a kowace awa, daya a kowace rana bayan wata daya, da daya a kowane mako bayan uku.',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Wannan rubutu ya kai girman da rubutu zai iya kaiwa a cikin ɗaki.',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'Sabon tab',
   'Full screen': 'Cikakken allo',
   'Print…': 'Buga…',
   'Share…': 'Raba…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'yana son',
   'Don’t allow': 'Kar ka bari',
   Allow: 'Bari',
@@ -1901,7 +1818,6 @@ export const ha: Dictionary = {
   'Use your MIDI devices': "Yi amfani da na'urorin MIDI naka",
   'Manage windows on all your displays': 'Sarrafa tagogi a duk allunanka',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'Bayanin gidan yanar',
   Downloads: 'Abubuwan da aka sauke',
   'Downloading {name}': 'Ana sauke {name}',
@@ -1928,11 +1844,9 @@ export const ha: Dictionary = {
   'Turn into': 'Juya zuwa',
   Foldable: 'Mai naɗewa',
   'Starts folded': 'Yana farawa a naɗe',
-  // Where a space keeps what websites store
   'Web data': 'Bayanan yanar gizo',
   Global: 'Na kowa',
   Site: 'Gidan yanar',
-  // The Mac's menu bar
   'About {name}': 'Game da {name}',
   Services: 'Ayyuka',
   'Hide {name}': 'Ɓoye {name}',
@@ -1940,7 +1854,6 @@ export const ha: Dictionary = {
   'Show all': 'Nuna duka',
   'Quit {name}': 'Fita daga {name}',
   'Bring all to front': 'Kawo duka gaba',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Mayar da kwafin',
   'Devices with your AI vault': "Na'urorin da ke da ma'ajin AI ɗinka",
   'This device': "Wannan na'urar",
@@ -1955,13 +1868,11 @@ export const ha: Dictionary = {
   'Select down': 'Zaɓi zuwa ƙasa',
   'Select up': 'Zaɓi zuwa sama',
   'Select or deselect': 'Zaɓi ko cire zaɓi',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'Buɗe a sabon shafi',
   'Open to the side': 'Buɗe a gefe',
   'Open all': 'Buɗe duka',
   'Show in the file list': 'Nuna a jerin fayiloli',
   'Collapse the file list': 'Naɗe jerin fayiloli',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'Faɗaɗa zaɓin',
   'Shrink the selection': 'Taƙaita zaɓin',
   'Insert a line above': 'Saka layi a sama',
@@ -1975,19 +1886,16 @@ export const ha: Dictionary = {
   'Duplicate the block': 'Kwafi sashen',
   'Move the block up': 'Matsar da sashen sama',
   'Move the block down': 'Matsar da sashen ƙasa',
-  // The editor's menu on a link and a picture
   'Copy link address': 'Kwafa adireshin haɗin',
   'Edit link': 'Gyara haɗin',
   'Remove link': 'Cire haɗin',
   'Copy picture': 'Kwafa hoton',
   'Open picture': 'Buɗe hoton',
   'Delete picture': 'Share hoton',
-  // A file dropped into a note
   'Storing the file': 'Ana adana fayil',
   'That file is larger than a note can keep.':
     'Wannan fayil ya fi abin da bayanin kula zai iya riƙewa girma.',
   'That file could not be kept.': 'Ba a iya adana wannan fayil ba.',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'Sabuwar tasha',
   'Command Prompt': 'Wurin umarni',
   Terminal: 'Tasha',
@@ -2009,11 +1917,8 @@ export const ha: Dictionary = {
   'Saved nowhere, a session kept running is found again in Settings, {pane}.':
     "Ba a ajiye ko'ina ba; zaman da aka bari yana gudana ana sake samunsa a Saituna, {pane}.",
   'Paste {count} lines?': { one: 'A liƙa layi {count}?', other: 'A liƙa layuka {count}?' },
-  // Orden as the default browser
   'Default browser': 'Birawuza na asali',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Soke gyare-gyaren {name}',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'Ajiye a rumbu',
   Unarchive: 'Fitar daga rumbu',
   Archived: 'An ajiye a rumbu',
@@ -2026,7 +1931,6 @@ export const ha: Dictionary = {
     one: 'Abu {count} da aka ajiye a ciki',
     other: 'Abubuwa {count} da aka ajiye a ciki',
   },
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'Gefen mashaya na hagu',
   'Right sidebar': 'Gefen mashaya na dama',
   'Ask about this space': 'Yi tambaya game da wannan wurin',
@@ -2037,7 +1941,6 @@ export const ha: Dictionary = {
   'Ask again': 'Sake tambaya',
   'Continue when the limit resets': 'Ci gaba idan iyakar ta sabunta',
   'Continues at {time}': 'Zai ci gaba da {time}',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Tambayi komai, @ don ƙarawa, / don ƙari',
   'What can I help with?': 'Me zan iya taimaka da shi?',
   'Add photos and files': 'Ƙara hotuna da fayiloli',
@@ -2105,12 +2008,9 @@ export const ha: Dictionary = {
   Closed: 'An rufe',
   Ran: 'An gudanar',
   Changed: 'An canza',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': 'Wannan {device}',
   '{name} is back: {device} was writing in it': '{name} ya dawo: {device} yana rubutu a ciki',
   'Changes to {name} are not syncing': 'Ba a daidaita canje-canjen {name}',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Buɗewa',
   Pressing: 'Dannawa',
   Typing: 'Bugawa',
@@ -2125,18 +2025,14 @@ export const ha: Dictionary = {
   'Agent tabs closed': 'An rufe shafukan wakilai',
   'Orden is still running for your agents': 'Orden yana ci gaba da aiki don wakilanka',
   '{client} wants to connect': '{client} yana son haɗawa',
-  // Web logins that travel, and the devices of an account
   'no such device': "babu irin wannan na'ura",
   'give the device a name': "ba na'urar suna",
   'that computer is no longer waiting': 'wannan kwamfuta ba ta jira kuma',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'babu irin wannan fayil',
   'too many changes at once - try again in a minute':
     'canje-canje sun yi yawa a lokaci ɗaya - sake gwadawa bayan minti ɗaya',
   'that is more than a space keeps about its tree':
     'wannan ya fi abin da wuri ke riƙewa game da bishiyarsa',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'Wakilai a wannan kwamfuta',
   'Your account’s connector': 'Mahaɗin asusunka',
   'Orden asks you once, the first time it connects.':
@@ -2207,12 +2103,9 @@ export const ha: Dictionary = {
     one: 'Kira {count}',
     other: 'Kira {count}',
   },
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'Tambaya mai sauri',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Ƙara a bayanin kula',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'Ƙarin shirye-shirye',
   'Add extension': 'Ƙara ƙarin shiri',
   'Manage extensions': 'Sarrafa ƙarin shirye-shirye',
@@ -2232,7 +2125,6 @@ export const ha: Dictionary = {
   'Did not load': 'Bai buɗu ba',
   Permissions: 'Izini',
   Options: 'Zaɓuɓɓuka',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'Nesa',
   'Add host': 'Ƙara mai masauki',
   Reconnect: 'Sake haɗawa',
@@ -2240,11 +2132,8 @@ export const ha: Dictionary = {
   'No group': 'Babu rukuni',
   'Not an address': 'Ba adireshi ba ne',
   'Could not connect to {host}': 'An kasa haɗawa da {host}',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'Ana aika hoton',
   'Could not send the image': 'An kasa aika hoton',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': {
     one: 'da {count} bayansa',
     other: 'da {count} bayansa',
@@ -2257,8 +2146,6 @@ export const ha: Dictionary = {
   'Pages, terminals and moves are not undone': 'Ba a soke shafuka, tashoshi da motsawa',
   Rewind: 'Koma baya',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'Injin bincike',
   History: 'Tarihi',
   'Search history': 'Bincika tarihi',
@@ -2282,14 +2169,12 @@ export const ha: Dictionary = {
   'New private tab': 'Sabon shafi na sirri',
   'All spaces': 'Duk wurare',
   'the data could not be deleted': 'Ba a iya goge bayanan ba',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Jinkirta',
   Reminders: 'Tunatarwa',
   'Reminders ring while Orden is open': 'Tunatarwa na kara yayin da Orden ke bude',
   Automatic: 'Kai tsaye',
   'Stay in the tray': 'Zauna a tire',
   'Exact alarms': 'Ƙararrawa daidai',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'Ayyuka',
   'Plan my day': 'Tsara ranata',
   'Add a task': 'Ƙara aiki',
@@ -2301,8 +2186,6 @@ export const ha: Dictionary = {
   'Done tasks too': 'Har da ayyukan da aka gama',
   'As a task': 'A matsayin aiki',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'Ayyuka',
   Ascending: 'Daga ƙasa zuwa sama',
   Descending: 'Daga sama zuwa ƙasa',
@@ -2387,8 +2270,6 @@ export const ha: Dictionary = {
   'Without a value': 'Ba tare da ƙima ba',
   'With a value': 'Da ƙima',
   Unique: 'Na musamman',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'Sabon bayani daga samfuri',
   Automations: 'Ayyukan kai-tsaye',
   'Row added': 'An ƙara layi',
@@ -2417,7 +2298,6 @@ export const ha: Dictionary = {
   Form: 'Fom',
   Formula: 'Dabara',
   'Blocked by {task}': '{task} ya hana',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'Yi gargaɗi kafin fita',
   'When something runs': 'Idan wani abu na gudana',
   'Quit {name}?': 'A fita daga {name}?',
@@ -2428,16 +2308,13 @@ export const ha: Dictionary = {
   'Quit anyway': 'Fita duk da haka',
   'Restart anyway': 'Sake kunnawa duk da haka',
   'Close anyway': 'Rufe duk da haka',
-  // The online terminal
   'Online terminal': 'Tashar kan layi',
   'New online terminal': 'Sabuwar tashar kan layi',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'wata na’ura',
   'Taken over by {device}': '{device} ya karɓe shi',
   'Open on {device} since {time}': 'A buɗe a {device} tun {time}',
   'Take over': 'Karɓe',
   'Take back': 'Mayar',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'Sabuwar manhaja',
   Application: 'Manhaja',
   'This application’s file is damaged': 'Fayil ɗin wannan manhaja ya lalace',
@@ -2547,8 +2424,6 @@ export const ha: Dictionary = {
   'Compare with original': 'Kwatanta da na asali',
   'Conflict copies from other apps': 'Kwafin rikici daga wasu manhajoji',
   'Remove from sync': 'Cire daga daidaitawa',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'Bayanan martaba',
   Change: 'Canza',
   'Take photo': 'Ɗauki hoto',
@@ -2573,7 +2448,6 @@ export const ha: Dictionary = {
   'that picture could not be opened': 'ba a iya buɗe wannan hoton ba',
   'the camera could not be opened': 'ba a iya buɗe kyamara ba',
   'that picture is too big': 'wannan hoton ya yi girma da yawa',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'Tattaunawa',
   Reply: 'Amsa',
   Replies: 'Amsoshi',
@@ -2592,7 +2466,6 @@ export const ha: Dictionary = {
   'Also send to {chat}': 'Aika zuwa {chat} ma',
   'Skin tone': 'Launin fata',
   'Deleted account': 'Asusun da aka share',
-  // Chats: notifications
   Mute: 'Yi shiru',
   Unmute: 'Dawo da sauti',
   'New message': 'Sabon saƙo',
@@ -2602,7 +2475,6 @@ export const ha: Dictionary = {
   Weekdays: 'Ranakun aiki',
   Starts: 'Farawa',
   Ends: 'Ƙarshe',
-  // Chats: everywhere
   'Read chats': 'Karanta hirarraki',
   'Post in chats': 'Rubuta a hirarraki',
   'Always in this chat': 'Kullum a wannan hira',
@@ -2614,14 +2486,12 @@ export const ha: Dictionary = {
   'Search this chat': 'Bincika wannan hira',
   'Add as task': 'Ƙara a matsayin aiki',
   'Save as note': 'Ajiye a matsayin bayani',
-  // Appearance: glass's own pairs of colours
   Dawn: 'Alfijir',
   Lagoon: 'Lagon',
   Lilac: 'Lila',
   Peach: 'Peach',
   Sage: 'Sage',
   Mist: 'Hazo',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'Sabon rumbun bayanai',
   'New page': 'Sabon shafi',
   'Not started': 'Ba a fara ba',
@@ -2647,7 +2517,6 @@ export const ha: Dictionary = {
   Large: 'Babba',
   Both: 'Duka biyu',
   'Shown on cards': 'Ana nunawa a katuna',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     "Yana daidaita maɓallan AI na wannan birawuza da sauran na'urorinka ta hanyar ma'ajin.",
   'Which of your AI accounts this feature asks.':
@@ -2891,7 +2760,6 @@ export const ha: Dictionary = {
   'Some changes may not be noticed': 'Wataƙila ba za a lura da wasu canje-canje ba',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'Tsarin ya kai iyakar fayilolin da yake kallo, don haka Orden ba zai iya lura da kowane canji da wasu shirye-shirye ke yi a wurarenka ba. Ƙara fs.inotify.max_user_watches yana gyara hakan.',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'A matsar da hira {name} zuwa {space}?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'Duk wanda ke cikin {space} zai iya karanta dukan tarihin, kuma mutanen {from} za su rasa shi.',
@@ -2932,7 +2800,6 @@ export const ha: Dictionary = {
   'One colour': 'Launi ɗaya',
   'Web icons': 'Gumakan yanar gizo',
   'Sites you visit will appear here': 'Shafukan da ka ziyarta za su bayyana a nan',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'Rubutun murya',
   'Dictate with': 'Rubuta murya da',
   'Where your voice goes to be turned into words.':
@@ -2963,11 +2830,9 @@ export const ha: Dictionary = {
   'Not on this device': 'Ba ya kan wannan na’ura',
   'Not on this device. It opens once you are online again.':
     'Ba ya kan wannan na’ura. Zai buɗe da zarar kun dawo kan intanet.',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'Sabar IMAP',
   'SMTP server': 'Sabar SMTP',
   'User name': 'Sunan mai amfani',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'Gaggawa',
   Important: 'Muhimmi',
   'If time': 'Idan akwai lokaci',

@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fil: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'Handa na ang lahat',
   Personalize: 'I-personalize',
   Clean: 'Malinis',
@@ -10,12 +9,10 @@ export const fil: Dictionary = {
   'Do you write code?': 'Nagsusulat ka ba ng code?',
   Yes: 'Oo',
   No: 'Hindi',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Mula sa ibang app: {key}',
   'From other apps: set in your system settings': 'Mula sa ibang app: itakda sa settings ng system',
   'From other apps: bind {command} in your system settings':
     'Mula sa ibang app: i-bind ang {command} sa settings ng system',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Mga Mahalaga',
   'Add to Essentials': 'Idagdag sa Mga Mahalaga',
   'Remove from Essentials': 'Alisin sa Mga Mahalaga',
@@ -23,20 +20,16 @@ export const fil: Dictionary = {
   'Add blocks to Essentials': 'Idagdag ang mga block sa Mga Mahalaga',
   'Add view to Essentials': 'Idagdag ang view sa Mga Mahalaga',
   'Open tabs and Essentials': 'Magbukas ng mga tab at Mga Mahalaga',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'Orden na ang nibeditor',
   'Notes from nibeditor.com': 'Mga tala mula sa nibeditor.com',
   'Nothing there': 'Walang laman doon',
-  // AI: the three permission modes
   'Full permissions': 'Buong pahintulot',
   'Auto mode': 'Auto mode',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'Buong pahintulot: walang itinatanong o ibinabalik sa iyo, kahit ang pag-sign in, pagbabayad, pagpapadala o pagbura',
-  // Import: Zen's tabs
   'Import from Zen': 'Mag-import mula sa Zen',
   'Containers stay in Zen': 'Nananatili sa Zen ang mga container',
   'Zen’s tabs could not be read.': 'Hindi mabasa ang mga tab ng Zen.',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'Nananatili sa Firefox ang mga container',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     'Naghahanap ang {browser} gamit ang {engine}: piliin ito sa Settings para maghanap gamit ito dito rin',
@@ -63,38 +56,29 @@ export const fil: Dictionary = {
   'Reading List': 'Listahan ng Babasahin',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'Itinatago ng macOS ang mga tab at bookmark ng Safari sa likod ng Full Disk Access. I-on doon ang Orden, saka subukan ulit.',
-  // Settings: note types
   'Page note': 'Talang may pahina',
   'Web note': 'Talang web',
   'Private tab': 'Pribadong tab',
   'Note types': 'Mga uri ng tala',
-  // Tasks: Upcoming's weeks
   'Previous week': 'Nakaraang linggo',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'Magdagdag ng proyekto sa itaas',
   'Add project below': 'Magdagdag ng proyekto sa ibaba',
   'Projects folder': 'Folder ng mga proyekto',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'Laktawan',
   'Complete forever': 'Tapusin nang tuluyan',
-  // Tasks: comments
   Comments: 'Mga komento',
-  // Tasks: filters
   Filters: 'Mga filter',
   'Add filter': 'Magdagdag ng filter',
   'Edit filter': 'I-edit ang filter',
-  // Tasks: a project's sections
   'Add section': 'Magdagdag ng seksyon',
   '{name} (copy)': '{name} (kopya)',
   'Its tasks are deleted with it.': 'Mabubura rin ang mga gawain nito.',
-  // Tasks: keys, selection and the undo toast
   Completed: 'Natapos',
   'Remove date': 'Alisin ang petsa',
   'Next task': 'Susunod na gawain',
   'Previous task': 'Nakaraang gawain',
   'Add task at the top': 'Magdagdag ng gawain sa itaas',
   '{count} selected': '{count} ang napili',
-  // Tasks: the Display menu
   Display: 'Pagpapakita',
   'Completed tasks': 'Mga natapos na gawain',
   Smart: 'Matalino',
@@ -106,20 +90,16 @@ export const fil: Dictionary = {
   'Reset all': 'I-reset lahat',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'Ipinapakita ng layout ang mga gawain bilang listahan, board o kalendaryo. Hinahati sila ng pagpapangkat sa mga grupo, na siyang mga column ng board. Inaayos ng pagsasaayos ang bawat grupo. Itinatago ng mga filter ang hindi mo kailangan. Lahat ng ito ay itinatago para sa view na ito.',
-  // Tasks: several lines pasted into quick add
   'One task': 'Isang gawain',
   'One per line': 'Isa bawat linya',
   'Add with AI': 'Idagdag gamit ang AI',
-  // Tasks: the projects in the panel
   Favorites: 'Mga paborito',
   'Add project': 'Magdagdag ng proyekto',
   'Add sub-project': 'Magdagdag ng sub-proyekto',
-  // Tasks: the task view
   'Sub-tasks': 'Mga sub-task',
   'Add sub-task': 'Magdagdag ng sub-task',
   'New label': 'Bagong label',
   'No deadline': 'Walang deadline',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'I-reschedule',
   'Later this week': 'Mamaya ngayong linggo',
   'This weekend': 'Ngayong katapusan ng linggo',
@@ -136,22 +116,18 @@ export const fil: Dictionary = {
   Reopen: 'Buksan muli',
   Schedule: 'Iiskedyul',
   'Open in note': 'Buksan sa tala',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Ibang app',
   'Import from Obsidian': 'Mag-import mula sa Obsidian',
   'Import from Notion': 'Mag-import mula sa Notion',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'Mga tip',
   'Silent mode': 'Silent mode',
   'See how your notes connect.': 'Tingnan kung paano magkakaugnay ang iyong mga tala.',
   'Press {key} to find anything, notes and commands alike.':
     'Pindutin ang {key} para mahanap ang kahit ano, mga tala man o mga command.',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Ipakita ang Markdown habang nagsusulat',
   'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'Pointer',
   'Pointing hand on buttons': 'Nakaturong kamay sa mga button',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Magdagdag ng gawain',
   'Apple Shortcuts': 'Apple Mga Shortcut',
   Tomorrow: 'Bukas',
@@ -178,7 +154,6 @@ export const fil: Dictionary = {
   'Every week': 'Linggo-linggo',
   'Every month': 'Buwan-buwan',
   'Every year': 'Taon-taon',
-  // Files and notes
   Save: 'I-save',
   'New note': 'Bagong tala',
   'Random note': 'Random na tala',
@@ -206,8 +181,6 @@ export const fil: Dictionary = {
   'Release to add a page': 'Bitawan para magdagdag ng pahina',
   'Page {number}': 'Pahina {number}',
   'The paper could not be read': 'Hindi mabasa ang papel',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'Mahabang pahina',
@@ -250,7 +223,6 @@ export const fil: Dictionary = {
   'Choose a picture': 'Pumili ng larawan',
   'Remove picture': 'Alisin ang larawan',
   'That picture could not be read.': 'Hindi mabasa ang larawang iyon.',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'Saturasyon',
   Tint: 'Tinta',
   'Tint colour': 'Kulay ng tinta',
@@ -379,7 +351,6 @@ export const fil: Dictionary = {
   'Merge into…': 'Isama sa…',
   'Split at caret': 'Hatiin sa cursor',
   'Extract selection': 'Ihango ang napili',
-  // Panels and navigation
   Bookmarks: 'Mga bookmark',
   'New group': 'Bagong grupo',
   'Remove group': 'Alisin ang grupo',
@@ -433,8 +404,6 @@ export const fil: Dictionary = {
   'Sort by name': 'Isunod-sunod ayon sa pangalan',
   'Sort by modified': 'Isunod-sunod ayon sa huling baguhan',
   'Sort by created': 'Isunod-sunod ayon sa pagkagawa',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'Pagkakasunod-sunod ng mga file',
   'Name, A to Z': 'Pangalan, A hanggang Z',
   'Name, Z to A': 'Pangalan, Z hanggang A',
@@ -445,7 +414,6 @@ export const fil: Dictionary = {
   Manual: 'Manu-mano',
   'Show hidden files': 'Ipakita ang nakatagong file',
   'Hide hidden files': 'Itago ang nakatagong file',
-  // Writing
   Bold: 'Bold',
   Italic: 'Italic',
   Strikethrough: 'May ekis',
@@ -533,11 +501,9 @@ export const fil: Dictionary = {
   'Horizontal rule': 'Pahalang na guhit',
   'Page break': 'Hati ng pahina',
   'Tidy up this note': 'Ayusin ang talang ito',
-  // PDFs
   'Copy a link': 'Kopyahin ang link',
   'That PDF could not be opened': 'Hindi mabuksan ang PDF na iyon',
   'That file could not be read': 'Hindi mabasa ang file na iyon',
-  // Modes and view
   Reading: 'Pagbasa',
   'Leave reading': 'Lumabas sa pagbasa',
   Present: 'Iprisinta',
@@ -577,7 +543,6 @@ export const fil: Dictionary = {
   'Zoom in': 'Palakihin',
   'Zoom out': 'Paliitin',
   'Actual size': 'Tunay na laki',
-  // Appearance
   Accent: 'Kulay tampok',
   'Tidy up': 'Ayusin',
   'Blur the app behind the tab overview': 'I-blur ang app sa likod ng overview ng mga tab',
@@ -706,7 +671,6 @@ export const fil: Dictionary = {
   'Switch theme': 'Palitan ang tema',
   Style: 'Estilo',
   Mode: 'Mode',
-  // The window's own edges; see appearance.rs
   Window: 'Bintana',
   'Orden’s own': 'Sa Orden',
   'The system’s': 'Sa sistema',
@@ -717,7 +681,6 @@ export const fil: Dictionary = {
   'Edit custom CSS': 'I-edit ang custom CSS',
   'Edit snippets': 'I-edit ang mga snippet',
   'Reload themes and custom CSS': 'Ikarga muli ang tema at custom CSS',
-  // The theme store, and the sample note its cards show
   Themes: 'Mga tema',
   Browse: 'Tingnan',
   'Search themes': 'Maghanap ng tema',
@@ -797,7 +760,6 @@ export const fil: Dictionary = {
   'Code only': 'Code lang',
   Everywhere: 'Kahit saan',
   Attachments: 'Mga kalakip',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Mga talang may pahina',
   'New pages': 'Mga bagong pahina',
   'Assets folder of the space': 'Folder ng asset ng espasyo',
@@ -849,7 +811,6 @@ export const fil: Dictionary = {
   'Machine-translated. Corrections welcome.': 'Salin ng makina. Tanggap ang pagwawasto.',
   'The glasses show English.': 'Ingles ang ipinapakita ng salamin.',
   'Match the app': 'Sundin ang app',
-  // Settings
   Settings: 'Mga setting',
   Account: 'Account',
   Publish: 'Ilathala',
@@ -875,7 +836,6 @@ export const fil: Dictionary = {
   },
   Update: 'I-update',
   'Live at': 'Nasa',
-  // Publishing
   'Publish {name}': 'Ilathala ang {name}',
   'What to publish': 'Ano ang ilalathala',
   'The whole space': 'Buong espasyo',
@@ -895,7 +855,6 @@ export const fil: Dictionary = {
   Value: 'Halaga',
   available: 'malaya',
   'checking…': 'sinusuri…',
-  // LLM
   'Connect an LLM to your notes': 'Ikonekta ang LLM sa mga tala mo',
   'Sign in first - the connector reaches the notes in your account.':
     'Mag-sign in muna - inaabot ng connector ang mga tala sa account mo.',
@@ -948,7 +907,6 @@ export const fil: Dictionary = {
     'Para sa client na tumatanggap ng JSON block kaysa URL.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'Ang client na hindi makapag-sign in ay maaaring bigyan ng token. Isang beses lang itong ipapakita.',
-  // Export
   'Plain text': 'Simpleng teksto',
   'Markdown with the pictures': 'Markdown kasama ang larawan',
   'HTML without styles': 'HTML na walang estilo',
@@ -967,13 +925,11 @@ export const fil: Dictionary = {
   Margin: 'Margin',
   Header: 'Header',
   Footer: 'Footer',
-  // History
   'Version history': 'Kasaysayan ng bersyon',
   'Copy link to this note': 'Kopyahin ang link ng talang ito',
   'that link could not be followed': 'hindi masundan ang link na iyon',
   'No earlier versions yet.': 'Wala pang naunang bersyon.',
   'Restore this version': 'Ibalik ang bersyong ito',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'may tala na roon',
   'enter a valid email address': 'maglagay ng tamang email address',
   'give the space a name': 'pangalanan ang espasyo',
@@ -1008,7 +964,6 @@ export const fil: Dictionary = {
   'could not publish': 'hindi mailathala',
   'could not create a token': 'hindi makagawa ng token',
   'that did not work': 'hindi umubra',
-  // Settings on a phone, display names, one blog address
   Back: 'Bumalik',
   'Display name': 'Pangalang ipapakita',
   'Your name': 'Pangalan mo',
@@ -1028,7 +983,6 @@ export const fil: Dictionary = {
   Spelling: 'Ispeling',
   Checking: 'Pagsusuri',
   Dictionary: 'Diksyunaryo',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'Hinihintay lumabas ang record.',
   'Certificate issued.': 'Naibigay ang sertipiko.',
   'Cloudflare could not set this domain up.': 'Hindi na-set up ng Cloudflare ang domain na ito.',
@@ -1040,7 +994,6 @@ export const fil: Dictionary = {
   'Cloudflare has blocked this domain': 'Hinarangan ng Cloudflare ang domain na ito',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'Sa ugat ng domain, gumamit ng ALIAS o ANAME record, o CNAME flattening, kung hindi pinapayagan ng provider mo ang CNAME doon.',
-  // Shortcuts
   Shortcuts: 'Mga shortcut',
   'Search shortcuts': 'Maghanap ng shortcut',
   'Second key': 'Ikalawang key',
@@ -1208,7 +1161,6 @@ export const fil: Dictionary = {
   Delegated: 'Ipinasa',
   'Code theme: {name}': 'Tema ng code: {name}',
   'Delete a layout': 'Tanggalin ang layout',
-  // Keyboards and modal editing
   Default: 'Orihinal',
   'Vim keys': 'Vim keys',
   'Follow the link': 'Sundan ang link',
@@ -1220,11 +1172,9 @@ export const fil: Dictionary = {
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
   REPLACE: 'REPLACE',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'Pahina {page}/{count} sa salamin',
   'Reaching the glasses': 'Inaabot ang salamin',
   'The glasses are not keeping up': 'Hindi makasabay ang salamin',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'Idagdag',
   Select: 'Piliin',
   Pan: 'Igalaw',
@@ -1254,7 +1204,6 @@ export const fil: Dictionary = {
   Calligraphy: 'Kaligrapiya',
   'Width {number}': 'Kapal {number}',
   'Finger draws': 'Gumuguhit ang daliri',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'Kapal',
   Opacity: 'Kalinawan',
   Colour: 'Kulay',
@@ -1298,24 +1247,20 @@ export const fil: Dictionary = {
   'Export as PNG': 'I-export bilang PNG',
   'Export as SVG': 'I-export bilang SVG',
   'Export as PDF': 'I-export bilang PDF',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'I-import ang PDF',
   'Choose how to add the pages to the canvas.':
     'Piliin kung paano idadagdag ang mga pahina sa canvas.',
   'Single page': 'Isang pahina',
   'All pages': 'Lahat ng pahina',
   'Choose a page': 'Pumili ng pahina',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'Tanggalin ang pinili',
   'Nudge left': 'Itulak pakaliwa',
   'Nudge right': 'Itulak pakanan',
   'Nudge up': 'Itulak pataas',
   'Nudge down': 'Itulak pababa',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'Bukas din sa iba',
   Shared: 'Ibinahagi',
   Browser: 'Browser',
-  // Sharing a space with other people
   Share: 'Ibahagi',
   'Share {name}': 'Ibahagi ang {name}',
   'Share this space': 'Ibahagi ang espasyong ito',
@@ -1360,14 +1305,12 @@ export const fil: Dictionary = {
   'Shared with you': 'Ibinahagi sa iyo',
   'That link does not open anything': 'Walang binubuksan ang link na iyon',
   'Ask for another one.': 'Humiling ng iba.',
-  // Somebody a share link let in, who has no account
   Guest: 'Bisita',
   'Ask to join': 'Humiling sumali',
   Asking: 'Humihiling',
   'Waiting for {who}': 'Hinihintay si {who}',
   '{who} did not let you in': 'Hindi ka pinapasok ni {who}',
   'What the others in this space see.': 'Ang nakikita ng iba sa espasyong ito.',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'Mga update',
   'Release channel': 'Channel ng release',
   Stable: 'Matatag',
@@ -1377,8 +1320,6 @@ export const fil: Dictionary = {
   'Web version': 'Bersyon sa web',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'Ang Matatag ang inilabas na web app, ang Hindi matatag ang pinakabagong build at puwedeng masira.',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'I-import',
   'Convert syntax': 'Baguhin ang sintaks',
   'In this note': 'Sa talang ito',
@@ -1482,8 +1423,6 @@ export const fil: Dictionary = {
   'Undo the import': 'Ibalik ang import',
   'Choose an export': 'Pumili ng export',
   Under: 'Sa ilalim ng',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'Sync',
   'When the same note was written twice': 'Kapag dalawang beses naisulat ang parehong tala',
   'On two devices': 'Sa dalawang device',
@@ -1546,7 +1485,6 @@ export const fil: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'Mananatili ang mga tala sa device na ito; ang account at ang mga naka-sync na kopya lang nito ang mawawala.',
   'Also gone for everyone in {spaces}.': 'Mawawala rin para sa lahat sa {spaces}.',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'Ang tala',
   '{space} panel': 'Panel ng {space}',
   'Panel width': 'Lapad ng panel',
@@ -1557,7 +1495,6 @@ export const fil: Dictionary = {
   'What is selected': 'Ang pinili',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'Canvas: {cards} card, {links} link, {drawings} guhit',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'Mga provider',
   'Make default': 'Gawing default',
@@ -1585,7 +1522,6 @@ export const fil: Dictionary = {
   'The model did not answer.': 'Hindi sumagot ang modelo.',
   'The connection closed before the answer was finished.':
     'Nagsara ang koneksyon bago natapos ang sagot.',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'Naabot na ng iyong {plan} plan ang limitasyon hanggang {time}.',
   'Your {plan} plan is at its limit for now.':
@@ -1614,7 +1550,6 @@ export const fil: Dictionary = {
   Shorter: 'Paikliin',
   Longer: 'Pahabain',
   'Fix grammar': 'Ayusin ang gramatika',
-  // The AI sidebar's commands
   'A cited report': 'Ulat na may sanggunian',
   'A helper in the background': 'Katulong sa likod ng trabaho',
   'A side question': 'Isang karagdagang tanong',
@@ -1716,7 +1651,6 @@ export const fil: Dictionary = {
   'Markdown, shortest name': 'Markdown, pinakaikling pangalan',
   'Markdown, relative path': 'Markdown, relatibong path',
   'Markdown, path in the space': 'Markdown, path sa espasyo',
-  // Publishing part one.
   'The folders you choose become public.': 'Ang piniling folder ay mapupunta sa publiko.',
   'Anyone with the address can read what is published, drafts included.':
     'Sinumang may address ay makakabasa ng nailathala, kasama ang draft.',
@@ -1742,11 +1676,9 @@ export const fil: Dictionary = {
   'Remove the password': 'Alisin ang password',
   'Scan this with your authenticator app, then type its code.':
     'I-scan ito sa authenticator app mo, pagkatapos i-type ang code nito.',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'Litrato',
   Dictate: 'Idikta',
   'Add to {name}': 'Idagdag sa {name}',
-  // Web tabs
   Reload: 'I-reload',
   'Hard reload': 'Buong i-reload',
   'Open in the browser': 'Buksan sa browser',
@@ -1761,7 +1693,6 @@ export const fil: Dictionary = {
   'Playing audio': 'Nagpapatugtog ng audio',
   Muted: 'Naka-mute',
   'Developer tools': 'Mga tool ng developer',
-  // Recording, meetings and what a model wrote
   Record: 'Mag-record',
   Recording: 'Recording',
   'Stop recording': 'Itigil ang pag-record',
@@ -1782,7 +1713,6 @@ export const fil: Dictionary = {
     'Masyadong mahaba ang recording na iyon para gawing salita nang minsanan.',
   'That is as much as one recording may hold.': 'Iyon na ang kasya sa isang recording.',
   'Nothing could be heard in that recording.': 'Walang naririnig sa recording na iyon.',
-  // Publishing part two.
   Spreadsheet: 'Spreadsheet',
   'The app’s own': 'Sa app mismo',
   'publish.css and publish.js in this space dress the site.':
@@ -1800,7 +1730,6 @@ export const fil: Dictionary = {
   'Save as CSV': 'I-save bilang CSV',
   'Kept for {days}': 'Itinatago nang {days}',
   Full: 'Puno na',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'hindi maipadala ang mail - subukan muli',
   'start again - that took too long': 'magsimula muli - masyadong tumagal',
   'sign in to do that': 'mag-sign in para gawin iyon',
@@ -1808,7 +1737,6 @@ export const fil: Dictionary = {
   'something went wrong here - try again': 'may nagkamali dito - subukan muli',
   'this service cannot keep a secret safely':
     'hindi maitatago nang ligtas ng serbisyong ito ang lihim',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only': 'imahe, PDF, at css o js ng site lang',
   'that file is too big': 'masyadong malaki ang file na iyon',
   'that is more settings than an account holds':
@@ -1823,14 +1751,12 @@ export const fil: Dictionary = {
   'that is more folder icons than a space holds':
     'mas marami iyon sa folder icon na kayang hawakan ng isang espasyo',
   'that is more than a site keeps': 'mas marami iyon sa kayang itago ng isang site',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'walang tao sa address na iyon',
   'nobody by that name': 'walang tao sa pangalang iyon',
   'nobody is waiting by that name': 'walang naghihintay sa pangalang iyon',
   'this space is yours': 'sa iyo ang espasyong ito',
   'that link is busy, try again in a minute':
     'abala ang link na iyon, subukan muli sa isang minuto',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'walang ganoong bersyon',
   'this note was shared with you, not its folder':
     'ang talang ito ang ibinahagi sa iyo, hindi ang folder nito',
@@ -1839,7 +1765,6 @@ export const fil: Dictionary = {
   'nothing to delete': 'walang tatanggalin',
   'this room is not answering - try again': 'hindi sumasagot ang room na ito - subukan muli',
   'rooms are not running here': 'hindi tumatakbo ang room dito',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'hindi sumasagot ang tindahan ng tema',
   'that is not a theme': 'hindi iyon tema',
   'no such theme': 'walang ganoong tema',
@@ -1852,10 +1777,8 @@ export const fil: Dictionary = {
   'that is more than a spoken command': 'mas mahaba iyon sa isang utos sa tinig',
   'that is a lot of listening - try again later': 'napakaraming pakikinig - subukan mamaya',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% teksto',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'Telepono',
   'The bar sits over the keyboard on a phone.': 'Sa telepono, nasa ibabaw ng keyboard ang bar.',
   'On the bar': 'Sa bar',
@@ -1869,31 +1792,25 @@ export const fil: Dictionary = {
   'A pull past the top runs': 'Ang hila lampas sa itaas ay magpapatakbo ng',
   Nothing: 'Wala',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'Itago',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'Ilipat sa kanan',
   'Move to the left': 'Ilipat sa kaliwa',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'Kasaysayan sa account',
   'Keep versions': 'Itago ang mga bersyon',
   'A month': 'Isang buwan',
   'A year': 'Isang taon',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Lahat mula sa huling araw, pagkatapos isa kada oras, isa kada araw pagkalipas ng isang buwan, at isa kada linggo pagkalipas ng tatlo.',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Kasinglaki na ng pinakamalaking posibleng laki ng tala sa isang silid ang talang ito.',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'Bagong tab',
   'Full screen': 'Buong screen',
   'Print…': 'I-print…',
   'Share…': 'Ibahagi…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'ay gustong',
   'Don’t allow': 'Huwag payagan',
   Allow: 'Payagan',
@@ -1910,7 +1827,6 @@ export const fil: Dictionary = {
   'Use your MIDI devices': 'Gamitin ang iyong mga MIDI device',
   'Manage windows on all your displays': 'Pamahalaan ang mga window sa lahat ng iyong display',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'Impormasyon ng site',
   Downloads: 'Mga download',
   'Downloading {name}': 'Dina-download ang {name}',
@@ -1937,11 +1853,9 @@ export const fil: Dictionary = {
   'Turn into': 'Gawing',
   Foldable: 'Natitiklop',
   'Starts folded': 'Nakatiklop sa simula',
-  // Where a space keeps what websites store
   'Web data': 'Data ng web',
   Global: 'Pangkalahatan',
   Site: 'Site',
-  // The Mac's menu bar
   'About {name}': 'Tungkol sa {name}',
   Services: 'Mga serbisyo',
   'Hide {name}': 'Itago ang {name}',
@@ -1949,7 +1863,6 @@ export const fil: Dictionary = {
   'Show all': 'Ipakita lahat',
   'Quit {name}': 'Umalis sa {name}',
   'Bring all to front': 'Dalhin lahat sa harap',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Ibalik ang pagkopya',
   'Devices with your AI vault': 'Mga device na may iyong AI vault',
   'This device': 'Ang device na ito',
@@ -1964,13 +1877,11 @@ export const fil: Dictionary = {
   'Select down': 'Pumili pababa',
   'Select up': 'Pumili pataas',
   'Select or deselect': 'Piliin o alisin sa pinili',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'Buksan sa bagong tab',
   'Open to the side': 'Buksan sa tabi',
   'Open all': 'Buksan lahat',
   'Show in the file list': 'Ipakita sa listahan ng file',
   'Collapse the file list': 'I-collapse ang listahan ng file',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'Palawakin ang napili',
   'Shrink the selection': 'Paliitin ang napili',
   'Insert a line above': 'Magsingit ng linya sa itaas',
@@ -1984,19 +1895,16 @@ export const fil: Dictionary = {
   'Duplicate the block': 'Gumawa ng kopya ng block',
   'Move the block up': 'Iakyat ang block',
   'Move the block down': 'Ibaba ang block',
-  // The editor's menu on a link and a picture
   'Copy link address': 'Kopyahin ang address ng link',
   'Edit link': 'I-edit ang link',
   'Remove link': 'Alisin ang link',
   'Copy picture': 'Kopyahin ang larawan',
   'Open picture': 'Buksan ang larawan',
   'Delete picture': 'Tanggalin ang larawan',
-  // A file dropped into a note
   'Storing the file': 'Iniimbak ang file',
   'That file is larger than a note can keep.':
     'Mas malaki ang file na iyan kaysa kayang itago ng isang tala.',
   'That file could not be kept.': 'Hindi naitago ang file na iyan.',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'Bagong terminal',
   'Command Prompt': 'Command Prompt',
   Terminal: 'Terminal',
@@ -2021,11 +1929,8 @@ export const fil: Dictionary = {
     one: 'I-paste ang {count} linya?',
     other: 'I-paste ang {count} na linya?',
   },
-  // Orden as the default browser
   'Default browser': 'Default na browser',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': 'I-undo ang mga edit ni {name}',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'I-archive',
   Unarchive: 'Alisin sa archive',
   Archived: 'Na-archive',
@@ -2038,7 +1943,6 @@ export const fil: Dictionary = {
     one: '{count} na-archive na item sa loob',
     other: '{count} na-archive na item sa loob',
   },
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'Kaliwang sidebar',
   'Right sidebar': 'Kanang sidebar',
   'Ask about this space': 'Magtanong tungkol sa espasyong ito',
@@ -2049,7 +1953,6 @@ export const fil: Dictionary = {
   'Ask again': 'Itanong muli',
   'Continue when the limit resets': 'Ituloy kapag na-reset ang limitasyon',
   'Continues at {time}': 'Itutuloy sa {time}',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more':
     'Magtanong ng kahit ano, @ para magdagdag, / para sa iba pa',
   'What can I help with?': 'Ano ang maitutulong ko?',
@@ -2118,13 +2021,10 @@ export const fil: Dictionary = {
   Closed: 'Isinara',
   Ran: 'Pinatakbo',
   Changed: 'Binago',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': 'Itong {device}',
   '{name} is back: {device} was writing in it':
     'Bumalik ang {name}: may isinusulat dito ang {device}',
   'Changes to {name} are not syncing': 'Hindi nagsi-sync ang mga pagbabago sa {name}',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Pagbubukas',
   Pressing: 'Pagpindot',
   Typing: 'Pagta-type',
@@ -2139,18 +2039,14 @@ export const fil: Dictionary = {
   'Agent tabs closed': 'Isinara ang mga tab ng agent',
   'Orden is still running for your agents': 'Tumatakbo pa rin ang Orden para sa iyong mga agent',
   '{client} wants to connect': 'Gustong kumonekta ng {client}',
-  // Web logins that travel, and the devices of an account
   'no such device': 'walang ganoong device',
   'give the device a name': 'bigyan ng pangalan ang device',
   'that computer is no longer waiting': 'hindi na naghihintay ang computer na iyon',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'walang ganoong file',
   'too many changes at once - try again in a minute':
     'napakaraming pagbabago nang sabay - subukang muli pagkalipas ng isang minuto',
   'that is more than a space keeps about its tree':
     'higit iyan sa itinatago ng isang espasyo tungkol sa puno nito',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'Mga agent sa computer na ito',
   'Your account’s connector': 'Connector ng iyong account',
   'Orden asks you once, the first time it connects.':
@@ -2221,12 +2117,9 @@ export const fil: Dictionary = {
     one: '{count} tawag',
     other: '{count} na tawag',
   },
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'Mabilis na tanong',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Idagdag sa tala',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'Mga extension',
   'Add extension': 'Magdagdag ng extension',
   'Manage extensions': 'Pamahalaan ang mga extension',
@@ -2246,7 +2139,6 @@ export const fil: Dictionary = {
   'Did not load': 'Hindi na-load',
   Permissions: 'Mga pahintulot',
   Options: 'Mga opsyon',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'Remote',
   'Add host': 'Magdagdag ng host',
   Reconnect: 'Kumonekta muli',
@@ -2254,11 +2146,8 @@ export const fil: Dictionary = {
   'No group': 'Walang grupo',
   'Not an address': 'Hindi isang address',
   'Could not connect to {host}': 'Hindi makakonekta sa {host}',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'Ipinapadala ang imahe',
   'Could not send the image': 'Hindi maipadala ang imahe',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': {
     one: 'at {count} pagkatapos nito',
     other: 'at {count} pagkatapos nito',
@@ -2271,8 +2160,6 @@ export const fil: Dictionary = {
   'Pages, terminals and moves are not undone': 'Hindi naa-undo ang mga page, terminal at paglipat',
   Rewind: 'I-rewind',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'Search engine',
   History: 'History',
   'Search history': 'History ng paghahanap',
@@ -2296,14 +2183,12 @@ export const fil: Dictionary = {
   'New private tab': 'Bagong pribadong tab',
   'All spaces': 'Lahat ng space',
   'the data could not be deleted': 'Hindi ma-delete ang data',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'I-snooze',
   Reminders: 'Mga paalala',
   'Reminders ring while Orden is open': 'Tumutunog ang mga paalala habang bukas ang Orden',
   Automatic: 'Awtomatiko',
   'Stay in the tray': 'Manatili sa tray',
   'Exact alarms': 'Eksaktong alarma',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'Mga gagawin',
   'Plan my day': 'Planuhin ang araw ko',
   'Add a task': 'Magdagdag ng gawain',
@@ -2315,8 +2200,6 @@ export const fil: Dictionary = {
   'Done tasks too': 'Pati tapos na gawain',
   'As a task': 'Bilang gawain',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'Mga gawain',
   Ascending: 'Pataas',
   Descending: 'Pababa',
@@ -2401,8 +2284,6 @@ export const fil: Dictionary = {
   'Without a value': 'Walang halaga',
   'With a value': 'May halaga',
   Unique: 'Natatangi',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'Bagong tala mula sa template',
   Automations: 'Mga automation',
   'Row added': 'Naidagdag ang hilera',
@@ -2431,7 +2312,6 @@ export const fil: Dictionary = {
   Form: 'Pormularyo',
   Formula: 'Pormula',
   'Blocked by {task}': 'Hinarang ng {task}',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'Magbabala bago umalis',
   'When something runs': 'Kapag may tumatakbo',
   'Quit {name}?': 'Umalis sa {name}?',
@@ -2442,16 +2322,13 @@ export const fil: Dictionary = {
   'Quit anyway': 'Umalis pa rin',
   'Restart anyway': 'I-restart pa rin',
   'Close anyway': 'Isara pa rin',
-  // The online terminal
   'Online terminal': 'Online na terminal',
   'New online terminal': 'Bagong online na terminal',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'ibang device',
   'Taken over by {device}': 'Kinuha ng {device}',
   'Open on {device} since {time}': 'Bukas sa {device} mula {time}',
   'Take over': 'Kunin',
   'Take back': 'Bawiin',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'Bagong application',
   Application: 'Application',
   'This application’s file is damaged': 'Sira ang file ng application na ito',
@@ -2563,8 +2440,6 @@ export const fil: Dictionary = {
   'Compare with original': 'Ihambing sa orihinal',
   'Conflict copies from other apps': 'Mga conflict copy mula sa ibang app',
   'Remove from sync': 'Alisin sa sync',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'Profile',
   Change: 'Palitan',
   'Take photo': 'Kumuha ng litrato',
@@ -2589,7 +2464,6 @@ export const fil: Dictionary = {
   'that picture could not be opened': 'hindi mabuksan ang larawang iyon',
   'the camera could not be opened': 'hindi mabuksan ang camera',
   'that picture is too big': 'masyadong malaki ang larawang iyon',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'Chat',
   Reply: 'Sumagot',
   Replies: 'Mga sagot',
@@ -2608,7 +2482,6 @@ export const fil: Dictionary = {
   'Also send to {chat}': 'Ipadala rin sa {chat}',
   'Skin tone': 'Kulay ng balat',
   'Deleted account': 'Binurang account',
-  // Chats: notifications
   Mute: 'I-mute',
   Unmute: 'I-unmute',
   'New message': 'Bagong mensahe',
@@ -2618,7 +2491,6 @@ export const fil: Dictionary = {
   Weekdays: 'Mga araw ng trabaho',
   Starts: 'Magsisimula',
   Ends: 'Matatapos',
-  // Chats: everywhere
   'Read chats': 'Basahin ang mga chat',
   'Post in chats': 'Magsulat sa mga chat',
   'Always in this chat': 'Palagi sa chat na ito',
@@ -2630,14 +2502,12 @@ export const fil: Dictionary = {
   'Search this chat': 'Maghanap sa chat na ito',
   'Add as task': 'Idagdag bilang gawain',
   'Save as note': 'I-save bilang tala',
-  // Appearance: glass's own pairs of colours
   Dawn: 'Bukang-liwayway',
   Lagoon: 'Lagoon',
   Lilac: 'Lila',
   Peach: 'Peach',
   Sage: 'Sage',
   Mist: 'Ulap',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'Bagong database',
   'New page': 'Bagong pahina',
   'Not started': 'Hindi pa nasisimulan',
@@ -2663,7 +2533,6 @@ export const fil: Dictionary = {
   Large: 'Malaki',
   Both: 'Pareho',
   'Shown on cards': 'Ipinapakita sa mga card',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'Sini-sync ang mga AI key ng browser na ito sa iba mong device sa pamamagitan ng vault.',
   'Which of your AI accounts this feature asks.':
@@ -2910,7 +2779,6 @@ export const fil: Dictionary = {
   'Some changes may not be noticed': 'Maaaring hindi mapansin ang ilang pagbabago',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'Naabot na ng system ang hangganan nito sa mga binabantayang folder, kaya maaaring hindi mapansin ng Orden ang bawat pagbabagong ginagawa ng ibang programa sa iyong mga space. Naaayos ito sa pagtaas ng fs.inotify.max_user_watches.',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Ilipat ang chat na {name} sa {space}?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'Mababasa na ng lahat sa {space} ang buong kasaysayan, at mawawala ito sa mga tao sa {from}.',
@@ -2951,7 +2819,6 @@ export const fil: Dictionary = {
   'One colour': 'Isang kulay',
   'Web icons': 'Mga web icon',
   'Sites you visit will appear here': 'Lalabas dito ang mga site na binibisita mo',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'Pagdidikta',
   'Dictate with': 'Magdikta gamit ang',
   'Where your voice goes to be turned into words.':
@@ -2982,11 +2849,9 @@ export const fil: Dictionary = {
   'Not on this device': 'Wala sa device na ito',
   'Not on this device. It opens once you are online again.':
     'Wala sa device na ito. Magbubukas ito kapag online ka na ulit.',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'IMAP server',
   'SMTP server': 'SMTP server',
   'User name': 'Username',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'Apurahan',
   Important: 'Mahalaga',
   'If time': 'Kung may oras',

@@ -1,16 +1,3 @@
-/** Putting the last file operation back.
- *
- *  Seven kinds of operation and seven ways back, each of them a write or two and then
- *  the operation said the way every file operation is: once, to everything kept by
- *  path (see workspace/file-ops.ts), with a document open on a file taking the words
- *  it says now. What is on the stack and how long it stays there is
- *  workspace/undo.svelte.ts; this is what one entry means when somebody asks for it
- *  back; redoing.ts is the way forward again.
- *
- *  Its own module because none of it is about the workspace's own state. Every one
- *  of these reads a recorded action and writes the disk, which is why it can be
- *  tested by handing it a stand-in store rather than a workspace. */
-
 import { oneEdit } from '@orden/markdown/edits'
 import { freePath } from '@orden/markdown/paths'
 import { sha256 } from '../bytes'
@@ -29,19 +16,14 @@ import type { Bookmark } from './bookmarks.svelte'
 import { inFileTurn, writeEdited, writeInTurn } from './in-turn'
 import { writeFile } from './write-file'
 
-/** What putting a file operation back needs of the store holding it. */
 export interface PutsBack {
   readonly undone: FileActions
   readonly archive: Archive
   openEntry(path: string): Promise<void>
-  /** The document a file is open as; see workspace/open.ts. */
   documentAt(path: string): NoteDoc | null
   entryAt(path: string): Entry | null
   reload(path: string, content: string): void
   retarget(from: string, to: string, how?: Retargeting): Promise<number>
-  /** A file operation, said once to everything kept by path; see `fileMoved` in
-   *  workspace.svelte.ts. A rename put back is a rename, a delete put back is a file
-   *  come back, and an import or a copy taken back is files gone. */
   fileMoved(from: string, to: string, kind: Kind): Promise<void>
   fileGone(path: string, kind: 'file' | 'folder', back?: string): Promise<void>
   fileCame(
@@ -52,26 +34,19 @@ export interface PutsBack {
     putBack?: boolean,
   ): Promise<void>
   undoFileAction(): Promise<void>
-  /** A move on the disk, said to sync first; see `renameOnDisk` in workspace.svelte.ts. */
   renameOnDisk(from: string, to: string, kind: Kind): Promise<void>
-  /** One file operation on everything open at or under a path, after whatever write
-   *  of any of it is in the air; see `holdingUnder` in workspace/saving.svelte.ts. */
   holdingUnder(path: string, run: () => Promise<void>): Promise<void>
   loadTree(): Promise<void>
   persist(): void
   readonly bookmarks: { put(root: string, list: Bookmark[]): void }
-  /** A file deleted without a step to undo it; see `bin` in workspace.svelte.ts. */
   bin(path: string, isFolder: boolean, how?: Binning): Promise<Kept | null>
 }
 
-/** Puts the last file operation back. */
 export async function undoLastFileAction(ws: PutsBack): Promise<void> {
   const action = ws.undone.last
   if (!action) return
 
   if (action.kind === 'many') {
-    // The steps of one gesture, newest first. One that will not go back leaves those
-    // before it on the stack as the step, to be asked for again.
     const steps = [...action.steps]
     for (let step = steps.at(-1); step; step = steps.at(-1)) {
       if (!(await undoOne(ws, step))) {
@@ -101,16 +76,11 @@ async function refused(ws: PutsBack, action: FileAction) {
   )
 }
 
-/** Puts one operation back; false where it would not go. */
 async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
   try {
     switch (action.kind) {
       case 'delete':
-        // Where it landed goes on the step, which beside a note made at its name since
-        // is not where it was: a redo deletes this note, not that one.
         action.path = await putBack(action)
-        // And the index reads it again, so the links to it resolve at once, and sync
-        // brings back the entries it was.
         await ws.fileCame(
           action.path,
           action.folder ? 'folder' : 'file',
@@ -120,10 +90,8 @@ async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
         )
         break
       case 'create': {
-        // Into Recently deleted, and what that kept goes on the step for a redo.
         const kept = await ws.bin(action.path, false)
         action.content = kept?.content ?? ''
-        // Put back by the trash's id where it went there, else by the word it went with.
         if (kept?.trashId) action.trashId = kept.trashId
         else delete action.trashId
         if (kept?.back) action.back = kept.back
@@ -135,7 +103,6 @@ async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
         for (const step of [...action.steps].reverse()) if (!(await undoOne(ws, step))) return false
         break
       case 'keep': {
-        // The rows sliding as they go, the way the drop that kept them slid them.
         const { moving } = await import('../list-landing.svelte')
         moving(() => ws.bookmarks.put(action.root, action.before))
         break
@@ -169,30 +136,11 @@ async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
         break
     }
   } catch {
-    // Something else has since changed the file; leave what is there alone.
-    // The action stays on the stack, so the same undo can be tried again
-    // once whatever is in the way has been dealt with.
     return false
   }
   return true
 }
 
-/** An import taken back: the files it wrote, gone again.
- *
- *  Outright rather than into the trash, for a note that still says what the import
- *  wrote. That was never a note anybody kept, and putting three thousand rows into
- *  Recently deleted would bury whatever is actually in there. A tab that is open on
- *  one of them is closed, the way a deleted note's is.
- *
- *  A note written in since is somebody's writing, and taking it away outright lost
- *  it for good, so it stays where it is. What has no hash to compare - a paper, a
- *  picture, a page note - goes to Recently deleted the way a note made here does
- *  when that is undone, since nothing can say it has not changed. This device's
- *  Recently deleted even signed in: the account may never have been handed it.
- *
- *  A file that will not go is stepped over rather than stopping the undo: the
- *  rest of the import still goes, and what is left is what somebody has since
- *  taken an interest in. */
 async function unimport(ws: PutsBack, action: Extract<FileAction, { kind: 'import' }>) {
   for (const path of action.paths) {
     const wrote = action.wrote[path]
@@ -215,12 +163,6 @@ async function unimport(ws: PutsBack, action: Extract<FileAction, { kind: 'impor
   }
 }
 
-/** A copy taken back: what it made, gone again, into Recently deleted the way a note
- *  made here goes when that is undone. A copy is a note somebody can go on writing in
- *  before asking for it back, and taken off the disk outright that writing was gone
- *  for good. This device's Recently deleted even signed in, since a copy made offline
- *  or before the next push is on no account; see `bin` in workspace.svelte.ts. A tab
- *  open on anything in it closes as it goes. */
 async function uncopy(ws: PutsBack, action: Extract<FileAction, { kind: 'copy' }>) {
   for (const { path, folder } of action.made) {
     await ws.bin(path, folder, { madeHere: true })
@@ -228,30 +170,15 @@ async function uncopy(ws: PutsBack, action: Extract<FileAction, { kind: 'copy' }
   }
 }
 
-/** A deleted note back where it was, answering with where that is. Out of the
- *  device's trash when it went there - which moves it aside when something has
- *  taken its name meanwhile - and from the snapshot taken on the way out otherwise,
- *  which steps aside the same way; see `writeBeside`.
- *
- *  The trash can refuse: the sweep runs daily and clears anything past its
- *  fourteen days, and Recently deleted can purge an entry by hand. The
- *  snapshot is still here either way, so it stands in rather than leaving
- *  the note gone with nothing said. */
 export async function putBack(action: Extract<FileAction, { kind: 'delete' }>): Promise<string> {
   if (!action.trashId && action.notes) {
-    // A folder deleted signed in: the folders it held, and its notes' words.
     await invoke('create_folder', { path: action.path })
     for (const path of action.folders ?? []) await invoke('create_folder', { path })
-    // Beside a note made at the same name since, as a note's own delete does.
     for (const note of action.notes) await writeBeside(note.path, note.content)
     return action.path
   }
 
   if (!action.trashId) {
-    // Nothing kept and nothing in the trash, which is what a PDF deleted while
-    // signed in looks like. Writing nothing would leave an empty file where the
-    // paper was, so this says so instead. A note that was empty is an empty note: an
-    // empty note the account held has nothing else to come back from.
     if (!action.content && !(isMarkdownPath(action.path) && !action.folder)) {
       throw new Error('there is nothing to put back')
     }
@@ -286,20 +213,12 @@ async function cameOver(action: Extract<FileAction, { kind: 'delete' }>, restore
   return to
 }
 
-/** Words written back at `path`, or beside it where something is there now, answering
- *  with where they went - the way the trash puts a note back.
- *
- *  A note can be made at a deleted note's name before the delete is undone, and the
- *  undo used to write over it: the words typed into the new one were gone, and with
- *  no version of them kept, since nothing had been asked to keep one. So the disk is
- *  asked first, and a name with a file at it steps aside as a new note's does. */
 async function writeBeside(path: string, content: string): Promise<string> {
   const at = await freeBeside(path)
   await invoke('write_note', { path: at, content })
   return at
 }
 
-/** `path`, or the first spelling beside it with nothing on the disk at it. */
 async function freeBeside(path: string): Promise<string> {
   const found: string[] = []
   for (;;) {
@@ -309,11 +228,6 @@ async function freeBeside(path: string): Promise<string> {
   }
 }
 
-/** Whether a note still says what an operation left it saying: the document open on
- *  it where there is one, since what is typed there may not have reached the file
- *  yet, and the file otherwise. Either line ending, because a file that had Windows
- *  ones keeps them whenever the app writes it; see `as_written` in notes.rs. A file
- *  that will not read cannot say it is unchanged. */
 async function stillSays(ws: PutsBack, path: string, words: string): Promise<boolean> {
   const open = ws.documentAt(path)
   if (open) open.flush()
@@ -322,15 +236,7 @@ async function stillSays(ws: PutsBack, path: string, words: string): Promise<boo
   return now.replace(/\r\n/g, '\n') === words.replace(/\r\n/g, '\n')
 }
 
-/** What a folder about to be deleted signed in holds: the folders under it and the
- *  words of every file in it, read off the disk, so an undo can write them again.
- *  Null when that is not the whole folder - a picture, a PDF, anything that is not
- *  words - or more than is worth holding, which leaves the deletion to Recently
- *  deleted. The file list leaves those out, and an undo read from it gave back the
- *  notes without them, saying nothing. */
 export async function heldIn(path: string): Promise<Pick<Kept, 'notes' | 'folders'> | null> {
-  // Dotfiles and a system's own clutter are left out, as sync leaves them: the
-  // account keeps no copy of them either, and a Finder's .DS_Store is not words.
   const options = { papers: true, every: true }
   const listed = await invoke<Entry>('read_tree', { root: path, options }).catch(() => null)
   if (!listed) return null
@@ -357,20 +263,6 @@ export async function heldIn(path: string): Promise<Pick<Kept, 'notes' | 'folder
   return (await walk(listed)) ? { notes, folders } : null
 }
 
-/** Whether the account holds everything in a folder about to be deleted signed in,
- *  so the account's copy can stand in for it. A dotfile anywhere under it says no:
- *  sync never hands the account one, so `.obsidian/` or `.git/` deleted outright was
- *  gone for good. So does any file that is not a note, a picture or a paper: the
- *  account's Recently deleted gives back notes and nothing else. So does a note sync
- *  has not pushed yet, and one written since it was pushed, whose newest words only
- *  this disk has. So does a folder the listing could not
- *  read into - a link out of the space, or one nested past the depth the listing
- *  stops at - which looks empty and is not. What sync leaves alone as clutter is not
- *  worth keeping either way.
- *
- *  Asked one file at a time, each against what the account was handed, with one
- *  allowance of bytes for the whole folder: a folder of thousands of notes is not
- *  worth reading through, and once the allowance is spent the answer is no. */
 export async function accountHoldsAll(
   path: string,
   holds: (path: string, how: Holding) => Promise<boolean>,
@@ -389,8 +281,6 @@ export async function accountHoldsAll(
       } else if (CLUTTER.test(one.name)) {
         continue
       } else if (!isMarkdownPath(one.name)) {
-        // The account's Recently deleted gives back notes and nothing else: a paper
-        // or a picture deleted outright with its folder is gone, held bytes or not.
         return false
       } else if (!(await holds(one.path, { modified: one.modified, budget }))) {
         return false
@@ -401,19 +291,12 @@ export async function accountHoldsAll(
   return walk(listed)
 }
 
-/** How much of a folder's files asking whether the account holds them may read. A
- *  folder of notes is well inside it; one of papers written since their last push is
- *  not read at all, and past it the folder goes to the trash. */
 const HOLDS_READ = 16_000_000
 
-/** What sync leaves alone besides dotfiles; see `ignored` in space_watch/walk.rs. */
 const CLUTTER = /^(~\$.*|thumbs\.db|desktop\.ini|Icon\r)$/i
 
-/** As much of a folder's words as a deletion holds: a few megabytes, past which the
- *  step is not worth the memory and Recently deleted is the way back. */
 const HELD = 4_000_000
 
-/** Puts an archiving back, either way round, and opens the tabs it closed. */
 async function unarchive(
   ws: PutsBack,
   action: Extract<FileAction, { kind: 'archive' | 'unarchive' }>,
@@ -422,22 +305,7 @@ async function unarchive(
   for (const path of action.closed) await ws.openEntry(path)
 }
 
-/** Puts a replacement back: every note that was touched says what it said, with
- *  whatever has been typed into it since the replacement kept.
- *
- *  The edits that take it back were worked out against the words the replacement
- *  left, and the reader may have gone on writing. So a note open in a pane takes
- *  them carried onto the words it holds now, through everything the document
- *  remembers changing - the same road the replacement itself took (see `writeOpen`
- *  in workspace/note-text.ts) - and keeps its caret; and a note nobody has open
- *  takes them carried past the one span its file has changed by since, an edit
- *  that falls inside that span being the reader's writing and left alone. */
 async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'replace' }>) {
-  // Every closed note read before any is written. A read that fails - a file another
-  // program rewrote in an encoding that is not UTF-8, or deleted - cannot say the
-  // note is unchanged, and taking it for one wrote the old words over that file or
-  // brought a deleted note back. So it leaves the whole replacement where it is, on
-  // the stack, rather than half of it put back.
   for (const note of action.notes) {
     if (ws.documentAt(note.path)) continue
     const now = await invoke<string>('read_note', { path: note.path }).catch(() => null)
@@ -468,9 +336,6 @@ async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'r
   }
 }
 
-/** The edits that take a replacement back, applied to a file that has changed since
- *  by one span: those before it as they were, those after it moved by what it grew
- *  or shrank by, and those it overlaps left out. */
 function carriedPast(
   note: { after: string; edits: readonly Edit[] },
   file: string,
@@ -486,26 +351,19 @@ function carriedPast(
     return []
   })
 
-  // In the file's own line endings, where the replacement was worked out on one.
   return file === now ? applied(now, carried) : appliedToFile(file, carried)
 }
 
-/** Puts a rename or a move back: the file where it was, and the links that
- *  followed it pointed at the old name again. */
 async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' | 'rename' }>) {
   if (action.kind === 'move' && action.carries) {
     ;(await import('./moving-space')).followsTo(action.from)
   }
   const kind = ws.entryAt(action.to)?.is_dir === true ? 'folder' : 'file'
-  // A move back into another space takes its chats back first, as the move did, and
-  // the account refusing keeps the step to be asked for again; see chat-leaving.ts.
   const back =
     action.kind === 'move'
       ? await (await import('./chat-leaving')).chatsCarried(action.to, folderOf(action.from))
       : null
 
-  // A move like the one it undoes, so it waits for the writes of what is open in it
-  // the same way, and is under way until it is told; see `move` in workspace.svelte.ts.
   const { moving: underWay } = await import('../views/moving')
   await underWay(action.from, () =>
     ws.holdingUnder(action.to, async () => {
@@ -514,17 +372,11 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
         throw error
       })
 
-      // The rename rewrote every link that pointed at the note; putting the name
-      // back has to put those back too, which is the same rewrite the other way
-      // round - and, again, before anything is told the note moved.
-      // A rewrite that fails leaves the name put back all the same, and told so; see
-      // `retargetMoved` in workspace.svelte.ts.
       if (action.rewrote)
         await ws.retarget(action.to, action.from, { moved: true }).catch(() => undefined)
       await ws.fileMoved(action.to, action.from, kind)
     }),
   )
-  // A nesting made the folder; refused where something else is in it now.
   if (action.nests) {
     await invoke('remove_empty_folder', { path: folderOf(action.to) }).catch(() => undefined)
   }
@@ -533,16 +385,6 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
   }
 }
 
-/** Puts a merge back: both notes as they were, and the note that was folded
- *  in written again where it was.
- *
- *  Only while the note it went into still says what the merge left. The merge opens
- *  that note and the reader goes on typing in it, and writing its old words back over
- *  that took the typing with no version of it kept; so a note written in since leaves
- *  the merge where it is, on the stack, the way any undo something is in the way of
- *  does. And the folded note's name was free once it went: a note made there since,
- *  synced in or written by an agent, stays, and the old words step aside beside it as
- *  a deleted note's do when it comes back; see `writeBeside`. */
 async function unmerge(ws: PutsBack, action: Extract<FileAction, { kind: 'merge' }>) {
   if (!(await stillSays(ws, action.into, action.intoAfter))) {
     throw new Error(`${action.into} has been written in since the merge`)
@@ -553,28 +395,12 @@ async function unmerge(ws: PutsBack, action: Extract<FileAction, { kind: 'merge'
   await writeFile(from, action.fromContent)
   ws.reload(action.into, action.intoContent)
 
-  // Links to the note that went away were pointed at the note it went into: put
-  // back in the notes the merge rewrote, and only there, since a link that always
-  // named the note it went into still means that note. The two notes themselves
-  // were just written back whole. A merge recorded before this was kept has no
-  // list, and is put back across the space as it used to be.
-  //
-  // They point at wherever the folded note landed, which is its old name unless
-  // something has arrived there since.
   const only = action.relinked?.filter(
     (path) => !samePath(path, action.into) && !samePath(path, action.from),
   )
   if (!only || only.length) await ws.retarget(action.into, from, only ? { only } : {})
 }
 
-/** Puts a split or an extraction back: the note whole again, and the note that
- *  was carved out of it gone.
- *
- *  Guarded the way a merge is, and for the same reason. A note written in since the
- *  carve leaves the carve where it is rather than losing the typing under the words
- *  it had before. A carved note written in since stays: what was typed into it is in
- *  no other file, and the note whole again already holds everything it was carved
- *  with. */
 async function uncarve(ws: PutsBack, action: Extract<FileAction, { kind: 'split' | 'extract' }>) {
   if (!(await stillSays(ws, action.from, action.fromAfter))) {
     throw new Error(`${action.from} has been written in since it was carved`)

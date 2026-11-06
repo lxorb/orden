@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ru: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'Всё готово',
   Personalize: 'Настроить под себя',
   Clean: 'Чистый',
@@ -10,13 +9,11 @@ export const ru: Dictionary = {
   'Do you write code?': 'Вы пишете код?',
   Yes: 'Да',
   No: 'Нет',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Из других приложений: {key}',
   'From other apps: set in your system settings':
     'Из других приложений: задаётся в настройках системы',
   'From other apps: bind {command} in your system settings':
     'Из других приложений: назначьте {command} в настройках системы',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Важное',
   'Add to Essentials': 'Добавить в важное',
   'Remove from Essentials': 'Удалить из важного',
@@ -24,20 +21,16 @@ export const ru: Dictionary = {
   'Add blocks to Essentials': 'Добавить блоки в важное',
   'Add view to Essentials': 'Добавить вид в важное',
   'Open tabs and Essentials': 'Открывать вкладки и важное',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor теперь называется Orden',
   'Notes from nibeditor.com': 'Заметки с nibeditor.com',
   'Nothing there': 'Там ничего нет',
-  // AI: the three permission modes
   'Full permissions': 'Полный доступ',
   'Auto mode': 'Автоматический режим',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'Полный доступ: ничего не спрашивается и не передаётся вам, даже вход, оплата, отправка или удаление',
-  // Import: Zen's tabs
   'Import from Zen': 'Импорт из Zen',
   'Containers stay in Zen': 'Контейнеры остаются в Zen',
   'Zen’s tabs could not be read.': 'Не удалось прочитать вкладки Zen.',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'Контейнеры остаются в Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} ищет через {engine}: выберите его в настройках, чтобы искать так и здесь',
@@ -66,38 +59,29 @@ export const ru: Dictionary = {
   'Reading List': 'Список для чтения',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS держит вкладки и закладки Safari за полным доступом к диску. Включите там Orden и попробуйте снова.',
-  // Settings: note types
   'Page note': 'Заметка со страницами',
   'Web note': 'Веб-заметка',
   'Private tab': 'Приватная вкладка',
   'Note types': 'Типы заметок',
-  // Tasks: Upcoming's weeks
   'Previous week': 'Предыдущая неделя',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'Добавить проект выше',
   'Add project below': 'Добавить проект ниже',
   'Projects folder': 'Папка проектов',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'Пропустить',
   'Complete forever': 'Выполнить навсегда',
-  // Tasks: comments
   Comments: 'Комментарии',
-  // Tasks: filters
   Filters: 'Фильтры',
   'Add filter': 'Добавить фильтр',
   'Edit filter': 'Изменить фильтр',
-  // Tasks: a project's sections
   'Add section': 'Добавить раздел',
   '{name} (copy)': '{name} (копия)',
   'Its tasks are deleted with it.': 'Задачи раздела удалятся вместе с ним.',
-  // Tasks: keys, selection and the undo toast
   Completed: 'Выполнено',
   'Remove date': 'Убрать дату',
   'Next task': 'Следующая задача',
   'Previous task': 'Предыдущая задача',
   'Add task at the top': 'Добавить задачу наверх',
   '{count} selected': 'Выбрано: {count}',
-  // Tasks: the Display menu
   Display: 'Вид',
   'Completed tasks': 'Выполненные задачи',
   Smart: 'Умная',
@@ -109,20 +93,16 @@ export const ru: Dictionary = {
   'Reset all': 'Сбросить всё',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'Макет показывает задачи списком, доской или календарём. Группировка делит их на группы, которые становятся столбцами доски. Сортировка упорядочивает каждую группу. Фильтры скрывают то, что вам не нужно. Всё это сохраняется для этого представления.',
-  // Tasks: several lines pasted into quick add
   'One task': 'Одна задача',
   'One per line': 'По одной на строку',
   'Add with AI': 'Добавить с ИИ',
-  // Tasks: the projects in the panel
   Favorites: 'Избранное',
   'Add project': 'Добавить проект',
   'Add sub-project': 'Добавить подпроект',
-  // Tasks: the task view
   'Sub-tasks': 'Подзадачи',
   'Add sub-task': 'Добавить подзадачу',
   'New label': 'Новая метка',
   'No deadline': 'Без срока',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'Перенести',
   'Later this week': 'Позже на этой неделе',
   'This weekend': 'В эти выходные',
@@ -139,22 +119,18 @@ export const ru: Dictionary = {
   Reopen: 'Открыть снова',
   Schedule: 'Запланировать',
   'Open in note': 'Открыть в заметке',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Другое приложение',
   'Import from Obsidian': 'Импорт из Obsidian',
   'Import from Notion': 'Импорт из Notion',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'Подсказки',
   'Silent mode': 'Тихий режим',
   'See how your notes connect.': 'Посмотрите, как связаны ваши заметки.',
   'Press {key} to find anything, notes and commands alike.':
     'Нажмите {key}, чтобы найти что угодно: заметки и команды.',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Показывать Markdown при наборе',
   'Open notes in source mode': 'Открывать заметки в режиме исходного кода',
   Pointer: 'Указатель',
   'Pointing hand on buttons': 'Указывающая рука над кнопками',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Добавить задачу',
   'Apple Shortcuts': 'Apple Команды',
   Tomorrow: 'Завтра',
@@ -180,7 +156,6 @@ export const ru: Dictionary = {
   'Every week': 'Каждую неделю',
   'Every month': 'Каждый месяц',
   'Every year': 'Каждый год',
-  // Files and notes
   Save: 'Сохранить',
   'New note': 'Новая заметка',
   'Random note': 'Случайная заметка',
@@ -208,8 +183,6 @@ export const ru: Dictionary = {
   'Release to add a page': 'Отпустите, чтобы добавить страницу',
   'Page {number}': 'Страница {number}',
   'The paper could not be read': 'Не удалось прочитать бумагу',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'Длинная страница',
@@ -252,7 +225,6 @@ export const ru: Dictionary = {
   'Choose a picture': 'Выбрать изображение',
   'Remove picture': 'Убрать изображение',
   'That picture could not be read.': 'Не удалось прочитать это изображение.',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'Насыщенность',
   Tint: 'Оттенок',
   'Tint colour': 'Цвет оттенка',
@@ -380,7 +352,6 @@ export const ru: Dictionary = {
   'Merge into…': 'Объединить с…',
   'Split at caret': 'Разделить по курсору',
   'Extract selection': 'Извлечь выделенное',
-  // Panels and navigation
   Bookmarks: 'Закладки',
   'New group': 'Новая группа',
   'Remove group': 'Убрать группу',
@@ -434,8 +405,6 @@ export const ru: Dictionary = {
   'Sort by name': 'По имени',
   'Sort by modified': 'По изменению',
   'Sort by created': 'По созданию',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'Порядок файлов',
   'Name, A to Z': 'Имя, от А до Я',
   'Name, Z to A': 'Имя, от Я до А',
@@ -446,7 +415,6 @@ export const ru: Dictionary = {
   Manual: 'Вручную',
   'Show hidden files': 'Показать скрытые файлы',
   'Hide hidden files': 'Скрыть скрытые файлы',
-  // Writing
   Bold: 'Полужирный',
   Italic: 'Курсив',
   Strikethrough: 'Зачёркнутый',
@@ -551,11 +519,9 @@ export const ru: Dictionary = {
   'Horizontal rule': 'Горизонтальная линия',
   'Page break': 'Разрыв страницы',
   'Tidy up this note': 'Привести заметку в порядок',
-  // PDFs
   'Copy a link': 'Копировать ссылку',
   'That PDF could not be opened': 'Не удалось открыть этот PDF',
   'That file could not be read': 'Не удалось прочитать этот файл',
-  // Modes and view
   Reading: 'Чтение',
   'Leave reading': 'Выйти из чтения',
   Present: 'Показ',
@@ -595,7 +561,6 @@ export const ru: Dictionary = {
   'Zoom in': 'Увеличить',
   'Zoom out': 'Уменьшить',
   'Actual size': 'Реальный размер',
-  // Appearance
   Accent: 'Акцент',
   'Tidy up': 'Упорядочить',
   'Blur the app behind the tab overview': 'Размывать приложение за обзором вкладок',
@@ -728,7 +693,6 @@ export const ru: Dictionary = {
   'Switch theme': 'Сменить тему',
   Style: 'Стиль',
   Mode: 'Режим',
-  // The window's own edges; see appearance.rs
   Window: 'Окно',
   'Orden’s own': 'Orden',
   'The system’s': 'Системная',
@@ -739,7 +703,6 @@ export const ru: Dictionary = {
   'Edit custom CSS': 'Изменить свой CSS',
   'Edit snippets': 'Изменить сниппеты',
   'Reload themes and custom CSS': 'Перезагрузить темы и свой CSS',
-  // The theme store, and the sample note its cards show
   Themes: 'Темы',
   Browse: 'Обзор',
   'Search themes': 'Поиск тем',
@@ -826,7 +789,6 @@ export const ru: Dictionary = {
   'Code only': 'Только в коде',
   Everywhere: 'Везде',
   Attachments: 'Вложения',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'Заметки со страницами',
   'New pages': 'Новые страницы',
   'Assets folder of the space': 'Папка ресурсов пространства',
@@ -878,7 +840,6 @@ export const ru: Dictionary = {
   'Machine-translated. Corrections welcome.': 'Машинный перевод. Исправления приветствуются.',
   'The glasses show English.': 'Очки показывают английский.',
   'Match the app': 'Как в приложении',
-  // Settings
   Settings: 'Настройки',
   Account: 'Аккаунт',
   Publish: 'Опубликовать',
@@ -906,7 +867,6 @@ export const ru: Dictionary = {
   },
   Update: 'Обновить',
   'Live at': 'Доступно на',
-  // Publishing
   'Publish {name}': 'Опубликовать {name}',
   'What to publish': 'Что публиковать',
   'The whole space': 'Всё пространство',
@@ -925,7 +885,6 @@ export const ru: Dictionary = {
   Value: 'Значение',
   available: 'свободно',
   'checking…': 'проверка…',
-  // LLM
   'Connect an LLM to your notes': 'Подключить LLM к заметкам',
   'Sign in first - the connector reaches the notes in your account.':
     'Сначала нужно войти - коннектор обращается к заметкам в аккаунте.',
@@ -978,7 +937,6 @@ export const ru: Dictionary = {
     'Для клиента, которому нужен блок JSON вместо адреса.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'Клиенту, который не умеет входить, можно дать токен. Он показывается только один раз.',
-  // Export
   'Plain text': 'Обычный текст',
   'Markdown with the pictures': 'Markdown с картинками',
   'HTML without styles': 'HTML без стилей',
@@ -997,13 +955,11 @@ export const ru: Dictionary = {
   Margin: 'Поля',
   Header: 'Верхний колонтитул',
   Footer: 'Нижний колонтитул',
-  // History
   'Version history': 'История версий',
   'Copy link to this note': 'Копировать ссылку на эту заметку',
   'that link could not be followed': 'по этой ссылке не удалось перейти',
   'No earlier versions yet.': 'Пока нет прежних версий.',
   'Restore this version': 'Восстановить эту версию',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'там уже есть заметка',
   'enter a valid email address': 'введите правильный адрес почты',
   'give the space a name': 'дайте пространству имя',
@@ -1035,7 +991,6 @@ export const ru: Dictionary = {
   'could not publish': 'не удалось опубликовать',
   'could not create a token': 'не удалось создать токен',
   'that did not work': 'не получилось',
-  // Settings on a phone, display names, one blog address
   Back: 'Назад',
   'Display name': 'Отображаемое имя',
   'Your name': 'Ваше имя',
@@ -1055,7 +1010,6 @@ export const ru: Dictionary = {
   Spelling: 'Орфография',
   Checking: 'Проверка',
   Dictionary: 'Словарь',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'Ожидание появления записи.',
   'Certificate issued.': 'Сертификат выдан.',
   'Cloudflare could not set this domain up.': 'Cloudflare не смог настроить этот домен.',
@@ -1066,7 +1020,6 @@ export const ru: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare заблокировал этот домен',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'В корне домена используйте запись ALIAS или ANAME либо выравнивание CNAME, если провайдер не разрешает там CNAME.',
-  // Shortcuts
   Shortcuts: 'Горячие клавиши',
   'Search shortcuts': 'Поиск горячих клавиш',
   'Second key': 'Вторая клавиша',
@@ -1233,7 +1186,6 @@ export const ru: Dictionary = {
   Delegated: 'Поручено',
   'Code theme: {name}': 'Тема кода: {name}',
   'Delete a layout': 'Удалить макет',
-  // Keyboards and modal editing
   Default: 'По умолчанию',
   'Vim keys': 'Клавиши Vim',
   'Follow the link': 'Перейти по ссылке',
@@ -1245,11 +1197,9 @@ export const ru: Dictionary = {
   INSERT: 'ВСТАВКА',
   VISUAL: 'ВЫДЕЛЕНИЕ',
   REPLACE: 'ЗАМЕНА',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'Страница {page} из {count} на очках',
   'Reaching the glasses': 'Подключение к очкам',
   'The glasses are not keeping up': 'Очки не успевают',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'Добавить',
   Select: 'Выделить',
   Pan: 'Сдвинуть вид',
@@ -1279,7 +1229,6 @@ export const ru: Dictionary = {
   Calligraphy: 'Каллиграфия',
   'Width {number}': 'Толщина {number}',
   'Finger draws': 'Палец рисует',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'Толщина',
   Opacity: 'Непрозрачность',
   Colour: 'Цвет',
@@ -1323,23 +1272,19 @@ export const ru: Dictionary = {
   'Export as PNG': 'Экспорт в PNG',
   'Export as SVG': 'Экспорт в SVG',
   'Export as PDF': 'Экспорт в PDF',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'Импорт PDF',
   'Choose how to add the pages to the canvas.': 'Выберите, как добавить страницы на полотно.',
   'Single page': 'Одна страница',
   'All pages': 'Все страницы',
   'Choose a page': 'Выбрать страницу',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'Удалить выбранное',
   'Nudge left': 'Сдвинуть влево',
   'Nudge right': 'Сдвинуть вправо',
   'Nudge up': 'Сдвинуть вверх',
   'Nudge down': 'Сдвинуть вниз',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'Открыто и в другом месте',
   Shared: 'Общий доступ',
   Browser: 'Браузер',
-  // Sharing a space with other people
   Share: 'Поделиться',
   'Share {name}': 'Поделиться {name}',
   'Share this space': 'Поделиться пространством',
@@ -1383,14 +1328,12 @@ export const ru: Dictionary = {
   'Shared with you': 'Поделились с вами',
   'That link does not open anything': 'Эта ссылка ничего не открывает',
   'Ask for another one.': 'Запросите другую.',
-  // Somebody a share link let in, who has no account
   Guest: 'Гость',
   'Ask to join': 'Попросить доступ',
   Asking: 'Запрос',
   'Waiting for {who}': 'Ожидание {who}',
   '{who} did not let you in': '{who} не дал вам доступ',
   'What the others in this space see.': 'То, что видят остальные в этом пространстве.',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'Обновления',
   'Release channel': 'Канал выпусков',
   Stable: 'Стабильный',
@@ -1400,8 +1343,6 @@ export const ru: Dictionary = {
   'Web version': 'Веб-версия',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'Стабильный - выпущенное веб-приложение, нестабильный - самая новая сборка и может ломаться.',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'Импорт',
   'Convert syntax': 'Преобразовать синтаксис',
   'In this note': 'В этой заметке',
@@ -1525,8 +1466,6 @@ export const ru: Dictionary = {
   'Undo the import': 'Отменить импорт',
   'Choose an export': 'Выбрать экспорт',
   Under: 'Внутри',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'Синхронизация',
   'When the same note was written twice': 'Когда одну заметку изменили дважды',
   'On two devices': 'На двух устройствах',
@@ -1597,7 +1536,6 @@ export const ru: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'Заметки на этом устройстве останутся; исчезнут только аккаунт и его синхронизированные копии.',
   'Also gone for everyone in {spaces}.': 'Также исчезнет для всех в {spaces}.',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'Заметка',
   '{space} panel': 'Панель пространства {space}',
   'Panel width': 'Ширина панели',
@@ -1608,7 +1546,6 @@ export const ru: Dictionary = {
   'What is selected': 'Выделенное',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'Полотно: карточек {cards}, связей {links}, рисунков {drawings}',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'ИИ',
   Providers: 'Поставщики',
   'Make default': 'Сделать основным',
@@ -1636,7 +1573,6 @@ export const ru: Dictionary = {
   'The model did not answer.': 'Модель не ответила.',
   'The connection closed before the answer was finished.':
     'Соединение закрылось до завершения ответа.',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'Ваш план {plan} исчерпан до {time}.',
   'Your {plan} plan is at its limit for now.': 'Ваш план {plan} пока исчерпан.',
   'Your {plan} plan is near its limit.': 'Ваш план {plan} почти исчерпан.',
@@ -1663,7 +1599,6 @@ export const ru: Dictionary = {
   Shorter: 'Короче',
   Longer: 'Длиннее',
   'Fix grammar': 'Исправить грамматику',
-  // The AI sidebar's commands
   'A cited report': 'Отчёт с цитатами',
   'A helper in the background': 'Помощник на фоне',
   'A side question': 'Побочный вопрос',
@@ -1765,7 +1700,6 @@ export const ru: Dictionary = {
   'Markdown, shortest name': 'Markdown, самое короткое имя',
   'Markdown, relative path': 'Markdown, относительный путь',
   'Markdown, path in the space': 'Markdown, путь в пространстве',
-  // Publishing part one.
   'The folders you choose become public.': 'Выбранные папки становятся общедоступными.',
   'Anyone with the address can read what is published, drafts included.':
     'Любой, у кого есть адрес, читает опубликованное, включая черновики.',
@@ -1791,11 +1725,9 @@ export const ru: Dictionary = {
   'Remove the password': 'Убрать пароль',
   'Scan this with your authenticator app, then type its code.':
     'Отсканируйте это приложением-аутентификатором и введите его код.',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'Фото',
   Dictate: 'Диктовать',
   'Add to {name}': 'Добавить в {name}',
-  // Web tabs
   Reload: 'Обновить',
   'Hard reload': 'Жёсткая перезагрузка',
   'Open in the browser': 'Открыть в браузере',
@@ -1810,7 +1742,6 @@ export const ru: Dictionary = {
   'Playing audio': 'Воспроизводится звук',
   Muted: 'Звук отключён',
   'Developer tools': 'Инструменты разработчика',
-  // Recording, meetings and what a model wrote
   Record: 'Записать',
   Recording: 'Запись',
   'Stop recording': 'Остановить запись',
@@ -1831,7 +1762,6 @@ export const ru: Dictionary = {
     'Эта запись слишком длинная, чтобы превратить её в слова за раз.',
   'That is as much as one recording may hold.': 'Столько вмещает одна запись.',
   'Nothing could be heard in that recording.': 'В этой записи ничего не было слышно.',
-  // Publishing part two.
   Spreadsheet: 'Таблица данных',
   'The app’s own': 'Как в приложении',
   'publish.css and publish.js in this space dress the site.':
@@ -1847,14 +1777,12 @@ export const ru: Dictionary = {
   'Save as CSV': 'Сохранить как CSV',
   'Kept for {days}': 'Хранятся {days}',
   Full: 'Заполнено',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'не удалось отправить письмо - попробуйте снова',
   'start again - that took too long': 'начните снова - это заняло слишком долго',
   'sign in to do that': 'войдите, чтобы это сделать',
   'that is not something a token can do': 'токен так не может',
   'something went wrong here - try again': 'здесь что-то пошло не так - попробуйте снова',
   'this service cannot keep a secret safely': 'эта служба не может надёжно хранить секрет',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only':
     'только изображения, PDF и собственные css или js сайта',
   'that file is too big': 'этот файл слишком большой',
@@ -1865,13 +1793,11 @@ export const ru: Dictionary = {
   'that is more than a space keeps about its graph': 'больше о своём графе пространство не хранит',
   'that is more folder icons than a space holds': 'больше значков папок пространство не вмещает',
   'that is more than a site keeps': 'это больше, чем хранит сайт',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'по этому адресу никого нет',
   'nobody by that name': 'с таким именем никого нет',
   'nobody is waiting by that name': 'с таким именем никто не ждёт',
   'this space is yours': 'это пространство ваше',
   'that link is busy, try again in a minute': 'эта ссылка занята, попробуйте через минуту',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'такой версии нет',
   'this note was shared with you, not its folder': 'с вами поделились заметкой, а не её папкой',
   'nothing to restore': 'нечего восстанавливать',
@@ -1879,7 +1805,6 @@ export const ru: Dictionary = {
   'nothing to delete': 'нечего удалять',
   'this room is not answering - try again': 'эта комната не отвечает - попробуйте снова',
   'rooms are not running here': 'комнаты здесь не работают',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'магазин тем не отвечает',
   'that is not a theme': 'это не тема',
   'no such theme': 'такой темы нет',
@@ -1892,10 +1817,8 @@ export const ru: Dictionary = {
   'that is more than a spoken command': 'это больше, чем голосовая команда',
   'that is a lot of listening - try again later': 'слишком много прослушивания - попробуйте позже',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% текста',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'Телефон',
   'The bar sits over the keyboard on a phone.': 'На телефоне панель стоит над клавиатурой.',
   'On the bar': 'На панели',
@@ -1909,31 +1832,25 @@ export const ru: Dictionary = {
   'A pull past the top runs': 'Потягивание за верх запускает',
   Nothing: 'Ничего',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'Оставить',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'Перенести направо',
   'Move to the left': 'Перенести налево',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'История в аккаунте',
   'Keep versions': 'Хранить версии',
   'A month': 'Месяц',
   'A year': 'Год',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Всё за последние сутки, затем по одной в час, после месяца по одной в день, после трёх по одной в неделю.',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Эта заметка достигла наибольшего размера, который может иметь заметка в комнате.',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'Новая вкладка',
   'Full screen': 'Полноэкранный режим',
   'Print…': 'Печать…',
   'Share…': 'Поделиться…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'запрашивает разрешение на',
   'Don’t allow': 'Запретить',
   Allow: 'Разрешить',
@@ -1950,7 +1867,6 @@ export const ru: Dictionary = {
   'Use your MIDI devices': 'Использование MIDI-устройств',
   'Manage windows on all your displays': 'Управление окнами на всех ваших экранах',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'Сведения о сайте',
   Downloads: 'Загрузки',
   'Downloading {name}': 'Загрузка {name}',
@@ -1977,11 +1893,9 @@ export const ru: Dictionary = {
   'Turn into': 'Превратить в',
   Foldable: 'Сворачиваемый',
   'Starts folded': 'Открывается свёрнутым',
-  // Where a space keeps what websites store
   'Web data': 'Данные сайтов',
   Global: 'Общие',
   Site: 'Сайт',
-  // The Mac's menu bar
   'About {name}': 'О программе {name}',
   Services: 'Службы',
   'Hide {name}': 'Скрыть {name}',
@@ -1989,7 +1903,6 @@ export const ru: Dictionary = {
   'Show all': 'Показать все',
   'Quit {name}': 'Завершить {name}',
   'Bring all to front': 'Все окна на передний план',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Отменить копирование',
   'Devices with your AI vault': 'Устройства с вашим хранилищем ИИ',
   'This device': 'Это устройство',
@@ -2004,13 +1917,11 @@ export const ru: Dictionary = {
   'Select down': 'Выделить вниз',
   'Select up': 'Выделить вверх',
   'Select or deselect': 'Выделить или снять выделение',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'Открыть в новой вкладке',
   'Open to the side': 'Открыть рядом',
   'Open all': 'Открыть все',
   'Show in the file list': 'Показать в списке файлов',
   'Collapse the file list': 'Свернуть список файлов',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'Расширить выделение',
   'Shrink the selection': 'Сузить выделение',
   'Insert a line above': 'Вставить строку выше',
@@ -2024,18 +1935,15 @@ export const ru: Dictionary = {
   'Duplicate the block': 'Дублировать блок',
   'Move the block up': 'Переместить блок выше',
   'Move the block down': 'Переместить блок ниже',
-  // The editor's menu on a link and a picture
   'Copy link address': 'Копировать адрес ссылки',
   'Edit link': 'Изменить ссылку',
   'Remove link': 'Удалить ссылку',
   'Copy picture': 'Копировать картинку',
   'Open picture': 'Открыть картинку',
   'Delete picture': 'Удалить картинку',
-  // A file dropped into a note
   'Storing the file': 'Файл сохраняется',
   'That file is larger than a note can keep.': 'Этот файл больше, чем может хранить заметка.',
   'That file could not be kept.': 'Не удалось сохранить этот файл.',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'Новый терминал',
   'Command Prompt': 'Командная строка',
   Terminal: 'Терминал',
@@ -2062,11 +1970,8 @@ export const ru: Dictionary = {
     many: 'Вставить {count} строк?',
     other: 'Вставить {count} строки?',
   },
-  // Orden as the default browser
   'Default browser': 'Браузер по умолчанию',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Отменить правки {name}',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'Архивировать',
   Unarchive: 'Вернуть из архива',
   Archived: 'В архиве',
@@ -2081,7 +1986,6 @@ export const ru: Dictionary = {
     many: '{count} архивных элементов внутри',
     other: '{count} архивного элемента внутри',
   },
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'Левая боковая панель',
   'Right sidebar': 'Правая боковая панель',
   'Ask about this space': 'Спросить об этом пространстве',
@@ -2092,7 +1996,6 @@ export const ru: Dictionary = {
   'Ask again': 'Спросить снова',
   'Continue when the limit resets': 'Продолжить, когда лимит обновится',
   'Continues at {time}': 'Продолжит в {time}',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Спросите что угодно, @ чтобы добавить, / для команд',
   'What can I help with?': 'Чем я могу помочь?',
   'Add photos and files': 'Добавить фото и файлы',
@@ -2160,12 +2063,9 @@ export const ru: Dictionary = {
   Closed: 'Закрыто',
   Ran: 'Выполнено',
   Changed: 'Изменено',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': '{device} (это устройство)',
   '{name} is back: {device} was writing in it': '{name} вернулась: в ней писал {device}',
   'Changes to {name} are not syncing': 'Изменения в {name} не синхронизируются',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Открытие',
   Pressing: 'Нажатие',
   Typing: 'Ввод',
@@ -2180,18 +2080,14 @@ export const ru: Dictionary = {
   'Agent tabs closed': 'Вкладки агентов закрыты',
   'Orden is still running for your agents': 'Orden продолжает работать для ваших агентов',
   '{client} wants to connect': '{client} хочет подключиться',
-  // Web logins that travel, and the devices of an account
   'no such device': 'Такого устройства нет',
   'give the device a name': 'Дайте устройству имя',
   'that computer is no longer waiting': 'Этот компьютер больше не ждёт',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'такого файла нет',
   'too many changes at once - try again in a minute':
     'слишком много изменений сразу - попробуйте через минуту',
   'that is more than a space keeps about its tree':
     'это больше, чем пространство хранит о своём дереве',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'Агенты на этом компьютере',
   'Your account’s connector': 'Коннектор вашего аккаунта',
   'Orden asks you once, the first time it connects.':
@@ -2264,12 +2160,9 @@ export const ru: Dictionary = {
     many: '{count} вызовов',
     other: '{count} вызова',
   },
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'Быстрый вопрос',
   Scratchpad: 'Scratchpad',
   'Add to note': 'Добавить в заметку',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'Расширения',
   'Add extension': 'Добавить расширение',
   'Manage extensions': 'Управление расширениями',
@@ -2289,7 +2182,6 @@ export const ru: Dictionary = {
   'Did not load': 'Не загружено',
   Permissions: 'Разрешения',
   Options: 'Параметры',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'Удалённый',
   'Add host': 'Добавить хост',
   Reconnect: 'Переподключиться',
@@ -2297,11 +2189,8 @@ export const ru: Dictionary = {
   'No group': 'Без группы',
   'Not an address': 'Это не адрес',
   'Could not connect to {host}': 'Не удалось подключиться к {host}',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'Отправка изображения',
   'Could not send the image': 'Не удалось отправить изображение',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': {
     few: 'и ещё {count} после неё',
     many: 'и ещё {count} после неё',
@@ -2316,8 +2205,6 @@ export const ru: Dictionary = {
   'Pages, terminals and moves are not undone': 'Страницы, терминалы и перемещения не отменяются',
   Rewind: 'Перемотать назад',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'Поисковая система',
   History: 'История',
   'Search history': 'История поиска',
@@ -2341,14 +2228,12 @@ export const ru: Dictionary = {
   'New private tab': 'Новая приватная вкладка',
   'All spaces': 'Все пространства',
   'the data could not be deleted': 'Не удалось удалить данные',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Отложить',
   Reminders: 'Напоминания',
   'Reminders ring while Orden is open': 'Напоминания звучат, пока Orden открыт',
   Automatic: 'Автоматически',
   'Stay in the tray': 'Оставаться в трее',
   'Exact alarms': 'Точные будильники',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'Задачи',
   'Plan my day': 'Спланировать мой день',
   'Add a task': 'Добавить задачу',
@@ -2360,8 +2245,6 @@ export const ru: Dictionary = {
   'Done tasks too': 'И выполненные задачи',
   'As a task': 'Как задачу',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'Задачи',
   Ascending: 'По возрастанию',
   Descending: 'По убыванию',
@@ -2446,8 +2329,6 @@ export const ru: Dictionary = {
   'Without a value': 'Без значения',
   'With a value': 'Со значением',
   Unique: 'Уникальные',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'Новая заметка из шаблона',
   Automations: 'Автоматизации',
   'Row added': 'Добавлена строка',
@@ -2476,7 +2357,6 @@ export const ru: Dictionary = {
   Form: 'Форма',
   Formula: 'Формула',
   'Blocked by {task}': 'Ждёт: {task}',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'Предупреждать перед выходом',
   'When something runs': 'Когда что-то запущено',
   'Quit {name}?': 'Выйти из {name}?',
@@ -2487,16 +2367,13 @@ export const ru: Dictionary = {
   'Quit anyway': 'Всё равно выйти',
   'Restart anyway': 'Всё равно перезапустить',
   'Close anyway': 'Всё равно закрыть',
-  // The online terminal
   'Online terminal': 'Онлайн-терминал',
   'New online terminal': 'Новый онлайн-терминал',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'другое устройство',
   'Taken over by {device}': 'Перехвачено устройством {device}',
   'Open on {device} since {time}': 'Открыто на {device} с {time}',
   'Take over': 'Перехватить',
   'Take back': 'Вернуть',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'Новое приложение',
   Application: 'Приложение',
   'This application’s file is damaged': 'Файл этого приложения повреждён',
@@ -2605,8 +2482,6 @@ export const ru: Dictionary = {
   'Compare with original': 'Сравнить с оригиналом',
   'Conflict copies from other apps': 'Конфликтные копии других приложений',
   'Remove from sync': 'Убрать из синхронизации',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'Профиль',
   Change: 'Изменить',
   'Take photo': 'Сделать фото',
@@ -2631,7 +2506,6 @@ export const ru: Dictionary = {
   'that picture could not be opened': 'не удалось открыть изображение',
   'the camera could not be opened': 'не удалось открыть камеру',
   'that picture is too big': 'изображение слишком большое',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'Чат',
   Reply: 'Ответить',
   Replies: 'Ответы',
@@ -2650,7 +2524,6 @@ export const ru: Dictionary = {
   'Also send to {chat}': 'Отправить и в {chat}',
   'Skin tone': 'Тон кожи',
   'Deleted account': 'Удалённый аккаунт',
-  // Chats: notifications
   Mute: 'Без звука',
   Unmute: 'Включить звук',
   'New message': 'Новое сообщение',
@@ -2660,7 +2533,6 @@ export const ru: Dictionary = {
   Weekdays: 'Будни',
   Starts: 'Начало',
   Ends: 'Конец',
-  // Chats: everywhere
   'Read chats': 'Читать чаты',
   'Post in chats': 'Писать в чаты',
   'Always in this chat': 'Всегда в этом чате',
@@ -2672,14 +2544,12 @@ export const ru: Dictionary = {
   'Search this chat': 'Искать в этом чате',
   'Add as task': 'Добавить как задачу',
   'Save as note': 'Сохранить как заметку',
-  // Appearance: glass's own pairs of colours
   Dawn: 'Рассвет',
   Lagoon: 'Лагуна',
   Lilac: 'Сирень',
   Peach: 'Персик',
   Sage: 'Шалфей',
   Mist: 'Туман',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'Новая база данных',
   'New page': 'Новая страница',
   'Not started': 'Не начато',
@@ -2705,7 +2575,6 @@ export const ru: Dictionary = {
   Large: 'Большое',
   Both: 'Оба',
   'Shown on cards': 'Показано на карточках',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'Синхронизирует ключи ИИ этого браузера с другими вашими устройствами через хранилище.',
   'Which of your AI accounts this feature asks.':
@@ -2945,7 +2814,6 @@ export const ru: Dictionary = {
   'Some changes may not be noticed': 'Некоторые изменения могут остаться незамеченными',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'Система достигла предела отслеживаемых папок, поэтому Orden может не заметить всех изменений, которые другие программы вносят в ваши пространства. Увеличьте fs.inotify.max_user_watches, чтобы это исправить.',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'Переместить чат {name} в {space}?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'Тогда все в {space} смогут прочитать всю историю, а люди в {from} её потеряют.',
@@ -2985,7 +2853,6 @@ export const ru: Dictionary = {
   'One colour': 'Одноцветные',
   'Web icons': 'Значки сайтов',
   'Sites you visit will appear here': 'Здесь появятся сайты, которые вы посещаете',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'Диктовка',
   'Dictate with': 'Диктовать через',
   'Where your voice goes to be turned into words.':
@@ -3016,11 +2883,9 @@ export const ru: Dictionary = {
   'Not on this device': 'Нет на этом устройстве',
   'Not on this device. It opens once you are online again.':
     'Нет на этом устройстве. Откроется, как только вы снова будете в сети.',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'Сервер IMAP',
   'SMTP server': 'Сервер SMTP',
   'User name': 'Имя пользователя',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'Срочно',
   Important: 'Важно',
   'If time': 'Если будет время',

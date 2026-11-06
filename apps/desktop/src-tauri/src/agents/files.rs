@@ -1,26 +1,3 @@
-//! `files`: an agent reads and changes files and folders anywhere the user account
-//! reaches (#1078; docs/agent-native.md 8.11), the way a VS Code extension's
-//! `workspace.fs` does.
-//!
-//! **Outside the spaces.** A space's own files go through the note tools - `read_note`,
-//! `write_note`, `move_file`, `trash_file`, `create_folder` - which keep links, undo,
-//! versions and sync right; this refuses a path inside the spaces folder and names them.
-//!
-//! **Never the app's own.** The app's config and data folders hold the agents' grants,
-//! the endpoint's secret, the web tabs' cookies and on a Mac the AI keys: no agent reads
-//! or writes there, whatever its mode, since a grant that could rewrite itself or
-//! another's would be no grant.
-//!
-//! **Asked as #1072 decided.** It needs the `files` scope. Then each call asks under
-//! *files from outside your spaces* (`Category::Files`) unless the reader said Always for
-//! a folder it is in; `delete` asks under *deleting for good*, since nothing here goes to
-//! a trash; in `confirm` mode every change asks as every write does. Each question is
-//! `Grant::asks`, so Full permissions asks nothing.
-//!
-//! **Bounded.** A read answers at most a megabyte, a list or a search at most 500 entries,
-//! and a search or a watch walks at most 20 000; each says when it was cut. What a file
-//! says is marked as the file's, never the reader's (9.6).
-
 use std::fs;
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
@@ -34,23 +11,16 @@ use super::grants::{Grant, Mode, Scope};
 use super::verbs::{Answer, Category, Code, FileEntry, FileKind, Files, FilesDone, FilesOp};
 use super::Caller;
 
-/// The most of a file `read` answers, in bytes.
 const MOST_READ: usize = 1_000_000;
 
-/// The most entries a list, a search or a watch answers.
 const MOST_LISTED: usize = 500;
 
-/// The most entries a search or a watch walks through.
 const MOST_WALKED: usize = 20_000;
 
-/// The largest file a search looks inside, in bytes.
 const MOST_SEARCHED: u64 = 2_000_000;
 
-/// Folders a walk never goes into: a repository's history and a package manager's cache,
-/// where a search would spend its whole walk and find nothing anybody wrote.
 const SKIPPED: [&str; 2] = [".git", "node_modules"];
 
-/// One call, answered: checked against the grant, asked where it asks, then done.
 pub(super) fn answer(app: &AppHandle, caller: &Caller, asked: &Files) -> Answer {
     if !caller.holds(Scope::Files) {
         return Answer::error(
@@ -91,15 +61,10 @@ pub(super) fn answer(app: &AppHandle, caller: &Caller, asked: &Files) -> Answer 
     }
 }
 
-/// Where another verb may write a file for an agent - `http`'s `save_to` (#1078) - under
-/// exactly the rules a `write` keeps: the `files` scope, never behind a fence, and the
-/// question a write raises. The path made absolute, or what the call answers instead.
 pub(super) fn writable(app: &AppHandle, caller: &Caller, asked: &str) -> Result<PathBuf, Answer> {
     reachable(app, caller, asked, FilesOp::Write)
 }
 
-/// Where a verb may read or write one file for an agent - a file dialog an agent's
-/// command opens, answered by a path (#1078) - under the rules `op` keeps here.
 pub(super) fn reachable(
     app: &AppHandle,
     caller: &Caller,
@@ -134,16 +99,10 @@ pub(super) fn reachable(
     Ok(path)
 }
 
-/// What a dialog answered by an agent's path lets the app's own writers and readers
-/// reach (`paths::picked_for_an_agent`), as the system dialog's pick would: a folder
-/// itself, and for a file the folder it is in - where an export's pictures land beside
-/// it - unless that folder holds Orden's own, by name or through a link, or is the top
-/// of a disk; then the file alone.
 pub(super) fn pick_reach(app: &AppHandle, path: &Path) -> PathBuf {
     reach_of(&own_folders(app), path)
 }
 
-/// `pick_reach`, against the folders given.
 fn reach_of(fenced: &[PathBuf], path: &Path) -> PathBuf {
     if path.is_dir() {
         return path.to_path_buf();
@@ -161,19 +120,14 @@ fn reach_of(fenced: &[PathBuf], path: &Path) -> PathBuf {
     }
 }
 
-/// A path as an agent gave it, made absolute: `~/` is the home folder (system.rs).
 pub(super) fn absolute(app: &AppHandle, asked: &str) -> Result<PathBuf, String> {
     resolved(app, asked)
 }
 
-/// Why no agent may hand this path to the system: it is in Orden's own folders, by its
-/// name or by where its links lead. Nothing where it is not; the spaces are the reader's,
-/// and theirs to open, and a folder that holds Orden's is only shown.
 pub(super) fn fenced_out(app: &AppHandle, path: &Path) -> Option<Answer> {
     behind(&own_folders(app), path)
 }
 
-/// `fenced_out`, against the folders given.
 fn behind(fenced: &[PathBuf], path: &Path) -> Option<Answer> {
     let real_path = real(path);
     fenced
@@ -193,7 +147,6 @@ fn behind(fenced: &[PathBuf], path: &Path) -> Option<Answer> {
         })
 }
 
-/// Whether an op answers what files say, which is the files' words and not the reader's.
 fn reads(op: FilesOp) -> bool {
     matches!(
         op,
@@ -201,7 +154,6 @@ fn reads(op: FilesOp) -> bool {
     )
 }
 
-/// Whether an op changes anything.
 fn changes(op: FilesOp) -> bool {
     matches!(
         op,
@@ -214,8 +166,6 @@ fn changes(op: FilesOp) -> bool {
     )
 }
 
-/// A path as asked for, made absolute: `~/` is the home folder, and anything else has to
-/// say where it is, since an agent has no folder it is "in".
 fn resolved(app: &AppHandle, asked: &str) -> Result<PathBuf, String> {
     let asked = asked.trim();
     let given = if let Some(rest) = asked
@@ -241,8 +191,6 @@ fn resolved(app: &AppHandle, asked: &str) -> Result<PathBuf, String> {
     Ok(crate::paths::folded(&given))
 }
 
-/// The folders no agent reaches, whatever it holds: the spaces, which have tools of
-/// their own, and the app's own folders.
 fn fences(app: &AppHandle) -> Vec<PathBuf> {
     crate::paths::spaces_dir(app)
         .ok()
@@ -251,8 +199,6 @@ fn fences(app: &AppHandle) -> Vec<PathBuf> {
         .collect()
 }
 
-/// Orden's own folders: its config and its data, with the grants, the endpoint's secret
-/// and the web tabs' cookies in them.
 pub(crate) fn own_folders(app: &AppHandle) -> Vec<PathBuf> {
     [
         crate::paths::config_dir(app).ok(),
@@ -265,9 +211,6 @@ pub(crate) fn own_folders(app: &AppHandle) -> Vec<PathBuf> {
     .collect()
 }
 
-/// Why an agent may not do this, or nothing: a path inside a fence, or a folder holding
-/// one moved, copied or deleted whole. A list or a search of a folder holding one goes
-/// ahead and walks round it.
 fn refused(fenced: &[PathBuf], op: FilesOp, path: &Path, to: Option<&Path>) -> Option<Answer> {
     let whole = matches!(op, FilesOp::Move | FilesOp::Copy | FilesOp::Delete);
     let meets = |fence: &Path, one: &Path| {
@@ -290,9 +233,6 @@ fn refused(fenced: &[PathBuf], op: FilesOp, path: &Path, to: Option<&Path>) -> O
     ))
 }
 
-/// A path with every link in the part of it that exists followed, so that a link can
-/// not carry a call into a fence under another name: `~/x` pointing at the app's config
-/// folder is that folder. What does not exist yet is joined on as it was asked.
 pub(crate) fn real(path: &Path) -> PathBuf {
     let mut rest = Vec::new();
     let mut at = path;
@@ -313,8 +253,6 @@ pub(crate) fn real(path: &Path) -> PathBuf {
     }
 }
 
-/// Whether a walk stays out of a folder: inside a fence by its name, or by where its
-/// links lead.
 fn fenced_off(fenced: &[PathBuf], real_fenced: &[PathBuf], path: &Path) -> bool {
     fenced.iter().any(|fence| crate::paths::inside(fence, path)) || {
         let real_path = real(path);
@@ -324,7 +262,6 @@ fn fenced_off(fenced: &[PathBuf], real_fenced: &[PathBuf], path: &Path) -> bool 
     }
 }
 
-/// The question a call raises, or nothing where it may go ahead.
 fn question(
     app: &AppHandle,
     grant: &Grant,
@@ -375,8 +312,6 @@ fn question(
     ))
 }
 
-/// The folder a call is about, which Always is said for: a folder itself where the call
-/// is about one, else the one the file is in.
 fn folder_of(path: &Path, op: FilesOp) -> PathBuf {
     let about_a_folder = matches!(
         op,
@@ -390,12 +325,10 @@ fn folder_of(path: &Path, op: FilesOp) -> PathBuf {
     }
 }
 
-/// A folder and every folder it is in.
 fn ancestors(folder: &Path) -> impl Iterator<Item = &Path> {
     folder.ancestors().filter(|one| !one.as_os_str().is_empty())
 }
 
-/// The op as the log and the key say it.
 fn op_word(op: FilesOp) -> &'static str {
     match op {
         FilesOp::Read => "read",
@@ -412,7 +345,6 @@ fn op_word(op: FilesOp) -> &'static str {
     }
 }
 
-/// The one line the reader is asked.
 fn summary(op: FilesOp, path: &Path, to: Option<&Path>) -> String {
     let path = path.display();
     let to = to.map_or_else(String::new, |one| one.display().to_string());
@@ -430,14 +362,12 @@ fn summary(op: FilesOp, path: &Path, to: Option<&Path>) -> String {
     }
 }
 
-/// Milliseconds since 1970, of a time a file system said.
 fn millis(at: SystemTime) -> u64 {
     at.duration_since(UNIX_EPOCH).map_or(0, |since| {
         u64::try_from(since.as_millis()).unwrap_or(u64::MAX)
     })
 }
 
-/// A path as `files` lists it, without following a link.
 fn entry(path: &Path) -> Result<FileEntry, String> {
     let meta = fs::symlink_metadata(path).map_err(|why| format!("{}: {why}", path.display()))?;
     let kind = if meta.file_type().is_symlink() {
@@ -459,7 +389,6 @@ fn entry(path: &Path) -> Result<FileEntry, String> {
     })
 }
 
-/// The call, done.
 fn done(
     asked: &Files,
     path: &Path,
@@ -511,12 +440,10 @@ fn done(
     Ok(out)
 }
 
-/// Where `move` and `copy` go, which they need.
 fn needed(to: Option<&Path>) -> Result<&Path, String> {
     to.ok_or_else(|| "say where it goes, as to".to_owned())
 }
 
-/// What `write` and `append` put in, as bytes.
 fn content(asked: &Files) -> Result<Vec<u8>, String> {
     let words = asked
         .content
@@ -531,7 +458,6 @@ fn content(asked: &Files) -> Result<Vec<u8>, String> {
     }
 }
 
-/// A file's content: as text where it is text and nobody asked otherwise, else base64.
 fn read(path: &Path, base64: bool, out: &mut FilesDone) -> Result<(), String> {
     if path.is_dir() {
         return Err(format!("{} is a folder: list it", path.display()));
@@ -555,7 +481,6 @@ fn read(path: &Path, base64: bool, out: &mut FilesDone) -> Result<(), String> {
     Ok(())
 }
 
-/// What a folder holds, by name.
 fn list(path: &Path, out: &mut FilesDone) -> Result<(), String> {
     let mut names: Vec<PathBuf> = fs::read_dir(path)
         .map_err(|why| format!("{}: {why}", path.display()))?
@@ -571,7 +496,6 @@ fn list(path: &Path, out: &mut FilesDone) -> Result<(), String> {
     Ok(())
 }
 
-/// Moved, never over something already there; across disks as a copy and a delete.
 fn moved(from: &Path, to: &Path) -> Result<(), String> {
     if fs::symlink_metadata(to).is_ok() {
         return Err(format!("{} is there already", to.display()));
@@ -586,8 +510,6 @@ fn moved(from: &Path, to: &Path) -> Result<(), String> {
     deleted(from)
 }
 
-/// Copied, a folder with everything in it, never over something already there. A link
-/// is copied as a link, never as what it points at, which may be behind a fence.
 fn copied(from: &Path, to: &Path) -> Result<(), String> {
     if fs::symlink_metadata(to).is_ok() {
         return Err(format!("{} is there already", to.display()));
@@ -615,14 +537,11 @@ fn copied(from: &Path, to: &Path) -> Result<(), String> {
     Ok(())
 }
 
-/// A link made at `to` pointing where the link at `from` points.
 #[cfg(unix)]
 pub(crate) fn linked(_from: &Path, target: &Path, to: &Path) -> std::io::Result<()> {
     std::os::unix::fs::symlink(target, to)
 }
 
-/// A link made at `to` pointing where the link at `from` points: a folder's link or a
-/// file's, as Windows tells them apart.
 #[cfg(windows)]
 pub(crate) fn linked(from: &Path, target: &Path, to: &Path) -> std::io::Result<()> {
     if fs::metadata(from).is_ok_and(|meta| meta.is_dir()) {
@@ -632,7 +551,6 @@ pub(crate) fn linked(from: &Path, target: &Path, to: &Path) -> std::io::Result<(
     }
 }
 
-/// Gone: a file or a link itself, or a folder and everything in it.
 fn deleted(path: &Path) -> Result<(), String> {
     let meta = fs::symlink_metadata(path).map_err(|why| format!("{}: {why}", path.display()))?;
     let gone = if meta.is_dir() {
@@ -643,8 +561,6 @@ fn deleted(path: &Path) -> Result<(), String> {
     gone.map_err(|why| why.to_string())
 }
 
-/// Every file under a folder that `keep` keeps, walked breadth first without following a
-/// link, as far as the bounds allow.
 fn walk(
     root: &Path,
     fenced: &[PathBuf],
@@ -692,7 +608,6 @@ fn walk(
     Ok(())
 }
 
-/// Whether a file is what a search asked for: its name the glob, its words the text.
 fn searched(relative: &str, file: &FileEntry, glob: Option<&str>, text: Option<&str>) -> bool {
     if let Some(glob) = glob {
         let name = relative.rsplit('/').next().unwrap_or(relative);
@@ -711,8 +626,6 @@ fn searched(relative: &str, file: &FileEntry, glob: Option<&str>, text: Option<&
         .is_ok_and(|words| words.to_lowercase().contains(&text.to_lowercase()))
 }
 
-/// Whether `name` is what `glob` says: `*` any run of letters but a slash, `**` any run at
-/// all, `?` one letter but a slash. Pure.
 fn globbed(glob: &[u8], name: &[u8]) -> bool {
     match (glob.first(), name.first()) {
         (None, None) => true,
@@ -754,8 +667,6 @@ mod tests {
         assert!(globbed(b"README*", b"readme.md"));
     }
 
-    /// A folder of the test's own: the tests run at once, in one process, often in the
-    /// same millisecond, so each is counted.
     fn temp() -> PathBuf {
         static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
         let at = std::env::temp_dir().join(format!(
@@ -915,8 +826,6 @@ mod tests {
         let _ = fs::remove_dir_all(&root);
     }
 
-    /// A link is no way round a fence: not a path through one, not a walk from one, and
-    /// not a copy of a folder holding one, which copies the link and not the secret.
     #[cfg(unix)]
     #[test]
     fn a_link_never_carries_a_call_behind_a_fence() {
@@ -951,9 +860,6 @@ mod tests {
         let _ = fs::remove_dir_all(&root);
     }
 
-    /// A path handed to the system (system.rs) is never in Orden's own folders, by its
-    /// name or through a link; the folder holding them is only shown, and every other
-    /// path is the reader's.
     #[cfg(unix)]
     #[test]
     fn a_path_handed_to_the_system_is_never_behind_orden_s_fence() {
@@ -977,8 +883,6 @@ mod tests {
         let _ = fs::remove_dir_all(&root);
     }
 
-    /// A dialog answered by an agent's path reaches what the system's pick would, and
-    /// never a folder that holds Orden's own: a file beside the fence is reached alone.
     #[cfg(unix)]
     #[test]
     fn a_path_an_agent_answers_a_dialog_with_reaches_no_further_than_a_pick() {

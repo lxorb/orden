@@ -1,20 +1,3 @@
-/** The rows of every space: a row per note and a row per task line, kept current.
- *
- *  What Today, Upcoming, a board and a reminder ask, and what they ask it of: a view
- *  never reads a file (docs/tasks.md 5.3). Built from the pass that already reads a
- *  space, `scan_links`, which carries each note's front matter and task lines raw; the
- *  open space's is the link index's own scan, taken rather than made again, and every
- *  other space is read once after the launch order, one at a time with a breath between
- *  them. From then on one file at a time: a save re-reads the note that was written,
- *  and a file operation (workspace/file-ops.ts) moves or drops the rows of the files it
- *  names. Nothing here walks a space twice, and nothing here runs per keystroke.
- *
- *  Plain rather than reactive, and told rather than asking: whoever draws rows listens
- *  (`watch`) and hears which file's rows changed, so a view moves the rows of one note
- *  between its groups rather than answering the whole space again. Its links to the
- *  rest of the app come in as a `Host`, so the store is tested without one; see
- *  start.svelte.ts for the app's. */
-
 import type { Row } from '@orden/bases'
 import type { ScannedNote, SpaceLinks } from '@orden/scan/note'
 import { scanNote } from '@orden/scan/note'
@@ -24,77 +7,52 @@ import { insideSpace, isMarkdownPath, pathKey, samePath, within } from '../space
 import { type FileOp } from '../workspace/file-ops'
 import { movedRows, type NoteRead, rowsOf } from '@orden/bases/rows'
 
-/** A space as the store is told of it. */
 export interface SpaceName {
   root: string
   name: string
 }
 
-/** One file's rows changing, or a whole space's when `path` is null: the space read,
- *  renamed or gone. `removed` and `added` are the rows before and after. */
 export interface RowsChange {
   root: string
   space: string
   path: string | null
   removed: readonly Row[]
   added: readonly Row[]
-  /** For a note renamed or moved, told at its new path: where it was and its rows
-   *  there, so the move is not taken for a note just made (B551). */
   from?: { space: string; path: string; rows: readonly Row[] }
 }
 
 export type RowsListener = (change: RowsChange) => void
 
-/** What the store needs of the app. */
 export interface Host {
-  /** A space read whole, or a folder of one: `scan_links`. */
   scan(root: string): Promise<SpaceLinks | null>
-  /** One file's words. */
   read(path: string): Promise<string | null>
-  /** The link index of the open space, whose scan is the open space's rows. */
   open(): { root: string | null; scanned(): Promise<void>; notes(): readonly ScannedNote[] }
-  /** Hands the thread back inside a long pass. */
   breathe(): Promise<void>
-  /** Milliseconds since the epoch, for a note just written. */
   now(): number
-  /** The notes of a space that no scan reads, being in Orden's own hidden folder: its
-   *  inbox (rows/inbox.ts), relative to the space. Read with the space, and kept
-   *  current like any note, by the saves and file operations that name them. */
   own?(root: string): readonly string[]
-  /** Whether a space is an Obsidian vault - `.obsidian` at its root - where a `📅` is a
-   *  deadline rather than a start date (#371, `@orden/markdown/task-dates`). */
   vault(root: string): Promise<boolean>
 }
 
-/** How many notes are made into rows between two breaths. */
 const CHUNK = 250
 
 interface Held {
   root: string
   name: string
-  /** By `pathKey` of the note's path within the space. */
   files: Map<string, Row[]>
-  /** Every row of the space in one list, made when first asked for after a change. */
   flat: Row[] | null
-  /** Whether the space is being read, and what it was told meanwhile, to be told
-   *  again over what the read brings back. */
   reading: boolean
   since: ((files: Map<string, Row[]>) => void)[]
-  /** Whether its `📅` is a deadline, as asked of the host when the space is read. */
   vault: boolean
 }
 
 export class RowsStore {
   private readonly spaces = new Map<string, Held>()
   private readonly listeners = new Set<RowsListener>()
-  /** Spaces waiting for their read, one at a time. */
   private readonly queue: Held[] = []
   private draining = false
 
   constructor(private readonly host: Host) {}
 
-  /** Every row of one space, by its name or its root, or of every space. The same
-   *  list until something in it changes. */
   of(space?: string): readonly Row[] {
     if (space === undefined) return [...this.spaces.values()].flatMap((held) => this.flat(held))
 
@@ -111,7 +69,6 @@ export class RowsStore {
     })
   }
 
-  /** The rows of one note, by its path as the app holds it. */
   at(path: string): readonly Row[] {
     const held = this.holding(path)
     if (!held) return []
@@ -119,25 +76,19 @@ export class RowsStore {
     return relative === null ? [] : (held.files.get(pathKey(relative, held.root)) ?? [])
   }
 
-  /** The space a row is in, by its root. */
   rootOf(row: Row): string | null {
     return [...this.spaces.values()].find((one) => one.name === row.space)?.root ?? null
   }
 
-  /** Whether every space told of has been read. */
   get ready(): boolean {
     return [...this.spaces.values()].every((one) => !one.reading) && !this.queue.length
   }
 
-  /** Hears every change from now on. Answers the way to stop. */
   watch(listener: RowsListener): () => void {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
   }
 
-  /** The spaces there are now. A new one is read in its turn; one that went is
-   *  forgotten; one renamed keeps its rows under its new name. Decides from what it is
-   *  handed, so an effect may call it. */
   spacesAre(spaces: readonly SpaceName[]) {
     for (const [key, held] of this.spaces) {
       if (!spaces.some((one) => samePath(one.root, held.root))) this.forget(key)
@@ -153,8 +104,6 @@ export class RowsStore {
     }
   }
 
-  /** A file the app has just written, in any space: its rows read again from what was
-   *  written. */
   saved(path: string, content: string) {
     const held = this.holding(path)
     if (!held) return
@@ -164,7 +113,6 @@ export class RowsStore {
     const key = pathKey(relative, held.root)
     const now = this.host.now()
     this.edit(held, key, (before) => {
-      // A creation time the scan never knew is the moment it was first written here.
       const known = before?.[0]?.file.ctime ?? 0
       const ctime = known > 0 ? known : now
       const stamp = { size: content.length, mtime: now, ctime }
@@ -175,9 +123,6 @@ export class RowsStore {
     })
   }
 
-  /** What the account says of notes a browser keeps no words of (#1126): each one's
-   *  scan, relative to the space at `root`, with the front matter and the task lines
-   *  its rows are made of. */
   indexed(root: string, scans: readonly ScannedNote[]) {
     const held = this.spaces.get(pathKey(root))
     if (!held) return
@@ -187,7 +132,6 @@ export class RowsStore {
     }
   }
 
-  /** A file operation, heard as everything kept by path hears one. */
   follow(op: FileOp): Promise<void> | undefined {
     if (op.op === 'removed') {
       if (op.kind === 'space') this.forget(pathKey(op.path))
@@ -198,8 +142,6 @@ export class RowsStore {
     if (op.op === 'moved') {
       if (op.kind === 'space') this.spaceMoved(op.from, op.to)
       else if (this.moved(op.from, op.to)) return undefined
-      // Into a space still being read, or out of one: the rows in hand are not the
-      // whole of it, so what arrived is read again where it is now.
       else return op.kind === 'folder' ? this.folderCame(op.to) : this.fileCame(op.to)
       return undefined
     }
@@ -212,9 +154,7 @@ export class RowsStore {
     return held.flat
   }
 
-  /** A note's rows, read the way its space reads a task's dates. */
   private rowsIn(held: Held, read: NoteRead): Row[] {
-    // The file at the top of a space that its settings edit, and no row of any view.
     if (samePath(read.path, AGENTS_NAME, held.root)) return []
     const rows = rowsOf(held.name, read)
     if (held.vault) for (const row of rows) if (row.task) row.task.dueReads = 'deadline'
@@ -232,7 +172,6 @@ export class RowsStore {
     for (const listener of this.listeners) listener(change)
   }
 
-  /** One file's rows replaced, made now and again over a read in the air. */
   private edit(
     held: Held,
     key: string,
@@ -304,14 +243,12 @@ export class RowsStore {
     this.spaces.set(pathKey(to), held)
   }
 
-  /** The files under a path that went, rows and all. */
   private gone(path: string) {
     const held = this.holding(path)
     if (!held) return
     const at = within(held.root, path, held.root)
     if (at === null) return
 
-    // What the read in the air brings back is told it went as well.
     if (held.reading) {
       held.since.push((files) => {
         for (const [key, rows] of files) {
@@ -323,10 +260,6 @@ export class RowsStore {
     for (const key of this.keysUnder(held, at)) this.edit(held, key, () => null)
   }
 
-  /** A file or a folder renamed or moved, perhaps into another space: its rows go
-   *  with it, saying where they are now. Answers false where the rows in hand cannot
-   *  be carried, because a space either side is still being read; the caller reads
-   *  what arrived instead. */
   private moved(from: string, to: string): boolean {
     const was = this.holding(from)
     const now = this.holding(to)
@@ -348,9 +281,6 @@ export class RowsStore {
 
       const rest = within(at, path, was.root) ?? ''
       const moved = rest ? (there ? `${there}/${rest}` : rest) : there
-      // Rows already where it went are a save since the rename, newer than what moved:
-      // a link rewrite is told before the move (B498). A case-only rename's own key
-      // was emptied just above.
       this.edit(
         now,
         pathKey(moved, now.root),
@@ -361,7 +291,6 @@ export class RowsStore {
     return true
   }
 
-  /** The keys of every note at or under a path within a space. */
   private keysUnder(held: Held, at: string): string[] {
     const keys: string[] = []
     for (const [key, rows] of held.files) {
@@ -371,7 +300,6 @@ export class RowsStore {
     return keys
   }
 
-  /** A note that came: a delete undone, a copy, a file put back from the trash. */
   private async fileCame(path: string) {
     const held = this.holding(path)
     if (!held || !isMarkdownPath(path)) return
@@ -379,7 +307,6 @@ export class RowsStore {
     if (content !== null) this.saved(path, content)
   }
 
-  /** A folder that came, read the way its space was. */
   private async folderCame(path: string) {
     const held = this.holding(path)
     if (!held) return
@@ -396,7 +323,6 @@ export class RowsStore {
     }
   }
 
-  /** The spaces waiting for their read, one at a time with a breath between them. */
   private async drain() {
     if (this.draining) return
     this.draining = true
@@ -411,8 +337,6 @@ export class RowsStore {
     }
   }
 
-  /** One space read whole: the link index's scan where it is the open space, a scan of
-   *  its own otherwise. */
   private async read(held: Held) {
     held.vault = await this.host.vault(held.root).catch(() => false)
     const notes = await this.notesOf(held)
@@ -423,8 +347,6 @@ export class RowsStore {
     for (const note of notes) {
       if (!isMarkdownPath(note.path)) continue
       if (note.tasks === undefined) {
-        // Saved since the index's scan, which the index read again without what the
-        // rows need: read once more, here.
         const content = await this.host.read(insideSpace(held.root, note.path))
         if (content !== null) {
           const stamp = { size: content.length, mtime: this.host.now(), ctime: this.host.now() }
@@ -439,7 +361,6 @@ export class RowsStore {
       if (++counted % CHUNK === 0) await this.host.breathe()
     }
 
-    // The notes the scan leaves out because they are Orden's own, read one by one.
     for (const relative of this.host.own?.(held.root) ?? []) {
       const content = await this.host.read(insideSpace(held.root, relative))
       if (content === null || this.spaces.get(pathKey(held.root)) !== held) continue
@@ -471,14 +392,11 @@ export class RowsStore {
   }
 }
 
-/** The rows a note's words make at `relative` in a space, as a save would make them;
- *  the read of a task's dates aside, which only the store knows. */
 export function noteRowsOf(space: string, relative: string, content: string): Row[] {
   const stamp = { size: content.length, mtime: 0, ctime: 0 }
   return rowsOf(space, readOf({ ...scanNote(relative, content), ...scanRows(content), stamp }))
 }
 
-/** A scanned note as the rows read it. */
 function readOf(note: ScannedNote): NoteRead {
   return {
     path: note.path,
@@ -490,7 +408,6 @@ function readOf(note: ScannedNote): NoteRead {
   }
 }
 
-/** Rows from a save, made when the rows it had were; see `moved`. */
 function bornWhen(saved: readonly Row[], had: readonly Row[]): Row[] {
   const first = saved[0]
   const ctime = had[0]?.file.ctime

@@ -1,116 +1,4 @@
 #!/usr/bin/env bash
-# Orden started the way a Wayland desktop starts it: a headless sway with its Xwayland,
-# four screens - one turned to portrait at a fractional 1.77, one at 1, one at 1.75, one
-# at 2 - and a session bus. Orden runs on CEF, whose browsers are X11 windows, so its
-# window is an Xwayland one, as it is on every Wayland desktop; GDK_BACKEND is unset and
-# DISPLAY is Xwayland's. Then the checks a reader would make by looking:
-#
-#   - the window maps, as a window sway can see;
-#   - every window of the app's carries the name its desktop entry's StartupWMClass
-#     says, CLASS (nib unless said; empty, not checked), and none is Chromium's own
-#     (#1148);
-#   - nothing the run does hands anything to the system's browser: an `xdg-open` of the
-#     run's own goes first on the path and says what it was asked (#1148);
-#   - nothing the graphics stack says is a failure: no EGL display that could not be
-#     made, no protocol error, no GTK criticals;
-#   - a key from any app reaches the app the way this desktop allows: through the
-#     portal where there is one (PORTAL=1 starts scripts/wayland-portal.py, which binds
-#     and then presses quick add), or as `--quick-add` handed to the running app where
-#     there is none (SECOND names the command that starts a second copy) - quick add's
-#     window comes up either way, floating, as a compositor floats a fixed-size window;
-#   - with DRIVE=1, Orden opened on a page of one colour in a web tab, and
-#     no process of the app running with GPU compositing turned off (#390,
-#     scripts/compositing-check.py), and scripts/wayland-drive.py reading where that
-#     page is drawn on every screen, with the tab's menu over it and after a resize,
-#     clicking with the compositor's own pointer (scripts/wayland-pointer.py); and
-#     with COLD=n as well, Orden quit and
-#     started again n times, each on another screen and with no address, and the drive
-#     run on the web tab it came back to;
-#   - with IDLE=1, what the app costs the CPU while nothing happens, before anything
-#     else is done with it (scripts/idle-cpu.py);
-#   - with GROUND=1, a page written only for light standing on white in either of the
-#     app's schemes (#763, scripts/ground-drive.py);
-#   - with TEXTSIZE=1, Settings > Editor > Text size dragged with the compositor's
-#     pointer, and the note's text larger on the screen and after a load (#680,
-#     scripts/textsize-drive.py);
-#   - with FLASH=1, the strip's note tab and web tab chosen in turn in the dark scheme,
-#     filmed, and no frame of the pane white (#762, scripts/flash-drive.py);
-#   - with KILL=1, the app's scheme switched and words typed into a new note, the app
-#     killed outright a tenth of a second later, and both there when it is started
-#     again (#961, scripts/kill-drive.py);
-#   - with WORKER=1, a web tab's page whose worker has to answer it, as it opens and
-#     after Orden is quit and started again with no address (#777,
-#     scripts/worker-drive.py);
-#   - with SESSION=1, a page in a web tab that makes a cookie with no expiry, and that
-#     cookie still there after Orden is quit and started again with no address (#483,
-#     scripts/session-drive.py);
-#   - with EXPORTPDF=1, a page printed to a file in a window nobody sees, with its pages
-#     and words in the file, and a page reaching for a file on the disk printed without it
-#     (#483, scripts/pdf-drive.py);
-#   - with CERT=1, a site served over https (CERT_HOST, example.com unless said) and
-#     the certificate its page came with shown from the site's popover (#776,
-#     scripts/cert-drive.py);
-#   - with DNS=1, a name only a DNS over HTTPS server of the run's own knows
-#     (scripts/doh-server.py, its authority trusted in the user's NSS store), the web
-#     tab sent to it, and Settings > General > DNS set to that server: reached at once
-#     and after Orden is started again (#766, #767, scripts/dns-drive.py);
-#   - with DOWNLOAD=1, a download in a web tab stopped on its way and the same name
-#     downloaded again: the first has to stop and leave nothing, the second has to be a
-#     file of its own (#788, scripts/download-drive.py);
-#   - with EXTENSIONS=1, a small extension of the run's own loaded (`--load-extension`):
-#     seen in the web bar and in Settings, removed through the engine and gone from both,
-#     and still gone once Orden is started again without it (#789,
-#     scripts/extensions-drive.py); then a Firefox add-on installed from
-#     addons.mozilla.org, loaded when Orden starts again, and its popup drawn with
-#     `browser` in it (#1155);
-#   - with GLOBALS=1, a page and a frame in a web tab: a classic script's `let ipc` has to
-#     run and nothing of the app's be on `window`, while the app's page keeps the channel
-#     and quick add and the presenter's window are heard from the app's profile
-#     (scripts/globals-drive.py);
-#   - with GRANTS=1, a site in a private tab asking for the camera and allowed, the
-#     private tab closed, and the same site asking from a normal tab: the private answer
-#     has to be written nowhere and the normal tab has to be asked (#787,
-#     scripts/grants-drive.py);
-#   - with PDFMARK=1, two PDFs and a blank page note put in the space and one PDF
-#     opened, which makes it a page note: its row and its tab have to wear the PDF's
-#     mark and the blank one's another, and so does its tab opened from another
-#     space (#676, scripts/pdf-mark-drive.py);
-#   - with RESERVED=1, a name Windows keeps for a device given to a note or a folder
-#     through the app's own commands, and a note made from words headed with one: each
-#     refused or stepped aside from, and a note that already has one still written and
-#     moved (#477, scripts/reserved-drive.py);
-#   - with WATCH=1, a space holding a folder nobody may read and four hundred more: a
-#     note written into it by another program has to be heard, at its top and deep in
-#     it, and again under a lowered limit of watched folders, which the watch has to say
-#     (#481, scripts/watch-drive.py);
-#   - with SCHEME=1, a web tab's page drawn in the app's scheme as the app's scheme is
-#     switched, light and dark (#427, scripts/scheme-drive.py);
-#   - with CORNER=1, a web tab's page of one colour photographed in its rounded card: its
-#     two bottom corners have to be the card's, not square (#1088, scripts/corner-drive.py);
-#   - with CHOOSING=1, two panes each with a web tab, and the page of the one not being
-#     worked in pressed with the compositor's pointer, round after round: its tab and pane
-#     have to be chosen each time (#1080, scripts/choosing-drive.py);
-#   - with OPENS=1, a page of the run's own pressed with the compositor's pointer in every
-#     way a page opens a window - links, `window.open` in its forms, a sign-in's popup
-#     with its opener, a blank window sent somewhere or written into, a form sent by
-#     POST, frames - and each has to do what it asked for (#1074, scripts/opens-drive.py);
-#   - with CLOSING=1, web tabs opened, Orden started again on them, and closed one after
-#     another as fast as Ctrl+W closes them while their pages come up: the window has to
-#     go on answering (#1031, scripts/closing-drive.py);
-#   - with POPUP=1, the space switcher, the web tab's menu and a canvas's pens' panel
-#     chosen from with the compositor's pointer, over a web tab's page, round after
-#     round (#661, scripts/popup-drive.py);
-#   - with DRAG=1, the window moved by its tab strip and resized by its edge with the
-#     compositor's own pointer (scripts/window-drag.py, #427);
-#   - with CHECK=1, what #418 asked of the engine, looked at and measured by
-#     scripts/wayland-418.py: the buttons' words, Settings' search, Ctrl+Tab, a web tab
-#     chosen, and three videos of three codecs (made here with ffmpeg).
-#
-# Run inside `dbus-run-session`, with the command that starts Orden:
-#
-#   dbus-run-session -- scripts/wayland-launch.sh /usr/bin/nib
-#
-# Everything it saw is left in $OUT (default ./wayland-out) for the job to keep.
 
 set -euo pipefail
 
@@ -125,7 +13,6 @@ XDG_RUNTIME_DIR=$(mktemp -d)
 chmod 700 "$XDG_RUNTIME_DIR"
 export HOME=${HOME:-/root}
 
-# sway with no GPU and no input: the headless backend, drawn in memory.
 export WLR_BACKENDS=headless WLR_RENDERER=pixman WLR_LIBINPUT_NO_DEVICES=1 WLR_HEADLESS_OUTPUTS=4
 cat > "$out/sway.conf" <<'CONF'
 xwayland force
@@ -150,7 +37,6 @@ export SWAYSOCK=$sock
 WAYLAND_DISPLAY=$(basename "$(ls "$XDG_RUNTIME_DIR"/wayland-* | grep -v '\.lock$' | head -1)")
 export WAYLAND_DISPLAY
 swaymsg -t get_outputs > "$out/outputs.json"
-# Xwayland's display, the one sway started: the socket that was not there before it.
 for _ in $(seq 100); do
   for socket in $(ls /tmp/.X11-unix 2>/dev/null || true); do
     if ! grep -qx "$socket" <<< "$x11_before"; then
@@ -163,8 +49,6 @@ done
 [ -n "${DISPLAY:-}" ] || { echo "::error::sway started no Xwayland"; cat "$out/sway.log"; exit 1; }
 echo "Xwayland on $DISPLAY"
 
-# With DPI=n, the desktop scaled for X11 applications as KDE scales it: XSETTINGS saying
-# n dots an inch (Xft/DPI), which Chromium takes its scale from (#427, page_scale.rs).
 if [ -n "${DPI:-}" ]; then
   printf 'Xft/DPI %s\n' "$((DPI * 1024))" > "$out/xsettingsd.conf"
   xsettingsd -c "$out/xsettingsd.conf" > "$out/xsettingsd.log" 2>&1 &
@@ -185,8 +69,6 @@ if [ "${PORTAL:-0}" = 1 ]; then
   grep -q '"owned"' "$out/portal.log" || { echo "::error::the stand-in portal did not start"; exit 1; }
 fi
 
-# Each X11 window sway has whose WM_CLASS is not the app's, or whose title is Chromium's.
-# Every window of Orden's own Chromium is an X11 one.
 strangers() {
   [ -n "${CLASS-nib}" ] || return 0
   swaymsg -t get_tree | python3 -c '
@@ -202,7 +84,6 @@ walk(json.load(sys.stdin))
 ' "${CLASS-nib}"
 }
 
-# The windows sway has, one line each: app id, title, floating or tiled, focused.
 views() {
   swaymsg -t get_tree | python3 -c '
 import json, sys
@@ -227,14 +108,9 @@ wait_for_views() {
   return 1
 }
 
-# The drive's page, one colour edge to edge, and the app's endpoint open to `eval`
-# before the app writes this launch's port into it.
-# With MEDIA=1 the page carries a video as well, so the page's engine starts GStreamer and
-# reads every plugin it is pointed at.
 site_pid=""
 pointer_pid=""
 config="${XDG_CONFIG_HOME:-$HOME/.config}/ch.emilvinu.nib"
-# The endpoint open to `eval`, with no port until the app that starts next writes its own.
 endpoint() {
   mkdir -p "$config"
   secret=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
@@ -242,8 +118,6 @@ endpoint() {
   chmod 600 "$config/automation.json"
 }
 command=("$@")
-# With DRIVE=1, Chromium's DevTools port, which says how Chromium runs (#390,
-# scripts/compositing-check.py); with EXTENSIONS=1, what a Firefox add-on's popup says.
 if [ "${DRIVE:-0}" = 1 ] || [ "${SESSION:-0}" = 1 ] || [ "${EXTENSIONS:-0}" = 1 ]; then
   NIB_CEF_DEBUG_PORT=${NIB_CEF_DEBUG_PORT:-9339}
   export NIB_CEF_DEBUG_PORT
@@ -253,19 +127,14 @@ if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ 
   video=""
   [ "${MEDIA:-0}" = 1 ] && video='<video src="none.webm" autoplay muted></video>'
   printf '<!doctype html><title>one colour</title><style>html,body{margin:0;height:100%%;background:#ff00ff}</style>%s' "$video" > "$out/site/index.html"
-  # With GROUND=1, a page written only for light, with no ground of its own (#763).
   [ "${GROUND:-0}" = 1 ] && printf '<!doctype html><title>light only</title><header style="background:#fff;padding:20px;border-bottom:1px solid #ddd">A white header</header><main style="padding:40px 20px;color:#202124;font:28px sans-serif"><h1>Store and share files online</h1><p>Words, dark, on whatever the page stands on.</p></main>' > "$out/site/index.html"
-  # With FLASH=1, a dark page, which any white in it is not (#762).
   [ "${FLASH:-0}" = 1 ] && printf '<!doctype html><title>dark</title><meta name="color-scheme" content="dark"><style>html,body{margin:0;height:100%%;background:#1e1e1e}</style>' > "$out/site/index.html"
-  # With SCHEME=1, a page whose colour says the scheme it is asked for (#427).
   [ "${SCHEME:-0}" = 1 ] && printf '<!doctype html><title>scheme</title><style>html,body{margin:0;height:100%%;background:#0000ff}@media (prefers-color-scheme: dark){html,body{background:#00ff00}}</style>' > "$out/site/index.html"
   if [ "${GLOBALS:-0}" = 1 ]; then
     said='<script>let ipc = 1</script><script>fetch("/said?" + new URLSearchParams({ who: "WHO", declared: String(ipc), ipc: typeof window.ipc, internals: typeof window.__TAURI_INTERNALS__ }))</script>'
     printf '<!doctype html><title>asked</title>%s<iframe src="http://localhost:8765/frame.html"></iframe>' "${said/WHO/page}" > "$out/site/index.html"
     printf '<!doctype html><title>frame</title>%s' "${said/WHO/frame}" > "$out/site/frame.html"
   fi
-  # With WORKER=1, a page that starts a worker from a blob, as Anubis does, and takes
-  # its answer into its title with the moment the page was loaded (#777).
   if [ "${WORKER:-0}" = 1 ]; then
     cat > "$out/site/index.html" <<'PAGE'
 <!doctype html><title>a worker waiting</title>
@@ -278,8 +147,6 @@ if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ 
 </script>
 PAGE
   fi
-  # With SESSION=1, a page that makes a cookie with no expiry, and says if it found one;
-  # in a private tab, `?private`, a cookie of another name.
   if [ "${SESSION:-0}" = 1 ]; then
     cat > "$out/site/index.html" <<'PAGE'
 <!doctype html><title>a session waiting</title>
@@ -334,10 +201,6 @@ PAGE
   endpoint
   set -- "$@" http://127.0.0.1:8765/
 fi
-# With DNS=1, a DNS over HTTPS server of the run's own, its certificate from an authority
-# made here and trusted in the user's NSS store, which is where Chromium on Linux takes
-# an authority somebody added from; a page served by name only it knows; and the web
-# tab opened on that name (#766, #767).
 dns_name=probe.test
 dns_provider=https://127.0.0.1:8443/dns-query
 if [ "${DNS:-0}" = 1 ]; then
@@ -363,11 +226,8 @@ if [ "${DNS:-0}" = 1 ]; then
   endpoint
   set -- "$@" "http://$dns_name:8765/"
 fi
-# With DOWNLOAD=1, a page with a file to download, slowly or at once, and a downloads
-# folder of the run's own (#788).
 if [ "${DOWNLOAD:-0}" = 1 ]; then
   mkdir -p "$out/downloads"
-  # Absolute, as the app takes only an absolute folder from it; see `folder_named`.
   NIB_DOWNLOADS_DIR="$(cd "$out/downloads" && pwd)"
   export NIB_DOWNLOADS_DIR
   python3 "$here/download-server.py" 8765 "$out/served.txt" > "$out/site.log" 2>&1 &
@@ -375,17 +235,12 @@ if [ "${DOWNLOAD:-0}" = 1 ]; then
   endpoint
   set -- "$@" http://127.0.0.1:8765/
 fi
-# With WATCH=1, a spaces folder of the run's own (#481).
 if [ "${WATCH:-0}" = 1 ]; then
   mkdir -p "$out/spaces"
-  # Absolute, as the app takes only an absolute folder from it; see `folder_named`.
   NIB_SPACES_DIR="$(cd "$out/spaces" && pwd)"
   export NIB_SPACES_DIR
   endpoint
 fi
-# With EXTENSIONS=1, an extension of the run's own, with a button and a popup, loaded into
-# the browsing profile as Chromium loads one from the command line (#789), and tabs of its
-# own to open (#1161).
 ext_name="Orden run extension"
 if [ "${EXTENSIONS:-0}" = 1 ]; then
   mkdir -p "$out/extension"
@@ -414,54 +269,34 @@ icon = (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 16, 16, 8,
     "background": {"service_worker": "background.js"},
 }))
 MAKE
-  # With a feature list of the run's own, as somebody chasing an extension passes one:
-  # it replaced CEF's own, and listing the extensions took the app down (#1084).
   NIB_CEF_ARGS="load-extension=$(cd "$out/extension" && pwd),disable-features=DisableLoadExtensionCommandLineSwitch"
   export NIB_CEF_ARGS
 fi
-# With TEXTSIZE=1, the endpoint and no page: the launch opens on its note (#680).
 [ "${TEXTSIZE:-0}" = 1 ] && endpoint
-# With KILL=1, the endpoint and no page (#961).
 [ "${KILL:-0}" = 1 ] && endpoint
-# With RESERVED=1, the endpoint and no page (#477).
 [ "${RESERVED:-0}" = 1 ] && endpoint
-# With PDFMARK=1, the endpoint and no page (#676).
 [ "${PDFMARK:-0}" = 1 ] && endpoint
-# With EXPORTPDF=1 the endpoint too, and a spaces folder the file may be written in.
 if [ "${EXPORTPDF:-0}" = 1 ]; then
   mkdir -p "$out/spaces"
   NIB_SPACES_DIR="$(cd "$out/spaces" && pwd)"
   export NIB_SPACES_DIR
   endpoint
 fi
-# With CLOSING=1, the endpoint and no page (#1031).
 [ "${CLOSING:-0}" = 1 ] && endpoint
-# With OPENS=1, the endpoint and no page: the drive opens its own (#1074).
 [ "${OPENS:-0}" = 1 ] && endpoint
-# With CHOOSING=1, the same (#1080).
 [ "${CHOOSING:-0}" = 1 ] && endpoint
-# With CORNER=1, the same (#1088).
 [ "${CORNER:-0}" = 1 ] && endpoint
-# With CERT=1, the endpoint and a site over https, a real one: its certificate is the
-# point (#776).
 if [ "${CERT:-0}" = 1 ]; then
   endpoint
   set -- "$@" "https://${CERT_HOST:-example.com}/"
 fi
 if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${TEXTSIZE:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ] || [ "${OPENS:-0}" = 1 ] || [ "${CHOOSING:-0}" = 1 ]; then
-  # And a keyboard with it, where xkbcommon's tools can say what its keys are.
   if command -v xkbcli > /dev/null; then
     xkbcli compile-keymap --layout us > "$out/keymap.txt"
     export KEY_MAP="$out/keymap.txt"
   fi
   python3 "$here/wayland-pointer.py" "$out/pointer.fifo" > "$out/pointer.log" 2>&1 &
   pointer_pid=$!
-  # The pointer and the keyboard on the seat before Orden starts, and not while it does
-  # (#439): Xwayland makes each an input device of its own, and GTK 4 reads the X
-  # server's devices once as it opens the display. A device made between that reading
-  # and GTK listening for new ones is one GTK never learns of, and the first event from
-  # it is GDK handed no device - `gdk_device_get_n_axes: assertion 'GDK_IS_DEVICE
-  # (device)' failed` - and a crash.
   said="a pointer is on the seat"
   [ -n "${KEY_MAP:-}" ] && said="and a keyboard"
   for _ in $(seq 100); do
@@ -524,7 +359,6 @@ if [ "$status" = 0 ] && [ -n "$portal_pid" ]; then
   grep -q 'CTRL+ALT+space' "$out/portal.log" || { echo "::error::quick add's key was not the one preferred"; status=1; }
 fi
 
-# Idle, before anything is done with it: what it costs the CPU (#427, scripts/idle-cpu.py).
 if [ "$status" = 0 ] && [ "${IDLE:-0}" = 1 ]; then
   sleep 15
   python3 "$here/idle-cpu.py" "$app_pid" 20 | tee "$out/idle.txt"
@@ -533,8 +367,6 @@ if [ "$status" = 0 ] && [ "${IDLE:-0}" = 1 ]; then
 fi
 
 if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ]; then
-  # Every page, the window's own and the web tab's, put together on the card as far as
-  # the app decides it (#390, scripts/compositing-check.py), and then where it is drawn.
   python3 "$here/compositing-check.py" "$NIB_CEF_DEBUG_PORT" || status=1
   python3 "$here/wayland-drive.py" "$out" "$app_pid" || status=1
 fi
@@ -559,13 +391,10 @@ if [ "$status" = 0 ] && [ "${CERT:-0}" = 1 ]; then
   python3 "$here/cert-drive.py" "$out" "${CERT_HOST:-example.com}" || status=1
 fi
 
-# The pages' DNS chosen in Settings and the name reached at once, then again once Orden
-# is quit and started again with no address (#766, #767).
 if [ "$status" = 0 ] && [ "${DNS:-0}" = 1 ]; then
   sleep 3
   python3 "$here/dns-drive.py" "$out" choose "$dns_name" "$dns_provider" "$out/doh/asked.txt" || status=1
   if [ "$status" = 0 ]; then
-    # The tabs are written to the disk a few seconds after they change; see WORKER=1.
     sleep 10
     kill -TERM "$app_pid" 2>/dev/null || true
     for _ in $(seq 50); do kill -0 "$app_pid" 2>/dev/null || break; sleep 0.2; done
@@ -601,7 +430,6 @@ if [ "$status" = 0 ] && [ "${GRANTS:-0}" = 1 ]; then
 fi
 
 if [ "$status" = 0 ] && [ "${EXTENSIONS:-0}" = 1 ]; then
-  # Orden started again, its log in orden-<name>.log; answers whether its window mapped.
   started_again() {
     kill -TERM "$app_pid" 2>/dev/null || true
     for _ in $(seq 50); do kill -0 "$app_pid" 2>/dev/null || break; sleep 0.2; done
@@ -619,15 +447,12 @@ if [ "$status" = 0 ] && [ "${EXTENSIONS:-0}" = 1 ]; then
   }
   sleep 3
   if python3 "$here/extensions-drive.py" "$out" installed "$ext_name"; then
-    # Started again without it on the command line: what was removed stays removed.
     unset NIB_CEF_ARGS
     if started_again again; then
       python3 "$here/extensions-drive.py" "$out" again "$ext_name" || status=1
     else
       status=1
     fi
-    # A Firefox add-on from addons.mozilla.org: installed, then loaded as Orden starts
-    # again, and its popup drawn with the Firefox layer in it (#1155).
     if [ "$status" = 0 ] && python3 "$here/extensions-drive.py" "$out" firefox-install "$ext_name"; then
       if started_again firefox; then
         python3 "$here/extensions-drive.py" "$out" firefox-run "$ext_name" || status=1
@@ -642,8 +467,6 @@ if [ "$status" = 0 ] && [ "${EXTENSIONS:-0}" = 1 ]; then
   fi
 fi
 
-# The space made, then given a folder nobody may read and four hundred more, and the app
-# started again on it; then again under a limit of watched folders it is past (#481).
 again() {
   kill -TERM "$app_pid" 2>/dev/null || true
   for _ in $(seq 50); do kill -0 "$app_pid" 2>/dev/null || break; sleep 0.2; done
@@ -683,9 +506,6 @@ if [ "$status" = 0 ] && [ "${WATCH:-0}" = 1 ]; then
   fi
 fi
 
-# Web tabs left open, the app started again on them, and closed as fast as Ctrl+W
-# closes them while their pages are still being built (#1031). The tabs are kept in the
-# page's local storage, which Chromium writes to the disk a few seconds after it changes.
 if [ "$status" = 0 ] && [ "${CLOSING:-0}" = 1 ]; then
   sleep 3
   if python3 "$here/closing-drive.py" "$out" open; then
@@ -730,10 +550,6 @@ if [ "$status" = 0 ] && [ "${CHECK:-0}" = 1 ]; then
   APP_COMMAND="${command[0]}" python3 "$here/wayland-418.py" "$out" "$app_pid" || status=1
 fi
 
-# What the app took in a tenth of a second before it was killed, there when it is started
-# again (#961). A tenth, sooner than the engine puts the page's storage on the disk of its
-# own accord, which a second was not; a kill, not a quit, so nothing is written on the way
-# out.
 if [ "$status" = 0 ] && [ "${RESERVED:-0}" = 1 ]; then
   sleep 3
   python3 "$here/reserved-drive.py" "$out" || status=1
@@ -748,10 +564,6 @@ if [ "$status" = 0 ] && [ "${KILL:-0}" = 1 ]; then
   sleep 3
   if python3 "$here/kill-drive.py" "$out" write; then
     sleep 0.1
-    # Every process of it at once, as `pkill` or the session ending does: the engine's
-    # storage runs in a process of its own, which puts what it holds on the disk the
-    # moment the app's own process is gone if it outlives it. The app and every process
-    # under it, found first and then killed together.
     tree="$app_pid" under="$app_pid"
     while [ -n "$under" ]; do
       under=$(ps -e -o pid=,ppid= | awk -v set=" $under " 'index(set, " " $2 " ") { printf "%s ", $1 }')
@@ -776,14 +588,10 @@ if [ "$status" = 0 ] && [ "${KILL:-0}" = 1 ]; then
   fi
 fi
 
-# A page's worker answering it, and again on the web tab the app comes back to once it is
-# quit and started again with no address (#777).
 if [ "$status" = 0 ] && [ "${WORKER:-0}" = 1 ]; then
   sleep 3
   python3 "$here/worker-drive.py" "$out" opened || status=1
   if [ "$status" = 0 ]; then
-    # The tabs are kept in the page's local storage, which Chromium writes to the disk
-    # a few seconds after it changes: a quit sooner than that is a run that kept none.
     sleep 10
     kill -TERM "$app_pid" 2>/dev/null || true
     for _ in $(seq 50); do kill -0 "$app_pid" 2>/dev/null || break; sleep 0.2; done
@@ -808,14 +616,8 @@ if [ "$status" = 0 ] && [ "${EXPORTPDF:-0}" = 1 ]; then
   python3 "$here/pdf-drive.py" "$out" || status=1
 fi
 
-# A session cookie and the same cookie on the web tab the app comes back to once its window
-# is closed and it is started again with no address, a private tab's nowhere on the disk,
-# and nothing more than the first run had: not then, not after a kill, and the process gone
-# when its window closes (#483, scripts/session-drive.py).
 if [ "$status" = 0 ] && [ "${SESSION:-0}" = 1 ]; then
   closed() {
-    # Its window closed, as a reader quits. A signal would not do: Chromium brings a
-    # session cookie back after an exit it takes for a crash whatever it is told.
     swaymsg '[title=".*"] kill' > /dev/null || true
     for _ in $(seq 100); do kill -0 "$app_pid" 2>/dev/null || break; sleep 0.2; done
     if kill -0 "$app_pid" 2>/dev/null; then
@@ -836,7 +638,6 @@ if [ "$status" = 0 ] && [ "${SESSION:-0}" = 1 ]; then
   python3 "$here/session-drive.py" "$out" first || status=1
   if [ "$status" = 0 ]; then
     read -r pages windows < "$out/session-counts"
-    # Kept tabs reach the disk a few seconds after they change; see WORKER=1.
     sleep 10
     closed
   fi
@@ -845,8 +646,6 @@ if [ "$status" = 0 ] && [ "${SESSION:-0}" = 1 ]; then
     python3 "$here/session-drive.py" "$out" again "$pages" "$windows" || status=1
   fi
   if [ "$status" = 0 ]; then
-    # Every process of it at once, as a crash does; a cookie reaches the disk within
-    # half a minute, and this is about what a kill brings back with it.
     sleep 35
     tree="$app_pid" under="$app_pid"
     while [ -n "$under" ]; do
@@ -858,8 +657,6 @@ if [ "$status" = 0 ] && [ "${SESSION:-0}" = 1 ]; then
     wait "$app_pid" 2>/dev/null || true
     again
     python3 "$here/session-drive.py" "$out" killed "$pages" "$windows" || status=1
-    # And it goes when its window closes, restored or not; started once more for the
-    # check at the end of this script that the app is up.
     if [ "$status" = 0 ]; then
       closed
       again
@@ -867,8 +664,6 @@ if [ "$status" = 0 ] && [ "${SESSION:-0}" = 1 ]; then
   fi
 fi
 
-# Quit and started again, the way a reader comes back after a restart: no address, so the
-# web tab is the one the last run left, on the next screen round each time.
 if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ] && [ "${COLD:-0}" -gt 0 ]; then
   screens=$(swaymsg -t get_outputs | python3 -c 'import json,sys; print(" ".join(o["name"] for o in json.load(sys.stdin)))')
   for run in $(seq "$COLD"); do
@@ -897,8 +692,6 @@ if [ "$status" = 0 ] && [ -n "${QUICK_ADD_FLOATS:-}" ]; then
 fi
 
 sleep 2
-# Still up, with everything above done: an engine that ends a while after its window
-# mapped - NSS, on the AppImage in #427 - ends the app with it.
 if ! kill -0 "$app_pid" 2>/dev/null; then
   echo "::error::Orden ended before the run did"
   status=1
@@ -909,7 +702,6 @@ if [ -n "$(strangers)" ]; then
   status=1
 fi
 views > "$out/views.txt" || true
-# A picture of every screen as the run leaves it, whatever it checked.
 for screen in $(swaymsg -t get_outputs | python3 -c 'import json,sys; print(" ".join(o["name"] for o in json.load(sys.stdin)))'); do
   grim -o "$screen" "$out/end-$screen.png" 2>/dev/null || true
 done
@@ -922,7 +714,6 @@ wait "$app_pid" 2>/dev/null || true
 [ -n "$pointer_pid" ] && kill "$pointer_pid" 2>/dev/null || true
 kill "$sway_pid" 2>/dev/null || true
 
-# The app's own log, which says how keys from other apps reach it here.
 find "$HOME" -path '*ch.emilvinu.nib*' -name 'nib.log' -exec cp {} "$out/nib.log" \; 2>/dev/null || true
 echo "::group::orden's output"
 cat "$out/orden.log"
@@ -942,9 +733,6 @@ if [ -s "$out/handed.txt" ]; then
   status=1
 fi
 
-# What a Wayland session must never print: the EGL display the friend's NixOS box could
-# not make, a protocol error, a GTK critical, a display that could not be opened, and
-# GStreamer loading plugins that are not its own.
 if grep -nE 'EGL_BAD_PARAMETER|Could not create default EGL display|Error 71|Protocol error|-CRITICAL|cannot open display|Failed to create GBM|Aborting|GStreamer-WARNING|:FATAL:|Check failed' "$out"/orden*.log "$out/second.log" 2>/dev/null; then
   echo "::error::the graphics stack failed"
   status=1

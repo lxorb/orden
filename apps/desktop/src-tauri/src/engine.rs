@@ -1,37 +1,3 @@
-//! Which engine every webview in this build runs on, and which profile each of
-//! them is in.
-//!
-//! Two builds come out of this source and they differ in one thing. macOS, Windows and
-//! the phones run every webview on the system's engine - `WebView2` on Windows,
-//! `WKWebView` on a Mac - which is what Tauri 2 gives without being asked. Linux runs on
-//! CEF (Chromium): the same library compiled against Tauri 3 and `tauri-runtime-cef` from
-//! `linux/Cargo.toml`, with the `cef` feature on, the app's interface and every web tab
-//! views in one browser process, as on Windows with `WebView2`. Everything Chromium is
-//! behind the feature, so the other platforms' dependency graph and lock file name no
-//! CEF at all. See `cef_runtime` for how the engine is started, and packaging/linux.md
-//! for what a Linux package carries.
-//!
-//! **The two profiles.** Chromium serves many profiles from one browser process, and an
-//! extension is installed into a profile - so two profiles is what keeps an extension a
-//! reader installed for the web out of Orden's own interface. It is not a precaution: with
-//! one profile the spike's test extension read the app's own document, in a screenshot,
-//! on the first try (docs/browser.md section 9). The browsing profile is the engine's
-//! *primary* one, which is where an extension installed by the command line or by
-//! Chromium's policies lands, and Orden's interface is the named one beside it. A space
-//! that keeps its web data apart has a profile of its own too.
-//!
-//! ```text
-//! <config>/chromium/                Chromium's user data directory, one lock on it
-//! <config>/chromium/Default         the browsing profile. Cookies, logins, extensions
-//! <config>/chromium/app             Orden's own interface. No extensions, nothing granted
-//! <config>/chromium/store-<name>    a space's or a site's own store; see web_stores.rs
-//! ```
-//!
-//! The system's engine keeps the folder it has always used - `<config>/web`, as one
-//! `WebView2` user data folder or one `WKWebView` data store - so nobody's cookies moved
-//! because a second engine exists, and the two engines never read each other's files. A
-//! store of its own is a folder under `<config>/web-stores`; see `web_stores.rs`.
-
 use std::path::PathBuf;
 
 use tauri::webview::WebviewBuilder;
@@ -39,25 +5,15 @@ use tauri::{AppHandle, Runtime};
 
 use crate::paths::{config_dir, made};
 
-/// The folder inside the app's own settings folder that the web lives in: the
-/// `WebView2` user data folder the system's engine has always used.
 #[cfg(not(feature = "cef"))]
 const ROOT: &str = "web";
 
-/// And Orden's own Chromium's user data directory, a folder of its own beside it: two
-/// engines on one machine, each with its own profiles. A profile is a direct child of
-/// it, which is the only shape CEF accepts. `cef_root` names the same place before Tauri has started.
 #[cfg(feature = "cef")]
 const ROOT: &str = "chromium";
 
-/// What a store of its own is called as a Chromium profile, in front of its name.
 #[cfg(feature = "cef")]
 const STORE_PROFILE: &str = "store-";
 
-/// The profile Orden's own interface is in, as a folder name.
-///
-/// Only the `cef` feature has profiles; the name is here rather than beside its one
-/// caller so that the layout in this file's comment is the layout in this file.
 #[cfg_attr(
     not(feature = "cef"),
     allow(
@@ -67,50 +23,9 @@ const STORE_PROFILE: &str = "store-";
 )]
 const APP_PROFILE: &str = "app";
 
-/// The same sixteen bytes every time, so `WKWebView` hands back the store it handed
-/// out last time. macOS 14 and later; older macOS has no such API and falls back to
-/// the default store, which is the one case where a web tab and the app share a
-/// profile on disk. Said out loud in docs/web-tabs.md rather than hidden here.
 #[cfg(all(not(feature = "cef"), target_os = "macos"))]
 const STORE_ID: [u8; 16] = *b"nib-web-tabs\0\0\0\0";
 
-/// The switches every `WebView2` browser process of this app starts with: the app's own
-/// page and every web tab's, in every store.
-///
-/// Three are wry's own defaults, written out again because passing any switches
-/// replaces them: Edge's mini menu over a selection, in a page and in a PDF, and
-/// `SmartScreen`. One is nib's: **`HideCursorWhileTyping` is off**. Emil, 2026-09-28:
-/// *"manchmal habe ich einfach keinen mouse cursor waehrend ich im browser bin. dann
-/// muss ich ihn aus dem browserfenster raus und dann wieder rein bewegen."*
-///
-/// The engine hides the pointer while somebody types, for Windows' *Hide pointer while
-/// typing*, with `ShowCursor(FALSE)` on its own thread, and shows it again on the next
-/// mouse event that same browser process receives. That is sound in a browser, which
-/// is one process under one window. Here it is two or more: the app's page and the web
-/// pages keep separate profiles, so separate browser processes, and every thread with a
-/// window in Orden's window shares one input queue and so one pointer count. Type an
-/// address with the pointer resting on the page, and the app's process hides the pointer
-/// over the whole window; moving it about the page reaches only the page's process,
-/// which never hid it, so it stays gone until it crosses into the app's own page. The
-/// same holds the other way round, and between two stores. Measured with
-/// `scripts/web-cursor-probe.py`.
-///
-/// The engine offers no way to show a pointer another process hid, so the hiding goes:
-/// the pointer stays where it was while somebody types, as it always had in Orden until the
-/// runtime started hiding it. One `--disable-features`, because Chromium reads only the
-/// last of a repeated switch. Every webview on one user data folder must be started with
-/// the same switches, which is why there is one list and not one per caller.
-///
-/// And **the engine's own swipe between pages is off**, both halves of it. Emil,
-/// 2026-10-08 (#209): *"edge supports it for some sites while nib supports it as well
-/// ... sometimes both triggers"*. nib draws the swipe itself (`web_swipe.rs`) and walks the
-/// tab's own trail; the engine's walks its own history, which a tab revived after a
-/// relaunch does not have, so it went on some pages and not others, and on those it went
-/// as well as nib's. `IsSwipeNavigationEnabled`, which wry leaves off, is documented for a
-/// finger on a screen, and did not reach two on a touchpad: that is Chromium's
-/// `TouchpadOverscrollHistoryNavigation`, and `--overscroll-history-navigation=0` turns
-/// the whole of it off, touchpad and screen alike, whichever of the two a runtime reads.
-/// See [`ENGINE_SWIPE`].
 #[cfg(all(windows, not(feature = "cef")))]
 pub(crate) const BROWSER_ARGS: &str = concat!(
     "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection,HideCursorWhileTyping,",
@@ -118,8 +33,6 @@ pub(crate) const BROWSER_ARGS: &str = concat!(
     " --overscroll-history-navigation=0",
 );
 
-/// [`BROWSER_ARGS`], and the switches that keep the engine off the graphics card in a run
-/// where Settings turned hardware acceleration off; see gpu.rs.
 #[cfg(all(windows, not(feature = "cef")))]
 pub(crate) fn browser_args(_app: &AppHandle) -> String {
     if crate::gpu::this_run() {
@@ -129,11 +42,6 @@ pub(crate) fn browser_args(_app: &AppHandle) -> String {
     }
 }
 
-/// Chromium's own swipe between pages, which both of Windows' engines would run beside
-/// Orden's: the feature that is its touchpad half, and the switch, with its value, that is
-/// the whole of it. Written into [`BROWSER_ARGS`] for `WebView2` and handed to Orden's own
-/// Chromium as it starts (`cef_runtime`); a test holds
-/// the first to these names.
 #[cfg_attr(not(any(test, feature = "cef")), allow(dead_code))]
 pub(crate) const ENGINE_SWIPE: (&str, &str, &str) = (
     "TouchpadOverscrollHistoryNavigation",
@@ -141,20 +49,6 @@ pub(crate) const ENGINE_SWIPE: (&str, &str, &str) = (
     "0",
 );
 
-/// The engine Linux runs on, configured before anything of it starts: CEF, with
-/// Chromium's user data directory in the app's own settings folder (see this file's
-/// comment), `nib://` links heard by the browser process when a second launch carries
-/// one, and the engine's own swipe off so only Orden's runs ([`ENGINE_SWIPE`]).
-///
-/// What a run can ask for through its environment, for the drives and for somebody
-/// chasing a crash, none of it read by a launch that sets nothing, and none of it read at
-/// all by a build that ships (see `from_run`):
-///
-/// - `NIB_CEF_ARGS`: switches for Chromium, `key=value` or a bare key, split on commas,
-///   such as `enable-logging=stderr,v=1`.
-/// - `NIB_CEF_DEBUG_PORT`: the `DevTools` protocol on that local port, for a drive.
-/// - `NIB_CEF_SANDBOX`: `disabled` for a container that cannot give Chromium a sandbox,
-///   `required` to refuse to start without one. Kept wherever it can be otherwise.
 #[cfg(feature = "cef")]
 pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
     use tauri_runtime_cef::{Cef, DevToolsPolicy, RemoteDebugging, SandboxPolicy};
@@ -173,8 +67,6 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
         });
 
     let (swipe_feature, swipe_switch, swipe_off) = ENGINE_SWIPE;
-    // The Firefox add-ons that are on, which this engine loads as it starts and in no other
-    // way; see extensions.rs.
     let mut asked = switches(&from_run("NIB_CEF_ARGS").unwrap_or_default());
     let firefox = cef_root()
         .and_then(|root| Some(root.parent()?.join("extensions")))
@@ -187,22 +79,13 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
         .on_unhosted_tab(crate::extensions::tabs::opened)
         .disable_features([swipe_feature])
         .command_line_args([(swipe_switch, Some(swipe_off))])
-        // Chromium's scale at 1, which CEF on X11 sizes windows by correctly; the
-        // desktop's is the app's zoom instead. See page_scale.rs.
         .command_line_args([(
             crate::page_scale::SWITCH.0,
             Some(crate::page_scale::SWITCH.1),
         )])
         .command_line_args(asked)
-        // A web tab's developer tools in the build that ships, as in a browser; Orden's own
-        // window turns its own off outside a development build (`ui_window`).
         .devtools(DevToolsPolicy::Allowed)
         .remote_debugging(debugging);
-    // Overlay scrollbars on Linux, as the desktop's own toolkits draw them (#775): thin,
-    // in on a scroll or a hover and gone again, rather than Chromium's classic gutter and
-    // thumb standing over every list whose content runs past it. The window's stylesheet
-    // leaves its own bars unstyled here so that the engine's are what is drawn; see
-    // `data-engine-bars` in src/main.ts and packages/themes/src/base.css.
     #[cfg(target_os = "linux")]
     {
         engine = engine.enable_features([OVERLAY_BARS]);
@@ -211,15 +94,12 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
         engine = engine.disable_features([LOAD_EXTENSION_OFF]);
     }
     if let Some(root) = cef_root() {
-        // An agent's own tab is a browser with no window, which CEF can make only when
-        // the whole process started able to; see agents/engines/cef.rs.
         if root
             .parent()
             .is_some_and(crate::agents::engines::cef::windowless_wanted)
         {
             engine = engine.with_settings(|settings| settings.windowless_rendering_enabled = 1);
         }
-        // Off the graphics card where Settings turned hardware acceleration off; see gpu.rs.
         if root
             .parent()
             .is_some_and(|config| !crate::gpu::accelerated(config))
@@ -231,12 +111,9 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
     engine
 }
 
-/// The feature that keeps Chromium from loading what `--load-extension` names.
 #[cfg(feature = "cef")]
 const LOAD_EXTENSION_OFF: &str = "DisableLoadExtensionCommandLineSwitch";
 
-/// `--load-extension` with `folders` too, beside whatever a run asked for of it already.
-/// Answers whether anything is to be loaded.
 #[cfg(any(feature = "cef", test))]
 fn loaded(asked: &mut Vec<(String, Option<String>)>, folders: &[PathBuf]) -> bool {
     const SWITCH: &str = "load-extension";
@@ -260,31 +137,19 @@ fn loaded(asked: &mut Vec<(String, Option<String>)>, folders: &[PathBuf]) -> boo
     true
 }
 
-/// One of `cef_runtime`'s variables, as this run set it.
-///
-/// Nothing in a build without debug assertions, which is every package a reader installs.
-/// The runtime keeps TLS keys out of a log, the protocol's port shut and the sandbox on in
-/// such a build, and these would open all three again to whatever can set a process's
-/// environment: `ssl-key-log-file` through the switches, and on the port every page and
-/// the app's own commands, for any user of the machine. The drives keep them because
-/// they run `tauri build --debug` (wayland.yml); a test holds both workflows to that.
 #[cfg(feature = "cef")]
 fn from_run(name: &str) -> Option<String> {
     read_by(cfg!(debug_assertions), name)
 }
 
-/// See `from_run`; `drive` is whether this is a build the drives run.
 #[cfg(any(feature = "cef", test))]
 fn read_by(drive: bool, name: &str) -> Option<String> {
     drive.then(|| std::env::var(name).ok()).flatten()
 }
 
-/// Chromium's feature for the overlay scrollbars Linux gets; see `cef_runtime`.
 #[cfg(all(feature = "cef", target_os = "linux"))]
 const OVERLAY_BARS: &str = "OverlayScrollbar";
 
-/// Chromium's user data directory before Tauri has started, so before `config_dir` can
-/// be asked: the same `<config>/<identifier>/chromium` that [`root`] answers once it has.
 #[cfg(feature = "cef")]
 fn cef_root() -> Option<PathBuf> {
     let config: serde_json::Value =
@@ -296,9 +161,6 @@ fn cef_root() -> Option<PathBuf> {
     Some(dirs::config_dir()?.join(identifier).join(ROOT))
 }
 
-/// Chromium switches as `NIB_CEF_ARGS` writes them: `key=value` or a bare key, split on
-/// commas. A bare key keeps or gains its two dashes, which is how CEF tells a switch from
-/// an argument.
 #[cfg(any(feature = "cef", test))]
 fn switches(written: &str) -> Vec<(String, Option<String>)> {
     written
@@ -312,7 +174,6 @@ fn switches(written: &str) -> Vec<(String, Option<String>)> {
         .collect()
 }
 
-/// The folder the web's own storage lives in, made if it is not there yet.
 #[cfg(desktop)]
 #[cfg_attr(
     all(not(feature = "cef"), target_os = "macos"),
@@ -327,11 +188,6 @@ pub(crate) fn root(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(dir)
 }
 
-/// Where Orden's own interface keeps what a webview keeps.
-///
-/// A profile of its own, so an extension installed for the web cannot reach the
-/// app's own document: an extension is installed into a profile, and this is not
-/// that profile.
 #[cfg(feature = "cef")]
 pub(crate) fn app_profile(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = root(app)?.join(APP_PROFILE);
@@ -339,25 +195,6 @@ pub(crate) fn app_profile(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(dir)
 }
 
-/// Where a web tab's site data goes, on the engine this build runs on.
-///
-/// **This is the seam.** One call for every engine, so `web_tabs.rs` says where a
-/// page's storage goes once rather than once per platform per engine, and so the
-/// answer for Orden's own Chromium is in the module that knows about engines.
-///
-/// `store` is the store the tab was asked to be in, already checked by
-/// `web_stores::named`: `None` for the one every space shares, a name for a space or a
-/// site that keeps its own. See `web_stores.rs`.
-///
-/// - The system's engine: for the shared store, the folder the app has always used,
-///   as a user data folder on Windows and Linux and as a data store identifier on a
-///   Mac, unchanged to the byte from what shipped. For a store of its own, a folder of
-///   its own under `web-stores`, or sixteen bytes of its own on a Mac.
-/// - Orden's own Chromium: nothing, deliberately, and for every store. A web tab is in
-///   the engine's primary profile, which is where an extension installed by the
-///   command line or by policy lands, and Orden's own interface is the named profile
-///   beside it; see this file's comment. A space that asks for a store of its own
-///   shares that one there, until the runtime can be asked for a profile per tab.
 #[cfg(all(desktop, not(feature = "cef")))]
 #[cfg_attr(
     target_os = "macos",
@@ -371,10 +208,6 @@ pub(crate) fn web_store<R: Runtime>(
     app: &AppHandle,
     store: Option<&str>,
 ) -> Result<WebviewBuilder<R>, String> {
-    // Extensions run in every store a reader's tab can be in and in none of an agent's.
-    // An environment option, and every page on one data folder must be built with the
-    // same options, which is why it is decided here, by store, and nowhere else. See
-    // extensions.rs.
     #[cfg(windows)]
     let builder = builder
         .additional_browser_args(&browser_args(app))
@@ -399,10 +232,6 @@ pub(crate) fn web_store<R: Runtime>(
     Ok(builder)
 }
 
-/// Where a web tab's site data goes on Orden's own Chromium: the engine's primary
-/// profile for the store every space shares - asked for as the user data directory
-/// itself, which is how the runtime is told "the primary one" rather than a profile named
-/// after it - and a profile of its own beside it for a store of its own. See above.
 #[cfg(feature = "cef")]
 pub(crate) fn web_store<R: Runtime>(
     builder: WebviewBuilder<R>,
@@ -412,10 +241,6 @@ pub(crate) fn web_store<R: Runtime>(
     Ok(builder.data_directory(profile(app, store)?))
 }
 
-/// The folder a store's profile is on Orden's own Chromium: the user data directory itself
-/// for the store every space shares, which is how the engine is told "the primary
-/// profile", and a profile of its own beside it for a store of its own. An agent's page
-/// is put in a store's profile by this folder too (agents/engines/cef.rs).
 #[cfg(feature = "cef")]
 pub(crate) fn profile(app: &AppHandle, store: Option<&str>) -> Result<PathBuf, String> {
     let root = root(app)?;
@@ -429,11 +254,6 @@ pub(crate) fn profile(app: &AppHandle, store: Option<&str>) -> Result<PathBuf, S
     })
 }
 
-/// Puts a webview built by `builder` into `window`, at `position` and `size`: a web
-/// tab's page, and every other page that lives inside the app's window.
-///
-/// The one call both Tauris spell differently - Tauri 2 takes the place beside the
-/// builder, Tauri 3 on it - so every caller says it once, here.
 #[cfg(desktop)]
 pub(crate) fn add_child<R: Runtime>(
     window: &tauri::Window<R>,
@@ -445,8 +265,6 @@ pub(crate) fn add_child<R: Runtime>(
     let built = window.add_child(builder, position, size);
     #[cfg(feature = "cef")]
     let built = window.add_child(builder.position(position).size(size));
-    // A page wry built as a visual is drawn into its window's tree and handed its input;
-    // see web_visual.rs.
     #[cfg(all(windows, not(feature = "cef")))]
     if let Ok(view) = &built {
         crate::web_visual::host_page(view);
@@ -456,21 +274,10 @@ pub(crate) fn add_child<R: Runtime>(
 
 #[cfg(desktop)]
 thread_local! {
-    /// What `with_platform!` was handed inline, run once the runtime has returned.
     static HANDED: std::cell::RefCell<Vec<Box<dyn FnOnce()>>> =
         const { std::cell::RefCell::new(Vec::new()) };
 }
 
-/// A page's own engine handle, handed to `then` with nothing of the runtime's held:
-/// `with_platform!(view, then)`, for a webview or a webview window.
-///
-/// On the window's thread the runtime answers `with_webview` inline, holding a lock of the
-/// webview's that its focus handlers take as well. `then` waiting in a nested message pump
-/// there, as `web_worlds::cleared` does on `WebView2`, let the new page's focus in, and the
-/// thread waited on itself: from #1094, which opens a web tab's page on that thread, Orden
-/// froze for good the moment a web tab opened on Windows (#1145). So the handle is taken out
-/// and `then` runs once `with_webview` has returned. Asked from any other thread, it is the
-/// runtime's own message, run on the window's thread with nothing held.
 #[cfg(desktop)]
 macro_rules! with_platform {
     ($page:expr, $then:expr) => {
@@ -480,7 +287,6 @@ macro_rules! with_platform {
 #[cfg(desktop)]
 pub(crate) use with_platform;
 
-/// `with_platform!`: `with_webview` is the runtime's, asked with what it hands `then`.
 #[cfg(desktop)]
 pub(crate) fn handed_out<P: 'static>(
     with_webview: impl FnOnce(Box<dyn FnOnce(P) + Send>) -> tauri::Result<()>,
@@ -509,17 +315,6 @@ pub(crate) fn handed_out<P: 'static>(
     asked
 }
 
-/// The window the config describes, taken out of it so it is built by our own code
-/// instead. The config keeps saying what the window looks like; only who builds it
-/// changes.
-///
-/// One reason per engine, and the same mechanism for both. Orden's own Chromium needs
-/// the interface in a profile of its own, and a profile is asked for when a webview is
-/// built. The system's webview needs the window on screen before the webview inside it
-/// exists, and a window the runtime builds cannot be: it is built around its webview,
-/// so nothing is visible until the webview runtime has started - between a third and
-/// half of a launch on Windows. Either way a window in `tauri.conf.json` is built
-/// before any of our own code runs, and this is what takes that over.
 pub(crate) fn take_ui_window(
     context: &mut tauri::Context,
 ) -> Option<tauri::utils::config::WindowConfig> {
@@ -530,23 +325,12 @@ pub(crate) fn take_ui_window(
     Some(windows.remove(0))
 }
 
-/// The builder of Orden's own window, on the engine this build runs on: everything the
-/// window needs from the engine, and nothing about where it goes or when it shows,
-/// which is the same on both and is `ready`'s in lib.rs.
-///
-/// - The system's engine: developer tools in a development build only, as Orden's own
-///   window always had, and the switches every page of this app starts with; see
-///   [`BROWSER_ARGS`].
-/// - Orden's own Chromium: the interface in a profile of its own, so an extension
-///   installed for the web cannot reach the app's own document; see this file's comment.
 pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
     manager: &'a M,
     config: &tauri::utils::config::WindowConfig,
 ) -> Result<tauri::WebviewWindowBuilder<'a, crate::Engine, M>, Box<dyn std::error::Error>> {
     let building =
         tauri::WebviewWindowBuilder::from_config(manager, config)?.devtools(cfg!(debug_assertions));
-    // This run's hardware acceleration decided here, as the first window is made and
-    // before the engine starts; every window and page after it asks `gpu::this_run`.
     #[cfg(all(windows, not(feature = "cef")))]
     if let Ok(settings) = config_dir(manager.app_handle()) {
         crate::gpu::accelerated(&settings);
@@ -555,30 +339,16 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
     let building = building
         .additional_browser_args(&browser_args(manager.app_handle()))
         .initialization_script(crate::page_scheme::SCRIPT);
-    // On CEF, Alloy style: a page and nothing of Chrome's around it, as `WebView2` and
-    // `WKWebView` are. A Chrome style browser keeps Chrome's whole accelerator table,
-    // which takes Ctrl+Tab, Ctrl+W, Ctrl+T and Ctrl+N before the page is offered them -
-    // the interface's own chords - and the runtime then swallows them, since the window
-    // has no tab strip for Chrome to act on. A web tab is Chrome style, for the browser's
-    // own pages and extensions; see web_tabs.rs.
     #[cfg(feature = "cef")]
     let building = {
         let _ = OWN_PROFILE.set(app_profile(manager.app_handle())?);
         crate::page_scale::read_chosen(manager.app_handle());
-        // What the last run's page kept, for this first window to put back; see kept.rs.
         crate::kept::read_kept(manager.app_handle());
         own_window(building)
     };
     Ok(building)
 }
 
-/// What every window of the app's own is on CEF, the first and every one after it: its
-/// page in the interface's own profile, Alloy style (see `ui_window`), and the window
-/// moved and resized by the page's own presses, which never reach GTK (`window_drag.rs`).
-///
-/// The profile's folder is made for the first window, on the thread that sets the app
-/// up, and only remembered for every window after it, whose command runs on the
-/// window's own thread, where nothing may wait on the disk.
 #[cfg(feature = "cef")]
 pub(crate) fn own_window<M: tauri::Manager<crate::Engine>>(
     building: tauri::WebviewWindowBuilder<'_, crate::Engine, M>,
@@ -586,8 +356,6 @@ pub(crate) fn own_window<M: tauri::Manager<crate::Engine>>(
     use tauri_runtime_cef::{RuntimeStyle, WebviewWindowBuilderCefExt as _};
     let building = building
         .browser_runtime_style(RuntimeStyle::Alloy)
-        // First, so whatever the page writes to its storage is kept, and what a kill
-        // took is back before anything reads it; see kept.rs.
         .initialization_script(crate::kept::kept_script())
         .initialization_script(crate::window_drag::SCRIPT)
         .initialization_script(crate::page_drag::SCRIPT)
@@ -601,15 +369,6 @@ pub(crate) fn own_window<M: tauri::Manager<crate::Engine>>(
     }
 }
 
-/// A window of the app's own that is not a document window: the hidden one a PDF is printed
-/// from, the quick add field and the presenter's. Only the interface's profile and Alloy
-/// style of what `own_window` gives, whose scripts speak for a page that holds a document.
-///
-/// Every page of the app is in this profile, whatever else it is. It holds the app's commands
-/// and the key to them at `http://tauri.localhost`, which `<all_urls>` matches, so in the
-/// profile a web extension runs in that extension's script could read and write notes. A test
-/// below reads this off the source, and no page may build a window at all: a window the
-/// plugin builds is built past this (test/permissions.test.ts).
 #[cfg(feature = "cef")]
 pub(crate) fn own_profile<M: tauri::Manager<crate::Engine>>(
     building: tauri::WebviewWindowBuilder<'_, crate::Engine, M>,
@@ -622,18 +381,9 @@ pub(crate) fn own_profile<M: tauri::Manager<crate::Engine>>(
     }
 }
 
-/// The interface's profile folder, once the first window has made it.
 #[cfg(feature = "cef")]
 static OWN_PROFILE: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
 
-/// Whether a page is one the engine loads for itself rather than one a tab was sent to.
-///
-/// `tauri-runtime-cef` builds every browser on an inert document of its own - a `data:`
-/// page marked `data-tauri-cef-internal`, titled "Tauri CEF Initial Load" - and only then
-/// sends it where it was asked to go. It hides that page's address from the address
-/// event and from nobody else: its load and its title arrive like any page's, and a web
-/// tab took them for its own - one came back from a relaunch named after that page, at
-/// that page. The system's engine has no such page, so nothing is one there.
 pub(crate) fn internal(url: &str) -> bool {
     url.starts_with("data:") && url.contains("data-tauri-cef-internal")
 }
@@ -648,9 +398,6 @@ mod tests {
     use super::{handed_out, internal, APP_PROFILE, ROOT};
     use std::sync::{Arc, Mutex};
 
-    /// #1145: the runtime answers inline on the window's thread, holding the webview's lock
-    /// as it does. What the page is handed runs with that lock let go, before the call
-    /// returns.
     #[test]
     fn a_page_handed_inline_is_used_once_the_runtime_lets_go() {
         let lock = Arc::new(Mutex::new(()));
@@ -672,8 +419,6 @@ mod tests {
         assert_eq!(*ran.lock().expect("ran"), Some((7, true)));
     }
 
-    /// Posted to the window's thread instead, it runs there when the runtime gets to it, and
-    /// the call does not wait for it; on the caller's own thread too, once the call is over.
     #[test]
     fn a_page_handed_later_is_used_where_it_is_handed() {
         let (said, heard) = std::sync::mpsc::channel();
@@ -713,9 +458,6 @@ mod tests {
         );
     }
 
-    /// #1145: nothing that waits in a nested message pump runs inside `with_webview`, where
-    /// on the window's thread the runtime holds the webview's lock: through `with_platform!`.
-    /// Read off the source, as a pump there hangs the app only once a page takes the focus.
     #[test]
     fn nothing_pumps_inside_with_webview() {
         let root = crate::app_dir().join("src");
@@ -800,17 +542,12 @@ mod tests {
         assert!(!internal("data:text/html,<p>a page somebody made</p>"));
     }
 
-    /// The engine is chosen by the manifest a build is made from and by nothing else:
-    /// the app's own has no default features, so macOS, Windows and the phones are on
-    /// the system's engine, and Linux's has `cef` on by default, so every Linux build -
-    /// a plain `cargo build`, the Tauri CLI's and every runner's - is on CEF.
     #[test]
     fn the_engine_is_the_manifest_s() {
         let read =
             |path: &str| std::fs::read_to_string(crate::app_dir().join(path)).expect("a manifest");
         let linux = read("linux/Cargo.toml");
         assert!(linux.contains("\ndefault = [\"cef\"]\ncef = []\n"));
-        // The manifest built from is Linux's on Linux and the app's everywhere else.
         let built = read("Cargo.toml");
         assert_eq!(built == linux, cfg!(feature = "cef"));
         if !cfg!(feature = "cef") {
@@ -822,7 +559,6 @@ mod tests {
         }
     }
 
-    /// `NIB_CEF_ARGS` reads pairs and bare keys, and a bare key keeps two dashes.
     #[test]
     fn the_command_line_reads_pairs_and_bare_keys() {
         assert_eq!(
@@ -840,8 +576,6 @@ mod tests {
         assert!(super::switches("").is_empty());
     }
 
-    /// The Firefox add-ons are loaded beside what a run loads itself, and nothing is asked
-    /// for when there is nothing to load (#1155).
     #[test]
     fn the_firefox_add_ons_join_what_a_run_loads() {
         use std::path::PathBuf;
@@ -871,9 +605,6 @@ mod tests {
         );
     }
 
-    /// A feature list a run asks for joins the engine's own (#1084). Put on the command
-    /// line as it came, it replaced the list CEF turns off to keep Chrome from crashing in
-    /// a CEF browser, and the first `extensions_list` took the app down.
     #[cfg(feature = "cef")]
     #[test]
     fn a_feature_list_a_run_asks_for_joins_the_engine_s_own() {
@@ -891,16 +622,12 @@ mod tests {
         assert!(said.contains(r#"enabled_features: ["Probe"]"#), "{said}");
     }
 
-    /// A build that ships reads none of the variables that would reopen what the runtime
-    /// shuts; a drive's build reads them. `PATH` stands for them, being there already.
     #[test]
     fn a_build_that_ships_reads_nothing_from_its_environment() {
         assert_eq!(super::read_by(false, "PATH"), None);
         assert!(super::read_by(true, "PATH").is_some());
     }
 
-    /// Those variables are only read by a build with debug assertions, so every drive
-    /// that uses them has to run one and no reader may be given one.
     #[test]
     fn the_drives_build_for_debug_and_the_release_does_not() {
         let workflow = |name: &str| {
@@ -918,8 +645,6 @@ mod tests {
         assert!(!linux.contains("--debug"), "{linux}");
     }
 
-    /// The engine's own swipe is named the way Chromium reads it, and handed over the way
-    /// both runtimes take a switch with a value: without its dashes.
     #[test]
     fn the_engine_s_swipe_is_named_the_way_chromium_reads_it() {
         let (feature, switch, value) = super::ENGINE_SWIPE;
@@ -928,10 +653,6 @@ mod tests {
         assert_eq!(value, "0", "the history navigation that is none");
     }
 
-    /// The pointer is never hidden by one browser process where another one has it,
-    /// wry's own three switches survive being replaced - all in the one
-    /// `--disable-features`, because Chromium reads only the last of a repeated switch -
-    /// and the engine's own swipe is off.
     #[cfg(all(windows, not(feature = "cef")))]
     #[test]
     fn the_engine_never_hides_the_pointer_and_keeps_wry_s_switches() {
@@ -968,9 +689,6 @@ mod tests {
         );
     }
 
-    /// A profile is a direct child of the user data directory, which is the only
-    /// shape CEF accepts: it refuses anything deeper, and anything outside it is
-    /// turned into a hashed folder name nobody chose.
     #[test]
     fn a_profile_is_a_direct_child_of_the_user_data_directory() {
         assert!(!APP_PROFILE.contains('/'), "a profile is one folder name");
@@ -979,8 +697,6 @@ mod tests {
         assert_ne!(APP_PROFILE, ROOT, "the interface is not the whole of it");
     }
 
-    /// A store of its own is a profile beside Orden's interface and never the interface:
-    /// a store is named `space_` or `site_` something, and the interface is `app`.
     #[cfg(feature = "cef")]
     #[test]
     fn a_store_s_profile_is_never_the_interface_s() {

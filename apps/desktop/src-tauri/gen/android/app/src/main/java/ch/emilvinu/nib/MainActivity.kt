@@ -28,37 +28,18 @@ import org.json.JSONObject
 
 class MainActivity : TauriActivity() {
   companion object {
-    /** A command in the page's own registry, carried in by a quick settings tile
-     *  or a widget. See commands.ts and mobile/handed.ts. */
     const val EXTRA_COMMAND = "ch.emilvinu.nib.command"
 
-    /** A note to open, carried in by a widget row. */
     const val EXTRA_OPEN = "ch.emilvinu.nib.open"
 
-    /** A task to tick, by its anchor and its space, carried in by a box of the Today
-     *  widget; see TodayWidget.kt and mobile/handed.ts. */
     const val EXTRA_TICK = "ch.emilvinu.nib.tick"
     const val EXTRA_TICK_SPACE = "ch.emilvinu.nib.tick.space"
 
-    /** Written onto an intent once it has been read, so a launch that is replayed
-     *  - a process killed in the background and restored with the intent it was
-     *  started with - does not make the same note twice. */
     private const val EXTRA_READ = "ch.emilvinu.nib.read"
 
-    /** A word made up once per install and kept in the app's private prefs, which
-     *  every intent the app makes for this activity carries - a tile, a widget row,
-     *  a Today box, a reminder's press.
-     *
-     *  The activity is exported and opens on a `nib://` link, so a web page
-     *  (`intent://...;S.ch.emilvinu.nib.command=record;end`) or any app could
-     *  hand it a command, a note or a task to tick: one tap started or stopped a
-     *  recording. Nothing else on the phone can read the extras of a
-     *  PendingIntent this app made, so an intent that has the word is one of ours,
-     *  and the extras of any other are dropped. */
     private const val EXTRA_SEAL = "ch.emilvinu.nib.seal"
     private const val SEALS = "nib-seal"
 
-    /** The install's word, made the first time it is asked for. */
     @Synchronized
     private fun seal(context: Context): String {
       val prefs = context.getSharedPreferences(SEALS, Context.MODE_PRIVATE)
@@ -68,80 +49,39 @@ class MainActivity : TauriActivity() {
       return made
     }
 
-    /** An intent for this activity, marked as the app's own. */
     fun sealed(context: Context, intent: Intent): Intent =
       intent.putExtra(EXTRA_SEAL, seal(context))
 
-    /** Whether the app made this intent itself. */
     private fun sealedBy(context: Context, intent: Intent): Boolean {
       val said = intent.getStringExtra(EXTRA_SEAL) ?: return false
       return MessageDigest.isEqual(said.toByteArray(), seal(context).toByteArray())
     }
 
-    /** Asking for the microphone. Its own number so the answer can be told from
-     *  anything else the app ever asks for. */
     private const val MICROPHONE = 0x6d69
 
-    /** The activity while it is up, so a reminder's Done pressed in the shade reaches
-     *  a page that is open at once; see Reminders.kt. */
     @Volatile private var live: java.lang.ref.WeakReference<MainActivity>? = null
 
-    /** A press on a reminder is waiting: the page, if there is one, takes it now. */
     fun reminded() {
       live?.get()?.tell("window.__nibReminders?.()")
     }
   }
 
-  // Back closes whatever is over the note rather than the app. Every layer the
-  // page opens takes a history entry of its own (see backstack.svelte.ts), so a
-  // back press the webview can answer is one it should: WryActivity does exactly
-  // that when this is on, and finishes the activity once nothing is left to
-  // close. Tauri turns it off by default.
   override val handleBackNavigation = true
 
-  // What the system bars leave for the page, in CSS pixels, as the page reads
-  // it. Written on the UI thread by the inset listener and read on the
-  // webview's own thread through the bridge, so it is published between them.
   @Volatile private var edges = "{\"top\":0,\"right\":0,\"bottom\":0,\"left\":0}"
 
-  // What a tile, a widget row or a share left for the page, waiting until the
-  // page asks. Written on the UI thread by an intent and read on the webview's
-  // own thread, the same way the insets are.
   @Volatile private var command = ""
   @Volatile private var opening = ""
   @Volatile private var ticking = ""
   @Volatile private var tickingIn = ""
 
-  /** The page, once there is one. Held so an intent that arrives while the app is
-   *  already open can say so, and so the recogniser's words have somewhere to go. */
   private var page: WebView? = null
 
-  /** A word made up for this launch, which the activity says to the page itself and
-   *  to nothing else.
-   *
-   *  `addJavascriptInterface` has no notion of an origin and no notion of a frame:
-   *  Android injects the object into *every* frame of the webview, iframes included,
-   *  and the call carries nothing about who made it. Orden's pages do hold frames of
-   *  somebody else's - a note may embed a page, and a block of a note's own HTML
-   *  runs in a frame of its own - and those are sandboxed precisely so that the app
-   *  is out of their reach. The bridge was the way round the sandbox: a framed page
-   *  could ask for every AI key on the phone, or turn the microphone on.
-   *
-   *  So the calls that matter want this word, and the only way to learn it is to be
-   *  the page: `evaluateJavascript` runs in the main frame, so `askForTheFrame`
-   *  answers into the main frame whoever asked, and a frame at another origin cannot
-   *  read a variable the main frame holds. See mobile/bridge.ts, which is the page's
-   *  side of it. */
   private val frame: String = UUID.randomUUID().toString()
 
   private val dictation by lazy { Dictation(this) }
 
   override fun onCreate(savedInstanceState: Bundle?) {
-    // Android 15 draws every app under the system bars whether it asks or not,
-    // so Orden asks, and paints those areas itself: transparent bars over the
-    // page's own background, with the page's chrome padded by the insets. A
-    // scrim behind the clock would be a band of somebody else's colour across
-    // the top of a themed app.
     enableEdgeToEdge(
       statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT),
       navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT),
@@ -149,18 +89,11 @@ class MainActivity : TauriActivity() {
     super.onCreate(savedInstanceState)
     live = java.lang.ref.WeakReference(this)
 
-    // Read before the page exists, which is the usual case: a share is what
-    // started the app. The page asks for it as it comes up; see mobile/handed.ts.
-    // Only on a fresh start: an activity made again after the process died, or
-    // opened from Recents, is handed the intent it first started with, and reading
-    // it again started the recording again or brought a share back twice.
     val fresh = savedInstanceState == null &&
       ((intent?.flags ?: 0) and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0
     if (fresh) read(intent)
   }
 
-  /** An intent for an app that is already open. `singleTask` means every share
-   *  after the first arrives here rather than in a second activity. */
   override fun onNewIntent(intent: Intent) {
     super.onNewIntent(intent)
     setIntent(intent)
@@ -172,17 +105,10 @@ class MainActivity : TauriActivity() {
     super.onDestroy()
   }
 
-  /**
-   * Takes what an intent was carrying and answers whether it was carrying
-   * anything. Nothing here acts on it: what a share becomes, and what a command
-   * id means, is the page's business, and it asks as soon as it can.
-   */
   private fun read(intent: Intent?): Boolean {
     if (intent == null || intent.getBooleanExtra(EXTRA_READ, false)) return false
     intent.putExtra(EXTRA_READ, true)
 
-    // A share is anybody's to send. A command, a note, a task or a reminder is
-    // taken only from an intent the app sealed; see EXTRA_SEAL.
     val ours = sealedBy(this, intent)
     val asked = if (ours) intent.getStringExtra(EXTRA_COMMAND) ?: "" else ""
     val note = if (ours) intent.getStringExtra(EXTRA_OPEN) ?: "" else ""
@@ -194,8 +120,6 @@ class MainActivity : TauriActivity() {
       tickingIn = intent.getStringExtra(EXTRA_TICK_SPACE) ?: ""
     }
 
-    // A reminder's notification pressed: its note opened at the task, which is the
-    // page's to do; see Reminders.kt.
     if (ours) {
       Reminders.carried(intent)?.let {
         Reminders.pressed(this, "open", it)
@@ -211,24 +135,6 @@ class MainActivity : TauriActivity() {
     page = webView
     webView.addJavascriptInterface(Bridge(), "__NIB_SYSTEM__")
 
-    // Two different edges, handled two different ways.
-    //
-    // The keyboard pads the webview: nothing shortens the window when the page
-    // is drawn edge to edge, so the line being written can end up behind the
-    // keys. Padding the view ends the page where the keys begin instead, which
-    // the layout and the visual viewport both read; see viewport.svelte.ts.
-    // Below Android 11 there is no keyboard inset to read and the manifest's
-    // adjustResize shortens the window itself, leaving this at zero.
-    //
-    // The system bars do not pad it. Padding there would letterbox the app in
-    // whatever colour the window happens to be, and the drawer, the scrim and
-    // the sheets would stop short of the edge - which is exactly what a native
-    // app does not look like. They are handed to the page as numbers instead,
-    // so it draws the whole screen and each bar of its own clears them; see
-    // insets.ts and the --inset-* tokens.
-    // The listener is on the webview, so the webview itself is what every line
-    // below speaks to: only a View arrives in the callback, and running a
-    // script is a WebView's own trick and not a View's.
     ViewCompat.setOnApplyWindowInsetsListener(webView) { _: View, insets: WindowInsetsCompat ->
       val keys = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
       webView.setPadding(0, 0, 0, keys)
@@ -240,8 +146,6 @@ class MainActivity : TauriActivity() {
       val density = webView.resources.displayMetrics.density
       fun css(pixels: Int) = (pixels / density).toInt()
 
-      // The gesture bar sits behind the keyboard while it is up, and the page
-      // already ends above the keys, so its inset has been paid for once.
       edges =
         "{\"top\":${css(bars.top)},\"right\":${css(bars.right)}," +
           "\"bottom\":${css(maxOf(0, bars.bottom - keys))},\"left\":${css(bars.left)}}"
@@ -249,30 +153,11 @@ class MainActivity : TauriActivity() {
       insets
     }
 
-    // The pen writes on the canvas rather than into a handwriting recogniser.
-    //
-    // Android turns stylus handwriting on for every text field by default from
-    // 14, and Samsung's Direct Writing does the same from Android 11 on its own
-    // devices. Both watch for a stylus over an editable area and then swallow
-    // the touch stream to convert it to text - which over a note being written
-    // in, or over a canvas card, means the pen never reaches the page at all.
-    // Orden draws with the pen itself, so the recogniser is turned off here and
-    // every stylus event arrives as a pointer event; see canvas/ink.ts.
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
       webView.isAutoHandwritingEnabled = false
     }
   }
 
-  /** Where an AI provider's key lives on a phone.
-   *
-   *  `EncryptedSharedPreferences` is Android's own answer to the keychain a desktop
-   *  has: the file is encrypted with a key held in the hardware-backed Keystore,
-   *  which never leaves the device and which no other app can reach. Built lazily
-   *  and kept, because building it derives the master key, and somebody who never
-   *  sets a key up should not pay for that on the way in.
-   *
-   *  See secrets.rs for the desktop's side of the same three calls, and keys.ts in
-   *  the app, which is what chooses between them. */
   private val secrets: SharedPreferences by lazy {
     EncryptedSharedPreferences.create(
       this,
@@ -283,13 +168,11 @@ class MainActivity : TauriActivity() {
     )
   }
 
-  /** Runs a line in the page, on the thread a webview may be touched from. */
   private fun tell(script: String) {
     val webView = page ?: return
     webView.post { webView.evaluateJavascript(script, null) }
   }
 
-  /** What the recogniser heard, or what it is doing; see mobile/dictation.ts. */
   fun heard(json: String) {
     tell("window.__nibHeard?.(${JSONObject.quote(json)})")
   }
@@ -331,9 +214,6 @@ class MainActivity : TauriActivity() {
       )
   }
 
-  /** The microphone, asked for the first time dictation is turned on. The old
-   *  call rather than a result contract: the webview registers its own contracts
-   *  as it is built, and registering another one this late throws. */
   fun askForTheMicrophone() {
     runOnUiThread { requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), MICROPHONE) }
   }
@@ -351,42 +231,30 @@ class MainActivity : TauriActivity() {
     dictation.allowedNow(granted)
   }
 
-  /** What the page cannot see for itself: the window's own edges, what another app
-   *  handed over, what the home screen asked for, and the phone's recogniser. */
   private inner class Bridge {
     @JavascriptInterface fun insets(): String = edges
 
-    /** Says this launch's word, into the page itself. Whoever called it, the answer
-     *  goes to the main frame - which is what makes it a word only the page has;
-     *  see `frame`. */
     @JavascriptInterface
     fun askForTheFrame() {
       tell("window.__nibFrame?.(${JSONObject.quote(frame)})")
     }
 
-    /** The key kept under `name`, or null where there is none - and null for
-     *  anybody who is not the page; see `frame`. */
     @JavascriptInterface
     fun secretRead(said: String, name: String): String? =
       if (said == frame) secrets.getString(name, null) else null
 
-    /** Writes one, replacing whatever was there. */
     @JavascriptInterface
     fun secretWrite(said: String, name: String, secret: String) {
       if (said != frame) return
       secrets.edit().putString(name, secret).apply()
     }
 
-    /** Takes one away. */
     @JavascriptInterface
     fun secretForget(said: String, name: String) {
       if (said != frame) return
       secrets.edit().remove(name).apply()
     }
 
-    /** The clock, the battery and the gesture bar are the system's own icons
-     *  drawn over our page: light on a dark theme, dark on a light one. Called
-     *  on the webview's thread, so the window is touched on the UI one. */
     @JavascriptInterface
     fun bars(dark: Boolean) {
       val window = this@MainActivity.window
@@ -397,13 +265,6 @@ class MainActivity : TauriActivity() {
       }
     }
 
-    /** A tile or a widget row, once. Cleared as it is read, so the same press
-     *  cannot be answered twice.
-     *
-     *  This and everything below that reads what came in or writes what the home
-     *  screen draws want the word: a framed page could otherwise read every byte
-     *  shared in, drop a share, swallow a reminder's Done or plant a widget row that
-     *  runs any command. Only how the window looks is left open; see `frame`. */
     @JavascriptInterface
     fun handed(said: String): String {
       if (said != frame) return ""
@@ -419,44 +280,34 @@ class MainActivity : TauriActivity() {
       return json.toString()
     }
 
-    /** What another app shared, without the bytes; see Shared.kt. */
     @JavascriptInterface
     fun shared(said: String): String =
       if (said == frame && Shared.waiting) Shared.json() else ""
 
-    /** One slice of one shared file, as base64. */
     @JavascriptInterface
     fun sharedBytes(said: String, at: Int, offset: Int, length: Int): String =
       if (said == frame) Shared.bytes(at, offset, length) else ""
 
-    /** The page has written what it was given, and the copies can go. */
     @JavascriptInterface
     fun sharedDone(said: String) {
       if (said == frame) Shared.clear(this@MainActivity)
     }
 
-    /** The rows the home screen draws, as JSON; see mobile/widgets.ts. */
     @JavascriptInterface
     fun widgets(said: String, json: String) {
       if (said == frame) WidgetNotes.write(this@MainActivity, json)
     }
 
-    /** Whether this phone has a speech recogniser to dictate into. */
     @JavascriptInterface fun dictates(): Boolean = dictation.available()
 
-    /** Turns dictation on or off; answers whether it is listening now. The word,
-     *  because a microphone is not a thing a framed page turns on; see `frame`. */
     @JavascriptInterface
     fun listen(said: String, on: Boolean): Boolean = said == frame && dictation.listen(on)
 
-    /** The reminders' plan, set as alarms; see Reminders.kt. The word, because a framed
-     *  page has no business ringing the phone. */
     @JavascriptInterface
     fun reminders(said: String, json: String) {
       if (said == frame) Reminders.set(this@MainActivity, json)
     }
 
-    /** Done and presses on a reminder since the page last asked, once. */
     @JavascriptInterface
     fun remindersTaken(said: String): String =
       if (said == frame) Reminders.taken(this@MainActivity) else "[]"
@@ -469,10 +320,8 @@ class MainActivity : TauriActivity() {
       if (said == frame) runOnUiThread { askOwner(reason.take(200)) } else owned(false)
     }
 
-    /** Whether an alarm rings at its minute. */
     @JavascriptInterface fun exactAlarms(): Boolean = Reminders.exact(this@MainActivity)
 
-    /** The system's switch for exact alarms. */
     @JavascriptInterface
     fun askExactAlarms() {
       Reminders.openExactSwitch(this@MainActivity)

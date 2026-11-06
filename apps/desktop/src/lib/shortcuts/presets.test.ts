@@ -2,9 +2,6 @@ import { beforeAll, describe, expect, test, vi } from 'vitest'
 import { defaultKeyFor } from '@orden/editor'
 import { parseCombination, type Platform, sameCombination } from '../keys'
 
-/** The registry reaches the stores, which write to the browser's storage and
- *  ask the browser what kind of machine this is. There is neither under node,
- *  so both are stood in for before anything is imported. */
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -27,11 +24,6 @@ let registry: typeof import('./registry')
 let presets: typeof import('./presets')
 let names: typeof import('./preset-ids')
 
-/** A budget of its own, because what this hook does is compile the registry's graph -
- *  half the app, cold, on whatever cores are left. Thirty seconds is enough on a quiet
- *  machine and not enough on one that is also building something else, and a timeout
- *  here skips every test in the file rather than failing one. Nothing here asserts on
- *  time; see docs/conventions.md. */
 beforeAll(async () => {
   registry = await import('./registry')
   presets = await import('./presets')
@@ -40,9 +32,6 @@ beforeAll(async () => {
 
 const PLATFORMS: Platform[] = ['mac', 'win', 'linux']
 
-/** The key an entry answers to under a preset: what the preset says, or what
- *  the app says when the preset does not mention it. The same reading the
- *  store does; see keyFor in shortcuts.svelte.ts. */
 function keyUnder(keys: Record<string, string | null>, id: string, platform: Platform) {
   const chosen = keys[id]
   if (chosen !== undefined) return chosen
@@ -59,7 +48,6 @@ describe('every keyboard there is', () => {
     expect(ids).toContain('vim')
   })
 
-  /** The launch reads the names without the maps, so the two lists are one list. */
   test('is every name the launch knows, in the same order', () => {
     expect(presets.PRESETS.map((one) => one.id)).toEqual([...names.PRESET_IDS])
   })
@@ -79,8 +67,6 @@ describe('every keyboard there is', () => {
 describe.each(['default', 'notion', 'obsidian', 'vscode', 'vim'])('the %s keyboard', (id) => {
   const keysOf = () => presets.presetById(id)?.keys ?? {}
 
-  /** A preset that names a shortcut this version does not have would be a key
-   *  that goes nowhere, and nothing in the settings would show it. */
   test('names only shortcuts the app has', () => {
     const unknown = Object.keys(keysOf()).filter((one) => !registry.BY_ID.has(one))
     expect(unknown).toEqual([])
@@ -91,8 +77,6 @@ describe.each(['default', 'notion', 'obsidian', 'vscode', 'vim'])('the %s keyboa
     expect(fixed).toEqual([])
   })
 
-  /** Every key it writes has to be one the app would take from a reader: the
-   *  recorder refuses a bare letter, and a preset may not smuggle one in. */
   test('writes every key the way the app writes them', () => {
     const wrong: string[] = []
 
@@ -114,8 +98,6 @@ describe.each(['default', 'notion', 'obsidian', 'vscode', 'vim'])('the %s keyboa
     expect(wrong).toEqual([])
   })
 
-  /** The narrowest form of the guard below, and the one a hand-written map gets wrong
-   *  first: the same chord written twice in the preset itself. */
   test.each(PLATFORMS)('writes no chord twice (%s)', (platform) => {
     const written = Object.entries(keysOf()).filter(
       (pair): pair is [string, string] => pair[1] !== null,
@@ -131,19 +113,12 @@ describe.each(['default', 'notion', 'obsidian', 'vscode', 'vim'])('the %s keyboa
     expect(twice).toEqual([])
   })
 
-  /** The guard the whole idea hangs on. Two actions on one key means one of
-   *  them never fires, and a preset is a map nobody checked by hand. Walks
-   *  every action there is, not only the ones the preset mentions: taking a
-   *  key for Notion's inline code is how Orden's reading view loses one. */
   test.each(PLATFORMS)('leaves nothing on a key something else is on (%s)', (platform) => {
     const keys = keysOf()
     const held = new Map<string, string>()
     const clashes: string[] = []
 
     for (const entry of registry.SHORTCUTS) {
-      // The contextual ones look for a table or a picture where the caret is
-      // and give way when it is not there, which is how six of them share the
-      // arrow keys with the editor's own motion.
       if (entry.contextual || entry.scope === 'fixed') continue
 
       const key = keyUnder(keys, entry.id, platform)
@@ -160,34 +135,11 @@ describe.each(['default', 'notion', 'obsidian', 'vscode', 'vim'])('the %s keyboa
     expect(clashes).toEqual([])
   })
 
-  /** The other half of that guard, for the keys the app reads by hand.
-   *
-   *  A contextual binding in the editor gives way: CodeMirror tries the next one
-   *  when it answers false, which is how Delete belongs to a table and to a
-   *  selected picture at once. The file list's and the plane's do not - they are
-   *  read where the surface is, off its own element, and the press goes on up to
-   *  the window afterwards. So a key that is one of those and an app key as well
-   *  fires both: the plane zooms to what is picked and the strip switches note,
-   *  from one press.
-   *
-   *  A web tab's bar is the exception, and on purpose: it reads its keys off the
-   *  window before the window's own handler and stops the press, which is how F5
-   *  reloads a page and presents a note. See web-tab/bar-keys.ts.
-   *
-   *  So is the plane's Duplicate beside Deselect tab, both on Ctrl+D. The plane takes
-   *  the press only with something picked and stops it then; with nothing picked it
-   *  lets it go whole, and the window's handler stands down on a press that was
-   *  stopped. One press, one of the two, never both; see `duplicate` in
-   *  canvas/actions.ts and `handle` in shortcuts.svelte.ts. */
   test.each(PLATFORMS)('leaves the plane and the file list their own keys (%s)', (platform) => {
     const keys = keysOf()
     const clashes: string[] = []
 
     const surfaces = registry.SHORTCUTS.filter(
-      // The AI panel's field takes its keys only while it has the keyboard and stops
-      // each press it takes, as a web page's keys are the page's: Ctrl+N there is a new
-      // chat and Ctrl+O opens its rows, and the same keys anywhere else are the app's.
-      // A view's rows the same: Ctrl+E on a task is its inline editor, and stopped.
       (one) =>
         one.contextual &&
         one.scope === 'panel' &&
@@ -216,11 +168,6 @@ describe.each(['default', 'notion', 'obsidian', 'vscode', 'vim'])('the %s keyboa
   })
 })
 
-/** One keyboard is not the place to decide where the command palette lives: every
- *  editor that has one puts it on Ctrl+Shift+P, and none of the three keyboards here
- *  binds that chord to anything of its own. So the default reaches all of them, which
- *  is what a preset holding only its differences means - and Paragraph, which held the
- *  chord, is without a key under every one of them. */
 describe.each(['default', 'notion', 'obsidian', 'vscode', 'vim'])('the %s keyboard', (id) => {
   test('opens the commands on Ctrl+Shift+P, and leaves Paragraph no key', () => {
     const keys = presets.presetById(id)?.keys ?? {}
@@ -231,8 +178,6 @@ describe.each(['default', 'notion', 'obsidian', 'vscode', 'vim'])('the %s keyboa
     }
   })
 
-  /** Ctrl+T asks which kind under every keyboard: none of the three binds the chord to
-   *  anything of its own, and a new tab is a new tab wherever a hand learned it. */
   test('asks what kind a new tab is on Ctrl+T', () => {
     const keys = presets.presetById(id)?.keys ?? {}
 
@@ -248,8 +193,6 @@ describe('the Obsidian keyboard', () => {
 
     expect(keys['app.note-1']).toBe('Mod-1')
     expect(keys['app.note-9']).toBe('Mod-9')
-    // Which is why the heading levels are left without one; they are still in
-    // the Paragraph menu and the palette.
     expect(keys['paragraph.heading-1']).toBeNull()
     expect(keys['paragraph.heading-6']).toBeNull()
   })
@@ -266,16 +209,11 @@ describe('the Obsidian keyboard', () => {
   test('leaves what Nib and Obsidian already agree on alone', () => {
     const keys = presets.presetById('obsidian')?.keys ?? {}
 
-    // Ctrl+E reading, Ctrl+W close, Ctrl+Shift+F search, Ctrl+K link: all of them are
-    // Orden's own already. New note is left where Orden has it too.
     for (const id of ['app.reading', 'app.new', 'app.close', 'format.link']) {
       expect(keys[id], id).toBeUndefined()
     }
   })
 
-  /** Obsidian's two: the quick switcher on Ctrl+O and the command palette on Ctrl+P,
-   *  which are Orden's one palette, and the same palette narrowed to the commands. Shift
-   *  twice stays its first key, and Ctrl+O is its second, which a Mac's menu shows. */
   test('opens the palette on Ctrl+O and narrows it to the commands on Ctrl+P', () => {
     const keys = presets.presetById('obsidian')?.keys ?? {}
 
@@ -299,21 +237,14 @@ describe('the Obsidian keyboard', () => {
   })
 })
 
-/** Emil, 2026-09-30: *"add Ctrl + D as a shortcut. Effectively it just deselects the
- *  currently selected tab."* Default's own key, and so Vim's, which is Default's keys
- *  with modes on top. A keyboard kept for another app's hands keeps that app's Ctrl+D,
- *  and Deselect tab has no key there. */
 describe('Ctrl+D', () => {
   test.each(['default', 'vim'])('deselects the tab under %s, and nothing else holds it', (id) => {
     const keys = presets.presetById(id)?.keys ?? {}
 
     for (const platform of PLATFORMS) {
       expect(keyUnder(keys, 'app.deselect-tab', platform), platform).toBe('Mod-d')
-      // Typora's Select word, which held it, and the file list's Duplicate: both keep
-      // their rows and have no key.
       expect(keyUnder(keys, 'edit.select-word', platform), platform).toBeNull()
       expect(keyUnder(keys, 'tree.duplicate', platform), platform).toBeNull()
-      // The plane's Duplicate shares it, taking it only with something picked.
       expect(keyUnder(keys, 'canvas.duplicate', platform), platform).toBe('Mod-d')
     }
   })
@@ -331,9 +262,6 @@ describe('Ctrl+D', () => {
     }
   })
 
-  /** Emil, 2026-10-03: Ctrl+Shift+D, every pane at once. None of the four keyboards
-   *  binds the chord to anything of its own, so it is the same key under all of them,
-   *  the ones that give Ctrl+D to another app's habit included. */
   test.each(['default', 'vim', 'vscode', 'obsidian', 'notion'])(
     'puts every pane down on Ctrl+Shift+D under %s',
     (id) => {
@@ -354,7 +282,6 @@ describe('Ctrl+D', () => {
     },
   )
 
-  /** A command that is only a key would be a command nobody without that key can find. */
   test('is a command of the app’s, which the palette and the list can press', () => {
     const entry = registry.BY_ID.get('app.deselect-tab')
 
@@ -364,9 +291,6 @@ describe('Ctrl+D', () => {
   })
 })
 
-/** Orden indents on Ctrl+[ and outdents on Ctrl+], which is Typora's order. VS Code,
- *  Obsidian and CodeMirror have it the other way round, and so do their keyboards
- *  here; the default is left as Typora's. */
 describe('the brackets', () => {
   test('indent on Ctrl+[ under the default keyboard', () => {
     for (const platform of PLATFORMS) {
@@ -397,15 +321,12 @@ describe('the VS Code keyboard', () => {
     }
   })
 
-  /** Already Orden's own, so the preset says nothing about them and they reach it. */
   test('grows and shrinks the selection on Shift+Alt and an arrow, as Nib already does', () => {
     expect(keys()['edit.expand-selection']).toBeUndefined()
     expect(keyUnder(keys(), 'edit.expand-selection', 'win')).toBe('Shift-Alt-ArrowRight')
     expect(keyUnder(keys(), 'edit.shrink-selection', 'linux')).toBe('Shift-Alt-ArrowLeft')
   })
 
-  /** Ctrl+B is VS Code's sidebar and every markdown editor's bold, and a note is
-   *  markdown: bold keeps it, and the sidebar is left without a key. */
   test('keeps Ctrl+B on bold', () => {
     expect(keys()['format.bold']).toBeUndefined()
     expect(keys()['app.sidebar']).toBeNull()
@@ -424,10 +345,6 @@ describe('the Notion keyboard', () => {
   test('puts the block types on the numbers, the way Notion does', () => {
     const keys = presets.presetById('notion')?.keys ?? {}
 
-    // Every one of them but Paragraph, which Notion puts on Ctrl+Shift+0: the nought
-    // is the shifted character on AZERTY, so that chord is Ctrl+0 there as well, and
-    // Ctrl+0 is the text size. Paragraph has no key under any keyboard now - a heading
-    // key pressed on the level it already set is what turns the line back into prose.
     expect(keys['paragraph.body']).toBeUndefined()
     expect(keys['paragraph.heading-1']).toBe('Mod-Shift-1')
     expect(keys['paragraph.bullet-list']).toBe('Mod-Shift-5')
@@ -440,7 +357,6 @@ describe('the Notion keyboard', () => {
 
     expect(keys['format.code']).toBe('Mod-e')
     expect(keys['app.sidebar']).toBe('Mod-\\')
-    // Which leaves the two Orden actions that were on those keys without one.
     expect(keys['app.reading']).toBeNull()
     expect(keys['format.clear']).toBeNull()
   })
@@ -468,18 +384,13 @@ describe('a name written down or carried by the account', () => {
     expect(names.knownPreset(7)).toBeNull()
   })
 
-  /** A preset a newer app added is a map this one cannot put a name to, which
-   *  is what Custom is for. The keys themselves still arrive. */
   test('reads as Custom when it is one this version has never heard of', () => {
     expect(names.knownPreset('emacs')).toBe('custom')
-    // And the Settings sheet, handed one, chooses nothing.
     expect(presets.presetById('emacs')).toBeUndefined()
   })
 })
 
 describe('the VS Code keyboard', () => {
-  /** Ctrl+P first, since that is what a VS Code hand reaches for and what the menu
-   *  row should say; Shift twice still opens it, second. */
   test('puts the palette on Ctrl+P first and Shift twice second', () => {
     const keys = presets.presetById('vscode')?.keys ?? {}
 
@@ -488,10 +399,6 @@ describe('the VS Code keyboard', () => {
   })
 })
 
-/** Emil, 2026-10-01: *"we don't need Ctrl+P as a default shortcut for opening the
- *  search, because we already have Shift Shift."* Nib's own Ctrl+P prints, as every
- *  program's does; a keyboard kept for hands from an app whose Ctrl+P is a palette or a
- *  search keeps it there, and Print has no key under it. */
 describe('Ctrl+P', () => {
   test.each(['default', 'vim'])('prints under %s, and the palette is not on it', (id) => {
     const keys = presets.presetById(id)?.keys ?? {}

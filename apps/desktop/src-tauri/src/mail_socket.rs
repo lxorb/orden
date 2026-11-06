@@ -1,11 +1,3 @@
-//! A connection to a mail server for the chats' mail provider (#321): TLS, or plain and
-//! upgraded in place by STARTTLS. IMAP and SMTP are spoken by the window
-//! (packages/chats/src/mail); this only carries the bytes.
-//!
-//! Only Orden's own document windows may open one, only to the ports mail uses, and plain
-//! text only to this machine, so a page cannot use it to reach other services or to send
-//! a password in the clear. Certificates are checked by the platform's verifier.
-
 use std::collections::HashMap;
 use std::io::{ErrorKind, Read as _, Write as _};
 use std::net::{IpAddr, TcpStream, ToSocketAddrs as _};
@@ -45,7 +37,6 @@ impl MailSockets {
         self.0.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
-    /// A window has gone, or reloaded: its connections end.
     pub fn end_where(&self, owner: &str) {
         let mut held = self.lock();
         held.retain(|_, one| {
@@ -89,8 +80,6 @@ fn owner(webview: &Webview) -> Result<String, String> {
     }
 }
 
-/// Whether a connection there may be asked for: a mail port, and TLS unless the server
-/// is on this machine.
 fn allowed(port: u16, tls: &str, loopback: bool) -> Result<(), String> {
     if !PORTS.contains(&port) {
         return Err(format!("{port} is not a port mail uses"));
@@ -229,8 +218,6 @@ fn ask(webview: &Webview, id: &str, order: impl FnOnce(Answer) -> Order) -> Resu
         .map_err(|_| "the mail server did not answer".to_owned())?
 }
 
-/// Opens one under `id`. What arrives comes on `output` as bytes; the last message is
-/// `{"end": reason}`.
 #[tauri::command(async)]
 pub fn mail_socket_open(
     webview: Webview,

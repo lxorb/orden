@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** One pane: its strip of tabs and the note, or the graph, that is showing in
-   *  it. A window has one of these until something is split, and up to four
-   *  after that.
-   *
-   *  Everything a pane's editor needs to know about is asked of the tab in this
-   *  pane rather than of the window: which note a pasted picture belongs beside,
-   *  which note a link is being followed from. Two panes on two notes would
-   *  otherwise both answer for whichever one had the focus. */
-
   import {
     closeFind,
     type EditorView,
@@ -86,64 +77,29 @@
 
   const { pane }: { pane: Pane } = $props()
 
-  /** A menu fetched for this pane is shown only while the pane is there; see while-here.ts. */
   const here = whileHere()
 
   const tab = $derived(workspace.showing(pane.id))
   const locked = $derived(workspace.protection.locked(tab?.path))
 
-  /** Whether the card has asked for the files the notes embed. Read into a derived of
-   *  its own, because the settings are one object behind one getter: reading a key off
-   *  it inside the pass below would make that pass follow every setting there is, and
-   *  a filter is typed a letter at a time. A derived that answers the same boolean
-   *  wakes nothing. */
   const attachments = $derived(workspace.graphSettings.here.attachments)
 
-  /** The space as a picture, without the notes it leaves out, and with the files its
-   *  notes embed where the card has asked for them. Lazy like the graph itself:
-   *  nothing here is worked out until a graph tab is open. */
   const picture = $derived.by(() => without(links.pictureOf(attachments), workspace.leftOut))
   const archived = $derived(tab?.path ? workspace.archive.has(tab.path) : false)
-  /** Every note this pane holds, the essentials shown in it among them. The editor
-   *  keeps a state for each one it has shown, and this is what tells it which of them
-   *  are still open. The tabs themselves, because a tab is what a state is kept
-   *  under; see editor-states.ts. A tab unloaded from its menu is not among them, so
-   *  its state is let go of and built again as it is next shown (#1127). */
   const held = $derived(workspace.heldIn(pane.id).filter((one) => !one.unloaded))
 
-  // Showing an unloaded tab is what loads it again; see tab-strip/unloading.svelte.ts.
   $effect(() => {
     if (tab?.unloaded) tab.unloaded = false
   })
-  /** The strips live in the panes as soon as there is more than one of them.
-   *  With one pane the window's own strip is in the titlebar, where a browser
-   *  puts it and where it has been all along - as it is for a pane filling the window.
-   *  Split, so are the strips of the panes along the top, each over its pane, so the
-   *  window keeps one top row (#1037; TopStrips.svelte); a pane under another one
-   *  carries its own. */
   const stripped = $derived(
     workspace.panes.count > 1 &&
       !workspace.panes.fills &&
       !alone.on &&
       !panesIn(topRow(workspace.panes.frame)).some((one) => one.id === pane.id),
   )
-  /** Whether what is showing takes a dropped note itself; see `answers`. A terminal
-   *  types its path. */
   const ownSurface = $derived(!!tab && TAB_KINDS[tab.kind].takesDrops)
-  /** Whether the surface in this pane is the editor, which is the one that has
-   *  no find bar of its own. The same question the branch chain below asks, asked
-   *  once so the bar above it and the editor under it cannot disagree. */
   const writing = $derived(!!tab && TAB_KINDS[tab.kind].editor && !tab.reading && !locked)
 
-  /** The notes this pane lays out as columns, or none where it lays out none.
-   *
-   *  Stacking is an arrangement of documents, so what it arranges is the notes: a plane,
-   *  a website, a PDF, a set of pages and the graph are each one surface that fills a
-   *  pane, and a note being read rather than written is a page with its own scroller. Any
-   *  of those showing and the pane draws the way it always did, columns or no columns.
-   *
-   *  Off on a handheld whatever the pane says, because a handheld holds one document; see
-   *  `canStack` in workspace.svelte.ts, which the rows that offer this read too. */
   const columns = $derived(
     pane.stacked && !viewport.touch
       ? workspace
@@ -154,22 +110,14 @@
       : [],
   )
 
-  /** Whether this pane is drawing columns right now: it is stacked, it holds more than
-   *  one note, and what is showing is one of them. */
   const stacking = $derived(columns.length > 1 && columns.some((one) => one.id === tab?.id))
 
   let view = $state<EditorView>()
 
-  /** Whether a note dropped in the middle is the surface's: a canvas makes a card, a
-   *  note that can be written in a link. */
   const keepsMiddle = $derived(
     ownSurface || (writing && !tab?.coming && !modes.readOnly && canWriteIn(tab?.note)),
   )
 
-  /** One editor per column, by the tab it is showing. The pane's bars - the find bar, the
-   *  formatting bar, the menu over the words - talk to one editor, and in a stacked pane
-   *  that one is the active column's; the effect below is what keeps `view` pointing at
-   *  it as the column changes. */
   const columnViews = $state<Record<string, EditorView | undefined>>({})
 
   $effect(() => {
@@ -179,17 +127,6 @@
     if (current && current !== view) view = current
   })
 
-  /** The find bar over this pane's editor.
-   *
-   *  Held here rather than in the editor, because the bar is a row of the pane -
-   *  under the strip, above the note - and because the keys that open it are the
-   *  editor's: it asks through `onfind` and this is what answers. Per pane, so
-   *  two panes can be looking for two different things.
-   *
-   *  The query itself lives in the document's own search state, which is where
-   *  the library keeps it; what is here is the copy the field is drawn from and
-   *  whether the second row is out. See find.ts in @orden/editor. */
-  /** The three the bar's flags stand for, which are three of the query's own. */
   type FindFlags = Pick<FindSpec, 'caseSensitive' | 'regexp' | 'wholeWord'>
 
   let finding = $state(false)
@@ -197,25 +134,12 @@
   let spec = $state<FindSpec>(NO_FIND)
   let tally = $state<FindTally>(NO_TALLY)
 
-  /** Whether this pane's note can be written in at all, which is what decides
-   *  whether the bar offers to replace anything. A note being read, a note in a
-   *  space shared to be read, a file shared to be read, and read-only mode all
-   *  say no; see `canWriteIn`. */
   const canReplace = $derived(
     !!tab && !tab.reading && !modes.readOnly && canWriteIn(tab.note) && !!view,
   )
 
-  /** The document, told what to look for, and then asked how many there are.
-   *  One call, because every change to the bar is the same two steps.
-   *
-   *  Awaited, because the search engine is fetched rather than carried: the bar can go
-   *  up in the frame before it lands, and a count read in front of it would be a count
-   *  of nothing. Only the first call of a session waits, and only for a fetch from
-   *  beside the page; see find.ts in @orden/editor. */
   async function look(next: FindSpec) {
     spec = next
-    // Held, because the await below is a frame the pane could have been given another
-    // note in: the editor this was asked about is the one to count in.
     const asked = view
     if (!asked) return
 
@@ -225,12 +149,7 @@
 
   function openFinding(ask: FindAsk) {
     replacing = ask.replace
-    // A word under the caret is what somebody pressed the key about; an empty
-    // selection leaves whatever was last looked for, which is still in the
-    // field and still selected.
     void look(ask.seed ? { ...spec, query: ask.seed } : spec)
-    // The bar goes up now rather than when the count comes back: the key was pressed,
-    // and a bar that waited on a fetch would be a key that did nothing for a frame.
     finding = true
   }
 
@@ -238,7 +157,6 @@
     finding = false
     replacing = false
     if (view) closeFind(view)
-    // The caret goes back to the note, which is where it was before the key.
     view?.focus()
   }
 
@@ -250,8 +168,6 @@
     tally = findTally(view.state)
   }
 
-  /** Every match selected, and the bar out of the way, so what is typed next is
-   *  typed at each of them. Nothing happens where nothing matched. */
   function selectEvery() {
     if (view && selectEveryMatch(view)) shutFinding()
   }
@@ -270,13 +186,8 @@
     tally = findTally(view.state)
   }
 
-  /** Which note the bar was opened over. A plain variable rather than state:
-   *  the effect below writes it, and writing state it reads would be a loop. */
   let searchedIn: string | null = null
 
-  // A pane whose note changed is a pane looking at something else, and a tally
-  // counted in the note before it is a number about nothing. Only on a real
-  // change, so the first run of this does not take the keyboard.
   $effect(() => {
     const here = tab?.id ?? null
     if (here === searchedIn) return
@@ -285,9 +196,6 @@
     if (untrack(() => finding)) shutFinding()
   })
 
-  // Pulling the note down past its first line, which on a phone runs whichever
-  // command the reader chose; see pull.svelte.ts. On the editor's own scroller,
-  // and rebuilt with it, because a view is built fresh for every note.
   $effect(() => {
     const current = view
     if (!current) return
@@ -295,8 +203,6 @@
     return pull.follow(current.scrollDOM)
   })
 
-  // Every editor on the page is one the modes, the keys and the palette have to
-  // reach, and a view is built fresh for every tab.
   $effect(() => {
     const current = view
     if (!current) return
@@ -312,8 +218,6 @@
     }
   })
 
-  // Reopening a note lands where it was left; see placement.svelte.ts. Per pane,
-  // because a note open in two panes is being read in two places.
   $effect(() => {
     const current = view
     const showing = tab
@@ -322,10 +226,6 @@
     return placement.follow(current, showing)
   })
 
-  // A note in a space somebody shared to read is read-only wherever it is shown,
-  // whatever the window's own read-only switch says. The switch is left as the
-  // reader set it; this is the space's answer laid over it, per pane, because a
-  // pane beside this one may be showing a note of this account's own.
   $effect(() => {
     const current = view
     const note = tab?.note
@@ -334,10 +234,6 @@
     setReadOnlyMode(current, modes.readOnly || !canWriteIn(note))
   })
 
-  // Whether this pane's note is a deck, which is what marks the rules that break
-  // it into slides. Read off the words as of the last pause in the typing, like
-  // the outline: `tab.doc` is only brought forward when the typing stops, so this
-  // costs one scan per pause rather than one per keystroke.
   $effect(() => {
     const current = view
     const words = tab?.doc
@@ -346,21 +242,12 @@
     setDeck(current, isDeck(words))
   })
 
-  /** The editor's own menu; see editor-menu.ts. Fetched as the launch ends rather
-   *  than carried into it (see `warmDoors`), so the browser's own menu is refused
-   *  here, in the frame of the press, and the rows are built once the module is in. */
   function showMenu(event: MouseEvent, on: EditorView | undefined, path: string | null) {
     event.preventDefault()
     event.stopPropagation()
     void here(import('./editor-menu')).then(({ showEditorMenu }) => showEditorMenu(event, on, path))
   }
 
-  /** A pasted or dropped image, stored once however often it is pasted. A large
-   *  screenshot takes a moment to hash and write, and nothing appears in the
-   *  note until it has, so the line at the top says so meanwhile.
-   *
-   *  Which note the picture belongs beside comes from the tab that was written
-   *  in, not from the pane: the pane's editor outlives the note in it. */
   async function saveImage(file: File, into: Tab): Promise<string | null> {
     if (!file.type.startsWith('image/')) return saveAttachment(file, into)
 
@@ -369,16 +256,12 @@
       void usage.refresh()
       return src
     } catch (error) {
-      // The one failure worth interrupting for: nothing else the editor does
-      // will work either until something is deleted.
       void usage.refresh()
       settings.error = message(error, key('That image does not fit in your storage.'))
       return null
     }
   }
 
-  /** Any other file the editor keeps - a PDF, sound, a film - which stays beside the
-   *  note whatever the account holds; see `storeAttachment`. */
   async function saveAttachment(file: File, into: Tab): Promise<string | null> {
     try {
       return await busy.run(t('Storing the file'), () => storeAttachment(file, into.path))
@@ -392,15 +275,10 @@
     return notePicture(src, from.path, from.doc)
   }
 
-  /** Names a block of another note, so a `[[…#^` link written in `from` can point at
-   *  it; the path is relative to that note's own space. */
   function nameBlock(path: string, line: number, from: Tab): Promise<string | null> {
     return links.nameBlock(path, line, from.path)
   }
 
-  /** Which zone of this pane a drop would land in. The sides this pane cannot
-   *  split into are not offered, so a zone that would do nothing never lights;
-   *  see workspace/zones.ts. */
   function zoneOf(event: DragEvent & { currentTarget: HTMLElement }): Zone {
     const box = event.currentTarget.getBoundingClientRect()
     const moving = workspace.panes.dragging?.tabId ?? null
@@ -410,11 +288,6 @@
     )
   }
 
-  /** Whether the pane answers for a drop, or leaves it to what is showing: a
-   *  canvas or a note that takes a link keeps the middle, and only the four sides
-   *  are the pane's; see `keepsMiddle`. A tab being dragged is not a transfer at
-   *  all - it is a pointer the strip it came out of follows, and that strip asks
-   *  the panes where it is; see Tabs.svelte. */
   function answers(event: DragEvent, zone: Zone): boolean {
     return isTreeDrag(event.dataTransfer) && !(keepsMiddle && zone === 'middle')
   }
@@ -446,9 +319,6 @@
     if (paths.length) void workspace.dropNotes(paths, landing)
   }
 
-  /** The zone of this pane the drop would land in, or undefined when the drag is
-   *  somewhere else: over another pane, or over a strip, which marks its own
-   *  place between the tabs. */
   const landing = $derived(workspace.panes.landing)
   const zone = $derived(
     landing?.kind === 'pane' && landing.paneId === pane.id ? landing.zone : undefined,
@@ -465,8 +335,6 @@
   onpointerdowncapture={() => workspace.focusPane(pane.id)}
   ondragover={over}
   ondragleave={(event) => {
-    // `dragleave` fires for a pointer moving onto the strip or the note inside
-    // this pane as well as for one leaving it. Geometry tells the two apart.
     const box = event.currentTarget.getBoundingClientRect()
     if (landing?.paneId !== pane.id || inside(box, event.clientX, event.clientY)) return
 
@@ -480,15 +348,6 @@
     </div>
   {/if}
 
-  <!-- Under the strip, which is where every editor puts its find bar, and above
-       the note rather than over it: a bar that covered the first line would be a
-       bar hiding the first match. The reading view and a PDF draw the same
-       component themselves, because each holds its own idea of where the words
-       are; see FindBar.svelte.
-
-       Fetched the first time a key asks for it, like every other part of the app
-       nothing is showing yet, and preloaded once the launch is over so the first
-       Control+F is not a wait; see `warmDoors` in surfaces.svelte.ts. -->
   <Door open={finding && writing} load={() => findBar()}>
     {#snippet children(FindBar)}
       <FindBar
@@ -514,7 +373,6 @@
     {/snippet}
   </Door>
 
-  <!-- Something archived, opened anyway, with the way back. -->
   {#if !__EVEN_PLUGIN__}
     <Door open={archived && !!tab?.path} load={() => archivedStrip()}>
       {#snippet children(ArchivedStrip)}
@@ -523,12 +381,6 @@
     </Door>
   {/if}
 
-  <!-- Every surface below the editor is fetched the first time a tab of its kind is
-       opened rather than before the window is on screen; see surfaces.svelte.ts. The awaited
-       promise is kept, so only the first canvas, PDF, deck of pages, graph or website
-       of a session waits, and switching back to one does not. Nothing is drawn while
-       one is on its way: the pane keeps its own ground for a frame, which is what it
-       looked like before the surface was asked for. -->
   {#if tab?.path && locked}
     {#key tab.id}
       {#await lockScreen() then LockScreen}
@@ -538,8 +390,6 @@
       {/await}
     {/key}
   {:else if tab?.kind === 'graph'}
-    <!-- The graph of the space is a tab like a note is, so it takes the note's
-         place in the pane rather than a surface of its own. -->
     {#await graphSurface() then Graph}
       <Graph
         graph={picture}
@@ -552,9 +402,6 @@
       {@render unreachable()}
     {/await}
   {:else if tab?.kind === 'canvas'}
-    <!-- A plane of cards, in the note's place. Keyed like the reading view and a
-         PDF: a canvas is a document of its own and nothing about it is swapped
-         into an editor. -->
     {#key tab.id}
       {#await canvasSurface() then Canvas}
         <Canvas {tab} focused={workspace.panes.focusedId === pane.id} />
@@ -563,10 +410,6 @@
       {/await}
     {/key}
   {:else if tab?.kind === 'pages' || tab?.kind === 'pdf'}
-    <!-- Pages of paper, in the note's place. Keyed like the canvas beside it: a page
-         note is a document of its own and nothing about it is swapped into an
-         editor. A PDF read as itself, in a space shared to be read, is drawn by the
-         same surface out of the pages held for it in memory. -->
     {#key tab.id}
       {#await pagesSurface() then Pages}
         <Pages {tab} focused={workspace.panes.focusedId === pane.id} />
@@ -575,9 +418,6 @@
       {/await}
     {/key}
   {:else if tab?.kind === 'web'}
-    <!-- A website, in the note's place. Keyed like the others: the page is a webview
-         of its own placed over this pane, and nothing about it is swapped into an
-         editor. See docs/web-tabs.md. -->
     {#key tab.id}
       {#await webSurface() then WebTab}
         <WebTab {tab} focused={workspace.panes.focusedId === pane.id} />
@@ -586,8 +426,6 @@
       {/await}
     {/key}
   {:else if tab?.kind === 'view'}
-    <!-- A view of rows: Today, a project, a base file's board. Keyed like the others; see
-         docs/tasks.md 5.5. -->
     {#key tab.id}
       {#await viewSurface() then ViewTab}
         <ViewTab {tab} />
@@ -612,15 +450,12 @@
       {/await}
     {/key}
   {:else if tab?.kind === 'chat'}
-    <!-- The AI panel, wide; see ai/sidebar/ChatPanel.svelte. -->
     {#await askPanel() then ChatPanel}
       <ChatPanel wide />
     {:catch}
       {@render unreachable()}
     {/await}
   {:else if tab?.kind === 'terminal'}
-    <!-- A shell, in the note's place. Keyed like the others; the shell itself outlives
-         this, so switching back finds it where it was. See terminal/sessions.svelte.ts. -->
     {#key tab.id}
       {#await terminalSurface() then TerminalTab}
         <TerminalTab {tab} focused={workspace.panes.focusedId === pane.id} />
@@ -629,7 +464,6 @@
       {/await}
     {/key}
   {:else if tab?.kind === 'application'}
-    <!-- An application on one of the reader's devices; see apps/ApplicationTab.svelte. -->
     {#key tab.id}
       {#await applicationSurface() then ApplicationTab}
         <ApplicationTab {tab} />
@@ -646,21 +480,12 @@
       {/await}
     {/key}
   {:else if tab?.coming}
-    <!-- A note whose row the account's first pass listed and whose words have not
-         come down yet. One line, in the middle of the space the note will fill: an
-         empty editor here would be something to type into, and typing into it would
-         be writing over the copy that is on its way. It fills itself in without
-         anybody asking again; see `arrived` in workspace.svelte.ts. -->
     <div class="coming" role="status">
       {keptAway.offline && tab.path !== null && keptAway.at(tab.path) !== null
         ? t('Not on this device. It opens once you are online again.')
         : t('Loading…')}
     </div>
   {:else if tab?.reading}
-    <!-- The note through the renderer. A tab keeps its own face, so the same note
-         can be read here and written in next door. Fetched like the surfaces above
-         it: a reader who writes and never reads never carries the renderer's own
-         side of the app. -->
     {#key tab.id}
       {#await readingSurface() then Reading}
         <Reading {tab} focused={workspace.panes.focusedId === pane.id} />
@@ -669,17 +494,6 @@
       {/await}
     {/key}
   {:else if stacking}
-    <!-- Stacked: the pane's notes as columns side by side, each its own editor, scrolling
-         sideways. The active one is widest, because it is the one being written in; the
-         rest are a spine of the note's name and as much of the words as there is room
-         for. Pressing a spine makes that column the active one, which is the same press
-         a tab in the strip is.
-
-         An editor per column and not one editor showing several notes: two notes side by
-         side have two carets, two scroll positions and two sets of folds, and a state
-         swapped between them would have one of each. The editors were already several -
-         a split has one per pane - so what is new here is the layout and not the
-         machinery; see Editor.svelte. -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="stack" data-region="editor">
       {#each columns as one (one.id)}
@@ -720,12 +534,7 @@
       {/each}
     </div>
   {:else if tab}
-    <!-- One editor for the pane, whichever note is in it: switching swaps the
-         note's state into it rather than building another editor, which is what
-         makes a switch land in one frame. See Editor.svelte. -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <!-- The note is a region of the window, which is what F6 walks to and what
-         every list hands the keyboard back to; see focus.ts. -->
     <div
       class="editor"
       data-region="editor"
@@ -746,15 +555,11 @@
         onselection={(current: EditorView) => {
           views.moved(current)
           placement.remember(current)
-          // Where the caret is, on its way to the other devices in this note.
           rooms.moved(current)
         }}
       />
     </div>
   {:else}
-    <!-- Nothing open. The kinds a new tab can be, as buttons, rather than a note nobody
-         asked for; see NewHere.svelte. Fetched like every other surface here: a window
-         that opens on a note never asks for it. -->
     {#await emptySurface() then NewHere}
       <NewHere paneId={pane.id} />
     {:catch}
@@ -762,17 +567,11 @@
     {/await}
   {/if}
 
-  <!-- What floats in the note's corners, in the pane with the keyboard and inside its
-       box, never the window's (#1076); see pane-corners.svelte.ts. -->
   {#if paneCorners.draw && workspace.panes.focusedId === pane.id}
     {@render paneCorners.draw()}
   {/if}
 
-  <!-- Five places a drop can land: the pane itself, and each of its four sides,
-       where a pane of its own would go. Lit as the drag nears one. -->
   {#if workspace.panes.dragging}
-    <!-- The bands are drawn as deep as the geometry reads them, from the one
-         number that says how deep that is. -->
     <div class="zones" class:sides={keepsMiddle} style:--band="{EDGE * 100}%">
       <div class="zone whole" class:lit={zone === 'middle'}></div>
       <div class="zone left" class:lit={zone === 'left'}></div>
@@ -784,23 +583,12 @@
 </div>
 
 {#snippet unreachable()}
-  <!-- What fills this pane could not be fetched: in the browser build, the site deployed
-       again under a tab left open, and the chunk it names is gone. A browser that cannot
-       reach a page offers Reload, and so does this; the door keeps its answer, so
-       nothing short of a reload would ever fill the pane. See Pane.test.ts. -->
   <div class="coming" role="alert">
     <button class="nib-button" onclick={() => location.reload()}>{t('Reload')}</button>
   </div>
 {/snippet}
 
 <style>
-  /* The paper whatever the pane shows is written on. The window's ground was the paper
-     while a window could only be opaque; under glass it is the platform's material, so
-     the words stand on something of their own - see-through as far as the theme's
-     Content row asks and the words allow (`--content-ground`, glass.css and
-     wallpaper.css). Laid once, here: what the pane holds stands on it rather than
-     painting a paper of its own, or two thin papers would be one thick one. A pane with
-     its own strip is paper under the strip only, since the strip is the frame. */
   .pane {
     position: relative;
     flex: 1;
@@ -809,8 +597,6 @@
     display: flex;
     flex-direction: column;
     background: var(--content-ground, var(--bg));
-    /* A card on the chrome (#1088): what it holds is cut to its corners, so a bar or a
-       page's own ground never stands square in a rounded card. */
     --card-foot: var(--card-radius);
     border-radius: var(--card-radius) var(--card-radius) var(--card-foot) var(--card-foot);
     overflow: clip;
@@ -834,8 +620,6 @@
     );
   }
 
-  /* The same paper with a page drawn under the app inside it, laid by the pane's own layer
-     round the page instead (web-tab/underlay.ts, #1137). */
   .pane:global([data-underlay])::before {
     background: var(--content-ground, var(--bg));
   }
@@ -847,16 +631,11 @@
     );
   }
 
-  /* Nothing open: whatever the theme puts behind the frame, like a browser's new tab. */
   .pane:has(> :global(.here)),
   .pane:has(> .head):has(> :global(.here)) {
     background: var(--empty-ground, var(--bg));
   }
 
-  /* Its tab in front is a window of the tab overview away from the pane, a copy of what
-     the pane shows: the pane stands back meanwhile, all but its own strip, so the window
-     and what it is a copy of are never seen at once (issue #331). Faded and not hidden,
-     so whatever has the focus in it keeps it. */
   .pane.lifted,
   .pane.lifted:has(> .head),
   .pane.lifted:has(> .head):has(> :global(.here)) {
@@ -873,11 +652,6 @@
     pointer-events: none;
   }
 
-  /* A pane beside another one carries its own strip. The window's single pane
-     has none: its tabs are in the titlebar, where a browser puts them.
-
-     Above the drop zones, so a tab dragged onto the strip reaches the strip and
-     lands between the tabs rather than being taken by the pane underneath. */
   .head {
     position: relative;
     z-index: var(--z-tools);
@@ -885,8 +659,6 @@
     align-items: stretch;
     flex: none;
     height: var(--titlebar-height);
-    /* The window's own bar, again: the frame the tabs are cut out of, whose line the
-       strip draws. See Titlebar.svelte. */
     background: var(--tab-frame);
     overflow-x: clip;
   }
@@ -898,10 +670,6 @@
     display: flex;
   }
 
-  /* Stacked tabs: the pane's notes as columns, scrolling sideways.
-
-     `overscroll-behavior-x: contain` so reaching the end of the row does not hand the
-     gesture to whatever is behind the app, which on a trackpad is a page going back. */
   .stack {
     position: relative;
     flex: 1;
@@ -916,10 +684,6 @@
     display: none;
   }
 
-  /* A column: the spine with the note's name, and the words beside it. The active one
-     takes three times the room, which is what says which one is being written in without
-     anything else having to say it - and it moves there rather than jumping, on the same
-     duration every other surface of the app moves on. */
   .column {
     position: relative;
     flex: 1 0 var(--stack-column);
@@ -937,8 +701,6 @@
     flex-basis: var(--stack-column-wide);
   }
 
-  /* The name, written down the side and staying where it is as the column scrolls: the
-     one thing a column always shows, so a row of them reads as a row of names. */
   .spine {
     position: sticky;
     inset-inline-start: 0;
@@ -958,9 +720,6 @@
       color var(--dur-fast) var(--ease-out);
   }
 
-  /* The name itself is what turns, not the button around it: `inset-inline-start` on the
-     sticky spine is resolved against the element's own writing mode, so a spine written
-     vertically would have been sticking to its top rather than to the edge of the row. */
   .spine .nib-row-label {
     display: block;
     max-height: 100%;
@@ -990,9 +749,6 @@
     display: flex;
   }
 
-  /* A note still on its way: the quietest thing the app can put in a pane, in the
-     muted colour everything that is not the writing is drawn in. Centred, because
-     there is nothing here to read from the top. */
   .coming {
     flex: 1;
     display: grid;
@@ -1005,18 +761,13 @@
     -webkit-user-select: none;
   }
 
-  /* Over the note while a tab is being dragged, so the drop lands here rather
-     than in the text. */
   .zones {
     position: absolute;
     inset: 0;
     z-index: var(--z-grip);
-    /* The zones themselves take the drag, not the gaps between them: a canvas
-       has to keep the middle of the pane, which is a card's place to land. */
     pointer-events: none;
   }
 
-  /* A surface that takes a note dropped on it keeps the middle of the pane. */
   .zones.sides .zone.whole {
     pointer-events: none;
   }

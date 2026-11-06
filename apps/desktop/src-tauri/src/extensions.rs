@@ -1,33 +1,3 @@
-//! Chrome and Edge extensions in web tabs, on both engines, and Firefox add-ons.
-//!
-//! Emil, 2026-10-03: extensions on `WebView2` and on nib's own Chromium, installed from a
-//! Chrome Web Store or Edge Add-ons link or from the store's own page in a tab, kept in
-//! the app's own folder, updated through the stores' own update service, with a button in
-//! the web bar, the popup in a bubble, the options page as a tab and a list in Settings.
-//!
-//! **Firefox add-ons** (#1155) come from addons.mozilla.org on both engines, and Orden
-//! installs them itself: the file AMO's API names (amo.rs), made into an extension
-//! Chromium runs (firefox.rs), unpacked into `<config>/extensions` like any other, and
-//! updated from AMO. On `WebView2` it is handed to the stores as the rest are; Orden's own
-//! Chromium, which installs no folder while it runs, loads it as it starts, so one that is
-//! installed or updated there starts with the next launch.
-//!
-//! **Who installs depends on the engine, and nothing else does.** `WebView2` installs
-//! nothing from a store - its API takes an unpacked folder - so on it Orden installs: the
-//! file fetched from the store's update service (fetch.rs), checked the way Chromium
-//! checks it (crx.rs), unpacked into `<config>/extensions` (library.rs), handed to every
-//! store's profile (webview2.rs), and updated the same way. Orden's own Chromium installs
-//! from the store for itself and refuses a host the one door to install a folder, so there
-//! the store's own button installs and the list is the engine's (chromium.rs). Everything
-//! the reader sees is the same on both: the button and its icons in the web bar
-//! (lib/web-tab/ExtensionButtons.svelte), the popup in a bubble (popup.rs), the options
-//! page as a tab, the rows in Settings.
-//!
-//! **Where they run.** Every store a reader's tab can be in: the shared one, a space's, a
-//! site's. Never Orden's own interface, which is a separate data folder on `WebView2` and a
-//! separate profile on Chromium (engine.rs). And never an agent's own store, which is
-//! built with extensions off at the engine; see `in_store`.
-
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::{LazyLock, Mutex, PoisonError, RwLock};
@@ -36,7 +6,6 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter as _, Url};
 
 mod amo;
-// What Orden installs itself, which on Orden's own Chromium the store does; see chromium.rs.
 #[cfg(not(feature = "cef"))]
 mod crx;
 mod fetch;
@@ -63,24 +32,16 @@ use library::Kept;
 use link::Store;
 use manifest::About;
 
-/// What the window hears when the list changed: nothing, the window asks again.
 const CHANGED: &str = "nib://extensions";
 
-/// One change to the list at a time, so two installs never write over each other.
 static WRITING: Mutex<()> = Mutex::new(());
 
-/// The ids installed, for the one question asked of every address a tab goes to: is
-/// `chrome-extension://<id>/` one of ours? Filled each time the list is read.
 static KNOWN: LazyLock<RwLock<HashSet<String>>> = LazyLock::new(RwLock::default);
 
-/// Why an extension did not load this run, by id, for its row to say.
 static PROBLEMS: Mutex<Vec<(String, String)>> = Mutex::new(Vec::new());
 
-/// The Firefox add-ons Orden's own Chromium has not loaded at the list's version, because
-/// they were installed, updated or turned on since it started; the next launch loads them.
 static PENDING: LazyLock<RwLock<HashSet<String>>> = LazyLock::new(RwLock::default);
 
-/// Writes down why an extension did not load.
 #[cfg_attr(
     not(all(windows, not(feature = "cef"))),
     allow(dead_code, reason = "only what nib hands WebView2 can fail to load")
@@ -91,7 +52,6 @@ fn went_wrong(id: &str, why: &str) {
     problems.push((id.to_owned(), why.to_owned()));
 }
 
-/// An extension that loaded has nothing wrong with it any more.
 #[cfg_attr(
     not(all(windows, not(feature = "cef"))),
     allow(dead_code, reason = "only what nib hands WebView2 can fail to load")
@@ -103,18 +63,14 @@ fn went_right(id: &str) {
         .retain(|(one, _)| one != id);
 }
 
-/// Whether this build's engine runs extensions at all: `WebView2` and Orden's Chromium.
-/// A Mac's and Linux's own engines have no extension API.
 pub const SUPPORTED: bool = cfg!(any(feature = "cef", windows));
 
-/// The folder extensions live in, made if it is not there.
 pub fn root(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = crate::paths::config_dir(app)?.join("extensions");
     std::fs::create_dir_all(&dir).map_err(|error| error.to_string())?;
     Ok(dir)
 }
 
-/// Whether a store's pages run extensions: every store but an agent's own.
 #[cfg_attr(
     not(all(windows, not(feature = "cef"))),
     allow(
@@ -126,7 +82,6 @@ pub fn in_store(store: Option<&str>) -> bool {
     SUPPORTED && !store.is_some_and(|name| name.starts_with("agent_"))
 }
 
-/// Whether `url` is a page of an installed extension: `chrome-extension://<id>/...`.
 pub fn ours(url: &Url) -> bool {
     url.scheme() == "chrome-extension"
         && url.host_str().is_some_and(|id| {
@@ -137,7 +92,6 @@ pub fn ours(url: &Url) -> bool {
         })
 }
 
-/// An extension `ours` knows of before the list is read.
 #[cfg(test)]
 pub fn known(id: &str) {
     KNOWN
@@ -146,16 +100,12 @@ pub fn known(id: &str) {
         .insert(id.to_owned());
 }
 
-/// The list as written down: on `WebView2`, what Orden installed; on Orden's own Chromium,
-/// the pins the reader set, the list itself being the engine's (`listed`).
 pub fn kept(app: &AppHandle) -> Vec<Kept> {
     root(app)
         .map(|root| library::read(&root))
         .unwrap_or_default()
 }
 
-/// What is installed, each with the folder it is unpacked in, and the ids remembered for
-/// `ours`. From a thread that is not the window's: on Chromium the engine is asked.
 fn listed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
     #[cfg(feature = "cef")]
     let list: Vec<(Kept, PathBuf)> = {
@@ -174,8 +124,6 @@ fn listed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
                 (one, folder)
             })
             .collect();
-        // A Firefox add-on is the list's, on or off as the list says: the engine has it only
-        // from the launch that loaded it, at the version it loaded.
         if let Ok(root) = root(app) {
             let mut pending = PENDING.write().unwrap_or_else(PoisonError::into_inner);
             pending.clear();
@@ -210,7 +158,6 @@ fn listed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
     list
 }
 
-/// One extension as the window draws it.
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Shown {
@@ -218,17 +165,12 @@ pub struct Shown {
     kept: Kept,
     #[serde(flatten)]
     about: About,
-    /// Its picture as a `data:` address, so the window needs no way into the folder.
     picture: Option<String>,
-    /// Why it did not load this run, if it did not.
     problem: Option<String>,
-    /// What of a Firefox add-on does not run in Orden; see firefox.rs.
     gaps: Option<Gaps>,
-    /// Whether it starts only with the next launch; see `PENDING`.
     pending: bool,
 }
 
-/// An extension's row: the list's entry and what its manifest says.
 fn shown(kept: Kept, folder: &Path) -> Shown {
     let about = manifest::read(folder).unwrap_or_default();
     let picture = about.icon.as_deref().and_then(|icon| picture(folder, icon));
@@ -252,10 +194,8 @@ fn shown(kept: Kept, folder: &Path) -> Shown {
     }
 }
 
-/// The largest picture a row carries, so a manifest naming a large file is not read whole.
 const LARGEST: u64 = 512 * 1024;
 
-/// A picture in an extension's folder as a `data:` address, if it is a small one.
 fn picture(folder: &Path, path: &str) -> Option<String> {
     use base64::Engine as _;
 
@@ -283,14 +223,12 @@ fn picture(folder: &Path, path: &str) -> Option<String> {
         })
 }
 
-/// Tells the window the list changed, and every `WebView2` store what it now holds.
 fn changed(app: &AppHandle) {
     let _ = app.emit(CHANGED, ());
     #[cfg(all(windows, not(feature = "cef")))]
     webview2::apply(app);
 }
 
-/// What is installed.
 #[tauri::command]
 pub async fn extensions_list(app: AppHandle) -> Result<Vec<Shown>, String> {
     if !SUPPORTED {
@@ -306,11 +244,6 @@ pub async fn extensions_list(app: AppHandle) -> Result<Vec<Shown>, String> {
     .map_err(|error| error.to_string())
 }
 
-/// What an install came to: the extension, installed - or, on Orden's own Chromium, the
-/// store's own page, where the store's own button installs it. A Firefox add-on that will
-/// not run whole is not installed until the reader has read what will not and asked again;
-/// a Firefox theme is not installed at all but handed to the window, to become one of
-/// Orden's (lib/themes/browser.ts).
 #[derive(Serialize)]
 #[serde(untagged)]
 pub enum Done {
@@ -334,18 +267,14 @@ pub enum Done {
     },
 }
 
-/// A Firefox theme, as the window reads a browser's theme (`browser_themes.rs`).
 #[derive(Serialize)]
 pub struct Theme {
     name: String,
-    /// Its manifest's `theme`, as JSON.
     source: String,
     css: bool,
     pages: String,
 }
 
-/// Installs the extension a store link or an id names, or updates it if it is there. A
-/// Firefox add-on that will not run whole is installed only once `anyway` says so.
 #[tauri::command]
 pub async fn extensions_install(
     app: AppHandle,
@@ -375,8 +304,6 @@ pub async fn extensions_install(
     }
 }
 
-/// Installs the Firefox add-on `slug` names from addons.mozilla.org, or hands its theme
-/// to the window.
 async fn from_amo(app: AppHandle, slug: &str, anyway: bool) -> Result<Done, String> {
     let listing = amo::listing(slug).await?;
     let bytes = amo::file(&listing).await?;
@@ -412,7 +339,6 @@ async fn from_amo(app: AppHandle, slug: &str, anyway: bool) -> Result<Done, Stri
     .map_err(|error| error.to_string())?
 }
 
-/// A theme's name and colours, out of its file.
 fn theme_in(bytes: &[u8]) -> Result<Theme, String> {
     let folder = tempfile::tempdir().map_err(|error| error.to_string())?;
     let unpacked = folder.path().join("theme");
@@ -435,8 +361,6 @@ fn theme_in(bytes: &[u8]) -> Result<Theme, String> {
     })
 }
 
-/// Puts an unpacked version on the list, or moves the list's entry to it, and hands it to
-/// the engines.
 fn listed_as(
     app: &AppHandle,
     root: &Path,
@@ -476,7 +400,6 @@ fn listed_as(
     Ok(shown(one, &folder))
 }
 
-/// Unpacks a fetched file, puts it on the list and hands it to the engines.
 #[cfg(not(feature = "cef"))]
 async fn installed(
     app: AppHandle,
@@ -493,7 +416,6 @@ async fn installed(
     .map_err(|error| error.to_string())?
 }
 
-/// Turns an extension on or off, or pins or unpins its button.
 #[tauri::command]
 pub async fn extensions_set(
     app: AppHandle,
@@ -503,8 +425,6 @@ pub async fn extensions_set(
 ) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || {
         let root = root(&app)?;
-        // Orden's own Chromium keeps whether one is on itself, and loses nothing it stored.
-        // A Firefox add-on is the list's, and the engine has it only if this run loaded it.
         #[cfg(feature = "cef")]
         if let Some(on) = enabled {
             let firefox = kept(&app)
@@ -542,13 +462,10 @@ pub async fn extensions_set(
     .map_err(|error| error.to_string())?
 }
 
-/// Removes an extension: from every store, and on `WebView2` its folder with it on the next
-/// tidy.
 #[tauri::command]
 pub async fn extensions_remove(app: AppHandle, id: String) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || {
         let root = root(&app)?;
-        // A Firefox add-on this run did not load is the list's alone.
         #[cfg(feature = "cef")]
         {
             let firefox = kept(&app)
@@ -573,9 +490,6 @@ pub async fn extensions_remove(app: AppHandle, id: String) -> Result<(), String>
     .map_err(|error| error.to_string())?
 }
 
-/// Looks for a newer version of every extension, and installs what it finds. Answers how
-/// many moved. The window asks every few hours, never at the launch. Orden's own Chromium
-/// updates what its store installed itself; a Firefox add-on is updated from AMO on both.
 #[tauri::command]
 pub async fn extensions_update(app: AppHandle) -> Result<usize, String> {
     if !SUPPORTED {
@@ -617,8 +531,6 @@ pub async fn extensions_update(app: AppHandle) -> Result<usize, String> {
     }
 }
 
-/// Installs the version AMO has of a Firefox add-on if it is not the one here, answering
-/// whether it did. What will not run of it was read before its first install.
 async fn amo_update(app: &AppHandle, one: &Kept) -> Result<bool, String> {
     let slug = one
         .addon
@@ -641,7 +553,6 @@ async fn amo_update(app: &AppHandle, one: &Kept) -> Result<bool, String> {
     .map_err(|error| error.to_string())?
 }
 
-/// The address of an extension's popup or options page, for the window to open.
 #[tauri::command]
 pub async fn extensions_page(app: AppHandle, id: String, options: bool) -> Result<String, String> {
     tauri::async_runtime::spawn_blocking(move || page_of(&app, &id, options))
@@ -649,7 +560,6 @@ pub async fn extensions_page(app: AppHandle, id: String, options: bool) -> Resul
         .map_err(|error| error.to_string())?
 }
 
-/// The address of an extension's popup, or of its options page.
 fn page_of(app: &AppHandle, id: &str, options: bool) -> Result<String, String> {
     let (_, folder) = listed(app)
         .into_iter()
@@ -661,9 +571,6 @@ fn page_of(app: &AppHandle, id: &str, options: bool) -> Result<String, String> {
         .ok_or_else(|| "that extension has no such page".to_string())
 }
 
-/// The store's own page a tab is on, if it is an extension's: `(store, id)`, so the bar
-/// can offer Add there - for a Firefox add-on, its slug. A Chromium store's page never on
-/// Orden's own Chromium, where the store's own button installs.
 #[tauri::command]
 pub fn extensions_named(link: String) -> Option<(Store, String)> {
     if !SUPPORTED {
@@ -674,9 +581,6 @@ pub fn extensions_named(link: String) -> Option<(Store, String)> {
         .filter(|(store, _)| *store == Store::Firefox || !cfg!(feature = "cef"))
 }
 
-/// Folders nothing on the list names any more, and versions an update left behind. Once
-/// a run, after the first store has been handed its extensions, so no engine still has a
-/// folder it is being taken away from.
 #[cfg(all(windows, not(feature = "cef")))]
 pub fn tidy(app: &AppHandle) {
     if let Ok(root) = root(app) {
@@ -709,8 +613,6 @@ mod tests {
         serde_json::to_value(shown(kept(), folder)).expect("a row")
     }
 
-    /// Whatever an extension's manifest says, or fails to say, its row is the list's id
-    /// and version and is drawn (#1084): no field is assumed, of any type or size.
     #[test]
     fn any_manifest_at_all_makes_a_row() {
         let folder = tempfile::tempdir().expect("a folder");
@@ -773,7 +675,6 @@ mod tests {
         assert_eq!(said["picture"], Value::Null);
     }
 
-    /// A Firefox theme is its name and its colours, handed to the window (#1155).
     #[test]
     fn a_firefox_theme_is_its_name_and_its_colours() {
         let file = super::unzip::tests::zip(&[
@@ -790,8 +691,6 @@ mod tests {
         assert!(super::theme_in(&none).is_err());
     }
 
-    /// A picture is carried only when it is a small file: never a folder, a file that is
-    /// not there, or a large one, which is not read at all.
     #[test]
     fn only_a_small_picture_is_carried() {
         let folder = tempfile::tempdir().expect("a folder");

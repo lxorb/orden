@@ -1,14 +1,3 @@
-//! Where notes are allowed to live, and how a path handed in from the window is
-//! judged before anything on disk is touched.
-//!
-//! This module owns the two folders the app has - the one the spaces live in and
-//! its own, where what it keeps *about* a file goes - the containment check every
-//! note and space command goes through, the two narrow ways past it (the app's own
-//! settings files, and where the reader picked in the system's dialog), what counts
-//! as a note, a PDF or a canvas, the walk that reads a whole space, the read of one
-//! file held to a ceiling, and the two file operations that must not leave a mess
-//! behind when they fail.
-
 use std::collections::HashSet;
 use std::ffi::OsStr;
 use std::fmt::Display;
@@ -21,62 +10,27 @@ use std::sync::Mutex;
 use std::sync::OnceLock;
 use tauri::{AppHandle, Manager};
 
-/// The extensions the app treats as a note. Anything else is not listed and not
-/// searched.
 pub const MARKDOWN: [&str; 4] = ["md", "markdown", "mdown", "mkd"];
 
-/// Recently deleted things wait in here. It sits inside the spaces folder but is
-/// not a space, and only the trash commands may touch it.
 pub const TRASH: &str = ".trash";
 
-/// How deep the tree walkers go. A folder nested further than this is either a
-/// mistake or a symlink pointing at one of its own parents, and following the
-/// second one forever is how a file manager hangs.
-///
-/// This bounds one chain of folders. What bounds how many chains there are is
-/// `Seen`.
 pub const MAX_DEPTH: usize = 32;
 
-/// Makes each temp file its own, so two windows saving at the same moment cannot
-/// write to the same half-finished file.
 static WRITES: AtomicU64 = AtomicU64::new(0);
 
-/// What a PDF's highlights are written beside it as. Not a note and not a file
-/// anyone opens: it is data about one file, it travels with that file, and it
-/// goes when the file goes.
 pub const HIGHLIGHTS: &str = ".highlights.json";
 
-/// Names Windows refuses whatever the extension, because each one names a device
-/// rather than a file. Windows reads the superscripts `¹²³` as digits, so `COM¹`
-/// is a port as surely as `COM1`.
-///
-/// Here rather than in one of the modules that ask, because several do: `spaces`
-/// keeps a new space from being called one, `trash` will not put a file back
-/// under one, and `downloads` will not save one. A second copy would be a second
-/// answer to the same question.
 pub const RESERVED: [&str; 32] = [
     "CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$", "COM0", "COM1", "COM2", "COM3", "COM4",
     "COM5", "COM6", "COM7", "COM8", "COM9", "COM¹", "COM²", "COM³", "LPT0", "LPT1", "LPT2", "LPT3",
     "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", "LPT¹", "LPT²", "LPT³",
 ];
 
-/// Whether a name is one of those, going by the part in front of the first dot,
-/// which is where Windows looks: `NUL.md` names the device as surely as `NUL`.
-/// And without the spaces that part ends with, which Windows drops: `CON .md` is
-/// `CON.md`.
-///
-/// Asked on every platform, not only on Windows. A note the reader syncs is a
-/// note that has to land on all of their machines, and a name only some of them
-/// can hold is not a name.
 pub fn is_reserved(name: &str) -> bool {
     let stem = name.split('.').next().unwrap_or(name).trim_end_matches(' ');
     RESERVED.contains(&stem.to_ascii_uppercase().as_str())
 }
 
-/// Refuses a name a note or a folder is about to be given - made, renamed, copied to -
-/// where it is one of those (#477). A name already on the disk is left alone: a note
-/// that arrived under one is still written and moved, so nothing anybody wrote is lost
-/// for the name it came with; only a new name is held to what every machine can hold.
 pub fn named_for_every_machine(target: &Path) -> Result<(), String> {
     match target.file_name().and_then(OsStr::to_str) {
         Some(name) if is_reserved(name) => Err(format!(
@@ -86,97 +40,54 @@ pub fn named_for_every_machine(target: &Path) -> Result<(), String> {
     }
 }
 
-/// Whether a path names a note, in whichever case the extension is written.
 pub fn is_markdown(path: &Path) -> bool {
     path.extension()
         .and_then(OsStr::to_str)
         .is_some_and(|extension| MARKDOWN.contains(&extension.to_lowercase().as_str()))
 }
 
-/// Whether a path names a PDF, in whichever case the extension is written. One
-/// of the two things beside a note that the window can open in a tab of its own.
 pub fn is_pdf(path: &Path) -> bool {
     path.extension()
         .and_then(OsStr::to_str)
         .is_some_and(|extension| extension.eq_ignore_ascii_case("pdf"))
 }
 
-/// Whether a path names a canvas: the plane of cards Obsidian keeps in a
-/// `.canvas` file, which Orden reads and writes as JSON Canvas 1.0.
-///
-/// It is text, so `read_note` and `write_note` already carry it and nothing here
-/// has to know what is inside; the crate only has to agree that it is a file the
-/// window lists and opens.
 pub fn is_canvas(path: &Path) -> bool {
     path.extension()
         .and_then(OsStr::to_str)
         .is_some_and(|extension| extension.eq_ignore_ascii_case("canvas"))
 }
 
-/// Whether a path names a page note: the stack of paper a pen is used on, kept
-/// in a `.pages` file.
-///
-/// The same file as a canvas under another name - JSON Canvas with pages among
-/// its nodes - so the same reasoning holds: it is text, `read_note` and
-/// `write_note` carry it, and the crate only has to agree that it is a file the
-/// window lists and opens. It did not, which left a page note drawn in a tab and
-/// in nothing else: no row in the file list, and nothing for the mirror to send
-/// up, since the mirror walks the tree this crate builds.
 pub fn is_pages(path: &Path) -> bool {
     path.extension()
         .and_then(OsStr::to_str)
         .is_some_and(|extension| extension.eq_ignore_ascii_case("pages"))
 }
 
-/// Whether a path names a base: Obsidian's `.base` file, a view of a space's notes and
-/// tasks (docs/tasks.md 5.11). YAML, so `read_note` and `write_note` carry it like
-/// any text; the crate only has to agree that it is a file the window lists and
-/// opens, and the mirror sends up, since the mirror walks the tree this crate builds.
 pub fn is_base(path: &Path) -> bool {
     path.extension()
         .and_then(OsStr::to_str)
         .is_some_and(|extension| extension.eq_ignore_ascii_case("base"))
 }
 
-/// Whether a path names a chat's pointer: one line of JSON naming the chat the account
-/// made (docs/chats.md 4.2). Text, so `read_note` and `write_note` carry it; the crate
-/// has to agree it is a file the window lists and opens, and the mirror sends up, since
-/// the mirror walks the tree this crate builds - which it did not, and a chat made on
-/// one device never reached another.
 pub fn is_chat(path: &Path) -> bool {
     path.extension()
         .and_then(OsStr::to_str)
         .is_some_and(|extension| extension.eq_ignore_ascii_case("chat"))
 }
 
-/// Whether a path names an online terminal: one line of JSON naming the session on its
-/// owner's machine (docs/online-terminal.md 4.5). Text, like a chat's pointer, and for the
-/// same reason the crate has to agree it is a file the window lists and opens: one that
-/// was not had no row in the file list, and a phone's or a browser's mirror, which walks
-/// this tree, never sent it to the reader's other devices (issue 1055).
 pub fn is_term(path: &Path) -> bool {
     path.extension()
         .and_then(OsStr::to_str)
         .is_some_and(|extension| extension.eq_ignore_ascii_case("term"))
 }
 
-/// Whether a path names an application: one line of JSON naming the device it runs on
-/// and what it runs there (docs/apps.md). Text, listed and opened as the online
-/// terminal's file is, and for the same reason.
 pub fn is_application(path: &Path) -> bool {
     path.extension()
         .and_then(OsStr::to_str)
         .is_some_and(|extension| extension.eq_ignore_ascii_case("application"))
 }
 
-/// Whether a path names a website: a shortcut file rather than words.
-///
-/// `.url` is the Windows Internet Shortcut - an INI file with an address in it,
-/// which Explorer and every browser write - and it is the one the app writes.
-/// `.webloc` is the same idea on macOS, a plist, which Safari writes and the app
-/// only reads. Both are small text files, so `read_note` and `write_note` already
-/// carry them the way they carry a canvas, and all the crate has to agree on is
-/// that they are files the window lists and opens. See web-tab/shortcut.ts.
 pub fn is_shortcut(path: &Path) -> bool {
     path.extension()
         .and_then(OsStr::to_str)
@@ -185,45 +96,29 @@ pub fn is_shortcut(path: &Path) -> bool {
         })
 }
 
-/// Where a PDF's highlights live: the PDF's own name with the suffix after it,
-/// so the two sit together in a folder and no note can ever collide with one.
 pub fn highlights_of(pdf: &Path) -> PathBuf {
     let mut name = pdf.file_name().unwrap_or_default().to_os_string();
     name.push(HIGHLIGHTS);
     pdf.with_file_name(name)
 }
 
-/// The PDF a page note holds: the note's own name with `.pdf` after it, beside it,
-/// the way a PDF's highlights are its name with their suffix after it. A PDF brought
-/// in becomes a page note and its bytes move here, so the space holds one thing - the
-/// page note - and the paper under its pages travels with it. See docs/pages.md.
 pub fn paper_of(pages: &Path) -> PathBuf {
     let mut name = pages.file_name().unwrap_or_default().to_os_string();
     name.push(".pdf");
     pages.with_file_name(name)
 }
 
-/// Whether a PDF is the paper of the page note beside it: `Lecture.pages.pdf` with
-/// `Lecture.pages` there. The list shows the page note and not its paper, as it
-/// shows a PDF and not its highlights; a paper whose note has gone is a PDF again,
-/// and is listed, so nothing is ever kept where nobody can see it.
 pub fn held_paper(pdf: &Path) -> bool {
     if !is_pdf(pdf) {
         return false;
     }
 
-    // The note's paper is the one `paper_of` names, so a paper hidden is one that goes
-    // with the note: `Lecture.pages.PDF` is that paper on a disk that ignores case,
-    // and somebody's own PDF on one that does not.
     paper_holder(pdf).is_some_and(|holder| {
         let paper = paper_of(&holder);
         paper == pdf || crate::notes::same_entry(&paper, pdf)
     })
 }
 
-/// The page note a PDF at `pdf` would be the paper of: `Lecture.pages` for
-/// `Lecture.pages.pdf`, where that note is there. A PDF put at such a name is held by
-/// the note, whoever put it there.
 fn paper_holder(pdf: &Path) -> Option<PathBuf> {
     if !is_pdf(pdf) {
         return None;
@@ -232,23 +127,10 @@ fn paper_holder(pdf: &Path) -> Option<PathBuf> {
     holds_paper(&holder).then_some(holder)
 }
 
-/// Whether `path` is a page note, which holds a paper: a file called `<name>.pages`.
-/// A folder of that name - a macOS Pages document is one - holds none, so a PDF
-/// beside it is a PDF of its own and never follows it anywhere.
 fn holds_paper(path: &Path) -> bool {
     is_pages(path) && path.is_file()
 }
 
-/// Whether a name is taken: by something there, or, for a page note, by a file where
-/// its paper would go. A PDF called `Report.pages.pdf` is somebody's - macOS Pages names
-/// every PDF it saves that way - and a page note given `Report.pages` would take it for
-/// its paper: moved over it, or hidden from the list as held (#538). And the other way
-/// round: such a PDF put beside a page note `Report.pages` with no paper yet is taken
-/// by that note for its paper, so for a PDF the name is taken where the note is. And
-/// where highlights a gone PDF left behind are, which a new one would show as its own.
-///
-/// Only for a file: a folder called `Report.pages`, which a macOS Pages document is,
-/// holds no paper and is no paper.
 pub fn taken(path: &Path, is_file: bool) -> bool {
     path.exists()
         || (is_file
@@ -257,15 +139,6 @@ pub fn taken(path: &Path, is_file: bool) -> bool {
                 || (is_pdf(path) && highlights_of(path).exists())))
 }
 
-/// Whether a page note may be called `to`, coming from `from`: not over a file where its
-/// paper would go, unless that file is `from`'s own paper under another spelling of its
-/// name (`same` says whether two paths are one entry; see `respelled` in notes.rs).
-/// Answers the file in the way, to be named in the refusal.
-///
-/// And whether a PDF may be called `to`: not where a page note would take it for its
-/// paper, which is the note in the way. From anywhere, the note's own folder too: a
-/// name typed into a PDF's row there is how it happens. The one move that means it,
-/// a PDF turned into its page note (pages/from-pdf.ts), says so to `rename_note`.
 pub fn paper_in_the_way(
     from: &Path,
     to: &Path,
@@ -274,7 +147,6 @@ pub fn paper_in_the_way(
     if !is_pages(to) {
         return paper_holder(to);
     }
-    // A folder holds no paper, so nothing is in its way.
     if from.is_dir() {
         return None;
     }
@@ -289,24 +161,10 @@ pub fn paper_in_the_way(
     (!own).then_some(there)
 }
 
-/// What a file holds travels with it: a PDF's highlights, and a page note's paper
-/// and that paper's highlights. Moved, copied and dropped with it; see `copy_held`
-/// and `drop_held`. They are data about the file rather than a file of
-/// their own, so a rename or a move that left them behind would leave them
-/// describing a name nothing answers to.
-///
-/// Quiet about failure on purpose: the file has already moved, and a sidecar that
-/// could not follow is a lost set of highlights or a paper listed on its own, not a
-/// lost file. Moved the way the file was, so one that went to the trash on another
-/// disk takes them with it.
 pub fn move_held(from: &Path, to: &Path) {
     held_moved(from, to, true);
 }
 
-/// `move_held` out of the trash, which leaves highlights already at the new name: a
-/// restore lands only where no other PDF's highlights are (`taken`), unless they are
-/// this one's own, back ahead of it (`rejoins_highlights`). Sync deletes a PDF and its
-/// highlights apart, each an entry of its own, and each comes back on its own.
 pub fn restore_held(from: &Path, to: &Path) {
     held_moved(from, to, false);
 }
@@ -322,8 +180,6 @@ fn held_moved(from: &Path, to: &Path, clear: bool) {
         return;
     }
 
-    // Highlights already at the new name were left by a PDF that went outside Orden, and
-    // are not this one's: replaced by its own, or cleared where it has none.
     let source = highlights_of(from);
     if source.exists() {
         let _ = crate::carry::move_whole(&source, &highlights_of(to), "move");
@@ -332,33 +188,20 @@ fn held_moved(from: &Path, to: &Path, clear: bool) {
     }
 }
 
-/// Whether a PDF coming back from the trash at `pdf` without highlights of its own
-/// finds only highlights there, which are its own, restored ahead of it: nothing else
-/// at the name, and no page note taking it for its paper.
 pub fn rejoins_highlights(pdf: &Path) -> bool {
     is_pdf(pdf) && !pdf.exists() && paper_holder(pdf).is_none() && highlights_of(pdf).exists()
 }
 
-/// A page note's paper, after the note, and nothing of the paper's own: sync's move,
-/// which carries the paper with the note and never as an entry of its own (#551,
-/// pages/carried.ts), and the paper's highlights as one of their own. Answers whether
-/// the paper moved. Quiet about failure for the reason `move_held` is.
 pub fn move_paper(from: &Path, to: &Path) -> bool {
-    // Asked of `to`, since the note has moved there already.
     if !is_pages(from) || !holds_paper(to) {
         return false;
     }
     let paper = paper_of(from);
-    // Never over a file already there, which is somebody's own PDF (#538): the
-    // commands that move a page note refuse such a name first, and this is the
-    // last word on it.
     paper.exists()
         && paper_in_the_way(from, to, crate::notes::same_entry).is_none()
         && crate::carry::move_whole(&paper, &paper_of(to), "move").is_ok()
 }
 
-/// And a copy of it has them too, for the reason they follow a move. Quiet about
-/// failure for the same reason as well.
 pub fn copy_held(from: &Path, to: &Path) {
     if is_pages(from) {
         if !holds_paper(from) {
@@ -383,8 +226,6 @@ pub fn copy_held(from: &Path, to: &Path) {
     }
 }
 
-/// And they go when it goes. Only ever after `file` was removed as a file, so a page
-/// note's: a folder is never removed through here.
 pub fn drop_held(file: &Path) {
     if is_pages(file) {
         let paper = paper_of(file);
@@ -396,89 +237,33 @@ pub fn drop_held(file: &Path) {
     }
 }
 
-/// What went wrong and which file it was about. An `io::Error` names the failure
-/// but never the path, and a message the window puts in front of someone has to
-/// say both.
 pub fn cannot(verb: &str, path: &Path, error: &impl Display) -> String {
     format!("could not {verb} {}: {error}", path.display())
 }
 
-/// Makes a folder, and every folder above it, saying which one it could not make.
-///
-/// Here rather than in each of the modules that keeps something in a folder of its
-/// own, because all of them do: the spaces folder, the trash, the themes, one
-/// note's history, a paper's words, the log, and the folder a note is written into.
 pub fn made(dir: &Path) -> Result<(), String> {
     fs::create_dir_all(dir).map_err(|error| cannot("create", dir, &error))
 }
 
-/// The variable that says where the notes are, for a probe or a drive.
-///
-/// **The identifier a build runs under does not keep anybody's notes apart.** It moves
-/// the settings folder and the browsing profile, and says nothing at all about where the
-/// spaces are - so a drive that made itself a space made it in the reader's own
-/// `Documents/Nib`, beside their notes. This is the one way to keep out of them, and
-/// every probe and drive sets it; see docs/automation.md.
 pub(crate) const SPACES_DIR: &str = "NIB_SPACES_DIR";
 
-/// The folder a variable names, or `None` for one it does not name: the spaces root in
-/// `NIB_SPACES_DIR`, and a probe's downloads folder in `NIB_DOWNLOADS_DIR` (see
-/// downloads.rs).
-///
-/// Absolute only. A relative path is read against whatever folder the app happened to be
-/// started in, which is not a place to decide somebody's files live; and an empty value
-/// is what a shell leaves behind when it clears a variable, so it reads as unset rather
-/// than as the root of the disk.
-///
-/// Pure, and told what the variable said rather than reading it, so the rule is tested
-/// without an app, a documents folder, or a variable set across a running test suite.
 pub(crate) fn folder_named(said: Option<&OsStr>) -> Option<PathBuf> {
     let path = PathBuf::from(said?);
     path.is_absolute().then_some(path)
 }
 
-/// The folder a new install keeps its spaces in, inside the app's own data. Emil,
-/// 2026-10-17 (#376), in German: the default Orden sync folder belongs in app data rather
-/// than in Documents - it is nothing a person should reach directly, but through Orden.
 #[cfg(desktop)]
 pub(crate) const SPACES: &str = "Spaces";
 
-/// The file in the settings folder that says which folder this install's spaces are in,
-/// written the first time it is decided and read from then on, so the answer never
-/// changes under somebody's notes: not when a `Documents/Nib` appears later, made by an
-/// older build or by hand, and not when one is emptied. Only Orden's own folders are
-/// taken from it; a path written into it by hand names a folder outside (#552), whose
-/// spaces are taken in once and never used where they are (outside.rs).
 #[cfg(desktop)]
 pub(crate) const SPACES_KEPT: &str = "spaces-folder";
 
-/// The folder outside Orden's own that `SPACES_KEPT` named as this launch started, until
-/// its spaces are taken in (outside.rs): nothing of it is listed, watched or written.
 #[cfg(desktop)]
 pub(crate) static SPACES_OUTSIDE: Mutex<Option<PathBuf>> = Mutex::new(None);
 
-/// What a desktop decided, once a launch, before anything else: `spaces_dir` is asked
-/// before every note, and many of the commands that ask it answer on the window's own
-/// thread, where it must not wait for the disk; see `decide_spaces`.
 #[cfg(desktop)]
 static SPACES_CHOSEN: OnceLock<PathBuf> = OnceLock::new();
 
-/// Where the spaces are, and nothing more: judging a path is not a reason to make a
-/// folder, and judging one is what most of the callers are doing - `in_spaces`
-/// stands in front of every note, folder, tree, search and trash command, and a
-/// note being read asks whether it is inside. What wants the folder to be there
-/// says so, with `spaces_root`.
-///
-/// On a desktop, the folder `spaces_folder` decides, once: `Spaces` in the app's own
-/// local data (`%LOCALAPPDATA%` on Windows, `~/Library/Application Support` on a Mac,
-/// `$XDG_DATA_HOME` on Linux, each under the identifier) for a new install, and
-/// `Documents/Nib`, where every space used to be, for an install that has one - nobody's
-/// spaces are moved. On a phone, `Documents/Nib`, which is the app's own container there
-/// already and what the Files app shows of it.
-///
-/// `NIB_SPACES_DIR` wins outright, and is read at call time and before anything else
-/// is asked for: a drive that says where the notes go must not be overruled by a
-/// documents folder or a kept answer, and must not need either to exist at all.
 pub fn spaces_dir(app: &AppHandle) -> Result<PathBuf, String> {
     if let Some(named) = folder_named(std::env::var_os(SPACES_DIR).as_deref()) {
         return Ok(named);
@@ -487,9 +272,6 @@ pub fn spaces_dir(app: &AppHandle) -> Result<PathBuf, String> {
     default_spaces(app)
 }
 
-/// A desktop's spaces folder when no variable names one, as `decide_spaces` found it as
-/// the app started. Asked before that, it is an error rather than a guess: a guess made
-/// before the old `Documents/Nib` was looked for could put somebody's spaces out of sight.
 #[cfg(desktop)]
 fn default_spaces(_app: &AppHandle) -> Result<PathBuf, String> {
     SPACES_CHOSEN
@@ -498,15 +280,8 @@ fn default_spaces(_app: &AppHandle) -> Result<PathBuf, String> {
         .ok_or_else(|| "the spaces folder is not decided yet".to_string())
 }
 
-/// Decides a desktop's spaces folder for this launch, reading and if need be writing
-/// the answer kept in the settings folder; see `SPACES_KEPT`. The first thing the app
-/// does once it is built, so nothing asks `spaces_dir` before it. A folder that cannot be
-/// found is said in the log, and every note command says so after it.
 #[cfg(desktop)]
 pub fn decide_spaces(app: &AppHandle) {
-    // A probe that names its folder decides nothing, and keeps nothing: a kept answer
-    // written by it would be the reader's `Documents/Nib`, waiting for the next launch
-    // of that build without the variable.
     if folder_named(std::env::var_os(SPACES_DIR).as_deref()).is_some() {
         return;
     }
@@ -519,7 +294,6 @@ pub fn decide_spaces(app: &AppHandle) {
     }
 }
 
-/// What `decide_spaces` decides.
 #[cfg(desktop)]
 fn chosen_spaces(app: &AppHandle) -> Result<PathBuf, String> {
     let kept = config_dir(app)?.join(SPACES_KEPT);
@@ -536,13 +310,10 @@ fn chosen_spaces(app: &AppHandle) -> Result<PathBuf, String> {
         if let Ok(mut pending) = SPACES_OUTSIDE.lock() {
             *pending = Some(outside);
         }
-        // Kept as it is until the spaces there are taken in, which writes this folder.
         return Ok(spaces_folder(None, old, fresh));
     }
     let chosen = spaces_folder(said.as_deref(), old, fresh);
     if folder_named(said.as_deref().map(str::trim).map(OsStr::new)).is_none() {
-        // Written once; a disk that will not take it decides again next launch, the
-        // same way while nothing changes.
         if let Some(dir) = kept.parent() {
             let _ = made(dir);
         }
@@ -551,14 +322,11 @@ fn chosen_spaces(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(chosen)
 }
 
-/// A phone's spaces folder: `Documents/Nib`, inside the app's own container.
 #[cfg(mobile)]
 fn default_spaces(app: &AppHandle) -> Result<PathBuf, String> {
     documents_nib(app)
 }
 
-/// `Documents/Nib`, or `Nib` in the home folder on a system with no documents folder:
-/// where every space was until #376, and where a phone's still are.
 fn documents_nib(app: &AppHandle) -> Result<PathBuf, String> {
     let base = app
         .path()
@@ -569,10 +337,6 @@ fn documents_nib(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(base.join("Nib"))
 }
 
-/// Which folder a desktop's spaces are in: the one the settings folder says (`said`, an
-/// absolute path), else the old `Documents/Nib` where it is there already (`old`), else
-/// the new default in the app's data (`fresh`). Pure, so the rule is tested without an
-/// app or a disk.
 #[cfg(desktop)]
 pub(crate) fn spaces_folder(said: Option<&str>, old: Option<PathBuf>, fresh: PathBuf) -> PathBuf {
     if let Some(kept) = folder_named(said.map(str::trim).map(OsStr::new)) {
@@ -581,10 +345,6 @@ pub(crate) fn spaces_folder(said: Option<&str>, old: Option<PathBuf>, fresh: Pat
     old.unwrap_or(fresh)
 }
 
-/// The folder `said` names where it is none of Orden's own (`own`: the new default and
-/// `Documents/Nib`, whether it is there or not): one somebody wrote into `SPACES_KEPT`,
-/// such as an Obsidian vault or any folder Orden did not make (#552). Pure, like
-/// `spaces_folder`.
 #[cfg(desktop)]
 pub(crate) fn outside_folder(said: Option<&str>, own: &[Option<&Path>]) -> Option<PathBuf> {
     let named = folder_named(said.map(str::trim).map(OsStr::new))?;
@@ -592,8 +352,6 @@ pub(crate) fn outside_folder(said: Option<&str>, own: &[Option<&Path>]) -> Optio
     (!ours).then_some(named)
 }
 
-/// The same folder, made if it is not there yet. What the commands that read or
-/// write the folder itself ask for: the list of spaces, a new space, the trash.
 pub fn spaces_root(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = spaces_dir(app)?;
     made(&dir)?;
@@ -601,22 +359,12 @@ pub fn spaces_root(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(dir)
 }
 
-/// The app's own folder, which is where what the app keeps *about* a file lives:
-/// the themes, the reader's own stylesheet, every version of every note, the words
-/// taken out of a paper.
-///
-/// Nothing is made here. A folder is made by whoever writes into it, with `made`,
-/// because most of the callers want a folder further down anyway.
 pub fn config_dir(app: &AppHandle) -> Result<PathBuf, String> {
     app.path()
         .app_config_dir()
         .map_err(|error| format!("could not find the settings folder: {error}"))
 }
 
-/// The app's own log folder, made if it is not there yet.
-///
-/// Here rather than in one of the two modules that writes into it, because both do:
-/// the log itself, and the launch trace that sits beside it.
 pub fn log_dir(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = app
         .path()
@@ -627,17 +375,12 @@ pub fn log_dir(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(dir)
 }
 
-/// The same path with `.` and `..` folded away, so it is judged by where it
-/// points rather than by how it was spelled. Nothing is read from disk, and the
-/// separators come out as this platform writes them.
 pub fn folded(path: &Path) -> PathBuf {
     let mut out = PathBuf::new();
 
     for part in path.components() {
         match part {
             Component::CurDir => {}
-            // Climbing above the top of the path names no place at all, so the
-            // component is simply dropped rather than kept for later.
             Component::ParentDir => {
                 out.pop();
             }
@@ -648,22 +391,10 @@ pub fn folded(path: &Path) -> PathBuf {
     out
 }
 
-/// True when `path` is `root` itself or something inside it.
-///
-/// Both sides are judged by what they say rather than by what they point at: a
-/// space someone symlinked onto another disk is still their space, and `..` was
-/// already folded away. What this stops is a path climbing out of the folder,
-/// not a reader arranging their own notes.
-///
-/// Each part is compared the way this platform's file system tells two names apart
-/// (`Naming`), and a path holding a part it would read as something other than a name
-/// is inside nothing (`unspoken`).
 pub fn inside(root: &Path, path: &Path) -> bool {
     inside_as(NAMING, root, path)
 }
 
-/// `inside`, for the file system `naming` says, so each one's rules can be held in a
-/// test on any machine.
 fn inside_as(naming: Naming, root: &Path, path: &Path) -> bool {
     let root = folded(root);
     let path = folded(path);
@@ -680,19 +411,9 @@ fn inside_as(naming: Naming, root: &Path, path: &Path) -> bool {
         }
     }
 
-    // Only what the path says below the root: the root is the app's own, and may itself
-    // be spelled with a short name - a temporary folder on Windows often is, under
-    // `RUNNER~1` - which the path then says the same way.
     !theirs.any(|(_, part)| unspoken(naming, part))
 }
 
-/// The space a folder belongs to: the folder directly inside `spaces` that holds
-/// it, or the folder itself when it is one. None when it is not in a space at
-/// all, which is what a note opened from somewhere else on the disk looks like,
-/// and also what the spaces folder itself is.
-///
-/// Takes the spaces folder rather than the app, so what counts as a space can be
-/// tested without one.
 pub fn space_root(spaces: &Path, path: &Path) -> Option<PathBuf> {
     let spaces = folded(spaces);
     let path = folded(path);
@@ -700,31 +421,17 @@ pub fn space_root(spaces: &Path, path: &Path) -> Option<PathBuf> {
         return None;
     }
 
-    // The first part below the spaces folder is the space; the path itself is
-    // the spaces folder when there is no such part, and that is no space.
     let mut parts = path.components().skip(spaces.components().count());
     parts.next().map(|first| spaces.join(first))
 }
 
-/// How this platform's file systems tell two names in a path apart, which is what the
-/// gates below compare by (#485, #486).
-///
-/// Comparing letters as they were sent let other spellings of one folder past: the
-/// trash is refused as `.trash`, and macOS opened it as `.TRASH`, Windows as `.trash.`
-/// and `.trash ` too. And comparing wider than the file system does lets a sibling in:
-/// Windows lowercased the Kelvin sign to `k`, which NTFS keeps apart from `K`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Naming {
-    /// Linux: a name is its bytes.
     Exact,
-    /// macOS: APFS and HFS+ as a Mac formats them, which ignore case.
     Cased,
-    /// Windows: NTFS ignores case, and Win32 drops the dot a part ends in and every dot
-    /// and space the last part ends in before NTFS sees the name.
     Win32,
 }
 
-/// This platform's.
 const NAMING: Naming = if cfg!(windows) {
     Naming::Win32
 } else if cfg!(target_os = "macos") {
@@ -733,8 +440,6 @@ const NAMING: Naming = if cfg!(windows) {
     Naming::Exact
 };
 
-/// A name as the file system reads it, to compare by. `last` is whether it ends the
-/// path, which is where Win32 drops trailing spaces as well as dots.
 fn name_key(naming: Naming, name: &str, last: bool) -> String {
     match naming {
         Naming::Exact => name.to_owned(),
@@ -743,8 +448,6 @@ fn name_key(naming: Naming, name: &str, last: bool) -> String {
     }
 }
 
-/// What Win32 makes of one part of a path: a part of only dots is a name of its own,
-/// a part ends in one dot fewer, and the last part in no dot or space at all.
 fn win32_name(name: &str, last: bool) -> &str {
     if name.chars().all(|one| one == '.') {
         name
@@ -755,10 +458,6 @@ fn win32_name(name: &str, last: bool) -> &str {
     }
 }
 
-/// A name with case taken out the way NTFS's upcase table and the Mac's file systems
-/// take it out: each letter to its one capital, and a letter whose capital is more than
-/// one letter (`ß`) left as it is. `to_lowercase` folded wider than that - the Kelvin
-/// sign to `k` - and so judged a sibling folder to be this one (#486).
 fn upcased(name: &str) -> String {
     name.chars()
         .map(|one| {
@@ -771,24 +470,14 @@ fn upcased(name: &str) -> String {
         .collect()
 }
 
-/// One part of a path against another, as `naming` reads them.
 fn same_part(naming: Naming, one: Component, other: Component, last: bool) -> bool {
     if naming == Naming::Exact {
         return one == other;
     }
-    // Both read as the part of the path in that place: the path's last part is where
-    // Win32 drops a trailing space, whichever side is asked about.
     let key = |part: Component| name_key(naming, &part.as_os_str().to_string_lossy(), last);
     key(one) == key(other)
 }
 
-/// Whether a part of a path is one the file system `naming` says would read as
-/// something other than a name, which no gate can compare by its letters and so lets
-/// in nowhere below the folder it guards.
-///
-/// On Windows: a `:`, which names a stream of a file rather than a file -
-/// `.trash::$INDEX_ALLOCATION` is the trash folder itself - and a short 8.3 alias
-/// (`TRASH~1`), which names whatever long name it was made for (#485).
 fn unspoken(naming: Naming, part: Component) -> bool {
     match part {
         Component::Normal(name) if naming == Naming::Win32 => {
@@ -799,8 +488,6 @@ fn unspoken(naming: Naming, part: Component) -> bool {
     }
 }
 
-/// Whether a name has the shape Windows gives a long name's 8.3 alias: up to six
-/// letters, a `~` and a number, and at most three after a dot.
 fn short_alias(name: &str) -> bool {
     let (stem, extension) = name.rsplit_once('.').unwrap_or((name, ""));
     let Some((_, number)) = stem.rsplit_once('~') else {
@@ -830,21 +517,14 @@ fn path_key_as(naming: Naming, path: &Path) -> String {
         .join("\u{0}")
 }
 
-/// The gate every note, folder and space command goes through: a string from the
-/// window only becomes a path once it is known to be inside the spaces folder.
-/// The trash is inside that folder and still refused, because nothing but the
-/// trash commands has any business in it.
 pub fn in_spaces(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
     judged(&spaces_dir(app)?, path)
 }
 
-/// That gate, with the spaces folder passed in rather than asked for, so what it
-/// refuses can be said without an app around it.
 fn judged(root: &Path, path: &str) -> Result<PathBuf, String> {
     judged_as(NAMING, root, path)
 }
 
-/// `judged`, for the file system `naming` says.
 fn judged_as(naming: Naming, root: &Path, path: &str) -> Result<PathBuf, String> {
     let target = folded(Path::new(path));
 
@@ -862,15 +542,10 @@ fn judged_as(naming: Naming, root: &Path, path: &str) -> Result<PathBuf, String>
     Ok(target)
 }
 
-/// A space is a folder directly inside the spaces folder, and not a hidden one.
-/// Renaming or deleting a space moves a whole tree, so the path is held to the
-/// stricter shape rather than to mere containment.
 pub fn a_space(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
     judged_space(&spaces_dir(app)?, path)
 }
 
-/// That shape, with the spaces folder passed in, for the same reason `judged` takes
-/// one: a space is a shape a test can be about.
 fn judged_space(root: &Path, path: &str) -> Result<PathBuf, String> {
     let target = folded(Path::new(path));
 
@@ -889,22 +564,10 @@ fn judged_space(root: &Path, path: &str) -> Result<PathBuf, String> {
     Ok(target)
 }
 
-/// A file the app opens in a tab: a note in a space, or one of the app's own three -
-/// the two settings files it offers to edit (Edit custom CSS, Edit snippets) and the
-/// scratchpad, which are its own rather than anybody's documents; see `own_files` in themes.rs. nib opens nothing else
-/// from anywhere on the disk, so this is what `read_note` and `file_stamp` stand
-/// behind.
 pub fn openable(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
     past_spaces(app, path, |target| is_own_file(app, target))
 }
 
-/// A path the reader chose: anything `openable` reaches, or where they picked a file
-/// in the system's own dialog - the file an export was saved as and the folder it is
-/// in, where a bundle's pictures land beside it, and the document an import read.
-///
-/// The one way out of the spaces, and a narrow one: nothing here is ever opened, only
-/// written, or read by pandoc to become a note inside a space. `write_note`,
-/// `write_bytes`, `run_pandoc`, `print_pdf` and `import_document` stand behind it.
 pub fn chosen(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
     past_spaces(app, path, |target| {
         is_own_file(app, target)
@@ -914,9 +577,6 @@ pub fn chosen(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
     })
 }
 
-/// Inside the spaces folder `in_spaces` decides alone, trash and all, whatever else
-/// might let a path in: a reader who saved an export into the spaces folder did not
-/// pick its trash. Outside it, `beyond` is the only way in.
 fn past_spaces(
     app: &AppHandle,
     path: &str,
@@ -925,8 +585,6 @@ fn past_spaces(
     judged_beyond(&spaces_dir(app)?, path, beyond)
 }
 
-/// That rule, with the spaces folder passed in, so what it lets past can be said
-/// without an app around it.
 fn judged_beyond(
     root: &Path,
     path: &str,
@@ -940,36 +598,20 @@ fn judged_beyond(
     Ok(target)
 }
 
-/// Whether a path is one of the app's own files: the two settings files and the
-/// scratchpad.
 fn is_own_file(app: &AppHandle, target: &Path) -> bool {
     crate::themes::own_files(app)
         .iter()
         .any(|own| same_path(own, target))
 }
 
-/// Whether two paths name the same place, each inside the other.
 fn same_path(one: &Path, other: &Path) -> bool {
     inside(one, other) && inside(other, one)
 }
 
-/// Where the reader has picked a file in the system's own dialog this run: the folder
-/// of each file, since an export of a note and its pictures writes the note and an
-/// `assets` folder beside the name picked, and a picked folder itself.
-///
-/// Heard from the asset protocol's scope, which the dialog plugin adds every pick to
-/// and which nothing else in the app adds to after the launch; see `hear_picks`.
-/// Tauri's own drop handler would - it adds every file dropped on a webview to the
-/// same scope - which is why no webview is built with it on
-/// (`every_webview_takes_its_own_drops` in launch.rs). So a path is here only because
-/// the reader chose it in a window of the system's own, which no note, link or script
-/// can open for them. Held for the run and never written down.
 #[derive(Default)]
 pub struct Picked(Mutex<HashSet<PathBuf>>);
 
 impl Picked {
-    /// Takes a pick. A file at the top of a disk gives itself and not its folder,
-    /// which would be the whole drive; see `a_shareable_folder`.
     fn add(&self, path: &Path) {
         let path = folded(path);
         let reach = if path.is_dir() {
@@ -986,7 +628,6 @@ impl Picked {
         }
     }
 
-    /// Whether a path is within reach of a pick.
     fn reach(&self, target: &Path) -> bool {
         self.0
             .lock()
@@ -994,9 +635,6 @@ impl Picked {
     }
 }
 
-/// A path an agent's command was answered with in a dialog's place (#1078), let in as
-/// the dialog's own pick would be: `reach` exactly, which the agents' crate has judged
-/// under `files`' rules (agents/files.rs, `pick_reach`).
 #[cfg(desktop)]
 pub fn picked_for_an_agent(app: &AppHandle, reach: &Path) {
     if let Some(picked) = app.try_state::<Picked>() {
@@ -1006,8 +644,6 @@ pub fn picked_for_an_agent(app: &AppHandle, reach: &Path) {
     }
 }
 
-/// Starts hearing the dialog's picks. Called once the launch has put the spaces
-/// folder in the same scope, so that is not taken for a pick.
 pub fn hear_picks(app: &AppHandle) {
     let heard = app.clone();
     app.asset_protocol_scope().listen(move |event| {
@@ -1019,61 +655,22 @@ pub fn hear_picks(app: &AppHandle) {
     });
 }
 
-/// Whether a folder is one whose whole tree a pick may reach.
-///
-/// What this rules out is the top of a disk. Saving an export at `C:\` or at `/` is
-/// the reader's choice of that one file, not of every file on the drive.
 fn a_shareable_folder(folder: &Path) -> bool {
     folder
         .parent()
         .is_some_and(|above| !above.as_os_str().is_empty())
 }
 
-/// The folders a walk has already been inside, judged by where they really are
-/// rather than by the path they were reached through.
-///
-/// The depth cap bounds one chain of folders and not how many chains there are,
-/// and a symlink multiplies the chains. Two folders each holding a link to the
-/// other hand the same note back once for every level the cap allows, each time
-/// under a name of its own; a folder holding two links back to one of its parents
-/// doubles the work at every level instead, which is two billion paths and a
-/// sidebar that never finishes loading. Walking each folder once settles both: a
-/// walk costs what the disk holds and no more.
-///
-/// A folder reachable two ways is therefore read the first way it is reached, and
-/// the second way reads as empty. That is the answer this app wants: one note in
-/// two places is still one note, and listing it twice is what a search must not
-/// do.
-///
-/// The cost is one `canonicalize` per folder, beside the metadata call each walk
-/// already makes per file.
 #[derive(Default)]
 pub struct Seen(HashSet<PathBuf>);
 
 impl Seen {
-    /// True the first time a folder is offered and false every time after.
-    ///
-    /// A folder whose real path cannot be read is judged by the path it was
-    /// reached through. That may miss a cycle, and the depth cap is then what
-    /// ends the walk.
     pub fn first_time(&mut self, dir: &Path) -> bool {
         self.0
             .insert(fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf()))
     }
 }
 
-/// Every file in a space, split into the notes and everything else, each list in
-/// a stable order so two walks of an unchanged space read the same.
-///
-/// Here rather than in one of the two modules that walk a space, because both do:
-/// `search` reads every note for a word or a tag, and `links` reads every note
-/// for the links out of it and every other file for a picture an embed might
-/// name. A second copy of the walk would be a second answer to what counts as
-/// part of a space.
-///
-/// Hidden folders are skipped, which is what keeps the trash out of a search, and
-/// every folder is walked once, so a symlink pointing at one of its own parents
-/// cannot be followed forever: see `Seen`.
 pub fn files_in(dir: &Path) -> (Vec<PathBuf>, Vec<PathBuf>) {
     let mut notes = Vec::new();
     let mut others = Vec::new();
@@ -1109,28 +706,16 @@ fn gather(
         } else if is_markdown(&path) {
             notes.push(path);
         } else if !entry.file_name().to_string_lossy().ends_with(HIGHLIGHTS) {
-            // A PDF's highlights are part of that PDF, not a file of the space:
-            // nothing links to them and nothing searches them.
             others.push(path);
         }
     }
 }
 
-/// A stable, filesystem-safe folder name for a file's full path, so that what the
-/// app keeps *about* a file can be found again without the path itself being a
-/// folder name.
-///
-/// Any hash would do; this one is `FNV-1a`, which is a dozen lines and needs no
-/// dependency. Folded case first where the file system ignores it, because two
-/// spellings of one path on Windows are one file; on Linux they are two (#476). Here
-/// rather than in one of the two modules that keeps something beside a file, because
-/// both do: the version history of a note, and the words taken out of a PDF.
 #[must_use]
 pub fn folder_key(path: &str) -> String {
     folder_key_as(NAMING, path)
 }
 
-/// `folder_key`, for the file system `naming` says.
 fn folder_key_as(naming: Naming, path: &str) -> String {
     let spelled = if naming == Naming::Exact {
         path.to_owned()
@@ -1145,16 +730,10 @@ fn folder_key_as(naming: Naming, path: &str) -> String {
     format!("{hash:016x}")
 }
 
-/// The folder under `root` that `folder_key` names for a file.
-///
-/// Linux named one by the lowercased path until #476, so a folder kept then is moved
-/// into place the first time it is asked for, when its `ORIGIN` names this very
-/// spelling; one naming another spelling stays that file's.
 pub fn kept_folder(root: &Path, path: &str) -> PathBuf {
     kept_folder_named(root, &folder_key(path), path)
 }
 
-/// `kept_folder`, under the name `folder_key` gives, so Linux's can be tested anywhere.
 fn kept_folder_named(root: &Path, name: &str, path: &str) -> PathBuf {
     let dir = root.join(name);
     let was = root.join(folder_key_as(Naming::Cased, path));
@@ -1164,19 +743,8 @@ fn kept_folder_named(root: &Path, name: &str, path: &str) -> PathBuf {
     dir
 }
 
-/// What a folder named by `folder_key` keeps the file's own path in, so the store
-/// can be listed by file without every record in it being read.
-///
-/// The other half of `folder_key`, and here for the same reason: the version
-/// history of a note and the words taken out of a PDF each keep one.
 pub const ORIGIN: &str = "origin.txt";
 
-/// A path inside a space as the space speaks of it: relative, and with `/`
-/// separators whichever the platform writes.
-///
-/// Here rather than in one of the modules that walks a space, because both do:
-/// `links` names a note this way so a link can point at it, and `search` reads
-/// the same spelling for the `path:` operator.
 pub fn relative_to(root: &Path, path: &Path) -> String {
     path.strip_prefix(root)
         .unwrap_or(path)
@@ -1184,23 +752,10 @@ pub fn relative_to(root: &Path, path: &Path) -> String {
         .replace('\\', "/")
 }
 
-/// A whole file, or None when it holds more than `limit` bytes.
-///
-/// Every reader of a file somebody else put in a space is held to a ceiling of its
-/// own - a note, a PDF in a tab, a picture in an export - and none may be talked past
-/// it: the size is asked of the open file rather than of the path, so the answer is
-/// about the very bytes that are read, and the read stops one byte past the ceiling,
-/// so a file that grows after the question was asked is refused as well rather than
-/// handed back cut short. A note cut short and saved back is a note that lost its end.
-/// How much is too much is each reader's own business, and so is what to say about it.
 pub fn at_most(target: &Path, limit: u64) -> Result<Option<Vec<u8>>, String> {
     Ok(at_most_stamped(target, limit)?.map(|(bytes, _)| bytes))
 }
 
-/// The same read, with what the open file said about itself: its size and its
-/// times, asked of the handle the bytes came through rather than of the path, so a
-/// scan that wants both pays for one open. See `scan_links`, which hands a note's
-/// times on to the rows of a space.
 pub fn at_most_stamped(
     target: &Path,
     limit: u64,
@@ -1223,57 +778,19 @@ pub fn at_most_stamped(
     Ok(within.then_some((bytes, meta)))
 }
 
-/// Writes a file whole: a temp file beside it takes the content and is flushed to
-/// the disk itself before being renamed over the target. A crash, a full disk or
-/// a pulled cable leaves either the old file or the new one, never half of
-/// either, and never a temp file lying around.
 pub fn write_atomically(target: &Path, bytes: &[u8]) -> Result<(), String> {
     written(target, bytes, false)
 }
 
-/// The same whole write, for a file nobody but this user may read: its temp file is
-/// made the owner's alone before a byte is in it, so what it holds is never on the
-/// disk where anybody else could read it - not even for the moment between the
-/// write and a permission set afterwards, which is what the first launch on a
-/// shared machine used to leave. On Windows there is no mode to set: the app's own
-/// folder is the user's already.
-///
-/// Only the automation endpoint writes one, and that is the desktop's alone; on a
-/// phone nothing calls this, so the phone's clippy would otherwise refuse it as dead
-/// code.
 #[cfg_attr(mobile, allow(dead_code))]
 pub fn write_privately(target: &Path, bytes: &[u8]) -> Result<(), String> {
     written(target, bytes, true)
 }
 
-/// Writes a file the person keeps, a note or something that travels with one, so
-/// that it stays the same file: the bytes go into the file that is there, rather
-/// than into a new one renamed over it.
-///
-/// A rename over a file is a new file under the old name, with a new NTFS file id or
-/// inode, and whatever follows files by that identity reads it so. Proton Drive does:
-/// it saw a stranger arrive under a name it was still syncing, kept the file it knew,
-/// and renamed each save of a note being typed into to a "Name clash" copy beside it.
-/// Sublime Text turned its atomic save off by default for the same family of reasons
-/// (hard links split, watchers confused), and VS Code and Obsidian write in place.
-///
-/// What the rename was for is kept. The new bytes are first written whole to a temp
-/// file beside the note and flushed, so a full disk fails there, before a byte of the
-/// note is touched. Only then is the note overwritten and flushed, and the copy
-/// dropped. A write into the note that fails part way puts the copy over it the old
-/// way, so the note is the new text whole; if that is refused as well the note keeps what
-/// the write left, and the copy stays beside it. A crash in that moment leaves the note
-/// part written, whichever way round (see `poured`), with the copy beside it, and the
-/// version before is in the note's history.
-///
-/// A file that is not there yet has no identity to keep, and is made the atomic way.
-/// So is a link: paths are judged by what they say (see `inside`), so writing through
-/// one could land outside the spaces, and replacing it is what a save always did.
 pub fn write_in_place(target: &Path, bytes: &[u8]) -> Result<(), String> {
     into_place(target, bytes, |file| poured(file, bytes, cfg!(windows)))
 }
 
-/// `write_in_place`, with what writes into the open file handed in.
 fn into_place(
     target: &Path,
     bytes: &[u8],
@@ -1296,13 +813,10 @@ fn into_place(
             let _ = fs::remove_file(&copy);
             Ok(())
         }
-        // The copy is the only whole version left if this fails too, so it stays.
         Err(_) => fs::rename(&copy, target).map_err(|error| cannot("save", target, &error)),
     }
 }
 
-/// A file `poured` writes into: what it takes of `fs::File`, apart so a refusal can be
-/// tested.
 trait Pourable: Write {
     fn size(&self) -> std::io::Result<u64>;
     fn shrink(&mut self, to: u64) -> std::io::Result<()>;
@@ -1321,15 +835,6 @@ impl Pourable for fs::File {
     }
 }
 
-/// `bytes` into an open file, in place of what it held.
-///
-/// Windows refuses to shrink a file another process has mapped
-/// (`ERROR_USER_MAPPED_FILE`) and writes to it all the same, so there the shrink comes
-/// first (`shrink_first`): refused, the note is still the old text, whole, where shrinking
-/// after the write left the new text with the old one's tail, for good if putting the copy
-/// over it was refused too. Nothing else refuses, and there the write comes first, for a
-/// crash: between the two steps that leaves the new text with a tail, where the other
-/// order leaves the start of the old text and the new only in a hidden copy.
 fn poured(file: &mut impl Pourable, bytes: &[u8], shrink_first: bool) -> std::io::Result<()> {
     let length = bytes.len() as u64;
     if shrink_first && file.size()? > length {
@@ -1350,13 +855,6 @@ fn written(target: &Path, bytes: &[u8], private: bool) -> Result<(), String> {
     })
 }
 
-/// A temp file beside `target` holding `bytes` whole and flushed to the disk, or
-/// nothing at all when it could not be written.
-///
-/// Hidden, so a half-written note never shows up in the tree beside the real one;
-/// named after this process and a count so two windows cannot collide; and ending in
-/// `.tmp`, the temp-file name sync clients skip (Proton Drive's filter does), so none
-/// of them uploads a file that lives for a millisecond.
 fn staged(target: &Path, bytes: &[u8], private: bool) -> Result<PathBuf, String> {
     let parent = target
         .parent()
@@ -1377,16 +875,8 @@ fn staged(target: &Path, bytes: &[u8], private: bool) -> Result<PathBuf, String>
     }
 }
 
-/// How many bytes of the target's name its temp file carries.
 const TEMP_STEM: usize = 64;
 
-/// The front of the target's name, for its temp file to be recognisable by.
-///
-/// Only the front. A file system holds a name to 255 bytes or 255 UTF-16 units,
-/// and the temp file's name is the target's with a dot and a counter around it -
-/// so a note whose own name was near that limit, which is 85 characters of
-/// Chinese on a Mac or on Linux, had a temp file no disk would create, and could
-/// be opened but never saved. Counted in bytes, and cut between two characters.
 fn temp_stem(target: &Path) -> &str {
     let name = target.file_name().and_then(OsStr::to_str).unwrap_or("file");
     let mut end = name.len().min(TEMP_STEM);
@@ -1396,7 +886,6 @@ fn temp_stem(target: &Path) -> &str {
     &name[..end]
 }
 
-/// The half of an atomic write that can fail with the temp file already there.
 #[cfg_attr(not(unix), allow(unused_variables))]
 fn spill(temp: &Path, bytes: &[u8], private: bool) -> Result<(), String> {
     let mut options = fs::OpenOptions::new();
@@ -1411,20 +900,14 @@ fn spill(temp: &Path, bytes: &[u8], private: bool) -> Result<(), String> {
         .map_err(|error| cannot("write", temp, &error))?;
     file.write_all(bytes)
         .map_err(|error| cannot("write", temp, &error))?;
-    // The rename is only atomic if the bytes reached the disk before it.
     file.sync_all()
         .map_err(|error| cannot("finish writing", temp, &error))
 }
 
-/// `path` if nothing is there, else the first free `name 2`, `name 3`... - the
-/// number before the extension for a file, after the name for a folder.
 pub fn free_spot(path: &Path, is_file: bool) -> PathBuf {
     first_spot(path, is_file, |one| !taken(one, is_file))
 }
 
-/// The first of `path`, `name 2`, `name 3`... that `fits`, numbered as `free_spot`
-/// numbers them. `fits` is told only of names; whether one is free is `taken`'s to say,
-/// which a caller that may also land on its own copy asks itself.
 pub fn first_spot(path: &Path, is_file: bool, fits: impl Fn(&Path) -> bool) -> PathBuf {
     if fits(path) {
         return path.to_path_buf();
@@ -1452,22 +935,11 @@ pub fn first_spot(path: &Path, is_file: bool, fits: impl Fn(&Path) -> bool) -> P
     }
 }
 
-/// Points `link` at the folder `target`, and says whether the platform made one.
-///
-/// Here rather than in the test module below because both walkers are held to the
-/// same bound and a cycle is built the same way for either.
 #[cfg(all(test, unix))]
 pub(crate) fn link_to(target: &Path, link: &Path) -> bool {
     std::os::unix::fs::symlink(target, link).is_ok()
 }
 
-/// Points `link` at the folder `target`, and says whether Windows made one.
-///
-/// A symlink there needs a privilege an ordinary account does not hold, so the
-/// fallback is a junction, which is the same thing as far as a walk is concerned:
-/// one folder under a second name, resolved by `canonicalize` and stepped into by
-/// `is_dir`. A machine that can make neither has no cycle to measure, and the
-/// tests say so by stopping.
 #[cfg(all(test, windows))]
 pub(crate) fn link_to(target: &Path, link: &Path) -> bool {
     if std::os::windows::fs::symlink_dir(target, link).is_ok() {
@@ -1530,8 +1002,6 @@ mod tests {
         assert!(!unsaid(Naming::Exact, "/a/b.txt:hidden"));
     }
 
-    /// The device names the list once missed, a stem with the spaces Windows drops
-    /// after it, and names that only begin like a device's.
     #[test]
     fn a_device_name_is_reserved_however_it_is_written() {
         for name in ["COM¹", "LPT².md", "CONIN$", "conout$.md", "CON .md", "COM0"] {
@@ -1542,10 +1012,6 @@ mod tests {
         }
     }
 
-    /// Every reader is held to a ceiling. A file over it comes back as nothing
-    /// rather than as an error, because what to say about it - a note too large to be
-    /// one, a picture too large for a document, a file too large to open in a tab - is
-    /// each reader's own.
     #[test]
     fn reads_a_file_whole_and_stops_at_the_ceiling() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -1555,21 +1021,13 @@ mod tests {
         assert_eq!(at_most(&target, 64), Ok(Some(b"a picture".to_vec())));
         assert_eq!(at_most(&target, 9), Ok(Some(b"a picture".to_vec())));
         assert_eq!(at_most(&target, 8), Ok(None));
-        // A file that is not there at all is an error: the caller asked about one
-        // it believes is there.
         assert!(at_most(&dir.path().join("gone.png"), 64).is_err());
     }
 
-    /// Written the way the platform writes them, so the assertions read the same
-    /// on a runner as they do on a laptop.
     fn path(parts: &[&str]) -> PathBuf {
         parts.iter().collect()
     }
 
-    /// A probe says where its notes go, because nothing else does: the identifier a
-    /// build runs under moves the settings and the browsing profile and leaves the
-    /// spaces in `Documents/Nib`, which is where a drive of mine wrote a space of its
-    /// own beside somebody's real notes. See `SPACES_DIR` and docs/automation.md.
     #[test]
     fn a_variable_says_where_the_spaces_are_and_wins() {
         let absolute = if cfg!(windows) {
@@ -1578,17 +1036,11 @@ mod tests {
             path(&["/", "probe", "notes"])
         };
 
-        // What comes back is that folder itself: not joined with `Nib`, and with no
-        // documents folder anywhere in it. That is what "wins" means - `spaces_dir`
-        // answers this before it asks for a documents folder at all.
         let said = folder_named(Some(absolute.as_os_str())).expect("an absolute path");
         assert_eq!(said, absolute);
         assert!(!said.ends_with("Nib"));
     }
 
-    /// #376: a new install keeps its spaces in the app's own data, an install that has
-    /// `Documents/Nib` keeps them there, and what was decided once is what is used from
-    /// then on, whatever appears in Documents later.
     #[cfg(desktop)]
     #[test]
     fn a_new_install_keeps_its_spaces_in_app_data_and_nobody_s_move() {
@@ -1600,26 +1052,21 @@ mod tests {
         let fresh = root(&["data", "ch.emilvinu.nib", "Spaces"]);
         let old = root(&["home", "Documents", "Nib"]);
 
-        // Nothing kept and no old folder: the app's data.
         assert_eq!(super::spaces_folder(None, None, fresh.clone()), fresh);
-        // An old folder there already: it stays where it is.
         assert_eq!(
             super::spaces_folder(None, Some(old.clone()), fresh.clone()),
             old
         );
-        // Kept once, kept for good: an old folder appearing later moves nothing.
         let kept = fresh.to_string_lossy().to_string();
         assert_eq!(
             super::spaces_folder(Some(&kept), Some(old.clone()), root(&["elsewhere"])),
             fresh
         );
-        // With the line end a hand-edited file has.
         let edited = format!("{}\n", old.to_string_lossy());
         assert_eq!(
             super::spaces_folder(Some(&edited), None, fresh.clone()),
             old
         );
-        // A kept answer that names no absolute folder decides again.
         assert_eq!(
             super::spaces_folder(Some("Spaces"), None, fresh.clone()),
             fresh
@@ -1630,9 +1077,6 @@ mod tests {
         );
     }
 
-    /// #552: the kept answer is taken only where it names one of Orden's own folders. A
-    /// folder written into it by hand - a vault, anything Orden did not make - is outside,
-    /// even inside `Documents/Nib`, and the spaces are then where they would be without it.
     #[cfg(desktop)]
     #[test]
     fn a_kept_answer_naming_somebody_else_s_folder_is_outside() {
@@ -1661,7 +1105,6 @@ mod tests {
             super::outside_folder(Some(&said(&within)), &own),
             Some(within)
         );
-        // `Documents/Nib` is Orden's own whether it is there or not, and only it.
         assert_eq!(
             super::outside_folder(Some(&said(&nib)), &[Some(fresh.as_path()), None]),
             Some(nib.clone())
@@ -1669,9 +1112,6 @@ mod tests {
         assert_eq!(super::spaces_folder(None, None, fresh.clone()), fresh);
     }
 
-    /// Anything that is not an absolute path is not an override. A relative one would be
-    /// read against whatever folder the app was started in, and an empty value is what a
-    /// shell leaves behind when it clears a variable.
     #[test]
     fn a_variable_that_names_no_absolute_folder_is_ignored() {
         assert!(folder_named(None).is_none());
@@ -1706,7 +1146,6 @@ mod tests {
             &root,
             &path(&["notes", "Nib", "Work", "..", "..", "secret.md"])
         ));
-        // Folded first, so a climb that lands back inside is still inside.
         assert!(inside(
             &root,
             &path(&["notes", "Nib", "Work", "..", "Home", "a.md"])
@@ -1718,10 +1157,6 @@ mod tests {
         assert!(!inside(Path::new(""), &path(&["a"])));
     }
 
-    /// The gate every note, folder, tree, search and trash command goes through,
-    /// on the strings a caller can hand it. The window's own side judges a path
-    /// before it sends one - see `insideOnly` in automation/inside.ts - and this is
-    /// the half that does not take the window's word for it.
     #[test]
     fn the_gate_takes_a_path_inside_the_spaces_folder_and_nothing_else() {
         let root = path(&["Documents", "Nib"]);
@@ -1729,20 +1164,13 @@ mod tests {
 
         let note = ["Documents", "Nib", "Work", "a.md"];
         assert_eq!(said(&note), Ok(path(&note)));
-        // The folder itself is inside itself, which is what a tree read of a whole
-        // space asks about.
         assert!(said(&["Documents", "Nib"]).is_ok());
-        // A name outside it, a name that merely starts the same way, and the folder
-        // above it.
         assert!(said(&["Documents", "Secrets", "a.md"]).is_err());
         assert!(said(&["Documents", "Nibble", "a.md"]).is_err());
         assert!(said(&["Documents"]).is_err());
         assert!(judged(&root, "").is_err());
     }
 
-    /// A path that climbs. `folded` collapses the `..` rather than refusing it, so
-    /// what is judged is where the path points: out of the folder is refused, and
-    /// back into it is not.
     #[test]
     fn the_gate_refuses_a_path_that_climbs_out_of_the_spaces_folder() {
         let root = path(&["Documents", "Nib"]);
@@ -1753,9 +1181,6 @@ mod tests {
         assert!(said(&["Documents", "Nib", "Work", "..", "Home", "a.md"]).is_ok());
     }
 
-    /// The trash is inside the spaces folder and refused all the same: it is the one
-    /// folder in there that is not a space, and only the trash commands may touch
-    /// it. A note called `.trashy` is not the trash.
     #[test]
     fn the_gate_refuses_the_trash_it_stands_beside() {
         let root = path(&["Documents", "Nib"]);
@@ -1782,10 +1207,6 @@ mod tests {
         assert!(said(Naming::Exact).is_ok());
     }
 
-    /// The trash by any other spelling the file system reads as the trash is refused
-    /// as well (#485): a Mac ignores case, and Windows drops a trailing dot or space,
-    /// reads `:` as a stream of the folder and `TRASH~1` as its short name. What the
-    /// platform keeps apart stays apart: on Linux `.TRASH` is a folder of its own.
     #[test]
     fn the_gate_refuses_the_trash_however_the_file_system_spells_it() {
         let root = path(&["Documents", "Nib"]);
@@ -1819,16 +1240,12 @@ mod tests {
         ] {
             assert!(said(Naming::Win32, trash).is_err(), "{trash:?}");
         }
-        // A folder of three dots is a name Win32 keeps.
         assert!(said(Naming::Win32, &["...", "a.md"]).is_ok());
 
         assert!(said(Naming::Exact, &[".TRASH", "a.md"]).is_ok());
         assert!(said(Naming::Exact, &[".trash.", "a.md"]).is_ok());
     }
 
-    /// The folder a gate guards may itself be spelled with a short name, as a temporary
-    /// folder on Windows is (`RUNNER~1`): only what a path says below it is held to the
-    /// rule, so a path the app hands back under that folder is still inside it.
     #[test]
     fn a_short_name_in_the_folder_guarded_is_no_bar() {
         let root = path(&["Users", "RUNNER~1", "Temp", "Nib"]);
@@ -1842,9 +1259,6 @@ mod tests {
         assert!(!inside_as(Naming::Win32, &root, &stream));
     }
 
-    /// Case is folded no wider than the file system folds it (#486): NTFS keeps the
-    /// Kelvin sign apart from `k`, so a folder spelled with one is not this one, while
-    /// `KIM` is. A letter whose capital is two letters is left as it is.
     #[test]
     fn containment_folds_case_no_wider_than_the_file_system() {
         let root = path(&["Users", "kim", "Nib"]);
@@ -1857,24 +1271,18 @@ mod tests {
         assert_eq!(upcased("stra\u{df}e"), "STRA\u{df}E");
     }
 
-    /// A space is a folder directly inside the spaces folder, which is the stricter
-    /// shape: renaming or deleting one moves a whole tree.
     #[test]
     fn a_space_is_a_folder_directly_inside_the_spaces_folder() {
         let root = path(&["Documents", "Nib"]);
         let said = |one: &[&str]| judged_space(&root, &path(one).to_string_lossy());
 
         assert!(said(&["Documents", "Nib", "Work"]).is_ok());
-        // Deeper than a space, the spaces folder itself, and the folder above it.
         assert!(said(&["Documents", "Nib", "Work", "2026"]).is_err());
         assert!(said(&["Documents", "Nib"]).is_err());
         assert!(said(&["Documents"]).is_err());
-        // The app's own folders in there are not spaces to rename or delete.
         assert!(said(&["Documents", "Nib", ".trash"]).is_err());
     }
 
-    /// A space named in somebody's own language is a space, and the gate is about
-    /// where a path points rather than which letters it is written in.
     #[test]
     fn a_space_outside_ascii_is_a_space_like_any_other() {
         let root = path(&["Documents", "Nib"]);
@@ -1896,9 +1304,6 @@ mod tests {
         .is_err());
     }
 
-    /// A pick reaches the folder it was made in, for the pictures an export writes
-    /// beside it. The top of a disk is not a folder anybody meant by that: an export
-    /// saved as `C:\x.md` would otherwise make every file on the drive writable.
     #[test]
     fn the_top_of_a_disk_is_not_a_folder_a_pick_shares() {
         assert!(a_shareable_folder(&path(&["Users", "me", "Notes"])));
@@ -1912,14 +1317,10 @@ mod tests {
             assert!(a_shareable_folder(Path::new("/Notes")));
         }
 
-        // A note with no folder above it at all shares nothing either.
         assert!(!a_shareable_folder(Path::new("")));
         assert!(!a_shareable_folder(Path::new("Idea.md")));
     }
 
-    /// The one way past the spaces folder, `openable` and `chosen` alike: a path out
-    /// there is refused unless the way in says yes, and a path in there is the
-    /// spaces' own to judge whatever the way in says - its trash included.
     #[test]
     fn nothing_outside_the_spaces_is_let_in_unless_the_way_in_says_so() {
         let root = path(&["Documents", "Nib"]);
@@ -1934,7 +1335,6 @@ mod tests {
         let note = ["Documents", "Nib", "Work", "a.md"];
         assert_eq!(said(&note, false), Ok(path(&note)));
         assert!(said(&["Documents", "Nib", ".trash", "1-0", "a.md"], true).is_err());
-        // A climb out of the folder is outside it, and refused like any other.
         assert!(said(&["Documents", "Nib", "..", "Downloads", "Idea.md"], false).is_err());
     }
 
@@ -1946,8 +1346,6 @@ mod tests {
         assert!(!same_path(&file, &path(&["config"])));
     }
 
-    /// What the dialog handed over is what a pick reaches: the folder a file was
-    /// saved in and everything below it, a picked folder itself, and nothing else.
     #[test]
     fn a_pick_reaches_its_own_folder_and_no_further() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -1957,7 +1355,6 @@ mod tests {
 
         assert!(!picked.reach(&desk.join("Idea.md")));
 
-        // Saved as, so not there yet.
         picked.add(&desk.join("Idea.md"));
         assert!(picked.reach(&desk.join("Idea.md")));
         assert!(picked.reach(&desk.join("assets").join("one.png")));
@@ -1985,8 +1382,6 @@ mod tests {
             space_root(&spaces, &space.join("Work").join("2026")),
             Some(space.clone())
         );
-        // Folded first, so a path that climbs back into its own space still
-        // names that space.
         assert_eq!(
             space_root(&spaces, &space.join("Work").join("..")),
             Some(space)
@@ -1998,7 +1393,6 @@ mod tests {
         let spaces = path(&["Documents", "Nib"]);
 
         assert_eq!(space_root(&spaces, &path(&["elsewhere", "notes"])), None);
-        // The spaces folder holds the spaces and is not one of them.
         assert_eq!(space_root(&spaces, &spaces), None);
     }
 
@@ -2040,10 +1434,6 @@ mod tests {
         assert_eq!(left, vec!["Note.md".to_string()]);
     }
 
-    /// A save writes into the note that is there, so the note stays the same file,
-    /// and leaves nothing beside it; one that shrinks the note leaves no tail.
-    /// A file that may not be shrunk, as Windows refuses one another process has mapped,
-    /// and is written to all the same.
     struct Mapped(Vec<u8>);
 
     impl std::io::Write for Mapped {
@@ -2070,8 +1460,6 @@ mod tests {
         }
     }
 
-    /// On Windows a refused shrink leaves the old text whole, never the new text on its
-    /// tail.
     #[test]
     fn a_file_that_may_not_shrink_keeps_its_old_text() {
         let mut file = Mapped(b"a first, longer version".to_vec());
@@ -2079,7 +1467,6 @@ mod tests {
         assert_eq!(file.0, b"a first, longer version");
     }
 
-    /// Growing asks nothing of the shrink a mapped file refuses.
     #[test]
     fn a_file_that_may_not_shrink_still_takes_a_longer_text() {
         let mut file = Mapped(b"short".to_vec());
@@ -2087,8 +1474,6 @@ mod tests {
         assert_eq!(file.0, b"a longer one");
     }
 
-    /// Everywhere else the new text is down before anything is cut, which is what a crash
-    /// between the two finds.
     #[test]
     fn off_windows_the_write_comes_before_the_shrink() {
         let mut file = Mapped(b"a first, longer version".to_vec());
@@ -2096,7 +1481,6 @@ mod tests {
         assert_eq!(file.0, b"secondt, longer version");
     }
 
-    /// Either order ends in the same file when nothing refuses.
     #[test]
     fn either_order_leaves_exactly_the_new_text() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -2116,8 +1500,6 @@ mod tests {
         }
     }
 
-    /// A write that fails part way: the copy goes over the note, and nothing is left beside
-    /// it.
     #[test]
     fn a_write_that_fails_puts_the_copy_over_the_note() {
         use std::io::Write as _;
@@ -2141,8 +1523,6 @@ mod tests {
         );
     }
 
-    /// And when that is refused too: the save says so, and the copy stays, the one whole
-    /// version left.
     #[cfg(unix)]
     #[test]
     fn a_copy_that_cannot_be_put_over_the_note_stays_beside_it() {
@@ -2196,8 +1576,6 @@ mod tests {
         assert_eq!(left, vec!["Note.md".to_string()]);
     }
 
-    /// A link is replaced by the note, as every save did before, never written
-    /// through: what it points at may be outside the spaces.
     #[test]
     #[cfg(unix)]
     fn an_in_place_write_never_writes_through_a_link() {
@@ -2220,8 +1598,6 @@ mod tests {
             .is_symlink());
     }
 
-    /// A private file is its owner's alone, and so was the temp file it was
-    /// written through, which is the file the rename leaves in its place.
     #[test]
     #[cfg(unix)]
     fn a_private_file_is_the_owners_alone() {
@@ -2239,9 +1615,6 @@ mod tests {
         assert_eq!(mode & 0o777, 0o600);
     }
 
-    /// A name as long as a disk allows is a note that can be saved. Its temp file
-    /// is named after it, and used to be the whole name and a counter more, which
-    /// no disk would create.
     #[test]
     fn a_note_with_the_longest_name_a_disk_allows_can_be_saved() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -2251,8 +1624,6 @@ mod tests {
         assert_eq!(std::fs::read(&target).expect("the note"), b"words");
     }
 
-    /// The temp file carries the front of the name, cut between two characters
-    /// however many bytes each of them is.
     #[test]
     fn a_temp_file_is_named_after_the_front_of_the_note() {
         assert_eq!(super::temp_stem(Path::new("dir/Idea.md")), "Idea.md");
@@ -2279,8 +1650,6 @@ mod tests {
         assert_eq!(free_spot(&here.join("New.md"), true), here.join("New.md"));
     }
 
-    /// The file names, sorted: the walk orders by whole path, and where in the
-    /// tree each file sits is not what these tests are about.
     fn names(paths: &[PathBuf]) -> Vec<String> {
         let mut found: Vec<String> = paths
             .iter()
@@ -2303,7 +1672,6 @@ mod tests {
     fn names_a_canvas_by_its_extension() {
         assert!(is_canvas(Path::new("a/Board.canvas")));
         assert!(is_canvas(Path::new("a/Board.CANVAS")));
-        // A note that merely mentions one is still a note.
         assert!(!is_canvas(Path::new("a/Board.canvas.md")));
         assert!(!is_canvas(Path::new("a/Board")));
         assert!(!is_markdown(Path::new("a/Board.canvas")));
@@ -2318,7 +1686,6 @@ mod tests {
         assert!(is_base(Path::new("a/Bugs.base")));
         assert!(is_base(Path::new("a/Bugs.BASE")));
         assert!(!is_base(Path::new("a/Bugs.base.md")));
-        // The two planes are told apart by their names, whatever is inside them.
         assert!(!is_canvas(Path::new("a/Journal.pages")));
         assert!(!is_markdown(Path::new("a/Journal.pages")));
     }
@@ -2327,11 +1694,9 @@ mod tests {
     fn names_a_website_by_its_extension() {
         assert!(is_shortcut(Path::new("a/Svelte docs.url")));
         assert!(is_shortcut(Path::new("a/Svelte docs.URL")));
-        // The one macOS writes, which this app reads and never writes.
         assert!(is_shortcut(Path::new("a/Safari page.webloc")));
         assert!(!is_shortcut(Path::new("a/Svelte docs.url.md")));
         assert!(!is_shortcut(Path::new("a/Svelte docs")));
-        // And a website is no other kind, whatever a space holds of that name.
         assert!(!is_markdown(Path::new("a/Svelte docs.url")));
         assert!(!is_canvas(Path::new("a/Svelte docs.url")));
         assert!(!is_pages(Path::new("a/Svelte docs.url")));
@@ -2343,7 +1708,6 @@ mod tests {
             highlights_of(&path(&["Nib", "Notes", "paper.pdf"])),
             path(&["Nib", "Notes", "paper.pdf.highlights.json"])
         );
-        // Two PDFs whose names differ only in the extension keep two sidecars.
         assert_ne!(
             highlights_of(Path::new("paper.pdf")),
             highlights_of(Path::new("paper.PDF"))
@@ -2357,8 +1721,6 @@ mod tests {
 
         assert_eq!(highlights_of(&pdf).parent(), pdf.parent());
         assert!(inside(&root, &highlights_of(&pdf)));
-        // A PDF path that climbs out is refused before a sidecar is named at
-        // all: `in_spaces` folds it first, and a folded climb is not inside.
         assert!(!inside(&root, &folded(&root.join("..").join("secret.pdf"))));
     }
 
@@ -2382,9 +1744,6 @@ mod tests {
         assert!(!highlights_of(&now).exists());
     }
 
-    /// A PDF of the name a page note's paper would take is somebody's own - macOS Pages
-    /// saves every PDF as `Report.pages.pdf` - and a page note renamed or restored to
-    /// `Report.pages` moved its paper over it, or hid it as held (#538).
     #[test]
     fn a_page_notes_paper_never_goes_over_a_pdf_already_there() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -2396,12 +1755,10 @@ mod tests {
         std::fs::write(paper_of(&report), b"%PDF mine").expect("somebody's own PDF");
         let never = |_: &Path, _: &Path| false;
 
-        // Refused by name before anything moves...
         assert_eq!(
             super::paper_in_the_way(&lecture, &report, never),
             Some(paper_of(&report))
         );
-        // ...and not moved over even where something asks anyway.
         std::fs::rename(&lecture, &report).expect("the note's own move");
         move_held(&lecture, &report);
         assert_eq!(
@@ -2413,15 +1770,12 @@ mod tests {
             b"%PDF lecture"
         );
 
-        // A new name for a page note steps past it, as it steps past a note.
         assert_eq!(
             free_spot(&here.join("Report.pages"), true),
             here.join("Report 2.pages")
         );
     }
 
-    /// A page note renamed to another spelling of its own name keeps its paper, which
-    /// is the file already "there".
     #[test]
     fn a_page_note_respelled_is_not_in_its_own_way() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -2444,8 +1798,6 @@ mod tests {
         );
     }
 
-    /// Highlights a PDF deleted outside Orden left behind are not the highlights of a
-    /// PDF renamed or copied to its name: the one arriving shows its own, or none.
     #[test]
     fn a_pdf_arriving_never_shows_highlights_left_behind() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -2465,10 +1817,6 @@ mod tests {
         assert!(!highlights_of(&gone).exists());
     }
 
-    /// The other way round: a PDF called `Report.pages.pdf` - macOS Pages names every
-    /// PDF it saves that way - brought beside a page note `Report.pages` that has no
-    /// paper yet would be taken for its paper, hidden from the list, drawn over, and
-    /// deleted with the note.
     #[test]
     fn a_pdf_never_lands_where_a_page_note_would_take_it_for_its_paper() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -2482,21 +1830,15 @@ mod tests {
         std::fs::write(&pdf, b"%PDF mine").expect("somebody's own PDF");
         let never = |_: &Path, _: &Path| false;
 
-        // Refused by name before anything moves...
         assert_eq!(
             super::paper_in_the_way(&pdf, &here.join("Report.pages.pdf"), never),
             Some(note.clone())
         );
-        // ...and a new place for it steps past the name.
         assert_eq!(
             free_spot(&here.join("Report.pages.pdf"), true),
             here.join("Report.pages 2.pdf")
         );
 
-        // And from the note's own folder too: `slides.pdf` renamed `Lecture.pages.pdf`
-        // by a name typed into its row would be taken for the blank note's paper. The
-        // one move that means it - a PDF turned into a page note - says so to
-        // `rename_note`, which is not this judge.
         let lecture = here.join("Lecture.pages");
         std::fs::write(&lecture, "{}").expect("a page note of blank sheets");
         let slides = here.join("slides.pdf");
@@ -2507,9 +1849,6 @@ mod tests {
         );
     }
 
-    /// A folder called `Report.pages` - a macOS Pages document is one - is no page
-    /// note and holds no paper, so a `Report.pages.pdf` beside it is a PDF of its own:
-    /// it stays where it is when the folder moves, and a copy of the folder has none.
     #[test]
     fn a_folder_of_a_page_notes_name_holds_no_paper() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -2519,13 +1858,11 @@ mod tests {
         std::fs::write(paper_of(&package), b"%PDF mine").expect("a PDF beside it");
         let never = |_: &Path, _: &Path| false;
 
-        // Copied, the copy has no paper...
         let copy = here.join("Copy.pages");
         std::fs::create_dir_all(&copy).expect("the copy");
         copy_held(&package, &copy);
         assert!(!paper_of(&copy).exists());
 
-        // ...moved, the PDF stays...
         let moved = here.join("Final.pages");
         std::fs::rename(&package, &moved).expect("the folder's own move");
         move_held(&package, &moved);
@@ -2535,7 +1872,6 @@ mod tests {
         );
         assert!(!paper_of(&moved).exists());
 
-        // ...and a PDF where the folder's paper would be is not in its way.
         std::fs::write(here.join("Other.pages.pdf"), b"%PDF other").expect("another PDF");
         assert_eq!(
             super::paper_in_the_way(&moved, &here.join("Other.pages"), never),
@@ -2543,8 +1879,6 @@ mod tests {
         );
     }
 
-    /// Highlights left behind by a PDF that has gone are still a PDF's highlights: a
-    /// new PDF under that name would show them as its own, so the name is taken.
     #[test]
     fn a_pdfs_name_is_taken_by_highlights_left_behind() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -2562,8 +1896,6 @@ mod tests {
         let dir = tempfile::tempdir().expect("a temp folder");
         let here = dir.path();
         let note = here.join("Idea.md");
-        // Something that looks like a note's sidecar is left where it is: only a
-        // PDF has one, and nothing else may take a file with it.
         std::fs::write(highlights_of(&note), "{}").expect("a decoy");
 
         move_held(&note, &here.join("Other.md"));
@@ -2582,16 +1914,13 @@ mod tests {
         let here = dir.path();
         let paper = here.join("Lecture.pages.pdf");
         std::fs::write(&paper, "%PDF").expect("a paper");
-        // Nobody holds it yet: a PDF like any other.
         assert!(!held_paper(&paper));
 
         std::fs::write(here.join("Lecture.pages"), "{}").expect("its page note");
         assert!(held_paper(&paper));
-        // A PDF of any other name is nobody's, and neither is the note itself.
         std::fs::write(here.join("Lecture.pdf"), "%PDF").expect("a pdf");
         assert!(!held_paper(&here.join("Lecture.pdf")));
         assert!(!held_paper(&here.join("Lecture.pages")));
-        // A capital PDF is the note's paper only where the disk reaches it as one.
         let capital = here.join("Lecture.pages.PDF");
         std::fs::remove_file(&paper).expect("the paper, gone");
         std::fs::write(&capital, "%PDF").expect("a capital PDF");
@@ -2663,8 +1992,6 @@ mod tests {
     fn stops_before_it_runs_out_of_stack() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let mut deep = dir.path().to_path_buf();
-        // One past the cap, in short names so the whole path stays inside what
-        // Windows allows without asking.
         for level in 0..34 {
             deep.push(format!("d{level}"));
         }
@@ -2676,10 +2003,6 @@ mod tests {
         assert!(others.is_empty());
     }
 
-    /// Two folders, each holding a symlink to the other. The depth cap alone
-    /// walks that chain thirty-two folders deep and hands each note back once per
-    /// level, thirty-one times over, which is thirty-one hits in a search for one
-    /// note.
     #[test]
     fn a_cycle_of_symlinks_is_walked_once() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -2703,10 +2026,6 @@ mod tests {
         assert!(others.is_empty());
     }
 
-    /// The fan-out rather than the chain: a folder holding two links back to the
-    /// folder above it doubles the work at every level the cap allows, which is
-    /// two billion paths and a walk that does not return. It returns here because
-    /// each folder is entered once.
     #[test]
     fn two_links_back_up_do_not_double_the_walk() {
         let dir = tempfile::tempdir().expect("a temp folder");

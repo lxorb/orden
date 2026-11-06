@@ -1,10 +1,6 @@
-/** What each kind of tab is called: on the press that makes one, and on its row in
- *  Settings › Note types. Said once, so no two places call one kind two things. */
-
 import { type KindName } from './settings.svelte'
 import { t } from './i18n.svelte'
 
-/** What a press that makes one says, wherever it is offered. */
 export function kindLabel(kind: KindName): string {
   return {
     note: () => t('New note'),
@@ -21,7 +17,6 @@ export function kindLabel(kind: KindName): string {
   }[kind]()
 }
 
-/** Its row in Settings › Note types. */
 export function kindName(kind: KindName): string {
   return {
     note: () => t('Note'),

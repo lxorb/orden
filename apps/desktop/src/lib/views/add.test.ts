@@ -2,21 +2,11 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { readBase } from '@orden/bases'
 import { freePath } from '@orden/markdown/paths'
 
-/** Where a base's plus puts the note it makes: the folder its filter points at,
- *  inside the base's own space and nowhere else.
- *
- *  The folder is words somebody wrote in a base file, which in a shared space is
- *  anybody the space is shared with. Joined to the root as written, `..` climbed
- *  out of the space, and a `.` step made the name look free while the disk wrote
- *  over the note it named. */
-
 const { added, written, taken, on, held } = vi.hoisted(() => ({
   added: [] as string[],
   written: new Map<string, string>(),
   taken: new Set<string>(),
-  /** The space on screen. */
   on: { root: '/s/Shared' },
-  /** Every space's notes, as the rows store holds them, by space name. */
   held: new Map<string, string[]>(),
 }))
 
@@ -34,7 +24,6 @@ vi.mock('../workspace.svelte', async () => {
       get activeSpace() {
         return on.root === mine.root ? mine : shared
       },
-      // The listing on screen, which is the space on screen's alone.
       get notes() {
         const space = on.root === mine.root ? mine : shared
         return (held.get(space.name) ?? []).map((relative) => ({
@@ -43,12 +32,10 @@ vi.mock('../workspace.svelte', async () => {
         }))
       },
       noteText: async (path: string) => files[path] ?? null,
-      // The store's numbering over what it knows; see `freeName` in workspace.svelte.ts.
       freeName: (dir: string, wanted: string) => {
         const keys = new Set([...taken].map((one) => pathKey(one, dir)))
         return freePath(wanted, (candidate) => keys.has(pathKey(`${dir}/${candidate}`, dir)))
       },
-      // The same numbering here, where nothing is on a disk the store has not listed.
       freeNameOnDisk: (dir: string, wanted: string) => {
         const keys = new Set([...taken].map((one) => pathKey(one, dir)))
         return Promise.resolve(
@@ -146,7 +133,6 @@ describe('a note added to a base with a template, from a tab of another space', 
     )
 
   beforeEach(() => {
-    // The reader's own space is on screen; the shared board is a tab kept from before.
     on.root = '/s/Private'
     held.set('Mine', ['Journal.md'])
   })
@@ -167,7 +153,6 @@ describe('a note added to a base with a template, from a tab of another space', 
   })
 })
 
-// #1046: a task added in a group of Todos starts as that group says.
 describe('a task added in a group of Todos', () => {
   const todos = { builtin: 'todos' as const, space: 'Mine' }
   const today = '2026-10-13'

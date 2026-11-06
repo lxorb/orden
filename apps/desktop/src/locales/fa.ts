@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fa: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'همه چیز آماده است',
   Personalize: 'شخصی‌سازی',
   Clean: 'تمیز',
@@ -10,12 +9,10 @@ export const fa: Dictionary = {
   'Do you write code?': 'آیا کد می‌نویسید؟',
   Yes: 'بله',
   No: 'نه',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'از برنامه‌های دیگر: {key}',
   'From other apps: set in your system settings': 'از برنامه‌های دیگر: در تنظیمات سیستم تعیین کنید',
   'From other apps: bind {command} in your system settings':
     'از برنامه‌های دیگر: {command} را در تنظیمات سیستم اختصاص دهید',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'ضروری‌ها',
   'Add to Essentials': 'افزودن به ضروری‌ها',
   'Remove from Essentials': 'حذف از ضروری‌ها',
@@ -23,20 +20,16 @@ export const fa: Dictionary = {
   'Add blocks to Essentials': 'افزودن بلوک‌ها به ضروری‌ها',
   'Add view to Essentials': 'افزودن نما به ضروری‌ها',
   'Open tabs and Essentials': 'باز کردن زبانه‌ها و ضروری‌ها',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor اکنون Orden است',
   'Notes from nibeditor.com': 'یادداشت‌ها از nibeditor.com',
   'Nothing there': 'آنجا چیزی نیست',
-  // AI: the three permission modes
   'Full permissions': 'دسترسی کامل',
   'Auto mode': 'حالت خودکار',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'دسترسی کامل: هیچ چیز پرسیده یا به شما برگردانده نمی‌شود، حتی ورود، پرداخت، ارسال یا حذف',
-  // Import: Zen's tabs
   'Import from Zen': 'درون‌آوری از Zen',
   'Containers stay in Zen': 'کانتینرها در Zen می‌مانند',
   'Zen’s tabs could not be read.': 'زبانه‌های Zen خوانده نشدند.',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'کانتینرها در Firefox می‌مانند',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} با {engine} جست‌وجو می‌کند: برای جست‌وجو با آن در اینجا، آن را در تنظیمات انتخاب کنید',
@@ -63,38 +56,29 @@ export const fa: Dictionary = {
   'Reading List': 'فهرست مطالعه',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS زبانه‌ها و نشانک‌های Safari را پشت دسترسی کامل به دیسک نگه می‌دارد. Orden را آنجا روشن کنید و دوباره بخواهید.',
-  // Settings: note types
   'Page note': 'یادداشت صفحه‌ای',
   'Web note': 'یادداشت وب',
   'Private tab': 'برگه خصوصی',
   'Note types': 'انواع یادداشت',
-  // Tasks: Upcoming's weeks
   'Previous week': 'هفتهٔ پیشین',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'افزودن پروژه در بالا',
   'Add project below': 'افزودن پروژه در پایین',
   'Projects folder': 'پوشهٔ پروژه‌ها',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'رد کردن',
   'Complete forever': 'انجام برای همیشه',
-  // Tasks: comments
   Comments: 'یادداشت‌ها',
-  // Tasks: filters
   Filters: 'پالایه‌ها',
   'Add filter': 'افزودن پالایه',
   'Edit filter': 'ویرایش پالایه',
-  // Tasks: a project's sections
   'Add section': 'افزودن بخش',
   '{name} (copy)': '{name} (رونوشت)',
   'Its tasks are deleted with it.': 'کارهایش هم با آن حذف می‌شوند.',
-  // Tasks: keys, selection and the undo toast
   Completed: 'انجام شد',
   'Remove date': 'حذف تاریخ',
   'Next task': 'کار پسین',
   'Previous task': 'کار پیشین',
   'Add task at the top': 'افزودن کار در بالا',
   '{count} selected': '{count} گزیده',
-  // Tasks: the Display menu
   Display: 'نمایش',
   'Completed tasks': 'کارهای انجام‌شده',
   Smart: 'هوشمند',
@@ -106,20 +90,16 @@ export const fa: Dictionary = {
   'Reset all': 'بازنشانی همه',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'چیدمان کارها را به‌صورت فهرست، تخته یا تقویم نشان می‌دهد. گروه‌بندی آن‌ها را به گروه‌هایی تقسیم می‌کند که ستون‌های تخته‌اند. مرتب‌سازی هر گروه را مرتب می‌کند. فیلترها آنچه را لازم ندارید پنهان می‌کنند. همهٔ این‌ها برای این نما نگه داشته می‌شود.',
-  // Tasks: several lines pasted into quick add
   'One task': 'یک کار',
   'One per line': 'یکی برای هر خط',
   'Add with AI': 'افزودن با هوش مصنوعی',
-  // Tasks: the projects in the panel
   Favorites: 'برگزیده‌ها',
   'Add project': 'افزودن پروژه',
   'Add sub-project': 'افزودن زیرپروژه',
-  // Tasks: the task view
   'Sub-tasks': 'زیرکارها',
   'Add sub-task': 'افزودن زیرکار',
   'New label': 'برچسب تازه',
   'No deadline': 'بدون مهلت',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'زمان‌بندی دوباره',
   'Later this week': 'اواخر همین هفته',
   'This weekend': 'همین آخر هفته',
@@ -136,22 +116,18 @@ export const fa: Dictionary = {
   Reopen: 'بازگشایی',
   Schedule: 'زمان‌بندی',
   'Open in note': 'باز کردن در یادداشت',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'برنامهٔ دیگر',
   'Import from Obsidian': 'درون‌آوری از Obsidian',
   'Import from Notion': 'درون‌آوری از Notion',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'راهنماها',
   'Silent mode': 'حالت بی‌صدا',
   'See how your notes connect.': 'ببینید یادداشت‌هایتان چگونه به هم پیوسته‌اند.',
   'Press {key} to find anything, notes and commands alike.':
     'برای یافتن هر چیزی، یادداشت یا فرمان، {key} را بزنید.',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'نمایش مارک‌داون هنگام نوشتن',
   'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'اشاره‌گر',
   'Pointing hand on buttons': 'دست اشاره روی دکمه‌ها',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'افزودن کار',
   'Apple Shortcuts': 'Apple میانبرها',
   Tomorrow: 'فردا',
@@ -180,7 +156,6 @@ export const fa: Dictionary = {
   'Every week': 'هر هفته',
   'Every month': 'هر ماه',
   'Every year': 'هر سال',
-  // Files and notes
   Save: 'ذخیره',
   'New note': 'یادداشت تازه',
   'Random note': 'یادداشت تصادفی',
@@ -208,8 +183,6 @@ export const fa: Dictionary = {
   'Release to add a page': 'برای افزودن صفحه رها کنید',
   'Page {number}': 'صفحه {number}',
   'The paper could not be read': 'کاغذ خوانده نشد',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'لتر',
   'Long page': 'صفحه بلند',
@@ -249,7 +222,6 @@ export const fa: Dictionary = {
   'Choose a picture': 'انتخاب تصویر',
   'Remove picture': 'حذف تصویر',
   'That picture could not be read.': 'آن تصویر خوانده نشد.',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'اشباع رنگ',
   Tint: 'ته‌رنگ',
   'Tint colour': 'رنگ ته‌رنگ',
@@ -377,7 +349,6 @@ export const fa: Dictionary = {
   'Merge into…': 'ادغام در…',
   'Split at caret': 'جدا کردن در نشانگر',
   'Extract selection': 'برداشت گزینش',
-  // Panels and navigation
   Bookmarks: 'نشانک‌ها',
   'New group': 'گروه تازه',
   'Remove group': 'برداشتن گروه',
@@ -431,8 +402,6 @@ export const fa: Dictionary = {
   'Sort by name': 'چیدن بر پایه نام',
   'Sort by modified': 'چیدن بر پایه تغییر',
   'Sort by created': 'چیدن بر پایه ساخت',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'چیدمان پرونده‌ها',
   'Name, A to Z': 'نام، از الف تا ی',
   'Name, Z to A': 'نام، از ی تا الف',
@@ -443,7 +412,6 @@ export const fa: Dictionary = {
   Manual: 'دستی',
   'Show hidden files': 'نمایش پرونده‌های نهفته',
   'Hide hidden files': 'نهفتن پرونده‌های نهفته',
-  // Writing
   Bold: 'سیاه',
   Italic: 'کج',
   Strikethrough: 'خط‌خورده',
@@ -528,11 +496,9 @@ export const fa: Dictionary = {
   'Horizontal rule': 'خط افقی',
   'Page break': 'شکست صفحه',
   'Tidy up this note': 'مرتب کردن این یادداشت',
-  // PDFs
   'Copy a link': 'رونوشت پیوند',
   'That PDF could not be opened': 'آن PDF گشوده نشد',
   'That file could not be read': 'آن پرونده خوانده نشد',
-  // Modes and view
   Reading: 'خواندن',
   'Leave reading': 'بیرون آمدن از خواندن',
   Present: 'ارائه',
@@ -572,7 +538,6 @@ export const fa: Dictionary = {
   'Zoom in': 'بزرگ‌نمایی',
   'Zoom out': 'کوچک‌نمایی',
   'Actual size': 'اندازه واقعی',
-  // Appearance
   Accent: 'رنگ تکیه',
   'Tidy up': 'مرتب‌سازی',
   'Blur the app behind the tab overview': 'محو کردن برنامه پشت نمای کلی زبانه‌ها',
@@ -700,7 +665,6 @@ export const fa: Dictionary = {
   'Switch theme': 'تغییر پوسته',
   Style: 'سبک',
   Mode: 'حالت',
-  // The window's own edges; see appearance.rs
   Window: 'پنجره',
   'Orden’s own': 'خودِ Orden',
   'The system’s': 'سیستم',
@@ -711,7 +675,6 @@ export const fa: Dictionary = {
   'Edit custom CSS': 'ویرایش CSS دلخواه',
   'Edit snippets': 'ویرایش تکه‌ها',
   'Reload themes and custom CSS': 'بارگذاری دوباره پوسته‌ها و CSS دلخواه',
-  // The theme store, and the sample note its cards show
   Themes: 'پوسته‌ها',
   Browse: 'مرور',
   'Search themes': 'جست‌وجوی پوسته',
@@ -791,7 +754,6 @@ export const fa: Dictionary = {
   'Code only': 'تنها کد',
   Everywhere: 'همه جا',
   Attachments: 'پیوست‌ها',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'یادداشت‌های صفحه‌ای',
   'New pages': 'صفحه‌های تازه',
   'Assets folder of the space': 'پوشه دارایی‌های فضا',
@@ -843,7 +805,6 @@ export const fa: Dictionary = {
   'Machine-translated. Corrections welcome.': 'ترجمه ماشینی. اصلاح‌ها خوش‌آمدند.',
   'The glasses show English.': 'عینک انگلیسی نشان می‌دهد.',
   'Match the app': 'پیروی از برنامه',
-  // Settings
   Settings: 'تنظیم',
   Account: 'حساب',
   Publish: 'انتشار',
@@ -869,7 +830,6 @@ export const fa: Dictionary = {
   },
   Update: 'به‌روزرسانی',
   'Live at': 'روی',
-  // Publishing
   'Publish {name}': 'انتشار {name}',
   'What to publish': 'چه چیزی منتشر شود',
   'The whole space': 'همه فضا',
@@ -889,7 +849,6 @@ export const fa: Dictionary = {
   Value: 'مقدار',
   available: 'آزاد',
   'checking…': 'در حال بررسی…',
-  // LLM
   'Connect an LLM to your notes': 'پیوند دادن یک LLM به یادداشت‌های شما',
   'Sign in first - the connector reaches the notes in your account.':
     'نخست وارد شوید - رابط به یادداشت‌های حساب شما می‌رسد.',
@@ -941,7 +900,6 @@ export const fa: Dictionary = {
     'برای کارخواهی که به جای نشانی، بلوک JSON می‌گیرد.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'به کارخواهی که نمی‌تواند وارد شود می‌توان ژتون داد. تنها یک بار نشان داده می‌شود.',
-  // Export
   'Plain text': 'نوشته ساده',
   'Markdown with the pictures': 'markdown همراه تصویرها',
   'HTML without styles': 'HTML بی‌سبک',
@@ -960,13 +918,11 @@ export const fa: Dictionary = {
   Margin: 'حاشیه',
   Header: 'سرصفحه',
   Footer: 'پاصفحه',
-  // History
   'Version history': 'تاریخ نسخه‌ها',
   'Copy link to this note': 'رونوشت پیوند این یادداشت',
   'that link could not be followed': 'آن پیوند دنبال نشد',
   'No earlier versions yet.': 'هنوز نسخه پیشینی نیست.',
   'Restore this version': 'بازگرداندن این نسخه',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'آنجا از پیش یادداشتی هست',
   'enter a valid email address': 'نشانی رایانامه درست بنویسید',
   'give the space a name': 'به فضا نامی بدهید',
@@ -997,7 +953,6 @@ export const fa: Dictionary = {
   'could not publish': 'منتشر نشد',
   'could not create a token': 'ژتون ساخته نشد',
   'that did not work': 'آن کار نکرد',
-  // Settings on a phone, display names, one blog address
   Back: 'بازگشت',
   'Display name': 'نام نمایشی',
   'Your name': 'نام شما',
@@ -1017,7 +972,6 @@ export const fa: Dictionary = {
   Spelling: 'نگارش',
   Checking: 'بررسی',
   Dictionary: 'واژه‌نامه',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'در انتظار نمایان شدن رکورد.',
   'Certificate issued.': 'گواهی صادر شد.',
   'Cloudflare could not set this domain up.': 'Cloudflare نتوانست این دامنه را برپا کند.',
@@ -1028,7 +982,6 @@ export const fa: Dictionary = {
   'Cloudflare has blocked this domain': 'Cloudflare این دامنه را بسته است',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'در ریشه یک دامنه، اگر فراهم‌کننده شما CNAME را آنجا روا نمی‌دارد، رکورد ALIAS یا ANAME یا CNAME flattening به کار برید.',
-  // Shortcuts
   Shortcuts: 'کلیدهای میان‌بر',
   'Search shortcuts': 'جست‌وجوی میان‌برها',
   'Second key': 'کلید دوم',
@@ -1195,7 +1148,6 @@ export const fa: Dictionary = {
   Delegated: 'واگذار شد',
   'Code theme: {name}': 'پوسته کد: {name}',
   'Delete a layout': 'حذف چیدمان',
-  // Keyboards and modal editing
   Default: 'پیش‌فرض',
   'Vim keys': 'کلیدهای Vim',
   'Follow the link': 'دنبال کردن پیوند',
@@ -1207,11 +1159,9 @@ export const fa: Dictionary = {
   INSERT: 'INSERT',
   VISUAL: 'VISUAL',
   REPLACE: 'REPLACE',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'صفحه {page} از {count} روی عینک',
   'Reaching the glasses': 'رسیدن به عینک',
   'The glasses are not keeping up': 'عینک پا به پا نمی‌آید',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'افزودن',
   Select: 'گزینش',
   Pan: 'جابه‌جایی نما',
@@ -1241,7 +1191,6 @@ export const fa: Dictionary = {
   Calligraphy: 'خوش‌نویسی',
   'Width {number}': 'پهنا {number}',
   'Finger draws': 'انگشت می‌کشد',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'پهنا',
   Opacity: 'تاری',
   Colour: 'رنگ',
@@ -1285,23 +1234,19 @@ export const fa: Dictionary = {
   'Export as PNG': 'برون‌بری به PNG',
   'Export as SVG': 'برون‌بری به SVG',
   'Export as PDF': 'برون‌بری به PDF',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'درون‌آوری PDF',
   'Choose how to add the pages to the canvas.': 'انتخاب کنید صفحه‌ها چطور به بوم اضافه شوند.',
   'Single page': 'یک صفحه',
   'All pages': 'همهٔ صفحه‌ها',
   'Choose a page': 'یک صفحه انتخاب کنید',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'حذف گزیده',
   'Nudge left': 'تکان به چپ',
   'Nudge right': 'تکان به راست',
   'Nudge up': 'تکان به بالا',
   'Nudge down': 'تکان به پایین',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'جای دیگری هم گشوده',
   Shared: 'هم‌رسانده',
   Browser: 'مرورگر',
-  // Sharing a space with other people
   Share: 'هم‌رسانی',
   'Share {name}': 'هم‌رسانی {name}',
   'Share this space': 'هم‌رسانی این فضا',
@@ -1345,14 +1290,12 @@ export const fa: Dictionary = {
   'Shared with you': 'با شما هم‌رسانده',
   'That link does not open anything': 'آن پیوند چیزی نمی‌گشاید',
   'Ask for another one.': 'یکی دیگر بخواهید.',
-  // Somebody a share link let in, who has no account
   Guest: 'مهمان',
   'Ask to join': 'خواستن پیوستن',
   Asking: 'در حال خواستن',
   'Waiting for {who}': 'در انتظار {who}',
   '{who} did not let you in': '{who} شما را راه نداد',
   'What the others in this space see.': 'آنچه دیگران در این فضا می‌بینند.',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'به‌روزرسانی‌ها',
   'Release channel': 'کانال انتشار',
   Stable: 'پایدار',
@@ -1362,8 +1305,6 @@ export const fa: Dictionary = {
   'Web version': 'نسخهٔ وب',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'پایدار اپ وب منتشرشده است، ناپایدار تازه‌ترین ساخت است و می‌تواند بشکند.',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'درون‌آوری',
   'Convert syntax': 'تبدیل نحو',
   'In this note': 'در این یادداشت',
@@ -1458,8 +1399,6 @@ export const fa: Dictionary = {
   'Undo the import': 'واگرد درون‌آوری',
   'Choose an export': 'گزینش یک برون‌بری',
   Under: 'زیر',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'همگام‌سازی',
   'When the same note was written twice': 'هنگامی که یک یادداشت دو بار نوشته شد',
   'On two devices': 'روی دو دستگاه',
@@ -1521,7 +1460,6 @@ export const fa: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'یادداشت‌های این دستگاه می‌مانند؛ فقط حساب و نسخه‌های همگام‌شده‌اش حذف می‌شوند.',
   'Also gone for everyone in {spaces}.': 'برای همه در {spaces} هم از بین می‌رود.',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'یادداشت',
   '{space} panel': 'تخته {space}',
   'Panel width': 'پهنای تخته',
@@ -1532,7 +1470,6 @@ export const fa: Dictionary = {
   'What is selected': 'آنچه گزیده است',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'بوم: {cards} کارت، {links} پیوند، {drawings} نقش',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'هوش مصنوعی',
   Providers: 'فراهم‌کنندگان',
   'Make default': 'پیش‌فرض کردن',
@@ -1559,7 +1496,6 @@ export const fa: Dictionary = {
   'Add an AI provider in Settings first.': 'نخست در تنظیم یک فراهم‌کننده هوش مصنوعی بیفزایید.',
   'The model did not answer.': 'مدل پاسخ نداد.',
   'The connection closed before the answer was finished.': 'اتصال پیش از پایان پاسخ قطع شد.',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.': 'طرح {plan} شما تا {time} به سقف رسیده است.',
   'Your {plan} plan is at its limit for now.': 'طرح {plan} شما فعلاً به سقف رسیده است.',
   'Your {plan} plan is near its limit.': 'طرح {plan} شما نزدیک سقف است.',
@@ -1586,7 +1522,6 @@ export const fa: Dictionary = {
   Shorter: 'کوتاه‌تر',
   Longer: 'بلندتر',
   'Fix grammar': 'اصلاح دستور',
-  // The AI sidebar's commands
   'A cited report': 'گزارش با ارجاع',
   'A helper in the background': 'کمک‌یار در پس‌زمینه',
   'A side question': 'پرسش جانبی',
@@ -1688,7 +1623,6 @@ export const fa: Dictionary = {
   'Markdown, shortest name': 'markdown، کوتاه‌ترین نام',
   'Markdown, relative path': 'markdown، مسیر نسبی',
   'Markdown, path in the space': 'markdown، مسیر در فضا',
-  // Publishing part one.
   'The folders you choose become public.': 'پوشه‌هایی که برمی‌گزینید همگانی می‌شوند.',
   'Anyone with the address can read what is published, drafts included.':
     'هر کس نشانی را داشته باشد منتشرشده را می‌خواند، پیش‌نویس‌ها هم.',
@@ -1714,11 +1648,9 @@ export const fa: Dictionary = {
   'Remove the password': 'برداشتن گذرواژه',
   'Scan this with your authenticator app, then type its code.':
     'این را با برنامه اصالت‌سنج خود بپویید و کدش را بنویسید.',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'عکس',
   Dictate: 'گفتن',
   'Add to {name}': 'افزودن به {name}',
-  // Web tabs
   Reload: 'بارگذاری دوباره',
   'Hard reload': 'بارگذاری دوباره کامل',
   'Open in the browser': 'گشودن در مرورگر',
@@ -1733,7 +1665,6 @@ export const fa: Dictionary = {
   'Playing audio': 'در حال پخش صدا',
   Muted: 'بی‌صدا',
   'Developer tools': 'ابزارهای توسعه‌دهنده',
-  // Recording, meetings and what a model wrote
   Record: 'ضبط',
   Recording: 'ضبط',
   'Stop recording': 'ایستاندن ضبط',
@@ -1754,7 +1685,6 @@ export const fa: Dictionary = {
     'آن ضبط برای تبدیل یک‌باره به واژه بسیار بلند است.',
   'That is as much as one recording may hold.': 'یک ضبط همین اندازه جا دارد.',
   'Nothing could be heard in that recording.': 'در آن ضبط چیزی شنیده نشد.',
-  // Publishing part two.
   Spreadsheet: 'صفحه‌گسترده',
   'The app’s own': 'مالِ خودِ برنامه',
   'publish.css and publish.js in this space dress the site.':
@@ -1770,14 +1700,12 @@ export const fa: Dictionary = {
   'Save as CSV': 'ذخیره به شکل CSV',
   'Kept for {days}': 'به مدت {days} نگه داشته می‌شود',
   Full: 'پر',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'نامه فرستاده نشد - دوباره بیازمایید',
   'start again - that took too long': 'از نو آغاز کنید - آن بسیار درازید',
   'sign in to do that': 'برای آن کار وارد شوید',
   'that is not something a token can do': 'آن کاری نیست که ژتون بتواند بکند',
   'something went wrong here - try again': 'اینجا چیزی خراب شد - دوباره بیازمایید',
   'this service cannot keep a secret safely': 'این خدمت نمی‌تواند رازی را ایمن نگه دارد',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only': 'تنها تصویر، PDF و css یا js خودِ سایت',
   'that file is too big': 'آن پرونده بسیار بزرگ است',
   'that is more settings than an account holds': 'آن بیش از تنظیمی است که یک حساب نگه می‌دارد',
@@ -1789,13 +1717,11 @@ export const fa: Dictionary = {
   'that is more folder icons than a space holds':
     'آن بیش از نقشک پوشه‌ای است که یک فضا نگه می‌دارد',
   'that is more than a site keeps': 'این بیش از آن است که یک سایت نگه می‌دارد',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'کسی با آن نشانی نیست',
   'nobody by that name': 'کسی با آن نام نیست',
   'nobody is waiting by that name': 'کسی با آن نام در انتظار نیست',
   'this space is yours': 'این فضا از شماست',
   'that link is busy, try again in a minute': 'آن پیوند مشغول است، یک دقیقه دیگر بیازمایید',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'چنین نسخه‌ای نیست',
   'this note was shared with you, not its folder': 'این یادداشت با شما هم‌رسانده شد، نه پوشه‌اش',
   'nothing to restore': 'چیزی برای بازگرداندن نیست',
@@ -1803,7 +1729,6 @@ export const fa: Dictionary = {
   'nothing to delete': 'چیزی برای حذف نیست',
   'this room is not answering - try again': 'این اتاق پاسخ نمی‌دهد - دوباره بیازمایید',
   'rooms are not running here': 'اتاق‌ها اینجا کار نمی‌کنند',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'فروشگاه پوسته پاسخ نمی‌دهد',
   'that is not a theme': 'آن پوسته نیست',
   'no such theme': 'چنین پوسته‌ای نیست',
@@ -1815,10 +1740,8 @@ export const fa: Dictionary = {
   'that is more than a spoken command': 'آن بیش از یک فرمان گفتاری است',
   'that is a lot of listening - try again later': 'آن شنیدن بسیار است - بعداً بیازمایید',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% متن',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'موبایل',
   'The bar sits over the keyboard on a phone.': 'نوار روی صفحه‌کلید گوشی می‌نشیند.',
   'On the bar': 'روی نوار',
@@ -1832,31 +1755,25 @@ export const fa: Dictionary = {
   'A pull past the top runs': 'کشیدن از بالا اجرا می‌کند',
   Nothing: 'هیچ',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'نگه داشتن',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'انتقال به راست',
   'Move to the left': 'انتقال به چپ',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'تاریخچه در حساب',
   'Keep versions': 'نگه داشتن نسخه‌ها',
   'A month': 'یک ماه',
   'A year': 'یک سال',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'همه‌چیز از روز گذشته، سپس یکی در هر ساعت، پس از یک ماه یکی در روز، و پس از سه ماه یکی در هفته.',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'این یادداشت به بزرگ‌ترین اندازه‌ای رسیده که یک یادداشت در یک اتاق می‌تواند داشته باشد.',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'زبانه جدید',
   'Full screen': 'تمام صفحه',
   'Print…': 'چاپ…',
   'Share…': 'هم‌رسانی…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'می‌خواهد',
   'Don’t allow': 'اجازه ندادن',
   Allow: 'اجازه دادن',
@@ -1872,7 +1789,6 @@ export const fa: Dictionary = {
   'Use your MIDI devices': 'استفاده از دستگاه‌های MIDI',
   'Manage windows on all your displays': 'مدیریت پنجره‌ها در همه نمایشگرهای شما',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'اطلاعات سایت',
   Downloads: 'بارگیری‌ها',
   'Downloading {name}': 'در حال دانلود {name}',
@@ -1899,11 +1815,9 @@ export const fa: Dictionary = {
   'Turn into': 'تبدیل به',
   Foldable: 'تاشو',
   'Starts folded': 'تاشده آغاز می‌شود',
-  // Where a space keeps what websites store
   'Web data': 'داده‌های وب',
   Global: 'همگانی',
   Site: 'سایت',
-  // The Mac's menu bar
   'About {name}': 'درباره {name}',
   Services: 'خدمات',
   'Hide {name}': 'پنهان کردن {name}',
@@ -1911,7 +1825,6 @@ export const fa: Dictionary = {
   'Show all': 'نمایش همه',
   'Quit {name}': 'خروج از {name}',
   'Bring all to front': 'آوردن همه به جلو',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'واگرد رونوشت',
   'Devices with your AI vault': 'دستگاه‌های دارای گاوصندوق هوش مصنوعی شما',
   'This device': 'این دستگاه',
@@ -1927,13 +1840,11 @@ export const fa: Dictionary = {
   'Select down': 'گزینش به پایین',
   'Select up': 'گزینش به بالا',
   'Select or deselect': 'گزینش یا لغو گزینش',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'باز کردن در زبانهٔ جدید',
   'Open to the side': 'باز کردن در کنار',
   'Open all': 'باز کردن همه',
   'Show in the file list': 'نمایش در فهرست فایل‌ها',
   'Collapse the file list': 'جمع کردن فهرست فایل‌ها',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'گسترش گزینش',
   'Shrink the selection': 'کوچک کردن گزینش',
   'Insert a line above': 'افزودن خط در بالا',
@@ -1947,19 +1858,16 @@ export const fa: Dictionary = {
   'Duplicate the block': 'همسان‌سازی بلوک',
   'Move the block up': 'جابه‌جایی بلوک به بالا',
   'Move the block down': 'جابه‌جایی بلوک به پایین',
-  // The editor's menu on a link and a picture
   'Copy link address': 'رونوشت نشانی پیوند',
   'Edit link': 'ویرایش پیوند',
   'Remove link': 'برداشتن پیوند',
   'Copy picture': 'رونوشت تصویر',
   'Open picture': 'گشودن تصویر',
   'Delete picture': 'حذف تصویر',
-  // A file dropped into a note
   'Storing the file': 'در حال نگه‌داری پرونده',
   'That file is larger than a note can keep.':
     'این پرونده بزرگ‌تر از آن است که یادداشت بتواند نگه دارد.',
   'That file could not be kept.': 'این پرونده نگه داشته نشد.',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'ترمینال جدید',
   'Command Prompt': 'خط فرمان',
   Terminal: 'ترمینال',
@@ -1981,11 +1889,8 @@ export const fa: Dictionary = {
   'Saved nowhere, a session kept running is found again in Settings, {pane}.':
     'جایی ذخیره نشده؛ نشستی که در حال اجرا بماند را دوباره در تنظیمات، {pane} پیدا می‌کنید.',
   'Paste {count} lines?': { one: '{count} خط چسبانده شود؟', other: '{count} خط چسبانده شود؟' },
-  // Orden as the default browser
   'Default browser': 'مرورگر پیش‌فرض',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': 'واگرد ویرایش‌های {name}',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'بایگانی',
   Unarchive: 'خروج از بایگانی',
   Archived: 'بایگانی شد',
@@ -1998,7 +1903,6 @@ export const fa: Dictionary = {
     one: '{count} مورد بایگانی‌شده در آن',
     other: '{count} مورد بایگانی‌شده در آن',
   },
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'نوار کناری چپ',
   'Right sidebar': 'نوار کناری راست',
   'Ask about this space': 'پرسیدن درباره این فضا',
@@ -2009,7 +1913,6 @@ export const fa: Dictionary = {
   'Ask again': 'دوباره بپرس',
   'Continue when the limit resets': 'ادامه پس از بازنشانی سقف',
   'Continues at {time}': 'در {time} ادامه می‌دهد',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'هر چیزی بپرسید، @ برای افزودن، / برای بیشتر',
   'What can I help with?': 'چه کمکی از من برمی‌آید؟',
   'Add photos and files': 'افزودن عکس و فایل',
@@ -2077,12 +1980,9 @@ export const fa: Dictionary = {
   Closed: 'بست',
   Ran: 'اجرا کرد',
   Changed: 'تغییر داد',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': 'این {device}',
   '{name} is back: {device} was writing in it': '{name} برگشت: {device} در آن می‌نوشت',
   'Changes to {name} are not syncing': 'تغییرات {name} همگام‌سازی نمی‌شوند',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'گشودن',
   Pressing: 'فشردن',
   Typing: 'تایپ کردن',
@@ -2097,18 +1997,14 @@ export const fa: Dictionary = {
   'Agent tabs closed': 'زبانه‌های عامل‌ها بسته شدند',
   'Orden is still running for your agents': 'Orden هنوز برای عامل‌های شما کار می‌کند',
   '{client} wants to connect': '{client} می‌خواهد وصل شود',
-  // Web logins that travel, and the devices of an account
   'no such device': 'چنین دستگاهی نیست',
   'give the device a name': 'برای دستگاه نامی بگذارید',
   'that computer is no longer waiting': 'آن رایانه دیگر منتظر نیست',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'چنین پرونده‌ای نیست',
   'too many changes at once - try again in a minute':
     'تغییرهای هم‌زمان بسیار زیاد است - یک دقیقه دیگر دوباره بکوشید',
   'that is more than a space keeps about its tree':
     'این بیش از آن است که یک فضا درباره درختش نگه می‌دارد',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'عامل‌های این رایانه',
   'Your account’s connector': 'رابط حساب شما',
   'Orden asks you once, the first time it connects.':
@@ -2178,12 +2074,9 @@ export const fa: Dictionary = {
     one: '{count} فراخوان',
     other: '{count} فراخوان',
   },
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'پرسش کوتاه',
   Scratchpad: 'Scratchpad',
   'Add to note': 'افزودن به یادداشت',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'افزونه‌ها',
   'Add extension': 'افزودن افزونه',
   'Manage extensions': 'مدیریت افزونه‌ها',
@@ -2203,7 +2096,6 @@ export const fa: Dictionary = {
   'Did not load': 'بارگیری نشد',
   Permissions: 'مجوزها',
   Options: 'گزینه‌ها',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'راه دور',
   'Add host': 'افزودن میزبان',
   Reconnect: 'اتصال دوباره',
@@ -2211,11 +2103,8 @@ export const fa: Dictionary = {
   'No group': 'بدون گروه',
   'Not an address': 'نشانی نیست',
   'Could not connect to {host}': 'اتصال به {host} ممکن نشد',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'در حال فرستادن تصویر',
   'Could not send the image': 'فرستادن تصویر ممکن نشد',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': {
     one: 'و {count} مورد پس از آن',
     other: 'و {count} مورد پس از آن',
@@ -2228,8 +2117,6 @@ export const fa: Dictionary = {
   'Pages, terminals and moves are not undone': 'صفحه‌ها، ترمینال‌ها و جابه‌جایی‌ها برنمی‌گردند',
   Rewind: 'بازگشت',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'موتور جستجو',
   History: 'سابقه',
   'Search history': 'سابقه «جستجو»',
@@ -2253,14 +2140,12 @@ export const fa: Dictionary = {
   'New private tab': 'برگه خصوصی جدید',
   'All spaces': 'همه فضاها',
   'the data could not be deleted': 'داده‌ها حذف نشد',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'تعویق',
   Reminders: 'یادآورها',
   'Reminders ring while Orden is open': 'یادآورها تا وقتی Orden باز است به صدا درمی‌آیند',
   Automatic: 'خودکار',
   'Stay in the tray': 'ماندن در سینی سیستم',
   'Exact alarms': 'هشدارهای دقیق',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'کارها',
   'Plan my day': 'برنامه‌ریزی روزم',
   'Add a task': 'افزودن کار',
@@ -2272,8 +2157,6 @@ export const fa: Dictionary = {
   'Done tasks too': 'کارهای انجام‌شده هم',
   'As a task': 'به‌عنوان کار',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'کارها',
   Ascending: 'صعودی',
   Descending: 'نزولی',
@@ -2358,8 +2241,6 @@ export const fa: Dictionary = {
   'Without a value': 'بدون مقدار',
   'With a value': 'با مقدار',
   Unique: 'یکتا',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'یادداشت تازه از الگو',
   Automations: 'خودکارسازی‌ها',
   'Row added': 'ردیف افزوده شد',
@@ -2388,7 +2269,6 @@ export const fa: Dictionary = {
   Form: 'فرم',
   Formula: 'فرمول',
   'Blocked by {task}': 'منتظر {task}',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'هشدار پیش از خروج',
   'When something runs': 'وقتی چیزی در حال اجراست',
   'Quit {name}?': 'از {name} خارج شوید؟',
@@ -2399,16 +2279,13 @@ export const fa: Dictionary = {
   'Quit anyway': 'در هر صورت خروج',
   'Restart anyway': 'در هر صورت راه‌اندازی دوباره',
   'Close anyway': 'در هر صورت بستن',
-  // The online terminal
   'Online terminal': 'ترمینال آنلاین',
   'New online terminal': 'ترمینال آنلاین جدید',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'دستگاهی دیگر',
   'Taken over by {device}': '{device} آن را گرفت',
   'Open on {device} since {time}': 'باز روی {device} از {time}',
   'Take over': 'در دست گرفتن',
   'Take back': 'پس گرفتن',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'برنامهٔ جدید',
   Application: 'برنامه',
   'This application’s file is damaged': 'فایل این برنامه آسیب دیده است',
@@ -2516,8 +2393,6 @@ export const fa: Dictionary = {
   'Compare with original': 'مقایسه با اصل',
   'Conflict copies from other apps': 'رونوشت‌های تعارض از برنامه‌های دیگر',
   'Remove from sync': 'حذف از همگام‌سازی',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'نمایه',
   Change: 'تغییر',
   'Take photo': 'گرفتن عکس',
@@ -2542,7 +2417,6 @@ export const fa: Dictionary = {
   'that picture could not be opened': 'آن تصویر باز نشد',
   'the camera could not be opened': 'دوربین باز نشد',
   'that picture is too big': 'آن تصویر خیلی بزرگ است',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'گفتگو',
   Reply: 'پاسخ',
   Replies: 'پاسخ‌ها',
@@ -2561,7 +2435,6 @@ export const fa: Dictionary = {
   'Also send to {chat}': 'به {chat} هم بفرست',
   'Skin tone': 'رنگ پوست',
   'Deleted account': 'حساب حذف‌شده',
-  // Chats: notifications
   Mute: 'بی‌صدا',
   Unmute: 'باصدا',
   'New message': 'پیام تازه',
@@ -2571,7 +2444,6 @@ export const fa: Dictionary = {
   Weekdays: 'روزهای کاری',
   Starts: 'شروع',
   Ends: 'پایان',
-  // Chats: everywhere
   'Read chats': 'خواندن گفتگوها',
   'Post in chats': 'نوشتن در گفتگوها',
   'Always in this chat': 'همیشه در این گفتگو',
@@ -2583,14 +2455,12 @@ export const fa: Dictionary = {
   'Search this chat': 'جستجو در این گفتگو',
   'Add as task': 'افزودن به‌عنوان کار',
   'Save as note': 'ذخیره به‌عنوان یادداشت',
-  // Appearance: glass's own pairs of colours
   Dawn: 'سپیده‌دم',
   Lagoon: 'مرداب',
   Lilac: 'یاسی',
   Peach: 'هلو',
   Sage: 'مریم‌گلی',
   Mist: 'مه',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'پایگاه داده تازه',
   'New page': 'صفحه تازه',
   'Not started': 'شروع نشده',
@@ -2616,7 +2486,6 @@ export const fa: Dictionary = {
   Large: 'بزرگ',
   Both: 'هر دو',
   'Shown on cards': 'نمایش روی کارت‌ها',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'کلیدهای هوش مصنوعی این مرورگر را از راه گاوصندوق با دستگاه‌های دیگر شما همگام می‌کند.',
   'Which of your AI accounts this feature asks.': 'این ویژگی از کدام حساب هوش مصنوعی شما می‌پرسد.',
@@ -2853,7 +2722,6 @@ export const fa: Dictionary = {
   'Some changes may not be noticed': 'شاید برخی تغییرها دیده نشوند',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'سیستم به سقف پوشه‌های زیر نظر رسیده است، پس شاید Orden همهٔ تغییرهایی را که برنامه‌های دیگر در فضاهای شما می‌دهند نبیند. افزایش fs.inotify.max_user_watches مشکل را حل می‌کند.',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'گفتگوی {name} به {space} منتقل شود؟',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'آن‌گاه همه در {space} می‌توانند کل تاریخچه را بخوانند و افراد {from} آن را از دست می‌دهند.',
@@ -2893,7 +2761,6 @@ export const fa: Dictionary = {
   'One colour': 'تک‌رنگ',
   'Web icons': 'نمادهای وب',
   'Sites you visit will appear here': 'سایت‌هایی که بازدید می‌کنید اینجا نشان داده می‌شوند',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'دیکته',
   'Dictate with': 'دیکته با',
   'Where your voice goes to be turned into words.': 'صدای شما برای تبدیل به متن به کجا می‌رود.',
@@ -2923,11 +2790,9 @@ export const fa: Dictionary = {
   'Not on this device': 'روی این دستگاه نیست',
   'Not on this device. It opens once you are online again.':
     'روی این دستگاه نیست. وقتی دوباره آنلاین شوید باز می‌شود.',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'سرور IMAP',
   'SMTP server': 'سرور SMTP',
   'User name': 'نام کاربری',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'فوری',
   Important: 'مهم',
   'If time': 'اگر وقت شد',

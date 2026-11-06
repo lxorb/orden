@@ -1,14 +1,4 @@
 <script lang="ts">
-  /** The Tasks panel: the add row, then Todos - every task of every space in one view
-   *  (#1046, #1153), its count in the danger tone while something is overdue
-   *  - then the favourites (bookmarked notes with tasks and views) and the labels. What
-   *  were Inbox, Today, Upcoming, Completed, the filters, the projects and the notes are
-   *  the one view's Display menu now.
-   *
-   *  A press on a row chooses it, and its list is drawn here under the rows; no tab
-   *  opens (#374). Ctrl or Cmd and a press, the middle button, or the row's menu opens
-   *  it in a tab of its own. Which is which is decided in one place, panel-press.ts.
-   *  Moved to the right, beside the note being written, it is the same. */
   import { answer, readBase, type Row } from '@orden/bases'
   import { untrack } from 'svelte'
   import { t } from '../i18n.svelte'
@@ -35,10 +25,8 @@
   import { homeRoot } from '../rows/home.svelte'
   import { builtinName } from './words'
 
-  /** Which side of the window the panel is on; the same on both, said for its styles. */
   const { side = 'left' }: { side?: 'left' | 'right' } = $props()
 
-  /** Every space's rows as the store last told of a change, which is what counts again. */
   let all = $state.raw<readonly Row[]>(untrack(() => rows.shown()))
   let today = $state(todayHere())
   $effect(() =>
@@ -57,12 +45,9 @@
 
   const space = $derived(workspace.activeSpace)
   const root = $derived(space?.root ?? null)
-  /** Whether a task can be added: into the reader's one inbox (rows/home.svelte.ts). */
   const writes = $derived(homeRoot() !== null)
-  /** Open tasks per note of the open space, by its path in the space. */
   const openIn = $derived(openByPath(counts.notes, space?.name))
 
-  /** The open space's bookmarks that are a note with tasks or a view. */
   const favourites = $derived.by(() => {
     if (root === null || !space) return []
     return workspace.bookmarks.list.flatMap((mark) => {
@@ -83,7 +68,6 @@
     })
   })
 
-  /** Each base file read once, and again when it is written. */
   let read = $state<Record<string, ReturnType<typeof readBase> | null>>({})
   $effect(() => {
     const paths = favourites.filter((one) => one.base).map((one) => one.path)
@@ -107,8 +91,6 @@
     try {
       return readBase(text)
     } catch {
-      // A base being written by hand is YAML half the time: it counts nothing until
-      // it reads again.
       return null
     }
   }
@@ -131,7 +113,6 @@
     }
   }
 
-  /** The row chosen, whose list is drawn under the rows: Todos until another is. */
   const here = $derived(space ? { id: space.id, name: space.name, root: space.root } : null)
   let pressed = $state.raw<Parameters<typeof chosenIn>[0]>({ row: { kind: 'todos' }, in: null })
   const chosen = $derived(chosenIn(pressed, here))
@@ -139,7 +120,6 @@
   const labelRow = (tag: string): PanelRow =>
     space ? { kind: 'label', tag, space: space.name } : { kind: 'label', tag }
 
-  /** A row pressed: chosen here, or opened in a tab where that was asked for. */
   function press(event: MouseEvent, row: PanelRow) {
     if (choose(event) === 'tab') {
       event.preventDefault()
@@ -147,12 +127,10 @@
     } else pressed = { row, in: here }
   }
 
-  /** The middle button, which a browser gives no click for. */
   function auxPress(event: MouseEvent, row: PanelRow) {
     if (event.button === 1) press(event, row)
   }
 
-  /** A row's menu: Open in new tab first, then what the row itself offers. */
   function rowMenu(event: MouseEvent, row: PanelRow) {
     event.preventDefault()
     if (row.kind === 'label') {
@@ -173,15 +151,10 @@
     const said = words
     if (!said.trim()) return
     words = ''
-    // Kept in the field where it was not written, unless more were typed meanwhile.
     if (!(await addTyped(said, {})) && !words) words = said
   }
 
-  /** A label's menu: named again, or taken off every task, in every note of the space,
-   *  as one undo (`retagNotes`). */
   function labelMenu(event: MouseEvent, tag: string) {
-    // Opened only, in a space shared to be read: renaming or taking a label away writes
-    // its notes, which that space refuses (`replaceInNotes` in workspace/note-text.ts).
     const open = { label: t('Open in new tab'), run: () => openInTab(labelRow(tag)) }
     if (root !== null && !canWriteAt(root)) {
       menu.show(event, [open])
@@ -217,8 +190,6 @@
     ])
   }
 
-  /** The chosen row's list, drawn under the rows: Todos of every space, the same whatever
-   *  space is open (#1153); a view's changes are kept on this device as a tab's would be. */
   const chosenKey = $derived(JSON.stringify(chosen))
   const shown = $derived.by(() => {
     const here = JSON.parse(chosenKey) as PanelRow
@@ -316,7 +287,6 @@
     {/each}
   {/if}
 
-  <!-- The chosen row's list, here in the panel and in no tab (#374). -->
   <div class="chosen">
     {#key shown}<ListLayout kit={shown.kit} />{/key}
   </div>

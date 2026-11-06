@@ -1,15 +1,3 @@
-/** The notes' verbs, on the road every other agent verb takes: `read_note`,
- *  `edit_note`, `write_note`, `append_note`, `set_property`, `set_task` and
- *  `create_note` (docs/agent-native.md 5.3).
- *
- *  What a read and an edit of a note's words mean is lib/agents/docs: the words as
- *  they are on screen, anchors, one transaction, the reader's typing winning. This is
- *  the rest of what a call owes on its way there: the space checked against the grant
- *  and never switched to, a space shared to be read refused, `confirm` mode's question,
- *  the words of a shared space marked, and the links of a space that is not open read
- *  off that space's own index. The four verbs past the first three are anchored edits
- *  too, so each is one undo step with the agent's caret, like any other. */
-
 import { frontMatterEdit, isPropertyName } from '@orden/markdown/front-matter'
 import { taskAt } from '@orden/markdown/tasks'
 import { flowItem, scalar } from '@orden/markdown/yaml'
@@ -41,12 +29,6 @@ import {
   writableAt,
 } from './spaces'
 
-/** The note a call names, in a space it may reach: its place, and its path as the
- *  space speaks of it, with `.md` where the name has no ending - or `tab`, any note tab
- *  `get_context` lists: one with a file is that file, as though its path were said, and
- *  a note with no file yet (workspace/drafts.ts) is reached by the tab alone. And
- *  `tab: "scratchpad"`, the scratchpad, which is every space's and no tab: reached by
- *  an agent that reaches the space it names, or the open one. */
 export function noteOf(
   call: Call,
   writing: boolean,
@@ -64,7 +46,6 @@ export function noteOf(
     const named = namedTab(call, ['note'], 'a note')
     namedOnce(call, named.relative)
     if (named.relative !== null) {
-      // The tab's own space, said: one the call names none of is the thread's otherwise.
       const args = { ...call.args, tab: null, path: named.relative, space: named.place.space.id }
       return noteOf({ ...call, args }, writing)
     }
@@ -86,10 +67,6 @@ export function noteOf(
   return { place, relative }
 }
 
-/** Refuses a call whose `path` names another note than its `tab` does. The two are
- *  each other's alternative, and a model handed both a note to read and the scratchpad
- *  to name got the scratchpad's empty page back as though it were the note (#325): one
- *  note said twice is that note, two are a call nobody can answer without guessing. */
 function namedOnce(call: Call, relative: string | null): void {
   const path = maybe(call, 'path')
   if (path === null) return
@@ -100,7 +77,6 @@ function namedOnce(call: Call, relative: string | null): void {
   )
 }
 
-/** The space of a note tab with no file: the draft's own. */
 function spaceOfTab(tab: Tab): string {
   const space = isDraft(tab.note) ? workspace.spaceOf(tab.note) : null
   if (space === null) {
@@ -117,7 +93,6 @@ function ifRev(call: Call): string | undefined {
   return maybe(call, 'if_rev') ?? undefined
 }
 
-/** The words a call sends, under either of the names the two servers use for them. */
 function wordsSent(call: Call): string | null {
   return text(call, 'content') ?? text(call, 'text')
 }
@@ -127,8 +102,6 @@ export async function readNote(call: Call): Promise<AgentAnswer> {
   const { place, relative } = named
   const read: NoteRead = await notes.readNote(at(named), call.args.include)
 
-  // The window's index is the open space's, so a note of another space has its links
-  // read off that space's own.
   if (!place.open && (read.links !== undefined || read.backlinks !== undefined)) {
     const index = await indexOf(place)
     const path = onDisk(place, relative)
@@ -159,7 +132,6 @@ export async function writeNote(call: Call): Promise<AgentAnswer> {
 
   const written = () => notes.writeNote(writerOf(call), at(named), words, ifRev(call))
   if (named.tab) return done(await written())
-  // A note that is not there yet is made: the connector's write_note makes one too.
   return done(
     await madeOrChanged(place, relative, () => made(place, relative, words, null), written),
   )
@@ -178,25 +150,17 @@ export async function appendNote(call: Call): Promise<AgentAnswer> {
   const edit = { at: under === null ? { end: true } : { heading: under }, insert_after: words }
   const added = () => notes.editNote(writerOf(call), at(named), [edit])
   if (named.tab) return done(await added())
-  // The day's note that is not there yet is the day's note to make, as nib://append
-  // makes one.
   return done(await madeOrChanged(place, relative, () => made(place, relative, words, null), added))
 }
 
-/** A front matter value as the one line it is written on: a list in brackets, a
- *  number or a yes as itself, and words quoted where YAML would read them as more. */
 function yamlOf(value: unknown): string | null {
   if (value === null) return null
   if (typeof value === 'number' || typeof value === 'boolean') return String(value)
   if (Array.isArray(value)) return `[${value.map(memberOf).join(', ')}]`
 
-  // Through the package's own quoting rather than a guess at what reads bare: words
-  // like `yes`, `012` or `1e3` pass any test of their characters and still come back
-  // as a boolean or a number.
   return scalar(typeof value === 'string' ? value : '')
 }
 
-/** One member of a list, where a comma or a bracket in the words would also end it. */
 function memberOf(value: unknown): string {
   if (typeof value === 'number' || typeof value === 'boolean') return String(value)
   return flowItem(String(value))
@@ -213,9 +177,6 @@ export async function setProperty(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Set ${key} of ${relative}`)
   if (question) return question
 
-  // Read, worked out, and written as the whole note against the words it was worked
-  // out from: a note the reader typed in meanwhile is read again rather than written
-  // over.
   for (let tries = 0; ; tries++) {
     const read = await notes.readNote(at(named), ['text'])
     const words = read.text ?? ''
@@ -269,7 +230,6 @@ export async function createNote(call: Call): Promise<AgentAnswer> {
   if (maybe(call, 'tab') !== null)
     throw new Refused('bad_arguments', 'a new note is made at a path')
 
-  // A canvas, a page note or a web note is a file of its own kind; see new-files.ts.
   const kind = fileKindOf(call)
   if (kind !== 'note') return createFile(call, placeOf(call), kind, made)
 
@@ -281,8 +241,6 @@ export async function createNote(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Make ${relative} in ${place.space.name}`)
   if (question) return question
 
-  // Said with the space it was made in: one the call did not name is the one in front,
-  // which a rewind of the thread later finds here rather than in the thread's own.
   const answer = await made(
     place,
     relative,
@@ -292,12 +250,8 @@ export async function createNote(call: Call): Promise<AgentAnswer> {
   return done({ ...answer, space: place.space.id })
 }
 
-/** The making or changing of each note, while one is on its way. */
 const making = new Map<string, Promise<unknown>>()
 
-/** `make` where the note is not there, `change` where it is: asked and done for one note
- *  at a time. A turn's tools run at once, and two calls that both found the note missing
- *  would both make it, the second over the first. */
 export function madeOrChanged<Made, Changed>(
   place: Place,
   relative: string,
@@ -317,16 +271,9 @@ export function madeOrChanged<Made, Changed>(
   return turn
 }
 
-/** A new note, written where it goes. Opened behind the tab in front when asked, and
- *  only in the space the reader is in: opening one in another would move them. Refused
- *  in a space shared to be read: the verbs that come here ask first, but this is the
- *  one place every new note passes, so it does not rely on them. */
 export async function made(place: Place, relative: string, words: string, open: Call | null) {
   const path = onDisk(place, relative)
   writableAt(place, path)
-  // Every caller makes the note because a read of it failed, and a read also fails for
-  // a note that is there and would not read. The disk is asked rather than the read
-  // trusted, so such a note is refused and kept instead of emptied.
   if (await there(path)) {
     throw new Refused(
       'exists',
@@ -337,7 +284,6 @@ export async function made(place: Place, relative: string, words: string, open: 
 
   if (place.open) {
     await workspace.loadTree()
-    // Behind the tab in front, through the one door an agent opens anything by.
     if (open) await openFile(open, path, false)
   } else {
     heldIndex(place)?.noteSaved(path, words)

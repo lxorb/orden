@@ -1,7 +1,6 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ml: Dictionary = {
-  // The first run's optional questions, and Settings' Developer mode
   'All set': 'എല്ലാം തയ്യാർ',
   Personalize: 'വ്യക്തിഗതമാക്കുക',
   Clean: 'വൃത്തിയുള്ളത്',
@@ -10,13 +9,11 @@ export const ml: Dictionary = {
   'Do you write code?': 'നിങ്ങൾ കോഡ് എഴുതാറുണ്ടോ?',
   Yes: 'അതെ',
   No: 'ഇല്ല',
-  // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'മറ്റ് ആപ്പുകളിൽ നിന്ന്: {key}',
   'From other apps: set in your system settings':
     'മറ്റ് ആപ്പുകളിൽ നിന്ന്: സിസ്റ്റം ക്രമീകരണങ്ങളിൽ സജ്ജമാക്കുക',
   'From other apps: bind {command} in your system settings':
     'മറ്റ് ആപ്പുകളിൽ നിന്ന്: സിസ്റ്റം ക്രമീകരണങ്ങളിൽ {command} ചേർക്കുക',
-  // Bookmarks are Essentials, Zen's word for them
   Essentials: 'അവശ്യങ്ങൾ',
   'Add to Essentials': 'അവശ്യങ്ങളിലേക്ക് ചേർക്കുക',
   'Remove from Essentials': 'അവശ്യങ്ങളിൽ നിന്ന് നീക്കുക',
@@ -24,20 +21,16 @@ export const ml: Dictionary = {
   'Add blocks to Essentials': 'ബ്ലോക്കുകൾ അവശ്യങ്ങളിലേക്ക് ചേർക്കുക',
   'Add view to Essentials': 'കാഴ്ച അവശ്യങ്ങളിലേക്ക് ചേർക്കുക',
   'Open tabs and Essentials': 'ടാബുകളും അവശ്യങ്ങളും തുറക്കുക',
-  // The name: the one-time notice, and the web build taking over the old address
   'nibeditor is now Orden': 'nibeditor ഇപ്പോൾ Orden ആണ്',
   'Notes from nibeditor.com': 'nibeditor.com-ൽ നിന്നുള്ള കുറിപ്പുകൾ',
   'Nothing there': 'അവിടെ ഒന്നുമില്ല',
-  // AI: the three permission modes
   'Full permissions': 'പൂർണ്ണ അനുമതികൾ',
   'Auto mode': 'ഓട്ടോ മോഡ്',
   'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting':
     'പൂർണ്ണ അനുമതികൾ: ഒന്നും ചോദിക്കുകയോ നിങ്ങൾക്ക് തിരികെ നൽകുകയോ ഇല്ല, സൈൻ ഇൻ, പണമടയ്ക്കൽ, അയയ്ക്കൽ, ഇല്ലാതാക്കൽ പോലും',
-  // Import: Zen's tabs
   'Import from Zen': 'Zen-ൽ നിന്ന് ഇംപോർട്ട് ചെയ്യുക',
   'Containers stay in Zen': 'കണ്ടെയ്‌നറുകൾ Zen-ൽ തന്നെ തുടരും',
   'Zen’s tabs could not be read.': 'Zen-ന്റെ ടാബുകൾ വായിക്കാനായില്ല.',
-  // Import: a browser's tabs and bookmarks
   'Containers stay in Firefox': 'കണ്ടെയ്‌നറുകൾ Firefox-ൽ തന്നെ തുടരും',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} ഉപയോഗിച്ച് തിരയുന്നു: ഇവിടെയും അതുപയോഗിച്ച് തിരയാൻ ക്രമീകരണങ്ങളിൽ അത് തിരഞ്ഞെടുക്കുക',
@@ -64,38 +57,29 @@ export const ml: Dictionary = {
   'Reading List': 'വായനാ ലിസ്റ്റ്',
   'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
     'macOS Safari-യുടെ ടാബുകളും ബുക്ക്‌മാർക്കുകളും ഫുൾ ഡിസ്ക് ആക്സസിന് പിന്നിൽ സൂക്ഷിക്കുന്നു. അവിടെ Orden ഓൺ ചെയ്ത്, വീണ്ടും ശ്രമിക്കുക.',
-  // Settings: note types
   'Page note': 'താൾ കുറിപ്പ്',
   'Web note': 'വെബ് കുറിപ്പ്',
   'Private tab': 'സ്വകാര്യ ടാബ്',
   'Note types': 'കുറിപ്പ് തരങ്ങൾ',
-  // Tasks: Upcoming's weeks
   'Previous week': 'മുൻപത്തെ ആഴ്ച',
-  // Tasks: projects placed in the panel, and their folder
   'Add project above': 'മുകളിൽ പ്രോജക്റ്റ് ചേർക്കുക',
   'Add project below': 'താഴെ പ്രോജക്റ്റ് ചേർക്കുക',
   'Projects folder': 'പ്രോജക്റ്റുകളുടെ ഫോൾഡർ',
-  // Tasks: a repeating task skipped or done for good
   Skip: 'ഒഴിവാക്കുക',
   'Complete forever': 'എന്നേക്കുമായി പൂർത്തിയാക്കുക',
-  // Tasks: comments
   Comments: 'അഭിപ്രായങ്ങൾ',
-  // Tasks: filters
   Filters: 'ഫിൽട്ടറുകൾ',
   'Add filter': 'ഫിൽട്ടർ ചേർക്കുക',
   'Edit filter': 'ഫിൽട്ടർ തിരുത്തുക',
-  // Tasks: a project's sections
   'Add section': 'വിഭാഗം ചേർക്കുക',
   '{name} (copy)': '{name} (പകർപ്പ്)',
   'Its tasks are deleted with it.': 'അതിലെ ജോലികളും ഒപ്പം ഇല്ലാതാകും.',
-  // Tasks: keys, selection and the undo toast
   Completed: 'പൂർത്തിയായി',
   'Remove date': 'തീയതി നീക്കുക',
   'Next task': 'അടുത്ത ജോലി',
   'Previous task': 'മുൻപത്തെ ജോലി',
   'Add task at the top': 'മുകളിൽ ടാസ്ക് ചേർക്കുക',
   '{count} selected': '{count} തിരഞ്ഞെടുത്തു',
-  // Tasks: the Display menu
   Display: 'പ്രദർശനം',
   'Completed tasks': 'പൂർത്തിയായ ജോലികൾ',
   Smart: 'സ്മാർട്ട്',
@@ -107,20 +91,16 @@ export const ml: Dictionary = {
   'Reset all': 'എല്ലാം പുനഃസജ്ജമാക്കുക',
   'Layout shows the tasks as a list, a board or a calendar. Grouping splits them into groups, which are the columns of a board. Sorting orders each group. Filters hide what you do not need. All of it is kept for this view.':
     'ലേഔട്ട് ജോലികളെ ലിസ്റ്റ്, ബോർഡ് അല്ലെങ്കിൽ കലണ്ടർ ആയി കാണിക്കുന്നു. ഗ്രൂപ്പ് ചെയ്യൽ അവയെ ഗ്രൂപ്പുകളായി തിരിക്കുന്നു, അവയാണ് ബോർഡിന്റെ കോളങ്ങൾ. ക്രമീകരണം ഓരോ ഗ്രൂപ്പിനെയും ക്രമപ്പെടുത്തുന്നു. ഫിൽട്ടറുകൾ നിങ്ങൾക്ക് വേണ്ടാത്തത് മറയ്ക്കുന്നു. ഇതെല്ലാം ഈ കാഴ്ചയ്ക്കായി സൂക്ഷിക്കുന്നു.',
-  // Tasks: several lines pasted into quick add
   'One task': 'ഒരു ജോലി',
   'One per line': 'ഓരോ വരിക്കും ഒന്ന്',
   'Add with AI': 'AI ഉപയോഗിച്ച് ചേർക്കുക',
-  // Tasks: the projects in the panel
   Favorites: 'പ്രിയപ്പെട്ടവ',
   'Add project': 'പ്രോജക്റ്റ് ചേർക്കുക',
   'Add sub-project': 'ഉപ പ്രോജക്റ്റ് ചേർക്കുക',
-  // Tasks: the task view
   'Sub-tasks': 'ഉപജോലികൾ',
   'Add sub-task': 'ഉപജോലി ചേർക്കുക',
   'New label': 'പുതിയ ലേബൽ',
   'No deadline': 'അവസാന തീയതിയില്ല',
-  // Tasks: the row's menu and the scheduler
   Reschedule: 'വീണ്ടും ക്രമീകരിക്കുക',
   'Later this week': 'ഈ ആഴ്ച പിന്നീട്',
   'This weekend': 'ഈ വാരാന്ത്യം',
@@ -137,22 +117,18 @@ export const ml: Dictionary = {
   Reopen: 'വീണ്ടും തുറക്കുക',
   Schedule: 'സമയം നിശ്ചയിക്കുക',
   'Open in note': 'കുറിപ്പിൽ തുറക്കുക',
-  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'മറ്റൊരു ആപ്പ്',
   'Import from Obsidian': 'Obsidian-ൽ നിന്ന് ഇംപോർട്ട് ചെയ്യുക',
   'Import from Notion': 'Notion-ൽ നിന്ന് ഇംപോർട്ട് ചെയ്യുക',
-  // Hints: Silent mode and the cards that point at a feature
   Hints: 'സൂചനകൾ',
   'Silent mode': 'നിശബ്ദ മോഡ്',
   'See how your notes connect.': 'നിങ്ങളുടെ കുറിപ്പുകൾ എങ്ങനെ ബന്ധപ്പെട്ടിരിക്കുന്നു എന്ന് കാണുക.',
   'Press {key} to find anything, notes and commands alike.':
     'കുറിപ്പുകളും കമാൻഡുകളും, എന്തും കണ്ടെത്താൻ {key} അമർത്തുക.',
-  // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'എഴുതുമ്പോൾ മാർക്ക്ഡൗൺ കാണിക്കുക',
   'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'പോയിന്റർ',
   'Pointing hand on buttons': 'ബട്ടണുകളിൽ ചൂണ്ടുന്ന കൈ',
-  // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'ടാസ്ക് ചേർക്കുക',
   'Apple Shortcuts': 'Apple ഷോർട്ട്കട്ടുകൾ',
   Tomorrow: 'നാളെ',
@@ -179,7 +155,6 @@ export const ml: Dictionary = {
   'Every week': 'എല്ലാ ആഴ്ചയും',
   'Every month': 'എല്ലാ മാസവും',
   'Every year': 'എല്ലാ വർഷവും',
-  // Files and notes
   Save: 'സേവ് ചെയ്യുക',
   'New note': 'പുതിയ കുറിപ്പ്',
   'Random note': 'ക്രമരഹിതമായ കുറിപ്പ്',
@@ -207,8 +182,6 @@ export const ml: Dictionary = {
   'Release to add a page': 'പേജ് ചേർക്കാൻ വിടുക',
   'Page {number}': 'താൾ {number}',
   'The paper could not be read': 'കടലാസ് വായിക്കാൻ കഴിഞ്ഞില്ല',
-  // The three papers and the rulings, which are the rows the page menu offers.
-  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'ലെറ്റർ',
   'Long page': 'നീണ്ട താൾ',
@@ -251,7 +224,6 @@ export const ml: Dictionary = {
   'Choose a picture': 'ഒരു ചിത്രം തിരഞ്ഞെടുക്കുക',
   'Remove picture': 'ചിത്രം നീക്കുക',
   'That picture could not be read.': 'ആ ചിത്രം വായിക്കാനായില്ല.',
-  // What glass and the wallpaper offer: their dials, and how far they reach a note
   Saturation: 'സാച്ചുറേഷൻ',
   Tint: 'നിറച്ഛായ',
   'Tint colour': 'നിറച്ഛായയുടെ നിറം',
@@ -380,7 +352,6 @@ export const ml: Dictionary = {
   'Merge into…': 'ഇതിലേക്ക് ലയിപ്പിക്കുക…',
   'Split at caret': 'കഴ്‌സറിൽ വിഭജിക്കുക',
   'Extract selection': 'തിരഞ്ഞെടുത്തത് വേർതിരിക്കുക',
-  // Panels and navigation
   Bookmarks: 'ബുക്ക്‌മാർക്കുകൾ',
   'New group': 'പുതിയ ഗ്രൂപ്പ്',
   'Remove group': 'ഗ്രൂപ്പ് നീക്കുക',
@@ -434,8 +405,6 @@ export const ml: Dictionary = {
   'Sort by name': 'പേര് അനുസരിച്ച് ക്രമം',
   'Sort by modified': 'മാറ്റിയ തീയതി അനുസരിച്ച് ക്രമം',
   'Sort by created': 'ഉണ്ടാക്കിയ തീയതി അനുസരിച്ച് ക്രമം',
-  // The order the file list is read in, which the button at the end of its header
-  // opens. `Manual` is the order somebody arranged by dragging the rows.
   'Order of the files': 'ഫയലുകളുടെ ക്രമം',
   'Name, A to Z': 'പേര്, അ മുതൽ ഹ വരെ',
   'Name, Z to A': 'പേര്, ഹ മുതൽ അ വരെ',
@@ -446,7 +415,6 @@ export const ml: Dictionary = {
   Manual: 'കൈകൊണ്ട്',
   'Show hidden files': 'മറഞ്ഞ ഫയലുകൾ കാണിക്കുക',
   'Hide hidden files': 'മറഞ്ഞ ഫയലുകൾ മറയ്ക്കുക',
-  // Writing
   Bold: 'ബോൾഡ്',
   Italic: 'ഇറ്റാലിക്',
   Strikethrough: 'വെട്ടിവര',
@@ -534,11 +502,9 @@ export const ml: Dictionary = {
   'Horizontal rule': 'തിരശ്ചീന വര',
   'Page break': 'പേജ് ബ്രേക്ക്',
   'Tidy up this note': 'ഈ കുറിപ്പ് ചിട്ടപ്പെടുത്തുക',
-  // PDFs
   'Copy a link': 'ഒരു ലിങ്ക് പകർത്തുക',
   'That PDF could not be opened': 'ആ PDF തുറക്കാനായില്ല',
   'That file could not be read': 'ആ ഫയൽ വായിക്കാനായില്ല',
-  // Modes and view
   Reading: 'വായന',
   'Leave reading': 'വായന വിടുക',
   Present: 'അവതരിപ്പിക്കുക',
@@ -578,7 +544,6 @@ export const ml: Dictionary = {
   'Zoom in': 'വലുതാക്കുക',
   'Zoom out': 'ചെറുതാക്കുക',
   'Actual size': 'യഥാർത്ഥ വലുപ്പം',
-  // Appearance
   Accent: 'ആക്‌സന്റ് നിറം',
   'Tidy up': 'ക്രമീകരിക്കുക',
   'Blur the app behind the tab overview': 'ടാബ് അവലോകനത്തിന് പിന്നിൽ ആപ്പ് മങ്ങിക്കുക',
@@ -707,7 +672,6 @@ export const ml: Dictionary = {
   'Switch theme': 'തീം മാറ്റുക',
   Style: 'ശൈലി',
   Mode: 'മോഡ്',
-  // The window's own edges; see appearance.rs
   Window: 'വിൻഡോ',
   'Orden’s own': 'Orden-ന്റെ സ്വന്തം',
   'The system’s': 'സിസ്റ്റത്തിന്റെ',
@@ -718,7 +682,6 @@ export const ml: Dictionary = {
   'Edit custom CSS': 'കസ്റ്റം CSS തിരുത്തുക',
   'Edit snippets': 'സ്നിപ്പെറ്റുകൾ തിരുത്തുക',
   'Reload themes and custom CSS': 'തീമുകളും കസ്റ്റം CSSഉം വീണ്ടും ലോഡ് ചെയ്യുക',
-  // The theme store, and the sample note its cards show
   Themes: 'തീമുകൾ',
   Browse: 'ബ്രൗസ് ചെയ്യുക',
   'Search themes': 'തീമുകൾ തിരയുക',
@@ -798,7 +761,6 @@ export const ml: Dictionary = {
   'Code only': 'കോഡിൽ മാത്രം',
   Everywhere: 'എല്ലായിടത്തും',
   Attachments: 'അറ്റാച്ച്‌മെന്റുകൾ',
-  // The paper a new page note starts on; see modes.svelte.ts
   'Page notes': 'താൾ കുറിപ്പുകൾ',
   'New pages': 'പുതിയ താളുകൾ',
   'Assets folder of the space': 'സ്പേസിന്റെ അറ്റാച്ച്‌മെന്റ് ഫോൾഡർ',
@@ -850,7 +812,6 @@ export const ml: Dictionary = {
   'Machine-translated. Corrections welcome.': 'യന്ത്ര വിവർത്തനം. തിരുത്തലുകൾ സ്വാഗതം.',
   'The glasses show English.': 'കണ്ണട ഇംഗ്ലീഷ് കാണിക്കുന്നു.',
   'Match the app': 'ആപ്പ് അനുസരിച്ച്',
-  // Settings
   Settings: 'സെറ്റിംഗ്സ്',
   Account: 'അക്കൗണ്ട്',
   Publish: 'പ്രസിദ്ധീകരിക്കുക',
@@ -876,7 +837,6 @@ export const ml: Dictionary = {
   },
   Update: 'അപ്ഡേറ്റ്',
   'Live at': 'ലൈവ് വിലാസം',
-  // Publishing
   'Publish {name}': '{name} പ്രസിദ്ധീകരിക്കുക',
   'What to publish': 'എന്ത് പ്രസിദ്ധീകരിക്കണം',
   'The whole space': 'മുഴുവൻ സ്പേസ്',
@@ -896,7 +856,6 @@ export const ml: Dictionary = {
   Value: 'മൂല്യം',
   available: 'ലഭ്യമാണ്',
   'checking…': 'പരിശോധിക്കുന്നു…',
-  // LLM
   'Connect an LLM to your notes': 'നിങ്ങളുടെ കുറിപ്പുകളിലേക്ക് LLM ബന്ധിപ്പിക്കുക',
   'Sign in first - the connector reaches the notes in your account.':
     'ആദ്യം സൈൻ ഇൻ ചെയ്യുക - കണക്ടർ നിങ്ങളുടെ അക്കൗണ്ടിലെ കുറിപ്പുകളിൽ എത്തുന്നു.',
@@ -949,7 +908,6 @@ export const ml: Dictionary = {
     'URLന് പകരം JSON ബ്ലോക്ക് എടുക്കുന്ന ക്ലയന്റിന്.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
     'സൈൻ ഇൻ ചെയ്യാനാകാത്ത ക്ലയന്റിന് ടോക്കൺ നൽകാം. അത് ഒരിക്കൽ മാത്രം കാണിക്കും.',
-  // Export
   'Plain text': 'പ്ലെയിൻ ടെക്സ്റ്റ്',
   'Markdown with the pictures': 'ചിത്രങ്ങളോടെ Markdown',
   'HTML without styles': 'സ്റ്റൈലുകളില്ലാത്ത HTML',
@@ -968,13 +926,11 @@ export const ml: Dictionary = {
   Margin: 'മാർജിൻ',
   Header: 'ഹെഡർ',
   Footer: 'ഫൂട്ടർ',
-  // History
   'Version history': 'പതിപ്പ് ചരിത്രം',
   'Copy link to this note': 'ഈ കുറിപ്പിന്റെ ലിങ്ക് പകർത്തുക',
   'that link could not be followed': 'ആ ലിങ്ക് പിന്തുടരാനായില്ല',
   'No earlier versions yet.': 'ഇനിയും പഴയ പതിപ്പുകളില്ല.',
   'Restore this version': 'ഈ പതിപ്പ് വീണ്ടെടുക്കുക',
-  // Messages the server sends, shown as they arrive.
   'a note already lives there': 'അവിടെ ഇപ്പോൾ തന്നെ ഒരു കുറിപ്പുണ്ട്',
   'enter a valid email address': 'ശരിയായ ഇമെയിൽ വിലാസം നൽകുക',
   'give the space a name': 'സ്പേസിന് ഒരു പേര് നൽകുക',
@@ -1007,7 +963,6 @@ export const ml: Dictionary = {
   'could not publish': 'പ്രസിദ്ധീകരിക്കാനായില്ല',
   'could not create a token': 'ടോക്കൺ സൃഷ്ടിക്കാനായില്ല',
   'that did not work': 'അത് പ്രവർത്തിച്ചില്ല',
-  // Settings on a phone, display names, one blog address
   Back: 'പിന്നോട്ട്',
   'Display name': 'ഡിസ്പ്ലേ പേര്',
   'Your name': 'നിങ്ങളുടെ പേര്',
@@ -1027,7 +982,6 @@ export const ml: Dictionary = {
   Spelling: 'സ്പെല്ലിംഗ്',
   Checking: 'പരിശോധിക്കുന്നു',
   Dictionary: 'നിഘണ്ടു',
-  // A domain of one's own, on its way
   'Waiting for the record to show up.': 'റെക്കോർഡ് വരാൻ കാത്തിരിക്കുന്നു.',
   'Certificate issued.': 'സർട്ടിഫിക്കറ്റ് നൽകി.',
   'Cloudflare could not set this domain up.': 'ഈ ഡൊമെയ്ൻ Cloudflareന് സജ്ജമാക്കാനായില്ല.',
@@ -1039,7 +993,6 @@ export const ml: Dictionary = {
   'Cloudflare has blocked this domain': 'ഈ ഡൊമെയ്ൻ Cloudflare തടഞ്ഞു',
   'At the root of a domain, use an ALIAS or ANAME record, or CNAME flattening, if your provider does not allow a CNAME there.':
     'ഡൊമെയ്നിന്റെ റൂട്ടിൽ നിങ്ങളുടെ പ്രൊവൈഡർ CNAME അനുവദിക്കുന്നില്ലെങ്കിൽ, ALIAS അല്ലെങ്കിൽ ANAME റെക്കോർഡ്, അല്ലെങ്കിൽ CNAME flattening ഉപയോഗിക്കുക.',
-  // Shortcuts
   Shortcuts: 'കുറുക്കുവഴികൾ',
   'Search shortcuts': 'കുറുക്കുവഴികൾ തിരയുക',
   'Second key': 'രണ്ടാം കീ',
@@ -1206,7 +1159,6 @@ export const ml: Dictionary = {
   Delegated: 'ഏൽപ്പിച്ചു',
   'Code theme: {name}': 'കോഡ് തീം: {name}',
   'Delete a layout': 'ലേഔട്ട് ഇല്ലാതാക്കുക',
-  // Keyboards and modal editing
   Default: 'ഡിഫോൾട്ട്',
   'Vim keys': 'Vim കീകൾ',
   'Follow the link': 'ലിങ്ക് പിന്തുടരുക',
@@ -1218,11 +1170,9 @@ export const ml: Dictionary = {
   INSERT: 'ചേർക്കൽ',
   VISUAL: 'ദൃശ്യം',
   REPLACE: 'മാറ്റൽ',
-  // Even Realities glasses
   'Page {page} of {count} on the glasses': 'കണ്ണടയിൽ {count}ൽ {page} പേജ്',
   'Reaching the glasses': 'കണ്ണടയിൽ എത്തുന്നു',
   'The glasses are not keeping up': 'കണ്ണടയ്ക്ക് ഒപ്പം എത്താനാകുന്നില്ല',
-  // The canvas: the tools, the pens and what a plane can be asked to do
   Add: 'ചേർക്കുക',
   Select: 'തിരഞ്ഞെടുക്കുക',
   Pan: 'പാൻ',
@@ -1252,7 +1202,6 @@ export const ml: Dictionary = {
   Calligraphy: 'കാലിഗ്രഫി',
   'Width {number}': 'വീതി {number}',
   'Finger draws': 'വിരൽ വരയ്ക്കും',
-  // The pen bar a finger gets: the pens it keeps and how each one is set
   Width: 'വീതി',
   Opacity: 'ഒപ്പാസിറ്റി',
   Colour: 'നിറം',
@@ -1296,24 +1245,20 @@ export const ml: Dictionary = {
   'Export as PNG': 'PNG ആയി എക്സ്പോർട്ട് ചെയ്യുക',
   'Export as SVG': 'SVG ആയി എക്സ്പോർട്ട് ചെയ്യുക',
   'Export as PDF': 'PDF ആയി എക്സ്പോർട്ട് ചെയ്യുക',
-  // A PDF dropped on the canvas: one page of it, or every page in order
   'Import PDF': 'PDF ഇംപോർട്ട് ചെയ്യുക',
   'Choose how to add the pages to the canvas.':
     'പേജുകൾ ക്യാൻവാസിൽ എങ്ങനെ ചേർക്കണമെന്ന് തിരഞ്ഞെടുക്കുക.',
   'Single page': 'ഒരു പേജ്',
   'All pages': 'എല്ലാ പേജുകളും',
   'Choose a page': 'ഒരു പേജ് തിരഞ്ഞെടുക്കുക',
-  // The canvas: what its own keys are called
   'Delete what is picked': 'തിരഞ്ഞെടുത്തത് ഇല്ലാതാക്കുക',
   'Nudge left': 'ഇടത്തേക്ക് ചെറുതായി നീക്കുക',
   'Nudge right': 'വലത്തേക്ക് ചെറുതായി നീക്കുക',
   'Nudge up': 'മുകളിലേക്ക് ചെറുതായി നീക്കുക',
   'Nudge down': 'താഴേക്ക് ചെറുതായി നീക്കുക',
-  // Writing in a note on several devices at once
   'Also open elsewhere': 'മറ്റൊരിടത്തും തുറന്നിട്ടുണ്ട്',
   Shared: 'പങ്കിട്ടു',
   Browser: 'ബ്രൗസർ',
-  // Sharing a space with other people
   Share: 'പങ്കിടുക',
   'Share {name}': '{name} പങ്കിടുക',
   'Share this space': 'ഈ സ്പേസ് പങ്കിടുക',
@@ -1358,14 +1303,12 @@ export const ml: Dictionary = {
   'Shared with you': 'നിങ്ങളുമായി പങ്കിട്ടു',
   'That link does not open anything': 'ആ ലിങ്ക് ഒന്നും തുറക്കുന്നില്ല',
   'Ask for another one.': 'മറ്റൊന്ന് ചോദിക്കുക.',
-  // Somebody a share link let in, who has no account
   Guest: 'അതിഥി',
   'Ask to join': 'ചേരാൻ അനുവാദം ചോദിക്കുക',
   Asking: 'ചോദിക്കുന്നു',
   'Waiting for {who}': '{who}യെ കാത്തിരിക്കുന്നു',
   '{who} did not let you in': '{who} നിങ്ങളെ അകത്ത് കടത്തിയില്ല',
   'What the others in this space see.': 'ഈ സ്പേസിലെ മറ്റുള്ളവർ കാണുന്നത്.',
-  // Which stream of releases this machine follows; see updates.svelte.ts
   Updates: 'അപ്ഡേറ്റുകൾ',
   'Release channel': 'റിലീസ് ചാനൽ',
   Stable: 'സ്ഥിരം',
@@ -1375,8 +1318,6 @@ export const ml: Dictionary = {
   'Web version': 'വെബ് പതിപ്പ്',
   'Stable is the released web app; Unstable is the newest build and can break.':
     'സ്ഥിരം റിലീസ് ചെയ്ത വെബ് ആപ്പ്; അസ്ഥിരം ഏറ്റവും പുതിയ ബിൽഡ്, തകരാനും മതി.',
-  // Bringing notes in from another app: the sheet, what it says, and the
-  // conversion of another app’s spellings.
   Import: 'ഇംപോർട്ട്',
   'Convert syntax': 'സിന്റാക്സ് മാറ്റുക',
   'In this note': 'ഈ കുറിപ്പിൽ',
@@ -1475,8 +1416,6 @@ export const ml: Dictionary = {
   'Undo the import': 'ഇംപോർട്ട് പഴയപടിയാക്കുക',
   'Choose an export': 'ഒരു എക്സ്പോർട്ട് തിരഞ്ഞെടുക്കുക',
   Under: 'ഇതിന് കീഴെ',
-  // Syncing: what happened, what to do about two copies, and what makes an
-  // account yours.
   Sync: 'സിങ്ക്',
   'When the same note was written twice': 'ഒരേ കുറിപ്പ് രണ്ടുതവണ എഴുതിയാൽ',
   'On two devices': 'രണ്ട് ഉപകരണങ്ങളിൽ',
@@ -1538,7 +1477,6 @@ export const ml: Dictionary = {
   'Notes on this device stay; only the account and its synced copies go.':
     'ഈ ഉപകരണത്തിലെ കുറിപ്പുകൾ നിലനിൽക്കും; അക്കൗണ്ടും അതിന്റെ സമന്വയിപ്പിച്ച പകർപ്പുകളും മാത്രം പോകും.',
   'Also gone for everyone in {spaces}.': '{spaces} ലെ എല്ലാവർക്കും ഇത് ഇല്ലാതാകും.',
-  // Said and not shown: what a reader is told about a surface
   'The note': 'കുറിപ്പ്',
   '{space} panel': '{space} പാനൽ',
   'Panel width': 'പാനൽ വീതി',
@@ -1549,7 +1487,6 @@ export const ml: Dictionary = {
   'What is selected': 'തിരഞ്ഞെടുത്തത്',
   'Canvas: {cards} cards, {links} links, {drawings} drawings':
     'ക്യാൻവാസ്: {cards} കാർഡുകൾ, {links} ലിങ്കുകൾ, {drawings} വരകൾ',
-  // The AI providers, the block in a note, and the four rewrites
   AI: 'AI',
   Providers: 'പ്രൊവൈഡർമാർ',
   'Make default': 'ഡിഫോൾട്ടാക്കുക',
@@ -1577,7 +1514,6 @@ export const ml: Dictionary = {
   'The model did not answer.': 'മോഡൽ മറുപടി നൽകിയില്ല.',
   'The connection closed before the answer was finished.':
     'ഉത്തരം പൂർത്തിയാകുന്നതിന് മുമ്പ് കണക്ഷൻ അടഞ്ഞു.',
-  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
   'Your {plan} plan is at its limit until {time}.':
     'നിങ്ങളുടെ {plan} പ്ലാൻ {time} വരെ പരിധിയിലാണ്.',
   'Your {plan} plan is at its limit for now.': 'നിങ്ങളുടെ {plan} പ്ലാൻ ഇപ്പോൾ പരിധിയിലാണ്.',
@@ -1605,7 +1541,6 @@ export const ml: Dictionary = {
   Shorter: 'ചെറുതായി',
   Longer: 'നീട്ടി',
   'Fix grammar': 'വ്യാകരണം ശരിയാക്കുക',
-  // The AI sidebar's commands
   'A cited report': 'ഉദ്ധൃതമായ റിപ്പോർട്ട്',
   'A helper in the background': 'പശ്ചാത്തലത്തിലെ ഒരു സഹായകൻ',
   'A side question': 'ഒരു അനുബന്ധ ചോദ്യം',
@@ -1707,7 +1642,6 @@ export const ml: Dictionary = {
   'Markdown, shortest name': 'Markdown, ഏറ്റവും ചെറിയ പേര്',
   'Markdown, relative path': 'Markdown, ആപേക്ഷിക പാത്ത്',
   'Markdown, path in the space': 'Markdown, സ്പേസിലെ പാത്ത്',
-  // Publishing part one.
   'The folders you choose become public.': 'തിരഞ്ഞെടുക്കുന്ന ഫോൾഡറുകൾ പൊതുവാകും.',
   'Anyone with the address can read what is published, drafts included.':
     'വിലാസം ഉള്ള ആർക്കും പ്രസിദ്ധീകരിച്ചത് വായിക്കാം, കരടുകളും.',
@@ -1733,11 +1667,9 @@ export const ml: Dictionary = {
   'Remove the password': 'പാസ്‌വേഡ് നീക്കുക',
   'Scan this with your authenticator app, then type its code.':
     'ഇത് നിങ്ങളുടെ ആധികാരികത ആപ്പിൽ സ്കാൻ ചെയ്ത്, അതിന്റെ കോഡ് എഴുതുക.',
-  // The phone's own rows: the camera, dictation, and where a share lands.
   Photo: 'ചിത്രം',
   Dictate: 'പറഞ്ഞ് എഴുതിക്കുക',
   'Add to {name}': '{name}-ൽ ചേർക്കുക',
-  // Web tabs
   Reload: 'വീണ്ടും എടുക്കുക',
   'Hard reload': 'പൂർണ്ണമായി വീണ്ടും എടുക്കുക',
   'Open in the browser': 'ബ്രൗസറിൽ തുറക്കുക',
@@ -1752,7 +1684,6 @@ export const ml: Dictionary = {
   'Playing audio': 'ഓഡിയോ പ്ലേ ചെയ്യുന്നു',
   Muted: 'മ്യൂട്ട് ചെയ്തു',
   'Developer tools': 'ഡെവലപ്പർ ടൂളുകൾ',
-  // Recording, meetings and what a model wrote
   Record: 'റെക്കോർഡ് ചെയ്യുക',
   Recording: 'റെക്കോർഡിംഗ്',
   'Stop recording': 'റെക്കോർഡിംഗ് നിർത്തുക',
@@ -1773,7 +1704,6 @@ export const ml: Dictionary = {
     'ഒറ്റയടിക്ക് വാക്കുകളാക്കാൻ ആ റെക്കോർഡിംഗ് വളരെ നീളമുള്ളതാണ്.',
   'That is as much as one recording may hold.': 'ഒരു റെക്കോർഡിംഗിൽ ഇത്രയേ ഒതുങ്ങും.',
   'Nothing could be heard in that recording.': 'ആ റെക്കോർഡിംഗിൽ ഒന്നും കേട്ടില്ല.',
-  // Publishing part two.
   Spreadsheet: 'സ്പ്രെഡ്‌ഷീറ്റ്',
   'The app’s own': 'ആപ്പിന്റെ സ്വന്തം',
   'publish.css and publish.js in this space dress the site.':
@@ -1789,14 +1719,12 @@ export const ml: Dictionary = {
   'Save as CSV': 'CSV ആയി സൂക്ഷിക്കുക',
   'Kept for {days}': '{days} സൂക്ഷിക്കും',
   Full: 'നിറഞ്ഞു',
-  // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'മെയിൽ അയയ്ക്കാനായില്ല - വീണ്ടും ശ്രമിക്കുക',
   'start again - that took too long': 'വീണ്ടും തുടങ്ങുക - അത് വളരെ സമയമെടുത്തു',
   'sign in to do that': 'അത് ചെയ്യാൻ സൈൻ ഇൻ ചെയ്യുക',
   'that is not something a token can do': 'അത് ഒരു ടോക്കണിന് ചെയ്യാനാകുന്നതല്ല',
   'something went wrong here - try again': 'ഇവിടെ എന്തോ പിഴച്ചു - വീണ്ടും ശ്രമിക്കുക',
   'this service cannot keep a secret safely': 'ഈ സേവനത്തിന് രഹസ്യം സുരക്ഷിതമായി സൂക്ഷിക്കാനാകില്ല',
-  // Pictures, files and what an account has room for.
   'images, PDFs and a site’s own css or js only':
     'ചിത്രങ്ങൾ, PDF, സൈറ്റിന്റെ സ്വന്തം css അല്ലെങ്കിൽ js മാത്രം',
   'that file is too big': 'ആ ഫയൽ വളരെ വലുതാണ്',
@@ -1808,14 +1736,12 @@ export const ml: Dictionary = {
     'ഒരു സ്പേസ് അതിന്റെ ഗ്രാഫിനെക്കുറിച്ച് സൂക്ഷിക്കുന്നതിലധികം',
   'that is more folder icons than a space holds': 'ഒരു സ്പേസ് കൊള്ളുന്നതിലധികം ഫോൾഡർ ഐക്കണുകൾ',
   'that is more than a site keeps': 'ഒരു സൈറ്റ് സൂക്ഷിക്കുന്നതിലും കൂടുതലാണ്',
-  // Sharing a space, and being let into one.
   'nobody by that address': 'ആ വിലാസത്തിൽ ആരുമില്ല',
   'nobody by that name': 'ആ പേരിൽ ആരുമില്ല',
   'nobody is waiting by that name': 'ആ പേരിൽ ആരും കാത്തിരിക്കുന്നില്ല',
   'this space is yours': 'ഈ സ്പേസ് നിങ്ങളുടേതാണ്',
   'that link is busy, try again in a minute':
     'ആ ലിങ്ക് തിരക്കിലാണ്, ഒരു മിനിറ്റിൽ വീണ്ടും ശ്രമിക്കുക',
-  // Versions, the bin, and a room two people write in.
   'no such version': 'അങ്ങനെയൊരു പതിപ്പില്ല',
   'this note was shared with you, not its folder':
     'ഈ കുറിപ്പ് നിങ്ങളുമായി പങ്കിട്ടു, അതിന്റെ ഫോൾഡർ അല്ല',
@@ -1824,7 +1750,6 @@ export const ml: Dictionary = {
   'nothing to delete': 'ഇല്ലാതാക്കാൻ ഒന്നുമില്ല',
   'this room is not answering - try again': 'ഈ മുറി പ്രതികരിക്കുന്നില്ല - വീണ്ടും ശ്രമിക്കുക',
   'rooms are not running here': 'ഇവിടെ മുറികൾ പ്രവർത്തിക്കുന്നില്ല',
-  // The theme store, and asking a model something.
   'the theme store is not answering': 'തീം സ്റ്റോർ പ്രതികരിക്കുന്നില്ല',
   'that is not a theme': 'അത് ഒരു തീം അല്ല',
   'no such theme': 'അങ്ങനെയൊരു തീം ഇല്ല',
@@ -1838,10 +1763,8 @@ export const ml: Dictionary = {
   'that is more than a spoken command': 'അത് ഒരു സംസാര കമാൻഡിനെക്കാൾ കൂടുതൽ',
   'that is a lot of listening - try again later': 'അത് വളരെയധികം കേൾക്കൽ - പിന്നീട് ശ്രമിക്കുക',
 
-  // The size of the text, said after a pinch or a key.
   '{percent}% text': '{percent}% എഴുത്ത്',
 
-  // The bar over the keyboard on a phone, and the pane it is put together in.
   Mobile: 'മൊബൈൽ',
   'The bar sits over the keyboard on a phone.': 'ഫോണിൽ ബാർ കീബോർഡിന് മുകളിലാണ്.',
   'On the bar': 'ബാറിൽ',
@@ -1855,31 +1778,25 @@ export const ml: Dictionary = {
   'A pull past the top runs': 'മുകളിൽ നിന്ന് വലിച്ചാൽ ഓടും',
   Nothing: 'ഒന്നുമില്ല',
 
-  // A way of looking at the space's graph, kept in the bookmarks.
   Keep: 'സൂക്ഷിക്കുക',
 
-  // Which side of the window a panel sits on.
   'Move to the right': 'വലത്തേക്ക് മാറ്റുക',
   'Move to the left': 'ഇടത്തേക്ക് മാറ്റുക',
 
-  // How long the account keeps what a note said before.
   'History on the account': 'അക്കൗണ്ടിലെ ചരിത്രം',
   'Keep versions': 'പതിപ്പുകൾ സൂക്ഷിക്കുക',
   'A month': 'ഒരു മാസം',
   'A year': 'ഒരു വർഷം',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'കഴിഞ്ഞ ദിവസത്തെ എല്ലാം, പിന്നെ മണിക്കൂറിൽ ഒന്ന്, ഒരു മാസത്തിന് ശേഷം ദിവസത്തിൽ ഒന്ന്, മൂന്നിന് ശേഷം ആഴ്ചയിൽ ഒന്ന്.',
-  // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'ഒരു റൂമിൽ ഒരു കുറിപ്പിന് ആകാവുന്ന ഏറ്റവും വലിയ വലുപ്പത്തിൽ ഈ കുറിപ്പ് എത്തി.',
 
-  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
   'New tab': 'പുതിയ ടാബ്',
   'Full screen': 'പൂർണ്ണ സ്ക്രീൻ',
   'Print…': 'പ്രിന്റ് ചെയ്യുക…',
   'Share…': 'പങ്കിടുക…',
 
-  // What a site is asking for, in the bubble under the address field.
   'wants to': 'ഇത് ചെയ്യാൻ ആവശ്യപ്പെടുന്നു',
   'Don’t allow': 'അനുവദിക്കരുത്',
   Allow: 'അനുവദിക്കുക',
@@ -1897,7 +1814,6 @@ export const ml: Dictionary = {
   'Use your MIDI devices': 'നിങ്ങളുടെ MIDI ഉപകരണങ്ങൾ ഉപയോഗിക്കുക',
   'Manage windows on all your displays': 'നിങ്ങളുടെ എല്ലാ ഡിസ്‌പ്ലേകളിലും വിൻഡോകൾ മാനേജ് ചെയ്യുക',
 
-  // What a site may do, behind the mark at the left of that field.
   'Site information': 'സൈറ്റ് വിവരങ്ങൾ',
   Downloads: 'ഡൗൺലോഡുകൾ',
   'Downloading {name}': '{name} ഡൗൺലോഡ് ചെയ്യുന്നു',
@@ -1924,11 +1840,9 @@ export const ml: Dictionary = {
   'Turn into': 'ആയി മാറ്റുക',
   Foldable: 'മടക്കാവുന്നത്',
   'Starts folded': 'മടക്കി തുടങ്ങുന്നു',
-  // Where a space keeps what websites store
   'Web data': 'വെബ് ഡാറ്റ',
   Global: 'പങ്കിട്ടത്',
   Site: 'സൈറ്റ്',
-  // The Mac's menu bar
   'About {name}': '{name}-നെ കുറിച്ച്',
   Services: 'സേവനങ്ങൾ',
   'Hide {name}': '{name} മറയ്ക്കുക',
@@ -1936,7 +1850,6 @@ export const ml: Dictionary = {
   'Show all': 'എല്ലാം കാണിക്കുക',
   'Quit {name}': '{name} അടയ്ക്കുക',
   'Bring all to front': 'എല്ലാം മുന്നിലേക്ക് കൊണ്ടുവരിക',
-  // The file list's clipboard, and redoing a file change
   'Undo the copy': 'പകർപ്പ് പഴയപടിയാക്കുക',
   'Devices with your AI vault': 'നിങ്ങളുടെ AI വോൾട്ടുള്ള ഉപകരണങ്ങൾ',
   'This device': 'ഈ ഉപകരണം',
@@ -1952,13 +1865,11 @@ export const ml: Dictionary = {
   'Select down': 'താഴേക്ക് തിരഞ്ഞെടുക്കുക',
   'Select up': 'മുകളിലേക്ക് തിരഞ്ഞെടുക്കുക',
   'Select or deselect': 'തിരഞ്ഞെടുക്കുക അല്ലെങ്കിൽ ഒഴിവാക്കുക',
-  // A row of the file list opened elsewhere, and the list folded and searched
   'Open in new tab': 'പുതിയ ടാബിൽ തുറക്കുക',
   'Open to the side': 'വശത്ത് തുറക്കുക',
   'Open all': 'എല്ലാം തുറക്കുക',
   'Show in the file list': 'ഫയൽ ലിസ്റ്റിൽ കാണിക്കുക',
   'Collapse the file list': 'ഫയൽ ലിസ്റ്റ് ചുരുക്കുക',
-  // Lines, case and the selection a step at a time
   'Expand the selection': 'തിരഞ്ഞെടുപ്പ് വികസിപ്പിക്കുക',
   'Shrink the selection': 'തിരഞ്ഞെടുപ്പ് ചുരുക്കുക',
   'Insert a line above': 'മുകളിൽ ഒരു വരി ചേർക്കുക',
@@ -1972,18 +1883,15 @@ export const ml: Dictionary = {
   'Duplicate the block': 'ബ്ലോക്കിന്റെ പകർപ്പ് ഉണ്ടാക്കുക',
   'Move the block up': 'ബ്ലോക്ക് മുകളിലേക്ക് നീക്കുക',
   'Move the block down': 'ബ്ലോക്ക് താഴേക്ക് നീക്കുക',
-  // The editor's menu on a link and a picture
   'Copy link address': 'ലിങ്ക് വിലാസം പകർത്തുക',
   'Edit link': 'ലിങ്ക് എഡിറ്റ് ചെയ്യുക',
   'Remove link': 'ലിങ്ക് നീക്കുക',
   'Copy picture': 'ചിത്രം പകർത്തുക',
   'Open picture': 'ചിത്രം തുറക്കുക',
   'Delete picture': 'ചിത്രം ഇല്ലാതാക്കുക',
-  // A file dropped into a note
   'Storing the file': 'ഫയൽ സൂക്ഷിക്കുന്നു',
   'That file is larger than a note can keep.': 'ഒരു കുറിപ്പിന് സൂക്ഷിക്കാവുന്നതിലും വലുതാണ് ഈ ഫയൽ.',
   'That file could not be kept.': 'ഈ ഫയൽ സൂക്ഷിക്കാനായില്ല.',
-  // A terminal tab, its shells and the questions it asks
   'New terminal': 'പുതിയ ടെർമിനൽ',
   'Command Prompt': 'കമാൻഡ് പ്രോംപ്റ്റ്',
   Terminal: 'ടെർമിനൽ',
@@ -2005,11 +1913,8 @@ export const ml: Dictionary = {
   'Saved nowhere, a session kept running is found again in Settings, {pane}.':
     'എവിടെയും സേവ് ചെയ്തിട്ടില്ല; പ്രവർത്തിക്കാൻ വിട്ട സെഷൻ ക്രമീകരണങ്ങൾ, {pane} എന്നതിൽ വീണ്ടും കാണാം.',
   'Paste {count} lines?': { one: '{count} വരി ഒട്ടിക്കണോ?', other: '{count} വരികൾ ഒട്ടിക്കണോ?' },
-  // Orden as the default browser
   'Default browser': 'ഡിഫോൾട്ട് ബ്രൗസർ',
-  // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} വരുത്തിയ തിരുത്തലുകൾ പഴയപടിയാക്കുക',
-  // The archive: a row put away and taken back, and what refuses to delete it
   Archive: 'ആർക്കൈവ് ചെയ്യുക',
   Unarchive: 'ആർക്കൈവിൽ നിന്ന് മാറ്റുക',
   Archived: 'ആർക്കൈവ് ചെയ്തു',
@@ -2022,7 +1927,6 @@ export const ml: Dictionary = {
     one: 'ഉള്ളിൽ {count} ആർക്കൈവ് ചെയ്ത ഇനം',
     other: 'ഉള്ളിൽ {count} ആർക്കൈവ് ചെയ്ത ഇനങ്ങൾ',
   },
-  // The right side: its own button, the Ask panel and where a provider is set up.
   'Left sidebar': 'ഇടത്തെ സൈഡ്‌ബാർ',
   'Right sidebar': 'വലത്തെ സൈഡ്‌ബാർ',
   'Ask about this space': 'ഈ സ്പേസിനെക്കുറിച്ച് ചോദിക്കുക',
@@ -2033,7 +1937,6 @@ export const ml: Dictionary = {
   'Ask again': 'വീണ്ടും ചോദിക്കുക',
   'Continue when the limit resets': 'പരിധി പുതുക്കുമ്പോൾ തുടരുക',
   'Continues at {time}': '{time}-ന് തുടരും',
-  // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'എന്തും ചോദിക്കൂ, ചേർക്കാൻ @, കൂടുതലിന് /',
   'What can I help with?': 'ഞാൻ എന്ത് സഹായിക്കണം?',
   'Add photos and files': 'ഫോട്ടോകളും ഫയലുകളും ചേർക്കുക',
@@ -2101,13 +2004,10 @@ export const ml: Dictionary = {
   Closed: 'അടച്ചു',
   Ran: 'പ്രവർത്തിപ്പിച്ചു',
   Changed: 'മാറ്റി',
-  // Sync v2: the question two devices' versions of one note ask, and a deleted note
-  // that came back because another device was writing in it.
   'This {device}': 'ഈ {device}',
   '{name} is back: {device} was writing in it':
     '{name} തിരിച്ചെത്തി: {device} അതിൽ എഴുതുകയായിരുന്നു',
   'Changes to {name} are not syncing': '{name}-ലെ മാറ്റങ്ങൾ സമന്വയിപ്പിക്കപ്പെടുന്നില്ല',
-  // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'തുറക്കൽ',
   Pressing: 'അമർത്തൽ',
   Typing: 'ടൈപ്പിംഗ്',
@@ -2123,18 +2023,14 @@ export const ml: Dictionary = {
   'Orden is still running for your agents':
     'നിങ്ങളുടെ ഏജന്റുകൾക്കായി Orden ഇപ്പോഴും പ്രവർത്തിക്കുന്നു',
   '{client} wants to connect': '{client} കണക്റ്റ് ചെയ്യാൻ ആഗ്രഹിക്കുന്നു',
-  // Web logins that travel, and the devices of an account
   'no such device': 'അങ്ങനെയൊരു ഉപകരണമില്ല',
   'give the device a name': 'ഉപകരണത്തിന് ഒരു പേര് നൽകുക',
   'that computer is no longer waiting': 'ആ കമ്പ്യൂട്ടർ ഇനി കാത്തിരിക്കുന്നില്ല',
-  // Sync v2: the files of a space, the tree changing too fast, and its maps
   'no such file': 'അങ്ങനെയൊരു ഫയൽ ഇല്ല',
   'too many changes at once - try again in a minute':
     'ഒറ്റയടിക്ക് വളരെയധികം മാറ്റങ്ങൾ - ഒരു മിനിറ്റിന് ശേഷം വീണ്ടും ശ്രമിക്കുക',
   'that is more than a space keeps about its tree':
     'ഒരു സ്പേസ് അതിന്റെ ട്രീയെക്കുറിച്ച് സൂക്ഷിക്കുന്നതിലും കൂടുതലാണിത്',
-  // Settings > Agents: every agent, what it may do and what it did, and the way
-  // to connect one more.
   'Agents on this computer': 'ഈ കമ്പ്യൂട്ടറിലെ ഏജന്റുകൾ',
   'Your account’s connector': 'നിങ്ങളുടെ അക്കൗണ്ടിന്റെ കണക്ടർ',
   'Orden asks you once, the first time it connects.':
@@ -2207,12 +2103,9 @@ export const ml: Dictionary = {
     one: '{count} കോൾ',
     other: '{count} കോളുകൾ',
   },
-  // A quick question on the side, and the scratchpad, whose name is its file's and
-  // so is the same in every language, as its tab says it
   'Quick question': 'പെട്ടെന്നുള്ള ചോദ്യം',
   Scratchpad: 'Scratchpad',
   'Add to note': 'കുറിപ്പിലേക്ക് ചേർക്കുക',
-  // Extensions in web tabs: the bar, its bubble and Settings
   Extensions: 'എക്സ്റ്റൻഷനുകൾ',
   'Add extension': 'എക്സ്റ്റൻഷൻ ചേർക്കുക',
   'Manage extensions': 'എക്സ്റ്റൻഷനുകൾ നിയന്ത്രിക്കുക',
@@ -2232,7 +2125,6 @@ export const ml: Dictionary = {
   'Did not load': 'ലോഡ് ആയില്ല',
   Permissions: 'അനുമതികൾ',
   Options: 'ഓപ്ഷനുകൾ',
-  // Remote: another machine's terminal, its host picker and Settings
   Remote: 'റിമോട്ട്',
   'Add host': 'ഹോസ്റ്റ് ചേർക്കുക',
   Reconnect: 'വീണ്ടും കണക്റ്റ് ചെയ്യുക',
@@ -2240,11 +2132,8 @@ export const ml: Dictionary = {
   'No group': 'ഗ്രൂപ്പില്ല',
   'Not an address': 'വിലാസമല്ല',
   'Could not connect to {host}': '{host}-ലേക്ക് കണക്റ്റ് ചെയ്യാനായില്ല',
-  // A picture pasted into a terminal on another machine, carried there (issue 228)
   'Sending the image': 'ചിത്രം അയയ്ക്കുന്നു',
   'Could not send the image': 'ചിത്രം അയയ്ക്കാനായില്ല',
-  // The review of the AI sidebar's changes: how many more an undo took, and the
-  // rewind sheet's rows
   'and {count} after it': {
     one: 'അതിനുശേഷമുള്ള {count} എണ്ണവും',
     other: 'അതിനുശേഷമുള്ള {count} എണ്ണവും',
@@ -2257,8 +2146,6 @@ export const ml: Dictionary = {
   'Pages, terminals and moves are not undone': 'പേജുകൾ, ടെർമിനലുകൾ, നീക്കങ്ങൾ പഴയപടിയാകില്ല',
   Rewind: 'പിന്നോട്ട്',
 
-  // The browser's own pages and dialogs: History, Delete browsing data, a private
-  // tab and the search engine. Chrome's words, from Chromium's own translations.
   'Search engine': 'തിരയൽ യന്ത്രം',
   History: 'ചരിത്രം',
   'Search history': 'തിരയൽ ചരിത്രം',
@@ -2282,14 +2169,12 @@ export const ml: Dictionary = {
   'New private tab': 'പുതിയ സ്വകാര്യ ടാബ്',
   'All spaces': 'എല്ലാ സ്പേസുകളും',
   'the data could not be deleted': 'ഡാറ്റ ഇല്ലാതാക്കാനായില്ല',
-  // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'സ്നൂസ്',
   Reminders: 'ഓർമ്മപ്പെടുത്തലുകൾ',
   'Reminders ring while Orden is open': 'Orden തുറന്നിരിക്കുമ്പോൾ ഓർമ്മപ്പെടുത്തലുകൾ മുഴങ്ങും',
   Automatic: 'സ്വയമേവ',
   'Stay in the tray': 'ട്രേയിൽ തുടരുക',
   'Exact alarms': 'കൃത്യമായ അലാറങ്ങൾ',
-  // To-dos from everywhere: the AI sidebar, Todoist, the glasses and the phone
   'To-dos': 'ജോലികൾ',
   'Plan my day': 'എന്റെ ദിവസം ആസൂത്രണം ചെയ്യുക',
   'Add a task': 'ജോലി ചേർക്കുക',
@@ -2301,8 +2186,6 @@ export const ml: Dictionary = {
   'Done tasks too': 'പൂർത്തിയായ ജോലികളും',
   'As a task': 'ജോലിയായി',
 
-  // Tasks and views: the Tasks panel, a view's head and its layouts, Todoist's
-  // words for them. See docs/tasks.md 5.5 and 5.9.
   Tasks: 'ജോലികൾ',
   Ascending: 'ആരോഹണം',
   Descending: 'അവരോഹണം',
@@ -2387,8 +2270,6 @@ export const ml: Dictionary = {
   'Without a value': 'മൂല്യമില്ലാത്തവ',
   'With a value': 'മൂല്യമുള്ളവ',
   Unique: 'അദ്വിതീയം',
-  // Databases, lane 7: rollups, ids, buttons, forms, automations, templates,
-  // locks and CSV. See docs/tasks.md 4 and 5.12-5.13.
   'New note from template': 'ടെംപ്ലേറ്റിൽ നിന്ന് പുതിയ കുറിപ്പ്',
   Automations: 'ഓട്ടോമേഷനുകൾ',
   'Row added': 'വരി ചേർത്തു',
@@ -2417,7 +2298,6 @@ export const ml: Dictionary = {
   Form: 'ഫോം',
   Formula: 'ഫോർമുല',
   'Blocked by {task}': '{task} കാരണം തടഞ്ഞു',
-  // The question before something running stops; see lib/quitting
   'Warn before quitting': 'അടയ്ക്കുന്നതിന് മുമ്പ് മുന്നറിയിപ്പ് നൽകുക',
   'When something runs': 'എന്തെങ്കിലും റൺ ചെയ്യുമ്പോൾ',
   'Quit {name}?': '{name} അടയ്ക്കണോ?',
@@ -2428,16 +2308,13 @@ export const ml: Dictionary = {
   'Quit anyway': 'എന്തായാലും അടയ്ക്കുക',
   'Restart anyway': 'എന്തായാലും റീസ്റ്റാർട്ട് ചെയ്യുക',
   'Close anyway': 'എന്തായാലും അടയ്ക്കുക',
-  // The online terminal
   'Online terminal': 'ഓൺലൈൻ ടെർമിനൽ',
   'New online terminal': 'പുതിയ ഓൺലൈൻ ടെർമിനൽ',
-  // One device at a time on an online terminal (issue 1055)
   'another device': 'മറ്റൊരു ഉപകരണം',
   'Taken over by {device}': '{device} ഏറ്റെടുത്തു',
   'Open on {device} since {time}': '{time} മുതൽ {device}-ൽ തുറന്നിരിക്കുന്നു',
   'Take over': 'ഏറ്റെടുക്കുക',
   'Take back': 'തിരിച്ചെടുക്കുക',
-  // Applications, in developer mode (docs/apps.md)
   'New application': 'പുതിയ ആപ്ലിക്കേഷൻ',
   Application: 'ആപ്ലിക്കേഷൻ',
   'This application’s file is damaged': 'ഈ ആപ്ലിക്കേഷന്റെ ഫയൽ കേടാണ്',
@@ -2548,8 +2425,6 @@ export const ml: Dictionary = {
   'Compare with original': 'യഥാർത്ഥവുമായി താരതമ്യം ചെയ്യുക',
   'Conflict copies from other apps': 'മറ്റ് ആപ്പുകളിലെ പൊരുത്തക്കേട് പകർപ്പുകൾ',
   'Remove from sync': 'സിങ്കിൽ നിന്ന് നീക്കുക',
-  // People: a profile, its face, a status that clears and a name per space. See
-  // docs/chats.md 4.9.
   Profile: 'പ്രൊഫൈൽ',
   Change: 'മാറ്റുക',
   'Take photo': 'ഫോട്ടോ എടുക്കുക',
@@ -2574,7 +2449,6 @@ export const ml: Dictionary = {
   'that picture could not be opened': 'ആ ചിത്രം തുറക്കാനായില്ല',
   'the camera could not be opened': 'ക്യാമറ തുറക്കാനായില്ല',
   'that picture is too big': 'ആ ചിത്രം വളരെ വലുതാണ്',
-  // Chats: the chat tab, its composer and replies, and the Chats panel
   Chat: 'ചാറ്റ്',
   Reply: 'മറുപടി നൽകുക',
   Replies: 'മറുപടികൾ',
@@ -2593,7 +2467,6 @@ export const ml: Dictionary = {
   'Also send to {chat}': '{chat}-ലേക്കും അയയ്ക്കുക',
   'Skin tone': 'ചർമ്മത്തിന്റെ നിറം',
   'Deleted account': 'ഇല്ലാതാക്കിയ അക്കൗണ്ട്',
-  // Chats: notifications
   Mute: 'നിശബ്ദമാക്കുക',
   Unmute: 'ശബ്ദം ഓണാക്കുക',
   'New message': 'പുതിയ സന്ദേശം',
@@ -2603,7 +2476,6 @@ export const ml: Dictionary = {
   Weekdays: 'പ്രവൃത്തി ദിവസങ്ങൾ',
   Starts: 'ആരംഭം',
   Ends: 'അവസാനം',
-  // Chats: everywhere
   'Read chats': 'ചാറ്റുകൾ വായിക്കുക',
   'Post in chats': 'ചാറ്റുകളിൽ എഴുതുക',
   'Always in this chat': 'ഈ ചാറ്റിൽ എപ്പോഴും',
@@ -2615,14 +2487,12 @@ export const ml: Dictionary = {
   'Search this chat': 'ഈ ചാറ്റിൽ തിരയുക',
   'Add as task': 'ജോലിയായി ചേർക്കുക',
   'Save as note': 'കുറിപ്പായി സംരക്ഷിക്കുക',
-  // Appearance: glass's own pairs of colours
   Dawn: 'പുലരി',
   Lagoon: 'കായൽ',
   Lilac: 'ലൈലാക്',
   Peach: 'പീച്ച്',
   Sage: 'സേജ്',
   Mist: 'മൂടൽമഞ്ഞ്',
-  // A board, Notion's: its columns, its cards, its settings, a new database
   'New database': 'പുതിയ ഡാറ്റാബേസ്',
   'New page': 'പുതിയ പേജ്',
   'Not started': 'ആരംഭിച്ചിട്ടില്ല',
@@ -2648,7 +2518,6 @@ export const ml: Dictionary = {
   Large: 'വലുത്',
   Both: 'രണ്ടും',
   'Shown on cards': 'കാർഡുകളിൽ കാണിക്കുന്നവ',
-  // What each setting does, behind the ? beside it (#768)
   'Syncs this browser’s AI keys with your other devices through the vault.':
     'ഈ ബ്രൗസറിന്റെ AI കീകൾ വോൾട്ട് വഴി നിങ്ങളുടെ മറ്റ് ഉപകരണങ്ങളുമായി സിങ്ക് ചെയ്യുന്നു.',
   'Which of your AI accounts this feature asks.':
@@ -2894,7 +2763,6 @@ export const ml: Dictionary = {
   'Some changes may not be noticed': 'ചില മാറ്റങ്ങൾ ശ്രദ്ധിക്കപ്പെടാതെ പോകാം',
   'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
     'സിസ്റ്റം നിരീക്ഷിക്കുന്ന ഫോൾഡറുകളുടെ പരിധി എത്തി, അതിനാൽ മറ്റ് പ്രോഗ്രാമുകൾ നിങ്ങളുടെ സ്പേസുകളിൽ വരുത്തുന്ന എല്ലാ മാറ്റങ്ങളും Orden ശ്രദ്ധിച്ചേക്കില്ല. fs.inotify.max_user_watches കൂട്ടിയാൽ ശരിയാകും.',
-  // A chat carried into another space, its own pointer not known (B542)
   'Move the chat {name} to {space}?': 'ചാറ്റ് {name} {space}-ലേക്ക് നീക്കണോ?',
   'Everyone in {space} can then read the whole history, and the people in {from} lose it.':
     'അപ്പോൾ {space}-ലെ എല്ലാവർക്കും മുഴുവൻ ചരിത്രവും വായിക്കാം, {from}-ലെ ആളുകൾക്ക് അത് നഷ്ടമാകും.',
@@ -2934,7 +2802,6 @@ export const ml: Dictionary = {
   'One colour': 'ഒറ്റ നിറം',
   'Web icons': 'വെബ് ഐക്കണുകൾ',
   'Sites you visit will appear here': 'നിങ്ങൾ സന്ദർശിക്കുന്ന സൈറ്റുകൾ ഇവിടെ കാണാം',
-  // Dictation into a field, and where a voice goes (#1128)
   Dictation: 'ഡിക്റ്റേഷൻ',
   'Dictate with': 'ഇതുപയോഗിച്ച് ഡിക്റ്റേറ്റ് ചെയ്യുക',
   'Where your voice goes to be turned into words.':
@@ -2965,11 +2832,9 @@ export const ml: Dictionary = {
   'Not on this device': 'ഈ ഉപകരണത്തിൽ ഇല്ല',
   'Not on this device. It opens once you are online again.':
     'ഈ ഉപകരണത്തിൽ ഇല്ല. വീണ്ടും ഓൺലൈനായാൽ ഇത് തുറക്കും.',
-  // Another chat service connected: its servers (#321)
   'IMAP server': 'IMAP സെർവർ',
   'SMTP server': 'SMTP സെർവർ',
   'User name': 'ഉപയോക്തൃനാമം',
-  // Chat priorities, asked of the reader’s AI (#321)
   Urgent: 'അടിയന്തരം',
   Important: 'പ്രധാനം',
   'If time': 'സമയമുണ്ടെങ്കിൽ',

@@ -1,11 +1,3 @@
-/** Links another program handed nib, as the window takes them.
- *
- *  What the crate refuses is tested beside it (src-tauri/src/web_handed.rs); what is
- *  under test here is the window's half: every page a tab in front, beside the one
- *  being read, in the order they came - the ones the app was started for and the ones
- *  that arrive while it runs - and anything that is not a page on the web opens
- *  nothing, whatever crossed the boundary. See handed.ts. */
-
 import { beforeEach, expect, test, vi } from 'vitest'
 
 interface Opened {
@@ -15,9 +7,7 @@ interface Opened {
 
 const world = vi.hoisted(() => ({
   opened: [] as Opened[],
-  /** What `take_startup_pages` answers with. */
   waiting: [] as unknown,
-  /** The listener the window put up, once it has. */
   heard: null as ((event: { payload: unknown }) => void) | null,
   asked: [] as string[],
 }))
