@@ -1,36 +1,13 @@
-/** An application's socket (issue 1063): a desktop application running on one of the
- *  reader's devices, used as an Orden tab from any other, one device at a time.
- *
- *  Every party has one socket to the account's `AppRelay` for the application, at
- *  `GET /v2/apps/:app/socket`: the **host**, the device the application runs on (its
- *  subprotocol `nib.role.host`), and the **viewers**, every device with its tab open. The
- *  relay keeps the lock between the viewers - the online terminal's (issue 1055), with
- *  its frames `hello {hold}`, `take`, `leave`, `held` and `hold`, and its `HOLD_GRACE`
- *  and `HOLD_QUIET` (wire.ts) - and passes WebRTC's
- *  signalling between the holder and the host. The picture and the input go between
- *  those two directly, never through the relay.
- *
- *  As the online terminal's wire: JSON text frames, and a frame that does not check is
- *  dropped, so either side may be older than the other. */
-
-/** The app socket's address for an application file's id. */
 export function appSocketPath(app: string): string {
   return `/v2/apps/${encodeURIComponent(app)}/socket`
 }
 
-/** What the door says to a look at an application that is not on the account: a file
- *  that has not synced up yet, or one that went. A door that is switched off, or an
- *  account that has no such route, says `not found` instead. */
 export const UNKNOWN_APP = 'no such application on this account'
 
-/** The subprotocol the host's socket names itself with. */
 export const HOST_PROTOCOL = 'nib.role.host'
 
-/** The largest signalling message: an SDP offer with many candidates is a few KB. */
 export const MOST_SIGNAL = 64 * 1024
 
-/** The tab's view on the holder's device, which the application's display is made to
- *  match: CSS pixels, the device pixel ratio, and the refresh rate. */
 export interface View {
   width: number
   height: number
@@ -38,21 +15,13 @@ export interface View {
   hz: number
 }
 
-/** Where the application is on its host. */
 export type AppState = 'stopped' | 'starting' | 'running' | 'exited'
 
 const APP_STATES: readonly AppState[] = ['stopped', 'starting', 'running', 'exited']
 
-/** Why a host did not start it, with a `stopped` or `exited` state: its platform cannot
- *  give an application a display of its own yet (macOS), the display server it needs is
- *  not installed (Xvfb), the reader at the host said no to a program by its path, what
- *  the file names is not on the host, it is a Store application that Windows starts only
- *  on the reader's own desktop (`packaged`), it handed itself at once to a copy already
- *  open on the host's own screen (`handed`, with `exited`), or it failed to start. */
 export type NotStarted =
   'isolation' | 'display' | 'refused' | 'missing' | 'packaged' | 'handed' | 'failed'
 
-/** Every reason, as the wire reads them. */
 export const NOT_STARTED: readonly NotStarted[] = [
   'isolation',
   'display',
@@ -63,7 +32,6 @@ export const NOT_STARTED: readonly NotStarted[] = [
   'failed',
 ]
 
-/** The state frame, as either side sends it. */
 export interface StateFrame {
   t: 'state'
   state: AppState
@@ -71,8 +39,6 @@ export interface StateFrame {
   why?: NotStarted
 }
 
-/** What a viewer says: hello (with `hold`, as an online terminal's), Take over, leave,
- *  signalling for the host, its view, and start / stop / restart for the host. */
 export type ViewerFrame =
   | { t: 'hello'; hold?: true; view?: View }
   | { t: 'take' }
@@ -81,12 +47,8 @@ export type ViewerFrame =
   | { t: 'view'; view: View }
   | { t: 'run'; what: 'start' | 'stop' | 'restart' }
 
-/** What the host says: that it is the host, signalling for the holder, and where the
- *  application stands. */
 export type HostFrame = { t: 'host' } | { t: 'signal'; data: string } | StateFrame
 
-/** What the relay tells a viewer: the lock's frames, whether the host is there, the
- *  host's signalling, where the application stands, and refusals. */
 export type RelayToViewer =
   | { t: 'held'; by: string; since: number; taken: boolean }
   | { t: 'hold' }
@@ -95,8 +57,6 @@ export type RelayToViewer =
   | StateFrame
   | { t: 'refused'; error: 'gone' | 'rate' | 'large' }
 
-/** What the relay tells the host: who holds the application now (null for nobody), the
- *  holder's signalling and view, and what the holder asked it to do. */
 export type RelayToHost =
   | { t: 'viewer'; device: string | null; name: string }
   | { t: 'signal'; data: string }
@@ -113,7 +73,6 @@ function parsed(raw: string): unknown {
   try {
     return JSON.parse(raw)
   } catch {
-    // Not JSON: not a frame, and the caller drops it.
     return undefined
   }
 }
@@ -122,7 +81,6 @@ function isSize(value: unknown, most: number): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= most
 }
 
-/** A view that checks: a screen no larger than 16K, a ratio up to 8, up to 500 Hz. */
 export function viewOf(value: unknown): View | null {
   if (!isRecord(value)) return null
   const { width, height, dpr, hz } = value
@@ -152,8 +110,6 @@ function stateOf(value: Fields): StateFrame | null {
     (typeof code === 'number' && Number.isSafeInteger(code))
   ))
     return null
-  // A reason this side does not know is dropped rather than the frame: a newer host may
-  // say more than an older tab can.
   const reason = NOT_STARTED.find((one) => one === why)
   return {
     t: 'state',
@@ -163,7 +119,6 @@ function stateOf(value: Fields): StateFrame | null {
   }
 }
 
-/** A viewer's frame, as the relay reads it. */
 export function viewerFrameOf(raw: string): ViewerFrame | null {
   const value = parsed(raw)
   if (!isRecord(value)) return null
@@ -193,7 +148,6 @@ export function viewerFrameOf(raw: string): ViewerFrame | null {
   }
 }
 
-/** The host's frame, as the relay reads it. */
 export function hostFrameOf(raw: string): HostFrame | null {
   const value = parsed(raw)
   if (!isRecord(value)) return null
@@ -209,7 +163,6 @@ export function hostFrameOf(raw: string): HostFrame | null {
   }
 }
 
-/** The relay's frame, as a viewer reads it. */
 export function toViewerOf(raw: string): RelayToViewer | null {
   const value = parsed(raw)
   if (!isRecord(value)) return null
@@ -240,7 +193,6 @@ export function toViewerOf(raw: string): RelayToViewer | null {
   }
 }
 
-/** The relay's frame, as the host reads it. */
 export function toHostOf(raw: string): RelayToHost | null {
   const value = parsed(raw)
   if (!isRecord(value)) return null
@@ -263,21 +215,12 @@ export function toHostOf(raw: string): RelayToHost | null {
   }
 }
 
-// ---------------------------------------------------------------------------
-// The file
-
-/** The extension an application's file has: its own word, since a `.app` is a folder on
- *  a Mac and Finder would draw the file as a broken bundle. */
 export const APP_EXTENSION = '.application'
 
-/** What an application runs: one installed on its host, by the id the host lists it
- *  under and the name it was shown with; or a program by its path, with its arguments
- *  and the folder it starts in. */
 export type AppRun =
   | { kind: 'installed'; id: string; name: string }
   | { kind: 'path'; path: string; args: string[]; cwd: string | null }
 
-/** An application's file: the device it runs on, and what it runs there. */
 export interface AppFile {
   v: 1
   host: string
@@ -306,8 +249,6 @@ function runOfFile(value: unknown): AppRun | null {
   return { kind: 'path', path: value.path, args, cwd }
 }
 
-/** An application file's text as its fields, or null for text that is not one: read
- *  strictly, as a `.term` is, and extra fields dropped. */
 export function appFileOf(text: string): AppFile | null {
   const value = parsed(text)
   if (!isRecord(value) || value.v !== 1 || !isText(value.host, 200)) return null
@@ -315,7 +256,6 @@ export function appFileOf(text: string): AppFile | null {
   return run ? { v: 1, host: value.host, run } : null
 }
 
-/** The text an application's file is written with: one line of JSON and a newline. */
 export function appFileText(app: AppFile): string {
   const run =
     app.run.kind === 'installed'
@@ -324,31 +264,18 @@ export function appFileText(app: AppFile): string {
   return `${JSON.stringify({ v: 1, host: app.host, run })}\n`
 }
 
-// ---------------------------------------------------------------------------
-// What a host has installed (step 3)
-
-/** One application a host has installed, as the new application's chooser offers it:
- *  the id the host knows it by (a desktop entry's id on Linux, a Start menu shortcut on
- *  Windows, a bundle on a Mac), its name, and its icon as a small picture, where the
- *  host found one. The host starts it by the id alone and never by words from elsewhere. */
 export interface Installed {
   id: string
   name: string
   icon?: string
 }
 
-/** The most applications one host lists: more than any Start menu holds. */
 export const MOST_INSTALLED = 2000
-/** The largest icon kept, as its data URL: a 32 pixel PNG or a small SVG. */
 export const MOST_ICON = 48 * 1024
-/** The largest catalogue, in characters of JSON: under the two million bytes a row of the
- *  account's database holds. */
 export const MOST_CATALOGUE = 1_900_000
 
 const ICON = /^data:image\/(png|svg\+xml);base64,[A-Za-z0-9+/]+={0,2}$/
 
-/** One listed application that checks, or null. An icon that does not check is left
- *  off rather than the application. */
 export function installedOf(value: unknown): Installed | null {
   if (!isRecord(value) || !isText(value.id, 512) || !isText(value.name, 200)) return null
   const { icon } = value
@@ -356,8 +283,6 @@ export function installedOf(value: unknown): Installed | null {
   return { id: value.id, name: value.name, ...(kept ? { icon } : {}) }
 }
 
-/** A host's catalogue that checks: the applications that do, the first of any id, at
- *  most `MOST_INSTALLED`; null for something that is no list. */
 export function catalogueOf(value: unknown): Installed[] | null {
   if (!Array.isArray(value)) return null
   const seen = new Set<string>()
@@ -372,9 +297,6 @@ export function catalogueOf(value: unknown): Installed[] | null {
   return apps
 }
 
-/** A catalogue that fits `MOST_CATALOGUE` as `{"apps": [...]}`: every application kept,
- *  and where they do not all fit with their icons, the icons of the last ones let go
- *  first. */
 export function fitCatalogue(apps: readonly Installed[], most = MOST_CATALOGUE): Installed[] {
   const fitted = [...apps]
   let length = JSON.stringify({ apps: fitted }).length
@@ -387,43 +309,26 @@ export function fitCatalogue(apps: readonly Installed[], most = MOST_CATALOGUE):
   return fitted
 }
 
-/** Where a host's catalogue is kept on the account: `PUT` by the host for itself, `GET`
- *  by any of the reader's devices for a host by its id. */
 export const CATALOGUE_PATH = '/v2/apps/catalogue'
 
-// ---------------------------------------------------------------------------
-// The picture's signalling (step 4)
-
-/** Why a host has no picture to offer: ffmpeg is not installed there, the offer was not
- *  one it could answer, it has no address to be reached on, or the application is not
- *  running. */
 export type NoPicture = 'encoder' | 'offer' | 'network' | 'stopped'
 
 const NO_PICTURE: readonly NoPicture[] = ['encoder', 'offer', 'network', 'stopped']
 
-/** A candidate as the viewer's engine gives it, `RTCIceCandidate.toJSON()`. */
 export interface CandidateLine {
   candidate: string
   sdpMid?: string | null
   sdpMLineIndex?: number | null
 }
 
-/** What the holder says to the host, as `data` of a `signal` frame: its offer (a
- *  receive-only video and the data channel), one of its candidates, or that it is done
- *  with the picture. */
 export type ToHost = { offer: string } | { candidate: CandidateLine } | { bye: true }
 
-/** A message to the host as the `signal` frame's `data`. */
 export function toHostText(said: ToHost): string {
   return JSON.stringify(said)
 }
 
-/** What the host says back: its answer, with every candidate of its own in it, or why
- *  there is no picture - null for a reason this side does not know yet. */
 export type FromHost = { answer: string } | { cannot: NoPicture | null }
 
-/** The host's message, read off a `signal` frame's `data`; null for one that does not
- *  check, which is dropped as a frame is. */
 export function fromHostOf(data: string): FromHost | null {
   const value = parsed(data)
   if (!isRecord(value)) return null
@@ -433,50 +338,26 @@ export function fromHostOf(data: string): FromHost | null {
   return null
 }
 
-/** One thing the holder does to the application, as its tab sends it over the
- *  picture's data channel, `input` (the host's `apps_host/input.rs` plays it into the
- *  application's display): the pointer at a point of the display in its own pixels, a
- *  button (a `PointerEvent`'s `button`) pressed or let go, the wheel turned by clicks
- *  (down and right positive), a key pressed or let go, by the character it gave or its
- *  name (`KeyboardEvent.key`) and the key it was (`KeyboardEvent.code`), and text an
- *  input method made (step 5), typed as it is. An older host lets the text go. */
 export type InputEvent =
   | { t: 'move'; x: number; y: number }
   | { t: 'button'; button: number; down: boolean }
   | { t: 'wheel'; x: number; y: number }
   | { t: 'key'; key: string; code: string; down: boolean }
   | { t: 'text'; text: string }
-  /** The holder's clipboard, for the application's next paste (step 6). */
   | { t: 'clipboard'; text: string }
-  /** Whether the holder shares its clipboard with the application (step 6): said as
-   *  the channel opens and whenever it changes; the host gives and takes nothing until
-   *  it has been told yes. */
   | { t: 'share'; clipboard: boolean }
-  /** The tab's clock, for the host to answer with its own (step 9): `pong`. */
   | { t: 'ping'; at: number }
 
-/** An input event as the channel's message. */
 export function inputText(event: InputEvent): string {
   return JSON.stringify(event)
 }
 
-/** The largest picture of the application's pointer the tab takes, as its data URL. */
 export const MOST_POINTER = 256 * 1024
 
-/** The most text of a clipboard either side sends: what one message on a data channel
- *  carries in every engine (256 KiB), with room for its envelope. */
 export const MOST_CLIPBOARD = 200 * 1024
 
-/** What the host says on the picture's data channel (step 5): the application's pointer,
- *  drawn so over the picture - its shape as a PNG with its hot spot in the display's
- *  pixels, or hidden, as an application hides it to draw its own - and what the
- *  application copied, while the holder shares its clipboard (step 6). */
 export type FromPicture = PointerShape | { t: 'clipboard'; text: string } | Pong
 
-/** The host's answer to a ping (step 9): the tab's time back, when the connection began
- *  and what time it is, on the host's clock in milliseconds since 1970, and the encoder
- *  the picture is made with. A frame's RTP time counts from `began` at 90 kHz, from the
- *  moment its picture was read off the display. */
 export interface Pong {
   t: 'pong'
   at: number
@@ -484,20 +365,15 @@ export interface Pong {
   now: number
   encoder: string | null
   hardware: boolean
-  /** What the application uses of its host (step 10), where the host can read it. */
   usage: Usage | null
 }
 
-/** What a tab's processes use of the computer they run on (step 10): the processor as a
- *  share of one core (100 is one core whole), the memory resident in bytes, and the
- *  GPU's busiest engine, where it can be read - left out, never 0, where it cannot. */
 export interface Usage {
   cpu: number
   memory: number
   gpu?: number
 }
 
-/** A usage that checks, or null. */
 export function usageOf(value: unknown): Usage | null {
   if (!isRecord(value)) return null
   const { cpu, memory, gpu } = value
@@ -509,7 +385,6 @@ function isTime(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0
 }
 
-/** The application's pointer: its shape and hot spot, or hidden. */
 export type PointerShape =
   { t: 'pointer'; png: string; x: number; y: number } | { t: 'pointer'; hidden: true }
 
@@ -519,8 +394,6 @@ function isSpot(value: unknown): value is number {
   return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 1024
 }
 
-/** The host's message on the data channel, or null for one that does not check or that
- *  this side does not know yet. */
 export function fromPictureOf(data: unknown): FromPicture | null {
   if (typeof data !== 'string' || data.length > MOST_POINTER + 1024) return null
   const value = parsed(data)
@@ -552,29 +425,18 @@ export function fromPictureOf(data: unknown): FromPicture | null {
   return isSpot(x) && isSpot(y) ? { t: 'pointer', png, x, y } : null
 }
 
-// ---------------------------------------------------------------------------
-// The servers a viewer's connection is offered (step 4)
-
-/** Where the account hands a viewer the servers its connection may use: STUN, and TURN
- *  with short-lived credentials where the service has them. */
 export const ICE_PATH = '/v2/apps/ice'
 
-/** One server, as `RTCIceServer` takes it. */
 export interface IceServer {
   urls: string[]
   username?: string
   credential?: string
 }
 
-/** What a viewer uses when the account says nothing, as an older one does: Cloudflare's
- *  STUN, which needs no account. */
 export const FALLBACK_ICE: readonly IceServer[] = [{ urls: ['stun:stun.cloudflare.com:3478'] }]
 
 const ICE_URL = /^(stun|stuns|turn|turns):[^\s]{1,250}$/
 
-/** The servers that check, at most eight of them: `urls` a STUN or TURN address or a
- *  list of them, and a TURN server's username and credential as text. A list or a
- *  single server is read, as Cloudflare answers either. */
 export function iceServersOf(value: unknown): IceServer[] {
   const list = Array.isArray(value) ? value : isRecord(value) ? [value] : []
   const servers: IceServer[] = []

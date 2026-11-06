@@ -49,7 +49,6 @@ describe('spend', () => {
   })
 
   it('prices an awake hour of the small machine with its CPU busy a quarter of it', () => {
-    // 3.3's figures: memory $0.018, disk $0.002, CPU $0.009; the object a cent's tenth.
     const hour = accrue(NONE, HOUR, SMALL, 0.25 * 0.5 * HOUR, 0)
     expect(spend(hour)).toBeCloseTo(0.018 + 0.002 + 0.009 + 0.0058, 3)
   })
@@ -57,7 +56,6 @@ describe('spend', () => {
   it('keeps a whole free allowance used to its end near 3.3’s worst case', () => {
     const month = accrue(NONE, FREE.awakeS, SMALL, FREE.cpuS, FREE.egressBytes)
     const dollars = spend(month, FREE.homeBytes)
-    // Hours, every CPU hour and all the egress: about a dollar and a half, never ten.
     expect(dollars).toBeGreaterThan(0.8)
     expect(dollars).toBeLessThan(2)
   })

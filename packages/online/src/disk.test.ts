@@ -9,7 +9,6 @@ describe('the disk', () => {
     expect(diskNear({ used: 80 * GB, total: 100 * GB })).toBe(true)
     expect(diskFull({ used: 89 * GB, total: 100 * GB })).toBe(false)
     expect(diskFull({ used: 90 * GB, total: 100 * GB })).toBe(true)
-    // A small disk is full when a gigabyte is left, whatever its share.
     expect(diskFull({ used: 7.2 * GB, total: 8 * GB })).toBe(true)
   })
 

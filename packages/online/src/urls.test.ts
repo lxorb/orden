@@ -9,7 +9,6 @@ import {
   loopbackOrigin,
 } from './urls'
 
-/** Claude Code's sign-in, as its binary builds it (read 2026-10-05). */
 const CLAUDE =
   'https://claude.ai/oauth/authorize?code=true&client_id=9d1c&response_type=code' +
   '&redirect_uri=http%3A%2F%2Flocalhost%3A54545%2Fcallback&scope=user%3Ainference&state=abc'

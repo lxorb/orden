@@ -1,21 +1,9 @@
-/** A `.term` file's text: the machine and the session the document names (4.5).
- *
- *  Never edited by hand, so it is read strictly: anything but the three fields with
- *  the right shapes is not a terminal, and the tab says the file is damaged rather
- *  than opening a session nobody asked for. Extra fields are dropped, so a later
- *  version may add one an older Orden ignores; a version it does not know is refused.
- *  The icon the reader chose, and its colour, are the two it keeps besides: optional,
- *  and dropped where they are not a short string. */
-
 import type { Term } from './types'
 
-/** The extension an online terminal's file has. */
 export const TERM_EXTENSION = '.term'
 
-/** The longest machine or session id a file may name. */
 const LONGEST_ID = 200
 
-/** The longest icon or colour a file may say: a set's name and an icon's, or an emoji. */
 const LONGEST_ICON = 120
 
 function iconField(value: unknown): string | null {
@@ -34,13 +22,11 @@ function isId(value: unknown): value is string {
   )
 }
 
-/** A `.term` file's text as its fields, or null for text that is not one. */
 export function termOf(text: string): Term | null {
   let value: unknown
   try {
     value = JSON.parse(text)
   } catch {
-    // Not JSON: a damaged or hand-made file, not a terminal.
     return null
   }
   if (!isRecord(value)) return null
@@ -58,8 +44,6 @@ export function termOf(text: string): Term | null {
   }
 }
 
-/** The text a `.term` file is written with: one line of JSON, the fields in the
- *  documented order, and a newline, as a text file ends. */
 export function termText(term: Term): string {
   const { v, machine, session, icon, iconColor } = term
   return `${JSON.stringify({
