@@ -3050,4 +3050,5 @@ export const te: Dictionary = {
     'మరచిపోయారా? ఫైల్ ఇంకా స్పేస్ ఫోల్డర్‌లోనే ఉంది, మరో పరికరం రక్షణను తీసివేయగలదు.',
   'Unlock what you protected in Orden': 'Orden‌లో మీరు రక్షించినది తెరవండి',
   'Protect with': 'దీనితో రక్షించు',
+  'Let agents read': 'ఏజెంట్‌లను చదవనివ్వండి',
 }

@@ -3059,4 +3059,5 @@ export const gsw: Dictionary = {
     'Vergässe? D Datei isch immer no im Ordner vom Space, und es anders Gerät chan de Schutz entferne.',
   'Unlock what you protected in Orden': 'Gschützts in Orden öffne',
   'Protect with': 'Schütze mit',
+  'Let agents read': 'Agänte la läse',
 }

@@ -114,6 +114,12 @@ export class Protection {
     return shut.includes(SPACE) ? null : shut
   }
 
+  agentsMay(path: string | null | undefined): boolean {
+    if (!path || !this.any) return true
+    const locks = this.covering(path)
+    return !locks.length || unlocks.agentsMay(locks)
+  }
+
   get password(): Hashed | null {
     return this.hashed
   }
@@ -256,3 +262,5 @@ export class Protection {
     keepJson(STORAGE_KEY, this.spaces)
   }
 }
+
+export const protection = new Protection()

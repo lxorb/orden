@@ -3015,4 +3015,5 @@ export const id: Dictionary = {
     'Lupa? Filenya masih ada di folder ruang, dan perangkat lain dapat menghapus perlindungannya.',
   'Unlock what you protected in Orden': 'Buka yang Anda lindungi di Orden',
   'Protect with': 'Lindungi dengan',
+  'Let agents read': 'Izinkan agen membaca',
 }

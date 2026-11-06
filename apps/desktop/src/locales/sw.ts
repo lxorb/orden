@@ -3077,4 +3077,5 @@ export const sw: Dictionary = {
     'Umesahau? Faili bado iko kwenye folda ya nafasi, na kifaa kingine kinaweza kuondoa ulinzi.',
   'Unlock what you protected in Orden': 'Fungua ulichokilinda katika Orden',
   'Protect with': 'Linda kwa',
+  'Let agents read': 'Ruhusu mawakala wasome',
 }

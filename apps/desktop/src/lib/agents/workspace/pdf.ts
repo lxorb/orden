@@ -13,6 +13,7 @@
  *  see pdf/sheets.svelte.ts. */
 
 import { isPdfTarget } from '@orden/markdown/links'
+import { readable } from './guarded'
 import type { AgentAnswer } from '../../automation/caller'
 import { COLOURS, type Highlight, type Quad } from '../../pdf/highlights'
 import { marksWritten } from '../../pdf/sheets.svelte'
@@ -44,6 +45,7 @@ function pdfOf(call: Call): { place: Place; relative: string; path: string } {
   const relative = judged(need(call, 'path'))
   if (!isPdfTarget(relative)) throw new Refused('bad_arguments', `${relative} is not a PDF`)
 
+  readable(onDisk(place, relative), relative)
   return { place, relative, path: onDisk(place, relative) }
 }
 

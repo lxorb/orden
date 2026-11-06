@@ -8,6 +8,7 @@ export type Code =
   | 'not_granted'
   | 'no_such_space'
   | 'no_such_file'
+  | 'protected'
   | 'exists'
   | 'archived'
   | 'read_only'

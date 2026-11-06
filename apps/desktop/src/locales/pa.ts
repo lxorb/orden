@@ -3046,4 +3046,5 @@ export const pa: Dictionary = {
     'ਭੁੱਲ ਗਏ? ਫ਼ਾਈਲ ਹਾਲੇ ਵੀ ਸਪੇਸ ਦੇ ਫੋਲਡਰ ਵਿੱਚ ਹੈ, ਅਤੇ ਕੋਈ ਹੋਰ ਡਿਵਾਈਸ ਸੁਰੱਖਿਆ ਹਟਾ ਸਕਦੀ ਹੈ।',
   'Unlock what you protected in Orden': 'Orden ਵਿੱਚ ਆਪਣੀ ਸੁਰੱਖਿਅਤ ਚੀਜ਼ ਖੋਲ੍ਹੋ',
   'Protect with': 'ਇਸ ਨਾਲ ਸੁਰੱਖਿਅਤ ਕਰੋ',
+  'Let agents read': 'ਏਜੰਟਾਂ ਨੂੰ ਪੜ੍ਹਨ ਦਿਓ',
 }

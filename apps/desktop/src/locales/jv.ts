@@ -2999,4 +2999,5 @@ export const jv: Dictionary = {
     'Lali? Berkasé isih ana ing folder papan, lan piranti liya bisa mbusak pangreksan.',
   'Unlock what you protected in Orden': 'Bukak sing koklindhungi ing Orden',
   'Protect with': 'Lindhungi nganggo',
+  'Let agents read': 'Keparengaké agen maca',
 }

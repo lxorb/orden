@@ -10,7 +10,7 @@ const unlocking = () =>
     : import('./unlocking')
 
 export interface ProtectRow extends MenuItem {
-  id: 'protect' | 'unprotect' | 'lock' | 'lock-all'
+  id: 'protect' | 'unprotect' | 'lock' | 'lock-all' | 'agents'
   run: () => void
 }
 
@@ -23,9 +23,18 @@ export function protectEntries(path: string | null | undefined): ProtectRow[] {
   const root = rootOf(path)
   if (root === null) return []
   const locks = workspace.protection.covering(path)
+  const agents = unlocks.agentsMay(locks)
   const lock: ProtectRow[] =
     locks.length && !unlocks.shut(locks)
-      ? [{ id: 'lock', label: t('Lock'), run: () => unlocks.close(locks) }]
+      ? [
+          { id: 'lock', label: t('Lock'), run: () => unlocks.close(locks) },
+          {
+            id: 'agents',
+            label: t('Let agents read'),
+            checked: agents,
+            run: () => unlocks.letAgents(locks, !agents),
+          },
+        ]
       : []
   if (workspace.protection.own(root, path)) {
     return [

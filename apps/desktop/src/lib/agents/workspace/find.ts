@@ -1,4 +1,5 @@
 import type { AgentAnswer } from '../../automation/caller'
+import { seen } from './guarded'
 import type { Hit } from '@orden/scan/search/match'
 import { parseQuery } from '@orden/scan/search/query'
 import { searchSpace } from '../../search/space'
@@ -38,7 +39,9 @@ async function hitsIn(place: Place, query: string, most: number): Promise<Row[]>
     [],
     most,
     (batch) => {
-      for (const hit of batch.hits) if (found.length < most) found.push(rowOf(place, hit))
+      for (const hit of batch.hits) {
+        if (found.length < most && seen(hit.path)) found.push(rowOf(place, hit))
+      }
     },
     workspace.leftOutOf(root),
   )

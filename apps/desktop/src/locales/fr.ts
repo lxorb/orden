@@ -3134,4 +3134,5 @@ export const fr: Dictionary = {
     'Oublié ? Le fichier est toujours dans le dossier de l’espace, et un autre appareil peut retirer la protection.',
   'Unlock what you protected in Orden': 'Ouvrir ce que vous avez protégé dans Orden',
   'Protect with': 'Protéger avec',
+  'Let agents read': 'Laisser les agents lire',
 }

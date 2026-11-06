@@ -2991,4 +2991,5 @@ export const ja: Dictionary = {
     '忘れましたか？ファイルはスペースのフォルダーにそのままあり、別のデバイスから保護を解除できます。',
   'Unlock what you protected in Orden': 'Orden で保護したものを開きます',
   'Protect with': '保護の方法',
+  'Let agents read': 'エージェントに読ませる',
 }

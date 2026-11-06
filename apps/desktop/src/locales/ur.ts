@@ -3032,4 +3032,5 @@ export const ur: Dictionary = {
     'بھول گئے؟ فائل اب بھی اسپیس کے فولڈر میں ہے، اور کوئی دوسرا آلہ حفاظت ہٹا سکتا ہے۔',
   'Unlock what you protected in Orden': 'Orden میں اپنی محفوظ کردہ چیز کھولیں',
   'Protect with': 'اس سے محفوظ کریں',
+  'Let agents read': 'ایجنٹس کو پڑھنے دیں',
 }

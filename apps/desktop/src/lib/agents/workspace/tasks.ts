@@ -12,6 +12,7 @@
  *  refused before anything is asked. */
 
 import { type Base, type Context, INBOX_PATH, type Row } from '@orden/bases'
+import { seen } from './guarded'
 import { meansInbox } from '@orden/bases/inbox'
 import {
   AgentError,
@@ -132,7 +133,9 @@ async function baseToAnswer(call: Call, name = 'path') {
 export async function listTasks(call: Call): Promise<AgentAnswer> {
   const places = spacesOf(call)
   const rows = await rowsStore()
-  const all = places.flatMap((place) => rows.of(place.space.name))
+  const all = places.flatMap((place) =>
+    rows.of(place.space.name).filter((row) => seen(onDisk(place, row.path))),
+  )
   const view = maybe(call, 'view')
   const base = view && /\.base$/i.test(view) ? await baseToAnswer(call, 'view') : null
   const names = new Set(

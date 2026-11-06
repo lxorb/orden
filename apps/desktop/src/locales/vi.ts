@@ -2987,4 +2987,5 @@ export const vi: Dictionary = {
     'Quên rồi? Tệp vẫn nằm trong thư mục của không gian, và thiết bị khác có thể bỏ bảo vệ.',
   'Unlock what you protected in Orden': 'Mở những gì bạn đã bảo vệ trong Orden',
   'Protect with': 'Bảo vệ bằng',
+  'Let agents read': 'Cho phép tác nhân đọc',
 }

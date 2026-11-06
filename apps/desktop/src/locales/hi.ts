@@ -3038,4 +3038,5 @@ export const hi: Dictionary = {
     'भूल गए? फ़ाइल अब भी स्पेस के फ़ोल्डर में है, और कोई दूसरा डिवाइस सुरक्षा हटा सकता है।',
   'Unlock what you protected in Orden': 'Orden में अपनी सुरक्षित चीज़ खोलें',
   'Protect with': 'इससे सुरक्षित करें',
+  'Let agents read': 'एजेंट को पढ़ने दें',
 }

@@ -75,3 +75,23 @@ describe('locking again', () => {
     expect(unlocks.any).toBe(true)
   })
 })
+
+describe('agents', () => {
+  test('read nothing protected until it is open and the reader lets them', () => {
+    expect(unlocks.agentsMay([NOTE])).toBe(false)
+    unlocks.letAgents([NOTE], true)
+    expect(unlocks.agentsMay([NOTE])).toBe(false)
+    unlocks.unlock([NOTE])
+    expect(unlocks.agentsMay([NOTE])).toBe(false)
+    unlocks.letAgents([NOTE], true)
+    expect(unlocks.agentsMay([NOTE])).toBe(true)
+  })
+
+  test('lose what they were let read as soon as it locks again', () => {
+    unlocks.unlock([NOTE])
+    unlocks.letAgents([NOTE], true)
+    unlocks.lockAll()
+    unlocks.unlock([NOTE])
+    expect(unlocks.agentsMay([NOTE])).toBe(false)
+  })
+})

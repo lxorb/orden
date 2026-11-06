@@ -3023,4 +3023,5 @@ export const gu: Dictionary = {
     'ભૂલી ગયા? ફાઇલ હજુ સ્પેસના ફોલ્ડરમાં છે, અને બીજું ઉપકરણ સુરક્ષા દૂર કરી શકે છે.',
   'Unlock what you protected in Orden': 'Ordenમાં તમે સુરક્ષિત કરેલું ખોલો',
   'Protect with': 'આનાથી સુરક્ષિત કરો',
+  'Let agents read': 'એજન્ટને વાંચવા દો',
 }

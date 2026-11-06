@@ -1,3 +1,4 @@
+import { protection } from '../../protect/protection.svelte'
 import { searchSpace } from '../../search/space'
 import { parseQuery } from '@orden/scan/search/query'
 import { scratchpad } from '../../scratchpad/pad'
@@ -47,7 +48,10 @@ async function markedFrom(
   return theirs.includes(true) ? { ...one, untrusted: true } : one
 }
 
+const agentsMay = (path: string) => protection.agentsMay(path)
+
 async function noteAttachment(root: string, path: string): Promise<Attachment | null> {
+  if (!agentsMay(path)) return null
   const text = await workspace.noteText(path)
   if (text === null) return null
   return await markedFrom({ label: relativeTo(root, path), text: fitted(text, NOTE) }, [path])
@@ -65,7 +69,7 @@ async function tagged(root: string, tag: string): Promise<string[]> {
     [],
     LISTED,
     (batch) => {
-      for (const hit of batch.hits) found.add(hit.path)
+      for (const hit of batch.hits) if (agentsMay(hit.path)) found.add(hit.path)
     },
     workspace.leftOutOf(root),
   ).catch(() => undefined)
@@ -133,7 +137,7 @@ async function attachmentOf(
     case 'tab':
       return await pageAttachment(chip.id, chip.label)
     case 'selection': {
-      if (!selection.trim()) return null
+      if (!selection.trim() || !agentsMay(workspace.active?.path ?? '')) return null
       const one = { label: 'selection', text: fitted(selection, SELECTION) }
       return (await pickedFromOthers(picked)) ? { ...one, untrusted: true } : one
     }
@@ -171,6 +175,7 @@ export async function draftOf(
 ): Promise<Draft> {
   const attachments: Attachment[] = []
   if (space) {
+    if (front && !agentsMay(insideSpace(space.root, front.path))) front = null
     if (mode === 'approve') {
       const root = space.root
       const passages = await retrieve(
@@ -179,7 +184,7 @@ export async function draftOf(
           root,
           excluded: [...workspace.leftOutOf(root), ...(front ? [] : frontPath(root))],
           relative: (path) => withinSpace(root, path),
-          read: (path) => workspace.noteText(path),
+          read: (path) => (agentsMay(path) ? workspace.noteText(path) : Promise.resolve(null)),
         },
         front,
       ).catch(() => [])

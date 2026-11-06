@@ -1,4 +1,5 @@
 import { documentOf } from '@orden/editor'
+import { seen } from './guarded'
 import type { AgentAnswer } from '../../automation/caller'
 import { folderOf, nameOf, relativeTo, within } from '../../space-paths'
 import type { Section } from '../../settings.svelte'
@@ -99,6 +100,7 @@ function inNote(tab: Tab) {
 }
 
 async function selectionIn(tab: Tab): Promise<unknown> {
+  if (tab.path !== null && !seen(tab.path)) return null
   switch (TAB_KINDS[tab.kind].selection) {
     case 'words':
       return inNote(tab)

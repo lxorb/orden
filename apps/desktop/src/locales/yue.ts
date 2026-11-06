@@ -2915,4 +2915,5 @@ export const yue: Dictionary = {
     '唔記得？個檔案仲喺空間個資料夾度，另一部裝置可以取消保護。',
   'Unlock what you protected in Orden': '打開你喺 Orden 保護嘅嘢',
   'Protect with': '用以下方法保護',
+  'Let agents read': '俾代理讀',
 }

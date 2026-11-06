@@ -3041,4 +3041,5 @@ export const fa: Dictionary = {
     'فراموش کرده‌اید؟ فایل هنوز در پوشهٔ فضا است و دستگاه دیگری می‌تواند محافظت را بردارد.',
   'Unlock what you protected in Orden': 'آنچه در Orden محافظت کرده‌اید را باز کنید',
   'Protect with': 'محافظت با',
+  'Let agents read': 'اجازهٔ خواندن به عامل‌ها',
 }

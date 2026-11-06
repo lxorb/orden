@@ -2978,4 +2978,5 @@ export const ko: Dictionary = {
     '잊으셨나요? 파일은 스페이스 폴더에 그대로 있고, 다른 기기에서 보호를 해제할 수 있습니다.',
   'Unlock what you protected in Orden': 'Orden에서 보호한 항목 열기',
   'Protect with': '보호 방법',
+  'Let agents read': '에이전트가 읽게 하기',
 }

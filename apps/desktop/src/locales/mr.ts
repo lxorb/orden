@@ -3036,4 +3036,5 @@ export const mr: Dictionary = {
     'विसरलात? फाइल अजूनही स्पेसच्या फोल्डरमध्ये आहे, आणि दुसरे डिव्हाइस संरक्षण काढू शकते.',
   'Unlock what you protected in Orden': 'Orden मध्ये तुम्ही संरक्षित केलेले उघडा',
   'Protect with': 'याने संरक्षित करा',
+  'Let agents read': 'एजंटना वाचू द्या',
 }

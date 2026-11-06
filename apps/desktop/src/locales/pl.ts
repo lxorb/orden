@@ -3148,4 +3148,5 @@ export const pl: Dictionary = {
     'Zapomniane? Plik nadal jest w folderze przestrzeni, a inne urządzenie może usunąć ochronę.',
   'Unlock what you protected in Orden': 'Otwórz to, co chronisz w Orden',
   'Protect with': 'Chroń za pomocą',
+  'Let agents read': 'Pozwól agentom czytać',
 }

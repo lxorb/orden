@@ -3127,4 +3127,5 @@ export const it: Dictionary = {
     'Dimenticata? Il file è ancora nella cartella dello spazio, e un altro dispositivo può rimuovere la protezione.',
   'Unlock what you protected in Orden': 'Apri ciò che hai protetto in Orden',
   'Protect with': 'Proteggi con',
+  'Let agents read': 'Lascia leggere agli agenti',
 }

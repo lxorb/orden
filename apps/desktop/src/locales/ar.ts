@@ -3170,4 +3170,5 @@ export const ar: Dictionary = {
     'نسيتها؟ الملف ما زال في مجلد المساحة، ويمكن لجهاز آخر إزالة الحماية.',
   'Unlock what you protected in Orden': 'افتح ما حميته في Orden',
   'Protect with': 'الحماية باستخدام',
+  'Let agents read': 'السماح للوكلاء بالقراءة',
 }

@@ -74,6 +74,18 @@ async function protectedFor(env: Env, userId: string): Promise<Protected> {
   return readProtected(row?.protected)
 }
 
+function covers(ways: Record<string, Way> | undefined, path: string): boolean {
+  if (!ways) return false
+  return Object.keys(ways).some((key) => key === '' || path === key || path.startsWith(`${key}/`))
+}
+
+export type Shut = (spaceId: string, path: string) => boolean
+
+export async function shutFor(env: Env, userId: string): Promise<Shut> {
+  const held = await protectedFor(env, userId)
+  return (spaceId, path) => covers(held.spaces[spaceId], path)
+}
+
 async function write(env: Env, userId: string, held: Protected): Promise<boolean> {
   const written = JSON.stringify(held)
   if (byteLength(written) > MOST_BYTES) return false

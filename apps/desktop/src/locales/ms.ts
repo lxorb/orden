@@ -3013,4 +3013,5 @@ export const ms: Dictionary = {
     'Terlupa? Fail masih dalam folder ruang, dan peranti lain boleh membuang perlindungan.',
   'Unlock what you protected in Orden': 'Buka apa yang anda lindungi dalam Orden',
   'Protect with': 'Lindungi dengan',
+  'Let agents read': 'Benarkan ejen membaca',
 }

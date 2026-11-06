@@ -28,6 +28,7 @@ import { heldIndex, indexOf } from './links'
 import { openFile } from './reader-view'
 import { Refused } from './problem'
 import { createFile, fileKindOf } from './new-files'
+import { readable } from './guarded'
 import { namedTab, tabsOwnSpace } from './tab-target'
 import {
   judged,
@@ -79,6 +80,7 @@ export function noteOf(
   const relative = notePath(safe)
   if (relative === null) throw new Refused('bad_arguments', `${safe} is not a markdown note`)
 
+  readable(onDisk(place, relative), relative)
   if (writing) writableAt(place, onDisk(place, relative))
 
   return { place, relative }

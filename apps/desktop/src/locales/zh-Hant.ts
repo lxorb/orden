@@ -2925,4 +2925,5 @@ export const zhHant: Dictionary = {
     '忘記了？檔案仍在空間的資料夾裡，另一台裝置可以取消保護。',
   'Unlock what you protected in Orden': '打開你在 Orden 中保護的內容',
   'Protect with': '保護方式',
+  'Let agents read': '允許代理讀取',
 }

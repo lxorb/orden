@@ -1,3 +1,4 @@
+import { protection } from '../protect/protection.svelte'
 import { canWriteAt } from '../sharing.svelte'
 import { insideSpace, withinSpace } from '../space-paths'
 import type { Space } from '../workspace.svelte'
@@ -62,6 +63,7 @@ export async function noteFor(args: Said, name = 'path', writing = false): Promi
 
     const relative = withinSpace(space.root, path)
     if (relative === null) throw new Error('no note of this space is open, so say which path')
+    if (!protection.agentsMay(path)) throw new Error(`${relative} is protected`)
 
     workspace.flush()
     return { relative, path, text: open.doc }
@@ -69,6 +71,7 @@ export async function noteFor(args: Said, name = 'path', writing = false): Promi
 
   const relative = relativeIn(args, name)
   const path = insideSpace(space.root, relative)
+  if (!protection.agentsMay(path)) throw new Error(`${relative} is protected`)
   const text = await workspace.noteText(path)
   if (text === null) throw new Error(`there is no note at ${relative}`)
 

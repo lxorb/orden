@@ -3081,4 +3081,5 @@ export const ha: Dictionary = {
     "Ka manta? Fayil ɗin yana nan a babban fayil na sararin, kuma wata na'ura na iya cire kariyar.",
   'Unlock what you protected in Orden': 'Buɗe abin da ka kare a Orden',
   'Protect with': 'Kare da',
+  'Let agents read': 'Bari wakilai su karanta',
 }

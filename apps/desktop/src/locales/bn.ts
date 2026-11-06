@@ -3032,4 +3032,5 @@ export const bn: Dictionary = {
     'ভুলে গেছেন? ফাইলটি এখনও স্পেসের ফোল্ডারে আছে, আর অন্য ডিভাইস সুরক্ষা সরাতে পারে।',
   'Unlock what you protected in Orden': 'Orden-এ আপনার সুরক্ষিত জিনিস খুলুন',
   'Protect with': 'যা দিয়ে সুরক্ষিত করবেন',
+  'Let agents read': 'এজেন্টদের পড়তে দিন',
 }

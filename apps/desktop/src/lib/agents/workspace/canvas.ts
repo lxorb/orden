@@ -1,4 +1,5 @@
 import type { AgentAnswer } from '../../automation/caller'
+import { readable as guarded } from './guarded'
 import { type Canvas, merged, readCanvas as parse, stamped, writeCanvas } from '../../canvas/format'
 import { canWriteAt } from '../../sharing.svelte'
 import { invoke } from '../../tauri'
@@ -45,6 +46,7 @@ function canvasOf(call: Call, writing: boolean): Target {
     throw new Refused('read_only', `${place.space.name} is shared with you to read`)
   }
 
+  guarded(path, relative)
   return { place, relative, path, draft: null }
 }
 

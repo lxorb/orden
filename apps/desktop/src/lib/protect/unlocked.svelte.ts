@@ -28,6 +28,23 @@ class Unlocks {
 
   private set open(next: ReadonlySet<string>) {
     this.opened = next
+    if ([...this.agents].some((one) => !next.has(one))) {
+      this.agents = new Set([...this.agents].filter((one) => next.has(one)))
+    }
+    this.revision++
+  }
+
+  private agents = $state<ReadonlySet<string>>(new Set())
+
+  agentsMay(locks: readonly Lock[]): boolean {
+    return locks.every((one) => this.has(one) && this.agents.has(keyOf(one)))
+  }
+
+  letAgents(locks: readonly Lock[], may: boolean): void {
+    const keys = locks.filter((one) => this.has(one)).map(keyOf)
+    this.agents = may
+      ? new Set([...this.agents, ...keys])
+      : new Set([...this.agents].filter((one) => !keys.includes(one)))
     this.revision++
   }
   relock = $state(readRelock())

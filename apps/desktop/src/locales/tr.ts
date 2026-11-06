@@ -3057,4 +3057,5 @@ export const tr: Dictionary = {
     'Unuttunuz mu? Dosya hâlâ alanın klasöründe ve başka bir cihaz korumayı kaldırabilir.',
   'Unlock what you protected in Orden': 'Orden’da koruduklarınızı açın',
   'Protect with': 'Şununla koru',
+  'Let agents read': 'Ajanların okumasına izin ver',
 }

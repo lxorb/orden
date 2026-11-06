@@ -3114,4 +3114,5 @@ export const ptPT: Dictionary = {
     'Esqueceu-se? O ficheiro continua na pasta do espaço, e outro dispositivo pode remover a proteção.',
   'Unlock what you protected in Orden': 'Abrir o que protegeu no Orden',
   'Protect with': 'Proteger com',
+  'Let agents read': 'Deixar os agentes ler',
 }

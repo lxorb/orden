@@ -2955,4 +2955,5 @@ export const th: Dictionary = {
     'ลืมหรือ? ไฟล์ยังอยู่ในโฟลเดอร์ของพื้นที่ และอุปกรณ์อื่นเอาการป้องกันออกได้',
   'Unlock what you protected in Orden': 'เปิดสิ่งที่คุณป้องกันไว้ใน Orden',
   'Protect with': 'ป้องกันด้วย',
+  'Let agents read': 'ให้เอเจนต์อ่านได้',
 }

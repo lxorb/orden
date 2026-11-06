@@ -2250,3 +2250,26 @@ describe('run_agent from a narrower grant', () => {
     expect(panel).toHaveProperty('thread', 'thread-1')
   })
 })
+
+describe('a note the reader protected', () => {
+  test('is refused to an agent until it is unlocked and agents are let read it', async () => {
+    const { protection } = await import('../../protect/protection.svelte')
+    const { unlocks } = await import('../../protect/unlocked.svelte')
+    protection.set('/s/Home', '/s/Home/Soup.md', 'password')
+    try {
+      expect(await call('read_note', { space: 'Home', path: 'Soup' })).toMatchObject({
+        code: 'protected',
+      })
+      const locks = protection.covering('/s/Home/Soup.md')
+      unlocks.unlock(locks)
+      expect(await call('read_note', { space: 'Home', path: 'Soup' })).toMatchObject({
+        code: 'protected',
+      })
+      unlocks.letAgents(locks, true)
+      expect(await call('read_note', { space: 'Home', path: 'Soup' })).not.toHaveProperty('error')
+    } finally {
+      protection.set('/s/Home', '/s/Home/Soup.md', null)
+      unlocks.lockAll()
+    }
+  })
+})

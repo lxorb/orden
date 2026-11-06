@@ -3100,4 +3100,5 @@ export const de: Dictionary = {
     'Vergessen? Die Datei liegt weiter im Ordner des Space, und ein anderes Gerät kann den Schutz entfernen.',
   'Unlock what you protected in Orden': 'Geschütztes in Orden öffnen',
   'Protect with': 'Schützen mit',
+  'Let agents read': 'Agenten lesen lassen',
 }

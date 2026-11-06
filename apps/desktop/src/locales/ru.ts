@@ -3148,4 +3148,5 @@ export const ru: Dictionary = {
     'Забыли? Файл по-прежнему в папке пространства, а другое устройство может снять защиту.',
   'Unlock what you protected in Orden': 'Откройте защищённое в Orden',
   'Protect with': 'Защитить с помощью',
+  'Let agents read': 'Разрешить агентам читать',
 }

@@ -1,4 +1,5 @@
 import { noteBody, type Space, spacesFor } from '../mcp/tools'
+import { shutFor } from '../protected'
 import type { Env } from '../types'
 
 export interface Found {
@@ -39,11 +40,13 @@ export async function searchNotes(env: Env, userId: string, query: string): Prom
   const out: Found[] = []
   let read = 0
 
+  const shut = await shutFor(env, userId)
   for (const space of await spacesFor(env, userId)) {
     if (out.length >= HITS || read >= MOST_READ) break
 
     for (const row of await pathsIn(env, space)) {
       if (out.length >= HITS || read >= MOST_READ) break
+      if (shut(space.id, row.path)) continue
       read++
 
       const body = await noteBody(env, space.id, row.id)
@@ -65,9 +68,10 @@ export async function readNote(env: Env, userId: string, name: string): Promise<
   const wanted = named(name.trim()).toLowerCase()
   if (!wanted) return null
 
+  const shut = await shutFor(env, userId)
   for (const space of await spacesFor(env, userId)) {
     for (const row of await pathsIn(env, space)) {
-      if (named(row.path).toLowerCase() !== wanted) continue
+      if (named(row.path).toLowerCase() !== wanted || shut(space.id, row.path)) continue
       return noteBody(env, space.id, row.id)
     }
   }

@@ -3142,4 +3142,5 @@ export const uk: Dictionary = {
     'Забули? Файл досі в папці простору, а інший пристрій може зняти захист.',
   'Unlock what you protected in Orden': 'Відкрийте захищене в Orden',
   'Protect with': 'Захистити за допомогою',
+  'Let agents read': 'Дозволити агентам читати',
 }

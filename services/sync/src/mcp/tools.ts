@@ -18,6 +18,7 @@ import { fits } from '../storage'
 import { hashOfBytes } from '../sync2/files'
 import type { Env, Note } from '../types'
 import type { TokenRow } from './tokens'
+import { type Shut, shutFor } from '../protected'
 
 const MOST_SPACES = 500
 const MOST_NOTES = 1000
@@ -208,9 +209,15 @@ async function listNotes(env: Env, space: Space): Promise<string> {
   return marked(spaceSource(space), results.map((row) => row.path).join('\n'))
 }
 
-async function readNote(env: Env, space: Space, args: Record<string, unknown>): Promise<string> {
+async function readNote(
+  env: Env,
+  space: Space,
+  args: Record<string, unknown>,
+  shut: Shut,
+): Promise<string> {
   const path = readablePath(text(args, 'path') ?? '')
   if (!path) return 'That is not a note path.'
+  if (shut(space.id, path)) return PROTECTED(path)
 
   const note = await env.DB.prepare(
     "select id from notes where space_id = ? and path = ? and deleted = 0 and kind != 'file'",
@@ -227,6 +234,7 @@ async function searchNotes(
   env: Env,
   scope: Space[],
   args: Record<string, unknown>,
+  shut: Shut,
 ): Promise<string> {
   const asked = text(args, 'query')
   if (asked === null) return 'The query has to be text.'
@@ -252,6 +260,7 @@ async function searchNotes(
 
     for (const row of results) {
       if (count >= MOST_MATCHES || read >= MOST_SEARCHED) break
+      if (shut(one.id, row.path)) continue
       read++
 
       const body = await noteBody(env, one.id, row.id)
@@ -274,6 +283,7 @@ async function listBacklinks(
   env: Env,
   space: Space,
   args: Record<string, unknown>,
+  shut: Shut,
 ): Promise<string> {
   const path = readablePath(text(args, 'path') ?? '')
   if (!path) return 'That is not a note path.'
@@ -292,7 +302,7 @@ async function listBacklinks(
   const found: string[] = []
 
   for (const row of results) {
-    if (found.length >= MOST_MATCHES || row.path === path) continue
+    if (found.length >= MOST_MATCHES || row.path === path || shut(space.id, row.path)) continue
 
     const body = await noteBody(env, space.id, row.id)
     for (const link of findLinks(body)) {
@@ -411,6 +421,9 @@ function notACanvas(path: string): string {
   return `${path} is a canvas. Write JSON Canvas into it, or leave it as it is.`
 }
 
+const PROTECTED = (path: string) =>
+  `${path} is protected. The reader can open it in Orden; an agent cannot.`
+
 export async function callTool(
   env: Env,
   token: TokenRow,
@@ -436,20 +449,26 @@ export async function callTool(
 
     case 'read_note': {
       const space = await askedSpace(env, userId, args)
-      return typeof space === 'string' ? space : readNote(env, space, args)
+      return typeof space === 'string'
+        ? space
+        : readNote(env, space, args, await shutFor(env, userId))
     }
 
     case 'search_notes': {
       if (args.space !== undefined && args.space !== null) {
         const space = await askedSpace(env, userId, args)
-        return typeof space === 'string' ? space : searchNotes(env, [space], args)
+        return typeof space === 'string'
+          ? space
+          : searchNotes(env, [space], args, await shutFor(env, userId))
       }
-      return searchNotes(env, await spacesFor(env, userId), args)
+      return searchNotes(env, await spacesFor(env, userId), args, await shutFor(env, userId))
     }
 
     case 'list_backlinks': {
       const space = await askedSpace(env, userId, args)
-      return typeof space === 'string' ? space : listBacklinks(env, space, args)
+      return typeof space === 'string'
+        ? space
+        : listBacklinks(env, space, args, await shutFor(env, userId))
     }
 
     case 'write_note': {
@@ -459,6 +478,8 @@ export async function callTool(
       const space = await askedSpace(env, userId, args)
       if (typeof space === 'string') return space
       if (space.role === 'read') return `${space.name} was shared with you to read, not to write.`
+      const path = cleanPath(text(args, 'path') ?? '')
+      if (path && (await shutFor(env, userId))(space.id, path)) return PROTECTED(path)
 
       return writeNote(env, space, args, token.device)
     }

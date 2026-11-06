@@ -3037,4 +3037,5 @@ export const ps: Dictionary = {
     'هېر مو شو؟ دوتنه لا هم د ځای په پوښۍ کې ده، او بله وسیله کولای شي ساتنه لرې کړي.',
   'Unlock what you protected in Orden': 'هغه څه پرانیزئ چې په Orden کې مو خوندي کړي',
   'Protect with': 'خوندي کول په',
+  'Let agents read': 'اجنټانو ته د لوستلو اجازه ورکړئ',
 }

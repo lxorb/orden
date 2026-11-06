@@ -2977,4 +2977,5 @@ export const am: Dictionary = {
     'ረሱት? ፋይሉ አሁንም በቦታው አቃፊ ውስጥ አለ፣ እና ሌላ መሣሪያ ጥበቃውን ማስወገድ ይችላል።',
   'Unlock what you protected in Orden': 'በOrden የጠበቁትን ይክፈቱ',
   'Protect with': 'ጠብቅ በ',
+  'Let agents read': 'ወኪሎች እንዲያነቡ ፍቀድ',
 }

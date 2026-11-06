@@ -1,4 +1,5 @@
 import type { Context, Row } from '@orden/bases'
+import { type Shut, shutFor } from '../protected'
 import {
   AgentError,
   clockOf,
@@ -157,12 +158,15 @@ async function notesOf(env: Env, space: Space): Promise<Held[]> {
 async function rowsOf(
   env: Env,
   spaces: readonly Space[],
+  shut: Shut,
 ): Promise<{ rows: Row[]; partial: boolean }> {
   const rows: Row[] = []
   let left = MOST_READ
   let partial = false
   for (const space of spaces) {
-    const held = (await notesOf(env, space)).filter((one) => MARKDOWN.test(one.path))
+    const held = (await notesOf(env, space)).filter(
+      (one) => MARKDOWN.test(one.path) && !shut(space.id, one.path),
+    )
     if (held.length > left) partial = true
     const reading = held.slice(0, Math.max(0, left))
     left -= reading.length
@@ -287,7 +291,7 @@ async function list(env: Env, token: TokenRow, args: Args, seen: Space[]): Promi
   seen.push(...spaces)
   const view = words(args, 'view')
   const filter = words(args, 'filter')
-  const { rows, partial } = await rowsOf(env, spaces)
+  const { rows, partial } = await rowsOf(env, spaces, await shutFor(env, token.user_id))
   const base =
     view && /\.base$/i.test(view)
       ? await readBaseAt(env, await spaceOf(env, token, args, seen), view)
@@ -455,7 +459,7 @@ async function query(env: Env, token: TokenRow, args: Args, seen: Space[]): Prom
   } else {
     throw new Said('Say the path of a .base file, or the base as yaml.')
   }
-  const { rows, partial } = await rowsOf(env, [space])
+  const { rows, partial } = await rowsOf(env, [space], await shutFor(env, token.user_id))
   const answer = queryBase(base, words(args, 'view'), rows, contextNow())
   return partial ? { ...answer, partial } : answer
 }

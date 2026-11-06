@@ -1,3 +1,4 @@
+import { protection } from '../protect/protection.svelte'
 import type { TextEdit } from '@orden/markdown/edits'
 import { typedItem, writeList, writeProperty } from '@orden/markdown/property-edits'
 import { isQuoted, unquoted, writtenFlowItems } from '@orden/markdown/yaml'
@@ -155,12 +156,14 @@ export async function searchSpace(args: Said): Promise<unknown> {
   return {
     query,
     running: search.running,
-    hits: search.hits.map((hit) => ({
-      path: hit.path,
-      name: hit.name,
-      line: hit.line,
-      text: hit.text,
-    })),
+    hits: search.hits
+      .filter((hit) => protection.agentsMay(hit.path))
+      .map((hit) => ({
+        path: hit.path,
+        name: hit.name,
+        line: hit.line,
+        text: hit.text,
+      })),
   }
 }
 

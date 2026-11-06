@@ -3100,4 +3100,5 @@ export const fil: Dictionary = {
     'Nakalimutan? Nasa folder pa rin ng space ang file, at maaaring alisin ng ibang device ang proteksyon.',
   'Unlock what you protected in Orden': 'Buksan ang pinrotektahan mo sa Orden',
   'Protect with': 'Protektahan gamit ang',
+  'Let agents read': 'Payagang basahin ng mga agent',
 }

@@ -2922,4 +2922,5 @@ export const zhHans: Dictionary = {
     '忘了？文件仍在空间的文件夹里，另一台设备可以取消保护。',
   'Unlock what you protected in Orden': '打开你在 Orden 中保护的内容',
   'Protect with': '保护方式',
+  'Let agents read': '允许智能体读取',
 }
