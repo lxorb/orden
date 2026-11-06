@@ -1395,6 +1395,27 @@ kept as a web note in the folder it was let go over, named after the link's own 
 copied in the way a file from Explorer is. A sentence carries no link and is the drop
 target's own business, as before.
 
+**A row of the file list let go of on a site** (#416) is the file itself there, the way a
+file dragged from the system's file manager is: a note is its `.md`, a PDF or a picture
+its own file, and Slack, WhatsApp Web, Gmail and any other site that takes files attach
+it. A web note is its address instead. A folder and a locked note carry nothing. The page
+also gets the note's words as text, so a field that only takes text is still given them.
+The drag starts in the app's own page, so Orden gives the site what to drop at the engine:
+when the drag starts, each row is copied into the app's cache (`carried/`) under its own
+name, and the page is handed those copies.
+
+- **Windows**: the page's drop target (`web_visual.rs`) hands WebView2 a shell data object
+  of the copies and the words in place of the app's own drag (`page_carry/win.rs`).
+- **macOS**: WKWebView is handed the same drag with a pasteboard of the copies, the words
+  and the address (`page_carry/mac.rs`, through a hook in wry's `drag_drop.rs`).
+- **Linux**: the app's drag never leaves its own page (`page_drag.rs`), so the hole under
+  the page hears it and CEF is told through `Input.dispatchDragEvent`, with the files.
+
+The page's events are the engine's own, trusted. Copies no page took are removed when the
+drag ends. The ones a page took are kept, since a site may read them only when the
+message is sent: the first drag a day later removes them, and the app's start removes all. The edges of the pane still split it. A
+tab dragged over a page still moves into that pane.
+
 ## A link in a tab of its own
 
 Chrome's convention, the same on every surface of the app that opens something (a
@@ -2346,6 +2367,9 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/web-tab/engines.ts` | the search engines: Chrome's list for the region, a custom one with `%s`. Pure, tested |
 | `apps/desktop/src/lib/web-tab/search-engine.svelte.ts` | the search engine this device chose. Tested |
 | `apps/desktop/src/lib/web-tab/dropped-site.ts` | a link dragged out of a page onto the file list, kept as a web note. Tested |
+| `apps/desktop/src/lib/web-tab/carry-in.ts` | rows of the file list carried onto a site: what each row hands the page, and the page told of the drag on Linux. Tested |
+| `apps/desktop/src-tauri/src/page_carry.rs` | the carried copies, their words and address, and the page told through CEF; `win.rs` and `mac.rs` hand them to WebView2 and WebKit. Unit tested |
+| `scripts/carry-drive.py`, `scripts/carry_page.py` | the drive for a row let go of on a site: the file, its name and words, on all three engines |
 | `scripts/web-bot-probe.py` | the drive for a bot check: what a page and a frame from another site can see of Orden, and a cookie set twice kept twice |
 | `scripts/browser-parity-probe.py` | the drive for History, Delete browsing data, a private tab, the search engine and a link dropped on the list |
 | `apps/desktop/src/lib/web-tab/web-data.ts` | what a site is, and the names of the stores a space kept before #239. Pure, tested |

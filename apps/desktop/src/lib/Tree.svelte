@@ -31,6 +31,7 @@
   import { shortcuts } from './shortcuts.svelte'
   import { syncMark } from './surfaces.svelte'
   import { carried, carriedNothing, carry, isBookmarkDrag, landing } from './drag-paths'
+  import { isDesktop } from './tauri'
   import { dropOnList, fileClipboard, listMotion } from './list-landing.svelte'
   import { dropTarget, targetFor } from './drop-target.svelte'
   import {
@@ -450,10 +451,12 @@
     carrying = paths
     workspace.panes.dragged({ tabId: null })
     void import('./tab-strip/space-drop').then((drop) => drop.followTreeDrag(paths))
+    if (isDesktop) void import('./web-tab/carry-in').then((pages) => pages.carryToPages(paths))
   }
 
   function endDrag() {
     workspace.panes.dropped()
+    if (isDesktop) void import('./web-tab/carry-in').then((pages) => pages.carriedToPages())
     carriedNothing()
     letGo()
     stopRolling()

@@ -5,6 +5,8 @@
 mod download;
 #[cfg(target_os = "macos")]
 mod drag_drop;
+#[cfg(target_os = "macos")]
+pub use drag_drop::{carry_into_pages, CarryIn};
 mod navigation;
 #[cfg(feature = "mac-proxy")]
 mod proxy;

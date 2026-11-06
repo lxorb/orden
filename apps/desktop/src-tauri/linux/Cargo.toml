@@ -154,11 +154,13 @@ objc2-app-kit = { version = "0.3", default-features = false, features = [
   "NSBitmapImageRep",
   "NSButton",
   "NSControl",
+  "NSDragging",
   "NSEvent",
   "NSGraphics",
   "NSGraphicsContext",
   "NSImage",
   "NSImageRep",
+  "NSPasteboard",
   "NSPrintInfo",
   "NSPrintOperation",
   "NSResponder",
@@ -260,6 +262,8 @@ windows-core = "0.61"
 windows_com = { package = "windows", version = "0.61", features = [
   "Win32_System_Com",
   "Win32_System_Com_StructuredStorage",
+  "Win32_System_DataExchange",
+  "Win32_System_Memory",
   "Win32_Graphics_DirectComposition",
   "Win32_Graphics_Direct2D_Common",
   "Win32_Graphics_Dxgi_Common",
@@ -271,6 +275,7 @@ windows_com = { package = "windows", version = "0.61", features = [
   "Win32_UI_Input_KeyboardAndMouse",
   "Win32_UI_Input_Pointer",
   "Win32_UI_Shell",
+  "Win32_UI_Shell_Common",
   "Win32_UI_WindowsAndMessaging",
 ] }
 
