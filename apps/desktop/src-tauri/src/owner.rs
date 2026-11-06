@@ -1,4 +1,4 @@
-use tauri::{Runtime, WebviewWindow};
+use tauri::{Runtime, Webview, Window};
 
 #[tauri::command]
 pub async fn owner_can() -> bool {
@@ -8,28 +8,25 @@ pub async fn owner_can() -> bool {
 }
 
 #[tauri::command]
-pub async fn owner_check<R: Runtime>(
-    window: WebviewWindow<R>,
-    reason: String,
-) -> Result<bool, String> {
+pub async fn owner_check<R: Runtime>(webview: Webview<R>, reason: String) -> Result<bool, String> {
     let reason: String = reason
         .chars()
         .filter(|one| !one.is_control())
         .take(200)
         .collect();
-    let window = handle_of(&window);
+    let window = handle_of(&webview.window());
     tauri::async_runtime::spawn_blocking(move || platform::check(&reason, window))
         .await
         .map_err(|error| error.to_string())?
 }
 
 #[cfg(target_os = "windows")]
-fn handle_of<R: Runtime>(window: &WebviewWindow<R>) -> Option<isize> {
+fn handle_of<R: Runtime>(window: &Window<R>) -> Option<isize> {
     window.hwnd().ok().map(|hwnd| hwnd.0 as isize)
 }
 
 #[cfg(not(target_os = "windows"))]
-fn handle_of<R: Runtime>(_window: &WebviewWindow<R>) -> Option<isize> {
+fn handle_of<R: Runtime>(_window: &Window<R>) -> Option<isize> {
     None
 }
 

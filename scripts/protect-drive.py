@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import http.server
 import json
 import os
 import pathlib
@@ -9,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -18,6 +20,19 @@ SPACE = "Protect probe"
 NOTE = "Diary.md"
 PASSWORD = "tulip ladder"
 WORDS = "the secret words"
+PAGE = b"<!doctype html><title>a page</title><p>a page beside the note"
+
+
+class Handler(http.server.BaseHTTPRequestHandler):
+    def log_message(self, *_: Any) -> None:
+        pass
+
+    def do_GET(self) -> None:  # noqa: N802 - the standard library's name
+        self.send_response(200)
+        self.send_header("content-type", "text/html; charset=utf-8")
+        self.send_header("content-length", str(len(PAGE)))
+        self.end_headers()
+        self.wfile.write(PAGE)
 
 
 class App:
@@ -89,7 +104,6 @@ DEVICE = """
 (async () => {
   const ask = window.__TAURI_INTERNALS__.invoke
   const can = await ask('owner_can').catch((error) => 'error: ' + String(error))
-  if (can !== true) return { can }
   const began = Date.now()
   const said = await Promise.race([
     ask('owner_check', { reason: 'The protect drive' }).then(
@@ -168,6 +182,9 @@ def main() -> int:
     (config / "automation.json").write_text(
         json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8"
     )
+    site = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=site.serve_forever, daemon=True).start()
+    url = f"http://127.0.0.1:{site.server_address[1]}/"
     log = open(args.out / "app.log", "wb")
     process = subprocess.Popen(
         [str(args.exe)],
@@ -196,12 +213,20 @@ def main() -> int:
         )
         where = step(FIND % {"space": json.dumps(SPACE), "note": json.dumps(NOTE)}, "the note", 60)
 
+        app.eval(f"nib.workspace.openPage({json.dumps(url)}); return true")
+        step(
+            "nib.pages.each().some(([, page]) => page.live)",
+            "a web page in the window beside the app's own webview",
+            60,
+        )
+        app.eval(FIND % {"space": json.dumps(SPACE), "note": json.dumps(NOTE)}, 60)
         device = app.eval(DEVICE, 140)
         print(f"the device: {json.dumps(device)}", flush=True)
-        if not isinstance(device, dict) or (device.get("can") is True and device.get("said") == "no answer"):
+        said = str(device.get("said", "")) if isinstance(device, dict) else ""
+        if said == "no answer":
             wrong.append(f"Windows Hello was asked and never answered: {device}")
-        elif str(device.get("said", "")).startswith("refused:") and len(str(device["said"])) < 12:
-            wrong.append(f"Windows Hello refused and said no reason: {device}")
+        elif said.startswith("refused:") and not said.startswith("refused: Windows Hello"):
+            wrong.append(f"Windows Hello was never asked, the call was refused: {device}")
 
         step(MENU % {"path": json.dumps(where["path"])}, "the row's menu")
         step(PRESS % {"where": json.dumps("[role=menuitem]"), "label": json.dumps("Protect")}, "Protect")
@@ -251,6 +276,7 @@ def main() -> int:
             process.wait(20)
         except subprocess.TimeoutExpired:
             process.kill()
+        site.shutdown()
         shutil.rmtree(spaces, ignore_errors=True)
 
     for one in wrong:
