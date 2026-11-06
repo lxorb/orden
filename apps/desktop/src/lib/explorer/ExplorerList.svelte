@@ -105,7 +105,7 @@
     if (top < box.scrollTop) box.scrollTop = top
     else if (top + lineHeight > box.scrollTop + box.clientHeight)
       box.scrollTop = top + lineHeight - box.clientHeight
-    requestAnimationFrame(() => {
+    void tick().then(() => {
       box.querySelector<HTMLElement>(`[data-index="${index}"]`)?.focus({ preventScroll: true })
     })
   }

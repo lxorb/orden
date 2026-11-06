@@ -87,6 +87,7 @@ const { viewOf } = await import('./view.svelte')
 
 const settled = async () => {
   for (let round = 0; round < 5; round++) await new Promise((resolve) => setTimeout(resolve))
+  await new Promise((resolve) => requestAnimationFrame(resolve))
   flushSync()
 }
 
@@ -200,6 +201,21 @@ describe('a file explorer', () => {
     field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
     await settled()
     expect(changed).toEqual(['rename /home/me/notes.txt letters.txt'])
+  })
+
+  test('keeps a name being typed when the folder is read again under it', async () => {
+    const { view } = await explorer()
+    press('n')
+    press('F2')
+    await settled()
+    const field = target.querySelector<HTMLInputElement>('input.rename')
+    if (!field) throw new Error('no rename field')
+    field.value = 'let'
+    await view.reload()
+    await settled()
+    expect(target.querySelector('input.rename')).toBe(field)
+    expect(document.activeElement).toBe(field)
+    expect(changed).toEqual([])
   })
 
   test('puts what is picked in the trash with Delete, and makes a folder with its key', async () => {

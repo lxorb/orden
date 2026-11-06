@@ -41,8 +41,10 @@
     }
   })
 
+  const shownFolder = $derived(view.listing?.path ?? null)
+
   $effect(() => {
-    if (focused && view.listing) untrack(() => list?.focus())
+    if (focused && shownFolder !== null) untrack(() => list?.focus())
   })
 
   const counted = $derived.by(() => {
