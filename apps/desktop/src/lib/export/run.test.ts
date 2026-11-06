@@ -1,11 +1,6 @@
-/** What an export hands the writer, for the formats whose files land beside the
- *  one the save dialog was given. Where they land is measured in save.test.ts;
- *  this is the half that has to know what is inside them. */
-
 import { expect, test, vi } from 'vitest'
 import type { Payload } from './save'
 
-/** What the writer was handed. */
 const handed: Payload[] = []
 
 vi.mock('../tauri', async (original) => ({

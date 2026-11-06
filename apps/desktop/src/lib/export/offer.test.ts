@@ -16,7 +16,6 @@ const TEN = EXPORT_FORMATS.map((format) => format.id)
 const VARIANTS = EXPORT_VARIANTS.map((variant) => variant.id)
 const KINDS: ExportKind[] = ['note', 'deck', 'canvas', 'file', 'none']
 
-/** A note with a slide break in it, which is what makes a note a deck. */
 const DECK = '# One\n\ntext\n\n---\n\n# Two\n\nmore\n'
 
 describe('what each kind of document goes out as', () => {
@@ -32,8 +31,6 @@ describe('what each kind of document goes out as', () => {
     expect(offeredBy('canvas')).toEqual(['png', 'svg', 'pdf'])
   })
 
-  /** The bug this exists to prevent: a drawing offered as a Word file, an ePub or
-   *  plain text, none of which a drawing has anything to put in. */
   test('never offers a canvas a format a drawing cannot be', () => {
     for (const id of ['txt', 'md', 'textbundle', 'rtf', 'jpg', 'html', 'docx', 'epub'] as const) {
       expect(offeredBy('canvas'), id).not.toContain(id)
@@ -48,9 +45,6 @@ describe('what each kind of document goes out as', () => {
     expect(offeredBy('none')).toEqual([])
   })
 
-  /** Each kind has one order and keeps it. A note and a deck take the list's own,
-   *  so a row sits where somebody last saw it; a canvas takes the order its own
-   *  menu on the plane already lists, which is the row above this test. */
   test('keeps the ten in the list own fixed order for the kinds that have them', () => {
     for (const kind of ['note', 'deck'] as const) {
       const ten = offeredBy(kind).filter((id) => TEN.some((one) => one === id))
@@ -89,7 +83,6 @@ describe('which kind the thing on screen is', () => {
     expect(exportKindOf({ kind: 'pdf', path: '/s/paper.pdf', text: '' })).toBe('file')
   })
 
-  /** No path is no bytes, and a row that cannot answer is worse than no row. */
   test('is nothing for a paper with no path behind it', () => {
     expect(exportKindOf({ kind: 'pdf', path: null, text: '' })).toBe('none')
   })
@@ -130,12 +123,6 @@ describe('the rows themselves', () => {
   })
 })
 
-/** The other half: that the File menu, the command palette and the shortcut
- *  settings all read the offer above rather than each keeping a list.
- *
- *  The stores are the real ones, with the platform and the browser stood in for,
- *  because what is being tested is that three readers of one list agree - and a
- *  mock of the list would agree with itself. */
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -153,14 +140,11 @@ function memoryStorage(): Storage {
 
 const CANVAS = '{"nodes":[],"edges":[]}'
 
-/** A PDF becomes its page note the first time it is opened, out of the page sizes
- *  pdf.js reads off it, and node has no pdf.js: the paper here is one A4 page. */
 vi.mock('../pdf/document', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../pdf/document')>()),
   pageSizes: () => Promise.resolve([{ width: 794, height: 1123 }]),
 }))
 
-/** The page notes written here, which a paper's first open makes. */
 const written = vi.hoisted(() => new Map<string, string>())
 
 vi.mock('../tauri', async (importOriginal) => ({
@@ -169,8 +153,6 @@ vi.mock('../tauri', async (importOriginal) => ({
     const path = args?.path ?? ''
     if (command === 'write_note') written.set(path, args?.content ?? '')
     if (command !== 'read_note') return Promise.resolve(undefined)
-    // A canvas wherever one is asked for, but a page note only once it is written, a
-    // paper never as words, and no folder's marker: there are no folders here.
     const held = written.get(path) ?? (/(\.(pages|pdf)|\/\.keep)$/.test(path) ? undefined : CANVAS)
     return held === undefined ? Promise.reject(new Error(`no ${path}`)) : Promise.resolve(held)
   },
@@ -179,15 +161,12 @@ vi.mock('../tauri', async (importOriginal) => ({
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
-/** Loaded once, at module scope: the command list and the menu reach half the
- *  app, and compiling that belongs to no one test. See docs/conventions.md. */
 const { workspace } = await import('../workspace.svelte')
 const { exportCommands } = await import('../commands')
 const { appMenu } = await import('../app-menu')
 const { isSubmenu } = await import('../menu-item')
 const { SHORTCUTS } = await import('../shortcuts/registry')
 
-/** Every row of Export, which is a submenu of File: rule rows left out. */
 function menuRows(): MenuItem[] {
   const file = appMenu({ onpalette: () => undefined, onhistory: () => undefined }).find(
     (one) => one.id === 'file',
@@ -199,12 +178,10 @@ function menuRows(): MenuItem[] {
   return submenu.rows.filter((row): row is MenuItem => row !== null && !isSubmenu(row))
 }
 
-/** The same rows as labels. */
 function menuLabels(): string[] {
   return menuRows().map((row) => row.label)
 }
 
-/** The ids of the format rows the palette offers, in order. */
 function offeredIds(): string[] {
   return exportCommands()
     .map((command) => command.id)
@@ -212,7 +189,6 @@ function offeredIds(): string[] {
     .map((id) => id.slice('export-'.length))
 }
 
-/** Closes whatever the last test opened, so each starts from an empty window. */
 async function only(open: () => Promise<void> | void) {
   for (const tab of [...workspace.tabs]) workspace.close(tab.id)
   await open()
@@ -235,15 +211,11 @@ describe('the menu, the palette and the shortcut settings', () => {
     expect(menuLabels()).toEqual(['Export as PNG', 'Export as SVG', 'Export as PDF'])
   })
 
-  /** A paper has no tab of its own: it opens as its page note, so what Export
-   *  offers is what a set of pages offers. */
   test('offer a paper what its page note offers', async () => {
     await only(() => workspace.openPdf('/space/paper.pdf'))
     expect(offeredIds()).toEqual([...offeredBy('pages')])
   })
 
-  /** Greying out rather than vanishing: the menu keeps its shape, and the reason
-   *  a row cannot run is the row itself. */
   test('keep the Export menu with every row greyed out when nothing can go out', async () => {
     await only(() => workspace.openGraph())
 
@@ -282,8 +254,6 @@ describe('the menu, the palette and the shortcut settings', () => {
     }
   })
 
-  /** A key bound to a format this document does not go out as finds no row, which
-   *  is how it comes to do nothing rather than to fail. */
   test('leave a key for a format this document has not got nothing to run', async () => {
     await only(() => workspace.openCanvas('/space/board.canvas'))
 

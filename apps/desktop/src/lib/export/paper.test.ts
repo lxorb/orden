@@ -6,26 +6,10 @@ import { documentOf } from './document'
 import { toDocx } from './docx'
 import { toRtf } from './rtf'
 
-/** The page setup, in the two formats that have a page.
- *
- *  Word and RTF ignored it altogether: the Word document went out with no page
- *  properties at all, which is Word's own default of US Letter, and the RTF had
- *  `\paperw12240\paperh15840\margl1440` written into its header by hand. So a reader
- *  on Orden's A4 default got Letter, and A5, landscape and a 33 mm margin were dropped
- *  without anything saying so - while the same note printed or exported as HTML
- *  honoured every one of them.
- *
- *  Read back off the real files, the way wrapping.test.ts beside this does: a page
- *  size is a number in a package, and the only way to know it is there is to open the
- *  package and look. */
-
-/** The note under test. Its own front matter says nothing about paper, so what comes
- *  out is what the settings asked for. */
 const NOTE = '# A page\n\nWords on it.\n'
 
 const setup = (over: Partial<PageSetup> = {}): PageSetup => ({ ...DEFAULT_PAGE_SETUP, ...over })
 
-/** The page properties of a `.docx`, read out of the section at the end of the body. */
 async function docxPage(source: string, page: PageSetup) {
   const doc = documentOf(source, 'Note.md')
   const paper = paperTwips(pageSetupFor(source, page), doc.title, '2026-09-14')
@@ -54,8 +38,6 @@ function rtfOf(source: string, page: PageSetup) {
   return toRtf(doc, [], paperTwips(pageSetupFor(source, page), doc.title, '2026-09-14'))
 }
 
-/** A4 upright is 210 by 297 mm, and a twip is a fourteen-hundred-and-fortieth of an
- *  inch: 11,906 by 16,838, the numbers Word itself writes for A4. The margin Orden defaults to is 20 mm, which is 1134. */
 describe('the paper a Word document goes out on', () => {
   test('is the A4 the app defaults to, not the Letter Word assumes', async () => {
     const page = await docxPage(NOTE, setup())
@@ -63,7 +45,6 @@ describe('the paper a Word document goes out on', () => {
     expect(page.width).toBe(11906)
     expect(page.height).toBe(16838)
     expect(page.orientation).toBe('portrait')
-    // Letter is 12240 by 15840, which is what came out before this.
     expect(page.width).not.toBe(12240)
     expect(page.height).not.toBe(15840)
   })
@@ -82,10 +63,6 @@ describe('the paper a Word document goes out on', () => {
       setup({ paper: 'A5', orientation: 'landscape', margin: '33mm' }),
     )
 
-    // A5 upright is 148 by 210 mm: 8391 by 11906. The sheet is handed over
-    // upright and the writer turns it, so what lands in the package is the page as
-    // it is printed - wider than it is tall - with `orient` saying which way it was
-    // turned. That is what OOXML asks for.
     expect(page.width).toBe(11906)
     expect(page.height).toBe(8391)
     expect(page.orientation).toBe('landscape')
@@ -96,7 +73,6 @@ describe('the paper a Word document goes out on', () => {
     const over = '---\nexport:\n  paper: Legal\n  margin: 15mm\n---\n\n# A page\n'
     const page = await docxPage(over, setup({ paper: 'A4', margin: '20mm' }))
 
-    // Legal is 8.5 by 14 inches: 12240 by 20160, and 15 mm is 850 twips.
     expect(page.width).toBe(12240)
     expect(page.height).toBe(20160)
     expect(page.top).toBe(850)
@@ -113,8 +89,6 @@ describe('the paper a Word document goes out on', () => {
 
     const header = await running.zip.file(running.headers[0]!)!.async('string')
     const footer = await running.zip.file(running.footers[0]!)!.async('string')
-    // The placeholders are filled by the time a writer sees them, so what is in the
-    // part is words and never `${title}`.
     expect(header).toContain('A page')
     expect(header).not.toContain('${title}')
     expect(footer).toContain('page of 2026-09-14')
@@ -134,9 +108,6 @@ describe('the paper an RTF goes out on', () => {
   test('is A5 on its side with a 33 mm margin when that is what was asked', () => {
     const rtf = rtfOf(NOTE, setup({ paper: 'A5', orientation: 'landscape', margin: '33mm' }))
 
-    // RTF says the sheet as it is printed, so a turned page is the wide way round -
-    // which is the other way from Word, where the sheet is upright and `orient` turns
-    // it. Each format is written the way that format says it.
     expect(rtf).toContain('\\paperw11906\\paperh8391')
     expect(rtf).toContain('\\landscape')
     expect(rtf).toContain('\\margl1871')
@@ -146,7 +117,6 @@ describe('the paper an RTF goes out on', () => {
     const over = '---\nexport:\n  paper: A3\n  orientation: landscape\n---\n\n# A page\n'
     const rtf = rtfOf(over, setup())
 
-    // A3 upright is 297 by 420 mm: 16838 by 23811, turned.
     expect(rtf).toContain('\\paperw23811\\paperh16838')
     expect(rtf).toContain('\\landscape')
   })
@@ -164,15 +134,12 @@ describe('the paper an RTF goes out on', () => {
   })
 
   test('and a reader cannot be talked out of the document by the running text', () => {
-    // The running text is a note's own words, so it is escaped like any others: a brace
-    // in a header would otherwise close the group and the rest would be control words.
     const rtf = rtfOf(NOTE, setup({ header: 'a {brace} and a \\slash' }))
 
     expect(rtf).toContain('a \\{brace\\} and a \\\\slash')
   })
 })
 
-/** The twips both writers count in, and the one place that works them out. */
 describe('the setup as a document writer needs it', () => {
   test('is the sheet upright, its margin, and the running text already filled', () => {
     expect(paperTwips(DEFAULT_PAGE_SETUP, 'A page', '2026-09-14')).toEqual({

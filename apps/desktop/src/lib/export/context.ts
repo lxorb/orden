@@ -1,11 +1,3 @@
-/** What a render of the open note needs that only the running app knows.
- *
- *  An export and a print are the same page twice: the note through the renderer,
- *  with the paper from the settings, the colours on screen or the ones chosen for
- *  export, every picture resolved to where it actually is, and every wikilink
- *  pointed at the file it names. Written down once here so a printed page and an
- *  exported one cannot disagree about any of it. */
-
 import type { HtmlOptions } from '../export'
 import { imagePath } from '../images'
 import { links } from '../link-index.svelte'
@@ -17,23 +9,13 @@ import { invoke, isNative } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import type { RunOptions } from './run'
 
-/** The note being rendered, and where it lives. The same shape run.ts calls a
- *  note, so a target goes straight to it. */
 export interface Target {
   source: string
   name: string
   path: string | null
-  /** Whether the note's raw HTML is markup, asked of the document the way the
-   *  reading view asks it; see trust.ts. A printed page of somebody else's words
-   *  is still their words. */
   trusted: boolean
 }
 
-/** The note in front of somebody, read as text.
- *
- *  Flushed first: the editor's last few keystrokes are still a rope until
- *  something asks for them as a string, and this is asking. So are a plane's last
- *  strokes, which it commits after a pause. */
 export function openTarget(): Target {
   workspace.wordsNow()
   const note = workspace.active
@@ -46,8 +28,6 @@ export function openTarget(): Target {
   }
 }
 
-/** How a rendered page should look: the colours chosen for export, or the ones on
- *  screen right now, theme file and custom CSS included. */
 export async function look(): Promise<
   Pick<HtmlOptions, 'scheme' | 'accent' | 'codeTheme' | 'css'>
 > {
@@ -63,20 +43,12 @@ export async function look(): Promise<
   return { ...chosen, scheme: theme.current, css: sheets.filter((css) => css.trim()).join('\n') }
 }
 
-/** Everything a render needs beyond the note itself: paper, colours, where the
- *  pictures it names actually are, and where its links point. */
 export async function renderOptions(target: Target): Promise<RunOptions> {
-  // A note of another space resolves its links in that space, read before the
-  // renderer asks, since it asks synchronously.
   await links.spaceRead(target.path)
   return {
     page: settings.page,
     resolveImage: (src: string) => imagePath(src, target.path, target.source) ?? src,
-    // An `![[Note]]` in the document brings that note into it, the way it shows in
-    // the editor. Read here rather than in the renderer, which is sync.
     readNote: (name: string) => links.embedNote(name, target.path),
-    // A wikilink written out as markdown points at the file it named, relative to
-    // this note, so the export reads in any other editor.
     link: (link) => links.relativeTarget(link, target.path),
     escapeHtml: !target.trusted,
     ...(await look()),

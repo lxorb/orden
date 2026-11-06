@@ -3,15 +3,10 @@ import JSZip from 'jszip'
 import { describe, expect, test } from 'vitest'
 import { ommlFor } from './omml'
 
-/** The OMML a formula comes to, as the XML Word will read.
- *
- *  A tree of `docx` components cannot be looked at from the outside, so the only
- *  honest way to see what was built is to build the document and open it again. */
 async function ommlOf(tex: string): Promise<string> {
   const children = ommlFor(tex)
   expect(children, tex).not.toBeNull()
 
-  // Asserted not null on the line above.
   const file = new Document({
     sections: [{ children: [new Paragraph({ children: [new Maths({ children: children! })] })] }],
   })
@@ -137,8 +132,6 @@ describe('a formula Word can lay out', () => {
     expect(xml).toContain('<m:chr m:val="∑"/>')
     expect(xml).toContain('<m:sub><m:r><m:t>i=1</m:t></m:r></m:sub>')
     expect(xml).toContain('<m:sup><m:r><m:t>n</m:t></m:r></m:sup>')
-    // What the sum runs over is everything written after it, which is what TeX
-    // means by writing them side by side.
     expect(xml).toContain('<m:e><m:r><m:t>i</m:t></m:r></m:e>')
   })
 
@@ -146,8 +139,6 @@ describe('a formula Word can lay out', () => {
     const xml = await ommlOf('\\int_0^1 x\\,dx')
 
     expect(xml).toContain('<m:nary>')
-    // The integral sign is OMML's own default for an n-ary, so there is no
-    // `m:chr` to write; what says it is an integral is where the limits sit.
     expect(xml).toContain('<m:limLoc m:val="subSup"/>')
     expect(xml).toContain('<m:sub><m:r><m:t>0</m:t></m:r></m:sub>')
     expect(xml).toContain('<m:sup><m:r><m:t>1</m:t></m:r></m:sup>')
@@ -198,8 +189,6 @@ describe('a formula Word can lay out', () => {
       expect(await ommlOf(`a${spacer}b`), spacer).toContain('<m:t> ')
     }
 
-    // A word-shaped macro needs something after it to end its name, exactly as
-    // it does in TeX: `\quadb` is an undefined control word, not a wide space.
     for (const spacer of ['\\quad ', '\\qquad ', '\\quad{}']) {
       expect(await ommlOf(`a${spacer}b`), spacer).toContain('<m:t> ')
     }

@@ -7,13 +7,8 @@ import { documentOf } from './document'
 import { toDocx } from './docx'
 import type { Picture } from './pictures'
 
-/** The page every test here goes on unless it says otherwise: the A4 the app
- *  defaults to, with its 20 mm margin and no running text. paper.test.ts beside
- *  this is where the page itself is measured. */
 const PAPER = paperTwips(DEFAULT_PAGE_SETUP, 'Corpus', '2026-09-14')
 
-/** A real PNG, twenty four by sixteen: header, one stored deflate block, end.
- *  Built by hand so the test knows the size the writer should read back. */
 function png(width: number, height: number): Uint8Array {
   const chunk = (type: string, body: number[]): number[] => {
     const bytes = [...new TextEncoder().encode(type), ...body]
@@ -23,8 +18,6 @@ function png(width: number, height: number): Uint8Array {
       (body.length >>> 8) & 0xff,
       body.length & 0xff,
     ]
-    // The CRC is not read by anything here, and a wrong one would only matter to
-    // a reader that draws the picture.
     return [...length, ...bytes, 0, 0, 0, 0]
   }
 
@@ -50,8 +43,6 @@ function png(width: number, height: number): Uint8Array {
   ])
 }
 
-/** A JPEG header alone: start of image, a baseline frame that says how big it is,
- *  end of image. Only the frame is read, so nothing else has to be real. */
 function jpeg(width: number, height: number): Uint8Array {
   return new Uint8Array([
     0xff,
@@ -102,13 +93,10 @@ let footnotes: string
 let rels: string
 
 beforeAll(async () => {
-  // Built once: packing a document is the slow part, and every test below reads
-  // the same package.
   zip = await JSZip.loadAsync(await toDocx(doc, PICTURES, PAPER))
   const read = async (path: string) => {
     const file = zip.file(path)
     expect(file, path).not.toBeNull()
-    // Asserted just above; a missing part is a failed test, not a null read.
     return file!.async('string')
   }
 
@@ -118,8 +106,6 @@ beforeAll(async () => {
   rels = await read('word/_rels/document.xml.rels')
 })
 
-/** Every tag in some XML, in order, with a stack so a close that does not match
- *  its open is a failure rather than something a later assertion trips over. */
 function wellFormed(xml: string): { tags: number; deepest: number } {
   const open: string[] = []
   let tags = 0
@@ -136,8 +122,6 @@ function wellFormed(xml: string): { tags: number; deepest: number } {
       continue
     }
 
-    // An attribute value may hold a `>`, which the pattern above would end the
-    // tag on; none of what Word writes does, so a stray one is a real fault.
     expect(attributes, name).not.toContain('<')
     if (!empty) {
       open.push(name)
@@ -147,8 +131,6 @@ function wellFormed(xml: string): { tags: number; deepest: number } {
 
   expect(open, 'tags left open').toEqual([])
 
-  // A bare ampersand is the other way well-formed XML goes wrong, and the one a
-  // note full of prose is likeliest to cause.
   const stray = [...body.matchAll(/&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)/g)]
   expect(stray.map((one) => body.slice(one.index, one.index + 12))).toEqual([])
 
@@ -171,7 +153,6 @@ describe('the package', () => {
     ]
 
     expect(wanted.filter((path) => zip.file(path) === null)).toEqual([])
-    // Guards the test: an empty zip would pass a filter over nothing.
     expect(Object.keys(zip.files).length).toBeGreaterThan(wanted.length)
   })
 
@@ -217,7 +198,6 @@ describe('the document part', () => {
     const missing = used.filter((id) => !declared.has(id))
     expect(missing).toEqual([])
 
-    // A picture's relationship points at a part that has to actually be there.
     const parts = [...declared.values()].filter((target) => target.startsWith('media/'))
     expect(parts.length).toBe(2)
     expect(parts.filter((target) => zip.file(`word/${target}`) === null)).toEqual([])
@@ -274,8 +254,6 @@ describe('what the note says reaches the document', () => {
 
   test('the code block, keeping every line and its indentation', () => {
     expect(document_).toContain('const answer: number = 42')
-    // The leading spaces of the second line are what a code block is for, and
-    // Word drops leading space unless the run says to keep it.
     expect(document_).toMatch(/xml:space="preserve">\s*const indented = true/)
   })
 
@@ -311,7 +289,6 @@ describe('what the note says reaches the document', () => {
   })
 
   test('a wikilink as the words it showed, brackets and all gone', () => {
-    // Its own run, because the words around it are not part of the link.
     expect(document_).toContain('A wikilink to ')
     expect(document_).toContain('Another note')
     expect(document_).toContain('the other')
@@ -322,7 +299,6 @@ describe('what the note says reaches the document', () => {
 describe('maths', () => {
   test('display maths becomes OMML Word lays out itself', () => {
     expect(document_).toContain('<m:oMath>')
-    // The corpus formula is an integral of a fraction, so both must be in there.
     expect(document_).toContain('<m:nary')
     expect(document_).toContain('<m:f>')
   })
@@ -345,8 +321,6 @@ describe('maths', () => {
 describe('footnotes', () => {
   test('are real footnotes, referenced from where the note referenced them', () => {
     expect(document_).toMatch(/<w:footnoteReference w:id="1"\s*\/>/)
-    // The apostrophe is a character reference in XML, which is what makes this
-    // the check that the words were escaped rather than pasted in.
     expect(footnotes).toContain('The footnote&apos;s own words')
   })
 
@@ -366,13 +340,8 @@ describe('footnotes', () => {
   })
 })
 
-/** English metric units per pixel at 96 dpi: 914400 to the inch. What `docx`
- *  writes a transformation given in pixels as. */
 const EMU = 9525
 
-/** The parts every picture in the document points at, in the order the pictures
- *  appear. `docx` names a media part after a hash of its bytes, so the only way
- *  to the right one is through the relationship the drawing names. */
 async function mediaParts(): Promise<Uint8Array[]> {
   const targets = new Map(
     [...rels.matchAll(/Id="([^"]+)"[^>]*?Target="([^"]+)"/g)].map(([, id = '', target = '']) => [
@@ -387,13 +356,11 @@ async function mediaParts(): Promise<Uint8Array[]> {
     used.map(async (id) => {
       const file = zip.file(`word/${targets.get(id) ?? ''}`)
       expect(file, id).not.toBeNull()
-      // Asserted on the line above.
       return file!.async('uint8array')
     }),
   )
 }
 
-/** Every picture's drawn size, in pixels. */
 function extents(): number[][] {
   return [...document_.matchAll(/<wp:extent cx="(\d+)" cy="(\d+)"\/>/g)].map(
     ([, cx = '0', cy = '0']) => [Number(cx) / EMU, Number(cy) / EMU],
@@ -410,16 +377,11 @@ describe('pictures', () => {
   })
 
   test('keep the size their own header gives', () => {
-    // 24 by 16 fits the column, so it is drawn at its own size.
     expect(extents()).toHaveLength(2)
     expect(extents()[0]).toEqual([24, 16])
   })
 
   test('a picture wider than the text column is scaled, keeping its shape', () => {
-    // The column is the A4 sheet less both 20 mm margins, which is 643 pixels at
-    // the 96 to the inch Word counts a drawing in; it used to be a flat 600 picked
-    // to be safe on a letter page. 1200 by 600 does not fit, so it comes down to
-    // the column and takes its height with it.
     expect(extents()[1]).toEqual([643, 322])
   })
 
@@ -473,10 +435,6 @@ describe('a note with nothing much in it', () => {
   })
 })
 
-/** The six colours a `==highlight==` can be, each mapped to the nearest of the
- *  seventeen Word's own highlight attribute allows. Word has no palette of its
- *  own to mix, so this is as near as a highlight can come; what matters is that
- *  a red one and a green one do not both arrive yellow. */
 describe('a coloured highlight', () => {
   const TONES = `==plain==, ==🔴 red==, ==🟠 orange==, ==🟢 green==, ==🔵 blue==, ==🟣 violet==\n`
 

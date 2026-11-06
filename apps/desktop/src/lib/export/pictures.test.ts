@@ -132,8 +132,6 @@ describe('naming the pictures inside a package', () => {
     vi.unstubAllGlobals()
   })
 
-  /** Every picture read straight out of a data URI, which is the one road that
-   *  needs neither a disk nor a network. */
   const inline = (mime: string) => `data:${mime};base64,${toBase64(PNG)}`
 
   test('keeps the name a picture came with', async () => {

@@ -1,9 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 
-/** What a print and an export are handed about the open note. The app around it
- *  is stood in for: what is under test is that the trust question the reading
- *  view asks of a document is asked of it here too, rather than an export of a
- *  collaborator's note running their markup in a window of the app's own. */
 const world = vi.hoisted(() => ({
   active: null as { doc: string; name: string; path: string | null; note: object } | null,
   trusts: true,

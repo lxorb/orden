@@ -27,7 +27,6 @@ const byPath = new Map(files.map((file) => [file.path, file.body]))
 const text = () => {
   const body = byPath.get('text.md')
   expect(typeof body).toBe('string')
-  // Asserted on the line above.
   return body as string
 }
 
@@ -130,9 +129,6 @@ describe('the zip the packages are built with', () => {
       { path: 'other.txt', body: 'x'.repeat(400) },
     ])
 
-    // The local file header's compression method sits at offset 8, and zero is
-    // "stored". Read off the bytes rather than asked of the library, because it
-    // is the file on disk a reader will judge.
     expect(bytes[8]).toBe(0)
     expect(bytes[9]).toBe(0)
   })

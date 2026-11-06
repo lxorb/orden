@@ -1,19 +1,6 @@
-/** The two halves of the picture export that can be reasoned about: how a long
- *  note is cut into pages, and the SVG the browser is handed.
- *
- *  The canvas itself is not here. Node has no canvas and no `foreignObject`, and
- *  a stub of either would only prove that the stub agrees with the code; the
- *  drawing is covered end to end in a browser instead. What is left is worth
- *  testing on its own, because both of the ways this export fails are in it: the
- *  arithmetic decides how many files the person ends up with, and markup that is
- *  not well-formed XML makes the whole SVG fail to parse without a word, leaving
- *  a blank picture and nothing to read. */
-
 import { describe, expect, test } from 'vitest'
 import { pagesOf, svgOf } from './image'
 
-/** A complete, self-contained document, which is the only kind `toImages` takes:
- *  the stylesheet inline, the picture a `data:` URI, nothing fetched. */
 const PAGE = `<!doctype html>
 <html lang="en" data-theme="light">
 <head>
@@ -36,8 +23,6 @@ const PAGE = `<!doctype html>
 </html>
 `
 
-// The five names XML defines by itself, plus any number. Anything else needs a
-// DTD, which a `foreignObject` has not got.
 const REFERENCE = /&(?:#\d+|#x[0-9a-fA-F]+|amp|lt|gt|quot|apos);/y
 const CLOSE_TAG = /<\/([^\s>]+)\s*>/y
 const OPEN_TAG = /<([A-Za-z][^\s/>]*)((?:"[^"]*"|'[^']*'|[^>"'])*?)(\/?)>/y
@@ -73,12 +58,6 @@ function badAttributes(source: string): string | null {
     : `something that is not an attribute in ${JSON.stringify(source)}`
 }
 
-/** Everything that has to be true for an XML parser to take the markup. Null
- *  means well formed; anything else names what is wrong.
- *
- *  The same scanner as `epub.test.ts`, written out again rather than shared:
- *  importing one test file into another registers its whole suite a second
- *  time. */
 function malformed(xml: string): string | null {
   const open: string[] = []
   let at = 0
@@ -161,7 +140,6 @@ describe('the pages a note comes to', () => {
   test('is still a page when there is nothing to show', () => {
     expect(pagesOf(0, 1000)).toEqual([{ top: 0, height: 0 }])
     expect(pagesOf(0, null)).toEqual([{ top: 0, height: 0 }])
-    // A height no page could be filled to would otherwise divide forever.
     expect(pagesOf(2400, 0)).toEqual([{ top: 0, height: 2400 }])
     expect(pagesOf(-10, 500)).toEqual([{ top: 0, height: 0 }])
   })
@@ -193,8 +171,6 @@ describe('the SVG the browser is handed', () => {
   })
 
   test('puts the document in the XHTML namespace', () => {
-    // Inside a foreignObject the default namespace is SVG's, and an <html> that
-    // does not say otherwise draws nothing at all.
     expect(svg).toContain('<html xmlns="http://www.w3.org/1999/xhtml" lang="en"')
     expect(svg).not.toContain('<!doctype')
     expect(svg).not.toContain('<!DOCTYPE')
@@ -230,8 +206,6 @@ describe('the SVG the browser is handed', () => {
     expect(svg).toContain('<img src="data:image/png;base64,iVBORw0KGgo=" alt="One" />')
     expect(svg).toContain('Guard: a &lt; b &amp;&amp; c &gt; d')
     expect(svg).toContain('<!--nib:toc-->')
-    // The stylesheet travels as text, so its `>` comes back a `>` when the
-    // parser hands the document over and no CDATA section is needed.
     expect(svg).toContain('#write &gt; p { margin: 0 0 1em; }')
   })
 

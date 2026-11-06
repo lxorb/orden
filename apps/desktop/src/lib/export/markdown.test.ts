@@ -3,8 +3,6 @@ import { describe, expect, test } from 'vitest'
 import { CORPUS } from './corpus'
 import { toMarkdown } from './markdown'
 
-/** A space that holds one note, so a wikilink to it resolves and everything else
- *  does not. Answers a path relative to the note being exported. */
 const resolve = (link: FoundLink) => (link.target === 'Another note' ? 'Another note.md' : null)
 
 describe('the note as it was written', () => {

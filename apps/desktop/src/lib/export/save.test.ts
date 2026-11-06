@@ -1,21 +1,10 @@
-/** Where an export goes, and the one rule that keeps it from going anywhere else.
- *
- *  The three roads out - a dialog, a download, a folder on a phone - each belong
- *  to a build, and a test cannot be all three at once. So what is measured here
- *  is the part that is the same on all of them: the calls that reach the crate,
- *  in the order and the shape it expects, over a stubbed bridge. Which road a
- *  build takes is measured in the browser instead; see scripts/export-e2e.py. */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { toBase64 } from '../bytes'
 
-/** Every call that went over the bridge, in order. */
 const calls: { command: string; args: Record<string, unknown> }[] = []
 
-/** The files already on the disk, for the crate to say a name is taken. */
 const onDisk = new Set<string>()
 
-/** What the reader typed into the save dialog. */
 let typed = ''
 
 vi.mock('../tauri', () => ({
@@ -34,7 +23,6 @@ vi.mock('../tauri', () => ({
 vi.mock('@tauri-apps/plugin-dialog', () => ({ save: () => Promise.resolve(typed) }))
 vi.mock('@tauri-apps/plugin-opener', () => ({ revealItemInDir: () => Promise.resolve() }))
 
-/** What the link index was told, in order. */
 const heard: string[] = []
 
 vi.mock('../link-index.svelte', () => ({
@@ -52,7 +40,6 @@ beforeEach(() => {
   onDisk.clear()
 })
 
-/** Where each file was written, by path. */
 function written(): Map<string, unknown> {
   return new Map(
     calls
@@ -97,8 +84,6 @@ describe('writing a file', () => {
 
     const base64 = calls[0]?.args.base64
     expect(typeof base64).toBe('string')
-    // Four characters per three bytes, which is a third more rather than the six
-    // characters a byte an array of JSON numbers would cost.
     expect(String(base64).length).toBeLessThan(big.length * 2)
   })
 

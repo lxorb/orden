@@ -1,7 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
-/** Printing what is open asks the same question of a plane's or a page note's HTML as
- *  the surface and the Export menu do (#612). The drawing itself is stood in for. */
 const world = vi.hoisted(() => ({
   kind: 'canvas',
   trusted: true,

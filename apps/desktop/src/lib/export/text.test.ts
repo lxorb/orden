@@ -6,12 +6,9 @@ import { toPlainText } from './text'
 const TEXT = toPlainText(documentOf(CORPUS, CORPUS_NAME))
 const lines = TEXT.split('\n')
 
-/** The line that holds `text`, so a test says what it is looking for rather than
- *  counting its way to an index. */
 function lineWith(text: string): string {
   const found = lines.find((line) => line.includes(text))
   expect(found, text).toBeDefined()
-  // Asserted on the line above.
   return found!
 }
 
@@ -89,8 +86,6 @@ describe('a table', () => {
 
     expect(rule).toMatch(/^-+ {2}-+ {2}-+$/)
     expect(head.length).toBe(rule.length)
-    // `Right` is right aligned and `22` is the longest value under it, so the
-    // heading and the value end in the same column.
     expect(first.length).toBe(head.length)
   })
 

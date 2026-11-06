@@ -1,16 +1,3 @@
-/** The note as a Word document.
- *
- *  A real one: named styles a person can change in Word's own styles pane, real
- *  numbering behind the ordered lists, a real table whose header repeats over a
- *  page break, real footnotes at the foot of the page, and the maths as OMML
- *  rather than a picture of it. Everything is built through the `docx` package,
- *  which owns the package's parts and its relationships; what is here is only the
- *  reading of the note into components.
- *
- *  Pure but for the pictures it is handed. The bytes arrive already read, so
- *  nothing here touches a disk or the network and the whole writer is testable on
- *  a note alone. */
-
 import {
   AlignmentType,
   BorderStyle,
@@ -30,8 +17,6 @@ import {
   ImageRun,
   LevelFormat,
   LineRuleType,
-  // `Math` is the global every rounding call below needs, so Word's own maths
-  // element comes in under the name the rest of this codebase gives the subject.
   Math as Maths,
   PageBreak,
   PageOrientation,
@@ -51,8 +36,6 @@ import { ommlFor } from './omml'
 import type { Picture } from './pictures'
 import { legalXml } from './xml-legal'
 
-/** Consolas is on every Windows and Word substitutes something monospaced for it
- *  everywhere else, which is more than a bare `monospace` would get. */
 const MONOSPACE = 'Consolas'
 
 const INK = '1A1A1A'
@@ -61,23 +44,14 @@ const CODE_FILL = 'F5F5F5'
 const HEAD_FILL = 'EFEFEF'
 const LINE = 'BFBFBF'
 
-/** Twips, which is how Word counts a page: a twentieth of a point, so an inch is
- *  1440 and half an inch - one rung of indent - is this. */
 const STEP = 720
 
-/** The numbering every ordered list in the document counts against. */
 const ORDERED = 'nib-ordered'
 
-/** Five rungs is as deep as a list goes before the shape stops saying anything,
- *  and Word wants each rung declared before a paragraph may sit on it. */
 const RUNGS = [0, 1, 2, 3, 4]
 
-/** Pixels to the inch, which is what Word counts a drawing in. */
 const PER_INCH = 96
 
-/** An open box and a ticked one. Word has a content control that draws a real
- *  checkbox, but it survives almost nothing it is handed to - another reader, a
- *  PDF, a paste into mail - and these two characters survive all of it. */
 const CHECKS = { open: '☐ ', done: '☑ ' }
 
 const HEADINGS = [
@@ -89,17 +63,11 @@ const HEADINGS = [
   HeadingLevel.HEADING_6,
 ]
 
-/** The body: eleven point, with a line and a little air, which is what a page of
- *  prose reads at. Used twice on purpose - as the document's defaults, which
- *  everything in the file falls back to, and as `Normal`, which is the name a
- *  person finds it under in Word. */
 const BODY = {
   run: { font: 'Calibri', size: 22 },
   paragraph: { spacing: { after: 160, line: 276, lineRule: LineRuleType.AUTO } },
 }
 
-/** One rung of the heading ladder. The air above a heading is twice the air
- *  under it, which is what ties it to the text it introduces. */
 function heading(size: number, before: number) {
   return {
     run: { size, bold: true, color: size >= 24 ? INK : CODE_INK },
@@ -131,8 +99,6 @@ const STYLES: IStylesOptions = {
       run: { font: MONOSPACE, size: 18, color: CODE_INK },
       paragraph: {
         shading: { fill: CODE_FILL },
-        // No air between the lines, because the lines are one block: a fence
-        // spaced like prose is a fence nobody can read the shape of.
         spacing: { before: 0, after: 0, line: 240, lineRule: LineRuleType.AUTO },
         contextualSpacing: true,
         border: {
@@ -190,7 +156,6 @@ const NUMBERING: INumberingOptions = {
   ],
 }
 
-/** The kinds of picture Word embeds as they are. */
 const IMAGE_TYPES: Record<string, 'png' | 'jpg' | 'gif' | 'bmp'> = {
   'image/png': 'png',
   'image/jpeg': 'jpg',
@@ -198,8 +163,6 @@ const IMAGE_TYPES: Record<string, 'png' | 'jpg' | 'gif' | 'bmp'> = {
   'image/bmp': 'bmp',
 }
 
-/** The frame headers of a JPEG, which are the markers that carry the size. C4,
- *  C8 and CC share the range and are tables rather than frames. */
 const JPEG_FRAMES = new Set([
   0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf,
 ])
@@ -213,8 +176,6 @@ function reader(bytes: Uint8Array): DataView {
   return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 }
 
-/** A PNG says its size in the IHDR chunk, which the format puts first: two
- *  big-endian words at byte 16. */
 function pngSize(bytes: Uint8Array): Size | null {
   if (bytes.length < 24) return null
 
@@ -224,9 +185,6 @@ function pngSize(bytes: Uint8Array): Size | null {
   return { width: png.getUint32(16), height: png.getUint32(20) }
 }
 
-/** A JPEG is a chain of segments, each one `FF`, a marker, and its own length.
- *  The size is in the first frame header, height five bytes into the segment and
- *  width seven. */
 function jpegSize(bytes: Uint8Array): Size | null {
   if (bytes.length < 12 || bytes[0] !== 0xff || bytes[1] !== 0xd8) return null
 
@@ -244,8 +202,6 @@ function jpegSize(bytes: Uint8Array): Size | null {
       return { width: jpeg.getUint16(at + 7), height: jpeg.getUint16(at + 5) }
     }
 
-    // The padding between segments, and the markers that stand on their own,
-    // carry no length to step over.
     if (marker === 0xff) at++
     else if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd9)) at += 2
     else at += 2 + Math.max(jpeg.getUint16(at + 2), 2)
@@ -254,7 +210,6 @@ function jpegSize(bytes: Uint8Array): Size | null {
   return null
 }
 
-/** A GIF writes its size little-endian right after the signature. */
 function gifSize(bytes: Uint8Array): Size | null {
   if (bytes.length < 10) return null
 
@@ -262,8 +217,6 @@ function gifSize(bytes: Uint8Array): Size | null {
   return { width: gif.getUint16(6, true), height: gif.getUint16(8, true) }
 }
 
-/** A BMP writes its size in the info header. The height is signed, because a
- *  negative one means the rows were stored top down. */
 function bmpSize(bytes: Uint8Array): Size | null {
   if (bytes.length < 26) return null
 
@@ -280,9 +233,6 @@ function sizeOf(bytes: Uint8Array, mime: string): Size | null {
   return null
 }
 
-/** The size a picture is drawn at: its own, or as much of it as the text column
- *  takes, in proportion. Word stretches a drawing to whatever it is told, so a
- *  size guessed rather than read is a squashed picture. */
 function fitted(size: Size, column: number): Size {
   if (size.width <= column) return size
 
@@ -295,21 +245,13 @@ interface Drawn {
   readonly size: Size
 }
 
-/** What a document needs to write a run: the pictures the note may name, the
- *  number each footnote label was given, and a count of the ordered lists so far,
- *  because each of them needs a numbering of its own to start again from one. */
 interface Writer {
   readonly pictures: ReadonlyMap<string, Picture>
   readonly notes: ReadonlyMap<string, number>
   lists: number
-  /** The text column in pixels, which the paper decides. A picture is brought down
-   *  to it, so an A5 page with a wide margin gets a drawing that fits on it rather
-   *  than one off the edge of it. */
   readonly column: number
 }
 
-/** What a block inherits from whatever it sits inside: the rung of the list it is
- *  under, and the style a blockquote puts on the prose in it. */
 interface Nesting {
   readonly level: number
   readonly style: string | null
@@ -317,13 +259,6 @@ interface Nesting {
 
 const OUTERMOST: Nesting = { level: 0, style: null }
 
-/** The picture a `src` names, as far as it can be drawn: the bytes, the kind Word
- *  reads them as, and the size its own header gives.
- *
- *  Null for everything else, which the caller writes as words instead. An SVG is
- *  one of those: Word wants a raster fallback beside the vector for the readers
- *  that cannot draw one, and rasterising here to make one costs more than a
- *  note's diagram is worth. */
 function drawnPicture(src: string, writer: Writer): Drawn | null {
   const picture = writer.pictures.get(src)
   if (picture === undefined) return null
@@ -337,8 +272,6 @@ function drawnPicture(src: string, writer: Writer): Drawn | null {
   return { picture, type, size: fitted(size, writer.column) }
 }
 
-/** What a picture falls back to, in brackets, exactly as the plain text export
- *  writes it. */
 function pictureWords(span: Span): string {
   return span.text ? `[${span.text}]` : '[picture]'
 }
@@ -357,19 +290,6 @@ function pictureRun(span: Span, drawn: Drawn | null): ParagraphChild {
   })
 }
 
-/** The six colours a `==highlight==` can be, as the nearest of the seventeen
- *  Word's highlight attribute allows.
- *
- *  Word has no colour of its own to mix here: `w:highlight` takes one of a fixed
- *  seventeen names, so a wash of `--canvas-2` cannot be asked for and the nearest
- *  is what a reader gets. What matters is that a red highlight and a green one do
- *  not both arrive yellow, which is what one hardcoded colour made of them.
- *
- *  The plain highlight keeps yellow: it named no colour, and yellow is what a
- *  highlighter is. `darkYellow` is Word's amber and the only orange it has.
- *  `cyan` rather than `blue` for the blue tone, and `magenta` rather than
- *  `darkMagenta` for the violet one, because Word's own blue and dark magenta are
- *  dark enough to swallow the words they are meant to be lighting up. */
 const HIGHLIGHTS: Record<number, (typeof HighlightColor)[keyof typeof HighlightColor]> = {
   1: HighlightColor.RED,
   2: HighlightColor.DARK_YELLOW,
@@ -378,9 +298,6 @@ const HIGHLIGHTS: Record<number, (typeof HighlightColor)[keyof typeof HighlightC
   6: HighlightColor.MAGENTA,
 }
 
-/** The marks a span carries, and only those. Word writes `<w:b w:val="false"/>`
- *  for a mark set to false, and a file full of those is a file nothing can be
- *  read out of. */
 function marksOf(span: Span): IRunPropertiesOptions {
   return {
     ...(span.bold ? { bold: true } : {}),
@@ -389,14 +306,10 @@ function marksOf(span: Span): IRunPropertiesOptions {
     ...(span.mark ? { highlight: HIGHLIGHTS[span.tone ?? 0] ?? HighlightColor.YELLOW } : {}),
     ...(span.sup ? { superScript: true } : {}),
     ...(span.sub ? { subScript: true } : {}),
-    // A run wears one character style, so code beats a link. The address is not
-    // lost by that: it is on the hyperlink around the run, not on the run.
     ...(span.code ? { style: 'Code' } : span.href === undefined ? {} : { style: 'Hyperlink' }),
   }
 }
 
-/** The span's words. A line break inside a paragraph becomes Word's own break
- *  rather than a character, which is the only way it survives. */
 function textRuns(span: Span): TextRun[] {
   const marks = marksOf(span)
 
@@ -409,9 +322,6 @@ function mathsRuns(span: Span): ParagraphChild[] {
   const omml = ommlFor(span.text)
   if (omml !== null) return [new Maths({ children: omml })]
 
-  // The source in the code style, which is neither a picture nor silence: a
-  // reader who knows TeX still reads the formula, and one who does not at least
-  // sees that there was one.
   return [new TextRun({ text: span.text, style: 'Code' })]
 }
 
@@ -420,8 +330,6 @@ function noteRuns(span: Span, writer: Writer): ParagraphChild[] {
   const number = writer.notes.get(label)
   if (number !== undefined) return [new FootnoteReferenceRun(number)]
 
-  // A reference to a footnote nobody defined has nothing to point at, so the
-  // label is raised and left standing where it was written.
   return [new TextRun({ text: label, superScript: true })]
 }
 
@@ -440,8 +348,6 @@ function runsOf(spans: readonly Span[], writer: Writer): ParagraphChild[] {
   })
 }
 
-/** The words a run of spans says, with none of the marks: what a title is
- *  compared against. */
 function wordsOf(spans: readonly Span[]): string {
   return spans.map((span) => span.text).join('')
 }
@@ -464,9 +370,6 @@ const CELL_EDGE = { style: BorderStyle.SINGLE, size: 2, color: LINE }
 const CELL_BORDERS = { top: CELL_EDGE, bottom: CELL_EDGE, left: CELL_EDGE, right: CELL_EDGE }
 
 function cellOf(spans: readonly Span[], align: Align, head: boolean, writer: Writer): TableCell {
-  // The header's words are bold because the row is a header, not because the note
-  // wrote them bold, so the mark goes on the spans rather than being threaded
-  // through every run behind them.
   const shown = head ? spans.map((span) => ({ ...span, bold: true })) : spans
 
   return new TableCell({
@@ -479,7 +382,6 @@ function cellOf(spans: readonly Span[], align: Align, head: boolean, writer: Wri
 function tableOf(block: Extract<Block, { kind: 'table' }>, writer: Writer): Table {
   const row = (cells: readonly Span[][], head: boolean) =>
     new TableRow({
-      // A header that repeats is a header a reader can still see on page four.
       ...(head ? { tableHeader: true } : {}),
       children: cells.map((cell, at) => cellOf(cell, block.align[at] ?? null, head, writer)),
     })
@@ -510,9 +412,6 @@ function itemChildren(
   return [own, ...childrenOf(item.blocks, writer, { ...nesting, level: nesting.level + 1 })]
 }
 
-/** A paragraph, and the picture that is sometimes the whole of one. That picture
- *  gets a line to itself with its words under it as a caption, which is what a
- *  picture in a note looks like on a page. */
 function paragraphChildren(spans: readonly Span[], writer: Writer, nesting: Nesting): FileChild[] {
   const only = spans.length === 1 ? spans[0] : undefined
   const drawn = only?.picture === undefined ? null : drawnPicture(only.picture, writer)
@@ -547,9 +446,6 @@ function entryChildren(entry: Entry, writer: Writer, nesting: Nesting): FileChil
   ]
 }
 
-/** A formula on its own line, centred either way. When the TeX is more than the
- *  translator knows, the source goes in instead: it is what the note says, and a
- *  reader can still read it, which is more than a blank line offers. */
 function mathsChildren(tex: string): FileChild[] {
   const omml = ommlFor(tex)
 
@@ -572,8 +468,6 @@ function blockChildren(block: Block, writer: Writer, nesting: Nesting): FileChil
       return [
         new Paragraph({
           heading: HEADINGS[level - 1] ?? HeadingLevel.HEADING_1,
-          // A heading alone at the foot of a page is a heading in the wrong
-          // place, so it holds on to the paragraph after it.
           keepNext: true,
           children: runsOf(block.spans, writer),
         }),
@@ -584,8 +478,6 @@ function blockChildren(block: Block, writer: Writer, nesting: Nesting): FileChil
       return paragraphChildren(block.spans, writer, nesting)
 
     case 'code':
-      // One paragraph per line, and no colouring. The indentation and the blank
-      // lines are the point: somebody is here to copy the code out.
       return block.code
         .split('\n')
         .map(
@@ -640,14 +532,9 @@ function childrenOf(blocks: readonly Block[], writer: Writer, nesting: Nesting):
   return blocks.flatMap((block) => blockChildren(block, writer, nesting))
 }
 
-/** The document's own name at the top, unless the note already opens with it as a
- *  heading. The rule the plain text export follows, so one note cannot come out
- *  titled twice. */
 function titleChildren(doc: Doc): FileChild[] {
   const first = doc.blocks[0]
   const heads = first?.kind === 'heading' && wordsOf(first.spans).trim() === doc.title.trim()
-  // A title the note never claimed is the file's own name, which is already on
-  // the file; printing it as the first line would be a word nobody wrote.
   if (heads || !doc.named) return []
 
   return [
@@ -655,8 +542,6 @@ function titleChildren(doc: Doc): FileChild[] {
   ]
 }
 
-/** The footnotes, numbered in the order the note defined them, which is the order
- *  Word shows them in. */
 function footnotesOf(doc: Doc, writer: Writer): Record<string, { children: Paragraph[] }> {
   return Object.fromEntries(
     doc.notes.map((note, at) => [
@@ -666,19 +551,6 @@ function footnotesOf(doc: Doc, writer: Writer): Record<string, { children: Parag
   )
 }
 
-/** The page, as Word's own section properties.
- *
- *  Word takes the sheet upright and turns it itself for a landscape section, which is
- *  the shape `paperTwips` hands over; see page-setup.ts. The margin is one number on
- *  all four sides, which is the one number the settings and the front matter ask for.
- *
- *  Nothing here was written at all before: the section went out with no properties, and
- *  a Word document with no page properties is a Word document on US Letter with an inch
- *  of margin. So a reader on Orden's A4 default got Letter, and A5, landscape and a 33 mm
- *  margin were dropped in silence. */
-/** The text column in pixels: the sheet as it is printed, less both margins. An
- *  inch at the very least, so a setup with a margin wider than its own paper still
- *  leaves something a picture can be drawn in. */
 function columnPixels(paper: PaperTwips): number {
   const width = paper.landscape ? paper.height : paper.width
 
@@ -703,12 +575,6 @@ function pageOf(paper: PaperTwips): ISectionPropertiesOptions {
   }
 }
 
-/** The running text, as the header and footer parts Word repeats on every sheet. One
- *  paragraph of words each, centred and quiet, which is what a running head is.
- *
- *  Only where there is something to run: a part per section costs a file in the package
- *  and a reference to it, and an empty one is a blank line at the top of every page.
- *  The placeholders are already filled by the time this sees them. */
 function runningOf(paper: PaperTwips) {
   const line = (text: string) =>
     new Paragraph({
@@ -735,12 +601,6 @@ function legalStrings<T>(value: T): T {
   ) as T
 }
 
-/** The whole note as the bytes of a `.docx`.
- *
- *  `paper` is the page the note is going on, resolved once by the caller: the settings,
- *  the note's own `export:` front matter over them, and the running text with its
- *  placeholders filled. Required rather than defaulted, because the whole of this bug
- *  was a silent default - a writer that can fall back to Letter is a writer that will. */
 export async function toDocx(
   written: Doc,
   pictures: readonly Picture[],
@@ -770,7 +630,5 @@ export async function toDocx(
     ],
   })
 
-  // Base64 rather than `toBuffer` or `toBlob`: the first is Node's alone and the
-  // second the browser's, and this same call runs in both.
   return fromBase64(await Packer.toBase64String(file))
 }

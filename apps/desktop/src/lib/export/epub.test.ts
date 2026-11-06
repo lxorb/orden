@@ -1,26 +1,10 @@
-/** The ePub, built for real and then taken apart again.
- *
- *  Nothing here stubs anything: the note goes through the same renderer an
- *  export uses, then through `toEpub`, and the bytes that come out are unzipped
- *  and read. Every rule that decides whether a reader opens a book is about
- *  those bytes rather than about any one function - the first entry and how it
- *  is stored, the manifest, the spine, and above all whether each part is XML a
- *  parser will take. */
-
 import { renderMarkdown } from '@orden/markdown'
-// Both heavy libraries handed over outright. In the app a formula is set by a render
-// that has awaited them - `prepareFences` and `runExport` do - and these render
-// synchronously; see @orden/markdown/engines.
 import '@orden/markdown/eager'
 import JSZip from 'jszip'
 import { describe, expect, test } from 'vitest'
 import { type EpubOptions, forReading, sectionsOf, toEpub, toXhtml } from './epub'
 import type { Picture } from './pictures'
 
-/** One of everything a book has to carry: two levels of heading, marked-up
- *  prose, a footnote at both ends, maths inline and on its own, a table, a
- *  fence, a task list, a quote, two pictures, and the characters XML is
- *  fussiest about. */
 const NOTE = `# Handbook
 
 [toc]
@@ -95,7 +79,6 @@ const BASE: EpubOptions = {
 
 interface Book {
   bytes: Uint8Array
-  /** Every entry, in the order the zip carries them. */
   names: string[]
   container: string
   opf: string
@@ -133,8 +116,6 @@ async function openBook(bytes: Uint8Array): Promise<Book> {
   }
 }
 
-// The five names XML defines by itself, plus any number. Anything else needs a
-// DTD, which a part of a book has not got.
 const REFERENCE = /&(?:#\d+|#x[0-9a-fA-F]+|amp|lt|gt|quot|apos);/y
 const CLOSE_TAG = /<\/([^\s>]+)\s*>/y
 const OPEN_TAG = /<([A-Za-z][^\s/>]*)((?:"[^"]*"|'[^']*'|[^>"'])*?)(\/?)>/y
@@ -170,12 +151,6 @@ function badAttributes(source: string): string | null {
     : `something that is not an attribute in ${JSON.stringify(source)}`
 }
 
-/** Everything about one part of a book that has to be true for a reader's XML
- *  parser to open it. Null means well formed; anything else names what is
- *  wrong, so a failure says which rule was broken and where.
- *
- *  Written out again in `image.test.ts` rather than shared: importing one test
- *  file into another registers its whole suite a second time. */
 function malformed(xml: string): string | null {
   const open: string[] = []
   let at = 0
@@ -228,10 +203,6 @@ function malformed(xml: string): string | null {
   return open.length ? `<${open.join('>, <')}> never closed` : null
 }
 
-/** The zip's own first local file header, read by hand. JSZip would answer the
- *  same question about compression from its own bookkeeping, but the reason the
- *  rule exists is that a reader looks at these bytes: the method field of the
- *  first entry, before it has parsed anything else. */
 function firstEntry(bytes: Uint8Array): { name: string; method: number; content: string } {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
   const nameLength = view.getUint16(26, true)
@@ -248,11 +219,9 @@ function firstEntry(bytes: Uint8Array): { name: string; method: number; content:
 const book = await openBook(await toEpub(BASE))
 const halved = await openBook(await toEpub({ ...BASE, splitAt: 2 }))
 
-/** A book of one small note, for a test that is about one thing. */
 const bookOf = async (changed: Partial<EpubOptions>): Promise<Book> =>
   openBook(await toEpub({ ...BASE, pictures: [], ...changed }))
 
-/** One part of a book as text, by the path it is stored under. */
 const bookText = async (one: Book, path: string): Promise<string> =>
   new TextDecoder().decode(await one.bytesOf(path))
 
@@ -340,9 +309,6 @@ describe('the two tables of contents', () => {
     expect(order).toEqual([1, 2, 3, 4])
   })
 
-  /** A reader finds the `navMap` by namespace, so one character wrong here and
-   *  the contents are simply not there. Caught by opening a book in a library
-   *  that had never seen this writer; see the note in scripts/export-e2e.py. */
   test('name the contents in the namespace an older reader looks in', () => {
     expect(book.ncx).toContain('xmlns="http://www.daisy.org/z3986/2005/ncx/"')
     expect(book.ncx).toContain('"http://www.daisy.org/z3986/2005/ncx-2005-1.dtd"')
@@ -350,9 +316,6 @@ describe('the two tables of contents', () => {
   })
 })
 
-/** What a real reader refuses, found by running epubcheck over a book this very
- *  writer produced; see scripts/export-e2e.py for how it was run. Each of these
- *  was an error in that report. */
 describe('what a reader that checks the book insists on', () => {
   test('a column’s alignment is a style, since XHTML5 dropped the attribute', () => {
     const aligned = toXhtml(
@@ -376,8 +339,6 @@ describe('what a reader that checks the book insists on', () => {
   })
 
   test('a paragraph inside a diagram’s label becomes a span, which may hold one', () => {
-    // Mermaid writes its labels as HTML inside a `foreignObject`, and puts a
-    // `<p>` inside a `<span>`, which is not allowed anywhere.
     const drawn = toXhtml(
       '<svg><foreignObject><div><span class="nodeLabel"><p>A</p></span></div></foreignObject></svg>',
     )
@@ -426,8 +387,6 @@ describe('what a reader that checks the book insists on', () => {
   test('the paper rules stay out of a book, which has no paper', () => {
     const css = 'a { color: red }\n@media print {\n  b { color: blue }\n}\ni { color: green }\n'
 
-    // The blank line the block sat on stays: what is cut is the rules, and a
-    // stylesheet is not laid out by whoever reads it.
     expect(forReading(css)).toBe('a { color: red }\n\ni { color: green }\n')
   })
 
@@ -497,8 +456,6 @@ describe('the parts', () => {
   })
 
   test('point a link at the file the id it names is in', () => {
-    // The footnote is used in the first part and shown in the last, and the
-    // table of contents links out of the first part into both of the others.
     expect(book.sections[0]).toContain('href="section-2.xhtml#fn-1"')
     expect(book.sections[0]).toContain('href="#handbook"')
     expect(book.sections[1]).toContain('href="section-1.xhtml#fnref-1"')
@@ -517,10 +474,6 @@ describe('the parts', () => {
   })
 
   test('close the void elements a task list and a picture bring with them', () => {
-    // This renderer writes `checked=""` rather than a bare `checked`, so what
-    // the book needs from the transformer here is the closing slash. The bare
-    // spelling XHTML forbids is a rule about the markup, not about this note,
-    // and is held to further down.
     expect(book.sections[0]).toContain('<input checked="" disabled="" type="checkbox" />')
     expect(book.sections[0]).not.toMatch(/<(?:input|img|br|hr)\b[^>]*[^/]>/)
   })
@@ -584,10 +537,6 @@ describe('every part of the book', () => {
     }
   })
 
-  /** A comment is a note to the writer and never reaches a rendered page at all;
-   *  see `withoutComments` in @orden/markdown. What the writer of an ePub does with a
-   *  comment handed to it in markup - XML cannot hold `--` inside one - is tested
-   *  against `toXhtml` below. */
   test('puts none of the writer’s own comments in the book', () => {
     expect(book.sections[0]).not.toContain('a plain note')
     expect(book.sections[0]).not.toContain('-- here')

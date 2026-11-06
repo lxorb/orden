@@ -1,9 +1,3 @@
-/** One note with everything in it, for the tests of every converter.
- *
- *  Nine formats read the same note, and a construct that only appears in one
- *  test is a construct only one format is held to. So the corpus lives here and
- *  each writer's test asserts what its own format does with the whole of it. */
-
 export const CORPUS = `---
 title: Export corpus
 author: Ada Lovelace
@@ -80,5 +74,4 @@ graph TD; A-->B
 \`\`\`
 `
 
-/** The name of the file the corpus stands for. */
 export const CORPUS_NAME = 'Export corpus.md'

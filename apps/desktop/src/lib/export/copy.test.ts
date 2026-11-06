@@ -11,7 +11,6 @@ describe('the extension a copy keeps', () => {
     expect(extensionOf('/space/README')).toBe('bin')
   })
 
-  /** A folder called `my.notes` does not make every file inside it a `.notes`. */
   test('never reads a dot in a folder name as one', () => {
     expect(extensionOf('/my.notes/paper')).toBe('bin')
     expect(extensionOf('/my.notes/paper.pdf')).toBe('pdf')

@@ -5,13 +5,8 @@ import { documentOf, type Doc } from './document'
 import type { Picture } from './pictures'
 import { toRtf } from './rtf'
 
-/** The page every test here goes on unless it says otherwise: the A4 the app
- *  defaults to, with its 20 mm margin and no running text. paper.test.ts beside
- *  this is where the page itself is measured. */
 const PAPER = paperTwips(DEFAULT_PAGE_SETUP, 'Corpus', '2026-09-14')
 
-/** One of everything the document model knows, so the whole writer is measured
- *  against a single document rather than a fixture per feature. */
 const NOTE = `---
 title: Corpus
 author: Ada Lovelace
@@ -128,8 +123,6 @@ function chunk(type: string, data: readonly number[]): number[] {
   return [...be32Bytes(data.length), ...tagged, ...be32Bytes(crc32(tagged))]
 }
 
-/** A deflate stream that compresses nothing: the zlib header, one stored block
- *  and the checksum. Enough to make a real PNG without a compressor. */
 function stored(raw: readonly number[]): number[] {
   const header = [0x78, 0x01, 0x01]
   const length = [raw.length & 0xff, (raw.length >>> 8) & 0xff]
@@ -138,21 +131,15 @@ function stored(raw: readonly number[]): number[] {
   return [...header, ...length, ...inverse, ...raw, ...be32Bytes(adler32(raw))]
 }
 
-/** Signature and IHDR only. The writer reads the size out of those two and
- *  never looks further, so this is what a picture too big to spell out in a test
- *  file is made of. */
 function pngHeader(width: number, height: number): number[] {
   const ihdr = [...be32Bytes(width), ...be32Bytes(height), 8, 0, 0, 0, 0]
 
   return [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, ...chunk('IHDR', ihdr)]
 }
 
-/** A real grey PNG of the size asked for, built by hand so the test owns every
- *  byte the size is read out of. */
 function png(width: number, height: number): Uint8Array {
   const rows: number[] = []
   for (let row = 0; row < height; row += 1) {
-    // The nought in front of each row names the filter it uses: none.
     rows.push(0, ...new Array<number>(width).fill(0x80))
   }
 
@@ -163,7 +150,6 @@ function png(width: number, height: number): Uint8Array {
   ])
 }
 
-/** SOI, a baseline frame header, EOI. Only the frame header is ever read. */
 function jpeg(width: number, height: number): Uint8Array {
   const frame = [0xff, 0xc0, 0x00, 0x0b, 0x08, ...be16Bytes(height), ...be16Bytes(width)]
 
@@ -174,17 +160,12 @@ function picture(src: string, mime: string, bytes: Uint8Array): Picture {
   return { src, name: src.split('/').pop() ?? src, mime, bytes }
 }
 
-/** Brace depth walked from the front, minding the pairs the escaper writes as
- *  two characters. A document that ends anywhere but at nought, or that dips
- *  below it on the way, is one a reader gives up on. */
 function braces(rtf: string): { end: number; lowest: number } {
   let depth = 0
   let lowest = 0
 
   for (let at = 0; at < rtf.length; at += 1) {
     const char = rtf[at]
-    // A backslash takes the character after it along, which keeps `\{` out of
-    // the count and costs nothing on a control word.
     if (char === '\\') {
       at += 1
       continue
@@ -198,13 +179,9 @@ function braces(rtf: string): { end: number; lowest: number } {
   return { end: depth, lowest }
 }
 
-/** The control words that stand for something the reader can see. */
 const SHOWN: Record<string, string> = { par: '\n', line: '\n', row: '\n', tab: '\t', cell: '\t' }
 
-/** The document's words with every control word taken off: near enough to what a
- *  reader shows to look for a phrase in, and in the order it would meet them. */
 function words(rtf: string): string {
-  // The hex of a picture is not words, and it is long enough to hide anything.
   const text = rtf.replace(/\{\\pict[^{}]*\}/g, '')
   let out = ''
   let at = 0
@@ -212,15 +189,12 @@ function words(rtf: string): string {
   while (at < text.length) {
     const char = text[at]
 
-    // A newline in the file is the writer's own formatting, never content.
     if (char === '{' || char === '}' || char === '\n') {
       at += 1
       continue
     }
 
     if (char !== '\\') {
-      // The loop stops at the end of the text, so a character read inside it is
-      // always there; the index type has no way of knowing that.
       out += char ?? ''
       at += 1
       continue
@@ -246,8 +220,6 @@ function words(rtf: string): string {
 
     out += SHOWN[word[1] ?? ''] ?? ''
     at += word[0].length
-    // A `\uN` escape is followed by the one character a reader without Unicode
-    // shows instead, and that character is not part of the text.
     if (word[1] === 'u' && text[at] === '?') at += 1
   }
 
@@ -258,12 +230,10 @@ function count(rtf: string, pattern: RegExp): number {
   return [...rtf.matchAll(pattern)].length
 }
 
-/** A run as the writer builds one: opened, the words, closed again. */
 function run(on: string, text: string, off: string): string {
   return `{${on} ${text}${off}}`
 }
 
-/** A document with only what the case under test needs in it. */
 function made(blocks: Doc['blocks'], notes: Doc['notes'] = []): Doc {
   return { title: 'Made', named: true, author: null, lang: 'en', date: null, blocks, notes }
 }
@@ -273,8 +243,6 @@ const PICTURES = [
   picture('https://pics.example/x.jpg', 'image/jpeg', jpeg(32, 48)),
 ]
 
-// Written once: every test below reads the same document, and lexing it per test
-// would be the slowest thing in the file.
 const DOC = documentOf(NOTE, 'Corpus.md')
 const RTF = toRtf(DOC, PICTURES, PAPER)
 
@@ -362,10 +330,6 @@ describe('runs', () => {
     expect(out).toContain('HYPERLINK "https://nib.dev/a%22 \\\\l %22x"')
   })
 
-  /** A paragraph hard wrapped in the file is one paragraph, and the newline in
-   *  the middle of it is a space, exactly as a browser reads it. Only the break
-   *  the writer asked for with two spaces is a break. See `flowed` in
-   *  document.ts. */
   test('flows a wrapped line, and keeps a break that was asked for', () => {
     expect(RTF).not.toContain(', a\\line ')
     expect(toRtf(documentOf('one  \ntwo\n', 'Break.md'), [], PAPER)).toContain('one\\line two')
@@ -410,9 +374,6 @@ describe('tables', () => {
   })
 
   test('splits the text column evenly and draws all four borders', () => {
-    // Three columns across the A4 text column, which is the sheet less both 20 mm
-    // margins: 9638 twips. It was 9360 - a letter page with an inch each side -
-    // whatever paper the export was going on.
     expect(RTF).toContain('\\cellx3213')
     expect(RTF).toContain('\\cellx6425')
     expect(RTF).toContain('\\cellx9638')
@@ -478,9 +439,6 @@ describe('blocks', () => {
 })
 
 describe('footnotes', () => {
-  // Built by hand rather than lexed: `documentOf` drops a footnote reference,
-  // because the span it makes carries no text and empty spans are filtered out.
-  // The writer still has to answer for the span, so the test hands it one.
   const NOTED = made(
     [
       {
@@ -537,9 +495,6 @@ describe('pictures', () => {
     const wide = made([{ kind: 'paragraph', spans: [{ text: 'Wide', picture: 'a/wide.png' }] }])
     const bytes = new Uint8Array(pngHeader(1000, 500))
 
-    // The column is the A4 sheet less both 20 mm margins: 11906 - 2268 twips. It
-    // used to be the 9360 of a letter page with an inch each side, whatever paper
-    // the export was actually going on.
     expect(toRtf(wide, [picture('a/wide.png', 'image/png', bytes)], PAPER)).toContain(
       '\\picw1000\\pich500\\picwgoal9638\\pichgoal4819',
     )
@@ -561,7 +516,6 @@ describe('pictures', () => {
       doc,
       [
         picture('a/one.gif', 'image/gif', new Uint8Array([0x47, 0x49, 0x46, 0x38])),
-        // A PNG signature and nothing behind it: no IHDR, so no size to be had.
         picture('a/two.png', 'image/png', new Uint8Array([0x89, 0x50, 0x4e, 0x47])),
       ],
       PAPER,
@@ -574,9 +528,6 @@ describe('pictures', () => {
   })
 })
 
-/** The six colours a `==highlight==` can be. RTF has a colour table of the
- *  document's own, so each tone is the wash the app draws it in rather than the
- *  nearest of a fixed few, and the plain one keeps the index it always had. */
 describe('a coloured highlight', () => {
   const TONES = `==plain==, ==🔴 red==, ==🟠 orange==, ==🟢 green==, ==🔵 blue==, ==🟣 violet==\n`
   const COLOURED = toRtf(documentOf(TONES, 'Tones.md'), [], PAPER)

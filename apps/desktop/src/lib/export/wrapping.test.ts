@@ -8,19 +8,8 @@ import { toDocx } from './docx'
 import { toRtf } from './rtf'
 import { toPlainText } from './text'
 
-/** The page every test here goes on unless it says otherwise: the A4 the app
- *  defaults to, with its 20 mm margin and no running text. paper.test.ts beside
- *  this is where the page itself is measured. */
 const PAPER = paperTwips(DEFAULT_PAGE_SETUP, 'Note', '2026-09-14')
 
-/** A paragraph hard wrapped in the file is one paragraph. A single newline in
- *  the middle of it is a space, which is what CommonMark says, what the reading
- *  view and every published page already do, and what the glasses do.
- *
- *  The blocks these exports are written from used to keep the newline, so a note
- *  wrapped at eighty columns arrived in Word, in RTF and in plain text broken at
- *  eighty columns. A hard break, which the writer asked for with two spaces or a
- *  backslash, is a `br` token and still breaks. */
 describe('a paragraph wrapped in the file', () => {
   const words = (source: string) => {
     const doc = documentOf(source, 'Note.md')
@@ -48,15 +37,6 @@ describe('a paragraph wrapped in the file', () => {
   })
 })
 
-/** The other answer to the same switch. "A single newline breaks the line" on, and
- *  the note reads the way it was typed - on every surface, which is the whole
- *  point of the switch being asked once. The reading view, the HTML export, a
- *  card on a canvas and a published page went through the one renderer and broke
- *  the line; Word, RTF and plain text are written from the blocks in
- *  document.ts, which flowed the newline away whatever the switch said.
- *
- *  The setting is read where every other reader of it reads it, so these set it
- *  the way the app does and put it back afterwards. */
 describe('a single newline, when the switch says it breaks the line', () => {
   const WRAPPED = 'one\ntwo\n'
 
@@ -99,7 +79,6 @@ describe('a single newline, when the switch says it breaks the line', () => {
     const zip = await JSZip.loadAsync(bytes)
     const file = zip.file('word/document.xml')
     expect(file).not.toBeNull()
-    // Asserted on the line above.
     const xml = await file!.async('string')
 
     expect(xml).toContain('<w:br/>')
@@ -111,7 +90,6 @@ describe('a single newline, when the switch says it breaks the line', () => {
     const zip = await JSZip.loadAsync(bytes)
     const file = zip.file('word/document.xml')
     expect(file).not.toBeNull()
-    // Asserted on the line above.
     expect(await file!.async('string')).toContain('one two')
   })
 })

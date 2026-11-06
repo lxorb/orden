@@ -1,17 +1,5 @@
-/** The note as plain text: everything it says, none of the marks it says it
- *  with.
- *
- *  What survives is what a reader would still read out loud. A heading is its
- *  own line, a list keeps its bullets because the shape is the meaning, a link
- *  becomes `words (address)` because an address the reader cannot see is an
- *  address they have lost, a table is drawn with spaces so the columns still line
- *  up, and code is left exactly as it was written - a plain text file is where
- *  somebody goes to copy the code out. */
-
 import type { Block, Doc, Item, Span } from './document'
 
-/** Two spaces of indent per rung, which is what a bulleted list reads as
- *  everywhere text is plain. */
 const STEP = '  '
 
 const CHECKS = { true: '[x] ', false: '[ ] ' }
@@ -20,7 +8,6 @@ function spanText(span: Span): string {
   if (span.picture !== undefined) return span.text ? `[${span.text}]` : '[picture]'
   if (span.note !== undefined) return `[${span.note}]`
 
-  // A link keeps its address, unless the words already are the address.
   if (span.href !== undefined && span.href !== span.text) return `${span.text} (${span.href})`
 
   return span.text
@@ -30,16 +17,12 @@ function textOf(spans: readonly Span[]): string {
   return spans.map(spanText).join('')
 }
 
-/** How wide a cell is on screen, counted in the characters a reader sees rather
- *  than in the units a string is stored as. An emoji is one column wide and two
- *  code units long, and a column padded by the second number comes out crooked. */
 const GRAPHEMES = new Intl.Segmenter()
 
 function shownWidth(text: string): number {
   return [...GRAPHEMES.segment(text)].length
 }
 
-/** The width a column needs: the longest line any of its cells holds. */
 function widths(rows: readonly string[][]): number[] {
   const out: number[] = []
 
@@ -57,8 +40,6 @@ function tableLines(block: Extract<Block, { kind: 'table' }>): string[] {
   const body = block.rows.map((row) => row.map(textOf))
   const columns = widths([head, ...body])
 
-  // Padded by what a reader sees rather than by `padEnd`, which counts the units
-  // a string is stored in and would put an emoji's second half in the gap.
   const padded = (cell: string, width: number, right: boolean) => {
     const gap = ' '.repeat(Math.max(0, width - shownWidth(cell)))
     return right ? gap + cell : cell + gap
@@ -78,8 +59,6 @@ function tableLines(block: Extract<Block, { kind: 'table' }>): string[] {
 function itemLines(item: Item, marker: string, indent: string): string[] {
   const check = item.checked === null ? '' : CHECKS[item.checked ? 'true' : 'false']
   const own = `${indent}${marker}${check}${textOf(item.spans)}`
-  // What sits under an item is indented past its own marker, so a nested list
-  // reads as nested rather than as a new list.
   const under = blockLines(item.blocks, indent + STEP)
 
   return under.length ? [own, ...under] : [own]
@@ -101,7 +80,6 @@ function blockLines(blocks: readonly Block[], indent = ''): string[] {
         break
 
       case 'code':
-        // As written, indent and all: this is what somebody came for.
         out.push(...block.code.split('\n').map((line) => `${indent}${line}`))
         break
 
@@ -139,8 +117,6 @@ function blockLines(blocks: readonly Block[], indent = ''): string[] {
         break
 
       case 'break':
-        // A page break has no meaning in a file with no pages; the blank line
-        // above it is all it comes to.
         out.pop()
         break
     }
@@ -149,15 +125,10 @@ function blockLines(blocks: readonly Block[], indent = ''): string[] {
   return out
 }
 
-/** A paragraph's own line breaks kept, nothing else wrapped: where the text
- *  ends up is the reader's window's business, not ours. */
 function wrapped(text: string, indent: string): string[] {
   return text.split('\n').map((line) => `${indent}${line}`.trimEnd())
 }
 
-/** The document as one plain text file. The title heads it when the note named
- *  one the body does not already say, and the footnotes follow at the bottom,
- *  where they are in the note. */
 export function toPlainText(doc: Doc): string {
   const lines: string[] = []
   const first = doc.blocks[0]

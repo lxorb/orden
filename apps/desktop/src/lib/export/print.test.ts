@@ -1,8 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The one place a PDF is written straight to a file, and what it does when the
- *  machine cannot. The printer itself is stood in for; what is under test is that
- *  a road that changed says so. */
 const world = vi.hoisted(() => ({ asked: [] as unknown[], refuse: null as string | null }))
 
 vi.mock('../tauri', async (importOriginal) => ({
@@ -13,8 +10,6 @@ vi.mock('../tauri', async (importOriginal) => ({
   },
 }))
 
-/** English for English: what the line says is checked as the key it is asked
- *  for, and the dictionaries are held to their own test. */
 vi.mock('../i18n.svelte', () => ({
   t: (text: string) => text,
   key: (text: string) => text,
@@ -47,9 +42,6 @@ describe('writing a PDF straight to a file', () => {
     expect(busy.trouble).toBeNull()
   })
 
-  /** Somebody who chose a filename and waited is about to be handed a print
-   *  dialog they did not ask for. A road that changes without a word reads as a
-   *  fault rather than as a fallback. */
   test('says the road changed when it cannot', async () => {
     world.refuse = 'the print was interrupted: 0x80070005'
 
@@ -57,8 +49,6 @@ describe('writing a PDF straight to a file', () => {
     expect(busy.trouble).toBe('The file could not be written, so it goes to the print dialog')
   })
 
-  /** What was thrown is the print engine's own sentence, in English and with a
-   *  code in it, and it tells the reader nothing they can act on. */
   test('says it in the app own words rather than the printer own', async () => {
     world.refuse = 'the print was interrupted: 0x80070005'
     await writtenPdf('<p>hello</p>', '/home/plan.pdf', PAGE)

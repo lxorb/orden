@@ -1,41 +1,15 @@
-/** The note as an RTF 1.5 file.
- *
- *  RTF is the one document format that is plain ASCII and still carries a
- *  footnote, a real table and an embedded picture, which is why it is what a
- *  word processor opens without asking anything. The whole translation lives
- *  here: the escaping of a single character, the twips a table column is wide,
- *  the hex a picture comes to.
- *
- *  Pure. The pictures arrive already read, and their pixel size is taken out of
- *  their own bytes, so a picture goes onto the page in the shape it has rather
- *  than in a shape guessed for it. */
-
 import type { PaperTwips } from '../page-setup'
 import type { Align, Block, Doc, Item, Span } from './document'
 import type { Picture } from './pictures'
 
-/** The colour table's numbering, which starts at one: nought is the reader's
- *  own default colour. */
 const BLACK = 1
 const GREY = 2
 const LINK = 3
 const SHADE = 4
 const WASH = 5
 
-/** The five coloured highlights, in the order highlights.ts in @orden/markdown
- *  names them, as the indices they take in the table above.
- *
- *  A tone rather than a name: `==🔴 careful==` is drawn in `--canvas-1` on every
- *  other surface, and a document that arrived with all five the same yellow was
- *  the one surface that threw the colour away. RTF has a colour table of the
- *  document's own, so unlike Word these are the real wash rather than the nearest
- *  of a fixed few; the plain highlight keeps `WASH`, the index it always had. */
 const TONE_COLOURS: Record<number, number> = { 1: 6, 2: 7, 4: 8, 5: 9, 6: 10 }
 
-/** The wash each of the five is drawn in: the light theme's own `--canvas-1` and
- *  its neighbours at the same strength `--mark-1` mixes them, over the white of
- *  the page. Written out because an RTF colour table is numbers, and a word
- *  processor has no `color-mix` to do it with. See tokens.css in @orden/themes. */
 const TONE_WASHES = [
   '\\red250\\green210\\blue215',
   '\\red251\\green225\\blue199',
@@ -44,10 +18,6 @@ const TONE_WASHES = [
   '\\red225\\green217\\blue251',
 ].join(';')
 
-/** The three faces, and the colours everything is drawn in. `\f0` is the body,
- *  `\f1` the headings, `\f2` code and maths. Each names a face that is on every
- *  machine as its `\*\falt`, so a reader that has neither Georgia nor Consolas
- *  still picks something of the right kind. */
 const HEADER = [
   '{\\rtf1\\ansi\\ansicpg1252\\deff0\\uc1',
   '{\\fonttbl',
@@ -60,46 +30,29 @@ const HEADER = [
   `${TONE_WASHES};}`,
 ].join('')
 
-/** One rung of indent, half an inch, the same step a list takes per level. */
 const STEP = 720
 
-/** Body text: eleven point, the air after a paragraph, and the line spacing
- *  that makes a page of prose readable. */
 const BODY = '\\sa180\\sl276\\slmult1\\f0\\fs22'
 
-/** A paragraph that belongs to the one above or below it - a callout's label, a
- *  term, a detail - and so wants less air under it than prose does. */
 const TIGHT = '\\sa60\\f0\\fs22'
 
 const TERM = '\\sb120\\sa40\\f0\\fs22'
 
-/** A line down the left of everything inside a quote. */
 const QUOTE = '\\brdrl\\brdrs\\brdrw20\\brsp80'
 
-/** A rule is an empty paragraph with a line under it, which is how a word
- *  processor draws one itself. */
 const RULE = '\\pard\\brdrb\\brdrs\\brdrw10\\brsp20\\par\n'
 
-/** A line on all four sides of a cell, half a point thick. */
 const BORDERS = ['t', 'l', 'b', 'r'].map((side) => `\\clbrdr${side}\\brdrs\\brdrw10`).join('')
 
-/** What a character below U+0080 comes to when it cannot stand for itself. */
 const SPECIAL: Record<number, string> = {
   0x5c: '\\\\',
   0x7b: '\\{',
   0x7d: '\\}',
   0x09: '\\tab ',
   0x0a: '\\line ',
-  // The other half of a Windows line ending. The newline beside it already
-  // stands for the break, so this one says nothing.
   0x0d: '',
 }
 
-/** Text as RTF says it.
- *
- *  Walked by code unit rather than by code point on purpose: RTF writes a
- *  character outside the BMP as two `\uN?` escapes, one per surrogate, which is
- *  exactly what the string already holds. */
 function escaped(text: string): string {
   let out = ''
 
@@ -110,20 +63,12 @@ function escaped(text: string): string {
     if (special !== undefined) out += special
     else if (unit === 0xa0) out += '\\~'
     else if (unit < 0x80) out += String.fromCharCode(unit)
-    // `\uN` takes a signed 16-bit number, so the upper half of the range is
-    // written as the negative it wraps to. The `?` after it is the single
-    // character a reader that cannot do Unicode shows instead.
     else out += `\\u${unit >= 0x8000 ? unit - 0x10000 : unit}?`
   }
 
   return out
 }
 
-/** The sheet, its margins, and which way round it is printed. RTF says the page
- *  as it comes off the printer, so a turned sheet is the wide way round here -
- *  the other way from Word, which takes the sheet upright and turns it with an
- *  `orient` of its own. `\ftnbj` puts the footnotes at the foot of their page,
- *  where a reader looks for them. */
 function page(paper: PaperTwips): string {
   const width = paper.landscape ? paper.height : paper.width
   const height = paper.landscape ? paper.width : paper.height
@@ -132,10 +77,6 @@ function page(paper: PaperTwips): string {
   return `\\paperw${width}\\paperh${height}${margin}${paper.landscape ? '\\landscape' : ''}\\ftnbj`
 }
 
-/** The running text across the top and the bottom of every page, each its own
- *  group at the head of the section. Small, grey and centred, which is how the
- *  printed page and the HTML road draw the same two lines. A setup that asks
- *  for neither gets neither group, so a plain export stays a plain document. */
 function running(paper: PaperTwips): string {
   const line = (word: string, text: string) =>
     `{\\${word}\\pard\\plain\\qc\\f0\\fs18\\cf${GREY} ${escaped(text)}\\par}`
@@ -146,10 +87,6 @@ function running(paper: PaperTwips): string {
   )
 }
 
-/** The text column: the sheet as it is printed, less both margins. It is what a
- *  table is measured against and the most a picture may be drawn at, so an A5
- *  page with a wide margin gets a table that fits it rather than one off the
- *  edge of it. */
 function columnOf(paper: PaperTwips): number {
   const width = paper.landscape ? paper.height : paper.width
 
@@ -158,15 +95,10 @@ function columnOf(paper: PaperTwips): number {
 
 interface Mark {
   of: (span: Span) => boolean
-  /** What turns it on. A function where the span decides which: a highlight is
-   *  one of six colours, and each is its own control word. */
   on: string | ((span: Span) => string)
   off: string
 }
 
-/** Every mark a span can carry, and the control words that turn it on and off
- *  again. One list rather than a case each, and in this order so the same
- *  combination of marks always nests the same way. */
 const MARKS: readonly Mark[] = [
   { of: (span) => span.bold === true, on: '\\b', off: '\\b0' },
   { of: (span) => span.italic === true, on: '\\i', off: '\\i0' },
@@ -178,15 +110,10 @@ const MARKS: readonly Mark[] = [
   },
   { of: (span) => span.sup === true, on: '\\super', off: '\\nosupersub' },
   { of: (span) => span.sub === true, on: '\\sub', off: '\\nosupersub' },
-  // Inline maths is TeX, so it reads as what it is, in the face code is set in
-  // but without the grey that says "not prose".
   { of: (span) => span.maths === true, on: '\\f2', off: '\\f0' },
   { of: (span) => span.code === true, on: `\\f2\\cf${GREY}`, off: `\\cf${BLACK}\\f0` },
 ]
 
-/** One run of text with its marks around it. The braces are not decoration:
- *  they close the run for the reader, so the first word of whatever comes next
- *  can never be read as part of the control word that ended this one. */
 function marked(span: Span, words: string): string {
   const on: string[] = []
   const off: string[] = []
@@ -200,41 +127,22 @@ function marked(span: Span, words: string): string {
   return on.length ? `{${on.join('')} ${words}${off.join('')}}` : words
 }
 
-/** The field a reader turns into something clickable. The words sit inside the
- *  result group as well, because that is all an older reader shows.
- *
- *  The address is quoted and RTF has no escape for a quote inside a field's
- *  instruction, so one written in the note would end the address early and leave
- *  whatever followed it reading as switches to the field. A URL spells a quote
- *  `%22` anyway, so that is what it becomes. */
 function hyperlink(href: string, words: string): string {
   const address = escaped(href.replace(/"/g, '%22'))
   return `{\\field{\\*\\fldinst{HYPERLINK "${address}"}}{\\fldrslt{\\cf${LINK}\\ul ${words}}}}`
 }
 
-/** The same spans, bold. A term and a callout's label are bold because of where
- *  they are, not because the note said so, and going through the marks means
- *  they are opened and closed the way every other run is. */
 function bolded(spans: readonly Span[]): Span[] {
   return spans.map((span) => ({ ...span, bold: true }))
 }
 
-/** What every run needs beyond the span itself. */
 interface Sheet {
   doc: Doc
-  /** The pictures by the `src` the note wrote, which is the key a span holds. */
   pictures: Map<string, Picture>
-  /** The footnotes being written at this moment, so a note that refers to
-   *  itself stops instead of going round for ever. */
   open: Set<string>
-  /** The text column in twips, which the paper decides. */
   column: number
 }
 
-/** A footnote where it is referred to, which is where RTF keeps them: the
- *  reference is a `\chftn` the reader numbers itself, and the words follow in
- *  the group beside it. A label nothing defines is left as the label, so a note
- *  with a typo in it still says a note was meant. */
 function footnote(label: string, sheet: Sheet): string {
   const found = sheet.doc.notes.find((note) => note.label === label)
   if (!found || sheet.open.has(label)) return `{\\super ${escaped(label)}}`
@@ -251,7 +159,6 @@ interface Size {
   height: number
 }
 
-/** A big-endian 16-bit number, or null past the end of the bytes. */
 function be16(bytes: Uint8Array, at: number): number | null {
   const high = bytes[at]
   const low = bytes[at + 1]
@@ -274,11 +181,8 @@ function sized(width: number | null, height: number | null): Size | null {
 
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
 
-/** `IHDR`, as the four bytes of its name read as one number. */
 const IHDR = 0x49484452
 
-/** A PNG says its size in its first chunk, which the format requires to be
- *  IHDR: two big-endian words right after that chunk's header. */
 function pngSize(bytes: Uint8Array): Size | null {
   if (PNG_SIGNATURE.some((byte, at) => bytes[at] !== byte)) return null
   if (be32(bytes, 12) !== IHDR) return null
@@ -286,19 +190,12 @@ function pngSize(bytes: Uint8Array): Size | null {
   return sized(be32(bytes, 16), be32(bytes, 20))
 }
 
-/** The markers with no length behind them, so walking the segments steps over
- *  two bytes rather than reading a size. */
 const BARE = new Set([0x01, 0xd0, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8, 0xd9])
 
-/** A start-of-frame marker, which is the one that carries the size. C4, C8 and
- *  CC sit in the same range and are a Huffman table, an extension and an
- *  arithmetic coding table instead. */
 function isFrame(marker: number): boolean {
   return marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc
 }
 
-/** A JPEG's size is in its frame header, and the only way there is to walk the
- *  segments from the front: all but a handful of them say how long they are. */
 function jpegSize(bytes: Uint8Array): Size | null {
   if (bytes[0] !== 0xff || bytes[1] !== 0xd8) return null
 
@@ -308,7 +205,6 @@ function jpegSize(bytes: Uint8Array): Size | null {
 
     const marker = bytes[at + 1]
     if (marker === undefined) return null
-    // A run of 0xff in front of a marker is padding the format allows.
     if (marker === 0xff) {
       at += 1
       continue
@@ -320,8 +216,6 @@ function jpegSize(bytes: Uint8Array): Size | null {
 
     const length = be16(bytes, at + 2)
     if (length === null || length < 2) return null
-    // Height comes before width in a frame header, which is the one place in
-    // either format where it does.
     if (isFrame(marker)) return sized(be16(bytes, at + 7), be16(bytes, at + 5))
 
     at += 2 + length
@@ -330,21 +224,13 @@ function jpegSize(bytes: Uint8Array): Size | null {
   return null
 }
 
-/** How RTF names the two formats it can carry as they are, and how each one
- *  says its size. Everything else - a GIF, a WebP, an SVG - has no `\...blip`
- *  of its own, and turning one into a PNG would mean carrying a decoder this
- *  file has no business carrying, so those fall back to their words. */
 const BLIPS: Record<string, { word: string; size: (bytes: Uint8Array) => Size | null }> = {
   'image/png': { word: '\\pngblip', size: pngSize },
   'image/jpeg': { word: '\\jpegblip', size: jpegSize },
 }
 
-/** Pixels to twips at the 96 dpi a picture for a screen is drawn for. */
 const PER_PIXEL = 1440 / 96
 
-/** What the picture is drawn at: its own size, until that is wider than the
- *  column, and then the column's width with the height brought down with it so
- *  nothing is squashed. */
 function goal(size: Size, column: number): Size {
   const width = Math.round(size.width * PER_PIXEL)
   const height = Math.round(size.height * PER_PIXEL)
@@ -353,9 +239,6 @@ function goal(size: Size, column: number): Size {
   return { width: column, height: Math.round((height * column) / width) }
 }
 
-/** How much hex goes on one line. A reader skips the breaks inside a picture,
- *  and a person who opens the file in an editor gets lines to scroll past
- *  rather than one of a million characters. */
 const HEX_WIDTH = 120
 
 function hex(bytes: Uint8Array): string {
@@ -369,10 +252,6 @@ function hex(bytes: Uint8Array): string {
   return lines.join('\n')
 }
 
-/** A picture as its own bytes. Without a size read out of those bytes the goal
- *  width would be a guess, and a guess is exactly what squashes a picture, so
- *  one that cannot be measured is written as the words under it instead - the
- *  same answer the plain text writer gives. */
 function pictureRun(span: Span, sheet: Sheet): string {
   const found = sheet.pictures.get(span.picture ?? '')
   const blip = found ? BLIPS[found.mime] : undefined
@@ -399,22 +278,13 @@ function runs(spans: readonly Span[], sheet: Sheet): string {
   return spans.map((span) => runOf(span, sheet)).join('')
 }
 
-/** Where a paragraph sits and what is drawn beside it, carried down so a
- *  paragraph inside a quote inside a list still knows about both. */
 interface Frame {
-  /** Left indent in twips. */
   indent: number
-  /** Paragraph properties every paragraph in here repeats, which is how a
-   *  quote's left border reaches every line of it. */
   border: string
 }
 
 const ROOT: Frame = { indent: 0, border: '' }
 
-/** The head of a paragraph: everything reset, then where it sits, then how it
- *  looks. `lead` is for the groups a numbered item puts before its indent. The
- *  trailing space is the delimiter that keeps the first word of the text out of
- *  the last control word. */
 function opened(frame: Frame, props: string, lead = ''): string {
   const indent = frame.indent > 0 ? `\\li${frame.indent}` : ''
 
@@ -425,9 +295,6 @@ function paragraph(spans: readonly Span[], sheet: Sheet, frame: Frame, props = B
   return `${opened(frame, props)}${runs(spans, sheet)}\\par\n`
 }
 
-/** Half-point sizes and the air around each level. The step down is what says
- *  which heading sits under which, and `\outlinelevel` is what a reader builds
- *  its outline from. */
 const HEADINGS = [
   { size: 36, before: 360, after: 160 },
   { size: 32, before: 320, after: 150 },
@@ -439,8 +306,6 @@ const HEADINGS = [
 
 function heading(block: Extract<Block, { kind: 'heading' }>, sheet: Sheet, frame: Frame): string {
   const level = Math.min(Math.max(Math.round(block.level), 1), HEADINGS.length)
-  // The clamp above keeps the index inside the table; the fallback is what the
-  // compiler needs to believe it.
   const style = HEADINGS[level - 1] ?? HEADINGS[0]
   const air = `\\sb${style.before}\\sa${style.after}`
   const props = `\\keepn${air}\\outlinelevel${level - 1}\\f1\\fs${style.size}\\b`
@@ -448,13 +313,7 @@ function heading(block: Extract<Block, { kind: 'heading' }>, sheet: Sheet, frame
   return `${opened(frame, props)}${runs(block.spans, sheet)}\\b0\\par\n`
 }
 
-/** A block of lines kept as they were written, each its own paragraph so the
- *  shading and the face hold for all of them rather than for one long wrapped
- *  line. `\sa` lands on the last line only, which keeps the block together and
- *  still leaves air under it. Nothing is trimmed: the indent is the code. */
 function lined(text: string, frame: Frame, props: string): string {
-  // Text ending in a newline ends where its last line does. Keeping the empty
-  // string after it would add a paragraph with nothing written in it.
   const lines = text.replace(/\n$/, '').split('\n')
 
   return lines
@@ -465,9 +324,6 @@ function lined(text: string, frame: Frame, props: string): string {
     .join('')
 }
 
-/** The bullet or the number in front of an item, twice over: the `\pntext` group
- *  is what a reader that cannot number for itself shows, and the `\*\pn` group
- *  is what one that can reads instead. */
 function marker(block: Extract<Block, { kind: 'list' }>, at: number): string {
   if (!block.ordered) {
     return '{\\pntext\\f0\\bullet\\tab}{\\*\\pn\\pnlvlblt\\pnf0\\pnindent0{\\pntxtb\\bullet}}'
@@ -479,7 +335,6 @@ function marker(block: Extract<Block, { kind: 'list' }>, at: number): string {
   return `{\\pntext\\f0 ${number}.\\tab}{\\*\\pn${pn}}`
 }
 
-/** The two checkbox glyphs, which is how a task reads on paper. */
 const CHECKS = { true: '\\u9745?', false: '\\u9744?' }
 
 function itemRtf(item: Item, lead: string, sheet: Sheet, frame: Frame): string {
@@ -487,8 +342,6 @@ function itemRtf(item: Item, lead: string, sheet: Sheet, frame: Frame): string {
   const check = item.checked === null ? '' : `${CHECKS[item.checked ? 'true' : 'false']} `
   const own = `${opened(inner, '\\fi-360\\sa60\\f0\\fs22', lead)}${check}`
 
-  // What sits under an item lines up with its words rather than its marker, and
-  // a list under it steps in again from there.
   return `${own}${runs(item.spans, sheet)}\\par\n${blocksRtf(item.blocks, sheet, inner)}`
 }
 
@@ -498,15 +351,10 @@ const ALIGNS: Record<'left' | 'center' | 'right', string> = {
   right: '\\qr',
 }
 
-/** A column with no alignment of its own reads left, which is what a table
- *  written without colons in its rule means. */
 function alignWord(align: Align | undefined): string {
   return align == null ? '\\ql' : ALIGNS[align]
 }
 
-/** A real RTF table: one row definition per row, saying where each cell's right
- *  edge is, then the cells, then `\row`. The columns share the text column
- *  evenly - the note says nothing about how wide any of them wants to be. */
 function tableRtf(block: Extract<Block, { kind: 'table' }>, sheet: Sheet, frame: Frame): string {
   const rows = block.head.length ? [block.head, ...block.rows] : block.rows
   const columns = Math.max(1, ...rows.map((row) => row.length))
@@ -552,8 +400,6 @@ function blocksRtf(blocks: readonly Block[], sheet: Sheet, frame: Frame): string
         break
 
       case 'maths':
-        // Left as the TeX it is: a picture of a formula is not something the
-        // reader can copy back out of the document.
         parts.push(lined(block.tex, frame, '\\qc\\f2\\fs20'))
         break
 
@@ -598,9 +444,6 @@ function blocksRtf(blocks: readonly Block[], sheet: Sheet, frame: Frame): string
   return parts.join('')
 }
 
-/** The Windows language ids for the languages a note is likely to be written in.
- *  Anything else falls back to US English, which is what a reader assumes when
- *  the file says nothing at all. */
 const LANGS: Record<string, number> = {
   cs: 1029,
   da: 1030,
@@ -631,8 +474,6 @@ function langOf(lang: string): number {
   return LANGS[base] ?? DEFAULT_LANG
 }
 
-/** What the document says about itself. A word processor shows this as the
- *  title, and the file's name is not the note's name. */
 function info(doc: Doc): string {
   const parts: string[] = []
   if (doc.title !== '') parts.push(`{\\title ${escaped(doc.title)}}`)
@@ -641,14 +482,6 @@ function info(doc: Doc): string {
   return parts.length ? `{\\info${parts.join('')}}` : ''
 }
 
-/** The whole note as one RTF file. `pictures` are the ones already read, keyed
- *  by the `src` the note wrote for them; a picture that is not in the list, or
- *  that is in a format RTF has no blip for, comes out as the words under it.
- *
- *  `paper` is the page the note is going on, resolved once by the caller: the
- *  settings, the note's own `export:` front matter over them, and the running text
- *  with its placeholders filled. Required rather than defaulted, because a Letter
- *  page written in by hand is the whole of the bug this argument closes. */
 export function toRtf(doc: Doc, pictures: readonly Picture[], paper: PaperTwips): string {
   const sheet: Sheet = {
     doc,

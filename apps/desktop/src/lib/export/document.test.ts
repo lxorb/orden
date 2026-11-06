@@ -4,8 +4,6 @@ import { type Block, documentOf, picturesIn, type Span, titleOf } from './docume
 
 const doc = documentOf(CORPUS, CORPUS_NAME)
 
-/** The blocks of one kind, so a test says what it is about rather than counting
- *  its way to an index. */
 function kind<K extends Block['kind']>(k: K): Extract<Block, { kind: K }>[] {
   return doc.blocks.filter((block): block is Extract<Block, { kind: K }> => block.kind === k)
 }
@@ -120,9 +118,6 @@ describe('the document a note comes to', () => {
     expect(words(kind('paragraph')[0]?.spans ?? [])).not.toContain('title:')
   })
 
-  /** The shape every export that is not HTML stands on, so this is where a comment
-   *  is kept out of Word, RTF, ePub and plain text at once; see comments.ts in
-   *  @orden/markdown for the rest of the paths. */
   test('leaves a comment the writer wrote out of the blocks', () => {
     const commented = documentOf('# Head\n\n<!-- to myself -->\n\nWords.\n', 'Note.md')
     const said = commented.blocks
@@ -186,10 +181,6 @@ describe('the marks on a run', () => {
   })
 })
 
-/** A `==highlight==` is one of six colours - the plain one and the five Obsidian
- *  writes an emoji for - and the blocks every document format is written from have
- *  to say which, or Word and RTF can only guess. See highlights.ts in
- *  @orden/markdown, the one place that knows the six. */
 describe('the colour a highlight was written in', () => {
   const marks = (source: string) =>
     documentOf(source, 'Note.md')
@@ -319,8 +310,6 @@ describe('a quote', () => {
   })
 
   test('a title of the writer’s own is the label, and the fold sign is not words', () => {
-    // A title is plain words. A mark inside one is not read as markdown, and
-    // whichever way it is written none of it leaks into the body below.
     expect(quotes[2]?.label).toBe('The short of it')
     const inner = quotes[2]?.blocks[0]
     expect(inner?.kind === 'paragraph' && words(inner.spans)).toBe(
@@ -365,7 +354,6 @@ describe('an embed on a line of its own', () => {
     expect(blocks('![[shot.png|the sketch]]\n')).toEqual([
       { kind: 'paragraph', spans: [{ text: 'the sketch', picture: 'shot.png' }] },
     ])
-    // A size is not a description.
     expect(blocks('![[shot.png|300]]\n')).toEqual([
       { kind: 'paragraph', spans: [{ text: '', picture: 'shot.png' }] },
     ])
@@ -384,8 +372,6 @@ describe('an embed on a line of its own', () => {
   })
 
   test('and never nothing at all', () => {
-    // The token carries no children, so before it was answered for here the
-    // whole line fell through the walk and left no block behind.
     expect(blocks('before\n\n![[clip.mp3]]\n\nafter\n')).toHaveLength(3)
   })
 })
@@ -415,9 +401,6 @@ describe('the pictures a document names', () => {
   })
 })
 
-/** A note's cover is the top of it, so a document of the note opens on the same
- *  picture the app draws a band of. A picture like any other from there on, which is
- *  what carries it into the Word package, the RTF and the bundle beside the note. */
 describe('the cover a note names', () => {
   const NOTED = '---\ntitle: Wide\ncover: assets/wide.jpg\n---\n\n# Wide\n\nWords.\n'
 

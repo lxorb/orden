@@ -1,9 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-/** On a Mac the frame's print is a dead end - `WKWebView` ignores `print()` inside a
- *  frame - so the page goes to the crate's own print sheet instead. The crate is stood
- *  in for; what is under test is which road a Mac takes and what it is handed. No
- *  frame is ever made on the way, which is what lets this run without a document. */
 const world = vi.hoisted(() => ({
   asked: [] as { command: string; args: Record<string, unknown> | undefined }[],
   refuse: false,
@@ -43,8 +39,6 @@ describe('printing on a Mac', () => {
     expect(world.asked[0]?.args?.page).toBeNull()
   })
 
-  /** A sheet that could not be shown is not worth an error on top of it: the caller
-   *  is let go of rather than held for ever. */
   test('lets the caller go when the sheet cannot be shown', async () => {
     world.refuse = true
 
