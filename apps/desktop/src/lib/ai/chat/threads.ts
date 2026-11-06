@@ -1,15 +1,3 @@
-/** Where threads are kept: per space, on this device, never synced (4.11).
- *
- *  A thread is the words of every note it read and every page it was shown, so it stays
- *  on the machine it was had on: in the app's own data folder on a desktop and a phone,
- *  one file a thread and a list per space beside them, written by the crate
- *  (src-tauri/src/ai_threads.rs); in the browser's IndexedDB in a tab. `localStorage`
- *  holds the Ask panel's forty turns and is too small for a history.
- *
- *  Reading is careful and writing is not: a thread comes back from a file some version
- *  of Orden wrote, possibly one cut short, so it is checked on the way in and what is not a
- *  thread is left out rather than trusted. See `threadIn`. */
-
 import { without } from '../../records'
 import { isNumber, isRecord, isString } from '../../stored'
 import { isNative, invoke } from '../../tauri'
@@ -32,10 +20,8 @@ import type {
 } from './types'
 import { noUsage } from './usage'
 
-/** How many characters of a thread its head keeps for the list's search. */
 const WORDS = 2_000
 
-/** A new, empty thread. */
 export function newThread(
   space: string,
   provider: string,
@@ -59,7 +45,6 @@ export function newThread(
   }
 }
 
-/** The words of a thread the list's search finds it by. */
 export function wordsOf(thread: Thread): string {
   return thread.turns
     .flatMap((turn) => [
@@ -71,8 +56,6 @@ export function wordsOf(thread: Thread): string {
     .slice(0, WORDS)
 }
 
-/** What the list shows of a thread: its title, its model, its age, and its words for
- *  searching. */
 export function headOf(thread: Thread, words = wordsOf(thread)): ThreadHead {
   return {
     id: thread.id,
@@ -90,25 +73,15 @@ export function headOf(thread: Thread, words = wordsOf(thread)): ThreadHead {
   }
 }
 
-/** The chats a list shows, wherever chats are listed (#1062): the threads the reader
- *  started, never a helper (`Thread.parent`), which lives in its parent's steps instead.
- *  A helper whose parent is not among `heads` (deleted, or its space gone) stands as a
- *  chat of its own, so nothing kept is out of reach. */
 export function chatsOf<T extends ThreadHead>(heads: readonly T[]): T[] {
   const ids = new Set(heads.map((one) => one.id))
   return heads.filter((one) => !one.parent || !ids.has(one.parent))
 }
 
-/** A deep copy that also takes a thread the panel holds as reactive state, which
- *  `structuredClone` refuses. */
 function copied<T>(value: T): T {
-  // The same shape back: JSON is what a thread is written as anyway.
   return JSON.parse(JSON.stringify(value)) as T
 }
 
-/** A copy of a thread up to and including one of its turns, under a new id: `/branch`,
- *  `/fork`, and editing an old message (4.5). A compaction made after that turn does not
- *  come along, and nor does a goal, which is the old thread's. */
 export function branchThread(thread: Thread, upTo: string, title?: string): Thread {
   const copy = copied(thread)
   const at = copy.turns.findIndex((one) => one.id === upTo)
@@ -117,10 +90,7 @@ export function branchThread(thread: Thread, upTo: string, title?: string): Thre
     delete copy.compaction
   }
   delete copy.goal
-  // A copy has started nothing yet: what the original's helpers did is its review's.
   delete (copy as Thread & { helpers?: string[] }).helpers
-  // A copy is the reader's own chat, even of a helper; a command that makes a helper of
-  // it says so itself.
   delete copy.parent
   Object.assign(copy, copy.own)
   delete copy.own
@@ -183,7 +153,6 @@ function outputIn(value: unknown): ToolOutput | undefined {
   }
 }
 
-/** A part, or null for one this version does not draw. */
 function partIn(value: unknown): Part | null {
   if (!isRecord(value)) return null
   const { kind, text } = value
@@ -198,7 +167,6 @@ function partIn(value: unknown): Part | null {
       : null
   }
   if (kind !== 'tool' || !isString(value.id) || !isString(value.verb)) return null
-  // A call that was still running when the thread was written never answered.
   const state = STATES.find((one) => one === value.state && one !== 'running') ?? 'error'
   const result = outputIn(value.result)
   const change = isRecord(value.change) && isString(value.change.path) ? value.change : null
@@ -222,7 +190,6 @@ function partIn(value: unknown): Part | null {
   }
 }
 
-/** A turn, with every part this version cannot read left out. */
 function turnIn(value: unknown): Turn | null {
   if (!isRecord(value) || !isString(value.id) || (value.role !== 'you' && value.role !== 'model')) {
     return null
@@ -230,8 +197,6 @@ function turnIn(value: unknown): Turn | null {
   const parts = Array.isArray(value.parts)
     ? value.parts.map(partIn).filter((one) => one !== null)
     : []
-  // The parts are checked one by one above; the rest of a turn (its draft, the provider's
-  // own record of it) is handed back as it was written, which is what it is kept for.
   const turn = { ...(value as unknown as Turn), parts, at: isNumber(value.at) ? value.at : 0 }
   if (!isString(turn.context)) delete turn.context
   return turn
@@ -355,16 +320,12 @@ export function threadIn(value: unknown, gone = false): Thread | null {
     : []
   const elsewhere = !gone && isString(value.answering) && answeredElsewhere(value)
   if (isString(value.answering) && !elsewhere) cutOff(turns, value.answering)
-  // A compaction's block is the provider's and goes back as it came, so only where it
-  // starts is checked.
   const compaction =
     isRecord(value.compaction) && isString(value.compaction.upTo)
       ? (value.compaction as unknown as Compaction)
       : undefined
   const always = Array.isArray(value.always) ? value.always.filter(isString) : []
   const kept = Array.isArray(value.without) ? value.without.filter(isString) : []
-  // Every field the engine reads is checked below; the rest (a goal, what was spent) is
-  // kept as written.
   const rest = [
     'always',
     'without',
@@ -401,7 +362,6 @@ export function threadIn(value: unknown, gone = false): Thread | null {
   }
 }
 
-/** A thread's `answered` and `seen`, where a file holds them as times. */
 function timesIn(value: Record<string, unknown>): { answered?: number; seen?: number } {
   return {
     ...(isNumber(value.answered) ? { answered: value.answered } : {}),
@@ -409,7 +369,6 @@ function timesIn(value: Record<string, unknown>): { answered?: number; seen?: nu
   }
 }
 
-/** A thread's state and pin, where a file holds a state there is and a time (#1089). */
 function placeIn(value: Record<string, unknown>): { state?: SessionState; pinned?: number } {
   return {
     ...(isSessionState(value.state) ? { state: value.state } : {}),
@@ -434,8 +393,6 @@ function headIn(value: unknown): ThreadHead | null {
   }
 }
 
-/** The browser's store: IndexedDB's `meta`, under a key per thread and one per space's
- *  list. Fetched only in a browser. */
 async function web() {
   const { meta } = await import('../../web/store')
   const listKey = (space: string) => `ai-threads:${space}`
@@ -447,14 +404,12 @@ async function web() {
       const list: unknown[] = Array.isArray(read) ? read : []
       return list
     } catch {
-      // A list cut short is a list to start again: the threads themselves are intact.
       return []
     }
   }
   return { meta, listKey, threadKey, heads }
 }
 
-/** The space's threads, newest first. */
 export async function listThreads(space: string): Promise<ThreadHead[]> {
   const read = isNative
     ? await invoke<unknown>('ai_threads_list', { space })
@@ -463,13 +418,8 @@ export async function listThreads(space: string): Promise<ThreadHead[]> {
   return heads.sort((a, b) => b.updated - a.updated)
 }
 
-/** A line of the one list the panel shows: a thread's head and the space it is kept in. */
 export type Listed = ThreadHead & { space: string }
 
-/** Every space's threads as one list, newest first (#332): the panel's chats are not the
- *  space's, so a space changing changes none of them. Each is still kept in the space it
- *  was asked in, which is where it reads and writes, and that space is on its line. A
- *  space whose list cannot be read leaves its threads out of this list and no other. */
 export async function listEveryThread(spaces: readonly string[]): Promise<Listed[]> {
   const each = await Promise.all(
     [...new Set(spaces)].map(async (space) =>
@@ -479,12 +429,6 @@ export async function listEveryThread(spaces: readonly string[]): Promise<Listed
   return each.flat().sort((a, b) => b.updated - a.updated)
 }
 
-/** Writes each helper of a space its parent, where it was kept before helpers said so
- *  (#1062): the parents' `helpers` list every thread started under them at any depth,
- *  and a helper's parent is the deepest of the threads that list it. A `/fork` copy is
- *  listed too but is the reader's own chat; it bears its parent's title, which a helper
- *  never does. Answers how many it wrote; reads every thread of the space, so it is
- *  asked once a space (see `findParentsOnce` in sidebar/chat.svelte.ts). */
 export async function findParents(space: string): Promise<number> {
   const threads = new Map<string, Thread & { helpers?: unknown }>()
   for (const head of await listThreads(space)) {
@@ -511,9 +455,6 @@ export async function findParents(space: string): Promise<number> {
   return wrote
 }
 
-/** The chats of `heads` that are unread (#1064): the agent answered, or asked the
- *  reader something, after the reader last saw the chat. A helper's answer is its
- *  chat's, the top of its `parent`s (#1062): the reader sees it there, in the step. */
 export function unreadOf(heads: readonly ThreadHead[]): Set<string> {
   const byId = new Map(heads.map((one) => [one.id, one]))
   const topOf = (head: ThreadHead): ThreadHead => {
@@ -535,7 +476,6 @@ export function unreadOf(heads: readonly ThreadHead[]): Set<string> {
   return unread
 }
 
-/** One thread, whole, or null where there is none to read. */
 export async function readThread(space: string, id: string): Promise<Thread | null> {
   let text: string | null
   if (isNative) {
@@ -549,8 +489,6 @@ export async function readThread(space: string, id: string): Promise<Thread | nu
   try {
     value = JSON.parse(text)
   } catch {
-    // A file cut short by a crash mid-write cannot be a thread; the list still names it,
-    // and deleting it is the way out.
     return null
   }
   const thread = threadIn(value)
@@ -571,7 +509,6 @@ function asWritten({ own, ...thread }: Thread): Thread {
   return { ...thread, ...own, ...aliveIn(thread) }
 }
 
-/** Writes a thread down, and its line in the space's list. */
 export async function writeThread(given: Thread): Promise<void> {
   const thread = asWritten(given)
   const head = { ...headOf(thread), ...aliveIn(thread) }
@@ -586,27 +523,19 @@ export async function writeThread(given: Thread): Promise<void> {
   await store.meta.put(store.listKey(thread.space), JSON.stringify([...others, head]))
 }
 
-/** Threads deleted this run: never written again, whatever still holds one (an answer
- *  that ends after the delete, a helper's line, a model picked), so a chat deleted
- *  while it answers stays deleted. Ids are never reused. */
 const removed = new Set<string>()
 
-/** Whether a thread was deleted this run, or is being deleted. */
 export function isDeleted(id: string): boolean {
   return removed.has(id)
 }
 
-/** Deletes on their way, by thread. */
 const deleting = new Map<string, Promise<void>>()
 
-/** Whether a thread is deleted for good, once a delete on its way is done. */
 export async function staysDeleted(id: string): Promise<boolean> {
   await deleting.get(id)?.catch(() => undefined)
   return removed.has(id)
 }
 
-/** Deletes a thread for good (`/delete`), once a write of it on its way is done. A
- *  delete that fails leaves the thread kept, and written again as it changes. */
 export function deleteThread(space: string, id: string): Promise<void> {
   removed.add(id)
   const done = (async () => {
@@ -635,7 +564,6 @@ async function deleted(space: string, id: string): Promise<void> {
   await store.meta.put(store.listKey(space), JSON.stringify(left))
 }
 
-/** Deletes every thread of a space, with the space. */
 export async function forgetSpace(space: string): Promise<void> {
   if (isNative) {
     await invoke<null>('ai_threads_forget', { space })
@@ -649,13 +577,8 @@ export async function forgetSpace(space: string): Promise<void> {
   await store.meta.remove(store.listKey(space))
 }
 
-/** Writes a thread, one write at a time per thread: a write asked for while one is on
- *  its way is made once that one is done, with the thread as it is then, and any more
- *  asked for meanwhile are that same write. */
 const writing = new Map<string, { next: boolean; thread: Thread; done: Promise<void> }>()
 
-/** Whether another write was asked for while one was on its way. Read through a call,
- *  because the write in between is what sets it. */
 function again(entry: { next: boolean }): boolean {
   return entry.next
 }

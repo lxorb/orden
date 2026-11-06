@@ -1,21 +1,3 @@
-/** What a row of the file list offers.
- *
- *  One menu, because the list shows one kind of thing: a note, which may hold
- *  other notes, or a file that is not a note at all. There is no folder menu,
- *  because nothing on screen is a folder - a folder on disk is a note that holds
- *  notes, and one that came out of somebody's vault is a note nobody has written
- *  yet. So "New folder" is not here, and is nowhere else either; see
- *  folder-notes.ts and docs/tree.md.
- *
- *  Its own module rather than a handful of functions inside Tree.svelte, so the
- *  entries a row offers can be read as a list of labels in a test instead of
- *  through a right click on a rendered tree; see row-menu.test.ts. What is left in
- *  the component is the row itself: the press, the drag, the keys.
- *
- *  Everything here asks the workspace as it stands, because a menu is built at the
- *  moment it is opened: which rows are selected, what is archived and what a row
- *  can be moved into are all true only then. */
-
 import { foreignCopy } from '@orden/sync-core/foreign'
 import { folderNote, nestedIn } from './folder-notes'
 import { hiddenKinds, type KindName } from './settings.svelte'
@@ -43,11 +25,8 @@ import type { Entry } from './workspace.svelte'
 import { workspace } from './workspace.svelte'
 import { protectEntries } from './protect/entries'
 
-/** A `.url` web note's web data, shared or its own (#239); see web-tab/own-data.ts. */
 export function webDataEntry(entry: { path: string; is_dir: boolean }): MenuEntry[] {
   if (!isDesktop || entry.is_dir || !/\.url$/i.test(entry.path)) return []
-  // Either choice writes the note's file, so a space shared to be read is not offered
-  // it (B288): its pages use the web data every page shares.
   if (!canWriteAt(entry.path)) return []
   const path = entry.path
   return [
@@ -63,22 +42,10 @@ export function rowMenu(entry: Entry): MenuEntry[] {
   const several = selectionMenu(entry)
   if (several) return several
 
-  // The note the row is drawn as, where the folder holds one. A folder that holds
-  // none is still a row that opens and holds; what it would open is not written
-  // yet, and nothing here writes it.
   const own = folderNote(entry)
-  // Whether a new note can go inside this one. A folder can hold notes whether it
-  // has a note of its own or not; a PDF, a picture and a canvas are not places.
   const holds = entry.is_dir || isMarkdownPath(entry.name)
-  // What the icon and the bookmark are about: the note inside the folder where
-  // there is one, and the row itself otherwise - which for a folder with no note
-  // is the folder, whose icon the space keeps and whose bookmark points at
-  // something that exists.
   const marked = own ?? entry
   const inside = entry.is_dir && nestedIn(entry).length > 0
-  // In a space shared with this account to be read the row is there to be opened and
-  // read: anything that writes would make the copy here stop being the space's, and
-  // the sync refuses it on every pass. The workspace refuses each of them as well.
   if (!canWriteAt(entry.path)) return readOnlyMenu(entry, own, marked)
 
   return [
@@ -98,28 +65,14 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     DIVIDER,
     { label: t('Rename'), run: () => workspace.startRenaming(entry.path) },
     ...moveEntry(entry),
-    // Beside the name, because both are what the row shows. A folder with no note
-    // has nowhere in itself to keep an icon, so that one goes in the space's map.
     ...iconEntries(marked.path, entry.is_dir && !own),
-    // And the picture across the top of it, which is the other thing the note looks
-    // like; see `coverEntries`.
     ...coverEntries(marked.path),
     ...wallpaperEntry(entry),
     ...webDataEntry(entry),
-    // Only for a row already left out of search, so nothing stays out with no way
-    // back; see `searchAgainEntry`.
     ...searchAgainEntry(entry.path),
-    // Putting it away, on the row's own path for the same reason: a folder goes with
-    // everything under it. See archiving.ts.
     ...archiveEntry(entry.path),
     ...protectEntries(entry.path),
-    // Who else may have this one file, in the same word the space uses. On the
-    // note the row is drawn as, because a share names a file the account has a
-    // copy of: a folder is not one, and a folder with no note has nothing to
-    // share. See `shareEntry` and sharing.svelte.ts.
     ...shareEntry(marked.path),
-    // A copy of the bytes, so a PDF duplicates as a PDF and a row that is a folder
-    // as the folder with its note renamed to match; see workspace/copying.ts.
     {
       label: t('Duplicate'),
       hint: shortcuts.hint('tree.duplicate'),
@@ -131,8 +84,6 @@ export function rowMenu(entry: Entry): MenuEntry[] {
   ]
 }
 
-/** A row of a space shared to be read: what opens it, looks at it or takes a copy of
- *  it out of the space, and nothing that changes it. */
 function readOnlyMenu(entry: Entry, own: Entry | null, marked: Entry): MenuEntry[] {
   return [
     { label: t('Open'), run: () => void workspace.openRow(entry.path) },
@@ -148,7 +99,6 @@ function readOnlyMenu(entry: Entry, own: Entry | null, marked: Entry): MenuEntry
   ]
 }
 
-/** A picture in a space as the wallpaper, copied into the app; see lib/wallpaper. */
 function wallpaperEntry(entry: Entry): MenuEntry[] {
   if (__EVEN_PLUGIN__ || entry.is_dir || !isPicturePath(entry.name)) return []
 
@@ -163,17 +113,12 @@ function wallpaperEntry(entry: Entry): MenuEntry[] {
   ]
 }
 
-/** A row that is part of a selection of several stands for all of them: its menu
- *  acts on the lot, and offers only what makes sense for a lot. */
 function selectionMenu(entry: Entry): MenuEntry[] | null {
   if (!workspace.isSelected(entry.path) || workspace.selection.length < 2) return null
   const paths = [...workspace.selection]
-  // Opening is all a selection in a space shared to be read is offered; see `rowMenu`.
   if (!paths.every((path) => canWriteAt(path))) {
     return [{ label: t('Open all'), run: () => void openAll(paths) }]
   }
-  // The rows that can actually go: a count that took in a folder holding something
-  // archived would be a menu promising to delete what it is going to leave.
   const count = workspace.deletable(paths).length
 
   return [
@@ -191,12 +136,6 @@ function selectionMenu(entry: Entry): MenuEntry[] | null {
   ]
 }
 
-/** A row somewhere other than where Open puts it: a tab of its own left behind the
- *  one in front, as a link's menu offers in a browser and Ctrl+click does on the row
- *  (see new-tab.ts), and a pane beside this one,
- *  as VS Code's Open to the Side does. The pane is not offered where there is none
- *  to make - a phone - nor for a folder with no note, which has no file to show
- *  beside anything yet. */
 function openElsewhere(entry: Entry, own: Entry | null): MenuEntry[] {
   const behind = {
     label: t('Open in new tab'),
@@ -210,10 +149,6 @@ function openElsewhere(entry: Entry, own: Entry | null): MenuEntry[] {
   ]
 }
 
-/** Another sync tool's copy beside the note it was made of: the note in front and the
- *  copy to the side, which is how two versions of one note are read against each other
- *  here, and Delete below is the rest of what there is to do with it. Offered only
- *  while the note is still there. See @orden/sync-core/foreign. */
 function compareEntry(entry: Entry): MenuEntry[] {
   const copy = entry.is_dir ? null : foreignCopy(entry.name)
   const original = copy && entryAt(workspace.tree, joinPath(folderOf(entry.path), copy.original))
@@ -227,8 +162,6 @@ async function compare(original: string, copy: string) {
   await workspace.openAside(copy)
 }
 
-/** Every row of the selection in a tab, in the order they were picked, landing on
- *  the first: the rest open behind it, as the tabs a browser opens from links do. */
 async function openAll(paths: readonly string[]) {
   const [first, ...rest] = paths
   if (first === undefined) return
@@ -237,9 +170,6 @@ async function openAll(paths: readonly string[]) {
   for (const path of rest) await workspace.openRow(path, howFor('behind'))
 }
 
-/** The files of the tabs a tab's menu is about, bookmarked with one press: the note a
- *  folder is drawn as where it has one. The word says which way the press goes; see
- *  tab-strip/menu.ts. A row of the file list is dragged onto the Essentials (#417). */
 export function bookmarkAll(paths: readonly string[]): MenuEntry[] {
   const marks = paths.flatMap((path) => {
     const entry = entryAt(workspace.tree, path)
@@ -257,7 +187,6 @@ export function bookmarkAll(paths: readonly string[]): MenuEntry[] {
   ]
 }
 
-/** The selection put away with one press, and one Undo for all of it. */
 function archiveAll(paths: readonly string[]): MenuEntry[] {
   const [first] = paths
   const entry = first === undefined ? [] : archiveEntry(first)
@@ -273,21 +202,8 @@ function archiveAll(paths: readonly string[]): MenuEntry[] {
       ]
 }
 
-/** Moving a row, said rather than dragged.
- *
- *  A held finger opens this menu before a drag could start, and the browser fires
- *  no drag events from a touch anyway, so on a phone or a tablet the menu is the
- *  only way a row moves at all. It is offered under a pointer too: a drag across a
- *  long list, into a note that is folded shut, is a gesture that can be missed,
- *  and the places a row can land read faster as a list than as a target to aim at.
- *  Which places those are is move-targets.ts.
- *
- *  Not under a pointer any more (#303): a row is dragged into a folder or onto a space
- *  in the switcher, and the palette's Move this note asks where. The right-click menu
- *  was long, and Move was the row in it a drag already does. */
 function moveEntry(entry: Entry): MenuEntry[] {
   if (!viewport.touch) return []
-  // Never into a space shared to be read, which takes nothing.
   const targets = moveTargets({
     moving: entry.path,
     tree: workspace.tree,
@@ -299,9 +215,6 @@ function moveEntry(entry: Entry): MenuEntry[] {
   return [{ label: t('Move'), run: () => void moveTo(entry, targets) }]
 }
 
-/** The selection moved together, somewhere every row of it may go: never into one
- *  of themselves, and a place some of them already are is fine as long as the rest
- *  would move. The same sheet and the same call as one row's Move. */
 async function moveAllTo(paths: readonly string[]) {
   const asked = (moving: string | null) =>
     moveTargets({
@@ -327,14 +240,9 @@ async function moveTo(entry: Entry, targets: readonly MoveTarget[]) {
   const { prompt } = await import('./prompt.svelte')
   const into = await prompt.find({ title: t('Move to'), options: [...targets] })
 
-  // The same call the drop makes, so it is the same move and the same undo.
   if (into) await workspace.moveMany([entry.path], into)
 }
 
-/** Deleting a row that holds rows takes all of them with it, so it asks first: the
- *  row is drawn as the one note it is, and a note does not look like something
- *  that holds anything. A row with nothing under it goes the way deleting one note
- *  has always gone, which is without a question. */
 async function removeRow(entry: Entry, marked: Entry, inside: boolean) {
   if (workspace.keepsArchived(entry.path)) {
     await refuseDeleting([entry.path])
@@ -357,9 +265,6 @@ async function removeRow(entry: Entry, marked: Entry, inside: boolean) {
   if (sure) await workspace.remove(entry.path, true)
 }
 
-/** Rows a deletion left alone because something archived is in them, said: nothing
- *  archived is deleted, so the sheet counts what is in the way and offers to show it.
- *  For the row's Delete and for the keys; see `keepsArchived` in workspace.svelte.ts. */
 export async function refuseDeleting(paths: readonly string[]) {
   const root = workspace.activeSpace?.root ?? ''
   const held = [...workspace.archive.keysOf(root)].filter((one) =>
@@ -385,18 +290,12 @@ export async function refuseDeleting(paths: readonly string[]) {
   }
 }
 
-/** The row in the file manager, in Obsidian's words on a Mac; see reveal.ts. */
 function revealEntry(entry: Entry): MenuEntry[] {
   if (!isDesktop) return []
   const label = platform() === 'macos' ? t('Reveal in Finder') : t('Show in folder')
   return [{ label, run: () => void import('./reveal').then((one) => one.reveal(entry.path)) }]
 }
 
-/** What the file list's own New rows make: a named file, as its row waiting for a name,
- *  of each kind that is a file and that Settings › Note types offers. The new tab's
- *  gesture is the other one, a tab first and a file when saved; see new-kinds.ts. A shell
- *  and a private tab are tabs and never files. Given a row, they go inside it, as its
- *  New note inside does. */
 const MAKERS: Partial<Record<KindName, (folder?: string) => unknown>> = {
   note: (folder) => workspace.createNote(folder),
   canvas: (folder) => workspace.createCanvas(folder),
@@ -411,7 +310,6 @@ const MAKERS: Partial<Record<KindName, (folder?: string) => unknown>> = {
 }
 
 export function newFileRows(inside?: string): MenuEntry[] {
-  // Nothing to make where nothing may be written; see `rowMenu`.
   const into = inside ?? workspace.activeSpace?.root
   if (into !== undefined && !canWriteAt(into)) return []
 
@@ -422,9 +320,6 @@ export function newFileRows(inside?: string): MenuEntry[] {
       const run = inside ? () => void workspace.createInside(inside, make) : () => void make()
       return [{ label: kindLabel(kind), run }]
     }),
-    // A folder of notes with a board over them, Notion's database; see new-database.ts.
-    // Not on the glasses, which draw no views. Made at the top level only, since
-    // createDatabase takes no folder.
     ...(__EVEN_PLUGIN__ || inside
       ? []
       : [

@@ -1,10 +1,3 @@
-/** What a view keeps on this device and nowhere else, as Todoist's apps do: which of
- *  a list's groups are folded, and how each project and each space's Todos is laid out -
- *  list or board, its grouping, its sorting - so it comes back as it was left.
- *
- *  Kept by the view's name (`viewKey`): a project by its space and its note, a view Orden
- *  ships by its name, a base by its file. */
-
 import { type Base, placeOfKey, readBase, writeBase } from '@orden/bases'
 import { isRecord, keepJson, stored, stringList } from '../stored'
 import type { ViewSpec } from './spec'
@@ -16,10 +9,8 @@ const RENAMES = 'nib:space-renames'
 
 export const EVERY_SPACE = ''
 
-/** How many views keep their folds: the ones folded most lately. */
 const MOST = 200
 
-/** The name a view keeps its folds under, or null for one that keeps none (a fence). */
 export function viewKey(spec: ViewSpec, file: string | null): string | null {
   if (file !== null) return `file:${file}`
   if (spec.builtin === 'project') return `project:${spec.space ?? ''}/${spec.path ?? ''}`
@@ -33,13 +24,11 @@ function read(key: string): Record<string, unknown> {
   return isRecord(all) ? all : {}
 }
 
-/** The groups a view was left with folded. */
 export function foldsOf(key: string | null): ReadonlySet<string> {
   if (key === null) return new Set()
   return new Set(stringList(read(FOLDS)[key]) ?? [])
 }
 
-/** The groups a view has folded now, kept for the next time it is drawn. */
 export function keepFolds(key: string | null, folded: ReadonlySet<string>): void {
   if (key === null) return
   const all = Object.fromEntries(Object.entries(read(FOLDS)).filter(([one]) => one !== key))
@@ -48,36 +37,28 @@ export function keepFolds(key: string | null, folded: ReadonlySet<string>): void
   keepJson(FOLDS, Object.fromEntries(kept))
 }
 
-/** How a project was last laid out here, as its base's words, if it was changed. */
 export function projectView(space: string, path: string): string | undefined {
   const words = read(PROJECTS)[`${space}/${path}`]
   return typeof words === 'string' ? words : undefined
 }
 
-/** How a project is laid out now, kept for the next time it is opened. */
 export function keepProjectView(space: string, path: string, words: string): void {
   const all = read(PROJECTS)
   all[`${space}/${path}`] = words
   keepJson(PROJECTS, all)
 }
 
-/** How a space's Todos was last laid out here - its layout, grouping, sorting, filters
- *  and whether done tasks show - as its base's words, if it was changed (#1046). */
 export function todosView(space: string): string | undefined {
   const words = read(TODOS)[space]
   return typeof words === 'string' ? words : undefined
 }
 
-/** How a space's Todos is laid out now, kept for the next time it is opened; none, put
- *  back as Orden ships it. */
 export function keepTodosView(space: string, words: string | undefined): void {
   const all = Object.fromEntries(Object.entries(read(TODOS)).filter(([one]) => one !== space))
   if (words !== undefined) all[space] = words
   keepJson(TODOS, all)
 }
 
-/** Every space's Todos laid out as one space's was, which no Todos of one space is
- *  read for again (#1153): a Reset later puts back what Orden ships, not that space's. */
 export function takeOverTodosView(words: string): void {
   keepJson(TODOS, { [EVERY_SPACE]: words })
 }
@@ -113,8 +94,6 @@ export function followSpaceViews(
     keepJson(FOLDS, Object.fromEntries(moved))
 }
 
-/** A view's words with what Display narrowed to a space that is gone, or to a note of
- *  it, taken out. */
 export function unnarrowed(words: string, space: string): string {
   let base: Base
   try {
@@ -181,9 +160,6 @@ export function renamedTo(space: string): string | undefined {
   return now
 }
 
-/** The layouts kept for a space's projects, moved along with their notes: `moved` answers
- *  where a path is now (or null where it did not move), `follow` the words about it there,
- *  and `into` the space it is in now, for a note moved into another one. */
 export function followProjectViews(
   space: string,
   moved: (path: string) => string | null,

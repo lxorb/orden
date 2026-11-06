@@ -66,8 +66,6 @@ describe('coalesce', () => {
   })
 
   test("a day's note renamed or moved before it went is made as a note of its own (#436)", () => {
-    // Made `mergeable` under its new name, it was merged into whichever note had that
-    // name: walk seed 207384677 put a day's words into a note renamed Café.md.
     const day = (op: string): Op => ({
       op,
       t: 'create',
@@ -85,7 +83,6 @@ describe('coalesce', () => {
     const moved = coalesce([mkdir('0', 'f', 'Work'), day('1'), move('2', 'd', 'f')])
     expect(moved).toEqual([mkdir('0', 'f', 'Work'), { ...create('1', 'd', '2026-09-30.md', 'f') }])
 
-    // Only its case changed: still the day's note, still merged with one made elsewhere.
     expect(coalesce([day('1'), rename('2', 'd', '2026-09-30.MD')])).toEqual([
       { ...day('1'), name: '2026-09-30.MD' },
     ])
@@ -150,9 +147,6 @@ describe('coalesce', () => {
   })
 })
 
-// ---------------------------------------------------------------------------
-// The property: what one device does, coalesced or not, leaves the same tree.
-
 type Choice =
   | { t: 'mkdir' | 'create'; parent: number; name: number }
   | { t: 'rename'; id: number; name: number }
@@ -174,8 +168,6 @@ const choice: fc.Arbitrary<Choice> = fc.oneof(
   fc.record({ t: fc.constant('restore' as const), id: fc.nat() }),
 )
 
-/** A device's own ops, made against its own tree as it goes, so each one names
- *  something that is there. */
 function made(start: TreeState, choices: readonly Choice[]): Op[] {
   const state = structuredClone(start)
   const ops: Op[] = []
@@ -231,9 +223,6 @@ function made(start: TreeState, choices: readonly Choice[]): Op[] {
   return ops
 }
 
-/** A tree as its shape: which ids are alive, where, and how many of each name key are
- *  in each folder. Names themselves may step aside differently once the order of the
- *  ops changes; what may not change is what exists and where. */
 function shape(state: TreeState) {
   const alive = [...state.entries.values()]
     .filter((entry) => !entry.deleted)

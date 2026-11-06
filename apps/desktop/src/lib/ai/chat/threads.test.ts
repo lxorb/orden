@@ -1,9 +1,5 @@
-/** Threads kept: written and read back whole, checked on the way in, branched, and
- *  written one write at a time. The crate's half is ai_threads.rs's tests. */
-
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** What the crate holds, by space and id, and every write it was asked for. */
 const disk = new Map<string, { head: unknown; body: string }>()
 const writes: string[] = []
 let slowly: Promise<void> = Promise.resolve()
@@ -241,7 +237,6 @@ describe('a file read back', () => {
     expect(read).toMatchObject({ effort: 'auto', mode: 'approve', title: '' })
     expect(read).not.toHaveProperty('always')
     expect(read?.turns).toHaveLength(1)
-    // A call still running when the thread was written never answered.
     expect(read?.turns[0]?.parts).toEqual([
       { kind: 'text', text: 'ok' },
       { kind: 'tool', id: 'c', verb: 'read_note', args: {}, state: 'error' },

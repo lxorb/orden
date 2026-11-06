@@ -11,11 +11,9 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
-
 def shot(page: Page, name: str) -> None:
     quiet(page)
     DRIVE.shot(page, name)
-
 
 NOTE = (
     "---\n"
@@ -63,16 +61,13 @@ CONTROLS = """
 ROWS = "() => [...document.querySelectorAll('#write .property')].map((row) => row.dataset.key)"
 SOURCE = "() => !!document.querySelector('#write .properties-source')"
 
-
 def is_true(claim: bool, what: str) -> None:
     if not claim:
         wrong(what)
 
-
 def line(page: Page, key: str) -> str:
     said = page.evaluate(SAID)
     return next((one for one in said.split("\n") if one.startswith(f"{key}:")), "")
-
 
 def the_controls(page: Page) -> None:
     controls = page.evaluate(CONTROLS)
@@ -101,7 +96,6 @@ def the_controls(page: Page) -> None:
     )
     shot(page, "01-rows")
 
-
 def a_word_and_a_number(page: Page) -> None:
     page.fill("#write .property[data-key='title'] .property-field", "Another name")
     page.locator("#write .property[data-key='count'] .property-field").click()
@@ -119,7 +113,6 @@ def a_word_and_a_number(page: Page) -> None:
     quiet(page)
     is_true(line(page, "count") == "count: 3", f"undoing left {line(page, 'count')!r}")
 
-
 def a_checkbox_and_a_date(page: Page) -> None:
     page.check("#write .property[data-key='done'] .property-box")
     quiet(page)
@@ -129,7 +122,6 @@ def a_checkbox_and_a_date(page: Page) -> None:
     page.locator("#write .property[data-key='title'] .property-field").click()
     quiet(page)
     is_true(line(page, "due") == "due: 2026-12-24", f"the date is {line(page, 'due')!r}")
-
 
 def a_list(page: Page) -> None:
     page.fill("#write .property[data-key='tags'] .property-add", "three")
@@ -142,7 +134,6 @@ def a_list(page: Page) -> None:
     is_true(line(page, "tags") == "tags: [two, three]", f"removing wrote {line(page, 'tags')!r}")
     shot(page, "02-list")
 
-
 def a_menu(page: Page) -> None:
     page.select_option("#write .property[data-key='icon-color'] .property-menu", "teal")
     quiet(page)
@@ -150,7 +141,6 @@ def a_menu(page: Page) -> None:
         line(page, "icon-color") == "icon-color: teal",
         f"the menu wrote {line(page, 'icon-color')!r}",
     )
-
 
 def adding_a_property(page: Page) -> None:
     before = page.evaluate(ROWS)
@@ -164,7 +154,6 @@ def adding_a_property(page: Page) -> None:
     page.keyboard.press("Control+z")
     quiet(page)
     say(f"[add] the rows were {json.dumps(before)}")
-
 
 def the_three_answers(page: Page) -> None:
     for mode, rows, source in [("source", False, True), ("hidden", False, False)]:
@@ -207,7 +196,6 @@ def the_three_answers(page: Page) -> None:
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
     quiet(page)
 
-
 def drive(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1180, "height": 860}, color_scheme="light")
     context.add_init_script(HIDE_CARET)
@@ -244,10 +232,8 @@ def drive(browser: Browser) -> None:
     say(f"[note] {json.dumps(page.evaluate(SAID).split('---')[1])}")
     context.close()
 
-
 def main() -> int:
     return DRIVE.run(drive, "every property row is edited in the control its shape asks for")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

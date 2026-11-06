@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong = DRIVE.say, DRIVE.wrong
 failures = DRIVE.failures
 SHOTS = DRIVE.shots
-
 
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
@@ -54,10 +52,8 @@ CATCH = """
 
 LEFT = "() => window.__left"
 
-
 def web_tabs(state: dict) -> list[str]:
     return [one["address"] or "" for one in state["tabs"] if one["kind"] == "web"]
-
 
 def close_pages(page) -> None:
     page.evaluate(
@@ -70,11 +66,9 @@ def close_pages(page) -> None:
     )
     page.wait_for_timeout(250)
 
-
 def press(page, selector: str, *, modifiers=(), button="left") -> None:
     page.locator(selector).first.click(modifiers=list(modifiers), button=button)
     page.wait_for_timeout(400)
-
 
 def in_the_note(page) -> None:
     say("--- a link in a note ---")
@@ -114,7 +108,6 @@ def in_the_note(page) -> None:
     page.screenshot(path=str(SHOTS / "in-front.png"))
     close_pages(page)
 
-
 def an_email(page) -> None:
     say("--- what is not a page ---")
 
@@ -136,7 +129,6 @@ def an_email(page) -> None:
     else:
         say("Ctrl+click on mailto: -> left for the system, no tab made")
     close_pages(page)
-
 
 def the_menu(page) -> None:
     say("--- a right click on a link ---")
@@ -179,7 +171,6 @@ def the_menu(page) -> None:
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
 
-
 def a_locked_note(page) -> None:
     say("--- a locked note ---")
 
@@ -196,7 +187,6 @@ def a_locked_note(page) -> None:
 
     page.evaluate("() => window.nibApp.modes.toggleReadOnly(undefined)")
     page.wait_for_timeout(400)
-
 
 def the_reading_view(page) -> None:
     say("--- the reading view ---")
@@ -255,7 +245,6 @@ def the_reading_view(page) -> None:
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
     page.wait_for_timeout(500)
 
-
 def drive(browser) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
 
@@ -282,13 +271,11 @@ def drive(browser) -> None:
     page.screenshot(path=str(SHOTS / "after.png"))
     context.close()
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         drive(browser)
 
     return DRIVE.verdict("everything the drive checked was right")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,13 +1,3 @@
-/** A session of an agent's calls, written into a note: `attach_agent_log`
- *  (docs/agent-native.md 9.5).
- *
- *  Out of the audit log the crate keeps for every call (`agents_log`, a day of it in
- *  UTC): this agent's calls of that day, one line each - when, the verb, what it was
- *  about, how it went - with a link to every note it touched and every page it went
- *  to, so the note reads as what happened and leads to all of it. Only what the log
- *  says a call was about goes in: the words an agent typed or wrote are in the notes
- *  and pages themselves, which is where the links go. */
-
 import type { AgentAnswer } from '../../automation/caller'
 import { notePath } from '../../space-paths'
 import { invoke } from '../../tauri'
@@ -18,7 +8,6 @@ import { made, madeOrChanged } from './notes'
 import { Refused } from './problem'
 import { judgedForWriting, onDisk, placeOf, writableAt } from './spaces'
 
-/** One line of the log, as far as a note needs it. */
 interface Line {
   at: number
   agent: string
@@ -41,10 +30,8 @@ function isLine(value: unknown): value is Line {
   )
 }
 
-/** Most lines one note takes: a long session is still a list somebody can read. */
 const MOST_LINES = 500
 
-/** What a call was about, as a link where it is something to follow. */
 function aboutOf(line: Line): string {
   const said = (key: string) => {
     const value = line.args[key]
@@ -63,7 +50,6 @@ function aboutOf(line: Line): string {
   return line.tab === undefined ? '' : `tab ${line.tab}`
 }
 
-/** One call as a line of the list. */
 function lineOf(line: Line): string {
   const when = new Date(line.at).toISOString().slice(11, 19)
   const about = aboutOf(line)
@@ -83,7 +69,6 @@ export async function attachAgentLog(call: Call): Promise<AgentAnswer> {
   const named = judgedForWriting(need(call, 'note'))
   const relative = notePath(named)
   if (relative === null) throw new Refused('bad_arguments', `${named} is not a markdown note`)
-  // A new note or a section on an old one, neither goes into a space shared to be read.
   writableAt(place, onDisk(place, relative))
 
   const read: unknown[] = await invoke<unknown[]>('agents_log', { day }).catch(() => [])

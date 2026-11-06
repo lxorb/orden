@@ -1,5 +1,3 @@
-# Wraps user-facing strings in t(), reading and writing UTF-8 explicitly so
-# non-ASCII characters in comments survive the round trip.
 param([Parameter(Mandatory = $true)][string[]]$Path)
 
 $utf8 = New-Object System.Text.UTF8Encoding($false)

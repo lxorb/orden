@@ -1,28 +1,3 @@
-<#
-  An install from before the product was renamed Orden - Nib up to 0.11, nibeditor
-  from 0.12 to 0.13, or Nib updated to nibeditor - updated by this build the way each
-  road to an update runs it, and what Windows says afterwards. For a CI runner only: it
-  installs, updates and uninstalls for real, in the account it runs in, so it refuses
-  to run anywhere but GitHub Actions.
-
-    pwsh scripts/windows-upgrade.ps1 -Scenario updater -Old <dir> -OldName Nib -New <dir>
-    pwsh scripts/windows-upgrade.ps1 -Scenario updater -Old <dir> -OldName Nib `
-      -Via <dir> -ViaName nibeditor -New <dir>
-
-  -Old holds the old release's setup.exe and .msi and -OldName is the name it was
-  made under; -Via, when given, is a later old release the first is updated to before
-  this build, the same way; -New holds this build's. The scenarios:
-
-    updater    the old NSIS install, updated as the app's own updater does (`/P /UPDATE`)
-    silent     the same, updated as winget does (`/S`)
-    elsewhere  the same, updated into a folder of its own (`/S /D=`)
-    msi        the old MSI, updated as Chocolatey and the app's updater run an MSI
-
-  Before the update the app is made the default browser for http and https the way
-  Settings would, with the hash Windows seals the choice with (PS-SFTA, pinned by
-  digest), so what is checked after it is that the choice still holds. Exits with
-  the number of checks that failed. See installer.nsh and wix/browser.wxs.
-#>
 param(
   [Parameter(Mandatory)][ValidateSet('updater', 'silent', 'elsewhere', 'msi')][string]$Scenario,
   [Parameter(Mandatory)][string]$Old,
@@ -37,10 +12,8 @@ $ErrorActionPreference = 'Stop'
 if ($env:GITHUB_ACTIONS -ne 'true') { throw 'this installs and uninstalls for real; it runs on a CI runner only' }
 if (($Via -eq '') -ne ($ViaName -eq '')) { throw '-Via and -ViaName go together' }
 
-# Every name the product has had, the one this build is made under last.
 $names = @('Nib', 'nibeditor', 'Orden')
 $product = 'Orden'
-# The name the install is under once the old releases have run: the last of them.
 $before = if ($ViaName) { $ViaName } else { $OldName }
 
 $wrong = [System.Collections.Generic.List[string]]::new()
@@ -63,8 +36,6 @@ function Value([string]$key, [string]$name = '(default)') {
 
 function Has([string]$key) { Test-Path -LiteralPath $key }
 
-# The program a command starts, as a long path: the MSI writes its own as a short one
-# (C:\PROGRA~1\...), which is the same file.
 function Starts([string]$command) {
   if ($command -notmatch '^"([^"]+)"') { return $null }
   $file = Get-Item -LiteralPath $Matches[1] -ErrorAction SilentlyContinue
@@ -76,7 +47,6 @@ Add-Type -Namespace Nib -Name Shell -MemberDefinition @'
 public static extern uint AssocQueryString(uint flags, uint what, string assoc, string extra, System.Text.StringBuilder found, ref uint size);
 '@
 
-# The ProgID the shell opens a scheme with.
 function Handler([string]$scheme, [uint32]$what) {
   $found = New-Object System.Text.StringBuilder 1024
   $size = [uint32]1024
@@ -137,7 +107,6 @@ $uninstall = "$hkcu\Microsoft\Windows\CurrentVersion\Uninstall"
 $clients = "$hkcu\Clients\StartMenuInternet"
 $registered = "$hkcu\RegisteredApplications"
 
-# --- the install from before: the first old release, where its name puts it
 if ($Scenario -eq 'msi') {
   Run 'msiexec.exe' "/i `"$($first.Msi)`" /qn /l*v `"$env:RUNNER_TEMP\old-msi.log`"" | Out-Null
   $dir = "$env:ProgramFiles\$OldName"
@@ -148,7 +117,6 @@ if ($Scenario -eq 'msi') {
 $where = $dir
 Check "$OldName is installed in $dir" (Test-Path "$dir\nib.exe")
 
-# Then the later old release over it, which keeps that folder.
 if ($Via) {
   $later = Files $Via
   if ($Scenario -eq 'msi') {
@@ -159,8 +127,6 @@ if ($Via) {
   Check "$ViaName is installed in $dir" ((Test-Path "$dir\nib.exe") -and -not (Test-Path "$($dir -replace '[^\\]+$', $ViaName)\nib.exe"))
 }
 
-# Settings' own choice, sealed with its hash. The old install wrote NibURL, which is
-# what the choice names.
 . $Sfta
 foreach ($scheme in 'http', 'https') { Set-PTA -ProgId 'NibURL' -Protocol $scheme }
 $chosen = (Handler 'http' 20) -eq 'NibURL' -and (Handler 'https' 20) -eq 'NibURL'
@@ -168,7 +134,6 @@ if (-not $chosen) { Write-Host '::warning::this runner did not take the default 
 Show 'before'
 $hadDesktop = Test-Path "$desktop\$before.lnk"
 
-# --- the update
 switch ($Scenario) {
   'updater' { Run $built.Setup '/P /UPDATE' | Out-Null; $want = $dir }
   'silent' { Run $built.Setup '/S' | Out-Null; $want = $dir }
@@ -179,7 +144,6 @@ Show 'after'
 
 $olds = @($names | Where-Object { $_ -ne $product })
 
-# --- one install, where it should be
 $exe = "$want\nib.exe"
 Check "the program is in $want" (Test-Path $exe)
 Check "and it is $version" ((Get-Item $exe).VersionInfo.ProductVersion -like "$version*")
@@ -223,7 +187,6 @@ if ($Scenario -eq 'msi') {
   }
 }
 
-# --- the browser
 foreach ($name in $olds) {
   Check "the $name browser client is gone" (-not (Has "$clients\$name"))
   Check "and its line in RegisteredApplications" ($null -eq (Value $registered $name))
@@ -234,27 +197,19 @@ $link = Value "$hkcu\Classes\NibURL\shell\open\command"
 Check 'the ProgID starts the program with a link' ((Starts $link) -eq $exe -and $link -like '* --url "%1"')
 if ($chosen) {
   foreach ($scheme in 'http', 'https') {
-    # The ProgID the shell resolves the scheme to, through the sealed choice; that the
-    # ProgID starts this program is checked above.
     Check "the app is still the default for $scheme" ((Handler $scheme 20) -eq 'NibURL')
   }
 }
 
-# --- PDFs: in "Open with", and never the default
 $pdf = Value "$hkcu\Classes\NibPDF\shell\open\command"
 Check 'the PDF ProgID starts the program with the file' ((Starts $pdf) -eq $exe -and $pdf -like '* "%1"')
 Check 'and is offered in Open with' ($null -ne (Value "$hkcu\Classes\.pdf\OpenWithProgids" 'NibPDF'))
 Check 'and the default for PDFs is left alone' ((Value "$hkcu\Classes\.pdf") -ne 'NibPDF')
 
-# --- and away again
 if ($Scenario -eq 'msi') {
   $code = $entries[0].PSChildName
   Run 'msiexec.exe' "/x $code /qn" | Out-Null
 } else {
-  # NSIS's uninstaller copies itself to %TEMP% (Un_A.exe and the like), starts that
-  # copy and returns at once, so its exit says nothing about the uninstall. Wait for
-  # the copy, and for what it removes last, rather than for a fixed while: three
-  # seconds was not always enough on a busy runner.
   Run "$want\uninstall.exe" '/S' | Out-Null
   $deadline = (Get-Date).AddSeconds(120)
   do {

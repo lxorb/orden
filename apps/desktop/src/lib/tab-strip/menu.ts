@@ -1,26 +1,3 @@
-/** A tab's own menu: what a right click, a held finger or the menu key on a tab
- *  offers.
- *
- *  Chrome's rows, VS Code's and Obsidian's, where Orden has the thing behind them, in
- *  groups that read top to bottom as the tab, the strip around it, and the panes:
- *
- *  | group | rows |
- *  | --- | --- |
- *  | the page | Reload, Copy link and Mute site, on a web tab only |
- *  | the shell | Open another, and any other shell a chevron away, on a terminal only |
- *  | the tab | Rename, Duplicate, Pin, Bookmark, Show in the file list, Move to space |
- *  | unloading | Unload tab, Unload other tabs, Unload tabs to the right, with the setting on |
- *  | closing | Close, Close others, Close tabs to the right, Close all, Reopen |
- *  | the panes | Share, Stack, Split right and down, Move to other pane, Full window |
- *
- *  A row that could only do nothing is left out rather than greyed where the thing
- *  it is about is not there at all - a graph has no file to rename - and greyed where
- *  it is there and there is nothing to do yet, the way Chrome greys "Close tabs to
- *  the right" on the last tab. Each command that has a key says it; see the registry.
- *
- *  A tab that is one of several picked out with Ctrl or Shift offers what can be done to
- *  all of them at once, Chrome's rows for a pick: see `pickMenu` and picking.svelte.ts. */
-
 import { agentMarks } from '../agent-marks.svelte'
 import { copyText } from '../clipboard'
 import { plural, t } from '../i18n.svelte'
@@ -46,17 +23,10 @@ import { spaceEntry } from './to-space'
 import { unloadEntries } from './unloading.svelte'
 import { chosen, duplicateMany, moveManyToOtherPane } from './picking.svelte'
 
-/** Move to space, on a touch screen only (#303). Under a pointer a tab is carried onto
- *  the space in the switcher, and the palette's Move to space asks which; a held finger
- *  opens this menu where a pointer would start the carry. */
 function movedToSpace(tabs: readonly Tab[]): MenuEntry[] {
   return viewport.touch ? spaceEntry(tabs) : []
 }
 
-/** An agent acting in the tab (docs/agent-native.md 7.3, 9.5): Stop stops that agent,
- *  as its session in Ask does, and Resume lets it go on. Nothing hands the
- *  tab to anybody: it is the reader's and the agent's at once. First, because while an
- *  agent is in a tab it is the thing about the tab most worth reaching. */
 function agentEntries(tab: Tab): MenuEntry[] {
   const worn = agentMarks.on[tab.id]
   const act = agentMarks.act
@@ -70,17 +40,11 @@ function agentEntries(tab: Tab): MenuEntry[] {
   ]
 }
 
-/** What a double click on the tab does, for a finger that cannot double click.
- *  Only offered while the tab is still a preview: once kept, there is nothing left
- *  to keep. */
 function keepEntry(tab: Tab): MenuEntry[] {
   if (tab.id !== workspace.previewTabId) return []
   return [{ label: t('Keep open'), run: () => workspace.keep(tab.id) }]
 }
 
-/** Beside, and below, and the tab itself carried to the other pane. Left out where
- *  the pane has split as far as it may, rather than offered as a row that does
- *  nothing. */
 function paneEntries(tab: Tab): MenuEntry[] {
   const entries: MenuEntry[] = []
 
@@ -105,8 +69,6 @@ function paneEntries(tab: Tab): MenuEntry[] {
       run: () => moveToOtherPane(tab.id),
     })
   }
-  // The tab alone in the window, brought to the front first where it is not; see
-  // lib/tab-fill. A phone and a tablet show one document already.
   if (!viewport.touch) {
     entries.push({
       label: workspace.panes.fills === null ? t('Full window') : t('Leave full window'),
@@ -118,7 +80,6 @@ function paneEntries(tab: Tab): MenuEntry[] {
   return entries.length ? [...entries, DIVIDER] : []
 }
 
-/** The note's other face. Not offered for the graph, which has only one. */
 function readingEntry(tab: Tab): MenuEntry[] {
   if (tab.kind !== 'note') return []
 
@@ -132,8 +93,6 @@ function readingEntry(tab: Tab): MenuEntry[] {
   ]
 }
 
-/** What Chrome's tab menu has about the page itself. Mute is the site's, as in
- *  Chrome: every tab on it, and the next time it plays; see web-tab/mute.ts. */
 function pageEntries(tab: Tab): MenuEntry[] {
   if (tab.kind !== 'web') return []
 
@@ -162,21 +121,14 @@ function pageEntries(tab: Tab): MenuEntry[] {
   ]
 }
 
-/** The site's mute turned over, fetched with the press: nothing of it is on screen
- *  before a tab's menu is. */
 async function muting(tabId: string): Promise<void> {
   const { muteSite } = await import('../web-tab/mute')
   await muteSite(tabId, !pages.of(tabId).muted)
 }
 
-/** What a terminal's tab offers about its shell: another beside it, in the folder it is
- *  in - the same shell by the row, any other by the chevron at its end, as VS Code's
- *  `+ ˅` has it. Duplicate is this row's, for a terminal; see `tabEntries`. */
 function shellEntries(tab: Tab): MenuEntry[] {
   if (__EVEN_PLUGIN__ || tab.kind !== 'terminal') return []
 
-  // Another online terminal is another session on the same machine, beside this one.
-  // Its icon and a local one's, chosen from the tab (#1110).
   if (isOnlineTab(tab)) {
     return [
       {
@@ -201,9 +153,6 @@ function shellEntries(tab: Tab): MenuEntry[] {
   ]
 }
 
-/** Renaming on the file's own row, and a second tab on the same thing. Each only
- *  where it can happen: a file with no row has no name to change, and the graph is
- *  one to a pane. */
 function tabEntries(tab: Tab): MenuEntry[] {
   return [
     ...(renamesFromTab(tab)
@@ -228,9 +177,6 @@ function tabEntries(tab: Tab): MenuEntry[] {
   ]
 }
 
-/** The file in the list, the rows above it unfolded and its own scrolled to. Only
- *  for a file that has a row there: the graph, a note from outside the space and one
- *  nobody has saved have none. */
 function inListEntry(tab: Tab): MenuEntry[] {
   const root = workspace.activeSpace?.root
   const path = tab.path
@@ -245,8 +191,6 @@ function inListEntry(tab: Tab): MenuEntry[] {
   ]
 }
 
-/** Left out while nothing has been closed, rather than offered as a row that does
- *  nothing. */
 function reopenEntry(): MenuEntry[] {
   if (!workspace.closed.any) return []
 
@@ -259,8 +203,6 @@ function reopenEntry(): MenuEntry[] {
   ]
 }
 
-/** The tab, and the strip around it. Greyed where there is nothing around it to
- *  close. */
 function closeEntries(tab: Tab): MenuEntry[] {
   return [
     {
@@ -289,19 +231,12 @@ function closeEntries(tab: Tab): MenuEntry[] {
   ]
 }
 
-/** Only for a tab with no file - a new note, plane or page note, or a web tab nobody
- *  has kept - which is where somebody pointing at the tab says where it goes. Every
- *  tab with a file writes itself and has nothing to save. See save-place/ask.ts. */
 function saveEntry(tab: Tab): MenuEntry[] {
   if (!isUnsaved(tab.note)) return []
 
   return [{ label: t('Save'), hint: shortcuts.saveHint, run: () => askPlace(tab.id) }, DIVIDER]
 }
 
-/** What a pick of tabs offers, all of it about every tab picked: Chrome's rows for a
- *  selection - reload, duplicate, close, close the others, move - and the bookmark
- *  a row of the file list has. The others the strip closes are the tabs not picked, and
- *  the ones to the right are right of the last of them. */
 function pickMenu(tabs: readonly Tab[], paneId: string): MenuEntry[] {
   const ids = tabs.map((one) => one.id)
   const web = tabs.filter((one) => one.kind === 'web')
@@ -370,21 +305,16 @@ function pickMenu(tabs: readonly Tab[], paneId: string): MenuEntry[] {
   ]
 }
 
-/** The tabs a menu on this tab is about: the pick it is one of, or it alone. */
 function pickOf(tab: Tab, paneId: string): Tab[] {
   const many = chosen.of(paneId)
   return many.some((one) => one.id === tab.id) ? many : []
 }
 
-/** What the menu says it is about: the tab's name, or how many tabs are picked. */
 export function tabMenuTitle(tab: Tab, paneId: string): string {
   const many = pickOf(tab, paneId).length
   return many ? plural(many, { one: '{count} tab', other: '{count} tabs' }) : tab.shown
 }
 
-/** Where a tab has been, newest first, as rows to go straight back to: the back
- *  arrow's own menu. What is ahead of it is left out: forward is one arrow away and a
- *  list of both directions is a list nobody can read at a glance. */
 export function trailMenu(tab: Tab): MenuEntry[] {
   return tab.trail
     .slice(0, tab.at)
@@ -406,17 +336,13 @@ export function tabMenu(tab: Tab, paneId: string): MenuEntry[] {
     ...tabEntries(tab),
     ...inListEntry(tab),
     ...movedToSpace([tab]),
-    // Putting away what the tab shows, which closes it; see archiving.ts.
     ...archiveEntry(tab.path),
     ...protectEntries(tab.path),
     DIVIDER,
-    // What the tab holds let go of, the tab kept; see unloading.svelte.ts (#1127).
     ...unloadEntries(tab),
     DIVIDER,
     ...closeEntries(tab),
     DIVIDER,
-    // Who else may have the file this tab is showing, in the same word and the
-    // same sheet the tree's row and the space's own menu use.
     ...shareEntry(tab.path),
     ...stackEntries(paneId),
     ...paneEntries(tab),

@@ -1,10 +1,3 @@
-// The extension API a Firefox add-on's background page sees, in the offscreen document it
-// runs as; see host.js. An offscreen document has the engine's messaging and nothing else,
-// so `chrome` here is the engine's own `runtime` and, for everything past it, a stand-in
-// that sends each call to the service worker over a port and each event back from it. A
-// call answers as the engine's own do: a promise, or the callback it was handed with
-// `runtime.lastError` set for a refusal, which is what the WebExtension polyfill after
-// this wraps into `browser`.
 ;(function () {
   if (globalThis.__ordenBridge) return
   globalThis.__ordenBridge = true
@@ -13,7 +6,6 @@
   const native = globalThis.chrome
   const PORT = '__orden'
 
-  // The namespaces that hold namespaces rather than functions, by the namespace they are in.
   const INSIDE = {
     storage: ['local', 'sync', 'session', 'managed'],
     privacy: ['network', 'services', 'websites'],
@@ -33,14 +25,12 @@
     ],
     browserSettings: [],
   }
-  // Where every name is a setting, itself a namespace of `get`, `set` and `clear`.
   const SETTINGS = new Set([
     'privacy.network',
     'privacy.services',
     'privacy.websites',
     'browserSettings',
   ])
-  // The engine's constants a background page reads, which a call cannot answer.
   const CONSTANTS = {
     'tabs.TAB_ID_NONE': -1,
     'tabs.TAB_INDEX_NONE': -1,
@@ -60,7 +50,6 @@
   let next = 0
   const waiting = new Map()
   const listening = new Map()
-  // The ports the page opened to a tab, each made in the worker.
   const ports = new Map()
 
   function connect() {
@@ -89,7 +78,6 @@
       for (const key of [...ports.keys()]) closed(key, 'The extension restarted.')
       for (const one of waiting.values()) one.refuse(new Error('The extension restarted.'))
       waiting.clear()
-      // The worker stopped; it is started again, and told again what the page listens to.
       setTimeout(() => {
         if (port || listening.size === 0) return
         connect()
@@ -171,7 +159,6 @@
     }
   }
 
-  /** An event of the page's own, which the bridge fires. */
   function local() {
     const listeners = new Set()
     return {
@@ -193,8 +180,6 @@
     one.onDisconnect.fire(one)
   }
 
-  /** A port to a tab, which no port carries: the worker opens it, and what is said on it
-   *  is passed along. */
   function connecting(path) {
     return function (...args) {
       const key = `port#${++next}`
@@ -217,8 +202,6 @@
     }
   }
 
-  // A menu item's id, which Firefox answers at once, and what pressing it runs, which no
-  // port carries.
   let items = 0
   const pressed = new Map()
   let hearing = false
@@ -250,8 +233,6 @@
     }
   }
 
-  // A file a call puts in a tab, found as Firefox finds it: from the background page, or
-  // the add-on's root for the page Orden writes round its scripts.
   const FILED = new Set(['tabs.executeScript', 'tabs.insertCSS', 'tabs.removeCSS'])
   function filed(path) {
     const made = call(path)
@@ -269,13 +250,11 @@
     }
   }
 
-  // A content script registered in the worker, which the page takes away again there.
   const registered = (one) => ({
     unregister: (...args) =>
       call(['scripting', 'unregisterContentScripts'], () => undefined)({ ids: [one?.id] }, ...args),
   })
 
-  /** A namespace: what is asked of it is made the first time and kept. */
   function namespace(path) {
     const made = {}
     const dotted = path.join('.')
@@ -306,8 +285,6 @@
     })
   }
 
-  /** One of the extension's own files as JSON, at once: what `runtime` and `i18n` answer
-   *  without waiting is read out of them. */
   function read(path) {
     try {
       const asked = new XMLHttpRequest()
@@ -319,7 +296,6 @@
     }
   }
 
-  // The engine's own messaging, with the rest of `runtime` from the worker.
   const nativeRuntime = native.runtime
   const manifest = read('/manifest.json') ?? {}
   const own = {
@@ -354,7 +330,6 @@
     },
   )
 
-  // `i18n` answers at once, so its words are read once, here, out of the extension's own files.
   const words = (() => {
     const wanted = navigator.language.replace('-', '_')
     const found = {}
@@ -395,7 +370,6 @@
   const extension = {
     getURL: (path) => runtime.getURL(path),
     getBackgroundPage: () => window,
-    // The page is no popup, tab or sidebar, and in no window.
     getViews: (filter = {}) =>
       filter.type === undefined && filter.windowId === undefined && filter.tabId === undefined
         ? [window]

@@ -34,11 +34,6 @@ import { dns, PROVIDER_NAMES } from './dns.svelte'
 import { gpu } from './gpu.svelte'
 import { versionField } from './version.svelte'
 
-/** Whose a key that is both the app's and the shell's is, one row each: asked every
- *  time, the app's command, or the shell's character. A row for every key somebody has
- *  answered the question for - any app command on a key a shell reads can be one (#426)
- *  - and putting it back to asking takes the row away. On a Mac none ever is: Cmd never
- *  reaches a shell. See terminal/two-ways.ts. */
 function twoWayFields(): Field[] {
   return Object.keys(shells.ways)
     .filter((command) => BY_ID.has(command))
@@ -60,8 +55,6 @@ function twoWayFields(): Field[] {
     }))
 }
 
-/** The terminal's settings. The shells are asked for as the pane is drawn, which is
- *  the first time this list is needed; the row fills in when they arrive. */
 function terminalGroup(): Group {
   void shells.ask()
 
@@ -159,8 +152,6 @@ function gpuGroup(): Group {
         initial: true,
         get: () => gpu.on,
         set: (on) => void gpu.set(on),
-        // The crate starts the engine on what the settings file says (gpu.rs), so a
-        // declared value is in force in this very run: nothing to keep, nothing to ask.
         declare: (on: boolean) => {
           gpu.on = on
         },
@@ -169,15 +160,9 @@ function gpuGroup(): Group {
   }
 }
 
-/** Which DNS the web tabs' pages look names up with (#766, #767): Chrome's Secure DNS,
- *  with Chrome's choices, and a field for one's own provider when that is the choice.
- *  Nothing until the crate has said this engine can be told; see dns.svelte.ts. */
 function dnsGroups(): Group[] {
   void dns.ask()
   if (!dns.answered) return []
-  // The system's own engine - WebView2, WKWebView - has nothing an app can set its DNS
-  // through, so the row says where it is set rather than offering a choice that does
-  // nothing.
   if (!dns.offered) {
     return [
       {
@@ -232,11 +217,6 @@ function dnsGroups(): Group[] {
   return [{ title: t('DNS'), fields }]
 }
 
-/** When a task reminds of itself, and what keeps the reminders ringing: the tray on a
- *  desktop that has one, the exact alarms on a phone. One line on Linux, where nothing
- *  rings with Orden closed. See docs/tasks.md 5.10. */
-/** The folders at the top of a space a Tasks panel can take its projects from, the one
- *  in force among them even before it is made. */
 function projectFolderChoices(root: string): { value: string; label: string }[] {
   const here = projectsOf(root)
   const names =
@@ -312,11 +292,6 @@ function remindersGroup(): Group {
   }
 }
 
-/** What the Language group says under its row, where there is anything to say.
- *
- *  One caption, because two sentences about the same choice are one caption; the link
- *  is the catalogues folder either way, since that is where a correction goes and a
- *  reader who cannot read the panel may well want to fix the words too. */
 function caption(): { caption?: { text: string; url: string } } {
   const said = [
     i18n.machine ? machineSaid() : '',
@@ -327,16 +302,12 @@ function caption(): { caption?: { text: string; url: string } } {
   return { caption: { text: said.join(' '), url: CATALOGUES_URL } }
 }
 
-/** Settings › General; see `preferences` in ../preferences.ts. */
 export function generalPane(): Pane {
   return {
     id: 'general',
     label: t('General'),
     groups: [
       {
-        // A note being written in is kept every so often on top of the words
-        // each sitting began with, so an edit that went wrong is not the end of
-        // the story; History is where the versions are.
         title: t('Recovery'),
         fields: [
           {
@@ -404,9 +375,6 @@ export function generalPane(): Pane {
             } satisfies Group,
           ]),
       {
-        // Chrome's order is the default, and VS Code's is the option: the tab
-        // used last, and further back for each press while Ctrl is held. See
-        // tab-cycle.svelte.ts.
         title: t('Tabs'),
         fields: [
           {
@@ -422,8 +390,6 @@ export function generalPane(): Pane {
             get: () => tabCycle.byUse,
             set: (on) => tabCycle.setByUse(on),
           },
-          // Unload tab, and the others and those to the right, in a tab's menu, as in
-          // Firefox and Edge (#1127); see tab-strip/unloading.svelte.ts.
           {
             kind: 'switch',
             key: 'general.unloadTabs',
@@ -437,14 +403,9 @@ export function generalPane(): Pane {
             get: () => unloadTabs.on,
             set: (on) => unloadTabs.set(on),
           },
-          // How long a tab is rested on before its card comes, at most two seconds
-          // (#1088). Not on a phone, whose tabs have no pointer to rest on them. See
-          // tab-strip/preview-delay.svelte.ts.
           ...(isMobile
             ? []
             : ([
-                // Every tab but the one in front as its mark alone, opening out under
-                // the pointer (#1041); see tab-strip/icon-tabs.svelte.ts.
                 {
                   kind: 'switch',
                   key: 'general.iconTabs',
@@ -458,8 +419,6 @@ export function generalPane(): Pane {
                   get: () => iconTabs.on,
                   set: (on) => iconTabs.set(on),
                 },
-                // Each tab only as wide as its contents, still shrinking when the room
-                // runs out (#1114); see tab-strip/icon-tabs.svelte.ts.
                 {
                   kind: 'switch',
                   key: 'general.fitTabs',
@@ -489,9 +448,6 @@ export function generalPane(): Pane {
                   set: (value) => previewDelay.set(value),
                 },
               ] satisfies Field[])),
-          // Two fingers sideways for back and forward, as in every browser; off for a
-          // hand that keeps doing it by accident. Not on a phone, whose side of the
-          // screen is the system's own back. See back-swipe/swipes.ts.
           ...(isMobile
             ? []
             : ([
@@ -507,8 +463,6 @@ export function generalPane(): Pane {
                   set: (on) => swipeChoice.set(on),
                 },
               ] satisfies Field[])),
-          // What a space's own tabs do out of sight: the pages a desktop runs, which a
-          // phone and a browser tab do not. See workspace/hidden-tabs.svelte.ts.
           ...(isDesktop
             ? ([
                 {
@@ -529,8 +483,6 @@ export function generalPane(): Pane {
                   get: () => hiddenTabs.choice,
                   set: (value) => hiddenTabs.set(isHiddenTabs(value) ? value : 'ask'),
                 },
-                // Off, so no page is ever closed for memory unless somebody asks; out of
-                // sight it is frozen instead. See web-tab/resting.ts.
                 {
                   kind: 'select',
                   key: 'general.memorySaver',
@@ -558,9 +510,6 @@ export function generalPane(): Pane {
         ],
       },
       {
-        // Quick add: whether its words are read as dates and fields at all (Todoist's
-        // smart date switch), and whether its key reaches past the window. See
-        // quick-add/asked.svelte.ts and docs/tasks.md 5.6.
         title: t('Add task'),
         fields: [
           {
@@ -576,8 +525,6 @@ export function generalPane(): Pane {
             get: () => quickAdd.smart,
             set: (on) => quickAdd.setSmart(on),
           },
-          // Which folder of the open space the Tasks panel lists as its projects
-          // (rows/projects.ts): any folder at its top, Projects where none was chosen.
           ...(workspace.activeSpace
             ? ([
                 {
@@ -596,8 +543,6 @@ export function generalPane(): Pane {
                 },
               ] satisfies Field[])
             : []),
-          // Whether Today holds the tasks with no start date, as begun; off is Today as
-          // Todoist has it. On the account (modes.svelte.ts, docs/tasks.md 5.1.1).
           {
             kind: 'switch',
             key: 'general.undatedInToday',
@@ -628,9 +573,6 @@ export function generalPane(): Pane {
             : []),
         ],
       },
-      // Discord's Developer Mode: the terminals and what goes with them, for somebody
-      // who writes code. The first run asks (Personalize.svelte); this is where the
-      // answer changes. Not in the glasses' plugin, which has no terminal to offer.
       ...(__EVEN_PLUGIN__
         ? []
         : [
@@ -648,8 +590,6 @@ export function generalPane(): Pane {
                   get: () => modes.coder,
                   set: (on: boolean) => modes.setDeveloper(on),
                 },
-                // An application on another of the reader's computers, and this one's
-                // clipboard (issue 1063, step 6); see apps-clipboard.svelte.ts.
                 ...(modes.coder
                   ? [
                       {
@@ -668,7 +608,6 @@ export function generalPane(): Pane {
               ],
             },
           ]),
-      // Silent mode turns the hints off; see hints.svelte.ts. The glasses have none.
       ...(__EVEN_PLUGIN__
         ? []
         : [
@@ -691,19 +630,6 @@ export function generalPane(): Pane {
           ]),
       {
         title: t('Language'),
-        // Two things can be worth saying about a language, and both are one line.
-        //
-        // Most of the catalogues were written in one pass and never read through.
-        // Saying so is the honest part; the folder they live in is the useful part,
-        // because the reader who can see the wrong word is the only person who can
-        // put it right.
-        //
-        // And the glasses have one font baked into the firmware, with no Devanagari,
-        // Arabic, Thai, Burmese or Ethiopic in it at all - so for a reader in one of
-        // those scripts the panel is in English however the app is set. Said here,
-        // where the choice is made, and only to somebody who has a pair: it is the
-        // one place a reader could act on it, and noise to everybody else. The rule
-        // itself is `panelDrawable`; see even/panel-words.ts.
         ...caption(),
         fields: [
           {
@@ -712,8 +638,6 @@ export function generalPane(): Pane {
             store: { on: i18n, name: 'choice' },
             label: t('Language'),
             hint: t('The language Orden’s menus and settings are in.'),
-            // Each row says for itself whether its catalogue was read through;
-            // see language-options.ts.
             options: languageOptions(),
             get: () => i18n.choice,
             set: (value) => i18n.select(value),
@@ -721,47 +645,18 @@ export function generalPane(): Pane {
         ],
       },
 
-      // The automatic reminder, and the tray or the alarms that keep reminders ringing;
-      // never the glasses' plugin, which rings nothing.
       ...(__EVEN_PLUGIN__ ? [] : [remindersGroup()]),
 
-      // What pings for every chat, where a chat can ping at all: a desktop and the
-      // browser, never a phone, whose push is off (docs/chats.md decision 7.4). None in
-      // the glasses' plugin, whose twin of the module has no chats; see
-      // chats-settings.even.ts.
       ...(isMobile ? [] : chatsGroups()),
 
-      // Which shell a new terminal opens, how large its type is and whether its lines
-      // come back after a restart: this machine's, like the release channel below,
-      // because a shell is a program on one computer and its screen is nobody else's.
-      // Only a desktop has a terminal; see docs/terminal.md.
       ...(!__EVEN_PLUGIN__ && isDesktop && modes.coder ? [terminalGroup()] : []),
 
-      // Whether Chromium draws on the graphics card (#550): Linux and Windows, since a
-      // Mac's engine has no switch.
       ...(!__EVEN_PLUGIN__ && isDesktop && ['linux', 'windows'].includes(platform())
         ? [gpuGroup()]
         : []),
 
-      // Which DNS the web tabs' pages look names up with (#766, #767): only where the
-      // engine is nib's own Chromium, which the crate says.
       ...(!__EVEN_PLUGIN__ && isDesktop ? dnsGroups() : []),
 
-      // Which version this is, on every build, and the channel it follows where it
-      // follows one (#490): the desktop's release channel, chosen here, or the web app's
-      // two builds; a phone's updates are the store's.
-      //
-      // Only the desktop app installs anything: a page is the new version the moment it
-      // is reloaded, and a phone app is the store's business. So its row is not there at
-      // all rather than there and answering nothing. The choice stays on this machine,
-      // since it is about this machine: one laptop can run the build of main while the
-      // desktop stays on the releases. See updates.svelte.ts.
-      //
-      // The web app's own pair is the release or the edge of `unstable`, chosen for this
-      // browser by a cookie the Worker keeps (#424). Choosing loads the page again from
-      // the other build, so the row says what is running rather than what was last
-      // pressed. `__EVEN_PLUGIN__` said here as well as in `webChannel`, so the plugin's
-      // build drops the row before it decides which catalogue rows to keep.
       {
         title: t('Updates'),
         fields: [

@@ -1,24 +1,3 @@
-/** A page into a note: `capture_to_note` (docs/agent-native.md 5.4).
- *
- *  The clipper's own road for a page. `clip` is the markdown the clip button writes
- *  (web-tab/note.ts `clipNote`), with `source:`, `title:` and `clipped:` as it writes
- *  them; `screenshot` is a picture of the page and `pdf` the page printed on the
- *  reader's own paper, each kept beside the note as the note's own file and embedded
- *  the way a pasted picture is; `link` is the address. Into a new note named after the
- *  page, stepped like every new file's name, or under a heading of a note that is
- *  there, which is an anchored edit like every other agent write.
- *
- *  The page is read by the crate (`agents_capture`), a reader's tab and an agent's own
- *  out-of-sight one alike: through the gate every browser verb goes through, in Orden's
- *  own world rather than the page's, every filled secret field painted over in a
- *  picture and a page holding one never printed (9.4). Where the engine has no road to
- *  a page, a reader's tab is clipped the clip button's own way, and nothing is
- *  photographed or printed that could not be painted over.
- *
- *  A reader's tab is theirs, so capturing one needs `browser.reader` and the space it
- *  is in, and an agent's own tab `browser`, as reading either does. The answer is
- *  marked as the page's: the note is named after what the page calls itself. */
-
 import { freePath } from '@orden/markdown/paths'
 import { stripFrontMatter, writeFrontMatter } from '@orden/markdown/front-matter'
 import { asWords } from '@orden/markdown/words'
@@ -52,19 +31,15 @@ import { treeOf } from './tree'
 const SHAPES = [...CAPTURE_AS, 'link'] as const
 type Shape = (typeof SHAPES)[number]
 
-/** A file kept beside the note: a picture or a PDF, as base64. */
 interface Kept {
   base64: string
   extension: 'png' | 'pdf'
 }
 
-/** A page as a capture reads it. */
 interface Page {
   url: string
   title: string
-  /** The article's HTML, for a clip. */
   html: string
-  /** The picture or the PDF, for those two. */
   file: Kept | null
 }
 
@@ -72,14 +47,10 @@ function isShape(value: string): value is Shape {
   return SHAPES.some((one) => one === value)
 }
 
-/** The page in a tab: one of the reader's or one of the agent's own, as the crate reads
- *  it; for a link, only what the window already knows of it. */
 async function pageIn(call: Call, tab: string, shape: Shape): Promise<Page> {
   const reader = workspace.tabs.find((one) => one.id === tab && one.kind === 'web')
   if (reader) {
     needScope(call, 'browser.reader', "the reader's tab")
-    // The reader's tabs belong to the space they are in; an agent that may not reach
-    // it has no business with them.
     placeFor(call, null)
     if (!tabsInReach(call).includes(reader)) {
       throw new Refused('no_such_tab', `there is no tab ${tab}: browser_tabs lists them`)
@@ -91,8 +62,6 @@ async function pageIn(call: Call, tab: string, shape: Shape): Promise<Page> {
       file: null,
     }
     if (shape === 'link') return known
-    // A tab behind another one is not being drawn, and a page nobody draws has no
-    // picture to take.
     if (shape === 'screenshot' && workspace.showing(reader.paneId)?.id !== reader.id) {
       throw new Refused('failed', 'the page is not on screen, so there is no picture of it')
     }
@@ -108,11 +77,6 @@ async function pageIn(call: Call, tab: string, shape: Shape): Promise<Page> {
   return { url: own[1].url, title: own[1].title, html: '', file: null }
 }
 
-/** A reader's tab through the crate, or what the clip button would write where the
- *  crate cannot read it: on an engine with no road to a page, the page read the
- *  button's own way; for a page put away to give the memory back, the address and the
- *  title. A picture or a PDF of either is refused rather than taken without the
- *  secret fields painted over, or of a page that is not there. */
 async function readersPage(call: Call, tab: string, shape: CaptureAs, known: Page): Promise<Page> {
   try {
     return await captured(call, tab, shape)
@@ -130,8 +94,6 @@ async function readersPage(call: Call, tab: string, shape: CaptureAs, known: Pag
   }
 }
 
-/** The page as the crate reads it, or the crate's own refusal, code and all: the log
- *  files the call by that code. */
 async function captured(call: Call, tab: string, shape: CaptureAs): Promise<Page> {
   const said = recordOf(
     await invoke<unknown>('agents_capture', {
@@ -145,8 +107,6 @@ async function captured(call: Call, tab: string, shape: CaptureAs): Promise<Page
 
   if (said.status === 'error') {
     const message = typeof said.message === 'string' ? said.message : 'the page was not read'
-    // The crate's own word for why (verbs.rs `Code`), passed on as it said it; one the
-    // contract does not have is filed as a failure by the log all the same.
     throw new Refused(String(said.code) as Code, message)
   }
   if (said.status !== 'ok') throw new Refused('failed', 'the page was not read')
@@ -156,12 +116,10 @@ async function captured(call: Call, tab: string, shape: CaptureAs): Promise<Page
   return page
 }
 
-/** An answer from the crate, which crossed a boundary: a record, or nothing. */
 function recordOf(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {}
 }
 
-/** The crate's result, read at the boundary. */
 function pageOf(record: Record<string, unknown>, shape: CaptureAs): Page {
   const words = (key: string) => (typeof record[key] === 'string' ? record[key] : '')
   const base64 = shape === 'screenshot' ? words('png') : shape === 'pdf' ? words('pdf') : ''
@@ -174,7 +132,6 @@ function pageOf(record: Record<string, unknown>, shape: CaptureAs): Page {
   }
 }
 
-/** What goes into a note for a page, and the front matter a new note of it wears. */
 async function wordsFor(page: Page, shape: Shape, embed: string | null): Promise<string> {
   if (shape === 'clip') return clipNote(page, new Date())
 
@@ -191,13 +148,10 @@ function frontMatter(page: Page, title: string): string {
   ])
 }
 
-/** The body of a capture without its front matter: what goes under a heading of a note
- *  that is already there, where a second block of front matter would be words. */
 function body(words: string): string {
   return stripFrontMatter(words).trim()
 }
 
-/** A note path nobody has in a place, from a page's title. */
 async function freshPath(place: Place, folder: string | null, title: string): Promise<string> {
   const tree = await treeOf(place)
   const taken = new Set<string>()
@@ -235,8 +189,6 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
       : notePath(target)
   if (relative === null) throw new Refused('bad_arguments', `${target} is not a markdown note`)
 
-  // Before the question and before any picture is kept beside the note: a space shared
-  // to be read takes neither a new note nor a section added to one there.
   const path = onDisk(place, relative)
   writableAt(place, path)
 
@@ -267,9 +219,6 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
   return done({ path: relative, space: place.space.id, source: page.url, created }, page.url)
 }
 
-/** A picture or a PDF kept beside a note the way a pasted picture is: in the folder the
- *  reader's Attachments setting says, under a name of its own. Answers what the note
- *  embeds. */
 async function attachment(place: Place, notePath: string, file: Kept): Promise<string> {
   writableAt(place, notePath)
   const bytes = Uint8Array.from(atob(file.base64), (character) => character.charCodeAt(0))

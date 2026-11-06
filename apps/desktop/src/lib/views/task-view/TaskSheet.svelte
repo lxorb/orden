@@ -1,14 +1,4 @@
 <script lang="ts">
-  /** A task, whole (Todoist's task view in Orden's shapes): where it lives, its box and its
-   *  words, its description in the editor every note is written in, its sub-tasks, and a
-   *  column of what it is - its note, its day, its deadline, its priority, its labels and
-   *  its reminders - each a press away from being changed. The arrows walk the list it
-   *  was opened from; ⋯ is the row's own menu.
-   *
-   *  It reads the task from the rows store as the store changes and writes through the
-   *  views' one write path, so every edit is one edit of the note and one undo, and the
-   *  note open in a pane beside it changes as it is written. A layer over the window; a
-   *  page of its own on a phone. */
   import type { Priority, Row } from '@orden/bases'
   import { parseQuickAdd } from '@orden/bases/language'
   import { linesOf } from '@orden/bases/tasks'
@@ -74,31 +64,19 @@
   })
 
   const row = $derived(rowFor(shown.ref, all))
-  /** Which task is shown, by where it is written: what its description and its comment
-   *  field are made again for. Its space too, as Today and Upcoming walk the tasks of
-   *  every space and two spaces each have an `Inbox.md` with a task on its first line:
-   *  a step from one to the other kept the first one's words, and wrote them into the
-   *  other's note (B461). */
   const shownAt = $derived(taskKey(shown.ref.space, shown.ref.path, shown.ref.line))
   const task = $derived(row?.task)
-  /** Its start date and its deadline, as its space reads a `📅` (#371). */
   const starts = $derived(task ? (startOf(task, task.dueReads) ?? task.scheduled) : undefined)
   const deadline = $derived(task ? deadlineOf(task, task.dueReads) : undefined)
   const path = $derived(row ? notePath(row) : null)
-  /** Whether its note may be written. A task of a space shared with this account to be
-   *  read is shown whole and offers no change at all: the store turns every write there
-   *  away, so a field, a key or a menu that seemed to work would lose what was typed
-   *  with nothing said (B285). */
   const writes = $derived(row ? kit.writes(row) : false)
   const phone = $derived(viewport.device === 'phone')
   const today = $derived(kit.live.today)
 
-  // A task that is gone (deleted here or in its note) takes its view with it.
   $effect(() => {
     if (!row) untrack(() => viewing.close())
   })
 
-  /** Its sub-tasks, in the order they are written. */
   const children = $derived(
     row?.anchor
       ? all.filter(
@@ -110,7 +88,6 @@
       : [],
   )
   const counts = $derived(subtaskCounts(all))
-  /** Its parent, for the breadcrumb, where it is a sub-task. */
   const parent = $derived(
     task?.parent === undefined || !row
       ? null
@@ -121,10 +98,6 @@
   )
   const subKit = $derived({ ...kit, openTask: (one: Row) => viewing.open(one) })
 
-  /** The task's words while they are being changed, written on Enter or when the field
-   *  is left. The field holds the words a reader sees, `milk $3` where the line says
-   *  `milk \$3`, and they go back with every escape the line had (`editedWords`):
-   *  taking a backslash out by hand would turn the line into maths. */
   let title = $state('')
   let editing = $state(false)
   $effect(() => {
@@ -132,8 +105,6 @@
     if (!editing) untrack(() => (title = words))
   })
 
-  /** The view follows the task to its new words only once they are written: told
-   *  first, it would look for a task that never came, and the words would be lost. */
   async function rename() {
     editing = false
     const words = title.trim()
@@ -141,15 +112,12 @@
     const written = editedWords(task.text, words)
     const line = row.anchor?.line ?? shown.ref.line
     if (await writeRow(row, { task: { text: written } })) viewing.renamed(written, line)
-    // Turned away: the words go back in the field the old ones were put in again.
     else title = words
   }
 
   let adding = $state(false)
   let subtask = $state('')
   let subField = $state<HTMLInputElement>()
-  // A sub-task begun is the shown task's own: a step to another task puts it away, or
-  // Enter there would write it under that one (B461).
   $effect(() => {
     if (shownAt)
       untrack(() => {
@@ -157,17 +125,12 @@
         subtask = ''
       })
   })
-  /** The comments, whose field `c` gives the keyboard to. */
   let comments = $state<{ focus: () => void }>()
-  /** Opened with `c` or the row's comment button: the field takes the keyboard once the
-   *  sheet has, and again for each task the view steps to while it was asked for. */
   $effect(() => {
     const field = comments
     if (shown.comment && field) untrack(() => void tick().then(() => field.focus()))
   })
 
-  /** A sub-task on its way: its words stay in the field until it is written, and a
-   *  second Enter in that time would write it again. */
   let writingSubtask = false
 
   async function writeSubtask() {
@@ -178,7 +141,6 @@
     if (!line) return
     writingSubtask = true
     try {
-      // Cleared once written, so a sub-task turned away is still in the field.
       if ((await addSubtask(row, line)) && subtask.trim() === words) subtask = ''
     } finally {
       writingSubtask = false
@@ -216,7 +178,6 @@
       return
     }
     if (event.ctrlKey || event.metaKey || event.altKey || !row || !task) return
-    // Only the keys that walk the list, where nothing may be written.
     if (!writes && !['ArrowUp', 'ArrowDown', 'k', 'j'].includes(event.key)) return
     const box = layer?.querySelector('.when')
     switch (event.key) {
@@ -262,7 +223,6 @@
     )
   }
 
-  /** The labels a task can be given: every tag the space's tasks carry, its own ticked. */
   function labelMenu(event: MouseEvent) {
     if (!row || !writes) return
     const tags = labelEntries([row])
@@ -300,7 +260,6 @@
   function remindMenu(event: MouseEvent) {
     if (!row || !task || !writes) return
     const current = row
-    // A reminder rings on the day it starts (#371).
     const day = starts
     menu.show(
       event,
@@ -317,10 +276,8 @@
     if (row) taskMenu(event, [row], kit)
   }
 
-  /** A sub-task's own sub-tasks, counted. */
   const countsOf = (one: Row) => counts.get(taskKey(one.space, one.path, one.anchor?.line ?? -1))
 
-  /** How many lines a sub-task's row is. */
   function lineOf(one: Row): number {
     const sub = one.task
     return sub ? lineCount(sub, hasMeta(sub, true, countsOf(one), today), false) : 1
@@ -449,7 +406,7 @@
             />
           {/each}
           {#if !writes}
-            <!-- Nothing to add to a task that may not be written. -->
+
           {:else if adding}
             <div class="nib-row adding">
               <Glyph icon={Plus} />
@@ -514,7 +471,6 @@
           <span class="nib-row-label">{row.file.basename}</span>
         </button>
 
-        <!-- The day it starts, never late; only a deadline is (#371). -->
         <p class="nib-section">{t('Start date')}</p>
         <button
           type="button"
@@ -567,7 +523,7 @@
             >
           {/each}
           {#if !writes}
-            <!-- No label to give a task that may not be written. -->
+
           {:else if labelling}
             <input
               bind:this={labelField}
@@ -617,7 +573,6 @@
     --scrim-z: var(--z-sheet);
   }
 
-  /* The screen's own shape and place (base.css), two things side by side wide. */
   .sheet {
     --screen-width: var(--screen-pair);
     z-index: var(--z-sheet);

@@ -11,15 +11,12 @@ say, wrong = DRIVE.say, DRIVE.wrong
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 
-
 def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> bool:
     return DRIVE.waited(page, expression, what, patience)
-
 
 def shot(page: Page, name: str) -> None:
     settle(page)
     DRIVE.shot(page, name)
-
 
 AGENT = "claude-code"
 
@@ -39,10 +36,8 @@ def settle(page: Page) -> None:
     page.evaluate("() => document.fonts.ready")
     page.wait_for_timeout(250)
 
-
 def fake(page: Page, call: str) -> object:
     return page.evaluate(f"() => window.__fake.{call}")
-
 
 def drive(page: Page, scheme: str) -> None:
     page.goto(ORIGIN, wait_until="domcontentloaded")
@@ -150,7 +145,6 @@ def drive(page: Page, scheme: str) -> None:
         wrong(f"the pairing bubble says {words!r}")
     shot(page, f"{scheme}-06-pairing")
 
-
 def main() -> int:
     with DRIVE.session() as browser:
         for scheme in ("light", "dark"):
@@ -169,7 +163,6 @@ def main() -> int:
             context.close()
 
     return DRIVE.verdict("all good")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

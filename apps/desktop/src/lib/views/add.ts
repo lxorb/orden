@@ -1,13 +1,3 @@
-/** Adding to a view: a task where the view says (its note, its day, its label, the
- *  column the plus was pressed in), or for a view of notes, a note where its filter
- *  points with its properties written in - the Bases bug of new rows landing at the
- *  root, fixed (docs/tasks.md 4) - from the base's template and with its next id.
- *
- *  A task is quick add's to read and write (quick-add/, docs/tasks.md 5.6), opened with
- *  what this view would prefill. A column that stands for a section, a priority or a
- *  status is more than quick add can carry, and there the view's own add row writes
- *  the words as they were typed, with the prefill's fields, through `addTask`. */
-
 import {
   addDays,
   type Base,
@@ -36,9 +26,7 @@ import { isPriority } from './drop'
 import type { ViewSpec } from './spec'
 import { dayIn } from './values'
 
-/** What a new task starts with, from the view and the group it was added in. */
 export interface Prefill {
-  /** The note it is written in, on this disk; the reader's one inbox where absent. */
   path?: string
   root?: string
   heading?: string
@@ -49,8 +37,6 @@ export interface Prefill {
   status?: string
 }
 
-/** Quick add, opened with what the view would prefill, where that is all quick add can
- *  carry: its note in the open space, its tags, its day. Answers whether it opened. */
 export function openQuickAdd(prefill: Prefill = {}): boolean {
   if (
     prefill.root !== undefined ||
@@ -73,8 +59,6 @@ export function openQuickAdd(prefill: Prefill = {}): boolean {
   return true
 }
 
-/** What a task added to this view starts with. `group` is the property the view groups
- *  by and the key of the group the add was pressed in, where it was pressed in one. */
 export function prefillOf(
   spec: ViewSpec,
   today: string,
@@ -92,8 +76,6 @@ export function prefillOf(
   if (spec.builtin === 'project' && spec.space !== undefined && spec.path !== undefined) {
     const space = workspace.spaces.find((one) => one.name === spec.space)
     if (space) out.path = insideSpace(space.root, spec.path)
-    // The add row reads a note by its path in the space it is told, the open one where
-    // none is said.
     if (space && space.root !== workspace.activeSpace?.root) out.root = space.root
   }
   if (!group) return out
@@ -104,10 +86,8 @@ export function prefillOf(
   else if (property === 'task.status' && typeof key === 'string') out.status = key
   else if (property === 'task.tags' && typeof key === 'string' && key) out.tags = [key]
   else if (isWhen(property) && (key === 'today' || key === 'tomorrow')) {
-    // Todos' due today, due tomorrow (#1046).
     out.deadline = key === 'today' ? today : addDays(today, 1)
   } else if (property === 'file.path' && typeof key === 'string' && key) {
-    // A project's column of Todos: the task goes into that note.
     const place = placeOfKey(key)
     const named = place.space ?? spec.space
     const [space, other] = workspace.spaces.filter((one) => one.name === named)
@@ -116,14 +96,12 @@ export function prefillOf(
       if (place.space !== null) out.root = space.root
     }
   } else if (property === 'formula.day' || /^task\.(due|date|scheduled)$/.test(property)) {
-    // A day of Upcoming, a date column: the day the group is.
     const day = dayIn(key)
     if (day) out.due = day
   }
   return out
 }
 
-/** The task written as the words were typed, with the prefill's fields. */
 export async function addTyped(words: string, prefill: Prefill): Promise<boolean> {
   const text = words.trim()
   if (!text) return false
@@ -143,17 +121,13 @@ export async function addTyped(words: string, prefill: Prefill): Promise<boolean
   )
 }
 
-/** What a new note of a view of notes is made with: a name, its own properties, and the
- *  template it starts from (the view's or the base's where absent, none for null). */
 export interface NewNote {
   title?: string
   properties?: Record<string, Value>
   template?: string | null
-  /** Opened in a tab for its name, as a plus does; a form stays where it is. */
   open?: boolean
 }
 
-/** The row's next id where the base keeps them, counted over the base's own rows. */
 function idFor(base: Base): Record<string, string> {
   const id = base.nib.id
   const space = workspace.activeSpace
@@ -164,12 +138,6 @@ function idFor(base: Base): Record<string, string> {
   return own.partial ? {} : { [id.property]: nextId(own.rows, id.property, id.prefix) }
 }
 
-/** A new note for a view of notes: in the folder its filter names, with the
- *  properties its filter pins and the group's value, from its template, with the base's
- *  next id; opened for its name unless `made.open` is false. `base` is the view's base,
- *  `file` the base file it is in (its folder), if any. Answers its path; null, and
- *  nothing written, where the folder is in a space shared with this account to be
- *  read, which a view of a base there, a form or a plus is all a way into. */
 export async function addNote(
   base: Base,
   at: number,
@@ -177,19 +145,12 @@ export async function addNote(
   group?: { property: string; key: Value },
   made: NewNote = {},
 ): Promise<string | null> {
-  // The base's own space, which a base open in a tab kept across a space switch is
-  // not: its rows are that space's, and so is the folder its filter names.
   const space =
     (file === null ? null : workspace.spaces.find((one) => within(one.root, file) !== null)) ??
     workspace.activeSpace
   if (!space) return null
   const view = base.views[at]
   const place = rowPlace(base, view?.name)
-  // The folder is words in a base file, which in a shared space anybody it is shared
-  // with can write. Joined as written, `../Private` climbed out into another space
-  // and wrote over what was there, and `./Projects` named a folder no listing spells
-  // that way, so a note already there was not seen. Read the way a link's path is,
-  // and the same refusal the agents' `addRow` gives; see automation/inside.ts.
   const folder =
     place.folder !== undefined && place.folder !== '' ? insideOnly(place.folder) : undefined
   if (folder === null) return null
@@ -198,7 +159,6 @@ export async function addNote(
   if (!canWriteAt(dir)) return null
 
   const props: Record<string, unknown> = { ...place.properties }
-  // The column the plus was pressed in: the value its property has there.
   const key = group?.key
   if (
     group &&
@@ -211,8 +171,6 @@ export async function addNote(
   Object.assign(props, idFor(base))
 
   const title = noteName(made.title ?? 'Untitled')
-  // The base file can be a tab from a space that is not on screen, whose folder no
-  // listing here has read, so the disk is asked about the name as well.
   const name = await workspace.freeNameOnDisk(dir, `${title}.md`)
   const link =
     made.template === undefined ? (view?.nib.template ?? base.nib.template) : made.template

@@ -1,13 +1,3 @@
-/** Todoist's Display menu over a view of tasks (#1046): how it is grouped, how it is
- *  sorted and which way, whether done tasks stay, and what it is narrowed to - a
- *  priority, a label, a day, when it was written down, who it is assigned to. Each answer is a new base, so the change is kept where the view keeps its
- *  changes (a built-in view in its tab, a base in its file), and Obsidian reads every key
- *  it knows: the grouping and the sorting are Bases' own, the narrowing Orden's under the
- *  view's `nib:` key (`only`), which Obsidian leaves alone.
- *
- *  Pure. `displayed` is what the engine is asked with: the view's own filters and the
- *  narrowing together. */
-
 import {
   type Base,
   isWhen,
@@ -58,8 +48,6 @@ export const SORTINGS: readonly Sorting[] = [
   'created',
 ]
 
-/** The groupings Todoist's Display offers (#1046), in its order: none, priority, label,
- *  date (when it is due), project and status; a project's own view its headings too. */
 export function groupingsFor(project: boolean): Grouping[] {
   return [
     'none',
@@ -72,7 +60,6 @@ export function groupingsFor(project: boolean): Grouping[] {
   ]
 }
 
-/** And the sortings: smart, due date, priority, name, created, manual. */
 export const SORTS_OFFERED: readonly Sorting[] = [
   'smart',
   'deadline',
@@ -82,7 +69,6 @@ export const SORTS_OFFERED: readonly Sorting[] = [
   'manual',
 ]
 
-/** The property each choice groups or sorts by. */
 const BY: Partial<Record<Grouping | Sorting, string>> = {
   note: 'file.basename',
   section: 'task.section',
@@ -93,9 +79,6 @@ const BY: Partial<Record<Grouping | Sorting, string>> = {
   created: 'task.created',
 }
 
-/** What each grouping groups by, where it differs from what its sorting sorts by: a
- *  note's group is its path, so two notes of one name in two folders stay apart. Date
- *  is when a task is due, Todos' Overdue, Today, Tomorrow, Later and No date (`WHEN`). */
 const GROUP_BY: Partial<Record<Grouping, string>> = {
   ...BY,
   note: 'file.path',
@@ -104,26 +87,19 @@ const GROUP_BY: Partial<Record<Grouping, string>> = {
   status: 'task.status',
 }
 
-/** What a view is narrowed to. */
 export interface Only {
   priority?: 1 | 2 | 3 | 4
   label?: string
   date?: 'overdue' | 'today' | 'week' | 'none'
-  /** A note, by its path in its space: Todoist's project filter on Completed. */
   project?: string
-  /** When the task was written down (its `➕`): today, in the last 7 days or 30. */
   created?: 'today' | 'week' | 'month'
-  /** Who it is assigned to: a name, `ASSIGNED_TO_ME` or `UNASSIGNED`. */
   assignee?: string
   space?: string
 }
 
-/** The assignee filter's two answers that are no one's name: a name never starts with
- *  a colon. */
 export const ASSIGNED_TO_ME = ':me'
 export const UNASSIGNED = ':none'
 
-/** Every assignee the tasks name, once each, in the reader's order. */
 export function assigneesOf(rows: readonly Row[]): string[] {
   const seen = new Set<string>()
   for (const row of rows) if (row.task?.assignee) seen.add(row.task.assignee)
@@ -140,9 +116,6 @@ export function spacesIn(rows: readonly Row[], order: readonly string[]): string
   return [...seen].sort((a, b) => at(a) - at(b) || a.localeCompare(b))
 }
 
-/** The notes a view's rows are in, by name, for the project it can be narrowed to. Of
- *  rows of more than one space, a note is its space and its path, as a view grouped by
- *  note keys it (`placeOfKey`), and named with its space where another has its name. */
 export function notesIn(rows: readonly Row[]): { path: string; name: string }[] {
   const many = rows.some((row) => row.space !== rows[0]?.space)
   const seen = new Map<string, { space: string; name: string }>()
@@ -167,8 +140,6 @@ const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stri
 const whenName = (base: Base) =>
   base.formulas.when === undefined || base.formulas.when === WHEN ? 'when' : WHEN_ASIDE
 
-/** The base with one view changed; `when` gives it Todos' formula of when a task is
- *  due, which grouping by date reads. */
 function withView(base: Base, at: number, change: (view: View) => View, when = false): Base {
   const view = base.views[at]
   if (!view) return base
@@ -180,19 +151,15 @@ function withView(base: Base, at: number, change: (view: View) => View, when = f
   }
 }
 
-/** How a view is grouped, `default` where it is grouped as the view it came from is. */
 export function groupingOf(view: View, original: View | null): Grouping {
   if (original && same(view.groupBy, original.groupBy)) return 'default'
   const by = view.groupBy?.property
   if (by === undefined) return 'none'
-  // A view grouped by note before notes were grouped by path.
   if (by === 'file.basename') return 'note'
   if (isWhen(by)) return 'due'
   return GROUPINGS.find((one) => GROUP_BY[one] === by) ?? 'none'
 }
 
-/** The view grouped another way. A note's headings are grouped in the order they are
- *  written, every other grouping by its values. */
 export function withGrouping(
   base: Base,
   at: number,
@@ -205,7 +172,6 @@ export function withGrouping(
     (view) => {
       const nib = { ...view.nib }
       delete nib.groupOrder
-      // The order of the groups belongs to the grouping it was set for.
       delete nib.groups
       const next: View = { ...view, nib }
       delete next.groupBy
@@ -226,8 +192,6 @@ export function withGrouping(
   )
 }
 
-/** The grouping a view as it came is grouped by, as Display names it, or `default` for
- *  one it has no name for (Upcoming's days). */
 export function shippedGrouping(original: View | null): Grouping {
   if (!original) return 'none'
   const by = original.groupBy?.property
@@ -235,7 +199,6 @@ export function shippedGrouping(original: View | null): Grouping {
   return GROUPINGS.find((one) => one !== 'default' && GROUP_BY[one] === by) ?? 'default'
 }
 
-/** The sorting a view as it came is sorted by, as Display names it. */
 export function shippedSorting(original: View | null): Sorting {
   if (!original?.sort.length) return 'manual'
   if (same(original.sort, SMART_SORT)) return 'smart'
@@ -245,9 +208,6 @@ export function shippedSorting(original: View | null): Sorting {
   )
 }
 
-/** How many of a view's Display settings differ from the view as it came: the badge on
- *  Display, and the ones on its Sort and Filter. A base came as its file says, so only
- *  what Display narrows it by is a change of Display's. */
 export function changedFrom(
   view: View,
   original: View | null,
@@ -264,7 +224,6 @@ export function changedFrom(
   return { sort, filter, total: sort + filter + layout + done }
 }
 
-/** How a view is sorted, and whether the other way round. */
 export function sortingOf(view: View, original: View | null): { sorting: Sorting; down: boolean } {
   if (original && same(view.sort, original.sort)) return { sorting: 'default', down: false }
   if (same(view.sort, SMART_SORT)) return { sorting: 'smart', down: false }
@@ -276,7 +235,6 @@ export function sortingOf(view: View, original: View | null): { sorting: Sorting
   }
 }
 
-/** The view sorted another way: by one property, then as it was written. */
 export function withSorting(
   base: Base,
   at: number,
@@ -293,7 +251,6 @@ export function withSorting(
   })
 }
 
-/** Whether done tasks stay in the view. */
 export function withCompleted(base: Base, at: number, shown: boolean): Base {
   return withView(base, at, (view) => {
     const nib = { ...view.nib }
@@ -303,19 +260,16 @@ export function withCompleted(base: Base, at: number, shown: boolean): Base {
   })
 }
 
-/** A priority as the narrowing keeps it, or undefined for anything else. */
 function priorityOf(value: unknown): Only['priority'] {
   return value === 1 || value === 2 || value === 3 || value === 4 ? value : undefined
 }
 
-/** A day as the narrowing keeps it, or undefined for anything else. */
 function dateOf(value: unknown): Only['date'] {
   return value === 'overdue' || value === 'today' || value === 'week' || value === 'none'
     ? value
     : undefined
 }
 
-/** What a view is narrowed to, as its `nib.only` says. */
 export function onlyOf(view: View): Only {
   const kept: unknown = view.nib.kept.only
   if (typeof kept !== 'object' || kept === null || Array.isArray(kept)) return {}
@@ -337,7 +291,6 @@ export function onlyOf(view: View): Only {
   }
 }
 
-/** The view narrowed to this, or to nothing. */
 export function withOnly(base: Base, at: number, only: Only): Base {
   return withView(base, at, (view) => {
     const kept = { ...view.nib.kept }
@@ -347,13 +300,11 @@ export function withOnly(base: Base, at: number, only: Only): Base {
   })
 }
 
-/** The narrowing as the engine's expression, or null for none. */
 export function onlyFilter(only: Only): string | null {
   const parts: string[] = []
   if (only.space !== undefined) parts.push(`file.space == ${JSON.stringify(only.space)}`)
   if (only.priority !== undefined) parts.push(`task.priority == ${only.priority}`)
   if (only.label !== undefined) parts.push(`task.hasTag(${JSON.stringify(only.label)})`)
-  // Only a deadline makes a task late (#371).
   if (only.date === 'overdue') parts.push('task.deadline < today()')
   else if (only.date === 'today') parts.push('task.date == today()')
   else if (only.date === 'week') parts.push('task.date >= today() && task.date <= today() + "6d"')
@@ -377,16 +328,11 @@ export function narrowedSpace(view: View | null | undefined): string | undefined
   return view ? onlyOf(view).space : undefined
 }
 
-/** Each base asked about once per view, so the engine, which keeps what it compiled with
- *  the base object, compiles a narrowed view once. */
 const narrowed = new WeakMap<Base, Map<number, Base>>()
 
-/** The base the engine answers a view of: the view's filters and its narrowing together. */
 export function displayed(base: Base, at: number): Base {
   const view = base.views[at]
   const extra = view ? onlyFilter(onlyOf(view)) : null
-  // A view grouped by note name before notes were grouped by path: two notes of one
-  // name in two folders are two groups, as the Display menu's "note" now groups them.
   const byName = view?.groupBy?.property === 'file.basename' ? view.groupBy : null
   if (!view || (extra === null && !byName)) return base
   let kept = narrowed.get(base)

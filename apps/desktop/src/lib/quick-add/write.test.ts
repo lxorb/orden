@@ -1,12 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Where `>` sends a task, driven by a stand-in store and disk.
- *
- *  The note it names is made where the space has none, and making it was writing
- *  an empty file over the path. Where the name only missed the listing, that was
- *  a closed note's words gone: the file was there, under a spelling the listing
- *  was compared to wrongly, or not yet in a listing read a moment before. */
-
 const { notes, disk, written, told } = vi.hoisted(() => ({
   notes: [] as { path: string; name: string }[],
   disk: new Map<string, string>(),
@@ -34,7 +27,6 @@ vi.mock('../workspace/note-text', () => ({
 }))
 vi.mock('../on-disk', () => ({ onDisk: async (path: string) => disk.has(path) }))
 vi.mock('../link-index.svelte', () => ({ links: { held: () => [] } }))
-// Every space here may be written in; which may not is write-read-only.test.ts's.
 vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
 
 vi.mock('../reserved-name.svelte', () => ({
@@ -55,8 +47,6 @@ beforeEach(() => {
 
 describe('a task sent to a note by name', () => {
   test('finds a note whose name is stored decomposed, typed composed', async () => {
-    // `Café` as a Mac keeps it, with the accent a character of its own, and as a
-    // keyboard types it, with the accent in the letter.
     const stored = '/s/Café.md'
     notes.push({ path: stored, name: 'Café.md' })
     disk.set(stored, 'my words\n')

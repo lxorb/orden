@@ -1,26 +1,13 @@
-// The service worker a Firefox add-on is given in place of its background page; see
-// firefox.rs. Chromium runs no background page any more, and a Firefox add-on's is a page,
-// with a document and `localStorage`, that a worker has neither of. So the page runs as an
-// offscreen document, which has its document and nothing of the extension's API but
-// messaging, and every other call it makes comes here over a port (bridge.js) and is made
-// on the real API, with the Firefox layer's emulations on it (firefox.js). An event the
-// page listens to is listened to here and sent on. Where the engine has no offscreen
-// documents, the page's scripts run in this worker instead, which serves a page that
-// never touches its document.
-
 importScripts('/orden/firefox.js')
 
 const LAYER = globalThis.__ordenLayer
 const PORT = '__orden'
 
-// What the engine said before the page was there to hear it: its install and its start,
-// each handed once to the first page that listens.
 const early = []
 const firstHeard = (path) => (details) => early.push({ path, details })
 chrome.runtime.onInstalled.addListener(firstHeard('runtime.onInstalled'))
 chrome.runtime.onStartup.addListener(firstHeard('runtime.onStartup'))
 
-/** The thing a dotted path names on the API, with what it hangs from. */
 function resolve(path) {
   let owner = null
   let at = chrome
@@ -31,7 +18,6 @@ function resolve(path) {
   return { owner, at }
 }
 
-/** Something the API answered, as messaging carries it. */
 function said(value) {
   try {
     return JSON.parse(JSON.stringify(value ?? null))
@@ -139,7 +125,6 @@ chrome.runtime.onConnect.addListener((port) => {
 
 let opening = null
 
-/** The page, made if it is not there. */
 function page() {
   opening ??= (async () => {
     const url = chrome.runtime.getURL(LAYER.background)

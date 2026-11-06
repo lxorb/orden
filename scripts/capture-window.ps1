@@ -1,32 +1,3 @@
-# Captures a running window to a PNG. Used by `nib screenshot` and to eyeball the real
-# app during development.
-#
-# Three things it is careful about, and each of them was wrong before:
-#
-#   - WHICH window. A pid, and nothing else. `-Pid` (spelled `-ProcessId` as well) is
-#     the process to photograph, and every caller has one: `nib screenshot` passes the
-#     pid the app wrote beside its port, and a drive passes the pid of the app it
-#     launched - so the window that answered the request is the window in the picture.
-#     A name used to be taken as a fallback, and it photographed somebody's own browser
-#     window: a machine that is building nib has several processes called nib, and
-#     Windows lists whichever it lists. A picture of the wrong window is worse than no
-#     picture - it can hold a stranger's screen and nothing in the file says it is not
-#     ours - so a name is refused outright rather than guessed from.
-#   - WHAT is in it. `PrintWindow` with `PW_RENDERFULLCONTENT` asks the window to draw
-#     itself, so what lands in the file is the window and not the screen in front of it:
-#     a menu, a notification or another app over the corner used to be part of the
-#     picture. Windows enumerates top-level windows rather than trusting
-#     MainWindowHandle, which an undecorated Tauri window is often not.
-#   - WHOSE keyboard. Nothing is raised, focused or moved. The old version called
-#     SetForegroundWindow and waited 700ms for it, which took the keyboard away from
-#     whatever somebody was typing in - a screenshot is a question, not an interruption.
-#   - HOW BIG. The process says it understands this display's scaling before it asks
-#     anything about a window. Without that, Windows answers GetWindowRect in the
-#     scaled-down coordinates it pretends the screen is in, while the webview
-#     composites at the real one - so the bitmap was the window's logical size and
-#     PrintWindow filled the whole of it with the top left corner of the window at
-#     device resolution. On a 200% display every picture was the top left quarter,
-#     at twice the size, and nothing in the file said so.
 param(
   [Alias('Pid')]
   [int]$ProcessId = 0,
@@ -34,8 +5,6 @@ param(
   [switch]$ListOnly
 )
 
-# One sentence, and a non-zero exit. Said before anything is loaded, because the
-# alternative to stopping here is a photograph of a window nobody asked for.
 if ($ProcessId -le 0) {
   [Console]::Error.WriteLine('capture-window.ps1 needs -Pid <process id>: a window is photographed by pid, never by name.')
   exit 2
@@ -108,11 +77,8 @@ public class NibCapture {
 }
 "@
 
-# In real pixels from here on, before a single question about a window is asked.
 [NibDpi]::Ask()
 
-# The process the caller named. A pid nothing answers to is a window that has closed,
-# which is an error rather than a reason to look for another one.
 $process = Get-Process -Id $ProcessId -ErrorAction Stop
 
 $rows = [NibCapture]::Windows($process.Id) | ForEach-Object {
@@ -131,10 +97,6 @@ $rows = [NibCapture]::Windows($process.Id) | ForEach-Object {
 
 if ($ListOnly) { return $rows | Sort-Object -Property Width -Descending }
 
-# The window worth photographing: visible, not minimised, sizeable, and with a title.
-# This process owns more than one - the single instance plugin keeps a 13 by 13 listener
-# with a title of its own, and there is an unnamed one beside it - so size decides among
-# the ones that are windows at all.
 $target = $rows |
   Where-Object { $_.Visible -and -not $_.Minimized -and $_.Width -gt 200 -and $_.Height -gt 200 } |
   Sort-Object -Property Width -Descending |

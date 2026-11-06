@@ -1,8 +1,3 @@
-/** The spaces made, adopted, renamed and deleted: the changes to the list that happen a
- *  few times in the life of a window, fetched by the first of them rather than carried
- *  in front of the first paint. Reading the list, its order and which space is open are
- *  spaces.ts. */
-
 import { account } from '../account.svelte'
 import { identifier } from '../identifier'
 import { samePath } from '../space-paths'
@@ -12,23 +7,11 @@ import { windows } from '../windows'
 import type { Space } from '../workspace.svelte'
 import { type HoldsSpaces, selectSpace, tabSets } from './spaces'
 
-/** Creates a space folder under the one the app owns. The name is the only
- *  thing asked for; where it lives is not a decision worth making. */
-/** A space the account has that this machine does not. Makes the folder and
- *  lists it, but does not switch to it: adopting someone else's space in the
- *  background should not move what is on screen out from under the writer.
- *  Unless nothing is on screen - a machine that has just erased its notes,
- *  or never had any, would otherwise list the account's spaces and show
- *  none of them. */
 export async function adoptSpace(
   ws: HoldsSpaces,
   name: string,
   fresh = false,
 ): Promise<string | null> {
-  // `fresh` is a space that must have a folder of its own even though one of
-  // that name is already here: two spaces can be called the same thing once
-  // one of them is somebody else's. The folder is then numbered, which is
-  // what create_space does with a name that is taken.
   const existing = fresh ? undefined : ws.spaces.find((space) => space.name === name)
   if (existing) return existing.root
 
@@ -71,13 +54,8 @@ export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
   const space = ws.spaces.find((entry) => entry.id === id)
   if (!space || !name.trim()) return
 
-  // The field in the header is done with, whatever the folder answers: it is
-  // held under the root, and the root is what is about to change.
   ws.naming = null
 
-  // The folder moves under every note open in it, so like any other move it waits
-  // for their writes and holds them until they have been told; see `move` in
-  // workspace.svelte.ts.
   const done = { moved: false }
   const { followSpaceName } = await import('../views/space-follow')
   await ws.holdingUnder(space.root, async () => {
@@ -88,12 +66,6 @@ export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
 
     if (!renamed) return
 
-    // A space moving is a file operation like any other, said once: the open notes
-    // move with their folder, and everything kept under the root follows it - the
-    // icon, the order its list is read in, the folder icons and the rest, and the
-    // account's table of what it holds, in the same breath as the notes' paths, so a
-    // note is never for a moment at a path the account has no id for. See
-    // workspace/file-ops.ts, and the space-rename drive for what that moment cost.
     const from = space.root
     const was = space.name
     space.name = renamed.name
@@ -113,20 +85,11 @@ export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
   ws.persist()
 }
 
-/** Deletes the space's folder. The app owns that folder, so dropping it from
- *  the list alone would only bring it back on the next launch. */
-/** `keep` puts the folder in this device's trash instead of deleting it, for
- *  a space whose folder may hold more than any Recently deleted does - which
- *  is every space sync takes away; see `reconcile` in sync.svelte.ts. */
 export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
   const space = ws.spaces.find((entry) => entry.id === id)
   if (!space) return
 
   {
-    // The account keeps a deleted space for 14 days; signed out, this device
-    // keeps it in its trash folder instead (see trash.svelte.ts). Signed in, the
-    // account's copy stands in for the folder only when it is all there; see
-    // `accountHoldsSpace`.
     const toAccount = account.signedIn && !keep && (await accountHoldsSpace(space.root))
     const gone = await (
       toAccount
@@ -139,8 +102,6 @@ export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
     if (!gone) return
   }
 
-  // Its tabs close and what was kept under its root goes with it; see
-  // workspace/file-ops.ts.
   await ws.fileGone(space.root, 'space')
   ws.spaces = ws.spaces.filter((entry) => entry.id !== id)
   if (!ws.spaces.some((entry) => entry.name === space.name)) {
@@ -148,9 +109,6 @@ export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
     const { forgetSpaceTabs } = await import('../views/space-follow')
     forgetSpaceTabs(space.name, ws.tabs)
   }
-  // The sets, fetched after the list so the shared set of older builds is not given to
-  // this space, and before the space on screen changes, since by the switch below they
-  // would take what is left of its tabs for the next space's. See `selectSpace`.
   const fetched =
     tabSets.fetched || ws.setsRead !== undefined || ws.tabs.length
       ? (await import('./sets.svelte')).sets
@@ -165,8 +123,6 @@ export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
   ws.persist()
 }
 
-/** Whether what runs in a space's terminals may stop with it: the question closing their
- *  tabs asks, since the question before a delete speaks only of its notes. */
 export async function mayEndSpace(ws: HoldsSpaces, id: string): Promise<boolean> {
   const tabs = tabSets.fetched
     ? (await import('./sets.svelte')).sets.tabsOf(id)
@@ -178,13 +134,6 @@ export async function mayEndSpace(ws: HoldsSpaces, id: string): Promise<boolean>
   return await mayEnd(tabs)
 }
 
-/** Whether the account's Recently deleted would give back everything in a space, so
- *  its folder can go outright. It keeps only what sync handed it: a space made
- *  offline and never pushed has no id there at all, a note written since the last
- *  pass has its newest words on this disk alone, and a dotfile like `.git/` or
- *  `.obsidian/` is never handed over. Nor a space somebody else owns: a deleted one
- *  lands in its owner's Recently deleted, not in this account's. What counts as held
- *  is what a folder delete asks; see `accountHoldsAll` in workspace/undoing.ts. */
 async function accountHoldsSpace(root: string): Promise<boolean> {
   const { sync } = await import('../sync.svelte')
   const id = sync.remoteIdFor(root)

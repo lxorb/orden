@@ -1,25 +1,3 @@
-//! A Firefox add-on, made into an extension Chromium runs (#1155).
-//!
-//! What addons.mozilla.org hands out is a Manifest V2 add-on nearly every time, or a
-//! Firefox Manifest V3 one, and Chromium runs neither: it has dropped Manifest V2, and a
-//! Firefox background is a page where Chromium's is a service worker. So the add-on's
-//! files are kept as they are and around them:
-//!
-//! - the manifest is written again as Chromium's Manifest V3 (`translate`): Firefox's own
-//!   keys gone, `browser_action` and `page_action` as `action`, `menus` as `contextMenus`,
-//!   host patterns out of `permissions`, the shortcuts and patterns Chromium would refuse
-//!   to load left out, an SVG picture (which Chromium cannot draw) left out;
-//! - the background page runs as an offscreen document, with its document, and calls the
-//!   API through a service worker of Orden's (firefox/host.js, firefox/bridge.js);
-//! - every context - the background, every page, every content script - has `browser`
-//!   with promises, the `WebExtension` polyfill's (firefox/browser-polyfill.js, MPL-2.0),
-//!   and before it the Firefox-only API Orden emulates (firefox/firefox.js);
-//! - and the add-on's id is the same on every computer and every version: a key made from
-//!   its AMO id is written into the manifest, as a CRX's own key is (manifest.rs).
-//!
-//! What it uses that the layer cannot run is read off the manifest and its scripts
-//! (`gaps`), for the reader to see before it is installed.
-
 use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -29,53 +7,36 @@ use serde::Serialize;
 use serde_json::{json, Map, Value};
 use sha2::{Digest as _, Sha256};
 
-/// The folder inside the add-on the layer's own files are written into.
 const FOLDER: &str = "orden";
 
-/// The layer's scripts, as each context loads them.
 const FIREFOX_JS: &str = include_str!("firefox/firefox.js");
 const POLYFILL_JS: &str = include_str!("firefox/browser-polyfill.js");
 const BRIDGE_JS: &str = include_str!("firefox/bridge.js");
 const HOST_JS: &str = include_str!("firefox/host.js");
 
-/// The picture a notification is shown with where the add-on has none Chromium draws;
-/// see firefox.js.
 const ICON_PNG: &[u8] = include_bytes!("../../icons/128x128.png");
 
-/// What every page loads first, and what the background page loads before that.
 const PAGE_SCRIPTS: &str = r#"<script src="/orden/firefox.js"></script><script src="/orden/browser-polyfill.js"></script>"#;
 const BACKGROUND_SCRIPTS: &str = r#"<script src="/orden/bridge.js"></script><script src="/orden/firefox.js"></script><script src="/orden/browser-polyfill.js"></script>"#;
 
-/// The background page Orden writes for an add-on that names only its scripts.
 const BACKGROUND_PAGE: &str = "orden/background.html";
 
-/// The Firefox an add-on is told it runs in, `runtime.getBrowserInfo`: an ESR, which is
-/// what an add-on is most surely written for.
 const FIREFOX_VERSION: &str = "140.0";
 
-/// The most bytes of script read for `gaps`.
 const MOST_READ: u64 = 64 * 1024 * 1024;
 
-/// How Chromium is handed the key: an Ed25519 `SubjectPublicKeyInfo`'s first twelve bytes,
-/// before the thirty-two of the key. Chromium checks nothing of an unpacked extension's key
-/// but its hash, which is the id.
 const ED25519_SPKI: [u8; 12] = [
     0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x03, 0x21, 0x00,
 ];
 
-/// What of an add-on Orden cannot run, said before it is installed.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Gaps {
-    /// What the window says in a sentence of its own: `blocking`, `containers`, `sidebar`,
-    /// `hiddenTabs`.
     pub said: Vec<String>,
-    /// The other Firefox-only parts of the API it calls, by name.
     pub apis: Vec<String>,
 }
 
 impl Gaps {
-    /// Whether all of it runs.
     pub fn is_empty(&self) -> bool {
         self.said.is_empty() && self.apis.is_empty()
     }
@@ -93,7 +54,6 @@ impl Gaps {
     }
 }
 
-/// The id an add-on has in Orden, and the key that gives it that id, out of its AMO id.
 pub fn id_and_key(guid: &str) -> (String, String) {
     let seed = Sha256::digest(format!("orden firefox add-on\0{guid}"));
     let mut key = ED25519_SPKI.to_vec();
@@ -102,28 +62,21 @@ pub fn id_and_key(guid: &str) -> (String, String) {
     (id, base64::engine::general_purpose::STANDARD.encode(&key))
 }
 
-/// Where an add-on's background runs from.
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Background {
-    /// A page of its own, at this path.
     Page(String),
-    /// Scripts Orden writes a page round, as a module or not.
     Scripts(Vec<String>, bool),
-    /// A service worker already, at this path, as a module or not.
     Worker(String, bool),
 }
 
-/// A Firefox manifest, as Chromium's.
 #[derive(Debug)]
 pub struct Translated {
     pub manifest: Value,
-    /// What the layer's scripts are told about the add-on; see firefox.js.
     pub layer: Value,
     pub gaps: Gaps,
     background: Option<Background>,
 }
 
-/// `firefox`, as a Manifest V3 extension with `key` as its key.
 pub fn translate(firefox: &Value, key: &str) -> Translated {
     let empty = Map::new();
     let source = firefox.as_object().unwrap_or(&empty);
@@ -207,8 +160,6 @@ pub fn translate(firefox: &Value, key: &str) -> Translated {
                 .and_then(Value::as_str)
                 .unwrap_or_default(),
         };
-        // Chromium's own for a Manifest V3 extension, which forbids what a Firefox add-on
-        // could allow itself; only WebAssembly is kept, which it allows when asked.
         if said.contains("'wasm-unsafe-eval'") {
             out.insert(
                 "content_security_policy".into(),
@@ -228,14 +179,12 @@ pub fn translate(firefox: &Value, key: &str) -> Translated {
     }
 }
 
-/// The button, the options page and the sidebar.
 fn pages_of(
     source: &Map<String, Value>,
     out: &mut Map<String, Value>,
     layer: &mut Map<String, Value>,
     gaps: &mut Gaps,
 ) {
-    // Firefox MV3's `action`, else the browser action, else the page action.
     let browser_action = source
         .get("action")
         .or_else(|| source.get("browser_action"));
@@ -271,7 +220,6 @@ fn pages_of(
     }
 }
 
-/// What it may do: names for the engine, patterns for the hosts, and what the layer needs.
 fn permissions_of(
     source: &Map<String, Value>,
     background: Option<&Background>,
@@ -313,7 +261,6 @@ fn permissions_of(
     }
 }
 
-/// The keys `translate` writes itself.
 const TAKEN: [&str; 18] = [
     "manifest_version",
     "key",
@@ -335,8 +282,6 @@ const TAKEN: [&str; 18] = [
     "commands",
 ];
 
-/// Firefox's own keys, and the few Chromium would refuse to load in the shape Firefox
-/// writes them.
 const DROPPED: [&str; 12] = [
     "browser_specific_settings",
     "applications",
@@ -352,7 +297,6 @@ const DROPPED: [&str; 12] = [
     "chrome_settings_overrides",
 ];
 
-/// What only Firefox has permissions for, and what a Firefox one is called in Chromium.
 const ONLY_FIREFOX: [&str; 19] = [
     "contextualIdentities",
     "menus.overrideContext",
@@ -375,7 +319,6 @@ const ONLY_FIREFOX: [&str; 19] = [
     "trialML",
 ];
 
-/// What Chromium will not have asked for later, which Firefox will.
 const NEVER_OPTIONAL: [&str; 9] = [
     "debugger",
     "declarativeNetRequest",
@@ -388,8 +331,6 @@ const NEVER_OPTIONAL: [&str; 9] = [
     "wallpaper",
 ];
 
-/// A permissions list, split into the engine's names and the hosts' patterns; what it
-/// says of a gap is written down.
 fn split(list: Option<&Value>, gaps: &mut Gaps) -> (Vec<String>, Vec<String>) {
     let mut names = Vec::new();
     let mut hosts = Vec::new();
@@ -425,7 +366,6 @@ fn split(list: Option<&Value>, gaps: &mut Gaps) -> (Vec<String>, Vec<String>) {
     (names, hosts)
 }
 
-/// The patterns of a list Chromium would take.
 fn patterns(list: Option<&Value>) -> Vec<String> {
     list.and_then(Value::as_array)
         .into_iter()
@@ -442,9 +382,6 @@ fn unique(mut list: Vec<String>) -> Vec<String> {
     list
 }
 
-/// Whether Chromium reads a match pattern as one: `<all_urls>`, or a scheme it knows, a
-/// host that is `*`, `*.` a name or a name, and a path. Firefox takes more, such as
-/// `moz-extension://`, which Chromium would refuse the whole add-on for.
 fn pattern(said: &str) -> bool {
     if said == "<all_urls>" {
         return true;
@@ -466,7 +403,6 @@ fn pattern(said: &str) -> bool {
     !host.is_empty() && (host == "*" || !name.contains('*'))
 }
 
-/// The background a manifest names.
 fn background_of(background: Option<&Value>) -> Option<Background> {
     let background = background?.as_object()?;
     let module = background.get("type").and_then(Value::as_str) == Some("module");
@@ -490,7 +426,6 @@ fn background_of(background: Option<&Value>) -> Option<Background> {
         .map(|worker| Background::Worker(relative(worker), module))
 }
 
-/// A path inside the add-on as Chromium's manifest writes it: no `/` or `./` in front.
 fn relative(path: &str) -> String {
     let mut path = path.trim();
     loop {
@@ -504,7 +439,6 @@ fn relative(path: &str) -> String {
     }
 }
 
-/// Whether a picture is one Chromium draws: not an SVG.
 fn draws(path: &str) -> bool {
     let file = path.split('#').next().unwrap_or_default();
     !file.is_empty()
@@ -513,8 +447,6 @@ fn draws(path: &str) -> bool {
             .is_some_and(|one| one.eq_ignore_ascii_case("svg"))
 }
 
-/// A picture or a map of pictures, without what Chromium cannot draw; `None` when that
-/// leaves nothing.
 fn drawable(icons: &Value) -> Option<Value> {
     match icons {
         Value::String(path) => draws(path).then(|| json!(relative(path))),
@@ -533,7 +465,6 @@ fn drawable(icons: &Value) -> Option<Value> {
     }
 }
 
-/// The largest picture of a map, or the one picture.
 fn largest(icons: &Value) -> Option<String> {
     match icons {
         Value::String(path) => Some(path.clone()),
@@ -546,7 +477,6 @@ fn largest(icons: &Value) -> Option<String> {
     }
 }
 
-/// A browser or page action, as Chromium's `action`.
 fn button(action: &Value) -> Value {
     let mut out = Map::new();
     if let Some(popup) = action.get("default_popup").and_then(Value::as_str) {
@@ -561,8 +491,6 @@ fn button(action: &Value) -> Value {
     Value::Object(out)
 }
 
-/// A content script, run with the layer's scripts first; `None` for one that matches
-/// nothing Chromium can match.
 fn content_script(script: &Value) -> Option<Value> {
     let mut out = script.as_object()?.clone();
     out.remove("cookieStoreId");
@@ -607,7 +535,6 @@ fn content_script(script: &Value) -> Option<Value> {
     Some(Value::Object(out))
 }
 
-/// Manifest V2's list of what a page may load, as V3's: every page, by pattern.
 fn accessible(resources: &[Value]) -> Vec<Value> {
     let plain: Vec<String> = resources
         .iter()
@@ -627,7 +554,6 @@ fn accessible(resources: &[Value]) -> Vec<Value> {
                 .filter_map(Value::as_str)
                 .map(relative)
                 .collect();
-            // Chromium takes only an origin here, as `/*`; Firefox reads no more of any.
             let matches: Vec<String> = patterns(one.get("matches"))
                 .iter()
                 .map(String::as_str)
@@ -649,7 +575,6 @@ fn accessible(resources: &[Value]) -> Vec<Value> {
     out
 }
 
-/// A match pattern for its origin alone, every path of it.
 fn origin_of(pattern: &str) -> String {
     match pattern.split_once("://") {
         Some((scheme, rest)) => {
@@ -660,13 +585,10 @@ fn origin_of(pattern: &str) -> String {
     }
 }
 
-/// What Chromium takes of `commands`: the button's own under its V3 name, a description
-/// for each, and only the shortcuts it would load - at most four.
 fn shortcuts(commands: &Map<String, Value>) -> Map<String, Value> {
     let mut out = Map::new();
     let mut bound = 0;
     let mut ordered: Vec<(&String, &Value)> = commands.iter().collect();
-    // The button's own first, so it keeps its shortcut when there are more than four.
     ordered.sort_by_key(|(name, _)| !name.starts_with("_execute_"));
     for (name, command) in ordered {
         let name = match name.as_str() {
@@ -709,8 +631,6 @@ fn shortcuts(commands: &Map<String, Value>) -> Map<String, Value> {
     out
 }
 
-/// Whether Chromium takes a shortcut: Ctrl or Alt (or a Mac's Command or Control), maybe
-/// Shift, never Ctrl with Alt, and one key it knows; a media key alone.
 fn shortcut(said: &str, mac: bool) -> bool {
     const MEDIA: [&str; 4] = [
         "MediaNextTrack",
@@ -749,9 +669,6 @@ fn shortcut(said: &str, mac: bool) -> bool {
     fine && main && !(seen.contains("Ctrl") && seen.contains("Alt"))
 }
 
-/// A Firefox version as Chromium's: up to four numbers. Firefox allows letters after a
-/// number (`1.0b2`, `3.0pre`); such a version keeps its first three numbers and a fourth
-/// of its own, so no two versions share a folder.
 pub fn chromium_version(version: &str) -> String {
     let parts: Vec<&str> = version.split('.').collect();
     let number = |part: &str| -> Option<u32> {
@@ -788,9 +705,6 @@ pub fn chromium_version(version: &str) -> String {
         .join(".")
 }
 
-/// Makes the add-on unpacked in `folder`, whose AMO id is `guid`, one Chromium runs:
-/// its manifest written again, the layer's files beside it and in every page. Answers
-/// what of it will not run, which is also written down for its row.
 pub fn apply(folder: &Path, guid: &str) -> Result<Gaps, String> {
     let path = folder.join("manifest.json");
     let text = fs::read_to_string(&path).map_err(|_| "that add-on has no manifest".to_string())?;
@@ -799,8 +713,6 @@ pub fn apply(folder: &Path, guid: &str) -> Result<Gaps, String> {
     let (_, key) = id_and_key(guid);
     let mut translated = translate(&firefox, &key);
     named_plainly(&mut translated.manifest);
-    // What `runtime.getManifest` answers: the add-on's own, which it reads for its
-    // Firefox names (`browser_action`) and its own version.
     let mut own = firefox.clone();
     named_plainly(&mut own);
     if let Some(layer) = translated.layer.as_object_mut() {
@@ -877,7 +789,6 @@ pub fn apply(folder: &Path, guid: &str) -> Result<Gaps, String> {
     Ok(gaps)
 }
 
-/// A manifest as Firefox reads one: a line that starts with `//` is a comment.
 fn uncommented(text: &str) -> String {
     text.trim_start_matches('\u{feff}')
         .lines()
@@ -886,9 +797,6 @@ fn uncommented(text: &str) -> String {
         .join("\n")
 }
 
-/// A message's name as Chromium takes one: letters, digits, `_` and `@`. Firefox takes a
-/// `-` too, and Chromium refuses to load an add-on whose words have one. The layer looks
-/// a name up the same way (firefox.js).
 pub fn message_name(name: &str) -> String {
     name.chars()
         .map(|one| {
@@ -901,7 +809,6 @@ pub fn message_name(name: &str) -> String {
         .collect()
 }
 
-/// Every `__MSG_name__` in the manifest, with its name as Chromium takes one.
 fn named_plainly(value: &mut Value) {
     match value {
         Value::String(text) if text.contains("__MSG_") => {
@@ -924,11 +831,6 @@ fn named_plainly(value: &mut Value) {
     }
 }
 
-/// The add-on's words, each language's held to what Chromium loads, which is less than
-/// Firefox does: every name as Chromium takes one, a message's and a placeholder's with
-/// the places it is used; a place no placeholder is defined for left empty, as Firefox
-/// leaves it; and a message with no words, or a language that cannot be read at all, left
-/// out - Chromium refuses the whole add-on for any of them.
 fn locales(folder: &Path) -> Result<(), String> {
     let Ok(languages) = fs::read_dir(folder.join("_locales")) else {
         return Ok(());
@@ -979,7 +881,6 @@ fn locales(folder: &Path) -> Result<(), String> {
     Ok(())
 }
 
-/// A message without the `$name$` places no placeholder of `defined` is for.
 fn undefined_left_out(message: &str, defined: &[String]) -> String {
     let mut out = String::new();
     let mut rest = message;
@@ -1004,7 +905,6 @@ fn undefined_left_out(message: &str, defined: &[String]) -> String {
     out
 }
 
-/// `text` with every `from`, in any case, as `to`.
 fn replace_ignoring_case(text: &str, from: &str, to: &str) -> String {
     let lower = text.to_ascii_lowercase();
     let from = from.to_ascii_lowercase();
@@ -1019,8 +919,6 @@ fn replace_ignoring_case(text: &str, from: &str, to: &str) -> String {
     out
 }
 
-/// What an installed add-on's folder says will not run of it; nothing for any other
-/// extension.
 pub fn gaps_in(folder: &Path) -> Option<Gaps> {
     #[derive(serde::Deserialize)]
     struct Said {
@@ -1035,7 +933,6 @@ pub fn gaps_in(folder: &Path) -> Option<Gaps> {
     })
 }
 
-/// `html` with `first` as the first thing its head runs.
 fn headed(html: &str, first: &str) -> String {
     let lower = html.to_ascii_lowercase();
     let after = |tag: &str| -> Option<usize> {
@@ -1057,8 +954,6 @@ fn headed(html: &str, first: &str) -> String {
     format!("{}{first}{}", &html[..at], &html[at..])
 }
 
-/// The scripts a background page loads, in order, as paths inside the add-on: what its
-/// service worker runs where the engine has no offscreen documents.
 fn page_scripts(folder: &Path, page: &str) -> Vec<String> {
     let Ok(html) = fs::read_to_string(folder.join(page)) else {
         return Vec::new();
@@ -1100,7 +995,6 @@ fn page_scripts(folder: &Path, page: &str) -> Vec<String> {
     out
 }
 
-/// An attribute's value in a tag, quoted or not.
 fn attribute(tag: &str, name: &str) -> Option<String> {
     let lower = tag.to_ascii_lowercase();
     let mut from = 0;
@@ -1128,7 +1022,6 @@ fn attribute(tag: &str, name: &str) -> Option<String> {
     None
 }
 
-/// Every page in the add-on but the layer's own.
 fn pages(folder: &Path) -> Vec<PathBuf> {
     files(folder)
         .into_iter()
@@ -1142,7 +1035,6 @@ fn pages(folder: &Path) -> Vec<PathBuf> {
         .collect()
 }
 
-/// Every file in the add-on, outside the layer's folder.
 fn files(folder: &Path) -> Vec<PathBuf> {
     let mut out = Vec::new();
     let mut waiting = vec![folder.to_path_buf()];
@@ -1168,7 +1060,6 @@ fn files(folder: &Path) -> Vec<PathBuf> {
     out
 }
 
-/// What the add-on's scripts call that the layer cannot run, by a word each is called by.
 const CALLS: [(&str, Gap); 14] = [
     (
         "filterResponseData",
@@ -1195,7 +1086,6 @@ enum Gap {
     Api(&'static str),
 }
 
-/// What the scripts in `folder` call of `CALLS`.
 fn read_for_gaps(folder: &Path, gaps: &mut Gaps) {
     let mut read = 0u64;
     for path in files(folder) {
@@ -1232,8 +1122,6 @@ mod tests {
 
     use super::{chromium_version, headed, id_and_key, pattern, shortcut, translate};
 
-    /// An add-on as AMO hands out most of them: Manifest V2, a background page, a browser
-    /// action with an SVG picture, Firefox's own keys and permissions.
     #[test]
     fn a_manifest_v2_add_on_becomes_a_manifest_v3_extension() {
         let firefox = json!({
@@ -1320,8 +1208,6 @@ mod tests {
         assert_eq!(made.gaps.apis, ["pageAction"]);
     }
 
-    /// Firefox's Manifest V3 keeps a page's scripts as its background, which Orden writes a
-    /// page round, and a page action alone is the button that shows and hides.
     #[test]
     fn a_firefox_manifest_v3_background_is_a_page_orden_writes() {
         let firefox = json!({
@@ -1424,8 +1310,6 @@ mod tests {
         assert_eq!(headed("<p>hi</p>", first), format!("{first}<p>hi</p>"));
     }
 
-    /// Firefox takes a `-` in a message's name; Chromium refuses to load an add-on with
-    /// one, so every name, and every use of it in the manifest, is written without.
     #[test]
     fn its_words_are_named_as_chromium_takes_them() {
         let folder = tempfile::tempdir().expect("a folder");
@@ -1465,8 +1349,6 @@ mod tests {
         assert_eq!(manifest["name"], "__MSG_onboarding_1_header__");
     }
 
-    /// Firefox reads only the origin of a pattern a page may load a file at; Chromium
-    /// refuses the whole add-on for one with a path of its own.
     #[test]
     fn a_file_a_page_may_load_is_matched_by_its_origin() {
         let firefox = json!({
@@ -1486,7 +1368,6 @@ mod tests {
         );
     }
 
-    /// Firefox takes a shortcut with an empty description; Chromium refuses to load one.
     #[test]
     fn a_shortcut_has_words_chromium_takes() {
         let firefox = json!({
@@ -1500,8 +1381,6 @@ mod tests {
         );
     }
 
-    /// A notification is shown with the add-on's picture, or the layer's own where it has
-    /// none Chromium draws; Chromium refuses one whose picture is not there.
     #[test]
     fn a_notification_has_a_picture_that_is_there() {
         let folder = tempfile::tempdir().expect("a folder");

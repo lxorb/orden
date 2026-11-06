@@ -1,12 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The marks on a PDF, through the two commands that keep them beside it.
- *
- *  The crate answers an empty sidecar for a PDF nobody has marked, and fails the
- *  read only where there is a file it will not read: one past the size it allows,
- *  one another program holds. That file is somebody's marks, and a sheet that
- *  reads as none and may be written would put the next highlight over all of them. */
-
 const disk = { refuse: false, written: [] as string[], slow: 0 }
 
 vi.mock('../tauri', async (importOriginal) => ({

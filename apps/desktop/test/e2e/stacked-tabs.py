@@ -11,11 +11,9 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
-
 def shot(page: Page, name: str) -> None:
     quiet(page)
     DRIVE.shot(page, name)
-
 
 NAMES = ["First", "Second", "Third", "Fourth", "Fifth"]
 NOTES = [(f"{name}.md", f"# {name}\n\nThe words of the {name.lower()} note.\n") for name in NAMES]
@@ -69,11 +67,9 @@ SPINE_AT = """
 }
 """
 
-
 def is_true(claim: bool, what: str) -> None:
     if not claim:
         wrong(what)
-
 
 def opened(browser: Browser, finger: bool = False) -> tuple[BrowserContext, Page]:
     context = browser.new_context(
@@ -100,10 +96,8 @@ def opened(browser: Browser, finger: bool = False) -> tuple[BrowserContext, Page
     quiet(page)
     return context, page
 
-
 def stack(page: Page) -> dict:
     return page.evaluate(STACK)
-
 
 def off_by_default(page: Page) -> None:
     said = stack(page)
@@ -120,7 +114,6 @@ def off_by_default(page: Page) -> None:
         "a pane holding three notes says it cannot stack them",
     )
     shot(page, "01-off")
-
 
 def the_columns(page: Page) -> None:
     page.evaluate("() => window.nibApp.workspace.toggleStacked()")
@@ -151,7 +144,6 @@ def the_columns(page: Page) -> None:
     is_true(said["scrolls"], "the row of columns does not scroll sideways")
     shot(page, "02-stacked")
 
-
 def the_spine(page: Page) -> None:
     before = page.evaluate(SPINE_AT, 0)
     page.evaluate(f"() => {{ document.querySelector('{STACKED}').scrollLeft = 260 }}")
@@ -173,7 +165,6 @@ def the_spine(page: Page) -> None:
         "the pane is showing something other than the note whose spine was pressed",
     )
     shot(page, "03-first-active")
-
 
 def a_pane_of_its_own(page: Page) -> None:
     page.evaluate("() => window.nibApp.workspace.split('row')")
@@ -200,7 +191,6 @@ def a_pane_of_its_own(page: Page) -> None:
     is_true(kept.count(True) == 1, f"the arrangement came back as {json.dumps(kept)}")
     shot(page, "05-restored")
 
-
 def a_handheld(browser: Browser) -> None:
     context, page = opened(browser, finger=True)
 
@@ -211,7 +201,6 @@ def a_handheld(browser: Browser) -> None:
     is_true(not stack(page)["stacked"], "a phone drew columns")
     shot(page, "06-phone")
     context.close()
-
 
 def drive(browser: Browser) -> None:
     context, page = opened(browser)
@@ -224,10 +213,8 @@ def drive(browser: Browser) -> None:
     context.close()
     a_handheld(browser)
 
-
 def main() -> int:
     return DRIVE.run(drive, "a pane lays its notes out as columns when it is asked to")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

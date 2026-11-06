@@ -1,10 +1,3 @@
-/** The Firefox layer a Firefox add-on runs through (#1155; src-tauri/src/extensions/firefox.rs),
- *  in each of its contexts, against an engine of the test's own: a page of the add-on's, a
- *  content script, the background page as the offscreen document it runs as, and the
- *  service worker that makes its calls. In each, `browser` is there with promises, made by
- *  the WebExtension polyfill of `chrome` as the layer leaves it, and what Firefox alone has
- *  answers as the layer emulates it. */
-
 /* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return --
    the extension API is called here as an add-on calls it: untyped, whatever the engine is. */
 
@@ -44,7 +37,6 @@ function event() {
   }
 }
 
-/** A call the engine answers as Chromium's do: a promise, or the callback it is handed. */
 function api<T>(work: (...args: any[]) => T | Promise<T>) {
   return (...args: any[]) => {
     const callback = typeof args[args.length - 1] === 'function' ? args.pop() : null
@@ -54,7 +46,6 @@ function api<T>(work: (...args: any[]) => T | Promise<T>) {
   }
 }
 
-/** The engine's API as an extension page and a service worker have it. */
 function engine() {
   const held = { local: new Map<string, unknown>(), session: new Map<string, unknown>() }
   const changed = event()
@@ -73,7 +64,6 @@ function engine() {
   const executed: unknown[] = []
   const registered: any[] = []
   const unregistered: unknown[] = []
-  // Chromium's own kinds of request; a listener for any other is refused.
   const KINDS = [
     'main_frame',
     'sub_frame',
@@ -92,7 +82,6 @@ function engine() {
   ]
   const requests = event()
   const filters: unknown[] = []
-  // The ports the engine opened to a tab, each with what was posted on it.
   const opened: any[] = []
   return {
     opened,
@@ -182,7 +171,6 @@ function engine() {
   }
 }
 
-/** A page of the add-on's own, as the layer and the polyfill leave it. */
 function page(path = 'popup.html', layer: object = LAYER) {
   const made = engine()
   const dom = new JSDOM('<p>popup</p>', {
@@ -191,7 +179,6 @@ function page(path = 'popup.html', layer: object = LAYER) {
   })
   const inside = dom.window as unknown as Record<string, any> & { eval: (code: string) => unknown }
   inside.chrome = made.chrome
-  // Chromium's own `browser`, which is `chrome` without the layer.
   inside.browser = { runtime: { id: made.chrome.runtime.id } }
   inside.eval(`globalThis.__ordenLayer = ${JSON.stringify(layer)};\n${FIREFOX}`)
   inside.eval(POLYFILL)
@@ -350,7 +337,6 @@ describe('a content script', () => {
     const inside = dom.window as unknown as Record<string, any> & {
       eval: (code: string) => unknown
     }
-    // A content script has the engine's messaging, storage and words, and no tabs or menus.
     const { runtime, storage, i18n, permissions } = made.chrome
     inside.chrome = { runtime, storage, i18n, permissions }
     inside.eval(TOLD + FIREFOX)
@@ -362,7 +348,6 @@ describe('a content script', () => {
   })
 })
 
-/** A port as the engine's messaging hands one, both ends. */
 function ports() {
   const one = { onMessage: event(), onDisconnect: event(), sent: [] as any[] }
   const two = { onMessage: event(), onDisconnect: event(), sent: [] as any[] }
@@ -384,14 +369,12 @@ describe('the background page and the service worker it calls through', () => {
     const made = engine()
     const { page: pageEnd, worker: workerEnd } = ports()
 
-    // The service worker, with the layer over the engine's own API.
     const worker: Record<string, any> = {
       chrome: made.chrome,
       console,
       queueMicrotask,
       setTimeout,
       URL,
-      // Every global this test makes is the worker's own.
       ServiceWorkerGlobalScope: Object.defineProperty(() => undefined, Symbol.hasInstance, {
         value: () => true,
       }),
@@ -401,11 +384,9 @@ describe('the background page and the service worker it calls through', () => {
     worker.importScripts = (path: string) => {
       if (path === '/orden/firefox.js') vm.runInContext(TOLD + FIREFOX, worker)
     }
-    // No offscreen documents in this engine's worker, so nothing is opened.
     vm.runInContext(HOST.replace('LAYER.background && chrome.offscreen', 'false'), worker)
     made.chrome.runtime.onConnect.fire(workerEnd)
 
-    // The offscreen document: the engine's messaging and nothing else.
     const dom = new JSDOM('', {
       url: `chrome-extension://abcdefghijklmnopabcdefghijklmnop/${path}`,
       runScripts: 'outside-only',

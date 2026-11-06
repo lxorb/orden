@@ -12,15 +12,12 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 ORIGIN = DRIVE.origin
 DIST = harness.DIST
 
-
 def shot(page: Page, name: str, selector: str | None = None) -> None:
     DRIVE.shot(page.locator(selector) if selector else page, name)
-
 
 MARK = "/mark.png"
 
 DRESSED = "---\nicon: rocket\n---\n\n# Plan\n\nA note that chose an icon.\n"
-
 
 def shortcut(url: str, title: str, icon: str | None) -> str:
 
@@ -29,7 +26,6 @@ def shortcut(url: str, title: str, icon: str | None) -> str:
         rows.append(f"Nib-Icon={icon}")
 
     return "[InternetShortcut]\r\n" + "\r\n".join(rows) + "\r\n"
-
 
 SEED = """
 async (site) => {
@@ -155,13 +151,11 @@ ROWS = """
   )
 """
 
-
 @DRIVE.answers
 def marks(request: harness.Files) -> bool:
     if request.path not in {MARK, "/favicon.ico"}:
         return False
     return request.reply((DIST / "icon-256.png").read_bytes(), "image/png")
-
 
 def fresh(browser: Browser, scheme: str) -> Page:
     context = browser.new_context(viewport={"width": 1280, "height": 820}, color_scheme=scheme)
@@ -183,10 +177,8 @@ def fresh(browser: Browser, scheme: str) -> Page:
     page.wait_for_timeout(300)
     return page
 
-
 def website(path: str) -> str:
     return f"{ORIGIN}{path}"
-
 
 def iconned(page: Page, scheme: str) -> None:
 
@@ -216,7 +208,6 @@ def iconned(page: Page, scheme: str) -> None:
     if (chip["width"], chip["height"]) != (beside["width"], beside["height"]):
         wrong(f"[{scheme}] the chip's mark is not the box the other tabs keep: {chip}")
 
-
 def chooses(page: Page, scheme: str) -> None:
 
     say(f"[{scheme}] choosing an icon for {page.evaluate(CHOOSE)}")
@@ -241,7 +232,6 @@ def chooses(page: Page, scheme: str) -> None:
         wrong(f"[{scheme}] the chosen icon never reached the row it was chosen on")
     elif drawn != row:
         wrong(f"[{scheme}] an icon chosen in the list did not reach the tab: {drawn!r}")
-
 
 def drive(page: Page, scheme: str) -> list[dict]:
     where = page.evaluate(
@@ -319,7 +309,6 @@ def drive(page: Page, scheme: str) -> list[dict]:
     chooses(page, scheme)
     return strip
 
-
 def main() -> int:
     measured: dict[str, list[dict]] = {}
     with DRIVE.session() as browser:
@@ -343,7 +332,6 @@ def main() -> int:
         "six kinds of tab, one mark each, one box, one weight, one place - and the"
         " file's own mark in the strip as in the list, down to the chip a tab behind is drawn as"
     )
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

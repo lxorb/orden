@@ -16,12 +16,8 @@ import { settings } from './settings.svelte'
 import { type Space, workspace } from './workspace.svelte'
 import { protectEntries } from './protect/entries'
 
-/** Putting a space away, fetched with the press; see space-archive.ts. */
 const archiving = () => import('./space-archive')
 
-/** Asks for a name and makes the space. Where it lives is the app's business,
- *  so that is the only question. Answers the space, or nothing where the question
- *  was dismissed. */
 export async function newSpace(): Promise<Space | undefined> {
   const name = await prompt.ask({
     title: t('Name the space'),
@@ -32,28 +28,16 @@ export async function newSpace(): Promise<Space | undefined> {
   return name ? madeSpace(name) : undefined
 }
 
-/** Makes a space called `name`, with what every new space starts with: the menu's
- *  New space and a fresh start (first-space.svelte.ts) alike. */
 export async function madeSpace(name: string): Promise<Space | undefined> {
   const space = await workspace.addSpace(name)
   if (!space) return
   if (!__EVEN_PLUGIN__) await (await import('./agents-seed')).seedAgents(space.root)
 
-  // Until a pass has put it on the account there is nothing to share or to
-  // publish, and a quiet loop can be a minute from its next one. Somebody who
-  // has just made a space should not have to wait that out to share it.
   const { sync } = await import('./sync.svelte')
   sync.nudge()
   return space
 }
 
-/** The space before or after this one, from anywhere in the app.
- *
- *  The ends meet, because one key has to be able to walk round: a chord that
- *  stops on the last space and does nothing is a chord that reads as broken. In
- *  the order the spaces are in, which is the order the reader put them in.
- *
- *  One space is not a ring, and the key does nothing at all. */
 export function stepSpace(direction: number) {
   const spaces = workspace.shownSpaces
   if (spaces.length < 2) return
@@ -63,9 +47,6 @@ export function stepSpace(direction: number) {
   if (next && next.id !== workspace.activeSpaceId) void workspace.showSpace(next.id)
 }
 
-/** Moves a space in the switcher and tells the account about it, so the order is
- *  the same on the next machine. Lives here rather than on the workspace,
- *  which knows nothing about syncing. */
 async function moveSpace(id: string, beforeId: string | null) {
   if (!workspace.moveSpace(id, beforeId)) return
 
@@ -73,13 +54,6 @@ async function moveSpace(id: string, beforeId: string | null) {
   void sync.pushSpaceOrder()
 }
 
-/** Whether a space has anywhere to go in that direction.
- *
- *  Only a space of the reader's own. The order is a column of the account's own
- *  space rows and the push writes it as one - `update spaces ... where user_id`
- *  in services/sync/src/spaces/index.ts - and a space somebody else shared is
- *  not a row there. Offering the move on one would be a row that appears to
- *  work and is back where it was on the next launch. */
 function canNudge(space: Space, by: -1 | 1): boolean {
   if (roleOf(space.root) !== 'owner') return false
 
@@ -89,17 +63,6 @@ function canNudge(space: Space, by: -1 | 1): boolean {
   return at >= 0 && to >= 0 && to < shown.length
 }
 
-/** One place up or down the list.
- *
- *  Steps rather than a drag. The column of squares this order used to be read in
- *  is gone, and the switcher is a menu that opens over the panel: a drag inside
- *  something that closes when the pointer leaves it is a gesture that fights
- *  itself. A step is exact, it is the same on a phone as on a desktop, it works
- *  for somebody who has asked for less movement, and it needs no second
- *  implementation of dragging.
- *
- *  `moveSpace` places a space in front of another, so going down means going in
- *  front of the one after next. */
 async function nudgeSpace(space: Space, by: -1 | 1) {
   const shown = workspace.shownSpaces
   const at = shown.findIndex((one) => one.id === space.id)
@@ -112,36 +75,20 @@ async function nudgeSpace(space: Space, by: -1 | 1) {
   await moveSpace(space.id, before?.id ?? null)
 }
 
-/** What a space itself offers, wherever it is asked: from the switcher's own
- *  button on the row, from a right click on it, or from a held finger.
- *
- *  What a space *is* rather than what to put in it - the file list's own menu
- *  makes notes, and it is where somebody looking for a new note already is. The
- *  folder behind the space is not what this is about either. */
 export function spaceMenu(space: Space): MenuEntry[] {
-  // A space somebody shared to read is theirs; the only thing this menu can
-  // offer about it is a way out of it.
   const theirs = roleOf(space.root) !== 'owner'
 
   return trim([
     ...(theirs ? [] : [{ label: t('Rename'), run: () => void renameSpace(space) }]),
     { label: t('Choose an icon'), run: () => iconChoice.space(space.id) },
-    // What is the space's own, like its agent instructions; see settings/SpacePane.svelte.
     ...(__EVEN_PLUGIN__
       ? []
       : [{ label: t('Settings'), run: () => settings.show('space', space.root) }]),
     ...(canShare(space) ? [{ label: t('Share'), run: () => void shareSpace(space) }] : []),
-    // Beside it, because it is the same question about the same folder: who
-    // else may read this.
     ...(canPublish(space) ? [{ label: t('Publish'), run: () => publishSpace(space) }] : []),
-    // Somebody who could once write in it has left, and what they wrote still reads as
-    // theirs to a model until the owner says the space is theirs again. Not on the
-    // glasses, which have no model a note's words reach with tools.
     ...(!__EVEN_PLUGIN__ && canTrustAgain(space)
       ? [{ label: t('Trust this space again'), run: () => void trustAgain(space) }]
       : []),
-    // What you are called in it, where anybody else is there to call you anything;
-    // see people/nickname.ts.
     ...(!__EVEN_PLUGIN__ && (theirs || isShared(space.root))
       ? [
           {
@@ -152,8 +99,6 @@ export function spaceMenu(space: Space): MenuEntry[] {
       : []),
     ...protectEntries(space.root),
     DIVIDER,
-    // Where a space sits in the list. Left out at the ends rather than offered
-    // as a row that does nothing.
     ...(canNudge(space, -1)
       ? [{ label: t('Move up'), run: () => void nudgeSpace(space, -1) }]
       : []),
@@ -161,8 +106,6 @@ export function spaceMenu(space: Space): MenuEntry[] {
       ? [{ label: t('Move down'), run: () => void nudgeSpace(space, 1) }]
       : []),
     DIVIDER,
-    // Put away whole, never deleted; offered where another space stays in sight, since a
-    // window has to be in one. See space-archive.ts.
     ...(workspace.shownSpaces.length > 1 && !workspace.archivedSpaces.has(space.root)
       ? [
           {
@@ -179,44 +122,25 @@ export function spaceMenu(space: Space): MenuEntry[] {
   ])
 }
 
-/** Renaming a space happens where its name is written: the header over the file
- *  list, in the field a row in that list renames in. Asked for from the switcher,
- *  the space is brought up first, because the name a header shows is the space that
- *  is open and renaming one out of sight would be a field with nothing in front of
- *  it. See NameField.svelte and Sidebar.svelte. */
 async function renameSpace(space: Space) {
   if (workspace.activeSpaceId !== space.id) await workspace.showSpace(space.id)
   workspace.startRenaming(space.root)
 }
 
-/** And what the name that was typed does. The account hears of it the way it hears
- *  of every file that moves; see workspace/file-ops.ts. */
 export async function commitSpaceName(space: Space, name: string) {
   await workspace.renameSpace(space.id, name)
 }
 
-/** Who else may reach a space, and at what. The one sheet; see ShareSheet.svelte. */
 export async function shareSpace(space: Space) {
   await share.show(space)
 }
 
-/** Putting a space on the web, which is the other half of who may read it and
- *  is asked in the sheet beside it; see PublishSheet.svelte.
- *
- *  The store arrives with the sheet, which is fetched rather than carried: nothing
- *  about publishing is in the app until a space's own menu asks for it. `show` puts
- *  the sheet on the page itself; see surfaces.svelte.ts. */
 export async function publishSpace(space: Space) {
   const { publish } = await import('./publishing.svelte')
   publish.show(space)
 }
 
-/** Deleting a space, or letting go of one somebody shared, which is the same
- *  gesture and a different sentence: a space that is not yours is not yours to
- *  delete, and leaving it takes its notes off this machine and nowhere else. */
 export async function deleteSpace(space: Space) {
-  // One answer for the dialog and for `forget`. Not known yet, the account is asked
-  // once; still unknown, it is a leave, and nothing is deleted from the account.
   let role = roleOf(space.root)
   if (role === null) {
     await account.loadSpaces().catch(() => undefined)
@@ -242,8 +166,6 @@ export async function deleteSpace(space: Space) {
   const root = space.root
   await workspace.deleteSpace(space.id)
 
-  // Deleted here means deleted from the account. Anything less and the next
-  // pass downloads it straight back, here and on every other machine.
   const { sync } = await import('./sync.svelte')
   await sync.forget(root, role)
 }

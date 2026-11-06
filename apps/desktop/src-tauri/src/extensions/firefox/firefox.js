@@ -1,20 +1,9 @@
-// What Firefox has and Chromium does not, put on `chrome` before the WebExtension polyfill
-// makes `browser` of it, in every context of a Firefox add-on: its service worker, its
-// pages, its content scripts; see firefox.rs. Each is the nearest Orden can come: a call
-// Chromium makes under another name is made under that name, a call it refuses for a
-// Firefox-only argument is made without the argument, and what Orden cannot do at all
-// answers the way Firefox answers when it cannot either, with an error that says so. The
-// background page's calls are made in the service worker (host.js), so there only what
-// cannot cross a port is made here.
 ;(function () {
   if (globalThis.__ordenFirefox) return
   globalThis.__ordenFirefox = true
   const chrome = globalThis.chrome
   if (!chrome?.runtime?.id) return
 
-  // Chromium's own `browser` is `chrome` without what is put on it here, and a Firefox
-  // add-on reads `browser` first: it goes, for the polyfill to make one of `chrome` as it
-  // is once this has run.
   try {
     delete globalThis.browser
   } catch {
@@ -31,18 +20,14 @@
 
   const DEFAULT_STORE = 'firefox-default'
   const OURS = ['orden/firefox.js', 'orden/browser-polyfill.js']
-  /** A list of the add-on's own files with the layer's first, each once. */
   const withOurs = (files) => [
     ...new Set([...OURS, ...files.map((one) => String(one).replace(/^\//, ''))]),
   ]
-  /** A file a call names, as Firefox finds it: from the page that calls, unless it starts
-   *  at the add-on's root. */
   const fileOf = (file) =>
     page
       ? decodeURIComponent(new URL(String(file), globalThis.location.href).pathname).slice(1)
       : String(file).replace(/^\//, '')
 
-  /** Whether `url` is an address one of the match patterns `patterns` matches. */
   const matching = (patterns, url) => {
     let address
     try {
@@ -66,8 +51,6 @@
     })
   }
 
-  // A refusal a callback is handed, as `runtime.lastError`, which is where the polyfill
-  // looks for one.
   if (!background) {
     try {
       const own = Object.getOwnPropertyDescriptor(chrome.runtime, 'lastError')
@@ -81,7 +64,6 @@
     }
   }
 
-  /** A function that answers a promise, and a callback too when it is handed one. */
   function promised(work) {
     return function (...args) {
       const callback = typeof args[args.length - 1] === 'function' ? args.pop() : null
@@ -105,7 +87,6 @@
     })
   }
 
-  /** An event of Orden's own, which the layer fires. */
   function event() {
     const listeners = new Set()
     return {
@@ -129,13 +110,11 @@
     if (on && on[name] === undefined) on[name] = value
   }
 
-  /** `on[name]`, wrapped by `wrap`, which is handed the engine's own. */
   function wrapped(on, name, wrap) {
     const own = on?.[name]
     if (typeof own === 'function') on[name] = wrap(own.bind(on))
   }
 
-  /** A listener's events, through `wrap`; the listener can still be taken away. */
   function filtered(on, wrap) {
     if (!on?.addListener) return
     const add = on.addListener.bind(on)
@@ -165,16 +144,12 @@
   const local = kept('local')
   const session = kept('session')
 
-  // A message by the name Firefox takes, which may have a `-` that Chromium's has not; see
-  // `message_name` in firefox.rs.
   const plainName = (name) => String(name).replace(/[^A-Za-z0-9_@]/g, '_')
   if (chrome.i18n?.getMessage && !background) {
     const own = chrome.i18n.getMessage.bind(chrome.i18n)
     chrome.i18n.getMessage = (name, ...rest) => own(plainName(name), ...rest)
   }
 
-  // Its own manifest, as Firefox answers it, rather than the one Chromium was handed: in its
-  // own words, where it names a message.
   const worded = (value) => {
     if (typeof value === 'string')
       return value.replace(
@@ -188,7 +163,6 @@
   }
   if (LAYER.manifest) chrome.runtime.getManifest = () => worded(LAYER.manifest)
 
-  // The browser it is, as an add-on asks Firefox.
   put(
     chrome.runtime,
     'getBrowserInfo',
@@ -200,12 +174,10 @@
     })),
   )
 
-  // An address of its own, as Firefox and Manifest V2 still say it.
   if (chrome.extension) put(chrome.extension, 'getURL', (path) => chrome.runtime.getURL(path))
   else chrome.extension = { getURL: (path) => chrome.runtime.getURL(path) }
 
   if (page) {
-    // A page asking for the background page gets the offscreen document it runs as.
     const backgroundPage = () =>
       chrome.extension.getViews?.().find((view) => view.__ordenBackground === true) ?? null
     chrome.extension.getBackgroundPage = backgroundPage
@@ -213,14 +185,12 @@
   }
 
   if (content) {
-    // The element a menu was opened on, as `menus.getTargetElement` hands it back.
     let target = null
     document.addEventListener('contextmenu', (event) => (target = event.target), true)
     chrome.menus = { getTargetElement: () => target }
     return
   }
 
-  // A content script registered while the add-on runs, as Firefox's own API does it.
   let registered = 0
   put(chrome, 'contentScripts', {
     register: promised(async (options) => {
@@ -254,8 +224,6 @@
 
   if (!full) return
 
-  // A permission only Firefox has is one the add-on does not have, rather than a refusal
-  // to answer.
   if (chrome.permissions) {
     const FIREFOX_ONLY = new Set([
       'browserSettings',
@@ -297,9 +265,6 @@
     )
   }
 
-  // The toolbar button by its Manifest V2 names. A page action that became the button
-  // shows and hides as the button is turned on and off; one beside a browser action has
-  // no button of its own in Chromium, and its calls change nothing.
   if (chrome.action) {
     const action = chrome.action
     wrapped(action, 'setIcon', (own) => (details, ...rest) => {
@@ -338,7 +303,6 @@
     put(chrome, 'pageAction', pageAction)
   }
 
-  // Menus: `menus` is `contextMenus`, with the places only Firefox has menus in left out.
   if (chrome.contextMenus) {
     const menus = chrome.contextMenus
     const PLACES = { browser_action: 'action', page_action: 'action' }
@@ -356,14 +320,12 @@
             out.contexts.filter((one) => !ONLY_FIREFOX.has(one)).map((one) => PLACES[one] ?? one),
           ),
         ]
-        // A menu only Firefox has, such as a tab's own, is made and never shown.
         if (!out.contexts.length) out.visible = false
         if (!out.contexts.length) out.contexts = ['page']
       }
       for (const field of ['documentUrlPatterns', 'targetUrlPatterns']) {
         if (Array.isArray(out[field])) out[field] = out[field].map(ours)
       }
-      // Firefox draws an item by its icon alone; Chromium will have words.
       if (creating && out.type !== 'separator' && !out.title) out.title = String(out.id ?? '…')
       return out
     }
@@ -395,9 +357,6 @@
     put(chrome, 'menus', menus)
   }
 
-  // Containers. Orden's are its spaces' and sites' own stores, which an add-on cannot reach
-  // from inside the engine; so an add-on keeps its own, as Firefox's are kept, and a tab
-  // opens in the one store it has.
   const IDENTITIES = '__ordenContainers'
   const COLORS = {
     blue: '#37adff',
@@ -494,8 +453,6 @@
   })
   put(chrome, 'contextualIdentities', containers)
 
-  // Tabs: each in the one store, and hidden as Firefox hides them, which in Orden is a
-  // tab the add-on itself takes for hidden and the tab bar still shows.
   const HIDDEN = '__ordenHidden'
   if (chrome.tabs) {
     const tabs = chrome.tabs
@@ -504,7 +461,6 @@
       tab && typeof tab === 'object'
         ? { cookieStoreId: DEFAULT_STORE, hidden: gone.has(tab.id), ...tab }
         : tab
-    // What only Firefox's `tabs` takes, by the call that takes it.
     const ONLY_FIREFOX = {
       create: ['cookieStoreId', 'openInReaderMode', 'discarded', 'title', 'muted'],
       update: ['loadReplace', 'successorTabId'],
@@ -585,7 +541,6 @@
       'captureTab',
       promised((tabId, options) => tabs.captureVisibleTab(undefined, options)),
     )
-    // An event Firefox lets an add-on narrow, by address, property, tab or window.
     filtered(tabs.onUpdated, (listener, [filter]) => ({
       listener: (tabId, change, tab) => {
         if (filter?.tabId !== undefined && filter.tabId !== tabId) return
@@ -603,7 +558,6 @@
         extra: [],
       }))
 
-    // A Manifest V2 script or sheet put into a tab, through `scripting`.
     const into = async (tabId, details = {}) => {
       const id = tabId ?? (await tabs.query({ active: true, currentWindow: true }))[0]?.id
       const target = { tabId: id }
@@ -646,7 +600,6 @@
           }),
         )
       }
-      // A file of the add-on's own put into a tab, which reads `browser` too.
       wrapped(chrome.scripting, 'executeScript', (own) => (injection, ...rest) => {
         if (injection?.files && injection.world !== 'MAIN')
           injection = {
@@ -669,8 +622,6 @@
       )
     }
 
-    // Firefox's find bar, from a script in the tab: the matches counted and painted with the
-    // page's own highlights.
     const FOUND = 'orden-find'
     put(chrome, 'find', {
       find: promised(async (query, options = {}) => {
@@ -731,7 +682,6 @@
     })
   }
 
-  // What Firefox keeps beside a tab or a window for an add-on, kept for the session.
   if (chrome.sessions) {
     const VALUES = '__ordenSessionValues'
     const values = () => session.get(VALUES, {})
@@ -766,9 +716,6 @@
     }
   }
 
-  // Requests: watched as Firefox lets an add-on watch them. Blocking, changing and reading
-  // what comes back are Firefox's alone among the engines Orden runs on; a listener that
-  // asked to block still hears every request, and what it answers is not done.
   if (chrome.webRequest) {
     const EVENTS = [
       'onBeforeRequest',
@@ -781,7 +728,6 @@
       'onCompleted',
       'onErrorOccurred',
     ]
-    // The kinds of request only Firefox names, as the kind Chromium has for each.
     const KINDS = {
       beacon: 'ping',
       imageset: 'image',
@@ -810,8 +756,6 @@
     })
   }
 
-  // A notification without a picture, which Chromium will not show, is shown with the
-  // add-on's own.
   if (chrome.notifications) {
     wrapped(chrome.notifications, 'create', (own) => (...args) => {
       const at = typeof args[0] === 'string' || args[0] === undefined ? 1 : 0
@@ -823,7 +767,6 @@
     })
   }
 
-  // Cookies in Firefox's one store by its name.
   if (chrome.cookies) {
     for (const name of ['get', 'getAll', 'set', 'remove']) {
       wrapped(chrome.cookies, name, (own) => (details, ...rest) => {
@@ -838,7 +781,6 @@
     }
   }
 
-  // Firefox's sidebar, which opens as a tab of its own.
   const SIDEBAR = {
     panel: LAYER.sidebar ? chrome.runtime.getURL(LAYER.sidebar) : '',
     title: LAYER.sidebarTitle ?? '',
@@ -866,7 +808,6 @@
     isOpen: promised(() => false),
   })
 
-  // The browser's own colours, which an add-on may read and in Orden may not change.
   put(chrome, 'theme', {
     getCurrent: promised(() => ({ colors: null, images: null, properties: null })),
     update: refused('theme.update'),

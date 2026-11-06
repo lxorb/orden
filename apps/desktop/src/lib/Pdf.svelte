@@ -1,19 +1,4 @@
 <script lang="ts">
-  /** A PDF in a pane, read the way a note is read.
-   *
-   *  One column of pages in the app's own scroller, drawn as they come into view
-   *  and given back as they leave, so a paper of three hundred pages costs what
-   *  one of three costs. The words are real words: they select, they copy, and
-   *  Ctrl+F finds them through the whole document in the same small bar a note
-   *  being read uses.
-   *
-   *  What a reader marks is kept beside the PDF and never inside it; see
-   *  pdf/highlights.ts. The PDF stays the file they put in the space.
-   *
-   *  This component owns the column, the zoom, the find bar and the selection.
-   *  One page - its picture, its words, its marks - is PdfPage.svelte, and the
-   *  arithmetic under both is pdf/pages.ts. */
-
   import type { PDFDocumentProxy } from 'pdfjs-dist'
   import { tick } from 'svelte'
   import { copyText } from './clipboard'
@@ -59,37 +44,22 @@
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 
-  /** A page that has never been measured is laid out at this, which is US Letter
-   *  in PDF points: the first page replaces it before anything is drawn, so it is
-   *  only ever the size of a column nobody has seen. */
   const LETTER: Size = { width: 612, height: 792 }
 
-  /** How long a match waits for its page to be drawn before the find bar gives up
-   *  on painting it. The page is already scrolled to; this is the render. */
   const PATIENCE = 2000
 
-  /** How long it took to open the document, under a name a profiler and a test
-   *  can both read. */
   const OPENED = 'nib:pdf-open'
 
   let doc = $state<PDFDocumentProxy | null>(null)
   let broken = $state(false)
   let scroller = $state<HTMLDivElement>()
 
-  /** Every page's size once it is known, and the one they are laid out at until
-   *  then; see pdf/pages.ts. */
   let sizes = $state<(Size | undefined)[]>([])
   let fallback = $state<Size>(LETTER)
-  /** Each page's transform, for placing a mark and for reading one back. */
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it; the marks come off `sheet`
   const matrices = new Map<number, Transform>()
 
-  /** How wide the pane the pages are read in is. */
   let viewWidth = $state(0)
-  /** On a touch screen, and until somebody zooms, the widest page fitted to the
-   *  width it is read in: a phone is narrower than a sheet of paper at its own size,
-   *  and a PDF opened on one ran off the right edge with the ends of its lines out of
-   *  sight. Never past the paper's own size, and a desktop keeps opening at that. */
   const fitted = $derived.by(() => {
     if (!viewport.touch || viewWidth <= 0) return 1
     const widest = Math.max(fallback.width, ...sizes.map((size) => size?.width ?? 0))
@@ -103,16 +73,12 @@
   let viewHeight = $state(0)
 
   const shown = $derived(nearby(boxes, at, viewHeight))
-  /** The pages to draw, counting from one. */
   const drawn = $derived(
     Array.from(
       { length: Math.max(0, shown.to - shown.from) },
       (_unused, index) => shown.from + index + 1,
     ),
   )
-  /** How wide the column has to be for the widest page to fit in it, which is what
-   *  gives the scroller something to scroll sideways once a page is zoomed past
-   *  the pane. */
   const columnWidth = $derived(Math.max(0, ...boxes.map((box) => box.width)) + GAP * 2)
 
   let sheet = $state<Sheet>(emptySheet())
@@ -129,10 +95,6 @@
     return out
   })
 
-  // ── The document ───────────────────────────────────────────────────
-
-  /** Which opening is the current one; see PdfPage.svelte for why this is a
-   *  number and not a flag. */
   let opening = 0
 
   $effect(() => {
@@ -153,15 +115,9 @@
       }
       opened = held
 
-      // Which file these pages belong to, so the words taken down below outlive
-      // the sitting: the hash says they are this paper's, and the listing says
-      // when the file was last written. See pdf/papers.ts.
       const listed = workspace.files.find((one) => one.path === path)
       paperOpened(path, held.hash, listed?.modified ?? 0)
 
-      // The first page settles the column: every other page is laid out at its
-      // size until it says otherwise, which is what lets a page be drawn before
-      // three hundred of them have been asked how big they are.
       const first = await held.doc.getPage(1)
       const view = first.getViewport({ scale: 1 })
       if (!current()) return
@@ -171,14 +127,10 @@
         index === 0 ? { width: view.width, height: view.height } : undefined,
       )
       doc = held.doc
-      // The file's own contents, for the Outline beside it; see pdf/outline.svelte.ts.
       void readOutline(held.doc).then((rows) => {
         if (current()) pdfOutlines.set(id, rows)
       })
 
-      // Opening is what stands between the tab appearing and the first page, so
-      // it is worth being able to ask how long it took. The same measurement the
-      // reading view takes of a render; see reading/render.ts.
       performance.measure(OPENED, { start: asked, detail: { pages: held.doc.numPages } })
     }
 
@@ -197,8 +149,6 @@
     }
   })
 
-  // What the reader has marked, read once per PDF, and again when an agent has marked
-  // it too; see pdf/sheets.svelte.ts.
   $effect(() => {
     const path = tab.path
     if (path === null) return
@@ -214,8 +164,6 @@
     }
   })
 
-  /** Where the reader was left: the page a link asked for, or the page the tab
-   *  was last on. Once per document, since after that the scroll is theirs. */
   let landed = false
 
   $effect(() => {
@@ -227,8 +175,6 @@
     at = box.scrollTop
   })
 
-  // A link into a page of a PDF that is already open. Taken down as it is read,
-  // the way a followed link into a note is; see App.svelte.
   $effect(() => {
     const asked = workspace.gotoPage
     const box = scroller
@@ -243,8 +189,6 @@
   function measured(number: number, size: Size, matrix: Transform) {
     matrices.set(number, matrix)
 
-    // A page that has already said this changes nothing: the column is laid out
-    // again on every zoom, and every page reports the same size each time.
     const held = sizes[number - 1]
     if (held?.width === size.width && held.height === size.height) return
 
@@ -252,8 +196,6 @@
     next[number - 1] = size
     sizes = next
   }
-
-  // ── Scrolling ──────────────────────────────────────────────────────
 
   let frame = 0
 
@@ -266,32 +208,19 @@
       if (!box) return
 
       at = box.scrollTop
-      // The page the reader is on, so the tab opens here next time and a link
-      // copied from the selection names the right one. The zoom is only ever the
-      // reader's own: writing down the one worked out for them would pin a phone's
-      // fitted width at whatever it was before the pane had been measured.
       workspace.notePdf(tab.id, pageAt(boxes, at, viewHeight), tab.zoom)
     })
   }
 
   $effect(() => () => cancelAnimationFrame(frame))
 
-  // The pane that is being read takes the keyboard, so the arrows and Page Down
-  // reach the column the way they reach an editor.
   $effect(() => {
     if (focused) scroller?.focus({ preventScroll: true })
   })
 
-  // ── Zoom ───────────────────────────────────────────────────────────
-
-  /** Zooms, keeping whatever was under `anchor` where it was: the pointer for a
-   *  wheel, the middle of the page for a key. Without this a zoom reads as the
-   *  document jumping somewhere else. */
   async function zoomTo(next: number, anchor?: number) {
     const box = scroller
     const wanted = heldZoom(next)
-    // The tab is what holds the zoom, and setting it there is also what writes it
-    // down; see `notePdf`, which does nothing when nothing changed.
     if (!box || !height) {
       workspace.notePdf(tab.id, tab.page ?? 1, wanted)
       return
@@ -303,8 +232,6 @@
 
     workspace.notePdf(tab.id, tab.page ?? 1, wanted)
 
-    // The column is laid out again by the change above; the scroll can only be
-    // put back once it has been.
     await tick()
     box.scrollTop = Math.max(0, along * heightOf(boxes) - focus)
     at = box.scrollTop
@@ -313,16 +240,10 @@
   function wheeled(event: WheelEvent) {
     if (!(event.ctrlKey || event.metaKey)) return
 
-    // The browser's own page zoom is what this replaces: inside a PDF, Ctrl and
-    // the wheel means the document rather than the app around it.
     event.preventDefault()
     void zoomTo(zoom * Math.pow(0.999, event.deltaY), event.clientY)
   }
 
-  /** Two fingers on a phone or a tablet, which is what Ctrl and the wheel are on
-   *  a desktop: the zoom there was, and how far apart the fingers were. The app
-   *  does not zoom as a page on a phone (main.ts), so this is the only way the
-   *  small print of a PDF gets bigger there. */
   let pinch: { apart: number; zoom: number } | null = null
 
   function pinched(event: TouchEvent) {
@@ -338,15 +259,11 @@
       void zoomTo(pinch.zoom * (apart / pinch.apart), (a.clientY + b.clientY) / 2)
   }
 
-  // ── Finding ────────────────────────────────────────────────────────
-
   interface Match {
     page: number
     offset: number
   }
 
-  /** Who this pane's highlights belong to, so another pane finding at the same
-   *  time leaves them alone; see `paint` in reading/find.ts. */
   const painter = {}
 
   let finding = $state(false)
@@ -354,38 +271,25 @@
   let current = $state(0)
   let matches = $state<Match[]>([])
 
-  /** Each page's words, read once. A page's text costs no drawing, which is what
-   *  lets a query be counted through a document nobody has scrolled through. */
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it; the bar reads `matches`
   const runs = new Map<number, string[]>()
-  /** The text layers on screen, which is where a match can actually be painted. */
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- the nodes these name are not something to render from
   const layers = new Map<number, { runs: readonly string[]; divs: readonly HTMLElement[] }>()
-  /** Who is waiting for a page's words to arrive. */
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- promises, not anything on screen
   const waiting = new Map<number, () => void>()
-  /** Which search is the current one, so an older one stops rather than filling
-   *  the list behind the newer. */
   let searching = 0
 
   function words(number: number, found: readonly string[], divs: readonly HTMLElement[]) {
     layers.set(number, { runs: found, divs })
     if (!runs.has(number)) runs.set(number, [...found])
-    // And the space search keeps them too, so a paper that has been read answers
-    // a query about it; see pdf/papers.ts.
     if (tab.path) paperRead(tab.path, number, found)
 
     waiting.get(number)?.()
     waiting.delete(number)
 
-    // A page arriving under the current match is a match that can now be shown.
     if (finding && matches[current]?.page === number) void reveal()
   }
 
-  /** A page that has gone takes what was kept of its DOM with it. The words
-   *  themselves stay: they are a few hundred bytes a page, they are what the find
-   *  bar counts with, and reading them again would be a round trip to the worker
-   *  for every page a scroll passes. */
   function forget(number: number) {
     layers.delete(number)
     matrices.delete(number)
@@ -402,8 +306,6 @@
 
     const page = await document.getPage(number)
     const read = await textOf(page)
-    // Read for its words and not to be looked at, so what pdf.js kept for it
-    // goes straight back.
     page.cleanup()
     runs.set(number, read)
     if (tab.path) paperRead(tab.path, number, read)
@@ -411,8 +313,6 @@
     return read
   }
 
-  /** Every place the query appears, page by page, in reading order. Counted as it
-   *  goes: the first match is shown while the last pages are still being read. */
   async function search(wanted: string) {
     const token = ++searching
     matches = []
@@ -443,9 +343,6 @@
     }
   }
 
-  /** Waits for a page's words to be laid out, which happens when the page is
-   *  drawn. Gives up rather than hanging, so a page that will not draw leaves the
-   *  find bar counting instead of stuck. */
   function layerOf(
     number: number,
   ): Promise<{ runs: readonly string[]; divs: readonly HTMLElement[] } | null> {
@@ -465,16 +362,12 @@
     })
   }
 
-  /** Brings the current match into view and paints it. Only its own page is
-   *  painted: the others are not on the page to paint. */
   async function reveal() {
     const match = matches[current]
     const box = scroller
     if (!match || !box) return
 
     const top = topOfPage(boxes, match.page)
-    // Only when the page is not already the one being looked at, so stepping
-    // between two matches on one page does not jump the column.
     if (
       top + (boxes[match.page - 1]?.height ?? 0) < box.scrollTop ||
       top > box.scrollTop + box.clientHeight
@@ -496,8 +389,6 @@
     paint(painter, 'nib-find-here', here ? [here] : [])
     if (!here) return
 
-    // Into the middle, by the box's own scroll rather than scrollIntoView, which
-    // would move whatever else on the page happens to scroll.
     const offset = here.getBoundingClientRect().top - box.getBoundingClientRect().top
     if (offset < 0 || offset > box.clientHeight - 40) {
       box.scrollTop += offset - box.clientHeight / 2
@@ -527,28 +418,20 @@
     scroller?.focus({ preventScroll: true })
   }
 
-  // A pane that has gone has no matches to paint.
   $effect(() => () => {
     paint(painter, 'nib-find', [])
     paint(painter, 'nib-find-here', [])
   })
 
-  // ── Selecting, and marking ─────────────────────────────────────────
-
-  /** The floating control over a selection: where it is, which page it is on, and
-   *  what was selected. Null whenever there is no selection to act on. */
   let control = $state<{ x: number; y: number; page: number; text: string; quads: Quad[] } | null>(
     null,
   )
 
-  /** The page element a node sits in, or null for a node outside one. */
   function sheetOf(node: Node | null): HTMLElement | null {
     const element = node instanceof Element ? node : node?.parentElement
     return element?.closest<HTMLElement>('[data-page]') ?? null
   }
 
-  /** Reads the selection: which page, the words, and the boxes they cover in PDF
-   *  user space, so a mark made now lands on the same words at any zoom. */
   function selected() {
     const selection = getSelection()
     const text = selection?.toString() ?? ''
@@ -588,7 +471,6 @@
       2
 
     control = {
-      // Kept clear of either edge, the way the format bar over a selection is.
       x: Math.min(Math.max(middle, 60), window.innerWidth - 60),
       y: top,
       page: number,
@@ -597,12 +479,6 @@
     }
   }
 
-  // A finger selects with the platform's own handles, and an iPad sends the page
-  // nothing a mouse would while it does: no mouseup after the long press that starts
-  // a selection, no touchend for a handle dragged along. So the bar came up late,
-  // or offered to mark the words of the first press after the handles had moved on.
-  // What a finger changes is heard as the selection changing, a moment after it
-  // settles, and only when it is this document's or nobody's.
   $effect(() => {
     if (!viewport.touch) return
 
@@ -623,8 +499,6 @@
     }
   })
 
-  /** Marks what is selected. Drawn at once and written down after, so the click
-   *  is answered in the frame it happened in. */
   async function highlight() {
     const asked = control
     const path = tab.path
@@ -646,7 +520,6 @@
     await editHighlights(path, (now) => ({ ...now, highlights: [...now.highlights, mark] }))
   }
 
-  /** The link and the words, as a citation to paste into a note. */
   async function copyLink() {
     const asked = control
     const path = tab.path
@@ -668,11 +541,6 @@
     }))
   }
 
-  // ── Keys ───────────────────────────────────────────────────────────
-
-  /** Read off the window because there is no editor here to read them: an editor
-   *  binding never reaches a pane without one. The same shape Reading.svelte
-   *  uses, and the same find key. */
   function onKeydown(event: KeyboardEvent) {
     if (!focused) return
 
@@ -692,7 +560,6 @@
       return
     }
     if (event.key === 'Escape' && (picked || control)) {
-      // Spent, so a tab filling the window is not left by the same press; see lib/tab-fill.
       event.preventDefault()
       picked = null
       control = null
@@ -704,8 +571,6 @@
       return
     }
 
-    // The document's own zoom. Ctrl and a digit or a sign is a heading level in
-    // an editor, and there is no editor in this pane, so the keys are free.
     if (!(event.ctrlKey || event.metaKey) || event.altKey) return
 
     if (event.key === '=' || event.key === '+') {
@@ -735,8 +600,6 @@
     />
   {/if}
 
-  <!-- Focusable, so the keys that move a page reach it. Nothing in it is a field,
-       and the words over each page are what a pointer selects. -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="scroller nib-host"
@@ -758,10 +621,6 @@
     {#if broken}
       <p class="trouble">{t('That PDF could not be opened')}</p>
     {:else}
-      <!-- A list, and only the pages near the view are in it: each one says which
-           page it is and how many there are, the way the rows of the file list do,
-           or a reader is handed four sheets out of three hundred with nothing to
-           say so. See row-window.ts and docs/tree.md. -->
       <div
         class="column"
         role="list"
@@ -794,10 +653,6 @@
   </div>
 
   {#if control}
-    <!-- Two actions on what is selected, in the shape the format bar over a
-         selection already has; see `.nib-bar` in the theme. Both of them run on
-         the click, which is how a pointer and a key both arrive - they used to run
-         on the press as well, so a mouse asked for each of them twice. -->
     <div
       class="nib-bar nib-bar-at"
       role="toolbar"
@@ -851,9 +706,6 @@
     min-height: 0;
     overflow-y: auto;
     overflow-x: auto;
-    /* The pages are a stack of sheets on a surface, not paper on paper. Under a
-       translucent theme the surface is the see-through paper and the sheets stay the
-       PDF's own, which is printed paper. */
     background: var(--content-inner, var(--surface));
   }
 
@@ -872,7 +724,6 @@
     text-align: center;
   }
 
-  /* The two actions a selection offers, drawn rather than written. */
   .nib-bar svg {
     width: 13px;
     height: 13px;
@@ -883,7 +734,6 @@
     stroke-linejoin: round;
   }
 
-  /* The pen says what colour it would leave, so the button is the answer. */
   .pen svg path:first-child {
     stroke: var(--accent);
     stroke-width: 2.4;

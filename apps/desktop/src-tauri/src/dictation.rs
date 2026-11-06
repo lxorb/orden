@@ -1,12 +1,3 @@
-//! Dictation heard on this device, with nothing sent anywhere (#1151).
-//!
-//! The window records and cuts the voice as it does for every road (dictation/
-//! listening.ts); this hears a stretch of it. The model and the runtime that runs it are
-//! downloaded when the reader turns this on, once, into `<app local data>/dictation`,
-//! each file checked against the hash `catalog` pins, and removed from Settings with
-//! `dictation_local_remove`. The model is opened when a dictation starts and closed again
-//! after a few idle minutes, since it holds a gigabyte of memory.
-
 mod catalog;
 mod device;
 mod sherpa;
@@ -26,11 +17,8 @@ use tauri::{AppHandle, Manager};
 use catalog::{Model, Pinned, Runtime, PARAKEET};
 use device::{Device, Fit};
 
-/// How long an open model stays open with nothing to hear.
 const IDLE: Duration = Duration::from_secs(5 * 60);
 
-/// What Settings and the engine choice read: whether this device can hear on its own,
-/// with which model, and whether that is here yet.
 #[derive(Serialize)]
 pub struct Local {
     device: Device,
@@ -39,7 +27,6 @@ pub struct Local {
     installed: bool,
 }
 
-/// The model this device would download.
 #[derive(Serialize)]
 struct Offered {
     id: &'static str,
@@ -47,20 +34,17 @@ struct Offered {
     bytes: u64,
 }
 
-/// How far a download has come, in bytes of all of it.
 #[derive(Clone, Serialize)]
 pub struct Fetched {
     done: u64,
     total: u64,
 }
 
-/// The open model, when it last heard, and how fast it heard as it opened.
 #[derive(Default)]
 pub struct Loaded {
     engine: Mutex<Option<(sherpa::Engine, Instant, f32)>>,
 }
 
-/// One download at a time.
 static FETCHING: AtomicBool = AtomicBool::new(false);
 
 fn model() -> &'static Model {
@@ -82,7 +66,6 @@ fn runtime_folder(root: &Path, runtime: &Runtime) -> PathBuf {
     ))
 }
 
-/// Whether a file is there at the size it is pinned at.
 fn present(path: &Path, pin: &Pinned) -> bool {
     fs::metadata(path).is_ok_and(|found| found.len() == pin.size)
 }
@@ -124,7 +107,6 @@ fn installed(root: &Path) -> bool {
             .all(|one| present(&root.join(model().id).join(one.name), one))
 }
 
-/// Whether this device can dictate on its own, and whether the model is here.
 #[tauri::command(async)]
 pub fn dictation_local(app: AppHandle) -> Result<Local, String> {
     let here = device::this();
@@ -141,8 +123,6 @@ pub fn dictation_local(app: AppHandle) -> Result<Local, String> {
     })
 }
 
-/// Downloads the runtime and the model, whatever of them is not here yet, saying how far
-/// it has come on `progress`.
 #[tauri::command]
 pub async fn dictation_local_fetch(
     app: AppHandle,
@@ -204,15 +184,12 @@ async fn fetch_all(root: &Path, progress: &mut impl FnMut(Fetched)) -> Result<()
 }
 
 fn client() -> Result<reqwest::Client, String> {
-    // Set once for the process; a second setting is refused harmlessly.
     let _ = rustls::crypto::ring::default_provider().install_default();
     reqwest::Client::builder()
         .build()
         .map_err(|error| error.to_string())
 }
 
-/// One file, to `path` by way of a `.part` beside it, kept only if it is the size and
-/// the hash `pin` says.
 async fn fetch_one(
     client: &reqwest::Client,
     url: &str,
@@ -274,7 +251,6 @@ async fn fetch_one(
     }
 }
 
-/// The two libraries out of the runtime's package, each checked as it is written.
 fn unpack(zip: &Path, runtime: &Runtime, into: &Path) -> Result<(), String> {
     let file = fs::File::open(zip).map_err(|error| error.to_string())?;
     let mut archive = zip::ZipArchive::new(file).map_err(|error| error.to_string())?;
@@ -296,7 +272,6 @@ fn unpack(zip: &Path, runtime: &Runtime, into: &Path) -> Result<(), String> {
     Ok(())
 }
 
-/// Closes the model and deletes everything local dictation downloaded.
 #[tauri::command(async)]
 pub fn dictation_local_remove(app: AppHandle) -> Result<(), String> {
     if FETCHING.load(Ordering::SeqCst) {
@@ -318,13 +293,11 @@ fn lock(loaded: &Loaded) -> std::sync::MutexGuard<'_, Option<(sherpa::Engine, In
         .unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
-/// How fast an open model heard its first stretch: seconds of work per second of sound.
 #[derive(Serialize)]
 pub struct Opened {
     pace: f32,
 }
 
-/// Opens the model, where it is not open already, and says how fast it hears here.
 #[tauri::command(async)]
 pub fn dictation_local_open(app: AppHandle) -> Result<Opened, String> {
     let loaded = Arc::clone(&app.state::<Arc<Loaded>>());
@@ -333,9 +306,6 @@ pub fn dictation_local_open(app: AppHandle) -> Result<Opened, String> {
         &mut held,
         || open_engine(&folder(&app)?),
         |engine| {
-            // Two seconds of a quiet room, twice: the first pass's own start-up paid here
-            // rather than in the reader's first words, and the second is what a live pass
-            // costs.
             let quiet: Vec<f32> = (0..32_000u16)
                 .map(|i| f32::from(i.wrapping_mul(7919) % 200) / 100_000.0 - 0.001)
                 .collect();
@@ -352,9 +322,6 @@ pub fn dictation_local_open(app: AppHandle) -> Result<Opened, String> {
     Ok(Opened { pace })
 }
 
-/// The engine `held` has open, opened and timed where it has none: answers its pace, and
-/// whether it was opened just now. A dictation starts with this, and the microphone only
-/// after it, so the two passes that time a model are its opening's alone.
 fn opened<E>(
     held: &mut Option<(E, Instant, f32)>,
     open: impl FnOnce() -> Result<E, String>,
@@ -370,8 +337,6 @@ fn opened<E>(
     Ok((pace, true))
 }
 
-/// The model in `root`, opened, with the runtime's libraries checked against their
-/// hashes before they are loaded.
 fn open_engine(root: &Path) -> Result<sherpa::Engine, String> {
     let runtime = catalog::this_runtime().ok_or("This device has no speech runtime.")?;
     if !installed(root) {
@@ -402,9 +367,6 @@ fn open_engine(root: &Path) -> Result<sherpa::Engine, String> {
     )
 }
 
-/// The vocabulary sherpa-onnx finds a name's pieces with, from the model's tokens: each
-/// piece in their order, the earlier ones, which a byte-pair model merged first, scored
-/// higher. The model ships `tokens.txt` alone, as `piece id` lines.
 fn vocabulary(tokens: &str) -> String {
     use std::fmt::Write as _;
     let mut out = String::new();
@@ -419,7 +381,6 @@ fn vocabulary(tokens: &str) -> String {
     out
 }
 
-/// Closes the model once it has been idle for `IDLE`.
 fn watch_idle(loaded: Arc<Loaded>) {
     std::thread::spawn(move || loop {
         std::thread::sleep(Duration::from_secs(30));
@@ -435,9 +396,6 @@ fn watch_idle(loaded: Arc<Loaded>) {
     });
 }
 
-/// The words in a stretch, sent as one body: the length of the context words in four
-/// little-endian bytes, the context words (names, comma-separated), then the samples,
-/// 16 kHz mono, as little-endian 32-bit floats.
 #[tauri::command(async)]
 pub fn dictation_local_hear(app: AppHandle, request: Request<'_>) -> Result<String, String> {
     let InvokeBody::Raw(body) = request.body() else {
@@ -513,8 +471,6 @@ mod tests {
         );
     }
 
-    /// A model already open is handed to the next dictation as it is: the passes that warm
-    /// and time it ran when it opened, and the microphone waits on nothing more.
     #[test]
     fn a_model_is_timed_once_as_it_opens() {
         let mut held: Option<(u32, Instant, f32)> = None;
@@ -568,13 +524,6 @@ mod tests {
         assert!(!present(&path, &Pinned { size: 4, ..pin }));
     }
 
-    /// The recordings of #1151 heard through this engine, as the app hears them: a live
-    /// pass every half second over the sentence so far, then the final pass, with the
-    /// names around a field for the dictated sentences. Downloads
-    /// the runtime and the model, so it runs only when asked:
-    ///
-    ///     python scripts/dictation-bench.py --export DIR
-    ///     ORDEN_DICTATION_SAMPLES=DIR cargo test --lib heard_here -- --ignored --nocapture
     #[test]
     #[ignore = "downloads the speech model"]
     fn the_recordings_heard_here() {

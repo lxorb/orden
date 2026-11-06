@@ -1,8 +1,3 @@
-/** Random walks of the tree (#1068): moves, renames, deletes and restores crossing on
- *  five devices, some of them offline for long stretches, against the reference account
- *  and devices. They must converge on one tree with nothing duplicated, nothing lost, no
- *  folder inside itself and every restore standing (checks.ts). */
-
 import { describe, expect, test } from 'vitest'
 import { crowded, simulate } from './run'
 
@@ -18,9 +13,6 @@ describe('the tree, walked at random on five devices', () => {
     expect(failed).toEqual([])
   })
 
-  /** Each once took a restore again with a delete that had not seen it, arriving after:
-   *  the account let a stale delete stand against a restore as it never let one stand
-   *  against an edit (#1068). */
   test.each([113, 122, 146, 149, 188, 720, 1151])(
     'seed %i keeps what was restored',
     async (seed) => {
@@ -28,16 +20,10 @@ describe('the tree, walked at random on five devices', () => {
     },
   )
 
-  /** A note another device moved into a folder, which this device then wrote in without
-   *  ever having seen it there, was taken with the folder when this device deleted it,
-   *  words and all: its writing had made it the note's last changer (#1068). */
   test('seed 632 loses no words to a folder delete', async () => {
     expect((await simulate({ seed: 632, devices: 5, steps: 80, mix: 'tree' })).failures).toEqual([])
   })
 
-  /** The same with rows dragged among the rest of their folders as well: every device
-   *  ends with each row where the account has it, so two people arranging one folder
-   *  at once both keep what they did (#1068). */
   test('ends with every row in the same place everywhere', async () => {
     const failed: string[] = []
     for (let seed = 1; seed <= SEEDS; seed++) {
@@ -66,9 +52,6 @@ describe('the tree, walked at random on five devices', () => {
     },
   )
 
-  /** Each deleted, restored and deleted again a note while away, and its own restore
-   *  hid from the account another device's restore in between, which the second delete
-   *  had never seen (#1068). */
   test.each([3175, 3900])(
     'seed %i of the tree on many devices keeps what another device restored',
     async (seed) => {
@@ -76,16 +59,10 @@ describe('the tree, walked at random on five devices', () => {
     },
   )
 
-  /** Deleted a folder made here, restored it and deleted it again while away, the second
-   *  delete refused here for a note inside whose words it had not pulled again: the
-   *  account hears the folder's making, both deletes and the restore in order (#1068). */
   test('seed 2316 of the tree on many devices keeps a folder restored here', async () => {
     expect((await simulate(crowded(2316, 'tree'))).failures).toEqual([])
   })
 
-  /** Restored a folder, then asked for it deleted again, which this device's own view of
-   *  the rules kept and the account, knowing more, took: the person's delete, though it
-   *  took nothing here (#1068). */
   test('seed 23652 of the tree on many devices lets a delete asked for after a restore stand', async () => {
     expect((await simulate(crowded(23652, 'tree'))).failures).toEqual([])
   })

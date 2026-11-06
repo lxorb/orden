@@ -27,7 +27,6 @@ const ROWS = taskRowsOfText(
   'Notes',
   'Errands.md',
   [
-    // Overdue by its deadline: a start date past is never late (#371).
     '- [ ] Call the bank #admin [deadline:: 2026-10-12] 🔺 📅 2026-10-12',
     '- [ ] Water the plants 📅 2026-10-13',
     '- [ ] Pay rent #admin ⏫ 📅 2026-10-13',
@@ -121,7 +120,6 @@ describe('a view grouped by note', () => {
 
   test('keeps notes of the same name in other folders apart', () => {
     expect(groupingOf(byNote.views[0] ?? today.views[0]!, today.views[0] ?? null)).toBe('note')
-    // In the order of the notes' names, the path between two of one name.
     expect(groups.map((group) => group.rows.map((row) => row.task?.text))).toEqual([
       ['Inbox one'],
       ['Alpha one'],
@@ -211,7 +209,6 @@ describe('Todos grouped by note across two spaces (#1157)', () => {
   })
 })
 
-// #1046: one view of a space's tasks, with Todoist's Display over it.
 describe('the Display menu over Todos', () => {
   const rows = taskRowsOfText(
     'Notes',
@@ -252,7 +249,6 @@ describe('the Display menu over Todos', () => {
     expect(grouped(byLabel)).toEqual([
       ['admin', ['Late', 'Now']],
       ['home', ['Now']],
-      // The smart order: the high priority first.
       [null, ['Some day', 'Doing it']],
     ])
     const byStatus = withGrouping(todos, 0, 'status', original)
@@ -260,7 +256,6 @@ describe('the Display menu over Todos', () => {
     const view = byLabel.views[0]
     if (!view) throw new Error('no view')
     expect(changedFrom(view, original)).toEqual({ sort: 1, filter: 0, total: 1 })
-    // Its own grouping chosen again is the view as it came, its order of groups and all.
     const back = withGrouping(byLabel, 0, 'default', original)
     expect(back.views[0]?.nib.groups).toEqual(original?.nib.groups)
   })
@@ -317,7 +312,6 @@ describe('the Display menu over Todos', () => {
     expect(dropInto('formula.when', null, now, TODAY)).toEqual({
       change: { task: { deadline: null } },
     })
-    // Overdue and Later name no one day.
     expect(dropInto('formula.when', 'later', now, TODAY)).toBeNull()
     expect(dropInto('task.tags', 'work', now, TODAY, 'home')).toEqual({
       change: { task: { tags: ['admin', 'work'] } },
