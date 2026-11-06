@@ -62,6 +62,10 @@ jobs:
           echo "the AppImage, as $root:"
           find "$root" -maxdepth 2 | sort | head -60
           find "$root" -name 'libcef.so*' | grep -q . || { echo "::error::the AppImage carries no libcef.so"; exit 1; }
+          if find "$root" | grep -E '/mime/packages/|/mimetypes/application-pdf\.'; then
+            echo "::error::the AppImage carries a file type's definition or the PDF icon"
+            exit 1
+          fi
           if find "$root" -name 'libwebkit2gtk*' -o -name 'libgst*' | grep .; then
             echo "::error::the AppImage carries WebKitGTK or GStreamer"
             exit 1
@@ -93,6 +97,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ./packages/deb/*.deb sway xwayland grim dbus poppler-utils python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg xsettingsd wf-recorder libnss3-tools
+      - name: The .deb gives no file type an icon or a definition, Orden owning none
+        run: |
+          if dpkg-deb -c packages/deb/*.deb | grep -E '/mimetypes/|/mime/packages/'; then
+            echo "::error::the .deb carries an icon or a definition for a file type"
+            exit 1
+          fi
       - name: Under Wayland, the portal's key reaching quick add
         env:
           OUT: wayland-out/portal
@@ -535,6 +545,12 @@ jobs:
         run: |
           dnf install -y ./packages/rpm/*.rpm sway xorg-x11-server-Xwayland mesa-dri-drivers mesa-libEGL dbus-daemon dbus-tools python3
           install -m 755 "$(command -v sway)" /usr/local/bin/sway
+      - name: The .rpm gives no file type an icon or a definition, Orden owning none
+        run: |
+          if rpm -qlp packages/rpm/*.rpm | grep -E '/mimetypes/|/mime/packages/'; then
+            echo "::error::the .rpm carries an icon or a definition for a file type"
+            exit 1
+          fi
       - name: Under Wayland
         env:
           OUT: wayland-out

@@ -205,6 +205,9 @@ $pdf = Value "$hkcu\Classes\NibPDF\shell\open\command"
 Check 'the PDF ProgID starts the program with the file' ((Starts $pdf) -eq $exe -and $pdf -like '* "%1"')
 Check 'and is offered in Open with' ($null -ne (Value "$hkcu\Classes\.pdf\OpenWithProgids" 'NibPDF'))
 Check 'and the default for PDFs is left alone' ((Value "$hkcu\Classes\.pdf") -ne 'NibPDF')
+$pdfIcon = "$want\documents\pdf.ico"
+Check 'and shows a PDF document icon of its own' ((Value "$hkcu\Classes\NibPDF\DefaultIcon") -eq $pdfIcon -and (Test-Path -LiteralPath $pdfIcon))
+Check 'and leaves the PDF type its own icon' ($null -eq (Value "$hkcu\Classes\.pdf\DefaultIcon") -or (Value "$hkcu\Classes\.pdf\DefaultIcon") -notlike "*$product*")
 
 if ($Scenario -eq 'msi') {
   $code = $entries[0].PSChildName
@@ -222,6 +225,7 @@ if ($Scenario -eq 'msi') {
 }
 Show 'uninstalled'
 Check 'the program is gone' (-not (Test-Path $exe))
+Check 'and its PDF document icon' (-not (Test-Path -LiteralPath $pdfIcon))
 Check 'nothing in Open with for PDFs' (-not (Has "$hkcu\Classes\NibPDF") -and $null -eq (Value "$hkcu\Classes\.pdf\OpenWithProgids" 'NibPDF'))
 foreach ($name in $names) {
   Check "no $name Apps & Features entry is left" (-not (Has "$uninstall\$name"))

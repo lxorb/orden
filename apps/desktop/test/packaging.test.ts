@@ -562,6 +562,7 @@ describe('what nib claims to open', () => {
     const types = /<key>CFBundleDocumentTypes<\/key>[\s\S]*?\n\t<\/array>/.exec(tauri('Info.plist'))
     expect(types?.[0].match(/<string>[^<]*<\/string>/g)).toEqual([
       '<string>PDF document</string>',
+      '<string>pdf.icns</string>',
       '<string>Viewer</string>',
       '<string>Alternate</string>',
       '<string>com.adobe.pdf</string>',
@@ -577,6 +578,89 @@ describe('what nib claims to open', () => {
     expect(tauri('wix', 'browser.wxs')).not.toMatch(/<(ProgId|Extension)\b/)
     expect(tauri('wix', 'pdf.wxs')).not.toMatch(/<(ProgId|Extension)\b/)
     expect(tauri('wix', 'pdf.wxs')).not.toContain(String.raw`Key="Software\Classes\.pdf" `)
+  })
+
+  const opened = (
+    JSON.parse(tauri('tauri.linux.conf.json')) as {
+      bundle: { fileAssociations: { ext: string[] }[] }
+    }
+  ).bundle.fileAssociations.flatMap((one) => one.ext)
+
+  test('every type it opens shows its own document icon where the default reader names one', () => {
+    const windows = JSON.parse(tauri('tauri.windows.conf.json')) as {
+      bundle: { resources: Record<string, string> }
+    }
+    const mac = JSON.parse(tauri('tauri.macos.conf.json')) as {
+      bundle: { macOS: { files: Record<string, string> } }
+    }
+    const script = tauri('installer.nsh')
+    const fragments = readdirSync(join(HERE, 'apps', 'desktop', 'src-tauri', 'wix'))
+      .map((file) => tauri('wix', file))
+      .join('\n')
+    const plist = tauri('Info.plist')
+
+    expect(opened.length).toBeGreaterThan(0)
+    for (const ext of opened) {
+      expect(windows.bundle.resources[`icons/documents/${ext}.ico`], ext).toBe(
+        `documents/${ext}.ico`,
+      )
+      const progId = new RegExp(
+        String.raw`WriteRegStr SHCTX "Software\\Classes\\\.${ext}\\OpenWithProgids" "(\w+)" ""`,
+      ).exec(script)?.[1]
+      expect(progId, ext).toBeDefined()
+      expect(script).toContain(
+        `WriteRegStr SHCTX "Software\\Classes\\${progId}\\DefaultIcon" "" "$INSTDIR\\documents\\${ext}.ico"`,
+      )
+      expect(fragments).toContain(
+        `Key="Software\\Classes\\${progId}\\DefaultIcon" Type="string" Value="[INSTALLDIR]documents\\${ext}.ico"`,
+      )
+      expect(mac.bundle.macOS.files[`Resources/${ext}.icns`], ext).toBe(
+        `icons/documents/${ext}.icns`,
+      )
+    }
+    const icons = [
+      ...plist.matchAll(/<key>CFBundleTypeIconFile<\/key>\s*<string>([^<]+)<\/string>/g),
+    ].map((one) => one[1])
+    expect(icons).toEqual(opened.map((ext) => `${ext}.icns`))
+    expect(plist.match(/<key>CFBundleTypeName<\/key>/g)).toHaveLength(icons.length)
+  })
+
+  test("and never the type's own icon, which is the system's", () => {
+    const fragments = readdirSync(join(HERE, 'apps', 'desktop', 'src-tauri', 'wix'))
+      .map((file) => tauri('wix', file))
+      .join('\n')
+    for (const [name, text] of [
+      ['installer.nsh', tauri('installer.nsh')],
+      ['wix', fragments],
+    ] as const) {
+      expect(text, name).not.toMatch(/Classes\\\.\w+\\DefaultIcon/)
+    }
+    expect(tauri('Info.plist')).not.toContain('UTExportedTypeDeclarations')
+  })
+
+  test('no Linux package gives a file type an icon or a definition, Orden owning none', () => {
+    const lists = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((one) =>
+        one.isDirectory() ? lists(join(dir, one.name)) : [join(dir, one.name)],
+      )
+    const files = [
+      ...lists(ROOT).filter((file) => !/(node-sources\.json|\.md)$/.test(file)),
+      ...['tauri.conf.json', 'tauri.linux.conf.json'].map((name) =>
+        join(HERE, 'apps', 'desktop', 'src-tauri', name),
+      ),
+    ]
+    for (const file of files) {
+      const text = readFileSync(file, 'utf8')
+      expect(text, file).not.toMatch(/icons\/[^\s"']*\/mimetypes\/|share\/mime\/packages/)
+    }
+
+    const wayland = repo('.github', 'workflows', 'wayland.yml')
+    const job = (name: string) =>
+      new RegExp(String.raw`\n  ${name}:\n([\s\S]*?)(?=\n  [a-z-]+:\n|$)`).exec(wayland)?.[1]
+    for (const name of ['deb', 'rpm']) {
+      expect(job(name), name).toContain("grep -E '/mimetypes/|/mime/packages/'")
+    }
+    expect(job('build')).toContain("grep -E '/mime/packages/|/mimetypes/application-pdf\\.'")
   })
 
   test('an install claims no file type and forgets the ones it used to', () => {

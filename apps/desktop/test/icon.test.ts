@@ -106,6 +106,86 @@ describe('the desktop icons', () => {
   })
 })
 
+describe('the document icons', () => {
+  const DOCUMENTS = join(ICONS, 'documents')
+  const opened = (
+    JSON.parse(readFileSync(join(TAURI, 'tauri.linux.conf.json'), 'utf8')) as {
+      bundle: { fileAssociations: { ext: string[] }[] }
+    }
+  ).bundle.fileAssociations.flatMap((one) => one.ext)
+  const page = (icon: Picture, name: string) => {
+    expect(icon.alpha(0, 0), name).toBe(0)
+    expect(icon.alpha(icon.size - 1, 0), name).toBe(0)
+    expect(icon.alpha(icon.size >> 1, icon.size >> 1), name).toBe(255)
+  }
+
+  test('every type Orden opens has its drawing and nothing else is drawn', () => {
+    const files = readdirSync(DOCUMENTS).sort()
+    const types = [...new Set(files.map((file) => file.replace(/(-\w+)?\.\w+$/, '')))]
+    expect(types).toEqual([...opened].sort())
+    for (const ext of opened) {
+      for (const file of [`${ext}.svg`, `${ext}-mid.svg`, `${ext}-small.svg`]) {
+        expect(readFileSync(join(DOCUMENTS, file), 'utf8'), file).toMatch(
+          /^<svg [^>]*viewBox="0 0 1024 1024"/,
+        )
+      }
+    }
+  })
+
+  test('the Windows icon holds every size Explorer asks for, each a page', () => {
+    for (const ext of opened) {
+      const bytes = readFileSync(join(DOCUMENTS, `${ext}.ico`))
+      expect(bytes.readUInt16LE(2)).toBe(1)
+      const sizes: number[] = []
+      for (let i = 0; i < bytes.readUInt16LE(4); i++) {
+        const at = 6 + 16 * i
+        const size = bytes.readUInt8(at) || 256
+        const png = bytes.subarray(
+          bytes.readUInt32LE(at + 12),
+          bytes.readUInt32LE(at + 12) + bytes.readUInt32LE(at + 8),
+        )
+        const icon = decode(png)
+        expect(icon.size, `${ext} ${size}`).toBe(size)
+        page(icon, `${ext}.ico ${size}`)
+        sizes.push(size)
+      }
+      expect(sizes).toEqual([16, 20, 24, 32, 40, 48, 64, 256])
+    }
+  })
+
+  test('the Mac icon holds every size Finder asks for, each a page', () => {
+    const SIZES: Record<string, number> = {
+      icp4: 16,
+      ic11: 32,
+      icp5: 32,
+      ic12: 64,
+      icp6: 64,
+      ic07: 128,
+      ic13: 256,
+      ic08: 256,
+      ic14: 512,
+      ic09: 512,
+      ic10: 1024,
+    }
+    for (const ext of opened) {
+      const bytes = readFileSync(join(DOCUMENTS, `${ext}.icns`))
+      expect(bytes.toString('ascii', 0, 4)).toBe('icns')
+      expect(bytes.readUInt32BE(4)).toBe(bytes.length)
+      const kinds: string[] = []
+      for (let at = 8; at < bytes.length;) {
+        const kind = bytes.toString('ascii', at, at + 4)
+        const length = bytes.readUInt32BE(at + 4)
+        const icon = decode(bytes.subarray(at + 8, at + length))
+        expect(icon.size, `${ext} ${kind}`).toBe(SIZES[kind])
+        page(icon, `${ext}.icns ${kind}`)
+        kinds.push(kind)
+        at += length
+      }
+      expect(kinds.sort()).toEqual(Object.keys(SIZES).sort())
+    }
+  })
+})
+
 describe('the mobile icons', () => {
   test('iOS is drawn to the edge', () => {
     for (const file of readdirSync(join(ICONS, 'ios'))) {

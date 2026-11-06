@@ -12,6 +12,9 @@ on:
       - apps/desktop/src-tauri/tauri.macos.conf.json
       - apps/desktop/src-tauri/src/bundle_name.rs
       - apps/desktop/src-tauri/src/default_browser.rs
+      - apps/desktop/src-tauri/tauri.windows.conf.json
+      - apps/desktop/src-tauri/Info.plist
+      - apps/desktop/src-tauri/icons/documents/**
       - scripts/windows-upgrade.ps1
       - .github/workflows/upgrade.yml
 
@@ -156,6 +159,14 @@ jobs:
           find new -type f
           tar -x -z -f "$(find new -name app.tgz | head -1)" -C new
           ls /tmp/old new
+
+      - name: A PDF shows Orden's PDF document icon where Orden is its reader
+        run: |
+          set -u
+          plist=new/Orden.app/Contents/Info.plist
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleDocumentTypes:0:CFBundleTypeIconFile' "$plist")" = pdf.icns
+          test -s new/Orden.app/Contents/Resources/pdf.icns
+          test "$(head -c 4 new/Orden.app/Contents/Resources/pdf.icns)" = icns
 
       - name: Updated in place, then launched
         run: |
