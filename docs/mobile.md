@@ -38,13 +38,14 @@ shows the colour the app is about to paint rather than a white flash.
   the part that could break is still built.
 
 A tag puts all of them on that version's own release, beside the desktop
-installers. A build of unstable goes on a rolling pre-release called `mobile-edge`,
-not the desktop's `edge`, because `release.yml` deletes and remakes that one on
-every push and would take an APK uploaded beside it with it.
+installers. A build of unstable goes on the rolling pre-release `edge`, beside the
+desktop's: `release.yml` keeps that release and replaces its own files on it, and
+this workflow replaces the phones' (`scripts/prune-edge.sh`). The phones' version
+number is this workflow's own run, so it need not match the desktop's beside it.
 
 ## Installing the APK on a phone
 
-1. Open the [`mobile-edge` release](https://github.com/lxorb/orden/releases/tag/mobile-edge)
+1. Open the [`edge` release](https://github.com/lxorb/orden/releases/tag/edge)
    in the phone's browser and download `Orden-<version>-android.apk`. It
    carries both architectures, so it is the right file for any phone and for an
    emulator; it is around 19 MB.

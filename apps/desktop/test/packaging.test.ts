@@ -183,17 +183,43 @@ esac
   })
 
   /** GitHub answers a delete with a 500 now and then, having deleted the file anyway:
-   *  that is the file gone, not the build failed (2026-11-05, #1147). */
+   *  that is the file gone, not the build failed (2026-11-05, #1147). And `edge` is one
+   *  release for every platform, filled by two workflows: each takes off only its own
+   *  last build's files, never the other's (#669). */
   describe.skipIf(process.platform === 'win32')("takes the last build's files off edge", () => {
-    function prune(gh: { failFirst: boolean; stuck?: boolean }) {
+    const mobile = repo('.github', 'workflows', 'publish-mobile.yml')
+    const mobileRun = () => {
+      const step = /- name: Take the last build's files off edge\n([\s\S]*?)(?=\n {6}- |$)/.exec(
+        mobile,
+      )?.[1]
+      return /run: (.*)/.exec(step ?? '')?.[1] ?? ''
+    }
+
+    function prune(gh: {
+      failFirst?: boolean
+      stuck?: boolean
+      phone?: boolean
+      built?: string[]
+      held?: string[]
+    }) {
       const at = mkdtempSync(join(tmpdir(), 'nib-prune-'))
       mkdirSync(join(at, 'bin'))
+      mkdirSync(join(at, 'scripts'))
+      writeFileSync(join(at, 'scripts', 'prune-edge.sh'), repo('scripts', 'prune-edge.sh'))
+      const into = gh.phone ? 'uploads' : 'artifacts'
       mkdirSync(join(at, 'artifacts'))
       mkdirSync(join(at, 'installers'))
-      writeFileSync(join(at, 'artifacts', 'Nib-1.0.1-1-linux-x64.rpm'), 'bytes')
+      mkdirSync(join(at, 'uploads'), { recursive: true })
+      for (const name of gh.built ?? ['Nib-1.0.1-1-linux-x64.rpm']) {
+        writeFileSync(join(at, into, name), 'bytes')
+      }
       const held = join(at, 'held')
-      writeFileSync(held, 'Nib-1.0.1-1-linux-x64.rpm\nNib-1.0.1-0-linux-x64.rpm\nlatest.json\n')
+      writeFileSync(
+        held,
+        `${(gh.held ?? ['Nib-1.0.1-1-linux-x64.rpm', 'Nib-1.0.1-0-linux-x64.rpm', 'latest.json']).join('\n')}\n`,
+      )
       const tried = join(at, 'tried')
+      writeFileSync(tried, '')
       writeFileSync(
         join(at, 'bin', 'gh'),
         `#!/bin/bash
@@ -212,7 +238,8 @@ esac
       // The wait between tries is the step's, not the test's.
       writeFileSync(join(at, 'bin', 'sleep'), '#!/bin/sh\n')
       chmodSync(join(at, 'bin', 'sleep'), 0o755)
-      const ran = spawnSync('bash', ['-e', '-c', stepRun("Take the last build's files off edge")], {
+      const run = gh.phone ? mobileRun() : stepRun("Take the last build's files off edge")
+      const ran = spawnSync('bash', ['-e', '-c', run], {
         cwd: at,
         encoding: 'utf8',
         env: {
@@ -225,22 +252,62 @@ esac
       })
       return {
         status: ran.status,
+        said: ran.stdout + ran.stderr,
         held: readFileSync(held, 'utf8'),
         tried: readFileSync(tried, 'utf8'),
       }
     }
 
     test('a 500 over a file that went is the file gone', () => {
-      const { status, held, tried } = prune({ failFirst: true })
-      expect(status).toBe(0)
+      const { status, held, tried, said } = prune({ failFirst: true })
+      expect(status, said).toBe(0)
       expect(held).not.toContain('Nib-1.0.1-0-linux-x64.rpm')
       expect(tried.trim().split('\n')).toEqual(['Nib-1.0.1-0-linux-x64.rpm'])
     })
 
     test('a file that will not go fails the step, after trying again', () => {
-      const { status, tried } = prune({ failFirst: false, stuck: true })
+      const { status, tried } = prune({ stuck: true })
       expect(status).not.toBe(0)
       expect(tried.trim().split('\n')).toHaveLength(3)
+    })
+
+    const both = [
+      'Orden-1.0.1-1-linux-x64.deb',
+      'Orden-1.0.1-0-linux-x64.deb',
+      'latest.json',
+      'Orden-1.0.1-7-android.apk',
+      'Orden-1.0.1-6-android.apk',
+      'Orden-1.0.1-6-ios-simulator.app.zip',
+    ]
+
+    test("the desktop's build leaves the phones' files where they are", () => {
+      const { status, tried, said } = prune({ built: ['Orden-1.0.1-1-linux-x64.deb'], held: both })
+      expect(status, said).toBe(0)
+      expect(tried.trim().split('\n')).toEqual(['Orden-1.0.1-0-linux-x64.deb'])
+    })
+
+    test("the phones' build takes off only the phones' old files", () => {
+      const { status, tried, said } = prune({
+        phone: true,
+        built: ['Orden-1.0.1-7-android.apk', 'Orden-1.0.1-7-ios-simulator.app.zip'],
+        held: [...both, 'Orden-1.0.1-7-ios-simulator.app.zip'],
+      })
+      expect(status, said).toBe(0)
+      expect(tried.trim().split('\n')).toEqual([
+        'Orden-1.0.1-6-android.apk',
+        'Orden-1.0.1-6-ios-simulator.app.zip',
+      ])
+    })
+
+    test('the phones neither delete nor make a release, and roll on edge', () => {
+      expect(mobile).not.toMatch(/gh release (delete|create) /)
+      expect(mobileRun()).toContain('prune-edge.sh "$TAG" phone')
+      for (const workflow of ['release.yml', 'publish-mobile.yml']) {
+        expect(repo('.github', 'workflows', workflow), workflow).toContain(
+          'run: bash scripts/build-version.sh\n',
+        )
+      }
+      expect(repo('scripts', 'build-version.sh')).toContain('echo "tag=edge"')
     })
   })
 
@@ -344,11 +411,11 @@ esac
 
     test('the phones wait for the draft, and neither make nor publish it', () => {
       const mobile = repo('.github', 'workflows', 'publish-mobile.yml')
-      const tagged = /- name: Wait for the draft\n([\s\S]*?)(?=\n {6}- )/.exec(mobile)?.[1] ?? ''
-      expect(tagged).toContain('gh release view "$TAG"')
-      expect(tagged).toContain('exit 1')
-      expect(mobile.match(/gh release create/g)?.length).toBe(1)
-      expect(mobile).toMatch(/gh release create "\$TAG" --prerelease/)
+      const waits = /- name: Wait for the release\n([\s\S]*?)(?=\n {6}- )/.exec(mobile)?.[1] ?? ''
+      expect(waits).toContain('gh release view "$TAG"')
+      expect(waits).toContain('exit 1')
+      expect(waits).not.toContain('if:')
+      expect(mobile).not.toContain('gh release create')
       expect(mobile).not.toContain('--draft')
     })
 

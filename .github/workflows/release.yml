@@ -6,7 +6,7 @@ name: release
 # the people who follow the edge rather than the releases. Those builds land on
 # one rolling pre-release tagged `edge`, replaced each time - not `unstable`,
 # since a tag sharing a name with the branch makes every checkout of it
-# ambiguous.
+# ambiguous. The phones' builds go on `edge` too, from publish-mobile.yml.
 #
 # Nix's edge is served from here too: after every edge build `nix-edge` pins the
 # flake's orden-unstable to its .debs, in packaging/nix/edge.json on `unstable`.
@@ -67,7 +67,7 @@ jobs:
 
       - id: decide
         shell: bash
-        run: bash scripts/build-version.sh edge
+        run: bash scripts/build-version.sh
 
   draft:
     needs: version
@@ -486,24 +486,14 @@ jobs:
             fi
           fi
 
-      # And off edge, everything this build did not put there: the last build's files,
-      # whose names carry its version. After the manifest, so the updater is never pointed
-      # at a file that has gone. GitHub answers a delete with a 500 now and then, having
-      # deleted the file or not (2026-11-05, which left the build's apt, rpm and snap
-      # unpublished): a refused delete is tried again, and is done once the file is gone.
+      # And off edge, every desktop file this build did not put there: the last build's,
+      # whose names carry its version. The phones' are publish-mobile.yml's to replace.
+      # After the manifest, so the updater is never pointed at a file that has gone.
       - name: Take the last build's files off edge
         if: needs.version.outputs.rolling == 'true'
         run: |
-          kept=$(find artifacts installers -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' -o -name '*.app.tar.gz' \) -printf '%f\n'; echo latest.json)
-          gh release view "$TAG" --json assets --jq '.assets[].name' | while read -r name; do
-            grep -qxF "$name" <<<"$kept" && continue
-            for attempt in 1 2 3; do
-              gh release delete-asset "$TAG" "$name" --yes && break
-              gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qxF "$name" || break
-              [ "$attempt" -lt 3 ] || exit 1
-              sleep 10
-            done
-          done
+          { find artifacts installers -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' -o -name '*.app.tar.gz' \) -printf '%f\n'; echo latest.json; } |
+            bash scripts/prune-edge.sh "$TAG" desktop
 
       # GitHub creates no workflow run for an event raised by GITHUB_TOKEN, so
       # the release published above reaches no other workflow by itself.

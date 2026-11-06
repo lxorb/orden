@@ -2,9 +2,8 @@ name: publish-mobile
 
 # The phone builds, on version tags and every push to `unstable`. A tag puts
 # them on that version's own release beside the installers; an unstable build
-# goes on a rolling pre-release of its own, `mobile-edge`, rather than the
-# desktop's `edge`, because release.yml deletes and
-# remakes that one on every push and would take an APK uploaded beside it with it.
+# puts them on `edge` beside the desktop's. Both releases are release.yml's: the
+# phones only add their files to them, and take off edge only their own old ones.
 #
 # There is no store account behind either platform. The Android side is an APK to
 # sideload; the iOS side is a simulator build, because putting Orden on a real iPhone
@@ -48,7 +47,7 @@ jobs:
 
       - id: decide
         shell: bash
-        run: bash scripts/build-version.sh mobile-edge
+        run: bash scripts/build-version.sh
 
   android:
     needs: version
@@ -307,7 +306,7 @@ jobs:
                 name="android-${name%-release.apk}.apk"
                 ;;
               # A simulator build installs on no phone, so a release's page, which
-              # is its installers, goes without it; `mobile-edge` has it.
+              # is its installers, goes without it; `edge` has it.
               *.app.zip)
                 [ "$ROLLING" = true ] || continue
                 ;;
@@ -316,25 +315,18 @@ jobs:
           done
           ls -l uploads
 
-      # The rolling release is remade rather than added to, so an old build's
-      # files never sit under a newer one's name.
-      - name: Replace the mobile edge build
-        if: needs.version.outputs.rolling == 'true'
-        run: |
-          gh release delete "$TAG" --cleanup-tag --yes || true
-          gh release create "$TAG" --prerelease --target "$GITHUB_SHA" \
-            --title "unstable on a phone · $VERSION" \
-            --notes ""
-
-      - name: Wait for the draft
-        if: needs.version.outputs.rolling != 'true'
+      - name: Wait for the release
         run: |
           for _ in $(seq 60); do
             gh release view "$TAG" >/dev/null 2>&1 && exit 0
             sleep 30
           done
-          echo "::error::$TAG has no release: release.yml's draft job makes it"
+          echo "::error::$TAG has no release: release.yml makes it"
           exit 1
 
       - name: Upload the files
         run: gh release upload "$TAG" uploads/* --clobber
+
+      - name: Take the last build's files off edge
+        if: needs.version.outputs.rolling == 'true'
+        run: find uploads -type f -printf '%f\n' | bash scripts/prune-edge.sh "$TAG" phone
