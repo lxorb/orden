@@ -48,14 +48,15 @@ class Pull {
     if (this.refreshing) return
     this.refreshing = true
     this.failed = false
-    const { refreshHere } = await import('./refresh')
     let timer: ReturnType<typeof setTimeout> | undefined
     const late = new Promise<boolean>((done) => (timer = setTimeout(() => done(false), WAITS)))
     const ok = await Promise.race([
-      refreshHere().then(
-        () => true,
-        () => false,
-      ),
+      import('./refresh')
+        .then(({ refreshHere }) => refreshHere())
+        .then(
+          () => true,
+          () => false,
+        ),
       late,
     ])
     clearTimeout(timer)
