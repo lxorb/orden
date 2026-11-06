@@ -43,7 +43,8 @@ PAD = '[data-tab="scratchpad"]'
 OUTLINE = '[data-tab="outline"]'
 RIGHT = 'header [data-side-toggle="right"]'
 PRESS_PAD = f"document.querySelector('{PAD}').click()"
-FOOT_PAD = '[data-region="foot"] button[aria-label="Scratchpad"]'
+YOU = "[data-phone-you]"
+PAD_ITEM = '[role="menuitem"]:has-text("Scratchpad")'
 
 def smooth(frames: list[list[int]], what: str) -> None:
     widths = [width for _, width in frames]
@@ -139,9 +140,11 @@ def phone(browser: Browser) -> None:
     shot(page, "05-phone-drawer")
 
     page.evaluate("() => window.nibApp.workspace.toggleSidebar('left')")
-    wait_for(page, f"document.querySelector('{FOOT_PAD}')", "the drawer's foot")
+    wait_for(page, f"document.querySelector('{YOU}')", "the drawer's head")
     page.wait_for_timeout(400)
-    page.locator(FOOT_PAD).tap()
+    page.locator(YOU).tap()
+    page.locator(PAD_ITEM).wait_for(state="visible", timeout=5000)
+    page.locator(PAD_ITEM).tap()
     page.wait_for_timeout(500)
     now = edge(page)
     say(f"phone, card up: {now}")

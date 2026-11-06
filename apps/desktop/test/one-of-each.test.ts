@@ -291,9 +291,9 @@ describe('the badge in front of a name', () => {
       .sort()
 
     expect(wearing).toEqual([
+      'lib/AccountBadge.svelte',
       'lib/ShareSheet.svelte',
       'lib/Sheet.svelte',
-      'lib/SidebarFoot.svelte',
       'lib/SpaceBadge.svelte',
       'lib/SpaceMenu.svelte',
       'lib/agents/settings/AgentMark.svelte',

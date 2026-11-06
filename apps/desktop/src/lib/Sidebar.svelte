@@ -40,6 +40,7 @@
     linksPanel,
     pagesNavigator,
     phoneTabsBar,
+    phoneYou,
     scratchpadCard,
     searchPanel,
     tasksPanel,
@@ -561,6 +562,11 @@
         {/if}
 
         <SpaceSwitcher />
+        {#if phoneTabs}
+          {#await phoneYou() then PhoneYou}
+            <PhoneYou />
+          {/await}
+        {/if}
       </div>
     {/if}
 
@@ -920,7 +926,7 @@
       {/key}
     </div>
 
-    {#if side === 'left'}
+    {#if side === 'left' && !phoneTabs}
       <SidebarFoot />
     {/if}
     {#if phoneTabs}

@@ -1,12 +1,11 @@
 <script lang="ts">
   import { fade } from 'svelte/transition'
   import { account } from './account.svelte'
-  import { BASE } from './api'
+  import { showAccount } from './account-menu'
+  import AccountBadge from './AccountBadge.svelte'
   import { DOWNLOAD_URL } from './links'
   import { arriving } from './arriving.svelte'
-  import { initial } from './icons'
   import { longPress } from './longpress'
-  import { DIVIDER, menu } from './menu.svelte'
   import { dur } from './motion'
   import { settings } from './settings.svelte'
   import { showFeedback } from './surfaces.svelte'
@@ -19,31 +18,9 @@
   import { scratchFromDrawer, shown as pad } from './scratchpad/is.svelte'
 
   const who = $derived(account.name)
-  const face = $derived(account.user?.avatar && `${BASE}/i/${account.user.avatar.s}.webp`)
 
   const pick = (event: MouseEvent) =>
     void import('./theme-picker/picking.svelte').then((one) => one.pickTheme(event))
-
-  function showAccount(event: MouseEvent) {
-    const box = (event.currentTarget as HTMLElement).getBoundingClientRect()
-    const at = new MouseEvent('contextmenu', { clientX: box.left, clientY: box.top })
-    const leave = () =>
-      __EVEN_PLUGIN__
-        ? void account.signOut()
-        : void import('./ai/vault/leaving').then((one) => one.signOut())
-    menu.show(
-      at,
-      [
-        { label: t('Account'), run: () => settings.show('account') },
-        { label: t('Settings'), hint: shortcuts.hint('app.settings'), run: () => settings.show() },
-        DIVIDER,
-        account.user
-          ? { label: t('Sign out'), run: leave }
-          : { label: t('Sign in'), run: () => (account.open = true) },
-      ],
-      { title: account.user?.email ?? t('Account'), up: true },
-    )
-  }
 </script>
 
 <div class="foot" data-region="foot">
@@ -56,17 +33,7 @@
     aria-haspopup="menu"
     onclick={showAccount}
   >
-    <span class="nib-badge" class:person={!!who} aria-hidden="true">
-      {#if face}
-        <img src={face} alt="" draggable="false" />
-      {:else if who}
-        {initial(who)}
-      {:else}
-        <svg viewBox="0 0 14 14"
-          ><circle cx="7" cy="4.6" r="2.8" /><path d="M1.6 13a5.4 5.4 0 0 1 10.8 0" /></svg
-        >
-      {/if}
-    </span>
+    <AccountBadge />
     <span class="nib-row-label">{who ?? t('Sign in')}</span>
   </button>
 
@@ -206,17 +173,6 @@
 
   .who .nib-row-label {
     flex: 0 1 auto;
-  }
-
-  .person {
-    overflow: hidden;
-    border-radius: 50%;
-  }
-
-  .person img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
   }
 
   .looking {

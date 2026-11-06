@@ -4,12 +4,16 @@
   import UnreadDot from '../ai/UnreadDot.svelte'
   import { t } from '../i18n.svelte'
   import { CHATS_MARK, SEARCH_MARK, TASKS_MARK } from '../panel-marks'
+  import { hiddenKinds } from '../settings.svelte'
   import { viewport } from '../viewport.svelte'
   import { workspace } from '../workspace.svelte'
+  import { writeNew } from '../write-new'
   import { PHONE_TABS, type PhoneTab } from '../workspace/panels'
 
   const NOTES_MARK =
     'M3.5 1.5h4l3 3v6a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1zM7.5 1.5v3h3M4.5 7.5h4M4.5 9.5h2.5'
+
+  const PLUS_MARK = 'M12 5v14M5 12h14'
 
   const LOOKS: Record<PhoneTab, { label: () => string; mark: string }> = {
     tree: { label: () => t('Notes'), mark: NOTES_MARK },
@@ -43,6 +47,11 @@
 
 {#if !viewport.typing}
   <div class="phone">
+    {#if on === 'tree' && hiddenKinds.offers('note')}
+      <button class="new" aria-label={t('New note')} onclick={writeNew}>
+        <svg viewBox="0 0 24 24"><path d={PLUS_MARK} /></svg>
+      </button>
+    {/if}
     <nav class="bar" data-phone-tabs aria-label={t('Panels')}>
       {#each tabs as tab (tab)}
         <button
@@ -135,5 +144,36 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     font-weight: var(--weight-strong);
+  }
+
+  .new {
+    position: absolute;
+    inset-inline-end: max(var(--space-4), var(--inset-end));
+    bottom: calc(100% + var(--space-4));
+    z-index: var(--z-float);
+    width: var(--touch-row);
+    height: var(--touch-row);
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: calc(var(--touch-row) * var(--radius-third));
+    background: var(--accent);
+    color: var(--accent-ink);
+    box-shadow: var(--shadow-lg);
+    -webkit-tap-highlight-color: transparent;
+    transition: transform var(--dur-fast) var(--ease-spring);
+  }
+
+  .new:active {
+    transform: scale(0.92);
+  }
+
+  .new svg {
+    width: var(--touch-icon);
+    height: var(--touch-icon);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
   }
 </style>
