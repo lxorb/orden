@@ -1188,3 +1188,47 @@ describe('the interface zoom', () => {
     crate.refuses = false
   })
 })
+
+describe('a step from wherever a slider left it', () => {
+  test('goes the way it was asked, to the next step that way', () => {
+    modes.setWidth(55)
+    modes.stepWidth(1)
+    expect(modes.width).toBe(60)
+    modes.setWidth(55)
+    modes.stepWidth(-1)
+    expect(modes.width).toBe(50)
+
+    modes.setLineSpacing(1.9)
+    modes.stepLineHeight(1)
+    expect(modes.lineHeight).toBe(2)
+    modes.setLineSpacing(1.9)
+    modes.stepLineHeight(-1)
+    expect(modes.lineHeight).toBe(1.85)
+  })
+
+  test('and stays put past the last step rather than coming back', () => {
+    modes.setWidth(30)
+    modes.stepWidth(-1)
+    expect(modes.width).toBe(30)
+    modes.setLineSpacing(2.2)
+    modes.stepLineHeight(1)
+    expect(modes.lineHeight).toBe(2.2)
+  })
+
+  test('and from a step itself, is the next one as before', () => {
+    modes.setWidth(42)
+    modes.stepWidth(1)
+    expect(modes.width).toBe(50)
+    modes.stepWidth(1)
+    modes.stepWidth(1)
+    modes.stepWidth(1)
+    expect(modes.width).toBe(80)
+    modes.resetZoom()
+    modes.stepZoom(1)
+    expect(modes.zoom).toBe(1.1)
+    modes.stepZoom(-1)
+    modes.stepZoom(-1)
+    expect(modes.zoom).toBe(0.9)
+    modes.resetZoom()
+  })
+})
