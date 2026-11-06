@@ -1349,8 +1349,12 @@ function holds(tail: string): boolean {
  *  Raised on 2026-11-06, to 2,114,900, for #1164: the file explorer is a kind of tab, made
  *  from the new tab's kinds, the palette and Ctrl+Alt+E, with its own keys in the registry
  *  and its branch in the pane (tab-kinds.ts, new-kinds.ts, shortcuts/registry.ts,
- *  Pane.svelte, workspace.svelte.ts). Measured 2,114,467 in 403. */
-const BUDGET = 2_114_900
+ *  Pane.svelte, workspace.svelte.ts). Measured 2,114,467 in 403.
+ *
+ *  Raised on 2026-11-06, to 2,116,000, for #331: a web tab's page held still as its
+ *  picture while the tab overview is up (web-tab/pages.svelte.ts, WebTab.svelte,
+ *  underlay.ts). Measured 2,115,690 in 403. */
+const BUDGET = 2_116_000
 const MOST_FILES = 404
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
