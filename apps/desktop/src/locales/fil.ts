@@ -2987,4 +2987,10 @@ export const fil: Dictionary = {
   'Count as': 'Ibilang bilang',
   'Time in spaces': 'Oras sa mga espasyo',
   'Time on websites': 'Oras sa mga website',
+  'Daily goal': 'Pang-araw-araw na layunin',
+  'Weekly goal': 'Lingguhang layunin',
+  'Goal reached': 'Naabot ang layunin',
+  'Export as CSV': 'I-export bilang CSV',
+  'Export as JSON': 'I-export bilang JSON',
+  'The timer has run for {time}': 'Tumatakbo na ang timer nang {time}',
 }

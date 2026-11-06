@@ -2958,4 +2958,10 @@ export const kn: Dictionary = {
   'Count as': 'ಇದಾಗಿ ಎಣಿಸಿ',
   'Time in spaces': 'ಸ್ಪೇಸ್‌ಗಳಲ್ಲಿನ ಸಮಯ',
   'Time on websites': 'ವೆಬ್‌ಸೈಟ್‌ಗಳಲ್ಲಿನ ಸಮಯ',
+  'Daily goal': 'ದೈನಂದಿನ ಗುರಿ',
+  'Weekly goal': 'ವಾರದ ಗುರಿ',
+  'Goal reached': 'ಗುರಿ ತಲುಪಿದೆ',
+  'Export as CSV': 'CSV ಆಗಿ ರಫ್ತು ಮಾಡಿ',
+  'Export as JSON': 'JSON ಆಗಿ ರಫ್ತು ಮಾಡಿ',
+  'The timer has run for {time}': 'ಟೈಮರ್ {time} ಇಂದ ನಡೆಯುತ್ತಿದೆ',
 }

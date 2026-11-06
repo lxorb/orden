@@ -19,7 +19,8 @@
     totalsOf,
     wholeOf,
   } from './days'
-  import type { Activity } from './records'
+  import { lengthIn } from './goals'
+  import type { Activity, Per } from './records'
   import { counted, isOwn, type Place, placesOf } from './counted'
   import SpanEditor from './SpanEditor.svelte'
   import './start.svelte'
@@ -133,6 +134,21 @@
     )
   }
 
+  async function askGoal(activity: Activity, per: Per) {
+    const was = time.goalFor(activity.id, per)
+    const said = await prompt.ask({
+      title: per === 'day' ? t('Daily goal') : t('Weekly goal'),
+      value: was ? lasting(was.ms) : '',
+      placeholder: '1:30',
+      confirmLabel: t('Save'),
+    })
+    if (said === null) return
+    time.setGoal(activity.id, per, lengthIn(said))
+  }
+
+  const goalHere = (activity: string | null) =>
+    activity !== null && range !== 'month' && current ? time.goalFor(activity, range) : null
+
   function activityMenu(event: MouseEvent, activity: Activity) {
     event.preventDefault()
     menu.show(
@@ -151,6 +167,12 @@
           label: t(accent.name),
           checked: activity.tint === accent.id,
           run: () => time.changeActivity(activity.id, { tint: accent.id }),
+        })),
+        null,
+        ...(['day', 'week'] as const).map((per) => ({
+          label: per === 'day' ? t('Daily goal') : t('Weekly goal'),
+          checked: time.goalFor(activity.id, per) !== null,
+          run: () => void askGoal(activity, per),
         })),
         null,
         {
@@ -313,7 +335,8 @@
     <ul class="totals">
       {#each totals as total (total.activity)}
         {@const activity = time.activity(total.activity)}
-        <li>
+        {@const goal = goalHere(total.activity)}
+        <li class:met={goal !== null && total.ms >= goal.ms}>
           <button
             type="button"
             class="nib-row is-short"
@@ -324,11 +347,13 @@
             <span class="nib-row-label">{nameOf(total.activity)}</span>
             <span class="share"
               ><span
-                style:width="{(total.ms / whole) * 100}%"
+                style:width="{Math.min(1, total.ms / (goal?.ms ?? whole)) * 100}%"
                 style:background={tintOf(total.activity)}
               ></span></span
             >
-            <span class="nib-row-meta">{lasting(total.ms)}</span>
+            <span class="nib-row-meta"
+              >{lasting(total.ms)}{goal ? ` / ${lasting(goal.ms)}` : ''}</span
+            >
           </button>
         </li>
       {/each}
@@ -488,6 +513,10 @@
   .share {
     flex: 0 1 30%;
     background: var(--surface-2);
+  }
+
+  .met .nib-row-meta {
+    color: var(--success);
   }
 
   .days .nib-row-meta:last-child,

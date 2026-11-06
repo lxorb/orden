@@ -2964,4 +2964,10 @@ export const sw: Dictionary = {
   'Count as': 'Hesabu kama',
   'Time in spaces': 'Muda katika nafasi',
   'Time on websites': 'Muda kwenye tovuti',
+  'Daily goal': 'Lengo la siku',
+  'Weekly goal': 'Lengo la wiki',
+  'Goal reached': 'Lengo limefikiwa',
+  'Export as CSV': 'Hamisha kama CSV',
+  'Export as JSON': 'Hamisha kama JSON',
+  'The timer has run for {time}': 'Kipima muda kimekuwa kikiendelea kwa {time}',
 }

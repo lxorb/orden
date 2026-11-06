@@ -22,6 +22,7 @@ $effect.root(() => {
 
 if (typeof window !== 'undefined') {
   void import('./tracking.svelte')
+  void import('./reminding')
   const again = () => {
     if (document.visibilityState === 'visible') void time.exchange()
   }

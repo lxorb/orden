@@ -3005,4 +3005,10 @@ export const es: Dictionary = {
   'Count as': 'Contar como',
   'Time in spaces': 'Tiempo en espacios',
   'Time on websites': 'Tiempo en sitios web',
+  'Daily goal': 'Objetivo diario',
+  'Weekly goal': 'Objetivo semanal',
+  'Goal reached': 'Objetivo cumplido',
+  'Export as CSV': 'Exportar como CSV',
+  'Export as JSON': 'Exportar como JSON',
+  'The timer has run for {time}': 'El temporizador lleva {time} en marcha',
 }

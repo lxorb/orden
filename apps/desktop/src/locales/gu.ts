@@ -2910,4 +2910,10 @@ export const gu: Dictionary = {
   'Count as': 'આ રીતે ગણો',
   'Time in spaces': 'સ્પેસમાં સમય',
   'Time on websites': 'વેબસાઇટ્સ પર સમય',
+  'Daily goal': 'દૈનિક લક્ષ્ય',
+  'Weekly goal': 'સાપ્તાહિક લક્ષ્ય',
+  'Goal reached': 'લક્ષ્ય પૂરું થયું',
+  'Export as CSV': 'CSV તરીકે નિકાસ કરો',
+  'Export as JSON': 'JSON તરીકે નિકાસ કરો',
+  'The timer has run for {time}': 'ટાઇમર {time}થી ચાલે છે',
 }

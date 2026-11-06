@@ -2968,4 +2968,10 @@ export const ha: Dictionary = {
   'Count as': 'Ƙidaya a matsayin',
   'Time in spaces': 'Lokaci a wurare',
   'Time on websites': 'Lokaci a shafukan yanar gizo',
+  'Daily goal': 'Burin yau da kullum',
+  'Weekly goal': 'Burin mako',
+  'Goal reached': 'An cimma buri',
+  'Export as CSV': 'Fitar a matsayin CSV',
+  'Export as JSON': 'Fitar a matsayin JSON',
+  'The timer has run for {time}': 'Agogon lokaci ya yi aiki na {time}',
 }

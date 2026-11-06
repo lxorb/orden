@@ -2802,4 +2802,10 @@ export const yue: Dictionary = {
   'Count as': '計做',
   'Time in spaces': '喺空間嘅時間',
   'Time on websites': '喺網站嘅時間',
+  'Daily goal': '每日目標',
+  'Weekly goal': '每週目標',
+  'Goal reached': '達到目標',
+  'Export as CSV': '匯出為 CSV',
+  'Export as JSON': '匯出為 JSON',
+  'The timer has run for {time}': '計時器已經行咗 {time}',
 }

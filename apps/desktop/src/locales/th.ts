@@ -2842,4 +2842,10 @@ export const th: Dictionary = {
   'Count as': 'นับเป็น',
   'Time in spaces': 'เวลาในพื้นที่',
   'Time on websites': 'เวลาบนเว็บไซต์',
+  'Daily goal': 'เป้าหมายรายวัน',
+  'Weekly goal': 'เป้าหมายรายสัปดาห์',
+  'Goal reached': 'ถึงเป้าหมายแล้ว',
+  'Export as CSV': 'ส่งออกเป็น CSV',
+  'Export as JSON': 'ส่งออกเป็น JSON',
+  'The timer has run for {time}': 'ตัวจับเวลาทำงานมา {time} แล้ว',
 }

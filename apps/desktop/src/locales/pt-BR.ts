@@ -2986,4 +2986,10 @@ export const ptBR: Dictionary = {
   'Count as': 'Contar como',
   'Time in spaces': 'Tempo nos espaços',
   'Time on websites': 'Tempo nos sites',
+  'Daily goal': 'Meta diária',
+  'Weekly goal': 'Meta semanal',
+  'Goal reached': 'Meta alcançada',
+  'Export as CSV': 'Exportar como CSV',
+  'Export as JSON': 'Exportar como JSON',
+  'The timer has run for {time}': 'O cronômetro está ligado há {time}',
 }

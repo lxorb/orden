@@ -2809,4 +2809,10 @@ export const zhHans: Dictionary = {
   'Count as': '计为',
   'Time in spaces': '在空间中的时间',
   'Time on websites': '在网站上的时间',
+  'Daily goal': '每日目标',
+  'Weekly goal': '每周目标',
+  'Goal reached': '已达成目标',
+  'Export as CSV': '导出为 CSV',
+  'Export as JSON': '导出为 JSON',
+  'The timer has run for {time}': '计时器已运行 {time}',
 }

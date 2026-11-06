@@ -2886,4 +2886,10 @@ export const jv: Dictionary = {
   'Count as': 'Etung minangka',
   'Time in spaces': 'Wektu ing papan',
   'Time on websites': 'Wektu ing situs web',
+  'Daily goal': 'Target saben dina',
+  'Weekly goal': 'Target saben minggu',
+  'Goal reached': 'Target kagayuh',
+  'Export as CSV': 'Ekspor dadi CSV',
+  'Export as JSON': 'Ekspor dadi JSON',
+  'The timer has run for {time}': 'Timer wis mlaku {time}',
 }

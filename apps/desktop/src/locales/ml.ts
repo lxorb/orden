@@ -2970,4 +2970,10 @@ export const ml: Dictionary = {
   'Count as': 'ഇതായി എണ്ണുക',
   'Time in spaces': 'സ്പേസുകളിലെ സമയം',
   'Time on websites': 'വെബ്സൈറ്റുകളിലെ സമയം',
+  'Daily goal': 'ദിവസ ലക്ഷ്യം',
+  'Weekly goal': 'ആഴ്ച ലക്ഷ്യം',
+  'Goal reached': 'ലക്ഷ്യം കൈവരിച്ചു',
+  'Export as CSV': 'CSV ആയി എക്സ്പോർട്ട് ചെയ്യുക',
+  'Export as JSON': 'JSON ആയി എക്സ്പോർട്ട് ചെയ്യുക',
+  'The timer has run for {time}': 'ടൈമർ {time} ആയി പ്രവർത്തിക്കുന്നു',
 }

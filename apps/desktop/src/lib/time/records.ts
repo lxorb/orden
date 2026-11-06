@@ -139,3 +139,25 @@ export interface Lanes {
 export function lanesOf(value: Record<string, unknown> | null | undefined): Lanes {
   return { spaces: value?.spaces !== false, sites: value?.sites !== false }
 }
+
+export type Per = 'day' | 'week'
+
+export interface Goal {
+  id: string
+  activity: string
+  per: Per
+  ms: number
+}
+
+export const goalId = (activity: string, per: Per): string => `${per}-${activity}`.slice(0, 64)
+
+export function goalOf(id: string, value: Record<string, unknown>): Goal | null {
+  const activity = idOr(value.activity)
+  const per = value.per === 'week' ? 'week' : value.per === 'day' ? 'day' : null
+  if (!activity || !per || !isTime(value.ms) || value.ms <= 0) return null
+  return { id, activity, per, ms: value.ms }
+}
+
+export function goalValue(goal: Goal): Record<string, unknown> {
+  return { activity: goal.activity, per: goal.per, ms: goal.ms }
+}

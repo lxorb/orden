@@ -2937,4 +2937,10 @@ export const te: Dictionary = {
   'Count as': 'ఇలా లెక్కించండి',
   'Time in spaces': 'స్పేస్‌లలో సమయం',
   'Time on websites': 'వెబ్‌సైట్‌లలో సమయం',
+  'Daily goal': 'రోజువారీ లక్ష్యం',
+  'Weekly goal': 'వారపు లక్ష్యం',
+  'Goal reached': 'లక్ష్యం చేరుకున్నారు',
+  'Export as CSV': 'CSVగా ఎగుమతి చేయండి',
+  'Export as JSON': 'JSONగా ఎగుమతి చేయండి',
+  'The timer has run for {time}': 'టైమర్ {time} నుండి నడుస్తోంది',
 }

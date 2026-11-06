@@ -3001,4 +3001,10 @@ export const ptPT: Dictionary = {
   'Count as': 'Contar como',
   'Time in spaces': 'Tempo nos espaços',
   'Time on websites': 'Tempo nos sites',
+  'Daily goal': 'Objetivo diário',
+  'Weekly goal': 'Objetivo semanal',
+  'Goal reached': 'Objetivo atingido',
+  'Export as CSV': 'Exportar como CSV',
+  'Export as JSON': 'Exportar como JSON',
+  'The timer has run for {time}': 'O cronómetro está ligado há {time}',
 }

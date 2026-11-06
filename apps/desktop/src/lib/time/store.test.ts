@@ -122,6 +122,33 @@ describe('the time a person records', () => {
     expect(other.tracking).toEqual({ spaces: true, sites: false })
   })
 
+  test('keeps one goal of each length for an activity, the same on every device', async () => {
+    const store = await opened(owner(), null)
+    const uni = store.addActivity('Uni')
+    store.setGoal(uni.id, 'day', 3_600_000)
+    store.setGoal(uni.id, 'day', 7_200_000)
+    store.setGoal(uni.id, 'week', 36_000_000)
+    expect(store.goals.map((one) => [one.per, one.ms])).toEqual([
+      ['day', 7_200_000],
+      ['week', 36_000_000],
+    ])
+    store.setGoal(uni.id, 'week', null)
+    expect(store.goalFor(uni.id, 'week')).toBeNull()
+    store.removeActivity(uni.id)
+    expect(store.goals).toEqual([])
+  })
+
+  test('brings in what another export holds, and nothing it has already', async () => {
+    const from = await opened(owner(), null)
+    from.addSpan({ start: 1, end: 2, note: 'kept' })
+    from.addActivity('Uni')
+    const into = await opened(owner(), null)
+    expect(into.bring(from.everything())).toBe(2)
+    expect(into.bring(from.everything())).toBe(0)
+    expect(into.spans.map((one) => one.note)).toEqual(['kept'])
+    expect(into.activities.map((one) => one.name)).toEqual(['Uni'])
+  })
+
   test('carries what was recorded signed out into the account, once', async () => {
     const local = await opened(null, null)
     local.addActivity('Before')

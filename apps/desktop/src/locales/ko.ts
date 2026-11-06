@@ -2865,4 +2865,10 @@ export const ko: Dictionary = {
   'Count as': '다음으로 집계',
   'Time in spaces': '공간에서 보낸 시간',
   'Time on websites': '웹사이트에서 보낸 시간',
+  'Daily goal': '일일 목표',
+  'Weekly goal': '주간 목표',
+  'Goal reached': '목표 달성',
+  'Export as CSV': 'CSV로 내보내기',
+  'Export as JSON': 'JSON으로 내보내기',
+  'The timer has run for {time}': '타이머가 {time} 동안 실행 중입니다',
 }
