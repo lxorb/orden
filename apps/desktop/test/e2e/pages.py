@@ -923,6 +923,56 @@ def check_counter(page: Page, label: str) -> None:
 
     shot(page, f"{label}-counter")
 
+def check_turn_while_drawing(page: Page, cdp, label: str) -> None:
+    say("--- a page turned with the pen down ---")
+
+    held = pages_of(page)
+    if len(held) < 2:
+        fail(f"[{label}] fewer than two pages to turn between with the pen down")
+        return
+
+    store_call(page, "s.turnTo(1)")
+    page.wait_for_timeout(300)
+    tool(page, "d")
+    box = surface(page)
+    x0, y0 = box["x"] + box["width"] / 2 - 100, box["y"] + 240
+    before = ink_count(page)
+
+    def send(what: str, x: float, y: float, held_down: int) -> None:
+        cdp.send(
+            "Input.dispatchMouseEvent",
+            {"type": what, "x": x, "y": y, "button": "left", "buttons": held_down, "clickCount": 1,
+             "pointerType": "pen", "force": 0.6, "tiltX": 0, "tiltY": 0},
+        )
+
+    send("mousePressed", x0, y0, 1)
+    for n in range(1, 8):
+        send("mouseMoved", x0 + n * 10, y0, 1)
+        page.wait_for_timeout(8)
+    page.evaluate(
+        "() => document.querySelector('.pages').dispatchEvent(new KeyboardEvent('keydown', { key: 'PageDown', bubbles: true, cancelable: true }))"
+    )
+    page.wait_for_timeout(200)
+    for n in range(8, 16):
+        send("mouseMoved", x0 + n * 10, y0 + 30, 1)
+        page.wait_for_timeout(8)
+    send("mouseReleased", x0 + 160, y0 + 30, 0)
+    page.wait_for_timeout(300)
+
+    first = held[0]
+    ys = page.evaluate(
+        "(count) => window.nibApp.pages.current.store.canvas.ink.slice(count).flatMap((one) => one.points.map((p) => p.y))",
+        before,
+    )
+    if not ys:
+        fail(f"[{label}] the pen drew nothing before the page was turned")
+    elif max(ys) > first["y"] + first["height"]:
+        fail(
+            f"[{label}] a page turned with the pen down drew a line onto the next page"
+            f" (down to y={max(ys):.0f}, the first page ends at {first['y'] + first['height']:.0f})"
+        )
+    shot(page, f"{label}-turned-while-drawing")
+
 def check_long_page(page: Page, label: str) -> None:
     say("--- the page that grows ---")
 
@@ -1278,6 +1328,7 @@ def drive(browser, theme: str) -> None:
         check_rulings(page, theme)
         check_adding(page, theme)
         check_counter(page, theme)
+        check_turn_while_drawing(page, cdp, theme)
         check_gutter(page, cdp, theme)
         if theme == "light":
             check_long_page(page, theme)

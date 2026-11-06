@@ -243,7 +243,7 @@
   })
 
   type Gesture =
-    | { kind: 'draw'; id: number; page: string; stroke: InkStroke; began: number }
+    | { kind: 'draw'; id: number; page: string; stroke: InkStroke; began: number; on: Camera }
     | { kind: 'erase'; id: number; run: string; last: Point; lastScreen: Point }
     | { kind: 'lasso'; id: number; points: Point[]; cards?: boolean }
     | { kind: 'armed'; id: number; at: Point; screen: Point }
@@ -396,6 +396,7 @@
         id: event.pointerId,
         page: page.id,
         began: event.timeStamp,
+        on: camera,
         stroke: {
           id: freshId(),
           tool: nib.tool,
@@ -646,6 +647,11 @@
       return
     }
 
+    if (one.kind === 'draw' && !sameView(one.on, camera)) {
+      finish()
+      return
+    }
+
     if (one.kind === 'draw') {
       const events = 'getCoalescedEvents' in event ? event.getCoalescedEvents() : []
       const samples = (events.length ? events : [event]).map((one) =>
@@ -728,6 +734,10 @@
     driver = null
     predicted = []
     endPull()
+  }
+
+  function sameView(one: Camera, other: Camera): boolean {
+    return one.x === other.x && one.y === other.y && one.scale === other.scale
   }
 
   function finish() {
