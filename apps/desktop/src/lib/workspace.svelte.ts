@@ -3908,9 +3908,10 @@ class Workspace {
     let at = landing.kind === 'strip' ? landing.at : null
 
     for (const path of paths) {
+      const before = this.active
       await this.openEntry(path)
       const tab = this.active
-      if (!tab) continue
+      if (!tab || (tab === before && !samePath(tab.path, path))) continue
 
       this.moveTab(tab.id, landing.paneId, at)
       if (at !== null) at += 1
