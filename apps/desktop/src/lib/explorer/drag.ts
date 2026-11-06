@@ -11,7 +11,7 @@ import {
 } from '../drag-paths'
 import { message } from '../i18n.svelte'
 import type { Picked } from '../import/sources'
-import { invoke, joinPath, platform } from '../tauri'
+import { invoke, isDesktop, joinPath, platform } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import type { OutsideStep } from '../workspace/undo.svelte'
 import { carry, changeable, freeName } from './changes'
@@ -26,9 +26,11 @@ export function startDrag(event: DragEvent, paths: string[]) {
     paths,
     paths.every((one) => inASpace(one)),
   )
+  if (isDesktop) void import('../web-tab/carry-in').then((pages) => pages.carryToPages(paths))
 }
 
 export function endDrag() {
+  if (isDesktop) void import('../web-tab/carry-in').then((pages) => pages.carriedToPages())
   carriedNothing()
 }
 

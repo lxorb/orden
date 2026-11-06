@@ -1398,7 +1398,9 @@ target's own business, as before.
 **A row of the file list let go of on a site** (#416) is the file itself there, the way a
 file dragged from the system's file manager is: a note is its `.md`, a PDF or a picture
 its own file, and Slack, WhatsApp Web, Gmail and any other site that takes files attach
-it. A web note is its address instead. A folder and a locked note carry nothing. The page
+it. A web note is its address instead. A folder and a locked note carry nothing. A row of
+the file explorer is carried the same way, from any folder an explorer has shown
+(`explorer::shown`), so a file from Downloads attaches as it would from Finder. The page
 also gets the note's words as text, so a field that only takes text is still given them.
 The drag starts in the app's own page, so Orden gives the site what to drop at the engine:
 when the drag starts, each row is copied into the app's cache (`carried/`) under its own
