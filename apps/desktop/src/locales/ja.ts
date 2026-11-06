@@ -2878,4 +2878,10 @@ export const ja: Dictionary = {
   'Count as': '次として集計',
   'Time in spaces': 'スペースでの時間',
   'Time on websites': 'ウェブサイトでの時間',
+  'Daily goal': '1日の目標',
+  'Weekly goal': '1週間の目標',
+  'Goal reached': '目標を達成しました',
+  'Export as CSV': 'CSV として書き出す',
+  'Export as JSON': 'JSON として書き出す',
+  'The timer has run for {time}': 'タイマーが {time} 動いています',
 }

@@ -2874,4 +2874,10 @@ export const vi: Dictionary = {
   'Count as': 'Tính là',
   'Time in spaces': 'Thời gian trong không gian',
   'Time on websites': 'Thời gian trên trang web',
+  'Daily goal': 'Mục tiêu hằng ngày',
+  'Weekly goal': 'Mục tiêu hằng tuần',
+  'Goal reached': 'Đã đạt mục tiêu',
+  'Export as CSV': 'Xuất dưới dạng CSV',
+  'Export as JSON': 'Xuất dưới dạng JSON',
+  'The timer has run for {time}': 'Đồng hồ hẹn giờ đã chạy {time}',
 }

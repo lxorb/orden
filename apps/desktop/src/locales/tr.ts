@@ -2944,4 +2944,10 @@ export const tr: Dictionary = {
   'Count as': 'Şu olarak say',
   'Time in spaces': 'Alanlarda geçen süre',
   'Time on websites': 'Web sitelerinde geçen süre',
+  'Daily goal': 'Günlük hedef',
+  'Weekly goal': 'Haftalık hedef',
+  'Goal reached': 'Hedefe ulaşıldı',
+  'Export as CSV': 'CSV olarak dışa aktar',
+  'Export as JSON': 'JSON olarak dışa aktar',
+  'The timer has run for {time}': 'Zamanlayıcı {time} süredir çalışıyor',
 }

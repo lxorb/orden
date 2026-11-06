@@ -7,9 +7,14 @@ import {
   type Activity,
   activityOf,
   activityValue,
+  type Goal,
+  goalId,
+  goalOf,
+  goalValue,
   type Lanes,
   lanesOf,
   LONGEST_NAME,
+  type Per,
   type Rule,
   ruleOf,
   ruleValue,
@@ -17,12 +22,17 @@ import {
   spanOf,
   spanValue,
 } from './records'
+import type { TimeRecord } from './written'
 
 const CURSOR = 'cursor'
 
 const SEND_AFTER = 1500
 
 const TRACKING = 'tracking'
+
+const REMINDERS = 'reminders'
+
+const KINDS = ['activity', 'span', 'rule', 'goal', 'pref']
 
 export interface Opening {
   owner: string | null
@@ -43,6 +53,8 @@ export class TimeStore {
   spans = $state.raw<Span[]>([])
   rules = $state.raw<Rule[]>([])
   tracking = $state.raw<Lanes>(lanesOf(null))
+  goals = $state.raw<Goal[]>([])
+  reminding = $state(true)
   ready = $state(false)
   kept = $state<boolean | null>(null)
 
@@ -126,6 +138,11 @@ export class TimeStore {
       .flatMap((row) => (row.value ? [ruleOf(row.id, row.value)] : []))
       .filter((one): one is Rule => one !== null)
     this.tracking = lanesOf(this.ledger.get('pref', TRACKING)?.value)
+    this.goals = this.ledger
+      .live('goal')
+      .flatMap((row) => (row.value ? [goalOf(row.id, row.value)] : []))
+      .filter((one): one is Goal => one !== null && this.activity(one.activity) !== null)
+    this.reminding = this.ledger.get('pref', REMINDERS)?.value?.on !== false
   }
 
   private written(rows: readonly Row[]): void {
@@ -170,6 +187,9 @@ export class TimeStore {
     const rows = [this.write('activity', id, null)]
     for (const rule of this.rules) {
       if (rule.activity === id) rows.push(this.write('rule', rule.id, null))
+    }
+    for (const goal of this.goals) {
+      if (goal.activity === id) rows.push(this.write('goal', goal.id, null))
     }
     for (const span of this.spans) {
       if (span.activity === id)
@@ -228,6 +248,36 @@ export class TimeStore {
   track(change: Partial<Lanes>): void {
     const next = { ...this.tracking, ...change }
     this.written([this.write('pref', TRACKING, { spaces: next.spaces, sites: next.sites })])
+  }
+
+  remind(on: boolean): void {
+    this.written([this.write('pref', REMINDERS, { on })])
+  }
+
+  goalFor(activity: string, per: Per): Goal | null {
+    return this.goals.find((one) => one.activity === activity && one.per === per) ?? null
+  }
+
+  setGoal(activity: string, per: Per, ms: number | null): void {
+    const id = goalId(activity, per)
+    const goal: Goal = { id, activity, per, ms: ms ?? 0 }
+    this.written([this.write('goal', id, ms && ms > 0 ? goalValue(goal) : null)])
+  }
+
+  everything(): TimeRecord[] {
+    return KINDS.flatMap((kind) =>
+      this.ledger
+        .live(kind)
+        .flatMap((row) => (row.value ? [{ kind, id: row.id, value: row.value }] : [])),
+    )
+  }
+
+  bring(records: readonly TimeRecord[]): number {
+    const rows = records
+      .filter((one) => KINDS.includes(one.kind) && !this.ledger.get(one.kind, one.id)?.value)
+      .map((one) => this.write(one.kind, one.id, one.value))
+    this.written(rows)
+    return rows.length
   }
 
   ruleFor(lane: 'space' | 'site', key: string): Rule | null {

@@ -3057,4 +3057,10 @@ export const ar: Dictionary = {
   'Count as': 'احسبه ضمن',
   'Time in spaces': 'الوقت في المساحات',
   'Time on websites': 'الوقت على المواقع',
+  'Daily goal': 'هدف يومي',
+  'Weekly goal': 'هدف أسبوعي',
+  'Goal reached': 'تحقّق الهدف',
+  'Export as CSV': 'تصدير بصيغة CSV',
+  'Export as JSON': 'تصدير بصيغة JSON',
+  'The timer has run for {time}': 'يعمل المؤقّت منذ {time}',
 }

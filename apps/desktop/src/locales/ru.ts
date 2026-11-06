@@ -3035,4 +3035,10 @@ export const ru: Dictionary = {
   'Count as': 'Считать как',
   'Time in spaces': 'Время в пространствах',
   'Time on websites': 'Время на сайтах',
+  'Daily goal': 'Цель на день',
+  'Weekly goal': 'Цель на неделю',
+  'Goal reached': 'Цель достигнута',
+  'Export as CSV': 'Экспорт в CSV',
+  'Export as JSON': 'Экспорт в JSON',
+  'The timer has run for {time}': 'Таймер идёт уже {time}',
 }

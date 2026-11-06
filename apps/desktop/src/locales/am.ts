@@ -2864,4 +2864,10 @@ export const am: Dictionary = {
   'Count as': 'እንደ … ቁጠር',
   'Time in spaces': 'በቦታዎች ያለ ጊዜ',
   'Time on websites': 'በድረ-ገጾች ላይ ያለ ጊዜ',
+  'Daily goal': 'የዕለት ግብ',
+  'Weekly goal': 'የሳምንት ግብ',
+  'Goal reached': 'ግቡ ተሳክቷል',
+  'Export as CSV': 'እንደ CSV ላክ',
+  'Export as JSON': 'እንደ JSON ላክ',
+  'The timer has run for {time}': 'ሰዓት ቆጣሪው ለ{time} ሠርቷል',
 }

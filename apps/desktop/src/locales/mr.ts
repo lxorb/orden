@@ -2923,4 +2923,10 @@ export const mr: Dictionary = {
   'Count as': 'म्हणून मोजा',
   'Time in spaces': 'स्पेसमधील वेळ',
   'Time on websites': 'वेबसाइटवरील वेळ',
+  'Daily goal': 'दैनिक लक्ष्य',
+  'Weekly goal': 'साप्ताहिक लक्ष्य',
+  'Goal reached': 'लक्ष्य गाठले',
+  'Export as CSV': 'CSV म्हणून निर्यात करा',
+  'Export as JSON': 'JSON म्हणून निर्यात करा',
+  'The timer has run for {time}': 'टायमर {time} पासून चालू आहे',
 }

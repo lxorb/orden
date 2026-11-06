@@ -2924,4 +2924,10 @@ export const ps: Dictionary = {
   'Count as': 'په توګه وشمېرئ',
   'Time in spaces': 'په ځایونو کې وخت',
   'Time on websites': 'په وېبپاڼو کې وخت',
+  'Daily goal': 'ورځنی هدف',
+  'Weekly goal': 'اوونیز هدف',
+  'Goal reached': 'هدف ترلاسه شو',
+  'Export as CSV': 'د CSV په توګه صادر کړئ',
+  'Export as JSON': 'د JSON په توګه صادر کړئ',
+  'The timer has run for {time}': 'ټایمر {time} راهیسې روان دی',
 }

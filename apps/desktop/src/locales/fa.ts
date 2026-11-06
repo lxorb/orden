@@ -2928,4 +2928,10 @@ export const fa: Dictionary = {
   'Count as': 'شمردن به‌عنوان',
   'Time in spaces': 'زمان در فضاها',
   'Time on websites': 'زمان در وب‌سایت‌ها',
+  'Daily goal': 'هدف روزانه',
+  'Weekly goal': 'هدف هفتگی',
+  'Goal reached': 'به هدف رسیدید',
+  'Export as CSV': 'برون‌بری به CSV',
+  'Export as JSON': 'برون‌بری به JSON',
+  'The timer has run for {time}': 'زمان‌سنج {time} است که روشن است',
 }

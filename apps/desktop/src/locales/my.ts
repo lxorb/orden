@@ -2894,4 +2894,10 @@ export const my: Dictionary = {
   'Count as': 'အဖြစ် ရေတွက်ရန်',
   'Time in spaces': 'နေရာများတွင် ကြာချိန်',
   'Time on websites': 'ဝဘ်ဆိုက်များတွင် ကြာချိန်',
+  'Daily goal': 'နေ့စဉ် ပန်းတိုင်',
+  'Weekly goal': 'အပတ်စဉ် ပန်းတိုင်',
+  'Goal reached': 'ပန်းတိုင် ရောက်ပြီ',
+  'Export as CSV': 'CSV အဖြစ် ထုတ်ရန်',
+  'Export as JSON': 'JSON အဖြစ် ထုတ်ရန်',
+  'The timer has run for {time}': 'အချိန်တိုင်းကိရိယာ {time} ကြာ လည်ပတ်နေသည်',
 }

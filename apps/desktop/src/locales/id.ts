@@ -2902,4 +2902,10 @@ export const id: Dictionary = {
   'Count as': 'Hitung sebagai',
   'Time in spaces': 'Waktu di ruang',
   'Time on websites': 'Waktu di situs web',
+  'Daily goal': 'Target harian',
+  'Weekly goal': 'Target mingguan',
+  'Goal reached': 'Target tercapai',
+  'Export as CSV': 'Ekspor sebagai CSV',
+  'Export as JSON': 'Ekspor sebagai JSON',
+  'The timer has run for {time}': 'Timer sudah berjalan {time}',
 }

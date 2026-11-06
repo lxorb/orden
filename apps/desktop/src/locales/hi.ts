@@ -2925,4 +2925,10 @@ export const hi: Dictionary = {
   'Count as': 'इसमें गिनें',
   'Time in spaces': 'स्पेस में समय',
   'Time on websites': 'वेबसाइटों पर समय',
+  'Daily goal': 'दैनिक लक्ष्य',
+  'Weekly goal': 'साप्ताहिक लक्ष्य',
+  'Goal reached': 'लक्ष्य पूरा हुआ',
+  'Export as CSV': 'CSV के रूप में निर्यात करें',
+  'Export as JSON': 'JSON के रूप में निर्यात करें',
+  'The timer has run for {time}': 'टाइमर {time} से चल रहा है',
 }

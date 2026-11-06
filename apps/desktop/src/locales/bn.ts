@@ -2919,4 +2919,10 @@ export const bn: Dictionary = {
   'Count as': 'হিসেবে গণনা করুন',
   'Time in spaces': 'স্পেসে কাটানো সময়',
   'Time on websites': 'ওয়েবসাইটে কাটানো সময়',
+  'Daily goal': 'দৈনিক লক্ষ্য',
+  'Weekly goal': 'সাপ্তাহিক লক্ষ্য',
+  'Goal reached': 'লক্ষ্য পূরণ হয়েছে',
+  'Export as CSV': 'CSV হিসেবে রপ্তানি',
+  'Export as JSON': 'JSON হিসেবে রপ্তানি',
+  'The timer has run for {time}': 'টাইমার {time} ধরে চলছে',
 }

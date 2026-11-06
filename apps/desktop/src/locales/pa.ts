@@ -2933,4 +2933,10 @@ export const pa: Dictionary = {
   'Count as': 'ਵਜੋਂ ਗਿਣੋ',
   'Time in spaces': 'ਸਪੇਸਾਂ ਵਿੱਚ ਸਮਾਂ',
   'Time on websites': 'ਵੈੱਬਸਾਈਟਾਂ ਉੱਤੇ ਸਮਾਂ',
+  'Daily goal': 'ਰੋਜ਼ਾਨਾ ਟੀਚਾ',
+  'Weekly goal': 'ਹਫ਼ਤਾਵਾਰੀ ਟੀਚਾ',
+  'Goal reached': 'ਟੀਚਾ ਪੂਰਾ ਹੋਇਆ',
+  'Export as CSV': 'CSV ਵਜੋਂ ਨਿਰਯਾਤ ਕਰੋ',
+  'Export as JSON': 'JSON ਵਜੋਂ ਨਿਰਯਾਤ ਕਰੋ',
+  'The timer has run for {time}': 'ਟਾਈਮਰ {time} ਤੋਂ ਚੱਲ ਰਿਹਾ ਹੈ',
 }

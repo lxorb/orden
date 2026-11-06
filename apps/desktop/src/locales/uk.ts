@@ -3029,4 +3029,10 @@ export const uk: Dictionary = {
   'Count as': 'Рахувати як',
   'Time in spaces': 'Час у просторах',
   'Time on websites': 'Час на сайтах',
+  'Daily goal': 'Ціль на день',
+  'Weekly goal': 'Ціль на тиждень',
+  'Goal reached': 'Ціль досягнуто',
+  'Export as CSV': 'Експорт у CSV',
+  'Export as JSON': 'Експорт у JSON',
+  'The timer has run for {time}': 'Таймер працює вже {time}',
 }

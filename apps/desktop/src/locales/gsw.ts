@@ -2946,4 +2946,10 @@ export const gsw: Dictionary = {
   'Count as': 'Zele als',
   'Time in spaces': 'Ziit i Bereich',
   'Time on websites': 'Ziit uf Websites',
+  'Daily goal': 'Tagesziil',
+  'Weekly goal': 'Wucheziil',
+  'Goal reached': 'Ziil erreicht',
+  'Export as CSV': 'Als CSV exportiere',
+  'Export as JSON': 'Als JSON exportiere',
+  'The timer has run for {time}': 'De Timer lauft sit {time}',
 }

@@ -2976,4 +2976,10 @@ export const ta: Dictionary = {
   'Count as': 'இதாக எண்ணு',
   'Time in spaces': 'இடங்களில் செலவிட்ட நேரம்',
   'Time on websites': 'இணையதளங்களில் செலவிட்ட நேரம்',
+  'Daily goal': 'தினசரி இலக்கு',
+  'Weekly goal': 'வாராந்திர இலக்கு',
+  'Goal reached': 'இலக்கு எட்டப்பட்டது',
+  'Export as CSV': 'CSV ஆக ஏற்றுமதி செய்',
+  'Export as JSON': 'JSON ஆக ஏற்றுமதி செய்',
+  'The timer has run for {time}': 'டைமர் {time} ஆக இயங்குகிறது',
 }

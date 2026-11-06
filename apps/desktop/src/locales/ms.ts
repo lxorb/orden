@@ -2900,4 +2900,10 @@ export const ms: Dictionary = {
   'Count as': 'Kira sebagai',
   'Time in spaces': 'Masa dalam ruang',
   'Time on websites': 'Masa di laman web',
+  'Daily goal': 'Matlamat harian',
+  'Weekly goal': 'Matlamat mingguan',
+  'Goal reached': 'Matlamat dicapai',
+  'Export as CSV': 'Eksport sebagai CSV',
+  'Export as JSON': 'Eksport sebagai JSON',
+  'The timer has run for {time}': 'Pemasa telah berjalan selama {time}',
 }

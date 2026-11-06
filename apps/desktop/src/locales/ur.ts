@@ -2919,4 +2919,10 @@ export const ur: Dictionary = {
   'Count as': 'بطور شمار کریں',
   'Time in spaces': 'اسپیسز میں وقت',
   'Time on websites': 'ویب سائٹس پر وقت',
+  'Daily goal': 'روزانہ ہدف',
+  'Weekly goal': 'ہفتہ وار ہدف',
+  'Goal reached': 'ہدف حاصل ہو گیا',
+  'Export as CSV': 'CSV کے طور پر برآمد کریں',
+  'Export as JSON': 'JSON کے طور پر برآمد کریں',
+  'The timer has run for {time}': 'ٹائمر {time} سے چل رہا ہے',
 }
