@@ -1,12 +1,14 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const world = vi.hoisted(() => ({
   full: false,
   calls: [] as boolean[],
+  page: Object.assign(new EventTarget(), { fullscreenElement: null as object | null }),
   wait: () => new Promise<void>((done) => setTimeout(done, 5)),
 }))
 
-vi.mock('../tauri', () => ({
+vi.mock('../tauri', async (actual) => ({
+  whenScreenGivenBack: (await actual<typeof import('../tauri')>()).whenScreenGivenBack,
   currentWindow: async () => {
     await world.wait()
     return {
@@ -18,6 +20,7 @@ vi.mock('../tauri', () => ({
         await world.wait()
         world.calls.push(on)
         world.full = on
+        world.page.fullscreenElement = on ? {} : null
       },
     }
   },
@@ -80,6 +83,47 @@ describe('presenting fills the screen and gives it back', () => {
     await settled()
 
     expect(world.full).toBe(true)
+    expect(world.calls).toEqual([])
+  })
+})
+
+describe('presenting in a browser', () => {
+  beforeEach(async () => {
+    present.stop()
+    await settled()
+    world.full = false
+    world.calls = []
+    world.page.fullscreenElement = null
+    vi.stubGlobal('document', world.page)
+  })
+
+  afterEach(async () => {
+    present.stop()
+    await settled()
+    vi.unstubAllGlobals()
+  })
+
+  test('ends when the browser gives its full screen back, as Escape does', async () => {
+    present.start()
+    await settled()
+    expect(world.calls).toEqual([true])
+    expect(present.on).toBe(true)
+
+    world.page.fullscreenElement = null
+    world.page.dispatchEvent(new Event('fullscreenchange'))
+    expect(present.on).toBe(false)
+  })
+
+  test('begun in a full screen already, ends with it too', async () => {
+    world.full = true
+    world.page.fullscreenElement = {}
+    present.start()
+    await settled()
+    expect(world.calls).toEqual([])
+
+    world.page.fullscreenElement = null
+    world.page.dispatchEvent(new Event('fullscreenchange'))
+    expect(present.on).toBe(false)
     expect(world.calls).toEqual([])
   })
 })
