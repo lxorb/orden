@@ -128,11 +128,15 @@ export async function writeEach(
   return true
 }
 
+const ticking = new WeakSet<Row>()
+
 export async function tickRow(row: Row, today = dayOf(new Date())): Promise<boolean> {
   const anchor = row.anchor
   const path = pathOf(row)
   if (!anchor || path === null) return false
-  return rewrite(
+  if (ticking.has(row)) return true
+  ticking.add(row)
+  const ticked = await rewrite(
     path,
     (before) => {
       const line = lineOfAnchor(before, anchor)
@@ -142,6 +146,8 @@ export async function tickRow(row: Row, today = dayOf(new Date())): Promise<bool
     },
     row.task && !row.task.done ? 'done' : undefined,
   )
+  if (!ticked) ticking.delete(row)
+  return ticked
 }
 
 export async function moveRow(row: Row, up: boolean): Promise<boolean> {
@@ -198,9 +204,12 @@ async function rewriteEach(
   return replaced(changes, said)
 }
 
-export function tickRows(many: readonly Row[], today = dayOf(new Date())): Promise<boolean> {
+export async function tickRows(asked: readonly Row[], today = dayOf(new Date())): Promise<boolean> {
+  const many = asked.filter((row) => !ticking.has(row))
+  if (!many.length) return asked.length > 0
+  for (const row of many) ticking.add(row)
   const opening = many.some((row) => row.task && !row.task.done)
-  return rewriteEach(
+  const ticked = await rewriteEach(
     many,
     (before, inNote) => {
       let text = before
@@ -214,6 +223,8 @@ export function tickRows(many: readonly Row[], today = dayOf(new Date())): Promi
     },
     opening ? 'done' : undefined,
   )
+  if (!ticked) for (const row of many) ticking.delete(row)
+  return ticked
 }
 
 function editLines(
