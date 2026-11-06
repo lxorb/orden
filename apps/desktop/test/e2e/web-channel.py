@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 
 from playwright.sync_api import Page
+from playwright.sync_api import TimeoutError as PlaywrightTimeout
 
 import harness
 from harness import Drive
@@ -66,9 +67,10 @@ def settled(page: Page) -> None:
 
 def row(page: Page) -> str:
     page.evaluate("() => window.nibApp.settings.show('general')")
-    page.wait_for_timeout(500)
     found = page.locator(ROW)
-    if not found.count():
+    try:
+        found.wait_for(timeout=PATIENCE * 1000)
+    except PlaywrightTimeout:
         wrong("Settings has no Web version row")
         return ""
     found.scroll_into_view_if_needed()
