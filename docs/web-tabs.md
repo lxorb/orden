@@ -1561,6 +1561,28 @@ engines say nothing, and what each one does there is said with it.
   by site. A pinch on a touchpad or a screen magnifies the page the way Chrome's does,
   without laying it out again or moving the percentage; it comes on with the rest.
 
+  That pinch is the engine's own on every desktop, asked for where the engine does not
+  hear it itself (#1244: _"currently it does the ladder, and other browsers do it
+  differently than us"_). On Windows the page is drawn under the app and its window is
+  Orden's, so a precision touchpad's pinch arrives there as Windows makes it for any
+  window without Direct Manipulation: the wheel with Ctrl in its keys. Handed on as it
+  came, that was a rung of the zoom. A wheel with Ctrl in its keys while Ctrl is not held,
+  or while two fingers are on the pad (`touchpad.rs`), or marked as the pad's own, is a
+  pinch: it is asked of the page as a touchpad's pinch through the DevTools Protocol
+  (`Input.synthesizePinchGesture`), at the fingers, one in flight and the turns that come
+  meanwhile added up into the next. The page hears it first as Ctrl and the wheel, as in
+  Chrome, so a map keeps its own pinch. On Linux Chromium does not read an X server's
+  touchpad gestures at all, so the pinch did nothing: Orden reads XInput 2.4's pinch over
+  each page and asks the page the same way. On a Mac the page's view is allowed to
+  magnify, which WebKit leaves off, and that is Safari's pinch and its two-finger double
+  tap. Ctrl and the wheel, the keys and the menu stay the page's zoom. See
+  `src-tauri/src/pinch.rs` and `web_visual.rs`, and `scripts/pinch-drive.py`, which
+  pinches a page in `web-tab.yml` - a wheel Windows' way on Windows, a virtual touchpad
+  under a real X server on Linux - and reads back that the page is magnified, heard the
+  pinch as Ctrl and the wheel, and kept its zoom, and on Windows that Ctrl held with the
+  wheel still zooms it. A Mac's magnify cannot be made from outside the app, so a Mac is
+  not driven.
+
   Inside the page the wheel and the keys are the engine's own zoom, which every webview
   has off unless it asks: a web tab's page asks (`zoom_hotkeys_enabled` in `web_tabs.rs`)
   and the app's own page does not, since Ctrl and the wheel there size a note's words. So
@@ -2316,6 +2338,7 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src-tauri/src/web_worlds.rs` | what a page is handed: the runtime's scripts taken back, the channel off, Orden's own in a world of their own on each engine, and what Orden reads in that world. Unit tested |
 | `apps/desktop/src-tauri/src/web_dialogs.rs` | a page's `alert`, `confirm`, `prompt` and leave, held open for the window's card. Unit tested |
 | `apps/desktop/src-tauri/src/web_reload.rs` | stopping a page, and loading it past the cache |
+| `apps/desktop/src-tauri/src/pinch.rs` | a pinch over a web tab asked of its page as a touchpad's pinch: what Windows' wheel means one, the turns added up while one is in flight, XInput's pinch on Linux, a Mac's magnification. Unit tested; driven by `scripts/pinch-drive.py` |
 | `apps/desktop/src-tauri/src/web_wheel.rs` | a wheel over a page sent to the page's own window, so a notch is one notch. Unit tested, with windows of its own |
 | `apps/desktop/src-tauri/src/web_swipe.rs`, `web_swipe.js` | a swipe over a page, said by the page through a binding in nib's world and read into numbers for the window. Unit tested; the script in `test/e2e/swipe.py` |
 | `apps/desktop/src-tauri/src/touchpad.rs` | how many fingers are on a precision touchpad, from its raw reports, said to the window so a swipe is decided as they lift. Unit tested; replayed in `scripts/swipe-probe.py` |
