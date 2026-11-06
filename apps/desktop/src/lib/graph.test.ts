@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { buildGraph, type NoteGraph, without } from './graph'
+import { buildGraph, type NoteGraph, without, worthAGraph } from './graph'
 import { neighbourhood, neighbours, signature } from './graph-walk'
 import { scanNote, type ScannedNote } from '@orden/scan/note'
 
@@ -427,5 +427,32 @@ describe('the neighbours of a node', () => {
 
     expect(neighbours(one, 0)).not.toBe(neighbours(other, 0))
     expect(neighbours(other, 0)).toHaveLength(1)
+  })
+})
+
+describe('a space worth a graph (#677)', () => {
+  test('five notes that link nowhere are not', () => {
+    const graph = space({ 'A.md': 'a', 'B.md': 'b', 'C.md': 'c', 'D.md': 'd', 'E.md': 'e' })
+
+    expect(worthAGraph(graph)).toBe(false)
+  })
+
+  test('four joined notes are not, five are', () => {
+    const four = { 'A.md': '[[B]] [[C]]', 'B.md': 'b', 'C.md': '[[D]]', 'D.md': 'd', 'E.md': 'e' }
+    expect(worthAGraph(space(four))).toBe(false)
+
+    expect(worthAGraph(space({ ...four, 'E.md': '[[A]]' }))).toBe(true)
+  })
+
+  test('links to notes that are not there and links to itself join nothing', () => {
+    const graph = space({
+      'A.md': '[[Gone]] [[Lost]] [[A]]',
+      'B.md': '[[Gone]]',
+      'C.md': '[[Lost]]',
+      'D.md': '[[Gone]]',
+      'E.md': '[[Lost]]',
+    })
+
+    expect(worthAGraph(graph)).toBe(false)
   })
 })

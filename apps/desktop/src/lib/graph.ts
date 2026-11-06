@@ -122,6 +122,19 @@ export function buildGraph(
   return { nodes, edges }
 }
 
+const WORTH_A_GRAPH = 5
+
+export function worthAGraph(graph: NoteGraph, enough = WORTH_A_GRAPH): boolean {
+  const joined = new Set<number>()
+  for (const edge of graph.edges) {
+    if (graph.nodes[edge.a]?.path == null || graph.nodes[edge.b]?.path == null) continue
+    joined.add(edge.a)
+    joined.add(edge.b)
+    if (joined.size >= enough) return true
+  }
+  return false
+}
+
 function count(nodes: GraphNode[], index: number) {
   const node = nodes[index]
   if (node) node.degree++
