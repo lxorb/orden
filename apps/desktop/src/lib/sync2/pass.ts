@@ -323,6 +323,7 @@ export async function readFeed(
     if (!alive() || reply === null) return false
     const read = feedPageOf(reply)
     if (!read) throw new Error('the account answered the feed with something else')
+    if (read.device !== undefined) core.mine.add(read.device)
 
     const changes: Change[] = []
     const wanted = core.wanted(space.id)

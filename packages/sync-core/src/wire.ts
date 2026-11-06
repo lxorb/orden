@@ -36,6 +36,7 @@ export interface FeedPage {
   more: boolean
   order?: true
   index?: true
+  device?: string
 }
 
 export const FEED_PAGE = 1000
@@ -449,6 +450,7 @@ export function feedPageOf(value: unknown): FeedPage | null {
   const page: FeedPage = { items, cursor: value.cursor, more: value.more }
   if (value.order === true) page.order = true
   if (value.index === true) page.index = true
+  if (typeof value.device === 'string' && value.device) page.device = value.device
   return page
 }
 

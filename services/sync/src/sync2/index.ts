@@ -60,10 +60,8 @@ v2Spaces.post('/:space/ops', atLeast('read', 'space'), async (context) => {
 v2Spaces.get('/:space/feed', atLeast('read', 'space'), async (context) => {
   const space = spaceOf(context)
   await preparedSpace(context.env, space)
-  return answer(
-    context,
-    await feedPage(context.env, space.id, cursorIn(context.req.query('since'))),
-  )
+  const page = await feedPage(context.env, space.id, cursorIn(context.req.query('since')))
+  return answer(context, { ...page, device: await deviceOf(context) })
 })
 
 v2Spaces.get('/:space/snapshot', atLeast('read', 'space'), async (context) => {

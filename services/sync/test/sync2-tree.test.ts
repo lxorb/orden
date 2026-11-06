@@ -570,6 +570,17 @@ describe('the feed', () => {
     expect(next.items[0]?.docSeq).toBe(next.items[0]?.seq)
   })
 
+  test('names the device that asks the way its changes are named', async () => {
+    await ops([op('mkdir', { id: 'f', parent: null, name: 'F' })])
+    await ops([op('mkdir', { id: 'g', parent: null, name: 'G' })], other)
+    const mine = await feed()
+    const theirs = await feed(0, other)
+    const by = (page: FeedPage, id: string) => page.items.find((item) => item.id === id)?.by
+    expect(mine.device).toBe(by(mine, 'f'))
+    expect(theirs.device).toBe(by(theirs, 'g'))
+    expect(mine.device).not.toBe(theirs.device)
+  })
+
   test('pages at a thousand', async () => {
     for (let at = 0; at < 1100; at += 200) {
       await ops(

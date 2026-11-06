@@ -74,6 +74,7 @@ export class Core {
   readonly held = new Map<string, Holding>()
   readonly wants = new Map<string, Map<string, Wanted>>()
   readonly by = new Map<string, string>()
+  readonly mine = new Set<string>()
   readonly carried = new Set<string>()
   readonly asked = new Set<string>()
   crowded = false
@@ -155,6 +156,7 @@ export class Core {
         core.device,
         world,
         orderings.get(space.space_id),
+        core.lastByMe,
       )
       state.gone = gones.get(space.space_id) ?? state.gone
       state.keeping = keepings.get(space.space_id) ?? state.keeping
@@ -209,13 +211,19 @@ export class Core {
     return put('meta', { key: COUNTER, value: this.counter })
   }
 
+  readonly lastByMe = (id: string): boolean => {
+    const by = this.by.get(id)
+    return by !== undefined && this.mine.has(by)
+  }
+
   freshClient(): number {
     return (Math.floor(this.world.random() * 0xffffffff) >>> 0) + 1
   }
 
   addSpace(spaceId: string, root: string, role: string | null): Change[] {
     const row = { space_id: spaceId, root, cursor: 0, role, store: null }
-    this.spaces.set(spaceId, new SpaceState(row, [], [], this.device, this.world))
+    const space = new SpaceState(row, [], [], this.device, this.world, undefined, this.lastByMe)
+    this.spaces.set(spaceId, space)
     return [put('spaces', row)]
   }
 

@@ -90,7 +90,7 @@ export class ReferenceAccount implements AccountAdapter {
       case 'ops':
         return this.ops(device, value)
       case 'feed':
-        return this.feed(value)
+        return this.feed(device, value)
       case 'pull':
         return this.pull(value)
       case 'push':
@@ -122,7 +122,7 @@ export class ReferenceAccount implements AccountAdapter {
     return { results, cursor: this.tree.cursor }
   }
 
-  private feed(value: unknown) {
+  private feed(device: string, value: unknown) {
     if (!isRecord(value) || typeof value.since !== 'number') throw new Error('feed: no since')
     const since = value.since
     const changed = [...this.tree.entries.values()]
@@ -147,7 +147,8 @@ export class ReferenceAccount implements AccountAdapter {
     }))
     const last = page.at(-1)
     const more = changed.length > page.length
-    return { items, cursor: more && last ? last.seq : this.tree.cursor, more, order: true }
+    const cursor = more && last ? last.seq : this.tree.cursor
+    return { items, cursor, more, order: true, device }
   }
 
   private pull(value: unknown) {

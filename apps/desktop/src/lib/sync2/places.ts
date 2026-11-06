@@ -66,6 +66,7 @@ export class SpaceState {
     private readonly device: string,
     private readonly world: Pick<World, 'platform' | 'foldsCase' | 'lazy'>,
     ordering: Ordering = { on: false, positions: new Map() },
+    private readonly lastByMe: (id: string) => boolean = () => false,
   ) {
     this.entries = new Map(entries.map((entry) => [entry.id, entry]))
     this.outbox = [...outbox]
@@ -94,6 +95,7 @@ export class SpaceState {
         deleted: entry.deleted,
         seq: entry.seq,
         docSeq: 0,
+        ...(this.lastByMe(entry.id) ? { by: this.device } : {}),
         ...this.positionOf(entry.id),
       })
     }

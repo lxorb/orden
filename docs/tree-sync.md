@@ -89,6 +89,18 @@ stands empties it: it had seen every change it took, so none of them stands agai
 next delete once something brings the entry back. A row without it, or written by a
 Worker from before it, answers by its last changer as before; an app never reads it.
 
+A device applies the rules to what waits in its outbox over what the feed has told it.
+The feed names who last changed each entry by the account's id for that device, and each
+page also says the id of the device asking (`device`, the same the account stamps its
+changes with). The device keeps the ids it was told are its own for as long as it runs,
+and an entry whose last change the feed names by one of them counts as its own: a folder
+it deletes before the feed has said back what it made in it is not put back on the disk
+while the account answers. What else the account keeps (`placed_by`, `changes_by`, who
+last wrote) a device does not hear; where that keeps something its delete took, the
+account refuses the delete and the device puts back what the account still holds, as for
+any refused delete. An account from before this says no id, so nothing in its feed counts
+as the device's own, and such a folder shows as kept until the account answers.
+
 ## What this device does
 
 A move, a rename or a delete made in the file list, by an agent or by an undo is said to
@@ -397,12 +409,6 @@ device's own view of the rules agree with it.
 ## Known gaps
 
 What is still open:
-
-- **A device cannot tell its own changes in the feed.** The feed names who changed an
-  entry by the account's device id, which the app does not know as its own, so the rules
-  a device applies to what it shows count its own acknowledged changes as somebody
-  else's. A folder deleted here before the feed has said back what this device made in
-  it shows as kept, and is put back on the disk, until the account answers the delete.
 
 - **Words that brought a note back, against an older account.** The rule that a writer's
   own words bringing a note back are not its sight of it (above) is in

@@ -946,6 +946,59 @@ describe('a folder deleted here', () => {
   })
 })
 
+describe('a delete said while the feed brings back what this device made (#1068)', () => {
+  async function deletedMidFeed(says: boolean) {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const here = await device(account, 'd0')
+    const handle = account.handle.bind(account)
+    let deleting = false
+    account.handle = async (_device, route, body) => {
+      if (route === 'feed' && deleting) {
+        deleting = false
+        await here.disk.remove(`${ROOT}/Work`)
+        await here.engine.removed(`${ROOT}/Work`, 'trash-1')
+      }
+      const reply = await handle('account-d0', route, body)
+      if (route !== 'feed' || says) return reply
+      const page = unframe(reply) as Record<string, unknown>
+      delete page.device
+      return frame(page)
+    }
+
+    await here.disk.mkdir(`${ROOT}/Work`)
+    const folder = await here.engine.created(`${ROOT}/Work`, true)
+    await here.disk.write(`${ROOT}/Work/Idea.md`, 'ship it mk6z')
+    const note = await here.engine.created(`${ROOT}/Work/Idea.md`, false, 'ship it mk6z')
+    await here.engine.pass(SPACE)
+    await here.engine.pass(SPACE)
+
+    await here.disk.mkdir(`${ROOT}/Work/Deep`)
+    const deep = await here.engine.created(`${ROOT}/Work/Deep`, true)
+    deleting = true
+    await here.engine.pass(SPACE)
+    const shown = here.disk.folders.has(`${ROOT}/Work`)
+
+    await here.engine.pass(SPACE)
+    await here.engine.pass(SPACE)
+    const live = (await account.view()).entries.map((entry) => entry.id)
+    return { here, shown, live, made: [folder, note, deep] }
+  }
+
+  test('is not put back on the disk while the account answers', async () => {
+    const { here, shown, live, made } = await deletedMidFeed(true)
+    expect(shown).toBe(false)
+    expect(live.filter((id) => made.includes(id))).toEqual([])
+    expect([...here.disk.folders].filter((path) => path.startsWith(`${ROOT}/Work`))).toEqual([])
+  })
+
+  test('against an account that does not say which device asks, ends the same', async () => {
+    const { here, live, made } = await deletedMidFeed(false)
+    expect(live.filter((id) => made.includes(id))).toEqual([])
+    expect([...here.disk.folders].filter((path) => path.startsWith(`${ROOT}/Work`))).toEqual([])
+    expect([...here.disk.files.keys()].filter((path) => path.includes('/Work/'))).toEqual([])
+  })
+})
+
 describe('a delete put back (#1068)', () => {
   test('brings a folder back as the entries it was, words and all, made nowhere again', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)

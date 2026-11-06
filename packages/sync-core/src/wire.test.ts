@@ -338,6 +338,8 @@ describe('the feed', () => {
       index: true,
     })
     expect(feedPageOf({ ...page, index: 'yes' })).toEqual(page)
+    expect(feedPageOf({ ...page, device: 'laptop' })).toEqual({ ...page, device: 'laptop' })
+    expect(feedPageOf({ ...page, device: 7 })).toEqual(page)
   })
 })
 
