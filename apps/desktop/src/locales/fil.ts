@@ -2986,4 +2986,22 @@ export const fil: Dictionary = {
   'IMAP server': 'IMAP server',
   'SMTP server': 'SMTP server',
   'User name': 'Username',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'Apurahan',
+  Important: 'Mahalaga',
+  'If time': 'Kung may oras',
+  Unimportant: 'Hindi mahalaga',
+  'By service': 'Ayon sa serbisyo',
+  'By priority': 'Ayon sa priyoridad',
+  Pending: 'Naghihintay',
+  'Chat priorities': 'Mga priyoridad ng chat',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'Binibigyan ng iyong AI ng priyoridad ang bawat chat kapag may dumating na mensahe at natututo ito sa mga binabago mo.',
+  'Notify for': 'Mag-abiso para sa',
+  'Which priorities notify you.': 'Aling mga priyoridad ang mag-aabiso sa iyo.',
+  'Urgent and important': 'Apurahan at mahalaga',
+  'Draft replies': 'Mag-draft ng mga sagot',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'Gumagawa ang iyong AI ng draft na sagot sa iyong istilo at nagmumungkahi ng gawain, at walang ipinapadala o idinadagdag hanggang piliin mo ito.',
+  'Use draft': 'Gamitin ang draft',
 }

@@ -2923,4 +2923,22 @@ export const ps: Dictionary = {
   'IMAP server': 'IMAP سرور',
   'SMTP server': 'SMTP سرور',
   'User name': 'کارن نوم',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'بېړني',
+  Important: 'مهم',
+  'If time': 'که وخت وي',
+  Unimportant: 'بې اهمیته',
+  'By service': 'د خدمت له مخې',
+  'By priority': 'د لومړیتوب له مخې',
+  Pending: 'په تمه',
+  'Chat priorities': 'د چټ لومړیتوبونه',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'کله چې پیغام راشي ستاسو AI هرې چټ ته لومړیتوب ورکوي او له هغو زده کوي چې تاسو یې بدلوئ.',
+  'Notify for': 'خبرتیا د دې لپاره',
+  'Which priorities notify you.': 'کوم لومړیتوبونه تاسو ته خبرتیا درکوي.',
+  'Urgent and important': 'بېړني او مهم',
+  'Draft replies': 'د ځوابونو مسوده',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'ستاسو AI ستاسو په سبک د ځواب مسوده لیکي او یو کار وړاندیز کوي، او تر هغو چې تاسو یې غوره نه کړئ هېڅ نه لېږل کېږي او نه ورزیاتېږي.',
+  'Use draft': 'مسوده وکاروئ',
 }

@@ -3014,4 +3014,22 @@ export const uk: Dictionary = {
   'IMAP server': 'Сервер IMAP',
   'SMTP server': 'Сервер SMTP',
   'User name': 'Ім’я користувача',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'Терміново',
+  Important: 'Важливо',
+  'If time': 'Якщо буде час',
+  Unimportant: 'Неважливо',
+  'By service': 'За сервісами',
+  'By priority': 'За пріоритетом',
+  Pending: 'Очікують',
+  'Chat priorities': 'Пріоритети чатів',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'Ваш ШІ призначає кожному чату пріоритет, коли надходить повідомлення, і вчиться на тих, які ви змінюєте.',
+  'Notify for': 'Сповіщати про',
+  'Which priorities notify you.': 'Які пріоритети вас сповіщають.',
+  'Urgent and important': 'Терміново і важливо',
+  'Draft replies': 'Чернетки відповідей',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'Ваш ШІ пише чернетку відповіді у вашому стилі й пропонує завдання, і нічого не надсилається й не додається, доки ви не оберете.',
+  'Use draft': 'Узяти чернетку',
 }

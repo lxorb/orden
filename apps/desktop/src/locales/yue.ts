@@ -2823,4 +2823,22 @@ export const yue: Dictionary = {
   'IMAP server': 'IMAP 伺服器',
   'SMTP server': 'SMTP 伺服器',
   'User name': '用戶名稱',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: '緊急',
+  Important: '重要',
+  'If time': '有時間先',
+  Unimportant: '唔重要',
+  'By service': '按服務',
+  'By priority': '按優先次序',
+  Pending: '待處理',
+  'Chat priorities': '聊天優先次序',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    '收到訊息時，你嘅 AI 會幫每個聊天定優先次序，再由你改過嘅學起。',
+  'Notify for': '通知嘅優先次序',
+  'Which priorities notify you.': '邊啲優先次序會通知你。',
+  'Urgent and important': '緊急同重要',
+  'Draft replies': '草擬回覆',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    '你嘅 AI 會用你嘅寫法草擬回覆同建議一項工作，你揀之前乜都唔會發出或者加入。',
+  'Use draft': '用草稿',
 }

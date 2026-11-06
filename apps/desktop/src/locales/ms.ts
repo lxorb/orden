@@ -2921,4 +2921,22 @@ export const ms: Dictionary = {
   'IMAP server': 'Pelayan IMAP',
   'SMTP server': 'Pelayan SMTP',
   'User name': 'Nama pengguna',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'Segera',
+  Important: 'Penting',
+  'If time': 'Jika sempat',
+  Unimportant: 'Tidak penting',
+  'By service': 'Mengikut perkhidmatan',
+  'By priority': 'Mengikut keutamaan',
+  Pending: 'Menunggu',
+  'Chat priorities': 'Keutamaan sembang',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'AI anda memberi setiap sembang keutamaan apabila mesej tiba dan belajar daripada yang anda ubah.',
+  'Notify for': 'Maklumkan untuk',
+  'Which priorities notify you.': 'Keutamaan yang memaklumkan anda.',
+  'Urgent and important': 'Segera dan penting',
+  'Draft replies': 'Draf balasan',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'AI anda mendraf balasan mengikut gaya anda dan mencadangkan tugas, dan tiada apa-apa dihantar atau ditambah sehingga anda memilihnya.',
+  'Use draft': 'Guna draf',
 }

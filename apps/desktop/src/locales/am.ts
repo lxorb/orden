@@ -2864,4 +2864,22 @@ export const am: Dictionary = {
   'IMAP server': 'IMAP አገልጋይ',
   'SMTP server': 'SMTP አገልጋይ',
   'User name': 'የተጠቃሚ ስም',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'አስቸኳይ',
+  Important: 'አስፈላጊ',
+  'If time': 'ጊዜ ካለ',
+  Unimportant: 'አስፈላጊ ያልሆነ',
+  'By service': 'በአገልግሎት',
+  'By priority': 'በቅድሚያ',
+  Pending: 'በመጠባበቅ ላይ',
+  'Chat priorities': 'የውይይት ቅድሚያዎች',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'መልዕክት ሲደርስ የእርስዎ AI ለእያንዳንዱ ውይይት ቅድሚያ ይሰጣል እና ከሚቀይሯቸው ይማራል።',
+  'Notify for': 'ማሳወቂያ ለ',
+  'Which priorities notify you.': 'የትኞቹ ቅድሚያዎች ያሳውቁዎታል።',
+  'Urgent and important': 'አስቸኳይ እና አስፈላጊ',
+  'Draft replies': 'ምላሾችን አርቅቅ',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'የእርስዎ AI በራስዎ ዘይቤ ምላሽ ያረቅቃል እና ተግባር ይጠቁማል፣ እርስዎ እስኪመርጡት ድረስም ምንም አይላክም ወይም አይታከልም።',
+  'Use draft': 'ረቂቁን ተጠቀም',
 }

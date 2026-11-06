@@ -2943,4 +2943,22 @@ export const tr: Dictionary = {
   'IMAP server': 'IMAP sunucusu',
   'SMTP server': 'SMTP sunucusu',
   'User name': 'Kullanıcı adı',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'Acil',
+  Important: 'Önemli',
+  'If time': 'Vakit olursa',
+  Unimportant: 'Önemsiz',
+  'By service': 'Hizmete göre',
+  'By priority': 'Önceliğe göre',
+  Pending: 'Bekleyen',
+  'Chat priorities': 'Sohbet öncelikleri',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'Yapay zekânız bir ileti geldiğinde her sohbete bir öncelik verir ve değiştirdiklerinizden öğrenir.',
+  'Notify for': 'Şunlar için bildir',
+  'Which priorities notify you.': 'Hangi önceliklerin sizi bilgilendireceği.',
+  'Urgent and important': 'Acil ve önemli',
+  'Draft replies': 'Yanıt taslakları',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'Yapay zekânız kendi tarzınızda bir yanıt taslağı yazıp bir görev önerir ve siz seçene kadar hiçbir şey gönderilmez ya da eklenmez.',
+  'Use draft': 'Taslağı kullan',
 }

@@ -14,6 +14,7 @@
     "./mentions": "./src/mentions.ts",
     "./notify": "./src/notify.ts",
     "./pointer": "./src/pointer.ts",
+    "./priority": "./src/priority.ts",
     "./provider": "./src/provider.ts",
     "./reduce": "./src/reduce.ts",
     "./roles": "./src/roles.ts",

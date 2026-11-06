@@ -2898,4 +2898,22 @@ export const ja: Dictionary = {
   'IMAP server': 'IMAP サーバー',
   'SMTP server': 'SMTP サーバー',
   'User name': 'ユーザー名',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: '緊急',
+  Important: '重要',
+  'If time': '時間があれば',
+  Unimportant: '重要でない',
+  'By service': 'サービス別',
+  'By priority': '優先度別',
+  Pending: '未対応',
+  'Chat priorities': 'チャットの優先度',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'メッセージが届くと AI が各チャットに優先度を付け、あなたが変えたものから学習します。',
+  'Notify for': '通知する優先度',
+  'Which priorities notify you.': 'どの優先度で通知するか。',
+  'Urgent and important': '緊急と重要',
+  'Draft replies': '返信の下書き',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'AI があなたの書き方で返信の下書きを作ってタスクを提案し、あなたが選ぶまで何も送信・追加されません。',
+  'Use draft': '下書きを使う',
 }

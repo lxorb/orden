@@ -2986,4 +2986,22 @@ export const de: Dictionary = {
   'IMAP server': 'IMAP-Server',
   'SMTP server': 'SMTP-Server',
   'User name': 'Benutzername',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'Dringend',
+  Important: 'Wichtig',
+  'If time': 'Wenn Zeit ist',
+  Unimportant: 'Unwichtig',
+  'By service': 'Nach Dienst',
+  'By priority': 'Nach Priorität',
+  Pending: 'Offen',
+  'Chat priorities': 'Chat-Prioritäten',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'Deine KI gibt jedem Chat eine Priorität, sobald eine Nachricht ankommt, und lernt aus denen, die du änderst.',
+  'Notify for': 'Benachrichtigen bei',
+  'Which priorities notify you.': 'Welche Prioritäten dich benachrichtigen.',
+  'Urgent and important': 'Dringend und wichtig',
+  'Draft replies': 'Antworten entwerfen',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'Deine KI entwirft eine Antwort in deinem Stil und schlägt eine Aufgabe vor, und nichts wird gesendet oder hinzugefügt, bevor du es wählst.',
+  'Use draft': 'Entwurf verwenden',
 }

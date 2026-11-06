@@ -3020,4 +3020,22 @@ export const pl: Dictionary = {
   'IMAP server': 'Serwer IMAP',
   'SMTP server': 'Serwer SMTP',
   'User name': 'Nazwa użytkownika',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'Pilne',
+  Important: 'Ważne',
+  'If time': 'Jeśli będzie czas',
+  Unimportant: 'Nieważne',
+  'By service': 'Według usługi',
+  'By priority': 'Według priorytetu',
+  Pending: 'Oczekujące',
+  'Chat priorities': 'Priorytety czatów',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'Twoja SI nadaje każdemu czatowi priorytet, gdy przychodzi wiadomość, i uczy się z tych, które zmieniasz.',
+  'Notify for': 'Powiadamiaj o',
+  'Which priorities notify you.': 'Które priorytety cię powiadamiają.',
+  'Urgent and important': 'Pilne i ważne',
+  'Draft replies': 'Szkice odpowiedzi',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'Twoja SI pisze szkic odpowiedzi w twoim stylu i proponuje zadanie, a nic nie zostanie wysłane ani dodane, dopóki tego nie wybierzesz.',
+  'Use draft': 'Użyj szkicu',
 }

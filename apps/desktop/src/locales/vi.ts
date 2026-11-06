@@ -2895,4 +2895,22 @@ export const vi: Dictionary = {
   'IMAP server': 'Máy chủ IMAP',
   'SMTP server': 'Máy chủ SMTP',
   'User name': 'Tên người dùng',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'Khẩn cấp',
+  Important: 'Quan trọng',
+  'If time': 'Nếu có thời gian',
+  Unimportant: 'Không quan trọng',
+  'By service': 'Theo dịch vụ',
+  'By priority': 'Theo mức ưu tiên',
+  Pending: 'Đang chờ',
+  'Chat priorities': 'Mức ưu tiên trò chuyện',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'AI của bạn gán mức ưu tiên cho mỗi cuộc trò chuyện khi có tin nhắn đến và học từ những mức bạn đổi.',
+  'Notify for': 'Thông báo cho',
+  'Which priorities notify you.': 'Những mức ưu tiên nào thông báo cho bạn.',
+  'Urgent and important': 'Khẩn cấp và quan trọng',
+  'Draft replies': 'Soạn nháp trả lời',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'AI của bạn soạn nháp câu trả lời theo phong cách của bạn và gợi ý một việc cần làm, và không có gì được gửi hay thêm cho đến khi bạn chọn.',
+  'Use draft': 'Dùng bản nháp',
 }

@@ -3020,4 +3020,22 @@ export const ru: Dictionary = {
   'IMAP server': 'Сервер IMAP',
   'SMTP server': 'Сервер SMTP',
   'User name': 'Имя пользователя',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'Срочно',
+  Important: 'Важно',
+  'If time': 'Если будет время',
+  Unimportant: 'Неважно',
+  'By service': 'По сервисам',
+  'By priority': 'По приоритету',
+  Pending: 'Ожидают',
+  'Chat priorities': 'Приоритеты чатов',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'Ваш ИИ назначает каждому чату приоритет, когда приходит сообщение, и учится на тех, что вы меняете.',
+  'Notify for': 'Уведомлять о',
+  'Which priorities notify you.': 'Какие приоритеты вас уведомляют.',
+  'Urgent and important': 'Срочно и важно',
+  'Draft replies': 'Черновики ответов',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'Ваш ИИ пишет черновик ответа в вашем стиле и предлагает задачу, и ничего не отправляется и не добавляется, пока вы не выберете.',
+  'Use draft': 'Взять черновик',
 }

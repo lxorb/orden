@@ -2964,4 +2964,22 @@ export const sw: Dictionary = {
   'IMAP server': 'Seva ya IMAP',
   'SMTP server': 'Seva ya SMTP',
   'User name': 'Jina la mtumiaji',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'Dharura',
+  Important: 'Muhimu',
+  'If time': 'Kama kuna muda',
+  Unimportant: 'Si muhimu',
+  'By service': 'Kwa huduma',
+  'By priority': 'Kwa kipaumbele',
+  Pending: 'Yanasubiri',
+  'Chat priorities': 'Vipaumbele vya gumzo',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'AI yako huipa kila gumzo kipaumbele ujumbe unapofika na hujifunza kutoka kwa unavyobadilisha.',
+  'Notify for': 'Arifu kwa',
+  'Which priorities notify you.': 'Vipaumbele vipi vinakuarifu.',
+  'Urgent and important': 'Dharura na muhimu',
+  'Draft replies': 'Rasimu za majibu',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'AI yako huandaa rasimu ya jibu kwa mtindo wako na kupendekeza kazi, na hakuna kinachotumwa wala kuongezwa hadi ukichague.',
+  'Use draft': 'Tumia rasimu',
 }

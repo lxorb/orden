@@ -2978,4 +2978,22 @@ export const ptBR: Dictionary = {
   'IMAP server': 'Servidor IMAP',
   'SMTP server': 'Servidor SMTP',
   'User name': 'Nome de usuário',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'Urgente',
+  Important: 'Importante',
+  'If time': 'Se der tempo',
+  Unimportant: 'Sem importância',
+  'By service': 'Por serviço',
+  'By priority': 'Por prioridade',
+  Pending: 'Pendentes',
+  'Chat priorities': 'Prioridades das conversas',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'Sua IA dá a cada conversa uma prioridade quando chega uma mensagem e aprende com as que você muda.',
+  'Notify for': 'Notificar para',
+  'Which priorities notify you.': 'Quais prioridades notificam você.',
+  'Urgent and important': 'Urgente e importante',
+  'Draft replies': 'Rascunhar respostas',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'Sua IA escreve um rascunho de resposta no seu estilo e sugere uma tarefa, e nada é enviado ou adicionado até você escolher.',
+  'Use draft': 'Usar rascunho',
 }

@@ -2923,4 +2923,22 @@ export const mr: Dictionary = {
   'IMAP server': 'IMAP सर्व्हर',
   'SMTP server': 'SMTP सर्व्हर',
   'User name': 'वापरकर्ता नाव',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'तातडीचे',
+  Important: 'महत्त्वाचे',
+  'If time': 'वेळ असल्यास',
+  Unimportant: 'बिनमहत्त्वाचे',
+  'By service': 'सेवेनुसार',
+  'By priority': 'प्राधान्यानुसार',
+  Pending: 'बाकी',
+  'Chat priorities': 'चॅट प्राधान्ये',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'संदेश आल्यावर तुमचे AI प्रत्येक चॅटला प्राधान्य देते आणि तुम्ही बदलता त्यांतून शिकते.',
+  'Notify for': 'यासाठी सूचना',
+  'Which priorities notify you.': 'कोणती प्राधान्ये तुम्हाला सूचना देतात.',
+  'Urgent and important': 'तातडीचे आणि महत्त्वाचे',
+  'Draft replies': 'उत्तरांचे मसुदे',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'तुमचे AI तुमच्या शैलीत उत्तराचा मसुदा लिहिते आणि एक काम सुचवते, आणि तुम्ही निवडेपर्यंत काहीही पाठवले किंवा जोडले जात नाही.',
+  'Use draft': 'मसुदा वापरा',
 }

@@ -2910,4 +2910,22 @@ export const gu: Dictionary = {
   'IMAP server': 'IMAP સર્વર',
   'SMTP server': 'SMTP સર્વર',
   'User name': 'વપરાશકર્તા નામ',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'તાકીદનું',
+  Important: 'મહત્વનું',
+  'If time': 'સમય હોય તો',
+  Unimportant: 'બિનમહત્વનું',
+  'By service': 'સેવા પ્રમાણે',
+  'By priority': 'પ્રાથમિકતા પ્રમાણે',
+  Pending: 'બાકી',
+  'Chat priorities': 'ચેટ પ્રાથમિકતાઓ',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'સંદેશ આવે ત્યારે તમારું AI દરેક ચેટને પ્રાથમિકતા આપે છે અને તમે બદલો છો તેમાંથી શીખે છે.',
+  'Notify for': 'આ માટે સૂચના',
+  'Which priorities notify you.': 'કઈ પ્રાથમિકતાઓ તમને સૂચના આપે છે.',
+  'Urgent and important': 'તાકીદનું અને મહત્વનું',
+  'Draft replies': 'જવાબોનો મુસદ્દો',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'તમારું AI તમારી શૈલીમાં જવાબનો મુસદ્દો લખે છે અને એક કાર્ય સૂચવે છે, અને તમે પસંદ ન કરો ત્યાં સુધી કંઈ મોકલાતું કે ઉમેરાતું નથી.',
+  'Use draft': 'મુસદ્દો વાપરો',
 }

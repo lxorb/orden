@@ -3029,4 +3029,22 @@ export const ar: Dictionary = {
   'IMAP server': 'خادم IMAP',
   'SMTP server': 'خادم SMTP',
   'User name': 'اسم المستخدم',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'عاجل',
+  Important: 'مهم',
+  'If time': 'إن توفر الوقت',
+  Unimportant: 'غير مهم',
+  'By service': 'حسب الخدمة',
+  'By priority': 'حسب الأولوية',
+  Pending: 'بانتظار الرد',
+  'Chat priorities': 'أولويات المحادثات',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'يمنح الذكاء الاصطناعي الخاص بك كل محادثة أولوية عند وصول رسالة ويتعلم مما تغيّره منها.',
+  'Notify for': 'الإشعار لـ',
+  'Which priorities notify you.': 'الأولويات التي تُشعرك.',
+  'Urgent and important': 'العاجل والمهم',
+  'Draft replies': 'صياغة الردود',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'يصوغ الذكاء الاصطناعي ردًا بأسلوبك ويقترح مهمة، ولا يُرسل شيء ولا يُضاف حتى تختاره.',
+  'Use draft': 'استخدم المسودة',
 }

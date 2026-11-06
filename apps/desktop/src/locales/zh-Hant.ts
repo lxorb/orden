@@ -2833,4 +2833,22 @@ export const zhHant: Dictionary = {
   'IMAP server': 'IMAP 伺服器',
   'SMTP server': 'SMTP 伺服器',
   'User name': '使用者名稱',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: '緊急',
+  Important: '重要',
+  'If time': '有空再看',
+  Unimportant: '不重要',
+  'By service': '依服務',
+  'By priority': '依優先順序',
+  Pending: '待處理',
+  'Chat priorities': '聊天優先順序',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    '有訊息送達時，你的 AI 會為每個聊天設定優先順序，並從你修改的那些中學習。',
+  'Notify for': '通知的優先順序',
+  'Which priorities notify you.': '哪些優先順序會通知你。',
+  'Urgent and important': '緊急和重要',
+  'Draft replies': '草擬回覆',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    '你的 AI 會以你的風格草擬回覆並建議一項任務，在你選擇之前不會傳送或加入任何內容。',
+  'Use draft': '使用草稿',
 }

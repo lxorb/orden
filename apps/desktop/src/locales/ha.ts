@@ -2967,4 +2967,22 @@ export const ha: Dictionary = {
   'IMAP server': 'Sabar IMAP',
   'SMTP server': 'Sabar SMTP',
   'User name': 'Sunan mai amfani',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'Gaggawa',
+  Important: 'Muhimmi',
+  'If time': 'Idan akwai lokaci',
+  Unimportant: 'Ba muhimmi ba',
+  'By service': 'Ta sabis',
+  'By priority': 'Ta fifiko',
+  Pending: 'Ana jira',
+  'Chat priorities': 'Fifikon hira',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'AI ɗinka yana ba kowace hira fifiko idan saƙo ya iso kuma yana koyo daga waɗanda ka canja.',
+  'Notify for': 'Sanar don',
+  'Which priorities notify you.': 'Waɗanne fifiko ne ke sanar da kai.',
+  'Urgent and important': 'Gaggawa da muhimmi',
+  'Draft replies': 'Rubuta daftarin amsoshi',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'AI ɗinka yana rubuta daftarin amsa a salonka kuma yana ba da shawarar aiki, kuma babu abin da za a aika ko a ƙara har sai ka zaɓa.',
+  'Use draft': 'Yi amfani da daftari',
 }

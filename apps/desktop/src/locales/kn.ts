@@ -2958,4 +2958,22 @@ export const kn: Dictionary = {
   'IMAP server': 'IMAP ಸರ್ವರ್',
   'SMTP server': 'SMTP ಸರ್ವರ್',
   'User name': 'ಬಳಕೆದಾರ ಹೆಸರು',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'ತುರ್ತು',
+  Important: 'ಮುಖ್ಯ',
+  'If time': 'ಸಮಯವಿದ್ದರೆ',
+  Unimportant: 'ಮುಖ್ಯವಲ್ಲದ',
+  'By service': 'ಸೇವೆಯ ಪ್ರಕಾರ',
+  'By priority': 'ಆದ್ಯತೆಯ ಪ್ರಕಾರ',
+  Pending: 'ಬಾಕಿ',
+  'Chat priorities': 'ಚಾಟ್ ಆದ್ಯತೆಗಳು',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'ಸಂದೇಶ ಬಂದಾಗ ನಿಮ್ಮ AI ಪ್ರತಿ ಚಾಟ್‌ಗೆ ಆದ್ಯತೆ ನೀಡುತ್ತದೆ ಮತ್ತು ನೀವು ಬದಲಿಸುವವುಗಳಿಂದ ಕಲಿಯುತ್ತದೆ.',
+  'Notify for': 'ಇವುಗಳಿಗೆ ಸೂಚನೆ',
+  'Which priorities notify you.': 'ಯಾವ ಆದ್ಯತೆಗಳು ನಿಮಗೆ ಸೂಚನೆ ನೀಡುತ್ತವೆ.',
+  'Urgent and important': 'ತುರ್ತು ಮತ್ತು ಮುಖ್ಯ',
+  'Draft replies': 'ಉತ್ತರಗಳ ಕರಡು',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'ನಿಮ್ಮ AI ನಿಮ್ಮ ಶೈಲಿಯಲ್ಲಿ ಉತ್ತರದ ಕರಡು ಬರೆದು ಒಂದು ಕಾರ್ಯವನ್ನು ಸೂಚಿಸುತ್ತದೆ, ಮತ್ತು ನೀವು ಆರಿಸುವವರೆಗೆ ಏನನ್ನೂ ಕಳುಹಿಸುವುದಿಲ್ಲ ಅಥವಾ ಸೇರಿಸುವುದಿಲ್ಲ.',
+  'Use draft': 'ಕರಡು ಬಳಸಿ',
 }

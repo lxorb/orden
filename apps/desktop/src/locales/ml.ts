@@ -2969,4 +2969,22 @@ export const ml: Dictionary = {
   'IMAP server': 'IMAP സെർവർ',
   'SMTP server': 'SMTP സെർവർ',
   'User name': 'ഉപയോക്തൃനാമം',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'അടിയന്തരം',
+  Important: 'പ്രധാനം',
+  'If time': 'സമയമുണ്ടെങ്കിൽ',
+  Unimportant: 'പ്രധാനമല്ല',
+  'By service': 'സേവനം അനുസരിച്ച്',
+  'By priority': 'മുൻഗണന അനുസരിച്ച്',
+  Pending: 'ബാക്കി',
+  'Chat priorities': 'ചാറ്റ് മുൻഗണനകൾ',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'സന്ദേശം വരുമ്പോൾ നിങ്ങളുടെ AI ഓരോ ചാറ്റിനും മുൻഗണന നൽകുകയും നിങ്ങൾ മാറ്റുന്നവയിൽ നിന്ന് പഠിക്കുകയും ചെയ്യുന്നു.',
+  'Notify for': 'ഇവയ്ക്ക് അറിയിപ്പ്',
+  'Which priorities notify you.': 'ഏതൊക്കെ മുൻഗണനകൾ നിങ്ങളെ അറിയിക്കും.',
+  'Urgent and important': 'അടിയന്തരവും പ്രധാനവും',
+  'Draft replies': 'മറുപടികളുടെ കരട്',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'നിങ്ങളുടെ AI നിങ്ങളുടെ ശൈലിയിൽ മറുപടിയുടെ കരട് എഴുതി ഒരു ജോലി നിർദ്ദേശിക്കുന്നു, നിങ്ങൾ തിരഞ്ഞെടുക്കുന്നതുവരെ ഒന്നും അയയ്ക്കുകയോ ചേർക്കുകയോ ഇല്ല.',
+  'Use draft': 'കരട് ഉപയോഗിക്കുക',
 }

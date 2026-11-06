@@ -2975,4 +2975,22 @@ export const ta: Dictionary = {
   'IMAP server': 'IMAP சேவையகம்',
   'SMTP server': 'SMTP சேவையகம்',
   'User name': 'பயனர் பெயர்',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'அவசரம்',
+  Important: 'முக்கியம்',
+  'If time': 'நேரம் இருந்தால்',
+  Unimportant: 'முக்கியமில்லை',
+  'By service': 'சேவை வாரியாக',
+  'By priority': 'முன்னுரிமை வாரியாக',
+  Pending: 'நிலுவையில்',
+  'Chat priorities': 'அரட்டை முன்னுரிமைகள்',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'செய்தி வந்ததும் உங்கள் AI ஒவ்வொரு அரட்டைக்கும் முன்னுரிமை தந்து நீங்கள் மாற்றுபவற்றிலிருந்து கற்றுக்கொள்கிறது.',
+  'Notify for': 'இவற்றுக்கு அறிவிப்பு',
+  'Which priorities notify you.': 'எந்த முன்னுரிமைகள் உங்களுக்கு அறிவிக்கும்.',
+  'Urgent and important': 'அவசரமும் முக்கியமும்',
+  'Draft replies': 'பதில் வரைவுகள்',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'உங்கள் AI உங்கள் நடையில் பதில் வரைவை எழுதி ஒரு பணியைப் பரிந்துரைக்கிறது, நீங்கள் தேர்ந்தெடுக்கும் வரை எதுவும் அனுப்பப்படாது, சேர்க்கப்படாது.',
+  'Use draft': 'வரைவைப் பயன்படுத்து',
 }

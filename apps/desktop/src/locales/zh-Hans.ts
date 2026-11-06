@@ -2830,4 +2830,22 @@ export const zhHans: Dictionary = {
   'IMAP server': 'IMAP 服务器',
   'SMTP server': 'SMTP 服务器',
   'User name': '用户名',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: '紧急',
+  Important: '重要',
+  'If time': '有空再看',
+  Unimportant: '不重要',
+  'By service': '按服务',
+  'By priority': '按优先级',
+  Pending: '待处理',
+  'Chat priorities': '聊天优先级',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    '有消息到来时，你的 AI 会为每个聊天设定优先级，并从你改动的那些中学习。',
+  'Notify for': '通知的优先级',
+  'Which priorities notify you.': '哪些优先级会通知你。',
+  'Urgent and important': '紧急和重要',
+  'Draft replies': '草拟回复',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    '你的 AI 会用你的风格草拟回复并建议一项任务，在你选择之前不会发送或添加任何内容。',
+  'Use draft': '使用草稿',
 }

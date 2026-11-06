@@ -2927,4 +2927,22 @@ export const fa: Dictionary = {
   'IMAP server': 'سرور IMAP',
   'SMTP server': 'سرور SMTP',
   'User name': 'نام کاربری',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'فوری',
+  Important: 'مهم',
+  'If time': 'اگر وقت شد',
+  Unimportant: 'کم‌اهمیت',
+  'By service': 'بر اساس سرویس',
+  'By priority': 'بر اساس اولویت',
+  Pending: 'در انتظار',
+  'Chat priorities': 'اولویت گفتگوها',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'هوش مصنوعی شما وقتی پیامی می‌رسد به هر گفتگو اولویتی می‌دهد و از آن‌هایی که تغییر می‌دهید یاد می‌گیرد.',
+  'Notify for': 'اعلان برای',
+  'Which priorities notify you.': 'کدام اولویت‌ها به شما اعلان می‌دهند.',
+  'Urgent and important': 'فوری و مهم',
+  'Draft replies': 'پیش‌نویس پاسخ‌ها',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'هوش مصنوعی شما پاسخی به سبک شما پیش‌نویس می‌کند و کاری پیشنهاد می‌دهد، و تا شما انتخاب نکنید چیزی فرستاده یا افزوده نمی‌شود.',
+  'Use draft': 'استفاده از پیش‌نویس',
 }

@@ -2886,4 +2886,22 @@ export const ko: Dictionary = {
   'IMAP server': 'IMAP 서버',
   'SMTP server': 'SMTP 서버',
   'User name': '사용자 이름',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: '긴급',
+  Important: '중요',
+  'If time': '시간 나면',
+  Unimportant: '중요하지 않음',
+  'By service': '서비스별',
+  'By priority': '우선순위별',
+  Pending: '대기 중',
+  'Chat priorities': '채팅 우선순위',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    '메시지가 오면 AI가 각 채팅에 우선순위를 매기고 당신이 바꾼 것에서 배웁니다.',
+  'Notify for': '알림 대상',
+  'Which priorities notify you.': '어떤 우선순위에서 알릴지.',
+  'Urgent and important': '긴급 및 중요',
+  'Draft replies': '답장 초안',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'AI가 당신의 문체로 답장 초안을 쓰고 할 일을 제안하며, 직접 고르기 전에는 아무것도 보내거나 추가하지 않습니다.',
+  'Use draft': '초안 사용',
 }

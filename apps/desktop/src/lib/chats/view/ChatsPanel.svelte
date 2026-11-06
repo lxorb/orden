@@ -27,6 +27,15 @@
   import { host } from '../providers/host'
   import { accounts, openConversation } from '../linked'
   import ConnectForm from './ConnectForm.svelte'
+  import { byPriority, LEVELS, isLevel } from '@orden/chats/priority'
+  import { priorities, rowKey } from '../priorities.svelte'
+  import { startPriorities } from '../prioritise'
+  import { levelWord } from '../level-words'
+  import type { Row } from '../connected.svelte'
+  import type { Suggestion } from '@orden/chats/priority'
+  import type { Priority } from '@orden/markdown/task-line'
+  import { showQuickAdd } from '../../surfaces.svelte'
+  import { drafts } from '../drafts'
 
   let query = $state('')
   let showing = $state<'chats' | 'activity' | 'saved'>('chats')
@@ -44,7 +53,99 @@
   const offered = PROVIDERS.filter((one) => one.available(host))
   let connecting = $state(false)
 
+  let arranged = $state<'service' | 'priority'>('service')
+
   accounts.start()
+  startPriorities()
+
+  const byLevel = $derived.by(() => {
+    if (!priorities.on || arranged !== 'priority') return { pending: [], rest: [] }
+    const asked = query.trim().toLowerCase()
+    const rows = connected
+      .rows()
+      .filter(
+        (row) =>
+          !asked ||
+          titleOf(row).toLowerCase().includes(asked) ||
+          row.conversation.people.some(
+            (person) =>
+              person.name.toLowerCase().includes(asked) ||
+              (person.handle ?? '').toLowerCase().includes(asked),
+          ),
+      )
+      .map((row) => ({ row, level: levelFor(row), since: row.conversation.lastAt }))
+    return {
+      pending: rows.filter((one) => one.row.conversation.unread > 0).sort(byPriority),
+      rest: rows.filter((one) => one.row.conversation.unread === 0),
+    }
+  })
+
+  function keyOf(row: Row) {
+    return rowKey(row.provider, row.account, row.conversation.id)
+  }
+
+  function levelFor(row: Row) {
+    return priorities.assigned[keyOf(row)]?.level ?? null
+  }
+
+  function titleOf(row: Row) {
+    return (
+      row.conversation.title ??
+      (row.conversation.people.map((person) => person.name).join(', ') || t('Chat'))
+    )
+  }
+
+  function iconOf(row: Row) {
+    return connected.find(row.provider, row.account)?.provider.icon ?? ORDEN_ICON
+  }
+
+  function openRow(row: Row) {
+    if (row.provider === ORDEN) {
+      open(store().entry(row.conversation.id) ?? undefined)
+      return
+    }
+    openConversation(
+      { provider: row.provider, account: row.account, conversation: row.conversation.id },
+      titleOf(row),
+    )
+  }
+
+  function moved(row: Row, value: string) {
+    if (!isLevel(value)) return
+    priorities.reassign(keyOf(row), value, {
+      title: titleOf(row),
+      from: row.conversation.people.map((person) => person.name).join(', '),
+      words: row.conversation.snippet ?? '',
+    })
+  }
+
+  function useDraft(row: Row, reply: string) {
+    priorities.settle(keyOf(row), 'reply')
+    if (row.provider === ORDEN) {
+      store().offer(row.conversation.id, reply)
+      open(store().entry(row.conversation.id) ?? undefined)
+      return
+    }
+    drafts.set(keyOf(row), reply)
+    openRow(row)
+  }
+
+  function priorityOf(value: number | undefined): Priority | undefined {
+    return value === 1 || value === 2 || value === 3 || value === 4 ? value : undefined
+  }
+
+  function addTodo(row: Row, todo: NonNullable<Suggestion['todo']>) {
+    priorities.settle(keyOf(row), 'todo')
+    const priority = priorityOf(todo.priority)
+    showQuickAdd({
+      text: todo.title,
+      ...(todo.tags ? { tags: todo.tags } : {}),
+      ...(todo.due ? { due: todo.due } : {}),
+      ...(priority ? { fields: { priority } } : {}),
+    })
+  }
+
+  const ORDEN_ICON = 'M4 9h16M4 15h16M10 3 8 21M16 3l-2 18'
 
   function conversationsOf(one: Linked) {
     const asked = query.trim().toLowerCase()
@@ -101,7 +202,88 @@
     <input bind:value={query} type="search" aria-label={t('Search')} placeholder={t('Search')} />
   </label>
 
-  {#if showing === 'chats'}
+  {#if showing === 'chats' && priorities.on}
+    <div class="nib-segmented arranged" role="radiogroup" aria-label={t('Chats')}>
+      <button
+        type="button"
+        role="radio"
+        aria-checked={arranged === 'service'}
+        class:on={arranged === 'service'}
+        onclick={() => (arranged = 'service')}>{t('By service')}</button
+      >
+      <button
+        type="button"
+        role="radio"
+        aria-checked={arranged === 'priority'}
+        class:on={arranged === 'priority'}
+        onclick={() => (arranged = 'priority')}>{t('By priority')}</button
+      >
+    </div>
+  {/if}
+
+  {#snippet ranked(one: { row: Row; level: (typeof LEVELS)[number] | null })}
+    <div class="ranked" class:unread={one.row.conversation.unread > 0}>
+      <button type="button" class="nib-row entry" onclick={() => openRow(one.row)}>
+        <span class="nib-row-mark"
+          ><svg viewBox="0 0 24 24" aria-hidden="true" class="mark"
+            ><path d={iconOf(one.row)} /></svg
+          ></span
+        >
+        <span class="nib-row-label">{titleOf(one.row)}</span>
+        {#if one.row.conversation.unread}<span class="nib-row-meta count"
+            >{amount(one.row.conversation.unread)}</span
+          >{/if}
+      </button>
+      <select
+        class="level"
+        aria-label={t('Priority')}
+        value={one.level ?? ''}
+        onchange={(event) => moved(one.row, event.currentTarget.value)}
+      >
+        <option value="" disabled>-</option>
+        {#each LEVELS as level (level)}<option value={level}>{levelWord(level)}</option>{/each}
+      </select>
+    </div>
+    {@const suggested = priorities.suggestions[keyOf(one.row)]}
+    {#if suggested}
+      <div class="suggested">
+        {#if suggested.reply}
+          <p class="draft">{suggested.reply}</p>
+          <button
+            type="button"
+            class="nib-chip"
+            onclick={() => suggested.reply && useDraft(one.row, suggested.reply)}
+            >{t('Use draft')}</button
+          >
+        {/if}
+        {#if suggested.todo}
+          <p class="draft">{suggested.todo.title}</p>
+          <button
+            type="button"
+            class="nib-chip"
+            onclick={() => suggested.todo && addTodo(one.row, suggested.todo)}
+            >{t('Add as task')}</button
+          >
+        {/if}
+        <button
+          type="button"
+          class="nib-chip"
+          onclick={() => priorities.settle(keyOf(one.row), 'all')}>{t('Dismiss')}</button
+        >
+      </div>
+    {/if}
+  {/snippet}
+
+  {#if showing === 'chats' && priorities.on && arranged === 'priority'}
+    <p class="nib-section">{t('Pending')}</p>
+    {#each byLevel.pending as one (keyOf(one.row))}
+      {@render ranked(one)}
+    {/each}
+    <p class="nib-section">{t('Everything else')}</p>
+    {#each byLevel.rest as one (keyOf(one.row))}
+      {@render ranked(one)}
+    {/each}
+  {:else if showing === 'chats'}
     <button
       type="button"
       class="nib-row"
@@ -280,6 +462,55 @@
 
   .count {
     font-variant-numeric: tabular-nums;
+  }
+
+  .arranged {
+    margin: 0 0 var(--space-2);
+  }
+
+  .ranked {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .ranked .entry {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ranked.unread .entry {
+    color: var(--text-strong);
+    font-weight: var(--weight-strong);
+  }
+
+  .suggested {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1);
+    margin: 0 0 var(--space-2) var(--space-5);
+    font-size: var(--text-sm);
+  }
+
+  .draft {
+    flex-basis: 100%;
+    margin: 0;
+    overflow: hidden;
+    color: var(--muted-strong);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .level {
+    flex: none;
+    max-width: 7.5em;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: var(--text-xs);
   }
 
   .account {

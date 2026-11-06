@@ -9,6 +9,8 @@
   import { connected } from '../connected.svelte'
   import { conversationKeyOf } from '../conversation-key'
   import { accounts } from '../linked'
+  import { drafts } from '../drafts'
+  import { rowKey } from '../priorities.svelte'
   import Glyph from './Glyph.svelte'
 
   const { tab }: { tab: Tab } = $props()
@@ -32,6 +34,14 @@
   let loaded: string | null = null
 
   accounts.start()
+
+  $effect(() => {
+    if (!key) return
+    const waiting = drafts.get(rowKey(key.provider, key.account, key.conversation))
+    if (waiting === undefined) return
+    drafts.delete(rowKey(key.provider, key.account, key.conversation))
+    if (!words.trim()) words = waiting
+  })
 
   $effect(() => {
     const connection = linked?.connection

@@ -2915,4 +2915,22 @@ export const my: Dictionary = {
   'IMAP server': 'IMAP ဆာဗာ',
   'SMTP server': 'SMTP ဆာဗာ',
   'User name': 'အသုံးပြုသူအမည်',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'အရေးပေါ်',
+  Important: 'အရေးကြီး',
+  'If time': 'အချိန်ရလျှင်',
+  Unimportant: 'အရေးမကြီး',
+  'By service': 'ဝန်ဆောင်မှုအလိုက်',
+  'By priority': 'ဦးစားပေးအလိုက်',
+  Pending: 'စောင့်ဆဲ',
+  'Chat priorities': 'ချက်တင် ဦးစားပေးများ',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'မက်ဆေ့ချ် ရောက်လာသောအခါ သင့် AI က ချက်တင်တိုင်းကို ဦးစားပေး သတ်မှတ်ပြီး သင်ပြောင်းသည့်အရာများမှ သင်ယူသည်။',
+  'Notify for': 'အသိပေးရန်',
+  'Which priorities notify you.': 'မည်သည့် ဦးစားပေးများက သင့်ကို အသိပေးမည်နည်း။',
+  'Urgent and important': 'အရေးပေါ်နှင့် အရေးကြီး',
+  'Draft replies': 'အကြောင်းပြန်ချက် မူကြမ်းများ',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'သင့် AI က သင့်ပုံစံဖြင့် အကြောင်းပြန်ချက် မူကြမ်းရေးပြီး လုပ်ငန်းတစ်ခု အကြံပြုကာ သင် ရွေးချယ်သည်အထိ ဘာမှ မပို့ မထည့်ပါ။',
+  'Use draft': 'မူကြမ်းကို သုံးရန်',
 }

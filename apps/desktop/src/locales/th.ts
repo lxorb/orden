@@ -2863,4 +2863,22 @@ export const th: Dictionary = {
   'IMAP server': 'เซิร์ฟเวอร์ IMAP',
   'SMTP server': 'เซิร์ฟเวอร์ SMTP',
   'User name': 'ชื่อผู้ใช้',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'ด่วน',
+  Important: 'สำคัญ',
+  'If time': 'ถ้ามีเวลา',
+  Unimportant: 'ไม่สำคัญ',
+  'By service': 'ตามบริการ',
+  'By priority': 'ตามลำดับความสำคัญ',
+  Pending: 'รอตอบ',
+  'Chat priorities': 'ลำดับความสำคัญของแชท',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'AI ของคุณให้ลำดับความสำคัญแก่แต่ละแชทเมื่อมีข้อความเข้ามาและเรียนรู้จากที่คุณเปลี่ยน',
+  'Notify for': 'แจ้งเตือนสำหรับ',
+  'Which priorities notify you.': 'ลำดับความสำคัญใดที่แจ้งเตือนคุณ',
+  'Urgent and important': 'ด่วนและสำคัญ',
+  'Draft replies': 'ร่างคำตอบ',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'AI ของคุณร่างคำตอบในสไตล์ของคุณและแนะนำงาน โดยไม่มีอะไรถูกส่งหรือเพิ่มจนกว่าคุณจะเลือก',
+  'Use draft': 'ใช้ร่าง',
 }

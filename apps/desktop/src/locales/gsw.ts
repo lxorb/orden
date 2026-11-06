@@ -2945,4 +2945,22 @@ export const gsw: Dictionary = {
   'IMAP server': 'IMAP-Server',
   'SMTP server': 'SMTP-Server',
   'User name': 'Benutzername',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'Dringend',
+  Important: 'Wichtig',
+  'If time': 'Wenn Ziit isch',
+  Unimportant: 'Unwichtig',
+  'By service': 'Nach Dienscht',
+  'By priority': 'Nach Priorität',
+  Pending: 'Offe',
+  'Chat priorities': 'Chat-Prioritäte',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'Dini KI git jedem Chat e Priorität, sobald e Nachricht chunnt, und lernt us dene, wo du änderisch.',
+  'Notify for': 'Benachrichtige bi',
+  'Which priorities notify you.': 'Weli Prioritäte dich benachrichtiged.',
+  'Urgent and important': 'Dringend und wichtig',
+  'Draft replies': 'Antworte entwerfe',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'Dini KI entwirft e Antwort i dim Stil und schlaat e Ufgab vor, und nüt wird gschickt oder dezuegfüegt, bevor du s uswählsch.',
+  'Use draft': 'Entwurf bruuche',
 }

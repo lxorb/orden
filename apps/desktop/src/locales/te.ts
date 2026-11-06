@@ -2937,4 +2937,22 @@ export const te: Dictionary = {
   'IMAP server': 'IMAP సర్వర్',
   'SMTP server': 'SMTP సర్వర్',
   'User name': 'వినియోగదారు పేరు',
+  // Chat priorities, asked of the reader’s AI (#321)
+  Urgent: 'అత్యవసరం',
+  Important: 'ముఖ్యం',
+  'If time': 'సమయం ఉంటే',
+  Unimportant: 'ముఖ్యం కాదు',
+  'By service': 'సేవ ప్రకారం',
+  'By priority': 'ప్రాధాన్యత ప్రకారం',
+  Pending: 'పెండింగ్',
+  'Chat priorities': 'చాట్ ప్రాధాన్యతలు',
+  'Your AI gives each chat a priority when a message arrives and learns from the ones you change.':
+    'సందేశం వచ్చినప్పుడు మీ AI ప్రతి చాట్‌కు ఒక ప్రాధాన్యత ఇస్తుంది మరియు మీరు మార్చిన వాటి నుండి నేర్చుకుంటుంది.',
+  'Notify for': 'వీటికి నోటిఫికేషన్',
+  'Which priorities notify you.': 'ఏ ప్రాధాన్యతలు మీకు తెలియజేస్తాయి.',
+  'Urgent and important': 'అత్యవసరం మరియు ముఖ్యం',
+  'Draft replies': 'జవాబుల ముసాయిదా',
+  'Your AI drafts a reply in your style and suggests a task, and nothing is sent or added until you choose it.':
+    'మీ AI మీ శైలిలో జవాబు ముసాయిదా రాసి ఒక పనిని సూచిస్తుంది, మరియు మీరు ఎంచుకునే వరకు ఏదీ పంపబడదు లేదా జోడించబడదు.',
+  'Use draft': 'ముసాయిదా వాడండి',
 }
