@@ -28,11 +28,6 @@ const NOT_OURS = [
 ]
 
 const LATER = new Set([
-  '.github/workflows/publish-even.yml',
-  '.github/workflows/publish-linux.yml',
-  '.github/workflows/publish-mobile.yml',
-  '.github/workflows/publish.yml',
-  '.github/workflows/release.yml',
   'apps/desktop/test/e2e/access.py',
   'apps/desktop/test/e2e/address-kept.py',
   'apps/desktop/test/e2e/agents-md.py',
@@ -161,7 +156,10 @@ function hashed(text: string): string[] {
     }
     const bare = line.trimStart()
     if (bare.startsWith('#')) found.push(bare)
-    heredoc = /<<-?\s*['"]?([A-Za-z_]+)['"]?/.exec(line)?.[1] ?? null
+    const unquoted = line.replace(/"(?:\\.|[^"\\])*"|'[^']*'/g, '""')
+    heredoc = unquoted.includes('<<<')
+      ? null
+      : (/<<-?\s*['"]?([A-Za-z_]+)['"]?/.exec(unquoted)?.[1] ?? null)
   }
   return found
 }
