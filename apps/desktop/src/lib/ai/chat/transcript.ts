@@ -123,7 +123,10 @@ function replays(turn: Turn, api: Api, model: string): boolean {
   return !!turn.replay && turn.replay.api === api && turn.replay.model === model
 }
 
-function sinceCompaction(turns: readonly Turn[], compaction: Compaction | undefined): Turn[] {
+export function sinceCompaction(
+  turns: readonly Turn[],
+  compaction: Compaction | undefined,
+): Turn[] {
   if (!compaction) return [...turns]
   const at = turns.findIndex((one) => one.id === compaction.upTo)
   return at < 0 ? [...turns] : turns.slice(at + 1)

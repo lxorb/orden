@@ -6,7 +6,7 @@ import { insideSpace, relativeTo, within, withinSpace } from '../../space-paths'
 import { pages } from '../../web-tab/pages.svelte'
 import { workspace } from '../../workspace.svelte'
 import { readThread } from '../chat/threads'
-import { readOutside } from '../chat/transcript'
+import { readOutside, sinceCompaction } from '../chat/transcript'
 import { fromOthers, fromOthersIn } from '../commands/found'
 import type { Attachment, Draft, Mode } from '../chat/types'
 import { fitted, retrieve } from '../retrieve'
@@ -94,15 +94,16 @@ async function threadAttachment(
 ): Promise<Attachment | null> {
   const thread = await readThread(space, id).catch(() => null)
   if (!thread) return null
-  const words =
-    thread.compaction?.summary ??
-    thread.turns
-      .map((turn) =>
-        turn.role === 'you'
-          ? `> ${turn.draft?.text ?? ''}`
-          : turn.parts.flatMap((part) => (part.kind === 'text' ? [part.text] : [])).join(''),
-      )
-      .join('\n\n')
+  const words = [
+    thread.compaction?.summary ?? '',
+    ...sinceCompaction(thread.turns, thread.compaction).map((turn) =>
+      turn.role === 'you'
+        ? `> ${turn.draft?.text ?? ''}`
+        : turn.parts.flatMap((part) => (part.kind === 'text' ? [part.text] : [])).join(''),
+    ),
+  ]
+    .filter(Boolean)
+    .join('\n\n')
   return {
     label,
     text: fitted(words, THREAD),

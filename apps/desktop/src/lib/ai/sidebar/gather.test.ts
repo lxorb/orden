@@ -88,7 +88,40 @@ vi.mock('../chat/threads', () => ({
                 },
               ],
             }
-          : null,
+          : space === 'home' && id === 'pond'
+            ? {
+                id: 'pond',
+                compaction: { kind: 'own', model: 'm', summary: 'Koi need shade.', upTo: 'm1' },
+                turns: [
+                  {
+                    id: 'u1',
+                    role: 'you',
+                    at: 1,
+                    parts: [],
+                    draft: { text: 'koi?', attachments: [] },
+                  },
+                  {
+                    id: 'm1',
+                    role: 'model',
+                    at: 2,
+                    parts: [{ kind: 'notice', code: 'compacted', text: '' }],
+                  },
+                  {
+                    id: 'u2',
+                    role: 'you',
+                    at: 3,
+                    parts: [],
+                    draft: { text: 'and lilies?', attachments: [] },
+                  },
+                  {
+                    id: 'm2',
+                    role: 'model',
+                    at: 4,
+                    parts: [{ kind: 'text', text: 'Lilies too.' }],
+                  },
+                ],
+              }
+            : null,
     ),
 }))
 
@@ -130,6 +163,20 @@ test('a chat of another space goes along from the space it is kept in', async ()
   )
   expect(draft.attachments.map((one) => [one.label, one.text])).toEqual([
     ['Garden', '> plant roses'],
+  ])
+})
+
+test('a compacted chat goes along with its summary and what was said after it', async () => {
+  const draft = await draftOf(
+    'what was it?',
+    [{ kind: 'thread', id: 'pond', label: 'Pond', space: HOME.id }],
+    'auto',
+    null,
+    '',
+    WORK,
+  )
+  expect(draft.attachments.map((one) => [one.label, one.text])).toEqual([
+    ['Pond', 'Koi need shade.\n\n> and lilies?\n\nLilies too.'],
   ])
 })
 
