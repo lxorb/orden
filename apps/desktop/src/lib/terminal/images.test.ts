@@ -4,15 +4,11 @@ import { busy } from '../busy.svelte'
 import { carried, type Picture, pictureAt, pictureOf } from './images'
 import type { Source } from './source'
 
-/** Issue 228: pictures carried to the machine a terminal reaches, and pasted as their
- *  paths there. */
-
 const picture = (size: number): Picture => ({
   kind: 'png',
   bytes: () => Promise.resolve(new Uint8Array(size)),
 })
 
-/** A source on another machine that writes each picture where `where` says. */
 function machine(where: (at: number) => string | Error): Source & { sizes: number[] } {
   const sizes: number[] = []
   return {

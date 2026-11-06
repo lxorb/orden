@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The shells the crate found, which one a new terminal opens, and how large its type
- *  is. The crate itself is stood in for: what it answers is its own test, in
- *  src-tauri/src/terminal/shells.rs. */
-
 const store = new Map<string, string>()
 vi.stubGlobal('localStorage', {
   getItem: (key: string) => store.get(key) ?? null,
@@ -42,8 +38,6 @@ describe('the shells', () => {
     expect(invoke).toHaveBeenCalledTimes(1)
   })
 
-  /** The platform's own is the first of the list; the one Settings chose wins while
-   *  this machine still has it. */
   test('open the chosen one, and the platform’s own otherwise', () => {
     expect(shells.chosen?.id).toBe('pwsh')
 
@@ -71,7 +65,6 @@ describe('the shells', () => {
   })
 })
 
-/** Whose a key that is both is, once somebody said; see two-ways.ts. */
 describe('the keys that are both', () => {
   test('are asked about until somebody answers, and the answer is kept', () => {
     expect(shells.ways['app.scratchpad']).toBeUndefined()
@@ -82,7 +75,6 @@ describe('the keys that are both', () => {
       'app.scratchpad': 'shell',
     })
 
-    // Back to asking every time.
     shells.setWay('app.scratchpad', null)
     expect(shells.ways['app.scratchpad']).toBeUndefined()
     expect(JSON.parse(store.get('nib:terminal-keys') ?? '{}')).toEqual({})

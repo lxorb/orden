@@ -1,15 +1,3 @@
-/** The drawings a terminal's tab wears; which one is naming.ts's `terminalMark`.
- *
- *  Lucide's, where Lucide has the thing: a branch for git, a container for Docker, a
- *  server for a host over SSH, a hexagon for Node, a prompt for a shell. Drawn here on
- *  Lucide's own grid where it has not - it carries no makers' marks - as the plainest
- *  outline of each program's own: Claude's burst of rays, the three loops of OpenAI's
- *  knot, Python's two snakes, Vim's diamond, PowerShell's slanted prompt. One weight
- *  and one colour, the strip's, so a strip of terminals reads as a strip of tabs and
- *  not a row of logos; the shape says which.
- *
- *  Fetched with the first terminal in the strip, never in front of the first paint. */
-
 import type { IconNode } from 'lucide'
 import Container from 'lucide/dist/esm/icons/container.mjs'
 import GitBranch from 'lucide/dist/esm/icons/git-branch.mjs'
@@ -19,7 +7,6 @@ import SquareTerminal from 'lucide/dist/esm/icons/square-terminal.mjs'
 import Terminal from 'lucide/dist/esm/icons/terminal.mjs'
 import type { TerminalMark } from './naming'
 
-/** Twelve rays out of the middle, long and short by turns. */
 const Claude: IconNode = [
   [
     'path',
@@ -29,13 +16,11 @@ const Claude: IconNode = [
   ],
 ]
 
-/** Three loops turned a third of the way round each from the last. */
 const Codex: IconNode = [0, 60, 120].map((turn) => [
   'rect',
   { x: '8', y: '2', width: '8', height: '20', rx: '4', transform: `rotate(${turn} 12 12)` },
 ])
 
-/** Two snakes, each the other turned round, an eye on each head. */
 const Python: IconNode = [
   [
     'path',
@@ -52,13 +37,11 @@ const Python: IconNode = [
   ['path', { d: 'M11 5h.01M13 19h.01' }],
 ]
 
-/** A diamond with the V inside it. */
 const Vim: IconNode = [
   ['path', { d: 'M12 2 22 12 12 22 2 12Z' }],
   ['path', { d: 'm8.5 9 3.5 6.5L15.5 9' }],
 ]
 
-/** The prompt in a slanted box. */
 const PowerShell: IconNode = [
   ['path', { d: 'M6.5 4h15l-4 16h-15Z' }],
   ['path', { d: 'm8.5 9 3 3-4.5 3' }],

@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { type Left, pastesItself, promptEnd, reporting, tidied } from './modes'
 
-/** What a program left on, found where a prompt begins, and switched off there. */
-
 const bytes = (text: string) => new TextEncoder().encode(text)
 
 const clean: Left = {
@@ -35,7 +33,6 @@ describe('a prompt mark', () => {
     expect(promptEnd(bytes('\x1b]633;A\x07$ '))).toBe(8)
   })
 
-  /** Other sequences are not marks: the folder, a title, a colour, another 133. */
   test('and nothing else is', () => {
     expect(promptEnd(bytes('\x1b]9;9;C:\\\x1b\\\x1b]0;title\x07\x1b[31mred\x1b]133;B\x07'))).toBe(
       -1,
@@ -49,7 +46,6 @@ describe('a prompt mark', () => {
     expect(promptEnd(two.subarray(8))).toBe(14)
   })
 
-  /** Cut in two by the chunk it came in: not found, and the next prompt's is. */
   test('cut short by the end of the chunk is not found', () => {
     expect(promptEnd(bytes('\x1b]133;A'))).toBe(-1)
     expect(promptEnd(bytes('\x1b]133;A\x1b'))).toBe(-1)
@@ -63,7 +59,6 @@ describe('what a prompt switches off', () => {
     expect(tidied(clean, false)).toBe('')
   })
 
-  /** Emil's prompt: any-event tracking in X10 bytes, every move typed at PowerShell. */
   test('the mouse, in every encoding, and the cursor shown', () => {
     expect(tidied(left({ mouseTrackingMode: 'any' }), true)).toBe(`${MOUSE_OFF}\x1b[?25h`)
     expect(tidied(left({ mouseTrackingMode: 'vt200' }), true)).toBe(`${MOUSE_OFF}\x1b[?25h`)
@@ -82,7 +77,6 @@ describe('what a prompt switches off', () => {
     expect(tidied(all, true)).toBe('\x1b[?1049l\x1b[?1004l\x1b[?2026l\x1b[?1l\x1b>\x1b[?25h')
   })
 
-  /** bash, zsh, fish and PSReadLine switch bracketed paste on for each line themselves. */
   test('bracketed paste only for a shell that never asks for it', () => {
     const paste = left({ bracketedPasteMode: true })
     expect(tidied(paste, true)).toBe('')
@@ -94,7 +88,6 @@ describe('what a prompt switches off', () => {
     expect(pastesItself('/bin/zsh')).toBe(true)
   })
 
-  /** Once the prompt is drawn the keys and the screen are the line editor's. */
   test('after the prompt is drawn, only the mouse and focus', () => {
     const late = left(
       { mouseTrackingMode: 'drag', applicationCursorKeysMode: true, bracketedPasteMode: true },

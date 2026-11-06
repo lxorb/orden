@@ -6,7 +6,6 @@ import { FIXED_PALETTE, terminalGround, terminalPalette, type TerminalTokens } f
 
 const THEMES = fileURLToPath(new URL('../../../../../packages/themes/src/', import.meta.url))
 
-/** Every token a block of a stylesheet states, as written. */
 function block(file: string, selector: string): Record<string, string> {
   const css = readFileSync(`${THEMES}${file}`, 'utf8')
   const at = css.indexOf(`${selector} {`)
@@ -20,7 +19,6 @@ function block(file: string, selector: string): Record<string, string> {
   )
 }
 
-/** `rgb(r g b / a)` as the comma form rgbOf reads too; a hex as it is. */
 const plain = (said: string | undefined) => (said ?? '').replace(/\s*\/\s*[\d.]+\s*\)/, ')')
 
 function tokensOf(theme: Record<string, string>, light: boolean): TerminalTokens {
@@ -83,7 +81,6 @@ function on(palette: Record<string, unknown>, name: string): number {
   return ratio(one, ground)
 }
 
-// #1069: the theme is the terminal's, and every colour a program asks for reads on it.
 describe('a terminal in the theme', () => {
   test.each(SCHEMES)(
     'in %s, every hue and its bright half read on the ground, apart',
@@ -140,8 +137,6 @@ describe('a terminal in the theme', () => {
   })
 })
 
-/** #1110: the open tab of a terminal stands on the ground the terminal draws, which is
- *  not the note's paper - the theme's terminal colours, or the one kept palette. */
 describe("the ground a terminal's open tab stands on", () => {
   test('is the one the terminal draws', () => {
     expect(terminalGround(FIXED_PALETTE)).toBe('#16181d')

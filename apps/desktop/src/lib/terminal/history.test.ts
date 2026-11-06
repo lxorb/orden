@@ -1,12 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** A terminal's last lines between runs: what is kept, how much, in what order the crate
- *  hears about it, and what a closed tab leaves behind. */
-
 const said: { command: string; args: Record<string, unknown> }[] = []
-/** The crate's files, by space and key. */
 const files = new Map<string, unknown>()
-/** A write the crate has not finished yet, while a test holds it. */
 let holding: Promise<void> | null = null
 
 vi.mock('../tauri', () => ({
@@ -67,7 +62,6 @@ describe('how much of a screen is kept', () => {
     expect(asked).toEqual([1000])
   })
 
-  /** A minified file printed whole is one line a megabyte long: fewer lines, not none. */
   test('half as many, and half again, until they fit', () => {
     const asked: number[] = []
     const text = fitted((lines) => (asked.push(lines), 'x'.repeat(lines * 10)), 2000)
@@ -88,9 +82,6 @@ test('the line under a replayed screen is dim and on a line of its own', () => {
   )
 })
 
-/** On Windows the pseudo console owns the screen it starts on, so the replayed lines go
- *  above it: a screen's worth of new lines, back to the top, and the line saying when as
- *  its first row, with the cursor under it where the new prompt goes. */
 test('on Windows the replayed screen goes above, and the line saying when is the first row', () => {
   expect(restoredAbove('Restored', 4)).toBe(
     '\x1b[0m\r\n' + '\r\n\r\n\r\n' + '\x1b[H' + '\x1b[2mRestored\x1b[22m\r\n',
@@ -112,7 +103,6 @@ describe('a screen written down', () => {
     ])
   })
 
-  /** A tab from before there were keys has nowhere to keep anything. */
   test('never without a key', async () => {
     keepHistory({ space: null, key: '' }, screen('lost'))
     expect(await historyOf({ space: null, key: '' })).toBeNull()
@@ -126,7 +116,6 @@ describe('a screen written down', () => {
     expect(await historyOf(place)).toBeNull()
   })
 
-  /** The window going waits for it, the way it waits for a note. */
   test('is waited for by the window going', async () => {
     let land: () => void = () => undefined
     holding = new Promise((resolve) => (land = resolve))
@@ -147,13 +136,11 @@ describe('a tab closed', () => {
     await written()
 
     expect(files.has('s1/k1')).toBe(false)
-    // Reopen closed tab: the lines come back from memory, once.
     expect(await historyOf(place)).toEqual(screen('last'))
     expect(said.filter((one) => one.command === 'terminal_history_read')).toEqual([])
     expect(await historyOf(place)).toBeNull()
   })
 
-  /** A forget that overtook the write before it would leave the file it meant to remove. */
   test('after the write that was already on its way', async () => {
     let land: () => void = () => undefined
     holding = new Promise((resolve) => (land = resolve))

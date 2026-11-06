@@ -1,17 +1,3 @@
-/** Where a terminal's screen is fed from: a shell in a pty on this machine, or a session
- *  on the reader's online machine over a socket (docs/online-terminal.md). The one seam
- *  between the two.
- *
- *  Everything a terminal does with its screen - the keys, find, copy, paste, links, the
- *  look, the last lines between runs - is the session's (sessions.svelte.ts) and the same
- *  for both. What differs is only where the bytes come from and where the keys go, and a
- *  few things only one side can know: a pty's kernel can be asked what runs in it, while
- *  an online session is told, along with a whole screen to draw and the machine's state.
- *  So a source says everything it knows as one `Said`, and the session draws it.
- *
- *  The pty's source is here; the socket's is lib/online/source.ts, fetched with the
- *  first online terminal and never before. */
-
 import { type Usage, usageOf } from '@orden/online/apps'
 import type { DownReason, ImageKind } from '@orden/online/wire'
 import { toBase64 } from '../bytes'
@@ -20,75 +6,40 @@ import { isNumber, isRecord } from '../stored'
 import { invoke } from '../tauri'
 import { hostIdOf } from './spec'
 
-/** A machine's state as a tab shows it: live, waking, asleep, or out of its allowance
- *  and refused. Null for a terminal on this computer, which has no machine to show. */
 export type Machine = 'awake' | 'starting' | 'asleep' | 'stopping' | 'down' | 'near'
 
-/** What a source tells its terminal. */
 export type Said =
-  /** Output, to draw. `drawn` is called once it is on the screen. */
   | { out: Uint8Array }
-  /** The shell ended, with its code; null for one a signal ended. */
   | { exit: number | null }
-  /** The whole screen as it stands, serialised, at the session's size: drawn in place
-   *  of whatever is there. `restored` is when a machine's restart put it back, and the
-   *  program that was in front then. */
   | {
       screen: string
       cols: number
       rows: number
       restored: { at: number; program: string | null } | null
     }
-  /** The session's size, which somebody else's typing set. */
   | { size: { cols: number; rows: number } }
-  /** What runs in front and the title it set, as the other end saw it. */
   | { program: string | null; title: string | null }
-  /** The machine's state, and why it is down where it is. */
   | { machine: Machine; reason?: DownReason }
-  /** Whether the socket to the session is open; a drop comes back by itself. */
   | { connected: boolean }
-  /** For an online session: whether the way from the server to its awake machine is
-   *  up. Down, the session runs on and its screen stays; what is typed waits for it. */
   | { link: boolean }
-  /** Whether keys typed here reach the session. */
   | { typing: boolean }
-  /** The source cannot go on, and why, in words to show under the screen. `gone` is an
-   *  online terminal whose session is no more, which only a new one answers. */
   | { refused: string; gone?: boolean }
-  /** One line worth saying under the session's screen once it is drawn. */
   | { note: string }
-  /** For an online session: another device holds it, so nothing of it comes here and
-   *  nothing typed goes there until Take over; null once this one holds it. */
   | { held: { by: string; since: number; taken: boolean } | null }
 
 export interface Source {
-  /** True for a session on another machine, whose programs and folders nothing on this
-   *  side can see. */
   readonly remote: boolean
-  /** Starts it at a size. Rejects when it cannot start. */
   start(cols: number, rows: number, said: (what: Said) => void): Promise<void>
   write(data: string, binary: boolean): Promise<void>
   resize(cols: number, rows: number): void
-  /** That `bytes` of output are drawn, which lets more come. */
   seen(bytes: number): void
-  /** Lets go of it: a pty is ended, a socket closed and the session left running. */
   end(): void
-  /** A new shell where the last one ended, for a source that keeps its session: an
-   *  online one. A pty's is a new source. */
   again?(): void
-  /** Take over: the session handed to this device from the one holding it. Online only. */
   take?(): void
-  /** A picture written to a file on the machine the shell runs on, answering its path
-   *  there; rejects where it could not be. Only for a source on another machine: a shell
-   *  on this one reads this computer's clipboard itself. See images.ts. */
   image?(bytes: Uint8Array, kind: ImageKind): Promise<string>
-  /** What the shell and everything under it use of this computer, for the tab's hover
-   *  card in developer mode (issue 1063, step 10); null where it cannot be read. Only a
-   *  pty's: an online session's machine does not say yet. */
   usage?(): Promise<Usage | null>
 }
 
-/** A shell in a pty on this machine, under the id given. */
 export class PtySource implements Source {
   readonly remote: boolean
 
@@ -137,27 +88,22 @@ export class PtySource implements Source {
     void invoke('pty_kill', { id: this.id }).catch(() => undefined)
   }
 
-  /** A picture on the host a remote terminal reaches, through a second `ssh` of its own;
-   *  see `remote_image` in src-tauri/src/terminal/remote.rs. */
   async image(bytes: Uint8Array, kind: ImageKind): Promise<string> {
     const host = hostIdOf(this.shell)
     if (host === null) throw new Error('a shell on this computer reads its own clipboard')
     return invoke<string>('remote_image', { host, kind, base64: toBase64(bytes) })
   }
 
-  /** What is in front of the shell, by the kernel; undefined where it could not say. */
   async program(): Promise<string | null | undefined> {
     const found = await invoke<unknown>('pty_program', { id: this.id }).catch(() => undefined)
     if (found === undefined) return undefined
     return typeof found === 'string' && found ? found : null
   }
 
-  /** Whether something besides the shell runs; true where it could not say. */
   async busy(): Promise<boolean> {
     return (await invoke<unknown>('pty_busy', { id: this.id }).catch(() => true)) !== false
   }
 
-  /** The folder the shell is in, by the kernel, or null. */
   async where(): Promise<string | null> {
     const folder = await invoke<unknown>('pty_folder', { id: this.id }).catch(() => null)
     return typeof folder === 'string' && folder ? folder : null

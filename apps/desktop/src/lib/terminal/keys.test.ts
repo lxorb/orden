@@ -9,9 +9,6 @@ import {
   typedBy,
 } from './keys'
 
-/** Which keys a terminal lets the app have: VS Code's split, checked against its own
- *  skip list. See keys.ts, and docs/keyboard.md for the list as a reader sees it. */
-
 function press(key: string, held: Partial<Omit<Keystroke, 'key'>> = {}): Keystroke {
   return { key, ctrlKey: false, metaKey: false, altKey: false, shiftKey: false, ...held }
 }
@@ -32,26 +29,19 @@ describe('on Windows and Linux', () => {
       ['F6', {}, 'app.region-next'],
       ['F11', {}, 'app.fullscreen'],
       ['F11', { shiftKey: true }, 'app.fill-tab'],
-      // The scratchpad's second key: Ctrl+Shift, which no shell has, so nothing to ask.
       ['X', ctrlShift, 'app.scratchpad.alt'],
       ['X', ctrlShift, 'app.scratchpad'],
       ['3', { altKey: true }, 'app.note-3.alt'],
       ['3', { ctrlKey: true, altKey: true }, 'app.note-3'],
       ['ArrowRight', { ctrlKey: true, altKey: true }, 'pane.split-right'],
       ['E', ctrlShift, 'app.files'],
-      // Every pane's tab put down, where Ctrl+D alone is the shell's end of input: a shell
-      // cannot tell the two apart, so the app losing it would gain the shell nothing.
       ['D', ctrlShift, 'app.deselect-all'],
-      // The space switcher's second key: a shell reads Ctrl+Shift+Space as Ctrl+Space,
-      // and the app's chord has the Shift.
       [' ', ctrlShift, 'space.switcher.alt'],
     ] as const) {
       expect(routeKey(press(key, held), platform, command, false), `${key} ${command}`).toBe('app')
     }
   })
 
-  /** A key only a shell has is the shell's, and Ctrl+C is the interrupt whatever an app
-   *  command might be on it. */
   test('a key nothing of the app is on is the shell’s, and Ctrl+C always is', () => {
     for (const [key, command] of [
       ['r', null],
@@ -65,10 +55,6 @@ describe('on Windows and Linux', () => {
     expect(routeKey(press('F5'), 'win', null, false)).toBe('shell')
   })
 
-  /** Emil, issues #213 and #426: every app command on a key the shell reads is both, and
-   *  which one it is in a terminal is the reader's to say, once - the defaults and any key
-   *  rebound onto one alike. Ctrl+W among them, which went to the shell without a
-   *  question before. See two-ways.ts. */
   test('every app command on a key a shell reads is both, and asked about', () => {
     for (const [key, command] of [
       ['t', 'app.new-kind'],
@@ -77,39 +63,27 @@ describe('on Windows and Linux', () => {
       ['p', 'app.print'],
       ['o', 'app.palette.open'],
       ['e', 'app.reading'],
-      // End of input to a shell, and Deselect tab everywhere else.
       ['d', 'app.deselect-tab'],
-      // NUL to a shell - Emacs's mark, PowerShell's menu of completions - and the space
-      // switcher everywhere else.
       [' ', 'space.switcher'],
-      // US to a shell, readline's undo, and the source view everywhere else.
       ['/', 'app.source'],
-      // A key somebody put a command on in Settings.
       ['k', 'app.palette.alt'],
       ['[', 'app.back'],
     ] as const) {
       expect(routeKey(press(key, ctrl), 'win', command, false), key).toBe('ask')
       expect(routeKey(press(key, ctrl), 'linux', command, false), key).toBe('ask')
     }
-    // A command rebound off a key a shell reads is a chord no shell has.
     expect(routeKey(press('T', ctrlShift), 'win', 'app.new-kind', false)).toBe('app')
   })
 
-  /** A command put on a function key, or on Alt and an arrow, is on a key the program in
-   *  the terminal reads too - htop and mc are worked with F-keys, a shell moves a word
-   *  with Alt and an arrow - so it is asked about as well, not given away unasked. */
   test('a command on a function key or Alt and an arrow is both too', () => {
     expect(routeKey(press('F9'), 'win', 'app.scratchpad', false)).toBe('ask')
     expect(routeKey(press('F2'), 'linux', 'app.print', false)).toBe('ask')
     expect(routeKey(press('ArrowLeft', { altKey: true }), 'win', 'app.back', false)).toBe('ask')
-    // The app's own function keys stay the app's, and a key with no command on it is the
-    // program's.
     expect(routeKey(press('F6'), 'win', 'app.region-next', false)).toBe('app')
     expect(routeKey(press('F11'), 'linux', 'app.fullscreen', false)).toBe('app')
     expect(routeKey(press('F9'), 'win', null, false)).toBe('shell')
   })
 
-  /** What the program would have read, typed once the answer is the shell. */
   test('a key answered for the shell is typed as xterm would have sent it', () => {
     expect(typedBy(press('F9'))).toBe('\x1b[20~')
     expect(typedBy(press('F2'))).toBe('\x1bOQ')
@@ -137,8 +111,6 @@ describe('on Windows and Linux', () => {
     expect(shellReads(press('n', cmd))).toBe(false)
   })
 
-  /** What the shell would have read, typed once the answer is the shell: DC4 is
-   *  readline's transpose-chars, SO its next-history, NUL Emacs's mark. */
   test('the shell is given the character the key would have typed', () => {
     expect(controlOf('t')).toBe('\x14')
     expect(controlOf('n')).toBe('\x0e')
@@ -148,7 +120,6 @@ describe('on Windows and Linux', () => {
     expect(controlOf('/')).toBe('\x1f')
   })
 
-  /** Close window here and Close tab in every terminal there is: neither, then. */
   test('Ctrl+Shift+W is sent to nobody', () => {
     expect(routeKey(press('W', ctrlShift), 'win', 'app.close-window', false)).toBe('shell')
   })
@@ -162,14 +133,12 @@ describe('on Windows and Linux', () => {
     expect(routeKey(press('0', ctrl), 'win', 'app.zoom-reset', false)).toBe('zoom-reset')
   })
 
-  /** Windows Terminal and VS Code paste on Ctrl+V there; Linux keeps it for the shell. */
   test('Ctrl+V pastes on Windows only, and Ctrl+C is always the interrupt', () => {
     expect(routeKey(press('v', ctrl), 'win', null, false)).toBe('paste')
     expect(routeKey(press('v', ctrl), 'linux', null, false)).toBe('shell')
     expect(routeKey(press('c', ctrl), 'win', null, false)).toBe('shell')
   })
 
-  /** AltGr is Ctrl and Alt to Windows, and it is how half of Europe types a brace. */
   test('AltGr typing a character is never a chord', () => {
     expect(routeKey(press('{', { ctrlKey: true, altKey: true }), 'win', 'app.note-7', false)).toBe(
       'shell',
@@ -179,12 +148,9 @@ describe('on Windows and Linux', () => {
 })
 
 describe('on a Mac', () => {
-  /** No shell ever sees Cmd, so every app command on it is the app's - Cmd+W closing
-   *  the tab among them, as it does in Terminal and iTerm2. */
   test('every app command on Cmd is the app’s', () => {
     expect(routeKey(press('w', cmd), 'mac', 'app.close', false)).toBe('app')
     expect(routeKey(press('t', cmd), 'mac', 'app.new-kind', false)).toBe('app')
-    // Nothing to ask: Cmd+N never reaches a shell.
     expect(routeKey(press('n', cmd), 'mac', 'app.scratchpad', false)).toBe('app')
     expect(routeKey(press('Tab', ctrl), 'mac', 'app.next-note', false)).toBe('app')
   })
@@ -202,8 +168,6 @@ describe('on a Mac', () => {
   })
 })
 
-/** Issue 228: Claude Code pastes a picture on Alt+V on Windows and Ctrl+V elsewhere, and
- *  reads the clipboard itself. */
 describe('the key an agent pastes a picture with', () => {
   const alt = { altKey: true }
 
@@ -212,9 +176,7 @@ describe('the key an agent pastes a picture with', () => {
       for (const letter of 'abcdefghijklmnopqrstuvwxyz') {
         expect(routeKey(press(letter, alt), platform, null, false), letter).toBe('shell')
       }
-      // A command a reader put on Alt and a letter: both, and asked about once (#426).
       expect(routeKey(press('k', alt), platform, 'app.ask-selection', false)).toBe('ask')
-      // The panes' four ways are the shell's, never asked about (#1033).
       for (const [letter, toward] of [
         ['h', 'left'],
         ['j', 'down'],
@@ -223,7 +185,6 @@ describe('the key an agent pastes a picture with', () => {
       ] as const) {
         expect(routeKey(press(letter, alt), platform, `pane.focus-${toward}`, false)).toBe('shell')
       }
-      // And the selection to the AI panel, now on Ctrl+Alt+K, is the app's.
       const both = { ctrlKey: true, altKey: true }
       expect(routeKey(press('k', both), platform, 'app.ask-selection', false)).toBe('app')
     }
@@ -234,10 +195,8 @@ describe('the key an agent pastes a picture with', () => {
     expect(imageKey(press('v', alt), 'linux')).toBe(true)
     expect(imageKey(press('v', ctrl), 'linux')).toBe(true)
     expect(imageKey(press('v', ctrl), 'mac')).toBe(true)
-    // Windows Terminal's paste, and the terminal's own here; a paste brings a picture.
     expect(imageKey(press('v', ctrl), 'win')).toBe(false)
     expect(routeKey(press('v', ctrl), 'win', null, false)).toBe('paste')
-    // Option+V types a character on a Mac.
     expect(imageKey(press('v', alt), 'mac')).toBe(false)
   })
 

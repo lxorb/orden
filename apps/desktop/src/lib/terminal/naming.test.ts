@@ -91,7 +91,6 @@ describe('whose a title is', () => {
 
     front.looked('claude')
     expect(front.title).toBe('Claude Code')
-    // Said again every second while it works, and taken at once now.
     expect(front.titled('⠂ Fix the parser')).toBe(false)
     expect(front.title).toBe('Fix the parser')
   })

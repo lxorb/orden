@@ -2,8 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { asksFirst, imageIn, imageKindAt, imageKindOf, linesIn, pasted, spokenPath } from './paste'
 
 describe('a paste into a terminal', () => {
-  /** Windows Terminal's trimPaste: a command copied with the line break that ended it
-   *  does not run the moment it lands. */
   test('loses the whitespace after a single line', () => {
     expect(pasted('npm install\n')).toBe('npm install')
     expect(pasted('ls -la  \r\n')).toBe('ls -la')
@@ -15,7 +13,6 @@ describe('a paste into a terminal', () => {
     expect(linesIn('one line\n')).toBe(1)
   })
 
-  /** A row of the file list dropped on a terminal: its path, as the shell reads one. */
   test('a dropped path is spelled for the shell it lands in', () => {
     expect(spokenPath('C:\\Users\\me\\notes', 'pwsh')).toBe('C:\\Users\\me\\notes')
     expect(spokenPath('C:\\Users\\me\\My notes', 'cmd')).toBe('"C:\\Users\\me\\My notes"')
@@ -25,7 +22,6 @@ describe('a paste into a terminal', () => {
     expect(spokenPath('/home/me/notes.md', '/bin/bash')).toBe('/home/me/notes.md')
   })
 
-  /** VS Code's "auto": only where the lines would run as they land. */
   test('asks first only for lines a shell without bracketed paste would run', () => {
     expect(asksFirst('a\nb', false)).toBe(true)
     expect(asksFirst('a\nb', true)).toBe(false)
@@ -33,7 +29,6 @@ describe('a paste into a terminal', () => {
   })
 })
 
-/** Issue 228: a picture into a terminal on another machine. */
 describe('a picture in a paste', () => {
   const transfer = (text: string, ...types: string[]) =>
     ({

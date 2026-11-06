@@ -1,26 +1,4 @@
 <script lang="ts">
-  /** A terminal tab's mark: the program in front of its shell where that has one of its
-   *  own - Claude Code, Codex, Node, Python, git, SSH, Docker, Vim - and the shell's own
-   *  otherwise, as VS Code's terminal tabs wear. In FileMark's box at FileMark's weight,
-   *  so it is a tab's mark like any other; see marks.ts and naming.ts.
-   *
-   *  What runs in the tab is its session's to know, and a tab put back after a restart
-   *  that nobody has looked at yet runs nothing: it wears its shell's. A terminal on
-   *  another machine wears a server in the colour Settings gave its host - the session's
-   *  once it has one, the host list's before; see remote/hosts.ts.
-   *
-   *  An online terminal wears the same marks with a small cloud in the corner, so it never
-   *  reads as a local shell, and its machine's state as a dot over the other corner: none
-   *  while awake, hollow while asleep, turning while it starts, amber near the month's
-   *  hours. See docs/online-terminal.md 4.10.
-   *
-   *  An icon the reader chose is worn over all of these (#1110) - a terminal's in its
-   *  tab's words (spec.ts), an online terminal's in its file - with the cloud still in
-   *  its corner. And this is the one mark a terminal has: its tab, its row in the file
-   *  list and every other list draw it, so a row is never the plain terminal its tab is
-   *  not (FileMark.svelte). A row with no tab open runs nothing, and says nothing of
-   *  the machine it has not asked about. */
-
   import { chosenIcon, chosenTint } from '../chosen-icon'
   import Icon from '../Icon.svelte'
   import { readIcon, takesTint } from '../icons'
@@ -32,13 +10,10 @@
   import { terminalMark } from './naming'
   import { hostIdOf, readSpec } from './spec'
 
-  // What it reads of a tab, which the question before quitting also hands it for a tab
-  // of another window; see lib/quitting.
   const { tab }: { tab: Pick<Tab, 'doc' | 'running'> & { id?: string; path?: string | null } } =
     $props()
 
   const online = $derived(isTermTarget(tab.path ?? null))
-  /** The tab's words, for one on this machine: its shell, and the icon chosen for it. */
   const spec = $derived(online ? null : readSpec(tab.doc))
   const shell = $derived(spec?.shell ?? '')
   const mark = $derived(terminalMark(shell, tab.running?.program ?? null))
@@ -48,8 +23,6 @@
   )
   const machine = $derived(online && tab.id !== undefined ? (marks.get(tab.id) ?? 'asleep') : null)
 
-  /** What the reader chose for it, and its colour: the file's for an online terminal,
-   *  the tab's words' for one on this machine. */
   const chosen = $derived(
     readIcon(online ? (tab.path ? chosenIcon(tab.path) : null) : (spec?.icon ?? null)),
   )
@@ -82,7 +55,6 @@
 </span>
 
 <style>
-  /* FileMark's box and stroke, to the pixel, and its quiet: a stroke is held back. */
   .mark {
     position: relative;
     display: block;
@@ -95,7 +67,6 @@
     opacity: 0.8;
   }
 
-  /* An emoji or a drawing in its own colours, chosen: FileMark's rule, drawn whole. */
   .mark.is-picture {
     opacity: 1;
   }
@@ -106,14 +77,11 @@
     height: 100%;
   }
 
-  /* A host's colour is the whole of what it says, so it is not held back. */
   .mark.is-coloured {
     color: var(--host);
     opacity: 1;
   }
 
-  /* The corner the cloud sits in is cut out of the program's mark, so the two never
-     cross whatever is behind the tab. */
   .is-online .drawn {
     mask: radial-gradient(circle at 100% 100%, transparent 46%, #000 47%);
   }
@@ -130,8 +98,6 @@
     stroke-linejoin: round;
   }
 
-  /* The machine's state over the other corner: hollow asleep, turning while it starts,
-     amber near the month's hours, nothing at all while it is simply awake. */
   .state {
     position: absolute;
     top: -1px;

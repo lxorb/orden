@@ -5,7 +5,6 @@ import { linksOn, unbroken } from './links'
 
 const { Terminal } = headless
 
-/** The shape of the sign-in link Claude Code prints, about 400 characters. */
 const SIGN_IN =
   'https://claude.ai/oauth/authorize?code=true&client_id=9d1c250a-e61b-44d9-88ed-5944d1962f5e' +
   '&response_type=code&redirect_uri=https%3A%2F%2Fconsole.anthropic.com%2Foauth%2Fcode%2Fcallback' +
@@ -22,7 +21,6 @@ async function screen(cols: number, data: string) {
   return { buffer, cols }
 }
 
-/** What Ink prints: the text cut at the width, each row its own line, dimmed. */
 function hardWrapped(text: string, cols: number): string {
   const rows: string[] = []
   for (let at = 0; at < text.length; at += cols) {
@@ -60,7 +58,6 @@ describe('an address over several rows', () => {
         const { buffer } = await screen(cols, data)
         const end = { x: cols, y: rowsOf(SIGN_IN, cols) - 1 }
         const whole = unbroken(buffer, cols, { x: 0, y: 0 }, end)
-        // Soft wraps are xterm.js's own to join; only a program's breaks need this.
         expect(whole).toBe(how === 'hard' ? SIGN_IN : null)
       })
     }

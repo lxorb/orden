@@ -1,16 +1,3 @@
-/** The shells this machine has, and the five things Settings says about terminals: which
- *  shell a new one opens, how large its type is, whether a restart puts back what was on
- *  its screen, when quitting asks first (see lib/quitting), and whose a key that is both
- *  the app's and the shell's is (see two-ways.ts).
- *
- *  The list is the crate's (see src-tauri/src/terminal/shells.rs) and is asked for the
- *  first time something needs it - a chooser opening, the settings pane, a terminal
- *  being made - and never at launch: finding the WSL distributions costs a process. Every
- *  later ask is the same promise.
- *
- *  Every one of them belongs to this machine and are never sent to the account: a shell is a
- *  program on one computer, and the one a laptop has may not be on the desktop. */
-
 import { t } from '../i18n.svelte'
 import { withOrWithout } from '../records'
 import { isRecord, keep, keepJson, stored, storedText } from '../stored'
@@ -21,7 +8,6 @@ export interface Shell {
   name: string
 }
 
-/** Where the settings are kept. */
 const SHELL_KEY = 'nib:terminal-shell'
 const SIZE_KEY = 'nib:terminal-size'
 const RESTORE_KEY = 'nib:terminal-restore'
@@ -29,12 +15,8 @@ const WARN_KEY = 'nib:terminal-quit-warn'
 const WAYS_KEY = 'nib:terminal-keys'
 const THEMED_KEY = 'nib:terminal-themed'
 
-/** Whose a key that is both is, once somebody has said: the app's command, or the
- *  shell's character. Not there at all is asking every time. */
 export type Way = 'app' | 'shell'
 
-/** The ways chosen, by command, out of whatever storage handed back: a command keeps
- *  its answer only where the answer is one of the two. */
 export function waysOf(value: unknown): Record<string, Way> {
   if (!isRecord(value)) return {}
 
@@ -45,36 +27,25 @@ export function waysOf(value: unknown): Record<string, Way> {
   return ways
 }
 
-/** When quitting asks first: whenever a terminal or an AI turn is open, only while
- *  something runs in one, or never. macOS Terminal's three, and its middle one first, as
- *  VS Code's `hasChildProcesses`: a question about idle shells is one people learn to
- *  click through. */
 const WARNINGS = ['always', 'running', 'never'] as const
 export type Warning = (typeof WARNINGS)[number]
 
-/** A warning out of whatever storage handed back; the default for anything else. */
 export function asWarning(value: unknown): Warning {
   return WARNINGS.find((one) => one === value) ?? 'running'
 }
 
-/** The type sizes Settings offers, and where a terminal starts: the size a code block is
- *  read at, a little under the note's own. */
 export const SIZES = { least: 9, most: 28, initial: 13 } as const
 
-/** A size as a size, whatever storage handed back. */
 function sizeOf(value: unknown): number {
   const number = typeof value === 'string' ? Number(value) : NaN
   if (!Number.isFinite(number)) return SIZES.initial
   return Math.min(SIZES.most, Math.max(SIZES.least, Math.round(number)))
 }
 
-/** What a shell the crate offered is called here. Product names stay as they are;
- *  Command Prompt is the one Windows translates itself, so it is translated here too. */
 export function shellName(shell: Shell): string {
   return shell.id === 'cmd' ? t('Command Prompt') : shell.name
 }
 
-/** What the crate said, read rather than trusted. */
 function readShells(value: unknown): Shell[] {
   if (!Array.isArray(value)) return []
 
@@ -86,27 +57,16 @@ function readShells(value: unknown): Shell[] {
 }
 
 class Shells {
-  /** The shells, the platform's default first. Empty until somebody has asked. */
   list = $state.raw<Shell[]>([])
-  /** The one Settings chose, by id, or empty for the platform's default. */
   preferred = $state(storedText(SHELL_KEY) ?? '')
-  /** How large a terminal's type is, in pixels. */
   size = $state(sizeOf(storedText(SIZE_KEY)))
-  /** Whether a terminal's last lines are kept for the next launch: on, as VS Code,
-   *  Windows Terminal and Warp all start. See history.ts. */
   restoring = $state(storedText(RESTORE_KEY) !== 'no')
-  /** Whether a terminal's colours follow the theme (#1069), which they do until a reader
-   *  keeps one palette instead (look.ts, `FIXED_PALETTE`). */
   themed = $state(storedText(THEMED_KEY) !== 'no')
-  /** When quitting asks first; see `WARNINGS`. */
   warning = $state<Warning>(asWarning(storedText(WARN_KEY)))
-  /** Whose each key that is both is, by the app command on it; see two-ways.ts. */
   ways = $state<Record<string, Way>>(waysOf(stored(WAYS_KEY)))
 
   private asked: Promise<Shell[]> | null = null
 
-  /** The list, found once. Nothing where there is no crate to find it: a browser and a
-   *  phone offer no terminal at all. */
   ask(): Promise<Shell[]> {
     if (!isDesktop) return Promise.resolve([])
 
@@ -116,8 +76,6 @@ class Shells {
         return this.list
       })
       .catch(() => {
-        // Asked again next time: a refusal here is a crate that could not look, and a
-        // chooser with no shells in it is a chooser worth another try.
         this.asked = null
         return []
       })
@@ -125,8 +83,6 @@ class Shells {
     return this.asked
   }
 
-  /** The shell a new terminal opens: the one Settings chose, while this machine still
-   *  has it, and the platform's own otherwise. */
   get chosen(): Shell | undefined {
     return this.list.find((one) => one.id === this.preferred) ?? this.list[0]
   }
@@ -146,15 +102,11 @@ class Shells {
     keep(WARN_KEY, warning)
   }
 
-  /** The key a command is on goes to `way` from now on, or is asked about every time
-   *  again for null. */
   setWay(command: string, way: Way | null) {
     this.ways = withOrWithout(this.ways, command, way)
     keepJson(WAYS_KEY, this.ways)
   }
 
-  /** Off forgets every terminal's lines at once, rather than only writing no more of
-   *  them: what somebody turns this off for is what is already written. */
   setThemed(on: boolean) {
     this.themed = on
     keep(THEMED_KEY, on ? 'yes' : 'no')

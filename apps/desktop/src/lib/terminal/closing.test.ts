@@ -1,12 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** #1110: an online terminal saved nowhere asks, as its tab closes, whether its session
- *  ends or keeps running; one saved in the sidebar closes without a word. The store is
- *  the real one, so every close below goes the way a press of the cross, Ctrl+W, Close
- *  others or a pane's close goes; the question sheet and the account's calls are
- *  stand-ins. */
-
 const world = vi.hoisted(() => ({
   answer: null as string | null,
   asked: [] as { title: string; options: string[] }[],
@@ -50,7 +44,6 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('../workspace.svelte')
 
-/** A new online terminal's tab, as `openOnline` opens it: its words name its session. */
 function online(session: string, name = 'Terminal') {
   return workspace.openUnsaved(
     'terminal',
@@ -117,7 +110,6 @@ describe('an online terminal saved nowhere, closed', () => {
     expect(world.asked).toHaveLength(1)
     expect(open(tab.id)).toBe(false)
 
-    // A pane of its own beside, closed with what is in it.
     const right = workspace.panes.split('row')
     expect(right).not.toBeNull()
     const again = online('s-8')
@@ -139,7 +131,6 @@ describe('an online terminal saved in the sidebar, closed', () => {
   })
 })
 
-/** Every close a hand asks for goes through `mayClose`, and so through the question. */
 test("the strip's, the overview's and the keys' closes all ask through the store", () => {
   const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8')
   const store = read('../workspace.svelte.ts')
