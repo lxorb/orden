@@ -77,7 +77,15 @@ def fresh(browser: Browser, finger: bool) -> Page:
     page.evaluate("() => window.nibApp.modes.setProperties('properties')")
     wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(900)
+    unfold(page)
     return page
+
+
+def unfold(page: Page) -> None:
+    folded = page.locator('.nib-properties-head[aria-expanded="false"]')
+    if folded.count():
+        folded.first.click()
+        page.wait_for_timeout(300)
 
 def properties(page: Page) -> None:
     rows = page.evaluate(ROWS)
