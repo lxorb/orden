@@ -161,7 +161,7 @@ export interface Space {
 
 export type { NoteDoc, Tab, TabKind } from './workspace/documents.svelte'
 
-export type Panel = 'tree' | 'outline' | 'search' | 'tasks' | 'chats' | 'links' | 'ask'
+export type Panel = 'tree' | 'outline' | 'search' | 'tasks' | 'chats' | 'time' | 'links' | 'ask'
 
 export type PanelSide = 'left' | 'right'
 

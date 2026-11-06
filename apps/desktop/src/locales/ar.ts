@@ -3047,4 +3047,11 @@ export const ar: Dictionary = {
   'That could not be protected: {reason}': 'تعذّرت الحماية: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     'لم تُضف {name}: تقبل المحادثة الصور والملفات النصية حتى 2 MB.',
+  'Time tracker': 'متتبّع الوقت',
+  'Start timer': 'بدء المؤقّت',
+  'Stop timer': 'إيقاف المؤقّت',
+  'New activity': 'نشاط جديد',
+  'No activity': 'بلا نشاط',
+  'Start time': 'وقت البدء',
+  'End time': 'وقت الانتهاء',
 }

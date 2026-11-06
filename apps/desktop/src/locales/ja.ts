@@ -2868,4 +2868,11 @@ export const ja: Dictionary = {
   'That could not be protected: {reason}': '保護できませんでした: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} は追加されませんでした: チャットに追加できるのは画像と 2 MB までのテキストファイルです。',
+  'Time tracker': 'タイムトラッカー',
+  'Start timer': 'タイマーを開始',
+  'Stop timer': 'タイマーを停止',
+  'New activity': '新しいアクティビティ',
+  'No activity': 'アクティビティなし',
+  'Start time': '開始時刻',
+  'End time': '終了時刻',
 }

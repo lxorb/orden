@@ -2832,4 +2832,11 @@ export const th: Dictionary = {
   'That could not be protected: {reason}': 'ป้องกันไม่ได้: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     'ไม่ได้เพิ่ม {name}: แชตรับรูปภาพและไฟล์ข้อความขนาดไม่เกิน 2 MB',
+  'Time tracker': 'ตัวติดตามเวลา',
+  'Start timer': 'เริ่มจับเวลา',
+  'Stop timer': 'หยุดจับเวลา',
+  'New activity': 'กิจกรรมใหม่',
+  'No activity': 'ไม่มีกิจกรรม',
+  'Start time': 'เวลาเริ่ม',
+  'End time': 'เวลาสิ้นสุด',
 }

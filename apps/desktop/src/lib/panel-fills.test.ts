@@ -22,7 +22,7 @@ describe('the panels a tab fills', () => {
   })
 
   test('are every panel about the space, beside anything or nothing', () => {
-    for (const panel of ['tree', 'search', 'tasks', 'chats', 'ask'] as const) {
+    for (const panel of ['tree', 'search', 'tasks', 'chats', 'time', 'ask'] as const) {
       expect(fills(panel, null)).toBe(true)
       expect(fills(panel, tab('terminal'))).toBe(true)
     }

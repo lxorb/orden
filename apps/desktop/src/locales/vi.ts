@@ -2864,4 +2864,11 @@ export const vi: Dictionary = {
   'That could not be protected: {reason}': 'Không thể bảo vệ: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     'Chưa thêm {name}: cuộc trò chuyện nhận hình ảnh và tệp văn bản tối đa 2 MB.',
+  'Time tracker': 'Theo dõi thời gian',
+  'Start timer': 'Bắt đầu hẹn giờ',
+  'Stop timer': 'Dừng hẹn giờ',
+  'New activity': 'Hoạt động mới',
+  'No activity': 'Không có hoạt động',
+  'Start time': 'Giờ bắt đầu',
+  'End time': 'Giờ kết thúc',
 }

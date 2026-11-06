@@ -2884,4 +2884,11 @@ export const my: Dictionary = {
   'That could not be protected: {reason}': 'ကာကွယ်၍ မရပါ - {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} ကို မထည့်ရပါ - ချတ်တွင် ပုံများနှင့် 2 MB အထိ စာသားဖိုင်များသာ ထည့်နိုင်သည်။',
+  'Time tracker': 'အချိန် မှတ်တမ်း',
+  'Start timer': 'အချိန်တိုင်းကိရိယာ စတင်ရန်',
+  'Stop timer': 'အချိန်တိုင်းကိရိယာ ရပ်ရန်',
+  'New activity': 'လုပ်ဆောင်ချက်အသစ်',
+  'No activity': 'လုပ်ဆောင်ချက် မရှိ',
+  'Start time': 'စတင်ချိန်',
+  'End time': 'ပြီးဆုံးချိန်',
 }

@@ -52,7 +52,7 @@ describe('the panel tabs', () => {
   test('are the space on the left and the note in front on the right, as Obsidian has them', () => {
     open('# Head\n')
 
-    expect(strip('left')).toEqual(['Files'])
+    expect(strip('left')).toEqual(['Files', 'Time tracker'])
     expect(strip('right')).toEqual(['Outline', 'Links', 'Ask', 'Tasks', 'Scratchpad'])
   })
 
@@ -60,7 +60,7 @@ describe('the panel tabs', () => {
     open('# Head\n')
     workspace.movePanel('outline', 'left')
 
-    expect(strip('left')).toEqual(['Files', 'Outline'])
+    expect(strip('left')).toEqual(['Files', 'Outline', 'Time tracker'])
     expect(strip('right')).toEqual(['Links', 'Ask', 'Tasks', 'Scratchpad'])
     workspace.movePanel('outline', 'right')
     expect(strip('right')).toEqual(['Links', 'Ask', 'Tasks', 'Outline', 'Scratchpad'])

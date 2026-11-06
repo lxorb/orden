@@ -2958,4 +2958,11 @@ export const ha: Dictionary = {
   'That could not be protected: {reason}': 'Ba a iya karewa ba: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     'Ba a ƙara {name} ba: hira tana karɓar hotuna da fayilolin rubutu har zuwa 2 MB.',
+  'Time tracker': 'Mai bin diddigin lokaci',
+  'Start timer': 'Fara agogon lokaci',
+  'Stop timer': 'Tsayar da agogon lokaci',
+  'New activity': 'Sabon aiki',
+  'No activity': 'Babu aiki',
+  'Start time': 'Lokacin farawa',
+  'End time': 'Lokacin ƙarewa',
 }

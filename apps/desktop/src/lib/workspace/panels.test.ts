@@ -179,7 +179,12 @@ describe('the scratchpad over the right side', () => {
 describe('where a panel lives until somebody moves it', () => {
   test('is the space on the left and the note in front on the right, as Obsidian has it', () => {
     expect(rightFrom(undefined)).toEqual(['outline', 'links', 'ask', 'tasks'])
-    expect(panelsOn(rightFrom(undefined), 'left', PANELS)).toEqual(['tree', 'search', 'chats'])
+    expect(panelsOn(rightFrom(undefined), 'left', PANELS)).toEqual([
+      'tree',
+      'search',
+      'chats',
+      'time',
+    ])
   })
 
   test('and a window arranged before the homes keeps its own arrangement', () => {

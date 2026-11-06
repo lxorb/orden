@@ -2960,4 +2960,11 @@ export const ml: Dictionary = {
   'That could not be protected: {reason}': 'സംരക്ഷിക്കാനായില്ല: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} ചേർത്തില്ല: ചാറ്റിൽ ചിത്രങ്ങളും 2 MB വരെയുള്ള ടെക്സ്റ്റ് ഫയലുകളും മാത്രമേ ചേർക്കാനാകൂ.',
+  'Time tracker': 'സമയ ട്രാക്കർ',
+  'Start timer': 'ടൈമർ ആരംഭിക്കുക',
+  'Stop timer': 'ടൈമർ നിർത്തുക',
+  'New activity': 'പുതിയ പ്രവർത്തനം',
+  'No activity': 'പ്രവർത്തനമില്ല',
+  'Start time': 'ആരംഭ സമയം',
+  'End time': 'അവസാന സമയം',
 }

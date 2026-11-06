@@ -2900,4 +2900,11 @@ export const gu: Dictionary = {
   'That could not be protected: {reason}': 'સુરક્ષિત કરી શકાયું નહીં: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} ઉમેરાયું નહીં: ચેટ ચિત્રો અને 2 MB સુધીની ટેક્સ્ટ ફાઇલો લે છે.',
+  'Time tracker': 'સમય ટ્રૅકર',
+  'Start timer': 'ટાઇમર શરૂ કરો',
+  'Stop timer': 'ટાઇમર બંધ કરો',
+  'New activity': 'નવી પ્રવૃત્તિ',
+  'No activity': 'કોઈ પ્રવૃત્તિ નથી',
+  'Start time': 'શરૂઆતનો સમય',
+  'End time': 'અંતનો સમય',
 }

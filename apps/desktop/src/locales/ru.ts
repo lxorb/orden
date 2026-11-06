@@ -3025,4 +3025,11 @@ export const ru: Dictionary = {
   'That could not be protected: {reason}': 'Не удалось защитить: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} не добавлен: чат принимает изображения и текстовые файлы до 2 МБ.',
+  'Time tracker': 'Учёт времени',
+  'Start timer': 'Запустить таймер',
+  'Stop timer': 'Остановить таймер',
+  'New activity': 'Новое занятие',
+  'No activity': 'Без занятия',
+  'Start time': 'Время начала',
+  'End time': 'Время окончания',
 }

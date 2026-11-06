@@ -67,13 +67,16 @@ export class TimeStore {
   }
 
   private async switchTo(owner: string | null): Promise<void> {
+    const opened = this.disk !== null
     this.disk?.close()
     this.disk = null
     this.ready = false
+    const early = opened ? [] : this.ledger.pending(Infinity)
     const disk = await this.open(owner)
     const ledger = new Ledger(await disk.rows())
     const cursor = await disk.read(CURSOR)
     if (owner !== null) await this.carry(ledger, disk)
+    await disk.put(early.map((row) => ledger.write(row.kind, row.id, row.value, row.at)))
     this.disk = disk
     this.ledger = ledger
     this.cursor = typeof cursor === 'number' ? cursor : 0

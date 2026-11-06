@@ -2802,4 +2802,11 @@ export const zhHant: Dictionary = {
   'That could not be protected: {reason}': '無法保護：{reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '未加入 {name}：聊天只接受圖片和 2 MB 以內的文字檔。',
+  'Time tracker': '時間記錄',
+  'Start timer': '開始計時',
+  'Stop timer': '停止計時',
+  'New activity': '新活動',
+  'No activity': '無活動',
+  'Start time': '開始時間',
+  'End time': '結束時間',
 }

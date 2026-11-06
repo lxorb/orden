@@ -2927,4 +2927,11 @@ export const te: Dictionary = {
   'That could not be protected: {reason}': 'రక్షించలేకపోయాం: {reason}',
   '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
     '{name} జోడించబడలేదు: చాట్ చిత్రాలను మరియు 2 MB వరకు ఉన్న టెక్స్ట్ ఫైల్‌లను తీసుకుంటుంది.',
+  'Time tracker': 'సమయ ట్రాకర్',
+  'Start timer': 'టైమర్ ప్రారంభించండి',
+  'Stop timer': 'టైమర్ ఆపండి',
+  'New activity': 'కొత్త కార్యకలాపం',
+  'No activity': 'కార్యకలాపం లేదు',
+  'Start time': 'ప్రారంభ సమయం',
+  'End time': 'ముగింపు సమయం',
 }

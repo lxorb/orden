@@ -32,6 +32,7 @@ const PANELS: Record<PanelTab, Entry> = {
   tree: { tab: null, fills: null },
   search: { tab: null, fills: null },
   chats: { tab: null, fills: null },
+  time: { tab: null, fills: null },
   outline: {
     tab: null,
     fills: (tab) =>

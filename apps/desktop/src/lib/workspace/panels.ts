@@ -88,6 +88,7 @@ export const PANELS: readonly Panel[] = [
   'search',
   'tasks',
   'chats',
+  'time',
   'links',
   'ask',
 ]

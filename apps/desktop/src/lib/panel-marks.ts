@@ -20,6 +20,8 @@ export const ASK_MARK =
 
 export const CHATS_MARK = 'M11.2 8.4a1 1 0 0 1-1 1H4.1l-2.3 2V2.8a1 1 0 0 1 1-1h7.4a1 1 0 0 1 1 1z'
 
+export const TIME_MARK = 'M6.5 1.8a4.7 4.7 0 1 0 0 9.4 4.7 4.7 0 1 0 0-9.4zM6.5 4v2.6l1.8 1.2'
+
 export const TASKS_MARK =
   'M3 1.8h7a1.2 1.2 0 0 1 1.2 1.2v7a1.2 1.2 0 0 1-1.2 1.2H3A1.2 1.2 0 0 1 1.8 10V3A1.2 1.2 0 0 1 3 1.8zM4.2 6.6l1.7 1.7 3-3.4'
 

@@ -69,6 +69,9 @@ export const conversationSurface = held(() =>
 export const chatsPanel = held(() =>
   __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./chats/view/ChatsPanel.svelte'),
 )
+export const timePanel = held(() =>
+  __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./time/TimePanel.svelte'),
+)
 
 export const pagesSurface = held(() =>
   __EVEN_PLUGIN__
