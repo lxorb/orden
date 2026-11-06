@@ -488,13 +488,21 @@ jobs:
 
       # And off edge, everything this build did not put there: the last build's files,
       # whose names carry its version. After the manifest, so the updater is never pointed
-      # at a file that has gone.
+      # at a file that has gone. GitHub answers a delete with a 500 now and then, having
+      # deleted the file or not (2026-11-05, which left the build's apt, rpm and snap
+      # unpublished): a refused delete is tried again, and is done once the file is gone.
       - name: Take the last build's files off edge
         if: needs.version.outputs.rolling == 'true'
         run: |
           kept=$(find artifacts installers -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' -o -name '*.app.tar.gz' \) -printf '%f\n'; echo latest.json)
           gh release view "$TAG" --json assets --jq '.assets[].name' | while read -r name; do
-            grep -qxF "$name" <<<"$kept" || gh release delete-asset "$TAG" "$name" --yes
+            grep -qxF "$name" <<<"$kept" && continue
+            for attempt in 1 2 3; do
+              gh release delete-asset "$TAG" "$name" --yes && break
+              gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qxF "$name" || break
+              [ "$attempt" -lt 3 ] || exit 1
+              sleep 10
+            done
           done
 
       # GitHub creates no workflow run for an event raised by GITHUB_TOKEN, so

@@ -8,7 +8,7 @@ them. Not Flathub; see the section of that name.
 | Directory | Manager | Built from | Architectures |
 | --- | --- | --- | --- |
 | `apt/` | apt (`apt install orden`, from `apt.orden.so`) | the `.deb` | amd64, arm64 |
-| `rpm/` | dnf and zypper (`dnf install orden`, from `apt.orden.so/rpm`) | the `.rpm` | x86_64, aarch64 |
+| `rpm/` | dnf and zypper (`dnf install orden`, from `rpm.orden.so`) | the `.rpm` | x86_64, aarch64 |
 | `aur/nib-bin/` | AUR (`yay -S orden-bin`) | the `.deb` | x86_64, aarch64 |
 | `snap/` | Snap Store | the `.deb` | amd64, arm64 |
 | `nix/` | a flake anyone can install from | the `.deb` | x86_64, aarch64 |
@@ -220,10 +220,13 @@ Orden" below.
 By hand, once `apt.yml` is on main: `gh workflow run apt.yml -f suite=stable -f tag=v0.15.0`,
 or `-f suite=unstable -f tag=edge`.
 
-## dnf and zypper - `apt.orden.so/rpm`
+## dnf and zypper - `rpm.orden.so`
 
-The apt repository's bucket, address and key, under `rpm/`: no secret, domain or bucket of
-its own. `rpm.yml` writes it, called the way `apt.yml` is - by `publish.yml` for a stable tag
+The apt repository's bucket and key, under `rpm/`: no secret or bucket of its own.
+`rpm.orden.so` is a second custom domain of the bucket `orden-apt`, which a transform rule
+of the zone reads under `rpm/` (`rpm.orden.so/<x>` is the bucket's `rpm/<x>`), and kept out
+of the sync Worker's `*.orden.so/*` route by a route of its own with no Worker, as
+`apt.orden.so` is. `rpm.yml` writes it, called the way `apt.yml` is - by `publish.yml` for a stable tag
 (`stable`) and by `release.yml` for edge (`unstable`) - and only after its `try` job has
 installed what it wrote.
 
@@ -231,7 +234,7 @@ installed what it wrote.
 rpm/<suite>/orden-<version>-<release>.<arch>.rpm
 rpm/<suite>/repodata/repomd.xml, repomd.xml.asc, and the indices it names
 rpm/orden.repo, rpm/orden-unstable.repo
-orden-archive-keyring.asc
+rpm/orden-archive-keyring.asc
 ```
 
 **Each suite holds one version, the newest**, as an apt suite does, and is put into the bucket
@@ -257,11 +260,11 @@ Adding it, for `stable` (`orden-unstable.repo` for the edge builds):
 
 ```sh
 # Fedora
-sudo curl -fsSLo /etc/yum.repos.d/orden.repo https://apt.orden.so/rpm/orden.repo
+sudo curl -fsSLo /etc/yum.repos.d/orden.repo https://rpm.orden.so/orden.repo
 sudo dnf install orden
 
 # openSUSE
-sudo zypper addrepo https://apt.orden.so/rpm/orden.repo
+sudo zypper addrepo https://rpm.orden.so/orden.repo
 sudo zypper install orden
 ```
 

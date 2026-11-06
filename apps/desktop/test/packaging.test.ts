@@ -182,6 +182,68 @@ esac
     })
   })
 
+  /** GitHub answers a delete with a 500 now and then, having deleted the file anyway:
+   *  that is the file gone, not the build failed (2026-11-05, #1147). */
+  describe.skipIf(process.platform === 'win32')("takes the last build's files off edge", () => {
+    function prune(gh: { failFirst: boolean; stuck?: boolean }) {
+      const at = mkdtempSync(join(tmpdir(), 'nib-prune-'))
+      mkdirSync(join(at, 'bin'))
+      mkdirSync(join(at, 'artifacts'))
+      mkdirSync(join(at, 'installers'))
+      writeFileSync(join(at, 'artifacts', 'Nib-1.0.1-1-linux-x64.rpm'), 'bytes')
+      const held = join(at, 'held')
+      writeFileSync(held, 'Nib-1.0.1-1-linux-x64.rpm\nNib-1.0.1-0-linux-x64.rpm\nlatest.json\n')
+      const tried = join(at, 'tried')
+      writeFileSync(
+        join(at, 'bin', 'gh'),
+        `#!/bin/bash
+case "$1 $2" in
+  "release view") cat "${held}" ;;
+  "release delete-asset")
+    echo "$4" >> "${tried}"
+    [ -n "$STUCK" ] && exit 1
+    grep -vxF "$4" "${held}" > "${held}.next"; mv "${held}.next" "${held}"
+    if [ -n "$FAIL_FIRST" ] && [ "$(wc -l < "${tried}")" = 1 ]; then echo 'HTTP 500' >&2; exit 1; fi
+    ;;
+esac
+`,
+      )
+      chmodSync(join(at, 'bin', 'gh'), 0o755)
+      // The wait between tries is the step's, not the test's.
+      writeFileSync(join(at, 'bin', 'sleep'), '#!/bin/sh\n')
+      chmodSync(join(at, 'bin', 'sleep'), 0o755)
+      const ran = spawnSync('bash', ['-e', '-c', stepRun("Take the last build's files off edge")], {
+        cwd: at,
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          PATH: `${join(at, 'bin')}:${process.env.PATH ?? ''}`,
+          TAG: 'edge',
+          FAIL_FIRST: gh.failFirst ? '1' : '',
+          STUCK: gh.stuck ? '1' : '',
+        },
+      })
+      return {
+        status: ran.status,
+        held: readFileSync(held, 'utf8'),
+        tried: readFileSync(tried, 'utf8'),
+      }
+    }
+
+    test('a 500 over a file that went is the file gone', () => {
+      const { status, held, tried } = prune({ failFirst: true })
+      expect(status).toBe(0)
+      expect(held).not.toContain('Nib-1.0.1-0-linux-x64.rpm')
+      expect(tried.trim().split('\n')).toEqual(['Nib-1.0.1-0-linux-x64.rpm'])
+    })
+
+    test('a file that will not go fails the step, after trying again', () => {
+      const { status, tried } = prune({ failFirst: false, stuck: true })
+      expect(status).not.toBe(0)
+      expect(tried.trim().split('\n')).toHaveLength(3)
+    })
+  })
+
   /** A `.deb` or an `.rpm` install is updated through PackageKit with its own package,
    *  checked against the updater's key like any bundle (#1147; src-tauri/src/system_update.rs). */
   test('names every Linux package in the manifest, by its architecture and kind', () => {
@@ -235,6 +297,19 @@ esac
       })
     },
   )
+
+  /** Edge holds the updater's `Nib-` copies of the .deb and the .rpm beside the page's
+   *  `Orden-` ones, and the managers built from it take the page's (2026-11-06, #1147). */
+  test('the managers built from edge take its Orden- packages, one each', () => {
+    const snap = repo('.github', 'workflows', 'snap.yml')
+    expect(snap).toContain('select(.name | startswith("Orden-") and endswith($end))')
+    for (const workflow of ['apt.yml', 'rpm.yml']) {
+      const text = repo('.github', 'workflows', workflow)
+      for (const found of text.matchAll(/--pattern '([^']+)'/g)) {
+        expect(found[1], workflow).toMatch(/^Orden-/)
+      }
+    }
+  })
 
   test('uploads the signatures of the .deb and the .rpm the build made', () => {
     for (const kind of ['deb', 'rpm']) {
@@ -661,15 +736,16 @@ describe('the apt repository', () => {
   })
 })
 
-/** The dnf and zypper repository: apt.orden.so's bucket and key, under `rpm/` (#1147). What
+/** The dnf and zypper repository: apt.orden.so's bucket and key, under `rpm/`, which
+ *  rpm.orden.so serves (#1147). What
  *  it installs on Fedora and openSUSE is rpm.yml's `try`, through scripts/rpm-try.sh. */
 describe('the rpm repository', () => {
   const workflow = repo('.github', 'workflows', 'rpm.yml')
   const apt = repo('.github', 'workflows', 'apt.yml')
   const field = (text: string, name: string) => new RegExp(`${name}: (\\S+)`).exec(text)?.[1]
 
-  test("is apt's key, address, bucket and account, and no secret of its own", () => {
-    for (const name of ['APT_KEY_FINGERPRINT', 'APT_BASE_URL', 'R2_BUCKET', 'CF_ACCOUNT_ID']) {
+  test("is apt's key, bucket and account, and no secret of its own", () => {
+    for (const name of ['APT_KEY_FINGERPRINT', 'R2_BUCKET', 'CF_ACCOUNT_ID']) {
       expect(field(workflow, name), name).toBe(field(apt, name))
     }
     const secrets = new Set([...workflow.matchAll(/secrets\.([A-Z_]+)/g)].map((found) => found[1]))
@@ -707,13 +783,26 @@ describe('the rpm repository', () => {
     expect(script).toMatch(/rpmkeys --dbpath "\$keys" --checksig/)
   })
 
+  /** `rpm.orden.so/<x>` is the bucket's `rpm/<x>`, so everything a reader is pointed at is
+   *  written under `rpm/`, the key beside the .repo files. */
+  test('is given out as rpm.orden.so, and writes all it serves there under rpm/', () => {
+    expect(field(workflow, 'RPM_BASE_URL')).toBe('https://rpm.orden.so')
+    expect(repo('scripts', 'rpm-repo.sh')).toContain('base=${RPM_BASE_URL:-https://rpm.orden.so}')
+    expect(repo('scripts', 'rpm-repo.sh')).toContain('cp "$public" rpm/orden-archive-keyring.asc')
+    expect(workflow).toContain('for file in rpm/*.repo rpm/orden-archive-keyring.asc; do')
+    for (const line of ['https://rpm.orden.so/orden.repo', 'orden-unstable.repo']) {
+      expect(repo('README.md')).toContain(line)
+    }
+    expect(repo('README.md')).not.toContain('apt.orden.so/rpm')
+  })
+
   test('hands readers a .repo file that checks both signatures against the published key', () => {
     const file = read('rpm', 'orden.repo')
     for (const line of [
       'gpgcheck=1',
       'repo_gpgcheck=1',
       'gpgkey=@BASE@/orden-archive-keyring.asc',
-      'baseurl=@BASE@/rpm/@SUITE@',
+      'baseurl=@BASE@/@SUITE@',
     ]) {
       expect(file).toContain(line)
     }

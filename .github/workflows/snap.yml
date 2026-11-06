@@ -81,8 +81,9 @@ jobs:
 
           # The two .debs, found by what they are rather than by a name built here: a
           # release's page and edge call them Orden-<version>, and the version
-          # of an edge build is in nothing but its files' names.
-          name() { jq -r --arg end "-linux-$1.deb" '[.assets[] | select(.name | endswith($end)) | .name] | if length == 1 then .[0] else empty end' <<<"$assets"; }
+          # of an edge build is in nothing but its files' names. Edge holds the
+          # updater's copies too, called Nib- (release.yml), which are not these.
+          name() { jq -r --arg end "-linux-$1.deb" '[.assets[] | select(.name | startswith("Orden-") and endswith($end)) | .name] | if length == 1 then .[0] else empty end' <<<"$assets"; }
           x64deb=$(name x64)
           arm64deb=$(name arm64)
           if [ -z "$x64deb" ] || [ -z "$arm64deb" ]; then

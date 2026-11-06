@@ -28,7 +28,7 @@ else
 fi
 
 repo=$(mktemp -d)/$id.repo
-sed -e "s|^baseurl=.*/rpm/|baseurl=file://$root/rpm/|" -e "s|^gpgkey=.*/|gpgkey=file://$root/|" "$root/rpm/$id.repo" >"$repo"
+sed -e "s|^baseurl=.*/|baseurl=file://$root/rpm/|" -e "s|^gpgkey=.*/|gpgkey=file://$root/rpm/|" "$root/rpm/$id.repo" >"$repo"
 cat "$repo"
 case "$manager" in
   zypper) zypper addrepo "$repo" ;;

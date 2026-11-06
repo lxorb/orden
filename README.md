@@ -55,7 +55,7 @@ Download an installer from the [latest release](https://github.com/lxorb/orden/r
 | Nix, compiled from `unstable` | `nix profile install github:lxorb/orden/unstable?dir=packaging/nix#orden-source` |
 | Debian, Ubuntu, apt repository | add `https://apt.orden.so` as below, then `sudo apt install orden` |
 | Debian, Ubuntu, one file | `sudo apt install ./Orden-<version>-linux-x64.deb` |
-| Fedora, openSUSE, rpm repository | add `https://apt.orden.so/rpm/orden.repo` as below, then `sudo dnf install orden` or `sudo zypper install orden` |
+| Fedora, openSUSE, rpm repository | add `https://rpm.orden.so/orden.repo` as below, then `sudo dnf install orden` or `sudo zypper install orden` |
 | Fedora, openSUSE, one file | `sudo dnf install ./Orden-<version>-linux-x64.rpm` |
 | Any Linux | `chmod +x Orden-<version>-linux-x64.AppImage && ./Orden-<version>-linux-x64.AppImage` |
 
@@ -81,11 +81,11 @@ The dnf and zypper repository, on x86_64 and aarch64, signed with the same key: 
 
 ```sh
 # Fedora
-sudo curl -fsSLo /etc/yum.repos.d/orden.repo https://apt.orden.so/rpm/orden.repo
+sudo curl -fsSLo /etc/yum.repos.d/orden.repo https://rpm.orden.so/orden.repo
 sudo dnf install orden
 
 # openSUSE
-sudo zypper addrepo https://apt.orden.so/rpm/orden.repo
+sudo zypper addrepo https://rpm.orden.so/orden.repo
 sudo zypper install orden
 ```
 

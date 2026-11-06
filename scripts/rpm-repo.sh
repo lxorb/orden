@@ -2,16 +2,17 @@
 # Puts a release's .rpms into the dnf and zypper repository, as one suite, signed.
 #
 #   APT_KEY_FINGERPRINT=<the signing key, imported into gpg already> \
-#   APT_BASE_URL=https://apt.orden.so \
+#   RPM_BASE_URL=https://rpm.orden.so \
 #   APT_PUBLIC_KEY=<its public half; packaging/apt/orden-archive-keyring.asc if unset> \
 #     scripts/rpm-repo.sh <stable|unstable> <folder of .rpms> <folder to write into>
 #
-# The apt repository's bucket, key and address (scripts/apt-repo.sh), under `rpm/`:
+# The apt repository's bucket and key (scripts/apt-repo.sh), under `rpm/`, which is what
+# https://rpm.orden.so serves: `rpm.orden.so/<x>` is the bucket's `rpm/<x>`.
 #
 #   rpm/<suite>/orden-<version>-<release>.<arch>.rpm, each signed
 #   rpm/<suite>/repodata/repomd.xml, repomd.xml.asc and what repomd.xml names
 #   rpm/orden.repo (stable) or rpm/orden-unstable.repo, the file a reader drops in
-#   orden-archive-keyring.asc, which both .repo files name
+#   rpm/orden-archive-keyring.asc, which both .repo files name
 #
 # A suite holds one version, the newest, as an apt suite does; the other suite is never
 # touched. See packaging/linux.md, "dnf and zypper".
@@ -21,7 +22,7 @@ suite=${1:?stable or unstable}
 rpms=${2:?a folder of .rpms}
 out=${3:?a folder to write into}
 key=${APT_KEY_FINGERPRINT:?the fingerprint of the signing key}
-base=${APT_BASE_URL:-https://apt.orden.so}
+base=${RPM_BASE_URL:-https://rpm.orden.so}
 public=${APT_PUBLIC_KEY:-}
 base=${base%/}
 
@@ -77,4 +78,4 @@ gpg --batch --yes --local-user "$key" --armor --detach-sign --output "$dir/repod
 
 sed -e "s|@BASE@|$base|g" -e "s|@SUITE@|$suite|g" -e "s|@ID@|$id|g" -e "s|@NAME@|$name|g" \
   "$here/packaging/rpm/orden.repo" >"rpm/$id.repo"
-cp "$public" orden-archive-keyring.asc
+cp "$public" rpm/orden-archive-keyring.asc

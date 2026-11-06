@@ -1,6 +1,6 @@
 name: rpm
 
-# The dnf and zypper repository, served at https://apt.orden.so/rpm from the apt
+# The dnf and zypper repository, served at https://rpm.orden.so from `rpm/` in the apt
 # repository's own bucket, `orden-apt`, and signed with its own key, APT_SIGNING_KEY:
 # one suite of it written again from a release's .rpms and put into the bucket in place
 # of what that suite was, once Fedora and openSUSE have installed it and upgraded to it.
@@ -38,9 +38,10 @@ permissions:
   contents: read
 
 env:
-  # apt.yml's: the same key, address, bucket and account.
+  # apt.yml's: the same key, bucket and account.
   APT_KEY_FINGERPRINT: 44404B19539FB2C53F31086941F0103448A194DE
-  APT_BASE_URL: https://apt.orden.so
+  # The bucket's `rpm/`, as readers are given it: rpm.orden.so/<x> is the bucket's rpm/<x>.
+  RPM_BASE_URL: https://rpm.orden.so
   R2_BUCKET: orden-apt
   CF_ACCOUNT_ID: b0e98c15b1f905a394ecd6a849e8e99f
 
@@ -197,7 +198,7 @@ jobs:
           dir="rpm/$SUITE"
           s3 sync "$dir" "$bucket/$dir" --only-show-errors --exclude 'repodata/*' --cache-control 'public, max-age=31536000, immutable'
           s3 sync "$dir/repodata" "$bucket/$dir/repodata" --only-show-errors --delete --cache-control 'public, max-age=60'
-          for file in rpm/*.repo orden-archive-keyring.asc; do
+          for file in rpm/*.repo rpm/orden-archive-keyring.asc; do
             s3 cp "$file" "$bucket/$file" --only-show-errors --cache-control 'public, max-age=300'
           done
           s3 sync "$dir" "$bucket/$dir" --only-show-errors --delete --exclude 'repodata/*' --cache-control 'public, max-age=31536000, immutable'
@@ -212,6 +213,10 @@ jobs:
       - name: Served
         working-directory: repo
         run: |
-          for path in "rpm/$SUITE/repodata/repomd.xml" "rpm/$SUITE/repodata/repomd.xml.asc" rpm/*.repo; do
-            curl -fsSI "$APT_BASE_URL/$path" | head -1
+          for path in "$SUITE/repodata/repomd.xml" "$SUITE/repodata/repomd.xml.asc" orden-archive-keyring.asc; do
+            curl -fsSI "$RPM_BASE_URL/$path" | head -1
+          done
+          # And the .repo file a reader is told to fetch, as it was written.
+          for file in rpm/*.repo; do
+            curl -fsS "$RPM_BASE_URL/${file#rpm/}" | cmp - "$file"
           done

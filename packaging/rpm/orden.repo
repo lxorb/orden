@@ -1,6 +1,6 @@
 [@ID@]
 name=@NAME@
-baseurl=@BASE@/rpm/@SUITE@
+baseurl=@BASE@/@SUITE@
 enabled=1
 gpgcheck=1
 repo_gpgcheck=1
