@@ -33,7 +33,6 @@ const bytes = (...values: number[]) => new Uint8Array(values)
 const folderIn = (home: string) => join(home, '.cache', 'nib', 'images')
 const aDayAgo = () => (Date.now() - 25 * 60 * 60_000) / 1000
 
-/** An old file at `path`, made a day and more ago. */
 function old(path: string) {
   writeFileSync(path, 'x')
   utimesSync(path, aDayAgo(), aDayAgo())
@@ -52,7 +51,6 @@ describe('where nibd is the user already', () => {
 
     expect(path).toBe(join(folderIn(home), `${ID}.png`))
     expect([...readFileSync(path)]).toEqual([137, 80, 78, 71])
-    // Windows keeps no POSIX modes; the machine itself is Linux.
     if (process.platform !== 'win32') expect(statSync(path).mode & 0o777).toBe(0o600)
   })
 
@@ -176,8 +174,6 @@ describe('where nibd is root', () => {
     expect(await elsewhere.part(ID, 'png', bytes(1), true)).toBeNull()
   })
 
-  /** The script itself, run by this test's own user in place of `setpriv`'s. Linux only,
-   *  as the machine is: it asks for GNU find's `-regextype`. */
   describe.runIf(process.platform === 'linux')('the script the user runs', () => {
     const asThisUser = (home: string): Run => {
       return (_file, args, _env, input) => {

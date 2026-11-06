@@ -1,8 +1,3 @@
-/** The image booted with nothing in the cloud (test/image.sh starts it): `nibd` answers
- *  on its link, a session is a login shell of the machine's user with the tools of 4.2,
- *  the agents run from the home, and - on the traced machine - a session reads the
- *  agents' files while strace watches `nibd` for image.sh to read. */
-
 import { describe, expect, test } from 'vitest'
 import { bytes, healthy, linked, until } from './link'
 
@@ -10,7 +5,6 @@ const URL = process.env.NIBD_URL ?? ''
 const TRACED = process.env.NIBD_TRACED_URL ?? ''
 const SECRET = process.env.NIBD_SECRET ?? ''
 
-/** Everything a session printed for a command typed into it, up to a marker after it. */
 async function ran(url: string, session: string, command: string): Promise<string> {
   const link = await linked(url, SECRET)
   link.send({ t: 'open', session, cols: 200, rows: 50 })

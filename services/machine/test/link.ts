@@ -1,12 +1,9 @@
-/** A link to a running `nibd`, as `Machine` holds one: for the drives of a real process. */
-
 import { WebSocket } from 'ws'
 import { linkFrame, nibdFrameOf, type MachineFrame, type NibdFrame } from '@orden/online/wire'
 
 export interface Link {
   frames: NibdFrame[]
   send(frame: MachineFrame): void
-  /** Everything a session printed so far, as text. */
   text(session: string): string
   close(): void
 }

@@ -1,29 +1,15 @@
-/** What `nibd` and a session's holder (hold.ts) say to each other over the holder's
- *  socket: frames of `[length: u32][kind: u8][body]`, the length counting the kind and
- *  the body.
- *
- *  A holder outlives the `nibd` that started it and is spoken to by every `nibd` after it,
- *  whichever version that is, until its shell ends. So these words only ever grow: a kind
- *  is never given a second meaning, a field is never taken away, and `hello` says the
- *  version a holder speaks. The offsets are the session's own, the `seq` of the link, so a
- *  device that drew up to one before a restart is still sent exactly what it missed. */
-
 export const HOLD_VERSION = 1
 
-/** The environment variable a holder is told what to run in; see `Spec`. */
 export const HOLD_SPEC = 'NIBD_HOLD'
 
-/** What a holder runs, and where it listens. Its environment is the shell's. */
 export interface Spec {
   socket: string
-  /** The session's cgroup, or null where the host has none. */
   cgroup: string | null
   file: string
   args: string[]
   cwd: string
   cols: number
   rows: number
-  /** The session's offset of the first byte this shell prints. */
   base: number
 }
 
@@ -42,35 +28,26 @@ export function specOf(raw: string | undefined): Spec | null {
   return { socket, cgroup, file, args, cwd, cols, rows, base }
 }
 
-/** How the shell ended: its exit code, or null for a signal. */
 export interface Exit {
   code: number | null
 }
 
-/** What a holder says first, to every `nibd` that connects. */
 export interface Hello {
   t: 'hello'
   v: number
-  /** The holder's process and the shell's: what ending the session kills, and what the
-   *  program in front is read from. */
   holder: number
   shell: number
-  /** The offset of the first byte the holder ever read, of the oldest it still keeps,
-   *  and of the one after its last. */
   base: number
   from: number
   end: number
   cols: number
   rows: number
-  /** Set once the shell has ended. */
   exited: Exit | null
 }
 
 export type FromHolder =
   Hello | { t: 'out'; seq: number; data: Uint8Array } | ({ t: 'exit' } & Exit)
 
-/** Output from `since` on (or from the oldest kept, where `since` is older), then every
- *  byte as it is read; keys; a new size. */
 export type ToHolder =
   | { t: 'attach'; since: number }
   | { t: 'in'; data: Uint8Array }
@@ -83,7 +60,6 @@ const ATTACH = 10
 const IN = 11
 const SIZE = 12
 
-/** No frame is larger: a length past it is a stream that went wrong. */
 const MOST_FRAME = 16 * 1024 * 1024
 
 const encoder = new TextEncoder()
@@ -102,7 +78,6 @@ function json(kind: number, value: unknown): Uint8Array {
   return framed(kind, encoder.encode(JSON.stringify(value)))
 }
 
-/** Eight bytes of offset, then the bytes. */
 function offsetThen(seq: number, data: Uint8Array): Uint8Array {
   const body = new Uint8Array(8 + data.length)
   new DataView(body.buffer).setFloat64(0, seq)
@@ -127,14 +102,11 @@ export function frameOf(frame: FromHolder | ToHolder): Uint8Array {
   }
 }
 
-/** One frame as it came off the socket, not yet read. */
 export interface Raw {
   kind: number
   body: Uint8Array
 }
 
-/** A socket's bytes cut into frames, however the reads split them. `broken` once a
- *  length says something no frame is; the socket is then dropped. */
 export class Frames {
   private held = new Uint8Array(0)
   broken = false
@@ -183,8 +155,6 @@ function exitOf(value: unknown): Exit | null {
   return code === null || (typeof code === 'number' && Number.isInteger(code)) ? { code } : null
 }
 
-/** A frame from a holder, checked; null for one this `nibd` does not know, which is
- *  skipped. */
 export function fromHolderOf(raw: Raw): FromHolder | null {
   if (raw.kind === OUT) {
     if (raw.body.length < 8) return null
@@ -208,7 +178,6 @@ export function fromHolderOf(raw: Raw): FromHolder | null {
   return { t: 'hello', v, holder, shell, base, from, end, cols, rows, exited }
 }
 
-/** A frame from `nibd`, checked; null for one this holder does not know. */
 export function toHolderOf(raw: Raw): ToHolder | null {
   if (raw.kind === IN) return { t: 'in', data: raw.body }
   const value = parsed(raw.body)

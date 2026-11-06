@@ -1,21 +1,3 @@
-/** A session's holder: the one process that owns a session's pty, so the program in it
- *  outlives every restart of `nibd` (docs/online-terminal.md 4.16). dtach's shape, with
- *  what dtach leaves out: the last few megabytes of output kept while nobody is attached,
- *  numbered by the session's own offsets, so the `nibd` after a restart hears exactly what
- *  it missed and a full-screen program is drawn back as it is.
- *
- *  `nibd` starts one per shell, in a session of its own, and on a server it moves itself
- *  into the session's cgroup before the shell exists, so neither a signal to `nibd` nor
- *  systemd stopping `nibd`'s unit reaches it or anything the shell started. It listens on
- *  one Unix socket in `nibd`'s state folder, which only root reaches, and takes one `nibd`
- *  at a time; a second replaces the first, as on the link. The pty is read whether
- *  anybody is attached or not, so a program never waits on a `nibd` that is restarting;
- *  it is paused only while the `nibd` that is attached falls behind, which is the back
- *  pressure the link already has.
- *
- *  Kept small on purpose. It runs until its shell ends, so whatever version started it is
- *  the one every later `nibd` speaks to (hold-wire.ts). */
-
 import { rmSync } from 'node:fs'
 import { createServer, type Socket } from 'node:net'
 import { spawn } from 'node-pty'
@@ -34,21 +16,16 @@ import {
 import { enterCgroup } from './limits'
 import { Ring } from './ring'
 
-/** How much output a holder keeps for the `nibd` after a restart: minutes of an agent's
- *  redrawing, so a save a few minutes old still meets what followed it. */
 export const HELD = 4 * 1024 * 1024
 
-/** What one output frame carries at most, kept or read. */
 const PART = 64 * 1024
 
-/** Past this much not yet taken by `nibd` the pty waits; see the header. */
 const BEHIND = 1024 * 1024
 
 function hold(spec: Spec, env: Record<string, string>): void {
   const ring = new Ring(spec.base, HELD)
   let size = { cols: spec.cols, rows: spec.rows }
   let client: Socket | null = null
-  /** Whether the client asked for output yet: until then it hears nothing but `hello`. */
   let attached = false
   let exited: Exit | null = null
 
@@ -72,7 +49,6 @@ function hold(spec: Spec, env: Record<string, string>): void {
     rmSync(spec.socket, { force: true })
     process.exit(0)
   }
-  /** The shell's end said, once everything before it is, and then nothing is left. */
   const finish = (socket: Socket): void => {
     say(socket, { t: 'exit', ...(exited ?? { code: null }) })
     socket.end(quit)
@@ -151,10 +127,7 @@ function hold(spec: Spec, env: Record<string, string>): void {
       pty.resume()
     })
   })
-  // A socket left by a holder that is gone (a reboot keeps /var/lib) is not this one's.
   rmSync(spec.socket, { force: true })
-  // Root's alone, as the folder it is in: the socket is a way into the shell. Only while
-  // it is made, which is at once: the shell keeps the umask it was started with.
   const umask = process.umask(0o077)
   server.listen(spec.socket)
   process.umask(umask)
@@ -164,8 +137,6 @@ function main(): void {
   const spec = specOf(process.env[HOLD_SPEC])
   Reflect.deleteProperty(process.env, HOLD_SPEC)
   if (!spec) process.exit(2)
-  // The holder's one job is to stay: a stray error in it must never take the program
-  // with it, and there is nobody to tell (its output goes nowhere).
   process.on('uncaughtException', () => undefined)
   if (spec.cgroup) enterCgroup(spec.cgroup, process.pid)
   const env: Record<string, string> = {}

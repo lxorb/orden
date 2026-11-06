@@ -57,7 +57,6 @@ test('a flush of part sends that part now and the rest at the next frame', () =>
   expect(sent).toEqual(['a', 'bc', 'd'])
 })
 
-/** A coalescer on a clock of the test's own, moved with the timers. */
 function clocked() {
   const sent: { at: number; text: string }[] = []
   let now = 1000
@@ -76,7 +75,6 @@ function clocked() {
 
 test('a key’s echo goes at once even inside a busy frame, not up to a frame later', () => {
   const { sent, coalescer, pass } = clocked()
-  // A spinner printed 2 ms ago; the key's echo follows.
   coalescer.push(bytes('-'))
   pass(2)
   coalescer.typed()
@@ -138,6 +136,5 @@ test('every key buys its own echo: fast typing is never a frame behind', () => {
     pass(4)
   }
   expect(sent.map((one) => one.text)).toEqual(['h', 'e', 'l', 'l', 'o'])
-  // Each echo went one millisecond after its key.
   expect(sent.map((one) => one.at)).toEqual([1001, 1006, 1011, 1016, 1021])
 })

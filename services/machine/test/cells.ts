@@ -1,7 +1,3 @@
-/** A terminal's whole state as plain data, to compare two terminals cell by cell: every
- *  line of both screens with each cell's character, width, colours and attributes, the
- *  cursor, which screen is in front, and the modes a program can switch on. */
-
 import headless from '@xterm/headless'
 
 const { Terminal } = headless
@@ -12,15 +8,12 @@ export function terminal(cols: number, rows: number): Term {
   return new Terminal({ cols, rows, scrollback: 5000, allowProposedApi: true })
 }
 
-/** Everything written so far, parsed. */
 export function written(term: Term, data: string | Uint8Array = ''): Promise<void> {
   return new Promise((resolve) => {
     term.write(data, resolve)
   })
 }
 
-/** The 256-colour palette's first sixteen are the sixteen colours by another name, which
- *  the serialise addon writes in the shorter form: the same colour on any screen. */
 const P16 = 0x1000000
 const P256 = 0x2000000
 
@@ -56,8 +49,6 @@ function lines(buffer: Buffer): string[] {
     out.push(`${line.isWrapped ? '~' : ''}${cells.join(' ')}`)
     if (!blank) used = out.length
   }
-  // Blank lines past the last written one are how far the screen scrolled, not what is
-  // on it.
   return out.slice(0, used)
 }
 
@@ -74,7 +65,6 @@ export function cells(term: Term): unknown {
   }
 }
 
-/** The text on the visible screen, for a test that looks for a word. */
 export function text(term: Term): string {
   const buffer = term.buffer.active
   const out: string[] = []

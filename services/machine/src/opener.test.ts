@@ -7,8 +7,6 @@ afterEach(() => {
   for (const server of servers.splice(0)) server.close()
 })
 
-/** The endpoint on a port of this computer's (the image's is a Unix socket), with an
- *  opener that keeps what it was asked and answers `heard`. */
 async function started(heard = true, now: () => number = Date.now) {
   const opened: { url: string; session: string }[] = []
   const server = serveOpener(

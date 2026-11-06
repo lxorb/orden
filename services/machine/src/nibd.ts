@@ -1,17 +1,3 @@
-/** `nibd`: every session on the machine, and what it says over the link to `Machine`
- *  (docs/online-terminal.md 4.6).
- *
- *  It knows nothing of Orden's accounts, spaces or roles - `Machine` is the door and has
- *  decided all of that before a frame reaches here - and it never opens anything under
- *  the home but what a shell does and the pictures pasted into a session, which it writes
- *  to `~/.cache/nib/images` as the user, never as root (images.ts): no file of the agents' (`~/.claude`, `~/.codex`)
- *  is read by any code of Orden's (4.7). Its whole vocabulary is the link's, from
- *  `@orden/online/wire`.
- *
- *  It owns no pty itself: every shell is in a holder of its own (hold.ts), which outlives
- *  `nibd`, so a restart of `nibd` - a deploy it picks up, the owner's Restart, its own
- *  watchdog, a crash, systemd after a security update - ends no program (4.16). */
-
 import { mkdirSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Activity } from '@orden/online/types'
@@ -26,7 +12,6 @@ import { programOf } from './proc'
 import { Session } from './session'
 
 export interface Options {
-  /** Where screens are saved: `/var/lib/nibd`. */
   state: string
   home: string
   shell: string
@@ -34,28 +19,16 @@ export interface Options {
   env: Record<string, string>
   pidsMax: number
   cgroups: Cgroups | null
-  /** How often activity is reported (30 s) and the home measured (an hour). */
   activityEvery: number
   homeEvery: number
-  /** How often every screen is written down while awake (5 min), so a `nibd` ended
-   *  without a SIGTERM - its watchdog, a crash, the kernel - comes back with screens
-   *  only minutes old; 0 for never. */
   saveEvery?: number
-  /** Makes a callback's request on this machine; `fetch`, or the tests' stand-in. */
   call?: (url: string) => Promise<number>
-  /** Ends `nibd` for its supervisor to start again (systemd on a server, the entrypoint in
-   *  a container), once every screen is saved: `restart` from the link. */
   restart?: () => void
-  /** The holder every shell runs under, `hold.cjs` beside `nibd.cjs` (hold.ts). */
   holder: string
 }
 
-/** How long a callback's request may take: a program's sign-in listener answers at
- *  once, or it is not listening. */
 const CALL_WAIT = 10_000
 
-/** The request a callback is: a GET to the program's own listener on this machine,
- *  followed nowhere. The answer's status, or 0 where nothing answered. */
 async function call(url: string): Promise<number> {
   try {
     const answer = await fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(CALL_WAIT) })
@@ -74,11 +47,9 @@ export class Nibd {
   private readonly meter = new Meter(Date.now())
   private link: ((frame: NibdFrame) => void) | null = null
   private homeBytes = 0
-  /** The session typed in last, for an address asked for where none was said. */
   private lastTyped: string | null = null
   private readonly timers: ReturnType<typeof setInterval>[] = []
   private readonly images: Images
-  /** The folder every holder's socket is in, root's alone. */
   private readonly holds: string
 
   constructor(options: Options) {
@@ -87,9 +58,6 @@ export class Nibd {
     this.saves = new Saves(options.state)
     this.holds = join(options.state, 'holds')
     mkdirSync(this.holds, { recursive: true, mode: 0o700 })
-    // Every saved session comes back now: still running in its holder where only `nibd`
-    // restarted, or above a fresh shell after a sleep or a reboot, so the first `open`
-    // after either finds it as it was left.
     for (const saved of this.saves.all()) {
       this.sessions.set(saved.session, this.session(saved.session, saved.cols, saved.rows, saved))
     }
@@ -111,8 +79,6 @@ export class Nibd {
     void this.measure()
   }
 
-  /** The link to `Machine`, or none: frames said with none are dropped, since what
-   *  they say is asked for again by the next link's `want`. */
   attach(send: ((frame: NibdFrame) => void) | null): void {
     this.link = send
   }
@@ -151,7 +117,6 @@ export class Nibd {
       this.send({ t: 'sessions', sessions: await this.list() })
       return
     }
-    // Answered by the server as it arrives (server.ts); here only from a test.
     if (frame.t === 'ping') {
       this.send({ t: 'pong' })
       return
@@ -186,14 +151,12 @@ export class Nibd {
         this.saves.forget(frame.session)
         return
       case 'callback': {
-        // Checked by the codec already; asked again, since this one goes to the network.
         if (!isLoopbackUrl(frame.url)) return
         const status = await (this.options.call ?? call)(frame.url)
         this.send({ t: 'called', session: frame.session, url: frame.url, status })
         return
       }
       case 'image': {
-        // A picture pasted in the session, a file here once its last part is (images.ts).
         const path = await this.images.part(frame.id, frame.kind, frame.data, frame.last)
         if (path !== undefined)
           this.send({ t: 'image', session: frame.session, id: frame.id, path })
@@ -202,9 +165,6 @@ export class Nibd {
     }
   }
 
-  /** Every session on the machine, for Settings' list: the ones this `nibd` has, and every
-   *  holder still running that no `open` asked for since it started - a session whose tab
-   *  has been closed all the while is still a program running on the machine. */
   async list(): Promise<SessionNow[]> {
     const listed = [...this.sessions.values()].map((one) => one.now())
     let sockets: string[]
@@ -220,9 +180,6 @@ export class Nibd {
     return [...listed, ...found.filter((one) => one !== null)]
   }
 
-  /** A holder nobody opened since this `nibd` started, asked how it is and let go of. */
-  /** A watcher's open of a session this machine has not got: only a program still running
-   *  in its holder, which is a question to ask it, with the session's next frames behind. */
   private async watcherOpens(id: string, cols: number, rows: number): Promise<void> {
     const opens = async () => {
       if (!(await this.holderOf(id))?.alive) return
@@ -252,9 +209,6 @@ export class Nibd {
     }
   }
 
-  /** An address a program asked a browser for (opener.ts): said up the link for the
-   *  session it was asked in, or the one typed in last. False where no link hears it or
-   *  there is no session to say it for. */
   open(url: string, session: string): boolean {
     const id = this.sessions.has(session) ? session : this.lastTyped
     if (!this.link || id === null || !this.sessions.has(id)) return false
@@ -262,8 +216,6 @@ export class Nibd {
     return true
   }
 
-  /** Every screen written down, then `saved`: as the machine sleeps, and on SIGTERM;
-   *  quietly, with nobody waiting on it, every few minutes. */
   async saveAll(say = true): Promise<void> {
     const at = Date.now()
     for (const session of this.sessions.values()) {
@@ -276,7 +228,6 @@ export class Nibd {
     if (say) this.send({ t: 'saved' })
   }
 
-  /** The last stretch's activity, as the awake rule reads it. */
   activity(): Activity {
     const now = Date.now()
     const { cpu, net } = this.meter.since(now)
@@ -296,14 +247,10 @@ export class Nibd {
     if (bytes !== null) this.homeBytes = bytes
   }
 
-  /** Every pty stops being read while the link is too far behind, so a flood waits
-   *  for the link rather than filling `nibd`'s memory. */
   pause(paused: boolean): void {
     for (const session of this.sessions.values()) session.pause(paused)
   }
 
-  /** A session no `open` asked for since this `nibd` started, ended all the same: its
-   *  holder found and ended, with everything its shell started. */
   private endHeld(id: string): void {
     this.options.cgroups?.kill(id)
     const held = new Held(socketOf(this.holds, id), {
@@ -314,8 +261,6 @@ export class Nibd {
     void held.find()
   }
 
-  /** Everything stopped: the timers, and every session let go of, its program running
-   *  on in its holder for the `nibd` after this one; or, `ending`, ended. */
   stop(ending = false): void {
     for (const timer of this.timers) clearInterval(timer)
     for (const session of this.sessions.values()) {

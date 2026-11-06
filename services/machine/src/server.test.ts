@@ -7,7 +7,6 @@ import { serve } from './server'
 
 const SECRET = 'a-secret-for-this-boot'
 
-/** A `nibd` that only records what the link did to it. */
 function fake() {
   const received: MachineFrame[] = []
   let send: ((frame: NibdFrame) => void) | null = null
@@ -135,7 +134,6 @@ test('a link that pinged and then fell silent is dropped and let go of', async (
 
   socket.send(linkFrame({ t: 'ping' }))
   await closed
-  // Attached on the link, then let go of when it was dropped.
   await expect.poll(() => attached.at(-1)).toBeNull()
 })
 

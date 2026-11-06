@@ -1,12 +1,3 @@
-/** `nibd` started: its settings from the environment the entrypoint gave it, the server,
- *  its own watchdog (watchdog.ts), and the save on SIGTERM. Neither a SIGTERM nor a
- *  restart ends a session: `nibd` lets go of each, and its holder keeps the program
- *  running for the `nibd` after this one (hold.ts).
- *
- *  The secret is read once and taken out of the environment before any shell starts,
- *  so no session inherits it. Every session gets a small environment of its own
- *  rather than `nibd`'s, and its login shell builds the rest. */
-
 import { existsSync } from 'node:fs'
 import { homedir, userInfo } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -17,11 +8,8 @@ import { serve } from './server'
 import { watch } from './watchdog'
 
 const PORT = 7680
-/** The code `nibd` ends with when asked to restart: EX_TEMPFAIL, "try again". */
 const RESTART = 75
 
-/** What every shell is given from `nibd`'s environment: the language, the time zone, and
- *  the certificates the entrypoint put in place for the host's HTTPS (4.2, 4.8). */
 const PASSED = [
   'PATH',
   'LANG',
@@ -58,10 +46,8 @@ function main(): void {
     SHELL: shell,
     TERM: 'xterm-256color',
     COLORTERM: 'truecolor',
-    // As every terminal Orden starts on a computer says (src-tauri/src/terminal/shells.rs).
     TERM_PROGRAM: 'nib',
     LANG: 'C.UTF-8',
-    // A program that asks for a browser gets its owner's own; see opener.ts.
     BROWSER: 'nib-open',
   }
   for (const key of PASSED) {
@@ -80,9 +66,7 @@ function main(): void {
     activityEvery: numberOf(env.NIBD_ACTIVITY_MS, 30_000),
     homeEvery: numberOf(env.NIBD_HOME_MS, 60 * 60_000),
     saveEvery: numberOf(env.NIBD_SAVE_MS, 5 * 60_000),
-    // Beside this file: in the image, on a server and in the repository's dist alike.
     holder: join(dirname(process.argv[1] ?? '.'), 'hold.cjs'),
-    // Not 0, which both supervisors read as "asked to stop": started again at once.
     restart: () => {
       nibd.stop()
       process.exit(RESTART)
@@ -101,9 +85,6 @@ function main(): void {
   const stop = (): void => {
     if (stopping) return
     stopping = true
-    // The host gives a stopping machine a grace period; the screens are worth more of
-    // it than anything else, so they go first, and the exit does not wait on sockets.
-    // Where the machine goes on (systemd restarting `nibd` alone), so do the holders.
     setTimeout(() => process.exit(0), 8000).unref()
     void nibd.saveAll().finally(() => {
       nibd.stop()

@@ -13,7 +13,6 @@ afterEach(() => {
   }
 })
 
-/** A `nibd` with no session yet, whose callbacks are answered by `call`. */
 function machine(
   call: (url: string) => Promise<number> = () => Promise.resolve(200),
   restart?: () => void,
@@ -29,7 +28,6 @@ function machine(
     cgroups: null,
     activityEvery: 60_000,
     homeEvery: 60_000,
-    // No test here starts a shell.
     holder: '',
     call,
     ...(restart ? { restart } : {}),
@@ -104,7 +102,6 @@ test('a pasted picture is answered with where it was written, once its last part
       t: 'image',
       session: 's_1',
       id,
-      // Either separator: the machine's is `/`, a developer's computer may say `\`.
       path: expect.stringMatching(
         /\.cache[\\/]nib[\\/]images[\\/]0123456789abcdef0123\.png$/,
       ) as string,

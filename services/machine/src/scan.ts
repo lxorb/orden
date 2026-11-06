@@ -1,19 +1,7 @@
-/** Where in a stream of terminal output a screen may be taken.
- *
- *  A pty is read in whatever pieces the kernel hands over, and a piece may end inside an
- *  escape sequence or a UTF-8 character. A screen serialised there would lose the half
- *  that was parsed - the parser's state is not part of any screen - and the joiner would
- *  draw the other half as text. So the stream is followed by this small parser, which
- *  knows only where sequences begin and end (ECMA-48's shapes, as xterm.js reads them),
- *  and a screen is taken only at a point where it stands in the ground state between
- *  two whole characters. */
-
 const GROUND = 0
 const ESCAPE = 1
 const CSI = 2
-/** OSC, DCS, SOS, PM and APC: a string ended by BEL or ST. */
 const TEXT = 3
-/** An ESC inside a string: the start of ST, or of a new sequence. */
 const TEXT_ESCAPE = 4
 type State = typeof GROUND | typeof ESCAPE | typeof CSI | typeof TEXT | typeof TEXT_ESCAPE
 
@@ -24,11 +12,8 @@ const SUB = 0x1a
 
 export class Scanner {
   private state: State = GROUND
-  /** UTF-8 continuation bytes still to come. */
   private more = 0
-  /** The offset after the last byte at which a screen could be taken. */
   safe = 0
-  /** Offsets fed so far. */
   private at = 0
 
   feed(bytes: Uint8Array): void {
@@ -69,7 +54,6 @@ export class Scanner {
           this.state = TEXT
         } else if (byte === ESC) this.state = ESCAPE
         else if (byte >= 0x30 && byte <= 0x7e) this.state = GROUND
-        // Intermediates and C0 controls keep the sequence open.
         return
       case CSI:
         if (byte === ESC) this.state = ESCAPE

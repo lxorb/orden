@@ -1,9 +1,4 @@
 #!/bin/bash
-# The image built and booted with nothing in the cloud (docs/online-terminal.md 6.2, lanes
-# 2 and 6): nibd answering in it, the tools of 4.2, Claude Code and Codex installed
-# unmodified with their checksums matching their makers' own, and nibd opening nothing
-# under ~/.claude or ~/.codex while a session does. Run from services/machine with the
-# image's tag; CI's machine workflow is the only caller.
 set -euo pipefail
 image=$1
 secret=ci-$RANDOM-$RANDOM
@@ -16,8 +11,6 @@ trap cleanup EXIT
 docker run -d --name nib-machine -e NIBD_SECRET="$secret" -e TZ=Europe/Zurich \
   -p 127.0.0.1:7680:7680 "$image"
 
-# A machine whose nibd runs under strace, with the agents' files in place and the agents
-# not installed, so every open of those files is a session's or nibd's own.
 docker run -d --name nib-traced --cap-add SYS_PTRACE -e NIBD_SECRET="$secret" \
   -p 127.0.0.1:7681:7680 --entrypoint bash "$image" -c '
     set -e
@@ -33,14 +26,10 @@ docker run -d --name nib-traced --cap-add SYS_PTRACE -e NIBD_SECRET="$secret" \
 NIBD_URL=ws://127.0.0.1:7680 NIBD_TRACED_URL=ws://127.0.0.1:7681 NIBD_SECRET=$secret \
   pnpm exec vitest run --config vitest.image.config.ts
 
-# A program in a session goes on while nibd ends under it and the entrypoint starts it
-# again: told to restart down the link, then killed outright (test/survive.drive.ts).
 NIBD_SURVIVE_URL=ws://127.0.0.1:7680 NIBD_SECRET=$secret \
   NIBD_SURVIVE_RESTARTS='["docker exec nib-machine pkill -KILL -f /opt/nibd/nibd.cjs"]' \
   pnpm exec vitest run --config vitest.image.config.ts test/survive.drive.ts
 
-# nibd ended under a machine that goes on (a crash, the OOM killer, its own watchdog) is
-# started again in the same machine by the entrypoint, and answers within seconds.
 before=$(docker exec nib-machine pgrep -f /opt/nibd/nibd.cjs)
 docker exec nib-machine pkill -KILL -f /opt/nibd/nibd.cjs
 again=
@@ -55,9 +44,6 @@ done
 [ -n "$again" ] && [ "$(docker inspect -f '{{.State.Running}}' nib-machine)" = true ]
 echo "nibd started again in the same machine"
 
-# The agents' checksums, against what their makers publish: Claude Code's binary against
-# the SHA-256 in its release manifest, every Codex package against the registry's
-# SHA-512 integrity.
 docker exec -u nib -w /home/nib nib-machine bash -lc '
   set -euo pipefail
   version=$(claude --version | cut -d" " -f1)
@@ -68,8 +54,6 @@ docker exec -u nib -w /home/nib nib-machine bash -lc '
   echo "claude $version $platform: $actual"
   [ "$expected" = "$actual" ]
 
-  # npm keeps the integrity of every tarball it fetched, checked as it fetched it, in
-  # its cache index; each installed Codex package is looked up there by its tarball.
   checked=0
   for manifest in $(find ~/.local/lib/node_modules/@openai -name package.json -path "*/@openai/codex*/package.json" -not -path "*/node_modules/*/node_modules/*/node_modules/*"); do
     [ "$(jq -r .name "$manifest")" = "@openai/codex" ] || continue
@@ -84,8 +68,6 @@ docker exec -u nib -w /home/nib nib-machine bash -lc '
   [ "$checked" -ge 2 ]
 '
 
-# nibd's own threads never open, list or look at anything of the agents': every process
-# that touched those folders is one that went on to run a program of its own (execve).
 docker exec nib-traced cat /tmp/trace >trace.log
 python3 - trace.log <<'PY'
 import re, sys

@@ -1,9 +1,3 @@
-/** A late joiner's screen against a terminal that saw everything (4.6): the screen
- *  serialised at a point in the stream, drawn into a fresh terminal, then the rest of
- *  the stream after it, compared cell by cell with a terminal fed the whole stream - at
- *  every point a screen could be taken, with colours mid-stream and a full-screen
- *  program on the second screen. */
-
 import { expect, test } from 'vitest'
 import { cells, terminal, written } from '../test/cells'
 import { Scanner } from './scan'
@@ -12,9 +6,6 @@ import { Screen } from './screen'
 const COLS = 60
 const ROWS = 12
 
-/** What a shell and a full-screen editor print: scrolled lines in many colours, wide
- *  characters, a title, then the second screen with its modes, a status line in
- *  reverse and the cursor left mid-screen. */
 function stream(): Uint8Array {
   const parts: string[] = ['\x1b]0;build\x07']
   for (let i = 0; i < 40; i++) {
@@ -87,8 +78,6 @@ test("a saved screen is the shell's alone, with no modes left switched on", asyn
   expect(back.modes.mouseTrackingMode).toBe('none')
 })
 
-/** A long address the shell let wrap stays one line for a joiner, so the app's link
- *  provider joins it as the watcher's would: the screen keeps which rows are wraps. */
 test('a wrapped line stays wrapped for a joiner', async () => {
   const address = `https://claude.ai/oauth/authorize?scope=${'user%3Aprofile+'.repeat(12)}`
   const screen = new Screen(COLS, ROWS)

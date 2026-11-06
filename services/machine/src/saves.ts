@@ -1,38 +1,18 @@
-/** Every session's screen, written as the machine goes to sleep, every few minutes while
- *  it is awake and as `nibd` stops, and read as `nibd` starts (docs/online-terminal.md
- *  4.4, 4.6, 4.16).
- *
- *  Read two ways. Where the session's holder is still there (`nibd` alone restarted),
- *  the program is too, and the screen is drawn back whole, the second screen and every
- *  mode included, with what the holder kept after it on top. Where it is not (a sleep, a
- *  reboot), what a person sees is the first screen they left, above a fresh prompt, in
- *  the folder they were in: the local terminal's restore. One file a session under
- *  `/var/lib/nibd/sessions`, written whole and renamed into place, so a machine stopped
- *  mid-write keeps the last good one. */
-
 import { mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 export interface Saved {
-  /** 2: `screen` is the whole terminal. 1, from a `nibd` before holders: the first
-   *  screen alone, without its modes. */
   v: 1 | 2
   session: string
-  /** When it was saved. */
   at: number
-  /** The offset the saved screen shows everything before. */
   seq: number
   cols: number
   rows: number
-  /** The serialised screen, as `v` says. */
   screen: string
-  /** The program that was in front, by name. */
   program: string | null
-  /** The folder the shell was in. */
   folder: string | null
 }
 
-/** A session id safe to be a file name: what Machine's ids are made of. */
 export function isSessionId(id: string): boolean {
   return /^[A-Za-z0-9_-]{1,200}$/.test(id)
 }
@@ -51,7 +31,6 @@ export class Saves {
     renameSync(`${file}.tmp`, file)
   }
 
-  /** Every saved session, oldest first; a file that does not read is skipped. */
   all(): Saved[] {
     let names: string[]
     try {
@@ -67,7 +46,6 @@ export class Saves {
     return out.sort((a, b) => a.at - b.at)
   }
 
-  /** A session ended for good: nothing to draw back. */
   forget(session: string): void {
     rmSync(join(this.dir, `${session}.json`), { force: true })
   }

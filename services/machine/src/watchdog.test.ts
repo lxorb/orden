@@ -10,8 +10,6 @@ test('a loop is stalled once it has not turned for longer than the limit', () =>
   expect(stalled(1000, 1500, 400)).toBe(true)
 })
 
-/** A node process that watches its own loop (limit 400 ms), then holds the loop for
- *  `holdFor` ms and says whether it came out the other side. */
 function held(holdFor: number): Promise<{ out: string; ms: number }> {
   const module = pathToFileURL(join(import.meta.dirname, 'watchdog.ts')).href
   const script = `

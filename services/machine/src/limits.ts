@@ -1,26 +1,3 @@
-/** The fence around the sessions: who their shells run as, how many processes they may
- *  have, and how a session's every process is ended.
- *
- *  4.8's process limit, so a fork bomb ends in its own machine's sessions and never
- *  takes `nibd` - which answers the owner's End - with it. Two layers, because what
- *  a machine allows differs by host:
- *
- *  - **a cgroup**, `nibd`'s own under the cgroup filesystem, with `pids.max` on the
- *    sessions' parent and one child per session, so ending a session is the kernel's
- *    `cgroup.kill` and nothing it started survives. Where the filesystem is read-only
- *    (a container that was not given its cgroup), there is none;
- *  - **memory**: the same cgroup's `memory.max`, the machine's memory less what `nibd`
- *    needs to keep answering, so a build or an agent that eats it all is ended by the
- *    kernel inside the sessions, and the machine never thrashes to a halt around a
- *    `nibd` that can no longer say so. Best effort: a kernel without the controller
- *    has the pids fence alone;
- *  - **`RLIMIT_NPROC`** on every shell, set by `prlimit` before the shell starts, so
- *    the limit holds even where the cgroup could not be made. It counts the user's
- *    processes across sessions, which on a machine with one user is the same thing.
- *
- *  Shells run as the machine's user, `nib`, through `setpriv` with that user's groups,
- *  when `nibd` is root; as `nibd`'s own user otherwise (a developer's machine, CI). */
-
 import {
   appendFileSync,
   existsSync,
@@ -34,12 +11,8 @@ import { sessionStates } from './proc'
 
 export const PIDS_MAX = 4096
 
-/** What the sessions leave of the machine's memory: `nibd` itself, its screens, and the
- *  kernel's own room to work. */
 const KEPT_FOR_NIBD = 512 * 1024 * 1024
 
-/** The sessions' memory ceiling for a machine whose `/proc/meminfo` says `meminfo`, or
- *  null where it does not say or is too small to fence. */
 export function memoryMax(meminfo: string): number | null {
   const kib = Number(/^MemTotal:\s+(\d+) kB$/m.exec(meminfo)?.[1])
   if (!Number.isSafeInteger(kib) || kib <= 0) return null
@@ -47,7 +20,6 @@ export function memoryMax(meminfo: string): number | null {
   return most >= KEPT_FOR_NIBD ? most : null
 }
 
-/** The machine's one user, as `/etc/passwd` has them. */
 export interface User {
   name: string
   uid: number
@@ -74,8 +46,6 @@ export function userOf(name: string, passwd = '/etc/passwd'): User | null {
 const PRLIMIT = '/usr/bin/prlimit'
 export const SETPRIV = '/usr/bin/setpriv'
 
-/** `command`, run as `user` with that user's groups rather than as `nibd`: what every
- *  shell is started through, and anything else `nibd` does in the user's home. */
 export function asUser(user: User, command: string[]): string[] {
   return [
     SETPRIV,
@@ -87,7 +57,6 @@ export function asUser(user: User, command: string[]): string[] {
   ]
 }
 
-/** The command a session's pty runs: the login shell, fenced, as the user. */
 export function shellCommand(
   shell: string,
   user: User | null,
@@ -95,8 +64,6 @@ export function shellCommand(
   has: (path: string) => boolean = existsSync,
 ): { file: string; args: string[] } {
   let command = [shell, '-l']
-  // Best effort: a host that refuses the limit (a container without the capability)
-  // still gets its shell, with the cgroup as the fence.
   if (has(PRLIMIT)) {
     const fence = `${PRLIMIT} --nproc=${String(pidsMax)} --pid $$ 2>/dev/null; exec "$@"`
     command = ['/bin/sh', '-c', fence, 'nib-shell', ...command]
@@ -106,7 +73,6 @@ export function shellCommand(
   return { file, args }
 }
 
-/** `nibd`'s cgroup, or null where the host gives it none to write. */
 export class Cgroups {
   private readonly base: string
 
@@ -125,18 +91,14 @@ export class Cgroups {
       fenceMemory(root, base)
       return new Cgroups(base)
     } catch {
-      // Read-only, or a kernel without the pids controller: the rlimit fences alone.
       return null
     }
   }
 
-  /** The session's own cgroup, which its holder puts itself in before the shell exists
-   *  (`enterCgroup`), so everything the shell starts is in it from the first fork. */
   dirOf(session: string): string {
     return join(this.base, session)
   }
 
-  /** Every process of the session, ended by the kernel; false where it could not. */
   kill(session: string): boolean {
     const dir = join(this.base, session)
     try {
@@ -144,7 +106,6 @@ export class Cgroups {
     } catch {
       return false
     }
-    // A cgroup can only go once it is empty, which the kill makes it a moment later.
     setTimeout(() => {
       try {
         rmdirSync(dir)
@@ -156,21 +117,16 @@ export class Cgroups {
   }
 }
 
-/** A process moved into a session's cgroup. That is also what takes a holder out of
- *  `nibd`'s own unit, whose processes systemd ends whenever `nibd` stops. False where the
- *  host gives no cgroup to write. */
 export function enterCgroup(dir: string, pid: number): boolean {
   try {
     mkdirSync(dir, { recursive: true })
     writeFileSync(join(dir, 'cgroup.procs'), String(pid))
     return true
   } catch {
-    // Read-only, or not Linux: the rlimit fences alone, and End kills by process.
     return false
   }
 }
 
-/** The sessions' memory ceiling, where the kernel offers the controller. */
 function fenceMemory(root: string, base: string): void {
   try {
     const most = memoryMax(readFileSync('/proc/meminfo', 'utf8'))
@@ -182,9 +138,6 @@ function fenceMemory(root: string, base: string): void {
   }
 }
 
-/** A controller handed down from the cgroup root. A root that is a container's
- *  namespace, not the machine's, may not hand controllers down while processes sit in
- *  it, so they are moved into a cgroup of their own first. */
 function enable(root: string, controller: string): void {
   try {
     appendFileSync(join(root, 'cgroup.subtree_control'), controller)
@@ -205,15 +158,6 @@ function enable(root: string, controller: string): void {
   appendFileSync(join(root, 'cgroup.subtree_control'), controller)
 }
 
-/** Every process in the shell's kernel session, ended: the end of a session where there
- *  is no cgroup. A fork bomb forks while it is being killed, and every one killed gives
- *  its place under the process limit to another fork, so killing alone can fall behind
- *  it on a busy machine and leave it running (#446). A stopped process forks no more and
- *  keeps its place, so they are all stopped first, pass after pass, until two passes in
- *  a row find nothing that is not stopped - the second one sees any child made between
- *  the first one's listing and its parent's stop - and only then killed, none of them
- *  able to fork again. Bounded, so one the kernel cannot stop, waiting in a driver, does
- *  not hold `nibd` here: what is still up then is killed as before. */
 export function killSession(shell: number): void {
   const until = Date.now() + 5000
   let still = 0
@@ -233,9 +177,7 @@ export function killSession(shell: number): void {
   }
 }
 
-/** States a process forks no more in: stopped, stopped by a tracer, dead. */
 const SETTLED = new Set(['T', 't', 'Z', 'X'])
-/** Dead, waiting only to be reaped. */
 const DEAD = new Set(['Z', 'X'])
 
 function signal(processes: [pid: number, state: string][], name: NodeJS.Signals): void {

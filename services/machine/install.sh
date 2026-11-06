@@ -1,20 +1,4 @@
 #!/bin/bash
-# What a machine has, said once (docs/online-terminal.md 4.2, 4.15): the Dockerfile runs
-# this to build the Cloudflare image, and cloud-init runs it with --server on a Hetzner
-# server, so the two can never drift apart.
-#
-#   install.sh            the system, the user and Orden's own files (the image)
-#   install.sh --server   all of that, and what a server of its own needs besides:
-#                         cloudflared, the systemd units, security updates, swap, SSH shut
-#   install.sh --files    nib's own files alone: what nib-update puts in place before
-#                         every start of nibd, from the bundle the Worker hands out
-#
-# Run as root from the folder it is in, which holds the rest: nibd.cjs and hold.cjs (or
-# dist/ in the repository), package.json, agents.sh, profile.sh, nib-open, nib-update and
-# server/*.service. Everything fetched is checked: apt by its signed repositories, node
-# against the release's SHASUMS256.txt, uv against its release's .sha256. Claude Code and
-# Codex are not here: they go into the home at boot (agents.sh), where their own
-# updaters keep them current.
 set -euo pipefail
 
 NODE_VERSION=22.23.3
@@ -36,7 +20,6 @@ esac
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
-# Fetches $1 into $work as $2, failing on any HTTP error.
 fetch() {
   curl -fsSL --retry 3 --retry-delay 2 -o "$work/$2" "$1"
 }
@@ -51,7 +34,6 @@ system() {
     openssh-client locales tzdata util-linux procps
   ln -sf /usr/bin/fdfind /usr/local/bin/fd
 
-  # gh, from GitHub's own signed repository.
   mkdir -p -m 755 /etc/apt/keyrings
   wget -qO /etc/apt/keyrings/githubcli.gpg https://cli.github.com/packages/githubcli-archive-keyring.gpg
   echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli.gpg] https://cli.github.com/packages stable main" \
@@ -59,8 +41,6 @@ system() {
   apt-get update
   apt-get install -y --no-install-recommends gh
 
-  # node 22 LTS with npm and corepack, the release's own tarball, checked against the
-  # checksums it was published with.
   local file="node-v$NODE_VERSION-linux-$node_arch.tar.xz"
   fetch "https://nodejs.org/dist/v$NODE_VERSION/$file" "$file"
   fetch "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt" SHASUMS256.txt
@@ -70,7 +50,6 @@ system() {
   node --version
   npm --version
 
-  # uv, the release's own binary, checked the same way.
   file="uv-$uv_arch-unknown-linux-gnu.tar.gz"
   fetch "https://github.com/astral-sh/uv/releases/download/$UV_VERSION/$file" "$file"
   fetch "https://github.com/astral-sh/uv/releases/download/$UV_VERSION/$file.sha256" "$file.sha256"
@@ -81,9 +60,6 @@ system() {
   rm -rf /var/lib/apt/lists/*
 }
 
-# The one user, uid 1000 where it is free (Ubuntu's image gives it to `ubuntu`, which
-# goes); root by sudo without a password, since installing things is the point of
-# having a machine (4.2).
 user() {
   if id ubuntu >/dev/null 2>&1 && [ "$(id -u ubuntu)" = 1000 ] && ! pgrep -u ubuntu >/dev/null; then
     userdel -r ubuntu 2>/dev/null || true
@@ -100,8 +76,6 @@ user() {
   chmod 440 /etc/sudoers.d/nib
 }
 
-# Orden's own files: nibd with node-pty built here for this system, the browser shims, the
-# agents' installer, the login shells' settings, and on a server the units and the updater.
 files() {
   local nibd="$here/nibd.cjs"
   [ -f "$nibd" ] || nibd="$here/dist/nibd.cjs"
@@ -109,9 +83,6 @@ files() {
   install -d /opt/nibd
   local pty
   pty=$(node -p "require('$here/package.json').dependencies['node-pty']")
-  # Built beside the one in place and swapped in by a rename: the sessions' holders keep
-  # running across an update with the old native module mapped, and a file written over
-  # under a running process is a crash, where one renamed away is not (hold.ts).
   if [ "$(cat /opt/nibd/pty 2>/dev/null)" != "$pty" ]; then
     rm -rf /opt/nibd/pty.new /opt/nibd/node_modules.old
     install -d /opt/nibd/pty.new
@@ -129,11 +100,8 @@ files() {
     mv "/opt/nibd/$program.cjs.new" "/opt/nibd/$program.cjs"
   done
 
-  # Global npm installs go into the home, so Codex's own update command needs no root.
   install -m 644 "$here/profile.sh" /etc/profile.d/nib.sh
   install -m 755 "$here/agents.sh" /usr/local/bin/nib-agents
-  # The machine's browser is its owner's (4.13): every name a program asks for one by,
-  # ahead of /usr/bin, and $BROWSER (profile.sh, nibd).
   install -m 755 "$here/nib-open" /usr/local/bin/nib-open
   for name in xdg-open sensible-browser x-www-browser www-browser; do
     ln -sf nib-open "/usr/local/bin/$name"
@@ -147,20 +115,16 @@ files() {
   fi
 }
 
-# What only a server of its own needs (4.15).
 server() {
   apt-get update
   apt-get install -y --no-install-recommends unattended-upgrades openssh-server
 
-  # cloudflared, the machine's one way in, from Cloudflare's own signed repository.
   wget -qO /usr/share/keyrings/cloudflare-main.gpg https://pkg.cloudflare.com/cloudflare-main.gpg
   echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main' \
     >/etc/apt/sources.list.d/cloudflared.list
   apt-get update
   apt-get install -y --no-install-recommends cloudflared
 
-  # Security updates by themselves, every day; never a reboot nobody asked for, since a
-  # reboot is the one thing a session does not survive.
   cat >/etc/apt/apt.conf.d/20auto-upgrades <<'EOF'
 APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "1";
@@ -169,8 +133,6 @@ EOF
 Unattended-Upgrade::Automatic-Reboot "false";
 EOF
 
-  # Swap, so a build that overreaches is slowed rather than killed; kept for when it is
-  # needed, never preferred.
   if ! swapon --show=NAME --noheadings | grep -qx /swapfile; then
     [ -f /swapfile ] || { fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile >/dev/null; }
     swapon /swapfile
@@ -179,9 +141,6 @@ EOF
   echo 'vm.swappiness = 10' >/etc/sysctl.d/90-nib.conf
   sysctl -q --system || true
 
-  # No way in as root, no passwords at all; SSH only for the person's own key, and only
-  # while the firewall lets port 22 through (an emergency setting, off by default). Read
-  # first of the drop-ins, since sshd keeps the first value it reads of each setting.
   passwd -l root >/dev/null
   install -d -m 755 /etc/ssh/sshd_config.d
   cat >/etc/ssh/sshd_config.d/01-nib.conf <<'EOF'
@@ -199,7 +158,6 @@ EOF
     systemctl disable --now ssh.socket ssh.service >/dev/null 2>&1 || true
   fi
 
-  # The account's time zone, as the container's TZ is.
   local zone
   zone=$(sed -n 's/^TZ=//p' /etc/nibd/env 2>/dev/null || true)
   if [ -n "$zone" ] && [ -f "/usr/share/zoneinfo/$zone" ]; then

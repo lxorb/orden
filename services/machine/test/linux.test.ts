@@ -1,10 +1,3 @@
-/** `nibd` on Linux with real shells (docs/online-terminal.md 6.2, lane 2): an echo; a
- *  late joiner's screen against a watcher that saw everything, with vim on the second
- *  screen and colours mid-stream; a reconnect inside and outside the kept megabyte; the
- *  program in front; activity counted; a program going on through every restart of
- *  `nibd` (4.16), and the screens back above a fresh shell where the program is gone; a
- *  fork bomb contained. CI runs these on ubuntu-latest; elsewhere they are skipped. */
-
 import { spawn, spawnSync, type ChildProcess } from 'node:child_process'
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs'
 import { createServer } from 'node:net'
@@ -25,12 +18,9 @@ const COLS = 100
 const ROWS = 30
 const here = join(import.meta.dirname, '..')
 
-/** The holder every shell runs under, built with `nibd` before any test starts one. */
 const HOLDER = join(here, 'dist', 'hold.cjs')
 
 let home: string
-/** The folder the holders listen in, shared by every `nibd` of a test as a machine's
- *  state folder is. */
 let holds: string
 const ended: { end: () => void }[] = []
 
@@ -49,7 +39,6 @@ afterAll(() => {
   rmSync(holds, { recursive: true, force: true })
 })
 
-/** A machine whose link is a list. */
 function machine(pidsMax = 4096): Machine & { frames: NibdFrame[] } {
   const frames: NibdFrame[] = []
   return {
@@ -71,7 +60,6 @@ function machine(pidsMax = 4096): Machine & { frames: NibdFrame[] } {
   }
 }
 
-/** Processes as the kernel has them: id, state and parent, the first twenty. */
 function described(pids: number[]): string {
   return pids
     .slice(0, 20)
@@ -94,14 +82,11 @@ function session(on: Machine, id = 's_test', saved?: Saved): Session {
   return one
 }
 
-/** Until a session's shell is running: its holder answered. */
 async function running(one: Session): Promise<number> {
   await until(() => one.pid !== undefined)
   return one.pid ?? 0
 }
 
-/** A terminal fed every output frame of a session in order, as a device watching from
- *  the start draws it; it checks that the offsets run on without a gap. */
 function watcher(frames: NibdFrame[], from = 0) {
   const term = terminal(COLS, ROWS)
   let read = from
@@ -111,7 +96,6 @@ function watcher(frames: NibdFrame[], from = 0) {
     get next() {
       return next
     },
-    /** Every frame that has arrived since the last call, drawn. */
     async caught(): Promise<void> {
       for (; read < frames.length; read++) {
         const frame = frames[read]
@@ -125,7 +109,6 @@ function watcher(frames: NibdFrame[], from = 0) {
   }
 }
 
-/** Until nothing has arrived for a while: the program has drawn what it will. */
 async function settled(frames: NibdFrame[], quiet = 600): Promise<void> {
   let seen = -1
   let since = Date.now()
@@ -184,7 +167,6 @@ describe.runIf(linux)('a session', () => {
     await written(joiner, answer.data)
     let next = answer.seq
 
-    // The stream after the screen: more typing in vim, drawn by both.
     await typed(one, on.frames, 'ojoined\x1b')
     await seen.caught()
     for (const frame of on.frames.slice(asked + 1)) {
@@ -251,28 +233,16 @@ describe.runIf(linux)('a session', () => {
     const one = session(on, 's_bomb')
     const shell = await running(one)
     one.input(bytes('b() { b | b & }; b\r'))
-    // Held, and pressing on the limit: bash has said again and again that a fork was
-    // refused. Counted, not given a few seconds, which a busy machine may spend before
-    // the bomb has even reached the limit (#446).
     await until(() => said(on.frames).split('Resource temporarily unavailable').length > 30, 50_000)
     expect(sessionProcesses(shell).length).toBeLessThanOrEqual(limit)
 
-    // nibd, outside the limit, still answers and still starts programs; the sessions'
-    // user is the one held, until the owner ends the session.
     const asked = on.frames.length
     await one.want(0)
     expect(on.frames[asked]?.t).toMatch(/^(out|screen)$/)
     expect(spawnSync('true').status).toBe(0)
 
     one.end()
-    // Ended means none of it forks again: every process there is now is one that was
-    // there when the session ended, on its way out. A new one is the bomb going on
-    // where killing fell behind it (#446).
     const ending = new Set(sessionProcesses(shell))
-    // What is left if it is not all gone, said rather than a bare "timed out": the bomb's
-    // own processes still forking, zombies nobody has reaped, or one stuck in the kernel
-    // are three different faults, and which it was is what the next failure has to say
-    // (#446).
     await until(() => {
       const left = sessionProcesses(shell)
       const born = left.filter((pid) => !ending.has(pid))
@@ -293,12 +263,10 @@ describe.runIf(linux)('a session', () => {
   })
 })
 
-/** Everything a session's output frames hold, as text. */
 function said(frames: NibdFrame[]): string {
   return Buffer.from(collected(frames, 0, Infinity)).toString('utf8')
 }
 
-/** The output frames' bytes between two offsets, joined. */
 function collected(frames: NibdFrame[], from: number, to: number): Uint8Array {
   const parts: Uint8Array[] = []
   for (const frame of frames) {
@@ -310,15 +278,12 @@ function collected(frames: NibdFrame[], from: number, to: number): Uint8Array {
   return Buffer.concat(parts)
 }
 
-/** The numbers a ticking loop printed, in order. */
 function ticks(seen: string): number[] {
   return [...seen.matchAll(/tick-(\d+)/g)].map((match) => Number(match[1]))
 }
 
 const TICKING = 'n=0; while :; do n=$((n+1)); echo tick-$n; sleep 0.2; done\r'
 
-/** A terminal that drew a stream up to `next`, drawing what `frames` add after it; it
- *  checks that nothing is missing in between. Answers the offset it reached. */
 async function follow(
   term: ReturnType<typeof terminal>,
   frames: readonly NibdFrame[],
@@ -335,7 +300,6 @@ async function follow(
   return next
 }
 
-/** A session's next screen, drawn. */
 async function screenOf(one: Session, frames: NibdFrame[]) {
   const asked = frames.length
   await one.want(0)
@@ -358,10 +322,8 @@ describe.runIf(linux)('through a restart of nibd', () => {
     })
     const saved = await first.save(Date.now())
     first.detach()
-    // The output a save hands on as it is taken reached the device before nibd went away.
     await seen.caught()
     expect(seen.next).toBeGreaterThanOrEqual(saved.seq)
-    // nibd is away: the loop goes on in its holder, which keeps what it prints.
     await new Promise((resolve) => setTimeout(resolve, 1500))
 
     const after = machine()
@@ -371,11 +333,9 @@ describe.runIf(linux)('through a restart of nibd', () => {
       next = await follow(seen.term, after.frames, next)
       return (ticks(text(seen.term)).at(-1) ?? 0) >= (ticks(text(seen.term))[2] ?? 0) + 15
     })
-    // Every number once, in order, across the restart: nothing lost, nothing twice.
     const all = ticks(text(seen.term))
     expect(all).toEqual(all.map((_, at) => (all[0] ?? 0) + at))
 
-    // A device joining now is drawn the same, with nothing saying it was restored.
     const { answer, drawn } = await screenOf(again, after.frames)
     expect(answer.restored).toBeUndefined()
     expect(ticks(text(drawn)).length).toBeGreaterThan(10)
@@ -425,7 +385,6 @@ describe.runIf(linux)('through a restart of nibd', () => {
     first.input(bytes('cd /tmp; echo saved-$((5+5))\r'))
     await until(() => Buffer.concat(outOf(before.frames)).includes('saved-10'))
     const saved = await first.save(Date.now())
-    // A reboot: the holder ends with everything else.
     first.end()
 
     const after = machine()
@@ -438,7 +397,6 @@ describe.runIf(linux)('through a restart of nibd', () => {
   })
 })
 
-/** The bytes of every output frame. */
 function outOf(frames: readonly NibdFrame[]): Uint8Array[] {
   return frames.flatMap((frame) => (frame.t === 'out' ? [frame.data] : []))
 }
@@ -454,7 +412,6 @@ describe.runIf(linux)('the machine', () => {
       (await first.list()).some((one) => one.session === 's_listed' && one.program === 'sleep'),
     )
     expect((await first.list()).find((one) => one.session === 's_listed')?.at).toBeGreaterThan(0)
-    // Restarted with nothing saved, and nobody has opened it since.
     first.stop()
 
     const second = new Nibd(options)
@@ -530,14 +487,12 @@ describe.runIf(linux)('nibd, the program', () => {
     return started
   }
 
-  /** `nibd` ended by `signal`, and the code it ended with. */
   async function stopped(signal: NodeJS.Signals): Promise<number | null> {
     const exited = new Promise<number | null>((resolve) => child?.once('exit', resolve))
     child?.kill(signal)
     return await exited
   }
 
-  /** A link to the session, opened, and the screen it is sent first. */
   async function rejoined(url: string, session: string) {
     const link = await linked(url, SECRET)
     link.send({ t: 'open', session, cols: COLS, rows: ROWS })
@@ -564,13 +519,9 @@ describe.runIf(linux)('nibd, the program', () => {
       ),
     })
     await until(() => link.text('s_kept').includes('kept-42'))
-    // The secret opens the link and nothing else: no shell is handed it, nor the holder's
-    // own instructions.
     expect(link.text('s_kept')).toContain('secret=none')
     expect(link.text('s_kept')).toContain('hold=none')
 
-    // A deploy picked up, or systemd after a security update: the screens are saved, and
-    // the program sleeps on and prints while nibd is away.
     expect(await stopped('SIGTERM')).toBe(0)
     expect(readdirSync(join(state, 'sessions'))).toEqual(['s_kept.json'])
     const saved: unknown = JSON.parse(readFileSync(join(state, 'sessions', 's_kept.json'), 'utf8'))
@@ -585,7 +536,6 @@ describe.runIf(linux)('nibd, the program', () => {
     await until(() => back.link.text('s_kept').includes('/tmp\r\n'))
     back.link.close()
 
-    // Its watchdog, a crash or the kernel: no save at all, and still the same shell.
     expect(await stopped('SIGKILL')).toBeNull()
     child = await booted(url, port)
     const killed = await rejoined(url, 's_kept')
@@ -593,7 +543,6 @@ describe.runIf(linux)('nibd, the program', () => {
     killed.link.send({ t: 'in', session: 's_kept', data: bytes('echo still-$((1+1))\r') })
     await until(() => killed.link.text('s_kept').includes('still-2'))
 
-    // The owner's Restart, and the health path's: told down the link.
     const exited = new Promise<number | null>((resolve) => child?.once('exit', resolve))
     killed.link.send({ t: 'restart' })
     expect(await exited).toBe(75)
@@ -617,7 +566,6 @@ describe.runIf(linux)('nibd, the program', () => {
     const holder = Number(/holder=(\d+)/.exec(link.text('s_kept'))?.[1])
     expect(await stopped('SIGTERM')).toBe(0)
     link.close()
-    // A reboot, as far as the session can tell: its holder ends, and the shell with it.
     process.kill(holder, 'SIGKILL')
     await until(() => !existsSync(`/proc/${String(holder)}`))
 
@@ -628,7 +576,6 @@ describe.runIf(linux)('nibd, the program', () => {
     back.link.send({ t: 'in', session: 's_kept', data: bytes('pwd\r') })
     await until(() => back.link.text('s_kept').includes('/tmp\r\n'))
 
-    // Ended, its holder goes with it, and nothing of it is drawn back again.
     back.link.send({ t: 'close', session: 's_kept' })
     await until(() => !existsSync(join(state, 'holds', 's_kept.sock')))
     expect(readdirSync(join(state, 'sessions'))).toEqual([])

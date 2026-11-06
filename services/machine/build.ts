@@ -1,20 +1,7 @@
-/** `nibd` and its sessions' holder, one file each for the image: everything but
- *  node-pty, which is native and is built inside the image for the image's own system
- *  (see Dockerfile). CommonJS, since xterm.js and ws are, and a CommonJS module inside an
- *  ES bundle cannot `require` the node built-ins they ask for.
- *
- *  And the machine's bundle, dist/machine.bin: nibd and every file install.sh puts in
- *  place, as one gzipped tar that the Worker carries inside itself and hands a Hetzner
- *  server at its first boot and at every start of nibd after (docs/online-terminal.md
- *  4.15). Deterministic - no times, no owners, files in a fixed order - so the same
- *  sources are the same bytes and the same SHA-256 wherever they are built. */
-
 import { readFileSync, writeFileSync } from 'node:fs'
 import { gzipSync } from 'node:zlib'
 import { build } from 'esbuild'
 
-/** `nibd`, and the holder each session's shell runs under (src/hold.ts), which outlives
- *  it and so is a program of its own. */
 for (const [entry, outfile] of [
   ['src/main.ts', 'dist/nibd.cjs'],
   ['src/hold.ts', 'dist/hold.cjs'],
@@ -32,7 +19,6 @@ for (const [entry, outfile] of [
   })
 }
 
-/** What goes in the bundle: its path inside it, where it is read from, and whether it runs. */
 const BUNDLE: readonly [string, string, boolean][] = [
   ['install.sh', 'install.sh', true],
   ['nibd.cjs', 'dist/nibd.cjs', false],
@@ -49,7 +35,6 @@ const BUNDLE: readonly [string, string, boolean][] = [
 
 const BLOCK = 512
 
-/** One ustar header: the name, the mode, the size in octal, and its checksum. */
 function header(name: string, size: number, mode: number): Uint8Array {
   const block = new Uint8Array(BLOCK)
   const put = (at: number, text: string) => {
@@ -64,7 +49,6 @@ function header(name: string, size: number, mode: number): Uint8Array {
   put(136, octal(0, 12))
   put(156, '0')
   put(257, 'ustar\u000000')
-  // The checksum is summed with its own field as spaces.
   put(148, '        ')
   const sum = block.reduce((total, byte) => total + byte, 0)
   put(148, `${octal(sum, 7)}\u0000 `)

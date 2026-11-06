@@ -33,7 +33,6 @@ test('the oldest frames go once the rest still cover the limit, and not before',
   ring.append(bytes('aaaa'))
   ring.append(bytes('bbbb'))
   ring.append(bytes('cccc'))
-  // Twelve bytes held; dropping the first four would leave eight, under ten.
   expect(ring.start).toBe(0)
   ring.append(bytes('dddd'))
   expect(ring.start).toBe(4)
