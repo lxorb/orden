@@ -3,7 +3,7 @@
 Seeds the accounts a reader with two Claude Code sign-ins, a work key and an OpenAI key
 would have (in a browser they are this tab's own storage, `nib:ai-accounts`; see
 src/lib/ai/accounts-file.ts), opens Settings > AI, and checks what docs/ai.md says the
-page is: every account a card of its own under its provider's name (#1150), the one of
+page is: every account a card of its own under its provider's name and logo (#1150), the one of
 Claude's in use marked on its card; a press on Use moving the provider and the mark to
 another account; the palette offering `AI account: Claude · ...` with the one in use ticked; and
 Access under the accounts, where an old link to Agents lands.
@@ -30,6 +30,7 @@ ACCOUNTS = {
         {"id": "anthropic", "kind": "anthropic", "name": "Work", "model": "claude-opus-5-5"},
         {"id": "anthropic-2", "kind": "anthropic", "name": "", "model": "claude-sonnet-5-5"},
         {"id": "openai", "kind": "openai", "name": "", "model": "gpt-6-astra"},
+        {"id": "ollama", "kind": "compatible", "name": "", "baseUrl": "http://localhost:11434", "model": ""},
     ],
     "active": {"claude": "anthropic", "openai": "openai"},
     "defaultVendor": "claude",
@@ -65,7 +66,26 @@ def drive(browser) -> None:
             card.get_by_role("button", name="Remove", exact=True).count() >= 1
             and card.get_by_text("Model", exact=True).count() == 1,
         )
-    check("each provider has its name over its cards", sheet.locator("[data-vendor]").count() == 2)
+    check("each provider has its name over its cards", sheet.locator("[data-vendor]").count() == 3)
+    try:
+        sheet.locator("[data-vendor] .mark svg.drawn").nth(2).wait_for(timeout=10_000)
+    except PlaywrightTimeout:
+        pass
+    for vendor, brand in (("claude", "claude"), ("openai", "openai"), ("ollama", "ollama")):
+        mark = sheet.locator(f'[data-vendor="{vendor}"] .mark[data-brand="{brand}"]')
+        check(f"{vendor} wears {brand}'s logo beside its name", mark.locator("svg.drawn").count() == 1)
+    inked = page.evaluate(
+        """() => [...document.querySelectorAll('[data-vendor] .mark svg')].map((one) => {
+          const look = getComputedStyle(one)
+          return look.fill === look.color
+        })"""
+    )
+    check("the logos are drawn in the text's colour", len(inked) == 3 and all(inked))
+    adding = sheet.locator("button.nib-action", has_text="Add")
+    check(
+        "every Add wears its provider's mark",
+        adding.count() > 0 and adding.locator(".mark").count() == adding.count(),
+    )
     check("the provider keeps its Default", sheet.locator('[data-vendor="claude"]').get_by_text("Default", exact=True).count() == 1)
     check("OpenAI keeps its Make default", sheet.locator('[data-vendor="openai"]').get_by_role("button", name="Make default").count() == 1)
     boxed = page.evaluate(

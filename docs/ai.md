@@ -203,7 +203,12 @@ every thread on that provider at its next question. A question already being ans
 finishes on the account it started on, as Roo Code keeps a task's profile for its life.
 In Settings > AI each account is a card of its own under its provider's name (#1150), the
 one in use marked on its card and **Use** on each other one; the palette lists
-`AI account: Claude · Work` for each, the one in use ticked.
+`AI account: Claude · Work` for each, the one in use ticked. A provider's name wears its
+logo out of the shared brand set (`accountBrand` in `provider-brand.ts`), as do its Add
+row and its chip in the composer's model picker: Claude for Claude's key and Claude Code,
+OpenAI for its key, ChatGPT and Codex, and a compatible server by its address (OpenRouter,
+Mistral, Gemini, DeepSeek), by the port of a program on this machine (Ollama's 11434, LM
+Studio's 1234), then by the name it was given; one that names no one wears a server.
 
 The accounts are one file, `<local data>/ai/accounts.json` (`src-tauri/src/ai_accounts.rs`),
 not the page's storage, which is one browsing profile's: while the app could run on Orden's

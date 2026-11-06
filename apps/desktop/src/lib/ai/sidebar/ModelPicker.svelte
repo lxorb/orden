@@ -20,6 +20,7 @@
   import { ordered } from '../chat/effort'
   import type { Effort } from '../chat/types'
   import { usable } from '../providers'
+  import ProviderMark from '../ProviderMark.svelte'
   import { ai } from '../store.svelte'
   import { chat } from './chat.svelte'
   import { hostHere } from './host'
@@ -135,9 +136,10 @@
         <div class="providers">
           {#each providers as one (one.id)}
             <button
-              class="nib-chip"
+              class="nib-chip provider"
               class:is-on={one.id === provider?.id}
-              onclick={() => void chat.chooseModel(one.id, one.model)}>{one.name}</button
+              onclick={() => void chat.chooseModel(one.id, one.model)}
+              ><ProviderMark account={one} />{one.name}</button
             >
           {/each}
         </div>
@@ -289,6 +291,13 @@
     flex-wrap: wrap;
     gap: 4px;
     padding: var(--space-1) var(--space-1) 0;
+  }
+
+  .provider {
+    --mark: var(--icon-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
   }
 
   .catch {

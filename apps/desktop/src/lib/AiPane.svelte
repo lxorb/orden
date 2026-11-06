@@ -34,6 +34,7 @@
   import { plans } from './ai/local/status.svelte'
   import { browserVault, keepBrowserInVault, vault } from './ai/vault/start.svelte'
   import PlanRows from './ai/PlanRows.svelte'
+  import ProviderMark from './ai/ProviderMark.svelte'
   import {
     firstModel,
     isLocal,
@@ -330,7 +331,9 @@
     <!-- A provider's name and whether a block asks it without being told, over a card for
          each of its accounts; where it has several, one of them answers. -->
     <div class="nib-setting setting" data-vendor={vendor} transition:slide={{ duration: dur(160) }}>
-      <span class="name strong">{named(vendor)}</span>
+      <span class="name strong"
+        >{#if mine[0]}<ProviderMark account={mine[0]} />{/if}{named(vendor)}</span
+      >
       <div class="row">{@render defaulting(vendor)}</div>
     </div>
     {#each mine as provider (provider.id)}
@@ -482,7 +485,8 @@
      can be added more than once stays here after the others have gone. -->
 <div class="card">
   {#each addable as kind (kind)}
-    <button class="nib-action" onclick={() => add(kind)}>
+    <button class="nib-action adding" onclick={() => add(kind)}>
+      <ProviderMark account={{ kind, name: '' }} />
       {t('Add {name}', { name: t(KIND_NAMES[kind]) })}
     </button>
   {/each}
@@ -681,6 +685,14 @@
   /* A provider's name over its accounts' cards, and each account's name atop its own. */
   .strong {
     font-weight: 600;
+  }
+
+  .name > :global(.mark) {
+    margin-inline-end: var(--space-2);
+  }
+
+  .adding {
+    gap: var(--space-2);
   }
 
   .hint.on {
