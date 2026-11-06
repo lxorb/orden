@@ -100,6 +100,48 @@ describe('what somebody typed', () => {
   })
 })
 
+describe('a name with a dot whose last part is no top-level domain', () => {
+  const search = (words: string) => `https://www.google.com/search?q=${encodeURIComponent(words)}`
+
+  test('is a file name, searched for, not a site', () => {
+    for (const name of [
+      'node.js',
+      'vue.config.ts',
+      'index.html',
+      'file.txt',
+      'report.docx',
+      'a.json',
+    ])
+      expect(webAddress(name)).toBe(search(name))
+  })
+
+  test('is no website the palette offers to open', () => {
+    for (const name of ['node.js', 'vite.config.ts', 'notes.txt'])
+      expect(typedAddress(name)).toBeNull()
+  })
+
+  test('still opens with a scheme, a slash, a path or a port, as in a browser', () => {
+    expect(webAddress('http://node.js')).toBe('http://node.js')
+    expect(webAddress('node.js/')).toBe('https://node.js/')
+    expect(webAddress('wiki.corp/home')).toBe('https://wiki.corp/home')
+    expect(webAddress('build.server:8080')).toBe('http://build.server:8080')
+  })
+
+  test('a real top-level domain, in any case or script, still opens', () => {
+    for (const name of ['readme.md', 'svelte.dev', 'x.co', 'Example.COM', 'deno.land', 'foo.zip'])
+      expect(webAddress(name)).toBe(`https://${name}`)
+    expect(webAddress('例子.中国')).toBe('https://xn--fsqu00a.xn--fiqs8s/')
+    expect(webAddress('xn--fsqu00a.xn--fiqs8s')).toBe('https://xn--fsqu00a.xn--fiqs8s')
+  })
+
+  test('the names of this machine and its network still open', () => {
+    expect(webAddress('printer.lan')).toBe('http://printer.lan')
+    expect(webAddress('nas.local')).toBe('http://nas.local')
+    expect(webAddress('app.localhost')).toBe('http://app.localhost')
+    expect(webAddress('router.home.arpa')).toBe('http://router.home.arpa')
+  })
+})
+
 describe('a word with a colon after it', () => {
   test.each([
     ['site:github.com orden'],
