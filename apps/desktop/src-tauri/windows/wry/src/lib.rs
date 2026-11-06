@@ -387,6 +387,9 @@ use objc2_app_kit::NSWindow;
 use objc2_web_kit::WKUserContentController;
 #[cfg(any(target_os = "macos", target_os = "ios"))]
 pub(crate) mod wkwebview;
+/// Orden's patch (lxorb/orden#1191); see `wkwebview::hear_dropped_paths`.
+#[cfg(target_os = "macos")]
+pub use wkwebview::hear_dropped_paths;
 #[cfg(any(target_os = "macos", target_os = "ios"))]
 use wkwebview::*;
 #[cfg(any(target_os = "macos", target_os = "ios"))]

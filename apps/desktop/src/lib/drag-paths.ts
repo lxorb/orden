@@ -36,6 +36,12 @@ export function carryFromExplorer(transfer: DataTransfer, paths: string[], inSpa
   carrying = paths
 }
 
+export function carryOutside(transfer: DataTransfer, paths: readonly string[]) {
+  transfer.setData(EXPLORER, JSON.stringify(paths))
+  transfer.effectAllowed = 'copy'
+  carrying = [...paths]
+}
+
 export function isExplorerDrag(transfer: DataTransfer | null): boolean {
   return !!transfer?.types.includes(EXPLORER)
 }

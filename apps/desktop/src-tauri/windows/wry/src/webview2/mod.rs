@@ -53,6 +53,20 @@ pub fn host_as_visual(choose: fn(&str) -> bool) {
   let _ = AS_VISUAL.set(choose);
 }
 
+/// Orden's patch (lxorb/orden#1191): a message posted with
+/// `chrome.webview.postMessageWithAdditionalObjects` hands the embedder files, such as the
+/// ones dropped on the page, and is not the page's IPC.
+fn hands_over_files(args: &ICoreWebView2WebMessageReceivedEventArgs) -> bool {
+  let mut count = 0_u32;
+  let counted = unsafe {
+    args
+      .cast::<ICoreWebView2WebMessageReceivedEventArgs2>()
+      .and_then(|two| two.AdditionalObjects())
+      .and_then(|objects| objects.Count(&mut count))
+  };
+  counted.is_ok() && count > 0
+}
+
 impl From<webview2_com::Error> for Error {
   fn from(err: webview2_com::Error) -> Self {
     Error::WebView2Error(err)
@@ -958,6 +972,10 @@ impl InnerWebView {
         let (Some(args), Some(ipc_handler)) = (args, &ipc_handler) else {
           return Ok(());
         };
+
+        if hands_over_files(&args) {
+          return Ok(());
+        }
 
         let url = {
           let mut url = PWSTR::null();

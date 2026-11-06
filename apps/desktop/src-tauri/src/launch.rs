@@ -317,6 +317,7 @@ fn opened(builder: WebviewWindowBuilder<'_, crate::Engine, AppHandle>) -> Result
     let window = crate::placement::built(building)
         .map_err(|error| format!("could not open another window: {error}"))?;
     crate::pinch::let_through(window.as_ref());
+    crate::dropped_paths::hear(window.as_ref());
 
     #[cfg(target_os = "macos")]
     {

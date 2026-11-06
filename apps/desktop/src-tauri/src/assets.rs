@@ -39,6 +39,10 @@ fn readable(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
     if let Some(handed) = crate::handed_pdfs::handed_pdf(app, path) {
         return Ok(handed);
     }
+    #[cfg(desktop)]
+    if let Some(dropped) = crate::dropped_paths::dropped_readable(path) {
+        return Ok(dropped);
+    }
     Err(refused)
 }
 
