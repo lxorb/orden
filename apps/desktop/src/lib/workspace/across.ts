@@ -70,6 +70,17 @@ export class Across {
     windows.hear('words', ({ path, text }) =>
       this.inTurn(() => this.heardWords(String(path), String(text))),
     )
+    this.inTurn(() => this.caughtUp())
+  }
+
+  private async caughtUp() {
+    for (const note of [...this.desk.documents]) {
+      const path = note.path
+      if (path === null) continue
+      await this.fromDisk(note, path).catch((error: unknown) => {
+        log('error', `across: ${String(error)}`)
+      })
+    }
   }
 
   private inTurn(run: () => Promise<unknown>) {
@@ -178,6 +189,10 @@ export class Across {
     this.desk.noteSaved(path, text)
     const note = this.desk.documents.find((one) => samePath(one.path, path))
     if (!note) return
+    await this.fromDisk(note, path)
+  }
+
+  private async fromDisk(note: NoteDoc, path: string) {
     await oneWriteAt(path, async () => {
       if (!samePath(note.path, path)) return
       if (note.live.holdingBack) {

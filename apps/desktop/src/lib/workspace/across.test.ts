@@ -177,6 +177,24 @@ describe('one note in two windows', () => {
     expect(b.owed).toEqual([])
   })
 
+  test('a window that starts hearing late takes in what was written before it listened', async () => {
+    const wires = channel()
+    const disk = new Map([[PATH, BASE]])
+    const a = aWindow(wires.end(), disk)
+    const inA = a.open(BASE)
+    a.type(inA, 'FROM-A ')
+    await a.save(inA)
+    await wires.deliver()
+
+    const b = aWindow(wires.end(), disk)
+    const inB = b.open(BASE)
+    await b.across.heardSoFar()
+
+    expect(inB.latest).toBe(`${BASE}FROM-A `)
+    expect(inB.dirty).toBe(false)
+    expect(b.owed).toEqual([])
+  })
+
   test('a write that has not heard the last one keeps both, and no word goes', async () => {
     const { wires, disk, a, b } = twoWindows()
     const inA = a.open(BASE)
