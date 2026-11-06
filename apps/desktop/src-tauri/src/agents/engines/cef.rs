@@ -1,39 +1,3 @@
-//! An agent's own tab on Orden's own Chromium: a browser with no window at all
-//! (docs/agent-native.md 12).
-//!
-//! **Windowless, not out of sight.** On `WebView2` an agent's page is a window clipped to
-//! nothing; here it is better than that: an Alloy-style browser with off-screen rendering,
-//! which CEF builds without any native window - no window to be on a screen, to come to
-//! the front, to take the keyboard or to be counted by the system as hidden. It paints
-//! into a buffer nobody reads at a frame rate of its own (60), is told it is shown
-//! (`WasHidden(false)`) and lays itself out at the tab's own size, so to the page it is a
-//! visible tab at a desktop size and to the reader it is nothing. CEF mixes styles per
-//! browser, so the reader's tabs stay Chrome style beside it (docs/browser.md 1). Its
-//! `<select>` lists are paints of the page too, never windows.
-//!
-//! **The same protocol, through the browser's own agent.** Calls are
-//! `SendDevToolsMessage` on the browser's host and answers and events come back to one
-//! observer per browser (`AddDevToolsMessageObserver`) - no port, no socket - so every
-//! verb in `browser.rs` and `page.rs` runs here unchanged. The host may only be spoken to
-//! on CEF's UI thread, so a call from anywhere else is posted there, and its answer comes
-//! back over a channel the caller waits on; the raw message is read, because only it says
-//! which frame's session an event is from.
-//!
-//! **Quiet by its handlers.** Everything that would reach the reader is this browser's own
-//! handler, answered here: dialogs held for `browser_dialog` (`quiet.rs` keeps them),
-//! windows the page opens made more windowless agent tabs with their opener kept,
-//! permissions refused, downloads into the agent's folder under the ceiling, the file
-//! chooser intercepted (and refused should it ever get past), sign-in boxes and client
-//! certificate requests held for `browser_dialog` like any dialog (#1072), no context
-//! menu, no sound, and a site the agent may not visit
-//! stopped before it loads.
-//!
-//! **Only for somebody who uses agents.** Off-screen rendering is a switch CEF reads once
-//! as it starts, for the whole process, and its own documentation says it can cost a
-//! browser that never renders off screen. So it is on only in a run that started with an
-//! agent already paired (`windowless_wanted`, which `engine::cef_runtime` asks); the first
-//! agent paired in a run gets its tabs from the next launch, and is told so.
-
 #![allow(
     clippy::transmute_ptr_to_ptr,
     reason = "the cef crate's wrap_* macros transmute between a wrapper and the struct it wraps"
@@ -59,17 +23,10 @@ use super::super::tabs;
 use super::super::verbs::{Dialog, DialogKind, Download, DownloadState};
 use super::View;
 
-/// The frame rate an agent's page paints at: a visible tab's.
 const FRAME_RATE: i32 = 60;
 
-/// Whether this run's engine can make windowless browsers: decided once, before CEF
-/// starts, by `windowless_wanted`.
 static WINDOWLESS: OnceLock<bool> = OnceLock::new();
 
-/// Whether a run should start CEF able to make windowless browsers: when an agent is
-/// paired with this installation, which is when `<config>/agents.json` names one, or when
-/// the run is a measurement that says so (`NIB_AGENT_PAGES=1`). Asked once by the
-/// engine's binary before CEF starts; the answer is this run's.
 pub fn windowless_wanted(config: &Path) -> bool {
     *WINDOWLESS.get_or_init(|| {
         std::env::var_os("NIB_AGENT_PAGES").is_some_and(|said| said == "1")
@@ -77,7 +34,6 @@ pub fn windowless_wanted(config: &Path) -> bool {
     })
 }
 
-/// Whether the agents' file names an agent.
 fn paired(text: &str) -> bool {
     serde_json::from_str::<Value>(text)
         .ok()
@@ -85,41 +41,28 @@ fn paired(text: &str) -> bool {
         .unwrap_or(false)
 }
 
-/// Who hears a page's events: the method, the frame's session (`None` for the page's
-/// own) and the parameters.
 type Hearing = Arc<dyn Fn(&str, Option<&str>, &Value) + Send + Sync>;
 
-/// One agent page and everything about it, from before its browser exists to after it
-/// closed.
 struct Page {
     owner: Owner,
     app: AppHandle,
     size: (u32, u32),
-    /// Where it was sent to go once it was built and quietened.
     going: Mutex<Option<String>>,
-    /// Told once the browser exists, or why it never will.
     built: Mutex<Option<SyncSender<Result<(), String>>>>,
     host: Mutex<Option<BrowserHost>>,
-    /// Kept for as long as the observer should hear.
     observing: Mutex<Option<Registration>>,
     url: Mutex<String>,
     waiting: Mutex<HashMap<i32, SyncSender<Result<Value, String>>>>,
     hearing: Mutex<Vec<Hearing>>,
-    /// The dialog the page holds: its number, and how it is answered.
     dialog: Mutex<Option<(u64, Answering)>>,
 }
 
-/// How a held dialog is answered, by its kind.
 enum Answering {
-    /// `alert`, `confirm`, `prompt`, `beforeunload`.
     Script(JsdialogCallback),
-    /// The site's sign-in box: the paused request, by the session it is paused in.
     SignIn {
         session: Option<String>,
         request: String,
     },
-    /// The site's request for a client certificate, with those it may be answered with
-    /// and the words each is known by.
     Certificate(
         SelectClientCertificateCallback,
         Vec<(X509Certificate, String)>,
@@ -139,21 +82,16 @@ impl Page {
     }
 }
 
-/// An agent's page on Orden's own Chromium, as the verbs hold it.
 #[derive(Clone)]
 pub struct Windowless {
     label: String,
     page: Arc<Page>,
 }
 
-/// Every agent page that has a browser, by label.
 static PAGES: Mutex<Option<HashMap<String, Windowless>>> = Mutex::new(None);
 
-/// The next message's id: every page here is this crate's own browser, so the ids are
-/// this crate's to count.
 static NEXT: AtomicI32 = AtomicI32::new(1);
 
-/// The page under a label, while it has a browser.
 pub fn page(label: &str) -> Option<Windowless> {
     PAGES
         .lock()
@@ -164,12 +102,10 @@ pub fn page(label: &str) -> Option<Windowless> {
 }
 
 impl Windowless {
-    /// Its label.
     pub fn label(&self) -> &str {
         &self.label
     }
 
-    /// Where it is, as its own frame last said.
     pub fn url(&self) -> String {
         self.page
             .url
@@ -178,7 +114,6 @@ impl Windowless {
             .clone()
     }
 
-    /// Closes it: gone from every list at once, its browser let go on CEF's thread.
     pub fn close(&self) {
         if let Some(all) = PAGES
             .lock()
@@ -192,7 +127,6 @@ impl Windowless {
         }
     }
 
-    /// Sends one call, from any thread, and answers where its answer arrives.
     pub fn ask(
         &self,
         session: Option<&str>,
@@ -236,12 +170,10 @@ impl Windowless {
         Ok(answer)
     }
 
-    /// One call nobody waits for.
     pub fn tell(&self, method: &str, params: &Value) {
         let _ = self.ask(None, method, params);
     }
 
-    /// Hears every event the page says from now on.
     pub fn hear(&self, heard: impl Fn(&str, Option<&str>, &Value) + Send + Sync + 'static) {
         self.page
             .hearing
@@ -251,11 +183,8 @@ impl Windowless {
     }
 }
 
-/// A piece of work for CEF's UI thread, taken by whichever runs it first.
 type Work = Arc<Mutex<Option<Box<dyn FnOnce() + Send>>>>;
 
-/// Runs `job` on CEF's UI thread, the only one a browser may be spoken to on. Whether it
-/// was posted.
 pub(crate) fn on_ui(job: impl FnOnce() + Send + 'static) -> bool {
     let job: Work = Arc::new(Mutex::new(Some(Box::new(job))));
     let mut task = Job::new(job);
@@ -277,9 +206,6 @@ wrap_task! {
     }
 }
 
-/// Builds an agent's page in the profile of `store` - the one every space shares when
-/// `None` - at `size` CSS pixels, quietened before it loads anything, and sends it to
-/// `going`. Waits for the browser, from any thread but CEF's own.
 pub fn build(
     app: &AppHandle,
     owner: &Owner,
@@ -310,9 +236,6 @@ pub fn build(
     });
     let making = Arc::clone(&page);
     let posted = on_ui(move || {
-        // A profile other than the primary one is made asynchronously, and a browser
-        // asked for before it is ready is no browser: the browser is made once the
-        // context says it is.
         let settings = RequestContextSettings {
             cache_path: profile.to_string_lossy().as_ref().into(),
             ..Default::default()
@@ -333,7 +256,6 @@ pub fn build(
         .map_err(|_| "the page was never built".to_string())?
 }
 
-/// Says to whoever waits on a page's build how it went, once.
 fn finished(page: &Page, outcome: Result<(), String>) {
     if let Some(built) = page
         .built
@@ -371,7 +293,6 @@ wrap_request_context_handler! {
     }
 }
 
-/// A browser with no window, in Alloy style: the only style CEF renders off screen.
 fn windowless() -> WindowInfo {
     WindowInfo {
         windowless_rendering_enabled: 1,
@@ -380,7 +301,6 @@ fn windowless() -> WindowInfo {
     }
 }
 
-/// An agent page's settings: its own frame rate, and an opaque page, as a tab's is.
 fn browser_settings() -> BrowserSettings {
     BrowserSettings {
         windowless_frame_rate: FRAME_RATE,
@@ -389,17 +309,12 @@ fn browser_settings() -> BrowserSettings {
     }
 }
 
-/// What an agent's page has been told before anything loads: the file chooser
-/// intercepted, `print()` and the pickers stubbed, the page domain on first since a
-/// script registered with it off is kept and never run, and the site's sign-in boxes
-/// brought here (`signing_in`).
 fn quietened(page: &Windowless) {
     for (method, params) in quieting() {
         page.tell(method, &params);
     }
 }
 
-/// The calls `quietened` makes, in order.
 fn quieting() -> [(&'static str, Value); 4] {
     [
         ("Page.enable", json!({})),
@@ -415,17 +330,10 @@ fn quieting() -> [(&'static str, Value); 4] {
     ]
 }
 
-/// The site's sign-in boxes, through the protocol rather than the request handler: CEF
-/// gives a sign-in to `GetAuthCredentials` only once `--disable-chrome-login-prompt`
-/// turns Chrome's own login prompt off for the whole process, the reader's tabs' box with
-/// it, and that prompt has nowhere to be on a browser with no window (#1131). Every
-/// request pauses for as long as `heard` takes to send it on, so a challenge to any of
-/// them is `Fetch.authRequired`.
 fn signing_in() -> Value {
     json!({ "handleAuthRequests": true, "patterns": [{ "urlPattern": "*" }] })
 }
 
-/// What answers a paused sign-in: the user name and password, or no.
 fn signed_in(request: &str, said: &Said) -> Value {
     let response = if said.accept {
         json!({
@@ -439,8 +347,6 @@ fn signed_in(request: &str, said: &Said) -> Value {
     json!({ "requestId": request, "authChallengeResponse": response })
 }
 
-/// A browser made for a page: kept, heard, quietened and sent where it was going. On
-/// CEF's UI thread.
 fn made(page: &Arc<Page>, browser: &Browser) {
     let Some(host) = browser.host() else {
         finished(page, Err("the engine made a page with no host".into()));
@@ -479,7 +385,6 @@ fn made(page: &Arc<Page>, browser: &Browser) {
     finished(page, Ok(()));
 }
 
-/// A page's browser closed: everything that held it let go of.
 fn closed(page: &Page) {
     if let Some(all) = PAGES
         .lock()
@@ -535,8 +440,6 @@ wrap_dev_tools_message_observer! {
     }
 }
 
-/// One message from the page's agent: an answer for whoever waits on its id, a paused
-/// request sent on or its sign-in held, or an event for whoever hears the page.
 fn heard(page: &Arc<Page>, message: &Value) {
     if let Some(id) = message
         .get("id")
@@ -591,7 +494,6 @@ fn heard(page: &Arc<Page>, message: &Value) {
             );
             return;
         }
-        // A frame in a process of its own pauses and asks in its own session.
         ("Target.attachedToTarget", _) => {
             if let Some(frame) = params.get("sessionId").and_then(Value::as_str) {
                 send(page, Some(frame), "Fetch.enable", &signing_in());
@@ -609,7 +511,6 @@ fn heard(page: &Arc<Page>, message: &Value) {
     }
 }
 
-/// One call nobody waits for, in a frame's session when named.
 fn send(page: &Arc<Page>, session: Option<&str>, method: &str, params: &Value) {
     let found = Windowless {
         label: page.owner.label.clone(),
@@ -618,7 +519,6 @@ fn send(page: &Arc<Page>, session: Option<&str>, method: &str, params: &Value) {
     let _ = found.ask(session, method, params);
 }
 
-/// What an answer says: its result, or the agent's own words for why there is none.
 fn answer(message: &Value) -> Result<Value, String> {
     if let Some(error) = message.get("error") {
         return Err(error
@@ -630,15 +530,12 @@ fn answer(message: &Value) -> Result<Value, String> {
     Ok(message.get("result").cloned().unwrap_or(Value::Null))
 }
 
-/// Answers the dialog a page holds; see `quiet::Said`.
 pub fn answer_dialog(_app: &AppHandle, label: &str, said: Said) -> Result<(), String> {
     let found = page(label).ok_or("the page has closed")?;
     settle(&found.page, None, said);
     Ok(())
 }
 
-/// Gives the engine its answer to a held dialog: the one with `number` when named,
-/// whichever is held otherwise.
 fn settle(page: &Arc<Page>, number: Option<u64>, said: Said) {
     let held = {
         let mut dialog = page.dialog.lock().unwrap_or_else(PoisonError::into_inner);
@@ -658,7 +555,6 @@ fn settle(page: &Arc<Page>, number: Option<u64>, said: Said) {
     give(page, answering, said);
 }
 
-/// Gives the engine one answer to a dialog.
 fn give(page: &Arc<Page>, answering: Answering, said: Said) {
     match answering {
         Answering::Script(callback) => {
@@ -675,7 +571,6 @@ fn give(page: &Arc<Page>, answering: Answering, said: Said) {
         ),
         Answering::Certificate(callback, offered) => {
             on_ui(move || {
-                // None chosen, or no: on without a certificate, as a browser's Cancel goes.
                 let mut chosen = said
                     .chosen(offered.iter().map(|(_, words)| words.as_str()))
                     .and_then(|at| offered.into_iter().nth(at))
@@ -686,7 +581,6 @@ fn give(page: &Arc<Page>, answering: Answering, said: Said) {
     }
 }
 
-/// Holds a dialog for the agent, and answers it the safe way if nobody does.
 fn hold(
     page: &Arc<Page>,
     kind: DialogKind,
@@ -696,8 +590,6 @@ fn hold(
     answering: Answering,
 ) {
     let number = quiet::NUMBER.fetch_add(1, Ordering::Relaxed);
-    // One held at a time: the one before it is answered no, or a sign-in it paused would
-    // wait for good.
     let before = page
         .dialog
         .lock()
@@ -723,7 +615,6 @@ fn hold(
     });
 }
 
-/// A string CEF handed over, as text.
 fn text(said: Option<&CefString>) -> String {
     said.map(ToString::to_string).unwrap_or_default()
 }
@@ -802,8 +693,6 @@ wrap_render_handler! {
             let Some(screen) = screen_info else {
                 return 0;
             };
-            // A screen exactly the tab's size, at one pixel a CSS pixel: nothing the page
-            // asks about its screen says anything about the reader's.
             let (width, height) = self.page.size;
             let whole = Rect {
                 x: 0,
@@ -828,7 +717,6 @@ wrap_render_handler! {
             _width: ::std::os::raw::c_int,
             _height: ::std::os::raw::c_int,
         ) {
-            // Nobody looks: a picture is the protocol's (`Page.captureScreenshot`).
         }
     }
 }
@@ -867,8 +755,6 @@ wrap_life_span_handler! {
             let Some(tab) = tabs::reserve_popup(owner, &url) else {
                 return 1;
             };
-            // Another agent tab of the same agent, with no window either, and the opener
-            // kept so a sign-in popup can post its answer back.
             let popup = Arc::new(Page {
                 owner: Owner {
                     agent: owner.agent.clone(),
@@ -1045,7 +931,6 @@ wrap_download_handler! {
                 return 0;
             };
             let owner = &self.page.owner;
-            // Not continued is cancelled, with Alloy style: 0 for every refusal.
             let Some(path) = quiet::destination(&self.page.app, &owner.agent, &text(suggested_name)) else {
                 return 0;
             };
@@ -1115,8 +1000,6 @@ wrap_dialog_handler! {
             _accept_descriptions: Option<&mut CefStringList>,
             callback: Option<&mut FileDialogCallback>,
         ) -> ::std::os::raw::c_int {
-            // The chooser is intercepted through the protocol and answered by
-            // `browser_upload`; one that gets past is never shown.
             if let Some(callback) = callback {
                 callback.cancel();
             }
@@ -1194,10 +1077,6 @@ wrap_request_handler! {
             1
         }
 
-        // The site's request for a client certificate, held for the agent like any dialog:
-        // `browser_dialog` answers it, and answering yes signs in, which asks as the mode
-        // says - nothing at all under Full permissions (#1072, `policy::answering`). Its
-        // sign-in box comes through the protocol instead; see `signing_in`.
         fn on_select_client_certificate(
             &self,
             _browser: Option<&mut Browser>,
@@ -1275,8 +1154,6 @@ wrap_display_handler! {
             _source: Option<&CefString>,
             _line: ::std::os::raw::c_int,
         ) -> ::std::os::raw::c_int {
-            // The page's console is the agent's to read (`browser_console`), not the
-            // engine's log's.
             1
         }
     }
@@ -1312,7 +1189,6 @@ wrap_load_handler! {
             error_text: Option<&CefString>,
             failed_url: Option<&CefString>,
         ) {
-            // A sign-in the site turned down, or one answered no: the agent hears it here.
             if frame.is_some_and(|frame| frame.is_main() != 0) && text(error_text).contains("AUTH") {
                 self.page.say(format!(
                     "The site at {} did not sign in: {}",
@@ -1343,8 +1219,6 @@ mod tests {
         assert_eq!(answer(&json!({ "id": 4 })), Ok(serde_json::Value::Null));
     }
 
-    /// #1131: a sign-in box CEF would give Chrome's own prompt, which a windowless page
-    /// has nowhere to show, is asked for before the page loads anything.
     #[test]
     fn an_agent_page_takes_its_own_sign_ins() {
         let fetch = quieting()

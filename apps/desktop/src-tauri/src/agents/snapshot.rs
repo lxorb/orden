@@ -1,30 +1,3 @@
-//! A page's accessibility tree as the lines an agent reads (docs/agent-native.md 5.2).
-//!
-//! The shape is Playwright MCP's, which agents are trained on - one element a line,
-//! indented under its parent, `- button "Save" [ref=e4812]` - with the states Chrome
-//! `DevTools` MCP writes (`[checked]`, `[disabled]`, `[expanded]`, `[level=2]`,
-//! `[value="..."]`, a link's `[url=...]`). What differs is the ref: it is the engine's
-//! own node id (`backendDOMNodeId`), not a counter, so it stays good for as long as the
-//! element lives rather than until the next snapshot; `f2e17` is node 17 inside the
-//! second frame that runs in a process of its own.
-//!
-//! What is left out, because it is noise to a reader of the page: containers that say
-//! nothing (`generic`, `none`) give their children to their parent; the engine's text
-//! boxes and line breaks; a text node that only repeats its parent's name.
-//!
-//! **A secret field says only whether it is filled** (9.4): a password, a one-time code,
-//! a card's number or code is one line, `- textbox "Password" [filled] [ref=e137]`, with
-//! no value and nothing under it. The engine writes a password's value as one bullet a
-//! character, and again as the words inside the field, so either would say how long it
-//! is; and a name the engine builds out of a field's value (a label that holds the field,
-//! an `aria-labelledby` that points at it) is written with that value taken out. Which
-//! fields are secret is `policy::secret`, asked of the page; a field whose value is
-//! nothing but the engine's mask is one whatever the page said, which covers a frame the
-//! page's own scan could not reach.
-//!
-//! Pure: it reads the protocol's JSON and writes text, so the tests run on trees recorded
-//! from real pages.
-
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write as _;
@@ -33,54 +6,34 @@ use serde_json::Value;
 
 use super::verbs::Match;
 
-/// The longest name written on a line, in characters.
 const LONGEST_NAME: usize = 160;
 
-/// The shortest secret value taken out of other names: a shorter one would take ordinary
-/// words and digits out of the page with it, and says next to nothing.
 const SHORTEST_ECHO: usize = 3;
 
 const DEEPEST: usize = 256;
 
 const HIDDEN: &str = "[hidden]";
 
-/// The longest snapshot when none is asked for, in characters.
 pub const MOST: usize = 40_000;
 
-/// One document's tree: the page's own, a frame in the same process, or a frame in a
-/// process of its own.
 pub struct Part {
-    /// What its refs start with: empty for the page's own session, `f2` for the second
-    /// frame in a process of its own. Same-process frames share the page's.
     pub prefix: String,
-    /// The protocol's nodes, as `Accessibility.getFullAXTree` answered them.
     pub nodes: Vec<Value>,
-    /// The frame element it hangs under: the part it is in, and that element's node.
     pub owner: Option<(usize, u64)>,
 }
 
-/// A tree written out.
 pub struct Written {
-    /// The lines.
     pub text: String,
-    /// Whether it was cut.
     pub truncated: bool,
 }
 
-/// What `render` is asked for.
 pub struct Asked<'a> {
-    /// Only under this element: its part's prefix and its node.
     pub under: Option<(&'a str, u64)>,
-    /// The longest answer.
     pub most: usize,
-    /// The secret fields, by part prefix and node: neither their values nor anything
-    /// under them is written, only whether they are filled.
     pub secret: &'a HashSet<(String, u64)>,
-    /// The page's origin, which a link's address is written relative to.
     pub origin: &'a str,
 }
 
-/// One node, read.
 struct Node<'a> {
     raw: &'a Value,
 }
@@ -161,8 +114,6 @@ pub fn holds_words(raw: &Value) -> bool {
         || node.property("editable").is_some()
 }
 
-/// A role as the agent reads it: the protocol's own words, but `document`, `iframe`,
-/// `text` and `label` for the four it spells as internal names.
 fn spoken_role(raw: &str) -> String {
     match raw {
         "RootWebArea" | "WebArea" => "document".into(),
@@ -179,7 +130,6 @@ fn spoken_role(raw: &str) -> String {
     }
 }
 
-/// Whether a role only holds other things and says nothing itself.
 fn silent(role: &str, name: &str) -> bool {
     matches!(
         role,
@@ -187,15 +137,10 @@ fn silent(role: &str, name: &str) -> bool {
     ) && name.is_empty()
 }
 
-/// Whether a role is the engine's own furniture, never worth a line.
 fn furniture(role: &str) -> bool {
     matches!(role, "inlineTextBox" | "lineBreak")
 }
 
-/// Roles whose insides are the engine's own: a date field's day, month and year and its
-/// "Show date picker" button, a colour well's swatch. The field is one line with its
-/// value, and nothing inside it has a ref, because pressing the picker's button would
-/// open a window of the engine's own (6.5).
 fn sealed(role: &str) -> bool {
     matches!(
         role,
@@ -203,7 +148,6 @@ fn sealed(role: &str) -> bool {
     )
 }
 
-/// Roles a person presses or types into, which words inside them stand for.
 fn pressable_role(role: &str) -> bool {
     matches!(
         role,
@@ -227,7 +171,6 @@ fn pressable_role(role: &str) -> bool {
     )
 }
 
-/// Roles whose value is what somebody typed or chose.
 fn has_value(role: &str) -> bool {
     matches!(
         role,
@@ -245,7 +188,6 @@ fn has_value(role: &str) -> bool {
     )
 }
 
-/// A name on one line, quoted, and cut.
 fn quoted(name: &str) -> String {
     let flat: String = name
         .chars()
@@ -259,7 +201,6 @@ fn quoted(name: &str) -> String {
     format!("\"{}\"", cut.replace('\\', "\\\\").replace('"', "\\\""))
 }
 
-/// A link's address, relative to the page's origin when it is on it.
 fn short_url(url: &str, origin: &str) -> String {
     match url.strip_prefix(origin) {
         Some(rest) if rest.starts_with('/') => rest.to_string(),
@@ -267,7 +208,6 @@ fn short_url(url: &str, origin: &str) -> String {
     }
 }
 
-/// The states worth a word, in the order they are written; the value is `value_of`'s.
 fn states(node: &Node<'_>, role: &str, origin: &str) -> String {
     let mut out = String::new();
     let on = |name: &str| node.property(name).and_then(Value::as_bool) == Some(true);
@@ -319,7 +259,6 @@ fn states(node: &Node<'_>, role: &str, origin: &str) -> String {
     out
 }
 
-/// A field's value as its line writes it: a secret's only as whether it is filled.
 fn value_of(node: &Node<'_>, role: &str, secret: bool) -> String {
     if !has_value(role) {
         return String::new();
@@ -337,7 +276,6 @@ fn value_of(node: &Node<'_>, role: &str, secret: bool) -> String {
     }
 }
 
-/// Whether a value is the engine's own mask over a secret: nothing but bullets.
 fn masked(value: &str) -> bool {
     !value.is_empty()
         && value
@@ -345,13 +283,10 @@ fn masked(value: &str) -> bool {
             .all(|one| matches!(one, '\u{2022}' | '\u{25cf}' | '*' | '\u{b7}'))
 }
 
-/// A tree of parts, indexed for walking.
 struct Forest<'a> {
     parts: &'a [Part],
     by_id: Vec<HashMap<&'a str, &'a Value>>,
-    /// Which part hangs under which frame element: (part, node) to the part's index.
     hung: HashMap<(usize, u64), usize>,
-    /// The secret fields the page named.
     secret: &'a HashSet<(String, u64)>,
     echoes: HashMap<(usize, &'a str), Vec<String>>,
     echoes_by_backend: HashMap<(usize, u64), Vec<String>>,
@@ -431,8 +366,6 @@ impl<'a> Forest<'a> {
         forest
     }
 
-    /// Whether a node is a secret field: one the page named, or one whose value is
-    /// nothing but the engine's mask.
     fn secret(&self, part: usize, node: &Node<'_>) -> bool {
         let named = node.backend().is_some_and(|backend| {
             self.parts
@@ -479,7 +412,6 @@ impl<'a> Forest<'a> {
         self.by_id.get(part)?.get(id).copied()
     }
 
-    /// The node for a backend id in a part.
     fn backend(&self, part: usize, backend: u64) -> Option<&'a Value> {
         self.parts
             .get(part)?
@@ -489,7 +421,6 @@ impl<'a> Forest<'a> {
     }
 }
 
-/// Writes the tree out.
 pub fn render(parts: &[Part], asked: &Asked<'_>) -> Written {
     let forest = Forest::new(parts, asked.secret);
     let mut writer = Writer {
@@ -534,7 +465,6 @@ pub fn render(parts: &[Part], asked: &Asked<'_>) -> Written {
     }
 }
 
-/// Whether a part of the page holds a node, for a ref an agent passed.
 pub fn holds(parts: &[Part], prefix: &str, backend: u64) -> bool {
     let none = HashSet::new();
     let forest = Forest::new(parts, &none);
@@ -552,14 +482,10 @@ struct Writer<'a> {
     down: usize,
 }
 
-/// Where a node is being written: how deep, and what around it already says.
 struct Around<'a> {
     depth: usize,
-    /// The root of a frame's document, which its frame element already stands for.
     skip: bool,
-    /// The names a text node would only repeat: its parent's, and its siblings'.
     said: &'a [String],
-    /// Inside a `<select>`: its options are chosen with `browser_select`, never pressed.
     in_list: bool,
 }
 
@@ -602,8 +528,6 @@ impl Writer<'_> {
             }
             line.push_str(&states(&node, &role, self.origin));
             line.push_str(&value_of(&node, &role, secret));
-            // Words on their own have a ref too: a `<div>` with a listener and no role is
-            // still somewhere a person presses, and its words are how an agent names it.
             let pressable = !(around.in_list && role == "option");
             if let Some(backend) = node.backend().filter(|_| pressable) {
                 let _ = write!(line, " [ref={prefix}e{backend}]");
@@ -617,13 +541,9 @@ impl Writer<'_> {
             inner = around.depth + 1;
         }
 
-        // Nothing under a secret field is written: the engine's words inside a password
-        // field are its bullets.
         if sealed(&role) || secret {
             return;
         }
-        // What the children would only repeat: this node's name, and every name a
-        // sibling of theirs already says (a label's words beside the field they name).
         let children: Vec<&Value> = node
             .children()
             .into_iter()
@@ -648,7 +568,6 @@ impl Writer<'_> {
         for child in children {
             self.walk(forest, part, child, &within);
         }
-        // A frame's document hangs under the frame element.
         if let Some(backend) = node.backend() {
             if let Some(&under) = forest.hung.get(&(part, backend)) {
                 if let Some(root) = forest.root(under) {
@@ -665,19 +584,12 @@ impl Writer<'_> {
     }
 }
 
-/// What `find` is asked for.
 pub struct Wanted<'a> {
-    /// Words in the element's name or text, lower case.
     pub text: Option<&'a str>,
-    /// Its role, lower case.
     pub role: Option<&'a str>,
-    /// Words in its name, lower case.
     pub name: Option<&'a str>,
 }
 
-/// The elements that match: by role and name, or by words in their name or text.
-/// Named elements only, each once, in the page's order; never anything inside a secret
-/// field, and no name with a secret's value in it.
 pub fn find(parts: &[Part], secret: &HashSet<(String, u64)>, wanted: &Wanted<'_>) -> Vec<Match> {
     let forest = Forest::new(parts, secret);
     let mut found = Vec::new();
@@ -695,10 +607,8 @@ pub fn find(parts: &[Part], secret: &HashSet<(String, u64)>, wanted: &Wanted<'_>
     found
 }
 
-/// The nearest element above a text node that an agent can name: its ref, role and name.
 type Holder = (String, String, String);
 
-/// What `search` fills: the matches, and the refs already in them.
 type Found<'a> = (&'a mut Vec<Match>, &'a mut HashSet<String>, usize);
 
 fn search(
@@ -745,8 +655,6 @@ fn searched(
     let visible = !node.ignored() && !silent(&role, name) && !furniture(&role);
     if visible {
         if role == "text" {
-            // Words found: the control they are the words of, or the words themselves when
-            // they belong to nothing an agent would name (a `<div>` with a listener).
             if wanted.text.is_some_and(|text| lower.contains(text)) {
                 match holder {
                     Some((element, role, name))
@@ -794,7 +702,6 @@ fn searched(
     }
 }
 
-/// A ref, read: the frame's number (`None` for the page's own session) and the node.
 pub fn parse_ref(reference: &str) -> Option<(Option<usize>, u64)> {
     let reference = reference.trim();
     if let Some(rest) = reference.strip_prefix('f') {
@@ -954,15 +861,11 @@ mod tests {
     #[test]
     fn a_password_fields_value_is_never_written() {
         assert!(!written(&parts(), None, MOST).text.contains("hunter2"));
-        // Nor a mask that stands for one.
         assert!(masked("\u{2022}\u{2022}\u{2022}"));
         assert!(!masked("4242"));
         assert!(!masked(""));
     }
 
-    /// A card form as the engine answers it: the number's field with its words inside,
-    /// a button whose name the engine built out of the number, and a field whose value is
-    /// only the engine's mask, which no scan named.
     fn card_page() -> Vec<Value> {
         let field = |id: &str, name: &str, value: &str, backend: u64, children: &[&str]| {
             with(
@@ -1038,7 +941,6 @@ mod tests {
             ]
             .join("\n")
         );
-        // Nor is anything inside one found, nor a name that says its value.
         let found = find(
             &parts,
             &secret,
@@ -1180,8 +1082,6 @@ mod tests {
         assert_eq!(found(Some("help"), None, None), ["e9"]);
     }
 
-    /// Trees recorded from headless Chromium, the engine `WebView2` is, on the probe's
-    /// own shop and sign-in pages (scripts/agent-tab-probe.py).
     fn recorded(page: &str) -> Vec<Part> {
         let all: Value =
             serde_json::from_str(include_str!("fixtures.json")).expect("recorded trees");
@@ -1194,11 +1094,6 @@ mod tests {
 
     #[test]
     fn a_recorded_shop_reads_as_its_form() {
-        // Every field once, by its label; a list's options without refs, because they are
-        // chosen with browser_select; a date field whole, because its insides - its
-        // picker's button above all - are the engine's own windows (6.5); and the words a
-        // label only repeats beside its field not said twice. The card's three fields are
-        // secret, and empty, so they say nothing more than their names.
         let secret: HashSet<(String, u64)> = [47, 50, 53]
             .into_iter()
             .map(|node| (String::new(), node))
@@ -1256,8 +1151,6 @@ mod tests {
             },
         )
         .text;
-        // The engine's value is one bullet a character, and so are the words inside the
-        // field; with no scan to say so, the mask alone makes it a secret.
         assert!(
             text.contains("- textbox \"Password\" [filled] [ref=e137]"),
             "{text}"

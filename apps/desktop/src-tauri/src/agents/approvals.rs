@@ -1,19 +1,3 @@
-//! The questions an agent's calls raise, and the reader's answers (docs/agent-native.md
-//! 9.3).
-//!
-//! **A question never holds a call open.** A call that needs asking answers at once,
-//! `{"status": "needs_approval", "approval": "a17", "summary": "Place order on
-//! shop.example"}`, so an unsupervised agent carries on with something else rather than
-//! holding a connection open for an hour. The window hears `asked` and puts the question
-//! in the activity panel with one notification; the reader answers there; `answered`
-//! says so, and `approval_status` tells the agent.
-//!
-//! **An allowed question lets the same call through once.** The agent calls again, the
-//! call finds its question allowed by what it is about (the verb, the tab, the element,
-//! and on a page its host and the element's name, `on_page`), and goes ahead; the question is then spent. "Always on this site" writes the category
-//! into the grant for that site, so the next one is not asked at all. A question nobody
-//! answered for a day expires.
-
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, PoisonError};
 use std::time::{Duration, Instant};
@@ -22,34 +6,25 @@ use tauri::{AppHandle, Emitter as _};
 
 use super::verbs::{Answer, Approval, ApprovalAnswer, Category, Event, EVENT};
 
-/// How long a question waits for the reader.
 const EXPIRES: Duration = Duration::from_secs(24 * 60 * 60);
 
-/// How long an allowed question waits to be used before it lapses.
 const SPEND_WITHIN: Duration = Duration::from_secs(10 * 60);
 
-/// One question, with what it lets through.
 struct Held {
     approval: Approval,
-    /// What the call it lets through is about: the verb, the tab, the element.
     key: String,
-    /// When it was asked, or answered.
     at: Instant,
-    /// Whether an allowed question has let its call through.
     spent: bool,
 }
 
-/// Every question of this run.
 static HELD: Mutex<Vec<Held>> = Mutex::new(Vec::new());
 
-/// The next question's number.
 static NEXT: AtomicU64 = AtomicU64::new(1);
 
 fn held() -> std::sync::MutexGuard<'static, Vec<Held>> {
     HELD.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
-/// What a call is about, for finding its question again.
 pub fn key(verb: &str, tab: Option<&str>, element: Option<&str>) -> String {
     format!(
         "{verb}:{}:{}",
@@ -74,7 +49,6 @@ pub fn is_allowed(agent: &str, key: &str) -> bool {
     })
 }
 
-/// Whether the reader allowed this call: spends the allowance if so.
 pub fn allowed(agent: &str, key: &str) -> bool {
     let mut all = held();
     let found = all.iter_mut().find(|one| {
@@ -93,28 +67,16 @@ pub fn allowed(agent: &str, key: &str) -> bool {
     }
 }
 
-/// The question for a call: the one already waiting, or a new one, asked. Answers what
-/// the call answers, `needs_approval`, or the reader's no when they already said it.
 pub struct Asking<'a> {
-    /// The agent's id.
     pub agent: &'a str,
-    /// The agent's name.
     pub name: &'a str,
-    /// What it is about.
     pub category: Category,
-    /// One line.
     pub summary: String,
-    /// The site, when a page is what it is about.
     pub site: Option<String>,
-    /// The tab.
     pub tab: Option<String>,
-    /// What the call is about; see `key`.
     pub key: String,
 }
 
-/// A question an agent that asks nothing would have raised, answered as it is raised: kept
-/// with its answer, so the activity panel and `approval_status` read it as any other, and
-/// said to the window, which shows a tab whose Show this was (#372).
 pub fn granted(app: &AppHandle, asking: Asking<'_>, answer: ApprovalAnswer) -> Approval {
     let approval = Approval {
         id: format!("q{}", NEXT.fetch_add(1, Ordering::Relaxed)),
@@ -143,7 +105,6 @@ pub fn granted(app: &AppHandle, asking: Asking<'_>, answer: ApprovalAnswer) -> A
     approval
 }
 
-/// Asks, once: a call made again while its question waits is told the same question.
 pub fn ask(app: &AppHandle, asking: Asking<'_>) -> Answer {
     let mut all = held();
     if let Some(one) = all
@@ -158,8 +119,6 @@ pub fn ask(app: &AppHandle, asking: Asking<'_>) -> Answer {
                     summary: one.approval.summary.clone(),
                 };
             }
-            // Refused recently: said again rather than asked again, so a loop in the
-            // agent is not a stream of questions.
             ApprovalAnswer::Denied if one.at.elapsed() < SPEND_WITHIN => {
                 return Answer::error(
                     super::verbs::Code::Denied,
@@ -200,13 +159,10 @@ pub fn ask(app: &AppHandle, asking: Asking<'_>) -> Answer {
     }
 }
 
-/// The verb a call's key names first, whichever way the key was written: the crate's
-/// `browser_click:a1:e7`, the window's `edit_note:{...}`.
 fn verb_of(key: &str) -> &str {
     key.split(':').next().unwrap_or_default()
 }
 
-/// The reader's answer. Answers the question as it now stands.
 pub fn answer(app: &AppHandle, id: &str, allow: bool) -> Result<Approval, String> {
     let approval = {
         let mut all = held();
@@ -234,7 +190,6 @@ pub fn answer(app: &AppHandle, id: &str, allow: bool) -> Result<Approval, String
     Ok(approval)
 }
 
-/// A question, as the agent that asked may see it.
 pub fn status(agent: &str, id: &str) -> Option<Approval> {
     held()
         .iter()
@@ -242,7 +197,6 @@ pub fn status(agent: &str, id: &str) -> Option<Approval> {
         .map(|one| one.approval.clone())
 }
 
-/// A question by id, whoever asked; for the window and the command line.
 pub fn any(id: &str) -> Option<Approval> {
     held()
         .iter()
@@ -250,7 +204,6 @@ pub fn any(id: &str) -> Option<Approval> {
         .map(|one| one.approval.clone())
 }
 
-/// Every question still waiting, of one agent or of all.
 pub fn pending(agent: Option<&str>) -> Vec<Approval> {
     held()
         .iter()
@@ -260,7 +213,6 @@ pub fn pending(agent: Option<&str>) -> Vec<Approval> {
         .collect()
 }
 
-/// Every question a day old, expired and said.
 pub fn expire(app: &AppHandle) {
     let expired: Vec<Approval> = held()
         .iter_mut()
@@ -275,7 +227,6 @@ pub fn expire(app: &AppHandle) {
     }
 }
 
-/// A takeover or a show waiting on one tab: whether its question is still open.
 pub fn waiting_on(agent: &str, tab: &str, category: Category) -> Option<Approval> {
     held()
         .iter()
@@ -320,7 +271,6 @@ mod tests {
         pushed("allowing", &key, ApprovalAnswer::Allowed);
         assert!(allowed("allowing", &key));
         assert!(!allowed("allowing", &key));
-        // Nobody else's call, and not another element.
         pushed("allowing", &key, ApprovalAnswer::Allowed);
         assert!(!allowed("somebody", &key));
         assert!(!allowed("allowing", "browser_click:a1:e8"));

@@ -1,17 +1,3 @@
-//! Who may drive Orden, and how far: an agent is a grant (docs/agent-native.md 9.1).
-//!
-//! A grant is made the first time a client pairs through `nib mcp`, or by hand in
-//! Settings > Agents for a client somewhere else, and it is kept in `<config>/agents.json`
-//! beside the endpoint's own file, the owner's alone. What a grant holds is what the
-//! settings pane shows: the scopes, the spaces, the rules per site, the mode, the
-//! questions it always asks and its limits.
-//!
-//! **The token is never kept.** A client is handed 32 random bytes as hex, once, and Orden
-//! keeps their SHA-256. A copy of the file is then a list of what each agent may do and
-//! not a way to be one. A token that arrives is hashed and compared with every grant's
-//! hash in constant time, all of them, so how long the answer takes says nothing about
-//! which one was nearly right.
-
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -23,87 +9,59 @@ use tauri::AppHandle;
 use super::verbs::Category;
 use crate::paths::{config_dir, made, write_privately};
 
-/// The token's length in bytes, which is the endpoint secret's too.
 const TOKEN_BYTES: usize = 32;
 
-/// What an agent may reach, by capability (9.1).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum Scope {
-    /// Where the reader is: the tab in front, the selection, the lines on screen.
     #[serde(rename = "context")]
     Context,
-    /// Reading notes.
     #[serde(rename = "notes.read")]
     NotesRead,
-    /// Writing notes.
     #[serde(rename = "notes.write")]
     NotesWrite,
-    /// Reading chats: other people's words, marked as theirs (docs/chats.md 4.14).
     #[serde(rename = "chats.read")]
     ChatsRead,
-    /// Posting, reacting and drafting in chats, as the reader.
     #[serde(rename = "chats.write")]
     ChatsWrite,
-    /// The file tree: moving, renaming, folders.
     #[serde(rename = "tree")]
     Tree,
-    /// Tabs and bookmarks, opened behind the tab in front.
     #[serde(rename = "workspace")]
     Workspace,
-    /// Changing what the reader is looking at.
     #[serde(rename = "workspace.focus")]
     WorkspaceFocus,
-    /// Tabs of its own, out of sight.
     #[serde(rename = "browser")]
     Browser,
-    /// The reader's own web tabs.
     #[serde(rename = "browser.reader")]
     BrowserReader,
-    /// Scripts in pages, per site on top of this.
     #[serde(rename = "browser.script")]
     BrowserScript,
-    /// Response bodies.
     #[serde(rename = "browser.network")]
     BrowserNetwork,
-    /// The reader's cookies and storage.
     #[serde(rename = "browser.storage")]
     BrowserStorage,
-    /// The short list of settings.
     #[serde(rename = "settings")]
     Settings,
-    /// The terminal.
     #[serde(rename = "terminal")]
     Terminal,
-    /// Files and folders anywhere the user account reaches, outside the spaces (#1078).
     #[serde(rename = "files")]
     Files,
-    /// Programs on this computer, run or started and talked to (#1078).
     #[serde(rename = "processes")]
     Processes,
-    /// Requests to any site, outside every tab (#1078).
     #[serde(rename = "network")]
     Network,
-    /// The system clipboard, read and written (#1078).
     #[serde(rename = "clipboard")]
     Clipboard,
-    /// A question put to the reader: a notice, a choice, a line to type (#1078).
     #[serde(rename = "ask")]
     Ask,
-    /// A note's editor: its selections, the marks an agent draws, its folds (#1078).
     #[serde(rename = "editor")]
     Editor,
-    /// The reader's applications, run on a computer of theirs and shown in a tab: started,
-    /// stopped, seen and used through the tab, only while this device holds them (#1063).
     #[serde(rename = "applications")]
     Applications,
-    /// Helpers on the reader's AI accounts: another model, Claude's or `OpenAI`'s, started
-    /// on a task, whose answer comes back (`run_agent`; docs/ai.md, "Helpers").
     #[serde(rename = "agents")]
     Agents,
 }
 
 impl Scope {
-    /// Every scope, in the settings pane's order.
     pub const ALL: [Scope; 23] = [
         Scope::Context,
         Scope::NotesRead,
@@ -131,27 +89,20 @@ impl Scope {
     ];
 }
 
-/// The word `"all"`, which is what `spaces` says for every space.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Every {
-    /// Every space.
     All,
 }
 
-/// Which spaces an agent may reach. Another space's notes, tabs and store do not exist
-/// to it (9.6).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Spaces {
-    /// `"all"`.
     All(Every),
-    /// These, by name.
     Named(Vec<String>),
 }
 
 impl Spaces {
-    /// Whether the space with this name is one of them.
     pub fn reach(&self, space: &str) -> bool {
         match self {
             Spaces::All(_) => true,
@@ -160,46 +111,28 @@ impl Spaces {
     }
 }
 
-/// What a grant says about one site (9.2, 6.3).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum SiteRule {
-    /// Always fine.
     Allow,
-    /// Never opened, navigated to or acted in, in any tab.
     Deny,
-    /// Only in the agent's own store: mail, a bank.
     AgentStore,
 }
 
-/// Whether an agent asks for every write, only for the list in 9.3, or for nothing.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Mode {
-    /// Only what 9.3 lists asks.
     #[default]
     Unsupervised,
-    /// Every write asks, batched.
     Confirm,
-    /// Nothing asks, whatever the act: the AI sidebar's Full permissions (docs/ai-sidebar.md
-    /// 4.4, #372). Paying included, and a tab shown or a step handed to the reader goes
-    /// ahead without a question. Only ever a call's, laid over the built-in grant by
-    /// `ai_agent.rs`; never kept (`Grants::replace`).
     Autonomous,
 }
 
-/// How much an agent may do (9.1, 6.4).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Limits {
-    /// Its own tabs open at once; past that the least recently used is parked.
     pub tabs: u32,
-    /// Calls a minute.
     pub calls: u32,
-    /// Navigations a minute.
     pub navigations: u32,
-    /// The browser's memory, in MB, past which this agent opens no more tabs; 0, the
-    /// default, is no ceiling at all (#333). A grant written before there was one has
-    /// none.
     #[serde(default)]
     pub memory: u32,
 }
@@ -215,41 +148,27 @@ impl Default for Limits {
     }
 }
 
-/// An agent, as the settings pane reads and writes it (13.1).
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Grant {
-    /// Its id, made from the client's name: `claude-code`.
     pub id: String,
-    /// What the reader calls it.
     pub name: String,
-    /// What the client called itself when it paired.
     pub client: String,
-    /// What it may reach.
     pub scopes: Vec<Scope>,
-    /// Which spaces.
     pub spaces: Spaces,
-    /// Rules by site, a registrable domain each (`example.co.uk`).
     #[serde(default)]
     pub sites: BTreeMap<String, SiteRule>,
-    /// The sites `browser.script` reaches (9.2): off everywhere until the reader says.
     #[serde(default)]
     pub scripts: Vec<String>,
-    /// Unsupervised or confirm.
     #[serde(default)]
     pub mode: Mode,
-    /// The categories of 9.3, each on or off. A category left out asks.
     #[serde(default)]
     pub asks: BTreeMap<Category, bool>,
-    /// "Always on this site": categories the reader allowed for good on one site.
     #[serde(default)]
     pub always: BTreeMap<String, Vec<Category>>,
-    /// The programs `run_terminal` may start without asking (8.9).
     #[serde(default)]
     pub programs: Vec<String>,
-    /// Its limits.
     #[serde(default)]
     pub limits: Limits,
-    /// When it was made, in milliseconds since 1970.
     #[serde(default)]
     pub created: u64,
     #[serde(default)]
@@ -257,10 +176,6 @@ pub struct Grant {
 }
 
 impl Grant {
-    /// A grant for one of the reader's own clients, paired on this machine, with Emil's
-    /// defaults (9.1): everything but scripts, the reader's storage and settings; every
-    /// space; unsupervised; every question on. The terminal and helpers are in since
-    /// 2026-10-12, so an agent outside Orden does what the AI panel's own agent does.
     pub fn own(id: String, client: &str) -> Self {
         Grant {
             id,
@@ -288,9 +203,6 @@ impl Grant {
         }
     }
 
-    /// A grant for somebody else's tool, made by hand: the same, without the reader's
-    /// screen, tabs or chats, and asking for every write (9.1). Chats are other
-    /// people's words, so a tool the reader did not pair starts without them.
     pub fn third_party(id: String, client: &str) -> Self {
         let mut grant = Grant::own(id, client);
         grant.scopes.retain(|one| {
@@ -315,28 +227,19 @@ impl Grant {
         grant
     }
 
-    /// Whether it holds a scope: every one under Full permissions (#1072), which refuses
-    /// nothing on the grounds of what was granted.
     pub fn holds(&self, scope: Scope) -> bool {
         self.mode == Mode::Autonomous || self.scopes.contains(&scope)
     }
 
-    /// The one place a category's question is decided (#1072): on unless the reader turned
-    /// it off, and never for an autonomous one (#372: Full permissions asks for nothing,
-    /// paying and signing in included). Every guard that would ask, refuse or hand a step
-    /// to the reader reads this, or `asks_nothing`, rather than a rule of its own.
     pub fn asks(&self, category: Category) -> bool {
         let on = self.asks.get(&category).copied().unwrap_or(true);
         on && self.mode != Mode::Autonomous
     }
 
-    /// Whether this agent goes ahead without asking the reader anything at all, a tab shown
-    /// or a step handed over included: Full permissions.
     pub fn asks_nothing(&self) -> bool {
         self.mode == Mode::Autonomous
     }
 
-    /// Whether the reader said "always" for this category on this site.
     pub fn always(&self, site: &str, category: Category) -> bool {
         self.always
             .get(site)
@@ -344,44 +247,29 @@ impl Grant {
     }
 }
 
-/// A grant as the file keeps it: with its token's hash, which never leaves the crate.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct Kept {
     #[serde(flatten)]
     grant: Grant,
-    /// SHA-256 of the token, as hex.
     token: String,
 }
 
-/// The file.
 #[derive(Default, Serialize, Deserialize)]
 struct File {
     #[serde(default)]
     agents: Vec<Kept>,
-    /// Whether its grants have been given the chats' scopes, which came after them:
-    /// absent in a file written before chats were.
     #[serde(default)]
     chats: bool,
-    /// Whether its grants have been given helpers, which came after them.
     #[serde(default)]
     helpers: bool,
-    /// Whether the AI sidebar's own grants have been called by the product's name since
-    /// the rename: absent in a file written while it was still nib.
     #[serde(default)]
     orden: bool,
 }
 
-/// What the AI sidebar's own grants are called before the provider's name:
-/// `Orden · Claude`.
 pub(crate) const SIDEBAR: &str = "Orden · ";
 
-/// What they were called until the product was renamed Orden, which a file written
-/// before then still says.
 const SIDEBAR_BEFORE: &str = "nib · ";
 
-/// A grant kept from before the rename, called what a new one is: its client and the
-/// name it is listed under, each where it still begins with the old word. A name the
-/// reader gave it is the reader's, and stays.
 fn as_orden(grant: &mut Grant) {
     for label in [&mut grant.client, &mut grant.name] {
         if let Some(rest) = label.strip_prefix(SIDEBAR_BEFORE) {
@@ -394,17 +282,12 @@ fn was_built_in(grant: &Grant) -> bool {
     grant.id.starts_with("nib-") && grant.client.starts_with(SIDEBAR)
 }
 
-/// A grant kept from before helpers, given them as a new grant of its kind would be: the
-/// reader's own clients (they see the screen) start helpers, somebody else's tool does not.
 fn with_helpers(grant: &mut Grant) {
     if grant.holds(Scope::Context) && !grant.holds(Scope::Agents) {
         grant.scopes.push(Scope::Agents);
     }
 }
 
-/// A grant kept from before chats, given them the way it holds notes: a grant of the
-/// reader's own clients (it sees the screen) reads and posts in chats where it reads
-/// and writes notes; somebody else's tool, which never had the screen, gets neither.
 fn with_chats(grant: &mut Grant) {
     if !grant.holds(Scope::Context) {
         return;
@@ -419,13 +302,10 @@ fn with_chats(grant: &mut Grant) {
     }
 }
 
-/// Every grant, read from the file the first time an agent asks and written back on
-/// every change. `None` until then, which is what keeps a launch from reading it.
 #[derive(Default)]
 pub struct Grants(Mutex<Option<Vec<Kept>>>);
 
 impl Grants {
-    /// The grants, read from disk if they have not been yet, handed to `with`.
     fn with<T>(
         &self,
         app: &AppHandle,
@@ -442,11 +322,9 @@ impl Grants {
         Ok(with(kept))
     }
 
-    /// The grant a token belongs to, if any.
     pub fn by_token(&self, app: &AppHandle, token: &str) -> Option<Grant> {
         let said = hashed(token);
         self.with(app, |kept| {
-            // Every one compared, none skipped: see the top of this file.
             let mut found = None;
             for one in kept.iter() {
                 if same(&said, &one.token) && found.is_none() {
@@ -459,7 +337,6 @@ impl Grants {
         .flatten()
     }
 
-    /// The grant with this id.
     pub fn by_id(&self, app: &AppHandle, id: &str) -> Option<Grant> {
         self.with(app, |kept| {
             kept.iter()
@@ -470,15 +347,12 @@ impl Grants {
         .flatten()
     }
 
-    /// Every grant.
     pub fn all(&self, app: &AppHandle) -> Result<Vec<Grant>, String> {
         self.with(app, |kept| {
             kept.iter().map(|one| one.grant.clone()).collect()
         })
     }
 
-    /// A new grant made from `make` with a fresh id and token, kept; answers the grant
-    /// and the token, which is said this once.
     pub fn mint(
         &self,
         app: &AppHandle,
@@ -498,9 +372,6 @@ impl Grants {
         })?
     }
 
-    /// The settings pane's list, written over what is kept: each grant by id takes the
-    /// pane's version, and a grant the pane left out is gone, with its token. A grant
-    /// the pane made up is not added; a grant is only ever made with a token.
     pub fn replace(&self, app: &AppHandle, grants: Vec<Grant>) -> Result<Vec<Grant>, String> {
         let path = file(app)?;
         self.with(app, |kept| {
@@ -509,12 +380,9 @@ impl Grants {
                 if let Some(one) = kept.iter().find(|one| one.grant.id == grant.id) {
                     next.push(Kept {
                         grant: Grant {
-                            // Who it was made for, and when, are facts rather than
-                            // settings.
                             client: one.grant.client.clone(),
                             created: one.grant.created,
                             built_in: one.grant.built_in,
-                            // A call's mode, never a grant's own.
                             mode: if grant.mode == Mode::Autonomous {
                                 one.grant.mode
                             } else {
@@ -531,7 +399,6 @@ impl Grants {
         })?
     }
 
-    /// One grant changed in place, and kept.
     pub fn change(
         &self,
         app: &AppHandle,
@@ -549,9 +416,6 @@ impl Grants {
     }
 }
 
-/// A grant as it was last read, without reading the file: for the engine's own events,
-/// which have no app to find the file with and come only after a grant was read. `None`
-/// for an id no grant has, or before any grant was read.
 pub fn cached(id: &str) -> Option<Grant> {
     super::AGENTS
         .get()?
@@ -565,13 +429,10 @@ pub fn cached(id: &str) -> Option<Grant> {
         .map(|one| one.grant.clone())
 }
 
-/// Where the grants are kept.
 fn file(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(config_dir(app)?.join("agents.json"))
 }
 
-/// The grants in the file; none for a file that is not there or cannot be read, which
-/// is an installation with no agents rather than a reason to refuse every call.
 fn read(path: &std::path::Path) -> Vec<Kept> {
     std::fs::read_to_string(path)
         .ok()
@@ -601,7 +462,6 @@ fn read(path: &std::path::Path) -> Vec<Kept> {
         .unwrap_or_default()
 }
 
-/// The grants, written whole and the owner's alone.
 fn write(path: &std::path::Path, kept: &[Kept]) -> Result<(), String> {
     if let Some(dir) = path.parent() {
         made(dir)?;
@@ -616,8 +476,6 @@ fn write(path: &std::path::Path, kept: &[Kept]) -> Result<(), String> {
     write_privately(path, text.as_bytes())
 }
 
-/// An id for a client, made from its name and free among `taken`: `Claude Code` is
-/// `claude-code`, and a second one `claude-code-2`.
 fn free_id(client: &str, taken: &[&str]) -> String {
     let mut stem = String::new();
     for one in client.chars().flat_map(char::to_lowercase) {
@@ -648,7 +506,6 @@ fn free_id(client: &str, taken: &[&str]) -> String {
         .unwrap_or_else(|| stem.to_string())
 }
 
-/// A token nobody can guess, from the system's own randomness.
 pub(crate) fn fresh_token() -> Result<String, String> {
     let mut bytes = [0_u8; TOKEN_BYTES];
     getrandom::fill(&mut bytes)
@@ -656,12 +513,10 @@ pub(crate) fn fresh_token() -> Result<String, String> {
     Ok(hex(&bytes))
 }
 
-/// A token's SHA-256, as hex: what the file keeps.
 pub(crate) fn hashed(token: &str) -> String {
     hex(&Sha256::digest(token.as_bytes()))
 }
 
-/// Bytes as hex, two characters each.
 fn hex(bytes: &[u8]) -> String {
     use std::fmt::Write as _;
     let mut out = String::with_capacity(bytes.len() * 2);
@@ -671,8 +526,6 @@ fn hex(bytes: &[u8]) -> String {
     out
 }
 
-/// Whether two hashes are the same, in a time that does not depend on where they
-/// differ. Both are always 64 characters, so the length gives nothing away.
 pub(crate) fn same(one: &str, other: &str) -> bool {
     if one.len() != other.len() {
         return false;
@@ -684,14 +537,12 @@ pub(crate) fn same(one: &str, other: &str) -> bool {
     differences == 0
 }
 
-/// The agents, for Settings > Agents.
 #[tauri::command(async)]
 pub fn agents_read(webview: tauri::Webview, app: AppHandle) -> Result<Vec<Grant>, String> {
     super::from_the_app(&webview)?;
     super::state(&app).grants.all(&app)
 }
 
-/// The agents as Settings > Agents changed them: see `Grants::replace`.
 #[tauri::command(async)]
 pub fn agents_write(
     webview: tauri::Webview,
@@ -702,8 +553,6 @@ pub fn agents_write(
     super::state(&app).grants.replace(&app, grants)
 }
 
-/// A grant made by hand for a client somewhere else, or a script (9.1): its token is
-/// answered this once, for the reader to paste into that client.
 #[tauri::command(async)]
 pub fn agents_mint(
     webview: tauri::Webview,
@@ -721,16 +570,12 @@ pub fn agents_mint(
     Ok(Minted { grant, token })
 }
 
-/// A grant made by hand, with its token.
 #[derive(Serialize)]
 pub struct Minted {
-    /// The grant.
     pub grant: Grant,
-    /// Its token, said once.
     pub token: String,
 }
 
-/// Grants held without a file, for the tests.
 #[cfg(test)]
 impl Grants {
     fn from(kept: Vec<Kept>) -> Self {
@@ -775,7 +620,6 @@ mod tests {
         let back: File = serde_json::from_str(&text).expect("read");
         assert_eq!(back.agents[0].grant, grant);
         assert_eq!(back.agents[0].token, hashed("t"));
-        // The shape 13.1 promises, by name.
         let value: serde_json::Value = serde_json::from_str(&text).expect("value");
         let one = &value["agents"][0];
         assert_eq!(one["sites"]["bank.example"], "agent-store");
@@ -788,9 +632,6 @@ mod tests {
             .contains(&"browser.reader".into()));
     }
 
-    /// The sidebar's grants from before the rename are called Orden once; a name the
-    /// reader gave one, and every other grant, keep theirs. Once the file is written with
-    /// the mark, nothing is renamed again.
     #[test]
     fn a_sidebar_grant_from_before_the_rename_is_called_orden_once() {
         let kept = |id: &str, client: &str, name: &str| {
@@ -831,10 +672,8 @@ mod tests {
                 ("nibbler · X", "nib ·X"),
             ]
         );
-        // The ids stay: they are how the sidebar finds its grant again.
         assert_eq!(read[0].grant.id, "nib-anthropic");
 
-        // Written with the mark, a grant somebody calls `nib · ...` from then on is theirs.
         let mut named = read.clone();
         named[2].grant.name = "nib · mine".into();
         write(&path, &named).expect("write again");
@@ -870,7 +709,6 @@ mod tests {
         assert!(!read[0].grant.holds(Scope::ChatsWrite));
         assert!(!read[1].grant.holds(Scope::ChatsRead));
 
-        // Once written with the mark, a scope the reader took away stays away.
         let mut taken = read.clone();
         taken[0].grant.scopes.retain(|one| *one != Scope::ChatsRead);
         write(&path, &taken).expect("write again");
@@ -898,17 +736,11 @@ mod tests {
         assert!(!own.holds(Scope::BrowserScript));
         assert!(!own.holds(Scope::BrowserStorage));
         assert!(!own.holds(Scope::Settings));
-        // What the AI panel's own agent has, terminal and all (Emil, 2026-10-12: an agent
-        // outside Orden does "exactly the same thing as an agent that I am running IN Orden").
         assert!(own.holds(Scope::Terminal));
         assert!(own.holds(Scope::ChatsRead) && own.holds(Scope::ChatsWrite));
         assert!(own.holds(Scope::Agents));
-        // Files anywhere (#1078): the reader's own agents, asking before a file outside the
-        // spaces is touched; a third party only once the reader grants it.
         assert!(own.holds(Scope::Files));
         assert!(own.asks(Category::Files));
-        // Processes (#1078): held, and asking under the terminal's question for a program
-        // not on the agent's list.
         assert!(own.holds(Scope::Processes));
         assert!(own.holds(Scope::Network));
         assert!(own.holds(Scope::Clipboard) && own.holds(Scope::Ask));
@@ -968,7 +800,6 @@ mod tests {
         assert!(!same(&one, &hashed("tokem")));
         assert!(!same(&one, &one[..63]));
         assert_eq!(one.len(), 64);
-        // What is kept is not the token.
         assert_ne!(one, "token");
     }
 

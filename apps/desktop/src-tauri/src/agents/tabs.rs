@@ -1,34 +1,3 @@
-//! An agent's own tabs: pages nobody sees (docs/agent-native.md 6).
-//!
-//! **Out of sight, not hidden.** A child webview of the reader's window, shown, at
-//! (-10000, -10000) in the window's own coordinates: a child is clipped to its parent, so
-//! no pixel of it reaches a screen, and to the engine it is a visible page at a desktop
-//! size, which paints, runs its timers at full speed and takes input. The spike measured
-//! it (section 3); `scripts/agent-tab-probe.py` keeps measuring it. On Orden's own Chromium
-//! it is better still: a browser with no window at all (`engines/cef.rs`), and everything
-//! below but how it is built is the same.
-//!
-//! **Where they live.** In the reader's first window, and not in a window of their own
-//! that nobody sees. Measured both ways: a page in a window that is hidden keeps running
-//! just as a page in a minimised one does, so the choice is not about the engine. It is
-//! about the app's own life: Orden ends with its last window, a quit asks every window
-//! about its unsaved notes, and a window of the agents' own would be a window that never
-//! answers and an app that never ends. The design's answer to "the window closed while an
-//! agent works" is the window hiding into the tray instead (6.1, open question 6), which
-//! keeps these pages alive without any of that.
-//!
-//! **Built quiet.** On `about:blank`, `focused(false)` (wry otherwise hands every new
-//! webview the keyboard), developer tools off, and before anything loads the engine's
-//! furniture off and every event that could reach the reader answered in `quiet`. None
-//! of a reader's tab's listeners: not the browser's keys, not the page-first keys, not
-//! full screen, not the permission bubble. Its label is `agent-`, which nothing that looks
-//! for a reader's page matches.
-//!
-//! **How many, and for how long (6.4).** Four an agent and eight in all by default; past
-//! that the least recently used is parked - its page closed, its address kept - and built
-//! again by the next call on it. A tab nobody called for ten minutes is parked, and an
-//! agent that said goodbye has its tabs closed ten minutes later.
-
 use std::sync::atomic::{AtomicU64, Ordering};
 #[cfg(all(windows, not(feature = "cef")))]
 use std::sync::mpsc::sync_channel;
@@ -45,61 +14,39 @@ use super::engines::{self, View};
 use super::quiet::{self, Owner};
 use super::verbs::{AgentTab, Answer, Code, Event, Store, EVENT};
 
-/// What an agent's page is labelled: `agent-a3`.
 pub const LABEL: &str = "agent-";
 
-/// Where an agent's page sits in the window's own coordinates: far enough past the
-/// window's corner that a popup the page raises lands on no screen either (6.5).
 #[cfg(all(windows, not(feature = "cef")))]
 const AWAY: f64 = -10_000.0;
 
-/// An agent tab's size when none is asked for, in CSS pixels.
 pub const WIDTH: u32 = 1280;
-/// An agent tab's height when none is asked for.
 pub const HEIGHT: u32 = 800;
 
-/// Every agent's tabs together, at most, before the least recently used is parked.
 const ALL_TABS: usize = 8;
 
-/// How long a tab may go uncalled before it is parked, and how long an agent that said
-/// goodbye keeps its tabs.
 const IDLE: Duration = Duration::from_secs(600);
 
-/// How long a page may take to be built.
 pub(super) const BUILDING: Duration = Duration::from_secs(20);
 
-/// One agent tab.
 #[derive(Clone, Debug)]
 pub struct Tab {
-    /// Its id, `a3`.
     pub id: String,
-    /// The agent it belongs to.
     pub agent: String,
-    /// Which store, as the agent asked for it.
     pub store: Store,
-    /// The store's name as the engine has it: `None` for the one every space shares.
     pub store_name: Option<String>,
-    /// Where it is, or was when it was parked.
     pub url: String,
-    /// What it calls itself.
     pub title: String,
-    /// Whether a page is loading.
     pub loading: bool,
-    /// Whether its page is closed to save memory.
     pub parked: bool,
-    /// When an agent last called on it.
     pub used: Instant,
-    /// Its size in CSS pixels.
     pub size: (u32, u32),
 }
 
 impl Tab {
-    /// Its page's label.
     pub fn label(&self) -> String {
         format!("{LABEL}{}", self.id)
     }
 
-    /// As `browser_tabs` lists it.
     pub fn listed(&self) -> AgentTab {
         AgentTab {
             id: self.id.clone(),
@@ -112,23 +59,18 @@ impl Tab {
     }
 }
 
-/// Every agent tab, in the order they were opened.
 static TABS: Mutex<Vec<Tab>> = Mutex::new(Vec::new());
 
-/// Agents that said goodbye, and when.
 static GONE: Mutex<Vec<(String, Instant)>> = Mutex::new(Vec::new());
 
-/// The next tab's number.
 static NEXT: AtomicU64 = AtomicU64::new(1);
 
-/// Whether the timer that parks and closes has been started.
 static TICKING: std::sync::Once = std::sync::Once::new();
 
 fn tabs() -> std::sync::MutexGuard<'static, Vec<Tab>> {
     TABS.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
-/// The agent and tab a page belongs to, while it is an agent's.
 pub fn owner(label: &str) -> Option<Owner> {
     let id = label.strip_prefix(LABEL)?;
     tabs().iter().find(|one| one.id == id).map(|one| Owner {
@@ -138,7 +80,6 @@ pub fn owner(label: &str) -> Option<Owner> {
     })
 }
 
-/// An agent's tabs.
 pub fn of(agent: &str) -> Vec<Tab> {
     tabs()
         .iter()
@@ -147,7 +88,6 @@ pub fn of(agent: &str) -> Vec<Tab> {
         .collect()
 }
 
-/// One of an agent's tabs.
 pub fn find(agent: &str, id: &str) -> Option<Tab> {
     tabs()
         .iter()
@@ -155,9 +95,6 @@ pub fn find(agent: &str, id: &str) -> Option<Tab> {
         .cloned()
 }
 
-/// Whether a page an agent's tab is on may go to `url` or open a window to it: nowhere
-/// off the web, whoever's tab it is, and the agent's own rules about the site. Each
-/// engine's navigation and window events ask this.
 pub fn may_open(owner: &Owner, url: &str) -> Result<(), String> {
     if !super::policy::on_the_web(url) {
         return Err("an agent's page stays on the web".to_string());
@@ -165,7 +102,6 @@ pub fn may_open(owner: &Owner, url: &str) -> Result<(), String> {
     super::policy::site_allowed_for(&owner.agent, url, store_of(&owner.tab))
 }
 
-/// Which store a tab is in.
 fn store_of(id: &str) -> Store {
     tabs()
         .iter()
@@ -173,9 +109,6 @@ fn store_of(id: &str) -> Store {
         .map_or(Store::Reader, |one| one.store)
 }
 
-/// Opens an agent tab out of sight: its record kept, room made, the page built and sent
-/// to `url`. `most` is how many tabs the agent keeps and `ceiling` the browser's memory
-/// in MB past which it opens none, 0 for none (see `memory`). Answers the tab, or why not.
 pub fn open(
     app: &AppHandle,
     agent: &str,
@@ -212,8 +145,6 @@ pub fn open(
     Ok(tab)
 }
 
-/// The page of one of an agent's tabs, built again first if it was parked. Notes the
-/// call, which is what keeps the tab from being parked.
 pub fn page(app: &AppHandle, agent: &str, id: &str) -> Result<(Tab, View), Answer> {
     let Some(mut tab) = find(agent, id) else {
         return Err(Answer::error(
@@ -225,7 +156,6 @@ pub fn page(app: &AppHandle, agent: &str, id: &str) -> Result<(Tab, View), Answe
     if let Some(view) = super::engines::view(app, &tab.label()) {
         return Ok((tab, view));
     }
-    // Parked: built again where it was.
     let address = web_address(&tab.url)?;
     make_room(app, agent, usize::MAX, Some(id));
     build(app, &tab, Some(&address)).map_err(|why| Answer::error(Code::Failed, why))?;
@@ -243,7 +173,6 @@ fn touch(id: &str) {
     set(id, |one| one.used = Instant::now());
 }
 
-/// Changes one tab's record.
 pub fn set(id: &str, change: impl FnOnce(&mut Tab)) {
     if let Some(one) = tabs().iter_mut().find(|one| one.id == id) {
         change(one);
@@ -268,8 +197,6 @@ pub(super) fn web_address(url: &str) -> Result<Url, Answer> {
     }
 }
 
-/// Parks tabs until the agent has fewer than `most` and all agents fewer than eight,
-/// least recently used first, never `keep`.
 fn make_room(app: &AppHandle, agent: &str, most: usize, keep: Option<&str>) {
     loop {
         let open: Vec<Tab> = tabs().iter().filter(|one| !one.parked).cloned().collect();
@@ -292,7 +219,6 @@ fn make_room(app: &AppHandle, agent: &str, most: usize, keep: Option<&str>) {
     }
 }
 
-/// Parks a tab: its page closed, its record kept.
 pub fn park(app: &AppHandle, id: &str) {
     let label = format!("{LABEL}{id}");
     set(id, |one| {
@@ -302,7 +228,6 @@ pub fn park(app: &AppHandle, id: &str) {
     let_go(app, &label);
 }
 
-/// Closes a tab for good.
 pub fn close(app: &AppHandle, id: &str) {
     let gone = {
         let mut all = tabs();
@@ -321,7 +246,6 @@ pub fn close(app: &AppHandle, id: &str) {
     }
 }
 
-/// Closes every tab of an agent, or of every agent.
 pub fn close_all(app: &AppHandle, agent: Option<&str>) {
     let ids: Vec<String> = tabs()
         .iter()
@@ -333,13 +257,8 @@ pub fn close_all(app: &AppHandle, agent: Option<&str>) {
     }
 }
 
-/// The session anchor's label: the page that holds the store every space shares open
-/// (`session::anchor` in `web_tabs.rs`).
 const ANCHOR: &str = "web-session";
 
-/// A page of the reader's store `store` to read it through, and whether it was built for
-/// that: the page that holds the shared store's session open when there is one, or a
-/// blank page built there, which loads no site and is let go of with `let_go_of_bare`.
 pub(super) fn bare(app: &AppHandle, store: Option<&str>) -> Result<(View, bool), String> {
     if store.is_none() {
         if let Some(anchor) = super::engines::view(app, ANCHOR) {
@@ -364,12 +283,10 @@ pub(super) fn bare(app: &AppHandle, store: Option<&str>) -> Result<(View, bool),
         .ok_or_else(|| "the page was never built".into())
 }
 
-/// Closes a page `bare` built.
 pub(super) fn let_go_of_bare(app: &AppHandle, view: &View) {
     let_go(app, &view.label());
 }
 
-/// A page closed, with everything kept about it.
 fn let_go(app: &AppHandle, label: &str) {
     if let Some(view) = super::engines::view(app, label) {
         view.close();
@@ -378,21 +295,18 @@ fn let_go(app: &AppHandle, label: &str) {
     quiet::forget(app, label);
 }
 
-/// An agent said goodbye: its tabs go in ten minutes, unless it comes back.
 pub fn bye(agent: &str) {
     let mut gone = GONE.lock().unwrap_or_else(PoisonError::into_inner);
     gone.retain(|(one, _)| one != agent);
     gone.push((agent.to_string(), Instant::now()));
 }
 
-/// An agent is back: nothing of its is closed.
 pub fn back(agent: &str) {
     GONE.lock()
         .unwrap_or_else(PoisonError::into_inner)
         .retain(|(one, _)| one != agent);
 }
 
-/// Tells the window about a tab: where it is and what it calls itself.
 pub fn said(app: &AppHandle, tab: &Tab) {
     let _ = app.emit(
         EVENT,
@@ -405,10 +319,6 @@ pub fn said(app: &AppHandle, tab: &Tab) {
     );
 }
 
-/// Builds a tab's page, out of sight and quiet, and sends it to `address` - or leaves it
-/// on nothing for a window the engine hands over. Waits for the build. A tab in a twin of
-/// the reader's store is handed the reader's cookies first, on a page that has loaded
-/// nothing yet (see `engines`).
 #[cfg(any(windows, feature = "cef"))]
 fn build(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
     let Some(reader) = super::engines::reader_of(tab.store_name.as_deref()) else {
@@ -428,14 +338,11 @@ fn build(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String
     Ok(())
 }
 
-/// Builds a tab's page on `WKWebView`, which runs no extensions and so needs no twin of the
-/// reader's store (see `engines`).
 #[cfg(all(target_os = "macos", not(feature = "cef")))]
 fn build(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
     build_page(app, tab, address)
 }
 
-/// Builds a tab's page on `WKWebView`; see `engines/webkit.rs`.
 #[cfg(all(target_os = "macos", not(feature = "cef")))]
 fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
     super::engines::webkit::build(
@@ -451,7 +358,6 @@ fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), S
     )
 }
 
-/// Builds a tab's page on Orden's own Chromium: a browser with no window.
 #[cfg(feature = "cef")]
 fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
     super::engines::cef::build(
@@ -467,7 +373,6 @@ fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), S
     )
 }
 
-/// Builds a tab's page on `WebView2`: a child of the reader's window, out of its sight.
 #[cfg(all(windows, not(feature = "cef")))]
 fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
     let window =
@@ -509,11 +414,6 @@ fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), S
                 let Some(core) = cdp::core_of(&platform) else {
                     return;
                 };
-                // Every script the runtime registered on the page taken back before
-                // anything else is put on it, the way a reader's tab is (web_worlds.rs):
-                // the dialog plugin's `alert` and `confirm` with them, so a page's dialogs
-                // reach the engine and the agent rather than the app. Then the page's own
-                // stubs, and then the site, all in this one turn of the window's thread.
                 let _ = crate::web_worlds::cleared(&platform, "");
                 quiet::quieten(&setting, &core, &owner);
                 cdp::follow(&core, &owner.label);
@@ -534,19 +434,15 @@ fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), S
         .map_err(|_| "the page was never built".to_string())?
 }
 
-/// Sends a page somewhere, on the window's thread.
 #[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
     reason = "the page is sent through WebView2's own COM interface"
 )]
 fn navigate_now(core: &webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2, url: &str) {
-    // Safe: on the window's thread, where the engine's objects live.
     let _ = unsafe { core.Navigate(&windows_core::HSTRING::from(url)) };
 }
 
-/// Follows what a tab's page does: where it goes, what it calls itself, and a site the
-/// agent may not visit, stopped before it loads (9.2).
 #[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
@@ -570,13 +466,11 @@ fn listen(
                 return Ok(());
             };
             let mut uri = PWSTR::null();
-            // Safe: the event's own arguments, on the window's thread.
             let url = unsafe {
                 args.Uri(&raw mut uri)?;
                 webview2_com::take_pwstr(uri)
             };
             if let Err(why) = may_open(&owner, &url) {
-                // Safe: as above.
                 unsafe { args.SetCancel(true)? };
                 cdp::heard(&owner.label)
                     .lock()
@@ -597,7 +491,6 @@ fn listen(
         NavigationCompletedEventHandler::create(Box::new(move |sender, _| {
             let mut uri = PWSTR::null();
             let url = sender.and_then(|core| {
-                // Safe: the engine's own object, on the window's thread.
                 unsafe { core.Source(&raw mut uri).ok()? };
                 Some(webview2_com::take_pwstr(uri))
             });
@@ -618,7 +511,6 @@ fn listen(
         DocumentTitleChangedEventHandler::create(Box::new(move |sender, _| {
             let mut title = PWSTR::null();
             let title = sender.and_then(|core| {
-                // Safe: as above.
                 unsafe { core.DocumentTitle(&raw mut title).ok()? };
                 Some(webview2_com::take_pwstr(title))
             });
@@ -632,7 +524,6 @@ fn listen(
         }))
     };
     let mut token = 0i64;
-    // Safe: the engine holds the handlers for as long as the webview lives.
     unsafe {
         let _ = core.add_NavigationStarting(&starting, &raw mut token);
         let _ = core.add_NavigationCompleted(&completed, &raw mut token);
@@ -640,8 +531,6 @@ fn listen(
     }
 }
 
-/// Keeps a record for a window a page asked for, as a tab of the same agent in the same
-/// store, and answers its id; the page is built by `build_popup` in the loop's next turn.
 pub fn reserve_popup(opener: &Owner, url: &str) -> Option<String> {
     let (store, store_name, size) = {
         let all = tabs();
@@ -666,16 +555,12 @@ pub fn reserve_popup(opener: &Owner, url: &str) -> Option<String> {
     Some(id)
 }
 
-/// Builds the page for a window a page asked for and hands it to the engine. On the
-/// window's thread, in the event loop's own turn.
 #[cfg(all(windows, not(feature = "cef")))]
 pub fn build_popup(app: &AppHandle, id: &str) {
     let Some(tab) = tabs().iter().find(|one| one.id == id).cloned() else {
         quiet::hand_over(id, None);
         return;
     };
-    // Building waits for the engine, which this turn of the loop may do; answering
-    // happens once the page's engine exists, inside `build`'s set-up.
     let building = app.clone();
     std::thread::spawn(move || {
         if build(&building, &tab, None).is_err() {
@@ -688,10 +573,6 @@ pub fn build_popup(app: &AppHandle, id: &str) {
     });
 }
 
-/// A window a page on `WKWebView` asked for: another agent tab of the same agent, built
-/// at the address it asked for, if the agent may go there. `WKWebView` makes the new
-/// window's page with the opener's own configuration, which only a page it builds itself
-/// can take, so the new tab is a page of its own and `window.opener` is not kept.
 #[cfg(all(target_os = "macos", not(feature = "cef")))]
 pub fn open_popup(app: &AppHandle, opener: &Owner, url: &str) {
     let Ok(address) = web_address(url) else {
@@ -716,11 +597,8 @@ pub fn open_popup(app: &AppHandle, opener: &Owner, url: &str) {
     });
 }
 
-/// Agent tabs the reader was shown, by the agent tab's id: the reader's tab each became.
 static SHOWN: Mutex<Vec<(String, String)>> = Mutex::new(Vec::new());
 
-/// The reader's tab an agent's tab became, if it was shown (6.7): the agent keeps
-/// acting in it by either id.
 pub fn shown_as(id: &str) -> Option<String> {
     SHOWN
         .lock()
@@ -730,10 +608,6 @@ pub fn shown_as(id: &str) -> Option<String> {
         .map(|(_, reader)| reader.clone())
 }
 
-/// Makes an agent's tab a tab of the reader's without loading it again (6.7): it stops
-/// being the agent's - its dialogs, windows and permissions go back to being the
-/// engine's and the reader's - and gets a reader's tab's listeners. The window has made
-/// the reader's tab `reader` for it and places the page as it places any tab's.
 #[allow(
     unsafe_code,
     reason = "the page's settings are WebView2's own, reached through its COM interfaces"
@@ -758,7 +632,6 @@ pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
         let Some(core) = cdp::core_of(&platform) else {
             return;
         };
-        // Safe: on the window's thread, where the engine's objects live.
         unsafe {
             use webview2_com::Microsoft::Web::WebView2::Win32::{
                 ICoreWebView2Settings3, ICoreWebView2Settings4, ICoreWebView2_8,
@@ -792,11 +665,6 @@ pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
     Ok(())
 }
 
-/// On Orden's own Chromium an agent's page has no window to put in the pane: it was never
-/// a view, only pictures (`engines/cef.rs`). So Show opens its address as the reader's
-/// tab, which loads it again (the window builds it the ordinary way when this answers
-/// no page), and the agent's own tab closes; the agent acts on in the reader's tab by
-/// either id, as it does after a Show on `WebView2`.
 #[cfg(feature = "cef")]
 pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
     if find_any(id).is_none() {
@@ -810,12 +678,6 @@ pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
     Err("an agent's page on nib's own Chromium has no window: the tab loads its address".into())
 }
 
-/// On `WKWebView` an agent's page has delegates of Orden's own in place of wry's, which a
-/// reader's tab needs back - its navigations, its downloads, its windows - and wry does not
-/// hand them out again. So Show opens its address as the reader's tab, which loads it
-/// again in the same store (the window builds it the ordinary way when this answers no
-/// page), and the agent's own tab closes; the agent acts on in the reader's tab by either
-/// id, as on Orden's own Chromium.
 #[cfg(all(target_os = "macos", not(feature = "cef")))]
 pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
     if !tabs().iter().any(|one| one.id == id) {
@@ -829,15 +691,11 @@ pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
     Err("an agent's page on WKWebView is shown as a reader's tab of its own: the tab loads its address".into())
 }
 
-/// Any agent's tab, by its id.
 #[cfg(feature = "cef")]
 fn find_any(id: &str) -> Option<Tab> {
     tabs().iter().find(|one| one.id == id).cloned()
 }
 
-/// Starts the one timer agents have, the first time a tab opens: every fifteen seconds
-/// it parks what nobody used, closes what a gone agent left, and puts idle pages' domains
-/// to sleep. Nothing runs before an agent's first tab.
 fn start_ticking(app: &AppHandle) {
     TICKING.call_once(|| {
         let app = app.clone();

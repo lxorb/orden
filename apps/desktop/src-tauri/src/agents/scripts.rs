@@ -1,9 +1,3 @@
-//! What every engine runs in an agent's page, and what it makes of the answers
-//! (docs/agent-native.md 5.2, 9.4): the scripts that read a field, an element and its
-//! form, the page's words and its markup, and the painting over of a secret field in a
-//! picture. One copy, so the `DevTools` Protocol's road (`page.rs`) and `WKWebView`'s
-//! (`engines/webkit.rs`) read a page the same way and refuse the same things (#1092).
-
 use std::sync::LazyLock;
 use std::time::Duration;
 
@@ -12,9 +6,6 @@ use serde_json::Value;
 
 use super::verbs::ReadAs;
 
-/// Whether what a press lands on (`this`) is the element meant (`target`): it, inside it,
-/// round it, its label, or a frame it may be in. Across shadow roots, which `contains`
-/// stops at: a button inside a web component is pressed through its host.
 #[cfg_attr(
     not(any(windows, feature = "cef")),
     allow(
@@ -24,10 +15,6 @@ use super::verbs::ReadAs;
 )]
 pub(super) const INSIDE: &str = "function (target) { const up = (one) => one.parentNode || (one instanceof ShadowRoot ? one.host : null); const holds = (outer, inner) => { for (let one = inner; one; one = up(one)) if (one === outer) return true; return false }; const el = this.nodeType === 1 ? this : this.parentElement; if (!el) return true; if (holds(target, el) || holds(el, target)) return true; const label = el.closest('label'); if (label && (label.control === target || holds(label, target))) return true; return el.tagName === 'IFRAME' || el.tagName === 'FRAME' }";
 
-/// How the page's scripts read a field, as the policy's `Field` has it: shared by `FACTS`
-/// and the secret scan, so the two never read one field two ways. Reports what the page
-/// says - type, `autocomplete`, words, whether its style masks it, whether a message box
-/// @-mentions somebody - and leaves every judgement to `policy`.
 pub(super) const FIELDS: &str = r"
   const text = (one) => String(one || '').replace(/\s+/g, ' ').trim()
   const labelOf = (field) => {
@@ -64,8 +51,6 @@ pub(super) const FIELDS: &str = r"
   }
 ";
 
-/// What a page's element says about itself and its form, for the policy and for what
-/// may be done to it. Run with the element as `this`.
 pub(super) const FACTS_BODY: &str = r"
   let el = this.nodeType === 1 ? this : this.parentElement
   if (!el) return {}
@@ -91,12 +76,9 @@ pub(super) const FACTS_BODY: &str = r"
   return { tag, type: kind, name, autocomplete: String(el.getAttribute('autocomplete') || '').toLowerCase(), submit, link, editable, in_form: !!form, fields, field: describe(el) }
 ";
 
-/// `FACTS_BODY` with `FIELDS` in front of it, as the function the protocol runs.
 pub(super) static FACTS: LazyLock<String> =
     LazyLock::new(|| ["function () {", FIELDS, FACTS_BODY, "}"].concat());
 
-/// Every field words can be typed into, over the page and its frames of the same origin:
-/// the array the secret scan reads, one element at a time.
 pub(super) const TYPED_INTO: &str = r"(() => {
   const all = []
   const walk = (doc) => {
@@ -107,7 +89,6 @@ pub(super) const TYPED_INTO: &str = r"(() => {
   return all
 })()";
 
-/// Each of `TYPED_INTO`'s fields described, in its order, and whether it holds anything.
 pub(super) static DESCRIBED: LazyLock<String> = LazyLock::new(|| {
     [
         "function () {",
@@ -117,10 +98,8 @@ pub(super) static DESCRIBED: LazyLock<String> = LazyLock::new(|| {
     .concat()
 });
 
-/// The grey a filled secret field is painted in a picture of the page.
 const PAINTED: [u8; 3] = [128, 128, 128];
 
-/// The element that has the keyboard, into frames of the same origin.
 #[cfg_attr(
     not(any(windows, feature = "cef")),
     allow(
@@ -134,8 +113,6 @@ pub(super) const ACTIVE: &str = r"(() => {
   return at
 })()";
 
-/// A key in a reader's page as the page's own events, and its default done the page's
-/// way; answers `type` when the key's text is still to be inserted.
 #[cfg_attr(
     not(any(windows, feature = "cef")),
     allow(
@@ -166,23 +143,14 @@ pub(super) const IN_PAGE_KEY: &str = r"function (key, code, modifiers) {
   return answer
 }";
 
-/// The page as the reader reads it, for `browser_read` as text.
 pub(super) const TEXT: &str = r"(() => ({ url: location.href, title: document.title, text: document.body ? document.body.innerText : '' }))()";
 
-/// What no field carries into the markup an agent reads (9.4): a password field is
-/// dropped and every other field's `value` too, so a page that writes a secret into the
-/// markup (a prefilled password, a card number) has nothing read back whatever the
-/// converter makes of a field. Words typed into a field are never in markup at all,
-/// which writes attributes, not a field's live value; nor in `innerText`, the text
-/// shape. The clip's reader (`web_tabs/reader.js`) holds its snapshot to the same rule.
 pub(super) const UNVALUED: &str = r"const unvalued = (root) => {
   for (const one of root.querySelectorAll('input[type=password]')) one.remove()
   for (const one of root.querySelectorAll('input[value]')) one.removeAttribute('value')
   return root
 }";
 
-/// The whole page's HTML with its links made absolute and its scripts left out, for
-/// `browser_read` as markdown, unvalued.
 pub(super) static WHOLE: LazyLock<String> = LazyLock::new(|| {
     [
         "(() => {\n",
@@ -198,14 +166,8 @@ pub(super) static WHOLE: LazyLock<String> = LazyLock::new(|| {
     .concat()
 });
 
-/// The article as the clip button reads it - the very script, `web_tabs::reader`, which
-/// leaves out every field's value by the same rule as `UNVALUED` - for `browser_read` as
-/// an article and for a clip, which are the same words. It answers a snapshot of the
-/// document; the window finds the article in it with the clipper's own extractor (see
-/// packages/markdown/src/article.ts `readSnapshot`), on the way to the markdown.
 pub(super) static CLIPPED: LazyLock<String> = LazyLock::new(|| crate::web_tabs::reader(false));
 
-/// A PNG's size, read from its header.
 pub(super) fn png_size(base64: &str) -> Option<(u32, u32)> {
     let head = base64.get(..44)?;
     let bytes = base64::engine::general_purpose::STANDARD
@@ -216,8 +178,6 @@ pub(super) fn png_size(base64: &str) -> Option<(u32, u32)> {
     Some((width, height))
 }
 
-/// A PNG, base64, with rectangles in its own pixels - left, top, right, bottom - painted
-/// flat grey.
 pub(super) fn paint_over(png: &str, rects: &[[f64; 4]]) -> Result<String, String> {
     let bytes = base64::engine::general_purpose::STANDARD
         .decode(png)
@@ -265,7 +225,6 @@ pub(super) fn paint_over(png: &str, rects: &[[f64; 4]]) -> Result<String, String
     Ok(base64::engine::general_purpose::STANDARD.encode(out))
 }
 
-/// A coordinate as a pixel index, held inside a picture `most` pixels across.
 #[allow(
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss,
@@ -275,9 +234,7 @@ fn pixel(value: f64, most: u32) -> usize {
     value.floor().clamp(0.0, f64::from(most)) as usize
 }
 
-/// Markup's words, for a page the window could not convert.
 fn strip_tags(html: &str) -> String {
-    // A script's or a style's insides are not words on the page.
     let mut kept = String::with_capacity(html.len());
     let mut rest = html;
     while let Some(at) = rest.find('<') {
@@ -308,9 +265,6 @@ fn strip_tags(html: &str) -> String {
     kept.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
-/// A `<select>`'s options chosen through the page, never by opening its list (6.5): by
-/// value, by label, by label in any case. Run with the `<select>` as `this`; answers the
-/// values chosen, or why not.
 pub(super) const SELECT: &str = r"function (values) {
   if (this.tagName !== 'SELECT') return { error: 'that is not a <select>: press it and then the option you want' }
   const options = Array.from(this.options)
@@ -325,20 +279,12 @@ pub(super) const SELECT: &str = r"function (values) {
   return { chosen: wanted.map((one) => one.value) }
 }";
 
-/// A value set through the page, with the events a person's choice raises: for the
-/// fields whose own picker is a window (a date, a time, a colour). Run with the field as
-/// `this`; answers the value it took.
 pub(super) const SET_VALUE: &str = "function (value) { const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(this), 'value').set; setter.call(this, value); this.dispatchEvent(new Event('input', { bubbles: true })); this.dispatchEvent(new Event('change', { bubbles: true })); return this.value }";
 
-/// Everything in a field selected, so words typed replace it.
 pub(super) const CARET_ALL: &str = "function () { if (this.select) { this.select() } else { const range = document.createRange(); range.selectNodeContents(this); const now = getSelection(); now.removeAllRanges(); now.addRange(range) } }";
 
-/// The caret at the end of a field, so words typed go after what is there.
 pub(super) const CARET_END: &str = "function () { try { if (this.setSelectionRange) { const end = String(this.value || '').length; this.setSelectionRange(end, end) } } catch (_) {} }";
 
-/// The page as `browser_read` answers it, from what `TEXT`, `WHOLE` or `CLIPPED`
-/// answered: `(url, title, words)`. Markdown is the clipper's own converter's, asked of
-/// the window; without a window it is the text.
 pub(super) fn words(
     app: &tauri::AppHandle,
     shape: ReadAs,
@@ -384,7 +330,6 @@ mod tests {
 
     #[test]
     fn a_pngs_size_is_in_its_header() {
-        // A 1 by 1 PNG.
         let one = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
         assert_eq!(png_size(one), Some((1, 1)));
         assert_eq!(png_size("nope"), None);
@@ -392,7 +337,6 @@ mod tests {
 
     #[test]
     fn a_secret_is_painted_over_and_nothing_else_moves() {
-        // A 4 by 2 picture, every pixel white, and a field over its middle two columns.
         let mut raw = Vec::new();
         {
             let mut encoder = png::Encoder::new(&mut raw, 4, 2);

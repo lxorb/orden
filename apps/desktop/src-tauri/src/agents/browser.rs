@@ -1,16 +1,3 @@
-//! The browser verbs, answered the same on every engine (docs/agent-native.md 5.2 and 12):
-//! which tab, whether this agent may act there, what the page says it would be doing, and
-//! then the act, through the one interface every engine implements (`engines::Engine`,
-//! #1092). A verb the engine has no honest way to do answers `unsupported_on_this_engine`
-//! with its reason before anything else (`engines::cannot`).
-//!
-//! Every verb on a tab goes through the same gate, in this order: the tab is this agent's
-//! own or a reader's tab it may reach (`browser.reader`, its spaces); the page is not
-//! holding a dialog; the site is not denied. Nothing the reader does in a tab takes it
-//! from the agent (7.3), and the stop is asked before any verb (`super::answer`). A press
-//! or a write is then judged from the page (`policy`) and asks first when it has to,
-//! answering `needs_approval` at once.
-
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -30,15 +17,11 @@ use super::verbs::{
 };
 use super::Caller;
 
-/// The longest `browser_wait` when none is asked for, and the longest ever.
 const WAIT: Duration = Duration::from_secs(30);
 const LONGEST_WAIT: Duration = Duration::from_secs(120);
 
-/// Where a verb acts.
 pub(super) enum Place {
-    /// One of this agent's own tabs.
     Own(Tab),
-    /// A tab of the reader's, by its id.
     Reader(String),
 }
 
@@ -58,7 +41,6 @@ impl Place {
     }
 }
 
-/// A verb's answer, and the tab it was about, for the log.
 pub fn answer(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer {
     if !caller.holds(Scope::Browser) && !caller.holds(Scope::BrowserReader) {
         return Answer::error(Code::NotGranted, "this agent was not granted the browser");
@@ -89,7 +71,6 @@ pub fn answer(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answe
     }
 }
 
-/// `browser_tabs`.
 fn tabs_of(app: &AppHandle, caller: &Caller) -> Answer {
     let reader = match caller {
         Caller::Reader => super::reader::tabs(app, &Spaces::All(super::grants::Every::All)),
@@ -102,7 +83,6 @@ fn tabs_of(app: &AppHandle, caller: &Caller) -> Answer {
     Answer::ok(TabList { reader, agent })
 }
 
-/// `browser_open`.
 fn open_tab(app: &AppHandle, caller: &Caller, open: &super::verbs::Open) -> Answer {
     if !caller.holds(Scope::Browser) {
         return Answer::error(
@@ -134,9 +114,6 @@ fn open_tab(app: &AppHandle, caller: &Caller, open: &super::verbs::Open) -> Answ
     if store == Store::Space && open.space.is_none() {
         return Answer::error(Code::BadArguments, "store \"space\" needs the space");
     }
-    // Never the reader's own store, whose pages run the reader's extensions: its twin,
-    // or the agent's own (see `engines`). An engine with no extensions has no twin, and
-    // its tab is in the reader's store itself.
     if store != Store::Agent && engines::reader_store() == ReaderStore::Blocked {
         store = Store::Agent;
     }
@@ -177,8 +154,6 @@ fn open_tab(app: &AppHandle, caller: &Caller, open: &super::verbs::Open) -> Answ
     }
 }
 
-/// Which store the reader's tabs of a space use for an address, as the window decides;
-/// the one every space shares when the window does not say.
 fn store_for(app: &AppHandle, space: Option<&str>, url: &str) -> Option<String> {
     let asked = super::verbs::window::StoreAsk {
         space: space.map(str::to_string),
@@ -201,9 +176,7 @@ fn store_for(app: &AppHandle, space: Option<&str>, url: &str) -> Option<String> 
     })
 }
 
-/// The tab a verb names, and whether this agent may act there now.
 fn place(app: &AppHandle, caller: &Caller, tab: &str) -> Result<(Place, View), Answer> {
-    // An agent's tab the reader was shown is the reader's now, under either id.
     let shown = tabs::shown_as(tab);
     let tab = shown.as_deref().unwrap_or(tab);
     if let Some(own) = tabs::find(caller.id(), tab) {
@@ -236,7 +209,6 @@ fn place(app: &AppHandle, caller: &Caller, tab: &str) -> Result<(Place, View), A
     Ok((Place::Reader(tab.to_string()), view))
 }
 
-/// The tab a verb acts on, through the gate at the top of this file.
 fn gate<'a>(
     app: &AppHandle,
     caller: &Caller,
@@ -247,9 +219,6 @@ fn gate<'a>(
 ) -> Result<Page<'a>, Answer> {
     let label = view.label();
     let own = matches!(place, Place::Own(_));
-    // The tab by the id the window knows it under: an agent's tab the reader was shown is
-    // the reader's tab now, whichever of its two ids the agent called it by (6.7), and it
-    // is that tab that wears the frame.
     let tab = place.id();
     let _ = app.emit(
         EVENT,
@@ -259,9 +228,6 @@ fn gate<'a>(
             verb: verb.to_string(),
         },
     );
-    // A credential is the mode's to clear (#1072): at once where the agent's mode does
-    // not ask about signing in, and the reader's own command line always; otherwise once
-    // `judged` has asked.
     let cleared = match caller {
         Caller::Agent(grant) => !grant.asks(Category::SigningIn),
         Caller::Reader => true,
@@ -289,7 +255,6 @@ fn gate<'a>(
     Ok(page)
 }
 
-/// Every verb that acts on one tab.
 fn on_a_tab(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer {
     let name = verb.name();
     let Some(tab) = tab_of(&verb) else {
@@ -310,9 +275,6 @@ fn on_a_tab(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer 
     )
 }
 
-/// One act on one tab, `name` as the activity panel shows it, through the gate at the
-/// top of this file; a dialog the page is holding stops it unless it `lets_through`, and
-/// rides on the answer either way. The window's `agents_capture` comes in here too.
 pub(super) fn on_tab(
     app: &AppHandle,
     caller: &Caller,
@@ -345,15 +307,11 @@ pub(super) fn on_tab(
     ))
 }
 
-/// A held dialog as the agent is shown it: one a site it may not reach raised - from a
-/// frame of that site's, or the site's own sign-in box for a request to it - says that it
-/// holds the page and nothing of what it says or offers (9.2).
 fn seen(limits: Option<&(Grant, Store)>, held: Option<Dialog>) -> Option<Dialog> {
     held.map(|mut one| {
         if engines::from_allowed(limits, std::slice::from_ref(&one.url)).is_err() {
             one.message = String::new();
             one.default_text = None;
-            // Where on the site, and what its address carries, is the site's too.
             one.url = tauri::Url::parse(&one.url)
                 .ok()
                 .map(|url| url.origin().ascii_serialization())
@@ -364,7 +322,6 @@ fn seen(limits: Option<&(Grant, Store)>, held: Option<Dialog>) -> Option<Dialog>
     })
 }
 
-/// The tab a verb names.
 fn tab_of(verb: &Verb) -> Option<String> {
     Some(
         match verb {
@@ -396,7 +353,6 @@ fn tab_of(verb: &Verb) -> Option<String> {
     )
 }
 
-/// What an act answers: where the page is, and the tabs it opened.
 fn acted(page: &Page<'_>) -> Answer {
     Answer::ok(Acted {
         url: page.url(),
@@ -404,11 +360,6 @@ fn acted(page: &Page<'_>) -> Answer {
     })
 }
 
-/// Whether a press or a write asks first: the one decision every act in a tab goes
-/// through, by the grant's mode (`Grant::asks`, #1072). `Ok` to go ahead; the answer to
-/// give when not. Signing in and words into a sign-in form ask as `Category::SigningIn`,
-/// so under Full permissions they simply happen, and once cleared the page lets the call
-/// touch the credential.
 fn judged(
     app: &AppHandle,
     caller: &Caller,
@@ -627,7 +578,6 @@ impl<'a, 'p> OnePress<'a, 'p> {
     }
 }
 
-/// Asks the reader; see `approvals`.
 fn ask(
     app: &AppHandle,
     grant: &Grant,
@@ -653,8 +603,6 @@ fn ask(
     )
 }
 
-/// An agent's own tab shown to the reader without a question, for an agent that asks
-/// nothing: its Show, answered as it is raised, which the window shows the tab for.
 fn shown(app: &AppHandle, grant: &Grant, own: &Tab, summary: String, key: &str) {
     approvals::granted(
         app,
@@ -671,12 +619,10 @@ fn shown(app: &AppHandle, grant: &Grant, own: &Tab, summary: String, key: &str) 
     );
 }
 
-/// A ref resolved, or the answer to give.
 fn element(page: &Page<'_>, reference: &str) -> Result<Element, Answer> {
     page.element(reference)
 }
 
-/// The verbs that act on one tab.
 #[allow(
     clippy::too_many_lines,
     reason = "one arm a verb: the dispatch reads as the table of verbs it is"
@@ -813,8 +759,6 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         };
                         page.click(&target, button, count, held, &|on| press.landed(on))?;
                     }
-                    // A point instead, which the press is judged by what lands there, as
-                    // a press on that element by ref would be (#373).
                     (None, Some(x), Some(y)) => {
                         let target = page.element_at((x, y))?;
                         let reference = format!("e{}", target.backend);
@@ -871,7 +815,6 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 } else {
                     None
                 };
-                // A key that types into a sign-in form is words into it, judged so.
                 if key.changes_words() {
                     if let Some(facts) = facts.as_ref().filter(|one| {
                         (one.editable || !key.presses()) && (one.password() || one.sign_in())
@@ -881,9 +824,6 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         judged(app, caller, page, place, facts, Act::Write, &asked)?;
                     }
                 }
-                // Space or Enter on a button or a link is a press of it, as a click is;
-                // Enter and Control+Enter are a message box's send as well as a form's
-                // submit; Shift+Enter only submits a form of single-line fields.
                 if let Some((facts, act)) = facts.and_then(|one| policy::key_act(one, &key)) {
                     let asked = approvals::key("browser_press", Some(&tab), Some(&pressing.keys));
                     judged(app, caller, page, place, &facts, act, &asked)?;
@@ -919,8 +859,6 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     page.may_act_in(&facts)?;
                     targets.push((target, facts));
                 }
-                // A sign-in form is judged by its credential field, which asks as the mode
-                // says (#1072); any other form by its first field.
                 let judged_by = targets
                     .iter()
                     .find(|(_, facts)| facts.password() || facts.sign_in())
@@ -1113,8 +1051,6 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         "the page is holding no dialog",
                     ));
                 };
-                // A denied site's dialog is that site's to answer, whatever the mode: its
-                // words, a prompt's answer or a sign-in would go to it (9.2).
                 if let Err(why) =
                     engines::from_allowed(page.limits.as_ref(), std::slice::from_ref(&held.url))
                 {
@@ -1123,8 +1059,6 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         format!("{why}: the dialog is that site's, and is answered the safe way by itself before long"),
                     ));
                 }
-                // A site's sign-in box or certificate request answered yes signs in, and
-                // asks as the mode says: nothing under Full permissions (#1072).
                 if let Caller::Agent(grant) = caller {
                     if let Some(question) =
                         policy::answering(grant, held.kind, answer.accept, &held.url, &held.message)
@@ -1212,7 +1146,6 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 } else {
                     own.title.clone()
                 };
-                // Full permissions: shown at once, the question answered as it is raised.
                 if grant.asks_nothing() {
                     shown(app, grant, own, format!("Show {title}"), &key);
                     return Ok(acted(page));
@@ -1235,17 +1168,12 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     ));
                 };
                 let key = approvals::key("browser_takeover", Some(&tab), Some(&takeover.reason));
-                // Full permissions asks the reader nothing (#372): an agent's own tab is
-                // put in front of the reader at once, as Show puts it, and the agent goes
-                // on, waiting for the page to show the step done (`browser_wait`).
                 if grant.asks_nothing() {
                     if let Place::Own(own) = place {
                         shown(app, grant, own, takeover.reason.clone(), &key);
                     }
                     return Ok(acted(page));
                 }
-                // A question and nothing more: the agent keeps the tab, and goes on
-                // when the page shows the step done.
                 ask(
                     app,
                     grant,
@@ -1265,8 +1193,6 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
     run().unwrap_or_else(|refused| refused)
 }
 
-/// One key pressed: into an agent's own page through the engine; into a reader's page as
-/// the page's own key events, never the engine's (see reader.rs).
 fn press(page: &Page<'_>, place: &Place, key: &keys::Key) -> Result<(), Answer> {
     match place {
         Place::Own(_) => page.press(key),
@@ -1274,7 +1200,6 @@ fn press(page: &Page<'_>, place: &Place, key: &keys::Key) -> Result<(), Answer> 
     }
 }
 
-/// The protocol's modifier bits for the keys held.
 fn modifiers(held: &[super::verbs::Modifier]) -> u8 {
     use super::verbs::Modifier;
     held.iter().fold(0, |bits, one| {
@@ -1287,10 +1212,6 @@ fn modifiers(held: &[super::verbs::Modifier]) -> u8 {
     })
 }
 
-/// The files an agent hands a page: each an absolute path, or one relative to the spaces
-/// folder, and whether it is inside a space (9.4). A file that is not there is refused,
-/// and so, in the same words, is one in a space this agent does not reach, which does not
-/// exist to it (9.6) - by what its path says and by where a link in it really goes.
 fn files_of(
     app: &AppHandle,
     caller: &Caller,
@@ -1460,9 +1381,6 @@ mod tests {
         assert_eq!(modifiers(&[Modifier::Alt, Modifier::Meta]), 5);
     }
 
-    /// RE-1: a dialog a denied site raised - `confirm` in its frame, or its sign-in box for
-    /// a request to it - is shown to the agent as holding the page and nothing else, and
-    /// `browser_dialog` refuses it by the same test.
     #[test]
     fn a_denied_site_s_dialog_says_nothing_to_the_agent_and_is_not_its_to_answer() {
         let mut grant = Grant::own("a".into(), "A");
@@ -1482,12 +1400,10 @@ mod tests {
                 "https://www.bank.example/transfer?iban=DE00",
             ),
             (DialogKind::SignIn, "https://bank.example/"),
-            // A frame the engine did not place is nobody's.
             (DialogKind::Prompt, ""),
         ] {
             let shown = seen(Some(&limits), Some(dialog(kind, url))).expect("still held");
             assert_eq!(shown.kind, kind);
-            // RF-6: the site, and not where on it or what its address carries.
             assert!(
                 !shown.url.contains('/') || shown.url.matches('/').count() == 2,
                 "{}",
@@ -1520,7 +1436,6 @@ mod tests {
         assert!(
             super::engines::from_allowed(Some(&limits), std::slice::from_ref(&allowed.url)).is_ok()
         );
-        // The reader's own command line sees every dialog.
         let denied = dialog(DialogKind::Confirm, "https://bank.example/");
         assert_eq!(seen(None, Some(denied.clone())), Some(denied));
         assert_eq!(seen(Some(&limits), None), None);

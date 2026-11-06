@@ -1,15 +1,3 @@
-//! Every call an agent makes, written down (docs/agent-native.md 9.5).
-//!
-//! One JSON line a call - when, which agent, which verb, which tab, the arguments, how it
-//! went and how long it took - in `<local data>/agents/log/<date>.jsonl`, a file a day in
-//! UTC, kept thirty days and never synced: it is this machine's record of what happened
-//! on it. The activity panel reads it and a session can be written into a note from it.
-//!
-//! **No secrets.** A password field cannot be typed into by an agent, so there is none to
-//! write; words typed into a field the page marks sensitive - a card's number, a one-time
-//! code - are written as how many characters there were, never what they were. A
-//! pairing's token is an answer and answers are not written.
-
 use std::cell::Cell;
 use std::fs::{self, OpenOptions};
 use std::io::Write as _;
@@ -20,47 +8,32 @@ use serde::Serialize;
 use serde_json::Value;
 use tauri::{AppHandle, Manager as _};
 
-/// How many days of the log are kept.
 const KEPT_DAYS: u64 = 30;
 
-/// One line.
 #[derive(Serialize)]
 pub struct Line<'a> {
-    /// When, in milliseconds since 1970.
     pub at: u64,
-    /// Which agent; `cli` for the reader's own command line.
     pub agent: &'a str,
-    /// The verb.
     pub verb: &'a str,
-    /// The tab, when there was one.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tab: Option<&'a str>,
-    /// The arguments, with anything sensitive taken out.
     pub args: Value,
-    /// `ok`, `needs_approval` or `error`.
     pub status: &'a str,
-    /// Why not, when it was not.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub code: Option<Value>,
-    /// How long it took, in milliseconds.
     pub ms: u64,
 }
 
 thread_local! {
-    /// Whether the call on this thread typed into a sensitive field: each call has a
-    /// thread of its own, so this is that call's.
     static SENSITIVE: Cell<bool> = const { Cell::new(false) };
 }
 
-/// The day the log was last swept, so the sweep is once a day.
 static SWEPT: Mutex<Option<String>> = Mutex::new(None);
 
-/// Marks the call on this thread as having typed into a sensitive field.
 pub fn sensitive() {
     SENSITIVE.set(true);
 }
 
-/// Writes one line. A log that cannot be written is not a reason for a call to fail.
 pub fn write(app: &AppHandle, mut line: Line<'_>) {
     if SENSITIVE.replace(false) {
         line.args = redacted(line.args);
@@ -87,7 +60,6 @@ pub fn write(app: &AppHandle, mut line: Line<'_>) {
     }
 }
 
-/// The lines of one day, oldest first, for the activity panel.
 pub fn read_day(app: &AppHandle, day: &str) -> Vec<Value> {
     let Some(path) = is_day(day)
         .then(|| folder(app).ok())
@@ -103,14 +75,12 @@ pub fn read_day(app: &AppHandle, day: &str) -> Vec<Value> {
         .collect()
 }
 
-/// The days the log has, newest first: what Settings > Agents reads the sessions from.
 pub fn days(app: &AppHandle) -> Vec<String> {
     folder(app)
         .map(|folder| days_in(&folder))
         .unwrap_or_default()
 }
 
-/// The days in a folder of the log, newest first.
 fn days_in(folder: &Path) -> Vec<String> {
     let mut days: Vec<String> = fs::read_dir(folder)
         .into_iter()
@@ -127,13 +97,10 @@ fn days_in(folder: &Path) -> Vec<String> {
     days
 }
 
-/// Takes one agent's lines out of every day, or every line of every day when no agent
-/// is named: the reader's Clear. A day left with nothing in it goes.
 pub fn clear(app: &AppHandle, agent: Option<&str>) -> Result<(), String> {
     clear_in(&folder(app)?, agent)
 }
 
-/// `clear` in a folder of the log.
 fn clear_in(folder: &Path, agent: Option<&str>) -> Result<(), String> {
     for day in days_in(folder) {
         let path = folder.join(format!("{day}.jsonl"));
@@ -157,8 +124,6 @@ fn clear_in(folder: &Path, agent: Option<&str>) -> Result<(), String> {
     Ok(())
 }
 
-/// Whether a line of the log is one of this agent's calls. A line that cannot be read
-/// is nobody's, and stays.
 fn written_by(line: &str, agent: &str) -> bool {
     serde_json::from_str::<Value>(line)
         .ok()
@@ -166,13 +131,10 @@ fn written_by(line: &str, agent: &str) -> bool {
         .unwrap_or(false)
 }
 
-/// Whether a name is a day as the log writes one, `YYYY-MM-DD`: the one shape a file of
-/// it may have, and the one shape a day asked for may.
 fn is_day(day: &str) -> bool {
     day.len() == 10 && day.bytes().all(|one| one.is_ascii_digit() || one == b'-')
 }
 
-/// Where the log lives, made if it is not there.
 fn folder(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = app
         .path()
@@ -184,7 +146,6 @@ fn folder(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(dir)
 }
 
-/// The arguments with every typed word replaced by how many there were.
 fn redacted(mut args: Value) -> Value {
     if let Some(text) = args.get_mut("text") {
         let count = text.as_str().map_or(0, |one| one.chars().count());
@@ -200,7 +161,6 @@ fn redacted(mut args: Value) -> Value {
     args
 }
 
-/// Removes every day older than thirty.
 fn sweep(folder: &Path, now: u64) {
     let oldest = date(now.saturating_sub(KEPT_DAYS * 24 * 60 * 60 * 1000));
     let Ok(entries) = fs::read_dir(folder) else {
@@ -209,7 +169,6 @@ fn sweep(folder: &Path, now: u64) {
     for entry in entries.flatten() {
         let name = entry.file_name().to_string_lossy().into_owned();
         if let Some(day) = name.strip_suffix(".jsonl") {
-            // Dates written as `YYYY-MM-DD` sort as they fall.
             if day.len() == 10 && day < oldest.as_str() {
                 let _ = fs::remove_file(entry.path());
             }
@@ -217,10 +176,8 @@ fn sweep(folder: &Path, now: u64) {
     }
 }
 
-/// A moment's day in UTC, as `YYYY-MM-DD`.
 pub fn date(ms: u64) -> String {
     let days = i64::try_from(ms / 86_400_000).unwrap_or(0);
-    // Howard Hinnant's civil_from_days.
     let z = days + 719_468;
     let era = z.div_euclid(146_097);
     let doe = z.rem_euclid(146_097);

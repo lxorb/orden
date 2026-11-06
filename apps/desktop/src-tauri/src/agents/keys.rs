@@ -1,38 +1,20 @@
-//! A key an agent names - `Enter`, `Control+A`, `Shift+Tab` - as the events the engine's
-//! `Input.dispatchKeyEvent` takes: the key, its code, its Windows virtual key, the text it
-//! types and the modifiers held. Pressed inside one page, never through the system.
-//!
-//! The names are the DOM's own `KeyboardEvent.key` values, which is what Playwright and
-//! Chrome `DevTools` MCP take too, so an agent's habit carries over.
-
 use serde_json::{json, Value};
 
-/// Alt, as the protocol counts modifiers.
 const ALT: u8 = 1;
-/// Control.
 const CONTROL: u8 = 2;
-/// Meta (the Windows key).
 const META: u8 = 4;
-/// Shift.
 const SHIFT: u8 = 8;
 
-/// One key, as the engine is told about it.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Key {
-    /// `KeyboardEvent.key`.
     pub name: String,
-    /// `KeyboardEvent.code`.
     pub code: String,
-    /// The Windows virtual key.
     pub windows_code: u32,
-    /// What it types, when it types something and no modifier but Shift is held.
     pub text: Option<String>,
-    /// The modifiers held.
     pub modifiers: u8,
 }
 
 impl Key {
-    /// The events one press is: down (with the text it types, if any) and up.
     pub fn events(&self) -> [Value; 2] {
         let down = json!({
             "type": if self.text.is_some() { "keyDown" } else { "rawKeyDown" },
@@ -55,10 +37,6 @@ impl Key {
         [down, up]
     }
 
-    /// The key as a Mac's own keyboard sends it, for an `NSEvent` (#1092): its virtual
-    /// key code, the characters it carries, and the characters it carries without its
-    /// modifiers - which for a key that types nothing is the function key's own character
-    /// `AppKit` gives it, so the page reads the same `key` and `code` it does on Windows.
     #[cfg_attr(
         not(target_os = "macos"),
         allow(dead_code, reason = "only a Mac's engine is handed keys as NSEvents")
@@ -101,16 +79,11 @@ impl Key {
         (code, typed, plain)
     }
 
-    /// Whether this press would open a `<select>`'s list or a picker, which the tools
-    /// never do (6.5): Space, Enter, F4 and Alt+Down on such a field.
     pub fn opens_a_picker(&self) -> bool {
         matches!(self.name.as_str(), " " | "Enter" | "F4")
             || (matches!(self.name.as_str(), "ArrowDown" | "ArrowUp") && self.modifiers & ALT != 0)
     }
 
-    /// Whether this press changes the words of the field it lands in: anything that
-    /// types, a delete either way, and a paste or a cut. Never into a password field
-    /// (9.4), which in a reader's tab may be the one they are typing into.
     pub fn changes_words(&self) -> bool {
         self.text.is_some()
             || matches!(self.name.as_str(), "Backspace" | "Delete")
@@ -118,7 +91,6 @@ impl Key {
                 && matches!(self.name.to_ascii_lowercase().as_str(), "v" | "x"))
     }
 
-    /// Whether this press submits the form the field is in.
     pub fn submits(&self) -> bool {
         self.name == "Enter" && self.modifiers & (CONTROL | ALT | META) == 0
     }
@@ -131,15 +103,11 @@ impl Key {
         matches!(self.name.as_str(), " " | "Enter")
     }
 
-    /// Whether this press is what sends from a message box: Enter, or Control+Enter
-    /// where Enter is a new line (a mail's body, a comment). Shift+Enter is the new line
-    /// in a chat, and sends nothing.
     pub fn sends(&self) -> bool {
         self.name == "Enter" && self.modifiers & (ALT | SHIFT) == 0
     }
 }
 
-/// A Mac's virtual key code for a key the DOM calls `code`, on the ANSI layout.
 #[cfg_attr(
     not(target_os = "macos"),
     allow(dead_code, reason = "only a Mac's engine is handed keys as NSEvents")
@@ -202,14 +170,11 @@ fn ansi(code: &str) -> u16 {
     }
 }
 
-/// A chord read: `Control+Shift+A` is A with two modifiers. `None` for a name that is not
-/// a key, with the reason.
 pub fn chord(said: &str) -> Result<Key, String> {
     let said = said.trim();
     if said.is_empty() {
         return Err("say which key".into());
     }
-    // `Control++` is Control and the plus key.
     let (held, last) = match said.strip_suffix("++") {
         Some(front) => (front, "+"),
         None => match said.rsplit_once('+') {
@@ -233,7 +198,6 @@ pub fn chord(said: &str) -> Result<Key, String> {
     }
     let mut key = named(last).ok_or_else(|| format!("{last} is not a key name"))?;
     key.modifiers = modifiers;
-    // A letter with Shift types its capital; anything held but Shift types nothing.
     if modifiers & (CONTROL | ALT | META) != 0 {
         key.text = None;
     } else if modifiers & SHIFT != 0 {
@@ -245,7 +209,6 @@ pub fn chord(said: &str) -> Result<Key, String> {
     Ok(key)
 }
 
-/// One key by its DOM name, or a single character.
 fn named(name: &str) -> Option<Key> {
     let plain = |name: &str, code: &str, windows_code: u32, text: Option<&str>| Key {
         name: name.to_string(),
@@ -275,7 +238,6 @@ fn named(name: &str) -> Option<Key> {
     })
 }
 
-/// `F1` to `F12`.
 fn function_key(lower: &str) -> Option<Key> {
     let number: u32 = lower.strip_prefix('f')?.parse().ok()?;
     (1..=12).contains(&number).then(|| Key {
@@ -287,10 +249,8 @@ fn function_key(lower: &str) -> Option<Key> {
     })
 }
 
-/// A single character: a letter, a digit, or a sign.
 fn character(name: &str) -> Option<Key> {
     let mut chars = name.chars();
-    // A letter is its small one unless Shift is held, as the DOM names it.
     let one = chars.next()?.to_ascii_lowercase();
     if chars.next().is_some() {
         return None;

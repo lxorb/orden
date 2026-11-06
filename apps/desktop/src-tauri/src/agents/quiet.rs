@@ -1,26 +1,3 @@
-//! An agent's page never reaches the reader (docs/agent-native.md 6.2).
-//!
-//! Every way a page has of putting something in front of somebody - a dialog, a window,
-//! a permission bubble, a download's flyout, a sign-in box, a file chooser, the print
-//! preview, a picker - is either switched off before the page loads or answered here,
-//! out of sight, and said to the agent instead:
-//!
-//! | the page | here |
-//! | --- | --- |
-//! | `alert`, `confirm`, `prompt`, `beforeunload` | held with a deferral until `browser_dialog`, or 30 s |
-//! | a window | another agent tab of the same agent, `window.opener` kept |
-//! | the camera, the microphone, location, notifications, the clipboard | refused |
-//! | a download | into `Downloads/nib agents/<agent>`, 500 MB at most |
-//! | a file chooser | intercepted, answered by `browser_upload` |
-//! | `print()`, `showPicker()` | nothing |
-//! | basic authentication, a client certificate | held like a dialog until `browser_dialog` answers it, which signs in as the mode says (#1072), or 30 s |
-//!
-//! On `WebView2` all of it is the engine's own events on the page's own engine, set on
-//! the window's thread on a page that is still `about:blank`, so none of it can be too
-//! late. On Orden's own Chromium it is the handlers of the agent's own browser, which has
-//! no window to put anything in front of anybody anyway (`engines/cef.rs`); what is kept
-//! here - the dialogs held, the downloads, where a download goes - is both engines'.
-
 #[cfg(all(windows, not(feature = "cef")))]
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -60,16 +37,10 @@ use super::cdp;
 use super::verbs::DialogKind;
 use super::verbs::{Dialog, Download, DownloadState};
 
-/// How long a dialog is held for an answer before it is answered the safe way.
 pub(super) const DIALOG_PATIENCE: Duration = Duration::from_secs(30);
 
-/// The largest file an agent's tab may download.
 pub(super) const MOST_DOWNLOAD: i64 = 500 * 1024 * 1024;
 
-/// What an agent's page runs first, in its own world: the one thing about a page an
-/// agent tab changes. `print()` opens the engine's print preview, a window of its own
-/// with no event to refuse it by, and `showPicker()` opens a native picker; both do
-/// nothing here. Every frame, from the first line of every document.
 pub(super) const STUBS: &str = r"(() => {
   const nothing = () => undefined
   try { Object.defineProperty(window, 'print', { value: nothing, writable: false, configurable: false }) } catch (_) {}
@@ -78,19 +49,15 @@ pub(super) const STUBS: &str = r"(() => {
   }
 })()";
 
-/// A dialog held open, as the agent is told about it.
 struct Held {
     dialog: Dialog,
     since: Instant,
 }
 
-/// The dialogs each page is holding, by label.
 static DIALOGS: Mutex<Option<HashMap<String, Held>>> = Mutex::new(None);
 
-/// Every agent's downloads, oldest first, with the agent they belong to.
 static DOWNLOADS: Mutex<Vec<(String, Download)>> = Mutex::new(Vec::new());
 
-/// A dialog's engine objects, which live on the window's thread.
 #[cfg(all(windows, not(feature = "cef")))]
 struct Waiting {
     asked: Holding,
@@ -98,36 +65,25 @@ struct Waiting {
     number: u64,
 }
 
-/// What the engine waits on for a held dialog, by its kind.
 #[cfg(all(windows, not(feature = "cef")))]
 enum Holding {
-    /// `alert`, `confirm`, `prompt`, `beforeunload`.
     Script(ICoreWebView2ScriptDialogOpeningEventArgs),
-    /// The site's sign-in box.
     SignIn(ICoreWebView2BasicAuthenticationRequestedEventArgs),
-    /// The site's request for a client certificate, with those it may be answered with
-    /// and the words each is known by.
     Certificate(
         ICoreWebView2ClientCertificateRequestedEventArgs,
         Vec<(ICoreWebView2ClientCertificate, String)>,
     ),
 }
 
-/// The agent's answer to a held dialog (`browser_dialog`).
 #[derive(Clone, Debug, Default)]
 pub struct Said {
-    /// OK, or Cancel.
     pub accept: bool,
-    /// A prompt's words; for a certificate, words of the subject of the one to present.
     pub text: Option<String>,
-    /// A sign-in box's user name.
     pub username: Option<String>,
-    /// A sign-in box's password.
     pub password: Option<String>,
 }
 
 impl Said {
-    /// OK or Cancel and nothing else: what a dialog nobody answered is given.
     pub(super) fn only(accept: bool) -> Self {
         Said {
             accept,
@@ -135,9 +91,6 @@ impl Said {
         }
     }
 
-    /// Of `offered`, by the words each is known by, the one this answer presents: the
-    /// first whose words hold `text`, ignoring case, or the first of all when it names
-    /// none. `None` for an answer of no, or nothing offered.
     pub(super) fn chosen<'a>(&self, offered: impl IntoIterator<Item = &'a str>) -> Option<usize> {
         if !self.accept {
             return None;
@@ -166,7 +119,6 @@ impl Said {
     }
 }
 
-/// A window the page asked for, waiting for its agent tab to be built.
 #[cfg(all(windows, not(feature = "cef")))]
 struct Asked {
     args: ICoreWebView2NewWindowRequestedEventArgs,
@@ -175,36 +127,25 @@ struct Asked {
 
 #[cfg(all(windows, not(feature = "cef")))]
 thread_local! {
-    /// The dialogs' engine objects, by label, on the window's thread.
     static WAITING: RefCell<HashMap<String, Waiting>> = RefCell::new(HashMap::new());
-    /// The windows pages asked for, by the agent tab being built for each.
     static POPUPS: RefCell<HashMap<String, Asked>> = RefCell::new(HashMap::new());
 }
 
-/// Counts dialogs, so a timeout answers the dialog it was set for and no later one.
 pub(super) static NUMBER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
 
-/// Who a page belongs to, for what the handlers below decide: the agent and the tab.
 #[derive(Clone)]
 pub struct Owner {
-    /// The agent's id.
     pub agent: String,
-    /// The agent tab's id.
     pub tab: String,
-    /// The page's label.
     pub label: String,
 }
 
-/// Quietens an agent's page before it loads anything: the engine's furniture off, and
-/// every event that would reach the reader answered here. On the window's thread.
 #[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
     reason = "the page's settings and events are WebView2's own, reached through its COM interfaces"
 )]
 pub fn quieten(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
-    // Safe: on the window's thread, where the engine's objects live; every handler below
-    // is held by the engine for as long as the webview is.
     unsafe {
         if let Ok(settings) = core.Settings() {
             let _ = settings.SetAreDefaultScriptDialogsEnabled(false);
@@ -237,9 +178,6 @@ pub fn quieten(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
     downloads(app, core, owner);
     sign_ins(app, core, owner);
 
-    // The file chooser intercepted and the two stubs in place, before the first
-    // document: the page domain on first, since a script registered with it off is kept
-    // and never run.
     cdp::post(core, "Page.enable", &json!({}));
     cdp::post(
         core,
@@ -253,7 +191,6 @@ pub fn quieten(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
     );
 }
 
-/// Dialogs, held for the agent.
 #[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
@@ -266,11 +203,9 @@ fn dialogs(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
         let Some(args) = args else {
             return Ok(());
         };
-        // A page shown to the reader since (6.7) has the engine's own dialogs back.
         if super::tabs::owner(&label).is_none() {
             return Ok(());
         }
-        // Safe: the event's own arguments, on the window's thread.
         let (kind, message, default_text, url) = unsafe {
             let mut kind = COREWEBVIEW2_SCRIPT_DIALOG_KIND::default();
             args.Kind(&raw mut kind)?;
@@ -287,7 +222,6 @@ fn dialogs(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
             COREWEBVIEW2_SCRIPT_DIALOG_KIND_BEFOREUNLOAD => DialogKind::Beforeunload,
             _ => DialogKind::Alert,
         };
-        // Safe: as above.
         let deferral = unsafe { args.GetDeferral()? };
         let dialog = Dialog {
             kind,
@@ -306,13 +240,9 @@ fn dialogs(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
         Ok(())
     }));
     let mut token = 0i64;
-    // Safe: as above.
     let _ = unsafe { core.add_ScriptDialogOpening(&handler, &raw mut token) };
 }
 
-/// A dialog held for the agent, on the window's thread: its engine objects kept here, what
-/// the agent is told kept for `dialog_of`, and answered the safe way if nobody answers in
-/// time - an alert read, anything else no.
 #[cfg(all(windows, not(feature = "cef")))]
 fn waiting(
     app: &AppHandle,
@@ -346,7 +276,6 @@ fn waiting(
     });
 }
 
-/// A string the engine hands out through an out pointer, taken and freed.
 #[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
@@ -360,7 +289,6 @@ fn text(read: impl FnOnce(*mut PWSTR) -> windows_core::Result<()>) -> String {
     webview2_com::take_pwstr(out)
 }
 
-/// The dialog a page is holding, if any, with how long it has been open.
 pub fn dialog_of(label: &str) -> Option<Dialog> {
     DIALOGS
         .lock()
@@ -373,9 +301,6 @@ pub fn dialog_of(label: &str) -> Option<Dialog> {
         })
 }
 
-/// Answers the dialog a page is holding: OK or Cancel, a prompt's words, a sign-in box's
-/// user name and password, the certificate to present. From any thread; the answer is
-/// given on the window's.
 pub fn answer_dialog(app: &AppHandle, label: &str, said: Said) -> Result<(), String> {
     if dialog_of(label).is_none() {
         return Err("the page is holding no dialog".into());
@@ -392,8 +317,6 @@ pub fn answer_dialog(app: &AppHandle, label: &str, said: Said) -> Result<(), Str
     }
 }
 
-/// A dialog a page is holding, kept for the agent: what `dialog_of` answers until the
-/// dialog is answered.
 pub(super) fn hold(label: &str, dialog: Dialog) {
     DIALOGS
         .lock()
@@ -408,7 +331,6 @@ pub(super) fn hold(label: &str, dialog: Dialog) {
         );
 }
 
-/// A held dialog answered, or its page gone.
 pub(super) fn release(label: &str) {
     if let Some(all) = DIALOGS
         .lock()
@@ -419,8 +341,6 @@ pub(super) fn release(label: &str) {
     }
 }
 
-/// Gives the engine its answer to a held dialog, on the window's thread: the one with
-/// `number` when named, whichever is held otherwise.
 #[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
@@ -446,7 +366,6 @@ fn settle(label: &str, number: Option<u64>, said: Said) {
     {
         all.remove(label);
     }
-    // Safe: the engine's own objects, on the thread they were made on.
     unsafe {
         match &waiting.asked {
             Holding::Script(args) => {
@@ -475,7 +394,6 @@ fn settle(label: &str, number: Option<u64>, said: Said) {
                 if let Some(at) = said.chosen(offered.iter().map(|(_, words)| words.as_str())) {
                     let _ = args.SetSelectedCertificate(&offered[at].0);
                 }
-                // No, or none chosen: on without a certificate, as a browser's Cancel goes.
                 let _ = args.SetHandled(true);
             }
         }
@@ -483,9 +401,6 @@ fn settle(label: &str, number: Option<u64>, said: Said) {
     }
 }
 
-/// Windows the page asks for: another agent tab of the same agent, built out of sight
-/// and handed to the engine as the new window, so `window.opener` is kept and a sign-in
-/// popup can post its answer back.
 #[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
@@ -498,14 +413,11 @@ fn windows(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
         let Some(args) = args else {
             return Ok(());
         };
-        // Safe: the event's own arguments, on the window's thread.
         let url = unsafe { text(|out| args.Uri(out)) };
         let Some(owner) = super::tabs::owner(&label) else {
-            // A page the reader was shown asks for windows the way a reader's tab does.
             crate::web_tabs::opened_from_adopted(&app, &label, &url);
             return Ok(());
         };
-        // Safe: as above.
         unsafe { args.SetHandled(true)? };
         if let Err(why) = super::tabs::may_open(&owner, &url) {
             say(
@@ -515,10 +427,8 @@ fn windows(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
             );
             return Ok(());
         }
-        // Safe: as above.
         let deferral = unsafe { args.GetDeferral()? };
         let Some(tab) = super::tabs::reserve_popup(&owner, &url) else {
-            // Safe: as above.
             let _ = unsafe { deferral.Complete() };
             return Ok(());
         };
@@ -531,19 +441,14 @@ fn windows(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
                 },
             );
         });
-        // Built in the event loop's own turn: building a webview inside the engine's
-        // handler waits for the engine, which is waiting for this handler.
         let building = app.clone();
         let _ = app.run_on_main_thread(move || super::tabs::build_popup(&building, &tab));
         Ok(())
     }));
     let mut token = 0i64;
-    // Safe: as above.
     let _ = unsafe { core.add_NewWindowRequested(&handler, &raw mut token) };
 }
 
-/// Hands the page that asked for a window the agent tab built for it; or, when none
-/// could be built, nothing, which the page reads as `window.open` answering `null`.
 #[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
@@ -553,7 +458,6 @@ pub fn hand_over(tab: &str, made: Option<&ICoreWebView2>) {
     let Some(asked) = POPUPS.with_borrow_mut(|held| held.remove(tab)) else {
         return;
     };
-    // Safe: the engine's own objects, on the thread they were made on.
     unsafe {
         if let Some(core) = made {
             let _ = asked.args.SetNewWindow(core);
@@ -562,7 +466,6 @@ pub fn hand_over(tab: &str, made: Option<&ICoreWebView2>) {
     }
 }
 
-/// Every permission a page asks for, refused and said.
 #[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
@@ -574,7 +477,6 @@ fn permissions(core: &ICoreWebView2, owner: &Owner) {
         let Some(args) = args else {
             return Ok(());
         };
-        // Safe: the event's own arguments, on the window's thread.
         unsafe {
             let mut kind = webview2_com::Microsoft::Web::WebView2::Win32::COREWEBVIEW2_PERMISSION_KIND::default();
             let _ = args.PermissionKind(&raw mut kind);
@@ -588,11 +490,9 @@ fn permissions(core: &ICoreWebView2, owner: &Owner) {
         Ok(())
     }));
     let mut token = 0i64;
-    // Safe: as above.
     let _ = unsafe { core.add_PermissionRequested(&handler, &raw mut token) };
 }
 
-/// What a permission is called, from `WebView2`'s numbering of them.
 #[cfg(all(windows, not(feature = "cef")))]
 fn permission_named(kind: i32) -> &'static str {
     match kind {
@@ -612,8 +512,6 @@ fn permission_named(kind: i32) -> &'static str {
     }
 }
 
-/// Downloads, into the agent's own folder, never past 500 MB, and never with the
-/// engine's own flyout.
 #[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
@@ -629,7 +527,6 @@ fn downloads(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
         let Some(args) = args else {
             return Ok(());
         };
-        // Safe: the event's own arguments, on the window's thread.
         unsafe {
             args.SetHandled(true)?;
             let operation = args.DownloadOperation()?;
@@ -665,11 +562,9 @@ fn downloads(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
         Ok(())
     }));
     let mut token = 0i64;
-    // Safe: as above.
     let _ = unsafe { four.add_DownloadStarting(&handler, &raw mut token) };
 }
 
-/// Follows one download to its end, and stops it past the ceiling.
 #[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
@@ -684,7 +579,6 @@ fn watch_download(operation: &ICoreWebView2DownloadOperation, agent: &str, path:
                 return Ok(());
             };
             let mut received = 0i64;
-            // Safe: the operation's own properties, on the window's thread.
             unsafe {
                 let _ = operation.BytesReceived(&raw mut received);
                 if received > MOST_DOWNLOAD {
@@ -700,7 +594,6 @@ fn watch_download(operation: &ICoreWebView2DownloadOperation, agent: &str, path:
             return Ok(());
         };
         let mut state = COREWEBVIEW2_DOWNLOAD_STATE::default();
-        // Safe: as above.
         unsafe {
             let _ = operation.State(&raw mut state);
         }
@@ -716,15 +609,12 @@ fn watch_download(operation: &ICoreWebView2DownloadOperation, agent: &str, path:
         Ok(())
     }));
     let mut token = 0i64;
-    // Safe: the engine holds both handlers for as long as the download lives.
     unsafe {
         let _ = operation.add_BytesReceivedChanged(&growing, &raw mut token);
         let _ = operation.add_StateChanged(&ended, &raw mut token);
     }
 }
 
-/// Where an agent's download goes: `Downloads/nib agents/<agent>/<name>`, never over
-/// a file that is there. `None` when there is no downloads folder to be had.
 pub(super) fn destination(app: &AppHandle, agent: &str, suggested: &str) -> Option<PathBuf> {
     let name = std::path::Path::new(suggested)
         .file_name()
@@ -750,7 +640,6 @@ pub(super) fn destination(app: &AppHandle, agent: &str, suggested: &str) -> Opti
 pub(super) fn noted(agent: &str, download: Download) {
     let mut all = DOWNLOADS.lock().unwrap_or_else(PoisonError::into_inner);
     all.push((agent.to_string(), download));
-    // The last few hundred are plenty to answer "what did I download".
     if all.len() > 500 {
         all.remove(0);
     }
@@ -769,7 +658,6 @@ pub(super) fn moved(agent: &str, path: &str, state: DownloadState) {
     }
 }
 
-/// An agent's downloads, of one tab when named, oldest first.
 pub fn downloads_of(agent: &str, tab: Option<&str>) -> Vec<Download> {
     DOWNLOADS
         .lock()
@@ -780,9 +668,6 @@ pub fn downloads_of(agent: &str, tab: Option<&str>) -> Vec<Download> {
         .collect()
 }
 
-/// The site's sign-in box and its request for a client certificate, held for the agent
-/// like any dialog: `browser_dialog` answers them, and answering yes signs in, which asks
-/// as the mode says - nothing at all under Full permissions (#1072, `policy::answering`).
 #[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
@@ -795,11 +680,9 @@ fn sign_ins(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
             let Some(args) = args else {
                 return Ok(());
             };
-            // A page shown to the reader since (6.7) has the engine's own box back.
             if super::tabs::owner(&label).is_none() {
                 return Ok(());
             }
-            // Safe: the event's own arguments, on the window's thread.
             let (url, challenge, deferral) = unsafe {
                 (
                     text(|out| args.Uri(out)),
@@ -824,7 +707,6 @@ fn sign_ins(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
             Ok(())
         }));
         let mut token = 0i64;
-        // Safe: as above.
         let _ = unsafe { ten.add_BasicAuthenticationRequested(&handler, &raw mut token) };
     }
     if let Ok(five) = core.cast::<ICoreWebView2_5>() {
@@ -836,7 +718,6 @@ fn sign_ins(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
             if super::tabs::owner(&label).is_none() {
                 return Ok(());
             }
-            // Safe: as above.
             let (host, offered, deferral) = unsafe {
                 let mut offered = Vec::new();
                 if let Ok(all) = args.MutuallyTrustedCertificates() {
@@ -869,13 +750,10 @@ fn sign_ins(app: &AppHandle, core: &ICoreWebView2, owner: &Owner) {
             Ok(())
         }));
         let mut token = 0i64;
-        // Safe: as above.
         let _ = unsafe { five.add_ClientCertificateRequested(&handler, &raw mut token) };
     }
 }
 
-/// What a site's sign-in box says to the agent, from what the site sent: its realm when
-/// it named one.
 pub(super) fn signing_in(realm: &str) -> String {
     let realm = realm.trim();
     if realm.is_empty() {
@@ -885,8 +763,6 @@ pub(super) fn signing_in(realm: &str) -> String {
     }
 }
 
-/// What a site's request for a client certificate says to the agent: those it may be
-/// answered with, by their subjects.
 pub(super) fn certificates<'a>(offered: impl IntoIterator<Item = &'a str>) -> String {
     let all: Vec<&str> = offered.into_iter().collect();
     if all.is_empty() {
@@ -900,8 +776,6 @@ pub(super) fn certificates<'a>(offered: impl IntoIterator<Item = &'a str>) -> St
     }
 }
 
-/// A line of Orden's own in the page's console, which is where the agent reads what the
-/// page tried.
 #[cfg(any(windows, feature = "cef"))]
 pub(super) fn say(label: &str, level: &str, text: String) {
     cdp::heard(label)
@@ -910,7 +784,6 @@ pub(super) fn say(label: &str, level: &str, text: String) {
         .say(level, text);
 }
 
-/// Forgets a page's held dialog, for a page that closed.
 pub fn forget(app: &AppHandle, label: &str) {
     release(label);
     #[cfg(all(windows, not(feature = "cef")))]

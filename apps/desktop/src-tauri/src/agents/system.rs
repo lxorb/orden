@@ -1,23 +1,3 @@
-//! `system`: the system around the app (#1078; docs/agent-native.md 8.16), as a VS Code
-//! extension's `env`, `env.openExternal` and the file manager's Reveal reach it.
-//!
-//! - `open` hands an address or a file to the system's own app for it; `reveal` shows a
-//!   file or folder in the file manager. Opening a file starts a program, so both are under
-//!   the `processes` scope and ask as `process` does: under *the terminal*, unless the
-//!   reader turned that question off, and nothing under Full permissions (#1072). An
-//!   address is the web's, mail's or a telephone's (`http`, `https`, `mailto`, `tel`):
-//!   never `file:`, which a path says, and never Orden's own `nib:` and `orden:` links,
-//!   which run the app's commands as the reader. The system's browser is the reader's,
-//!   cookies and all, so a site the grant denies, or keeps to the agent's own store, is
-//!   not opened there. A path is never in Orden's own folders, which no agent reaches
-//!   whatever its mode (files.rs).
-//! - `env` answers the app's environment, with every value whose name says it is a secret
-//!   (`*_TOKEN`, `*_KEY`, `*SECRET*`, `*PASSWORD*` and their kin), or that is an address
-//!   carrying a password (`postgres://me:pw@db/x`), left out and named, unless the grant
-//!   is Full permissions.
-//! - `info` answers the system's name, version and architecture, the reader's language,
-//!   Orden's version, the engine and the screens.
-
 use std::collections::BTreeMap;
 
 use tauri::AppHandle;
@@ -27,10 +7,8 @@ use super::grants::{Grant, Scope, SiteRule};
 use super::verbs::{Answer, Category, Code, Display, System, SystemDone, SystemInfo, SystemOp};
 use super::{files, policy, Caller};
 
-/// The schemes `open` hands to the system.
 const SCHEMES: [&str; 4] = ["http", "https", "mailto", "tel"];
 
-/// Words in a variable's name that say its value is a secret.
 const SECRET_WORDS: [&str; 7] = [
     "TOKEN",
     "SECRET",
@@ -41,10 +19,8 @@ const SECRET_WORDS: [&str; 7] = [
     "COOKIE",
 ];
 
-/// Endings of a variable's name that say its value is a secret.
 const SECRET_ENDINGS: [&str; 4] = ["_KEY", "_PAT", "_AUTH", "APIKEY"];
 
-/// One call, answered: checked against the grant, asked where it asks, then done.
 pub(super) fn answer(app: &AppHandle, caller: &Caller, asked: &System) -> Answer {
     if !caller.holds(Scope::Processes) {
         return Answer::error(
@@ -73,7 +49,6 @@ pub(super) fn answer(app: &AppHandle, caller: &Caller, asked: &System) -> Answer
     }
 }
 
-/// `open` and `reveal`: the target checked, asked about, handed over.
 fn handed(app: &AppHandle, caller: &Caller, asked: &System) -> Answer {
     let target = match (asked.op, asked.url.as_deref(), asked.path.as_deref()) {
         (SystemOp::Open, Some(url), None) => match address(url) {
@@ -115,7 +90,6 @@ fn handed(app: &AppHandle, caller: &Caller, asked: &System) -> Answer {
     }
 }
 
-/// What `open` or `reveal` is handed.
 enum Target {
     Url(String),
     Path(std::path::PathBuf),
@@ -130,8 +104,6 @@ impl std::fmt::Display for Target {
     }
 }
 
-/// A path an agent may hand the system: one that exists, outside Orden's own folders,
-/// whatever the agent's scopes.
 fn fenced(
     app: &AppHandle,
     caller: &Caller,
@@ -151,7 +123,6 @@ fn fenced(
     Ok(path)
 }
 
-/// An address `open` takes, or why not.
 fn address(url: &str) -> Result<String, String> {
     let parsed: tauri::Url = url
         .trim()
@@ -167,9 +138,6 @@ fn address(url: &str) -> Result<String, String> {
     Ok(parsed.to_string())
 }
 
-/// Why an address may not be handed to the system's browser, which is the reader's,
-/// with their cookies: a site the grant denies, or keeps to the agent's own store, by
-/// every spelling of its name (policy.rs). A path, mail and a telephone are no site.
 fn site_refused(grant: &Grant, target: &Target) -> Option<Answer> {
     let Target::Url(url) = target else {
         return None;
@@ -186,7 +154,6 @@ fn site_refused(grant: &Grant, target: &Target) -> Option<Answer> {
     Some(Answer::error(Code::SiteDenied, why))
 }
 
-/// The question `open` and `reveal` raise, as `process` asks: under the terminal.
 fn question(app: &AppHandle, grant: &Grant, op: SystemOp, target: &Target) -> Option<Answer> {
     if !grant.asks(Category::Terminal) {
         return None;
@@ -219,7 +186,6 @@ fn question(app: &AppHandle, grant: &Grant, op: SystemOp, target: &Target) -> Op
     ))
 }
 
-/// Whether a variable's name says its value is a secret.
 fn secret(name: &str) -> bool {
     let name = name.to_ascii_uppercase();
     SECRET_WORDS.iter().any(|word| name.contains(word))
@@ -227,8 +193,6 @@ fn secret(name: &str) -> bool {
         || name == "KEY"
 }
 
-/// Whether a variable's value is an address that carries a password, which is the secret
-/// whatever the variable is called: `DATABASE_URL=postgres://me:pw@db/x`.
 fn secret_value(value: &str) -> bool {
     value
         .trim()
@@ -236,8 +200,6 @@ fn secret_value(value: &str) -> bool {
         .is_ok_and(|url| url.password().is_some())
 }
 
-/// The environment as an agent is told it: every secret's value left out and its name
-/// said, unless `full`.
 fn environment(
     vars: impl Iterator<Item = (String, String)>,
     full: bool,
@@ -255,7 +217,6 @@ fn environment(
     (env, withheld)
 }
 
-/// The engine the window runs on.
 fn engine() -> &'static str {
     if cfg!(feature = "cef") {
         "Chromium (CEF)"
@@ -268,7 +229,6 @@ fn engine() -> &'static str {
     }
 }
 
-/// What the system is.
 fn info(app: &AppHandle) -> SystemInfo {
     let mut screens = app.available_monitors().unwrap_or_default();
     if let Ok(Some(primary)) = app.primary_monitor() {
@@ -302,7 +262,6 @@ fn info(app: &AppHandle) -> SystemInfo {
 mod tests {
     use super::*;
 
-    /// A secret by its name, in any case, and the rest told: `PATH`, `HOME`, `LANG`.
     #[test]
     fn a_secret_is_left_out_by_its_name_unless_the_grant_is_full() {
         let vars = [
@@ -331,8 +290,6 @@ mod tests {
         assert!(withheld.is_empty());
     }
 
-    /// The web, mail and the telephone; never a file, and never the app's own links,
-    /// which run its commands as the reader.
     #[test]
     fn only_the_webs_mails_and_telephones_addresses_are_opened() {
         for fine in [
@@ -355,9 +312,6 @@ mod tests {
         }
     }
 
-    /// The system's browser is the reader's: a site the grant denies, or keeps to the
-    /// agent's own store, is not opened there, by any spelling; every other address, mail,
-    /// a telephone and a path are, whatever the mode.
     #[test]
     fn a_site_the_grant_keeps_from_the_reader_s_browser_is_not_opened_there() {
         let mut grant = Grant::own("system-sites".into(), "A");

@@ -1,995 +1,639 @@
-//! The browser as an agent drives it: every verb's name, what it takes and what it
-//! answers, and what the crate tells the window on `nib://agent`.
-//!
-//! One file, because it is where three lanes meet (docs/agent-native.md 13.1). The MCP
-//! server's tool schemas are written from these types, the activity panel is built
-//! against the events, and `src/lib/agents/verbs.ts` mirrors every shape here for the
-//! window. A test at the bottom holds the list of names to the table, and the mirror's
-//! own test holds the mirror to this file, so a verb cannot drift on one side only.
-//!
-//! **What a caller sends.** One POST to the endpoint, `{"verb": "browser_click", "args":
-//! {...}}`, with an agent's token (or the installation's secret) as its bearer. The
-//! arguments are read strictly: a name the verb does not take is refused rather than
-//! ignored, because an agent that misspelt `ref` would otherwise press the wrong thing
-//! with nothing said.
-//!
-//! **What comes back** is always an `Answer`: `ok` with the verb's own result, or
-//! `needs_approval` at once (9.3), or `error` with a code an agent can act on. A dialog
-//! the page is holding rides on every one of them, so the agent hears about it on
-//! whatever it calls next.
-
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-/// The event every agent's news reaches the window on.
 pub const EVENT: &str = "nib://agent";
 
-/// A tab as an agent names it: an agent tab's id (`a3`), or a reader's web tab's id as
-/// `browser_tabs` lists it.
 pub type TabId = String;
 
-/// An element as an agent names it: `e4812` for the engine's node 4812 in the page, and
-/// `f2e17` for node 17 inside the page's second frame that runs in a process of its own.
-/// Stable for as long as the element lives, which is longer than a snapshot.
 pub type Ref = String;
 
-// ---------------------------------------------------------------------------------------
-// What each verb takes.
-// ---------------------------------------------------------------------------------------
-
-/// A verb that takes nothing.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Nothing {}
 
-/// A verb that takes only a tab.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct OnTab {
-    /// The tab.
     pub tab: TabId,
 }
 
-/// Which store an agent tab's cookies and logins are in (6.3).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Store {
-    /// The store the reader's own tabs of that space use: signed in where they are.
     #[default]
     Reader,
-    /// A store of the agent's own, signed out until somebody signs in there, kept
-    /// across runs.
     Agent,
-    /// Another space's store, with that space granted.
     Space,
 }
 
-/// `browser_open`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Open {
-    /// Where the page goes: `http` or `https`.
     pub url: String,
-    /// Which store it is in.
     #[serde(default)]
     pub store: Store,
-    /// The space whose store `space` means, or whose reader's store `reader` means.
-    /// The open space when not said.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub space: Option<String>,
-    /// Its width in CSS pixels, 1280 when not said: a page lays itself out for the
-    /// width it has, independent of the reader's window.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub width: Option<u32>,
-    /// Its height in CSS pixels, 800 when not said.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub height: Option<u32>,
 }
 
-/// `browser_navigate`: an address, or one of the three steps.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Navigate {
-    /// The tab.
     pub tab: TabId,
-    /// Where to, unless one of the steps below is asked for instead.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
-    /// One step back along the tab's history.
     #[serde(default)]
     pub back: bool,
-    /// One step forward.
     #[serde(default)]
     pub forward: bool,
-    /// The same page again.
     #[serde(default)]
     pub reload: bool,
 }
 
-/// What `browser_wait` waits for as a word.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Moment {
-    /// The page's `load` event, which is `document.readyState` complete.
     Load,
-    /// No request in flight for 500 ms, counted from the engine's own network events.
     NetworkIdle,
 }
 
-/// What `browser_wait` waits for.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Until {
-    /// `"load"` or `"network_idle"`.
     Moment(Moment),
-    /// `{"text": "Saved"}`: those words anywhere in the page's text.
     Text {
-        /// The words.
         text: String,
     },
-    /// `{"ref": "e12"}`: that element in the page and visible.
     Element {
-        /// The element.
         #[serde(rename = "ref")]
         element: Ref,
     },
-    /// `{"url": "/done"}`: the page's address containing that.
     Url {
-        /// Part of the address.
         url: String,
     },
 }
 
-/// `browser_wait`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Wait {
-    /// The tab.
     pub tab: TabId,
-    /// What for.
     #[serde(rename = "for")]
     pub until: Until,
-    /// How long at most, 30 s when not said and never more than 120 s.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub timeout_ms: Option<u64>,
 }
 
-/// `browser_snapshot`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Snapshot {
-    /// The tab.
     pub tab: TabId,
-    /// Only the part of the tree under this element.
     #[serde(default, rename = "ref", skip_serializing_if = "Option::is_none")]
     pub element: Option<Ref>,
-    /// The longest answer, in characters; 40,000 when not said.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub max_chars: Option<usize>,
 }
 
-/// `browser_find`: by the words an element carries, or by its role and name.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Find {
-    /// The tab.
     pub tab: TabId,
-    /// Words the element's name or text contains, ignoring case.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub text: Option<String>,
-    /// Its accessible role: `button`, `link`, `textbox`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub role: Option<String>,
-    /// Its accessible name, or part of it, ignoring case.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 }
 
-/// How `browser_read` answers the page.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ReadAs {
-    /// The page's visible words, as a person would copy them.
     Text,
-    /// The whole page as markdown, through the clipper's own converter.
     #[default]
     Markdown,
-    /// Only the article, as the clipper picks it, as markdown.
     Article,
 }
 
-/// `browser_read`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Read {
-    /// The tab.
     pub tab: TabId,
-    /// How.
     #[serde(default, rename = "as")]
     pub shape: ReadAs,
-    /// The longest answer, in characters; 100,000 when not said.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub max_chars: Option<usize>,
 }
 
-/// What `capture_to_note` asks the crate for when it puts a page into a note: the
-/// window's `agents_capture`, never an agent's own verb (docs/agent-native.md 5.4).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum CaptureAs {
-    /// The article as the clip button picks it, as HTML for the clipper's converter.
     Clip,
-    /// A picture of the page, every filled secret field painted over.
     Screenshot,
-    /// The page printed to a PDF on the reader's paper.
     Pdf,
 }
 
-/// Which mouse button.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Button {
-    /// The main one.
     #[default]
     Left,
-    /// The context menu's.
     Right,
-    /// The wheel.
     Middle,
 }
 
-/// A key held during a press.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Modifier {
-    /// Alt, Option on a Mac.
     Alt,
-    /// Control.
     Control,
-    /// The Windows key, Command on a Mac.
     Meta,
-    /// Shift.
     Shift,
 }
 
-/// `browser_click`: an element by ref, or - where a press by ref cannot land - a point in
-/// the tab's viewport, in CSS pixels, which is one image pixel of `browser_screenshot` at
-/// its own scale (#373). One or the other, never both.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Click {
-    /// The tab.
     pub tab: TabId,
-    /// What to press.
     #[serde(default, rename = "ref", skip_serializing_if = "Option::is_none")]
     pub element: Option<Ref>,
-    /// Across the viewport from its left, in CSS pixels.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub x: Option<f64>,
-    /// Down the viewport from its top, in CSS pixels.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub y: Option<f64>,
-    /// Which button; the main one when not said.
     #[serde(default)]
     pub button: Button,
-    /// How many presses, 2 for a double click; one when not said.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub count: Option<u8>,
-    /// Keys held while pressing.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub modifiers: Vec<Modifier>,
 }
 
-/// `browser_type`: words into a field, as text rather than keys. Refused on a
-/// password field (9.4).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Type {
-    /// The tab.
     pub tab: TabId,
-    /// The field.
     #[serde(rename = "ref")]
     pub element: Ref,
-    /// The words.
     pub text: String,
-    /// Enter afterwards.
     #[serde(default)]
     pub submit: bool,
-    /// Empty the field first rather than adding to what is there.
     #[serde(default)]
     pub replace: bool,
 }
 
-/// `browser_press`: one key or one chord, pressed inside that page.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Press {
-    /// The tab.
     pub tab: TabId,
-    /// `Enter`, `Tab`, `Escape`, `ArrowDown`, `Control+A`, `Shift+Tab`.
     pub keys: String,
 }
 
-/// `browser_scroll`: an element into view, or the page by an amount.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Scroll {
-    /// The tab.
     pub tab: TabId,
-    /// The element to bring into view.
     #[serde(default, rename = "ref", skip_serializing_if = "Option::is_none")]
     pub element: Option<Ref>,
-    /// Across, in CSS pixels.
     #[serde(default)]
     pub dx: f64,
-    /// Down, in CSS pixels.
     #[serde(default)]
     pub dy: f64,
 }
 
-/// `browser_select`: options of a `<select>` chosen through the page, by value or by
-/// the words they show, never by opening its list.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Select {
-    /// The tab.
     pub tab: TabId,
-    /// The `<select>`.
     #[serde(rename = "ref")]
     pub element: Ref,
-    /// The options, each by its value or its label.
     pub values: Vec<String>,
 }
 
-/// What a field is set to by `browser_fill_form`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum FieldValue {
-    /// A checkbox or a radio button, ticked or not.
     Ticked(bool),
-    /// Words for a text field, or one option of a `<select>`, or a date as
-    /// `2026-09-30` for a date field.
     Words(String),
-    /// Several options of a `<select multiple>`.
     Options(Vec<String>),
 }
 
-/// One field of a form.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Field {
-    /// The field.
     #[serde(rename = "ref")]
     pub element: Ref,
-    /// What it is set to.
     pub value: FieldValue,
 }
 
-/// `browser_fill_form`: several fields in one call.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct FillForm {
-    /// The tab.
     pub tab: TabId,
-    /// The fields, in order.
     pub fields: Vec<Field>,
 }
 
-/// `browser_hover`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Hover {
-    /// The tab.
     pub tab: TabId,
-    /// What to hold the pointer over.
     #[serde(rename = "ref")]
     pub element: Ref,
 }
 
-/// `browser_drag`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Drag {
-    /// The tab.
     pub tab: TabId,
-    /// What is picked up.
     pub from: Ref,
-    /// Where it is dropped.
     pub to: Ref,
 }
 
-/// `browser_upload`: files for a file input, from inside a space. A path outside
-/// every space asks first (9.4).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Upload {
-    /// The tab.
     pub tab: TabId,
-    /// The file input, or the element whose press opens the file chooser.
     #[serde(rename = "ref")]
     pub element: Ref,
-    /// Each file, as an absolute path or relative to the spaces folder
-    /// (`Research/paper.pdf`).
     pub files: Vec<String>,
 }
 
-/// `browser_screenshot`.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Screenshot {
-    /// The tab.
     pub tab: TabId,
-    /// Only this element.
     #[serde(default, rename = "ref", skip_serializing_if = "Option::is_none")]
     pub element: Option<Ref>,
-    /// The whole page rather than what fits in the tab.
     #[serde(default)]
     pub full_page: bool,
-    /// Image pixels per CSS pixel; 1 when not said, whatever the screen's scale.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub scale: Option<f64>,
 }
 
-/// `browser_console`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Console {
-    /// The tab.
     pub tab: TabId,
-    /// Only lines after this one, as `next` answered it last time.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub since: Option<u64>,
-    /// Only lines of this level: `error`, `warning`, `info`, `log`, `debug`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub level: Option<String>,
 }
 
-/// `browser_network`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Network {
-    /// The tab.
     pub tab: TabId,
-    /// Only requests after this one, as `next` answered it last time.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub since: Option<u64>,
-    /// Only requests whose address contains this.
     #[serde(default, rename = "match", skip_serializing_if = "Option::is_none")]
     pub matching: Option<String>,
-    /// Each response's body too, which needs `browser.network`.
     #[serde(default)]
     pub bodies: bool,
 }
 
-/// Where `browser_evaluate` runs.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum World {
-    /// A world of nib's own: the page's document, none of its globals.
     #[default]
     Isolated,
-    /// The page's own world, as the page.
     Page,
 }
 
-/// `browser_evaluate`: only with `browser.script` for that site (9.2).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Evaluate {
-    /// The tab.
     pub tab: TabId,
-    /// A JavaScript expression; a promise is waited for.
     pub expression: String,
-    /// Where.
     #[serde(default)]
     pub world: World,
 }
 
-/// `browser_dialog`: the answer to the dialog the page is holding.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AnswerDialog {
-    /// The tab.
     pub tab: TabId,
-    /// OK, or Cancel.
     pub accept: bool,
-    /// What a `prompt` is answered with; for a `certificate`, words of the subject of the
-    /// one to present, the first offered when not said.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub text: Option<String>,
-    /// The user name a `sign_in` box is answered with.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub username: Option<String>,
-    /// The password a `sign_in` box is answered with.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub password: Option<String>,
 }
 
-/// `browser_downloads`.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Downloads {
-    /// Only that tab's.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tab: Option<TabId>,
 }
 
-/// What `browser_storage` does.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum StorageOp {
-    /// The cookies the page's address would be sent.
     Cookies,
-    /// Sets `cookie`.
     SetCookie,
-    /// Every cookie and every bit of storage of the page's site, gone.
     Clear,
-    /// The page's `localStorage`.
     Local,
 }
 
-/// A cookie, as `browser_storage` reads and writes one.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Cookie {
-    /// Its name.
     pub name: String,
-    /// Its value.
     pub value: String,
-    /// Its domain; the page's host when not said.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub domain: Option<String>,
-    /// Its path; `/` when not said.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub path: Option<String>,
-    /// When it ends, in seconds since 1970; with the session when not said.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub expires: Option<f64>,
-    /// Out of the page's scripts' reach.
     #[serde(default)]
     pub http_only: bool,
-    /// Only over https.
     #[serde(default)]
     pub secure: bool,
 }
 
-/// `browser_storage`: an agent's own store, unless it holds `browser.storage` for the
-/// reader's.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Storage {
-    /// The tab.
     pub tab: TabId,
-    /// What to do.
     pub op: StorageOp,
-    /// The cookie `set_cookie` sets.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cookie: Option<Cookie>,
 }
 
-/// `browser_takeover`: the reader asked to do one step in that tab, which the agent
-/// keeps all the while.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Takeover {
-    /// The tab.
     pub tab: TabId,
-    /// The one line the reader reads: `Sign in to the bank`.
     pub reason: String,
 }
 
-/// `files`: one thing done to a file or a folder anywhere the user account reaches
-/// (#1078), outside the spaces; a space's own files go through the note tools. See
-/// files.rs.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Files {
-    /// What to do.
     pub op: FilesOp,
-    /// The file or folder: absolute, or under the home folder with `~/`.
     pub path: String,
-    /// Where `move` and `copy` put it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub to: Option<String>,
-    /// What `write` and `append` put in it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub content: Option<String>,
-    /// Whether `content`, and what `read` answers, is base64 rather than text.
     #[serde(default)]
     pub base64: bool,
-    /// What `search` looks for in names: a glob, `*.rs`, `**/notes/*.md`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub glob: Option<String>,
-    /// What `search` looks for inside text files.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub text: Option<String>,
-    /// For `changes`: what changed after this time, in milliseconds since 1970, as the
-    /// last answer's `now` said it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub since: Option<u64>,
 }
 
-/// What `files` does.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum FilesOp {
-    /// A file's content.
     Read,
-    /// A file's content replaced, the file and its folders made where there are none.
     Write,
-    /// Words added at the end of a file.
     Append,
-    /// What a folder holds.
     List,
-    /// What a path is: kind, size, when it changed.
     Stat,
-    /// A folder, with the folders it is in.
     Mkdir,
-    /// A file or folder to `to`.
     Move,
-    /// A file or folder copied to `to`.
     Copy,
-    /// A file or folder gone, for good: asks as deleting for good does.
     Delete,
-    /// The files under a folder whose names match `glob` or that hold `text`.
     Search,
-    /// What changed under a folder since `since`: a watch without a held connection.
     Changes,
 }
 
-/// What `files` answers.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FilesDone {
-    /// The path it was about, as it was read.
     pub path: String,
-    /// What `read` read.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub content: Option<String>,
-    /// Whether `content` is base64: asked for, or a file that is not text.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub base64: bool,
-    /// Whether `content`, or the list, was cut short.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub truncated: bool,
-    /// What `list`, `search` and `changes` found, and `stat`'s one.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub entries: Vec<FileEntry>,
-    /// When this was answered, for the next `changes`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub now: Option<u64>,
 }
 
-/// One file or folder, as `files` lists it.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FileEntry {
-    /// Where it is.
     pub path: String,
-    /// What it is.
     pub kind: FileKind,
-    /// How large, in bytes; nought for a folder.
     pub size: u64,
-    /// When it last changed, in milliseconds since 1970.
     pub modified: u64,
 }
 
-/// What a path is.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum FileKind {
-    /// A file.
     File,
-    /// A folder.
     Folder,
-    /// A symbolic link, never followed.
     Link,
 }
 
-/// `process`: a program on this computer, run to its end or started and talked to
-/// (#1078), the way a VS Code extension's `ShellExecution` and `child_process` do. See
-/// process.rs.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Process {
-    /// What to do.
     pub op: ProcessOp,
-    /// For `run` and `start`: the program, a bare name found on the `PATH`, or a path,
-    /// absolute or under `~/`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub program: Option<String>,
-    /// Its arguments, each as it is, never through a shell.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub args: Vec<String>,
-    /// Variables set for it, over the app's own.
     #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
     pub env: std::collections::BTreeMap<String, String>,
-    /// The folder it runs in: absolute, or under `~/`; the home folder when not said.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cwd: Option<String>,
-    /// For `run`, what it reads, after which its input is closed; for `write`, words
-    /// typed into a started one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub stdin: Option<String>,
-    /// For `run`: how long it may take, in milliseconds.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub timeout_ms: Option<u64>,
-    /// For `read`, `write` and `kill`: the started one, as `start` answered.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
-    /// For `read`: what it printed after this, as the last answer's `next` said.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub since: Option<u64>,
-    /// For `read`: how long to wait for something new, in milliseconds.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub wait_ms: Option<u64>,
-    /// For `write`: its input closed after the words.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub close: bool,
 }
 
-/// What `process` does.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ProcessOp {
-    /// Started, waited for, and answered with what it printed and how it ended.
     Run,
-    /// Started and left running, answered with its id.
     Start,
-    /// This agent's started ones.
     List,
-    /// What a started one printed since a cursor.
     Read,
-    /// Words typed into a started one.
     Write,
-    /// A started one ended, with everything it started.
     Kill,
 }
 
-/// What `process` answers.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ProcessDone {
-    /// The started one it is about.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
-    /// Whether it is still running.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub running: bool,
-    /// Its exit code, once it has one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub exit: Option<i32>,
-    /// What ended it, where it did not end on its own.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ended: Option<Ended>,
-    /// What `run` printed on its standard output: the end of it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub stdout: Option<String>,
-    /// What `run` printed on its standard error: the end of it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub stderr: Option<String>,
-    /// What a started one printed since the cursor, both outputs as they came.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub output: Option<String>,
-    /// The cursor for the next `read`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub next: Option<u64>,
-    /// Whether something was left out: the start of a long output, or past the most
-    /// one answer holds.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub truncated: bool,
-    /// What `list` found.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub processes: Vec<ProcessEntry>,
 }
 
-/// What ended a program that did not end on its own.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Ended {
-    /// Running past its time.
     TimedOut,
-    /// `kill`, the stop, or the agent going.
     Killed,
 }
 
-/// One started program, as `list` says it.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ProcessEntry {
-    /// Its id.
     pub id: String,
-    /// The program, as it was found.
     pub program: String,
-    /// Its arguments.
     pub args: Vec<String>,
-    /// When it was started, in milliseconds since 1970.
     pub started: u64,
-    /// Whether it is still running.
     pub running: bool,
-    /// Its exit code, once it has one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub exit: Option<i32>,
 }
 
-/// `http`: one request to any site (#1078), the way a VS Code extension's `fetch` makes
-/// one, with no cookie of the reader's. See http.rs.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Http {
-    /// Where: an `http` or `https` address.
     pub url: String,
-    /// `GET` when not said.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub method: Option<String>,
-    /// Headers sent with it.
     #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
     pub headers: std::collections::BTreeMap<String, String>,
-    /// What it sends.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub body: Option<String>,
-    /// Whether `body` is base64.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub base64: bool,
-    /// A file the answer's body is written to rather than answered, under `files`'
-    /// rules.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub save_to: Option<String>,
-    /// How long it may take, in milliseconds.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub timeout_ms: Option<u64>,
 }
 
-/// What `http` answers.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct HttpDone {
-    /// The status.
     pub status: u16,
-    /// Where it was answered from, after any redirect.
     pub url: String,
-    /// The answer's headers, each name once, in lower case.
     pub headers: std::collections::BTreeMap<String, String>,
-    /// The body: text, or base64 for what is not.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub body: Option<String>,
-    /// Whether `body` is base64.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub base64: bool,
-    /// Whether the body was cut short.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub truncated: bool,
-    /// The file `save_to` wrote.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub saved: Option<String>,
-    /// How large the body was, in bytes, as far as it was read.
     pub size: u64,
 }
 
-/// `system`: the system around the app (#1078), as a VS Code extension's `env` and
-/// `env.openExternal` reach it. See system.rs.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct System {
-    /// What to do.
     pub op: SystemOp,
-    /// For `open`: an address, `http`, `https`, `mailto` or `tel`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
-    /// For `open` and `reveal`: a file or folder, absolute or under `~/`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub path: Option<String>,
 }
 
-/// What `system` does.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum SystemOp {
-    /// An address or a file opened with the system's own app for it.
     Open,
-    /// A file or folder shown in the file manager.
     Reveal,
-    /// The app's environment variables.
     Env,
-    /// The system: its name, version, architecture, displays and language.
     Info,
 }
 
-/// What `system` answers.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct SystemDone {
-    /// What `open` or `reveal` handed the system.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub opened: Option<String>,
-    /// The environment, names to values, those that look like secrets left out.
     #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
     pub env: std::collections::BTreeMap<String, String>,
-    /// The names whose values were left out.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub withheld: Vec<String>,
-    /// What `info` found.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub info: Option<SystemInfo>,
 }
 
-/// The system, as `info` says it.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct SystemInfo {
-    /// `windows`, `macos`, `linux`.
     pub os: String,
-    /// Its version.
     pub os_version: String,
-    /// `x86_64`, `aarch64`.
     pub arch: String,
-    /// The reader's language, as the system says it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub locale: Option<String>,
-    /// Orden's own version.
     pub app_version: String,
-    /// The engine the window runs on.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub webview: Option<String>,
-    /// The screens, the primary one first.
     pub displays: Vec<Display>,
 }
 
-/// One screen.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Display {
-    /// What the system calls it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
-    /// Its size in physical pixels.
     pub width: u32,
-    /// Its size in physical pixels.
     pub height: u32,
-    /// How many physical pixels a logical one is.
     pub scale: f64,
 }
 
-/// `approval_status`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ApprovalAsk {
-    /// The approval, as `needs_approval` named it.
     pub id: String,
 }
 
-/// `agent_pair`: a client asking to become an agent. Only with the installation's
-/// secret, which is what `nib mcp` reads out of the endpoint file.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Pair {
-    /// The client's name as it gives it: `Claude Code`.
     pub client: String,
-    /// How long to wait for the reader's answer before answering `needs_approval`;
-    /// 0 when not said, and never more than five minutes.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub wait_ms: Option<u64>,
 }
 
-// ---------------------------------------------------------------------------------------
-// The table.
-// ---------------------------------------------------------------------------------------
-
-/// The verbs, written once: the enum, the list of names and the reading of a request
-/// all come out of this one table.
 macro_rules! verbs {
     ($( $(#[$doc:meta])* $name:literal => $variant:ident($args:ty) -> $answer:ty, )*) => {
-        /// One call, read.
         #[derive(Clone, Debug, PartialEq)]
         pub enum Verb {
             $( $(#[$doc])* $variant($args), )*
         }
 
-        /// Every verb the crate answers, by name, in the table's order.
         #[allow(dead_code, reason = "the list the MCP server's schemas and the tests read")]
         pub const NAMES: &[&str] = &[$($name),*];
 
-        /// What each verb answers, by name, for the schemas. The type named is the
-        /// `result` of an `ok`.
         #[allow(dead_code, reason = "the list the MCP server's schemas and the tests read")]
         pub const ANSWERS: &[(&str, &str)] = &[$(($name, stringify!($answer))),*];
 
         impl Verb {
-            /// The verb a request names, with its arguments checked. `None` for a name
-            /// that is not one of these, which the endpoint then hands to the window.
             pub fn read(name: &str, args: Value) -> Option<Result<Self, String>> {
-                // A verb that takes nothing may be sent with no arguments at all.
                 let args = if args.is_null() { Value::Object(Default::default()) } else { args };
                 match name {
                     $( $name => Some(
@@ -1001,7 +645,6 @@ macro_rules! verbs {
                 }
             }
 
-            /// The verb's name.
             pub fn name(&self) -> &'static str {
                 match self {
                     $( Verb::$variant(_) => $name, )*
@@ -1012,195 +655,110 @@ macro_rules! verbs {
 }
 
 verbs! {
-    /// The reader's web tabs and this agent's own.
     "browser_tabs" => Tabs(Nothing) -> TabList,
-    /// An agent tab, out of sight.
     "browser_open" => Open(Open) -> Opened,
-    /// An address, back, forward or reload.
     "browser_navigate" => Navigate(Navigate) -> Acted,
-    /// Until the page has loaded, gone quiet, or shows something.
     "browser_wait" => Wait(Wait) -> Waited,
-    /// The accessibility tree as text with refs.
     "browser_snapshot" => Snapshot(Snapshot) -> Snapped,
-    /// The refs that match.
     "browser_find" => Find(Find) -> Found,
-    /// The page as words.
     "browser_read" => Read(Read) -> PageText,
-    /// Scrolled into view, lit for a beat, pressed.
     "browser_click" => Click(Click) -> Acted,
-    /// Words into a field.
     "browser_type" => Type(Type) -> Acted,
-    /// A key inside the page.
     "browser_press" => Press(Press) -> Acted,
-    /// An element into view, or the page by an amount.
     "browser_scroll" => Scroll(Scroll) -> Acted,
-    /// Options of a `<select>`.
     "browser_select" => Select(Select) -> Acted,
-    /// Several fields at once.
     "browser_fill_form" => FillForm(FillForm) -> Acted,
-    /// The pointer over an element.
     "browser_hover" => Hover(Hover) -> Acted,
-    /// One element dragged onto another.
     "browser_drag" => Drag(Drag) -> Acted,
-    /// Files for a file input.
     "browser_upload" => Upload(Upload) -> Acted,
-    /// A PNG.
     "browser_screenshot" => Screenshot(Screenshot) -> Picture,
-    /// The page's console.
     "browser_console" => Console(Console) -> ConsoleLines,
-    /// The page's requests.
     "browser_network" => Network(Network) -> Requests,
-    /// A script in the page.
     "browser_evaluate" => Evaluate(Evaluate) -> Evaluated,
-    /// The answer to the dialog the page is holding.
     "browser_dialog" => Dialog(AnswerDialog) -> Acted,
-    /// What the agent's tabs downloaded.
     "browser_downloads" => Downloads(Downloads) -> DownloadList,
-    /// Cookies and storage.
     "browser_storage" => Storage(Storage) -> Stored,
-    /// An agent tab closed.
     "browser_close" => Close(OnTab) -> Closed,
-    /// An agent tab made a tab of the reader's; asks first.
     "browser_show" => Show(OnTab) -> Acted,
-    /// The reader asked to do one step; asks.
     "browser_takeover" => Takeover(Takeover) -> Acted,
-    /// Files and folders anywhere the user account reaches (#1078).
     "files" => Files(Files) -> FilesDone,
-    /// Programs on this computer, run or started and talked to (#1078).
     "process" => Process(Process) -> ProcessDone,
-    /// One request to any site (#1078).
     "http" => Http(Http) -> HttpDone,
-    /// The system around the app: open, reveal, its environment, what it is (#1078).
     "system" => System(System) -> SystemDone,
-    /// This agent's grant, tabs, questions and pauses.
     "agent_status" => Status(Nothing) -> Status,
-    /// What the reader answered.
     "approval_status" => ApprovalStatus(ApprovalAsk) -> ApprovalState,
-    /// A client asking to become an agent; the installation's secret only.
     "agent_pair" => Pair(Pair) -> Paired,
-    /// A client going away: its tabs are closed after ten minutes unless it comes
-    /// back.
     "agent_bye" => Bye(Nothing) -> Nothing,
 }
 
-// ---------------------------------------------------------------------------------------
-// What comes back.
-// ---------------------------------------------------------------------------------------
-
-/// Why a call was not done, as a word an agent can act on.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Code {
-    /// This engine has no honest way to do it (section 12).
     UnsupportedOnThisEngine,
-    /// The arguments were not what the verb takes.
     BadArguments,
-    /// The grant does not reach it: a scope, a space or a site.
     NotGranted,
-    /// The site is denied to this agent.
     SiteDenied,
-    /// There is no such tab, or not one this agent may see.
     NoSuchTab,
-    /// The element is gone, or never was: take a snapshot again.
     NoSuchRef,
-    /// The stop was pressed.
     Stopped,
-    /// A password field: signing in is a takeover (9.4).
     PasswordField,
-    /// Too many tabs, too many calls, or the machine's memory.
     Limit,
-    /// It did not happen in time.
     Timeout,
-    /// The page said no, or the engine did.
     Failed,
-    /// The page is holding no dialog.
     NoDialog,
-    /// The reader said no.
     Denied,
 }
 
-/// A dialog the page is holding open until `browser_dialog` answers it.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Dialog {
-    /// Which kind.
     pub kind: DialogKind,
-    /// What it says.
     pub message: String,
-    /// What a `prompt` offers as its answer.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub default_text: Option<String>,
-    /// The page that raised it.
     pub url: String,
-    /// How long it has been open, in milliseconds. An `alert` is accepted after 30 s
-    /// unanswered, and a `confirm`, a `prompt`, a `beforeunload`, a sign-in box or a
-    /// certificate request dismissed.
     pub open_ms: u64,
 }
 
-/// The kinds of dialog a page raises.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DialogKind {
-    /// `alert()`.
     Alert,
-    /// `confirm()`.
     Confirm,
-    /// `prompt()`.
     Prompt,
-    /// Leaving a page that asked to be asked.
     Beforeunload,
-    /// The site's own sign-in box, HTTP authentication: answered with a user name and a
-    /// password, as signing in is (#1072).
     SignIn,
-    /// The site asking for a client certificate: answered with one of those offered, as
-    /// signing in is (#1072).
     Certificate,
 }
 
 impl DialogKind {
-    /// Whether answering it yes signs in, which asks as the mode says (#1072).
     pub fn signs_in(self) -> bool {
         matches!(self, DialogKind::SignIn | DialogKind::Certificate)
     }
 }
 
-/// Every answer, whatever the verb.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum Answer {
-    /// Done; `result` is the verb's own answer.
     Ok {
-        /// The verb's own answer.
         result: Value,
-        /// Where the words in `result` came from, when they came from a page: the MCP
-        /// server marks them untrusted (9.6).
         #[serde(default, skip_serializing_if = "Option::is_none")]
         untrusted: Option<String>,
-        /// A dialog the page is holding.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         dialog: Option<Box<Dialog>>,
     },
-    /// Not done, and asked: `approval_status` says what the reader answered.
     NeedsApproval {
-        /// Which question.
         approval: String,
-        /// What the reader is asked, in one line.
         summary: String,
     },
-    /// Not done.
     Error {
-        /// Why, as a word.
         code: Code,
-        /// Why, in a sentence.
         message: String,
-        /// A dialog the page is holding.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         dialog: Option<Box<Dialog>>,
     },
 }
 
 impl Answer {
-    /// Done, with a result.
     pub fn ok(result: impl Serialize) -> Self {
         Answer::Ok {
             result: serde_json::to_value(result).unwrap_or(Value::Null),
@@ -1209,7 +767,6 @@ impl Answer {
         }
     }
 
-    /// Not done.
     pub fn error(code: Code, message: impl Into<String>) -> Self {
         Answer::Error {
             code,
@@ -1218,7 +775,6 @@ impl Answer {
         }
     }
 
-    /// The same answer, carrying the dialog a page is holding.
     #[must_use]
     pub fn with_dialog(mut self, held: Option<Dialog>) -> Self {
         match &mut self {
@@ -1230,7 +786,6 @@ impl Answer {
         self
     }
 
-    /// The word the audit log files it under.
     pub fn status(&self) -> &'static str {
         match self {
             Answer::Ok { .. } => "ok",
@@ -1239,11 +794,6 @@ impl Answer {
         }
     }
 
-    /// The window's answer to a verb it answered for an agent, as the audit log files it:
-    /// by its `status`, the contract's own word, because a question asked is `ok` to the
-    /// endpoint and not a thing done; by `ok` alone for a verb that answers in the
-    /// command line's `{ok, value}`. A code the contract does not have is a failure, in
-    /// the window's words.
     pub fn from_window(text: &str) -> Self {
         if let Ok(answer) = serde_json::from_str::<Answer>(text) {
             return answer;
@@ -1265,465 +815,286 @@ impl Answer {
     }
 }
 
-/// A reader's web tab, as `browser_tabs` lists it.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ReaderTab {
-    /// Its id.
     pub id: TabId,
-    /// What the page calls itself.
     pub title: String,
-    /// Where it is.
     pub url: String,
-    /// Which space it is in, when the window said.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub space: Option<String>,
-    /// Whether it is the tab in front of its pane.
     pub front: bool,
-    /// Whether any of it is on the screen.
     pub on_screen: bool,
 }
 
-/// An agent's own tab.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AgentTab {
-    /// Its id.
     pub id: TabId,
-    /// Where it is.
     pub url: String,
-    /// What the page calls itself.
     pub title: String,
-    /// Whether a page is still loading.
     pub loading: bool,
-    /// Which store it is in.
     pub store: Store,
-    /// Whether its page was closed to save memory. The next call on it builds it again
-    /// at the same address.
     pub parked: bool,
 }
 
-/// `browser_tabs`.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TabList {
-    /// The reader's, when the grant holds `browser.reader`.
     pub reader: Vec<ReaderTab>,
-    /// This agent's own.
     pub agent: Vec<AgentTab>,
 }
 
-/// `browser_open`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Opened {
-    /// The new tab.
     pub tab: TabId,
-    /// The store it is in: the agent's own when the site is kept to it (6.3), whatever
-    /// was asked.
     pub store: Store,
 }
 
-/// What a verb that acts answers.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Acted {
-    /// The page's address afterwards.
     pub url: String,
-    /// Tabs the act opened: a link with `target=_blank`, a sign-in popup.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub opened: Vec<TabId>,
 }
 
-/// `browser_wait`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Waited {
-    /// How long it took, in milliseconds.
     pub ms: u64,
-    /// The page's address then.
     pub url: String,
 }
 
-/// `browser_snapshot`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Snapped {
-    /// Where the page is.
     pub url: String,
-    /// What it calls itself.
     pub title: String,
-    /// The tree, one element a line: `- button "Save" [ref=e4812]`.
     pub text: String,
-    /// Whether it was cut at `max_chars`.
     pub truncated: bool,
 }
 
-/// One element that matched.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Match {
-    /// Its ref.
     #[serde(rename = "ref")]
     pub element: Ref,
-    /// Its role.
     pub role: String,
-    /// Its name.
     pub name: String,
 }
 
-/// `browser_find`.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Found {
-    /// Every element that matched, in the page's order.
     pub matches: Vec<Match>,
 }
 
-/// `browser_read`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PageText {
-    /// Where the page is.
     pub url: String,
-    /// What it calls itself.
     pub title: String,
-    /// The words.
     pub text: String,
-    /// Whether they were cut at `max_chars`.
     pub truncated: bool,
 }
 
-/// `browser_screenshot`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Picture {
-    /// The PNG, as base64.
     pub png: String,
-    /// Its width in pixels.
     pub width: u32,
-    /// Its height in pixels.
     pub height: u32,
 }
 
-/// `agents_capture`: the page as the window writes it into a note. One of the three is
-/// there, the one asked for.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Captured {
-    /// Where the page is.
     pub url: String,
-    /// What it calls itself.
     pub title: String,
-    /// The article's HTML, links made absolute and no field's value in it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub html: Option<String>,
-    /// The picture, as base64.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub png: Option<String>,
-    /// The PDF, as base64.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pdf: Option<String>,
 }
 
-/// One line of a page's console.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ConsoleLine {
-    /// Its place in the tab's count, for `since`.
     pub seq: u64,
-    /// `error`, `warning`, `info`, `log` or `debug`.
     pub level: String,
-    /// What it said.
     pub text: String,
-    /// Where, when the engine said: an address and a line.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source: Option<String>,
 }
 
-/// `browser_console`.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ConsoleLines {
-    /// The lines, oldest first; the last 500 at most.
     pub lines: Vec<ConsoleLine>,
-    /// What to pass as `since` next time.
     pub next: u64,
 }
 
-/// One request a page made.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Request {
-    /// Its place in the tab's count, for `since`.
     pub seq: u64,
-    /// `GET`, `POST`.
     pub method: String,
-    /// Where to.
     pub url: String,
-    /// What the server answered, once it has.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub status: Option<u16>,
-    /// What kind of thing: `Document`, `XHR`, `Fetch`, `Script`, `Image`.
     pub kind: String,
-    /// How long it took, once it is done, in milliseconds.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ms: Option<u64>,
-    /// Why it failed, when it did.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub failed: Option<String>,
-    /// The response's body, with `bodies` and `browser.network`, cut at 100,000
-    /// characters.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub body: Option<String>,
 }
 
-/// `browser_network`.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Requests {
-    /// The requests, oldest first; the last 500 at most.
     pub requests: Vec<Request>,
-    /// What to pass as `since` next time.
     pub next: u64,
 }
 
-/// `browser_evaluate`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Evaluated {
-    /// What the expression came to, as JSON.
     pub value: Value,
 }
 
-/// Where a download has got to.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DownloadState {
-    /// On its way.
     Going,
-    /// In the folder.
     Done,
-    /// It stopped, and there is no file.
     Failed,
-    /// Past 500 MB, and stopped.
     TooLarge,
 }
 
-/// One file an agent's tab downloaded.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Download {
-    /// The tab that fetched it.
     pub tab: TabId,
-    /// Where from.
     pub url: String,
-    /// Where it is, in `Downloads/nib agents/<agent>`.
     pub path: String,
-    /// How far along it is.
     pub state: DownloadState,
 }
 
-/// `browser_downloads`.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DownloadList {
-    /// Oldest first.
     pub downloads: Vec<Download>,
 }
 
-/// `browser_storage`.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Stored {
-    /// The cookies, for `cookies`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cookies: Option<Vec<Cookie>>,
-    /// The page's `localStorage`, for `local`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub local: Option<serde_json::Map<String, Value>>,
 }
 
-/// `browser_close`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Closed {
-    /// The tab that is gone.
     pub tab: TabId,
 }
 
-/// What a question is about (9.3), and the questions Orden asks for itself.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Category {
-    /// A card field, a press that reads as paying, a payment processor.
     Paying,
-    /// Send, post, reply, publish or submit on a mail, messaging or social site.
     Sending,
-    /// Anything in Orden that puts words where somebody else can read them.
     Publishing,
-    /// Delete, remove, erase: for good.
     Deleting,
-    /// A password field or a sign-in form: typing into it, or signing in (#1072).
     SigningIn,
-    /// `write_setting`.
     Settings,
-    /// A command not on the agent's list.
     Terminal,
-    /// A file from outside every space handed to a page.
     Files,
-    /// Any write, in `confirm` mode.
     Writing,
     Trashing,
     Unread,
-    /// An agent tab made a tab of the reader's (6.7).
     Showing,
-    /// The reader asked to do one step (7.3).
     Takeover,
-    /// A client asking to become an agent (9.1).
     Pairing,
 }
 
-/// Where a question has got to.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ApprovalAnswer {
-    /// Nobody has answered yet.
     Pending,
-    /// Allowed: the agent calls again and it goes through.
     Allowed,
-    /// Refused.
     Denied,
-    /// Unanswered for a day.
     Expired,
-    /// A step the reader said they did.
     Done,
 }
 
-/// A question the reader is asked.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Approval {
-    /// Its id, `a17`.
     pub id: String,
-    /// The agent asking, by id.
     pub agent: String,
-    /// The agent's name.
     pub name: String,
-    /// What it is about.
     pub category: Category,
-    /// One line: `Place order on shop.example`.
     pub summary: String,
-    /// The site, when a page is what it is about.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub site: Option<String>,
-    /// The tab, when a page is what it is about.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tab: Option<TabId>,
-    /// The verb whose call asked, so the AI sidebar finds the call it is about.
     #[serde(default)]
     pub verb: String,
-    /// When it was asked, in milliseconds since 1970.
     pub asked: u64,
-    /// Where it has got to.
     pub answer: ApprovalAnswer,
 }
 
-/// `approval_status`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ApprovalState {
-    /// The question.
     pub approval: Approval,
 }
 
-/// `agent_status`.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Status {
-    /// The grant, as the settings pane shows it.
     pub grant: super::grants::Grant,
-    /// Whether the reader stopped it: everybody, or this agent alone.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub stopped: bool,
-    /// Its own tabs.
     pub tabs: Vec<AgentTab>,
-    /// Its questions nobody has answered yet.
     pub approvals: Vec<Approval>,
 }
 
-/// `agent_pair`, once the reader allowed it. The token is said once and kept by the
-/// client; Orden keeps only its hash.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Paired {
-    /// The agent's id.
     pub agent: String,
-    /// Its token.
     pub token: String,
 }
 
-// ---------------------------------------------------------------------------------------
-// What the window hears.
-// ---------------------------------------------------------------------------------------
-
-/// News from the crate, on `EVENT`. The activity panel is built against exactly these.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Event {
-    /// An agent is acting in a tab now: the reader's tab wears the mark and the frame.
     Acting {
-        /// The agent.
         agent: String,
-        /// The tab.
         tab: TabId,
-        /// The verb.
         verb: String,
     },
-    /// One agent stopped on its own.
     Paused {
-        /// The agent.
         agent: String,
     },
-    /// The stop lifted: one agent's, or everybody's when the agent is empty.
     Resumed {
-        /// The agent.
         agent: String,
     },
-    /// A question for the reader.
     Asked {
-        /// The question.
         approval: Approval,
     },
-    /// A question answered, or expired.
     Answered {
-        /// The question, with its answer.
         approval: Approval,
     },
-    /// An agent tab opened, or moved, or was renamed by its page.
     Tab {
-        /// The agent.
         agent: String,
-        /// The tab.
         id: TabId,
-        /// Where it is.
         url: String,
-        /// What it calls itself.
         title: String,
     },
-    /// An agent tab closed.
     Closed {
-        /// The agent.
         agent: String,
-        /// The tab.
         id: TabId,
     },
-    /// The stop was pressed: every call cancelled and every agent paused, and on the
-    /// second press every agent tab closed.
     Stopped {
-        /// Whether the tabs were closed too.
         closed: bool,
     },
-    /// Which agents are connected now: those that called in the last ten minutes and
-    /// did not say goodbye. Said whenever the list changes; see shell.rs.
     Connected {
-        /// Their ids.
         agents: Vec<String>,
     },
 }
 
-// ---------------------------------------------------------------------------------------
-// What the crate asks the window.
-// ---------------------------------------------------------------------------------------
-
-/// The window's verbs the crate asks on the agents' behalf, through the endpoint's own
-/// road (`nib://automation`). Each is answered by the window's dispatcher; when it is
-/// not (an older window, or no window at all) the crate answers from what it knows.
 pub mod window {
     use serde::{Deserialize, Serialize};
 
     use crate::agents::grants::Scope;
 
-    /// The window's verbs an agent may call (sections 5.1, 5.3, 5.4), with the scope
-    /// each needs at the least. The crate refuses anything else from an agent before the
-    /// window hears it: the command line's own verbs (`files.write`, `eval`) predate
-    /// agents and check nothing about them. The window checks the rest - spaces, which
-    /// op, what asks - with the grant it is handed alongside.
     pub const AGENT_VERBS: &[(&str, Option<Scope>)] = &[
         ("get_context", Some(Scope::Context)),
         ("list_spaces", None),
@@ -1778,59 +1149,36 @@ pub mod window {
         ("agent_result", Some(Scope::Agents)),
     ];
 
-    /// The reader's web tabs, of every space's set, with what only the window knows
-    /// about them: which space, whether in front, whether on screen. Answers
-    /// `Vec<super::ReaderTab>`.
     pub const READER_TABS: &str = "agent.reader_tabs";
 
-    /// A reader's tab lent to an agent: its page built if it has none (parked, or never
-    /// shown since a launch) and kept running out of sight - shown to the engine, outside
-    /// the window - while it is not on screen, until the agent's mark on it lapses. Takes
-    /// `Lend`, answers once the page is there.
     pub const LEND: &str = "agent.lend";
 
-    /// `LEND`'s arguments.
     #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
     pub struct Lend {
-        /// The reader's tab.
         pub tab: String,
     }
 
-    /// Which store the reader's tabs of a space use for an address, as `web-data.ts`
-    /// decides. Takes `StoreAsk`, answers `StoreSaid`.
     pub const STORE_FOR: &str = "agent.store_for";
 
-    /// A page's HTML as markdown, through the clipper's own converter
-    /// (`@orden/markdown/from-html`). Takes `Convert`, answers a string.
     pub const MARKDOWN: &str = "agent.markdown";
 
-    /// `STORE_FOR`'s arguments.
     #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
     pub struct StoreAsk {
-        /// The space; the open one when there is none.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         pub space: Option<String>,
-        /// The address the tab is for.
         pub url: String,
     }
 
-    /// `STORE_FOR`'s answer.
     #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
     pub struct StoreSaid {
-        /// The space it answered for.
         pub space: String,
-        /// The store: `None` for the one every space shares, `space_<id>` or
-        /// `site_<id>_<site>`; see `web_stores.rs`.
         #[serde(default)]
         pub store: Option<String>,
     }
 
-    /// `MARKDOWN`'s arguments.
     #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
     pub struct Convert {
-        /// The page's HTML, links already absolute.
         pub html: String,
-        /// The page's address.
         pub url: String,
     }
 }
@@ -1840,9 +1188,6 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    /// The window answers an agent's verb in the contract's shape with `ok` beside it
-    /// (automation/caller.ts `AgentAnswer`), and the command line's verbs as `{ok,
-    /// value}`: the log files each by what it says, not by whether it says `ok`.
     #[test]
     fn a_window_answer_is_read_by_its_status() {
         let read = Answer::from_window;
@@ -1863,18 +1208,15 @@ mod tests {
             read(r#"{"ok":false,"status":"error","code":"not_granted","message":"no","error":"no"}"#),
             Answer::Error { code: Code::NotGranted, ref message, .. } if message == "no"
         ));
-        // A code the contract does not have is a failure, in the window's words.
         assert!(matches!(
             read(r#"{"ok":false,"status":"error","code":"nope","message":"why"}"#),
             Answer::Error { code: Code::Failed, ref message, .. } if message == "why"
         ));
-        // The command line's own shape, which has no status.
         assert_eq!(read(r#"{"ok":true,"value":3}"#).status(), "ok");
         assert!(matches!(
             read(r#"{"ok":false,"error":"gone"}"#),
             Answer::Error { code: Code::Failed, ref message, .. } if message == "gone"
         ));
-        // Words that only hold `"ok":true` are no ok, and nothing readable is a failure.
         assert_eq!(
             read(r#"{"ok":false,"status":"error","code":"failed","message":"\"ok\":true"}"#)
                 .status(),
@@ -1883,8 +1225,6 @@ mod tests {
         assert_eq!(read("not json").status(), "error");
     }
 
-    /// Every name in the table reads back as the verb it names, and there is no name
-    /// twice.
     #[test]
     fn every_name_is_its_own_verb() {
         let mut seen = std::collections::HashSet::new();
@@ -1984,7 +1324,6 @@ mod tests {
         );
     }
 
-    /// The shape of 9.3's example, to the byte.
     #[test]
     fn a_question_answers_at_once_in_the_documents_shape() {
         let asked = Answer::NeedsApproval {

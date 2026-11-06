@@ -1,18 +1,3 @@
-//! The reader's cookies, handed to the twin of their store (see `engines`): the agent is
-//! signed in where the reader is, in a profile none of the reader's extensions are in.
-//!
-//! Every cookie of the reader's store, out of a page there through the protocol
-//! (`Network.getAllCookies`, which keeps a partitioned cookie's partition, its priority
-//! and the scheme and port it was set from) and into the twin's page before it has loaded
-//! anything (`Network.setCookies`). One way only and every time a twin's page is built,
-//! so the twin follows the reader's logins and the reader's store never hears of the
-//! agent's. A cookie the reader no longer has stays in the twin until it ends: the site
-//! has let go of it already.
-//!
-//! The page the cookies are read from is the one that holds the store's session open when
-//! there is one, and otherwise a blank page built in the store for the read and closed
-//! after it: no site loads in it, so no extension's script runs in it either.
-
 use std::sync::PoisonError;
 
 use serde_json::{json, Map, Value};
@@ -21,7 +6,6 @@ use tauri::AppHandle;
 use super::cdp;
 use super::engines::View;
 
-/// What of a cookie `Network.setCookies` takes back, as `Network.getAllCookies` says it.
 const KEPT: [&str; 11] = [
     "name",
     "value",
@@ -36,9 +20,6 @@ const KEPT: [&str; 11] = [
     "partitionKey",
 ];
 
-/// Hands the twin `twin` every cookie of the reader's store `reader`. What could not be
-/// read or written is said in the twin's console, where the agent reads what went wrong
-/// with its page, and the page opens signed out.
 pub fn carry(app: &AppHandle, reader: Option<&str>, twin: &View) {
     let said = super::tabs::bare(app, reader).and_then(|(source, built)| {
         let read = cdp::call(&source, "Network.getAllCookies", &json!({}));
@@ -65,8 +46,6 @@ pub fn carry(app: &AppHandle, reader: Option<&str>, twin: &View) {
     }
 }
 
-/// The cookies of an answer to `Network.getAllCookies`, as `Network.setCookies` takes
-/// them: a session cookie stays one, a lasting one keeps its end.
 fn settable(answer: &Value) -> Vec<Value> {
     answer
         .get("cookies")

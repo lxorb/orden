@@ -1,55 +1,10 @@
-//! What an agent may do, and what it always asks first, recognised from the page rather
-//! than from the agent's own account of it (docs/agent-native.md 9.2 to 9.4).
-//!
-//! An agent that has been talked into buying something will describe the press as
-//! whatever it was told to; the card field is still a card field. So the questions are
-//! answered from what the page says about the element being pressed and the form it is
-//! in - its `autocomplete`, its type, its label, the words on the button - and from where
-//! the page is, never from the agent:
-//!
-//! | category | recognised by |
-//! | --- | --- |
-//! | paying | a press in a form with a card field, a press whose name reads as paying in any of Orden's languages, a submit on a page that talks to a payment processor, a page going to one |
-//! | sending | see `sends`: a press named send, post, reply, publish or comment beside a message box or an address, or on a mail, messaging or social site; a submit of a form that holds both; Enter in a message box |
-//! | deleting | a press named delete, remove or erase |
-//! | signing in | a credential field, or any field of a form with one: never typed, never submitted, a takeover |
-//!
-//! **Sending is read off the page, not off a list of sites.** Operator and Claude in
-//! Chrome ask before a send because their model was taught to, which Operator measured at
-//! 92 per cent; the list of mail and social sites this used to be missed every self-hosted
-//! webmail, support form and chat widget. What a send looks like anywhere is a message
-//! box (a `<textarea>` or an editable region that is no search box) and somebody it goes
-//! to (an address or phone field, a field labelled To, Cc or recipient, an @-mention in
-//! the box), and a press that says so. A search box, a sign-in and a newsletter's
-//! Subscribe have neither box nor send word, and pressing into a message box is not
-//! pressing Send; the tests hold those apart in several languages. The list stays as one
-//! more signal.
-//!
-//! **A secret is nobody's but the reader's** (9.4): a password - by its type, by its
-//! `autocomplete`, or masked by the page's style, so a show-password toggle is not a way
-//! round - a one-time code, and a card's number, expiry and security code. One rule,
-//! `secret`, says which, for typing, the log, the snapshot and `browser_find` alike.
-//!
-//! Sites are registrable domains. A rule for `bank.example` covers `www.bank.example`
-//! and `login.bank.example`, which is what the reader means by the bank; the reader's
-//! rules are matched by that suffix, and a site this crate names for a question is the
-//! host's last two labels, or three under a two-letter country code's own second level
-//! (`bbc.co.uk`).
-//!
-//! Pure: every function here reads what it is given, so the tables are tested in every
-//! language they cover.
-
 use serde::Deserialize;
 
 use super::grants::{Grant, Mode, SiteRule};
 use super::verbs::{Category, DialogKind, Store};
 
-/// The host of an address, lower case, and without the root's dot that names the same
-/// host (`bank.example.`), which every rule below would otherwise read as another one.
 pub fn host_of(url: &str) -> Option<String> {
     let parsed: tauri::Url = url.parse().ok()?;
-    // `bank.example.` is `bank.example` to every resolver: a rule is not got round by the
-    // dot that ends a fully qualified name (#1078).
     parsed
         .host_str()
         .map(|host| host.trim_end_matches('.').to_lowercase())
@@ -96,8 +51,6 @@ const SHARED_HOSTS: &[&str] = &[
     "repl.co",
 ];
 
-/// The site a host is on: its registrable domain, as far as it can be told without the
-/// public suffix list.
 pub fn site_of(host: &str) -> String {
     let host = host.trim_end_matches('.').to_lowercase();
     if host.parse::<std::net::IpAddr>().is_ok() || !host.contains('.') {
@@ -138,7 +91,6 @@ pub fn site_of(host: &str) -> String {
     labels[labels.len().saturating_sub(keep)..].join(".")
 }
 
-/// The reader's rule for a host, by the longest site in the grant that covers it.
 pub fn rule_for(grant: &Grant, host: &str) -> Option<SiteRule> {
     grant
         .sites
@@ -148,17 +100,12 @@ pub fn rule_for(grant: &Grant, host: &str) -> Option<SiteRule> {
         .map(|(_, rule)| *rule)
 }
 
-/// Whether a site the reader named covers a host.
 fn covers(site: &str, host: &str) -> bool {
     let site = named(site.trim().trim_start_matches("*."));
     let host = host.trim_end_matches('.');
     !site.is_empty() && (host == site || host.ends_with(&format!(".{site}")))
 }
 
-/// A site as an address names it: `bücher.example` as `xn--bcher-kva.example`, the way
-/// the host of every address an agent reaches is written, in lower case and without the
-/// dot a fully qualified name ends on. A rule typed in letters of its own covers the
-/// address it names (#1078).
 fn named(site: &str) -> String {
     let site = site.trim_end_matches('.');
     format!("http://{site}/")
@@ -170,10 +117,6 @@ fn named(site: &str) -> String {
         .to_lowercase()
 }
 
-/// Whether an agent may be at an address in a tab of this store: nowhere off the web, a
-/// denied site nowhere, a site kept to the agent's own store only there. The page the
-/// engine shows for a load that failed is no address anybody asked for, and the tab has
-/// to stay the agent's to send elsewhere.
 pub fn site_allowed(grant: &Grant, url: &str, store: Store) -> Result<(), String> {
     if url.starts_with("chrome-error:") {
         return Ok(());
@@ -213,8 +156,6 @@ pub fn frame_allowed(grant: &Grant, at: &[String], store: Store) -> Result<(), S
     }
 }
 
-/// `site_allowed` for an agent by id, from the grants already read; the reader's own
-/// command line and an agent whose grant is gone may go anywhere the page goes.
 pub fn site_allowed_for(agent: &str, url: &str, store: Store) -> Result<(), String> {
     match super::grants::cached(agent) {
         Some(grant) => site_allowed(&grant, url, store),
@@ -222,13 +163,10 @@ pub fn site_allowed_for(agent: &str, url: &str, store: Store) -> Result<(), Stri
     }
 }
 
-/// Whether an agent may run script on a page at this host (9.2): `browser.script` and
-/// the site on its list.
 pub fn script_allowed(grant: &Grant, host: &str) -> bool {
     grant.asks_nothing() || grant.scripts.iter().any(|site| covers(site, host))
 }
 
-/// What the page says about the element being acted on, read by `FACTS` in the page.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[serde(default)]
 #[allow(
@@ -236,74 +174,51 @@ pub fn script_allowed(grant: &Grant, host: &str) -> bool {
     reason = "four things the page reports apart - submits, follows a link, takes words, in a form - which the policy reads one at a time, in every combination"
 )]
 pub struct Facts {
-    /// Its tag, lower case.
     pub tag: String,
-    /// An input's type, lower case.
     #[serde(rename = "type")]
     pub kind: String,
-    /// What it says: its label, its text, its value for a button.
     pub name: String,
-    /// Its `autocomplete`.
     pub autocomplete: String,
-    /// Whether pressing it submits a form.
     pub submit: bool,
-    /// Whether pressing it follows a link to another page: a navigation, which neither
-    /// sends nor signs in whatever it is called (a forum's Reply, a Forgot login?).
     pub link: bool,
-    /// Whether words can be typed into it.
     pub editable: bool,
-    /// Whether it is in a form.
     pub in_form: bool,
-    /// The form's fields, or the page's when it is in none.
     pub fields: Vec<Field>,
     pub control: bool,
     pub dialog: String,
     pub held: Vec<String>,
     pub cut: bool,
     pub at: Vec<String>,
-    /// The element itself, read the way each of `fields` is.
     pub field: Field,
     pub default_button: String,
     pub opaque: bool,
 }
 
-/// One field of the form the element is in.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[serde(default)]
 pub struct Field {
-    /// Its type: an input's own, `textarea`, `select`, `editable` for an editable
-    /// region, and `search` for a box that is a search whatever its tag.
     #[serde(rename = "type")]
     pub kind: String,
-    /// Its `autocomplete`.
     pub autocomplete: String,
-    /// Its name, id, label and placeholder, joined.
     pub said: String,
-    /// What a person reads as its name: its label, or its placeholder when it has none.
     pub label: String,
-    /// Whether the page's style hides what is typed in it, the way a password field does.
     pub masked: bool,
-    /// Whether it is a message box whose words @-mention somebody.
     pub mentions: bool,
 }
 
 impl Facts {
-    /// Whether it is a password field, however the page dresses it.
     pub fn password(&self) -> bool {
         self.kind == "password" || credential(&self.field)
     }
 
-    /// Whether it is in a sign-in form: a form with a password field.
     pub fn sign_in(&self) -> bool {
         self.in_form && self.fields.iter().any(credential)
     }
 
-    /// Whether its form asks for a card.
     pub fn card_form(&self) -> bool {
         self.in_form && self.fields.iter().any(card_field)
     }
 
-    /// Whether it is a field an agent's typing into is kept out of the log.
     pub fn sensitive(&self) -> bool {
         self.password()
             || secret(&self.field)
@@ -319,7 +234,6 @@ impl Facts {
         !self.editable && !matches!(self.tag.as_str(), "" | "body" | "html")
     }
 
-    /// Whether it opens one of the engine's own pickers when pressed (6.5).
     pub fn picker(&self) -> bool {
         self.tag == "select"
             || (self.tag == "input"
@@ -330,7 +244,6 @@ impl Facts {
     }
 }
 
-/// Whether a field asks for a card: by `autocomplete`, or by what it is called.
 fn card_field(field: &Field) -> bool {
     if field.autocomplete.split_whitespace().any(|one| {
         matches!(
@@ -394,9 +307,6 @@ const NOT_A_PIN: &[&str] = &[
     "pin board",
 ];
 
-/// Whether a field holds a credential: a password by its type or its `autocomplete`, or
-/// a field the page masks the way it would one. A show-password toggle turns the type to
-/// `text` and leaves the other two.
 fn credential(field: &Field) -> bool {
     field.kind == "password"
         || field.masked
@@ -406,9 +316,6 @@ fn credential(field: &Field) -> bool {
             .any(|one| matches!(one, "current-password" | "new-password"))
 }
 
-/// Whether a field's value is nobody's but the reader's (9.4): a credential, a one-time
-/// code, or a card's number, expiry or security code. Nothing reads it back to an agent:
-/// not its value, not its length.
 pub fn secret(field: &Field) -> bool {
     credential(field)
         || field
@@ -419,15 +326,10 @@ pub fn secret(field: &Field) -> bool {
         || one_time(field)
 }
 
-/// Whether a field is a box words are written in: a `<textarea>` or an editable region,
-/// and no search box.
 fn body(field: &Field) -> bool {
     matches!(field.kind.as_str(), "textarea" | "editable")
 }
 
-/// Whether a field says who a message goes to: an address or a phone number by type or
-/// `autocomplete`, a field labelled To, Cc or a recipient, or a message box that
-/// @-mentions somebody.
 fn addressed(field: &Field) -> bool {
     matches!(field.kind.as_str(), "email" | "tel")
         || field
@@ -439,23 +341,16 @@ fn addressed(field: &Field) -> bool {
         || (body(field) && field.mentions)
 }
 
-/// Whether a field is a message box: a box whose own words say it is for a message, a
-/// reply, a comment or a chat.
 fn message_box(field: &Field) -> bool {
     body(field) && says(&field.said, MESSAGES)
 }
 
-/// How a press sends, when it does.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Sends {
-    /// Its own words say so: the reader is asked in them.
     ByWords,
-    /// What it submits is a message to somebody, whatever the press is called.
     ByShape,
 }
 
-/// Whether an act sends a message out of the reader's account (9.3), from the page: see
-/// the top of this file. A sign-in is never a send; it is refused before this is asked.
 fn sends(facts: &Facts, act: Act, host: &str) -> Option<Sends> {
     if facts.sign_in() {
         return None;
@@ -467,7 +362,6 @@ fn sends(facts: &Facts, act: Act, host: &str) -> Option<Sends> {
     match act {
         Act::Write => None,
         Act::Press => {
-            // A press into a field is somebody starting to write, never the send.
             let worded = !facts.editable
                 && !facts.link
                 && ((says_sending(&facts.name) && (social || writing || to_somebody))
@@ -478,8 +372,6 @@ fn sends(facts: &Facts, act: Act, host: &str) -> Option<Sends> {
                 composed.then_some(Sends::ByShape)
             }
         }
-        // Enter in a box is a new line, never its form's submit; it sends from a box
-        // that is a message's, or on a site for messages.
         Act::Enter => {
             let own = &facts.field;
             let sent = if body(own) {
@@ -492,21 +384,14 @@ fn sends(facts: &Facts, act: Act, host: &str) -> Option<Sends> {
     }
 }
 
-/// Whether a name reads as sending: a send word, and not one of the phrases that only
-/// contain one.
 fn says_sending(name: &str) -> bool {
     (says(name, SENDING) || alone(name, SENDING_ALONE)) && !says(name, NOT_SENDING)
 }
 
-/// Whether an act touches a credential (9.4): words into a password field or any field of
-/// a sign-in form, or signing in itself (`signs_in`). It asks as `Category::SigningIn`
-/// does for the agent's mode (#1072): never under Full permissions.
 pub fn credential_act(facts: &Facts, act: Act) -> bool {
     signs_in(facts, act) || (act == Act::Write && (facts.password() || facts.sign_in()))
 }
 
-/// Whether an act signs in: a submit of a sign-in form, Enter in one or in a password
-/// field, or a press that reads as signing in beside a password field.
 pub fn signs_in(facts: &Facts, act: Act) -> bool {
     match act {
         Act::Write => false,
@@ -521,8 +406,6 @@ pub fn signs_in(facts: &Facts, act: Act) -> bool {
     }
 }
 
-/// Whether a name is, whole, one of the words: for the words too short or too common to
-/// be found inside a longer name (`To`, Thai `ส่ง` inside "delivery").
 fn alone(name: &str, words: &[&str]) -> bool {
     let name = name
         .split_whitespace()
@@ -534,29 +417,18 @@ fn alone(name: &str, words: &[&str]) -> bool {
     !name.is_empty() && words.contains(&name.as_str())
 }
 
-/// A press, judged: the category it asks under and the one line the reader reads, or
-/// nothing to ask about.
 pub struct Question {
-    /// What it is about.
     pub category: Category,
-    /// `Place order on shop.example`.
     pub summary: String,
 }
 
-/// What an agent is doing to the element the facts are about.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Act {
-    /// Pressing it.
     Press,
-    /// Enter in it, or Control+Enter: its form's submit, and a message box's send. Its
-    /// `submit` says whether the key submits the field's form.
     Enter,
-    /// Typing into it or setting it.
     Write,
 }
 
-/// What a press or a write asks first, for an agent with this grant on a page at `url`
-/// that has talked to `hosts`. `None` when it goes ahead.
 pub fn judge(
     grant: &Grant,
     facts: &Facts,
@@ -576,8 +448,6 @@ pub fn judge(
             .then_some(Question { category, summary })
     };
 
-    // Signing in, and words into a sign-in form, ask as the mode says (#1072): a takeover
-    // no more, and nothing at all under Full permissions.
     if credential_act(facts, act) {
         if let Some(question) = ask(Category::SigningIn, on(&label, "Sign in", &site)) {
             return Some(question);
@@ -649,7 +519,6 @@ pub fn judge(
         }
     }
 
-    // Confirm mode asks for every write, pressing included (9.3).
     (grant.mode == Mode::Confirm)
         .then(|| {
             let what = if label.is_empty() {
@@ -697,13 +566,6 @@ pub fn of_a_drag<'a>(
     }
 }
 
-/// A one-line summary: the press's own words, or a word for the category, and the site.
-/// What answering a dialog the page holds asks first, for an agent with this grant: a
-/// site's own sign-in box or its request for a client certificate answered yes signs in,
-/// and asks under `SigningIn` as the mode says - nothing at all under Full permissions
-/// (#1072). A `confirm` or a `prompt` that says it pays, sends or deletes is that press:
-/// the button before it may have been called anything. Every other answer, and any no,
-/// goes ahead.
 pub fn answering(
     grant: &Grant,
     kind: DialogKind,
@@ -747,7 +609,6 @@ fn on(label: &str, fallback: &str, site: &str) -> String {
     format!("{what} on {site}")
 }
 
-/// A name cut to one short line.
 fn short(name: &str) -> String {
     let flat = name.split_whitespace().collect::<Vec<_>>().join(" ");
     match flat.char_indices().nth(60) {
@@ -756,8 +617,6 @@ fn short(name: &str) -> String {
     }
 }
 
-/// Whether a name says one of the words: as a whole word where the language puts spaces
-/// between words, and anywhere in it where it does not.
 pub fn says(name: &str, words: &[&str]) -> bool {
     let name = name.to_lowercase();
     words.iter().any(|word| {
@@ -773,28 +632,24 @@ pub fn says(name: &str, words: &[&str]) -> bool {
     })
 }
 
-/// Whether a word is written in a script that puts spaces between words, where a match
-/// inside another word ("sil" in "silver") is no match.
 fn spaced(word: &str) -> bool {
     !word.chars().any(|one| {
         matches!(u32::from(one),
-            0x0E00..=0x0EFF      // Thai, Lao
-            | 0x1000..=0x109F    // Myanmar
-            | 0x1100..=0x11FF    // Hangul jamo
-            | 0x2E80..=0x9FFF    // CJK, kana
-            | 0xAC00..=0xD7AF    // Hangul
-            | 0xF900..=0xFAFF    // CJK compatibility
-            | 0x0900..=0x0DFF    // the Indic scripts, whose words take endings
+            0x0E00..=0x0EFF
+            | 0x1000..=0x109F
+            | 0x1100..=0x11FF
+            | 0x2E80..=0x9FFF
+            | 0xAC00..=0xD7AF
+            | 0xF900..=0xFAFF
+            | 0x0900..=0x0DFF
         )
     })
 }
 
-/// Whether a host is a known payment processor's.
 pub fn payment_host(host: &str) -> bool {
     PAYMENT_HOSTS.iter().any(|one| covers(one, host))
 }
 
-/// Whether a host is a mail, messaging or social site, where a send is a send.
 pub fn social(host: &str) -> bool {
     SOCIAL.iter().any(|one| covers(one, host))
 }
@@ -1074,7 +929,6 @@ pub fn leads(line: &str) -> bool {
         && (starts_with_any(line, PAYING) || starts_with_any(line, DELETING))
 }
 
-/// What card fields are called, in names, ids and labels.
 const CARD: &[&str] = &[
     "cardnumber",
     "card-number",
@@ -1128,67 +982,50 @@ const CARD: &[&str] = &[
     "nomor kartu",
 ];
 
-/// Presses that pay, in every language Orden has a catalogue for.
 pub const PAYING: &[&str] = &[
-    // English
     "pay", "pay now", "buy", "buy now", "place order", "place your order", "checkout",
     "check out", "confirm purchase", "complete purchase", "complete order", "submit order",
     "confirm order", "purchase", "order now",
-    // German, Swiss German
     "bezahlen", "jetzt bezahlen", "kaufen", "jetzt kaufen", "zahlungspflichtig bestellen",
     "kostenpflichtig bestellen", "bestellung abschlie\u{df}en", "kauf abschlie\u{df}en",
     "zur kasse", "zahle", "chaufe",
-    // French
     "payer", "acheter", "commander", "passer la commande", "valider la commande",
     "confirmer l'achat", "finaliser la commande", "paiement",
-    // Spanish
     "pagar", "comprar", "realizar pedido", "finalizar compra", "confirmar compra",
     "tramitar pedido", "hacer pedido",
-    // Italian
     "paga", "acquista", "compra", "effettua ordine", "conferma ordine",
     "procedi all'acquisto", "concludi ordine",
-    // Portuguese
     "fazer pedido", "finalizar pedido", "encomendar",
-    // Polish
     "zap\u{142}a\u{107}", "kup", "kup teraz", "zamawiam", "zam\u{f3}w",
     "z\u{142}\u{f3}\u{17c} zam\u{f3}wienie", "kupuj\u{119} i p\u{142}ac\u{119}",
-    // Russian, Ukrainian
     "\u{43e}\u{43f}\u{43b}\u{430}\u{442}\u{438}\u{442}\u{44c}", "\u{43a}\u{443}\u{43f}\u{438}\u{442}\u{44c}",
     "\u{43e}\u{444}\u{43e}\u{440}\u{43c}\u{438}\u{442}\u{44c} \u{437}\u{430}\u{43a}\u{430}\u{437}",
     "\u{437}\u{430}\u{43a}\u{430}\u{437}\u{430}\u{442}\u{44c}",
     "\u{43e}\u{43f}\u{43b}\u{430}\u{442}\u{438}\u{442}\u{438}", "\u{43a}\u{443}\u{43f}\u{438}\u{442}\u{438}",
     "\u{43e}\u{444}\u{43e}\u{440}\u{43c}\u{438}\u{442}\u{438} \u{437}\u{430}\u{43c}\u{43e}\u{432}\u{43b}\u{435}\u{43d}\u{43d}\u{44f}",
     "\u{437}\u{430}\u{43c}\u{43e}\u{432}\u{438}\u{442}\u{438}",
-    // Turkish
     "\u{f6}de", "\u{f6}deme yap", "sat\u{131}n al", "sipari\u{15f}i tamamla", "sipari\u{15f} ver",
-    // Indonesian, Malay, Javanese, Filipino
     "bayar", "beli", "beli sekarang", "buat pesanan", "tuku", "magbayad", "bumili", "bilhin",
     "mag-order",
-    // Swahili, Hausa, Amharic
     "lipa", "nunua", "agiza", "biya", "saya", "\u{12ed}\u{12ad}\u{1348}\u{1209}", "\u{130d}\u{12db}",
-    // Arabic, Persian, Pashto, Urdu
     "\u{627}\u{62f}\u{641}\u{639}", "\u{62f}\u{641}\u{639}", "\u{634}\u{631}\u{627}\u{621}",
     "\u{627}\u{634}\u{62a}\u{631}", "\u{625}\u{62a}\u{645}\u{627}\u{645} \u{627}\u{644}\u{637}\u{644}\u{628}",
     "\u{62a}\u{623}\u{643}\u{64a}\u{62f} \u{627}\u{644}\u{637}\u{644}\u{628}",
     "\u{67e}\u{631}\u{62f}\u{627}\u{62e}\u{62a}", "\u{62e}\u{631}\u{6cc}\u{62f}",
     "\u{62b}\u{628}\u{62a} \u{633}\u{641}\u{627}\u{631}\u{634}", "\u{62a}\u{627}\u{62f}\u{6cc}\u{647}",
     "\u{627}\u{62f}\u{627}\u{626}\u{6cc}\u{6af}\u{6cc}", "\u{62e}\u{631}\u{6cc}\u{62f}\u{6cc}\u{6ba}",
-    // Hindi, Marathi, Bengali, Gujarati, Punjabi
     "\u{92d}\u{941}\u{917}\u{924}\u{93e}\u{928}", "\u{916}\u{930}\u{940}\u{926}\u{947}\u{902}",
     "\u{911}\u{930}\u{94d}\u{921}\u{930} \u{915}\u{930}\u{947}\u{902}", "\u{916}\u{930}\u{947}\u{926}\u{940}",
     "\u{9aa}\u{9c7}\u{9ae}\u{9c7}\u{9a8}\u{9cd}\u{99f}", "\u{995}\u{9bf}\u{9a8}\u{9c1}\u{9a8}",
     "\u{a9a}\u{ac1}\u{a95}\u{ab5}\u{aa3}\u{ac0}", "\u{a96}\u{ab0}\u{ac0}\u{aa6}\u{acb}",
     "\u{a2d}\u{a41}\u{a17}\u{a24}\u{a3e}\u{a28}", "\u{a16}\u{a30}\u{a40}\u{a26}\u{a4b}",
-    // Tamil, Telugu, Kannada, Malayalam
     "\u{b9a}\u{bc6}\u{bb2}\u{bc1}\u{ba4}\u{bcd}\u{ba4}\u{bc1}", "\u{bb5}\u{bbe}\u{b99}\u{bcd}\u{b95}\u{bc1}",
     "\u{c1a}\u{c46}\u{c32}\u{c4d}\u{c32}\u{c3f}\u{c02}\u{c1a}", "\u{c15}\u{c4a}\u{c28}\u{c41}\u{c17}\u{c4b}\u{c32}\u{c41}",
     "\u{caa}\u{cbe}\u{cb5}\u{ca4}\u{cbf}\u{cb8}\u{cbf}", "\u{c96}\u{cb0}\u{cc0}\u{ca6}\u{cbf}\u{cb8}\u{cbf}",
     "\u{d2a}\u{d23}\u{d2e}\u{d1f}\u{d2f}\u{d4d}\u{d15}\u{d4d}\u{d15}\u{d41}\u{d15}", "\u{d35}\u{d3e}\u{d19}\u{d4d}\u{d19}\u{d41}\u{d15}",
-    // Thai, Burmese, Vietnamese
     "\u{e0a}\u{e33}\u{e23}\u{e30}\u{e40}\u{e07}\u{e34}\u{e19}", "\u{e2a}\u{e31}\u{e48}\u{e07}\u{e0b}\u{e37}\u{e49}\u{e2d}",
     "\u{1004}\u{103d}\u{1031}\u{1015}\u{1031}\u{1038}\u{1001}\u{103b}\u{1031}", "\u{101d}\u{101a}\u{103a}",
     "thanh to\u{e1}n", "mua ngay", "\u{111}\u{1eb7}t h\u{e0}ng", "\u{111}\u{1eb7}t mua",
-    // Japanese, Korean, Chinese
     "\u{652f}\u{6255}", "\u{8cfc}\u{5165}", "\u{6ce8}\u{6587}\u{3059}\u{308b}", "\u{6ce8}\u{6587}\u{3092}\u{78ba}\u{5b9a}",
     "\u{30ec}\u{30b8}\u{306b}\u{9032}\u{3080}", "\u{acb0}\u{c81c}", "\u{ad6c}\u{b9e4}", "\u{c8fc}\u{bb38}\u{d558}\u{ae30}",
     "\u{652f}\u{4ed8}", "\u{4ed8}\u{6b3e}", "\u{8d2d}\u{4e70}", "\u{63d0}\u{4ea4}\u{8ba2}\u{5355}", "\u{7ed3}\u{7b97}",
@@ -1196,10 +1033,7 @@ pub const PAYING: &[&str] = &[
     "\u{4fbe}\u{9322}", "\u{843d}\u{55ae}",
 ];
 
-/// Presses that send, post, reply, publish or comment, in every language Orden has a catalogue
-/// for; found inside a longer name (`Send message`, `Post comment`).
 const SENDING: &[&str] = &[
-    // English
     "send",
     "post",
     "reply",
@@ -1209,7 +1043,6 @@ const SENDING: &[&str] = &[
     "retweet",
     "repost",
     "reply all",
-    // German, Swiss German
     "senden",
     "absenden",
     "abschicken",
@@ -1223,31 +1056,26 @@ const SENDING: &[&str] = &[
     "ver\u{f6}ffentliche",
     "antworte",
     "kommentiere",
-    // French
     "envoyer",
     "publier",
     "r\u{e9}pondre",
     "poster",
     "commenter",
-    // Spanish, Portuguese
     "enviar",
     "publicar",
     "responder",
     "comentar",
-    // Italian
     "invia",
     "inviare",
     "pubblica",
     "rispondi",
     "commenta",
-    // Polish
     "wy\u{15b}lij",
     "prze\u{15b}lij",
     "opublikuj",
     "publikuj",
     "odpowiedz",
     "skomentuj",
-    // Russian, Ukrainian
     "\u{43e}\u{442}\u{43f}\u{440}\u{430}\u{432}\u{438}\u{442}\u{44c}",
     "\u{43e}\u{43f}\u{443}\u{431}\u{43b}\u{438}\u{43a}\u{43e}\u{432}\u{430}\u{442}\u{44c}",
     "\u{43e}\u{442}\u{432}\u{435}\u{442}\u{438}\u{442}\u{44c}",
@@ -1258,13 +1086,11 @@ const SENDING: &[&str] = &[
     "\u{43e}\u{43f}\u{443}\u{431}\u{43b}\u{456}\u{43a}\u{443}\u{432}\u{430}\u{442}\u{438}",
     "\u{432}\u{456}\u{434}\u{43f}\u{43e}\u{432}\u{456}\u{441}\u{442}\u{438}",
     "\u{43a}\u{43e}\u{43c}\u{435}\u{43d}\u{442}\u{443}\u{432}\u{430}\u{442}\u{438}",
-    // Turkish
     "g\u{f6}nder",
     "yay\u{131}nla",
     "yay\u{131}mla",
     "yan\u{131}tla",
     "yorum yap",
-    // Indonesian, Malay, Javanese, Filipino
     "kirim",
     "hantar",
     "terbitkan",
@@ -1281,7 +1107,6 @@ const SENDING: &[&str] = &[
     "tumugon",
     "i-post",
     "magkomento",
-    // Swahili, Hausa, Amharic
     "tuma",
     "chapisha",
     "jibu",
@@ -1291,7 +1116,6 @@ const SENDING: &[&str] = &[
     "\u{120b}\u{12ad}",
     "\u{12ed}\u{120b}\u{12a9}",
     "\u{12a0}\u{1233}\u{1275}\u{121d}",
-    // Arabic, Persian, Pashto, Urdu
     "\u{625}\u{631}\u{633}\u{627}\u{644}",
     "\u{623}\u{631}\u{633}\u{644}",
     "\u{646}\u{634}\u{631}",
@@ -1308,7 +1132,6 @@ const SENDING: &[&str] = &[
     "\u{645}\u{646}\u{62a}\u{634}\u{631} \u{6a9}\u{646}",
     "\u{634}\u{627}\u{626}\u{639} \u{6a9}\u{631}\u{6cc}\u{6ba}",
     "\u{62c}\u{648}\u{627}\u{628} \u{62f}\u{6cc}\u{6ba}",
-    // Hindi, Marathi, Bengali, Gujarati, Punjabi
     "\u{92d}\u{947}\u{91c}\u{947}\u{902}",
     "\u{92d}\u{947}\u{91c}\u{94b}",
     "\u{92a}\u{94d}\u{930}\u{915}\u{93e}\u{936}\u{93f}\u{924}",
@@ -1325,7 +1148,6 @@ const SENDING: &[&str] = &[
     "\u{a2d}\u{a47}\u{a1c}\u{a4b}",
     "\u{a1b}\u{a3e}\u{a2a}\u{a4b}",
     "\u{a1c}\u{a35}\u{a3e}\u{a2c} \u{a26}\u{a3f}\u{a13}",
-    // Tamil, Telugu, Kannada, Malayalam
     "\u{b85}\u{ba9}\u{bc1}\u{baa}\u{bcd}\u{baa}\u{bc1}",
     "\u{bb5}\u{bc6}\u{bb3}\u{bbf}\u{baf}\u{bbf}\u{b9f}\u{bc1}",
     "\u{baa}\u{ba4}\u{bbf}\u{bb2}\u{bb3}\u{bbf}",
@@ -1339,7 +1161,6 @@ const SENDING: &[&str] = &[
     "\u{d05}\u{d2f}\u{d2f}\u{d4d}\u{d15}\u{d4d}\u{d15}\u{d41}\u{d15}",
     "\u{d2a}\u{d4d}\u{d30}\u{d38}\u{d3f}\u{d26}\u{d4d}\u{d27}\u{d40}\u{d15}\u{d30}\u{d3f}\u{d15}\u{d4d}\u{d15}\u{d41}\u{d15}",
     "\u{d2e}\u{d31}\u{d41}\u{d2a}\u{d1f}\u{d3f}",
-    // Thai, Burmese, Vietnamese
     "\u{e2a}\u{e48}\u{e07}\u{e02}\u{e49}\u{e2d}\u{e04}\u{e27}\u{e32}\u{e21}",
     "\u{e42}\u{e1e}\u{e2a}\u{e15}\u{e4c}",
     "\u{e40}\u{e1c}\u{e22}\u{e41}\u{e1e}\u{e23}\u{e48}",
@@ -1351,7 +1172,6 @@ const SENDING: &[&str] = &[
     "xu\u{1ea5}t b\u{1ea3}n",
     "tr\u{1ea3} l\u{1edd}i",
     "b\u{ec}nh lu\u{1ead}n",
-    // Japanese, Korean, Chinese
     "\u{9001}\u{4fe1}",
     "\u{6295}\u{7a3f}",
     "\u{8fd4}\u{4fe1}",
@@ -1374,11 +1194,7 @@ const SENDING: &[&str] = &[
     "\u{9001}\u{51fa}",
 ];
 
-/// Send words only when they are the whole name: each is inside everyday words of its
-/// language (Thai `ส่ง` in "delivery", Vietnamese `đăng` in "sign in", Korean `게시` in
-/// "board").
 const SENDING_ALONE: &[&str] = &[
-    // Thai, Vietnamese, Burmese, Korean, Japanese
     "\u{e2a}\u{e48}\u{e07}",
     "\u{111}\u{103}ng",
     "\u{1015}\u{102d}\u{102f}\u{1037}",
@@ -1387,10 +1203,8 @@ const SENDING_ALONE: &[&str] = &[
     "\u{9001}\u{308b}",
 ];
 
-/// Names with a send word in them that send nothing.
 const NOT_SENDING: &[&str] = &["post code", "post office"];
 
-/// Presses that submit a form, which is a send only beside a message box.
 const SUBMITTING: &[&str] = &[
     "submit",
     "soumettre",
@@ -1402,7 +1216,6 @@ const SUBMITTING: &[&str] = &[
     "\u{c81c}\u{cd9c}",
 ];
 
-/// What a field a message goes to is called, in every language Orden has a catalogue for.
 const RECIPIENTS: &[&str] = &[
     "recipient",
     "recipients",
@@ -1449,7 +1262,6 @@ const RECIPIENTS: &[&str] = &[
     "\u{6536}\u{4ef6}\u{8005}",
 ];
 
-/// A field labelled only this is who a message goes to: `To:`, `Cc`, `An`.
 const ADDRESSED_ALONE: &[&str] = &[
     "to",
     "cc",
@@ -1474,8 +1286,6 @@ const ADDRESSED_ALONE: &[&str] = &[
     "\u{111}\u{1ebf}n",
 ];
 
-/// What a message box calls itself (`Type a message`, `Write a reply`, `Message #general`),
-/// in every language Orden has a catalogue for.
 const MESSAGES: &[&str] = &[
     "message",
     "reply",
@@ -1577,7 +1387,6 @@ const MESSAGES: &[&str] = &[
     "\u{8a55}\u{8ad6}",
 ];
 
-/// Presses that sign in, in every language Orden has a catalogue for.
 const SIGNING_IN: &[&str] = &[
     "sign in",
     "log in",
@@ -1631,7 +1440,6 @@ const SIGNING_IN: &[&str] = &[
     "\u{767b}\u{9304}",
 ];
 
-/// Presses that delete, in every language Orden has a catalogue for.
 pub const DELETING: &[&str] = &[
     "delete",
     "remove",
@@ -1706,7 +1514,6 @@ pub const DELETING: &[&str] = &[
     "\u{522a}\u{9664}",
 ];
 
-/// Payment processors, by site.
 const PAYMENT_HOSTS: &[&str] = &[
     "stripe.com",
     "stripe.network",
@@ -1756,7 +1563,6 @@ const PAYMENT_HOSTS: &[&str] = &[
     "wallee.com",
 ];
 
-/// Mail, messaging and social sites, where a press named send is a message leaving.
 const SOCIAL: &[&str] = &[
     "mail.google.com",
     "gmail.com",
@@ -2366,8 +2172,6 @@ mod tests {
         assert!(site_allowed(&grant, "https://ok.evil.example/", Store::Reader).is_ok());
     }
 
-    /// A denied site by every name it has: a capital, the dot a fully qualified name ends
-    /// on, its letters as typed or as an address writes them (#1078).
     #[test]
     fn a_rule_is_not_got_round_by_another_spelling_of_its_site() {
         let mut grant = grant();
@@ -2390,7 +2194,6 @@ mod tests {
         );
     }
 
-    /// The table: a press, the page it is on, and what it asks. Several languages each.
     #[test]
     fn presses_are_recognised_in_every_language() {
         let cases: &[(&str, &str, Option<Category>)] = &[
@@ -2408,14 +2211,12 @@ mod tests {
             ("Senden", "https://outlook.office.com/mail/", Some(Category::Sending)),
             ("Publier", "https://www.linkedin.com/feed/", Some(Category::Sending)),
             ("\u{53d1}\u{9001}", "https://weibo.com/", Some(Category::Sending)),
-            // Send with nothing on the page to send and nobody to send it to.
             ("Send", "https://shop.example/contact", None),
             ("Delete", "https://drive.example/", Some(Category::Deleting)),
             ("Endg\u{fc}ltig l\u{f6}schen", "https://drive.example/", Some(Category::Deleting)),
             ("Supprimer le fichier", "https://drive.example/", Some(Category::Deleting)),
             ("\u{524a}\u{9664}", "https://drive.example/", Some(Category::Deleting)),
             ("Sil", "https://drive.example/", Some(Category::Deleting)),
-            // A word inside another word is not the word.
             ("Silver plan", "https://drive.example/", None),
             ("Payment history", "https://shop.example/", None),
             ("Search", "https://shop.example/", None),
@@ -2486,7 +2287,6 @@ mod tests {
         }
     }
 
-    /// A press on a form's submit button.
     fn submitting(name: &str, fields: Vec<Field>) -> Facts {
         Facts {
             tag: "button".into(),
@@ -2498,7 +2298,6 @@ mod tests {
         }
     }
 
-    /// A press on a button in no form, on a page with these fields.
     fn on_the_page(name: &str, fields: Vec<Field>) -> Facts {
         Facts {
             tag: "div".into(),
@@ -2508,7 +2307,6 @@ mod tests {
         }
     }
 
-    /// Enter in a field, and whether it submits a form of these fields.
     fn enter_in(own: Field, in_form: bool, fields: Vec<Field>) -> Facts {
         Facts {
             tag: if own.kind == "textarea" {
@@ -2534,7 +2332,6 @@ mod tests {
         ]
     }
 
-    /// What an act asks, as its category and summary.
     fn asked(facts: &Facts, act: Act, url: &str) -> Option<(Category, String)> {
         judge(&grant(), facts, act, url, &[]).map(|one| (one.category, one.summary))
     }
@@ -2545,13 +2342,11 @@ mod tests {
 
     #[test]
     fn a_compose_form_on_any_site_asks_before_it_sends() {
-        // The harness's own mail page, on no list of mail sites.
         let send = submitting("Send", compose());
         assert_eq!(
             asked(&send, Act::Press, "http://127.0.0.1:23960/mail"),
             Some((Category::Sending, "Send on 127.0.0.1".to_string()))
         );
-        // A self-hosted webmail's Send, a `<div>` in no form beside an editable body.
         let webmail = on_the_page(
             "Send",
             vec![
@@ -2561,7 +2356,6 @@ mod tests {
             ],
         );
         assert!(sent(&webmail, Act::Press, "https://mail.example.org/"));
-        // A support form, whose words are only Submit.
         let support = submitting(
             "Submit",
             vec![
@@ -2571,7 +2365,6 @@ mod tests {
             ],
         );
         assert!(sent(&support, Act::Press, "https://help.example/contact"));
-        // A chat widget's send button, and Enter in its box.
         let widget = vec![field("textarea", "Type a message\u{2026}")];
         assert!(sent(
             &on_the_page("Send message", widget.clone()),
@@ -2583,8 +2376,6 @@ mod tests {
             Act::Enter,
             "https://shop.example/"
         ));
-        // A form that holds a box and somebody to send it to sends whatever its button is
-        // called, and is asked about as a send.
         let mut mention = field("textarea", "");
         mention.mentions = true;
         assert_eq!(
@@ -2595,8 +2386,6 @@ mod tests {
             ),
             Some((Category::Sending, "Send on forum.example".to_string()))
         );
-        // Enter in a support form's box is a new line; in the one line of a form with
-        // one, it submits.
         let support = vec![
             field("email", "Email"),
             field("textarea", "How can we help?"),
@@ -2611,13 +2400,11 @@ mod tests {
             Act::Enter,
             "https://help.example/"
         ));
-        // Enter in the subject line of a compose form submits it.
         assert!(sent(
             &enter_in(field("text", "Subject"), true, compose()),
             Act::Enter,
             "https://mail.example.org/"
         ));
-        // The list of social sites is still a signal of its own.
         assert!(sent(
             &on_the_page("Post", Vec::new()),
             Act::Press,
@@ -2665,11 +2452,9 @@ mod tests {
     fn a_search_a_sign_in_or_a_newsletter_is_no_send() {
         let url = "https://a.example/";
         let never = [
-            // A search, even a box that is a `<textarea>`, and even with a Submit.
             submitting("Search", vec![field("search", "Search")]),
             submitting("Submit", vec![field("search", "q Search")]),
             submitting("Google Search", vec![field("search", "q Search")]),
-            // A sign-in, whatever its button says.
             submitting(
                 "Submit",
                 vec![field("email", "Email"), field("password", "Password")],
@@ -2678,14 +2463,10 @@ mod tests {
                 "Send",
                 vec![field("email", "Email"), field("password", "Password")],
             ),
-            // A newsletter: an address and no box.
             submitting("Subscribe", vec![field("email", "Email")]),
             submitting("Submit", vec![field("email", "Email")]),
-            // A flight: a field called To, and nothing to send.
             submitting("Submit", vec![field("text", "From"), field("text", "To")]),
-            // A setting with a box and no send word, and nobody to send it to.
             submitting("Save", vec![field("textarea", "Bio")]),
-            // Words that only hold a send word, beside a box.
             on_the_page("\u{110}\u{103}ng nh\u{1ead}p", vec![field("textarea", "")]),
             on_the_page(
                 "\u{e08}\u{e31}\u{e14}\u{e2a}\u{e48}\u{e07}\u{e1f}\u{e23}\u{e35}",
@@ -2693,9 +2474,7 @@ mod tests {
             ),
             on_the_page("Find by post code", vec![field("textarea", "")]),
             on_the_page("Sender", vec![field("textarea", "")]),
-            // Send with nothing to send.
             on_the_page("Send", Vec::new()),
-            // A link to a reply page, beside a box, and on a social site.
             Facts {
                 link: true,
                 ..on_the_page("Reply", vec![field("textarea", "")])
@@ -2709,7 +2488,6 @@ mod tests {
                 facts.fields
             );
         }
-        // Pressing into a message box is starting to write in it.
         let mut into = enter_in(
             field("textarea", "Reply"),
             false,
@@ -2717,14 +2495,12 @@ mod tests {
         );
         into.name = "Reply".into();
         assert!(!sent(&into, Act::Press, url));
-        // Enter in a box that is no message box is a new line (the harness's keys page).
         let words = field("textarea", "words Words");
         assert!(!sent(
             &enter_in(words.clone(), false, vec![words]),
             Act::Enter,
             url
         ));
-        // Enter in a search box.
         let search = field("search", "q Search");
         assert!(!sent(
             &enter_in(search.clone(), true, vec![search]),
@@ -2745,21 +2521,18 @@ mod tests {
             &enter_in(field("email", "Email"), true, sign_in.clone()),
             Act::Enter
         ));
-        // A show-password toggle turns the field's type to text: its autocomplete stays.
         let mut shown = field("text", "Password");
         shown.autocomplete = "current-password".into();
         assert!(signs_in(
             &submitting("Log in", vec![field("email", "Email"), shown.clone()]),
             Act::Press
         ));
-        // A field the page masks itself is one too.
         let mut masked = field("text", "PIN");
         masked.masked = true;
         assert!(signs_in(
             &enter_in(masked.clone(), false, vec![masked]),
             Act::Enter
         ));
-        // A page with no form: its sign-in button beside a password field.
         assert!(signs_in(
             &on_the_page("Anmelden", sign_in.clone()),
             Act::Press
@@ -2769,8 +2542,6 @@ mod tests {
             Act::Press
         ));
 
-        // Not a sign-in: a button that submits nothing, the first step with no password
-        // yet, and a sign-in button with no password on the page.
         let mut show = submitting("Show password", sign_in.clone());
         show.submit = false;
         assert!(!signs_in(&show, Act::Press));
@@ -2868,7 +2639,6 @@ mod tests {
 
     #[test]
     fn signing_in_asks_as_the_mode_says_and_full_permissions_just_signs_in() {
-        // #1072: a password manager filled the form, and the agent presses Log in.
         let sign_in = vec![field("email", "Email"), field("password", "Password")];
         let log_in = submitting("Log in", sign_in.clone());
         let typed = enter_in(field("password", "Password"), true, sign_in);
@@ -2882,14 +2652,12 @@ mod tests {
         assert!(judge(&full, &typed, Act::Write, url, &[]).is_none());
         assert!(judge(&full, &typed, Act::Enter, url, &[]).is_none());
 
-        // Unsupervised asks, as a question rather than a takeover; turned off, it does not.
         let mut asked = grant();
         let question = judge(&asked, &log_in, Act::Press, url, &[]);
         assert_eq!(question.map(|one| one.category), Some(Category::SigningIn));
         asked.asks.insert(Category::SigningIn, false);
         assert!(judge(&asked, &log_in, Act::Press, url, &[]).is_none());
 
-        // Approve's confirm mode asks about it by name.
         let mut approve = grant();
         approve.mode = Mode::Confirm;
         let question = judge(&approve, &typed, Act::Write, url, &[]);
@@ -2898,7 +2666,6 @@ mod tests {
 
     #[test]
     fn a_site_s_sign_in_box_and_certificate_ask_as_the_mode_says() {
-        // #1072: HTTP authentication and a client certificate are signing in.
         let url = "https://intranet.example/";
         let mut full = grant();
         full.mode = Mode::Autonomous;
@@ -2914,17 +2681,14 @@ mod tests {
                 let question = answering(asking, kind, true, url, "").expect("asked");
                 assert_eq!(question.category, Category::SigningIn);
                 assert_eq!(question.summary, "Sign in on intranet.example");
-                // Saying no to the site never asks.
                 assert!(answering(asking, kind, false, url, "").is_none());
             }
         }
 
-        // Turned off, or always allowed on the site, it goes ahead.
         let mut off = grant();
         off.asks.insert(Category::SigningIn, false);
         assert!(answering(&off, DialogKind::SignIn, true, url, "").is_none());
 
-        // A page's own alert, confirm or prompt about nothing much is never a question.
         for kind in [DialogKind::Alert, DialogKind::Confirm, DialogKind::Prompt] {
             assert!(
                 answering(&approve, kind, true, url, "Leave this page?").is_none(),
@@ -3084,7 +2848,6 @@ mod tests {
             );
         }
         assert!(judge(&grant, &Facts::default(), Act::Write, url, &[]).is_none());
-        // A submit on a page that talks to a payment processor, and Enter in a message box.
         let submit = Facts {
             submit: true,
             ..press("Continue")

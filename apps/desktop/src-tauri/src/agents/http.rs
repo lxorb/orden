@@ -1,28 +1,3 @@
-//! `http`: an agent sends one request to any site (#1078; docs/agent-native.md 8.13), the
-//! way a VS Code extension's `fetch` does - an API, a download, a page's source - outside
-//! every tab and with none of the reader's cookies.
-//!
-//! **Asked as #1072 decided.** It needs the `network` scope. A site the reader denied is
-//! refused, by every spelling of its name (policy.rs). In `confirm` mode a site not
-//! reached yet in this run asks once, under *writing*, with "Always" for that site
-//! (`http:<site>`); Full permissions, which a client connected over MCP always has
-//! (#1099), asks nothing.
-//!
-//! **Every hop.** Redirects are followed by hand, and each hop is held to the same rules as
-//! the first: `http` or `https` only, a denied site refused, a new site asked about, and
-//! the headers that carry a credential - `Authorization`, `Cookie` - dropped on the way to
-//! another site. The name is resolved once and the connection pinned to the address that
-//! was checked, so a second lookup cannot answer differently.
-//!
-//! **Never the app itself.** The endpoint `nib mcp` and the command line talk to listens on
-//! this machine: no request reaches its port on any of this machine's own addresses, by
-//! whatever name or number it is asked for (`localhost`, `127.1`, `[::1]`, `0.0.0.0`).
-//!
-//! **Saved or answered.** `save_to` writes the body to a file under exactly the rules a
-//! `files` write keeps (the scope, the fences, the question), as it arrives, at most a
-//! gigabyte; otherwise the answer holds at most a megabyte of it, as text or base64. What
-//! a site said is its words, marked untrusted (9.6).
-
 use std::collections::{BTreeMap, HashSet};
 use std::io::Write as _;
 use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
@@ -40,24 +15,17 @@ use super::grants::{Grant, Mode, Scope, SiteRule};
 use super::verbs::{Answer, Category, Code, Http, HttpDone};
 use super::{files, policy, stop, Caller};
 
-/// How long a request may take when the call does not say, and at the most: inside the
-/// time `nib mcp` waits for an answer.
 const WAIT: u64 = 60_000;
 const MOST_WAIT: u64 = 120_000;
 
-/// Redirects followed, at most.
 const MOST_HOPS: usize = 10;
 
-/// The most of a body an answer holds.
 const MOST_BODY: usize = 1_000_000;
 
-/// The most `save_to` writes.
 const MOST_SAVED: u64 = 1 << 30;
 
-/// The sites each agent was let reach in `confirm` mode this run, by agent and site.
 static REACHED: Mutex<Option<HashSet<(String, String)>>> = Mutex::new(None);
 
-/// One request, as the call asks for it.
 struct Request {
     method: Method,
     headers: HeaderMap,
@@ -67,7 +35,6 @@ struct Request {
     since: u64,
 }
 
-/// One call, answered: checked against the grant, asked where it asks, then sent.
 pub(super) fn answer(app: &AppHandle, caller: &Caller, asked: &Http, since: u64) -> Answer {
     if !caller.holds(Scope::Network) {
         return Answer::error(
@@ -98,7 +65,6 @@ pub(super) fn answer(app: &AppHandle, caller: &Caller, asked: &Http, since: u64)
     tauri::async_runtime::block_on(sent(url, request, &check))
 }
 
-/// The call's method, headers, body and file, read.
 fn request(app: &AppHandle, caller: &Caller, asked: &Http, since: u64) -> Result<Request, Answer> {
     let bad = |why: String| Answer::error(Code::BadArguments, why);
     let method = asked
@@ -141,9 +107,6 @@ fn request(app: &AppHandle, caller: &Caller, asked: &Http, since: u64) -> Result
     })
 }
 
-/// The request sent, hop by hop, and its answer read: every hop, the first and each
-/// redirect's, is let through `check` before anything is sent to it - the stop, and the
-/// grant.
 async fn sent(
     start: Url,
     mut request: Request,
@@ -200,7 +163,6 @@ async fn sent(
     )
 }
 
-/// One hop, sent to the address that was checked.
 async fn once(
     url: &Url,
     address: SocketAddr,
@@ -223,7 +185,6 @@ async fn once(
     sending.send().await.map_err(failed)
 }
 
-/// What a request that went wrong answers.
 fn failed(why: reqwest::Error) -> Answer {
     if why.is_timeout() {
         Answer::error(Code::Timeout, "it took longer than its time")
@@ -232,7 +193,6 @@ fn failed(why: reqwest::Error) -> Answer {
     }
 }
 
-/// The body, answered or saved.
 async fn read(
     mut response: reqwest::Response,
     url: &str,
@@ -268,8 +228,6 @@ async fn read(
     Ok(done)
 }
 
-/// A body as words where it is text - a cut one up to its last whole letter - and as
-/// base64 where it is not.
 fn body_of(bytes: Vec<u8>, cut: bool) -> (String, bool) {
     match String::from_utf8(bytes) {
         Ok(text) => (text, false),
@@ -289,8 +247,6 @@ fn body_of(bytes: Vec<u8>, cut: bool) -> (String, bool) {
     }
 }
 
-/// The body written to `path` as it arrives: beside it first, then put in its place
-/// whole. Answers how much was written.
 async fn saved(response: &mut reqwest::Response, path: &Path, since: u64) -> Result<u64, Answer> {
     let failing = |why: String| Answer::error(Code::Failed, why);
     if let Some(folder) = path.parent() {
@@ -330,7 +286,6 @@ async fn saved(response: &mut reqwest::Response, path: &Path, since: u64) -> Res
     written.map(|()| size)
 }
 
-/// An answer's headers, each name once: a name said twice is its values joined.
 fn headers_of(headers: &HeaderMap) -> BTreeMap<String, String> {
     let mut all: BTreeMap<String, String> = BTreeMap::new();
     for (name, value) in headers {
@@ -345,8 +300,6 @@ fn headers_of(headers: &HeaderMap) -> BTreeMap<String, String> {
     all
 }
 
-/// The host of an address, as rules and pins name it: lower case, without the dot a fully
-/// qualified name ends on, an IPv6 address without its brackets.
 fn host(url: &Url) -> String {
     url.host_str()
         .unwrap_or_default()
@@ -356,20 +309,12 @@ fn host(url: &Url) -> String {
         .to_lowercase()
 }
 
-/// What the grant says of one hop: go, or ask the reader about its site first.
 #[derive(Debug, PartialEq, Eq)]
 enum Reach {
     Go,
-    /// In `confirm` mode, a site not reached yet in this run nor allowed: the site, and
-    /// the "Always" it is kept under.
-    Ask {
-        site: String,
-        always: String,
-    },
+    Ask { site: String, always: String },
 }
 
-/// Whether an agent may reach this address now: the web's two schemes, a site the reader
-/// did not deny, and in `confirm` mode one it was let reach.
 fn reachable(app: &AppHandle, grant: Option<&Grant>, url: &Url) -> Result<(), Answer> {
     if !web(url) {
         return Err(Answer::error(
@@ -403,10 +348,6 @@ fn reachable(app: &AppHandle, grant: Option<&Grant>, url: &Url) -> Result<(), An
     ))
 }
 
-/// The one decision of a hop by an agent's grant (#1072): a denied site refused by
-/// every spelling; in `confirm` mode, where writing asks, a site neither allowed, nor
-/// "Always", nor reached already in this run asks; everything else goes, Full
-/// permissions included.
 fn decided(grant: &Grant, url: &Url, before: bool) -> Result<Reach, Answer> {
     let host = host(url);
     let site = policy::site_of(&host);
@@ -430,7 +371,6 @@ fn decided(grant: &Grant, url: &Url, before: bool) -> Result<Reach, Answer> {
     Ok(Reach::Ask { site, always })
 }
 
-/// Whether an address is on the web: `http` or `https`, with a host.
 fn web(url: &Url) -> bool {
     matches!(url.scheme(), "http" | "https") && url.host_str().is_some_and(|host| !host.is_empty())
 }
@@ -451,8 +391,6 @@ fn remember(agent: &str, site: &str) {
         .insert((agent.to_owned(), site.to_owned()));
 }
 
-/// The address a hop goes to: the first its name resolves to, refused where any of them
-/// is the app's own endpoint.
 async fn address(url: &Url) -> Result<SocketAddr, Answer> {
     let named = host(url);
     let Some(port) = url.port_or_known_default() else {
@@ -485,7 +423,6 @@ async fn address(url: &Url) -> Result<SocketAddr, Answer> {
         .ok_or_else(|| Answer::error(Code::Failed, format!("{named} is not a name that resolves")))
 }
 
-/// Whether an address is the endpoint's: its port on one of this machine's own addresses.
 fn own_endpoint(address: SocketAddr, own: Option<u16>) -> bool {
     let Some(own) = own else {
         return false;
@@ -497,17 +434,12 @@ fn own_endpoint(address: SocketAddr, own: Option<u16>) -> bool {
     address.port() == own && (ip.is_loopback() || ip.is_unspecified())
 }
 
-/// The headers that carry a credential, which go to the site they were written for and no
-/// other.
 fn strip_credentials(headers: &mut HeaderMap) {
     headers.remove(AUTHORIZATION);
     headers.remove(COOKIE);
     headers.remove(reqwest::header::PROXY_AUTHORIZATION);
 }
 
-/// The method and body a redirect goes on with, as browsers follow one: a 303, and a 301
-/// or 302 after anything but `GET` or `HEAD`, is a `GET` with no body; a 307 and a 308
-/// repeat the request.
 fn redirected(
     status: StatusCode,
     method: &Method,
@@ -530,7 +462,6 @@ fn redirected(
 mod tests {
     use super::*;
 
-    /// The endpoint by every name this machine has for itself, and nothing else.
     #[test]
     fn the_apps_own_endpoint_is_never_reached() {
         let own = Some(4100);
@@ -553,7 +484,6 @@ mod tests {
             "127.0.0.1:4100".parse().expect("an address"),
             None
         ));
-        // The names: `localhost`, a decimal and a short form all resolve to loopback.
         for named in [
             "http://localhost:4100/",
             "http://127.1:4100/",
@@ -568,7 +498,6 @@ mod tests {
         }
     }
 
-    /// Only the web's two schemes: never a file, a page's script or data.
     #[test]
     fn only_http_and_https_are_sent() {
         for allowed in ["http://a.example/", "https://a.example:8443/x?y"] {
@@ -630,7 +559,6 @@ mod tests {
     fn a_body_is_words_where_it_is_text_and_base64_where_not() {
         assert_eq!(body_of(b"hi".to_vec(), false), ("hi".into(), false));
         assert_eq!(body_of(vec![0xff, 0x00], false), ("/wA=".into(), true));
-        // A body cut inside its last letter is still words, up to it.
         let mut cut = "gr\u{fc}".as_bytes().to_vec();
         cut.pop();
         assert_eq!(body_of(cut, true), ("gr".into(), false));
@@ -648,9 +576,6 @@ mod tests {
         Url::parse(said).expect("an address")
     }
 
-    /// The grant's one decision of a hop (#1072): a denied site by any spelling, in every
-    /// mode; in `confirm` mode a new site asks, unless allowed, "Always" or reached
-    /// already; the reader's own agent and Full permissions go ahead.
     #[test]
     fn a_hop_goes_asks_or_is_refused_as_the_grant_says() {
         let mut own = Grant::own("http-own".into(), "A");
@@ -714,8 +639,6 @@ mod tests {
         );
     }
 
-    /// A redirect to a denied site is refused before anything is sent there: every hop is
-    /// held to the grant, not only the first.
     #[test]
     fn every_redirect_is_held_to_the_grant_before_it_is_sent() {
         use std::io::{Read as _, Write as _};

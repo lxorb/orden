@@ -1,25 +1,3 @@
-//! What an agent does to a page, through the engine and nothing else
-//! (docs/agent-native.md 5.2, 7.2).
-//!
-//! Every act is the `DevTools` Protocol on that one webview: a press is
-//! `Input.dispatchMouseEvent` at the element's middle, words are `Input.insertText`, a key
-//! is `Input.dispatchKeyEvent` into the page. Trusted events, inside the page, that move
-//! neither the system's pointer nor its keyboard; the spike and the probe measure that
-//! the window in front and the app's focus never change.
-//!
-//! **Every act settles** the way Chrome `DevTools` MCP's `waitForEventsAfterAction` does:
-//! if the page's own frame starts a navigation within 50 ms, its load is waited for (up
-//! to 3 s), and then the document is waited on until it has not changed for 80 ms (up to
-//! 3 s). So an agent rarely needs `browser_wait` after a press, and a dialog the act
-//! raised ends the wait and rides on the answer instead.
-//!
-//! **What is never done**: a `<select>`, a date field or a colour field is never pressed
-//! or keyed open, because its list is a window of the engine's own (6.5); they are set
-//! through the page. A password field is never typed into, never read and never
-//! photographed while focused, and no secret field's value - a password's, a code's, a
-//! card's - is read back in any shape, not even as the bullets that count it: a picture
-//! has each filled one painted over (9.4).
-
 use std::collections::{HashMap, HashSet};
 use std::sync::atomic::Ordering;
 use std::sync::{Arc, LazyLock, Mutex, PoisonError};
@@ -40,19 +18,14 @@ use super::verbs::{
 };
 use crate::pdf::{printing, PdfPage};
 
-/// What an agent's refs are resolved and scripts run under, in the page.
 const WORLD: &str = "nib-agent";
 
-/// How long an act waits for a navigation it may have started to begin.
 const NAVIGATION_STARTS: Duration = Duration::from_millis(50);
 
-/// How long an act waits for a navigation's load, and for the document to settle.
 const SETTLES: Duration = Duration::from_secs(3);
 
-/// How long the document has to be still to be settled.
 const STILL: Duration = Duration::from_millis(80);
 
-/// How long the element about to be pressed in a reader's tab is lit first (7.1).
 const LIT: Duration = Duration::from_millis(300);
 
 static INSIDE: LazyLock<String> = LazyLock::new(|| {
@@ -66,7 +39,6 @@ static INSIDE: LazyLock<String> = LazyLock::new(|| {
 
 const NATIVE: &str = "const read = (one, key) => Reflect.get(Object.getPrototypeOf(one), key, one); const call = (one, key, ...args) => read(one, key).apply(one, args); ";
 
-/// The tallest full-page picture, in CSS pixels.
 const TALLEST: f64 = 16_384.0;
 
 const FIELDS: &str = r"
@@ -329,7 +301,6 @@ fn hears_a_press(said: &Value) -> bool {
         })
 }
 
-/// What the secret scan's handles are held under, and let go of together.
 const SECRETS: &str = "nib-agent-secrets";
 
 static DESCRIBED: LazyLock<String> = LazyLock::new(|| {
@@ -386,13 +357,9 @@ const MOST_PAINTED: usize = 500;
 
 type Hidden = (HashSet<(String, u64)>, Vec<[f64; 4]>);
 
-/// A secret field on the page: which node, and whether anything is in it.
 struct Secret {
-    /// Its part's prefix, as its ref starts.
     prefix: String,
-    /// Its node.
     backend: u64,
-    /// Whether it holds a value.
     filled: bool,
 }
 
@@ -607,14 +574,10 @@ impl FrameMap {
     }
 }
 
-/// An element, resolved from a ref.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Element {
-    /// The frame's session, for an element in a process of its own.
     session: Option<String>,
-    /// The frame's id there.
     frame: Option<String>,
-    /// The node.
     pub backend: u64,
 }
 
@@ -623,9 +586,6 @@ impl Page<'_> {
         cdp::heard(&self.label)
     }
 
-    /// One call on the page's own session. A call the page cannot answer because it is
-    /// holding a dialog - the press that raised it, a navigation it asked to be asked
-    /// about - answers nothing rather than waiting for the agent to answer the dialog.
     fn call(&self, method: &str, params: &Value) -> Result<Value, Answer> {
         cdp::call_until(self.view, None, method, params, || {
             super::quiet::dialog_of(&self.label).is_some()
@@ -646,12 +606,10 @@ impl Page<'_> {
         .map_err(|why| stale(&why))
     }
 
-    /// Where the page is.
     fn url(&self) -> String {
         self.view.url()
     }
 
-    /// An element from a ref the agent passed.
     fn element(&self, reference: &str) -> Result<Element, Answer> {
         let Some((frame, backend)) = snapshot::parse_ref(reference) else {
             return Err(Answer::error(
@@ -685,8 +643,6 @@ impl Page<'_> {
             })
     }
 
-    /// A handle to an element in nib's own world, for a function to run on: what it reads
-    /// is the engine's own, whatever the page has defined on the same objects (9.3).
     fn object(&self, element: &Element) -> Result<String, Answer> {
         self.handle_in_world(element.session.as_deref(), element.backend, WORLD)
             .ok_or_else(|| stale("the element has no object"))
@@ -783,7 +739,6 @@ impl Page<'_> {
             .ok_or_else(|| stale("the element has no object"))
     }
 
-    /// nib's own world in a session's top frame.
     fn world_in(&self, session: Option<&str>) -> Result<i64, Answer> {
         let frame = match session {
             None => self.main_frame()?,
@@ -803,7 +758,6 @@ impl Page<'_> {
         self.world_of_frame(session, &frame)
     }
 
-    /// nib's own world in one frame, made once for the call.
     fn world_of_frame(&self, session: Option<&str>, frame: &str) -> Result<i64, Answer> {
         let key = (session.map(str::to_string), frame.to_string());
         if let Some(world) = self
@@ -844,7 +798,6 @@ impl Page<'_> {
             .remove(&session.map(str::to_string));
     }
 
-    /// Runs a function on an element in nib's own world, answering its value.
     fn run_on(
         &self,
         element: &Element,
@@ -892,7 +845,6 @@ impl Page<'_> {
             .unwrap_or_default())
     }
 
-    /// What an element says about itself and its form.
     fn facts(&self, element: &Element) -> Result<Facts, Answer> {
         let said = self.run_on(element, &FACTS, &[])?;
         Ok(self.facts_from(element, &said))
@@ -1097,7 +1049,6 @@ impl Page<'_> {
         .ok()
     }
 
-    /// What the element with the keyboard says about itself, if one has it.
     fn active_facts(&self) -> Result<Option<Facts>, Answer> {
         let Some((facts, object)) = self.active_in(None, None)? else {
             return Ok(None);
@@ -1221,7 +1172,6 @@ impl Page<'_> {
             .map(|(_, one)| one.session)
     }
 
-    /// Runs an expression in nib's own world in the page's frame, answering its value.
     pub fn isolated(&self, expression: &str) -> Result<Value, Answer> {
         let run = |context: i64| {
             self.call(
@@ -1245,7 +1195,6 @@ impl Page<'_> {
             .unwrap_or_default())
     }
 
-    /// nib's own world in the page's frame: the page's document, none of its globals.
     fn world(&self) -> Result<i64, Answer> {
         self.world_in(None)
     }
@@ -1273,7 +1222,6 @@ impl Page<'_> {
         Ok(frame)
     }
 
-    /// Waits for an act to settle; see the top of this file.
     fn settle(&self, navigations_before: u64) {
         let started = Instant::now();
         let navigated = loop {
@@ -1330,13 +1278,10 @@ impl Page<'_> {
         );
     }
 
-    /// Whether a wait should end early: the stop was pressed, or the page is holding a
-    /// dialog, which stops everything in it.
     fn interrupted(&self) -> bool {
         super::stop::cancelled(self.since) || super::quiet::dialog_of(&self.label).is_some()
     }
 
-    /// How many navigations of the page's own frame have started, for `settle`.
     fn navigations(&self) -> u64 {
         self.heard()
             .lock()
@@ -1344,15 +1289,10 @@ impl Page<'_> {
             .navigations
     }
 
-    /// Where an element's middle is in the page's viewport, scrolled into view first.
     fn point(&self, element: &Element) -> Result<(f64, f64), Answer> {
         Ok(self.points(element)?[0])
     }
 
-    /// Where an element can be pressed in the page's viewport, scrolled into view first:
-    /// its middle, and then the middles of its four quarters, for an element whose
-    /// middle something small of the page's sits over - a badge, a count, an icon's
-    /// overlay.
     fn points(&self, element: &Element) -> Result<Vec<(f64, f64)>, Answer> {
         let _ = self.call_on(
             element,
@@ -1386,8 +1326,6 @@ impl Page<'_> {
             .collect())
     }
 
-    /// The first of an element's points that a press lands on, or why none does: what
-    /// covers its middle.
     fn landing(&self, element: &Element) -> Result<(f64, f64), Answer> {
         let points = self.points(element)?;
         let mut first = None;
@@ -1426,11 +1364,6 @@ impl Page<'_> {
         self.struck(element, point)
     }
 
-    /// How far the page's own frame is scrolled, in CSS pixels: `DOM.getNodeForLocation`
-    /// counts from the page's top left and not the viewport's, so a point in the viewport
-    /// is that far further in. Asked with the viewport's point, a page scrolled down
-    /// answered with whatever was that far from the top of the page - a header, a menu -
-    /// and every press there was refused as covered by it (#373).
     fn scrolled(&self) -> (f64, f64) {
         let Ok(metrics) = self.call("Page.getLayoutMetrics", &json!({})) else {
             return (0.0, 0.0);
@@ -1447,7 +1380,6 @@ impl Page<'_> {
         )
     }
 
-    /// The node a press at a point in the page's viewport lands on.
     fn node_at(&self, (x, y): (f64, f64)) -> Option<u64> {
         let (left, top) = self.scrolled();
         let hit = self
@@ -1491,10 +1423,6 @@ impl Page<'_> {
         holder().unwrap_or(backend)
     }
 
-    /// What a press at a point in the page's viewport lands on, as an element: inside a
-    /// frame of another origin where the point is in one, since the frame's element says
-    /// nothing of the button a press lands on (a card form, a pay button). A point in a
-    /// frame that cannot be read is refused, for a press by ref, rather than judged blind.
     fn element_at(&self, point: (f64, f64)) -> Result<Element, Answer> {
         let backend = self
             .node_at(point)
@@ -1666,8 +1594,6 @@ impl Page<'_> {
         ))
     }
 
-    /// Lights an element with the engine's own inspector highlight for a beat: drawn by
-    /// the renderer, not put into the page (7.1).
     fn light(&self, element: &Element) {
         if element.session.is_some() {
             return;
@@ -1713,8 +1639,6 @@ impl Page<'_> {
         .map(|_| ())
     }
 
-    /// Presses an element: into view, lit for a beat in a reader's tab, then the
-    /// engine's own press at its middle. Refused on a field whose list is a window.
     fn click(
         &self,
         element: &Element,
@@ -1742,10 +1666,6 @@ impl Page<'_> {
         Ok(())
     }
 
-    /// The engine's own press at a point in the tab's viewport, in CSS pixels - one image
-    /// pixel of `browser_screenshot` at its own scale: what an agent falls back on where a
-    /// press by ref cannot say what it lands on. Refused where it lands on a field whose
-    /// list is a window, as a press by ref is.
     fn click_at(
         &self,
         point: (f64, f64),
@@ -1806,9 +1726,6 @@ impl Page<'_> {
         Ok(())
     }
 
-    /// What the frame an element is in says the pointer is over, by `:hover`, the engine's
-    /// own: the deepest of it, and not a label's control, which shows it too when only its
-    /// label is under the pointer. `None` for an element of the page's own document.
     fn pointer_over(&self, element: &Element) -> Option<Element> {
         let (session, frame) = (element.session.as_deref()?, element.frame.as_deref()?);
         let world = self.world_of_frame(Some(session), frame).ok()?;
@@ -1830,7 +1747,6 @@ impl Page<'_> {
         })
     }
 
-    /// Whether a press at one is a press at the other: `INSIDE`, either way round.
     fn same_press(&self, one: &Element, other: &Element) -> bool {
         if one == other {
             return true;
@@ -1860,7 +1776,6 @@ impl Page<'_> {
         self.mouse("mouseMoved", point, "none", 0, 0)
     }
 
-    /// Words into a field, as text rather than keys; replacing what is there when asked.
     fn type_text(&self, element: &Element, text: &str, replace: bool) -> Result<(), Answer> {
         let facts = self.facts(element)?;
         self.refuse_secret(&facts)?;
@@ -1889,11 +1804,6 @@ impl Page<'_> {
             ));
         }
         let placing = if replace { CARET_ALL } else { CARET_END };
-        // In a reader's tab the field is focused, its caret placed and the words put in
-        // within one task of the page's own, so a key of the reader's - who may be typing
-        // in the same page this moment - lands before them or after them and never
-        // between, where it would have sent the words into the reader's field (7.3). An
-        // agent's own tab has nobody else in it and keeps the engine's insert.
         if !self.own && !text.is_empty() {
             let put = self.run_in_page(
                 element,
@@ -1922,8 +1832,6 @@ impl Page<'_> {
             .map(|_| ())
     }
 
-    /// A value set through the page, with the events a person's choice raises: for the
-    /// fields whose own picker is a window (a date, a time, a colour).
     fn set_value(&self, element: &Element, text: &str) -> Result<(), Answer> {
         let said = self.run_in_page(
             element,
@@ -1940,7 +1848,6 @@ impl Page<'_> {
         }
     }
 
-    /// Options of a `<select>` chosen through the page, never by opening its list.
     fn select(&self, element: &Element, values: &[String]) -> Result<Vec<String>, Answer> {
         let said = self.run_in_page(
             element,
@@ -1974,7 +1881,6 @@ impl Page<'_> {
             .unwrap_or_default())
     }
 
-    /// One field of a form set to a value, by what kind of field it is.
     fn fill(&self, element: &Element, value: &FieldValue, gate: Gate<'_>) -> Result<(), Answer> {
         let facts = self.facts(element)?;
         self.refuse_secret(&facts)?;
@@ -2007,7 +1913,6 @@ impl Page<'_> {
         Ok(now.as_bool() != Some(wanted))
     }
 
-    /// One key or chord pressed inside the page.
     fn press(&self, key: &Key) -> Result<(), Answer> {
         self.may_press(key)?;
         let before = self.navigations();
@@ -2016,11 +1921,6 @@ impl Page<'_> {
         Ok(())
     }
 
-    /// One key or chord in a reader's page, as the page's own key events rather than the
-    /// engine's: a reader's tab hands the engine's keys to the window, which then takes
-    /// the keyboard (see reader.rs). The key's default is done the page's way - Enter
-    /// submits the field's form, Tab moves along, Backspace and Delete delete - and its
-    /// text is inserted as text.
     fn press_in_page(&self, key: &Key) -> Result<(), Answer> {
         self.may_press(key)?;
         let found = self.call(
@@ -2064,7 +1964,6 @@ impl Page<'_> {
         Ok(())
     }
 
-    /// An element into view, or the page moved by an amount with the wheel at its middle.
     fn scroll(&self, element: Option<&Element>, dx: f64, dy: f64) -> Result<(), Answer> {
         if let Some(element) = element {
             self.call_on(
@@ -2075,9 +1974,6 @@ impl Page<'_> {
             return Ok(());
         }
         let (width, height, x, y) = self.viewport()?;
-        // The wheel scrolls what is under it, which may be a frame of a site the agent may
-        // not act in (9.2); that, and what cannot be told, is scrolled as a whole page
-        // instead, which moves the tab's own document and no frame in it.
         let middle = (width / 2.0, height / 2.0);
         let under = if self.limits_sites() {
             self.element_at(middle)
@@ -2096,8 +1992,6 @@ impl Page<'_> {
             "Input.dispatchMouseEvent",
             &json!({ "type": "mouseWheel", "x": middle.0, "y": middle.1, "deltaX": dx, "deltaY": dy }),
         )?;
-        // The wheel is what a person's scroll is, and what a page's own scrolling listens
-        // to; a page it did not move is scrolled as a whole instead.
         let started = Instant::now();
         while started.elapsed() < Duration::from_millis(400) {
             std::thread::sleep(Duration::from_millis(50));
@@ -2112,9 +2006,6 @@ impl Page<'_> {
         Ok(())
     }
 
-    /// One element dragged onto another, with the engine's own drag when the page drags
-    /// and plain presses and moves when it only listens to the pointer. The engine's drag
-    /// is intercepted rather than started, so no drag of the system's ever begins.
     fn drag(
         &self,
         (from, picked): (&Element, &Element),
@@ -2171,8 +2062,6 @@ impl Page<'_> {
         dragged
     }
 
-    /// Files handed to a file input: the input itself, or the chooser a press on the
-    /// element opens, which the engine intercepts rather than shows (6.2).
     fn upload(&self, element: &Element, files: &[String], gate: Gate<'_>) -> Result<(), Answer> {
         let facts = self.facts(element)?;
         let input = if facts.kind == "file" {
@@ -2219,8 +2108,6 @@ impl Page<'_> {
         Ok(())
     }
 
-    /// The viewport in CSS pixels, where it is scrolled to, and the device's pixels per
-    /// CSS pixel: `(width, height, x, y)` and the ratio in `ratio`.
     fn viewport(&self) -> Result<(f64, f64, f64, f64), Answer> {
         let metrics = self.call("Page.getLayoutMetrics", &json!({}))?;
         let get = |path: &str| {
@@ -2251,9 +2138,6 @@ impl Page<'_> {
             .unwrap_or(1.0)
     }
 
-    /// A PNG of the page: what fits in the tab, the whole page, or one element; scaled to
-    /// one image pixel per CSS pixel unless asked. Refused while a password field has the
-    /// keyboard (9.4).
     fn screenshot(
         &self,
         element: Option<&Element>,
@@ -2330,8 +2214,6 @@ impl Page<'_> {
         ))
     }
 
-    /// Where an element is on the page, in CSS pixels from the page's top left: its
-    /// left, top, right and bottom, through the frame it is in.
     fn page_rect(&self, element: &Element) -> Result<[f64; 4], Answer> {
         let model = self.call_on(
             element,
@@ -2414,8 +2296,6 @@ impl Page<'_> {
         })
     }
 
-    /// The prefix of every part of the page: its own document, and each frame in a
-    /// process of its own, at any depth.
     fn every_part(&self) -> Result<Vec<String>, Answer> {
         self.nested_followed()?;
         let mut prefixes = vec![String::new()];
@@ -2430,7 +2310,6 @@ impl Page<'_> {
         Ok(prefixes)
     }
 
-    /// The page's accessibility tree, with its frames, as the parts `snapshot` writes.
     fn parts(&self) -> Result<Tree, Answer> {
         let started = Instant::now();
         let _ = self.nested_followed();
@@ -2451,7 +2330,6 @@ impl Page<'_> {
             .into_iter()
             .filter(|(_, frame)| frame.parent.is_empty());
 
-        // Frames in the page's own process: a tree each, under their frame element.
         let tree = self.call("Page.getFrameTree", &json!({}))?;
         let mut same = Vec::new();
         collect_frames(
@@ -2490,7 +2368,6 @@ impl Page<'_> {
                 owner,
             });
         }
-        // Frames in processes of their own, through their sessions.
         for (number, frame) in away {
             if started.elapsed() > MOST_ON_FRAMES {
                 whole = false;
@@ -2597,7 +2474,6 @@ impl Page<'_> {
         .unwrap_or_else(|| vec![frame.url.clone()])
     }
 
-    /// The frame element a frame hangs under: the part holding it, and its node.
     fn owner_in(&self, parts: &[Part], frame: &str) -> Option<(usize, u64)> {
         let owner = self
             .call("DOM.getFrameOwner", &json!({ "frameId": frame }))
@@ -2612,8 +2488,6 @@ impl Page<'_> {
         Some((part, backend))
     }
 
-    /// Every secret field in the parts of the page, by part prefix and node, so that
-    /// nothing of theirs is written whatever the tree says.
     fn secret_fields(&self, parts: &[Part]) -> HashSet<(String, u64)> {
         let prefixes: HashSet<String> = parts.iter().map(|part| part.prefix.clone()).collect();
         let (found, seen) = self.scanned(prefixes);
@@ -2636,10 +2510,6 @@ impl Page<'_> {
             .map(|frame| frame.session)
     }
 
-    /// Every secret field (`policy::secret`: a password, a one-time code, a card) in the
-    /// page's parts with these prefixes. The nodes are the engine's, so a shadow root, open
-    /// or closed, and a frame sharing the process, of any origin, hide none of them from
-    /// this; each describes itself and the policy judges.
     fn secrets(&self, prefixes: impl IntoIterator<Item = String>) -> Vec<Secret> {
         self.scanned(prefixes).0
     }
@@ -2754,8 +2624,6 @@ impl Page<'_> {
         ))
     }
 
-    /// The page as text, as markdown, or its article as markdown. Markdown is the
-    /// clipper's own converter's, asked of the window; without a window it is the text.
     fn read(
         &self,
         app: &tauri::AppHandle,
@@ -2770,7 +2638,6 @@ impl Page<'_> {
         Ok(scripts::words(app, shape, &said))
     }
 
-    /// What the page calls itself, read in nib's own world.
     fn title(&self) -> String {
         self.isolated("document.title")
             .ok()
@@ -2778,10 +2645,6 @@ impl Page<'_> {
             .unwrap_or_default()
     }
 
-    /// The article as the clip button reads it, in nib's own world and unvalued:
-    /// `(url, title, html)`. The window turns the HTML into the clip's markdown with the
-    /// clipper's own converter, so a clip of an agent's tab and of the reader's are the
-    /// same words.
     pub fn clip(&self) -> Result<(String, String, String), Answer> {
         let said = self.read_hiding(clipped_hiding)?;
         Ok((
@@ -2791,14 +2654,6 @@ impl Page<'_> {
         ))
     }
 
-    /// The page printed to a PDF, as base64: the engine's own print, laid out on the
-    /// paper given.
-    ///
-    /// Refused while a filled secret field is anywhere on the page. A field prints as
-    /// what it shows, and a password shows as one bullet a character, which says how
-    /// long it is; a picture has such a field painted over (9.4), and a PDF is text and
-    /// shapes that nothing here can paint over after the engine has laid them out. So
-    /// the agent is told to take the picture instead, rather than handed a weaker print.
     pub fn pdf(&self, paper: &PdfPage) -> Result<String, Answer> {
         if !self.denied_frames()?.is_empty() {
             return Err(Answer::error(
@@ -2834,7 +2689,6 @@ impl Page<'_> {
             .ok_or_else(|| Answer::error(Code::Failed, "the engine printed nothing"))
     }
 
-    /// Waits for what the agent asked, stop and dialogs ending it early.
     fn wait(&self, until: &Until, most: Duration) -> Result<u64, Answer> {
         let started = Instant::now();
         loop {
@@ -2909,7 +2763,6 @@ impl Page<'_> {
         }
     }
 
-    /// A script run in the page, in nib's world or the page's own, answering its value.
     fn evaluate(&self, expression: &str, page_world: bool) -> Result<Value, Answer> {
         if !page_world {
             return self.isolated(expression);
@@ -2925,7 +2778,6 @@ impl Page<'_> {
             .unwrap_or_default())
     }
 
-    /// Goes to an address, and waits for it to load, up to ten seconds.
     fn navigate(&self, url: &str) -> Result<(), Answer> {
         let loads = self
             .heard()
@@ -2947,7 +2799,6 @@ impl Page<'_> {
         Ok(())
     }
 
-    /// One step along the tab's history, or the same page again.
     fn step(&self, by: i64) -> Result<(), Answer> {
         let loads = self
             .heard()
@@ -3000,7 +2851,6 @@ impl Page<'_> {
         }
     }
 
-    /// The cookies the page's address would be sent.
     fn cookies(&self) -> Result<Vec<Cookie>, Answer> {
         let said = self.call("Network.getCookies", &json!({ "urls": [self.url()] }))?;
         Ok(said
@@ -3029,8 +2879,6 @@ impl Page<'_> {
             .collect())
     }
 
-    /// Sets a cookie for the page's address, or a domain the page is on: a cookie for any
-    /// other would plant it for a site the agent may not reach at all.
     fn set_cookie(&self, cookie: &Cookie) -> Result<(), Answer> {
         if let Some(domain) = &cookie.domain {
             if !policy::host_of(&self.url()).is_some_and(|host| cookie_fits(domain, &host)) {
@@ -3061,7 +2909,6 @@ impl Page<'_> {
         Ok(())
     }
 
-    /// Every cookie and bit of storage of the page's origin, gone.
     fn clear(&self) -> Result<(), Answer> {
         for cookie in self.cookies()? {
             let _ = self.call(
@@ -3079,25 +2926,20 @@ impl Page<'_> {
         Ok(())
     }
 
-    /// The page's `localStorage`.
     fn local(&self) -> Result<serde_json::Map<String, Value>, Answer> {
         let said = self.isolated("(() => { const out = {}; for (let at = 0; at < localStorage.length; at++) { const key = localStorage.key(at); out[key] = localStorage.getItem(key) } return out })()")?;
         Ok(said.as_object().cloned().unwrap_or_default())
     }
 
-    /// The elements that match, over every frame.
     fn find(&self, wanted: &snapshot::Wanted<'_>) -> Result<Vec<Match>, Answer> {
         let (parts, secret) = self.parts()?;
         Ok(snapshot::find(&parts, &secret, wanted))
     }
 }
 
-/// How many response bodies one `browser_network` reads, and how long each may be.
 const BODIES: usize = 20;
 const LONGEST_BODY: usize = 100_000;
 
-/// The `DevTools` Protocol's road to every act (#1092): `WebView2`'s and Orden's own
-/// Chromium's. Each act is the page's own method above.
 impl Engine for Page<'_> {
     fn wake(&self) {
         cdp::awake(self.view, &self.label, self.own);
@@ -3372,8 +3214,6 @@ impl Engine for Page<'_> {
     }
 }
 
-/// Whether the engine's refusal of a print is that it has no printing at all, rather
-/// than that this page could not be printed.
 fn unprintable(said: &str) -> bool {
     let said = said.to_ascii_lowercase();
     said.contains("not implemented")
@@ -3381,7 +3221,6 @@ fn unprintable(said: &str) -> bool {
         || said.contains("wasn't found")
 }
 
-/// A coordinate as the whole number the protocol takes for a hit test.
 #[allow(
     clippy::cast_possible_truncation,
     reason = "a point on a page is a few thousand pixels at most"
@@ -3390,13 +3229,6 @@ fn whole(value: f64) -> i64 {
     value.round() as i64
 }
 
-/// The error an element that is gone answers with: take a snapshot again.
-///
-/// A node of a document the tab has since left is refused by `WebView2` itself, before the
-/// protocol says anything, with the system's `E_INVALIDARG`: "The parameter is incorrect."
-/// Every call this reads for names its element by that node, so that sentence is the
-/// element being gone too (measured by scripts/mcp-probe.py: a ref of one page pressed
-/// after the tab went to the next).
 fn stale(why: &str) -> Answer {
     let gone = why.contains("No node")
         || why.contains("Could not find node")
@@ -3413,7 +3245,6 @@ fn stale(why: &str) -> Answer {
     }
 }
 
-/// The page's own exception, from an answer that threw.
 fn thrown(answered: &Value) -> Result<(), Answer> {
     let Some(details) = answered.get("exceptionDetails") else {
         return Ok(());
@@ -3741,7 +3572,6 @@ fn takes_words(attributes: &[&str]) -> bool {
     )
 }
 
-/// Every frame under the page's own, by id.
 fn collect_frames(tree: &Value, top: bool, out: &mut Vec<String>) {
     if !top {
         if let Some(id) = tree.pointer("/frame/id").and_then(Value::as_str) {
@@ -3758,9 +3588,6 @@ fn collect_frames(tree: &Value, top: bool, out: &mut Vec<String>) {
     }
 }
 
-/// A quad's area, to skip the empty ones an inline element has.
-/// Where a quad (eight numbers, four corners) can be pressed: its middle, then half way
-/// from the middle to each corner.
 fn pressable(quad: &[f64]) -> Vec<(f64, f64)> {
     let corners: Vec<(f64, f64)> = quad
         .as_chunks::<2>()
@@ -3793,17 +3620,11 @@ fn area(at: &[f64]) -> f64 {
     (twice / 2.0).abs()
 }
 
-/// Whether a scroll of the page may wheel at the viewport's middle under a call's
-/// `limits`, by what is there (`None` when that cannot be told): not into a frame of a site
-/// the agent may not act in (9.2), nor where that cannot be told; `false` scrolls the page
-/// as a whole instead.
 fn wheels(limits: Option<&(Grant, Store)>, under: Option<&Facts>) -> bool {
     !engines::limits_sites(limits)
         || under.is_some_and(|facts| engines::acts_in(limits, facts).is_ok())
 }
 
-/// The addresses of the requests still in flight that the agent may read, for a wait
-/// that timed out on the network: the same rows `browser_network` shows.
 fn still_in_flight(limits: Option<&(Grant, Store)>, rows: Vec<(Request, Whence)>) -> Vec<String> {
     rows.into_iter()
         .filter(|(one, from)| request_readable(limits, one, from))
@@ -3811,9 +3632,6 @@ fn still_in_flight(limits: Option<&(Grant, Store)>, rows: Vec<(Request, Whence)>
         .collect()
 }
 
-/// Whether a console line is the agent's to read under a call's `limits`: one a frame of a
-/// site it may not reach printed is that site's, whichever site its script came from, as is
-/// one a script of such a site printed; one the engine did not place is nobody's.
 fn line_readable(limits: Option<&(Grant, Store)>, line: &ConsoleLine, whence: &Whence) -> bool {
     match whence {
         Whence::Orden => true,
@@ -3827,9 +3645,6 @@ fn line_readable(limits: Option<&(Grant, Store)>, line: &ConsoleLine, whence: &W
     }
 }
 
-/// Whether a request is the agent's to read under a call's `limits`: one to or from a site
-/// it may not reach is that site's, and one from a frame the engine did not place is
-/// nobody's.
 fn request_readable(limits: Option<&(Grant, Store)>, row: &Request, from: &Whence) -> bool {
     engines::frame_readable(limits, std::slice::from_ref(&row.url))
         && match from {
@@ -3843,7 +3658,6 @@ mod tests {
     use super::*;
     use crate::agents::grants::SiteRule;
 
-    /// An agent denied bank.example, in the reader's store.
     fn denying() -> (Grant, Store) {
         let mut grant = Grant::own("a".into(), "A");
         grant.sites.insert("bank.example".into(), SiteRule::Deny);
@@ -3854,8 +3668,6 @@ mod tests {
         Whence::Frame(at.iter().map(|one| (*one).to_string()).collect())
     }
 
-    /// RE-2: a line a denied frame printed stays out of `browser_console`, whichever site
-    /// its script came from or none, and so does one the engine did not place.
     #[test]
     fn a_denied_frame_s_console_line_is_not_read_whatever_its_script() {
         let limits = denying();
@@ -3881,10 +3693,8 @@ mod tests {
                 "{source:?}"
             );
         }
-        // A script of the denied site, in an allowed frame, is still that site's.
         let theirs = line(Some("https://bank.example/widget.js:9"));
         assert!(!line_readable(Some(&limits), &theirs, &shop));
-        // Orden's own lines, and the reader's command line.
         assert!(line_readable(
             Some(&limits),
             &line(Some("nib")),
@@ -3893,8 +3703,6 @@ mod tests {
         assert!(line_readable(None, &line(None), &bank));
     }
 
-    /// RE-3: a request a denied frame sent is out of `browser_network`, whichever host it
-    /// went to, as is one to the denied site.
     #[test]
     fn a_denied_frame_s_request_is_not_read_whatever_its_host() {
         let limits = denying();
@@ -3937,8 +3745,6 @@ mod tests {
         ));
     }
 
-    /// RE-4: a scroll by no ref wheels into a denied frame at the middle not at all, and
-    /// scrolls the page as a whole where what is there cannot be told.
     #[test]
     fn a_scroll_by_no_ref_does_not_wheel_a_denied_frame() {
         let limits = denying();
@@ -3946,7 +3752,6 @@ mod tests {
             at: at.iter().map(|one| (*one).to_string()).collect(),
             ..Facts::default()
         };
-        // RF-3: a denied frame at the middle scrolls the page as a whole, not an error.
         assert!(!wheels(
             Some(&limits),
             Some(&facts(&["https://bank.example/"]))
@@ -3956,14 +3761,11 @@ mod tests {
             Some(&facts(&["https://shop.example/"]))
         ));
         assert!(!wheels(Some(&limits), None));
-        // No rule for any site: the wheel, as before.
         let open = (Grant::own("a".into(), "A"), Store::Reader);
         assert!(wheels(Some(&open), None));
         assert!(wheels(None, None));
     }
 
-    /// RF-1: a wait that timed out on the network names only the requests the agent may
-    /// read, not a denied frame's or one to a denied site.
     #[test]
     fn a_network_wait_names_only_the_requests_the_agent_may_read() {
         let limits = denying();
@@ -4123,7 +3925,6 @@ mod tests {
         assert_eq!(asked["displayHeaderFooter"], false);
         assert_eq!(asked["transferMode"], "ReturnAsBase64");
 
-        // Given upright and turned by the flag, as the reader's own export is.
         let turned = printing(&PdfPage {
             margin: -1.0,
             landscape: true,

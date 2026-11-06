@@ -1,36 +1,3 @@
-//! An agent's page on `WKWebView` (#1092): the same [`Engine`] every browser verb goes
-//! through, on a Mac.
-//!
-//! **The page.** A child `WKWebView` of the reader's window, placed outside the window's
-//! content the way `WebView2`'s is (`tabs.rs`): measured to run at the window's own rate
-//! there (docs/agent-native.md 12.2), clipped to the window, so no pixel of it reaches a
-//! screen. It is a webview of the app's, so the window's own calls - its address, closing
-//! it, showing it to the reader - are the same as for any.
-//!
-//! **Quiet, and Orden's own.** Before it loads anything the runtime's scripts and its
-//! message channel are taken out of it, and it gets a navigation delegate and a UI
-//! delegate of Orden's own in place of wry's, so nothing a page does reaches the reader:
-//!
-//! | the page | here |
-//! | --- | --- |
-//! | `alert`, `confirm`, `prompt` | held for `browser_dialog`, or 30 s (`quiet`) |
-//! | the site's sign-in box | held like a dialog; a client certificate is declined |
-//! | a window | another agent tab of the same agent, at the address it asked for |
-//! | `window.close()` | the agent tab closed |
-//! | the camera, the microphone, the motion sensors | refused |
-//! | a file chooser | refused, and said to the agent: `browser_upload` cannot be done here |
-//! | a download | into `Downloads/nib agents/<agent>` through `WKDownload`, 500 MB at most |
-//! | `print()`, `showPicker()` | nothing (`quiet::STUBS`, in the page's world) |
-//!
-//! A frame's navigation is judged as a frame's (`web_tabs::frame_may_open`, as #1093's
-//! delegate does for a reader's tab), and the page's own as the agent's (`tabs::may_open`).
-//!
-//! **Asking the page.** Every question is a script in a world of nib's own
-//! (`web_worlds::WORLD`, a `WKContentWorld`) through `callAsyncJavaScript`, which runs on
-//! the main thread and answers there; a verb waits for it on its own thread, and stops
-//! waiting when the page raises a dialog - a page holding one runs nothing - or the stop
-//! is pressed.
-
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ffi::c_void;
@@ -79,7 +46,6 @@ use crate::agents::scripts::{
 };
 use crate::agents::snapshot::{self, Part, Wanted};
 
-/// The tallest full-page picture, in CSS pixels, as on the `DevTools` Protocol.
 const TALLEST: f64 = 16_384.0;
 use crate::agents::verbs::{
     Answer, Code, ConsoleLines, Cookie, Dialog, DialogKind, Download, DownloadState, FieldValue,
@@ -87,52 +53,35 @@ use crate::agents::verbs::{
 };
 use crate::pdf::PdfPage;
 
-/// Where an agent's page sits in the window's own coordinates: far past its corner, as on
-/// `WebView2` (`tabs.rs`).
 const AWAY: f64 = -10_000.0;
 
-/// How long one script may take to answer before the call gives up on it.
 const PATIENCE: Duration = Duration::from_secs(10);
 
-/// How long an act waits for a navigation it may have started to begin, for its load, and
-/// for the document to be still; the same as the `DevTools` Protocol's (`page.rs`).
 const NAVIGATION_STARTS: Duration = Duration::from_millis(50);
 const SETTLES: Duration = Duration::from_secs(3);
 const STILL: Duration = Duration::from_millis(80);
 
-/// How long the page has to have fetched nothing new to be idle on the network.
 const QUIET: Duration = Duration::from_millis(500);
 
-/// The name wry registers its message channel under, which the page's `window.ipc` posts
-/// to; taken out of an agent's page, as out of a reader's (`web_worlds.rs`).
 const CHANNEL: &str = "ipc";
 
-/// The keys the delegates are kept under on their webview. Their addresses are the keys.
 static KEPT_NAVIGATION: u8 = 0;
 static KEPT_UI: u8 = 0;
 static KEPT_DOWNLOAD: u8 = 0;
 
-/// An element, resolved from a ref.
 #[derive(Clone, Debug)]
 pub struct Element {
-    /// The node.
     pub backend: u64,
 }
 
-/// What is kept about one agent page as the engine tells it.
 #[derive(Default)]
 struct Heard {
-    /// Navigations of the page's own frame that started.
     navigations: u64,
-    /// Navigations of the page's own frame that ended, loaded or failed.
     loads: u64,
-    /// Why the last navigation that ended failed, and which end it was.
     failed: Option<(u64, String)>,
-    /// The agent tabs the page opened since the last act answered.
     opened: Vec<String>,
 }
 
-/// Every agent page's, by label.
 static HEARD: Mutex<Option<HashMap<String, Heard>>> = Mutex::new(None);
 
 fn heard<T>(label: &str, read: impl FnOnce(&mut Heard) -> T) -> T {
@@ -144,7 +93,6 @@ fn heard<T>(label: &str, read: impl FnOnce(&mut Heard) -> T) -> T {
     )
 }
 
-/// Forgets what is kept about a page that closed.
 pub fn forget(label: &str) {
     if let Some(all) = HEARD
         .lock()
@@ -155,13 +103,10 @@ pub fn forget(label: &str) {
     }
 }
 
-/// A navigation of a page's own frame started: an agent's page's, from Orden's own
-/// delegate, or a reader's tab's, from its own (`web_page/webkit.rs`).
 pub fn started(label: &str) {
     heard(label, |one| one.navigations += 1);
 }
 
-/// A navigation of a page's own frame ended, and why it failed if it did.
 pub fn arrived(label: &str, failure: Option<String>) {
     heard(label, |one| {
         one.loads += 1;
@@ -171,13 +116,10 @@ pub fn arrived(label: &str, failure: Option<String>) {
     });
 }
 
-/// Notes a tab a page opened, for the answer to the act that opened it.
 pub fn opened(label: &str, tab: &str) {
     heard(label, |one| one.opened.push(tab.to_string()));
 }
 
-/// Builds an agent's page out of sight and quiet, and sends it to `address` - or leaves
-/// it on nothing, for a window a page asked for. Waits for the build.
 pub fn build(
     app: &AppHandle,
     owner: &Owner,
@@ -220,9 +162,6 @@ pub fn build(
         .map_err(|_| "the page was never built".to_string())?
 }
 
-/// Quietens a page that is still on `about:blank` and sends it on: the runtime's scripts
-/// and channel out, `quiet::STUBS` in the page's own world, Orden's delegates in place of
-/// wry's. On the main thread, in the turn that built it, so none of it is too late.
 #[allow(
     unsafe_code,
     reason = "a WKWebView's scripts and delegates are set through the Objective-C runtime"
@@ -231,13 +170,9 @@ fn set_up(platform: &PlatformWebview, app: &AppHandle, owner: &Owner, going: Opt
     let Some(mtm) = MainThreadMarker::new() else {
         return;
     };
-    // SAFETY: the pointer is the WKWebView wry built for this page, alive for as long as
-    // the page is; this runs on the main thread, where it belongs.
     let Some(view) = (unsafe { Retained::retain(platform.inner().cast::<WKWebView>()) }) else {
         return;
     };
-    // SAFETY: the view's own user content controller and delegates, on the main thread.
-    // `WebKit` holds its delegates weakly, so each is kept alive by the view itself.
     unsafe {
         let content = view.configuration().userContentController();
         content.removeAllUserScripts();
@@ -280,13 +215,11 @@ fn set_up(platform: &PlatformWebview, app: &AppHandle, owner: &Owner, going: Opt
     }
 }
 
-/// Keeps an object alive for as long as `owner` is, under `key`.
 #[allow(
     unsafe_code,
     reason = "an associated object is set through the Objective-C runtime"
 )]
 fn keep(owner: &NSObject, key: &'static u8, kept: *const AnyObject) {
-    // SAFETY: both are live objects; the runtime retains `kept` for `owner`'s lifetime.
     unsafe {
         objc2::ffi::objc_setAssociatedObject(
             std::ptr::from_ref(owner).cast::<AnyObject>().cast_mut(),
@@ -297,15 +230,12 @@ fn keep(owner: &NSObject, key: &'static u8, kept: *const AnyObject) {
     }
 }
 
-/// What both delegates hold: the app, and whose page it is.
 struct Held {
     app: AppHandle,
     owner: Owner,
 }
 
 define_class!(
-    /// An agent page's navigation delegate, Orden's own in place of wry's: where the page
-    /// may go, what it fetched as a download, and how each navigation ended.
     #[unsafe(super(NSObject))]
     #[thread_kind = MainThreadOnly]
     #[name = "NibAgentNavigation"]
@@ -315,7 +245,6 @@ define_class!(
     unsafe impl NSObjectProtocol for Navigator {}
 
     unsafe impl WKNavigationDelegate for Navigator {
-        /// Where a navigation may go.
         #[unsafe(method(webView:decidePolicyForNavigationAction:decisionHandler:))]
         fn decide_policy_for_navigation_action(
             &self,
@@ -326,7 +255,6 @@ define_class!(
             decide.call((going(self.ivars(), action),));
         }
 
-        /// Whether a response is shown or downloaded.
         #[unsafe(method(webView:decidePolicyForNavigationResponse:decisionHandler:))]
         fn decide_policy_for_navigation_response(
             &self,
@@ -337,7 +265,6 @@ define_class!(
             decide.call((shown_or_downloaded(response),));
         }
 
-        /// The page's own frame started a navigation.
         #[unsafe(method(webView:didStartProvisionalNavigation:))]
         fn did_start_provisional_navigation(
             &self,
@@ -349,13 +276,11 @@ define_class!(
             crate::agents::tabs::set(&owner.tab, |one| one.loading = true);
         }
 
-        /// The page's own load ended.
         #[unsafe(method(webView:didFinishNavigation:))]
         fn did_finish_navigation(&self, webview: &WKWebView, _navigation: Option<&WKNavigation>) {
             ended(self.ivars(), webview, None);
         }
 
-        /// A navigation failed before anything of it was shown.
         #[unsafe(method(webView:didFailProvisionalNavigation:withError:))]
         fn did_fail_provisional_navigation(
             &self,
@@ -366,7 +291,6 @@ define_class!(
             ended(self.ivars(), webview, Some(error));
         }
 
-        /// A navigation failed once its page had begun to be shown.
         #[unsafe(method(webView:didFailNavigation:withError:))]
         fn did_fail_navigation(
             &self,
@@ -377,7 +301,6 @@ define_class!(
             ended(self.ivars(), webview, Some(error));
         }
 
-        /// The site's sign-in box, or its request for a client certificate.
         #[unsafe(method(webView:didReceiveAuthenticationChallenge:completionHandler:))]
         fn did_receive_authentication_challenge(
             &self,
@@ -388,7 +311,6 @@ define_class!(
             challenged(self.ivars(), challenge, answer);
         }
 
-        /// A link or a script's navigation turned out to be a download.
         #[unsafe(method(webView:navigationAction:didBecomeDownload:))]
         fn action_became_download(
             &self,
@@ -400,7 +322,6 @@ define_class!(
             downloading(self.ivars(), download, url);
         }
 
-        /// A response turned out to be a download.
         #[unsafe(method(webView:navigationResponse:didBecomeDownload:))]
         fn response_became_download(
             &self,
@@ -412,7 +333,6 @@ define_class!(
             downloading(self.ivars(), download, url);
         }
 
-        /// The page's process ended under it.
         #[unsafe(method(webViewWebContentProcessDidTerminate:))]
         fn web_content_process_did_terminate(&self, webview: &WKWebView) {
             let owner = &self.ivars().owner;
@@ -426,8 +346,6 @@ define_class!(
 );
 
 define_class!(
-    /// An agent page's UI delegate, Orden's own in place of wry's: every way a page has of
-    /// reaching a person, answered out of sight and said to the agent.
     #[unsafe(super(NSObject))]
     #[thread_kind = MainThreadOnly]
     #[name = "NibAgentUi"]
@@ -437,7 +355,6 @@ define_class!(
     unsafe impl NSObjectProtocol for Asker {}
 
     unsafe impl WKUIDelegate for Asker {
-        /// `alert()`.
         #[unsafe(method(webView:runJavaScriptAlertPanelWithMessage:initiatedByFrame:completionHandler:))]
         fn alert(
             &self,
@@ -456,7 +373,6 @@ define_class!(
             );
         }
 
-        /// `confirm()`.
         #[unsafe(method(webView:runJavaScriptConfirmPanelWithMessage:initiatedByFrame:completionHandler:))]
         fn confirm(
             &self,
@@ -475,7 +391,6 @@ define_class!(
             );
         }
 
-        /// `prompt()`.
         #[unsafe(method(webView:runJavaScriptTextInputPanelWithPrompt:defaultText:initiatedByFrame:completionHandler:))]
         fn prompt(
             &self,
@@ -495,7 +410,6 @@ define_class!(
             );
         }
 
-        /// A file chooser: refused, and the agent told why.
         #[unsafe(method(webView:runOpenPanelWithParameters:initiatedByFrame:completionHandler:))]
         fn open_panel(
             &self,
@@ -507,7 +421,6 @@ define_class!(
             done.call((std::ptr::null_mut(),));
         }
 
-        /// The camera or the microphone: refused.
         #[unsafe(method(webView:requestMediaCapturePermissionForOrigin:initiatedByFrame:type:decisionHandler:))]
         fn media_capture(
             &self,
@@ -520,7 +433,6 @@ define_class!(
             decide.call((WKPermissionDecision::Deny,));
         }
 
-        /// The motion sensors: refused.
         #[unsafe(method(webView:requestDeviceOrientationAndMotionPermissionForOrigin:initiatedByFrame:decisionHandler:))]
         fn motion(
             &self,
@@ -532,7 +444,6 @@ define_class!(
             decide.call((WKPermissionDecision::Deny,));
         }
 
-        /// A window the page asked for: another agent tab of the same agent.
         #[unsafe(method(webView:createWebViewWithConfiguration:forNavigationAction:windowFeatures:))]
         fn create_web_view(
             &self,
@@ -548,19 +459,16 @@ define_class!(
             std::ptr::null_mut()
         }
 
-        /// `window.close()`: the agent tab closed.
         #[unsafe(method(webViewDidClose:))]
         fn did_close(&self, _webview: &WKWebView) {
             let held = self.ivars();
             let (app, tab) = (held.app.clone(), held.owner.tab.clone());
-            // After this turn of the loop: the page is still inside its own call.
             std::thread::spawn(move || crate::agents::tabs::close(&app, &tab));
         }
     }
 );
 
 define_class!(
-    /// An agent's download: where it goes, and how it ended.
     #[unsafe(super(NSObject))]
     #[thread_kind = MainThreadOnly]
     #[name = "NibAgentDownload"]
@@ -570,7 +478,6 @@ define_class!(
     unsafe impl NSObjectProtocol for Fetcher {}
 
     unsafe impl WKDownloadDelegate for Fetcher {
-        /// Where the file goes: the agent's own folder, or nowhere past 500 MB.
         #[unsafe(method(download:decideDestinationUsingResponse:suggestedFilename:completionHandler:))]
         fn decide_destination(
             &self,
@@ -582,13 +489,11 @@ define_class!(
             destined(self.ivars(), response, &suggested.to_string(), done);
         }
 
-        /// The file is in the folder.
         #[unsafe(method(downloadDidFinish:))]
         fn did_finish(&self, _download: &WKDownload) {
             finished_download(self.ivars(), DownloadState::Done);
         }
 
-        /// It stopped, and there is no file.
         #[unsafe(method(download:didFailWithError:resumeData:))]
         fn did_fail(
             &self,
@@ -601,7 +506,6 @@ define_class!(
     }
 );
 
-/// What a download's delegate holds.
 struct Fetching {
     app: AppHandle,
     owner: Owner,
@@ -609,15 +513,11 @@ struct Fetching {
     path: RefCell<Option<String>>,
 }
 
-/// Where a navigation may go: the page's own frame as the agent's grant says
-/// (`tabs::may_open`), a frame as a frame (`web_tabs::frame_may_open`), and what the page
-/// asked to download, downloaded.
 #[allow(
     unsafe_code,
     reason = "a navigation action is read through the Objective-C runtime"
 )]
 fn going(held: &Held, action: &WKNavigationAction) -> WKNavigationActionPolicy {
-    // SAFETY: the engine's own action, read on the main thread during its own call.
     let (frame, downloads) = unsafe {
         (
             action.targetFrame().is_some_and(|one| !one.isMainFrame()),
@@ -654,14 +554,11 @@ fn going(held: &Held, action: &WKNavigationAction) -> WKNavigationActionPolicy {
     }
 }
 
-/// A response the engine cannot show, or one the site says is an attachment, is a
-/// download; anything else is shown.
 fn shown_or_downloaded(response: &WKNavigationResponse) -> WKNavigationResponsePolicy {
     #[allow(
         unsafe_code,
         reason = "a navigation response is read through the Objective-C runtime"
     )]
-    // SAFETY: the engine's own response, read on the main thread during its own call.
     let (main, showable, answer) = unsafe {
         (
             response.isForMainFrame(),
@@ -685,16 +582,12 @@ fn shown_or_downloaded(response: &WKNavigationResponse) -> WKNavigationResponseP
     }
 }
 
-/// A navigation of the page's own frame ended: counted, its failure kept, and the tab's
-/// address and title told to the window.
 #[allow(
     unsafe_code,
     reason = "the view's address and title are read through the Objective-C runtime"
 )]
 fn ended(held: &Held, webview: &WKWebView, error: Option<&NSError>) {
     let owner = &held.owner;
-    // A navigation this delegate cancelled, or one a newer one replaced, is no failure
-    // of the page's: `NSURLErrorCancelled`, and WebKit's "frame load interrupted".
     let failure = error
         .filter(|one| {
             let domain = one.domain().to_string();
@@ -706,7 +599,6 @@ fn ended(held: &Held, webview: &WKWebView, error: Option<&NSError>) {
         &owner.label,
         failure.map(|why| format!("the page could not be reached: {why}")),
     );
-    // SAFETY: the view's own address and title, read on the main thread.
     let (url, title) = unsafe {
         (
             webview
@@ -733,55 +625,46 @@ fn ended(held: &Held, webview: &WKWebView, error: Option<&NSError>) {
     }
 }
 
-/// Loads the page again after its process ended.
 #[allow(
     unsafe_code,
     reason = "a reload is asked of the view through the Objective-C runtime"
 )]
 fn reload(webview: &WKWebView) {
-    // SAFETY: a reload asked of the view on the main thread.
     let _ = unsafe { webview.reload() };
 }
 
-/// The address a navigation action goes to.
 #[allow(
     unsafe_code,
     reason = "a navigation action's request is read through the Objective-C runtime"
 )]
 fn address_of(action: &WKNavigationAction) -> Option<String> {
-    // SAFETY: the engine's own action, read on the main thread.
     unsafe { action.request().URL() }
         .and_then(|url| url.absoluteString())
         .map(|url| url.to_string())
 }
 
-/// The address a navigation response came from.
 #[allow(
     unsafe_code,
     reason = "a navigation response is read through the Objective-C runtime"
 )]
 fn response_address(response: &WKNavigationResponse) -> Option<String> {
-    // SAFETY: the engine's own response, read on the main thread.
     unsafe { response.response() }
         .URL()
         .and_then(|url| url.absoluteString())
         .map(|url| url.to_string())
 }
 
-/// The address of the frame that raised a dialog.
 #[allow(
     unsafe_code,
     reason = "a frame is read through the Objective-C runtime"
 )]
 fn frame_address(frame: &WKFrameInfo) -> String {
-    // SAFETY: the engine's own frame, read on the main thread.
     unsafe { frame.request().URL() }
         .and_then(|url| url.absoluteString())
         .map(|url| url.to_string())
         .unwrap_or_default()
 }
 
-/// A download, given a delegate of Orden's own that the download keeps alive.
 #[allow(
     unsafe_code,
     reason = "a download's delegate is set through the Objective-C runtime"
@@ -796,8 +679,6 @@ fn downloading(held: &Held, download: &WKDownload, url: Option<String>) {
         url: url.unwrap_or_default(),
         path: RefCell::new(None),
     });
-    // SAFETY: a new object of this module's own class, initialised as `NSObject` is; the
-    // download holds its delegate weakly, so it keeps this one itself.
     unsafe {
         let fetcher: Retained<Fetcher> = msg_send![super(fetcher), init];
         download.setDelegate(Some(ProtocolObject::from_ref(&*fetcher)));
@@ -805,7 +686,6 @@ fn downloading(held: &Held, download: &WKDownload, url: Option<String>) {
     }
 }
 
-/// Where a download goes, and whether it may at all.
 fn destined(
     fetching: &Fetching,
     response: &NSURLResponse,
@@ -843,15 +723,12 @@ fn destined(
     done.call((Retained::as_ptr(&url).cast_mut(),));
 }
 
-/// A download ended.
 fn finished_download(fetching: &Fetching, state: DownloadState) {
     if let Some(path) = fetching.path.borrow().as_deref() {
         quiet::moved(&fetching.owner.agent, path, state);
     }
 }
 
-/// The site's sign-in box, held for the agent like a dialog; a client certificate is
-/// declined, so the site goes on without one; anything else is the engine's own.
 #[allow(
     unsafe_code,
     reason = "an authentication challenge is read through the Objective-C runtime"
@@ -867,7 +744,6 @@ fn challenged(
         "NSURLAuthenticationMethodHTTPBasic"
         | "NSURLAuthenticationMethodHTTPDigest"
         | "NSURLAuthenticationMethodNTLM" => {
-            // A sign-in the agent already answered wrong is not asked again.
             if challenge.previousFailureCount() > 0 && held_answered(&held.owner.label) {
                 answer.call((
                     NSURLSessionAuthChallengeDisposition::CancelAuthenticationChallenge,
@@ -876,9 +752,6 @@ fn challenged(
                 return;
             }
             let realm = space.realm().map(|one| one.to_string()).unwrap_or_default();
-            // The site that asks, which is the one the sign-in goes to: a frame's or a
-            // request's of a site the agent may not reach is that site's (9.2), however
-            // allowed the page round it.
             let url = format!(
                 "{}://{}/",
                 space
@@ -906,21 +779,14 @@ fn challenged(
     }
 }
 
-/// What the engine waits on for a held dialog.
 enum Waiting {
-    /// `alert()`.
     Alert(RcBlock<dyn Fn()>),
-    /// `confirm()`.
     Confirm(RcBlock<dyn Fn(Bool)>),
-    /// `prompt()`.
     Prompt(RcBlock<dyn Fn(*mut NSString)>),
-    /// The site's sign-in box.
     SignIn(RcBlock<dyn Fn(NSURLSessionAuthChallengeDisposition, *mut NSURLCredential)>),
 }
 
 thread_local! {
-    /// The dialogs' answers waiting, by label, on the main thread; and the labels whose
-    /// last sign-in the agent answered.
     static WAITING: RefCell<HashMap<String, (u64, Waiting)>> = RefCell::new(HashMap::new());
     static SIGNED: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
 }
@@ -929,9 +795,6 @@ fn held_answered(label: &str) -> bool {
     SIGNED.with_borrow(|all| all.iter().any(|one| one == label))
 }
 
-/// A dialog held for the agent, on the main thread: the engine's answer kept here, what
-/// the agent is told kept for `quiet::dialog_of`, and answered the safe way if nobody
-/// answers in time - an alert read, anything else no.
 fn held_dialog(
     held: &Held,
     kind: DialogKind,
@@ -942,7 +805,6 @@ fn held_dialog(
 ) {
     let label = held.owner.label.clone();
     let number = quiet::NUMBER.fetch_add(1, Ordering::Relaxed);
-    // One dialog at a time, as an engine holds them: one left over is answered no.
     if let Some((_, old)) =
         WAITING.with_borrow_mut(|all| all.insert(label.clone(), (number, waiting)))
     {
@@ -968,8 +830,6 @@ fn held_dialog(
     });
 }
 
-/// Gives the engine its answer to a held dialog, on the main thread: the one with
-/// `number` when named, whichever is held otherwise.
 fn settle(label: &str, number: Option<u64>, said: &Said) {
     let taken = WAITING.with_borrow_mut(|all| {
         let matches = all
@@ -996,7 +856,6 @@ fn settle(label: &str, number: Option<u64>, said: &Said) {
     answered(waiting, said);
 }
 
-/// The engine told the answer.
 fn answered(waiting: Waiting, said: &Said) {
     match waiting {
         Waiting::Alert(done) => done.call(()),
@@ -1029,8 +888,6 @@ fn answered(waiting: Waiting, said: &Said) {
     }
 }
 
-/// Answers the dialog a page is holding, from any thread; the answer is given on the main
-/// thread.
 pub fn answer_dialog(app: &AppHandle, label: &str, said: Said) -> Result<(), String> {
     if matches!(
         quiet::dialog_of(label).map(|one| one.kind),
@@ -1045,16 +902,12 @@ pub fn answer_dialog(app: &AppHandle, label: &str, said: Said) -> Result<(), Str
         .map_err(|error| error.to_string())
 }
 
-/// The webview a view is, on a Mac: always one of the app's.
 fn webview_of(view: &View) -> &tauri::Webview {
     match view {
         View::Webview(one) => one,
     }
 }
 
-/// Runs `work` on the main thread with the page's `WKWebView`, and waits for what it
-/// sends back - at once, or later from a completion the engine calls. Stops waiting at
-/// `most`, when the page raises a dialog, or when the stop is pressed.
 #[allow(
     unsafe_code,
     reason = "the page's WKWebView is reached through the pointer wry hands out"
@@ -1067,8 +920,6 @@ fn on_main<T: Send + 'static>(
     let (said, heard) = channel();
     webview_of(page.view)
         .with_webview(move |platform| {
-            // SAFETY: the pointer is the WKWebView wry built for this page, alive for as
-            // long as the page is; this runs on the main thread.
             if let Some(view) = unsafe { Retained::retain(platform.inner().cast::<WKWebView>()) } {
                 work(&view, said);
             }
@@ -1077,7 +928,6 @@ fn on_main<T: Send + 'static>(
     waited(page, &heard, most)
 }
 
-/// Waits for an answer on its own thread, as `on_main` says.
 fn waited<T>(page: &Page<'_>, heard: &Receiver<T>, most: Duration) -> Result<T, Answer> {
     let started = Instant::now();
     loop {
@@ -1107,33 +957,22 @@ fn waited<T>(page: &Page<'_>, heard: &Receiver<T>, most: Duration) -> Result<T, 
 }
 
 thread_local! {
-    /// nib's own world, held for as long as the app runs. `WebKit` keeps a content world
-    /// only while something holds it: one asked for by name and let go of after a call is
-    /// torn down with every global of its own, so a ref the snapshot gave was gone at the
-    /// next call. A reader's tab's world lives in its user scripts (`web_worlds.rs`); an
-    /// agent's page has none there.
     static NIB_WORLD: std::cell::OnceCell<Retained<WKContentWorld>> = const { std::cell::OnceCell::new() };
 }
 
-/// nib's own world, on the main thread.
 #[allow(
     unsafe_code,
     reason = "a content world is asked for by name through the Objective-C runtime"
 )]
 fn nib_world(mtm: MainThreadMarker) -> Retained<WKContentWorld> {
     NIB_WORLD.with(|held| {
-        held.get_or_init(|| {
-            // SAFETY: a world asked for by name on the main thread.
-            unsafe {
-                WKContentWorld::worldWithName(&NSString::from_str(crate::web_worlds::WORLD), mtm)
-            }
+        held.get_or_init(|| unsafe {
+            WKContentWorld::worldWithName(&NSString::from_str(crate::web_worlds::WORLD), mtm)
         })
         .clone()
     })
 }
 
-/// A function body run in the page - in nib's own world, or the page's - answering what
-/// it returns, as JSON. Its `await`s are waited for.
 #[allow(
     unsafe_code,
     reason = "a script is run in the page through the Objective-C runtime"
@@ -1150,13 +989,11 @@ fn run(page: &Page<'_>, body: &str, page_world: bool) -> Result<Value, Answer> {
                 return;
             };
             let world = if page_world {
-                // SAFETY: the page's own world, asked for on the main thread.
                 unsafe { WKContentWorld::pageWorld(mtm) }
             } else {
                 nib_world(mtm)
             };
             let done = RcBlock::new(move |value: *mut AnyObject, error: *mut NSError| {
-                // SAFETY: the engine's own answer, alive for this call, on the main thread.
                 let answer = unsafe {
                     if let Some(error) = error.as_ref() {
                         Err(thrown(error))
@@ -1169,8 +1006,6 @@ fn run(page: &Page<'_>, body: &str, page_world: bool) -> Result<Value, Answer> {
                 };
                 let _ = said.send(answer);
             });
-            // SAFETY: a script run in the view on the main thread, its answer handed to a
-            // block the engine copies.
             unsafe {
                 view.callAsyncJavaScript_arguments_inFrame_inContentWorld_completionHandler(
                     &NSString::from_str(&wrapped),
@@ -1191,7 +1026,6 @@ fn run(page: &Page<'_>, body: &str, page_world: bool) -> Result<Value, Answer> {
     }
 }
 
-/// What a script that threw says: the page's exception, or the engine's reason.
 fn thrown(error: &NSError) -> String {
     let info = error.userInfo();
     let message = info
@@ -1201,12 +1035,10 @@ fn thrown(error: &NSError) -> String {
     message.unwrap_or_else(|| error.localizedDescription().to_string())
 }
 
-/// An expression run in nib's own world.
 fn isolated(page: &Page<'_>, expression: &str) -> Result<Value, Answer> {
     run(page, &format!("return ({expression});"), false)
 }
 
-/// Waits for a navigation of the page's own frame to end after `loads` had, up to `most`.
 fn loaded_after(page: &Page<'_>, loads: u64, most: Duration) {
     let started = Instant::now();
     while started.elapsed() < most && !interrupted(page) {
@@ -1217,12 +1049,10 @@ fn loaded_after(page: &Page<'_>, loads: u64, most: Duration) {
     }
 }
 
-/// Whether a wait should end early: the stop, or a dialog the page is holding.
 fn interrupted(page: &Page<'_>) -> bool {
     crate::agents::stop::cancelled(page.since) || quiet::dialog_of(&page.label).is_some()
 }
 
-/// The failure of the navigation that ended after `loads`, if it failed.
 fn failure_after(page: &Page<'_>, loads: u64) -> Option<String> {
     heard(&page.label, |one| {
         one.failed
@@ -1232,7 +1062,6 @@ fn failure_after(page: &Page<'_>, loads: u64) -> Option<String> {
     })
 }
 
-/// Sends the view somewhere, on the main thread.
 #[allow(
     unsafe_code,
     reason = "a load is asked of the view through the Objective-C runtime"
@@ -1241,18 +1070,15 @@ fn load(view: &WKWebView, url: &str) -> bool {
     let Some(address) = NSURL::URLWithString(&NSString::from_str(url)) else {
         return false;
     };
-    // SAFETY: a load asked of the view on the main thread.
     let _ = unsafe { view.loadRequest(&NSURLRequest::requestWithURL(&address)) };
     true
 }
 
-/// One step along the view's history, or the same page again; whether there was one.
 #[allow(
     unsafe_code,
     reason = "history is asked of the view through the Objective-C runtime"
 )]
 fn stepped(view: &WKWebView, by: i64) -> bool {
-    // SAFETY: the view's own history, asked on the main thread.
     unsafe {
         match by {
             0 => view.reload().is_some(),
@@ -1262,20 +1088,12 @@ fn stepped(view: &WKWebView, by: i64) -> bool {
     }
 }
 
-/// How many resources the page has fetched, and whether it has loaded: the road to
-/// "network idle" on an engine that says nothing of its requests.
 const FETCHED: &str = "({ loaded: document.readyState === 'complete', fetched: performance.getEntriesByType('resource').length })";
 
-/// The agent's reach into a page (`snapshot.js`): refs, the tree, the elements a ref
-/// names.
 const AGENT: &str = include_str!("snapshot.js");
 
-/// The most nodes one snapshot reads.
 const MOST_NODES: usize = 20_000;
 
-/// A function body with `nibAgent` in scope: the page's own, made the first time this
-/// document is asked, with refs numbered from a start of this load's own, so a ref of a
-/// page the tab has left never names an element of the next.
 fn with_agent(page: &Page<'_>, body: &str) -> String {
     let start = (heard(&page.label, |one| one.loads) + 1) * 100_000 + 1;
     format!(
@@ -1283,13 +1101,10 @@ fn with_agent(page: &Page<'_>, body: &str) -> String {
     )
 }
 
-/// A function body run with `nibAgent` in nib's own world.
 fn agent(page: &Page<'_>, body: &str) -> Result<Value, Answer> {
     run(page, &with_agent(page, body), false)
 }
 
-/// A function run with the element a ref names as `this`, answering its value; an
-/// element that is gone says to look again.
 fn on(
     page: &Page<'_>,
     element: &Element,
@@ -1310,7 +1125,6 @@ fn on(
     Ok(said.get("value").cloned().unwrap_or_default())
 }
 
-/// What an element that is no longer in the page answers.
 fn gone() -> Answer {
     Answer::error(
         Code::NoSuchRef,
@@ -1318,7 +1132,6 @@ fn gone() -> Answer {
     )
 }
 
-/// Where an element is in the viewport, in CSS pixels: left, top, width, height.
 fn box_of(page: &Page<'_>, element: &Element, scroll: bool) -> Result<[f64; 4], Answer> {
     let said = agent(
         page,
@@ -1335,8 +1148,6 @@ fn holds_a_secret(page: &Page<'_>) -> Result<bool, Answer> {
     Ok(secrets(page)?.iter().any(|(_, filled, _)| *filled))
 }
 
-/// Every field on the page words are typed into that is secret (`policy::secret`): its
-/// ref, whether it holds anything, and where it is in the viewport.
 fn secrets(page: &Page<'_>) -> Result<Vec<(u64, bool, [f64; 4])>, Answer> {
     let said = agent(
         page,
@@ -1376,17 +1187,14 @@ fn secrets(page: &Page<'_>) -> Result<Vec<(u64, bool, [f64; 4])>, Answer> {
         .collect())
 }
 
-/// The page's cookies, as the engine keeps them for every site, from the main thread.
 #[allow(
     unsafe_code,
     reason = "the cookie store is reached through WKWebView's Objective-C interface"
 )]
 fn all_cookies(page: &Page<'_>) -> Result<Vec<Cookie>, Answer> {
     on_main(page, PATIENCE, |view, said| {
-        // SAFETY: the view's own store, read on the main thread.
         let store = unsafe { view.configuration().websiteDataStore().httpCookieStore() };
         let handler = RcBlock::new(move |cookies: NonNull<NSArray<NSHTTPCookie>>| {
-            // SAFETY: the engine hands this block an array alive for its length.
             let cookies = unsafe { cookies.as_ref() };
             let _ = said.send(
                 cookies
@@ -1395,12 +1203,10 @@ fn all_cookies(page: &Page<'_>) -> Result<Vec<Cookie>, Answer> {
                     .collect::<Vec<_>>(),
             );
         });
-        // SAFETY: as above; the engine copies the block and calls it once.
         unsafe { store.getAllCookies(&handler) };
     })
 }
 
-/// A cookie as the agent reads it.
 fn cookie_of(cookie: &NSHTTPCookie) -> Cookie {
     Cookie {
         name: cookie.name().to_string(),
@@ -1416,8 +1222,6 @@ fn cookie_of(cookie: &NSHTTPCookie) -> Cookie {
     }
 }
 
-/// Whether a cookie is one the page's address is sent: its domain the host or a domain
-/// above it, its path above the address's.
 fn sent_to(cookie: &Cookie, url: &Url) -> bool {
     let host = url.host_str().unwrap_or_default().to_lowercase();
     let domain = cookie
@@ -1434,7 +1238,6 @@ fn sent_to(cookie: &Cookie, url: &Url) -> bool {
         && (!cookie.secure || url.scheme() == "https" || host == "127.0.0.1" || host == "localhost")
 }
 
-/// One cookie written to the page's store, or deleted from it.
 #[allow(
     unsafe_code,
     reason = "a cookie is made and stored through Foundation's and WKWebView's Objective-C interfaces"
@@ -1455,7 +1258,6 @@ fn store_cookie(page: &Page<'_>, cookie: &Cookie, url: &Url, delete: bool) -> Re
     on_main(page, PATIENCE, move |view, said| {
         let properties = NSMutableDictionary::<NSString, AnyObject>::new();
         let put = |key: &NSString, value: &AnyObject| properties.insert(key, value);
-        // SAFETY: every key is `NSHTTPCookie`'s own, every value the type it takes.
         let made = unsafe {
             put(NSHTTPCookieName, &NSString::from_str(&name));
             put(NSHTTPCookieValue, &NSString::from_str(&value));
@@ -1479,12 +1281,10 @@ fn store_cookie(page: &Page<'_>, cookie: &Cookie, url: &Url, delete: bool) -> Re
             let _ = said.send(false);
             return;
         };
-        // SAFETY: the view's own store, used on the main thread.
         let store = unsafe { view.configuration().websiteDataStore().httpCookieStore() };
         let done = RcBlock::new(move || {
             let _ = said.send(true);
         });
-        // SAFETY: as above; the engine copies the block and calls it once.
         unsafe {
             if delete {
                 store.deleteCookie_completionHandler(&made, Some(&done));
@@ -1495,8 +1295,6 @@ fn store_cookie(page: &Page<'_>, cookie: &Cookie, url: &Url, delete: bool) -> Re
     })
 }
 
-/// Everything the page's store keeps for its site but its cookies, gone: storage,
-/// caches, databases.
 #[allow(
     unsafe_code,
     reason = "a store's data is removed through WKWebView's Objective-C interface"
@@ -1506,8 +1304,6 @@ fn clear_site(page: &Page<'_>, host: String) -> Result<(), Answer> {
         let Some(mtm) = MainThreadMarker::new() else {
             return;
         };
-        // SAFETY: the view's own store, used on the main thread; each block is copied by
-        // the engine and called once.
         unsafe {
             let store = view.configuration().websiteDataStore();
             let types = WKWebsiteDataStore::allWebsiteDataTypes(mtm);
@@ -1538,9 +1334,6 @@ fn clear_site(page: &Page<'_>, host: String) -> Result<(), Answer> {
     })
 }
 
-/// A picture of the view, as a PNG: of `rect` in the view's own points, `width` pixels
-/// across. `tall` is how tall the view is made while the picture is taken, for a picture
-/// of the whole page; it is put back after.
 #[allow(
     unsafe_code,
     reason = "WKWebView's snapshot is reached through the Objective-C runtime"
@@ -1559,8 +1352,6 @@ fn photograph(
         if let Some(tall) = tall {
             view.setFrameSize(NSSize::new(was.size.width, tall));
         }
-        // SAFETY: a configuration of the view's own, made and used on the main thread;
-        // the engine copies the block and calls it once.
         unsafe {
             let configuration = WKSnapshotConfiguration::new(mtm);
             configuration.setRect(NSRect::new(
@@ -1581,7 +1372,6 @@ fn photograph(
     })
 }
 
-/// A picture as a PNG.
 #[allow(
     unsafe_code,
     reason = "a bitmap is encoded through AppKit's Objective-C interface"
@@ -1589,7 +1379,6 @@ fn photograph(
 fn png_of(image: &NSImage) -> Option<Vec<u8>> {
     let tiff = image.TIFFRepresentation()?;
     let bitmap = NSBitmapImageRep::imageRepWithData(&tiff)?;
-    // SAFETY: an empty dictionary is a valid set of encoding properties.
     let data = unsafe {
         bitmap.representationUsingType_properties(NSBitmapImageFileType::PNG, &NSDictionary::new())
     }?;
@@ -1597,7 +1386,6 @@ fn png_of(image: &NSImage) -> Option<Vec<u8>> {
     (!bytes.is_empty()).then_some(bytes)
 }
 
-/// How many of the screen's pixels the view's window draws a point with.
 fn backing(page: &Page<'_>) -> f64 {
     on_main(page, PATIENCE, |view, said| {
         let _ = said.send(
@@ -1609,9 +1397,6 @@ fn backing(page: &Page<'_>) -> f64 {
     .max(1.0)
 }
 
-/// A statement list run in the page's world or nib's, answering the value of its last
-/// statement as `evaluateJavaScript` does: for what `browser_evaluate` is handed that is
-/// not one expression.
 #[allow(
     unsafe_code,
     reason = "a script is run in the page through the Objective-C runtime"
@@ -1626,13 +1411,11 @@ fn statements(page: &Page<'_>, source: &str, page_world: bool) -> Result<Value, 
                 return;
             };
             let world = if page_world {
-                // SAFETY: the page's own world, asked for on the main thread.
                 unsafe { WKContentWorld::pageWorld(mtm) }
             } else {
                 nib_world(mtm)
             };
             let done = RcBlock::new(move |value: *mut AnyObject, error: *mut NSError| {
-                // SAFETY: the engine's own answer, alive for this call, on the main thread.
                 let answer = unsafe {
                     match error.as_ref() {
                         Some(error) => Err(thrown(error)),
@@ -1641,7 +1424,6 @@ fn statements(page: &Page<'_>, source: &str, page_world: bool) -> Result<Value, 
                 };
                 let _ = said.send(answer);
             });
-            // SAFETY: as in `run`.
             unsafe {
                 view.evaluateJavaScript_inFrame_inContentWorld_completionHandler(
                     &NSString::from_str(&source),
@@ -1660,14 +1442,11 @@ fn statements(page: &Page<'_>, source: &str, page_world: bool) -> Result<Value, 
     })
 }
 
-/// What the engine answered a script with, as JSON: strings, numbers, booleans, arrays
-/// and dictionaries of them, and nothing else.
 fn value_of(said: &AnyObject) -> Value {
     if let Some(text) = said.downcast_ref::<NSString>() {
         return Value::String(text.to_string());
     }
     if let Some(number) = said.downcast_ref::<NSNumber>() {
-        // A boolean is a number to Foundation; its type says which.
         if number.encoding() == objc2::encode::Encoding::Char
             || number.encoding() == objc2::encode::Encoding::Bool
         {
@@ -1700,7 +1479,6 @@ fn value_of(said: &AnyObject) -> Value {
     Value::Null
 }
 
-/// What the pointer does, as `AppKit`'s events.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Pointer {
     Moved,
@@ -1708,7 +1486,6 @@ enum Pointer {
     Up,
 }
 
-/// The modifiers an agent held, as `AppKit`'s flags.
 fn flags_of(modifiers: u8) -> NSEventModifierFlags {
     let mut flags = NSEventModifierFlags::empty();
     if modifiers & 1 != 0 {
@@ -1726,10 +1503,6 @@ fn flags_of(modifiers: u8) -> NSEventModifierFlags {
     flags
 }
 
-/// The pointer at a point of the page's viewport, in CSS pixels, as an `NSEvent` sent to
-/// the view itself: trusted, inside the page, and never through the system's queue, so the
-/// system's own pointer and the window in front are untouched (docs/agent-native.md
-/// 12.2).
 fn send_pointer(
     view: &WKWebView,
     (x, y): (f64, f64),
@@ -1779,11 +1552,6 @@ fn send_pointer(
     true
 }
 
-/// Runs `act` and gives the window's keyboard back to whatever held it before: a press
-/// the engine answers by making its view the window's first responder would otherwise
-/// leave the reader's typing in Orden's window going to the agent's page (7.2), and a
-/// view that is first responder ignores the pointer moving outside what of it shows,
-/// which for a page out of sight is everywhere.
 fn keeping_focus<T>(window: &NSWindow, act: impl FnOnce() -> T) -> T {
     let before = window.firstResponder();
     let done = act();
@@ -1799,8 +1567,6 @@ fn keeping_focus<T>(window: &NSWindow, act: impl FnOnce() -> T) -> T {
     done
 }
 
-/// One key pressed and let go of, as the `NSEvent`s a Mac's keyboard sends, to the view
-/// itself.
 fn send_key(view: &WKWebView, code: u16, typed: &str, plain_text: &str, modifiers: u8) -> bool {
     let plain: &NSView = view;
     let Some(window) = plain.window() else {
@@ -1830,20 +1596,14 @@ fn send_key(view: &WKWebView, code: u16, typed: &str, plain_text: &str, modifier
     true
 }
 
-/// Words put in where the page's caret is, through the view's own text input: what a
-/// person's typing becomes once the keyboard has done its part.
 #[allow(
     unsafe_code,
     reason = "a view's text input is reached through the Objective-C runtime"
 )]
 fn insert_text(view: &WKWebView, text: &str) {
     let words = NSString::from_str(text);
-    let insert = || {
-        // SAFETY: `insertText:` is `NSResponder`'s, which WKWebView answers as its text
-        // input does, with a string; sent on the main thread.
-        unsafe {
-            let () = msg_send![view, insertText: &*words];
-        }
+    let insert = || unsafe {
+        let () = msg_send![view, insertText: &*words];
     };
     let plain: &NSView = view;
     match plain.window() {
@@ -1852,13 +1612,10 @@ fn insert_text(view: &WKWebView, text: &str) {
     }
 }
 
-/// Whether the pointer is over an element, as the page's style sees it.
 const HOVERED: &str = "function () { const el = this.nodeType === 1 ? this : this.parentElement; return !!el && el.matches(':hover') }";
 
-/// The events a pointer arriving over an element raises, as the page's own.
 const HOVER_EVENTS: &str = "function (x, y) { const el = this.nodeType === 1 ? this : this.parentElement; if (!el) return; for (const type of ['pointerover', 'pointerenter', 'mouseover', 'mouseenter', 'pointermove', 'mousemove']) { const Kind = type.startsWith('pointer') ? PointerEvent : MouseEvent; el.dispatchEvent(new Kind(type, { bubbles: !type.endsWith('enter'), cancelable: true, composed: true, clientX: x, clientY: y, view: window })) } }";
 
-/// The pointer, through the main thread.
 fn pointer(
     page: &Page<'_>,
     point: (f64, f64),
@@ -1880,7 +1637,6 @@ fn pointer(
     }
 }
 
-/// A button's name as the pointer's events take it.
 fn button_of(button: &str) -> &'static str {
     match button {
         "right" => "right",
@@ -1889,8 +1645,6 @@ fn button_of(button: &str) -> &'static str {
     }
 }
 
-/// A press at a point: the pointer moved there, pressed and let go `count` times, and
-/// the page let settle.
 fn press_at(
     page: &Page<'_>,
     point: (f64, f64),
@@ -1909,8 +1663,6 @@ fn press_at(
     Ok(())
 }
 
-/// Where an element can be pressed, scrolled into view first: its middle, then the middle
-/// of each quarter of it, as on the `DevTools` Protocol.
 fn points(page: &Page<'_>, element: &Element) -> Result<Vec<(f64, f64)>, Answer> {
     let [x, y, width, height] = box_of(page, element, true)?;
     if width <= 0.0 || height <= 0.0 {
@@ -1939,8 +1691,6 @@ fn points(page: &Page<'_>, element: &Element) -> Result<Vec<(f64, f64)>, Answer>
         .collect())
 }
 
-/// The first of an element's points a press there lands on it: it, inside it, round it,
-/// its label, or a frame it is in; and what covers it when none does.
 fn landing(page: &Page<'_>, element: &Element) -> Result<(f64, f64), Answer> {
     let mut first = None;
     for (x, y) in points(page, element)? {
@@ -1977,9 +1727,6 @@ fn landing(page: &Page<'_>, element: &Element) -> Result<(f64, f64), Answer> {
     }))
 }
 
-/// Words put into the element with the keyboard through the page itself, in one task of
-/// the page's own: a reader's tab, where the reader may be typing too (7.3), and the road
-/// for words the view's own text input did not put in.
 fn insert_in_page(
     page: &Page<'_>,
     element: &Element,
@@ -1995,7 +1742,6 @@ fn insert_in_page(
     Ok(said.as_bool() == Some(true))
 }
 
-/// What a field holds now, for whether words reached it.
 fn held_words(page: &Page<'_>, element: &Element) -> String {
     on(
         page,
@@ -2008,8 +1754,6 @@ fn held_words(page: &Page<'_>, element: &Element) -> String {
     .unwrap_or_default()
 }
 
-/// The page as a PDF, as `WKWebView` makes one: the whole page laid out as it shows, on
-/// one sheet as tall as it is, `[width, height]` in CSS pixels.
 #[allow(
     unsafe_code,
     reason = "WKWebView's PDF is made through the Objective-C runtime"
@@ -2019,8 +1763,6 @@ fn printed(page: &Page<'_>, size: [f64; 2]) -> Result<Option<Vec<u8>>, Answer> {
         let Some(mtm) = MainThreadMarker::new() else {
             return;
         };
-        // SAFETY: a configuration of the view's own, made and used on the main thread;
-        // the engine copies the block and calls it once.
         unsafe {
             let configuration = WKPDFConfiguration::new(mtm);
             configuration.setRect(NSRect::new(
@@ -2159,7 +1901,6 @@ impl Engine for Page<'_> {
 
     fn wait(&self, until: &Until, most: Duration) -> Result<u64, Answer> {
         let started = Instant::now();
-        // For the network: how many resources the page had fetched, and since when.
         let mut fetched: Option<(u64, Instant)> = None;
         loop {
             let done = match until {
@@ -2422,7 +2163,6 @@ impl Engine for Page<'_> {
 
     fn hover(&self, element: &Element) -> Result<(), Answer> {
         let point = points(self, element)?[0];
-        // From a pixel beside it, so the engine sees the pointer arrive.
         pointer(
             self,
             (point.0 - 1.0, point.1 - 1.0),
@@ -2432,9 +2172,6 @@ impl Engine for Page<'_> {
             0,
         )?;
         pointer(self, point, Pointer::Moved, "none", 1, 0)?;
-        // `WebKit` gives a page the pointer's moves only while its window is the active
-        // one; where Orden's is not, the element hears them as the page's own events
-        // instead (`isTrusted` false), as `WebKitGTK`'s would (docs/agent-native.md 12.2).
         let over = on(self, element, HOVERED, &[])?;
         if over.as_bool() != Some(true) {
             on(
@@ -2483,8 +2220,6 @@ impl Engine for Page<'_> {
             ));
         }
         let placing = if replace { CARET_ALL } else { CARET_END };
-        // A reader's tab: in one task of the page's own, so a key of the reader's lands
-        // before the words or after them and never between (7.3).
         if !self.own && !text.is_empty() && insert_in_page(self, element, text, placing)? {
             return Ok(());
         }
@@ -2508,8 +2243,6 @@ impl Engine for Page<'_> {
             insert_text(view, &words);
             let _ = said.send(());
         })?;
-        // The view's text input goes where the window's keyboard is; where it did not
-        // reach the field, the words go in through the page, as in a reader's tab.
         if held_words(self, element) == before && !insert_in_page(self, element, text, CARET_END)? {
             return Err(Answer::error(Code::Failed, "the field took no words"));
         }
@@ -2650,8 +2383,6 @@ impl Engine for Page<'_> {
             (Some(element), _) => (box_of(self, element, true)?, None),
             (None, true) => {
                 let tall = at("tall").clamp(at("height"), TALLEST);
-                // The whole page, from its top: the view made as tall as the page, and the
-                // page scrolled to its start while it is.
                 let _ = isolated(self, "window.scrollTo(0, 0)");
                 ([0.0, 0.0, at("width"), tall], Some(tall))
             }

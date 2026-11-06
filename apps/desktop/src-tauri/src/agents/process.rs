@@ -1,32 +1,3 @@
-//! `process`: an agent runs programs on this computer (#1078; docs/agent-native.md 8.12),
-//! the way a VS Code extension's tasks and `child_process` do: `run` one to its end and
-//! read what it printed, or `start` one - a dev server, a watcher - and `read`, `write`
-//! and `kill` it after.
-//!
-//! **Never through a shell.** The program and each argument are handed to the system as
-//! they are, so nothing in an argument is a second command. A bare name is looked for on
-//! the app's own `PATH` (a Mac's and Linux's login shell's included, as the AI programs
-//! are found), never on one the call sets, and what is started is the file found.
-//!
-//! **Asked as the terminal asks** (8.9, #1072): it needs the `processes` scope, and a
-//! program not on the agent's list asks under *the terminal* first. Only a bare name can
-//! be on the list: a path is any file that happens to be called `git`, and so is a name
-//! found on a `PATH` the call chose. A call that sets variables asks as well, since
-//! `GIT_SSH_COMMAND`, `NODE_OPTIONS` or `LD_PRELOAD` make a listed program run something
-//! else. Each question is `Grant::asks`, so Full permissions, which a client connected
-//! over MCP always has (#1099), asks nothing.
-//!
-//! **The agent's own.** A started program belongs to the agent that started it: no other
-//! agent lists, reads, writes to or ends it. It is ended, with everything it started
-//! (`ai_cli::family`), when the agent says goodbye, when it has not called for the ten
-//! minutes that make it gone (shell.rs), and when the reader presses the stop, for
-//! everyone or for that agent.
-//!
-//! **Bounded.** A `run` waits at most two minutes, inside the time `nib mcp` waits for an
-//! answer; longer work is `start` and `read`. An answer holds at most 100 000 bytes of
-//! output, a started program keeps its last megabyte, and an agent has at most eight
-//! running at once. What a program printed is its words, marked untrusted (9.6).
-
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, Command, Stdio};
@@ -43,46 +14,34 @@ use super::verbs::{Answer, Category, Code, Ended, Process, ProcessDone, ProcessE
 use super::Caller;
 use crate::ai_cli::family::{self, Family};
 
-/// How long a `run` may take when the call does not say, and at the most.
 const WAIT: u64 = 60_000;
 const MOST_WAIT: u64 = 120_000;
 
-/// The longest a `read` waits for something new.
 const MOST_READ_WAIT: u64 = 30_000;
 
-/// The most output one answer holds, in bytes.
 const MOST_OUTPUT: usize = 100_000;
 
-/// What a program's output keeps of itself, in bytes: the end.
 const KEPT: usize = 1_000_000;
 
-/// The most programs one agent has running at once.
 const MOST_RUNNING: usize = 8;
 
-/// How long the output is waited for once the program has ended: a program it started
-/// may hold the pipes open for good.
 const DRAINING: Duration = Duration::from_secs(1);
 
-/// The next started program's number.
 static NEXT: AtomicU64 = AtomicU64::new(1);
 
-/// Every program an agent started that has not been forgotten.
 static STARTED: Mutex<Vec<Arc<Started>>> = Mutex::new(Vec::new());
 
 fn started() -> MutexGuard<'static, Vec<Arc<Started>>> {
     STARTED.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
-/// One program, started.
 struct Started {
     id: String,
     agent: String,
     program: String,
     args: Vec<String>,
     at: u64,
-    /// Whether `start` started it, rather than a `run` waiting for it.
     kept: bool,
-    /// The head of the family, until it has been waited for.
     child: Mutex<Option<Child>>,
     family: Family,
     input: Mutex<Option<ChildStdin>>,
@@ -91,22 +50,15 @@ struct Started {
     heard: Condvar,
 }
 
-/// What a program printed, and how it ended.
 #[derive(Default)]
 struct Said {
-    /// Its standard output; for a started one, both outputs as they came.
     out: Stream,
-    /// Its standard error, for a `run`.
     err: Stream,
-    /// The outputs still open.
     open: u8,
-    /// Whether it has ended.
     ended: bool,
-    /// Its exit code, where it ended with one.
     code: Option<i32>,
 }
 
-/// One output: its end, and how much came before it.
 #[derive(Default)]
 struct Stream {
     bytes: Vec<u8>,
@@ -123,13 +75,10 @@ impl Stream {
         }
     }
 
-    /// The whole of it, as a cursor counts.
     fn total(&self) -> u64 {
         self.dropped + u64::try_from(self.bytes.len()).unwrap_or(u64::MAX)
     }
 
-    /// What came after `since`, at most `MOST_OUTPUT` bytes of it, ending on a whole
-    /// letter: the words, where the next read starts, and whether any was left out.
     fn after(&self, since: u64) -> (String, u64, bool) {
         let skipped = since < self.dropped;
         let from = usize::try_from(since.saturating_sub(self.dropped))
@@ -147,7 +96,6 @@ impl Stream {
         )
     }
 
-    /// The last `MOST_OUTPUT` bytes, from a whole letter, and whether any was left out.
     fn end(&self) -> (String, bool) {
         let from = whole_from(&self.bytes, self.bytes.len().saturating_sub(MOST_OUTPUT));
         (
@@ -157,7 +105,6 @@ impl Stream {
     }
 }
 
-/// `at`, moved on past the rest of a letter it falls inside.
 fn whole_from(bytes: &[u8], at: usize) -> usize {
     let mut at = at;
     while at < bytes.len() && at > 0 && (bytes[at] & 0b1100_0000) == 0b1000_0000 {
@@ -166,7 +113,6 @@ fn whole_from(bytes: &[u8], at: usize) -> usize {
     at
 }
 
-/// `at`, moved back to before a letter it would cut in two.
 fn whole_to(bytes: &[u8], at: usize) -> usize {
     match std::str::from_utf8(&bytes[..at]) {
         Err(error) if error.error_len().is_none() => error.valid_up_to(),
@@ -179,7 +125,6 @@ impl Started {
         self.said.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
-    /// Ends the family, while its head is still there to be named by.
     fn end(&self) {
         let held = self.child.lock().unwrap_or_else(PoisonError::into_inner);
         if held.is_some() {
@@ -200,8 +145,6 @@ impl Started {
         }
     }
 
-    /// Waits until `done` says so of what it printed, or `patience` has gone by, or the
-    /// stop is pressed after the stop `since` names. Answers whether the stop cut it short.
     fn wait(&self, patience: Duration, since: Option<u64>, done: impl Fn(&Said) -> bool) -> bool {
         let until = Instant::now() + patience;
         let mut said = self.said();
@@ -225,7 +168,6 @@ impl Started {
     }
 }
 
-/// One call, answered: checked against the grant, asked where it asks, then done.
 pub(super) fn answer(app: &AppHandle, caller: &Caller, asked: &Process, since: u64) -> Answer {
     if !caller.holds(Scope::Processes) {
         return Answer::error(
@@ -258,7 +200,6 @@ pub(super) fn answer(app: &AppHandle, caller: &Caller, asked: &Process, since: u
     }
 }
 
-/// The started program a call names, if it is this agent's.
 fn own(caller: &Caller, asked: &Process) -> Result<Arc<Started>, Answer> {
     let Some(id) = asked.id.as_deref() else {
         return Err(Answer::error(
@@ -278,7 +219,6 @@ fn own(caller: &Caller, asked: &Process) -> Result<Arc<Started>, Answer> {
         })
 }
 
-/// How a started program is now, without what it printed.
 fn state(one: &Started) -> ProcessDone {
     let said = one.said();
     ProcessDone {
@@ -290,7 +230,6 @@ fn state(one: &Started) -> ProcessDone {
     }
 }
 
-/// `run` and `start`: found, asked about, started.
 fn begin(app: &AppHandle, caller: &Caller, asked: &Process, since: u64) -> Answer {
     let Some(program) = asked
         .program
@@ -351,7 +290,6 @@ fn begin(app: &AppHandle, caller: &Caller, asked: &Process, since: u64) -> Answe
     ran(&one, asked, since)
 }
 
-/// A `run`, waited for and answered, then forgotten.
 fn ran(one: &Arc<Started>, asked: &Process, since: u64) -> Answer {
     let patience = Duration::from_millis(asked.timeout_ms.unwrap_or(WAIT).min(MOST_WAIT));
     let stopped = one.wait(patience, Some(since), |said| said.ended);
@@ -380,7 +318,6 @@ fn ran(one: &Arc<Started>, asked: &Process, since: u64) -> Answer {
     )
 }
 
-/// A `read`: what came after the cursor, waited for up to `wait_ms`.
 fn read(one: &Arc<Started>, asked: &Process, since: u64) -> Answer {
     let cursor = asked.since.unwrap_or(0);
     let patience = Duration::from_millis(asked.wait_ms.unwrap_or(0).min(MOST_READ_WAIT));
@@ -399,7 +336,6 @@ fn read(one: &Arc<Started>, asked: &Process, since: u64) -> Answer {
     untrusted(done, &one.program)
 }
 
-/// A `write`: the words typed in, and the input closed when asked.
 fn written(one: &Started, asked: &Process) -> Answer {
     let mut input = one.input.lock().unwrap_or_else(PoisonError::into_inner);
     let Some(pipe) = input.as_mut() else {
@@ -418,7 +354,6 @@ fn written(one: &Started, asked: &Process) -> Answer {
     Answer::ok(state(one))
 }
 
-/// An answer holding what a program printed: its words, not the reader's (9.6).
 fn untrusted(done: ProcessDone, program: &str) -> Answer {
     Answer::Ok {
         result: serde_json::to_value(done).unwrap_or_default(),
@@ -427,7 +362,6 @@ fn untrusted(done: ProcessDone, program: &str) -> Answer {
     }
 }
 
-/// The question a `run` or a `start` raises, or nothing where it may go ahead.
 fn question(app: &AppHandle, grant: &Grant, asked: &Process, program: &str) -> Option<Answer> {
     if !grant.asks(Category::Terminal) || listed(&grant.programs, program, asked, cfg!(windows)) {
         return None;
@@ -460,9 +394,6 @@ fn question(app: &AppHandle, grant: &Grant, asked: &Process, program: &str) -> O
     ))
 }
 
-/// Whether a call starts a program on the agent's list, and nothing else: a bare name,
-/// as the list names it, with no variables set. `windows` is the system it runs on, said
-/// so that both are tested on any machine; the call passes `cfg!(windows)`.
 fn listed(programs: &[String], program: &str, asked: &Process, windows: bool) -> bool {
     if !asked.env.is_empty() || program.contains(['/', '\\']) || program.starts_with('~') {
         return false;
@@ -485,7 +416,6 @@ fn bare(program: &str, windows: bool) -> String {
     name
 }
 
-/// One line for the question.
 fn summary(program: &str, args: &[String]) -> String {
     let mut line = format!("Run {program}");
     for arg in args {
@@ -505,8 +435,6 @@ fn summary(program: &str, args: &[String]) -> String {
     line
 }
 
-/// A path as asked for, made absolute: `~/` is the home folder, and anything else has to
-/// say where it is, since an agent has no folder it is "in".
 fn absolute(asked: &str, home: Option<&Path>) -> Result<PathBuf, String> {
     let asked = asked.trim();
     let rest = asked
@@ -527,7 +455,6 @@ fn absolute(asked: &str, home: Option<&Path>) -> Result<PathBuf, String> {
     Ok(crate::paths::folded(&given))
 }
 
-/// The file a program is: a path as it says, or a bare name on `path`.
 fn located(program: &str, home: Option<&Path>, path: &std::ffi::OsStr) -> Result<PathBuf, String> {
     if program.contains(['/', '\\']) || program.starts_with('~') {
         let file = absolute(program, home)?;
@@ -542,8 +469,6 @@ fn located(program: &str, home: Option<&Path>, path: &std::ffi::OsStr) -> Result
         .ok_or_else(|| format!("there is no program called {program} on this computer's PATH"))
 }
 
-/// The names a bare program may have on disk: itself, and on Windows with each ending the
-/// system runs.
 fn names(program: &str) -> Vec<String> {
     let mut names = vec![program.to_owned()];
     if cfg!(windows) && Path::new(program).extension().is_none() {
@@ -555,7 +480,6 @@ fn names(program: &str) -> Vec<String> {
     names
 }
 
-/// Whether a file can be started: on a Mac and Linux, one marked so.
 fn runnable(file: &Path) -> bool {
     #[cfg(unix)]
     {
@@ -569,8 +493,6 @@ fn runnable(file: &Path) -> bool {
     }
 }
 
-/// Started, kept where the stop and the agent's going can find it, with a thread per
-/// output and one that waits for it to end.
 fn spawned(
     agent: &str,
     program: &Path,
@@ -635,8 +557,6 @@ fn spawned(
     Ok(one)
 }
 
-/// Reads one output to its end: into the standard error's stream when `apart`, else into
-/// the one both share.
 fn listen(one: Arc<Started>, mut pipe: impl std::io::Read + Send + 'static, apart: bool) {
     std::thread::spawn(move || {
         let mut chunk = [0_u8; 8192];
@@ -660,9 +580,6 @@ fn listen(one: Arc<Started>, mut pipe: impl std::io::Read + Send + 'static, apar
     });
 }
 
-/// Waits for the head of the family, under the same lock `end` asks under, so the
-/// family is never named by a number that may already be somebody else's; then for the
-/// outputs to close, a moment at most.
 fn reap(one: &Started) {
     let code = loop {
         {
@@ -703,8 +620,6 @@ fn reap(one: &Started) {
     one.heard.notify_all();
 }
 
-/// Ends and forgets every program of `agent`'s, or of every agent's: the agent went, or
-/// the reader pressed the stop.
 pub(super) fn end_all(agent: Option<&str>) {
     let ending: Vec<Arc<Started>> = {
         let mut all = started();
@@ -719,7 +634,6 @@ pub(super) fn end_all(agent: Option<&str>) {
     }
 }
 
-/// Ends the programs of every agent not in `connected`: gone quiet, as shell.rs counts.
 pub(super) fn keep_only(connected: &[String]) {
     let gone: Vec<String> = started()
         .iter()
@@ -752,9 +666,6 @@ mod tests {
         }
     }
 
-    /// A program on the list goes as a bare name only: a path, `~/`, a name with
-    /// variables that could make it run something else, are no longer the program the
-    /// reader listed, and ask.
     #[test]
     fn only_a_bare_name_with_nothing_set_is_on_the_list() {
         let programs = vec!["git".to_owned(), "Node.exe".to_owned()];
@@ -803,7 +714,6 @@ mod tests {
         assert!(listed(&programs, "Node.exe", &run("Node.exe"), false));
     }
 
-    /// A path has to say where it is; a bare name is looked for on the app's own `PATH`.
     #[test]
     fn a_program_is_found_where_it_says_and_never_relative() {
         let home = std::env::temp_dir();
@@ -833,9 +743,7 @@ mod tests {
         let (words, next, cut) = stream.after(0);
         assert_eq!((words.as_str(), cut), ("grüß", false));
         assert_eq!(next, stream.total());
-        // A cursor inside a letter starts after it, never half of it.
         assert_eq!(stream.after(3).0, "ß");
-        // Half a letter at the end waits for its other half.
         let mut half = Stream::default();
         half.push(&"ü".as_bytes()[..1]);
         assert_eq!(half.after(0), (String::new(), 0, false));
@@ -856,8 +764,6 @@ mod tests {
         );
     }
 
-    /// A program run to its end, a started one read, written to and killed, and every
-    /// one of an agent's ended when it goes - never another agent's.
     #[cfg(unix)]
     #[test]
     fn a_program_runs_and_a_started_one_is_read_written_and_killed() {

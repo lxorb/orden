@@ -1,23 +1,8 @@
-// An agent's reach into a page on WKWebView (#1092), in nib's own world: refs, the page's
-// accessibility tree as the DevTools Protocol answers `Accessibility.getFullAXTree`, and
-// the elements a ref names. One expression, handed `describe` (agents/scripts.rs, FIELDS),
-// answering the functions agents/engines/webkit.rs calls; kept on the world's own global,
-// so a ref is the same number for as long as its element lives.
-//
-// The tree is written in the protocol's own shape - roles in Chromium's words, a name, a
-// value, the states as properties, children by id - so that agents/snapshot.rs writes it
-// out exactly as it writes a Chromium page's, and `browser_find` and the secret fields'
-// rules are one piece of code on every engine. Roles and names follow the HTML-AAM and
-// accname rules the way Playwright's `ariaSnapshot` reads them, small enough to read.
 globalThis.nibAgentOf = (describe, base) => {
-  // Held strongly: a world's wrapper of a node is the world's to collect when nothing of
-  // the world holds it, and a wrapper made again is another key and another ref. A node
-  // that left the document is let go of at the next snapshot.
   const ids = new WeakMap()
   const nodes = new Map()
   let next = base
 
-  /** A node's ref, given the first time it is seen. */
   const idOf = (node) => {
     let id = ids.get(node)
     if (!id) {
@@ -28,13 +13,11 @@ globalThis.nibAgentOf = (describe, base) => {
     return id
   }
 
-  /** The node a ref names, while it is still in the document. */
   const byId = (id) => {
     const node = nodes.get(Number(id))
     return node && node.isConnected ? node : null
   }
 
-  /** Every node that left the document, let go of. */
   const prune = () => {
     for (const [id, node] of nodes) if (!node.isConnected) nodes.delete(id)
   }
@@ -44,7 +27,6 @@ globalThis.nibAgentOf = (describe, base) => {
       .replace(/\s+/g, ' ')
       .trim()
 
-  /** Whether an element is out of the accessibility tree: not rendered, or hidden. */
   const hidden = (el) => {
     if (el.hidden || el.getAttribute('aria-hidden') === 'true') return true
     const tag = el.localName
@@ -80,7 +62,6 @@ globalThis.nibAgentOf = (describe, base) => {
     color: 'colorWell',
   }
 
-  /** An element's role, as Chromium names it: its own `role`, or its tag's. */
   const roleOf = (el) => {
     const given = flat(el.getAttribute('role')).split(' ')[0].toLowerCase()
     if (given === 'none' || given === 'presentation') return 'none'
@@ -194,7 +175,6 @@ globalThis.nibAgentOf = (describe, base) => {
     }
   }
 
-  /** Roles whose name is their contents. */
   const fromContents = new Set([
     'button',
     'link',
@@ -222,8 +202,6 @@ globalThis.nibAgentOf = (describe, base) => {
     'emphasis',
   ])
 
-  /** The words inside an element, as a name made of contents reads them: a control
-   *  inside says its value, and the element being named (`skip`) says nothing. */
   const contents = (el, skip = null, depth = 0) => {
     if (depth > 20) return ''
     let words = ''
@@ -265,8 +243,6 @@ globalThis.nibAgentOf = (describe, base) => {
         .join(' '),
     )
 
-  /** An element's accessible name, by accname's order: what points at it, what it says
-   *  of itself, its label, its contents for the roles named by them, its title. */
   const nameOf = (el, role) => {
     const by = el.getAttribute('aria-labelledby')
     if (by) {
@@ -323,8 +299,6 @@ globalThis.nibAgentOf = (describe, base) => {
       const type = String(el.type || 'text').toLowerCase()
       if (['checkbox', 'radio', 'button', 'submit', 'reset', 'image', 'file'].includes(type))
         return null
-      // A password's value as the engine's mask, one bullet a character, as Chromium
-      // answers it: what is in it never leaves the page.
       if (type === 'password') return '•'.repeat(el.value.length)
       return el.value
     }
@@ -373,8 +347,6 @@ globalThis.nibAgentOf = (describe, base) => {
     return out
   }
 
-  /** The page's tree, as the protocol writes one, under at most `most` nodes; and every
-   *  field words can be typed into, described for the secret rules. */
   const tree = (most) => {
     prune()
     const out = []
@@ -452,7 +424,6 @@ globalThis.nibAgentOf = (describe, base) => {
     return { nodes: out, fields }
   }
 
-  /** Runs `body`, a function's source, with the element a ref names as `this`. */
   const on = (id, body, args) => {
     const node = byId(id)
     if (!node) return { gone: true }
@@ -460,8 +431,6 @@ globalThis.nibAgentOf = (describe, base) => {
     return { value: run.apply(node, args || []) }
   }
 
-  /** Where an element is in the viewport, in CSS pixels, scrolled into view first: its
-   *  box, and whether it is in view at all. */
   const box = (id, scroll) => {
     const node = byId(id)
     if (!node) return { gone: true }
@@ -474,7 +443,6 @@ globalThis.nibAgentOf = (describe, base) => {
       range.selectNodeContents(node)
       rect = range.getBoundingClientRect()
     }
-    // An element in a frame of the page: its frames' places added on.
     let x = rect.left
     let y = rect.top
     for (let view = el.ownerDocument.defaultView; view && view !== window; view = view.parent) {
@@ -487,7 +455,6 @@ globalThis.nibAgentOf = (describe, base) => {
     return { x, y, width: rect.width, height: rect.height }
   }
 
-  /** The element at a point of the viewport, into frames of the same origin. */
   const at = (x, y) => {
     let doc = document
     let el = doc.elementFromPoint(x, y)
@@ -508,7 +475,6 @@ globalThis.nibAgentOf = (describe, base) => {
     return el ? idOf(el) : null
   }
 
-  /** The element with the keyboard, into frames of the same origin. */
   const active = () => {
     let el = document.activeElement
     try {
