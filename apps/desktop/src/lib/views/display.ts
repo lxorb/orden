@@ -324,8 +324,8 @@ export function onlyFilter(only: Only): string | null {
   return parts.length ? parts.join(' && ') : null
 }
 
-export function narrowedSpace(view: View | null | undefined): string | undefined {
-  return view ? onlyOf(view).space : undefined
+export function narrowing(view: View | null | undefined): Only {
+  return view ? onlyOf(view) : {}
 }
 
 const narrowed = new WeakMap<Base, Map<number, Base>>()

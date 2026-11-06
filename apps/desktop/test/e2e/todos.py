@@ -21,7 +21,7 @@ DAYS = """() => {
     const two = (v) => String(v).padStart(2, '0')
     return `${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())}`
   }
-  return { yesterday: day(-1), today: day(0), tomorrow: day(1), far: day(20), soon: day(3) }
+  return { yesterday: day(-1), today: day(0), tomorrow: day(1), later: day(2), far: day(20), soon: day(3) }
 }"""
 
 ERRANDS = """# Errands

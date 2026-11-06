@@ -6,7 +6,7 @@
   import { relativeTo, withoutExtension } from '../space-paths'
   import { workspace } from '../workspace.svelte'
   import { addTyped, type Prefill, prefillOf } from './add'
-  import { narrowedSpace } from './display'
+  import { narrowing } from './display'
   import type { Kit } from './kit'
   import TaskEditor from './TaskEditor.svelte'
 
@@ -45,7 +45,11 @@
       ...(prefill.heading === undefined ? {} : { heading: prefill.heading }),
       ...(prefill.due === undefined ? {} : { due: prefill.due }),
       ...(prefill.tags === undefined ? {} : { tags: prefill.tags }),
-      ...(prefill.priority === undefined ? {} : { fields: { priority: prefill.priority } }),
+      fields: {
+        ...(prefill.priority === undefined ? {} : { priority: prefill.priority }),
+        ...(prefill.deadline === undefined ? {} : { deadline: prefill.deadline }),
+        ...(prefill.assignee === undefined ? {} : { assignee: prefill.assignee }),
+      },
     }
   }
 
@@ -56,7 +60,7 @@
       onclose?.()
       return
     }
-    const prefill = prefillOf(kit.spec, kit.live.today, at, narrowedSpace(kit.live.view))
+    const prefill = prefillOf(kit.spec, kit.live.today, at, narrowing(kit.live.view))
     if (prefill.status !== undefined) {
       plain = prefill
       queueMicrotask(() => field?.focus())

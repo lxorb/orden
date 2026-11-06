@@ -6,7 +6,7 @@ import { workspace } from '../workspace.svelte'
 import { dropRow, tickRow, writeRow } from './act'
 import { homeRoot } from '../rows/home.svelte'
 import { addNote, openQuickAdd, type Prefill, prefillOf } from './add'
-import { narrowedSpace } from './display'
+import { narrowing } from './display'
 import { dropInto } from './drop'
 import { everyRow } from './list-items'
 import { pressButton } from './press'
@@ -78,7 +78,7 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
         const to = file ?? workspace.activeSpace?.root
         return to === undefined || canWriteAt(to)
       }
-      const prefill = prefillOf(spec, live.today, undefined, narrowedSpace(live.view))
+      const prefill = prefillOf(spec, live.today, undefined, narrowing(live.view))
       const to = prefill.path ?? prefill.root ?? homeRoot()
       return to !== null && canWriteAt(to)
     },
@@ -132,7 +132,7 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
         }
         return null
       }
-      const prefill = prefillOf(spec, live.today, group, narrowedSpace(live.view))
+      const prefill = prefillOf(spec, live.today, group, narrowing(live.view))
       return openQuickAdd(prefill) ? null : prefill
     },
     change(edit, unlocking = false) {
