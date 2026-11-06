@@ -2097,6 +2097,15 @@ class Workspace {
 
     if (!samePath(links.rootOf(), root)) {
       void links.build(root)
+      void startup.turn('index').then(() =>
+        import('./workspace/setext').then(
+          ({ dropSetext }) =>
+            dropSetext(this, root).catch((error: unknown) => {
+              log('error', `setext headings in ${root} not rewritten - ${String(error)}`)
+            }),
+          unfetched,
+        ),
+      )
       void import('./search/warm.svelte').then(({ warm }) => warm.forSpace(root), unfetched)
       const listed = this.files
       const tree = this.tree

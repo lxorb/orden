@@ -138,13 +138,6 @@ function ownEnd(state: EditorState, span: BlockSpan): number {
 
 const PROSE = new Set<BlockKind>(['heading', 'paragraph', 'list', 'quote'])
 
-function underlineOf(state: EditorState, from: number): number | null {
-  for (const node of enclosing(syntaxTree(state).resolveInner(from, 1))) {
-    if (node.name.startsWith('SetextHeading')) return state.doc.lineAt(node.to).number
-  }
-  return null
-}
-
 interface Counting {
   written: number
   at: number
@@ -182,13 +175,7 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
 
   for (const span of spans) {
     const first = doc.lineAt(span.from).number
-    const underline = span.kind === 'heading' ? underlineOf(view.state, span.from) : null
-    const last =
-      span.kind !== 'heading'
-        ? doc.lineAt(Math.min(span.to, doc.length)).number
-        : underline
-          ? underline - 1
-          : first
+    const last = span.kind !== 'heading' ? doc.lineAt(Math.min(span.to, doc.length)).number : first
     const verbatim = verbatimLines(view.state, span.from, doc.line(last).to)
 
     for (let number = first; number <= last; number++) {
@@ -205,8 +192,6 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
 
       changes.push({ from: line.from, to: line.to, insert: text })
     }
-
-    if (underline) changes.push({ from: doc.line(last).to, to: doc.line(underline).to })
   }
 
   if (!changes.length) return false

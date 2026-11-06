@@ -1,4 +1,4 @@
-import type { TokenizerExtension } from 'marked'
+import type { MarkedExtension, TokenizerExtension } from 'marked'
 import { firstStart, lineStart, matchesAt } from './starts'
 
 const MATH_BLOCK = /\$\$(?:\r?\n[\s\S]+?\r?\n|(?![\s$])[^\n]*?(?<![\s$]))\$\$[ \t]*(?:\r?\n|$)/y
@@ -48,5 +48,11 @@ export const definitionList: TokenizerExtension = {
         details: item.details.map((detail) => this.lexer.inlineTokens(detail)),
       })),
     }
+  },
+}
+
+export const noSetextHeadings: MarkedExtension = {
+  tokenizer: {
+    lheading: () => undefined,
   },
 }

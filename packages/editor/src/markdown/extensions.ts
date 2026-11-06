@@ -1,4 +1,4 @@
-import { GFM, parser } from '@lezer/markdown'
+import { GFM, type MarkdownConfig, parser } from '@lezer/markdown'
 import {
   Abbreviation,
   BlockMath,
@@ -13,6 +13,8 @@ import {
 } from './constructs'
 import { FencedCode } from './fences'
 
+export const NoSetextHeadings: MarkdownConfig = { remove: ['SetextHeading'] }
+
 export const nibMarkdownExtensions = [
   Wikilink,
   PercentComment,
@@ -25,6 +27,7 @@ export const nibMarkdownExtensions = [
   DefinitionList,
   Abbreviation,
   FencedCode,
+  NoSetextHeadings,
 ]
 
 export const nibMarkdownParser = parser.configure([GFM, ...nibMarkdownExtensions])

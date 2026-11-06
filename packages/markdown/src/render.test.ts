@@ -1026,7 +1026,6 @@ describe('a named block on a page a link to it is followed on', () => {
   test('is drawn as without one, where a line cannot hold it', () => {
     for (const [named, plain] of [
       ['# Title ^abc\n', '# Title\n'],
-      ['Title ^abc\n===\n', 'Title\n===\n'],
       ['> [!note] ^abc\n> said\n', '> [!note]\n> said\n'],
       ['```ts\ncode\n``` ^abc\n', '```ts\ncode\n```\n'],
       ['<div title="a ^abc\n"></div>\n', '<div title="a\n"></div>\n'],
@@ -1149,5 +1148,21 @@ describe('a named block, as a page holds it', () => {
   test('takes a tag no further than the next one that opens', async () => {
     const { blockAnchorsDrawn } = await import('./links')
     expect(blockAnchorsDrawn('<div <a title="x">y</a>\n')).toBe('<div <a title="">y</a>\n')
+  })
+})
+
+describe('a line with = or - under it', () => {
+  test.each([
+    ['text\n-', '<p>text\n-</p>\n'],
+    ['text\n=', '<p>text\n=</p>\n'],
+    ['text\n- item', '<p>text</p>\n<ul>\n<li>item</li>\n</ul>\n'],
+    ['text\n---', '<p>text</p>\n<hr>\n'],
+    ['> text\n> ---', '<blockquote>\n<p>text</p>\n<hr>\n</blockquote>\n'],
+  ])('%j is never a heading', (source, html) => {
+    expect(renderMarkdown(source)).toBe(html)
+  })
+
+  test('and a page of them draws no heading at all', () => {
+    expect(renderMarkdown('One\n===\n\nTwo\n---\n')).not.toMatch(/<h\d/)
   })
 })

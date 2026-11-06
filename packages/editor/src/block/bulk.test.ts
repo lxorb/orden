@@ -340,16 +340,18 @@ describe('naming a block in old notes and open ones', () => {
   })
 })
 
-describe('turning a setext heading', () => {
+describe('a line with a rule under it', () => {
   test.each([
-    ['heading2', '## Title\n\nb\n'],
-    ['bullet', '- Title\n\nb\n'],
-    ['paragraph', 'Title\n\nb\n'],
-  ] as const)('into %s takes its underline away', (shape, wanted) => {
-    const { view, said } = viewOf('Title\n---\n\nb\n', 0)
-    expect(turnBlocksInto(view, 0, shape)).toBe(true)
-    expect(said()).toBe(wanted)
-  })
+    ['heading2', '## Title\n---\n\nb\n'],
+    ['bullet', '- Title\n---\n\nb\n'],
+  ] as const)(
+    'turned into %s keeps its rule, as no heading is written with one',
+    (shape, wanted) => {
+      const { view, said } = viewOf('Title\n---\n\nb\n', 0)
+      expect(turnBlocksInto(view, 0, shape)).toBe(true)
+      expect(said()).toBe(wanted)
+    },
+  )
 })
 
 describe('turning a nested list into numbers', () => {

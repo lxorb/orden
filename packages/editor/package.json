@@ -11,6 +11,7 @@
     "./menu": "./src/menu.ts",
     "./note-links": "./src/wikilink/note-links.ts",
     "./review": "./src/review/marks.ts",
+    "./setext": "./src/markdown/setext.ts",
     "./task-days": "./src/task-days.ts"
   },
   "scripts": {

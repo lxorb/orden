@@ -1,5 +1,5 @@
 import { Marked, type Token, type Tokens } from 'marked'
-import { blockMath, definitionList } from './blocks'
+import { blockMath, definitionList, noSetextHeadings } from './blocks'
 import { BLANK, bodyStart, fenceChange, HORIZONTAL, lines, VERTICAL } from './slide-breaks'
 
 export type SlideShape = 'title' | 'picture' | 'prose'
@@ -91,7 +91,7 @@ function shapeOf(markdown: string): SlideShape {
 }
 
 const blocks = new Marked({ gfm: true, breaks: false })
-blocks.use({ extensions: [blockMath, definitionList] })
+blocks.use(noSetextHeadings, { extensions: [blockMath, definitionList] })
 
 function listItems(markdown: string): Tokens.ListItem[] {
   const found: Tokens.ListItem[] = []
