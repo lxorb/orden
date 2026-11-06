@@ -11,7 +11,8 @@ PLAN = "# Plan\n\nWhat we are doing this week, and why it matters.\n"
 
 RIGHT = 'header [data-side-toggle="right"]'
 PAD_TAB = '[data-tab="scratchpad"]'
-FOOT_GLYPH = '[data-region="foot"] button[aria-label="Scratchpad"]'
+YOU = "[data-phone-you]"
+PAD_ITEM = '[role="menuitem"]:has-text("Scratchpad")'
 CARD = "[data-scratchpad-card] .cm-content"
 
 PHONE_AGENT = (
@@ -57,11 +58,13 @@ def show_pad(page: Page) -> None:
         page.locator(PAD_TAB).click()
 
 def pad_on_phone(page: Page) -> None:
-    if not page.locator(FOOT_GLYPH).is_visible():
+    if not page.locator(YOU).is_visible():
         page.evaluate("() => window.nibApp.workspace.toggleSidebar('left')")
-        page.locator(FOOT_GLYPH).wait_for(state="visible", timeout=5000)
+        page.locator(YOU).wait_for(state="visible", timeout=5000)
         page.wait_for_timeout(400)
-    page.locator(FOOT_GLYPH).tap()
+    page.locator(YOU).tap()
+    page.locator(PAD_ITEM).wait_for(state="visible", timeout=5000)
+    page.locator(PAD_ITEM).tap()
     page.wait_for_timeout(300)
     page.evaluate("() => { const ws = window.nibApp.workspace; if (ws.panel) ws.closePanel() }")
 

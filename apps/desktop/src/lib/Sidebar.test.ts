@@ -10,6 +10,7 @@ vi.mock('./surfaces.svelte', () => ({
   searchPanel: () => new Promise(() => undefined),
   tasksPanel: () => new Promise(() => undefined),
   phoneTabsBar: () => new Promise(() => undefined),
+  phoneYou: () => new Promise(() => undefined),
   showFeedback: () => undefined,
   toggleTabOverview: () => undefined,
   tabOverview: { open: false },
@@ -20,6 +21,7 @@ const { viewport } = await import('./viewport.svelte')
 const { agentMarks } = await import('./agent-marks.svelte')
 const Sidebar = (await import('./Sidebar.svelte')).default
 const PhoneTabs = (await import('./phone/PhoneTabs.svelte')).default
+const PhoneYou = (await import('./phone/PhoneYou.svelte')).default
 
 function open(text: string) {
   workspace.tabs = []
@@ -458,6 +460,37 @@ describe('the tab bar on a phone', () => {
     workspace.closePanel()
     workspace.toggleSidebar()
     expect(workspace.panel).toBe('tree')
+    workspace.panel = null
+  })
+})
+
+describe('the head of a phone screen', () => {
+  test("holds the reader's own button, where a desktop and a tablet keep a foot", () => {
+    open('# Head\n')
+
+    expect(drawn('tree', 'phone')).not.toContain('data-region="foot"')
+    for (const device of ['desktop', 'tablet'] as const) {
+      expect(drawn('tree', device), device).toContain('data-region="foot"')
+    }
+    viewport.device = 'desktop'
+
+    const you = render(PhoneYou).body
+    expect(you).toContain('data-phone-you')
+    expect(you).toContain('aria-label="Sign in"')
+    expect(you).toContain('aria-haspopup="menu"')
+  })
+
+  test('and the new note button stands on the notes alone, over the tab bar', () => {
+    open('# Head\n')
+    viewport.device = 'phone'
+
+    workspace.panel = 'tree'
+    expect(render(PhoneTabs).body).toContain('aria-label="New note"')
+    for (const panel of ['tasks', 'search'] as const) {
+      workspace.panel = panel
+      expect(render(PhoneTabs).body, panel).not.toContain('aria-label="New note"')
+    }
+    viewport.device = 'desktop'
     workspace.panel = null
   })
 })

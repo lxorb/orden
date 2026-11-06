@@ -131,6 +131,33 @@ def phone(browser: Browser, dark: bool) -> None:
     DRIVE.shot(page, f"{tag}search")
     page.locator("[data-panel=search] .hit").first.tap()
     wait_for(page, "window.nibApp.workspace.active?.note?.name?.startsWith('Ideas')", "the note found")
+
+    page.locator("[data-phone-back]").tap()
+    wait_for(page, "window.nibApp.workspace.panel === 'search'", "back on the search")
+    tab(page, "tree")
+    if page.locator('[data-region="foot"]').count():
+        wrong("[phone] the desktop's sidebar foot is still drawn")
+    before = page.evaluate("window.nibApp.workspace.active?.id")
+    page.locator(".panels:not(.right) button[aria-label='New note']").tap()
+    wait_for(
+        page,
+        f"window.nibApp.workspace.panel === null && window.nibApp.workspace.active?.id !== {before!r}"
+        " && window.nibApp.workspace.active?.doc === ''",
+        "a new note",
+    )
+    page.wait_for_timeout(500)
+    page.keyboard.type("Kestrel")
+    wait_for(page, "window.nibApp.workspace.active?.doc?.includes('Kestrel')", "the new note written")
+    DRIVE.shot(page, f"{tag}new-note")
+
+    page.locator("[data-phone-back]").tap()
+    wait_for(page, "window.nibApp.workspace.panel === 'tree'", "back on the notes")
+    page.wait_for_timeout(300)
+    page.locator("[data-phone-you]").tap()
+    page.locator('[role="menuitem"]:has-text("Settings")').wait_for(state="visible", timeout=5000)
+    DRIVE.shot(page, f"{tag}you")
+    page.locator('[role="menuitem"]:has-text("Settings")').tap()
+    wait_for(page, """document.querySelector('[role="dialog"][aria-label="Settings"]')""", "the settings")
     context.close()
 
 
