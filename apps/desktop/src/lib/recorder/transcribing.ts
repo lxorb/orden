@@ -1,13 +1,3 @@
-/** Turning a recording that is already in a note into words, and writing them under
- *  it.
- *
- *  Its own module rather than part of commands.ts, because nothing here is any use
- *  until somebody presses Transcribe on an embed's menu: it reads the whole file into
- *  memory, sends it through the Whisper path a piece at a time and writes what came
- *  back as a callout, which brings the transcript's own markdown with it. The row that
- *  offers it is a regular expression over one line, and that stays where the menus can
- *  read it; see commands.ts. */
-
 import type { EditorView } from '@orden/editor'
 import { busy } from '../busy.svelte'
 import { i18n, key, message, t } from '../i18n.svelte'
@@ -18,16 +8,7 @@ import { workspace } from '../workspace.svelte'
 import { transcribedBy, wordsInFile } from './transcribe'
 import { languageName, transcriptCallout } from './transcript'
 
-/** The recording named by an embed, as bytes, or null where the space has no such
- *  file.
- *
- *  Asked for at the very address the player is pointed at, which is the asset protocol
- *  in the app and the asset worker in a browser, so this cannot come to a different
- *  answer about where a file is than the thing that plays it. The same resolution too:
- *  a bare name is looked for anywhere in the space, anything else is a path beside the
- *  note. See note-images.ts. */
 async function bytesOf(target: string, notePath: string | null): Promise<ArrayBuffer | null> {
-  // In the note's own space; see note-images.ts.
   const found = !target.includes('/') ? links.fileFor(target, notePath) : null
   const path = found ?? beside(notePath, target)
   if (!path) return null
@@ -41,11 +22,6 @@ function beside(notePath: string | null, target: string): string | null {
   return joinPath(notePath.replace(/[\\/][^\\/]*$/, ''), target)
 }
 
-/** Writes the words of a recording under the line its embed is on.
- *
- *  Under it rather than in place of it: the sound is the record and the transcript is a
- *  reading of it, and a reading that replaced the recording would throw away the one
- *  thing that cannot be got back. */
 export async function transcribeInto(view: EditorView, at: number, target: string) {
   const note = workspace.active
   const line = view.state.doc.lineAt(at)

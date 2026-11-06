@@ -34,7 +34,6 @@ function rgb(hex: string): Rgb {
   return found
 }
 
-/** The four sites Emil's brief names, and a few more of the shapes the web comes in. */
 const SITES: Record<string, Rgb> = {
   'white Google': [255, 255, 255],
   'black YouTube': [15, 15, 15],
@@ -47,7 +46,6 @@ const SITES: Record<string, Rgb> = {
   'teal header': [0, 128, 128],
 }
 
-/** Whether one side's quietest word reads on a ground, alone and under a row's lift. */
 function reads(scheme: Scheme, ground: Rgb): boolean {
   const side = sides[scheme]
   const grounds = [
@@ -80,7 +78,6 @@ describe("a page's bar", () => {
     const bar = barFor(SITES.red!, 'dark', sides)
     expect(bar.colour).not.toBe('#ff0000')
     expect(reads(bar.scheme, rgb(bar.colour))).toBe(true)
-    // Still red: the colour moved toward one side's chrome, not to it.
     const [r, g, b] = rgb(bar.colour)
     expect(r).toBeGreaterThan(g + 40)
     expect(r).toBeGreaterThan(b + 40)
@@ -131,7 +128,6 @@ describe('the frame', () => {
   test("is a tone of a note's mark, always in the reader's own scheme", () => {
     const green: Rgb = [0, 160, 90]
     const frame = frameFor({ colour: green, page: false }, 'dark', 'mica', sides, PAPER.dark)
-    // A tone of it: greener than the chrome, and no more of it than MARK_TONE.
     const [r, g] = rgb(frame.tint)
     expect(g).toBeGreaterThan(sides.dark.scrim[1] + 8)
     expect(g).toBeGreaterThan(r + 8)
@@ -177,7 +173,6 @@ describe('the frame', () => {
   })
 })
 
-/** The paper's inks in each scheme, as follow.svelte.ts reads them. */
 const INKS: Record<Scheme, PaperInks> = {
   dark: {
     bg: PAPER.dark,
@@ -225,7 +220,6 @@ describe("glass's own dials", () => {
                 expect(ratio(sides[frame.scheme].ink, ground), what).toBeGreaterThanOrEqual(aim)
                 expect(reads(frame.scheme, ground), what).toBe(true)
 
-                // And the note, on the least paper the Content row may lay over that.
                 const paper = over(INKS[app].bg, frame.paper, ground)
                 expect(ratio(INKS[app].text, paper), what).toBeGreaterThanOrEqual(7)
                 expect(ratio(INKS[app].muted, paper), what).toBeGreaterThanOrEqual(AA)
@@ -263,9 +257,6 @@ describe("glass's own pair", () => {
   const white: Rgb = [255, 255, 255]
   const black: Rgb = [0, 0, 0]
 
-  /** Whether one side's quietest word reads on a ground with the grain's lightest and
-   *  darkest speck on it: at `aim` on the ground itself, and at AA on the list's layer,
-   *  under a row's lift and both - what the frame's own tests above ask of a colour. */
   function readsGrained(scheme: Scheme, ground: Rgb, aim: number): boolean {
     const side = sides[scheme]
     return [white, black].every((speck) => {
@@ -293,7 +284,6 @@ describe("glass's own pair", () => {
       expect(stopsOf(undefined, scheme, 'violet', dark.scrim).map(hexOf)).toEqual(DAWN[scheme])
     }
     const [blue, pink] = DAWN.light.map(rgb)
-    // Blue first: more blue than red; pink-purple second: more red than green.
     expect(blue![2]).toBeGreaterThan(blue![0])
     expect(pink![0]).toBeGreaterThan(pink![1])
   })
@@ -357,7 +347,6 @@ describe("glass's own pair", () => {
                   const ground = over(colour, frame.wash, under)
                   expect(readsGrained(app, ground, aim), what).toBe(true)
 
-                  // And the note, on the least paper the Content row may lay over that.
                   for (const speck of [white, black]) {
                     const paper = over(INKS[app].bg, frame.paper, over(speck, GRAIN, ground))
                     expect(ratio(INKS[app].text, paper), what).toBeGreaterThanOrEqual(7)

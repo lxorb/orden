@@ -1,16 +1,4 @@
 <script lang="ts">
-  /** What the presenter reads while the audience reads the stage.
-   *
-   *  Its own window on its own screen, and its own page rather than the app
-   *  again: nothing here opens a note, syncs anything or holds a workspace. It
-   *  listens on the channel the stage talks over, draws the slide that is up, the
-   *  one after it, the notes and a clock, and sends back which way to go so the
-   *  deck can be moved from here. See slides/presenter.ts.
-   *
-   *  Nothing is labelled. The big frame is now, the small one is next, the prose
-   *  is what to say, and the numbers are the numbers.
-   */
-
   import { onDestroy } from 'svelte'
   import { fitSurface } from './fit'
   import { presenterChannel, type Stage } from './presenter'
@@ -32,23 +20,16 @@
       return
     }
 
-    // The stage has left presenting, so this window has nothing left to show.
-    // A window a script opened may close itself; one the app opened is closed
-    // by the app.
     if (message.kind === 'gone') {
       gone = true
       window.close()
     }
   })
 
-  // The deck is already up by the time this window opens, and nothing about it
-  // is about to change, so it is asked where it has got to.
   channel.send({ kind: 'here' })
 
   onDestroy(() => channel.close())
 
-  // The clock runs here off the moment the stage started, so nothing has to be
-  // sent once a second.
   $effect(() => {
     const from = stage?.started
     if (from === undefined) return
@@ -61,8 +42,6 @@
 
   const clock = $derived(`${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`)
 
-  /** Both frames are the stage at its own size, scaled down to the box they are
-   *  in, so what is shown here is exactly what is on the other screen. */
   function scaleInto(box: HTMLElement | undefined) {
     if (!box) return
 
@@ -80,21 +59,16 @@
     return () => watcher.disconnect()
   })
 
-  /** Sized by the same ladder the stage uses, so a slide shrunk to fit over
-   *  there is shrunk by the same rung here; see slides/fit.ts. */
   function fitBoth() {
     if (bigPage) fitSurface(bigPage)
     if (smallPage) fitSurface(smallPage)
   }
 
   $effect(() => {
-    // Read, not used: a new slide is what this waits for.
     const reasons = [stage?.slide, stage?.next]
     if (!reasons.length) return
 
     fitBoth()
-    // A maths font arriving changes how tall a slide is, and this window opens
-    // with its own stylesheet still loading.
     void document.fonts.ready.then(fitBoth)
   })
 
@@ -175,16 +149,12 @@
 
   .screens {
     display: grid;
-    /* The slide that is up, and under it a smaller one that is next. */
     grid-template-rows: 2fr 1fr;
     gap: var(--space-4);
     min-width: 0;
     min-height: 0;
   }
 
-  /* Each frame holds a stage of the real size, shrunk to fit: what is here is
-     what is on the other screen, not a second layout of it. */
-  /* The stage pins itself to the middle of this; see slides.css. */
   .frame {
     position: relative;
     min-height: 0;
@@ -233,7 +203,6 @@
     border-radius: var(--radius-md);
     background: var(--surface);
     font-family: var(--font-content);
-    /* Read at a glance from a lectern, not at a desk. */
     font-size: 1.1rem;
     line-height: 1.6;
     color: var(--text);

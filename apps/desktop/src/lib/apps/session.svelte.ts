@@ -1,10 +1,3 @@
-/** An application's tab, as it stands (docs/apps.md): which device it runs on, whether
- *  that device is there, where the application is, and who holds it. Kept per tab and
- *  outliving the pane that draws it, as a terminal's session does.
- *
- *  The file says the host and what runs; the account names the relay by the file's id,
- *  never by its words, as an online terminal's. */
-
 import {
   type AppFile,
   appFileOf,
@@ -25,29 +18,17 @@ import { workspace } from '../workspace.svelte'
 import { type AppHeard, AppLink } from './link'
 import { Picture } from './picture.svelte'
 
-/** How long a file just made is waited for, for sync to give it its id. */
 const WAIT = 20_000
 const LOOK_EVERY = 100
-/** How long the account has to answer a look before it counts as not reached. */
 const LOOK_WITHIN = 10_000
-/** How long a socket the account said may open has to open before the tab says it
- *  cannot reach it, and looks again why. */
 export const OPEN_DEADLINE = 12_000
-/** How long the host has to answer Start, Stop or Restart before the tab says it did not. */
 export const ANSWER_WITHIN = 15_000
-/** The waits between looks that may come out otherwise later: a file that is still
- *  syncing up, an account that could not be reached. */
 const LOOK_AGAIN = [3_000, 5_000, 10_000, 30_000] as const
 
 const pause = (ms: number) => new Promise((settle) => setTimeout(settle, ms))
 
-/** What a look at the application's door found (services/sync/src/apps/door.ts): that
- *  its socket may open, or why not - this account serves no applications (an older
- *  server, or the switch off), the file is not on the account (yet), the sign-in
- *  ended, or the account did not answer. */
 export type Look = 'open' | 'unserved' | 'unknown' | 'signed-out' | 'unreachable'
 
-/** A look's answer, by its status and the `error` it said. */
 export function lookOf(status: number | null, error: unknown): Look {
   if (status === 426) return 'open'
   if (status === 401) return 'signed-out'
@@ -58,19 +39,14 @@ export function lookOf(status: number | null, error: unknown): Look {
 export type AppStatus =
   | { is: 'reading' }
   | { is: 'damaged' }
-  /** No account to reach it through. */
   | { is: 'signed-out' }
-  /** Sync has not given the file its id yet, or the account does not have it yet. */
   | { is: 'syncing' }
   | { is: 'unsynced' }
   | { is: Unfound }
   | { is: 'shared' }
-  /** The account answers that it serves no applications. */
   | { is: 'unserved' }
   | { is: 'connecting' }
-  /** The account's relay was not reached in time; still being tried. */
   | { is: 'unreachable' }
-  /** The device it runs on is no longer on the account. */
   | { is: 'gone' }
   | { is: 'away' }
   | { is: 'held'; holder: Holder }
@@ -79,11 +55,9 @@ export type AppStatus =
       state: AppState | null
       code: number | null
       why: NotStarted | null
-      /** Start, Stop or Restart was asked and the host said nothing in time. */
       unanswered: boolean
     }
 
-/** Why the tab is not connected, where that is not just a socket being made. */
 type Blocked =
   'signed-out' | 'syncing' | 'unsynced' | 'unserved' | 'unreachable' | Unfound | 'shared'
 
@@ -91,14 +65,12 @@ export type Found = IdAt | { none: 'old-sync' }
 
 type Unfound = Extract<Found, { none: string }>['none']
 
-/** One of the account's devices, as `/v2/devices` lists it. */
 interface Device {
   id: string
   name: string
   platform?: string
 }
 
-/** As much of the relay's socket as the tab uses. */
 export interface Linked {
   open(): void
   close(): void
@@ -107,13 +79,10 @@ export interface Linked {
   resize(view: View): void
 }
 
-/** What a tab's session reads of the world, so a test can hand in its own. */
 export interface SessionWorld {
   read(path: string): Promise<string | null>
-  /** The id sync gave the file, waited for until `until`, or why it has none. */
   find(path: string, until: number): Promise<Found>
   token(): string | null
-  /** The account's devices, or null where they could not be asked. */
   devices(token: string): Promise<Device[] | null>
   look(app: string, token: string): Promise<Look>
   link(app: string, heard: (what: AppHeard) => void, view: View): Linked
@@ -169,16 +138,12 @@ const sessionWorld: SessionWorld = {
 }
 
 export class AppSession {
-  /** What the file says, once read. */
   file = $state<AppFile | null>(null)
-  /** The name of the device it runs on, once the account said it, and its system. */
   hostName = $state('')
   hostPlatform = $state('')
   private damaged = $state(false)
   private blocked = $state<Blocked | null>(null)
-  /** Whether the socket was not open by its deadline. */
   private slow = $state(false)
-  /** Whether the account lists the host: null until it has said. */
   private hostListed = $state<boolean | null>(null)
   private open = $state(false)
   private hostUp = $state(false)
@@ -187,23 +152,17 @@ export class AppSession {
   private code = $state<number | null>(null)
   private why = $state<NotStarted | null>(null)
   private unanswered = $state(false)
-  /** Whether this device holds it, as the relay last said; kept while its socket
-   *  comes back, since the picture goes peer to peer meanwhile. */
   private holding = false
   private link: Linked | null = null
   private ended = false
   private begun = false
-  /** The file's id, once sync gave it one. */
   private id: string | null = null
   private view: View | null = null
-  /** Counted up by every new try, so a look that was waiting knows it is stale. */
   private turn = 0
   private tries = 0
-  /** The one timer of each kind: the next look, the socket's deadline, the host's answer. */
   private cancelLook: (() => void) | null = null
   private cancelSlow: (() => void) | null = null
   private cancelAnswer: (() => void) | null = null
-  /** Its picture, wanted while this device holds it and it runs on a host that is there. */
   readonly picture = new Picture((data) => {
     this.link?.say({ t: 'signal', data })
   })
@@ -213,8 +172,6 @@ export class AppSession {
     private readonly world: SessionWorld = sessionWorld,
   ) {}
 
-  /** Whether this device holds it now: the one device whose input, Start, Stop and
-   *  Restart its host takes (an agent's too, which never takes it over). */
   get holds(): boolean {
     return this.holding && this.holder === null && this.open
   }
@@ -235,7 +192,6 @@ export class AppSession {
     }
   }
 
-  /** Reads the file and connects, once. */
   async start(view: View): Promise<void> {
     if (this.begun || this.ended) return
     this.begun = true
@@ -253,7 +209,6 @@ export class AppSession {
     await this.connect()
   }
 
-  /** From the start: the sign-in, the file's id, and a look at the door. */
   private async connect(): Promise<void> {
     const path = this.tab.path
     const turn = ++this.turn
@@ -280,8 +235,6 @@ export class AppSession {
     await this.lookIn(turn)
   }
 
-  /** Looks at the door, and opens the socket if it may open; otherwise says why, and
-   *  looks again by itself where waiting may change the answer. */
   private async lookIn(turn: number): Promise<void> {
     const token = this.world.token()
     const id = this.id
@@ -323,8 +276,6 @@ export class AppSession {
     })
   }
 
-  /** The socket has until `OPEN_DEADLINE` to open; past it the tab says so, and looks at
-   *  the door again in case the answer changed - the file deleted, the sign-in ended. */
   private deadline(): void {
     this.cancelSlow?.()
     const turn = this.turn
@@ -336,7 +287,6 @@ export class AppSession {
     })
   }
 
-  /** Try again, from the start: after signing in, or once sync or the account is back. */
   retry(): void {
     if (this.ended || !this.file) return
     this.cancelLook?.()
@@ -403,8 +353,6 @@ export class AppSession {
     }
   }
 
-  /** The device it runs on, by the name the account knows it by; and whether the
-   *  account still lists it at all. */
   private async nameHost(host: string): Promise<void> {
     const token = this.world.token()
     if (!token) return
@@ -416,17 +364,14 @@ export class AppSession {
     this.hostListed = found !== undefined
   }
 
-  /** Whether the tab went while something was waited for. */
   private over(): boolean {
     return this.ended
   }
 
-  /** Take over, or take back. */
   take(): void {
     this.link?.take()
   }
 
-  /** Start, stop or restart it on its host, which has `ANSWER_WITHIN` to say anything. */
   run(what: 'start' | 'stop' | 'restart'): void {
     if (!this.link?.say({ t: 'run', what })) return
     this.unanswered = false
@@ -442,7 +387,6 @@ export class AppSession {
     this.link?.resize(view)
   }
 
-  /** The tab has gone: the socket with it, and the application goes on. */
   end(): void {
     this.ended = true
     this.turn += 1
@@ -453,7 +397,6 @@ export class AppSession {
   }
 }
 
-/** The id sync gave the file at `path`, waited for while a new one is taken in. */
 export async function find(path: string, until: number): Promise<Found> {
   if (account.user && account.user.syncVersion !== 2) return { none: 'old-sync' }
   const { runner } = await import('../sync2/runner.svelte')
@@ -464,17 +407,14 @@ export async function find(path: string, until: number): Promise<Found> {
   }
 }
 
-/** Every application tab's session, by the tab's id. */
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- a registry; nothing renders from it
 const sessions = new Map<string, AppSession>()
 let watching = false
 
-/** The tab's session if it has one yet, which a hover card asks without making one. */
 export function appSessionIfAny(tab: Tab): AppSession | null {
   return sessions.get(tab.id) ?? null
 }
 
-/** The tab's session, made once; a tab that has gone takes its socket with it. */
 export function appSessionOf(tab: Tab): AppSession {
   if (!watching) {
     watching = true

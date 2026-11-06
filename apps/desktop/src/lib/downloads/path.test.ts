@@ -1,6 +1,3 @@
-/** Where a download's flight starts and lands, and the path it takes (#1048). See
- *  path.ts. */
-
 import { describe, expect, test } from 'vitest'
 import {
   arcOf,

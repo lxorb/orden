@@ -18,7 +18,6 @@ describe('a thought put on the end', () => {
 })
 
 describe('the edit a tab showing it takes', () => {
-  /** The edit, applied. */
   const applied = (before: string, after: string) => {
     const { from, to, insert } = difference(before, after)
     return before.slice(0, from) + insert + before.slice(to)

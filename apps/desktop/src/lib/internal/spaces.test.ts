@@ -1,10 +1,6 @@
 import 'fake-indexeddb/auto'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** New spaces kept by Orden itself (#1068, step 4d): made, listed beside the crate's
- *  folders, renamed, deleted into Recently deleted and back, and moved into and out of,
- *  with a crate in memory standing in for the disk. */
-
 const disk = vi.hoisted(() => {
   const files = new Map<string, string | Uint8Array>()
   const dirs = new Set<string>(['/spaces'])
@@ -172,7 +168,6 @@ vi.mock('../native', () => ({
   },
 }))
 
-/** The system's folder dialog: what opened it, which an agent's command never does. */
 const dialogs = vi.hoisted(() => ({ opened: 0 }))
 vi.mock('@tauri-apps/plugin-dialog', () => ({
   open: () => {
@@ -181,7 +176,6 @@ vi.mock('@tauri-apps/plugin-dialog', () => ({
   },
 }))
 
-// The window's storage, where this device says it keeps new spaces itself.
 const said = new Map<string, string>()
 vi.stubGlobal('localStorage', {
   getItem: (key: string) => said.get(key) ?? null,
@@ -200,7 +194,6 @@ beforeEach(() => {
 })
 
 afterEach(async () => {
-  // Every space let go, and the disk as it was, for the next test.
   for (const space of await call<{ path: string }[]>('list_spaces')) {
     if (space.path.includes('/.orden/')) await call('delete_space', { path: space.path })
   }
@@ -226,11 +219,9 @@ describe('a new space, where this device keeps new spaces itself', () => {
     const stored = [...disk.files.keys()].filter((one) => one.includes('/.entries/'))
     expect(stored).toHaveLength(1)
     expect(disk.files.get(stored[0] ?? '')).toBe('ship it')
-    // A call that reached the crate with a path in the space by mistake: refused.
     expect(() => disk.crate('write_note', { path: `${made.path}/Lost.md`, content: 'x' })).toThrow(
       'is a file',
     )
-    // Named as no space here is.
     expect(await call('create_space', { name: 'Disk' })).toEqual({
       name: 'Disk 2',
       path: '/spaces/.orden/Disk 2/Disk 2',
@@ -246,8 +237,6 @@ describe('a new space, where this device keeps new spaces itself', () => {
   })
 
   test('is found where an earlier session left it, and renamed with nothing in it moving', async () => {
-    // As a session before this one wrote it: a folder, its index, one file's bytes, and
-    // no file at the root - a rename cut short leaves it so.
     const folder = '/spaces/.orden/Plans'
     disk.dirs.add('/spaces/.orden')
     disk.dirs.add(folder)
@@ -321,8 +310,6 @@ describe('a new space, where this device keeps new spaces itself', () => {
 })
 
 describe('a space that is a folder, where this device keeps new spaces itself', () => {
-  /** The workspace, as much of it as a conversion asks: the list, a hold on what is open
-   *  under a folder, and the move said once. */
   function workspace(roots: string[]) {
     const said: string[] = []
     const ws = {
@@ -370,7 +357,6 @@ describe('a space that is a folder, where this device keeps new spaces itself', 
     disk.files.set('/spaces/Notes/.obsidian/plugins.json', 'theirs')
     const before = new Map(disk.files)
     const { ws, said } = workspace(['/spaces/Notes'])
-    // Written while the rest was being copied, before the hold.
     ws.during = () => disk.files.set('/spaces/Notes/Plan.md', 'ship it today')
 
     await convertAll(ws)
@@ -385,21 +371,17 @@ describe('a space that is a folder, where this device keeps new spaces itself', 
       new Uint8Array(await call<ArrayBuffer>('read_file', { path: `${root}/Work/cat.png` })),
     ).toEqual(new Uint8Array([1, 2]))
     expect(await call('path_exists', { path: `${root}/Empty` })).toBe(true)
-    // What says it was a vault, and nothing else of Obsidian's; and its versions with it.
     expect(await call('path_exists', { path: `${root}/.obsidian/app.json` })).toBe(true)
     expect(await call('path_exists', { path: `${root}/.obsidian/plugins.json` })).toBe(false)
     expect(disk.rehomed).toEqual([`/spaces/Notes -> ${root}`])
-    // The folder as it was, bar what was written into it before the hold; and listed no more.
     for (const [path, held] of before) {
       if (path !== '/spaces/Notes/Plan.md') expect(disk.files.get(path)).toEqual(held)
     }
     expect(await call('list_spaces')).toEqual([{ name: 'Notes', path: root }])
-    // And the folder as it was before anything was made of it, whole, where no list sees.
     const backup = [...disk.dirs].find((one) => one.startsWith('/spaces/.orden/.backups/Notes '))
     expect(disk.files.get(`${backup ?? ''}/Plan.md`)).toBe('ship it')
     expect(disk.files.get(`${backup ?? ''}/Work/cat.png`)).toEqual(new Uint8Array([1, 2]))
 
-    // Once: the next launch finds nothing to do, and a delete leaves the folder no space.
     await convertAll(ws)
     expect(said).toHaveLength(1)
     await call('delete_space', { path: root })
@@ -413,7 +395,6 @@ describe('a space that is a folder, where this device keeps new spaces itself', 
     const { ws, said } = workspace(['/spaces/Notes'])
     const write = disk.crate
     disk.crate = (command, args) => {
-      // Every byte written into a kept space's folder comes out wrong.
       if (command === 'write_bytes' && String(args.path).includes('/.entries/')) {
         return write(command, { ...args, base64: 'AA==' })
       }
@@ -600,7 +581,6 @@ describe('making a folder a kept space, whatever happens on the way', () => {
   test('cut short by a crash, is never listed half made, and is made again from the start', async () => {
     const { convertAll } = await import('./convert')
     notes()
-    // As a crash leaves it: the folder begun, half copied, its root never written.
     disk.dirs.add('/spaces/.orden')
     disk.dirs.add('/spaces/.orden/Notes')
     disk.files.set('/spaces/.orden/Notes/.converting', '/spaces/Notes')
@@ -608,7 +588,6 @@ describe('making a folder a kept space, whatever happens on the way', () => {
     expect(await call('list_spaces')).toEqual([{ name: 'Notes', path: '/spaces/Notes' }])
 
     const { ws, said } = workspace('/spaces/Notes')
-    // Twice at once, as two turns of a launch might ask: made once.
     await Promise.all([convertAll(ws), convertAll(ws)])
     const root = '/spaces/.orden/Notes/Notes'
     expect(said).toEqual([`/spaces/Notes -> ${root}`])
@@ -656,13 +635,11 @@ describe('making a folder a kept space, whatever happens on the way', () => {
       new TextEncoder().encode('ship it today'),
     )
     expect(disk.files.get('/spaces/Notes/New.md')).toEqual(new TextEncoder().encode('new'))
-    // Gone from the space, so gone from the folder - into Recently deleted.
     expect(disk.files.has('/spaces/Notes/Work/Old.md')).toBe(false)
     expect(disk.trash.map((one) => one.from)).toEqual([
       '/spaces/Notes/Work/Old.md',
       '/spaces/.orden/Notes',
     ])
-    // Backed up before it was written into, as before it was first made a space.
     const backups = [...disk.dirs].filter((one) =>
       /^\/spaces\/\.orden\/\.backups\/[^/]+$/.test(one),
     )

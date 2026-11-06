@@ -1,8 +1,4 @@
 <script lang="ts">
-  /** A host's mark: the server a remote terminal's tab wears, in the colour Settings
-   *  gave the host, or in the row's own ink where it has none. Every list of hosts
-   *  draws it - the picker, Settings, the palette - so a host is the same shape and the
-   *  same colour wherever it is named. See terminal/TerminalMark.svelte for the tab's. */
   import Server from 'lucide/dist/esm/icons/server.mjs'
   import Icon from '../Icon.svelte'
   import type { Colour } from './hosts'
@@ -19,7 +15,6 @@
 </span>
 
 <style>
-  /* FileMark's box and stroke. */
   .mark {
     display: block;
     width: var(--icon-md);

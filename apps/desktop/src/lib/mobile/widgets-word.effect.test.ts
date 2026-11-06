@@ -1,11 +1,6 @@
 import { flushSync } from 'svelte'
 import { expect, test, vi } from 'vitest'
 
-/** The home screen's rows, handed over before the activity has said its word (B456).
- *  The activity drops them and says nothing; taken for drawn, the same rows were never
- *  handed again and the widget stayed as it was. They are handed once the word is
- *  said instead. */
-
 const said = vi.hoisted(() => {
   let speak: (word: string) => void = () => undefined
   const spoken = new Promise<string>((done) => (speak = done))

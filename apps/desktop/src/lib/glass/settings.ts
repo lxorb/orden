@@ -1,18 +1,3 @@
-/** Glass's own dials, said in code behind the theme's door (see `own` in
- *  theme.svelte.ts).
- *
- *  Windows Terminal is the role model for what is offered: which material, and how much
- *  of the window's colour lies over it, all the way to none of the desk at all. Arc's
- *  theme is the one for the colour: follow what is open, and where nothing open has a
- *  colour, glass's own two (pairs.ts) - one of the pairs it offers, or two of the
- *  reader's own.
- *  What glass adds is the floor: the Opacity dial's track is grey below the least wash
- *  the frame's words read on over the material, and the knob stops there; see tint.ts.
- *
- *  The material and the opacity are a desktop's: where the platform puts nothing behind
- *  the window - a Mac's opaque webview, Linux, a browser, a phone - glass is the frame
- *  taking its colour from what is open, and those rows would turn nothing. */
-
 import { t } from '../i18n.svelte'
 import { isDesktop, platform } from '../tauri'
 import { theme } from '../theme.svelte'
@@ -22,10 +7,8 @@ import { chrome } from './chrome.svelte'
 import { ACCENT_PAIR, DAWN, isOwn, ownOf, PAIRS, shownOf, swatchOf } from './pairs'
 import { DIALS, type Dials } from './tint'
 
-/** The theme's id, which is also the drawer its dials are kept in. */
 const GLASS = 'glass'
 
-/** Each material the row offers, by the word the crate is asked with. */
 const MATERIALS = {
   'mica-alt': 'Mica Alt',
   mica: 'Mica',
@@ -33,15 +16,10 @@ const MATERIALS = {
   clear: 'No blur',
 } as const
 
-/** Whether there is a material to choose: Windows, today (see `hasMaterial` in
- *  theme.svelte.ts), or a window the root says stands on one. */
 function hasMaterial(): boolean {
   return (isDesktop && platform() === 'windows') || chrome.material !== null
 }
 
-/** Glass's dials as they stand: what is tried, else what was kept - read off the kept
- *  drawer too, for a launch whose settings door has not opened yet - else nothing, which
- *  is where each starts. */
 export function glassValues(): Record<string, ThemeValue> {
   const values: Record<string, ThemeValue> = {}
   for (const id of ['material', 'opacity', 'follow', 'tint', 'pair', 'tab', 'content']) {
@@ -135,7 +113,6 @@ export function glassSettings(): ThemeSetting[] {
   ]
 }
 
-/** The dials tint.ts works the frame out with, out of the settings' values. */
 export function dialsOf(values: Record<string, ThemeValue>): Dials {
   const percent = (value: ThemeValue | undefined, initial: number) =>
     Math.min(1, Math.max(0, (typeof value === 'number' ? value : initial * 100) / 100))

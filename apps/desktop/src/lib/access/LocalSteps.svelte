@@ -1,16 +1,4 @@
 <script lang="ts">
-  /** How an agent on this computer is connected (docs/agent-native.md 9.1, 10), for one
-   *  way in of Settings > AI > Access.
-   *
-   *  A client is given one line: Orden's own program as its MCP server, `nib mcp`, which
-   *  asks the reader once, the first time it connects, and is remembered after. The line
-   *  is the client's own way of adding a server - Claude Code's, Codex's, or the JSON
-   *  entry the rest take from a file - with the path of the program that is installed
-   *  here, so it is pasted and not edited.
-   *
-   *  A client somewhere else, or a script, is given a token instead, under Other: made
-   *  here by hand with somebody else's defaults and shown the once, as GitHub shows one;
-   *  Orden keeps only its hash. */
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import Copyable from '../Copyable.svelte'
@@ -22,8 +10,6 @@
 
   const { pane, client }: { pane: AgentsPane; client: 'claude-code' | 'codex' | 'other' } = $props()
 
-  /** Each way's line, in the words `mcpLine` writes it in: Other is the entry a client
-   *  takes from a file. */
   const lineOf = (way: typeof client): McpClient =>
     way === 'claude-code' ? 'claude' : way === 'codex' ? 'codex' : 'json'
 
@@ -32,8 +18,6 @@
 
   const line = $derived(pane.program === null ? null : mcpLine(pane.program, lineOf(client)))
 
-  /** Opens the fold, or closes it and the token with it: shown once means gone once it
-   *  is put away, and the fold then makes the next one. */
   function fold() {
     making = !making
     if (making) return
@@ -105,8 +89,6 @@
     color: var(--muted-strong);
   }
 
-  /* The fold, as the account connector's: a chevron that turns, and the words beside
-     it. See AccountSteps.svelte. */
   .disclose {
     display: inline-flex;
     align-items: center;

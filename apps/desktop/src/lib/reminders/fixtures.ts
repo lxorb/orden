@@ -1,5 +1,3 @@
-/** Rows out of words, for the reminders' tests: a note read the way the rows read one. */
-
 import type { Row } from '@orden/bases'
 import { rowsOf } from '@orden/bases/rows'
 import { scanNote } from '@orden/scan/note'

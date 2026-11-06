@@ -2,9 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { type InternalBytes, InternalFolder, type InternalWorld } from './folder'
 import { MemoryBytes, sharedWindows } from './memory'
 
-/** A space Orden keeps itself (#1068, step 4c): every file's bytes under a key that never
- *  changes, one index saying where each is, and every change said by what made it. */
-
 function world(over: Partial<InternalWorld> = {}): InternalWorld {
   let keys = 0
   let clock = 1000
@@ -57,7 +54,6 @@ describe('a folder Orden keeps', () => {
     await expect(folder.move('A', 'A/In')).rejects.toThrow('into itself')
     await expect(folder.move('B.md', 'A/x.md')).rejects.toThrow('already')
     await expect(folder.move('Nope.md', 'Yes.md')).rejects.toThrow('nothing')
-    // Only its case changed, on a disk that compares names without it: the same file.
     await folder.move('B.md', 'b.md')
     expect((await folder.list()).map((one) => one.path)).toEqual(['A', 'A/x.md', 'b.md'])
   })
@@ -75,7 +71,6 @@ describe('a folder Orden keeps', () => {
       ['Ship.md', 'k1.md'],
     ])
 
-    // The next write is lost halfway: the slot it was going to is gone, the other stands.
     bytes.failSlots = true
     await expect(again.move('Ship.md', 'Lost.md')).rejects.toThrow()
     bytes.failSlots = false
@@ -158,7 +153,6 @@ describe('a folder Orden keeps', () => {
     await windows.settled()
     expect(await one.at('Plan.md')).toBeNull()
     expect((await one.at('Ship.md'))?.key).toBe('k1.md')
-    // The first window's next change starts from the index the second wrote.
     await one.write('More.md', 'more')
     expect((await opened(bytes)).atNow('Ship.md')).not.toBeNull()
     expect(heard).toContain('created')

@@ -1,9 +1,4 @@
 <script lang="ts">
-  /** The mark on another sync tool's copy: a cloud struck through, in the voice of the
-   *  marks beside it, and the row it is on drawn faint the way a row left out of the
-   *  space is. The file is the person's and stays; Orden only says it does not carry it.
-   *  Which tool made it is in the tooltip, because that is who to ask about it. See
-   *  @orden/sync-core/foreign and docs/sync.md "Other sync tools". */
   import { foreignCopy } from '@orden/sync-core/foreign'
   import CloudOff from 'lucide/dist/esm/icons/cloud-off.mjs'
   import { t } from '../i18n.svelte'
@@ -25,14 +20,10 @@
 {/if}
 
 <style>
-  /* Nothing of its own to draw: the mark sits in the row's slot as if it were bare. */
   .foreign {
     display: contents;
   }
 
-  /* The name and its mark in front of it, faint as `.row.is-left-out` in Tree.svelte
-     and for the same reason: there to open, and quietly not part of what the space
-     says about itself. The row itself is the themes package's, hover and all. */
   :global(:is(.nib-row-label, :has(+ .nib-row-label)):has(~ .foreign)) {
     opacity: 0.5;
   }

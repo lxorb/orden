@@ -1,15 +1,5 @@
-/** Whether a space is an Obsidian vault: `.obsidian` at its root, which Obsidian makes
- *  with its settings in it the first time it opens a folder. In a vault a task's `📅` is
- *  the Tasks plugin's due date, a deadline; in a space of Orden's own it is a start date
- *  (#371, `@orden/markdown/task-dates`).
- *
- *  Asked of the files Obsidian always writes there, by whether they are there - nothing
- *  in the app lists a hidden folder - once per root, and answered no where none can be read: the
- *  web app's spaces, a space Orden made. */
-
 import { invoke, joinPath } from '../tauri'
 
-/** What Obsidian writes into `.obsidian` of every vault it opens. */
 const SETTINGS = ['app.json', 'workspace.json', 'core-plugins.json']
 
 const asked = new Map<string, Promise<boolean>>()
@@ -17,7 +7,6 @@ const asked = new Map<string, Promise<boolean>>()
 export function isVault(root: string): Promise<boolean> {
   let found = asked.get(root)
   if (!found) {
-    // A stamp rather than the words: nothing in it is read, only whether it is there.
     found = Promise.all(
       SETTINGS.map((name) =>
         invoke<unknown>('file_stamp', { path: joinPath(root, `.obsidian/${name}`) }).catch(

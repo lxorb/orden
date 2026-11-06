@@ -1,36 +1,15 @@
-/** Which colour something open stands on, out of what it says and what it shows.
- *
- *  Three sources, in the order Safari reads a page: the colour the page names for its
- *  browser, the colour along its top edge, and - where the top is a picture - the still
- *  of the page the window already took as it landed. And for a page that has said
- *  nothing yet, or a note, the colour of its mark: the dominant colour of a favicon or a
- *  cover, the way Vivaldi takes its accent from a site.
- *
- *  Pure: colours and pixels come in, so the page reader, the drive and the tests ask the
- *  same question. See colours.test.ts. */
-
 import { luminance, type Rgb, rgbOf } from '../legibility'
 
-/** What a page says about itself, as web_tint.rs reads it (and reading.ts in a browser). */
 export interface PageSaid {
-  /** `<meta name="theme-color">`, the one whose `media` matches, or empty. */
   theme: string
-  /** The colour at three points along the top edge; empty where it is a picture. */
   top: string[]
-  /** Whether a picture is what the top edge shows somewhere. */
   pictured: boolean
 }
 
-/** How opaque a colour must be to be a ground. A page that names a see-through colour
- *  for its bar is asking for a bar that shows what is behind it, which the frame cannot
- *  be over a page that is drawn by another process; it is read as saying nothing. */
 const SOLID = 0.9
 
-/** How far apart two readings may be, per channel, and still be one colour: an
- *  antialiased border or a shade of difference a reader cannot see. */
 const SAME = 12
 
-/** The colour a stylesheet or a canvas wrote, if it is solid enough to stand on. */
 export function solid(said: string): Rgb | null {
   const text = said.trim().toLowerCase()
   const colour = rgbOf(text)
@@ -46,8 +25,6 @@ function near(one: Rgb, two: Rgb): boolean {
   return one.every((channel, at) => Math.abs(channel - (two[at] ?? 0)) <= SAME)
 }
 
-/** The colour most of the readings agree on - two of three is enough, the middle one
- *  first - or null where they disagree. */
 export function agreed(readings: readonly (Rgb | null)[]): Rgb | null {
   const found = readings.filter((one): one is Rgb => one !== null)
   const middle = readings[Math.floor(readings.length / 2)] ?? null
@@ -58,32 +35,22 @@ export function agreed(readings: readonly (Rgb | null)[]): Rgb | null {
   return null
 }
 
-/** How colourful a pixel is: the spread of its channels, 0 for a grey. */
 function chroma(r: number, g: number, b: number): number {
   return Math.max(r, g, b) - Math.min(r, g, b)
 }
 
-/** Under this spread a colour reads as a grey. */
 const GREY = 32
 
-/** Where black ink and white ink read equally well: lighter than this is a light ground. */
 const MIDDLE = 0.179
 
 function light(colour: Rgb): boolean {
   return luminance(colour) > MIDDLE
 }
 
-/** A theme colour that is a grey of the other lightness from what the page paints along
- *  its top: a mode the page did not keep up with, not a colour it chose. YouTube in the
- *  dark names a white bar over a black page, react.dev in the light a black one over
- *  white (lxorb, issue #238). A colour with a hue in it is a brand's, and stands. */
 function stale(named: Rgb, top: Rgb): boolean {
   return chroma(...named) < GREY && light(named) !== light(top)
 }
 
-/** What a page's own words say it stands on, or null where only its picture can say.
- *  The theme colour first, unless it is stale; the top edge where every point is a
- *  colour and most agree. */
 export function groundSaid(said: PageSaid): Rgb | null {
   const named = solid(said.theme)
   const top = said.pictured ? null : agreed(said.top.map(solid))
@@ -91,11 +58,8 @@ export function groundSaid(said: PageSaid): Rgb | null {
   return top && stale(named, top) ? top : named
 }
 
-/** Pixels as a canvas hands them over: four bytes a pixel, red first. */
 export type Pixels = ArrayLike<number>
 
-/** Each channel's top four bits: sixteen levels, so a gradient's neighbours and a
- *  JPEG's noise fall in one bucket. */
 function bucketOf(r: number, g: number, b: number): number {
   return ((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4)
 }
@@ -108,8 +72,6 @@ interface Tally {
   count: number
 }
 
-/** Counts pixels into buckets, each weighed by `weigh`, and answers the heaviest
- *  bucket's average colour with its share of every pixel counted. */
 function heaviest(
   pixels: Pixels,
   weigh: (r: number, g: number, b: number) => number,
@@ -118,7 +80,6 @@ function heaviest(
   let counted = 0
 
   for (let at = 0; at + 3 < pixels.length; at += 4) {
-    // A pixel mostly see-through is the shape's edge or the space round it.
     if ((pixels[at + 3] ?? 0) < 128) continue
     const r = pixels[at] ?? 0
     const g = pixels[at + 1] ?? 0
@@ -151,9 +112,6 @@ function heaviest(
   }
 }
 
-/** The colour a mark is - a favicon, a cover - as a person would name it: the most
- *  common colourful one, weighed by how colourful, so a red logo on white is red and
- *  not white. A mark with no colour in it at all is its most common grey. */
 export function dominant(pixels: Pixels): Rgb | null {
   const coloured = heaviest(pixels, (r, g, b) => {
     const spread = chroma(r, g, b)
@@ -162,21 +120,14 @@ export function dominant(pixels: Pixels): Rgb | null {
   return coloured?.colour ?? heaviest(pixels, () => 1)?.colour ?? null
 }
 
-/** How much of a strip one colour has to be for the strip to be that colour. */
 const MOSTLY = 0.6
 
-/** The colour a strip of a page's picture is, read off its top rows: one colour across
- *  most of it, or for a picture too busy to have one, what it all comes to, which is at
- *  least as dark or as light as the picture is. A dark hero image under a dark site's
- *  header used to leave the frame to the site's mark, toned into the reader's own
- *  scheme: a light frame over a dark page (issue #238). Null with nothing to count. */
 export function stripGround(pixels: Pixels): Rgb | null {
   const most = heaviest(pixels, () => 1)
   if (!most) return null
   return most.share >= MOSTLY ? most.colour : average(pixels)
 }
 
-/** Every pixel that is not see-through, averaged. */
 function average(pixels: Pixels): Rgb | null {
   const sum = [0, 0, 0]
   let counted = 0

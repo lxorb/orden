@@ -1,9 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { pageSheet } from './page-sheet'
 
-/** A theme on a published page, which follows the reader's system until they press
- *  the button in its bar, and never says so with `data-theme` while it does. */
-
 const light = 'color-scheme: light; --bg: #faf6ee;'
 const dark = 'color-scheme: dark; --bg: #1c1814;'
 

@@ -1,34 +1,16 @@
-/** Finding words in a note that is being read.
- *
- *  Ours rather than the browser's, because there is no browser's to reach: a
- *  Tauri webview has no find bar and no way to ask for one, and `window.find`
- *  moves the selection without showing anything or counting anything. The
- *  editor's own find is CodeMirror's and needs a document; a rendered page has
- *  none.
- *
- *  So the page's words are read once into a string with a note of which text node
- *  each part came from, the places are found in that string, and each one is shown
- *  by selecting it - which is the browser's own highlight, needs nothing drawn,
- *  and leaves the match ready to copy. Reading it as one string is what lets a
- *  match run across a tag: `the **word**` is two nodes and one phrase. */
-
 import { fold } from '@orden/scan/search/match'
 
-/** Where one text node's words start in the page's words. */
 export interface Piece {
   node: Text
   at: number
 }
 
-/** The words of a page, and where each node's share of them begins. */
 export interface Words {
   text: string
   pieces: Piece[]
-  /** The same words lowercased, kept once something has asked. See `placesIn`. */
   folded?: string
 }
 
-/** Every place a needle appears in a haystack, both already lowercased. */
 function scan(haystack: string, needle: string): number[] {
   const found: number[] = []
   for (let at = haystack.indexOf(needle); at !== -1; at = haystack.indexOf(needle, at + 1)) {
@@ -38,29 +20,16 @@ function scan(haystack: string, needle: string): number[] {
   return found
 }
 
-/** Every place `query` appears in `text`, as offsets into it. Case is ignored, the
- *  way every find field in every editor ignores it. Empty for an empty query,
- *  which is a field nobody has typed in yet rather than a search for nothing.
- *
- *  Folded the way search folds, keeping the length: an offset in the folded text
- *  has to be the same offset in the page, and `İ` lowercases into two. */
 export function placesOf(text: string, query: string): number[] {
   if (!query) return []
   return scan(fold(text), fold(query))
 }
 
-/** The same over a page that was read once, which is what the reading view has.
- *
- *  The fold is kept on the words rather than made per call: the page is read once
- *  per render and the query changes once per keystroke, so lowercasing a long page
- *  per letter typed is the one cost in a find bar that scales with the document. */
 export function placesIn(words: Words, query: string): number[] {
   if (!query) return []
   return scan((words.folded ??= fold(words.text)), fold(query))
 }
 
-/** Which piece an offset falls in, and how far into that piece it is. Null when
- *  the offset is past the end of the words, which nothing should ask for. */
 export function locate(
   pieces: readonly Piece[],
   offset: number,
@@ -85,7 +54,6 @@ export function locate(
   return found ? { piece: found, into: offset - found.at } : null
 }
 
-/** The words of everything under `root`, in reading order. */
 export function wordsOf(root: HTMLElement): Words {
   const walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT)
   const pieces: Piece[] = []
@@ -104,8 +72,6 @@ export function wordsOf(root: HTMLElement): Words {
   return { text: parts.join(''), pieces }
 }
 
-/** The match at `offset` as a range in the page, or null when the words have
- *  moved since they were read. */
 export function rangeOf(words: Words, offset: number, length: number): Range | null {
   const start = locate(words.pieces, offset)
   const end = locate(words.pieces, offset + length)
@@ -118,20 +84,8 @@ export function rangeOf(words: Words, offset: number, length: number): Range | n
   return range
 }
 
-/** What each page has painted under each of the registry's names. */
 const painted = new Map<string, Map<object, readonly Range[]>>()
 
-/** Paints a set of ranges under one of the registry's names, or takes the name
- *  down when there is nothing to paint.
- *
- *  Painted rather than selected. Selecting a match is the obvious way to show it
- *  and the wrong one: an input holds its caret in the same selection the page
- *  does, so moving it leaves the find field with nowhere to type - the second
- *  letter of a query never arrives. A highlight is the browser's own paint over a
- *  range and touches neither the caret nor what a reader has selected to copy.
- *
- *  Per `owner`, because the name is the theme's and so one for every pane: two
- *  pages finding at once each replace only their own share of it. */
 export function paint(owner: object, name: string, ranges: readonly Range[]): void {
   const owners = painted.get(name) ?? new Map<object, readonly Range[]>()
   if (ranges.length) owners.set(owner, ranges)

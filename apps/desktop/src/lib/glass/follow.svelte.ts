@@ -1,15 +1,3 @@
-/** Glass following what is open: which colour is in front, worked out and worn.
- *
- *  Behind a door glass alone opens (see chrome.svelte.ts). One effect reads what is in
- *  front - the tab, its page's ground or mark, a note's cover or icon colour, the accent
- *  - with the scheme and the material, and hands chrome.svelte.ts the answer. It runs
- *  when one of those changes: a tab switch, a page landing, a scheme or a material
- *  changing. Never on a frame, and nothing it reads moves on one.
- *
- *  A page's ground is read when the page lands or moves (`landed`), a quarter of a second
- *  after the last such news, and kept per address so a tab opened again is its colour at
- *  once (grounds.ts). */
-
 import { glassCss } from '@orden/themes/glass'
 import { untrack } from 'svelte'
 import { accentColour } from '../accents'
@@ -31,21 +19,12 @@ import { dialsOf, glassValues } from './settings'
 import { type Stops, stopsOf } from './pairs'
 import { barFor, frameFor, type Material, pairFor, type Sides, type Source } from './tint'
 
-/** How long after a page's last news it is read: a page lands, then names itself, then
- *  shows its mark, all in the same breath. */
 const SETTLES = 250
 
-/** How long after its first read a page is asked once more: an app that draws itself
- *  after it has loaded - Spotify's player, Proton's pages, which name their colour from
- *  script - has nothing of its own along its top yet, and was left in its mark's colour or
- *  the bare canvas's white, a light or grey frame over a dark page (issue #238). Three
- *  style lookups in the page; a page that said the same twice changes nothing. */
 const LATER = 1500
 
-/** A mark is counted at this size: a favicon's own, and plenty for a cover's colour. */
 const MARK = { width: 24, height: 24 }
 
-/** Glass's two sides, read out of its sheet once. */
 const SIDES: Sides | null = (() => {
   const names = { scrim: '--glass-chrome', layer: '--glass-layer' }
   const dark = paletteOf(glassCss, 'dark', names)
@@ -53,12 +32,10 @@ const SIDES: Sides | null = (() => {
   return dark && light ? { dark, light } : null
 })()
 
-/** The colour of each mark asked about, by its address; null for one that has none. */
 const marks = $state<Record<string, string | null>>({})
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping nothing draws
 const asking = new Set<string>()
 
-/** A mark's colour, asked for the first time it is wanted and read when it arrives. */
 function markColour(src: string | null): Rgb | null {
   if (!src) return null
   const said = marks[src]
@@ -73,33 +50,25 @@ function markColour(src: string | null): Rgb | null {
   return null
 }
 
-/** What the window stands on behind the frame. */
 function materialOf(said: string | null): Material {
   return said === 'mica' || said === 'acrylic' || said === 'clear' ? said : null
 }
 
-/** The paper the window is painted with where nothing is behind it. */
 function paper(): Rgb {
   const said = getComputedStyle(document.documentElement).getPropertyValue('--bg')
   return rgbOf(said) ?? (chrome.app === 'dark' ? [14, 16, 19] : [251, 252, 253])
 }
 
-/** A tab's address, for its ground kept by address and its mark. Asked without making
- *  a page for a tab that has none open. */
 function addressOf(tab: string, written: string | undefined): string | null {
   return pages.addressOf(tab) ?? written ?? null
 }
 
-/** What a tab's page stands on now: what it said here, or what this device saw here
- *  before, or while it loads somewhere new, what it said last (`grounds.last`). */
 function groundNow(tab: string, address: string | null): Rgb | null {
   return grounds.of(tab, address) ?? (pages.loadingOf(tab) ? grounds.last(tab) : null)
 }
 
-/** Each tab's read, waiting for its page to settle. */
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping nothing draws
 const waiting = new Map<string, ReturnType<typeof setTimeout>>()
-/** Which tab and address the effect has asked to be read, so it asks once. */
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping nothing draws
 const askedFor = new Set<string>()
 
@@ -110,8 +79,6 @@ function askOnce(tab: string, address: string | null): void {
   landed(tab)
 }
 
-/** The paper's inks in the reader's own scheme, which is the scheme a note is in: glass's
- *  stronger greys, and the app's own paper and link. Read once per scheme and accent. */
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping nothing draws
 const inked = new Map<string, PaperInks>()
 function inksOf(sides: Sides): PaperInks {
@@ -132,9 +99,6 @@ function inksOf(sides: Sides): PaperInks {
   return inks
 }
 
-/** What is in front, as the colour the frame takes: a page's own, a site's mark while
- *  its page has said nothing, and everywhere else - or everywhere, with the frame not
- *  following - glass's own pair. */
 function sourceOf(sides: Sides): Source | Stops {
   const tab = workspace.active
   const values = glassValues()
@@ -144,9 +108,6 @@ function sourceOf(sides: Sides): Source | Stops {
   if (tab?.kind === 'web') {
     const address = addressOf(tab.id, tab.address)
     const page = pages.of(tab.id)
-    // A page in front that has finished loading and not been read where it is - one
-    // that landed before glass was listening, or whose landing went unheard - is read
-    // now, once for each address. A browser's frame says so itself as it loads.
     if (isDesktop && !page.loading && !grounds.heard(tab.id, address)) askOnce(tab.id, address)
 
     const ground = groundNow(tab.id, address)
@@ -159,8 +120,6 @@ function sourceOf(sides: Sides): Source | Stops {
   return pair()
 }
 
-/** Every web tab whose page has said what it stands on, with its bar: none while the
- *  tab is not to take the page's colour. */
 function barsOf(sides: Sides): Record<string, Ground> {
   const bars: Record<string, Ground> = {}
   if (glassValues().tab === false) return bars
@@ -174,12 +133,10 @@ function barsOf(sides: Sides): Record<string, Ground> {
 
 let stop: (() => void) | null = null
 
-/** Starts following, once; it stops of its own accord while glass is not worn. */
 export function follow(): void {
   if (stop || !SIDES) return
   const sides = SIDES
 
-  // Pages already open when glass is put on have landed before anyone was listening.
   for (const [tab] of pages.each()) landed(tab)
 
   stop = $effect.root(() => {
@@ -196,7 +153,6 @@ export function follow(): void {
         material ? inksOf(sides) : null,
       ] as const
       const frame = 'page' in source ? frameFor(source, ...around) : pairFor(source, ...around)
-      // The Content row's level over the floors; paper on paper is the paper itself.
       const level = material ? contentOf(glassValues().content) : 'opaque'
       const laid = alphaFor(level, frame.paper)
       const worn = {
@@ -209,7 +165,6 @@ export function follow(): void {
       }
       const bars = barsOf(sides)
       const tab = workspace.active?.id ?? null
-      // What was worn last is compared rather than followed.
       untrack(() => {
         chrome.floor = frame.floor
         chrome.wear(worn, bars, tab)
@@ -218,8 +173,6 @@ export function follow(): void {
   })
 }
 
-/** A page's ground, read and said; and `again`, read once more a moment later unless
- *  the page has landed somewhere else meanwhile, which is read on its own. */
 function read(tab: string, again: boolean): void {
   if (!chrome.on) return
   const written = workspace.tabs.find((one) => one.id === tab)?.address
@@ -234,7 +187,6 @@ function read(tab: string, again: boolean): void {
   })
 }
 
-/** A page has landed or moved: its ground is read once it has settled. */
 export function landed(tab: string): void {
   clearTimeout(waiting.get(tab))
   waiting.set(

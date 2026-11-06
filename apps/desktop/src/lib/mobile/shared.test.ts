@@ -16,14 +16,6 @@ import {
 } from './shared'
 import { plain } from '../views/inline'
 
-/** What another app hands Orden, and what that becomes.
- *
- *  Everything crossing the bridge is a string written by Kotlin, so the first
- *  half of this is about strings that are not what they claim to be: a page that
- *  believed one would write a note called `undefined` holding `[object Object]`.
- *  The second half is the answer itself - where the words go, where the pictures
- *  go, and what the front matter says about where it all came from. */
-
 function item(one: Partial<SharedItem>): SharedItem {
   return { name: '', mime: '', size: 0, text: null, ...one }
 }
@@ -68,7 +60,6 @@ describe('what the activity said', () => {
     expect(arrivedFrom('null')).toBe(null)
     expect(arrivedFrom('[]')).toBe(null)
     expect(arrivedFrom('{"items":[]}')).toBe(null)
-    // An item with neither words nor bytes is not a thing that was shared.
     expect(arrivedFrom('{"items":[{"name":"a.png","size":0}]}')).toBe(null)
   })
 
@@ -90,7 +81,6 @@ describe('what each thing is', () => {
     expect(isPicture(item({ mime: 'image/jpeg' }))).toBe(true)
     expect(isPicture(item({ name: 'holiday.JPG', mime: 'application/octet-stream' }))).toBe(true)
     expect(isPicture(item({ name: 'report.pdf', mime: 'application/pdf' }))).toBe(false)
-    // Words are never a picture, whatever they are called.
     expect(isPicture(item({ name: 'a.png', text: 'not really' }))).toBe(false)
   })
 
@@ -156,8 +146,6 @@ describe('a share as a task', () => {
     expect(renderMarkdown(line)).toContain('Prices $5-$10 ~5 min</li>')
   })
 
-  /** What the task reader takes back out of the line the share became: the words,
-   *  and none of them read as a tag, a date, a priority, a recurrence or a field. */
   test('no word of it is read as a field of the task', () => {
     for (const said of [
       'Read later #tips',
@@ -324,7 +312,6 @@ describe('what a share becomes', () => {
       'assets',
     )
 
-    // No note about it: the thing shared was already a note.
     expect(plan.files).toEqual([{ kind: 'note', path: 'Kit list.md', text: '# Kit\n\nA tent' }])
   })
 
@@ -357,7 +344,6 @@ describe('what a share becomes', () => {
     expect(text).toContain('What we need')
     expect(text).toContain('![](assets/tent.png)')
     expect(text).toContain('[route.pdf](assets/route.pdf)')
-    // No address in it, so nothing claims a source.
     expect(text).not.toContain('source:')
   })
 

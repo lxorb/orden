@@ -1,18 +1,3 @@
-/** What the phone hands the page, and what the page does about it.
- *
- *  Three things arrive from outside the app on Android: something another app
- *  shared, a quick settings tile pressed, and a widget row tapped. All three come
- *  in as one intent, are read by `MainActivity` and wait there until the page asks
- *  - because the usual case is a launch, where the page does not exist yet.
- *
- *  A tile and a widget carry the id of a command in the app's own registry and
- *  nothing else. That is the whole of the wiring: the row the home screen offers
- *  and the row the palette offers are the same row, so one cannot drift from the
- *  other, and an id nothing answers to does nothing at all - which is what keeps
- *  the recorder's tile inert until the recorder lands.
- *
- *  What a share becomes is next door, in shared.ts. */
-
 import { attachmentFolder } from '../attachments'
 import { busy } from '../busy.svelte'
 import { fromBase64 } from '../bytes'
@@ -42,17 +27,10 @@ import {
 } from './shared'
 import { watchWidgets } from './widgets.svelte'
 
-/** How much of a shared file to carry over at once. A photograph is megabytes and
- *  every one of them costs a third again as base64 on the way across, so it comes
- *  in slices with a breath between them rather than as one string that stops the
- *  page while it is built. */
 const SLICE = 256 * 1024
 
-/** How much of what arrived the sheet shows, so the reader can see which share
- *  they are answering about. */
 const SHOWN = 160
 
-/** Where a tile or a widget row asked to go, and the task a Today box asked to tick. */
 interface Asked {
   command: string
   open: string
@@ -60,13 +38,8 @@ interface Asked {
   tickSpace: string
 }
 
-/** The commands a tile or a widget row sends (Tiles.kt, Widgets.kt, TodayWidget.kt),
- *  and the only ones a press runs. The activity is exported and opens on a `nib://`
- *  link, so a web page could name any id in the registry: one tap started dictation
- *  or signed the reader out. test/android.test.ts holds the senders to this list. */
 export const HANDED: ReadonlySet<string> = new Set(['new', 'search-space', 'record', 'quick-add'])
 
-/** Reads what the activity said about the press that started this. */
 export function askedFrom(json: string): Asked {
   const nothing: Asked = { command: '', open: '', tick: '', tickSpace: '' }
   if (!json) return nothing
@@ -90,11 +63,6 @@ export function askedFrom(json: string): Asked {
   }
 }
 
-/** Runs one of the app's own commands by id, and answers whether there was one.
- *
- *  The registry as the palette reads it, view and all, so a tile gets the row's
- *  own behaviour including its refusal: a command that is greyed out in the
- *  palette does nothing from a tile either. */
 function run(id: string): boolean {
   if (!id) return false
 
@@ -106,13 +74,6 @@ function run(id: string): boolean {
   return true
 }
 
-/** The note a widget row named, if it named one this app has any business
- *  opening.
- *
- *  A widget row hands back a path on disk, and the activity that carries it is
- *  exported: anything on the phone can send that intent, so the path is judged
- *  against the spaces before it reaches the disk. Refused quietly on screen and
- *  in the log, because the reader did not ask for whatever this was. */
 export function openable(said: string): string | null {
   const found = insideAnyOf(
     workspace.spaces.map((one) => one.root),
@@ -123,16 +84,10 @@ export function openable(said: string): string | null {
   return found
 }
 
-/** A take waits for the word; one is enough. */
 let retaking = false
 
-/** Everything one intent was carrying, in the order it matters: the note a widget
- *  row named, then the command a tile asked for, then whatever was shared. */
 async function take(): Promise<void> {
-  // The word, because the bridge is in every frame; see `frameWord`.
   const word = await frameWord()
-  // The activity keeps what it holds until asked with the word: asked again once it
-  // is said, or the share that started the app is never read (B467).
   if (!word) {
     if (!retaking) {
       retaking = true
@@ -150,9 +105,6 @@ async function take(): Promise<void> {
   await taken(word)
 }
 
-/** A box of the Today widget: the task ticked in its note, through the one write path.
- *  An anchor is words anything on the phone could have sent, so it is read as one and
- *  found among the rows of a space the app has, or nothing happens. */
 async function ticked(at: string, space: string): Promise<void> {
   if (!workspace.spaces.some((one) => one.name === space)) return
   const { tickTask } = await import('../task-actions')
@@ -161,7 +113,6 @@ async function ticked(at: string, space: string): Promise<void> {
   })
 }
 
-/** The share, from what the activity holds to what the space holds. */
 async function taken(word: string): Promise<void> {
   const arrived = arrivedFrom(method('shared')?.(word) ?? '')
   if (!arrived) return
@@ -173,9 +124,6 @@ async function taken(word: string): Promise<void> {
     const where = await ask(arrived, root)
 
     if (where === 'kept') {
-      // Nowhere it could go: every space is shared to be read and no note is open
-      // to write in. Letting go of it here would lose it with nothing made, so the
-      // activity keeps it, and the next time the page asks it is offered again.
       answered = false
       log('error', 'shared: no space may be written in, so the share is kept')
     } else if (where === 'here') await intoTheOpenNote(arrived, bytes)
@@ -184,15 +132,10 @@ async function taken(word: string): Promise<void> {
   } catch (error) {
     log('error', `shared: ${error instanceof Error ? error.message : String(error)}`)
   } finally {
-    // Either way the copies in the cache have been answered for. A share nobody
-    // took is a share that was dismissed, which always means do nothing.
     if (answered) method('sharedDone')?.(word)
   }
 }
 
-/** The bytes of everything that came over as a file, by where it sat in the
- *  share. Asked for in slices, yielding between them, so a photograph does not
- *  hold the page still while it crosses. */
 async function carried(arrived: Arrived, word: string): Promise<Map<number, Uint8Array>> {
   const read = method('sharedBytes')
   const held = new Map<number, Uint8Array>()
@@ -213,7 +156,6 @@ async function carried(arrived: Arrived, word: string): Promise<Map<number, Uint
 
       parts.push(bytes)
       got += bytes.length
-      // A turn of the event loop, so the page can draw between two slices.
       await waited()
     }
 
@@ -232,10 +174,6 @@ async function carried(arrived: Arrived, word: string): Promise<Map<number, Uint
   return held
 }
 
-/** The space a new note from a share goes into: the open one where it may
- *  be written in, else the first that may, as a PDF from outside is (pdf/arrival.ts),
- *  else none. Never one shared with this account to be read, which the sync refuses
- *  on every pass. Fetched, as sharing.svelte.ts reads the workspace. */
 async function landing(): Promise<string | null> {
   const { canWriteAt } = await import('../sharing.svelte')
   const open = workspace.activeSpace?.root
@@ -243,13 +181,6 @@ async function landing(): Promise<string | null> {
   return workspace.spaces.find((one) => canWriteAt(one.root))?.root ?? null
 }
 
-/** Which way this share should land, null for none, or kept where it has nowhere to go.
- *
- *  Asked only where there is a choice: a note open to write in, for a share that is
- *  nothing but words and pictures, which are the two things that can go into a note
- *  that already exists; and a task in the inbox, for a share that is words alone (a
- *  link, a sentence). Anything else makes its own note without asking, because there
- *  is nothing to choose between. */
 async function ask(
   arrived: Arrived,
   root: string | null,
@@ -259,7 +190,6 @@ async function ask(
   const fits = arrived.items.every((one) => one.text !== null || isPicture(one))
   const into = tab?.kind === 'note' && !!view && !view.state.readOnly && fits ? tab : null
   const words = arrived.items.every((one) => one.text !== null)
-  // With no space to make a note or a task in, the open note is the only way in.
   if (root === null && !into) return 'kept'
   if (root !== null && !into && !words) return 'new'
 
@@ -277,15 +207,11 @@ async function ask(
   return null
 }
 
-/** A line in the reader's one inbox (rows/home.svelte.ts), the share's title linked to
- *  where it came from. */
 async function asATask(arrived: Arrived) {
   const { addTask } = await import('../task-actions')
   await addTask(sharedTask(arrived), { typed: false })
 }
 
-/** What arrived, in one line, so the question is about something the reader can
- *  see. Their own words and their own file names, so nothing here is translated. */
 function summary(arrived: Arrived): string {
   const words = sharedWords(arrived).replace(/\s+/g, ' ').trim()
   if (words) return words.length > SHOWN ? `${words.slice(0, SHOWN)}…` : words
@@ -296,16 +222,11 @@ function summary(arrived: Arrived): string {
     .join(', ')
 }
 
-/** A note of its own, written the way an import is written, in the space `landing`
- *  chose: never one shared with this account to be read, which the import itself
- *  refuses too. */
 async function intoANewNote(
   arrived: Arrived,
   bytes: ReadonlyMap<number, Uint8Array>,
   root: string,
 ) {
-  // Where the pictures and the files go, which is the reader's own Attachments
-  // setting, worked out for the note this is about to write.
   const folder = attachmentFolder(
     modes.attachments,
     joinPath(root, `${sharedTitle(arrived)}.md`),
@@ -317,14 +238,10 @@ async function intoANewNote(
 
   const landed = await busy.run(t('Importing'), () => applyImport(plan, { root, folder: '' }))
 
-  // The note is first in the plan, so it is the first path back - a page note, where
-  // what was shared is a PDF on its own.
   const first = landed.paths[0]
   if (first) await workspace.openEntry(first)
 }
 
-/** Into the note in front of somebody: the words at the caret, and each picture
- *  stored and drawn exactly as a paste of it would be. */
 async function intoTheOpenNote(arrived: Arrived, bytes: ReadonlyMap<number, Uint8Array>) {
   const view = views.of(workspace.panes.focusedId)
   if (!view) return
@@ -336,25 +253,16 @@ async function intoTheOpenNote(arrived: Arrived, bytes: ReadonlyMap<number, Uint
     const held = bytes.get(at)
     if (item.text !== null || !held?.length) continue
 
-    // Copied on the way into the `File`, which will only take a view of a buffer
-    // that is certainly not shared. One picture's worth, once.
     const file = new File([new Uint8Array(held)], item.name || 'shared', { type: item.mime })
     await putPicture(view, file)
   }
 }
 
-/** Starts listening for all of it, and answers how to stop.
- *
- *  Nothing is registered anywhere but in the app on a phone: a browser and a
- *  desktop have no activity behind them, and asking for a share there would be
- *  asking an object that is not there. */
 export function startHanded(): () => void {
   if (!onTheActivity()) return () => undefined
 
   const stopWidgets = watchWidgets()
 
-  // An intent that arrives while the app is already open, rather than one that
-  // started it: the activity runs this line and the page comes and asks.
   answer('__nibHanded', () => void take())
   void take()
 

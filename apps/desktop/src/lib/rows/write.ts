@@ -1,20 +1,3 @@
-/** The one write path for rows: a property of a note, a field of a task.
- *
- *  A cell in a table, a card dragged to another column, a box ticked in Today, a date
- *  dragged on the calendar and an agent's `update_task` all come here, and here is the
- *  only place that knows how a change becomes characters (docs/tasks.md 5.12). A
- *  property is a front matter edit (`writeProperty`, `writeList`); a task field is the
- *  engine's smallest edits to its line (`writeTask`). Both are written through
- *  note-text.ts the way a replacement across the space is: an open note takes the edit
- *  as a transaction of its own document, so nothing typed is lost and no caret moves; a
- *  closed one is written with the version before it kept; either way it is one thing to
- *  undo. And the write tells the link index, which tells the rows (`hearSaves`), so the
- *  row a view drew moves in every view at once with nothing said here.
- *
- *  The line a task is on is found again rather than trusted: the note may have been
- *  edited since the row was drawn, so the anchor's line is checked by its words' hash
- *  and, where the words have moved, the nearest line with the same words is the one. */
-
 import type { DateValue, DurationValue, LinkValue, Row, TaskChange, Value } from '@orden/bases'
 import { listAsWritten, noteValues, taskHash, tick, todayOf } from '@orden/bases'
 import { appliedEdits, oneEdit, type TextEdit } from '@orden/markdown/edits'
@@ -32,24 +15,14 @@ import { readTask } from '@orden/markdown/task-line'
 import { changeOf } from '../search/replace'
 import { type HoldsNotes, noteText, replaceInNotes } from '../workspace/note-text'
 
-/** What a write changes: properties of the note (null takes one away), fields of the
- *  task (null takes one away), chips put on or taken off the note's lists, or several. */
 export interface RowChange {
   note?: Record<string, Value | null>
   task?: TaskChange
   list?: Record<string, ListChange>
 }
 
-/** One chip of a list: words typed onto its end, or the member at a place taken off.
- *  Said as the gesture rather than as the list it leaves, because a cell only holds
- *  the members as they are shown - a link as its words, a date as `Today` - and the
- *  list written back has to be the members as the note writes them. */
 export type ListChange = { add: string } | { remove: number }
 
-/** Writes one change to the note a row is in. Answers whether anything was written:
- *  false for a task whose line is no longer in the note, for a change the note
- *  already says, and for a note in a space shared to be read, which the replacement
- *  passes over (note-text.ts) - so a view never draws as done what nothing wrote. */
 export async function writeRow(
   ws: HoldsNotes,
   path: string,
@@ -68,7 +41,6 @@ export async function writeRow(
   return (await replaceInNotes(ws, [changeOf(path, before, [edit])])) > 0
 }
 
-/** The note's words with the change made, or null where the change cannot be made. */
 export function changed(text: string, row: Row, change: RowChange): string | null {
   let after = text
 
@@ -80,7 +52,6 @@ export function changed(text: string, row: Row, change: RowChange): string | nul
 
   for (const [key, edit] of Object.entries(change.list ?? {})) {
     const list = asList(after, key)
-    // A list that cannot be written back whole is refused, never written over.
     if (!list) return null
     const items = listChanged(list.property, edit)
     if (!items) continue
@@ -107,10 +78,6 @@ export function changed(text: string, row: Row, change: RowChange): string | nul
   return after
 }
 
-/** The note with the task whose line starts at `from` ticked, or opened again. Ticking
- *  is the engine's (`tick`): the done date, the open sub-tasks under it, and a recurring
- *  task's next occurrence above it, as one write; see occurrence.ts in @orden/bases. A
- *  task already as asked is left as it is. */
 function ticked(text: string, from: number, done: boolean): string {
   const end = text.indexOf('\n', from)
   const line = text.slice(from, end === -1 ? text.length : end).replace(/\r$/, '')
@@ -118,7 +85,6 @@ function ticked(text: string, from: number, done: boolean): string {
   if (!fields || fields.done === done) return text
 
   const today = todayOf()
-  // A cancelled task done after all is ticked where it stands, nothing else moving.
   if (done && fields.cancelled) {
     const edits = writeTask(line, { done: true, completed: today, cancelledOn: null })
     return appliedEdits(
@@ -129,9 +95,6 @@ function ticked(text: string, from: number, done: boolean): string {
   return appliedEdits(text, tick(text, text.slice(0, from).split('\n').length - 1, today))
 }
 
-/** Where the task an anchor names is now: the line it was on if its words are still
- *  there, else the nearest line with the same words. Null where no line has them. The
- *  span leaves out a line's `\r`, which belongs to the line break. */
 export function taskLine(
   text: string,
   anchor: { line: number; hash: string },
@@ -159,12 +122,6 @@ export function taskLine(
   return null
 }
 
-/** A key of the note's front matter as a list row, and how members are written back
- *  in its place: its members as written, a single value as a list of one, and nothing
- *  for a key the note does not hold. Null for a map, which a chip must not turn into a
- *  list, and for a list in a block the rows cannot draw that cannot be rewritten
- *  without losing something (`listAsWritten`): a chip there is refused rather than
- *  written over the members the cell showed. */
 function asList(
   text: string,
   key: string,
@@ -188,8 +145,6 @@ function asList(
       }),
     }
   }
-  // The key in the note's own spelling where it is in another case, as `writeList`
-  // and `frontMatterEdit` find it: taken as missing, a chip wrote a list of one over it.
   const found = keyCalled(rows, key)
   if (found?.kind === 'map') return null
   if (!found) return whole(empty)
@@ -203,23 +158,15 @@ function asList(
   })
 }
 
-/** The members a chip leaves, or null where it changes nothing. */
 function listChanged(property: Property, edit: ListChange): ListItem[] | null {
   if ('add' in edit) return withItem(property, edit.add)
   if (edit.remove < 0 || edit.remove >= property.items.length) return null
   return listItems(property).filter((_, at) => at !== edit.remove)
 }
 
-/** One property's edit: null where the note already says it, undefined for a value no
- *  front matter line can hold (a map). */
 function propertyEdit(text: string, key: string, value: Value): TextEdit | null | undefined {
   if (value === null) return writeProperty(text, key, null)
   if (Array.isArray(value)) {
-    // Each member as what it is: a number, a yes or no and nothing stay themselves,
-    // where turning them into words would write `[1, 10]` back as `['1', '10']`. And
-    // a member the note already holds is put back as the note wrote it: the value a
-    // row holds for `1.10` or `1234567890123456789` is a number that writes itself
-    // as `1.1` or `1234567890123456800`.
     const kept = keptMembers(text, key)
     return writeList(
       text,
@@ -240,9 +187,6 @@ function propertyEdit(text: string, key: string, value: Value): TextEdit | null 
   return writeProperty(text, key, said, hasKind(value, 'date') ? 'date' : 'text')
 }
 
-/** For a list the note holds under `key`, a lookup from a member's value to that
- *  member as written, each written member handed out once, in order. Nothing for a
- *  key that holds no list. */
 function keptMembers(text: string, key: string): (value: Value) => ListItem | null {
   const list = asList(text, key)?.property
   const values = list ? noteValues(text)[list.key] : undefined
@@ -258,7 +202,6 @@ function keptMembers(text: string, key: string): (value: Value) => ListItem | nu
   }
 }
 
-/** Whether a value is one of the shapes that say what they are by `kind`. */
 function hasKind<K extends 'date' | 'duration' | 'link'>(
   value: Value,
   kind: K,
@@ -266,8 +209,6 @@ function hasKind<K extends 'date' | 'duration' | 'link'>(
   return value !== null && typeof value === 'object' && !Array.isArray(value) && value.kind === kind
 }
 
-/** A value as the words a note writes it in: a link as a wikilink, a date as ISO with
- *  its time, a duration in minutes. Null for a map, which a line cannot hold. */
 function written(value: Value): string | null {
   if (value === null) return ''
   if (typeof value !== 'object') return String(value)

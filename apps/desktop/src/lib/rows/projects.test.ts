@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Each space's projects folder: `Projects` unless the space moved it, following the
- *  folder through a rename and its space through one, and forgotten with its space. */
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 

@@ -1,21 +1,3 @@
-/** The way in, and the row on an embed's own menu.
- *
- *  `record` is one command with one id, and every way of reaching it runs the same
- *  function: the palette, the Paragraph menu, the editor's `/` menu and the quick
- *  settings tile on Android. That is the whole reason this file exists rather than the
- *  store being reached for directly - an id is a thing another surface can call, and a
- *  row that built its own behaviour would be the second answer to the same question.
- *
- *  `Transcribe` is the other: a row on the menu of a recording already in a note,
- *  which sends that file through the Whisper path and writes what came back under the
- *  embed.
- *
- *  Nothing here carries the recorder. The microphone, the container it writes and the
- *  transcriber are a subsystem of their own, and a window that opens on a note has no
- *  use for any of it - so the store is fetched by whichever of the rows above is
- *  pressed, and held once it arrives. What is left here is what a menu needs in order
- *  to draw itself: whether the rows are worth offering, and what they are called. */
-
 import type { EditorView } from '@orden/editor'
 import { embedKind, parseWikilink } from '@orden/markdown/links'
 import { t } from '../i18n.svelte'
@@ -24,17 +6,9 @@ import { isMarkdownPath } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import { canRecordHere } from './container'
 
-/** The recorder, once the row below has woken it.
- *
- *  Held rather than imported, and null until then - which is also the answer to what
- *  the label says before that: nothing can be being recorded while the thing that
- *  records has not been fetched. A plain reference and not a rune, because a menu is
- *  built when it opens rather than watched. */
 type Recorder = (typeof import('./recording.svelte'))['recorder']
 let woken: Recorder | null = null
 
-/** The store, fetched the first time anything asks. The import is held by the module
- *  registry, so the second press is not a second fetch. */
 async function wake(): Promise<Recorder> {
   const { recorder } = await import('./recording.svelte')
   woken = recorder
@@ -42,40 +16,23 @@ async function wake(): Promise<Recorder> {
   return recorder
 }
 
-/** Whether the row is worth offering: a microphone, and a space to write into.
- *
- *  Not "a note open": a recording makes one where there is none, which is the whole
- *  point of a command somebody presses in a hurry. But where something is in front it
- *  has to take the recording: an editor in Read-only mode refuses the embed, and a
- *  space shared to be read refuses the sound stored beside the note, or the note a
- *  recording would make. This stands in for the block rows' own read-only check, so it
- *  asks the same question of the view. */
 export function canRecord(view?: EditorView): boolean {
   const space = workspace.activeSpace
   if (!canRecordHere() || !space || view?.state.readOnly === true) return false
 
   const open = workspace.active
-  // Asked of where the recording will go: a file that is not Markdown gets a new note
-  // in the space; see noteToRecordInto.
   const into = open?.kind === 'note' && open.path && isMarkdownPath(open.path) ? open.path : null
   return canWriteAt(into ?? space.root)
 }
 
-/** What the row says, which is the other half of one command doing two things. */
 export function recordLabel(): string {
   return woken?.on ? t('Stop recording') : t('Record')
 }
 
-/** Whether a `![[…]]` under the pointer names a recording, and what it names. Null for
- *  anything else, which is what keeps the row off the menu for a picture. */
 export function recordingAt(view: EditorView, at: number): string | null {
   const line = view.state.doc.lineAt(at)
   const column = at - line.from
 
-  // Found with a regular expression rather than by walking the syntax tree: the menu
-  // opens at a point, and what that point is inside is a question about the line's own
-  // text. The inner part is read by the package's own parser, so `![[take.weba|Sam]]`
-  // is the same link here as it is to the player.
   for (const match of line.text.matchAll(/!\[\[([^\]\n]*)\]\]/g)) {
     if (column < match.index || column > match.index + match[0].length) continue
 
@@ -88,8 +45,6 @@ export function recordingAt(view: EditorView, at: number): string | null {
   return null
 }
 
-/** Turns the recording an embed names into words, and writes them under it. The reading
- *  and the writing are transcribing.ts, fetched by the press: see that file. */
 export async function transcribeEmbed(view: EditorView, at: number) {
   const target = recordingAt(view, at)
   if (!target) return
@@ -98,7 +53,6 @@ export async function transcribeEmbed(view: EditorView, at: number) {
   await transcribeInto(view, at, target)
 }
 
-/** Starts or stops a recording. The one function the ids run. */
 export async function record() {
   ;(await wake()).toggle()
 }

@@ -1,7 +1,3 @@
-/** An `Inbox.md` Orden made, moved into the space's own inbox (#1044): nothing lost,
- *  nothing twice, the reader's own note never touched, and safe to run again, from two
- *  devices, and with the note changing under it. */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const kept = new Map<string, string>()
@@ -19,7 +15,6 @@ const ROOT = '/spaces/Work'
 const OLD = `${ROOT}/Inbox.md`
 const OWN = `${ROOT}/.Inbox.md`
 
-/** A disk, and what the move did to it. */
 function rig(files: Record<string, string>) {
   const disk = new Map(Object.entries(files))
   const made: string[] = []
@@ -29,7 +24,6 @@ function rig(files: Record<string, string>) {
     disk,
     made,
     trash,
-    /** Something written between the move's first read and its last. */
     then(change: () => void) {
       meanwhile = change
     },
@@ -78,7 +72,6 @@ describe('an Inbox.md Orden made', () => {
     expect(one.disk.get(OWN)).toBe('- [ ] Call the bank\n- [ ] Buy milk\n  oat\n')
     expect(one.disk.has(OLD)).toBe(false)
     expect(one.made).toEqual([OWN])
-    // Recoverable all the same: the delete is one with a version kept.
     expect(one.trash).toEqual([`${OLD}: - [ ] Call the bank\n- [ ] Buy milk\n  oat\n`])
   })
 
@@ -96,7 +89,6 @@ describe('an Inbox.md Orden made', () => {
 
   test('run again, or after a crash between the two writes, adds nothing twice', async () => {
     const one = rig({ [OLD]: '- [ ] Call the bank\n' })
-    // A crash after the own inbox was written and before the note went.
     one.disk.set(OWN, '- [ ] Call the bank\n')
     expect(await moveOldInbox(ROOT, one.moving)).toBe('moved')
     expect(one.disk.get(OWN)).toBe('- [ ] Call the bank\n')
@@ -107,8 +99,6 @@ describe('an Inbox.md Orden made', () => {
   test('brought back by another device, with a task added there, moves that task too', async () => {
     const one = rig({ [OLD]: '- [ ] Call the bank\n' })
     await moveOldInbox(ROOT, one.moving)
-    // An older Orden on another device added a task to the old note, and sync brought
-    // it back: an edit beats a delete.
     one.disk.set(OLD, '- [ ] Call the bank\n- [ ] From the old phone\n')
     expect(await moveOldInbox(ROOT, one.moving)).toBe('moved')
     expect(one.disk.get(OWN)).toBe('- [ ] Call the bank\n- [ ] From the old phone\n')

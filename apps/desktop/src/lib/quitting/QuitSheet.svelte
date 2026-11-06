@@ -1,8 +1,4 @@
 <script lang="ts">
-  /** The question before something running stops; see ask.ts. The prompt's sheet in
-   *  shape and motion (PromptSheet.svelte), with the rows that would stop between the
-   *  line and the buttons: each wears its tab's mark and name, and a press goes to it. */
-
   import { cubicOut } from 'svelte/easing'
   import { fade, scale } from 'svelte/transition'
   import Spark from '../agents/ui/Spark.svelte'
@@ -35,7 +31,6 @@
   const stay = () => quitAsk.answer('stay')
 
   $effect(() => closeOnBack(quitAsk.open, stay))
-  // Escape stays, like every layer's; see overlays.ts.
   $effect(() => (quitAsk.open ? overlays.show(stay) : undefined))
 </script>
 
@@ -80,7 +75,6 @@
         checked={quitAsk.never}
         onchange={(on: boolean) => (quitAsk.never = on)}
       />
-      <!-- Cancel takes the keyboard, so Enter keeps everything running. -->
       <button type="button" class="nib-button is-quiet" data-lands onclick={stay}
         >{t('Cancel')}</button
       >
@@ -92,7 +86,6 @@
 {/if}
 
 <style>
-  /* `.nib-screen` in the themes package; the prompt's width and padding. */
   .sheet {
     --screen-width: var(--screen-ask);
 
@@ -117,8 +110,6 @@
     color: var(--muted-strong);
   }
 
-  /* As many as there are, and a scroll past a screenful rather than a sheet taller
-     than the window. */
   .rows {
     list-style: none;
     margin: 0 calc(var(--row-pad) * -1);
@@ -133,7 +124,6 @@
     white-space: nowrap;
   }
 
-  /* A shell at its prompt, listed because Settings asks about every terminal. */
   .is-idle {
     color: var(--muted);
   }

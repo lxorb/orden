@@ -1,6 +1,3 @@
-/** The Search panel finds a task in the space's own inbox (#1044), which the crate's
- *  walk leaves out with every other hidden file. */
-
 import { expect, test, vi } from 'vitest'
 
 const ROOT = '/spaces/Work'

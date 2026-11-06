@@ -7,10 +7,6 @@ import { MemoryBytes } from './memory'
 import { mountRoot } from './roots'
 import { internalRows } from './rows'
 
-/** A space Orden keeps itself answering the browser build's own file commands (#1068,
- *  step 4c): the same commands, over its folder mounted as rows, so a rename is one line
- *  of its index and what moved keeps its bytes and their key. */
-
 const crate = vi.hoisted(() => ({ calls: [] as { command: string; args: unknown }[] }))
 
 vi.mock('../native', () => ({
@@ -126,7 +122,6 @@ describe('a space Orden keeps, through the file commands', () => {
       item.id,
     ])
 
-    // Something took the name meanwhile: it comes back beside it.
     await webInvoke('create_folder', { path: `${WEB}/Work` })
     expect(await webInvoke('restore_trash', { id: item.id })).toBe(`${WEB}/Work 2`)
     expect(await keyAt(folder, 'Work 2/Plan.md')).toBe(plan)

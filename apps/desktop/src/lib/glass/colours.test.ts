@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { agreed, dominant, groundSaid, solid, stripGround } from './colours'
 
-/** A picture as a canvas hands it over, from a list of pixels. */
 function pixels(...each: [number, number, number, number?][]): number[] {
   return each.flatMap(([r, g, b, a = 255]) => [r, g, b, a])
 }
@@ -78,26 +77,20 @@ describe('what a page says it stands on', () => {
     expect(groundSaid({ theme: '', top: ['#ffffff', '', '#ffffff'], pictured: true })).toBeNull()
   })
 
-  // lxorb, issue #238: glass came out light over dark sites. Read off the sites
-  // themselves on 2026-10-13, through web_tint.rs's own script.
   test('is what it paints where its theme colour is a grey of the other lightness', () => {
-    // YouTube, dark: a near-white bar named over a black page.
     const youtube = {
       theme: 'rgba(255, 255, 255, 0.98)',
       top: ['#000000', '#ffffff', '#000000'],
       pictured: false,
     }
     expect(groundSaid(youtube)).toEqual([0, 0, 0])
-    // react.dev, light: its dark mode's bar named over a white page.
     const react = { theme: '#23272f', top: ['#ffffff', '#ffffff', '#ffffff'], pictured: false }
     expect(groundSaid(react)).toEqual([255, 255, 255])
   })
 
   test('keeps a grey theme colour of the same lightness, and any colour with a hue', () => {
-    // GitHub, dark: a dark bar over a darker page.
     const github = { theme: '#1e2327', top: ['#0d1117', '#0d1117', '#0d1117'], pictured: false }
     expect(groundSaid(github)).toEqual([30, 35, 39])
-    // A brand's blue stands even over a white page.
     const discord = { theme: '#161cbb', top: ['#ffffff', '#ffffff', '#ffffff'], pictured: false }
     expect(groundSaid(discord)).toEqual([22, 28, 187])
   })
@@ -105,8 +98,6 @@ describe('what a page says it stands on', () => {
   test('keeps its theme colour where the top is a picture and cannot say otherwise', () => {
     const linear = { theme: '#08090a', top: ['', '', ''], pictured: true }
     expect(groundSaid(linear)).toEqual([8, 9, 10])
-    // Proton, the owner's example: its violet over its gradient, and over its white page
-    // in the light, since a colour with a hue is the site's own.
     const proton = { theme: '#1b1340', top: ['', '', ''], pictured: true }
     expect(groundSaid(proton)).toEqual([27, 19, 64])
     expect(
@@ -161,7 +152,6 @@ describe("a page's still along its top", () => {
       ...many(40, [0, 0, 200]),
     )
     expect(stripGround(busy)).toEqual([60, 60, 80])
-    // A dark hero image under a header: dark, not left to the site's mark.
     const hero = pixels(
       ...many(25, [10, 10, 12]),
       ...many(25, [40, 20, 20]),

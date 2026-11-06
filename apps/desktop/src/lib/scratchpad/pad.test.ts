@@ -1,19 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The scratchpad's writes, over a disk that is a map. What is here is the one thing
- *  a write must never do: empty the scratchpad because its file would not read. */
-
 const fake = vi.hoisted(() => ({
   disk: new Map<string, string>(),
-  /** Files that are there and will not read: another encoding, or a lock. */
   unreadable: new Set<string>(),
-  /** What a browser keeps through a reload. */
   kept: new Map<string, string>(),
-  /** The page is going: a write begun now never lands. */
   going: false,
-  /** The disk refuses: read-only, or locked. */
   refusing: false,
-  /** The browser's storage is full. */
   full: false,
 }))
 
@@ -28,7 +20,6 @@ vi.mock('../workspace.svelte', () => ({
   workspace: {
     noteText: (path: string) =>
       Promise.resolve(fake.unreadable.has(path) ? null : (fake.disk.get(path) ?? null)),
-    // No tab has the scratchpad open as a note here; see scratchpad-session.effect.test.ts.
     documentAt: () => null,
   },
 }))
@@ -70,7 +61,6 @@ vi.mock('./is.svelte', () => ({ shown: { show: () => undefined } }))
 
 const { scratchpad } = await import('./pad')
 
-/** One launch: the path is asked once per run, and what is left of the last is read then. */
 const launched = async () => {
   vi.resetModules()
   return (await import('./pad')).scratchpad
@@ -100,8 +90,6 @@ describe('words put on the end of the scratchpad', () => {
     expect(fake.disk.get(PAD)).toContain('first')
   })
 
-  /** A file that is there and will not read used to read as an empty scratchpad, and
-   *  the words appended to that were written over everything it held. */
   test('and are refused where it is there and will not read', async () => {
     fake.disk.set(PAD, 'a year of notes')
     fake.unreadable.add(PAD)
@@ -119,12 +107,7 @@ describe('words put on the end of the scratchpad', () => {
   })
 })
 
-/** A write begun as the page goes may never land: a browser does not wait for it, and
- *  WebKit lost the words of a reload made within the pause after the typing (#446). The
- *  scratchpad is in no session, so nothing else held them. */
 describe('words the card is writing down', () => {
-  /** A launch whose card opened on what the disk said, and went as `words` were on their
-   *  way: the write never lands. */
   const wentWriting = async (words: string) => {
     const pad = await launched()
     await pad.editable()

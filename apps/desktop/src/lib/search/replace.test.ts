@@ -3,8 +3,6 @@ import { Matcher } from '@orden/scan/search/match'
 import { parseQuery } from '@orden/scan/search/query'
 import { applied, expand, replaceIn, reverse } from './replace'
 
-/** What the panel does to one note: find, keep the lines that are ticked,
- *  and put the replacement in. */
 function rewrite(body: string, query: string, replacement: string, lines?: number[]) {
   const spans = new Matcher(parseQuery(query)).spans({
     path: '/space/Note.md',
@@ -48,8 +46,6 @@ describe('replacing', () => {
     ])
   })
 
-  /** `task-todo:` on its own answers with a place of no width at each task, so the
-   *  row sits on the task. That is a row to show, not words to replace. */
   test('puts nothing where a filter found no words', () => {
     const body = '- [ ] buy milk\n- [ ] call Ana\nmilk is in the fridge\n'
 

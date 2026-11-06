@@ -1,22 +1,3 @@
-/** What the home screen draws, and who decides it.
- *
- *  A widget is drawn by the launcher in its own process, so it cannot ask the app
- *  anything: what it shows is whatever the page last handed over. Which notes
- *  those are is decided here rather than in Kotlin, because it is a question about
- *  notes - what is kept to hand, what was written in last - and because here it
- *  can be read and tested.
- *
- *  The space's Essentials come first. That is what "open a chosen note" means on the
- *  home screen: the app already has one gesture for keeping a note to hand, and a
- *  picker written in Kotlin would be a second file list in a second language
- *  answering a question the app has already answered. They were the pinned tabs
- *  until the strip lost its pinning (#1041); the Essentials are the kept notes now.
- *
- *  The words are handed over too, not only the rows, so the heading and the line
- *  for a space with nothing in it are in the reader's own language - Android's own
- *  resources cannot reach the page's dictionaries. See res/values/strings.xml for
- *  what stands there before the app has ever run. */
-
 import { shownWords } from '@orden/markdown/escapes'
 import { t } from '../i18n.svelte'
 import { shownName } from '../note-name'
@@ -26,17 +7,13 @@ import { type Entry, workspace } from '../workspace.svelte'
 import { isTile } from '../workspace/bookmarks.svelte'
 import { frameWord, method, wordSaid } from './bridge'
 
-/** As many rows as the layout has; see res/layout/widget_notes.xml. */
 const MOST = 5
 
-/** One row: what it says, and what it opens. */
 export interface WidgetRow {
   name: string
   path: string
 }
 
-/** One task of the Today widget: its words, its anchor and space for the box to tick
- *  it by, and its note's path for the words to open it. */
 export interface TodayRow {
   text: string
   at: string
@@ -44,7 +21,6 @@ export interface TodayRow {
   path: string
 }
 
-/** Everything a widget draws: the notes widget's rows, and the Today widget's. */
 interface WidgetState {
   title: string
   empty: string
@@ -52,8 +28,6 @@ interface WidgetState {
   today: { title: string; empty: string; tasks: TodayRow[] }
 }
 
-/** Today as the widget draws it, from what `list_tasks` answers: the first rows, each
- *  with where its note is on this phone. Pure, like `widgetRows`. */
 export function todayRows(
   tasks: readonly { text: string; at: string; space: string }[],
   rootOf: (space: string) => string | undefined,
@@ -63,7 +37,6 @@ export function todayRows(
     const root = rootOf(one.space)
     const relative = one.at.replace(/#\d+:[0-9a-z]+$/, '')
     return {
-      // The words, not the line: `milk \$3` says `milk $3` on the home screen.
       text: shownWords(one.text),
       at: one.at,
       space: one.space,
@@ -72,11 +45,6 @@ export function todayRows(
   })
 }
 
-/** The rows, in the order they are drawn: the notes being kept to hand first, in the
- *  Essentials' order, then everything else by when it was last written in.
- *
- *  Pure, and given its lists rather than reading them, so what the home screen
- *  will say can be asked without a home screen. */
 export function widgetRows(
   notes: readonly Entry[],
   kept: readonly string[],
@@ -89,8 +57,6 @@ export function widgetRows(
     rows.push({ name: shownName(entry.name), path: entry.path })
   }
 
-  // Lists rather than a map of every note: what is kept open is a handful, and
-  // five rows is the whole answer.
   for (const path of kept) {
     const found = notes.find((one) => one.path === path)
     if (found) add(found)
@@ -101,7 +67,6 @@ export function widgetRows(
   return rows
 }
 
-/** What the app would hand over now, Today's tasks as they were last read. */
 function widgetState(today: TodayRow[]): WidgetState {
   const root = workspace.activeSpace?.root
   const kept = root
@@ -111,21 +76,14 @@ function widgetState(today: TodayRow[]): WidgetState {
   return {
     title: workspace.activeSpace?.name ?? t('Notes'),
     empty: t('Nothing here'),
-    // What the space archived is off the home screen as it is off the file list.
     notes: widgetRows(
       workspace.notes.filter((one) => !workspace.archive.has(one.path)),
       kept,
     ),
-    // No sentence for an empty Today: an empty list with its plus (docs/tasks.md 5.19).
     today: { title: t('Today'), empty: '', tasks: today },
   }
 }
 
-/** Keeps the home screen in step with the space, and answers how to stop.
- *
- *  One line across the bridge whenever what it would draw changes, and nothing at
- *  all when it has not: changing the Essentials changes the list only sometimes, and
- *  a widget redrawn for nothing is a launcher woken for nothing. */
 export function watchWidgets(): () => void {
   const push = method('widgets')
   if (!push) return () => undefined
@@ -134,8 +92,6 @@ export function watchWidgets(): () => void {
   let gone = false
   let today = $state<TodayRow[]>([])
 
-  // Today read again when the rows change, once the typing has stopped: a widget
-  // redrawn for every keystroke is a launcher woken for every keystroke.
   const read = async () => {
     const { listed } = await import('../task-actions')
     const tasks = (await listed()).tasks
@@ -156,14 +112,11 @@ export function watchWidgets(): () => void {
       if (said === last) return
 
       last = said
-      // With the word, since the bridge is in every frame; see `frameWord`. One
-      // promise for the launch, so the rows still arrive in the order they were drawn.
       void frameWord().then((word) => {
         if (word) {
           push(word, said)
           return
         }
-        // Dropped, so not drawn: drawn once the word is said, unless newer rows were.
         if (last === said) last = ''
         void wordSaid().then((known) => {
           if (gone || last) return

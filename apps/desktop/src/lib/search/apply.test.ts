@@ -26,9 +26,6 @@ const changes = (query: string, hits: Hit[], replacement: string) =>
   changesFor(parseQuery(query), hits, replacement, ROOT, textOf)
 
 describe('what a replacement would do', () => {
-  /** The desktop's search reads a website shortcut's words too, and a shortcut is a
-   *  file of `key=value` lines: replacing in one renames its keys or breaks its
-   *  address, and the home, the icon and the page's data are lost on every device. */
   test('never touches a file that is not a note', async () => {
     const made = await changes('nib', [hit('/space/Docs.url', 2)], 'orden')
 

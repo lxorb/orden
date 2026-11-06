@@ -13,9 +13,6 @@ import {
   type SessionWorld,
 } from './session.svelte'
 
-/** An application's tab as it connects (issue 1063): every way it can fail to is said,
- *  and none of them waits for ever - with the account, sync and the relay played here. */
-
 const FILE = JSON.stringify({
   v: 1,
   host: 'device-desktop',
@@ -75,7 +72,6 @@ function world(options: { token?: string | null; found?: Found; looks?: Look[] }
     },
     now: () => clock,
   }
-  /** Moves the clock on, running every timer due by then. */
   async function pass(ms: number) {
     const until = clock + ms
     for (;;) {
@@ -99,7 +95,6 @@ describe('an application tab connecting', () => {
     expect(lookOf(426, 'an application is a websocket')).toBe('open')
     expect(lookOf(401, 'sign in first')).toBe('signed-out')
     expect(lookOf(404, UNKNOWN_APP)).toBe('unknown')
-    // An older server, or the switch off: the route is not there.
     expect(lookOf(404, 'not found')).toBe('unserved')
     expect(lookOf(404, null)).toBe('unserved')
     expect(lookOf(503, null)).toBe('unreachable')
@@ -111,7 +106,6 @@ describe('an application tab connecting', () => {
     await session.start(VIEW)
     expect(session.status).toEqual({ is: 'unserved' })
     expect(links).toEqual([])
-    // Nothing waiting can change that, so it is not asked again until the reader does.
     await pass(120_000)
     expect(state.looked).toBe(1)
     state.looks = ['open']

@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Each space's inbox: Orden's own `.Inbox.md` unless the reader chose a note of
- *  theirs, which follows its note through a rename; made the first time it is needed
- *  and never over one there (#1044). */
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -22,11 +18,8 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const disk = new Map<string, string>()
-/** Notes that are there and will not read: not UTF-8, over the size the crate reads,
- *  or in a cloud that cannot fetch them offline. */
 const unreadable = new Set<string>()
 
-/** What the crate was told the inbox of the space in front is. */
 const told: string[] = []
 
 vi.mock('../tauri', async (original) => ({
@@ -86,14 +79,12 @@ describe('the inbox of a space', () => {
     expect(inboxOf(ROOT)).toBe(INBOX)
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
 
-    // A note of the reader's named Inbox.md is theirs to choose like any other.
     setInbox(ROOT, OLD_INBOX)
     expect(inboxOf(ROOT)).toBe(OLD_INBOX)
     expect(chosenInbox(ROOT)).toBe(OLD_INBOX)
   })
 
   test('follows its note when it is renamed or its folder moves, and nothing else', () => {
-    // A note named Inbox.md the reader never chose is not the inbox, renamed or not.
     inboxes.moved?.(`${ROOT}/Inbox.md`, `${ROOT}/Triage.md`, ROOT)
     expect(inboxOf(ROOT)).toBe(INBOX)
 
@@ -131,7 +122,6 @@ describe('the inbox of a space', () => {
     disk.set(`${ROOT}/.Inbox.md`, '- [ ] already here\n')
     expect(await ensureInbox(ROOT, make)).toBe(`${ROOT}/.Inbox.md`)
     expect(made).toEqual([`${ROOT}/.Inbox.md`])
-    // Nothing is made at the space's root, where the reader's own notes are.
     expect(disk.has(`${ROOT}/Inbox.md`)).toBe(false)
   })
 
@@ -156,7 +146,6 @@ describe('the inbox a task from Shortcuts goes to', () => {
     setInbox(ROOT, 'Lists/Todo.md')
     expect(told.at(-1)).toBe(`${ROOT}/Lists/Todo.md`)
 
-    // Another space's inbox moving says nothing: it is not the one in front.
     setInbox('/spaces/Home', 'Elsewhere.md')
     expect(told).toHaveLength(2)
   })

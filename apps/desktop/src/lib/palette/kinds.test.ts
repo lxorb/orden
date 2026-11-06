@@ -58,10 +58,8 @@ describe('one list of everything', () => {
   })
 
   test('holds a setting back unless the words are its own', () => {
-    // Text size holds a t, an e and an x; it is not what somebody typing `tax` wants.
     expect(ranked('tax', everything()).map(named)).not.toContain('setting Text size')
     expect(top('text size', {}, 1)).toEqual(['setting Text size'])
-    // Its other words find it, below its own name.
     expect(ranked('font', everything()).map(named)).toContain('setting Text size')
   })
 
@@ -87,9 +85,7 @@ describe('one list of everything', () => {
 
   test('lets use carry a thing up, but not past a better match', () => {
     const used = (key: string) => (key === 'setting:editor/Text size' ? 12 : 0)
-    // Used every day, the setting is the first thing `te` finds.
     expect(top('te', { worth: used }, 1)).toEqual(['setting Text size'])
-    // But not what `tax` finds, which it barely holds.
     expect(top('tax', { worth: used }, 1)).toEqual(['Tax'])
   })
 })
@@ -166,7 +162,6 @@ describe('a field with nothing typed', () => {
       '> Reopen closed tab',
       'Tax',
       '> Print',
-      // The notes opened lately that the curve has no time for, then the rest.
       'Plan',
       'Lecture 3',
       'Plan',
@@ -203,8 +198,6 @@ describe('what a row is counted under', () => {
 })
 
 describe('the rows built again while the palette is open', () => {
-  /** What a note's row was read out of, which is the same array for as long as the
-   *  row was not read again. */
   const readOf = (all: ReturnType<typeof candidates>, path: string) =>
     all.find((one) => one.item.kind === 'note' && one.item.entry.path === path)?.also
 
@@ -212,7 +205,6 @@ describe('the rows built again while the palette is open', () => {
     const [plan, lecture, tax] = [file('Plan.md'), file('Uni/Lecture 3.md'), file('Home/Tax.md')]
     const before = candidates(world({ files: [plan, lecture, tax] }))
 
-    // A tree read again replaces what changed and keeps the rest: here a rename.
     const renamed = file('Home/Taxes.md')
     const after = candidates(world({ files: [plan, lecture, renamed] }))
 

@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** One host, in Settings, Remote: its name and where it is, its colour, its group and
-   *  its pin.
-   *
-   *  A host of the ssh config shows its name and address as the config has them and
-   *  nothing to type into: the config is the reader's own file, which Orden never writes
-   *  (VS Code's Add host writing a block in front of the reader's own is the complaint
-   *  this avoids), so Open config is how those change. A host made here is nib's, and
-   *  its name and address are fields. Every change is written as it is made; see
-   *  hosts.svelte.ts. */
   import { t } from '../i18n.svelte'
   import { prompt } from '../prompt.svelte'
   import Select from '../Select.svelte'
@@ -33,7 +24,6 @@
   const about = (change: Change<About>) =>
     void remote.keep((kept) => withAbout(kept, host.id, change))
 
-  /** The value of the Group control that makes a new group rather than choosing one. */
   const NEW = '\u0000new'
 
   const groups = $derived(groupsOf(remote.hosts, remote.kept))
@@ -63,7 +53,6 @@
 
   let problem = $state('')
 
-  /** Where a host made here is, as typed: kept only where it reads as a destination. */
   function placed(typed: string, field: HTMLInputElement) {
     const wanted = destinationOf(typed)
     if (!wanted) {
@@ -82,7 +71,6 @@
   }
 
   function renamed(typed: string, field: HTMLInputElement) {
-    // A host is never nobody: a name cleared is the name it had.
     if (!typed.trim()) field.value = host.name
     else void remote.keep((kept) => withOwn(kept, host.id, { name: typed.trim() }))
   }
@@ -94,7 +82,6 @@
     await remote.keep((kept) => withoutOwn(kept, host.id))
   }
 
-  /** Space or Enter on a row that is a switch. */
   function pressed(event: KeyboardEvent, then: () => void) {
     if (event.key !== ' ' && event.key !== 'Enter') return
     event.preventDefault()
@@ -206,14 +193,10 @@
     min-width: 0;
   }
 
-  /* Back to the list: the square is `.nib-glyph`; it stands out into the margin by
-     the room round its arrow, so the arrow lines up with the title above. */
   .back {
     margin-inline-start: -6px;
   }
 
-  /* The name, in the type a pane's own title is set in; a field only where it can
-     change. */
   .title {
     display: block;
     width: 100%;
@@ -233,7 +216,6 @@
     border-bottom-color: var(--accent);
   }
 
-  /* An address is read letter by letter; the box is every setting value's. */
   .address {
     font-family: var(--font-mono);
   }

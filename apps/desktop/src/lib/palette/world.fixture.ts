@@ -1,7 +1,3 @@
-/** A space, a strip of tabs, a history and a few commands and settings, built by hand
- *  for the palette's tests: the shape `candidates` is handed by the palette, with
- *  nothing behind it. */
-
 import type { Command } from '../commands'
 import type { Visit } from '../web-tab/visits'
 import type { Bookmark } from '../workspace/bookmarks.svelte'
@@ -78,7 +74,6 @@ export function world(more: Partial<World> = {}): World {
   }
 }
 
-/** What a row is called, the way the list says it. */
 export function named(row: Row): string {
   switch (row.kind) {
     case 'note':

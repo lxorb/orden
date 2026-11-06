@@ -1,38 +1,11 @@
 <script lang="ts">
-  /** The arrow a swipe brings in from the side of a pane: Chrome's, in Orden's own
-   *  colours. A circle with an arrow in it slides in with the fingers, pixel for pixel,
-   *  from behind the side to where letting go would go, and past that a little further
-   *  against a growing pull, so it stops. A ring round its edge fills with the accent as
-   *  the fingers go, so how far is left is in sight; full, the circle fills with it, the
-   *  arrow in it grows a little, and letting go goes. Nothing happens while the
-   *  fingers are down. It bursts once and goes when the swipe goes, and slides back out
-   *  when it stays. While the fingers are on nothing on it glides or fades, its place, its
-   *  size and its colours alike: where it is drawn is where they are, as they are (#1050).
-   *  Only playing out does it move on its own. See swipes.ts, and gesture_nav_simple.cc
-   *  in Chromium for the look.
-   *
-   *  Over a web tab the page is a webview drawn above every pixel of the window. While
-   *  the fingers are on, the whole pane counts as covered (`nib-swipe-room`, which
-   *  covers.ts takes for a scrim): the page stands as its still picture and the arrow is
-   *  drawn over it whole, shadow and soft edge and all. It used to be cut out of the page
-   *  in its own shape, and a window's shape on Windows is whole pixels with no soft edge,
-   *  set again on every step: a jagged circle that lagged the fingers (#209). Until the
-   *  picture is in, and while the arrow bursts on its way out, it is cut round as before.
-   *
-   *  Where it is drawn is whole pixels of the screen, so the circle, its ring and the
-   *  arrow are drawn sharp at 125 and 150 per cent as well as at 100 and 200. */
   import ArrowLeft from 'lucide/dist/esm/icons/arrow-left.mjs'
   import { workspace } from '../workspace.svelte'
   import { swipeChoice } from './choice.svelte'
   import { swiping } from './shown.svelte'
 
-  /** Said when the tab the arrow is over stops being the one its pane shows, or swiping
-   *  is turned off. */
   const { unseen }: { unseen: () => void } = $props()
 
-  /** Whether the tab the arrow is over is still what its pane shows: another tab chosen
-   *  in it, the tab closed or the pane gone - or the setting turned off - and the arrow
-   *  is not drawn at all, and its stream ends (#1119). */
   const seen = $derived(
     swipeChoice.on &&
       swiping.tab !== null &&
@@ -43,16 +16,11 @@
     if (swiping.tab !== null && !seen) unseen()
   })
 
-  /** How much further than where letting go goes the circle may be pulled. */
   const EXTRA = 72
-  /** The circle's diameter. */
   const SIZE = 40
 
-  /** Chrome's fast-out-slow-in, for the stretch past the threshold. */
   const eased = (t: number) => 1 - (1 - t) ** 3
 
-  /** How far in from the side the circle's leading edge is: the fingers' own travel up
-   *  to where letting go goes, and past it a pull that gives a little less each pixel. */
   const reach = $derived.by(() => {
     const progress = Math.max(0, swiping.progress)
     if (swiping.stage === 'stayed' || progress === 0) return 0
@@ -62,7 +30,6 @@
     return far + EXTRA * eased(Math.min(1, (travel - far) / (EXTRA * 3)))
   })
 
-  /** A length in the window's pixels, on the nearest whole pixel of the screen. */
   const whole = (length: number) => {
     const ratio = window.devicePixelRatio || 1
     return Math.round(length * ratio) / ratio
@@ -72,9 +39,6 @@
     swiping.side === 'left' ? reach - SIZE : (swiping.room?.width ?? 0) - reach,
   )
 
-  /** Where the circle's corner is in the room, put on a whole pixel of the screen counted
-   *  from the window's corner rather than the room's, which is on one only by chance:
-   *  across with the fingers, and half way down. */
   const drop = $derived.by(() => {
     const room = swiping.room
     if (!room) return 0
@@ -82,12 +46,8 @@
   })
   const across = $derived(swiping.room ? whole(swiping.room.x + shift) - swiping.room.x : 0)
 
-  /** Whole from its first pixel, which is the side of the pane it slides in from behind
-   *  (#1050): a fade over the first stretch was the arrow showing up late. Out as it
-   *  plays out. */
   const shade = $derived(swiping.stage === 'tracking' ? 1 : 0)
 
-  /** How much of the ring is filled: the way to where letting go goes. */
   const filled = $derived(Math.min(1, Math.max(0, swiping.progress)))
 </script>
 
@@ -123,8 +83,6 @@
 {/if}
 
 <style>
-  /* The pane's content, which the circle is clipped to: it comes in from beyond the
-     side, never from over the file list. */
   .track {
     position: fixed;
     z-index: var(--z-float);
@@ -132,8 +90,6 @@
     pointer-events: none;
   }
 
-  /* Chrome's forty pixels. The corner is half of it in pixels rather than a
-     percentage, because it is also the shape the page is cut in; see covers.ts. */
   .nib-swipe {
     --size: 40px;
     position: absolute;
@@ -148,13 +104,9 @@
     background: var(--surface-3);
     box-shadow: var(--shadow-md);
     color: var(--accent);
-    /* Moved and faded by the compositor on every step, never painted again for it. */
     will-change: transform, opacity;
   }
 
-  /* The icon's own twenty-four, on its own grid: eight pixels in from the circle's edge,
-     which is whole pixels of the screen at 125 and 150 per cent as well, where twenty
-     put it half a pixel off and drew its two-pixel lines between pixels. */
   .arrow {
     width: 24px;
     height: 24px;
@@ -169,10 +121,6 @@
     transform: scaleX(-1);
   }
 
-  /* The way to where letting go goes, filled from the top towards the side the arrow
-     points. Inside the circle, so the shape a page is cut in stays the circle's. */
-  /* Over the border box, which the view box is the size of: from inside the border it
-     was drawn at 38/40ths, its stroke and its circle between pixels. */
   .ring {
     position: absolute;
     inset: -1px;
@@ -198,16 +146,12 @@
     scale: 1.15;
   }
 
-  /* Past the point where letting go goes: the circle takes the accent, as Chrome's
-     turns blue. */
   .nib-swipe.armed {
     border-color: var(--accent);
     background: var(--accent);
     color: var(--accent-ink);
   }
 
-  /* Gone: one burst, and out. A swipe a flick decided before the ring was full takes
-     the accent on its way out. */
   .nib-swipe.went {
     scale: 1.2;
     transition:
@@ -226,7 +170,6 @@
     transition: scale var(--dur-base) var(--ease-out);
   }
 
-  /* Stayed: back out the way it came. */
   .nib-swipe.stayed {
     transition:
       transform var(--dur-base) var(--ease-out),

@@ -1,9 +1,3 @@
-/** Searching a space Orden keeps itself (#1068, step 4c): the browser build's walk over
- *  the rows (web/search.ts), on this thread, since the folder is this window's and the
- *  crate's own walk reads a folder this space does not have. What is held between two
- *  questions (web/space-cache.ts) follows the folder's own word on every change, as the
- *  browser's follows its rows, and every hit is said at the path the app holds. */
-
 import type { FuzzyHit } from '@orden/scan/search/fuzzy'
 import type { Hit } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
@@ -11,10 +5,8 @@ import type { Warmth } from '../search/warmth'
 import { joinPath } from '../tauri'
 import { type Mounted, mountOf } from './roots'
 
-/** The spaces whose changes the held space already follows. */
 const following = new WeakSet<Mounted>()
 
-/** The held space told of every change to `mount`'s folder, once. */
 async function follow(mount: Mounted) {
   if (following.has(mount)) return
   following.add(mount)
@@ -22,7 +14,6 @@ async function follow(mount: Mounted) {
   mount.folder.heard((changes) => {
     for (const change of changes) {
       const at = `${mount.web}/${change.path}`
-      // A folder that moved or went takes what is under it, which is read again.
       if (change.dir && change.kind !== 'created') space.forget(null)
       else if (change.kind === 'renamed') {
         space.gone(`${mount.web}/${change.from}`)
@@ -33,7 +24,6 @@ async function follow(mount: Mounted) {
   })
 }
 
-/** Where `root` is for the browser's commands, or null where it is in no kept space. */
 function addressOf(root: string): { mount: Mounted; web: string } | null {
   const found = mountOf(root)
   if (!found) return null
@@ -43,8 +33,6 @@ function addressOf(root: string): { mount: Mounted; web: string } | null {
   }
 }
 
-/** Every hit of a query in the kept space at `root`, as `searchSpace` hands them over.
- *  Answers false where `root` is in none, for the crate to search. */
 export async function searchInternal(
   root: string,
   query: Query,
@@ -76,8 +64,6 @@ export async function searchInternal(
   return true
 }
 
-/** The kept space at `root` read and held, and what is held: `warm_search` for it.
- *  Null where `root` is in none. */
 export async function warmInternal(root: string): Promise<Warmth | null> {
   const at = addressOf(root)
   if (!at) return null

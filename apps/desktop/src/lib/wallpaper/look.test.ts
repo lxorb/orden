@@ -16,11 +16,6 @@ import {
   wallpaperRule,
 } from './look'
 
-/** The promise the wallpaper's dials make, held at every end of every dial: whatever
- *  the picture, the blur, the grain and the Content row say, the quietest word on the
- *  frame reads at its aim - higher over a sharp picture - and body text on the note at
- *  seven to one. */
-
 const SIDES = ['dark', 'light'] as const
 type Side = (typeof SIDES)[number]
 
@@ -66,7 +61,6 @@ function held(span: Span): Held {
   }
 }
 
-/** Every stack a word on the frame stands on, as floors.ts lays them. */
 function stacks(one: Palette, ground: Rgb): Rgb[] {
   const hover = { colour: over(one.text, 8 / 48, one.scrim), alpha: 0.48 }
   const layered = over(one.layer.colour, one.layer.alpha, ground)
@@ -89,8 +83,6 @@ describe('every end of every dial', () => {
             const under = grained(span, grain)
             const aim = aimFor(blur)
 
-            // The frame: the chrome's scrim at its floor, and the Dim dial at both
-            // ends of it on top, which only ever helps.
             for (const dim of [0, 0.9]) {
               const scrim = floors.chrome + (1 - floors.chrome) * dim
               for (const corner of [under.least, under.most]) {
@@ -103,7 +95,6 @@ describe('every end of every dial', () => {
               }
             }
 
-            // The note, at every level of the Content row.
             for (const level of ['clear', 'tinted', 'opaque'] as const) {
               const paper = alphaFor(level, floors.paper)
               const terminal = layered(alphaFor(level, floors.terminal), paper)
@@ -113,7 +104,6 @@ describe('every end of every dial', () => {
                 expect(ratio(sides.inks.text, ground)).toBeGreaterThanOrEqual(BODY)
                 expect(ratio(sides.inks.muted, ground)).toBeGreaterThanOrEqual(AA)
                 expect(ratio(sides.inks.link, ground)).toBeGreaterThanOrEqual(AA)
-                // The terminal's own layer only ever adds paper.
                 expect(paper + (1 - paper) * terminal).toBeGreaterThanOrEqual(paper)
               }
             }

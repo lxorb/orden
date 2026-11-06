@@ -1,21 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Something shared to the app on a phone, while the open space is one shared with
- *  this account to be read (B280, B314). Nothing is written there, which the sync
- *  would refuse on every pass: the share lands in the first space that may be written
- *  in, and where there is none it is kept rather than let go of with nothing made. */
-
 const world = vi.hoisted(() => ({
-  /** The roots of spaces shared with this account to be read. */
   readOnly: ['/theirs'] as string[],
   spaces: [] as { id: string; name: string; root: string }[],
-  /** What the sheet answers, and every question it was asked. */
   answer: 'new',
   asked: [] as { options: { id: string }[] }[],
-  /** What the activity holds, and how often it was told the share is answered for. */
   shared: 'a link',
   done: 0,
-  /** The note open to write in, if any. */
   open: false,
   typed: [] as string[],
   tasks: [] as { root?: string; typed?: boolean }[],
@@ -87,7 +78,6 @@ vi.mock('../workspace.svelte', () => ({
 
 const { startHanded } = await import('./handed')
 
-/** The share taken, and every write it led to waited for. */
 async function share() {
   const stop = startHanded()
   await new Promise((done) => setTimeout(done, 20))
@@ -121,7 +111,6 @@ describe('a share while the open space is shared to be read', () => {
   test("makes its task in the reader's one inbox, naming no space (#1157)", async () => {
     world.answer = 'task'
     await share()
-    // Shared words are the task's words, never read as quick add's grammar.
     await vi.waitFor(() => expect(world.tasks).toEqual([{ typed: false }]))
   })
 
@@ -155,7 +144,6 @@ describe('a share with no space that may be written in', () => {
 })
 
 describe('words shared into the open note', () => {
-  // The rest of B263: a share is somebody else's words, so a tag in it is words too.
   test('open no markup there', async () => {
     world.readOnly = []
     world.open = true

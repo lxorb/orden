@@ -1,13 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The gallery's state: what the grid shows for what was typed, and where a
- *  theme stands once it has been installed, updated and removed again.
- *
- *  Run against the real theme store rather than a stand-in for it, with the
- *  themes folder and the network the only things replaced. Under node there is
- *  no storage, no document and no folder, so all three are stood in for before
- *  the stores are imported. */
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 
@@ -23,8 +15,6 @@ function memoryStorage(): Storage {
   }
 }
 
-/** Storage and a page, fresh for every test: the theme store is a singleton, so
- *  what one test chose is still chosen when the next one starts. */
 function stubs() {
   vi.stubGlobal('localStorage', memoryStorage())
   vi.stubGlobal('document', {
@@ -41,7 +31,6 @@ function stubs() {
 
 stubs()
 
-/** The themes folder, as the commands see it: one stylesheet per id. */
 const folder = vi.hoisted(() => ({ files: new Map<string, string>() }))
 
 vi.mock('../tauri', () => ({
@@ -74,7 +63,6 @@ vi.mock('../tauri', () => ({
       return Promise.resolve(undefined)
     }
 
-    // `read_custom_css`, which the reload asks for after the themes.
     return Promise.resolve('')
   },
 }))
@@ -82,7 +70,6 @@ vi.mock('../tauri', () => ({
 const { arrange, GIVEN_THEMES, store } = await import('./store.svelte')
 const { theme } = await import('../theme.svelte')
 
-/** One catalogue entry, with only what the test cares about spelled out. */
 function entry(patch: Record<string, unknown> = {}) {
   return {
     id: 'warm-paper',
@@ -99,14 +86,11 @@ function entry(patch: Record<string, unknown> = {}) {
   }
 }
 
-/** The stylesheet the registry serves for a theme. */
 const sheet = (colour: string) => `[data-theme='light'] { color-scheme: light; --bg: ${colour}; }`
 
-/** One that states both schemes, which is what makes a theme a pair. */
 const PAIR = `[data-theme='light'] { --bg: #fff; }
 [data-theme='dark'] { --bg: #000; }`
 
-/** Answers the catalogue and the stylesheets, and counts what was asked for. */
 function serving(themes: unknown[], css = sheet('#faf6ee')) {
   const asked: string[] = []
 
@@ -179,9 +163,6 @@ describe('what the grid shows', () => {
   })
 
   test('what was searched for is still sorted', () => {
-    // Both are by the same author; the newer one comes first, which is what the
-    // choice of order is for. A search narrows the shelf without reordering it
-    // by a score nobody can see.
     const found = arrange(catalogue, 'Nib', 'newest')
     expect(found.map((one) => one.name)).toEqual(['Amber', 'Zinc'])
   })
@@ -276,8 +257,6 @@ describe('installing, updating and removing', () => {
   })
 
   test('a theme that brings an accent keeps it, and one that does not lets it go', async () => {
-    // The card in the gallery showed the theme's own accent, so what the app
-    // looks like afterwards has to be what the card showed.
     serving([entry()], `[data-theme='light'] { --bg: #fff; --accent: #a0522d; }`)
     await store.load()
     await store.install(entry({}) as never)
@@ -320,8 +299,6 @@ describe('installing, updating and removing', () => {
     expect(folder.files.size).toBe(0)
     expect(store.installed('warm-paper')).toBe(false)
     expect(store.using('warm-paper')).toBe(false)
-    // Whatever it was showing is gone, so it goes back to the built-in rather
-    // than to a theme that is not there.
     expect(theme.id).toBe('default')
   })
 
@@ -366,8 +343,6 @@ describe('installing, updating and removing', () => {
   })
 })
 
-/** Unasked, at every launch (#1110): what the store installed follows the catalogue,
- *  and the given themes are in the folder without anybody installing them. */
 describe('keeping up with the catalogue', () => {
   const given = () => GIVEN_THEMES.map((id) => entry({ id, name: id }))
 
@@ -380,7 +355,6 @@ describe('keeping up with the catalogue', () => {
     expect(GIVEN_THEMES.every((id) => store.installed(id))).toBe(true)
     expect(theme.id).toBe('default')
 
-    // One removed stays removed: the next launch does not bring it back.
     await store.remove('rose')
     store.themes = []
     await store.keepUp()
@@ -425,16 +399,12 @@ describe('keeping up with the catalogue', () => {
 
     expect(folder.files.size).toBe(0)
     expect(store.error).toBe(null)
-    // Tried again next time, since nothing was given yet.
     serving(given())
     await store.keepUp()
     expect(folder.files.size).toBe(GIVEN_THEMES.length)
   })
 })
 
-/** The one control a theme can take away. Its own block because the answer is
- *  the theme's rather than the store's: what the switch does depends entirely on
- *  how many schemes the theme in force states. */
 describe('the light and dark switch', () => {
   test('is live on the built-in, which states both schemes', () => {
     expect(theme.switchable).toBe(true)
@@ -455,8 +425,6 @@ describe('the light and dark switch', () => {
 
     theme.toggle()
 
-    // Above all not swapped for the built-in dark: somebody who chose this theme
-    // did not ask for ours.
     expect(store.using('warm-paper')).toBe(true)
     expect(theme.current).toBe('light')
   })
@@ -469,8 +437,6 @@ describe('the light and dark switch', () => {
 
     expect(theme.switchable).toBe(true)
 
-    // Whichever side it opened on, the switch shows the other one, and the theme
-    // is still the theme.
     const was = theme.current
     theme.toggle()
 

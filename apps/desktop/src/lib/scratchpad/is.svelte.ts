@@ -1,6 +1,4 @@
 import type { EditorView } from '@orden/editor'
-/** The scratchpad by name in no space, and its card: up or not, and how wide. Eager, so
- *  a card left up has its column before the note is drawn. See pad.ts. */
 
 import { focusEditor } from '../focus'
 import { nameOf } from '../space-paths'
@@ -14,13 +12,10 @@ export function isScratchpad(path: string | null | undefined): boolean {
   return !!path && nameOf(path) === SCRATCHPAD && workspace.outside(path)
 }
 
-/** The tab the scratchpad is open in as a note, its right side icon's double press
- *  (#1110); null while it is only its card. */
 export function padTab(): { id: string } | null {
   return workspace.tabs.find((one) => isScratchpad(one.path)) ?? null
 }
 
-// Guarded for the workspace's tests, which have no page.
 const inCard = () =>
   typeof document !== 'undefined' &&
   !!document.activeElement?.closest('[data-scratchpad], [data-scratchpad-card]')
@@ -28,9 +23,7 @@ const inCard = () =>
 class Shown {
   on = $state(false)
   width = $state(WIDTH)
-  /** A person asked: the card takes the keyboard. */
   calling = $state(false)
-  /** The card's editor while it is up (#404). */
   view = $state.raw<EditorView | null>(null)
   from: HTMLElement | null = null
 
@@ -41,8 +34,6 @@ class Shown {
     if (typeof kept.width === 'number') this.resize(kept.width)
   }
 
-  /** Up, unless a tab holds its words already: that tab is brought forward instead, so
-   *  the words are in one editor and never two writing over each other (#1110). */
   show(take = true) {
     const tab = padTab()
     if (tab) {
@@ -53,7 +44,6 @@ class Shown {
     this.set(true)
   }
 
-  /** Away, the keyboard back where it was. */
   hide() {
     if (inCard()) {
       if (this.from?.isConnected) this.from.focus({ preventScroll: true })
@@ -81,9 +71,6 @@ class Shown {
 
 export const shown = new Shown()
 
-/** Up with the keyboard elsewhere, the keyboard in (VS Code's terminal key); else the
- *  switch. Shut, it shuts the right side it is shown in, and nothing comes back from
- *  under it (#1032); see `toggleSidebar` in the workspace. */
 export function toggleScratchpad(): void {
   if (__EVEN_PLUGIN__) return
   if (shown.on && !inCard()) shown.calling = true
@@ -91,15 +78,10 @@ export function toggleScratchpad(): void {
   else workspace.showRight('scratchpad')
 }
 
-/** The card put away by its own Escape: the right side it is, shut. */
 export function closeScratchpad(): void {
   if (shown.on) workspace.closeRight()
 }
 
-/** The scratchpad from a phone's drawer (#1030): up, over the note, with the drawer out
- *  of the way; pressed while it is up, put away. The doors the right side's button uses
- *  (`showRight` and `closeRight` in the workspace), so every device opens and shuts it
- *  one way. */
 export function scratchFromDrawer(): void {
   if (__EVEN_PLUGIN__) return
   if (shown.on) {

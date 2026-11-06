@@ -6,11 +6,6 @@ import { ACCENTS } from '../accents'
 import { AA, type Lift, over, ratio, type Rgb, rgbOf, type Span } from '../legibility'
 import { floorFor, type Palette, paletteOf } from './floors'
 
-/** The promise wallpaper.css makes, held to the sheet itself: the quietest word on the
- *  chrome clears AA over every picture at its floor, on every stack a word stands on,
- *  and the floors the sheet states for the accent field are enough for that field
- *  whichever accent the reader chose. */
-
 const TOKENS = readFileSync(
   fileURLToPath(new URL('../../../../../packages/themes/src/tokens.css', import.meta.url)),
   'utf8',
@@ -30,7 +25,6 @@ function palette(side: Side): Palette {
   return found
 }
 
-/** Every stack floors.ts promises, laid out again here rather than taken from it. */
 function stacks(one: Palette): Lift[][] {
   expect(wallpaperCss).toContain(
     '--item-hover-bg-color: color-mix(in srgb, var(--text) 8%, var(--wallpaper-scrim) 40%);',
@@ -49,7 +43,6 @@ function readsEverywhere(one: Palette, alpha: number, under: Rgb): boolean {
   })
 }
 
-/** A token as one side of a sheet states it. */
 function tokenOf(css: string, side: Side, name: string): Rgb {
   const head = new RegExp(String.raw`\[data-theme='${side}'\]\s*\{`).exec(css)!
   const block = css.slice(head.index, css.indexOf('}', head.index))
@@ -62,13 +55,11 @@ describe('the palette', () => {
       const one = palette(side)
       expect(one.layer.alpha).toBeGreaterThan(0)
       expect(one.layer.alpha).toBeLessThan(1)
-      // The scrim alone is a ground every word reads on, or no floor could help.
       expect(readsEverywhere(one, 1, BLACK), side).toBe(true)
     }
   })
 })
 
-/** Pictures as what they hold: the worst there are, and some ordinary ones. */
 const PICTURES: Record<string, Span> = {
   white: { least: WHITE, most: WHITE },
   black: { least: BLACK, most: BLACK },
@@ -79,7 +70,6 @@ const PICTURES: Record<string, Span> = {
 }
 
 describe('the open note’s row', () => {
-  /** A pill of the accent on the scrim's own colour, opaque, whatever is under it. */
   test('reads in its quietest ink on every accent, both sides', () => {
     expect(wallpaperCss).toMatch(
       /--active-file-bg-color:\s*color-mix\(in srgb, var\(--accent\) 16%, var\(--wallpaper-scrim\)\)/,
@@ -125,7 +115,6 @@ describe('the floor', () => {
 })
 
 describe('the accent field, before a picture is chosen', () => {
-  /** What the sheet says the floor is with no picture said on the root. */
   function statedFloor(side: Side): number {
     const found = new RegExp(
       String.raw`--wallpaper-floor:\s*var\(--wallpaper-floor-${side},\s*(\d+)%\)`,
@@ -133,13 +122,9 @@ describe('the accent field, before a picture is chosen', () => {
     return Number(found?.[1]) / 100
   }
 
-  /** How much of a colour the field mixes in, as the sheet writes it. */
   const share = (token: string) =>
     Number(new RegExp(String.raw`var\(${token}\) (\d+)%`).exec(wallpaperCss)?.[1]) / 100
 
-  /** Every colour the field can come to with one accent: its two grounds, the accent
-   *  over them, and the canvas's blue over any of those. Every point of the field is
-   *  a mix of these, so it stays inside the box they make. */
   function fieldOf(side: Side, accent: Rgb): Span {
     const canvas = tokenOf(TOKENS, side, '--canvas-5')
     const grounds = [

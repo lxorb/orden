@@ -1,12 +1,4 @@
 <script lang="ts">
-  /** One emoji picker, for the composer and for reactions (docs/chats.md 3, #32): a
-   *  search over every emoji's names and keywords, the ones last chosen, Unicode's
-   *  groups, and the skin tone. Keyboard first: the field has the keys, the arrows
-   *  walk the grid from it, Enter takes the one lit, Escape is the layer's.
-   *
-   *  The grid is a window of rows, as the icon picker's is: nineteen hundred buttons
-   *  are a few dozen in the page. The data arrives with the first picker opened; see
-   *  data.ts. */
   import { onMount } from 'svelte'
   import { t } from '../i18n.svelte'
   import { windowFor } from '../row-window'
@@ -16,7 +8,6 @@
 
   const { onpick }: { onpick: (emoji: string) => void } = $props()
 
-  /** Cells across, and how tall each row is. */
   const ACROSS = 8
   const CELL = 34
 
@@ -40,8 +31,6 @@
 
   type Row = { head: string } | { cells: string[] }
 
-  /** Every emoji in the order the grid shows them: what was found, or the recent ones
-   *  and then every group. */
   const cells = $derived.by((): string[] => {
     if (!data) return []
     if (query.trim()) return findEmoji(data, query)
@@ -81,7 +70,6 @@
     onpick(chosen)
   }
 
-  /** The row a cell is on, so the arrows can keep the lit one in view. */
   function rowOf(index: number): number {
     const emoji = cells[index]
     return rows.findIndex(
@@ -99,7 +87,6 @@
     }
     const by = step[event.key]
     if (by !== undefined) {
-      // Left and right stay the field's while there are words in it to move through.
       if (Math.abs(by) === 1 && query) return
       event.preventDefault()
       lit = Math.min(cells.length - 1, Math.max(0, lit + by))

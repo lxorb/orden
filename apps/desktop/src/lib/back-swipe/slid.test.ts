@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { LEAD, Slid } from './slid'
 
-/** A scroller whose `scrollLeft` the test moves: the one field `Slid` reads. */
 function scroller() {
   const held = { scrollLeft: 0 }
   return { one: held as unknown as Element, to: (left: number) => (held.scrollLeft = left) }
@@ -15,9 +14,7 @@ describe('whether a stream moved the content sideways (#407)', () => {
     slid.heard(one, 'p1', 1000)
 
     expect(slid.since('p1', 1000)).toBe(true)
-    // Heard in the frame before the wheel that made it.
     expect(slid.since('p1', 1000 + LEAD)).toBe(true)
-    // Long before the stream: another scroll's.
     expect(slid.since('p1', 1000 + LEAD + 1)).toBe(false)
     expect(slid.since('p2', 1000)).toBe(false)
   })
@@ -34,7 +31,6 @@ describe('whether a stream moved the content sideways (#407)', () => {
     const { one, to } = scroller()
     to(40)
     slid.heard(one, 'p1', 1000)
-    // Down only, from where it was left: not sideways.
     slid.heard(one, 'p1', 2000)
     expect(slid.since('p1', 2000)).toBe(false)
     to(40.3)

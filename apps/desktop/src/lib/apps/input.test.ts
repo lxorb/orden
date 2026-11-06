@@ -10,20 +10,15 @@ import {
   wheelClicks,
 } from './input'
 
-/** What the holder does over an application's picture, as its host is sent it (issue
- *  1063, steps 4 and 5; input.ts), and the application's pointer as the tab draws it. */
-
 const box = (left: number, top: number, width: number, height: number) =>
   ({ left, top, width, height }) as DOMRectReadOnly
 
 describe('the point under the pointer', () => {
   test('is the display’s own pixel, through the scale the picture is drawn at', () => {
-    // A 2560 by 1600 display in a pane of 1280 by 800 CSS pixels: two to one.
     expect(displayPoint(100, 50, box(0, 0, 1280, 800), 2560, 1600)).toEqual({ x: 200, y: 100 })
   })
 
   test('leaves out the bands round a picture of another shape, and keeps to the display', () => {
-    // A square display in a wide pane is drawn in its middle.
     expect(displayPoint(400, 300, box(0, 0, 800, 600), 600, 600)).toEqual({ x: 300, y: 300 })
     expect(displayPoint(10, 300, box(0, 0, 800, 600), 600, 600)).toEqual({ x: 0, y: 300 })
     expect(displayPoint(799, 599, box(0, 0, 800, 600), 600, 600)).toEqual({ x: 599, y: 599 })

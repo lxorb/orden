@@ -1,13 +1,3 @@
-/** Which road a recording takes, and what leaves the machine on it.
- *
- *  Two roads: the reader's own provider, and the account. Both of them are somebody
- *  else's server for most people and neither of them for somebody running whisper on
- *  this machine, so the one thing worth a test here is which of them is asked - and,
- *  where it is the provider, that what goes up is the shape that route takes.
- *
- *  Nothing here decodes audio: `wordsInFile` needs a browser's own decoder and the
- *  piece is already a WAV by the time it reaches any of this. */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 function memoryStorage(): Storage {
@@ -28,17 +18,12 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
-/** What the device's keychain answers, which each test sets. */
 let apiKey = ''
-// The rest of the module as it is: the AI vault starts with the AI store and listens
-// for keys moving, whatever this test asks of the key.
 vi.mock('../ai/keys', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../ai/keys')>()),
   readKey: () => Promise.resolve(apiKey),
 }))
 
-/** The account's own road, stubbed at the API rather than at `fetch`: what is under
- *  test is which road was taken. */
 const askedAccount: number[] = []
 const likedAccount: string[] = []
 vi.mock('../api', () => ({
@@ -51,7 +36,6 @@ vi.mock('../api', () => ({
   },
 }))
 
-/** Every request that left, and what a provider answers to it. */
 interface Sent {
   url: string
   headers: Record<string, string>
@@ -64,8 +48,6 @@ interface Sent {
 const sent: Sent[] = []
 let answers: { status: number; body: string }[] = []
 
-/** One field of a form as the text it was written as. A field can also be a file, and
- *  none of the ones read here is one. */
 function said(form: FormData, name: string): string {
   const found = form.get(name)
   return typeof found === 'string' ? found : ''
@@ -103,7 +85,6 @@ const { ai } = await import('../ai/store.svelte')
 const { canTranscribe } = await import('../ai/hears')
 const { heardPiece, transcribedBy, WHISPER } = await import('./transcribe')
 
-/** A piece of sound, of a size a test can recognise again. */
 const wav = new Uint8Array(new ArrayBuffer(2048))
 
 function local(): void {
@@ -135,8 +116,6 @@ beforeEach(() => {
   account.user = null
 })
 
-/** An account, the way a signed-in one looks: `accountToken` is the token and the user
- *  together, so a token on its own is a session nothing has come back about yet. */
 function signedIn(): void {
   account.token = 'a-session'
   account.user = { id: 'drive', email: 'drive@example.com', name: 'Drive' }
@@ -157,8 +136,6 @@ describe('whether there is anything to ask at all', () => {
     expect(canTranscribe()).toBe(true)
   })
 
-  /** Claude reads text and images and serves no audio route, so a reader who has set
-   *  up only Claude has no transcriber and the row stays out of the menu. */
   test('but Claude alone is not, because there is no route to ask', () => {
     claude()
     expect(ai.ready).toBe(true)
@@ -166,9 +143,6 @@ describe('whether there is anything to ask at all', () => {
   })
 })
 
-/** Before any request has been made, so nothing is remembered yet: which model a server
- *  actually answers with is a thing this module learns, and the name it offers before it
- *  has learned anything is the name a transcript's callout says wrote it. */
 describe('what the note says wrote it', () => {
   test('is Whisper on the account’s road', () => {
     signedIn()
@@ -200,8 +174,6 @@ describe('a recording with a provider set up', () => {
     local()
     await heardPiece(wav)
 
-    // The boundary of a multipart body is the browser's to write, so naming the type
-    // here would describe a body the server could not read.
     expect(sent[0]?.headers['content-type']).toBeUndefined()
     expect(sent[0]?.file).toEqual({ size: wav.byteLength, type: 'audio/wav', name: 'said.wav' })
   })
@@ -211,8 +183,6 @@ describe('a recording with a provider set up', () => {
     await heardPiece(wav)
 
     expect(sent[0]?.model).toBe('whisper-1')
-    // `whisper-1` is the one model that says which language it heard, and it says so
-    // under this shape.
     expect(sent[0]?.format).toBe('verbose_json')
   })
 
@@ -234,9 +204,6 @@ describe('a recording with a provider set up', () => {
     expect(sent[0]?.headers.authorization).toBe('Bearer sk-test')
   })
 
-  /** The list of model names is a guess about somebody else's server, so a server that
-   *  has never heard of the first one is asked for the next. Only that: a key refused is
-   *  not a reason to try another name. */
   test('walks past a model the server does not have, and remembers the one it does', async () => {
     hosted()
     apiKey = 'sk-test'
@@ -248,8 +215,6 @@ describe('a recording with a provider set up', () => {
     expect((await heardPiece(wav)).text).toBe('heard')
     expect(sent.map((one) => one.model)).toEqual(['gpt-transcribe', 'gpt-4o-mini-transcribe'])
 
-    // And the next piece asks for the one that answered, once: a long file sends many
-    // pieces and must not spend a request finding this out again.
     sent.length = 0
     await heardPiece(wav)
     expect(sent.map((one) => one.model)).toEqual(['gpt-4o-mini-transcribe'])
@@ -264,14 +229,10 @@ describe('a recording with a provider set up', () => {
     }))
 
     await expect(heardPiece(wav)).rejects.toThrow(/Incorrect API key/)
-    // Three tries, which is what a piece gets, and one name throughout: a refusal that
-    // is not about the model never reaches the next name.
     expect(sent).toHaveLength(3)
     expect(new Set(sent.map((one) => one.model)).size).toBe(1)
   })
 
-  /** A hosted provider with no key on this device cannot be asked anything, and the
-   *  recording does not go to the account instead: the reader chose that server. */
   test('a hosted provider with no key is not asked, and the account is not asked either', async () => {
     hosted()
     signedIn()
@@ -298,8 +259,6 @@ describe('a recording with no provider at all', () => {
   })
 })
 
-/** Dictation's three asks (#1128): the words it expects, the road the reader chose for
- *  it, and how often a live pass that the next one replaces is worth trying. */
 describe('a piece heard for dictation', () => {
   test('carries the expected words as the prompt, to a provider', async () => {
     local()

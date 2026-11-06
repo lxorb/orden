@@ -1,21 +1,11 @@
-/** One frame of an application's picture, as a PNG (issue 1063, step 7): what an agent
- *  sees of it, in the display's own pixels - the same pixels its pointer and clicks
- *  are said in.
- *
- *  Read off the stream the tab already receives, through a video element of its own
- *  that is never on the page, so the tab's picture goes on as it was. */
-
-/** A frame: the PNG's bytes as base64, and its size in the display's pixels. */
 export interface Frame {
   png: string
   width: number
   height: number
 }
 
-/** How long the stream is given to show its first frame. */
 const WITHIN = 3000
 
-/** The frame the stream shows now, or null where it has none to show in time. */
 export async function frameOf(stream: MediaStream): Promise<Frame | null> {
   const video = document.createElement('video')
   video.muted = true

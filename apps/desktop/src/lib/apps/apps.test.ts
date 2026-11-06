@@ -42,7 +42,6 @@ describe('what an application runs', () => {
   })
 })
 
-/** A world with one socket at a time, opened by hand. */
 function world() {
   const sockets: {
     url: string

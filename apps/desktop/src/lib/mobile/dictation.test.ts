@@ -1,12 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { spaced } from './dictation'
 
-/** Where one heard sentence lands against the last one.
- *
- *  A recogniser answers in turns and each turn is a sentence with no space on
- *  either side of it, so two of them written straight into the note would come out
- *  as one word. */
-
 describe('a sentence after a sentence', () => {
   test('is given the space the recogniser did not', () => {
     expect(spaced('.', 'And then we left')).toBe(' And then we left')

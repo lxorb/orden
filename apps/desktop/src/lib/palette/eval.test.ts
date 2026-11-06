@@ -1,19 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import type { Row } from './rows'
 
-/** What the palette puts first for the things a person actually types into it.
- *
- *  A space shaped like Emil's - lecture notes, a tax folder, a roadmap, a canvas, a
- *  paper - with two pages open and a history behind them, and the app's real commands
- *  and real settings, so the question is the one the palette is asked: for these
- *  letters, is the thing meant the first row, or at least in the first three? Each
- *  case is a query and the row it should find, and the whole set is held to a rate
- *  rather than case by case, because a ranking is a trade: moving one row up moves
- *  another down, and what matters is how often Enter is right.
- *
- *  `NIB_EVAL=1` prints every case with where its row landed, beside where the palette
- *  before this one put it: notes by name and nothing else without a `>`. */
-
 function memoryStorage(): Storage {
   const held = new Map<string, string>()
 
@@ -32,8 +19,6 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
-/** Loaded at module scope: the commands and the settings reach half the app, and
- *  compiling that belongs to no single test. See docs/conventions.md. */
 const { appCommands } = await import('../commands')
 const { preferences } = await import('../preferences')
 const { places } = await import('../settings/places')
@@ -98,10 +83,7 @@ const WORLD = world({
   now: NOW,
 })
 
-/** A query, the row it should find, and whether that row has to be the first one or
- *  only among the first three. */
 const CASES: [string, string, 1 | 3][] = [
-  // Notes, by their names and their folders.
   ['plan', 'tab Plan', 3],
   ['lecture', 'Lecture 3', 1],
   ['lec', 'Lecture 3', 1],
@@ -117,11 +99,9 @@ const CASES: [string, string, 1 | 3][] = [
   ['attention', 'Attention is all you need.pdf', 1],
   ['board', 'Board.canvas', 1],
   ['09-30', '2026-09-30', 1],
-  // Open tabs, switched to.
   ['roadmap', 'tab nib roadmap', 1],
   ['moodle', 'tab Moodle', 1],
   ['youtube', 'tab YouTube', 1],
-  // Commands.
   ['new', '> New note', 1],
   ['new note', '> New note', 1],
   ['new canvas', '> New canvas', 1],
@@ -143,12 +123,10 @@ const CASES: [string, string, 1 | 3][] = [
   ['heading 2', '> Heading 2', 1],
   ['dark', '> Mode: Dark', 1],
   ['export pdf', '> Export as PDF', 1],
-  // Pages from the history.
   ['github', 'page lxorb/orden: a Typora-style editor', 1],
   ['chatgpt', 'page ChatGPT', 1],
   ['polybox', 'page polybox', 1],
   ['tauri', 'page tauri - Rust', 3],
-  // Settings, which have to be asked for by name.
   ['spelling', 'setting Spelling', 1],
   ['spell check', 'setting Check spelling', 1],
   ['check spelling', 'setting Check spelling', 1],
@@ -159,10 +137,8 @@ const CASES: [string, string, 1 | 3][] = [
   ['vim', 'setting Vim keys', 1],
   ['ligatures', 'setting Ligatures', 1],
   ['dark', 'setting Mode', 3],
-  // Bookmarks.
   ['goals', 'bookmark Goals', 1],
   ['tag:work', 'bookmark tag:work', 1],
-  // Slips.
   ['reopne', '> Reopen closed tab', 1],
   ['lectrue', 'Lecture 3', 1],
   ['setings', '> Settings', 1],
@@ -170,14 +146,11 @@ const CASES: [string, string, 1 | 3][] = [
 
 const ALL = candidates(WORLD)
 
-/** Where a row lands for a query, from one, or null where it is not in the list. */
 function placeOf(expected: string, rows: readonly Row[]): number | null {
   const at = rows.map(named).indexOf(expected)
   return at < 0 ? null : at + 1
 }
 
-/** The palette before this one: without a `>`, notes by name and path, the ones
- *  opened lately winning ties, and nothing else. */
 function before(query: string): Row[] {
   const where = (path: string) => path.slice(ROOT.length + 1)
   return rank(
@@ -190,7 +163,6 @@ function before(query: string): Row[] {
 describe('what the palette puts first', () => {
   const results = CASES.map(([query, expected, within]) => {
     const now = placeOf(expected, ranked(query, ALL))
-    // A note that is open was a note row before there were tab rows.
     const then = placeOf(expected.replace(/^tab /, ''), before(query))
     return { query, expected, within, now, then }
   })

@@ -1,10 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { refreshRate, SETTLE, Settling } from './view'
 
-/** The holder's view of an application, as its host is told it (issue 1063, step 5;
- *  view.ts): the refresh rate measured off the page's frames, and a view said once it
- *  has settled. */
-
 describe('the refresh rate', () => {
   test('is the middle gap’s, whatever a frame or two late says', () => {
     const at60 = [16.7, 16.6, 16.7, 33.4, 16.6, 16.7, 16.7, 16.6, 50, 16.7]

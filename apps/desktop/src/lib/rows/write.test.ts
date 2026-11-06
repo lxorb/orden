@@ -5,9 +5,6 @@ import { rowsOf } from '@orden/bases/rows'
 import { scanNote } from '@orden/scan/note'
 import { scanRows } from '@orden/bases/scan'
 
-/** The one write path: a property of a note and a field of a task, as edits of the
- *  note's words, written the way every write across a space is. */
-
 const disk = new Map<string, string>()
 const sent: string[] = []
 
@@ -33,7 +30,6 @@ vi.mock('../link-index.svelte', () => ({
 
 vi.mock('../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 
-/** Whether the space is one shared with this account to be read. */
 const share = vi.hoisted(() => ({ readOnly: false }))
 vi.mock('../sharing.svelte', () => ({ canWriteAt: () => !share.readOnly }))
 
@@ -44,7 +40,6 @@ type HoldsNotes = import('../workspace/note-text').HoldsNotes
 
 const PATH = '/space/Plan.md'
 
-/** The rows of a note as the store would hold them. */
 function rowsFor(text: string): Row[] {
   return rowsOf('Space', {
     ...scanNote('Plan.md', text),
@@ -65,7 +60,6 @@ const taskRow = (text: string, words: string) => {
   return found
 }
 
-/** A store with one note on the disk and, optionally, open with other words. */
 function holding(text: string, open?: string) {
   disk.clear()
   disk.set(PATH, text)
@@ -94,7 +88,6 @@ function holding(text: string, open?: string) {
 beforeEach(() => {
   sent.length = 0
   share.readOnly = false
-  // Ticking writes today's date, so today is held still.
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date(2026, 9, 7, 10, 0))
 })
@@ -153,23 +146,18 @@ describe('a property written from a view', () => {
     expect(changed(text, row, { list: { flags: { add: '3' } } })).toBe(
       '---\ndue: [2026-10-24, 2026-11-02]\nflags: [true, false, 1234.5, 3]\n---\n# N\n',
     )
-    // A list the note does not hold yet, and one written as a single value.
     expect(changed('---\ntags: a\n---\n', row, { list: { tags: { add: 'b' } } })).toBe(
       '---\ntags: [a, b]\n---\n',
     )
     expect(changed('---\ntags: a\n---\n', row, { list: { links: { add: 'b' } } })).toBe(
       '---\ntags: a\nlinks: [b]\n---\n',
     )
-    // A chip the list already has writes nothing.
     expect(changed(text, row, { list: { flags: { add: '1234.5' } } })).toBe(text)
-    // A map is no list: a chip put on one is refused rather than written over it.
     const mapped = '---\nexport:\n  paper: A4\n---\n'
     expect(changed(mapped, row, { list: { export: { add: 'b' } } })).toBeNull()
   })
 
   test('puts a chip on or takes one off a list in a block the rows cannot draw', () => {
-    // A comment line and a block scalar each make the rows' reader give up; the list
-    // is still the one the cell showed, read by YAML, and the rest stays as it was.
     const commented = '---\n# kept\ntags: [a, "b"]\n---\n# N\n'
     const row = noteRow(commented)
     expect(changed(commented, row, { list: { tags: { add: 'z' } } })).toBe(
@@ -188,7 +176,6 @@ describe('a property written from a view', () => {
       '---\nsummary: |\n  Line one.\n  Line two.\ntags: [a]\nafter: x\n---\n',
     )
 
-    // A key such a block does not hold yet is added beside the others.
     expect(changed('---\n# kept\ntitle: x\n---\n', row, { list: { tags: { add: 'z' } } })).toBe(
       '---\n# kept\ntitle: x\ntags: [z]\n---\n',
     )
@@ -207,16 +194,13 @@ describe('a property written from a view', () => {
     expect(changed(block, row, { list: { tags: { add: 'z' } } })).toBe(
       '---\nTags: [x, y, z]\ntitle: a\n---\nbody\n',
     )
-    // In a block the rows cannot draw, too.
     const commented = '---\n# kept\nTags:\n  - x\n  - 007\n---\nbody\n'
     expect(changed(commented, row, { list: { tags: { add: 'z' } } })).toBe(
       '---\n# kept\nTags: [x, 007, z]\n---\nbody\n',
     )
-    // A whole list keeps the members it did not change as the note wrote them.
     expect(changed('---\nTags: [007, x]\n---\n', row, { note: { tags: [7, 'x', 'z'] } })).toBe(
       '---\nTags: [007, x, z]\n---\n',
     )
-    // Where the note has both spellings, they are two keys, and `tags` is its own.
     expect(changed('---\nTags: [x]\ntags: [y]\n---\n', row, { list: { tags: { add: 'z' } } })).toBe(
       '---\nTags: [x]\ntags: [y, z]\n---\n',
     )
@@ -233,7 +217,6 @@ describe('a property written from a view', () => {
       expect(changed(flow, row, { list: { ids: { remove: 3 } } }), lead).toBe(
         crlf(`---\n${lead}ids: [007, 1.10, "x"]\ntitle: t\n---\nbody\n`),
       )
-      // A whole list keeps the members it did not change as written.
       expect(changed(flow, row, { note: { ids: [7, 1.1, 'x', 'b'] } }), lead).toBe(
         crlf(`---\n${lead}ids: [007, 1.10, "x", b]\ntitle: t\n---\nbody\n`),
       )
@@ -247,13 +230,9 @@ describe('a property written from a view', () => {
   test('refuses a chip it cannot write without losing what the block says', () => {
     const row = noteRow('---\ntags: [a]\n---\n')
     for (const text of [
-      // A comment inside the list itself, which a rewrite would drop.
       '---\n# kept\ntags:\n  - a # why\n  - b\n---\n',
-      // A block that is not YAML at all.
       '---\n# kept\ntags: [a\n---\n',
-      // A list of lists.
       '---\n# kept\ntags:\n  - - a\n---\n',
-      // The same key twice.
       '---\n# kept\ntags: [a]\ntags: [b]\n---\n',
     ]) {
       expect(changed(text, row, { list: { tags: { add: 'z' } } }), text).toBeNull()
@@ -266,7 +245,6 @@ describe('a property written from a view', () => {
     const row = noteRow(text)
     const after = '---\nids: [1234567890123456789, 1.10, 2.0, 007, -0]\n---\n# N\n'
     expect(changed(text, row, { list: { ids: { remove: 1 } } })).toBe(after)
-    // The same list as values, the way a rename of a choice writes it.
     const ids = row.note.ids
     expect(Array.isArray(ids)).toBe(true)
     const kept = Array.isArray(ids) ? ids.filter((_, at) => at !== 1) : []
@@ -359,8 +337,6 @@ describe('the write itself', () => {
     expect(disk.get(PATH)).toBe('- [x] Go ✅ 2026-10-07\nwords typed since\n')
   })
 
-  // A row of a space shared to be read: Today and a base across every space draw them,
-  // and the replacement passes their note over (B280). Nothing written is not done.
   test('a note in a space shared to be read is not written, and answers so', async () => {
     const text = '- [ ] Go\n'
     const { ws, undone } = holding(text)

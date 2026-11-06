@@ -1,10 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** What the Sync pane counts and takes off the account: other sync tools' copies the
- *  account holds from before Orden left them alone, under either engine, and nothing
- *  else. The account, the store and the engine are stood in for; what is asked is which
- *  notes are counted and which deletes go out. */
-
 interface Fake {
   saved: unknown
   deleted: string[]

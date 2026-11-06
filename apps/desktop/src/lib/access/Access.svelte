@@ -1,18 +1,4 @@
 <script lang="ts">
-  /** Settings > AI > Access: everything that can reach the notes, in one list, and one
-   *  way to connect one more (docs/agent-native.md 9.1, 9.5, 10; docs/ai.md).
-   *
-   *  Settings used to split this by plumbing - Agents for what reaches Orden on this
-   *  computer through `nib mcp`, LLM access for what reaches the account's notes through
-   *  its connector - and the reader had to know which road a client took to find it. So
-   *  both are rows of one list: an agent on this computer opens its grant (what it may
-   *  do, its sites, what it asks, what it did), a connected app says what it reaches and
-   *  can be disconnected. Under the list, Connect: one chooser over both roads, each way
-   *  only where it applies (choices.ts).
-   *
-   *  Fetched when Settings > AI is opened, never before: nothing of the agents is in the
-   *  first paint (weight.test.ts). The crate is the real one on a desktop and the
-   *  stand-in a drive puts in front of it anywhere else; see reach.svelte.ts. */
   import { onMount } from 'svelte'
   import { slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -34,10 +20,8 @@
   import LocalSteps from './LocalSteps.svelte'
   import Hint from '../Hint.svelte'
 
-  /** Told whether an agent's grant is open, which the page shows instead of its accounts. */
   const { ondetail }: { ondetail?: (open: boolean) => void } = $props()
 
-  /** Which way in was looked at last; people have one. */
   const CHOICE_KEY = 'nib:access-choice'
 
   const local = !__EVEN_PLUGIN__ && reach.offered
@@ -51,8 +35,6 @@
     }
   })
 
-  // Kept fresh while the page shows: the moment a client has signed in, it is in the list
-  // without anyone reloading anything.
   $effect(() => {
     if (!account.user) return
     return connectors.watch()
@@ -64,7 +46,6 @@
     ondetail?.(agent !== null)
   })
 
-  /** The one somebody used last at the top, and those never used by when they came. */
   const listed = $derived(
     pane
       ? [...pane.grants].sort(
@@ -78,7 +59,6 @@
   let picked = $state<Choice | null>(null)
   const choice = $derived(picked ?? shownFirst(offered, storedText(CHOICE_KEY)))
 
-  /** The ways, as their tabs read: products' names, and Other. */
   const LABELS: Record<Choice, () => string> = {
     'claude-code': () => 'Claude Code',
     codex: () => 'Codex',
@@ -109,9 +89,6 @@
 
   let root = $state<HTMLElement>()
 
-  /** Whether Orden adds itself to the agent programs on this computer, so they reach it
-   *  with nothing to set up (src-tauri/src/ai_cli/enroll.rs); null where this app may
-   *  not, which is anything but the app somebody installed. */
   let enrolled = $state<boolean | null>(null)
 
   onMount(() => {
@@ -125,8 +102,6 @@
     )
   })
 
-  /** Whether Shortcuts lists Orden's actions, which only a build signed by a developer
-   *  team gets (src-tauri/src/siri.rs). */
   let shortcuts = $state(false)
 
   onMount(() => {
@@ -143,14 +118,12 @@
     void invoke('ai_cli_enroll_write', { on: enrolled }).catch(() => undefined)
   }
 
-  /** A switch row answers Enter and Space, as a button does. */
   function pressed(event: KeyboardEvent) {
     if (event.key !== 'Enter' && event.key !== ' ') return
     event.preventDefault()
     enroll()
   }
 
-  // Opened at Access - an old link to Agents or LLM access, `/mcp` - the page lands here.
   onMount(() => {
     if (settings.at !== 'access') return
     settings.at = null
@@ -301,10 +274,6 @@
 </div>
 
 <style>
-  /* The page's own shapes, for every part of it. A component does not inherit the
-     panel's rules - those are scoped to it - so they are said once here, with the
-     panel's values, for the components inside: the list, one agent, its log and the
-     ways to connect. See SettingsPanel.svelte. */
   .agents,
   .page {
     display: flex;
@@ -325,7 +294,6 @@
     color: var(--muted-strong);
   }
 
-  /* A run of rows. */
   .agents :global(.card) {
     display: flex;
     flex-direction: column;
@@ -366,7 +334,6 @@
     color: var(--danger);
   }
 
-  /* A row that is itself a control: it shows what it does when pointed at. */
   @media (hover: hover) {
     .agents :global(button.nib-setting:hover),
     .agents :global(.nib-setting.pressable:hover) {

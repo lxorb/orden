@@ -1,18 +1,3 @@
-/** Everything the palette can find, as candidates for rank.ts: the open tabs, the
- *  files of the space, the bookmarks, the commands, the pages of this device's
- *  history and the settings.
- *
- *  **One row per place to go**, which is Chrome's rule for its omnibox: a note that is
- *  open is its tab, switched to rather than opened a second time; a page that is open
- *  is its tab too; a bookmark of a note is that note, a little higher, rather than a
- *  second row saying the same thing. So the list never offers two ways to the same
- *  place and asks somebody to guess which is which.
- *
- *  Built once each time the palette opens, not per keystroke: every name is folded
- *  here, and everything the ranking weighs besides the words - how much a thing is
- *  used, and where the reader is - is worked out here too. Pure: the palette hands in
- *  what the stores hold. */
-
 import { foldName } from '@orden/markdown/links'
 import type { Command } from '../commands'
 import { fileMark } from '../file-mark'
@@ -28,68 +13,46 @@ import type { Candidate, Kind } from './rank'
 import type { OpenTab, Row } from './rows'
 import type { Setting } from './settings'
 
-/** What the stores hold, handed in. */
 export interface World {
   root: string
   files: readonly Entry[]
   tabs: readonly OpenTab[]
-  /** The tab in front, and what kind of thing it holds. */
   active: string | null
   focused: TabKind | null
-  /** The notes opened lately, newest first. */
   recent: readonly string[]
   bookmarks: readonly Bookmark[]
   commands: readonly Command[]
   pages: readonly Visit[]
   settings: readonly Setting[]
-  /** The machines a remote terminal reaches, where this is a desktop that has any. */
   hosts: readonly Host[]
-  /** How much a key has been used; see frecency.ts. */
   worth: (key: string) => number
   now: number
-  /** Where the website at a path points, or null for a file that is not one: a web
-   *  note is found by its address as well as by its name, here and in the address
-   *  field alike (#1059; see web-tab/web-notes.ts). */
   addressOf?: (path: string) => string | null
 }
 
-/** Part 5 of rank.ts, as points. */
 const LIFT = {
-  /** A note somebody bookmarked is one they meant to come back to. */
   bookmarked: 6,
-  /** The notes opened lately, the latest most: frecency's own curve is only as old
-   *  as this version, and the list of recent notes is older. */
   recent: 8,
-  /** The tab already in front is the one place nobody is looking to go. */
   here: -24,
-  /** A command that cannot run right now is still listed, faded, below the rest. */
   unavailable: -30,
-  /** A command about the kind of tab in front: the page's own when a page is. */
   about: 12,
 }
 
 const noteKey = (path: string) => `note:${path}`
 const pageKey = (url: string) => `page:${url}`
 
-/** An address as the history shows it, or as it came where it is not one. */
 function addressOf(url: string): string {
   try {
     return shownAddress(url)
   } catch {
-    // Not an address `URL` can read - a page still arriving - so it is shown as it is.
     return url
   }
 }
 
-/** The key a tab is used under: its file's where it has one, so a note is the same
- *  thing open or not, else its page's, else the tab itself. */
 function tabKey(tab: OpenTab): string {
   return tab.path ? noteKey(tab.path) : tab.url ? pageKey(tab.url) : `tab:${tab.id}`
 }
 
-/** What frecency.ts counts a row's uses under, or null for a row that is not a
- *  thing to come back to: a place in the note in front, a note not made yet, an
- *  address typed (which the history counts once it is a page). */
 export function rowKey(row: Row): string | null {
   switch (row.kind) {
     case 'note':
@@ -116,9 +79,6 @@ export function rowKey(row: Row): string | null {
   }
 }
 
-/** What a candidate is made of besides its name: its other names and what else it
- *  is found by (see part 1 of rank.ts), where the reader is (part 5), and any use it
- *  has had that frecency.ts does not count (part 4). */
 interface Readings {
   names?: readonly string[]
   also?: readonly string[]
@@ -148,24 +108,11 @@ function candidate(
   }
 }
 
-/** A site's host, which it is known by as much as by its title. */
 const hostOf = (address: string) => address.split('/')[0] ?? address
 
-/** What a note's row is made of that its entry alone decides: the name it shows, its
- *  folder, and both folded the way the ranking reads them.
- *
- *  Kept per entry, because the palette builds its rows again whenever anything it
- *  lists changes while it is open - a pass of sync, a file another program wrote, a
- *  note saved - and on five thousand notes that was fourteen milliseconds of folding
- *  names that had not changed. The tree is replaced rather than edited (see
- *  `$state.raw` in workspace.svelte.ts), so an entry that is the same object is the
- *  same file under the same name, and only what changed is read again. Weak, so a
- *  space closed takes its readings with it. */
 interface Reading {
-  /** The space the folder was read against. */
   root: string
   key: string
-  /** The shown name in lower case, which is what two notes share. */
   alike: string
   folder: string | null
   name: string
@@ -192,8 +139,6 @@ function readingOf(entry: Entry, root: string): Reading {
   return reading
 }
 
-/** How many notes share each name, so a row says its folder only where the name
- *  alone would not do. Asked with the name as a reading has it: shown, in lower case. */
 function sharing(files: readonly Entry[], root: string): (alike: string) => boolean {
   const named = new Map<string, number>()
   for (const one of files) {
@@ -204,9 +149,6 @@ function sharing(files: readonly Entry[], root: string): (alike: string) => bool
   return (alike) => (named.get(alike) ?? 0) > 1
 }
 
-/** The files with the ones opened lately first, newest first, and the rest in the
- *  order the space lists them: what a stable sort by recency gives, without sorting
- *  every file of the space to move a handful to the front. */
 function recentFirst(files: readonly Entry[], place: ReadonlyMap<string, number>): Entry[] {
   const lately: Entry[] = []
   const rest: Entry[] = []
@@ -232,9 +174,6 @@ export function candidates(world: World): Candidate<Row>[] {
   )
   const lifted = (path: string) => recency(path) + (marked.has(path) ? LIFT.bookmarked : 0)
 
-  // The open tabs, one per file or page. Every tab is in the list, the one in front
-  // too, sunk: typing the name of the note one is in finds it, and it is not the
-  // row Enter should take anybody to.
   const open = new Set<string>()
   const openPages = new Set<string>()
   for (const tab of world.tabs) {
@@ -260,14 +199,10 @@ export function candidates(world: World): Candidate<Row>[] {
     )
   }
 
-  // The files, the ones opened lately first so they win every tie. Built out of each
-  // entry's reading rather than through `candidate`, which would fold every name again.
   for (const entry of recentFirst(world.files, place)) {
     const reading = readingOf(entry, world.root)
     if (open.has(reading.key)) continue
 
-    // A website's site and address, read afresh: its entry stays the same object when
-    // only the address inside it changes. A space holds a handful.
     const url = world.addressOf?.(entry.path) ?? null
     const address = url ? foldName(addressOf(url)) : null
 
@@ -297,8 +232,6 @@ export function candidates(world: World): Candidate<Row>[] {
     )
   }
 
-  // A page counts its visits as well as the times it was chosen here: the history is
-  // how often somebody went there, whichever way they went.
   for (const visit of world.pages) {
     if (openPages.has(visit.url)) continue
 
@@ -314,7 +247,6 @@ export function candidates(world: World): Candidate<Row>[] {
     )
   }
 
-  // Another machine, found by its name, its other names and where it is.
   for (const host of world.hosts) {
     out.push(
       candidate('host', host.name, { kind: 'host', host }, world, {
@@ -324,7 +256,6 @@ export function candidates(world: World): Candidate<Row>[] {
     )
   }
 
-  // A setting whose name is a command's is reached by the command: Shortcuts is both.
   const commanded = new Set(world.commands.map((one) => foldName(one.label)))
   for (const setting of world.settings) {
     if (commanded.has(foldName(setting.label))) continue
@@ -340,8 +271,6 @@ export function candidates(world: World): Candidate<Row>[] {
   return out
 }
 
-/** The bookmarks that are more than a note: a heading, a block, a folder, a search, a
- *  view of the graph. A note's is the note's own row; a group is a shelf, not a place. */
 function bookmarkCandidates(world: World): Candidate<Row>[] {
   const out: Candidate<Row>[] = []
   const files = new Map(world.files.map((one) => [one.path, one]))
@@ -361,8 +290,6 @@ function bookmarkCandidates(world: World): Candidate<Row>[] {
       continue
     }
 
-    // A block bookmark carries the whole of what a link into it would say, so the
-    // note is the part in front of the `#`; see forBlock in bookmarks.svelte.ts.
     const inside = mark.kind === 'block' ? (mark.path.split('#')[0] ?? '') : mark.path
     const path = insideSpace(world.root, inside)
     const folder = mark.kind === 'folder'
@@ -392,15 +319,10 @@ function bookmarkCandidates(world: World): Candidate<Row>[] {
   return out
 }
 
-/** The headings of the note in front, for the list of everything: there only when
- *  the words find one closely (see `STRONG` in rank.ts), since they are a place in
- *  this note rather than somewhere to go. `#` lists them alone. */
 export function headingCandidates(
   headings: readonly { line: number; text: string; level: number }[],
   nested: boolean,
 ): Candidate<Row>[] {
-  // Under `#` a heading sits under the one it belongs to, as in the outline; among
-  // everything else it is a row like the rest.
   const top = Math.min(...headings.map((one) => one.level))
 
   return headings.map((one) => ({
@@ -421,12 +343,6 @@ export function headingCandidates(
   }))
 }
 
-/** The rows of a field with nothing typed in it: whatever was reached for lately -
- *  the notes and the commands, and a setting or a page chosen here - newest first,
- *  then the notes opened lately that the curve has no time for yet, then the rest of
- *  the notes in the file list's order, so a new space's palette is not empty. The tab
- *  in front is left out: with nothing typed, Enter is the thing before it, the way
- *  Alt+Tab is the window before this one. */
 export function resting(
   all: readonly Candidate<Row>[],
   world: Pick<World, 'recent' | 'active'>,

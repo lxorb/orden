@@ -27,8 +27,6 @@ describe('every place a word appears', () => {
   })
 
   test('stays where the words are after a letter that lowercases into two', () => {
-    // `İ` lowercases into `i` and a combining dot, which moved every match after
-    // one a letter to the right of the word it was found in.
     expect(placesOf('İstanbul beta', 'beta')).toEqual([9])
     expect(placesIn({ text: 'İİ beta İ beta', pieces: [] }, 'BETA')).toEqual([3, 10])
   })
@@ -42,8 +40,6 @@ describe('the same over a page read once', () => {
   })
 
   test('folds the page once, however many letters are typed after it', () => {
-    // The one cost in a find bar that would scale with the document: a copy of
-    // the whole page per letter typed.
     const words: Words = { text, pieces: [] }
     expect(words.folded).toBeUndefined()
 
@@ -56,8 +52,6 @@ describe('the same over a page read once', () => {
   })
 })
 
-/** The nodes are only ever looked at through `at`, so a stand-in that carries
- *  nothing but the offset is enough to test the arithmetic. */
 function pieces(...offsets: number[]): Piece[] {
   return offsets.map((at) => ({ node: { at } as unknown as Text, at }))
 }
@@ -83,7 +77,6 @@ describe('which piece of the page an offset falls in', () => {
 })
 
 describe('painting the places found', () => {
-  /** A registry the way the engine keeps one: a name to the highlight under it. */
   class Highlight {
     readonly ranges: Range[]
     constructor(...ranges: Range[]) {
@@ -100,8 +93,6 @@ describe('painting the places found', () => {
   const painted = (name: string) => highlights.get(name)?.ranges ?? []
 
   test("one page's paint leaves another page's in place", () => {
-    // Two reading panes paint under the one name the theme styles, and each used
-    // to replace the whole of it.
     const left = {}
     const right = {}
 

@@ -1,9 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { clockOf, middle, seenAt, streamStats } from './stats'
 
-/** The developer overlay's numbers (issue 1063, step 9; stats.ts): the two clocks set
- *  side by side, a frame's time on this one, and the engine's counts read. */
-
 const pong = (at: number, now: number) => ({
   t: 'pong' as const,
   at,
@@ -16,15 +13,12 @@ const pong = (at: number, now: number) => ({
 
 describe('the clocks', () => {
   test('are set side by side by half the round trip', () => {
-    // Sent at 1000 here, answered at 5010 there, heard at 1020 here: 5000 ahead.
     expect(clockOf(pong(1000, 5010), 1020)).toEqual({ offset: 4000, rtt: 20 })
   })
 
   test('put a frame’s RTP time on this clock, the 32 bits come round or not', () => {
     const clock = { offset: 4000, rtt: 0 }
-    // Began at 100 000 there; read 2 seconds in: 102 000 there, 98 000 here.
     expect(seenAt(180_000, 100_000, clock, 98_050)).toBeCloseTo(98_000)
-    // Fourteen hours in, the RTP time has come round once.
     const wrap = 2 ** 32 / 90
     const fourteen = 14 * 3_600_000
     const rtp = ((fourteen * 90) % 2 ** 32) + 0
@@ -83,7 +77,6 @@ describe('the engine’s numbers', () => {
       route: 'srflx',
     })
     expect(first.stats.rtt).toBeCloseTo(4)
-    // 60 frames 1/60 s apart, evenly: no spread.
     const gap = 1 / 60
     const second = streamStats(report(500_000, 60, 60 * gap, 60 * gap * gap), first.counts, 2000)
     expect(second.stats.bitrate).toBe(4_000_000)

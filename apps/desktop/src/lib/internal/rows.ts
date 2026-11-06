@@ -1,15 +1,3 @@
-/** A space Orden keeps itself (internal/folder.ts), as the rows the browser build's commands
- *  read and write (web/store.ts): mounted at the space's address, it answers every
- *  command a folder of the browser's answers, so the commands are the same code on
- *  both (#1068, step 4c).
- *
- *  Words are `files`, every other file `assets`, split the way the commands split them
- *  (`readsAsText`), so a path is in one table or the other and never both. A folder is
- *  what the browser makes one, a `.keep` under it, and writing one is making the folder.
- *  A move and a delete of a path with everything under it, and the trash, are the
- *  folder's own steps (`tree`), so a rename is one line of the index and no file under
- *  it changes its identity. */
-
 import { fromBase64, toBase64 } from '../bytes'
 import type { PlaneMarks } from '@orden/scan/canvas'
 import { assetType } from '../web/asset-route'
@@ -17,15 +5,12 @@ import { basename, normalise, parent } from '../web/paths'
 import { type AssetRow, type FileRow, KEEP, type Rows, type Trashed } from '../web/store'
 import type { InternalEntry, InternalFolder } from './folder'
 
-/** `folder` as rows at `root`, an address of the browser build's shape (`/<name>`).
- *  `words` says which files are read as words; see `readsAsText` in web/commands.ts. */
 export function internalRows(
   folder: InternalFolder,
   root: string,
   words: (path: string) => boolean,
 ): Rows {
   const base = normalise(root)
-  /** Where a path is in the space, `''` its top. */
   const inSpace = (path: string): string => {
     const at = normalise(path)
     if (at === base) return ''
@@ -34,7 +19,6 @@ export function internalRows(
   }
   const address = (path: string) => (path ? `${base}/${path}` : base)
   const isKeep = (path: string) => basename(path) === KEEP
-  /** What a plane's listing carries, learnt by the scan and written with the plane. */
   const planes = new Map<string, PlaneMarks>()
 
   const fileRow = async (path: string, entry: InternalEntry): Promise<FileRow | undefined> => {
@@ -51,7 +35,6 @@ export function internalRows(
     created: entry.made,
   })
 
-  /** Every path's row of the listing, a folder as its `.keep`, in path order. */
   const listing = async () => {
     const out: { path: string; entry: InternalEntry }[] = []
     for (const { path, entry } of await folder.list()) {
@@ -60,7 +43,6 @@ export function internalRows(
     return out.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
   }
 
-  /** The rows of words, folders' `.keep` among them, in path order. */
   const wordRows = async (wanted: (path: string) => boolean = () => true) => {
     const out: FileRow[] = []
     for (const { path, entry } of await listing()) {
@@ -91,8 +73,6 @@ export function internalRows(
     return { path, type: assetType(path), data: toBase64(bytes), modified: entry.modified }
   }
 
-  /** A folder's `.keep` taken away: the folder goes if nothing at all is in it, as a
-   *  folder of the browser's would. */
   const unkeep = async (path: string) => {
     const at = inSpace(parent(path))
     const entry = await folder.at(at)
@@ -138,8 +118,6 @@ export function internalRows(
       const at = inSpace(path)
       if ((await folder.at(at))?.key) await folder.remove(at)
     },
-    /** Rows written and dropped one by one: what a command not taught about the tree
-     *  does. Every move the commands make here goes through `tree`. */
     async move(rows, gone) {
       for (const row of rows) await write(row.path, row.content)
       for (const path of gone) {
@@ -186,7 +164,6 @@ export function internalRows(
     },
   }
 
-  /** A trashed thing as Recently deleted lists it, at its address. */
   const listed = (one: Awaited<ReturnType<InternalFolder['trash']>>[number]): Trashed => ({
     id: one.id,
     kind: one.kind,

@@ -1,9 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { headingOffsets, positionOf, type Section, sectionAt } from './places'
 
-/** A note of four sections, by the offset each heading starts at. */
 const OFFSETS = [0, 100, 260, 470]
-/** And how long the note is, which is where the last section ends. */
 const END = 600
 
 describe('which section a place is in', () => {
@@ -37,7 +35,6 @@ describe('and back again', () => {
 
   test('a fraction is that far towards the next heading', () => {
     expect(positionOf({ index: 1, fraction: 0.5 }, OFFSETS, END)).toBe(180)
-    // The last section runs to the end of the note rather than to a heading.
     expect(positionOf({ index: 3, fraction: 0.5 }, OFFSETS, END)).toBe(535)
   })
 
@@ -53,8 +50,6 @@ describe('and back again', () => {
 
 describe('the two directions are one mapping', () => {
   test('a place survives the round trip', () => {
-    // Which is what makes switching a note between writing and reading and back
-    // again land where it began, and it is the whole reason these are a pair.
     for (const position of [0, 40, 100, 173, 260, 399, 470, 522, 600]) {
       const section: Section = sectionAt(position, OFFSETS, END)
       expect(positionOf(section, OFFSETS, END)).toBe(position)

@@ -1,13 +1,3 @@
-/** The wallpaper's dials, said in code behind the theme's door (see `own` in
- *  theme.svelte.ts): more than a theme file may declare, and two of them - the tint's
- *  colour, which is the accent's until another is picked, and what a dial's floor is -
- *  are not something a stylesheet can say.
- *
- *  Windows Terminal's background image is the role model for what is offered (fit,
- *  alignment, opacity) and Arc's theme for how little is said about it (a colour, its
- *  strength, a grain). What Orden adds is that none of them can make the frame unreadable:
- *  every floor is worked out from the picture under the dials; see look.ts. */
-
 import { t } from '../i18n.svelte'
 import type { ThemeSetting, ThemeValue } from '../themes/settings'
 import { theme } from '../theme.svelte'
@@ -81,7 +71,6 @@ function isFit(value: unknown): value is Fit {
   return FITS.includes(value as Fit)
 }
 
-/** The dials the sheet depends on, out of the settings' values. */
 export function dialsOf(values: Record<string, ThemeValue>): Dials {
   return {
     blur: Number(values.blur ?? 28),
@@ -93,8 +82,6 @@ export function dialsOf(values: Record<string, ThemeValue>): Dials {
   }
 }
 
-/** What is baked into the picture besides the blur: its saturation and a tint toward a
- *  colour, as the three numbers the canvas needs. */
 export interface Tone {
   saturation: number
   tint: number

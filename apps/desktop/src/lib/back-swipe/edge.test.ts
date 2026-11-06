@@ -21,7 +21,6 @@ describe('which way the content would still scroll', () => {
     expect(taken([scroller(300, 1500)])).toEqual({ left: true, right: true })
     expect(taken([scroller(0, 1500)])).toEqual({ left: false, right: true })
     expect(taken([scroller(1500, 1500)])).toEqual({ left: true, right: false })
-    // A zoomed page stops a fraction short of its edge.
     expect(taken([scroller(1499.7, 1500)])).toEqual({ left: true, right: false })
   })
 
@@ -67,8 +66,6 @@ describe('the chain under the pointer', () => {
   })
 
   test('words in no scroller are no chain, whatever the pane itself says above them', () => {
-    // The pane's root says `none` for the window's own sake, and the root is not a scroll
-    // container sideways, so it keeps nothing.
     expect(chainOf(at('words'), at('pane'))).toEqual([])
   })
 

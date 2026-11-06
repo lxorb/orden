@@ -1,10 +1,4 @@
 <script lang="ts">
-  /** Save, for a tab with no file: a small layer hanging from the tab, like Chrome's
-   *  bookmark bubble hangs from its star. The name, prefilled and selected so it can
-   *  be typed straight over, and where it goes - the places the Move sheet offers,
-   *  starting on the root of the space the tab was opened in. Enter saves, Escape or a
-   *  press anywhere else leaves it as it was. No title and no question: the tab it
-   *  hangs from says what is being saved. See ask.ts and workspace/drafts.ts. */
   import { onMount, tick } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { scale } from 'svelte/transition'
@@ -32,16 +26,11 @@
   }: { tab: Tab; anchor: DOMRect | null; onclose: () => void; onsaved?: (() => void) | undefined } =
     $props()
 
-  /** How many places the list shows at once: enough to pick from without the layer
-   *  becoming a page, the Move sheet's own number. */
   const MOST_SHOWN = 8
-  /** The layer's width, which is also what keeps it on the screen. */
   const WIDTH = 288
   const GAP = 6
   const EDGE = 8
 
-  // What the tab offers, read once as the layer opens: the page's title may change
-  // under a web tab while somebody is typing over it, and the field is theirs now.
   // svelte-ignore state_referenced_locally
   const title = tab.kind === 'web' ? pages.of(tab.id).title : undefined
   // svelte-ignore state_referenced_locally
@@ -58,7 +47,6 @@
 
   let named = $state<HTMLInputElement>()
 
-  /** The list of places, open while one is being picked. */
   let choosing = $state(false)
   let query = $state('')
   let cursor = $state(0)
@@ -66,8 +54,6 @@
     choosing ? rank(query.trim(), places, (one) => one.label).slice(0, MOST_SHOWN) : [],
   )
 
-  /** Under the tab, starting where it starts and kept on the screen; the middle of the
-   *  top of the window where there is no tab to hang from. */
   const at = $derived.by(() => {
     const left = anchor ? anchor.left : (innerWidth - WIDTH) / 2
     return {
@@ -76,10 +62,6 @@
     }
   })
 
-  // Escape leaves it, like everything else the app puts over a note; and while it is
-  // up a web tab's page is out of sight, since a page is drawn over everything the
-  // window draws. See overlays.ts. And a press past it, and the window losing the focus,
-  // as every popup does.
   let bubble = $state<HTMLElement>()
   onMount(() => overlays.show(onclose, () => [bubble]))
 
@@ -90,7 +72,6 @@
     place = chosen
     choosing = false
     query = ''
-    // Back in the name, where the next Enter saves.
     void tick().then(() => named?.focus())
   }
 
@@ -100,8 +81,6 @@
       const step = event.key === 'ArrowDown' ? 1 : -1
       cursor = (cursor + step + matches.length) % Math.max(matches.length, 1)
     } else if (event.key === 'Enter') {
-      // The place, not the whole layer: Enter on a row picks it, and the next Enter
-      // saves.
       event.preventDefault()
       pick()
     }
@@ -111,15 +90,12 @@
     event.preventDefault()
     const folder = place?.id
     const file = fileFor(name, tab.note, title)
-    // Where nobody may name a note; see `isAgentsName`. The bubble stays with the words.
     if (folder && isAgentsName(file)) {
       const root = workspace.rootHolding(joinPath(folder, file))
       if (root !== null)
         void import('../reserved-name.svelte').then((one) => one.reservedName.tell(root))
       return
     }
-    // Gone at once, with the row arriving in the list as it goes: what is left is a
-    // write, and a write that fails says so where every write says it.
     onclose()
     void workspace.save(tab, folder, file).then((path) => {
       if (path !== null) onsaved?.()
@@ -212,8 +188,6 @@
     --scrim-z: var(--z-menu);
   }
 
-  /* `.nib-layer` in the themes package: a thing that floats, over the note and under
-     nothing but another menu. Its places are `.nib-row`s, every list's row. */
   .bubble {
     position: fixed;
     z-index: var(--z-menu);

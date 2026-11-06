@@ -1,60 +1,31 @@
-/** A theme as the handful of colours its card in the picker is drawn in.
- *
- *  A card is nib in small - the title bar, the list with the open note in it, a
- *  note - and it has to show *that* theme whatever the window is wearing. So it
- *  cannot be painted by the page's stylesheets: those answer for the window's own
- *  theme on every element that carries the scheme attribute, which is how a card
- *  for the built-in came out in high contrast while high contrast was on. It is
- *  painted inline instead, from colours worked out here out of the sheets' own
- *  text: the app's tokens, then the theme's, then custom.css, in the order the
- *  page applies them and by the rules it applies them by.
- *
- *  Pure, so it is tested without a page; see looks.test.ts. */
-
 import type { Scheme } from '../theme.svelte'
 import { rules } from '../themes/sample'
 import { declarationsOf } from '../themes/validate'
 
-/** What a card draws. Each is read off the token the app itself reads for that
- *  part of the window, so a theme that restates one part moves the same part of
- *  its card; see `lookOf`. */
 export interface Look {
-  /** The note, and the window under everything. */
   ground: string
-  /** The list down the side. */
   side: string
-  /** The title bar the tabs sit in. */
   frame: string
   text: string
   muted: string
   line: string
   accent: string
-  /** The open note's row in the list. */
   open: string
-  /** The wallpaper's picture and its two scrims - their colour, the floor and the Dim
-   *  dial over it - and nothing for any other theme. */
   picture: string
   scrim: string
   floor: string
   dim: string
 }
 
-/** One custom property as a sheet states it, with what decides whether it wins. */
 interface Stated {
   name: string
   value: string
-  /** The body's own outrank whatever the root hands down, whatever either says. */
   body: boolean
   important: boolean
-  /** How specific the selector was, in the one currency these selectors use. */
   weight: number
-  /** The scheme the rule is for, or null for both. */
   scheme: Scheme | null
 }
 
-/** Which element a selector is about and how specific it is, for the handful of
- *  shapes a theme puts tokens under. Anything else - a prose rule, a media width,
- *  a descendant - says nothing about the window's own colours and is null. */
 function aimOf(selector: string): { body: boolean; weight: number; scheme: Scheme | null } | null {
   const bare = selector.replace(/['"\s]/g, '').toLowerCase()
   if (bare === 'body') return { body: true, weight: 1, scheme: null }
@@ -67,8 +38,6 @@ function aimOf(selector: string): { body: boolean; weight: number; scheme: Schem
   return { body: false, weight, scheme: scheme === 'dark' || scheme === 'light' ? scheme : null }
 }
 
-/** Every custom property a sheet states for the window, in the order it states
- *  them. Held per sheet, because the app's tokens are read for every card. */
 const read = new Map<string, Stated[]>()
 
 function statedIn(sheet: string): Stated[] {
@@ -92,8 +61,6 @@ function statedIn(sheet: string): Stated[] {
   return found
 }
 
-/** Where the `var(` that starts at `from` closes, and the comma splitting its name
- *  from its fallback, counting the parentheses in between. */
 export function argumentsOf(value: string, from: number): { end: number; comma: number } {
   let depth = 0
   let comma = -1
@@ -108,10 +75,6 @@ export function argumentsOf(value: string, from: number): { end: number; comma: 
   return { end: value.length, comma }
 }
 
-/** A value with every `var()` in it replaced by what it names, the way the browser
- *  substitutes one: the name if it is set, else the fallback, else the whole value
- *  is invalid, which is null. Ten names deep at most, which is also what ends a
- *  cycle. */
 export function substituted(value: string, known: Map<string, string>, depth = 0): string | null {
   const start = value.indexOf('var(')
   if (start < 0) return value
@@ -128,15 +91,12 @@ export function substituted(value: string, known: Map<string, string>, depth = 0
       : fallback === null
         ? null
         : substituted(fallback, known, depth + 1)
-  // The rest of the value at the same depth: a `color-mix()` of two tokens is two
-  // substitutions side by side, not one inside the other.
   const rest = substituted(value.slice(end + 1), known, depth)
   if (inner === null || rest === null) return null
 
   return `${value.slice(0, start)}${inner}${rest}`
 }
 
-/** The winner for each name on one element: the last of the strongest. */
 function winners(stated: Stated[]): Map<string, string> {
   const rank = (one: Stated) => (one.important ? 1000 : 0) + one.weight
   const best = new Map<string, Stated>()
@@ -149,8 +109,6 @@ function winners(stated: Stated[]): Map<string, string> {
   return new Map([...best].map(([name, one]) => [name, one.value]))
 }
 
-/** Every value on one element, with the `var()`s in it worked out against that
- *  same element's own values, which is where the browser works them out. */
 function resolved(own: Map<string, string>, inherited = new Map<string, string>()) {
   const known = new Map([...inherited, ...own])
   const out = new Map(inherited)
@@ -164,9 +122,6 @@ function resolved(own: Map<string, string>, inherited = new Map<string, string>(
   return out
 }
 
-/** The colours a card draws `scheme` in, out of `sheets` in the order the page has
- *  them, with `inline` standing for what the app writes onto the root element
- *  itself: the reader's accent, which outranks every sheet short of `!important`. */
 export function lookOf(
   sheets: readonly string[],
   scheme: Scheme,

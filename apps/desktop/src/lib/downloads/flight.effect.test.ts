@@ -1,8 +1,3 @@
-/** A download seen going, on a window (#1048): the file flies to the glyph of the tab
- *  saving it, the glyph answers when it lands, the reader hears it, a burst stays a
- *  handful of flights, the window changing size ends them, and a reader who asked for
- *  less movement sees the glyph answer and nothing fly. See flight.ts. */
-
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 let still = false
@@ -95,7 +90,6 @@ test("a page's file flies from its page to its own bar's glyph, which answers", 
   const [flight] = flights()
   expect(flight).toBeDefined()
   const card = flight?.node as HTMLElement
-  // Out from under the bar of the right pane, on an engine that cannot cut a page.
   expect(card.style.left).toBe(`${String(750 - 14)}px`)
   expect(card.style.top).toBe(`${String(36 - 14)}px`)
   expect(card.className).toBe('')
@@ -141,7 +135,6 @@ test('a burst is a handful of flights, one after another, and the glyph answers 
   expect(going).toHaveLength(5)
   const delays = going.map((one) => one.options.delay)
   expect(new Set(delays).size).toBe(5)
-  // The three past the handful answer at once.
   expect(answers(glyph('a'))).toHaveLength(3)
 })
 
@@ -161,7 +154,6 @@ test('a reader who asked for less movement sees no flight, only the glyph answer
   expect(flights()).toHaveLength(0)
   const [answer] = answers(glyph('a'))
   expect(answer).toBeDefined()
-  // Its strength dips, and nothing moves.
   expect(answer?.frames.every((one) => !('transform' in one))).toBe(true)
   expect(answer?.options.duration).toBeGreaterThan(0)
 })

@@ -1,7 +1,3 @@
-/** The inbox a task with no place goes to puts no file into the space the reader did
- *  not make (#1044): Orden's own `.Inbox.md` is made, and only that, and the file
- *  list is not asked to show it; a note the reader chose is listed as any note is. */
-
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const ROOT = '/spaces/Work'
@@ -62,10 +58,8 @@ describe('the inbox a task with no place goes to', () => {
     expect(await inboxNote(ROOT)).toBe(`${ROOT}/.Inbox.md`)
     expect([...disk.keys()]).toEqual([`${ROOT}/.Inbox.md`])
     expect(listed).toEqual([])
-    // Still told as a file that came, which is how the rows and the sync hear of it.
     expect(came).toEqual([`${ROOT}/.Inbox.md`])
 
-    // Asked again, nothing more is made.
     disk.set(`${ROOT}/.Inbox.md`, '- [ ] Call the bank\n')
     expect(await inboxNote(ROOT)).toBe(`${ROOT}/.Inbox.md`)
     expect(disk.get(`${ROOT}/.Inbox.md`)).toBe('- [ ] Call the bank\n')

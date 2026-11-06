@@ -1,14 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Recording where nothing may be written.
- *
- *  A recording is two writes: the sound, stored beside the note, and the embed, put
- *  into the note. In a space somebody shared with this account to be read the sync
- *  refuses the first on every pass, and the editor refuses the second, so the file
- *  would be left on the disk with nothing naming it. A note of the reader's own in
- *  Read-only mode refuses the embed the same way. So Record is not offered there, and
- *  a recording that is asked for anyway writes nothing. */
-
 const readOnly = vi.hoisted(() => new Set<string>())
 const stored = vi.hoisted(() => [] as string[])
 const editor = vi.hoisted(() => ({ readOnly: false }))
@@ -57,7 +48,6 @@ const MINE = '/mine'
 type View = Parameters<typeof canRecord>[0]
 const view = (locked: boolean) => ({ state: { readOnly: locked } }) as unknown as View
 
-/** The space in front, and the note in front of it, or none. */
 function inFront(root: string, note: string | null) {
   vi.spyOn(workspace, 'activeSpace', 'get').mockReturnValue({ id: root, name: root, root })
   vi.spyOn(workspace, 'active', 'get').mockReturnValue(
@@ -124,9 +114,6 @@ describe('the note a recording goes into', () => {
   })
 })
 
-/** A tab of a `.txt` or a `.json` is a note tab too, and an embed written into one is
- *  a line of Markdown in a file that is not. So a recording over one goes into a new
- *  note, as one over no note at all does. */
 describe('over a file that is not Markdown', () => {
   test('a recording goes into a new note rather than into the file', async () => {
     inFront(MINE, `${MINE}/data.json`)
@@ -141,8 +128,6 @@ describe('over a file that is not Markdown', () => {
 })
 
 describe('keeping a recording', () => {
-  /** A recording started over a note that could be written, and stopped once it no
-   *  longer can: the space shared to be read meanwhile, or Read-only turned on. */
   async function recordThen(change: () => void) {
     inFront(MINE, `${MINE}/a.md`)
     await recorder.start()

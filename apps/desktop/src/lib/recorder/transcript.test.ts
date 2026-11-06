@@ -38,8 +38,6 @@ describe('a date', () => {
 })
 
 describe('what a recording note is called', () => {
-  /** The same shape as the file beside it, so the two read as one thing in the file
-   *  list. */
   test('is the word, the day and the minute', () => {
     const at = new Date(2026, 8, 12, 14, 32)
 
@@ -48,8 +46,6 @@ describe('what a recording note is called', () => {
 })
 
 describe('the line that says a machine wrote something', () => {
-  /** One line, italic, naming the model rather than "AI". The reader came for the
-   *  words and not for a disclaimer. */
   test('names the model', () => {
     expect(writtenBy('whisper')).toBe('*Written by whisper*')
   })
@@ -58,15 +54,11 @@ describe('the line that says a machine wrote something', () => {
 describe('a transcript under an embed', () => {
   const said = transcriptCallout('Guten Morgen.\n\nWir fangen an.', 'German', 'whisper')
 
-  /** A callout: one block, with a line saying whose words are in it, and nothing of
-   *  the reader's own writing left sitting in a paragraph beside a machine's. */
   test('is one callout, headed with the language', () => {
     expect(said.split('\n')[0]).toBe('> [!quote] Transcript (German)')
     expect(said.split('\n')[1]).toBe('> *Written by whisper*')
   })
 
-  /** Every line carries the mark, blank ones included, or the callout ends where the
-   *  reader's own writing begins. */
   test('and carries the quote mark down every line', () => {
     for (const line of said.split('\n')) expect(line.startsWith('>')).toBe(true)
     expect(said).toContain('>\n> Wir fangen an.')
@@ -78,8 +70,6 @@ describe('a transcript under an embed', () => {
 })
 
 describe('a language', () => {
-  /** The platform's own list, which is the only one already translated into the four
-   *  languages the app speaks. */
   test('is named rather than left as a tag', () => {
     expect(languageName('de', 'en')).toBe('German')
     expect(languageName('de', 'de')).toBe('Deutsch')

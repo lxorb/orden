@@ -1,19 +1,13 @@
 <script module lang="ts">
   import { owes, writing } from '../parting'
 
-  /** The write a window going owes, while a card is up; see parting.ts. */
   let owing: (() => void) | null = null
   owes(() => owing?.())
 
-  /** Where the caret was when the card last went, for the next time it comes. */
   let caret: number | null = null
 </script>
 
 <script lang="ts">
-  /** The scratchpad's card: the note's own live-preview editor, built as the card comes
-   *  and gone with it, the way the hover card's is (preview-card.ts). Written a pause
-   *  after the typing stops, and at once as the card goes or the window does - no dot,
-   *  nothing to save. Its edge widens it; Escape puts it away. See pad.ts. */
   import { createEditor, EditorView, setNoteIndex } from '@orden/editor'
   import { onMount } from 'svelte'
   import { SAVE_DELAY } from '../backoff'
@@ -31,8 +25,6 @@
   import { closeScratchpad, padTab, shown, WIDTH } from './is.svelte'
   import { viewport } from '../viewport.svelte'
 
-  /** `docked` in the right side's body, as its tab (#1032): the side's width, so no edge
-   *  of its own to drag, and the side's height. */
   const { docked = false }: { docked?: boolean } = $props()
 
   const NARROWEST = 240
@@ -42,7 +34,6 @@
   let host: HTMLDivElement
   let view = $state<EditorView | null>(null)
   let path: string | null = null
-  /** Typed since the last write. */
   let owed = false
   let resizing = $state(false)
 
@@ -59,10 +50,6 @@
     void (async () => {
       const at = await scratchpad.where()
       path = at
-      // Read as it comes rather than kept: another window may have written it since.
-      // A file that is there and will not read opens nothing: the card goes and the
-      // reader is told, as for any note that will not read (unread.svelte.ts), since
-      // a card opened empty on it saved over the file at the first keystroke.
       const text = await scratchpad.editable().catch(() => null)
       if (going.signal.aborted) return
       if (text === null) {
@@ -86,12 +73,8 @@
         writeLink: pickedLink,
         shortcuts: shortcuts.forEditor,
         propertyChoices: PROPERTY_CHOICES,
-        // Where pastes from anywhere go, so its markup is never run.
         trustedMarkup: false,
       })
-      // Every mode a note's editor wears, the width of its column and its leading too,
-      // and kept up to date with them: on a phone this is the note on screen, and it
-      // reads as any other note there does (#404).
       modes.apply(made)
       view = made
       shown.view = made
@@ -111,22 +94,15 @@
     }
   })
 
-  // The space's links, kept up to date the way a pane's are (Editor.svelte): a fresh
-  // index whenever the space in front or anything in it changed. Handed once as the
-  // card came, a note made since, or the notes of a space switched to, were never in
-  // it, and following `[[Plan]]` made an empty `Plan.md` beside the real one.
   $effect(() => {
     const index = links.index(path)
     if (view) setNoteIndex(view, index)
   })
 
-  // A tab holding the scratchpad as a note is where its words are (#1110): a card left up
-  // by the last launch goes as that tab comes back, so they are never in two editors.
   $effect(() => {
     if (padTab()) closeScratchpad()
   })
 
-  // Asked for by a person: the keyboard in, remembering where it was for the way back.
   $effect(() => {
     if (!shown.calling || !view) return
     shown.calling = false
@@ -147,8 +123,6 @@
     })
   })
 
-  /** Escape the editor had no use for puts the card away, and the right side with it
-   *  (#1032). */
   function onKey(event: KeyboardEvent) {
     if (event.key !== 'Escape' || event.defaultPrevented) return
     event.preventDefault()
@@ -156,7 +130,6 @@
     closeScratchpad()
   }
 
-  /** The edge faces the note, so dragging it towards the note widens the card. */
   function grab(event: PointerEvent) {
     if (event.button !== 0) return
     event.preventDefault()
@@ -185,8 +158,6 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="card" class:resizing class:docked data-scratchpad-card data-covers onkeydown={onKey}>
-  <!-- No width to drag on a phone or a tablet, where the card is the one note there is,
-       nor in the right side, whose own edge it is. -->
   {#if !viewport.touch && !docked}
     <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
     <div
@@ -208,8 +179,6 @@
 </div>
 
 <style>
-  /* The column PadColumn.svelte keeps for the card, and over the note where the panels
-     are drawers or the window is too narrow for two columns. */
   :global([data-scratchpad]) {
     max-width: 60%;
   }
@@ -222,9 +191,6 @@
     max-width: 100%;
   }
 
-  /* A phone and a tablet open one note at a time, and the scratchpad is that note while
-     it is up: the whole of where the note is, never a card beside it (Emil, #206: "it
-     shouldn't side-display, it should display as the only open note on mobile"). */
   :global(html:not([data-device='desktop']) [data-scratchpad]) {
     position: absolute;
     inset: 0;
@@ -239,17 +205,10 @@
     border-radius: 0;
   }
 
-  /* Held at its width while the column slides. */
   :global([data-scratchpad]:is(.moving, .coming)) .card {
     min-width: calc(var(--pad-width) - 2 * var(--space-2));
   }
 
-  /* A note, so it stands on the paper a note stands on, not the surface a menu floats
-     on: the page's own ground in every theme, whole. See-through, as the Content row
-     leaves a pane under glass and the wallpaper, a card this narrow and this tall is a
-     strip of whatever is behind the window - glass's pair turning to its second colour
-     towards the bottom corner - and read as a second ground under its lower half
-     (#1110). One paper, top to bottom. */
   .card {
     position: relative;
     flex: none;
@@ -281,8 +240,6 @@
     background: none;
   }
 
-  /* A card's worth of margin rather than a page's - on a desktop, where it is a card.
-     On a phone and a tablet it is the note on the screen, on a note's own page. */
   :global(html[data-device='desktop']) .host :global(#write) {
     max-width: none;
     margin: 0 var(--space-4);

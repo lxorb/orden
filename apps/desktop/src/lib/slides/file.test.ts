@@ -3,8 +3,6 @@ import { deckBody, FIT_STEPS } from '@orden/markdown/deck'
 import { buildDeckHtml, DECK_PAPER, exportDeck } from './file'
 import type { StageSlide } from './render'
 
-/** The renderer and the save are stood in for: what is under test is the trust
- *  answer reaching the renderer, and the file that comes back. */
 const world = vi.hoisted(() => ({
   trusted: [] as boolean[],
   saved: [] as string[],
@@ -32,7 +30,6 @@ const DECK = [
   slide('<h2>Detail</h2>', { vertical: true }),
 ]
 
-/** How many pages the file holds. */
 const stages = (html: string) => html.match(/<div class="stage">/g)?.length ?? 0
 
 describe('a deck written out as one page per slide', () => {
@@ -65,8 +62,6 @@ describe('a deck written out as one page per slide', () => {
 
   test('the paper is the size of the stage', () => {
     expect(html).toContain('@page { size: 1280px 720px; margin: 0; }')
-    // All four fields, because PdfPage in src-tauri/src/pdf.rs takes all four
-    // and a page missing one is a command that refuses to read its argument.
     expect(DECK_PAPER).toEqual({
       width: 1280 / 96,
       height: 720 / 96,
@@ -96,9 +91,6 @@ describe('a deck that stands on its own', () => {
   })
 
   test('a deck on its way to a printer turns no pages, but still lays itself out', () => {
-    // Every slide is on the page and the print rules give each a sheet, so every
-    // one of them has to be fitted: none was ever on screen to be measured, and
-    // one that had to shrink would otherwise be cut off.
     const paper = buildDeckHtml(DECK, 'Talk', { interactive: false })
 
     expect(stages(paper)).toBe(DECK.length)
@@ -139,10 +131,6 @@ describe('the markup a deck page is made of', () => {
   })
 })
 
-/** A deck is the same question the reading view asks: whose words these are. A
- *  collaborator's `<img onerror>` in a shared space is their markup, and a file
- *  of it is opened in a browser, and a PDF of it drawn in a window of the app's
- *  own. */
 describe('a deck of somebody else’s note', () => {
   test('is rendered with their HTML as characters', async () => {
     world.trusted = []
@@ -157,9 +145,6 @@ describe('a deck of somebody else’s note', () => {
   })
 })
 
-/** The content policy a deck carries: its own script runs, and nothing else. A
- *  trusted note's raw HTML is the reader's own, but a script in it is no part of
- *  the deck, and the page is opened later in whatever browser the reader has. */
 describe('the content policy a deck carries', () => {
   const policyOf = (html: string) =>
     /<meta http-equiv="Content-Security-Policy" content="([^"]*)">/.exec(html)?.[1] ?? ''

@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { OPERATORS, parseQuery, type Query } from '@orden/scan/search/query'
 import { chosen, completing, naming, offered } from './suggest'
 
-/** The caret sits where the pipe is, which is how these read. */
 function at(source: string) {
   const caret = source.indexOf('|')
   return completing(source.replace('|', ''), caret)
@@ -117,8 +116,6 @@ describe('choosing one', () => {
   })
 })
 
-/** The operators themselves, offered while what is typed could still become one.
- *  Not when it could not: an ordinary word opens nothing. */
 describe('finishing an operator name', () => {
   const asked = (source: string) => naming(source, source.length)
 
@@ -147,19 +144,13 @@ describe('finishing an operator name', () => {
     expect(asked('plan ta')?.typed).toBe('ta')
     expect(asked('(ta')?.typed).toBe('ta')
     expect(asked('-ta')?.typed).toBe('ta')
-    // Not in the middle of a word: `beta` is a word being typed, not `ta`.
     expect(asked('beta')).toBeNull()
   })
 
   test('and never inside a value somebody is already finishing', () => {
-    // `path:ta` is a value, which `completing` answers for; the name popup would
-    // be a second list over the same letters.
     expect(completing('path:ta', 7)?.field).toBe('path')
   })
 
-  /** Which is what keeps this list and the parser together: an operator the
-   *  parser has never heard of is read as a word, and offering one would be
-   *  offering to type a search for `task-todo:plan` itself. */
   test('and each one it offers is one the parser reads as an operator', () => {
     const words = (query: Query): string[] => {
       switch (query.kind) {

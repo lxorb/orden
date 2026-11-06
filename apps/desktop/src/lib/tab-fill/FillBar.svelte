@@ -1,26 +1,4 @@
 <script lang="ts">
-  /** What a window a tab fills keeps of its chrome: the window's own bar, out of sight
-   *  until the pointer reaches the top edge, and then down over the top of the tab.
-   *
-   *  The way Edge brings its bar back in full screen, the way a Mac brings its menu bar
-   *  back and Arc its sidebar: over what fills rather than pushing it, so nothing is
-   *  resized by a pointer passing by - a web page least of all, which is a native webview
-   *  the crate would have to place again. The bar is the whole of it, whole: the menu,
-   *  the pane's tabs, the stretch the window is dragged by and its three buttons. So the
-   *  window can always be moved and closed, which is where Windows Terminal's focus mode
-   *  leaves people stuck ("Dragging the windows around is not really possible in focus
-   *  mode", microsoft/terminal#20573). A strip kept for good was the other choice, and it
-   *  would have held nothing: the window's buttons do not fit in a strip thin enough to
-   *  be worth keeping.
-   *
-   *  It stays down while anything holds it - the pointer, the keyboard, a menu opened
-   *  from it - and slides back up a moment after nothing does.
-   *
-   *  Mounted for exactly as long as a tab fills the window, which makes it the place the
-   *  fill's own ends are kept: the pane stops being the one worked in or shows nothing,
-   *  Escape where nothing else wants it, and the chrome coming back however it ended. See
-   *  rules.ts and fill.ts. */
-
   import { onDestroy, type Snippet, tick, untrack } from 'svelte'
   import { GRACE } from '../edge-peek.svelte'
   import { focusEditor } from '../focus'
@@ -32,37 +10,18 @@
 
   const { children }: { children: Snippet } = $props()
 
-  /** How long the bar stays once nothing holds it: long enough to come back to it from
-   *  a pointer that overshot, and no longer, or it hangs over the tab after the hand has
-   *  gone back to it. It comes the moment the pointer reaches the edge, with no wait for
-   *  it to rest there: a wait for intent read as the app lagging the hand (#1034, #1050).
-   *  The file list brought out at the start edge keeps the same time. A menu it opened
-   *  holds it by itself, so this need not cover the way there. */
   const GOES_AFTER = GRACE
 
-  /** Whether the bar is down over the tab. */
   let shown = $state(false)
-  /** What holds it down, besides a menu it opened: the pointer over it, and a keyboard
-   *  walking it. Plain fields: nothing is drawn from them, they are asked when the bar
-   *  would go. */
   let pointer = false
   let keyboard = false
-  /** Whether the focus is in the bar at all, however it got there: the bar going takes
-   *  it along, and it has to land somewhere. */
   let within = false
-  /** The bar, which the pointer is measured against. */
   let bar = $state<HTMLElement>()
 
   let going: ReturnType<typeof setTimeout> | undefined
 
-  /** A Mac keeps its three lights at the top left of the window, over whatever is there,
-   *  and they are the system's to show. So there the row they sit in is kept, and is what
-   *  the window is dragged by; see Titlebar.svelte, which says it on the root. */
   const lights = document.documentElement.hasAttribute('data-lights')
 
-  /** Where the pointer is, from every move over the window. Measured rather than heard
-   *  from the bar's own enter and leave, because the bar arrives under a pointer that has
-   *  stopped, and a browser says nothing about an element that came to the pointer. */
   function moved(y: number) {
     if (shown) {
       pointer = y >= 0 && y < (bar?.getBoundingClientRect().bottom ?? 0)
@@ -76,9 +35,6 @@
     pointer = true
   }
 
-  /** The bar goes, a moment after the last thing holding it has let go. Counted from the
-   *  first moment nothing held it, not from the last move: a pointer moving about the
-   *  page below has let go however long it keeps moving. */
   function letGo() {
     going ??= setTimeout(() => {
       going = undefined
@@ -91,12 +47,6 @@
     going = undefined
   }
 
-  /** Escape, where nothing on the page wanted it: after every layer has had its turn
-   *  (overlays.ts, in App.svelte's own handler, which runs first) and only while the
-   *  keyboard is in no document and no field; see `escapeLeaves`. Decided once the
-   *  press has been everywhere it goes, because a surface that reads it off the window
-   *  too - the graph, a PDF - may be told of it after this: one it spent is not this
-   *  one's as well. */
   function onKeydown(event: KeyboardEvent) {
     if (event.key !== 'Escape') return
 
@@ -106,9 +56,6 @@
     })
   }
 
-  // The fill ends by itself when its pane is no longer the one worked in, or shows
-  // nothing; see `stillFills`. Decided from what is read here and written through
-  // `unfill`, which reads nothing, so the effect cannot run away with itself.
   $effect(() => {
     const panes = workspace.panes
     const holds = stillFills({
@@ -119,16 +66,12 @@
     if (!holds) untrack(unfill)
   })
 
-  // A menu opened from the bar closing is the last thing letting go of it, when the
-  // pointer went somewhere else meanwhile.
   $effect(() =>
     overlays.watch(() => {
       if (shown && overlays.depth === 0) letGo()
     }),
   )
 
-  // However the fill ended, the chrome comes back from its edges once it is on the page;
-  // and a focus that was in the bar, which has gone, goes to the document.
   onDestroy(() => {
     clearTimeout(going)
     const stranded = within
@@ -148,8 +91,6 @@
   <div class="lights" data-tauri-drag-region></div>
 {/if}
 
-<!-- Inert while it is up out of sight: nothing in it can be reached by a key it cannot
-     be seen taking. The pointer only holds it; what is pressed is the bar inside. -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="bar"
@@ -180,8 +121,6 @@
 </div>
 
 <style>
-  /* Over the top of what fills, and above everything it draws over itself: the canvas's
-     tools, a pane's own bars. Under every layer, which a menu opened from it is. */
   .bar {
     position: absolute;
     inset: 0 0 auto;
@@ -203,7 +142,6 @@
       box-shadow var(--dur-fast) var(--ease-out);
   }
 
-  /* The lights' own row, and nothing else in it. */
   .lights {
     flex: none;
     height: var(--titlebar-height);

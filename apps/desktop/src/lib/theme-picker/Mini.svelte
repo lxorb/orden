@@ -1,23 +1,4 @@
 <script lang="ts">
-  /** One theme on its card: Orden in small, in the theme's own colours.
-   *
-   *  The title bar with a tab in it, the list with the open note lit in the
-   *  accent, and a note with a heading, two lines and a link - the parts somebody
-   *  judging a theme looks at, and nothing drawn that the theme does not colour.
-   *  The colours arrive worked out (see looks.ts) and are written on the element
-   *  itself, so the window's own theme never reaches a card.
-   *
-   *  A theme that states both schemes is drawn twice and cut on the diagonal, light
-   *  above and dark below, the way a Mac draws Auto: one card that says it follows
-   *  the room. Spans throughout, because it lives inside a button.
-   *
-   *  `desk` is glass's: its frame and its list stand on what is behind the window, so
-   *  they are drawn over a desk, and the note keeps its paper. A picture of a desk
-   *  rather than the reader's own, which no card can see.
-   *
-   *  `pictured` is the wallpaper's: the reader's own picture - the very one the window
-   *  wears, a few hundred pixels across, out of its sheet - or, with none chosen, the
-   *  accent field, under the frame and the list at the scrim the window lays. */
   import type { Look } from './looks'
 
   const {
@@ -61,9 +42,6 @@
 </span>
 
 <style>
-  /* The shape of a window, a little wider than it is tall, like the one it is a
-     picture of. Its own edge is drawn inside it so the ring a chosen card wears
-     sits outside and neither covers the other. */
   .mini {
     position: relative;
     display: block;
@@ -83,7 +61,6 @@
     background: var(--mini-ground);
   }
 
-  /* The other scheme, below the diagonal. */
   .second {
     clip-path: polygon(100% 0, 100% 100%, 0 100%);
   }
@@ -125,7 +102,6 @@
     width: 55%;
   }
 
-  /* The open note: the row's own fill, with the accent's dot where its mark goes. */
   .row.open {
     display: flex;
     align-items: center;
@@ -179,9 +155,6 @@
     background: var(--mini-accent);
   }
 
-  /* Glass: a desk behind the window, the frame and the list a wash over it and the
-     note on its own paper, which is the whole of what the theme is. The desk is drawn
-     in the canvas's colours, which every palette states. */
   .desk .window {
     background: linear-gradient(135deg, var(--canvas-5), var(--canvas-6) 55%, var(--canvas-2));
   }
@@ -195,9 +168,6 @@
     background: var(--mini-ground);
   }
 
-  /* The wallpaper: the picture behind the whole window, the frame and the list under
-     the same two scrims the window lays (see wallpaper.css), and the note on paper.
-     With no picture, the field of the accent the window wears without one. */
   .pictured .window {
     background:
       var(

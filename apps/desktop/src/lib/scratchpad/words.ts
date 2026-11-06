@@ -1,7 +1,3 @@
-/** What writing into the scratchpad does to its words. Pure; see pad.ts. */
-
-/** Two bodies with one blank line between them, however the first ended: what
- *  appending a second thought to the first looks like. */
 export function joined(first: string, second: string): string {
   const head = first.replace(/\s+$/, '')
   const tail = second.trim()
@@ -10,8 +6,6 @@ export function joined(first: string, second: string): string {
   return `${head}\n\n${tail}\n`
 }
 
-/** The one range two texts differ in, as an edit: what is the same at either end is
- *  left alone, so a caret in a tab showing the words stays where it was. */
 export function difference(
   before: string,
   after: string,

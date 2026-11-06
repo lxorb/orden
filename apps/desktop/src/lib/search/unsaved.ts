@@ -1,11 +1,3 @@
-/** The notes of a space that have no file yet, searched where their words are: in the
- *  tabs holding them. A search of the space reads the disk, and an unsaved note is on
- *  no disk, but it is the space's all the same - it was opened there and is saved there
- *  - so a word typed into one is found beside the words of every other note. Its rows
- *  open its tab rather than a path; see `tab` on a hit. Only notes: a plane's and a
- *  deck's words are JSON, which the disk search does not read either. Fetched with
- *  the first search. See workspace/drafts.ts. */
-
 import { workspace } from '../workspace.svelte'
 import type { NoteDoc } from '../workspace/documents.svelte'
 import { isDraft } from '../workspace/drafts'

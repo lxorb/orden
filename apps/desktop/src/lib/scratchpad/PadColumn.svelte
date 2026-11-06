@@ -1,7 +1,4 @@
 <script lang="ts">
-  /** The scratchpad card's column. Its width slides like a sidebar's (Sidebar.svelte's
-   *  `.column`) with the card held at its own width inside, and it opens on the frame the
-   *  right side closes on, so the note eases between the two (workspace/panels.ts). */
   import { untrack } from 'svelte'
   import { dur } from '../motion'
   import { startup } from '../startup.svelte'
@@ -9,9 +6,7 @@
   import { shown } from './is.svelte'
 
   let column = $state<HTMLElement>()
-  /** Built from the ask until it has slid away. */
   let kept = $state(untrack(() => shown.on))
-  /** Laid out shut to open from; one the launch put back is open already. */
   let entered = $state(untrack(() => shown.on && !startup.reached('index')))
   const narrow = $derived(!shown.on || !entered)
   let moving = $state(false)
@@ -21,7 +16,6 @@
     else entered = false
   })
 
-  // Shut, measured and opened before a paint, so the width slides from nothing.
   $effect(() => {
     if (!shown.on || entered || !column) return
     column.getBoundingClientRect()
@@ -75,8 +69,6 @@
     width: 0;
   }
 
-  /* The one note on a phone and a tablet, so all of where the note is; see
-     ScratchpadCard.svelte. */
   :global(html:not([data-device='desktop'])) .pad:not(.coming, .shut) {
     width: 100%;
   }

@@ -1,12 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** This launch's word, when the activity is slow to say it or never does (B456). The
- *  answer goes through the UI thread, which on a cold start can be busy for seconds,
- *  and it never comes while the activity has no page yet. A word given up on was kept
- *  for the whole launch, and every call that wants it then did nothing: the share
- *  that started the app, the widget rows, a reminder's Done. A wait with no end is no
- *  better, since every one of those callers would then never go on. */
-
 let asked = 0
 const say = (word: string): void => {
   ;(globalThis as unknown as { __nibFrame: (word: string) => void }).__nibFrame(word)
@@ -120,8 +113,6 @@ test('the word said late is heard by whoever waits for it', async () => {
   expect(heard).toBe('the word')
 })
 
-// Android's Java bridge refuses a call whose `this` is not the injected object, with
-// "Java bridge method can't be invoked on a non-injected object": a blank app on launch.
 test('a method handed out of the bridge is still called on the bridge', async () => {
   const bridge = {
     insets(this: unknown) {

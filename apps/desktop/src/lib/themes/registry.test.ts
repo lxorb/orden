@@ -1,10 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { isNewer, readIndex } from './registry'
 
-/** The catalogue arrives over the network from a repository the app does not
- *  own, so nothing in it is trusted until it has been read. A malformed
- *  catalogue has to cost the entry it is in and nothing more. */
-
 const entry = (patch: Record<string, unknown> = {}) => ({
   id: 'warm-paper',
   name: 'Warm Paper',
@@ -28,9 +24,6 @@ describe('reading the catalogue', () => {
     expect(theme?.palettes.light).toEqual({ '--bg': '#faf6ee' })
   })
 
-  /** A miniature is painted from the catalogue alone, so the colours a card shows
-   *  have to include the ones a fence is drawn in. The contrast theme states all
-   *  four, and a card that dropped them would be a picture of a different theme. */
   test('carries the syntax colours a theme states, so a card shows the fence it will get', () => {
     const [theme] = readIndex({
       themes: [
@@ -116,10 +109,6 @@ describe('reading the catalogue', () => {
   })
 
   test('drops a palette value that would write a rule of its own', () => {
-    // The gallery pastes these into a stylesheet it injects, and it does that
-    // for every card as soon as the store is opened: nobody has installed
-    // anything, so nothing else has looked at them. A value here is the shortest
-    // path there is from the catalogue to the whole app's CSS.
     const [theme] = readIndex({
       themes: [
         entry({
@@ -146,11 +135,6 @@ describe('reading the catalogue', () => {
   })
 
   test('drops a palette value that would swallow the cards after it', () => {
-    // One block per theme in one injected stylesheet: a function left open in
-    // this theme's value takes every block below it into that value, so one bad
-    // entry would paint the rest of the shelf in the app's own colours. A
-    // bracket inside a string is still a letter, which is what keeps a font
-    // called `Half (` on its card.
     const [theme] = readIndex({
       themes: [
         entry({
@@ -170,9 +154,6 @@ describe('reading the catalogue', () => {
   })
 
   test('keeps a font stack, which is the one token that is a sentence', () => {
-    // Long enough to be worth a bound, and the bound has to clear it: a card
-    // that dropped it would show a theme in the wrong typeface, which is the
-    // one thing a preview must not do.
     const stack = `'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif`
     const [theme] = readIndex({
       themes: [entry({ palettes: { light: { '--font-content': stack }, dark: {} } })],
@@ -182,9 +163,6 @@ describe('reading the catalogue', () => {
   })
 
   test('drops a version that is not three numbers', () => {
-    // It is written into the installed file and compared against what is there,
-    // so an entry that cannot say plainly which version it is has nothing the
-    // app can do with it.
     for (const version of ['1.0', 'next', '1.0.0-beta', '1.0.0 */ x', '']) {
       expect(readIndex({ themes: [entry({ version })] }), version).toEqual([])
     }

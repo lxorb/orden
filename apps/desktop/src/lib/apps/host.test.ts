@@ -13,11 +13,6 @@ import {
   type Speaking,
 } from './host.svelte'
 
-/** This computer as an application's host (issue 1063, steps 3 to 5; host.svelte.ts):
- *  which files it hosts, what it does with the holder's Start, Stop and Restart, its
- *  signalling and its view, and what it says back - with the crate and the relay played
- *  here. */
-
 const GIMP: AppFile = {
   v: 1,
   host: 'device-laptop',
@@ -59,7 +54,6 @@ function world(
     },
     async signal(key, data) {
       asked.push(`signal ${key} ${data}`)
-      // An offer takes the crate a while to answer; a candidate after it waits for it.
       if (data.includes('offer')) await tick()
       asked.push(`signalled ${key}`)
       return data.includes('offer') ? '{"answer":"v=0"}' : null
@@ -133,7 +127,6 @@ describe('an application’s host', () => {
     expect(here.links.map((one) => one.app)).toEqual(['id-sGIMPapplication'])
     expect(here.asked).toEqual(['watch id-sGIMPapplication'])
 
-    // Once the socket is open, the relay is told where it stands: not running.
     here.links[0]?.heard({ t: 'open' })
     expect(here.said).toEqual([{ t: 'state', state: 'stopped' }])
   })
@@ -173,8 +166,6 @@ describe('an application’s host', () => {
     here.exits(3)
     expect(here.said.at(-1)).toEqual({ t: 'state', state: 'exited', code: 3 })
 
-    // Handed at once to a copy already open on the host's own screen (Windows), which is
-    // said; a reason the wire does not know is not.
     heard?.({ t: 'run', what: 'start' })
     await tick()
     here.exits(0, 'handed')
@@ -235,7 +226,6 @@ describe('an application’s size', () => {
     await tick()
     expect(here.asked).toContain('start id-sGIMPapplication gimp.desktop 1600')
 
-    // Resized, then taken over by a device with another screen.
     heard?.({ t: 'view', view: { ...VIEW, width: 1200 } })
     heard?.({ t: 'viewer', device: 'device-phone', name: 'Phone' })
     heard?.({ t: 'view', view: { width: 400, height: 800, dpr: 3, hz: 60 } })
@@ -262,7 +252,6 @@ describe('an application’s picture', () => {
       'signal id-sGIMPapplication {"candidate":{"candidate":""}}',
       'signalled id-sGIMPapplication',
     ])
-    // Only the answer is said back; a candidate has nothing to say.
     expect(here.said).toEqual([{ t: 'signal', data: '{"answer":"v=0"}' }])
   })
 

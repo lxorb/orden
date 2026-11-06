@@ -44,7 +44,6 @@ test('each reminder rings once, at its moment', () => {
   one.advance(150)
   expect(one.shown).toEqual(['a'])
 
-  // Handed again: a has rung and does not ring twice.
   one.ringer.ring([reminder('a', 100), reminder('b', 200)])
   one.advance(250)
   expect(one.shown).toEqual(['a', 'b'])

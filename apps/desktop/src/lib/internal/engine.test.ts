@@ -17,7 +17,6 @@ import { MemoryBytes } from './memory'
 import { mountRoot } from './roots'
 import { internalRows } from './rows'
 
-// The crate's watcher and its scan, which a kept space is never handed to.
 const watch = vi.hoisted(() => ({ roots: [] as string[][], scans: [] as string[] }))
 vi.mock('../space-watch', () => ({
   watchSpaces: (roots: string[]) => {
@@ -32,11 +31,6 @@ vi.mock('../space-watch', () => ({
 }))
 vi.mock('../notify', () => ({ notify: () => undefined }))
 
-/** The sync engine over a space Orden keeps itself (#1068, step 4c): its disk is the
- *  space's folder, reached through the same file commands every other caller uses, so a
- *  rename another device made is one line of the index here, and nothing the engine
- *  moves is written again or changes its identity. */
-
 const SPACE = 'sim'
 const undo: (() => void)[] = []
 
@@ -46,10 +40,8 @@ afterEach(() => {
   watch.scans.length = 0
 })
 
-/** Long enough for what a change sets going to have landed. */
 const settled = () => new Promise((resolve) => setTimeout(resolve, 30))
 
-/** A kept space at `root`, mounted for the commands and for `invoke`. */
 async function kept(root: string) {
   const bytes = new MemoryBytes()
   let keys = 0
@@ -63,8 +55,6 @@ async function kept(root: string) {
   return { bytes, folder }
 }
 
-/** The engine's disk as the app's world makes it (`diskOf` in sync2/app-world.ts): the
- *  file commands, which for a kept space are its folder's. */
 function commandsDisk(): Disk {
   const folderOf = (path: string) => path.slice(0, path.lastIndexOf('/'))
   return {
@@ -85,7 +75,6 @@ function commandsDisk(): Disk {
   }
 }
 
-/** One device holding the simulator's seeded notes in `disk`, at `root`. */
 async function device(account: ReferenceAccount, id: string, root: string, disk: Disk) {
   const store = new MemoryStore(id)
   const seeding = store.open()
@@ -188,11 +177,9 @@ describe('the engine over a space Orden keeps', () => {
       },
     })
     await settled()
-    // Never the crate's to watch or to list.
     expect(watch.roots.flat()).not.toContain(root)
     expect(watch.scans).toEqual([])
 
-    // Made through the commands by something that told nobody, an agent say.
     await webInvoke('write_note', { path: `${root}/Work/Ideas.md`, content: 'eggs' })
     await settled()
     const ideas = here.entryAt(`${root}/Work/Ideas.md`)
@@ -260,14 +247,10 @@ describe('the engine over a space Orden keeps', () => {
     await webInvoke('write_note', { path: `${root}/.Inbox.md`, content: '- [ ] buy kumquats' })
     await settled()
 
-    // In the store alone: a line of its index and bytes under a key, and no file anywhere.
     const inbox = await folder.at('.Inbox.md')
     expect(bytes.texts.get(inbox?.key ?? '')).toBe('- [ ] buy kumquats')
-    // Carried as the note it has always been, so an older app and the account see it.
     expect(here.entryAt(`${root}/.Inbox.md`)?.kind).toBe('note')
     expect((await listInternal(root))?.map((one) => one.path)).toContain(`${root}/.Inbox.md`)
-    // Never a row of the list, a note of the link scan, or a hit of the walk; the
-    // search finds it once, as the inbox.
     const tree = await webInvoke<{ children: { name: string }[] }>('read_tree', { root })
     expect(tree.children.map((one) => one.name)).not.toContain('.Inbox.md')
     const links = await webInvoke<{ notes: { path: string }[] }>('scan_links', { root })

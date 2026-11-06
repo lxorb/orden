@@ -47,7 +47,6 @@ describe("glass's pairs", () => {
   test('at night a light colour of one’s own is a deep version of itself, a dark one as picked', () => {
     const [deep, kept] = stopsOf(ownOf('#bfddfb', '#1d2a3d'), 'dark', 'violet', SCRIM)
     expect(luminance(deep)).toBeLessThan(0.05)
-    // Still blue: more blue than red.
     expect(deep[2]).toBeGreaterThan(deep[0] + 8)
     expect(hexOf(kept)).toBe('#1d2a3d')
   })

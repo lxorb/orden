@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** The account connector's steps for one way in (Settings > AI > Access): Claude's,
-   *  ChatGPT's, or any client that speaks MCP over the web, with the token for one that
-   *  cannot sign in.
-   *
-   *  A client is given one URL and signs the person in itself, so this is the few clicks
-   *  that client needs and a copy button next to each value that has to be typed
-   *  somewhere else. The pasted-token way is folded away under Other so it does not
-   *  distract anyone who does not need it. What is connected is listed with everything
-   *  else that reaches the notes, in Access.svelte. */
   import { fly, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { MCP_URL } from '../api'
@@ -28,8 +19,6 @@
   let showCode = $state(false)
   let showConfig = $state(false)
 
-  /** What a client that takes a JSON block wants: the URL, and the token
-   *  where there is one for a client that cannot sign in. */
   const config = (token?: string | null) =>
     JSON.stringify(
       {
@@ -84,8 +73,6 @@
         </div>
       {/if}
     {:else if client === 'chatgpt'}
-      <!-- ChatGPT keeps custom MCP servers under Plugins, behind its
-           Developer mode. Checked against the app in September 2026. -->
       <ol class="steps">
         <li>
           <p>{t('In ChatGPT, open Settings → Plugins and click the plus button.')}</p>
@@ -207,8 +194,6 @@
     gap: 1px;
   }
 
-  /* ── The steps ─────────────────────────────────────────────────── */
-
   .steps-wrap {
     display: flex;
     flex-direction: column;
@@ -234,7 +219,6 @@
     counter-increment: step;
   }
 
-  /* The number, drawn as a small badge so the eye finds the next step. */
   .steps li::before {
     content: counter(step);
     position: absolute;
@@ -261,10 +245,6 @@
     line-height: 22px;
   }
 
-  /* A value with its copy button is one component; see Copyable.svelte. */
-
-  /* ── Links and disclosures ─────────────────────────────────────── */
-
   .link,
   .disclose {
     align-self: flex-start;
@@ -278,8 +258,6 @@
     transition: color var(--dur-fast) var(--ease-out);
   }
 
-  /* A run of text, not a flex row: the arrow sits on the letters and wraps with the
-     last word, and keeps the end of the line for itself (#1061, Outward.svelte). */
   .link {
     display: block;
     color: var(--accent);
@@ -353,15 +331,10 @@
     color: var(--muted-strong);
   }
 
-  /* ── Buttons ───────────────────────────────────────────────────── */
-
-  /* The one thing to press is `.nib-button` in the themes package; here it only
-     keeps to its own width in the column. */
   .nib-button {
     align-self: flex-start;
   }
 
-  /* The switch, drawn like the panel's so the two read as one control. */
   .switch {
     display: flex;
     align-items: center;

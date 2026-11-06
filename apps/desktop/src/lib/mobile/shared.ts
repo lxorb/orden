@@ -1,33 +1,3 @@
-/** What another app shared with Orden, as a note.
- *
- *  A share is the phone's version of the clipper: somebody found something
- *  somewhere else and wants a note about it. So it lands the way a clip and an
- *  import land - front matter saying where it came from and when, the words under
- *  a heading, and anything that is not words written as a file beside the note -
- *  and it goes through `applyImport`, which is the one road every imported file
- *  in the app already travels: `write_note` and `write_bytes`, a name that steps
- *  aside rather than overwriting, one undo for the lot, the file list reloaded and
- *  the sync nudged. Nothing here writes to disk itself.
- *
- *  Two shapes it can take, and the sheet asks which when both are possible:
- *
- *  A new note, which is everything - the words, the pictures and the files.
- *
- *  Or into the note already open, which takes the words and the pictures: the
- *  words at the caret, and each picture through `storeImage`, exactly as a paste
- *  of the same two things would. A file that is neither is not offered there,
- *  because a file needs a name of its own in the space and the plan is what gives
- *  it one; a share carrying one always makes its own note.
- *
- *  A markdown file is its own note, under its own name and with its own bytes:
- *  that is a note arriving, not a note being written about. And a PDF shared on its
- *  own is its page note, the way a PDF imported is (#400): somebody's paper to write
- *  on, not a note with a link to it. See pages/from-pdf.ts.
- *
- *  The reading is separated from the writing on purpose. Everything above the
- *  line is a pure answer to "what would this share become", which is the part
- *  worth testing, and the Kotlin side is in Shared.kt. */
-
 import { escapeText, plainWords } from '@orden/markdown/escapes'
 import { plainTaskWords, taskWords } from '@orden/markdown/task-line'
 import { asWords, OPENS_MARKUP } from '@orden/markdown/words'
@@ -37,8 +7,6 @@ import { safeName, titleFrom } from '../import/names'
 import { isPicturePath } from '../space-paths'
 import type { ImportPlan, Planned } from '../import/plan'
 
-/** One thing that arrived. Exactly one of `text` and `size` is the whole of it:
- *  words came over with the payload, anything else is bytes to ask for. */
 export interface SharedItem {
   name: string
   mime: string
@@ -46,26 +14,16 @@ export interface SharedItem {
   text: string | null
 }
 
-/** A whole share as the activity describes it. */
 export interface Arrived {
   action: string
   subject: string
   items: SharedItem[]
 }
 
-/** Text that is a note rather than a file: markdown, and a plain text file, which
- *  is a note somebody has not called one yet. */
 const NOTES = /\.(md|markdown|mdown|mkd|txt|text)$/i
 
-/** The first address in what was shared. A link shared from a browser arrives as
- *  the address alone; a paragraph shared from a page often carries one at the
- *  end. Either way it is where this came from, which is what the front matter
- *  says. */
 const ADDRESS = /https?:\/\/[^\s<>"')]+/
 
-/** What the activity said, read into something the page can trust. Answers null
- *  for anything that is not a share with something in it, which is what a launch
- *  from the launcher looks like. */
 export function arrivedFrom(json: string): Arrived | null {
   if (!json) return null
 
@@ -105,25 +63,21 @@ export function arrivedFrom(json: string): Arrived | null {
   }
 }
 
-/** Whether this is a picture, by what the sender said or by what it is called. */
 export function isPicture(item: SharedItem): boolean {
   if (item.text !== null) return false
   return item.mime.startsWith('image/') || isPicturePath(item.name)
 }
 
-/** Whether this is a PDF, by what the sender said or by what it is called. */
 function isPaper(item: SharedItem): boolean {
   if (item.text !== null) return false
   return item.mime === 'application/pdf' || /\.pdf$/i.test(item.name)
 }
 
-/** Whether this is a note in its own right rather than something to write about. */
 export function isNote(item: SharedItem): boolean {
   if (item.text !== null) return false
   return item.mime.includes('markdown') || NOTES.test(item.name)
 }
 
-/** The words that came over, as one block. */
 export function sharedWords(arrived: Arrived): string {
   return arrived.items
     .map((one) => one.text)
@@ -136,10 +90,6 @@ function saysMarkdown(item: SharedItem): boolean {
   return item.mime.includes('markdown') || /\.(md|markdown|mdown|mkd)$/i.test(item.name)
 }
 
-/** The words that came over as a note's markdown. Words shared out of another app
- *  are plain text, written so they read back as themselves - `$5-$10` is two
- *  prices rather than a formula; see `plainWords` - and only text that says it is
- *  markdown is taken as markdown. */
 export function sharedMarkdown(arrived: Arrived): string {
   return arrived.items
     .flatMap((one) =>
@@ -149,19 +99,12 @@ export function sharedMarkdown(arrived: Arrived): string {
     .trim()
 }
 
-/** What the note about this share is called, without its extension.
- *
- *  The subject first, which is the page title a browser shares alongside a link,
- *  then the first line of the words, then the name of the first file. A share is
- *  usually one of those three and never none of them. */
 export function sharedTitle(arrived: Arrived): string {
   const subject = arrived.subject.trim()
   if (subject) return safeName(subject)
 
   const words = sharedWords(arrived)
   const address = ADDRESS.exec(words)?.[0]
-  // A link on its own is a poor title, so the address is only used when there is
-  // nothing else at all - and then only its host, which is at least legible.
   if (words && words !== address) {
     const found = titleFrom(words)
     if (found) return found
@@ -174,52 +117,29 @@ export function sharedTitle(arrived: Arrived): string {
   return 'Shared'
 }
 
-/** What a share of words becomes as a task: its title, a link to where it came from
- *  where it came from somewhere, one line (docs/tasks.md 3, row 17). The words of a
- *  share are a sentence somebody wants to act on, which is a to-do, and the page they
- *  were on is the context Todoist would have put in a comment. */
 export function sharedTask(arrived: Arrived): string {
   const words = sharedWords(arrived)
   const address = ADDRESS.exec(words)?.[0]
   const title = sharedTitle(arrived).replace(/[[\]]/g, '').replace(/\s+/g, ' ').trim()
-  // Somebody else's words, written to read back as themselves (`plainWords`); inside
-  // the link's brackets nothing autolinks, so an address there is words as well. And
-  // none of it a field of the task: a `#tips` or a `📅 2026-11-01` in what was shared
-  // is part of the sentence (`taskWords`).
   return address
     ? `[${taskWords(escapeText(title, { addresses: false }))}](${address})`
     : plainTaskWords(title)
 }
 
-/** The host of an address, for a share that is nothing but a link. */
 function hostOf(address: string): string {
   const found = /^https?:\/\/([^/?#]+)/.exec(address)
   return found?.[1]?.replace(/^www\./, '') ?? 'Shared'
 }
 
-/** The markdown for one thing that came over: a picture is drawn, anything else
- *  is a link wearing its own name. */
 export function embedFor(item: SharedItem, src: string): string {
   const at = encodeURI(src)
   if (isPicture(item)) return `![](${at})`
 
-  // A name is whatever the other app called the file, so a tag in it is words, and
-  // a bracket in it is one too rather than the end of the link.
   return `[${asWords(item.name.replace(LITERAL, (one) => `\\${one}`))}](${at})`
 }
 
-/** What a link's words escape themselves before `asWords`: a bracket, which would
- *  end them, and a backslash, which would escape what comes after it. Not the run
- *  of backslashes in front of a tag, which `asWords` doubles itself. */
 const LITERAL = new RegExp(`\\\\(?!\\\\*${OPENS_MARKUP.source})|[[\\]]`, 'g')
 
-/** The whole share as an import: the note it becomes, the notes that arrived as
- *  notes, and the files that go beside them.
- *
- *  `folder` is where the files land, relative to the note, which is what the
- *  Attachments setting says; `on` is the day, which the front matter carries. The
- *  note is first in the plan, so the path it was written under is the first one
- *  `applyImport` answers with. */
 export function sharedPlan(
   arrived: Arrived,
   bytes: ReadonlyMap<number, Uint8Array>,
@@ -229,8 +149,6 @@ export function sharedPlan(
   const words = sharedWords(arrived)
   const address = ADDRESS.exec(words)?.[0] ?? null
 
-  // A PDF on its own, and nothing said about it: its page note, at the top of the
-  // space, which is where the Import door would put it.
   const [only] = arrived.items
   const paper = bytes.get(0)
   if (arrived.items.length === 1 && only && isPaper(only) && paper?.length && !words) {

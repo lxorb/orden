@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** One property's value as the control its kind asks for: chips and an add field
-   *  for a list, a box for a yes or no, a menu where the answers are fixed, and a field
-   *  for words, a number or a date. The one control for a property wherever one is
-   *  edited - a table's cell, and any row that edits one - so a date is picked the
-   *  same way everywhere (docs/tasks.md 5.12).
-   *
-   *  It writes nothing itself: it says what the value became, and whoever holds the
-   *  note writes it (the panel into the open document, a view through the rows' one
-   *  write path). */
   import type { Property } from '@orden/markdown/properties'
   import { type ListItem, withItem, withoutItem } from '@orden/markdown/property-edits'
   import Cross from '../Cross.svelte'
@@ -25,47 +16,34 @@
   }: {
     property: Property
     writable: boolean
-    /** The fixed answers, where the property has them: a menu for one value, and for
-     *  a list the words its add field offers. */
     choices?: readonly string[] | null
-    /** A scalar written: the words as the file writes them, or null to empty it. */
     onwrite: (value: string | null) => void
-    /** A list written whole. */
     onitems: (items: ListItem[]) => void
-    /** A chip put on or taken off, in place of the list written whole: for a holder
-     *  whose items are the members as shown rather than as the note writes them (a
-     *  table's cell), which has to make the list from the note's own members. */
     onchip?: ((change: { add: string } | { remove: number }) => void) | undefined
-    /** A tag pressed, which asks the space about it. */
     onsearch?: ((text: string) => void) | undefined
     autofocus?: boolean
   } = $props()
 
   const uid = $props.id()
 
-  /** The answers a list's add field offers: those it does not hold yet. */
   const offered = $derived(choices?.filter((one) => !property.items.includes(one)) ?? [])
 
-  /** A field commits on Enter as well as on leaving it. */
   function commitOnEnter(event: KeyboardEvent) {
     if (event.key !== 'Enter' || event.isComposing) return
     event.preventDefault()
     if (event.currentTarget instanceof HTMLElement) event.currentTarget.blur()
   }
 
-  /** The value a date field holds, as the file writes it. */
   function dated(field: HTMLInputElement): string {
     return field.type === 'datetime-local' ? field.value.replace('T', ' ') : field.value
   }
 
-  /** What a scalar row is edited in. */
   function fieldType(one: Property): string {
     if (one.kind === 'number') return 'number'
     if (one.kind !== 'date') return 'text'
     return one.value.length > 10 ? 'datetime-local' : 'date'
   }
 
-  /** A list's field: Enter or leaving it adds what was typed. */
   function addItem(field: HTMLInputElement) {
     const said = field.value
     field.value = ''
@@ -77,7 +55,6 @@
     if (items) onitems(items)
   }
 
-  /** A tag list's chips ask the space about their tag, as a tag does everywhere. */
   const tagged = $derived(/^tags?$/i.test(property.key))
 
   function focusOnMount(node: HTMLElement) {
@@ -177,9 +154,6 @@
     color: var(--text);
   }
 
-  /* A field with no box until a pointer or the keyboard arrives, so the rows go on
-     reading as metadata rather than as a form: the note's own controls, drawn the
-     same way; see editor.css. */
   .field {
     min-width: 0;
     width: 100%;
@@ -244,7 +218,6 @@
     transition: opacity var(--dur-fast) var(--ease-out);
   }
 
-  /* The small cross a tab closes with, at the size it is on a tab. */
   .chip-off :global(svg) {
     width: 8px;
     height: 8px;

@@ -1,21 +1,12 @@
 import { expect, test, vi } from 'vitest'
 
-/** The share that started the app, asked for before the activity has said its word
- *  (B467). Every call wants the word and does nothing without it, while the activity
- *  keeps the share until it is asked with one; so the page asks again once the word
- *  is said, or the share is never read. */
-
 const world = vi.hoisted(() => ({
-  /** The roots of spaces shared with this account to be read. */
   readOnly: ['/theirs'] as string[],
   spaces: [] as { id: string; name: string; root: string }[],
-  /** What the sheet answers, and every question it was asked. */
   answer: 'new',
   asked: [] as { options: { id: string }[] }[],
-  /** What the activity holds, and how often it was told the share is answered for. */
   shared: 'a link',
   done: 0,
-  /** The note open to write in, if any. */
   open: false,
   typed: [] as string[],
   tasks: [] as { root?: string; typed?: boolean }[],

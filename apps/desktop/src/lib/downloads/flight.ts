@@ -1,32 +1,3 @@
-/** A download, seen going: the file flies from where it was asked for to the downloads
- *  glyph, and the glyph answers when it lands (#1048). Said too, through the app's one
- *  live region, for whoever is listening rather than looking.
- *
- *  Where it starts, best first: the control it was asked for by; else the last press
- *  in the window, the element if it is still there and the pointer if not - a menu's
- *  row has closed by the time a save dialog has been answered; else the middle of the
- *  panes. A web page's download starts in the middle of that page, because what was
- *  pressed inside a page is the page's own and the window never heard it.
- *
- *  Where it lands, best first: the glyph in the bar of the tab that is saving it, then
- *  the glyph in the pane that has the focus, then any glyph on screen. A bar that is
- *  out of sight - a page holding the whole screen, a tab behind another - is no place
- *  to land, and with no glyph on screen at all the file goes to the corner of the
- *  window at the end of the strip, where a browser keeps its downloads, and fades there.
- *
- *  An arc of 400 to 600 milliseconds, longer the further it goes, and only a transform
- *  and an opacity, so the compositor draws it and nothing is laid out again. Each file
- *  its own flight; a burst of them leaves one after another rather than as one, and
- *  past a handful only the glyph answers. Nothing waits on a flight and nothing is held
- *  by one: it takes no press, it ends early when the window changes size, and the
- *  glyph's answer starts over when the next file lands. A reader who asked for less
- *  movement gets no flight: the glyph answers in place, and its ring says the rest.
- *
- *  A page is a native webview drawn over the window's HTML (see web-tab/covers.ts),
- *  so a flight over one is cut out of it where the engine can cut, and on an engine
- *  that cannot - which would hide the whole page behind a still for half a second -
- *  the flight leaves from the top edge of the page instead, out from under the bar. */
-
 import FileIcon from 'lucide/dist/esm/icons/file.mjs'
 import { t } from '../i18n.svelte'
 import { calm, dur, stillness } from '../motion'
@@ -44,26 +15,17 @@ import {
   type Point,
 } from './path'
 
-/** The size of the file that flies, in pixels. */
 const SIZE = 28
 
-/** How many files fly at once. A burst of forty is forty answers of the glyph and
- *  five flights, not forty things crossing the window. */
 const AT_ONCE = 5
 
-/** How far apart the files of a burst leave. */
 const APART = 70
-
-// ---------------------------------------------------------------------------------
-// On the window.
 
 function boxOf(node: Element): Box {
   const box = node.getBoundingClientRect()
   return { x: box.x, y: box.y, width: box.width, height: box.height }
 }
 
-/** An element's box, if it is drawn and on screen: nothing hidden with the bar it is
- *  in, nothing of no size, nothing outside the window. */
 function shown(node: Element | null | undefined): Box | null {
   if (!node?.isConnected) return null
   if (typeof node.checkVisibility === 'function' && !node.checkVisibility()) return null
@@ -99,21 +61,16 @@ function areaOf(): Box {
   return panes ?? { x: 0, y: 0, width: innerWidth, height: innerHeight }
 }
 
-/** Whether a web tab is anywhere in the window, which is when a flight may cross a
- *  page. Asked before the web tabs' store is, so a window with none never fetches it. */
 function pagesInWindow(): boolean {
   return document.querySelector('.webbar') !== null
 }
 
-/** Whether the engine cuts the app's layers out of a page; see covers.ts. */
 async function engineCuts(): Promise<boolean> {
   if (!pagesInWindow()) return false
   const { pages } = await import('../web-tab/pages.svelte')
   return pages.cuts
 }
 
-/** Where a web tab's page is, as a place a flight leaves from: its middle where the
- *  engine cuts a flight out of it, else the top edge, under its bar. */
 function pageOf(tab: string, cuts: boolean): Point | null {
   const glyph = [...document.querySelectorAll<HTMLElement>(GLYPHS)].find(
     (one) => one.dataset.tab === tab,
@@ -128,8 +85,6 @@ function pageOf(tab: string, cuts: boolean): Point | null {
 const flying = new Set<Animation>()
 const answering = new WeakMap<Element, Animation>()
 
-/** The glyph's answer to a file landing: a bounce, or for a reader who asked for less
- *  movement a dip of its strength, which moves nothing. Started over by the next. */
 function answer(node: Element): void {
   if (typeof node.animate !== 'function') return
   answering.get(node)?.cancel()
@@ -167,9 +122,6 @@ function fileGlyph(): SVGSVGElement {
   return svg
 }
 
-/** The file that flies: a small card in the accent with the file glyph on it, fixed
- *  over the window, taking no press. Cut out of a page where the engine cuts
- *  (`nib-flight`; see covers.ts). */
 function flyer(at: Point, cut: boolean): HTMLElement {
   const node = document.createElement('div')
   if (cut) node.className = 'nib-flight'
@@ -196,8 +148,6 @@ function flyer(at: Point, cut: boolean): HTMLElement {
   return node
 }
 
-/** Ends every flight still in the air, at once: the window changed size and where
- *  they were going is not where the glyph is now. */
 export function stopFlights(): void {
   for (const one of [...flying]) one.finish()
 }
@@ -209,15 +159,12 @@ function listen() {
   window.addEventListener('resize', stopFlights, { passive: true })
 }
 
-/** Two frames, so a glyph the first download brings into the bar is laid out before
- *  it is looked for, and a tab a download closes has gone. */
 function settled(): Promise<void> {
   return new Promise((done) => {
     requestAnimationFrame(() => requestAnimationFrame(() => done()))
   })
 }
 
-/** A download has started; see started.ts. */
 export async function started(
   name: string,
   from: Origin,
@@ -226,8 +173,6 @@ export async function started(
   said.say(t('Downloading {name}', { name }))
   const element = shown(from.element)
   await settled()
-  // The last wait: from here to the flight leaving nothing yields, so a burst counts
-  // the flights already in the air rightly.
   const cuts = await engineCuts()
 
   const glyphs = glyphsOnScreen()
@@ -246,9 +191,6 @@ export async function started(
     return
   }
 
-  // A page's file: the page saving it, else the page it was handed back to - a tab a
-  // download link opened closes as the file starts (`downloaded` in pages.svelte.ts).
-  // Never the window's last press, which was not in the page.
   const page = from.tab
     ? (pageOf(from.tab, cuts) ??
       (target?.tab ? pageOf(target.tab, cuts) : null) ??

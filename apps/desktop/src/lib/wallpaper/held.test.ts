@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { DARK_KEY, heldDark, heldFor, heldWallpaper, WALLPAPER_KEY } from './held'
 
-/** What the first frame reads. The entry is somebody else's text as far as this is
- *  concerned - an older build's, a half-written one - and the picture in it goes
- *  into a stylesheet, so anything not quite a picture is nothing. */
-
 const entries = new Map<string, string>()
 
 beforeEach(() => {

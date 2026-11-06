@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { ordenCss, paged } from './browser'
 
-/** The tokens of one scheme's block, by name. */
 function tokens(css: string, scheme: string): Record<string, string> {
   const block = new RegExp(`data-theme='${scheme}'\\] \\{([^}]*)\\}`).exec(css)?.[1] ?? ''
   const entries = block.split(';\n').map((line) => line.trim().split(': ') as [string, string])
@@ -32,7 +31,6 @@ describe('a browser theme as an Orden theme', () => {
       '--accent': '#ff8800',
       '--accent-ink': '#000000',
     })
-    // A white list cannot carry light words, so it is as much white as they read on.
     expect(tokens(css, 'dark')['--side-bar-bg-color']).toBe('#404040')
     expect(ordenCss({ name: 'Pictures', source: '{"images":{}}', css: false, pages: '' })).toBe('')
   })
@@ -57,7 +55,6 @@ describe('a browser theme as an Orden theme', () => {
     expect(new RegExp(said.sheets[2]?.match ?? '').test('https://sub.example.org/a')).toBe(true)
     expect(new RegExp(said.sheets[2]?.match ?? '').test('https://notexample.org/')).toBe(false)
     expect(said.sheets[1]?.css.trim()).toBe('img { filter: none; }')
-    // Nothing a comment could end on, and nothing at all where nothing is said.
     expect(line.slice(3, -4)).not.toContain('*/')
     expect(paged('')).toBe('')
   })
@@ -75,7 +72,6 @@ describe('a browser theme as an Orden theme', () => {
       pages: '',
     })
     expect(tokens(light, 'light')).toMatchObject({ '--bg': '#c9d6f3', '--text': '#000000' })
-    // Its deep blue frame cannot carry the note's black, so it is a wash of that blue.
     expect(tokens(light, 'light')['--tab-frame']).toBe('#93a6cf')
 
     const source =
@@ -105,7 +101,6 @@ describe('a browser theme as an Orden theme', () => {
       toolbar#nav-bar { background-color: rgba(0, 0, 0, 0.4) !important; }`
     const css = ordenCss({ name: 'userChrome', source, css: true, pages: '' })
 
-    // The see-through strip is no frame, so the frame is the toolbar's.
     expect(tokens(css, 'dark')).toMatchObject({
       '--bg': '#0f0f0f',
       '--surface': '#000000',
@@ -120,8 +115,6 @@ describe('a browser theme as an Orden theme', () => {
     })
     expect(css).not.toContain('--accent')
 
-    // And over the desk it is what it was written as: a strip that is not there, a
-    // tab that is a breath of white, a list that is two fifths black.
     const glass = /data-translucent\]\[data-theme='dark'\] \{([^}]*)\}/.exec(css)?.[1]
     expect(glass).toContain('--shell-ground: rgb(0 0 0 / 0.000);')
     expect(glass).toContain('--content-ground: rgb(242 242 242 / 0.063);')

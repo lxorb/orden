@@ -98,8 +98,6 @@ describe('moving through a deck', () => {
   })
 
   test('forward and back are each other, one press at a time', () => {
-    // Exactly as far as the deck goes: past the end both keys stand still, and
-    // standing still is not something the other one can undo.
     let at = { slide: 0, step: 0 }
     const walked = [at]
     for (let press = 0; press < 4; press++) {

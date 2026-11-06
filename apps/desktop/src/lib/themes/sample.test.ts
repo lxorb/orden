@@ -1,11 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { paletteCss, rescoped, scopedRoots } from './sample'
 
-/** The miniature is drawn by the app's own prose rules, taken as text and
- *  pointed somewhere else. What is tested here is that pointing them somewhere
- *  else takes the prose and leaves everything around it: a rule that escaped the
- *  frame would restyle the settings sheet the gallery is sitting on. */
-
 describe('pointing the prose rules at a miniature', () => {
   test('takes the rules for the writing surface', () => {
     const out = rescoped('#write h1 { color: red; }', '.mini')
@@ -33,9 +28,6 @@ describe('pointing the prose rules at a miniature', () => {
   })
 
   test('leaves behind an at-rule and everything inside it', () => {
-    // A rule inside a media query belongs to a screen width, and a miniature's
-    // width is not the screen's. Stepped over as one block, so what is inside it
-    // is not read as a rule of its own either.
     const out = rescoped(
       `@media (max-width: 720px) { #write { padding: 0; } }
 #write h2 { color: red; }`,
@@ -73,8 +65,6 @@ describe('the token blocks restated on the frame', () => {
   })
 
   test('leaves the palettes alone, or every card would be the same colour', () => {
-    // `:root, [data-theme='dark']` is the dark palette. Restating it on the
-    // frame would outrank the light one and paint every miniature dark.
     const out = scopedRoots(
       `:root,
 [data-theme='dark'] { --bg: #000; }
@@ -86,16 +76,12 @@ describe('the token blocks restated on the frame', () => {
   })
 
   test('carries the aliases, which is the whole point of doing it', () => {
-    // Written in terms of another token, so where it is declared decides what
-    // it resolves against. On the frame it resolves against the theme.
     const out = scopedRoots(':root { --code-block-bg-color: var(--surface); }', '.mini')
 
     expect(out).toContain('--code-block-bg-color: var(--surface);')
   })
 
   test('is not fooled by the comment above a block', () => {
-    // The sheets these come from are commented throughout, and what stands
-    // between one rule and the next is read as the selector of the next.
     const out = scopedRoots(`/* The tokens. */\n:root { --a: 1; }`, '.mini')
 
     expect(out).toBe('.mini { --a: 1; }')
@@ -135,8 +121,6 @@ describe('the blocks a card is painted from', () => {
   })
 
   test('outranks the block the app writes for that scheme', () => {
-    // Two attributes against the app's one, so the theme wins with nothing
-    // marked important. If this ever stops being true, every card goes grey.
     const css = paletteCss([theme])
     const selector = css.slice(0, css.indexOf('{')).trim()
 

@@ -1,17 +1,7 @@
-/** The machines a remote terminal reaches, as one list: the hosts of the reader's own
- *  `~/.ssh/config`, read by the crate and never written, and the hosts made in nib,
- *  with what Orden knows about each - a colour, a group, a pin, when it was last
- *  connected to. See src-tauri/src/terminal/remote.rs and docs/terminal.md.
- *
- *  Pure: what the crate answered goes in, the list and its orders come out, and the
- *  store (hosts.svelte.ts) holds it. */
-
-/** One of the canvas's six colours, by number, as a card's colour is. */
 export type Colour = '1' | '2' | '3' | '4' | '5' | '6'
 
 export const COLOURS: readonly Colour[] = ['1', '2', '3', '4', '5', '6']
 
-/** A host of the config, as the crate read it. */
 export interface ConfigHost {
   id: string
   also: string[]
@@ -21,8 +11,6 @@ export interface ConfigHost {
   group?: string
 }
 
-/** A host made in Orden. Its id starts with `n-` and is made once, so renaming it keeps
- *  every tab that connects to it; see `is_own_id` in remote.rs. */
 export interface Own {
   id: string
   name: string
@@ -38,27 +26,20 @@ export interface About {
   last?: number
 }
 
-/** What nib keeps, as the crate keeps it. */
 export interface Kept {
   own: Own[]
   about: Record<string, About>
-  /** The order Settings put the hosts in, by id. */
   order: string[]
-  /** And the groups. */
   groups: string[]
 }
 
 export const NOTHING_KEPT: Kept = { own: [], about: {}, order: [], groups: [] }
 
-/** One host, as every list shows it. */
 export interface Host {
   id: string
   name: string
-  /** Made in Orden, and so editable; a config's host is a mirror. */
   own: boolean
-  /** Other names it is found by: the config's other names on its line, its address. */
   also: string[]
-  /** `user@address:port` where any of it is known, said quietly after the name. */
   detail: string | null
   user: string | null
   hostname: string | null
@@ -69,8 +50,6 @@ export interface Host {
   last: number | null
 }
 
-/** `user@address:port`, as much of it as is known, and null where nothing is besides
- *  the name. */
 function detailOf(user: string | null, hostname: string | null, port: number | null, name: string) {
   const address = hostname ?? (user || port ? name : null)
   if (!address) return null
@@ -80,8 +59,6 @@ function detailOf(user: string | null, hostname: string | null, port: number | n
   return said === name ? null : said
 }
 
-/** Every host, in the order Settings lists them: the order kept there first, then the
- *  config's in the config's order, then the ones made here. */
 export function hostsOf(config: readonly ConfigHost[], kept: Kept): Host[] {
   const about = (id: string): About => kept.about[id] ?? {}
 
@@ -124,36 +101,26 @@ export function hostsOf(config: readonly ConfigHost[], kept: Kept): Host[] {
   const all = [...fromConfig, ...made]
   const place = new Map(kept.order.map((id, at) => [id, at]))
   const rank = (host: Host) => place.get(host.id) ?? Number.MAX_SAFE_INTEGER
-  // Stable: the ones Settings never ordered keep the order they came in.
   return all
     .map((host, at) => ({ host, at }))
     .sort((a, b) => rank(a.host) - rank(b.host) || a.at - b.at)
     .map(({ host }) => host)
 }
 
-/** The groups in their order: the order kept in Settings, then each other group in the
- *  order its first host comes. */
 export function groupsOf(hosts: readonly Host[], kept: Kept): string[] {
   const out = [...kept.groups]
   for (const host of hosts) if (host.group && !out.includes(host.group)) out.push(host.group)
   return out.filter((group) => hosts.some((host) => host.group === group))
 }
 
-/** How many recent hosts the picker puts after the pinned ones. */
 export const RECENT = 5
 
-/** One row of the picker, and what stands over it. */
 export interface Placed {
   host: Host
-  /** A group's name over this row, where a group starts here. */
   head: string | null
-  /** A line over this row, where the pinned or the recent hosts end. */
   parted: boolean
 }
 
-/** The hosts as the picker offers them, each once: the pinned ones, then the ones
- *  connected to lately, newest first, then the rest - the ones in no group, and each
- *  group under its name. The numbers a digit picks follow this order. */
 export function pickerOrder(hosts: readonly Host[], kept: Kept): Placed[] {
   const pinned = hosts.filter((host) => host.pinned)
   const recent = hosts
@@ -175,7 +142,6 @@ export function pickerOrder(hosts: readonly Host[], kept: Kept): Placed[] {
 
   const out: Placed[] = []
   for (const [list, group] of sections) {
-    // A group's name is the line between it and what is above; the others get a line.
     const parted = out.length > 0 && group === null
     list.forEach((host, at) => {
       out.push({ host, head: at === 0 ? group : null, parted: at === 0 && parted })
@@ -184,26 +150,19 @@ export function pickerOrder(hosts: readonly Host[], kept: Kept): Placed[] {
   return out
 }
 
-/** What a typed host is found by: its name, its other names and its address. */
 export function searchName(host: Host): string {
   return [host.name, ...host.also].join(' ')
 }
 
-/** A destination typed: `pi`, `emil@10.0.0.5`, `box.example.com:2222`,
- *  `[fe80::1]:22`. */
 export interface Destination {
   user: string | null
   hostname: string
   port: number | null
 }
 
-/** What remote.rs takes as an address and a user; the crate holds the same rule. */
 const ADDRESS = /^(?!-)[A-Za-z0-9._:%-]{1,253}$/
 const USER = /^(?!-)[A-Za-z0-9._@\\$-]{1,64}$/
 
-/** The destination something typed is, or null for words that are not one: no space,
- *  nothing an option could start with, a port that is a port. A leading `ssh ` is the
- *  command's own and is read past. */
 export function destinationOf(typed: string): Destination | null {
   const text = typed.trim().replace(/^ssh\s+/i, '')
   if (!text || /\s/.test(text)) return null
@@ -229,19 +188,14 @@ export function destinationOf(typed: string): Destination | null {
   return { user, hostname, port }
 }
 
-/** Whether typing could still become a destination: only what one is written with. */
 export function mayBeDestination(typed: string): boolean {
   return /^[A-Za-z0-9._:%@\\$[\]-]+$/.test(typed)
 }
 
-/** Whether a destination says it is one - a user, a port, a dot - rather than being a
- *  few letters that may be the start of a host's name. */
 export function plainlyDestination(typed: string): boolean {
   return /[@:.]/.test(typed)
 }
 
-/** The host a destination is already, if one is: by its name, one of its other names,
- *  or the same user, address and port. */
 export function hostFor(hosts: readonly Host[], wanted: Destination): Host | null {
   const plain = !wanted.user && wanted.port === null
   return (
@@ -255,7 +209,6 @@ export function hostFor(hosts: readonly Host[], wanted: Destination): Host | nul
   )
 }
 
-/** A destination, said the way it was typed. */
 export function said(wanted: Destination): string {
   const at = (address: string) => (wanted.user ? `${wanted.user}@${address}` : address)
   if (wanted.port === null) return at(wanted.hostname)
@@ -264,10 +217,8 @@ export function said(wanted: Destination): string {
   return `${at(address)}:${wanted.port}`
 }
 
-/** Fields to change, where one set to undefined is taken out. */
 export type Change<T> = { [K in keyof T]?: T[K] | undefined }
 
-/** What Orden knows about one host, changed. */
 export function withAbout(kept: Kept, id: string, change: Change<About>): Kept {
   const merged = { ...kept.about[id], ...change }
   const about = Object.fromEntries(
@@ -280,7 +231,6 @@ export function withAbout(kept: Kept, id: string, change: Change<About>): Kept {
   }
 }
 
-/** A host made here, changed. */
 export function withOwn(kept: Kept, id: string, change: Change<Omit<Own, 'id'>>): Kept {
   return {
     ...kept,
@@ -299,7 +249,6 @@ export function withOwn(kept: Kept, id: string, change: Change<Omit<Own, 'id'>>)
   }
 }
 
-/** A host made here, gone, with everything Orden knew about it. */
 export function withoutOwn(kept: Kept, id: string): Kept {
   const about = Object.fromEntries(Object.entries(kept.about).filter(([one]) => one !== id))
   return {
@@ -310,8 +259,6 @@ export function withoutOwn(kept: Kept, id: string): Kept {
   }
 }
 
-/** The list with the host at `from` moved to `to`, kept as the order Settings shows
- *  and the groups in the order their first hosts now come. */
 export function moved(kept: Kept, hosts: readonly Host[], from: number, to: number): Kept {
   const ids = hosts.map((host) => host.id)
   const [one] = ids.splice(from, 1)

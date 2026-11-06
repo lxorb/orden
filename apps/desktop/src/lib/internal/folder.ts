@@ -1,56 +1,22 @@
-/** A space whose files Orden keeps itself (#1068, step 4c): a folder of its own holding
- *  every file's bytes under a name that never changes, and one index saying where in
- *  the space each one is.
- *
- *  It is a disk, as the engine and every command already know one: paths, folders,
- *  files with words or bytes, a move, a delete. What makes it Orden's own is that the
- *  paths are only the index. A file's bytes are `.entries/<key>` from the moment it is
- *  made, a key nobody reads a name off, so a move or a rename is a line of the index
- *  written again and no byte moves; nothing else writes the folder, so nothing there has
- *  to be guessed about; and every change is said, exactly, by what made it (`heard`).
- *
- *  The index is written whole to one of two slots, the older one each time, after that
- *  one is taken away, so a new file is what is written and the crate writes a new file
- *  whole or not at all: a write cut short leaves the other slot, one change behind, and
- *  the next read takes whichever is newest. Every window of the app reads and writes the
- *  same index, so a change is made under a lock all of them share and said to the
- *  others on a channel, and a window that heard of one reads the index again before it
- *  answers anything. When a file was written and how long it is are written down with
- *  the next change to the tree, or a moment after the last write: a crash in that moment
- *  costs those times, never a file. */
-
 import { nameKey } from '@orden/sync-core/tree'
 
-/** What is at one path: a folder, or a file and the key its bytes are kept under. */
 export interface InternalEntry {
-  /** Null for a folder. */
   key: string | null
-  /** When it was made, in milliseconds. */
   made: number
-  /** When its bytes were last written; a folder's is when it was made. */
   modified: number
-  /** How long it is: characters for words, bytes for bytes. */
   size: number
 }
 
-/** Something deleted into this space's trash: what was at a path, with everything under
- *  it, by where each was under it (`''` the thing itself). Its bytes stay where they
- *  were until it is purged, so putting it back is the index written again. */
 export interface InternalTrashed {
   id: string
   kind: string
   name: string
-  /** Where it was in the space. */
   from: string
   trashedAt: number
-  /** Deleted by sync, which leaves a PDF's highlights out of the slot; see trash.rs. */
   apart?: boolean
   held: [string, InternalEntry][]
 }
 
-/** One change to the space, as a folder's watcher would hear it (`SpaceChange` in
- *  space-watch.ts), paths relative to the space: what the engine reads in place of a
- *  watcher, since this one is never wrong. `id` is the key, a file's identity. */
 export type InternalChange =
   | {
       kind: 'created' | 'modified'
@@ -71,39 +37,28 @@ export type InternalChange =
       id: string | null
     }
 
-/** The bytes and the index, wherever they are kept: the crate's files on a desktop
- *  (internal/bytes.ts), a map in a test. */
 export interface InternalBytes {
   readText(key: string): Promise<string | null>
   writeText(key: string, text: string): Promise<void>
   read(key: string): Promise<Uint8Array | null>
   write(key: string, bytes: Uint8Array): Promise<void>
   remove(key: string): Promise<void>
-  /** One of the index's two slots, or null where it is not there or will not read. */
   slot(at: 0 | 1): Promise<string | null>
-  /** A slot written as a new file: taken away first, then written whole. */
   writeSlot(at: 0 | 1, text: string): Promise<void>
-  /** Where a key's bytes are on this disk, for what reads a file by its own path. */
   where(key: string): string
 }
 
-/** What a folder needs besides its bytes. */
 export interface InternalWorld {
   now(): number
-  /** A key nobody has used: 128 random bits. */
   key(): string
-  /** Whether names are compared without case, as the disk the space came from did. */
   foldsCase: boolean
-  /** Runs `then` while no other window changes this folder (a Web Lock). */
   exclusive?<T>(name: string, then: () => Promise<T>): Promise<T>
-  /** A channel to the other windows (a BroadcastChannel). */
   channel?(
     name: string,
     heard: (message: unknown) => void,
   ): { post(message: unknown): void; close(): void }
 }
 
-/** What the index file says, as written. */
 interface Written {
   index: 1
   gen: number
@@ -111,10 +66,8 @@ interface Written {
   trash: InternalTrashed[]
 }
 
-/** How long after the last write its time and length wait to be written down. */
 const STAMPS_AFTER = 2000
 
-/** The parent of a path relative to the space, `''` for its top. */
 function folderOf(path: string): string {
   const at = path.lastIndexOf('/')
   return at < 0 ? '' : path.slice(0, at)
@@ -131,7 +84,6 @@ function isEntry(value: unknown): value is InternalEntry {
   )
 }
 
-/** The index as a slot holds it, or null where it is not one. A bad line costs itself. */
 function readIndex(text: string | null): Written | null {
   if (!text) return null
   let value: unknown
@@ -176,22 +128,17 @@ function readIndex(text: string | null): Written | null {
 }
 
 export class InternalFolder {
-  /** Every path, by how this disk compares paths, with the path as it is spelled. */
   private paths = new Map<string, { path: string; entry: InternalEntry }>()
   private trashed: InternalTrashed[] = []
   private gen = 0
-  /** Which slot holds `gen`. */
   private holding: 0 | 1 = 1
-  /** Another window wrote the index since this one read it. */
   private stale = false
   private readonly listeners = new Set<(changes: InternalChange[]) => void>()
   private stampTimer: ReturnType<typeof setTimeout> | undefined
-  /** Times and lengths written here and not yet in the index, by path as spelled. */
   private stamps = new Map<string, { modified: number; size: number }>()
   private readonly channel: { post(message: unknown): void; close(): void } | null
 
   private constructor(
-    /** What the lock and the channel are named by: the folder, the same in every window. */
     readonly name: string,
     readonly bytes: InternalBytes,
     private readonly world: InternalWorld,
@@ -202,7 +149,6 @@ export class InternalFolder {
       }) ?? null
   }
 
-  /** Opens the folder named `name`, reading its index. */
   static async open(
     name: string,
     bytes: InternalBytes,
@@ -213,7 +159,6 @@ export class InternalFolder {
     return folder
   }
 
-  /** How this disk compares two paths. */
   private keyOf(path: string): string {
     return this.world.foldsCase ? nameKey(path) : path.normalize('NFC')
   }
@@ -231,7 +176,6 @@ export class InternalFolder {
       this.paths.set(this.keyOf(path), { path, entry })
     }
     this.trashed = newest?.trash ?? []
-    // Times this window wrote and has not written down stand over what was read.
     for (const [path, stamp] of this.stamps) {
       const at = this.paths.get(this.keyOf(path))
       if (at?.entry.key) at.entry = { ...at.entry, ...stamp }
@@ -239,9 +183,6 @@ export class InternalFolder {
     this.stale = false
   }
 
-  /** What another window said: the index it wrote, which this one reads again before it
-   *  answers anything, or a file it wrote into, whose time and length are only in that
-   *  window until they are written down. */
   private fromAnother(message: unknown) {
     if (typeof message !== 'object' || message === null) return
     const said = message as { gen?: unknown; changes?: unknown }
@@ -259,13 +200,10 @@ export class InternalFolder {
     })
   }
 
-  /** The index as it is, read again where another window changed it. */
   async fresh(): Promise<void> {
     if (this.stale) await this.load()
   }
 
-  /** Hears every change to the space, made in this window or another. Answers how to
-   *  stop. */
   heard(listener: (changes: InternalChange[]) => void): () => void {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
@@ -276,14 +214,9 @@ export class InternalFolder {
     for (const listener of [...this.listeners]) listener(changes)
   }
 
-  /** One change to the index, made where no other window is making one, written down
-   *  before it is answered, and said. `change` answers what it did, which may be
-   *  nothing anybody hears of, or null where it changed nothing. */
   private async change(change: () => InternalChange[] | null): Promise<void> {
     const run = async () => {
       await this.fresh()
-      // What was there, put back if the index cannot be written: a change it does not
-      // hold did not happen, in this window either.
       const paths = new Map(this.paths)
       const trashed = [...this.trashed]
       const stamps = new Map(this.stamps)
@@ -318,7 +251,6 @@ export class InternalFolder {
     this.stamps.clear()
   }
 
-  /** Writes the times and lengths of the last writes down a moment after them. */
   private stampSoon() {
     clearTimeout(this.stampTimer)
     this.stampTimer = setTimeout(() => {
@@ -326,40 +258,29 @@ export class InternalFolder {
     }, STAMPS_AFTER)
   }
 
-  /** Everything not yet written down, written down: at a window's close. */
   async flush(): Promise<void> {
     if (this.stamps.size) await this.change(() => null)
   }
 
-  /** Lets go: the channel closed and nothing heard any more. */
   close() {
     clearTimeout(this.stampTimer)
     this.channel?.close()
     this.listeners.clear()
   }
 
-  // ---------------------------------------------------------------------------
-  // Reading
-
-  /** What is at `path`, or null. */
   async at(path: string): Promise<InternalEntry | null> {
     await this.fresh()
     return this.atNow(path)
   }
 
-  /** The same, from what this window holds now, without asking: what a path is turned
-   *  into a file's place by, where nothing may wait (`assetUrl`). */
   atNow(path: string): InternalEntry | null {
     return this.paths.get(this.keyOf(path))?.entry ?? null
   }
 
-  /** The path as it is spelled here, for one spelled another way this disk calls the
-   *  same. */
   private spelled(path: string): string {
     return this.paths.get(this.keyOf(path))?.path ?? path
   }
 
-  /** Whether anything is at `path` or under it. */
   async holds(path: string): Promise<boolean> {
     await this.fresh()
     if (!path) return true
@@ -369,13 +290,11 @@ export class InternalFolder {
     return false
   }
 
-  /** Every path and what is there, in path order. */
   async list(): Promise<{ path: string; entry: InternalEntry }[]> {
     await this.fresh()
     return [...this.paths.values()].sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
   }
 
-  /** What is at `path` and under it, by where under it (`''` itself). */
   private under(path: string): { rest: string; key: string; path: string; entry: InternalEntry }[] {
     const own = this.keyOf(path)
     const inside = `${own}/`
@@ -397,11 +316,6 @@ export class InternalFolder {
     return entry?.key ? this.bytes.read(entry.key) : null
   }
 
-  // ---------------------------------------------------------------------------
-  // Writing
-
-  /** The folders above `path` that are not there yet, made, shallow first. Refuses one
-   *  where a file is. */
   private folders(path: string, at: number, changes: InternalChange[]) {
     const missing: string[] = []
     for (let folder = folderOf(path); folder; folder = folderOf(folder)) {
@@ -419,7 +333,6 @@ export class InternalFolder {
     }
   }
 
-  /** A folder, with the folders above it. Nothing where one is already. */
   async mkdir(path: string): Promise<void> {
     if (!path) return
     await this.change(() => {
@@ -433,8 +346,6 @@ export class InternalFolder {
     })
   }
 
-  /** Words or bytes at `path`: into the file that is there, or a new one made, with the
-   *  folders above it. */
   async write(path: string, what: string | Uint8Array): Promise<void> {
     await this.fresh()
     const there = this.atNow(path)
@@ -442,8 +353,6 @@ export class InternalFolder {
     const at = this.world.now()
     const size = typeof what === 'string' ? what.length : what.byteLength
     const key = there?.key ?? this.newKey(path)
-    // The bytes first: an index naming a key with nothing behind it would be a file that
-    // reads as nothing, where bytes no index names are only bytes.
     if (typeof what === 'string') await this.bytes.writeText(key, what)
     else await this.bytes.write(key, what)
 
@@ -466,8 +375,6 @@ export class InternalFolder {
       return
     }
     await this.change(() => {
-      // Made by another window meanwhile: the file is this one, and what that window
-      // wrote is under a key nothing names any more.
       const changes: InternalChange[] = []
       this.folders(path, at, changes)
       this.paths.set(this.keyOf(path), { path, entry: { key, made: at, modified: at, size } })
@@ -476,8 +383,6 @@ export class InternalFolder {
     })
   }
 
-  /** A key for a new file: random, and the extension of its name, which is all the
-   *  system reads a picture's type off where its bytes do not say. */
   private newKey(path: string): string {
     const name = path.slice(path.lastIndexOf('/') + 1)
     const dot = name.lastIndexOf('.')
@@ -485,8 +390,6 @@ export class InternalFolder {
     return `${this.world.key()}${/^\.[a-z0-9]{1,8}$/.test(extension) ? extension : ''}`
   }
 
-  /** `from` and everything under it at `to`: the index, and no bytes. Refuses a move
-   *  onto something, into itself, or into a file. */
   async move(from: string, to: string): Promise<void> {
     if (from === to) return
     await this.change(() => {
@@ -527,7 +430,6 @@ export class InternalFolder {
     })
   }
 
-  /** `path` and everything under it gone, and their bytes with them. */
   async remove(path: string): Promise<void> {
     let keys: string[] = []
     await this.change(() => {
@@ -548,22 +450,14 @@ export class InternalFolder {
         },
       ]
     })
-    // After the index no longer names them: bytes nothing names are only bytes.
     for (const key of keys) await this.bytes.remove(key).catch(() => undefined)
   }
-
-  // ---------------------------------------------------------------------------
-  // The trash
 
   async trash(): Promise<InternalTrashed[]> {
     await this.fresh()
     return [...this.trashed]
   }
 
-  /** What is at `path`, and under it, into the trash as `item` says, with what is
-   *  `beside` it and goes with it - a PDF's highlights, a page note's paper - each a path
-   *  that begins with `path`'s. Its bytes stay where they are. Answers false where
-   *  nothing is there. */
   async toTrash(
     path: string,
     item: Omit<InternalTrashed, 'held' | 'from'>,
@@ -594,7 +488,6 @@ export class InternalFolder {
     return taken
   }
 
-  /** Words that never had a file, in the trash as a note deleted from `from` would be. */
   async wordsToTrash(from: string, text: string, item: Omit<InternalTrashed, 'held' | 'from'>) {
     const at = this.world.now()
     const key = this.newKey(from)
@@ -609,8 +502,6 @@ export class InternalFolder {
     })
   }
 
-  /** One trashed thing back at `to`, under the keys it had. Refuses where something is
-   *  at `to`. */
   async fromTrash(id: string, to: string): Promise<void> {
     await this.change(() => {
       const item = this.trashed.find((one) => one.id === id)
@@ -638,7 +529,6 @@ export class InternalFolder {
     })
   }
 
-  /** One trashed thing gone for good, and its bytes. */
   async purge(id: string): Promise<void> {
     let keys: string[] = []
     await this.change(() => {

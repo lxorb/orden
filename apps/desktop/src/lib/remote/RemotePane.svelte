@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** Settings, Remote: every host a remote terminal reaches, in the order the picker
-   *  offers the rest of them, and a row opens one (HostDetail.svelte).
-   *
-   *  A host of the ssh config is a mirror - its name and where it is are the config's,
-   *  and Open config is where they change - and one made here is nib's own, in the app's
-   *  data folder. Either can be coloured, grouped and pinned. Dragged to reorder where
-   *  there is a pointer, and the two arrows everywhere, as the phone bar's rows are.
-   *
-   *  Fetched when the pane is opened, never before: nothing of it is in the first paint. */
   import { t } from '../i18n.svelte'
   import { prompt } from '../prompt.svelte'
   import { arrive } from '../slide'
@@ -27,7 +18,6 @@
 
   let problem = $state('')
 
-  /** A host made here: where it is, typed as `ssh` takes it. */
   async function add() {
     problem = ''
     const typed = await prompt.ask({
@@ -56,7 +46,6 @@
     })
   }
 
-  /** Which row is being dragged, while one is, and where it would land. */
   let dragging = $state<number | null>(null)
   let dropAt = $state<number | null>(null)
 
@@ -150,9 +139,6 @@
 </div>
 
 <style>
-  /* The settings pane's own shapes, said once here for this pane and the host page in
-     it, since the panel's rules are scoped to the panel; see access/Access.svelte, which
-     does the same. */
   .remote,
   .page {
     display: flex;
@@ -198,7 +184,6 @@
     color: var(--danger);
   }
 
-  /* The row opens its host; the arrows at its end order it. */
   .open {
     flex: 1;
     min-width: 0;
@@ -221,8 +206,6 @@
     }
   }
 
-  /* The mark in front of Add host is the row's leading mark (`.nib-setting-mark`);
-     the move up and down beside each host are `.nib-glyph`. */
   .plus svg {
     width: 14px;
     height: 14px;
@@ -233,12 +216,10 @@
     stroke-linejoin: round;
   }
 
-  /* Where a dragged row would land: the line the phone bar's rows draw. */
   .row.landing {
     box-shadow: inset 0 2px 0 var(--accent);
   }
 
-  /* To the config, in the accent, as a link inside the settings leads. */
   .link {
     align-self: flex-start;
     padding: 0;

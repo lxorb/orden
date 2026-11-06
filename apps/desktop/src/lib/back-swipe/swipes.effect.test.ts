@@ -1,11 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 
-/** The arrow is glued to the fingers (#1050): drawn in the turn each step is heard in,
- *  from the very first step, with nothing measured on the way and nothing easing it after
- *  them. In the jsdom project, because the room it comes in over is the DOM's. Where it
- *  is for each step is gesture.test.ts, and that nothing eases it there is
- *  test/effects/with-the-fingers.effect.test.ts. */
-
 vi.mock('../tauri', () => ({ isDesktop: false, isMobile: false }))
 vi.mock('../web-tab/pages.svelte', () => ({
   pages: { of: () => ({ back: true, forward: false }) },

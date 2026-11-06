@@ -1,7 +1,3 @@
-/** The hits of a space's own inbox (#1044), which no walk of the crate's reads: it is
- *  hidden. Its own file, fetched with the first search, so the first paint carries
- *  none of it. */
-
 import { INBOX_NAME, INBOX_PATH } from '@orden/bases/inbox'
 import { insideSpace } from '../space-paths'
 import { invoke } from '../tauri'

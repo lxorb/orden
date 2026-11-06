@@ -1,10 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { AGAIN_AFTER, Picture, type PeerWorld, SHOWN_WITHIN } from './picture.svelte'
 
-/** An application's picture in its tab (issue 1063, step 4; picture.svelte.ts): what it
- *  offers, what it does with the host's answer, and when it ends and tries again - with
- *  the engine's connection and the clock played here. */
-
 const tick = () => new Promise((settle) => setTimeout(settle, 0))
 
 class FakePeer {
@@ -85,7 +81,6 @@ function world(engine = true) {
     now: () => clock.now,
   }
   const picture = new Picture((data) => said.push(data), made)
-  /** Runs the timers due after `ms`, as the clock would. */
   const wait = (ms: number) => {
     for (const timer of timers.splice(0)) {
       if (timer.gone) continue
@@ -131,7 +126,6 @@ describe('an application’s picture', () => {
     expect(here.picture.status).toEqual({ is: 'showing' })
     expect(here.picture.stream).toBe(stream)
 
-    // Showing in time, the deadline does nothing.
     here.wait(SHOWN_WITHIN)
     expect(here.picture.status).toEqual({ is: 'showing' })
   })
@@ -161,10 +155,8 @@ describe('an application’s picture', () => {
     here.wait(AGAIN_AFTER)
     await tick()
     expect(here.peers).toHaveLength(2)
-    // Still said to be lost while it is tried again, until it shows.
     expect(here.picture.status).toEqual({ is: 'lost' })
 
-    // This offer the relay lost: never answered, it counts as failed in the end.
     here.wait(SHOWN_WITHIN)
     expect(here.picture.status).toEqual({ is: 'lost' })
     here.picture.want(false)
@@ -181,7 +173,6 @@ describe('an application’s picture', () => {
     expect(here.said.at(-1)).toBe('{"bye":true}')
     expect(here.picture.status).toEqual({ is: 'off' })
 
-    // What the old connection says after is not heard.
     here.peers[0]?.becomes('connected')
     expect(here.picture.status).toEqual({ is: 'off' })
   })
@@ -244,7 +235,6 @@ describe('an application’s picture', () => {
 
     here.picture.want(false)
     expect(here.picture.pointer).toBeNull()
-    // What the old connection says after is not heard.
     channel?.onmessage?.({ data: JSON.stringify({ t: 'pointer', png, x: 1, y: 2 }) })
     expect(here.picture.pointer).toBeNull()
   })
@@ -272,7 +262,6 @@ describe('an application’s picture', () => {
     channel?.onopen?.()
     expect(channel?.sent).toEqual(['{"t":"share","clipboard":false}'])
 
-    // Not shared: nothing goes, and nothing comes.
     here.picture.paste('secret')
     channel?.onmessage?.({ data: '{"t":"clipboard","text":"from it"}' })
     expect(here.copied).toEqual([])
@@ -287,7 +276,6 @@ describe('an application’s picture', () => {
     ])
     expect(here.copied).toEqual(['from it'])
 
-    // A connection made again says so again as it opens.
     here.picture.want(false)
     here.picture.want(true)
     await tick()
@@ -310,20 +298,17 @@ describe('an application’s picture', () => {
     expect(channel?.sent.at(-1)).toBe('{"t":"ping","at":1000}')
     expect(here.picture.stats?.width).toBe(640)
 
-    // The host is 4000 ahead, and began at 4000 there; the answer came 20 later.
     here.clock.now = 1020
     channel?.onmessage?.({
       data: '{"t":"pong","at":1000,"began":4000,"now":5010,"encoder":"libvpx","hardware":false,"usage":{"cpu":5,"memory":2048}}',
     })
     expect(here.picture.usage).toEqual({ cpu: 5, memory: 2048 })
     expect(here.picture.encoder).toEqual({ name: 'libvpx', hardware: false })
-    // A frame read 2 s in (at 2000 here), shown at 2035 here.
     here.clock.now = 2040
     here.picture.presented(180_000, 2035)
     here.wait(1000)
     expect(here.picture.latency).toBeCloseTo(35)
 
-    // Still wanted by the other: going on.
     release()
     release()
     expect(here.picture.stats).not.toBeNull()

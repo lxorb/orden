@@ -2,10 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { stamped, stampOf } from './stamp'
 import { review } from './validate'
 
-/** The rules a theme from the store is held to. Every one of these is something
- *  a stylesheet from a stranger could do to the app if it were applied as it
- *  arrived, so each has a test rather than a comment. */
-
 const tokens = (body: string) => `[data-theme='dark'] {\n${body}\n}`
 
 describe('what a theme may set', () => {
@@ -37,9 +33,6 @@ describe('what a theme may set', () => {
     expect(reviewed.css).toContain('#write pre code')
   })
 
-  /** The four colours inside a code fence. They are why contrast could not be a
-   *  theme before: nothing named them, so nothing but a switch over the whole app
-   *  could change them. A theme states them like any other colour now. */
   test('keeps the syntax colours a fence is drawn in', () => {
     const reviewed = review(
       tokens(`--syntax-number: #ffc861;
@@ -122,9 +115,6 @@ describe('what a theme may not set', () => {
   })
 
   test('refuses a value that would be read back as something else', () => {
-    // A comment marker comments out the rest of the file from where it lands,
-    // and a string opened and never closed swallows the end of the rule. Either
-    // makes what is applied differ from what was read here.
     for (const value of ['red /* ', 'red */ x']) {
       const reviewed = review(tokens(`--bg: ${value};`))
 
@@ -132,9 +122,6 @@ describe('what a theme may not set', () => {
       expect(reviewed.refused, value).toContain('--bg is not a value a theme may set')
     }
 
-    // A string that is never closed does not even get that far: the scanner
-    // follows quotes to find the end of the block, so it never finds one and
-    // the whole rule is refused as unfinished.
     for (const value of ['"unclosed', "'unclosed"]) {
       const reviewed = review(tokens(`--bg: ${value};`))
 
@@ -144,10 +131,6 @@ describe('what a theme may not set', () => {
   })
 
   test('a value cannot open a rule of its own', () => {
-    // The scanner gets there first: the block ends at the unquoted `}`, so what
-    // follows is read as the next selector and refused as one. The colour
-    // survives on its own, which is the whole of what the theme asked for that
-    // the app is willing to give it.
     const reviewed = review(`[data-theme='dark'] { --bg: red } html { opacity: 0.02 }`)
 
     expect(reviewed.css).toBe(`[data-theme=dark] {\n  --bg: red;\n}`)
@@ -156,9 +139,6 @@ describe('what a theme may not set', () => {
   })
 
   test('refuses a selector list that mixes the tokens with the prose', () => {
-    // `:root` is the element the app is laid out on. Read as a prose rule, the
-    // list below would be allowed to set `opacity` and `font-size` there, which
-    // is a window somebody cannot see and every measurement in it rescaled.
     for (const list of ['#write, :root', ':root, #write h1', "#write, [data-theme='dark']"]) {
       const reviewed = review(`${list} { opacity: 0.03; font-size: 200px; }`)
 
@@ -181,27 +161,18 @@ describe('what a theme may not set', () => {
 
     expect(reviewed.css).toContain('--text: #eee;')
     expect(reviewed.css).not.toContain('--bg')
-    // Two: the `@import` ends at its semicolon and is refused there, and the
-    // `@media` is refused with everything inside it.
     expect(reviewed.refused).toHaveLength(2)
     expect(reviewed.refused[0]).toContain('@import')
     expect(reviewed.refused[1]).toContain('@media')
   })
 
   test('refuses a nested rule rather than reading past it', () => {
-    // A scanner that skipped to the first `}` would read `--bg` below as a rule
-    // of its own, which is how a whitelist gets walked past.
     const reviewed = review(`[data-theme='dark'] { &:hover { --bg: red; } }`)
 
     expect(reviewed.css).toBe('')
   })
 
   test('a name spelled with a CSS escape is not the name it spells', () => {
-    // `p\6fsition` is how a browser reads `position`. Nothing here un-escapes
-    // anything, and both whitelists match the text as written, so an escape can
-    // only ever turn an allowed name into one that is not on the list. Written
-    // out as a test because that is a property of the design and not an
-    // accident: whitelisting the raw text is what makes it true.
     const reviewed = review(String.raw`#write p { p\6fsition: fixed; }`)
 
     expect(reviewed.css).toBe('')
@@ -212,17 +183,10 @@ describe('what a theme may not set', () => {
   })
 
   test('refuses a value with a function nobody closed', () => {
-    // A browser reads to the end of the file looking for the `)`, taking the `}`
-    // and every rule after it into the value. The scanner cannot catch this: it
-    // counts braces, and a brace inside an unclosed function is still a brace to
-    // it. So the sheet would install clean and quietly do almost nothing, which
-    // is the one thing this file exists to prevent.
     const reviewed = review(`[data-theme='dark'] { --bg: rgb(0,0,0 } #write h1 { color: red; }`)
 
     expect(reviewed.css).not.toContain('rgb(0,0,0')
     expect(reviewed.refused).toContain('--bg is not a value a theme may set')
-    // The rule after it is still read, which is the point of refusing the value
-    // rather than letting it swallow the rest.
     expect(reviewed.css).toContain('#write h1')
   })
 
@@ -234,8 +198,6 @@ describe('what a theme may not set', () => {
   })
 
   test('a bracket inside a string is not a bracket', () => {
-    // Which is what keeps a font called `'Half ('` working, the same way a
-    // semicolon inside one is left alone.
     const reviewed = review(tokens(`--font-content: 'Half (', serif;`))
 
     expect(reviewed.css).toContain(`'Half (', serif`)
@@ -243,9 +205,6 @@ describe('what a theme may not set', () => {
   })
 
   test('a brace inside a string costs the rule rather than letting it out', () => {
-    // The scanner follows quotes to find the end of the block, so the block ends
-    // where it should; a brace left in the body then means either nesting or a
-    // string, and refusing both is the safe way round.
     const reviewed = review(`[data-theme='dark'] { --a: "{"; --bg: red; }`)
 
     expect(reviewed.css).toBe('')
@@ -282,9 +241,6 @@ describe('the shape of the sheet', () => {
   })
 
   test('a declaration left unfinished takes the next one with it', () => {
-    // What a browser does too: without the semicolon the two lines are one
-    // declaration, whose name is not a token, so neither survives. Named here
-    // because a theme author whose theme half works reads it as a bug.
     const reviewed = review(tokens('--bg\n--text: #eee;'))
 
     expect(reviewed.css).toBe('')
@@ -314,9 +270,6 @@ describe('the stamp an installed theme carries', () => {
   })
 
   test('cannot be made to close its own comment', () => {
-    // The name and the version come out of the catalogue, which is a file on
-    // somebody else's server. A stamp that could end its comment would be a way
-    // to write any CSS at all into the installed file, past everything above.
     const evil = {
       id: 'a',
       name: 'A */ html { opacity: 0.02 } /*',
@@ -326,12 +279,9 @@ describe('the stamp an installed theme carries', () => {
     const file = stamped(evil, tokens('--bg: #000;'))
 
     const line = file.slice(0, file.indexOf('\n'))
-    // One `*/` in the line, and it is the one that ends it, so everything the
-    // catalogue wrote stays inside a comment. Words in a comment are not CSS.
     expect(line.split('*/')).toHaveLength(2)
     expect(line.endsWith('*/')).toBe(true)
 
-    // Still a stamp, so the theme is still marked installed at its version.
     expect(stampOf(file)?.id).toBe('a')
     expect(stampOf(file)?.version).toBe('1.0.0  .rail { display: none } ')
   })
@@ -344,8 +294,6 @@ describe('the stamp an installed theme carries', () => {
   })
 
   test('is only read from the front of the file', () => {
-    // Otherwise a theme could claim to be another one by writing the line
-    // further down, and the store would offer to update the wrong file.
     expect(stampOf(`${tokens('--bg: #000;')}\n${stamped(stamp, '')}`)).toBeNull()
   })
 })

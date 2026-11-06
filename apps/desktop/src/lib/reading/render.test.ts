@@ -1,7 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 
-/** The space around the note, stood in for: what the reading view has to get
- *  right is that it asks, and what it does with the answers. */
 const NOTES = [
   { path: 'Plan.md', name: 'Plan', headings: ['Why it works'], blocks: [], aliases: [] },
   { path: 'ideas/Later.md', name: 'Later', headings: [], blocks: [], aliases: [] },
@@ -13,11 +11,6 @@ const bodies: Record<string, string> = {
 
 const asked: { embeds: string[]; from: (string | null)[] } = { embeds: [], from: [] }
 
-/** The index stands in for the whole space, and `targetOf` is the one thing the
- *  reading view asks it: which note a link means. Resolved here the way the real
- *  one resolves it - the end of a path, folded - because what this file tests is
- *  that the view asks and what it does with the answer, not the resolver, which is
- *  tested in link-index.test.ts. */
 vi.mock('../link-index.svelte', () => ({
   links: {
     spaceOf: () => null,
@@ -31,8 +24,6 @@ vi.mock('../link-index.svelte', () => ({
 
       return found?.path ?? null
     },
-    // The note an embed names, with whether its own HTML is words: a note in a space
-    // somebody else can reach, here `Theirs`.
     embedNote: (target: string) => {
       asked.embeds.push(target)
       const text = bodies[`${target}.md`]
@@ -43,19 +34,12 @@ vi.mock('../link-index.svelte', () => ({
   },
 }))
 
-/** Where a picture ends up is images.ts's business and is tested there; here it
- *  only matters that the reading view runs every `src` through it. */
 vi.mock('../note-images', () => ({
   notePicture: (src: string) => `asset://${src}`,
 }))
 
 const { readingHtml, unreadableHtml } = await import('./render')
 
-/** The reading view asks for the exporter the first time it renders a note: the
- *  diagram drawers, the syntax parsers, KaTeX, most of what the app can load.
- *  Loaded here rather than by the first test, where it was three seconds on an
- *  idle machine, past a test's five on a busy one, and every test waiting on the
- *  same import timed out with it. See docs/conventions.md. */
 await import('../export')
 
 const note = (text: string) => ({ text, path: '/space/Notes/Today.md' })
@@ -90,7 +74,6 @@ describe('the space a note is read in', () => {
   test('points a link into this very note at its own heading', async () => {
     const html = await readingHtml(note('# One\n\nBack to [[#One]].\n'), 'light', true)
 
-    // Shown as it was written, which is how the editor shows it too.
     expect(html).toContain('<a class="wikilink" href="#one">#One</a>')
   })
 
@@ -144,7 +127,6 @@ describe('the page a note is read on', () => {
 
     expect(html).toContain('class="task-list-item"')
     expect(html).toContain('class="task-list-item is-done"')
-    // Every one of them: a reading view is not a place where a note is changed.
     expect(html.match(/<input/g)).toHaveLength(2)
     expect(html.match(/disabled/g)).toHaveLength(2)
   })
@@ -175,7 +157,6 @@ describe('the page a note is read on', () => {
   test('leaves a picture from the web where it is', async () => {
     const html = await readingHtml(note('![a](https://example.com/one.png)\n'), 'light', true)
 
-    // The resolver is still asked; it is the one that knows a remote path.
     expect(html).toContain('asset://https://example.com/one.png')
   })
 
@@ -199,8 +180,6 @@ describe('the page a note is read on', () => {
   })
 })
 
-/** Whose note it is decides whether the HTML in it is markup or is words; the
- *  rule is trust.ts and the reading view is handed the answer. */
 describe('the HTML in a note', () => {
   const HOSTILE = '<img src=x onerror="alert(1)">\n\n<u>underlined</u>\n'
 
@@ -227,8 +206,6 @@ describe('the HTML in a note', () => {
     expect(html).toContain('<li>')
   })
 
-  /** An embed is another note pulled into this one, and it is rendered with the
-   *  outer note's options; see `inside` in @orden/markdown. */
   test('is escaped inside an embedded note as well', async () => {
     bodies['Plan.md'] = '# Plan\n\n<script>alert(1)</script>\n'
     const html = await readingHtml(note('![[Plan]]\n'), 'light', false)
@@ -238,8 +215,6 @@ describe('the HTML in a note', () => {
     expect(html).toContain('&lt;script&gt;')
   })
 
-  /** And the other way round: a note the reader wrote can embed one somebody else
-   *  did, whose HTML is words wherever it is shown. */
   test('is escaped inside an embedded note somebody else wrote, in a note that is not', async () => {
     bodies['Theirs.md'] = '<form action="https://evil.example">x</form>\n'
     const html = await readingHtml(note('<b>mine</b>\n\n![[Theirs]]\n'), 'light', true)

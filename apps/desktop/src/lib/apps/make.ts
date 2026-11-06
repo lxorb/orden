@@ -1,10 +1,3 @@
-/** Making an application (docs/apps.md): developer mode's new tab card. Which of the
- *  reader's computers it runs on, then what: one of the applications that computer has
- *  installed, by its name and icon - this computer's asked of the crate, another's read
- *  from the catalogue its host wrote to the account (`host.svelte.ts`) - or another
- *  program by its path and arguments. The file is written in the folder new notes go
- *  to, named after what it runs, and opened. */
-
 import {
   type AppRun,
   appFileText,
@@ -55,7 +48,6 @@ export async function makeApplication(): Promise<Tab | null> {
     title: t('Where does it run?'),
     options: computers.map((one) => {
       const name = one.current ? t('{device} (this device)', { device: one.name }) : one.name
-      // A Mac has no place of an application's own yet (step 8): said here, not after.
       const label =
         one.platform === 'macos'
           ? t('{device}: cannot run applications yet', { device: name })
@@ -86,8 +78,6 @@ export async function makeApplication(): Promise<Tab | null> {
     if (app) run = { kind: 'installed', id: app.id, name: app.name }
   }
   if (!run) {
-    // No list from that computer: it has not hosted since it was updated, or the account
-    // does not keep one yet. Said, rather than a path asked for with no word why.
     const device = computers.find((one) => one.id === host)?.name ?? ''
     const line = await prompt.ask({
       title:
@@ -112,12 +102,8 @@ export async function makeApplication(): Promise<Tab | null> {
   return tab
 }
 
-/** The chooser's row for a program by its path, which no application id can be. */
 const ANOTHER = '\u0000another'
 
-/** What a computer has installed: this one's from the crate, another's from the
- *  catalogue its host wrote. Nothing, where that computer has not written one yet or the
- *  account does not know the route, and then the chooser asks for a path. */
 async function installedOn(host: string, here: boolean, token: string): Promise<Installed[]> {
   if (here) {
     const { invoke, isDesktop } = await import('../tauri')

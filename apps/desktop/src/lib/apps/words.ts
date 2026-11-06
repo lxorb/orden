@@ -1,6 +1,3 @@
-/** What an application's program line says (docs/apps.md): the program and its
- *  arguments, split as a shell splits them - on spaces, with quotes keeping a space in
- *  one, and a backslash keeping the next character as it is - and never run by a shell. */
 export function programOf(line: string): { path: string; args: string[] } | null {
   const words: string[] = []
   let word = ''
@@ -35,7 +32,6 @@ export function programOf(line: string): { path: string; args: string[] } | null
   return path ? { path, args } : null
 }
 
-/** The devices an application may run on: a computer, never a phone or a page. */
 export function mayHost(platform: string): boolean {
   return platform === 'linux' || platform === 'windows' || platform === 'macos'
 }

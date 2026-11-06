@@ -1,9 +1,5 @@
 import { expect, test, vi } from 'vitest'
 
-/** Dictation turned on before the activity has said its word (B456). The activity
- *  will not turn the microphone on for a call with no word, so the row goes back to
- *  "dictate" rather than saying it listens to nothing. */
-
 const listen = vi.fn(() => true)
 const held = { on: 0, off: 0 }
 

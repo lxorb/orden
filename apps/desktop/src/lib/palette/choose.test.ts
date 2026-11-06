@@ -4,7 +4,6 @@ import { choose, type Hands } from './choose'
 import type { Row } from './rows'
 import { command, file, ROOT, setting, tab } from './world.fixture'
 
-/** A stand-in for the app that writes down what it was asked to do. */
 function hands(): { asked: string[]; hands: Hands } {
   const asked: string[] = []
   const say =
@@ -35,7 +34,6 @@ function hands(): { asked: string[]; hands: Hands } {
   }
 }
 
-/** A keystroke, as the palette hands one on. */
 const key = (held: { ctrl?: boolean; shift?: boolean; alt?: boolean } = {}) => ({
   ctrlKey: held.ctrl ?? false,
   metaKey: false,

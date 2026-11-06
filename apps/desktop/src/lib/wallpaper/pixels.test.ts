@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { blurred, boxesFor, fitted, LARGEST, measured, sharpBelow, sideFor, toned } from './pixels'
 
-/** A picture `width` by `height`, every pixel what `paint` says, opaque. */
 function picture(
   width: number,
   height: number,
@@ -44,7 +43,6 @@ describe('the blur', () => {
   test('is three boxes that add up to the Gaussian asked for', () => {
     for (const sigma of [0.8, 2, 5.5, 12]) {
       const boxes = boxesFor(sigma)
-      // A box of width w has variance (w² - 1) / 12; three in a row add theirs.
       const variance = boxes.reduce((sum, width) => sum + (width * width - 1) / 12, 0)
       expect(Math.sqrt(variance), String(sigma)).toBeCloseTo(sigma, 0)
       for (const width of boxes) expect(width % 2).toBe(1)
@@ -72,7 +70,6 @@ describe('the blur', () => {
     expect(at(out, size, 15, 13)[0]).toBe(at(out, size, 15, 17)[0])
     let light = 0
     for (let index = 0; index < out.length; index += 4) light += out[index]!
-    // Rounded to a byte at each of six passes, so near rather than exact.
     expect(Math.abs(light - 255)).toBeLessThan(60)
   })
 

@@ -2,13 +2,6 @@ import { describe, expect, test } from 'vitest'
 import type { Entry } from '../workspace.svelte'
 import { todayRows, widgetRows } from './widgets.svelte'
 
-/** Which notes the home screen lists.
- *
- *  A widget is drawn by the launcher out of what the page last handed over, so
- *  this is the whole of the decision and there is no home screen in it: the notes
- *  kept open first, then the rest by when they were last written in, five at most
- *  because five is how many rows the layout has. */
-
 function note(name: string, modified: number, path = `/Notes/${name}`): Entry {
   return { name, path, is_dir: false, modified, created: 0, children: [] }
 }
@@ -54,7 +47,6 @@ describe('the rows', () => {
   })
 
   test('are named the way every other list names a note', () => {
-    // The extension is the file's, not the document's; see note-name.ts.
     expect(widgetRows([note('Read me.markdown', 1)], [])[0]?.name).toBe('Read me')
   })
 
@@ -86,7 +78,6 @@ describe('today', () => {
       space: 'Notes',
       path: '/Notes/Work/Plan.md',
     })
-    // A space this phone does not have opens nothing.
     expect(rows[0]?.path).toBe('')
   })
 

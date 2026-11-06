@@ -1,7 +1,3 @@
-/** A row of the question brought to the front in this window: a terminal's tab, in
- *  whichever space it is (see `reveal` in workspace/sets.svelte.ts), or the AI panel on
- *  the thread. */
-
 import { workspace } from '../workspace.svelte'
 import type { Row } from './rows'
 

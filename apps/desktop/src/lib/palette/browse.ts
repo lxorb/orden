@@ -1,12 +1,7 @@
-/** The palette with nothing typed, as a menu to browse (#304): a few of what was used
- *  lately, then what the note in front offers, how it is shown and what can be made,
- *  each group under its name. The rows are the palette's own commands, picked by id. */
-
 import type { Command } from '../commands'
 import { t } from '../i18n.svelte'
 import type { Row } from './rows'
 
-/** How many of what was used lately come before the groups. */
 export const RECENT = 8
 
 const GROUPS: readonly { title: () => string; ids: readonly string[] }[] = [
@@ -22,16 +17,12 @@ const GROUPS: readonly { title: () => string; ids: readonly string[] }[] = [
     title: () => t('Create'),
     ids: ['new', 'new-canvas', 'new-pages', 'new-from-template', 'new-terminal'],
   },
-  // Send feedback, there the moment the palette opens on every platform rather than a
-  // button in the sidebar's foot (#1049); last, since it is for when something went
-  // wrong. See FeedbackSheet.svelte.
   {
     title: () => t('Help'),
     ids: ['feedback'],
   },
 ]
 
-/** The rows, and the name over the group that starts at each place in them. */
 export function browse(
   recent: readonly Row[],
   commands: readonly Command[],

@@ -1,8 +1,3 @@
-/** An application's socket (docs/apps.md): the account's `AppRelay` for it, which keeps
- *  the online terminal's lock between the reader's devices and passes signalling to the
- *  device it runs on. Everything a socket does besides its frames is `Channel`'s, the
- *  online terminal's link, so it comes back, beats and is looked at the same way. */
-
 import {
   appSocketPath,
   type RelayToViewer,
@@ -28,7 +23,6 @@ export class AppLink extends Channel<RelayToViewer, ViewerFrame> {
     return appSocketPath(app)
   }
 
-  /** That it takes part in the lock, and the tab's view the host is made to fit. */
   protected helloFrame(): ViewerFrame {
     return { t: 'hello', hold: true, view: this.view }
   }
@@ -41,7 +35,6 @@ export class AppLink extends Channel<RelayToViewer, ViewerFrame> {
     return frame.t === 'refused' && frame.error === 'gone'
   }
 
-  /** The tab's view, said now and with every hello after. */
   resize(view: View): void {
     const was = this.view
     if (was.width === view.width && was.height === view.height && was.dpr === view.dpr) {

@@ -1,19 +1,4 @@
 <script lang="ts">
-  /** Another machine, in the middle of the window: Remote, from Ctrl+T or the plus.
-   *
-   *  Built as the space switcher is (SpacePicker.svelte), so a hand that knows one knows
-   *  the other: every host a digit away, its number at the corner of its mark once a
-   *  digit is typed or while Alt is held, a digit goes at once where only one can be meant,
-   *  letters find a host by its name, its other names or its address and wait for
-   *  Enter, Backspace takes one back, the arrows walk, Escape and the scrim put it away.
-   *  No heading and no field. The pinned hosts come first, then the ones connected to
-   *  lately, then the rest under their groups' names; a line between, and when each was
-   *  last connected to at a row's end, quietly. See hosts.ts for the order.
-   *
-   *  An address typed that no host has - `emil@10.0.0.5`, `box:2222` - is a row of its
-   *  own, and choosing it keeps it as a host made in Orden. With no hosts at all, the one
-   *  row is Add host, which is Settings, Remote. A right click on a host pins it or goes
-   *  to Settings. */
   import { cubicOut } from 'svelte/easing'
   import { fade, scale } from 'svelte/transition'
   import { tick } from 'svelte'
@@ -49,8 +34,6 @@
 
   const placed = $derived(pickerOrder(remote.hosts, remote.kept))
 
-  /** What is typed into it, new each time it opens. An address is typing the list
-   *  takes even where no host has it; a number never is one, since a digit picks. */
   const typing = $derived(
     hostPicker.open
       ? new ListTyping(
@@ -76,9 +59,6 @@
     }),
   )
 
-  /** An address typed that is no host's yet: the row that keeps it and connects. Only
-   *  where nothing else answers or it plainly is one, so a few letters of a host's name
-   *  are not offered as an address of their own. */
   const offer = $derived.by(() => {
     if (!typed || isNumber(typed)) return null
     if (shown.length && !plainlyDestination(typed)) return null
@@ -90,12 +70,9 @@
 
   let box = $state<HTMLElement>()
 
-  /** Each host's button, by its place in the order. */
   const buttons = $state<Record<number, HTMLButtonElement | null>>({})
   let offerButton = $state<HTMLButtonElement | null>(null)
 
-  // The keyboard stands on the row that is meant: the first as it opens, the number or
-  // the best of the names as anything is typed, the address where nothing else is.
   $effect(() => {
     const best = typing?.reading.best ?? -1
     const first = shown[0]?.at
@@ -112,13 +89,11 @@
     new Intl.RelativeTimeFormat(i18n.language, { style: 'narrow', numeric: 'auto' }),
   )
 
-  /** When it was last connected to, said as briefly as a language says it. */
   function ago(at: number): string {
     const step = relativeStep(Date.now() - at)
     return relative.format(step.value, step.unit)
   }
 
-  /** What a host offers about itself: a pin, and Settings. */
   function about(event: MouseEvent, host: Host) {
     event.preventDefault()
     menu.show(event, [
@@ -203,9 +178,6 @@
 {/if}
 
 <style>
-  /* SpacePicker's own shape: a sheet wide, in the middle, one height while it is up so
-     the rows a name leaves out never move the edge - held by `--rows`, and by the group
-     names and the lines between, which a name typed leaves out too. */
   .picker {
     --screen-width: var(--screen-sheet);
     --screen-height: calc(
@@ -224,14 +196,12 @@
     font-weight: var(--weight-strong);
   }
 
-  /* Where it is, after the name and quieter: what a host is to `ssh`. */
   .detail {
     margin-inline-start: var(--space-2);
     color: var(--muted);
     font-size: var(--text-xs);
   }
 
-  /* A group's name, over its hosts: a heading in a list, as the outline draws one. */
   .head {
     margin: var(--space-2) 0 0;
     padding: 0 var(--row-pad);

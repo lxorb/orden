@@ -1,25 +1,9 @@
-/** The file commands for a space Orden keeps itself, answered on a desktop (#1068, step
- *  4c): by the browser build's own commands over that space's folder mounted as rows
- *  (web/commands.ts, internal/rows.ts), so the desktop and the browser are one
- *  implementation.
- *
- *  The browser's commands speak its own paths, `/` between folders and a space a folder
- *  at the top (`/<name>`). So every path a call names is turned into that space's
- *  address there on the way in, and every path an answer names back into the root the
- *  app holds on the way out. A move or a copy from a kept space into another is rows
- *  going from one store into another; between a kept space and a folder it is made here,
- *  since neither side could make it alone and the crate making it would write a file
- *  where nothing of the space is on the disk (`across`). Recently deleted holds both
- *  sides' trash, so its four commands are answered by both, and the space commands list
- *  and make the spaces kept here beside the crate's folders (internal/spaces.ts). */
-
 import { toBase64 } from '../bytes'
 import { joinPath } from '../tauri'
 import { normalise } from '../web/paths'
 import type { Trashed } from '../web/store'
 import { type Mounted, mountOf, mounts as mounted, PATH_ARGS } from './roots'
 
-/** The crate's answer, through the one door to it. */
 async function crate<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   const { invoke } = await import('../native')
   return invoke<T>(command, args)
@@ -30,7 +14,6 @@ async function web<T>(command: string, args?: Record<string, unknown>): Promise<
   return webInvoke<T>(command, args)
 }
 
-/** A path at the browser's address of a kept space, back at its root here. */
 function outOf(mount: Mounted, path: string): string {
   const at = normalise(path)
   if (at === mount.web) return mount.root
@@ -63,7 +46,6 @@ function treeOut(mount: Mounted, entry: Entry, top: boolean): Entry {
   }
 }
 
-/** A trashed thing of a kept space, where it came from said as the app says it. */
 function trashedOut(entry: Trashed, mounts: readonly Mounted[]): Trashed {
   for (const mount of mounts) {
     const from = outOf(mount, entry.from)
@@ -72,7 +54,6 @@ function trashedOut(entry: Trashed, mounts: readonly Mounted[]): Trashed {
   return entry
 }
 
-/** The trash commands, which reach both: the crate's trash, and every kept space's. */
 async function trash<T>(
   command: string,
   args: Record<string, unknown>,
@@ -100,10 +81,6 @@ async function trash<T>(
   return answer as T
 }
 
-/** One call that names a kept space, or Recently deleted. */
-/** What is at `path` and under it, by where under it (`''` itself), with whatever goes
- *  with a file wherever it goes: a PDF's highlights, a page note's paper and the paper's
- *  own. Read off the kept space's index, or the crate's tree. */
 async function what(path: string): Promise<{ rest: string; dir: boolean }[]> {
   const kept = mountOf(path)
   const { SIDECAR } = await import('../pdf/highlights')
@@ -152,18 +129,12 @@ interface Listed {
   children?: Listed[]
 }
 
-/** A path in either kind of space, as a call names it there: the browser's address of
- *  a kept space's path, or the path itself for the crate. */
 function addressed(path: string): { kept: boolean; at: string } {
   const found = mountOf(path)
   if (!found) return { kept: false, at: path }
   return { kept: true, at: found.inside ? `${found.mount.web}/${found.inside}` : found.mount.web }
 }
 
-/** A move or a copy between a kept space and a folder, which neither can make alone:
- *  every file's bytes written where it goes, its folders first, and only then, for a
- *  move, what was where it came from taken away - so a move cut short leaves two
- *  copies, never none. */
 async function across<T>(command: string, args: Record<string, unknown>): Promise<T> {
   if (command !== 'rename_note' && command !== 'copy_path') {
     throw new Error(`${command} cannot reach a space Orden keeps and a folder at once`)
@@ -176,7 +147,6 @@ async function across<T>(command: string, args: Record<string, unknown>): Promis
 
   const source = addressed(from)
   const target = addressed(to)
-  // Under it, or beside it: `/x/y` is inside, `.highlights.json` goes with it.
   const join = (base: string, rest: string, kept: boolean) =>
     !rest ? base : kept || !rest.startsWith('/') ? `${base}${rest}` : joinPath(base, rest.slice(1))
   for (const one of going) {
@@ -198,15 +168,12 @@ async function across<T>(command: string, args: Record<string, unknown>): Promis
     return undefined as T
   }
   await remove('delete_note', source.at)
-  // What went with it, where taking the file away did not take it too.
   for (const one of going.slice(1)) {
     await remove('delete_note', join(source.at, one.rest, source.kept)).catch(() => undefined)
   }
   return undefined as T
 }
 
-/** The bytes of a kept space's file, read off its folder: what `read_file` has no
- *  command of the browser's for. */
 async function keptBytes(path: string, rest: string): Promise<Uint8Array> {
   const found = mountOf(path)
   const bytes = found ? await found.mount.folder.read(`${found.inside}${rest}`) : null
@@ -214,12 +181,8 @@ async function keptBytes(path: string, rest: string): Promise<Uint8Array> {
   return bytes
 }
 
-/** The space commands, which a desktop answers with the spaces it keeps itself beside
- *  the crate's folders. */
 const SPACE_COMMANDS = new Set(['list_spaces', 'create_space', 'rename_space', 'delete_space'])
 
-/** A space command, where a kept space has a part in it: `done` with the answer, or
- *  not, for the crate to answer alone. */
 async function spaces(
   command: string,
   args: Record<string, unknown>,
@@ -258,12 +221,7 @@ export async function internalInvoke<T>(
   args: Record<string, unknown> = {},
   mounts: readonly Mounted[] = mounted(),
 ): Promise<T> {
-  // A shell in a kept space starts where a shell starts with no folder: there is none
-  // on the disk to stand in, and its files are not files a shell could read.
   if (command === 'pty_spawn') return crate<T>(command, { ...args, folder: null })
-  // The Mac's Shortcuts add a task from the crate alone, straight into the file the
-  // inbox is; a kept space's inbox is no file there, so the crate is not told of it and
-  // keeps the one it had.
   if (command === 'remember_inbox') return undefined as T
   if (command === 'same_pdf') return null as T
   if (
@@ -289,8 +247,6 @@ export async function internalInvoke<T>(
     named.add(found?.mount ?? null)
     if (found) inWeb[key] = found.inside ? `${found.mount.web}/${found.inside}` : found.mount.web
   }
-  // From one space into another: two kept ones are two stores of rows the browser's
-  // commands move between themselves; a kept one and a folder are this module's.
   if (named.size > 1) {
     if (named.has(null)) return across<T>(command, args)
     return web<T>(command, inWeb)
@@ -301,7 +257,6 @@ export async function internalInvoke<T>(
   const at = (typeof pathArg === 'string' ? mountOf(pathArg)?.inside : undefined) ?? ''
 
   switch (command) {
-    // The crate's own shapes, which the browser's commands do not have.
     case 'read_file': {
       const bytes = await mount.folder.read(at)
       if (!bytes) throw new Error(`no file at ${String(args.path)}`)
@@ -312,7 +267,6 @@ export async function internalInvoke<T>(
       return (entry?.key ? { modified: entry.modified, len: entry.size } : null) as T
     }
     case 'read_tree': {
-      // A folder's tree, as the crate refuses one of what is not a folder.
       const entry = await mount.folder.at(at)
       if (at && (!entry || entry.key)) throw new Error(`${String(args.root)} is not a folder`)
       const tree = await web<Entry>(command, inWeb)

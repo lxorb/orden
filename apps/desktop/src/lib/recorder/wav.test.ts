@@ -1,11 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { mono, pieces, RATE, resampled, wavOf } from './wav'
 
-/** What the Worker's own reader looks for in a WAV, read back out of one this wrote.
- *
- *  It matters field by field: the route works out how long an utterance is from the
- *  rate at byte 28, so a header written wrongly is a recording refused for a reason
- *  that has nothing to do with the recording. See services/sync/src/ask/heard.ts. */
 function header(file: Uint8Array) {
   const view = new DataView(file.buffer, file.byteOffset, file.byteLength)
   const text = (at: number, length: number) =>
@@ -36,7 +31,6 @@ describe('a WAV', () => {
       size: 36 + 32,
       wave: 'WAVE',
       fmt: 'fmt ',
-      // One is PCM, and one channel of sixteen bits at 16 kHz is 32 kB a second.
       format: 1,
       channels: 1,
       rate: 16_000,
@@ -53,8 +47,6 @@ describe('a WAV', () => {
     expect(wavOf(new Float32Array(0), 16_000).length).toBe(44)
   })
 
-  /** A sample over full scale that wrapped would be a click in the middle of a word,
-   *  which is the one way of being wrong that a model would hear. */
   test('clips rather than wraps', () => {
     const file = wavOf(new Float32Array([0, 1, -1, 4, -4]), 16_000)
     const view = new DataView(file.buffer)
@@ -71,8 +63,6 @@ describe('mixing down', () => {
     expect(mono([one])).toBe(one)
   })
 
-  /** A laptop with two microphones puts the voice in both; taking the left one throws
-   *  half the sound away for nothing. */
   test('averages the channels there are', () => {
     const heard = mono([new Float32Array([1, 0]), new Float32Array([0, 1])])
     expect([...heard]).toEqual([0.5, 0.5])
@@ -94,9 +84,6 @@ describe('resampling', () => {
     expect(third.length).toBe(16_000)
   })
 
-  /** Linear interpolation between the samples either side, which on a ramp is the
-   *  ramp: what comes out of a half-rate pass over 0..3 is 0 and 3 at the ends and the
-   *  line between them in the middle. */
   test('reads between the samples rather than dropping every other one', () => {
     const halved = resampled(new Float32Array([0, 1, 2, 3]), 4, 2)
     expect([...halved]).toEqual([0, 3])
@@ -116,8 +103,6 @@ describe('cutting a recording into pieces', () => {
     expect(pieces(new Float32Array(0), RATE, 20)).toEqual([])
   })
 
-  /** The last piece is whatever is left, however short: sound dropped because it did
-   *  not fill a piece is a sentence that ends mid word. */
   test('cuts at the length asked for and keeps the tail', () => {
     const parts = pieces(new Float32Array(RATE * 50), RATE, 20)
 

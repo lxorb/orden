@@ -1,9 +1,5 @@
 import { afterEach, expect, test, vi } from 'vitest'
 
-/** The presses on a reminder are asked for with this launch's word: the bridge is in
- *  every frame of the webview, and a framed page that could take them would swallow
- *  a Done the reader pressed. See `frameWord` in mobile/bridge.ts. */
-
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
   isDesktop: false,

@@ -1,15 +1,3 @@
-/** Two recognisers behind one row, and everything either of them needs.
- *
- *  Fetched by the first press rather than carried: a row that says "Dictate" has to
- *  know whether anything can hear, and that is a property read - which is all that is
- *  left in dictation.ts. What is here is the turn-taking, the words on their way into
- *  the note, and the line across the top that says it is listening.
- *
- *  On Android the phone's own `SpeechRecognizer`, through the bridge, because the web's
- *  speech API is Chrome's and not the webview's; everywhere else the web's own, which
- *  is the same feature where it exists. Neither is Orden's: no sound is recorded, nothing
- *  is uploaded, and what comes back is words. */
-
 import type { EditorView } from '@orden/editor'
 import { busy } from '../busy.svelte'
 import { t } from '../i18n.svelte'
@@ -20,9 +8,6 @@ import { workspace } from '../workspace.svelte'
 import { answer, frameWord, method } from './bridge'
 import { spaced, speechRecogniser } from './dictation'
 
-/** One thing a recogniser heard, as the web hands it over. Written out rather
- *  than taken from the DOM library, which has no types for the webkit spelling
- *  half the browsers still answer to. */
 interface Alternative {
   transcript: string
 }
@@ -54,14 +39,10 @@ let listening = false
 let release: (() => void) | null = null
 let browser: Recogniser | null = null
 
-/** Whether it is listening now, which is what the row says. Read through the door,
- *  which answers false while this module has not been fetched - and nothing can be
- *  listening before something pressed the row. */
 export function dictating(): boolean {
   return listening
 }
 
-/** The row: on, or off again. */
 export function toggle(view: EditorView): void {
   if (listening) stop()
   else start(view)
@@ -75,18 +56,8 @@ function start(view: EditorView): void {
     listening = true
     hold()
     answer('__nibHeard', (json: string) => said(json, view))
-    // The word the activity says to the page and to nothing else: a microphone is
-    // not a thing an embedded page turns on. Asked for once and answered within a
-    // frame, so what waits on it is the request and never the row; see
-    // `frameWord`. And checked again on the way out, because a row pressed twice
-    // in that frame is off rather than on.
-    //
-    // What it answers is false where the microphone has still to be asked for; the
-    // words arrive through `__nibHeard` either way.
     void frameWord().then((word) => {
       if (!listening) return
-      // No word is a microphone the activity will not turn on, so the row says
-      // "dictate" again rather than "listening" to nothing.
       if (word) phone(word, true)
       else stop()
     })
@@ -98,8 +69,6 @@ function start(view: EditorView): void {
 
   const one = new makes()
   one.continuous = true
-  // Only what it is sure of. A half-heard word written into the note and taken
-  // back out again is the caret jumping about while somebody is talking.
   one.interimResults = false
   one.lang = document.documentElement.lang || 'en'
 
@@ -113,7 +82,6 @@ function start(view: EditorView): void {
     }
   }
 
-  // Both ends are the same end: whatever it was, nothing is listening now.
   one.onerror = () => stop()
   one.onend = () => {
     if (listening) stop()
@@ -156,7 +124,6 @@ function stop(): void {
   letGo()
 }
 
-/** What the activity heard, or what it is doing about it. */
 function said(json: string, view: EditorView): void {
   let parsed: unknown
   try {
@@ -170,13 +137,9 @@ function said(json: string, view: EditorView): void {
   const words = typeof held.text === 'string' ? held.text : ''
 
   if (words.trim()) put(view, words)
-  // Refused, or a recogniser that gave up: the row goes back to saying "dictate".
   if (held.state === 'off' || held.state === 'refused') stop()
 }
 
-/** One heard sentence, into the note. A space in front where the words would
- *  otherwise be glued onto the last one, which is what a dictated sentence after
- *  a dictated sentence would be. */
 function put(view: EditorView, words: string): void {
   const one = views.of(workspace.panes.focusedId) ?? view
   if (one.state.readOnly) return
@@ -184,15 +147,12 @@ function put(view: EditorView, words: string): void {
   writeAtCaret(one, spaced(before(one), words.trim()))
 }
 
-/** The character in front of the caret, or the empty string at the very start. */
 function before(view: EditorView): string {
   const at = view.state.selection.main.from
 
   return at > 0 ? view.state.doc.sliceString(at - 1, at) : ''
 }
 
-/** The line across the top, sweeping while it listens. Held open by a promise
- *  that resolves when dictation stops, because that is what `busy` counts. */
 function hold(): void {
   busy.start(
     t('Listening'),

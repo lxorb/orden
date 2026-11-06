@@ -14,16 +14,12 @@ import {
   type Turn,
 } from './gesture'
 
-/** A window of 800 by 600: the fingers travel 180 pixels past the start on a touchpad,
- *  150 on a screen. */
 const ROOM = { width: 800, height: 600 }
 const PAD = distance('touchpad', ROOM.width, ROOM.height)
 
 const EDGE: Record<Side, boolean> = { left: false, right: false }
 const BOTH: Record<Side, boolean> = { left: true, right: true }
 
-/** A stream of steps 8 ms apart, from `at`. Each step is `dx` sideways and `dy` down;
- *  the content scrolls nowhere and the history goes both ways unless said. */
 function stream(
   swipe: Swipe,
   steps: readonly (readonly [number, number])[],
@@ -40,7 +36,6 @@ function stream(
 }
 
 const swipe = (source: Source = 'touchpad') => new Swipe(source, () => ROOM)
-/** A precision touchpad's, which says when the fingers lift. */
 const told = () => new Swipe('touchpad', () => ROOM, true)
 const times = (count: number, step: readonly [number, number]) =>
   Array.from({ length: count }, () => step)
@@ -54,7 +49,6 @@ describe('the start', () => {
     expect(stream(one, [[-10, 0]], {}, 2000).shown.phase).toBe('tracking')
   })
 
-  /** #1050: the arrow is glued to the fingers from their first step, not from the start. */
   test('but the arrow is out from the first step that leans sideways', () => {
     const one = swipe()
     expect(stream(one, [[-3, 0]]).shown).toMatchObject({ phase: 'gathering', travel: 3 })
@@ -81,7 +75,6 @@ describe('the start', () => {
 
   test('sideways has to beat down by the ratio', () => {
     const one = swipe()
-    // 70 across against 35 down: past the start, but only twice as far.
     expect(stream(one, times(7, [-10, 5])).shown.phase).toBe('gathering')
     expect(RATIO).toBe(2.5)
   })
@@ -100,11 +93,9 @@ describe('the content first', () => {
     expect(
       stream(one, times(3, [-10, 0]), { scrolls: { left: true, right: false } }).shown.phase,
     ).toBe('content')
-    // The carousel has run out, and the same stream goes on: still the carousel's.
     expect(stream(one, times(40, [-20, 0]), {}, 2000).shown.phase).toBe('content')
     expect(one.lift(3000).phase).toBe('idle')
 
-    // A new stream at the edge is a swipe.
     expect(stream(one, times(10, [-10, 0]), {}, 4000).shown.phase).toBe('tracking')
   })
 
@@ -141,7 +132,6 @@ describe('letting go', () => {
 
   test('a fling towards the arrow goes whatever the distance', () => {
     const one = swipe('touch')
-    // 9 pixels in 8 ms is past 1.1 a millisecond.
     const { shown, at } = stream(one, times(8, [-9, 0]))
     expect(shown.progress).toBeLessThan(1)
     expect(9 / 8).toBeGreaterThan(FLING)
@@ -164,8 +154,6 @@ describe('letting go', () => {
 })
 
 describe('the touchpad coasting', () => {
-  /** A hand moving at 2 pixels a millisecond, then let go: steps that keep 85 per cent
-   *  of the one before. */
   const flick = (hand: number): (readonly [number, number])[] => [
     ...times(hand, [-16, 0] as const),
     ...Array.from({ length: 6 }, (_, at): [number, number] => [-16 * 0.85 ** (at + 1), 0]),
@@ -175,7 +163,6 @@ describe('the touchpad coasting', () => {
     const one = swipe()
     const { shown, at } = stream(one, flick(8))
     expect(shown.phase).toBe('went')
-    // The rest of the coast changes nothing, and the lift is not a second decision.
     expect(stream(one, times(10, [-3, 0]), {}, at).shown.phase).toBe('went')
     expect(one.lift(at + 200).phase).toBe('idle')
   })
@@ -203,7 +190,6 @@ describe('the touchpad coasting', () => {
     expect(coasting(steps([0.2, 0.17, 0.145, 0.123]))).toBeNull()
     expect(coasting(steps([2, 1.7, 1.45]))).toBeNull()
 
-    // Keeping three fifths each time: half again as much as the newest step is left.
     const said = coasting(steps([2, 1.2, 0.72, 0.432]))
     expect(said?.from).toBe(2)
     expect(said?.left).toBeCloseTo(0.432 * 8 * 1.5)
@@ -218,12 +204,10 @@ test('the distance is Chrome s share of the longer side, less the start, never t
 })
 
 test('a wide window never asks for more of the pad than the most', () => {
-  // Chrome's share of a 1920 window would be 516 pixels past the start.
   expect(distance('touchpad', 1920, 1080)).toBe(MOST)
   expect(distance('touch', 2560, 1440)).toBe(MOST)
   expect(MOST).toBeLessThan(1920 * 0.3 - START.touchpad)
 
-  // And a stream that has gone that far on one goes.
   const wide = new Swipe('touchpad', () => ({ width: 1920, height: 1080 }))
   const { at } = stream(wide, times(39, [-10, 0]))
   expect(wide.shown.progress).toBeGreaterThanOrEqual(1)
@@ -250,7 +234,6 @@ describe('a touchpad that says when the fingers lift', () => {
     const { shown, at } = stream(one, times(40, [-10, 0]))
     expect(shown.phase).toBe('tracking')
     expect(shown.progress).toBeGreaterThanOrEqual(1)
-    // Nothing for a long while is still nothing: only the lift decides.
     expect(one.shown.phase).toBe('tracking')
     expect(one.lift(at + 5000).phase).toBe('went')
   })
@@ -261,7 +244,6 @@ describe('a touchpad that says when the fingers lift', () => {
       ...times(14, [-16, 0] as const),
       ...Array.from({ length: 8 }, (_, at): [number, number] => [-16 * 0.85 ** (at + 1), 0]),
     ]
-    // Untold, the same steps are a coast, decided as it starts.
     expect(stream(swipe(), slowing).shown.phase).toBe('went')
     const { shown, at } = stream(one, slowing)
     expect(shown.phase).toBe('tracking')
@@ -280,7 +262,6 @@ describe('a touchpad that says when the fingers lift', () => {
   test('flicked back the way it came at the lift stays, however far it had come', () => {
     const one = told()
     stream(one, times(40, [-10, 0]))
-    // Back at 1.25 pixels a millisecond, still past the distance.
     const { at, shown } = stream(one, times(6, [10, 0]), {}, 2000)
     expect(shown.progress).toBeGreaterThanOrEqual(1)
     expect(10 / 8).toBeGreaterThan(BACKING)
@@ -305,12 +286,10 @@ describe('a touchpad that says when the fingers lift', () => {
     const one = told()
     expect(stream(one, times(10, [-10, 0])).shown.travel).toBe(100)
     expect(stream(one, times(5, [4, 0]), {}, 2000).shown.travel).toBe(80)
-    // Back past where the swipe began, to the side and no further.
     expect(stream(one, times(30, [4, 0]), {}, 3000).shown.travel).toBe(0)
     expect(stream(one, times(5, [-4, 0]), {}, 4000).shown.travel).toBe(20)
   })
 
-  /** Letting go goes exactly where the arrow says it does: full at one. */
   test('is full exactly where letting go goes', () => {
     const one = told()
     const past = distance('touchpad', 800, 600) + START.touchpad
