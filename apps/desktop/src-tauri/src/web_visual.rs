@@ -21,7 +21,8 @@
 //! is that window's region, which now only says where the page takes input. The keyboard,
 //! the IME and the page's own popups are the engine's, as they are for a windowed page.
 //!
-//! Under `NIB_PAGES_UNDER=1` for now; without it every page is windowed, as before.
+//! Every page of a tab is drawn so, unless `NIB_PAGES_WINDOWED=1`: the windowed page of
+//! before, kept for one release as the way back.
 
 use std::cell::RefCell;
 use std::collections::{BTreeSet, HashMap};
@@ -64,10 +65,10 @@ use windows_com::Win32::UI::WindowsAndMessaging::{
     WM_XBUTTONUP,
 };
 
-/// The switch, read once.
+/// Whether pages are drawn under the app this run, read once.
 pub(crate) fn pages_drawn_under() -> bool {
     static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-    *ON.get_or_init(|| std::env::var_os("NIB_PAGES_UNDER").is_some_and(|said| said == "1"))
+    *ON.get_or_init(|| std::env::var_os("NIB_PAGES_WINDOWED").is_none_or(|said| said != "1"))
 }
 
 /// Which webviews are drawn under the app: a tab's page, and nothing else - an extension's

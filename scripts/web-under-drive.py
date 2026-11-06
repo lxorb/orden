@@ -1,8 +1,7 @@
 """A web tab's page drawn under the app's own page on WebView2, driven by a real hand (#1137).
 
 A probe build is started on the runner's desktop - in view, which no probe on somebody's
-machine ever is - with `NIB_PAGES_UNDER=1`, a page of one colour is opened in a web tab,
-and everything a page drawn as a DirectComposition visual has to get right is done to it
+machine ever is - a page of one colour is opened in a web tab, and everything a page drawn as a DirectComposition visual has to get right is done to it
 with the system's own input (`SendInput`, `InjectTouchInput`), not the page's devtools:
 
     drawn       the page's colour in its hole; a layer of the app's drawn over it there
@@ -21,7 +20,7 @@ What the page heard it says in its title, which the window reads as any page's.
 
     python scripts/web-under-drive.py --exe <probe nib.exe> --identifier <probe id> --out <folder>
 
-`--windowed` starts the same build without `NIB_PAGES_UNDER=1` and only reads the page's
+`--windowed` starts the same build with `NIB_PAGES_WINDOWED=1` and only reads the page's
 tree, the same question asked of a windowed page.
 """
 
@@ -432,7 +431,7 @@ def main() -> int:
     # Animations on, which a server's desktop has off.
     user32.SystemParametersInfoW(0x1043, 0, ctypes.c_void_p(1), 0x3)
 
-    env = {**os.environ, "NIB_SPACES_DIR": str(spaces), **({} if args.windowed else {"NIB_PAGES_UNDER": "1"})}
+    env = {**os.environ, "NIB_SPACES_DIR": str(spaces), **({"NIB_PAGES_WINDOWED": "1"} if args.windowed else {})}
     said = open(args.out / "app.log", "wb")
     process = subprocess.Popen([str(args.exe)], env=env, cwd=str(args.exe.parent), stdout=said, stderr=subprocess.STDOUT)
     wrong: list[str] = []
