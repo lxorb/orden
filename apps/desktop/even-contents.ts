@@ -717,10 +717,14 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  keys in the registry, which the plugin carries and never makes (workspace/undo.svelte.ts,
  *  shortcuts/registry.ts): the code to 6,046,900, measured 6,046,492, and the catalogues
  *  to 1,026,100, measured 1,025,652.
+ *
+ *  Raised on 2026-11-06 for #1165, what is protected and shut kept out of every preview, an
+ *  embed and a hover card saying so in the editor's own word: the code to 6,051,900,
+ *  measured 6,051,363, and the catalogues to 1,026,600, measured 1,026,230.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_046_900,
-  catalogues: 1_026_100,
+  code: 6_051_900,
+  catalogues: 1_026_600,
   styles: 293_500,
   fonts: 260_000,
   pages: 40_000,
