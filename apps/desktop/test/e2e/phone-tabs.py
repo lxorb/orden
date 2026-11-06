@@ -97,6 +97,19 @@ def phone(browser: Browser, dark: bool) -> None:
     wait_for(page, "window.nibApp.workspace.active?.doc?.includes('bread')", "the line written")
     DRIVE.shot(page, f"{tag}note")
 
+    if page.locator("header .search").is_visible():
+        wrong("[phone] the note's bar still has the search glyph, which is a tab now")
+    page.locator("[data-phone-more]").tap()
+    page.locator('[role="menuitem"]:has-text("Outline")').wait_for(state="visible", timeout=5000)
+    page.wait_for_timeout(300)
+    DRIVE.shot(page, f"{tag}note-more")
+    page.locator('[role="menuitem"]:has-text("Outline")').tap()
+    wait_for(page, "window.nibApp.workspace.openOn('right') === 'outline'", "the outline")
+    page.wait_for_timeout(400)
+    DRIVE.shot(page, f"{tag}note-outline")
+    page.evaluate("() => window.nibApp.workspace.closeRight()")
+    page.wait_for_timeout(400)
+
     page.locator("[data-phone-back]").tap()
     wait_for(page, "window.nibApp.workspace.panel === 'tree'", "back on the notes")
     page.wait_for_timeout(400)

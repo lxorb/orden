@@ -38,6 +38,17 @@
 
   const BACK_MARK = 'M8.2 2.2 3.9 6.5l4.3 4.3'
 
+  const MORE_MARK = 'M3 6.5h.1M6.5 6.5h.1M10 6.5h.1'
+
+  const phone = $derived(viewport.device === 'phone' && !__EVEN_PLUGIN__)
+
+  function showMore(event: MouseEvent) {
+    const from = event.currentTarget as HTMLElement
+    void (__EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./phone/note-more')).then(
+      (one) => one.showNoteMore(from),
+    )
+  }
+
   $effect(() => {
     if (swiped && workspace.openOn('left')) {
       void import('./hints.svelte').then(({ hints }) => hints.dismiss('drawer'))
@@ -240,7 +251,7 @@
     : `max(0px, calc(${overPanes}px + var(--lights-end, 0px) - var(--card-inset)))`}
 >
   {#if viewport.touch}
-    {#if viewport.device === 'phone' && !listless && !__EVEN_PLUGIN__}
+    {#if phone && !listless}
       <button
         class="nib-glyph back"
         data-phone-back
@@ -264,8 +275,22 @@
     </h1>
 
     {@render edgeMark()}
-    {@render searchGlyph()}
-    {@render rightToggle()}
+    {#if phone}
+      {#if showing}
+        <button
+          class="nib-glyph more"
+          data-phone-more
+          aria-label={t('More')}
+          aria-haspopup="menu"
+          onclick={showMore}
+        >
+          <svg viewBox="0 0 13 13"><path d={MORE_MARK} /></svg>
+        </button>
+      {/if}
+    {:else}
+      {@render searchGlyph()}
+      {@render rightToggle()}
+    {/if}
     {@render windowButtons()}
   {:else}
     <div class="lead" bind:clientWidth={leadWide}>
@@ -461,6 +486,11 @@
     padding-top: var(--inset-top);
     padding-inline-end: var(--inset-end);
     padding-inline-start: calc(var(--inset-start) + (var(--row-height) - var(--icon-lg)) / 2);
+  }
+
+  .more svg {
+    stroke-width: 2;
+    stroke-linecap: round;
   }
 
   .back svg {

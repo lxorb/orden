@@ -185,9 +185,10 @@ def onPhone(browser) -> None:
     page.wait_for_timeout(500)
     say(f"the sides say: {page.evaluate(SIDES)}")
 
-    toggle = page.locator("button.toggle.right").first
-    say(f"the right side's button is there: {toggle.count() == 1}")
-    toggle.click(force=True)
+    more = page.locator("[data-phone-more]").first
+    say(f"the note's More button is there: {more.count() == 1}")
+    more.tap()
+    page.locator('[role="menuitem"]:has-text("Outline")').tap()
     page.wait_for_timeout(700)
     say(f"after pressing it: {page.evaluate(SIDES)}")
     say(f"and the drawer is over the note: {page.evaluate(DRAWER)}")
