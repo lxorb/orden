@@ -499,14 +499,17 @@ fn short_alias(name: &str) -> bool {
         && number.chars().all(|one| one.is_ascii_digit())
 }
 
+#[cfg(desktop)]
 pub fn spoken(path: &Path) -> bool {
     !path.components().any(|part| unspoken(NAMING, part))
 }
 
+#[cfg(desktop)]
 pub fn path_key(path: &Path) -> String {
     path_key_as(NAMING, path)
 }
 
+#[cfg(any(desktop, test))]
 fn path_key_as(naming: Naming, path: &Path) -> String {
     let path = folded(path);
     let last = path.components().count();
