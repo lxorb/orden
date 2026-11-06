@@ -54,9 +54,9 @@ use windows::Win32::System::Threading::{
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     GetTopWindow, GetWindow, GetWindowLongW, GetWindowRect, IsIconic, IsWindow, IsWindowVisible,
-    PostMessageW, SetWindowPos, ShowWindow, GWL_EXSTYLE, GWL_STYLE, GW_HWNDNEXT, GW_OWNER,
-    SWP_NOACTIVATE, SWP_NOSIZE, SWP_NOZORDER, SW_RESTORE, WM_CLOSE, WS_CAPTION, WS_EX_TOOLWINDOW,
-    WS_MAXIMIZE, WS_THICKFRAME,
+    PostMessageW, SetWindowPos, ShowWindowAsync, GWL_EXSTYLE, GWL_STYLE, GW_HWNDNEXT, GW_OWNER,
+    SWP_ASYNCWINDOWPOS, SWP_NOACTIVATE, SWP_NOSIZE, SWP_NOZORDER, SW_RESTORE, WM_CLOSE, WS_CAPTION,
+    WS_EX_TOOLWINDOW, WS_MAXIMIZE, WS_THICKFRAME,
 };
 
 const EVERYTHING: u32 = 0x1000_0000;
@@ -464,7 +464,7 @@ fn keep(desk: &Desk) {
                 match kind_of(style, extended, owned) {
                     Kind::Main => {
                         if style & WS_MAXIMIZE.0 != 0 {
-                            let _ = ShowWindow(window, SW_RESTORE);
+                            let _ = ShowWindowAsync(window, SW_RESTORE);
                         }
                         let _ = SetWindowPos(
                             window,
@@ -473,7 +473,7 @@ fn keep(desk: &Desk) {
                             0,
                             view.0,
                             view.1,
-                            SWP_NOZORDER | SWP_NOACTIVATE,
+                            SWP_NOZORDER | SWP_NOACTIVATE | SWP_ASYNCWINDOWPOS,
                         );
                     }
                     Kind::Dialog if new => {
@@ -486,7 +486,7 @@ fn keep(desk: &Desk) {
                                 y,
                                 0,
                                 0,
-                                SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE,
+                                SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_ASYNCWINDOWPOS,
                             );
                         }
                     }
