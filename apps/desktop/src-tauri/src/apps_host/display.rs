@@ -20,7 +20,9 @@ use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use x11rb::connection::{Connection as _, RequestConnection as _};
+use x11rb::connection::{Connection as _, RequestConnection};
+use x11rb::cookie::VoidCookie;
+use x11rb::errors::ReplyError;
 use x11rb::protocol::randr::{self, ConnectionExt as _};
 use x11rb::protocol::xproto::ConnectionExt as _;
 
@@ -284,20 +286,22 @@ fn resize(
             .mode
     };
     // Already the monitor's, or added now; an error here says it already was.
-    let _ = x.randr_add_output_mode(output, mode)?.check();
+    let _ = checked(x, x.randr_add_output_mode(output, mode)?);
 
     let now = x.get_geometry(root)?.reply()?;
     let (millis_wide, millis_high) = (millimetres(width, dpr), millimetres(height, dpr));
     let grown = (wide.max(now.width), high.max(now.height));
     if grown != (now.width, now.height) {
-        x.randr_set_screen_size(
-            root,
-            grown.0,
-            grown.1,
-            millimetres(u32::from(grown.0), dpr),
-            millimetres(u32::from(grown.1), dpr),
-        )?
-        .check()?;
+        checked(
+            x,
+            x.randr_set_screen_size(
+                root,
+                grown.0,
+                grown.1,
+                millimetres(u32::from(grown.0), dpr),
+                millimetres(u32::from(grown.1), dpr),
+            )?,
+        )?;
     }
     x.randr_set_crtc_config(
         crtc,
@@ -310,8 +314,10 @@ fn resize(
         &[output],
     )?
     .reply()?;
-    x.randr_set_screen_size(root, wide, high, millis_wide, millis_high)?
-        .check()?;
+    checked(
+        x,
+        x.randr_set_screen_size(root, wide, high, millis_wide, millis_high)?,
+    )?;
 
     // The modes of the sizes it had before, which nothing shows now. Xvfb's own, the
     // room's, is kept.
@@ -325,15 +331,73 @@ fn resize(
         if old.id == mode || (old.width, old.height) == made_at {
             continue;
         }
-        let _ = x.randr_delete_output_mode(output, old.id)?.check();
-        let _ = x.randr_destroy_mode(old.id)?.check();
+        let _ = checked(x, x.randr_delete_output_mode(output, old.id)?);
+        let _ = checked(x, x.randr_destroy_mode(old.id)?);
     }
     Ok(())
+}
+
+/// A request's error, or none, on a connection another thread reads events off, as the
+/// window manager's does. x11rb 0.13.2's `check()` waits for a packet later than the
+/// request and asks for one only while no reply is expected that late; an event the
+/// request itself caused, read first by the other thread, counts as that reply, so the
+/// check waited on a server with nothing more to say (issue 1160). A request with a
+/// reply right after it is that later packet.
+pub fn checked<C: RequestConnection>(x: &C, cookie: VoidCookie<'_, C>) -> Result<(), ReplyError> {
+    let after = x.get_input_focus()?;
+    let said = cookie.check();
+    drop(after);
+    said
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The window manager's loop reads the event a request makes before the request's
+    /// check is asked: the check still answers. CI installs Xvfb; elsewhere the test
+    /// says nothing without it.
+    #[test]
+    fn a_check_answers_though_the_requests_own_event_was_read_first() {
+        use x11rb::protocol::xproto::{AtomEnum, ChangeWindowAttributesAux, EventMask, PropMode};
+        use x11rb::protocol::Event;
+        use x11rb::wrapper::ConnectionExt as _;
+
+        super::super::in_time(|| {
+            if !available() {
+                assert!(
+                    std::env::var_os("CI").is_none(),
+                    "CI installs xvfb for this test"
+                );
+                return;
+            }
+            let display = Display::start(320, 240, 1.0).unwrap();
+            let (x, screen) = x11rb::connect(Some(display.name().as_str())).unwrap();
+            let root = x.setup().roots[screen].root;
+            checked(
+                &x,
+                x.change_window_attributes(
+                    root,
+                    &ChangeWindowAttributesAux::new().event_mask(EventMask::PROPERTY_CHANGE),
+                )
+                .unwrap(),
+            )
+            .unwrap();
+            let asked = x
+                .change_property8(
+                    PropMode::REPLACE,
+                    root,
+                    AtomEnum::WM_NAME,
+                    AtomEnum::STRING,
+                    b"orden",
+                )
+                .unwrap();
+            x.flush().unwrap();
+            let event = x.wait_for_event().unwrap();
+            assert!(matches!(event, Event::PropertyNotify(_)), "{event:?}");
+            checked(&x, asked).unwrap();
+        });
+    }
 
     #[test]
     fn takes_the_first_number_with_no_lock_and_no_socket() {
@@ -378,47 +442,49 @@ mod tests {
     /// room. CI installs Xvfb; elsewhere the test says nothing without it.
     #[test]
     fn fits_the_screen_to_the_view_as_it_changes() {
-        use x11rb::connection::Connection as _;
+        super::super::in_time(|| {
+            use x11rb::connection::Connection as _;
 
-        if !available() {
+            if !available() {
+                assert!(
+                    std::env::var_os("CI").is_none(),
+                    "CI installs xvfb for this test"
+                );
+                return;
+            }
+            let display = Display::start(640, 480, 1.0).unwrap();
+            let (x, screen) = x11rb::connect(Some(display.name().as_str())).unwrap();
+            let root = x.setup().roots[screen].root;
+            let size = || {
+                let at = x.get_geometry(root).unwrap().reply().unwrap();
+                (at.width, at.height)
+            };
+            assert_eq!(size(), (640, 480));
+            display.fit(1600, 1000, 2.0).unwrap();
+            assert_eq!(size(), (1600, 1000));
+            display.fit(800, 600, 1.0).unwrap();
+            assert_eq!(size(), (800, 600));
+            display.fit(800, 600, 1.0).unwrap();
+            assert_eq!(size(), (800, 600));
+            display.fit(9000, 600, 1.0).unwrap();
+            assert_eq!(size(), (4096, 600));
+            // The monitor is the screen's size too, as toolkits read it.
+            let resources = x
+                .randr_get_screen_resources_current(root)
+                .unwrap()
+                .reply()
+                .unwrap();
+            let crtc = x
+                .randr_get_crtc_info(resources.crtcs[0], 0)
+                .unwrap()
+                .reply()
+                .unwrap();
+            assert_eq!((crtc.width, crtc.height), (4096, 600));
             assert!(
-                std::env::var_os("CI").is_none(),
-                "CI installs xvfb for this test"
+                resources.modes.len() <= 2,
+                "{} modes",
+                resources.modes.len()
             );
-            return;
-        }
-        let display = Display::start(640, 480, 1.0).unwrap();
-        let (x, screen) = x11rb::connect(Some(display.name().as_str())).unwrap();
-        let root = x.setup().roots[screen].root;
-        let size = || {
-            let at = x.get_geometry(root).unwrap().reply().unwrap();
-            (at.width, at.height)
-        };
-        assert_eq!(size(), (640, 480));
-        display.fit(1600, 1000, 2.0).unwrap();
-        assert_eq!(size(), (1600, 1000));
-        display.fit(800, 600, 1.0).unwrap();
-        assert_eq!(size(), (800, 600));
-        display.fit(800, 600, 1.0).unwrap();
-        assert_eq!(size(), (800, 600));
-        display.fit(9000, 600, 1.0).unwrap();
-        assert_eq!(size(), (4096, 600));
-        // The monitor is the screen's size too, as toolkits read it.
-        let resources = x
-            .randr_get_screen_resources_current(root)
-            .unwrap()
-            .reply()
-            .unwrap();
-        let crtc = x
-            .randr_get_crtc_info(resources.crtcs[0], 0)
-            .unwrap()
-            .reply()
-            .unwrap();
-        assert_eq!((crtc.width, crtc.height), (4096, 600));
-        assert!(
-            resources.modes.len() <= 2,
-            "{} modes",
-            resources.modes.len()
-        );
+        });
     }
 }

@@ -844,9 +844,53 @@ fn shown_line(path: &str, args: &[String]) -> String {
         .join(" ")
 }
 
+/// A test that drives a real display, sound server or ffmpeg, run on a thread of its
+/// own and failed once it has taken two minutes: a hang in any of them fails it at once
+/// rather than holding CI until the job is cancelled (issue 1160).
+#[cfg(all(test, any(target_os = "linux", target_os = "windows")))]
+fn in_time(test: impl FnOnce() + Send + 'static) {
+    within(std::time::Duration::from_secs(120), test);
+}
+
+#[cfg(all(test, any(target_os = "linux", target_os = "windows")))]
+fn within(limit: std::time::Duration, test: impl FnOnce() + Send + 'static) {
+    let (done, finished) = std::sync::mpsc::channel();
+    let running = std::thread::spawn(move || {
+        test();
+        let _ = done.send(());
+    });
+    if let Err(std::sync::mpsc::RecvTimeoutError::Timeout) = finished.recv_timeout(limit) {
+        panic!("still running after {limit:?}");
+    }
+    if let Err(panic) = running.join() {
+        std::panic::resume_unwind(panic);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    #[test]
+    fn a_test_that_hangs_fails_once_its_time_is_up_and_one_that_panics_with_its_own_words() {
+        let began = std::time::Instant::now();
+        let hung = std::panic::catch_unwind(|| {
+            within(std::time::Duration::from_millis(200), || loop {
+                std::thread::sleep(std::time::Duration::from_secs(1));
+            });
+        });
+        assert!(hung.is_err());
+        assert!(began.elapsed() < std::time::Duration::from_secs(5));
+        let failed = std::panic::catch_unwind(|| {
+            within(std::time::Duration::from_secs(5), || {
+                panic!("its own words")
+            });
+        })
+        .unwrap_err();
+        assert_eq!(failed.downcast_ref::<&str>(), Some(&"its own words"));
+        within(std::time::Duration::from_secs(5), || {});
+    }
 
     #[test]
     fn reads_what_the_window_asks_to_run() {

@@ -492,6 +492,35 @@ describe('what a workflow is allowed to fetch', () => {
   })
 })
 
+/** check.yml gates main, and a job of it that hangs holds the gate for the six hours
+ *  GitHub allows by default. The runner's apt mirror trickled for over an hour with
+ *  nothing failing (issue 1160), so every job is given a limit of its own, and every
+ *  package is fetched through scripts/ci-apt.sh, which bounds the fetch and falls back
+ *  to the next mirror. */
+describe('a check that cannot hang', () => {
+  const workflow = repo('.github', 'workflows', 'check.yml')
+  const jobs = workflow
+    .slice(workflow.indexOf('\njobs:\n'))
+    .split(/\n(?= {2}[\w-]+:\n)/)
+    .slice(1)
+
+  test('gives every job a time limit', () => {
+    expect(jobs.length).toBeGreaterThan(5)
+    const unbounded = jobs
+      .filter((job) => !/^ {4}timeout-minutes: \d+$/m.test(job))
+      .map((job) => job.trim().split(':')[0])
+    expect(unbounded).toEqual([])
+  })
+
+  test('and fetches its packages in a bounded time', () => {
+    const unbounded = workflow
+      .split(/\r?\n/)
+      .filter((line) => !/^\s*#/.test(line))
+      .filter((line) => /\bapt(?:-get)? (?:install|update)\b|--with-deps\b/.test(line))
+    expect(unbounded).toEqual([])
+  })
+})
+
 /** nib opens no note from outside its spaces, so no bundle and no package manager
  *  offers it a note: no double click, no "Open with", no share of a file to open
  *  where it lies. Held here rather than trusted to memory, because a file type is

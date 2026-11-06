@@ -406,70 +406,72 @@ mod tests {
     /// CI installs Xvfb; elsewhere the test says nothing without it.
     #[test]
     fn reads_the_screen_when_it_is_drawn_on_and_not_otherwise() {
-        use std::time::Duration;
-        use x11rb::protocol::xproto::Rectangle;
+        super::super::in_time(|| {
+            use std::time::Duration;
+            use x11rb::protocol::xproto::Rectangle;
 
-        if !super::super::display::available() {
-            assert!(
-                std::env::var_os("CI").is_none(),
-                "CI installs xvfb for this test"
-            );
-            return;
-        }
-        let display = super::super::display::Display::start(320, 240, 1.0).unwrap();
-        let (sender, seen) = std::sync::mpsc::channel();
-        let mut capture = Capture::open(&display.name(), sender).unwrap();
-        assert!(matches!(
-            seen.recv_timeout(Duration::from_secs(2)),
-            Ok(News::Pointer(_))
-        ));
-        // What was drawn as it started is in the first look.
-        while seen.recv_timeout(Duration::from_millis(100)).is_ok() {}
-        let (bytes, size) = capture.grab().unwrap();
-        assert_eq!(size, (320, 240));
-        assert_eq!(bytes.len(), 320 * 240 * 4);
-        let still = seen.recv_timeout(Duration::from_millis(300));
-        assert!(still.is_err(), "{still:?} with nothing drawn");
+            if !super::super::display::available() {
+                assert!(
+                    std::env::var_os("CI").is_none(),
+                    "CI installs xvfb for this test"
+                );
+                return;
+            }
+            let display = super::super::display::Display::start(320, 240, 1.0).unwrap();
+            let (sender, seen) = std::sync::mpsc::channel();
+            let mut capture = Capture::open(&display.name(), sender).unwrap();
+            assert!(matches!(
+                seen.recv_timeout(Duration::from_secs(2)),
+                Ok(News::Pointer(_))
+            ));
+            // What was drawn as it started is in the first look.
+            while seen.recv_timeout(Duration::from_millis(100)).is_ok() {}
+            let (bytes, size) = capture.grab().unwrap();
+            assert_eq!(size, (320, 240));
+            assert_eq!(bytes.len(), 320 * 240 * 4);
+            let still = seen.recv_timeout(Duration::from_millis(300));
+            assert!(still.is_err(), "{still:?} with nothing drawn");
 
-        let (x, screen) = x11rb::connect(Some(display.name().as_str())).unwrap();
-        let root = x.setup().roots[screen].root;
-        let pen = x.generate_id().unwrap();
-        x.create_gc(
-            pen,
-            root,
-            &x11rb::protocol::xproto::CreateGCAux::new().foreground(0x00ff_0000),
-        )
-        .unwrap();
-        x.poly_fill_rectangle(
-            root,
-            pen,
-            &[Rectangle {
-                x: 0,
-                y: 0,
-                width: 10,
-                height: 10,
-            }],
-        )
-        .unwrap();
-        x.flush().unwrap();
-        let mut news = seen.recv_timeout(Duration::from_secs(2));
-        while matches!(news, Ok(News::Pointer(_))) {
-            news = seen.recv_timeout(Duration::from_secs(2));
-        }
-        assert_eq!(news, Ok(News::Drawn));
-        let (bytes, _) = capture.grab().unwrap();
-        // Blue, green, red: the corner is red now.
-        assert_eq!(&bytes[..3], &[0, 0, 0xff]);
+            let (x, screen) = x11rb::connect(Some(display.name().as_str())).unwrap();
+            let root = x.setup().roots[screen].root;
+            let pen = x.generate_id().unwrap();
+            x.create_gc(
+                pen,
+                root,
+                &x11rb::protocol::xproto::CreateGCAux::new().foreground(0x00ff_0000),
+            )
+            .unwrap();
+            x.poly_fill_rectangle(
+                root,
+                pen,
+                &[Rectangle {
+                    x: 0,
+                    y: 0,
+                    width: 10,
+                    height: 10,
+                }],
+            )
+            .unwrap();
+            x.flush().unwrap();
+            let mut news = seen.recv_timeout(Duration::from_secs(2));
+            while matches!(news, Ok(News::Pointer(_))) {
+                news = seen.recv_timeout(Duration::from_secs(2));
+            }
+            assert_eq!(news, Ok(News::Drawn));
+            let (bytes, _) = capture.grab().unwrap();
+            // Blue, green, red: the corner is red now.
+            assert_eq!(&bytes[..3], &[0, 0, 0xff]);
 
-        display.fit(400, 300, 1.0).unwrap();
-        let until = std::time::Instant::now() + Duration::from_secs(2);
-        let mut resized = false;
-        while !resized && std::time::Instant::now() < until {
-            resized = seen.recv_timeout(Duration::from_millis(100)) == Ok(News::Resized);
-        }
-        assert!(resized);
-        let (bytes, size) = capture.grab().unwrap();
-        assert_eq!(size, (400, 300));
-        assert_eq!(bytes.len(), 400 * 300 * 4);
+            display.fit(400, 300, 1.0).unwrap();
+            let until = std::time::Instant::now() + Duration::from_secs(2);
+            let mut resized = false;
+            while !resized && std::time::Instant::now() < until {
+                resized = seen.recv_timeout(Duration::from_millis(100)) == Ok(News::Resized);
+            }
+            assert!(resized);
+            let (bytes, size) = capture.grab().unwrap();
+            assert_eq!(size, (400, 300));
+            assert_eq!(bytes.len(), 400 * 300 * 4);
+        });
     }
 }

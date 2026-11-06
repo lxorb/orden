@@ -33,6 +33,7 @@ jobs:
     # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     # Every job in this file says what its token may do, and every one of them
     # only reads: nothing here writes a release, opens a pull request or touches
     # a package. A job with no block of its own inherits whatever the
@@ -65,6 +66,7 @@ jobs:
     # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -108,6 +110,7 @@ jobs:
     # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -143,6 +146,7 @@ jobs:
     # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
@@ -158,12 +162,14 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       # The runner's own Python: one package, and the
-      # browser it drives. `--with-deps` because a bare Chromium on a runner is
-      # missing half the shared libraries it needs to start.
+      # browser it drives, and the system's libraries it needs, which a bare Chromium on
+      # a runner is missing half of (scripts/ci-apt.sh, Playwright's `--with-deps` in a
+      # bounded time).
       - name: The browser the drive holds
         run: |
           python3 -m pip install --quiet --break-system-packages playwright pillow
-          python3 -m playwright install --with-deps chromium
+          bash scripts/ci-apt.sh --playwright chromium
+          python3 -m playwright install chromium
 
       # The drive builds its own, `--mode drive`: a release build in every respect
       # but one, with `__DRIVEABLE__` keeping the two handles it steers by. That
@@ -239,6 +245,7 @@ jobs:
     # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
@@ -256,7 +263,8 @@ jobs:
       - name: The browser the drives hold
         run: |
           python3 -m pip install --quiet --break-system-packages playwright pillow
-          python3 -m playwright install --with-deps webkit
+          bash scripts/ci-apt.sh --playwright webkit
+          python3 -m playwright install webkit
 
       - name: The core drives, as a Mac
         env:
@@ -276,6 +284,7 @@ jobs:
     # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: macos-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -323,6 +332,7 @@ jobs:
       matrix:
         os: [ubuntu-24.04, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     defaults:
       run:
         # One spelling of every step below, whichever runner reads it.
@@ -379,9 +389,9 @@ jobs:
       # and gets its picture; and PulseAudio and its tools, so it hears its sound.
       - name: System dependencies
         if: runner.os == 'Linux'
+        timeout-minutes: 25
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk-4-dev libdbus-1-dev cmake ninja-build pandoc xvfb ffmpeg pulseaudio pulseaudio-utils
+          bash scripts/ci-apt.sh --no-install-recommends libgtk-4-dev libdbus-1-dev cmake ninja-build pandoc xvfb ffmpeg pulseaudio pulseaudio-utils
           bash scripts/linux-cef.sh cef
 
       # And ffmpeg on Windows, so a viewer in apps_host/stream.rs's tests gets the picture
@@ -411,6 +421,7 @@ jobs:
       # On Linux the tests link CEF, which its build script copies beside the binaries
       # it builds, one folder above the tests'.
       - name: Tests
+        timeout-minutes: 25
         run: |
           export LD_LIBRARY_PATH="$PWD/apps/desktop/src-tauri/target/debug${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
           cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
@@ -474,6 +485,7 @@ jobs:
     # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
     outputs:
@@ -520,6 +532,7 @@ jobs:
     needs: android-touched
     if: needs.android-touched.outputs.touched == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
@@ -615,6 +628,7 @@ jobs:
     needs: [test, lint]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     # The Worker and the database are reached with a Cloudflare token, not with
     # this one, so even the deploy only reads the repository.

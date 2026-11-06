@@ -1366,128 +1366,130 @@ mod tests {
         reason = "one viewer's picture, told in the order it changes"
     )]
     fn a_viewer_gets_the_picture_of_the_display_as_it_changes() {
-        use str0m::media::KeyframeRequestKind;
-        use x11rb::connection::Connection as _;
-        use x11rb::protocol::xproto::{ConnectionExt as _, CreateGCAux, Rectangle};
+        super::super::in_time(|| {
+            use str0m::media::KeyframeRequestKind;
+            use x11rb::connection::Connection as _;
+            use x11rb::protocol::xproto::{ConnectionExt as _, CreateGCAux, Rectangle};
 
-        let ready =
-            super::super::display::available() && super::super::installed::on_path("ffmpeg");
-        if !ready {
-            assert!(
-                std::env::var_os("CI").is_none() || !cfg!(target_os = "linux"),
-                "CI installs xvfb and ffmpeg for this test"
-            );
-            return;
-        }
-        let display = super::super::display::Display::start(320, 240, 1.0).unwrap();
-        let (peer, mut viewer, mid, _) = Viewer::connect(display.name(), None, None);
-        let (x, number) = x11rb::connect(Some(display.name().as_str())).unwrap();
-        let root = x.setup().roots[number].root;
-        let pointer = || {
-            let at = x.query_pointer(root).ok()?.reply().ok()?;
-            Some((at.root_x, at.root_y))
-        };
-        let frames = std::cell::RefCell::new(Vec::<Vec<u8>>::new());
-        let mut shape = false;
-        let heard = |rtc: &mut Rtc, event: Event, shape: &mut bool| match event {
-            Event::ChannelOpen(id, _) => {
-                if let Some(mut channel) = rtc.channel(id) {
-                    channel
-                        .write(false, br#"{"t":"move","x":100,"y":50}"#)
-                        .unwrap();
+            let ready =
+                super::super::display::available() && super::super::installed::on_path("ffmpeg");
+            if !ready {
+                assert!(
+                    std::env::var_os("CI").is_none() || !cfg!(target_os = "linux"),
+                    "CI installs xvfb and ffmpeg for this test"
+                );
+                return;
+            }
+            let display = super::super::display::Display::start(320, 240, 1.0).unwrap();
+            let (peer, mut viewer, mid, _) = Viewer::connect(display.name(), None, None);
+            let (x, number) = x11rb::connect(Some(display.name().as_str())).unwrap();
+            let root = x.setup().roots[number].root;
+            let pointer = || {
+                let at = x.query_pointer(root).ok()?.reply().ok()?;
+                Some((at.root_x, at.root_y))
+            };
+            let frames = std::cell::RefCell::new(Vec::<Vec<u8>>::new());
+            let mut shape = false;
+            let heard = |rtc: &mut Rtc, event: Event, shape: &mut bool| match event {
+                Event::ChannelOpen(id, _) => {
+                    if let Some(mut channel) = rtc.channel(id) {
+                        channel
+                            .write(false, br#"{"t":"move","x":100,"y":50}"#)
+                            .unwrap();
+                    }
                 }
-            }
-            Event::ChannelData(data) => {
-                *shape = *shape
-                    || data.data.starts_with(b"{")
-                        && String::from_utf8_lossy(&data.data).contains(r#""t":"pointer""#);
-            }
-            Event::MediaData(data) => frames.borrow_mut().push(data.data.to_vec()),
-            _ => {}
-        };
+                Event::ChannelData(data) => {
+                    *shape = *shape
+                        || data.data.starts_with(b"{")
+                            && String::from_utf8_lossy(&data.data).contains(r#""t":"pointer""#);
+                }
+                Event::MediaData(data) => frames.borrow_mut().push(data.data.to_vec()),
+                _ => {}
+            };
 
-        let connected = viewer.run(
-            Duration::from_secs(30),
-            |rtc, event| heard(rtc, event, &mut shape),
-            || !frames.borrow().is_empty() && pointer() == Some((100, 50)),
-        );
-        assert!(connected, "{} frames came", frames.borrow().len());
-        assert!(vp8(&frames.borrow()[0]).0, "the first frame is a key frame");
-        let mut shaped = shape;
-        viewer.run(
-            Duration::from_secs(2),
-            |rtc, event| heard(rtc, event, &mut shaped),
-            || false,
-        );
-        assert!(shape || shaped, "the pointer's shape came");
+            let connected = viewer.run(
+                Duration::from_secs(30),
+                |rtc, event| heard(rtc, event, &mut shape),
+                || !frames.borrow().is_empty() && pointer() == Some((100, 50)),
+            );
+            assert!(connected, "{} frames came", frames.borrow().len());
+            assert!(vp8(&frames.borrow()[0]).0, "the first frame is a key frame");
+            let mut shaped = shape;
+            viewer.run(
+                Duration::from_secs(2),
+                |rtc, event| heard(rtc, event, &mut shaped),
+                || false,
+            );
+            assert!(shape || shaped, "the pointer's shape came");
 
-        // Nothing drawn: nothing sent.
-        frames.borrow_mut().clear();
-        viewer.run(
-            Duration::from_millis(800),
-            |rtc, event| heard(rtc, event, &mut shaped),
-            || false,
-        );
-        assert!(
-            frames.borrow().is_empty(),
-            "{} frames of a still screen",
-            frames.borrow().len()
-        );
+            // Nothing drawn: nothing sent.
+            frames.borrow_mut().clear();
+            viewer.run(
+                Duration::from_millis(800),
+                |rtc, event| heard(rtc, event, &mut shaped),
+                || false,
+            );
+            assert!(
+                frames.borrow().is_empty(),
+                "{} frames of a still screen",
+                frames.borrow().len()
+            );
 
-        // Something drawn: sent.
-        let pen = x.generate_id().unwrap();
-        x.create_gc(pen, root, &CreateGCAux::new().foreground(0x00ff_0000))
+            // Something drawn: sent.
+            let pen = x.generate_id().unwrap();
+            x.create_gc(pen, root, &CreateGCAux::new().foreground(0x00ff_0000))
+                .unwrap();
+            x.poly_fill_rectangle(
+                root,
+                pen,
+                &[Rectangle {
+                    x: 0,
+                    y: 0,
+                    width: 40,
+                    height: 40,
+                }],
+            )
             .unwrap();
-        x.poly_fill_rectangle(
-            root,
-            pen,
-            &[Rectangle {
-                x: 0,
-                y: 0,
-                width: 40,
-                height: 40,
-            }],
-        )
-        .unwrap();
-        x.flush().unwrap();
-        let drawn = viewer.run(
-            Duration::from_secs(5),
-            |rtc, event| heard(rtc, event, &mut shaped),
-            || !frames.borrow().is_empty(),
-        );
-        assert!(drawn, "what was drawn came");
+            x.flush().unwrap();
+            let drawn = viewer.run(
+                Duration::from_secs(5),
+                |rtc, event| heard(rtc, event, &mut shaped),
+                || !frames.borrow().is_empty(),
+            );
+            assert!(drawn, "what was drawn came");
 
-        // A whole picture asked for: a key frame.
-        frames.borrow_mut().clear();
-        viewer
-            .rtc
-            .writer(mid)
-            .unwrap()
-            .request_keyframe(None, KeyframeRequestKind::Pli)
-            .unwrap();
-        let whole = viewer.run(
-            Duration::from_secs(5),
-            |rtc, event| heard(rtc, event, &mut shaped),
-            || frames.borrow().iter().any(|one| vp8(one).0),
-        );
-        assert!(whole, "a key frame came when one was asked for");
+            // A whole picture asked for: a key frame.
+            frames.borrow_mut().clear();
+            viewer
+                .rtc
+                .writer(mid)
+                .unwrap()
+                .request_keyframe(None, KeyframeRequestKind::Pli)
+                .unwrap();
+            let whole = viewer.run(
+                Duration::from_secs(5),
+                |rtc, event| heard(rtc, event, &mut shaped),
+                || frames.borrow().iter().any(|one| vp8(one).0),
+            );
+            assert!(whole, "a key frame came when one was asked for");
 
-        // Another size: a key frame of it.
-        frames.borrow_mut().clear();
-        display.fit(400, 300, 1.0).unwrap();
-        let resized = viewer.run(
-            Duration::from_secs(5),
-            |rtc, event| heard(rtc, event, &mut shaped),
-            || {
-                frames
-                    .borrow()
-                    .iter()
-                    .any(|one| vp8(one).1 == Some((400, 300)))
-            },
-        );
-        assert!(resized, "a key frame of the new size came");
-        assert!(!peer.ended());
-        drop(peer);
+            // Another size: a key frame of it.
+            frames.borrow_mut().clear();
+            display.fit(400, 300, 1.0).unwrap();
+            let resized = viewer.run(
+                Duration::from_secs(5),
+                |rtc, event| heard(rtc, event, &mut shaped),
+                || {
+                    frames
+                        .borrow()
+                        .iter()
+                        .any(|one| vp8(one).1 == Some((400, 300)))
+                },
+            );
+            assert!(resized, "a key frame of the new size came");
+            assert!(!peer.ended());
+            drop(peer);
+        });
     }
 
     #[cfg(target_os = "linux")]
@@ -1501,144 +1503,151 @@ mod tests {
         reason = "one paste and one copy, told in the order they happen"
     )]
     fn the_clipboard_goes_both_ways_while_the_holder_shares_it() {
-        use x11rb::connection::Connection as _;
-        use x11rb::protocol::xproto::{
-            AtomEnum, ConnectionExt as _, CreateWindowAux, EventMask, PropMode,
-            SelectionNotifyEvent, WindowClass, SELECTION_NOTIFY_EVENT,
-        };
-        use x11rb::wrapper::ConnectionExt as _;
-        use x11rb::NONE;
+        super::super::in_time(|| {
+            use x11rb::connection::Connection as _;
+            use x11rb::protocol::xproto::{
+                AtomEnum, ConnectionExt as _, CreateWindowAux, EventMask, PropMode,
+                SelectionNotifyEvent, WindowClass, SELECTION_NOTIFY_EVENT,
+            };
+            use x11rb::wrapper::ConnectionExt as _;
+            use x11rb::NONE;
 
-        let ready =
-            super::super::display::available() && super::super::installed::on_path("ffmpeg");
-        if !ready {
-            assert!(
-                std::env::var_os("CI").is_none() || !cfg!(target_os = "linux"),
-                "CI installs xvfb and ffmpeg for this test"
-            );
-            return;
-        }
-        let display = super::super::display::Display::start(320, 240, 1.0).unwrap();
-        let (peer, mut viewer, _, _) = Viewer::connect(display.name(), display.clipboard(), None);
-        let (x, number) = x11rb::connect(Some(display.name().as_str())).unwrap();
-        let root = x.setup().roots[number].root;
-        let atoms = super::super::clipboard::Atoms::new(&x)
-            .unwrap()
-            .reply()
-            .unwrap();
-        let window = x.generate_id().unwrap();
-        x.create_window(
-            0,
-            window,
-            root,
-            0,
-            0,
-            1,
-            1,
-            0,
-            WindowClass::INPUT_ONLY,
-            0,
-            &CreateWindowAux::new(),
-        )
-        .unwrap();
-        x.flush().unwrap();
-        let owner = || {
-            x.get_selection_owner(atoms.CLIPBOARD)
+            let ready =
+                super::super::display::available() && super::super::installed::on_path("ffmpeg");
+            if !ready {
+                assert!(
+                    std::env::var_os("CI").is_none() || !cfg!(target_os = "linux"),
+                    "CI installs xvfb and ffmpeg for this test"
+                );
+                return;
+            }
+            let display = super::super::display::Display::start(320, 240, 1.0).unwrap();
+            let (peer, mut viewer, _, _) =
+                Viewer::connect(display.name(), display.clipboard(), None);
+            let (x, number) = x11rb::connect(Some(display.name().as_str())).unwrap();
+            let root = x.setup().roots[number].root;
+            let atoms = super::super::clipboard::Atoms::new(&x)
                 .unwrap()
                 .reply()
-                .unwrap()
-                .owner
-        };
-
-        let channel = std::cell::Cell::new(None);
-        let copied = std::cell::RefCell::new(Vec::<String>::new());
-        let heard = |_: &mut Rtc, event: Event| match event {
-            Event::ChannelOpen(id, _) => channel.set(Some(id)),
-            Event::ChannelData(data) => {
-                let text = String::from_utf8_lossy(&data.data).into_owned();
-                if text.contains(r#""t":"clipboard""#) {
-                    copied.borrow_mut().push(text);
-                }
-            }
-            _ => {}
-        };
-        assert!(viewer.run(Duration::from_secs(30), heard, || channel.get().is_some()));
-        let say = |viewer: &mut Viewer, text: &[u8]| {
-            let id = channel.get().unwrap();
-            viewer.rtc.channel(id).unwrap().write(false, text).unwrap();
-        };
-
-        // Not shared: the holder's clipboard goes nowhere.
-        say(&mut viewer, br#"{"t":"clipboard","text":"secret"}"#);
-        viewer.run(Duration::from_millis(500), heard, || false);
-        assert_eq!(owner(), NONE);
-
-        // Shared: the application's paste gets it.
-        say(&mut viewer, br#"{"t":"share","clipboard":true}"#);
-        say(
-            &mut viewer,
-            br#"{"t":"clipboard","text":"from the holder"}"#,
-        );
-        assert!(viewer.run(Duration::from_secs(5), heard, || owner() != NONE));
-        x.convert_selection(
-            window,
-            atoms.CLIPBOARD,
-            atoms.UTF8_STRING,
-            atoms.ORDEN_CLIPBOARD,
-            x11rb::CURRENT_TIME,
-        )
-        .unwrap();
-        x.flush().unwrap();
-        let mut pasted = None;
-        viewer.run(Duration::from_secs(5), heard, || {
-            if let Ok(Some(x11rb::protocol::Event::SelectionNotify(answer))) = x.poll_for_event() {
-                pasted = x
-                    .get_property(true, window, answer.property, AtomEnum::ANY, 0, 1024)
-                    .ok()
-                    .and_then(|cookie| cookie.reply().ok())
-                    .map(|reply| String::from_utf8_lossy(&reply.value).into_owned());
-            }
-            pasted.is_some()
-        });
-        assert_eq!(pasted.as_deref(), Some("from the holder"));
-
-        // The application copies: the holder hears it.
-        x.set_selection_owner(window, atoms.CLIPBOARD, x11rb::CURRENT_TIME)
+                .unwrap();
+            let window = x.generate_id().unwrap();
+            x.create_window(
+                0,
+                window,
+                root,
+                0,
+                0,
+                1,
+                1,
+                0,
+                WindowClass::INPUT_ONLY,
+                0,
+                &CreateWindowAux::new(),
+            )
             .unwrap();
-        x.flush().unwrap();
-        let came = viewer.run(Duration::from_secs(5), heard, || {
-            if let Ok(Some(x11rb::protocol::Event::SelectionRequest(asked))) = x.poll_for_event() {
-                let _ = x.change_property8(
-                    PropMode::REPLACE,
-                    asked.requestor,
-                    asked.property,
-                    atoms.UTF8_STRING,
-                    b"from the application",
-                );
-                let _ = x.send_event(
-                    false,
-                    asked.requestor,
-                    EventMask::NO_EVENT,
-                    SelectionNotifyEvent {
-                        response_type: SELECTION_NOTIFY_EVENT,
-                        sequence: 0,
-                        time: asked.time,
-                        requestor: asked.requestor,
-                        selection: asked.selection,
-                        target: asked.target,
-                        property: asked.property,
-                    },
-                );
-                let _ = x.flush();
-            }
-            !copied.borrow().is_empty()
+            x.flush().unwrap();
+            let owner = || {
+                x.get_selection_owner(atoms.CLIPBOARD)
+                    .unwrap()
+                    .reply()
+                    .unwrap()
+                    .owner
+            };
+
+            let channel = std::cell::Cell::new(None);
+            let copied = std::cell::RefCell::new(Vec::<String>::new());
+            let heard = |_: &mut Rtc, event: Event| match event {
+                Event::ChannelOpen(id, _) => channel.set(Some(id)),
+                Event::ChannelData(data) => {
+                    let text = String::from_utf8_lossy(&data.data).into_owned();
+                    if text.contains(r#""t":"clipboard""#) {
+                        copied.borrow_mut().push(text);
+                    }
+                }
+                _ => {}
+            };
+            assert!(viewer.run(Duration::from_secs(30), heard, || channel.get().is_some()));
+            let say = |viewer: &mut Viewer, text: &[u8]| {
+                let id = channel.get().unwrap();
+                viewer.rtc.channel(id).unwrap().write(false, text).unwrap();
+            };
+
+            // Not shared: the holder's clipboard goes nowhere.
+            say(&mut viewer, br#"{"t":"clipboard","text":"secret"}"#);
+            viewer.run(Duration::from_millis(500), heard, || false);
+            assert_eq!(owner(), NONE);
+
+            // Shared: the application's paste gets it.
+            say(&mut viewer, br#"{"t":"share","clipboard":true}"#);
+            say(
+                &mut viewer,
+                br#"{"t":"clipboard","text":"from the holder"}"#,
+            );
+            assert!(viewer.run(Duration::from_secs(5), heard, || owner() != NONE));
+            x.convert_selection(
+                window,
+                atoms.CLIPBOARD,
+                atoms.UTF8_STRING,
+                atoms.ORDEN_CLIPBOARD,
+                x11rb::CURRENT_TIME,
+            )
+            .unwrap();
+            x.flush().unwrap();
+            let mut pasted = None;
+            viewer.run(Duration::from_secs(5), heard, || {
+                if let Ok(Some(x11rb::protocol::Event::SelectionNotify(answer))) =
+                    x.poll_for_event()
+                {
+                    pasted = x
+                        .get_property(true, window, answer.property, AtomEnum::ANY, 0, 1024)
+                        .ok()
+                        .and_then(|cookie| cookie.reply().ok())
+                        .map(|reply| String::from_utf8_lossy(&reply.value).into_owned());
+                }
+                pasted.is_some()
+            });
+            assert_eq!(pasted.as_deref(), Some("from the holder"));
+
+            // The application copies: the holder hears it.
+            x.set_selection_owner(window, atoms.CLIPBOARD, x11rb::CURRENT_TIME)
+                .unwrap();
+            x.flush().unwrap();
+            let came = viewer.run(Duration::from_secs(5), heard, || {
+                if let Ok(Some(x11rb::protocol::Event::SelectionRequest(asked))) =
+                    x.poll_for_event()
+                {
+                    let _ = x.change_property8(
+                        PropMode::REPLACE,
+                        asked.requestor,
+                        asked.property,
+                        atoms.UTF8_STRING,
+                        b"from the application",
+                    );
+                    let _ = x.send_event(
+                        false,
+                        asked.requestor,
+                        EventMask::NO_EVENT,
+                        SelectionNotifyEvent {
+                            response_type: SELECTION_NOTIFY_EVENT,
+                            sequence: 0,
+                            time: asked.time,
+                            requestor: asked.requestor,
+                            selection: asked.selection,
+                            target: asked.target,
+                            property: asked.property,
+                        },
+                    );
+                    let _ = x.flush();
+                }
+                !copied.borrow().is_empty()
+            });
+            assert!(came, "what the application copied came");
+            assert_eq!(
+                copied.borrow()[0],
+                r#"{"t":"clipboard","text":"from the application"}"#
+            );
+            drop(peer);
         });
-        assert!(came, "what the application copied came");
-        assert_eq!(
-            copied.borrow()[0],
-            r#"{"t":"clipboard","text":"from the application"}"#
-        );
-        drop(peer);
     }
 
     #[cfg(target_os = "linux")]
@@ -1690,66 +1699,68 @@ mod tests {
     /// them.
     #[test]
     fn a_viewer_hears_the_applications_sound() {
-        let ready = super::super::display::available()
-            && super::super::installed::on_path("ffmpeg")
-            && audio::available();
-        if !ready {
+        super::super::in_time(|| {
+            let ready = super::super::display::available()
+                && super::super::installed::on_path("ffmpeg")
+                && audio::available();
+            if !ready {
+                assert!(
+                    std::env::var_os("CI").is_none() || !cfg!(target_os = "linux"),
+                    "CI installs xvfb, ffmpeg and pulseaudio for this test"
+                );
+                return;
+            }
+            let server = sound_server();
+            let sink = audio::Sink::make(std::process::id() % 100_000 + 400_000);
             assert!(
-                std::env::var_os("CI").is_none() || !cfg!(target_os = "linux"),
-                "CI installs xvfb, ffmpeg and pulseaudio for this test"
+                sink.is_some() || std::env::var_os("CI").is_none(),
+                "a sink of the application's own"
             );
-            return;
-        }
-        let server = sound_server();
-        let sink = audio::Sink::make(std::process::id() % 100_000 + 400_000);
-        assert!(
-            sink.is_some() || std::env::var_os("CI").is_none(),
-            "a sink of the application's own"
-        );
-        let Some(sink) = sink else {
-            return;
-        };
-        // The application playing: noise into its sink.
-        let monitor = sink.monitor();
-        let mut playing = Command::new("pacat")
-            .args([
-                "--playback",
-                &format!("--device={}", monitor.trim_end_matches(".monitor")),
-                "--format=s16le",
-                "--rate=48000",
-                "--channels=2",
-                "--raw",
-            ])
-            .stdin(std::fs::File::open("/dev/urandom").unwrap())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .spawn()
-            .unwrap();
+            let Some(sink) = sink else {
+                return;
+            };
+            // The application playing: noise into its sink.
+            let monitor = sink.monitor();
+            let mut playing = Command::new("pacat")
+                .args([
+                    "--playback",
+                    &format!("--device={}", monitor.trim_end_matches(".monitor")),
+                    "--format=s16le",
+                    "--rate=48000",
+                    "--channels=2",
+                    "--raw",
+                ])
+                .stdin(std::fs::File::open("/dev/urandom").unwrap())
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .spawn()
+                .unwrap();
 
-        let display = super::super::display::Display::start(320, 240, 1.0).unwrap();
-        let (peer, mut viewer, _, heard) =
-            Viewer::connect(display.name(), display.clipboard(), Some(monitor));
-        let packets = std::cell::Cell::new(0);
-        let came = viewer.run(
-            Duration::from_secs(30),
-            |_, event| {
-                if let Event::MediaData(data) = event {
-                    if data.mid == heard {
-                        packets.set(packets.get() + 1);
+            let display = super::super::display::Display::start(320, 240, 1.0).unwrap();
+            let (peer, mut viewer, _, heard) =
+                Viewer::connect(display.name(), display.clipboard(), Some(monitor));
+            let packets = std::cell::Cell::new(0);
+            let came = viewer.run(
+                Duration::from_secs(30),
+                |_, event| {
+                    if let Event::MediaData(data) = event {
+                        if data.mid == heard {
+                            packets.set(packets.get() + 1);
+                        }
                     }
-                }
-            },
-            || packets.get() >= 20,
-        );
-        assert!(came, "{} packets of sound came", packets.get());
-        drop(peer);
-        let _ = playing.kill();
-        let _ = playing.wait();
-        drop(sink);
-        if let Some(mut server) = server {
-            let _ = server.kill();
-            let _ = server.wait();
-        }
+                },
+                || packets.get() >= 20,
+            );
+            assert!(came, "{} packets of sound came", packets.get());
+            drop(peer);
+            let _ = playing.kill();
+            let _ = playing.wait();
+            drop(sink);
+            if let Some(mut server) = server {
+                let _ = server.kill();
+                let _ = server.wait();
+            }
+        });
     }
 
     #[cfg(target_os = "linux")]
@@ -1766,98 +1777,103 @@ mod tests {
         reason = "one benchmark, its two halves told in order"
     )]
     fn latency_benchmark() {
-        use x11rb::connection::Connection as _;
-        use x11rb::protocol::xproto::{ChangeGCAux, ConnectionExt as _, CreateGCAux, Rectangle};
+        super::super::in_time(|| {
+            use x11rb::connection::Connection as _;
+            use x11rb::protocol::xproto::{
+                ChangeGCAux, ConnectionExt as _, CreateGCAux, Rectangle,
+            };
 
-        let ready =
-            super::super::display::available() && super::super::installed::on_path("ffmpeg");
-        if !ready {
-            assert!(
-                std::env::var_os("CI").is_none() || !cfg!(target_os = "linux"),
-                "CI installs xvfb and ffmpeg for this test"
-            );
-            return;
-        }
-        let display = super::super::display::Display::start(640, 400, 1.0).unwrap();
-        let (peer, mut viewer, _, _) = Viewer::connect(display.name(), display.clipboard(), None);
-        let (x, number) = x11rb::connect(Some(display.name().as_str())).unwrap();
-        let root = x.setup().roots[number].root;
-        let pen = x.generate_id().unwrap();
-        x.create_gc(pen, root, &CreateGCAux::new()).unwrap();
-        let mut colour = 0_u32;
-        let mut draw = || {
-            colour = colour.wrapping_add(0x0011_2233) & 0x00ff_ffff;
-            x.change_gc(pen, &ChangeGCAux::new().foreground(colour))
+            let ready =
+                super::super::display::available() && super::super::installed::on_path("ffmpeg");
+            if !ready {
+                assert!(
+                    std::env::var_os("CI").is_none() || !cfg!(target_os = "linux"),
+                    "CI installs xvfb and ffmpeg for this test"
+                );
+                return;
+            }
+            let display = super::super::display::Display::start(640, 400, 1.0).unwrap();
+            let (peer, mut viewer, _, _) =
+                Viewer::connect(display.name(), display.clipboard(), None);
+            let (x, number) = x11rb::connect(Some(display.name().as_str())).unwrap();
+            let root = x.setup().roots[number].root;
+            let pen = x.generate_id().unwrap();
+            x.create_gc(pen, root, &CreateGCAux::new()).unwrap();
+            let mut colour = 0_u32;
+            let mut draw = || {
+                colour = colour.wrapping_add(0x0011_2233) & 0x00ff_ffff;
+                x.change_gc(pen, &ChangeGCAux::new().foreground(colour))
+                    .unwrap();
+                x.poly_fill_rectangle(
+                    root,
+                    pen,
+                    &[Rectangle {
+                        x: 0,
+                        y: 0,
+                        width: 640,
+                        height: 400,
+                    }],
+                )
                 .unwrap();
-            x.poly_fill_rectangle(
-                root,
-                pen,
-                &[Rectangle {
-                    x: 0,
-                    y: 0,
-                    width: 640,
-                    height: 400,
-                }],
-            )
-            .unwrap();
-            x.flush().unwrap();
-        };
-        let frames = std::cell::Cell::new(0_usize);
-        let arrived = std::cell::RefCell::new(Vec::<Instant>::new());
-        let heard = |_: &mut Rtc, event: Event| {
-            if let Event::MediaData(_) = event {
-                frames.set(frames.get() + 1);
-                arrived.borrow_mut().push(Instant::now());
-            }
-        };
-        assert!(viewer.run(Duration::from_secs(30), heard, || frames.get() > 0));
-        viewer.run(Duration::from_millis(300), heard, || false);
+                x.flush().unwrap();
+            };
+            let frames = std::cell::Cell::new(0_usize);
+            let arrived = std::cell::RefCell::new(Vec::<Instant>::new());
+            let heard = |_: &mut Rtc, event: Event| {
+                if let Event::MediaData(_) = event {
+                    frames.set(frames.get() + 1);
+                    arrived.borrow_mut().push(Instant::now());
+                }
+            };
+            assert!(viewer.run(Duration::from_secs(30), heard, || frames.get() > 0));
+            viewer.run(Duration::from_millis(300), heard, || false);
 
-        // Drawn to arrived, one frame at a time.
-        let mut latencies = Vec::new();
-        for _ in 0..20 {
-            let before = frames.get();
-            draw();
-            let drawn = Instant::now();
-            assert!(viewer.run(Duration::from_secs(5), heard, || frames.get() > before));
-            latencies.push(drawn.elapsed());
-            viewer.run(Duration::from_millis(60), heard, || false);
-        }
-        latencies.sort();
-        let median = latencies[latencies.len() / 2];
-        let worst = latencies[latencies.len() * 9 / 10];
-        eprintln!("drawn to arrived: median {median:?}, 90th {worst:?}");
-        assert!(median < Duration::from_millis(50), "median {median:?}");
-        assert!(worst < Duration::from_millis(120), "90th {worst:?}");
-
-        // Drawing at the holder's refresh rate, 30 here: as many frames, evenly.
-        arrived.borrow_mut().clear();
-        let began = Instant::now();
-        let mut next = began;
-        let mut drawn = 0;
-        while began.elapsed() < Duration::from_secs(2) {
-            if Instant::now() >= next {
+            // Drawn to arrived, one frame at a time.
+            let mut latencies = Vec::new();
+            for _ in 0..20 {
+                let before = frames.get();
                 draw();
-                drawn += 1;
-                next += Duration::from_millis(33);
+                let drawn = Instant::now();
+                assert!(viewer.run(Duration::from_secs(5), heard, || frames.get() > before));
+                latencies.push(drawn.elapsed());
+                viewer.run(Duration::from_millis(60), heard, || false);
             }
-            viewer.run(Duration::from_millis(2), heard, || false);
-        }
-        viewer.run(Duration::from_millis(200), heard, || false);
-        let times = arrived.borrow();
-        let gaps: Vec<Duration> = times.windows(2).map(|two| two[1] - two[0]).collect();
-        let longest = gaps.iter().max().copied().unwrap_or_default();
-        eprintln!(
-            "{drawn} drawn, {} arrived, longest gap {longest:?}",
-            times.len()
-        );
-        assert!(times.len() * 10 >= drawn * 8, "{} of {drawn}", times.len());
-        assert!(
-            longest < Duration::from_millis(250),
-            "longest gap {longest:?}"
-        );
-        drop(times);
-        drop(peer);
+            latencies.sort();
+            let median = latencies[latencies.len() / 2];
+            let worst = latencies[latencies.len() * 9 / 10];
+            eprintln!("drawn to arrived: median {median:?}, 90th {worst:?}");
+            assert!(median < Duration::from_millis(50), "median {median:?}");
+            assert!(worst < Duration::from_millis(120), "90th {worst:?}");
+
+            // Drawing at the holder's refresh rate, 30 here: as many frames, evenly.
+            arrived.borrow_mut().clear();
+            let began = Instant::now();
+            let mut next = began;
+            let mut drawn = 0;
+            while began.elapsed() < Duration::from_secs(2) {
+                if Instant::now() >= next {
+                    draw();
+                    drawn += 1;
+                    next += Duration::from_millis(33);
+                }
+                viewer.run(Duration::from_millis(2), heard, || false);
+            }
+            viewer.run(Duration::from_millis(200), heard, || false);
+            let times = arrived.borrow();
+            let gaps: Vec<Duration> = times.windows(2).map(|two| two[1] - two[0]).collect();
+            let longest = gaps.iter().max().copied().unwrap_or_default();
+            eprintln!(
+                "{drawn} drawn, {} arrived, longest gap {longest:?}",
+                times.len()
+            );
+            assert!(times.len() * 10 >= drawn * 8, "{} of {drawn}", times.len());
+            assert!(
+                longest < Duration::from_millis(250),
+                "longest gap {longest:?}"
+            );
+            drop(times);
+            drop(peer);
+        });
     }
 
     /// Notepad on a desktop of its own, seen by a viewer of `str0m`'s own on the loopback
@@ -1867,77 +1883,82 @@ mod tests {
     #[cfg(target_os = "windows")]
     #[test]
     fn a_viewer_gets_the_picture_of_a_desktop_of_its_own_and_types_into_it() {
-        use super::super::desk;
+        super::super::in_time(|| {
+            use super::super::desk;
 
-        let notepad = std::path::PathBuf::from(std::env::var("SystemRoot").unwrap())
-            .join("System32\\notepad.exe");
-        if encoder::ffmpeg().is_none() || !notepad.is_file() {
-            assert!(
-                std::env::var_os("CI").is_none(),
-                "CI installs ffmpeg for this test"
-            );
-            return;
-        }
-        let desktop = desk::Desktop::start(640, 480).unwrap();
-        let program = desktop
-            .run(
-                &[notepad.to_string_lossy().into_owned()],
-                &std::env::temp_dir(),
-            )
-            .unwrap();
-        let (peer, mut viewer, _, _) = Viewer::connect(desktop.name(), None, None);
-        let frames = std::cell::RefCell::new(Vec::<Vec<u8>>::new());
-        let channel = std::cell::Cell::new(None);
-        let connected = viewer.run(
-            Duration::from_secs(30),
-            |_, event| match event {
-                Event::ChannelOpen(id, _) => channel.set(Some(id)),
-                Event::MediaData(data) => frames.borrow_mut().push(data.data.to_vec()),
-                _ => {}
-            },
-            || channel.get().is_some() && frames.borrow().iter().any(|one| vp8(one).1.is_some()),
-        );
-        assert!(connected, "{} frames came", frames.borrow().len());
-        assert!(vp8(&frames.borrow()[0]).0, "the first frame is a key frame");
-
-        let id = channel.get().unwrap();
-        for said in [
-            r#"{"t":"move","x":320,"y":240}"#,
-            r#"{"t":"button","button":0,"down":true}"#,
-            r#"{"t":"button","button":0,"down":false}"#,
-            r#"{"t":"text","text":"hello from afar"}"#,
-        ] {
-            viewer
-                .rtc
-                .channel(id)
-                .unwrap()
-                .write(false, said.as_bytes())
-                .unwrap();
-            viewer.run(Duration::from_millis(200), |_, _| {}, || false);
-        }
-        let desk = desk::desk(&desktop.name()).unwrap();
-        let typed = std::thread::spawn(move || {
-            desk.enter().unwrap();
-            let until = Instant::now() + Duration::from_secs(10);
-            while Instant::now() < until {
-                if desk::shown()
-                    .into_iter()
-                    .any(|one| text_in(one).contains("hello from afar"))
-                {
-                    return true;
-                }
-                std::thread::sleep(Duration::from_millis(100));
+            let notepad = std::path::PathBuf::from(std::env::var("SystemRoot").unwrap())
+                .join("System32\\notepad.exe");
+            if encoder::ffmpeg().is_none() || !notepad.is_file() {
+                assert!(
+                    std::env::var_os("CI").is_none(),
+                    "CI installs ffmpeg for this test"
+                );
+                return;
             }
-            false
-        })
-        .join()
-        .unwrap();
-        assert!(typed, "the text did not reach notepad");
-        assert!(!peer.ended());
-        drop(peer);
-        // Typed into, it would ask whether to save before it closed: ended instead.
-        desk::kill(program.pid());
-        let _ = program.wait();
+            let desktop = desk::Desktop::start(640, 480).unwrap();
+            let program = desktop
+                .run(
+                    &[notepad.to_string_lossy().into_owned()],
+                    &std::env::temp_dir(),
+                )
+                .unwrap();
+            let (peer, mut viewer, _, _) = Viewer::connect(desktop.name(), None, None);
+            let frames = std::cell::RefCell::new(Vec::<Vec<u8>>::new());
+            let channel = std::cell::Cell::new(None);
+            let connected = viewer.run(
+                Duration::from_secs(30),
+                |_, event| match event {
+                    Event::ChannelOpen(id, _) => channel.set(Some(id)),
+                    Event::MediaData(data) => frames.borrow_mut().push(data.data.to_vec()),
+                    _ => {}
+                },
+                || {
+                    channel.get().is_some()
+                        && frames.borrow().iter().any(|one| vp8(one).1.is_some())
+                },
+            );
+            assert!(connected, "{} frames came", frames.borrow().len());
+            assert!(vp8(&frames.borrow()[0]).0, "the first frame is a key frame");
+
+            let id = channel.get().unwrap();
+            for said in [
+                r#"{"t":"move","x":320,"y":240}"#,
+                r#"{"t":"button","button":0,"down":true}"#,
+                r#"{"t":"button","button":0,"down":false}"#,
+                r#"{"t":"text","text":"hello from afar"}"#,
+            ] {
+                viewer
+                    .rtc
+                    .channel(id)
+                    .unwrap()
+                    .write(false, said.as_bytes())
+                    .unwrap();
+                viewer.run(Duration::from_millis(200), |_, _| {}, || false);
+            }
+            let desk = desk::desk(&desktop.name()).unwrap();
+            let typed = std::thread::spawn(move || {
+                desk.enter().unwrap();
+                let until = Instant::now() + Duration::from_secs(10);
+                while Instant::now() < until {
+                    if desk::shown()
+                        .into_iter()
+                        .any(|one| text_in(one).contains("hello from afar"))
+                    {
+                        return true;
+                    }
+                    std::thread::sleep(Duration::from_millis(100));
+                }
+                false
+            })
+            .join()
+            .unwrap();
+            assert!(typed, "the text did not reach notepad");
+            assert!(!peer.ended());
+            drop(peer);
+            // Typed into, it would ask whether to save before it closed: ended instead.
+            desk::kill(program.pid());
+            let _ = program.wait();
+        });
     }
 
     /// The text of a window and of its children, as each answers `WM_GETTEXT`.

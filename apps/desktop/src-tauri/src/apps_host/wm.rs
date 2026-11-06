@@ -518,120 +518,122 @@ mod tests {
         reason = "one display's windows, told in the order they come and go"
     )]
     fn fills_the_screen_with_the_main_window_and_follows_it() {
-        if !super::super::display::available() {
-            assert!(
-                std::env::var_os("CI").is_none(),
-                "CI installs xvfb for this test"
-            );
-            return;
-        }
-        let display = super::super::display::Display::start(800, 600, 1.0).unwrap();
-        let (x, screen) = x11rb::connect(Some(display.name().as_str())).unwrap();
-        let root = x.setup().roots[screen].root;
-        let atoms = Atoms::new(&x).unwrap().reply().unwrap();
-        let open = |width: u16, height: u16, transient_for: Option<Window>| {
-            let window = x.generate_id().unwrap();
-            x.create_window(
-                0,
-                window,
-                root,
-                5,
-                5,
-                width,
-                height,
-                0,
-                WindowClass::INPUT_OUTPUT,
-                0,
-                &CreateWindowAux::new(),
-            )
-            .unwrap();
-            if let Some(parent) = transient_for {
-                x.change_property32(
-                    PropMode::REPLACE,
+        super::super::in_time(|| {
+            if !super::super::display::available() {
+                assert!(
+                    std::env::var_os("CI").is_none(),
+                    "CI installs xvfb for this test"
+                );
+                return;
+            }
+            let display = super::super::display::Display::start(800, 600, 1.0).unwrap();
+            let (x, screen) = x11rb::connect(Some(display.name().as_str())).unwrap();
+            let root = x.setup().roots[screen].root;
+            let atoms = Atoms::new(&x).unwrap().reply().unwrap();
+            let open = |width: u16, height: u16, transient_for: Option<Window>| {
+                let window = x.generate_id().unwrap();
+                x.create_window(
+                    0,
                     window,
-                    atoms.WM_TRANSIENT_FOR,
-                    AtomEnum::WINDOW,
-                    &[parent],
+                    root,
+                    5,
+                    5,
+                    width,
+                    height,
+                    0,
+                    WindowClass::INPUT_OUTPUT,
+                    0,
+                    &CreateWindowAux::new(),
                 )
                 .unwrap();
-            }
-            x.map_window(window).unwrap();
+                if let Some(parent) = transient_for {
+                    x.change_property32(
+                        PropMode::REPLACE,
+                        window,
+                        atoms.WM_TRANSIENT_FOR,
+                        AtomEnum::WINDOW,
+                        &[parent],
+                    )
+                    .unwrap();
+                }
+                x.map_window(window).unwrap();
+                x.flush().unwrap();
+                window
+            };
+            let geometry = |window: Window| {
+                let at = x.get_geometry(window).unwrap().reply().unwrap();
+                (at.x, at.y, at.width, at.height)
+            };
+            let settle = |window: Window, want: (i16, i16, u16, u16)| {
+                let until = std::time::Instant::now() + std::time::Duration::from_secs(5);
+                while geometry(window) != want && std::time::Instant::now() < until {
+                    std::thread::sleep(std::time::Duration::from_millis(10));
+                }
+                geometry(window)
+            };
+            let focused = || x.get_input_focus().unwrap().reply().unwrap().focus;
+
+            let main = open(300, 200, None);
+            assert_eq!(settle(main, (0, 0, 800, 600)), (0, 0, 800, 600));
+            assert_eq!(focused(), main);
+            // Asking for another size is answered with the screen's.
+            x.configure_window(main, &ConfigureWindowAux::new().width(100).height(100))
+                .unwrap();
             x.flush().unwrap();
-            window
-        };
-        let geometry = |window: Window| {
-            let at = x.get_geometry(window).unwrap().reply().unwrap();
-            (at.x, at.y, at.width, at.height)
-        };
-        let settle = |window: Window, want: (i16, i16, u16, u16)| {
+            std::thread::sleep(std::time::Duration::from_millis(100));
+            assert_eq!(geometry(main), (0, 0, 800, 600));
+
+            let dialog = open(200, 100, Some(main));
+            assert_eq!(settle(dialog, (300, 250, 200, 100)), (300, 250, 200, 100));
+            assert_eq!(focused(), dialog);
+
+            display.fit(1024, 768, 1.0).unwrap();
+            assert_eq!(settle(main, (0, 0, 1024, 768)), (0, 0, 1024, 768));
+            assert_eq!(settle(dialog, (412, 334, 200, 100)), (412, 334, 200, 100));
+
+            x.destroy_window(dialog).unwrap();
+            x.flush().unwrap();
             let until = std::time::Instant::now() + std::time::Duration::from_secs(5);
-            while geometry(window) != want && std::time::Instant::now() < until {
+            while focused() != main && std::time::Instant::now() < until {
                 std::thread::sleep(std::time::Duration::from_millis(10));
             }
-            geometry(window)
-        };
-        let focused = || x.get_input_focus().unwrap().reply().unwrap().focus;
+            assert_eq!(focused(), main);
 
-        let main = open(300, 200, None);
-        assert_eq!(settle(main, (0, 0, 800, 600)), (0, 0, 800, 600));
-        assert_eq!(focused(), main);
-        // Asking for another size is answered with the screen's.
-        x.configure_window(main, &ConfigureWindowAux::new().width(100).height(100))
-            .unwrap();
-        x.flush().unwrap();
-        std::thread::sleep(std::time::Duration::from_millis(100));
-        assert_eq!(geometry(main), (0, 0, 800, 600));
-
-        let dialog = open(200, 100, Some(main));
-        assert_eq!(settle(dialog, (300, 250, 200, 100)), (300, 250, 200, 100));
-        assert_eq!(focused(), dialog);
-
-        display.fit(1024, 768, 1.0).unwrap();
-        assert_eq!(settle(main, (0, 0, 1024, 768)), (0, 0, 1024, 768));
-        assert_eq!(settle(dialog, (412, 334, 200, 100)), (412, 334, 200, 100));
-
-        x.destroy_window(dialog).unwrap();
-        x.flush().unwrap();
-        let until = std::time::Instant::now() + std::time::Duration::from_secs(5);
-        while focused() != main && std::time::Instant::now() < until {
-            std::thread::sleep(std::time::Duration::from_millis(10));
-        }
-        assert_eq!(focused(), main);
-
-        // The ratio, as GTK reads it.
-        let owner = x
-            .get_selection_owner(atoms._XSETTINGS_S0)
-            .unwrap()
-            .reply()
-            .unwrap()
-            .owner;
-        assert_ne!(owner, NONE);
-        display.fit(1024, 768, 2.0).unwrap();
-        let read = x
-            .get_property(
-                false,
-                owner,
-                atoms._XSETTINGS_SETTINGS,
-                atoms._XSETTINGS_SETTINGS,
-                0,
-                1024,
-            )
-            .unwrap()
-            .reply()
-            .unwrap();
-        assert_eq!(read.value[44..48], 2_i32.to_ne_bytes());
-        let resources = x
-            .get_property(
-                false,
-                root,
-                atoms.RESOURCE_MANAGER,
-                AtomEnum::STRING,
-                0,
-                1024,
-            )
-            .unwrap()
-            .reply()
-            .unwrap();
-        assert_eq!(resources.value, b"Xft.dpi:\t192\n");
+            // The ratio, as GTK reads it.
+            let owner = x
+                .get_selection_owner(atoms._XSETTINGS_S0)
+                .unwrap()
+                .reply()
+                .unwrap()
+                .owner;
+            assert_ne!(owner, NONE);
+            display.fit(1024, 768, 2.0).unwrap();
+            let read = x
+                .get_property(
+                    false,
+                    owner,
+                    atoms._XSETTINGS_SETTINGS,
+                    atoms._XSETTINGS_SETTINGS,
+                    0,
+                    1024,
+                )
+                .unwrap()
+                .reply()
+                .unwrap();
+            assert_eq!(read.value[44..48], 2_i32.to_ne_bytes());
+            let resources = x
+                .get_property(
+                    false,
+                    root,
+                    atoms.RESOURCE_MANAGER,
+                    AtomEnum::STRING,
+                    0,
+                    1024,
+                )
+                .unwrap()
+                .reply()
+                .unwrap();
+            assert_eq!(resources.value, b"Xft.dpi:\t192\n");
+        });
     }
 }
