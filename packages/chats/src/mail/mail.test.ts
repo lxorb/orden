@@ -340,6 +340,14 @@ describe('a mailbox, end to end against a server', () => {
     await connection.close()
   })
 
+  test('a password beyond ASCII signs in where the server takes only LOGIN', async () => {
+    server.sasl = false
+    server.password = 'grüne Pferde'
+    const connection = await mailProvider.connect({ ...config(), password: 'grüne Pferde' }, host)
+    expect(connection.account.id).toBe('emil@example.org')
+    await connection.close()
+  })
+
   test('a wrong password is refused, and a kept one is read from the vault', async () => {
     await expect(mailProvider.connect({ ...config(), password: 'wrong' }, host)).rejects.toThrow(
       /Invalid credentials/,

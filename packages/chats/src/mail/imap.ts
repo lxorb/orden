@@ -193,12 +193,13 @@ export class Imap {
     if (this.capabilities.has('LOGINDISABLED')) {
       throw new ImapError('the server refuses a login over this connection', 'NO')
     }
-    await this.command(`LOGIN ${this.text(user)} ${this.text(password)}`)
-  }
-
-  /** A string argument: quoted when it can be, a literal otherwise. */
-  private text(value: string): string {
-    return /^[\x20-\x7e]*$/.test(value) ? quoted(value) : quoted(latin(ascii(value)))
+    // A quoted string is 7-bit (RFC 3501), so a password beyond it goes as a literal of
+    // its UTF-8 bytes, the one literal a command here carries.
+    if (/^[\x20-\x7e]*$/.test(password)) {
+      await this.command(`LOGIN ${quoted(user)} ${quoted(password)}`)
+    } else {
+      await this.command(`LOGIN ${quoted(user)}`, ascii(password))
+    }
   }
 
   private readCapabilities(line: string): void {

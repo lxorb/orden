@@ -22,6 +22,8 @@ export class FakeMail {
   user = 'emil@example.org'
   password = 'right horse'
   idle = true
+  /** Whether it takes SASL PLAIN in the command, or only LOGIN. */
+  sasl = true
   private readonly idlers = new Set<() => void>()
   private readonly servers: Server[] = []
   imapPort = 0
@@ -71,7 +73,7 @@ export class FakeMail {
     let authed = false
     let literal: { tag: string; rest: string; size: number } | null = null
     let idling: { tag: string; stop: () => void } | null = null
-    const caps = `IMAP4rev1 LITERAL+ AUTH=PLAIN SASL-IR${this.idle ? ' IDLE' : ''}`
+    const caps = `IMAP4rev1 LITERAL+${this.sasl ? ' AUTH=PLAIN SASL-IR' : ''}${this.idle ? ' IDLE' : ''}`
     say(`* OK [CAPABILITY ${caps}] fake ready`)
 
     const messages = () => this.boxes.get(box ?? '') ?? []
@@ -94,9 +96,16 @@ export class FakeMail {
         say(`* CAPABILITY ${caps}`)
         say(`${tag} OK done`)
       } else if (command === 'LOGIN') {
-        const [user, password] = [...rest.matchAll(/"((?:[^"\\]|\\.)*)"/g)].map((one) =>
+        // A quoted string is 7-bit (RFC 3501): 8-bit words come as a literal.
+        if (/[\u0080-\uffff]/.test(rest)) {
+          say(`${tag} BAD 8-bit characters in a quoted string`)
+          return
+        }
+        const said = [...rest.matchAll(/"((?:[^"\\]|\\.)*)"/g)].map((one) =>
           (one[1] ?? '').replace(/\\(.)/g, '$1'),
         )
+        const user = said[0]
+        const password = data ? new TextDecoder().decode(data) : said[1]
         authed = user === this.user && password === this.password
         say(authed ? `${tag} OK in` : `${tag} NO [AUTHENTICATIONFAILED] Invalid credentials`)
       } else if (command === 'AUTHENTICATE') {
