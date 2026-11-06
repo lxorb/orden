@@ -354,7 +354,7 @@ export class TableView {
     })
 
     cell.addEventListener('focus', () => showSource(cell))
-    cell.addEventListener('blur', () => this.left(cell, at))
+    cell.addEventListener('blur', () => queueMicrotask(() => this.left(cell, at)))
     cell.addEventListener('input', (event) => {
       if (!(event as InputEvent).isComposing) this.edited(cell, at)
     })

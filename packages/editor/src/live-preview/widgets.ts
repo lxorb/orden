@@ -311,12 +311,16 @@ export class FenceHeaderWidget extends NibWidget {
     field.placeholder = uiLabel('fenceLanguage')
     field.spellcheck = false
 
+    const written = view.state.sliceDoc(this.infoFrom, this.infoTo)
     const commit = () => {
       const next = field.value.trim().replace(/\s+/g, '')
       field.replaceWith(label)
 
       if (next === this.language) return
-      view.dispatch({ changes: { from: this.infoFrom, to: this.infoTo, insert: next } })
+      queueMicrotask(() => {
+        if (view.state.sliceDoc(this.infoFrom, this.infoTo) !== written) return
+        view.dispatch({ changes: { from: this.infoFrom, to: this.infoTo, insert: next } })
+      })
     }
 
     field.addEventListener('keydown', (event) => {
