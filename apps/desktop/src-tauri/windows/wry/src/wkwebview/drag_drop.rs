@@ -107,6 +107,9 @@ pub(crate) fn perform_drag_operation(
   drag_info: &ProtocolObject<dyn NSDraggingInfo>,
 ) -> Bool {
   let paths = unsafe { collect_paths(drag_info) };
+  if let Some(hear) = super::DROPPED.get() {
+    hear(paths.clone());
+  }
   let dl: NSPoint = unsafe { drag_info.draggingLocation() };
   let frame: NSRect = this.frame();
   let position = (dl.x as i32, (frame.size.height - dl.y) as i32);

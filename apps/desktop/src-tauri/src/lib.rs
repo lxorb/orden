@@ -51,6 +51,8 @@ mod document_window;
 #[cfg(desktop)]
 mod downloads;
 #[cfg(desktop)]
+mod dropped_paths;
+#[cfg(desktop)]
 mod endpoint;
 #[cfg(desktop)]
 mod engine;
@@ -428,6 +430,7 @@ macro_rules! desktop_commands {
             page_style::wear_page_styles,
             launch::take_startup_pages,
             launch::take_startup_pdfs,
+            dropped_paths::dropped_paths,
             handed_pdfs::same_pdf,
             launch::new_window,
             launch::show_window,
@@ -606,6 +609,8 @@ pub fn run() {
     web_visual::arm_visuals();
     #[cfg(all(target_os = "macos", not(feature = "cef")))]
     page_carry::mac::arm();
+    #[cfg(target_os = "macos")]
+    dropped_paths::arm();
     #[cfg(not(feature = "cef"))]
     run_on(tauri::Builder::default());
     #[cfg(feature = "cef")]
@@ -740,6 +745,12 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
             std::process::exit(1);
         })
         .run(on_event);
+}
+
+#[cfg(desktop)]
+fn first_window(handle: &tauri::AppHandle) {
+    pinch::first_window(handle);
+    dropped_paths::first_window(handle);
 }
 
 fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
@@ -889,7 +900,7 @@ fn ready(
                 window.show()?;
             }
         }
-        pinch::first_window(handle);
+        first_window(handle);
     }
 
     #[cfg(not(desktop))]

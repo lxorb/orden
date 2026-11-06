@@ -61,7 +61,8 @@ test('Ctrl+O opens the palette on the notes, and nothing else', () => {
 
 function drag(type: 'dragover' | 'drop', on: Element, types: string[]): DragEvent {
   const event = new Event(type, { bubbles: true, cancelable: true }) as DragEvent
-  const transfer = { types, dropEffect: 'copy', files: [], items: [] }
+  const items = types.includes('Files') ? [{ kind: 'file', type: 'text/markdown' }] : []
+  const transfer = { types, dropEffect: 'copy', files: [], items }
   Object.defineProperty(event, 'dataTransfer', { value: transfer })
   on.dispatchEvent(event)
   return event

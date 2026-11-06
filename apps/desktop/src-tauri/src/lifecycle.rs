@@ -145,6 +145,11 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
         }
 
         RunEvent::WindowEvent {
+            event: WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }),
+            ..
+        } => crate::dropped_paths::dropped(app, &paths),
+
+        RunEvent::WindowEvent {
             label,
             event: WindowEvent::Destroyed,
             ..

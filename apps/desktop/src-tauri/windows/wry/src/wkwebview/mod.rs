@@ -108,6 +108,19 @@ use crate::util::Counter;
 
 static COUNTER: Counter = Counter::new();
 
+/// Orden's patch (lxorb/orden#1191): told the paths of the files dropped on a webview before
+/// its page hears of the drop, whatever the drop handler says.
+#[cfg(target_os = "macos")]
+pub(crate) static DROPPED: std::sync::OnceLock<fn(Vec<std::path::PathBuf>)> =
+  std::sync::OnceLock::new();
+
+/// Orden's patch (lxorb/orden#1191): says who is told the paths of dropped files. Once per
+/// process; later calls are ignored.
+#[cfg(target_os = "macos")]
+pub fn hear_dropped_paths(hear: fn(Vec<std::path::PathBuf>)) {
+  let _ = DROPPED.set(hear);
+}
+
 static WEBVIEW_STATE: Lazy<RwLock<HashMap<String, WebViewState>>> = Lazy::new(Default::default);
 
 struct WebViewState {

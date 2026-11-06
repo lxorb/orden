@@ -177,6 +177,14 @@ export function start(): () => void {
       .then((one) => (stopAnywhere = one.listen()))
   }
 
+  let stopOutsideDrops: (() => void) | null = null
+  if (!__EVEN_PLUGIN__ && isDesktop) {
+    void import('./outside-drops')
+      .then(({ hearOutsideDrops }) => hearOutsideDrops())
+      .then((stop) => (stopOutsideDrops = stop))
+      .catch((error: unknown) => log('warn', `outside drops: ${String(error)}`))
+  }
+
   let stopPointer: (() => void) | null = null
   if (!__EVEN_PLUGIN__) {
     void import('./typing-pointer').then((one) => (stopPointer = one.hidePointerWhileTyping()))
@@ -190,6 +198,7 @@ export function start(): () => void {
     stopRecovery()
     stopReloading()
     stopStrayDrops()
+    stopOutsideDrops?.()
     stopLooking()
     stopAutomation?.()
     stopHanded?.()

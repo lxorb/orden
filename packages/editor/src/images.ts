@@ -124,7 +124,11 @@ export function imageHandling(sink: ImageSink): Extension {
       dragover(event, view) {
         if (view.state.readOnly) return false
 
-        if ([...(event.dataTransfer?.items ?? [])].some((item) => item.kind === 'file')) {
+        if (
+          [...(event.dataTransfer?.items ?? [])].some(
+            (item) => item.kind === 'file' && item.type !== 'application/pdf',
+          )
+        ) {
           event.preventDefault()
         }
         return false
