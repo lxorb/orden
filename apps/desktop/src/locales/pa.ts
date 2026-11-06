@@ -2930,4 +2930,7 @@ export const pa: Dictionary = {
   'No activity': 'ਕੋਈ ਗਤੀਵਿਧੀ ਨਹੀਂ',
   'Start time': 'ਸ਼ੁਰੂ ਹੋਣ ਦਾ ਸਮਾਂ',
   'End time': 'ਖ਼ਤਮ ਹੋਣ ਦਾ ਸਮਾਂ',
+  'Count as': 'ਵਜੋਂ ਗਿਣੋ',
+  'Time in spaces': 'ਸਪੇਸਾਂ ਵਿੱਚ ਸਮਾਂ',
+  'Time on websites': 'ਵੈੱਬਸਾਈਟਾਂ ਉੱਤੇ ਸਮਾਂ',
 }

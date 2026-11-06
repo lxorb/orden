@@ -2883,4 +2883,7 @@ export const jv: Dictionary = {
   'No activity': 'Ora ana kegiatan',
   'Start time': 'Wektu wiwit',
   'End time': 'Wektu rampung',
+  'Count as': 'Etung minangka',
+  'Time in spaces': 'Wektu ing papan',
+  'Time on websites': 'Wektu ing situs web',
 }

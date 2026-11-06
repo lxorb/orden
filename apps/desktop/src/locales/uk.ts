@@ -3026,4 +3026,7 @@ export const uk: Dictionary = {
   'No activity': 'Без заняття',
   'Start time': 'Час початку',
   'End time': 'Час завершення',
+  'Count as': 'Рахувати як',
+  'Time in spaces': 'Час у просторах',
+  'Time on websites': 'Час на сайтах',
 }

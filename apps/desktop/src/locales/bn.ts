@@ -2916,4 +2916,7 @@ export const bn: Dictionary = {
   'No activity': 'কোনো কাজ নেই',
   'Start time': 'শুরুর সময়',
   'End time': 'শেষের সময়',
+  'Count as': 'হিসেবে গণনা করুন',
+  'Time in spaces': 'স্পেসে কাটানো সময়',
+  'Time on websites': 'ওয়েবসাইটে কাটানো সময়',
 }

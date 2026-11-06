@@ -2920,4 +2920,7 @@ export const mr: Dictionary = {
   'No activity': 'कोणतीही क्रिया नाही',
   'Start time': 'सुरुवातीची वेळ',
   'End time': 'शेवटची वेळ',
+  'Count as': 'म्हणून मोजा',
+  'Time in spaces': 'स्पेसमधील वेळ',
+  'Time on websites': 'वेबसाइटवरील वेळ',
 }

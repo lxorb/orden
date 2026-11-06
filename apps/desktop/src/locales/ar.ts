@@ -3054,4 +3054,7 @@ export const ar: Dictionary = {
   'No activity': 'بلا نشاط',
   'Start time': 'وقت البدء',
   'End time': 'وقت الانتهاء',
+  'Count as': 'احسبه ضمن',
+  'Time in spaces': 'الوقت في المساحات',
+  'Time on websites': 'الوقت على المواقع',
 }

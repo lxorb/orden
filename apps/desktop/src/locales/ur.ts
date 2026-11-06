@@ -2916,4 +2916,7 @@ export const ur: Dictionary = {
   'No activity': 'کوئی سرگرمی نہیں',
   'Start time': 'شروع کا وقت',
   'End time': 'ختم ہونے کا وقت',
+  'Count as': 'بطور شمار کریں',
+  'Time in spaces': 'اسپیسز میں وقت',
+  'Time on websites': 'ویب سائٹس پر وقت',
 }

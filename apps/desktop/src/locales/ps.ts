@@ -2921,4 +2921,7 @@ export const ps: Dictionary = {
   'No activity': 'هیڅ کړنه نشته',
   'Start time': 'د پیل وخت',
   'End time': 'د پای وخت',
+  'Count as': 'په توګه وشمېرئ',
+  'Time in spaces': 'په ځایونو کې وخت',
+  'Time on websites': 'په وېبپاڼو کې وخت',
 }

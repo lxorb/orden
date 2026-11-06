@@ -2967,4 +2967,7 @@ export const ml: Dictionary = {
   'No activity': 'പ്രവർത്തനമില്ല',
   'Start time': 'ആരംഭ സമയം',
   'End time': 'അവസാന സമയം',
+  'Count as': 'ഇതായി എണ്ണുക',
+  'Time in spaces': 'സ്പേസുകളിലെ സമയം',
+  'Time on websites': 'വെബ്സൈറ്റുകളിലെ സമയം',
 }

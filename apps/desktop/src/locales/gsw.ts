@@ -2943,4 +2943,7 @@ export const gsw: Dictionary = {
   'No activity': 'Kei Aktivität',
   'Start time': 'Aafang',
   'End time': 'Änd',
+  'Count as': 'Zele als',
+  'Time in spaces': 'Ziit i Bereich',
+  'Time on websites': 'Ziit uf Websites',
 }

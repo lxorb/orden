@@ -2955,4 +2955,7 @@ export const kn: Dictionary = {
   'No activity': 'ಯಾವುದೇ ಚಟುವಟಿಕೆ ಇಲ್ಲ',
   'Start time': 'ಆರಂಭದ ಸಮಯ',
   'End time': 'ಮುಕ್ತಾಯದ ಸಮಯ',
+  'Count as': 'ಇದಾಗಿ ಎಣಿಸಿ',
+  'Time in spaces': 'ಸ್ಪೇಸ್‌ಗಳಲ್ಲಿನ ಸಮಯ',
+  'Time on websites': 'ವೆಬ್‌ಸೈಟ್‌ಗಳಲ್ಲಿನ ಸಮಯ',
 }

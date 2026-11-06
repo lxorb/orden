@@ -2925,4 +2925,7 @@ export const fa: Dictionary = {
   'No activity': 'بدون فعالیت',
   'Start time': 'زمان شروع',
   'End time': 'زمان پایان',
+  'Count as': 'شمردن به‌عنوان',
+  'Time in spaces': 'زمان در فضاها',
+  'Time on websites': 'زمان در وب‌سایت‌ها',
 }

@@ -2984,4 +2984,7 @@ export const fil: Dictionary = {
   'No activity': 'Walang gawain',
   'Start time': 'Oras ng simula',
   'End time': 'Oras ng tapos',
+  'Count as': 'Ibilang bilang',
+  'Time in spaces': 'Oras sa mga espasyo',
+  'Time on websites': 'Oras sa mga website',
 }

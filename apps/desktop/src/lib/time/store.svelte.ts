@@ -7,7 +7,12 @@ import {
   type Activity,
   activityOf,
   activityValue,
+  type Lanes,
+  lanesOf,
   LONGEST_NAME,
+  type Rule,
+  ruleOf,
+  ruleValue,
   type Span,
   spanOf,
   spanValue,
@@ -16,6 +21,8 @@ import {
 const CURSOR = 'cursor'
 
 const SEND_AFTER = 1500
+
+const TRACKING = 'tracking'
 
 export interface Opening {
   owner: string | null
@@ -34,6 +41,8 @@ const byOrder = (one: Activity, other: Activity) =>
 export class TimeStore {
   activities = $state.raw<Activity[]>([])
   spans = $state.raw<Span[]>([])
+  rules = $state.raw<Rule[]>([])
+  tracking = $state.raw<Lanes>(lanesOf(null))
   ready = $state(false)
   kept = $state<boolean | null>(null)
 
@@ -112,6 +121,11 @@ export class TimeStore {
       .flatMap((row) => (row.value ? [spanOf(row.id, row.value)] : []))
       .filter((one): one is Span => one !== null)
       .sort(byStart)
+    this.rules = this.ledger
+      .live('rule')
+      .flatMap((row) => (row.value ? [ruleOf(row.id, row.value)] : []))
+      .filter((one): one is Rule => one !== null)
+    this.tracking = lanesOf(this.ledger.get('pref', TRACKING)?.value)
   }
 
   private written(rows: readonly Row[]): void {
@@ -154,6 +168,9 @@ export class TimeStore {
 
   removeActivity(id: string): void {
     const rows = [this.write('activity', id, null)]
+    for (const rule of this.rules) {
+      if (rule.activity === id) rows.push(this.write('rule', rule.id, null))
+    }
     for (const span of this.spans) {
       if (span.activity === id)
         rows.push(this.write('span', span.id, spanValue({ ...span, activity: null })))
@@ -175,6 +192,7 @@ export class TimeStore {
       source: 'manual',
       space: null,
       site: null,
+      label: null,
       device: this.device || null,
       ...fields,
     }
@@ -205,6 +223,30 @@ export class TimeStore {
       this.write('span', span.id, spanValue({ ...span, end: Math.max(at, span.start) })),
     )
     this.written(rows)
+  }
+
+  track(change: Partial<Lanes>): void {
+    const next = { ...this.tracking, ...change }
+    this.written([this.write('pref', TRACKING, { spaces: next.spaces, sites: next.sites })])
+  }
+
+  ruleFor(lane: 'space' | 'site', key: string): Rule | null {
+    return this.rules.find((one) => (lane === 'space' ? one.space : one.site) === key) ?? null
+  }
+
+  countAs(lane: 'space' | 'site', key: string, activity: string | null): void {
+    const was = this.ruleFor(lane, key)
+    if (activity === null) {
+      if (was) this.written([this.write('rule', was.id, null)])
+      return
+    }
+    const rule: Rule = {
+      id: was?.id ?? crypto.randomUUID(),
+      activity,
+      space: lane === 'space' ? key : null,
+      site: lane === 'site' ? key : null,
+    }
+    this.written([this.write('rule', rule.id, ruleValue(rule))])
   }
 
   latest(): Activity[] {

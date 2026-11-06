@@ -31,6 +31,7 @@ const span = (id: string, start: number, end: number | null, activity: string | 
     source: 'manual',
     space: null,
     site: null,
+    label: null,
     device: null,
   }) satisfies Span
 

@@ -2934,4 +2934,7 @@ export const te: Dictionary = {
   'No activity': 'కార్యకలాపం లేదు',
   'Start time': 'ప్రారంభ సమయం',
   'End time': 'ముగింపు సమయం',
+  'Count as': 'ఇలా లెక్కించండి',
+  'Time in spaces': 'స్పేస్‌లలో సమయం',
+  'Time on websites': 'వెబ్‌సైట్‌లలో సమయం',
 }

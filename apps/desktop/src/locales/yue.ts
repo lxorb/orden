@@ -2799,4 +2799,7 @@ export const yue: Dictionary = {
   'No activity': '冇活動',
   'Start time': '開始時間',
   'End time': '結束時間',
+  'Count as': '計做',
+  'Time in spaces': '喺空間嘅時間',
+  'Time on websites': '喺網站嘅時間',
 }

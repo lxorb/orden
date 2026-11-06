@@ -2891,4 +2891,7 @@ export const my: Dictionary = {
   'No activity': 'လုပ်ဆောင်ချက် မရှိ',
   'Start time': 'စတင်ချိန်',
   'End time': 'ပြီးဆုံးချိန်',
+  'Count as': 'အဖြစ် ရေတွက်ရန်',
+  'Time in spaces': 'နေရာများတွင် ကြာချိန်',
+  'Time on websites': 'ဝဘ်ဆိုက်များတွင် ကြာချိန်',
 }

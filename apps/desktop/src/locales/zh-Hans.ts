@@ -2806,4 +2806,7 @@ export const zhHans: Dictionary = {
   'No activity': '无活动',
   'Start time': '开始时间',
   'End time': '结束时间',
+  'Count as': '计为',
+  'Time in spaces': '在空间中的时间',
+  'Time on websites': '在网站上的时间',
 }

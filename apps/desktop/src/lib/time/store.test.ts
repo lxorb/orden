@@ -94,6 +94,34 @@ describe('the time a person records', () => {
     expect(later.kept).toBe(true)
   })
 
+  test('counts a space as an activity, changes it, and lets it go with the activity', async () => {
+    const store = await opened(owner(), null)
+    const uni = store.addActivity('Uni')
+    const sport = store.addActivity('Sport')
+    store.countAs('space', 'space-1', uni.id)
+    store.countAs('space', 'space-1', sport.id)
+    expect(store.rules.map((one) => [one.space, one.activity])).toEqual([['space-1', sport.id]])
+    store.countAs('site', 'moodle.ethz.ch', uni.id)
+    store.removeActivity(sport.id)
+    expect(store.rules.map((one) => one.site)).toEqual(['moodle.ethz.ch'])
+    store.countAs('site', 'moodle.ethz.ch', null)
+    expect(store.rules).toEqual([])
+  })
+
+  test('tracks spaces and sites until switched off, on every device of the account', async () => {
+    const server = new FakeTimeServer()
+    const who = owner()
+    const one = await opened(who, server)
+    expect(one.tracking).toEqual({ spaces: true, sites: true })
+    one.track({ sites: false })
+    await one.exchange()
+
+    const other = new TimeStore((name) => openTimeDisk(name === null ? null : `${name}-far`))
+    await other.opened({ owner: who, server, device: 'there' })
+    await other.exchange()
+    expect(other.tracking).toEqual({ spaces: true, sites: false })
+  })
+
   test('carries what was recorded signed out into the account, once', async () => {
     const local = await opened(null, null)
     local.addActivity('Before')

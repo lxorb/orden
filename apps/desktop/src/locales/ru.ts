@@ -3032,4 +3032,7 @@ export const ru: Dictionary = {
   'No activity': 'Без занятия',
   'Start time': 'Время начала',
   'End time': 'Время окончания',
+  'Count as': 'Считать как',
+  'Time in spaces': 'Время в пространствах',
+  'Time on websites': 'Время на сайтах',
 }

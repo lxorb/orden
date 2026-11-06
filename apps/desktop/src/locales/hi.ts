@@ -2922,4 +2922,7 @@ export const hi: Dictionary = {
   'No activity': 'कोई गतिविधि नहीं',
   'Start time': 'शुरू होने का समय',
   'End time': 'ख़त्म होने का समय',
+  'Count as': 'इसमें गिनें',
+  'Time in spaces': 'स्पेस में समय',
+  'Time on websites': 'वेबसाइटों पर समय',
 }

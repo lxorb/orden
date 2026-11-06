@@ -2941,4 +2941,7 @@ export const tr: Dictionary = {
   'No activity': 'Etkinlik yok',
   'Start time': 'Başlangıç saati',
   'End time': 'Bitiş saati',
+  'Count as': 'Şu olarak say',
+  'Time in spaces': 'Alanlarda geçen süre',
+  'Time on websites': 'Web sitelerinde geçen süre',
 }

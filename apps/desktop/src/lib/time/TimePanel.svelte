@@ -20,6 +20,7 @@
     wholeOf,
   } from './days'
   import type { Activity } from './records'
+  import { counted, isOwn, type Place, placesOf } from './counted'
   import SpanEditor from './SpanEditor.svelte'
   import './start.svelte'
   import { time } from './time.svelte'
@@ -42,9 +43,16 @@
   })
 
   const end = $derived(endOf(range, start))
-  const pieces = $derived(piecesIn(time.spans, start, end, now))
+  const spans = $derived(counted(time.spans, time.rules))
+  const pieces = $derived(piecesIn(spans, start, end, now))
+  const own = $derived(pieces.filter((piece) => isOwn(piece.span)))
   const totals = $derived(totalsOf(pieces))
   const whole = $derived(wholeOf(pieces))
+  const everything = $derived(piecesIn(time.spans, start, end, now))
+  const places = $derived([
+    { lane: 'space' as const, label: t('Spaces'), list: placesOf(everything, 'space') },
+    { lane: 'site' as const, label: t('Sites'), list: placesOf(everything, 'site') },
+  ])
   const current = $derived(startOf(range, now) === start)
   const chips = $derived(time.latest().slice(0, 6))
 
@@ -52,7 +60,7 @@
     if (range === 'day') return []
     const out: { day: number; whole: number; totals: ReturnType<typeof totalsOf> }[] = []
     for (let day = start; day < end; day = daysAfter(day, 1)) {
-      const inDay = piecesIn(time.spans, day, daysAfter(day, 1), now)
+      const inDay = piecesIn(spans, day, daysAfter(day, 1), now)
       out.push({ day, whole: wholeOf(inDay), totals: totalsOf(inDay) })
     }
     return out
@@ -99,6 +107,30 @@
     const at = Math.min(Date.now(), end)
     const from = Math.max(start, at - 30 * MINUTE)
     editing = time.addSpan({ start: from, end: at, activity: chips[0]?.id ?? null }).id
+  }
+
+  function placeMenu(event: MouseEvent, place: Place) {
+    event.preventDefault()
+    const now = time.ruleFor(place.lane, place.key)?.activity ?? null
+    menu.show(
+      event,
+      [
+        ...time.activities
+          .filter((one) => !one.archived || one.id === now)
+          .map((one) => ({
+            label: one.name,
+            checked: one.id === now,
+            run: () => time.countAs(place.lane, place.key, one.id),
+          })),
+        null,
+        {
+          label: t('No activity'),
+          checked: now === null,
+          run: () => time.countAs(place.lane, place.key, null),
+        },
+      ],
+      { title: `${t('Count as')}: ${place.name}` },
+    )
   }
 
   function activityMenu(event: MouseEvent, activity: Activity) {
@@ -228,7 +260,7 @@
       {/each}
     </div>
     <ul class="spans">
-      {#each pieces as piece (piece.span.id)}
+      {#each own as piece (piece.span.id)}
         <li>
           <button
             type="button"
@@ -302,6 +334,30 @@
       {/each}
     </ul>
   {/if}
+
+  {#each places as group (group.lane)}
+    {#if group.list.length}
+      <p class="nib-section">{group.label}</p>
+      <ul class="totals">
+        {#each group.list as place (place.key)}
+          {@const rule = time.ruleFor(place.lane, place.key)}
+          <li>
+            <button
+              type="button"
+              class="nib-row is-short"
+              aria-haspopup="menu"
+              onclick={(event) => placeMenu(event, place)}
+              oncontextmenu={(event) => placeMenu(event, place)}
+            >
+              <span class="dot" style:background={tintOf(rule?.activity ?? null)}></span>
+              <span class="nib-row-label">{place.name}</span>
+              <span class="nib-row-meta">{lasting(place.ms)}</span>
+            </button>
+          </li>
+        {/each}
+      </ul>
+    {/if}
+  {/each}
 </div>
 
 <style>
