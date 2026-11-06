@@ -1069,3 +1069,39 @@ describe('a form that asks for something', () => {
     expect(said('<form><input type="hidden"><p>body</p></form>')).toContain('body')
   })
 })
+
+describe('what Orden draws itself, pasted back', () => {
+  const back = (markdown: string) => htmlToMarkdown(renderMarkdown(markdown))
+
+  test.each([
+    '> [!note] Title\n> body of the callout',
+    '> [!tip]- Folded away\n> hidden words',
+    '> [!warning]+\n> open by default',
+    '> [!note]\n> - one\n> - two\n>\n> a paragraph',
+    '> [!quote] A *literal* title\n> body',
+    '> [!note] Outer\n> > [!tip] Inner\n> > inner body',
+    'A mark[^1] and another[^two].\n\n[^1]: The note.\n[^two]: Second **bold**.',
+    'Term\n: Definition\n\nOther\n: First\n: Second',
+  ])('stays what was written: %s', (markdown) => {
+    expect(back(markdown)).toBe(markdown)
+  })
+})
+
+describe('what GitHub draws, pasted', () => {
+  test('an alert is a callout', () => {
+    const html =
+      '<div class="markdown-alert markdown-alert-warning" dir="auto"><p class="markdown-alert-title" dir="auto"><svg class="octicon"><path d="M0"></path></svg>Warning</p><p dir="auto">Careful here.</p></div>'
+    expect(htmlToMarkdown(html)).toBe('> [!warning]\n> Careful here.')
+  })
+
+  test('footnotes are footnotes, without the heading GitHub hides or the way back', () => {
+    const html = `<p>Text<sup><a href="#user-content-fn-note-1" id="user-content-fnref-note-1" data-footnote-ref="" aria-describedby="footnote-label">1</a></sup>.</p>
+<section data-footnotes="" class="footnotes"><h2 id="footnote-label" class="sr-only" dir="auto">Footnotes</h2>
+<ol dir="auto"><li id="user-content-fn-note-1"><p dir="auto">The words. <a href="#user-content-fnref-note-1" data-footnote-backref="" aria-label="Back to reference 1" class="data-footnote-backref">↩</a></p></li></ol></section>`
+    expect(htmlToMarkdown(html)).toBe('Text[^note-1].\n\n[^note-1]: The words.')
+  })
+
+  test('a superscript link that is no footnote is still a link', () => {
+    expect(htmlToMarkdown('<p>x<sup><a href="#top">up</a></sup></p>')).toBe('x^[up](#top)^')
+  })
+})
