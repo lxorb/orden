@@ -23,18 +23,25 @@ export function renamedAll(names: readonly string[], how: Renaming): string[] {
   })
 }
 
+export function isOneName(name: string): boolean {
+  const clean = name.trim()
+  return clean !== '' && clean !== '.' && clean !== '..' && !/[/\\\0]/.test(name)
+}
+
 export function clashing(
   names: readonly string[],
   next: readonly string[],
   taken: readonly string[],
+  swapping = true,
 ): Set<number> {
-  const leaving = new Set(names.map((one) => one.toLowerCase()))
+  const leaving = new Set(swapping ? names.map((one) => one.toLowerCase()) : [])
   const staying = new Set(taken.map((one) => one.toLowerCase()).filter((one) => !leaving.has(one)))
   const seen = new Map<string, number>()
   const out = new Set<number>()
   next.forEach((name, at) => {
     const key = name.toLowerCase()
-    if (staying.has(key)) out.add(at)
+    const same = key === names[at]?.toLowerCase()
+    if (!isOneName(name) || (staying.has(key) && !same)) out.add(at)
     const first = seen.get(key)
     if (first !== undefined) {
       out.add(first)

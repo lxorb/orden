@@ -191,10 +191,10 @@ describe("a file explorer's changes", () => {
       { from: '/home/me/Downloads/b.txt', name: 'a.txt' },
     ])
     expect(crate.renameTo.mock.calls.map(([path, name]) => `${path} ${name}`)).toEqual([
-      '/home/me/Downloads/a.txt .orden-renaming-0-b.txt',
-      '/home/me/Downloads/b.txt .orden-renaming-1-a.txt',
-      '/home/me/Downloads/.orden-renaming-0-b.txt b.txt',
-      '/home/me/Downloads/.orden-renaming-1-a.txt a.txt',
+      '/home/me/Downloads/a.txt .orden-renaming-0',
+      '/home/me/Downloads/b.txt .orden-renaming-1',
+      '/home/me/Downloads/.orden-renaming-0 b.txt',
+      '/home/me/Downloads/.orden-renaming-1 a.txt',
     ])
     expect(recorded).toEqual([
       {
@@ -210,5 +210,35 @@ describe("a file explorer's changes", () => {
         ],
       },
     ])
+  })
+
+  test('a swap of names that fails half way puts every name back as it was', async () => {
+    const view_ = view()
+    crate.renameTo.mockImplementation((path: string, name: string) =>
+      name === 'a.txt'
+        ? Promise.reject(new Error('a.txt is there already'))
+        : Promise.resolve(`${path.slice(0, path.lastIndexOf('/'))}/${name}`),
+    )
+    await renameMany(view_ as never, [
+      { from: '/home/me/Downloads/a.txt', name: 'b.txt' },
+      { from: '/home/me/Downloads/b.txt', name: 'a.txt' },
+    ])
+    expect(crate.renameTo.mock.calls.slice(4).map(([path, name]) => `${path} ${name}`)).toEqual([
+      '/home/me/Downloads/b.txt .orden-renaming-0',
+      '/home/me/Downloads/.orden-renaming-0 a.txt',
+      '/home/me/Downloads/.orden-renaming-1 b.txt',
+    ])
+    expect(view_.tell).toHaveBeenCalledWith('a.txt is there already')
+    expect(recorded).toEqual([])
+  })
+
+  test('a rename of many in a space that fails says why rather than throwing', async () => {
+    const view_ = view('/home/me/Orden/Work')
+    workspace.rename.mockImplementationOnce(() =>
+      Promise.reject(new Error('b.md is already there')),
+    )
+    await renameMany(view_ as never, [{ from: '/home/me/Orden/Work/a.md', name: 'b.md' }])
+    expect(view_.tell).toHaveBeenCalledWith('b.md is already there')
+    expect(view_.reload).toHaveBeenCalled()
   })
 })
