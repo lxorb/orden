@@ -37,7 +37,7 @@ if (sessionStorage.getItem('first-screen-other-words')) {
 }
 new MutationObserver(() => {
   const now = performance.now()
-  const drawing = document.querySelector('.first')
+  const drawing = document.querySelector('.panes > .first')
   if (first.list === null && document.querySelector('aside .row')) first.list = now
   if (drawing && first.drawn === null) {
     first.drawn = now
@@ -47,7 +47,7 @@ new MutationObserver(() => {
       first.lines = linesOf(content)
     }
   }
-  if (first.editor === null && [...document.querySelectorAll('.cm-editor')].some((one) => !one.closest('.first'))) first.editor = now
+  if (first.editor === null && [...document.querySelectorAll('.cm-editor')].some((one) => !one.closest('.panes > .first'))) first.editor = now
   if (first.drawn !== null && first.gone === null && !drawing) first.gone = now
 }).observe(document, { childList: true, subtree: true })
 // Every frame, whether the editor has a heading on screen still showing its marks: the
@@ -55,7 +55,7 @@ new MutationObserver(() => {
 first.raw = 0
 first.rawSeen = 0
 const look = () => {
-  const content = [...document.querySelectorAll('.cm-content')].find((one) => !one.closest('.first'))
+  const content = [...document.querySelectorAll('.cm-content')].find((one) => !one.closest('.panes > .first'))
   if (content) {
     const box = content.closest('.cm-scroller').getBoundingClientRect()
     const raw = [...content.querySelectorAll('.cm-line')].some((one) => {
@@ -63,7 +63,7 @@ const look = () => {
       return r.bottom > box.top && r.top < box.bottom && one.textContent.startsWith('## ')
     })
     if (raw) first.raw++
-    if (raw && !document.querySelector('.first')) first.rawSeen++
+    if (raw && !document.querySelector('.panes > .first')) first.rawSeen++
   }
   if (performance.now() < 20000) requestAnimationFrame(look)
 }
@@ -71,7 +71,7 @@ requestAnimationFrame(look)
 """
 
 EDITOR_LINES = r"""() => {
-  const content = [...document.querySelectorAll('.cm-content')].find((one) => !one.closest('.first'))
+  const content = [...document.querySelectorAll('.cm-content')].find((one) => !one.closest('.panes > .first'))
   const box = content.closest('.cm-scroller').getBoundingClientRect()
   return [...content.querySelectorAll('.cm-line')]
     .map((one) => ({ text: one.textContent, y: Math.round(one.getBoundingClientRect().top * 10) / 10, h: Math.round(one.getBoundingClientRect().height * 10) / 10 }))
@@ -79,7 +79,7 @@ EDITOR_LINES = r"""() => {
 }"""
 
 EDITOR_TOP = r"""() => {
-  const content = [...document.querySelectorAll('.cm-content')].find((one) => !one.closest('.first'))
+  const content = [...document.querySelectorAll('.cm-content')].find((one) => !one.closest('.panes > .first'))
   const scroller = content.closest('.cm-scroller')
   const box = scroller.getBoundingClientRect()
   const line = [...content.querySelectorAll('.cm-line')].find((one) => one.getBoundingClientRect().bottom > box.top + 1)
@@ -103,7 +103,7 @@ def relaunched(page: Page, cdp) -> dict:
     page.reload(wait_until="domcontentloaded")
     DRIVE.wait_for(page, "window.__first && window.__first.drawn !== null || window.__first.editor !== null", "a first frame", 60)
     held: bytes | None = None
-    if page.evaluate("() => !!document.querySelector('.first')"):
+    if page.evaluate("() => !!document.querySelector('.panes > .first')"):
         held = page.screenshot(clip=region(page), animations="disabled")
     DRIVE.ready(page)
     DRIVE.wait_for(page, "window.__first.gone !== null || window.__first.drawn === null", "the handover", 30)
