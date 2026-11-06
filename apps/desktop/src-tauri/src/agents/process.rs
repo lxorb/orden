@@ -1,8 +1,8 @@
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, Command, Stdio};
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Arc, Condvar, Mutex, MutexGuard, PoisonError};
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
+use std::sync::{mpsc, Arc, Condvar, Mutex, MutexGuard, PoisonError};
 use std::time::{Duration, Instant};
 
 use tauri::{AppHandle, Manager as _};
@@ -44,10 +44,49 @@ struct Started {
     kept: bool,
     child: Mutex<Option<Child>>,
     family: Family,
-    input: Mutex<Option<ChildStdin>>,
+    input: Mutex<Option<Feed>>,
     killed: AtomicBool,
     said: Mutex<Said>,
     heard: Condvar,
+}
+
+struct Feed {
+    words: mpsc::Sender<Vec<u8>>,
+    unread: Arc<AtomicUsize>,
+}
+
+impl Feed {
+    fn new(mut pipe: ChildStdin) -> Self {
+        let (words, heard) = mpsc::channel::<Vec<u8>>();
+        let unread = Arc::new(AtomicUsize::new(0));
+        let left = Arc::clone(&unread);
+        std::thread::spawn(move || {
+            for chunk in heard {
+                let done = pipe.write_all(&chunk).and_then(|()| pipe.flush());
+                left.fetch_sub(chunk.len(), Ordering::SeqCst);
+                if done.is_err() {
+                    return;
+                }
+            }
+        });
+        Self { words, unread }
+    }
+
+    fn give(&self, words: &str) -> Result<(), Unfed> {
+        let unread = self.unread.load(Ordering::SeqCst);
+        if unread > 0 && unread + words.len() > KEPT {
+            return Err(Unfed::Unread(unread));
+        }
+        self.unread.fetch_add(words.len(), Ordering::SeqCst);
+        self.words
+            .send(words.as_bytes().to_vec())
+            .map_err(|_| Unfed::Closed)
+    }
+}
+
+enum Unfed {
+    Unread(usize),
+    Closed,
 }
 
 #[derive(Default)]
@@ -340,13 +379,22 @@ fn read(one: &Arc<Started>, asked: &Process, since: u64) -> Answer {
 
 fn written(one: &Started, asked: &Process) -> Answer {
     let mut input = one.input.lock().unwrap_or_else(PoisonError::into_inner);
-    let Some(pipe) = input.as_mut() else {
+    let Some(feed) = input.as_ref() else {
         return Answer::error(Code::Failed, "its input is closed");
     };
-    if let Some(words) = asked.stdin.as_deref() {
-        if let Err(why) = pipe.write_all(words.as_bytes()).and_then(|()| pipe.flush()) {
-            *input = None;
-            return Answer::error(Code::Failed, format!("it would not read: {why}"));
+    if let Some(words) = asked.stdin.as_deref().filter(|words| !words.is_empty()) {
+        match feed.give(words) {
+            Ok(()) => {}
+            Err(Unfed::Unread(unread)) => {
+                return Answer::error(
+                    Code::Limit,
+                    format!("it has not read the {unread} bytes written before: read its output, or kill it"),
+                );
+            }
+            Err(Unfed::Closed) => {
+                *input = None;
+                return Answer::error(Code::Failed, "it would not read: its input is closed");
+            }
         }
     }
     if asked.close {
@@ -539,7 +587,9 @@ fn spawned(
     });
     started().push(Arc::clone(&one));
     match (kept, input) {
-        (true, input) => *one.input.lock().unwrap_or_else(PoisonError::into_inner) = input,
+        (true, input) => {
+            *one.input.lock().unwrap_or_else(PoisonError::into_inner) = input.map(Feed::new);
+        }
         (false, Some(mut pipe)) => {
             let words = asked.stdin.clone().unwrap_or_default();
             std::thread::spawn(move || {
@@ -805,5 +855,34 @@ mod tests {
         assert!(started().iter().all(|one| one.agent != "tester"));
         assert!(!other.said().ended);
         end_all(Some("someone-else"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_write_to_a_program_that_is_not_reading_does_not_wait_for_it() {
+        let cwd = std::env::temp_dir();
+        let found = located("sh", None, std::ffi::OsStr::new("/bin:/usr/bin")).expect("sh");
+        let mut start = process(ProcessOp::Start, "sh");
+        start.args = vec!["-c".into(), "sleep 3; wc -c".into()];
+        let kept = spawned("not-reading", &found, &start, &cwd, true).expect("started");
+
+        let mut write = process(ProcessOp::Write, "sh");
+        write.stdin = Some("x".repeat(512 << 10));
+        let at = Instant::now();
+        assert_eq!(written(&kept, &write).status(), "ok");
+        write.stdin = Some("y".repeat(600 << 10));
+        let refused = written(&kept, &write);
+        assert!(at.elapsed() < Duration::from_millis(500));
+        assert!(
+            matches!(&refused, Answer::Error { code: Code::Limit, message, .. } if message.contains("not read")),
+            "{refused:?}"
+        );
+
+        let mut close = process(ProcessOp::Write, "sh");
+        close.close = true;
+        assert_eq!(written(&kept, &close).status(), "ok");
+        assert!(!kept.wait(Duration::from_secs(20), None, |said| said.ended));
+        assert_eq!(kept.said().out.end().0.trim(), (512 << 10).to_string());
+        end_all(Some("not-reading"));
     }
 }
