@@ -2,7 +2,14 @@ import { type Extension, Prec } from '@codemirror/state'
 import { EditorView, ViewPlugin } from '@codemirror/view'
 import { CodeMirror, getCM, Vim, vim } from '@replit/codemirror-vim'
 import { tickTaskAtCaret } from './commands'
-import { cycleAllFolds, toggleFold } from './fold'
+import {
+  cycleAllFolds,
+  foldAtCaret,
+  foldHeadings,
+  toggleFold,
+  unfoldAtCaret,
+  unfoldEverything,
+} from './fold'
 import { once } from './once'
 import { redoEdit, undoEdit } from './shared'
 import { modeOf, vimCommands, vimReport } from './vim'
@@ -63,6 +70,19 @@ function moveByScreenLine(keys: string, forward: boolean, context: string) {
 for (const context of ['normal', 'visual']) {
   moveByScreenLine('j', true, context)
   moveByScreenLine('k', false, context)
+}
+
+const FOLD_KEYS = {
+  za: toggleFold,
+  zc: foldAtCaret,
+  zo: unfoldAtCaret,
+  zM: foldHeadings,
+  zR: unfoldEverything,
+}
+
+for (const [keys, command] of Object.entries(FOLD_KEYS)) {
+  Vim.defineAction(keys, (cm) => void command(cm.cm6 as EditorView))
+  Vim.mapCommand(keys, 'action', keys, {}, { context: 'normal' })
 }
 
 Vim.defineEx('write', 'w', () => vimCommands()?.write())

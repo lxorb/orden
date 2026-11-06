@@ -123,6 +123,43 @@ describe('Tab in normal mode, as Org mode has it', () => {
   })
 })
 
+describe("Vim's own fold keys", () => {
+  function keys(view: EditorView, typed: string) {
+    const cm = getCM(view)
+    if (!cm) throw new Error('no Vim in the view')
+    for (const key of typed) Vim.handleKey(cm, key, 'user')
+  }
+
+  test('za folds and opens, zc only folds, zo only opens', () => {
+    const view = viewOf(NOTE, 2)
+    keys(view, 'za')
+    expect(foldLines(view.state)).toEqual([[1, 7]])
+    keys(view, 'za')
+    expect(foldLines(view.state)).toEqual([])
+
+    keys(view, 'zo')
+    expect(foldLines(view.state)).toEqual([])
+    keys(view, 'zc')
+    expect(foldLines(view.state)).toEqual([[1, 7]])
+    keys(view, 'zc')
+    expect(foldLines(view.state)).toEqual([[1, 7]])
+    keys(view, 'zo')
+    expect(foldLines(view.state)).toEqual([])
+    expect(view.state.doc.toString()).toBe(NOTE)
+  })
+
+  test('zM folds every heading and zR opens everything', () => {
+    const view = viewOf(NOTE, NOTE.indexOf('- a'))
+    keys(view, 'zM')
+    expect(foldLines(view.state)).toEqual([
+      [1, 7],
+      [9, 14],
+    ])
+    keys(view, 'zR')
+    expect(foldLines(view.state)).toEqual([])
+  })
+})
+
 describe('Tab, as normal mode reads it', () => {
   const tab = {
     key: 'Tab',
