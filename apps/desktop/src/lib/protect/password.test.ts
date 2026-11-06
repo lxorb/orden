@@ -23,4 +23,12 @@ describe('the protection password', () => {
     expect(hashedOf({ ...kept, hash: 1 })).toBeNull()
     expect(hashedOf('tulip')).toBeNull()
   })
+
+  test('is never read back at a cost that would hold the app for minutes or take gigabytes', async () => {
+    const kept = await hashPassword('x')
+    expect(hashedOf({ ...kept, n: 1 << 20 })).toBeNull()
+    expect(hashedOf({ ...kept, p: 16 })).toBeNull()
+    expect(hashedOf({ ...kept, r: 32 })).toBeNull()
+    expect(hashedOf({ ...kept, n: 1 << 16 })).toEqual({ ...kept, n: 1 << 16 })
+  })
 })

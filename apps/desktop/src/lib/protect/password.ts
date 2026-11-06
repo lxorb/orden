@@ -1,5 +1,6 @@
 import type { Hashed } from './protection.svelte'
-import { type Cost, scrypt } from './scrypt'
+import type { Cost } from './scrypt'
+import { scryptOffThread } from './scrypt-off'
 
 const COST: Cost = { n: 32768, r: 8, p: 1 }
 const LENGTH = 32
@@ -20,7 +21,7 @@ function unbase64(text: string): Uint8Array<ArrayBuffer> {
 }
 
 function derive(password: string, salt: Uint8Array<ArrayBuffer>, cost: Cost) {
-  return scrypt(encoder.encode(password.normalize('NFC')), salt, cost, LENGTH)
+  return scryptOffThread(encoder.encode(password.normalize('NFC')), salt, cost, LENGTH)
 }
 
 export async function hashPassword(password: string): Promise<Hashed> {
