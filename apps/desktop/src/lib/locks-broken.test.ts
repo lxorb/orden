@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { leadSync } from './sync2/lead'
-import { heldForLife, holdIfFree, ifFree, locksWork } from './locks'
+import { heldForLife, holdIfFree, ifFree, inTurn, locksWork } from './locks'
+import { aloneHere } from './sync2/budget'
 import { oneWriteAt } from './windows'
 import { takeSlot } from './workspace/slot'
 
@@ -60,6 +61,20 @@ describe.each(Object.entries(BROKEN))('with locks %s', (_name, locks) => {
     lead?.release()
   })
 
+  test("a kept space's index is written, once", async () => {
+    const run = vi.fn(() => Promise.resolve('index'))
+    const written = inTurn(() => 'nib:internal:space', run, 10_000)
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(await written).toBe('index')
+    expect(run).toHaveBeenCalledTimes(1)
+  })
+
+  test('the sync pass hears whether the window is alone', async () => {
+    const alone = aloneHere()
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(typeof (await alone)).toBe('boolean')
+  })
+
   test('the file is written, once', async () => {
     const run = vi.fn(() => Promise.resolve('words'))
     const written = oneWriteAt('/a.md', run)
@@ -100,6 +115,28 @@ describe('with locks that work', () => {
       },
     } as unknown as LockManager
   }
+
+  test('a turn another window never gives up is taken once its patience is out', async () => {
+    let free = true
+    vi.stubGlobal('navigator', {
+      locks: {
+        request: (_name: string, ...rest: unknown[]) => {
+          const run = rest.at(-1) as (lock: unknown) => unknown
+          const { ifAvailable } = (rest.length > 1 ? rest[0] : {}) as { ifAvailable?: boolean }
+          if (ifAvailable) return Promise.resolve(run(free ? {} : null))
+          free = false
+          return new Promise(() => undefined)
+        },
+      },
+    })
+    const run = vi.fn(() => Promise.resolve('index'))
+    const written = inTurn(() => 'nib:internal:space', run, 10_000)
+    await vi.advanceTimersByTimeAsync(9_000)
+    expect(run).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(2_000)
+    expect(await written).toBe('index')
+    expect(run).toHaveBeenCalledTimes(1)
+  })
 
   test('a name one window holds is not free to the next, until it lets go', async () => {
     vi.stubGlobal('navigator', { locks: working() })

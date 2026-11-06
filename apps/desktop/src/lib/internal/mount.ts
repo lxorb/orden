@@ -1,3 +1,4 @@
+import { inTurn } from '../locks'
 import { readsAsText } from '../web/commands'
 import { mountRows } from '../web/store'
 import { folderBytes } from './bytes'
@@ -7,13 +8,12 @@ import { internalRows } from './rows'
 
 let count = 0
 
+const INDEX_TURN_AT_MOST = 10_000
+
 function desktopWorld(foldsCase: boolean): InternalWorld {
   const world: InternalWorld = { now: () => Date.now(), key: () => crypto.randomUUID(), foldsCase }
-  const locks = typeof navigator === 'undefined' ? undefined : navigator.locks
-  if (locks) {
-    world.exclusive = <T>(name: string, then: () => Promise<T>): Promise<T> =>
-      locks.request(name, then) as Promise<T>
-  }
+  world.exclusive = <T>(name: string, then: () => Promise<T>): Promise<T> =>
+    inTurn(() => name, then, INDEX_TURN_AT_MOST)
   if (typeof BroadcastChannel === 'function') {
     world.channel = (name, heard) => {
       const channel = new BroadcastChannel(name)
