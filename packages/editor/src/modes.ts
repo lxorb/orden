@@ -8,6 +8,7 @@ import {
 import {
   Decoration,
   type DecorationSet,
+  Direction,
   EditorView,
   ViewPlugin,
   type ViewUpdate,
@@ -241,10 +242,85 @@ const bracketsFor = once((on: boolean): Extension => (on ? wrapSelection() : [])
 
 const deckFor = once((on: boolean): Extension => (on ? editorClass('nib-deck') : []))
 
+const RIGHT_TO_LEFT =
+  /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFC\u{10800}-\u{10FFF}\u{1E800}-\u{1EFFF}]/u
+
+const STRONG = /\p{L}/u
+
+const OWN_DIRECTION = new Set(['FencedCode', 'CodeBlock', 'Table', 'FrontMatter', 'BlockMath'])
+
+export function firstStrong(text: string): Direction | null {
+  for (const char of text) {
+    if (RIGHT_TO_LEFT.test(char)) return Direction.RTL
+    if (STRONG.test(char)) return Direction.LTR
+  }
+  return null
+}
+
+function keepsItsOwn(state: EditorState, pos: number): boolean {
+  for (let node = syntaxTree(state).resolveInner(pos, 1); node.parent; node = node.parent) {
+    if (OWN_DIRECTION.has(node.name)) return true
+  }
+  return false
+}
+
+const asWritten = {
+  [Direction.LTR]: Decoration.line({ attributes: { dir: 'ltr' } }),
+  [Direction.RTL]: Decoration.line({ attributes: { dir: 'rtl' } }),
+}
+
+function directions(view: EditorView, base: Direction): DecorationSet {
+  const { state } = view
+  const marks = []
+
+  for (const { from, to } of view.visibleRanges) {
+    for (let pos = from; pos <= to;) {
+      const line = state.doc.lineAt(pos)
+      const said = firstStrong(line.text)
+      if (said !== null && said !== base && !keepsItsOwn(state, line.from)) {
+        marks.push(asWritten[said].range(line.from))
+      }
+      if (line.to >= state.doc.length) break
+      pos = line.to + 1
+    }
+  }
+
+  return Decoration.set(marks)
+}
+
+function lineDirections(base: Direction): Extension {
+  return [
+    EditorView.perLineTextDirection.of(true),
+    ViewPlugin.fromClass(
+      class {
+        decorations: DecorationSet
+
+        constructor(view: EditorView) {
+          this.decorations = directions(view, base)
+        }
+
+        update(update: ViewUpdate) {
+          if (
+            update.docChanged ||
+            update.viewportChanged ||
+            syntaxTree(update.startState) !== syntaxTree(update.state)
+          ) {
+            this.decorations = directions(update.view, base)
+          }
+        }
+      },
+      { decorations: (plugin) => plugin.decorations },
+    ),
+  ]
+}
+
+export const leftToRightLines = lineDirections(Direction.LTR)
+export const rightToLeftLines = lineDirections(Direction.RTL)
+
 const directionFor = once((rtl: boolean): Extension =>
   rtl
-    ? [EditorView.contentAttributes.of({ dir: 'rtl' }), editorClass('nib-rtl')]
-    : EditorView.contentAttributes.of({ dir: 'ltr' }),
+    ? [EditorView.contentAttributes.of({ dir: 'rtl' }), editorClass('nib-rtl'), rightToLeftLines]
+    : [EditorView.contentAttributes.of({ dir: 'ltr' }), leftToRightLines],
 )
 
 const spellings = once((setting: string): Extension => {
