@@ -10,6 +10,7 @@ const disk = vi.hoisted(() => ({
   tabs: null as (() => unknown) | null,
   reactive: false,
   heard: null as ((path: string, words: string) => void) | null,
+  held: null as Promise<void> | null,
 }))
 
 vi.mock('../tauri', async (original) => ({
@@ -41,10 +42,11 @@ vi.mock('../workspace.svelte', () => ({
   },
 }))
 vi.mock('../workspace/note-text', () => ({
-  noteText: (_: unknown, path: string) => {
+  noteText: async (_: unknown, path: string) => {
     disk.reads++
     if (disk.reactive) void disk.tabs?.()
-    return Promise.resolve(disk.files.get(path) ?? null)
+    if (disk.held) await disk.held
+    return disk.files.get(path) ?? null
   },
   writeNoteText: (_: unknown, path: string, _before: string, after: string) => {
     disk.writes.push({ path, after })
@@ -96,6 +98,7 @@ beforeEach(() => {
   settings.landsOnField = false
   disk.reads = 0
   disk.reactive = false
+  disk.held = null
   target = document.createElement('div')
   document.body.append(target)
 })
@@ -171,6 +174,32 @@ describe('Settings > Space', () => {
     box.dispatchEvent(new Event('blur'))
     await settled()
     expect(disk.writes).toEqual([])
+  })
+
+  test('while the file is read, it is a field still to be filled, never a blank', async () => {
+    let read: () => void = () => undefined
+    disk.held = new Promise((done) => (read = done))
+    disk.files.set('/space/AGENTS.md', '# Rules')
+    const box = await shown()
+    expect(box.readOnly).toBe(true)
+    expect(box.classList.contains('read')).toBe(false)
+    read()
+    await settled()
+    flushSync()
+    expect(box.readOnly).toBe(false)
+    expect(box.value).toBe('# Rules')
+  })
+
+  test('a reader reads its words as words, and an empty file still as a field', async () => {
+    disk.writable = false
+    disk.files.set('/space/AGENTS.md', '# Theirs')
+    const box = await shown()
+    expect(box.classList.contains('read')).toBe(true)
+    close?.()
+    disk.files.set('/space/AGENTS.md', '')
+    const empty = await shown()
+    expect(empty.readOnly).toBe(true)
+    expect(empty.classList.contains('read')).toBe(false)
   })
 
   test('a file that arrives from sync or an agent appears', async () => {
