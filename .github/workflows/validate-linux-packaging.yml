@@ -133,7 +133,6 @@ jobs:
           bsdtar -tf ./*.pkg.tar.zst
           echo "::endgroup::"
 
-          # The repairs the PKGBUILD makes have to have landed.
           install -d /check
           bsdtar -xf ./*.pkg.tar.zst -C /check
           test -f /check/usr/share/applications/nib.desktop
@@ -146,7 +145,6 @@ jobs:
           desktop-file-validate /check/usr/share/applications/nib.desktop
           echo 'installed layout ok'
 
-          # The committed .SRCINFO has to be the one makepkg generates.
           diff -u /repo/packaging/aur/nib-bin/.SRCINFO /repo/out/SRCINFO
           echo '.SRCINFO is current'
           SH

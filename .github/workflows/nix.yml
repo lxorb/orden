@@ -188,7 +188,6 @@ jobs:
           digest, = sys.argv[1:]
           flake = Path('packaging/nix/flake.nix')
           source = flake.read_text()
-          # Whatever stands there: the pinned hash, or a placeholder if one ever does.
           source, count = re.subn(
               r'(pnpmDeps = pkgs\.fetchPnpmDeps \{.*?hash = )(?:"[^"]*"|lib\.fakeHash);',
               rf'\1"{digest}";',

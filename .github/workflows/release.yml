@@ -243,7 +243,6 @@ jobs:
             { echo "$name<<__nib_eof__"; echo "$value"; echo "__nib_eof__"; } >> "$GITHUB_ENV"
           done
 
-      # Signed so the updater will accept them, as in `build`.
       - name: Bundle the app
         shell: bash
         env:
@@ -254,7 +253,7 @@ jobs:
             --config '{"version":"${{ needs.version.outputs.version }}"}'
           lipo -info "$UNIVERSAL/bundle/macos/Orden.app/Contents/MacOS/"*
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: nib-macos-universal
           if-no-files-found: error
@@ -263,10 +262,6 @@ jobs:
             ${{ env.UNIVERSAL }}/bundle/macos/*.app.tar.gz
             ${{ env.UNIVERSAL }}/bundle/macos/*.app.tar.gz.sig
 
-  # One generation of the release's caches on `unstable`, the only ref that saves any:
-  # once this run's are saved, the ones they replaced go, so the repository's 10 GB holds
-  # today's caches rather than yesterday's beside them (#307). After every job that saves
-  # one; see scripts/prune-caches.sh, which says what is kept.
   caches:
     needs: [build, macos]
     if: ${{ !cancelled() && github.ref == 'refs/heads/unstable' && (needs.build.result == 'success' || needs.macos.result == 'success') }}
@@ -274,60 +269,34 @@ jobs:
     permissions:
       actions: write
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - env:
           GH_TOKEN: ${{ github.token }}
         run: bash scripts/prune-caches.sh "$GITHUB_REF"
 
-  # One manifest for every platform, which is what the app polls.
-  #
-  # A release's own page is for people: the installers, under the product's name, and
-  # latest.json, which every install asks for at releases/latest/download. What the app
-  # downloads by itself goes on one pre-release, `updates`, beside every other version's:
-  # the bundles the updater installs. They keep the name `Nib-`, because every build
-  # before 0.14 takes an update only from a file called that (`names()` in
-  # src-tauri/src/updates.rs), and the one manifest serves them all. A build of
-  # `unstable` puts both on `edge`.
   publish:
     needs: [version, draft, build, macos]
-    # Only `unstable` and tags: a dispatch on any other branch is a trial and
-    # publishes nothing (it would otherwise replace edge).
     if: ${{ !cancelled() && needs.draft.result != 'failure' && needs.build.result == 'success' && needs.macos.result == 'success' && (github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v')) }}
     runs-on: ubuntu-latest
-    # The release's files are the point of it, and the release itself once they are up.
     permissions:
       contents: write
-      # To dispatch publish.yml, publish-linux.yml and packaging-bump.yml at the
-      # end of this job.
       actions: write
     env:
       TAG: ${{ needs.version.outputs.tag }}
       VERSION: ${{ needs.version.outputs.version }}
-      # Where the files the app downloads by itself go.
       FILES: ${{ needs.version.outputs.rolling == 'true' && needs.version.outputs.tag || 'updates' }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      # The bundles, and not the Mac's two halves, which `macos` made one of.
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with: { path: artifacts, pattern: 'nib-*' }
 
-      # Before the manifest, which builds its download URLs from the filenames.
       - name: Name the downloads for humans
         run: node scripts/name-assets.mjs artifacts "$VERSION"
 
       - name: Build latest.json
         run: node scripts/update-manifest.mjs "$FILES" "$VERSION" artifacts > latest.json
 
-      # The rolling release is updated where it stands, never taken down first. It
-      # used to be deleted and made again, and on 2026-10-17 the delete went through and
-      # the create was refused (HTTP 403, "Resource not accessible by integration"), which
-      # left no edge at all for anybody to update from. So: an edge that is there keeps
-      # its page and its tag, gets this build's name and notes, and has its tag moved
-      # here; one that is not there is made. A tag the token may not move is said and
-      # left where it was - the files below are what matter, and they go up either way.
-      # The last build's files come off only after this one's are up; see the step after
-      # the upload.
       - name: Point edge at this build
         if: needs.version.outputs.rolling == 'true'
         run: |
@@ -342,14 +311,11 @@ jobs:
           elif ! made=$(gh api -i -X POST "repos/$GITHUB_REPOSITORY/releases" \
             -f tag_name="$TAG" -f target_commitish="$GITHUB_SHA" -f name="$GITHUB_REF_NAME · $VERSION" \
             -f body="$notes" -F prerelease=true 2>&1); then
-            # What GitHub says it wanted, which is the question when this is refused.
             grep -iE '^(HTTP/|x-accepted-github-permissions|x-github-request-id)|"message"' <<<"$made" || true
             echo "::error::$TAG is not there and could not be made"
             exit 1
           fi
 
-      # Made by the first release that needs it, and a pre-release, so it is never the
-      # latest one.
       - name: The release the app downloads from
         if: needs.version.outputs.rolling != 'true'
         run: |
@@ -358,15 +324,8 @@ jobs:
 
       - name: Upload the files
         run: |
-          # Every file before the manifest that names it: the updater is never offered
-          # a version whose installer is still on its way.
-          # What latest.json names: the setups, the AppImages, the Mac's .app.tar.gz, and the
-          # .deb and .rpm a system's PackageKit installs (src-tauri/src/updates.rs).
-          # Through xargs, which fails when one does; find's own -exec answers 0 whatever
-          # the command said.
           find artifacts -type f \( -name '*-setup.exe' -o -name '*.AppImage' -o -name '*.app.tar.gz' -o -name '*.deb' -o -name '*.rpm' \) -print0 |
             xargs -0 -I{} gh release upload "$FILES" {} --clobber
-          # And the installers, under the product's name, on the release's own page.
           mkdir installers
           find artifacts -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' \) |
             while read -r file; do
@@ -396,33 +355,18 @@ jobs:
             fi
           fi
 
-      # And off edge, every desktop file this build did not put there: the last build's,
-      # whose names carry its version. The phones' are publish-mobile.yml's to replace.
-      # After the manifest, so the updater is never pointed at a file that has gone.
       - name: Take the last build's files off edge
         if: needs.version.outputs.rolling == 'true'
         run: |
           { find artifacts installers -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' -o -name '*.app.tar.gz' \) -printf '%f\n'; echo latest.json; } |
             bash scripts/prune-edge.sh "$TAG" desktop
 
-      # GitHub creates no workflow run for an event raised by GITHUB_TOKEN, so
-      # the release published above reaches no other workflow by itself.
-      # workflow_dispatch is the documented exception to that rule, so the release
-      # hands itself over explicitly: to publish.yml, and to packaging-bump.yml, which
-      # moves the manifests in packaging/ onto it, the flake people install from this
-      # repository first of all. Both are on the default branch, which a dispatch needs.
-      # The Linux managers are a call instead; see the `linux` job below. Only a real
-      # tag: `edge` is remade on every push and is not something to publish anywhere.
       - name: Hand the release to the package managers
         if: needs.version.outputs.rolling != 'true'
         run: |
           gh workflow run publish.yml -f tag="$TAG"
           gh workflow run packaging-bump.yml -f tag="$TAG"
 
-  # Edge into the apt repository's `unstable` suite, once edge's files are up; a stable
-  # release reaches its `stable` one through publish.yml. A call rather than a dispatch:
-  # a dispatch only finds a workflow on the default branch, and apt.yml is written on
-  # `unstable` first. See apt.yml.
   apt:
     needs: [version, publish]
     if: ${{ !cancelled() && needs.publish.result == 'success' && needs.version.outputs.rolling == 'true' }}
@@ -434,7 +378,6 @@ jobs:
       tag: ${{ needs.version.outputs.tag }}
     secrets: inherit
 
-  # And into the dnf and zypper repository's `unstable` suite, the same way; see rpm.yml.
   rpm:
     needs: [version, publish]
     if: ${{ !cancelled() && needs.publish.result == 'success' && needs.version.outputs.rolling == 'true' }}
@@ -446,8 +389,6 @@ jobs:
       tag: ${{ needs.version.outputs.tag }}
     secrets: inherit
 
-  # And edge to the Snap Store's `edge` channel, the same way; a stable release reaches
-  # `stable` through publish-linux.yml. See snap.yml.
   snap:
     needs: [version, publish]
     if: ${{ !cancelled() && needs.publish.result == 'success' && needs.version.outputs.rolling == 'true' }}
@@ -458,8 +399,6 @@ jobs:
       tag: ${{ needs.version.outputs.tag }}
     secrets: inherit
 
-  # A stable release to the AUR and the Snap Store's `stable`; see publish-linux.yml. A
-  # call, like apt and the snap: a dispatch only finds a workflow on the default branch.
   linux:
     needs: [version, publish]
     if: ${{ !cancelled() && needs.publish.result == 'success' && needs.version.outputs.rolling != 'true' }}
@@ -470,9 +409,6 @@ jobs:
       tag: ${{ needs.version.outputs.tag }}
     secrets: inherit
 
-  # The pin is pushed with this run's own token, which starts no workflow, so it never
-  # builds an edge of its own; then that commit's flake is built and started the way
-  # the release's is.
   nix-edge:
     needs: [version, publish]
     if: ${{ !cancelled() && needs.publish.result == 'success' && needs.version.outputs.rolling == 'true' }}
@@ -485,7 +421,7 @@ jobs:
       VERSION: ${{ needs.version.outputs.version }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           ref: unstable
 
@@ -507,8 +443,6 @@ jobs:
           done
           echo "sha=$(git rev-parse HEAD)" >>"$GITHUB_OUTPUT"
 
-  # Its own `if`: a job's default one is false whenever a job anywhere above it was
-  # skipped, and a push to `unstable` always skips `draft`.
   nix:
     needs: nix-edge
     if: ${{ !cancelled() && needs.nix-edge.result == 'success' }}

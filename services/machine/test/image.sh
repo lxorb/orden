@@ -75,7 +75,6 @@ ran, touched = set(), {}
 for line in open(sys.argv[1], encoding="utf-8", errors="replace"):
     pid, _, call = line.partition(" ")
     if "execve" in call:
-        # Whole, or the "<... execve resumed>" half of one another thread interrupted.
         if re.search(r"= 0\s*$", call):
             ran.add(pid)
     elif re.search(r"/home/nib/\.(claude|codex)", call):

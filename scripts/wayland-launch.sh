@@ -254,7 +254,6 @@ rows = b"".join(b"\x00" + b"\x2b\x8a\x6e\xff" * 16 for _ in range(16))
 icon = (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 16, 16, 8, 6, 0, 0, 0))
         + chunk(b"IDAT", zlib.compress(rows)) + chunk(b"IEND", b""))
 (folder / "icon.png").write_bytes(icon)
-# A popup, and a page of its own its background opens when the popup asks (#1161).
 (folder / "popup.html").write_text(f"<!doctype html><title>{name} popup</title><p>{name}</p>")
 (folder / "page.html").write_text(f"<!doctype html><title>{name} page</title><p>{name}</p>")
 (folder / "background.js").write_text(
