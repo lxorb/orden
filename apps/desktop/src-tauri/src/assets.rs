@@ -1,8 +1,3 @@
-//! The files a note points at. This module owns copying a picture in beside the
-//! note, handing one back as a `data:` URI for an export that has to carry its
-//! own pictures, and handing a whole file back as bytes for the window to read
-//! itself. Everything here stays inside the folder the note is in.
-
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
 use std::ffi::OsStr;
@@ -15,33 +10,17 @@ use crate::paths::{
     space_root, spaces_dir, taken,
 };
 
-/// Bigger than any picture belongs in a document, and small enough that turning
-/// it into text cannot exhaust the memory of the window asking.
 const LIMIT: u64 = LIMIT_MB * 1024 * 1024;
 
-/// The same ceiling in megabytes, because a picture that is refused says the
-/// number, and a sentence carrying a second copy of it is one that goes stale.
 const LIMIT_MB: u64 = 12;
 
-/// How long a picture's file name may be, so the whole path stays inside the
-/// limits Windows puts on one.
 const MAX_NAME: usize = 120;
 
-/// How large a file the window may read whole. Bigger than any PDF anyone keeps
-/// notes on - a scanned book of a thousand pages is well under this - and small
-/// enough that one read cannot exhaust the memory of the window asking. A PDF another
-/// program hands over is held to it too, since it is read in a tab once it is in.
 pub(crate) const FILE_LIMIT: u64 = 192 * 1024 * 1024;
 
-/// A file beside a note as its bytes, for the window to read itself: the PDF a
-/// tab is showing, which is far too large to spell out as text.
-///
-/// The bytes go over the IPC as bytes rather than as JSON, which is what makes a
-/// thirty megabyte PDF a copy rather than a hundred megabytes of numbers.
 #[tauri::command(async)]
 pub fn read_file(app: AppHandle, path: String) -> Result<tauri::ipc::Response, String> {
     let target = readable(&app, &path)?;
-    // A PDF iCloud took off this Mac is brought back before it is read.
     #[cfg(target_os = "macos")]
     crate::notes::icloud::fetched(&app, &target)?;
     let Some(bytes) = at_most(&target, FILE_LIMIT)? else {
@@ -63,8 +42,6 @@ fn readable(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
     Err(refused)
 }
 
-/// A picture as a `data:` URI, so an exported page carries its own pictures.
-/// Refuses anything large enough to bloat the file past usefulness.
 #[tauri::command(async)]
 pub fn read_asset(app: AppHandle, path: String) -> Result<String, String> {
     let target = in_spaces(&app, &path)?;
@@ -79,14 +56,6 @@ pub fn read_asset(app: AppHandle, path: String) -> Result<String, String> {
     ))
 }
 
-/// Copies a pasted or dropped picture into the folder the window asked for and
-/// returns the relative path to write into the markdown, so the note stays
-/// portable.
-///
-/// `folder` is relative to the note's own folder, empty for the folder itself.
-/// The window decides which of them it is - the space's assets folder, beside the
-/// note, a folder named after it - and this decides whether the result is still
-/// somewhere a note of this space may write.
 #[tauri::command(async)]
 pub fn save_asset(
     app: AppHandle,
@@ -100,7 +69,6 @@ pub fn save_asset(
         .parent()
         .ok_or_else(|| format!("{note_path} has no folder"))?;
 
-    // How far a picture may be put from the note: anywhere in its space.
     let limit = space_root(&spaces_dir(&app)?, note_folder)
         .ok_or_else(|| format!("{note_path} is not in a space"))?;
 
@@ -116,9 +84,6 @@ pub fn save_asset(
         .and_then(OsStr::to_str)
         .ok_or("could not name the picture")?;
 
-    // What goes into the note: forward slashes and the folder the window asked
-    // for, so the link reads the same on every platform and resolves from the
-    // note's own folder.
     Ok(if relative.is_empty() {
         file.to_string()
     } else {
@@ -126,17 +91,8 @@ pub fn save_asset(
     })
 }
 
-/// The picture written into `dir` under `safe`, or the copy of it already there, and
-/// where that is.
 fn stored(dir: &Path, safe: &str, bytes: &[u8]) -> Result<PathBuf, String> {
-    // The caller names the file after a hash of its contents, so a name that is
-    // already taken usually holds this very picture, and pasting the same one twice
-    // should cost nothing - at whichever name it stepped aside to before. Unless it is
-    // a page note's paper, which goes when the note does.
     let ours = |one: &Path| !held_paper(one) && fs::read(one).is_ok_and(|held| held == bytes);
-    // Anything else steps aside: a different picture of the name would be taken away,
-    // and a name that is free may still be taken, as `Report.pages.pdf` is beside a page
-    // note `Report.pages`, which would take it for its paper (#538).
     let target = first_spot(&dir.join(safe), true, |one| !taken(one, true) || ours(one));
 
     if !ours(&target) {
@@ -145,25 +101,13 @@ fn stored(dir: &Path, safe: &str, bytes: &[u8]) -> Result<PathBuf, String> {
     Ok(target)
 }
 
-/// The folder as the markdown will spell it: no leading or trailing slashes, and
-/// slashes rather than whatever the window sent.
 fn trimmed(folder: &str) -> &str {
     folder.trim_matches('/')
 }
 
-/// Where a picture from a note in `note_folder` goes, given the folder relative
-/// to it that the window asked for.
-///
-/// Refused when the folder is not relative, when it names a hidden folder, or
-/// when joining it on lands outside `limit`: `../assets` reaches the space's own
-/// folder from a note one level down, and `../../..` reaches another space, which
-/// is not this note's to write in. Nothing is read from disk, so this is a
-/// decision about paths alone.
 fn asset_dir(note_folder: &Path, folder: &str, limit: &Path) -> Result<PathBuf, String> {
     let asked = Path::new(folder);
 
-    // An absolute path handed to `join` replaces what it is joined to, so it
-    // would leave the note's folder behind entirely.
     let from_the_root = asked
         .components()
         .any(|part| matches!(part, Component::Prefix(_) | Component::RootDir));
@@ -171,11 +115,6 @@ fn asset_dir(note_folder: &Path, folder: &str, limit: &Path) -> Result<PathBuf, 
         return Err(format!("{folder} is not a folder inside the space"));
     }
 
-    // A dot in front is the app's own business - the trash is `.trash` inside the
-    // spaces folder, which a note directly in that folder would otherwise reach -
-    // and a picture there would be invisible anyway: the tree, the search and the
-    // link scan all skip a hidden folder. `..` is not one of these; it is a
-    // component of its own and the check below is what judges it.
     let hidden = asked.components().any(|part| match part {
         Component::Normal(name) => name.to_string_lossy().starts_with('.'),
         _ => false,
@@ -192,9 +131,6 @@ fn asset_dir(note_folder: &Path, folder: &str, limit: &Path) -> Result<PathBuf, 
     Ok(target)
 }
 
-/// The name a picture may be written under: what the caller asked for, with
-/// anything that could name another folder replaced by a dash. A name that is
-/// nothing but dots is refused, because `.` and `..` are folders and not files.
 pub(crate) fn safe_name(name: &str) -> Option<String> {
     let safe: String = name
         .chars()
@@ -212,8 +148,6 @@ pub(crate) fn safe_name(name: &str) -> Option<String> {
         return None;
     }
 
-    // `CON.png` is a device on Windows, and a file of that name one nobody can open,
-    // move or delete there; see `is_reserved`.
     Some(if is_reserved(&safe) {
         format!("_{safe}")
     } else {
@@ -221,12 +155,6 @@ pub(crate) fn safe_name(name: &str) -> Option<String> {
     })
 }
 
-/// What kind of file this is, going by the extension, which is all a `data:` URI
-/// needs to be told.
-///
-/// Sound and film are here because a note embeds those the way it embeds a
-/// picture, and a player handed `application/octet-stream` refuses to play. The
-/// bytes still go the same way; only the label changes.
 fn mime_of(path: &Path) -> &'static str {
     match path
         .extension()
@@ -246,8 +174,6 @@ fn mime_of(path: &Path) -> &'static str {
         "m4a" | "aac" => "audio/mp4",
         "wav" => "audio/wav",
         "flac" => "audio/flac",
-        // A container either can be in is labelled with what it usually holds;
-        // see the two lists in the markdown package's links.ts.
         "ogg" | "oga" | "opus" => "audio/ogg",
         "weba" => "audio/webm",
         "mp4" | "m4v" => "video/mp4",
@@ -261,9 +187,6 @@ fn mime_of(path: &Path) -> &'static str {
     }
 }
 
-/// Base64, the same way the byte writer reads it: one encoding for the crate, so
-/// a picture handed to the window and a picture handed back cannot disagree about
-/// what base64 is. The tests below are the RFC's own vectors.
 fn encode(bytes: &[u8]) -> String {
     BASE64.encode(bytes)
 }
@@ -273,16 +196,10 @@ mod tests {
     use super::{asset_dir, encode, mime_of, safe_name, stored, trimmed, MAX_NAME};
     use std::path::{Path, PathBuf};
 
-    /// Written the way the platform writes them, so the assertions read the same
-    /// on a runner as they do on a laptop.
     fn path(parts: &[&str]) -> PathBuf {
         parts.iter().collect()
     }
 
-    /// A page note's paper is `<name>.pages.pdf` beside it, so an attachment of that
-    /// name dropped beside a page note with no paper yet would become its paper -
-    /// hidden, drawn over, and deleted with the note - and a flat `Report.pages`
-    /// dropped beside a `Report.pages.pdf` would take that PDF. Each steps aside.
     #[test]
     fn an_attachment_never_pairs_with_a_page_note_or_its_paper() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -302,14 +219,10 @@ mod tests {
             std::fs::read(here.join("Lecture.pages.pdf")).expect("still there"),
             b"%PDF mine"
         );
-        // And the same picture twice is still the one copy.
         assert_eq!(stored(here, "a.png", b"png"), Ok(here.join("a.png")));
         assert_eq!(stored(here, "a.png", b"png"), Ok(here.join("a.png")));
     }
 
-    /// Dropped twice, the same file is the one copy, wherever it stepped aside to; and a
-    /// file whose bytes are a page note's paper is a copy of its own, not the paper,
-    /// which goes when the note does.
     #[test]
     fn an_attachment_stepped_aside_is_still_the_one_copy() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -332,8 +245,6 @@ mod tests {
         );
     }
 
-    /// `CON.png` is a name Windows gives to a device, and a file saved under it is one
-    /// nobody can open, move or delete there; see `is_reserved` in paths.rs.
     #[test]
     fn an_attachment_never_takes_a_device_name() {
         assert_eq!(safe_name("CON.png").as_deref(), Some("_CON.png"));
@@ -383,15 +294,9 @@ mod tests {
 
         assert!(asset_dir(&space, "../assets", &space).is_err());
         assert!(asset_dir(&space, "../../elsewhere", &space).is_err());
-        // Another space is inside the spaces folder and still none of this
-        // note's business.
         assert!(asset_dir(&space.join("Work"), "../../Other/assets", &space).is_err());
     }
 
-    /// A note directly in the spaces folder has that folder as its limit, and the
-    /// trash is a folder inside it. Nothing but the trash commands has any
-    /// business there, and a picture in any hidden folder is one the tree, the
-    /// search and the link scan would all skip.
     #[test]
     fn a_hidden_folder_is_refused() {
         let spaces = path(&["Documents", "Nib"]);
@@ -400,8 +305,6 @@ mod tests {
         assert!(asset_dir(&spaces, ".trash/1700000000000-0", &spaces).is_err());
         assert!(asset_dir(&spaces, "assets/.hidden", &spaces).is_err());
         assert!(asset_dir(&spaces, ".git", &spaces).is_err());
-        // A note whose own folder is hidden still keeps its own folder: what is
-        // judged is the folder that was asked for, not where the note lives.
         let inside_a_dot = path(&["home", "me", ".config", "notes"]);
         assert_eq!(
             asset_dir(&inside_a_dot, "assets", &inside_a_dot),
@@ -457,12 +360,10 @@ mod tests {
         assert_eq!(mime_of(Path::new("a/b.jpeg")), "image/jpeg");
         assert_eq!(mime_of(Path::new("a/b.svg")), "image/svg+xml");
         assert_eq!(mime_of(Path::new("a/b.xyz")), "application/octet-stream");
-        // Sound and film, so a player handed one knows what it is.
         assert_eq!(mime_of(Path::new("a/clip.MP3")), "audio/mpeg");
         assert_eq!(mime_of(Path::new("a/talk.m4a")), "audio/mp4");
         assert_eq!(mime_of(Path::new("a/demo.mp4")), "video/mp4");
         assert_eq!(mime_of(Path::new("a/demo.mov")), "video/quicktime");
-        // A container either can be in is labelled with what it usually holds.
         assert_eq!(mime_of(Path::new("a/x.ogg")), "audio/ogg");
         assert_eq!(mime_of(Path::new("a/x.ogv")), "video/ogg");
         assert_eq!(mime_of(Path::new("a/x.webm")), "video/webm");

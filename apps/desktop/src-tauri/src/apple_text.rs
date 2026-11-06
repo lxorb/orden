@@ -1,100 +1,47 @@
-//! The words of an Apple Notes note, out of the shape Notes keeps them in.
-//!
-//! A note's body is not text on a row. It is a gzipped protobuf in
-//! `ZICNOTEDATA.ZDATA`, holding the note's plain text once and a list of runs
-//! over it saying what each stretch of it is: a heading, an item of a list, a
-//! box, bold, a link, or the place an attachment sits.
-//!
-//! That is the shape Obsidian's importer reads, and this is a port of the reading
-//! into Rust - the same field numbers, the same style numbers. The importer is
-//! MIT; the protobuf shape it carries is Ciofeca Forensics' reverse engineering of
-//! the format, MIT as well.
-//!
-//! Nothing here opens a database or a file, which is the point: a Mac is the only
-//! machine that has the database, and the reading of what is on a row is bytes and
-//! arithmetic. So this is built and tested on every platform the app is built for,
-//! and only the store reader beside it is a Mac's own; see `lib.rs`.
-//!
-//! What a run becomes is Orden's own markdown rather than Obsidian's: `==marked==`
-//! for a highlight with no coloured circle in front of it, `^up^` and `~down~`
-//! for a raised and a lowered run, `- [x]` for a ticked box.
-
 use std::collections::HashMap;
 use std::io::Read;
 
 use flate2::read::{GzDecoder, ZlibDecoder};
 
-/// Where an attachment sits in the words. Notes writes one of these per
-/// attachment and says what it is in a run beside it.
 const OBJECT: char = '\u{fffc}';
 
-/// A line break inside a paragraph, which is what Notes writes for a return held
-/// with shift. The paragraph's style does not start again after one.
 const SOFT: char = '\u{2028}';
 
-/// The style of a paragraph that is only a paragraph.
 const PLAIN: i32 = -1;
-/// The note's own title, which is its first line.
 const TITLE: i32 = 0;
 const HEADING: i32 = 1;
 const SUBHEADING: i32 = 2;
-/// A monospaced paragraph, which is a code block one line at a time.
 const CODE: i32 = 4;
 const DOTTED: i32 = 100;
 const DASHED: i32 = 101;
 const NUMBERED: i32 = 102;
 const CHECKBOX: i32 = 103;
 
-/// Bold, italic, and the two at once, as `fontWeight` counts them.
 const BOLD: i32 = 1;
 const ITALIC: i32 = 2;
 const BOLD_ITALIC: i32 = 3;
 
-/// How far a run is raised or lowered.
 const SUPER: i32 = 1;
 const SUB: i32 = -1;
 
-/// How many spaces one level of a list is indented by, which is what Orden's own
-/// markdown writes: the width of `- `, so a nested line lines up under the words
-/// above it.
 const STEP: &str = "  ";
 
-/// How deep a line may say it sits. The depth is a number out of the blob and
-/// `prefix` writes a step for each of it, so a line claiming four billion levels
-/// is eight gigabytes of indent - which is not a deeply nested note but an import
-/// that runs the machine out of memory. Deeper than anybody nests a list.
 const DEEPEST: u32 = 32;
 
-/// The most one row may inflate to. A few megabytes of gzip can name gigabytes of
-/// nothing, and what comes of reading that is not an error but the import taking
-/// the machine with it. Far more words than Notes lets one note hold.
 const MOST_BYTES: u64 = 64 * 1024 * 1024;
 
-/// What Notes says about one stretch of a note's text.
 struct Run {
-    /// How many UTF-16 units of the text this run covers, which is how Notes
-    /// counts: an emoji is two.
     length: usize,
-    /// Which paragraph this is, as `styleType` numbers them.
     style: i32,
-    /// How deep in a list, counting from zero.
     indent: u32,
-    /// Whether a box is ticked, for a paragraph that is one.
     done: Option<bool>,
     quote: bool,
-    /// Bold, italic or both, as `fontWeight` counts them.
     weight: i32,
     underlined: bool,
-    /// Notes stores this as a number rather than a flag, and so does this.
     struck: i32,
-    /// Raised, lowered, or neither.
     baseline: i32,
-    /// One of the five colours a highlight can be. Which one is not carried
-    /// over: Orden has one highlight, and a note full of coloured circles is not
-    /// a note anybody wrote.
     emphasis: i32,
     link: Option<String>,
-    /// The attachment sitting here: its identifier, and what kind it is.
     attachment: Option<(String, String)>,
 }
 
@@ -102,8 +49,6 @@ impl Default for Run {
     fn default() -> Self {
         Self {
             length: 0,
-            // Not zero: zero is the title, and a run that says nothing about its
-            // paragraph is a paragraph.
             style: PLAIN,
             indent: 0,
             done: None,
@@ -119,44 +64,25 @@ impl Default for Run {
     }
 }
 
-/// A note as Notes stored it: its plain text, and the runs over it. An empty one
-/// is a row Notes wrote nothing into, which is what a note made and never typed
-/// in leaves behind.
 #[derive(Default)]
 pub struct Body {
-    /// UTF-16 units, because that is what a run's length counts.
     text: Vec<u16>,
-    /// In the order they cover the text.
     runs: Vec<Run>,
 }
 
-/// What an attachment becomes in the words. The words are the only thing this
-/// module knows about an attachment; which file it is and whether that file is
-/// on the disk is the database's business.
 pub trait Parts {
-    /// What sits at this attachment, or nothing at all for one that has no words
-    /// and no file.
     fn attachment(&mut self, id: &str, uti: &str) -> Option<String>;
 }
 
-/// One note's body, out of the bytes on its row. None for bytes that are not a
-/// note: a row Notes left empty, or one written by a version this cannot read.
 pub fn decode(data: &[u8]) -> Option<Body> {
     let bytes = inflate(data)?;
     let note = held(&bytes, 2).and_then(|document| held(document, 3));
 
-    // A `NoteStoreProto` holds a `Document` under field 2, which holds the `Note`
-    // under field 3, and the note is the text and the runs over it. A row that is
-    // a `Document` already is read as one as well: the two are told apart by which
-    // field is there, and a reader that insisted on the wrapper would answer
-    // nothing at all for a row written without it.
     let note = note.or_else(|| held(&bytes, 3))?;
 
     Some(note_of(note))
 }
 
-/// The bytes of one length-delimited field of a message, or None where the message
-/// has no such field or holds something else under it.
 fn held(bytes: &[u8], number: u32) -> Option<&[u8]> {
     Fields::new(bytes).find_map(|(held, value)| match value {
         Value::Bytes(inside) if held == number => Some(inside),
@@ -164,8 +90,6 @@ fn held(bytes: &[u8], number: u32) -> Option<&[u8]> {
     })
 }
 
-/// The note's own first line, which is the title Notes shows in its list. The
-/// title on the row is the same words cut short, so this is the one to use.
 pub fn title(body: &Body) -> Option<String> {
     let text = String::from_utf16_lossy(&body.text);
 
@@ -179,36 +103,23 @@ pub fn title(body: &Body) -> Option<String> {
     None
 }
 
-/// The note, as markdown.
 pub fn markdown(body: &Body, parts: &mut dyn Parts) -> String {
     let mut out = String::new();
     let mut fenced = false;
     let mut counted = 0_u32;
-    // The style and the count of the last item at each depth of the list this line
-    // is in.
     let mut levels: Vec<(i32, u32)> = Vec::new();
     let fence = fence_for(&body.text);
 
     for line in lines_of(body) {
         let run = line.run().unwrap_or(&DEFAULT);
-        // A line with nothing on it carries no run of its own, so what it is is
-        // what it sits in: a blank line between two monospaced paragraphs is part
-        // of the code, and closing the fence over it and opening another would cut
-        // one block of code into two.
         let code = line.run().map_or(fenced, |one| one.style == CODE);
 
-        // A fence is opened once for however many monospaced paragraphs follow
-        // each other, which is what they were on screen: one block of code.
         if code != fenced {
             out.push_str(&fence);
             out.push('\n');
             fenced = code;
         }
 
-        // The second half of a paragraph is the same item: it carries no number of
-        // its own, so it does not take the next one either. Each depth of a list keeps
-        // its own count, so the items nested under `1.` do not restart the list they
-        // sit in, and `2.` after them is still `2.`.
         if !line.soft {
             let listed = matches!(run.style, DOTTED | DASHED | NUMBERED | CHECKBOX);
             let depth = usize::try_from(run.indent).unwrap_or(0);
@@ -239,11 +150,7 @@ pub fn markdown(body: &Body, parts: &mut dyn Parts) -> String {
             out.push_str(&words);
         } else {
             out.push_str(&prefix(run, line.soft, counted));
-            // Not the line breaks: those are an attachment that is a block of its own,
-            // a table or a scan, asking for the blank line a block needs above it.
             let said = words.trim_start_matches(|one: char| one.is_whitespace() && one != '\n');
-            // An attachment's own markdown starts the line as what it is, a list of
-            // pictures as much as a picture; only a note's words are escaped.
             let first = line.pieces.iter().find(|(run, said)| {
                 run.attachment.is_some() || !said.replace(OBJECT, "").trim().is_empty()
             });
@@ -266,9 +173,6 @@ pub fn markdown(body: &Body, parts: &mut dyn Parts) -> String {
     tidy(&out)
 }
 
-/// The fence a block of code is written between: three backticks, or one more than
-/// the longest run of them in the note, so code that holds a fence of its own - a
-/// snippet of markdown, say - does not end the block halfway.
 fn fence_for(text: &[u16]) -> String {
     let backtick = u16::from(b'`');
     let mut longest = 0_usize;
@@ -282,7 +186,6 @@ fn fence_for(text: &[u16]) -> String {
     "`".repeat(longest.max(2) + 1)
 }
 
-/// A run that says nothing, for a line with nothing in it at all.
 const DEFAULT: Run = Run {
     length: 0,
     style: PLAIN,
@@ -298,25 +201,17 @@ const DEFAULT: Run = Run {
     attachment: None,
 };
 
-/// One line of the note: the pieces it is made of, each with the run it came
-/// out of.
 struct Line<'a> {
     pieces: Vec<(&'a Run, String)>,
-    /// Whether this line is the second half of a paragraph rather than a
-    /// paragraph of its own, which is what a return held with shift makes.
     soft: bool,
 }
 
 impl<'a> Line<'a> {
-    /// The run the line's style comes from, which is its first: Notes styles a
-    /// paragraph, and the first run of one carries what that style is.
     fn run(&self) -> Option<&'a Run> {
         self.pieces.first().map(|(run, _)| *run)
     }
 }
 
-/// The note's text cut into lines, with each line's pieces still knowing which
-/// run they came from.
 fn lines_of(body: &Body) -> Vec<Line<'_>> {
     let mut lines = vec![Line {
         pieces: Vec::new(),
@@ -351,7 +246,6 @@ fn lines_of(body: &Body) -> Vec<Line<'_>> {
             }
         }
 
-        // A run that ends on a break leaves the next line to the run after it.
         if said.ends_with('\n') || said.ends_with(SOFT) {
             lines.push(Line {
                 pieces: Vec::new(),
@@ -360,10 +254,6 @@ fn lines_of(body: &Body) -> Vec<Line<'_>> {
         }
     }
 
-    // A note ending on a break leaves a line with nothing on it, and that is not a
-    // line of the note: the words end where the last of them are. Dropped here
-    // rather than trimmed afterwards, because a note ending in a block of code
-    // would otherwise hold its fence open over it.
     if lines.last().is_some_and(|line| line.pieces.is_empty()) {
         lines.pop();
     }
@@ -371,15 +261,11 @@ fn lines_of(body: &Body) -> Vec<Line<'_>> {
     lines
 }
 
-/// What a line starts with: its box, its bullet, its hashes, its quote mark and
-/// however deep in a list it sits.
 fn prefix(run: &Run, soft: bool, counted: u32) -> String {
     let step = usize::try_from(run.indent).unwrap_or(0);
     let pad = STEP.repeat(step);
     let quote = if run.quote { "> " } else { "" };
 
-    // The second half of a paragraph carries no marker: it is the same item, so
-    // it is indented under the words above it instead.
     if soft {
         let listed = matches!(run.style, DOTTED | DASHED | NUMBERED | CHECKBOX);
         return format!("{quote}{pad}{}", if listed { STEP } else { "" });
@@ -399,14 +285,6 @@ fn prefix(run: &Run, soft: bool, counted: u32) -> String {
     }
 }
 
-/// One line's words, with what each run says about them written around them.
-///
-/// Runs next to each other that say the same thing are written as one: Notes ends a
-/// run wherever anything changes, a colour or a font as much as bold, so `Graphic` in
-/// bold may be two runs, and marking each on its own would write `**Gr****aphic**`.
-///
-/// Inside a block of code the words are the code, exactly as typed: no marks around
-/// them and no escapes in them, since a fence shows a backslash as a backslash.
 fn inline(line: &Line, parts: &mut dyn Parts, code: bool) -> String {
     let mut out = String::new();
     let mut pending: Option<(&Run, String)> = None;
@@ -440,7 +318,6 @@ fn inline(line: &Line, parts: &mut dyn Parts, code: bool) -> String {
     out
 }
 
-/// A stretch of words: marked, or as it is inside code.
 fn written(run: &Run, said: &str, code: bool) -> String {
     if code {
         return said.replace(OBJECT, "");
@@ -449,7 +326,6 @@ fn written(run: &Run, said: &str, code: bool) -> String {
     wrapped(run, said)
 }
 
-/// Whether two runs write the same marks around their words.
 fn same_marks(one: &Run, other: &Run) -> bool {
     one.weight == other.weight
         && one.underlined == other.underlined
@@ -459,11 +335,6 @@ fn same_marks(one: &Run, other: &Run) -> bool {
         && (one.emphasis != 0) == (other.emphasis != 0)
 }
 
-/// One piece of a line, with its marks around it.
-///
-/// The spaces at either end stay outside the marks, because `** bold **` is not
-/// bold in any reader: a run of Apple's is as likely to start with a space as
-/// not, since it ends wherever the formatting changes.
 fn wrapped(run: &Run, said: &str) -> String {
     let said = said.replace(OBJECT, "");
     if said.trim().is_empty() {
@@ -489,8 +360,6 @@ fn wrapped(run: &Run, said: &str) -> String {
     }
 
     if run.underlined {
-        // Orden has no mark of its own for an underline, and this is the one every
-        // markdown reader draws as one.
         marked = format!("<u>{marked}</u>");
     }
 
@@ -513,20 +382,9 @@ fn wrapped(run: &Run, said: &str) -> String {
     format!("{before}{marked}{after}")
 }
 
-/// A note's own words, escaped where Orden's markdown would read them as markup: they
-/// are plain words in Notes, and `a==b or c==d` is not a highlight, `_x_` not italics,
-/// `<b>` not a tag and `$x$` not math. The rules are packages/markdown's `escapeText`
-/// (escapes.ts), which every other conversion goes through, without its keeping of
-/// `**bold**` a page wrote as markdown: here a star is a star somebody typed. Where an
-/// escape changes nothing a reader sees it is left out, as there: `snake_case`, `2 * 3`.
-///
-/// A run is escaped on its own, so what is next to its ends is unknown and treated as
-/// something a marker could lean on. See `opened` for what the start of a line needs.
 fn escaped(words: &str) -> String {
     let chars: Vec<char> = words.chars().collect();
     let mut out = String::with_capacity(words.len());
-    // Whether anything has been written before this character in the run, which is
-    // what a star needs to know: one with words before it cannot begin a list.
     let mut mid = false;
 
     for (at, &one) in chars.iter().enumerate() {
@@ -536,23 +394,14 @@ fn escaped(words: &str) -> String {
         let blank = |side: Option<char>| side.is_some_and(char::is_whitespace);
 
         let escape = match one {
-            // An escape of the punctuation after it, or a backslash.
             '\\' => after.is_none_or(|next| next.is_ascii_punctuation()),
-            // Never emphasis inside a word, where a file name keeps its underscores.
             '_' => !(word(before) && word(after)),
-            // A star with a blank on each side can neither open emphasis nor close it.
             '*' => !(mid && blank(before) && blank(after)),
-            // Doubled, a highlight (`==`).
             '=' => before == Some(one) || after == Some(one),
-            // The second of two, which would open a comment and hide the rest.
             '%' => before == Some(one),
-            // Maths, unless it stands alone: `$5-$10` is two prices, `a $ b` a dollar.
             '$' => !(blank(before) && blank(after)),
-            // Lowered or raised text, or a strike, unless nothing follows to lower.
             '~' | '^' => !blank(after),
-            // A tag opened, where the words say `<b>` or `<script>`.
             '<' => opens_tag(after),
-            // An entity, which would show as the character it names; `R&D` is none.
             '&' => {
                 let named = chars[at + 1..]
                     .iter()
@@ -560,7 +409,6 @@ fn escaped(words: &str) -> String {
                     .count();
                 named > 0 && chars.get(at + 1 + named) == Some(&';')
             }
-            // A link or a wikilink, and code.
             '[' | ']' | '`' => true,
             _ => false,
         };
@@ -575,10 +423,6 @@ fn escaped(words: &str) -> String {
     out
 }
 
-/// A line's words with what would open a block at its start escaped, where Notes had a
-/// paragraph: a heading of `# not a heading`, a quote of `> q`, a list of `1986. A great
-/// year` or `- not a bullet`. A star there is a bullet as well, which `escaped` has
-/// seen to already, and so are `~~~` and `===`. `-5 degrees` is a temperature.
 fn opened(words: &str) -> String {
     let blank_or_end = |rest: &str| rest.chars().next().is_none_or(char::is_whitespace);
 
@@ -611,21 +455,10 @@ fn opened(words: &str) -> String {
     words.to_string()
 }
 
-/// Whether a `<` followed by this reads as the start of a tag, a closing tag, a
-/// comment or a processing instruction: the four things markdown lets raw HTML
-/// begin with. `a < b` is not one of them and keeps its bracket. The same rule as
-/// `OPENS_MARKUP` in `packages/markdown/src/words.ts`.
 pub fn opens_tag(next: Option<char>) -> bool {
     next.is_some_and(|next| next.is_ascii_alphabetic() || matches!(next, '/' | '!' | '?'))
 }
 
-/// Words from outside a note, with nothing in them that can open a tag. A note's
-/// own markup is markup, and the app renders the HTML in it, so a page that calls
-/// itself `Fine <img src=x onerror=...>` would otherwise write a tag into the note.
-///
-/// A backslash already in front of the `<` would take the escape for itself and
-/// leave the tag live, so those are doubled too. Everything else is left alone: a
-/// `#` in a tag is the tag.
 pub fn as_words(words: &str) -> String {
     let mut out = String::with_capacity(words.len());
     let mut slashes = 0_usize;
@@ -648,8 +481,6 @@ pub fn as_words(words: &str) -> String {
     out
 }
 
-/// Where a link goes, as markdown writes it: in angle brackets where it holds a space
-/// or a bracket of its own, which would otherwise end the link early or not make one.
 pub fn destination(link: &str) -> String {
     if link.contains(|one: char| one.is_whitespace() || matches!(one, '(' | ')' | '<' | '>')) {
         let inside = link.replace('<', "%3C").replace('>', "%3E");
@@ -659,8 +490,6 @@ pub fn destination(link: &str) -> String {
     link.to_string()
 }
 
-/// Blank lines collapsed and the ends trimmed, which is what every other reader
-/// in the import hands over. Never inside a code block, whose words are as they were.
 fn tidy(markdown: &str) -> String {
     let mut out = String::new();
     let mut blank = 0_u32;
@@ -697,24 +526,6 @@ fn tidy(markdown: &str) -> String {
     out.trim().to_string()
 }
 
-// ── Tables and scans ──────────────────────────────────────────────────
-
-/// A table inside a note, as a markdown table, or None for bytes that are not one.
-///
-/// A table is not on the note's row. It is an attachment with a row of its own, whose
-/// `ZMERGEABLEDATA1` is a gzipped `MergableDataProto`: the document Notes merges when two
-/// devices edit the same table at once. So nothing in it is where it is drawn. There is a
-/// list of objects, and every reference is an index into it; the rows and the columns are
-/// two ordered sets of identifiers, each saying where an identifier sits; and the cells
-/// are a dictionary from a column's identifier to a dictionary from a row's identifier to
-/// a note of its own - which is a `Body` like any other, so its words are written the way
-/// a note's are. This is Obsidian's importer's reading (`convert-table.ts`), field for
-/// field.
-///
-/// The first row is the header, because markdown's table has one and Notes' does not:
-/// that is what every table somebody makes in Notes looks like anyway. A cell's line
-/// breaks become `<br>` and its pipes are escaped, so a row stays one row. Notes cannot
-/// merge two cells, so there is nothing to flatten.
 pub fn table(data: &[u8], parts: &mut dyn Parts) -> Option<String> {
     let bytes = inflate(data)?;
     let store = Store::of(&bytes)?;
@@ -772,10 +583,6 @@ pub fn table(data: &[u8], parts: &mut dyn Parts) -> Option<String> {
     Some(grid_markdown(&grid))
 }
 
-/// The pages a scan holds, in order: the identifier of each page's own image attachment,
-/// whose file the database says where to find. A scan is a gallery in `ZMERGEABLEDATA1`,
-/// like a table, and each of its objects that is a map names one page as its first
-/// entry's string; see Obsidian's importer, `convert-scan.ts`.
 pub fn gallery(data: &[u8]) -> Vec<String> {
     let Some(store) = inflate(data).and_then(|bytes| Store::of(&bytes)) else {
         return Vec::new();
@@ -789,19 +596,13 @@ pub fn gallery(data: &[u8]) -> Vec<String> {
         .collect()
 }
 
-/// The type the root of a table's document has.
 const TABLE_TYPE: &str = "com.apple.notes.ICTable";
-/// The root's three keys: where each row sits, where each column sits, and the cells.
 const ROWS: &str = "crRows";
 const COLUMNS: &str = "crColumns";
 const CELLS: &str = "cellColumns";
 
-/// The most rows or columns a table is read with. Notes stops long before this; a set
-/// claiming millions is a blob somebody wrote by hand, and a grid that size would be the
-/// import running out of memory rather than a table.
 const MOST_CELLS: usize = 1024;
 
-/// One cell's words, on one line.
 fn cell_words(body: &Body, parts: &mut dyn Parts) -> String {
     markdown(body, parts)
         .lines()
@@ -812,7 +613,6 @@ fn cell_words(body: &Body, parts: &mut dyn Parts) -> String {
         .replace('|', "\\|")
 }
 
-/// The grid as a markdown table, the first row its header.
 fn grid_markdown(grid: &[Vec<String>]) -> String {
     let mut out = Vec::with_capacity(grid.len() + 1);
 
@@ -826,8 +626,6 @@ fn grid_markdown(grid: &[Vec<String>]) -> String {
     out.join("\n")
 }
 
-/// A reference in the merged document: a number, a string, or an index into its list
-/// of objects.
 #[derive(Default)]
 struct Id {
     number: Option<u64>,
@@ -835,26 +633,20 @@ struct Id {
     object: Option<usize>,
 }
 
-/// A map in the document: its type, as an index into the types, and its entries, each
-/// an index into the keys and a reference.
 struct Map {
     kind: usize,
     entries: Vec<(usize, Id)>,
 }
 
-/// One object of the document: the parts of one a table or a scan is made of.
 #[derive(Default)]
 struct Object {
     map: Option<Map>,
     dictionary: Vec<(Id, Id)>,
-    /// An ordered set's identifiers in the order they are drawn.
     order: Vec<Vec<u8>>,
-    /// And which identifier each element of the set is.
     placed: Vec<(Id, Id)>,
     note: Option<Body>,
 }
 
-/// A merged document, read: its objects, and the three lists they index into.
 #[derive(Default)]
 struct Store {
     objects: Vec<Object>,
@@ -864,7 +656,6 @@ struct Store {
 }
 
 impl Store {
-    /// A `MergableDataProto`: field 2 holds the object, whose field 3 holds the data.
     fn of(bytes: &[u8]) -> Option<Self> {
         let data = held(held(bytes, 2)?, 3)?;
         let mut store = Self::default();
@@ -892,8 +683,6 @@ impl Store {
         self.types.get(at).is_some_and(|one| one == name)
     }
 
-    /// The identifier a reference ends at: the object it names is a map whose first
-    /// entry is an index into the identifiers.
     fn target(&self, reference: &Id) -> Option<Vec<u8>> {
         let object = self.objects.get(reference.object?)?;
         let first = &object.map.as_ref()?.entries.first()?.1;
@@ -901,7 +690,6 @@ impl Store {
         self.uuids.get(at).cloned()
     }
 
-    /// Where each row or column sits, by its identifier, and how many there are.
     fn places(&self, object: &Object) -> Option<(HashMap<Vec<u8>, usize>, usize)> {
         let count = object.order.len();
         if count > MOST_CELLS {
@@ -922,7 +710,6 @@ impl Store {
     }
 }
 
-/// One `MergeableDataObjectEntry`.
 fn object_of(bytes: &[u8]) -> Object {
     let mut object = Object::default();
 
@@ -940,12 +727,10 @@ fn object_of(bytes: &[u8]) -> Object {
     object
 }
 
-/// An index out of the blob, or one that indexes nothing where it does not fit.
 fn index(said: u64) -> usize {
     usize::try_from(said).unwrap_or(usize::MAX)
 }
 
-/// A `MergeableDataObjectMap`.
 fn map_of(bytes: &[u8]) -> Map {
     let mut map = Map {
         kind: usize::MAX,
@@ -974,7 +759,6 @@ fn map_of(bytes: &[u8]) -> Map {
     map
 }
 
-/// An `ObjectID`.
 fn id_of(bytes: &[u8]) -> Id {
     let mut id = Id::default();
 
@@ -990,7 +774,6 @@ fn id_of(bytes: &[u8]) -> Id {
     id
 }
 
-/// A `Dictionary`: its elements, each a key and a value.
 fn elements_of(bytes: &[u8]) -> Vec<(Id, Id)> {
     let mut elements = Vec::new();
 
@@ -1012,8 +795,6 @@ fn elements_of(bytes: &[u8]) -> Vec<(Id, Id)> {
     elements
 }
 
-/// An `OrderedSet`: its ordering's array of identifiers, and its ordering's contents,
-/// which say which identifier each element is.
 fn ordered_of(bytes: &[u8], object: &mut Object) {
     let Some(ordering) = held(bytes, 1) else {
         return;
@@ -1034,18 +815,11 @@ fn ordered_of(bytes: &[u8], object: &mut Object) {
     }
 }
 
-// ── The protobuf ──────────────────────────────────────────────────────
-
-/// One field of a message: a number, or the bytes of a string or a message
-/// inside it.
 enum Value<'a> {
     Number(u64),
     Bytes(&'a [u8]),
 }
 
-/// A message being walked, a field at a time. Enough protobuf to read what
-/// Notes wrote and no more: the two wire types it uses, plus the two fixed
-/// widths, stepped over rather than read.
 struct Fields<'a> {
     bytes: &'a [u8],
     at: usize,
@@ -1056,7 +830,6 @@ impl<'a> Fields<'a> {
         Self { bytes, at: 0 }
     }
 
-    /// The next variable-width number, or nothing where the bytes run out.
     fn varint(&mut self) -> Option<u64> {
         let mut value = 0_u64;
         let mut shift = 0_u32;
@@ -1106,9 +879,6 @@ impl<'a> Iterator for Fields<'a> {
     }
 }
 
-/// A fixed-width field as a number. Nothing read here is one - a font's size is
-/// the only float Notes writes and nothing needs it - so this exists to step
-/// over them without losing the fields after.
 fn number_of(bytes: &[u8]) -> u64 {
     bytes
         .iter()
@@ -1116,9 +886,6 @@ fn number_of(bytes: &[u8]) -> u64 {
         .fold(0_u64, |value, byte| (value << 8) | u64::from(*byte))
 }
 
-/// A signed field, which protobuf writes as the same bits an unsigned one has.
-/// `styleType` is the reason its sign matters: a run that says nothing about its
-/// paragraph means -1, and -1 is written as the widest number there is.
 fn signed(value: u64) -> i32 {
     let low = u32::try_from(value & 0xffff_ffff).unwrap_or(0);
     i32::from_ne_bytes(low.to_ne_bytes())
@@ -1128,7 +895,6 @@ fn text_of(bytes: &[u8]) -> String {
     String::from_utf8_lossy(bytes).to_string()
 }
 
-/// The note inside a `Document`: its text once, and a run per stretch of it.
 fn note_of(bytes: &[u8]) -> Body {
     let mut text = Vec::new();
     let mut runs = Vec::new();
@@ -1141,9 +907,6 @@ fn note_of(bytes: &[u8]) -> Body {
         }
     }
 
-    // The runs should cover the whole text. The words past the last of them, in a
-    // row whose runs stop short or that has none, are words of the note all the
-    // same: written plain rather than dropped without a word.
     let covered = runs
         .iter()
         .fold(0_usize, |sum, run| sum.saturating_add(run.length));
@@ -1157,7 +920,6 @@ fn note_of(bytes: &[u8]) -> Body {
     Body { text, runs }
 }
 
-/// One `AttributeRun`.
 fn run_of(bytes: &[u8]) -> Run {
     let mut run = Run::default();
 
@@ -1179,8 +941,6 @@ fn run_of(bytes: &[u8]) -> Run {
     run
 }
 
-/// One `ParagraphStyle`, which is what says a line is a heading, an item or a
-/// box, and how deep it sits.
 fn paragraph_of(bytes: &[u8], run: &mut Run) {
     for (number, value) in Fields::new(bytes) {
         match (number, value) {
@@ -1195,8 +955,6 @@ fn paragraph_of(bytes: &[u8], run: &mut Run) {
     }
 }
 
-/// Whether a box is ticked. A `Checklist` carries the box's own id as well,
-/// which nothing here needs.
 fn ticked(bytes: &[u8]) -> bool {
     for (number, value) in Fields::new(bytes) {
         if number == 2 {
@@ -1209,7 +967,6 @@ fn ticked(bytes: &[u8]) -> bool {
     false
 }
 
-/// One `AttachmentInfo`: which attachment, and what kind of thing it is.
 fn attachment_of(bytes: &[u8]) -> Option<(String, String)> {
     let mut id = String::new();
     let mut uti = String::new();
@@ -1229,11 +986,6 @@ fn attachment_of(bytes: &[u8]) -> Option<(String, String)> {
     Some((id, uti))
 }
 
-/// The bytes under the gzip, or under the zlib wrapper where a row has one.
-///
-/// Held to `MOST_BYTES`, because how much is under a gzip is whatever the gzip
-/// says: a row that names more than a note can hold is a row this reads nothing
-/// out of rather than a reason for the import to run out of memory.
 fn inflate(data: &[u8]) -> Option<Vec<u8>> {
     let mut out = Vec::new();
 
@@ -1249,8 +1001,6 @@ fn inflate(data: &[u8]) -> Option<Vec<u8>> {
         _ => return None,
     };
 
-    // Filled to the brim is a row that holds more than the cap, and half a note is
-    // not a note.
     if u64::try_from(read).ok()? >= MOST_BYTES {
         return None;
     }
@@ -1262,7 +1012,6 @@ fn inflate(data: &[u8]) -> Option<Vec<u8>> {
 mod tests {
     use super::{decode, markdown, tidy, title, Parts};
 
-    /// Names an attachment by its identifier, the way the database would.
     struct Named;
 
     impl Parts for Named {
@@ -1275,7 +1024,6 @@ mod tests {
         }
     }
 
-    /// A varint, as protobuf writes one.
     fn varint(mut value: u64) -> Vec<u8> {
         let mut out = Vec::new();
 
@@ -1305,7 +1053,6 @@ mod tests {
         out
     }
 
-    /// A `ParagraphStyle`.
     fn style(kind: u64, indent: u64, done: Option<bool>) -> Vec<u8> {
         let mut out = Vec::new();
         out.extend(number(1, kind));
@@ -1321,7 +1068,6 @@ mod tests {
         out
     }
 
-    /// One `AttributeRun` over `length` UTF-16 units.
     fn run(length: u64, parts: &[Vec<u8>]) -> Vec<u8> {
         let mut body = number(1, length);
         for part in parts {
@@ -1331,8 +1077,6 @@ mod tests {
         bytes(5, &body)
     }
 
-    /// A whole note's row: a `NoteStoreProto` holding a `Document` holding a
-    /// `Note`, gzipped, which is the shape Notes writes on the row.
     fn note(text: &str, runs: &[Vec<u8>]) -> Vec<u8> {
         let mut inner = bytes(2, text.as_bytes());
         for one in runs {
@@ -1342,7 +1086,6 @@ mod tests {
         zipped(&bytes(2, &bytes(3, &inner)))
     }
 
-    /// The same bytes under a gzip, which is how a row carries any of this.
     fn zipped(said: &[u8]) -> Vec<u8> {
         let mut gzipped = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
         std::io::Write::write_all(&mut gzipped, said).expect("gzip");
@@ -1354,10 +1097,6 @@ mod tests {
         markdown(&body, &mut Named)
     }
 
-    /// Lines of somebody's plain words and the markdown they are written as, shared with
-    /// packages/markdown, whose test renders each and finds the words and nothing else:
-    /// no highlight of `a==b or c==d`, no italics of `_x_`, no heading of `# not a
-    /// heading`, no list that starts at 1986.
     const PLAIN_LINES: &str =
         include_str!("../../../../packages/markdown/src/fixtures/plain-lines.json");
 
@@ -1429,8 +1168,6 @@ mod tests {
 
     #[test]
     fn marks_go_around_the_words_and_not_around_the_spaces() {
-        // `Bold ` is one run and `words` another, which is what Notes stores for
-        // a sentence with two words of it in bold.
         let said = as_markdown("Bold words", &[run(5, &[number(5, 1)]), run(5, &[])]);
 
         assert_eq!(said, "**Bold** words");
@@ -1467,7 +1204,6 @@ mod tests {
 
     #[test]
     fn an_attachment_becomes_what_the_database_says_it_is() {
-        // The run over the object character is the attachment's own.
         let said = as_markdown(
             "Look \u{fffc}",
             &[
@@ -1502,7 +1238,6 @@ mod tests {
 
     #[test]
     fn an_emoji_is_two_units_long_the_way_notes_counts() {
-        // The run covers `Hi 🙂`, which is five UTF-16 units and not four.
         let said = as_markdown("Hi 🙂 there", &[run(5, &[number(5, 1)]), run(6, &[])]);
 
         assert_eq!(said, "**Hi 🙂** there");
@@ -1513,10 +1248,6 @@ mod tests {
         assert!(decode(b"not gzip at all").is_none());
     }
 
-    /// The row carries a `NoteStoreProto` around a `Document` around the note, so
-    /// the note is two hops in rather than one: a reader that looked one hop in
-    /// found nothing in any note anybody has. A `Document` on its own is read as
-    /// well, so a row written without the wrapper is still a note.
     #[test]
     fn a_note_is_found_through_the_wrapper_it_arrives_in() {
         let inner = bytes(2, "Words".as_bytes());
@@ -1527,13 +1258,9 @@ mod tests {
         let bare = decode(&zipped(&bytes(3, &inner))).expect("a document on its own");
         assert_eq!(title(&bare).as_deref(), Some("Words"));
 
-        // And a message holding neither is not a note.
         assert!(decode(&zipped(&bytes(9, &inner))).is_none());
     }
 
-    /// A blank line between two monospaced paragraphs is part of the code: it
-    /// carries no run of its own, and closing the fence over it and opening another
-    /// would cut one block of code into two.
     #[test]
     fn a_code_block_keeps_its_blank_lines_and_its_spaces() {
         assert_eq!(
@@ -1556,8 +1283,6 @@ mod tests {
         assert_eq!(said, "```\none\n\ntwo\n```");
     }
 
-    /// The second half of an item is the same item, so the item after it takes the
-    /// next number rather than the one after that.
     #[test]
     fn a_return_held_with_shift_does_not_take_the_next_number() {
         let said = as_markdown(
@@ -1571,9 +1296,6 @@ mod tests {
         assert_eq!(said, "1. One\n  still one\n2. Two");
     }
 
-    /// A depth is a number out of the blob and `prefix` writes a step for each of
-    /// it, so a line saying it sits four billion levels in is eight gigabytes of
-    /// indent. Held to a depth a note can have, it is an item like any other.
     #[test]
     fn a_depth_nobody_wrote_is_held_to_one_a_note_can_have() {
         let said = as_markdown(
@@ -1585,7 +1307,6 @@ mod tests {
         assert!(said.trim_start().starts_with("- "), "{said}");
     }
 
-    /// Code that holds a fence of its own, a snippet of markdown, is still one block.
     #[test]
     fn code_with_a_fence_in_it_is_fenced_with_a_longer_one() {
         let said = as_markdown(
@@ -1596,8 +1317,6 @@ mod tests {
         assert_eq!(said, "````\n```js\nx\n```\n````");
     }
 
-    /// The items nested under a numbered one are a list of their own, and the list
-    /// they sit in carries on counting after them.
     #[test]
     fn a_nested_list_does_not_restart_the_count_around_it() {
         let said = as_markdown(
@@ -1613,8 +1332,6 @@ mod tests {
         assert_eq!(said, "1. One\n  1. a\n  2. b\n2. Two");
     }
 
-    /// Code is the code as it was typed: a bracket in it is a bracket, and a bold run
-    /// inside it is not asterisks around it.
     #[test]
     fn a_block_of_code_keeps_its_words_as_they_were_typed() {
         let said = as_markdown(
@@ -1628,8 +1345,6 @@ mod tests {
         assert_eq!(said, "```\nlet a = b[0]\n```");
     }
 
-    /// Notes ends a run wherever anything changes, a colour as much as bold, so one
-    /// bold word may be two runs. It is written as the one word it is.
     #[test]
     fn runs_that_say_the_same_thing_are_marked_once() {
         let said = as_markdown(
@@ -1644,7 +1359,6 @@ mod tests {
         assert_eq!(said, "**Graphic designer**");
     }
 
-    /// A row whose runs stop short of its text still holds the rest of the words.
     #[test]
     fn words_past_the_last_run_are_kept() {
         let said = as_markdown(
@@ -1657,16 +1371,12 @@ mod tests {
         assert_eq!(bare, "No runs at all");
     }
 
-    /// A note that says `<b>` says those three characters, rather than turning the rest
-    /// of its line bold or its words into markup that vanishes.
     #[test]
     fn words_that_look_like_html_are_words() {
         let said = as_markdown("<script src=x> and 1 < 2", &[run(24, &[])]);
         assert_eq!(said, "\\<script src=x> and 1 < 2");
     }
 
-    /// A note that says `$5-$10` says two prices, and `~5 or ~10` and `%%d` say those
-    /// characters, rather than a formula, lowered words or a comment hiding the rest.
     #[test]
     fn dollars_tildes_carets_and_percent_signs_are_words() {
         let words = "Tickets $5-$10, ~5 or ~10, %%d, x^2, a $ b ~ c";
@@ -1677,16 +1387,12 @@ mod tests {
         );
     }
 
-    /// A backslash somebody typed in front of a tag would otherwise take the escape
-    /// for itself: `\<img>` is a backslash and then a live tag.
     #[test]
     fn a_backslash_in_front_of_html_does_not_let_it_through() {
         let said = as_markdown("\\<img src=x onerror=alert(1)>", &[run(29, &[])]);
         assert_eq!(said, "\\\\\\<img src=x onerror=alert(1)>");
     }
 
-    /// Where a link goes comes from outside the note, and nothing in it may end the
-    /// link early and leave the rest of it as markup on the line.
     #[test]
     fn where_a_link_goes_cannot_end_the_link() {
         assert_eq!(
@@ -1696,7 +1402,6 @@ mod tests {
         assert_eq!(super::destination("https://x.test/a"), "https://x.test/a");
     }
 
-    /// A link with a space or a bracket in where it goes is still one link.
     #[test]
     fn a_link_with_a_space_in_it_is_still_a_link() {
         let said = as_markdown(
@@ -1706,21 +1411,16 @@ mod tests {
         assert_eq!(said, "[Here](<file:///Users/me/My Notes (1).pdf>)");
     }
 
-    // ── Tables and scans ──
-
-    /// An `ObjectID` naming one object of the document.
     fn object(at: u64) -> Vec<u8> {
         number(6, at)
     }
 
-    /// A dictionary element from one object to another.
     fn element(key: u64, value: u64) -> Vec<u8> {
         let mut inner = bytes(1, &object(key));
         inner.extend(bytes(2, &object(value)));
         bytes(1, &inner)
     }
 
-    /// A map of the given type, its entries each a key and an `ObjectID`.
     fn map(kind: u64, entries: &[(u64, Vec<u8>)]) -> Vec<u8> {
         let mut inner = number(1, kind);
         for (key, id) in entries {
@@ -1731,8 +1431,6 @@ mod tests {
         bytes(13, &inner)
     }
 
-    /// An ordered set: the identifiers in their order, and each element pointing at
-    /// the object that names its identifier.
     fn ordered(order: &[&[u8]], elements: &[(u64, u64)]) -> Vec<u8> {
         let mut array = Vec::new();
         for (at, uuid) in order.iter().enumerate() {
@@ -1757,7 +1455,6 @@ mod tests {
         bytes(6, &inner)
     }
 
-    /// A cell: a note of its own, with one run over all of it saying what it is.
     fn cell(text: &str, marks: &[Vec<u8>]) -> Vec<u8> {
         let length = u64::try_from(text.encode_utf16().count()).unwrap_or(0);
         let mut inner = bytes(2, text.as_bytes());
@@ -1765,7 +1462,6 @@ mod tests {
         bytes(10, &inner)
     }
 
-    /// A merged document, the way a table's or a scan's row carries it.
     fn merged(objects: &[Vec<u8>], keys: &[&str], types: &[&str], uuids: &[&[u8]]) -> Vec<u8> {
         let mut data = Vec::new();
         for one in objects {
@@ -1783,30 +1479,22 @@ mod tests {
         zipped(&bytes(2, &bytes(3, &data)))
     }
 
-    /// Two rows and two columns, the columns stored the other way round from how they
-    /// are drawn, which is what a column dragged to the front leaves behind.
     fn shopping() -> Vec<u8> {
         let (r0, r1, c0, c1): (&[u8], &[u8], &[u8], &[u8]) =
             (b"row-0", b"row-1", b"col-0", b"col-1");
         let uuid = |at: u64| map(1, &[(3, number(2, at))]);
 
         let objects = vec![
-            // 0: the table, and where its three parts are.
             map(0, &[(0, object(1)), (1, object(2)), (2, object(3))]),
-            // 1: the rows, in order; 2: the columns, the second first.
             ordered(&[r0, r1], &[(4, 4), (5, 5)]),
             ordered(&[c1, c0], &[(6, 6), (7, 7)]),
-            // 3: the cells, by column.
             dictionary(&[(6, 8), (7, 9)]),
-            // 4 to 7: the four identifiers.
             uuid(0),
             uuid(1),
             uuid(2),
             uuid(3),
-            // 8 and 9: each column's cells, by row.
             dictionary(&[(4, 10), (5, 11)]),
             dictionary(&[(4, 12), (5, 13)]),
-            // 10 to 13: the cells themselves.
             cell("Item", &[]),
             cell("Milk", &[number(5, 1)]),
             cell("How much", &[]),
@@ -1831,8 +1519,6 @@ mod tests {
         );
     }
 
-    /// A table is a block: whatever line it sat on in Notes, it arrives with a blank
-    /// line on either side, which is what markdown needs to see a table at all.
     #[test]
     fn a_table_in_a_note_stands_apart_from_the_lines_around_it() {
         struct Tabled;
@@ -1862,7 +1548,6 @@ mod tests {
     fn bytes_that_are_not_a_table_are_no_table() {
         assert!(super::table(b"not gzip", &mut Named).is_none());
 
-        // A merged document with no table at its root, which is what a scan is.
         let scan = merged(
             &[map(0, &[(0, Vec::new())])],
             &["self"],

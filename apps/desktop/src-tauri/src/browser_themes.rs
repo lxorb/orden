@@ -1,34 +1,17 @@
-//! The themes Chrome and Firefox wear on this machine, as each browser holds them:
-//! the `theme` of an extension's manifest, and Firefox's `userChrome.css` and
-//! `userContent.css` with every sheet they import written into them. Chrome has had
-//! no stylesheet of the reader's own since version 32, so a manifest is all there is
-//! to read of it.
-//!
-//! Found by walking every folder either browser keeps profiles in, on every desktop
-//! and in every packaging, rather than by asking which is installed: a folder that is
-//! not there holds no themes. Read and never written; what a theme becomes is the
-//! window's to say, in `lib/themes/browser.ts`.
-
 use serde::Serialize;
 use serde_json::Value;
 use std::fs;
 use std::io::Read as _;
 use std::path::{Path, PathBuf};
 
-/// One theme, in its browser's own words.
 #[derive(Serialize)]
 pub struct BrowserTheme {
     name: String,
     source: String,
-    /// Whether `source` is a stylesheet rather than a manifest's `theme`.
     css: bool,
-    /// What the profile's `userContent.css` says of pages, read as `source` is.
     pages: String,
 }
 
-/// Where Firefox keeps its profile folders, under the home folder or either of the
-/// system's application-data folders: Linux's own, its XDG one, the Snap's and the
-/// Flatpak's, then Windows' and a Mac's.
 const FIREFOX: [&str; 6] = [
     ".mozilla/firefox",
     "mozilla/firefox",
@@ -38,7 +21,6 @@ const FIREFOX: [&str; 6] = [
     "Firefox/Profiles",
 ];
 
-/// And Chrome and Chromium theirs, in the same order.
 const CHROME: [&str; 9] = [
     "google-chrome",
     "chromium",
@@ -51,7 +33,6 @@ const CHROME: [&str; 9] = [
     "Chromium",
 ];
 
-/// The themes one browser has, by name: Firefox's for `firefox`, else Chrome's.
 #[tauri::command(async)]
 pub fn browser_themes(browser: String) -> Vec<BrowserTheme> {
     let bases = [dirs::home_dir(), dirs::config_dir(), dirs::data_local_dir()];
@@ -73,20 +54,16 @@ fn themes_under(bases: &[PathBuf], firefox: bool) -> Vec<BrowserTheme> {
         .flat_map(|profile| themes_in(&profile))
         .collect();
 
-    // One theme in two profiles, or one folder under two spellings, is one theme.
     found.sort_by(|a, b| (&a.name, &a.source).cmp(&(&b.name, &b.source)));
     found.dedup_by(|a, b| a.name == b.name && a.source == b.source);
     found
 }
 
-/// What a folder holds, which is nothing where there is no such folder.
 fn entries(dir: &Path) -> Vec<PathBuf> {
     let read = fs::read_dir(dir).into_iter().flatten().flatten();
     read.map(|entry| entry.path()).collect()
 }
 
-/// A Firefox profile's: its `userChrome.css`, named for the profile once the salt
-/// in front of the folder's name is gone, and every theme among its add-ons.
 fn firefox_themes(profile: &Path) -> Vec<BrowserTheme> {
     let sheet = profile.join("chrome/userChrome.css");
     let folder = profile.file_name().unwrap_or_default().to_string_lossy();
@@ -107,7 +84,6 @@ fn firefox_themes(profile: &Path) -> Vec<BrowserTheme> {
     own.into_iter().chain(packed).collect()
 }
 
-/// A Chrome profile's: every version of every extension that is a theme.
 fn chrome_themes(profile: &Path) -> Vec<BrowserTheme> {
     let extensions = entries(&profile.join("Extensions"));
     let manifests = extensions
@@ -119,7 +95,6 @@ fn chrome_themes(profile: &Path) -> Vec<BrowserTheme> {
         .collect()
 }
 
-/// An extension's manifest as a theme, where it is one.
 fn theme_of(manifest: &str) -> Option<BrowserTheme> {
     let read: Value = serde_json::from_str(manifest).ok()?;
     Some(BrowserTheme {
@@ -130,7 +105,6 @@ fn theme_of(manifest: &str) -> Option<BrowserTheme> {
     })
 }
 
-/// The manifest of an add-on, which Firefox keeps packed.
 fn manifest_in(xpi: &Path) -> Option<String> {
     let mut archive = zip::ZipArchive::new(fs::File::open(xpi).ok()?).ok()?;
     let mut packed = archive.by_name("manifest.json").ok()?;
@@ -139,10 +113,6 @@ fn manifest_in(xpi: &Path) -> Option<String> {
     Some(manifest)
 }
 
-/// A stylesheet with its comments gone and every sheet it imports in the import's
-/// place, as Firefox reads it: an import somebody commented out is not one, and one
-/// behind a preference is one only where `prefs`, the profile's own, turn it on.
-/// `depth` is what ends a sheet that imports itself.
 fn inlined(sheet: &Path, prefs: &str, depth: u8) -> String {
     let mut css = fs::read_to_string(sheet).unwrap_or_default();
     while let Some(start) = css.find("/*") {
@@ -181,10 +151,6 @@ mod tests {
     use std::io::Write as _;
     use std::path::PathBuf;
 
-    /// A home with a Firefox profile and a Chromium one in it: the stylesheet with
-    /// what it imports and not what it commented out or left behind a preference that
-    /// is off, the add-on that is a theme and not the one that is not, and each
-    /// browser's own and never the other's.
     #[test]
     fn every_theme_of_a_browser_is_found_and_nothing_else() {
         let home = tempfile::tempdir().expect("a temp folder");

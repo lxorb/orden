@@ -1,77 +1,31 @@
-//! Apple Notes, read out of the database Notes keeps on this Mac.
-//!
-//! Notes has no export. What it offers is a PDF per note, which is a picture of a
-//! note rather than a note, so the only way in is the database itself:
-//! `~/Library/Group Containers/group.com.apple.notes/NoteStore.sqlite`, with the
-//! attachments in folders beside it. That is what Obsidian's importer reads, and
-//! this reads the same rows the same way.
-//!
-//! Which is why this is a Mac-only command. Orden runs on Windows, Linux, Android
-//! and in a browser as well, and on those there is no database to read: the sheet
-//! says so, and what it offers instead is the folder an exporter wrote.
-//!
-//! macOS keeps that folder behind Full Disk Access, so the first read of it fails
-//! with the system's own refusal. That is answered as `no access`, which the sheet
-//! turns into a line and a button that opens the setting.
-//!
-//! The words of a note are `apple_text`'s business; this module is the rows: which
-//! folders there are, which notes are in them, when each was written, and which
-//! file an attachment is.
-
 use serde::Serialize;
 
-/// One note, in the shape the import's own readers hand over: where it goes,
-/// what it says, and when it was written.
 #[derive(Serialize, Debug)]
 pub struct Note {
-    /// The folders it sat in, its own name, and `.md`, which is what a link from
-    /// another note points at as well. Whether a name may be spelled that way is
-    /// the window's to decide, the way it is for every other import.
     pub path: String,
-    /// What Notes listed it as, for a note whose words do not open with a title.
     pub title: String,
-    /// The note, as markdown.
     pub text: String,
-    /// Seconds since 1970, or zero for a note whose row says nothing. Apple
-    /// counts from 2001; the shift happens here so the window reads one clock.
     pub created: i64,
-    /// The same for the day it was last edited.
     pub modified: i64,
 }
 
-/// One attachment: where it goes beside the notes, and its bytes.
 #[derive(Serialize, Debug)]
 pub struct Media {
-    /// Relative to the import, like a note's.
     pub path: String,
-    /// Base64, which is how bytes cross the bridge everywhere else in here.
     pub bytes: String,
 }
 
-/// Everything one read of the database found, counts included, so the sheet can
-/// say what is not coming with them before it writes anything.
 #[derive(Serialize, Default, Debug)]
 pub struct Read {
-    /// In no particular order: the import sorts nothing, and the folders each
-    /// note names are what put it where it goes.
     pub notes: Vec<Note>,
-    /// The attachments those notes point at, each written once however many
-    /// notes show it.
     pub media: Vec<Media>,
-    /// Notes behind a password, which nothing but Notes can open.
     pub locked: u32,
-    /// Notes in Recently Deleted, which stay there.
     pub binned: u32,
-    /// Drawings and scanned pages with no picture of them on this Mac: Notes draws one
-    /// for each as it is shown, and one it has not drawn here is not on the disk.
     pub drawn: u32,
-    /// Tables inside notes that could not be read as one.
     pub tables: u32,
-    /// Attachments whose file is in iCloud rather than on this disk.
     pub missing: u32,
 }
 
-/// Every note on this Mac, read out of Notes' own database.
 #[tauri::command(async)]
 pub fn read_apple_notes() -> Result<Read, String> {
     #[cfg(target_os = "macos")]
@@ -85,9 +39,6 @@ pub fn read_apple_notes() -> Result<Read, String> {
     }
 }
 
-/// Opens the setting that would let the app read that database. Said as its own
-/// command because a sheet that asks for a permission and leaves the reader to
-/// find the pane themselves has asked them to do the work twice.
 #[tauri::command(async)]
 pub fn open_full_disk_access() -> Result<(), String> {
     #[cfg(target_os = "macos")]
@@ -103,7 +54,6 @@ pub fn open_full_disk_access() -> Result<(), String> {
 
 #[cfg(target_os = "macos")]
 mod mac {
-    //! The database itself, which only a Mac has.
 
     use std::collections::{HashMap, HashSet};
     use std::path::{Path, PathBuf};
@@ -115,61 +65,39 @@ mod mac {
     use super::{Media, Note, Read};
     use crate::apple_text::{self, Body, Parts};
 
-    /// What the window is answered when macOS refuses the folder, which is what
-    /// it does until Orden has Full Disk Access. The sheet reads these two
-    /// rather than showing them, so they are words the window knows and not words
-    /// a reader is shown.
     const NO_ACCESS: &str = "no access";
 
-    /// And where Notes has never been used, so there is no database at all.
     const NO_DATABASE: &str = "no database";
 
-    /// Where Notes keeps everything, under the reader's home folder.
     const CONTAINER: &str = "Library/Group Containers/group.com.apple.notes";
 
-    /// The database, and the two files it may be mid-write into.
     const DATABASE: &str = "NoteStore.sqlite";
     const ALONGSIDE: [&str; 2] = ["NoteStore.sqlite-wal", "NoteStore.sqlite-shm"];
 
-    /// Apple counts seconds from 2001 where everything else counts from 1970.
     const FROM_2001: f64 = 978_307_200.0;
 
-    /// A folder Notes made for itself rather than one somebody named.
     const TRASH: i64 = 1;
     const SMART: i64 = 3;
 
-    /// The attachments that are words rather than files: a tag, a mention of
-    /// somebody, the answer to a sum, and a link to another note, which is the one
-    /// of them that points somewhere.
     const INLINE: &str = "com.apple.notes.inlinetextattachment.";
     const INTERNAL: &str = "com.apple.notes.inlinetextattachment.link";
-    /// A link Notes drew a card for.
     const CARD: &str = "public.url";
-    /// A table inside a note, which is a document of its own in another row.
     const TABLE: &str = "com.apple.notes.table";
 
-    /// A sketch, in the three shapes Notes has stored one in. What it keeps is the
-    /// strokes; the picture of them is the fallback image Notes draws beside the
-    /// database for whatever cannot draw strokes, which is what comes over.
     const DRAWINGS: [&str; 3] = [
         "com.apple.paper",
         "com.apple.drawing",
         "com.apple.drawing.2",
     ];
 
-    /// A scan: a gallery of pages, each page a picture attachment of its own.
     const SCAN: &str = "com.apple.notes.gallery";
 
-    /// A scan somebody has marked up, which Notes keeps as the PDF it made of it.
     const MARKED_SCAN: &str = "com.apple.paper.doc.scan";
 
-    /// What a picture is, for the difference between a note showing a file and a
-    /// note linking to one.
     const PICTURES: [&str; 9] = [
         "png", "jpg", "jpeg", "gif", "heic", "heif", "webp", "tiff", "bmp",
     ];
 
-    /// Every note in Notes on this Mac.
     pub fn read() -> Result<Read, String> {
         let home = std::env::var_os("HOME").ok_or_else(|| "there is no home folder".to_string())?;
         let base = PathBuf::from(home).join(CONTAINER);
@@ -177,7 +105,6 @@ mod mac {
         read_from(&base)
     }
 
-    /// Opens Full Disk Access in System Settings.
     pub fn open_setting() -> Result<(), String> {
         std::process::Command::new("open")
             .arg("x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_AllFiles")
@@ -186,8 +113,6 @@ mod mac {
             .map_err(|error| format!("that setting would not open: {error}"))
     }
 
-    /// Every note under one group container, which is the reader's own on a Mac
-    /// and a folder of test files under `cargo test`.
     pub fn read_from(base: &Path) -> Result<Read, String> {
         let copied = copy_out(base)?;
         let db = Connection::open_with_flags(
@@ -212,8 +137,6 @@ mod mac {
                 continue;
             }
 
-            // A note whose folder is not in the table is still a note, and it
-            // arrives at the top of the import rather than not at all.
             if folders
                 .get(&row.folder)
                 .is_some_and(|one| one.kind == TRASH)
@@ -250,27 +173,14 @@ mod mac {
         Ok(read)
     }
 
-    /// The database, copied somewhere it cannot change while it is being read.
-    ///
-    /// Notes is very likely running, and a note written halfway through an import
-    /// leaves the read looking at a page that moved. The copy is also where the
-    /// system's refusal shows up, which is the whole of the Full Disk Access
-    /// story: the folder is readable or it is not.
     fn copy_out(base: &Path) -> Result<tempfile::TempDir, String> {
         let copied =
             tempfile::tempdir().map_err(|error| format!("no temporary folder: {error}"))?;
 
-        // The copy is the permission check as well, and it is the honest one: with
-        // Full Disk Access off macOS refuses to open this file at all, and asking
-        // whether it is even there is answered by the same refusal.
         if let Err(error) = std::fs::copy(base.join(DATABASE), copied.path().join(DATABASE)) {
             return Err(refusal(base, error));
         }
 
-        // Both of these are only there while Notes has the database open, and a
-        // copy without them is the database as of the last time it was closed -
-        // which is a note or two behind rather than unreadable, so failing to copy
-        // them is not failing to import.
         for name in ALONGSIDE {
             let _ = std::fs::copy(base.join(name), copied.path().join(name));
         }
@@ -278,13 +188,7 @@ mod mac {
         Ok(copied)
     }
 
-    /// Why the database could not be copied: one of the two marks the sheet knows,
-    /// or the system's own words.
     fn refusal(base: &Path, error: std::io::Error) -> String {
-        // A group container that is there and holds no database is a Mac whose
-        // owner has never opened Notes. Anything else - refused outright, or not
-        // there at all - is the system declining to say, which is what it does
-        // about this folder until the app is allowed to read it.
         match error.kind() {
             std::io::ErrorKind::NotFound if base.is_dir() => NO_DATABASE.to_string(),
             std::io::ErrorKind::NotFound | std::io::ErrorKind::PermissionDenied => {
@@ -294,8 +198,6 @@ mod mac {
         }
     }
 
-    /// Seconds since 1970 out of Apple's own clock, or zero for a row that says
-    /// nothing.
     fn unix(seconds: f64) -> i64 {
         let shifted = seconds + FROM_2001;
         if seconds <= 0.0 || !shifted.is_finite() {
@@ -305,16 +207,11 @@ mod mac {
         whole(shifted)
     }
 
-    /// A count of seconds with its fraction dropped. A day is what the note will
-    /// carry, so the fraction of a second Apple stores is of no use to anybody
-    /// here, and an `as` is how a float is made whole.
     #[allow(clippy::cast_possible_truncation)]
     fn whole(seconds: f64) -> i64 {
         seconds.trunc() as i64
     }
 
-    /// Which number each of Core Data's own kinds is on this machine, since the
-    /// numbers are assigned per database rather than fixed.
     fn keys(db: &Connection) -> Result<HashMap<String, i64>, String> {
         let mut statement = db
             .prepare("SELECT z_name, z_ent FROM z_primarykey")
@@ -336,8 +233,6 @@ mod mac {
         Ok(found)
     }
 
-    /// The columns one table has, because Notes has added some over the years and
-    /// a database written by an older macOS has fewer.
     fn columns(db: &Connection, table: &str) -> Result<HashSet<String>, String> {
         let mut statement = db
             .prepare(&format!("PRAGMA table_info({table})"))
@@ -356,15 +251,10 @@ mod mac {
         Ok(found)
     }
 
-    /// One of Notes' own folders.
     struct Folder {
         title: String,
         parent: Option<i64>,
-        /// A default folder, the bin, or a smart folder.
         kind: i64,
-        /// Notes in the folder Notes starts with go straight into the import,
-        /// because `Notes` inside a folder called Apple Notes is a folder saying
-        /// the same thing twice.
         first: bool,
     }
 
@@ -405,7 +295,6 @@ mod mac {
         Ok(found)
     }
 
-    /// One note's row, with its body already decoded.
     struct Row {
         title: String,
         folder: i64,
@@ -471,8 +360,6 @@ mod mac {
         Ok(found)
     }
 
-    /// The first of these columns this database has, as something to select, and
-    /// a zero where it has none of them.
     fn first_of(known: &HashSet<String>, names: &[&str]) -> String {
         let mut said: Vec<String> = names
             .iter()
@@ -483,14 +370,10 @@ mod mac {
         match said.len() {
             0 => "0".to_string(),
             1 => said.remove(0),
-            // The newest one that has anything in it, which is how Notes has
-            // moved the date from column to column across its versions.
             _ => format!("COALESCE({})", said.join(", ")),
         }
     }
 
-    /// Where one note goes inside the import: the folders it sat in, and its own
-    /// name stepped aside from a name already taken.
     fn place_of(
         row: &Row,
         folders: &HashMap<i64, Folder>,
@@ -500,9 +383,6 @@ mod mac {
         let mut walked = HashSet::new();
         let mut at = Some(row.folder);
 
-        // Up through the parents, so a folder inside a folder arrives as one. A
-        // folder that is its own parent is a database nobody should trust, and
-        // the walk stops rather than going round.
         while let Some(id) = at {
             if !walked.insert(id) {
                 break;
@@ -532,8 +412,6 @@ mod mac {
         Some(stepped(parts.join("/"), taken))
     }
 
-    /// A path nothing else in this read has taken, stepped the way the app's own
-    /// new notes step: `Plan 2`.
     fn stepped(path: String, taken: &mut HashSet<String>) -> String {
         let mut said = path.clone();
         let mut at = 1;
@@ -546,10 +424,6 @@ mod mac {
         said
     }
 
-    /// Where each account keeps its attachments. A note's own account is on its
-    /// folder's row, but the folders of an account with nothing in them are the
-    /// same shape, so every account's folder is tried in turn: there are two of
-    /// them on a busy Mac and one on most.
     fn roots(
         db: &Connection,
         keys: &HashMap<String, i64>,
@@ -572,23 +446,17 @@ mod mac {
             }
         }
 
-        // Where an older Notes kept them, which is beside the database itself.
         roots.push(base.to_path_buf());
 
         Ok(roots)
     }
 
-    /// What an attachment becomes in a note's words, and the files that go with
-    /// them.
     struct Found<'a> {
         db: &'a Connection,
         roots: Vec<PathBuf>,
-        /// Where each note went, by the identifier a link inside another note
-        /// points at.
         notes: HashMap<String, String>,
         known: HashSet<String>,
         media: Vec<Media>,
-        /// Attachments already written, so a picture in two notes is one file.
         written: HashMap<String, String>,
         taken: HashSet<String>,
         drawn: u32,
@@ -617,7 +485,6 @@ mod mac {
             }
         }
 
-        /// Hands what it found to the answer.
         fn report(self, read: &mut Read) {
             read.media = self.media;
             read.drawn = self.drawn;
@@ -625,7 +492,6 @@ mod mac {
             read.missing = self.missing;
         }
 
-        /// One column of the row an attachment's identifier names.
         fn column(&self, id: &str, name: &str) -> Option<String> {
             if !self.known.contains(&name.to_lowercase()) {
                 return None;
@@ -640,17 +506,11 @@ mod mac {
                 .flatten()
         }
 
-        /// A tag or a mention, which Notes stores as an attachment holding the
-        /// words it draws. Those are whatever the row says, and a store somebody
-        /// was handed can say a tag, so they come over as words and never as markup.
         fn words(&self, id: &str) -> Option<String> {
             self.column(id, "zalttext")
                 .map(|words| apple_text::as_words(&words))
         }
 
-        /// A link to another note, which becomes a link to wherever that note
-        /// went. The import turns it into a wikilink afterwards, the way it does
-        /// for every other export's links.
         fn link(&self, id: &str) -> Option<String> {
             let said = self.column(id, "ztokencontentidentifier")?;
             let uuid = said.rsplit('/').next().unwrap_or(said.as_str());
@@ -661,7 +521,6 @@ mod mac {
             Some(format!("[{}]({}.md)", label(&name), target(path)))
         }
 
-        /// A card Notes drew for a link somebody pasted.
         fn card(&self, id: &str) -> Option<String> {
             let url = self.column(id, "zurlstring")?;
             let title = self.column(id, "ztitle").unwrap_or_else(|| url.clone());
@@ -673,8 +532,6 @@ mod mac {
             ))
         }
 
-        /// A real file: a picture, a recording, a paper. The row says which file
-        /// it is and the bytes come off the disk beside the database.
         fn file(&mut self, id: &str) -> Option<String> {
             if let Some(path) = self.written.get(id) {
                 return Some(shown(path));
@@ -689,8 +546,6 @@ mod mac {
             Some(shown(&self.keep(id, &name, bytes)))
         }
 
-        /// The bytes of the first of these files that is under one of the accounts'
-        /// folders.
         fn on_disk(&self, candidates: &[PathBuf]) -> Option<Vec<u8>> {
             self.roots.iter().find_map(|root| {
                 candidates
@@ -699,8 +554,6 @@ mod mac {
             })
         }
 
-        /// An attachment's bytes, written beside the notes once under a name nothing
-        /// else took: where it went.
         fn keep(&mut self, id: &str, name: &str, bytes: Vec<u8>) -> String {
             let path = format!("assets/{}", free(name, &mut self.taken));
             self.media.push(Media {
@@ -711,8 +564,6 @@ mod mac {
             path
         }
 
-        /// The merged document an attachment's own row holds: a table's cells, or a
-        /// scan's pages.
         fn merged(&self, id: &str) -> Option<Vec<u8>> {
             if !self.known.contains("zmergeabledata1") {
                 return None;
@@ -728,15 +579,12 @@ mod mac {
                 .flatten()
         }
 
-        /// A table, as a markdown table of its own between the lines around it.
         fn table(&mut self, id: &str) -> Option<String> {
             let data = self.merged(id)?;
             let table = apple_text::table(&data, self)?;
             Some(format!("\n\n{table}\n\n"))
         }
 
-        /// The picture Notes drew of a sketch: `FallbackImages/<id>/<generation>/` on a
-        /// Mac from macOS 14 on, and a JPEG named after the sketch before that.
         fn drawing(&mut self, id: &str) -> Option<String> {
             if let Some(path) = self.written.get(id) {
                 return Some(shown(path));
@@ -772,8 +620,6 @@ mod mac {
             Some(shown(&self.keep(id, &name, bytes)))
         }
 
-        /// A scan, a picture a page: the page as Notes cropped it where that preview is
-        /// on this Mac, and the page's own photograph where it is not.
         fn scan(&mut self, id: &str) -> Option<String> {
             let pages = apple_text::gallery(&self.merged(id)?);
             let shown: Vec<String> = pages
@@ -788,7 +634,6 @@ mod mac {
             Some(format!("\n\n{}\n\n", shown.join("\n\n")))
         }
 
-        /// One page of a scan.
         fn scanned_page(&mut self, id: &str) -> Option<String> {
             if let Some(path) = self.written.get(id) {
                 return Some(shown(path));
@@ -818,7 +663,6 @@ mod mac {
             self.file(id)
         }
 
-        /// A scan somebody marked up, as the PDF Notes made of it.
         fn marked_scan(&mut self, id: &str) -> Option<String> {
             if let Some(path) = self.written.get(id) {
                 return Some(shown(path));
@@ -843,7 +687,6 @@ mod mac {
             Some(shown(&self.keep(id, "Scan.pdf", bytes)))
         }
 
-        /// The file name an attachment has, and where under `Media` it sits.
         fn media_row(&self, id: &str) -> Option<(String, PathBuf)> {
             let media = self
                 .db
@@ -876,8 +719,6 @@ mod mac {
                 })
                 .ok()?;
 
-            // Each of the three is a name rather than a path, whatever the row
-            // says; see `segment`.
             let (folder, name, generation) =
                 (segment(&folder), segment(&name), segment(&generation));
 
@@ -897,15 +738,10 @@ mod mac {
 
     impl Parts for Found<'_> {
         fn attachment(&mut self, id: &str, uti: &str) -> Option<String> {
-            // A link to a note that did not come over - locked, in the bin - is still
-            // the words Notes showed for it.
             if uti == INTERNAL {
                 return self.link(id).or_else(|| self.words(id));
             }
 
-            // A tag, a mention, and anything else Notes keeps as words in the line:
-            // the answer to a sum in Math Notes, the expression a graph was drawn
-            // from. Each holds the words Notes draws for it, and none has a file.
             if uti.starts_with(INLINE) {
                 return self.words(id);
             }
@@ -939,8 +775,6 @@ mod mac {
         }
     }
 
-    /// How a file is written into a note: shown where it is a picture, linked
-    /// where it is a paper or a recording, which is what Orden writes itself.
     fn shown(path: &str) -> String {
         let name = path.rsplit('/').next().unwrap_or(path);
         let extension = name.rsplit('.').next().unwrap_or("").to_lowercase();
@@ -952,11 +786,6 @@ mod mac {
         format!("[{}]({})", label(name), target(path))
     }
 
-    /// A note's title as the words of a link: a bracket of its own would end them,
-    /// and a line break would leave the link behind on the line above. A card's
-    /// title is whatever the linked page called itself, so a `<` that would open a
-    /// tag is escaped as well. Every backslash is already doubled by then, so one
-    /// more in front is enough.
     fn label(words: &str) -> String {
         let said = words
             .replace('\\', "\\\\")
@@ -975,10 +804,6 @@ mod mac {
         out
     }
 
-    /// Where a link goes, with what a title may hold and a link may not encoded: a
-    /// space and a bracket, which end it, a `#`, which starts a heading, a `%`, which
-    /// starts an escape, and a colon, which makes `Re: lunch.md` read as an address
-    /// in a scheme called `Re`. The import decodes it again to find the note.
     fn target(path: &str) -> String {
         let mut out = String::with_capacity(path.len());
         for one in path.chars() {
@@ -998,8 +823,6 @@ mod mac {
         out
     }
 
-    /// A width or a height the way Notes writes one into a preview's name: a whole
-    /// number of points with no fraction after it.
     fn measure(points: f64) -> String {
         if points.fract().abs() < f64::EPSILON {
             format!("{points:.0}")
@@ -1008,27 +831,8 @@ mod mac {
         }
     }
 
-    /// What no file may be called on Windows, which is the strictest of the three
-    /// systems and so the list a name has to pass everywhere. The same list
-    /// `packages/markdown/src/paths.ts` holds a note's own name to.
     const FORBIDDEN: [char; 9] = ['\\', '/', ':', '*', '?', '"', '<', '>', '|'];
 
-    /// One name out of the database, as the name of a file and nothing else.
-    ///
-    /// Every name in this module comes out of the store being read, and that store
-    /// is a file somebody was handed - an export, a backup, a folder off somebody
-    /// else's disk. A row of one written by hand can say its attachment is called
-    /// `../../../.ssh/authorized_keys`, or that its bytes sit at `C:\Windows\win.ini`,
-    /// and both ends of the read join what the row says onto a folder: the name goes
-    /// under the space's `assets/`, and the folder and the name together are read
-    /// from under `Media/`. `Path::join` with an absolute path throws away the root
-    /// it was joined onto, so the second is how a crafted store reads any file on
-    /// the machine into a note.
-    ///
-    /// So a name is the last segment of whatever was written, with the separators,
-    /// the colon a drive letter needs and the control characters taken out, and the
-    /// dots that would leave `..` trimmed off either end. Empty is a row the caller
-    /// steps over.
     fn segment(name: &str) -> String {
         let last = name.rsplit(['/', '\\']).next().unwrap_or(name);
         let said: String = last
@@ -1045,7 +849,6 @@ mod mac {
         said.trim().trim_matches('.').trim().to_string()
     }
 
-    /// A file name nothing else in this read has taken.
     fn free(name: &str, taken: &mut HashSet<String>) -> String {
         let (stem, extension) = match name.rsplit_once('.') {
             Some((stem, extension)) => (stem.to_string(), format!(".{extension}")),
@@ -1067,10 +870,6 @@ mod mac {
     mod tests {
         use super::{read_from, segment};
 
-        /// The store is a file somebody was handed, and every name in it is a name
-        /// it chose: the one on the way out is joined onto the space's `assets/`,
-        /// and the ones on the way in are joined onto `Media/`, where an absolute
-        /// path would replace the folder rather than sit under it.
         #[test]
         fn a_name_in_the_store_is_a_name_and_not_a_path() {
             assert_eq!(segment("photo.png"), "photo.png");
@@ -1083,16 +882,12 @@ mod mac {
             assert_eq!(segment("C:/Windows/win.ini"), "win.ini");
             assert_eq!(segment("a\nb.png"), "a b.png");
 
-            // Nothing left is a row the caller steps over.
             assert_eq!(segment(".."), "");
             assert_eq!(segment("..."), "");
             assert_eq!(segment("/"), "");
             assert_eq!(segment(""), "");
         }
 
-        /// A title is anything somebody typed, and a link to that note has to survive
-        /// it: `Re: lunch` would otherwise read as an address in a scheme called `Re`,
-        /// and `C# notes` as a heading in a note called `C`.
         #[test]
         fn a_link_to_a_note_holds_whatever_its_title_says() {
             assert_eq!(
@@ -1103,7 +898,6 @@ mod mac {
             assert_eq!(super::label("a < b <i>"), "a < b \\<i>");
         }
 
-        /// A store with one attachment row in it, holding what `columns` says.
         fn store(columns: &[(&str, &str)]) -> rusqlite::Connection {
             let db = rusqlite::Connection::open_in_memory().expect("a database");
             db.execute_batch(
@@ -1138,8 +932,6 @@ mod mac {
             found.attachment("A", uti)
         }
 
-        /// A card's title is whatever the linked page called itself, and a page can
-        /// call itself a tag. In the reader's own note that tag would be markup.
         #[test]
         fn a_cards_title_is_words_and_not_markup() {
             let db = store(&[
@@ -1161,8 +953,6 @@ mod mac {
             );
         }
 
-        /// A tag, a mention and the answer to a sum are the words Notes keeps on
-        /// their row, which a store somebody was handed can fill with a tag.
         #[test]
         fn words_kept_on_an_attachment_are_not_markup() {
             let db = store(&[("zalttext", "#plans <img src=x onerror=alert(1)> \\</b>")]);
@@ -1172,9 +962,6 @@ mod mac {
             );
         }
 
-        /// The database under `tests/apple-notes`, which is Notes' own schema with
-        /// four notes in it. Built by `scripts/apple-notes-fixture.py`, which says
-        /// what each row is for.
         fn fixture() -> std::path::PathBuf {
             crate::app_dir().join("tests/apple-notes")
         }
@@ -1184,7 +971,6 @@ mod mac {
             let read = read_from(&fixture()).expect("the fixture reads");
             let paths: Vec<&str> = read.notes.iter().map(|note| note.path.as_str()).collect();
 
-            // The first folder's notes go straight in; a named folder is a folder.
             assert!(paths.contains(&"Groceries.md"), "{paths:?}");
             assert!(paths.contains(&"Work/Ideas.md"), "{paths:?}");
             assert!(paths.contains(&"Work/Deeper/Nested.md"), "{paths:?}");
@@ -1202,7 +988,6 @@ mod mac {
             assert_eq!(note.title, "Groceries");
             assert!(note.text.starts_with("# Groceries"), "{}", note.text);
             assert!(note.text.contains("- [x] Milk"), "{}", note.text);
-            // 2026-09-04, as seconds since 1970.
             assert_eq!(note.created, 1_788_480_000);
         }
 
@@ -1249,8 +1034,6 @@ mod mac {
             );
         }
 
-        /// The answer to a sum is words Notes keeps on its attachment's row, and so is
-        /// a link to a note that stays behind: neither leaves a gap in the line.
         #[test]
         fn words_kept_on_an_attachment_come_over_as_words() {
             let read = read_from(&fixture()).expect("the fixture reads");
@@ -1271,8 +1054,6 @@ mod mac {
                 .expect("the note with a table, sketches and scans in it")
         }
 
-        /// A table is a document of its own on its attachment's row, and arrives as a
-        /// markdown table with its columns where Notes draws them.
         #[test]
         fn a_table_arrives_as_a_markdown_table() {
             let read = read_from(&fixture()).expect("the fixture reads");
@@ -1287,9 +1068,6 @@ mod mac {
             assert_eq!(read.tables, 0);
         }
 
-        /// A sketch is the picture Notes drew of it; a scan is a picture a page, the
-        /// cropped preview where Notes left one and the page's photograph where it did
-        /// not; a marked-up scan is the PDF Notes made of it.
         #[test]
         fn sketches_and_scans_arrive_as_the_pictures_notes_drew() {
             let read = read_from(&fixture()).expect("the fixture reads");
@@ -1315,7 +1093,6 @@ mod mac {
             }
         }
 
-        /// A sketch whose picture is not on this Mac is the one thing left to say.
         #[test]
         fn a_sketch_with_no_picture_on_this_mac_is_counted() {
             let read = read_from(&fixture()).expect("the fixture reads");

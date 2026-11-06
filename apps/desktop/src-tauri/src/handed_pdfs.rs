@@ -1,20 +1,3 @@
-//! PDFs another program opens with nib: "Open with" in Explorer, the Finder's Open
-//! With, a file manager on Linux, or `nib paper.pdf` in a terminal.
-//!
-//! Emil, 2026-10-13: *"open with nib should be possible for pdfs"*. The one kind of
-//! file from outside the spaces Orden takes: one already in a space opens where it is,
-//! and one from anywhere else opens as a page note nobody has saved yet, reading the
-//! PDF where it lies, until it is saved into a space (#1162).
-//!
-//! Each installer lists nib for PDFs and claims nothing: Windows' `OpenWithProgids`, a
-//! Mac's `LSHandlerRank` of `Alternate` and a Linux desktop entry's `MimeType`, the way
-//! VS Code and Chrome stand in "Open with" without taking the default from the PDF
-//! reader somebody chose.
-//!
-//! What a launch named is held here, and kept for the next runs, and only that is
-//! what `read_file` and `same_pdf` will read outside the spaces: no note, link or page
-//! can add to it.
-
 use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::io::{BufReader, Read};
@@ -25,11 +8,8 @@ use tauri::{AppHandle, Manager, Url};
 
 use crate::paths::{a_space, cannot, files_in, folded, inside, is_pdf, write_atomically};
 
-/// The longest argument read as a path: the longest command line Windows starts a
-/// program with.
 const LONGEST: usize = 32 * 1024;
 
-/// The PDFs handed to Orden, by where they are, the latest last.
 #[derive(Default)]
 pub struct Handed(Mutex<Vec<PathBuf>>);
 
@@ -38,7 +18,6 @@ const KEPT: &str = "handed-pdfs.json";
 const MOST_KEPT: usize = 256;
 
 impl Handed {
-    /// Takes these in, and answers them as the window is told them.
     fn admit(&self, pdfs: Vec<PathBuf>) -> Vec<String> {
         if let Ok(mut held) = self.0.lock() {
             held.retain(|one| !pdfs.iter().any(|new| same_handed(one, new)));
@@ -51,8 +30,6 @@ impl Handed {
             .collect()
     }
 
-    /// Whether a path is one that was handed over, in whichever case it is written
-    /// back.
     fn holds(&self, path: &Path) -> bool {
         self.0
             .lock()
@@ -105,7 +82,6 @@ fn handed_set(app: &AppHandle) -> tauri::State<'_, Handed> {
     app.state::<Handed>()
 }
 
-/// The PDFs handed over, taken in and spelled for the window; see launch.rs.
 pub fn admit_handed(app: &AppHandle, pdfs: Vec<PathBuf>) -> Vec<String> {
     if pdfs.is_empty() {
         return Vec::new();
@@ -125,11 +101,6 @@ pub fn handed_pdf(app: &AppHandle, path: &str) -> Option<PathBuf> {
     handed_set(app).holds(&path).then_some(path)
 }
 
-/// The PDFs a command line names, each once, in the order given. A path relative to
-/// where the launch was made is read from there, and a `file:` address - what a Linux
-/// entry's `%U` hands over - as the file it names. Nothing on a link's command line,
-/// which is about its one address; see `for_a_link` in `web_handed.rs`. Each argument
-/// as it was given, so a file whose name is not Unicode is found all the same.
 pub fn pdfs_in<A: AsRef<OsStr>>(args: &[A], cwd: &Path) -> Vec<PathBuf> {
     if crate::web_handed::for_a_link(args) {
         return Vec::new();
@@ -144,7 +115,6 @@ pub fn pdfs_in<A: AsRef<OsStr>>(args: &[A], cwd: &Path) -> Vec<PathBuf> {
     found
 }
 
-/// The PDFs among what a Mac was asked to open, which are `file:` addresses.
 #[cfg_attr(
     not(target_os = "macos"),
     allow(
@@ -161,15 +131,11 @@ pub fn pdfs_among(urls: &[Url]) -> Vec<PathBuf> {
         .collect()
 }
 
-/// The PDF one argument names, or `None` for a flag, a page, or anything that is not
-/// a PDF on this disk.
 fn named(said: &OsStr, cwd: &Path) -> Option<PathBuf> {
     if said.is_empty() || said.as_encoded_bytes().starts_with(b"-") || said.len() > LONGEST {
         return None;
     }
 
-    // `C:\paper.pdf` parses as an address in the scheme `c`, which is a path all the
-    // same; only `file:` is read as an address.
     let path = match said.to_str().map(Url::parse) {
         Some(Ok(url)) if url.scheme() == "file" => url.to_file_path().ok()?,
         _ => PathBuf::from(said),
@@ -190,8 +156,6 @@ pub fn same_pdf(app: AppHandle, from: String, space: String) -> Result<Option<St
     Ok(same_in(&root, &pdf).map(|there| there.to_string_lossy().into_owned()))
 }
 
-/// A PDF of the space holding the same bytes as `pdf`. Only one of the same size is
-/// read, so a space of papers costs a walk and, nearly always, no read at all.
 fn same_in(root: &Path, pdf: &Path) -> Option<PathBuf> {
     let size = pdf.metadata().ok()?.len();
     let (_, others) = files_in(root);
@@ -202,7 +166,6 @@ fn same_in(root: &Path, pdf: &Path) -> Option<PathBuf> {
     })
 }
 
-/// Whether two files hold the same bytes, read side by side.
 fn same_bytes(one: &Path, other: &Path) -> Result<bool, String> {
     let open = |path: &Path| {
         File::open(path)
@@ -314,8 +277,6 @@ mod tests {
         }
     }
 
-    /// A link's command line is about its one address, and a path smuggled into it is
-    /// part of that address.
     #[test]
     fn a_links_command_line_hands_over_no_pdf() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -325,7 +286,6 @@ mod tests {
         assert!(pdfs_in(&args, dir.path()).is_empty());
     }
 
-    /// A name that is not Unicode, which Linux allows, is found by the very bytes it has.
     #[cfg(target_os = "linux")]
     #[test]
     fn a_pdf_whose_name_is_not_unicode_is_handed_over_as_named() {
@@ -400,9 +360,6 @@ mod tests {
         fs::read_to_string(crate::app_dir().join(relative)).expect("a file beside the crate")
     }
 
-    /// What Windows reads for "Open with": the `ProgID` and its line under the
-    /// extension, written alike by both installers and taken away by the uninstaller.
-    /// Never the extension's own default, which is the reader somebody chose.
     #[test]
     fn windows_offers_nib_for_a_pdf_and_claims_nothing() {
         let script = source("installer.nsh");
@@ -445,8 +402,6 @@ mod tests {
         assert!(!fragment.contains(r#"Key="Software\Classes\.pdf" Type"#));
         assert!(source("tauri.conf.json").contains(r#""wix/pdf.wxs""#));
 
-        // The name "Open with" shows is the product's, which WiX has spelt out and the
-        // NSIS installer takes from the template.
         let config: serde_json::Value =
             serde_json::from_str(&source("tauri.conf.json")).expect("the config");
         let product = config["productName"].as_str().expect("a product name");

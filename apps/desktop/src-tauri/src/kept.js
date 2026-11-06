@@ -1,6 +1,3 @@
-// What the app's page writes to its `localStorage`, written to the disk as well, the
-// moment it is written; and put back into it before the page reads anything, where the
-// engine lost it. See kept.rs, which writes what was kept in place of the empty one.
 ;(function () {
   if (window.top !== window) return
   const kept = /* kept */ { values: {}, gone: [] }
@@ -14,8 +11,6 @@
   const remove = Storage.prototype.removeItem
   const clear = Storage.prototype.clear
 
-  // Once a run, on the first page of its first window: a reload keeps the engine's own
-  // copy, which is newer than anything this run said at its start.
   const DONE = 'nib:kept-restored'
   let done = false
   try {

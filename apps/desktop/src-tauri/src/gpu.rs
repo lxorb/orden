@@ -1,37 +1,17 @@
-//! Whether Chromium draws on the graphics card or on the CPU, on Linux, in the log.
-//!
-//! A reader whose Orden sat at a whole core asked whether it was drawing in software
-//! (#427, KDE). Chromium falls back to its software renderer, `SwiftShader`, quietly where
-//! the GPU process cannot start - a driver it will not use, a library it cannot load -
-//! and the app then works and costs the CPU what the card should have. So the app's own
-//! page says, once it has settled, which renderer WebGL draws with (`SCRIPT`), and the
-//! log says it in one line a reader can send: `gpu: hardware (…)` or `gpu: software (…)`,
-//! with whether a GPU process is running at all.
-//!
-//! And where it should not draw on the card at all, Settings › General › Hardware
-//! acceleration says so (#550): a file in the app's own settings folder, since the engine
-//! reads it before anything of it starts (`accelerated`).
-
 use std::path::Path;
 use std::sync::OnceLock;
 
-/// What the app's own page runs on CEF to say it; see the top of this file.
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub const SCRIPT: &str = include_str!("gpu.js");
 
-/// What draws the app's pages, as the first page said it.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Seen {
-    /// Whether that is the graphics card.
     pub hardware: bool,
-    /// The renderer WebGL named, or why there was none.
     pub renderer: String,
-    /// Whether a GPU process was running when it was asked.
     pub gpu_process: bool,
 }
 
 impl Seen {
-    /// What the log says of it, after `gpu: `: `hardware (…)` or `software (…)`.
     fn said(&self) -> String {
         format!(
             "{} ({}; {})",
@@ -52,59 +32,37 @@ impl Seen {
 
 static SEEN: OnceLock<Seen> = OnceLock::new();
 
-/// Where Hardware acceleration is kept, in the app's own settings folder: `off` for a
-/// reader who turned it off. No file, or anything else in it, is on.
 const FILE: &str = "gpu.txt";
 
-/// The switches that keep Chromium off the graphics card: no GPU process, and the pages
-/// put together on the CPU too, as Chrome's own setting does.
 #[cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
 pub(crate) const OFF: [&str; 2] = ["--disable-gpu", "--disable-gpu-compositing"];
 
-/// Whether this run's engine draws on the graphics card: decided once, by `accelerated`.
 static ACCELERATED: OnceLock<bool> = OnceLock::new();
 
-/// Whether this run's engine draws on the graphics card: decided once, before the engine
-/// starts, from the setting in `config`; the answer is this run's, so every webview of it
-/// starts with the same switches whatever the setting says by then.
 #[cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
 pub fn accelerated(config: &Path) -> bool {
     *ACCELERATED.get_or_init(|| chosen(config))
 }
 
-/// What `accelerated` decided for this run, for what is made after it has: on, where
-/// it has not decided. Nothing read, so nothing waited on, by the windows and pages
-/// made later on whatever thread makes them.
 #[cfg_attr(not(all(windows, not(feature = "cef"))), allow(dead_code))]
 pub fn this_run() -> bool {
     ACCELERATED.get().copied().unwrap_or(true)
 }
 
-/// What the setting in `config` says now, which the next run starts with: what the
-/// settings file declares (#673), where it does, and the reader's own otherwise. Read
-/// here rather than by the window, because the engine's switches are set before any
-/// page has run; so a declared value is in force from the run that first reads it, and
-/// the window never asks for a restart to make it so.
 fn chosen(config: &Path) -> bool {
     declared(config).unwrap_or_else(|| {
         !std::fs::read_to_string(config.join(FILE)).is_ok_and(|said| said.trim() == "off")
     })
 }
 
-/// The key the settings file sets Hardware acceleration by.
 const KEY: &str = "general.hardwareAcceleration";
 
-/// Hardware acceleration as the settings file declares it, or nothing where there is no
-/// file, it is not JSON, or it says nothing about it (or something that is not true or
-/// false: the window says what is wrong with the file).
 fn declared(config: &Path) -> Option<bool> {
     let text = std::fs::read_to_string(config.join(crate::themes::SETTINGS_FILE)).ok()?;
     let file: serde_json::Value = serde_json::from_str(&text).ok()?;
     find(&file, KEY)?.as_bool()
 }
 
-/// A key in a settings file, nested by its dots or written out, or any mixture: what
-/// the window reads the same file as (settings/file.ts).
 fn find<'a>(value: &'a serde_json::Value, key: &str) -> Option<&'a serde_json::Value> {
     let object = value.as_object()?;
     if let Some(found) = object.get(key) {
@@ -117,19 +75,15 @@ fn find<'a>(value: &'a serde_json::Value, key: &str) -> Option<&'a serde_json::V
     })
 }
 
-/// What draws the app's pages, once the first page has said; `None` before then.
 pub fn seen() -> Option<&'static Seen> {
     SEEN.get()
 }
 
-/// Hardware acceleration as Settings shows it: what the next run starts with.
 #[tauri::command(async)]
 pub fn gpu_chosen(app: tauri::AppHandle<crate::Engine>) -> Result<bool, String> {
     Ok(chosen(&crate::paths::config_dir(&app)?))
 }
 
-/// Hardware acceleration turned on or off, kept for the next run; this one goes on as it
-/// started, which is why Settings asks for a restart.
 #[tauri::command(async)]
 pub fn gpu_choose(app: tauri::AppHandle<crate::Engine>, on: bool) -> Result<(), String> {
     let config = crate::paths::config_dir(&app)?;
@@ -137,15 +91,11 @@ pub fn gpu_choose(app: tauri::AppHandle<crate::Engine>, on: bool) -> Result<(), 
     crate::paths::write_atomically(&config.join(FILE), if on { b"on" } else { b"off" })
 }
 
-/// What draws the app's pages, as the log said it, for Settings to show under Hardware
-/// acceleration: `None` until the first page has said, which on Windows is never, since
-/// the page's script runs on Orden's own Chromium only.
 #[tauri::command(async)]
 pub fn gpu_line() -> Option<String> {
     seen().map(Seen::said)
 }
 
-/// Whether a renderer WebGL names is one that draws on the CPU.
 fn software(renderer: &str) -> bool {
     let renderer = renderer.to_lowercase();
     [
@@ -159,7 +109,6 @@ fn software(renderer: &str) -> bool {
     .any(|one| renderer.contains(one))
 }
 
-/// Whether one of this process's children is Chromium's GPU process.
 fn gpu_process() -> bool {
     let own = std::process::id().to_string();
     let Ok(all) = std::fs::read_dir("/proc") else {
@@ -181,7 +130,6 @@ fn gpu_process() -> bool {
     })
 }
 
-/// What the page's WebGL said draws it: kept, and said in the log, the first time.
 #[tauri::command(async)]
 pub fn gpu_seen(app: tauri::AppHandle<crate::Engine>, renderer: Option<String>) {
     if SEEN.get().is_some() {
@@ -210,7 +158,6 @@ pub fn gpu_seen(app: tauri::AppHandle<crate::Engine>, renderer: Option<String>) 
 mod tests {
     use super::{chosen, software, Seen, FILE, SCRIPT};
 
-    /// Settings shows what the log says: which of the two, and why.
     #[test]
     fn what_draws_is_said_as_the_log_says_it() {
         let seen = Seen {
@@ -221,7 +168,6 @@ mod tests {
         assert_eq!(seen.said(), "software (no WebGL; no GPU process)");
     }
 
-    /// Hardware acceleration is on until the file says `off`, and only that turns it off.
     #[test]
     fn only_off_in_the_file_turns_hardware_acceleration_off() {
         let config = tempfile::tempdir().unwrap();
@@ -234,8 +180,6 @@ mod tests {
         assert!(chosen(config.path()), "half a file is on");
     }
 
-    /// What the settings file declares wins over the reader's own, nested or written
-    /// out; a file that says nothing of it, or is not JSON, leaves the reader's.
     #[test]
     fn the_settings_file_decides_where_it_says() {
         let config = tempfile::tempdir().unwrap();
@@ -256,7 +200,6 @@ mod tests {
         assert!(chosen(config.path()), "not a switch is not a decision");
     }
 
-    /// The renderers that draw on the CPU are told from the cards.
     #[test]
     fn a_software_renderer_is_told_from_a_card() {
         assert!(software("ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"));
@@ -271,7 +214,6 @@ mod tests {
         ));
     }
 
-    /// The script asks the command by its name, once, after the page has loaded.
     #[test]
     fn the_script_asks_by_the_command_s_name() {
         assert!(SCRIPT.contains("'gpu_seen'"));

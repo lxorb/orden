@@ -1,93 +1,22 @@
-//! Where the keyboard was in each window, and the keyboard put back there.
-//!
-//! Emil, 2026-09-30: *"when I Alt+Tab out of nib and back in, I usually have to click
-//! again before I can type, into the terminal or the open web page."* A browser puts the
-//! keyboard back exactly where it was - the site's own field with its caret, the address
-//! field, a terminal's prompt - however the window came back: Alt+Tab, the taskbar, a
-//! notification, a dialog closing over it. Chrome does it by storing the focused view as
-//! its window is left and restoring it as the window comes back; the page keeps its own
-//! focused element meanwhile, in the renderer.
-//!
-//! **Why Orden lost it.** A window here holds several webviews: the app's own page and one
-//! per web tab. On Windows every activation hands the keyboard to the window itself, and
-//! wry answers that by moving it into the window's *own* page, always - and does the same
-//! at the start of every drag of the window. So a web tab's page never had the keyboard
-//! back after Alt+Tab, whatever it held before. Orden's own Chromium is worse off: nothing
-//! there hands the window's keyboard to any page at all.
-//!
-//! **One record per window**: which of its web pages has the keyboard, or none, which is
-//! the app's own page. Written only when the keyboard really moves: a page takes it (the
-//! engine says so, or it is found there as the app's page lets go of it, or as the window
-//! is left), or a person takes it into the app's page, which the page says itself
-//! (`keyboard_here`, from lib/keyboard-home.ts). Never by the window's own activation, and
-//! never by Orden handing a browser chord back to its own page. The element inside a page is
-//! the engine's to keep - the site's input with its caret and selection, the note, the
-//! terminal - and the app's page keeps the other half of this record for its own elements.
-//!
-//! **Read back** as the window takes the keyboard (`WM_SETFOCUS`: activation, a restore
-//! from the taskbar, a dialog closing) and as a drag of it ends, inside that same message,
-//! so a click that activated the window still lands where it clicked. And by the app's page
-//! once a layer of its own has closed with the keyboard nowhere (`keyboard_back`). Only a
-//! page that is on screen, only one of the reader's tabs - an agent's own page is never in
-//! this record - and never while another program is in front.
-//!
-//! **The app's own page is handed it here too**, not left to wry. Emil, 2026-10-13: *"when
-//! I alt tab out of nib and then alt tab onto it again ... ctrl tab nothing happens. i have
-//! to click into nib first."* wry gives the window's keyboard to its own page from a
-//! subclass of the window, and takes that subclass off again whenever *any* webview in the
-//! window goes: a child's drop detaches its parent's subclass, whoever put it there (wry
-//! 0.55, `Drop for InnerWebView`). Closing one web tab was enough. From then on the window
-//! took the keyboard back to itself, a frame with nothing in it to type into, until a
-//! click. So each window's own page is kept beside the reader's pages, and given the
-//! keyboard the same way.
-//!
-//! A Mac and Linux keep a window's first responder and its focus widget across activation
-//! themselves, so only the second reading is theirs; the same record and the same commands,
-//! with the platform asked which page has the keyboard.
-//!
-//! **The app's own page is told as a page takes it** (#1036): `IN_PAGE`, to the window's
-//! own page, which then lets go of whatever of its elements had the keyboard; see
-//! lib/keyboard-home.ts. A press into a page never reaches the app's HTML, and the window's
-//! `blur` the engine sends it instead is not a promise: on CEF on Linux it sometimes never
-//! came, and the address field stayed focused with its address selected while the page was
-//! being used. So each engine's own word is passed on as well: `WebView2`'s `GotFocus` on
-//! each page, and on CEF the X server's `FocusIn` on each page's browser window, heard on
-//! the connection `web_keys.rs` already keeps. On a Mac a page taking the keyboard is the
-//! app's view resigning first responder, which `WebKit` always says to the page as its
-//! window's `blur`, so the page's own word is the one there. The page asks the record
-//! (`keyboard_went`) before it lets go, so a word that arrives late is never acted on.
-
 use std::collections::{HashMap, HashSet};
 use std::sync::{LazyLock, Mutex, PoisonError};
 use std::time::Instant;
 
 use tauri::{AppHandle, Emitter as _, Manager as _, Webview};
 
-/// How long a page that was out of sight under a layer may still be handed the keyboard
-/// back as it comes into sight again: the layer's own way out, and a margin for the
-/// window to see it has gone. See `LEAVING` in lib/web-tab/WebTab.svelte.
 const OWED_MS: u64 = 1_000;
 
-/// The record, for every window of the run.
 #[derive(Debug, Default)]
 struct Homes {
-    /// The page that has the keyboard, by the label of the window it is in. A window that
-    /// is not here is typing in its own page.
     typing: HashMap<String, String>,
-    /// The pages on screen, by label.
     shown: HashSet<String>,
-    /// A page owed the keyboard the moment it is shown again, and until when.
     owed: Option<(String, u64)>,
 }
 
-/// Where the keyboard goes back to after one of the app's layers has closed.
 #[derive(Debug, PartialEq, Eq)]
 enum Back {
-    /// To this page, now.
     Page(String),
-    /// To a page still out of sight under the layer, as it is shown again.
     Later,
-    /// To the app's own page, which knows which of its elements.
     Own,
 }
 
@@ -102,7 +31,6 @@ impl Homes {
         self.owed = None;
     }
 
-    /// A page shown or hidden. True when it is shown owing the keyboard.
     fn placed(&mut self, page: &str, visible: bool, now: u64) -> bool {
         if !visible {
             self.shown.remove(page);
@@ -126,8 +54,6 @@ impl Homes {
         }
     }
 
-    /// The page to hand the keyboard back to as the window comes back: the one that had
-    /// it, while it is still on screen.
     #[cfg_attr(
         not(windows),
         allow(
@@ -156,25 +82,17 @@ impl Homes {
 
 static HOMES: LazyLock<Mutex<Homes>> = LazyLock::new(Mutex::default);
 
-/// The record, for one short look. Never held across a call into the engine: the engine
-/// may say a page took the keyboard from inside that call, which writes here.
 fn homes<T>(look: impl FnOnce(&mut Homes) -> T) -> T {
     look(&mut HOMES.lock().unwrap_or_else(PoisonError::into_inner))
 }
 
-/// Milliseconds since the record was first asked the time.
 fn now() -> u64 {
     static START: LazyLock<Instant> = LazyLock::new(Instant::now);
     u64::try_from(START.elapsed().as_millis()).unwrap_or(u64::MAX)
 }
 
-/// What the window's own page is told as one of its pages takes the keyboard; `IN_PAGE` in
-/// lib/keyboard-home.ts.
 pub const IN_PAGE: &str = "nib://keyboard-in-page";
 
-/// A page took the keyboard, as its engine or the window system says the moment it does:
-/// written down, and the window's own page told, which lets go of it; see the top of this
-/// file. From any thread.
 #[cfg_attr(
     not(any(windows, feature = "cef")),
     allow(dead_code, reason = "a Mac's engine says it to the app's page itself")
@@ -185,14 +103,10 @@ pub fn page_took(app: &AppHandle, window: &str, page: &str) {
     crate::web_tabs::page_chosen(app, window, page);
 }
 
-/// A web tab's page is on screen as it is built: the rectangle it was built at is the
-/// pane's. See `web_open`.
 pub fn built(page: &str) {
     homes(|all| all.placed(page, true, now()));
 }
 
-/// A page shown or hidden, from `web_place` on the window's own thread; a page owed the
-/// keyboard takes it as it arrives, while its window is still the one in front.
 pub fn placed(app: &AppHandle, view: &Webview, visible: bool) {
     let page = view.label();
     if homes(|all| all.placed(page, visible, now())) && native::in_front(&view.window()) {
@@ -200,12 +114,6 @@ pub fn placed(app: &AppHandle, view: &Webview, visible: bool) {
     }
 }
 
-/// One of the app's layers was cut out of a page that stays live under it (`web_cut.rs`):
-/// the keyboard is kept by the app's own page, which has it, given to its browser
-/// outright. On X11 a window's keyboard goes to whichever of its child windows the
-/// pointer is over until one of them is given it, so the pointer crossing the page took
-/// it from the menu over the page, and the menu closed (#427). Not where a page holds
-/// the keyboard already: a toast coming up over a page being typed in leaves it there.
 #[cfg(feature = "cef")]
 pub fn hold_for_layer(app: &AppHandle, window: &str) {
     if native::holding(window).is_none() {
@@ -213,13 +121,11 @@ pub fn hold_for_layer(app: &AppHandle, window: &str) {
     }
 }
 
-/// A page closed, on the window's own thread.
 pub fn closed(page: &str) {
     homes(|all| all.closed(page));
     native::let_go_of(page);
 }
 
-/// The window was left: whichever of its pages has the keyboard is where it goes back to.
 #[cfg(windows)]
 fn left(window: &str) {
     if let Some(page) = native::holding(window) {
@@ -227,14 +133,6 @@ fn left(window: &str) {
     }
 }
 
-/// The window took the keyboard, which the engine has just put in the app's own page.
-///
-/// Never in a run whose windows were sent off the screen: a page handed the keyboard
-/// activates the window it is in, and a probe's window must never be activated; see
-/// foreground.rs. A probe's window is never activated to begin with, so this is the
-/// guard's second line, not its first. A probe says instead, on stderr, where the
-/// keyboard would have gone, so a drive that sends its window `WM_SETFOCUS` itself reads
-/// the rule without the window being handed anything; see scripts/refocus-probe.py.
 #[cfg(windows)]
 fn returned(window: &str) {
     let home = homes(|all| all.home(window).map(str::to_string));
@@ -260,15 +158,9 @@ fn returned(window: &str) {
     }
 }
 
-/// What the app's own page runs on CEF to say a press landed in it; see `pressed`.
 #[cfg_attr(not(feature = "cef"), allow(dead_code))]
 pub const PRESS_SCRIPT: &str = include_str!("keyboard_press.js");
 
-/// A press landed in the app's own page: on CEF on Linux, its browser is given the
-/// keyboard outright, as it is the one pressed. A window's keyboard on X11 otherwise
-/// follows the pointer between its child windows, which a web tab's page is one of, and
-/// the pointer crossing the page took it from a menu just opened over the page (#427,
-/// #512). A press in the page itself takes it from there, as it always has.
 #[tauri::command]
 #[cfg_attr(
     not(feature = "cef"),
@@ -286,22 +178,16 @@ pub fn keyboard_pressed(webview: Webview) {
     let _ = webview;
 }
 
-/// Starts following a window, once, as its page comes up.
 #[tauri::command]
 pub fn keyboard_watch(webview: Webview) {
     native::watch(&webview);
 }
 
-/// Somebody put the keyboard in the app's own page: a key, or an element a person types
-/// or stands in taking it. Said by the page once each time it has the keyboard again.
 #[tauri::command]
 pub fn keyboard_here(webview: Webview) {
     homes(|all| all.own_took(webview.window().label()));
 }
 
-/// The app's own page let go of the keyboard. Where it went, if it went to a page of this
-/// window, is written down, and the answer is whether it did; gone to another program,
-/// nothing is.
 #[tauri::command]
 pub fn keyboard_went(webview: Webview) -> bool {
     let window = webview.window().label().to_string();
@@ -313,12 +199,6 @@ pub fn keyboard_went(webview: Webview) -> bool {
     true
 }
 
-/// One of the app's layers closed with the keyboard nowhere. True when a page has it back
-/// or will as it comes into sight; false leaves it to the app's own page. Never while
-/// another program is in front: Orden only ever gives the keyboard back to itself.
-///
-/// With a tab, that tab's page is where it goes: a web tab's find bar closing, which was
-/// opened from the page and gives the page its keyboard back, as Chrome's does.
 #[tauri::command]
 pub fn keyboard_back(webview: Webview, tab: Option<String>) -> bool {
     let window = webview.window();
@@ -326,8 +206,6 @@ pub fn keyboard_back(webview: Webview, tab: Option<String>) -> bool {
         let page = crate::web_tabs::label_of(&tab);
         homes(|all| all.page_took(window.label(), &page));
     }
-    // A probe's window is never in front, and never handed the keyboard besides; see
-    // `returned`.
     if crate::placement::away().is_some() || !native::in_front(&window) {
         return false;
     }
@@ -338,23 +216,17 @@ pub fn keyboard_back(webview: Webview, tab: Option<String>) -> bool {
     }
 }
 
-/// What a message to a window says about its keyboard.
 #[cfg_attr(
     not(windows),
     allow(dead_code, reason = "a window's messages are Windows' own")
 )]
 #[derive(Debug, PartialEq, Eq)]
 enum Moment {
-    /// The window is being left for another: where the keyboard is now is where it goes
-    /// back to.
     Leaving,
-    /// The window has the keyboard back, or has stopped being dragged: it goes home.
     Back,
     Nothing,
 }
 
-/// `WM_ACTIVATE` with `WA_INACTIVE`, `WM_SETFOCUS` and `WM_EXITSIZEMOVE`, by number, so
-/// the rule reads and is tested on every platform.
 #[cfg_attr(
     not(windows),
     allow(dead_code, reason = "a window's messages are Windows' own")
@@ -364,7 +236,6 @@ fn moment(message: u32, wparam: usize) -> Moment {
     const SET_FOCUS: u32 = 0x0007;
     const EXIT_SIZE_MOVE: u32 = 0x0232;
     const INACTIVE: usize = 0;
-    // The low word says how; the high one whether the window is minimised.
     let how = wparam % 0x1_0000;
     match message {
         ACTIVATE if how == INACTIVE => Moment::Leaving,
@@ -373,7 +244,6 @@ fn moment(message: u32, wparam: usize) -> Moment {
     }
 }
 
-/// The window's own messages, on Windows: the one seam every engine's window shares.
 #[cfg(windows)]
 mod watching {
     use std::cell::RefCell;
@@ -387,15 +257,12 @@ mod watching {
 
     use super::{left, moment, returned, Moment};
 
-    /// This file's own mark among the window's subclasses: wry keeps one of its own there.
     const OURS: usize = 0x6b65_7973;
 
     thread_local! {
-        /// The windows followed, by handle, with their labels.
         static WINDOWS: RefCell<HashMap<isize, String>> = RefCell::new(HashMap::new());
     }
 
-    /// Follows the messages of the window a page is in, once. On the window's own thread.
     #[allow(
         unsafe_code,
         reason = "a window's activation is heard through a Win32 subclass, which only the Win32 API installs"
@@ -409,43 +276,32 @@ mod watching {
         if WINDOWS.with_borrow_mut(|all| all.insert(hwnd, label).is_some()) {
             return;
         }
-        // Safe: a window of this thread, and a procedure that lives for the program; it
-        // takes itself off as the window goes.
         unsafe {
             let _ = SetWindowSubclass(HWND(hwnd as *mut core::ffi::c_void), Some(heard), OURS, 0);
         }
     }
 
-    /// Whether the keyboard is in this window or inside it, asked of the input this thread
-    /// shares with every page's window, the way `web_opens.rs` asks it.
     #[allow(
         unsafe_code,
         reason = "which window has the keyboard is Win32's to say"
     )]
     pub fn keyboard_in(host: isize) -> bool {
         let host = HWND(host as *mut core::ffi::c_void);
-        // Safe: which window of this thread's input has the keyboard, and whether it is
-        // inside another; neither takes anything.
         unsafe {
             let focus = GetFocus();
             !focus.is_invalid() && (host == focus || IsChild(host, focus).as_bool())
         }
     }
 
-    /// Whether this window is the one in front of the person.
     #[allow(unsafe_code, reason = "which window is in front is Win32's to say")]
     pub fn in_front(window: &Window) -> bool {
         let Ok(ours) = window.hwnd() else {
             return false;
         };
-        // Safe: reads which window is in front; takes nothing.
         let front = unsafe { GetForegroundWindow() };
         front.0 as isize == ours.0 as isize
     }
 
-    /// Runs in front of wry's own subclass, which was there first: the keyboard is looked
-    /// for before the window's default moves it, and put back after wry has put it in the
-    /// app's own page.
     #[allow(
         unsafe_code,
         reason = "the subclass's own procedure, called by Win32 with the message's words"
@@ -458,8 +314,6 @@ mod watching {
         _id: usize,
         _data: usize,
     ) -> LRESULT {
-        // Every message the window gets passes through here, so the label is only looked
-        // up for the three this is about.
         let now = moment(message, wparam.0);
         let window = match now {
             Moment::Nothing => None,
@@ -469,7 +323,6 @@ mod watching {
             left(window);
         }
 
-        // Safe: hands the message on down the window's chain, as a subclass must.
         let answer = unsafe { DefSubclassProc(hwnd, message, wparam, lparam) };
 
         if let (Some(window), Moment::Back) = (&window, &now) {
@@ -479,7 +332,6 @@ mod watching {
             if let Some(gone) = WINDOWS.with_borrow_mut(|all| all.remove(&(hwnd.0 as isize))) {
                 super::native::window_gone(&gone);
             }
-            // Safe: this subclass, off the window that is going.
             unsafe {
                 let _ = RemoveWindowSubclass(hwnd, Some(heard), OURS);
             }
@@ -488,8 +340,6 @@ mod watching {
     }
 }
 
-/// The page asked which of this window's pages has the keyboard, and one of them handed
-/// it: `WebView2`, through each page's controller.
 #[cfg(all(windows, not(feature = "cef")))]
 mod native {
     use std::cell::RefCell;
@@ -504,23 +354,17 @@ mod native {
 
     pub use super::watching::in_front;
 
-    /// A reader's web page: the window it is in, and its controller.
     struct Page {
         window: String,
         controller: ICoreWebView2Controller,
     }
 
     thread_local! {
-        /// Every reader's page, by label. On the window's thread, which is the only one
-        /// the engine's objects may be touched from.
         static PAGES: RefCell<HashMap<String, Page>> = RefCell::new(HashMap::new());
-        /// Each window's own page, by the window's label; see the top of this file.
         static OWN: RefCell<HashMap<String, ICoreWebView2Controller>> =
             RefCell::new(HashMap::new());
     }
 
-    /// Follows the window, and keeps its own page's controller to hand the keyboard to.
-    /// On the window's thread, where `with_webview` runs at once.
     pub fn watch(webview: &Webview) {
         super::watching::watch(webview);
         let window = webview.window().label().to_string();
@@ -537,7 +381,6 @@ mod native {
         OWN.with_borrow_mut(|all| all.remove(window));
     }
 
-    /// A reader's page, as it is built: the engine says each time it takes the keyboard.
     #[allow(
         unsafe_code,
         reason = "a page taking the keyboard is WebView2's own controller event, reached through COM"
@@ -550,8 +393,6 @@ mod native {
             Ok(())
         }));
         let mut token = 0i64;
-        // Safe: the controller is this page's own, on its own thread; the engine holds the
-        // handler for as long as the page lives.
         unsafe {
             let _ = controller.add_GotFocus(&got, &raw mut token);
         }
@@ -566,7 +407,6 @@ mod native {
         PAGES.with_borrow_mut(|all| all.remove(label));
     }
 
-    /// Which of this window's pages has the keyboard now.
     #[allow(
         unsafe_code,
         reason = "a page's window is its WebView2 controller's to say, reached through COM"
@@ -578,22 +418,17 @@ mod native {
                     return None;
                 }
                 let mut parent = windows_com::Win32::Foundation::HWND::default();
-                // Safe: the page's own window, asked of its controller on its thread.
                 unsafe { page.controller.ParentWindow(&raw mut parent).ok()? };
                 super::watching::keyboard_in(parent.0 as isize).then(|| label.clone())
             })
         })
     }
 
-    /// Hands a page the keyboard, the engine's way: the page's own focused element, its
-    /// caret and its selection come back with it.
     #[allow(
         unsafe_code,
         reason = "a page is given the keyboard through its WebView2 controller, reached through COM"
     )]
     fn focus(controller: Option<ICoreWebView2Controller>) -> bool {
-        // Safe: the page's own controller, on its own thread. Out of every borrow, because
-        // the engine may say the page took the keyboard from inside this call.
         controller.is_some_and(|controller| unsafe {
             controller
                 .MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC)
@@ -609,16 +444,11 @@ mod native {
         take_now(label)
     }
 
-    /// The window's own page. wry may have handed it the keyboard already, or may have
-    /// stopped doing so; twice is the same page with the same element.
     pub fn take_own(window: &str) {
         focus(OWN.with_borrow(|all| all.get(window).cloned()));
     }
 }
 
-/// The same on Orden's own Chromium on Windows, through each browser's host, which is CEF's
-/// own way to give a browser the keyboard. There the app's own page is a browser like any
-/// other and nothing hands it the keyboard as the window comes back, so this does.
 #[cfg(all(target_os = "macos", not(feature = "cef")))]
 mod native {
     use std::cell::RefCell;
@@ -645,7 +475,6 @@ mod native {
         reason = "the runtime hands the page and its window over as bare pointers"
     )]
     pub fn page(_app: &AppHandle, platform: &PlatformWebview, label: &str, window: &str) {
-        // Safe: the runtime's own live objects, of the types it says, on the main thread.
         let (view, frame) = unsafe {
             (
                 Retained::retain(platform.inner().cast::<WKWebView>()),
@@ -691,8 +520,6 @@ mod native {
     pub fn watch(_webview: &Webview) {}
 }
 
-/// CEF, on Linux, asked which page's browser window the X server says has the keyboard,
-/// or holds the window that has it.
 #[cfg(feature = "cef")]
 mod native {
     use std::collections::HashMap;
@@ -701,10 +528,8 @@ mod native {
     use tauri::webview::PlatformWebview;
     use tauri::{AppHandle, Manager, Webview, Window};
 
-    /// Each reader's page: the window it is in, and its browser's X11 window.
     static PAGES: Mutex<Vec<(String, String, u32)>> = Mutex::new(Vec::new());
 
-    /// The X server says as its browser window takes the keyboard; see `web_keys::listen`.
     pub fn page(_app: &AppHandle, platform: &PlatformWebview, label: &str, window: &str) {
         let Some(x11) = crate::web_keys::x11_window(platform) else {
             return;
@@ -721,7 +546,6 @@ mod native {
             .retain(|(one, _, _)| one != label);
     }
 
-    /// The X server says this browser window took the keyboard; see `web_keys.rs`.
     pub fn x11_took(app: &AppHandle, x11: u32) {
         let found = PAGES
             .lock()
@@ -758,8 +582,6 @@ mod native {
     pub fn watch(_webview: &Webview) {}
 }
 
-/// Everywhere else - the BSDs - the record without the platform's answer to which page has
-/// the keyboard: a layer closing gives it back to the app's own page's element.
 #[cfg(not(any(windows, target_os = "macos", feature = "cef")))]
 mod native {
     use tauri::webview::PlatformWebview;
@@ -811,7 +633,6 @@ mod tests {
     fn the_page_that_took_the_keyboard_is_where_it_goes_back() {
         let homes = typing_in("main", "web-a");
         assert_eq!(homes.home("main"), Some("web-a"));
-        // Each window its own.
         assert_eq!(homes.home("window-2"), None);
     }
 
@@ -835,7 +656,6 @@ mod tests {
         let mut homes = typing_in("main", "web-a");
         homes.placed("web-a", false, 0);
         assert_eq!(homes.home("main"), None);
-        // In sight again, it is.
         homes.placed("web-a", true, 0);
         assert_eq!(homes.home("main"), Some("web-a"));
     }
@@ -846,7 +666,6 @@ mod tests {
         homes.closed("web-a");
         assert_eq!(homes.home("main"), None);
         assert_eq!(homes.back("main", 0), Back::Own);
-        // And coming back under the same label is not being on screen.
         homes.page_took("main", "web-a");
         assert_eq!(homes.home("main"), None);
     }
@@ -862,10 +681,8 @@ mod tests {
         let mut homes = typing_in("main", "web-a");
         homes.placed("web-a", false, 0);
         assert_eq!(homes.back("main", 100), Back::Later);
-        // Another page shown first owes nothing.
         assert!(!homes.placed("web-b", true, 200));
         assert!(homes.placed("web-a", true, 300));
-        // Once.
         assert!(!homes.placed("web-a", true, 400));
     }
 
@@ -892,11 +709,6 @@ mod tests {
         assert!(!homes.placed("web-a", true, 10));
     }
 
-    /// On `WebView2` the window's own page is handed the keyboard by this file, from the
-    /// controller it keeps for each window, and never left to wry's subclass, which wry
-    /// takes off the window as soon as any webview in it goes; see the top of this file.
-    /// Read off the source, because only a window that once had a web tab closed in it
-    /// shows the difference, and no runner has one.
     #[test]
     fn the_window_s_own_page_is_handed_the_keyboard_here_and_not_left_to_wry() {
         let source = include_str!("keyboard.rs");
@@ -917,10 +729,6 @@ mod tests {
         );
     }
 
-    /// #1036: each engine that keeps its own word about a page taking the keyboard passes
-    /// it on to the window's own page, which lets go of whatever it had focused. Read off
-    /// the source, because each half is built only on its own platform and no runner
-    /// presses into a page.
     #[test]
     fn every_engine_tells_the_app_s_own_page_as_a_page_takes_the_keyboard() {
         let source = include_str!("keyboard.rs");
@@ -948,16 +756,12 @@ mod tests {
 
     #[test]
     fn a_window_is_left_on_its_deactivation_and_home_on_its_focus_or_a_drag_s_end() {
-        // WM_ACTIVATE: WA_INACTIVE is left, WA_ACTIVE and WA_CLICKACTIVE are not, and the
-        // minimised flag in the high word changes nothing.
         assert_eq!(moment(0x0006, 0), Moment::Leaving);
         assert_eq!(moment(0x0006, 0x0001_0000), Moment::Leaving);
         assert_eq!(moment(0x0006, 1), Moment::Nothing);
         assert_eq!(moment(0x0006, 2), Moment::Nothing);
-        // WM_SETFOCUS and WM_EXITSIZEMOVE.
         assert_eq!(moment(0x0007, 0), Moment::Back);
         assert_eq!(moment(0x0232, 0), Moment::Back);
-        // WM_KILLFOCUS and WM_ENTERSIZEMOVE are not.
         assert_eq!(moment(0x0008, 0), Moment::Nothing);
         assert_eq!(moment(0x0231, 0), Moment::Nothing);
     }

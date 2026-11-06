@@ -1,53 +1,3 @@
-//! The plans a reader already pays for, spent through the programs their makers ship:
-//! Claude Code and Codex, run headless on this machine, signed in by the reader through
-//! the programs' own sign-in.
-//!
-//! **Why a program and not a login of Orden's own.** Anthropic does not let an app sign
-//! somebody in to Claude.ai, route requests through a Pro or Max plan's credentials, or
-//! collect, store or pass on its tokens; what it does allow is a person running the
-//! unmodified Claude Code they installed and signed in to themselves. So Orden starts that
-//! program, asks it a question, and reads the answer: it never opens `~/.claude` or
-//! `~/.codex`, never reads a token, and learns whether somebody is signed in only by
-//! asking the program (`claude auth status`, `codex login status`). See docs/ai.md,
-//! which carries the policy's own words, and `lib/ai/local` in the app, which reads what
-//! the programs say.
-//!
-//! **Two shapes.** A question (`ai_cli_ask`): Claude Code, words in, words out, ended.
-//! And a session (`ai_cli_open`, `ai_cli_say`, `ai_cli_close`), the AI sidebar's thread
-//! (docs/ai-sidebar.md 5.2): a Claude Code kept open for one thread, or a thread on the
-//! window's one Codex app-server, whose only tool is `nib mcp` under the sidebar's own
-//! grant. Codex answers every question this way, a question being a thread with no tool.
-//!
-//! **Who may.** The window's own document pages, as for a terminal: a web tab's page,
-//! the presenter and anything a site could open are refused. And they name a tool, a
-//! model, an effort, a mode and a thread, and send words - never a program, an argument,
-//! a variable or a protocol message; see args.rs and say.rs.
-//!
-//! **The sidebar's token.** `nib mcp` proves itself with a token the app lends the
-//! provider's built-in grant ("Orden · Claude Code" in Settings > Agents) for the thread's
-//! mode (`ai_agent::lend`), so the endpoint supervises the session as that mode says. One
-//! per provider and mode, made the first time a run of the app needs it, kept in memory
-//! only, and handed to the program in its environment, which passes it to `nib mcp`
-//! (src/mcp/link.rs). Last run's is worth nothing.
-//!
-//! **Nothing outlives its asking.** A question ends when it is stopped, when it has run
-//! for `ASKING`, when its window is destroyed and when the app exits; a session when it is
-//! closed, when nothing has been said for `IDLE` (the window then starts it again from
-//! its own transcript), with its window and with the app. Each ends with every process it
-//! started; see family.rs.
-//!
-//! | file | what it owns |
-//! | --- | --- |
-//! | `args` | the command line each run starts with, and how a Codex thread is set up |
-//! | `say` | what the window may say to a session, and what comes back |
-//! | `session` | a Claude Code session: what is said, written as stream-json |
-//! | `codex_app` | the window's Codex app-server: the JSON-RPC client, its threads |
-//! | `program` | where each program is, and the `PATH` it runs with |
-//! | `family` | a program and everything it starts, ended together |
-//! | `enroll` | Orden added to the agent programs on this computer, as they add a server |
-//! | `home` | where a program keeps one account's sign-in |
-//! | `run` | one run: stdin in, lines out, its end |
-
 mod args;
 mod codex_app;
 mod enroll;
@@ -80,28 +30,16 @@ use run::{Heard, Running, Said};
 use say::{Message, Say};
 use session::Claude;
 
-/// Whether this build offers Claude Code at all. Anthropic's terms for running Claude
-/// Code inside a product ask the product's maker to accept its Commercial Terms; a build
-/// made with `NIB_CLAUDE_CODE=off` leaves the choice out, here and in the pane (see
-/// `__CLAUDE_CODE__` in vite.config.ts).
 fn claude_code_offered() -> bool {
     !matches!(option_env!("NIB_CLAUDE_CODE"), Some("off" | "0" | "false"))
 }
 
-/// How long one question may take, thinking included, before it is ended.
 const ASKING: Duration = Duration::from_secs(300);
 
-/// How long a session may sit with nothing said by either side before it is ended. The
-/// window starts it again from its own transcript at the next message.
 const IDLE: Duration = Duration::from_secs(600);
 
-/// How long a program may take to say whether it is signed in, what flags it has or
-/// which models it offers: a cold start of Node on a slow disk, and a token it may
-/// refresh on the way.
 const TELLING: Duration = Duration::from_secs(30);
 
-/// Every question and every session running, by the name the window gave it, and the
-/// app-servers the windows' Codex threads are on.
 #[derive(Default)]
 pub struct Asks {
     running: Mutex<HashMap<String, Held>>,
@@ -114,11 +52,8 @@ struct Held {
     running: Running,
 }
 
-/// One open session.
 struct Session {
     owner: String,
-    /// Which opening of this name it is, so the end of an earlier one, heard late,
-    /// takes nothing of a later one's.
     opening: u64,
     on: On,
 }
@@ -128,14 +63,10 @@ enum On {
     Codex(Arc<Host>),
 }
 
-/// An app-server: the window's, and for threads with tools, the provider and mode whose
-/// token it was started with, so each is supervised as its mode is. A question's threads
-/// are on one with no token at all.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 struct HostKey {
     owner: String,
     agent: Option<(String, Mode)>,
-    /// The account's home, so two accounts' threads are never on one app-server.
     home: Option<Home>,
 }
 
@@ -144,7 +75,6 @@ fn lock<T>(held: &Mutex<T>) -> MutexGuard<'_, T> {
 }
 
 impl Asks {
-    /// Stops every run and session one window owns, or every one for `None`.
     fn stop_where(&self, owner: Option<&str>) {
         let mine = |one: &str| owner.is_none_or(|owner| one == owner);
         for held in lock(&self.running).values() {
@@ -181,21 +111,18 @@ impl Asks {
     }
 }
 
-/// A window has gone, and its questions and sessions with it.
 pub fn window_gone(app: &AppHandle, label: &str) {
     if let Some(asks) = app.try_state::<Asks>() {
         asks.stop_where(Some(label));
     }
 }
 
-/// The app is ending: every program it started goes.
 pub fn end_all(app: &AppHandle) {
     if let Some(asks) = app.try_state::<Asks>() {
         asks.stop_where(None);
     }
 }
 
-/// The window this call came from, when it is one of ours; see the top of this file.
 fn owner(webview: &Webview) -> Result<String, String> {
     let label = webview.label();
     if label == webview.window().label() && crate::launch::is_document_window(label) {
@@ -205,8 +132,6 @@ fn owner(webview: &Webview) -> Result<String, String> {
     }
 }
 
-/// A name the window may give a run, a session or a provider: short, letters, digits,
-/// `-` and `_`.
 fn usable(id: &str) -> Result<(), String> {
     let fits = !id.is_empty()
         && id.len() <= 80
@@ -217,7 +142,6 @@ fn usable(id: &str) -> Result<(), String> {
         .ok_or_else(|| "not a question's name".to_owned())
 }
 
-/// Refuses Claude Code in a build that leaves it out.
 fn offered(tool: Tool) -> Result<(), String> {
     if tool == Tool::ClaudeCode && !claude_code_offered() {
         return Err("not in this build".to_owned());
@@ -225,8 +149,6 @@ fn offered(tool: Tool) -> Result<(), String> {
     Ok(())
 }
 
-/// A program's command, started in `folder` with its own `PATH`, and in an account's
-/// home where it is not the reader's own (home.rs).
 fn command(
     program: &Program,
     args: &[impl AsRef<std::ffi::OsStr>],
@@ -244,8 +166,6 @@ fn command(
     command
 }
 
-/// The home an account named by the window runs in: the account must be one of the
-/// reader's, and only a second sign-in to a program has one.
 fn home_for(app: &AppHandle, tool: Tool, account: Option<&str>) -> Result<Option<Home>, String> {
     if let Some(id) = account {
         usable(id)?;
@@ -253,8 +173,6 @@ fn home_for(app: &AppHandle, tool: Tool, account: Option<&str>) -> Result<Option
     home::of(app, tool, account)
 }
 
-/// Where a program runs: a folder of the app's own, empty, so nothing it might look
-/// around in is the reader's. Never a space.
 fn workroom(app: &AppHandle) -> Result<PathBuf, String> {
     let folder = app
         .path()
@@ -265,8 +183,6 @@ fn workroom(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(folder)
 }
 
-/// Claude Code's optional flags, read off its help once per program per run of the app;
-/// see args.rs.
 fn caps_of(program: &Program, folder: &Path) -> args::Caps {
     static KNOWN: OnceLock<Mutex<HashMap<PathBuf, args::Caps>>> = OnceLock::new();
     let known = KNOWN.get_or_init(Mutex::default);
@@ -282,20 +198,15 @@ fn caps_of(program: &Program, folder: &Path) -> args::Caps {
     caps
 }
 
-/// What a program said when asked whether it is signed in, and where it is.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Status {
-    /// The program, for the line a terminal types to sign in with it.
     program: String,
-    /// The account's home where it is one of Orden's, for the same line.
     home: Option<String>,
     #[serde(flatten)]
     said: Said,
 }
 
-/// Whether a tool is installed and signed in, asked of the tool itself. `None` where it
-/// is not installed. The app reads the answer; see `lib/ai/local/status.svelte.ts`.
 #[tauri::command(async)]
 pub fn ai_cli_status(
     webview: Webview,
@@ -321,28 +232,22 @@ pub fn ai_cli_status(
     }))
 }
 
-/// After the window: Orden added to the agent programs on this computer; see enroll.rs.
 pub fn keep_enrolled(app: &AppHandle) {
     enroll::keep_enrolled(app);
 }
 
-/// Whether Orden connects itself to the agents on this computer, for Access's switch.
 #[tauri::command]
 pub fn ai_cli_enroll_read(webview: Webview) -> Result<enroll::Standing, String> {
     owner(&webview)?;
     Ok(enroll::standing(webview.app_handle()))
 }
 
-/// The switch turned: Orden connected to every agent program, or let go of.
 #[tauri::command(async)]
 pub fn ai_cli_enroll_write(webview: Webview, on: bool) -> Result<(), String> {
     owner(&webview)?;
     enroll::turned(webview.app_handle(), on)
 }
 
-/// Signs a second sign-in's program out of its home, the program's own way, and lets the
-/// home go: what Remove does to an account that is not the reader's own. The reader's own
-/// home is never touched here; its sign-out is the program's own line in a terminal.
 #[tauri::command(async)]
 pub fn ai_cli_forget(webview: Webview, tool: Tool, account: String) -> Result<(), String> {
     owner(&webview)?;
@@ -352,8 +257,6 @@ pub fn ai_cli_forget(webview: Webview, tool: Tool, account: String) -> Result<()
     };
     if let Some(program) = program::find(tool) {
         let folder = workroom(webview.app_handle())?;
-        // Whatever it says: a program that cannot sign out leaves a login the folder takes
-        // with it, and the reader asked for the account to go.
         let _ = run::run_to_end(
             command(&program, args::logout(tool), &folder, Some(&home)),
             TELLING,
@@ -362,17 +265,12 @@ pub fn ai_cli_forget(webview: Webview, tool: Tool, account: String) -> Result<()
     home::removed(&home)
 }
 
-/// A message on a channel, as JSON.
 fn sent(output: &Channel<Value>, message: Message) {
     if let Ok(value) = serde_json::to_value(message) {
         let _ = output.send(value);
     }
 }
 
-/// Asks Claude Code one question, with `prompt` on its stdin, and streams what it prints
-/// to `output`. `model` empty or `None` is its own default. Answers once the program has
-/// started; everything after that, its end included, arrives on the channel. Codex is
-/// asked through a session (`ai_cli_open` with no mode).
 #[tauri::command(async)]
 pub fn ai_cli_ask(
     webview: Webview,
@@ -397,8 +295,6 @@ pub fn ai_cli_ask(
     let args = args::ask(model.as_deref(), &caps_of(&program, &folder))?;
 
     let asks = webview.state::<Asks>();
-    // Held across the start, so a program that ends at once cannot take its entry out
-    // before it is put in.
     let mut running = lock(&asks.running);
     if running.contains_key(&id) {
         return Err(format!("{id} is already being asked"));
@@ -434,8 +330,6 @@ pub fn ai_cli_ask(
     Ok(())
 }
 
-/// Stops a question: the program and everything it started. What it said before stays
-/// said; the channel's end says `stopped`.
 #[tauri::command]
 pub fn ai_cli_stop(webview: Webview, id: String) -> Result<(), String> {
     let owner = owner(&webview)?;
@@ -447,14 +341,11 @@ pub fn ai_cli_stop(webview: Webview, id: String) -> Result<(), String> {
     Ok(())
 }
 
-/// Which opening of a session this is; see `Session::opening`.
 fn next_opening() -> u64 {
     static OPENINGS: AtomicU64 = AtomicU64::new(1);
     OPENINGS.fetch_add(1, Ordering::SeqCst)
 }
 
-/// Where a session's messages go: the window's channel, and on the end the session let
-/// go of, if it is still this opening.
 fn session_output(
     app: &AppHandle,
     id: &str,
@@ -465,8 +356,6 @@ fn session_output(
     let id = id.to_owned();
     Arc::new(move |message: Message| {
         if matches!(message, Message::End(_)) {
-            // On a thread of its own: the end can be heard while the session is still
-            // being opened, under the lock this takes, and under a Codex host's own.
             let app = app.clone();
             let id = id.clone();
             std::thread::spawn(move || {
@@ -482,39 +371,27 @@ fn session_output(
     })
 }
 
-/// How a session is to start: what the window names, and nothing else.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Opening {
     tool: Tool,
-    /// The provider whose built-in grant the tools are asked as.
     agent: Builtin,
-    /// `None`: words only, no tool.
     #[serde(default)]
     mode: Option<Mode>,
     #[serde(default)]
     model: Option<String>,
     #[serde(default)]
     effort: Option<Effort>,
-    /// A Codex thread to start as a copy of another open session's.
     #[serde(default)]
     fork_of: Option<String>,
-    /// The account the thread's provider answers with: its home, where it has one.
     #[serde(default)]
     account: Option<String>,
-    /// The Orden thread it is for, which the helpers it starts belong to.
     #[serde(default)]
     thread: Option<String>,
-    /// The tools the thread is not given, whatever its mode lists: a task done with AI
-    /// without the ones its settings turned off (#325). Left out of what the program is
-    /// shown, the way a mode leaves its own out (`args::tools_of`).
     #[serde(default)]
     without: Vec<String>,
 }
 
-/// Opens a session named `id`: a Claude Code of its own, or a thread on the window's
-/// Codex app-server. Answers once it is started; what it says, and its end, arrive on
-/// `output`. Then `ai_cli_say` talks to it and `ai_cli_close` ends it.
 #[tauri::command(async)]
 pub fn ai_cli_open(
     webview: Webview,
@@ -543,7 +420,6 @@ pub fn ai_cli_open(
         .transpose()?;
     let home = home_for(&app, tool, opening.account.as_deref())?;
 
-    // Read off its help, perhaps for the first time this run, before any lock is held.
     let claude = match tool {
         Tool::ClaudeCode => Some(claude_command(
             &program,
@@ -599,9 +475,6 @@ pub fn ai_cli_open(
     Ok(())
 }
 
-/// Claude Code's command for a session: its flags, Orden's server where the shape has a
-/// mode, and the environment that keeps the reader's `CLAUDE.md` out and hands `nib mcp`
-/// its token.
 fn claude_command(
     program: &Program,
     folder: &Path,
@@ -639,7 +512,6 @@ fn claude_command(
     Ok(command)
 }
 
-/// The window's app-server for `key`, started now if it has none running.
 fn host_for(
     asks: &Asks,
     key: HostKey,
@@ -663,7 +535,6 @@ fn host_for(
     Ok(host)
 }
 
-/// Says something to an open session; see say.rs for what may be said.
 #[tauri::command]
 pub fn ai_cli_say(webview: Webview, id: String, say: Value) -> Result<(), String> {
     let owner = owner(&webview)?;
@@ -682,7 +553,6 @@ pub fn ai_cli_say(webview: Webview, id: String, say: Value) -> Result<(), String
     }
 }
 
-/// Ends a session. What it said stays said; the channel's end says `stopped`.
 #[tauri::command]
 pub fn ai_cli_close(webview: Webview, id: String) -> Result<(), String> {
     let owner = owner(&webview)?;
@@ -702,8 +572,6 @@ pub fn ai_cli_close(webview: Webview, id: String) -> Result<(), String> {
     Ok(())
 }
 
-/// The models a program offers, as it lists them: Claude Code's `list_models`, Codex's
-/// `model/list`. The window reads them into its model list (`lib/ai/local/models.ts`).
 #[tauri::command(async)]
 pub fn ai_cli_models(
     webview: Webview,
@@ -730,7 +598,6 @@ pub fn ai_cli_models(
             )
             .map_err(|error| error.to_string())?;
             let listed = claude.ask(serde_json::json!({ "subtype": "list_models" }), TELLING);
-            // Asked nothing else, it ends on its own; the idle time ends it otherwise.
             claude.close_input();
             listed
         }
@@ -754,8 +621,6 @@ mod tests {
     use std::sync::mpsc::{self, Receiver};
     use std::time::Instant;
 
-    /// The stand-in for both programs, which Node runs; see scripts/fake-ai-cli.mjs.
-    /// Found upwards from the crate.
     fn fake_script() -> PathBuf {
         Path::new(env!("CARGO_MANIFEST_DIR"))
             .ancestors()
@@ -764,8 +629,6 @@ mod tests {
             .expect("scripts/fake-ai-cli.mjs above the crate")
     }
 
-    /// Whether Node is here to run it. CI's Rust job sets it up; a machine without it
-    /// says so rather than failing a test about something else.
     fn node() -> bool {
         Command::new("node").arg("--version").output().is_ok()
     }
@@ -781,7 +644,6 @@ mod tests {
         command
     }
 
-    /// Everything a run says, until its end.
     fn heard_all(command: Command, input: &str, timeout: Duration) -> (Vec<String>, Ended) {
         let (sent, heard) = mpsc::channel();
         start(command, input.as_bytes().to_vec(), timeout, move |one| {
@@ -816,7 +678,6 @@ mod tests {
             .expect("a home");
 
         let mut asked = fake(Tool::ClaudeCode, "answer", args::status(Tool::ClaudeCode));
-        // The reader's shell holds a key, which would outrank the account's sign-in.
         asked.env("ANTHROPIC_API_KEY", "from-the-shell");
         home.apply(&mut asked);
         let said = run_to_end(asked, TELLING).expect("status");
@@ -835,8 +696,6 @@ mod tests {
         assert!(!home.dir().exists());
     }
 
-    /// The stand-in started the way an installed program is: a shim by the program's
-    /// name, npm's `.cmd` on Windows and a script elsewhere.
     fn fake_program(dir: &Path, tool: Tool) -> Program {
         let name = tool.command();
         #[cfg(windows)]
@@ -909,14 +768,12 @@ exec node '{}' {name} \"$@\"
             enroll::unenroll(&program, tool, dir.path(), &nib, Some(&home));
             assert_eq!(servers(), serde_json::json!({}), "{tool:?}");
 
-            // A server the reader called orden, pointing somewhere else, is theirs.
             let theirs = serde_json::json!({ "orden": elsewhere() });
             start(theirs.clone());
             enroll::enroll(&program, tool, dir.path(), &nib, Some(&home));
             enroll::unenroll(&program, tool, dir.path(), &nib, Some(&home));
             assert_eq!(servers(), theirs, "{tool:?}");
 
-            // This app under the old name is renamed, by enrolling and on its own alike.
             for enrolling in [true, false] {
                 start(serde_json::json!({ "nib": ours() }));
                 for _ in 0..2 {
@@ -933,7 +790,6 @@ exec node '{}' {name} \"$@\"
                 );
             }
 
-            // Under both names, it keeps the new one alone.
             start(serde_json::json!({ "nib": ours(), "orden": ours() }));
             enroll::carry_over(&program, tool, dir.path(), &nib, Some(&home));
             assert_eq!(
@@ -942,8 +798,6 @@ exec node '{}' {name} \"$@\"
                 "{tool:?}"
             );
 
-            // The old name pointing somewhere else is the reader's: kept, and the app added
-            // beside it under the new name only when enrolling.
             start(serde_json::json!({ "nib": elsewhere() }));
             enroll::carry_over(&program, tool, dir.path(), &nib, Some(&home));
             assert_eq!(
@@ -958,14 +812,11 @@ exec node '{}' {name} \"$@\"
                 "{tool:?}"
             );
 
-            // The new name the reader's and the old one this app's: the old one stays, the
-            // app's only way in, and nothing is added beside it.
             let kept_both = serde_json::json!({ "nib": ours(), "orden": elsewhere() });
             start(kept_both.clone());
             enroll::enroll(&program, tool, dir.path(), &nib, Some(&home));
             assert_eq!(servers(), kept_both, "{tool:?}");
 
-            // Turned off, the app goes under either name, the reader's stay.
             start(serde_json::json!({ "nib": ours(), "orden": elsewhere() }));
             enroll::unenroll(&program, tool, dir.path(), &nib, Some(&home));
             assert_eq!(
@@ -1018,7 +869,6 @@ exec node '{}' {name} \"$@\"
         assert!(ended.err.contains("asked with tools"));
     }
 
-    /// Whether a process is still running, asked of the system by its number.
     fn alive(pid: u32) -> bool {
         #[cfg(windows)]
         {
@@ -1143,7 +993,6 @@ exec node '{}' {name} \"$@\"
         assert!(codex.ended.err.contains("Not logged in"));
     }
 
-    /// Messages off a session until one matches, or a panic after `patience`.
     fn until(
         heard: &Receiver<Message>,
         patience: Duration,
@@ -1230,8 +1079,6 @@ exec node '{}' {name} \"$@\"
             .iter()
             .find(|one| line_has(one, "\"subtype\":\"init\""))
             .expect("init");
-        // The stand-in says what it was started with: Orden alone, its token, the mode's
-        // tools, the model and the effort.
         for told in [
             "\"mcp_servers\":[{\"name\":\"orden\",\"status\":\"connected\"}]",
             "\"token\":true",
@@ -1384,7 +1231,6 @@ exec node '{}' {name} \"$@\"
         )
         .expect("opened");
 
-        // Said before the thread is there: held, then sent.
         host.say("one", turn("what is a heron")).expect("said");
         let heard = until(&first, TELLING, |one| line_has(one, "turn/completed"));
         let told = &result_of(&heard, "thread")["told"];
@@ -1404,7 +1250,6 @@ exec node '{}' {name} \"$@\"
             .iter()
             .any(|one| line_has(one, "You asked: what is a heron")));
 
-        // The other thread heard none of it but what is about no thread.
         let others: Vec<Message> = second.try_iter().collect();
         assert!(others.iter().all(|one| !line_has(one, "agentMessage")));
 
@@ -1481,7 +1326,6 @@ exec node '{}' {name} \"$@\"
         host.open("t", output, None, None, None, codex_app::From::default())
             .expect("opened");
         host.say("t", turn("run something")).expect("said");
-        // The stand-in ends the turn only once answered, and says what the answer was.
         let heard = until(&heard, TELLING, |one| line_has(one, "turn/completed"));
         assert!(heard.iter().any(|one| line_has(one, "requestApproval")));
         assert!(heard.iter().any(|one| line_has(one, "answered decline")));
@@ -1511,8 +1355,6 @@ exec node '{}' {name} \"$@\"
         host.stop();
     }
 
-    /// No argument a session starts with comes from the window but what it names: two
-    /// openings that differ only in their model and effort differ only there.
     #[test]
     fn nothing_on_the_command_line_comes_from_the_window_but_what_it_names() {
         let caps = args::Caps::from_help(
@@ -1541,16 +1383,11 @@ exec node '{}' {name} \"$@\"
             .map(|(a, b)| (a.as_str(), b.as_str()))
             .collect();
         assert_eq!(differ, [("opus", "sonnet[1m]"), ("low", "max")]);
-        // And a Codex command line takes nothing from the window at all: its model,
-        // effort and mode go in typed requests on stdin.
         assert!(args::codex_server()
             .iter()
             .all(|arg| arg == "app-server" || arg == "-c" || arg.contains('=')));
     }
 
-    /// An npm install on Windows is a `.cmd` file, and everything on the command line
-    /// goes through `cmd.exe`: the empty `--tools` value, the system prompt and the TOML
-    /// overrides have to arrive as they were sent.
     #[cfg(windows)]
     #[test]
     fn every_argument_survives_an_npm_shim() {
@@ -1596,10 +1433,6 @@ exec node '{}' {name} \"$@\"
         host.stop();
     }
 
-    /// The reader's own Claude Code, asked "say ok" with the arguments Orden uses and no
-    /// tool, once as a question and twice in one session - only where it is installed
-    /// and already signed in, and never signing anything in or out. Run by hand:
-    /// `cargo test real_claude -- --ignored --nocapture`.
     #[test]
     #[ignore = "asks the real Claude Code on this machine, which spends a little of a plan"]
     fn real_claude_says_ok() {

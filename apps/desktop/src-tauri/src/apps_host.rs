@@ -1,46 +1,3 @@
-//! The host of an application (issue 1063, step 3; docs/apps.md): this computer running
-//! one of the reader's applications for a tab on another, on a display of its own.
-//!
-//! The window is the host's other half: it keeps the relay's socket, hears Start, Stop
-//! and Restart from the device holding the application, and asks here
-//! (`lib/apps/host.svelte.ts`). What is here is what runs.
-//!
-//! **What may run.** An application file is synced, so its words come from whichever of
-//! the reader's devices wrote it, and this computer does not take a command line from it:
-//!
-//! - an installed application is started by the id this module found (`installed.rs`)
-//!   and the command its own entry holds, as a terminal's shell is by the id
-//!   `terminal/shells.rs` found;
-//! - a program by its path runs only once the reader at this computer has said yes to
-//!   that exact program, those arguments and that folder, in a dialog of the system's
-//!   own that no page can answer, and the yes is kept for next time (`allowed.json` in
-//!   the app's local data);
-//! - and only the app's own document windows may ask, as for a terminal.
-//!
-//! **Nowhere but its own display.** On Linux an application runs on an Xvfb of its own
-//! (`display.rs`), never the reader's desktop, so nothing it draws or does lands on
-//! their screen or takes their mouse. Windows and macOS have no such display yet (step
-//! 8), so there nothing is started at all and the tab says so (`isolation`).
-//!
-//! **What outlives what.** An application keeps running when the device viewing it
-//! leaves and when this window reloads - the window asks again, and hears where it
-//! stands - and stops when it is stopped, when its file goes, and when Orden quits, with
-//! everything it started: it runs in a process group of its own, which is what is ended.
-//!
-//! **Its picture** goes to the device holding it, peer to peer (`stream.rs`, step 4),
-//! once that device offers to take it; the offer and the answer come and go through the
-//! window and the relay (`apps_signal`).
-//!
-//! **Its size is the holder's tab's** (step 5): the window hands on the holder's view
-//! whenever it changes - the tab resized, moved to another monitor, taken over by
-//! another device - and the display is made that size and ratio (`apps_view`), its
-//! windows fitted to it (`wm.rs`), and its picture read at that refresh rate.
-//!
-//! **Its sound and its clipboard** (step 6): it plays into a sink of its own, never out
-//! of this computer's speakers, which goes to the holder with its picture (`audio.rs`);
-//! and text goes between its clipboard and the holder's while the holder shares it
-//! (`clipboard.rs`).
-
 #![cfg_attr(not(any(target_os = "linux", target_os = "windows")), allow(dead_code))]
 
 #[cfg(target_os = "linux")]
@@ -67,7 +24,6 @@ mod stun;
 #[cfg(target_os = "linux")]
 mod wm;
 
-// Windows' desktop of its own stands where Linux's display does, with the same faces.
 #[cfg(target_os = "windows")]
 use desk::{audio, capture, clipboard, input};
 
@@ -82,8 +38,6 @@ use tauri::{AppHandle, Manager, Webview};
 
 const REFUSED: &str = "only the app's own windows may host an application";
 
-/// What the window asks to run: an installed application by its id, or a program by
-/// its path, with its arguments and the folder it starts in.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(tag = "kind", rename_all = "lowercase")]
 pub enum Run {
@@ -99,8 +53,6 @@ pub enum Run {
     },
 }
 
-/// The holder's view, which the display is made to: CSS pixels at a ratio, and the
-/// refresh rate its picture is read at.
 #[derive(Clone, Copy, Debug, Deserialize)]
 pub struct View {
     pub width: f64,
@@ -110,27 +62,20 @@ pub struct View {
     pub hz: f64,
 }
 
-/// The refresh rate of a view that says none.
 fn sixty() -> f64 {
     60.0
 }
 
-/// The display an application draws on, as its picture is read from it: its name, and
-/// the holder's refresh rate as it is now. Its size is the display's own.
 #[derive(Clone, Debug)]
 pub struct Screen {
     pub display: String,
     pub hz: f64,
 }
 
-/// Where the application stands, as the window hears it and says it on to the relay:
-/// the wire's `state` frame (`@orden/online/apps`).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct Said {
     pub state: &'static str,
     pub code: Option<i32>,
-    /// Why it ended as it did, where that can be told: `handed`, an application that
-    /// handed itself to a copy already running on the reader's desktop at once.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub why: Option<&'static str>,
 }
@@ -142,7 +87,6 @@ impl Said {
         why: None,
     };
 
-    /// It ended: stopped, or by itself with its code.
     fn ended(stopped: bool, code: Option<i32>) -> Said {
         Said {
             state: if stopped { "stopped" } else { "exited" },
@@ -152,23 +96,15 @@ impl Said {
     }
 }
 
-/// One application running.
 struct Running {
-    /// The process, and its group.
     pid: u32,
-    /// Whoever is told what happens to it: the window that asked last.
     events: Mutex<Option<Channel<Said>>>,
-    /// Whether it was stopped, rather than ending by itself.
     stopping: AtomicBool,
-    /// Its display, as its picture is read.
     screen: Arc<Mutex<Screen>>,
-    /// The display itself, made the holder's size; gone once the application is.
     #[cfg(target_os = "linux")]
     display: Mutex<Option<display::Display>>,
-    /// Its sink on the sound server, where there is one; gone with it too.
     #[cfg(target_os = "linux")]
     sink: Mutex<Option<audio::Sink>>,
-    /// Its desktop of its own, made the holder's size; gone once the application is.
     #[cfg(target_os = "windows")]
     desktop: Mutex<Option<desk::Desktop>>,
 }
@@ -185,9 +121,6 @@ impl Running {
     }
 }
 
-/// Every application this computer runs, by the key the window gave it (its file's id),
-/// the programs the reader here said yes to, and the picture of each that a device is
-/// taking.
 #[derive(Default)]
 pub struct Hosted {
     apps: Mutex<HashMap<String, Arc<Running>>>,
@@ -210,7 +143,6 @@ impl Hosted {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
-    /// Ends the picture of one application, if a device was taking it.
     #[cfg(any(target_os = "linux", target_os = "windows"))]
     fn end_peer(&self, key: &str) {
         let gone = self.peers().remove(key);
@@ -218,7 +150,6 @@ impl Hosted {
     }
 }
 
-/// The window this call came from, when it is one of ours; see terminal.rs.
 fn owner(webview: &Webview) -> Result<(), String> {
     let label = webview.label();
     if label == webview.window().label() && crate::launch::is_document_window(label) {
@@ -228,7 +159,6 @@ fn owner(webview: &Webview) -> Result<(), String> {
     }
 }
 
-/// A key the window may give: an id's letters, digits, `-` and `_`.
 fn usable(key: &str) -> Result<(), String> {
     let fits = !key.is_empty()
         && key.len() <= 128
@@ -242,16 +172,12 @@ fn usable(key: &str) -> Result<(), String> {
     }
 }
 
-/// What this computer has installed, for New application's chooser and its catalogue.
 #[tauri::command(async)]
 pub fn apps_installed(webview: Webview) -> Result<Vec<installed::Listed>, String> {
     owner(&webview)?;
     Ok(installed::installed())
 }
 
-/// Starts it, or - already running - tells this window where it stands. Errs with the
-/// wire's reason it did not start (`NotStarted` in `@orden/online/apps`): `missing`,
-/// `packaged`, `refused`, `isolation`, `display` or `failed`.
 #[tauri::command(async)]
 pub fn apps_start(
     webview: Webview,
@@ -275,8 +201,6 @@ pub fn apps_start(
     let (argv, cwd) = match &run {
         Run::Installed { id } => {
             let entry = installed::find(id).ok_or("missing")?;
-            // A Store application is started by Windows itself, on the reader's desktop
-            // and no other.
             if entry.packaged {
                 return Err("packaged".to_owned());
             }
@@ -314,8 +238,6 @@ fn run_on_its_display(
     Err("isolation".to_owned())
 }
 
-/// The size a desktop of its own is made, for a view in CSS pixels at a ratio: device
-/// pixels, even, as encoders want them.
 #[cfg(target_os = "windows")]
 #[allow(
     clippy::cast_possible_truncation,
@@ -327,8 +249,6 @@ fn desk_size(view: View) -> (u32, u32) {
     (side(view.width), side(view.height))
 }
 
-/// How soon an application that ended without a window is taken to have handed itself to
-/// a copy already running on the reader's desktop.
 #[cfg(target_os = "windows")]
 const HANDED_WITHIN: std::time::Duration = std::time::Duration::from_secs(10);
 
@@ -374,8 +294,6 @@ fn run_on_its_display(
         .insert(key.clone(), running.clone());
     running.tell(Said::RUNNING);
 
-    // As on Linux: when everything it started has ended, its desktop goes and the window
-    // is told how it ended.
     std::thread::spawn(move || {
         let code = program.wait();
         let handed = began.elapsed() < HANDED_WITHIN && !desk.shown.load(Ordering::SeqCst);
@@ -421,8 +339,6 @@ fn run_on_its_display(
     if !display::available() {
         return Err("display".to_owned());
     }
-    // Which encoders work here is found by trying each, which takes a moment: begun now,
-    // it is known by the time a viewer asks for the picture.
     if encoder::ffmpeg().is_some() {
         std::thread::spawn(|| encoder::working().len());
     }
@@ -440,8 +356,6 @@ fn run_on_its_display(
         .args(rest)
         .current_dir(folder)
         .env("DISPLAY", &name)
-        // Its own display and no other: a toolkit that would rather speak Wayland is
-        // told there is none, or it would open on the reader's desktop.
         .env_remove("WAYLAND_DISPLAY")
         .env("XDG_SESSION_TYPE", "x11")
         .env("GDK_BACKEND", "x11")
@@ -449,7 +363,6 @@ fn run_on_its_display(
         .env("SDL_VIDEODRIVER", "x11")
         .env("MOZ_ENABLE_WAYLAND", "0")
         .env("ELECTRON_OZONE_PLATFORM_HINT", "x11")
-        // Its sound into a sink of its own, or nowhere: never this computer's speakers.
         .envs(audio::environment(sink.as_ref()))
         .stdin(Stdio::null())
         .stdout(Stdio::null())
@@ -474,8 +387,6 @@ fn run_on_its_display(
         .insert(key.clone(), running.clone());
     running.tell(Said::RUNNING);
 
-    // The one thing that waits for it: when it ends, its display goes and the window is
-    // told whether it was stopped or ended by itself.
     std::thread::spawn(move || {
         let status = child.wait().ok();
         let display = running
@@ -506,8 +417,6 @@ fn run_on_its_display(
     Ok(())
 }
 
-/// Hears where it stands, if it is running: the window that reloaded asks again. Starts
-/// nothing; answers whether it runs.
 #[tauri::command(async)]
 pub fn apps_watch(webview: Webview, key: String, events: Channel<Said>) -> Result<bool, String> {
     owner(&webview)?;
@@ -523,7 +432,6 @@ pub fn apps_watch(webview: Webview, key: String, events: Channel<Said>) -> Resul
     Ok(true)
 }
 
-/// Stops it, with everything it started; the window hears `stopped` once it has gone.
 #[tauri::command(async)]
 pub fn apps_stop(webview: Webview, key: String) -> Result<(), String> {
     owner(&webview)?;
@@ -535,9 +443,6 @@ pub fn apps_stop(webview: Webview, key: String) -> Result<(), String> {
     Ok(())
 }
 
-/// The holder's view, as it changes: the display made its size and ratio, and its
-/// picture read at its refresh rate. Nothing running, nothing happens; the next start is
-/// made at the view the window has kept.
 #[tauri::command(async)]
 pub fn apps_view(webview: Webview, key: String, view: View) -> Result<(), String> {
     owner(&webview)?;
@@ -586,9 +491,6 @@ fn view_here(running: &Running, view: View) {
     }
 }
 
-/// What the device holding it says of its picture, `data` of its `signal` frame
-/// (`stream.rs`): an offer is answered, a candidate taken, a goodbye ends it. Answers
-/// what to send back, if anything: the answer, or why there is no picture.
 #[tauri::command(async)]
 pub fn apps_signal(webview: Webview, key: String, data: String) -> Result<Option<String>, String> {
     owner(&webview)?;
@@ -598,7 +500,6 @@ pub fn apps_signal(webview: Webview, key: String, data: String) -> Result<Option
 
 #[cfg(not(any(target_os = "linux", target_os = "windows")))]
 fn signal_here(_hosted: &Hosted, _key: &str, data: &str) -> Option<String> {
-    // Nothing runs here yet (`isolation`), so there is no picture to offer.
     data.contains("\"offer\"")
         .then(|| serde_json::json!({ "cannot": "stopped" }).to_string())
 }
@@ -609,7 +510,6 @@ fn signal_here(hosted: &Hosted, key: &str, data: &str) -> Option<String> {
 
     match serde_json::from_str::<FromViewer>(data).ok()? {
         FromViewer::Offer { offer } => {
-            // A new offer is a new picture: whatever was sent before ends first.
             hosted.end_peer(key);
             let Some(running) = hosted.apps().get(key).cloned() else {
                 return Some(stream::cannot_text("stopped"));
@@ -642,8 +542,6 @@ fn signal_here(hosted: &Hosted, key: &str, data: &str) -> Option<String> {
     }
 }
 
-/// What of an application goes to the holder besides its picture: its clipboard and its
-/// sink's monitor, on Linux.
 #[cfg(target_os = "linux")]
 fn shared_of(running: &Running) -> (Option<Arc<clipboard::Clipboard>>, Option<String>) {
     let clipboard = running
@@ -661,13 +559,11 @@ fn shared_of(running: &Running) -> (Option<Arc<clipboard::Clipboard>>, Option<St
     (clipboard, sound)
 }
 
-/// On Windows, neither: both are the reader's own at the host.
 #[cfg(target_os = "windows")]
 fn shared_of(_running: &Running) -> (Option<Arc<clipboard::Clipboard>>, Option<String>) {
     (None, None)
 }
 
-/// Asks its group to end, and makes it after `grace`.
 fn end(running: &Arc<Running>, grace: std::time::Duration) {
     running.stopping.store(true, Ordering::SeqCst);
     let pid = running.pid;
@@ -685,18 +581,13 @@ fn end(running: &Arc<Running>, grace: std::time::Duration) {
     }
 }
 
-/// What is said to an application's process group.
 #[derive(Clone, Copy)]
 enum Signal {
-    /// Whether it is still there.
     Ask,
-    /// Asked to end.
     End,
-    /// Made to.
     Kill,
 }
 
-/// Says it to the group the application leads; answers whether the group was there.
 #[cfg(unix)]
 #[allow(
     unsafe_code,
@@ -711,12 +602,9 @@ fn signal(pid: u32, what: Signal) -> bool {
         Signal::End => libc::SIGTERM,
         Signal::Kill => libc::SIGKILL,
     };
-    // SAFETY: a negated id names the process group; the call touches no memory of ours.
     unsafe { libc::kill(-group, number) == 0 }
 }
 
-/// Says it to everything the application started on its desktop: whether any of it is
-/// still there, its windows asked to close, or its job ended.
 #[cfg(windows)]
 fn signal(pid: u32, what: Signal) -> bool {
     let alive = desk::alive(pid);
@@ -733,7 +621,6 @@ fn signal(_pid: u32, _what: Signal) -> bool {
     false
 }
 
-/// Orden is quitting: nothing it started is left running.
 pub fn end_all(app: &AppHandle) {
     let Some(hosted) = app.try_state::<Hosted>() else {
         return;
@@ -749,7 +636,6 @@ pub fn end_all(app: &AppHandle) {
     }
 }
 
-/// The programs the reader here said yes to, kept in the app's local data.
 fn allowed_file(app: &AppHandle) -> Option<PathBuf> {
     Some(
         app.path()
@@ -760,13 +646,10 @@ fn allowed_file(app: &AppHandle) -> Option<PathBuf> {
     )
 }
 
-/// What one program, with its arguments and folder, is remembered as.
 fn allowed_key(path: &str, args: &[String], cwd: Option<&str>) -> String {
     serde_json::json!([path, args, cwd]).to_string()
 }
 
-/// Whether the reader at this computer lets this program run: said yes before, or says
-/// so now, in a dialog of the system's own.
 fn allowed_here(
     app: &AppHandle,
     hosted: &Hosted,
@@ -828,8 +711,6 @@ fn allowed_here(
     true
 }
 
-/// A program and its arguments as a reader reads a command line: quoted where a word
-/// has a space or a quote in it.
 fn shown_line(path: &str, args: &[String]) -> String {
     std::iter::once(path)
         .chain(args.iter().map(String::as_str))
@@ -844,9 +725,6 @@ fn shown_line(path: &str, args: &[String]) -> String {
         .join(" ")
 }
 
-/// A test that drives a real display, sound server or ffmpeg, run on a thread of its
-/// own and failed once it has taken two minutes: a hang in any of them fails it at once
-/// rather than holding CI until the job is cancelled (issue 1160).
 #[cfg(all(test, any(target_os = "linux", target_os = "windows")))]
 fn in_time(test: impl FnOnce() + Send + 'static) {
     within(std::time::Duration::from_secs(120), test);

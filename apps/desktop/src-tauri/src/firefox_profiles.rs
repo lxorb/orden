@@ -1,17 +1,3 @@
-//! The profiles Firefox keeps on this machine, the files of each the import reads,
-//! and its bookmarks out of `places.sqlite`.
-//!
-//! Firefox lists its profiles in `profiles.ini`, the file Zen's is a copy of, so
-//! they are read the same way (`browser_profiles::ini_profiles`). Of a profile, the
-//! import reads its session - `sessionstore-backups/recovery.jsonlz4` while Firefox
-//! runs, `sessionstore.jsonlz4` after it quit, the one before that behind them - which
-//! holds the open tabs, the pinned ones, the tab groups and the saved groups; and its
-//! bookmarks. Those are `places.sqlite`, which Firefox keeps open and locked, so the
-//! database is copied out with its write-ahead log first and the copy is read, the way
-//! Apple Notes' is; the newest of the daily backups in `bookmarkbackups/` stands behind
-//! it, a day old at most. Those files, by those names, of a profile Firefox lists, and
-//! nothing else. Never written.
-
 use rusqlite::Connection;
 use serde_json::{json, Map, Value};
 use std::collections::HashMap;
@@ -21,40 +7,27 @@ use std::path::{Path, PathBuf};
 use crate::browser_profiles::{copied, ini_profiles, known, once, Profile};
 use crate::paths::folder_named;
 
-/// Where a drive keeps the browsers of its own, so a probe never reads the reader's:
-/// a folder with a folder per browser in it, `firefox/` holding a `profiles.ini`.
 pub(crate) const BROWSERS_DIR: &str = "NIB_BROWSERS_DIR";
 
-/// The session files, in the order they are worth reading: the one a running Firefox
-/// keeps writing, the one it wrote as it quit, and the one before that.
 const SESSIONS: [&str; 3] = [
     "sessionstore-backups/recovery.jsonlz4",
     "sessionstore.jsonlz4",
     "sessionstore-backups/previous.jsonlz4",
 ];
 
-/// The bookmarks, and where Firefox keeps a copy of them every day.
 pub(crate) const PLACES: &str = "places.sqlite";
-/// The sites' marks, and the search engines; see `browser_data.rs` and
-/// `import/search-engines.ts`.
 pub(crate) const FAVICONS: &str = "favicons.sqlite";
 pub(crate) const SEARCH: &str = "search.json.mozlz4";
 const BACKUPS: &str = "bookmarkbackups";
 const BACKUP_PREFIX: &str = "bookmarks-";
 const BACKUP_SUFFIX: &str = ".jsonlz4";
 
-/// The roots that are not bookmarks: the tags, which list again what is already
-/// bookmarked, under each tag.
 const TAGS: &str = "tags________";
 
-/// The profiles on this machine Firefox lists that hold anything to read, the one it
-/// opens first in front.
 pub(crate) fn profiles() -> Vec<Profile> {
     once(homes().iter().flat_map(|home| ini_profiles(home, files_of)))
 }
 
-/// The bookmarks of a listed profile, as the tree Firefox's own backups are written
-/// as: `{ guid, title, typeCode, uri, dateAdded, children }`.
 #[tauri::command(async)]
 pub fn read_firefox_places(profile: String) -> Result<String, String> {
     let path = known("Firefox", &profile, PLACES, &profiles())?;
@@ -67,8 +40,6 @@ pub fn read_firefox_places(profile: String) -> Result<String, String> {
     Ok(tree.to_string())
 }
 
-/// The folders Firefox keeps `profiles.ini` in: on Linux the dotted one, its XDG one,
-/// the Snap's and the Flatpak's; a Mac's and Windows' application data.
 fn homes() -> Vec<PathBuf> {
     if let Some(named) = folder_named(std::env::var_os(BROWSERS_DIR).as_deref()) {
         return vec![named.join("firefox")];
@@ -98,8 +69,6 @@ fn homes() -> Vec<PathBuf> {
     found
 }
 
-/// The files a profile holds that the import reads: its sessions in the order they
-/// are worth reading, the bookmarks, and the newest daily copy of them.
 fn files_of(profile: &Path) -> Vec<String> {
     let mut found: Vec<String> = SESSIONS
         .iter()
@@ -108,7 +77,6 @@ fn files_of(profile: &Path) -> Vec<String> {
         .map(|name| (*name).to_owned())
         .collect();
 
-    // Named for the day, so the newest sorts last.
     let newest = fs::read_dir(profile.join(BACKUPS))
         .into_iter()
         .flatten()
@@ -123,7 +91,6 @@ fn files_of(profile: &Path) -> Vec<String> {
     found
 }
 
-/// One row of `moz_bookmarks`, with the address of a bookmark.
 struct Row {
     id: i64,
     parent: i64,
@@ -134,8 +101,6 @@ struct Row {
     url: Option<String>,
 }
 
-/// Every bookmark, folder and separator, nested as Firefox nests them and in its
-/// order, from the root down. The tags are left out.
 pub(crate) fn tree_of(db: &Connection) -> rusqlite::Result<Value> {
     let mut statement = db.prepare(
         "SELECT b.id, b.parent, b.type, IFNULL(b.title, ''), IFNULL(b.dateAdded, 0), \
@@ -165,8 +130,6 @@ pub(crate) fn tree_of(db: &Connection) -> rusqlite::Result<Value> {
     Ok(root.map_or(Value::Null, |root| node(root, &children, 0)))
 }
 
-/// How deep a folder may be nested before the walk stops: well past anybody's, and a
-/// stop for a database whose parents go round.
 const DEEPEST: usize = 64;
 
 fn node(row: &Row, children: &HashMap<i64, Vec<&Row>>, depth: usize) -> Value {
@@ -233,7 +196,6 @@ mod tests {
         );
     }
 
-    /// The tables as Firefox makes them, as far as the bookmarks go.
     fn places(at: &Path) -> Connection {
         let db = Connection::open(at).expect("a database");
         db.execute_batch(

@@ -1,15 +1,3 @@
-//! A link's preview, made on the sender's device (docs/chats.md 4.8): the page's title,
-//! site, description and picture, read once as the message is written and frozen in it,
-//! as Signal makes them. Recipients never contact the site, everybody sees the same
-//! preview, and a page that changes later does not change the message.
-//!
-//! The crate fetches it, not the webview, so no cookie and no login goes with the request.
-//! Only a public address: a name that resolves anywhere private (this machine, the local
-//! network, a link-local or unique-local address) is no preview, and the connection is
-//! pinned to the address that was checked, so a second lookup cannot answer differently.
-//! Redirects are followed by hand, each one checked the same way. Nothing slower than
-//! three seconds, nothing but HTML, and no more of a page than its head needs.
-
 use base64::Engine as _;
 use reqwest::header::{CONTENT_TYPE, LOCATION, USER_AGENT};
 use reqwest::{redirect, Client, Url};
@@ -17,34 +5,25 @@ use serde::Serialize;
 use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
 use std::time::Duration;
 
-/// How long a whole preview may take, the page and its picture.
 const PATIENCE: Duration = Duration::from_secs(3);
 
-/// The most of a page read: a head is in the first part of any page.
 const MOST_PAGE: usize = 512 * 1024;
 
-/// The largest picture taken.
 const MOST_PICTURE: usize = 2 * 1024 * 1024;
 
-/// Redirects followed, at most.
 const MOST_HOPS: usize = 5;
 
-/// What a preview says, as the window reads it.
 #[derive(Serialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Page {
-    /// Where the page ended up, after any redirect.
     url: String,
     title: String,
     site: Option<String>,
     text: Option<String>,
-    /// The page's picture, as base64, and its media type.
     picture: Option<String>,
     picture_type: Option<String>,
 }
 
-/// A link's preview, or nothing: a private address, a page that is not HTML, one with no
-/// title, or one slower than three seconds.
 #[tauri::command(async)]
 pub async fn link_preview(url: String) -> Option<Page> {
     tokio::time::timeout(PATIENCE, preview(&url))
@@ -99,8 +78,6 @@ async fn preview(url: &str) -> Option<Page> {
     Some(page)
 }
 
-/// The bytes at an address and their media type, following redirects by hand, each hop to
-/// a public address only; None for anything else, or a type `wanted` does not take.
 async fn fetched(
     start: &str,
     most: usize,
@@ -162,7 +139,6 @@ async fn fetched(
     None
 }
 
-/// The address a name resolves to, if every address it resolves to is public.
 async fn public_address(host: &str, port: u16) -> Option<SocketAddr> {
     let named = host
         .trim_start_matches('[')
@@ -182,8 +158,6 @@ async fn public_address(host: &str, port: u16) -> Option<SocketAddr> {
     found.first().copied()
 }
 
-/// Whether an address is one anybody on the internet could reach: none of this machine's,
-/// the local network's, or the ones set aside.
 fn is_public(ip: IpAddr) -> bool {
     match ip {
         IpAddr::V4(v4) => {
@@ -195,7 +169,6 @@ fn is_public(ip: IpAddr) -> bool {
                 || v4.is_documentation()
                 || v4.is_unspecified()
                 || v4.is_multicast()
-                // Shared address space (carrier-grade NAT) and the benchmarking range.
                 || (a == 100 && (64..128).contains(&b))
                 || (a == 198 && (18..20).contains(&b))
                 || a == 0
@@ -209,19 +182,16 @@ fn is_public(ip: IpAddr) -> bool {
             !(v6.is_loopback()
                 || v6.is_unspecified()
                 || v6.is_multicast()
-                // Unique local and link-local.
                 || (first & 0xfe00) == 0xfc00
                 || (first & 0xffc0) == 0xfe80)
         }
     }
 }
 
-/// Text cut to at most `most` characters, whole characters, without its outer blanks.
 fn clipped(text: &str, most: usize) -> String {
     text.trim().chars().take(most).collect()
 }
 
-/// What a page's head says: its title and its `meta` tags by name or property.
 struct Head {
     title: Option<String>,
     metas: Vec<(String, String)>,
@@ -229,7 +199,6 @@ struct Head {
 
 impl Head {
     fn read(html: &str) -> Self {
-        // Only the head: the body is where a page says anything it likes.
         let lower = html.to_ascii_lowercase();
         let end = lower.find("</head").unwrap_or(html.len());
         let (html, lower) = (&html[..end], &lower[..end]);
@@ -260,7 +229,6 @@ impl Head {
         }
     }
 
-    /// The first non-empty `meta` of a name.
     fn meta(&self, key: &str) -> Option<String> {
         self.metas
             .iter()
@@ -269,14 +237,12 @@ impl Head {
     }
 }
 
-/// An attribute's value in a tag, quoted either way or not at all.
 fn attribute(tag: &str, name: &str) -> Option<String> {
     let lower = tag.to_ascii_lowercase();
     let mut from = 0;
     while let Some(at) = lower[from..].find(name) {
         let start = from + at;
         from = start + name.len();
-        // A whole attribute name: after a blank, and followed by `=`.
         let before = lower[..start].chars().last();
         if !before.is_some_and(char::is_whitespace) {
             continue;
@@ -300,7 +266,6 @@ fn attribute(tag: &str, name: &str) -> Option<String> {
     None
 }
 
-/// The few entities a title or a description is written with.
 fn decoded(text: &str) -> String {
     let mut out = String::with_capacity(text.len());
     let mut rest = text;

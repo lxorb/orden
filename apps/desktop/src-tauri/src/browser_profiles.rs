@@ -1,13 +1,3 @@
-//! What every browser's import shares on this side: a profile as the import lists it,
-//! the `profiles.ini` Firefox and everything built on it keep, and the one narrow way
-//! a listed file of a listed profile is read. Zen's row is the first to use it; see
-//! `zen_profiles.rs`. The rows for the other browsers ask `browser_profiles` which of
-//! them are on this machine and `read_browser_file` for one of their files: Firefox's
-//! in `firefox_profiles.rs`, every Chromium's in `chromium_profiles.rs`. Safari's
-//! are read whole, by `read_safari` (`safari.rs`). Read and never written: `fs::read` opens a file sharing it for
-//! reading, writing and deleting, which is how a running browser replaces it, and the
-//! bytes are a copy the moment they are read.
-
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
 use serde::Serialize;
@@ -17,24 +7,19 @@ use std::path::{Path, PathBuf};
 use crate::paths::folded;
 use crate::{chromium_profiles, firefox_profiles, safari, zen_profiles};
 
-/// One profile, the way the browser's own profile manager shows it.
 #[derive(Serialize, Debug, PartialEq, Eq)]
 pub struct Profile {
     pub name: String,
     pub path: String,
-    /// The files of it the import reads, the one to read first in front.
     pub files: Vec<String>,
 }
 
-/// One browser the import reads, by the id the app names it with, and its profiles.
 #[derive(Serialize)]
 pub struct Browser {
     pub id: &'static str,
     pub profiles: Vec<Profile>,
 }
 
-/// The browsers on this machine that hold anything to import, in the order the rows
-/// show them, each with its profiles. None where none ever ran.
 #[tauri::command(async)]
 pub fn browser_profiles() -> Vec<Browser> {
     ["safari", "firefox"]
@@ -48,16 +33,11 @@ pub fn browser_profiles() -> Vec<Browser> {
         .collect()
 }
 
-/// One listed file of a listed profile of a browser, as base64. Never a database:
-/// Firefox's bookmarks are read out of theirs by `read_firefox_places`, and the
-/// history and the sites' marks out of theirs by `browser_data.rs`.
 #[tauri::command(async)]
 pub fn read_browser_file(browser: String, profile: String, file: String) -> Result<String, String> {
     read_listed(&browser, &profile, &file, &profiles_of(&browser))
 }
 
-/// The databases a profile lists: Firefox's and Zen's `.sqlite` files, a Chromium's
-/// `History` and `Favicons`.
 const DATABASES: [&str; 2] = ["History", "Favicons"];
 
 fn is_database(file: &str) -> bool {
@@ -67,7 +47,6 @@ fn is_database(file: &str) -> bool {
         || DATABASES.contains(&file)
 }
 
-/// A browser's profiles, by its id; none for a browser this does not read.
 pub(crate) fn profiles_of(browser: &str) -> Vec<Profile> {
     match browser {
         "zen" => zen_profiles::listed(),
@@ -78,12 +57,8 @@ pub(crate) fn profiles_of(browser: &str) -> Vec<Profile> {
     }
 }
 
-/// More than any session or bookmark file is. A file past it is not one, and the app
-/// holds what it reads whole.
 const MOST_BYTES: u64 = 128 * 1024 * 1024;
 
-/// One listed file of a listed profile, as base64, which is how bytes cross the
-/// bridge.
 pub(crate) fn read_listed(
     browser: &str,
     profile: &str,
@@ -104,23 +79,14 @@ pub(crate) fn read_listed(
     Ok(BASE64.encode(bytes))
 }
 
-/// A database a browser may hold open, copied with its write-ahead log where nothing
-/// changes them while they are read: Firefox's `places.sqlite`, Safari's
-/// `SafariTabs.db`. The log is only there while the browser has the database open,
-/// and a copy without it is the database as of the last time it was closed, which is
-/// behind rather than wrong. The copy is also where the system's refusal shows, which
-/// is how Safari's Full Disk Access is heard.
 pub(crate) fn copied(folder: &Path, database: &str) -> std::io::Result<tempfile::TempDir> {
     let copy = tempfile::tempdir()?;
     fs::copy(folder.join(database), copy.path().join(database))?;
     let log = format!("{database}-wal");
-    // Not there is a database that was closed cleanly.
     let _ = fs::copy(folder.join(&log), copy.path().join(&log));
     Ok(copy)
 }
 
-/// Each profile once, the first place it was found winning: one folder reached under
-/// two spellings is one profile.
 pub(crate) fn once(all: impl IntoIterator<Item = Profile>) -> Vec<Profile> {
     all.into_iter().fold(Vec::new(), |mut kept, one| {
         if !kept.iter().any(|held: &Profile| held.path == one.path) {
@@ -130,9 +96,6 @@ pub(crate) fn once(all: impl IntoIterator<Item = Profile>) -> Vec<Profile> {
     })
 }
 
-/// The profiles of one `profiles.ini` that hold something `files_of` finds: the one
-/// an install opens first, then the one marked default, then the rest in the file's
-/// order.
 pub(crate) fn ini_profiles(home: &Path, files_of: impl Fn(&Path) -> Vec<String>) -> Vec<Profile> {
     let Ok(text) = fs::read_to_string(home.join("profiles.ini")) else {
         return Vec::new();
@@ -171,7 +134,6 @@ pub(crate) fn ini_profiles(home: &Path, files_of: impl Fn(&Path) -> Vec<String>)
     found.into_iter().map(|(_, one)| one).collect()
 }
 
-/// A `[ProfileN]` section.
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct Entry {
     pub(crate) name: String,
@@ -180,8 +142,6 @@ pub(crate) struct Entry {
     pub(crate) default: bool,
 }
 
-/// The sections of an INI file as `(section, key, value)` rows, keys and sections
-/// compared without case the way Firefox's own parser compares them.
 fn rows(text: &str) -> Vec<(String, String, String)> {
     let mut section = String::new();
     let mut found = Vec::new();
@@ -209,7 +169,6 @@ fn rows(text: &str) -> Vec<(String, String, String)> {
     found
 }
 
-/// Every profile the file names, in its order.
 pub(crate) fn entries_in(text: &str) -> Vec<Entry> {
     let rows = rows(text);
     let mut sections: Vec<&str> = Vec::new();
@@ -242,8 +201,6 @@ pub(crate) fn entries_in(text: &str) -> Vec<Entry> {
         .collect()
 }
 
-/// The profile each install opens first: `[InstallXXXX]` sections, one per copy of
-/// the browser on the machine, each with `Default=` the profile's `Path`.
 pub(crate) fn installed_defaults(text: &str) -> Vec<String> {
     rows(text)
         .into_iter()
@@ -254,8 +211,6 @@ pub(crate) fn installed_defaults(text: &str) -> Vec<String> {
         .collect()
 }
 
-/// The file asked for, when the profile is one `browser` lists and the file is one
-/// of the files that profile was listed with: never a path the caller made up.
 pub(crate) fn known(
     browser: &str,
     profile: &str,

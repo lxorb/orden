@@ -1,25 +1,3 @@
-//! The profiles Chrome, Edge, Brave, Chromium, Vivaldi, Opera, Opera GX and Arc keep on
-//! this machine, and the files of each the import reads.
-//!
-//! All of them are Chromium and keep the same folder: a "user data" folder per browser,
-//! with `Local State` in it naming every profile (`profile.info_cache`, in the order
-//! `profile.profiles_order` gives) and a folder per profile. Of a profile the import
-//! reads `Bookmarks`, a JSON file, and `AccountBookmarks`, the same file of what a
-//! profile signed in to its Google account keeps there, and its session: the newest
-//! `Sessions/Session_*` first, older ones behind it, and an older Chromium's `Current
-//! Session` and `Last Session`. A newer Chromium writes the same session encrypted into
-//! `Sessions_Encrypted/` too, with a key in the system's keychain that nothing here
-//! asks for; the newest of those is listed so the app can say why it read no tabs. And
-//! `Preferences`, for its search engine, and its two databases, `History` and
-//! `Favicons`, which `browser_data.rs` reads. Those files, by those names, of a profile
-//! `Local State` names, and nothing else. Never written.
-//!
-//! Opera keeps its first profile in the user data folder itself rather than in a
-//! `Default` inside it, so that folder is a profile too where it holds one. Arc keeps
-//! its sidebar - its spaces, their pinned and open tabs, its Favorites - in
-//! `StorableSidebar.json` beside its user data folder, one file for every profile;
-//! `read_arc_sidebar` hands it over.
-
 use serde_json::Value;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -28,23 +6,16 @@ use crate::browser_profiles::{once, Profile};
 use crate::firefox_profiles::BROWSERS_DIR;
 use crate::paths::folder_named;
 
-/// The Chromium browsers the import reads, by the id the app names each with.
 pub(crate) const BROWSERS: [&str; 8] = [
     "chrome", "edge", "brave", "chromium", "vivaldi", "opera", "opera-gx", "arc",
 ];
 
-/// Arc's sidebar, in the folder its user data folder is in.
 const ARC_SIDEBAR: &str = "StorableSidebar.json";
 
-/// More than any sidebar is.
 const MOST_SIDEBAR_BYTES: u64 = 64 * 1024 * 1024;
 
-/// How many of a profile's sessions are listed: the one it is writing and the ones
-/// before it, which Chromium keeps two or three of.
 const SESSIONS_KEPT: usize = 3;
 
-/// The profiles of one of the browsers that hold anything to read, in the order the
-/// browser's own profile picker shows them.
 pub(crate) fn profiles(browser: &str) -> Vec<Profile> {
     once(
         user_data_folders(browser)
@@ -53,8 +24,6 @@ pub(crate) fn profiles(browser: &str) -> Vec<Profile> {
     )
 }
 
-/// Each user data folder the browser keeps, on this system and in every packaging of
-/// it: Linux's own, the Snap's and the Flatpak's; a Mac's and Windows' application data.
 fn user_data_folders(browser: &str) -> Vec<PathBuf> {
     if let Some(named) = folder_named(std::env::var_os(BROWSERS_DIR).as_deref()) {
         return vec![named.join(browser)];
@@ -127,7 +96,6 @@ fn user_data_folders(browser: &str) -> Vec<PathBuf> {
             found.push(local.join(folder));
         }
     }
-    // Opera keeps its user data with the roaming profile.
     #[cfg(windows)]
     if let Some(roaming) = dirs::data_dir() {
         match browser {
@@ -140,8 +108,6 @@ fn user_data_folders(browser: &str) -> Vec<PathBuf> {
     found
 }
 
-/// Arc's user data on Windows, inside the folder its Store package keeps: named for
-/// the package and its publisher, which is the part a folder is looked for by.
 #[cfg(windows)]
 fn arc_homes(local: &Path) -> Vec<PathBuf> {
     fs::read_dir(local.join("Packages"))
@@ -158,9 +124,6 @@ fn arc_homes(local: &Path) -> Vec<PathBuf> {
         .collect()
 }
 
-/// Arc's sidebar, read whole, for one of the profiles Arc lists: the file is every
-/// profile's, and which of its spaces are this profile's is the app's to read
-/// (`import/arc.ts`).
 #[tauri::command(async)]
 pub fn read_arc_sidebar(profile: String) -> Result<String, String> {
     let listed = profiles("arc");
@@ -179,16 +142,11 @@ pub fn read_arc_sidebar(profile: String) -> Result<String, String> {
     fs::read_to_string(&path).map_err(|error| format!("{ARC_SIDEBAR} could not be read: {error}"))
 }
 
-/// Where Arc's sidebar is for one of its profiles: beside the user data folder the
-/// profile is in.
 fn sidebar_of(profile: &Path) -> Option<PathBuf> {
     let path = profile.parent()?.parent()?.join(ARC_SIDEBAR);
     path.is_file().then_some(path)
 }
 
-/// The profiles one user data folder holds, by what its `Local State` says: each
-/// profile's name, in the picker's order. A folder with no `Local State` has the one
-/// profile a Chromium always makes, `Default`, where it is there.
 fn profiles_in(home: &Path) -> Vec<Profile> {
     let state = fs::read_to_string(home.join("Local State"))
         .ok()
@@ -215,7 +173,6 @@ fn profiles_in(home: &Path) -> Vec<Profile> {
         return listed;
     }
 
-    // Opera's first profile is the folder itself.
     let files = files_of(home);
     if files.iter().any(|one| one != "Preferences") {
         return vec![Profile {
@@ -227,8 +184,6 @@ fn profiles_in(home: &Path) -> Vec<Profile> {
     Vec::new()
 }
 
-/// Each profile's folder and name, in `profiles_order`'s order and then the rest of
-/// `info_cache` by folder.
 fn names_in(state: &Value) -> Vec<(String, String)> {
     let profile = &state["profile"];
     let Some(cache) = profile["info_cache"].as_object() else {
@@ -263,14 +218,10 @@ fn names_in(state: &Value) -> Vec<(String, String)> {
         .collect()
 }
 
-/// A profile's folder as `Local State` may name it: one name, never a path.
 fn is_profile_folder(folder: &str) -> bool {
     !folder.is_empty() && folder != "." && folder != ".." && !folder.contains(['/', '\\', ':'])
 }
 
-/// The files of a profile the import reads: the bookmarks and the account's, the
-/// sessions newest first, an older Chromium's two, the newest encrypted session, and
-/// the search engine's and the two databases' after them.
 fn files_of(profile: &Path) -> Vec<String> {
     let mut found: Vec<String> = ["Bookmarks", "AccountBookmarks"]
         .into_iter()
@@ -294,8 +245,6 @@ fn files_of(profile: &Path) -> Vec<String> {
     found
 }
 
-/// The newest `Session_<time>` files of a folder of the profile, newest first: the time
-/// is a number of the same width in every name, so the names sort as the times do.
 fn newest(profile: &Path, folder: &str, most: usize) -> Vec<String> {
     let mut names: Vec<String> = fs::read_dir(profile.join(folder))
         .into_iter()

@@ -1,49 +1,11 @@
-//! The block of metadata a note may open with, and the two ways one key of it is
-//! read.
-//!
-//! YAML between two `---` fences, which is Obsidian's convention and so this
-//! app's: a note that says what it is says it there, and every other editor that
-//! reads markdown leaves the block alone.
-//!
-//! Here rather than in one of the two modules that ask, because both do: `links`
-//! reads the icon a row wears and the other names a note gives itself, and `tags`
-//! reads the `tags:` key and then leaves the block out of its own pass. A second
-//! copy of where the block is would be a second answer to what a note's metadata
-//! is.
-//!
-//! Top-level keys only. A key indented under another one belongs to that one:
-//! `paper` under `export:` is not the note's paper, and nothing here pretends
-//! otherwise.
-//!
-//! The twin of this is `packages/markdown/src/front-matter.ts`, which the browser
-//! build reads a space with, and the tests at the bottom are the twin of
-//! `front-matter.test.ts`: the same notes, the same answers.
-
-/// Where a note's front matter sits, in bytes.
-///
-/// Three offsets, because the two readers ask different things: what the block
-/// says is `from` to `close`, and where the note's own words start is `end`.
 pub struct Block {
-    /// Where the lines between the fences start: just past the opening one.
     pub from: usize,
-    /// Where the closing fence's own line begins, which is where those lines end.
     pub close: usize,
-    /// Where that line ends, its break not included: the last byte of the block.
     pub end: usize,
 }
 
-/// Where the block sits, or None where the note opens with anything else, which
-/// is most notes.
-///
-/// Three things make one, and the first two are Obsidian's: the opening fence is
-/// the note's first line at the left margin, and the block closes. An indented
-/// fence is an indented rule, and a block nobody closed is a note that opens with a
-/// rule. The third is how it reads: see `closing_fence`.
 pub fn block(body: &str) -> Option<Block> {
     let first = body.find('\n')?;
-    // Space after the fence is nothing; space before it is a fence that is not at
-    // the margin, which no reader of a markdown file takes for metadata. A byte
-    // order mark in front of it is how Notepad saves a file, and is not text.
     let opening = body[..first]
         .strip_prefix('\u{feff}')
         .unwrap_or(&body[..first]);
@@ -432,25 +394,10 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
     None
 }
 
-/// A top-level `key: value` of a block the caller has already found, quotes
-/// stripped, or None where the block holds no such key or nothing after the colon.
-///
-/// The block comes in rather than being looked for here, because a caller that wants
-/// one key wants four: the icon a row wears, the colour of it, the other names the
-/// note answers to and the address it stands for are four keys of one block. Looking
-/// for that block per key is four passes down a note that opens with a fence nothing
-/// closes, for every note in the space.
-///
-/// The twin of `frontMatterValue`.
 pub fn value(body: &str, block: &Block, key: &str) -> Option<String> {
     lines_of(body, block).find_map(|line| value_of(line, key))
 }
 
-/// A top-level key of that block read as a list: `key: [a, b]`, the `- a` lines
-/// written under `key:`, or a single value standing for a list of one. Empty where
-/// the block holds no such key or nothing under it.
-///
-/// The twin of `frontMatterList`.
 pub fn list(body: &str, block: &Block, key: &str) -> Vec<String> {
     let mut lines = lines_of(body, block);
     while let Some(line) = lines.next() {
@@ -475,7 +422,6 @@ pub fn list(body: &str, block: &Block, key: &str) -> Vec<String> {
             return flow_items(&joined.join(" "));
         }
 
-        // A key with nothing after it is a list written underneath it.
         return if said.is_empty() {
             dash_items(lines)
         } else {
@@ -486,20 +432,14 @@ pub fn list(body: &str, block: &Block, key: &str) -> Vec<String> {
     Vec::new()
 }
 
-/// The block's own lines, without their breaks: from just past the opening fence
-/// to the line the closing one is on.
 fn lines_of<'a>(body: &'a str, block: &Block) -> std::str::Lines<'a> {
     body.get(block.from..block.close)
         .unwrap_or_default()
         .lines()
 }
 
-/// What one line says under `key`, trimmed, or None when the line is another key,
-/// a list item, or a line indented under something else.
 fn named<'a>(line: &'a str, key: &str) -> Option<&'a str> {
     let (name, said) = line.split_once(':')?;
-    // A key of the note's own stands at the left margin; an indented one belongs
-    // to the key above it.
     if name.starts_with(char::is_whitespace) || !name.trim_end().eq_ignore_ascii_case(key) {
         return None;
     }
@@ -507,13 +447,10 @@ fn named<'a>(line: &'a str, key: &str) -> Option<&'a str> {
     Some(said.trim())
 }
 
-/// What one line says under `key`, or None when it says nothing at all.
 fn value_of(line: &str, key: &str) -> Option<String> {
     unquoted(named(line, key)?)
 }
 
-/// `[One, Two]` on the key's own line, or a single value standing for a list of
-/// one.
 fn flow_items(value: &str) -> Vec<String> {
     if let Some(list) = value
         .strip_prefix('[')
@@ -528,8 +465,6 @@ fn flow_items(value: &str) -> Vec<String> {
     unquoted(value).into_iter().collect()
 }
 
-/// The `- item` lines written under a key, up to the next key of the note's own
-/// or anything else that is not an item.
 fn dash_items(lines: std::str::Lines<'_>) -> Vec<String> {
     let mut out = Vec::new();
 
@@ -542,8 +477,6 @@ fn dash_items(lines: std::str::Lines<'_>) -> Vec<String> {
         let Some(item) = line.strip_prefix('-') else {
             break;
         };
-        // A dash with no space after it is not an item, and neither is a dash on
-        // its own: `-One` is a word and `-` is a rule.
         if !item.starts_with(char::is_whitespace) {
             break;
         }
@@ -555,8 +488,6 @@ fn dash_items(lines: std::str::Lines<'_>) -> Vec<String> {
     out
 }
 
-/// A value with the quotes YAML would take off taken off, or None where nothing
-/// is left of it.
 fn unquoted(value: &str) -> Option<String> {
     let bare = value
         .strip_prefix('"')
@@ -579,17 +510,10 @@ fn unquoted(value: &str) -> Option<String> {
 mod tests {
     use super::{block, list, value};
 
-    /// The icon a row wears, which is what `links` reads a note's front matter
-    /// for. Every case here has its twin in
-    /// `packages/markdown/src/front-matter.test.ts`.
-    ///
-    /// None for a note with no block at all, the way the reader in `links` answers
-    /// for one: a key of a block that is not there is a key nothing said.
     fn icon(body: &str) -> Option<String> {
         value(body, &block(body)?, "icon")
     }
 
-    /// The other names a note gives itself, and the other twin.
     fn aliases(body: &str) -> Vec<String> {
         block(body).map_or_else(Vec::new, |one| list(body, &one, "aliases"))
     }
@@ -628,12 +552,9 @@ mod tests {
         assert!(block("# Plan\n\nwords").is_none());
         assert!(block("").is_none());
         assert!(block("---").is_none());
-        // A block that never closes is a note that opens with a rule.
         assert!(block("---\nicon: rocket\n\n# Plan").is_none());
     }
 
-    /// A file saved by Notepad opens with a byte order mark. The twin of "a byte
-    /// order mark in front of the fence" in front-matter.test.ts.
     #[test]
     fn a_byte_order_mark_in_front_of_the_fence() {
         let note = "\u{feff}---\naliases: [Proj]\nicon: star\n---\nbody\n";
@@ -648,15 +569,11 @@ mod tests {
         assert_eq!(aliases(note), vec!["Proj"]);
     }
 
-    /// The opening fence stands at the left margin, which is where Obsidian and
-    /// every other reader of a markdown file look for it. The twin of "an opening
-    /// fence stands at the left margin".
     #[test]
     fn an_indented_opening_fence_opens_nothing() {
         assert!(block("  ---\nicon: rocket\n---\n").is_none());
         assert!(block("\t---\nicon: rocket\n---\n").is_none());
         assert_eq!(icon("  ---\nicon: rocket\n---\n"), None);
-        // Space after the fence is nothing at all, though.
         assert_eq!(
             icon("---  \nicon: rocket\n---\n").as_deref(),
             Some("rocket")
@@ -698,9 +615,7 @@ mod tests {
         assert_eq!(icon("# Plan\n\nwords"), None);
         assert_eq!(icon("---\ntitle: Plan\n---\n"), None);
         assert_eq!(icon("---\nicon:\n---\n"), None);
-        // A block that never closes is a note that opens with a rule.
         assert_eq!(icon("---\nicon: rocket\n\n# Plan"), None);
-        // And a key below the block is the note's words rather than its metadata.
         assert_eq!(icon("---\ntitle: Plan\n---\n\nicon: rocket\n"), None);
     }
 
@@ -709,8 +624,6 @@ mod tests {
         assert_eq!(icon("---\nexport:\n  icon: rocket\n---\n"), None);
     }
 
-    /// A note written on Windows carries `\r\n`, and the carriage return is no
-    /// part of what the key says.
     #[test]
     fn reads_a_note_written_with_carriage_returns() {
         assert_eq!(

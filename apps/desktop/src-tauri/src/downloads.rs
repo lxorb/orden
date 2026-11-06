@@ -1,35 +1,3 @@
-//! What a web tab saves: the file a link, a script or a server hands over, in the
-//! Downloads folder under the server's own name, the way a browser saves it.
-//!
-//! Emil, 2026-09-27: *"downloads currently don't work, please fix"*. They did save.
-//! wry answers a download nobody has a handler for by accepting it silently - the
-//! engine's own bubble switched off and the file written to the engine's default path -
-//! so a course PDF on Moodle was pressed, arrived in Downloads, and nothing on screen
-//! ever said so. From where the reader sat, nothing happened. This module is the
-//! handler: it decides where the file goes, keeps the list of what this run has
-//! saved, and tells the window as each one starts, moves and ends, so the bar can
-//! show it and the reader can open it.
-//!
-//! **The engine does the fetching, not this crate.** A download is the engine's own
-//! request from the page's own webview, so it goes out with the cookies, the login
-//! and the profile the page has - whichever store `engine::web_store` put that
-//! webview on. A file behind a sign-in (Moodle's `pluginfile.php`) therefore arrives
-//! exactly when the page itself could open it, and nothing here has to know where the
-//! session is kept.
-//!
-//! Where the file goes is a browser's rule, and Chrome's in particular: the Downloads
-//! folder, the name the server or the link gave it, and `name (1).ext` beside a file
-//! that is already there - never a dialog, and never over the top of anything. The
-//! window can open a file or show it in its folder, but only by the id this module
-//! gave it: a path the window names is never opened. See `lib/web-tab/downloads.svelte.ts`.
-//!
-//! One mechanism on every desktop. `WebviewBuilder::on_download` is the same hook on
-//! `WebView2`, `WKWebView` and `WebKitGTK`; the one thing it does not say is how far
-//! along a file is, and `progress` adds that - and Cancel - where the engine's own
-//! download can be reached, which is `WebView2`, `WKWebView` and Orden's own Chromium,
-//! through the page's `DevTools` protocol. A phone has no web
-//! tabs - a site there opens in the system browser, whose downloads are its own.
-
 use std::collections::HashSet;
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
@@ -41,81 +9,49 @@ use tauri::{AppHandle, Emitter, Manager, Runtime, WebviewBuilder};
 
 use crate::paths::is_reserved;
 
-/// The event the window hears whenever a download starts, moves or ends. It carries
-/// the whole download each time, so the window never has to put one together.
 const MOVED: &str = "nib://web-download";
 
-/// The variable a probe names its own downloads folder in, so a run never writes into
-/// anybody's Downloads; the same rule as `NIB_SPACES_DIR`. See
-/// scripts/web-downloads-probe.py.
 const DOWNLOADS_DIR: &str = "NIB_DOWNLOADS_DIR";
 
-/// The longest name a file is saved under, in characters. Every file system Orden runs on
-/// allows 255 bytes, and a name that is mostly one server's idea of a title is still
-/// read as that title at this length.
 const LONGEST_NAME: usize = 180;
 
-/// Where a download has got to.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum State {
-    /// On its way.
     Going,
-    /// In the folder.
     Done,
-    /// It stopped, and there is no file.
     Failed,
-    /// The reader stopped it.
     Cancelled,
 }
 
 impl Download {
-    /// Whether the engine may still be writing it: on its way, or stopped by the reader
-    /// and not yet let go of by the engine.
     fn writing(&self) -> bool {
         self.state == State::Going || (self.state == State::Cancelled && !self.ended)
     }
 }
 
-/// One download, as the window is told about it.
-///
-/// The path is not in it. The window only ever names a download by its id, and the
-/// crate is the one that turns that back into a file; see `web_download_open`.
 #[derive(Clone, Debug, Serialize)]
 pub struct Download {
     id: u64,
-    /// The tab whose page asked for it.
     tab: String,
     url: String,
-    /// What the file was saved as, which is what the list shows.
     name: String,
     state: State,
     received: u64,
-    /// How large it is, when the server said.
     total: Option<u64>,
     #[serde(skip)]
     path: PathBuf,
-    /// For one the reader stopped: whether the engine has said it ended. Until it has,
-    /// its name stays taken, since an engine that has not stopped yet is still writing
-    /// it (#788).
     #[serde(skip)]
     ended: bool,
 }
 
-/// Everything this run has downloaded, newest last.
-///
-/// For as long as the app runs and no longer: Chrome's bubble is about what has just
-/// happened, and a list of every file ever saved is the Downloads folder itself.
 #[derive(Default)]
 pub struct Downloads {
     held: Mutex<Vec<Download>>,
-    /// The tabs closed while a file was still on its way, whose webview is kept out of
-    /// sight until the file is in; see `linger`.
     lingering: Mutex<HashSet<String>>,
 }
 
 impl Downloads {
-    /// Whether a page in this tab is fetching a file at the moment.
     fn busy(&self, tab: &str) -> bool {
         self.held.lock().is_ok_and(|held| {
             held.iter()
@@ -123,10 +59,6 @@ impl Downloads {
         })
     }
 
-    /// A download the engine is about to start, given its place in `folder`: the name
-    /// the engine suggests, made safe, and numbered past any file already there and
-    /// any download still on its way to the same name. The engine writes somewhere
-    /// else until it is done, so the folder alone cannot say a name is taken.
     fn start(&self, tab: &str, url: &str, suggested: &Path, folder: &Path) -> Option<Download> {
         let name = clean_name(suggested.file_name().unwrap_or_default());
         let mut held = self.held.lock().ok()?;
@@ -156,9 +88,6 @@ impl Downloads {
         Some(made)
     }
 
-    /// A download that has ended. Found by the path it was written to, or - where the
-    /// engine does not say, which is `WKWebView` - by the oldest one still going from
-    /// the same address. One the reader already stopped stays stopped.
     fn finish(&self, url: &str, path: Option<&Path>, success: bool) -> Option<Download> {
         let mut held = self.held.lock().ok()?;
         let one = held.iter_mut().find(|one| {
@@ -169,9 +98,6 @@ impl Downloads {
                 }
         })?;
 
-        // One the reader stopped, which the engine has now let go of: it stays stopped,
-        // and a file the engine finished all the same is not left behind as though it
-        // had been wanted.
         if one.state == State::Cancelled {
             one.ended = true;
             if success {
@@ -187,7 +113,6 @@ impl Downloads {
         Some(one.clone())
     }
 
-    /// How far a download has got, by the path it is being written to.
     #[cfg_attr(
         all(not(any(windows, target_os = "macos")), not(feature = "cef")),
         allow(
@@ -206,10 +131,6 @@ impl Downloads {
         Some(one.clone())
     }
 
-    /// The oldest download still on its way from `url` that is not one of `taken`, with
-    /// the path it is being written to. How a `WKDownload` - which knows its address
-    /// and not its file - is matched to the list: in the same order `finish` matches
-    /// one that names no path, so the two agree on which is which.
     #[cfg_attr(
         not(any(all(target_os = "macos", not(feature = "cef")), feature = "cef")),
         allow(
@@ -225,7 +146,6 @@ impl Downloads {
         })
     }
 
-    /// Where a download is being written, while it is still on its way.
     #[cfg_attr(
         not(any(all(target_os = "macos", not(feature = "cef")), feature = "cef")),
         allow(
@@ -241,8 +161,6 @@ impl Downloads {
         })
     }
 
-    /// The reader stopped one. Marked here first, so the engine's own word that it
-    /// ended is not taken for a failure.
     fn cancelled(&self, id: u64) -> Option<Download> {
         let mut held = self.held.lock().ok()?;
         let one = held
@@ -253,7 +171,6 @@ impl Downloads {
         Some(one.clone())
     }
 
-    /// The file a finished download was saved as, for the window to open or show.
     fn saved(&self, id: u64) -> Result<PathBuf, String> {
         self.held
             .lock()
@@ -266,8 +183,6 @@ impl Downloads {
             .ok_or_else(|| "that download is not in the folder".to_string())
     }
 
-    /// The id of the download being written to a path, for the engine's own events,
-    /// which name a download by its path.
     #[cfg_attr(
         not(all(windows, not(feature = "cef"))),
         allow(
@@ -284,9 +199,6 @@ impl Downloads {
     }
 }
 
-/// The list, made the first time anything asks for it. Kept by this module rather than
-/// registered with the builder, because nothing needs it until a page downloads
-/// something, and a launch that never opens a website never makes it.
 fn held(app: &AppHandle) -> tauri::State<'_, Downloads> {
     if app.try_state::<Downloads>().is_none() {
         app.manage(Downloads::default());
@@ -294,19 +206,12 @@ fn held(app: &AppHandle) -> tauri::State<'_, Downloads> {
     app.state::<Downloads>()
 }
 
-/// Whether two paths are one file. Case does not tell two files apart on the file
-/// systems Windows and macOS use, and a download numbered past `Report.pdf` because
-/// `report.pdf` is on its way is the right answer on Linux too.
 fn same_path(one: &Path, other: &Path) -> bool {
     one.as_os_str()
         .to_string_lossy()
         .eq_ignore_ascii_case(&other.as_os_str().to_string_lossy())
 }
 
-/// Whether a character is one of Unicode's invisible format characters (Cf), which say how
-/// text is drawn and are no part of a name: `invoice\u{202E}fdp.exe` is an `.exe` that reads
-/// as `invoiceexe.pdf`, and Open runs it. The two joiners stay, which Persian and emoji
-/// spell with, as they do in Chrome's own rule for a file name.
 fn is_format(one: char) -> bool {
     matches!(one,
         '\u{00AD}'
@@ -334,10 +239,6 @@ fn is_format(one: char) -> bool {
     )
 }
 
-/// Whether a character draws as nothing, whatever Unicode files it under: 150 of them
-/// between `invoice.pdf` and `.exe` is a name the file manager cuts off at `invoice.pdf`,
-/// and Open runs the exe. The spaces among them go too, though a CJK name may have used one:
-/// an underscore is a small price, and a plain space is kept, one at a time.
 fn is_blank(one: char) -> bool {
     matches!(one,
         '\u{00A0}'
@@ -354,16 +255,6 @@ fn is_blank(one: char) -> bool {
     )
 }
 
-/// A name a file can be saved under on every desktop, out of whatever the server or
-/// the link said.
-///
-/// The engine has already cleaned it for its own platform; this is the rule that does
-/// not depend on that. Nothing that is a path (`/`, `\`, `..` at the front), nothing a
-/// file system refuses (`<>:"|?*` and control characters), nothing invisible that changes
-/// how it reads (`is_format`, `is_blank`, a run of spaces), no dot or space at the end,
-/// which Windows drops without saying, no dot at the front, which hides a file on the
-/// other two, and no device name. A name with nothing left is `download`, which is
-/// Chrome's word for it.
 pub(crate) fn clean_name(suggested: &OsStr) -> String {
     let replaced: String = suggested
         .to_string_lossy()
@@ -401,15 +292,12 @@ pub(crate) fn clean_name(suggested: &OsStr) -> String {
     };
 
     let (stem, ext) = split_extension(name);
-    // A file saved as `CON.pdf` is a file nobody can open, move or delete.
     let stem = if is_reserved(stem) {
         format!("_{stem}")
     } else {
         stem.to_string()
     };
 
-    // Shortened from the middle of the name's own words rather than the end of the
-    // file, so the extension - which is what opens it - survives.
     let room = LONGEST_NAME.saturating_sub(ext.chars().count()).max(1);
     if stem.chars().count() <= room {
         return format!("{stem}{ext}");
@@ -418,9 +306,6 @@ pub(crate) fn clean_name(suggested: &OsStr) -> String {
     format!("{}{ext}", cut.trim_end_matches(['.', ' ']))
 }
 
-/// A name split before its extension, the way Chrome numbers a name: `report` and
-/// `.pdf`, and `backup` and `.tar.gz` for the archives whose extension is two. A name
-/// whose only dot is its first character has no extension.
 fn split_extension(name: &str) -> (&str, &str) {
     let Some(dot) = name.rfind('.').filter(|&at| at > 0) else {
         return (name, "");
@@ -442,8 +327,6 @@ fn split_extension(name: &str) -> (&str, &str) {
     (stem, ext)
 }
 
-/// The first of `name`, `name (1)`, `name (2)` ... in `folder` that nothing has taken,
-/// the numbering Chrome uses.
 pub(crate) fn free_path(folder: &Path, name: &str, taken: impl Fn(&Path) -> bool) -> PathBuf {
     let first = folder.join(name);
     if !taken(&first) {
@@ -457,8 +340,6 @@ pub(crate) fn free_path(folder: &Path, name: &str, taken: impl Fn(&Path) -> bool
         .unwrap_or(first)
 }
 
-/// The folder downloads go to: the one a probe named, or the system's Downloads
-/// folder, or the home folder on a system that has none.
 pub(crate) fn folder(app: &AppHandle) -> Result<PathBuf, String> {
     if let Some(named) = crate::paths::folder_named(std::env::var_os(DOWNLOADS_DIR).as_deref()) {
         return Ok(named);
@@ -470,9 +351,6 @@ pub(crate) fn folder(app: &AppHandle) -> Result<PathBuf, String> {
         .map_err(|error| format!("could not find the downloads folder: {error}"))
 }
 
-/// A web tab's builder, with its downloads answered by `heard`. The engine fetches the
-/// file on the profile the page is on, so a file behind the page's login arrives with
-/// the page's own cookies whichever store `engine::web_store` chose.
 pub fn saving<R: Runtime>(
     builder: WebviewBuilder<R>,
     app: &AppHandle,
@@ -485,13 +363,6 @@ pub fn saving<R: Runtime>(
     builder.on_download(move |_view, event| heard(&app, &tab, &window, event))
 }
 
-/// A download the page in `tab` started or ended, answered and said to the window that
-/// holds the tab. The answer is whether the engine goes ahead.
-///
-/// A download is never refused here. What a site may start is the engine's own
-/// question - several at once is the "automatic downloads" permission, asked in the
-/// bubble like any other - and a download that cannot be placed is left where the
-/// engine would have put it rather than lost.
 fn heard(app: &AppHandle, tab: &str, window: &str, event: DownloadEvent<'_>) -> bool {
     let downloads = held(app);
     let said = match event {
@@ -514,7 +385,6 @@ fn heard(app: &AppHandle, tab: &str, window: &str, event: DownloadEvent<'_>) -> 
             }
             ended
         }
-        // A kind of event a later Tauri adds is one nothing here answers.
         _ => None,
     };
 
@@ -524,14 +394,6 @@ fn heard(app: &AppHandle, tab: &str, window: &str, event: DownloadEvent<'_>) -> 
     true
 }
 
-/// Whether the page in a tab being closed has to stay, out of sight, until the files
-/// it is fetching are in - and if so, keeps it.
-///
-/// The engine goes on fetching a file after the webview that asked for it has gone - the
-/// browser process holds it - but it stops saying anything about it, so the bar would
-/// turn its ring for a file that had long since arrived. A browser keeps a download
-/// going after its tab has closed and keeps showing it; this is how that holds here.
-/// Called by `web_close`, which hides the page instead of closing it when this says so.
 pub fn linger(app: &AppHandle, tab: &str) -> bool {
     let downloads = held(app);
     if !downloads.busy(tab) {
@@ -544,9 +406,6 @@ pub fn linger(app: &AppHandle, tab: &str) -> bool {
     true
 }
 
-/// Takes a tab's page back from lingering, for a tab that is opened again while its
-/// last file is still on its way: the page is still there, so it is the page. True
-/// when there was one to take back.
 pub fn revive(app: &AppHandle, tab: &str) -> bool {
     held(app)
         .lingering
@@ -554,9 +413,6 @@ pub fn revive(app: &AppHandle, tab: &str) -> bool {
         .is_ok_and(|mut lingering| lingering.remove(tab))
 }
 
-/// Closes a lingering page once nothing it was fetching is still on its way. After the
-/// engine's own handler has returned, because this is called from inside it and a
-/// webview is not closed from inside one of its own events.
 fn settle(app: &AppHandle, tab: &str) -> bool {
     let downloads = held(app);
     if downloads.busy(tab) || !revive(app, tab) {
@@ -569,16 +425,10 @@ fn settle(app: &AppHandle, tab: &str) -> bool {
     true
 }
 
-/// Starts listening to how far each download of this webview has got. `WebView2` and
-/// `WKWebView`, through `progress`; on Linux a download says when it starts and when it
-/// ends.
 pub fn listen(platform: &tauri::webview::PlatformWebview, app: AppHandle, window: String) {
     progress::listen(platform, app, window);
 }
 
-/// Everything this run has downloaded, for a window that was reloaded while a
-/// download was on its way, and for a probe. On the window's thread: it waits on
-/// nothing but the list's own lock.
 #[tauri::command]
 pub fn web_downloads(app: AppHandle) -> Vec<Download> {
     held(&app)
@@ -588,12 +438,6 @@ pub fn web_downloads(app: AppHandle) -> Vec<Download> {
         .unwrap_or_default()
 }
 
-/// Opens a downloaded file the way the system opens it, by the id the list gave it.
-///
-/// Off the window's thread, as the opener's own command is: the system's shell
-/// answers in its own time - an app to start, a network drive to wake, a dialog
-/// asking which app - and the window does not paint while it waits. The same for
-/// showing one in its folder.
 #[tauri::command(async)]
 pub fn web_download_open(app: AppHandle, id: u64) -> Result<(), String> {
     let path = held(&app).saved(id)?;
@@ -601,7 +445,6 @@ pub fn web_download_open(app: AppHandle, id: u64) -> Result<(), String> {
         .map_err(|error| format!("that file could not be opened: {error}"))
 }
 
-/// Shows a downloaded file in its folder, selected, by the id the list gave it.
 #[tauri::command(async)]
 pub fn web_download_show(app: AppHandle, id: u64) -> Result<(), String> {
     let path = held(&app).saved(id)?;
@@ -609,9 +452,6 @@ pub fn web_download_show(app: AppHandle, id: u64) -> Result<(), String> {
         .map_err(|error| format!("that file could not be shown: {error}"))
 }
 
-/// Stops a download on its way. The engine's own operation is touched on the window's
-/// thread, the only one it may be touched from, where this sends it; see `progress`.
-/// Off that thread itself, since Orden's own Chromium is told through the page's agent.
 #[tauri::command(async)]
 pub fn web_download_cancel(webview: tauri::Webview, id: u64) {
     let app = webview.app_handle();
@@ -624,16 +464,6 @@ pub fn web_download_cancel(webview: tauri::Webview, id: u64) {
     let _ = app.emit_to(webview.window().label(), MOVED, stopped);
 }
 
-/// How far a download has got, from `WebView2`'s own operation.
-///
-/// wry hands the engine's `DownloadStarting` to `heard` and keeps the operation to
-/// itself, so this listens to the same event a second time. It is registered after
-/// wry's, and the engine calls its handlers in that order, so by the time it runs the
-/// file already has the path `heard` gave it - which is how the two are matched.
-///
-/// The operations still going are kept on the window's thread, the only one they may
-/// be touched from, so Cancel can reach them; the shape `ask` in `web_tabs.rs` uses for
-/// the requests it holds open.
 #[cfg(all(windows, not(feature = "cef")))]
 mod progress {
     use std::cell::RefCell;
@@ -654,12 +484,9 @@ mod progress {
 
     use super::MOVED;
 
-    /// How often the window hears how far a file has got. Often enough that the ring
-    /// turns smoothly, and not the thousand times a second a fast file would say it.
     const EVERY: Duration = Duration::from_millis(120);
 
     thread_local! {
-        /// The operations still going, by the id the list gave them.
         static GOING: RefCell<HashMap<u64, ICoreWebView2DownloadOperation>> =
             RefCell::new(HashMap::new());
     }
@@ -669,8 +496,6 @@ mod progress {
         reason = "a download's progress is one of WebView2's own events, and its objects are reached through COM"
     )]
     pub fn listen(webview: &PlatformWebview, app: AppHandle, window: String) {
-        // Safe: the controller is this window's, every object below is used only on
-        // this thread, and WebView2 holds each handler for as long as it can fire.
         unsafe {
             let Ok(core) = webview.controller().CoreWebView2() else {
                 return;
@@ -731,8 +556,6 @@ mod progress {
                 let mut token = 0i64;
                 operation.add_BytesReceivedChanged(&moved, &raw mut token)?;
 
-                // Out of the list of what Cancel can reach once it has ended, however it
-                // ended. What it ended as is wry's to report, through `heard`.
                 let ended = StateChangedEventHandler::create(Box::new(move |operation, _| {
                     let Some(operation) = operation else {
                         return Ok(());
@@ -755,7 +578,6 @@ mod progress {
         }
     }
 
-    /// Stops a download on its way. On the window's thread, where it was kept.
     #[allow(
         unsafe_code,
         reason = "a download operation is one of WebView2's own objects"
@@ -765,29 +587,12 @@ mod progress {
             return;
         };
 
-        // Safe: the operation came from this thread's own event and is used here and
-        // nowhere else.
         unsafe {
             let _ = operation.Cancel();
         }
     }
 }
 
-// `WKWebView`'s downloads, watched: how far each has got, and Cancel.
-//
-// wry hands `heard` the start and the end of a download and keeps the `WKDownload` in
-// between to itself - it becomes the object's delegate in the navigation delegate's
-// `didBecomeDownload`, and nothing is handed out. So the page's navigation delegate is
-// given one of this module's own in front of wry's, the way `ask` in web_tabs.rs puts a
-// UI delegate in front of wry's: the two `didBecomeDownload` calls are passed to wry's
-// delegate first, unchanged, and the download is then kept here; every other navigation
-// question goes to wry's delegate by forwarding.
-//
-// A `WKDownload` knows its address and not its file, so it is matched to the list by
-// address, the same way `finish` matches wry's word that one ended. How far it has got is
-// its `NSProgress`, read on the main thread a few times a second while anything is going;
-// Cancel is its own `cancel:`, and the engine's word that it ended then finds it already
-// stopped in the list and says nothing more.
 #[cfg(all(target_os = "macos", not(feature = "cef")))]
 mod progress {
     use std::cell::{Cell, RefCell};
@@ -806,18 +611,13 @@ mod progress {
 
     use super::MOVED;
 
-    /// How often the window hears how far a file has got, as on Windows.
     const EVERY: Duration = Duration::from_millis(120);
 
-    /// How many looks a download may go unmatched before it is let go of: one the list
-    /// never took - a download wry was told not to start - is not watched for ever.
     const UNMATCHED: u32 = 50;
 
-    /// One download on its way, as the engine holds it.
     struct Going {
         download: Retained<WKDownload>,
         url: String,
-        /// The id the list gave it, once it has been matched.
         id: Option<u64>,
         looks: u32,
         app: AppHandle,
@@ -825,16 +625,12 @@ mod progress {
     }
 
     thread_local! {
-        /// The downloads on their way, on the main thread and nowhere else.
         static GOING: RefCell<Vec<Going>> = const { RefCell::new(Vec::new()) };
-        /// Whether something is already looking at them a few times a second.
         static WATCHING: Cell<bool> = const { Cell::new(false) };
     }
 
-    /// The key the watcher is kept under on its webview. Its address is the key.
     static KEPT: u8 = 0;
 
-    /// What the watcher holds: wry's navigation delegate, and who to tell.
     struct Held {
         inner: Option<Retained<ProtocolObject<dyn WKNavigationDelegate>>>,
         app: AppHandle,
@@ -842,8 +638,6 @@ mod progress {
     }
 
     define_class!(
-        /// A web tab's navigation delegate: a download kept as it starts, and every
-        /// other question passed to wry's own delegate.
         #[unsafe(super(NSObject))]
         #[thread_kind = MainThreadOnly]
         #[name = "NibWebDownloadWatcher"]
@@ -853,7 +647,6 @@ mod progress {
         unsafe impl NSObjectProtocol for Watcher {}
 
         unsafe impl WKNavigationDelegate for Watcher {
-            /// A link or a script's navigation turned out to be a download.
             #[unsafe(method(webView:navigationAction:didBecomeDownload:))]
             fn action_became_download(
                 &self,
@@ -864,7 +657,6 @@ mod progress {
                 became(self, webview, action.as_ref(), download, true);
             }
 
-            /// A response turned out to be a download.
             #[unsafe(method(webView:navigationResponse:didBecomeDownload:))]
             fn response_became_download(
                 &self,
@@ -877,14 +669,11 @@ mod progress {
         }
 
         impl Watcher {
-            /// Yes for what this delegate has and for what wry's has; `WebKit` reads
-            /// this once, as the delegate is set.
             #[unsafe(method(respondsToSelector:))]
             fn responds_to_selector(&self, selector: Sel) -> bool {
                 forwards(self, selector)
             }
 
-            /// Everything this delegate does not answer itself goes to wry's.
             #[unsafe(method(forwardingTargetForSelector:))]
             fn forwarding_target_for_selector(&self, _selector: Sel) -> *mut AnyObject {
                 self.ivars()
@@ -897,14 +686,11 @@ mod progress {
         }
     );
 
-    /// Whether the watcher answers a selector, itself or through wry's delegate.
     #[allow(
         unsafe_code,
         reason = "the superclass's own answer is asked for through the Objective-C runtime"
     )]
     fn forwards(watcher: &Watcher, selector: Sel) -> bool {
-        // SAFETY: `respondsToSelector:` is `NSObject`'s, takes a selector and answers a
-        // boolean; this is the superclass being asked what it has.
         let own: bool = unsafe { msg_send![super(watcher), respondsToSelector: selector] };
         own || watcher
             .ivars()
@@ -913,9 +699,6 @@ mod progress {
             .is_some_and(|inner| inner.respondsToSelector(selector))
     }
 
-    /// A download has started: wry's delegate is told first, exactly as the engine told
-    /// this one, so it becomes the download's delegate as it always has; then the
-    /// download is kept here.
     #[allow(
         unsafe_code,
         reason = "wry's delegate is called through the Objective-C runtime with the engine's own arguments"
@@ -928,9 +711,6 @@ mod progress {
         action: bool,
     ) {
         if let Some(inner) = &watcher.ivars().inner {
-            // SAFETY: the selectors are the two `WKNavigationDelegate` declares, sent to
-            // the delegate wry set with the objects the engine handed this call, and
-            // only where that delegate has them.
             unsafe {
                 if action {
                     if inner.respondsToSelector(
@@ -956,8 +736,6 @@ mod progress {
             }
         }
 
-        // SAFETY: reading the address of the request the download was made from, on
-        // the main thread.
         let url = unsafe {
             download
                 .originalRequest()
@@ -982,8 +760,6 @@ mod progress {
         watch(&watcher.ivars().app);
     }
 
-    /// Starts looking at the downloads a few times a second, unless something already
-    /// is. On the main thread, like `look`, which is what makes the two agree.
     fn watch(app: &AppHandle) {
         if WATCHING.replace(true) {
             return;
@@ -1001,17 +777,12 @@ mod progress {
             {
                 return;
             }
-            // Nothing left to look at, or the main thread gone: either way, done. `look`
-            // has already said so on the main thread, where the next download reads it.
             if !heard.recv().unwrap_or(false) {
                 return;
             }
         });
     }
 
-    /// One look at every download on its way: matched to the list if it was not yet,
-    /// its progress said to the window, and let go of once it has ended. Answers
-    /// whether anything is left to look at.
     fn look() -> bool {
         let left = GOING.with_borrow_mut(|going| {
             let mut taken: Vec<u64> = going.iter().filter_map(|one| one.id).collect();
@@ -1022,8 +793,6 @@ mod progress {
 
                 let progress = one.download.progress();
                 if one.id.is_none() {
-                    // One that ended before it was ever matched is not matched now: the
-                    // download going from its address is somebody else's.
                     if progress.isFinished() || progress.isCancelled() {
                         return false;
                     }
@@ -1054,7 +823,6 @@ mod progress {
         left
     }
 
-    /// Puts the watcher in front of wry's navigation delegate on a tab's webview.
     #[allow(
         unsafe_code,
         reason = "a WKWebView's navigation delegate is set, and kept alive, through the Objective-C runtime"
@@ -1064,15 +832,10 @@ mod progress {
             return;
         };
 
-        // SAFETY: the pointer is the WKWebView wry built for this tab, alive for as long
-        // as the tab's page is, and this runs on the main thread where it belongs.
         let Some(view) = (unsafe { Retained::retain(webview.inner().cast::<WKWebView>()) }) else {
             return;
         };
 
-        // SAFETY: reading and setting a delegate on the main thread. The watcher is kept
-        // alive by the webview itself below, because `WebKit` holds its navigation
-        // delegate weakly; wry's own delegate is held both by wry and by the watcher.
         unsafe {
             let inner = view.navigationDelegate();
             let watcher = Watcher::alloc(mtm).set_ivars(Held { inner, app, window });
@@ -1088,8 +851,6 @@ mod progress {
         }
     }
 
-    /// Stops a download on its way. On the main thread, where it was kept. The engine
-    /// then tells wry's delegate it failed, which finds it already stopped in the list.
     #[allow(
         unsafe_code,
         reason = "a WKDownload is cancelled through its own method"
@@ -1101,15 +862,11 @@ mod progress {
         });
 
         if let Some(download) = stopped {
-            // SAFETY: the download is the engine's own, used on the main thread; no
-            // resume data is wanted, so there is no block to hand it.
             unsafe { download.cancel(None) };
         }
     }
 }
 
-// WebKitGTK, whose engine says nothing about a download between its start and its end
-// through what wry hands out.
 #[cfg(all(not(any(windows, target_os = "macos")), not(feature = "cef")))]
 mod progress {
     use tauri::webview::PlatformWebview;
@@ -1117,25 +874,9 @@ mod progress {
 
     pub fn listen(_webview: &PlatformWebview, _app: AppHandle, _window: String) {}
 
-    /// Nothing is kept to stop. The list says it was cancelled, and the file arrives
-    /// anyway; its name stays taken until it has (see `Download::writing`).
     pub fn cancel(_id: u64) {}
 }
 
-/// How far a download has got on Orden's own Chromium, and Cancel, through the page's
-/// `DevTools` protocol: the runtime hands out a download's start and end and nothing
-/// between, and keeps the engine's own handle on it to itself.
-///
-/// The page's agent says each download as it begins (`Page.downloadWillBegin`, with the
-/// engine's own id for it) and as it moves (`Page.downloadProgress`), and stops one by
-/// that id (`Browser.cancelDownload`). Before this, Cancel only marked the list: the
-/// engine went on writing, and a second download of the same name was given the same
-/// file (#788). Measured on the probe: cancelled, the server saw the engine hang up a
-/// tenth of the way in, and no file was left.
-///
-/// An engine id is matched to the list's own by address, the oldest still going first -
-/// the order the list keeps its own - when it first moves or is cancelled, since the two
-/// can arrive in either order.
 #[cfg(feature = "cef")]
 mod progress {
     use std::sync::{LazyLock, Mutex, OnceLock, PoisonError};
@@ -1146,24 +887,18 @@ mod progress {
 
     use super::{held, MOVED};
 
-    /// One download as the engine named it.
     struct Begun {
-        /// The engine's own id for it.
         guid: String,
         url: String,
-        /// The webview whose page fetches it, which is the agent that can stop it.
         view: String,
-        /// The list's own id, once matched.
         id: Option<u64>,
     }
 
     static BEGUN: LazyLock<Mutex<Vec<Begun>>> = LazyLock::new(Mutex::default);
     static APP: OnceLock<AppHandle> = OnceLock::new();
 
-    /// Nothing here: the page is followed through its agent instead; see `follow`.
     pub fn listen(_webview: &PlatformWebview, _app: AppHandle, _window: String) {}
 
-    /// The list's id for an engine download, matching it now if it was not yet.
     fn matched(begun: &mut [Begun], at: usize) -> Option<u64> {
         if let Some(id) = begun[at].id {
             return Some(id);
@@ -1175,8 +910,6 @@ mod progress {
         Some(id)
     }
 
-    /// Follows the downloads of the page in `view`, and says how far each has got to
-    /// `window`.
     pub fn follow(view: &Webview, app: &AppHandle, window: &str) {
         let _ = APP.set(app.clone());
         let (app, window, label) = (app.clone(), window.to_string(), view.label().to_string());
@@ -1270,8 +1003,6 @@ mod progress {
         }
     }
 
-    /// Stops a download in the engine, by the list's id. On the window's thread, where
-    /// `web_download_cancel` sends it; the stop itself is said to the page's agent.
     pub fn cancel(id: u64) {
         let Some(app) = APP.get() else {
             return;
@@ -1280,7 +1011,6 @@ mod progress {
         let found = (0..begun.len())
             .find(|&at| begun[at].id == Some(id))
             .or_else(|| {
-                // Not matched yet: the oldest one from its address, as the list matches it.
                 let url = held(app).held.lock().ok().and_then(|list| {
                     list.iter()
                         .find(|one| one.id == id)
@@ -1304,8 +1034,6 @@ mod progress {
     }
 }
 
-/// Follows how far each download of a web tab's page has got, on Orden's own Chromium;
-/// see `progress`.
 #[cfg(feature = "cef")]
 pub fn follow(view: &tauri::Webview, app: &AppHandle, window: &str) {
     progress::follow(view, app, window);
@@ -1349,13 +1077,10 @@ mod tests {
         assert_eq!(name("a\u{2066}b\u{2069}.pdf"), "a_b_.pdf");
         assert_eq!(name("a\u{200B}b\u{FEFF}.pdf"), "a_b_.pdf");
         assert_eq!(name("a\u{061C}b\u{E0041}.pdf"), "a_b_.pdf");
-        // The joiners are how a name is spelled in Persian and in emoji.
         assert_eq!(name("می\u{200C}خواهم.pdf"), "می\u{200C}خواهم.pdf");
         assert_eq!(name("👩\u{200D}💻.pdf"), "👩\u{200D}💻.pdf");
     }
 
-    /// #790 review: what looks like nothing pushes the real extension out of the file
-    /// manager's view, whichever category Unicode files it under.
     #[test]
     fn a_run_of_nothing_cannot_hide_the_extension() {
         for blank in [
@@ -1487,7 +1212,6 @@ mod tests {
         assert_eq!(done.received, 40);
         assert_eq!(downloads.saved(made.id).expect("saved"), made.path);
 
-        // The name is free once the file itself is what holds it.
         let again = downloads
             .start("a", "https://x.example/f", Path::new("f.pdf"), &tmp())
             .expect("again");
@@ -1530,8 +1254,6 @@ mod tests {
         assert!(downloads.id_of(&made.path).is_none());
     }
 
-    /// A `WKDownload` knows its address and nothing else, so it is matched to the list
-    /// by that: the oldest one still going from it, and never one already matched.
     #[test]
     fn a_download_that_knows_only_its_address_is_matched_oldest_first() {
         let downloads = Downloads::default();
@@ -1566,8 +1288,6 @@ mod tests {
         );
     }
 
-    /// #788: one the reader stopped keeps its name while the engine may still be writing
-    /// it, and the engine's end of it is not taken for the next one's.
     #[test]
     fn a_stopped_download_keeps_its_name_until_the_engine_lets_go() {
         let downloads = Downloads::default();
@@ -1580,7 +1300,6 @@ mod tests {
             .expect("second");
         assert_eq!(second.name, "report (1).pdf");
 
-        // The first one's end: still stopped, and not the second's.
         assert!(downloads
             .finish("https://x.example/r", Some(&first.path), true)
             .is_none());
@@ -1590,7 +1309,6 @@ mod tests {
         assert_eq!(done.id, second.id);
         assert_eq!(done.state, State::Done);
 
-        // Let go of, its name is free again.
         let third = downloads
             .start("a", "https://x.example/r", Path::new("report.pdf"), &tmp())
             .expect("third");

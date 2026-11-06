@@ -1,36 +1,3 @@
-//! The AI sidebar's agent: Orden's own tools, called by the loop the window runs for a
-//! Claude or `OpenAI` key, a `ChatGPT` plan or a compatible server (docs/ai-sidebar.md 4.4).
-//!
-//! **An agent like any other.** Each provider gets a built-in grant, named after it
-//! ("Orden · Claude"), made the first time its thread asks and kept in Settings > Agents
-//! with the same scopes, sites, limits and stop as an outside agent's. A call goes
-//! through the endpoint's own dispatch with that grant as the caller
-//! (`endpoint::dispatch`), so it meets the same policy and is written to the same log;
-//! the answer is written for the model the way `nib mcp` writes it, marks round every
-//! word from outside (`mcp::host`). There is no second policy in the window.
-//!
-//! **The modes are views of the grant, never more than it** (4.4). What each lists:
-//! Plan the tools that only read and `create_note` for the plan, the others everything
-//! the grant reaches. A call to a tool its mode does not list is refused here as well,
-//! whatever the model says. And how each is supervised, laid over the grant for the call
-//! and never kept (`supervised`): Approve asks before every change and never before a
-//! read; Auto as the grant is, asking about what Settings > AI > Access says asks
-//! (sending, deleting, publishing, ...); Full permissions asks for nothing at all (#372),
-//! every change it makes on the changes card to keep or undo; Plan as the grant is.
-//!
-//! The same three hold for every engine the sidebar runs: its own loop for a key or a
-//! plan, and Claude Code and Codex, which are started with none of their own tools and
-//! their own prompts off, so every change they can make is one of Orden's, asked about
-//! here. A helper (`run_agent`) works in its parent's mode.
-//!
-//! The sidebar's Claude Code and Codex call the same tools through `nib mcp`, with a token
-//! the app lends each provider and mode for one run (`lend`): the endpoint finds the
-//! grant in that mode by it (`lent`), so a session is supervised as its thread's mode is.
-//!
-//! Every turn also carries where the reader is - the space, the tab in front, every
-//! open tab - asked by nib through the same two verbs an outside agent would call
-//! (`ai_agent_context`).
-
 use std::collections::BTreeSet;
 use std::sync::{Mutex, PoisonError};
 use std::time::Duration;
@@ -43,31 +10,21 @@ use crate::agents::grants::{fresh_token, hashed, same, Grant, Mode as GrantMode,
 use crate::agents::{state, Caller};
 use crate::mcp::host;
 
-/// The sidebar's modes, as the window names them: the three permission modes, and Plan.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Mode {
-    /// Everything the grant reaches, every change approved first.
     Approve,
-    /// Everything the grant reaches, asked about where the grant asks.
     Auto,
-    /// Everything the grant reaches, nothing asked (#372). Agent, as it was called
-    /// before, is read as this.
     #[serde(alias = "agent")]
     Full,
-    /// Reads, and writes the plan as a note.
     Plan,
 }
 
-/// Which provider's agent is asking, and whether a new grant reaches the reader's tabs.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Builtin {
-    /// The provider's id in Settings > AI.
     pub id: String,
-    /// The provider's name there.
     pub name: String,
-    /// Whether the reader's own tabs are in reach.
     #[serde(default = "yes")]
     pub reader_tabs: bool,
 }
@@ -76,8 +33,6 @@ fn yes() -> bool {
     true
 }
 
-/// The built-in grant's id for a provider: `nib-` and the provider's own id, which the
-/// window keeps to the characters a keychain entry takes.
 fn grant_id(provider: &str) -> Result<String, String> {
     let fits = !provider.is_empty()
         && provider.len() <= 48
@@ -91,10 +46,6 @@ fn grant_id(provider: &str) -> Result<String, String> {
     }
 }
 
-/// A new built-in grant: Emil's defaults for the reader's own agents (9.1), with the
-/// reader's tabs in reach or not - and the terminal, which the sidebar is asked about as
-/// much as the notes ("why did the build fail"). How much it asks is the thread's mode's
-/// (`supervised`), not the grant's.
 fn made(id: String, client: &str, builtin: &Builtin) -> Grant {
     let mut grant = Grant::own(id, client);
     grant.built_in = true;
@@ -104,19 +55,12 @@ fn made(id: String, client: &str, builtin: &Builtin) -> Grant {
     grant
 }
 
-/// The grant as a call in `mode` meets the policy: Approve asks before every change, and
-/// about every category, whatever was switched off; Auto as the grant is, so what the
-/// reader set in Settings > AI > Access is what asks; Full asks for nothing at all and
-/// holds every scope (#372, #1072);
-/// Plan, which changes nothing but its own note, as the grant is.
 fn supervised(mut grant: Grant, mode: Mode) -> Grant {
     match mode {
         Mode::Approve => {
             grant.mode = GrantMode::Confirm;
             grant.asks.clear();
         }
-        // Full permissions means full permissions (#1072): every scope, scripts on every
-        // site, and nothing asked, refused on the grounds of the grant or handed back.
         Mode::Full => {
             grant.mode = GrantMode::Autonomous;
             grant.scopes = Scope::ALL.into_iter().collect();
@@ -126,9 +70,6 @@ fn supervised(mut grant: Grant, mode: Mode) -> Grant {
     grant
 }
 
-/// The provider's built-in grant, made the first time it is asked for. Its token is not
-/// kept: the window's calls are dispatched inside the app, and the sidebar's Claude Code
-/// and Codex are lent a token of their own (`lend`).
 pub(crate) fn grant_for(app: &AppHandle, builtin: &Builtin) -> Result<Grant, String> {
     let id = grant_id(&builtin.id)?;
     let grants = &state(app).grants;
@@ -141,7 +82,6 @@ pub(crate) fn grant_for(app: &AppHandle, builtin: &Builtin) -> Result<Grant, Str
     Ok(grant)
 }
 
-/// A token lent for one run: the grant it is, the mode it is in, the token and its hash.
 struct Lent {
     grant: String,
     mode: Mode,
@@ -149,16 +89,12 @@ struct Lent {
     hash: String,
 }
 
-/// Every token lent this run. Memory only: the next run lends new ones, so last run's
-/// is worth nothing.
 static LENT: Mutex<Vec<Lent>> = Mutex::new(Vec::new());
 
 fn lent_now() -> std::sync::MutexGuard<'static, Vec<Lent>> {
     LENT.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
-/// The token a provider's session in `mode` hands `nib mcp`: one per provider and mode
-/// for a run of the app, made the first time it is asked for.
 pub(crate) fn lend(app: &AppHandle, builtin: &Builtin, mode: Mode) -> Result<String, String> {
     let grant = grant_for(app, builtin)?.id;
     let mut all = lent_now();
@@ -178,8 +114,6 @@ pub(crate) fn lend(app: &AppHandle, builtin: &Builtin, mode: Mode) -> Result<Str
     Ok(token)
 }
 
-/// The grant a lent token is, in its mode; `None` for a token this run did not lend.
-/// Every hash compared, none skipped, as `Grants::by_token` does.
 pub(crate) fn lent(app: &AppHandle, token: &str) -> Option<Grant> {
     let said = hashed(token);
     let (grant, mode) = {
@@ -198,8 +132,6 @@ pub(crate) fn lent(app: &AppHandle, token: &str) -> Option<Grant> {
         .map(|grant| supervised(grant, mode))
 }
 
-/// Whether a mode lists a tool: Plan what only reads, `create_note` and helpers (which
-/// work in Plan too), the others all.
 pub(crate) fn in_mode(mode: Mode, name: &str, reads_only: bool) -> bool {
     match mode {
         Mode::Plan => reads_only || name == "create_note" || name == "run_agent",
@@ -207,7 +139,6 @@ pub(crate) fn in_mode(mode: Mode, name: &str, reads_only: bool) -> bool {
     }
 }
 
-/// The window's verbs it answers now, asked of it the way `nib mcp` asks.
 fn window_verbs(app: &AppHandle) -> Option<BTreeSet<String>> {
     let said = crate::endpoint::ask(app, "verbs", json!({}), Duration::from_secs(2)).ok()?;
     Some(
@@ -220,8 +151,6 @@ fn window_verbs(app: &AppHandle) -> Option<BTreeSet<String>> {
     )
 }
 
-/// The tools a mode lists for a grant, as `tools/list` would write them: the grant as the
-/// mode lays it over the call (`supervised`), so Full permissions lists every tool.
 fn listed(grant: &Grant, window: Option<&BTreeSet<String>>, mode: Mode) -> Vec<Value> {
     host::listed(&supervised(grant.clone(), mode), window)
         .into_iter()
@@ -230,7 +159,6 @@ fn listed(grant: &Grant, window: Option<&BTreeSet<String>>, mode: Mode) -> Vec<V
         .collect()
 }
 
-/// The instructions and the tools for a provider's agent in a mode.
 #[tauri::command(async)]
 pub fn ai_agent_tools(
     webview: tauri::Webview,
@@ -247,9 +175,6 @@ pub fn ai_agent_tools(
     }))
 }
 
-/// What the window is asked for one call: the verb, its arguments, and the AI panel
-/// thread it runs for, which `nib mcp` says the same way (src/mcp/link.rs). Every thread
-/// of a provider is one grant, so only this says whose an edit the call makes is.
 fn asked_for(tool: &str, args: &Value, thread: Option<&str>) -> Value {
     let mut asked = json!({ "verb": tool, "args": args, "rest": [] });
     if let Some(thread) = thread {
@@ -258,7 +183,6 @@ fn asked_for(tool: &str, args: &Value, thread: Option<&str>) -> Value {
     asked
 }
 
-/// One call, as the provider's agent, answered the way `nib mcp` answers a model.
 #[tauri::command(async)]
 pub fn ai_agent_call(
     webview: tauri::Webview,
@@ -285,17 +209,8 @@ pub fn ai_agent_call(
     Ok(rendered)
 }
 
-/// What every turn is sent about where the reader is (docs/ai-sidebar.md 4.2): the
-/// space, the tab in front and every open tab, with their kinds and paths or addresses,
-/// as `get_context` answers the provider's agent. Asked by Orden for the turn rather than
-/// by the model, so in every mode; only as far as the grant reaches, and written for the
-/// model with its marks like any answer. One verb: `get_context` lists every tab, so a
-/// `workspace_tabs` list beside it would say each one twice.
 const CONTEXT: &str = "get_context";
 
-/// The reader's context for a turn, as the model reads it: nothing where the grant does
-/// not reach it. Asked for the thread the turn is in, so it names the space the thread's
-/// calls work in, which stays where the thread was started when the reader moves on.
 #[tauri::command(async)]
 pub fn ai_agent_context(
     webview: tauri::Webview,
@@ -328,7 +243,6 @@ mod tests {
     use super::*;
     use crate::agents::verbs::Category;
 
-    /// Every question a call can raise about itself (pairing is a client's, not a call's).
     const ASKED: [Category; 13] = [
         Category::Paying,
         Category::Sending,
@@ -407,10 +321,8 @@ mod tests {
         let agent = names(Mode::Auto, &grant);
         assert_eq!(names(Mode::Approve, &grant), agent);
         assert!(agent.contains("edit_note") && agent.contains("browser_click"));
-        // Emil's defaults leave scripts and settings out; the terminal is in.
         assert!(!agent.contains("browser_evaluate") && agent.contains("type_terminal"));
         assert!(names(Mode::Plan, &grant).is_subset(&agent));
-        // Full permissions holds every scope, so lists scripts too (#1072).
         let full = names(Mode::Full, &grant);
         assert!(agent.is_subset(&full) && full.contains("browser_evaluate"));
         for verb in [
@@ -429,8 +341,6 @@ mod tests {
     #[test]
     fn full_permissions_never_ask_anything() {
         let mut stored = grant();
-        // Whatever the grant said, asking first included (#372: paying, a tab shown and a
-        // step handed to the reader too).
         stored.mode = GrantMode::Confirm;
         let agent = supervised(stored, Mode::Full);
         assert_eq!(agent.mode, GrantMode::Autonomous);
@@ -438,7 +348,6 @@ mod tests {
         for category in ASKED {
             assert!(!agent.asks(category), "{category:?}");
         }
-        // Nor refused on the grounds of the grant: every scope (#1072).
         for scope in Scope::ALL {
             assert!(agent.holds(scope), "{scope:?}");
         }
@@ -459,7 +368,6 @@ mod tests {
     #[test]
     fn auto_asks_where_the_readers_access_says_and_nowhere_else() {
         let mut stored = grant();
-        // Settings > AI > Access: deleting switched off, the rest left as they come.
         stored.asks.insert(Category::Deleting, false);
         let auto = supervised(stored.clone(), Mode::Auto);
         assert_eq!(auto, stored);
@@ -500,8 +408,6 @@ mod tests {
 
     #[test]
     fn a_mode_is_laid_over_a_call_never_over_the_grant() {
-        // The grant a provider is made with asks for nothing of its own; the thread's
-        // mode says how much it asks.
         let made = grant();
         assert_eq!(made.mode, GrantMode::Unsupervised);
         assert!(made.asks.is_empty());
@@ -509,7 +415,6 @@ mod tests {
 
     #[test]
     fn every_turn_asks_where_the_reader_is_once() {
-        // `get_context` lists every tab; a `workspace_tabs` list beside it said them twice.
         assert_eq!(CONTEXT, "get_context");
     }
 

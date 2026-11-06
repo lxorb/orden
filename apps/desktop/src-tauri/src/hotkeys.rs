@@ -1,24 +1,3 @@
-//! Keys from any app: quick add's (`quick_add.rs`) and the agents' stop
-//! (`agents/shell.rs`), held here for both, so a key moves between them the same way.
-//!
-//! **Two ways a key reaches the app.** Windows, a Mac and an X11 session register it
-//! with the system through Tauri's global shortcut plugin, which is added the first time
-//! a key is wanted and never at launch: a plugin added twice is refused the second time,
-//! which is why there is one place that adds it. A Wayland session lets no app grab a
-//! key at all - the compositor holds every one - and hands one over only through the
-//! desktop portal's global shortcuts, which KDE, GNOME from 48 and Hyprland answer
-//! (`hotkeys/portal.rs`). There the system's own settings have the last word on which
-//! key it is, and the page is told the key the system says (`Keys`).
-//!
-//! **Where neither is there** - sway, an older GNOME - nothing reaches the app from
-//! another one, and the page is told that too, rather than shown a key that does
-//! nothing. What every such desktop does have is a shortcut of its own that runs a
-//! command, so `nib --quick-add` and `nib --stop-agents` press the keys from there: a
-//! second launch, handed to the app already running (`launch.rs`).
-//!
-//! On the event loop's own thread, which every caller is on: a plugin added at run time,
-//! and a key registered with it, have to live there.
-
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{Mutex, OnceLock, PoisonError};
 
@@ -30,22 +9,17 @@ mod portal;
 #[cfg(any(target_os = "linux", test))]
 mod trigger;
 
-/// What the page hears when the keys held change.
 const EVENT: &str = "nib://global-keys";
 
-/// A key from any app.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Which {
-    /// Quick add's window, over whatever is in front.
     QuickAdd,
-    /// The stop for every agent.
     StopAgents,
 }
 
 impl Which {
     const ALL: [Self; 2] = [Self::QuickAdd, Self::StopAgents];
 
-    /// The keyboard registry's id, which is what the page knows it by.
     fn id(self) -> &'static str {
         match self {
             Self::QuickAdd => "app.quick-add",
@@ -53,7 +27,6 @@ impl Which {
         }
     }
 
-    /// What a command line says to press it.
     fn flag(self) -> &'static str {
         match self {
             Self::QuickAdd => "--quick-add",
@@ -61,7 +34,6 @@ impl Which {
         }
     }
 
-    /// The keys a command line asks to press.
     pub fn asked_by<A: AsRef<std::ffi::OsStr>>(argv: &[A]) -> Vec<Self> {
         Self::ALL
             .into_iter()
@@ -69,21 +41,16 @@ impl Which {
             .collect()
     }
 
-    /// Whether `arg` is one of the flags, which nothing else on a command line reads.
     pub fn is_flag(arg: &str) -> bool {
         Self::ALL.iter().any(|which| which.flag() == arg)
     }
 }
 
-/// How keys from any app reach Orden on this desktop.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Reach {
-    /// Registered with the system by the plugin.
     System,
-    /// Bound through the desktop portal.
     Portal,
-    /// Not at all: only a command bound in the desktop's own settings.
     #[cfg_attr(
         not(target_os = "linux"),
         allow(dead_code, reason = "only a Wayland session goes without")
@@ -91,33 +58,23 @@ pub enum Reach {
     None,
 }
 
-/// What the page is told about the keys from any app.
 #[derive(Clone, Debug, Serialize)]
 pub struct Keys {
     reach: Reach,
-    /// Whether the system has a page of its own to change them on.
     change: bool,
-    /// The keys held now, by the registry's id, in the system's own words: the key, or
-    /// nothing where the system holds it with no key yet.
     held: BTreeMap<&'static str, String>,
-    /// The keys the system turned down: its dialog closed without them.
     refused: Vec<&'static str>,
-    /// What starts Orden on this machine, for a desktop's own shortcut to run with a flag.
     run: String,
 }
 
-/// What is held.
 struct State {
-    /// What the page asked for each key, in the plugin's notation.
     #[cfg_attr(
         not(target_os = "linux"),
         allow(dead_code, reason = "only the portal binds every key at once")
     )]
     wanted: BTreeMap<Which, String>,
-    /// What the system holds for each, in its own words.
     held: BTreeMap<Which, String>,
     refused: BTreeSet<Which>,
-    /// How keys reach the app here, once that is known.
     reach: Option<Reach>,
     change: bool,
 }
@@ -134,8 +91,6 @@ fn with_state<T>(on_held: impl FnOnce(&mut State) -> T) -> T {
     on_held(&mut HELD.lock().unwrap_or_else(PoisonError::into_inner))
 }
 
-/// Holds `key` for `which` from any app, in the plugin's notation, or lets it go. Answers
-/// the key held now.
 pub fn hold(app: &AppHandle, which: Which, key: Option<String>) -> Option<String> {
     let key = key.filter(|key| !key.trim().is_empty() && allowed(key, cfg!(target_os = "macos")));
     #[cfg(target_os = "linux")]
@@ -171,7 +126,6 @@ fn by_plugin(app: &AppHandle, which: Which, key: Option<String>) -> Option<Strin
     if old == key {
         return old;
     }
-    // Something is held only where the plugin is in the app.
     if let Some(old) = &old {
         let _ = app.global_shortcut().unregister(old.as_str());
     }
@@ -197,9 +151,6 @@ fn by_plugin(app: &AppHandle, which: Which, key: Option<String>) -> Option<Strin
     now
 }
 
-/// Whether a key may be held at all: never with the Windows key outside a Mac, where the
-/// desktop binds its own keys to it - a Hyprland launcher's Super+Space was taken - and
-/// a Mac's Cmd is its ordinary modifier.
 fn allowed(accelerator: &str, mac: bool) -> bool {
     mac || !accelerator.split('+').any(|part| {
         ["super", "meta", "win", "command", "cmd", "logo"]
@@ -207,7 +158,6 @@ fn allowed(accelerator: &str, mac: bool) -> bool {
     })
 }
 
-/// Whether the plugin is in the app, added now where it was not yet.
 fn plugin_added(app: &AppHandle) -> bool {
     static READY: OnceLock<bool> = OnceLock::new();
     *READY.get_or_init(|| {
@@ -216,8 +166,6 @@ fn plugin_added(app: &AppHandle) -> bool {
     })
 }
 
-/// A key pressed - from any app, or by a command line - with the compositor's token for
-/// the press where it gave one. On the event loop's thread.
 pub fn pressed(app: &AppHandle, which: Which, token: Option<String>) {
     match which {
         Which::QuickAdd => crate::quick_add::bring_up(app, token),
@@ -227,7 +175,6 @@ pub fn pressed(app: &AppHandle, which: Which, token: Option<String>) {
     }
 }
 
-/// How keys reach the app, as the portal found out.
 #[cfg_attr(
     not(target_os = "linux"),
     allow(dead_code, reason = "only a Wayland session asks a portal")
@@ -240,7 +187,6 @@ fn reached(app: &AppHandle, reach: Reach, change: bool) {
     told_page(app);
 }
 
-/// The keys the system holds now, and those it turned down.
 #[cfg_attr(
     not(target_os = "linux"),
     allow(dead_code, reason = "only a Wayland session asks a portal")
@@ -253,7 +199,6 @@ fn bound(app: &AppHandle, now: BTreeMap<Which, String>, refused: BTreeSet<Which>
     told_page(app);
 }
 
-/// The keys the system shows now for those it holds, changed in its own settings.
 #[cfg_attr(
     not(target_os = "linux"),
     allow(dead_code, reason = "only a Wayland session asks a portal")
@@ -309,8 +254,6 @@ fn wayland() -> bool {
     }
 }
 
-/// What starts Orden here: Flatpak's and Snap's own commands, the `AppImage` itself, or the
-/// name it was started by, which is `nib` or `orden` on the path.
 fn started_by(
     flatpak: Option<String>,
     appimage: Option<String>,
@@ -335,8 +278,6 @@ fn started_by(
         )
 }
 
-/// The keys from any app as they stand, and the portal asked now on a Wayland session
-/// where nothing has asked it yet, so that a desktop without one is said to be.
 #[tauri::command]
 pub fn global_keys(app: AppHandle) -> Keys {
     #[cfg(target_os = "linux")]
@@ -347,7 +288,6 @@ pub fn global_keys(app: AppHandle) -> Keys {
     keys_now()
 }
 
-/// The system's own page for the keys, where it has one: the portal's second version.
 #[tauri::command]
 pub fn global_keys_change(app: AppHandle) {
     #[cfg(target_os = "linux")]
@@ -372,7 +312,6 @@ mod tests {
             Which::asked_by(&argv),
             vec![Which::QuickAdd, Which::StopAgents]
         );
-        // The program's own name is not a flag, whatever it is called.
         let argv: Vec<String> = ["--quick-add"].map(String::from).into();
         assert!(Which::asked_by(&argv).is_empty());
         assert!(Which::is_flag("--stop-agents"));

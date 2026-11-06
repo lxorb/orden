@@ -1,23 +1,3 @@
-//! A `ChatGPT` plan, spent directly: Sign in with `ChatGPT`, the way `OpenAI` documents it
-//! for open-source apps that run on the reader's own machine.
-//!
-//! **Why this is allowed and the other way is not.** `OpenAI` offers "`ChatGPT` plan usage"
-//! to open-source and locally hosted apps (<https://developers.openai.com/siwc/token-sharing-open-source>):
-//! the app registers itself through the reader's own sign-in and calls the Responses API
-//! at `api.openai.com` with the token it is given. Orden is open source and the
-//! desktop app runs here, so it qualifies; the web app at orden.so is hosted and does
-//! not, and never offers this. What is *not* done is what several tools did before this
-//! existed - borrowing the Codex CLI's own client id and calling `ChatGPT`'s private
-//! `backend-api` - which is somebody else's identity. See docs/ai.md.
-//!
-//! **Where the tokens are.** The refresh token is where Orden keeps its secrets (secrets.rs:
-//! the system's store, or on a Mac a file of the app's own, #1090), under a name
-//! the page's own `secret_read` refuses (a dot is not a character a provider id has; see
-//! `named` in secrets.rs), so the webview never holds it. The access token lives here, in
-//! memory, for its hour, and the page asks for it per request (`chatgpt_token`) to make
-//! that request itself, the way it uses an API key. The installation's host id and the
-//! client id issued to it are not secrets and are a file in the app's folder.
-
 mod oauth;
 
 use std::io::{BufRead as _, BufReader, Write as _};
@@ -32,26 +12,16 @@ use tauri::{AppHandle, Manager, Webview};
 
 use oauth::{Attempt, Callback, Tokens};
 
-/// Where the refresh token is kept among Orden's secrets (secrets.rs), under a name no
-/// provider id can be.
 const REFRESH: &str = "chatgpt.refresh";
 
-/// Where a copy of the installation is kept beside it, so the sign-in outlives the app's
-/// data folder: an uninstall that took the folder with it left the refresh token in the
-/// keychain and the client it belongs to nowhere, which was a sign-in lost.
 const KEPT: &str = "chatgpt.installation";
 
-/// The port the first sign-in listens on, as `OpenAI`'s own example has it; any free port
-/// after that, since only the port may change between sign-ins.
 const PORT: u16 = 1455;
 
-/// How long a sign-in waits for the browser to come back.
 const SIGNING_IN: Duration = Duration::from_secs(300);
 
-/// How long before an access token's hour is up it is replaced.
 const EARLY: Duration = Duration::from_secs(120);
 
-/// What this installation is to `OpenAI`: its host id, and the client issued to it.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Installation {
@@ -62,20 +32,17 @@ struct Installation {
     email: Option<String>,
 }
 
-/// The access token of the hour, and the sign-in in progress.
 #[derive(Default)]
 pub struct ChatGpt {
     access: tokio::sync::Mutex<Option<(String, Instant)>>,
     signing: std::sync::Mutex<Option<Arc<AtomicBool>>>,
 }
 
-/// Who is signed in, for the pane.
 #[derive(Serialize)]
 pub struct Account {
     email: Option<String>,
 }
 
-/// The window this call came from, when it is one of ours.
 fn owner(webview: &Webview) -> Result<(), String> {
     let label = webview.label();
     if label == webview.window().label() && crate::launch::is_document_window(label) {
@@ -103,7 +70,6 @@ fn installation(app: &AppHandle) -> Result<Installation, String> {
     {
         return Ok(found);
     }
-    // The folder went and the secret store stayed: the installation is the one kept there.
     if let Some(found) = crate::secrets::get(app, KEPT)
         .ok()
         .flatten()
@@ -125,7 +91,6 @@ fn installation(app: &AppHandle) -> Result<Installation, String> {
 
 fn keep(app: &AppHandle, installation: &Installation) -> Result<(), String> {
     let text = serde_json::to_vec(installation).map_err(|error| error.to_string())?;
-    // A copy among the secrets first, best effort: the file is what is read.
     if let Ok(words) = std::str::from_utf8(&text) {
         let _ = crate::secrets::set(app, KEPT, words);
     }
@@ -137,7 +102,6 @@ fn refresh_token(app: &AppHandle) -> Result<Option<String>, String> {
 }
 
 fn client() -> Result<reqwest::Client, String> {
-    // Rustls with no provider of its own, as the updater builds it.
     let _ = rustls::crypto::ring::default_provider().install_default();
     reqwest::Client::builder()
         .timeout(Duration::from_secs(30))
@@ -145,7 +109,6 @@ fn client() -> Result<reqwest::Client, String> {
         .map_err(|error| error.to_string())
 }
 
-/// One form sent to the token endpoint, and its answer.
 async fn tokens(form: &[(&str, &str)]) -> Result<Tokens, String> {
     let answer = client()?
         .post(oauth::TOKEN)
@@ -167,8 +130,6 @@ async fn tokens(form: &[(&str, &str)]) -> Result<Tokens, String> {
     serde_json::from_slice(&body).map_err(|error| error.to_string())
 }
 
-/// Waits on the loopback for the browser to come back, answering it with a line it can
-/// be closed on.
 fn wait_for_callback(
     listener: &TcpListener,
     state: &str,
@@ -197,7 +158,6 @@ fn wait_for_callback(
     Err("timed out".to_owned())
 }
 
-/// Reads one request off the loopback; `None` for one that was not the callback.
 fn answer_callback(
     mut stream: TcpStream,
     state: &str,
@@ -232,8 +192,6 @@ fn answer_callback(
     result
 }
 
-/// Signs in: opens the reader's browser on `OpenAI`'s sign-in and waits for it to come
-/// back to the loopback, up to five minutes. A second press gives up the first wait.
 #[tauri::command]
 pub async fn chatgpt_sign_in(webview: Webview) -> Result<Account, String> {
     owner(&webview)?;
@@ -248,7 +206,6 @@ pub async fn chatgpt_sign_in(webview: Webview) -> Result<Account, String> {
         .replace(Arc::clone(&stop));
     if let Some(earlier) = earlier {
         earlier.store(true, Ordering::SeqCst);
-        // Long enough for the earlier wait to see it and let go of its port.
         tokio::time::sleep(Duration::from_millis(250)).await;
     }
 
@@ -303,13 +260,11 @@ pub async fn chatgpt_sign_in(webview: Webview) -> Result<Account, String> {
     Ok(Account { email: found.email })
 }
 
-/// The access token with the moment it should be replaced.
 fn fresh(got: &Tokens) -> (String, Instant) {
     let lasts = Duration::from_secs(got.expires_in.unwrap_or(3600)).saturating_sub(EARLY);
     (got.access_token.clone(), Instant::now() + lasts)
 }
 
-/// Who is signed in, or `None`.
 #[tauri::command(async)]
 pub fn chatgpt_account(webview: Webview) -> Result<Option<Account>, String> {
     owner(&webview)?;
@@ -320,8 +275,6 @@ pub fn chatgpt_account(webview: Webview) -> Result<Option<Account>, String> {
     Ok(Some(Account { email: found.email }))
 }
 
-/// An access token for one request, replaced when its hour is nearly up. One refresh at
-/// a time: a rotating refresh token used twice is a refresh token lost.
 #[tauri::command]
 pub async fn chatgpt_token(webview: Webview) -> Result<String, String> {
     owner(&webview)?;
@@ -361,8 +314,6 @@ pub async fn chatgpt_token(webview: Webview) -> Result<String, String> {
     Ok(token)
 }
 
-/// Signs out: the refresh token revoked at `OpenAI` where it can be reached, and forgotten
-/// here either way, with the client issued to it.
 #[tauri::command]
 pub async fn chatgpt_sign_out(webview: Webview) -> Result<(), String> {
     owner(&webview)?;
@@ -380,7 +331,6 @@ pub async fn chatgpt_sign_out(webview: Webview) -> Result<(), String> {
     keep(&app, &found)
 }
 
-/// Revokes a refresh token at the endpoint `OpenAI`'s configuration names.
 async fn revoke(refresh: &str, client_id: &str) -> Result<(), String> {
     let http = client()?;
     let configuration: serde_json::Value = serde_json::from_slice(

@@ -1,17 +1,3 @@
-//! What a browser's profile keeps in its databases besides its bookmarks, for the
-//! import: the pages it has been to, and the marks of the sites its tabs are on.
-//!
-//! The history is Firefox's and Zen's `moz_places` in `places.sqlite`, a Chromium's
-//! `urls` in `History`, Safari's `history_items` and `history_visits` in
-//! `History.db`: the most recent as many pages as Orden keeps, each with its title,
-//! how often it was visited, how often typed and when last. The marks are Firefox's
-//! and Zen's `favicons.sqlite` and a Chromium's `Favicons`, each page's own picture
-//! or else one of its site's, as a `data:` address the app writes into a web note.
-//!
-//! Every one is a database the browser keeps open, so it is copied with its log and
-//! the copy is read, as `places.sqlite` is for the bookmarks (`firefox_profiles.rs`);
-//! only a listed file of a profile the browser lists, and never written.
-
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
 use rusqlite::{params, Connection};
@@ -22,26 +8,18 @@ use std::path::Path;
 use crate::browser_profiles::{copied, known, profiles_of};
 use crate::paths::folded;
 
-/// As many pages as Orden's history keeps (`MOST_VISITS` in web-tab/visits.ts).
 const MOST_VISITS: i64 = 2000;
 
-/// The most pages one call asks marks for: more tabs than anybody keeps open.
 const MOST_PAGES: usize = 5000;
 
-/// A picture past this is not a site's mark. Its `data:` address stays under the
-/// longest the app keeps (`LONGEST_MARK` in import/sidebar-plan.ts).
 const LONGEST_MARK: usize = 46 * 1024;
 
-/// The size a mark is drawn at in the file list, at twice the pixels.
 const MARK_SIZE: i64 = 32;
 
-/// Microseconds from 1601 to 1970, which is where Chromium counts its times from.
 const CHROMIUM_EPOCH: i64 = 11_644_473_600_000_000;
 
-/// Seconds from 1970 to 2001, which is where Safari counts its times from.
 const SAFARI_EPOCH: f64 = 978_307_200.0;
 
-/// Which kind of profile a browser keeps.
 #[derive(Clone, Copy)]
 enum Kind {
     Mozilla,
@@ -58,8 +36,6 @@ fn profile_kind(browser: &str) -> Option<Kind> {
     }
 }
 
-/// The pages a profile has been to, newest first, as JSON: `[{ url, title, visits,
-/// typed, last }]`, `last` in milliseconds.
 #[tauri::command(async)]
 pub fn read_browser_history(browser: String, profile: String) -> Result<String, String> {
     let kind = profile_kind(&browser).ok_or("not a browser the import reads")?;
@@ -73,8 +49,6 @@ pub fn read_browser_history(browser: String, profile: String) -> Result<String, 
     Ok(Value::Array(rows).to_string())
 }
 
-/// The marks of the pages asked for that the profile holds, as JSON: each page's
-/// `data:` address by the page.
 #[tauri::command(async)]
 pub fn read_browser_icons(
     browser: String,
@@ -94,14 +68,11 @@ pub fn read_browser_icons(
     Ok(Value::Object(marks).to_string())
 }
 
-/// A copy of a database, open, and the folder that holds it for as long as it is read.
 struct Opened {
     connection: Connection,
     _copy: tempfile::TempDir,
 }
 
-/// One listed database of a listed profile, copied and opened. Safari lists no files:
-/// its one profile is its folder, and `History.db` is the one asked of it here.
 fn copied_database(browser: &str, profile: &str, file: &str) -> Result<Opened, String> {
     let listed = profiles_of(browser);
     let path = if browser == "safari" {
@@ -136,7 +107,6 @@ fn history_of(db: &Connection, kind: Kind) -> rusqlite::Result<Vec<Value>> {
              WHERE hidden = 0 AND visit_count > 0 AND last_visit_time > 0 \
              ORDER BY last_visit_time DESC LIMIT ?1"
         }
-        // The title is the last visit's: SQLite takes a bare column from the row MAX picked.
         Kind::Safari => {
             "SELECT i.url, IFNULL(v.title, ''), i.visit_count, 0, MAX(v.visit_time) \
              FROM history_items i JOIN history_visits v ON v.history_item = i.id \
@@ -161,14 +131,11 @@ fn history_of(db: &Connection, kind: Kind) -> rusqlite::Result<Vec<Value>> {
     rows.collect()
 }
 
-/// A Safari time, seconds since 2001, as the whole milliseconds since 1970 the app
-/// counts in.
 #[allow(clippy::cast_possible_truncation)]
 fn safari_time(seconds: f64) -> i64 {
     ((seconds + SAFARI_EPOCH) * 1000.0) as i64
 }
 
-/// One picture a page is drawn with: what it is found by, and how wide it is.
 struct Candidate {
     page: String,
     id: i64,
@@ -217,9 +184,6 @@ fn marks_of(db: &Connection, kind: Kind, pages: &[&str]) -> rusqlite::Result<Map
     Ok(out)
 }
 
-/// The picture each page asked for is drawn with: the page's own, else one of another
-/// page of its site's, each the narrowest at least as wide as a mark is drawn, or the
-/// widest there is.
 fn chosen_marks<'a>(candidates: &[Candidate], pages: &[&'a str]) -> Vec<(&'a str, i64)> {
     let better =
         |held: &Candidate, one: &Candidate| match (held.width >= MARK_SIZE, one.width >= MARK_SIZE)
@@ -253,7 +217,6 @@ fn chosen_marks<'a>(candidates: &[Candidate], pages: &[&'a str]) -> Vec<(&'a str
         .collect()
 }
 
-/// A page's site: its scheme and host, the address up to the path.
 fn site_part(page: &str) -> &str {
     let after = page.find("://").map_or(0, |at| at + 3);
     let end = page[after..]
@@ -262,8 +225,6 @@ fn site_part(page: &str) -> &str {
     &page[..end]
 }
 
-/// A picture as a `data:` address, of the kind its first bytes say it is; none for
-/// bytes that are no picture a page draws, or one too large to be a mark.
 fn data_address(bytes: &[u8]) -> Option<String> {
     if bytes.is_empty() || bytes.len() > LONGEST_MARK {
         return None;
@@ -394,7 +355,6 @@ mod tests {
         assert!(marks["https://docs.example.com/api"]
             .as_str()
             .is_some_and(|one| one.starts_with("data:image/svg+xml;base64,")));
-        // Its own picture is no picture, and nothing stands in for a page's own.
         assert!(!marks.contains_key("https://docs.example.com/guide"));
         assert!(!marks.contains_key("https://nowhere.example.com/"));
     }

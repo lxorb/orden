@@ -1,6 +1,3 @@
-// What draws the app's own page, said to the crate once the page has settled: the
-// renderer WebGL names, which is the graphics card where the GPU is used and a software
-// one where Chromium fell back to drawing on the CPU. See gpu.rs.
 ;(function () {
   if (window.top !== window) return
   function report() {
@@ -22,6 +19,5 @@
       internals.invoke('gpu_seen', { renderer }).catch(() => null)
     }
   }
-  // Late, so a launch is not slowed by it: a context made and let go of.
   window.addEventListener('load', () => setTimeout(report, 3000), { once: true })
 })()

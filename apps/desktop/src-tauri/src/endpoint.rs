@@ -1,38 +1,3 @@
-//! The socket the `nib` command drives the running app through.
-//!
-//! What it is: a listener on 127.0.0.1, on a port the system hands out at every
-//! launch, behind a secret this installation keeps in the app's own config
-//! folder. A request is one POST carrying a verb; the answer is what the window
-//! said about it.
-//!
-//! Why it is shaped that way. The window is where the verbs actually live - it
-//! holds the spaces, the link index, the search and the command registry the
-//! palette reads - so this module does not know what a verb means and never
-//! answers one itself. It reads the request, decides whether the caller is
-//! allowed to ask at all, hands it to the window and waits. A second road to any
-//! of those things would be a second answer to the same question; see
-//! apps/desktop/src/lib/automation. (The agents are the one exception; see below.)
-//!
-//! Who is allowed to ask. Anybody who can read a file that only this user can
-//! read, which is the same bar as "can open the notes". Four things are checked
-//! before the secret is even looked at, and all four are about a page in a
-//! browser rather than about a program: a page cannot read the file, cannot send
-//! the two headers this requires to another origin without a preflight nothing
-//! here answers, and cannot put this endpoint's own address in the host header
-//! while pointing a name of its own at 127.0.0.1.
-//!
-//! **Agents** (docs/agent-native.md) come in the same way with a token of their own
-//! instead of the secret; see agents/grants.rs. Two things change for them and nothing
-//! for the secret. The browser's verbs, and the agents' own, are answered in the crate,
-//! because only the engine can answer them and an agent's browsing should never wait on
-//! the window's thread. And an agent reaches only the window verbs made for agents,
-//! with its grant handed to the window beside the verb; never `eval`, never the command
-//! line's own verbs, which predate agents and check nothing about them.
-//!
-//! Desktop only. A browser tab has no socket to listen on and a phone has no
-//! command line, so neither build compiles this and the CLI says so rather than
-//! failing to connect; see docs/automation.md.
-
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write as _;
 use std::fs;
@@ -49,34 +14,20 @@ use crate::paths::{config_dir, made, write_privately};
 
 const TAKES: Duration = Duration::from_millis(1500);
 
-/// What the window hears a request on.
 const ASKED: &str = "nib://automation";
 
-/// How much of a request is read. A note is the longest thing anybody sends, and
-/// this is the same ceiling a note has everywhere else.
 const MOST_BYTES: usize = 8 * 1024 * 1024;
 
-/// How long the window has to answer. Long enough to search a large space, short
-/// enough that a wedged window frees the socket rather than holding it forever.
 const PATIENCE: Duration = Duration::from_secs(30);
 
-/// How long a caller has to finish sending, and to read what comes back. Without
-/// it a connection that opened and said nothing would hold a thread for good.
 const SLOWEST: Duration = Duration::from_secs(10);
 
-/// The secret's length in bytes. Written down as hex, so twice that in
-/// characters.
 const SECRET_BYTES: usize = 32;
 
-/// Which request an answer belongs to. Counted rather than random: it never
-/// leaves this machine and two requests only have to tell each other apart.
 static NEXT: AtomicU64 = AtomicU64::new(1);
 
-/// The port this launch listens on, nought before it does.
 static PORT: AtomicU16 = AtomicU16::new(0);
 
-/// The port this launch answers on, where it does: what an agent's `http` may never
-/// reach on this machine (agents/http.rs).
 pub fn own_port() -> Option<u16> {
     match PORT.load(Ordering::SeqCst) {
         0 => None,
@@ -84,45 +35,16 @@ pub fn own_port() -> Option<u16> {
     }
 }
 
-/// What the file in the config folder says, which is everything a caller needs to
-/// reach the app and nothing else.
 #[derive(serde::Serialize, serde::Deserialize)]
 struct Kept {
-    /// The port this launch is listening on. New every launch, which is the
-    /// reason the file is written again every launch rather than once.
     port: u16,
-    /// This installation's secret, kept across launches: a caller that has it has
-    /// read a file only this user can read.
     secret: String,
-    /// Whether `eval` is answered at all.
-    ///
-    /// Off unless somebody wrote `true` here by hand, and there is deliberately
-    /// no way to turn it on from outside this machine - not through a request,
-    /// not through a link. It runs whatever it is sent inside the window, so
-    /// turning it on should cost opening the file the secret is in.
     #[serde(default)]
     eval: bool,
-    /// Which process is listening on that port.
-    ///
-    /// For `nib screenshot`, which has to photograph the window of the app that
-    /// answered it. Two nibs can be running - a build somebody is working on beside
-    /// the one they use - and a capture that went looking for a process by name
-    /// photographed whichever of them Windows happened to list first.
-    ///
-    /// Right by construction rather than by being asked for: whoever wrote this file
-    /// is whoever opened that socket, so the port and the process below it are one
-    /// fact written at one moment. Never read back - the file is rewritten every
-    /// launch, and a pid from a launch that has ended names nothing or names somebody
-    /// else's process.
     #[serde(default)]
     pid: u32,
 }
 
-/// The requests the window has not answered yet, by the id each was given; and whether
-/// the window hears them yet. An event emitted before the page has a listener for it
-/// reaches nobody, so a request that came in while the page was still coming up is held
-/// until the window says it listens, rather than sent into nothing and waited on for the
-/// whole of `PATIENCE`.
 #[derive(Default)]
 pub struct Waiting(
     Mutex<HashMap<u64, SyncSender<String>>>,
@@ -222,15 +144,7 @@ impl Waiting {
     }
 }
 
-/// Opens the socket and starts answering on it.
-///
-/// Says nothing where it cannot: an app whose endpoint did not come up is an app
-/// without a command line, not an app that failed to start, and the one thing
-/// worse than no CLI would be no editor.
 pub fn start(app: &AppHandle) {
-    // Port zero, so the system names it. A port written down here would be a port
-    // something else on the machine could be sitting on, and a fixed one is also
-    // a port anything could guess at.
     let Ok(listener) = TcpListener::bind(SocketAddr::from((Ipv4Addr::LOCALHOST, 0))) else {
         return;
     };
@@ -242,13 +156,6 @@ pub fn start(app: &AppHandle) {
     let port = address.port();
     PORT.store(port, Ordering::SeqCst);
     std::thread::spawn(move || {
-        // The file the port and the secret are written down in, written on this
-        // thread rather than before it. It is a read, a folder made and a write,
-        // and `start` is called from the setup hook - the thread the window is
-        // about to be shown on, where the disk is the one thing that can hold a
-        // launch up. The socket is already listening by the time this runs, so a
-        // request that arrives in the same moment waits in the backlog instead of
-        // finding nothing there.
         let Ok(kept) = remember(&app, port) else {
             return;
         };
@@ -260,8 +167,6 @@ pub fn start(app: &AppHandle) {
             let secret = kept.secret.clone();
             let port = kept.port;
             let eval = kept.eval;
-            // A thread each, so a caller that stopped reading halfway cannot keep
-            // the next one waiting.
             std::thread::spawn(move || {
                 let _ = answer(&app, stream, &secret, port, eval);
             });
@@ -269,7 +174,6 @@ pub fn start(app: &AppHandle) {
     });
 }
 
-/// The window saying it listens for requests; see `Waiting`.
 #[tauri::command]
 pub fn automation_listening(window: tauri::Window, waiting: tauri::State<'_, Waiting>) {
     waiting.page_started(window.label());
@@ -284,11 +188,6 @@ pub fn automation_claim(
     waiting.claim(id, window.label())
 }
 
-/// The window's answer to one request, handed back to whoever asked.
-///
-/// Passed through exactly as the window said it: the verbs and the shape of what
-/// each answers belong to the dispatcher in the window, and an opinion about them
-/// here would be a second dispatcher.
 #[tauri::command]
 pub fn automation_result(waiting: tauri::State<'_, Waiting>, id: u64, result: serde_json::Value) {
     let Ok(mut held) = waiting.0.lock() else {
@@ -296,14 +195,10 @@ pub fn automation_result(waiting: tauri::State<'_, Waiting>, id: u64, result: se
     };
 
     if let Some(send) = held.remove(&id) {
-        // The caller may have given up and gone. A channel nobody is listening
-        // to is nothing to report.
         let _ = send.try_send(result.to_string());
     }
 }
 
-/// The file, read for what it already holds and written again with this launch's
-/// port. Answers what is now in it.
 fn remember(app: &AppHandle, port: u16) -> Result<Kept, String> {
     let path = endpoint_file(app)?;
     let held: Option<Kept> = fs::read_to_string(&path)
@@ -312,8 +207,6 @@ fn remember(app: &AppHandle, port: u16) -> Result<Kept, String> {
 
     let kept = Kept {
         port,
-        // A secret of the wrong length is one somebody edited or a file that was
-        // written half way, and either way it is not a secret any more.
         secret: match held.as_ref() {
             Some(one) if one.secret.len() == SECRET_BYTES * 2 => one.secret.clone(),
             _ => fresh_secret()?,
@@ -324,15 +217,11 @@ fn remember(app: &AppHandle, port: u16) -> Result<Kept, String> {
 
     let written = serde_json::to_string_pretty(&kept)
         .map_err(|error| format!("could not write the endpoint file: {error}"))?;
-    // Whole, so a launch that dies halfway leaves the secret there was rather than a
-    // file nothing can read; and the owner's alone before the secret is in it.
     write_privately(&path, written.as_bytes())?;
 
     Ok(kept)
 }
 
-/// Where the file lives: the app's own settings folder, which exists by the time
-/// this returns.
 fn endpoint_file(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = config_dir(app)?;
 
@@ -340,7 +229,6 @@ fn endpoint_file(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(dir.join("automation.json"))
 }
 
-/// A secret nobody can guess, from the system's own randomness.
 fn fresh_secret() -> Result<String, String> {
     let mut bytes = [0_u8; SECRET_BYTES];
     getrandom::fill(&mut bytes)
@@ -349,22 +237,15 @@ fn fresh_secret() -> Result<String, String> {
     Ok(as_hex(&bytes))
 }
 
-/// Bytes as hex, two characters each, which is what makes the length known.
 fn as_hex(bytes: &[u8]) -> String {
     let mut out = String::with_capacity(bytes.len() * 2);
     for byte in bytes {
-        // Into a string that cannot fail to be written to.
         let _ = write!(out, "{byte:02x}");
     }
 
     out
 }
 
-/// One request, from the first byte to the last.
-///
-/// Every refusal is a status and a sentence. A caller that is told nothing cannot
-/// tell a wrong secret from an app that is not running, and the first thing
-/// anybody does with a new command is get the secret wrong.
 fn answer(
     app: &AppHandle,
     mut stream: TcpStream,
@@ -403,8 +284,6 @@ fn answer(
             &refused("that is not this endpoint's address"),
         );
     }
-    // The installation's secret is the reader's own command line, as it always was.
-    // Anything else is an agent's token or nobody's; see agents/grants.rs.
     let caller = if same_secret(request.header("authorization"), secret) {
         crate::agents::Caller::Reader
     } else {
@@ -429,19 +308,12 @@ fn answer(
     say(&mut stream, status, &body)
 }
 
-/// What the endpoint answers one request from a caller it let in: the status and the
-/// body. The road every verb takes, whoever asks: the command line and `nib mcp` over the
-/// socket, and the AI sidebar's own agent from inside the app (`ai_agent.rs`), so an agent
-/// in the sidebar is answered exactly as an outside one is - the same crate verbs, the
-/// same window verbs and grant check, the same log.
 pub(crate) fn dispatch(
     app: &AppHandle,
     caller: &crate::agents::Caller,
     mut asked: serde_json::Value,
     eval: bool,
 ) -> (u16, String) {
-    // Owned, because the value is written into a moment later and a borrow of it
-    // would still be alive.
     let verb = asked
         .get("verb")
         .and_then(|one| one.as_str())
@@ -450,9 +322,6 @@ pub(crate) fn dispatch(
         return (400, refused("say which verb"));
     };
 
-    // The browser's verbs, and the agents' own, are answered here without the window:
-    // what only the engine can answer is answered where the engine is, and an agent's
-    // browsing never waits on the window's thread (docs/agent-native.md 4).
     let args = asked.get("args").cloned().unwrap_or_default();
     if let Some(read) = crate::agents::verbs::Verb::read(&verb, args.clone()) {
         let answered = match read {
@@ -472,8 +341,6 @@ pub(crate) fn dispatch(
         );
     }
 
-    // An agent reaches only the window's agent verbs, and the window is told who is
-    // asking so its dispatcher can check the grant; an agent never reaches `eval`.
     if let Err(why) = crate::agents::may_ask_the_window(caller, &verb) {
         return (403, refused(&why));
     }
@@ -484,7 +351,6 @@ pub(crate) fn dispatch(
 
     let started = std::time::Instant::now();
     let outcome = ask_the_window(app, &mut asked);
-    // An agent's every call is in its log, the window's verbs as well as the crate's.
     if agent {
         let answered = match &outcome {
             Ok(text) => crate::agents::verbs::Answer::from_window(text),
@@ -502,9 +368,6 @@ pub(crate) fn dispatch(
     }
 }
 
-/// The crate asking the window one of its verbs on an agent's behalf, through the same
-/// road the command line takes, and waiting at most `patience` for the answer: the
-/// window's own `{ok, value}` or `{ok, error}`, read. See agents/verbs.rs `window`.
 #[cfg_attr(
     not(all(windows, not(feature = "cef"))),
     allow(dead_code, reason = "only WebView2's agent verbs ask the window")
@@ -540,20 +403,15 @@ fn answering_order(app: &AppHandle) -> Vec<String> {
     labels
 }
 
-/// Hands the request to the window and waits for its answer.
 fn ask_the_window(app: &AppHandle, asked: &mut serde_json::Value) -> Result<String, String> {
     ask_the_window_within(app, asked, PATIENCE)
 }
 
-/// Hands the request to the window and waits at most `patience` for its answer.
 fn ask_the_window_within(
     app: &AppHandle,
     asked: &mut serde_json::Value,
     patience: Duration,
 ) -> Result<String, String> {
-    // The window, not the webview window: a window with a page in a tab is not one
-    // of those, and every request would be refused for as long as a website was
-    // open. See web_tabs.rs.
     if crate::launch::document_windows(app).is_empty() {
         return Err("the app has no window open to ask".to_owned());
     }
@@ -586,8 +444,6 @@ fn ask_the_window_within(
         })
     });
 
-    // However that went, nothing is left waiting: an entry per request that timed
-    // out would be a map that only grows.
     if let Ok(mut held) = waiting.0.lock() {
         held.remove(&id);
     }
@@ -644,8 +500,6 @@ fn awaited(
     }
 }
 
-/// One answer, written and done with. The connection closes, which is what a
-/// caller that sent one request and is waiting for one answer expects.
 fn say(stream: &mut TcpStream, status: u16, body: &str) -> std::io::Result<()> {
     let head = format!(
         "HTTP/1.1 {status} {}\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n",
@@ -658,7 +512,6 @@ fn say(stream: &mut TcpStream, status: u16, body: &str) -> std::io::Result<()> {
     stream.flush()
 }
 
-/// The word beside the number, for the statuses this endpoint answers with.
 fn reason(status: u16) -> &'static str {
     match status {
         200 => "OK",
@@ -671,13 +524,10 @@ fn reason(status: u16) -> &'static str {
     }
 }
 
-/// A refusal the caller can print. JSON, because everything else here is, so one
-/// shape is read whether the answer is an answer or a no.
 fn refused(why: &str) -> String {
     serde_json::json!({ "error": why }).to_string()
 }
 
-/// A request, as far as this endpoint reads one.
 struct Request {
     method: String,
     headers: Vec<(String, String)>,
@@ -685,7 +535,6 @@ struct Request {
 }
 
 impl Request {
-    /// One header, by its folded name.
     fn header(&self, name: &str) -> Option<&str> {
         self.headers
             .iter()
@@ -694,18 +543,10 @@ impl Request {
     }
 }
 
-/// A request as far as this endpoint reads one: the method, the headers, and a
-/// body as long as `content-length` says. None for anything that is not shaped
-/// like a request at all, which is the shape a port scanner arrives in.
 fn read_request(stream: &mut impl Read) -> std::io::Result<Option<Request>> {
     let mut bytes: Vec<u8> = Vec::new();
     let mut chunk = [0_u8; 8192];
 
-    // Where the next look for the end of the head starts. Three bytes back from
-    // what has been read, because a blank line can straddle two chunks and cannot
-    // straddle more than that: looking over the whole of what has arrived per chunk
-    // reads a head in the square of its length, which for the eight megabytes
-    // allowed here is minutes of a thread for one caller that sends no blank line.
     let mut scanned = 0;
 
     let ends = loop {
@@ -762,13 +603,10 @@ fn read_request(stream: &mut impl Read) -> std::io::Result<Option<Request>> {
     }))
 }
 
-/// Where `needle` starts in `haystack`.
 fn find(haystack: &[u8], needle: &[u8]) -> Option<usize> {
     haystack.windows(needle.len()).position(|one| one == needle)
 }
 
-/// The method and the headers, with every header name folded to lowercase. None
-/// for a first line that is not a request line, which is not a request.
 fn parse_head(head: &str) -> Option<(String, Vec<(String, String)>)> {
     let mut lines = head.split("\r\n");
     let mut words = lines.next()?.split(' ');
@@ -777,8 +615,6 @@ fn parse_head(head: &str) -> Option<(String, Vec<(String, String)>)> {
     if method.is_empty() {
         return None;
     }
-    // The target and the version have to be there and have nothing to say: one
-    // socket, one caller, and the verb is in the body.
     words.next()?;
     words.next()?;
 
@@ -790,18 +626,10 @@ fn parse_head(head: &str) -> Option<(String, Vec<(String, String)>)> {
     Some((method, headers))
 }
 
-/// Whether the caller said it is sending JSON.
-///
-/// Required, and not out of pedantry: a form, plain text and multipart are what a
-/// page in a browser may send to another origin without being allowed to first.
-/// JSON is not one of them.
 fn is_json(said: Option<&str>) -> bool {
     said.is_some_and(|one| one.trim().to_lowercase().starts_with("application/json"))
 }
 
-/// Whether the request was addressed to this endpoint rather than to a name that
-/// happens to resolve here. A page served from a domain whose record points at
-/// 127.0.0.1 arrives with that domain in the host header.
 fn is_local(said: Option<&str>, port: u16) -> bool {
     let Some(host) = said else { return false };
 
@@ -810,7 +638,6 @@ fn is_local(said: Option<&str>, port: u16) -> bool {
         .any(|name| host == format!("{name}:{port}"))
 }
 
-/// The token an `authorization` header carries as its bearer.
 fn bearer(said: Option<&str>) -> Option<&str> {
     let header = said?;
     header
@@ -818,9 +645,6 @@ fn bearer(said: Option<&str>) -> Option<&str> {
         .or_else(|| header.strip_prefix("bearer "))
 }
 
-/// Whether the bearer token is this installation's secret, compared in a way that
-/// takes the same time however wrong it is. The length is public - it is always
-/// the same - so comparing that first gives nothing away.
 fn same_secret(said: Option<&str>, secret: &str) -> bool {
     let Some(token) = bearer(said) else {
         return false;
@@ -847,11 +671,6 @@ mod tests {
     use std::sync::mpsc::sync_channel;
     use std::time::{Duration, Instant};
 
-    /// What the file says about who is answering on that port.
-    ///
-    /// `nib screenshot` photographs the window of the app that answered it, and the only
-    /// thing that can say which process that is, is the process that opened the socket.
-    /// So the pid is written beside the port, as this process's own.
     #[test]
     fn says_which_process_is_listening() {
         let text = serde_json::to_string(&Kept {
@@ -867,8 +686,6 @@ mod tests {
         assert_eq!(read.port, 1234);
     }
 
-    /// A file written before this version knew about the pid still reads, and says
-    /// nothing about a process rather than refusing to be read at all.
     #[test]
     fn reads_a_file_written_without_one() {
         let read: Kept = serde_json::from_str(r#"{"port":9,"secret":"ab"}"#).expect("a Kept");
@@ -906,10 +723,6 @@ mod tests {
         assert_eq!(find(b"ab", b"\r\n\r\n"), None);
     }
 
-    /// One request off the wire. Read through `Read` rather than off a socket,
-    /// because what is being checked is what this makes of the bytes: the caller is
-    /// whatever found the port, and most of what finds a port is not the `nib`
-    /// command.
     fn read(said: &[u8]) -> Option<Request> {
         read_request(&mut std::io::Cursor::new(said.to_vec())).expect("a cursor cannot fail")
     }
@@ -924,9 +737,6 @@ mod tests {
         assert_eq!(request.body, "{\"verb\":\"open\"}\n");
     }
 
-    /// What a port scanner sends: a line, or nothing, and then the connection goes.
-    /// None rather than a wait or a panic - and the socket's own read timeout is the
-    /// other half of that; see `SLOWEST`.
     #[test]
     fn anything_that_is_not_a_request_is_no_request() {
         assert!(read(b"").is_none());
@@ -934,13 +744,6 @@ mod tests {
         assert!(read(b"\x16\x03\x01\x02\x00\x01\x00").is_none());
     }
 
-    /// A caller that opens with eight megabytes and no blank line in them. It is
-    /// refused for being longer than a request may be - and it is refused in a
-    /// moment, which is the half worth measuring: the head is read in chunks, and
-    /// looking over all of what has arrived per chunk costs the square of its
-    /// length. That was a minute and a half of a thread for one caller, and any
-    /// program on this machine can be that caller before the secret is even looked
-    /// at.
     #[test]
     fn a_head_that_never_ends_is_refused_without_being_read_twice() {
         let started = std::time::Instant::now();
@@ -961,9 +764,6 @@ mod tests {
         assert!(read(said.as_bytes()).is_none());
     }
 
-    /// A caller that promised more than it sent. What arrived is what is read: the
-    /// verb is then not JSON and the request is refused by the reader above, which
-    /// is the same answer as for any other nonsense.
     #[test]
     fn a_body_shorter_than_it_said_is_what_arrived() {
         let request =
@@ -972,8 +772,6 @@ mod tests {
         assert_eq!(request.body, "{\"verb\"");
     }
 
-    /// And one that sent more than it promised: the rest is not part of this
-    /// request, so a second request smuggled behind the first is not read either.
     #[test]
     fn a_body_longer_than_it_said_is_cut_where_it_said() {
         let request = read(b"POST / HTTP/1.1\r\ncontent-length: 2\r\n\r\n{}POST /").expect("one");
@@ -990,7 +788,6 @@ mod tests {
     fn only_json_is_a_body_it_reads() {
         assert!(is_json(Some("application/json")));
         assert!(is_json(Some("Application/JSON; charset=utf-8")));
-        // The three a page may send to another origin unasked.
         assert!(!is_json(Some("text/plain")));
         assert!(!is_json(Some("application/x-www-form-urlencoded")));
         assert!(!is_json(Some("multipart/form-data")));
@@ -1038,13 +835,9 @@ mod tests {
     #[test]
     fn a_refusal_is_json_with_the_reason_in_it() {
         assert_eq!(refused("no"), r#"{"error":"no"}"#);
-        // A quote in the reason cannot break the shape.
         assert_eq!(refused(r#"say "yes""#), r#"{"error":"say \"yes\""}"#);
     }
 
-    /// A request that came in while the page was still coming up waits for the window
-    /// to listen and is then sent, rather than emitted to nobody; and one the window
-    /// never listens for is refused once the patience is spent.
     #[test]
     fn a_request_before_the_window_listens_waits_for_it() {
         let open = || vec!["main".to_owned()];

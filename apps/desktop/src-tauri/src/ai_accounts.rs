@@ -1,23 +1,3 @@
-//! The reader's AI accounts, kept once for every window of the app (docs/ai.md,
-//! "Accounts").
-//!
-//! **Why a file of the crate's.** The accounts used to be a row in the page's own
-//! storage, and a page's storage belongs to one browsing profile: while the app could run
-//! on a second engine, switching engines started with no accounts and the reader typed
-//! every key again, though each was still in the keychain under its account's id. A file
-//! in the app's data folder is the same file for every window and every space, and
-//! survives an update.
-//!
-//! **What is in it.** Which accounts there are, which of each provider is active, and
-//! what each feature asks: the window's JSON, checked by the window on the way back in
-//! (`src/lib/ai/accounts.ts`). Nothing secret. A key is in the keychain under the
-//! account's id (secrets.rs), and a program's sign-in is the program's own.
-//!
-//! **Two windows at once.** A write names the stamp of the text it changed; a write
-//! made over a text that has changed since is refused, and the window reads the new text
-//! and makes its change again. Each write is said to every window, so a switch in one is
-//! a switch in all of them.
-
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -27,17 +7,12 @@ use tauri::{AppHandle, Emitter, Manager};
 
 use crate::paths::{made, write_privately};
 
-/// What every window hears when the accounts change.
 const EVENT: &str = "nib://ai-accounts";
 
-/// The most the file may be: hundreds of accounts, and a ceiling on one write.
 const MOST_BYTES: usize = 256 * 1024;
 
-/// One write at a time, so two windows' writes cannot interleave between the stamp
-/// being checked and the file being written.
 static WRITING: Mutex<()> = Mutex::new(());
 
-/// Whether the call came from the app's own page rather than a web page in it.
 fn ours(webview: &tauri::Webview) -> Result<(), String> {
     let label = webview.label();
     #[cfg(desktop)]
@@ -51,9 +26,6 @@ fn ours(webview: &tauri::Webview) -> Result<(), String> {
     }
 }
 
-/// The folder the accounts and the homes kept for them are under: the app's local data,
-/// beside the threads, and not the roaming settings, since it names folders that hold
-/// sign-ins.
 pub(crate) fn root(app: &AppHandle) -> Result<PathBuf, String> {
     let folder = app
         .path()
@@ -66,9 +38,6 @@ fn file(root: &Path) -> PathBuf {
     root.join("accounts.json")
 }
 
-/// The stamp of a text: its 64-bit FNV-1a hash in sixteen hex digits, and the empty
-/// string for no text at all. A stamp tells two versions of one small file apart, not a
-/// secret, so a hash every build and every platform computes alike is all it needs.
 fn stamp_of(text: Option<&str>) -> String {
     text.map(|text| {
         let hash = text.bytes().fold(0xcbf2_9ce4_8422_2325_u64, |hash, byte| {
@@ -79,7 +48,6 @@ fn stamp_of(text: Option<&str>) -> String {
     .unwrap_or_default()
 }
 
-/// The file's text, or nothing where there is none.
 fn read_text(root: &Path) -> Result<Option<String>, String> {
     match fs::read_to_string(file(root)) {
         Ok(text) => Ok(Some(text)),
@@ -88,7 +56,6 @@ fn read_text(root: &Path) -> Result<Option<String>, String> {
     }
 }
 
-/// What a read answers: the text, and the stamp a write of a change to it names.
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct Kept {
     text: Option<String>,
@@ -101,8 +68,6 @@ pub fn read(root: &Path) -> Result<Kept, String> {
     Ok(Kept { text, stamp })
 }
 
-/// Writes `text` over the text whose stamp is `over`, and answers the new stamp. Refused
-/// with `stale` where the file changed since that stamp was read, with nothing written.
 pub fn write(root: &Path, text: &str, over: &str) -> Result<String, String> {
     if text.len() > MOST_BYTES {
         return Err("too many accounts to keep".into());
@@ -123,10 +88,6 @@ pub fn write(root: &Path, text: &str, over: &str) -> Result<String, String> {
     Ok(stamp_of(Some(text)))
 }
 
-/// Whether `id` is kept as an account that is a second sign-in to `kind`'s program, and
-/// so has a home of Orden's: the window says so (`own`), and only for a program's kind.
-/// Read here rather than taken from the window, so a page can name an account and never
-/// a folder.
 #[cfg(desktop)]
 pub fn has_own_home(root: &Path, id: &str, kind: &str) -> Result<bool, String> {
     if kind != "claude-code" && kind != "codex" {
@@ -153,9 +114,6 @@ pub fn has_own_home(root: &Path, id: &str, kind: &str) -> Result<bool, String> {
     }
 }
 
-/// The folder a second sign-in's program keeps its login in: `homes/<id>` under the
-/// accounts. An id is the window's own, letters, digits, `-` and `_`, so it can only
-/// ever name a folder there.
 #[cfg(desktop)]
 pub fn home_dir(root: &Path, id: &str) -> Result<PathBuf, String> {
     let fits = !id.is_empty()
@@ -170,14 +128,12 @@ pub fn home_dir(root: &Path, id: &str) -> Result<PathBuf, String> {
     }
 }
 
-/// The accounts as they are kept.
 #[tauri::command(async)]
 pub fn ai_accounts_read(webview: tauri::Webview, app: AppHandle) -> Result<Kept, String> {
     ours(&webview)?;
     read(&root(&app)?)
 }
 
-/// The accounts written over the text stamped `stamp`, said to every window.
 #[tauri::command(async)]
 pub fn ai_accounts_write(
     webview: tauri::Webview,
@@ -229,10 +185,8 @@ mod tests {
     fn a_write_over_a_text_that_changed_since_is_refused() {
         let root = folder("stale");
         let first = write(&root, r#"{"a":1}"#, "").expect("first");
-        // A second window wrote, from the same first read.
         write(&root, r#"{"a":2}"#, &first).expect("second");
         assert_eq!(write(&root, r#"{"a":3}"#, &first), Err("stale".to_owned()));
-        // A first write is refused as well where something is already there.
         assert_eq!(write(&root, r#"{"a":4}"#, ""), Err("stale".to_owned()));
         assert_eq!(
             read(&root).expect("read").text.as_deref(),
@@ -256,7 +210,6 @@ mod tests {
             has_own_home(&root, "claude-code-2", "claude-code"),
             Ok(true)
         );
-        // A home is a program's: neither another program's nor a key's.
         assert_eq!(has_own_home(&root, "claude-code-2", "codex"), Ok(false));
         assert_eq!(has_own_home(&root, "anthropic", "anthropic"), Ok(false));
         assert!(has_own_home(&root, "nobody", "claude-code").is_err());

@@ -1,52 +1,19 @@
-//! A file or a folder with everything in it, put somewhere else whole or not at all:
-//! copied, which is a paste or a Ctrl-drag in the file list, or moved, which is the
-//! trash, a restore out of it and a note dragged into another folder.
-//!
-//! A move is a rename for as long as both ends are on one disk. A space linked in
-//! from another drive is not - the space on D:, the trash in `Documents/Nib` on C: -
-//! and there a rename fails with the error that says so, and a note could not be
-//! deleted at all. So a move across disks is a copy and then a removal, the way KDE's
-//! trash does it (`TrashImpl::move` in KIO). Either half can stop half way: a copy
-//! that stops takes back what it made, and a removal that stops puts back what it
-//! took before the copy goes. KDE removes the copy instead, which loses whatever the
-//! removal had already taken; a person is never left here with half a folder in one
-//! place and half in the other.
-
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
 use crate::paths::{cannot, made};
 
-/// What a link inside the thing carried becomes.
 #[derive(Clone, Copy)]
 enum Links {
-    /// A copy: a link to a file is copied as the file it leads to, which is what a
-    /// person copying it sees. Any other link is copied as a link to where it leads,
-    /// the way Finder and `cp -R` copy one: a link to a folder can lead back to a
-    /// folder above it, and a copy that followed it would never end. It used to be
-    /// left out instead, which was a copy with a hole in it that said it had worked.
     Followed,
-    /// A move: a link is carried as the link, pointing where it pointed. What it
-    /// points at is somewhere else and stays there.
     Kept,
 }
 
-/// Copies a file, or a folder and everything under it, to `target`, which nothing
-/// may be at yet. Whole or not at all: a copy that stops takes what it had made with
-/// it and says why, since a paste that answers yes while a file is missing from it is
-/// a copy with a hole in it that nobody was told about.
 pub fn copy_whole(source: &Path, target: &Path) -> Result<(), String> {
     copy_or_nothing(source, target, Links::Followed)
 }
 
-/// Moves a file or a folder to `target`, across disks too, and says `verb` of it if
-/// it cannot: the source is then where it was, whole.
-///
-/// The one exception is a removal that stopped half way whose losses could not be
-/// put back either. The copy is then left where it landed, since it is the one whole
-/// copy there is, and the caller is told the move failed; which is why a caller
-/// clearing up after a failed move clears up only an empty folder.
 pub fn move_whole(source: &Path, target: &Path, verb: &str) -> Result<(), String> {
     moved_by(
         source,
@@ -57,9 +24,6 @@ pub fn move_whole(source: &Path, target: &Path, verb: &str) -> Result<(), String
     )
 }
 
-/// `move_whole` with the rename and the removal handed in, so what happens when
-/// either says no can be tested without two disks or a file some other program
-/// holds.
 fn moved_by(
     source: &Path,
     target: &Path,
@@ -85,9 +49,6 @@ fn moved_by(
     Ok(())
 }
 
-/// A copy that takes back what it made when it stops. Nothing may be at `target`
-/// beforehand, which is also what makes taking it back safe: everything there is the
-/// copy's own.
 fn copy_or_nothing(source: &Path, target: &Path, links: Links) -> Result<(), String> {
     if fs::symlink_metadata(target).is_ok() {
         return Err("something already lives there".into());
@@ -98,7 +59,6 @@ fn copy_or_nothing(source: &Path, target: &Path, links: Links) -> Result<(), Str
     })
 }
 
-/// One file, one link, or one folder and everything under it.
 fn copy_all(source: &Path, target: &Path, links: Links) -> Result<(), String> {
     let kind = fs::symlink_metadata(source).map_err(|error| cannot("read", source, &error))?;
 
@@ -108,7 +68,6 @@ fn copy_all(source: &Path, target: &Path, links: Links) -> Result<(), String> {
                 let points = fs::read_link(source);
                 return relinked(source, target, points);
             }
-            // Where it really leads, so the copy leads there too from wherever it lands.
             Links::Followed if !source.is_file() => {
                 let points = fs::canonicalize(source).or_else(|_| fs::read_link(source));
                 return relinked(source, target, points);
@@ -132,9 +91,6 @@ fn copy_all(source: &Path, target: &Path, links: Links) -> Result<(), String> {
         .map_err(|error| cannot("copy", source, &error))
 }
 
-/// A link made again at `target`, pointing at `points`. On Windows a link to a folder
-/// is a kind of its own, and one this account may not be allowed to make; the copy or
-/// the move then stops whole, which is the honest answer.
 fn relinked(source: &Path, target: &Path, points: io::Result<PathBuf>) -> Result<(), String> {
     let points = points.map_err(|error| cannot("read", source, &error))?;
 
@@ -156,8 +112,6 @@ fn relinked(source: &Path, target: &Path, points: io::Result<PathBuf>) -> Result
     linked.map_err(|error| cannot("copy", source, &error))
 }
 
-/// Puts back into `source` whatever a removal that stopped half way took from it,
-/// out of the whole copy at `copy`. What is still there is left as it is.
 fn put_back(copy: &Path, source: &Path) -> Result<(), String> {
     let kind = fs::symlink_metadata(copy).map_err(|error| cannot("read", copy, &error))?;
 
@@ -178,9 +132,6 @@ fn put_back(copy: &Path, source: &Path) -> Result<(), String> {
     copy_all(copy, source, Links::Kept)
 }
 
-/// Takes a file, a link or a folder away. A link to a folder goes as the link:
-/// Windows removes one of those as a folder and not as a file, and neither platform
-/// follows it into what it points at.
 fn taken_away(path: &Path) -> io::Result<()> {
     let kind = fs::symlink_metadata(path)?;
 
@@ -191,10 +142,6 @@ fn taken_away(path: &Path) -> io::Result<()> {
     }
 }
 
-/// Holds a file so that nothing can read it while the answer lives: opened without
-/// sharing on Windows, and with no permissions on a Unix. `None` where this user reads
-/// it anyway, which is what root does, and a test that needs the refusal has nothing
-/// to show there.
 #[cfg(all(test, windows))]
 pub(crate) fn unreadable(path: &Path) -> Option<Unreadable> {
     use std::os::windows::fs::OpenOptionsExt as _;
@@ -207,7 +154,6 @@ pub(crate) fn unreadable(path: &Path) -> Option<Unreadable> {
     Some(Unreadable { _handle: handle })
 }
 
-/// See above.
 #[cfg(all(test, unix))]
 pub(crate) fn unreadable(path: &Path) -> Option<Unreadable> {
     use std::os::unix::fs::PermissionsExt as _;
@@ -219,7 +165,6 @@ pub(crate) fn unreadable(path: &Path) -> Option<Unreadable> {
     fs::File::open(path).is_err().then_some(held)
 }
 
-/// A file `unreadable` is holding, until this goes.
 #[cfg(test)]
 pub(crate) struct Unreadable {
     #[cfg(windows)]
@@ -228,7 +173,6 @@ pub(crate) struct Unreadable {
     path: std::path::PathBuf,
 }
 
-/// Gives the file its permissions back, so the temp folder it is in can go.
 #[cfg(all(test, unix))]
 impl Drop for Unreadable {
     fn drop(&mut self) {
@@ -246,13 +190,10 @@ mod tests {
     use std::io;
     use std::path::Path;
 
-    /// What a rename says when its two ends are on two disks.
     fn across(_: &Path, _: &Path) -> io::Result<()> {
         Err(io::ErrorKind::CrossesDevices.into())
     }
 
-    /// A folder of the shape a space holds: a note, a picture beside it, and a
-    /// folder inside.
     fn trip(dir: &Path) -> std::path::PathBuf {
         let trip = dir.join("Trip");
         fs::create_dir_all(trip.join("assets")).expect("the folders");
@@ -283,8 +224,6 @@ mod tests {
         assert!(!source.exists());
     }
 
-    /// The space on D:, the trash on C:. The rename says it cannot, and the folder
-    /// arrives anyway, whole, and is gone from where it was.
     #[test]
     fn a_move_across_disks_is_a_copy_and_then_a_removal() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -308,8 +247,6 @@ mod tests {
         assert!(!source.exists());
     }
 
-    /// A rename that says no for any other reason is the answer, and nothing is
-    /// copied anywhere.
     #[test]
     fn a_rename_refused_for_another_reason_moves_nothing() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -328,8 +265,6 @@ mod tests {
         whole_trip(&source);
     }
 
-    /// The copy stops at a file another program holds: what it had made goes, and the
-    /// folder is where it was, untouched.
     #[test]
     fn a_copy_across_disks_that_stops_leaves_the_folder_where_it_was() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -346,9 +281,6 @@ mod tests {
         whole_trip(&source);
     }
 
-    /// The removal stops half way, the way it does on Windows at a file another
-    /// program has open: what it had already taken comes back out of the copy, and
-    /// then the copy goes. Nothing is in two places and nothing is in none.
     #[test]
     fn a_removal_that_stops_half_way_puts_back_what_it_took() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -366,9 +298,6 @@ mod tests {
         assert!(!target.exists(), "the copy stayed as well");
     }
 
-    /// A link inside a folder that moves is carried as the link, and what it points
-    /// at is neither copied nor taken away. Where this account may not make a link
-    /// the move stops whole instead, which is the other honest answer.
     #[test]
     fn a_link_that_moves_is_still_a_link() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -395,9 +324,6 @@ mod tests {
         );
     }
 
-    /// A folder holding a link to a folder somewhere else, copied: the copy holds a
-    /// link to the same place, or the copy stops whole where this account may not
-    /// make one. Never a copy without it that says it worked.
     #[test]
     fn a_copy_carries_a_link_to_a_folder_as_a_link() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -424,8 +350,6 @@ mod tests {
         }
     }
 
-    /// The row itself a link to a folder: the copy is a link to the same folder, not
-    /// nothing at all with an answer that it worked.
     #[test]
     fn a_linked_folder_copied_is_not_nothing() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -459,8 +383,6 @@ mod tests {
         assert!(!target.join("Trip.md").exists());
     }
 
-    /// Two real disks where the machine has them: on Linux `/dev/shm` is a disk of its
-    /// own in memory, and the temp folder is usually on another.
     #[cfg(target_os = "linux")]
     #[test]
     fn a_move_between_two_real_disks_lands_whole() {

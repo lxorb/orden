@@ -1,17 +1,3 @@
-//! The AI sidebar's threads, kept on this device (docs/ai-sidebar.md 4.11).
-//!
-//! A thread holds the words of every note it read and every page it was shown, so it is
-//! kept where nothing syncs it: the app's local data folder, `ai/threads/<space>/`, one
-//! file a thread (`<id>.json`) and one list per space (`index.json`) holding what the
-//! thread list shows without reading a thread whole. Every file is written whole, the
-//! owner's alone, so a crash leaves the old file or the new one and never half of either.
-//!
-//! This module only keeps what the window hands it: a thread is the window's JSON, and
-//! the window checks it on the way back in (`src/lib/ai/chat/threads.ts`). What is
-//! checked here is everything that names a file: a space and a thread are each an id the
-//! window made (a UUID), and anything else is refused rather than made safe, so no id can
-//! name a file outside the folder. Only Orden's own window may ask.
-
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -22,14 +8,10 @@ use tauri::{AppHandle, Manager};
 
 use crate::paths::{made, write_privately};
 
-/// How large a thread may be: a long one with pictures in it, and a ceiling on one write.
 const MOST_BYTES: usize = 64 * 1024 * 1024;
 
-/// One list at a time is read, changed and written, so two threads written at once both
-/// stay in it.
 static LISTS: Mutex<()> = Mutex::new(());
 
-/// Whether the call came from the app's own page rather than a web page in it.
 fn ours(webview: &tauri::Webview) -> Result<(), String> {
     let label = webview.label();
     #[cfg(desktop)]
@@ -43,7 +25,6 @@ fn ours(webview: &tauri::Webview) -> Result<(), String> {
     }
 }
 
-/// An id as the name of a file or a folder: the window's own ids are UUIDs.
 fn named(id: &str) -> Result<&str, String> {
     let fits = !id.is_empty()
         && id.len() <= 64
@@ -57,7 +38,6 @@ fn named(id: &str) -> Result<&str, String> {
     }
 }
 
-/// The folder every space's threads are kept under.
 fn root(app: &AppHandle) -> Result<PathBuf, String> {
     let folder = app
         .path()
@@ -66,13 +46,10 @@ fn root(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(folder.join("ai").join("threads"))
 }
 
-/// One space's folder.
 fn space_dir(root: &Path, space: &str) -> Result<PathBuf, String> {
     Ok(root.join(named(space)?))
 }
 
-/// A space's list, by thread id; empty where there is none or it cannot be read, which
-/// is a list to start again rather than a reason to refuse a write.
 fn read_list(dir: &Path) -> BTreeMap<String, Value> {
     fs::read_to_string(dir.join("index.json"))
         .ok()
@@ -85,13 +62,11 @@ fn write_list(dir: &Path, list: &BTreeMap<String, Value>) -> Result<(), String> 
     write_privately(&dir.join("index.json"), text.as_bytes())
 }
 
-/// The list's heads.
 pub fn list(root: &Path, space: &str) -> Result<Vec<Value>, String> {
     let dir = space_dir(root, space)?;
     Ok(read_list(&dir).into_values().collect())
 }
 
-/// One thread's JSON, or nothing where there is none.
 pub fn read(root: &Path, space: &str, id: &str) -> Result<Option<String>, String> {
     let path = space_dir(root, space)?.join(format!("{}.json", named(id)?));
     match fs::read_to_string(&path) {
@@ -101,7 +76,6 @@ pub fn read(root: &Path, space: &str, id: &str) -> Result<Option<String>, String
     }
 }
 
-/// Writes one thread and its line in the list.
 pub fn write(root: &Path, space: &str, id: &str, head: Value, body: &str) -> Result<(), String> {
     if body.len() > MOST_BYTES {
         return Err("that thread is too long to keep".into());
@@ -118,7 +92,6 @@ pub fn write(root: &Path, space: &str, id: &str, head: Value, body: &str) -> Res
     write_list(&dir, &list)
 }
 
-/// Deletes one thread for good.
 pub fn delete(root: &Path, space: &str, id: &str) -> Result<(), String> {
     let dir = space_dir(root, space)?;
     let path = dir.join(format!("{}.json", named(id)?));
@@ -137,7 +110,6 @@ pub fn delete(root: &Path, space: &str, id: &str) -> Result<(), String> {
     Ok(())
 }
 
-/// Deletes every thread of a space, with the space.
 pub fn forget(root: &Path, space: &str) -> Result<(), String> {
     let dir = space_dir(root, space)?;
     let _held = LISTS
@@ -150,7 +122,6 @@ pub fn forget(root: &Path, space: &str) -> Result<(), String> {
     }
 }
 
-/// The space's threads, as the list shows them.
 #[tauri::command(async)]
 pub fn ai_threads_list(
     webview: tauri::Webview,
@@ -161,7 +132,6 @@ pub fn ai_threads_list(
     list(&root(&app)?, &space)
 }
 
-/// One thread, whole.
 #[tauri::command(async)]
 pub fn ai_thread_read(
     webview: tauri::Webview,
@@ -173,7 +143,6 @@ pub fn ai_thread_read(
     read(&root(&app)?, &space, &id)
 }
 
-/// One thread written down, with its head.
 #[tauri::command(async)]
 pub fn ai_thread_write(
     webview: tauri::Webview,
@@ -187,7 +156,6 @@ pub fn ai_thread_write(
     write(&root(&app)?, &space, &id, head, &body)
 }
 
-/// One thread deleted.
 #[tauri::command(async)]
 pub fn ai_thread_delete(
     webview: tauri::Webview,
@@ -199,7 +167,6 @@ pub fn ai_thread_delete(
     delete(&root(&app)?, &space, &id)
 }
 
-/// Every thread of a space deleted.
 #[tauri::command(async)]
 pub fn ai_threads_forget(
     webview: tauri::Webview,
