@@ -2,6 +2,7 @@ import { carriedOwn } from '@orden/bases/inbox'
 import { fileMade } from './files'
 import { inForeignCopy } from '@orden/sync-core/foreign'
 import { kindOfName } from '@orden/sync-core/tree'
+import type { MetaPatch } from '@orden/sync-core/meta'
 import type { EntryKind, Op } from '@orden/sync-core/wire'
 import type { Core } from './core'
 import { MINE } from './docs'
@@ -225,6 +226,22 @@ export function placed(
     )
   }
   if (places.size) core.reorders += 1
+  space.changed()
+  return changes
+}
+
+export function described(
+  core: Core,
+  space: SpaceState,
+  patches: ReadonlyMap<string, MetaPatch>,
+): Change[] {
+  const changes: Change[] = []
+  for (const [id, meta] of patches) {
+    changes.push(
+      ...queue(core, space, { op: core.nextId('o'), t: 'meta', id, meta, seen: space.row.cursor }),
+    )
+  }
+  if (patches.size) core.reorders += 1
   space.changed()
   return changes
 }

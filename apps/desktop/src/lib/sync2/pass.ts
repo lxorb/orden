@@ -213,8 +213,11 @@ async function sendOps(
 }
 
 function fitted(space: SpaceState, ops: Op[]): Op[] {
-  if (space.ordering.on) return ops
+  const { on, describes } = space.ordering
+  if (on && describes) return ops
   return ops.flatMap((op): Op[] => {
+    if (op.t === 'meta') return describes ? [op] : []
+    if (on) return [op]
     if (op.t === 'place') return []
     if ((op.t === 'move' || op.t === 'mkdir' || op.t === 'create') && op.pos !== undefined) {
       const bare = { ...op }
@@ -226,12 +229,16 @@ function fitted(space: SpaceState, ops: Op[]): Op[] {
 }
 
 function unplaced(space: SpaceState, batch: readonly Outboxed[], error: Refused) {
-  if (error.status !== 400 || !space.ordering.on) return false
+  if (error.status !== 400) return false
   const placing = (op: Op) =>
     op.t === 'place' ||
     ((op.t === 'move' || op.t === 'mkdir' || op.t === 'create') && op.pos !== undefined)
-  if (!batch.some((one) => one.record.t === 'op' && placing(one.record.op))) return false
-  space.ordering.on = false
+  const ops = batch.flatMap((one) => (one.record.t === 'op' ? [one.record.op] : []))
+  const places = space.ordering.on && ops.some(placing)
+  const describes = space.ordering.describes && ops.some((op) => op.t === 'meta')
+  if (!places && !describes) return false
+  if (places) space.ordering.on = false
+  if (describes) space.ordering.describes = false
   space.repositioned = true
   for (const one of batch) {
     if (one.record.t !== 'op') continue
@@ -363,6 +370,7 @@ export async function readFeed(
         else space.ordering.positions.set(item.id, item.pos)
         space.repositioned = true
       }
+      space.heardMeta(item.id, item.meta)
       space.entries.set(item.id, entry)
       changes.push(put('entries', { ...entry }))
 
@@ -377,6 +385,10 @@ export async function readFeed(
 
     if (space.ordering.on !== (read.order === true)) {
       space.ordering.on = read.order === true
+      space.repositioned = true
+    }
+    if (space.ordering.describes !== (read.meta === true)) {
+      space.ordering.describes = read.meta === true
       space.repositioned = true
     }
     if (space.keeping.on !== (read.index === true)) {

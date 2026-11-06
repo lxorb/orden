@@ -437,6 +437,62 @@ describe('tree operations', () => {
     expect(refused.status).toBe(400)
   })
 
+  test("keep an item's metadata on the entry, key by key, through a rename and a move", async () => {
+    const { cursor } = await ops([
+      op('mkdir', { id: 'f', parent: null, name: 'Folder' }),
+      op('create', { id: 'a', kind: 'note', parent: null, name: 'A.md' }),
+    ])
+    expect(
+      await one(op('meta', { id: 'a', meta: { icon: 'rocket', 'icon-color': 'red' } }, cursor)),
+    ).toMatchObject({ ok: true })
+    await one(
+      op('meta', { id: 'a', meta: { cover: 'pics/sea.png', 'icon-color': null } }, cursor),
+      other,
+    )
+    await one(op('rename', { id: 'a', name: 'Renamed.md' }, cursor))
+    await one(op('move', { id: 'a', parent: 'f' }, cursor))
+    await one(op('meta', { id: 'f', meta: { icon: 'star' } }, cursor))
+
+    const page = await feed()
+    expect(page.meta).toBe(true)
+    const meta = Object.fromEntries(page.items.map((item) => [item.id, item.meta]))
+    expect(meta).toEqual({ f: { icon: 'star' }, a: { icon: 'rocket', cover: 'pics/sea.png' } })
+
+    await one(op('meta', { id: 'a', meta: { icon: null, cover: null } }, cursor))
+    expect((await feed()).items.find((item) => item.id === 'a')?.meta).toBeUndefined()
+
+    for (const meta of [{ Icon: 'x' }, { icon: '' }, {}, { icon: 7 }]) {
+      const refused = await call(env, `/v2/spaces/${space}/ops`, {
+        token,
+        body: { ops: [op('meta', { id: 'a', meta }, cursor)] },
+      })
+      expect(refused.status).toBe(400)
+    }
+  })
+
+  test("count a picture an item's metadata shows as a picture the note uses", async () => {
+    const { cursor } = await ops([
+      op('create', { id: 'n', kind: 'note', parent: null, name: 'N.md' }),
+    ])
+    const hash = 'a'.repeat(64)
+    await one(op('meta', { id: 'n', meta: { cover: `https://x.test/i/${hash}.png` } }, cursor))
+    const pictures = () =>
+      (
+        env.db.prepare('select hash from note_pictures where note_id = ?').all('n') as {
+          hash: string
+        }[]
+      ).map((one) => one.hash)
+    expect(pictures()).toEqual([hash])
+  })
+
+  test("keep an item's metadata from a delete that had not seen it", async () => {
+    const { cursor } = await ops([
+      op('create', { id: 'n', kind: 'note', parent: null, name: 'N.md' }),
+    ])
+    await one(op('meta', { id: 'n', meta: { icon: 'rocket' } }, cursor), other)
+    expect(await one(op('delete', { id: 'n' }, cursor))).toMatchObject({ refused: 'edited' })
+  })
+
   test('keep a position only in the folder it was given in, unless a move says another', async () => {
     const { cursor } = await ops([
       op('mkdir', { id: 'f', parent: null, name: 'Folder' }),

@@ -1,4 +1,5 @@
 import { freePath } from '@orden/markdown/paths'
+import { type ItemMeta, patched, sameMeta } from './meta'
 import { type EntryKind, heldName, LONGEST_NAME, type Op, type OpResult, shortened } from './wire'
 
 export interface TreeEntry {
@@ -16,6 +17,7 @@ export interface TreeEntry {
   placedBy?: string
   changesBy?: Record<string, number>
   pos?: string
+  meta?: ItemMeta
 }
 
 export interface TreeState {
@@ -316,6 +318,18 @@ class Rules {
     return placement(op, entry)
   }
 
+  described(op: Op & { t: 'meta' }): OpResult {
+    const entry = this.state.entries.get(op.id)
+    if (!entry || entry.deleted) return { op: op.op, refused: 'gone' }
+    const meta = patched(entry.meta, op.meta)
+    if (!sameMeta(meta, entry.meta)) {
+      if (meta === undefined) delete entry.meta
+      else entry.meta = meta
+      changed(this.state, entry, this.device, op.seen)
+    }
+    return placement(op, entry)
+  }
+
   deleted(op: Op & { t: 'delete' }): OpResult {
     const { state, device } = this
     const entry = state.entries.get(op.id)
@@ -404,6 +418,8 @@ class Rules {
         return this.restored(op)
       case 'place':
         return this.placed(op)
+      case 'meta':
+        return this.described(op)
     }
   }
 }

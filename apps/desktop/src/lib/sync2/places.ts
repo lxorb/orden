@@ -1,12 +1,13 @@
 import { type OpResult, type Op } from '@orden/sync-core/wire'
 import { inForeignCopy } from '@orden/sync-core/foreign'
 import { hash32 } from '@orden/sync-core/seed'
+import { type ItemMeta, type MetaPatch, patched, sameMeta } from '@orden/sync-core/meta'
 import { byPosition } from '@orden/sync-core/order'
 import { applyOp, nameKey, type TreeEntry, type TreeState, treeState } from '@orden/sync-core/tree'
 import { isReserved } from '../naming'
 import { holdsDocument } from './kinds'
 import { emptyKeeping } from './keeping'
-import type { Gone, Keeping, Ordering, Outgoing } from './records'
+import { emptyOrdering, type Gone, type Keeping, type Ordering, type Outgoing } from './records'
 import type { EntryRow, OutboxRow, SpaceRow } from './store'
 import type { Disk, FileKind, World } from './world'
 
@@ -70,7 +71,7 @@ export class SpaceState {
     outbox: readonly Outboxed[],
     private readonly device: string,
     private readonly world: Pick<World, 'platform' | 'foldsCase' | 'lazy'>,
-    ordering: Ordering = { on: false, positions: new Map() },
+    ordering: Ordering = emptyOrdering(),
     private readonly lastByMe: (id: string) => boolean = () => false,
   ) {
     this.entries = new Map(entries.map((entry) => [entry.id, entry]))
@@ -102,6 +103,7 @@ export class SpaceState {
         docSeq: 0,
         ...(this.lastByMe(entry.id) ? { by: this.device } : {}),
         ...this.positionOf(entry.id),
+        ...this.metaOf(entry.id),
       })
     }
     return treeState(entries, this.row.cursor)
@@ -110,6 +112,22 @@ export class SpaceState {
   private positionOf(id: string): { pos?: string } {
     const pos = this.ordering.positions.get(id)
     return pos === undefined ? {} : { pos }
+  }
+
+  private metaOf(id: string): { meta?: ItemMeta } {
+    const meta = this.ordering.meta.get(id)
+    return meta === undefined ? {} : { meta }
+  }
+
+  described(): Map<string, ItemMeta> {
+    const paths = this.paths()
+    const out = new Map<string, ItemMeta>()
+    for (const entry of this.shown().entries.values()) {
+      const path = paths.get(entry.id)
+      if (entry.deleted || entry.meta === undefined || path === undefined) continue
+      out.set(path, entry.meta)
+    }
+    return out
   }
 
   shown(): TreeState {
@@ -329,6 +347,23 @@ export class SpaceState {
 
   repositioned = false
 
+  describedBy(id: string, patch: MetaPatch) {
+    const had = this.ordering.meta.get(id)
+    const meta = patched(had, patch)
+    if (sameMeta(had, meta)) return
+    if (meta === undefined) this.ordering.meta.delete(id)
+    else this.ordering.meta.set(id, meta)
+    this.repositioned = true
+  }
+
+  heardMeta(id: string, meta: ItemMeta | undefined) {
+    const had = this.ordering.meta.get(id)
+    if (sameMeta(had, meta)) return
+    if (meta === undefined) this.ordering.meta.delete(id)
+    else this.ordering.meta.set(id, meta)
+    this.repositioned = true
+  }
+
   answered(op: Op, result: OpResult): EntryRow[] {
     const touched: EntryRow[] = []
     if ('refused' in result || 'merged' in result) return touched
@@ -336,6 +371,8 @@ export class SpaceState {
     if (!entry) return touched
     if (op.t === 'delete') {
       entry.deleted = true
+    } else if (op.t === 'meta') {
+      this.describedBy(op.id, op.meta)
     } else if ('parent' in result) {
       this.placedBy(op, entry.parent, result.parent)
       entry.parent = result.parent

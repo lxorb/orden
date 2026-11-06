@@ -425,6 +425,39 @@ describe('tree', () => {
     ).toMatchObject({ refused: 'gone' })
   })
 
+  test("an item's metadata: two devices setting different keys both keep theirs", () => {
+    const state = treeState()
+    create(state, 'a', 'A.md')
+    mkdir(state, 'f', 'Work')
+    const seen = state.cursor
+    const meta = (id: string, patch: Record<string, string | null>, as = OWNER) =>
+      applyOp(state, { op: opId(), t: 'meta', id, meta: patch, seen }, as)
+    meta('a', { icon: 'rocket', 'icon-color': 'red' })
+    meta('a', { cover: 'sea.png' }, PHONE)
+    meta('a', { icon: 'star' }, PHONE)
+    applyOp(state, { op: opId(), t: 'rename', id: 'a', name: 'Z.md', seen }, OWNER)
+    applyOp(state, { op: opId(), t: 'move', id: 'a', parent: 'f', seen }, OWNER)
+    expect(state.entries.get('a')?.meta).toEqual({
+      icon: 'star',
+      'icon-color': 'red',
+      cover: 'sea.png',
+    })
+
+    meta('a', { icon: null, 'icon-color': null, cover: null })
+    expect(state.entries.get('a')?.meta).toBeUndefined()
+
+    const before = state.cursor
+    meta('a', { icon: null })
+    expect(state.cursor).toBe(before)
+
+    meta('a', { icon: 'leaf' }, PHONE)
+    expect(applyOp(state, { op: opId(), t: 'delete', id: 'a', seen: before }, OWNER)).toMatchObject(
+      { refused: 'edited' },
+    )
+    applyOp(state, { op: opId(), t: 'delete', id: 'a', seen: state.cursor }, OWNER)
+    expect(meta('a', { icon: 'x' })).toMatchObject({ refused: 'gone' })
+  })
+
   test('rename against rename: the later wins', () => {
     const state = treeState()
     create(state, 'n', 'Plan.md')

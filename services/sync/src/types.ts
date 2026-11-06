@@ -146,6 +146,7 @@ export interface Note {
   updated_by?: string | null
   deleted_in?: number | null
   paper?: string | null
+  meta?: string | null
 }
 
 export interface Variables {

@@ -21,7 +21,7 @@ export function coverPosition(said: string | null | undefined): number {
   return Math.min(100, Math.max(0, Math.round(number)))
 }
 
-function pathIn(said: string): string {
+export function coverSrc(said: string): string {
   const link = /^!?\[\[([^\]]+)\]\]$/.exec(said.trim())
   const inner = link?.[1] ?? said.trim()
   const bar = inner.indexOf('|')
@@ -33,7 +33,7 @@ export function coverOf(source: string): Cover | null {
   const said = frontMatterValue(source, COVER_KEY)
   if (said === null) return null
 
-  const src = pathIn(said)
+  const src = coverSrc(said)
   if (!src) return null
 
   return { src, position: coverPosition(frontMatterValue(source, COVER_POSITION_KEY)) }

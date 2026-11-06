@@ -10,6 +10,15 @@ export {
   type Times,
   type Verdict,
 } from './diverge'
+export {
+  isMetaKey,
+  metaOf,
+  metaPatchOf,
+  patched,
+  sameMeta,
+  type ItemMeta,
+  type MetaPatch,
+} from './meta'
 export { merge3, type Edit, type Meeting, type Merged, type Span, type Whose } from './merge3'
 export { coalesce } from './outbox'
 export { between, byPosition, isPosition, MOST_POSITION, repositioned, spread } from './order'

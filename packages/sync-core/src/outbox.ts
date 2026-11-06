@@ -86,6 +86,8 @@ export function coalesce(ops: readonly Op[]): Op[] {
       }
     }
 
+    if (op.t === 'meta') continue
+
     if (create) stuck.add(op.id)
 
     if (op.t === 'rename') {

@@ -1,11 +1,13 @@
 import { foreignCopy, inForeignCopy } from '@orden/sync-core/foreign'
 import { repositioned } from '@orden/sync-core/order'
+import type { ItemMeta, MetaPatch } from '@orden/sync-core/meta'
 import type { TreeEntry } from '@orden/sync-core/tree'
 import type { EngineEvents, Engine as AskedEngine } from './asking.svelte'
 import { Core } from './core'
 import {
   atOrUnder,
   carried,
+  described,
   intended,
   made,
   mergeableAfter,
@@ -234,6 +236,29 @@ export class Engine implements AskedEngine {
   keepsPlaces(folder: string): boolean {
     const placed = this.folderPlaced(folder)
     return !!placed?.space.ordering.on && placed.space.folderAt(placed.path) !== undefined
+  }
+
+  describedIn(root: string): Record<string, ItemMeta> | null {
+    const placed = this.folderPlaced(root)
+    if (!placed?.space.ordering.describes || placed.path) return null
+    return Object.fromEntries(placed.space.described())
+  }
+
+  describe(root: string, patches: Readonly<Record<string, MetaPatch>>): Promise<string[] | null> {
+    return this.core.use(async () => {
+      const placed = this.folderPlaced(root)
+      if (!placed?.space.ordering.describes || placed.path) return null
+      const { space } = placed
+      const left: string[] = []
+      const ids = new Map<string, MetaPatch>()
+      for (const [path, patch] of Object.entries(patches)) {
+        const entry = space.at(path)
+        if (entry && space.isLive(entry.id)) ids.set(entry.id, patch)
+        else left.push(path)
+      }
+      if (ids.size) await this.core.commit(described(this.core, space, ids))
+      return left
+    })
   }
 
   arrange(folder: string, order: readonly string[], count: number): Promise<boolean> {
