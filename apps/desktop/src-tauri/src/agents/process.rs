@@ -249,7 +249,9 @@ fn begin(app: &AppHandle, caller: &Caller, asked: &Process, since: u64) -> Answe
         Err(why) => return Answer::error(Code::BadArguments, why),
     };
     let cwd = match asked.cwd.as_deref() {
-        Some(cwd) => match absolute(cwd, home.as_deref()) {
+        Some(cwd) => match absolute(cwd, home.as_deref())
+            .and_then(|cwd| super::working::on_disk(app, &cwd))
+        {
             Ok(cwd) if cwd.is_dir() => cwd,
             Ok(cwd) => {
                 return Answer::error(

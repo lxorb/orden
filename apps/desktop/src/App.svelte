@@ -265,19 +265,6 @@
   $effect(() => workspace.oneDocument())
 
   $effect(() => {
-    if (!isDesktop || platform() !== 'macos') return
-    let stop: (() => void) | null = null
-    let gone = false
-    void import('./lib/rows/home.svelte').then(({ tellHome }) => {
-      if (!gone) stop = tellHome()
-    })
-    return () => {
-      gone = true
-      stop?.()
-    }
-  })
-
-  $effect(() => {
     const who = account.user?.id
     if (!who) return
 

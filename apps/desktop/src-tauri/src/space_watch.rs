@@ -6,12 +6,14 @@ mod watching;
 pub use walk::says_gone;
 
 use serde::Serialize;
-use std::path::Path;
+use std::collections::HashMap;
+use std::ffi::OsStr;
+use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
 use tauri::ipc::Channel;
 use tauri::{AppHandle, Manager};
 
-use crate::paths::{a_space, cannot, in_spaces};
+use crate::paths::{a_space, cannot, folded, in_spaces, inside, spaces_dir};
 use crate::tree::MAX_ENTRIES;
 use known::Seen;
 use walk::Found;
@@ -27,6 +29,21 @@ impl Watching {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 }
+
+#[derive(Default)]
+pub struct Working(Mutex<HashMap<PathBuf, Watch>>);
+
+impl Working {
+    fn lock(&self) -> MutexGuard<'_, HashMap<PathBuf, Watch>> {
+        self.0
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+}
+
+const KEPT: &str = ".orden";
+
+const WORKING: &str = ".work";
 
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -122,7 +139,30 @@ fn news(roots: &[Root], heard: Heard) -> News {
 }
 
 fn judged_root(app: &AppHandle, root: &str) -> Result<Root, String> {
-    let given = a_space(app, root)?;
+    rooted(a_space(app, root)?, root)
+}
+
+fn working_copy(spaces: &Path, path: &str) -> Result<PathBuf, String> {
+    let target = folded(Path::new(path));
+    let home = spaces.join(KEPT).join(WORKING);
+    let directly_inside = target
+        .parent()
+        .is_some_and(|parent| inside(&home, parent) && inside(parent, &home));
+    let hidden = target
+        .file_name()
+        .and_then(OsStr::to_str)
+        .is_none_or(|name| name.starts_with('.'));
+    if !directly_inside || hidden {
+        return Err(format!("{path} is not a space's working folder"));
+    }
+    Ok(target)
+}
+
+fn judged_working(app: &AppHandle, root: &str) -> Result<Root, String> {
+    rooted(working_copy(&spaces_dir(app)?, root)?, root)
+}
+
+fn rooted(given: PathBuf, root: &str) -> Result<Root, String> {
     let real = std::fs::canonicalize(&given).map_err(|error| cannot("watch", &given, &error))?;
     if !real.is_dir() {
         return Err(format!("{root} is not a folder"));
@@ -161,7 +201,36 @@ pub fn space_unwatch(app: AppHandle) {
 
 #[tauri::command(async)]
 pub fn space_scan(app: AppHandle, root: String, listing: Channel<Listing>) -> Result<(), String> {
-    let root = judged_root(&app, &root)?;
+    scanned(&judged_root(&app, &root)?, &listing)
+}
+
+#[tauri::command(async)]
+pub fn working_watch(app: AppHandle, root: String, news: Channel<News>) -> Result<(), String> {
+    let judged = judged_working(&app, &root)?;
+    let key = judged.given.clone();
+    let spelled = vec![judged.clone()];
+    let made = armed(vec![judged])?.start(Box::new(move |heard| {
+        news.send(self::news(&spelled, heard)).is_ok()
+    }))?;
+    let old = app.state::<Working>().lock().insert(key, made);
+    drop(old);
+    Ok(())
+}
+
+#[tauri::command(async)]
+pub fn working_unwatch(app: AppHandle, root: String) -> Result<(), String> {
+    let given = working_copy(&spaces_dir(&app)?, &root)?;
+    let old = app.state::<Working>().lock().remove(&given);
+    drop(old);
+    Ok(())
+}
+
+#[tauri::command(async)]
+pub fn working_scan(app: AppHandle, root: String, listing: Channel<Listing>) -> Result<(), String> {
+    scanned(&judged_working(&app, &root)?, &listing)
+}
+
+fn scanned(root: &Root, listing: &Channel<Listing>) -> Result<(), String> {
     let mut chunk = Vec::with_capacity(MOST_CHANGES);
     let mut left = MAX_ENTRIES;
     let mut sent = Ok(());
@@ -193,11 +262,37 @@ pub fn file_identity(app: AppHandle, path: String) -> Result<Option<String>, Str
 
 #[cfg(test)]
 mod tests {
-    use super::{change, Change, Listed};
+    use super::{change, working_copy, Change, Listed, KEPT, WORKING};
     use crate::space_watch::known::Seen;
     use crate::space_watch::walk::Found;
     use serde_json::json;
     use std::path::{Path, PathBuf};
+
+    #[test]
+    fn only_a_spaces_working_folder_is_watched_as_one() {
+        let spaces = Path::new("/spaces");
+        let home = spaces.join(KEPT).join(WORKING);
+        let notes = home.join("Notes");
+        assert_eq!(
+            working_copy(spaces, &notes.to_string_lossy()).expect("a working folder"),
+            notes
+        );
+        for path in [
+            spaces.join("Notes"),
+            spaces.join(KEPT).join("Notes"),
+            home.clone(),
+            home.join(".hidden"),
+            notes.join("Inner"),
+            home.join("..").join("Notes"),
+            PathBuf::from("/elsewhere/.orden/.work/Notes"),
+        ] {
+            assert!(
+                working_copy(spaces, &path.to_string_lossy()).is_err(),
+                "{}",
+                path.display()
+            );
+        }
+    }
 
     #[test]
     fn what_the_window_is_told() {

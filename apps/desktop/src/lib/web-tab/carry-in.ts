@@ -47,11 +47,13 @@ function next(step: () => Promise<unknown>): void {
 }
 
 export function carryToPages(paths: readonly string[], look: Looking = looking): void {
-  if (!isDesktop) return
+  if (!isDesktop || __EVEN_PLUGIN__) return
   told = false
   next(async () => {
     const carrying = await carryingOf(paths, look)
     if (!carrying.files.length && !carrying.addresses.length) return
+    const { diskPathOf } = await import('../internal/work')
+    carrying.files = await Promise.all(carrying.files.map(diskPathOf))
     told = (await invoke<boolean | null>('page_carry', { ...carrying })) ?? false
   })
 }

@@ -25,7 +25,7 @@ import { record } from './sync/record.svelte'
 import { hiddenKinds, settings } from './settings.svelte'
 import { startup } from './startup.svelte'
 import { shortcuts } from './shortcuts.svelte'
-import { currentWindow, internal, isDesktop, isMobile } from './tauri'
+import { currentWindow, internal, isDesktop, isMobile, platform } from './tauri'
 import { waited } from './timing'
 import { factsOfLaunch, mark } from './trace'
 import { theme } from './theme.svelte'
@@ -149,6 +149,11 @@ export function start(): () => void {
       .turn('right')
       .then(() => import('./internal/convert'))
       .then(({ convertAll }) => convertAll(workspace))
+      .then(() => import('./internal/work'))
+      .then(({ keepWorking }) => keepWorking())
+      .then(() => (platform() === 'macos' ? import('./quick-add/shortcuts') : null))
+      .then((one) => one?.hearShortcuts())
+      .catch((error: unknown) => log('warn', `after the spaces moved in: ${String(error)}`))
   }
 
   if (!__EVEN_PLUGIN__ && isDesktop) {

@@ -1,6 +1,5 @@
 import { canWriteAt, isShared, roleOf } from '../sharing.svelte'
 import { workspace } from '../workspace.svelte'
-import { rememberInbox } from './inbox'
 
 export function homeOf(
   spaces: readonly { root: string }[],
@@ -24,10 +23,4 @@ export function homeRoot(): string | null {
     (root) => !isShared(root),
     canWriteAt,
   )
-}
-
-export function tellHome(): () => void {
-  return $effect.root(() => {
-    $effect(() => rememberInbox(homeRoot()))
-  })
 }

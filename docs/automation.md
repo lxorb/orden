@@ -213,12 +213,13 @@ And the window in front is the same one before and after.
 ## Shortcuts, on a Mac
 
 One App Intent, Add task, which Shortcuts, Spotlight and the Action button list under
-Orden. It asks for the words and appends `- [ ] <words>` to the inbox of the space in
-front - the note `rememberInbox` (`src/lib/rows/inbox.ts`) last told the crate about,
-kept in `inbox.txt` in the app's config folder - or, where that note is gone, to
-`Inbox.md` of the first space. It runs in the app's own process, which the system
-starts in the background when the app is not open, and writes the file directly: no
-window and no page are involved. `NIB_SPACES_DIR` holds for it as for everything else.
+Orden. It asks for the words and appends `- [ ] <words>` to `inbox-queue.md` in the
+app's config folder, since a space Orden keeps has no file on disk to write into. It
+runs in the app's own process, which the system starts in the background when the app is
+not open. The app takes the queue (`src/lib/rows/queued.ts`) once it has started, when a
+window comes forward and when the crate says a task was queued, and adds each task to
+the reader's one inbox as quick add does; the queue is let go only once every task in
+it is in, and windows take it one at a time.
 
 The intent is Swift (`src-tauri/swift/AddTask.swift`), compiled by `build.rs` into an
 object linked into the app, with its metadata written beside it for the bundle. The

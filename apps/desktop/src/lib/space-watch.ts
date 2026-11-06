@@ -49,6 +49,14 @@ export function onUnwatched(listener: () => void): () => void {
 }
 
 export function scanSpace(root: string, each?: (chunk: Listed[]) => void): Promise<Listed[]> {
+  return scanned('space_scan', root, each)
+}
+
+function scanned(
+  command: string,
+  root: string,
+  each?: (chunk: Listed[]) => void,
+): Promise<Listed[]> {
   return new Promise((resolve, reject) => {
     const all: Listed[] = []
     const listing = new Channel<unknown>()
@@ -62,8 +70,25 @@ export function scanSpace(root: string, each?: (chunk: Listed[]) => void): Promi
       each?.(chunk.listed)
       if (chunk.done) resolve(all)
     }
-    invoke('space_scan', { root, listing }).catch(reject)
+    invoke(command, { root, listing }).catch(reject)
   })
+}
+
+export function watchWorking(root: string, heard: (news: SpaceNews) => void): Promise<void> {
+  const news = new Channel<unknown>()
+  news.onmessage = (message) => {
+    const checked = newsOf(message)
+    if (checked) heard(checked)
+  }
+  return invoke('working_watch', { root, news })
+}
+
+export function unwatchWorking(root: string): Promise<void> {
+  return invoke('working_unwatch', { root })
+}
+
+export function scanWorking(root: string): Promise<Listed[]> {
+  return scanned('working_scan', root)
 }
 
 export async function fileIdentity(path: string): Promise<string | null> {

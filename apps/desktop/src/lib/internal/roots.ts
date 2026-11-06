@@ -66,6 +66,7 @@ const FILE_COMMANDS = new Set([
   'read_asset',
   'read_file',
   'file_stamp',
+  'file_there',
 ])
 
 const TRASH_COMMANDS = new Set([
@@ -78,7 +79,6 @@ const TRASH_COMMANDS = new Set([
 const ON_DISK: Record<string, string> = {
   pty_spawn: 'folder',
   same_pdf: 'space',
-  remember_inbox: 'path',
 }
 
 export const PATH_ARGS = ['path', 'root', 'from', 'to', 'notePath'] as const

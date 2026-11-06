@@ -220,8 +220,13 @@ export async function internalInvoke<T>(
   args: Record<string, unknown> = {},
   mounts: readonly Mounted[] = mounted(),
 ): Promise<T> {
-  if (command === 'pty_spawn') return crate<T>(command, { ...args, folder: null })
-  if (command === 'remember_inbox') return undefined as T
+  if (command === 'pty_spawn') {
+    const asked = typeof args.folder === 'string' && !__EVEN_PLUGIN__ ? args.folder : null
+    if (asked === null) return crate<T>(command, { ...args, folder: null })
+    const { workingFolder } = await import('./work')
+    const folder = await workingFolder(asked).catch(() => null)
+    return crate<T>(command, { ...args, folder })
+  }
   if (command === 'same_pdf') return null as T
   if (
     command === 'list_trash' ||
@@ -265,6 +270,8 @@ export async function internalInvoke<T>(
       const entry = await mount.folder.at(at)
       return (entry?.key ? { modified: entry.modified, len: entry.size } : null) as T
     }
+    case 'file_there':
+      return ((await mount.folder.at(at)) !== null) as T
     case 'read_tree': {
       const entry = await mount.folder.at(at)
       if (at && (!entry || entry.key)) throw new Error(`${String(args.root)} is not a folder`)

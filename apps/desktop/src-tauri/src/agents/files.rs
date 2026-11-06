@@ -51,6 +51,14 @@ pub(super) fn answer(app: &AppHandle, caller: &Caller, asked: &Files) -> Answer 
             return question;
         }
     }
+    let path = match super::working::on_disk(app, &path) {
+        Ok(path) => path,
+        Err(why) => return Answer::error(Code::BadArguments, why),
+    };
+    let to = match to.map(|one| super::working::on_disk(app, &one)).transpose() {
+        Ok(to) => to,
+        Err(why) => return Answer::error(Code::BadArguments, why),
+    };
     match done(asked, &path, to.as_deref(), &fenced) {
         Ok(result) => Answer::Ok {
             untrusted: reads(asked.op).then(|| path.display().to_string()),
@@ -96,7 +104,7 @@ pub(super) fn reachable(
             return Err(question);
         }
     }
-    Ok(path)
+    super::working::on_disk(app, &path).map_err(|why| Answer::error(Code::BadArguments, why))
 }
 
 pub(super) fn pick_reach(app: &AppHandle, path: &Path) -> PathBuf {

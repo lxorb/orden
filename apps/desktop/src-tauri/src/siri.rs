@@ -2,19 +2,26 @@ use std::ffi::{c_char, CStr};
 use std::fs;
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::OnceLock;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use security_framework::os::macos::code_signing::{Flags, SecCode, SecRequirement};
-use tauri::AppHandle;
+use tauri::{AppHandle, Emitter as _};
 
-use crate::paths::{
-    config_dir, folder_named, in_spaces, inside, made, outside_folder, spaces_folder,
-    write_atomically, SPACES, SPACES_DIR, SPACES_KEPT, TRASH,
-};
+use crate::paths::{config_dir, inside, made, spaces_dir, write_atomically, TRASH};
 
 const INBOX: &str = ".Inbox.md";
 
 const FRONT: &str = "inbox.txt";
+
+const ADDED: &str = "added";
+
+pub const ADDED_EVENT: &str = "nib://shortcuts-added";
+
+static APP: OnceLock<AppHandle> = OnceLock::new();
+
+static COUNT: AtomicU32 = AtomicU32::new(0);
 
 pub fn offered() -> bool {
     static OFFERED: OnceLock<bool> = OnceLock::new();
@@ -30,16 +37,6 @@ fn signed_by_a_team() -> bool {
         .is_ok()
 }
 
-pub fn remember(app: &AppHandle, path: &str) -> Result<(), String> {
-    let inbox = in_spaces(app, path)?;
-    if inbox.extension().is_none_or(|one| one != "md") {
-        return Err(format!("{path} is not a note"));
-    }
-    let dir = config_dir(app)?;
-    made(&dir)?;
-    write_atomically(&dir.join(FRONT), inbox.to_string_lossy().as_bytes())
-}
-
 #[allow(unsafe_code)]
 #[no_mangle]
 pub extern "C" fn nib_add_to_inbox(text: *const c_char) -> i32 {
@@ -47,11 +44,14 @@ pub extern "C" fn nib_add_to_inbox(text: *const c_char) -> i32 {
         return 1;
     }
     let text = unsafe { CStr::from_ptr(text) }.to_string_lossy();
-    let front = crate::mcp::home::config_dir()
-        .and_then(|dir| fs::read_to_string(dir.join(FRONT)).ok())
-        .map(|said| PathBuf::from(said.trim()));
-    match decided_spaces().and_then(|spaces| add_to_inbox(&spaces, front.as_deref(), &text)) {
-        Ok(_) => 0,
+    let added = crate::mcp::home::config_dir()
+        .ok_or_else(|| "no settings folder".to_owned())
+        .and_then(|dir| queued(&dir.join(ADDED), &text));
+    match added {
+        Ok(_) => {
+            told();
+            0
+        }
         Err(error) => {
             eprintln!("siri: no task added: {error}");
             1
@@ -59,20 +59,91 @@ pub extern "C" fn nib_add_to_inbox(text: *const c_char) -> i32 {
     }
 }
 
-fn add_to_inbox(spaces: &Path, front: Option<&Path>, text: &str) -> Result<PathBuf, String> {
+fn told() {
+    let Some(app) = APP.get() else {
+        return;
+    };
+    if let Some(window) = crate::agents::shell::host(app) {
+        let _ = app.emit_to(window.label(), ADDED_EVENT, ());
+    }
+}
+
+fn queued(folder: &Path, text: &str) -> Result<PathBuf, String> {
     let text = text.split_whitespace().collect::<Vec<_>>().join(" ");
     if text.is_empty() {
         return Err("no words".to_owned());
     }
-    let inbox = inbox_in(spaces, front)?;
-    let before = match fs::read_to_string(&inbox) {
-        Ok(before) => before,
-        Err(error) if error.kind() == ErrorKind::NotFound => String::new(),
-        Err(error) => return Err(format!("could not read {}: {error}", inbox.display())),
+    made(folder)?;
+    let at = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_or(0, |since| since.as_nanos());
+    let count = COUNT.fetch_add(1, Ordering::Relaxed);
+    let file = folder.join(format!("{at:024}-{count:06}.txt"));
+    write_atomically(&file, text.as_bytes())?;
+    Ok(file)
+}
+
+#[derive(serde::Serialize, Debug, PartialEq, Eq)]
+pub struct Added {
+    id: String,
+    text: String,
+}
+
+pub fn added(app: &AppHandle) -> Result<Vec<Added>, String> {
+    let _ = APP.set(app.clone());
+    Ok(waiting(&config_dir(app)?.join(ADDED)))
+}
+
+fn waiting(folder: &Path) -> Vec<Added> {
+    let Ok(entries) = fs::read_dir(folder) else {
+        return Vec::new();
     };
-    fs::write(&inbox, appended(&before, &format!("- [ ] {text}")))
-        .map_err(|error| format!("could not write {}: {error}", inbox.display()))?;
-    Ok(inbox)
+    let mut out: Vec<Added> = entries
+        .flatten()
+        .filter_map(|entry| {
+            let id = entry.file_name().to_str()?.to_owned();
+            if !one_of_ours(&id) {
+                return None;
+            }
+            let text = fs::read_to_string(entry.path()).ok()?;
+            Some(Added { id, text })
+        })
+        .collect();
+    out.sort_by(|a, b| a.id.cmp(&b.id));
+    out
+}
+
+fn one_of_ours(id: &str) -> bool {
+    id.strip_suffix(".txt").is_some_and(|stem| {
+        !stem.is_empty()
+            && stem
+                .bytes()
+                .all(|byte| byte.is_ascii_digit() || byte == b'-')
+    })
+}
+
+pub fn taken(app: &AppHandle, id: &str) -> Result<(), String> {
+    gone(&config_dir(app)?.join(ADDED), id)
+}
+
+fn gone(folder: &Path, id: &str) -> Result<(), String> {
+    if !one_of_ours(id) {
+        return Err(format!("{id} is not a task Shortcuts added"));
+    }
+    match fs::remove_file(folder.join(id)) {
+        Err(error) if error.kind() != ErrorKind::NotFound => {
+            Err(format!("could not let go of {id}: {error}"))
+        }
+        _ => Ok(()),
+    }
+}
+
+pub fn left_inbox(app: &AppHandle) -> Option<PathBuf> {
+    let front = config_dir(app)
+        .ok()
+        .and_then(|dir| fs::read_to_string(dir.join(FRONT)).ok())
+        .map(|said| PathBuf::from(said.trim()));
+    inbox_in(&spaces_dir(app).ok()?, front.as_deref()).ok()
 }
 
 fn inbox_in(spaces: &Path, front: Option<&Path>) -> Result<PathBuf, String> {
@@ -89,24 +160,6 @@ fn inbox_in(spaces: &Path, front: Option<&Path>) -> Result<PathBuf, String> {
     }
 }
 
-fn decided_spaces() -> Result<PathBuf, String> {
-    if let Some(named) = folder_named(std::env::var_os(SPACES_DIR).as_deref()) {
-        return Ok(named);
-    }
-    let settings = crate::mcp::home::config_dir().ok_or_else(|| "no settings folder".to_owned())?;
-    let documents = dirs::document_dir().or_else(dirs::home_dir);
-    Ok(spaces_in(&settings, documents.as_deref()))
-}
-
-fn spaces_in(settings: &Path, documents: Option<&Path>) -> PathBuf {
-    let said = fs::read_to_string(settings.join(SPACES_KEPT)).ok();
-    let fresh = settings.join(SPACES);
-    let nib = documents.map(|base| base.join("Nib"));
-    let outside = outside_folder(said.as_deref(), &[Some(fresh.as_path()), nib.as_deref()]);
-    let said = said.filter(|_| outside.is_none());
-    spaces_folder(said.as_deref(), nib.filter(|dir| dir.is_dir()), fresh)
-}
-
 fn default_space(spaces: &Path) -> Result<PathBuf, String> {
     let entries = fs::read_dir(spaces)
         .map_err(|error| format!("could not read {}: {error}", spaces.display()))?;
@@ -119,169 +172,83 @@ fn default_space(spaces: &Path) -> Result<PathBuf, String> {
         .ok_or_else(|| format!("no space in {}", spaces.display()))
 }
 
-fn appended(note: &str, line: &str) -> String {
-    let eol = if note.contains("\r\n") { "\r\n" } else { "\n" };
-    let lines: Vec<&str> = note
-        .split('\n')
-        .map(|one| one.trim_end_matches('\r'))
-        .collect();
-    let Some(last) = lines.iter().rposition(|one| !one.trim().is_empty()) else {
-        return format!("{line}{eol}");
-    };
-    let kept = note
-        .split('\n')
-        .take(last)
-        .map(|one| one.len() + 1)
-        .sum::<usize>()
-        + lines[last].len();
-    let gap = if ends_in_list(&lines[..=last]) {
-        eol.to_owned()
-    } else {
-        eol.repeat(2)
-    };
-    format!("{}{gap}{line}{}", &note[..kept], &note[kept..])
-}
-
-fn ends_in_list(lines: &[&str]) -> bool {
-    for line in lines.iter().rev() {
-        if line.trim().is_empty() {
-            return false;
-        }
-        if is_item(line) {
-            return true;
-        }
-        if !line.starts_with([' ', '\t']) {
-            return false;
-        }
-    }
-    false
-}
-
-fn is_item(line: &str) -> bool {
-    let rest = line.strip_prefix(['-', '*', '+']).or_else(|| {
-        let digits = line.trim_start_matches(|c: char| c.is_ascii_digit());
-        (digits.len() < line.len())
-            .then_some(digits)?
-            .strip_prefix(['.', ')'])
-    });
-    rest.is_some_and(|rest| rest.starts_with([' ', '\t']))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn a_task_lands_at_the_end_of_the_inbox() {
-        assert_eq!(appended("", "- [ ] a"), "- [ ] a\n");
-        assert_eq!(appended("- [ ] a\n", "- [ ] b"), "- [ ] a\n- [ ] b\n");
-        assert_eq!(appended("# Inbox\n", "- [ ] b"), "# Inbox\n\n- [ ] b\n");
-        assert_eq!(
-            appended("1. a\n  more\n\n", "- [ ] b"),
-            "1. a\n  more\n- [ ] b\n\n"
-        );
-        assert_eq!(appended("- [ ] a\r\n", "- [ ] b"), "- [ ] a\r\n- [ ] b\r\n");
-    }
-
-    #[test]
-    fn a_task_lands_after_the_last_words_of_a_note_of_mixed_endings() {
-        assert_eq!(
-            appended("a\nb\nc\nd\r\n", "- [ ] x"),
-            "a\nb\nc\nd\r\n\r\n- [ ] x\r\n"
-        );
-        assert_eq!(
-            appended("Einkauf\nÄpfel\nBirnen\nÄ\r\n", "- [ ] x"),
-            "Einkauf\nÄpfel\nBirnen\nÄ\r\n\r\n- [ ] x\r\n"
-        );
-        assert_eq!(
-            appended("- a\n- b\r\n", "- [ ] x"),
-            "- a\n- b\r\n- [ ] x\r\n"
-        );
-    }
-
-    #[test]
-    fn the_spaces_folder_is_the_one_the_app_chose() {
+    fn a_task_waits_for_the_app_and_writes_into_no_space() {
         let dir = tempfile::tempdir().unwrap();
-        let settings = dir.path().join("Application Support").join("nib");
-        let documents = dir.path().join("Documents");
-        fs::create_dir_all(&settings).unwrap();
-        fs::create_dir_all(&documents).unwrap();
+        let spaces = dir.path().join("Nib");
+        fs::create_dir_all(spaces.join("Notes")).unwrap();
+        let folder = dir.path().join(ADDED);
 
+        queued(&folder, "  buy\n milk ").unwrap();
+        queued(&folder, "bread").unwrap();
+
+        let waiting = waiting(&folder);
         assert_eq!(
-            spaces_in(&settings, Some(&documents)),
-            settings.join(SPACES)
+            waiting
+                .iter()
+                .map(|one| one.text.as_str())
+                .collect::<Vec<_>>(),
+            ["buy milk", "bread"]
         );
+        assert!(!spaces.join("Notes").join(INBOX).exists());
 
-        fs::create_dir(documents.join("Nib")).unwrap();
+        gone(&folder, &waiting[0].id).unwrap();
+        gone(&folder, &waiting[0].id).unwrap();
         assert_eq!(
-            spaces_in(&settings, Some(&documents)),
-            documents.join("Nib")
+            super::waiting(&folder)
+                .into_iter()
+                .map(|one| one.text)
+                .collect::<Vec<_>>(),
+            ["bread"]
         );
+    }
 
-        let kept = settings.join(SPACES);
-        fs::write(
-            settings.join(SPACES_KEPT),
-            kept.to_string_lossy().as_bytes(),
-        )
-        .unwrap();
-        assert_eq!(spaces_in(&settings, Some(&documents)), kept);
+    #[test]
+    fn nothing_waits_without_words() {
+        let dir = tempfile::tempdir().unwrap();
+        let folder = dir.path().join(ADDED);
+        assert!(queued(&folder, " \n ").is_err());
+        assert!(waiting(&folder).is_empty());
+    }
 
-        fs::write(
-            settings.join(SPACES_KEPT),
-            dir.path().join("Elsewhere").to_string_lossy().as_bytes(),
-        )
-        .unwrap();
-        assert_eq!(
-            spaces_in(&settings, Some(&documents)),
-            documents.join("Nib")
-        );
+    #[test]
+    fn only_a_waiting_task_is_let_go() {
+        let dir = tempfile::tempdir().unwrap();
+        let outside = dir.path().join("keep.txt");
+        fs::write(&outside, "kept").unwrap();
+        let folder = dir.path().join(ADDED);
+        fs::create_dir_all(&folder).unwrap();
+        fs::write(folder.join("notes.md"), "kept").unwrap();
+
+        for id in ["../keep.txt", "notes.md", "", ".txt"] {
+            assert!(gone(&folder, id).is_err(), "{id}");
+        }
+        assert!(outside.exists());
+        assert!(waiting(&folder).is_empty());
     }
 
     #[test]
     fn the_default_space_is_the_first_on_disk() {
         let dir = tempfile::tempdir().unwrap();
-        for name in [".trash", "Work", "notes"] {
+        for name in [".trash", ".orden", "Work", "notes"] {
             fs::create_dir(dir.path().join(name)).unwrap();
         }
         assert_eq!(default_space(dir.path()).unwrap(), dir.path().join("notes"));
     }
 
     #[test]
-    fn a_task_is_written_as_an_open_item() {
-        let dir = tempfile::tempdir().unwrap();
-        let space = dir.path().join("Notes");
-        fs::create_dir(&space).unwrap();
-        fs::write(space.join(INBOX), "# Inbox\n").unwrap();
-
-        let inbox = add_to_inbox(dir.path(), None, "  buy\n milk ").unwrap();
-        assert_eq!(inbox, space.join(INBOX));
-        assert_eq!(
-            fs::read_to_string(&inbox).unwrap(),
-            "# Inbox\n\n- [ ] buy milk\n"
-        );
-    }
-
-    #[test]
-    fn a_missing_inbox_is_made_hidden_and_nothing_the_reader_sees() {
-        let dir = tempfile::tempdir().unwrap();
-        fs::create_dir(dir.path().join("Notes")).unwrap();
-        let inbox = add_to_inbox(dir.path(), None, "milk").unwrap();
-        assert_eq!(inbox, dir.path().join("Notes").join(".Inbox.md"));
-        assert_eq!(fs::read_to_string(inbox).unwrap(), "- [ ] milk\n");
-        assert!(!dir.path().join("Notes").join("Inbox.md").exists());
-    }
-
-    #[test]
-    fn the_task_goes_to_the_inbox_of_the_space_in_front() {
+    fn the_inbox_an_older_build_wrote_to_is_the_one_in_front() {
         let dir = tempfile::tempdir().unwrap();
         let work = dir.path().join("Work").join("Lists");
         fs::create_dir_all(&work).unwrap();
         fs::create_dir(dir.path().join("Notes")).unwrap();
         let front = work.join("Todo.md");
 
-        let inbox = add_to_inbox(dir.path(), Some(&front), "milk").unwrap();
-        assert_eq!(inbox, front);
-        assert_eq!(fs::read_to_string(front).unwrap(), "- [ ] milk\n");
+        assert_eq!(inbox_in(dir.path(), Some(&front)).unwrap(), front);
     }
 
     #[test]
@@ -305,14 +272,5 @@ mod tests {
     #[test]
     fn an_ad_hoc_build_is_not_offered_the_shortcuts() {
         assert!(!signed_by_a_team());
-    }
-
-    #[test]
-    fn nothing_is_written_without_words_or_a_space() {
-        let dir = tempfile::tempdir().unwrap();
-        assert!(add_to_inbox(dir.path(), None, "milk").is_err());
-        fs::create_dir(dir.path().join("Notes")).unwrap();
-        assert!(add_to_inbox(dir.path(), None, " \n ").is_err());
-        assert!(!dir.path().join("Notes").join(INBOX).exists());
     }
 }
