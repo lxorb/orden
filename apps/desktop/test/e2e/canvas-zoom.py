@@ -87,7 +87,26 @@ def drive(browser: Browser) -> None:
             wrong(f"[pen] at 400% the stroke is {drawn} wide, not the pen's {pen} on the screen")
         else:
             say("ok   [pen] zoomed in, the stroke is as wide as it shows")
+
+    page.evaluate(
+        "() => { const tab = window.nibApp.workspace.active; tab.camera = { ...tab.camera, scale: 0.25 } }"
+    )
+    page.wait_for_timeout(300)
+    page.mouse.move(x, y + 120)
+    page.mouse.down()
+    for step in range(1, 12):
+        page.mouse.move(x + step * 8, y + 120 + (step % 3) * 3)
+    page.mouse.up()
+    page.wait_for_timeout(2500)
+    written = page.evaluate("() => JSON.parse(window.nibApp.workspace.active.doc)")
+    ink = written.get("nib", {}).get("ink", [])
+    drawn = ink[-1].get("size") if len(ink) > 1 else None
+    say(f"[pen] a pen of 3 wrote a stroke {drawn} wide at 25%")
+    if not drawn or abs(drawn - 12) > 0.011:
+        wrong(f"[pen] at 25% the stroke is {drawn} wide, not the pen's 3 on the screen (#644)")
+    else:
+        say("ok   [pen] zoomed out, the stroke is as wide as it shows")
     page.close()
 
 if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the plane goes back to 100% from the bar, and a pen is fine when zoomed in"))
+    raise SystemExit(DRIVE.run(drive, "the plane goes back to 100% from the bar, and a pen is as wide as it shows zoomed in and out"))

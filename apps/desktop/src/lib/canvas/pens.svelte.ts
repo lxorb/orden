@@ -50,8 +50,13 @@ export const RUB = 10
 export const STROKE_RUB = 2
 
 export function drawnWidth(size: number, scale: number): number {
-  if (!(scale > 1)) return size
+  if (!(scale > 0) || !Number.isFinite(scale)) return size
   return Math.max(0.1, Math.round((size / scale) * 100) / 100)
+}
+
+export function shownWidth(size: number, scale: number): number {
+  if (!(scale > 0) || !Number.isFinite(scale)) return size
+  return Math.round(size * scale * 10) / 10
 }
 
 export function clampSize(value: number): number {

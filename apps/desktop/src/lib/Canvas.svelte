@@ -60,7 +60,7 @@
   import { cursorFor, type Over } from './canvas/cursor'
   import { hand } from './canvas/hand.svelte'
   import { aimed, fading, latticeLayers, latticeLevel, settled, stepped } from './canvas/lattice'
-  import { drawnWidth, pens } from './canvas/pens.svelte'
+  import { drawnWidth, pens, shownWidth } from './canvas/pens.svelte'
   import { hitAt, HANDLE, PORT, roomFor } from './canvas/hit'
   import { assisted, leadPoint, penFelt, tidyShape, transformed } from './canvas/ink'
   import { inkColour } from './canvas/paint'
@@ -1470,6 +1470,11 @@
     return { at: rubAt, reach: pens.rub / camera.scale }
   })
 
+  const pickedWidth = $derived.by(() => {
+    const stroke = store.canvas.ink.find((one) => store.isPicked(one.id))
+    return stroke && shownWidth(stroke.size, camera.scale)
+  })
+
   const onFrame = $derived(
     store.canvas.nodes.some((node) => node.type === 'group' && picked.has(node.id)),
   )
@@ -1765,12 +1770,12 @@
       at={overPicked.at}
       below={overPicked.below}
       colour={pickedColour}
-      size={store.canvas.ink.find((one) => store.isPicked(one.id))?.size}
+      size={pickedWidth}
       recent={pens.recent}
       grouping={onFrame ? 'ungroup' : store.picked.length > 1 ? 'group' : null}
       oncolour={colourPicked}
       onsize={(size: number, drag: string) =>
-        store.edit(sized(store.canvas, store.picked, size), drag)}
+        store.edit(sized(store.canvas, store.picked, drawnWidth(size, camera.scale)), drag)}
       onduplicate={() => run.duplicate(store)}
       ondelete={() => run.remove(store)}
       ongroup={() => (onFrame ? run.ungroup(store) : run.group(store))}
