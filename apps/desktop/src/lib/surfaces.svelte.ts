@@ -147,6 +147,12 @@ export const applicationSurface = held(() =>
     : import('./apps/ApplicationTab.svelte'),
 )
 
+export const explorerSurface = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no file explorer in the Even Realities plugin'))
+    : import('./explorer/ExplorerTab.svelte'),
+)
+
 /** A pane with nothing open, which is the kinds a new tab can be as buttons. Fetched
  *  like the surfaces above it and for the same reason: a window that opens on a note -
  *  which is nearly every window - should not carry the answer to a pane that has

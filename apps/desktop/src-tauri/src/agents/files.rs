@@ -253,7 +253,7 @@ fn fences(app: &AppHandle) -> Vec<PathBuf> {
 
 /// Orden's own folders: its config and its data, with the grants, the endpoint's secret
 /// and the web tabs' cookies in them.
-fn own_folders(app: &AppHandle) -> Vec<PathBuf> {
+pub(crate) fn own_folders(app: &AppHandle) -> Vec<PathBuf> {
     [
         crate::paths::config_dir(app).ok(),
         app.path().app_config_dir().ok(),
@@ -293,7 +293,7 @@ fn refused(fenced: &[PathBuf], op: FilesOp, path: &Path, to: Option<&Path>) -> O
 /// A path with every link in the part of it that exists followed, so that a link can
 /// not carry a call into a fence under another name: `~/x` pointing at the app's config
 /// folder is that folder. What does not exist yet is joined on as it was asked.
-fn real(path: &Path) -> PathBuf {
+pub(crate) fn real(path: &Path) -> PathBuf {
     let mut rest = Vec::new();
     let mut at = path;
     loop {
@@ -617,14 +617,14 @@ fn copied(from: &Path, to: &Path) -> Result<(), String> {
 
 /// A link made at `to` pointing where the link at `from` points.
 #[cfg(unix)]
-fn linked(_from: &Path, target: &Path, to: &Path) -> std::io::Result<()> {
+pub(crate) fn linked(_from: &Path, target: &Path, to: &Path) -> std::io::Result<()> {
     std::os::unix::fs::symlink(target, to)
 }
 
 /// A link made at `to` pointing where the link at `from` points: a folder's link or a
 /// file's, as Windows tells them apart.
 #[cfg(windows)]
-fn linked(from: &Path, target: &Path, to: &Path) -> std::io::Result<()> {
+pub(crate) fn linked(from: &Path, target: &Path, to: &Path) -> std::io::Result<()> {
     if fs::metadata(from).is_ok_and(|meta| meta.is_dir()) {
         std::os::windows::fs::symlink_dir(target, to)
     } else {

@@ -498,6 +498,11 @@
     "default": true,
     "description": "Offers this type when you make something new; off only takes it out of that list."
   },
+  "kinds.explorer": {
+    "type": "boolean",
+    "default": true,
+    "description": "Offers this type when you make something new; off only takes it out of that list."
+  },
   "kinds.note": {
     "type": "boolean",
     "default": true,
@@ -662,6 +667,10 @@
   "shortcuts.app-duplicate-tab": {
     "type": "string",
     "description": "The key that runs Duplicate tab, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-explorer": {
+    "type": "string",
+    "description": "The key that runs File explorer, as the keys file writes it; empty for none."
   },
   "shortcuts.app-files": {
     "type": "string",
@@ -1186,6 +1195,18 @@
   "shortcuts.edit-upper-case": {
     "type": "string",
     "description": "The key that runs Upper case, as the keys file writes it; empty for none."
+  },
+  "shortcuts.explorer-hidden": {
+    "type": "string",
+    "description": "The key that runs Hidden files, as the keys file writes it; empty for none."
+  },
+  "shortcuts.explorer-location": {
+    "type": "string",
+    "description": "The key that runs Type a location, as the keys file writes it; empty for none."
+  },
+  "shortcuts.explorer-parent": {
+    "type": "string",
+    "description": "The key that runs Folder above, as the keys file writes it; empty for none."
   },
   "shortcuts.export-copy": {
     "type": "string",

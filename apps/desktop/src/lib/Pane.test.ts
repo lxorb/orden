@@ -27,6 +27,7 @@ describe('a surface a pane is filled with', () => {
       'chatSurface',
       'conversationSurface',
       'emptySurface',
+      'explorerSurface',
       'graphSurface',
       'pagesSurface',
       // No paper of its own: a PDF opens as the page note that holds it, which the

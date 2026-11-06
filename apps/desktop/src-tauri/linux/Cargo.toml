@@ -219,6 +219,7 @@ raw-window-handle = "0.6"
 
 [target.'cfg(any(target_os = "linux", target_os = "windows"))'.dependencies]
 str0m = { version = "0.25", default-features = false, features = ["rust-crypto"] }
+trash = { version = "5.3", default-features = false, features = ["chrono", "coinit_apartmentthreaded", "freedesktop"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 file-id = "0.2"

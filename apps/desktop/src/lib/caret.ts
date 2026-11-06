@@ -27,6 +27,7 @@ export interface Showing {
     | 'chat'
     | 'channel'
     | 'application'
+    | 'explorer'
   /** A note being read is a page, and a page has no caret to put anywhere. */
   reading: boolean
 }

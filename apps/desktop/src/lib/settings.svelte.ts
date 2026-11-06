@@ -198,6 +198,7 @@ export type KindName =
   | 'remote'
   | 'online'
   | 'application'
+  | 'explorer'
   | 'web'
   | 'private'
 
@@ -212,6 +213,7 @@ export function kindsHere(): KindName[] {
   if (modes.coder) here.push('online')
   // An application on one of the reader's computers, used from any device (docs/apps.md).
   if (modes.coder) here.push('application')
+  if (isDesktop) here.push('explorer')
   if (web) here.push('web')
   if (web && isDesktop) here.push('private')
   return here

@@ -143,6 +143,17 @@ const ROWS: Record<KindName, () => NewKindRow> = {
         inPane(paneId, () => import('./chats/view/open').then((one) => one.makeChat()))
     },
   }),
+  explorer: () => ({
+    kind: 'explorer',
+    line: 'run',
+    label: () => kindLabel('explorer'),
+    mark: 'folder',
+    letter: 'f',
+    make: (paneId) => {
+      if (!__EVEN_PLUGIN__)
+        inPane(paneId, () => import('./explorer/open').then((one) => one.openExplorer()))
+    },
+  }),
   // R, because T is the new tab's own key, and R is what Run has been on Windows for
   // thirty years. See docs/terminal.md.
   terminal: () => terminalRow(),

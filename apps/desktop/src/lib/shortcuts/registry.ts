@@ -63,6 +63,7 @@ export type Category =
   | 'table'
   | 'picture'
   | 'tasks'
+  | 'explorer'
   | 'fixed'
 
 export const CATEGORIES: { id: Category; label: () => string }[] = [
@@ -76,6 +77,7 @@ export const CATEGORIES: { id: Category; label: () => string }[] = [
   { id: 'pages', label: () => t('Pages') },
   { id: 'table', label: () => t('Tables') },
   { id: 'picture', label: () => t('Pictures') },
+  { id: 'explorer', label: () => t('File explorer') },
   { id: 'fixed', label: () => t('Fixed keys') },
 ]
 
@@ -1122,6 +1124,18 @@ const APP_ENTRIES: Shortcut[] = [
     run: toggleSpacePicker,
   },
   {
+    id: 'app.explorer',
+    label: () => t('File explorer'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-Alt-e',
+    desktop: true,
+    run: () => {
+      if (!__EVEN_PLUGIN__ && hiddenKinds.offers('explorer'))
+        void import('../explorer/open').then((one) => one.openExplorer())
+    },
+  },
+  {
     // The space drawn as a map of its links. No key out of the box - it opens
     // from the panel's tabs and the palette - and here so a preset that has one for it
     // has somewhere to put it. Obsidian's is Ctrl+G.
@@ -1814,6 +1828,24 @@ export const FIXED_ENTRIES: Shortcut[] = [
   },
 ]
 
+const EXPLORER_ENTRIES: Shortcut[] = (
+  [
+    ['explorer.parent', () => t('Folder above'), 'Backspace', 'Mod-ArrowUp'],
+    ['explorer.parent.alt', () => t('Folder above'), 'Alt-ArrowUp', 'Alt-ArrowUp'],
+    ['explorer.location', () => t('Type a location'), 'Mod-l', 'Mod-Shift-g'],
+    ['explorer.hidden', () => t('Hidden files'), 'Mod-h', 'Mod-Shift-h'],
+  ] as const
+).map(([id, label, key, mac]) => ({
+  id,
+  label,
+  category: 'explorer' as const,
+  scope: 'panel' as const,
+  key,
+  mac,
+  contextual: true,
+  ...(id.endsWith('.alt') ? { alias: true } : {}),
+}))
+
 /** Every shortcut there is, in the order the settings list shows them. */
 export const SHORTCUTS: Shortcut[] = [
   ...APP_ENTRIES,
@@ -1821,6 +1853,7 @@ export const SHORTCUTS: Shortcut[] = [
   ...ALT_NUMBERED,
   ...EDITOR_SPECS.map(fromEditor),
   ...PANEL_ENTRIES,
+  ...EXPLORER_ENTRIES,
   ...CANVAS_ENTRIES,
   ...PAGES_ENTRIES,
   ...WEB_ENTRIES,

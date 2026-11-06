@@ -98,6 +98,8 @@ mod endpoint;
 #[cfg(desktop)]
 mod engine;
 #[cfg(desktop)]
+mod explorer;
+#[cfg(desktop)]
 mod extensions;
 #[cfg(desktop)]
 mod foreground;
@@ -652,6 +654,24 @@ macro_rules! desktop_commands {
             dictation::dictation_local_remove,
             dictation::dictation_local_open,
             dictation::dictation_local_hear,
+            explorer::listing::explorer_list,
+            explorer::listing::explorer_places,
+            explorer::listing::explorer_facts,
+            explorer::listing::explorer_peek,
+            explorer::listing::explorer_open,
+            explorer::listing::explorer_reveal,
+            explorer::changes::explorer_make,
+            explorer::changes::explorer_rename,
+            explorer::changes::explorer_trash,
+            explorer::changes::explorer_untrash,
+            explorer::changes::explorer_delete,
+            explorer::jobs::explorer_cancel,
+            explorer::jobs::explorer_clashes,
+            explorer::jobs::explorer_transfer,
+            explorer::jobs::explorer_count,
+            explorer::jobs::explorer_search,
+            explorer::watch::explorer_watch,
+            explorer::watch::explorer_unwatch,
             downloads::web_downloads,
             downloads::web_download_open,
             downloads::web_download_show,
@@ -839,6 +859,11 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
 
     #[cfg(desktop)]
     let builder = builder.manage(mail_socket::MailSockets::default());
+
+    #[cfg(desktop)]
+    let builder = builder
+        .manage(explorer::reach::Explored::default())
+        .manage(explorer::watch::Watching::default());
 
     // The model local dictation has open; see dictation.rs.
     #[cfg(desktop)]

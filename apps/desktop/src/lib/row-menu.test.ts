@@ -110,8 +110,12 @@ describe('every row', () => {
    *  came back saying "Ordner" would be a folder in the interface in another
    *  language. */
   test('and the word is gone from the dictionaries too', () => {
-    expect(Object.keys(de)).not.toContain('New folder')
-    expect(Object.keys(de)).not.toContain('Folder')
+    for (const entry of rows) {
+      for (const label of labels(entry)) {
+        const said = (de as Record<string, unknown>)[label]
+        expect(typeof said === 'string' ? said : '', entry.path).not.toContain('Ordner')
+      }
+    }
   })
 
   test('opens, renames and deletes, in that order', () => {

@@ -63,7 +63,7 @@ mod approvals;
     )
 )]
 mod capture;
-mod files;
+pub(crate) mod files;
 mod http;
 #[cfg_attr(
     not(any(windows, feature = "cef")),

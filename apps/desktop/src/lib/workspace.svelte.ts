@@ -276,6 +276,11 @@ function papers(): Promise<typeof import('./pdf/papers')> {
   return import('./pdf/papers')
 }
 
+async function viewOfExplorer(tab: Tab): Promise<import('./explorer/view.svelte').ExplorerView> {
+  const { viewOf } = await import('./explorer/view.svelte')
+  return viewOf(tab)
+}
+
 /** A background fetch nobody waits for that did not arrive: a chunk missing after an
  *  update, which reloading.svelte.ts answers, or a page going away while it was still
  *  coming in - a test's environment torn down under a space it had only just listed.
@@ -1714,7 +1719,7 @@ class Workspace {
    *  opens a tab with Ctrl held: what an agent makes for the reader without moving their
    *  screen (docs/agent-native.md 5.4). Nothing in front changes, so nothing goes. */
   openUnsaved(
-    kind: 'note' | 'canvas' | 'pages' | 'terminal' | 'application',
+    kind: 'note' | 'canvas' | 'pages' | 'terminal' | 'application' | 'explorer',
     text: string,
     name = UNTITLED,
     beside: string | null = null,
@@ -3466,6 +3471,8 @@ class Workspace {
     // In a web tab the trail is the page's own history, which is the browser's
     // meaning of the same key rather than a second one; see web-tab/pages.svelte.ts.
     if (tab.kind === 'web') void pages.step(tab.id, 'back')
+    else if (!__EVEN_PLUGIN__ && tab.kind === 'explorer')
+      void viewOfExplorer(tab).then((view) => view.back())
     else void this.walk(tab.at - 1, tab.id)
   }
 
@@ -3478,6 +3485,8 @@ class Workspace {
     }
 
     if (tab.kind === 'web') void pages.step(tab.id, 'forward')
+    else if (!__EVEN_PLUGIN__ && tab.kind === 'explorer')
+      void viewOfExplorer(tab).then((view) => view.forward())
     else void this.walk(tab.at + 1, tab.id)
   }
 

@@ -255,6 +255,24 @@ export const TAB_KINDS = {
     preview: 'picture',
     panels: [],
   },
+  explorer: {
+    words: false,
+    extension: null,
+    statusBar: false,
+    mark: 'folder',
+    glyph: null,
+    liveMark: false,
+    editor: false,
+    takesDrops: false,
+    ownBar: false,
+    fileDocument: false,
+    plane: false,
+    exports: 'none',
+    selection: null,
+    outsideTitle: false,
+    preview: 'picture',
+    panels: [],
+  },
 } as const satisfies Record<string, TabKindTraits>
 
 /** What a tab holds; see documents.svelte.ts for what each kind is. */

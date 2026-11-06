@@ -15,6 +15,7 @@ export function kindLabel(kind: KindName): string {
     remote: () => t('Remote'),
     online: () => t('Online terminal'),
     application: () => t('New application'),
+    explorer: () => t('File explorer'),
     web: () => t('New web note'),
     private: () => t('New private tab'),
   }[kind]()
@@ -31,6 +32,7 @@ export function kindName(kind: KindName): string {
     remote: () => t('Remote'),
     online: () => t('Online terminal'),
     application: () => t('Application'),
+    explorer: () => t('File explorer'),
     web: () => t('Web note'),
     private: () => t('Private tab'),
   }[kind]()

@@ -197,6 +197,12 @@ Import, a drop onto the file list or into a note, a share on the phone.
 tab left on such a file by a sitting from before is not put back (`tabsFrom` in
 the workspace).
 
+The file explorer (docs/explorer.md) is the one surface about the rest of the disk, and
+its commands stand behind a fifth judge, `explorer/reach.rs`: a folder is listed wherever
+the reader points the tab, and everything else reaches only what a tab has shown this run,
+never Orden's own folders and never the spaces for a change. It opens nothing in Orden from
+outside the spaces: such a file goes to the app the system opens it with.
+
 `chosen` is the one way past the spaces, and a narrow one. Inside the spaces
 folder `in_spaces` decides alone, trash and all. Outside it, a path is let
 through only when the reader picked it, or a file in the same folder, in the

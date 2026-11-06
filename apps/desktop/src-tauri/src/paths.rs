@@ -812,6 +812,24 @@ fn short_alias(name: &str) -> bool {
         && number.chars().all(|one| one.is_ascii_digit())
 }
 
+pub fn spoken(path: &Path) -> bool {
+    !path.components().any(|part| unspoken(NAMING, part))
+}
+
+pub fn path_key(path: &Path) -> String {
+    path_key_as(NAMING, path)
+}
+
+fn path_key_as(naming: Naming, path: &Path) -> String {
+    let path = folded(path);
+    let last = path.components().count();
+    path.components()
+        .enumerate()
+        .map(|(at, part)| name_key(naming, &part.as_os_str().to_string_lossy(), at + 1 == last))
+        .collect::<Vec<_>>()
+        .join("\u{0}")
+}
+
 /// The gate every note, folder and space command goes through: a string from the
 /// window only becomes a path once it is known to be inside the spaces folder.
 /// The trash is inside that folder and still refused, because nothing but the
@@ -1470,11 +1488,47 @@ mod tests {
         a_shareable_folder, at_most, copy_held, drop_held, files_in, folded, folder_key,
         folder_key_as, folder_named, free_spot, held_paper, highlights_of, inside, inside_as,
         is_base, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut, judged, judged_as,
-        judged_beyond, judged_space, kept_folder_named, link_to, move_held, paper_of, same_path,
-        space_root, upcased, write_atomically, Naming, Picked, ORIGIN,
+        judged_beyond, judged_space, kept_folder_named, link_to, move_held, paper_of, path_key_as,
+        same_path, space_root, unspoken, upcased, write_atomically, Naming, Picked, ORIGIN,
     };
     use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
+
+    #[test]
+    fn a_path_key_is_one_folder_however_it_is_spelled() {
+        let key = |naming, path: &str| path_key_as(naming, Path::new(path));
+        assert_eq!(
+            key(Naming::Cased, "/Users/a/Photos"),
+            key(Naming::Cased, "/users/A/photos")
+        );
+        assert_eq!(
+            key(Naming::Win32, "/Users/a/Photos."),
+            key(Naming::Win32, "/users/a/photos")
+        );
+        assert_eq!(
+            key(Naming::Exact, "/a/./b/../c"),
+            key(Naming::Exact, "/a/c")
+        );
+        assert_ne!(
+            key(Naming::Exact, "/a/Photos"),
+            key(Naming::Exact, "/a/photos")
+        );
+        assert_ne!(key(Naming::Cased, "/a/b"), key(Naming::Cased, "/a/bc"));
+        assert_ne!(key(Naming::Cased, "/a/b/c"), key(Naming::Cased, "/a/b"));
+    }
+
+    #[test]
+    fn a_stream_or_an_alias_is_not_spoken_on_windows() {
+        let unsaid = |naming, path: &str| {
+            Path::new(path)
+                .components()
+                .any(|part| unspoken(naming, part))
+        };
+        assert!(unsaid(Naming::Win32, "/a/b.txt:hidden"));
+        assert!(unsaid(Naming::Win32, "/a/PROGRA~1/b"));
+        assert!(!unsaid(Naming::Win32, "/a/Program Files/b"));
+        assert!(!unsaid(Naming::Exact, "/a/b.txt:hidden"));
+    }
 
     /// The device names the list once missed, a stem with the spaces Windows drops
     /// after it, and names that only begin like a device's.

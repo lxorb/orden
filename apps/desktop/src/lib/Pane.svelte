@@ -59,6 +59,7 @@
     conversationIn,
     conversationSurface,
     emptySurface,
+    explorerSurface,
     findBar,
     graphSurface,
     lockScreen,
@@ -632,6 +633,14 @@
     {#key tab.id}
       {#await applicationSurface() then ApplicationTab}
         <ApplicationTab {tab} />
+      {:catch}
+        {@render unreachable()}
+      {/await}
+    {/key}
+  {:else if tab?.kind === 'explorer'}
+    {#key tab.id}
+      {#await explorerSurface() then ExplorerTab}
+        <ExplorerTab {tab} focused={workspace.panes.focusedId === pane.id} />
       {:catch}
         {@render unreachable()}
       {/await}
