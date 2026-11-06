@@ -1,73 +1,19 @@
-//! Orden, on a desktop and on a phone: the plugins it runs with, the commands the
-//! window may call, and the window itself.
-//!
-//! Every command lives in the module that owns the thing it touches - `notes`,
-//! `spaces`, `trash` and so on - and every path a command is given is judged by
-//! `paths` before anything on disk is touched.
-//!
-//! A phone has no second window, no installer, no file dialog and no shell, so
-//! the modules that are only about those are `#[cfg(desktop)]` and their commands
-//! reach the handler only there. Everything about notes is the same on both: one
-//! spaces folder (`paths::spaces_dir`), read and written by the same commands.
-//!
-//! One rule about every command that waits for the disk: it says `async`.
-//!
-//! `#[tauri::command]` on a function that is not itself async runs the body *on
-//! the main thread*, inside the webview's own request handler. On Windows that is
-//! the thread with the message loop on it, so a command that reads a folder full
-//! of notes stops the window repainting, stops it answering the mouse, and stops
-//! the webview loading anything else for as long as the read takes - the app looks
-//! wedged, and the wait is the disk's. `#[tauri::command(async)]` on the same
-//! synchronous function runs it on a thread of the runtime's instead and answers
-//! the window when it is done, which is the same command with the freeze taken
-//! out. So everything that touches a file, walks a folder, starts a subprocess or
-//! asks the machine's keychain says it.
-//!
-//! Four kinds of command deliberately do not. The ones that only read state this
-//! builder manages, which is a mutex and no wait at all. `write_log`, whose lines
-//! have to leave in the order they were written and would not if two could be in
-//! the air at once; it hands each to the log's own thread, which is the one that
-//! waits. The two that reach Windows through COM or the registry, since
-//! an apartment belongs to the thread that made it. And `new_window`, which builds
-//! a window.
-
 #[cfg(desktop)]
 mod agents;
-// An application running on this computer for a tab on another, on a display of its
-// own (issue 1063); see apps_host.rs.
-#[cfg(desktop)]
-mod apps_host;
-// What a launch reads first, read while the webview starts; see ahead.rs.
 #[cfg(desktop)]
 mod ahead;
-// The AI sidebar's agent: Orden's own tools under a built-in grant; see ai_agent.rs.
+mod ai_accounts;
 #[cfg(desktop)]
 mod ai_agent;
-// Claude Code and Codex, run headless on this machine with the reader's own plan; see
-// ai_cli.rs and docs/ai.md.
 #[cfg(desktop)]
 mod ai_cli;
-// The reader's AI accounts, one file for every window and engine; see ai_accounts.rs.
-mod ai_accounts;
-// The AI sidebar's threads, kept on this device; see ai_threads.rs.
 mod ai_threads;
-// A ChatGPT plan through Sign in with ChatGPT; see chatgpt.rs and docs/ai.md.
-#[cfg(desktop)]
-mod appearance;
-// Where a Mac's copy runs from, and the move to Applications; see app_place.rs.
 #[cfg(desktop)]
 mod app_place;
 #[cfg(desktop)]
+mod appearance;
+#[cfg(desktop)]
 mod apple_notes;
-#[cfg(desktop)]
-mod chatgpt;
-#[cfg(desktop)]
-mod link_preview;
-// Where the database holding the notes is, that is a Mac: SQLite, a group
-// container and a permission no other system has, all of which is `apple_notes`.
-// What is *on* a row is a gzipped protobuf, and unpacking one is arithmetic over
-// bytes - so it is built everywhere, and every runner compiles and tests it. A
-// thousand lines only one runner checked is a thousand lines nothing checked.
 #[cfg_attr(
     not(target_os = "macos"),
     allow(
@@ -76,17 +22,28 @@ mod link_preview;
     )
 )]
 mod apple_text;
+#[cfg(desktop)]
+mod apps_host;
 mod assets;
-// The Mac app's folder carried over from the product's old names; see bundle_name.rs.
+#[cfg(desktop)]
+mod browser_data;
+#[cfg(desktop)]
+mod browser_profiles;
+#[cfg(desktop)]
+mod browser_themes;
 #[cfg(desktop)]
 mod bundle_name;
 mod carry;
+#[cfg(desktop)]
+mod chatgpt;
+#[cfg(desktop)]
+mod chromium_profiles;
+#[cfg(all(target_os = "linux", feature = "cef"))]
+mod chromium_pump;
 mod clock;
-// Which lines of a note are code, for the tag index; see code_blocks.rs.
 mod code_blocks;
 #[cfg(desktop)]
 mod default_browser;
-// Dictation heard on this device, with a model downloaded on demand; see dictation.rs.
 #[cfg(desktop)]
 mod dictation;
 #[cfg(desktop)]
@@ -102,25 +59,29 @@ mod explorer;
 #[cfg(desktop)]
 mod extensions;
 #[cfg(desktop)]
+mod firefox_profiles;
+#[cfg(desktop)]
+mod fonts;
+#[cfg(desktop)]
 mod foreground;
 mod front_matter;
-// The window's full screen, which a run sent off the screen never takes; see full_screen.rs.
 #[cfg(desktop)]
 mod full_screen;
 mod fuzzy;
 #[cfg(desktop)]
-mod ground;
-// A second launch that finds the first not answering; see handover.rs.
+mod gpu;
 #[cfg(desktop)]
-mod handover;
-// PDFs another program opens with nib, brought into a space; see handed_pdfs.rs.
+mod ground;
 #[cfg(desktop)]
 mod handed_pdfs;
+#[cfg(desktop)]
+mod handover;
 mod highlights;
 mod history;
-// The keys from any app, through the system or the desktop portal; see hotkeys.rs.
 #[cfg(desktop)]
 mod hotkeys;
+#[cfg(desktop)]
+mod kept;
 #[cfg(desktop)]
 mod keyboard;
 mod lane;
@@ -130,50 +91,50 @@ mod launch;
 mod lifecycle;
 #[cfg(target_os = "macos")]
 mod lights;
+#[cfg(desktop)]
+mod link_preview;
 mod links;
-// What a Linux desktop, and Wayland above all, needs beyond GTK; see linux.rs.
 #[cfg(target_os = "linux")]
 mod linux;
-// The main thread asleep while nothing happens, on CEF; see chromium_pump.rs.
-#[cfg(all(target_os = "linux", feature = "cef"))]
-mod chromium_pump;
 mod logs;
-// The bytes the chats' mail provider speaks IMAP and SMTP over; see mail_socket.rs.
 #[cfg(desktop)]
 mod mail_socket;
 mod matcher;
-// `nib mcp`, the server an agent's client runs; main.rs hands it the process before
-// anything below starts.
 #[cfg(desktop)]
 pub mod mcp;
 #[cfg(desktop)]
 mod menu_bar;
 mod notes;
-// Notifications the page shows that answer back: a press opens what it was about, and a
-// chat's can be answered in place; see notices.rs and docs/chats.md 4.11.
 #[cfg(desktop)]
 mod notices;
-// The vaults Obsidian lists, for the migration's first screen; see obsidian_vaults.rs.
 #[cfg(desktop)]
 mod obsidian_vaults;
-// Which package manager keeps this install, if one does; see package_manager.rs.
-#[cfg(desktop)]
-mod package_manager;
-// The system's own way to install a package, which updates a .deb or an .rpm; see
-// packagekit.rs and system_update.rs.
-#[cfg(target_os = "linux")]
-mod packagekit;
-#[cfg(desktop)]
-mod pandoc;
-mod papers;
-// A spaces folder pointed at a folder outside Orden's own, taken in once; see outside.rs.
 #[cfg(desktop)]
 mod outside;
 #[cfg(any(desktop, target_os = "ios"))]
 mod owner;
+#[cfg(desktop)]
+mod package_manager;
+#[cfg(target_os = "linux")]
+mod packagekit;
+#[cfg(desktop)]
+mod page_drag;
+#[cfg(desktop)]
+mod page_hide;
+#[cfg(desktop)]
+mod page_scale;
+#[cfg(desktop)]
+mod page_scheme;
+#[cfg(desktop)]
+mod page_style;
+#[cfg(desktop)]
+mod pandoc;
+mod papers;
 mod paths;
 #[cfg(desktop)]
 mod pdf;
+#[cfg(desktop)]
+mod pinch;
 #[cfg(desktop)]
 mod placement;
 #[cfg(desktop)]
@@ -181,47 +142,40 @@ mod presence;
 #[cfg(desktop)]
 mod presenter;
 mod query;
-// Quick add from any app: its key and its window; see quick_add.rs.
 #[cfg(desktop)]
 mod quick_add;
 mod regex;
-// Reminders handed to the system's own scheduler, and the presses on them; see
-// reminders.rs and docs/tasks.md 5.10. A phone's are the activity's.
 #[cfg(desktop)]
 mod reminders;
-// What Orden's own Chromium left on a Windows PC or a Mac that once ran it, cleared; see
-// retired_engine.rs. Linux never had it, and runs on CEF now.
 #[cfg(all(desktop, not(feature = "cef")))]
 mod retired_engine;
+#[cfg(desktop)]
+mod safari;
 mod search;
 #[cfg(any(desktop, target_os = "ios"))]
 mod secrets;
 #[cfg(desktop)]
+mod secure_dns;
+#[cfg(desktop)]
 mod shell_menu;
-// Settings' Shortcuts row and where a task from Shortcuts goes; see shortcuts.rs.
 #[cfg(desktop)]
 mod shortcuts;
-// The Mac's App Intents for Shortcuts; see siri.rs and swift/AddTask.swift.
 #[cfg(target_os = "macos")]
 mod siri;
 mod space_watch;
 mod spaces;
-// A touchpad's pinch let through to the app's own page on Windows; see pinch.rs.
 #[cfg(desktop)]
-mod pinch;
-// What the window's thread was doing when it stopped answering; see stall.rs.
+mod spelling;
 #[cfg(desktop)]
 mod stall;
 mod sync_store;
+#[cfg(desktop)]
+mod system_update;
 mod tags;
 mod tasks;
 #[cfg(desktop)]
 mod terminal;
 mod themes;
-// A .deb or an .rpm updated through PackageKit; see system_update.rs.
-#[cfg(desktop)]
-mod system_update;
-// The window's top edge, offering a resize only where the window can be resized; see top_edge.rs.
 #[cfg(desktop)]
 mod top_edge;
 #[cfg(desktop)]
@@ -232,19 +186,12 @@ mod tree;
 #[cfg(desktop)]
 mod updates;
 mod uris;
-// What a terminal's or an application's processes use of this computer, for a tab's hover
-// card in developer mode (issue 1063); see usage.rs.
 #[cfg(desktop)]
 mod usage;
-// Whether a web tab's browser answers before the window's thread waits on it; see
-// web_answers.rs.
 #[cfg(desktop)]
 mod web_answers;
-// The certificate a web tab's page came with, for the site's popover (#776).
 #[cfg(desktop)]
 mod web_certificate;
-// Only where there is a cookie store to reach: the system's own engine on Windows and
-// on a Mac.
 #[cfg(desktop)]
 mod web_clear;
 #[cfg(any(windows, target_os = "macos", feature = "cef"))]
@@ -283,83 +230,20 @@ mod web_swipe;
 mod web_tabs;
 #[cfg(desktop)]
 mod web_tint;
-// Only where a page's input window is a window of another process: the system's own
-// engine on Windows.
-#[cfg(all(windows, not(feature = "cef")))]
-mod web_wheel;
-// A web tab's page drawn under the app's own page, as a DirectComposition visual (#1137).
 #[cfg(all(windows, not(feature = "cef")))]
 mod web_visual;
+#[cfg(all(windows, not(feature = "cef")))]
+mod web_wheel;
 #[cfg(desktop)]
 mod web_worlds;
-// The window moved and resized by the page's own presses on Linux; see window_drag.rs.
 #[cfg(desktop)]
 mod window_drag;
-// Whether Chromium draws on the graphics card or on the CPU, in the log; see gpu.rs.
-#[cfg(desktop)]
-mod gpu;
-// What the app's page keeps in its storage, kept on the disk at once (#961); see kept.rs.
-#[cfg(desktop)]
-mod kept;
-// Which DNS the web tabs' pages look names up with (#766, #767); see secure_dns.rs.
-#[cfg(desktop)]
-mod secure_dns;
-// A drag out of the app's own page, which the page runs itself on Linux; see page_drag.rs.
-#[cfg(desktop)]
-mod page_drag;
-// How large the app's pages are drawn, and where a web tab's page goes; see
-// page_scale.rs.
-#[cfg(desktop)]
-mod page_scale;
-// A web tab's page taken out of sight without a frame of it white; see page_hide.rs.
-#[cfg(desktop)]
-mod page_hide;
-// A web tab's page drawn in the app's scheme rather than the system's; see page_scheme.rs.
-#[cfg(desktop)]
-mod page_scheme;
-// The dictionaries Orden's own Chromium checks spelling against; see spelling.rs.
-#[cfg(desktop)]
-mod spelling;
-// The font families installed here, for Settings' font pickers; see fonts.rs.
-#[cfg(desktop)]
-mod fonts;
-// What every browser's import reads profiles and their files with; see
-// browser_profiles.rs.
-#[cfg(desktop)]
-mod browser_profiles;
-// The profiles Firefox lists and its bookmarks, for the import's Firefox row; see
-// firefox_profiles.rs.
-#[cfg(desktop)]
-mod firefox_profiles;
-// The profiles Chrome, Edge, Brave, Chromium, Vivaldi, Opera and Arc keep, for the
-// import's rows; see chromium_profiles.rs.
-#[cfg(desktop)]
-mod chromium_profiles;
-// The history and the sites' marks out of a browser's databases, for the import; see
-// browser_data.rs.
-#[cfg(desktop)]
-mod browser_data;
-// Safari's tabs and bookmarks, for the import's Safari row on a Mac; see safari.rs.
-#[cfg(desktop)]
-mod safari;
-// The profiles Zen lists and the file of each that holds its tabs, for the import's
-// Zen row; see zen_profiles.rs.
 #[cfg(desktop)]
 mod zen_profiles;
-// The themes Chrome and Firefox wear, for the Appearance pane's Import row; see
-// browser_themes.rs.
-#[cfg(desktop)]
-mod browser_themes;
-// And what such a theme says of the pages in web tabs; see page_style.rs.
-#[cfg(desktop)]
-mod page_style;
 
 use paths::Picked;
 use tauri::Manager;
 
-/// The commands the window may call, as one list. A builder takes a single
-/// handler, so the desktop-only ones are passed in here rather than added
-/// afterwards, and the names both builds share are written once.
 macro_rules! commands {
     ($($desktop:tt)*) => {
         tauri::generate_handler![
@@ -447,8 +331,6 @@ macro_rules! commands {
     };
 }
 
-/// The desktop's own commands, with the ones both builds share: a list of its own
-/// rather than a block inside `run_on`, which is about the order a launch happens in.
 #[cfg(desktop)]
 macro_rules! desktop_commands {
     () => {
@@ -614,7 +496,6 @@ macro_rules! desktop_commands {
             shortcuts::open_shortcuts,
             shortcuts::remember_inbox,
             web_tabs::web_open,
-            // Chrome and Edge extensions in web tabs; see extensions.rs.
             extensions::extensions_list,
             extensions::extensions_install,
             extensions::extensions_set,
@@ -682,26 +563,14 @@ macro_rules! desktop_commands {
             downloads::web_download_open,
             downloads::web_download_show,
             downloads::web_download_cancel,
-            // A store a space kept, folded into the shared one (#239); see web_state.rs.
             web_state::web_merge,
-            // A tab saved out of a Separate web note keeps its sign-in in the new note's
-            // own store; see web_state.rs.
             web_state::web_copy,
-            // Whether somebody is at this computer, and what it is called; see
-            // presence.rs.
             presence::input_idle,
             presence::device_name,
         ]
     };
 }
 
-/// How a phone starts the app. The attribute writes the symbol the Android and
-/// iOS projects load the library through, which a desktop does not have: there
-/// the binary beside this library calls `run` itself.
-///
-/// In a module of its own so that the one item the macro writes without a doc
-/// comment is excepted here rather than crate-wide. Everything of ours is still
-/// documented, and the desktop builds hold the whole crate to that.
 #[cfg(mobile)]
 #[allow(
     missing_docs,
@@ -714,35 +583,20 @@ mod entry {
     }
 }
 
-// Linux is built from linux/Cargo.toml, on CEF: its WebKitGTK build is gone, and the
-// app's own manifest names no engine for it. See scripts/linux-cef.sh.
 #[cfg(all(target_os = "linux", not(feature = "cef")))]
 compile_error!(
     "Linux builds from apps/desktop/src-tauri/linux/Cargo.toml: run scripts/linux-cef.sh first"
 );
 
-/// Which runtime every type in this crate is written against.
-///
-/// On macOS, Windows and the phones it is Tauri's own `Wry`, on the system's engine,
-/// and a bare `AppHandle` or `Webview` means that - which is why nothing else in the
-/// crate names a runtime at all. On Linux it is CEF, through Tauri's type-erased runtime,
-/// and a bare `AppHandle` means that instead. Every other signature in the crate is
-/// unchanged either way, which is what makes one seam enough; see src/engine.rs.
 #[cfg(not(feature = "cef"))]
 pub type Engine = tauri::Wry;
 
-/// Which runtime every type in this crate is written against on CEF: the type-erased
-/// one. See above.
 #[cfg(feature = "cef")]
 pub type Engine = tauri::DynRuntime;
 
-/// Starts the app on the engine this build ships with - `WebView2` on Windows,
-/// `WKWebView` on a Mac, CEF on Linux - and returns when the last window has closed.
 pub fn run() {
-    // Before GTK and any thread, both of which read what it sets; see linux.rs.
     #[cfg(target_os = "linux")]
     linux::prepare();
-    // Before any page is built; see web_visual.rs.
     #[cfg(all(windows, not(feature = "cef")))]
     web_visual::arm_visuals();
     #[cfg(not(feature = "cef"))]
@@ -751,10 +605,6 @@ pub fn run() {
     run_on(tauri::Builder::default().runtime(engine::cef_runtime()));
 }
 
-/// What a process CEF starts beside the app - a renderer, the GPU process, a utility -
-/// does instead of the app: true when this process is one of them and has run as it,
-/// in which case `main` returns. Every one of them is this same executable, started
-/// again with `--type=`. See engine.rs.
 #[cfg(feature = "cef")]
 #[must_use]
 pub fn cef_helper() -> bool {
@@ -765,22 +615,12 @@ pub fn cef_helper() -> bool {
     true
 }
 
-/// Starts the app on `builder`, and exits with a message if the app could not be built
-/// at all.
 pub fn run_on(builder: tauri::Builder<Engine>) {
-    // Before everything, because a copy under the old folder's name renames it and
-    // starts again from there rather than going on; see bundle_name.rs.
     #[cfg(target_os = "macos")]
     bundle_name::carry_over();
 
-    // First, so that the one step nothing inside the process can time - the
-    // machine loading the binary before any of this ran - is on the trace as well;
-    // see trace.rs. Off unless NIB_TRACE_STARTUP says otherwise.
     trace::begin();
 
-    // A probe's process is held out of the foreground before anything in it can make a
-    // window or start an engine; see foreground.rs. And said, so a drive knows which of
-    // its probes started able to take the front.
     #[cfg(desktop)]
     if foreground::hold() {
         eprintln!(
@@ -797,9 +637,6 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     )]
     let mut context = tauri::generate_context!();
 
-    // A second launch is handed to the Orden already running, or - where that one has
-    // stopped answering - asks whether to end it, rather than waiting on it for ever; see
-    // handover.rs.
     #[cfg(desktop)]
     if handover::handed_over(&context.config().identifier) {
         return;
@@ -807,9 +644,6 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(desktop)]
     trace::mark("engine chosen");
 
-    // A second launch belongs to the window that is already open: it raises it
-    // and hands over whatever page it was asked to open. A phone launches an app
-    // once, has no installer to run and no dialog to pick a file in.
     #[cfg(desktop)]
     let builder = builder
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -819,47 +653,27 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
             launch::second_launch_heard,
         ))
         .manage(launch::Pending::default());
-    // Where the app is on its way out, and on a Mac where the window was; see
-    // lifecycle.rs.
     #[cfg(desktop)]
     let builder = lifecycle::managed(builder);
     #[cfg(desktop)]
     trace::mark("plugins: updater, dialog, process, one instance");
 
-    // Deep links come after single instance above, which is the order that plugin
-    // asks for: on Windows and Linux a `nib://` link reaching an app that is
-    // already open arrives as a second launch, and single instance is what hands
-    // it over to be read as a link. See uris.rs.
     let builder = links_out_and_in(builder);
     trace::mark("plugins: opener, os, deep link");
 
-    // Sync's store and the watch on the space folders: two empty slots, filled when the
-    // engine first asks, which is after the first paint. See sync_store.rs and
-    // space_watch.rs.
     let builder = builder
         .manage(sync_store::Stores::default())
         .manage(space_watch::Watching::default());
 
-    // What the `nib` command's requests wait in while the window answers them.
-    // Managed here rather than where the socket opens, because a builder is the
-    // one place state can be added; see endpoint.rs.
     #[cfg(desktop)]
     let builder = builder.manage(endpoint::Waiting::default());
 
-    // Which page each web tab is on, so a back arrow is lit only where there is
-    // something behind it, and a window with web tabs in it held, as it closes, until
-    // their logins are made to last. A phone has no child webviews to keep a trail
-    // for; see web_tabs.rs and docs/web-tabs.md. And where each window is, written
-    // down as it closes so the next launch opens there; see placement.rs.
     #[cfg(desktop)]
     let builder = placement::managed(web_tabs::managed(builder));
 
-    // The shells terminal tabs run, and the page load that lets go of a page's own; see
-    // terminal.rs.
     #[cfg(desktop)]
     let builder = terminal::managed(builder);
 
-    // The applications this computer hosts; see apps_host.rs.
     #[cfg(desktop)]
     let builder = builder.manage(apps_host::Hosted::default());
 
@@ -871,24 +685,17 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         .manage(explorer::reach::Explored::default())
         .manage(explorer::watch::Watching::default());
 
-    // The model local dictation has open; see dictation.rs.
     #[cfg(desktop)]
     let builder = builder.manage(std::sync::Arc::new(dictation::Loaded::default()));
 
-    // The questions Claude Code and Codex are answering, and the ChatGPT plan's access
-    // token of the hour; see ai_cli.rs and chatgpt.rs.
     #[cfg(desktop)]
     let builder = builder
         .manage(ai_cli::Asks::default())
         .manage(chatgpt::ChatGpt::default());
 
-    // Every command the window asks for says, while it runs on the window's thread, what
-    // the thread is doing, so a stall can name it; see stall.rs.
     #[cfg(desktop)]
     let builder = builder.invoke_handler(named(desktop_commands!()));
 
-    // An iPhone keeps a provider's key in its keychain the way a Mac does; Android keeps
-    // it through the activity, so its page never calls these. See secrets.rs.
     #[cfg(target_os = "ios")]
     let builder = builder.invoke_handler(commands![
         owner::owner_can,
@@ -901,24 +708,9 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     let builder = builder.invoke_handler(commands![]);
     trace::mark("commands registered");
 
-    // The window is taken out of the config on every desktop, and built by `ready`
-    // instead. Two reasons, one per engine, and the config still says what the window
-    // looks like either way; see engine.rs.
-    //
-    // On Orden's own Chromium, because the interface needs a profile of its own and a
-    // profile is asked for when a webview is built. On the system's, because a window
-    // the runtime builds is built around its webview - so there is nothing on screen
-    // until the webview runtime has started, which on Windows is between a third and
-    // half of a launch with the screen empty for all of it. Built here, the window is up
-    // in about twenty milliseconds and the webview starts behind it. See ground.rs.
     #[cfg(desktop)]
     let ui = engine::take_ui_window(&mut context);
 
-    // A web tab's page whose process died, on the two engines that say so to the app rather
-    // than to the page; see web_page.rs. CEF has no word for a normal end (its termination
-    // status starts at abnormal), and its killed is somebody else's doing, an out of memory
-    // killer or a task manager: closing a page says nothing here. A page the window has
-    // taken away is not live by then either; see `ended` in pages.svelte.ts.
     #[cfg(feature = "cef")]
     let builder = builder.on_web_content_process_terminate(|view, ended| {
         use tauri::webview::WebContentProcessTerminationReason as Reason;
@@ -943,20 +735,6 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         .run(on_event);
 }
 
-/// The plugins every build has, the phone's too: the opener, which is how a link leaves
-/// the app anywhere, the os plugin, which is how the window knows which build it is
-/// running as, and deep links; with the paths the reader picked in a dialog of the
-/// system's (`Picked`) and the links the app was launched by (`uris::Pending`).
-///
-/// Without the script the opener puts in every webview by default, a web tab's
-/// included. That script takes a Ctrl+click, a Shift+click and a `target="_blank"`
-/// link away from the page and asks the opener to hand the link to the system
-/// browser, which a site is never granted: so in a web tab those presses did
-/// nothing at all, the commonest link on the web among them. Emil, 2026-09-30:
-/// *"Ctrl + click to open a new web page doesn't work."* A page's links open the
-/// way a browser opens them, and the engine asks this app for the window; see
-/// `web_opens.rs`. The app's own links are pressed through its own code, and each
-/// one says where it goes; see open-link.ts.
 fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
     #[cfg(desktop)]
     let builder = builder.on_page_load(|webview, payload| {
@@ -981,8 +759,6 @@ fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
         .manage(uris::Pending::default())
 }
 
-/// The window's commands, each saying by name while it runs on the window's thread what
-/// that thread is doing; see stall.rs.
 #[cfg(desktop)]
 fn named(
     answer: impl Fn(tauri::ipc::Invoke<Engine>) -> bool + Send + Sync + 'static,
@@ -993,9 +769,6 @@ fn named(
     }
 }
 
-/// What the system asks of the app as a whole, rather than of a window: a link
-/// from another program, the Dock icon clicked, a quit. See lifecycle.rs; a phone has
-/// none of the three.
 fn on_event(app: &tauri::AppHandle<Engine>, event: tauri::RunEvent) {
     #[cfg(desktop)]
     lifecycle::on_event(app, event);
@@ -1003,25 +776,13 @@ fn on_event(app: &tauri::AppHandle<Engine>, event: tauri::RunEvent) {
     let _ = (app, event);
 }
 
-/// Everything that has to happen once, after the app is built and before the
-/// window is seen: what the webview may load, what the app was launched with, and
-/// then showing the window that was built hidden.
-/// What the window hears from outside its own page, all of it in place before the window
-/// is shown, because a page that asked before anything was listening waits for ever.
 #[cfg(desktop)]
 fn hearing(handle: &tauri::AppHandle) {
-    // What the window's own page may be given: the microphone the moment somebody
-    // presses Record, and nothing else; see `hearing` in web_tabs.rs.
     web_tabs::hearing(handle);
-    // The fingers on a precision touchpad, which a swipe waits for; see touchpad.rs.
     #[cfg(windows)]
     touchpad::start(handle);
 }
 
-/// What CEF needs once it has started and before the window is made: on Linux the main
-/// thread asleep while nothing happens (`chromium_pump.rs`) and the desktop's scale read
-/// (`page_scale.rs`); and everywhere the DNS the pages look names up with, before any
-/// page does (`secure_dns.rs`).
 #[cfg(feature = "cef")]
 fn engine_started(handle: &tauri::AppHandle<Engine>) {
     #[cfg(target_os = "linux")]
@@ -1036,64 +797,35 @@ fn ready(
     app: &mut tauri::App,
     ui: Option<&tauri::utils::config::WindowConfig>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // Everything between the last mark and this one is Tauri's own: the context,
-    // the window and - on Windows, where it is most of a launch - the webview
-    // runtime being started and pointed at the page.
     trace::mark("app built, window created");
 
     let handle = app.handle();
 
-    // Where the spaces are, before anything asks; see `decide_spaces`.
     #[cfg(desktop)]
     paths::decide_spaces(handle);
 
-    // What the page will ask for first, read on a thread of its own from here, while
-    // the webview below starts; see ahead.rs.
     #[cfg(desktop)]
     let web_first = ahead::start(handle);
 
-    // Before the page can put its menu strip up; see menu_bar.rs.
     #[cfg(target_os = "macos")]
     menu_bar::leave_out_system_rows();
 
-    // A picture in a note is loaded by the webview itself, over the asset
-    // protocol, which has a scope of its own. The spaces folder is in it from the
-    // start, and the only other thing that ever is: a file the reader picked in the
-    // system's own dialog, which the dialog adds. Heard from here on, so what an
-    // export was pointed at may be written; see `Picked` in paths.rs.
     if let Ok(root) = paths::spaces_dir(handle) {
         let _ = handle.asset_protocol_scope().allow_directory(&root, true);
     }
     paths::hear_picks(handle);
     trace::mark("asset scope");
 
-    // Links into the app, on every platform: the one the app was launched by, and
-    // every one that arrives while it is running.
     uris::watch(handle);
-    // And the presses on what a Mac shows, heard from now so the one that started the
-    // app is not missed; see reminders.rs.
     #[cfg(desktop)]
     reminders::start(handle);
     trace::mark("deep links");
 
-    // And the socket the `nib` command drives the app through, which only a
-    // desktop has. It comes up after the links above and a millisecond or two before
-    // the window below, which is as close to "there is a window to ask" as the order
-    // can be: the socket has to be listening early enough that a second launch and a
-    // waiting script find it, and the window is the last thing this function does.
     #[cfg(desktop)]
     endpoint::start(handle);
     #[cfg(desktop)]
     trace::mark("automation endpoint");
 
-    // A command line is a desktop's way of being handed a link, when nib is the
-    // browser, and a PDF opened with nib; never a note, since nib opens nothing from
-    // outside its spaces (see launch.rs). A phone app is launched by tapping it, and
-    // there is nothing in `args` worth reading.
-    //
-    // Added to, not replaced: on a Mac a link the system opened the app with may
-    // already be waiting there; see lifecycle.rs. And the trace says which kind of
-    // launch this was, because a link's is measured from the click to the page.
     #[cfg(desktop)]
     {
         let args: Vec<std::ffi::OsString> = std::env::args_os().collect();
@@ -1109,47 +841,16 @@ fn ready(
     #[cfg(not(desktop))]
     trace::mark("launch arguments");
 
-    // What the window hears from outside its own page, before the window is shown; see
-    // `hearing`.
     #[cfg(desktop)]
     hearing(handle);
     #[cfg(feature = "cef")]
     engine_started(handle);
 
-    // And the window on screen, which is the last thing this does and the first thing
-    // anybody sees. Everything above it costs under two milliseconds together and has to
-    // be in place first: the microphone above all, because a page that asked before
-    // anything was listening waits for ever.
-    //
-    // Built here rather than by the runtime, and opened in the colour it was last seen
-    // in, which is what lets it be on screen before there is anything in it: the webview
-    // runtime starts behind a window somebody can already see. A machine with no colour
-    // remembered yet, and a reader whose ground is the platform's own material rather
-    // than a colour, get what they always got - built hidden, shown once the webview is
-    // there. See ground.rs, which says why that is right rather than merely careful.
-    //
-    // The window, not the webview window; see web_tabs.rs.
-    //
-    // Where it was left, too, put into the config rather than applied afterwards, so the
-    // first frame is already in the right place; see placement.rs.
     #[cfg(desktop)]
     if let Some(config) = ui {
         let config = placement::restored(handle, config);
         trace::mark("window placement");
-        // What the engine needs of the window - its developer tools, its switches, its
-        // profile - is the engine's; see `engine::ui_window`.
         let building = engine::ui_window(app, &config)?;
-        // A window sent somewhere of its own - a probe off the screen - is built hidden,
-        // put there, and shown without coming forward; see `built_away` in placement.rs.
-        // A place that was only remembered is in the config and needs none of that.
-        //
-        // Otherwise on screen at once, in the colour it was last seen in, except on a
-        // Mac, where it is built hidden so its traffic lights are placed before anything
-        // is drawn (see lights.rs). A Mac's webview starts in fourteen milliseconds, not
-        // in the third of a second Windows needs, which is what showing it at once is for.
-        //
-        // And standing on the platform's material from the first frame where the page
-        // last stood on it, which is the glass theme: see `wear_from_the_start`.
         let see_through = ground::see_through(handle);
         if let Some(at) = placement::away() {
             let window = placement::built_away(building, at)?;
@@ -1158,8 +859,6 @@ fn ready(
             }
             stall::watch_page(handle, window.as_ref(), "the window's");
         } else if uris::launched_quietly(handle) {
-            // Started by nothing but a reminder's Done, or by an agent's `nib mcp` (#1091):
-            // answered without a window on screen, from the tray; see reminders.rs.
             let window = building.visible(false).build()?;
             top_edge::mind(&window.as_ref().window());
             stall::watch_page(handle, window.as_ref(), "the window's");
@@ -1185,7 +884,6 @@ fn ready(
         pinch::first_window(handle);
     }
 
-    // A phone's window is the activity's.
     #[cfg(not(desktop))]
     {
         let _ = ui;
@@ -1194,7 +892,6 @@ fn ready(
         }
     }
 
-    // From here a link that finds no window at all is one that has to open one.
     #[cfg(desktop)]
     if let Some(pending) = handle.try_state::<launch::Pending>() {
         pending.launched();
@@ -1203,40 +900,26 @@ fn ready(
     trace::mark("window shown");
     #[cfg(desktop)]
     watched(handle);
-    // And the browser a website on screen is built on, started now that the window's own
-    // page is on its way; see `web_tabs::warm`.
     #[cfg(desktop)]
     if web_first {
         web_tabs::warm(handle);
     }
-    // What Orden's own Chromium left behind, once the window is up; see retired_engine.rs.
     #[cfg(all(desktop, not(feature = "cef")))]
     retired_engine::clear_leftovers(handle);
-    // Written here as well as when the window reports in, so a launch that never
-    // gets as far as a window still leaves behind what it did get through.
     trace::write(handle);
 
-    // Orden listed among the browsers and among the agents' servers, each on a thread of
-    // its own after the window; see `kept_listed`.
     #[cfg(desktop)]
     kept_listed(handle);
 
     Ok(())
 }
 
-/// What other programs list Orden in, put back after every launch: Windows' browsers, put
-/// back if a portable copy moved or an install never wrote it (`default_browser.rs`), and
-/// the agent programs on this computer, so they reach Orden with nothing to set up
-/// (`ai_cli/enroll.rs`). Each on a thread of its own, after the window.
 #[cfg(desktop)]
 fn kept_listed(handle: &tauri::AppHandle<Engine>) {
     default_browser::keep_registered(handle);
     ai_cli::keep_enrolled(handle);
 }
 
-/// The launch said in the log, and the window's thread watched from here on: which
-/// process, so a relaunch is told apart from the page loading again, and what a launch
-/// before it left unsaid. See stall.rs and handover.rs.
 #[cfg(desktop)]
 fn watched(handle: &tauri::AppHandle) {
     logs::say(
@@ -1252,7 +935,6 @@ fn watched(handle: &tauri::AppHandle) {
     stall::start(handle);
 }
 
-/// The app's own folder, `src-tauri`, for a test that reads a file beside the crate.
 #[cfg(test)]
 pub(crate) fn app_dir() -> std::path::PathBuf {
     std::path::Path::new(env!("CARGO_MANIFEST_DIR")).to_path_buf()
@@ -1263,20 +945,6 @@ mod tests {
     use std::collections::{HashMap, HashSet};
     use std::fs;
 
-    /// The commands that run on the thread that called them although they reach a
-    /// file, a subprocess or the registry, and the reason each may. The note at the
-    /// top of this file is where they are explained; this is that list, held to.
-    ///
-    /// `write_log` hands its lines on in the order they were written, which two of
-    /// them in the air at once would not; the disk is its own thread's, and this
-    /// reader follows a call into a closure without knowing it runs on another
-    /// thread. The other two reach Windows through the
-    /// registry, and a key is opened and closed inside one call.
-    ///
-    /// And the page's storage kept on the disk (kept.rs): each write is handed to a
-    /// thread of its own over a channel, and on the window's thread so the writes keep
-    /// the order the page made them in.
-    ///
     const EXCEPTED: [&str; 5] = [
         "write_log",
         "new_menu_registered",
@@ -1285,10 +953,6 @@ mod tests {
         "kept_forget",
     ];
 
-    /// What a body that waits says itself, whichever module it is in: the
-    /// filesystem, a subprocess, the machine's own keychain, and the system's shell,
-    /// which opens a file or shows it in its folder in its own time - the opener's own
-    /// commands are `async` for that reason.
     const WAITS: [&str; 9] = [
         "fs::",
         "File::",
@@ -1305,14 +969,11 @@ mod tests {
 
     const BUILT_OFF_THE_CALLBACK: [&str; 1] = ["bring_up"];
 
-    /// One function of the crate: the name it is called by, and the body it runs.
     struct Function {
         name: String,
         body: String,
     }
 
-    /// Every function in one module, however deeply it is nested, by where the
-    /// signature is indented: rustfmt closes a body at the column its `fn` began at.
     fn functions(source: &str) -> Vec<Function> {
         let mut found = Vec::new();
         let lines: Vec<&str> = source.lines().collect();
@@ -1338,8 +999,6 @@ mod tests {
         found
     }
 
-    /// How far a signature is indented and what it names, or nothing where the line
-    /// is not one.
     fn signature(line: &str) -> Option<(usize, String)> {
         let indent = line.len() - line.trim_start().len();
         let mut rest = line.trim_start();
@@ -1355,9 +1014,6 @@ mod tests {
         Some((indent, name))
     }
 
-    /// Every name a body calls. A name after a dot is a method on something else and
-    /// not one of ours, and so is one after a type's path: `DispatchQueue::main()` is
-    /// the queue's, and not the `main` that runs the app.
     fn calls(body: &str) -> HashSet<String> {
         let mut found = HashSet::new();
         let letters: Vec<char> = body.chars().collect();
@@ -1383,8 +1039,6 @@ mod tests {
         found
     }
 
-    /// Whether the name starting at `from` follows `Type::`, a path whose last part is
-    /// written with a capital, which is how a type is written and a module is not.
     fn after_a_type(letters: &[char], from: usize) -> bool {
         if from < 2 || letters[from - 1] != ':' || letters[from - 2] != ':' {
             return false;
@@ -1397,8 +1051,6 @@ mod tests {
         letters[start].is_uppercase()
     }
 
-    /// Every function that waits, by name: the ones that say so themselves, and then
-    /// every one that calls one of those, to the end of the chain.
     fn waiting(functions: &[Function]) -> HashSet<String> {
         reaching(functions, &WAITS, &[])
     }
@@ -1435,10 +1087,6 @@ mod tests {
         }
     }
 
-    /// The name of every command that runs on the thread that called it, which is
-    /// `#[tauri::command]` on a function that is not itself `async`.
-    /// `#[tauri::command(async)]` and `async fn` both answer from a thread of the
-    /// runtime's, and saying one of the two is what the rule below asks for.
     fn on_the_calling_thread(source: &str) -> Vec<String> {
         let mut found = Vec::new();
         let mut lines = source.lines();
@@ -1447,7 +1095,6 @@ mod tests {
             if line.trim() != "#[tauri::command]" {
                 continue;
             }
-            // Past anything written between the attribute and the signature.
             let Some(line) = lines.find(|one| one.contains("fn ")) else {
                 break;
             };
@@ -1462,12 +1109,6 @@ mod tests {
         found
     }
 
-    /// The rule the top of this file states, held to. A command that is not `async`
-    /// runs its body on the thread the message loop is on, so one that waits for a
-    /// file there stops the window painting for as long as the disk takes - and how
-    /// long the disk takes is the one thing nobody can predict. Followed through the
-    /// crate's own helpers, because a command that waits usually does it one call
-    /// down rather than in its own three lines.
     #[test]
     fn a_command_that_waits_says_async() {
         let sources = own_sources();
@@ -1521,7 +1162,6 @@ mod tests {
                 sources.push(fs::read_to_string(&path).expect("one module"));
             }
         }
-        // The walk itself, in case the source ever stops being where this looks.
         assert!(
             sources.len() > 20,
             "only {} modules were read",
@@ -1530,7 +1170,6 @@ mod tests {
         sources
     }
 
-    /// The three shapes the reader has to tell apart, and the chain it follows.
     #[test]
     fn a_command_waits_when_what_it_calls_waits() {
         let source = concat!(
@@ -1546,10 +1185,8 @@ mod tests {
         let waits = waiting(&functions(source));
         assert!(waits.contains("here"), "the chain was not followed");
         assert!(waits.contains("deeper"));
-        // A name read off a method call is not one of ours.
         assert!(!calls("one.read(two)").contains("read"));
         assert!(calls("read(two)").contains("read"));
-        // Nor is one a type answers, though a module's is.
         assert!(!calls("DispatchQueue::main()").contains("main"));
         assert!(calls("crate::launch::main()").contains("main"));
     }

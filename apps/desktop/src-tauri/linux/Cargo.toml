@@ -17,7 +17,6 @@ name = "nib_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [lints.rust]
-missing_docs = "warn"
 unsafe_code = "deny"
 unsafe_op_in_unsafe_fn = "deny"
 
@@ -133,15 +132,11 @@ objc2-foundation = { version = "0.3", default-features = false, features = [
   "NSNotification",
   "NSObject",
   "NSOperation",
-  # The time an agent's press is said to happen at on a Mac, as the system's own events
-  # say theirs (agents/engines/webkit.rs).
   "NSProcessInfo",
   "NSProgress",
   "NSSet",
   "NSString",
   "NSURL",
-  # An agent's page on a Mac answers a site's sign-in box and decides its downloads; see
-  # agents/engines/webkit.rs.
   "NSURLAuthenticationChallenge",
   "NSURLCredential",
   "NSURLProtectionSpace",
@@ -159,8 +154,6 @@ objc2-app-kit = { version = "0.3", default-features = false, features = [
   "NSBitmapImageRep",
   "NSButton",
   "NSControl",
-  # An agent's press, pointer and keys sent to its page's view on a Mac; see
-  # agents/engines/webkit.rs.
   "NSEvent",
   "NSGraphics",
   "NSGraphicsContext",
@@ -192,17 +185,11 @@ objc2-user-notifications = { version = "0.3", default-features = false, features
 objc2-web-kit = { version = "0.3", default-features = false, features = [
   "std",
   "objc2-app-kit",
-  # The part of an agent's page a picture is taken of (agents/engines/webkit.rs).
   "objc2-core-foundation",
   "block2",
-  # A web state's scripts and nib's own page scripts run in a world of their own, and
-  # a hidden page is made an origin with an HTML string; see web_state/isolated.rs,
-  # restore_view.rs and web_worlds.rs.
   "WKContentWorld",
   "WKNavigation",
   "WKDownload",
-  # An agent's page on a Mac: its downloads, its file chooser and the windows it asks
-  # for, answered by Orden's own delegates; see agents/engines/webkit.rs.
   "WKDownloadDelegate",
   "WKOpenPanelParameters",
   "WKPDFConfiguration",
@@ -241,58 +228,26 @@ windows = { version = "0.58", features = [
   "Win32_UI_Shell",
   "Win32_Foundation",
   "Win32_System_Registry",
-  # When this process was created, which is the one thing a launch trace cannot
-  # measure from inside it: everything before our first line is the machine loading
-  # the binary. See trace.rs.
   "Win32_System_Threading",
-  # Whether Ctrl is down as a key is pressed inside a web tab's page, which the
-  # engine's own event does not say. See web_keys.rs.
   "Win32_UI_Input_KeyboardAndMouse",
-  # Which processes a terminal's shell has started, asked before its tab closes on
-  # one of them, and Ctrl+C let through to them. See terminal/process.rs and
-  # terminal/session.rs.
   "Win32_System_Diagnostics_ToolHelp",
   "Win32_System_Console",
-  # A job object round Claude Code or Codex and everything it starts, so a stop ends
-  # them all; see ai_cli/family.rs. The job's call names a security descriptor.
   "Win32_System_JobObjects",
   "Win32_Security",
-  # How much memory the engine's processes hold, before an agent opens another page.
-  # See agents/memory.rs.
   "Win32_System_ProcessStatus",
-  # A wheel over a page, seen before Windows delivers it and sent to the page's own
-  # window, where the engine handles it once (web_wheel.rs); and whether a page asking
-  # for the palette has the keyboard, and a key was just pressed, which a double tap is
-  # taken on (web_opens.rs).
   "Win32_UI_WindowsAndMessaging",
-  # Every window a probe's process makes, on any of its threads, told to it as it is
-  # made, so that none is ever on a screen; see foreground.rs.
   "Win32_UI_Accessibility",
   "Win32_System_LibraryLoader",
   "Win32_System_SystemInformation",
-  # A second launch hands itself to the first with WM_COPYDATA, waiting at most two
-  # seconds for a nib that may have stopped answering; see handover.rs.
   "Win32_System_DataExchange",
-  # The shape of a web tab's page, with the app's layers over it cut out of it rather
-  # than the page hidden for them; see web_cut.rs.
   "Win32_Graphics_Gdi",
-  # How many fingers are on a precision touchpad, from its own reports, so a swipe is
-  # decided as they lift and not before; see touchpad.rs.
   "Win32_UI_Input",
   "Win32_Devices_HumanInterfaceDevice",
-  # A desktop of its own for each application this computer hosts, its windows drawn
-  # with PrintWindow; see apps_host/desk.rs.
   "Win32_System_StationsAndDesktops",
   "Win32_Storage_Xps",
-  # What the Start menu lists, for New application: its shortcuts read with the shell's
-  # IShellLink, the Store's applications from its Apps folder, and each one's icon as
-  # Explorer draws it; see apps_host/installed/windows.rs.
   "Win32_System_Com",
   "Win32_Storage_FileSystem",
   "Win32_UI_Shell_PropertiesSystem",
-  # Reminders put on Windows' own schedule of toasts, which rings them with nib not
-  # running: the notifier, the toast's XML and the moment it rings. See
-  # reminders/toasts.rs.
   "Foundation",
   "Foundation_Collections",
   "Data_Xml_Dom",

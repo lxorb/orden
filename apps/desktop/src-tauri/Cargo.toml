@@ -10,79 +10,17 @@ name = "nib_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [lints.rust]
-# Every module says what it owns, and every command says what it does.
-missing_docs = "warn"
-# Unsafe is denied everywhere and excepted by name in the seven functions that
-# call Windows directly: the two registry calls behind Explorer's New menu, WebView2's print engine, the launch
-# trace's question about when this process was created, the list of
-# processes a terminal asks before it closes on a running one, Ctrl+C let
-# through to a terminal's shells (see terminal/process.rs and
-# terminal/session.rs), and the shell's answer to which program opens a web
-# address (default_browser.rs), and the hook that has a probe's window created off
-# the screen rather than moved there (placement.rs), and what keeps a probe out of
-# the foreground: its lock, and the hook and the procedure that refuse every
-# activation and hold every window's style (foreground.rs). Three more on a Mac: the
-# window's AppKit object, which Tauri hands over as a bare pointer, to mark it
-# edited (see document_window.rs), the method that lets a quit ask about
-# unsaved notes first, added to an application delegate that is tao's (see
-# lifecycle.rs), the kernel's answer to which folder a terminal's shell is in
-# (terminal/process.rs), and the notification centre's delegate for reminders, made
-# and handed its answer through the Objective-C runtime (reminders/macos.rs). And the agents' own reach into WebView2 in src/agents: the
-# DevTools Protocol's calls and events, an agent tab's settings and the events it
-# answers out of sight, the reader's tab's focus, and the engine's memory. And `nib mcp`
-# keeping its client's pipes out of the app it starts (src/mcp/app.rs), which the app
-# asks too before it starts Claude Code or Codex, in a job object that ends everything
-# they start (src/ai_cli/family.rs). And asking the system when it
-# last had input and which window is in front, on Windows and a Mac, so a web login is
-# not handed away from somebody typing in a page (src/presence.rs). And the shape a
-# web tab's page is cut to round the app's layers over it (src/web_cut.rs). And the
-# window's top edge strip, shown only while that edge resizes the window
-# (src/top_edge.rs). And the trust a Mac's web tab was served with, and the chain
-# of certificates in it, for the site's popover (src/web_certificate/webkit.rs). And
-# `kill(2)` on the process group of an application this computer hosts, which is how it
-# and everything it started are ended (src/apps_host.rs), and the memory its display's
-# picture is read through, shared with that display's X server (`mmap(2)` and
-# `munmap(2)`, src/apps_host/capture.rs); and on Windows its desktop of its own, the
-# program started on it in a job, its windows placed, drawn and sent messages
-# (src/apps_host/desk.rs and desk/), and what the Start menu lists with its icons
-# (src/apps_host/installed/windows.rs). And a test's count of the steps SQLite took
-# over a chat's window (src/sync_store/chats.rs). And a web tab's page drawn under the app
-# as a DirectComposition visual on Windows: its tree, and the input, cursor, accessibility
-# and drops its window hands it (src/web_visual.rs). None of
-# them has a safe wrapper to use instead, and anything new that wants unsafe has to
-# say so at the function and say why.
 unsafe_code = "deny"
 unsafe_op_in_unsafe_fn = "deny"
 
-# Pedantic as the floor, so CI's plain `cargo clippy -- -D warnings` enforces it.
-# Anything allowed below is a lint that fights the shape of a Tauri app rather
-# than a lint the code fails to meet.
 [lints.clippy]
 pedantic = { level = "warn", priority = -1 }
-# A command's arguments arrive deserialised and owned; that is the signature Tauri
-# generates against, and taking them by reference is not an option.
 needless_pass_by_value = "allow"
-# Rust 1.99's: an `assert!(x.is_empty())` written as `assert_eq!` with a typed empty
-# array. The tests read as the sentence they are, and the answer on a failure is one
-# `dbg!` away; nearly two hundred of them turned red the day the runners' stable moved.
 assert_is_empty = "allow"
 
 [features]
-# Which runtime the app's webviews run on. Off here: macOS, Windows and the phones are
-# built from this manifest, against Tauri 2, on the system's own engine.
-#
-# On, the app is a Chromium app: its own interface and every web tab are views in one
-# CEF browser process, through `tauri-runtime-cef`, which exists for Tauri 3 only. That
-# is Linux, and only Linux: `linux/Cargo.toml` is this same package with the Tauri family
-# moved to the pins below and this feature on, written from this file by
-# scripts/linux-manifest.mjs. One manifest cannot hold both, even per target: Tauri 2 and
-# 3 both declare `links = "Tauri"`, which Cargo allows once in a dependency graph. See
-# src/engine.rs and packaging/linux.md.
 cef = []
 
-# What `linux/Cargo.toml` pins the Tauri family to: one release of Tauri 3 and the CEF
-# runtime built against it, so a Linux build gives the same answer twice. The plugins
-# are pinned one by one, because each moves on its own.
 [package.metadata.cef]
 tauri = "3.0.0-alpha.5"
 tauri-runtime-cef = "3.0.0-alpha.6"
@@ -102,173 +40,46 @@ tauri-plugin-notification = "3.0.0-alpha.3"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
-# The identifier and the version, read the way tauri-build reads them, for `nib mcp`;
-# see identity.rs. Both are what tauri-build is itself built with, so they add nothing.
 tauri-utils = "2"
 serde_json = "1"
 
 [dependencies]
-# `protocol-asset` is what lets the webview load a picture from disk. Without it
-# every local image in a note is a broken image.
-#
-# `unstable` is what a web tab needs: putting a second webview inside a window and
-# giving it bounds of its own is behind that flag, and it is the only embedding
-# that renders a site the way a browser does. Unstable in Tauri means the API may
-# be renamed in a minor release, not that it is experimental in the engine - the
-# webview underneath is the same WebView2 or WKWebView the app itself runs in. The
-# whole of what nib calls is `Window::add_child`, `Manager::get_webview` and the
-# handful of methods on the webview it hands back, all in src/web_tabs.rs, so an
-# upstream rename is one file to follow.
 tauri = { version = "2", features = ["protocol-asset", "unstable"] }
-# Links leave the app the same way on every platform: the system browser on a
-# desktop, the browser app on a phone.
 tauri-plugin-opener = "2"
-# Which platform this is, said once and read from the window. Nothing else tells
-# the frontend apart a phone build from the desktop one.
 tauri-plugin-os = "2"
-# `nib://` links, which is the one way another program on the machine can ask this
-# app for something. On both kinds of build: a desktop registers the scheme in its
-# installer and a phone in its manifest, and the arriving half is the same code.
 tauri-plugin-deep-link = "2"
 serde = { version = "1", features = ["derive"] }
-# `raw_value` so a web store's IndexedDB dump passes through as the text the page
-# wrote rather than being parsed into a tree and printed again; see web_state/merge.rs.
 serde_json = { version = "1", features = ["raw_value"] }
-# Bytes cross the bridge as base64: an export is a Word file, an ePub or a
-# picture, and JSON digits would cost six characters a byte. Already in the lock
-# file as something tauri builds with, so this adds nothing to the build.
 base64 = "0.22"
-# A note's body on one of Apple Notes' rows is a gzipped protobuf, and unpacking it
-# is `apple_text.rs`. Every platform, although only a Mac has the database: the
-# decoding is `std` and this, so keeping it out of the other builds only meant that
-# no runner but one compiled a thousand lines of it. The pure-Rust backend, so it
-# needs no C compiler and cross-compiles to a phone like anything else.
 flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
-# The sync store: one SQLite file per account, on every platform, phones included,
-# because the device's half of sync v2 (what the account confirmed, what this device
-# has not sent yet, what nib last wrote to each file) is the same on all of them. See
-# sync_store.rs. Bundled so the store does not depend on whichever SQLite a machine
-# ships, and because a phone ships none an app may link.
 rusqlite = { version = "0.32", features = ["bundled"] }
-# The space folders watched for what other programs write into them: git, Obsidian,
-# a text editor. ReadDirectoryChangesW, FSEvents and inotify behind one interface, with
-# the debouncing done by space_watch/watching.rs rather than by notify's own debouncers,
-# because neither stitches a move between two folders on Windows. See space_watch.rs.
 notify = "8"
-# The sync store's device id, from the system's own randomness. Already in the lock
-# file as something tauri builds with, and on every platform now that every platform
-# has a sync store.
 getrandom = "0.3"
-# A tag's name holds letters, marks, digits and emoji, which the standard library cannot
-# tell apart. Already in the lock file as something tauri builds with, so this adds nothing.
 icu_properties = "2"
 
-# Desktop only: a second launch should hand its file to the running window, the
-# app installs its own updates, and files are chosen and saved in a dialog. A
-# phone has none of the three.
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
-# The font families installed on this machine, for Settings' font pickers (#772): one
-# reader of the font folders the platform keeps - fontconfig's on Linux, NixOS's included,
-# the system's and the user's on Windows and the Mac - and of each file's name table,
-# rather than three platform APIs behind three `cfg`s. Pure Rust, with ttf-parser under it.
 fontdb = "0.24"
-# An agent's picture of a page with every filled secret field painted over, so a
-# password's bullets and a card's digits never reach it; see agents/page.rs. Every
-# desktop that has agents' pages. Already in the lock file, at
-# this version, as what the menu and tray icons are read with.
 png = "0.18"
-# The engine's developer tools, for a web tab's page in the build that ships: F12,
-# Ctrl+Shift+I and the page menu's Inspect, as in a browser. A desktop's only, so a
-# phone's webview is never debuggable from outside, and nib's own window turns them
-# off again outside a development build; see `ready` in src/lib.rs. `protocol-asset` is
-# here because the Tauri CLI writes it into every `tauri` entry on each build (it follows
-# `assetProtocol` in tauri.conf.json); listed already, a build leaves this file alone.
 tauri = { version = "2", features = ["protocol-asset", "devtools"] }
 tauri-plugin-dialog = "2"
 tauri-plugin-process = "2"
-# Apple Notes keeps its notes in a SQLite database in a group container, which is
-# the only way into them: Notes has no export. Read with the same `rusqlite` the sync
-# store uses (above), and a temporary folder to copy the database into, because Notes
-# is very likely running while it is read. Firefox's bookmarks are the same story on
-# every desktop: `places.sqlite`, copied out of a profile Firefox may have open; see
-# firefox_profiles.rs.
 tempfile = "3"
-# Safari's bookmarks and its old session are binary property lists; see safari.rs.
-# Already in the lock file, at this version, as what tauri reads a bundle's Info.plist
-# with.
 plist = "1"
-# The `deep-link` feature is what makes a second launch hand over a `nib://` link
-# as a link rather than as an argument nothing reads: on Windows and Linux that is
-# how a link reaches an app that is already open.
 tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
 tauri-plugin-updater = "2"
-# The stop for every agent from any app (docs/agent-native.md 9.5), held only while an
-# agent is connected and added to the app then rather than at launch. Tauri's own
-# plugin, because a key from any app is three different system calls on three desktops
-# - RegisterHotKey, Carbon's hot keys, an X grab - each wanting the event loop's thread,
-# which the plugin already knows how to reach. See src/agents/shell.rs.
 tauri-plugin-global-shortcut = "~2.3"
-# One notification per question an agent asks while nib is not in front, and one for
-# the stop: Tauri's own plugin, which is the platform's own notification on each
-# desktop and knows the installed app's identity on Windows. Added on the first agent
-# request, never at launch; see src/agents/shell.rs.
 tauri-plugin-notification = "~2.4"
-# What an agent's token is kept as: its SHA-256, so the file of grants is a list of
-# what each agent may do and not a way to be one. Already in the lock file as
-# something tauri builds with; see src/agents/grants.rs.
 sha2 = "0.10"
-# What a platform composites behind a window: Mica, Acrylic, vibrancy. Also already
-# in the lock file as something tauri builds with, and asked for here by name rather
-# than through tauri's own `set_effects` for one reason: that wrapper applies the
-# first effect it is handed instead of the first the platform supports, and the whole
-# question on Windows is Mica or Acrylic depending on which Windows this is. See
-# appearance.rs.
 window-vibrancy = "0.6"
-# A shell in a tab: one pseudo terminal per terminal tab, ConPTY on Windows - on ARM
-# as on Intel, since it is kernel32's own - and the system's pty on a Mac and Linux.
-# Wezterm's own crate: it hands over a reader, a writer, a resize and the child, and
-# nothing else. See src/terminal.rs.
 portable-pty = "0.9"
-# Where other programs keep their settings, for the imports and the terminal's remote
-# hosts; and the web, for a link's preview, ChatGPT's sign-in and an extension fetched
-# from its store. Every one of them is in the lock file already, through the updater
-# plugin, with the same features, so this adds nothing to the build.
 dirs = "6"
 reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider"] }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 rustls-platform-verifier = "0.7"
-# A Firefox theme is an add-on, and an add-on is a zip: its manifest is read out of it
-# for the Appearance pane's Import row. In the lock file already, through the updater
-# plugin, and inflated by the flate2 above. See src/browser_themes.rs.
 zip = { version = "4", default-features = false, features = ["deflate-flate2"] }
-# How long a web state's capture or restore waits for the engine before it gives up,
-# which is tokio's timer. Tauri runs on tokio already and builds its runtime with every
-# driver the features compile in; this is the one feature it does not ask for itself.
-# And its mutex, which an await may be held across: one refresh of a ChatGPT plan's token
-# at a time (chatgpt.rs).
 tokio = { version = "1", default-features = false, features = ["time", "sync"] }
-# Local dictation's runtime, sherpa-onnx and ONNX Runtime, downloaded when the reader
-# turns it on and loaded then, so the installer carries none of it; see src/dictation.rs.
 libloading = "0.8"
 
-# UIKit as the objects tao hands out, at the version it is built against. For the one
-# thing the phone build answers itself: a second window an iPad asks for, which is
-# given back rather than left blank (lifecycle.rs). And the iPhone's own keychain for
-# an AI provider's key, which is the Mac's store under the same feature; Android keeps
-# them through the activity instead (secrets.rs).
-# The tray icon an agent's work keeps nib in when the window it lives in is closed, with
-# Open, the stop and Quit (docs/agent-native.md, open question 6). Not on Linux, where
-# the tray library is loaded from the system and is not on every desktop: there the
-# window closes the ordinary way. Already in the lock file, as what tauri builds with.
-# `protocol-asset` as on the desktops' entry above: what the Tauri CLI writes on a build.
-# An AI provider's key goes in the machine's own store: the Credential Manager on
-# Windows, the Secret Service on Linux. Named features rather than the defaults, so only
-# those two are compiled in - `linux-native` is the kernel's session keyring, which
-# forgets a key at logout, and `crypto-rust` keeps the Secret Service transport off
-# OpenSSL. Never on a Mac, whose keychain asks for the login password and asks again
-# (#1090): a Mac keeps them in a file of the app's own. A phone has the iPhone's
-# keychain (below) or EncryptedSharedPreferences, and a browser has nothing; see
-# secrets.rs. test/no-keychain-on-mac.test.ts holds this table to that.
 [target.'cfg(any(target_os = "windows", target_os = "linux"))'.dependencies]
 keyring = { version = "3", default-features = false, features = [
   "windows-native",
@@ -306,31 +117,8 @@ objc2-local-authentication = { version = "0.3", default-features = false, featur
 ] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-# Whether the running app is signed by a developer team, which is when the system lists
-# its App Intents in Shortcuts. Already in the lock file, through keyring and the
-# platform certificate verifier. See src/siri.rs.
 security-framework = "3"
-# The folder a terminal's shell is in, asked of the kernel (`proc_pidinfo`) for the
-# shells that do not say it themselves - zsh, a Mac's own. Already in the lock file, as
-# what portable-pty and tauri build with. See src/terminal/process.rs.
 libc = "0.2"
-# Where the main window was and how big it was, put back at the next launch the way
-# a Mac app puts back its frame. Only the size, the place and whether it was
-# maximised: whether it is visible is the launch's own decision (see ground.rs), and
-# which frame it wears is the reader's setting (see appearance.rs). The 2.4 line,
-# because 2.5 asks for a newer Tauri than the one this crate is built against. See
-# document_window.rs for why it is the Mac's alone.
-# AppKit, Foundation and WebKit as the objects tao and wry hand out, at the versions
-# they are built against so the pointers line up. What each is for: the dot in a
-# window's close button and the file it stands for (document_window.rs), the one
-# method AppKit asks before it quits (lifecycle.rs), asking iCloud for a note it took
-# off the Mac (notes/icloud.rs), the
-# menu bar's own rows and actions (menu_bar.rs), the traffic lights (lights.rs),
-# WKWebView's own printing, capture prompt, cookie store and snapshot (pdf.rs,
-# web_tabs.rs, web_cookies.rs), which browser opens the web and the question that
-# makes nib it (default_browser.rs), and a web tab's user scripts, emptied of the
-# app's before the page is sent to the site and given nib's own in a world of their
-# own (web_worlds.rs).
 objc2 = "0.6"
 block2 = "0.6"
 objc2-foundation = { version = "0.3", default-features = false, features = [
@@ -350,15 +138,11 @@ objc2-foundation = { version = "0.3", default-features = false, features = [
   "NSNotification",
   "NSObject",
   "NSOperation",
-  # The time an agent's press is said to happen at on a Mac, as the system's own events
-  # say theirs (agents/engines/webkit.rs).
   "NSProcessInfo",
   "NSProgress",
   "NSSet",
   "NSString",
   "NSURL",
-  # An agent's page on a Mac answers a site's sign-in box and decides its downloads; see
-  # agents/engines/webkit.rs.
   "NSURLAuthenticationChallenge",
   "NSURLCredential",
   "NSURLProtectionSpace",
@@ -376,8 +160,6 @@ objc2-app-kit = { version = "0.3", default-features = false, features = [
   "NSBitmapImageRep",
   "NSButton",
   "NSControl",
-  # An agent's press, pointer and keys sent to its page's view on a Mac; see
-  # agents/engines/webkit.rs.
   "NSEvent",
   "NSGraphics",
   "NSGraphicsContext",
@@ -391,9 +173,6 @@ objc2-app-kit = { version = "0.3", default-features = false, features = [
   "NSWindow",
   "NSWorkspace",
 ] }
-# A reminder as a notification request the system delivers at its minute with nib quit,
-# with Done and two snoozes; see reminders/macos.rs. Already in the lock file, as
-# something the AppKit bindings are built with.
 objc2-user-notifications = { version = "0.3", default-features = false, features = [
   "std",
   "block2",
@@ -412,17 +191,11 @@ objc2-user-notifications = { version = "0.3", default-features = false, features
 objc2-web-kit = { version = "0.3", default-features = false, features = [
   "std",
   "objc2-app-kit",
-  # The part of an agent's page a picture is taken of (agents/engines/webkit.rs).
   "objc2-core-foundation",
   "block2",
-  # A web state's scripts and nib's own page scripts run in a world of their own, and
-  # a hidden page is made an origin with an HTML string; see web_state/isolated.rs,
-  # restore_view.rs and web_worlds.rs.
   "WKContentWorld",
   "WKNavigation",
   "WKDownload",
-  # An agent's page on a Mac: its downloads, its file chooser and the windows it asks
-  # for, answered by Orden's own delegates; see agents/engines/webkit.rs.
   "WKDownloadDelegate",
   "WKOpenPanelParameters",
   "WKPDFConfiguration",
@@ -444,109 +217,43 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
   "WKWebsiteDataStore",
 ] }
 
-# The desktop portal's global shortcuts, the only key from any app a Wayland session
-# hands over, and the token-carrying second launch, both on the session bus: zbus's
-# blocking API, which the single instance and notification plugins already build here,
-# rather than ashpd on top of it. See hotkeys/portal.rs and handover.rs. Linux is built
-# from linux/Cargo.toml, on CEF; this table is what that manifest is written from.
 [target.'cfg(target_os = "linux")'.dependencies]
 zbus = { version = "5", default-features = false, features = ["async-io", "blocking-api"] }
-# The X server, from a connection of the crate's own: the browser's chords taken from a
-# web tab's page before the page has them, and which page has the keyboard. Every CEF
-# browser is an X11 window, and Chromium keeps the chords from the page and swallows
-# them. Pure Rust, and in Linux's lock file already, through the runtime's windowing.
-# See web_keys.rs and keyboard.rs.
-# And the window's own edges, with a border's cursors (window_drag.rs), and the shape
-# of a web tab's page, less the app's layers over it (web_cut.rs). And `xinput`, the
-# keyboard's raw keys, which say Alt held and let go of inside a page (web_keys.rs). And
-# `xtest`, the holder's input played into an application's own Xvfb (apps_host/input.rs).
-# And that Xvfb's picture read as it changes, in memory shared with it (`damage`, `shm`),
-# its pointer's shape (`xfixes`), and its size made the holder's (`randr`;
-# apps_host/capture.rs and display.rs). No new crate: features of x11rb's own.
 x11rb = { version = "0.13", default-features = false, features = ["cursor", "damage", "randr", "resource_manager", "shape", "shm", "xfixes", "xinput", "xtest"] }
-# GLib's sources, read by name at run time where the binding cannot be linked: the
-# main thread's loop asleep while nothing happens on CEF (chromium_pump.rs). In the lock
-# file already, as what nearly every crate here builds with.
 libc = "0.2"
-# A window's own X11 window, for what only the window manager is told: quick add
-# floated (linux.rs). In the lock file already, through the runtime's windowing.
 raw-window-handle = "0.6"
 
-# The picture of an application this computer hosts, sent peer to peer to the device
-# holding it (apps_host/stream.rs, issue 1063): WebRTC with no threads or sockets of its
-# own, its DTLS and SRTP in RustCrypto (`rust-crypto`), so no build links the system's
-# OpenSSL. Its DTLS certificate is made by rcgen on aws-lc-rs, which that backend asks for
-# and which is built from source by its own crate. Linux and Windows, the platforms that
-# host an application.
 [target.'cfg(any(target_os = "linux", target_os = "windows"))'.dependencies]
 str0m = { version = "0.25", default-features = false, features = ["rust-crypto"] }
 trash = { version = "5.3", default-features = false, features = ["chrono", "coinit_apartmentthreaded", "freedesktop"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-# What a file *is*, apart from where it is: the volume and the file id, asked of an open
-# handle. notify's own crate for it, so the one unsafe call it takes is not ours; a Mac
-# and Linux need nothing but `std` for the same answer. See space_watch/identity.rs.
 file-id = "0.2"
-# Orden's registration as a browser, written and read back through a safe interface
-# rather than more unsafe calls; see default_browser.rs. Already in the lock file,
-# at this version, as something the updater's HTTP client builds with.
 windows-registry = "0.6"
 windows = { version = "0.58", features = [
   "Win32_UI_Shell",
   "Win32_Foundation",
   "Win32_System_Registry",
-  # When this process was created, which is the one thing a launch trace cannot
-  # measure from inside it: everything before our first line is the machine loading
-  # the binary. See trace.rs.
   "Win32_System_Threading",
-  # Whether Ctrl is down as a key is pressed inside a web tab's page, which the
-  # engine's own event does not say. See web_keys.rs.
   "Win32_UI_Input_KeyboardAndMouse",
-  # Which processes a terminal's shell has started, asked before its tab closes on
-  # one of them, and Ctrl+C let through to them. See terminal/process.rs and
-  # terminal/session.rs.
   "Win32_System_Diagnostics_ToolHelp",
   "Win32_System_Console",
-  # A job object round Claude Code or Codex and everything it starts, so a stop ends
-  # them all; see ai_cli/family.rs. The job's call names a security descriptor.
   "Win32_System_JobObjects",
   "Win32_Security",
-  # How much memory the engine's processes hold, before an agent opens another page.
-  # See agents/memory.rs.
   "Win32_System_ProcessStatus",
-  # A wheel over a page, seen before Windows delivers it and sent to the page's own
-  # window, where the engine handles it once (web_wheel.rs); and whether a page asking
-  # for the palette has the keyboard, and a key was just pressed, which a double tap is
-  # taken on (web_opens.rs).
   "Win32_UI_WindowsAndMessaging",
-  # Every window a probe's process makes, on any of its threads, told to it as it is
-  # made, so that none is ever on a screen; see foreground.rs.
   "Win32_UI_Accessibility",
   "Win32_System_LibraryLoader",
   "Win32_System_SystemInformation",
-  # A second launch hands itself to the first with WM_COPYDATA, waiting at most two
-  # seconds for a nib that may have stopped answering; see handover.rs.
   "Win32_System_DataExchange",
-  # The shape of a web tab's page, with the app's layers over it cut out of it rather
-  # than the page hidden for them; see web_cut.rs.
   "Win32_Graphics_Gdi",
-  # How many fingers are on a precision touchpad, from its own reports, so a swipe is
-  # decided as they lift and not before; see touchpad.rs.
   "Win32_UI_Input",
   "Win32_Devices_HumanInterfaceDevice",
-  # A desktop of its own for each application this computer hosts, its windows drawn
-  # with PrintWindow; see apps_host/desk.rs.
   "Win32_System_StationsAndDesktops",
   "Win32_Storage_Xps",
-  # What the Start menu lists, for New application: its shortcuts read with the shell's
-  # IShellLink, the Store's applications from its Apps folder, and each one's icon as
-  # Explorer draws it; see apps_host/installed/windows.rs.
   "Win32_System_Com",
   "Win32_Storage_FileSystem",
   "Win32_UI_Shell_PropertiesSystem",
-  # Reminders put on Windows' own schedule of toasts, which rings them with nib not
-  # running: the notifier, the toast's XML and the moment it rings. See
-  # reminders/toasts.rs.
   "Foundation",
   "Foundation_Collections",
   "Data_Xml_Dom",
@@ -554,18 +261,8 @@ windows = { version = "0.58", features = [
   "Security_Credentials_UI",
   "Win32_System_WinRT",
 ] }
-# PDF export talks to WebView2's print engine directly, and a web tab asks the
-# engine to photograph itself. The versions are the ones tauri itself is built
-# against, so the handles it hands out line up.
 webview2-com = "0.38"
 windows-core = "0.61"
-# The COM stream `CapturePreview` writes a page's picture into; see `web_shot` in
-# web_tabs.rs. It has to be the same `windows` crate webview2-com's own signature
-# names, which is 0.61 and not the 0.58 above - two versions of it are already in
-# the lock file for that reason - so it comes in under a name of its own rather
-# than as a second `windows`. And a page drawn under the app as a DirectComposition
-# visual, whose input, cursor, accessibility and drops are handed to it through those
-# same signatures; see web_visual.rs (#1137).
 windows_com = { package = "windows", version = "0.61", features = [
   "Win32_System_Com",
   "Win32_System_Com_StructuredStorage",
@@ -582,32 +279,17 @@ windows_com = { package = "windows", version = "0.61", features = [
   "Win32_UI_Shell",
   "Win32_UI_WindowsAndMessaging",
 ] }
-# Which of a window's pages wry builds as visuals, said once (web_visual.rs): the copy in
-# windows/wry below, the release tauri-runtime-wry is built against otherwise.
 wry = { version = "0.55", default-features = false }
 
-# WebKitGTK as the webview wry hands out on the BSDs, at the version and the features wry
-# builds it with, so the types line up and the lock file gains no crate: a web tab's user
-# scripts, emptied of the app's before the page is sent to the site and given nib's own
-# in a script world of their own (web_worlds.rs). Linux has it in its own table above.
 [target.'cfg(any(target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))'.dependencies]
 webkit2gtk = { version = "=2.0.2", features = ["v2_38"] }
 
 [dev-dependencies]
-# The tests that touch the disk do it in a folder that cleans itself up. Already
-# in the lock file as something tauri builds with, so this costs nothing new.
 tempfile = "3"
 
-# A PackageKit of the tests' own, on the far end of a socket pair, which packagekit.rs's
-# tests update and install against. zbus's own feature, which a build never turns on.
 [target.'cfg(target_os = "linux")'.dev-dependencies]
 zbus = { version = "5", default-features = false, features = ["async-io", "blocking-api", "p2p"] }
 
-# A window class of a test's own, which Windows describes with a brush: the tests in
-# web_wheel.rs build the windows a wheel over a page passes through. The tests' only,
-# so the app never compiles the drawing half of the crate. And a desktop of a test's
-# own, which nobody sees, for the windows foreground.rs's tests show; see there. And the
-# folder Explorer's New menu is built for, in shell_menu.rs's tests.
 [target.'cfg(target_os = "windows")'.dev-dependencies]
 windows = { version = "0.58", features = [
   "Win32_Graphics_Gdi",
@@ -622,9 +304,5 @@ opt-level = "s"
 panic = "abort"
 strip = true
 
-# wry from a copy in the tree, its version the lock file's, with Orden's changes marked
-# "Orden's patch" in it: a web tab's page built as a `WebView2` composition controller,
-# which wry has no way to ask for (src/web_visual.rs, #1137). Linux's manifest builds no
-# wry and leaves this out (scripts/linux-manifest.mjs).
 [patch.crates-io]
 wry = { path = "windows/wry" }
