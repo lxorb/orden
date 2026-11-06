@@ -1,25 +1,3 @@
-//! The desktop portal's global shortcuts (`org.freedesktop.portal.GlobalShortcuts`), the
-//! one way a Wayland session hands an app a key pressed in another.
-//!
-//! **One session for every key the page wants**, bound again whenever that set changes:
-//! the portal binds a session's keys once and never again, so a key added or let go is a
-//! new session. The key the reader chose is only the key the app prefers; the system's
-//! settings decide, and the system says back which key it is (`trigger_description`),
-//! which is what the page shows. GNOME and KDE ask the first time, in a dialog of their
-//! own, and remember the answer. A set the system turned down is not asked about again
-//! until the set changes, so nothing the page does over and over brings the dialog
-//! back.
-//!
-//! **Before anything else**, a program that is not in a sandbox tells the portal which
-//! desktop entry it is (`org.freedesktop.host.portal.Registry`), which is how the dialog
-//! names Orden and how the system remembers its keys; a portal too old to have the
-//! registry works it out by itself.
-//!
-//! On threads of its own: every step is a request answered later, and a dialog may wait
-//! on the reader for as long as they like. One thread binds, one hears the presses, and
-//! a press is answered on the event loop's thread with the compositor's token for it, so
-//! quick add's window may take the front.
-
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -42,25 +20,17 @@ const SESSION: &str = "org.freedesktop.portal.Session";
 const REGISTRY: &str = "org.freedesktop.host.portal.Registry";
 const PROPERTIES: &str = "org.freedesktop.DBus.Properties";
 
-/// The names an installed Orden's desktop entry has had: the AUR's, the Snap's and the
-/// Nix flake's, Tauri's own in the .deb and the .rpm, and Flathub's.
 const ENTRIES: [&str; 4] = ["nib", "orden", "Orden", "ch.emilvinu.nib"];
 
-/// What the binding thread is asked.
 enum Ask {
-    /// These keys, and no others.
     Want(BTreeMap<Which, String>),
-    /// The system's own page for them.
     Change,
 }
 
 static ASKS: OnceLock<Sender<Ask>> = OnceLock::new();
 
-/// The session the presses are heard for now.
 static SESSION_NOW: Mutex<Option<String>> = Mutex::new(None);
 
-/// The binding thread, started the first time anything asks: the portal asked whether it
-/// is there at all.
 pub fn wake(app: &AppHandle) {
     let _ = asks(app);
 }
@@ -76,12 +46,10 @@ fn asks(app: &AppHandle) -> &'static Sender<Ask> {
     })
 }
 
-/// These keys, and no others, from any app.
 pub fn want_keys(app: &AppHandle, wanted: BTreeMap<Which, String>) {
     let _ = asks(app).send(Ask::Want(wanted));
 }
 
-/// The system's own page for the keys.
 pub fn reconfigure(app: &AppHandle) {
     let _ = asks(app).send(Ask::Change);
 }
@@ -112,7 +80,6 @@ fn run(app: &AppHandle, asked: &Receiver<Ask>) {
 
     let mut bound = Bound::default();
     while let Ok(first) = asked.recv() {
-        // Only the last of several sets waiting is worth a session.
         let mut wanted = None;
         let mut change = false;
         for ask in std::iter::once(first).chain(asked.try_iter()) {
@@ -132,18 +99,14 @@ fn run(app: &AppHandle, asked: &Receiver<Ask>) {
     }
 }
 
-/// What was last bound: the keys asked for, and the session holding them, if the system
-/// gave one.
 #[derive(Default)]
 struct Bound {
     keys: BTreeMap<Which, String>,
     session: Option<String>,
 }
 
-/// The session bus, and what the portal is on it.
 struct Portal {
     bus: Connection,
-    /// This connection's name as the portal writes it into a request's path.
     sender: String,
     version: u32,
 }
@@ -171,7 +134,6 @@ impl Portal {
         })
     }
 
-    /// Binds `wanted` in a session of its own, in place of what was bound.
     fn rebind(&self, app: &AppHandle, bound: &mut Bound, wanted: BTreeMap<Which, String>) {
         if bound.keys == wanted {
             return;
@@ -203,7 +165,6 @@ impl Portal {
         }
     }
 
-    /// A session with `wanted` in it, and what the system holds for each.
     fn bind(
         &self,
         wanted: &BTreeMap<Which, String>,
@@ -253,8 +214,6 @@ impl Portal {
         }
     }
 
-    /// Calls `method` and waits for the answer the portal sends on the request it made,
-    /// listening before the call so the answer cannot arrive unheard.
     fn request<B>(
         &self,
         method: &str,
@@ -281,7 +240,6 @@ impl Portal {
         body.deserialize()
     }
 
-    /// The system's own page for the session's keys: the portal's second version.
     fn configure(&self, session: &str) {
         if self.version < 2 {
             return;
@@ -305,7 +263,6 @@ impl Portal {
             .call_method(Some(DESKTOP), session, Some(SESSION), "Close", &());
     }
 
-    /// The presses, and the keys the system changed, heard on a thread of their own.
     fn hear(&self, app: &AppHandle) {
         let bus = self.bus.clone();
         let app = app.clone();
@@ -359,8 +316,6 @@ fn presses(bus: &Connection, app: &AppHandle) -> zbus::Result<()> {
     Ok(())
 }
 
-/// Tells the portal which desktop entry this is, where the program is not in a sandbox
-/// that already says so. A portal without the registry is one that works it out itself.
 fn register(bus: &Connection) {
     if std::env::var_os("FLATPAK_ID").is_some() || std::env::var_os("SNAP").is_some() {
         return;
@@ -378,7 +333,6 @@ fn register(bus: &Connection) {
     );
 }
 
-/// The desktop entry this install put on the system, by the name the portal knows it by.
 fn installed_entry() -> Option<String> {
     let home = std::env::var_os("XDG_DATA_HOME")
         .map(PathBuf::from)
@@ -416,14 +370,11 @@ fn is_now(session: &str) -> bool {
         == Some(session)
 }
 
-/// A handle no request of this connection has had before.
 fn token() -> String {
     static NEXT: AtomicU32 = AtomicU32::new(0);
     format!("orden{}", NEXT.fetch_add(1, Ordering::Relaxed))
 }
 
-/// The keys in a list of shortcuts as the portal says them, `a(sa{sv})`, with the key
-/// the system shows for each.
 fn triggers(value: &Value<'_>) -> BTreeMap<Which, String> {
     let Value::Array(items) = unwrapped(value) else {
         return BTreeMap::new();
@@ -452,10 +403,8 @@ fn triggers(value: &Value<'_>) -> BTreeMap<Which, String> {
         .collect()
 }
 
-/// A list of shortcuts as a signal carries it, typed.
 type Listed = Vec<(String, HashMap<String, OwnedValue>)>;
 
-/// The keys in a list a signal carried, with the key the system shows for each.
 fn listed(shortcuts: Listed) -> BTreeMap<Which, String> {
     shortcuts
         .into_iter()
@@ -469,7 +418,6 @@ fn listed(shortcuts: Listed) -> BTreeMap<Which, String> {
         .collect()
 }
 
-/// A variant's value, however deep the variants go.
 fn unwrapped<'v, 'a>(value: &'v Value<'a>) -> &'v Value<'a> {
     match value {
         Value::Value(inner) => unwrapped(inner),
@@ -482,7 +430,6 @@ fn text(value: &Value<'_>) -> Option<String> {
 }
 
 impl Which {
-    /// The id the portal keeps the key under, which a Hyprland config binds it by.
     fn portal_id(self) -> &'static str {
         match self {
             Self::QuickAdd => "quick-add",
@@ -494,7 +441,6 @@ impl Which {
         Self::ALL.into_iter().find(|which| which.portal_id() == id)
     }
 
-    /// What the system's dialog and settings call it.
     fn description(self) -> &'static str {
         match self {
             Self::QuickAdd => "Add a task",

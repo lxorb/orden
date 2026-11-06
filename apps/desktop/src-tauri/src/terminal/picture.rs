@@ -1,24 +1,3 @@
-//! A picture pasted into a remote terminal, carried to its host.
-//!
-//! A coding agent pastes a picture by reading the clipboard itself - Claude Code's Alt+V
-//! on Windows and Ctrl+V elsewhere - and on the host that is the host's clipboard, which
-//! is empty. So the window carries the picture over and pastes its path there, which the
-//! agent takes as an image the way it takes one dragged onto a terminal (issue 228; see
-//! `lib/terminal/images.ts` and docs/terminal.md).
-//!
-//! **The tab's own way there.** The same host's id, so the same `ssh` and the same
-//! arguments the tab connects with (`remote::reach`), in a connection of its own beside
-//! the tab's: the tab's carries a person's typing to a shell and has no room for a file.
-//! In `BatchMode`, so a key, the agent or a connection `ssh` already shares
-//! (`ControlMaster`) is enough, and a host that would ask for a password refuses at once
-//! rather than waiting on a prompt nobody sees. The window names the host, the kind of
-//! picture and its bytes and nothing else: the file's name and the line the host runs
-//! are made here.
-//!
-//! **Where it goes.** The host user's own cache, `~/.cache/nib/images` (or under
-//! `$XDG_CACHE_HOME`), made private, in `sh` whatever the login shell is; the host says
-//! the file's path back on its output, which is what is pasted.
-
 use std::io::Write;
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
@@ -29,8 +8,6 @@ use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
 use tauri::Webview;
 
-/// The kinds of picture a paste carries, and the end of each one's file name: what a
-/// coding agent reads as an image from a path. The online terminal's `IMAGE_KINDS`.
 const KINDS: [(&str, &str); 4] = [
     ("png", "png"),
     ("jpeg", "jpg"),
@@ -38,12 +15,8 @@ const KINDS: [(&str, &str); 4] = [
     ("webp", "webp"),
 ];
 
-/// The largest picture a paste carries: the online terminal's `MOST_IMAGE`.
 const MOST_BYTES: usize = 16 * 1024 * 1024;
 
-/// What `ssh` is told besides the tab's own arguments: no prompt, no terminal, a host
-/// that does not answer given up on in seconds rather than minutes, and a connection that
-/// dies on the way found out in fifteen.
 const OPTIONS: [&str; 9] = [
     "-T",
     "-o",
@@ -56,7 +29,6 @@ const OPTIONS: [&str; 9] = [
     "ServerAliveCountMax=3",
 ];
 
-/// The end of a picture's file name by its kind, or None for a kind no agent reads.
 fn end_of(kind: &str) -> Option<&'static str> {
     KINDS
         .iter()
@@ -64,8 +36,6 @@ fn end_of(kind: &str) -> Option<&'static str> {
         .map(|(_, end)| *end)
 }
 
-/// A fresh name for a picture: `nib-`, sixteen random hex digits and its end, so it is
-/// never a path and never a word a shell reads twice.
 fn fresh_name(end: &str) -> Result<String, String> {
     use std::fmt::Write as _;
 
@@ -78,9 +48,6 @@ fn fresh_name(end: &str) -> Result<String, String> {
     Ok(format!("{name}.{end}"))
 }
 
-/// What the host runs: its user's cache folder made, private, the bytes from standard
-/// input into `name` there, and the file's path said back. One word for the login shell,
-/// in single quotes, which `bash`, `zsh`, `fish` and `tcsh` all read as it is.
 fn script(name: &str) -> String {
     format!(
         "sh -c 'd=\"${{XDG_CACHE_HOME:-$HOME/.cache}}/nib/images\"; umask 077; \
@@ -88,7 +55,6 @@ fn script(name: &str) -> String {
     )
 }
 
-/// `ssh` run with `args`, the picture on its standard input; the path the host said.
 fn carried(program: &Path, args: &[String], bytes: Vec<u8>) -> Result<String, String> {
     let mut command = Command::new(program);
     command
@@ -96,8 +62,6 @@ fn carried(program: &Path, args: &[String], bytes: Vec<u8>) -> Result<String, St
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
-    // `CREATE_NO_WINDOW`: a console program started by a GUI app gets a console window of
-    // its own otherwise, which would flash up in front of everything.
     #[cfg(windows)]
     command.creation_flags(0x0800_0000);
 
@@ -105,8 +69,6 @@ fn carried(program: &Path, args: &[String], bytes: Vec<u8>) -> Result<String, St
         .spawn()
         .map_err(|error| format!("could not start ssh: {error}"))?;
     if let Some(mut input) = child.stdin.take() {
-        // On a thread of its own: `ssh` reads it while the host answers, and a picture
-        // larger than the pipe would otherwise wait on output nobody is reading yet.
         std::thread::spawn(move || {
             let _ = input.write_all(&bytes);
         });
@@ -127,8 +89,6 @@ fn carried(program: &Path, args: &[String], bytes: Vec<u8>) -> Result<String, St
     }
 }
 
-/// A picture pasted into the remote terminal of the host `host` names, written to a file
-/// on that host; answers the file's path there. See the top of this file.
 #[tauri::command(async)]
 pub fn remote_image(
     webview: Webview,
@@ -177,7 +137,6 @@ mod tests {
     fn the_host_runs_one_quoted_word_and_says_the_path_back() {
         let line = script("nib-0011223344556677.png");
         assert!(line.starts_with("sh -c '") && line.ends_with('\''));
-        // One word for the login shell: no single quote inside it.
         assert_eq!(line.matches('\'').count(), 2);
         assert!(line.contains("cat > \"$d/nib-0011223344556677.png\""));
         assert!(line.contains("printf %s \"$d/nib-0011223344556677.png\""));

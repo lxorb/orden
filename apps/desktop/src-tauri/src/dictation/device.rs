@@ -1,39 +1,26 @@
-//! Whether this device can hear on its own, read off what it is (#1151): the platform,
-//! the cores and the memory. What it is measured at once the model is here is
-//! `super::trial`; this is what is known before anything is downloaded.
-
 use serde::Serialize;
 
 use super::catalog::{rid_of, Model};
 
-/// What the machine is.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct Device {
     pub os: &'static str,
     pub arch: &'static str,
     pub cores: usize,
-    /// Memory in GB, rounded down; `None` where it could not be read.
     pub memory: Option<u64>,
 }
 
-/// Whether a model fits a device, and why not where it does not.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Fit {
     Fits,
-    /// No runtime is built for this platform.
     Platform,
-    /// Too few cores to keep up with a voice.
     Cores,
-    /// Too little memory to hold the model beside everything else.
     Memory,
 }
 
-/// The fewest cores that hear in real time with room for the rest of the app: measured
-/// for #1151 on four, where a ten-second stretch is heard in well under a second.
 const LEAST_CORES: usize = 4;
 
-/// Whether `model` can run on `device`.
 pub fn fit(device: &Device, model: &Model) -> Fit {
     if rid_of(device.os, device.arch).is_none() {
         return Fit::Platform;
@@ -47,13 +34,10 @@ pub fn fit(device: &Device, model: &Model) -> Fit {
     Fit::Fits
 }
 
-/// How many threads a pass is given: half the cores, so the window and the microphone
-/// keep theirs, and never more than four, past which a pass of this size is no faster.
 pub fn threads(cores: usize) -> i32 {
     i32::try_from((cores / 2).clamp(1, 4)).unwrap_or(1)
 }
 
-/// This machine.
 pub fn this() -> Device {
     Device {
         os: std::env::consts::OS,
@@ -92,7 +76,6 @@ fn memory() -> Option<u64> {
         dwLength: u32::try_from(std::mem::size_of::<MEMORYSTATUSEX>()).ok()?,
         ..Default::default()
     };
-    // SAFETY: `status` is a whole MEMORYSTATUSEX with its length set, as the call asks.
     unsafe { GlobalMemoryStatusEx(&raw mut status) }.ok()?;
     Some(status.ullTotalPhys)
 }

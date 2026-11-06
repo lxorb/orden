@@ -1,20 +1,3 @@
-//! The chats' half of the device's store: every message of every chat the account
-//! reaches, with their words indexed, the outbox, and the composer's drafts
-//! (docs/chats.md 4.5, 4.12 and 4.17).
-//!
-//! A file of its own beside the sync store, `sync/<account>.chats.db`, rather than more
-//! tables in it. A chat is the account's on sync v1 and v2 alike (decision 7.12), and the
-//! sync store is sync v2's: its engine closes it when it stops, marks every opening as an
-//! unclean session until it says otherwise (which is when it rotates every document's
-//! client id), and deletes it on the way back to v1. A chat's outbox held in that file
-//! would lose its words on the way back, and a chat that opened it on a v1 account would
-//! cost the next v2 launch a rotation. So the chats keep their own file, opened the first
-//! time anything asks, on any account, and deleted when the account signs out.
-//!
-//! The window speaks to it in a few typed questions and changes, never in SQL: what a
-//! surface asks of a chat is a window of rows by `seq`, a few rows by id, a search, a
-//! count, and the outbox. Every read is one snapshot and every write one transaction.
-
 use rusqlite::types::Value as Sql;
 use rusqlite::{params_from_iter, Connection, ErrorCode, TransactionBehavior};
 use serde::Deserialize;
@@ -28,19 +11,12 @@ use tauri::{AppHandle, Manager};
 use super::store::{files_of, migrated_with, set_aside, Refused};
 use crate::paths::{cannot, made};
 
-/// Every schema the chats' store has had; see `MIGRATIONS` in store.rs for the rule.
 const MIGRATIONS: [&str; 1] = [include_str!("chats.sql")];
 
-/// How long a statement waits on another connection's lock: a second copy of the app
-/// during an update, or a probe.
 const PATIENCE: Duration = Duration::from_secs(5);
 
-/// The most rows one question answers: a window is 200, a search's candidates a
-/// thousand or two.
 const MOST_ROWS: u32 = 5000;
 
-/// The chats' store that is open, and whose it is: held beside the sync store's own in
-/// `Stores`.
 #[derive(Default)]
 pub struct ChatStores(Mutex<Option<(String, PathBuf, ChatStore)>>);
 
@@ -52,7 +28,6 @@ impl ChatStores {
     }
 }
 
-/// A question, of the list a read carries.
 #[derive(Deserialize, Debug)]
 #[serde(
     tag = "t",
@@ -61,10 +36,7 @@ impl ChatStores {
     deny_unknown_fields
 )]
 pub enum Ask {
-    /// Every chat this device has heard of.
     Chats,
-    /// A window of one chat's messages by `seq`, oldest first: the chat's own rows, or
-    /// one message's replies. `before`, `after` or `around` one place, else the newest.
     Window {
         chat: String,
         #[serde(default)]
@@ -77,9 +49,10 @@ pub enum Ask {
         around: Option<i64>,
         limit: u32,
     },
-    /// Some messages of one chat by id.
-    Messages { chat: String, ids: Vec<String> },
-    /// The candidates for a search, newest first: every part given must hold.
+    Messages {
+        chat: String,
+        ids: Vec<String>,
+    },
     Search {
         #[serde(default)]
         chats: Vec<String>,
@@ -99,19 +72,15 @@ pub enum Ask {
         until: Option<i64>,
         limit: u32,
     },
-    /// How many of a chat's own messages after a place are somebody else's.
     Unread {
         chat: String,
         after: i64,
         me: String,
     },
-    /// The outbox, oldest first.
     Outbox,
-    /// Every draft.
     Drafts,
 }
 
-/// A change, of the list a write applies in one transaction.
 #[derive(Deserialize, Debug)]
 #[serde(
     tag = "t",
@@ -120,7 +89,6 @@ pub enum Ask {
     deny_unknown_fields
 )]
 pub enum Change {
-    /// A chat's row, whole.
     Chat {
         id: String,
         space: String,
@@ -132,7 +100,6 @@ pub enum Change {
         #[serde(default)]
         row: Option<String>,
     },
-    /// A message as it now stands, whole.
     Message {
         chat: String,
         id: String,
@@ -150,12 +117,10 @@ pub enum Change {
         #[serde(default)]
         marks: Option<String>,
     },
-    /// A message gone from the device.
     Unmessage {
         chat: String,
         id: String,
     },
-    /// An outbox row, whole.
     Queue {
         id: String,
         chat: String,
@@ -176,18 +141,15 @@ pub enum Change {
     Undraft {
         chat: String,
     },
-    /// Everything of one chat: its row, messages and draft. Its outbox is the outbox's.
     Forget {
         chat: String,
     },
 }
 
-/// An open chats' store.
 pub struct ChatStore {
     conn: Connection,
 }
 
-/// Why a read or a write did not happen, and whether the file is damaged.
 struct Failed {
     said: String,
     damaged: bool,
@@ -208,7 +170,6 @@ fn damaged(error: &rusqlite::Error) -> bool {
         .is_some_and(|code| matches!(code, ErrorCode::DatabaseCorrupt | ErrorCode::NotADatabase))
 }
 
-/// A whole number the window's numbers hold exactly, as SQL takes it.
 fn whole(value: i64) -> Sql {
     Sql::Integer(value)
 }
@@ -221,13 +182,10 @@ fn maybe_text(value: Option<&String>) -> Sql {
     value.map_or(Sql::Null, |one| Sql::Text(one.clone()))
 }
 
-/// `?, ?, ?` for a list of `count`.
 fn slots(count: usize) -> String {
     vec!["?"; count].join(", ")
 }
 
-/// A word or a phrase as FTS5 reads it: in double quotes, a quote inside doubled, so no
-/// word anybody types is ever read as FTS5's own syntax. A word is the start of one.
 fn quoted(words: &str, prefix: bool) -> String {
     let inner = words.replace('"', "\"\"");
     if prefix {
@@ -237,13 +195,9 @@ fn quoted(words: &str, prefix: bool) -> String {
     }
 }
 
-/// The columns a message row answers with.
 const MESSAGE: &str = "chat, id, seq, upto, json, marks";
 
 impl ChatStore {
-    /// Opens the store at `path`, making it if it is not there and bringing its schema up
-    /// to date. A file that is not a store is set aside and a new one made: it is a cache
-    /// of the account, but for an outbox the account would then not have heard of.
     pub fn open(path: &Path) -> Result<Self, String> {
         if let Some(folder) = path.parent() {
             made(folder)?;
@@ -260,14 +214,12 @@ impl ChatStore {
     fn opened(path: &Path) -> Result<Self, Refused> {
         let conn = Connection::open(path)?;
         conn.busy_timeout(PATIENCE)?;
-        // As the sync store: a write-ahead log, flushed at every checkpoint.
         conn.pragma_update(None, "journal_mode", "wal")?;
         conn.pragma_update(None, "synchronous", "normal")?;
         migrated_with(&conn, &MIGRATIONS)?;
         Ok(Self { conn })
     }
 
-    /// Answers every question from one snapshot.
     fn read(&mut self, asks: &[Ask]) -> Result<Vec<Json>, Failed> {
         let snapshot = self
             .conn
@@ -279,7 +231,6 @@ impl ChatStore {
         Ok(answers)
     }
 
-    /// Applies every change in one transaction.
     fn write(&mut self, changes: &[Change]) -> Result<(), Failed> {
         let batch = self
             .conn
@@ -298,7 +249,6 @@ impl ChatStore {
     }
 }
 
-/// Every row a statement answers, as JSON objects by the statement's column names.
 fn rows(conn: &Connection, sql: &str, values: &[Sql]) -> Result<Vec<Json>, Failed> {
     let mut statement = conn.prepare_cached(sql)?;
     let names: Vec<String> = statement
@@ -380,7 +330,6 @@ fn answer(conn: &Connection, ask: &Ask) -> Result<Json, Failed> {
     })
 }
 
-/// The candidates of a search, newest first.
 fn search(conn: &Connection, ask: &Ask) -> Result<Json, Failed> {
     let Ask::Search {
         chats,
@@ -445,7 +394,6 @@ fn search(conn: &Connection, ask: &Ask) -> Result<Json, Failed> {
     Ok(Json::Array(rows(conn, &sql, &values)?))
 }
 
-/// A window of rows by `seq`, oldest first.
 fn window(
     conn: &Connection,
     chat: &str,
@@ -456,8 +404,6 @@ fn window(
     limit: u32,
 ) -> Result<Vec<Json>, Failed> {
     let limit = i64::from(limit.clamp(1, MOST_ROWS));
-    // Which rows: the chat's own by the `main` index, or one message's replies by the
-    // `parent` one. Either way one index read per side.
     let (which, key) = match parent {
         Some(parent) => ("parent = ?2", text(parent)),
         None => ("main = ?2", whole(1)),
@@ -574,9 +520,6 @@ fn apply(conn: &Connection, change: &Change) -> Result<(), Failed> {
     }
 }
 
-/// A message as it now stands: an upsert rather than a replace, so the row keeps its
-/// rowid and the words' triggers see an update, where a replace deletes without telling
-/// them.
 fn message(conn: &Connection, change: &Change) -> Result<(), Failed> {
     let Change::Message {
         chat,
@@ -623,15 +566,11 @@ fn message(conn: &Connection, change: &Change) -> Result<(), Failed> {
     )
 }
 
-/// Where an account's chats are kept: beside its sync store.
 fn chats_path(app: &AppHandle, account: &str) -> Result<PathBuf, String> {
     let store = super::store_path(app, account)?;
     Ok(store.with_extension("chats.db"))
 }
 
-/// Runs `act` on the account's chats' store, opening it first where it is not open for
-/// that account. A store found damaged while used is set aside, and the next call makes
-/// a new one.
 fn with_chats<T>(
     app: &AppHandle,
     account: &str,
@@ -664,13 +603,11 @@ fn with_chats<T>(
     }
 }
 
-/// Answers a list of questions about an account's chats.
 #[tauri::command(async)]
 pub fn chat_store_read(app: AppHandle, account: String, asks: Vec<Ask>) -> Result<Json, String> {
     with_chats(&app, &account, |store| store.read(&asks).map(Json::Array))
 }
 
-/// Applies a list of changes to an account's chats, all or nothing.
 #[tauri::command(async)]
 pub fn chat_store_write(
     app: AppHandle,
@@ -680,7 +617,6 @@ pub fn chat_store_write(
     with_chats(&app, &account, |store| store.write(&changes))
 }
 
-/// Deletes an account's chats' store: signing out leaves nothing of its chats here.
 #[tauri::command(async)]
 pub fn chat_store_forget(app: AppHandle, account: String) -> Result<(), String> {
     let path = chats_path(&app, &account)?;
@@ -842,7 +778,6 @@ mod tests {
         );
         assert_eq!(seqs(&odd), Vec::<i64>::new(), "typed syntax is only words");
 
-        // An edit takes the old words out of the index and puts the new ones in.
         write(&mut store, json!([message("c", 1, "Meet at the bar")]));
         let gone = ask(
             &mut store,
@@ -879,8 +814,6 @@ mod tests {
         assert_eq!(unread, json!(3), "5, 7 and 9 are user:b's");
     }
 
-    /// The outbox is what a crash must not lose: written, then read by a store opened
-    /// afresh on the same file.
     #[test]
     fn the_outbox_and_drafts_outlive_the_store() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -933,8 +866,6 @@ mod tests {
         assert_eq!(ask(&mut store, json!({ "t": "chats" })), json!([]));
     }
 
-    /// docs/chats.md 6.2: a chat of 100,000 messages, the window around a read place read
-    /// off the index, in a few steps for each row it answers.
     #[test]
     fn a_window_of_a_hundred_thousand_is_quick() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -946,10 +877,6 @@ mod tests {
             write(&mut store, Json::Array(batch));
         }
 
-        // Quick is the rows a window reads, counted in SQLite's own steps rather than timed:
-        // a clock says how busy the machine was (#446). A window that walked the chat
-        // would take a step or more for each of its hundred thousand rows; one read off
-        // the index takes a few for each of the hundred it answers.
         for place in [73_210, 61_377, 84_052, 12_904, 95_118] {
             steps(&store);
             let around = ask(
@@ -962,14 +889,10 @@ mod tests {
         }
     }
 
-    /// The steps SQLite's machine has taken in every statement of the store since this
-    /// was last asked, which is the work a read did, however slowly it was done.
     #[allow(unsafe_code)]
     fn steps(store: &ChatStore) -> i64 {
         use rusqlite::ffi;
         let mut total = 0;
-        // SAFETY: the connection is the store's, open for as long as the borrow, and only
-        // its statements' counters are read and reset; none of them is stepped here.
         unsafe {
             let db = store.conn.handle();
             let mut statement = ffi::sqlite3_next_stmt(db, std::ptr::null_mut());

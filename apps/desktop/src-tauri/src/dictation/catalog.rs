@@ -1,27 +1,14 @@
-//! What local dictation downloads, pinned: the runtime for this platform and the model,
-//! each file with its size and SHA-256 (#1151). Nothing here is in the installer.
-//!
-//! The runtime is sherpa-onnx's own build for .NET, `org.k2fsa.sherpa.onnx.runtime.*`
-//! on `NuGet`: a zip with its C interface and ONNX Runtime beside it, which is what
-//! sherpa.rs loads. The model files come from the Hugging Face repository sherpa-onnx's
-//! packages are made from, at a fixed revision.
-
-/// The sherpa-onnx release sherpa.rs is written against.
 pub const RUNTIME_VERSION: &str = "2.0.1";
 
-/// A file with what it must be.
 #[derive(Clone, Copy, Debug)]
 pub struct Pinned {
-    /// Its name where it is kept.
     pub name: &'static str,
     pub size: u64,
     pub sha256: &'static str,
 }
 
-/// The runtime for one platform: the package, and the two libraries in it.
 #[derive(Clone, Copy, Debug)]
 pub struct Runtime {
-    /// The `NuGet` runtime identifier, which is also the folder in the zip.
     pub rid: &'static str,
     pub package: Pinned,
     pub onnxruntime: Pinned,
@@ -29,7 +16,6 @@ pub struct Runtime {
 }
 
 impl Runtime {
-    /// Where the package is downloaded from.
     pub fn url(&self) -> String {
         let id = format!("org.k2fsa.sherpa.onnx.runtime.{}", self.rid);
         format!("https://api.nuget.org/v3-flatcontainer/{id}/{RUNTIME_VERSION}/{id}.{RUNTIME_VERSION}.nupkg")
@@ -49,7 +35,6 @@ const fn runtime(rid: &'static str, package: Pinned, onnxruntime: Pinned, api: P
     }
 }
 
-/// Every platform sherpa-onnx builds a runtime for that Orden runs on.
 pub const RUNTIMES: &[Runtime] = &[
     runtime(
         "win-x64",
@@ -161,7 +146,6 @@ pub const RUNTIMES: &[Runtime] = &[
     ),
 ];
 
-/// The runtime identifier of a platform, as Rust names its parts.
 pub fn rid_of(os: &str, arch: &str) -> Option<&'static str> {
     Some(match (os, arch) {
         ("windows", "x86_64") => "win-x64",
@@ -174,39 +158,30 @@ pub fn rid_of(os: &str, arch: &str) -> Option<&'static str> {
     })
 }
 
-/// The runtime this build downloads, where there is one.
 pub fn this_runtime() -> Option<&'static Runtime> {
     let rid = rid_of(std::env::consts::OS, std::env::consts::ARCH)?;
     RUNTIMES.iter().find(|one| one.rid == rid)
 }
 
-/// A model, and the files it is opened from.
 #[derive(Clone, Copy, Debug)]
 pub struct Model {
     pub id: &'static str,
     pub name: &'static str,
-    /// The repository and revision its files are fetched from.
     pub base: &'static str,
     pub files: &'static [Pinned],
-    /// The least memory, in GB, a device needs to run it beside everything else.
     pub memory: u64,
 }
 
 impl Model {
-    /// Where one of its files is downloaded from.
     pub fn url(&self, file: &Pinned) -> String {
         format!("{}/{}", self.base, file.name)
     }
 
-    /// What all of it takes on the disk.
     pub fn bytes(&self) -> u64 {
         self.files.iter().map(|one| one.size).sum()
     }
 }
 
-/// NVIDIA's Parakeet TDT 0.6B v3 (CC BY 4.0), quantised to int8 by sherpa-onnx: 25
-/// European languages, the one spoken found by the model itself, with punctuation and
-/// capitals. Chosen on the recordings of #1128; see the table on #1151.
 pub const PARAKEET: Model = Model {
     id: "parakeet-tdt-0.6b-v3-int8",
     name: "NVIDIA Parakeet TDT 0.6B v3 (CC BY 4.0)",

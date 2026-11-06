@@ -1,13 +1,3 @@
-//! A site's chain read over a connection of this module's own, for an `https:` page
-//! whose engine says nothing of the certificates it came with.
-//!
-//! The handshake goes as far as the site sending its certificates, which are kept and
-//! then refused, so the connection ends there: nothing is sent to the site, and nothing
-//! here decides whether the chain is to be trusted. It is what the site serves now, over
-//! the system's own route to it, which is the same chain as the page's nearly always and
-//! not always - a site behind several servers, a proxy, a DNS the engine was given - so
-//! the popover says where it came from.
-
 use std::net::{TcpStream, ToSocketAddrs as _};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::Duration;
@@ -16,18 +6,14 @@ use rustls::client::danger::{HandshakeSignatureValid, ServerCertVerified, Server
 use rustls::pki_types::{CertificateDer, ServerName, UnixTime};
 use rustls::{ClientConfig, ClientConnection, DigitallySignedStruct, SignatureScheme};
 
-/// How long the site is waited for, to connect and then to answer.
 const PATIENCE: Duration = Duration::from_secs(5);
 
-/// The chain the site at `address` sends, site first, or nothing where it could not be
-/// reached.
 pub async fn read(address: tauri::Url) -> Vec<Vec<u8>> {
     tauri::async_runtime::spawn_blocking(move || chain_of(&address).unwrap_or_default())
         .await
         .unwrap_or_default()
 }
 
-/// What a site's handshake sends of its certificates.
 fn chain_of(address: &tauri::Url) -> Option<Vec<Vec<u8>>> {
     let host = address
         .host_str()?
@@ -49,19 +35,16 @@ fn chain_of(address: &tauri::Url) -> Option<Vec<Vec<u8>>> {
     let mut socket = TcpStream::connect_timeout(&place, PATIENCE).ok()?;
     socket.set_read_timeout(Some(PATIENCE)).ok()?;
     socket.set_write_timeout(Some(PATIENCE)).ok()?;
-    // Until the verifier has refused the chain, or the site has stopped answering.
     while connection.is_handshaking() && connection.complete_io(&mut socket).is_ok() {}
     let chain = std::mem::take(&mut *heard.chain.lock().unwrap_or_else(PoisonError::into_inner));
     Some(chain)
 }
 
-/// A verifier that keeps the chain it is shown and refuses it.
 #[derive(Debug, Default)]
 struct Heard {
     chain: Mutex<Vec<Vec<u8>>>,
 }
 
-/// Why the handshake stops: its certificates have been read, which is all it was for.
 fn read_all() -> rustls::Error {
     rustls::Error::General("the certificates are read, which is all this was for".into())
 }
@@ -119,7 +102,6 @@ mod tests {
     use super::super::x509::tests::{der, INTERMEDIATE, SITE};
     use super::chain_of;
 
-    /// The key of the test chain's site certificate, made for these tests alone.
     const SITE_KEY: &str = "MC4CAQAwBQYDK2VwBCIEIAMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD";
 
     #[test]

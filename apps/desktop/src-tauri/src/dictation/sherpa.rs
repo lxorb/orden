@@ -1,12 +1,3 @@
-//! sherpa-onnx's C interface, loaded from the runtime this device downloaded (#1151).
-//!
-//! Loaded rather than linked: the library and ONNX Runtime under it are some 35 MB
-//! that only a reader who turns local dictation on ever needs, so the installer carries
-//! none of it (`catalog::RUNTIME`). The structs below are the C header of the one
-//! release `catalog::RUNTIME_VERSION` names, field for field; `open` refuses a library
-//! that says it is another release, since a struct of another shape would be read
-//! wrongly rather than refused.
-
 use std::ffi::{c_char, CStr, CString};
 use std::path::Path;
 
@@ -166,11 +157,8 @@ struct RecognizerConfig {
     ctc_fst_decoder_config: CtcFst,
 }
 
-/// How strongly a name is preferred, per piece of it: sherpa-onnx's own default, which
-/// heard the most names right on #1151 (and is the one that needs `repeats_a_name`).
 const HOTWORDS_SCORE: f32 = 1.5;
 
-/// The first field of the result, which is all of it read here.
 #[repr(C)]
 struct RecognizerResult {
     text: Text,
@@ -190,7 +178,6 @@ type Decode = unsafe extern "C" fn(*const Recognizer, *const Stream);
 type GetResult = unsafe extern "C" fn(*const Stream) -> *const RecognizerResult;
 type DropResult = unsafe extern "C" fn(*const RecognizerResult);
 
-/// The calls a pass makes, looked up once.
 struct Calls {
     destroy: Destroy,
     stream: NewStream,
@@ -202,23 +189,18 @@ struct Calls {
     drop_result: DropResult,
 }
 
-/// A model open in the runtime, ready to hear.
 pub struct Engine {
     recognizer: *const Recognizer,
     calls: Calls,
-    // Last, so the library outlives every call above when this is dropped.
     _libraries: [Library; 2],
 }
 
-// SAFETY: sherpa-onnx's recognizer may be used from any thread, one decode at a
-// time; `super::Loaded` keeps it behind a mutex.
 #[allow(
     unsafe_code,
     reason = "a C object handed between threads behind a mutex"
 )]
 unsafe impl Send for Engine {}
 
-/// What a model is opened from: the folder of its files, and how it runs.
 pub struct Opening<'a> {
     pub files: &'a Path,
     pub threads: i32,
@@ -233,11 +215,8 @@ fn path_text(folder: &Path, name: &str) -> Result<CString, String> {
     text(&folder.join(name).to_string_lossy())
 }
 
-/// Loads a library, with the folder it is in searched for what it needs.
 #[allow(unsafe_code, reason = "loading a library runs its initialisers")]
 fn load(path: &Path) -> Result<Library, String> {
-    // SAFETY: the file is the runtime `catalog::RUNTIME` names, whose hash was checked
-    // when it was downloaded and again just now (`super::runtime_folder`).
     #[cfg(windows)]
     let library = unsafe {
         libloading::os::windows::Library::load_with_flags(
@@ -251,14 +230,11 @@ fn load(path: &Path) -> Result<Library, String> {
     library.map_err(|error| format!("the speech runtime could not be loaded: {error}"))
 }
 
-/// Looks a function up by name.
 #[allow(
     unsafe_code,
     reason = "a symbol is read as the type its C header declares"
 )]
 fn symbol<T: Copy>(library: &Library, name: &[u8]) -> Result<T, String> {
-    // SAFETY: every `T` asked for is the declaration of `name` in the C header of
-    // `RUNTIME_VERSION`, which `open` checks the library is.
     unsafe { library.get::<T>(name).map(|found| *found) }.map_err(|error| {
         format!(
             "the speech runtime has no {}: {error}",
@@ -268,15 +244,12 @@ fn symbol<T: Copy>(library: &Library, name: &[u8]) -> Result<T, String> {
 }
 
 impl Engine {
-    /// Opens a model: ONNX Runtime first, so the interface finds it already loaded on
-    /// every platform, then sherpa-onnx's interface, then the model itself.
     #[allow(unsafe_code, reason = "sherpa-onnx's interface is C")]
     pub fn open(runtime: &Path, onnx: &str, api: &str, opening: &Opening) -> Result<Self, String> {
         let onnxruntime = load(&runtime.join(onnx))?;
         let library = load(&runtime.join(api))?;
 
         let version: Version = symbol(&library, b"SherpaOnnxGetVersionStr\0")?;
-        // SAFETY: the call takes nothing and answers a static string.
         let said = unsafe { CStr::from_ptr(version()) }
             .to_string_lossy()
             .into_owned();
@@ -298,15 +271,12 @@ impl Engine {
         };
 
         let folder = opening.files;
-        // Kept alive until the recognizer is made, which copies what it is given.
         let mut held: Vec<CString> = Vec::new();
         let mut keep = |value: CString| {
             let pointer = value.as_ptr();
             held.push(value);
             pointer
         };
-        // SAFETY: every field of the config is a pointer, a number or a struct of them,
-        // for which all zeroes is "not given", as the header's own examples start.
         let mut config: RecognizerConfig = unsafe { std::mem::zeroed() };
         config.feat_config = FeatureConfig {
             sample_rate: 16_000,
@@ -321,15 +291,11 @@ impl Engine {
         };
         config.model_config.tokens = keep(path_text(folder, "tokens.txt")?);
         config.model_config.model_type = keep(text("nemo_transducer")?);
-        // Beam search, which is what takes hotwords; their pieces are found with
-        // the vocabulary `super::vocabulary` writes beside the tokens.
         config.decoding_method = keep(text("modified_beam_search")?);
         config.max_active_paths = 4;
         config.hotwords_score = HOTWORDS_SCORE;
         config.model_config.modeling_unit = keep(text("bpe")?);
         config.model_config.bpe_vocab = keep(path_text(folder, "bpe.vocab")?);
-        // SAFETY: `config` is a whole config of the header's shape, and every string in
-        // it lives in `held` until the call is over.
         let recognizer = unsafe { create(&raw const config) };
         drop(held);
         if recognizer.is_null() {
@@ -342,14 +308,6 @@ impl Engine {
         })
     }
 
-    /// The words in `samples`, 16 kHz mono, with `names` (one per line) as the words
-    /// they are likely to hold.
-    ///
-    /// A bias towards names can make a transducer say one over and over in the noise
-    /// before the voice (measured on #1151: "Daniel Daniel Daniel ... Can you
-    /// summarize"). So an answer that says a name twice in a row is heard again without
-    /// them, and the biased one kept only if it is no longer than that by more than a
-    /// word: a name heard right is a word swapped for another, not one more.
     pub fn hear(&self, samples: &[f32], names: &str) -> Result<String, String> {
         let names: Vec<String> = names
             .lines()
@@ -372,15 +330,11 @@ impl Engine {
         })
     }
 
-    /// One pass, with `hotwords` (`/` between them) where there are any.
     #[allow(unsafe_code, reason = "sherpa-onnx's interface is C")]
     fn pass(&self, samples: &[f32], hotwords: Option<&str>) -> Result<String, String> {
         let count = i32::try_from(samples.len()).map_err(|_| "too long a stretch".to_owned())?;
         let c = &self.calls;
         let hotwords = hotwords.map(text).transpose()?;
-        // SAFETY: the recognizer is open until `drop`, the stream is used only here and
-        // destroyed at the end of this block, and the samples and strings outlive every
-        // call they are passed to.
         unsafe {
             let stream = match &hotwords {
                 Some(words) => (c.stream_with_hotwords)(self.recognizer, words.as_ptr()),
@@ -409,7 +363,6 @@ impl Engine {
     }
 }
 
-/// The words of a text, lower-cased, without what is between them.
 fn words_of(text: &str) -> Vec<String> {
     text.split(|c: char| !c.is_alphanumeric())
         .filter(|one| !one.is_empty())
@@ -417,7 +370,6 @@ fn words_of(text: &str) -> Vec<String> {
         .collect()
 }
 
-/// Whether `text` says one of `names` twice in a row.
 fn repeats_a_name(text: &str, names: &[String]) -> bool {
     let said = words_of(text);
     names.iter().any(|name| {
@@ -430,7 +382,6 @@ fn repeats_a_name(text: &str, names: &[String]) -> bool {
 impl Drop for Engine {
     #[allow(unsafe_code, reason = "sherpa-onnx's interface is C")]
     fn drop(&mut self) {
-        // SAFETY: made by `open`, destroyed once, here.
         unsafe { (self.calls.destroy)(self.recognizer) }
     }
 }

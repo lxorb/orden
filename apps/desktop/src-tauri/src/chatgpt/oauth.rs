@@ -1,15 +1,3 @@
-//! The arithmetic of Sign in with `ChatGPT`: the address the browser is sent to, the
-//! callback read back, and the forms and answers of the token endpoint. Pure, so every
-//! part of it is tested without a network; see chatgpt.rs for the requests.
-//!
-//! The flow is `OpenAI`'s own for open-source apps that let a reader spend their `ChatGPT`
-//! plan, documented at <https://developers.openai.com/siwc/token-sharing-open-source/sign-in>:
-//! the first sign-in registers this installation (`client_id=dynamic_agent_client`, the
-//! host's `ext_agent_host_id`, the app's name in `agent_name_hint`) and the callback
-//! hands back the `client_id` issued to it, which every later request uses. PKCE with
-//! S256, a loopback callback on `127.0.0.1` where only the port may change, and the
-//! `resource` the tokens are for.
-
 use std::fmt::Write as _;
 
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
@@ -17,44 +5,30 @@ use base64::Engine as _;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 
-/// Where the browser signs in.
 pub const AUTHORIZE: &str = "https://auth.openai.com/api/accounts/authorize";
 
-/// Where a code or a refresh token is exchanged.
 pub const TOKEN: &str = "https://auth.openai.com/api/accounts/oauth/token";
 
-/// Where the revocation endpoint is named; see `sign_out` in chatgpt.rs.
 pub const CONFIGURATION: &str = "https://auth.openai.com/.well-known/openid-configuration";
 
-/// The client id a first sign-in registers through, and never the one kept.
 pub const REGISTERING: &str = "dynamic_agent_client";
 
-/// What the tokens are for: the Responses API, and nothing of `ChatGPT`'s own.
 pub const RESOURCE: &str = "https://api.openai.com/v1";
 
-/// What is asked for: who the reader is, a refresh token, and the plan's use.
 pub const SCOPE: &str =
     "openid profile email offline_access resource.invoke chatgpt.tokens.use.direct";
 
-/// The app's name as the reader's `ChatGPT` settings list it.
 pub const NAME: &str = "Orden";
 
-/// The path the loopback callback arrives on.
 pub const CALLBACK_PATH: &str = "/auth/callback";
 
-/// A PKCE pair and the two values that tie a callback to the request that caused it.
 pub struct Attempt {
-    /// The verifier, kept here and sent only with the code.
     pub verifier: String,
-    /// What the callback must bring back.
     pub state: String,
-    /// What the id token must carry.
     pub nonce: String,
 }
 
 impl Attempt {
-    /// Made from 96 random bytes, which is all the randomness PKCE, the state and the
-    /// nonce need between them.
     pub fn from_random(random: &[u8; 96]) -> Self {
         Self {
             verifier: URL_SAFE_NO_PAD.encode(&random[..48]),
@@ -63,18 +37,15 @@ impl Attempt {
         }
     }
 
-    /// The S256 challenge of the verifier.
     pub fn challenge(&self) -> String {
         URL_SAFE_NO_PAD.encode(Sha256::digest(self.verifier.as_bytes()))
     }
 }
 
-/// The loopback address the browser comes back to.
 pub fn redirect(port: u16) -> String {
     format!("http://127.0.0.1:{port}{CALLBACK_PATH}")
 }
 
-/// Percent-encoding for a query or a form: everything but the unreserved characters.
 pub fn encoded(text: &str) -> String {
     let mut out = String::with_capacity(text.len());
     for byte in text.bytes() {
@@ -87,7 +58,6 @@ pub fn encoded(text: &str) -> String {
     out
 }
 
-/// A query or a form, written out.
 pub fn form(pairs: &[(&str, &str)]) -> String {
     pairs
         .iter()
@@ -96,8 +66,6 @@ pub fn form(pairs: &[(&str, &str)]) -> String {
         .join("&")
 }
 
-/// Where the browser is sent: registering where no client has been issued yet, and as
-/// the issued one after.
 pub fn authorize_url(attempt: &Attempt, port: u16, host: &str, client: Option<&str>) -> String {
     let redirect = redirect(port);
     let challenge = attempt.challenge();
@@ -119,7 +87,6 @@ pub fn authorize_url(attempt: &Attempt, port: u16, host: &str, client: Option<&s
     format!("{AUTHORIZE}?{}", form(&pairs))
 }
 
-/// `%XX` and `+` undone.
 pub fn decoded(text: &str) -> String {
     let bytes = text.as_bytes();
     let mut out = Vec::with_capacity(bytes.len());
@@ -143,23 +110,16 @@ pub fn decoded(text: &str) -> String {
     String::from_utf8_lossy(&out).into_owned()
 }
 
-/// What came back to the loopback.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Callback {
-    /// Signed in: the code, and the client issued where this was a registration.
     Code {
-        /// The authorization code.
         code: String,
-        /// The client issued to this installation, on a first sign-in.
         client: Option<String>,
     },
-    /// Refused, in `OpenAI`'s own words where it sent some.
     Refused(String),
-    /// Not the callback: a favicon, or a state that is not this attempt's.
     Other,
 }
 
-/// Reads the first line of a request that reached the loopback.
 pub fn callback(request_line: &str, state: &str) -> Callback {
     let mut parts = request_line.split_whitespace();
     let (Some("GET"), Some(target)) = (parts.next(), parts.next()) else {
@@ -203,23 +163,17 @@ pub fn callback(request_line: &str, state: &str) -> Callback {
     }
 }
 
-/// The token endpoint's answer.
 #[derive(Debug, Deserialize)]
 pub struct Tokens {
-    /// For the Responses API, for an hour.
     pub access_token: String,
-    /// For the next access token; replaced by every refresh.
     #[serde(default)]
     pub refresh_token: Option<String>,
-    /// Who signed in.
     #[serde(default)]
     pub id_token: Option<String>,
-    /// Seconds the access token lasts.
     #[serde(default)]
     pub expires_in: Option<u64>,
 }
 
-/// What the token endpoint said went wrong, where it said.
 pub fn token_error(body: &[u8]) -> Option<String> {
     let value: serde_json::Value = serde_json::from_slice(body).ok()?;
     let error = value.get("error")?;
@@ -229,9 +183,6 @@ pub fn token_error(body: &[u8]) -> Option<String> {
     Some(code.to_owned())
 }
 
-/// Whether a refresh failed because the grant is gone - revoked, expired, never valid -
-/// rather than because the network was down: the one case where signing in again is
-/// the answer.
 pub fn grant_gone(code: &str) -> bool {
     matches!(
         code,
@@ -244,8 +195,6 @@ pub fn grant_gone(code: &str) -> bool {
     )
 }
 
-/// The email an id token names, read without checking its signature: it is shown to the
-/// reader as whose plan this is and trusted for nothing else.
 pub fn email_in(id_token: &str) -> Option<String> {
     let payload = id_token.split('.').nth(1)?;
     let bytes = URL_SAFE_NO_PAD.decode(payload.trim_end_matches('=')).ok()?;
@@ -256,7 +205,6 @@ pub fn email_in(id_token: &str) -> Option<String> {
         .map(str::to_owned)
 }
 
-/// This installation's host id, made once: a URN of a random UUID.
 pub fn host_id(random: &[u8; 16]) -> String {
     let mut bytes = *random;
     bytes[6] = (bytes[6] & 0x0f) | 0x40;
@@ -310,7 +258,6 @@ mod tests {
 
     #[test]
     fn the_challenge_is_s256_of_the_verifier() {
-        // RFC 7636's own example.
         let example = Attempt {
             verifier: "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk".to_owned(),
             state: String::new(),

@@ -1,25 +1,5 @@
-//! What a terminal's shell is doing: whether something besides it is running, and which
-//! folder it is in.
-//!
-//! **Busy** is the question a tab asks before it closes. VS Code asks before it kills a
-//! terminal that has child processes, and iTerm2 before it closes a session running jobs
-//! besides the idle ones; an idle shell closes without a word in both. So does this.
-//!
-//! On a Mac and on Linux the kernel keeps the answer: the terminal's foreground process
-//! group is the shell's own while it waits at its prompt, and a program it runs is given
-//! the terminal by becoming the foreground group. On Windows there is no such thing, so
-//! the shell's descendants are listed, and anything among them that is not a console
-//! host or a shell - Git Bash's launcher starts the real bash, `cmd` inside PowerShell is
-//! still somebody at a prompt - is something running. A WSL distribution's programs live
-//! in the Linux kernel and are not on that list, so a WSL tab closes without asking.
-//!
-//! **The folder** is what brings a terminal back where it was after a restart. The shells
-//! Orden starts say it themselves (see shells.rs); on Linux and on a Mac the kernel is asked
-//! as well, for the shells that do not - zsh and fish, a Mac's own among them.
-
 use portable_pty::MasterPty;
 
-/// One running process, as the list of them says.
 #[cfg_attr(
     not(windows),
     allow(
@@ -34,8 +14,6 @@ pub struct Process {
     pub name: String,
 }
 
-/// The programs that are somebody at a prompt rather than something running: shells,
-/// and the console hosts and launchers standing between a terminal and one.
 #[cfg_attr(
     not(windows),
     allow(
@@ -59,9 +37,6 @@ const IDLE: [&str; 13] = [
     "git-bash.exe",
 ];
 
-/// The programs that start another and are not what anybody would call it by: npm's
-/// Codex is a Node script that starts `codex.exe`. One of these below the program in
-/// front is the one the tab is named for.
 #[cfg_attr(
     not(windows),
     allow(
@@ -71,7 +46,6 @@ const IDLE: [&str; 13] = [
 )]
 const AGENTS: [&str; 2] = ["claude.exe", "codex.exe"];
 
-/// Whether a process is somebody at a prompt rather than something running.
 #[cfg_attr(
     not(windows),
     allow(
@@ -83,19 +57,8 @@ fn idle(one: &Process) -> bool {
     IDLE.contains(&one.name.to_ascii_lowercase().as_str())
 }
 
-/// When a process was started, as a number that grows with time, or None where it cannot
-/// be said - one that has gone, or one this user may not ask about.
 type Born<'a> = &'a dyn Fn(u32) -> Option<u64>;
 
-/// The first process below `root`, nearest first, that `stop` answers for, walking down
-/// only through the processes `through` lets by.
-///
-/// A process counts as below its parent only where it was started after it. The list
-/// says which process started each one by its id, and Windows hands a dead process's id
-/// to the next one started: a program whose parent went long ago can name an id the
-/// shell holds now, and was taken for something running in it - a shell at its prompt
-/// called busy, now and then, on a runner starting and ending processes all the time
-/// (#446). Where `born` cannot say, the list is believed.
 #[cfg_attr(
     not(windows),
     allow(
@@ -136,9 +99,6 @@ fn first_below<'a>(
     None
 }
 
-/// The program in front below `root` in a list of processes: the first that is not a
-/// shell, walking down through shells - VS Code's reading of a Windows terminal - or an
-/// agent that program started. None while only shells run.
 #[cfg_attr(
     not(windows),
     allow(
@@ -155,7 +115,6 @@ pub fn front_below<'a>(root: u32, processes: &'a [Process], born: Born<'_>) -> O
     Some(first_below(front.id, processes, |_| true, agent, born).unwrap_or(front))
 }
 
-/// Whether anything but a shell runs below `root` in a list of processes.
 #[cfg_attr(
     not(windows),
     allow(
@@ -167,7 +126,6 @@ pub fn busy_below(root: u32, processes: &[Process], born: Born<'_>) -> bool {
     first_below(root, processes, idle, |one| !idle(one), born).is_some()
 }
 
-/// A program's name as a tab says it: the file's, without Windows' `.exe`.
 fn program_name(file: &str) -> String {
     let stem = file
         .len()
@@ -177,14 +135,11 @@ fn program_name(file: &str) -> String {
     stem.to_owned()
 }
 
-/// Whether something besides the shell is running in a terminal.
 #[cfg(windows)]
 pub fn busy(shell: Option<u32>, _master: &dyn MasterPty) -> bool {
     shell.is_some_and(|root| busy_below(root, &processes(), &started()))
 }
 
-/// Whether something besides the shell is running in a terminal: the terminal's
-/// foreground group is somebody else's.
 #[cfg(unix)]
 pub fn busy(shell: Option<u32>, master: &dyn MasterPty) -> bool {
     let (Some(shell), Some(front)) = (shell, master.process_group_leader()) else {
@@ -193,16 +148,12 @@ pub fn busy(shell: Option<u32>, master: &dyn MasterPty) -> bool {
     i64::from(front) != i64::from(shell)
 }
 
-/// The program in front of the shell, by name, or None while the shell is: what a tab
-/// is named for. See `front_below`.
 #[cfg(windows)]
 pub fn program(shell: Option<u32>, _master: &dyn MasterPty) -> Option<String> {
     let processes = processes();
     front_below(shell?, &processes, &started()).map(|one| program_name(&one.name))
 }
 
-/// The program in front of the shell, by name: the terminal's foreground group, where
-/// it is somebody else's.
 #[cfg(unix)]
 pub fn program(shell: Option<u32>, master: &dyn MasterPty) -> Option<String> {
     let front = master.process_group_leader()?;
@@ -212,7 +163,6 @@ pub fn program(shell: Option<u32>, master: &dyn MasterPty) -> Option<String> {
     name_of(u32::try_from(front).ok()?).map(|name| program_name(&name))
 }
 
-/// What a process is called, out of Linux's `/proc`.
 #[cfg(target_os = "linux")]
 fn name_of(pid: u32) -> Option<String> {
     let name = std::fs::read_to_string(format!("/proc/{pid}/comm")).ok()?;
@@ -220,8 +170,6 @@ fn name_of(pid: u32) -> Option<String> {
     (!name.is_empty()).then(|| name.to_owned())
 }
 
-/// What a process is called, out of a Mac's `proc_pidpath`: the last part of the path
-/// of the program it runs.
 #[cfg(target_os = "macos")]
 #[allow(
     unsafe_code,
@@ -232,7 +180,6 @@ fn name_of(pid: u32) -> Option<String> {
     let mut buffer = vec![0_u8; 4096];
     let size = u32::try_from(buffer.len()).ok()?;
 
-    // SAFETY: the buffer is as long as the kernel is told, and it writes no more.
     let written = unsafe { libc::proc_pidpath(pid, buffer.as_mut_ptr().cast(), size) };
     let written = usize::try_from(written).ok().filter(|&length| length > 0)?;
 
@@ -243,14 +190,11 @@ fn name_of(pid: u32) -> Option<String> {
         .map(str::to_owned)
 }
 
-/// Elsewhere there is no kernel to ask.
 #[cfg(all(unix, not(any(target_os = "linux", target_os = "macos"))))]
 fn name_of(_pid: u32) -> Option<String> {
     None
 }
 
-/// Every process on the machine, from the toolhelp snapshot: the one call Windows has
-/// that lists them with their parents.
 #[cfg(windows)]
 #[allow(
     unsafe_code,
@@ -266,9 +210,6 @@ pub(crate) fn processes() -> Vec<Process> {
     let mut found = Vec::new();
     let size = u32::try_from(std::mem::size_of::<PROCESSENTRY32W>()).unwrap_or(u32::MAX);
 
-    // SAFETY: the snapshot is a handle this function owns and closes; each entry is
-    // written by Windows into a structure whose size it is told, and read after the
-    // call that filled it succeeded.
     unsafe {
         let Ok(snapshot) = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) else {
             return found;
@@ -299,9 +240,6 @@ pub(crate) fn processes() -> Vec<Process> {
     found
 }
 
-/// When each process was started, asked of Windows as the walk below a shell comes to
-/// it and kept for the walk: the handful of processes under one shell, never the
-/// whole list. See `first_below`.
 #[cfg(windows)]
 #[allow(
     unsafe_code,
@@ -322,8 +260,6 @@ fn started() -> impl Fn(u32) -> Option<u64> {
             let mut exited = FILETIME::default();
             let mut kernel = FILETIME::default();
             let mut user = FILETIME::default();
-            // SAFETY: the handle is this closure's own and closed before it returns; the
-            // four times are ours, outlive the call, and are all it writes.
             unsafe {
                 let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid).ok()?;
                 let read = GetProcessTimes(
@@ -341,16 +277,12 @@ fn started() -> impl Fn(u32) -> Option<u64> {
     }
 }
 
-/// Which folder the shell is in, where the kernel can say: Linux's `/proc`.
 #[cfg(target_os = "linux")]
 pub fn folder(shell: Option<u32>) -> Option<String> {
     let link = std::fs::read_link(format!("/proc/{}/cwd", shell?)).ok()?;
     Some(link.to_string_lossy().into_owned())
 }
 
-/// Which folder the shell is in, where the kernel can say: a Mac's `proc_pidinfo`, which
-/// is what `lsof -d cwd` asks. zsh, a Mac's own shell, is taught nothing about saying its
-/// folder, so this is how a terminal of it comes back where it was.
 #[cfg(target_os = "macos")]
 #[allow(
     unsafe_code,
@@ -361,8 +293,6 @@ pub fn folder(shell: Option<u32>) -> Option<String> {
     let size = libc::c_int::try_from(std::mem::size_of::<libc::proc_vnodepathinfo>()).ok()?;
     let mut info = std::mem::MaybeUninit::<libc::proc_vnodepathinfo>::zeroed();
 
-    // SAFETY: the buffer is a whole `proc_vnodepathinfo`, `size` says as much, and the
-    // kernel writes no more than it is told it may.
     let written = unsafe {
         libc::proc_pidinfo(
             pid,
@@ -376,7 +306,6 @@ pub fn folder(shell: Option<u32>) -> Option<String> {
         return None;
     }
 
-    // SAFETY: zeroed and then filled by the kernel, and every field of it is plain data.
     let info = unsafe { info.assume_init() };
     let path: Vec<u8> = info
         .pvi_cdir
@@ -389,8 +318,6 @@ pub fn folder(shell: Option<u32>) -> Option<String> {
     (!path.is_empty()).then(|| String::from_utf8_lossy(&path).into_owned())
 }
 
-/// Windows cannot, without reading another process's memory; the shells say it
-/// themselves instead.
 #[cfg(not(any(target_os = "linux", target_os = "macos")))]
 pub fn folder(_shell: Option<u32>) -> Option<String> {
     None
@@ -400,7 +327,6 @@ pub fn folder(_shell: Option<u32>) -> Option<String> {
 mod tests {
     use super::*;
 
-    /// A list that says nothing of when anything started, which is believed as it is.
     const UNKNOWN: fn(u32) -> Option<u64> = |_| None;
 
     fn process(id: u32, parent: u32, name: &str) -> Process {
@@ -421,8 +347,6 @@ mod tests {
         assert!(!busy_below(20, &listed, &UNKNOWN));
     }
 
-    /// Git Bash is a launcher with the real bash under it, and PowerShell may have a
-    /// Command Prompt open inside it: shells all the way down is still a prompt.
     #[test]
     fn shells_inside_shells_are_still_a_prompt() {
         let listed = [
@@ -462,8 +386,6 @@ mod tests {
         assert_eq!(front_below(20, &listed[..3], &UNKNOWN), None);
     }
 
-    /// npm's Codex is Node starting `codex.exe`, and Claude Code's `.cmd` is a Command
-    /// Prompt starting `claude.exe`: the tab is named for the agent either way.
     #[test]
     fn an_agent_a_launcher_started_is_the_program_in_front() {
         let codex = [
@@ -498,8 +420,6 @@ mod tests {
         assert_eq!(program_name("ä.exe"), "ä");
     }
 
-    /// A process that names itself as its own parent - pid 0 on Windows does - is not a
-    /// loop to walk for ever.
     #[test]
     fn a_process_that_is_its_own_parent_ends_the_walk() {
         let listed = [
@@ -509,8 +429,6 @@ mod tests {
         assert!(!busy_below(20, &listed, &UNKNOWN));
     }
 
-    /// The kernel's own answer, on the two systems that have one: a process started in a
-    /// folder is found there, which is what brings a zsh or fish tab back where it was.
     #[cfg(any(target_os = "linux", target_os = "macos"))]
     #[test]
     fn the_kernel_says_where_a_process_is() {
@@ -524,15 +442,11 @@ mod tests {
         let _ = child.kill();
         let _ = child.wait();
 
-        // A Mac's temporary folder is under a link, and the kernel answers the real path.
         let wanted = dir.path().canonicalize().unwrap();
         assert_eq!(found.map(std::path::PathBuf::from), Some(wanted));
         assert_eq!(folder(None), None);
     }
 
-    /// #446: a program whose parent went long ago names an id the shell holds now - which
-    /// Windows hands out again - and was taken for something running in the shell. One
-    /// started before the shell is not the shell's.
     #[test]
     fn a_process_older_than_the_shell_is_not_running_in_it() {
         let listed = [

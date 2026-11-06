@@ -1,24 +1,3 @@
-//! Every file and folder in a space, as sync sees them: what `space_scan` lists, what
-//! the watcher learns a space from before it watches, and what it reads a folder that
-//! arrived whole with.
-//!
-//! The same bounds as the file tree's walk (tree.rs), for the same reasons: no deeper
-//! than `MAX_DEPTH`, no more than `MAX_ENTRIES`, and a space larger than that says so
-//! rather than answering with half of itself. Two rules differ, and both are about what
-//! a second computer should be handed:
-//!
-//! - Links are left alone, not followed. The tree follows a link into a folder of the
-//!   same space, which draws one note in two places; sync would send it twice, under two
-//!   names, and a link is a thing about this disk that means nothing on another one.
-//!   Syncthing makes the same choice.
-//! - Hidden names are left out, as the tree leaves them out: `.git`, `.obsidian`, and
-//!   Orden's own half-written temp files, which are hidden so that no list ever shows one.
-//!   So is what an operating system leaves in every folder it opens (`Thumbs.db`,
-//!   `desktop.ini`, an open Office file's `~$` owner file): a folder full of those
-//!   arriving on a Mac is noise, and none of them is anybody's writing. Bar one hidden
-//!   name: the space's own inbox (`.Inbox.md`, #1044), hidden from every list and a note
-//!   every device needs.
-
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -27,30 +6,17 @@ use crate::clock;
 use crate::paths::MAX_DEPTH;
 use crate::tree::MAX_ENTRIES;
 
-/// One file or folder: where it is inside its space, and what it is.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Found {
-    /// Inside the space, with the platform's separators.
     pub rel: PathBuf,
-    /// Whether it is a folder.
     pub dir: bool,
-    /// Its size in bytes; nothing for a folder.
     pub size: u64,
-    /// When it was last written, in milliseconds since the epoch.
     pub mtime: u64,
-    /// The same moment as finely as the file system keeps it, in nanoseconds: what a
-    /// write is told from the one before by, where two land in the same millisecond.
-    /// NTFS keeps a tenth of a microsecond, APFS and ext4 a nanosecond, though Linux
-    /// stamps a write with a clock that moves every few milliseconds.
     pub stamp: u128,
-    /// What it is apart from where it is; see identity.rs. None where the file system
-    /// would not say, which a file that vanished between the listing and the question
-    /// also answers.
     pub id: Option<String>,
     pub unlisted: bool,
 }
 
-/// Whether sync leaves a name alone; see the top of this file.
 pub fn ignored(name: &str) -> bool {
     name.starts_with('.')
         || name.starts_with("~$")
@@ -59,17 +25,12 @@ pub fn ignored(name: &str) -> bool {
         || name == "Icon\r"
 }
 
-/// What sync carries though it is hidden: the space's own inbox (#1044), at its root,
-/// where a task with no note of the reader's goes. Hidden from every list, and a note
-/// every device needs. The window says the same (`carriedOwn` in
-/// packages/bases/src/inbox.ts).
 const CARRIED: &str = ".Inbox.md";
 
 fn carried(rel: &Path) -> bool {
     rel.as_os_str() == CARRIED
 }
 
-/// Whether any part of a path inside a space is a name sync leaves alone.
 pub fn ignored_path(rel: &Path) -> bool {
     if carried(rel) {
         return false;
@@ -78,8 +39,6 @@ pub fn ignored_path(rel: &Path) -> bool {
         .any(|part| part.as_os_str().to_str().is_none_or(ignored))
 }
 
-/// What is at `rel` inside `root` now, or None where nothing sync keeps is there: no
-/// file, a link, a name it leaves alone, a name that is not text.
 pub fn found(root: &Path, rel: &Path) -> Option<Found> {
     looked(root, rel).ok().flatten()
 }
@@ -122,8 +81,6 @@ pub fn says_gone(error: &std::io::Error) -> bool {
     )
 }
 
-/// Whether anything sync keeps is at `rel` inside `root` now: `found` without asking
-/// what it is, which on Windows is a handle opened and closed.
 pub fn present(root: &Path, rel: &Path) -> bool {
     !rel.as_os_str().is_empty()
         && !ignored_path(rel)
@@ -163,12 +120,6 @@ fn listed_in(root: &Path, rel: &Path) -> std::io::Result<Listing> {
     Ok(listing)
 }
 
-/// Everything under `rel` inside `root`, `rel` itself left out, handed to `visit` a
-/// folder before what is in it and each folder's names in order. `left` is what the
-/// walk may still list; a walk that runs out answers the sentence that says so.
-///
-/// A folder inside that will not list is handed over `unlisted`, and the walk goes on. `rel`
-/// itself not listing is an error: answered as an empty space, every note in it is a delete.
 pub fn walk(
     root: &Path,
     rel: &Path,
@@ -217,7 +168,6 @@ fn walk_listing(
     Ok(())
 }
 
-/// Everything in a space, in the walk's order.
 #[cfg(test)]
 pub fn everything(root: &Path) -> Result<Vec<Found>, String> {
     let mut all = Vec::new();

@@ -1,9 +1,3 @@
-//! A key as the global shortcut plugin writes it - `Control+Alt+Space`, the notation
-//! `accelerator.ts` hands the crate - in the notation the desktop portal reads a
-//! preferred trigger in: the shortcuts specification's `CTRL+ALT+space`, modifiers by
-//! their capitals and the key by its XKB name.
-
-/// The portal's spelling of `accelerator`, or nothing for a key it has no name for.
 pub fn preferred(accelerator: &str) -> Option<String> {
     let mut parts: Vec<&str> = accelerator.split('+').collect();
     let key = xkb(parts.pop()?)?;
@@ -22,7 +16,6 @@ pub fn preferred(accelerator: &str) -> Option<String> {
     Some(said.join("+"))
 }
 
-/// The XKB name of the key the plugin calls `key`.
 fn xkb(key: &str) -> Option<String> {
     if let Some(digit) = key.strip_prefix("Digit") {
         return (digit.len() == 1 && digit.bytes().all(|b| b.is_ascii_digit()))

@@ -1,30 +1,16 @@
-//! A reminder as a Windows toast, in the XML the system reads.
-//!
-//! The shape Windows' own Alarms and Calendar use for something that must not be
-//! missed: `scenario="reminder"`, which keeps the toast on screen until it is dealt with;
-//! the system's own snooze, with a choice of 15 minutes, an hour or tomorrow morning,
-//! which Windows carries out itself without starting anything; and Done, a `nib://` link
-//! (link.rs), which reaches the app however it is running. A press on the toast itself
-//! opens the note at the task.
-//!
-//! Pure, so the XML is tested on every runner; only Windows builds a toast from it.
-
 use std::fmt::Write as _;
 
 use super::link::{link, Act};
 use super::{Planned, Words};
 
-/// Minutes in the two fixed snoozes.
 const SNOOZES: [u32; 2] = [15, 60];
 
-/// The toast for one reminder.
 pub fn xml(one: &Planned, nonce: &str, words: &Words) -> String {
     let open = escaped(&link(Act::Open, &one.id, nonce));
     let done = escaped(&link(Act::Done, &one.id, nonce));
 
     let mut choices = String::new();
     let mut add = |minutes: u32, label: &str| {
-        // One choice per number of minutes: the system reads the id as the snooze.
         if !choices.contains(&format!("id=\"{minutes}\"")) {
             let _ = write!(
                 choices,
@@ -63,7 +49,6 @@ pub fn xml(one: &Planned, nonce: &str, words: &Words) -> String {
     )
 }
 
-/// Text as XML holds it, in an attribute or between tags alike.
 fn escaped(text: &str) -> String {
     let mut out = String::with_capacity(text.len());
     for character in text.chars() {
@@ -73,7 +58,6 @@ fn escaped(text: &str) -> String {
             '>' => out.push_str("&gt;"),
             '"' => out.push_str("&quot;"),
             '\'' => out.push_str("&apos;"),
-            // A control character is not XML at all, and the system refuses the toast.
             one if one.is_control() && one != '\t' => out.push(' '),
             '\u{FFFE}' | '\u{FFFF}' => out.push(' '),
             one => out.push(one),
@@ -107,7 +91,6 @@ mod tests {
         assert!(made.contains("arguments=\"nib://reminder?act=done&amp;id=00ff00ff00ff00ff&amp;n=0123\" content=\"Done\""));
     }
 
-    /// U+FFFE and U+FFFF are not XML characters either; see notices/toast.rs.
     #[test]
     fn the_two_noncharacters_are_not_handed_to_the_toast() {
         assert_eq!(escaped("a\u{FFFE}b\u{FFFF}c"), "a b c");

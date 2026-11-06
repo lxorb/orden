@@ -1,10 +1,3 @@
-//! One account's sync store on disk: opening it, bringing its schema up to date,
-//! asking it questions and changing it, all or nothing.
-//!
-//! Pure over a path, with no app around it, so every rule here is tested against a
-//! real file in a temporary folder; `sync_store.rs` is what finds the path and keeps the
-//! store open between commands.
-
 use rusqlite::types::Value as Sql;
 use rusqlite::{
     params_from_iter, Connection, ErrorCode, OpenFlags, OptionalExtension, TransactionBehavior,
@@ -20,54 +13,29 @@ use super::tables::{table, Table};
 use super::wire::{from_sql, to_sql, Change, Parts, Query, MOST_PARTS};
 use crate::paths::{cannot, made};
 
-/// Every schema the store has had, in order. The store's `meta.schema` row says how
-/// many of them it has run; opening runs the rest, each in a transaction of its own
-/// with the row that records it, so a store is always at exactly one of them. See
-/// `1.sql` for why a migration is never edited once it has shipped.
 const MIGRATIONS: [&str; 1] = [include_str!("1.sql")];
 
-/// How long a statement waits for another connection's lock before it gives up. The
-/// store has one connection, so this is only ever a second copy of the app during an
-/// update, or a probe; long enough for that copy's one transaction.
 const PATIENCE: Duration = Duration::from_secs(5);
 
-/// How many rows of the log the store keeps. The log is for a person reading why sync
-/// did what it did, and the newest thousand passes are more than anybody reads.
 const LOG_ROWS: i64 = 1000;
 
-/// What the window is told about a store it has opened.
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Opened {
-    /// This device's id, made the first time the store was opened and kept for its
-    /// life: what the hub and every tree op name this device by.
     pub device: String,
-    /// Whether the session before this one ended with the engine saying so. False
-    /// after a crash, a kill or a power cut, which is when every document's Yjs client
-    /// id has to be rotated before anything new is typed (docs/sync-v2.md 5.2).
     pub was_clean: bool,
-    /// The schema the store is at now.
     pub schema: usize,
-    /// Whether the file on disk could not be read and a new, empty store was made in
-    /// its place. The engine then rebuilds from the account and the files, the way a
-    /// first sync does; the unreadable file is kept beside it.
     pub recovered: bool,
 }
 
-/// Why a store would not open, apart from the disk refusing outright.
 #[derive(Debug)]
 pub enum Refused {
-    /// The file is not a store this build can read: damaged, or not SQLite at all.
     Damaged(String),
-    /// A newer Orden has been here and moved the schema past what this one knows. Nothing
-    /// is changed; a newer nib is the one that can open it.
     Newer(usize),
-    /// Anything else: a folder that cannot be made, a disk that is full.
     Other(String),
 }
 
 impl Refused {
-    /// The sentence the window is given.
     pub fn said(&self) -> String {
         match self {
             Self::Damaged(why) | Self::Other(why) => why.clone(),
@@ -89,21 +57,15 @@ impl From<rusqlite::Error> for Refused {
     }
 }
 
-/// Whether an error from SQLite means the file itself is bad, rather than the question
-/// or the disk.
 fn damaged(error: &rusqlite::Error) -> bool {
     error
         .sqlite_error_code()
         .is_some_and(|code| matches!(code, ErrorCode::DatabaseCorrupt | ErrorCode::NotADatabase))
 }
 
-/// Why a read or a write did not happen: the sentence, and whether the file turned out
-/// to be damaged, which is found by using it as often as by opening it.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Failed {
-    /// What the window is told.
     pub said: String,
-    /// Whether the store has to be set aside and made again.
     pub damaged: bool,
 }
 
@@ -125,26 +87,12 @@ impl From<String> for Failed {
     }
 }
 
-/// An open store.
 pub struct Store {
     conn: Connection,
-    /// What opening it found.
     pub opened: Opened,
 }
 
 impl Store {
-    /// Opens the store at `path`, making it if it is not there, bringing its schema up
-    /// to date, and marking this session as not yet ended cleanly.
-    ///
-    /// A file that cannot be read as a store is set aside, not deleted, and a new
-    /// store is made where it was: sync can be rebuilt from the account and the files,
-    /// and an app that will not start because of a cache is worse than one that
-    /// rebuilds it. VS Code does the same with its state database. A store a newer Orden
-    /// wrote is refused instead, because nothing about it is wrong.
-    ///
-    /// `device` is the id a store made now takes: the one this device already said to the
-    /// hub before there was a store (`madeDeviceId` in the window), so a device has one id
-    /// from the start. A store that has one keeps its own.
     pub fn open_as(path: &Path, device: Option<&str>) -> Result<Self, Refused> {
         if let Some(folder) = path.parent() {
             made(folder).map_err(Refused::Other)?;
@@ -167,14 +115,6 @@ impl Store {
     fn opened(path: &Path, recovered: bool, preferred: Option<&str>) -> Result<Self, Refused> {
         let conn = Connection::open(path)?;
         conn.busy_timeout(PATIENCE)?;
-        // The write-ahead log: a write is an append to one file and a crash at any
-        // moment leaves the store as it was before the transaction or after it. Normal
-        // rather than full synchronisation, which skips the flush at every commit and
-        // keeps it at every checkpoint. The one thing that costs is the last moments
-        // before the machine itself loses power, and a session that ends that way is an
-        // unclean exit - which is exactly when the engine rotates every client id and
-        // resends what it has. So the flush would buy nothing the protocol does not
-        // already give.
         let mode: String =
             conn.pragma_update_and_check(None, "journal_mode", "wal", |row| row.get(0))?;
         if !mode.eq_ignore_ascii_case("wal") {
@@ -199,13 +139,10 @@ impl Store {
         })
     }
 
-    /// Says whether this session is ending cleanly, and answers what it said before.
     pub fn mark_clean(&self, clean: bool) -> Result<bool, rusqlite::Error> {
         mark_clean(&self.conn, clean)
     }
 
-    /// Answers every query, in order, from one snapshot of the store: rows as JSON
-    /// objects by column name, and the bytes of every blob among them as parts.
     pub fn read(&mut self, queries: &[Query]) -> Result<(Json, Vec<Vec<u8>>), Failed> {
         let snapshot = self
             .conn
@@ -265,9 +202,6 @@ impl Store {
         Ok((Json::Array(answers), parts.into_parts()))
     }
 
-    /// Applies every change in one transaction, and answers how many rows each one
-    /// touched. One change the store refuses, or one statement SQLite refuses, and
-    /// nothing of the batch is written.
     pub fn write(&mut self, changes: &[Change], parts: &[&[u8]]) -> Result<Vec<usize>, Failed> {
         let batch = self
             .conn
@@ -303,8 +237,6 @@ impl Store {
             });
         }
 
-        // The log is capped in the same transaction that grew it, so it never holds
-        // more than its thousand rows, not even between two batches.
         if logged {
             run(
                 &batch,
@@ -317,7 +249,6 @@ impl Store {
         Ok(counts)
     }
 
-    /// Closes the store, and says so if SQLite would not.
     pub fn close(self) -> Result<(), String> {
         self.conn
             .close()
@@ -325,7 +256,6 @@ impl Store {
     }
 }
 
-/// Every row a statement answers, as JSON objects by column name.
 fn rows(
     conn: &Connection,
     table: &Table,
@@ -349,15 +279,12 @@ fn rows(
     Ok(out)
 }
 
-/// One statement, and how many rows it touched.
 fn run(conn: &Connection, sql: &str, values: Vec<Sql>) -> Result<usize, Failed> {
     Ok(conn
         .prepare_cached(sql)?
         .execute(params_from_iter(values))?)
 }
 
-/// A whole row, over whatever had its key. Every column the row leaves out is empty,
-/// which a column that may not be refuses; a name that is no column is refused too.
 fn put(
     conn: &Connection,
     table: &Table,
@@ -388,8 +315,6 @@ fn put(
     run(conn, &sql, values)
 }
 
-/// Some columns of one row. Its key is not one of them: a row that moves is a delete
-/// and a put, said as such.
 fn patch(
     conn: &Connection,
     table: &Table,
@@ -422,11 +347,6 @@ fn patch(
     run(conn, &sql, values)
 }
 
-/// Runs whatever of `migrations` the store has not run yet, and answers the schema it
-/// is at afterwards.
-///
-/// Takes the list rather than reading `MIGRATIONS`, so a test can hand it a second
-/// migration and watch the first one's rows survive it.
 pub fn migrated_with(conn: &Connection, migrations: &[&str]) -> Result<usize, Refused> {
     let has_meta: bool = conn.query_row(
         "select exists (select 1 from sqlite_master where type = 'table' and name = 'meta')",
@@ -461,8 +381,6 @@ pub fn migrated_with(conn: &Connection, migrations: &[&str]) -> Result<usize, Re
     Ok(migrations.len())
 }
 
-/// The schema this build knows, run on a connection: what the tests of the table list
-/// hold it to.
 #[cfg(test)]
 pub fn migrated(conn: &Connection) -> Result<usize, Refused> {
     migrated_with(conn, &MIGRATIONS)
@@ -514,13 +432,10 @@ fn is_device_id(word: &str) -> bool {
             .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_')
 }
 
-/// A random id in the shape the account makes its own in (`crypto.randomUUID()`), so
-/// a device id reads like every other id the server keeps.
 fn new_id() -> Result<String, Refused> {
     let mut bytes = [0_u8; 16];
     getrandom::fill(&mut bytes)
         .map_err(|error| Refused::Other(format!("no randomness for a device id: {error}")))?;
-    // Version 4, variant 1: the two fields that make these bytes a UUID.
     bytes[6] = (bytes[6] & 0x0f) | 0x40;
     bytes[8] = (bytes[8] & 0x3f) | 0x80;
 
@@ -540,9 +455,6 @@ fn new_id() -> Result<String, Refused> {
     ))
 }
 
-/// Writes whether the session is ending cleanly, and answers what the store said
-/// before. A store that never said is a new one, which has nothing a rotation could
-/// protect, so it reads as clean.
 fn mark_clean(conn: &Connection, clean: bool) -> Result<bool, rusqlite::Error> {
     let before: Option<i64> = conn
         .query_row(
@@ -558,8 +470,6 @@ fn mark_clean(conn: &Connection, clean: bool) -> Result<bool, rusqlite::Error> {
     Ok(before.is_none_or(|said| said != 0))
 }
 
-/// Moves a store that cannot be read out of the way, with the log and the index beside
-/// it, keeping the one damaged copy most recently set aside for whoever wants to look.
 pub fn set_aside(path: &Path) -> Result<(), Refused> {
     let aside = with_suffix(path, ".damaged");
     let _ = fs::remove_file(&aside);
@@ -570,8 +480,6 @@ pub fn set_aside(path: &Path) -> Result<(), Refused> {
     Ok(())
 }
 
-/// Every file a store at `path` is kept in: itself, its log, its index and a damaged
-/// copy set aside.
 pub fn files_of(path: &Path) -> [PathBuf; 4] {
     [
         path.to_path_buf(),
@@ -613,12 +521,10 @@ mod tests {
         serde_json::from_value(value).expect("queries")
     }
 
-    /// Parts as a write takes them: borrowed out of the envelope they arrived in.
     fn slices(parts: &[Vec<u8>]) -> Vec<&[u8]> {
         parts.iter().map(Vec::as_slice).collect()
     }
 
-    /// A read as the window gets it: the JSON, and the parts its blobs name.
     fn read(store: &mut Store, asked: Json) -> (Json, Vec<Vec<u8>>) {
         store.read(&queries(asked)).expect("a read")
     }
@@ -680,8 +586,6 @@ mod tests {
         assert_eq!(again.opened.device, device, "the device id is kept");
     }
 
-    /// The flag the engine decides client-id rotation by: false from the moment a
-    /// store is opened until the engine says the session ended cleanly.
     #[test]
     fn clean_exit_is_false_until_said_otherwise() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -697,12 +601,9 @@ mod tests {
         assert!(clean.opened.was_clean);
         clean.close().expect("closed");
 
-        // And false again for the session that just opened.
         assert!(!opened(&path).opened.was_clean);
     }
 
-    /// Forward only: a second migration runs once, over the first one's rows, and a
-    /// store written by a newer Orden is left exactly as it is.
     #[test]
     fn a_migration_runs_once_and_keeps_what_was_there() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -756,8 +657,6 @@ mod tests {
         assert!(aside.exists(), "the damaged copy is kept");
     }
 
-    /// All or nothing: a batch with one bad change writes none of the good ones, and
-    /// that holds for a change the store refuses and for one SQLite refuses.
     #[test]
     fn a_batch_that_fails_leaves_nothing() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -791,8 +690,6 @@ mod tests {
         assert_eq!(store.write(&changes(json!([file("a")])), &[]), Ok(vec![1]));
     }
 
-    /// Every operation, and what each answers: a put, a patch of some columns, a get,
-    /// a scan narrowed to one space in the table's own order, a delete and a clear.
     #[test]
     fn each_operation_does_what_it_says() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -858,8 +755,6 @@ mod tests {
             .is_err());
     }
 
-    /// Bytes in, the same bytes out, through the frame the window speaks: every value
-    /// a byte can have, and a document's worth of them.
     #[test]
     fn bytes_come_back_as_they_went() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -898,8 +793,6 @@ mod tests {
         assert_eq!(row["client_id"], 4_294_967_295_u32);
     }
 
-    /// One answer carries at most the envelope's ceiling of parts, which is what the
-    /// window's `unframe` holds every envelope to; past it the read says so in words.
     #[test]
     fn a_read_past_the_envelope_is_refused_in_words() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -971,8 +864,6 @@ mod tests {
         assert_eq!(kept[999]["at"], 1199);
     }
 
-    /// The name of the test the killed writer runs as, and the variable that tells it
-    /// where its store is. Run on its own it does nothing: it is a child's half.
     const CHILD: &str = "sync_store::store::tests::a_child_writes_and_waits_to_be_killed";
     const CHILD_STORE: &str = "NIB_SYNC_STORE_CHILD";
 
@@ -996,9 +887,6 @@ mod tests {
         std::thread::sleep(std::time::Duration::from_secs(60));
     }
 
-    /// The crash the write-ahead log is for: a process killed after its transaction
-    /// committed and before anything was copied into the database file. Another
-    /// process opens the store and finds every row.
     #[test]
     fn a_kill_between_write_and_checkpoint_loses_nothing() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -1038,11 +926,6 @@ mod tests {
         assert_eq!(answer[0].as_array().map(Vec::len), Some(50));
     }
 
-    /// The two numbers the brief holds the store to, measured on a store the size of a
-    /// large account. A timing test, so it is run by hand, in release, and its numbers
-    /// go in the commit message:
-    ///
-    ///     cargo test --release --lib sync_store::store::tests::measured -- --ignored --nocapture
     #[test]
     #[ignore = "a measurement, run by hand in release"]
     fn measured() {
@@ -1084,9 +967,6 @@ mod tests {
         store.write(&batch, &slices(&tail)).expect("500 rows");
         let write = started.elapsed();
 
-        // What the crate's half of the bridge costs for the same five hundred documents,
-        // framed against spelled as JSON number arrays, which is what Tauri's IPC does
-        // with bytes that are not sent raw.
         let bytes: Vec<u8> = (0..500 * (4096 + 24_u32))
             .map(|at| (at % 251) as u8)
             .collect();

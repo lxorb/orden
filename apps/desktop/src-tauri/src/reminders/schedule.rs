@@ -1,39 +1,17 @@
-//! The system's schedule made to match the plan, whatever the system is.
-//!
-//! The page hands over the whole plan every time (src/lib/reminders/scheduler.ts), and
-//! the system holds what it was given last time and the time before: so the one
-//! question is the difference, asked of the system rather than of a list kept here,
-//! because the system's list is the one that rings. What is wanted and not held is
-//! added; what is held and not wanted is taken off; what is both is left alone, so the
-//! same plan twice touches nothing. A snoozed reminder is the system's own until it
-//! rings, and is never taken off by a plan that does not name it.
-//!
-//! Behind a trait so the difference is tested without a system; see `Fake` below.
-
 use super::{Planned, Words};
 
-/// What a schedule of the system's is asked: what it holds, one added, one taken off.
 pub trait System {
-    /// The ids it holds, snoozes left out.
     fn scheduled(&self) -> Result<Vec<String>, String>;
-    /// Holds one more, to ring at its moment with Done and Snooze; `nonce` is what its
-    /// Done says it is with.
     fn add(&self, one: &Planned, nonce: &str, words: &Words) -> Result<(), String>;
-    /// Lets one go before it rings.
     fn remove(&self, id: &str) -> Result<(), String>;
 }
 
-/// What a pass changed, for the log and the tests.
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct Changes {
     pub added: Vec<String>,
     pub removed: Vec<String>,
 }
 
-/// Makes the system hold exactly the reminders of `wanted` still to come. `nonce` names
-/// each one's Done. The first failure ends the pass and is answered, so the page knows
-/// the system did not take the plan and rings it itself. `moved` are the ids whose moment
-/// is not the one they were handed at; see `moved` in reminders.rs.
 pub fn make_so(
     system: &impl System,
     wanted: &[(Planned, String)],
@@ -45,16 +23,12 @@ pub fn make_so(
     let mut changes = Changes::default();
 
     for id in &held {
-        // One at another moment goes too and comes back below at its own: left alone it
-        // would ring at the old one, stop being held, and be added for the new one as well.
         if moved.contains(id) || !wanted.iter().any(|(one, _)| &one.id == id && one.at > now) {
             system.remove(id)?;
             changes.removed.push(id.clone());
         }
     }
     for (one, nonce) in wanted {
-        // A moment already gone is refused by every system, and would ring at once by
-        // the others: it is not handed over at all.
         if one.at <= now || (held.contains(&one.id) && !moved.contains(&one.id)) {
             continue;
         }
@@ -69,7 +43,6 @@ pub(super) mod tests {
     use super::*;
     use std::cell::RefCell;
 
-    /// A schedule held in memory, which says what it was asked.
     #[derive(Default)]
     pub struct Fake {
         pub held: RefCell<Vec<String>>,
@@ -171,8 +144,6 @@ pub(super) mod tests {
         assert_eq!(changes.removed, ["late"]);
     }
 
-    // Left at its old moment it would ring there, stop being held, and be added at the new
-    // one by the next pass: two rings for one reminder.
     #[test]
     fn one_held_at_another_moment_is_set_again_at_its_own() {
         let fake = Fake::default();

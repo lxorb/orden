@@ -1,35 +1,3 @@
-"""Does dump.js read out everything a site keeps, and does restore.js put it back as it was?
-
-The two scripts beside this file are the page's half of moving a web store's state into
-another store (see src-tauri/src/web_state.rs and docs/sync-v2.md 6.4). This drives
-them in a real engine, headless, against a corpus of every kind of value IndexedDB can hold:
-primitives with -0, NaN and the infinities, BigInts, sparse arrays and arrays with keys of
-their own, a `__proto__` key, cycles and shared references, Dates valid and not, RegExps,
-Maps and Sets with objects for keys, boxed primitives, ArrayBuffers and every typed array
-and DataView (two views of one buffer included), Blobs and Files, Errors, CryptoKeys secret
-and private, ImageData; keys of every kind (numbers, strings, dates, binary, arrays); stores
-with key paths simple and compound, auto-increment, unique and multi-entry indexes; a
-database with no stores (which broke Playwright's own); one past the size ceiling; one
-holding a key that may not be exported. Plus localStorage and sessionStorage.
-
-Per engine:
-
-  1. a page on https://corpus.nib.test (answered by the route, so no network and a secure
-     context) writes the corpus;
-  2. dump.js reads it out;
-  3. a fresh context, which is a second computer, restores it with restore.js;
-  4. dump.js reads that out again, and the two dumps must be the same bytes;
-  5. and the restored values are compared, in the page, with the corpus built again:
-     types, prototypes, identity (a shared object is still shared, a cycle still a cycle),
-     bytes of every buffer and Blob, keys by `indexedDB.cmp`, schema, index lookups, and
-     that an auto-increment store carries on from its last key.
-
-    python apps/desktop/src-tauri/src/web_state/scripts/corpus.py            chromium, webkit
-    python apps/desktop/src-tauri/src/web_state/scripts/corpus.py firefox    any list
-
-Exits non-zero on the first engine that does not round-trip.
-"""
-
 from __future__ import annotations
 
 import json
@@ -45,8 +13,6 @@ RESTORE = (HERE / "restore.js").read_text(encoding="utf-8")
 
 ORIGIN = "https://corpus.nib.test"
 
-# Built the same way on both sides: written on the first computer, and built again on the
-# second to compare what arrived with. Deterministic, so the two builds are equal.
 CORPUS = r"""
 globalThis.nibCorpus = async function nibCorpus() {
   const shared = { x: 1 }
@@ -389,9 +355,7 @@ globalThis.nibCheck = async function nibCheck() {
 }
 """
 
-
 def dumped(page: Page, most: dict[str, int]) -> dict[str, object]:
-    """Everything dump.js says about the page, one call per database as the crate makes."""
 
     listed = json.loads(page.evaluate("(a) => nibDump('list', a)", json.dumps({"session": True})))
     databases = {}
@@ -401,13 +365,7 @@ def dumped(page: Page, most: dict[str, int]) -> dict[str, object]:
     listed["databases"] = sorted(listed["databases"], key=lambda db: db["name"])
     return {"list": listed, "databases": databases}
 
-
 def fresh_page(playwright: Playwright, engine: str, folder: str) -> tuple[BrowserContext, Page]:
-    """A browser with a profile of its own in `folder`, which is one computer.
-
-    A persistent profile rather than Playwright's usual throwaway context, because that
-    is what a web store is, and because WebKit refuses a Blob in IndexedDB in a session
-    that keeps nothing (as Safari's private windows do)."""
 
     context = getattr(playwright, engine).launch_persistent_context(folder, headless=True)
     page = context.new_page()
@@ -418,12 +376,9 @@ def fresh_page(playwright: Playwright, engine: str, folder: str) -> tuple[Browse
         ),
     )
     page.goto(f"{ORIGIN}/")
-    # As scripts of the page rather than evaluated expressions: each file's value is a
-    # function, which Playwright would take for one to call.
     for source in (DUMP, RESTORE, CORPUS):
         page.add_script_tag(content=source)
     return context, page
-
 
 def round_trip(engine: str) -> list[str]:
     problems: list[str] = []
@@ -479,7 +434,6 @@ def round_trip(engine: str) -> list[str]:
             two.close()
     return problems
 
-
 def main() -> int:
     engines = sys.argv[1:] or ["chromium", "webkit"]
     failed = 0
@@ -493,7 +447,6 @@ def main() -> int:
         else:
             print(f"{engine}: every value round-trips, byte for byte")
     return 1 if failed else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,42 +1,9 @@
-//! What a file is, apart from where it is: the thing that stays the same when a file is
-//! renamed or moved to another folder, and changes when it is deleted and another file
-//! is made under its name.
-//!
-//! Sync needs this because a path is not a note. A note renamed in Explorer, or moved
-//! with `git mv`, is the same note with its history; read off paths alone it is one note
-//! deleted and a stranger created, which is how an offline rename used to lose a note's
-//! identity (docs/sync-v2.md section 1, road 6). Syncthing matches a new file to a
-//! deleted one by hashing both; Dropbox and the Microsoft Sync Framework keep the
-//! file system's own id, which costs no read of the file. This is the second.
-//!
-//! - Windows: the volume's serial number and the file's id, which NTFS keeps for the
-//!   life of the file and gives a new file a new one of, since the id carries a count of
-//!   how often its slot was reused. Asked of an open handle through notify's own
-//!   `file-id` crate, which tries the 128-bit id first (`ReFS` and Dev Drives need it) and
-//!   falls back to `GetFileInformationByHandle`; on NTFS the two are the same number.
-//! - Elsewhere: the device and the inode, and the moment the file was born where the
-//!   file system says. An inode number is reused as soon as it is free (ext4 hands a
-//!   deleted file's number to the next file made in the same folder), which is the reason
-//!   Syncthing never shipped identity by inode alone; the birth time is what tells the
-//!   two apart, and a rename keeps it. On Linux the inode's generation too, which ext4,
-//!   xfs and btrfs give anew each time they hand a number out again: the birth time is
-//!   read off a clock that moves every few milliseconds, so a file deleted and made again
-//!   at once can be born at the same moment in the same inode.
-//!
-//! The answer is a string, opaque to everybody: the engine keeps it as an entry's
-//! `file_key` and only ever compares two for equality.
-
 use std::path::Path;
 
-/// The identity of the file or folder at `path`, or None when there is nothing there to
-/// ask about. Nobody asks about a link: the walk and the watcher leave links alone.
 #[cfg(windows)]
 pub fn identity(path: &Path) -> Option<String> {
     use file_id::FileId;
 
-    // `file-id` opens with `FILE_FLAG_BACKUP_SEMANTICS`, which is what lets a folder be
-    // opened at all, and without asking for any access to the contents, so a file
-    // another program holds open is asked about all the same.
     Some(match file_id::get_file_id(path).ok()? {
         FileId::HighRes {
             volume_serial_number,
@@ -53,8 +20,6 @@ pub fn identity(path: &Path) -> Option<String> {
     })
 }
 
-/// The identity of the file or folder at `path`, or None when there is nothing there to
-/// ask about.
 #[cfg(unix)]
 pub fn identity(path: &Path) -> Option<String> {
     use std::os::unix::fs::MetadataExt;
@@ -78,23 +43,18 @@ pub fn identity(path: &Path) -> Option<String> {
     Some(id)
 }
 
-/// The generation of the inode at `path`, or None where the file system keeps none
-/// (tmpfs, most network file systems) or the file cannot be opened.
 #[cfg(target_os = "linux")]
 #[allow(unsafe_code, reason = "the generation is asked through an ioctl")]
 fn generation(path: &Path) -> Option<libc::c_int> {
     use std::os::fd::AsRawFd;
     use std::os::unix::fs::OpenOptionsExt;
 
-    // Opened without blocking, so a pipe in a space answers too, and never through a link.
     let file = std::fs::OpenOptions::new()
         .read(true)
         .custom_flags(libc::O_NONBLOCK | libc::O_NOFOLLOW)
         .open(path)
         .ok()?;
     let mut generation: libc::c_int = 0;
-    // SAFETY: the file is open for as long as the call, and every file system that answers
-    // writes one int, which is what `generation` holds.
     let asked = unsafe { libc::ioctl(file.as_raw_fd(), libc::FS_IOC_GETVERSION, &mut generation) };
     (asked == 0).then_some(generation)
 }
@@ -139,12 +99,6 @@ mod tests {
         assert_eq!(identity(&moved.join("2026")), Some(folder));
     }
 
-    /// Deleted and made again under the same name is a different file, which is what
-    /// keeps a new note from inheriting a deleted one's history. Made the way ext4 is
-    /// most likely to hand the old inode number straight back: the same name, in the
-    /// same folder, at once, and often, so some go within one tick of the birth clock.
-    /// On the disk the crate is on, since the temporary folder may be tmpfs, which never
-    /// reuses a number.
     #[test]
     fn a_file_made_again_is_another_file() {
         let dir = tempfile::tempdir_in(env!("CARGO_MANIFEST_DIR")).expect("a folder");

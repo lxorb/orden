@@ -1,12 +1,3 @@
-//! `WebView2`: the `DevTools` Protocol's `Network.getCertificate`, which answers the
-//! chain the frame of the page's origin was committed with, site first, as base64 DER.
-//!
-//! `WebView2` itself says nothing of a certificate that had nothing wrong with it: its
-//! one certificate event, `ServerCertificateErrorDetected`, is raised for an error, and
-//! with no handler for it - nib has none - the page is refused and the engine's error
-//! page shown in its place. So a page that was committed over `https:` with a chain to
-//! answer is one the engine found nothing wrong with, and that is what `secure` says.
-
 use std::time::Duration;
 
 use base64::Engine as _;
@@ -15,11 +6,8 @@ use tauri::Webview;
 
 use super::Served;
 
-/// How long the engine is waited for.
 const PATIENCE: Duration = Duration::from_secs(5);
 
-/// The chain the page's frame was committed with, or `None` where the engine has none
-/// for the page's origin.
 pub async fn read(view: Webview, address: &str) -> Option<Served> {
     let origin = tauri::Url::parse(address).ok()?.origin();
     if !origin.is_tuple() {
@@ -40,7 +28,6 @@ pub async fn read(view: Webview, address: &str) -> Option<Served> {
     })
 }
 
-/// The certificates an answer names, in its order; one that is not base64 ends it.
 fn chain(answered: &Value) -> Vec<Vec<u8>> {
     answered
         .get("tableNames")

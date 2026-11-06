@@ -1,28 +1,3 @@
-//! A space's own web data, folded into the store every page shares (#239).
-//!
-//! Emil, 2026-10-13: *"currently there's a web data option per space ... i'd like for this
-//! option to be removed. instead, web data should be global"*. A reader who kept a space
-//! apart is signed in to its sites in that space's store, and turning the option into
-//! nothing must not sign them out. So once, the first time a build without the option
-//! starts, each store a space kept is merged into the global one (lib/web-tab/merged.ts
-//! names them):
-//!
-//! - **Cookies, one at a time.** A cookie is its name, domain, path and partition. One the
-//!   global store does not have is copied as it is - `HttpOnly`, `Secure`, `SameSite`, the
-//!   partition and the expiry with it. One both have goes to the copy set last, and no
-//!   engine says when a cookie was set, so the later expiry stands for it: a site that sets
-//!   a cookie again sets the same lifetime from a later moment, and Orden's own four hundred
-//!   days for a session cookie run from the last time it kept one (`web_cookies.rs`). A
-//!   cookie without an expiry on either side is the one from the store used last.
-//! - **An origin's storage, whole or not at all.** Its localStorage and every `IndexedDB`
-//!   database are copied over only when the global store holds nothing for the origin; an
-//!   origin global has storage for keeps its own. An app's storage is one state, and half
-//!   of two states is neither.
-//! - **Nothing is deleted.** The store merged from is left where it is, as it was.
-//!
-//! Read and written through hidden pages and isolated worlds (`restore_view.rs`,
-//! `isolated.rs`, scripts/dump.js and restore.js): nothing here leaves the computer.
-
 use std::collections::HashMap;
 use std::path::Path;
 use std::time::SystemTime;
@@ -36,24 +11,16 @@ use super::isolated::{self, quoted};
 use super::restore_view::Hidden;
 use super::{DUMP, RESTORE};
 
-/// The most one `IndexedDB` database may be, in bytes of its encoding, before it stays
-/// behind: the site fills it again.
 const DATABASE_MOST: u64 = 16 * 1024 * 1024;
 
-/// What a merge did.
 #[derive(Debug, Default, Serialize, PartialEq, Eq)]
 pub(crate) struct Merged {
-    /// Cookies written into the global store: new there, or newer than its own.
     pub cookies: usize,
-    /// Cookies the global store kept, because its own were newer.
     pub kept: usize,
-    /// Origins whose storage was copied over.
     pub origins: usize,
-    /// Origins left as the global store had them.
     pub left: usize,
 }
 
-/// What `nibDump('list')` says of an origin.
 #[derive(Deserialize)]
 struct Listed {
     origin: String,
@@ -61,13 +28,11 @@ struct Listed {
     databases: Vec<Listing>,
 }
 
-/// One database, as the list names it.
 #[derive(Deserialize)]
 struct Listing {
     name: String,
 }
 
-/// What `nibDump('database')` answers: the database, or why it stays behind.
 #[derive(Deserialize)]
 struct Dumped<'a> {
     skip: Option<String>,
@@ -75,7 +40,6 @@ struct Dumped<'a> {
     db: Option<&'a RawValue>,
 }
 
-/// Which cookie this is, wherever it is kept.
 fn identity(cookie: &Cookie) -> (String, String, String, Option<(String, bool)>) {
     (
         cookie.name.clone(),
@@ -90,9 +54,6 @@ fn identity(cookie: &Cookie) -> (String, String, String, Option<(String, bool)>)
     )
 }
 
-/// The cookies of `from` to write into the global store, which holds `into`, and how many
-/// of `from`'s the global store keeps its own of. `from_used_last` says which store was
-/// used last, for two copies neither of which ends.
 pub(crate) fn chosen(
     from: &[Cookie],
     into: &[Cookie],
@@ -103,7 +64,6 @@ pub(crate) fn chosen(
     let mut kept = 0;
     let taken = from
         .iter()
-        // An ended cookie is nobody's login any more.
         .filter(|one| one.expires.is_none_or(|end| end > at))
         .filter(|one| {
             let Some(there) = theirs.get(&identity(one)) else {
@@ -127,8 +87,6 @@ pub(crate) fn chosen(
     (taken, kept)
 }
 
-/// When anything in `folder` last changed, a few levels down, which is the nearest thing a
-/// store has to when it was last used. Nothing for a store that is not a folder (a Mac's).
 pub(crate) fn last_used(folder: &Path) -> Option<SystemTime> {
     fn newest(at: &Path, depth: u8, seen: &mut usize) -> Option<SystemTime> {
         let mut best = std::fs::metadata(at).ok()?.modified().ok();
@@ -153,11 +111,6 @@ pub(crate) fn last_used(folder: &Path) -> Option<SystemTime> {
     newest(folder, 5, &mut 0)
 }
 
-/// Folds the store `from` into `into`: its cookies, and the storage of each of `origins`.
-/// Into the global store (`into` none) only an origin's storage it has none of; into a
-/// named store, which is one made for this copy (`web_copy`), every origin's, since what
-/// is there was put by nothing but the copy. `from_used_last` is whether `from` was used
-/// more recently than `into`.
 pub(crate) async fn merge(
     caller: &Webview,
     from: &str,
@@ -181,7 +134,6 @@ pub(crate) async fn merge(
     };
 
     for origin in origins {
-        // An origin that cannot be opened or read is left as it is, and the rest go on.
         match copied(&mut old, &mut global, origin, into.is_some()).await {
             Ok(true) => merged.origins += 1,
             Ok(false) | Err(_) => merged.left += 1,
@@ -190,15 +142,10 @@ pub(crate) async fn merge(
     Ok(merged)
 }
 
-/// Whether an origin's storage is copied, given whether the store it goes into already
-/// holds some for it: never over what the shared store has of its own, and always into a
-/// store made for the copy (`fresh`).
 pub(crate) fn takes_storage(into_has: bool, fresh: bool) -> bool {
     fresh || !into_has
 }
 
-/// One origin's storage out of `old` and into `global`; see `takes_storage`. Says whether
-/// it was copied.
 async fn copied(
     old: &mut Hidden,
     global: &mut Hidden,

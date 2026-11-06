@@ -1,39 +1,15 @@
-//! A store's cookies, read and written through each engine's own cookie store: never the
-//! cookie database on disk, which is encrypted to the machine. What folds a store a space
-//! kept into the shared one (`merge.rs`) reads every cookie of one and writes some into the
-//! other; `web_cookies.rs` keeps a store's logins on Windows through the same protocol.
-//!
-//! | engine | out | in |
-//! | --- | --- | --- |
-//! | `WebView2` | `Network.getAllCookies` over the `DevTools` Protocol, which keeps `partitionKey`, priority and the source scheme and port | `Network.setCookies` |
-//! | `WKWebView` | `WKHTTPCookieStore`, through the webview's own `cookies()` | `setCookie` |
-//! | `WebKitGTK` | the cookie manager's every cookie, the same way | the same |
-//!
-//! A Mac and Linux go through Tauri's own cookie calls, which are those stores and write
-//! `HttpOnly` back by name, as `web_cookies.rs` does; what they have no word for (a
-//! partition, a priority) is left out there.
-//!
-//! A session cookie is written with the four hundred days `web_cookies.rs` gives every
-//! session cookie, so the login it carries survives the next restart. The cookie as the
-//! protocol says it - read out of an answer, written for `setCookie`, named for
-//! `deleteCookies` - is shared with `web_cookies.rs`, along with the four hundred days.
-
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
 use tauri::Webview;
 
-/// A cookie, as every engine can say it and take it back.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct Cookie {
     pub name: String,
     pub value: String,
-    /// As the engine said it: a leading dot for a cookie every subdomain is sent, none for
-    /// one only its own host is.
     pub domain: String,
     pub path: String,
-    /// Seconds since 1970, or none for a session cookie.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub expires: Option<f64>,
     #[serde(default)]
@@ -42,21 +18,16 @@ pub(crate) struct Cookie {
     pub secure: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub same_site: Option<SameSite>,
-    /// Chromium's own; the others have none.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub priority: Option<Priority>,
-    /// The top-level site a partitioned (CHIPS) cookie belongs to.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub partition: Option<Partition>,
-    /// Chromium's scheme binding, `Secure`, `NonSecure` or `Unset`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_scheme: Option<String>,
-    /// Chromium's port binding.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_port: Option<i64>,
 }
 
-/// A cookie's `SameSite`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub(crate) enum SameSite {
     Strict,
@@ -64,7 +35,6 @@ pub(crate) enum SameSite {
     None,
 }
 
-/// A cookie's priority, which Chromium uses to choose what to evict.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub(crate) enum Priority {
     Low,
@@ -72,42 +42,30 @@ pub(crate) enum Priority {
     High,
 }
 
-/// A partitioned cookie's partition.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct Partition {
-    /// `https://example.com`.
     pub top_level_site: String,
     #[serde(default)]
     pub cross_site_ancestor: bool,
 }
 
-/// How long a session cookie is kept once it has been made to last, in seconds: four
-/// hundred days, which is the longest Chrome lets any cookie live. Long enough that
-/// nobody is signed out by it, and a cookie the site sets again starts a new four
-/// hundred days rather than being stretched for ever. Here and in `web_cookies.rs`.
 pub(crate) const KEPT_FOR: f64 = 400.0 * 24.0 * 60.0 * 60.0;
 
-/// When a cookie written now should end: its own expiry, or four hundred days out for a
-/// session cookie.
 fn until(cookie: &Cookie, now: f64) -> f64 {
     cookie.expires.unwrap_or(now + KEPT_FOR)
 }
 
-/// Now, in seconds since 1970: the engines' own unit for an expiry.
 pub(crate) fn now() -> f64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_or(0.0, |since| since.as_secs_f64())
 }
 
-/// Every cookie in the store `view` is in.
 pub(crate) async fn every(view: &Webview) -> Result<Vec<Cookie>, String> {
     engine::all(view).await
 }
 
-/// Writes `cookies` into the store `view` is in, each over any cookie that is the same
-/// one, and leaves every other cookie there as it was.
 pub(crate) async fn put(view: &Webview, cookies: &[&Cookie]) -> Result<(), String> {
     engine::set(view, cookies, now()).await
 }
@@ -135,7 +93,6 @@ pub(crate) mod engine {
             .map(|_| ())
     }
 
-    /// The cookies in `Network.getAllCookies`' answer.
     pub(crate) fn cookies_in(answered: &Value) -> Vec<Cookie> {
         answered["cookies"]
             .as_array()
@@ -143,9 +100,6 @@ pub(crate) mod engine {
             .unwrap_or_default()
     }
 
-    /// What `Network.deleteCookies` is asked to take exactly this cookie away: its name,
-    /// domain and path, and its partition where it has one. Without a partition the engine
-    /// takes only the unpartitioned cookie of that name, never one in a partition.
     #[cfg_attr(
         feature = "cef",
         allow(
@@ -164,8 +118,6 @@ pub(crate) mod engine {
         Value::Object(asked)
     }
 
-    /// A partition as the protocol takes it now: an object. (Chromium before 119 said a
-    /// string, which `from_devtools` still reads.)
     fn partition_key(partition: &Partition) -> Value {
         json!({
             "topLevelSite": partition.top_level_site,
@@ -173,7 +125,6 @@ pub(crate) mod engine {
         })
     }
 
-    /// One cookie out of the protocol's own shape.
     pub(crate) fn from_devtools(said: &Value) -> Option<Cookie> {
         let text = |key: &str| said[key].as_str().map(str::to_owned);
         let partition = match &said["partitionKey"] {
@@ -221,9 +172,6 @@ pub(crate) mod engine {
         })
     }
 
-    /// One cookie in the protocol's shape for `setCookies`. A cookie only its own host
-    /// is sent (no leading dot) is set by address, which is the one way the protocol has
-    /// of making a host-only cookie; a domain cookie is set by its domain.
     pub(crate) fn to_devtools(cookie: &Cookie, now: f64) -> Value {
         let mut out = Map::new();
         out.insert("name".into(), json!(cookie.name));
@@ -267,8 +215,6 @@ mod engine {
 
     use super::{until, Cookie, SameSite};
 
-    /// Tauri's cookie calls wait on the window's thread, so they are made from a thread
-    /// that may block rather than from the runtime's own.
     async fn blocking<T: Send + 'static>(
         view: &Webview,
         work: impl FnOnce(Webview) -> Result<T, String> + Send + 'static,
@@ -303,7 +249,6 @@ mod engine {
         .await
     }
 
-    /// A moment as seconds since 1970.
     #[allow(
         clippy::cast_precision_loss,
         reason = "seconds since 1970 fit a double's 53 bits for millions of years"
@@ -364,8 +309,6 @@ mod tests {
     use super::engine::{from_devtools, to_devtools};
     use super::KEPT_FOR;
 
-    /// A cookie out of the protocol and back in keeps everything that makes it the same
-    /// cookie: partition, priority, the source binding, and whether it is only its host's.
     #[test]
     fn a_cookie_round_trips_through_the_protocol() {
         let said = json!({
@@ -391,8 +334,6 @@ mod tests {
         assert_eq!(back["sourcePort"], 443);
     }
 
-    /// A session cookie is written with four hundred days, a domain cookie by its domain,
-    /// and an old engine's partition key (a string) is still read.
     #[test]
     fn a_session_cookie_is_written_to_last() {
         let said = json!({

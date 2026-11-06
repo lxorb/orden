@@ -1,20 +1,3 @@
-//! A Claude Code session: one `claude -p --input-format stream-json` per running thread,
-//! kept open, each turn a line on its stdin (docs/ai-sidebar.md 5.2).
-//!
-//! What the window says (say.rs) is written here as the line Claude Code reads, measured
-//! against 2.1.280: a turn is a `user` message; a stop, a model and the window's fill are
-//! control requests (`interrupt`, `set_model`, `get_context_usage`, `list_models`), which
-//! the SDK uses and which work headless; effort, compaction and the goal are its own
-//! commands typed as a message (`/effort high`, `/compact`, `/goal`). The reader's words
-//! are never read as a command: a message that starts with `/` goes with a space in
-//! front, which Claude Code then reads as words (measured).
-//!
-//! Every line Claude Code prints goes to the window as it is, for `lib/ai/local` to read,
-//! except the answers to Orden's own control requests, which go back as a `Reply` to what
-//! was asked. A control request of Claude Code's own - a permission it would ask about -
-//! is refused here: with `--permission-prompts none` it never should, and nobody is there
-//! to answer it.
-
 use std::collections::HashMap;
 use std::io;
 use std::process::Command;
@@ -28,11 +11,8 @@ use super::args::{Effort, Tool};
 use super::run::{self, Heard, Running};
 use super::say::{one_line, GoalSay, Image, Message, Say};
 
-/// Who is waiting for the answer to a control request.
 enum Asked {
-    /// The window, as a `Reply` to this.
     Window(&'static str),
-    /// The crate itself, on a channel.
     Crate(mpsc::Sender<Result<Value, String>>),
 }
 
@@ -42,7 +22,6 @@ fn waiting(held: &Waiting) -> MutexGuard<'_, HashMap<String, Asked>> {
     held.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
-/// One running Claude Code.
 pub struct Claude {
     running: Running,
     next: AtomicU64,
@@ -50,8 +29,6 @@ pub struct Claude {
 }
 
 impl Claude {
-    /// Starts `command`, kept open and ended after `idle` with nothing said, and hands
-    /// `output` what it says.
     pub fn start(
         command: Command,
         idle: Duration,
@@ -59,8 +36,6 @@ impl Claude {
     ) -> io::Result<Self> {
         let held: Waiting = Arc::default();
         let heard_by = Arc::clone(&held);
-        // The answer to one of Claude Code's own requests is written by the reading thread,
-        // which has the program only once it has started.
         let answering: Arc<Mutex<Option<Running>>> = Arc::default();
         let answer_with = Arc::clone(&answering);
         let running = run::open(command, idle, move |heard| match heard {
@@ -90,16 +65,13 @@ impl Claude {
         })
     }
 
-    /// Ends it and everything it started.
     pub fn stop(&self) {
         self.running.stop();
     }
 
-    /// Writes what the window said.
     pub fn say(&self, say: &Say) -> Result<(), String> {
         let line = match say {
             Say::Turn { text, images } => user(text, images),
-            // Claude Code reads a message that arrives mid-turn into that turn.
             Say::Steer { text } => user(text, &[]),
             Say::Interrupt => self.control(json!({ "subtype": "interrupt" }), None),
             Say::Model { model } => self.control(
@@ -107,7 +79,6 @@ impl Claude {
                 Some("model"),
             ),
             Say::Effort { effort } => effort_line(*effort)?,
-            // Measured on 2.1.280: "Fast mode is not available in the Agent SDK".
             Say::Fast { .. } => return Err("Claude Code has no fast mode headless".into()),
             Say::Compact { focus } => command(format!("/compact {}", one_line(focus)).trim_end()),
             Say::Context => {
@@ -120,7 +91,6 @@ impl Claude {
             .map_err(|error| format!("Claude Code is not listening: {error}"))
     }
 
-    /// Asks a control request of the crate's own and waits for its answer.
     pub fn ask(&self, request: Value, patience: Duration) -> Result<Value, String> {
         let (sent, answer) = mpsc::channel();
         let id = self.id();
@@ -133,7 +103,6 @@ impl Claude {
             .map_err(|_| "Claude Code did not answer".to_owned())?
     }
 
-    /// Closes stdin: Claude Code answers what it has and ends.
     pub fn close_input(&self) {
         self.running.close_input();
     }
@@ -142,7 +111,6 @@ impl Claude {
         format!("nib-{}", self.next.fetch_add(1, Ordering::SeqCst))
     }
 
-    /// A control request, its answer sent to the window as `to` where there is one.
     fn control(&self, request: Value, to: Option<&'static str>) -> String {
         let id = self.id();
         if let Some(to) = to {
@@ -156,8 +124,6 @@ fn control_line(id: &str, request: Value) -> String {
     json!({ "type": "control_request", "request_id": id, "request": request }).to_string()
 }
 
-/// A `user` message: the pictures, then the words. Words that start with `/` would be
-/// read as a command, so they go with a space in front.
 fn user(text: &str, images: &[Image]) -> String {
     let mut content: Vec<Value> = images
         .iter()
@@ -177,11 +143,6 @@ fn user(text: &str, images: &[Image]) -> String {
     message(Value::Array(content))
 }
 
-/// One of Claude Code's own commands, typed as a message.
-/// The thread's goal, typed as Claude Code's own `/goal`: set or cleared, and nothing
-/// else. It has no pause and no resume - `/goal pause` would set a goal whose whole
-/// condition is the word "pause" - so the window clears it to hold it and sets it again
-/// to go on (lib/ai/local/goal.ts).
 fn goal_line(goal: &GoalSay) -> Result<String, String> {
     match goal {
         GoalSay::Set { objective, .. } => Ok(command(&format!("/goal {}", one_line(objective)))),
@@ -206,8 +167,6 @@ fn message(content: Value) -> String {
     .to_string()
 }
 
-/// What one printed line comes to for the window: the line itself, the reply to one of
-/// Orden's requests, or nothing for one of Claude Code's own requests, which is refused.
 fn read(line: &str, held: &Waiting, writer: Option<&Running>) -> Option<Message> {
     let event: Value = match serde_json::from_str(line) {
         Ok(event) => event,
@@ -253,8 +212,6 @@ fn read(line: &str, held: &Waiting, writer: Option<&Running>) -> Option<Message>
     }
 }
 
-/// The answer to one of Claude Code's own requests: a permission denied, anything else
-/// refused.
 fn refusal(id: &str, request: &Value) -> String {
     let response = if request["subtype"] == "can_use_tool" {
         json!({
@@ -268,7 +225,6 @@ fn refusal(id: &str, request: &Value) -> String {
     json!({ "type": "control_response", "response": response }).to_string()
 }
 
-/// An effort typed as Claude Code's own command; `None` is the model's default.
 fn effort_line(effort: Option<Effort>) -> Result<String, String> {
     let word = effort
         .map(|one| one.word(Tool::ClaudeCode))
@@ -361,7 +317,6 @@ mod tests {
                 error: None,
             })
         );
-        // Asked once, answered once.
         assert!(read(
             r#"{"type":"control_response","response":{"subtype":"success","request_id":"nib-1"}}"#,
             &held,

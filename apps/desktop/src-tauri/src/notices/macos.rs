@@ -1,15 +1,3 @@
-//! A notice as a Mac's notification, heard back by the delegate reminders set.
-//!
-//! `UNUserNotificationCenter`, under the app's bundle: a request delivered at once, named
-//! `notice.` and its id so the delegate (reminders/macos.rs) knows it from a reminder and
-//! hands it here, and threaded by its tag so the system groups one chat's together. A
-//! second notice with the same tag takes the first one's place. Where the page offers an
-//! answer, the request is in a category with a text field, Messages' own inline reply;
-//! what was typed arrives as the response's text.
-//!
-//! A build that is not a bundle - `cargo run` - has no notification centre, and asking
-//! for one ends the process; there nothing is shown.
-
 use std::collections::HashMap;
 use std::sync::{Mutex, Once, PoisonError};
 
@@ -27,17 +15,13 @@ use tauri::AppHandle;
 
 use super::{Act, Notice};
 
-/// The category of a notice with a field to answer in, and its one action.
 pub const CATEGORY: &str = "nib.notice.reply";
 const SEND: &str = "send";
 
-/// What every notice's request is named by, before its id.
 const PREFIX: &str = "notice.";
 
-/// Leave to show anything, asked of the reader once a run.
 static ASKED: Once = Once::new();
 
-/// The request each tag is showing, so the next one takes its place.
 static SHOWING: Mutex<Option<HashMap<String, String>>> = Mutex::new(None);
 
 fn in_showing<T>(alter: impl FnOnce(&mut HashMap<String, String>) -> T) -> T {
@@ -45,7 +29,6 @@ fn in_showing<T>(alter: impl FnOnce(&mut HashMap<String, String>) -> T) -> T {
     alter(held.get_or_insert_with(HashMap::new))
 }
 
-/// The field a notice is answered in, in the reader's words.
 pub fn reply_action(placeholder: &str, send: &str) -> Retained<UNNotificationAction> {
     let action =
         UNTextInputNotificationAction::actionWithIdentifier_title_options_textInputButtonTitle_textInputPlaceholder(
@@ -58,7 +41,6 @@ pub fn reply_action(placeholder: &str, send: &str) -> Retained<UNNotificationAct
     Retained::into_super(action)
 }
 
-/// Shows one notice, replacing whatever its tag showed.
 pub fn show(app: &AppHandle, notice: &Notice) -> Result<(), String> {
     use crate::reminders::macos as centre_of;
 
@@ -103,8 +85,6 @@ pub fn show(app: &AppHandle, notice: &Notice) -> Result<(), String> {
     Ok(())
 }
 
-/// A response the delegate heard, answered here if it was a notice's. Answers whether it
-/// was, so the delegate does not read it as a reminder's.
 pub fn answer(app: &AppHandle, response: &UNNotificationResponse, name: &str) -> bool {
     let Some(id) = name.strip_prefix(PREFIX) else {
         return false;
@@ -124,7 +104,6 @@ pub fn answer(app: &AppHandle, response: &UNNotificationResponse, name: &str) ->
     true
 }
 
-/// Takes whatever a tag is showing out of the notification centre.
 pub fn clear(tag: &str) {
     if !crate::reminders::macos::bundled() {
         return;
@@ -137,7 +116,6 @@ pub fn clear(tag: &str) {
     }
 }
 
-/// Takes every notice out of the notification centre, and none of the reminders.
 pub fn clear_all() {
     if !crate::reminders::macos::bundled() {
         return;

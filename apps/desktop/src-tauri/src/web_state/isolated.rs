@@ -1,32 +1,11 @@
-//! Running dump.js and restore.js in a page without the page seeing them.
-//!
-//! An isolated world is a second JavaScript global on the same document: it shares the
-//! DOM and the origin's storage with the page's own scripts and nothing else, so a site
-//! can neither read what the dump reads out nor change it on the way, and the names the
-//! scripts define never reach the page. Each engine has one:
-//!
-//! | engine | world |
-//! | --- | --- |
-//! | `WebView2` | `Page.createIsolatedWorld`, then `Runtime.evaluate` in it, over the `DevTools` Protocol |
-//! | `WKWebView` | a `WKContentWorld` named `nib-state`, through `callAsyncJavaScript` (macOS 11) |
-//! | `WebKitGTK` | a script world named `nib-state`, through `call_async_javascript_function` (2.40) |
-//!
-//! None falls back to the page's own world. Every call is one program: the script's own
-//! source, which defines its one name on the world's global, and then the call, whose
-//! promise the engine waits for; what comes back is the string the call answered.
-
 use tauri::Webview;
 
-/// What the worlds are called, which is what a web inspector shows them as.
 const WORLD: &str = "nib-state";
 
-/// Runs `source`, then `call`, in an isolated world of the page in `view`, and answers
-/// the string `call`'s promise resolved to.
 pub(crate) async fn run(view: &Webview, source: &str, call: &str) -> Result<String, String> {
     engine::run(view, source, call).await
 }
 
-/// A string as a JavaScript string literal: JSON's own quoting, which JavaScript reads.
 pub(crate) fn quoted(text: &str) -> Result<String, String> {
     serde_json::to_string(text).map_err(|error| error.to_string())
 }
@@ -106,8 +85,6 @@ mod engine {
                     reply.say(Err("not on the window's thread".to_owned()));
                     return;
                 };
-                // SAFETY: the pointer is the WKWebView wry built for this page, alive while
-                // the page is; retaining it keeps it so for the call, on the main thread.
                 let Some(web) = (unsafe { Retained::retain(platform.inner().cast::<WKWebView>()) })
                 else {
                     reply.say(Err("the page has gone".to_owned()));
@@ -117,8 +94,6 @@ mod engine {
                     unsafe { WKContentWorld::worldWithName(&NSString::from_str(WORLD), mtm) };
                 let answered = reply.clone();
                 let done = RcBlock::new(move |value: *mut AnyObject, error: *mut NSError| {
-                    // SAFETY: the engine hands this block either an error or a value,
-                    // each alive for the call.
                     let said = unsafe {
                         if let Some(error) = error.as_ref() {
                             Err(error.localizedDescription().to_string())
@@ -132,8 +107,6 @@ mod engine {
                     };
                     answered.say(said);
                 });
-                // SAFETY: on the main thread, with the webview's own world; the engine
-                // copies the block and calls it once.
                 unsafe {
                     web.callAsyncJavaScript_arguments_inFrame_inContentWorld_completionHandler(
                         &NSString::from_str(&body),
@@ -154,7 +127,6 @@ mod engine {
 mod tests {
     use super::quoted;
 
-    /// Anything a string holds stays inside the literal it is quoted in.
     #[test]
     fn a_quoted_string_stays_a_string() {
         assert_eq!(

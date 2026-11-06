@@ -1,16 +1,3 @@
-//! `WKWebView`: `serverTrust`, the trust the committed navigation was evaluated with,
-//! whose chain runs from the site's certificate up to the anchor it was trusted through.
-//!
-//! `WebKit` refuses a page whose certificate it does not trust unless a navigation
-//! delegate answers its challenge, and neither wry's nor nib's answers one; so a page
-//! with a trust to read was trusted. What can still be wrong is the page itself: a
-//! picture or a script it fetched over plain `http:`, which `hasOnlySecureContent`
-//! says, and which a browser does not call secure either.
-//!
-//! The trust is a Security framework object that objc2's `WebKit` binding hands out only
-//! with the Security binding, which is not in the lock file; the four calls it takes are
-//! made directly instead, as `presence.rs` does for `CoreGraphics`.
-
 use std::ffi::c_void;
 use std::sync::mpsc::channel;
 use std::time::Duration;
@@ -23,10 +10,8 @@ use tauri::Webview;
 
 use super::Served;
 
-/// How long the main thread is waited for.
 const PATIENCE: Duration = Duration::from_secs(5);
 
-/// The chain of the page now in sight, read on the main thread, where its webview is.
 pub async fn read(view: Webview, _address: &str) -> Option<Served> {
     let (sending, said) = channel();
     view.with_webview(move |platform| {
@@ -39,13 +24,11 @@ pub async fn read(view: Webview, _address: &str) -> Option<Served> {
         .flatten()
 }
 
-/// `struct __SecTrust`, which a `SecTrustRef` points to and nothing here looks into.
 #[repr(C)]
 struct Trust {
     _opaque: [u8; 0],
 }
 
-// SAFETY: the encoding `serverTrust` is declared with, `^{__SecTrust=}`.
 #[allow(
     unsafe_code,
     reason = "the trust's type is told to the Objective-C runtime by hand"
@@ -77,28 +60,19 @@ unsafe extern "C" {
     fn CFRelease(object: *const c_void);
 }
 
-/// The chain the webview's committed navigation was trusted through, site first.
 #[allow(
     unsafe_code,
     reason = "WKWebView's trust and the Security framework's chain are reached through \
               the Objective-C runtime and C"
 )]
 fn of(webview: *mut c_void) -> Option<Served> {
-    // SAFETY: the pointer is the WKWebView wry built for this tab, alive for as long as
-    // the tab's page is, and this runs on the main thread where it belongs.
     let view = unsafe { Retained::retain(webview.cast::<WKWebView>()) }?;
-    // SAFETY: a property read on the main thread; the trust is the webview's (the get
-    // rule), held only while the webview is, which is the rest of this function.
     let trust: *mut Trust = unsafe { msg_send![&*view, serverTrust] };
     if trust.is_null() {
         return None;
     }
-    // SAFETY: as above.
     let only_secure = unsafe { view.hasOnlySecureContent() };
     let mut chain = Vec::new();
-    // SAFETY: the trust is a live `SecTrustRef`. The array and each certificate's data
-    // are made by the copy calls (the create rule) and released here once read; each
-    // certificate is the array's (the get rule), read while the array is held.
     unsafe {
         let certificates = SecTrustCopyCertificateChain(trust);
         if certificates.is_null() {

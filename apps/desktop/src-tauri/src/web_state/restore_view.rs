@@ -1,22 +1,3 @@
-//! A page nobody sees, in the same store as a site's tabs, that is the site's origin and
-//! runs none of the site's code: where a site's storage is written back, and read out
-//! for an origin no tab is on.
-//!
-//! Playwright's `storageState` does the same thing the same way - a blank page whose
-//! every request is answered with nothing, sent to each origin in turn - and this is
-//! each engine's own form of it (docs/sync-v2.md 6.4):
-//!
-//! | engine | how the page becomes the origin |
-//! | --- | --- |
-//! | `WebView2` | sent to `<origin>/__nib_restore`, which `WebResourceRequested` answers with an empty page before any network is asked |
-//! | `WKWebView` | `loadHTMLString("", baseURL: <origin>/__nib_restore)`, which runs as that origin |
-//! | CEF (Linux) | sent to `<origin>/__nib_restore`, which the `DevTools` Protocol's `Fetch` domain answers with an empty page before any network is asked |
-//!
-//! The view is a child of the window that asked, a pixel wide, hidden from the moment
-//! it exists and never given the keyboard, built through the same seam every web tab is
-//! (`engine::web_store`), so it is in the store the tab would be in and shares its
-//! browser process. It is closed when it is dropped.
-
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
@@ -28,31 +9,20 @@ use tauri::{
 
 use super::answer::PATIENCE;
 
-/// The address every hidden page is sent to under an origin. Nothing on the network is
-/// ever asked for it.
 pub(crate) const PATH: &str = "/__nib_restore";
 
-/// How long a hidden page may take to become an origin. The page is answered on this
-/// computer and is empty, so this is long only for an engine starting a store's browser
-/// process; a minute was a Save waiting a minute with nothing said.
 const VISIT: Duration = Duration::from_secs(15);
 
-/// How many hidden views this run has made, for their labels.
 static MADE: AtomicU64 = AtomicU64::new(0);
 
-/// One hidden page, and the addresses it has finished loading.
 pub(crate) struct Hidden {
     view: Webview,
     loads: Receiver<String>,
 }
 
 impl Hidden {
-    /// Builds one in `store` (the one every space shares, for none), inside `window`.
     pub(crate) async fn open(window: &Window, store: Option<&str>) -> Result<Self, String> {
         let app = window.app_handle().clone();
-        // Under the `web-` prefix every page of the web wears, so no capability names it
-        // and a window's close makes its session cookies last like a tab's; see
-        // web_tabs.rs and web_cookies.rs.
         let label = format!("web-state-{}", MADE.fetch_add(1, Ordering::Relaxed));
         let (loaded, loads) = channel(16);
         let blank: Url = "about:blank"
@@ -69,8 +39,6 @@ impl Hidden {
             });
         let builder = crate::engine::web_store(builder, &app, store)?;
 
-        // On the window's own thread, like a tab's page, and waited for there: see
-        // `web_open` in web_tabs.rs for why a webview is never built anywhere else.
         let (made, mut waiting) = channel(1);
         let holder = window.clone();
         app.run_on_main_thread(move || {
@@ -97,12 +65,10 @@ impl Hidden {
         Ok(hidden)
     }
 
-    /// The page, to run scripts in and to reach its store's cookies through.
     pub(crate) fn view(&self) -> &Webview {
         &self.view
     }
 
-    /// Makes the page `origin`, empty, and waits until it is.
     pub(crate) async fn visit(&mut self, origin: &str) -> Result<(), String> {
         let address = format!("{origin}{PATH}");
         engine::show(&self.view, &address)?;
@@ -132,8 +98,6 @@ mod engine {
     use super::super::answer::{answer, Reply};
     use super::PATH;
 
-    /// Answers every request for the restore address in this view, under any origin,
-    /// with an empty page, before the network is asked.
     #[allow(
         unsafe_code,
         reason = "WebView2's request interception is reached through its COM interfaces, which have no safe wrapper"
@@ -147,8 +111,6 @@ mod engine {
                         let Some(args) = args else {
                             return Ok(());
                         };
-                        // Safe: the environment is this view's own and the arguments are the
-                        // engine's for this one request, both on the window's thread.
                         unsafe {
                             let response = environment.CreateWebResourceResponse(
                                 None::<&windows_com::Win32::System::Com::IStream>,
@@ -160,8 +122,6 @@ mod engine {
                         }
                     }));
 
-                // Safe: the controller is this view's own, the handler is held by the
-                // engine for as long as the view is, and this runs on the window's thread.
                 let installed = unsafe {
                     platform.controller().CoreWebView2().and_then(|core| {
                         core.AddWebResourceRequestedFilter(
@@ -194,7 +154,6 @@ mod engine {
     use objc2_web_kit::WKWebView;
     use tauri::Webview;
 
-    /// Nothing to set up: an HTML string with a base address is the origin already.
     #[allow(
         clippy::unused_async,
         reason = "one signature for every engine; WebView2's has something to wait for"
@@ -209,27 +168,17 @@ mod engine {
     )]
     pub(super) fn show(view: &Webview, address: &str) -> Result<(), String> {
         let address = address.to_owned();
-        view.with_webview(move |platform| {
-            // SAFETY: the WKWebView wry built for this view, retained for the call, on
-            // the main thread where `with_webview` runs.
-            unsafe {
-                let Some(web) = Retained::retain(platform.inner().cast::<WKWebView>()) else {
-                    return;
-                };
-                let base = NSURL::URLWithString(&NSString::from_str(&address));
-                let _ = web.loadHTMLString_baseURL(&NSString::from_str(""), base.as_deref());
-            }
+        view.with_webview(move |platform| unsafe {
+            let Some(web) = Retained::retain(platform.inner().cast::<WKWebView>()) else {
+                return;
+            };
+            let base = NSURL::URLWithString(&NSString::from_str(&address));
+            let _ = web.loadHTMLString_baseURL(&NSString::from_str(""), base.as_deref());
         })
         .map_err(|error| error.to_string())
     }
 }
 
-/// CEF: the restore address answered in the page's own engine, as on `WebView2`, through
-/// the `DevTools` Protocol's `Fetch` domain: every request for it is held before the
-/// network is asked and fulfilled with an empty page. It used to go to the site, which
-/// ran the site's own code in both stores, wrote the site's storage into the store a copy
-/// was going into before the copy could, and for a site that redirects an address it
-/// does not know never finished loading at it at all.
 #[cfg(feature = "cef")]
 mod engine {
     use serde_json::{json, Value};

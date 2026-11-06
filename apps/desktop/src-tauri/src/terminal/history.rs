@@ -1,21 +1,3 @@
-//! A terminal's last lines between runs: what a restart puts back above the fresh shell.
-//!
-//! A screen can hold anything that was printed to it - a token a command echoed, a
-//! password somebody typed where a prompt said not to - so where it is kept is the whole
-//! question, and the answer is the one place on this machine that is nobody's to share:
-//! the app's local data folder, one file per terminal, `terminal/<space>/<key>.json`.
-//! Never a space's folder, which is synced and handed to other people; never the
-//! webview's storage, whose quota the session's unsaved words live in; never a roaming
-//! profile, which would carry it to the next computer. `<space>` is the space the tab was
-//! opened in, and `none` for one opened in none.
-//!
-//! The window decides when (a moment after the output rests, as the tab leaves its pane,
-//! as the window goes) and forgets one when its tab closes; see `lib/terminal/history.ts`.
-//! Here is the disk: every command runs off the window's thread, every write lands whole
-//! or not at all, and a space keeps at most `MOST_PER_SPACE` of them, so terminals nobody
-//! closed properly - a crash, a session lost - do not pile up the way Windows Terminal's
-//! `buffer_*.txt` files did.
-
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -23,35 +5,22 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use serde::{Deserialize, Serialize};
 use tauri::{Manager, Webview};
 
-/// What one terminal's history is: the screen and its scrollback as xterm.js serialised
-/// them, the size it was written at, so it can be replayed at that width and reflowed,
-/// and when, which the line under it says.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct History {
     pub cols: u16,
     pub rows: u16,
-    /// Milliseconds since 1970, as the window's clock said it.
     pub at: u64,
     pub text: String,
 }
 
-/// The most one history's text may be. The window keeps its own to half a million
-/// characters (see history.ts), which is a megabyte and a half at the very most; anything
-/// past this was not written by the app.
 const MOST_TEXT: usize = 2 << 20;
 
-/// The most a history's file is read to: its text with every escape written out as JSON
-/// writes one, which is up to six bytes for a byte of the screen's colours.
 const MOST_FILE: usize = 16 << 20;
 
-/// How many histories one space keeps, newest first. Only terminals that went without
-/// their tab being closed are ever over it: a closed tab takes its file with it.
 const MOST_PER_SPACE: usize = 32;
 
-/// The folder for terminals opened in no space.
 const NO_SPACE: &str = "none";
 
-/// Where every history is kept.
 fn root(webview: &Webview) -> Result<PathBuf, String> {
     let data = webview
         .app_handle()
@@ -61,9 +30,6 @@ fn root(webview: &Webview) -> Result<PathBuf, String> {
     Ok(data.join("terminal"))
 }
 
-/// A space's id or a terminal's key as the name of a folder or a file: both are ids the
-/// window made, so anything else is refused rather than made safe, and no name can reach
-/// outside the folder.
 fn name(id: &str) -> Result<&str, String> {
     let fits = !id.is_empty()
         && id.len() <= 80
@@ -77,7 +43,6 @@ fn name(id: &str) -> Result<&str, String> {
     }
 }
 
-/// The folder of one space's histories.
 fn folder(root: &Path, space: Option<&str>) -> Result<PathBuf, String> {
     Ok(root.join(match space {
         Some(space) => name(space)?,
@@ -85,12 +50,10 @@ fn folder(root: &Path, space: Option<&str>) -> Result<PathBuf, String> {
     }))
 }
 
-/// The file of one terminal's history.
 fn file(root: &Path, space: Option<&str>, key: &str) -> Result<PathBuf, String> {
     Ok(folder(root, space)?.join(format!("{}.json", name(key)?)))
 }
 
-/// One history, or nothing where there is none or what is there does not read as one.
 fn read(path: &Path) -> Option<History> {
     let bytes = fs::read(path).ok()?;
     if bytes.len() > MOST_FILE {
@@ -99,16 +62,12 @@ fn read(path: &Path) -> Option<History> {
     serde_json::from_slice(&bytes).ok()
 }
 
-/// A name for the half-written file, never the same twice in one run: two writes of one
-/// terminal may be in the air at once, and each renames its own.
 fn scratch(path: &Path) -> PathBuf {
     static NEXT: AtomicU64 = AtomicU64::new(0);
     let turn = NEXT.fetch_add(1, Ordering::Relaxed);
     path.with_extension(format!("{turn}.part"))
 }
 
-/// Writes one history whole: into a file of its own first and then renamed over the old
-/// one, so a crash in the middle leaves the last history rather than half of this one.
 fn write(path: &Path, history: &History) -> Result<(), String> {
     if history.text.len() > MOST_TEXT {
         return Err("a terminal's history is kept to two megabytes".to_owned());
@@ -127,8 +86,6 @@ fn write(path: &Path, history: &History) -> Result<(), String> {
     })
 }
 
-/// Keeps the newest `MOST_PER_SPACE` histories of a folder and removes the rest, with
-/// any half-written file a crash left behind.
 fn prune(folder: &Path) {
     let Ok(listed) = fs::read_dir(folder) else {
         return;
@@ -157,7 +114,6 @@ fn prune(folder: &Path) {
     }
 }
 
-/// A half-written file old enough that no write can still be renaming it.
 fn is_stale(entry: &fs::DirEntry) -> bool {
     entry
         .metadata()
@@ -167,8 +123,6 @@ fn is_stale(entry: &fs::DirEntry) -> bool {
         .is_some_and(|age| age.as_secs() > 60)
 }
 
-/// A terminal's history, or nothing: none was written, it was forgotten, or restoring
-/// is off and there never was one.
 #[tauri::command(async)]
 pub fn terminal_history_read(
     webview: Webview,
@@ -179,7 +133,6 @@ pub fn terminal_history_read(
     Ok(read(&file(&root(&webview)?, space.as_deref(), &key)?))
 }
 
-/// Writes a terminal's history down, in place of the one before.
 #[tauri::command(async)]
 pub fn terminal_history_write(
     webview: Webview,
@@ -195,8 +148,6 @@ pub fn terminal_history_write(
     Ok(())
 }
 
-/// Forgets one terminal's history - its tab has closed - or, with no key, every history
-/// there is: restoring was turned off.
 #[tauri::command(async)]
 pub fn terminal_history_forget(
     webview: Webview,
@@ -266,7 +217,6 @@ mod tests {
         write(&path, &written).unwrap();
         assert_eq!(read(&path), Some(written));
 
-        // And again, in place of the one before, with nothing left beside it.
         let again = history("C:\\>", 1_700_000_001_000);
         write(&path, &again).unwrap();
         assert_eq!(read(&path), Some(again));
@@ -310,7 +260,6 @@ mod tests {
         for turn in 0..MOST_PER_SPACE + 3 {
             let path = space.join(format!("t{turn}.json"));
             write(&path, &history("screen", 0)).unwrap();
-            // The first three are the oldest, whatever the clock's resolution.
             if turn < 3 {
                 fs::File::options()
                     .write(true)
@@ -320,7 +269,6 @@ mod tests {
                     .unwrap();
             }
         }
-        // A half-written file from a crash an hour ago goes too.
         let part = space.join("t0.7.part");
         fs::write(&part, b"half").unwrap();
         fs::File::options()

@@ -1,48 +1,17 @@
-//! The hosts the reader's own `~/.ssh/config` names, read the way `ssh` reads it and
-//! never written: Orden lists them, and `ssh` itself resolves everything else.
-//!
-//! What a host is here: a `Host` line's names that are names and not patterns. `Host pi
-//! raspberry` is one host, `pi`, found by `raspberry` too - the names on one line are one
-//! machine, which VS Code's explorer listing each as an entry of its own got wrong. A
-//! pattern (`*`, `?`) or a negation (`!`) is settings for many hosts and none to connect
-//! to, which is what Windows Terminal's generator lists by mistake. A `Match` block is
-//! skipped whole: it is a condition, never a name.
-//!
-//! `Include` is followed, which VS Code's explorer never did: a path relative to `~/.ssh`,
-//! `~` for home, and `*` and `?` in the file's own name, in the order the names sort, as
-//! `glob(3)` hands them to `ssh`. At most `MOST_DEPTH` deep, as `ssh` allows, and a file
-//! is read once however many times it is included.
-//!
-//! **Groups**, for the picker and Settings, come out of how people already lay the file
-//! out: a heading - one comment line on its own, after a blank line, that is not a
-//! commented-out setting - names the group of the hosts under it until the next one; and
-//! hosts in an included file with no heading of their own are grouped by that file's
-//! name, `config.d/work` being `work`, whatever heading the `Include` stood under.
-//!
-//! `HostName`, `User` and `Port` are read for the row to show: the first value wins, as
-//! it does for `ssh`. Pure but for the files, which come through [`Files`] so the tests
-//! hand in a made-up disk.
-
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
 use serde::Serialize;
 
-/// How deep includes go, as `ssh`'s own `READCONF_MAX_DEPTH`.
 const MOST_DEPTH: usize = 16;
 
-/// The longest a heading may be and still be a group's name rather than a sentence.
 const HEADING_MOST: usize = 40;
 
-/// And the most words.
 const HEADING_WORDS: usize = 5;
 
-/// One host the config names.
 #[derive(Clone, Debug, Default, Serialize, PartialEq, Eq)]
 pub struct ConfigHost {
-    /// The first name on its `Host` line, which is what `ssh` is handed.
     pub id: String,
-    /// The other names on that line, which find it too.
     pub also: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hostname: Option<String>,
@@ -50,20 +19,15 @@ pub struct ConfigHost {
     pub user: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub port: Option<u16>,
-    /// The heading it is under, or the included file it is in; see the top of this file.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub group: Option<String>,
 }
 
-/// What reading asks of the disk.
 pub trait Files {
     fn read(&self, path: &Path) -> Option<String>;
-    /// The files in a folder, by name.
     fn list(&self, folder: &Path) -> Vec<String>;
 }
 
-/// The hosts `config` names, `home` being the reader's home folder, which `~` and a
-/// relative `Include` are read against.
 pub fn hosts(config: &Path, home: &Path, files: &impl Files) -> Vec<ConfigHost> {
     let mut reading = Reading {
         home,
@@ -82,13 +46,9 @@ struct Reading<'a, F: Files> {
     found: Vec<ConfigHost>,
 }
 
-/// Which block a line is in.
 enum Block {
-    /// Before the first `Host` or `Match`: settings for every host.
     Top,
-    /// A `Host` block, and where its host is in `found`; None for one of patterns only.
     Host(Option<usize>),
-    /// A `Match` block, skipped.
     Match,
 }
 
@@ -143,8 +103,6 @@ impl<F: Files> Reading<'_, F> {
         }
     }
 
-    /// The host a `Host` line names, added the first time it is named; its place in
-    /// `found`, or None for a line of patterns only.
     fn host(&mut self, patterns: &[String], group: Option<String>) -> Option<usize> {
         let names: Vec<&String> = patterns.iter().filter(|one| is_name(one)).collect();
         let first = names.first()?;
@@ -161,7 +119,6 @@ impl<F: Files> Reading<'_, F> {
         Some(self.found.len() - 1)
     }
 
-    /// The files one `Include` argument names, sorted.
     fn included(&self, pattern: &str) -> Vec<PathBuf> {
         let path = if let Some(rest) = pattern.strip_prefix("~/") {
             self.home.join(rest)
@@ -194,7 +151,6 @@ impl<F: Files> Reading<'_, F> {
     }
 }
 
-/// A host's `HostName`, `User` or `Port`, unless it has one already: the first wins.
 fn set(host: &mut ConfigHost, keyword: &str, value: &str) {
     match keyword.to_ascii_lowercase().as_str() {
         "hostname" if host.hostname.is_none() => host.hostname = Some(value.to_owned()),
@@ -204,13 +160,10 @@ fn set(host: &mut ConfigHost, keyword: &str, value: &str) {
     }
 }
 
-/// Whether a `Host` pattern names one host rather than many.
 fn is_name(pattern: &str) -> bool {
     !pattern.is_empty() && !pattern.contains(['*', '?', '!'])
 }
 
-/// A line as its keyword and its arguments: `Keyword value`, `Keyword=value` or
-/// `Keyword = value`, with `"double quoted"` arguments kept whole.
 fn split(line: &str) -> Option<(String, Vec<String>)> {
     let end = line.find(|one: char| one.is_whitespace() || one == '=')?;
     let keyword = line[..end].to_owned();
@@ -246,8 +199,6 @@ fn split(line: &str) -> Option<(String, Vec<String>)> {
     Some((keyword, args))
 }
 
-/// The words of settings `ssh` reads, which a comment starting with one of them is
-/// a setting commented out rather than a heading.
 const KEYWORDS: &[&str] = &[
     "host",
     "match",
@@ -279,10 +230,6 @@ const KEYWORDS: &[&str] = &[
     "loglevel",
 ];
 
-/// The group a comment line names, or None: one comment line on its own, after a blank
-/// line or at the top of the file and before a line that is not a comment, a few words
-/// that do not start with a setting's name. Dashes, equals signs and stars round it are
-/// decoration: `## Work ##`, `# --- Home ---`.
 fn heading(lines: &[&str], at: usize) -> Option<String> {
     let line = lines.get(at)?;
     if line.starts_with([' ', '\t']) {
@@ -307,14 +254,11 @@ fn heading(lines: &[&str], at: usize) -> Option<String> {
     fits.then(|| words.to_owned())
 }
 
-/// The group of an included file's hosts: its name, without an extension.
 fn file_group(path: &Path) -> Option<String> {
     let stem = path.file_stem()?.to_string_lossy().into_owned();
     (!stem.is_empty() && stem != "config").then_some(stem)
 }
 
-/// Whether a name matches a pattern of `*` and `?`, as `glob(3)` matches a file name: a
-/// leading dot only by a leading dot.
 fn matches(pattern: &str, name: &str) -> bool {
     if name.starts_with('.') && !pattern.starts_with('.') {
         return false;
@@ -350,12 +294,10 @@ fn matches(pattern: &str, name: &str) -> bool {
     pattern[p..].iter().all(|one| *one == '*')
 }
 
-/// The disk.
 pub struct Disk;
 
 impl Files for Disk {
     fn read(&self, path: &Path) -> Option<String> {
-        // A config is a few kilobytes; a megabyte is not one.
         let meta = std::fs::metadata(path).ok()?;
         if !meta.is_file() || meta.len() > 1 << 20 {
             return None;
@@ -381,7 +323,6 @@ mod tests {
     use super::*;
     use std::collections::HashMap;
 
-    /// A disk made up for the test.
     #[derive(Default)]
     struct Fake(HashMap<PathBuf, String>);
 
@@ -488,7 +429,6 @@ mod tests {
         assert_eq!(ids(&found), vec!["pi", "office", "lab1", "last"]);
         assert_eq!(found[0].group.as_deref(), Some("a-home"));
         assert_eq!(found[1].group.as_deref(), Some("b-work"));
-        // A heading inside an included file is its own group.
         assert_eq!(found[2].group.as_deref(), Some("Lab"));
         assert!(found[3].group.is_none());
     }

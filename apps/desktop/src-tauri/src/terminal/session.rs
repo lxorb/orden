@@ -1,18 +1,3 @@
-//! One shell in one pseudo terminal, and the four threads that keep it moving.
-//!
-//! - The **reader** takes what the shell prints, as fast as it prints it, into a buffer
-//!   shared with the sender - and stops reading while more than [`MOST_UNSEEN`] bytes are
-//!   out that the window has not drawn yet, so a `cat` of a large file waits for the
-//!   screen rather than filling memory ahead of it.
-//! - The **sender** hands that buffer to the window at most once a frame, and at once when
-//!   nothing has been sent for a frame: a keystroke's echo is never held back, and a flood
-//!   is one message per frame rather than one per read. VS Code's terminal and Windows
-//!   Terminal both draw at the frame, and so does xterm.js on the other side.
-//! - The **writer** puts keystrokes into the terminal in the order they came, from a
-//!   queue, so the command that sends them never waits on a shell that is not reading.
-//! - The **waiter** waits for the shell to exit, says so, and closes the terminal, which
-//!   on Windows is what lets the reader reach the end of what the console had left to say.
-
 use std::io::{Read, Write};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Arc, Condvar, Mutex, MutexGuard};
@@ -24,31 +9,20 @@ use portable_pty::{native_pty_system, Child, ChildKiller, CommandBuilder, Master
 use super::process;
 use super::shells::Launch;
 
-/// One frame at sixty a second: the fastest the window is sent anything.
 const FRAME: Duration = Duration::from_millis(16);
 
-/// How much the window may be behind before the shell is made to wait: a megabyte, which
-/// xterm.js parses in a few frames.
 const MOST_UNSEEN: usize = 1 << 20;
 
-/// How long a shell that has exited may leave the terminal held open by something it
-/// left running - `sleep 100 &` and `exit` on a Mac - before it is said to be gone.
 const LINGER: Duration = Duration::from_millis(500);
 
-/// What the window is sent.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Out {
-    /// What the shell printed since the last message, as bytes: UTF-8 cut wherever a read
-    /// happened to end, which xterm.js puts back together.
     Bytes(Vec<u8>),
-    /// The shell has exited, with this code. The last message a session sends.
     Exit(i64),
 }
 
-/// Where a session's messages go: the window's channel, or a test's list.
 pub type Sink = Box<dyn Fn(Out) + Send + Sync>;
 
-/// A running shell, as the commands reach it.
 pub struct Session {
     master: Box<dyn MasterPty + Send>,
     input: Sender<Vec<u8>>,
@@ -57,9 +31,6 @@ pub struct Session {
     stream: Arc<Stream>,
 }
 
-/// The halves the threads take, handed over once the session has been put where the
-/// commands can find it. Two steps because a shell that exits at once would otherwise be
-/// forgotten before it had been remembered.
 pub struct Started {
     reader: Box<dyn Read + Send>,
     writer: Box<dyn Write + Send>,
@@ -68,7 +39,6 @@ pub struct Started {
     stream: Arc<Stream>,
 }
 
-/// What the reader, the sender and the waiter share.
 #[derive(Default)]
 struct Stream {
     flow: Mutex<Flow>,
@@ -77,15 +47,10 @@ struct Stream {
 
 #[derive(Default)]
 struct Flow {
-    /// Read and not sent yet.
     waiting: Vec<u8>,
-    /// Sent and not drawn yet, as far as the window has said.
     unseen: usize,
-    /// The reader has reached the end.
     drained: bool,
-    /// The shell has exited, with this code.
     exit: Option<i64>,
-    /// The window let go of it: nothing more is read or sent.
     ended: bool,
 }
 
@@ -104,8 +69,6 @@ impl Stream {
 }
 
 impl Session {
-    /// A shell, started in a terminal of this size. Nothing is read or written until
-    /// [`Started::run`].
     pub fn open(launch: &Launch, cols: u16, rows: u16) -> Result<(Self, Started), String> {
         #[cfg(windows)]
         interrupts_reach_shells();
@@ -127,8 +90,6 @@ impl Session {
             .slave
             .spawn_command(command)
             .map_err(|error| format!("could not start {}: {error}", launch.program.display()))?;
-        // The shell holds the other end now. Ours going is what lets the reader see the
-        // end of the output once the shell has gone.
         drop(pair.slave);
 
         let reader = pair
@@ -160,17 +121,14 @@ impl Session {
         Ok((session, started))
     }
 
-    /// The shell's process id.
     pub fn pid(&self) -> Option<u32> {
         self.pid
     }
 
-    /// Whether this is the session a waiter was started for.
     fn same_stream(&self, stream: &Arc<Stream>) -> bool {
         Arc::ptr_eq(&self.stream, stream)
     }
 
-    /// Keystrokes, in order.
     pub fn write(&self, bytes: Vec<u8>) {
         let _ = self.input.send(bytes);
     }
@@ -181,7 +139,6 @@ impl Session {
             .map_err(|error| error.to_string())
     }
 
-    /// The window has drawn this much of what it was sent.
     pub fn seen(&self, bytes: usize) {
         let mut flow = self.stream.lock();
         flow.unseen = flow.unseen.saturating_sub(bytes);
@@ -189,31 +146,22 @@ impl Session {
         self.stream.changed.notify_all();
     }
 
-    /// Whether something besides the shell is running in it; see process.rs.
     pub fn busy(&self) -> bool {
         process::busy(self.pid, &*self.master)
     }
 
-    /// The program in front of the shell, by name, or None while the shell is; see
-    /// process.rs.
     pub fn program(&self) -> Option<String> {
         process::program(self.pid, &*self.master)
     }
 
-    /// Which folder the shell is in, where the system can say; see process.rs.
     pub fn folder(&self) -> Option<String> {
         process::folder(self.pid)
     }
 
-    /// The shell's process, once it has one.
     pub fn shell(&self) -> Option<u32> {
         self.pid
     }
 
-    /// The end of it: nothing more is sent, the shell is killed and the terminal closed -
-    /// which on Windows sends every console program still attached to it the same close a
-    /// console window's cross does. Slow on Windows, where closing waits for the console
-    /// host to finish, so the caller does it off the window's thread.
     pub fn end(mut self) {
         self.stream.lock().ended = true;
         self.stream.changed.notify_all();
@@ -223,8 +171,6 @@ impl Session {
 }
 
 impl Started {
-    /// Sets it going. `ended` is called once the shell has exited, to let go of the
-    /// session - which closes the terminal - unless it has been let go of already.
     pub fn run(self, sink: Sink, ended: impl FnOnce(&dyn Fn(&Session) -> bool) + Send + 'static) {
         let Self {
             reader,
@@ -244,23 +190,12 @@ impl Started {
 
         thread::spawn(move || {
             wait(child, &stream);
-            // Only this session: the window may have let it go and started another under
-            // the same name since.
             ended(&|session: &Session| session.same_stream(&stream));
             linger(&stream);
         });
     }
 }
 
-/// Ctrl+C, reaching the programs a shell runs.
-///
-/// Windows keeps a flag on every process that says whether Ctrl+C is ignored, and a
-/// process starts with its parent's. Whatever started Orden may have set it - a launcher
-/// that starts its children in a group of their own, which is how an MSYS shell starts
-/// a Windows program - and every shell and every program in every terminal would then
-/// have ignored the interrupt: `ping` ran on through Ctrl+C. So Orden says, once, that it
-/// processes Ctrl+C as a process normally does, which costs a window with no console
-/// nothing and is what its shells inherit.
 #[cfg(windows)]
 #[allow(
     unsafe_code,
@@ -272,8 +207,6 @@ fn interrupts_reach_shells() {
 
     static ONCE: Once = Once::new();
     ONCE.call_once(|| {
-        // SAFETY: no handler is passed, so nothing of ours is ever called back; the call
-        // only clears this process's own flag.
         let _ = unsafe { SetConsoleCtrlHandler(None, false) };
     });
 }
@@ -298,9 +231,6 @@ fn read(mut reader: Box<dyn Read + Send>, stream: &Stream) {
             }
         }
 
-        // Read to the end even once the window has let go, and throw it away: a Windows
-        // console being closed waits until what it had to say has been taken, and a
-        // reader that stopped would leave the close waiting for ever.
         match reader.read(&mut buffer) {
             Ok(0) => break,
             Ok(count) => {
@@ -339,7 +269,6 @@ fn send(stream: &Stream, sink: &Sink) {
             return;
         }
 
-        // A frame since the last message, and the rest of what arrives in it goes too.
         if let Some(sent) = last {
             let since = sent.elapsed();
             if since < FRAME {
@@ -381,9 +310,6 @@ fn wait(mut child: Box<dyn Child + Send + Sync>, stream: &Stream) {
     stream.changed.notify_all();
 }
 
-/// After the terminal has been closed: the reader either reaches the end, or something
-/// the shell left running holds it open, in which case the shell is said to be gone
-/// anyway once [`LINGER`] is up.
 fn linger(stream: &Stream) {
     let until = Instant::now() + LINGER;
     let mut flow = stream.lock();
@@ -411,8 +337,6 @@ mod tests {
 
     type Held = Arc<Mutex<Option<Session>>>;
 
-    /// A shell that runs one line and waits for more: Command Prompt on Windows, `sh`
-    /// elsewhere.
     fn shell() -> Launch {
         let (program, args): (PathBuf, Vec<String>) = if cfg!(windows) {
             let root = std::env::var("SystemRoot").unwrap_or_else(|_| r"C:\Windows".to_owned());
@@ -432,18 +356,14 @@ mod tests {
         }
     }
 
-    /// A line that prints `nib-ok` without the line itself saying so, since the terminal
-    /// echoes what is typed: the two halves are put together by the shell.
     const SAYS_OK: &str = if cfg!(windows) {
         "echo nib-%COMSPEC:~0,0%ok"
     } else {
         r#"echo nib-""ok"#
     };
 
-    /// The end of a typed line, as each shell's console reads Enter.
     const ENTER: &str = if cfg!(windows) { "\r" } else { "\n" };
 
-    /// Starts one, with everything it sends going into a channel the test reads.
     fn started(cols: u16, rows: u16) -> (Held, Receiver<Out>) {
         let (session, parts) = Session::open(&shell(), cols, rows).expect("a shell");
         let held = Arc::new(Mutex::new(Some(session)));
@@ -476,9 +396,6 @@ mod tests {
         typed(held, &format!("{words}{ENTER}"));
     }
 
-    /// Everything the shell prints until `wanted` has appeared or it exits, answering the
-    /// cursor question a Windows console asks as it starts - which xterm.js answers in
-    /// the app, and which the console waits for.
     fn printed_until(held: &Held, heard: &Receiver<Out>, wanted: &str) -> (String, Option<i64>) {
         let until = Instant::now() + Duration::from_secs(20);
         let mut bytes = Vec::new();
@@ -503,9 +420,6 @@ mod tests {
         (String::from_utf8_lossy(&bytes).into_owned(), None)
     }
 
-    /// The whole of it, the way a tab uses it: a line typed, its answer read, the
-    /// terminal made another size, and the shell told to exit, with the code it exited
-    /// with arriving last and the session letting itself go.
     #[test]
     fn a_shell_answers_resizes_and_exits() {
         let (held, heard) = started(80, 24);
@@ -535,7 +449,6 @@ mod tests {
         );
     }
 
-    /// Closing a tab: the shell is killed, nothing more is said, nothing is left running.
     #[test]
     fn a_session_ended_by_the_window_kills_its_shell() {
         let (held, heard) = started(80, 24);
@@ -563,7 +476,6 @@ mod tests {
         assert!(!alive(pid), "the shell {pid} outlived its tab");
     }
 
-    /// Ctrl+C is the interrupt, and a program running in the shell stops for it.
     #[test]
     fn ctrl_c_interrupts_what_is_running() {
         let (held, heard) = started(80, 24);
@@ -596,8 +508,6 @@ mod tests {
         session.end();
     }
 
-    /// What the quit question asks: busy while a program runs, and idle again once it has
-    /// ended by itself, with nobody pressing anything.
     #[test]
     fn a_program_that_ends_leaves_the_shell_idle() {
         let (held, heard) = started(80, 24);
@@ -656,7 +566,6 @@ mod tests {
 
     #[cfg(unix)]
     fn alive(pid: u32) -> bool {
-        // A zombie is gone for this purpose, and `ps` says Z for one.
         let state = std::process::Command::new("ps")
             .args(["-o", "stat=", "-p", &pid.to_string()])
             .output()

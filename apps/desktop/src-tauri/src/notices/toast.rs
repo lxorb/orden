@@ -1,26 +1,11 @@
-//! A notice as a Windows toast, in the XML the system reads.
-//!
-//! The shape Windows' own messaging apps use: the title, the words and a quieter line
-//! of where it came from; a field to answer in with a Send beside it where the page
-//! offers one, which Teams and every messenger put on theirs; the instant-message sound, or
-//! none. Every press is a foreground activation, heard in this process by the toast's
-//! own `Activated` (windows.rs): never a `nib://` link, which would start whichever nib
-//! registered the scheme, and never one that lands in an app that is not running,
-//! because a notice is taken off the screen when Orden quits (notices.rs).
-//!
-//! Pure, so the XML is tested on every runner; only Windows builds a toast from it.
-
 use std::fmt::Write as _;
 
 use super::Notice;
 
-/// The id of the field a reply is typed into, which the activation's input is read by.
 pub const REPLY_INPUT: &str = "reply";
 
-/// What a press on Send says, apart from a press on the toast itself.
 pub const REPLY_ARGUMENT: &str = "reply";
 
-/// The toast for one notice.
 pub fn xml(notice: &Notice) -> String {
     let mut texts = format!(
         "<text>{}</text><text>{}</text>",
@@ -61,7 +46,6 @@ pub fn xml(notice: &Notice) -> String {
     )
 }
 
-/// Text as XML holds it, in an attribute or between tags alike.
 fn escaped(text: &str) -> String {
     let mut out = String::with_capacity(text.len());
     for character in text.chars() {
@@ -71,7 +55,6 @@ fn escaped(text: &str) -> String {
             '>' => out.push_str("&gt;"),
             '"' => out.push_str("&quot;"),
             '\'' => out.push_str("&apos;"),
-            // A control character is not XML at all, and the system refuses the toast.
             one if one.is_control() && one != '\t' && one != '\n' => out.push(' '),
             '\u{FFFE}' | '\u{FFFF}' => out.push(' '),
             one => out.push(one),
@@ -131,7 +114,6 @@ mod tests {
         assert_eq!(escaped("a\u{0}b\tc\nd"), "a b\tc\nd");
     }
 
-    /// U+FFFE and U+FFFF are not XML characters either.
     #[test]
     fn a_non_character_is_a_space_as_well() {
         assert_eq!(escaped("a\u{FFFE}b\u{FFFF}c"), "a b c");

@@ -1,25 +1,6 @@
-/** What a site keeps in the page's own storage, put back: the page's half of restoring
- *  a web login. The other half of dump.js, whose comment says what the encoding is.
- *
- *  One file for every engine, run in an isolated world like dump.js, in a hidden page
- *  the crate has answered with nothing at `<origin>/__nib_restore`, so the page is the
- *  origin and no script of the site's is running beside it. One name on the world's
- *  global:
- *
- *    nibRestore('clear', '{}')                   every database of the origin deleted,
- *                                                localStorage emptied
- *    nibRestore('local', '[[k, v], ...]')        localStorage, replaced
- *    nibRestore('session', '[[k, v], ...]')      sessionStorage, replaced
- *    nibRestore('database', '{"name": ...}')     one database, made again at its
- *                                                version with its schema and records
- *
- *  Each answers a JSON string, like dump.js. What restores is what Chrome would have
- *  after a restart: the origin's databases are those of the bundle and no others, so a
- *  database left behind for its size starts empty and the site fills it again. */
 globalThis.nibRestore = async function nibRestore(op, argsJson) {
   const args = JSON.parse(argsJson)
 
-  /** Bytes out of base64. */
   function bytes(text) {
     const binary = atob(text)
     const out = new Uint8Array(binary.length)
@@ -27,18 +8,15 @@ globalThis.nibRestore = async function nibRestore(op, argsJson) {
     return out
   }
 
-  /** A fresh ArrayBuffer holding exactly these bytes. */
   function buffer(text) {
     return bytes(text).buffer
   }
 
-  /** A number out of its encoding. */
   function number(encoded) {
     if (!Array.isArray(encoded)) return encoded
     return { NaN, Infinity, '-Infinity': -Infinity, '-0': -0 }[encoded[1]]
   }
 
-  /** A CryptoKey's algorithm back from plain JSON: the public exponent as bytes. */
   function algorithmFrom(algorithm) {
     const out = {}
     for (const [key, value] of Object.entries(algorithm)) {
@@ -49,11 +27,6 @@ globalThis.nibRestore = async function nibRestore(op, argsJson) {
     return out
   }
 
-  /** Every key an encoded value holds, imported first: an import is asynchronous and
-   *  the decoding is not, because it runs inside a transaction that closes as soon as
-   *  nothing asks it for more. Walked by tag, because only some places in a node hold
-   *  nodes: an object's keys, for one, are plain strings, and a key named `k` is not a
-   *  CryptoKey. */
   async function imported(encoded, into) {
     if (!Array.isArray(encoded)) return
     const [tag] = encoded
@@ -85,20 +58,15 @@ globalThis.nibRestore = async function nibRestore(op, argsJson) {
     }
   }
 
-  /** One key or one value, decoded; `keys` are the CryptoKeys `imported` made. Objects
-   *  are numbered as they are made, before their children, which is the order dump.js
-   *  met them in, so a `#` names the same object on both sides. */
   function decode(root, keys) {
     const made = []
 
-    /** Reserves the next number for an object made after its children. */
     function reserve() {
       made.push(undefined)
       return made.length - 1
     }
 
     function own(target, key, value) {
-      // defineProperty rather than assignment, so a key like `__proto__` is a key.
       Object.defineProperty(target, key, {
         value,
         writable: true,
@@ -235,7 +203,6 @@ globalThis.nibRestore = async function nibRestore(op, argsJson) {
     return decoded(root)
   }
 
-  /** A request's answer as a promise. */
   function answered(request) {
     return new Promise((resolve, reject) => {
       request.onsuccess = () => resolve(request.result)
@@ -243,9 +210,6 @@ globalThis.nibRestore = async function nibRestore(op, argsJson) {
     })
   }
 
-  /** Deletes one database, and says so rather than waiting for ever when a page
-   *  somewhere still holds it open: the crate restores only where no page of the site
-   *  is live, so a database held open is a mistake worth hearing about. */
   function deleted(name) {
     return new Promise((resolve, reject) => {
       const request = indexedDB.deleteDatabase(name)
@@ -278,8 +242,6 @@ globalThis.nibRestore = async function nibRestore(op, argsJson) {
     return { items: items.length }
   }
 
-  /** One database, made at its version with its stores and indexes, and every record
-   *  put back under its own key in one transaction. */
   async function rebuilt(db) {
     const keys = new Map()
     for (const store of db.stores) {
@@ -323,8 +285,6 @@ globalThis.nibRestore = async function nibRestore(op, argsJson) {
           const target = transaction.objectStore(store.name)
           for (const [key, value] of store.records) {
             const decodedValue = decode(value, keys)
-            // A store with a key path finds the key in the value; giving it one as
-            // well is an error.
             if (store.keyPath === null) target.put(decodedValue, decode(key, keys))
             else target.put(decodedValue)
             count++

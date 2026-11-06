@@ -1,23 +1,3 @@
-//! Which shells this machine has, found once and the first time somebody asks.
-//!
-//! What Windows Terminal and VS Code both offer, in their order: PowerShell 7 when it is
-//! installed and Windows PowerShell otherwise, then Command Prompt, Git Bash where Git for
-//! Windows is, each WSL distribution, and the two Developer shells of every Visual Studio.
-//! On a Mac and on Linux it is the reader's own `$SHELL` first and then whatever else
-//! `/etc/shells` lists that is really there. The first of the list is the platform's
-//! default, which is what a new terminal opens with until Settings says otherwise.
-//!
-//! Found lazily, because two of the questions cost a process or a folder walk: `wsl -l
-//! -q` and the Visual Studio instances. Nothing here runs at launch; the window asks when
-//! a chooser first needs the list, and every later ask is the same list.
-//!
-//! **A shell is an id to the window.** The window says which of these it wants, and the
-//! program, its arguments and its environment are this module's: a page cannot hand the
-//! crate a command line to run. See `terminal.rs`.
-//!
-//! Every question the machine answers goes through [`Machine`], so the order, the names
-//! and the launches are tested against a machine made up in the test.
-
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -25,55 +5,30 @@ use std::sync::{Condvar, Mutex, PoisonError};
 
 use serde::Serialize;
 
-/// How a shell says which folder it is in, which is what brings a terminal back where it
-/// was after a restart. Each is taught the one sequence a terminal already understands -
-/// OSC 9;9 for the two Windows shells, the one Windows Terminal documents, and OSC 7 for
-/// bash - and only where the reader has not set up the same thing themselves.
-///
-/// And where each prompt begins, as the prompt mark terminals read, OSC 133;A: where the
-/// window switches off what a program left on - the mouse reported as typing, above all -
-/// once the shell is in front again. See `lib/terminal/modes.ts`. Command Prompt carries
-/// the mark in front of a prompt the reader set up too, since it draws nothing.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Kind {
-    /// `cmd.exe`, told through `PROMPT`.
     Cmd,
-    /// Windows PowerShell or PowerShell 7, told through a prompt function wrapped
-    /// around the reader's own.
     PowerShell,
-    /// bash, told through `PROMPT_COMMAND`: Git Bash, and bash on a Mac or Linux.
     Bash,
-    /// A WSL distribution, whose `PROMPT_COMMAND` has to be carried across by `WSLENV`,
-    /// and whose folder is a Linux path handed back with `--cd`.
     Wsl,
-    /// Anything else, which is left exactly as it is.
     Other,
 }
 
-/// One shell there is.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Shell {
-    /// What the window calls it, and what a session and the settings write down. Stable
-    /// from one launch to the next: `pwsh`, `cmd`, `wsl:Ubuntu`, `/bin/zsh`.
     pub id: String,
-    /// What a person calls it. Product names, which are not translated - except Command
-    /// Prompt, which Windows itself translates and so the window does too, by its id.
     pub name: String,
     program: PathBuf,
     args: Vec<String>,
     kind: Kind,
 }
 
-/// A shell as the window is told about it: the id and the name, and nothing it could
-/// hand back as a program to run.
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
 pub struct Offered {
     id: String,
     name: String,
 }
 
-/// What starting a shell comes to: the program, its arguments, the folder and what is
-/// added to the environment it inherits.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Launch {
     pub program: PathBuf,
@@ -82,44 +37,27 @@ pub struct Launch {
     pub env: Vec<(String, String)>,
 }
 
-/// One Visual Studio, as its installer wrote it down.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Studio {
-    /// The installer's own id for it, which `Enter-VsDevShell` is given.
     pub instance: String,
     pub path: PathBuf,
-    /// Its year or its version, whichever the installer calls it by: `2022`, `2026`.
     pub line: String,
-    /// Community, Professional, `BuildTools`; said only when two share a year.
     pub edition: String,
 }
 
-/// Everything detection asks of the machine.
 pub trait Machine {
     fn var(&self, name: &str) -> Option<String>;
-    /// Whether a program is there.
     fn exists(&self, path: &Path) -> bool;
-    /// Whether a folder is there, to start a shell in.
     fn is_folder(&self, path: &Path) -> bool;
-    /// The WSL distributions, default first. Only asked where `wsl.exe` is.
     fn distributions(&self) -> Vec<String>;
     fn studios(&self) -> Vec<Studio>;
-    /// The contents of `/etc/shells`.
     fn etc_shells(&self) -> String;
 }
 
-/// `wsl -l -q` ran out of its three seconds on the last look, which says nothing about
-/// what is installed: a WSL service still starting after a boot takes that long.
 static WSL_SILENT: AtomicBool = AtomicBool::new(false);
 
-/// How many looks at a machine that may have more to say. Each one that WSL does not
-/// answer holds whoever asked for its three seconds.
 const LOOKS: u8 = 3;
 
-/// What a look found, kept once it can be believed: a look that could not be sure is
-/// looked at again by the next to ask, `LOOKS` times in all. One look at a time, made
-/// outside the lock: whoever asks during one shares its answer, and waits for that one
-/// look and no other.
 struct Kept<T: 'static> {
     state: Mutex<Looks<T>>,
     looked: Condvar,
@@ -143,7 +81,6 @@ impl<T: 'static> Kept<T> {
         }
     }
 
-    /// `look` answers with what it found, and whether that can be believed.
     fn get(&self, look: impl FnOnce() -> (T, bool)) -> &'static T {
         let mut state = self.lock();
         if state.looking {
@@ -162,7 +99,6 @@ impl<T: 'static> Kept<T> {
         drop(state);
 
         let (found, sure) = look();
-        // Once per look, and there are at most `LOOKS` of them in a run.
         let found: &'static T = Box::leak(Box::new(found));
 
         let mut state = self.lock();
@@ -178,9 +114,6 @@ impl<T: 'static> Kept<T> {
     }
 }
 
-/// The shells, found the first time anything asks and the same list after that; unless
-/// WSL did not answer in time, when restored `wsl:` terminals would otherwise say there
-/// is no such shell for the whole run.
 pub fn detected() -> &'static [Shell] {
     static FOUND: Kept<Vec<Shell>> = Kept::new();
     FOUND.get(|| {
@@ -194,13 +127,11 @@ pub fn detected() -> &'static [Shell] {
     })
 }
 
-/// The shell an id names, among the ones this machine has.
 pub fn find(id: &str) -> Option<&'static Shell> {
     detected().iter().find(|one| one.id == id)
 }
 
 impl Shell {
-    /// What the window is told about it.
     pub fn offered(&self) -> Offered {
         Offered {
             id: self.id.clone(),
@@ -223,10 +154,6 @@ impl Shell {
         self
     }
 
-    /// How to start it in a folder. `folder` is the one the window asked for, which is a
-    /// Linux path for a WSL tab that was last in one; `home` is where a shell goes when
-    /// the folder asked for is not there any more, which is what Warp and Windows
-    /// Terminal both do rather than refusing to start.
     pub fn launch(&self, folder: Option<&str>, machine: &impl Machine) -> Launch {
         let mut args = self.args.clone();
         let mut env = vec![
@@ -272,10 +199,6 @@ impl Shell {
             _ => {}
         }
 
-        // A Mac starts a GUI app with the barest PATH there is, and Terminal and iTerm
-        // both start a login shell for that reason: the profile is what puts Homebrew
-        // and everything else on it. A shell with no language set writes its own
-        // prompt in ASCII question marks.
         if !cfg!(windows) {
             let unset = ["LANG", "LC_ALL", "LC_CTYPE"]
                 .iter()
@@ -294,21 +217,12 @@ impl Shell {
     }
 }
 
-/// The prompt mark in Command Prompt's own `PROMPT` codes.
 const CMD_MARK: &str = "$E]133;A$E\\";
 
-/// Command Prompt's prompt: the mark, the folder said as OSC 9;9, and the prompt drawn as
-/// it always is - Windows Terminal's own recipe, word for word, after the mark.
 const CMD_PROMPT: &str = "$E]133;A$E\\$E]9;9;$P$E\\$P$G";
 
-/// bash's: the mark, and the folder as OSC 7. The path is written as it is rather than
-/// encoded, which the window reads either way; see terminal/spec.ts.
 const BASH_PROMPT: &str = r#"printf '\e]133;A\e\\\e]7;file://%s\e\\' "$PWD""#;
 
-/// PowerShell's, around whatever prompt the profile has already set up - oh-my-posh,
-/// starship, the stock one - and written before it rather than into it, so `PSReadLine`
-/// measures the prompt it always measured. Only for a folder on disk: a registry drive
-/// or a certificate store is not somewhere a restart can put a shell back.
 const POWERSHELL_PROMPT: &str = "$global:__nibPrompt = $function:prompt; \
 function global:prompt { \
 [Console]::Write([char]27 + ']133;A' + [char]27 + '\\'); \
@@ -324,7 +238,6 @@ fn powershell_args(first: Option<&str>) -> Vec<String> {
     vec!["-NoExit".to_owned(), "-Command".to_owned(), command]
 }
 
-/// The shells a Windows machine has, in the order they are offered.
 pub fn windows(machine: &impl Machine) -> Vec<Shell> {
     let root = machine
         .var("SystemRoot")
@@ -373,8 +286,6 @@ pub fn windows(machine: &impl Machine) -> Vec<Shell> {
     found
 }
 
-/// PowerShell 7, from where its installer puts it or from the PATH, which is where the
-/// Store's copy and winget's are.
 fn powershell_seven(machine: &impl Machine) -> Option<PathBuf> {
     let installed = ["ProgramFiles", "ProgramW6432"]
         .iter()
@@ -386,8 +297,6 @@ fn powershell_seven(machine: &impl Machine) -> Option<PathBuf> {
         .find(|one| machine.exists(one))
 }
 
-/// Git for Windows' bash: where its installer puts it, for everybody or for one person,
-/// or beside the `git.exe` the PATH finds, which is `<Git>\cmd\git.exe`.
 fn git_bash(machine: &impl Machine) -> Option<PathBuf> {
     let installed = ["ProgramFiles", "ProgramW6432", "ProgramFiles(x86)"]
         .iter()
@@ -406,7 +315,6 @@ fn git_bash(machine: &impl Machine) -> Option<PathBuf> {
     installed.chain(beside_git).find(|one| machine.exists(one))
 }
 
-/// Every place on the PATH a program of that name could be.
 fn on_path(machine: &impl Machine, program: &str) -> Vec<PathBuf> {
     let path = machine.var("PATH").unwrap_or_default();
     std::env::split_paths(&path)
@@ -414,9 +322,6 @@ fn on_path(machine: &impl Machine, program: &str) -> Vec<PathBuf> {
         .collect()
 }
 
-/// The two shells every Visual Studio installs, the way Windows Terminal generates them:
-/// the batch file that sets up the compilers, and PowerShell with the module that does
-/// the same. For this machine's own architecture, which on an ARM laptop is ARM64.
 fn developer_shells(machine: &impl Machine, cmd: &Path, powershell: &Path) -> Vec<Shell> {
     let studios = machine.studios();
     let arch = match std::env::consts::ARCH {
@@ -481,9 +386,6 @@ fn developer_shells(machine: &impl Machine, cmd: &Path, powershell: &Path) -> Ve
     found
 }
 
-/// The shells a Mac or a Linux machine has: the reader's own first, then the rest of
-/// `/etc/shells` that exists, each once. Named by the program, as VS Code names them,
-/// and by the whole path where two programs share a name.
 pub fn unix(machine: &impl Machine) -> Vec<Shell> {
     let listed = machine.etc_shells();
     let mut paths: Vec<String> = machine.var("SHELL").into_iter().collect();
@@ -509,7 +411,6 @@ pub fn unix(machine: &impl Machine) -> Vec<Shell> {
         kept.push(path);
     }
 
-    // A login shell on a Mac, for the PATH; see `launch`.
     let login = cfg!(target_os = "macos");
 
     kept.iter()
@@ -539,10 +440,6 @@ fn name_of(path: &Path) -> String {
         .unwrap_or_default()
 }
 
-/// What `wsl -l -q` printed, as distribution names. It prints UTF-16 unless told
-/// otherwise, and a newer WSL prints UTF-8 when asked; both are read. Docker's own two
-/// distributions are machinery rather than somewhere to type, and VS Code leaves them out
-/// too.
 #[cfg_attr(
     not(windows),
     allow(
@@ -573,15 +470,11 @@ pub fn distributions(printed: &[u8]) -> Vec<String> {
         .collect()
 }
 
-/// One Visual Studio out of the `state.json` its installer keeps for it, or nothing for
-/// a file that does not read as one.
 pub fn studio(instance: &str, json: &str) -> Option<Studio> {
     let value: serde_json::Value =
         serde_json::from_str(json.trim_start_matches('\u{feff}')).ok()?;
     let path = PathBuf::from(value.get("installationPath")?.as_str()?);
 
-    // The year is in the product's own English title - Visual Studio Community 2022 - and
-    // the installer's line version is a year up to 2022 and the version number after it.
     let title = value
         .get("localizedResources")
         .and_then(serde_json::Value::as_array)
@@ -619,7 +512,6 @@ pub fn studio(instance: &str, json: &str) -> Option<Studio> {
     })
 }
 
-/// The machine this is running on.
 pub struct ThisMachine;
 
 impl Machine for ThisMachine {
@@ -628,8 +520,6 @@ impl Machine for ThisMachine {
     }
 
     fn exists(&self, path: &Path) -> bool {
-        // An app execution alias - the Store's `pwsh.exe` - is a reparse point that the
-        // ordinary question cannot follow, so it is asked about as a link as well.
         std::fs::symlink_metadata(path).is_ok_and(|one| !one.is_dir())
     }
 
@@ -658,7 +548,6 @@ impl Machine for ThisMachine {
                 studio(&instance, &json)
             })
             .collect();
-        // Newest first, and then by edition, so the order does not follow the folder's.
         found.sort_by(|a, b| b.line.cmp(&a.line).then(a.edition.cmp(&b.edition)));
         found
     }
@@ -668,9 +557,6 @@ impl Machine for ThisMachine {
     }
 }
 
-/// `wsl -l -q`, with no window of its own and three seconds to answer: a WSL service that
-/// is still starting can take that long, and a chooser that waited longer would be a
-/// chooser that never opened.
 #[cfg(windows)]
 fn wsl_list() -> Vec<String> {
     use std::io::Read;
@@ -679,8 +565,6 @@ fn wsl_list() -> Vec<String> {
     use std::sync::mpsc;
     use std::time::Duration;
 
-    /// `CREATE_NO_WINDOW`: a console program started by a GUI app gets a console window
-    /// of its own otherwise, which would flash up in front of everything.
     const NO_WINDOW: u32 = 0x0800_0000;
 
     let root = std::env::var("SystemRoot").unwrap_or_else(|_| r"C:\Windows".to_owned());
@@ -727,8 +611,6 @@ mod tests {
     use super::*;
     use std::collections::HashMap;
 
-    /// A machine made up for the test: what is set, what exists, what WSL and the
-    /// Visual Studio installer would say.
     #[derive(Default)]
     struct Fake {
         vars: HashMap<String, String>,
@@ -785,7 +667,6 @@ mod tests {
         shells.iter().map(|one| one.name.as_str()).collect()
     }
 
-    /// A Windows machine with everything on it, the way this one is.
     #[cfg(windows)]
     fn loaded() -> Fake {
         let mut fake = Fake::default()
@@ -810,7 +691,6 @@ mod tests {
         fake
     }
 
-    /// A look WSL did not answer is looked at again, and what it finds then is kept.
     #[test]
     fn a_look_that_was_not_sure_is_looked_at_again() {
         let kept = Kept::new();
@@ -822,7 +702,6 @@ mod tests {
         assert_eq!(*kept.get(|| panic!("kept")), vec!["cmd", "wsl:Ubuntu"]);
     }
 
-    /// A sure answer the first time is the only look there is.
     #[test]
     fn a_sure_look_is_the_only_one() {
         let kept = Kept::new();
@@ -830,7 +709,6 @@ mod tests {
         assert_eq!(*kept.get(|| panic!("kept")), "cmd");
     }
 
-    /// Nobody queues behind the lock while a look is out.
     #[test]
     fn a_look_is_made_outside_the_lock() {
         let kept = Kept::new();
@@ -840,7 +718,6 @@ mod tests {
         });
     }
 
-    /// Whoever asks while a look is out does not make another.
     #[test]
     fn who_asks_during_a_look_shares_its_answer() {
         let kept: &'static Kept<&str> = Box::leak(Box::new(Kept::new()));
@@ -863,7 +740,6 @@ mod tests {
         assert_eq!(second.join().expect("the second"), "cmd");
     }
 
-    /// A WSL that never answers holds nobody up for ever.
     #[test]
     fn a_wsl_that_never_answers_stops_being_asked() {
         let kept = Kept::new();
@@ -906,8 +782,6 @@ mod tests {
         );
     }
 
-    /// No PowerShell 7, no Git, no WSL and no Visual Studio: a fresh Windows, which has
-    /// Windows PowerShell first, and so that is what a terminal opens with.
     #[test]
     #[cfg(windows)]
     fn a_fresh_windows_starts_with_windows_powershell() {
@@ -919,7 +793,6 @@ mod tests {
         assert_eq!(ids(&windows(&fresh)), vec!["powershell", "cmd"]);
     }
 
-    /// Git installed somewhere of its own, found beside the `git.exe` on the PATH.
     #[test]
     #[cfg(windows)]
     fn git_bash_is_found_beside_git_on_the_path() {
@@ -937,7 +810,6 @@ mod tests {
         assert_eq!(bash.args, vec!["--login", "-i"]);
     }
 
-    /// Two installs of one year are told apart by their edition, and only then.
     #[test]
     #[cfg(windows)]
     fn two_studios_of_one_year_say_which_is_which() {
@@ -990,7 +862,6 @@ mod tests {
         assert_eq!(read.edition, "Community");
         assert_eq!(read.instance, "66e9e031");
 
-        // No title with a year in it: the installer's own line version.
         let bare =
             r#"{ "installationPath": "C:\\VS", "catalogInfo": { "productLineVersion": "2022" } }"#;
         assert_eq!(studio("x", bare).expect("a studio").line, "2022");
@@ -1035,15 +906,12 @@ mod tests {
             .contains(&("PROMPT".to_owned(), CMD_PROMPT.to_owned())));
         assert!(CMD_PROMPT.starts_with(CMD_MARK));
 
-        // The reader's own prompt stays theirs, with the mark in front of it, which draws
-        // nothing.
         let own = cmd.launch(None, &Fake::default().set("PROMPT", "$G"));
         assert!(own
             .env
             .contains(&("PROMPT".to_owned(), "$E]133;A$E\\$G".to_owned())));
     }
 
-    /// Every prompt a shell is taught begins with the mark, before anything is drawn.
     #[test]
     fn every_prompt_nib_teaches_is_marked() {
         assert!(BASH_PROMPT.starts_with(r"printf '\e]133;A\e\\"));
@@ -1067,8 +935,6 @@ mod tests {
         );
         assert!(launch.args[2].contains("]9;9;"));
         assert!(launch.args[2].contains("& $global:__nibPrompt"));
-        // One argument with no double quote in it, so no quoting rule of anybody's can
-        // split it.
         assert!(!launch.args[2].contains('"'));
     }
 
@@ -1093,7 +959,6 @@ mod tests {
         )));
     }
 
-    /// A folder that has gone is home instead, as Warp and Windows Terminal do.
     #[test]
     fn a_folder_that_is_not_there_is_home() {
         let bash = Shell::new(

@@ -1,12 +1,3 @@
-//! One run of a program: the question on its stdin, the answer as lines, and its end,
-//! whichever way it came - it finished, it was stopped, or it ran out of time. Or a run
-//! that is kept talking to (`open`), a line at a time, until it is stopped or has been
-//! idle too long: a session of the sidebar's.
-//!
-//! Nothing here knows what the lines mean. Claude Code's stream-json and Codex's JSONL
-//! are read by the app (`lib/ai/local`), where they are tested beside the other
-//! providers' wires; this is the plumbing that has to be right on three systems.
-
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
@@ -19,47 +10,31 @@ use serde::Serialize;
 
 use super::family::{self, Family};
 
-/// The longest line passed on. A stream-json line holds one event, and the longest of
-/// those is a whole answer; a line past this is dropped rather than held in memory.
 const LONGEST_LINE: u64 = 8 << 20;
 
-/// How much of stderr is kept for the sentence a failure is read from: its last part,
-/// which is where a program says why it stopped.
 const ERR_TAIL: usize = 16 << 10;
 
-/// Something a run said.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Heard {
-    /// One line of stdout, without its line break. Empty lines are not passed on.
     Line(String),
-    /// The end; always the last thing heard, and heard once.
     End(Ended),
 }
 
-/// How a run ended.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Ended {
-    /// The exit code, where the program exited with one.
     pub code: Option<i32>,
-    /// Whether it was ended for running too long.
     pub timed_out: bool,
-    /// Whether it was ended because somebody stopped it.
     pub stopped: bool,
-    /// The end of what it wrote to stderr.
     pub err: String,
 }
 
 struct Shared {
-    /// The head of the family, until it has been waited for.
     child: Mutex<Option<Child>>,
     family: Family,
     stopped: AtomicBool,
     timed_out: AtomicBool,
-    /// Its stdin, for a run that is kept talking to (`open`); `None` once closed.
     input: Mutex<Option<ChildStdin>>,
-    /// When it was started, and how long after that it last said or was told anything,
-    /// in milliseconds: what an idle run is measured by.
     born: Instant,
     last: AtomicU64,
 }
@@ -77,7 +52,6 @@ impl Shared {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
-    /// Ends the family, while its head is still there to be named by.
     fn end(&self) {
         let held = self.child();
         if held.is_some() {
@@ -85,32 +59,26 @@ impl Shared {
         }
     }
 
-    /// Something was said or heard just now.
     fn touch(&self) {
         let now = u64::try_from(self.born.elapsed().as_millis()).unwrap_or(u64::MAX);
         self.last.store(now, Ordering::SeqCst);
     }
 
-    /// How long nothing has been said or heard.
     fn quiet_for(&self) -> Duration {
         let last = Duration::from_millis(self.last.load(Ordering::SeqCst));
         self.born.elapsed().saturating_sub(last)
     }
 }
 
-/// A run in progress, which can be stopped, and for one that was `open`ed, told more.
 #[derive(Clone)]
 pub struct Running(Arc<Shared>);
 
 impl Running {
-    /// Ends the program and everything it started. What it said before is kept; the
-    /// end is heard as `stopped`.
     pub fn stop(&self) {
         self.0.stopped.store(true, Ordering::SeqCst);
         self.0.end();
     }
 
-    /// Writes one line to the program's stdin. Refused once the input was closed.
     pub fn write_line(&self, line: &str) -> io::Result<()> {
         let mut held = self.0.input();
         let input = held
@@ -127,24 +95,17 @@ impl Running {
         Ok(())
     }
 
-    /// Closes the program's stdin: a program reading it to its end takes that as the
-    /// last word, and ends once it has answered.
     pub fn close_input(&self) {
         self.0.input().take();
     }
 }
 
-/// When a run is ended for its time.
 #[derive(Clone, Copy, Debug)]
 enum Limit {
-    /// However far it got, this long after it started.
     Total(Duration),
-    /// Once nothing has been said to it or by it for this long.
     Idle(Duration),
 }
 
-/// Starts `command` with `input` on its stdin, which is then closed, and hands `heard`
-/// each line of its stdout and then its end. `timeout` ends it however far it got.
 pub fn start(
     command: Command,
     input: Vec<u8>,
@@ -154,9 +115,6 @@ pub fn start(
     launch(command, Some(input), Limit::Total(timeout), heard)
 }
 
-/// Starts `command` with its stdin kept open for `Running::write_line`, and hands `heard`
-/// each line of its stdout and then its end. It is ended once neither side has said
-/// anything for `idle`: a conversation nobody is having.
 pub fn open(
     command: Command,
     idle: Duration,
@@ -194,8 +152,6 @@ fn launch(
         last: AtomicU64::new(0),
     });
 
-    // The question, and then the end of it: a program reading stdin to its end waits
-    // for this close.
     if let Some((mut stdin, input)) = once {
         thread::spawn(move || {
             let _ = stdin.write_all(&input);
@@ -231,19 +187,14 @@ fn launch(
     Ok(Running(shared))
 }
 
-/// What a short run printed, all of it: for the questions asked of a program rather
-/// than of a model, whether it is signed in and what flags it has.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Said {
-    /// Its stdout, line by line.
     pub out: String,
-    /// How it ended, with its stderr.
     #[serde(flatten)]
     pub ended: Ended,
 }
 
-/// Runs `command` to its end, or to `timeout`, with nothing on its stdin.
 pub fn run_to_end(command: Command, timeout: Duration) -> io::Result<Said> {
     let (sent, heard) = mpsc::channel();
     start(command, Vec::new(), timeout, move |one| {
@@ -265,7 +216,6 @@ pub fn run_to_end(command: Command, timeout: Duration) -> io::Result<Said> {
     Err(io::Error::other("the run ended without saying so"))
 }
 
-/// Ends a run at its limit, unless `waiting` hears that it ended first.
 fn watch(shared: &Shared, waiting: &Receiver<()>, limit: Limit) {
     match limit {
         Limit::Total(timeout) => {
@@ -289,7 +239,6 @@ fn watch(shared: &Shared, waiting: &Receiver<()>, limit: Limit) {
     shared.end();
 }
 
-/// Every line of `out`, as it arrives.
 fn lines(out: impl Read, heard: &impl Fn(Heard)) {
     let mut reader = BufReader::new(out);
     let mut line = Vec::new();
@@ -316,7 +265,6 @@ fn lines(out: impl Read, heard: &impl Fn(Heard)) {
     }
 }
 
-/// Reads past the rest of a line too long to keep.
 fn skip_line(reader: &mut impl BufRead) {
     loop {
         let Ok(buffer) = reader.fill_buf() else {
@@ -334,7 +282,6 @@ fn skip_line(reader: &mut impl BufRead) {
     }
 }
 
-/// The last `ERR_TAIL` bytes of `err`.
 fn tail(mut err: impl Read) -> String {
     let mut kept = Vec::new();
     let mut chunk = [0_u8; 8192];
@@ -351,8 +298,6 @@ fn tail(mut err: impl Read) -> String {
     String::from_utf8_lossy(&kept[from..]).into_owned()
 }
 
-/// Waits for the head of the family, under the same lock `end` asks under, so the
-/// family is never named by a number that may already be somebody else's.
 fn reap(shared: &Shared) -> Option<i32> {
     loop {
         {

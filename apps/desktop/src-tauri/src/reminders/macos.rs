@@ -1,18 +1,3 @@
-//! A Mac's own schedule: each reminder a notification request with a calendar trigger,
-//! which the system delivers at its minute with Orden quit (docs/tasks.md 5.10).
-//!
-//! `UNUserNotificationCenter`, under the app's bundle. A request's identifier is its
-//! reminder's id, so the schedule is read back and taken apart by id (schedule.rs); a
-//! snooze is a request of the system's own, named after the reminder with a suffix, and
-//! no plan takes one off. Every reminder is in one category with Done and two snoozes:
-//! Done reaches the app without bringing it forward (the system starts it where it is
-//! not running) and comes back as a press (`pressed` in reminders.rs) with the nonce
-//! kept for that id; a snooze is answered here, by asking again in 15 minutes or an
-//! hour; a press on the notification itself opens the note at the task.
-//!
-//! A build that is not a bundle - `cargo run` - has no notification centre, and asking
-//! for one ends the process; there the answer is no, and the page rings the plan itself.
-
 use std::sync::mpsc;
 use std::sync::{Mutex, OnceLock, PoisonError};
 use std::time::Duration;
@@ -39,34 +24,24 @@ use super::link::Act;
 use super::schedule::System;
 use super::{Planned, Words};
 
-/// The category every reminder is in, and its actions' identifiers.
 const CATEGORY: &str = "nib.reminder";
 const DONE: &str = "done";
 const LATER: &str = "snooze-15";
 const HOUR: &str = "snooze-60";
 
-/// How long the system has to say what it holds.
 const PATIENCE: Duration = Duration::from_secs(2);
 
-/// The app, for the delegate, which the system calls with nothing of ours.
 static APP: OnceLock<AppHandle> = OnceLock::new();
 
-/// The words each category's buttons are drawn in, the reminders' and a notice's answer
-/// field: the centre holds one set of categories for the whole app, so setting either
-/// sets both.
 static WORDS: Mutex<Said> = Mutex::new((None, None));
 
-/// The reminders' words, and a notice's placeholder and Send.
 type Said = (Option<Words>, Option<(String, String)>);
 
-/// Whether this process is a bundle the notification centre will answer.
 pub fn bundled() -> bool {
     NSBundle::mainBundle().bundleIdentifier().is_some()
 }
 
 define_class!(
-    /// What the notification centre tells about a reminder: a press on it or on one of
-    /// its buttons, and one arriving while Orden is in front, which is shown all the same.
     #[unsafe(super(NSObject))]
     #[name = "NibReminders"]
     struct Delegate;
@@ -99,22 +74,15 @@ define_class!(
     }
 );
 
-/// The delegate, made once and kept for the life of the process: the centre holds it
-/// weakly.
 #[allow(
     unsafe_code,
     reason = "a class of our own is initialised through the Objective-C runtime"
 )]
 fn delegate() -> Retained<Delegate> {
     let made = Delegate::alloc();
-    // SAFETY: `init` is NSObject's own initialiser, called once on an object just
-    // allocated, and the class has no instance variables of its own.
     unsafe { msg_send![made, init] }
 }
 
-/// Listens for presses from the launch on, so a press that started the app is heard:
-/// the system hands it over once the delegate is set. Once; a notice asks again before
-/// it shows (notices/macos.rs), where reminders were never handed over.
 pub fn listen(app: &AppHandle) {
     if !bundled() || APP.set(app.clone()).is_err() {
         return;
@@ -125,7 +93,6 @@ pub fn listen(app: &AppHandle) {
     std::mem::forget(kept);
 }
 
-/// A press, answered: a snooze here, Done and a press on the notification by the app.
 fn answered(response: &UNNotificationResponse) {
     let Some(app) = APP.get() else {
         return;
@@ -136,7 +103,6 @@ fn answered(response: &UNNotificationResponse) {
         return;
     }
     let action = response.actionIdentifier().to_string();
-    // A snooze of a snooze is the same reminder.
     let id = id.split('-').next().unwrap_or(&id).to_string();
 
     match action.as_str() {
@@ -160,8 +126,6 @@ fn answered(response: &UNNotificationResponse) {
     }
 }
 
-/// A notice's answer field in the reader's words, and the categories set again where
-/// they changed.
 pub fn reply_words(placeholder: &str, send: &str) {
     let wanted = Some((placeholder.to_string(), send.to_string()));
     {
@@ -174,8 +138,6 @@ pub fn reply_words(placeholder: &str, send: &str) {
     categorise(&UNUserNotificationCenter::currentNotificationCenter());
 }
 
-/// Every category the app has words for: a reminder's Done and snoozes, and a notice's
-/// field to answer in.
 fn categorise(centre: &UNUserNotificationCenter) {
     let (reminders, reply) = WORDS.lock().unwrap_or_else(PoisonError::into_inner).clone();
     let category = |id: &str, actions: &[Retained<UNNotificationAction>]| {
@@ -213,14 +175,11 @@ fn categorise(centre: &UNUserNotificationCenter) {
     centre.setNotificationCategories(&NSSet::from_retained_slice(&categories));
 }
 
-/// The schedule of this app's bundle.
 pub struct Requests {
     centre: Retained<UNUserNotificationCenter>,
 }
 
 impl Requests {
-    /// The centre, asked once for leave to show anything, with the buttons in the
-    /// reader's words.
     pub fn start(app: &AppHandle, words: &Words) -> Result<Self, String> {
         if !bundled() {
             return Err("not a bundle, so no notification centre".into());
@@ -237,10 +196,6 @@ impl Requests {
         WORDS.lock().unwrap_or_else(PoisonError::into_inner).0 = Some(words.clone());
         categorise(&centre);
 
-        // The system takes a request it will never show without a word, so a plan handed
-        // to it would be answered as held. Refused here, the page rings them itself while
-        // it runs. Not yet decided is the question above, still up: a yes then is worth
-        // waiting for, and the next plan hears a no.
         if authorization(&centre) == Some(UNAuthorizationStatus::Denied) {
             return Err("notifications are turned off for Orden".into());
         }
@@ -249,7 +204,6 @@ impl Requests {
     }
 }
 
-/// What the system says about this app's notifications, if it says in time.
 fn authorization(centre: &UNUserNotificationCenter) -> Option<UNAuthorizationStatus> {
     let (said, heard) = mpsc::channel();
     let answer = RcBlock::new(move |settings: std::ptr::NonNull<UNNotificationSettings>| {
@@ -264,7 +218,6 @@ impl System for Requests {
         let (said, heard) = mpsc::channel();
         let answer = RcBlock::new(
             move |requests: std::ptr::NonNull<NSArray<UNNotificationRequest>>| {
-                // SAFETY of the read: the system hands a live array for the call's length.
                 let ids = ids_of(requests);
                 let _ = said.send(ids);
             },
@@ -274,7 +227,6 @@ impl System for Requests {
         let ids = heard
             .recv_timeout(PATIENCE)
             .map_err(|_| "the notification centre did not say what it holds".to_string())?;
-        // A snooze is the system's own until it rings.
         Ok(ids.into_iter().filter(|id| !id.contains('-')).collect())
     }
 
@@ -320,25 +272,19 @@ impl System for Requests {
     }
 }
 
-/// The status in the settings the centre handed over.
 #[allow(
     unsafe_code,
     reason = "the centre hands its answer over as a bare pointer for the length of the call"
 )]
 fn status_of(settings: std::ptr::NonNull<UNNotificationSettings>) -> UNAuthorizationStatus {
-    // SAFETY: the pointer is the settings the notification centre passes its completion
-    // handler, alive for the whole of the call this runs inside.
     unsafe { settings.as_ref() }.authorizationStatus()
 }
 
-/// The identifiers of the requests the centre handed over.
 #[allow(
     unsafe_code,
     reason = "the centre hands its answer over as a bare pointer for the length of the call"
 )]
 fn ids_of(requests: std::ptr::NonNull<NSArray<UNNotificationRequest>>) -> Vec<String> {
-    // SAFETY: the pointer is the array the notification centre passes its completion
-    // handler, alive for the whole of the call this runs inside.
     let requests = unsafe { requests.as_ref() };
     requests
         .iter()

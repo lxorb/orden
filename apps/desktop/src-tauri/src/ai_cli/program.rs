@@ -1,39 +1,14 @@
-//! Where Claude Code and Codex are on this machine, and the `PATH` they run with.
-//!
-//! The same program that answers in a terminal has to be found by an app nobody started
-//! from one, and that is where the other apps that do this lose people: an npm install
-//! under nvm, Volta or mise is on the terminal's `PATH` and on no app's, a Mac app opened
-//! from the Dock gets launchd's four folders, and the native installers put the program
-//! in `~/.local/bin`, which is added to a `PATH` at the next login. So a program is
-//! looked for, in order:
-//!
-//! 1. on the `PATH` the app was started with, which is where a terminal finds it;
-//! 2. where the installers put it: `~/.local/bin` (Claude Code's own installer on every
-//!    system), npm's global folder, Homebrew, Bun, Volta and mise;
-//! 3. on a Mac and on Linux, on the `PATH` the reader's own login shell builds, asked
-//!    once per run of the app - VS Code's and Typora's answer to the same question.
-//!
-//! And the program is started with a `PATH` that has its own folder in front: an npm
-//! install is a script that starts `node`, which lives beside it under nvm or mise.
-//!
-//! `NIB_AI_CLAUDE_CODE` and `NIB_AI_CODEX` name a program outright, for a probe that runs
-//! a stand-in rather than the reader's own; see scripts/fake-ai-cli.mjs.
-
 use std::ffi::{OsStr, OsString};
 use std::path::{Path, PathBuf};
 
 use super::args::Tool;
 
-/// A program, found, and the `PATH` it is started with.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Program {
-    /// The file to start.
     pub exe: PathBuf,
-    /// The `PATH` it gets.
     pub path: OsString,
 }
 
-/// The file names a tool may have: an executable of its own, or npm's `.cmd` on Windows.
 fn names(tool: Tool) -> Vec<String> {
     let command = tool.command();
     if cfg!(windows) {
@@ -43,8 +18,6 @@ fn names(tool: Tool) -> Vec<String> {
     }
 }
 
-/// The folders installers put these programs in, inside the reader's home and outside it,
-/// in the order they are looked at after the `PATH`.
 pub fn installed_in(home: Option<&Path>, appdata: Option<&Path>) -> Vec<PathBuf> {
     let mut found = Vec::new();
     if let Some(home) = home {
@@ -70,7 +43,6 @@ pub fn installed_in(home: Option<&Path>, appdata: Option<&Path>) -> Vec<PathBuf>
     found
 }
 
-/// The first of `names` in the first of `folders` that holds one, as `is_file` answers.
 pub fn first_in(
     folders: &[PathBuf],
     names: &[String],
@@ -82,14 +54,12 @@ pub fn first_in(
         .find(|candidate| is_file(candidate))
 }
 
-/// A `PATH` with `folder` in front of `path`.
 pub fn with_first(folder: Option<&Path>, path: &OsStr) -> OsString {
     let mut folders: Vec<PathBuf> = folder.map(Path::to_path_buf).into_iter().collect();
     folders.extend(std::env::split_paths(path));
     std::env::join_paths(folders).unwrap_or_else(|_| path.to_owned())
 }
 
-/// Where a tool is, or `None` where it is not installed.
 pub fn find(tool: Tool) -> Option<Program> {
     let path = search_path();
     let exe = named_outright(tool).or_else(|| {
@@ -103,7 +73,6 @@ pub fn find(tool: Tool) -> Option<Program> {
     Some(Program { exe, path })
 }
 
-/// The program a probe named in the environment, where it named one that exists.
 fn named_outright(tool: Tool) -> Option<PathBuf> {
     let name = match tool {
         Tool::ClaudeCode => "NIB_AI_CLAUDE_CODE",
@@ -114,8 +83,6 @@ fn named_outright(tool: Tool) -> Option<PathBuf> {
         .filter(|path| path.is_file())
 }
 
-/// The `PATH` to look on and to start with: the app's own, and on a Mac and Linux the
-/// login shell's after it.
 pub fn search_path() -> OsString {
     let own = std::env::var_os("PATH").unwrap_or_default();
     #[cfg(unix)]
@@ -129,19 +96,15 @@ pub fn search_path() -> OsString {
     own
 }
 
-/// What a login shell's `PATH` is, asked once per run of the app.
 #[cfg(unix)]
 fn login_path() -> Option<&'static OsStr> {
     static ASKED: std::sync::OnceLock<Option<OsString>> = std::sync::OnceLock::new();
     ASKED.get_or_init(ask_login_shell).as_deref()
 }
 
-/// The line a login shell prints its `PATH` on, told apart from whatever its files print
-/// on the way in - a greeting, a theme's warning - by a mark of its own.
 #[cfg(any(unix, test))]
 const MARK: &str = "__nib_path__=";
 
-/// The `PATH` out of everything a login shell printed.
 #[cfg(any(unix, test))]
 pub fn marked_path(printed: &str) -> Option<&str> {
     printed
@@ -151,9 +114,6 @@ pub fn marked_path(printed: &str) -> Option<&str> {
         .filter(|path| !path.is_empty())
 }
 
-/// Asks `$SHELL -ilc`, interactive as well as a login because a `PATH` line in
-/// `.bashrc` or `.zshrc` is read only by an interactive shell. Five seconds, and nothing
-/// where a shell file waits for input or takes longer.
 #[cfg(unix)]
 fn ask_login_shell() -> Option<OsString> {
     use std::io::Read as _;

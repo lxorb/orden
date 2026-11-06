@@ -1,87 +1,65 @@
-//! What the window may say to a session, and what a session says back.
-//!
-//! The window never writes to a program. It names one of these, and session.rs (Claude
-//! Code) or `codex_app.rs` (Codex) writes the message the program reads: so a page that got
-//! hold of the bridge can send words, pick a model or an effort, stop a turn and ask for
-//! the window's fill, and nothing else - no `command/exec`, no `fs/writeFile`, no
-//! `mcp_set_servers`, no permission mode. Free text is only ever the reader's words.
-
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use super::args::{model_ok, Effort};
 use super::run::Ended;
 
-/// The most a message may be: the reader's words and every note attached to them.
 const LONGEST_TEXT: usize = 4 << 20;
 
-/// The most a picture may be, as base64.
 const LONGEST_IMAGE: usize = 20 << 20;
 
-/// A picture sent with a message.
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct Image {
-    /// One of the four kinds both programs take.
     pub mime: String,
-    /// Its bytes, as base64.
     pub data: String,
 }
 
-/// Where a goal is to go (docs/ai-sidebar.md 4.8).
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(tag = "do", rename_all = "camelCase")]
 pub enum GoalSay {
-    /// Work towards this until it holds; `budget` is a token budget where the program has
-    /// one.
     Set {
         objective: String,
         #[serde(default)]
         budget: Option<u64>,
     },
-    /// Hold it.
     Pause,
-    /// Go on with it.
     Resume,
-    /// Drop it.
     Clear,
-    /// Where it stands.
     Get,
 }
 
-/// One thing the window says to a session.
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum Say {
-    /// The reader's message, starting a turn.
     Turn {
         text: String,
         #[serde(default)]
         images: Vec<Image>,
     },
-    /// Words for the turn that is running (Ctrl+Enter).
-    Steer { text: String },
-    /// Stop the turn; what arrived stays.
+    Steer {
+        text: String,
+    },
     Interrupt,
-    /// Answer with this model from the next request on.
-    Model { model: String },
-    /// Think this hard from the next request on; `None` is the model's own default.
-    Effort { effort: Option<Effort> },
-    /// The provider's faster tier from the next request on, where it has one.
-    Fast { on: bool },
-    /// The older turns become a summary; `focus` steers it where the program takes one.
+    Model {
+        model: String,
+    },
+    Effort {
+        effort: Option<Effort>,
+    },
+    Fast {
+        on: bool,
+    },
     Compact {
         #[serde(default)]
         focus: String,
     },
-    /// How full the window is, by part, where the program says.
     Context,
-    /// The thread's goal.
-    Goal { goal: GoalSay },
+    Goal {
+        goal: GoalSay,
+    },
 }
 
 impl Say {
-    /// Refuses what no program should be handed: a message too long to be one, a picture
-    /// that is not one, a model name that could be read as a flag.
     pub fn checked(self) -> Result<Self, String> {
         match &self {
             Self::Turn { text, images } => {
@@ -128,26 +106,22 @@ fn picture(image: &Image) -> Result<(), String> {
     }
 }
 
-/// Words on one line, for a command that takes the rest of its line as its argument.
 pub fn one_line(text: &str) -> String {
     text.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
-/// What a session's channel carries.
 #[derive(Clone, Debug, Serialize, PartialEq)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum Message {
-    /// One line the program printed, as it printed it: an event for `lib/ai/local`.
-    Line { line: String },
-    /// The program's answer to something the window said, by what was asked (`models`,
-    /// `context`, `goal`, `compact`), or why it could not.
+    Line {
+        line: String,
+    },
     Reply {
         to: String,
         result: Value,
         #[serde(skip_serializing_if = "Option::is_none")]
         error: Option<String>,
     },
-    /// The end: the program ended, was stopped, or the session was closed.
     End(Ended),
 }
 

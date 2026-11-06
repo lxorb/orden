@@ -1,24 +1,3 @@
-//! The `DevTools` Protocol on one page of Orden's own Chromium: calls, and what the page
-//! says back.
-//!
-//! The same protocol `WebView2` speaks through its COM interfaces (see
-//! `agents/cdp.rs` and `web_worlds.rs`), reached the way `tauri-runtime-cef` offers it: a
-//! message sent to the browser's own agent, and one observer per browser that hears
-//! every message the agent sends - the answers to anybody's calls, the runtime's own
-//! included, and every event. No port and no socket, so nothing else on the machine
-//! reaches it.
-//!
-//! **Calls wait on the caller's thread, never the window's.** Sending a message waits
-//! for the event loop to take it, and the answer arrives on the thread the event loop
-//! runs on; a call made from that thread would be waiting for itself. Every caller here
-//! is a thread of its own or a command's.
-//!
-//! **Every message, read whole.** The observer is handed each message twice - raw, and
-//! then sorted into an answer or an event - and only the raw one says which session a
-//! message belongs to, which is how a frame from another site (a process of its own,
-//! attached with `Target.setAutoAttach`) is told from the page. So the raw one is read,
-//! and the sorted ones are not.
-
 use std::collections::HashMap;
 use std::sync::mpsc::{sync_channel, SyncSender};
 use std::sync::{Arc, LazyLock, Mutex, PoisonError};
@@ -28,31 +7,19 @@ use serde_json::{json, Value};
 use tauri::Webview;
 use tauri_runtime_cef::{allocate_devtools_message_id, DevToolsProtocol, WebviewCefExt as _};
 
-/// What hears a page's events: the method, the session it came from (`None` for the
-/// page itself), and its parameters.
 type Hearing = Arc<dyn Fn(&str, Option<&str>, &Value) + Send + Sync>;
 
-/// One page's conversation with its agent.
 #[derive(Default)]
 struct Page {
-    /// Who is waiting for which answer.
     waiting: Mutex<HashMap<i64, SyncSender<Result<Value, String>>>>,
-    /// Who hears the page's events.
     hearing: Mutex<Vec<Hearing>>,
-    /// Whether the observer is registered, held while it is being registered: every
-    /// caller waits for the first one's registration, since an answer the agent sends
-    /// before there is an observer is heard by nobody.
     observed: Mutex<bool>,
 }
 
-/// The pages spoken to, by the webview's label.
 type Pages = Mutex<HashMap<String, Arc<Page>>>;
 
-/// Every page that has been spoken to, by the webview's label. A label is reused only
-/// after its page has gone, and the observer of a page that has gone hears nothing.
 static PAGES: LazyLock<Pages> = LazyLock::new(Mutex::default);
 
-/// The conversation with this webview's page, the observer registered the first time.
 fn page(view: &Webview) -> Result<Arc<Page>, String> {
     page_in(&PAGES, view.label(), |made| {
         let heard = Arc::clone(made);
@@ -67,16 +34,6 @@ fn page(view: &Webview) -> Result<Arc<Page>, String> {
     })
 }
 
-/// The page under `label` in `pages`, made the first time and its observer registered
-/// through `register` until one registration has worked.
-///
-/// **The list is never held while the observer is registered.** Registering waits for
-/// the window's thread, which takes the runtime's message - and the window's thread takes
-/// the list as well, to let go of a page that is closing (`let_go_of`, from `web_close`).
-/// A page being built on one thread, held here, and another closed on the window's own
-/// was each waiting for the other: Ctrl+W pressed through tabs whose pages were still
-/// coming up froze the whole app for good (#1031). Only the page's own `observed` is held
-/// across the wait, which nothing on the window's thread ever takes.
 fn page_in(
     pages: &Pages,
     label: &str,
@@ -101,8 +58,6 @@ fn page_in(
     Ok(found)
 }
 
-/// One message from the agent: an answer for whoever waits on its id, or an event for
-/// whoever hears the page.
 fn read(page: &Page, message: &Value) {
     let session = message.get("sessionId").and_then(Value::as_str);
     if let Some(id) = message.get("id").and_then(Value::as_i64) {
@@ -130,7 +85,6 @@ fn read(page: &Page, message: &Value) {
     }
 }
 
-/// What an answer says: its result, or the agent's own words for why there is none.
 fn answer(message: &Value) -> Result<Value, String> {
     if let Some(error) = message.get("error") {
         return Err(error
@@ -142,7 +96,6 @@ fn answer(message: &Value) -> Result<Value, String> {
     Ok(message.get("result").cloned().unwrap_or(Value::Null))
 }
 
-/// The message a call is sent as.
 fn asking(id: i64, method: &str, params: &Value, session: Option<&str>) -> Value {
     let mut message = json!({ "id": id, "method": method, "params": params });
     if let Some(session) = session {
@@ -151,8 +104,6 @@ fn asking(id: i64, method: &str, params: &Value, session: Option<&str>) -> Value
     message
 }
 
-/// Calls one method on the page - or on the frame `session` names - and waits at most
-/// `patience` for the answer. From any thread but the window's; see the top of this file.
 pub fn call(
     view: &Webview,
     session: Option<&str>,
@@ -186,10 +137,6 @@ pub fn call(
     outcome
 }
 
-/// Sends methods one after another, in order, on a thread of their own, and waits for
-/// none of their answers: for what a page is told from inside one of its own events,
-/// which run on the thread a call would be waiting on. The order is the order the page
-/// runs them in, which matters to a frame held at its start until the last of them.
 pub fn tell(view: &Webview, session: Option<&str>, said: Vec<(&'static str, Value)>) {
     let view = view.clone();
     let session = session.map(str::to_string);
@@ -204,7 +151,6 @@ pub fn tell(view: &Webview, session: Option<&str>, said: Vec<(&'static str, Valu
     });
 }
 
-/// Hears every event the page says from now on, for as long as it is open.
 pub fn hear(
     view: &Webview,
     heard: impl Fn(&str, Option<&str>, &Value) + Send + Sync + 'static,
@@ -217,13 +163,10 @@ pub fn hear(
     Ok(())
 }
 
-/// Lets go of a page that has closed, so its label can be a new page's. On the window's
-/// own thread, and so never waiting on a page being registered; see `page_in`.
 pub fn let_go_of(label: &str) {
     forget(&PAGES, label);
 }
 
-/// `label`'s page taken off `pages`.
 fn forget(pages: &Pages, label: &str) {
     pages
         .lock()
@@ -241,9 +184,6 @@ mod tests {
 
     use super::{answer, asking, forget, page_in, read, Page, Pages};
 
-    /// #1031: a page being registered on one thread - which waits for the window's thread -
-    /// while the window's thread lets go of another page that is closing. The letting go
-    /// has to come back without the registration having ended, or each waits for the other.
     #[test]
     fn a_page_closing_never_waits_for_another_being_registered() {
         let pages: Arc<Pages> = Arc::default();
@@ -254,14 +194,12 @@ mod tests {
         let builder = std::thread::spawn(move || {
             page_in(&building, "web-a", |_| {
                 registering.send(()).unwrap();
-                // The runtime's message, which only the window's thread answers.
                 waiting_for_window.recv().map_err(|error| error.to_string())
             })
             .map(|_| ())
         });
         registered.recv().unwrap();
 
-        // The window's thread, closing another tab's page meanwhile.
         let (closed, closing) = channel();
         let window_thread = Arc::clone(&pages);
         std::thread::spawn(move || {
@@ -270,7 +208,6 @@ mod tests {
         });
         let answered = closing.recv_timeout(Duration::from_secs(5));
 
-        // The window's thread answers the registration either way, so a failing run ends.
         window.send(()).unwrap();
         builder.join().unwrap().unwrap();
         assert!(
@@ -279,8 +216,6 @@ mod tests {
         );
     }
 
-    /// Everybody asking for a page while its observer is registered waits for that, and
-    /// it is registered once; one that failed is tried again by the next.
     #[test]
     fn a_page_is_observed_once_and_after_a_failure_again() {
         let pages = Pages::default();

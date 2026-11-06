@@ -1,32 +1,3 @@
-//! The spaces being watched: notify's watcher on every root, the events it hears
-//! gathered until the folder is quiet, and each quiet moment settled into answers on a
-//! thread of its own.
-//!
-//! notify's own debouncers were the obvious choice and neither fits. The full one
-//! stitches a rename out of its two halves only when the platform names them as a rename,
-//! and Windows names a move between two folders as a removal and an addition; it also
-//! keeps a file-id cache of its own for macOS and Windows only. So the debouncing is
-//! here, it is a few lines (`QUIET`, `LONGEST`), and the answers come from known.rs,
-//! which reads the disk rather than the events.
-//!
-//! **Losing events.** Every platform can drop them under a burst: inotify's queue fills,
-//! `FSEvents` says it coalesced too much, Windows' 16 KB buffer overflows. The first two
-//! say so, as notify's rescan flag. Windows does not: notify's backend treats the
-//! overflow as an unknown error and quietly stops watching the folder. So a burst larger
-//! than a buffer's worth (`OVERFLOWING`) is treated as an overflow whether or not one was
-//! reported: the root is watched again, read again, and the engine is told to list it
-//! with `space_scan`. A `git checkout` of a few hundred notes costs one listing, which is
-//! what it needs anyway.
-//!
-//! **A root that goes.** A space folder deleted or renamed in Explorer is not a space
-//! whose every note was deleted, and the watcher must never say it is: Windows keeps
-//! watching a renamed folder and reports its files under the old name, which would read
-//! as every file gone. So a root that is no longer there is answered `gone` and nothing
-//! else, and is no longer watched. Whether each root is still there is asked at every
-//! batch and every `ROOT_CHECK` besides, because not every platform says anything when
-//! the folder it watches is itself renamed: `FSEvents` watches a path, and the path is
-//! simply quiet.
-
 use notify::event::{AccessKind, AccessMode};
 use notify::{ErrorKind, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use std::collections::BTreeSet;
@@ -37,42 +8,25 @@ use std::time::{Duration, Instant};
 
 use super::known::{Seen, Space};
 
-/// How long a space has to be quiet before what happened in it is settled.
 const QUIET: Duration = Duration::from_millis(250);
 
-/// How long a burst that never goes quiet waits at most before it is settled anyway, so
-/// a long `git checkout` is heard as it goes rather than once at the end.
 const LONGEST: Duration = Duration::from_secs(1);
 
-/// The most answers one message to the window carries. A folder of a thousand notes
-/// dropped into a space is two messages, not one of a thousand.
 pub const MOST_CHANGES: usize = 500;
 
-/// How many events on one root in one batch are treated as an overflow; see the top of
-/// this file. Windows' 16 KB buffer holds a few hundred events of ordinary names.
 const OVERFLOWING: usize = 256;
 
-/// How often a quiet watch asks whether its roots are still there: one `stat` a root.
 const ROOT_CHECK: Duration = Duration::from_secs(2);
 
-/// How often an error from the watcher may make a root be listed again. An error is
-/// usually a folder inotify could not add a watch for (past the system's limit), and it
-/// comes back every time the root is watched again: a listing for every return would
-/// never stop.
 const FAILED_GAP: Duration = Duration::from_secs(60);
 
-/// One space folder: as the window named it, which is how every answer names it back,
-/// and as the file system resolves it, which is what macOS reports events under.
 #[derive(Clone, Debug)]
 pub struct Root {
-    /// As the window named it.
     pub given: PathBuf,
-    /// Every link along the way followed.
     pub real: PathBuf,
 }
 
 impl Root {
-    /// Where a path the watcher reported is inside this root, if it is.
     fn inside(&self, path: &Path) -> Option<PathBuf> {
         path.strip_prefix(&self.real)
             .or_else(|_| path.strip_prefix(&self.given))
@@ -81,41 +35,24 @@ impl Root {
     }
 }
 
-/// What happened in one space since the last message: the answers, and whether the
-/// space has to be listed again (`scan`) or is gone.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Heard {
-    /// Which root, by its place in the list the watch was started with.
     pub root: usize,
-    /// What the touched paths came to.
     pub seen: Vec<Seen>,
-    /// The watch on this root is fresh and knows what is there; list the space with
-    /// `space_scan` to catch up on what happened before. Said once for every root when
-    /// the watch starts, and again after an overflow.
     pub scan: bool,
-    /// The root is not there any more and is no longer watched.
     pub gone: bool,
-    /// Said with a root's scan where not all of it could be watched, and why: changes
-    /// made there by other programs may go unheard (#481).
     pub unwatched: Option<Unwatched>,
 }
 
-/// Why part of a root is not watched.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Unwatched {
-    /// A folder in it nobody may read: that folder alone is left out.
     Folders,
-    /// The system's limit of watched folders is reached (`fs.inotify.max_user_watches`):
-    /// every folder past it is left out, in this root and in any other.
     Limit,
 }
 
-/// Where each message goes. False when nobody is listening any more, which stops the
-/// watch.
 pub type Sink = Box<dyn FnMut(Heard) -> bool + Send>;
 
-/// A running watch. Dropping it stops it.
 pub struct Watch {
     shared: Arc<Shared>,
     roots: Arc<Vec<Root>>,
@@ -145,7 +82,6 @@ pub struct Armed {
     unwatched: Vec<Option<Unwatched>>,
 }
 
-/// Starts watching `roots`, answering into `sink`.
 #[cfg(test)]
 pub fn watch(roots: Vec<Root>, sink: Sink) -> Result<Watch, String> {
     armed(roots)?.start(sink)
@@ -212,11 +148,6 @@ impl Armed {
     }
 }
 
-/// Watches a root and every folder in it that can be watched, and says in the log what
-/// could not be. inotify watches folder by folder, and notify gives up on the whole tree
-/// at the first folder it cannot add: one nobody may read (a `lost+found` at the top of
-/// an external disk), or one past the system's limit of watches. A space that cannot be
-/// watched at all is still read at every batch, and every other space is watched.
 fn arm(watcher: &mut RecommendedWatcher, root: &Root) -> Option<Unwatched> {
     let error = watch_tree(watcher, &root.real).err()?;
     eprintln!(
@@ -230,14 +161,10 @@ fn arm(watcher: &mut RecommendedWatcher, root: &Root) -> Option<Unwatched> {
     })
 }
 
-/// Watches `dir` whole, or, where a folder inside it cannot be watched, every folder
-/// below it but that one; `dir` itself is watched whole by then, so a folder made in it
-/// later is too. Said back: the first folder that could not be watched.
 fn watch_tree(watcher: &mut RecommendedWatcher, dir: &Path) -> notify::Result<()> {
     let Err(error) = watcher.watch(dir, RecursiveMode::Recursive) else {
         return Ok(());
     };
-    // Only a folder below is left out; past the limit, every other would fail too.
     let below = error
         .paths
         .iter()
@@ -262,8 +189,6 @@ fn watch_tree(watcher: &mut RecommendedWatcher, dir: &Path) -> notify::Result<()
     outcome
 }
 
-/// The thread every answer is settled on: learns each space, says so, then settles each
-/// quiet moment until the watch is dropped or nobody listens.
 fn work(
     roots: &[Root],
     shared: &Shared,
@@ -273,8 +198,6 @@ fn work(
 ) {
     let mut spaces: Vec<Option<Space>> = Vec::with_capacity(roots.len());
     for (at, root) in roots.iter().enumerate() {
-        // A space too large to know is still watched; what arrives in it is new to the
-        // watcher, and the engine's own listing is what says it is too large.
         spaces.push(Some(Space::read(&root.real).unwrap_or_default()));
         let said = Heard {
             unwatched: unwatched.get(at).copied().flatten(),
@@ -308,8 +231,6 @@ fn work(
             } else if touched.is_empty() && !batch.rescan[at] && !failing {
                 continue;
             } else if batch.rescan[at] || failing || batch.raw[at] >= OVERFLOWING {
-                // Watched again before it is read again, so nothing that happens in
-                // between is missed: it is either in the reading or heard after it.
                 let unwatched = {
                     let mut watcher = lock_watcher(watcher);
                     if shared.stopped() {
@@ -338,8 +259,6 @@ fn work(
             }
 
             for one in heard {
-                // A watch replaced while this batch was settling says nothing more: its
-                // listener may still be there, and would hear the same change twice.
                 if shared.stopped() || !sink(one) {
                     shared.stop();
                     return;
@@ -371,7 +290,6 @@ impl Heard {
     }
 }
 
-/// The roots a set of paths lies in, or every root where the paths name none.
 fn named(roots: &[Root], paths: &[PathBuf]) -> Vec<usize> {
     let named: Vec<usize> = (0..roots.len())
         .filter(|at| paths.iter().any(|path| roots[*at].inside(path).is_some()))
@@ -389,13 +307,11 @@ fn lock_watcher(watcher: &Mutex<RecommendedWatcher>) -> MutexGuard<'_, Recommend
         .unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
-/// What the watcher's callback and the settling thread share.
 struct Shared {
     queue: Mutex<Queue>,
     wake: Condvar,
 }
 
-/// Everything heard since the last batch was taken.
 struct Queue {
     touched: Vec<BTreeSet<PathBuf>>,
     raw: Vec<usize>,
@@ -406,20 +322,15 @@ struct Queue {
     stopped: bool,
 }
 
-/// One batch, taken off the queue.
 struct Batch {
     touched: Vec<BTreeSet<PathBuf>>,
     raw: Vec<usize>,
     rescan: Vec<bool>,
-    /// The roots the watcher reported an error about.
     failed: Vec<bool>,
-    /// Whether the burst was still going when the batch was taken.
     cut: bool,
 }
 
 impl Batch {
-    /// Nothing happened: what a quiet watch settles every `ROOT_CHECK` to ask whether its
-    /// roots are still there.
     fn quiet(roots: usize) -> Self {
         Self {
             touched: vec![BTreeSet::new(); roots],
@@ -464,9 +375,6 @@ impl Shared {
         self.lock().stopped
     }
 
-    /// One event from notify: the paths it touched, by root, and whether it asked for a
-    /// rescan. An error is a failure of the roots it names, or of every root where it
-    /// names none; see `FAILED_GAP`.
     fn heard(&self, roots: &[Root], event: notify::Result<notify::Event>) {
         let mut queue = self.lock();
         if queue.stopped {
@@ -480,8 +388,6 @@ impl Shared {
                 }
             }
             Ok(event) => {
-                // A file opened or read is nobody's writing; a file closed after a write
-                // is, and is the moment inotify knows the write is whole.
                 if matches!(
                     event.kind,
                     EventKind::Access(kind) if kind != AccessKind::Close(AccessMode::Write)
@@ -512,7 +418,6 @@ impl Shared {
         self.wake.notify_one();
     }
 
-    /// Paths whose removal is waiting for the next batch, touched again so there is one.
     fn touch_again(&self, root: usize, paths: &[PathBuf]) {
         if paths.is_empty() {
             return;
@@ -524,9 +429,6 @@ impl Shared {
         queue.last.get_or_insert(now);
     }
 
-    /// The next batch, once the spaces have been quiet for `QUIET` or a burst has gone
-    /// on for `LONGEST`, or an empty one every `ROOT_CHECK` while nothing happens; None
-    /// once the watch has stopped.
     fn next(&self) -> Option<Batch> {
         let mut queue = self.lock();
         loop {
@@ -579,9 +481,6 @@ mod tests {
     use std::sync::mpsc::{channel, Receiver};
     use std::time::{Duration, Instant};
 
-    /// Every message until the watch has been silent for a second and a half, or ten
-    /// seconds have passed: long enough for a slow runner's watcher, short enough that a
-    /// test that hears nothing ends.
     fn until_quiet(heard: &Receiver<Heard>) -> Vec<Heard> {
         let mut all = Vec::new();
         let started = Instant::now();
@@ -701,8 +600,6 @@ mod tests {
         assert_eq!(holders(&root), 2);
     }
 
-    /// The whole life of a note as another program lives it, one step at a time, each
-    /// heard as what it was: made, written, renamed, moved into a folder, deleted.
     #[test]
     fn a_note_is_heard_through_its_whole_life() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -733,9 +630,6 @@ mod tests {
         assert_eq!(said(&until_quiet(&heard)), ["removed Box/Thought.md"]);
     }
 
-    /// A thousand files written as fast as the disk takes them: heard in a few
-    /// messages of a bounded size rather than a thousand, and every one of them
-    /// accounted for, either named or covered by a listing the watcher asks for.
     #[test]
     fn a_burst_is_heard_in_bounded_batches() {
         let dir = tempfile::tempdir().expect("a folder");
@@ -749,9 +643,6 @@ mod tests {
         }
         let burst = until_quiet(&heard);
 
-        // A batch is settled no sooner than `QUIET` after its first event and says one
-        // message, so however long the disk takes over the notes - a Windows runner's
-        // scans every one - there is at most one message for each `QUIET` of it.
         let most = started.elapsed().as_millis() / QUIET.as_millis() + 1;
         assert!(
             burst.len() as u128 <= most,
@@ -790,10 +681,6 @@ mod tests {
         let (_watch, heard) = watching(&root);
         assert!(until_quiet(&heard)[0].scan);
 
-        // Renamed in Explorer, and then written in: Windows goes on watching the folder
-        // under its new name and reports the new file under the old one, which read off
-        // the paths alone is a space whose note was deleted and another one made. macOS
-        // says nothing at all, and the next look at the roots is what finds it gone.
         let renamed = dir.path().join("Renamed");
         fs::rename(&root, &renamed).expect("the space renamed");
         fs::write(renamed.join("Idea.md"), "new").expect("written in");
@@ -811,8 +698,6 @@ mod tests {
         assert!(after.iter().any(|one| one.gone), "{after:?}");
     }
 
-    /// A folder nobody may read in one space (a `lost+found` at the top of an external
-    /// disk) costs the watch that folder: not the rest of its space, not another space.
     #[cfg(unix)]
     #[test]
     fn a_folder_that_cannot_be_watched_is_left_out_and_nothing_else() {
@@ -824,7 +709,6 @@ mod tests {
             fs::create_dir_all(folder).expect("a folder");
         }
         fs::set_permissions(&locked, fs::Permissions::from_mode(0o000)).expect("locked");
-        // Root reads every folder, so there is nothing to leave out.
         let unreadable = fs::read_dir(&locked).is_err();
         let (tell, heard) = channel();
         let roots = [&space, &other].map(|dir| Root {

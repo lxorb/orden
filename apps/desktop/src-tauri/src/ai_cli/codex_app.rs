@@ -1,21 +1,3 @@
-//! Codex on its app-server: one `codex app-server` per window, a Codex thread per Orden
-//! thread, over JSON-RPC on stdio (docs/ai-sidebar.md 5.2; the protocol read from
-//! `codex app-server generate-ts`, 0.160.0). JSON lines without the `jsonrpc` field, as
-//! the app-server writes them.
-//!
-//! **The crate is the client.** The app-server answers far more than a sidebar needs -
-//! `command/exec`, `fs/writeFile`, `config/value/write` - so the window never writes a
-//! request: it says one of say.rs's things, and this writes the one request that is,
-//! with its id, its thread and every setting that keeps Codex inside the answer
-//! (`args::codex_thread`). A request the app-server makes of its client is answered here
-//! too, and always no: an approval declined, an elicitation declined, a token refresh
-//! refused, since Orden reads no token and asks its own questions at its own verbs.
-//!
-//! **What goes to the window**: every notification, routed to the Orden thread whose Codex
-//! thread it names, and one with no thread (the plan's limits, a warning) to all of them;
-//! the answer to anything the window said, as a `Reply`; and the end. The window reads
-//! the events in `lib/ai/local/codex.ts`.
-
 use std::collections::HashMap;
 use std::io;
 use std::path::PathBuf;
@@ -30,64 +12,43 @@ use super::args::{codex_thread, with_thread, Effort, Mode, Tool};
 use super::run::{self, Ended, Heard, Running};
 use super::say::{GoalSay, Image, Message, Say};
 
-/// Where an Orden thread's words go.
 pub type Output = Arc<dyn Fn(Message) + Send + Sync>;
 
-/// One Orden thread on the app-server.
 struct Route {
     output: Output,
-    /// Its Codex thread, once `thread/start` answered.
     thread: Option<String>,
-    /// The turn running in it, which a steer and a stop name.
     turn: Option<String>,
-    /// The model and effort every `turn/start` carries.
     model: Option<String>,
     effort: Option<&'static str>,
-    /// The faster tier, `priority` in Codex's own list, where the reader asked for it.
     fast: bool,
-    /// What the window said before the thread was there.
     queued: Vec<Say>,
 }
 
-/// Who is waiting for the answer to a request.
 enum Waiter {
-    /// `initialize`, before which nothing else is sent.
     Init,
-    /// `thread/start` or `thread/fork`, for this Orden thread.
     Started(String),
-    /// The window of this Orden thread, as a `Reply` to this.
     Reply(String, &'static str),
-    /// The crate itself.
     Crate(mpsc::Sender<Result<Value, String>>),
-    /// Nobody.
     Nobody,
 }
 
 #[derive(Default)]
 struct State {
     next: u64,
-    /// Whether `initialize` has been answered.
     ready: bool,
-    /// Requests written before it was.
     backlog: Vec<String>,
     waiting: HashMap<u64, Waiter>,
-    /// By Orden thread.
     routes: HashMap<String, Route>,
-    /// The Orden thread of each Codex thread.
     threads: HashMap<String, String>,
 }
 
-/// Where an Orden thread comes from: a copy of another's Codex thread, and the Orden thread
-/// whose `nib mcp` it is, for the helpers it starts.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct From<'a> {
     pub fork_of: Option<&'a str>,
     pub thread: Option<&'a str>,
-    /// The tools the Orden thread is not given, whatever its mode lists.
     pub without: &'a [String],
 }
 
-/// One running app-server.
 pub struct Host {
     running: Running,
     state: Arc<Mutex<State>>,
@@ -101,9 +62,6 @@ fn locked(state: &Mutex<State>) -> MutexGuard<'_, State> {
 }
 
 impl Host {
-    /// Starts `command` (`args::codex_server`), ended once nothing has been said for
-    /// `idle`, and introduces nib to it. `nib` is this app's program, which a thread with
-    /// tools runs as `nib mcp`; `folder` the empty folder Codex works in.
     pub fn start(
         command: Command,
         idle: Duration,
@@ -156,7 +114,6 @@ impl Host {
                         "title": "Orden",
                         "version": env!("CARGO_PKG_VERSION"),
                     },
-                    // The goal methods are behind it.
                     "capabilities": { "experimentalApi": true },
                 }),
             )
@@ -165,18 +122,14 @@ impl Host {
         Ok(host)
     }
 
-    /// Whether it is still running.
     pub fn alive(&self) -> bool {
         !self.ended.load(Ordering::SeqCst)
     }
 
-    /// Ends it, and every thread on it.
     pub fn stop(&self) {
         self.running.stop();
     }
 
-    /// An Orden thread, on a Codex thread of its own or, with `from.fork_of`, on a copy of
-    /// the Codex thread another Orden thread is on.
     pub fn open(
         &self,
         id: &str,
@@ -227,7 +180,6 @@ impl Host {
         )
     }
 
-    /// What the window said to one of its threads.
     pub fn say(&self, id: &str, say: Say) -> Result<(), String> {
         let mut state = locked(&self.state);
         let route = state
@@ -241,9 +193,6 @@ impl Host {
         say_now(&mut state, &self.running, id, say)
     }
 
-    /// An Orden thread let go of: its Codex thread is unsubscribed from, and the window
-    /// hears the end. The app-server stays for the window's other threads, and ends on
-    /// its own once nobody has said anything for its idle time.
     pub fn close(&self, id: &str) {
         let mut state = locked(&self.state);
         let Some(route) = state.routes.remove(id) else {
@@ -266,7 +215,6 @@ impl Host {
         }));
     }
 
-    /// The models this Codex offers, as `model/list` answers.
     pub fn models(&self, patience: Duration) -> Result<Value, String> {
         let (sent, answer) = mpsc::channel();
         {
@@ -289,7 +237,6 @@ fn request_line(id: u64, method: &str, params: &Value) -> String {
     json!({ "id": id, "method": method, "params": params }).to_string()
 }
 
-/// Writes a request, or holds it until `initialize` is answered.
 fn send(
     state: &mut State,
     running: &Running,
@@ -311,7 +258,6 @@ fn send(
     })
 }
 
-/// A message's words and pictures as the app-server's input items.
 fn input(text: &str, images: &[Image]) -> Value {
     let mut items: Vec<Value> = images
         .iter()
@@ -323,7 +269,6 @@ fn input(text: &str, images: &[Image]) -> Value {
     Value::Array(items)
 }
 
-/// What the window said, written as the one request it is.
 fn say_now(state: &mut State, running: &Running, id: &str, say: Say) -> Result<(), String> {
     let route = state
         .routes
@@ -411,16 +356,14 @@ fn say_now(state: &mut State, running: &Running, id: &str, say: Say) -> Result<(
     send(state, running, method, &params, waiter)
 }
 
-/// One line the app-server printed.
 fn heard_line(state: &Mutex<State>, running: &Running, line: &str) {
     let Ok(message) = serde_json::from_str::<Value>(line) else {
         return;
     };
     let method = message["method"].as_str();
-    let id = message["id"].as_u64().or_else(|| {
-        // A request of the server's may carry a string id.
-        message["id"].is_string().then_some(u64::MAX)
-    });
+    let id = message["id"]
+        .as_u64()
+        .or_else(|| message["id"].is_string().then_some(u64::MAX));
     let mut state = locked(state);
     match (method, id) {
         (Some(method), Some(_)) => {
@@ -447,13 +390,11 @@ fn heard_line(state: &Mutex<State>, running: &Running, line: &str) {
     }
 }
 
-/// The Orden thread a message's `threadId` names.
 fn nib_of(state: &State, params: &Value) -> Option<String> {
     let thread = params["threadId"].as_str()?;
     state.threads.get(thread).cloned()
 }
 
-/// A line, to the Orden thread it is about, or to all of them for one about none.
 fn route_line(state: &State, params: &Value, line: &str) {
     let message = || Message::Line {
         line: line.to_owned(),
@@ -469,7 +410,6 @@ fn route_line(state: &State, params: &Value, line: &str) {
     }
 }
 
-/// The answer to one of the crate's requests.
 fn answered(state: &mut State, running: &Running, id: u64, message: &Value) {
     let Some(waiter) = state.waiting.remove(&id) else {
         return;
@@ -509,7 +449,6 @@ fn answered(state: &mut State, running: &Running, id: u64, message: &Value) {
     }
 }
 
-/// An Orden thread's Codex thread started, or did not.
 fn started(state: &mut State, running: &Running, nib: &str, result: Value, error: Option<String>) {
     let thread = result["thread"]["id"].as_str().map(str::to_owned);
     let Some(thread) = thread.filter(|_| error.is_none()) else {
@@ -545,7 +484,6 @@ fn started(state: &mut State, running: &Running, nib: &str, result: Value, error
     }
 }
 
-/// The answer to a request of the app-server's: always no.
 fn refusal(id: &Value, method: &str) -> String {
     let result = match method {
         "item/commandExecution/requestApproval" | "item/fileChange/requestApproval" => {
@@ -567,7 +505,6 @@ fn refusal(id: &Value, method: &str) -> String {
     json!({ "id": id, "result": result }).to_string()
 }
 
-/// The app-server ended: every thread on it hears so, and whoever waits is told.
 fn ending(state: &Mutex<State>, ended: &Ended) {
     let mut state = locked(state);
     for (_, waiter) in state.waiting.drain() {

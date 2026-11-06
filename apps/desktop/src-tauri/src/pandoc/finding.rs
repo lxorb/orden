@@ -1,25 +1,6 @@
-//! Where pandoc is on a Mac.
-//!
-//! An app started from Finder or the Dock does not inherit the terminal's `PATH`:
-//! launchd hands it `/usr/bin:/bin:/usr/sbin:/sbin`, and pandoc is never in any of
-//! those. Homebrew puts it in `/opt/homebrew/bin` or `/usr/local/bin`, `MacPorts` in
-//! `/opt/local/bin`, pandoc's own installer in `/usr/local/bin`, and a Haskell or
-//! Nix setup somewhere of its own. So the same `pandoc` that works in a terminal
-//! was "not installed" to the app, and the export list shrank to what needs none.
-//!
-//! The answer is Typora's and VS Code's: look in the places a package manager
-//! puts it first, which is a handful of `stat` calls, and only when none of them
-//! holds it ask the reader's own login shell, once per launch, which knows every
-//! `PATH` line their shell files add. On the other platforms a launched app has
-//! the `PATH` its user set, and none of this runs.
-
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 
-/// Where a package manager on a Mac puts the programs it installs, in the order
-/// they are looked at: Homebrew on Apple silicon, then Homebrew on Intel and
-/// pandoc's own installer, then `MacPorts`, then a Nix profile shared by the
-/// machine.
 const WELL_KNOWN: &[&str] = &[
     "/opt/homebrew/bin",
     "/usr/local/bin",
@@ -28,12 +9,8 @@ const WELL_KNOWN: &[&str] = &[
     "/run/current-system/sw/bin",
 ];
 
-/// The same inside the reader's home: pip, pipx and a hand-built copy, then a
-/// Haskell install, then a Nix profile of their own.
 const IN_HOME: &[&str] = &[".local/bin", ".cabal/bin", ".ghcup/bin", ".nix-profile/bin"];
 
-/// Every folder pandoc is looked for in: the `PATH` the app was started with
-/// first, since that is where a terminal launch finds it, then the places above.
 pub fn folders(path: Option<&OsStr>, home: Option<&Path>) -> Vec<PathBuf> {
     let mut found: Vec<PathBuf> = path
         .map(|path| std::env::split_paths(path).collect())
@@ -47,7 +24,6 @@ pub fn folders(path: Option<&OsStr>, home: Option<&Path>) -> Vec<PathBuf> {
     found
 }
 
-/// The first `pandoc` among the folders that `runs` says is a program.
 pub fn first_in(folders: &[PathBuf], runs: impl Fn(&Path) -> bool) -> Option<PathBuf> {
     folders
         .iter()
@@ -55,12 +31,6 @@ pub fn first_in(folders: &[PathBuf], runs: impl Fn(&Path) -> bool) -> Option<Pat
         .find(|program| runs(program))
 }
 
-/// What a login shell said `command -v pandoc` was, out of everything it printed.
-///
-/// A shell started with `-i` reads the reader's shell files, and those can print
-/// anything - a greeting, a theme's warning, a reminder to update - so only the
-/// last line is the answer, and only if it is a path. `command -v` answers a bare
-/// word for an alias or a function, which is nothing a program can be started with.
 pub fn shell_answer(printed: &str) -> Option<PathBuf> {
     let last = printed
         .lines()
@@ -69,8 +39,6 @@ pub fn shell_answer(printed: &str) -> Option<PathBuf> {
     last.starts_with('/').then(|| PathBuf::from(last))
 }
 
-// A `PATH` is written with colons in every case below, which is a Mac's spelling and
-// not Windows', where none of this runs.
 #[cfg(all(test, unix))]
 mod tests {
     use super::{first_in, folders, shell_answer};

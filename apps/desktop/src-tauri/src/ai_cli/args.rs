@@ -1,53 +1,18 @@
-//! What each program is started with, and what it is told on the way, which the crate
-//! decides and the window never does.
-//!
-//! The window names a tool, a model, an effort, a mode and a thread, and sends words.
-//! Everything else on the command line, and every field of every message that sets a
-//! program up, is written here, so no page (Orden's own, or one that got hold of its
-//! bridge) can hand Claude Code or Codex a flag that lets it run a command, write a file
-//! or reach a server the reader set up for their own work.
-//!
-//! - **A question** (`ask`, Claude Code only) is answered in words: no tools at all
-//!   (`--tools ""`), none of the reader's MCP servers (`--strict-mcp-config` with none
-//!   given), nothing written to its session history, Orden's own one-line system prompt in
-//!   place of the coding agent's, and where the installed version knows `--safe-mode`,
-//!   the reader's hooks, plugins and `CLAUDE.md` left out while their sign-in and model
-//!   work as always.
-//! - **A session** (the AI sidebar's thread, docs/ai-sidebar.md 5.2) is the same promise
-//!   with one tool in it: Orden's own, `nib mcp`, under the sidebar's grant, listing only
-//!   what the thread's mode lists. Claude Code runs long-lived with turns on stdin as
-//!   stream-json, `--restricted` where it has it (the reader's settings files, hooks and
-//!   plugins left out) and the reader's `CLAUDE.md` files switched off by their own
-//!   variable. Not `--safe-mode`: measured on 2.1.280, it drops the `--mcp-config` server
-//!   too. Codex runs as `app-server` for every question, sidebar or not: read-only,
-//!   asking nobody, shell and web search off, none of the reader's MCP servers, no
-//!   `AGENTS.md`, and Orden's server added per thread on stdin (`codex_thread`).
-//!
-//! Which optional flags Claude Code has is read off its own `--help`, once per program
-//! per run of the app (`Caps`), so an older version is still asked rather than refused
-//! for a flag it has not heard of.
-
 use std::path::Path;
 
 use serde::Deserialize;
 use serde_json::{json, Value};
 
-/// What the sidebar's thread may do and how it is supervised: `ai_agent.rs` says, for
-/// both roads (docs/ai-sidebar.md 4.4).
 pub use crate::ai_agent::Mode;
 
-/// The two programs, as the window names them.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Tool {
-    /// Anthropic's Claude Code, `claude`.
     ClaudeCode,
-    /// The Codex CLI, `codex`.
     Codex,
 }
 
 impl Tool {
-    /// The program's name on a command line.
     pub fn command(self) -> &'static str {
         match self {
             Self::ClaudeCode => "claude",
@@ -56,17 +21,10 @@ impl Tool {
     }
 }
 
-/// What Claude Code is told in place of its own system prompt. One line with no quote,
-/// percent sign or line break, because on Windows an npm install is a `.cmd` file and
-/// every argument goes through `cmd.exe` on its way; the instructions that change with
-/// the question are in the question itself, on stdin. See `promptFor` in the app.
 pub const SYSTEM: &str = "You are the assistant inside Orden, a markdown notes app. \
 The message starts with the app's instructions for this request; follow them exactly. \
 You have no tools: answer in words only.";
 
-/// What a session of the sidebar's is told, by mode: one line each, kept to the
-/// characters `cmd.exe` passes through untouched, like `SYSTEM`. The space's own
-/// instructions and the reader's arrive in the first message, from the window.
 pub fn session_system(mode: Option<Mode>) -> &'static str {
     match mode {
         None => SYSTEM,
@@ -103,29 +61,19 @@ Reply in the language of the request, briefly, saying what you did."
     }
 }
 
-/// Orden's scale of effort, less `auto`, which is sent as nothing (docs/ai-sidebar.md 4.9).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Effort {
-    /// `none`, as `OpenAI` spells it.
     Off,
-    /// `minimal`.
     Minimal,
-    /// `low`.
     Low,
-    /// `medium`.
     Medium,
-    /// `high`.
     High,
-    /// `xhigh`, the chip's Extra.
     Xhigh,
-    /// `max`.
     Max,
 }
 
 impl Effort {
-    /// The level as a program spells it, or why it cannot be sent: Claude Code takes low
-    /// to max, Codex `none` to max.
     pub fn word(self, tool: Tool) -> Result<&'static str, String> {
         Ok(match (self, tool) {
             (Self::Off | Self::Minimal, Tool::ClaudeCode) => {
@@ -142,7 +90,6 @@ impl Effort {
     }
 }
 
-/// One row of `nib mcp`'s table, as far as a mode needs it.
 #[derive(Deserialize)]
 struct Row {
     name: String,
@@ -150,11 +97,6 @@ struct Row {
     annotations: Value,
 }
 
-/// The tools a mode lists and the ones it leaves out, by their names in `nib mcp`, from
-/// the one table the server lists them from (src/mcp/tools.json). What the grant does
-/// not reach the server leaves out on its own. `without` is what the thread is not given
-/// whatever its mode lists (a task done with AI, #325); a name the table does not have
-/// is no tool, and changes nothing.
 pub fn tools_of(mode: Mode, without: &[String]) -> (Vec<String>, Vec<String>) {
     let table: Vec<Row> =
         serde_json::from_str(include_str!("../mcp/tools.json")).unwrap_or_default();
@@ -166,39 +108,23 @@ pub fn tools_of(mode: Mode, without: &[String]) -> (Vec<String>, Vec<String>) {
     (names(listed), names(left))
 }
 
-/// The name a session's MCP server goes by in both programs, which Claude Code prefixes
-/// its tools with (`mcp__orden__read_note`). It was `nib` until the product was renamed
-/// Orden; a session is started fresh every time, so nothing kept names the old one.
 pub const SERVER: &str = "orden";
 
-/// The variable `nib mcp` reads the sidebar's token from (src/mcp/link.rs). Set on the
-/// program's own environment: Claude Code hands its environment to the servers it starts,
-/// and Codex is told to pass this one on (`env_vars`). Never on a command line.
 pub const TOKEN_VAR: &str = "NIB_MCP_TOKEN";
 
-/// The variable `nib mcp` reads which Orden thread a session is for, so a helper it starts
-/// is that thread's (src/mcp/link.rs). Not a secret: an id of the window's own.
 pub const THREAD_VAR: &str = "NIB_MCP_THREAD";
 
-/// A Codex thread's `nib mcp` told which Orden thread it is for: the server's own
-/// environment in the thread's config, sent on stdin like the rest of it.
 pub fn with_thread(params: &mut Value, thread: &str) {
     params["config"][format!("mcp_servers.{SERVER}.env")] = json!({ THREAD_VAR: thread });
 }
 
-/// How long either program waits for one Orden tool: ten minutes, since in Approve a call
-/// waits for the reader to approve it (src/mcp/link.rs).
 const TOOL_SECONDS: u64 = 600;
 
-/// What a Claude Code session's environment adds to the app's: the reader's `CLAUDE.md`
-/// files left unread, which `--restricted` does not do on its own, and the tool timeout.
 pub const CLAUDE_SESSION_ENV: [(&str, &str); 2] = [
     ("CLAUDE_CODE_DISABLE_CLAUDE_MDS", "1"),
     ("MCP_TOOL_TIMEOUT", "600000"),
 ];
 
-/// Claude Code's `--mcp-config`: `nib mcp` alone, by this app's own program. No token in
-/// it; see `TOKEN_VAR`.
 pub fn mcp_config(nib: &Path) -> Value {
     json!({
         "mcpServers": {
@@ -207,23 +133,14 @@ pub fn mcp_config(nib: &Path) -> Value {
     })
 }
 
-/// What a session is started as.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Shape<'a> {
-    /// The mode's tools; `None` is a session with no tool at all, for a question that
-    /// wants words.
     pub mode: Option<Mode>,
-    /// `None` is the program's own default.
     pub model: Option<&'a str>,
-    /// `None` is the model's own default.
     pub effort: Option<Effort>,
-    /// The tools the thread is not given, whatever its mode lists; see `tools_of`.
     pub without: &'a [String],
 }
 
-/// Whether a model name is one to pass on: a short run of the characters model names and
-/// aliases are made of (`opus`, `claude-opus-4-5`, `gpt-5.1-codex`, `sonnet[1m]`), never
-/// starting with a dash, so it can only ever be the value of `--model`.
 pub fn model_ok(model: &str) -> bool {
     !model.is_empty()
         && model.len() <= 100
@@ -233,7 +150,6 @@ pub fn model_ok(model: &str) -> bool {
         })
 }
 
-/// A model name, checked.
 pub fn checked_model(model: Option<&str>) -> Result<Option<&str>, String> {
     match model {
         Some(model) if !model_ok(model) => Err(format!("{model:?} is not a model name")),
@@ -241,14 +157,12 @@ pub fn checked_model(model: Option<&str>) -> Result<Option<&str>, String> {
     }
 }
 
-/// The optional flags a program's `--help` mentions.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Caps {
     flags: Vec<String>,
 }
 
 impl Caps {
-    /// Every `--flag` the help text names.
     pub fn from_help(help: &str) -> Self {
         let mut flags: Vec<String> = help
             .split(|one: char| !(one.is_ascii_alphanumeric() || one == '-'))
@@ -267,8 +181,6 @@ impl Caps {
     }
 }
 
-/// The flags every Claude Code run starts with: printed as stream-json, no tool of its
-/// own, none of the reader's MCP servers.
 fn claude_base(input: bool, partial: bool) -> Vec<String> {
     let mut args = vec!["-p".to_owned()];
     if input {
@@ -290,7 +202,6 @@ fn claude_base(input: bool, partial: bool) -> Vec<String> {
     args
 }
 
-/// The flags a program has that keep the reader's things out, where it has them.
 fn present(caps: &Caps, flags: &[&str]) -> Vec<String> {
     flags
         .iter()
@@ -299,9 +210,6 @@ fn present(caps: &Caps, flags: &[&str]) -> Vec<String> {
         .collect()
 }
 
-/// The command line one question runs with: Claude Code, words only. `model` is `None`
-/// for the program's own default, which is whatever the reader chose in it. Codex is
-/// asked through its app-server (`codex_server`), never here.
 pub fn ask(model: Option<&str>, caps: &Caps) -> Result<Vec<String>, String> {
     let model = checked_model(model)?;
     let mut args = claude_base(false, true);
@@ -316,8 +224,6 @@ pub fn ask(model: Option<&str>, caps: &Caps) -> Result<Vec<String>, String> {
     Ok(args)
 }
 
-/// Claude Code's command line for a session. `config` is the file `mcp_config` was
-/// written to, named only where the shape has a mode.
 pub fn claude_session(shape: Shape, caps: &Caps, config: &Path) -> Result<Vec<String>, String> {
     if !caps.has("--input-format") {
         return Err("out of date".to_owned());
@@ -349,12 +255,9 @@ pub fn claude_session(shape: Shape, caps: &Caps, config: &Path) -> Result<Vec<St
             },
         ]);
         if !left.is_empty() {
-            // Left out of what the model is shown, not only refused when called.
             args.extend(["--disallowedTools".to_owned(), named(&left)]);
         }
     }
-    // Anything not allowed above is refused without asking: nobody is there to ask, and
-    // Orden's own questions are asked at Orden's verbs.
     if caps.has("--permission-mode") {
         args.extend(["--permission-mode".to_owned(), "dontAsk".to_owned()]);
     }
@@ -375,8 +278,6 @@ pub fn claude_session(shape: Shape, caps: &Caps, config: &Path) -> Result<Vec<St
     Ok(args)
 }
 
-/// Claude Code asked for its model list and nothing else: no tool, no server, nothing of
-/// the reader's.
 pub fn claude_listing(caps: &Caps) -> Vec<String> {
     let mut args = claude_base(true, false);
     args.extend(["--system-prompt".to_owned(), SYSTEM.to_owned()]);
@@ -384,12 +285,6 @@ pub fn claude_listing(caps: &Caps) -> Vec<String> {
     args
 }
 
-/// Codex's app-server, with the reader's config overridden where it could reach past the
-/// answer: no shell, no web search, none of their MCP servers, no `AGENTS.md`, nothing in
-/// its history, read-only and asking nobody. A key an older Codex does not know is left
-/// alone by it, so both spellings of web search are given; and the strings are TOML's
-/// single-quoted kind, because on Windows an npm install is a `.cmd` file and a double
-/// quote has a meaning to `cmd.exe` on the way.
 pub fn codex_server() -> Vec<String> {
     let mut args = vec!["app-server".to_owned()];
     for setting in [
@@ -407,9 +302,6 @@ pub fn codex_server() -> Vec<String> {
     args
 }
 
-/// The parameters of `thread/start`: read-only, asking nobody, kept nowhere, its
-/// instructions Orden's, and for a mode `nib mcp` with the mode's tools. Sent on stdin, so
-/// nothing in it is on a command line.
 pub fn codex_thread(
     mode: Option<Mode>,
     model: Option<&str>,
@@ -444,8 +336,6 @@ pub fn codex_thread(
     params
 }
 
-/// What asks a program whether, and as whom, it is signed in: an answer it gives from
-/// its own files, which nib never opens.
 pub fn status(tool: Tool) -> &'static [&'static str] {
     match tool {
         Tool::ClaudeCode => &["auth", "status", "--json"],
@@ -453,7 +343,6 @@ pub fn status(tool: Tool) -> &'static [&'static str] {
     }
 }
 
-/// What signs a program out of the home it is started in: its own sign-out.
 pub fn logout(tool: Tool) -> &'static [&'static str] {
     match tool {
         Tool::ClaudeCode => &["auth", "logout"],
@@ -461,7 +350,6 @@ pub fn logout(tool: Tool) -> &'static [&'static str] {
     }
 }
 
-/// What lists Claude Code's flags.
 pub const HELP: [&str; 1] = ["--help"];
 
 #[cfg(test)]
@@ -564,9 +452,6 @@ mod tests {
         assert_eq!(value_of(&plan, "--permission-mode"), Some("dontAsk"));
         assert_eq!(value_of(&plan, "--input-format"), Some("stream-json"));
 
-        // The three permission modes list every Orden verb, allowed in advance, so Claude Code itself
-        // never prompts: what asks first, in Approve and Auto, is Orden, at its own verbs, for the
-        // token lent to that mode. Its own tools stay out, so no bypass is needed.
         for mode in [Mode::Approve, Mode::Auto, Mode::Full] {
             let all = claude_session(shape(mode), &caps, &config()).expect("all");
             assert_eq!(value_of(&all, "--allowedTools"), Some("mcp__orden"));
@@ -583,8 +468,6 @@ mod tests {
         assert!(!words.contains(&"--allowedTools".to_owned()));
     }
 
-    /// A task done with AI with some switches off (#325): those tools are left out of what
-    /// either program is shown, in every mode, as a mode leaves its own out.
     #[test]
     fn a_thread_s_tools_left_out_are_never_shown() {
         let caps = Caps::from_help(CLAUDE_HELP);
@@ -614,7 +497,6 @@ mod tests {
         assert!(enabled.contains(&"update_task"));
         assert!(!enabled.contains(&"browser_navigate") && !enabled.contains(&"write_note"));
 
-        // A name that is no tool changes nothing.
         let unknown = ["no_such_tool".to_owned()];
         assert_eq!(tools_of(Mode::Full, &unknown), tools_of(Mode::Full, &[]));
     }
@@ -696,10 +578,8 @@ mod tests {
         assert!(agent["config"]["mcp_servers.orden.enabled_tools"].is_null());
         let approve = codex_thread(Some(Mode::Approve), None, &[], &nib, &folder);
         assert!(approve["config"]["mcp_servers.orden.enabled_tools"].is_null());
-        // Codex asks nobody in any mode: Orden asks, at its verbs, in Approve.
         assert_eq!(approve["approvalPolicy"], "never");
         assert_eq!(agent["approvalPolicy"], "never");
-        // Auto too: the three permission modes are Orden's, never Codex's own sandbox.
         let auto = codex_thread(Some(Mode::Auto), None, &[], &nib, &folder);
         assert_eq!(auto["approvalPolicy"], "never");
         assert_eq!(auto["sandbox"], "read-only");
@@ -708,7 +588,6 @@ mod tests {
         let words = codex_thread(None, None, &[], &nib, &folder);
         assert_eq!(words["config"], json!({}));
 
-        // The Orden thread a session is for reaches its `nib mcp` alone, for its helpers.
         let mut helped = codex_thread(Some(Mode::Full), None, &[], &nib, &folder);
         with_thread(&mut helped, "nib-thread-1");
         assert_eq!(
