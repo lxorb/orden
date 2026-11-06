@@ -30,6 +30,9 @@ export const zhHans: Dictionary = {
   'Import from Zen': '从 Zen 导入',
   'Containers stay in Zen': '容器保留在 Zen 中',
   'Zen’s tabs could not be read.': '无法读取 Zen 的标签页。',
+  'Bring your bookmarks, tabs and history from another browser?':
+    '要从其他浏览器带来书签、标签页和历史记录吗？',
+  'No thanks': '不用了，谢谢',
   'Containers stay in Firefox': '容器保留在 Firefox 中',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} 使用 {engine} 搜索：在设置中选择它，即可在这里也用它搜索',

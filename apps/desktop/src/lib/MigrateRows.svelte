@@ -5,7 +5,7 @@
   import { t } from './i18n.svelte'
   import Icon from './Icon.svelte'
   import { brandIcon, type IconNode, readIcon } from './icons'
-  import type { BrowserId } from './import/browsers'
+  import { BROWSER_LOGOS, ZEN_LOGO } from './import/browsers'
   import { migrating } from './migrating.svelte'
   import { takingOver } from './web/taking-over.svelte'
   import { isDesktop, isMobile } from './tauri'
@@ -17,19 +17,6 @@
   const OBSIDIAN = 'Obsidian'
   const NOTION = 'Notion'
   const ZEN = 'Zen'
-
-  const BROWSER_LOGOS: Record<BrowserId, string | null> = {
-    safari: 'safari',
-    firefox: 'firefox',
-    chrome: 'googlechrome',
-    edge: 'microsoftedge',
-    brave: 'brave',
-    chromium: null,
-    vivaldi: 'vivaldi',
-    opera: 'opera',
-    'opera-gx': 'operagx',
-    arc: 'arc',
-  }
 
   const listed = $derived(migrating.browserProfiles?.[0]?.browser ?? null)
 
@@ -80,7 +67,7 @@
 {:else if migrating.profiles}
   {#each migrating.profiles as profile (profile.path)}
     <div class="nib-setting">
-      {@render mark('zenbrowser', Globe)}
+      {@render mark(ZEN_LOGO, Globe)}
       <span class="name" title={profile.path}>{profile.name}</span>
       <button
         class="nib-chip"
@@ -188,7 +175,7 @@
 
   {#if zen}
     <div class="nib-setting">
-      {@render mark('zenbrowser', Globe)}
+      {@render mark(ZEN_LOGO, Globe)}
       <span class="name">{ZEN}</span>
       <button
         class="nib-chip"

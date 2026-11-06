@@ -30,6 +30,9 @@ export const my: Dictionary = {
   'Import from Zen': 'Zen မှ သွင်းပါ',
   'Containers stay in Zen': 'ကွန်တိန်နာများ Zen တွင် ကျန်ရစ်သည်',
   'Zen’s tabs could not be read.': 'Zen ၏ တဘ်များကို ဖတ်၍ မရပါ။',
+  'Bring your bookmarks, tabs and history from another browser?':
+    'အခြားဘရောက်ဇာမှ သင့်စာညှပ်များ၊ တဘ်များနှင့် မှတ်တမ်းကို ယူလာမလား?',
+  'No thanks': 'မလိုပါ၊ ကျေးဇူးပါ',
   'Containers stay in Firefox': 'ကွန်တိန်နာများ Firefox တွင် ကျန်ရစ်သည်',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} သည် {engine} ဖြင့် ရှာသည်- ဤနေရာတွင်လည်း ၎င်းဖြင့် ရှာရန် ဆက်တင်များတွင် ရွေးပါ',

@@ -31,6 +31,9 @@ export const gsw: Dictionary = {
   'Import from Zen': 'Us Zen importiere',
   'Containers stay in Zen': 'D Container blibe im Zen',
   'Zen’s tabs could not be read.': 'D Tabs vo Zen hend nöd chöne gläse werde.',
+  'Bring your bookmarks, tabs and history from another browser?':
+    'Lesezeiche, Tabs und Verlauf us emne andere Browser mitnäh?',
+  'No thanks': 'Nei danke',
   'Containers stay in Firefox': 'D Container blibe im Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} suecht mit {engine}: Wähl s i de Iistellige, zum au do demit z sueche',

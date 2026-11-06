@@ -30,6 +30,9 @@ export const ko: Dictionary = {
   'Import from Zen': 'Zen에서 가져오기',
   'Containers stay in Zen': '컨테이너는 Zen에 남습니다',
   'Zen’s tabs could not be read.': 'Zen의 탭을 읽을 수 없습니다.',
+  'Bring your bookmarks, tabs and history from another browser?':
+    '다른 브라우저에서 북마크, 탭, 방문 기록을 가져올까요?',
+  'No thanks': '괜찮습니다',
   'Containers stay in Firefox': '컨테이너는 Firefox에 남습니다',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser}은(는) {engine}(으)로 검색합니다: 여기서도 쓰려면 설정에서 선택하세요',

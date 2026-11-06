@@ -31,6 +31,9 @@ export const ptBR: Dictionary = {
   'Import from Zen': 'Importar do Zen',
   'Containers stay in Zen': 'Os contêineres ficam no Zen',
   'Zen’s tabs could not be read.': 'Não foi possível ler as abas do Zen.',
+  'Bring your bookmarks, tabs and history from another browser?':
+    'Trazer seus favoritos, abas e histórico de outro navegador?',
+  'No thanks': 'Não, obrigado',
   'Containers stay in Firefox': 'Os contêineres ficam no Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     'O {browser} pesquisa com {engine}: escolha-o nos Ajustes para pesquisar com ele aqui também',

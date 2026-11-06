@@ -30,6 +30,9 @@ export const ja: Dictionary = {
   'Import from Zen': 'Zen から読み込む',
   'Containers stay in Zen': 'コンテナは Zen に残ります',
   'Zen’s tabs could not be read.': 'Zen のタブを読み込めませんでした。',
+  'Bring your bookmarks, tabs and history from another browser?':
+    '別のブラウザからブックマーク、タブ、履歴を取り込みますか？',
+  'No thanks': '結構です',
   'Containers stay in Firefox': 'コンテナは Firefox に残ります',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} は {engine} で検索します: ここでも使うには設定で選んでください',

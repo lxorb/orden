@@ -31,6 +31,9 @@ export const te: Dictionary = {
   'Import from Zen': 'Zen నుండి ఇంపోర్ట్ చేయి',
   'Containers stay in Zen': 'కంటైనర్‌లు Zen లోనే ఉంటాయి',
   'Zen’s tabs could not be read.': 'Zen ట్యాబ్‌లను చదవలేకపోయాము.',
+  'Bring your bookmarks, tabs and history from another browser?':
+    'వేరే బ్రౌజర్ నుండి మీ బుక్‌మార్క్‌లు, ట్యాబ్‌లు, చరిత్రను తీసుకురావాలా?',
+  'No thanks': 'వద్దు, ధన్యవాదాలు',
   'Containers stay in Firefox': 'కంటైనర్‌లు Firefox లోనే ఉంటాయి',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine}తో వెతుకుతుంది: ఇక్కడ కూడా దానితో వెతకడానికి సెట్టింగ్‌లలో దాన్ని ఎంచుకోండి',

@@ -31,6 +31,9 @@ export const tr: Dictionary = {
   'Import from Zen': 'Zen’den içe aktar',
   'Containers stay in Zen': 'Kapsayıcılar Zen’de kalır',
   'Zen’s tabs could not be read.': 'Zen’in sekmeleri okunamadı.',
+  'Bring your bookmarks, tabs and history from another browser?':
+    'Yer imlerinizi, sekmelerinizi ve geçmişinizi başka bir tarayıcıdan getirmek ister misiniz?',
+  'No thanks': 'Hayır, teşekkürler',
   'Containers stay in Firefox': 'Kapsayıcılar Firefox’ta kalır',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser}, {engine} ile arar: burada da onunla aramak için Ayarlar’dan seçin',

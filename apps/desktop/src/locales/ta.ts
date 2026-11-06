@@ -31,6 +31,9 @@ export const ta: Dictionary = {
   'Import from Zen': 'Zen-இலிருந்து இறக்குமதி செய்',
   'Containers stay in Zen': 'கண்டெய்னர்கள் Zen-இலேயே இருக்கும்',
   'Zen’s tabs could not be read.': 'Zen தாவல்களைப் படிக்க முடியவில்லை.',
+  'Bring your bookmarks, tabs and history from another browser?':
+    'வேறொரு உலாவியிலிருந்து உங்கள் புக்மார்க்குகள், தாவல்கள், வரலாற்றைக் கொண்டுவரவா?',
+  'No thanks': 'வேண்டாம், நன்றி',
   'Containers stay in Firefox': 'கண்டெய்னர்கள் Firefox-இலேயே இருக்கும்',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     '{browser} {engine} மூலம் தேடுகிறது: இங்கேயும் அதைக் கொண்டு தேட அமைப்புகளில் அதைத் தேர்வுசெய்யவும்',

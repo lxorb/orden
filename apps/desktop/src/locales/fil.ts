@@ -30,6 +30,9 @@ export const fil: Dictionary = {
   'Import from Zen': 'Mag-import mula sa Zen',
   'Containers stay in Zen': 'Nananatili sa Zen ang mga container',
   'Zen’s tabs could not be read.': 'Hindi mabasa ang mga tab ng Zen.',
+  'Bring your bookmarks, tabs and history from another browser?':
+    'Dalhin ang iyong mga bookmark, tab at history mula sa ibang browser?',
+  'No thanks': 'Hindi, salamat',
   'Containers stay in Firefox': 'Nananatili sa Firefox ang mga container',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     'Naghahanap ang {browser} gamit ang {engine}: piliin ito sa Settings para maghanap gamit ito dito rin',

@@ -30,6 +30,9 @@ export const ar: Dictionary = {
   'Import from Zen': 'استيراد من Zen',
   'Containers stay in Zen': 'تبقى الحاويات في Zen',
   'Zen’s tabs could not be read.': 'تعذّرت قراءة علامات تبويب Zen.',
+  'Bring your bookmarks, tabs and history from another browser?':
+    'هل تريد جلب الإشارات المرجعية وعلامات التبويب والسجل من متصفح آخر؟',
+  'No thanks': 'لا، شكرًا',
   'Containers stay in Firefox': 'تبقى الحاويات في Firefox',
   '{browser} searches with {engine}: choose it in Settings to search with it here':
     'يبحث {browser} باستخدام {engine}: اختره في الإعدادات للبحث به هنا أيضًا',

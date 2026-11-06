@@ -26,6 +26,21 @@ export const BROWSER_NAMES: Record<BrowserId, string> = {
   arc: 'Arc',
 }
 
+export const BROWSER_LOGOS: Record<BrowserId, string | null> = {
+  safari: 'safari',
+  firefox: 'firefox',
+  chrome: 'googlechrome',
+  edge: 'microsoftedge',
+  brave: 'brave',
+  chromium: null,
+  vivaldi: 'vivaldi',
+  opera: 'opera',
+  'opera-gx': 'operagx',
+  arc: 'arc',
+}
+
+export const ZEN_LOGO = 'zenbrowser'
+
 export interface BrowserProfile {
   browser: BrowserId
   name: string
