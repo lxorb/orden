@@ -1027,4 +1027,19 @@ describe('a canvas holding another app’s things', () => {
     expect(readCanvas(blankCanvas()).extras).toBeUndefined()
     expect('extras' in readCanvas(writeCanvas(readCanvas(VAULT)))).toBe(true)
   })
+
+  test('writes a line to a card the file lacks as nothing, and adds no empty block of its own', () => {
+    const text = JSON.stringify(
+      {
+        nodes: [{ id: 'a', type: 'text', text: 'a', x: 0, y: 0, width: 200, height: 60 }],
+        edges: [{ id: 'e', fromNode: 'a', toNode: 'gone' }],
+      },
+      null,
+      '\t',
+    )
+
+    const back = JSON.parse(writeCanvas(readCanvas(text))) as Record<string, unknown>
+    expect(back.edges).toEqual([])
+    expect('nib' in back).toBe(false)
+  })
 })
