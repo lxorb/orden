@@ -184,6 +184,9 @@ export const unfoldEverything: StateCommand = (target) => {
   return true
 }
 
+export const cycleAllFolds: StateCommand = (target) =>
+  unfoldEverything(target) || foldHeadings(target)
+
 export function foldLines(state: EditorState): FoldLines[] {
   const out: FoldLines[] = []
   foldedRanges(state).between(0, state.doc.length, (from, to) => {
