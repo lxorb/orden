@@ -1,8 +1,3 @@
-/** The one socket a device keeps to its account's hub, against a socket, a channel and
- *  a clock that are stood in for: what it says as it opens, the beat, what it hands to
- *  whoever listens, coming back after a drop and not after an ending, and one socket for
- *  every window, the others speaking through it. */
-
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { BEAT_EVERY } from '../backoff'
 import { Hub, type HubWorld, type SocketEvents } from './hub.svelte'
@@ -18,9 +13,7 @@ interface Opened {
 
 let sockets: Opened[]
 let ticks: (() => void)[]
-/** What every window's channel hears, in the order it was said. */
 let bus: ((message: unknown) => void)[]
-/** Who is waiting for the lock, first first. */
 let line: (() => void)[]
 
 function world(overrides: Partial<HubWorld> = {}): HubWorld {
@@ -54,7 +47,6 @@ function world(overrides: Partial<HubWorld> = {}): HubWorld {
   }
 }
 
-/** Opens the last socket asked for and lets `hello` go. */
 async function open(): Promise<Opened> {
   await vi.advanceTimersByTimeAsync(0)
   const socket = sockets.at(-1)
@@ -103,7 +95,6 @@ describe('a device’s hub socket', () => {
     for (const tick of ticks) tick()
     expect(socket.said.at(-1)).toBe('beat')
     expect(ticks).toHaveLength(1)
-    // What the interval is, beside it: three may be missed before the hub gives up.
     expect(BEAT_EVERY * 3).toBeLessThanOrEqual(30_000)
   })
 
@@ -160,7 +151,6 @@ describe('a device’s hub socket', () => {
     await vi.advanceTimersByTimeAsync(60_000)
     expect(sockets).toHaveLength(1)
 
-    // A new session is what brings it back.
     hub.follow('token-2')
     await open()
     expect(sockets).toHaveLength(2)
@@ -179,7 +169,6 @@ describe('a device’s hub socket', () => {
 })
 
 describe('two windows', () => {
-  /** A channel every window shares, and a lock only the first of them gets. */
   function windowed(): HubWorld {
     return world({
       channel: (heard) => {
@@ -224,7 +213,6 @@ describe('two windows', () => {
     second.follow('token-1')
     await open()
 
-    // The first window closed: the lock is the next one's.
     line[1]?.()
     await open()
     expect(sockets).toHaveLength(2)

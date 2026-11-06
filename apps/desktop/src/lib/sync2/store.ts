@@ -1,21 +1,5 @@
-/** The device's sync store, as the engine sees it: one typed interface over SQLite on a
- *  desktop and a phone (src-tauri/src/sync_store.rs) and IndexedDB in a browser
- *  (web/sync-store.ts). The engine imports this and nothing else.
- *
- *  The tables are docs/sync-v2.md section 9.2, column for column and under the same
- *  names, so a row reads the same in the spec, in SQL and here. A pass is a handful of
- *  calls rather than one per note: `read` answers a list of questions from one snapshot
- *  and `write` applies a list of changes all or nothing.
- *
- *  Everything read back is checked against `TABLES` before the engine sees it, whichever
- *  store it came from: a row is unknown until it has been looked at (docs/conventions.md,
- *  "Types"). `TABLES` is the same list the crate holds in sync_store/tables.rs, and
- *  store.test.ts holds both to what the migration actually makes. */
-
 import { isNative } from '../tauri'
 
-/** A value a `meta` row may hold: the device id and the schema are text and numbers,
- *  and anything else the engine keeps there is one of the same or bytes. */
 type MetaValue = string | number | Uint8Array | null
 
 export interface MetaRow {
@@ -23,8 +7,6 @@ export interface MetaRow {
   value: MetaValue
 }
 
-/** A space this device holds: where it is on disk, the feed cursor, this device's role
- *  in it and the web store its pages use. */
 export interface SpaceRow {
   space_id: string
   root: string
@@ -33,17 +15,13 @@ export interface SpaceRow {
   store: string | null
 }
 
-/** One entry of a space's tree, by the account's id, and where it is on this disk. */
 export interface EntryRow {
   id: string
   space_id: string
   kind: string
   parent: string | null
   name: string
-  /** The name on this disk, which is the account's name unless this platform cannot
-   *  hold it (section 5.9). */
   local_path: string
-  /** The file's identity on this disk; see `fileIdentity` in space-watch.ts. */
   file_key: string | null
   written_hash: string | null
   mtime: number | null
@@ -52,14 +30,11 @@ export interface EntryRow {
   deleted: boolean
 }
 
-/** What Orden last wrote to a note: the ancestor of every three-way merge with another
- *  program's edit (section 5.5). */
 export interface WrittenRow {
   id: string
   text: string
 }
 
-/** A document: what the account confirmed, and what this device has not sent. */
 export interface DocRow {
   id: string
   epoch: number
@@ -70,7 +45,6 @@ export interface DocRow {
   pending_at: number | null
 }
 
-/** A tree op waiting to go up. */
 export interface OutboxRow {
   op_id: string
   space_id: string
@@ -79,8 +53,6 @@ export interface OutboxRow {
   made_at: number
 }
 
-/** A note held for the question: what the account had when this device's edits
- *  diverged from it. */
 export interface HeldRow {
   id: string
   remote: Uint8Array
@@ -89,14 +61,11 @@ export interface HeldRow {
   at: number
 }
 
-/** Where a blob is: here, wanted, or on its way up. */
 export interface FileStateRow {
   hash: string
   state: string
 }
 
-/** A web lease this device had seen. Nothing writes it since web logins stopped
- *  travelling (#393); the table stays until a migration takes it away. */
 export interface WebRow {
   key: string
   fence: number | null
@@ -104,8 +73,6 @@ export interface WebRow {
   applied: number | null
 }
 
-/** One pass, for a person reading why sync did what it did. The store keeps the newest
- *  thousand. */
 export interface LogRow {
   at: number
   space: string | null
@@ -114,7 +81,6 @@ export interface LogRow {
   failed: string | null
 }
 
-/** Every table, by name, and the row it holds. */
 export interface Rows {
   meta: MetaRow
   spaces: SpaceRow
@@ -130,13 +96,10 @@ export interface Rows {
 
 export type TableName = keyof Rows
 
-/** The tables a row can be found in by its key: all but the log. */
 export type KeyedTable = Exclude<TableName, 'log'>
 
-/** The tables whose rows belong to a space, which a scan and a clear can be narrowed to. */
 export type SpacedTable = 'entries' | 'outbox' | 'log'
 
-/** Each keyed table's key column. */
 interface Keys {
   meta: 'key'
   spaces: 'space_id'
@@ -149,8 +112,6 @@ interface Keys {
   web: 'key'
 }
 
-/** What a column holds. `packed` is text the SQLite store compresses on its way to the
- *  disk; to everybody else it is text. */
 type Kind = 'text' | 'integer' | 'bool' | 'blob' | 'packed' | 'any'
 
 interface Column {
@@ -160,9 +121,7 @@ interface Column {
 }
 
 export interface TableSpec {
-  /** The column a row is found by; null for the log. */
   key: string | null
-  /** The column that says which space a row belongs to, where there is one. */
   space: string | null
   columns: readonly Column[]
 }
@@ -170,7 +129,6 @@ export interface TableSpec {
 const maybe = (name: string, kind: Kind): Column => ({ name, kind, required: false })
 const always = (name: string, kind: Kind): Column => ({ name, kind, required: true })
 
-/** Every table, as schema 1 made it. */
 export const TABLES: Readonly<Record<TableName, TableSpec>> = {
   meta: { key: 'key', space: null, columns: [always('key', 'text'), maybe('value', 'any')] },
   spaces: {
@@ -262,21 +220,14 @@ export const TABLES: Readonly<Record<TableName, TableSpec>> = {
   },
 }
 
-/** How many rows of the log a store keeps. */
 export const LOG_ROWS = 1000
 
-// ---------------------------------------------------------------------------
-// Questions and changes
-
-/** One row by its key, answered with the row or null. */
 export interface Get<T extends KeyedTable = KeyedTable> {
   t: 'get'
   table: T
   key: string
 }
 
-/** Every row of a table, or of one space in it, in the table's order: by key, the
- *  outbox oldest first, the log as it was written. */
 export interface Scan<T extends TableName = TableName> {
   t: 'scan'
   table: T
@@ -286,11 +237,9 @@ export interface Scan<T extends TableName = TableName> {
 export type Query =
   { [T in KeyedTable]: Get<T> }[KeyedTable] | { [T in TableName]: Scan<T> }[TableName]
 
-/** What one question is answered with. */
 export type Answer<Q> =
   Q extends Get<infer T> ? Rows[T] | null : Q extends Scan<infer T> ? Rows[T][] : never
 
-/** What a list of questions is answered with, answer for question. */
 export type Answers<Q extends readonly Query[]> = { -readonly [I in keyof Q]: Answer<Q[I]> }
 
 export const get = <T extends KeyedTable>(table: T, key: string): Get<T> => ({
@@ -307,16 +256,12 @@ export const scanSpace = <T extends SpacedTable>(table: T, space: string): Scan<
   space,
 })
 
-/** A whole row, over whatever had its key. A log row is added. */
 export interface Put<T extends TableName = TableName> {
   t: 'put'
   table: T
   row: Rows[T]
 }
 
-/** Some columns of a row that is already there, never its key: what lets the pending
- *  half of a document be written without the confirmed half. Counts 0 when there is no
- *  such row. */
 export interface Patch<T extends KeyedTable = KeyedTable> {
   t: 'patch'
   table: T
@@ -330,7 +275,6 @@ export interface Delete {
   key: string
 }
 
-/** Every row of one space in a table that has spaces. */
 export interface Clear {
   t: 'clear'
   table: SpacedTable
@@ -359,31 +303,17 @@ export const remove = (table: KeyedTable, key: string): Delete => ({ t: 'delete'
 
 export const clear = (table: SpacedTable, space: string): Clear => ({ t: 'clear', table, space })
 
-// ---------------------------------------------------------------------------
-// The store
-
-/** What opening a store found. */
 export interface Opened {
-  /** This device's id, made the first time and kept for the store's life. */
   device: string
-  /** Whether the session before this one said it ended cleanly. False after a crash,
-   *  which is when every document's client id is rotated (section 5.2). */
   wasClean: boolean
   schema: number
-  /** Whether the store could not be read and was made again empty; the engine then
-   *  rebuilds from the account and the files. */
   recovered: boolean
 }
 
 export interface SyncStore {
   readonly opened: Opened
-  /** Answers every question, in order, from one snapshot. */
   read<const Q extends readonly Query[]>(queries: Q): Promise<Answers<Q>>
-  /** Applies every change in one transaction and answers how many rows each touched.
-   *  One refusal and nothing of the batch is written. */
   write(changes: readonly Change[]): Promise<number[]>
-  /** Says whether this session is ending cleanly: true once everything the engine held
-   *  is written, as the app quits. Opening sets it false again. */
   cleanExit(clean: boolean): Promise<void>
   close(): Promise<void>
 }
@@ -410,7 +340,6 @@ export async function deviceOfSyncStore(account: string): Promise<string | null>
   return deviceWeb(account)
 }
 
-/** Deletes an account's store, as signing out does. */
 export async function forgetSyncStore(account: string): Promise<void> {
   if (isNative) {
     const { forgetNative } = await import('../native-sync-store')
@@ -420,25 +349,17 @@ export async function forgetSyncStore(account: string): Promise<void> {
   return forgetWeb(account)
 }
 
-// ---------------------------------------------------------------------------
-// Checks, the same in both directions and both stores
-
-/** Why a store refused, or why what it answered could not be read. */
 export class StoreError extends Error {
   override name = 'StoreError'
 }
 
-/** A table the store has, or the refusal. */
 function tableNamed(name: string): TableSpec {
   if (!(name in TABLES)) throw new StoreError(`the sync store has no table ${name}`)
-  // Asked of TABLES on the line above, which is every name `TableName` has.
   return TABLES[name as TableName]
 }
 
-/** The largest whole number both stores keep exactly. */
 const fits = (value: unknown): value is number => Number.isSafeInteger(value)
 
-/** Whether a value is what a column holds; null is judged by `required` instead. */
 function holds(kind: Kind, value: unknown): boolean {
   switch (kind) {
     case 'text':
@@ -455,7 +376,6 @@ function holds(kind: Kind, value: unknown): boolean {
   }
 }
 
-/** One value for one column, or the sentence that says why not. */
 function checked(table: string, column: Column, value: unknown): unknown {
   if (value === null || value === undefined) {
     if (column.required) throw new StoreError(`${table}.${column.name} may not be empty`)
@@ -474,8 +394,6 @@ function describe(value: unknown): string {
   return typeof value
 }
 
-/** A row as a table keeps it: every column, each checked, and nothing else. What both
- *  stores run every row they write through, and every row they read back. */
 export function rowOf<T extends TableName>(table: T, value: unknown): Rows[T] {
   if (typeof value !== 'object' || value === null) {
     throw new StoreError(`a ${table} row is not an object`)
@@ -490,11 +408,9 @@ export function rowOf<T extends TableName>(table: T, value: unknown): Rows[T] {
 
   const row: Record<string, unknown> = {}
   for (const column of spec.columns) row[column.name] = checked(table, column, given[column.name])
-  // Checked column by column against TABLES, which is `Rows` spelled as values.
   return row as unknown as Rows[T]
 }
 
-/** The columns a patch sets, each checked, and never the key. */
 export function patchOf(table: KeyedTable, set: unknown): Record<string, unknown> {
   if (typeof set !== 'object' || set === null) {
     throw new StoreError(`a patch of ${table} is not an object`)
@@ -513,7 +429,6 @@ export function patchOf(table: KeyedTable, set: unknown): Record<string, unknown
   return out
 }
 
-/** A change, checked whole before anything is written. */
 export function changeOf(change: Change): Change {
   const spec = tableNamed(change.table)
   switch (change.t) {
@@ -532,7 +447,6 @@ export function changeOf(change: Change): Change {
   }
 }
 
-/** A question, checked. */
 export function queryOf(query: Query): Query {
   const spec = tableNamed(query.table)
   if (query.t === 'get' && spec.key === null) {
@@ -544,7 +458,6 @@ export function queryOf(query: Query): Query {
   return query
 }
 
-/** One answer, checked against the question it answers. */
 export function answerOf<Q extends Query>(query: Q, value: unknown): Answer<Q> {
   if (query.t === 'get') {
     return (value === null || value === undefined ? null : rowOf(query.table, value)) as Answer<Q>
@@ -553,7 +466,6 @@ export function answerOf<Q extends Query>(query: Q, value: unknown): Answer<Q> {
   return value.map((row) => rowOf(query.table, row)) as Answer<Q>
 }
 
-/** What a store says it opened, checked. */
 export function openedOf(value: unknown): Opened {
   const said = (typeof value === 'object' && value !== null ? value : {}) as Record<string, unknown>
   const { device, wasClean, schema, recovered } = said
@@ -568,7 +480,6 @@ export function openedOf(value: unknown): Opened {
   return { device, wasClean, schema, recovered }
 }
 
-/** How many rows each change touched, checked. */
 export function countsOf(value: unknown, changes: number): number[] {
   if (!Array.isArray(value) || value.length !== changes || !value.every(fits)) {
     throw new StoreError('the sync store answered an odd count')

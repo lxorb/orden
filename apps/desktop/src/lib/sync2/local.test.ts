@@ -6,10 +6,6 @@ import { MemoryDisk } from './memory-disk'
 import { MemoryStore } from './memory-store'
 import type { World } from './world'
 
-/** A space used signed out (#1068, step 4b): the engine runs with no account behind it,
- *  so every folder, note and file has an id from the start, and the tree is the same
- *  operations on ids, applied here. */
-
 const ROOT = '/device/space'
 
 interface Here {
@@ -182,7 +178,6 @@ describe('a space used signed out', () => {
     await here.engine.pass(here.space)
     const work = spaceOf(here).at('Work')?.id ?? ''
 
-    // A note whose folder the tree does not hold: its making is refused as `gone`.
     await here.disk.write(`${ROOT}/Work/Idea.md`, 'words')
     const made = (await here.engine.created(`${ROOT}/Work/Idea.md`, false, 'words')) ?? ''
     const space = spaceOf(here)
@@ -226,8 +221,6 @@ describe('a space used signed out', () => {
     const notes = space.at('Work/Notes.md')?.id ?? ''
     expect(space.at('Work/Notes.md')?.parent).toBe(work)
 
-    // Back to the account they came from, every id goes; to another, only what was made
-    // here, since a space there may not make anything under an id another space made.
     const same = JSON.parse(
       (await carriedIds(here.engine.core.store, isLocal, 'u1')).get(ROOT) ?? '{}',
     )

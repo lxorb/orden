@@ -1,16 +1,3 @@
-/** Everything the engine holds, in memory and in the store, and the one way it is
- *  written down.
- *
- *  What is read at start is small: every space's tree, the outbox, the held notes and
- *  every document's numbers (records.ts). A document's bytes are read when something
- *  needs them - a note opened, a pass settling it - and let go again once written, so
- *  memory holds the open notes and whatever one step of a pass is working on.
- *
- *  Every write goes through `commit`, one after another in the order they were asked
- *  for, each all or nothing. The steps of a pass commit what they learned before the
- *  next request goes out, so a crash at any await loses nothing a step had finished:
- *  the simulator crashes devices at exactly those moments. */
-
 import type { Times } from '@orden/sync-core/diverge'
 import { Doc } from './docs'
 import { holdsDocument, shapeOf, type Shape } from './kinds'
@@ -53,13 +40,8 @@ import {
 } from './store'
 import type { World } from './world'
 
-/** Which run of the clients this is: bumped by every launch after an unclean exit, and
- *  kept beside each document's numbers, so a document first touched after a crash takes
- *  a new client id before anything is typed under the old one (section 5.2). */
 const CLIENTS = 'clients'
 
-/** Classified merges, for the simulator's check that the modal was asked exactly when
- *  `diverge` says so. */
 export interface Classification {
   id: string
   base: string
@@ -70,78 +52,47 @@ export interface Classification {
   held: boolean
 }
 
-/** A held note, with the texts the modal draws and the answers act on. */
 export interface Holding {
   row: HeldRow
   against: Against
 }
 
-/** Events the engine says out loud. */
 export interface CoreEvents {
   resurrected: (event: { id: string; name: string; device: string }) => void
   held: () => void
-  /** A file whose words its entry's kind cannot hold, kept on this device; see
-   *  `unsynced` in ingest.ts. */
   unsynced: (event: { id: string; name: string }) => void
   file: (event: { id: string; text: string }) => void
 }
 
 export class Core {
   readonly spaces = new Map<string, SpaceState>()
-  /** Every document's numbers, by id: which have something pending, where each is. */
   readonly numbers = new Map<string, DocNumbers>()
-  /** Which run of the clients each document's id was chosen in. */
   private readonly generations = new Map<string, number>()
   private generation = 0
-  /** Documents whose bytes are in memory. */
   readonly docs = new Map<string, Doc>()
-  /** Documents something outside is holding open: a tab, a room. They stay live. */
   readonly pinned = new Set<string>()
   readonly held = new Map<string, Holding>()
-  /** Per space, the documents the feed says have words this device has not pulled. */
   readonly wants = new Map<string, Map<string, Wanted>>()
-  /** The device that last changed each entry, as the feed said: the other side of a
-   *  held note, and who brought back a note this device deleted. Memory only. */
   readonly by = new Map<string, string>()
-  /** Documents a live room's socket carries: a pass leaves them to it. */
   readonly carried = new Set<string>()
-  /** Documents whose words were asked for here - opened, or about to be - where this
-   *  device keeps only the words it uses (keeping.ts). Memory only. */
   readonly asked = new Set<string>()
   crowded = false
-  /** The newest epoch the account has said each document is on: a room is joined only by
-   *  a document on it, since operations of two epochs cannot be merged. */
   readonly epochs = new Map<string, number>()
   readonly classified: Classification[] = []
-  /** Files that are not documents which another program may have changed since they
-   *  were last read: what the next pass hashes (files.ts). Memory only - the launch
-   *  scan says them again. */
   readonly touched = new Set<string>()
   readonly stampWaiting = new Map<string, { mtime: number; size: number }>()
   readonly unreadFor = new Map<string, number>()
-  /** Files whose bytes the account last refused, which, when, and whether for want of room:
-   *  they wait a while before going again (files.ts). Memory only. */
   readonly refusedBytes = new Map<string, { at: number; hash: string; full: boolean }>()
   readonly events: Partial<CoreEvents> = {}
-  /** Entries whose files the app is moving or deleting itself this moment, by id, and
-   *  the paths on this disk it is doing it at (`moving` in engine.ts): a pass leaves
-   *  the files to it, and the folder's watcher hears nothing there that needs reading.
-   *  Memory only: nothing is in hand across a launch. */
   readonly inHand = new Map<string, number>()
   readonly handPaths: string[] = []
-  /** Which files' words were kept because their entry's kind cannot hold them, by id
-   *  and digest, and which entries the reader was told about; see `unsynced` in
-   *  ingest.ts. */
   readonly unsyncedKept = new Set<string>()
   readonly unsyncedTold = new Set<string>()
   readonly unwrittenFor = new Map<string, number>()
-  /** Bumped when the engine stops, so work still in the air can tell it is too late. */
   life = 0
   private writing: Promise<unknown> = Promise.resolve()
-  /** The last write the store refused, kept for the next one. */
   private refused: Change[] = []
   private counter = 0
-  /** The newest outbox row's `made_at`: each new row is stamped after it (`outgoing`). */
   private lastMade = 0
 
   private constructor(
@@ -153,7 +104,6 @@ export class Core {
     return this.store.opened.device
   }
 
-  /** Everything small, read from the store. */
   static async open(world: World, store: SyncStore): Promise<Core> {
     const core = new Core(world, store)
     const [spaces, entries, outbox, meta, held] = await store.read([
@@ -218,9 +168,6 @@ export class Core {
     return core
   }
 
-  /** Writes changes down, in order, all or nothing each. What the store refused - a full
-   *  disk, a browser over its quota - goes in front of the next write, so a refusal
-   *  loses nothing a later write can carry (road 7 of section 1). */
   commit(changes: readonly Change[]): Promise<void> {
     if (!changes.length && !this.refused.length) return this.writing.then(() => undefined)
     const next = this.writing.then(async () => {
@@ -252,35 +199,26 @@ export class Core {
     return next
   }
 
-  /** A number that has never been handed out on this device: op and push ids. Kept in
-   *  the store with the next write that carries one. */
   nextId(prefix: string): string {
     this.counter += 1
     const random = Math.floor(this.world.random() * 2 ** 32).toString(36)
     return `${this.device}.${prefix}${this.counter.toString(36)}.${random}`
   }
 
-  /** The counter's row, for a write that carries a new id. */
   counterRow(): Change {
     return put('meta', { key: COUNTER, value: this.counter })
   }
 
-  /** A client id for a document: a random 32-bit number that is not nought. */
   freshClient(): number {
     return (Math.floor(this.world.random() * 0xffffffff) >>> 0) + 1
   }
 
-  // -------------------------------------------------------------------------
-  // Spaces and entries
-
-  /** A space this device starts keeping, from the top of its feed. */
   addSpace(spaceId: string, root: string, role: string | null): Change[] {
     const row = { space_id: spaceId, root, cursor: 0, role, store: null }
     this.spaces.set(spaceId, new SpaceState(row, [], [], this.device, this.world))
     return [put('spaces', row)]
   }
 
-  /** A space let go of: its tree, its outbox, its documents and what was held of it. */
   forgetSpace(spaceId: string): Change[] {
     const space = this.spaces.get(spaceId)
     if (!space) return []
@@ -303,7 +241,6 @@ export class Core {
     return changes
   }
 
-  /** A space whose folder moved: the same space, under its new root. */
   rootMoved(spaceId: string, root: string): Change[] {
     const space = this.spaces.get(spaceId)
     if (!space) return []
@@ -311,7 +248,6 @@ export class Core {
     return [put('spaces', { ...space.row })]
   }
 
-  /** The space an entry is in. */
   spaceOf(id: string): SpaceState | null {
     for (const space of this.spaces.values()) if (space.entries.has(id)) return space
     return null
@@ -326,16 +262,12 @@ export class Core {
     return entry ? shapeOf(entry.kind) : null
   }
 
-  /** The row changes for entries. */
   entryChanges(rows: Iterable<EntryRow>): Change[] {
     return [...rows].map((row) => put('entries', { ...row }))
   }
 
-  /** How many times where an entry stands among the rest of its folder has changed,
-   *  here or on the account: what the file list redraws a hand-arranged folder by. */
   reorders = 0
 
-  /** The space's places written down, where they changed since they last were. */
   orderChanges(space: SpaceState): Change[] {
     if (!space.repositioned) return []
     space.repositioned = false
@@ -343,7 +275,6 @@ export class Core {
     return [put('meta', orderingRow(space.id, space.ordering))]
   }
 
-  /** The documents of a space still to pull. */
   wanted(space: string): Map<string, Wanted> {
     let wanted = this.wants.get(space)
     if (!wanted) {
@@ -357,16 +288,10 @@ export class Core {
     return put('meta', wantedRow(space, this.wanted(space)))
   }
 
-  // -------------------------------------------------------------------------
-  // Documents
-
-  /** Whether this device holds words for a document. */
   hasDoc(id: string): boolean {
     return this.docs.has(id) || this.numbers.has(id)
   }
 
-  /** A document's bytes, read from the store the first time. Null when this device has
-   *  none. */
   async doc(id: string): Promise<Doc | null> {
     const held = this.docs.get(id)
     if (held) return held
@@ -374,7 +299,6 @@ export class Core {
     const shape = this.shapeOfEntry(id) ?? 'words'
     if (!numbers) return null
     const [row] = await this.store.read([get('docs', id)])
-    // Read while another step made or dropped it.
     const again = this.docs.get(id)
     if (again) return again
     if (!row) return null
@@ -383,7 +307,6 @@ export class Core {
     return doc
   }
 
-  /** A document this device has just made, or taken from the account. */
   made(id: string, shape: Shape, epoch: number, confirmed?: Uint8Array, seq = 0): Doc {
     const doc = Doc.fresh(
       id,
@@ -402,15 +325,12 @@ export class Core {
   private adopt(doc: Doc) {
     this.docs.set(doc.id, doc)
     this.numbers.set(doc.id, doc.numbers())
-    // A document first touched since an unclean exit takes a new id before anything
-    // is made under the old one.
     if ((this.generations.get(doc.id) ?? 0) < this.generation) {
       doc.rotate(this.freshClient())
       this.generations.set(doc.id, this.generation)
     }
   }
 
-  /** What writing a document down changes: its row, its numbers, its generation. */
   docChanges(doc: Doc): Change[] {
     doc.dirty = false
     this.numbers.set(doc.id, doc.numbers())
@@ -421,14 +341,12 @@ export class Core {
     ]
   }
 
-  /** Every document that changed since it was last written, as changes. */
   dirtyChanges(): Change[] {
     const out: Change[] = []
     for (const doc of this.docs.values()) if (doc.dirty) out.push(...this.docChanges(doc))
     return out
   }
 
-  /** A document this device will not hear of again, gone from memory and the store. */
   forgetChanges(id: string): Change[] {
     this.docs.get(id)?.close()
     this.docs.delete(id)
@@ -443,20 +361,14 @@ export class Core {
     ]
   }
 
-  /** Whether a document holds words the account has not acknowledged. */
   hasPending(id: string): boolean {
     const doc = this.docs.get(id)
     if (doc) return doc.hasPending
     return this.numbers.get(id)?.pending ?? false
   }
 
-  /** How many operations are under way. A document's bytes are let go only when none
-   *  is, so no step ever holds a document another step has read again from the store:
-   *  two copies of one document are two sets of pending edits, and the later write
-   *  would drop the earlier's. */
   private busy = 0
 
-  /** Runs one operation, and lets go of what it read once nothing else is running. */
   async use<T>(work: () => Promise<T>): Promise<T> {
     this.busy += 1
     try {
@@ -467,12 +379,10 @@ export class Core {
     }
   }
 
-  /** Whether a document read before an await is still the one this device holds. */
   current(doc: Doc): boolean {
     return this.docs.get(doc.id) === doc
   }
 
-  /** Lets go of every document nothing is holding open, once it is written down. */
   private release() {
     for (const [id, doc] of this.docs) {
       if (this.pinned.has(id) || doc.dirty || doc.unsaved.length) continue
@@ -481,16 +391,6 @@ export class Core {
     }
   }
 
-  // -------------------------------------------------------------------------
-  // The outbox
-
-  /** One thing waiting to go up, as a row and a place in its space's queue.
-   *
-   *  `made_at` is the order the store reads the outbox back in, so it never repeats and
-   *  never goes back: the clock, or one past the newest row when the clock has not moved
-   *  on (a folder's mkdir and the note made in it, in one step) or went back. A tie would
-   *  be broken by op id, which is random, and a note's create read back before its
-   *  folder's mkdir is refused `gone` and made again at the top of the space. */
   outgoing(space: SpaceState, record: Outgoing, seen: number): { one: Outboxed; change: Change } {
     this.lastMade = Math.max(this.world.now(), this.lastMade + 1)
     const row = {
@@ -503,9 +403,6 @@ export class Core {
     const one: Outboxed = { row, record }
     return { one, change: put('outbox', row) }
   }
-
-  // -------------------------------------------------------------------------
-  // Held notes
 
   holdChanges(holding: Holding): Change[] {
     this.held.set(holding.row.id, holding)
@@ -523,7 +420,6 @@ export class Core {
     return this.held.has(id)
   }
 
-  /** Whether an entry is a document: what a pass pulls and pushes. */
   static isDocument(entry: EntryRow): boolean {
     return holdsDocument(entry.kind)
   }

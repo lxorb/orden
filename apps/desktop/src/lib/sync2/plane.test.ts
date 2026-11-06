@@ -12,11 +12,6 @@ import { numbersRow, wantedRow } from './records'
 import { put } from './store'
 import type { World } from './world'
 
-/** A canvas under sync v2 (docs/sync-v2.md 5.6): joined to its document the way a note
- *  is, so what is drawn goes into the document as this device's pending edits, room or
- *  no room, and what arrives in the document reaches the plane on screen as the objects
- *  it touched. */
-
 const ROOT = '/device/space'
 const SPACE = 'space'
 const ID = 'c1'

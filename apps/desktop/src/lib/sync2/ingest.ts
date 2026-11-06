@@ -1,20 +1,3 @@
-/** Files changed by something other than nib: another editor, a `git checkout`, a sync
- *  tool of somebody else's (docs/sync-v2.md section 5.5).
- *
- *  Every write Orden makes is recorded (project.ts), so a file whose words are not Orden's
- *  last write was changed by something else. Its new text is folded in three ways:
- *  against the words Orden last wrote, with the document as it reads now (which may have
- *  moved on since, from the account) as the other side. The usual case is that the
- *  document has not moved - Orden was closed, or nobody else wrote - and then the change
- *  is simply this device's own edit, as the few operations the texts differ by. When
- *  both moved, `diverge` decides exactly as it does for two devices: settled quietly,
- *  or the note held for the modal.
- *
- *  Creates, deletes and moves are read the same way (section 5.5): a file nobody made is
- *  a create, a file gone is a delete, and a file with a known identity at a new path is
- *  a move - see `news` in the engine, which reads the watcher's messages a hundred at a
- *  time and hands each here or to create.ts. */
-
 import type { Core, Holding } from './core'
 import { MINE } from './docs'
 import { judge, readable, turn, unixLines } from './kinds'
@@ -24,18 +7,11 @@ import { keepLosers } from './rejoin'
 import type { SpaceState } from './places'
 import { get, type Change, type EntryRow } from './store'
 
-/** The words Orden last wrote to an entry's file. */
 export async function writtenOf(core: Core, id: string): Promise<string | null> {
   const [row] = await core.store.read([get('written', id)])
   return row?.text ?? null
 }
 
-/** Words in a plane's file that are not a canvas: written by another program, or typed
- *  into a canvas entry that a rename gave a name saying words. They cannot go into the
- *  plane, and the next change from the account is written over the file, so they are
- *  kept as a version on this device now, once for each text, and the reader is told
- *  once that this file is not syncing. A file left blank is a save caught half way,
- *  and has nothing to keep. */
 async function unsynced(core: Core, entry: EntryRow, full: string, read: string): Promise<void> {
   if (!read.trim()) return
   const kept = `${entry.id}:${await core.world.digest(read)}`
@@ -65,8 +41,6 @@ export async function readAgain(core: Core, space: SpaceState): Promise<Change[]
   return changes
 }
 
-/** Folds another program's change to an entry's file into its document. Answers the
- *  changes to write; nothing when the file says what Orden wrote. */
 export async function foldIn(core: Core, space: SpaceState, entry: EntryRow): Promise<Change[]> {
   if (!entry.local_path || core.isHeld(entry.id)) return []
   const full = core.world.join(space.row.root, entry.local_path)
@@ -83,8 +57,6 @@ export async function foldIn(core: Core, space: SpaceState, entry: EntryRow): Pr
   if (!doc) return []
   const ours = doc.text()
   const ancestor = (await writtenOf(core, entry.id)) ?? ours
-  // A plane another program left unreadable - cut short mid-write, or holding a merge's
-  // conflict markers - is left for that program to finish, not taken for an empty one.
   if (file !== ancestor && file !== ours && !readable(doc.shape, file)) {
     await unsynced(core, entry, full, read)
     return []

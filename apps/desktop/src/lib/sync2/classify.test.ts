@@ -1,9 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { classifier, inline, LARGE } from './classify'
 
-/** The window's classifier hands large meetings to a worker (classify.ts); what it
- *  answers is the verdict `judge` gives, which this holds for the inline one both share. */
-
 const line = 'A line of an ordinary long note, with nothing much in it.\n'
 const base = line.repeat(Math.ceil(LARGE / line.length))
 const meeting = {

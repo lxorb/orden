@@ -12,29 +12,19 @@ import { put, type Change } from './store'
 import { Refused } from './transport'
 import type { World } from './world'
 
-/** Where each row stands among the rest of its folder, kept on the entry by id (#1068):
- *  the engine's half of the file list's hand-arranged order. Read from the feed and kept
- *  across a relaunch; a drag sends as few places as it needs; and an account that does
- *  not say it keeps places - one from before them, or one put back to such a build - is
- *  sent none, so a pass over it goes on as before. */
-
 const ROOT = '/device/space'
 const SPACE = 'sim'
 
 interface Device {
   account: ReferenceAccount
   store: MemoryStore
-  /** Every op sent up, in order. */
   sent: { t: string; pos?: string }[]
-  /** Whether the account's feed says it keeps places. */
   keeps: boolean
-  /** Whether it refuses a batch with a place in it, as a build from before them does. */
   old: boolean
   engine: Engine
   launch(): Promise<Engine>
 }
 
-/** One device holding the simulator's two seeded notes, Plan.md and Ideas.md. */
 async function device(foldsCase = true): Promise<Device> {
   const account = new ReferenceAccount(new Clock(), SEEDED)
   const store = new MemoryStore('d0')
@@ -206,8 +196,6 @@ describe('places', () => {
     await one.engine.pass(SPACE)
     await one.engine.arrange(ROOT, ['Ideas.md', 'Plan.md'], 2)
     await one.engine.created(`${ROOT}/New.md`, false, 'new')
-    // The account goes back to a build that reads no places, before the drag went up:
-    // a batch with one in it is not a request it can read.
     one.keeps = false
     one.old = true
     const passed = await one.engine.pass(SPACE)
@@ -216,7 +204,6 @@ describe('places', () => {
     expect(one.engine.placedIn(ROOT)).toBeNull()
     expect((await one.account.view()).entries.map((entry) => entry.name)).toContain('New.md')
 
-    // And from then on nothing with a place goes up.
     one.sent.length = 0
     expect(await one.engine.arrange(ROOT, ['Plan.md', 'Ideas.md'], 2)).toBe(false)
     await one.engine.created(`${ROOT}/Other.md`, false, 'other')

@@ -1,8 +1,3 @@
-/** Sync v2's rooms: an open note's document the engine keeps, carried live through its
- *  room (rooms/carried.ts), by document key. Kept here rather than in rooms.svelte.ts,
- *  which is in front of the first paint: that file only reaches these with the caret,
- *  the scheme and the name, as it reaches its own (`rooms.carried`). */
-
 import { account } from '../account.svelte'
 import { busy } from '../busy.svelte'
 import { t } from '../i18n.svelte'
@@ -18,15 +13,11 @@ import type { PlaneSurface } from '../canvas/shared'
 
 export interface Carry {
   noteId: string
-  /** A note's views, or a canvas's surface: who else is there is drawn on it. */
   on: { note: NoteDoc } | { surface: PlaneSurface }
   carrying: Carrying
-  /** The room let the document go: a new epoch, or the note gone from the account. */
   gone: () => void
 }
 
-/** An open note's document, carried through its room from now on. Answers the room, for
- *  a canvas to hand its pointer to. */
 export async function carry(
   key: string,
   carried: Carry,
@@ -70,7 +61,6 @@ export async function carry(
   return {}
 }
 
-/** Lets a carried document's room go; the document stays the engine's. */
 export function uncarry(key: string): void {
   const carried = rooms.carried.get(key)
   if (!carried) return

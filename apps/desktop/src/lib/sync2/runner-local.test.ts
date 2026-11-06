@@ -2,13 +2,7 @@
 import { describe, expect, test, vi } from 'vitest'
 import { hash32 } from '@orden/sync-core/seed'
 
-/** The engine kept signed out and the account's, one after the other (#1068, step 4b):
- *  the crate keeps one sync store open at a time and closes whichever that is, so the
- *  account's engine opens its store only once the one kept signed out has closed its
- *  own, and signing in lets the store kept signed out go. */
-
 const said = vi.hoisted(() => [] as string[])
-/** Each store by whose it is, kept across opens as the crate keeps its files. */
 const stores = vi.hoisted(() => new Map<string, unknown>())
 vi.mock('./store', async (importOriginal) => {
   const original = await importOriginal<typeof import('./store')>()
@@ -16,9 +10,7 @@ vi.mock('./store', async (importOriginal) => {
     ...original,
     openSyncStore: async (id: string) => {
       said.push(`open ${id}`)
-      // Fetched here, not as the mock is made: the memory store reads this module.
       const { MemoryStore } = await import('./memory-store')
-      // A round trip, as the crate's is.
       await new Promise((settle) => setTimeout(settle, 5))
       const kept =
         (stores.get(id) as InstanceType<typeof MemoryStore> | undefined) ?? new MemoryStore(id)
@@ -40,7 +32,6 @@ vi.mock('./store', async (importOriginal) => {
   }
 })
 
-// As on the desktop, the one place spaces are kept signed out, with no folder to watch.
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
   isDesktop: true,
@@ -88,7 +79,6 @@ describe('the engine kept signed out', () => {
   test('is nobody’s to ask about, and lets go of its store before the account’s opens', async () => {
     await runner.startLocal()
     expect(said).toEqual(['open local'])
-    // What asks the account about an entry reads no ids off it.
     expect(runner.engine).toBeNull()
 
     Object.assign(account, { user: { id: 'u1', syncVersion: 2 } })

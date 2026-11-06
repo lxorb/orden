@@ -1,18 +1,3 @@
-/** The engine as a device of `@orden/sync-core`'s simulator (docs/sync-v2.md section 12).
- *
- *  The simulator drives devices over an unkind network and judges what everybody ends up
- *  holding. This hands it the engine that runs in the window - the same passes, the same
- *  store tables (in memory, surviving a crash the way the SQLite file does), the same
- *  files on a disk - with nothing standing in but the disk (a map of files), the network
- *  (the simulator's) and the person. What the person does is what the app would hear:
- *  typing goes into the document the way the editor's binding puts it there, a file made
- *  is made on the disk and then said, one renamed, moved or deleted is said to the engine
- *  with the disk's part inside (`moving`, `removing`) the way `workspace.fileOps` does
- *  it, another program's edit is a file written behind the engine's back and then
- *  noticed.
- *
- *  So a seed that fails here is the engine failing, and replays as one. */
-
 import { byPosition } from '@orden/sync-core/order'
 import { nameKey } from '@orden/sync-core/tree'
 import { hash32, seedUpdate } from '@orden/sync-core/seed'
@@ -46,8 +31,6 @@ import type { World } from './world'
 
 const SPACE = 'sim'
 
-/** The place `fraction` of the way into a text that falls on whitespace or the end, so
- *  words put there never join a word already there. The simulator's own rule. */
 function spot(text: string, fraction: number): number {
   let at = Math.max(0, Math.min(text.length, Math.floor(fraction * text.length)))
   while (at < text.length && !/\s/.test(text.charAt(at))) at++
@@ -66,7 +49,6 @@ function withoutWords(text: string, fraction: number, length: number): string {
   return text.slice(0, from) + text.slice(Math.max(from, to))
 }
 
-/** A name free in a folder, numbered the way the file list numbers a duplicate. */
 function freeIn(taken: (path: string) => boolean, folder: string, name: string): string {
   const dot = name.lastIndexOf('.')
   const stem = dot > 0 ? name.slice(0, dot) : name
@@ -101,8 +83,6 @@ export class EngineDevice implements DeviceAdapter {
     this.starting = this.seed(seeded).then(() => this.launchNow())
   }
 
-  /** A device that already holds the notes the run starts with, as a migrated one does:
-   *  each note the seed of its words at epoch 1, on the disk, and the feed read past it. */
   private async seed(seeded: readonly Seeded[]) {
     const store = this.store.open()
     const changes: Change[] = [
@@ -163,7 +143,6 @@ export class EngineDevice implements DeviceAdapter {
           const reply = await link(route, frame(body))
           if (reply === null) return null
           const value = unframe(reply)
-          // The account's refusal of one request, as a status the Worker's adapter says.
           if (
             typeof value === 'object' &&
             value !== null &&
@@ -232,9 +211,6 @@ export class EngineDevice implements DeviceAdapter {
     this.heldNow = out
   }
 
-  // -------------------------------------------------------------------------
-  // The tree as the person sees it
-
   private live(engine: Engine) {
     const space = engine.core.spaces.get(SPACE)
     if (!space) return []
@@ -247,7 +223,6 @@ export class EngineDevice implements DeviceAdapter {
     return list[Math.min(list.length - 1, Math.floor(pick * list.length))]
   }
 
-  /** A note the person can type into: shown, with its words here, and not held. */
   private writable(engine: Engine, pick: Pick): string | null {
     const notes = this.live(engine).filter(
       (entry) =>
@@ -259,8 +234,6 @@ export class EngineDevice implements DeviceAdapter {
     return this.chosen(notes, pick)?.id ?? null
   }
 
-  /** Where an entry's file is on the disk now, which is what a person acts on: null for
-   *  one that is not on the disk yet. */
   private pathOf(engine: Engine, id: string | null): string | null {
     if (id === null) return ''
     const path = engine.core.spaces.get(SPACE)?.entries.get(id)?.local_path
@@ -283,9 +256,6 @@ export class EngineDevice implements DeviceAdapter {
       return false
     }
   }
-
-  // -------------------------------------------------------------------------
-  // What the person does
 
   async act(action: Action): Promise<void> {
     const engine = await this.ready()
@@ -354,7 +324,6 @@ export class EngineDevice implements DeviceAdapter {
         const to =
           nameKey(wanted) === nameKey(from) ? wanted : freeIn(taken, folderOf(from), action.name)
         if (to === from) return
-        // As the file list does it: said to the engine first, the disk moved inside.
         await engine.moving(this.full(from), this.full(to), () =>
           this.disk.move(this.full(from), this.full(to)),
         )
@@ -369,7 +338,6 @@ export class EngineDevice implements DeviceAdapter {
         const from = target ? this.pathOf(engine, target.id) : null
         const into = this.pathOf(engine, parent)
         if (!target || !from || into === null || parent === target.id) return
-        // The file list refuses a folder dropped into itself.
         if (into === from || into.startsWith(`${from}/`)) return
         if (folderOf(from) === into) return
         const to = freeIn(this.taken(engine), into, nameOf(from))
@@ -383,7 +351,6 @@ export class EngineDevice implements DeviceAdapter {
         const path = target ? this.pathOf(engine, target.id) : null
         if (!target || !path) return
         this.trashed(engine, target.id, path)
-        // The trash's word for it is the id the person will ask for back by.
         await engine.removing(this.full(path), async () => {
           await this.disk.remove(this.full(path))
           return target.id
@@ -391,12 +358,9 @@ export class EngineDevice implements DeviceAdapter {
         return
       }
       case 'restore': {
-        // As the app's trash does it (trash.svelte.ts): what was deleted is put back on
-        // the disk where it was, and the engine is told which entry it is (#1068).
         const item = this.trash.find((one) => one.ids.includes(action.id))
         if (!item) return
         this.trash = this.trash.filter((one) => one !== item)
-        // Beside whatever took its name meanwhile, as the trash puts it back.
         const at = freeIn(this.taken(engine), folderOf(item.path), nameOf(item.path))
         const moved = (path: string) => `${at}${path.slice(item.path.length)}`
         for (const folder of item.folders) await this.disk.mkdir(this.full(moved(folder)))
@@ -409,8 +373,6 @@ export class EngineDevice implements DeviceAdapter {
         return
       }
       case 'place': {
-        // As the file list's drag does it: the folder's rows as drawn, the target lifted
-        // out and put back where it was let go of, said to the engine by name.
         const entries = this.live(engine)
         const target = this.chosen(entries, action.target)
         const folder = target ? this.pathOf(engine, target.parent) : null
@@ -469,8 +431,6 @@ export class EngineDevice implements DeviceAdapter {
     }
   }
 
-  /** What the person deleted here, as the trash keeps it: the files and folders under
-   *  what went, by path, and the ids they had. */
   private trash: {
     path: string
     id: string
@@ -497,13 +457,9 @@ export class EngineDevice implements DeviceAdapter {
     this.trash.push({ path, id, ids, folders, files })
   }
 
-  /** A full path on this disk, as the space speaks it; null outside the space. */
   private relativeOf(full: string): string | null {
     return full.startsWith(`${this.root}/`) ? full.slice(this.root.length + 1) : null
   }
-
-  // -------------------------------------------------------------------------
-  // Passes and answers
 
   async pass(link: Link): Promise<void> {
     const engine = await this.ready()
@@ -532,9 +488,6 @@ export class EngineDevice implements DeviceAdapter {
     await engine.pause()
     await this.refreshHeld()
   }
-
-  // -------------------------------------------------------------------------
-  // Life
 
   async quit(): Promise<void> {
     const engine = await this.ready()
@@ -566,9 +519,6 @@ export class EngineDevice implements DeviceAdapter {
     await this.starting
   }
 
-  // -------------------------------------------------------------------------
-  // What it holds
-
   async view(): Promise<View> {
     const engine = await this.ready()
     if (!engine) return { entries: [], texts: {} }
@@ -585,8 +535,6 @@ export class EngineDevice implements DeviceAdapter {
         if (!holdsDocument(entry.kind)) continue
         texts[entry.id] = (await engine.core.doc(entry.id))?.text() ?? ''
       }
-      // A note deleted elsewhere while this device still has words for it to send: not in
-      // the tree, but its words are here until the push brings it back.
       for (const id of engine.core.numbers.keys()) {
         if (id in texts || !engine.core.hasPending(id)) continue
         texts[id] = (await engine.core.doc(id))?.text() ?? ''

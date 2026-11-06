@@ -5,8 +5,6 @@ import * as Y from 'yjs'
 import { MINE } from './docs'
 import { joinsAs, judge, readable, turn } from './kinds'
 
-/** A web note under v2 settles the way v1's does since 2026-10-03: the newer copy
- *  stands and nothing is kept beside it (web-tab/settle.ts). */
 describe('a web note changed on two devices', () => {
   const when = new Date('2026-10-01T10:00:00Z')
   const base = writeShortcut(
@@ -46,9 +44,6 @@ describe('a web note changed on two devices', () => {
   })
 })
 
-/** A note whose words the account holds with Windows line ends: written by another
- *  program on Windows and sent up by v1, which carries the bytes as they are, so the
- *  epoch at the switch to v2 is seeded with them. */
 describe('a note seeded with Windows line ends', () => {
   function seeded(words: string): Y.Doc {
     const doc = new Y.Doc()
@@ -70,8 +65,6 @@ describe('a note seeded with Windows line ends', () => {
   })
 })
 
-/** A tab is opened by the file's name, and the document is the entry's kind, which a
- *  rename across `.md` and `.canvas` never changes (A26-S1). */
 describe('an open tab joining its document', () => {
   test('joins where the tab and the entry agree', () => {
     expect(joinsAs('note', 'note')).toBe('views')
@@ -81,9 +74,7 @@ describe('an open tab joining its document', () => {
   })
 
   test('joins neither way where a rename made the two disagree', () => {
-    // `Plan.md` renamed to `Plan.canvas`: a surface over words.
     expect(joinsAs('canvas', 'note')).toBeNull()
-    // `Board.canvas` renamed to `Board.md`: views over a plane.
     expect(joinsAs('note', 'canvas')).toBeNull()
   })
 })

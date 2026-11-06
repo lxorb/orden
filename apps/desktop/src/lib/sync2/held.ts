@@ -1,30 +1,3 @@
-/** The notes held for the one question, and the three answers (docs/sync-v2.md 5.4).
- *
- *  A note is held when two sides rewrote the same passage: a push answered `moved` whose
- *  overlap is past a sentence, a room's words met with pending edits the same way,
- *  another program's edit to a file whose document had moved too, or a day's note made on
- *  two devices and written two ways. A held note is never pushed, and nothing the account
- *  sends is read into it, until somebody answers.
- *
- *  What the reader sees of it is lane `sync-client-ux`'s (asking.svelte.ts): this hands
- *  over `notes`, each with both sides' first contested passage, and carries out `answer`.
- *
- *  The answers, precisely:
- *
- *  - **Keep (this device)**: the account's words are applied, then whatever turns the
- *    merge into this device's text, as this device's edits; the account's side is kept as
- *    a version. Every device ends at this device's text.
- *  - **Keep (the other device)**: this device's pending edits are dropped - they were
- *    never sent - and the document is the account's; this device's text is kept first,
- *    in its own history and on the account (`/v2/docs/keep`), so any device can put it
- *    back.
- *  - **Keep both**: as the other device, and this device's text becomes a new note beside
- *    the original, `Name (Device).md`, numbered if that is taken.
- *
- *  An answer is carried out against what the account holds when it is given, not when the
- *  question was drawn: the note is pulled again first, so words another device added in
- *  the meantime are kept by the second two answers and are a version under the first. */
-
 import { readCanvas } from '@orden/markdown/canvas'
 import { diverge, excerpt, type Excerpt } from '@orden/sync-core/diverge'
 import { pullResponseOf } from '@orden/sync-core/wire'
@@ -39,7 +12,6 @@ import { keepLosers } from './rejoin'
 import { put, type Change, type EntryRow } from './store'
 import * as Y from 'yjs'
 
-/** Both sides of a held note, as texts. */
 interface Sides {
   base: string
   local: string
@@ -58,14 +30,11 @@ function sidesOf(doc: Doc, against: Holding['against']): Sides {
   return { base: against.base, local: against.local, remote: doc.text() }
 }
 
-/** The account's side's own words, for a note held against a push: the confirmed
- *  document with what the account sent, and nothing of this device's. */
 function remoteOnly(doc: Doc, against: Holding['against']): string {
   if (against.t !== 'moved') return doc.text()
   return fileOfUpdates(doc.shape, doc.row().confirmed, against.update)
 }
 
-/** A plane's excerpt is the plane itself, which the sheet draws. */
 function planeOf(text: string): string | undefined {
   try {
     readCanvas(text)
@@ -75,21 +44,16 @@ function planeOf(text: string): string | undefined {
   }
 }
 
-/** Each side's first contested passage. */
 function passagesOf(sides: Sides, times: { local: number; remote: number }) {
   const overlaps = diverge(sides.base, sides.local, sides.remote, times).overlaps
   return excerpt(sides.base, sides.local, sides.remote, overlaps)
 }
 
-/** Names of devices, by the id the account knows them under. */
 export type Names = (device: string | null) => Promise<string>
 
 export class HeldList implements HeldNotes {
   notes: readonly Held[] = []
-  /** Told whenever `notes` changes: what puts the list on screen (the app's runner keeps
-   *  a reactive copy; see app.svelte.ts). */
   changed: ((notes: readonly Held[]) => void) | null = null
-  /** Whether an answer pulls the account's newest words first. */
   freshens = true
 
   constructor(
@@ -97,7 +61,6 @@ export class HeldList implements HeldNotes {
     private readonly names: Names,
   ) {}
 
-  /** Reads the list again from what the engine holds. */
   refresh(): Promise<void> {
     return this.core.use(() => this.read())
   }
@@ -145,7 +108,6 @@ export class HeldList implements HeldNotes {
     }
   }
 
-  /** A file both sides replaced: what stands in for words is the file itself. */
   private async fileHeld(
     space: SpaceState,
     entry: EntryRow,
@@ -167,7 +129,6 @@ export class HeldList implements HeldNotes {
     }
   }
 
-  /** Carries an answer out. Keep both answers with the path of the copy it made. */
   answer(id: string, answer: HeldAnswer): Promise<string | undefined> {
     return this.core.use(() => this.answered(id, answer))
   }
@@ -200,7 +161,6 @@ export class HeldList implements HeldNotes {
       doc.flush()
       changes.push(...keepLosers(core, space, id, { local: false, remote: true }, local, remote))
     } else {
-      // This device's text, kept before it goes: here, and on the account.
       if (entry.local_path) {
         await core.world.disk.keep(core.world.join(space.row.root, entry.local_path), local)
       }
@@ -223,8 +183,6 @@ export class HeldList implements HeldNotes {
       copy = core.world.join(space.row.root, path)
     }
 
-    // The note made here for a day's note the account already had goes with the answer:
-    // its words are in the note, in a version, or in the copy.
     if (against.t === 'merge') changes.push(...core.forgetChanges(against.from))
 
     await core.commit(changes)
@@ -232,10 +190,6 @@ export class HeldList implements HeldNotes {
     return copy
   }
 
-  /** A held file answered. Keep mine: this disk's bytes replace the account's at the
-   *  next pass. Keep theirs: this disk's go to the device's trash and the account's are
-   *  fetched. Keep both: this disk's become a file of their own beside it, and the
-   *  account's are fetched. The fetching and the sending are the next pass's. */
   private async fileAnswered(
     space: SpaceState,
     entry: EntryRow,
@@ -246,8 +200,6 @@ export class HeldList implements HeldNotes {
     const changes: Change[] = [...core.letGoChanges(entry.id)]
     let copy: string | undefined
     if (answer === 'mine') {
-      // As though this disk had held the account's bytes: what it holds is then the
-      // replacement it is, made against them.
       entry.written_hash = entry.file_key
       core.touched.add(entry.id)
     } else if (answer === 'theirs') {
@@ -263,8 +215,6 @@ export class HeldList implements HeldNotes {
     return copy
   }
 
-  /** What the account holds now, for a note held against a push: pulled again, so an
-   *  answer is carried out against the newest words. Offline, what was held. */
   private async freshest(
     space: SpaceState,
     doc: Doc,
@@ -288,7 +238,6 @@ export class HeldList implements HeldNotes {
     return against
   }
 
-  /** `Name (Device).md` beside the note, numbered where that is taken. */
   private copyPath(space: SpaceState, entry: EntryRow): string {
     const name = entry.name
     const dot = name.lastIndexOf('.')
@@ -304,7 +253,6 @@ export class HeldList implements HeldNotes {
   }
 }
 
-/** The confirmed document with what the account sent, as one update. */
 function fileBytes(doc: Doc, update: Uint8Array): Uint8Array {
   return Y.mergeUpdatesV2([doc.row().confirmed, update])
 }

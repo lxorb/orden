@@ -1,22 +1,3 @@
-/** Sync v2 in the window: the engine (engine.ts) started for the account signed in, and
- *  everything around it that is the app's rather than the engine's.
- *
- *  - **When it runs.** After the first paint, at the launch's `rooms` turn, never
- *    before. A pass over a space when the account's hub pokes about it (about a second
- *    after another device wrote), when something changed here, when the window comes
- *    back, every thirty seconds while visible in case a poke went missing (five minutes
- *    while hidden), and at v1's cadence while the hub cannot be reached
- *    (docs/sync-v2.md 5.12).
- *  - **Which folder is which space**, worked out as v1 does (space-pairing.ts), kept in
- *    the sync store; a space's first pass is migrate.ts.
- *  - **What this device does**, heard as the workspace says it (workspace/file-ops.ts),
- *    and what autosave wrote (`wrote`); what the engine does to the disk is said back
- *    to the workspace the same way, and its own operations are not heard twice.
- *  - **Open notes** joined to their documents (binding.ts), and to their rooms.
- *  - **The light**: syncing, failed, or - when the account cannot be reached - hollow,
- *    never red for being offline.
- *  - **The question** (asking.svelte.ts), handed the held notes. */
-
 import { untrack } from 'svelte'
 import { account } from '../account.svelte'
 import { api, ApiError } from '../api'
@@ -82,21 +63,13 @@ const ASKS_AT_MOST = 30_000
 
 const SIGN_OUT_WAITS = 10_000
 
-/** How long after a change here the pass that sends it waits, so a burst of saves is one
- *  pass. */
 const NUDGE = 2_000
 
-/** The hub's poke is immediate; this catches one that went missing while someone is
- *  looking at the window. Hidden windows keep the quieter five-minute fallback. */
 const FALLBACK = 30_000
 const HIDDEN_FALLBACK = 5 * 60_000
 
-/** v1's mirrors: what the first pass of each space starts from, never written while v2
- *  runs, and written from the store only when the account goes back to v1 or this device
- *  signs out. */
 const MIRRORS = 'nib:mirrors'
 
-/** The meta row that says a space's first pass is done. */
 const FIRST = 'first:'
 
 function v1Spaces(accountId: string): Map<string, V1Space> {
@@ -120,9 +93,6 @@ function v1Spaces(accountId: string): Map<string, V1Space> {
   return out
 }
 
-/** v1's record of a space with what a pass of its left half done settled first: a
- *  note waiting aside from a swap, which the first pass would read as deleted here.
- *  v1's pass is fetched only for a record that has one; see `asidesBack`. */
 async function wholeV1(root: string, v1: V1Space | null): Promise<V1Space | null> {
   const waiting = (path: string) => (path.split('/').pop() ?? '').startsWith('.nib-moving-')
   if (!v1 || (!v1.moving && !Object.keys(v1.notes).some(waiting))) return v1
@@ -138,52 +108,36 @@ class Runner {
   status = $state<Light>('off')
   lastError = $state<string | null>(null)
   lastSyncedAt = $state<number | null>(null)
-  /** The held notes, as the question reads them: reactive, where the engine's list is
-   *  not. */
   heldNotes = $state.raw<readonly Held[]>([])
 
-  /** The engine running, the account's or the one kept signed out. */
   private current: Engine | null = null
 
-  /** The account's engine, while one runs: what everything that asks the account about
-   *  an entry reads ids off. The one kept signed out is nobody's to ask about. */
   get engine(): Engine | null {
     return this.local ? null : this.current
   }
   private accountId: string | null = null
 
-  /** Whose store is open now. */
   get accountNow(): string | null {
     return this.accountId
   }
   private stops: (() => void)[] = []
   private due = new Set<string>()
-  /** The spaces whose last pass heard the account had no room for a file. */
   private readonly full = new Set<string>()
   private passing_: Promise<void> | null = null
   private timer: ReturnType<typeof setTimeout> | undefined
   private quiet = 0
   private reconciledAt = 0
-  /** Operations the engine made on the disk, which the workspace says back: not heard
-   *  as this person's. */
   private readonly own = new Set<string>()
-  /** Spaces whose first pass is done. */
   private readonly firsts = new Set<string>()
-  /** Open notes joined to their documents, by document key. */
   private readonly bound = new Map<
     string,
     { id: string; part: () => void; plane?: PlaneJoin | null; joining?: boolean }
   >()
   private binding = Promise.resolve()
-  /** The space folders' watch, on the desktop; see watching.ts. */
   private watched: Watched | null = null
 
-  /** Whether the engine running is the one for the spaces used signed out (local.ts). */
   private local = false
 
-  /** Whatever opens or closes a store, one after another: the crate keeps one store
-   *  open at a time and closes whichever that is, so an engine starting while another
-   *  let go of its own would have its store closed under it. */
   private lane: Promise<unknown> = Promise.resolve()
 
   private inLane<T>(work: () => Promise<T>): Promise<T> {
@@ -285,17 +239,8 @@ class Runner {
     this.storeLead = null
   }
 
-  /** The ids the spaces kept signed out had, by each space's root, on their way to the
-   *  account's store; see `carryLocal`. */
   private carrying = new Map<string, string>()
 
-  /** Signing in: the engine kept signed out lets go, the ids of everything it kept are
-   *  carried over for the account's first pass of each space (`firstPass`), and its
-   *  store goes, so a later session signed out starts from the folders as they are
-   *  then, never from a tree from before that the disk would be made to agree with.
-   *  Never while the account's engine runs: opening the store kept signed out then
-   *  would close the account's under it, and there is nothing left to carry anyway.
-   *  Only in the window holding the device's store (`storeLead`), which it keeps. */
   private async carryLocal(): Promise<void> {
     if (!this.storeLead) return
     try {
@@ -305,7 +250,6 @@ class Runner {
         this.keepCarried(await carriedIds(engine.core.store, isLocal, account.user?.id))
         await this.letGo(true)
       } else {
-        // Only the desktop keeps spaces signed out this way; see `startLocal` in sync.svelte.ts.
         if (!isDesktop) return
         const store = await openSyncStore(LOCAL_STORE)
         try {
@@ -325,12 +269,8 @@ class Runner {
     for (const [root, kept] of ids) this.carrying.set(root, kept)
   }
 
-  /** Whose store the ids being carried came from: an account's, signing out, or null
-   *  for the one kept signed out. */
   private carriedFrom: string | null = null
 
-  /** The ids carried, into the account's store, for every space whose first pass is
-   *  still to come: kept there, so a first pass a relaunch away still finds them. */
   private async carriedIn(engine: Engine) {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away within this call
     const carried = new Map(this.carrying)
@@ -357,7 +297,6 @@ class Runner {
     }
     this.current = engine
     await followRoots(engine.core)
-    // What the browser knows of the notes it keeps no words of (#1126; indexing.ts).
     if (!isNative) {
       const store = await openIndex(user.id).catch(() => null)
       if (store)
@@ -372,7 +311,6 @@ class Runner {
     engine.held.changed = (notes) => (this.heldNotes = notes)
     this.heldNotes = engine.held.notes
 
-    // The question reads the held notes reactively; the engine's own list is plain.
     const notes = () => this.heldNotes
     this.stops.push(
       asking.connect({
@@ -399,9 +337,7 @@ class Runner {
       document.removeEventListener('visibilitychange', back)
     })
     this.stops.push(this.followOpen())
-    // The workspace's moves and deletes, said to the engine before the disk has them.
     this.stops.push(workspace.fileOps.doneBy(this.doer))
-    // The file list's hand-arranged order, by the places the account keeps (#1068).
     this.stops.push(
       workspace.arranged.placeBy(
         placesOf(
@@ -417,7 +353,6 @@ class Runner {
         ),
       ),
     )
-    // A canvas's surface arrives after its tab: the planes are joined once it has.
     rooms.drawn = () => this.rebind()
     this.stops.push(() => (rooms.drawn = null))
     if (isDesktop) {
@@ -440,11 +375,6 @@ class Runner {
     return engine
   }
 
-  /** Starts the engine with no account behind it, for the spaces used signed out
-   *  (#1068, step 4b; local.ts): every folder, note and file has an id from the start,
-   *  and what the file list does is said to the engine by id as it is signed in. Its
-   *  store is its own (`LOCAL_STORE`), and nothing in it reaches the network: no hub,
-   *  no rooms, no light in the corner. Answers once it runs, or once it will not. */
   async startLocal(): Promise<void> {
     if (account.user) return
     await this.usingStore(() => this.inLane(() => this.startLocalNow()))
@@ -457,7 +387,6 @@ class Runner {
       appWorld(() => null, this.telling),
       store,
     )
-    // Signed in while the store was opening: the account's engine is next in line.
     if (signedIn()) {
       engine.stop()
       await store.close().catch(() => undefined)
@@ -466,8 +395,6 @@ class Runner {
     this.local = true
     this.current = engine
     await followRoots(engine.core)
-    // The ids the account's store had, signing out, for each space's first pass here;
-    // nothing carried the other way, which was for an account.
     const from = this.carriedFrom
     const carried = new Map(this.carrying)
     this.carrying.clear()
@@ -491,8 +418,6 @@ class Runner {
     this.kick()
   }
 
-  /** The spaces used signed out let go of, their ids carried (`carryLocal`): what
-   *  signing in does, whichever engine the account runs. */
   async dropLocal(): Promise<void> {
     await this.usingStore(() =>
       this.inLane(() => (account.user ? this.carryLocal() : Promise.resolve())),
@@ -505,29 +430,20 @@ class Runner {
     return await deviceOfSyncStore(accountId).catch(() => null)
   }
 
-  /** A held note answered: Keep mine, Keep theirs or Keep both. Answers the copy's path
-   *  for the third. */
   async answer(id: string, answer: HeldAnswer): Promise<string | undefined> {
     const engine = this.current
     if (!engine) return undefined
     const copy = await engine.held.answer(id, answer)
     this.nudge()
-    // Answered: the note may be carried by its room again.
     this.rebind()
     if (copy) this.treeStale()
     return copy
   }
 
-  /** Lets the engine go: signing out, or the account going back to v1. While signing
-   *  out is writing v1's mirrors from the store, it is the one that lets go: syncing is
-   *  told to stop in the same moment (the account's session has gone), and a stop that
-   *  closed the store under it left the mirrors unwritten and the words typed offline
-   *  with nothing saying they were this device's. */
   stop(): Promise<void> {
     return this.leaving ?? this.halt()
   }
 
-  /** Signing out, while it runs. */
   private leaving: Promise<void> | null = null
 
   private halt(keepLead = false): Promise<void> {
@@ -590,8 +506,6 @@ class Runner {
     )
   }
 
-  /** The window going: everything typed written down, and the session marked ended
-   *  cleanly, after autosave's own last writes. */
   parting() {
     const engine = this.current
     if (!engine) return
@@ -603,15 +517,6 @@ class Runner {
     )
   }
 
-  /** The account went back to v1 (docs/sync-v2.md section 11): whatever this device has
-   *  pending goes up first, then v1's mirrors are written from the store and the
-   *  account's own listing, so v1 meets each note as one it knows, at the version the
-   *  account holds, and writes no copy of anything. The store goes once they are written:
-   *  v1 moves the files on from here, and a later switch to v2 starts again from v1's
-   *  word, as the first switch did.
-   *
-   *  Answers whether v1 may start. Not while the account cannot be reached: v1 starting
-   *  from mirrors older than what v2 did here would delete every note v2 renamed. */
   rollBack(): Promise<boolean> {
     return this.inLane(async () => {
       if (this.local) await this.letGo(true)
@@ -657,8 +562,6 @@ class Runner {
     }
   }
 
-  /** The way back, tried until it is walked, at v1's cadence while the account cannot be
-   *  reached. Answers whether v1 may start, false once `alive` says this session ended. */
   async walkBack(alive: () => boolean): Promise<boolean> {
     const walked = await this.usingStore(async () => {
       const lead = await leadSync(undefined, account.user?.id)
@@ -675,7 +578,6 @@ class Runner {
     return walked ?? false
   }
 
-  /** The spaces v2 kept here: the ones whose first pass is done. */
   private async kept(engine: Engine): Promise<ReadonlySet<string>> {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once on the way back; nothing renders from it
     const done = new Set<string>()
@@ -685,8 +587,6 @@ class Runner {
     return done
   }
 
-  /** v1's mirrors as they stand now: the spaces v2 kept, written from the store, and
-   *  every other space as v1 last wrote it. */
   private async mirrorsNow(
     engine: Engine,
     accountId: string,
@@ -706,11 +606,6 @@ class Runner {
     return { ...out, ...(await mirrorsFrom(engine.core, listings, (id) => done.has(id))) }
   }
 
-  /** Signing out: the store goes, as it empties the vault (docs/sync-v2.md section 10),
-   *  but first v1's mirrors are written from it. Words typed and not sent yet are on the
-   *  disk, and the mirrors say what the account had confirmed under them, so the next
-   *  first pass - or v1 - sends them as this device's edits rather than meeting them as
-   *  a stranger's. */
   signedOut(accountId: string): Promise<void> {
     this.leaving ??= this.leave(accountId).finally(() => (this.leaving = null))
     return this.leaving
@@ -726,8 +621,6 @@ class Runner {
       } catch (error) {
         log('warn', `sync: signing out kept no mirrors - ${String(error)}`)
       }
-      // What every space holds keeps its id signed out too, on the desktop, which keeps
-      // spaces signed out (`startLocal`); see `carriedRows` in local.ts.
       if (isDesktop && !this.local) {
         const ids = await carriedIds(engine.core.store, () => true).catch(() => null)
         if (ids) {
@@ -757,16 +650,10 @@ class Runner {
     if (!isNative) await forgetIndex(accountId)
   }
 
-  // -------------------------------------------------------------------------
-  // When to pass
-
-  /** Whether a pass is under way. */
   get passing(): boolean {
     return this.passing_ !== null
   }
 
-  /** Every space passed now, waited for: what automation and a link joining ask for.
-   *  Answers whether anything moved. */
   async passNow(): Promise<boolean> {
     if (!this.current) {
       return this.leaderId ? (await this.ask('pass', {})) === true : false
@@ -777,7 +664,6 @@ class Runner {
     return this.lastSyncedAt !== before
   }
 
-  /** A pass soon over one space, or all of them. */
   kick(space?: string) {
     const engine = this.current
     if (!engine) {
@@ -796,7 +682,6 @@ class Runner {
     })
   }
 
-  /** Something changed here: a pass in a moment, unless one is sooner. */
   nudge() {
     if (!this.current) {
       if (this.accountId) this.say('sync-kick', {})
@@ -833,8 +718,6 @@ class Runner {
     let moved = false as boolean
     try {
       if (this.due.delete('') || Date.now() - this.reconciledAt >= RECONCILE_INTERVAL) {
-        // The account out of reach is the hollow light, never the red one: the passes
-        // below find the same and stop quietly.
         const reconciling = this.local ? this.pairLocal(engine) : this.reconcile(engine)
         await reconciling.catch((error: unknown) => {
           if (!unreachable(error)) throw error
@@ -902,9 +785,6 @@ class Runner {
         this.status = 'idle'
         return
       }
-      // The paper each page note holds goes where the note goes (#551), kept by the
-      // note's id rather than as a file of the tree; see pages/carried.ts. Not waited
-      // for: a paper is megabytes, and nothing in the pass is behind it.
       void import('../pages/carrying').then(({ carryNow }) =>
         carryNow(
           () => pageNotes(engine),
@@ -918,8 +798,6 @@ class Runner {
       this.trimSoon()
     } catch (error) {
       if (this.current !== engine) return
-      // The session ended on the account: signed out here too, as every other request
-      // signs out.
       if ((error instanceof Refused || error instanceof ApiError) && error.status === 401) {
         void account.signOut()
         return
@@ -930,11 +808,8 @@ class Runner {
     }
   }
 
-  /** How many times the engine's places had changed when the file list last heard. */
   private reorders = -1
 
-  /** A pass over a space is over: its hand-arranged order is brought into line with the
-   *  places (`fromPlaces`), and drawn again where they changed. */
   private placesHeard(engine: Engine, root: string) {
     workspace.arranged.fromPlaces(root)
     if (engine.core.reorders === this.reorders) return
@@ -955,9 +830,6 @@ class Runner {
     return null
   }
 
-  /** Which folder is which space, signed out: every space of the workspace is one kept
-   *  here, and one that left the workspace is let go of. A space's folder moved is told
-   *  by the file list as it moves (`follow`), so its tree goes with it. */
   private async pairLocal(engine: Engine) {
     this.reconciledAt = Date.now()
     const core = engine.core
@@ -977,7 +849,6 @@ class Runner {
     for (const id of core.spaces.keys()) this.due.add(id)
   }
 
-  /** Which folder is which space: v1's rules, with the pairing in the sync store. */
   private async reconcile(engine: Engine) {
     const token = account.token
     if (!token) return
@@ -1011,7 +882,6 @@ class Runner {
         changes.push(put('spaces', { ...space.row }))
       },
     }
-    // The folders v1 had paired, for a store that has paired none of them yet (v1-pairs.ts).
     if (this.accountId) {
       const paired = pairing.pairs()
       const local = workspace.spaces.map((space) => space.root)
@@ -1026,10 +896,6 @@ class Runner {
     for (const id of core.spaces.keys()) this.due.add(id)
   }
 
-  // -------------------------------------------------------------------------
-  // This device's own changes
-
-  /** The engine's own operations on the disk, said to the workspace and not heard back. */
   private readonly telling: Telling = {
     holdingWrites: (from, run, stalled) => workspace.holdingWrites(from, run, stalled),
     moved: async (from, to, kind) => {
@@ -1047,9 +913,6 @@ class Runner {
       try {
         await workspace.fileGone(path, kind)
         workspace.heardGone(path)
-        // Remote deletions update every path-based store above, but unlike a
-        // downloaded document they do not call `written`. Refresh the sidebar
-        // after the deletion has reached those stores so its row disappears now.
         this.treeStale()
       } finally {
         this.own.delete(`removed:${path}`)
@@ -1076,9 +939,6 @@ class Runner {
     this.treeTimer = setTimeout(() => void workspace.loadTree(), 200)
   }
 
-  /** A move or a delete the workspace is making (`doing` in workspace/file-ops.ts),
-   *  said to the engine by the id of what is there before the disk has it, and the
-   *  disk's part made inside that (`moving` and `removing` in engine.ts). */
   readonly doer: Doer = async (op, run) => {
     const engine = this.current
     if (!engine || op.kind === 'space' || op.op === 'created') {
@@ -1097,23 +957,13 @@ class Runner {
         })
       }
     } finally {
-      // What this browser keeps no words of moved or went with it, as this person did:
-      // everything kept by path has heard so already.
       await this.awayHeard(engine, false)
     }
     this.nudge()
   }
 
-  // -------------------------------------------------------------------------
-  // Words kept only while used, in the browser (keeping.ts, #1126)
-
-  /** Where each file this browser keeps no words of was last said to be, by id. */
   private awayPaths = new Map<string, string>()
 
-  /** The files kept away told to the browser's commands. `told`: where the engine's tree
-   *  moved under them by somebody else's doing, everything kept by path hears of a move
-   *  or a delete of one too, as it hears of a file the engine moved or took away; a file
-   *  that came to be here is the engine's write, which says itself. */
   private async awayHeard(engine: Engine, told: boolean) {
     if (isNative || this.current !== engine) return
     const files = engine.awayFiles()
@@ -1130,11 +980,9 @@ class Runner {
     const back = keptAway.keep(files, (path) => this.fetchAway(engine, path))
     if (this.indexing) keptAway.answeredBy(this.indexing.scans(), this.indexing.search)
     if (back.length || files.length !== was.size) this.treeStale()
-    // A note opened while it was away, waiting in its tab, has its words now.
     for (const path of back) void workspace.arrived(path)
   }
 
-  /** A file kept away, fetched now. */
   private async fetchAway(engine: Engine, path: string): Promise<boolean> {
     if (this.current !== engine) return false
     const here = await engine.fetch(path)
@@ -1143,12 +991,9 @@ class Runner {
     return here
   }
 
-  /** What the browser knows of the notes it keeps no words of, and where it keeps it. */
   private indexing: Indexing | null = null
   private indexStore: IndexStore | null = null
 
-  /** The scans older than the words the feed names, asked for again after a pass, and
-   *  what came told to the link index and the rows (indexing.ts). */
   private async indexHeard(engine: Engine) {
     const indexing = this.indexing
     if (!indexing || this.current !== engine) return
@@ -1159,20 +1004,17 @@ class Runner {
     if (this.current !== engine || this.indexing !== indexing) return
     keptAway.answeredBy(indexing.scans(), indexing.search)
     for (const one of refreshed) links.indexed(one.root, one.scans)
-    // A space whose account had no route for it is kept whole from now on.
     if (!engine.keepingFew().length) await this.awayHeard(engine, false)
   }
 
   private trimTimer: ReturnType<typeof setTimeout> | undefined
 
-  /** The words kept here brought within the budget, a moment after they last grew. */
   private trimSoon() {
     const engine = this.current
     if (isNative || !engine) return
     clearTimeout(this.trimTimer)
     this.trimTimer = setTimeout(() => {
       void (async () => {
-        // Another window of the app may have open what this one would let go of.
         if (this.current !== engine || !(await aloneHere())) return
         const indexing = this.indexing
         const went = await engine.trim(await keptBudget(), {
@@ -1184,9 +1026,6 @@ class Runner {
     }, TRIM_AFTER)
   }
 
-  /** A file operation, heard as everything kept by path hears it. Answers what is left to
-   *  do, which the operation waits for, so the account hears operations in the order
-   *  they were done. */
   follow(op: FileOp): Promise<void> | undefined {
     const engine = this.current
     if (!engine) {
@@ -1204,15 +1043,11 @@ class Runner {
     const done = (async () => {
       if (op.op === 'created') {
         const document = op.key ? workspace.documents.find((one) => one.key === op.key) : undefined
-        // A picture or a recording travels as its bytes, which the engine reads itself.
         const text =
           op.kind === 'folder' || !holdsDocument(kindOfName(op.path))
             ? undefined
             : (document?.latest ?? (await engine.core.world.disk.read(op.path)) ?? '')
-        // A day's note the append action made starts from nothing, which is what two of
-        // them made apart are merged against.
         const mergeable = this.mergeables.delete(op.path) ? '' : undefined
-        // A delete put back comes back as the entries it was, where the engine has it.
         if (!(op.back && (await engine.restored(op.path, op.back)))) {
           await engine.created(op.path, op.kind === 'folder', text, mergeable)
         }
@@ -1234,7 +1069,6 @@ class Runner {
     })
   }
 
-  /** Paths of notes about to be made by the append action: made `mergeable`. */
   private readonly mergeables = new Set<string>()
 
   mergeable(path: string) {
@@ -1242,7 +1076,6 @@ class Runner {
     this.mergeables.add(path)
   }
 
-  /** Autosave wrote a note: recorded, and what was typed is one more pending update. */
   async wrote(path: string, text: string): Promise<void> {
     const engine = this.current
     if (!engine) {
@@ -1255,7 +1088,6 @@ class Runner {
     this.nudge()
   }
 
-  /** The account's id for a space's folder. */
   remoteIdFor(root: string): string | null {
     if (!this.engine) return this.seen.spaces.find((one) => one.root === root)?.id ?? null
     for (const space of this.engine.core.spaces.values()) {
@@ -1264,8 +1096,6 @@ class Runner {
     return null
   }
 
-  /** The role the sync store kept for the space a folder is, as the account last
-   *  said it: what may be done there before the account is asked again. */
   roleKept(root: string): string | null {
     if (!this.engine) return this.seen.spaces.find((one) => one.root === root)?.role ?? null
     for (const space of this.engine.core.spaces.values()) {
@@ -1274,8 +1104,6 @@ class Runner {
     return null
   }
 
-  /** The file on this disk an entry of the account is, by its id: null for one that is
-   *  not on this disk, or in no space this device syncs. */
   fileOf(id: string): string | null {
     if (!this.engine) return this.seen.notes.find((one) => one.id === id)?.path ?? null
     for (const space of this.engine.core.spaces.values()) {
@@ -1285,8 +1113,6 @@ class Runner {
     return null
   }
 
-  /** What the account holds for a note on this disk: its id, its version, and the digest
-   *  of what Orden last wrote. */
   tracked(path: string): { id: string; version: number; hash: string } | null {
     if (!this.engine) return this.seenAt.get(pathKey(path)) ?? null
     const engine = this.engine
@@ -1306,16 +1132,6 @@ class Runner {
     return isIdAt(said) ? said : { none: 'not-running' }
   }
 
-  /** Whether the account holds what is at a path on this disk now, so a delete can be
-   *  left to it; see `holds` in sync.svelte.ts.
-   *
-   *  An entry with a number has been handed over once, and that is all it says. A note
-   *  with words not acknowledged, or whose file another program wrote since Orden did, is
-   *  ahead of the account. A file another program changed (`touched`), one whose bytes
-   *  the account names differently from the ones last on this disk, and one held in a
-   *  conflict - whose bytes here were never sent (`holdFile` in files.ts) - are too. Each
-   *  is read and hashed against what was last written, since the watcher's word on a
-   *  change can come a moment after the change. */
   async holds(path: string, how: Holding = {}): Promise<boolean> {
     if (!this.engine && this.accountId) return (await this.ask('holds', { path })) === true
     const engine = this.engine
@@ -1335,14 +1151,12 @@ class Runner {
 
     if (core.touched.has(entry.id) || entry.file_key !== entry.written_hash) return false
     const blobs = core.world.blobs
-    // What is larger than a folder check may still read is not read at all.
     if (!blobs || (how.budget && (entry.size ?? Infinity) > how.budget.left)) return false
     const bytes = await blobs.read(path)
     if (!bytes || !spend(how, bytes.byteLength)) return false
     return (await blobs.hash(bytes)) === entry.written_hash
   }
 
-  /** A space deleted here: its rows go with it. */
   async forget(root: string): Promise<void> {
     if (!this.current && this.accountId) {
       await this.ask('forget', { root })
@@ -1353,10 +1167,6 @@ class Runner {
     if (engine && space) await engine.core.commit(engine.core.forgetSpace(space.id))
   }
 
-  /** A device's name, by its id on the account: the account's list, asked for once by
-   *  everyone who wants a name while it is coming, and kept only once it came. A list
-   *  that could not be had is asked for again next time, rather than every device being
-   *  nameless for the rest of the session. */
   private names: Promise<Map<string, string>> | null = null
   private async nameOf(device: string | null): Promise<string> {
     if (!device) return ''
@@ -1601,10 +1411,6 @@ class Runner {
     }
   }
 
-  // -------------------------------------------------------------------------
-  // Open notes
-
-  /** Joins every open note to its document, and parts the ones that closed. */
   private followOpen(): () => void {
     return $effect.root(() => {
       $effect(() => {
@@ -1629,9 +1435,6 @@ class Runner {
       const surface = rooms.planes.get(one.key)
       const entry = engine.entryAt(one.path)
       const joins = entry && joinsAs(note.kind, entry.kind)
-      // A tab whose name and entry disagree about the shape, after a rename across
-      // `.md` and `.canvas`, is left unjoined, and the reader is told once: what is
-      // typed there that the entry's kind cannot hold does not sync.
       if (entry && engine.core.hasDoc(entry.id) && joins === null)
         this.mismatched(one.key, one.path)
       const on: On | null =
@@ -1656,8 +1459,6 @@ class Runner {
       const arrivals = one.arrivals()
       const holds = () => one.arrivals() === arrivals && this.bound.get(key)?.id === one.id
       this.bound.set(key, { id: one.id, part: () => undefined, joining: true })
-      // A document made again under the note - the account's words taken, a new epoch -
-      // is a document its room has never met: the room is joined afresh.
       const again = () => {
         uncarry(key)
         this.carried.delete(key)
@@ -1678,7 +1479,6 @@ class Runner {
     }
   }
 
-  /** Tabs already told that their file syncs as another kind; see `bindNow`. */
   private readonly told = new Set<string>()
 
   private mismatched(key: string, path: string) {
@@ -1688,11 +1488,8 @@ class Runner {
     void unsyncedToast(path.split(/[\\/]/).pop() ?? path)
   }
 
-  /** Open notes whose documents a room is carrying, by document key. */
   private readonly carried = new Set<string>()
 
-  /** An open note's document, carried live through its room: only one the account
-   *  knows, on the epoch the account is on, and not held for the question. */
   private enter(engine: Engine, key: string, id: string, on: On) {
     const core = engine.core
     const doc = core.docs.get(id)
@@ -1717,7 +1514,6 @@ class Runner {
         met: async (update) => {
           const met = await engine.meet(id, Y.convertUpdateFormatV1ToV2(update))
           if (met === 'hold') {
-            // Out of the room until the question is answered; the answer joins it again.
             queueMicrotask(() => {
               uncarry(key)
               this.carried.delete(key)
@@ -1736,7 +1532,6 @@ class Runner {
         },
       },
     })
-    // A canvas's pointer goes to the others through the room while there is one.
     void room.then((entered) => {
       const plane = this.bound.get(key)?.plane
       if (plane && entered?.hand) plane.hand = entered.hand.bind(entered)
@@ -1756,17 +1551,12 @@ function withoutKey(op: FileOp): FileOp {
   return said
 }
 
-/** Whether somebody is signed in now: read again after every wait. */
 function signedIn(): boolean {
   return account.user !== null
 }
 
-/** What an open note is joined through: its views, or a canvas's surface. */
 type On = { note: NoteDoc } | { surface: PlaneSurface }
 
-/** Whether a request failed for want of the account rather than by its answer: no
- *  network, or the account too busy or failing to say anything (transport.ts reads the
- *  engine's own requests the same way). */
 function unreachable(error: unknown): boolean {
   if (error instanceof ApiError) return error.status === 429 || error.status >= 500
   return error instanceof TypeError
@@ -1794,13 +1584,10 @@ export const runner = new Runner()
 owesLast(() => runner.flushing())
 owesAtTheEnd(() => runner.parting())
 
-/** How many rounds of passes the way back gives what is pending to go up and be taken. */
 const SENDING_ROUNDS = 4
 
-/** How long between them: a room takes what was pushed a moment after the push. */
 const SETTLING = 1_500
 
-/** v1's whole listing of a space, deleted notes too, page by page. */
 async function listingOf(token: string, spaceId: string): Promise<V1Listing> {
   const notes: V1Listing['notes'][number][] = []
   let cursor = 0
@@ -1813,14 +1600,11 @@ async function listingOf(token: string, spaceId: string): Promise<V1Listing> {
   }
 }
 
-// Signing out deletes the account's sync store, as it empties the vault (docs/sync-v2.md
-// section 10): what is in it is the account's, and the next account is somebody else.
 account.forgetWithSession(() => {
   const id = runner.accountNow
   if (id) void runner.signedOut(id)
 })
 
-/** The page notes the account holds of every space this engine keeps, for their papers. */
 function pageNotes(engine: Engine): Carried[] {
   const out: Carried[] = []
   for (const space of engine.core.spaces.values()) {

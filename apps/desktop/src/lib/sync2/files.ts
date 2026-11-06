@@ -1,75 +1,34 @@
-/** Every file of a space that is not a note, a canvas, a page note or a web note: a
- *  picture, a recording, a PDF (docs/sync-v2.md section 5.8).
- *
- *  Such a file is an entry of kind `file` with the hash of its bytes, and the bytes are
- *  a blob on the account under that hash. Nothing merges. A file made here goes up as
- *  its bytes and then its `create`; one replaced here goes up as new bytes and a
- *  replace naming the bytes it replaced, which the account answers `moved` when another
- *  device replaced them first - and then the file is held and its person asked, with the
- *  same three answers a note has. A file the account has bytes for that this disk does
- *  not is fetched and written, unless this device replaced it meanwhile, which is the
- *  same question from the other side.
- *
- *  Two hashes on each entry say where it stands: `file_key` is the bytes the account
- *  last named, `written_hash` the bytes this disk was last known to hold. Equal is in
- *  step; a newer `file_key` is something to fetch; a disk that hashes to neither is a
- *  replacement made here.
- *
- *  Only where the world can carry bytes (`World.blobs`): the simulator's cannot, and
- *  there files are not kept at all. Up to 64 MB a file, in one request; a larger one
- *  stays on this device, and nothing from the account is written over it. */
-
 import type { Core, Holding } from './core'
 import { readFine, readRefused, saidUnsynced } from './project'
 import { againstBytes, outgoingBytes } from './records'
 import type { Outboxed, SpaceState } from './places'
 import { put, type Change, type EntryRow } from './store'
 
-/** The largest file that travels: the account's one-request ceiling. */
 const LARGEST = 64 * 1024 * 1024
 
-/** How long a file whose bytes the account refused waits before they go again. A full
- *  account stays full until somebody deletes something, and every try sends every byte. */
 const REFUSED_WAIT = 5 * 60_000
 
-/** What the account answered a replacement. */
 export type Replaced =
   | { ok: true; seq: number }
   | { moved: { hash: string; size: number; at: number } }
   | { gone: true }
   | { refused: 'role' }
 
-/** The world's road for bytes. Each request answers null when the account cannot be
- *  reached, as `Account.ask` does. */
 export interface Blobs {
-  /** A file's bytes on this disk, or null when it is not there or will not read. */
   read(path: string): Promise<Uint8Array | null>
   write(path: string, bytes: Uint8Array): Promise<void>
   size?(path: string): Promise<number | null>
-  /** The hash a blob is named by. */
   hash(bytes: Uint8Array): Promise<string>
-  /** The bytes, up to the account under their hash. Answers whether it keeps them now,
-   *  or `full` when the account has no room for them. */
   up(hash: string, bytes: Uint8Array): Promise<boolean | 'full' | null>
-  /** A file's bytes, from its space. `gone` for one the account no longer has. */
   down(space: string, id: string): Promise<Uint8Array | 'gone' | null>
   replace(space: string, id: string, hash: string, base: string): Promise<Replaced | null>
-  /** Which of these hashes the account keeps, or null where it did not say - no answer,
-   *  or an account from before it could be asked (#517). */
   have?(hashes: string[]): Promise<Set<string> | null>
 }
 
-/** How often the files a space holds in step are checked against what the account
- *  keeps: once a launch, and then every few hours. Bytes the account lost do not come
- *  back by waiting, and every check is a request per ninety files. */
 const LOST_EVERY = 6 * 60 * 60_000
 
-/** How many hashes one question names; the account's ceiling. */
 const ASKED_AT_ONCE = 90
 
-/** A file's bytes and their hash, read now; null for one that is not there. `large` for
- *  one too large to travel and `unread` for one that is there and will not read: what
- *  those say cannot be told from what this disk last held, so neither is "no change". */
 async function readBytes(
   core: Core,
   space: SpaceState,
@@ -98,8 +57,6 @@ function cannotJudge(core: Core, entry: EntryRow, how: 'large' | 'unread'): void
   else readRefused(core, entry)
 }
 
-/** A file made here: its hash and size, for the entry and its `create`. Null when this
- *  world keeps no files, or the file is too large to travel. */
 export async function fileMade(
   core: Core,
   space: SpaceState,
@@ -113,17 +70,10 @@ export async function fileMade(
   return { hash: read.hash, size: read.bytes.byteLength }
 }
 
-/** What a pass heard about the account's room for bytes. */
 export interface Room {
-  /** Whether the account said it has no room for a file's bytes. */
   full: boolean
 }
 
-/** The bytes of every file a waiting `create` names, up before the ops that name them,
- *  since the account makes no entry for bytes it does not have. A file changed since it
- *  was made goes up as it is now, under its new hash. Answers the ids of the files whose
- *  bytes the account would not take - their creates wait, and the rest of the outbox
- *  goes - or null when a request got no answer. */
 export async function sendMade(
   core: Core,
   space: SpaceState,
@@ -148,8 +98,6 @@ export async function sendMade(
       continue
     }
     readFine(core, op.id)
-    // Sent without its bytes, the create would be refused `gone` and the file forgotten:
-    // it waits, and the rest of the outbox goes.
     if (resting(core, op.id, read.hash, room)) {
       waiting.add(op.id)
       continue
@@ -171,9 +119,6 @@ export async function sendMade(
   return waiting
 }
 
-/** Fetches what the account has that this disk does not, and sends what this disk has
- *  that the account does not: every file entry of the space, compared by hash. Answers
- *  whether everything got an answer. */
 export async function settleFiles(
   core: Core,
   space: SpaceState,
@@ -186,13 +131,10 @@ export async function settleFiles(
   for (const entry of [...space.entries.values()]) {
     if (entry.kind !== 'file' || entry.deleted || entry.seq === null) continue
     if (core.isHeld(entry.id) || !space.isLive(entry.id) || space.foreign(entry.id)) continue
-    // A create still on its way: its bytes go up with it (`sendMade`).
     if (waitingCreate(space, entry.id)) continue
     const path = entry.local_path || wanted.get(entry.id)
     if (!path) continue
     const changedThere = entry.file_key !== null && entry.file_key !== entry.written_hash
-    // Read only where something may have changed: what another program wrote is said by
-    // the watcher and the launch scan (`touched`), so a quiet space reads nothing.
     if (!core.touched.has(entry.id) && !changedThere && entry.local_path) continue
     core.touched.delete(entry.id)
 
@@ -206,7 +148,6 @@ export async function settleFiles(
     const changedHere = here !== null && here.hash !== entry.written_hash
 
     if (here?.hash === entry.file_key) {
-      // Both say the same: in step, whichever moved.
       const stamped = stampLanded(core, entry)
       if (entry.written_hash !== here.hash || stamped) {
         await written(core, entry, here.hash, here.bytes)
@@ -219,13 +160,10 @@ export async function settleFiles(
     }
     if (changedHere) {
       core.touched.add(entry.id)
-      // Bytes the account refused a moment ago go again once the wait is over.
       if (resting(core, entry.id, here.hash, room)) continue
       const stored = await blobs.up(here.hash, here.bytes)
       if (!alive() || stored === null) return false
       if (!(await taken(core, space, entry, here.hash, stored, room))) {
-        // Bytes the account would not take, no room for them, say: this file waits, and
-        // the rest of the space settles.
         continue
       }
       const answer = await blobs.replace(space.id, entry.id, here.hash, entry.file_key ?? '')
@@ -240,17 +178,9 @@ export async function settleFiles(
         await core.commit(holdFile(core, entry, here.hash, answer.moved.at))
       }
       if (!('refused' in answer)) continue
-      // A space this account may only read: the bytes another program wrote here will
-      // never go up, and kept they would stand for good against every replacement the
-      // owner makes. They go to this device's trash, which is where Keep theirs puts a
-      // replacement too, and the owner's are fetched in their place. With no file and no
-      // path the entry is fetched next pass, should this one stop before the bytes come.
       try {
         await core.world.disk.remove(core.world.join(space.row.root, entry.local_path), 'file')
       } catch {
-        // Locked by the program still writing it, or the trash would not take it: thrown,
-        // it stopped the whole pass, every pass. It stays as it is and is tried again
-        // next pass, and the rest of the space settles meanwhile.
         core.touched.add(entry.id)
         continue
       }
@@ -260,12 +190,8 @@ export async function settleFiles(
     if (changedThere || !entry.local_path) {
       const full = core.world.join(space.row.root, path)
       if (!entry.local_path) {
-        // Another entry's file is still where this one is going: it moves on first.
         const holder = space.at(path)
         if (holder && holder !== entry) continue
-        // A file nobody here has named yet is in the way, dropped here while the app
-        // was closed or a page note's paper: it becomes an entry of its own (ingest),
-        // and nothing is written over it, as with a document (`project`).
         if (await core.world.disk.exists(full)) continue
       }
       const bytes = await blobs.down(space.id, entry.id)
@@ -275,9 +201,6 @@ export async function settleFiles(
         await core.world.disk.mkdir(core.world.join(space.row.root, folderPath(path)))
         await blobs.write(full, bytes)
       } catch {
-        // Refused, a file another program holds open: this one waits for the next pass,
-        // its entry as it was, and the rest of the space settles. Thrown, it stopped
-        // every pass before anything after it came or went.
         continue
       }
       entry.local_path = path
@@ -289,17 +212,6 @@ export async function settleFiles(
   return true
 }
 
-/** The files this disk holds in step whose bytes the account no longer keeps, sent up
- *  again from here (#517).
- *
- *  A file in step is never asked about - the account named those bytes, and this disk
- *  has them - so bytes the account lost stayed lost: the nightly sweep of misnamed
- *  copies takes the rows of uploads that were answered over such a copy with it, and
- *  from then on every other device of the space read the file as gone, until somebody
- *  edited it here again. Asked now and then (`LOST_EVERY`), in batches, and only of the
- *  files whose bytes on this disk are still the ones the account named; an account
- *  that cannot be asked is not asked again until the next time. Answers whether
- *  everything got an answer. */
 export async function recoverLost(
   core: Core,
   space: SpaceState,
@@ -330,7 +242,6 @@ export async function recoverLost(
     for (const entry of batch) {
       if (entry.file_key === null || kept.has(entry.file_key)) continue
       const here = await readBytes(core, space, entry)
-      // Changed here since, or gone: the next settle sends or fetches it as ever.
       if (!here || typeof here === 'string' || here.hash !== entry.file_key) continue
       const stored = await blobs.up(here.hash, here.bytes)
       if (!alive() || stored === null) return false
@@ -340,8 +251,6 @@ export async function recoverLost(
   return true
 }
 
-/** Whether these bytes of a file were refused too lately to go again yet: bytes changed
- *  since go at once. Says the account is still full meanwhile, as it last said. */
 function resting(core: Core, id: string, hash: string, room: Room): boolean {
   const refused = core.refusedBytes.get(id)
   if (!refused) return false
@@ -358,9 +267,6 @@ function resting(core: Core, id: string, hash: string, room: Room): boolean {
   return false
 }
 
-/** Whether the account took a file's bytes, writing down when it did not, and saying
- *  so in the log the first time it refuses these bytes: a refusal other than for room
- *  shows no warning, and the file would wait unremarked. */
 async function taken(
   core: Core,
   space: SpaceState,
@@ -387,8 +293,6 @@ async function taken(
   return false
 }
 
-/** Whether an outbox row is an op on a file whose create waits for the account to take
- *  its bytes: nothing a pass can send now, so nothing to pass again for soon. */
 export function waitsForBytes(core: Core, space: SpaceState, one: Outboxed): boolean {
   return (
     one.record.t === 'op' &&
@@ -398,7 +302,6 @@ export function waitsForBytes(core: Core, space: SpaceState, one: Outboxed): boo
   )
 }
 
-/** Whether a `create` for this entry is still waiting to go up. */
 function waitingCreate(space: SpaceState, id: string): boolean {
   return space.outbox.some(
     (one) => one.record.t === 'op' && one.record.op.t === 'create' && one.record.op.id === id,
@@ -416,8 +319,6 @@ function folderPath(path: string): string {
   return at < 0 ? '' : path.slice(0, at)
 }
 
-/** A file both sides replaced, held for the question: this disk keeps its bytes, the
- *  account keeps the other's, and nothing goes either way until it is answered. */
 function holdFile(core: Core, entry: EntryRow, mine: string, at = core.world.now()): Change[] {
   const against = { t: 'blob', mine, theirs: entry.file_key ?? '', at } as const
   const holding: Holding = {

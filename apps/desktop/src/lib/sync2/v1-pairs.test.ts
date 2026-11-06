@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { pairsFromV1 } from './v1-pairs'
 
-/** v1's mirrors, as `nib:mirrors` holds them for one account. */
 const saved = {
   account: 'u1',
   seen: true,

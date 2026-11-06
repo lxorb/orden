@@ -1,10 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 
-/** The disk the v2 engine is handed in the browser, which keeps no stamps:
- *  `file_stamp` answers null for every path there (web/commands.ts). Asked by a stamp
- *  alone, every file read as not there, and a note deleted on another device was
- *  never deleted in the browser. */
-
 const notes = new Map([['/s/Plan.md', '# Plan\n']])
 const renames: Record<string, unknown>[] = []
 const trashed: Record<string, unknown>[] = []
@@ -18,21 +13,15 @@ vi.mock('../tauri', () => ({
     const path = args?.path ?? ''
     if (command === 'create_folder') return Promise.resolve()
     if (command === 'rename_note') {
-      // The crate's guard: a PDF going to a page note's paper name is refused unless
-      // it is held there on purpose; see `rename_note` in notes.rs.
       renames.push({ ...args })
       const holder = args?.to?.replace(/\.pdf$/i, '')
       const held = (args as { hold?: boolean }).hold === true
       if (args?.to?.endsWith('.pages.pdf') && holder && notes.has(holder) && !held)
         return Promise.reject(new Error(`${holder} is already there`))
-      // And `move_held`: a PDF's highlights go with it, and highlights already at the
-      // new name are cleared where it has none, unless the move is the file alone.
       const { from = '', to = '' } = args ?? {}
       if (notes.has(from)) notes.set(to, notes.get(from)!)
       notes.delete(from)
       const alone = (args as { alone?: boolean }).alone === true
-      // A page note's paper goes with it either way: sync carries it with the note, never
-      // as an entry of its own.
       if (from.endsWith('.pages') && notes.has(`${from}.pdf`)) {
         notes.set(`${to}.pdf`, notes.get(`${from}.pdf`)!)
         notes.delete(`${from}.pdf`)
@@ -46,8 +35,6 @@ vi.mock('../tauri', () => ({
       return Promise.resolve()
     }
     if (command === 'trash_item') {
-      // The crate's `trash_item`: a PDF's highlights go with it, unless the delete is
-      // sync's, which leaves what the account holds as an entry of its own.
       trashed.push({ ...args })
       notes.delete(path)
       if (path.endsWith('.pdf') && (args as { alone?: boolean }).alone !== true)
@@ -84,9 +71,6 @@ describe("the browser's disk, as the v2 engine sees it", () => {
 })
 
 describe('a move the engine makes', () => {
-  /** A write that has not answered would land at the old path after the move. Rejected
-   *  while the file is where it was, the entry stays and the next pass asks again; see
-   *  `moves` in places.ts. */
   test('is refused, the file left alone, under a write that has stalled', async () => {
     notes.set('/s/Stuck.md', '# Stuck\n')
     const told: string[] = []
@@ -130,9 +114,6 @@ describe('a move the engine makes', () => {
 })
 
 describe('a PDF another device turned into its page note', () => {
-  // On the other device the PDF beside `X.pages` went to `X.pages.pdf`, the paper
-  // that note holds. The move came here without saying so, the crate refused it as a
-  // PDF put where a page note takes it for its paper, and every pass stopped there.
   test('moves to the paper of the page note beside it', async () => {
     notes.set('/s/X.pages', '{}')
     const telling = {
@@ -173,11 +154,6 @@ describe('a PDF another device turned into its page note', () => {
 })
 
 describe('a PDF another device renamed, with its highlights', () => {
-  // The other device moved `A.pdf` to `B.pdf` and its highlights with it, and the
-  // account holds the two as moves of their own, which come here in either order.
-  // Highlights first, then the PDF: a move that took companions found none at `A.pdf`,
-  // cleared the ones that had just arrived at `B.pdf`, and the next scan sent that
-  // delete everywhere.
   test('keeps the highlights that arrived ahead of the PDF', async () => {
     notes.set('/s/A.pdf', '%PDF')
     notes.set('/s/A.pdf.highlights.json', '{"version":1}')
@@ -202,8 +178,6 @@ describe('a PDF another device renamed, with its highlights', () => {
 })
 
 describe('a page note another device renamed', () => {
-  // The paper is no entry of the account's (#551): it goes with the note. Left behind,
-  // it was downloaded again under the new name and the old one listed as a new PDF.
   test('moves the note and its paper', async () => {
     notes.set('/s/X.pages', '{}')
     notes.set('/s/X.pages.pdf', '%PDF')
@@ -222,10 +196,6 @@ describe('a page note another device renamed', () => {
 })
 
 describe('a highlighted PDF another device turned into its page note', () => {
-  // There the PDF went to the paper and its highlights with it; here that comes as a
-  // delete of the PDF, run first, and a move of its highlights. The delete took the
-  // highlights into the trash, the move found nothing, and the next scan sent the
-  // highlights' delete everywhere.
   test('keeps the highlights', async () => {
     notes.set('/s/T.pdf', '%PDF')
     notes.set('/s/T.pdf.highlights.json', '{"version":1}')

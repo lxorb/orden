@@ -1,11 +1,3 @@
-/** The sync store in memory: the same tables, the same questions and the same answers
- *  as the SQLite store and the IndexedDB one (store.ts), kept in maps.
- *
- *  What the simulator's devices keep, and what the engine's tests run against. A crash
- *  is the engine going and this staying: whatever a write committed is here for the
- *  next `open`, and nothing else is. A write is one change after another on a copy that
- *  is swapped in whole, so one refusal writes nothing, as in both real stores. */
-
 import {
   answerOf,
   changeOf,
@@ -26,7 +18,6 @@ import {
 
 type Row = Record<string, unknown>
 
-/** A row as nothing outside can change: byte arrays copied, both ways. */
 function copied(row: Row): Row {
   const out: Row = {}
   for (const [key, value] of Object.entries(row)) {
@@ -58,16 +49,12 @@ export class MemoryStore {
   private tables = emptyTables()
   private clean = true
   private readonly device: string
-  /** How many writes it has taken, and how many rows they touched: what a test of
-   *  "a keystroke writes nothing" counts. */
   writes = 0
 
   constructor(device = 'memory-device') {
     this.device = device
   }
 
-  /** The store as an engine opens it: this session marked unfinished until it says
-   *  otherwise, and whether the last one said so. */
   open(): SyncStore {
     const opened: Opened = {
       device: this.device,
@@ -121,7 +108,6 @@ export class MemoryStore {
     }) as Answers<Q>
   }
 
-  /** A table's rows in its order: by key, the outbox oldest first, the log as written. */
   private scanned(table: TableName, space: string | undefined): Row[] {
     const spec = TABLES[table]
     const all =
@@ -142,7 +128,6 @@ export class MemoryStore {
     return counts
   }
 
-  /** Every row of a table, for a test to look at. */
   rows<T extends TableName>(table: T): Rows[T][] {
     return this.scanned(table, undefined).map((row) => rowOf(table, copied(row)))
   }

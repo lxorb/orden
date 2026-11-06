@@ -1,6 +1,3 @@
-/** The worker side of classify.ts: one meeting classified per message, off the
- *  writing thread. */
-
 import type { Judging } from './classify'
 import { judge } from './kinds'
 

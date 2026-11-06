@@ -1,7 +1,3 @@
-/** What the hub says, read at the boundary: each frame the hub sends comes back typed,
- *  and anything else - the beat's answer, a frame of the wrong shape, one this version
- *  does not speak - comes back as nothing. */
-
 import { describe, expect, test } from 'vitest'
 import { BEAT_ANSWER, readHubFrame } from './hub-frames'
 

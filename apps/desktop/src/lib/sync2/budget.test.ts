@@ -1,15 +1,11 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { aloneHere, forgetWindow, holdThisWindow, keptBudget } from './budget'
 
-/** How much a browser keeps of the words it uses, and when it may let any go
- *  (budget.ts, #1126). */
-
 afterEach(() => {
   vi.unstubAllGlobals()
   forgetWindow()
 })
 
-/** The browser's lock manager, with `others` other windows holding the window's lock. */
 function locks(others: number) {
   const held: { name: string; mode: string }[] = Array.from({ length: others }, () => ({
     name: 'nib:window',

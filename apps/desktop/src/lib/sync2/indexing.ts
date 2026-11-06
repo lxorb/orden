@@ -1,14 +1,3 @@
-/** What a browser that keeps only the words it uses knows of the rest (#1126; keeping.ts):
- *  each note's scan, asked of the account and kept by id (web/index-store.ts), and a
- *  search of the notes it keeps no words of, asked of the account a page at a time.
- *
- *  A scan is asked for once per version of the words: the feed says each note's
- *  `docSeq`, and a scan made from an older one is asked for again, a batch at a time,
- *  after a pass. Offline, the scans kept are what the link index and the rows read. A
- *  note let go of here leaves its scan made from the words in hand, so nothing has to be
- *  asked for it. An account that says it serves this and then has no route for it is a
- *  Worker put back: its space is kept whole again (`keepWhole`). */
-
 import { indexed, rehomed } from '@orden/scan/indexed'
 import type { Query } from '@orden/scan/search/query'
 import type { Found } from '@orden/scan/search/walk'
@@ -18,17 +7,12 @@ import type { Leaving } from './keeping'
 import type { Reading } from './transport'
 import type { IndexRow, IndexStore } from '../web/index-store'
 
-/** How many notes one index request names: the account's batch. */
 const BATCH = 200
 
-/** How many notes a search may say it walks itself: the account's ceiling. */
 const MOST_SKIPPED = 5000
 
-/** Which files have a scan: a note, a canvas, a website. */
 const SCANNED = /\.(md|markdown|mdown|mkd|canvas|url|webloc)$/i
 
-/** What came of a refresh of one space: the scans newer than the index held, relative
- *  to the space, for the link index and the rows. */
 export interface Refreshed {
   root: string
   scans: IndexedNote[]
@@ -44,14 +28,10 @@ export class Indexing {
     private readonly store: IndexStore,
   ) {}
 
-  /** The scans held, by id. */
   scans(): ReadonlyMap<string, IndexedNote> {
     return new Map([...this.rows].map(([id, row]) => [id, row.scan]))
   }
 
-  /** Every space's scans read in, and those older than the words the feed names asked
-   *  for again. Answers what changed, by space; stops quietly where the account does not
-   *  answer. */
   async refresh(): Promise<Refreshed[]> {
     const out: Refreshed[] = []
     const away = this.engine.awayFiles()
@@ -95,7 +75,6 @@ export class Indexing {
     return out
   }
 
-  /** The words of a note this device lets go of, made into its scan here. */
   async leaving(one: Leaving): Promise<void> {
     const stamp = { size: one.text.length, mtime: one.at, ctime: one.at }
     const scan = indexed(one.path, one.text, stamp)
@@ -105,8 +84,6 @@ export class Indexing {
     this.rows.set(row.id, row)
   }
 
-  /** What is kept away under `root`, searched by the account a page at a time, from
-   *  where the last page ended, until `limit` hits have come or the space is walked. */
   readonly search = async (
     root: string,
     query: Query,

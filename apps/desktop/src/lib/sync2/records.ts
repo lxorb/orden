@@ -1,20 +1,3 @@
-/** What the engine keeps in the sync store beyond the columns section 9.2 names, and how
- *  it is spelled there.
- *
- *  Three things. A document's two version numbers - where its confirmed state is on the
- *  account (`seq`, what a push names) and how far along the space's feed it has been
- *  pulled (`pulled`, which says a newer `docSeq` has words to fetch) - kept as a `meta`
- *  row beside its `docs` row, `doc:<id>`, in the same write. What waits to go up: tree
- *  ops, the losing side of an answer or a minor overlap on its way to `/v2/docs/keep`,
- *  and a day's note the account merged into one that was there, each a row of the
- *  `outbox` in the order it was made. And what a held note was held against, in the
- *  `held` row's `remote`. Beside them, where each entry was put among the rest of its
- *  folder (`order:<space>`), and where what this device deleted was (`gone:<space>`).
- *
- *  All of it framed the way sync v2 frames a request (`frame` in @orden/sync-core), so a
- *  Yjs update inside a record is bytes and not a list of numbers, and read back through
- *  a check: a row is unknown until it has been looked at. */
-
 import {
   frame,
   type CreateOp,
@@ -29,25 +12,14 @@ import type { MetaRow } from './store'
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
-// ---------------------------------------------------------------------------
-// A document's numbers
-
-/** A push sent and not answered yet: its own id, and how many of the pending updates it
- *  carried. Written before it goes, so one whose answer was lost - to the network or to
- *  a crash - goes again as it was, the same id and the same bytes, and the account
- *  answers it the way it answered the first time (`PushDoc` in @orden/sync-core/wire). */
 export interface Flight {
   push: string
   count: number
 }
 
 export interface DocNumbers {
-  /** The document's version on the account that `confirmed` is at. */
   seq: number
-  /** The feed's `docSeq` the confirmed state is known to cover. */
   pulled: number
-  /** Whether it holds updates the account has not acknowledged: what a pass looks for
-   *  without reading every document's bytes. */
   pending: boolean
   flight: Flight | null
 }
@@ -66,7 +38,6 @@ function flightOf(value: unknown): Flight | null {
   return typeof push === 'string' && whole(count) ? { push, count } : null
 }
 
-/** The id a numbers row is about, or null for another meta row. */
 export function numbersOf(row: MetaRow): { id: string; numbers: DocNumbers } | null {
   if (!row.key.startsWith(DOC) || typeof row.value !== 'string') return null
   try {
@@ -87,11 +58,6 @@ export function numbersRow(id: string, numbers: DocNumbers): MetaRow {
   return { key: numbersKey(id), value: JSON.stringify(numbers) }
 }
 
-/** A document's pending updates as the `pending` column holds them: a list, oldest
- *  first, each what one pause in the typing (or one answer) added. A list rather than
- *  one merged update, because a push carries the first few and an acknowledgement
- *  confirms the first few, and a merged update cannot be cut back into what it was
- *  made of. */
 export function pendingBytes(chunks: readonly Uint8Array[]): Uint8Array | null {
   return chunks.length ? frame({ chunks: [...chunks] }) : null
 }
@@ -103,20 +69,12 @@ export function pendingOf(bytes: Uint8Array | null): Uint8Array[] {
   return value.chunks.filter((one): one is Uint8Array => one instanceof Uint8Array)
 }
 
-// ---------------------------------------------------------------------------
-// The outbox
-
-/** A day's note the account answered `merged`: this device's words (`mine`) go into
- *  the note that was there (`into`), against the text both started from, and the create
- *  is kept for when that note is gone before they get there. */
 export interface Merging {
   mine: string
   into: string
   create: CreateOp
 }
 
-/** `sent` marks an op that went up in a request whose answer has not come back: it is
- *  the account's already, and goes again exactly as it was. */
 export type Outgoing =
   | { t: 'op'; op: Op; sent?: boolean }
   | { t: 'keep'; keep: KeepRequest }
@@ -150,13 +108,6 @@ export function outgoingOf(bytes: Uint8Array): Outgoing | null {
   return null
 }
 
-// ---------------------------------------------------------------------------
-// Documents the feed said moved
-
-/** A document the feed says has words this device has not pulled: the feed's `docSeq`
- *  for it and the epoch it is on. Kept per space in `meta` as `want:<space>`, written
- *  with the cursor that moved past them, so a pass cut off between reading the feed and
- *  pulling still pulls them next time. */
 export interface Wanted {
   docSeq: number
   epoch: number
@@ -191,19 +142,6 @@ export function wantedRow(space: string, wanted: ReadonlyMap<string, Wanted>): M
   return { key: wantKey(space), value: JSON.stringify(out) }
 }
 
-// ---------------------------------------------------------------------------
-// Where each entry was put among the rest of its folder
-
-/** Whether a space's account keeps where somebody put each entry among the rest of its
- *  folder (its feed said `order`), and the place the account confirmed for every entry
- *  that has one (#1068). Kept per space in `meta` as `order:<space>`, written with the
- *  feed page or the answer that changed it.
- *
- *  A row of `meta` rather than a column of `entries`: a new column is a new schema,
- *  which a store at it shuts an older Orden out of (`Newer` in sync_store/store.rs), and
- *  an entry row with a field the older build does not know is one it refuses to read
- *  (`rowOf` in store.ts). An older build reads past a `meta` row it has no use for, so
- *  going back to one costs the places and nothing else. */
 export interface Ordering {
   on: boolean
   positions: Map<string, string>
@@ -239,15 +177,6 @@ export function orderingRow(space: string, ordering: Ordering): MetaRow {
   }
 }
 
-// ---------------------------------------------------------------------------
-// What this device deleted
-
-/** What this device deleted, by the id of the entry deleted: where it and everything in
- *  it were on this disk, relative to the space's root, and the word the app keeps to put
- *  it back by (`back`: its trash's id for it, or its undo's), so a delete put back - out
- *  of the trash, or undone - brings each back as the entry it was (#1068; `restored` in
- *  create.ts). The newest `GONE_KEPT`, per space, in `meta` as `gone:<space>`: an older
- *  build reads past it. */
 interface Went {
   paths: Map<string, string>
   back?: string
@@ -295,22 +224,6 @@ export function goneRow(space: string, gone: Gone): MetaRow {
   return { key: goneKey(space), value: JSON.stringify(value) }
 }
 
-// ---------------------------------------------------------------------------
-// A held note
-
-/** What a note is held against (section 5.4).
- *
- *  - `moved`: a push answered `moved`, or a socket opening with pending edits met the
- *    room's words; `update` is what the account sent, which brings the confirmed
- *    state to version `seq`, last changed at `at` on the account's clock.
- *  - `file`: another program changed the file while the document had moved too; the
- *    file's text is `local`, the words Orden last wrote are `base`, and the document is
- *    the other side.
- *  - `blob`: a file that is not a document, replaced here (`mine`, a hash) and on the
- *    account (`theirs`) while apart; see files.ts.
- *  - `merge`: a day's note made here met one of the same name on the account; `local`
- *    is this device's text, `base` the text both started from, and `from` the id of the
- *    note this device made, whose words are `local`. */
 export type Against =
   | { t: 'moved'; update: Uint8Array; seq: number; at: number }
   | { t: 'file'; base: string; local: string }
@@ -350,22 +263,10 @@ export function againstOf(bytes: Uint8Array): Against | null {
   return null
 }
 
-// ---------------------------------------------------------------------------
-// Which words this device keeps
-
-/** In a browser that keeps only some of a space's words (#1126): whether the account
- *  serves what the rest need (`index: true` on its feed), when each document kept here
- *  was last used and how long it is, and the files whose words are being let go. In
- *  `meta` as `keep:<space>`; an older build reads past it and keeps every word again. */
 export interface Keeping {
   on: boolean
   used: Map<string, { at: number; size: number }>
-  /** Paths in the space whose rows this device is letting go of: written down before
-   *  the rows go, so a stop halfway takes the rest at the next start. */
   going: Set<string>
-  /** Whether the account said it serves the rest and then had no route for it - a
-   *  Worker put back to one from before them: the space is kept whole until its feed
-   *  stops saying so. */
   refused?: boolean
 }
 

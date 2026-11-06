@@ -21,11 +21,6 @@ import {
   type TableName,
 } from './store'
 
-/** The one list of tables the TypeScript side checks rows against, held to what the
- *  crate's migration makes: the same SQL file, run in Node's own SQLite. The crate holds
- *  its own copy of the list to the same file (sync_store/tables.rs), so the three cannot
- *  drift apart without one of the two tests saying so. */
-
 const SCHEMA = readFileSync(
   new URL('../../../src-tauri/src/sync_store/1.sql', import.meta.url),
   'utf8',
@@ -60,7 +55,6 @@ describe('the tables', () => {
         const sql = columns[at]
         expect(sql, `${name}.${column.name}`).toBeDefined()
         if (!sql) continue
-        // A text primary key may be null in SQLite; both stores hold it to what a key means.
         expect(column.required, `${name}.${column.name}`).toBe(sql.notnull === 1 || sql.pk > 0)
         expect(spec.key === column.name, `${name}.${column.name} is the key`).toBe(sql.pk > 0)
         const declared = ['integer', 'bool'].includes(column.kind)
@@ -87,7 +81,6 @@ const doc = {
 describe('a row', () => {
   test('is every column of its table, checked, and nothing else', () => {
     expect(rowOf('docs', doc)).toEqual(doc)
-    // A missing column that may be empty is empty; one that may not is refused.
     expect(rowOf('docs', { ...doc, pending: undefined }).pending).toBeNull()
     expect(() => rowOf('docs', { ...doc, epoch: undefined })).toThrow('docs.epoch may not be empty')
   })

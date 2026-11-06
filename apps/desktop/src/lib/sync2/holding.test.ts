@@ -1,12 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { sha256 } from '../bytes'
 
-/** Whether the account holds what a path is on this disk, under sync v2: what a delete
- *  leans on to go outright rather than into this device's trash. Having been handed the
- *  file once is not enough. An edit made since the last push, a replacement the account
- *  has not taken yet, and a file held in a conflict are bytes only this disk has, and
- *  deleted outright they were gone, with only the older copy in Recently deleted. */
-
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
   return {
@@ -24,7 +18,6 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { runner } = await import('./runner.svelte')
 
-/** What is on the disk, by full path. */
 const disk = new Map<string, string>()
 
 interface Entry {
@@ -42,8 +35,6 @@ const held = new Set<string>()
 const pending = new Set<string>()
 const touched = new Set<string>()
 
-/** An engine as far as the question reads one: an entry by path, and the core's word on
- *  whether it is held, has edits not sent, or was changed by another program. */
 function engine() {
   const bytes = (path: string) => {
     const words = disk.get(path)
@@ -67,8 +58,6 @@ function engine() {
   }
 }
 
-/** A file the last pass left in step with the account: the bytes it has are the bytes
- *  this disk had. */
 async function inStep(path: string, kind: string, words: string) {
   disk.set(path, words)
   const hash = await sha256(words)

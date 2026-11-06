@@ -1,9 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 
-/** Signing out under sync v2, as the app does it: the account forgets the session and,
- *  in the same moment, syncing is told to stop. The runner's way out writes v1's mirrors
- *  from the sync store first; the stop must not close that store under it. */
-
 const forgotten = vi.hoisted(() => [] as string[])
 vi.mock('./store', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./store')>()),
@@ -13,7 +9,6 @@ vi.mock('./store', async (importOriginal) => ({
   },
 }))
 
-/** The account's list of devices, as each test answers it. */
 const devices = vi.hoisted(() => ({
   asked: 0,
   answer: (): Promise<unknown> => Promise.resolve({ devices: [] }),
@@ -43,12 +38,9 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { runner } = await import('./runner.svelte')
 
-/** An engine kept as far as the way out reads it: one space whose first pass is done,
- *  in a store that refuses to be read once it is closed, the way the real one does. */
 function engineWithOneSpace() {
   let open = true
   const store = {
-    // Answered a moment later, as the crate answers: a read is a round trip.
     read: async (gets: readonly unknown[]) => {
       await new Promise((settle) => setTimeout(settle, 5))
       if (!open) throw new Error('the sync store is not open')
@@ -95,8 +87,6 @@ describe("a device's name", () => {
     Object.assign(runner, { names: null })
     devices.asked = 0
 
-    // The list is a moment coming. Asked for twice meanwhile, both must wait for it
-    // rather than one of them reading the empty list it is being filled into.
     let answer: (value: unknown) => void = () => undefined
     devices.answer = () => new Promise((settle) => (answer = settle))
     const first = nameOf('d1')
@@ -106,8 +96,6 @@ describe("a device's name", () => {
     expect(await Promise.all([first, second])).toEqual(['Laptop', 'Laptop'])
     expect(devices.asked).toBe(1)
 
-    // An account that could not be reached is asked again next time, rather than every
-    // device being nameless for the rest of the session.
     Object.assign(runner, { names: null })
     devices.answer = () => Promise.reject(new Error('offline'))
     expect(await nameOf('d1')).toBe('')

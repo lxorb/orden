@@ -1,19 +1,3 @@
-/** What a document holds, by the kind of entry it is, and the four things the engine
- *  does with one: read it as the file it projects to, seed it from a file, turn it from
- *  one file into another as operations, and classify two sets of edits against their
- *  ancestor (docs/sync-v2.md sections 5.3 to 5.7).
- *
- *  Three shapes. A note is words: one `Y.Text`, merged character by character. A canvas
- *  and a page note are a plane: a map of objects by id, merged object by object, whose
- *  file is what `writeCanvas` writes. A web note's `.url` is words the account keeps
- *  last-writer-wins: nobody writes it but the device whose tab follows the page, so two
- *  versions of it never ask anybody anything, and the later arrival stands. An online
- *  terminal's `.term` is the same shape for the same reason: three fields written once,
- *  never by hand (docs/online-terminal.md 4.5), and so is a chat's `.chat` pointer
- *  (docs/chats.md 4.2).
- *
- *  Everything else in the engine speaks files - text in, text out - and asks here. */
-
 import { holdsCanvas, readCanvas, writeCanvas } from '@orden/markdown/canvas'
 import { TEXT } from '@orden/rooms'
 import { pushPlane, readPlane } from '@orden/rooms/plane'
@@ -26,8 +10,6 @@ import { settleShortcuts } from '../web-tab/settle'
 
 export type Shape = 'words' | 'plane' | 'link'
 
-/** The shape of an entry's document, or null for an entry that has none: a folder, and
- *  a file that is a blob. */
 export function shapeOf(kind: string): Shape | null {
   switch (kind) {
     case 'note':
@@ -44,35 +26,24 @@ export function shapeOf(kind: string): Shape | null {
   }
 }
 
-/** Whether an entry of this kind has a document. */
 export function holdsDocument(kind: string): boolean {
   return shapeOf(kind) !== null
 }
 
-/** How an open tab joins an entry's document: a note's tab through its views, a canvas's
- *  through its surface, and neither where the tab and the entry disagree about the shape.
- *  The tab is opened by the file's name and the document is the entry's kind, which a
- *  rename never changes: `Plan.md` renamed to `Plan.canvas` opens on a surface over a
- *  document that is still words, and a plane bound into words is drawn into nothing the
- *  file ever shows. Unjoined, the tab writes its file and the pass carries that. */
 export function joinsAs(tab: string, kind: string): 'views' | 'surface' | null {
   const plane = shapeOf(kind) === 'plane'
   if (tab === 'note') return plane ? null : 'views'
   return plane ? 'surface' : null
 }
 
-/** Line endings as the editor holds them: what a document is compared and seeded in. A
- *  file keeps its own on disk (`as_written` in src-tauri/src/notes.rs). */
 export function unixLines(text: string): string {
   return text.replace(/\r\n?/g, '\n')
 }
 
-/** The file a document projects to. */
 export function fileOf(shape: Shape, doc: Y.Doc): string {
   return shape === 'plane' ? writeCanvas(readPlane(doc)) : doc.getText(TEXT).toJSON()
 }
 
-/** The file an update, or a list of them, projects to: read in a scratch document. */
 export function fileOfUpdates(shape: Shape, ...updates: readonly Uint8Array[]): string {
   const doc = new Y.Doc()
   for (const update of updates) Y.applyUpdateV2(doc, update)
@@ -81,22 +52,14 @@ export function fileOfUpdates(shape: Shape, ...updates: readonly Uint8Array[]): 
   return text
 }
 
-/** The seed of an epoch from a file: the same bytes on every device (section 5.3). */
 export function seedOf(shape: Shape, id: string, epoch: number, text: string): Uint8Array {
   return shape === 'plane' ? seedPlane(id, epoch, readCanvas(text)) : seedUpdate(id, epoch, text)
 }
 
-/** Whether text read off the disk says what a document of this shape can hold. Only a
- *  plane can fail: `readCanvas` reads text that is not a canvas as one with nothing on
- *  it, and a document turned to that deletes every node there was, on every device. A
- *  file with nothing in it is no plane either: every canvas written has its braces, and
- *  an empty one is a save caught between emptying the file and writing it. */
 export function readable(shape: Shape, text: string): boolean {
   return shape !== 'plane' || holdsCanvas(text)
 }
 
-/** Turns a document that reads `from` into one that reads `to`, as the few operations the
- *  two differ by, in one transaction under `origin`. */
 export function turn(shape: Shape, doc: Y.Doc, from: string, to: string, origin: unknown): void {
   if (from === to) return
   if (shape === 'plane') {
@@ -109,11 +72,6 @@ export function turn(shape: Shape, doc: Y.Doc, from: string, to: string, origin:
   textops(text, wordsOf(text, from), unixLines(to), origin)
 }
 
-/** What a document reads, as `textops` needs it: the caller's copy where it is that, with
- *  its line ends made Unix ones the way every file is read. A document can hold Windows
- *  line ends itself - seeded at the switch to v2 from words v1 carried as another program
- *  on Windows wrote them - and then only its own words say what it reads; read back once,
- *  and the edit made from them turns its line ends Unix ones too. */
 function wordsOf(text: Y.Text, from: string): string {
   const said = unixLines(from)
   if (text.length === said.length) return said
@@ -121,13 +79,6 @@ function wordsOf(text: Y.Text, from: string): string {
   return text.toJSON()
 }
 
-/** The CRDT's merge of two texts made from one ancestor, where there is no document
- *  history to merge: each side's edits made as operations on one scratch copy of the
- *  ancestor, then put together. What `diverge` reads a resolution off when there is no
- *  live merge to hand - a file another program wrote, a day's note made twice - because a
- *  text merge alone keeps both copies of a passage one side moved (diff3's old trouble),
- *  and the CRDT never does: a moved passage is a deletion and an insertion, and the
- *  deletion lands on the one copy there is. */
 export function mergedOf(base: string, local: string, remote: string): string {
   const seed = new Y.Doc()
   seed.clientID = 1
@@ -148,24 +99,15 @@ export function mergedOf(base: string, local: string, remote: string): string {
   return fileOfUpdates('words', side(2, local), side(3, remote))
 }
 
-/** How a web note's words are read when two copies are settled: as a `.url`; a
- *  `.webloc` reads as none, and the newer side stands as it is. */
 const LINK = 'web note.url'
 
-/** What two sets of edits come to, as the engine acts on it. */
 export interface Judged {
   verdict: Verdict
-  /** What the document should read, for `clean` and `minor`; null for `diverged`. */
   resolution: string | null
-  /** Which sides lost a span somewhere, and so are kept as a version. */
   lost: { local: boolean; remote: boolean }
-  /** The merge the resolution was read off, for words. */
   merged?: string
 }
 
-/** Classifies local and remote edits against their ancestor. `merged` is the CRDT's merge
- *  of the two, where the caller has one, which is what the note reads unless an overlap
- *  settles otherwise. */
 export function judge(
   shape: Shape,
   base: string,
@@ -175,9 +117,6 @@ export function judge(
   merged?: string,
 ): Judged {
   if (shape === 'link') {
-    // A web note is never kept twice, as in v1 (web-tab/settle.ts): the newer copy
-    // stands, with what only the older one says carried across. It is a tab written
-    // down, so nothing of the other side is worth a version.
     const resolution =
       remote === base
         ? local
@@ -205,7 +144,6 @@ export function judge(
 
   const both = merged ?? mergedOf(base, local, remote)
   const words = diverge(base, local, remote, times, both)
-  // Overlaps settled with both sides' edits made lost something on each side.
   const each = words.settled === 'both'
   return {
     merged: both,

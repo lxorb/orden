@@ -1,12 +1,3 @@
-/** The engine's world inside the app: files through the crate's commands (or the
- *  browser build's stand-ins for them), the account through `fetch`, and the workspace
- *  told about every file the engine moves or takes away, so everything kept by path
- *  follows (workspace/file-ops.ts).
- *
- *  A file the engine writes is a note no tab is holding - one a tab holds is written by
- *  autosave - so it is said to the list and the link index as a file written over or a
- *  file come, never as an edit to an open document. */
-
 import { INBOX_PATH } from '@orden/bases/inbox'
 import { api, BASE } from '../api'
 import { fileBytes, sha256, toBase64 } from '../bytes'
@@ -25,17 +16,10 @@ import { accountOver, type Reading, readingOver, remoteFiles } from './transport
 import type { Disk, FileKind, World } from './world'
 import { syncDeletes } from '../sync/deletes'
 
-/** What the engine's own changes to the disk owe the rest of the app. */
 export interface Telling {
-  /** A move the engine makes, after the writes in the air of what is open in it, and
-   *  `stalled` in its place under one that has not answered; see `holdingWrites` in
-   *  workspace/saving.svelte.ts. */
   holdingWrites(from: string, run: () => Promise<void>, stalled: () => Promise<void>): Promise<void>
-  /** A file or folder the engine moved, for everything kept by path. */
   moved(from: string, to: string, kind: FileKind): Promise<void>
-  /** One it took away. */
   gone(path: string, kind: FileKind): Promise<void>
-  /** One it wrote: `fresh` when nothing was there before. */
   written(path: string, fresh: boolean): void
   writing?(path: string, text: string, write: () => Promise<unknown>): Promise<unknown>
 }
@@ -45,16 +29,8 @@ function parentOf(path: string): string {
   return at > 0 ? path.slice(0, at) : path
 }
 
-/** What the engine's reads say in the browser: of the rows as they are, never fetching a
- *  note this browser keeps no words of (#1126; web/away.svelte.ts). Nothing on a desktop,
- *  whose crate has no such thing to leave out. */
 const RAW = isNative ? {} : { raw: true }
 
-/** Whether a file is there: the crate's stamp, or in the browser, which keeps none,
- *  a read; see on-disk.ts. A stamp alone answered no for every path in the browser,
- *  so a note deleted on another device was never deleted there. In the browser the
- *  engine asks of the rows as they are (`raw`), never counting a note it keeps no words
- *  of (#1126), which it is itself the one to bring. */
 const stamped = (path: string) =>
   isNative
     ? onDisk(path)
@@ -84,17 +60,7 @@ function diskOf(telling: Telling): Disk {
       ),
     async move(from, to, kind) {
       await invoke('create_folder', { path: parentOf(to), arrived: true }).catch(() => undefined)
-      // A file the account holds as a page note's paper, `X.pages.pdf` beside
-      // `X.pages`: a PDF another device turned into that note. The crate refuses a PDF
-      // put where a page note takes it for its paper unless it is held there on
-      // purpose, and this move only completes a pairing the account already has.
       const hold = kind === 'file' && holderOf(to) !== null
-      // The one file and nothing it holds: a PDF's highlights and a page note's paper
-      // are entries of their own, moved by moves of their own in whichever order those
-      // come. Taking them along, a PDF moved after its highlights found none and cleared
-      // the ones that had just arrived, and the next scan deleted them everywhere.
-      // A write that has stalled refuses it, the file where it was: the entry stays, and
-      // the next pass asks again; see `moves` in places.ts.
       await telling.holdingWrites(
         from,
         async () => {
@@ -112,24 +78,12 @@ function diskOf(telling: Telling): Disk {
       )
     },
     async remove(path, kind) {
-      // A version of the words kept first, the way a delete made here keeps one.
       if (kind === 'file') {
         const words = await invoke<string>('read_note', { path, ...RAW }).catch(() => null)
         if (words?.trim())
           await invoke('snapshot_note', { path, content: words }).catch(() => undefined)
       }
-      // Then gone the way a delete made here, signed in, goes (`deleteEntry` in
-      // workspace.svelte.ts): what the account keeps in its own Recently deleted - a
-      // note another device deleted, a day's note whose words went into the one that
-      // was there - is not put in this device's as well. It showed up there twice, or
-      // as something nobody here deleted (#765). What the account's Recently deleted
-      // does not hold goes to this device's: a folder, which may hold files that never
-      // travel; a page note, whose paper only this trash keeps beside it; and any other
-      // file, whose bytes the account keeps only as a version.
       if (syncDeletes(path, kind)) await invoke('delete_note', { path })
-      // Leaving what the account holds as an entry of its own, a PDF's highlights, for
-      // that entry's own move or delete: a PDF turned into its page note elsewhere comes
-      // as this delete, run first, and a move of its highlights, which found none.
       else
         await invoke('trash_item', {
           path,
@@ -144,13 +98,10 @@ function diskOf(telling: Telling): Disk {
   }
 }
 
-/** How the browser lets go of a note's row when it keeps only the words it uses
- *  (sync2/keeping.ts, #1126): the row, as no delete, and nothing told of it. */
 export const lettingGo = {
   drop: (path: string) => invoke('let_go_note', { path }).then(() => undefined),
 }
 
-/** Every file and folder under a space's root, from the tree the list reads. */
 interface Listed {
   path: string
   is_dir: boolean
@@ -165,8 +116,6 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[] | 
     const at = slashed(path)
     return at.startsWith(`${base}/`) ? at.slice(base.length + 1) : null
   }
-  // A space Orden keeps itself is its folder's index, every file in it (#1068); one the
-  // launch has not mounted yet is waited for, and never listed as a folder with nothing.
   const kept = (await mountedFor(root)) ? mountOf(root) : null
   if (!kept && keptShaped(root)) throw new Error(`${root} is a space kept here, not mounted`)
   if (kept) {
@@ -177,9 +126,6 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[] | 
         : [],
     )
   }
-  // On a desktop, everything in the folder - pictures and recordings with the notes -
-  // from the crate's own scan, which leaves out the dotted files that are the app's own.
-  // The list's tree holds only what a tab can open.
   if (isDesktop) {
     const all = await scanSpace(root).catch(() => null)
     if (all) {
@@ -189,8 +135,6 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[] | 
       })
     }
   }
-  // Elsewhere, what the list shows, as v1 sends it - and the papers page notes hold,
-  // which the list leaves out and which are as much the space's files as the notes.
   const tree = await invoke<Listed>('read_tree', {
     root,
     options: { showHidden: false, papers: true },
@@ -207,8 +151,6 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[] | 
   }
   if (!tree || tree.unlisted) return null
   walk(tree)
-  // The list leaves a dotted file out as the app's own; sync carries the space's own
-  // inbox all the same (#1044), as the crate's scan does on a desktop.
   const inbox = `${base}/${INBOX_PATH}`
   if (!out.some((one) => one.path === INBOX_PATH) && (await stamped(inbox).catch(() => false))) {
     out.push({ path: INBOX_PATH, dir: false })
@@ -216,12 +158,10 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[] | 
   return out
 }
 
-/** The app's world for one account's engine. */
 function reachingOf(token: () => string | null) {
   return { base: BASE, token, device: deviceName, fetch: (request: Request) => fetch(request) }
 }
 
-/** What a browser that keeps only some of the words asks about the rest (#1126). */
 export function readingFor(token: () => string | null): Reading {
   return readingOver(reachingOf(token))
 }
@@ -265,7 +205,6 @@ export function appWorld(token: () => string | null, telling: Telling): World {
       const session = token()
       if (!session) return null
       const { versions } = await api.noteVersions(session, id).catch(() => ({ versions: [] }))
-      // Newest first, and only so far back: the words v1 last agreed on are recent.
       for (const version of versions.slice(0, 20)) {
         const body = await api.noteVersion(session, id, version.at).catch(() => null)
         if (body && (await sha256(body.content.replace(/\r\n?/g, '\n'))) === hash)

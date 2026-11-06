@@ -1,16 +1,10 @@
-/** A disk of files and folders in memory, for the engine under test: the simulator's
- *  devices and the tests that run the engine against the Worker. Paths compare without
- *  case, as on Windows and a Mac. */
-
 import { nameKey } from '@orden/sync-core/tree'
 import { placeholderOf } from '../icloud-placeholder'
 import { folderOf } from './places'
 import type { Disk } from './world'
 
-/** A disk of files and folders in memory. */
 export class MemoryDisk implements Disk {
   readonly files = new Map<string, string>()
-  /** Files that are not documents, as their bytes (files.ts). */
   readonly bytes = new Map<string, Uint8Array>()
   readonly folders = new Set<string>()
 
@@ -34,7 +28,6 @@ export class MemoryDisk implements Disk {
     return Promise.resolve()
   }
 
-  /** What was kept as a version on this device, in order. */
   readonly kept: { path: string; text: string }[] = []
 
   keep(path: string, text: string): Promise<void> {

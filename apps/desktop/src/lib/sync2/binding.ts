@@ -1,27 +1,3 @@
-/** An open note and its document, kept as one (docs/sync-v2.md section 9.3).
- *
- *  A note opens with its file's words at once - the file is read as it always was - and
- *  the document is read from the store a moment later and joined to it through the
- *  binding a room uses (rooms/bind.ts): a keystroke goes into the document as the
- *  operation it is, and what arrives in the document - a pull, a room, the engine's
- *  own merge - comes back into the note as the edit it is, so no caret moves.
- *
- *  The moment of joining is the one to get right, because the two may not agree:
- *
- *  - the note was typed in during the moment the document took to arrive, or the file
- *    was written by another program while Orden was closed: the note is ahead, and what
- *    it says goes into the document as this device's edits;
- *  - the document has words the file had not been written with yet (another device's,
- *    pulled while this note was closed and its file not yet written): the document is
- *    ahead, and its words go into the note;
- *  - both moved: the three-way rule another program's edit gets, against the words Orden
- *    last wrote (ingest.ts).
- *
- *  A canvas or a page note is joined through the binding a canvas's room uses
- *  (rooms/plane-bind.ts), whose join is the merge two canvas files get: every object
- *  has an id and a time, so both sides are kept whichever is ahead, and what the plane
- *  had that the document did not goes in as this device's. */
-
 import type { SharedDoc } from '@orden/editor'
 import { TEXT } from '@orden/rooms'
 import { fold } from '@orden/rooms/fold'
@@ -36,28 +12,19 @@ import type { Engine } from './engine'
 import { writtenOf } from './ingest'
 import { judge, mergedOf, turn } from './kinds'
 
-/** The words of a note as its views hold them now. */
 export interface Held {
   readonly live: SharedDoc
   readonly latest: string
   onDisk?: string | null
 }
 
-/** Puts `to` into a note that reads `from`, as one edit, keeping every caret. */
 function arrive(note: Held, from: string, to: string) {
   const change = fold(from, to)
   if (change) note.live.arrived([change])
 }
 
-/** How a meeting of a note and its document ended: one text, or the note held. */
 type Met = { shared: string; asked?: never } | { asked: string; shared?: never }
 
-/** Brings a note and its document to one text, as above. Answers the words they shared as
- *  it ended, or, where the two each moved and the rule asks, the words the note said as
- *  the question went up: the note is held, and the next meeting is against those (#543).
- *
- *  `given` is the words both sides last shared, where the caller knows them better than
- *  the file Orden last wrote: after a hold, what the note said when it was asked. */
 async function agree(
   engine: Engine,
   id: string,
@@ -92,16 +59,10 @@ async function agree(
     merged,
   )
   if (judged.resolution === null) {
-    // Held like another program's edit: the note keeps what it says here, and the
-    // question comes up over it.
     await engine.holdFile(id, base, mine)
     return { asked: mine }
   }
   const resolution = judged.resolution
-  // Settled without asking, one side's words in the overlap stand and the other's are
-  // kept as a version, as every other meeting of two sides keeps them (ingest.ts,
-  // pass.ts). Left out here, what the document said lost was in no version at all.
-  // Kept after the two are one, so nothing typed in the meantime falls between them.
   doc.write((live) => turn('words', live, theirs, resolution, MINE))
   arrive(note, mine, resolution)
   const shared = doc.text()
@@ -111,21 +72,11 @@ async function agree(
 
 const AGREEING = 8
 
-/** Joins a note to its document. Answers how to part them again. `holds` is whether the
- *  note's view is still on this file (see rooms/bind.ts).
- *
- *  Not while the two are held apart: the note and the document then say different
- *  things, and a keystroke put into the document at the note's place landed inside
- *  another word of it (`wr!itten`), a deletion took out words nobody chose (#543). The
- *  note waits, typed into as a file, until the question is answered, and meets the
- *  document again then - against the words it said as it was asked, so what the answer
- *  kept and what was typed since both stay. */
 export async function attach(
   engine: Engine,
   id: string,
   note: Held,
   holds: () => boolean,
-  /** Told when the document under the note was made again, once it is joined anew. */
   again?: () => void,
 ): Promise<(() => void) | null> {
   const doc = await engine.hold(id)
@@ -138,7 +89,6 @@ export async function attach(
   let unbind: (() => void) | null = null
   let waiting: (() => void) | null = null
   let parted = false
-  /** Whether the note has been parted from it, or moved on to another file. */
   const gone = () => parted || !holds()
 
   const join = () => {
@@ -175,8 +125,6 @@ export async function attach(
     }
   })
 
-  // The account's words taken over this device's, or a new epoch: the same note, a new
-  // document under it. A note still waiting on its question meets it when that is answered.
   doc.replaced = (fresh) => {
     text = fresh.getText(TEXT)
     if (!unbind) return
@@ -197,15 +145,11 @@ export async function attach(
   }
 }
 
-/** A plane joined to its document: how to part them, and where its pointer goes while a
- *  room carries the document. */
 export interface PlaneJoin {
   part: () => void
   hand: ((at: Point | null, drawing: InkStroke | null) => void) | null
 }
 
-/** Joins a canvas or a page note to its document, as above. The surface pushes its
- *  edits into the document from here on, with the document's undo, room or no room. */
 export async function attachPlane(
   engine: Engine,
   id: string,

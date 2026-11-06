@@ -2,9 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { MemoryDisk } from './memory-disk'
 import { settle, SpaceState } from './places'
 
-/** Where the account says the entries are, put on a disk that still has them where
- *  they were. */
-
 const row = (id: string, kind: string, parent: string | null, name: string, local: string) => ({
   id,
   space_id: 's',
@@ -21,9 +18,6 @@ const row = (id: string, kind: string, parent: string | null, name: string, loca
 })
 
 describe('a folder renamed while a note was moved into it', () => {
-  // Sorted by where they were, the note went first, its folder was made for it at
-  // the folder's new name, and the folder then found something in its way there on
-  // every pass, for good: its notes went one by one and an empty folder stayed.
   test.each(['the note first', 'the folder first'])(
     'goes to its new name whole, with the note in it, listed %s',
     async (order) => {
@@ -64,9 +58,6 @@ describe('a folder renamed while a note was moved into it', () => {
 })
 
 describe('a folder moved into a new folder that took its old name', () => {
-  // Renamed Old, a new Projects made, and Old moved into it: the folder at Projects
-  // was asked to go into Projects/Old, inside itself, which no disk will do, and the
-  // settle threw on every pass.
   test('steps aside first, and both end where they are wanted', async () => {
     const disk = new MemoryDisk()
     disk.folders.add('/r')
@@ -106,8 +97,6 @@ describe('a folder moved into a new folder that took its old name', () => {
 })
 
 describe('a move the disk refuses', () => {
-  // A PDF going to the paper of a page note was refused by the crate, the settle
-  // threw, and the pass stopped before anything else came or went, on every pass.
   test('leaves that file where it is and settles the rest', async () => {
     const disk = new MemoryDisk()
     disk.folders.add('/r')
@@ -141,8 +130,6 @@ describe('a move the disk refuses', () => {
 })
 
 describe('a delete or a new folder the disk refuses', () => {
-  // A PDF held open by another program and deleted on the phone: the trash refused it,
-  // the settle threw, and nothing else in the space came or went, on every pass.
   test('leaves that file where it is and settles the rest', async () => {
     const disk = new MemoryDisk()
     disk.folders.add('/r')
@@ -171,8 +158,6 @@ describe('a delete or a new folder the disk refuses', () => {
       forget: (id) => forgotten.push(id),
     })
 
-    // Still known where it is, so the next pass tries again rather than reading it
-    // as a file made here.
     expect([pdf.local_path, note.local_path]).toEqual(['X.pdf', 'b.md'])
     expect(forgotten).toEqual([])
     expect([...disk.files.keys()].sort()).toEqual(['/r/X.pdf', '/r/b.md'])

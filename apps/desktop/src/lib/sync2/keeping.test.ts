@@ -19,12 +19,6 @@ import type { Leaving } from './keeping'
 import type { Reading } from './transport'
 import type { World } from './world'
 
-/** A browser that keeps only the words it uses (keeping.ts, #1126), against the
- *  simulator's account in memory: the tree comes down and no words with it, a note's
- *  words come down when it is asked for, and the least recently used go again past the
- *  budget, never one with anything of this device's in it. An account that does not
- *  say it serves the rest is kept whole, as every device did before. */
-
 const ROOT = '/browser/space'
 const SPACE = 'sim'
 const PLAN = 'n1'
@@ -39,8 +33,6 @@ interface Device {
   engine: Engine
 }
 
-/** A device that has never held the space: its row and nothing in it. `lazy` is a
- *  browser's, and `index` is whether the account's feed says it serves the rest. */
 async function fresh(
   account: ReferenceAccount,
   id: string,
@@ -55,7 +47,6 @@ async function fresh(
   await seeding.cleanExit(true)
   const disk = new MemoryDisk()
   const saying = typeof index === 'boolean' ? { on: index } : index
-  // A clock that moves on at every look, so which note was used last is never a tie.
   let tick = 1000
   const made: Device = {
     disk,
@@ -95,7 +86,6 @@ async function fresh(
   return made
 }
 
-/** Rows dropped as the browser drops them, and the words told on their way out. */
 function letting(disk: MemoryDisk) {
   const told: { path: string; text: string }[] = []
   return {
@@ -153,7 +143,6 @@ describe('a browser that keeps only the words it uses', () => {
     expect(browser.pulled).toEqual([PLAN])
     expect(browser.engine.awayFiles().map((one) => one.path)).toEqual([`${ROOT}/Ideas.md`])
 
-    // Another device writes in both: the one kept here is pulled, the other is not.
     const other = await fresh(account, 'o', { lazy: false })
     await other.engine.pass(SPACE)
     for (const id of [PLAN, IDEAS]) {
@@ -172,7 +161,6 @@ describe('a browser that keeps only the words it uses', () => {
     expect(browser.disk.files.get(`${ROOT}/Plan.md`)?.startsWith('Later. ')).toBe(true)
     expect(browser.disk.files.has(`${ROOT}/Ideas.md`)).toBe(false)
 
-    // And the one kept away comes down with what the other device wrote.
     expect(await browser.engine.fetch(`${ROOT}/Ideas.md`)).toBe(true)
     expect(browser.disk.files.get(`${ROOT}/Ideas.md`)?.startsWith('Later. # Ideas')).toBe(true)
   })
@@ -227,7 +215,6 @@ describe('a browser that keeps only the words it uses', () => {
     await browser.engine.pass(SPACE)
     await browser.engine.fetch(`${ROOT}/Plan.md`)
     await browser.engine.fetch(`${ROOT}/Ideas.md`)
-    // Plan used last.
     await browser.engine.hold(PLAN)
     await browser.engine.letGo(PLAN)
 
@@ -244,7 +231,6 @@ describe('a browser that keeps only the words it uses', () => {
     expect(written.map((one) => one.id)).toEqual([PLAN])
     expect(browser.engine.awayFiles().map((one) => one.path)).toEqual([`${ROOT}/Ideas.md`])
 
-    // A let-go is no delete: the account still has it, and so does the tree.
     expect((await account.view()).texts[IDEAS]).toBe(SEEDED[1]?.text)
     expect(await browser.engine.fetch(`${ROOT}/Ideas.md`)).toBe(true)
     expect(browser.disk.files.get(`${ROOT}/Ideas.md`)).toBe(SEEDED[1]?.text)
@@ -257,21 +243,17 @@ describe('a browser that keeps only the words it uses', () => {
     await browser.engine.fetch(`${ROOT}/Plan.md`)
     await browser.engine.fetch(`${ROOT}/Ideas.md`)
 
-    // Typed in and not sent: pending.
     const plan = await browser.engine.hold(PLAN)
     plan?.live?.transact(() => plan.live?.getText(TEXT).insert(0, 'Mine. '), HERE)
-    // Autosave writes the file, and then says so.
     await browser.disk.write(`${ROOT}/Plan.md`, plan?.text() ?? '')
     await browser.engine.saved(`${ROOT}/Plan.md`, plan?.text() ?? '')
     await browser.engine.letGo(PLAN)
-    // Open in a tab.
     await browser.engine.hold(IDEAS)
 
     const { how } = letting(browser.disk)
     expect(await browser.engine.trim(0, how)).toBe(0)
     expect(browser.disk.files.get(`${ROOT}/Plan.md`)?.startsWith('Mine. ')).toBe(true)
 
-    // Once it has gone up and been let go of, it may go.
     await browser.engine.pass(SPACE)
     await browser.engine.letGo(IDEAS)
     expect(await browser.engine.trim(0, how)).toBe(2)
@@ -308,8 +290,6 @@ describe('a browser that keeps only the words it uses', () => {
     const browser = await fresh(account, 'b')
     await browser.engine.pass(SPACE)
 
-    // The file list's moves and deletes, said before the disk has them; there is no row
-    // to move, so the disk's part is nothing.
     await browser.engine.moving(`${ROOT}/Plan.md`, `${ROOT}/Later.md`, () => Promise.resolve())
     await browser.engine.removing(`${ROOT}/Ideas.md`, () => Promise.resolve())
     expect(browser.engine.awayFiles().map((one) => one.path)).toEqual([`${ROOT}/Later.md`])
@@ -332,15 +312,12 @@ describe('a browser that keeps only the words it uses', () => {
       await other.disk.write(`${ROOT}/${name}`, doc?.text() ?? '')
       await other.engine.saved(`${ROOT}/${name}`, doc?.text() ?? '')
       await other.engine.letGo(id)
-      // Twice: the second hears the account take the words, and sends nothing more.
       await other.engine.pass(SPACE)
       await other.engine.pass(SPACE)
     }
-    // Written in before the browser listed it: what it was shown, so its delete stands.
     await write(IDEAS, 'Ideas.md', 'Earlier. ')
     const browser = await fresh(account, 'b')
     await browser.engine.pass(SPACE)
-    // Written in after: words the browser was never told of, which its delete leaves.
     await write(PLAN, 'Plan.md', 'Later. ')
 
     await browser.engine.removing(`${ROOT}/Ideas.md`, () => Promise.resolve())
@@ -395,7 +372,6 @@ describe('a browser that keeps only the words it uses', () => {
     expect(browser.pulled).toEqual([])
 
     saying.on = false
-    // A change on the account, so the feed has a page to say it on.
     const other = await fresh(account, 'o', { lazy: false })
     await other.engine.pass(SPACE)
     const doc = await other.engine.hold(PLAN)
@@ -411,9 +387,6 @@ describe('a browser that keeps only the words it uses', () => {
   })
 })
 
-/** The account's half of #1126 as the Worker answers it (sync2/reading.ts), over the
- *  simulator's account: each note's scan from its words, and a search of them a note
- *  per page, so paging is walked. `missing` is a Worker from before the routes. */
 function readingOf(account: ReferenceAccount, how = { missing: false }) {
   const asked: { route: string; ids: string[] }[] = []
   const reading: Reading = {
@@ -484,7 +457,6 @@ describe('what a browser knows of the notes it keeps no words of', () => {
     expect(await indexing.refresh()).toEqual([])
     expect(asked).toHaveLength(1)
 
-    // Another device writes in one: that one is asked for again, and only that one.
     const other = await fresh(account, 'o', { lazy: false })
     await other.engine.pass(SPACE)
     const doc = await other.engine.hold(IDEAS)
@@ -499,7 +471,6 @@ describe('what a browser knows of the notes it keeps no words of', () => {
     expect(asked.at(-1)).toEqual({ route: 'index', ids: [IDEAS] })
     expect(indexing.scans().get(IDEAS)?.headings).toEqual(['New', 'Ideas'])
 
-    // Kept across a launch, in its own store.
     const again = new Indexing(browser.engine, reading, store)
     expect(await again.refresh()).toEqual([])
     expect(again.scans().get(PLAN)?.path).toBe('Plan.md')
@@ -544,7 +515,6 @@ describe('what a browser knows of the notes it keeps no words of', () => {
     expect(found.some((one) => one.startsWith(`${ROOT}/Later.md:`))).toBe(true)
     expect(found.some((one) => one.startsWith(`${ROOT}/Ideas.md:`))).toBe(true)
 
-    // What is kept here is walked here, and left out of the account's walk.
     await browser.engine.fetch(`${ROOT}/Ideas.md`)
     asked.length = 0
     await indexing.search(ROOT, parseQuery('e'), [], 1, () => undefined, [])
@@ -564,7 +534,6 @@ describe('what a browser knows of the notes it keeps no words of', () => {
     expect(browser.disk.files.size).toBe(2)
     expect(browser.engine.awayFiles()).toEqual([])
 
-    // And it stays whole across a launch, while the feed still says it serves the rest.
     const launched = await Engine.start(browser.engine.core.world, browser.store.open(), {
       freshens: false,
     })

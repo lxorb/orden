@@ -1,9 +1,3 @@
-/** One device's engine over a disk in memory and an account reached by `fetch`: what the
- *  tests that run the engine against the Worker's own routes start from (the migration
- *  rows of docs/sync-v2.md section 11 in services/sync/test/sync2-migrate.test.ts), and
- *  the transport's own tests here. The app's world is app-world.ts; this is the same
- *  engine with nothing of the window around it. */
-
 import { Engine } from './engine'
 import { MemoryDisk } from './memory-disk'
 import { MemoryStore } from './memory-store'
@@ -14,22 +8,16 @@ export interface TestDevice {
   disk: MemoryDisk
   store: MemoryStore
   engine: Engine
-  /** Every route asked, in order, with the space or document it named. */
   asked: string[]
-  /** What a browser asks of the notes it keeps no words of (#1126). */
   reading: Reading
 }
 
 export interface Making {
-  /** `fetch`, or the Worker's own `app.fetch` bound to a test environment. */
   fetch: (request: Request) => Promise<Response>
   token: string
-  /** The files the device's space folder starts with, by path from its root: words for
-   *  a document, bytes for any other file. */
   files?: Record<string, string | Uint8Array>
   name?: string
   base?: string
-  /** A browser, which keeps only the words it uses where the account serves the rest. */
   lazy?: boolean
 }
 

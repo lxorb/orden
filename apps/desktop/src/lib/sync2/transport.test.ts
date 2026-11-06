@@ -4,10 +4,6 @@ import { testDevice } from './test-device'
 import { readingOver, Refused, remoteFiles } from './transport'
 import { parseQuery } from '@orden/scan/search/query'
 
-/** What a pass hears from the network (transport.ts): an answer, no answer - which stops
- *  the pass and keeps what this device made waiting, the light hollow - or a refusal,
- *  which is said and never read as being offline. */
-
 const SPACE = 'space-1'
 
 async function made(fetch: (request: Request) => Promise<Response>) {
@@ -85,12 +81,9 @@ describe('a file’s bytes over the network', () => {
     expect(await over(507).up('h', new Uint8Array([1]))).toBe('full')
     expect(await over(413).up('h', new Uint8Array([1]))).toBe(false)
     expect(await over(503).up('h', new Uint8Array([1]))).toBeNull()
-    // Only the upload says the account is full; anywhere else a 507 is a failing account.
     expect(await over(507).down('s', 'f')).toBeNull()
   })
 
-  // #517: an account from before the question cannot say which bytes it keeps, and
-  // nothing is sent again on the strength of a silence.
   test('an account that cannot say which bytes it keeps says nothing', async () => {
     expect(await over(404).have?.(['h'])).toBeNull()
     expect(await over(503).have?.(['h'])).toBeNull()
