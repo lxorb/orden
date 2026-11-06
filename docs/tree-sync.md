@@ -44,7 +44,7 @@ the same tree. An operation carries its own id, so one that arrives twice is app
 | rename and rename | The later to arrive decides the name. |
 | two names one folder cannot both hold | The second is numbered (`Plan 2.md`), compared as the disk compares names: case and accents folded. |
 | move and delete | A move made without having seen the delete brings the entry back; a move the device made knowing of the delete cannot, since it no longer shows the entry. |
-| delete of a folder and a change inside it | Whatever another device created, moved in, renamed, restored or edited inside since the deleting device last looked stays, and keeps the folder. |
+| delete of a folder and a change inside it | Whatever another device created, moved in, renamed, restored or edited inside since the deleting device last looked stays, and keeps the folder; so does everything inside a folder so changed, which came with it. |
 | edit and delete | The edit wins: a delete of a note whose words changed since the deleting device last pulled them is refused, and that device puts the note back. Words that land on a deleted note bring it back with its folders, and nobody saw that, the writer included: a delete of a folder around it by the writer, made before its device heard the note was back, leaves the note and the folder. |
 | a rename, move or restore and a delete that had not seen it | The other change wins, as an edit does: a delete takes only what its device had seen. A device's own changes never stand against its own delete, and neither does the account's bookkeeping (folders made from paths at the move to v2). Nor do they hide another device's: a change of the deleting device's own made since, a restore or words, does not let its delete take a change by somebody else it had never seen. |
 | delete and restore | The restore brings the entry back under its id, with its folders. A restore of something already back still counts as that person's change, so a delete that had not seen it leaves the entry. |
@@ -387,7 +387,12 @@ device's own view of the rules and so put back on its disk, came to the same res
 (21591, 25006). And a folder deleted on a device whose words had just brought a note in
 it back on the account, its push's answer lost, took the note and those words, because
 the account counted the note's coming back as that device's own change and so as seen
-(23076).
+(23076). The order walks found one more: a folder deleted on a device that had not seen
+another device move a folder into it kept the folder moved in, but not the note inside
+it, whose own last change was the deleting device's words (order seed 49850). The Worker
+already kept that note, since moving a folder rewrites the paths of the notes in it as
+the mover's change; the rule now says so itself, so the reference account and each
+device's own view of the rules agree with it.
 
 ## Known gaps
 

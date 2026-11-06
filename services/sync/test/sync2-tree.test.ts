@@ -330,6 +330,19 @@ describe('tree operations', () => {
     expect(folders()[0]?.deleted).toBe(0)
   })
 
+  test('leave what is in a folder another device moved into the deleted one unseen', async () => {
+    const { cursor: seen } = await ops([
+      op('mkdir', { id: 'f', parent: null, name: 'Old' }),
+      op('mkdir', { id: 'w', parent: null, name: 'Work' }),
+      op('create', { id: 'n', kind: 'note', parent: 'w', name: 'n.md' }),
+    ])
+    await one(op('move', { id: 'w', parent: 'f' }, seen), other)
+
+    expect(await one(op('delete', { id: 'f' }, seen))).toMatchObject({ refused: 'edited' })
+    expect(row('n').deleted).toBe(0)
+    expect(folders().map((one) => one.deleted)).toEqual([0, 0])
+  })
+
   test('leave a note in a deleted folder that its own words brought back unseen', async () => {
     const id = await made('Plan.md', 'first\n')
     const { cursor } = await ops([op('mkdir', { id: 'f', parent: null, name: 'Folder' })])

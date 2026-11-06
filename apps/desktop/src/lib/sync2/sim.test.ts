@@ -354,6 +354,14 @@ describe('the tree walked at random, the engine as every device', () => {
   )
 })
 
+test('seed 49850 of the order on many devices keeps the words in a folder moved into one deleted unseen', async () => {
+  const report = await simulate({
+    ...crowded(49850, 'order'),
+    device: (id, clock, random, seeded) => new EngineDevice(id, clock, random, seeded),
+  })
+  expect(report.failures).toEqual([])
+})
+
 /** Rows dragged among the rest of their folders as well as the tree walked (#1068): every
  *  device ends with each row where the account has it, so two people arranging one
  *  folder at once both keep what they did. The engine as every device, the drag said to

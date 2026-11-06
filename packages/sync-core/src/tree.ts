@@ -333,9 +333,19 @@ class Rules {
     if (othersSince(entry, op.seen, device)) return { op: op.op, refused: 'edited' }
 
     const inside = under(state, entry.id).filter((one) => !one.deleted)
+    const changed = new Set(
+      inside.filter((one) => changedSince(one, op.seen, device)).map((one) => one.id),
+    )
+    const cameWith = (one: TreeEntry): boolean => {
+      for (let at: string | null = one.id; at !== null && at !== entry.id;) {
+        if (changed.has(at)) return true
+        at = state.entries.get(at)?.parent ?? null
+      }
+      return false
+    }
     const kept = new Set<string>()
     for (const one of inside) {
-      if (!changedSince(one, op.seen, device)) continue
+      if (!cameWith(one)) continue
       for (let at: string | null = one.id; at !== null && !kept.has(at);) {
         kept.add(at)
         at = state.entries.get(at)?.parent ?? null

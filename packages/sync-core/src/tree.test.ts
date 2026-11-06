@@ -132,6 +132,21 @@ describe('tree', () => {
     expect(live(state, 'f')).toBe(true)
   })
 
+  test('a folder delete leaves what is in a folder another device moved into it unseen', () => {
+    const state = treeState()
+    mkdir(state, 'f', 'Old')
+    mkdir(state, 'w', 'Work')
+    create(state, 'n', 'Plan.md', 'w')
+    contentChanged(state, 'n', OWNER.device)
+    const seen = state.cursor
+    applyOp(state, { op: opId(), t: 'move', id: 'w', parent: 'f', seen }, PHONE)
+
+    expect(applyOp(state, { op: opId(), t: 'delete', id: 'f', seen }, OWNER)).toMatchObject({
+      refused: 'edited',
+    })
+    expect([live(state, 'f'), live(state, 'w'), live(state, 'n')]).toEqual([true, true, true])
+  })
+
   test('a folder delete leaves a note its own words brought back that it never saw come back', () => {
     const state = treeState()
     mkdir(state, 'f', 'Work')
