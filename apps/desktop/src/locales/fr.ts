@@ -3018,4 +3018,7 @@ export const fr: Dictionary = {
   'No activity': 'Aucune activité',
   'Start time': 'Heure de début',
   'End time': 'Heure de fin',
+  'Count as': 'Compter comme',
+  'Time in spaces': 'Temps dans les espaces',
+  'Time on websites': 'Temps sur les sites web',
 }

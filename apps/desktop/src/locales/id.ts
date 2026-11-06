@@ -2899,4 +2899,7 @@ export const id: Dictionary = {
   'No activity': 'Tanpa aktivitas',
   'Start time': 'Waktu mulai',
   'End time': 'Waktu selesai',
+  'Count as': 'Hitung sebagai',
+  'Time in spaces': 'Waktu di ruang',
+  'Time on websites': 'Waktu di situs web',
 }

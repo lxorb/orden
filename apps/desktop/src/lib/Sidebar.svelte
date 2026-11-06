@@ -339,7 +339,13 @@
     const own = import('./panel-menu')
     const shown = (rows: MenuEntry[]) => menu.show(event, rows, { title: label })
     if (id !== 'tree') {
-      void own.then(({ panelMenu }) => shown(panelMenu(id, side)))
+      const making =
+        id === 'time' && !__EVEN_PLUGIN__
+          ? import('./time/menu').then(({ trackingMenu }) => trackingMenu())
+          : Promise.resolve([])
+      void Promise.all([own, making]).then(([{ panelMenu }, rows]) =>
+        shown(panelMenu(id, side, rows)),
+      )
       return
     }
 

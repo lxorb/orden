@@ -2983,4 +2983,7 @@ export const ptBR: Dictionary = {
   'No activity': 'Sem atividade',
   'Start time': 'Hora de início',
   'End time': 'Hora de término',
+  'Count as': 'Contar como',
+  'Time in spaces': 'Tempo nos espaços',
+  'Time on websites': 'Tempo nos sites',
 }

@@ -2839,4 +2839,7 @@ export const th: Dictionary = {
   'No activity': 'ไม่มีกิจกรรม',
   'Start time': 'เวลาเริ่ม',
   'End time': 'เวลาสิ้นสุด',
+  'Count as': 'นับเป็น',
+  'Time in spaces': 'เวลาในพื้นที่',
+  'Time on websites': 'เวลาบนเว็บไซต์',
 }

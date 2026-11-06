@@ -2961,4 +2961,7 @@ export const sw: Dictionary = {
   'No activity': 'Hakuna shughuli',
   'Start time': 'Muda wa kuanza',
   'End time': 'Muda wa kumaliza',
+  'Count as': 'Hesabu kama',
+  'Time in spaces': 'Muda katika nafasi',
+  'Time on websites': 'Muda kwenye tovuti',
 }

@@ -2861,4 +2861,7 @@ export const am: Dictionary = {
   'No activity': 'እንቅስቃሴ የለም',
   'Start time': 'የመጀመሪያ ሰዓት',
   'End time': 'የማብቂያ ሰዓት',
+  'Count as': 'እንደ … ቁጠር',
+  'Time in spaces': 'በቦታዎች ያለ ጊዜ',
+  'Time on websites': 'በድረ-ገጾች ላይ ያለ ጊዜ',
 }

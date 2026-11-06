@@ -3002,4 +3002,7 @@ export const es: Dictionary = {
   'No activity': 'Sin actividad',
   'Start time': 'Hora de inicio',
   'End time': 'Hora de fin',
+  'Count as': 'Contar como',
+  'Time in spaces': 'Tiempo en espacios',
+  'Time on websites': 'Tiempo en sitios web',
 }

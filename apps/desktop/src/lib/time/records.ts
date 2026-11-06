@@ -31,6 +31,7 @@ export interface Span {
   source: Source
   space: string | null
   site: string | null
+  label: string | null
   device: string | null
 }
 
@@ -81,6 +82,7 @@ export function spanOf(id: string, value: Record<string, unknown>): Span | null 
     source: SOURCES.find((one) => one === value.source) ?? 'manual',
     space: idOr(value.space),
     site: textOr(value.site, 253) || null,
+    label: textOr(value.label, LONGEST_NAME) || null,
     device: idOr(value.device),
   }
 }
@@ -105,6 +107,35 @@ export function spanValue(span: Span): Record<string, unknown> {
     source: span.source,
     space: span.space,
     site: span.site,
+    label: span.label,
     device: span.device,
   }
+}
+
+export interface Rule {
+  id: string
+  activity: string
+  space: string | null
+  site: string | null
+}
+
+export function ruleOf(id: string, value: Record<string, unknown>): Rule | null {
+  const activity = idOr(value.activity)
+  const space = textOr(value.space, 253) || null
+  const site = textOr(value.site, 253) || null
+  if (!activity || (space === null) === (site === null)) return null
+  return { id, activity, space, site }
+}
+
+export function ruleValue(rule: Rule): Record<string, unknown> {
+  return { activity: rule.activity, space: rule.space, site: rule.site }
+}
+
+export interface Lanes {
+  spaces: boolean
+  sites: boolean
+}
+
+export function lanesOf(value: Record<string, unknown> | null | undefined): Lanes {
+  return { spaces: value?.spaces !== false, sites: value?.sites !== false }
 }

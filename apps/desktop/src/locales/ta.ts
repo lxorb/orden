@@ -2973,4 +2973,7 @@ export const ta: Dictionary = {
   'No activity': 'செயல்பாடு இல்லை',
   'Start time': 'தொடக்க நேரம்',
   'End time': 'முடிவு நேரம்',
+  'Count as': 'இதாக எண்ணு',
+  'Time in spaces': 'இடங்களில் செலவிட்ட நேரம்',
+  'Time on websites': 'இணையதளங்களில் செலவிட்ட நேரம்',
 }

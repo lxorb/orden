@@ -2965,4 +2965,7 @@ export const ha: Dictionary = {
   'No activity': 'Babu aiki',
   'Start time': 'Lokacin farawa',
   'End time': 'Lokacin ƙarewa',
+  'Count as': 'Ƙidaya a matsayin',
+  'Time in spaces': 'Lokaci a wurare',
+  'Time on websites': 'Lokaci a shafukan yanar gizo',
 }

@@ -2897,4 +2897,7 @@ export const ms: Dictionary = {
   'No activity': 'Tiada aktiviti',
   'Start time': 'Masa mula',
   'End time': 'Masa tamat',
+  'Count as': 'Kira sebagai',
+  'Time in spaces': 'Masa dalam ruang',
+  'Time on websites': 'Masa di laman web',
 }

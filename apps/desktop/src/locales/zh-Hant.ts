@@ -2809,4 +2809,7 @@ export const zhHant: Dictionary = {
   'No activity': '無活動',
   'Start time': '開始時間',
   'End time': '結束時間',
+  'Count as': '計為',
+  'Time in spaces': '在空間中的時間',
+  'Time on websites': '在網站上的時間',
 }

@@ -2998,4 +2998,7 @@ export const ptPT: Dictionary = {
   'No activity': 'Sem atividade',
   'Start time': 'Hora de início',
   'End time': 'Hora de fim',
+  'Count as': 'Contar como',
+  'Time in spaces': 'Tempo nos espaços',
+  'Time on websites': 'Tempo nos sites',
 }

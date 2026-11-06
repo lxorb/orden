@@ -2984,4 +2984,7 @@ export const de: Dictionary = {
   'No activity': 'Keine Aktivität',
   'Start time': 'Beginn',
   'End time': 'Ende',
+  'Count as': 'Zählen als',
+  'Time in spaces': 'Zeit in Bereichen',
+  'Time on websites': 'Zeit auf Websites',
 }

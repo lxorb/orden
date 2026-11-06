@@ -2907,4 +2907,7 @@ export const gu: Dictionary = {
   'No activity': 'કોઈ પ્રવૃત્તિ નથી',
   'Start time': 'શરૂઆતનો સમય',
   'End time': 'અંતનો સમય',
+  'Count as': 'આ રીતે ગણો',
+  'Time in spaces': 'સ્પેસમાં સમય',
+  'Time on websites': 'વેબસાઇટ્સ પર સમય',
 }

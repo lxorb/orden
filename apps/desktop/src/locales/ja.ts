@@ -2875,4 +2875,7 @@ export const ja: Dictionary = {
   'No activity': 'アクティビティなし',
   'Start time': '開始時刻',
   'End time': '終了時刻',
+  'Count as': '次として集計',
+  'Time in spaces': 'スペースでの時間',
+  'Time on websites': 'ウェブサイトでの時間',
 }

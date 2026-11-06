@@ -2862,4 +2862,7 @@ export const ko: Dictionary = {
   'No activity': '활동 없음',
   'Start time': '시작 시간',
   'End time': '종료 시간',
+  'Count as': '다음으로 집계',
+  'Time in spaces': '공간에서 보낸 시간',
+  'Time on websites': '웹사이트에서 보낸 시간',
 }

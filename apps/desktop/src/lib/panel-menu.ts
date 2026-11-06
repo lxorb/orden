@@ -45,7 +45,8 @@ export function panelMenu(
   side: PanelSide | undefined,
   making: MenuEntry[] = [],
 ): MenuEntry[] {
-  const sorts = id === 'tree' ? sortMenu(making) : id === 'search' ? resultsMenu() : []
+  const sorts =
+    id === 'tree' ? sortMenu(making) : id === 'search' ? resultsMenu() : id === 'time' ? making : []
   const asTab: MenuEntry[] = hasTab(id)
     ? [{ label: t('Open in new tab'), run: () => openAsTab(id) }]
     : []

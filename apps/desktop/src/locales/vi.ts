@@ -2871,4 +2871,7 @@ export const vi: Dictionary = {
   'No activity': 'Không có hoạt động',
   'Start time': 'Giờ bắt đầu',
   'End time': 'Giờ kết thúc',
+  'Count as': 'Tính là',
+  'Time in spaces': 'Thời gian trong không gian',
+  'Time on websites': 'Thời gian trên trang web',
 }
