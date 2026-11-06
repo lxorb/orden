@@ -206,6 +206,31 @@ describe('a call made and answered', () => {
     expect(thread.usage).toMatchObject({ input: 180, cached: 100, output: 4, window: 1_048_576 })
   })
 
+  test('calls without ids in two rounds each keep their own result', async () => {
+    const bare = (path: string) =>
+      sse({
+        candidates: [
+          {
+            content: {
+              role: 'model',
+              parts: [{ functionCall: { name: 'read_note', args: { path } } }],
+            },
+            finishReason: 'STOP',
+          },
+        ],
+      })
+    answers = [bare('One.md'), bare('Two.md'), ANSWERED]
+    const thread = newThread('space', 'gemini', 'gemini-3-flash', 'low', 'full')
+    await send(thread, 'Read both.')
+
+    const tools = thread.turns[1]?.parts.filter((one) => one.kind === 'tool') ?? []
+    expect(tools.map((one) => [one.args, one.state])).toEqual([
+      [{ path: 'One.md' }, 'ok'],
+      [{ path: 'Two.md' }, 'ok'],
+    ])
+    expect(new Set(tools.map((one) => one.id)).size).toBe(2)
+  })
+
   test('asks the streaming address with the tools, the system and the thinking level', async () => {
     answers = [CALLED, ANSWERED]
     const thread = newThread('space', 'gemini', 'gemini-3-flash', 'low', 'full')
