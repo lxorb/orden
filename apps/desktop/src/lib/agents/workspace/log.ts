@@ -11,11 +11,10 @@
 import type { AgentAnswer } from '../../automation/caller'
 import { notePath } from '../../space-paths'
 import { invoke } from '../../tauri'
-import { workspace } from '../../workspace.svelte'
 import { notes } from '../docs'
 import { asked } from './asks'
 import { type Call, done, maybe, need, writerOf } from './call'
-import { made } from './notes'
+import { made, madeOrChanged } from './notes'
 import { Refused } from './problem'
 import { judgedForWriting, onDisk, placeOf, writableAt } from './spaces'
 
@@ -100,13 +99,15 @@ export async function attachAgentLog(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Write the log of ${day} into ${relative}`)
   if (question) return question
 
-  if ((await workspace.noteText(onDisk(place, relative))) === null) {
-    await made(place, relative, `${section}\n`, null)
-  } else {
-    await notes.editNote(writerOf(call), { path: relative, space: place.space.id }, [
-      { at: { end: true }, insert_after: section },
-    ])
-  }
+  await madeOrChanged(
+    place,
+    relative,
+    () => made(place, relative, `${section}\n`, null),
+    () =>
+      notes.editNote(writerOf(call), { path: relative, space: place.space.id }, [
+        { at: { end: true }, insert_after: section },
+      ]),
+  )
 
   return done({ path: relative, calls: shown.length })
 }

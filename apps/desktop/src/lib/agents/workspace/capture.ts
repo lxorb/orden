@@ -36,7 +36,7 @@ import { notes } from '../docs'
 import { CAPTURE_AS, type CaptureAs, type Code, type Overview } from '../verbs'
 import { asked } from './asks'
 import { type Call, done, flag, maybe, need, needScope, writerOf } from './call'
-import { made } from './notes'
+import { made, madeOrChanged } from './notes'
 import { Refused } from './problem'
 import {
   judgedForWriting,
@@ -246,23 +246,25 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
   const embed = page.file ? await attachment(place, path, page.file) : null
   const words = await wordsFor(page, shape, embed)
 
-  const there = (await workspace.noteText(path)) !== null
-  if (!there) {
-    await made(place, relative, words, null)
-    return done(
-      { path: relative, space: place.space.id, source: page.url, created: true },
-      page.url,
-    )
-  }
-
   const under = maybe(call, 'under')
   const title = page.title.trim() || page.url
   const section = `## ${asWords(title)}\n\n${shape === 'clip' ? `<${page.url}>\n\n` : ''}${body(words).replace(/^# .*\n+/, '')}`
-  await notes.editNote(writerOf(call), { path: relative, space: place.space.id }, [
-    { at: under === null ? { end: true } : { heading: under }, insert_after: section },
-  ])
+  const created = await madeOrChanged(
+    place,
+    relative,
+    async () => {
+      await made(place, relative, words, null)
+      return true
+    },
+    async () => {
+      await notes.editNote(writerOf(call), { path: relative, space: place.space.id }, [
+        { at: under === null ? { end: true } : { heading: under }, insert_after: section },
+      ])
+      return false
+    },
+  )
 
-  return done({ path: relative, space: place.space.id, source: page.url, created: false }, page.url)
+  return done({ path: relative, space: place.space.id, source: page.url, created }, page.url)
 }
 
 /** A picture or a PDF kept beside a note the way a pasted picture is: in the folder the

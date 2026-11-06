@@ -52,7 +52,7 @@ import { nowOf } from '../../views/days'
 import { guardedAt } from '../../views/guard'
 import { withComment } from '../../views/task-body'
 import { type Call, done, flag, maybe, need, writerOf } from './call'
-import { at, made, noteOf } from './notes'
+import { at, made, madeOrChanged, noteOf } from './notes'
 import { Refused } from './problem'
 import {
   judgedForWriting,
@@ -223,16 +223,20 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
   if (question) return question
 
   const hash = taskHash(fields.text)
-  if ((await workspace.noteText(onDisk(note.place, note.relative))) === null) {
-    const placed = placeIn('', [line], under)
-    await made(note.place, note.relative, appliedEdits('', [placedEdit(placed)]), null)
-    return done({ at: `${note.relative}#${placed.line}:${hash}`, space: place.space.name })
-  }
-
-  const placedAt = await rewritten(call, note, (text) => {
-    const placed = placeIn(text, [line], under)
-    return { text: appliedEdits(text, [placedEdit(placed)]), said: placed.line }
-  })
+  const placedAt = await madeOrChanged(
+    note.place,
+    note.relative,
+    async () => {
+      const placed = placeIn('', [line], under)
+      await made(note.place, note.relative, appliedEdits('', [placedEdit(placed)]), null)
+      return placed.line
+    },
+    () =>
+      rewritten(call, note, (text) => {
+        const placed = placeIn(text, [line], under)
+        return { text: appliedEdits(text, [placedEdit(placed)]), said: placed.line }
+      }),
+  )
   return done({ at: `${note.relative}#${placedAt}:${hash}`, space: place.space.name })
 }
 
@@ -342,17 +346,20 @@ async function moved(
     words,
     taskIn(words, place.space.name, from.relative, anchor).anchor?.line ?? 0,
   )
-  let line: number
-  if ((await workspace.noteText(onDisk(into.place, into.relative))) === null) {
-    const placed = placeIn('', block.lines, heading)
-    await made(into.place, into.relative, appliedEdits('', [placedEdit(placed)]), null)
-    line = placed.line
-  } else {
-    line = await rewritten(call, into, (text) => {
-      const placed = placeIn(text, block.lines, heading)
-      return { text: appliedEdits(text, [placedEdit(placed)]), said: placed.line }
-    })
-  }
+  const line = await madeOrChanged(
+    into.place,
+    into.relative,
+    async () => {
+      const placed = placeIn('', block.lines, heading)
+      await made(into.place, into.relative, appliedEdits('', [placedEdit(placed)]), null)
+      return placed.line
+    },
+    () =>
+      rewritten(call, into, (text) => {
+        const placed = placeIn(text, block.lines, heading)
+        return { text: appliedEdits(text, [placedEdit(placed)]), said: placed.line }
+      }),
+  )
   await notes.writeNote(
     writerOf(call),
     at(from),

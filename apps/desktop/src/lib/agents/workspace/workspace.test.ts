@@ -1663,6 +1663,43 @@ describe('to-dos and bases', () => {
     })
   })
 
+  test('calls at once on a note that is not there yet make it once, and the rest add to it', async () => {
+    const { madeOrChanged } = await import('./notes')
+    const place = { space: home, open: false } as Parameters<typeof madeOrChanged>[0]
+    const did: string[] = []
+    await Promise.all(
+      ['Call mum', 'Buy leeks', 'Water the fern'].map((task) =>
+        madeOrChanged(
+          place,
+          '.Inbox.md',
+          async () => {
+            did.push(`made ${task}`)
+            await Promise.resolve()
+            files.set('/s/Home/.Inbox.md', `- [ ] ${task}\n`)
+          },
+          async () => {
+            did.push(`added ${task}`)
+            await Promise.resolve()
+          },
+        ),
+      ),
+    )
+    expect(did).toEqual(['made Call mum', 'added Buy leeks', 'added Water the fern'])
+  })
+
+  test('words added at once to a note that is not there yet are all in it', async () => {
+    docs.editNote.mockClear()
+    await Promise.all(
+      ['One.', 'Two.', 'Three.'].map((content) =>
+        call('append_note', { space: 'Home', path: 'Day', content }),
+      ),
+    )
+    const added = docs.editNote.mock.calls.map((one) => JSON.stringify((one as unknown[])[2]))
+    const wrote = [files.get('/s/Home/Day.md') ?? '', ...added].join('\n')
+    for (const one of ['One.', 'Two.', 'Three.']) expect(wrote).toContain(one)
+    expect(added).toHaveLength(2)
+  })
+
   test('a task sent to the Inbox by name goes there, and makes no Inbox.md (#1044)', async () => {
     await call('add_task', { space: 'Home', text: 'Call mum', note: 'Inbox' })
     expect(files.get('/s/Home/.Inbox.md')).toBe('- [ ] Call mum\n')

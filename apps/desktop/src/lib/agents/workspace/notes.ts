@@ -155,12 +155,12 @@ export async function writeNote(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Write ${relative} in ${place.space.name}`)
   if (question) return question
 
+  const written = () => notes.writeNote(writerOf(call), at(named), words, ifRev(call))
+  if (named.tab) return done(await written())
   // A note that is not there yet is made: the connector's write_note makes one too.
-  if (!named.tab && (await workspace.noteText(onDisk(place, relative))) === null) {
-    return done(await made(place, relative, words, null))
-  }
-
-  return done(await notes.writeNote(writerOf(call), at(named), words, ifRev(call)))
+  return done(
+    await madeOrChanged(place, relative, () => made(place, relative, words, null), written),
+  )
 }
 
 export async function appendNote(call: Call): Promise<AgentAnswer> {
@@ -172,15 +172,13 @@ export async function appendNote(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Add to ${relative} in ${place.space.name}`)
   if (question) return question
 
-  // The day's note that is not there yet is the day's note to make, as nib://append
-  // makes one.
-  if (!named.tab && (await workspace.noteText(onDisk(place, relative))) === null) {
-    return done(await made(place, relative, words, null))
-  }
-
   const under = maybe(call, 'under')
   const edit = { at: under === null ? { end: true } : { heading: under }, insert_after: words }
-  return done(await notes.editNote(writerOf(call), at(named), [edit]))
+  const added = () => notes.editNote(writerOf(call), at(named), [edit])
+  if (named.tab) return done(await added())
+  // The day's note that is not there yet is the day's note to make, as nib://append
+  // makes one.
+  return done(await madeOrChanged(place, relative, () => made(place, relative, words, null), added))
 }
 
 /** A front matter value as the one line it is written on: a list in brackets, a
@@ -290,6 +288,31 @@ export async function createNote(call: Call): Promise<AgentAnswer> {
     flag(call, 'open') ? call : null,
   )
   return done({ ...answer, space: place.space.id })
+}
+
+/** The making or changing of each note, while one is on its way. */
+const making = new Map<string, Promise<unknown>>()
+
+/** `make` where the note is not there, `change` where it is: asked and done for one note
+ *  at a time. A turn's tools run at once, and two calls that both found the note missing
+ *  would both make it, the second over the first. */
+export function madeOrChanged<Made, Changed>(
+  place: Place,
+  relative: string,
+  make: () => Promise<Made>,
+  change: () => Promise<Changed>,
+): Promise<Made | Changed> {
+  const path = onDisk(place, relative)
+  const turn = (making.get(path) ?? Promise.resolve())
+    .catch(() => undefined)
+    .then(async () => ((await workspace.noteText(path)) === null ? make() : change()))
+  making.set(path, turn)
+  void turn
+    .catch(() => undefined)
+    .finally(() => {
+      if (making.get(path) === turn) making.delete(path)
+    })
+  return turn
 }
 
 /** A new note, written where it goes. Opened behind the tab in front when asked, and
