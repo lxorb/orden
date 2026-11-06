@@ -1,48 +1,4 @@
 {
-  # Orden for Nix, out of one file: the release and the `edge` pre-release, each
-  # taken from its `.deb`, and the app compiled from the sources this file arrives
-  # beside.
-  #
-  # One file, the same bytes on every branch, on purpose. The release flake belongs
-  # on main and the source build on unstable, and work flows unstable -> pull
-  # request -> main, so while this path held two different files every release pull
-  # request either conflicted here or quietly carried the source flake onto main and
-  # broke `nix profile install github:lxorb/orden?dir=packaging/nix` for everyone
-  # already on it. Nothing below asks which branch it is on: the release outputs are
-  # pinned to a published release, and the source output compiles whatever tree this
-  # file sits in. The edge's pin is edge.json beside it, which only release.yml writes,
-  # on unstable, after every edge build.
-  #
-  # `packages.default` and `packages.orden` take the program out of the release's
-  # .deb and run it on nixpkgs' own GTK 4, NSS and the rest, the way the AUR package
-  # runs it on Arch's. Orden runs on CEF (Chromium) on Linux, and the .deb carries the
-  # engine beside the program, in usr/share/Orden: both are kept together, every one
-  # of their libraries pointed at nixpkgs'.
-  #
-  # Not the AppImage, which this flake wrapped up to 0.13: its own libraries do not
-  # match NixOS' Mesa and libglvnd. The .deb is the bare program and its engine, so
-  # everything they link is nixpkgs', the same version as everything else on the
-  # system: the graphics driver NixOS provides, and a fraction of the size.
-  #
-  # This is not the nixpkgs package - it is a flake anyone can install from
-  # directly, without waiting on a nixpkgs review:
-  #
-  #   nix run github:lxorb/orden?dir=packaging/nix
-  #   nix profile install github:lxorb/orden?dir=packaging/nix
-  #
-  # `packages.orden-unstable` is the edge's .deb, wrapped the same way, and
-  # `packages.orden-source` compiles the sources; each has its own command, desktop
-  # entry and icons, so it installs beside the release rather than over it:
-  #
-  #   nix profile install github:lxorb/orden/unstable?dir=packaging/nix#orden-unstable
-  #   nix profile install github:lxorb/orden/unstable?dir=packaging/nix#orden-source
-  #
-  # On NixOS, as an input of the system's flake:
-  #
-  #   inputs.orden.url = "github:lxorb/orden?dir=packaging/nix";
-  #   environment.systemPackages = [ inputs.orden.packages.${pkgs.system}.default ];
-  #
-  # or through `overlays.default`, which builds them out of the system's own nixpkgs.
   description = "Orden, a markdown editor with realtime inline preview";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -50,14 +6,6 @@
   outputs =
     { self, nixpkgs }:
     let
-      # Which release the binary outputs install, moved by
-      # .github/workflows/packaging-bump.yml after every one. `tag` is the release
-      # the .debs are attached to and `asset` is what they are called there.
-      #
-      # scripts/bump-packaging.mjs rewrites these four by regex, anchored inside
-      # this attrset so that none of its patterns can wander onto the source build's
-      # own names below. Keep a `}` out of the comments in here, which is where that
-      # anchor ends.
       release = {
         pname = "orden";
         version = "0.19.0";
@@ -65,7 +13,6 @@
         asset = "Orden";
       };
 
-      # One .deb per architecture.
       debs = {
         x86_64-linux = {
           suffix = "x64";
@@ -86,39 +33,17 @@
         else
           null;
 
-      # The source build's own names, never touched by a release bump.
       fromSource = {
         pname = "orden-source";
-        # A prerelease version makes a source-built Nix install follow the unstable
-        # updater stream by default. Stable and edge release builds have a higher
-        # semantic version than this local source build.
         version = "0.0.0-unstable";
       };
 
       systems = builtins.attrNames debs;
       forEach = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
 
-      # The workspace this file sits in, when there is one to see. A flake reference
-      # that names the repository and points into it - `github:lxorb/orden?dir=packaging/nix`,
-      # or a git checkout - copies the whole repository into the store, so
-      # `sourceInfo` is the workspace root and `self.outPath` is this directory
-      # inside it. That is the tree the source build compiles, the one that was
-      # evaluated: no second clone over the network, and a dirty checkout builds what
-      # it actually says. It replaces a `builtins.fetchGit` of `self.rev`, which was
-      # here because this file's own outPath holds only packaging/nix - true, but the
-      # repository is already in the store one directory up, and fetching it again by
-      # revision asked GitHub for the pushed commit rather than building the tree in
-      # hand.
-      #
-      # `path:packaging/nix` copies this directory alone, and then there is no
-      # workspace next to it at all. That must not take the release outputs down with
-      # it, so it is a question asked here and answered in mkSource rather than an
-      # evaluation error.
       workspace = self.sourceInfo.outPath;
       haveSources = builtins.pathExists "${workspace}/apps/desktop/src-tauri/Cargo.lock";
 
-      # WebKitGTK plays audio and video through GStreamer, and these are the only
-      # plugins a WebKit release is let to load.
       gstPluginsFor =
         pkgs: with pkgs.gst_all_1; [
           gstreamer
@@ -128,7 +53,6 @@
           gst-libav
         ];
 
-      # What a release on WebKitGTK (0.16.0 and before) links against.
       webkitInputsFor =
         pkgs:
         (with pkgs; [
@@ -147,9 +71,6 @@
         ])
         ++ gstPluginsFor pkgs;
 
-      # Everything both builds link against: what Chromium and its GTK 4 windows take
-      # from the system. The release build patches the .deb's program and engine onto
-      # these; the source build compiles against them.
       runtimeInputsFor =
         pkgs: with pkgs; [
           gtk4
@@ -183,12 +104,6 @@
           stdenv.cc.cc.lib
         ];
 
-      # What Chromium opens by name at run time rather than links: the GL and Vulkan
-      # loaders and udev. autoPatchelfHook puts these on the program's run path alone,
-      # and a library's `dlopen` searches its own: ANGLE's libGLESv2 and libEGL and
-      # libcef.so looked for libGL.so.1 and found nothing, and the GPU process gave up
-      # (#438). So the release build puts them on every library of the engine as well;
-      # see its postFixup.
       openedFor =
         pkgs: with pkgs; [
           libGL
@@ -196,13 +111,6 @@
           systemdLibs
         ];
 
-      # The CEF the source build compiles against and ships: the version Linux's
-      # manifest pins (`cef` in apps/desktop/src-tauri/Cargo.toml's
-      # [package.metadata.cef]), nixpkgs' own package of it moved to that version, and
-      # laid out the way the `cef` crate's build script reads a distribution - every
-      # file of the engine in one folder, with the archive it came from named beside
-      # them. The build script would download it itself, which a build in Nix's
-      # sandbox may not.
       cefFor =
         pkgs:
         let
@@ -219,10 +127,6 @@
               aarch64-linux = "fa85793519eef199e6b6fa8cc8d6f0eb45c6dac2";
             }
             .${system};
-          # nixpkgs packages CEF 151, whose install step points libEGL.so and
-          # libGLESv2.so at their libraries. CEF 154 ships neither any more (ANGLE
-          # is inside libcef.so now), and patchelf fails on the missing files, so
-          # those two lines go; the rest of the step is kept as nixpkgs wrote it.
           cef =
             (pkgs.cef-binary.override {
               version = "154.0.34";
@@ -246,9 +150,6 @@
             inherit sha1;
           };
         in
-        # Two empty libraries under ANGLE's names as well, as scripts/linux-cef.sh lays
-        # out for the other Linux builds: the bundler still copies libEGL.so and
-        # libGLESv2.so by name, and Chromium never opens them with ANGLE linked in.
         pkgs.runCommandCC "cef-distribution-154.0.34" { } ''
           mkdir -p $out
           for one in ${cef}/Release/* ${cef}/Resources/*; do
@@ -263,10 +164,6 @@
           echo '${archive}' > $out/archive.json
         '';
 
-      # Built out of whichever nixpkgs it is handed: this flake's own for
-      # `packages`, the system's for `overlays.default`. Nothing is compiled: the
-      # .deb is unpacked, its program pointed at nixpkgs' libraries, and wrapped
-      # in a shell script.
       mkRelease =
         channel: pkgs:
         let
@@ -274,19 +171,12 @@
           inherit (debs.${pkgs.stdenv.hostPlatform.system}) suffix;
           hash = channel.hashes.${pkgs.stdenv.hostPlatform.system};
           edge = pname != "orden";
-          # 0.16.0 is the last release on WebKitGTK; every release after it carries CEF
-          # in its .deb. The packaging for CEF lands on unstable ahead of the release that
-          # ships it, so until the pin above moves past 0.16.0 the release build has to
-          # take the .deb it is actually pinned to, or `nix run` breaks for everyone the
-          # moment this file reaches main. Once it has moved, the WebKit half below is
-          # dead and can go.
           onCef = nixpkgs.lib.versionOlder "0.16.0" version;
           gstPlugins = gstPluginsFor pkgs;
         in
         pkgs.stdenv.mkDerivation {
           inherit pname version;
 
-          # Which engine the pinned .deb runs on, for nix.yml to check the right things.
           passthru.engine = if onCef then "cef" else "webkit";
 
           src = pkgs.fetchurl {
@@ -306,20 +196,8 @@
 
           dontConfigure = true;
           dontBuild = true;
-          # libcef.so is stripped already, and stripping it again is minutes for nothing.
           dontStrip = onCef;
 
-          # The program keeps the name every install of it has had, nib, out of
-          # $PATH; the command is the package's name, and the stable one keeps
-          # `nib` beside it. Tauri's own desktop entry is replaced with the one
-          # beside this file, and its 256x256 icon, which it files under a scale-2
-          # directory, goes where a theme looks for it. Every file the profile
-          # gets is named after the package, so stable and edge never collide.
-          #
-          # The program and the engine stay in one folder, which is where the program
-          # looks for libcef.so and Chromium for its resources. Not the sandbox helper,
-          # which only works setuid root and cannot be in the store: Chromium sandboxes
-          # its renderers in user namespaces instead, which NixOS allows.
           installPhase = ''
             runHook preInstall
           ''
@@ -351,24 +229,7 @@
             runHook postInstall
           '';
 
-          # The wrapper is a shell script rather than wrapGAppsHook4's own, which would be
-          # compiled. GTK names the window after the command it was started as, which is
-          # what the desktop entry's StartupWMClass says. Links and attachments open with
-          # xdg-open.
-          #
-          # On WebKitGTK, two more things: its DMA-BUF renderer leaves a blank window on
-          # NVIDIA's own driver, so there, and only there, it is turned off unless the
-          # user has set it either way; and GStreamer is shut in with its own plugins
-          # and a registry of this package's own, so a NixOS profile's lib/ full of Qt
-          # and KDE libraries is never searched.
-          #
-          # pandoc is deliberately not here: it is only needed for importing and
-          # exporting DOCX and friends, Orden hides that when it is missing, and
-          # anyone who wants it can add it to their own profile.
           dontWrapGApps = true;
-          # Patched here rather than by the hook's own run, which comes after this and
-          # would set every run path afresh: the engine's libraries then get what they
-          # open by name beside what they link (`openedFor`).
           dontAutoPatchelf = onCef;
           postFixup =
             pkgs.lib.optionalString onCef ''
@@ -384,8 +245,6 @@
               --inherit-argv0 \
               --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.xdg-utils ]} \
           ''
-          # On CEF, a system that refuses the user namespaces Chromium's sandbox needs
-          # here is told so, and what to do, before Chromium stops on it (userns.sh).
           + pkgs.lib.optionalString onCef ''
             --run '. ${./userns.sh}'
           ''
@@ -433,40 +292,6 @@
             };
           };
 
-      # The same app compiled out of the workspace beside this flake, with its own
-      # command, desktop entry, icons, wrapper and GStreamer registry, so it sits in
-      # a profile next to the release instead of over it.
-      #
-      # THE DEPENDENCY HASHES. A source build of this app needs its Cargo and pnpm
-      # dependencies fetched in a fixed-output derivation, and a fixed-output hash
-      # moves with the lockfile under it. Since this file is now the same on main as
-      # on unstable, `nix flake check` on main evaluates this output too, and a hash
-      # nobody can keep current must not be able to break it. Two halves, two
-      # answers:
-      #
-      # Cargo: no hash at all. `cargoLock.lockFile` vendors straight out of
-      # apps/desktop/src-tauri/Cargo.lock, which is in the tree being built, so there
-      # is nothing to keep current and nothing to resolve. The `cargoHash =
-      # lib.fakeHash` that stood here was dead either way: nixpkgs uses
-      # `importCargoLock` and ignores cargoHash whenever cargoLock is set (see
-      # pkgs/build-support/rust/build-rust-package/default.nix), which is why the
-      # cargo half of nix.yml's `resolve_source_hashes` loop never had a hash
-      # mismatch to catch.
-      #
-      # pnpm: one real hash, below. It is the pnpm store for pnpm-lock.yaml, and it
-      # is the same on both architectures by construction - the fetcher runs
-      # `pnpm install --force`, which takes every platform's optional dependencies,
-      # so one hash covers x86_64 and aarch64. A real hash means `nix profile
-      # install ...#orden-source` works for somebody who is not CI, which a
-      # placeholder never did. It does go stale when pnpm-lock.yaml moves, and then
-      # the *build* fails loudly with the hash it wanted; nix.yml's
-      # `resolve_source_hashes` fills it in a runner's copy to validate a build
-      # before it is committed here.
-      #
-      # Neither `nix flake check` nor `nix eval` touches either one: check builds
-      # `checks` and only evaluates `packages`, so a stale pnpm hash can never take
-      # down the release outputs or the check on main. That is the whole reason this
-      # output is safe to carry on a branch whose lockfiles it may not match.
       mkSource =
         pkgs:
         let
@@ -475,10 +300,6 @@
           cef = cefFor pkgs;
         in
         if !haveSources then
-          # Reached only through a flake reference that copied this directory
-          # without the repository around it. The output stays, so that every branch
-          # and every reference offers the same attributes, and says what is missing
-          # when somebody asks for it to be built.
           pkgs.stdenvNoCC.mkDerivation {
             inherit pname version;
             buildCommand = ''
@@ -502,25 +323,11 @@
             inherit pname version;
             TAURI_CONFIG = builtins.toJSON { inherit version; };
             src = workspace;
-            # cargoRoot is only where the vendored dependencies go; Cargo itself runs in
-            # buildAndTestSubdir, and without it in the workspace root, where there is
-            # no Cargo.toml.
             cargoRoot = "apps/desktop/src-tauri";
             buildAndTestSubdir = "apps/desktop/src-tauri";
-            # The app's tests run in CI against the checkout; the package only builds.
             doCheck = false;
-            # Thin LTO in sixteen parts here, where the release build is one part under
-            # fat LTO. That pair puts the whole program through one optimiser thread at
-            # the end: measured on eight cores, the app's own crate ran alone on one of
-            # them for 315 s of a 510 s compile, which is what "multiple threads but not
-            # multiple cores" was (#672); in sixteen parts it took 154 s. This copy is
-            # compiled on the machine that runs it, every time it updates, so its
-            # compile is worth more than the 5 MB it adds to a 15 MB program beside a
-            # Chromium of its own; the release's profile is left as it is.
             CARGO_PROFILE_RELEASE_LTO = "thin";
             CARGO_PROFILE_RELEASE_CODEGEN_UNITS = "16";
-            # Linux is built from a manifest of its own, on Tauri 3 and CEF, put in place
-            # of the app's before anything reads it; see scripts/linux-cef.sh.
             cargoLock.lockFile = "${workspace}/apps/desktop/src-tauri/linux/Cargo.lock";
             postPatch = ''
               cp apps/desktop/src-tauri/linux/Cargo.toml apps/desktop/src-tauri/Cargo.toml
@@ -538,8 +345,6 @@
               wrapGAppsHook4
               makeWrapper
             ];
-            # cmake is the `cef` crate's, for the wrapper library it compiles; the
-            # package itself is Cargo's.
             dontUseCmakeConfigure = true;
             runtimeDependencies = openedFor pkgs;
             dontStrip = true;
@@ -558,18 +363,6 @@
               pnpm --filter @orden/desktop build
             '';
 
-            # Everything the profile gets is named after this package, so it never
-            # collides with the release's files: the command, the desktop entry
-            # (Tauri's own is replaced with the one beside this file, with the
-            # pname substituted into it) and the icons, including the 256x256 one
-            # Tauri files under a scale-2 name.
-            #
-            # The engine beside the program, where it looks for libcef.so and Chromium for
-            # its resources; not the sandbox helper, which only works setuid root.
-            #
-            # cargoInstallHook also copies what the `cef` crate put beside the build -
-            # chrome-sandbox into bin and the engine's libraries into lib - and the
-            # engine in libexec is the one the program uses, so those copies go.
             postInstall = ''
               install -Dm755 $out/bin/nib $out/libexec/${pname}/nib
               rm $out/bin/nib
@@ -595,7 +388,6 @@
                 $out/share/icons/hicolor/256x256/apps/${pname}.png
             '';
 
-            # The same environment the release build's wrapper sets: xdg-open on $PATH.
             dontWrapGApps = true;
             postFixup = ''
               makeWrapper $out/libexec/${pname}/nib $out/bin/${pname} \
@@ -624,7 +416,6 @@
         {
           inherit orden;
           default = orden;
-          # What the package was called before 0.15, for a profile that names it.
           nib = orden;
           orden-unstable = mkEdge pkgs;
           ${fromSource.pname} = mkSource pkgs;
@@ -637,27 +428,6 @@
         ${fromSource.pname} = mkSource final;
       };
 
-      # Home Manager, as `programs.orden`:
-      #
-      #   inputs.orden.url = "github:lxorb/orden?dir=packaging/nix";
-      #   imports = [ inputs.orden.homeManagerModules.default ];
-      #   programs.orden.enable = true;
-      #
-      # Beyond installing the package it writes only the files Orden leaves to the
-      # reader in its settings folder, each of them optional: theme stylesheets,
-      # custom.css, snippets.json, and settings.json - the settings declared here,
-      # which the app puts in force at launch and holds there (#673):
-      #
-      #   programs.orden.settings = {
-      #     editor.textSize = 1.1;
-      #     editor.focusMode = true;
-      #     appearance.mode = "dark";
-      #     markdown.strictCommonMark = true;
-      #   };
-      #
-      # Everything else in that folder is the app's own state - window positions,
-      # history, what Settings saved - and is kept out of here on purpose, since the
-      # app rewrites it while running.
       homeManagerModules.default =
         {
           config,
@@ -669,23 +439,11 @@
           cfg = config.programs.orden;
           inherit (lib) mkOption types;
           system = pkgs.stdenv.hostPlatform.system;
-          # Tauri's app_config_dir: XDG_CONFIG_HOME, then the bundle identifier.
-          # The source build keeps the release's identifier, so both read the
-          # same folder.
           folder = "ch.emilvinu.nib";
-          # What themes.rs accepts as a theme's id, the file's name less `.css`.
           isId = id: builtins.stringLength id <= 39 && builtins.match "[a-z0-9][a-z0-9-]*" id != null;
-          # The CSS itself, or a file holding it. Text first: `types.path` takes
-          # any string starting with a slash, and a stylesheet may well open with
-          # a comment.
           stylesheet = types.either types.lines types.path;
           file = value: if builtins.isString value then { text = value; } else { source = value; };
 
-          # Every setting the file may set, as the app declares them: settings-schema.json
-          # is made from the panes by the app's own test (file-schema.test.ts), so an
-          # option here is exactly what the app takes, of its type and within its range
-          # or its choices. Beside this file; the repository's root flake.nix is a link to
-          # it, and is evaluated from the root.
           schema = builtins.fromJSON (
             builtins.readFile (
               if builtins.pathExists ./settings-schema.json then
@@ -694,7 +452,6 @@
                 ./packaging/nix/settings-schema.json
             )
           );
-          # One value of a setting: a choice where it has a fixed set of them.
           oneOf = setting: if setting ? enum then types.enum setting.enum else types.str;
           typeOf =
             setting:
@@ -711,9 +468,6 @@
               )
             else
               oneOf setting;
-          # Null, the default, leaves a setting to Settings; anything else is held. A
-          # setting of some platforms only says which; on the others the app passes it
-          # over, so one configuration serves every machine.
           optionOf =
             setting:
             mkOption {
@@ -733,8 +487,6 @@
               key: setting: lib.setAttrByPath (lib.splitString "." key) (optionOf setting)
             ) schema
           );
-          # What the file says: the settings given, nested as they are named, and nothing
-          # for none - a null, or a group with nothing given in it, is left out.
           pruned =
             attrs:
             lib.filterAttrs (_: value: value != null && value != { }) (
@@ -820,10 +572,6 @@
           };
         };
 
-      # The module's settings, evaluated as Home Manager would and the file it writes
-      # compared with what the app reads (#673): an option the schema made, a value
-      # within its type, and the JSON nested by pane, the nulls left out. Without Home
-      # Manager as an input, the few options of its the module sets are stood in for.
       checks = forEach (
         pkgs:
         let

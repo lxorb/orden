@@ -8,10 +8,6 @@ $packageArgs = @{
   validExitCodes = @(0, 3010, 1605, 1614, 1641)
 }
 
-# Orden's own NSIS installer registers under the same display name but with a
-# plain key ("Orden") instead of a product GUID. Only the MSI's entry can be
-# handed to the Windows Installer, so anything that is not a GUID is left alone.
-# An install made before a rename is still listed as nibeditor or Nib.
 [array]$keys = @($packageArgs.softwareName, 'nibeditor', 'Nib') |
   ForEach-Object { Get-UninstallRegistryKey -SoftwareName $_ } |
   Where-Object { $_.PSChildName -match '^\{[0-9A-Fa-f]{8}-([0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12}\}$' }

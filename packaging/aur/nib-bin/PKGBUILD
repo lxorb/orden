@@ -1,14 +1,6 @@
 # Maintainer: Emil Vinu <101118850+lxorb@users.noreply.github.com>
 
-# Orden ships an official .deb for both architectures, so this package unpacks
-# that rather than rebuilding the app: no Rust or Node toolchain is pulled in
-# to install an editor. What comes out of the .deb is repaired on the way in -
-# Tauri's own .desktop entry carries no categories, no web handlers and no
-# comment, and its 256x256 icon is filed under a scale-2 directory.
-
 pkgname=orden-bin
-# The program, its icon and its desktop entry keep the name every install of it
-# has had: the binary is `nib`, whatever the product is called.
 _pkgname=nib
 pkgver=0.19.0
 pkgrel=1
@@ -16,11 +8,6 @@ pkgdesc="Lightweight markdown editor with realtime inline preview"
 arch=('x86_64' 'aarch64')
 url="https://orden.so"
 license=('AGPL-3.0-only')
-# Orden runs on CEF (Chromium) on Linux, and the .deb carries the engine itself
-# beside the program, in /usr/share/Orden: what is named here is what Chromium and
-# its GTK 4 windows link from the system. GTK 4.14 is the oldest the runtime is built
-# against. Nothing of WebKitGTK or GStreamer: Chromium plays VP9, AV1 and Opus itself.
-# See packaging/linux.md.
 depends=('gtk4>=4.14' 'nss' 'nspr' 'alsa-lib' 'libcups' 'at-spi2-core' 'libdrm' 'mesa'
          'libxkbcommon' 'libxcomposite' 'libxdamage' 'libxrandr' 'libxfixes' 'pango'
          'cairo' 'dbus' 'expat' 'hicolor-icon-theme')
@@ -32,7 +19,6 @@ options=('!strip' '!debug' '!emptydirs')
 
 _url="https://github.com/lxorb/orden/releases/download/v${pkgver}"
 source=('nib.desktop')
-# One name for both, since only the running architecture is fetched.
 source_x86_64=("nib.deb::${_url}/Orden-${pkgver}-linux-x64.deb")
 source_aarch64=("nib.deb::${_url}/Orden-${pkgver}-linux-arm64.deb")
 noextract=('nib.deb')
@@ -43,22 +29,16 @@ sha256sums_aarch64=('58e43657f7b36a01864b595d740f143aca75f4f19d518846944c28820d6
 package() {
   bsdtar -O -xf "${srcdir}/nib.deb" 'data.tar.*' |
     bsdtar -xf - -C "${pkgdir}" usr
-  # Chromium's sandbox helper, which only runs setuid root.
   chmod 4755 "${pkgdir}/usr/share/Orden/chrome-sandbox"
 
   install -Dm644 "${srcdir}/nib.desktop" \
     "${pkgdir}/usr/share/applications/${_pkgname}.desktop"
-  # Tauri names its entry after the product: Nib up to 0.11, nibeditor up to
-  # 0.13, Orden since.
   rm -f "${pkgdir}/usr/share/applications/Nib.desktop" \
     "${pkgdir}/usr/share/applications/nibeditor.desktop" \
     "${pkgdir}/usr/share/applications/Orden.desktop"
 
-  # The file in 256x256@2 is a plain 256x256 image, so it belongs in the
-  # unscaled directory; left where it is, every theme lookup scales it wrong.
   install -Dm644 "${pkgdir}/usr/share/icons/hicolor/256x256@2/apps/${_pkgname}.png" \
     "${pkgdir}/usr/share/icons/hicolor/256x256/apps/${_pkgname}.png"
   rm -rf "${pkgdir}/usr/share/icons/hicolor/256x256@2"
 }
 
-# AGPL-3.0-only lives in /usr/share/licenses/common/AGPL3, so no copy is shipped.

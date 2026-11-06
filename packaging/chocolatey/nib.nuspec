@@ -1,12 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  The package's name up to 0.15.0, kept as the road to `orden`, the way Chocolatey
-  deprecates a package: "[Deprecated]" in front of the title, a dependency on the one that
-  replaces it, no files at all and no icon. Upgrading it installs `orden`, which upgrades
-  Orden in place. Its version is the release's with the release's date after it
-  (publish.yml), because a deprecation has to be a version of `nib` newer than every one
-  pushed before it, 0.15.0 among them.
--->
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
     <id>nib</id>

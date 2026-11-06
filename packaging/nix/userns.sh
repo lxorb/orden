@@ -1,14 +1,3 @@
-# Sourced by the release wrapper before Orden starts (#438).
-#
-# Chromium sandboxes its renderers in unprivileged user namespaces in this package: the
-# setuid helper the .deb installs cannot live in the Nix store. NixOS allows the
-# namespaces. A system that refuses them - Ubuntu 23.10 and later through AppArmor,
-# older Debian through a sysctl - leaves Chromium no sandbox at all, and it stops with
-# "No usable sandbox!" before a window opens. That is said here, before it starts, with
-# what to do about it. Never `--no-sandbox` in its place: the renderers run what a page
-# or a note hands them.
-#
-# A setuid helper named in CHROME_DEVEL_SANDBOX is a sandbox, and then nothing is said.
 orden_userns_refused() {
   [ "$(cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns 2>/dev/null)" = 1 ] && return 0
   [ "$(cat /proc/sys/kernel/unprivileged_userns_clone 2>/dev/null)" = 0 ] && return 0

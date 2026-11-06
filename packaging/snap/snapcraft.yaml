@@ -1,19 +1,3 @@
-# Orden for the Snap Store.
-#
-# Like the AUR and Flathub packaging, this unpacks the official .deb instead of
-# rebuilding the app. Orden runs on CEF (Chromium) on Linux, and the .deb carries the
-# engine itself beside the program, in usr/share/Orden, so nothing of the engine is
-# staged from the Ubuntu archive. What it links from the system - GTK 4, NSS, ALSA and
-# the rest - is the gnome extension's platform snap: gnome-46-2404 carries GTK 4.14,
-# the oldest the runtime is built against. Chromium plays VP9, AV1 and Opus itself, so
-# no GStreamer either; H.264 and AAC do not play in the standard CEF build anywhere.
-#
-# Chromium's sandbox is a namespace one here, the setuid helper being of no use in a
-# snap: `browser-support` with `allow-sandbox`, as the Chromium snap has it.
-#
-# Build with `snapcraft` from this directory. Publishing needs a Snapcraft
-# account and `snapcraft upload --release=stable orden_0.19.0_amd64.snap`; see
-# packaging/linux.md.
 name: orden
 title: Orden
 base: core24
@@ -43,9 +27,6 @@ issues: https://github.com/lxorb/orden/issues
 contact: https://github.com/lxorb/orden/issues
 
 grade: stable
-# Nothing here needs to reach outside the sandbox: the spaces in ~/Documents come
-# through the home interface, an export saved elsewhere through removable-media,
-# and everything else is the desktop stack.
 confinement: strict
 
 platforms:
@@ -83,17 +64,6 @@ parts:
     source:
       - on amd64: https://github.com/lxorb/orden/releases/download/v0.19.0/Orden-0.19.0-linux-x64.deb
       - on arm64: https://github.com/lxorb/orden/releases/download/v0.19.0/Orden-0.19.0-linux-arm64.deb
-    # The bytes those two names stood for on the day the release was made. Every
-    # other packaging path here pins a digest - scoop, chocolatey, homebrew, the
-    # AUR, nix, and flathub by commit - and this one did not: a tampered release
-    # asset, or a proxy on the runner, went into the snap and to the Snap Store
-    # under this name with nothing to notice it.
-    #
-    # One line, for the architecture being built: snapcraft takes no `on <arch>:`
-    # list here, though it takes one for `source` ("Input should be a valid string",
-    # snapcraft 8.11.1). Both digests are written down below, and the snap workflow
-    # copies the one for its runner into the line; as committed it holds amd64's,
-    # for a build on an amd64 machine. See packaging/linux.md.
     #   on amd64: sha256/85d650bce50369991389368f6cecb080e8bb08db050d765cb075a751af67055b
     #   on arm64: sha256/58e43657f7b36a01864b595d740f143aca75f4f19d518846944c28820d675839
     source-checksum: sha256/85d650bce50369991389368f6cecb080e8bb08db050d765cb075a751af67055b
