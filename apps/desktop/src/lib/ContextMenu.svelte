@@ -6,7 +6,7 @@
   import { type Spelling, spelled } from './list-keys'
   import { DIVIDER, menu, trim, type MenuEntry, type MenuItem } from './menu.svelte'
   import { overlays } from './overlays'
-  import { released } from './menu-release'
+  import { released, shortcutPassesBy } from './menu-release'
   import { spendClick } from './spent-click'
   import { pullsAway } from './sheet-pull'
   import { trap } from './trap'
@@ -196,6 +196,9 @@
 
 <svelte:window
   onresize={() => menu.hide()}
+  onkeydowncapture={(event: KeyboardEvent) => {
+    if (menu.open && shortcutPassesBy(event)) menu.hide()
+  }}
   onpointerdowncapture={onPress}
   onpointerupcapture={onRelease}
 />
