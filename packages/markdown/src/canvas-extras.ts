@@ -294,11 +294,13 @@ export function withExtras(text: string, extras: Extras | undefined): string {
   for (const [name, generation] of extras.buried) {
     if (!(name in record)) record[name] = `~${String(generation)}`
   }
-  file.nib = {
+  const nib = {
     ...(isRecord(file.nib) ? file.nib : {}),
     ...extras.nib,
     ...(Object.keys(record).length ? { [RECORD]: record } : {}),
   }
+  if (Object.keys(nib).length) file.nib = nib
+  else delete file.nib
 
   return `${JSON.stringify(file, null, '\t')}\n`
 }
