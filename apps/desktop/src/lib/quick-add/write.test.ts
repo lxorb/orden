@@ -83,6 +83,17 @@ describe('a task sent to a note by name', () => {
     expect(landed?.path).toBe('/s/Ideas.md')
     expect(written).toEqual(['/s/Ideas.md'])
   })
+
+  test('into another space finds the note of that space, not the open one of that name', async () => {
+    notes.push({ path: '/open/Errands.md', name: 'Errands.md' })
+    disk.set('/open/Errands.md', 'the open space\n')
+    disk.set('/other/Errands.md', 'the other space\n')
+
+    const landed = await addTask(task('Errands'), { root: '/other' })
+
+    expect(landed?.path).toBe('/other/Errands.md')
+    expect(written).toEqual([])
+  })
 })
 
 describe('a task sent to the name the space keeps for its instructions', () => {

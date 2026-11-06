@@ -17,6 +17,7 @@ import {
   nameOf,
   relativeTo,
   samePath,
+  within,
   withoutExtension,
 } from '../space-paths'
 import { links } from '../link-index.svelte'
@@ -55,7 +56,9 @@ export function headingsOf(root: string, said: string): readonly string[] {
 function named(root: string, said: string): string | null {
   const key = (words: string) => words.normalize('NFC').toLowerCase()
   const wanted = key(said.replace(/\.md$/i, ''))
-  const notes = workspace.notes.filter((one) => isMarkdownPath(one.path))
+  const notes = workspace.notes.filter(
+    (one) => isMarkdownPath(one.path) && within(root, one.path, root) !== null,
+  )
   const found =
     notes.find((one) => key(withoutExtension(relativeTo(root, one.path))) === wanted) ??
     notes.find((one) => key(withoutExtension(one.name)) === wanted.split('/').at(-1))
