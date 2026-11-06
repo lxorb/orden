@@ -90,8 +90,9 @@ export class PtySource implements Source {
 
   async image(bytes: Uint8Array, kind: ImageKind): Promise<string> {
     const host = hostIdOf(this.shell)
-    if (host === null) throw new Error('a shell on this computer reads its own clipboard')
-    return invoke<string>('remote_image', { host, kind, base64: toBase64(bytes) })
+    const base64 = toBase64(bytes)
+    if (host === null) return invoke<string>('local_image', { kind, base64 })
+    return invoke<string>('remote_image', { host, kind, base64 })
   }
 
   async program(): Promise<string | null | undefined> {

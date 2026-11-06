@@ -1,12 +1,13 @@
 use std::io::Write;
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::time::{Duration, SystemTime};
 
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
-use tauri::Webview;
+use tauri::{Manager as _, Webview};
 
 const KINDS: [(&str, &str); 4] = [
     ("png", "png"),
@@ -16,6 +17,8 @@ const KINDS: [(&str, &str); 4] = [
 ];
 
 const MOST_BYTES: usize = 16 * 1024 * 1024;
+
+const KEPT: Duration = Duration::from_secs(24 * 60 * 60);
 
 const OPTIONS: [&str; 9] = [
     "-T",
@@ -89,6 +92,72 @@ fn carried(program: &Path, args: &[String], bytes: Vec<u8>) -> Result<String, St
     }
 }
 
+fn picture_of(kind: &str, base64: &str) -> Result<(&'static str, Vec<u8>), String> {
+    let end = end_of(kind).ok_or_else(|| format!("{kind} is not a picture an agent reads"))?;
+    if base64.len() > MOST_BYTES.div_ceil(3) * 4 {
+        return Err("the picture is larger than a paste carries".to_owned());
+    }
+    let bytes = BASE64
+        .decode(base64.as_bytes())
+        .map_err(|error| format!("the picture is not base64: {error}"))?;
+    Ok((end, bytes))
+}
+
+fn is_ours(name: &str) -> bool {
+    let Some((stem, end)) = name.rsplit_once('.') else {
+        return false;
+    };
+    let Some(hex) = stem.strip_prefix("nib-") else {
+        return false;
+    };
+    hex.len() == 16
+        && hex.bytes().all(|byte| byte.is_ascii_hexdigit())
+        && KINDS.iter().any(|(_, one)| *one == end)
+}
+
+fn forget_old(folder: &Path, now: SystemTime) {
+    let Ok(entries) = std::fs::read_dir(folder) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let old = entry
+            .metadata()
+            .and_then(|about| about.modified())
+            .is_ok_and(|at| now.duration_since(at).unwrap_or_default() > KEPT);
+        if old && entry.file_name().to_str().is_some_and(is_ours) {
+            let _ = std::fs::remove_file(entry.path());
+        }
+    }
+}
+
+fn kept(folder: &Path, name: &str, bytes: &[u8]) -> Result<PathBuf, String> {
+    std::fs::create_dir_all(folder)
+        .map_err(|error| format!("there is no folder for the picture: {error}"))?;
+    forget_old(folder, SystemTime::now());
+    let path = folder.join(name);
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&path)
+        .map_err(|error| format!("the picture could not be kept: {error}"))?;
+    file.write_all(bytes)
+        .map_err(|error| format!("the picture could not be kept: {error}"))?;
+    Ok(path)
+}
+
+#[tauri::command(async)]
+pub fn local_image(webview: Webview, kind: String, base64: String) -> Result<String, String> {
+    super::owner(&webview)?;
+    let (end, bytes) = picture_of(&kind, &base64)?;
+    let folder = webview
+        .path()
+        .app_cache_dir()
+        .map_err(|error| format!("there is no folder for the picture: {error}"))?
+        .join("images");
+    let path = kept(&folder, &fresh_name(end)?, &bytes)?;
+    Ok(path.to_string_lossy().into_owned())
+}
+
 #[tauri::command(async)]
 pub fn remote_image(
     webview: Webview,
@@ -97,13 +166,7 @@ pub fn remote_image(
     base64: String,
 ) -> Result<String, String> {
     super::owner(&webview)?;
-    let end = end_of(&kind).ok_or_else(|| format!("{kind} is not a picture an agent reads"))?;
-    if base64.len() > MOST_BYTES.div_ceil(3) * 4 {
-        return Err("the picture is larger than a paste carries".to_owned());
-    }
-    let bytes = BASE64
-        .decode(base64.as_bytes())
-        .map_err(|error| format!("the picture is not base64: {error}"))?;
+    let (end, bytes) = picture_of(&kind, &base64)?;
 
     let (program, reach) = super::remote::reach(&webview, &host)?;
     let mut args = Vec::from(OPTIONS.map(String::from));
@@ -140,6 +203,34 @@ mod tests {
         assert_eq!(line.matches('\'').count(), 2);
         assert!(line.contains("cat > \"$d/nib-0011223344556677.png\""));
         assert!(line.contains("printf %s \"$d/nib-0011223344556677.png\""));
+    }
+
+    #[test]
+    fn only_our_own_pictures_are_ours_to_forget() {
+        assert!(is_ours("nib-0011223344556677.png"));
+        assert!(is_ours("nib-aabbccddeeff0011.jpg"));
+        assert!(!is_ours("nib-0011223344556677.jpeg"));
+        assert!(!is_ours("nib-00112233.png"));
+        assert!(!is_ours("holiday.png"));
+        assert!(!is_ours("nib-0011223344556677"));
+    }
+
+    #[test]
+    fn a_kept_picture_lies_in_its_folder_and_old_ones_go() {
+        let folder =
+            std::env::temp_dir().join(format!("nib-terminal-pictures-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&folder);
+
+        let path = kept(&folder, "nib-0011223344556677.png", &[1, 2, 3]).expect("kept");
+        assert_eq!(path, folder.join("nib-0011223344556677.png"));
+        assert_eq!(std::fs::read(&path).expect("read"), vec![1, 2, 3]);
+        assert!(kept(&folder, "nib-0011223344556677.png", &[4]).is_err());
+        std::fs::write(folder.join("mine.png"), [9]).expect("write");
+
+        forget_old(&folder, SystemTime::now() + KEPT + Duration::from_secs(60));
+        assert!(!path.exists());
+        assert!(folder.join("mine.png").exists());
+        let _ = std::fs::remove_dir_all(&folder);
     }
 
     #[test]

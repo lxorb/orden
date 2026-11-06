@@ -5,6 +5,9 @@ const carried: Record<string, unknown>[] = []
 let refuse = false
 
 const PATH = '/home/emil/.cache/nib/images/nib-0011223344556677.png'
+const KEPT = '/home/emil/.cache/ch.emilvinu.nib/images/nib-8899aabbccddeeff.png'
+const kept: Record<string, unknown>[] = []
+let outside: string[] = []
 
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
@@ -22,6 +25,11 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
         file: null,
       })
     }
+    if (command === 'local_image') {
+      kept.push(args)
+      return refuse ? Promise.reject(new Error('disk full')) : Promise.resolve(KEPT)
+    }
+    if (command === 'dropped_paths') return Promise.resolve(outside)
     if (command === 'remote_image') {
       carried.push(args)
       return refuse ? Promise.reject(new Error('Permission denied')) : Promise.resolve(PATH)
@@ -154,6 +162,8 @@ function paste(session: Opened, what: { text?: string; picture?: Uint8Array }) {
 beforeEach(() => {
   typed.length = 0
   carried.length = 0
+  kept.length = 0
+  outside = []
   heard.length = 0
   reads.count = 0
   refuse = false
@@ -230,13 +240,90 @@ test('a paste with a picture and no text is carried over; one with text is the t
   expect(carried).toHaveLength(1)
 })
 
-test('a local terminal pastes only text, as it always has', async () => {
+test('a picture pasted into a local terminal is kept on this computer and its path pasted', async () => {
   const session = await local('img-2')
 
   paste(session, { picture: new Uint8Array([1, 2, 3]) })
-  await new Promise((settle) => setTimeout(settle, 20))
-  expect(typed).toEqual([])
+  await vi.waitFor(() => expect(typed.join('')).toBe(KEPT))
+  expect(kept).toEqual([{ kind: 'png', base64: 'AQID' }])
   expect(carried).toEqual([])
+
+  typed.length = 0
+  paste(session, { text: 'ls', picture: new Uint8Array([1]) })
+  await vi.waitFor(() => expect(typed.join('')).toBe('ls'))
+  expect(kept).toHaveLength(1)
+})
+
+test('so is one pasted from the menu when the clipboard holds no text', async () => {
+  clipboard = { picture: new Uint8Array([7]) }
+  const session = await local('img-3')
+
+  session.term.textarea?.dispatchEvent(
+    new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
+  )
+  flushSync()
+  const { menu } = await import('../../src/lib/menu.svelte')
+  const row = menu.items.find((one) => one !== null && 'label' in one && one.label === 'Paste')
+  if (!row || !('run' in row)) throw new Error('no Paste row')
+  row.run()
+  await vi.waitFor(() => expect(typed.join('')).toBe(KEPT))
+  expect(kept).toEqual([{ kind: 'png', base64: 'Bw==' }])
+})
+
+test('a picture this computer could not keep says so, and nothing is pasted', async () => {
+  refuse = true
+  const session = await local('img-4')
+
+  paste(session, { picture: new Uint8Array([1]) })
+  await vi.waitFor(() => expect(busy.trouble).toBe('Could not send the image'))
+  expect(typed).toEqual([])
+})
+
+function drop(session: Opened, transfer: Partial<DataTransfer>): boolean {
+  const host = session.term.element?.parentElement ?? place
+  const over = new Event('dragover', { bubbles: true, cancelable: true })
+  Object.defineProperty(over, 'dataTransfer', { value: { ...transfer, dropEffect: 'none' } })
+  host.dispatchEvent(over)
+  const event = new Event('drop', { bubbles: true, cancelable: true })
+  Object.defineProperty(event, 'dataTransfer', { value: transfer })
+  host.dispatchEvent(event)
+  return over.defaultPrevented && event.defaultPrevented
+}
+
+const named = (name: string, type: string) => ({ name, type }) as unknown as File
+
+test('files dropped from another app on a local terminal are their paths at the prompt', async () => {
+  const session = await local('img-5')
+  outside = ['/home/emil/Pictures/shot one.png', '/home/emil/notes.txt']
+
+  const files = [named('shot one.png', 'image/png'), named('notes.txt', 'text/plain')]
+  expect(drop(session, { types: ['Files'], files: files as unknown as FileList })).toBe(true)
+  await vi.waitFor(() =>
+    expect(typed.join('')).toBe("'/home/emil/Pictures/shot one.png' /home/emil/notes.txt"),
+  )
+  expect(kept).toEqual([])
+})
+
+test('rows of the file explorer dropped on a local terminal are their paths too', async () => {
+  const session = await local('img-6')
+
+  const rows = JSON.stringify(['/etc/hosts', '/tmp/a b'])
+  const transfer = {
+    types: ['text/nib-explorer', 'text/plain'],
+    getData: (type: string) => (type === 'text/nib-explorer' ? rows : ''),
+    files: [] as unknown as FileList,
+  }
+  expect(drop(session, transfer)).toBe(true)
+  await vi.waitFor(() => expect(typed.join('')).toBe("/etc/hosts '/tmp/a b'"))
+})
+
+test('a picture dropped from another app on a remote terminal is carried over', async () => {
+  const session = await remote()
+
+  const picture = Object.assign(pictureFile(new Uint8Array([5])), { name: 'shot.png' })
+  expect(drop(session, { types: ['Files'], files: [picture] as unknown as FileList })).toBe(true)
+  await vi.waitFor(() => expect(typed.join('')).toBe(PATH))
+  expect(carried).toEqual([{ host: 'pi', kind: 'png', base64: 'BQ==' }])
 })
 
 test('a host that refuses the picture says so across the top, and nothing is pasted', async () => {

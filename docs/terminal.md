@@ -445,7 +445,10 @@ word, as it does in every terminal there is. Cmd+W closes the tab on a Mac.
   Windows Terminal.
 - **A row of the file list** dropped on a terminal is its path at the prompt, spelled for
   the shell: quoted where it has a space, `/mnt/c/...` in WSL and `/c/...` in Git Bash -
-  VS Code's drop into its terminal. See `spokenPath` in `lib/terminal/paste.ts`.
+  VS Code's drop into its terminal. So is a row of the file explorer and a file dropped
+  from another app (Finder, Explorer, a file manager), whose path the engine says
+  (`droppedPaths` in `lib/dropped-paths.ts`, #1191) - what every terminal does with a
+  drop. See `spokenPath` in `lib/terminal/paste.ts`.
 - **Pictures**, for a coding agent (Emil, issue 228: _"inserting images into claude session
   with alt + v should also work"_). Claude Code pastes an image by reading the clipboard
   itself when its key is pressed - Alt+V on Windows, through PowerShell; Ctrl+V on Linux
@@ -462,8 +465,12 @@ word, as it does in every terminal there is. Cmd+W closes the tab on a Mac.
   (Ctrl+V on Windows, Ctrl+Shift+V, Shift+Insert, Cmd+V, the menu); and a picture's row of
   the file list dropped on it. PNG, JPEG, GIF and WebP, 16 MB at most. The line across the
   top of the panes sweeps while it goes and says _Could not send the image_ where it could
-  not. A Remote host is reached by a second `ssh` of the tab's own, in `BatchMode`, so a
-  key, the agent or a shared connection (`ControlMaster`) is enough, and a host that only
+  not. A picture pasted into a terminal on this computer (Cmd+V, Ctrl+Shift+V, the menu)
+  has no clipboard key behind it, so it is kept the same way, in Orden's own cache
+  (`images` in the app's cache folder, `local_image`), and its path pasted, as a Mac
+  terminal pastes a file (#1141); a day later it is gone, as on the online machine. A
+  remote terminal's drop of a picture from another app is carried over too. A Remote
+  host is reached by a second `ssh` of the tab's own, in `BatchMode`, so a key, the agent or a shared connection (`ControlMaster`) is enough, and a host that only
   takes a password refuses at once (`src-tauri/src/terminal/picture.rs`); the online
   machine takes it up the terminal's own socket (docs/online-terminal.md 4.13). See
   `lib/terminal/images.ts`.

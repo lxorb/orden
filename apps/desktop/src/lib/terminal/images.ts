@@ -32,7 +32,11 @@ export async function clipboardPicture(): Promise<Picture | null> {
   return null
 }
 
-export async function carried(source: Source, pictures: Picture[]): Promise<string | null> {
+export async function carried(
+  source: Source,
+  pictures: Picture[],
+  shell: string,
+): Promise<string | null> {
   const image = source.image?.bind(source)
   if (!image || !pictures.length) return null
 
@@ -46,7 +50,7 @@ export async function carried(source: Source, pictures: Picture[]): Promise<stri
       }
       return paths
     })
-    return paths.map((path) => spokenPath(path, '/bin/sh')).join(' ')
+    return paths.map((path) => spokenPath(path, shell)).join(' ')
   } catch {
     busy.failed(t('Could not send the image'))
     return null
