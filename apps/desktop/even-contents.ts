@@ -721,9 +721,12 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  Raised on 2026-11-06 for #1165, what is protected and shut kept out of every preview, an
  *  embed and a hover card saying so in the editor's own word: the code to 6,051,900,
  *  measured 6,051,363, and the catalogues to 1,026,600, measured 1,026,230.
+ *
+ *  Raised on 2026-11-06 for #1165, what is protected kept on the account: the code to
+ *  6,052,800, measured 6,052,243.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_051_900,
+  code: 6_052_800,
   catalogues: 1_026_600,
   styles: 293_500,
   fonts: 260_000,
