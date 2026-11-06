@@ -219,6 +219,9 @@ CLIPPED = """
   for (const node of document.querySelectorAll('button, a[href], input, [role=tab]')) {
     const box = node.getBoundingClientRect()
     if (box.width === 0 && box.height === 0) continue
+    // A sidebar put away waits beyond the window's edge, hidden and inert (#1038):
+    // nothing in it can be seen or reached, so nothing in it is off the side.
+    if (node.closest('[inert]') || getComputedStyle(node).visibility === 'hidden') continue
     if (box.right > root.clientWidth + 1 || box.left < -1) {
       const cls = (node.className ?? '').toString().split(' ').filter(Boolean)[0] ?? ''
       over.push(`${node.tagName.toLowerCase()}.${cls}`)
