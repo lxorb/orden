@@ -1,4 +1,5 @@
 import type { Context, Row } from '@orden/bases'
+import { account } from '../account.svelte'
 
 interface Lookups {
   byPath: Map<string, Row>
@@ -61,6 +62,7 @@ export function contextFor(start: ContextStart): Context {
   }
   if (start.this) context.this = start.this
   if (start.search) context.search = start.search
-  if (start.me) context.me = start.me
+  const me = start.me ?? account.name
+  if (me) context.me = me
   return context
 }

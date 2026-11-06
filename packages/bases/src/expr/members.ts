@@ -120,7 +120,7 @@ export function taskField(row: Row, name: string, scope: Scope): Val {
     case 'assignee':
       return task.assignee ?? null
     case 'mine':
-      return task.assignee !== undefined && task.assignee === scope.context.me
+      return task.assignee !== undefined && samePerson(task.assignee, scope.context.me)
     case 'id':
       return task.id ?? null
     case 'dependsOn':
@@ -222,4 +222,10 @@ export function indexed(object: Val, index: Val, scope: Scope): Val {
   }
   if (typeof index === 'string') return member(object, index, scope)
   return null
+}
+
+function samePerson(one: string, other: string | undefined): boolean {
+  if (other === undefined) return false
+  const key = (name: string) => name.trim().normalize('NFC').toLowerCase()
+  return key(one) === key(other)
 }
