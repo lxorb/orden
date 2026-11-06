@@ -16,7 +16,7 @@ import { isPdfTarget } from '@orden/markdown/links'
 import type { AgentAnswer } from '../../automation/caller'
 import { COLOURS, type Highlight, type Quad } from '../../pdf/highlights'
 import { marksWritten } from '../../pdf/sheets.svelte'
-import { loadHighlights, saveHighlights } from '../../pdf/sidecar'
+import { editHighlights, loadHighlights } from '../../pdf/sidecar'
 import { canWriteAt } from '../../sharing.svelte'
 import { asked } from './asks'
 import { type Call, done, maybe, need, needScope } from './call'
@@ -125,7 +125,11 @@ export async function pdfHighlights(call: Call): Promise<AgentAnswer> {
       )
       if (question) return question
 
-      if (!(await saveHighlights(path, { ...sheet, highlights: [...sheet.highlights, mark] }))) {
+      const written = await editHighlights(path, (now) => ({
+        ...now,
+        highlights: [...now.highlights, mark],
+      }))
+      if (!written) {
         throw new Refused('failed', 'the highlights beside that PDF were written by a newer nib')
       }
       marksWritten(path)

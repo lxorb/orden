@@ -23,12 +23,32 @@ export async function loadHighlights(path: string): Promise<Sheet> {
   return text === null ? leftAlone() : readSheet(text)
 }
 
-/** Writes the marks down. Answers whether they were: a sheet from a later version
- *  of Orden holds fields this one knows nothing about, and writing back what was
- *  understood would throw the rest away. */
-export async function saveHighlights(path: string, sheet: Sheet): Promise<boolean> {
-  if (frozen(sheet)) return false
+/** The change on its way to each PDF's marks. */
+const turns = new Map<string, Promise<unknown>>()
 
-  await invoke('write_highlights', { path, content: writeSheet(sheet) })
-  return true
+/** Changes the marks as they are on the disk when the change runs, one change to a PDF
+ *  at a time: the viewer and an agent's calls, several at once, each add to what the
+ *  others wrote rather than over it. Answers the sheet written, or null where it was
+ *  not: a sheet from a later version of Orden holds fields this one knows nothing
+ *  about, and writing back what was understood would throw the rest away. */
+export function editHighlights(
+  path: string,
+  change: (sheet: Sheet) => Sheet,
+): Promise<Sheet | null> {
+  const turn = (turns.get(path) ?? Promise.resolve())
+    .catch(() => undefined)
+    .then(async () => {
+      const sheet = await loadHighlights(path)
+      if (frozen(sheet)) return null
+      const next = change(sheet)
+      await invoke('write_highlights', { path, content: writeSheet(next) })
+      return next
+    })
+  turns.set(path, turn)
+  void turn
+    .catch(() => undefined)
+    .finally(() => {
+      if (turns.get(path) === turn) turns.delete(path)
+    })
+  return turn
 }

@@ -47,7 +47,7 @@
     topOfPage,
     type Size,
   } from './pdf/pages'
-  import { loadHighlights, saveHighlights } from './pdf/sidecar'
+  import { editHighlights, loadHighlights } from './pdf/sidecar'
   import { marksFromOutside } from './pdf/sheets.svelte'
   import PdfPage from './PdfPage.svelte'
   import { paint, placesOf, rangeOf } from './reading/find'
@@ -643,7 +643,7 @@
     control = null
     getSelection()?.removeAllRanges()
 
-    await saveHighlights(path, sheet)
+    await editHighlights(path, (now) => ({ ...now, highlights: [...now.highlights, mark] }))
   }
 
   /** The link and the words, as a citation to paste into a note. */
@@ -662,7 +662,10 @@
 
     sheet = { ...sheet, highlights: sheet.highlights.filter((one) => one.id !== id) }
     picked = null
-    await saveHighlights(path, sheet)
+    await editHighlights(path, (now) => ({
+      ...now,
+      highlights: now.highlights.filter((one) => one.id !== id),
+    }))
   }
 
   // ── Keys ───────────────────────────────────────────────────────────
