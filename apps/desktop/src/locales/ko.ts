@@ -1237,6 +1237,9 @@ export const ko: Dictionary = {
   'Share {name}': '{name} 공유',
   'Share this space': '이 공간 공유',
   'Export this space as Markdown and folders': '이 공간을 Markdown과 폴더로 내보내기',
+  'Moving {name} into Orden’s storage': '{name}을(를) Orden 저장소로 옮기는 중',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    '{names}을(를) 아직 Orden 저장소로 옮기지 못했습니다. 잃은 것은 없습니다. 당분간 폴더로 남으며, Orden이 다음에 시작할 때 다시 시도합니다.',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden은 더 이상 {folder}를 그 자리에서 열지 않습니다. 그 안의 공간은 이제 Orden에 보관되고, 폴더는 그대로 남아 있습니다. 더 가져오려면 가져오기를 사용하세요.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

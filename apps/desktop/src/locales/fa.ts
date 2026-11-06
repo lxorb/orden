@@ -1251,6 +1251,9 @@ export const fa: Dictionary = {
   'Share {name}': 'هم‌رسانی {name}',
   'Share this space': 'هم‌رسانی این فضا',
   'Export this space as Markdown and folders': 'برون‌بری این فضا به‌صورت Markdown و پوشه‌ها',
+  'Moving {name} into Orden’s storage': 'در حال انتقال {name} به فضای ذخیره‌سازی Orden',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    'هنوز نمی‌شود {names} را به فضای ذخیره‌سازی Orden منتقل کرد. چیزی از دست نرفت: فعلاً پوشه می‌مانند و Orden دفعهٔ بعد که شروع شود دوباره تلاش می‌کند.',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden دیگر {folder} را در جای خودش باز نمی‌کند. فضاهای آن اکنون در Orden نگه داشته می‌شوند و پوشه همان‌طور که بود مانده است. برای آوردن چیزهای بیشتر از آن، از درون‌آوری استفاده کنید.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

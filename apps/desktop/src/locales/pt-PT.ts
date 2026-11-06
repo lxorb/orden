@@ -1268,6 +1268,9 @@ export const ptPT: Dictionary = {
   'Share {name}': 'Partilhar {name}',
   'Share this space': 'Partilhar este espaço',
   'Export this space as Markdown and folders': 'Exportar este espaço como Markdown e pastas',
+  'Moving {name} into Orden’s storage': 'A mover {name} para o armazenamento do Orden',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    'Ainda não foi possível mover {names} para o armazenamento do Orden. Nada se perdeu: por agora continuam a ser pastas, e o Orden tentará de novo da próxima vez que iniciar.',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'O Orden já não abre {folder} no próprio sítio. Os espaços dela estão agora guardados no Orden, e a pasta ficou como estava. Para trazer mais dela, use Importar.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

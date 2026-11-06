@@ -1266,6 +1266,9 @@ export const fil: Dictionary = {
   'Share this space': 'Ibahagi ang espasyong ito',
   'Export this space as Markdown and folders':
     'I-export ang espasyong ito bilang Markdown at mga folder',
+  'Moving {name} into Orden’s storage': 'Inililipat ang {name} sa storage ng Orden',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    'Hindi pa mailipat ang {names} sa storage ng Orden. Walang nawala: mananatili muna silang mga folder, at susubukan ulit ng Orden sa susunod na pagbukas nito.',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Hindi na binubuksan ng Orden ang {folder} sa kinalalagyan nito. Nasa Orden na ang mga espasyo nito, at iniwan ang folder gaya ng dati. Para magdala pa mula rito, gamitin ang I-import.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

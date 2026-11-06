@@ -1231,6 +1231,9 @@ export const th: Dictionary = {
   'Share {name}': 'แชร์ {name}',
   'Share this space': 'แชร์พื้นที่นี้',
   'Export this space as Markdown and folders': 'ส่งออกพื้นที่นี้เป็น Markdown และโฟลเดอร์',
+  'Moving {name} into Orden’s storage': 'กำลังย้าย {name} เข้าสู่ที่จัดเก็บของ Orden',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    'ยังย้าย {names} เข้าสู่ที่จัดเก็บของ Orden ไม่ได้ ไม่มีอะไรสูญหาย: ตอนนี้ยังคงเป็นโฟลเดอร์ และ Orden จะลองอีกครั้งเมื่อเริ่มทำงานครั้งถัดไป',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden ไม่เปิด {folder} ในที่เดิมอีกต่อไป พื้นที่ในนั้นถูกเก็บไว้ใน Orden แล้ว และโฟลเดอร์ยังคงอยู่อย่างเดิม หากต้องการนำเข้าเพิ่มเติมจากโฟลเดอร์นั้น ให้ใช้ นำเข้า',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

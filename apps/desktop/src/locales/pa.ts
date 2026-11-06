@@ -1252,6 +1252,9 @@ export const pa: Dictionary = {
   'Share {name}': '{name} ਸਾਂਝਾ ਕਰੋ',
   'Share this space': 'ਇਹ ਥਾਂ ਸਾਂਝੀ ਕਰੋ',
   'Export this space as Markdown and folders': 'ਇਹ ਥਾਂ Markdown ਅਤੇ ਫੋਲਡਰਾਂ ਵਜੋਂ ਐਕਸਪੋਰਟ ਕਰੋ',
+  'Moving {name} into Orden’s storage': '{name} ਨੂੰ Orden ਦੀ ਸਟੋਰੇਜ ਵਿੱਚ ਲਿਜਾਇਆ ਜਾ ਰਿਹਾ ਹੈ',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    '{names} ਨੂੰ ਅਜੇ Orden ਦੀ ਸਟੋਰੇਜ ਵਿੱਚ ਨਹੀਂ ਲਿਜਾਇਆ ਜਾ ਸਕਿਆ। ਕੁਝ ਵੀ ਨਹੀਂ ਗੁਆਚਿਆ: ਫ਼ਿਲਹਾਲ ਇਹ ਫੋਲਡਰ ਹੀ ਰਹਿਣਗੇ, ਅਤੇ Orden ਅਗਲੀ ਵਾਰ ਸ਼ੁਰੂ ਹੋਣ ’ਤੇ ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੇਗਾ।',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden ਹੁਣ {folder} ਨੂੰ ਉਸਦੀ ਥਾਂ ’ਤੇ ਨਹੀਂ ਖੋਲ੍ਹਦਾ। ਇਸਦੀਆਂ ਥਾਵਾਂ ਹੁਣ Orden ਵਿੱਚ ਰੱਖੀਆਂ ਹਨ, ਅਤੇ ਫੋਲਡਰ ਜਿਵੇਂ ਸੀ ਉਵੇਂ ਹੀ ਛੱਡਿਆ ਗਿਆ ਹੈ। ਇਸ ਵਿੱਚੋਂ ਹੋਰ ਲਿਆਉਣ ਲਈ ਅੰਦਰ ਲਿਆਓ ਵਰਤੋ।',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

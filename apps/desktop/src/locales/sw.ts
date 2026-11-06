@@ -1258,6 +1258,9 @@ export const sw: Dictionary = {
   'Share {name}': 'Shiriki {name}',
   'Share this space': 'Shiriki nafasi hii',
   'Export this space as Markdown and folders': 'Hamisha nafasi hii kama Markdown na folda',
+  'Moving {name} into Orden’s storage': 'Inahamisha {name} kwenye hifadhi ya Orden',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    'Bado haikuwezekana kuhamisha {names} kwenye hifadhi ya Orden. Hakuna kilichopotea: kwa sasa zinabaki kuwa folda, na Orden itajaribu tena itakapoanza wakati ujao.',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden haifungui tena {folder} mahali ilipo. Nafasi zake sasa zimehifadhiwa ndani ya Orden, na folda imeachwa kama ilivyokuwa. Ili kuleta zaidi kutoka humo, tumia Ingiza.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

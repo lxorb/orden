@@ -1252,6 +1252,9 @@ export const gsw: Dictionary = {
   'Share {name}': '{name} teile',
   'Share this space': 'Die Ablag teile',
   'Export this space as Markdown and folders': 'Die Ablag als Markdown und Ordner exportiere',
+  'Moving {name} into Orden’s storage': '{name} wird in de Spiicher vo Orden verschobe',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    'No nöd in de Spiicher vo Orden verschobe: {names}. Nüt isch verlore gange: Si blibed vorerst Ordner, und Orden probierts bim nächschte Start nomal.',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden macht {folder} nümm dört uf, wo er isch. Sini Ablage sind jetzt in Orden, und de Ordner bliibt, wie er gsi isch. Zum meh drus hole, nimm Importiere.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

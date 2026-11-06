@@ -1262,6 +1262,9 @@ export const ta: Dictionary = {
   'Share this space': 'இந்த இடத்தைப் பகிர்',
   'Export this space as Markdown and folders':
     'இந்த இடத்தை Markdown மற்றும் கோப்புறைகளாக ஏற்றுமதி செய்',
+  'Moving {name} into Orden’s storage': '{name} Orden இன் சேமிப்பிடத்துக்கு நகர்த்தப்படுகிறது',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    '{names} ஐ இன்னும் Orden இன் சேமிப்பிடத்துக்கு நகர்த்த முடியவில்லை. எதுவும் இழக்கப்படவில்லை: இப்போதைக்கு அவை கோப்புறைகளாகவே இருக்கும், Orden அடுத்த முறை தொடங்கும்போது மீண்டும் முயலும்.',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden இனி {folder} ஐ அதன் இடத்திலேயே திறக்காது. அதன் இடங்கள் இப்போது Orden இல் வைக்கப்பட்டுள்ளன, கோப்புறை இருந்தபடியே விடப்பட்டுள்ளது. அதிலிருந்து மேலும் கொண்டுவர இறக்குமதியைப் பயன்படுத்துங்கள்.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

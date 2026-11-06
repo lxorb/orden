@@ -383,6 +383,29 @@ export class InternalFolder {
     })
   }
 
+  async adopt(path: string, what: Uint8Array | null): Promise<void> {
+    await this.fresh()
+    const there = this.atNow(path)
+    const at = this.world.now()
+    if (!what) {
+      if (there?.key) throw new Error(`${path} is a file`)
+      if (!there) this.folders(`${path}/-`, at, [])
+      return
+    }
+    if (there && !there.key) throw new Error(`${path} is a folder`)
+    const key = there?.key ?? this.newKey(path)
+    await this.bytes.write(key, what)
+    this.folders(path, at, [])
+    this.paths.set(this.keyOf(path), {
+      path: there ? this.spelled(path) : path,
+      entry: { key, made: there?.made ?? at, modified: at, size: what.byteLength },
+    })
+  }
+
+  save(): Promise<void> {
+    return this.change(() => [])
+  }
+
   private newKey(path: string): string {
     const name = path.slice(path.lastIndexOf('/') + 1)
     const dot = name.lastIndexOf('.')

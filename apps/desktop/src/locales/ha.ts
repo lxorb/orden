@@ -1260,6 +1260,9 @@ export const ha: Dictionary = {
   'Share this space': 'Raba wannan wurin',
   'Export this space as Markdown and folders':
     'Fitar da wannan wurin a matsayin Markdown da manyan fayiloli',
+  'Moving {name} into Orden’s storage': 'Ana matsar da {name} zuwa ma’ajiyar Orden',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    'Har yanzu ba a iya matsar da {names} zuwa ma’ajiyar Orden ba. Babu abin da ya ɓace: za su ci gaba da zama manyan fayiloli a yanzu, kuma Orden zai sake gwadawa idan ya sake farawa.',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden ba ya buɗe {folder} a inda yake kuma. Wuraren sa yanzu suna cikin Orden, kuma an bar babban fayil ɗin yadda yake. Don kawo ƙari daga gare shi, yi amfani da Shigar.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

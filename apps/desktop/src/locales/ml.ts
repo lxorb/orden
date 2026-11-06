@@ -1264,6 +1264,9 @@ export const ml: Dictionary = {
   'Share this space': 'ഈ സ്പേസ് പങ്കിടുക',
   'Export this space as Markdown and folders':
     'ഈ സ്പേസ് Markdown-ഉം ഫോൾഡറുകളുമായി എക്സ്പോർട്ട് ചെയ്യുക',
+  'Moving {name} into Orden’s storage': '{name} Orden-ന്റെ സംഭരണത്തിലേക്ക് മാറ്റുന്നു',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    '{names} ഇതുവരെ Orden-ന്റെ സംഭരണത്തിലേക്ക് മാറ്റാനായില്ല. ഒന്നും നഷ്ടപ്പെട്ടില്ല: തൽക്കാലം അവ ഫോൾഡറുകളായി തുടരും, അടുത്ത തവണ തുടങ്ങുമ്പോൾ Orden വീണ്ടും ശ്രമിക്കും.',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden ഇനി {folder} അതിന്റെ സ്ഥാനത്ത് തുറക്കില്ല. അതിലെ സ്പേസുകൾ ഇപ്പോൾ Orden-ൽ സൂക്ഷിച്ചിരിക്കുന്നു, ഫോൾഡർ മുമ്പത്തെപ്പോലെ തന്നെ വിട്ടിരിക്കുന്നു. അതിൽ നിന്ന് കൂടുതൽ കൊണ്ടുവരാൻ ഇംപോർട്ട് ഉപയോഗിക്കുക.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

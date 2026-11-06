@@ -25,6 +25,9 @@
 {:else if showing}
   <div class="track" role="status" data-covers aria-label={busy.label ?? undefined}>
     <Sweep />
+    {#if busy.told}
+      <p class="said told">{busy.label} · {busy.told}</p>
+    {/if}
   </div>
 {/if}
 
@@ -55,6 +58,11 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     text-align: center;
+  }
+
+  .told {
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
   }
 
   @keyframes fade-in {

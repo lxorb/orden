@@ -1246,6 +1246,9 @@ export const gu: Dictionary = {
   'Share {name}': '{name} વહેંચો',
   'Share this space': 'આ જગ્યા વહેંચો',
   'Export this space as Markdown and folders': 'આ જગ્યાને Markdown અને ફોલ્ડર તરીકે નિકાસ કરો',
+  'Moving {name} into Orden’s storage': '{name}ને Ordenના સ્ટોરેજમાં ખસેડી રહ્યા છીએ',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    '{names}ને હજુ Ordenના સ્ટોરેજમાં ખસેડી શકાયું નથી. કંઈ ગુમાવ્યું નથી: હાલ પૂરતું તે ફોલ્ડર જ રહેશે, અને Orden આગલી વાર શરૂ થાય ત્યારે ફરી પ્રયત્ન કરશે.',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden હવે {folder} ને તેની જગ્યાએ ખોલતું નથી. તેની જગ્યાઓ હવે Orden માં રાખેલી છે, અને ફોલ્ડર જેમ હતું તેમ જ રહેવા દીધું છે. તેમાંથી વધુ લાવવા માટે આયાત વાપરો.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

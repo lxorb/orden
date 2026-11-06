@@ -1239,6 +1239,9 @@ export const vi: Dictionary = {
   'Share {name}': 'Chia sẻ {name}',
   'Share this space': 'Chia sẻ không gian này',
   'Export this space as Markdown and folders': 'Xuất không gian này dưới dạng Markdown và thư mục',
+  'Moving {name} into Orden’s storage': 'Đang chuyển {name} vào bộ nhớ của Orden',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    'Chưa thể chuyển {names} vào bộ nhớ của Orden. Không mất gì cả: tạm thời chúng vẫn là thư mục, và Orden sẽ thử lại vào lần khởi động tới.',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden không còn mở {folder} ngay tại chỗ nữa. Các không gian trong đó giờ được giữ trong Orden, và thư mục được để nguyên như cũ. Để đưa thêm từ đó vào, hãy dùng Nhập.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

@@ -1223,6 +1223,9 @@ export const yue: Dictionary = {
   'Share {name}': '分享{name}',
   'Share this space': '分享呢個空間',
   'Export this space as Markdown and folders': '將呢個空間匯出做 Markdown 同資料夾',
+  'Moving {name} into Orden’s storage': '而家將 {name} 搬入 Orden 嘅儲存',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    '暫時未能將 {names} 搬入 Orden 嘅儲存。冇嘢唔見：暫時仍然係資料夾，Orden 下次開嘅時候會再試。',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden 唔會再喺原位打開 {folder}。入面嘅空間而家放咗喺 Orden，個資料夾就保持原狀。想再匯入多啲，就用「匯入」。',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

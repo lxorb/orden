@@ -264,8 +264,14 @@ entries keep their ids. A copy that does not check out leaves the space the fold
 was, to be tried again next launch: a full disk, a file that reads back wrong, two names
 the folder tells apart that are one name here. Before anything is copied the folder is
 copied whole into `.orden/.backups`; while the copy is made, the kept folder says so
-(`.converting`), so one a crash cut short is never listed and is begun again from the
-start, and one conversion runs at a time. Turn this space back into a folder makes it
+(`.converting`, naming the folder and its backup), so one a crash cut short is never
+listed, and the next launch goes on from where it stopped: what the kept folder already
+holds, byte for byte, is not written again. Its index is written every 200 files or two
+seconds, not once a file, so a large space costs about one write of each file. One
+conversion runs at a time, the window says which space and how many of its files are
+in, and a space that stays a folder is named at the top of the window, with nothing of
+it lost and another try at the next launch. A kept space that already has the name
+gives the converted one the next free name (`Notes 2`), as a rename does. Turn this space back into a folder makes it
 the folder again: the folder backed up once more, every file of the space written into
 it as the space has it now, what the space no longer has taken into Recently deleted,
 the space moved back as a rename does and its kept folder into Recently deleted whole;

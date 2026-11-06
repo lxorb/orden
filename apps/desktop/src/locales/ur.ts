@@ -1249,6 +1249,9 @@ export const ur: Dictionary = {
   'Share this space': 'یہ اسپیس شیئر کریں',
   'Export this space as Markdown and folders':
     'یہ اسپیس Markdown اور فولڈرز کے طور پر ایکسپورٹ کریں',
+  'Moving {name} into Orden’s storage': '{name} کو Orden کے اسٹوریج میں منتقل کیا جا رہا ہے',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    '{names} کو ابھی Orden کے اسٹوریج میں منتقل نہیں کیا جا سکا۔ کچھ ضائع نہیں ہوا: فی الحال یہ فولڈر ہی رہیں گے، اور Orden اگلی بار شروع ہونے پر دوبارہ کوشش کرے گا۔',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden اب {folder} کو اس کی جگہ پر نہیں کھولتا۔ اس کی اسپیسز اب Orden میں رکھی ہیں، اور فولڈر جیسا تھا ویسا ہی چھوڑ دیا گیا ہے۔ اس سے مزید لانے کے لیے امپورٹ استعمال کریں۔',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

@@ -1287,6 +1287,9 @@ export const uk: Dictionary = {
   'Share {name}': 'Поділитися {name}',
   'Share this space': 'Поділитися простором',
   'Export this space as Markdown and folders': 'Експортувати простір у Markdown і теки',
+  'Moving {name} into Orden’s storage': 'Перенесення {name} до сховища Orden',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    'Поки не вдалося перенести {names} до сховища Orden. Нічого не втрачено: поки це залишаються теки, і Orden спробує знову під час наступного запуску.',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden більше не відкриває {folder} на місці. Його простори тепер зберігаються в Orden, а теку залишено такою, як була. Щоб перенести з неї ще щось, скористайтеся Імпортом.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

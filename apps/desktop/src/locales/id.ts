@@ -1244,6 +1244,9 @@ export const id: Dictionary = {
   'Share {name}': 'Bagikan {name}',
   'Share this space': 'Bagikan ruang ini',
   'Export this space as Markdown and folders': 'Ekspor ruang ini sebagai Markdown dan folder',
+  'Moving {name} into Orden’s storage': 'Memindahkan {name} ke penyimpanan Orden',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    '{names} belum bisa dipindahkan ke penyimpanan Orden. Tidak ada yang hilang: untuk sementara tetap berupa folder, dan Orden akan mencoba lagi saat dimulai berikutnya.',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden tidak lagi membuka {folder} di tempatnya. Ruang-ruangnya kini disimpan di Orden, dan folder itu dibiarkan seperti semula. Untuk membawa lebih banyak darinya, gunakan Impor.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':

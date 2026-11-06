@@ -578,22 +578,139 @@ describe('making a folder a kept space, whatever happens on the way', () => {
     expect(await call('list_spaces')).toEqual([{ name: 'Notes', path: '/spaces/Notes' }])
   })
 
-  test('cut short by a crash, is never listed half made, and is made again from the start', async () => {
+  test('cut short by a crash, is never listed half made, and goes on from where it stopped', async () => {
+    const { convertAll } = await import('./convert')
+    const { InternalFolder } = await import('./folder')
+    const { folderBytes } = await import('./bytes')
+    notes()
+    disk.dirs.add('/spaces/.orden/.backups/Notes earlier')
+    disk.files.set('/spaces/.orden/.backups/Notes earlier/Plan.md', 'ship it')
+    const half = '/spaces/.orden/Notes'
+    disk.files.set(`${half}/.converting`, '/spaces/Notes\n/spaces/.orden/.backups/Notes earlier\n')
+    const world = { now: () => 1, key: () => crypto.randomUUID(), foldsCase: false }
+    const before = await InternalFolder.open(half, folderBytes(half), world)
+    await before.adopt('Plan.md', new TextEncoder().encode('ship it'))
+    await before.adopt('Work/Old.md', new TextEncoder().encode('ol'))
+    await before.save()
+    before.close()
+    expect(await call('list_spaces')).toEqual([{ name: 'Notes', path: '/spaces/Notes' }])
+
+    const write = disk.crate
+    const written: string[] = []
+    disk.crate = (command, args) => {
+      if (command === 'write_bytes' && String(args.path).includes('/.entries/')) {
+        written.push(String(args.path))
+      }
+      return write(command, args)
+    }
+    const { ws, said } = workspace('/spaces/Notes')
+    try {
+      await Promise.all([convertAll(ws), convertAll(ws)])
+    } finally {
+      disk.crate = write
+    }
+    const root = '/spaces/.orden/Notes/Notes'
+    expect(said).toEqual([`/spaces/Notes -> ${root}`])
+    expect(written).toHaveLength(1)
+    expect(disk.files.has(`${half}/.converting`)).toBe(false)
+    expect(await call('read_note', { path: `${root}/Plan.md` })).toBe('ship it')
+    expect(await call('read_note', { path: `${root}/Work/Old.md` })).toBe('old')
+    expect(
+      [...disk.dirs].filter((one) => /^\/spaces\/\.orden\/\.backups\/[^/]+$/.test(one)),
+    ).toEqual(['/spaces/.orden/.backups/Notes earlier'])
+  })
+
+  test('takes a free name where Orden already keeps a space of that name', async () => {
+    const { convertSpace } = await import('./convert')
+    notes()
+    disk.dirs.add('/spaces/.orden')
+    disk.dirs.add('/spaces/.orden/Notes')
+    disk.files.set('/spaces/.orden/Notes/Notes', '')
+    const { ws, said } = workspace('/spaces/Notes')
+    expect(await convertSpace(ws, 's0')).toBe(true)
+    const root = '/spaces/.orden/Notes 2/Notes 2'
+    expect(said).toEqual([`/spaces/Notes -> ${root}`])
+    expect(ws.spaces[0]).toMatchObject({ name: 'Notes 2', root })
+    expect(await call('read_note', { path: `${root}/Plan.md` })).toBe('ship it')
+    expect(await convertSpace(ws, 's0')).toBe(false)
+  })
+
+  test('a half-made folder from an old build, with only its source named, is gone on with too', async () => {
     const { convertAll } = await import('./convert')
     notes()
     disk.dirs.add('/spaces/.orden')
     disk.dirs.add('/spaces/.orden/Notes')
     disk.files.set('/spaces/.orden/Notes/.converting', '/spaces/Notes')
     disk.files.set('/spaces/.orden/Notes/.entries/half.md', 'ship')
-    expect(await call('list_spaces')).toEqual([{ name: 'Notes', path: '/spaces/Notes' }])
-
     const { ws, said } = workspace('/spaces/Notes')
-    await Promise.all([convertAll(ws), convertAll(ws)])
+    await convertAll(ws)
     const root = '/spaces/.orden/Notes/Notes'
     expect(said).toEqual([`/spaces/Notes -> ${root}`])
-    expect(disk.files.has('/spaces/.orden/Notes/.converting')).toBe(false)
-    expect(disk.files.has('/spaces/.orden/Notes/.entries/half.md')).toBe(false)
-    expect(await call('read_note', { path: `${root}/Work/Old.md` })).toBe('old')
+    expect(await call('read_note', { path: `${root}/Plan.md` })).toBe('ship it')
+    expect([...disk.dirs].some((one) => one.startsWith('/spaces/.orden/.backups/Notes '))).toBe(
+      true,
+    )
+  })
+
+  test('writes its index a handful of times, not once a file', async () => {
+    const { convertSpace } = await import('./convert')
+    disk.dirs.add('/spaces/Big')
+    for (let at = 0; at < 450; at += 1) disk.files.set(`/spaces/Big/${String(at)}.md`, String(at))
+    const write = disk.crate
+    let indexed = 0
+    disk.crate = (command, args) => {
+      if (command === 'write_note' && /\/\.index\.[01]\.json$/.test(String(args.path))) indexed += 1
+      return write(command, args)
+    }
+    const { ws } = workspace('/spaces/Big')
+    const seen: [number, number][] = []
+    try {
+      expect(
+        await convertSpace(ws, 's0', {
+          progress: (done, total) => seen.push([done, total]),
+          failed: () => undefined,
+        }),
+      ).toBe(true)
+    } finally {
+      disk.crate = write
+    }
+    expect(indexed).toBeLessThan(10)
+    expect(seen).toHaveLength(450)
+    expect(seen.at(-1)).toEqual([450, 450])
+    expect(await call('read_note', { path: '/spaces/.orden/Big/Big/449.md' })).toBe('449')
+  })
+
+  test('shows how far it is while it goes, and says so when a space stays a folder', async () => {
+    const { convertAll } = await import('./convert')
+    const { busy } = await import('../busy.svelte')
+    notes()
+    disk.dirs.add('/spaces/Stuck')
+    disk.files.set('/spaces/Stuck/Plan.md', 'stuck')
+    const write = disk.crate
+    const shown: string[] = []
+    disk.crate = (command, args) => {
+      if (busy.told) shown.push(`${busy.label ?? ''} · ${busy.told}`)
+      if (command === 'write_bytes' && String(args.path).startsWith('/spaces/.orden/Stuck/')) {
+        throw new Error('No space left on device')
+      }
+      return write(command, args)
+    }
+    const notesSpace = workspace('/spaces/Notes').ws
+    notesSpace.spaces.push({ id: 's1', name: 'Stuck', root: '/spaces/Stuck' })
+    try {
+      await convertAll(notesSpace)
+    } finally {
+      disk.crate = write
+    }
+    expect(shown).toContain('Moving Notes into Orden’s storage · 2 of 2')
+    expect(busy.told).toBeNull()
+    expect(busy.active).toBe(false)
+    expect(busy.trouble).toContain('Stuck')
+    expect(busy.trouble).not.toContain('Notes,')
+    expect(notesSpace.spaces[1]?.root).toBe('/spaces/Stuck')
+    expect(disk.files.get('/spaces/Stuck/Plan.md')).toBe('stuck')
+    expect(disk.dirs.has('/spaces/.orden/Stuck')).toBe(false)
+    busy.clear()
   })
 
   test('keeps names of every kind, and refuses two that are one name here', async () => {

@@ -1246,6 +1246,9 @@ export const mr: Dictionary = {
   'Share {name}': '{name} शेअर करा',
   'Share this space': 'हा स्पेस शेअर करा',
   'Export this space as Markdown and folders': 'हा स्पेस Markdown आणि फोल्डर म्हणून निर्यात करा',
+  'Moving {name} into Orden’s storage': '{name} Orden च्या संचयात हलवत आहे',
+  'Could not move {names} into Orden’s storage yet. Nothing was lost: they stay folders for now, and Orden tries again the next time it starts.':
+    '{names} अजून Orden च्या संचयात हलवता आले नाही. काहीही हरवले नाही: सध्या ते फोल्डरच राहतील, आणि Orden पुढच्या वेळी सुरू झाल्यावर पुन्हा प्रयत्न करेल.',
   'Orden no longer opens {folder} in place. Its spaces are kept in Orden now, and the folder is left as it was. To bring in more from it, use Import.':
     'Orden आता {folder} त्याच जागी उघडत नाही. त्यातले स्पेस आता Orden मध्ये ठेवले आहेत, आणि फोल्डर जसा होता तसाच ठेवला आहे. त्यातून आणखी आणण्यासाठी इंपोर्ट वापरा.',
   'Not copied yet, so still only in that folder: {names}. Orden tries again the next time it starts.':
