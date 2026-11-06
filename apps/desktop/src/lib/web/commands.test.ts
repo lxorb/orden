@@ -1395,6 +1395,23 @@ describe('a note kept away', () => {
     expect(disk.files.get('/Copied/Plan.md')?.content).toBe('Ship Monday')
   })
 
+  test('is fetched before the folder holding it goes to Recently deleted, and offline the folder stays', async () => {
+    const offline = { yes: true }
+    away(offline)
+    await write('/Notes/Idea.md', 'idea')
+    await expect(webInvoke('trash_item', { path: '/Notes', kind: 'folder' })).rejects.toThrow(
+      NOT_HERE,
+    )
+    expect(disk.files.has('/Notes/Idea.md')).toBe(true)
+
+    offline.yes = false
+    const entry = await webInvoke<{ id: string }>('trash_item', { path: '/Notes', kind: 'folder' })
+    expect(disk.files.has('/Notes/Idea.md')).toBe(false)
+    await webInvoke('restore_trash', { id: entry.id })
+    expect(disk.files.get('/Notes/Plan.md')?.content).toBe('Ship Monday')
+    expect(disk.files.get('/Notes/Idea.md')?.content).toBe('idea')
+  })
+
   test('is in the link index as the account read it, and by its name before that', async () => {
     await write('/Notes/Idea.md', 'see [[Plan]]')
     keptAway.keep(

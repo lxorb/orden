@@ -1135,6 +1135,7 @@ class Runner {
   async holds(path: string, how: Holding = {}): Promise<boolean> {
     if (!this.engine && this.accountId) return (await this.ask('holds', { path })) === true
     const engine = this.engine
+    if (keptAway.at(path)) return true
     const entry = engine?.entryAt(path)
     if (!engine || entry?.seq == null || entry.deleted || !entry.written_hash) {
       return false

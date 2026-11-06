@@ -158,6 +158,7 @@ type RemoteSpace = import('./api').RemoteSpace
 const { trash } = await import('./trash.svelte')
 const { prompt } = await import('./prompt.svelte')
 const { sync } = await import('./sync.svelte')
+const { keptAway } = await import('./web/away.svelte')
 
 beforeEach(() => {
   notes.clear()
@@ -399,6 +400,19 @@ describe('signed in', () => {
 
     await workspace.undoFileAction()
     expect(deviceTrash).toEqual([])
+  })
+
+  test('a note this device keeps none of goes from the account, though its words would not come', async () => {
+    unreadable.add('/space/Idea.md')
+    keptAway.keep([{ id: 'n1', path: '/space/Idea.md', size: 4, modified: 1 }], () =>
+      Promise.resolve(false),
+    )
+
+    await workspace.remove('/space/Idea.md', false)
+    keptAway.clear()
+
+    expect(calls).toContain('delete_note')
+    expect(calls).not.toContain('trash_item')
   })
 
   test('the list is the account’s, with any device leftovers', async () => {

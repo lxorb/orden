@@ -3369,7 +3369,7 @@ class Workspace {
       if (content) await invoke('snapshot_note', { path, content, source }).catch(() => undefined)
     }
 
-    const unread = words && content === null
+    const unread = words && content === null && !keptAway.at(path)
     const toAccount =
       account.signedIn &&
       !madeHere &&
