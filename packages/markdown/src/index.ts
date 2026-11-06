@@ -44,6 +44,7 @@ import {
   maths,
   scripts,
 } from './extensions'
+import { noSetextHeadings } from './blocks'
 
 export interface RenderOptions {
   footnotes?: boolean
@@ -150,7 +151,17 @@ function bareAddress(this: Tokenizer, src: string): Tokens.Link | undefined {
 
 function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
   const marked = new Marked({ gfm: true, breaks: false })
-  marked.use(maths, highlight, scripts, emoji, footnotes, callouts, definitionLists, abbreviations)
+  marked.use(
+    noSetextHeadings,
+    maths,
+    highlight,
+    scripts,
+    emoji,
+    footnotes,
+    callouts,
+    definitionLists,
+    abbreviations,
+  )
   marked.use(
     wikilinks({
       embeds,

@@ -113,7 +113,7 @@ Body.
     expect(frontMatter(note)).toBe('title: Hi')
   })
 
-  test('a setext underline stays an underline', () => {
+  test('a line of dashes or equals signs stays as it was typed', () => {
     expect(typed('---')).toBe('---')
     expect(typed('===')).toBe('===')
   })

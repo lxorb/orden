@@ -13,7 +13,10 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Line break via two trailing spaces
 - [x] Line break via `<br/>`
 - [x] Headings `#` … `######`
-- [x] Setext headings (`===`, `---` underlines)
+- [ ] Setext headings (`===`, `---` underlines): left out on purpose (#1214). A `-` under a
+      line of words starts a list there and `---` is a rule; only `#` makes a heading. A
+      space's notes written with underlines are rewritten once with hashes, so they read
+      as they did
 - [x] Blockquotes `>`, arbitrarily nested
 - [x] Unordered lists (`*`, `+`, `-`)
 - [x] Ordered lists (`1.`), custom start numbers
@@ -307,7 +310,7 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Smart punctuation, toggleable, and off out of the box. Typora has it on;
       Orden would rather hand back the characters that were typed, because a note
       is a file other tools read. It never touches a line that is a thematic
-      break, a setext underline or a front-matter fence: `---` typed on its own
+      break, a line of `=` or a front-matter fence: `---` typed on its own
       line stays `---`, so a rule, a slide break and a metadata block can all be
       written from the keyboard
 - [x] Select the word `Ctrl+D`, select the line `Ctrl+L`. A second `Ctrl+D` takes

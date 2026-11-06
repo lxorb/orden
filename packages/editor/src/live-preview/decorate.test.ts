@@ -605,9 +605,13 @@ describe('headings', () => {
     }
   })
 
-  test('the two underlined forms style theirs as the level they mean', () => {
-    expect(lineClasses('Title\n=====')).toContain('nib-h1')
-    expect(lineClasses('Title\n-----')).toContain('nib-h2')
+  test('a line with = or - under it is no heading, only a hash makes one', () => {
+    for (const doc of ['Title\n=====', 'Title\n-----', 'Title\n-', 'Title\n- item']) {
+      expect(
+        lineClasses(doc).filter((one) => one.startsWith('nib-h')),
+        doc,
+      ).toEqual([])
+    }
   })
 
   test('seven hashes are not a heading', () => {

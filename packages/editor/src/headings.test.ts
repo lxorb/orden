@@ -8,13 +8,15 @@ describe('which nodes are headings', () => {
     }
   })
 
-  test('and the two written with an underline', () => {
-    expect(headingLevel('SetextHeading1')).toBe(1)
-    expect(headingLevel('SetextHeading2')).toBe(2)
-  })
-
   test('nothing else is one', () => {
-    for (const name of ['Paragraph', 'ATXHeading7', 'ATXHeading', 'SetextHeading3', 'Heading1']) {
+    for (const name of [
+      'Paragraph',
+      'ATXHeading7',
+      'ATXHeading',
+      'SetextHeading1',
+      'SetextHeading2',
+      'Heading1',
+    ]) {
       expect(headingLevel(name), name).toBeNull()
     }
   })

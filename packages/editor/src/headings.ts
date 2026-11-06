@@ -5,8 +5,6 @@ export const HEADING_LEVEL: Readonly<Record<string, number>> = {
   ATXHeading4: 4,
   ATXHeading5: 5,
   ATXHeading6: 6,
-  SetextHeading1: 1,
-  SetextHeading2: 2,
 }
 
 export function headingLevel(name: string): number | null {

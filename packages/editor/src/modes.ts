@@ -22,7 +22,7 @@ import { livePreview } from './live-preview'
 import { noReveal, quietMarks } from './live-preview/reveal'
 import { numberEquations } from './live-preview/blocks'
 import { propertiesMode } from './live-preview/hidden-front-matter'
-import { nibMarkdownExtensions } from './markdown/extensions'
+import { nibMarkdownExtensions, NoSetextHeadings } from './markdown/extensions'
 import { enclosing } from './nodes'
 import { flushTableEdits } from './table/widget'
 import { smartPunctuation } from './typography'
@@ -60,7 +60,7 @@ const markdownFor = once((strict: boolean): Extension =>
   markdown({
     base: strict ? commonmarkLanguage : markdownLanguage,
     codeLanguages: fenceLanguage,
-    extensions: strict ? [] : nibMarkdownExtensions,
+    extensions: strict ? [NoSetextHeadings] : nibMarkdownExtensions,
     addKeymap: false,
     pasteURLAsLink: false,
   }),

@@ -28,12 +28,8 @@ describe('reading the headings of a document', () => {
     expect(headings(state('##   Spaced   ##\n'))[0]?.text).toBe('Spaced')
   })
 
-  test('reads the underlined form as well', () => {
-    const found = headings(state('Title\n=====\n\nSub\n---\n'))
-    expect(found.map((one) => [one.level, one.text])).toEqual([
-      [1, 'Title'],
-      [2, 'Sub'],
-    ])
+  test('reads no heading from a line with = or - under it', () => {
+    expect(headings(state('Title\n=====\n\nSub\n---\n\nItem\n- one\n'))).toEqual([])
   })
 
   test('says where each one starts', () => {
