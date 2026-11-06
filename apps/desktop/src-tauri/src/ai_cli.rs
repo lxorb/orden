@@ -12,7 +12,7 @@ mod session;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard, OnceLock, PoisonError};
 use std::time::Duration;
 
@@ -57,7 +57,7 @@ struct Held {
 struct Session {
     owner: String,
     opening: u64,
-    on: On,
+    on: Arc<On>,
 }
 
 enum On {
@@ -71,6 +71,16 @@ struct HostKey {
     owner: String,
     agent: Option<(String, Mode)>,
     home: Option<Home>,
+}
+
+impl On {
+    fn end(&self, id: &str) {
+        match self {
+            Self::Claude(claude) => claude.stop(),
+            Self::Codex(host) => host.close(id),
+            Self::Gemini(gemini) => gemini.stop(),
+        }
+    }
 }
 
 fn lock<T>(held: &Mutex<T>) -> MutexGuard<'_, T> {
@@ -95,7 +105,7 @@ impl Asks {
             ids.iter().filter_map(|id| sessions.remove(id)).collect()
         };
         for session in sessions {
-            match session.on {
+            match &*session.on {
                 On::Claude(claude) => claude.stop(),
                 On::Gemini(gemini) => gemini.stop(),
                 On::Codex(_) => {}
@@ -338,7 +348,7 @@ pub fn ai_cli_ask(
     Ok(())
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn ai_cli_stop(webview: Webview, id: String) -> Result<(), String> {
     let owner = owner(&webview)?;
     if let Some(held) = lock(&webview.state::<Asks>().running).get(&id) {
@@ -359,11 +369,14 @@ fn session_output(
     id: &str,
     opening: u64,
     output: Channel<Value>,
+    ended: &Arc<AtomicBool>,
 ) -> codex_app::Output {
     let app = app.clone();
     let id = id.to_owned();
+    let ended = Arc::clone(ended);
     Arc::new(move |message: Message| {
         if matches!(message, Message::End(_)) {
+            ended.store(true, Ordering::SeqCst);
             let app = app.clone();
             let id = id.clone();
             std::thread::spawn(move || {
@@ -441,12 +454,12 @@ pub fn ai_cli_open(
     };
 
     let asks = webview.state::<Asks>();
-    let mut sessions = lock(&asks.sessions);
-    if sessions.contains_key(&id) {
+    if lock(&asks.sessions).contains_key(&id) {
         return Err(format!("{id} is already open"));
     }
     let number = next_opening();
-    let output = session_output(&app, &id, number, output);
+    let ended = Arc::new(AtomicBool::new(false));
+    let output = session_output(&app, &id, number, output, &ended);
 
     let on = match (tool, claude) {
         (Tool::ClaudeCode, Some(command)) => {
@@ -496,14 +509,25 @@ pub fn ai_cli_open(
             On::Gemini(Box::new(gemini))
         }
     };
-    sessions.insert(
-        id,
-        Session {
-            owner,
-            opening: number,
-            on,
-        },
-    );
+    let session = Session {
+        owner,
+        opening: number,
+        on: Arc::new(on),
+    };
+    kept(&asks, id, session, &ended)
+}
+
+fn kept(asks: &Asks, id: String, session: Session, ended: &AtomicBool) -> Result<(), String> {
+    let mut sessions = lock(&asks.sessions);
+    if sessions.contains_key(&id) {
+        drop(sessions);
+        session.on.end(&id);
+        return Err(format!("{id} is already open"));
+    }
+    sessions.insert(id.clone(), session);
+    if ended.load(Ordering::SeqCst) {
+        sessions.remove(&id);
+    }
     Ok(())
 }
 
@@ -567,26 +591,26 @@ fn host_for(
     Ok(host)
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn ai_cli_say(webview: Webview, id: String, say: Value) -> Result<(), String> {
     let owner = owner(&webview)?;
     let say = serde_json::from_value::<Say>(say)
         .map_err(|error| error.to_string())?
         .checked()?;
     let asks = webview.state::<Asks>();
-    let sessions = lock(&asks.sessions);
-    let session = sessions
+    let on = lock(&asks.sessions)
         .get(&id)
         .filter(|one| one.owner == owner)
+        .map(|one| Arc::clone(&one.on))
         .ok_or_else(|| format!("{id} is not open"))?;
-    match &session.on {
+    match &*on {
         On::Claude(claude) => claude.say(&say),
         On::Codex(host) => host.say(&id, say),
         On::Gemini(gemini) => gemini.say(say),
     }
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn ai_cli_close(webview: Webview, id: String) -> Result<(), String> {
     let owner = owner(&webview)?;
     let asks = webview.state::<Asks>();
@@ -597,11 +621,8 @@ pub fn ai_cli_close(webview: Webview, id: String) -> Result<(), String> {
         }
         sessions.remove(&id)
     };
-    match session.map(|one| one.on) {
-        Some(On::Claude(claude)) => claude.stop(),
-        Some(On::Codex(host)) => host.close(&id),
-        Some(On::Gemini(gemini)) => gemini.stop(),
-        None => {}
+    if let Some(session) = session {
+        session.on.end(&id);
     }
     Ok(())
 }
