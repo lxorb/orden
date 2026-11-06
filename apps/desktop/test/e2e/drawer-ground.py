@@ -45,6 +45,14 @@ BARE = """
 }
 """
 
+GROUND_ONLY = """
+(selector) => {
+  for (const one of document.querySelector(selector).querySelectorAll('*')) {
+    one.style.setProperty('visibility', 'hidden', 'important')
+  }
+}
+"""
+
 HANDHELDS = [
     ("phone", 390, 844, PHONE_AGENT, {"top": 47, "bottom": 34}),
     ("phone-side", 844, 390, PHONE_AGENT, {"left": 47, "right": 47, "bottom": 21}),
@@ -72,6 +80,8 @@ def compare(page: Any, name: str, selector: str) -> None:
         wrong(f"{name}: no sidebar to photograph ({box})")
         return
     corner = box.pop("corner")
+    page.evaluate(GROUND_ONLY, selector)
+    page.wait_for_timeout(120)
     shown = DRIVE.shot(page, f"{name}-1-shown", clip=box, animations="disabled")
     page.evaluate(BARE, selector)
     page.wait_for_timeout(120)
