@@ -1,6 +1,6 @@
 import { isWebTarget } from '@orden/markdown/links'
 import { readWebFile } from '@orden/scan/shortcut'
-import { isTreeDrag } from '../drag-paths'
+import { isExplorerDrag, isTreeDrag } from '../drag-paths'
 import { invoke, isDesktop } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { zoneAt } from '../workspace/zones'
@@ -104,7 +104,7 @@ function pointOf(hole: HTMLElement, event: DragEvent, zoom: number) {
 }
 
 function carried(event: DragEvent): boolean {
-  return isDesktop && isTreeDrag(event.dataTransfer)
+  return isDesktop && (isTreeDrag(event.dataTransfer) || isExplorerDrag(event.dataTransfer))
 }
 
 export function overPage(tab: string, hole: HTMLElement, event: DragEvent, zoom: number): void {

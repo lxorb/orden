@@ -146,6 +146,20 @@ describe('a page the shell tells of the drag itself', () => {
     expect(told().slice(1)).toEqual([])
   })
 
+  test('takes rows of the file explorer as it takes rows of the file list', async () => {
+    carryToPages(['/home/me/Downloads/scan.pdf'], look)
+    await settled()
+    const rows = dragAt(300, 250, ['text/nib-explorer', 'text/plain'])
+    overPage('a', hole, rows, 1)
+    expect(preventedOf(rows)).toHaveBeenCalled()
+    await settled()
+    const drop = dragAt(300, 250, ['text/nib-explorer', 'text/plain'])
+    droppedOnPage('a', hole, drop, 1)
+    expect(preventedOf(drop)).toHaveBeenCalled()
+    await settled()
+    expect(told().map((one) => one.args.phase)).toEqual([undefined, 'over', 'drop'])
+  })
+
   test('takes nothing but rows of the file list', async () => {
     carryToPages(['/s/Idea.md'], look)
     await settled()
