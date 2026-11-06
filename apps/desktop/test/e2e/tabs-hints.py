@@ -491,10 +491,12 @@ def alt_numbers(page: Page, scheme: str) -> None:
 
     page.keyboard.press("F4")
     page.wait_for_timeout(200)
-    if page.locator(".numeral").count():
-        wrong(f"[{scheme}] the numbers stayed through Alt+F4")
+    if page.locator(".numeral").count() != len(wanted):
+        wrong(f"[{scheme}] Alt+F4 left {page.locator('.numeral').count()} numbers up")
     page.keyboard.up("Alt")
-    page.wait_for_timeout(200)
+    page.wait_for_timeout(250)
+    if page.locator(".numeral").count():
+        wrong(f"[{scheme}] the numbers stayed after Alt+F4 and Alt let go of")
 
     page.keyboard.down("Alt")
     page.wait_for_timeout(150)
