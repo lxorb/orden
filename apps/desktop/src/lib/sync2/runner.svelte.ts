@@ -11,6 +11,8 @@ import type { Doer, FileOp } from '../workspace/file-ops'
 import { owesAtTheEnd, owesLast, writing } from '../parting'
 import { isDesktop, isNative, joinPath } from '../tauri'
 import { keptAway } from '../web/away.svelte'
+import { hearWrites } from '../workspace/write-file'
+import { onDisk } from '../on-disk'
 import { aloneHere, holdThisWindow, keptBudget, TRIM_AFTER } from './budget'
 import { links } from '../link-index.svelte'
 import { Indexing } from './indexing'
@@ -401,6 +403,7 @@ class Runner {
     this.carriedFrom = null
     if (from !== null && carried.size) await engine.core.commit(carriedRows(carried, from))
     this.stops.push(workspace.fileOps.doneBy(this.doer))
+    if (!isDesktop) this.stops.push(this.hearsWrites())
     if (isDesktop) {
       const { watchFolders } = await import('./watching')
       const watched = watchFolders({
@@ -1249,9 +1252,18 @@ class Runner {
     })
   }
 
+  private hearsWrites(): () => void {
+    return hearWrites({
+      there: (path) => onDisk(path),
+      made: (path) => workspace.fileCame(path, 'file'),
+      wrote: (path, content) => void this.wrote(path, content),
+    })
+  }
+
   private hearLeader() {
     if (!isNative) holdThisWindow()
     if (this.hearings.length) return
+    if (!isDesktop) this.hearings.push(this.hearsWrites())
     if (typeof window !== 'undefined') {
       const back = () => this.lookedAt()
       window.addEventListener('focus', back)

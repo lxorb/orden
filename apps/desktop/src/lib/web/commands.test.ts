@@ -1395,6 +1395,27 @@ describe('a note kept away', () => {
     expect(disk.files.get('/Copied/Plan.md')?.content).toBe('Ship Monday')
   })
 
+  test('is fetched before the app writes over it, and offline the write is refused', async () => {
+    const offline = { yes: true }
+    const asked = away(offline)
+    await expect(
+      webInvoke('write_note', { path: '/Notes/Plan.md', content: 'Ship Friday' }),
+    ).rejects.toThrow(NOT_HERE)
+    expect(disk.files.has('/Notes/Plan.md')).toBe(false)
+
+    offline.yes = false
+    await webInvoke('write_note', { path: '/Notes/Plan.md', content: 'Ship Friday' })
+    expect(disk.files.get('/Notes/Plan.md')?.content).toBe('Ship Friday')
+    expect(asked).toEqual(['/Notes/Plan.md', '/Notes/Plan.md'])
+  })
+
+  test("is written where the engine's disk puts it, with nothing fetched", async () => {
+    const asked = away()
+    await webInvoke('write_note', { path: '/Notes/Plan.md', content: 'Ship Monday', arrived: true })
+    expect(disk.files.get('/Notes/Plan.md')?.content).toBe('Ship Monday')
+    expect(asked).toEqual([])
+  })
+
   test('is fetched before the folder holding it goes to Recently deleted, and offline the folder stays', async () => {
     const offline = { yes: true }
     away(offline)
