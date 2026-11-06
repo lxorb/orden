@@ -94,6 +94,25 @@ describe('ink on a fill of the accent', () => {
   })
 })
 
+describe('an accent written as words', () => {
+  test.each(['dark', 'light'] as const)(
+    'clears the floor on every ground words stand on, %s',
+    (scheme) => {
+      const grounds = ['--bg', '--surface']
+      const short = ACCENTS.flatMap((accent) => {
+        const words = accentTokens(accent.id, scheme)['--accent'] ?? ''
+
+        return grounds
+          .map((ground) => ({ ground, ratio: ratio(words, BUILT_IN[scheme][ground] ?? '') }))
+          .filter((one) => one.ratio < FLOOR)
+          .map((one) => `${accent.id} on ${one.ground} ${one.ratio.toFixed(2)}`)
+      })
+
+      expect(short).toEqual([])
+    },
+  )
+})
+
 function files(dir: string, suffix: RegExp): string[] {
   const out: string[] = []
 

@@ -58,7 +58,7 @@ describe('who else is in a note', () => {
     expect(carets[0]).toMatchObject({ id: one.doc.clientID, name: 'Android', anchor: 4, head: 7 })
 
     expect(carets[0]?.colour).toBe('#33c7ba')
-    expect(peersIn(two.awareness, two.doc, 'light').carets[0]?.colour).toBe('#0d8277')
+    expect(peersIn(two.awareness, two.doc, 'light').carets[0]?.colour).toBe('#0d7d73')
   })
 
   test('moves the caret along when words are written above it', () => {

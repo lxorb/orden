@@ -12,11 +12,11 @@ const VIOLET: Accent = { id: 'violet', name: 'Violet', dark: '#7c6bf5', light: '
 
 export const ACCENTS: Accent[] = [
   VIOLET,
-  { id: 'blue', name: 'Blue', dark: '#3584e4', light: '#1c71d8' },
-  { id: 'teal', name: 'Teal', dark: '#33c7ba', light: '#0d8277' },
-  { id: 'green', name: 'Green', dark: '#3fcf8e', light: '#188556' },
-  { id: 'yellow', name: 'Yellow', dark: '#e5b23c', light: '#9f6a07' },
-  { id: 'orange', name: 'Orange', dark: '#f08437', light: '#c64600' },
+  { id: 'blue', name: 'Blue', dark: '#3584e4', light: '#1b6ed3' },
+  { id: 'teal', name: 'Teal', dark: '#33c7ba', light: '#0d7d73' },
+  { id: 'green', name: 'Green', dark: '#3fcf8e', light: '#177f52' },
+  { id: 'yellow', name: 'Yellow', dark: '#e5b23c', light: '#986507' },
+  { id: 'orange', name: 'Orange', dark: '#f08437', light: '#c44500' },
   { id: 'red', name: 'Red', dark: '#f2555a', light: '#c01c28' },
   { id: 'pink', name: 'Pink', dark: '#e56ba8', light: '#c4287f' },
   { id: 'slate', name: 'Slate', dark: '#8aa0b8', light: '#5b6b7f' },
