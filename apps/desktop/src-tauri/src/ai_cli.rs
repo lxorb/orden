@@ -244,7 +244,7 @@ pub fn keep_enrolled(app: &AppHandle) {
     enroll::keep_enrolled(app);
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn ai_cli_enroll_read(webview: Webview) -> Result<enroll::Standing, String> {
     owner(&webview)?;
     Ok(enroll::standing(webview.app_handle()))
