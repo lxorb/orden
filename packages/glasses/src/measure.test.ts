@@ -5,26 +5,9 @@ import { pagesOf } from './pages'
 import { BODY_INNER } from './panel'
 import { costOf, NOTE as note, PAGING as paging, typed } from '../test/cost'
 
-/** What text mode costs, said out loud.
- *
- *  Counted rather than timed. This used to time two hundred and seventy five pagings
- *  of a long note to print their means, which on a runner with seven packages on it
- *  is most of a test timeout spent measuring the queue in front of the work. What is
- *  asserted now is `workDone` in firmware.ts and in pages.ts - the characters folded,
- *  the glyphs measured, the lines broken, the lines read out of the cache instead and
- *  the pages cut - and every one of those is the same number on a busy machine as on
- *  an idle one.
- *
- *  The report is still printed, because the numbers in docs/even.md are these ones,
- *  and the figures a reader wants from it are the two that matter: a cold page of a
- *  long note breaks every line of it, and the same note after a keystroke breaks one.
- *  The assertions that hold the speed round to that difference, and pages.test.ts
- *  holds it again from the other end. */
 describe('what text mode costs', () => {
   test('measured', () => {
-    // A note this width has not been paged before, so every line of it is broken.
     const cold = costOf(() => pagesOf(typed(1), paging))
-    // And the same note with one line of it changed, which is the keystroke.
     const warm = costOf(() => pagesOf(typed(2), paging))
     const marked = costOf(() => markLines(note, { inner: paging.inner }))
     const folding = costOf(() => fold(note.slice(0, 2700)))
@@ -52,27 +35,17 @@ describe('what text mode costs', () => {
 
     expect(all.length).toBeGreaterThan(100)
 
-    // The whole of the note walked into pages, both times: a keystroke re-pages
-    // from the top, and the saving is not in what it looks at.
     expect(warm.paged).toEqual(cold.paged)
     expect(cold.paged.lines).toBeGreaterThan(700)
 
-    // The cold page breaks every distinct line of the note; the keystroke breaks
-    // the one line that changed and is handed the rest back. That ratio is the
-    // whole reason a keystroke fits inside a frame.
     expect(cold.set.broken).toBeGreaterThan(100)
     expect(warm.set.broken).toBe(1)
     expect(warm.set.cached).toBe(cold.set.broken + cold.set.cached - 1)
-    // And measures a fraction of the glyphs, because measuring is what breaking a
-    // line spends its time on.
     expect(warm.set.measured * 2).toBeLessThan(cold.set.measured)
 
-    // Marking a note asks the metrics only what a heading rule and a table need;
-    // folding asks them nothing at all.
     expect(marked.set.broken).toBe(0)
     expect(folding.set.measured).toBe(0)
     expect(folding.set.folded).toBe(2700)
-    // One line, broken once.
     expect(wrapped.set.broken).toBe(1)
   })
 })

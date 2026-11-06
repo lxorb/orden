@@ -2,13 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { markLines } from './mark'
 import { MARKS } from './mark'
 
-/** A coloured highlight on a monochrome panel.
- *
- *  The glasses set one font in one colour, so the colour a highlight names is
- *  nothing they can draw - and the emoji that names it is not a word of the note.
- *  It comes off in the renderer's own grammar, which is what `lexMarkdown` hands
- *  over, so the panel shows the words and nothing else. Rule one, unchanged: see
- *  `inlineWords` in mark.ts. */
 describe('a coloured highlight on the panel', () => {
   const lines = (source: string, marks = MARKS) =>
     markLines(source, { inner: 560, marks }).map((one) => one.text)

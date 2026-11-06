@@ -1,13 +1,3 @@
-/** Orden on the Even Realities G2, in text.
- *
- *  A note as pages of words for a 576 by 288 panel that has exactly one font in
- *  exactly one size, and a mapping from every construct in a note to something
- *  that font can draw. Pure, with no DOM and no canvas in it, so all of it is
- *  tested without a browser.
- *
- *  See docs/even.md for the panel, the mapping table, and why the glasses are
- *  written to rather than drawn on. */
-
 export {
   fit,
   fold,

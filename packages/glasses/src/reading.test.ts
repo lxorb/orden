@@ -9,11 +9,6 @@ import {
 } from './mark'
 import { BODY_INNER } from './panel'
 
-/* ── How much of a note's white space reaches the panel ───────────────── */
-
-/** Emil's three levels, in his words. What they have in common is the one that
- *  matters: a line number is the line of the file, whatever was folded into the
- *  row it stands beside. */
 describe('compaction', () => {
   const rows = (source: string, compaction: Compaction) =>
     markLines(source, { inner: BODY_INNER, compaction }).map((one) => [one.at, one.text])
@@ -34,8 +29,6 @@ describe('compaction', () => {
     ])
   })
 
-  /** What a reader who has never chosen gets. Said once, so the mapping, the
-   *  schema's initial and the store's default cannot drift apart. */
   test('is what a note is set at with nobody having chosen', () => {
     expect(DEFAULT_COMPACTION).toBe('collapse')
     expect(markLines(A_B, { inner: BODY_INNER }).map((one) => one.text)).toEqual(['A', 'B'])
@@ -78,8 +71,6 @@ describe('compaction', () => {
     ])
   })
 
-  /** The whole point of the numbers. A row that says 12 is line 12 of the file,
-   *  whether ten of its lines were folded into it or none were. */
   test('numbers the source lines whatever the level', () => {
     const source = 'one\ntwo\nthree\n\nfour\n'
     for (const level of COMPACTIONS) {
@@ -89,8 +80,6 @@ describe('compaction', () => {
   })
 })
 
-/* ── Which markers the reader asked to see ────────────────────────────── */
-
 describe('the markers a reader may turn on', () => {
   const shown = (source: string, over: Partial<Marks>) =>
     markLines(source, { inner: BODY_INNER, marks: { ...MARKS, ...over } })
@@ -99,8 +88,6 @@ describe('the markers a reader may turn on', () => {
 
   const TICKS = '`'
   const fenced = [`${TICKS.repeat(3)}js`, 'const a = 1', TICKS.repeat(3), ''].join('\n')
-  /** What a fence is drawn with: the firmware has no backtick, so it is three left
-   *  quotes. See `fold` in firmware.ts. */
   const DRAWN = '‘‘‘'
 
   test('are off for everything that only styles words, which is the default', () => {
@@ -123,7 +110,6 @@ describe('the markers a reader may turn on', () => {
 
   test('keep a fence marked unless the reader says otherwise', () => {
     expect(shown(fenced, {})).toBe(`${DRAWN}js\nconst a = 1\n${DRAWN}`)
-    // Rule two: the code is still every line of it, without the lines around it.
     expect(shown(fenced, { fence: false })).toBe('const a = 1')
   })
 

@@ -2,14 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { fold, undrawable } from './firmware'
 import { drawsScript, SCRIPTS, scriptsNotDrawn } from './scripts'
 
-/** The list of scripts, held to the font it is about.
- *
- *  `scripts.ts` is data: one row per writing system, with a sample and a column
- *  saying whether the firmware draws it. Data can rot, and this is what stops it -
- *  every sample is measured against the metrics in `@evenrealities/pretext`, so the
- *  list cannot claim a script the font has not got, or deny one it has. The day a
- *  firmware update adds Devanagari, this test says which line to change. */
-
 describe('the scripts the firmware draws', () => {
   test.each(SCRIPTS.map((one) => [one.code, one] as const))(
     '%s is measured, not assumed',
@@ -17,12 +9,9 @@ describe('the scripts the firmware draws', () => {
       const missing = undrawable(script.sample)
 
       if (script.draws) {
-        // Every letter of the sample has a glyph. Not "most": a script the font
-        // half has is a script that draws half a word.
         expect(missing, `${script.name}: ${script.sample}`).toBe(0)
         expect(fold(script.sample)).toBe(script.sample.normalize('NFC'))
       } else {
-        // And a script it has not got is boxes, not a near miss.
         expect(missing, `${script.name}: ${script.sample}`).toBeGreaterThan(0.3)
         expect(fold(script.sample)).toContain('□')
       }
@@ -72,8 +61,6 @@ describe('asking about a script by its code', () => {
     expect(drawsScript('Ethi')).toBe(false)
   })
 
-  /** A wrong yes costs one panel of boxes; a wrong no puts a reader who can read
-   *  their own language into English for nothing. So the unknown answers yes. */
   test('and answers yes for a script nobody has listed', () => {
     expect(drawsScript(undefined)).toBe(true)
     expect(drawsScript('')).toBe(true)

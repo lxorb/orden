@@ -2,33 +2,13 @@ import { describe, expect, test } from 'vitest'
 import { draws, fit, fold, rightward, rows, ruleOf, SPACE, TICK, width, workDone } from './firmware'
 import { LINE } from './panel'
 
-/** What the firmware font has and has not, asserted rather than assumed.
- *
- *  Every glyph text mode leans on is checked here, so a change to the font, to
- *  pretext, or to somebody's idea of a good bullet fails a test rather than
- *  quietly drawing nothing on a pair of glasses nobody here can see. */
 describe('the firmware font', () => {
   test('sets a fixed 27 pixel line', () => {
     expect(LINE).toBe(27)
   })
 
   test('has the glyphs the mapping is drawn with', () => {
-    for (const one of [
-      '─', // rules, and a heading underline
-      '═', // a first level heading underline
-      '│', // a quote bar
-      '•', // a bullet
-      '·', // a bullet one level in
-      '□', // a task not done
-      '■', // a task done
-      '▶', // where the cursor is, and a folder shut
-      '▼', // a folder open
-      '●', // listening
-      '…', // where a name was cut
-      '¹', // a footnote
-      '≡',
-      '†',
-    ]) {
+    for (const one of ['─', '═', '│', '•', '·', '□', '■', '▶', '▼', '●', '…', '¹', '≡', '†']) {
       expect(draws(one.codePointAt(0) ?? 0), one).toBe(true)
     }
   })
@@ -48,7 +28,6 @@ describe('the firmware font', () => {
   test('has no tab, so one is spent as spaces', () => {
     expect(draws(9)).toBe(false)
     expect(fold('\tone')).toBe('  one')
-    // To the next stop, not a fixed number: two tabs are four columns.
     expect(fold('\t\tone')).toBe('    one')
     expect(fold('a\tb')).toBe('a b')
   })
@@ -60,10 +39,6 @@ describe('the firmware font', () => {
   })
 })
 
-/** The promise text mode makes: nothing in a note is silently dropped.
- *
- *  A codepoint the firmware lacks is drawn as nothing at all, so folding is not
- *  a nicety. Every one of these was a hole in a note. */
 describe('folding a note to what the font can draw', () => {
   test('leaves what the font has exactly as it is', () => {
     expect(fold('The quick brown fox, 1234 (five) - six.')).toBe(
@@ -84,38 +59,32 @@ describe('folding a note to what the font can draw', () => {
   })
 
   test('rescues a whole class through a compatibility decomposition', () => {
-    expect(fold('x⁽²⁾')).toBe('x(²)') // the superscript parentheses are missing
+    expect(fold('x⁽²⁾')).toBe('x(²)')
     expect(fold('ⁿ')).toBe('n')
     expect(fold('ﬁt')).toBe('fit')
-    expect(fold('№4')).toBe('№4') // this one the font has
-    expect(fold('10 µm')).toBe('10 μm') // the micro sign, as a greek mu
+    expect(fold('№4')).toBe('№4')
+    expect(fold('10 µm')).toBe('10 μm')
   })
 
   test('keeps an accent the font has, composed or not', () => {
     expect(fold('Zürich, Genève')).toBe('Zürich, Genève')
-    // The firmware has no combining marks at all, so a note written on a Mac
-    // arrives as a letter and a mark that draws nothing. Composed first.
     expect(fold('Zürich')).toBe('Zürich')
-    // And a mark with no precomposed form leaves the letter rather than a box.
     expect(fold('a̧')).toBe('a')
     expect(fold('ǰ')).toBe('j')
   })
 
   test('says an emoji by name when the emoji font has no glyph', () => {
-    // The emoji font has this one.
     expect(fold('😀')).toBe('😀')
-    // And not this one, so it reads as what it is called.
     expect(fold('❌')).toBe(':x:')
   })
 
   test('drops what is meant to be invisible rather than boxing it', () => {
-    expect(fold('a​b')).toBe('ab') // zero width space
-    expect(fold('❤️')).toBe('❤') // the selector after an emoji
+    expect(fold('a​b')).toBe('ab')
+    expect(fold('❤️')).toBe('❤')
     expect(fold('soft­hyphen')).toBe('softhyphen')
   })
 
   test('draws a box for anything left, so the reader is told there was one', () => {
-    // A private use codepoint: no glyph, no decomposition, no name.
     expect(fold('ab')).toBe('a□b')
   })
 
@@ -145,58 +114,32 @@ describe('folding a note to what the font can draw', () => {
     }
   })
 
-  /** Counted rather than timed. This asked for a fold of 2,700 characters in under
-   *  4 ms, which says as much about what else the runner had on it as about the fold;
-   *  `workDone` in firmware.ts says what the fold actually did, and says the same
-   *  number on a busy machine as on an idle one.
-   *
-   *  What it says is the thing the per-codepoint table exists for: a character the
-   *  font has no glyph for is worked out once, however many times it turns up. The
-   *  substitution is the dear part - a compatibility decomposition, then the same
-   *  with the combining marks off, then the emoji's own name - and a table that
-   *  stopped working would do it eighteen thousand times here rather than three. */
   test('folds a page of prose in well under a frame', () => {
-    // A page of prose with characters the font has none of scattered through it, so
-    // what is counted below is a substitution per character rather than one per
-    // time that character appears.
     const page = 'The quick brown fox ╬ jumps over the ┋ lazy dog ◃. '.repeat(60)
 
-    // The first fold works out what the font lacks, and it may have been worked out
-    // already by a test above: the table is the module's own.
     workDone()
     fold(page)
     const first = workDone()
 
-    // Three thousand characters, a hundred times. A page turn folds one page.
     const at = performance.now()
     for (let round = 0; round < 100; round++) fold(page)
     const each = (performance.now() - at) / 100
     const rest = workDone()
 
-    // Every character of every round walked once, and not one of them measured:
-    // folding asks the font's metrics nothing.
     expect(first.folded).toBe(page.length)
     expect(rest.folded).toBe(page.length * 100)
     expect(first.measured).toBe(0)
     expect(rest.measured).toBe(0)
 
-    // And nothing worked out a second time: the hundred rounds after the first read
-    // every substitution out of the table.
     expect(first.instead).toBeLessThanOrEqual(3)
     expect(rest.instead).toBe(0)
 
-    // The one clock in this file, kept as a shape check rather than as a
-    // measurement: a fold of this page is 0.2 ms on the machine this was written
-    // on, and code that has changed shape misses a ceiling fifty times that by a
-    // factor rather than by a percent.
     expect(each).toBeLessThan(10)
   })
 })
 
-/** Measuring, which is the whole of how a page knows where it ends. */
 describe('measuring as the firmware sets it', () => {
   test('measures a folded string, not the one it was given', () => {
-    // Unfolded, a backtick is nothing and three of them are zero pixels wide.
     expect(width('```')).toBeGreaterThan(0)
   })
 
@@ -223,7 +166,6 @@ describe('measuring as the firmware sets it', () => {
 
     expect(line.trimStart()).toBe('3/12')
     expect(width(line)).toBeLessThanOrEqual(560)
-    // Within one space of the edge, which is five pixels of 576.
     expect(width(line)).toBeGreaterThan(560 - SPACE - 1)
   })
 

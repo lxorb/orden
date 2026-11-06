@@ -9,12 +9,6 @@ const lines = (source: string, inner = BODY_INNER) =>
 
 const one = (source: string) => lines(source).join('\n')
 
-/** Rule one, and it is Emil's: a mark that only styles words is dropped, and a
- *  mark that says what something is, is kept.
- *
- *  "It's about understanding the markdown. And for that it's not necessary to
- *  know whether text is bold or not. But it is necessary to know whether
- *  something is code or not." */
 describe('marks that only style words', () => {
   test.each([
     ['bold', 'a **bold** word', 'a bold word'],
@@ -35,11 +29,8 @@ describe('marks that only style words', () => {
   })
 })
 
-/** Rule one the other way round: what a reader cannot work out for themselves is
- *  kept. On a panel with one font, code and prose look exactly alike. */
 describe('marks that say what something is', () => {
   test('inline code keeps its ticks', () => {
-    // Folded, because the firmware has no backtick; see firmware.ts.
     expect(one('call `readNote()` first')).toBe(fold('call `readNote()` first'))
     expect(one('call `readNote()` first')).toContain('‘readNote()‘')
   })
@@ -52,11 +43,6 @@ describe('marks that say what something is', () => {
     expect(lines('```\nplain\n```\n')).toEqual(['‘‘‘', 'plain', '‘‘‘'])
   })
 
-  /** An info string is a language and then a caption - ```ts src/main.ts is
-   *  TypeScript from that file - and the whole string used to be read as the
-   *  language, so a captioned fence opened with `‘‘‘ts src/main.ts` and the caption
-   *  was never a caption. It says what the code is, which is the one thing about a
-   *  block of code that a panel of one font cannot get from the code. */
   test('a fence says what it is called, above it, and names its language alone', () => {
     expect(lines('```ts src/main.ts\nconst a = 1\n```\n')).toEqual([
       'src/main.ts',
@@ -71,8 +57,6 @@ describe('marks that say what something is', () => {
     expect(lines("```ts title='What it does'\nconst a = 1\n```\n")[0]).toBe('What it does')
   })
 
-  /** The caption and the block are one thing, so a page cannot be cut between
-   *  them. */
   test('and the caption is glued to the block it names', () => {
     const marked = markLines('```ts src/main.ts\nconst a = 1\n```\n', { inner: BODY_INNER })
 
@@ -95,8 +79,6 @@ describe('marks that say what something is', () => {
   })
 
   test('a tab in a fence becomes the spaces it stood for', () => {
-    // The firmware has no glyph for a tab at all, so this was a fence with no
-    // indentation in it.
     expect(lines('```go\nfunc a() {\n\treturn 1\n}\n```\n')[2]).toBe('  return 1')
   })
 
@@ -106,8 +88,6 @@ describe('marks that say what something is', () => {
   })
 })
 
-/** Headings, in a font with one size. Capitals throughout, and the level said by
- *  a rule under the first two and a chevron on the last three. */
 describe('a heading', () => {
   test('is set in capitals, with a heavy rule under a first level one', () => {
     const set = lines('# The title\n\nWords.\n')
@@ -146,7 +126,6 @@ describe('a heading', () => {
   test('keeps a rule the author wrote apart from an underline', () => {
     const marked = markLines('## A section\n\n---\n', { inner: BODY_INNER })
 
-    // Two rules that look alike: the heading's, and the author's own.
     expect(marked.map((line) => line.under)).toEqual([false, true, false])
   })
 
@@ -155,8 +134,6 @@ describe('a heading', () => {
   })
 })
 
-/** Lists, which is where the firmware's missing glyphs bit hardest: it has no
- *  ballot box and no check mark at all. */
 describe('a list', () => {
   test('marks a bullet, and a deeper one differently', () => {
     expect(lines('- one\n- two\n')).toEqual(['• one', '• two'])
@@ -180,10 +157,6 @@ describe('a list', () => {
     }
   })
 
-  /** Emil: "indentation is not forbidden, but not at the root level, that wastes
-   *  space." A block inside a top level item is at the root level of the note, so
-   *  it begins where the item does. A list inside a list still steps, because that
-   *  step is what says which list an item belongs to. */
   test('sets what follows an item at the item’s own indent', () => {
     expect(lines('- one\n\n  more about one\n')).toEqual(['• one', 'more about one'])
     expect(lines('- one\n  - inside\n\n    under it\n')).toEqual([
@@ -194,7 +167,6 @@ describe('a list', () => {
   })
 })
 
-/** Quotes and callouts. */
 describe('a quote', () => {
   test('carries a bar down its left', () => {
     expect(lines('> quoted\n')).toEqual(['│ quoted'])
@@ -218,8 +190,6 @@ describe('a quote', () => {
   })
 
   test('says a title of the writer’s own rather than the kind, as written', () => {
-    // Capitals are the only emphasis one font has, and a whole sentence in
-    // capitals is shouting. A one word kind is not.
     expect(lines('> [!tip] Mind the gap\n> Between the two.\n')).toEqual([
       '│ Mind the gap',
       '│ Between the two.',
@@ -253,8 +223,6 @@ describe('a quote', () => {
   })
 })
 
-/** A note to the writer is not read out to anybody, here either. Both spellings
- *  go, and the offsets every line carries do not move; see comments.ts. */
 describe('a comment', () => {
   test('is not set on the panel, whichever way it is written', () => {
     expect(one('Words %% to myself %% here.\n')).not.toContain('to myself')
@@ -262,8 +230,6 @@ describe('a comment', () => {
   })
 
   test('leaves the words around it where they were', () => {
-    // Both spaces stay, the one before the comment and the one after it, which
-    // is what the renderer does with them too.
     expect(lines('Words %% aside %% here.\n')).toEqual(['Words  here.'])
   })
 
@@ -276,7 +242,6 @@ describe('a comment', () => {
   })
 })
 
-/** Everything else a note can hold. Nothing here is allowed to disappear. */
 describe('nothing in a note is dropped', () => {
   test('a table becomes columns that line up', () => {
     const set = lines('| Kind | Size |\n| --- | ---: |\n| Image | 288 |\n| Text | 27 |\n')
@@ -286,15 +251,12 @@ describe('nothing in a note is dropped', () => {
     expect(set[0]).toContain('Kind')
     expect(set[2]).toContain('Image')
     expect(set[3]).toContain('27')
-    // The head and the rows start at the same pixel, which is what "lines up"
-    // means when the font is proportional.
     expect(width(set[0]?.split(/ {2,}/)[0] ?? '')).toBeLessThanOrEqual(width('Image  '))
   })
 
   test('a right aligned column is set to the right', () => {
     const set = lines('| a | n |\n| --- | ---: |\n| x | 1 |\n| y | 1000 |\n')
 
-    // Both numbers end at the same pixel.
     expect(width(set[2] ?? '')).toBeCloseTo(width(set[3] ?? ''), -1)
   })
 
@@ -313,7 +275,6 @@ describe('nothing in a note is dropped', () => {
 
   test('a picture is what it was described as, with a mark to say it was one', () => {
     expect(lines('![A diagram](sketch.png)\n')).toEqual(['▤ A diagram'])
-    // Nothing to describe it: its address, so the line is not a gap.
     expect(lines('![](sketch.png)\n')).toEqual(['▤ sketch.png'])
   })
 
@@ -350,8 +311,6 @@ describe('nothing in a note is dropped', () => {
   })
 
   test('an embedded file is its name behind the mark that says it is one', () => {
-    // A panel of one font cannot play a recording or show a page of a paper, and
-    // a line that merely said `clip.mp3` would read as prose about a file name.
     expect(lines('![[clip.mp3]]\n')).toEqual(['▤ clip.mp3'])
     expect(lines('![[demo.mp4]]\n')).toEqual(['▤ demo.mp4'])
     expect(lines('![[shot.png]]\n')).toEqual(['▤ shot.png'])
@@ -360,7 +319,6 @@ describe('nothing in a note is dropped', () => {
   })
 
   test('and a note embedded on its own line carries no such mark', () => {
-    // There is nothing about a note this panel cannot show, so nothing to say.
     expect(lines('![[Another note]]\n')).toEqual(['Another note'])
   })
 
@@ -383,16 +341,11 @@ describe('nothing in a note is dropped', () => {
   })
 
   test('a definition list keeps the colon that ties it together', () => {
-    // At the margin, because the colon is the marker and the note is at its root
-    // level; see the list case above.
     expect(lines('Term\n: what it means\n')).toEqual(['Term', ': what it means'])
   })
 
   test('an emoji written as a name is the emoji the font can draw', () => {
-    // The firmware's emoji font has this one.
     expect(one('smile :grinning:')).toBe('smile 😀')
-    // And not this one, so it comes back as the name it was written with rather
-    // than as a hole in the line. See `fold` in firmware.ts.
     expect(one('ship it :rocket:')).toBe('ship it :rocket:')
   })
 
@@ -401,13 +354,6 @@ describe('nothing in a note is dropped', () => {
     expect(one('<div>block</div>')).toBe('block')
   })
 
-  /** A single newline inside a paragraph is a space in markdown, and at the top
-   *  compaction that is what it becomes. Read as a break it was two lines on the
-   *  panel for every wrapped paragraph in every note, both numbered with the line the
-   *  paragraph started on, and the panel held half of what it should.
-   *
-   *  Asked of `aggressive` by name, because the default is `collapse` now: Emil, who
-   *  reads on a pair, would rather have the note's own breaks. See `Compaction`. */
   test('a paragraph hard wrapped in the file is one line at the top compaction', () => {
     const flowed = (source: string) =>
       markLines(source, { inner: BODY_INNER, compaction: 'aggressive' }).map((one) => one.text)
@@ -416,13 +362,10 @@ describe('nothing in a note is dropped', () => {
     expect(flowed('- one two\n  three four\n')).toEqual(['• one two three four'])
     expect(flowed('> one two\n> three four\n')).toEqual(['│ one two three four'])
 
-    // And at the default the reader gets the lines they wrote.
     expect(lines('one two\nthree four\n')).toEqual(['one two', 'three four'])
   })
 
   test('a hard break is two lines, the second under the words of the first', () => {
-    // Three spaces, which is the fourteen pixels the bullet and its space took,
-    // to the nearest five pixel space.
     expect(lines('- one  \n  two\n')).toEqual(['• one', '   two'])
     expect(lines('one  \ntwo\n')).toEqual(['one', 'two'])
   })
@@ -477,7 +420,6 @@ describe('nothing in a note is dropped', () => {
 
     const set = one(note)
 
-    // Every construct left a mark, and every character of it is drawable.
     for (const want of [
       'EVERYTHING',
       'bold',
@@ -512,8 +454,6 @@ describe('nothing in a note is dropped', () => {
   })
 })
 
-/** Where a line came from, which is what the position map, the scroll binding and
- *  "go to line" all stand on. */
 describe('where a line came from', () => {
   test('says which line of the note each one is', () => {
     const marked = markLines('one\n\ntwo\n\nthree\n', { inner: BODY_INNER })
@@ -559,28 +499,7 @@ describe('where a line came from', () => {
   })
 })
 
-/** What it costs, because speed is the reason text mode exists.
- *
- *  Counted rather than timed. This block held a stopwatch to a note of twenty
- *  thousand characters and asked for under 120 ms; a runner with the rest of the
- *  suite on it answered 123.25 and failed a test that had found nothing wrong -
- *  the same commit had passed minutes earlier. A timing is a proxy for the work
- *  done and a poor one: what it measures is partly the queue in front of the code.
- *
- *  So `workDone` in mark.ts counts the four things marking a note actually does -
- *  the blocks walked, the lines made, the characters folded into them and the
- *  characters read looking for where each block begins - and those are the same
- *  numbers on a loaded machine as on an idle one. Each of them names a way this
- *  could get slower: a block walked twice, a line folded twice, a locator that
- *  starts again from the top.
- *
- *  One clock is left, on the whole pass, with a margin no real regression could
- *  hide in: a count cannot tell code that got slower from code that did not, and
- *  code that has changed shape misses a margin like that by a factor rather than by
- *  a percent. */
 describe('what it costs', () => {
-  /** Two hundred sections: a heading, a paragraph and a list of two, which is about
-   *  twenty four thousand characters and a thousand lines of panel. */
   const note = Array.from(
     { length: 200 },
     (_one, at) =>
@@ -596,33 +515,18 @@ describe('what it costs', () => {
   test('marks a note of twenty thousand characters, and counts what that took', () => {
     const { marked, work } = marking(note)
 
-    // Every line that came out was counted as it was made.
     expect(marked).toHaveLength(work.lines)
     expect(marked.length).toBeGreaterThan(800)
 
-    // Every block of the note, at every depth: the sections, their prose, the lists
-    // and the items in them. More blocks than lines, because a list is a block that
-    // holds blocks; not many more, because nothing is walked twice.
     expect(work.blocks).toBeGreaterThan(marked.length)
     expect(work.blocks).toBeLessThan(marked.length * 2)
 
-    // What is written to the panel is the note with its marks taken off and its
-    // indents put on, once. A multiple of the note would be a note folded twice.
     expect(work.folded).toBeGreaterThan(note.length / 2)
     expect(work.folded).toBeLessThan(note.length * 1.5)
 
-    // The locator searches forward from where the last block ended, so the whole
-    // note costs about one read of it - 31,779 characters for a note of 23,979,
-    // because a block that holds others is looked for once and read again by its
-    // children.
     expect(work.searched).toBeLessThan(note.length * 2)
   })
 
-  /** The regression this is really for. Every count above is linear in the note, and
-   *  the one that could stop being linear is the locator: a change that sent it back
-   *  to the start of the note for each block would read the note squared - about
-   *  three hundred million characters for this one rather than thirty thousand - and
-   *  would still pass every test in this file that is about what a note looks like. */
   test('and twice the note is twice the work, not four times', () => {
     const once = marking(note)
     const twice = marking([note, note].join('\n'))
@@ -633,10 +537,6 @@ describe('what it costs', () => {
     expect(twice.work.searched).toBeLessThan(once.work.searched * 2 + 100)
   })
 
-  /** The one clock in this file. Twenty five milliseconds on the machine this was
-   *  written on and a hundred and twenty three on the loaded runner that failed the
-   *  old assertion, against a ceiling of a second: this is not a measurement of
-   *  speed, it is the line past which the shape of the code has changed. */
   test('and does the whole of it in well under a second', () => {
     const at = performance.now()
     const marked = markLines(note, { inner: BODY_INNER })
