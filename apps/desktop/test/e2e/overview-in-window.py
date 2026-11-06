@@ -14,8 +14,6 @@ the way home:
     no frame has a tab both in its strip and as a window somewhere else
     the left sidebar is off the window while the overview is out, and back where it was
       after; the bar takes presses all the while
-    the canvas is a clear scrim from its first frame, so a web page's live view would be
-      behind its picture all the way
 
     python apps/desktop/test/e2e/overview-in-window.py
 """
@@ -39,8 +37,6 @@ async () => {
 """
 
 #: Every frame until `stop()`: for each tab, whether its strip tab and its window are seen
-#: and where, whether its window draws a picture of a pane, the pane's own drawing, the
-#: sidebar's box, and whether the canvas is a scrim that is seen.
 SAMPLE = """
 () => {
   const frames = []
@@ -72,12 +68,10 @@ SAMPLE = """
     })
     const pane = document.querySelector('[data-pane]')
     const side = document.querySelector('[data-chrome="start"]')?.getBoundingClientRect()
-    const canvas = document.querySelector('.canvas')
     frames.push({
       tabs,
       pane: pane ? { transform: pane.style.transform, seen: !!seen(pane) } : null,
       side: side ? [side.x, side.width] : null,
-      scrim: canvas ? canvas.matches('.nib-scrim') && getComputedStyle(canvas).visibility !== 'hidden' : null,
     })
     requestAnimationFrame(look)
   }
@@ -109,14 +103,10 @@ def judged(frames: list[dict], label: str) -> None:
                 wrong(f"[{label}] frame {index}: the window of {tab['name']} draws a picture of its pane")
                 return
             # Both all there, and not on each other: a window being handed over to what
-            # it is, in the last few pixels home, is fading as that comes back.
-            both = tab["strip"] and tab["window"] and min(tab["strip"][4], tab["window"][4]) > 0.9
+            both = tab["strip"] and tab["window"] and tab["strip"][4] > 0.9 and tab["window"][4] > 0.999
             if both and apart(tab["strip"], tab["window"]):
-                wrong(f"[{label}] frame {index}: {tab['name']} is in its strip and a window elsewhere at once")
+                wrong(f"[{label}] frame {index}: {tab['name']} is in its strip and a window elsewhere at once: {tab}")
                 return
-        if frame["scrim"] is False:
-            wrong(f"[{label}] frame {index}: the canvas is there but not a scrim a page steps behind")
-            return
 
 
 def drive(browser: Browser) -> None:

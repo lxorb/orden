@@ -95,17 +95,23 @@ export class Flight {
 
 const clamp = (value: number) => Math.min(1, Math.max(0, value))
 
-/** The styles of a window `wide` by `tall` at `pose`, and of the tab's face inside it,
- *  on a canvas the camera draws `zoom` times its size: the tab's face is drawn at the
- *  tab's own size on the screen, whatever either scale is. */
-export function drawn(pose: Pose, wide: number, tall: number, corner: number, zoom = 1) {
+export function drawn(
+  pose: Pose,
+  wide: number,
+  tall: number,
+  corner: number,
+  camera: { x: number; y: number; zoom: number } = { x: 0, y: 0, zoom: 1 },
+) {
+  const { zoom } = camera
   const sx = Math.max(pose.w, 1) / wide
   const sy = Math.max(pose.h, 1) / tall
   const tab = clamp(pose.tab)
   const radius = corner + (TAB_RADIUS - corner) * tab
+  const x = camera.x + pose.x * zoom
+  const y = camera.y + pose.y * zoom
   return {
     window: {
-      transform: `translate(${pose.x}px, ${pose.y}px) scale(${sx}, ${sy})`,
+      transform: `translate(${x}px, ${y}px) scale(${sx * zoom}, ${sy * zoom})`,
       borderRadius: `${radius / sx}px / ${radius / sy}px`,
       opacity: String(clamp(pose.alpha)),
     },

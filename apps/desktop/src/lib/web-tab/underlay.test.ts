@@ -22,6 +22,13 @@ describe('the ground behind a page drawn under the app', () => {
     expect(groundOf(CARD, 12, [])).toBeNull()
   })
 
+  test('is whole round a page held still as its picture, and still the same painter', () => {
+    const held = { x: 10, y: 90, width: 400, height: 260, corner: 12, cut: false }
+    expect(groundOf(CARD, 12, [held])).toBe(
+      `path(evenodd, "${rounded({ x: 0, y: 0, width: 400, height: 300 }, 12, false)}")`,
+    )
+  })
+
   test('leaves out every page inside it', () => {
     const left = { x: 10, y: 90, width: 190, height: 260, corner: 0 }
     const right = { x: 210, y: 90, width: 200, height: 260, corner: 0 }

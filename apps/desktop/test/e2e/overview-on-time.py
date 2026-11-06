@@ -62,7 +62,10 @@ SAMPLE = """
     const now = [...document.querySelectorAll('.window')].map((one) => one.style.transform).join('|')
     const ws = window.nibApp.workspace
     const pane = document.querySelector(`[data-pane="${ws.panes.at(ws.tabs.find((one) => one.id === ws.activeTabId)?.paneId)?.id}"]`)
-    const canvas = document.querySelector('.canvas')
+    const active = ws.tabs.find((one) => one.id === ws.activeTabId)?.shown
+    const others = [...document.querySelectorAll('.window')]
+      .filter((one) => one.getAttribute('aria-label') !== active)
+      .map((one) => Number(getComputedStyle(one).zIndex) || 0)
     const blank = [...document.querySelectorAll('.window .face')].filter((face) =>
       !face.querySelector('.mark, .screen, .kept, img.is-drawn') && !face.querySelector('.read article')?.childElementCount).length
     frames.push({
@@ -70,7 +73,7 @@ SAMPLE = """
       moved: now !== before && before !== '',
       drawn,
       blank,
-      over: pane && canvas ? Number(getComputedStyle(pane).zIndex) > Number(getComputedStyle(canvas).zIndex) : null,
+      over: pane && others.length ? others.every((one) => Number(getComputedStyle(pane).zIndex) > one) : null,
     })
     before = now
     drawn = 0

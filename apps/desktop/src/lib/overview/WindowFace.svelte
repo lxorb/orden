@@ -18,6 +18,8 @@
    *  nothing to draw from, it is its mark, its name and where it is from. */
 
   import { untrack } from 'svelte'
+  import { fade } from 'svelte/transition'
+  import { dur } from '../motion'
   import { readingHtml, unreadableHtml } from '../reading/render'
   import { trustsHtmlIn } from '../sharing.svelte'
   import TabMark from '../TabMark.svelte'
@@ -159,6 +161,8 @@
     return { update: decode }
   }
 
+  const arrive = { duration: dur(160) }
+
   /** Where a tab with no picture is from: a page's site, a file's folder. */
   const whence = $derived.by(() => {
     if (tab.kind === 'web') {
@@ -183,12 +187,12 @@
 
 <div class="face" style:width="{width}px" style:height="{height}px">
   {#if how === 'reading' && html}
-    <div class="read">
+    <div class="read" in:fade={arrive}>
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note's own words, rendered by the same renderer the reading view uses, under the same trust -->
       <article class="page nib-write">{@html html}</article>
     </div>
   {:else if how === 'scrollback' && screen}
-    <pre class="screen">{screen.text}</pre>
+    <pre class="screen" in:fade={arrive}>{screen.text}</pre>
   {:else if how === 'photograph' && shot}
     {@render mark()}
     <img
@@ -205,6 +209,7 @@
       style:width="{kept.w}px"
       style:height="{kept.h}px"
       style:scale={width / Math.max(kept.w, 1)}
+      in:fade={arrive}
       use:drawn={kept}
     ></div>
   {:else}
@@ -274,6 +279,7 @@
 
   .shot.is-drawn {
     opacity: 1;
+    transition: opacity var(--dur-fast) var(--ease-out);
   }
 
   .mark {

@@ -154,7 +154,7 @@ def drive(browser: Browser) -> None:
     ideas = bubbles["Ideas"]
     work = bubbles.get("Work")
     zoom = page.evaluate(
-        "() => Number(/scale\\(([-\\d.]+)\\)/.exec(document.querySelector('.canvas .world').style.transform)?.[1] ?? 1)"
+        "() => Number(/scale\\(([-\\d.]+)\\)/.exec(document.querySelector('.under .world').style.transform)?.[1] ?? 1)"
     )
     if not work:
         wrong("[carry] Work has no bubble")

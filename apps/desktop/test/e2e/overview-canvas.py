@@ -88,12 +88,18 @@ BAR = """
 #: Where each window lies on the canvas, and each bubble's box on the canvas.
 LAID = """
 () => ({
-  windows: [...document.querySelectorAll('.window')].map((one) => [one.getAttribute('aria-label'), one.style.width, one.style.transform]),
+  windows: (() => {
+    const [cx, cy, zoom] = (/translate\\(([-\\d.]+)px, ([-\\d.]+)px\\) scale\\(([-\\d.]+)\\)/.exec(document.querySelector('.under .world').style.transform) ?? []).slice(1).map(Number)
+    return [...document.querySelectorAll('.window')].map((one) => {
+      const [x, y] = (/translate\\(([-\\d.]+)px, ([-\\d.]+)px\\)/.exec(one.style.transform) ?? []).slice(1).map(Number)
+      return [one.getAttribute('aria-label'), one.style.width, Math.round((x - cx) / zoom), Math.round((y - cy) / zoom)]
+    })
+  })(),
   bubbles: [...document.querySelectorAll('.bubble')].map((one) => { const b = one.getBBox(); return [b.x, b.y, b.width, b.height] }),
 })
 """
 
-ZOOM = "() => Number(/scale\\(([-\\d.]+)\\)/.exec(document.querySelector('.canvas .world').style.transform)?.[1] ?? 1)"
+ZOOM = "() => Number(/scale\\(([-\\d.]+)\\)/.exec(document.querySelector('.under .world').style.transform)?.[1] ?? 1)"
 
 #: The bubbles on the screen.
 CELLS = "() => [...document.querySelectorAll('.bubble')].map((one) => { const b = one.getBoundingClientRect(); return [b.x, b.y, b.width, b.height] })"
@@ -198,7 +204,7 @@ def drive(browser: Browser) -> None:
     if zoom > 0.8:
         wrong(f"[zoom] the wheel did not zoom out: {zoom}")
     if after["windows"] != before["windows"]:
-        wrong("[zoom] the windows were laid out again as the camera zoomed")
+        wrong(f"[zoom] the windows were laid out again as the camera zoomed: {before['windows']} -> {after['windows']}")
     for one, other in zip(before["bubbles"], after["bubbles"]):
         if any(abs(a - b) > 4 for a, b in zip(one, other)):
             wrong(f"[zoom] a bubble changed with the zoom: {one} -> {other}")

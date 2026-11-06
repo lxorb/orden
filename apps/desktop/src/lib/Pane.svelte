@@ -869,11 +869,6 @@
   }
 
   :global(html[data-overview]) .pane:has(> :global(.here)) {
-    background: none;
-    box-shadow: none;
-  }
-
-  :global(html[data-overview]) .pane > :global(.here) {
     opacity: calc(1 - var(--overview-open, 0));
     pointer-events: none;
   }

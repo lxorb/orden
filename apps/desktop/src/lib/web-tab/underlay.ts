@@ -14,9 +14,9 @@
 
 import type { Rect } from './pages.svelte'
 
-/** A page's place in the window, with the card's corner at its two bottom corners. */
 export interface Hollow extends Rect {
   corner: number
+  cut?: boolean
 }
 
 /** What paints a ground behind a page, outermost first: the order their layers are
@@ -67,15 +67,21 @@ function inside(hole: Rect, box: Rect): boolean {
 }
 
 /** The shape a painter at `box`, with `round` at its corners, paints its ground in: all
- *  of its box less every page inside it, in the box's own coordinates, or null where no
- *  page is inside it. Pure. */
+ *  of its box less every page inside it that is cut round, in the box's own coordinates,
+ *  or null where no page is inside it. Pure. */
 export function groundOf(box: Rect, round: number, pages: readonly Hollow[]): string | null {
   const within = pages.filter((one) => one.width > 0 && one.height > 0 && inside(one, box))
   if (within.length === 0) return null
   const local = (one: Rect): Rect => ({ ...one, x: one.x - box.x, y: one.y - box.y })
   const outer = rounded(local({ ...box }), round, false)
-  const cut = within.map((one) => rounded(local(one), one.corner, true))
+  const cut = within
+    .filter((one) => one.cut !== false)
+    .map((one) => rounded(local(one), one.corner, true))
   return `path(evenodd, "${[outer, ...cut].join(' ')}")`
+}
+
+function cutWithin(box: Rect, pages: readonly Hollow[]): boolean {
+  return pages.some((one) => one.cut !== false && inside(one, box))
 }
 
 function boxOf(node: Element): Rect {
@@ -94,6 +100,7 @@ function paint(): void {
   const now = new Map<HTMLElement, Record<string, string>>()
   for (const one of all.length === 0 ? [] : painters()) {
     const box = boxOf(one)
+    if (one.matches('[data-pane]') && !cutWithin(box, all)) continue
     const round = parseFloat(getComputedStyle(one).borderTopLeftRadius) || 0
     const shape = groundOf(box, round, all)
     if (!shape) continue

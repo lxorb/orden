@@ -41,8 +41,28 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
   'lib/Select.svelte .sheet': 'a touch screen only, and over its own .nib-scrim',
   'lib/FormatBar.svelte .docked': 'a touch screen only, docked over the keyboard',
   'lib/StatusBar.svelte .mode': 'the vim mode, drawn in the corner of a note’s own pane',
-  'lib/overview/Overview.svelte .under': 'inside the overview, whose .nib-scrim covers every page',
-  'lib/overview/Overview.svelte .riding': 'inside the overview, whose .nib-scrim covers every page',
+  'lib/overview/Overview.svelte .under':
+    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
+  'lib/overview/Overview.svelte .floor':
+    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
+  'lib/overview/Overview.svelte .top':
+    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
+  'lib/overview/Overview.svelte .window':
+    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
+  'lib/overview/Overview.svelte .closer':
+    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
+  'lib/overview/Overview.svelte .rider':
+    'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/pages.svelte.ts)',
+  'lib/overview/Overview.svelte .window.is-front':
+    'the same, stacked over its neighbours: see .window',
+  'lib/overview/Overview.svelte .window.is-held':
+    'the same, stacked over its neighbours: see .window',
+  'lib/overview/Overview.svelte .closer.is-front':
+    'the same, stacked over its neighbours: see .closer',
+  'lib/overview/Overview.svelte .closer.is-held':
+    'the same, stacked over its neighbours: see .closer',
+  'lib/overview/Overview.svelte .rider.is-front':
+    'the same, stacked over its neighbours: see .rider',
   'lib/even/Glasses.svelte .frame': 'the glasses’ plugin, which places no page',
   'lib/tab-strip/TabChip.svelte .chip':
     'the tab carried out of a strip, which hangs only while a drag is over the panes - and a drag covers all of every page (`coverOf` in WebTab.svelte)',

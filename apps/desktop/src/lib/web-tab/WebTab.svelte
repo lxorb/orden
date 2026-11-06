@@ -113,6 +113,9 @@
   const UNSEEN = 0.01
 
   const page = $derived(pages.of(tab.id))
+  const pictured = $derived(
+    page.shot !== null && (page.layering !== 'under' || page.heldAt !== null),
+  )
 
   let hole = $state<HTMLElement>()
   /** Whether the site's own favicon arrived. A site that has none, or one the
@@ -218,8 +221,7 @@
    *  anywhere in the window asks this question, and most presses have not moved
    *  anything. */
   let told = ''
-  /** Whether what was told had all of the page under the app's layers. */
-  let toldWhole = false
+  let grounded = false
 
   /** What was told while the hole had no room for the page: the page out of sight. */
   const NO_ROOM = 'no room'
@@ -298,6 +300,12 @@
     return () => holding.disconnect()
   })
 
+  $effect(() => heldOrLet(pages.still, page.heldAt))
+
+  function heldOrLet(..._now: unknown[]) {
+    untrack(now)
+  }
+
   /** Puts the page where the hole is. Coalesced onto a frame, because a pane being
    *  dragged reports every pixel. What set it off is taken and not looked at: an
    *  observer and a listener hand it one anyway, and an effect names by it the state
@@ -336,6 +344,17 @@
   function look() {
     if (!isDesktop || !ready || own) return
 
+    if (page.heldAt || (pages.still && !page.shown)) {
+      if (!grounded) {
+        const at = page.heldAt !== null && page.layering === 'under' ? last : null
+        underlaid(tab.id, at && { ...at, corner: cardCorner(hole), cut: false })
+      }
+      grounded = true
+      told = ''
+      return
+    }
+    grounded = false
+
     const box = rect()
     if (!box) underlaid(tab.id, null)
     if (!box) {
@@ -345,7 +364,6 @@
       // with the room, because what was told is forgotten.
       if (last && told !== NO_ROOM) {
         told = NO_ROOM
-        toldWhole = false
         void pages.place(tab.id, last, false)
       }
       return
@@ -386,13 +404,6 @@
     }
     if (!visible && hole && moving(hole)) follow()
 
-    // All of the page under a layer is out of sight wherever its hole goes, so a hole that
-    // moves under one - a pane shrinking into its window under the tab overview - is not
-    // told on every frame, each a placement of a page nobody sees and its photograph
-    // thrown away for the new size (#1136). Where the hole is is told when the page is seen.
-    // A page drawn under the app is seen under a scrim, and goes on following its hole.
-    if (cut?.all && toldWhole && page.live && !under) return
-
     const frame = frameOf()
     // The scale is part of it: the same box on a screen of another scale is another page
     // window, and nothing else in the layout says the scale changed.
@@ -403,7 +414,6 @@
     if (said === told && page.live) return
 
     told = said
-    toldWhole = cut?.all === true
     // Which space the tab is in, and before its first page whether its note keeps its own
     // web data; said with the page, since a tab opened by hand asks for it as it mounts.
     page.space = space
@@ -1106,11 +1116,9 @@
       class:acted={worn !== null}
       class:resting={worn?.stopped}
       style:--agent={worn?.colour}
-      class:under={page.layering === 'under' && page.live}
-      class:still={page.shot !== null && page.layering !== 'under'}
-      style:background-image={page.shot === null || page.layering === 'under'
-        ? 'none'
-        : `url(${page.shot})`}
+      class:under={page.layering === 'under' && page.live && page.heldAt === null}
+      class:still={pictured}
+      style:background-image={pictured ? `url(${page.shot})` : 'none'}
       bind:this={hole}
     ></div>
   {:else if page.framing === 'frame' && address}

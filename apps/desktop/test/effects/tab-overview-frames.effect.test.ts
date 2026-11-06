@@ -158,40 +158,39 @@ function front() {
   return pane?.style.zIndex ?? ''
 }
 
-test('the tab worked in is over every other window on every frame of the way out and home', async () => {
-  // Emil: the other windows flew over the one worked in as it shrank.
+function others() {
+  const active = workspace.tabs.find((one) => one.id === workspace.activeTabId)?.shown
+  return [...document.querySelectorAll<HTMLElement>('.window')]
+    .filter((one) => one.getAttribute('aria-label') !== active)
+    .map((one) => (one.classList.contains('is-front') ? 'in front' : 'behind'))
+}
+
+test('the tab worked in is over every other window on every frame, and nothing is stacked anew as they land', async () => {
   tabOverview.open = true
   flushSync()
   await drawnNow()
-  const out: string[] = []
-  for (let i = 0; i < 40 && waiting.size; i++) {
+  const seen = new Set<string>()
+  let frames = 0
+  for (let i = 0; i < 400 && waiting.size; i++) {
     frame()
-    if (tabOverview.out.length) out.push(front())
+    if (!tabOverview.out.length) continue
+    frames++
+    seen.add(`${front()} over ${[...new Set(others())].join(',')}`)
   }
-  expect(out.length).toBeGreaterThan(5)
-  // Over the canvas the other windows are on, until every window is where it goes.
-  const landed = out.indexOf('var(--z-raised)')
-  expect(landed).toBeGreaterThan(5)
-  expect(out.slice(0, landed).every((one) => one === 'var(--z-drawer)')).toBe(true)
-  // At rest it is among the others again, under a window dragged over it.
-  for (let i = 0; i < 200; i++) frame()
-  expect(front()).toBe('var(--z-raised)')
   tabOverview.open = false
   flushSync()
-  const home: string[] = []
-  for (let i = 0; i < 200 && tabOverview.out.length; i++) {
+  for (let i = 0; i < 400 && tabOverview.out.length; i++) {
     frame()
-    if (tabOverview.out.length) home.push(front())
+    if (tabOverview.out.length) seen.add(`${front()} over ${[...new Set(others())].join(',')}`)
   }
-  expect(home.length).toBeGreaterThan(5)
-  expect(home.every((one) => one === 'var(--z-drawer)')).toBe(true)
-  // The tabs riding on their windows are over it still.
+  expect(frames).toBeGreaterThan(5)
+  expect([...seen]).toEqual(['calc(var(--z-drawer) - 1) over behind'])
   tabOverview.open = true
   flushSync()
   frame()
   frame()
-  const riding = document.querySelector('.riding')
-  expect(riding?.closest('.canvas')).toBe(null)
+  for (const one of document.querySelectorAll('.window, .rider, .closer'))
+    expect(one.parentElement?.classList.contains('canvas')).toBe(true)
 })
 
 test('a picture that comes in while the windows fly is drawn once they are there, its mark till then', async () => {
@@ -233,23 +232,29 @@ test('a window drawn before is drawn at once the next time, never waited on', as
   expect(tabOverview.out.length).toBeGreaterThan(0)
 })
 
-test('a zoom makes no layer of its own and lets none go: every frame of it is drawn as it is shown', async () => {
-  // Emil: zooming in or out made the bubbles and the windows flash.
+function layered(): string[] {
+  return [...document.querySelectorAll<HTMLElement>('*')]
+    .filter((one) => one.style.willChange !== '' || one.classList.contains('is-moving'))
+    .map((one) => one.className || one.tagName)
+}
+
+test('no frame of the way out, a zoom or the way home makes a layer of its own or lets one go', async () => {
   tabOverview.open = true
   flushSync()
   await drawnNow()
-  for (let i = 0; i < 200; i++) frame()
-  // Landed, and a moment after: drawn at the size it is shown, as it rests.
+  const asked: string[] = []
+  for (let i = 0; i < 200; i++) {
+    frame()
+    asked.push(...layered())
+  }
   for (let i = 0; i < 8; i++) {
     await new Promise((go) => setTimeout(go, 60))
     frame()
+    asked.push(...layered())
   }
   const canvas = document.querySelector<HTMLElement>('.canvas')
-  expect(canvas?.classList.contains('is-moving')).toBe(false)
-  const world = () => document.querySelector<HTMLElement>('.canvas .world')?.style.transform
-  const pane = document.querySelector<HTMLElement>(`[data-pane="${workspace.panes.all[0]?.id}"]`)
-  const before = world()
-  const layered: string[] = []
+  const windowAt = () => document.querySelector<HTMLElement>('.window')?.style.transform
+  const before = windowAt()
   for (let i = 0; i < 60; i++) {
     if (i % 6 === 0)
       canvas?.dispatchEvent(
@@ -262,9 +267,14 @@ test('a zoom makes no layer of its own and lets none go: every frame of it is dr
         }),
       )
     frame()
-    if (canvas?.classList.contains('is-moving')) layered.push(`frame ${i}: the canvas`)
-    if (pane?.style.willChange === 'transform') layered.push(`frame ${i}: the pane`)
+    asked.push(...layered())
   }
-  expect(world()).not.toBe(before)
-  expect(layered).toEqual([])
+  expect(windowAt()).not.toBe(before)
+  tabOverview.open = false
+  flushSync()
+  for (let i = 0; i < 200 && waiting.size; i++) {
+    frame()
+    asked.push(...layered())
+  }
+  expect(asked).toEqual([])
 })

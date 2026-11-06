@@ -247,7 +247,6 @@ test('each pane is its own window, moved where it is and never copied, and every
 test('a pane holding a web page moves as its window, its picture in its hole and no copy of it', async () => {
   const page = workspace.openPage('https://example.com/') ?? ''
   pages.of(page).shot = 'data:image/png;base64,AA=='
-  const shoot = vi.spyOn(pages, 'shoot')
   const paneId = workspace.tabs.find((one) => one.id === page)?.paneId ?? ''
   const pane = document.createElement('div')
   pane.dataset.pane = paneId
@@ -264,7 +263,11 @@ test('a pane holding a web page moves as its window, its picture in its hole and
       one.getAttribute('aria-label') === workspace.tabs.find((tab) => tab.id === page)?.shown,
   )
   expect(window?.querySelector('.face-box > .face')).toBe(null)
-  expect(shoot).toHaveBeenCalledWith(page)
+  expect(pages.still).toBe(true)
+  expect(overlays.escape()).toBe(true)
+  flushSync()
+  await tick()
+  expect(pages.still).toBe(false)
 })
 
 test('the canvas is the window’s own ground, its sidebars sliding away, and the app blurred only when asked for', async () => {
@@ -304,18 +307,23 @@ test('the canvas is the window’s own ground, its sidebars sliding away, and th
   }
 })
 
-test('a web page steps behind its picture for as long as the overview is up, from its first frame', async () => {
+test('every page stands still from before the first frame to after the last, and the canvas is no layer a page has to find', async () => {
   const { layersOver } = await import('../../src/lib/web-tab/covers')
   const hole = document.createElement('div')
   document.body.append(hole)
   onTestFinished(() => hole.remove())
-  await opened()
-  // The canvas itself is a clear scrim, there and seen as soon as it is: never hidden on
-  // its first frames as the blurred ground is (covers.ts `seen`).
-  const canvas = layer() as HTMLElement | null
-  expect(canvas?.matches('.nib-scrim.is-clear')).toBe(true)
-  expect(canvas?.style.visibility).toBe('')
-  expect(layersOver(hole).some((one) => one.scrim && one.node === canvas)).toBe(true)
+  appCommands()
+    .find((one) => one.id === 'tab-overview')
+    ?.run()
+  flushSync()
+  expect(pages.still).toBe(true)
+  await tick()
+  expect(layersOver(hole).some((one) => layer()?.contains(one.node ?? null))).toBe(false)
+  expect(layer()?.classList.contains('nib-scrim')).toBe(false)
+  expect(overlays.escape()).toBe(true)
+  flushSync()
+  await tick()
+  expect(pages.still).toBe(false)
 })
 
 test('a window’s cross sits on its corner, red, and answers the pointer', async () => {
@@ -323,11 +331,16 @@ test('a window’s cross sits on its corner, red, and answers the pointer', asyn
   const window = windows()[0]
   const cross = window?.nextElementSibling as HTMLElement | null
   // On the window's top right corner itself, its middle on it (the transform below).
-  const [x, y] = (/translate\(([-\d.]+)px, ([-\d.]+)px\)/.exec(window?.style.transform ?? '') ?? [])
+  const [x, y, zoom] = (
+    /translate\(([-\d.]+)px, ([-\d.]+)px\) scale\(([-\d.]+)/.exec(window?.style.transform ?? '') ??
+    []
+  )
     .slice(1)
     .map(Number)
-  const width = parseFloat(window?.style.width ?? '0')
-  expect(cross?.style.translate).toBe(`${String((x ?? 0) + width)}px ${String(y)}px`)
+  const width = parseFloat(window?.style.width ?? '0') * (zoom ?? 1)
+  const [cx, cy] = (cross?.style.translate ?? '').split(' ').map(parseFloat)
+  expect(cx).toBeCloseTo((x ?? 0) + width, 3)
+  expect(cy).toBeCloseTo(y ?? 0, 3)
   // The app's quiet grey button, only its cross red, small, and under the pointer lit
   // and a little larger: its own rules, as the component declares them (jsdom lays
   // nothing out and hovers nothing).
@@ -356,23 +369,18 @@ test('a window’s cross sits on its corner, red, and answers the pointer', asyn
 })
 
 test('every window’s name, and the bubbles, are drawn under the panes and every window, so none lies on another window', async () => {
-  // The room the panes are drawn in, which the layer under them goes first in.
-  const room = document.createElement('div')
-  room.dataset.panes = ''
-  room.append(document.createElement('div'))
-  document.body.append(room)
-  onTestFinished(() => room.remove())
   await opened()
-  const under = room.firstElementChild
-  expect(under?.classList.contains('under')).toBe(true)
+  const under = document.querySelector<HTMLElement>('.under')
   expect(under?.querySelectorAll('.caption')).toHaveLength(windows().length)
   expect(under?.querySelector('.window')).toBe(null)
   expect(layer()?.querySelector('.caption')).toBe(null)
+  expect(under?.compareDocumentPosition(layer() as Node)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  for (const one of windows()) expect(one.parentElement?.classList.contains('canvas')).toBe(true)
   // And it goes with the overview.
   expect(overlays.escape()).toBe(true)
   flushSync()
   await tick()
-  expect(room.querySelector('.under')).toBe(null)
+  expect(document.querySelector('.under')).toBe(null)
 })
 
 test('every scroll zooms about the pointer, Ctrl or not, and none moves the canvas', async () => {
@@ -424,8 +432,22 @@ test('a zoom only moves the camera: where the windows lie, and how big, is the s
   // Emil, round 4: scrolling changed the bubbles - the room kept under each window for
   // its name grew as the camera drew back, and the windows were laid out again.
   await opened()
-  const laidOut = () =>
-    windows().map((one) => [one.style.width, one.style.height, one.style.transform].join(' '))
+  const laidOut = () => {
+    const [cx, cy, zoom] = (
+      /translate\(([-\d.]+)px, ([-\d.]+)px\) scale\(([-\d.]+)\)/.exec(
+        document.querySelector<HTMLElement>('.world')?.style.transform ?? '',
+      ) ?? []
+    )
+      .slice(1)
+      .map(Number)
+    return windows().map((one) => {
+      const [x, y] = (/translate\(([-\d.]+)px, ([-\d.]+)px\)/.exec(one.style.transform) ?? [])
+        .slice(1)
+        .map(Number)
+      const at = [((x ?? 0) - (cx ?? 0)) / (zoom ?? 1), ((y ?? 0) - (cy ?? 0)) / (zoom ?? 1)]
+      return [one.style.width, one.style.height, ...at.map((v) => v.toFixed(2))].join(' ')
+    })
+  }
   const before = laidOut()
   for (const deltaY of [400, 400, 400]) {
     layer()?.dispatchEvent(

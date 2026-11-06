@@ -8,11 +8,13 @@
    *  copy of it - and the other tabs come down out of the strip from where each tab sits
    *  as pictures of themselves (WindowFace.svelte). They land laid out the way the panes
    *  are, a split's sides side by side with a curve between them (layout.ts). A web page,
-   *  which no style can move, steps behind its picture for the whole run, and its pane
-   *  stands back while the picture flies as its window. While a window is away, the tab
-   *  it is is out of its strip, so nothing is seen twice. A press on one opens it: it
-   *  grows back into its pane while the rest go home to the strip. Alt Alt again, Escape,
-   *  or a press on the canvas send every window home.
+   *  which no style can move, stands still as its picture for the whole run, in its hole,
+   *  which shrinks with its pane (`holdStill`). The panes and the windows are stacked in
+   *  one order, the window's own, and nothing is ever made a layer of its own or let go
+   *  of as one: every frame is drawn at the size it is shown. While a window is away,
+   *  the tab it is is out of its strip, so nothing is seen twice. A press on one opens
+   *  it: it grows back into its pane while the rest go home to the strip. Alt Alt again,
+   *  Escape, or a press on the canvas send every window home.
    *
    *  Every window is one element on springs from the tab it was to the window it is
    *  (flight.ts), so a change of mind mid-flight turns it round from where it is, at the
@@ -681,6 +683,8 @@
   const LONGEST_FRAME = 1 / 30
   let unready = 0
   let entered = 0
+  let stood = true
+  const STANDS = 1500
 
   function readying(done: Promise<unknown>) {
     if (started) return
@@ -699,7 +703,10 @@
 
   function tick(now: number) {
     frameAsked = 0
-    if (!started && unready > 0 && now - entered < READY) {
+    if (
+      !started &&
+      ((unready > 0 && now - entered < READY) || (!stood && now - entered < STANDS))
+    ) {
       last = now
       frameAsked = requestAnimationFrame(tick)
       return
@@ -720,10 +727,8 @@
       else paint(id)
     }
     awayFromStrip()
-    if (moving) {
-      stirred()
-      fly()
-    } else {
+    if (moving) fly()
+    else {
       landed()
       if (!out) gone()
     }
@@ -744,9 +749,10 @@
     for (const id of flights.keys()) paint(id)
   }
 
-  /** The tab worked in, while the windows fly: over every other window, the pane it is
-   *  in too (Emil: the others flew over it as it shrank). */
-  const inFront = (id: string) => onTheWay && id === workspace.activeTabId
+  function stackOf(id: string): string {
+    if (heldIds.has(id)) return 'var(--z-drawer)'
+    return id === workspace.activeTabId ? 'calc(var(--z-drawer) - 1)' : 'var(--z-bar)'
+  }
 
   /** How far out the overview is, 0 the app as it was and 1 all the way: what the
    *  ground, the row at the top, the cells, the lines and the windows' shadows fade by,
@@ -756,6 +762,7 @@
   let ground = $state<HTMLElement>()
   let canvasNode = $state<HTMLElement>()
   let top = $state<HTMLElement>()
+  let under = $state<HTMLElement>()
 
   let opens: HTMLElement[] = []
   let slides: HTMLElement[] = []
@@ -763,7 +770,7 @@
   function opensOf() {
     opens = [
       ...document.querySelectorAll<HTMLElement>(
-        "header[data-chrome='top'] :is(button, [role='button']), [data-side-toggle], [data-pane] > .here",
+        "header[data-chrome='top'] :is(button, [role='button']), [data-side-toggle], [data-pane]:has(> .here)",
       ),
     ]
     slides = [
@@ -844,6 +851,7 @@
   function begin() {
     started = true
     onTheWay = true
+    document.documentElement.dataset.overview = modes.overviewBlur ? 'blur' : 'slide'
     opensOf()
     for (const id of flights.keys()) paint(id)
   }
@@ -855,14 +863,13 @@
     const slot = laid.slots.find((one) => one.id === id)
     if (!flight || !parts || !slot) return
     const pose = flight.pose
-    const styles = drawn(pose, slot.w, slot.h, corner, camera.zoom)
+    const styles = drawn(pose, slot.w, slot.h, corner, camera)
     // Out, the first frame that moves is already the window's: the movement hides the
     // change. Home, the movement is slowest at its very end, so it is handed over there.
     const home = started ? (out ? null : fromHome(id)) : 0
     if (home !== null && home < NEAR)
       styles.window.opacity = String(Number(styles.window.opacity) * (home / NEAR))
     Object.assign(parts.window.style, styles.window)
-    parts.window.classList.toggle('is-front', inFront(id) && !heldIds.has(id))
     Object.assign(parts.face.style, styles.face)
     Object.assign(parts.chip.style, styles.chip)
     // How far the window is scaled from its own size, which its ring is drawn back by,
@@ -882,7 +889,10 @@
     const near = Math.max(0, 1 - off / CAPTION_NEAR) * Math.max(0, 1 - pose.tab * 3) * pose.alpha
     const caption = captions.get(id)
     if (caption) caption.style.opacity = String(near)
-    closers.get(id)?.style.setProperty('--near', String(near))
+    const closer = closers.get(id)
+    if (!closer) return
+    closer.style.setProperty('--near', String(near))
+    closer.style.translate = `${camera.x + (slot.x + slot.w) * camera.zoom}px ${camera.y + slot.y * camera.zoom}px`
   }
 
   /** The tab of a window that is its pane's, riding on top of its window, as the window
@@ -938,9 +948,6 @@
     return panesAsWindows.has(id) && !!pane && workspace.panes.at(pane)?.activeTabId === id
   }
 
-  /** A pane drawn where its window is this frame: over the bubbles and the names, under
-   *  the windows of the other tabs and its own ring, and over all of them while it is the
-   *  one held. It takes no press; its window over it does. */
   function movePane(id: string, pose: Pose) {
     const one = panesAsWindows.get(id)
     if (!one) return
@@ -948,67 +955,18 @@
     const styles = paneDrawn(pose, camera, one.box, one.head, corner, opening.at)
     Object.assign(one.node.style, styles, {
       transformOrigin: '0 0',
-      // Over the canvas while it is held, as the window under the hand is; under every
-      // surface that comes up over the overview, a drawer, the palette, a sheet.
-      zIndex: heldIds.has(id) || inFront(id) ? 'var(--z-drawer)' : 'var(--z-raised)',
+      zIndex: stackOf(id),
       pointerEvents: 'none',
-      // A layer of its own while anything moves; at rest drawn again at the size it is
-      // shown, so its words are as sharp as the other windows'.
-      willChange: stirring ? 'transform' : 'auto',
     })
   }
 
-  /** The camera moved - a pan, a pinch, a notch - and the panes moving as their windows
-   *  with it, which no world they are in moves for them, and the tabs riding on them.
-   *  Nothing is made a layer of its own for it, nor let go of as one after: a layer made
-   *  as a zoom starts and let go of as it stops was drawn again at another size each
-   *  time, and the windows and the bubbles flashed (Emil); each frame of a zoom is drawn
-   *  at the size it is shown. */
   $effect(() => {
     const looking = { ...camera }
     untrack(() => {
       if (!shown || !started || looking.zoom <= 0) return
-      for (const id of panesAsWindows.keys()) {
-        const pose = flights.get(id)?.pose
-        if (pose) movePane(id, pose)
-      }
-      for (const id of riderNodes.keys()) paintRider(id, out ? null : fromHome(id))
+      for (const id of flights.keys()) paint(id)
     })
   })
-
-  /** Whether anything moves: a window flying, or one under the hand. While it does, the
-   *  windows, the panes moving as theirs and the canvas under them are each a layer of
-   *  their own, which the screen only moves and scales; a moment after it stops, each is
-   *  drawn again at the size it is shown at - a page's picture smoothly scaled once, the
-   *  words of a pane drawn at their size - rather than a layer drawn at another size
-   *  scaled on every frame, which is jagged far out and slow in an engine such as
-   *  WebView2 (Emil, round 4). */
-  let stirring = false
-  let stillLater: ReturnType<typeof setTimeout> | undefined
-  let under = $state<HTMLElement>()
-
-  function stirred() {
-    clearTimeout(stillLater)
-    stillLater = setTimeout(settle, 180)
-    if (stirring) return
-    stirring = true
-    canvasNode?.classList.add('is-moving')
-    under?.classList.add('is-moving')
-    for (const [id, one] of panesAsWindows)
-      if (movesAsWindow(id)) one.node.style.willChange = 'transform'
-  }
-
-  function settle() {
-    if (frameAsked || held) {
-      stillLater = setTimeout(settle, 180)
-      return
-    }
-    stirring = false
-    canvasNode?.classList.remove('is-moving')
-    under?.classList.remove('is-moving')
-    for (const [id, one] of panesAsWindows)
-      if (movesAsWindow(id)) one.node.style.willChange = 'auto'
-  }
 
   const PANE_STYLES = [
     'transform',
@@ -1017,7 +975,6 @@
     'opacity',
     'z-index',
     'pointer-events',
-    'will-change',
   ]
 
   /** A pane where it is laid out, drawn as it always is. */
@@ -1076,6 +1033,9 @@
       entered = performance.now()
       started = false
       readying(faces.read())
+      const holding = pages.holdStill()
+      stood = holding === null
+      void holding?.finally(() => (stood = true))
       // Where it was left, once there is somewhere; the space worked in the first time, and
       // whenever where it was left shows nothing of the tab in front, as after a switch to
       // another space: the keyboard is on that window.
@@ -1092,11 +1052,6 @@
       for (const pane of workspace.panes.all) {
         const tab = pane.activeTabId ? byId.get(pane.activeTabId) : undefined
         if (!tab) continue
-        // A page's pane moves as its window too, the page's photograph in its hole and its
-        // bar over it: the live view stays where it was, out of sight under the canvas, and
-        // is not told where the hole goes (`look` in WebTab.svelte). A window drawn from the
-        // photograph alone was the page's picture over its bar at both ends of the way (#1136).
-        if (tab.kind === 'web') readying(pages.shoot(tab.id))
         const node = marked('pane', pane.id)
         const box = node?.getBoundingClientRect()
         if (!node || !box || box.width <= 0 || box.height <= 0) continue
@@ -1126,7 +1081,6 @@
     }
     shown = true
     out = true
-    document.documentElement.dataset.overview = modes.overviewBlur ? 'blur' : 'slide'
     if (again) {
       onTheWay = true
       aimAll()
@@ -1178,11 +1132,10 @@
     tabsAsDrawn = {}
     ridersDrawn = {}
     riders.clear()
-    clearTimeout(stillLater)
-    stirring = false
     tabOverview.out = []
     tabOverview.lifted = []
     delete document.documentElement.dataset.overview
+    void pages.letGo()
     for (const one of opens) one.style.removeProperty('--overview-open')
     for (const one of slides) one.style.removeProperty('--overview-slide')
     opens = []
@@ -1735,19 +1688,6 @@
     touching.set(event.pointerId, now)
   }
 
-  /** The layer under the panes, put first among them: drawn before every pane, and under
-   *  the bar. Moved back out as the layer goes, since it is no longer where it was made. */
-  function beneathPanes(node: HTMLElement) {
-    const layer = node.firstElementChild
-    const panes = document.querySelector('[data-panes]')
-    if (layer && panes) panes.prepend(layer)
-    return {
-      destroy() {
-        layer?.remove()
-      },
-    }
-  }
-
   function letGo(event: PointerEvent) {
     if (pressed?.whole && pressed.pointer === event.pointerId) {
       if (event.type === 'pointerup') up(event)
@@ -1774,48 +1714,6 @@
 />
 
 {#if shown}
-  <!-- Under the panes, which stand on it: the bubbles, the lines between a split's sides,
-       and the names under the windows, all of them before any window, so a window is
-       never under a name. Put among the panes themselves (`beneathPanes`), since a pane
-       moving as its window is drawn where the panes are drawn. -->
-  <div class="beneath" use:beneathPanes>
-    <div
-      class="under"
-      style:--overview-top="{barBottom}px"
-      aria-hidden="true"
-      bind:this={under}
-      onselectstart={(event) => event.preventDefault()}
-      ondragstart={(event) => event.preventDefault()}
-    >
-      <div
-        class="world"
-        style:transform="translate({camera.x}px, {camera.y}px) scale({camera.zoom})"
-        style:--overview-line={1 / camera.zoom}
-        style:--overview-names={Math.min(unzoom, NAMES_MOST)}
-        style:--overview-space-names={Math.min(unzoom, SPACE_NAMES_MOST)}
-      >
-        {#if cellsShown.length}
-          <Cells cells={cellsShown} pushed={pushedNow} holding={held !== null} inside={insideOf} />
-        {/if}
-        <svg class="seams" width="1" height="1">
-          {#each laid.seams as seam (seam.id)}
-            <path d={seamPath(seam)} />
-          {/each}
-        </svg>
-        {#each windows as { slot, tab } (tab.id)}
-          <span
-            class="caption"
-            style:translate="{slot.x}px {slot.y + slot.h + 8}px"
-            style:width="calc({slot.w}px / var(--overview-names))"
-            use:named={tab.id}
-          >
-            <TabMark {tab} /><span class="caption-name">{tab.shown}</span>
-          </span>
-        {/each}
-      </div>
-    </div>
-  </div>
-
   <!-- Asked for under Appearance: the app behind the canvas, blurred, its sidebars where
        they are. Otherwise there is nothing here at all: the sidebars slide away and the
        canvas is the ground the panes stand on. -->
@@ -1828,13 +1726,44 @@
     ></div>
   {/if}
 
-  <!-- A clear scrim, so a web page's live view steps behind its picture from the first
-       frame to the last (web-tab/covers.ts); it draws nothing and takes no press itself -
-       the bar over it is the window's still, and the floor under the windows is what a
-       press on the canvas lands on. -->
   <div
-    class="nib-scrim is-clear canvas"
+    class="under"
     style:--overview-top="{barBottom}px"
+    aria-hidden="true"
+    bind:this={under}
+    onselectstart={(event) => event.preventDefault()}
+    ondragstart={(event) => event.preventDefault()}
+  >
+    <div
+      class="world"
+      style:transform="translate({camera.x}px, {camera.y}px) scale({camera.zoom})"
+      style:--overview-line={1 / camera.zoom}
+      style:--overview-names={Math.min(unzoom, NAMES_MOST)}
+      style:--overview-space-names={Math.min(unzoom, SPACE_NAMES_MOST)}
+    >
+      {#if cellsShown.length}
+        <Cells cells={cellsShown} pushed={pushedNow} holding={held !== null} inside={insideOf} />
+      {/if}
+      <svg class="seams" width="1" height="1">
+        {#each laid.seams as seam (seam.id)}
+          <path d={seamPath(seam)} />
+        {/each}
+      </svg>
+      {#each windows as { slot, tab } (tab.id)}
+        <span
+          class="caption"
+          style:translate="{slot.x}px {slot.y + slot.h + 8}px"
+          style:width="calc({slot.w}px / var(--overview-names))"
+          use:named={tab.id}
+        >
+          <TabMark {tab} /><span class="caption-name">{tab.shown}</span>
+        </span>
+      {/each}
+    </div>
+  </div>
+
+  <div
+    class="canvas"
     bind:this={canvasNode}
     role="dialog"
     aria-modal="true"
@@ -1850,9 +1779,9 @@
     onselectstart={(event) => event.preventDefault()}
     ondragstart={(event) => event.preventDefault()}
   >
-    <div class="floor" aria-hidden="true"></div>
+    <div class="floor" style:top="{barBottom}px" aria-hidden="true"></div>
 
-    <div class="top" bind:this={top}>
+    <div class="top" style:--overview-top="{barBottom}px" bind:this={top}>
       {#if spaces.length > 1}
         <!-- All spaces or This space: whether the other spaces' cells are there too. -->
         <Select
@@ -1870,81 +1799,72 @@
       >
     </div>
 
-    <div class="world" style:transform="translate({camera.x}px, {camera.y}px) scale({camera.zoom})">
-      {#each windows as { slot, tab } (tab.id)}
-        {@const face = faceOf(slot)}
-        <button
-          class="window"
-          class:is-at={at === tab.id}
-          class:unsaved={isDraft(tab.note)}
-          style:width="{slot.w}px"
-          style:height="{slot.h}px"
-          aria-label={tab.shown}
-          aria-current={tab.id === workspace.activeTabId ? 'page' : undefined}
-          class:is-held={heldIds.has(tab.id)}
-          class:is-chosen={chosen.includes(tab.id)}
-          aria-pressed={chosen.length ? chosen.includes(tab.id) : undefined}
-          onfocus={() => (at = tab.id)}
-          onclick={(event) => clicked(event, tab)}
-          onpointerdown={(event) => down(event, tab.id)}
-          onpointermove={moved}
-          onpointerup={up}
-          onpointercancel={cancelled}
-          use:placed={tab.id}
-        >
-          <span class="face-box" style:scale={slot.w / face.w}>
-            <!-- A pane that is its window is under it, and the window only its ring; one whose
-                 pane shows another tab now is its picture again. -->
-            {#if !asPanes[tab.id] || workspace.panes.at(tab.paneId)?.activeTabId !== tab.id}
-              <WindowFace
-                {tab}
-                face={faces.of(tab.id)}
-                width={face.w}
-                height={face.h}
-                drawing={readying}
-                flying={onTheWay}
-              />
-            {/if}
-          </span>
-          <span class="chip" class:is-copy={!!tabsAsDrawn[tab.id]} aria-hidden="true">
-            {#if tabsAsDrawn[tab.id]}
-              <span class="chip-copy" use:holdingTab={tabsAsDrawn[tab.id]}></span>
-            {:else}
-              <span class="chip-inner"
-                ><TabMark {tab} /><span class="chip-name">{tab.shown}</span></span
-              >
-            {/if}
-          </span>
-          <span class="ring" style:--overview-line={1 / camera.zoom} aria-hidden="true"></span>
-        </button>
-        <!-- Its cross, on its corner while the pointer is on it: beside the window and not
-             in it, a button in a button being no button at all. -->
-        <button
-          class="closer"
-          class:is-held={heldIds.has(tab.id)}
-          type="button"
-          tabindex="-1"
-          title={t('Close')}
-          aria-label={t('Close')}
-          style:translate="{slot.x + slot.w}px {slot.y}px"
-          style:--overview-unzoom={unzoom}
-          onpointerdown={(event) => event.stopPropagation()}
-          onclick={(event) => shut(event, tab)}
-          use:closing={tab.id}
-        >
-          <Cross />
-        </button>
-      {/each}
-    </div>
-  </div>
-
-  <!-- The tabs riding on the windows that are their panes', on the screen and not on the
-       canvas: each where its tab is in its strip, against its window (`paintRider`), over
-       the pane in front as it flies over every other window (`movePane`). -->
-  <div class="riding" aria-hidden="true">
-    {#each windows as { tab } (tab.id)}
+    {#each windows as { slot, tab } (tab.id)}
+      {@const face = faceOf(slot)}
+      <button
+        class="window"
+        class:is-at={at === tab.id}
+        class:unsaved={isDraft(tab.note)}
+        style:width="{slot.w}px"
+        style:height="{slot.h}px"
+        aria-label={tab.shown}
+        aria-current={tab.id === workspace.activeTabId ? 'page' : undefined}
+        class:is-front={tab.id === workspace.activeTabId}
+        class:is-held={heldIds.has(tab.id)}
+        class:is-chosen={chosen.includes(tab.id)}
+        aria-pressed={chosen.length ? chosen.includes(tab.id) : undefined}
+        onfocus={() => (at = tab.id)}
+        onclick={(event) => clicked(event, tab)}
+        onpointerdown={(event) => down(event, tab.id)}
+        onpointermove={moved}
+        onpointerup={up}
+        onpointercancel={cancelled}
+        use:placed={tab.id}
+      >
+        <span class="face-box" style:scale={slot.w / face.w}>
+          {#if !asPanes[tab.id] || workspace.panes.at(tab.paneId)?.activeTabId !== tab.id}
+            <WindowFace
+              {tab}
+              face={faces.of(tab.id)}
+              width={face.w}
+              height={face.h}
+              drawing={readying}
+              flying={onTheWay}
+            />
+          {/if}
+        </span>
+        <span class="chip" class:is-copy={!!tabsAsDrawn[tab.id]} aria-hidden="true">
+          {#if tabsAsDrawn[tab.id]}
+            <span class="chip-copy" use:holdingTab={tabsAsDrawn[tab.id]}></span>
+          {:else}
+            <span class="chip-inner"
+              ><TabMark {tab} /><span class="chip-name">{tab.shown}</span></span
+            >
+          {/if}
+        </span>
+        <span class="ring" style:--overview-line={1 / camera.zoom} aria-hidden="true"></span>
+      </button>
+      <button
+        class="closer"
+        class:is-front={tab.id === workspace.activeTabId}
+        class:is-held={heldIds.has(tab.id)}
+        type="button"
+        tabindex="-1"
+        title={t('Close')}
+        aria-label={t('Close')}
+        onpointerdown={(event) => event.stopPropagation()}
+        onclick={(event) => shut(event, tab)}
+        use:closing={tab.id}
+      >
+        <Cross />
+      </button>
       {#if ridersDrawn[tab.id]}
-        <span class="rider" use:riding={tab.id}></span>
+        <span
+          class="rider"
+          class:is-front={tab.id === workspace.activeTabId}
+          aria-hidden="true"
+          use:riding={tab.id}
+        ></span>
       {/if}
     {/each}
   </div>
@@ -2013,21 +1933,9 @@
   .canvas {
     --overview-caption: var(--text-base);
     --overview-cell-name: calc(var(--text-base) * 1.6);
-    position: fixed;
-    inset: 0;
-    /* Over the panes and what floats over them, and under every surface that comes up
-       over the app: a drawer, the palette Shift Shift brings up (Emil, round 4: it was
-       drawn in among the windows), a notice, the settings, and a sheet - what the
-       overview asks, a terminal still running, words with no file, closed by a window's
-       cross, comes up over it and is answered there. */
-    z-index: calc(var(--z-drawer) - 1);
-    overflow: hidden;
-    background: none;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    /* Nothing but its windows, its row and its floor takes a press: the bar stays the
-       window's. */
-    pointer-events: none;
+    position: static;
+    width: 0;
+    height: 0;
     outline: none;
     touch-action: none;
     /* Windows are pictures of their tabs, not their words: nothing here is chosen as
@@ -2039,17 +1947,15 @@
   /* The canvas between the windows, under the bar, which a press, a drag or a pinch on
      the canvas lands on. */
   .floor {
-    position: absolute;
+    position: fixed;
     inset: 0;
-    top: var(--overview-top, 0);
-    pointer-events: auto;
+    z-index: var(--z-raised);
   }
 
   .top {
-    position: absolute;
-    z-index: var(--z-raised);
+    position: fixed;
+    z-index: var(--z-drawer);
     top: calc(var(--overview-top, 0px) + var(--space-3));
-    pointer-events: auto;
     left: 50%;
     display: flex;
     gap: var(--space-2);
@@ -2063,18 +1969,11 @@
     white-space: nowrap;
   }
 
-  /* The anchor the layer under the panes is made in, and moved out of. */
-  .beneath {
-    display: none;
-  }
-
-  /* Under the panes and over the ground they stand on, cut off at the bar. */
   .under {
     --overview-caption: var(--text-base);
     --overview-cell-name: calc(var(--text-base) * 1.6);
     position: fixed;
     inset: 0;
-    /* Level with the panes moving as their windows (`movePane`), and before them. */
     z-index: var(--z-raised);
     overflow: hidden;
     clip-path: inset(var(--overview-top, 0) 0 0 0);
@@ -2111,10 +2010,8 @@
     stroke-dasharray: none;
   }
 
-  /* A window: no frame, floating. Laid out once at its slot's size at the canvas's
-     corner; flight.ts moves and scales it from there. */
   .window {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     padding: 0;
@@ -2137,22 +2034,24 @@
     pointer-events: auto;
   }
 
-  /* Layers of their own only while something moves (`stirred`): at rest each is drawn at
-     the size it is shown at, so a picture is smoothly scaled once and words are drawn
-     at their size, never a layer of another size scaled every frame. */
-  .canvas:global(.is-moving) .window,
-  .canvas:global(.is-moving) .world,
-  .under:global(.is-moving) .world {
-    will-change: transform;
+  .window,
+  .closer,
+  .rider {
+    z-index: var(--z-bar);
   }
 
-  .window:global(.is-front) {
-    z-index: var(--z-lifted);
+  .window.is-front,
+  .closer.is-front,
+  .rider.is-front {
+    z-index: calc(var(--z-drawer) - 1);
   }
 
-  /* Under the hand, over the others, a little higher off the canvas. */
+  .window.is-held,
+  .closer.is-held {
+    z-index: var(--z-drawer);
+  }
+
   .window.is-held {
-    z-index: var(--z-raised);
     box-shadow:
       var(--shadow-lg),
       0 32px 80px -16px rgb(0 0 0 / 0.35);
@@ -2248,16 +2147,8 @@
 
   /* A tab riding on its window, on the screen (`paintRider`): its copy, at its own size,
      scaled from its corner. */
-  .riding {
-    position: fixed;
-    inset: 0;
-    z-index: var(--z-drawer);
-    overflow: hidden;
-    pointer-events: none;
-  }
-
   .rider {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     opacity: 0;
@@ -2273,7 +2164,7 @@
      the tab. */
   .closer {
     --closer-size: 22px;
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     display: flex;
@@ -2289,7 +2180,6 @@
     background: var(--surface-2);
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.22);
     transform-origin: 0 0;
-    scale: var(--overview-unzoom);
     /* Its middle on the corner: scaled about that point, so it grows in place. */
     transform: scale(1) translate(-50%, -50%);
     opacity: 0;

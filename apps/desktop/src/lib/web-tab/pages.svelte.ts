@@ -421,6 +421,7 @@ export class Page {
   shot = $state<string | null>(null)
   /** How the engine layers this page with the window's HTML; see `layering`. */
   layering = $state<Layering>('hide')
+  heldAt = $state.raw<Placement | null>(null)
   /** When that picture was taken, so two overlays in a row share one. */
   shotAt = 0
   /** The picture being taken at this moment, if one is.
@@ -1006,6 +1007,49 @@ class Pages {
   /** Whether pages are drawn under the app's HTML; see `layering`. */
   get under(): boolean {
     return layering === 'under'
+  }
+
+  still = $state(false)
+
+  holdStill(): Promise<void> | null {
+    this.still = true
+    const shown = this.each().filter(([, page]) => this.heldWhere(page) !== null)
+    if (shown.length === 0) return null
+    return Promise.all(shown.map(([tabId, page]) => this.holdOne(tabId, page))).then(
+      () => undefined,
+    )
+  }
+
+  private heldWhere(page: Page): Placement | null {
+    if (__EVEN_PLUGIN__ || !isDesktop || !page.live) return null
+    return page.heldAt ?? (page.shown && page.sent?.visible ? page.sent : null)
+  }
+
+  private async holdOne(tabId: string, page: Page): Promise<void> {
+    const at = this.heldWhere(page)
+    if (!at) return
+    if (!page.heldAt) {
+      await this.shoot(tabId)
+      if (!this.still) return
+      page.heldAt = at
+    }
+    await this.put(
+      tabId,
+      page,
+      page.layering === 'under' ? { ...at, cut: WHOLE } : { ...at, visible: false },
+    )
+  }
+
+  async letGo(): Promise<void> {
+    this.still = false
+    await Promise.all(this.each().map(([tabId, page]) => this.letOneGo(tabId, page)))
+  }
+
+  private async letOneGo(tabId: string, page: Page): Promise<void> {
+    const at = page.heldAt
+    if (!at) return
+    if (page.layering !== 'under') await this.put(tabId, page, at)
+    if (!this.still) page.heldAt = null
   }
 
   /** The tab is no longer the one showing.

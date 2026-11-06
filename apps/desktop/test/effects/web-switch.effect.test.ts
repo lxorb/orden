@@ -1009,54 +1009,61 @@ test('a picture of the page goes when the page is shown at another size', async 
   void unmount(app)
 })
 
-/** #1136: under the tab overview a web tab's pane shrinks into its window, its hole with
- *  it, while the page is under the overview's scrim. A page told where its hole was on
- *  every frame was a placement of a page nobody saw on each of them, and on an engine that
- *  photographs it its picture thrown away for every new size; it stays where it was until
- *  it is seen, and is then put where the hole is. */
-describe('a page all under a layer stays where it is while its hole moves', () => {
-  for (const cutting of [true, false]) {
-    test(cutting ? 'cut out whole' : 'hidden', async () => {
+describe('a page held still while its hole moves, and let go', () => {
+  for (const cutting of [true, false, 'under'] as const) {
+    test(cutting === 'under' ? 'drawn under the app' : cutting ? 'cut' : 'hidden', async () => {
       cuts = cutting
-      const { tab, app } = await opened(`https://example.com/under-${String(cutting)}`)
-      pages.of(tab.id).shot = 'data:image/png;base64,iVBORw0KGgo='
-      const scrim = layer('nib-scrim', { x: 0, y: 0, width: 800, height: 600 })
+      const { tab, app } = await opened(`https://example.com/still-${String(cutting)}`)
+      const page = pages.of(tab.id)
+      page.shot = 'data:image/png;base64,iVBORw0KGgo='
+      page.shotAt = Date.now()
       await settle()
       await frames()
       const hole = document.querySelector('.hole')
       if (!hole) throw new Error('no hole')
       onTestFinished(() => {
-        scrim.remove()
         hole.removeAttribute('data-box')
         void unmount(app)
       })
+      const shown = asked.filter((one) => one.command === 'web_place').at(-1)?.args.pane
+
+      asked.length = 0
+      await pages.holdStill()
+      await settle()
+      const held = asked.filter((one) => one.command === 'web_place')
+      expect(held.at(-1)?.args).toMatchObject(
+        cutting === 'under' ? { visible: true, cut: { all: true } } : { visible: false },
+      )
+      expect(hole.classList.contains('still')).toBe(true)
+      expect(hole.classList.contains('under')).toBe(false)
 
       asked.length = 0
       for (const [step, scale] of [0.9, 0.7, 0.5].entries()) {
-        const box = {
-          x: 30 * (step + 1),
-          y: 40 + 20 * (step + 1),
-          width: 800 * scale,
-          height: 560 * scale,
-        }
-        hole.setAttribute('data-box', JSON.stringify(box))
-        scrim.style.setProperty('--overview-open', String(1 - scale))
+        hole.setAttribute(
+          'data-box',
+          JSON.stringify({
+            x: 30 * (step + 1),
+            y: 40 + 20 * (step + 1),
+            width: 800 * scale,
+            height: 560 * scale,
+          }),
+        )
         await settle()
         await frames()
       }
       expect(asked.filter((one) => one.command === 'web_place')).toEqual([])
-      expect(pages.of(tab.id).shot).not.toBeNull()
 
       hole.removeAttribute('data-box')
-      scrim.remove()
+      await pages.letGo()
       await settle()
       await frames()
-      const last = asked.filter((one) => one.command === 'web_place').at(-1)
-      expect(last?.args).toMatchObject({
+      expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args).toMatchObject({
         visible: true,
         cut: null,
-        pane: { x: 0, y: 40, width: 800, height: 560 },
+        pane: shown,
       })
+      expect(page.heldAt).toBe(null)
+      expect(hole.classList.contains('under')).toBe(cutting === 'under')
     })
   }
 })
