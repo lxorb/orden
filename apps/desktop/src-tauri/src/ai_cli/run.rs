@@ -34,7 +34,7 @@ struct Shared {
     family: Family,
     stopped: AtomicBool,
     timed_out: AtomicBool,
-    input: Mutex<Option<ChildStdin>>,
+    input: Mutex<Option<mpsc::Sender<Vec<u8>>>>,
     born: Instant,
     last: AtomicU64,
 }
@@ -46,7 +46,7 @@ impl Shared {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
-    fn input(&self) -> MutexGuard<'_, Option<ChildStdin>> {
+    fn input(&self) -> MutexGuard<'_, Option<mpsc::Sender<Vec<u8>>>> {
         self.input
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
@@ -81,15 +81,15 @@ impl Running {
 
     pub fn write_line(&self, line: &str) -> io::Result<()> {
         let mut held = self.0.input();
-        let input = held
-            .as_mut()
-            .ok_or_else(|| io::Error::new(io::ErrorKind::BrokenPipe, "the input is closed"))?;
-        input.write_all(line.as_bytes())?;
-        input.write_all(
-            b"
-",
-        )?;
-        input.flush()?;
+        let closed = || io::Error::new(io::ErrorKind::BrokenPipe, "the input is closed");
+        let input = held.as_ref().ok_or_else(closed)?;
+        let mut bytes = Vec::with_capacity(line.len() + 1);
+        bytes.extend_from_slice(line.as_bytes());
+        bytes.push(b'\n');
+        if input.send(bytes).is_err() {
+            held.take();
+            return Err(closed());
+        }
         drop(held);
         self.0.touch();
         Ok(())
@@ -140,7 +140,7 @@ fn launch(
 
     let (once, kept) = match input {
         Some(bytes) => (stdin.map(|stdin| (stdin, bytes)), None),
-        None => (None, stdin),
+        None => (None, stdin.map(writer)),
     };
     let shared = Arc::new(Shared {
         child: Mutex::new(Some(child)),
@@ -185,6 +185,18 @@ fn launch(
     });
 
     Ok(Running(shared))
+}
+
+fn writer(mut stdin: ChildStdin) -> mpsc::Sender<Vec<u8>> {
+    let (sent, lines) = mpsc::channel::<Vec<u8>>();
+    thread::spawn(move || {
+        for line in lines {
+            if stdin.write_all(&line).and_then(|()| stdin.flush()).is_err() {
+                return;
+            }
+        }
+    });
+    sent
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
@@ -316,5 +328,40 @@ fn reap(shared: &Shared) -> Option<i32> {
             }
         }
         thread::sleep(Duration::from_millis(15));
+    }
+}
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_line_to_a_program_that_is_not_reading_yet_does_not_wait_for_it() {
+        let mut command = Command::new("sh");
+        command.args(["-c", "sleep 2; cat"]);
+        let (sent, heard) = mpsc::channel();
+        let running = open(command, Duration::from_secs(30), move |one| {
+            let _ = sent.send(one);
+        })
+        .unwrap();
+
+        let long = "x".repeat(1 << 20);
+        let started = Instant::now();
+        running.write_line(&long).unwrap();
+        running.write_line("after").unwrap();
+        running.close_input();
+        assert!(started.elapsed() < Duration::from_millis(500));
+
+        let lines: Vec<String> = heard
+            .iter()
+            .take_while(|one| matches!(one, Heard::Line(_)))
+            .filter_map(|one| match one {
+                Heard::Line(line) => Some(line),
+                Heard::End(_) => None,
+            })
+            .collect();
+        assert_eq!(lines.len(), 2);
+        assert_eq!(lines[0].len(), 1 << 20);
+        assert_eq!(lines[1], "after");
     }
 }
