@@ -25,6 +25,8 @@ from ApplicationServices import (
 )
 from PIL import Image, ImageChops, ImageGrab, ImageStat
 
+from carry_page import PAGE as CARRY_PAGE, carried
+
 COLOUR = (255, 0, 255)
 LAYER = (0, 160, 0)
 PAGE = b"""<!doctype html><title>under</title>
@@ -60,11 +62,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
         pass
 
     def do_GET(self) -> None:  # noqa: N802 - the standard library's name
+        page = CARRY_PAGE if self.path.startswith("/carry") else PAGE
         self.send_response(200)
         self.send_header("content-type", "text/html; charset=utf-8")
-        self.send_header("content-length", str(len(PAGE)))
+        self.send_header("content-length", str(len(page)))
         self.end_headers()
-        self.wfile.write(PAGE)
+        self.wfile.write(page)
 
     def do_POST(self) -> None:  # noqa: N802 - the standard library's name
         body = self.rfile.read(int(self.headers.get("content-length") or 0))
@@ -152,7 +155,7 @@ def scrolled_down(at: tuple[float, float]) -> None:
         Quartz.CGEventPost(Quartz.kCGHIDEventTap, event)
         time.sleep(0.05)
 
-def dragged(start: tuple[float, float], end: tuple[float, float]) -> None:
+def dragged(start: tuple[float, float], end: tuple[float, float], midway: Any = None) -> None:
     point(start)
     post(Quartz.kCGEventLeftMouseDown, start)
     time.sleep(0.2)
@@ -162,6 +165,8 @@ def dragged(start: tuple[float, float], end: tuple[float, float]) -> None:
         post(Quartz.kCGEventLeftMouseDragged, at)
         time.sleep(0.03)
     time.sleep(0.3)
+    if midway:
+        midway()
     post(Quartz.kCGEventLeftMouseUp, end)
     time.sleep(0.6)
 
@@ -307,6 +312,33 @@ def moves_as_before(exe: pathlib.Path, identifier: str, secret: str, env: dict[s
         except subprocess.TimeoutExpired:
             process.kill()
 
+def carried_in(app: App, url: str, name: str) -> tuple[list[str], list[str]]:
+    inner = app.eval(INNER)
+    if not isinstance(inner, dict):
+        return [f"[carry {name}] where the window is was not said: {inner}"], []
+    screen = lambda x, y: (inner["x"] + x, inner["y"] + y)  # noqa: E731
+    return carried(app.eval, screen, dragged, url, name)
+
+def carried_alone(exe: pathlib.Path, identifier: str, secret: str, env: dict[str, str], url: str, out: pathlib.Path, name: str) -> tuple[list[str], list[str]]:
+
+    process = subprocess.Popen([str(exe)], env=env, cwd=str(exe.parent), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        app = endpoint(identifier, process.pid, secret)
+        until = time.monotonic() + 90
+        while time.monotonic() < until and app.eval("!!nib.workspace") is not True:
+            time.sleep(1)
+        app.eval("await window.__TAURI_INTERNALS__.invoke('plugin:window|set_focus', { label: 'main' }); return true")
+        time.sleep(3)
+        said = carried_in(app, url, name)
+        shot().save(out / f"carried-{name}.png")
+        return said
+    finally:
+        process.terminate()
+        try:
+            process.wait(20)
+        except subprocess.TimeoutExpired:
+            process.kill()
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exe", required=True, type=pathlib.Path)
@@ -334,6 +366,11 @@ def main() -> int:
     env = {**os.environ, "NIB_SPACES_DIR": str(spaces)}
     as_before = moves_as_before(args.exe, args.identifier, secret, env)
     print(f"moves the app's page heard with no page under it: {as_before}", flush=True)
+    carry_url = url.replace("/under", "/carry")
+    beside_wrong, beside_unverified = carried_alone(args.exe, args.identifier, secret, env, carry_url, args.out, "beside")
+    under_wrong, under_unverified = carried_alone(
+        args.exe, args.identifier, secret, {**env, "NIB_PAGES_UNDER": "1"}, carry_url, args.out, "under"
+    )
     env["NIB_PAGES_UNDER"] = "1"
     said = open(args.out / "app.log", "wb")
     process = subprocess.Popen([str(args.exe)], env=env, cwd=str(args.exe.parent), stdout=said, stderr=subprocess.STDOUT)
@@ -475,6 +512,9 @@ def main() -> int:
             unverified.append("this process may not ask the accessibility hit test")
         elif "Pressable" not in named:
             wrong.append(f"the accessibility hit test does not find the page's button: {named!r}")
+
+        wrong += beside_wrong + under_wrong
+        unverified += beside_unverified + under_unverified
 
         wrong += overview(app, hole, ratio, args.out)
     finally:
