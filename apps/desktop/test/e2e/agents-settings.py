@@ -181,20 +181,34 @@ def look(browser, scheme: str, language: str) -> None:
     quiet(page)
 
     if language == "en":
+        check(f"[{name}] an MCP client says it manages its own permissions", page.locator(".agents .connected").count() == 1)
+        check(f"[{name}] and has no switch of them", page.locator(".agents [role=switch]", has_text="Run scripts in pages").count() == 0)
+        sidebar = page.evaluate("() => { const one = window.agentsFake.pair('Orden · Claude'); return { id: one.id, name: one.name } }")
+        page.locator(".agents .back").click()
+        page.wait_for_selector(".agents .agent")
+        quiet(page)
+        choose(page, sidebar["name"])
+        quiet(page)
+
         switch(page, "Run scripts in pages")
         page.wait_for_timeout(200)
-        grant = page.evaluate(GRANT, "claude-code")
+        grant = page.evaluate(GRANT, sidebar["id"])
         check(f"[{name}] a switch pressed is in the crate's grant", "browser.script" in grant["scopes"])
 
         switch(page, "Read your cookies")
         page.wait_for_timeout(200)
         switch(page, "Act in your tabs")
         page.wait_for_timeout(200)
-        grant = page.evaluate(GRANT, "claude-code")
+        grant = page.evaluate(GRANT, sidebar["id"])
         check(
             f"[{name}] what needed a scope goes with it",
             "browser.reader" not in grant["scopes"] and "browser.storage" not in grant["scopes"],
         )
+        page.locator(".agents .back").click()
+        page.wait_for_selector(".agents .agent")
+        quiet(page)
+        choose(page, "Claude Code")
+        quiet(page)
 
         field = page.locator(".agents h3:text-is('Sites') + .card .add")
         field.press_sequentially("https://login.bank2.example/sign-in?next=/")
