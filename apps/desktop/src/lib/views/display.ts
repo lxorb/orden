@@ -117,14 +117,14 @@ export function spacesIn(rows: readonly Row[], order: readonly string[]): string
 }
 
 export function notesIn(rows: readonly Row[]): { path: string; name: string }[] {
-  const many = rows.some((row) => row.space !== rows[0]?.space)
+  const tasks = rows.filter((row) => row.task)
+  const many = tasks.some((row) => row.space !== tasks[0]?.space)
   const seen = new Map<string, { space: string; name: string }>()
-  for (const row of rows)
-    if (row.task)
-      seen.set(many ? `${row.space}//${row.path}` : row.path, {
-        space: row.space,
-        name: row.file.basename,
-      })
+  for (const row of tasks)
+    seen.set(many ? `${row.space}//${row.path}` : row.path, {
+      space: row.space,
+      name: row.file.basename,
+    })
   const named = new Map<string, number>()
   for (const { name } of seen.values()) named.set(name, (named.get(name) ?? 0) + 1)
   return [...seen]

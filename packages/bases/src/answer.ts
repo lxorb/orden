@@ -189,9 +189,11 @@ export function compileView(base: Base, which?: string | number): CompiledView {
     }
 
     const kept: { row: Row; facts: RowFacts; at: number }[] = []
+    const spaces = new Set<string>()
     rows.forEach((row, at) => {
       if (kinds === 'notes' && row.kind !== 'note') return
       if (kinds === 'tasks' && row.kind !== 'task') return
+      spaces.add(row.space)
       if (!showCompleted && row.task && (row.task.done || row.task.cancelled)) return
       const one = factsOf(row)
       if (!one.pass) return
@@ -211,7 +213,7 @@ export function compileView(base: Base, which?: string | number): CompiledView {
     })
     const manySpaces =
       [view.groupBy, view.nib.subGroupBy].some((by) => by?.property === 'file.path') &&
-      new Set(kept.map((one) => one.row.space)).size > 1
+      spaces.size > 1
     const limit = view.limit && view.limit > 0 ? view.limit : null
     const cut = <T>(members: T[]): T[] => (limit === null ? members : members.slice(0, limit))
 
