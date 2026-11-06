@@ -14,6 +14,7 @@
     "./plane-diverge": "./src/plane-diverge.ts",
     "./seed": "./src/seed.ts",
     "./textops": "./src/textops.ts",
+    "./time": "./src/time.ts",
     "./tree": "./src/tree.ts",
     "./wire": "./src/wire.ts",
     "./sim": "./test/sim/index.ts"

@@ -59,6 +59,7 @@ import { openWaitingIssues } from './feedback-issues'
 import { recheckDomains } from './spaces/proof'
 import { expireRequests, sharedWithMe } from './spaces/share'
 import { themes } from './themes'
+import { time } from './time'
 import { purgeExpired, trash } from './trash'
 import { QUOTA, usedBytes } from './storage'
 import type { Env, Variables, Whoever } from './types'
@@ -238,6 +239,8 @@ app.route('/v2/blobs', v2Blobs)
 app.route('/v2/admin', syncAdmin)
 
 app.route('/v2/push', push)
+
+app.route('/v2/time', time)
 
 app.route('/v2/chats', chats)
 
