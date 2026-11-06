@@ -8,7 +8,15 @@
   import PagesPage from './PagesPage.svelte'
   import PagesSlot from './PagesSlot.svelte'
   import PagesZoom from './PagesZoom.svelte'
-  import { type Camera, ctrlWheelZoom, graphPoint, heldGestures, NOTCH, pinching } from './camera'
+  import {
+    type Camera,
+    ctrlWheelZoom,
+    graphPoint,
+    heldGestures,
+    NOTCH,
+    pinching,
+    turnOf,
+  } from './camera'
   import { putWords, toolPressed, wordsAt } from './canvas/actions'
   import { coloured, copied, movedBy, pickedBox, removed, sized, withText } from './canvas/edits'
   import { freshId, type InkPoint, type InkStroke } from './canvas/format'
@@ -34,7 +42,7 @@
   import { longPress } from './longpress'
   import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { stillness } from './motion'
-  import { forgetPaper } from './pages/paper'
+  import { forgetPaper, paperAhead } from './pages/paper'
   import {
     began,
     dragged,
@@ -46,6 +54,7 @@
     startedNearEnd,
     wheeled,
   } from './pages/pull'
+  import { inSight } from './pages/sight'
   import { PagesStore } from './pages/store.svelte'
   import { t } from './i18n.svelte'
   import { rooms } from './rooms.svelte'
@@ -60,6 +69,12 @@
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 
   const store = untrack(() => new PagesStore(tab))
+
+  untrack(() => {
+    const file = store.pages.find((one) => one.file)?.file
+    const note = tab.note.path
+    if (file) paperAhead({ file, note, root: workspace.rootHolding(note), shared: tab.note.shared })
+  })
 
   const A_TWITCH = 6
 
@@ -108,6 +123,10 @@
   const reach = $derived(reachFor((store.last?.height ?? 0) * camera.scale))
 
   const view = $derived<Camera>(rise ? { ...camera, y: camera.y + rise / camera.scale } : camera)
+
+  const sight = $derived(inSight(pages, view, turnOf(view) ? Math.hypot(width, height) : height))
+
+  const near = $derived(pages.slice(sight.from, sight.to))
 
   $effect(() => {
     store.measured(width, height)
@@ -932,10 +951,10 @@
     style:transform="translate({width / 2 - view.x * view.scale}px, {height / 2 -
       view.y * view.scale}px) scale({view.scale})"
   >
-    {#each pages as page, at (page.id)}
+    {#each near as page, at (page.id)}
       <PagesPage
         {page}
-        number={at + 1}
+        number={sight.from + at + 1}
         {unit}
         notePath={tab.note.path}
         root={workspace.rootHolding(tab.note.path)}

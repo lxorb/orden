@@ -7,7 +7,7 @@
   import { t } from './i18n.svelte'
   import { longPress } from './longpress'
   import { DIVIDER, type MenuEntry, menu } from './menu.svelte'
-  import { paperOf } from './pages/paper'
+  import { densityFor, paperOf } from './pages/paper'
   import { pages as showing } from './pages/showing.svelte'
   import { workspace } from './workspace.svelte'
 
@@ -17,8 +17,21 @@
 
   const follows = (_value: unknown) => undefined
 
+  const FIRST = 24
+
+  const STEP = 48
+
   const store = $derived(showing.current?.store ?? null)
   const pages = $derived(store?.pages ?? [])
+
+  let listed = $state(FIRST)
+  const shown = $derived(pages.length > listed ? pages.slice(0, listed) : pages)
+
+  $effect(() => {
+    if (listed >= pages.length) return
+    const timer = window.setTimeout(() => (listed += STEP), 0)
+    return () => window.clearTimeout(timer)
+  })
   const spaceRoot = $derived(workspace.rootHolding(store?.path ?? null))
   const on = $derived(store?.showing ?? 0)
 
@@ -35,15 +48,63 @@
 
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- painted into, never rendered from; see above
   const sheets = new Map<string, HTMLCanvasElement>()
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- which sheets are near the screen, not anything rendered
+  const seen = new Set<string>()
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- the draws under way, not anything rendered
+  const drawing = new Map<string, AbortController>()
+  const painted = new WeakMap<HTMLCanvasElement, Canvas>()
+
+  const watcher =
+    typeof IntersectionObserver === 'undefined'
+      ? null
+      : new IntersectionObserver(sighted, { rootMargin: '50% 0px' })
+
+  $effect(() => () => {
+    watcher?.disconnect()
+    for (const one of drawing.values()) one.abort()
+  })
+
+  function sighted(entries: IntersectionObserverEntry[]) {
+    for (const entry of entries) {
+      const id = (entry.target as HTMLElement).dataset.page
+      if (!id) continue
+
+      if (!entry.isIntersecting) {
+        seen.delete(id)
+        drawing.get(id)?.abort()
+        drawing.delete(id)
+        continue
+      }
+
+      seen.add(id)
+      const element = sheets.get(id)
+      const page = pages.find((one) => one.id === id)
+      if (element && page && painted.get(element) !== store?.canvas) void draw(page, element)
+    }
+  }
 
   function keep(id: string, element: HTMLCanvasElement | undefined) {
-    if (element) sheets.set(id, element)
-    else sheets.delete(id)
+    const was = sheets.get(id)
+    if (was && was !== element) watcher?.unobserve(was)
+    if (element) {
+      sheets.set(id, element)
+      if (watcher) watcher.observe(element)
+      else seen.add(id)
+    } else {
+      sheets.delete(id)
+      seen.delete(id)
+      drawing.get(id)?.abort()
+      drawing.delete(id)
+    }
   }
 
   async function draw(page: PageNode, element: HTMLCanvasElement) {
     const canvas = store?.canvas
     if (!canvas) return
+
+    drawing.get(page.id)?.abort()
+    const asked = new AbortController()
+    drawing.set(page.id, asked)
 
     const scale = WIDE / page.width
     const tall = page.height * scale
@@ -63,8 +124,17 @@
 
     const paper =
       page.file && page.page
-        ? await paperOf({ file: page.file, note: store.path, root: spaceRoot }, page.page)
+        ? await paperOf(
+            { file: page.file, note: store.path, root: spaceRoot },
+            page.page,
+            asked.signal,
+            true,
+            densityFor(scale * ratio),
+          )
         : null
+    if (asked.signal.aborted) return
+    drawing.delete(page.id)
+    painted.set(element, canvas)
 
     const inked = paper ? document.createElement('canvas') : element
     if (paper) {
@@ -91,7 +161,7 @@
     window.clearTimeout(timer)
     timer = window.setTimeout(() => {
       for (const page of pages) {
-        const element = sheets.get(page.id)
+        const element = seen.has(page.id) ? sheets.get(page.id) : undefined
         if (element) void draw(page, element)
       }
     }, SETTLE)
@@ -187,7 +257,7 @@
 {#if store}
   <div class="navigator" bind:this={host}>
     <ul>
-      {#each pages as page, at (page.id)}
+      {#each shown as page, at (page.id)}
         <li>
           <button
             class="page"
@@ -210,6 +280,7 @@
           >
             <canvas
               aria-hidden="true"
+              data-page={page.id}
               style:aspect-ratio="{page.width} / {page.height}"
               bind:this={
                 () => sheets.get(page.id),

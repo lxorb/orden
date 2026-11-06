@@ -2,7 +2,7 @@
   import { onDestroy } from 'svelte'
   import type { PageNode } from './canvas/format'
   import { t } from './i18n.svelte'
-  import { paperOf } from './pages/paper'
+  import { densityFor, paperOf } from './pages/paper'
 
   const {
     page,
@@ -29,6 +29,10 @@
 
   const backed = $derived(!!page.file && !!page.page)
 
+  const density = $derived(
+    densityFor((typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1) / unit),
+  )
+
   $effect(() => {
     if (!backed) return
 
@@ -37,19 +41,17 @@
     if (!file || !at) return
 
     const asking = tries
-    let alive = true
-    void paperOf({ file, note: notePath, root, shared }, at).then((drawn) => {
-      if (!alive || asking !== tries) return
+    const leaving = new AbortController()
+    void paperOf({ file, note: notePath, root, shared }, at, leaving.signal, false, density).then(
+      (drawn) => {
+        if (leaving.signal.aborted || asking !== tries) return
 
-      paper = drawn?.image ?? null
-      lost = !drawn
-    })
+        paper = drawn?.image ?? null
+        lost = !drawn
+      },
+    )
 
-    return () => {
-      alive = false
-      paper = null
-      lost = false
-    }
+    return () => leaving.abort()
   })
 
   let tries = $state(0)

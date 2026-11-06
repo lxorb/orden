@@ -43,5 +43,26 @@ export async function fileBytes(path: string): Promise<Uint8Array> {
   if (isNative) return new Uint8Array(await invoke<ArrayBuffer>('read_file', { path }))
 
   const uri = await invoke<string>('read_asset', { path })
+  return await decoded(uri)
+}
+
+export async function decoded(uri: string): Promise<Uint8Array> {
+  const comma = uri.indexOf(',')
+  const native = (Uint8Array as { fromBase64?: (text: string) => Uint8Array }).fromBase64
+  if (native && /^data:[^,]*;base64,/.test(uri.slice(0, comma + 1))) {
+    try {
+      return native(uri.slice(comma + 1))
+    } catch {
+      return parseDataUri(uri)?.bytes ?? new Uint8Array()
+    }
+  }
+
+  if (typeof fetch === 'function' && uri.startsWith('data:')) {
+    const read = await fetch(uri)
+      .then((answer) => (answer.ok ? answer.arrayBuffer() : null))
+      .catch(() => null)
+    if (read) return new Uint8Array(read)
+  }
+
   return parseDataUri(uri)?.bytes ?? new Uint8Array()
 }

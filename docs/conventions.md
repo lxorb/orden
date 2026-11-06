@@ -720,6 +720,13 @@ fully loaded when it does. What holds it, and how to measure it again:
   note's editor, on a fixed space of a hundred notes, against a line scaled to the
   machine it runs on. Red with a task of eighty reference milliseconds put into the
   search stage's turn, green without it.
+- **A thick PDF**, on every change in the smoke job: `apps/desktop/test/e2e/big-pdf.py`.
+  A PDF of a thousand pages turned into its page note shows the page it lands on within
+  600 reference milliseconds, and within 300 when the note opens again; no task over a
+  hundred holds the thread while it opens, settles, turns to its last page or opens
+  again, and only the sheets in sight are in the document. Only those are drawn, one at
+  a time, the reader's before the page list's, and a far-off page small
+  (`apps/desktop/src/lib/pages/paper.ts`, `sight.ts`).
 - **The note before its editor**, every night: `apps/desktop/test/e2e/first-screen.py`.
   A long note left in its middle, the page loaded again four times slower, and three
   things held: the note's lines were drawn in the launch's first frame, before the

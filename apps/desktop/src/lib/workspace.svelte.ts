@@ -1463,6 +1463,8 @@ class Workspace {
   async openPdf(asked: string, page: number | null = null, how: OpenHow = {}) {
     if (__EVEN_PLUGIN__) return
 
+    void import('./surfaces.svelte').then(({ pagesSurface }) => pagesSurface())
+
     const path = this.spelled(asked)
     const held = isPagesTarget(path) ? path : await this.heldBy(path)
     if (held) {
