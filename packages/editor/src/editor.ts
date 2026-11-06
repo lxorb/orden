@@ -19,7 +19,7 @@ import { external } from './external'
 import { blockHandles } from './block/handle'
 import { landing } from './landing'
 import { folding, foldsChanged, type FoldLines, withFolds } from './fold'
-import { imageHandling, imageResolver, type ImageSink } from './images'
+import { type CarriedFiles, imageHandling, imageResolver, type ImageSink } from './images'
 import { propertyChoices } from './live-preview/properties'
 import { linkClicks, type LinkPress, linkOpener } from './links'
 import { tagClicks, tagOpener, type TagOpener } from './tag-press'
@@ -59,6 +59,7 @@ export interface StateOptions {
   shared?: SharedDoc
   onChange?: (doc: Text) => void
   onImage?: ImageSink
+  carriedFiles?: CarriedFiles
   resolveImage?: (src: string) => string
   propertyChoices?: Record<string, readonly string[]>
   onSelection?: (view: EditorView) => void
@@ -137,7 +138,7 @@ export function editorState(options: StateOptions): EditorState {
       mathsPreview,
       parseAhead,
       completionExtensions(),
-      ...(onImage ? [imageHandling(onImage)] : []),
+      ...(onImage ? [imageHandling(onImage, options.carriedFiles)] : []),
       richPaste(),
       richCopy(),
       openTail(),

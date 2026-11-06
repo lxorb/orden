@@ -1,5 +1,14 @@
 import { describe, expect, test } from 'vitest'
-import { carry, isFileDrop, isLinkDrop, landing } from './drag-paths'
+import {
+  carriedNothing,
+  carry,
+  carryFromExplorer,
+  carriesFiles,
+  isFileDrop,
+  isLinkDrop,
+  landing,
+  outsideRows,
+} from './drag-paths'
 
 function transfer(types: string[] = []): DataTransfer {
   const data = new Map<string, string>()
@@ -77,5 +86,28 @@ describe('a bookmark carried over the file list', () => {
     const search = transfer()
     carryBookmark(search, 1)
     expect(landing(drop(search), 'linux')).toBeNull()
+  })
+})
+
+describe('rows of the file explorer, carried where files are taken', () => {
+  test('are files to a place that takes them, even before the page may read the drag', () => {
+    const rows = transfer()
+    carryFromExplorer(rows, ['/home/me/Downloads/a.png', '/home/me/b.pdf'], false)
+    expect(carriesFiles(rows)).toBe(true)
+    expect(outsideRows(rows)).toEqual(['/home/me/Downloads/a.png', '/home/me/b.pdf'])
+
+    const hidden = { types: rows.types, getData: () => '' } as unknown as DataTransfer
+    expect(outsideRows(hidden)).toEqual(['/home/me/Downloads/a.png', '/home/me/b.pdf'])
+    carriedNothing()
+  })
+
+  test('rows inside the spaces are rows of the file list, not files from outside', () => {
+    const rows = transfer()
+    carryFromExplorer(rows, ['/s/Idea.md'], true)
+    expect(outsideRows(rows)).toEqual([])
+    expect(carriesFiles(rows)).toBe(false)
+    expect(carriesFiles(transfer(['Files']))).toBe(true)
+    expect(carriesFiles(transfer(['text/plain']))).toBe(false)
+    carriedNothing()
   })
 })

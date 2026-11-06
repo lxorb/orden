@@ -1,16 +1,9 @@
-import { carried, explorerDragged, isExplorerDrag, isFileDrop, isTreeDrag } from './drag-paths'
+import { isFileDrop, outsideRows } from './drag-paths'
 
 const PDF = /\.pdf$/i
 
 function isPdfPath(path: string): boolean {
   return PDF.test(path)
-}
-
-function outsideRows(transfer: DataTransfer | null): readonly string[] {
-  if (!isExplorerDrag(transfer) || isTreeDrag(transfer)) return []
-
-  const rows = explorerDragged(transfer)
-  return rows.length ? rows : carried()
 }
 
 function mayHoldPdfs(transfer: DataTransfer | null): boolean {

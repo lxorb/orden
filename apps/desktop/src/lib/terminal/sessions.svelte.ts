@@ -8,7 +8,7 @@ import { chrome } from '../glass/chrome.svelte'
 import '@xterm/xterm/css/xterm.css'
 import { untrack } from 'svelte'
 import { copyText } from '../clipboard'
-import { dragged, explorerDragged, isExplorerDrag, isFileDrop, isTreeDrag } from '../drag-paths'
+import { dragged, isExplorerDrag, isFileDrop, isTreeDrag, outsideRows } from '../drag-paths'
 import { i18n, key, plural, t } from '../i18n.svelte'
 import { identifier } from '../identifier'
 import { notify } from '../notify'
@@ -1211,7 +1211,7 @@ class Session {
     const rows = isTreeDrag(transfer)
       ? dragged(transfer)
       : isExplorerDrag(transfer)
-        ? explorerDragged(transfer)
+        ? outsideRows(transfer)
         : null
     if (rows !== null) {
       this.droppedRows(rows)

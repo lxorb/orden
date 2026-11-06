@@ -80,7 +80,7 @@ class Drag extends MouseEvent {
 Object.assign(globalThis, { DataTransfer: Transfer, DragEvent: Drag })
 
 const { guardDrops } = await import('./drops')
-const { OutsideDrops } = await import('./outside-drops')
+const { filesAt, OutsideDrops } = await import('./outside-drops')
 const { explorerDragged, isExplorerDrag } = await import('./drag-paths')
 
 let under: Element | null = null
@@ -312,5 +312,19 @@ describe('a file dropped on Orden from another app, as WebView2 and WebKit hand 
     expect(dropped).toBe(1)
     expect(handed.asked).toEqual([])
     expect(opened).toEqual([])
+  })
+})
+
+describe('files read for a place that takes them by their paths', () => {
+  test('are named and typed by their paths, and one that cannot be read is left out', async () => {
+    const read = (path: string) =>
+      path.endsWith('gone.png')
+        ? Promise.reject(new Error('gone'))
+        : Promise.resolve(new Uint8Array([1, 2]))
+    const files = await filesAt(['/home/me/a.png', '/home/me/gone.png', '/home/me/b.pdf'], read)
+    expect(files.map((one) => [one.name, one.type, one.size])).toEqual([
+      ['a.png', 'image/png', 2],
+      ['b.pdf', 'application/pdf', 2],
+    ])
   })
 })
