@@ -156,7 +156,7 @@ FunctionEnd
   WriteRegStr SHCTX "Software\Classes\NibPDF" "" "${PRODUCTNAME} PDF"
   WriteRegStr SHCTX "Software\Classes\NibPDF\Application" "ApplicationName" "${PRODUCTNAME}"
   WriteRegStr SHCTX "Software\Classes\NibPDF\Application" "ApplicationIcon" "$INSTDIR\${MAINBINARYNAME}.exe,0"
-  WriteRegStr SHCTX "Software\Classes\NibPDF\DefaultIcon" "" "$INSTDIR\${MAINBINARYNAME}.exe,0"
+  WriteRegStr SHCTX "Software\Classes\NibPDF\DefaultIcon" "" "$INSTDIR\documents\pdf.ico"
   WriteRegStr SHCTX "Software\Classes\NibPDF\shell\open\command" "" '"$INSTDIR\${MAINBINARYNAME}.exe" "%1"'
   WriteRegStr SHCTX "Software\Classes\.pdf\OpenWithProgids" "NibPDF" ""
 !macroend

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<defs>
+<linearGradient id="wash" x1="192" y1="80" x2="832" y2="944" gradientUnits="userSpaceOnUse">
+<stop offset="0" stop-color="#bfddfb"/><stop offset="0.25" stop-color="#bfddfb"/>
+<stop offset="0.75" stop-color="#e7c6ec"/><stop offset="1" stop-color="#e7c6ec"/>
+</linearGradient>
+<clipPath id="page"><path d="M248 80H656L832 256V888A56 56 0 0 1 776 944H248A56 56 0 0 1 192 888V136A56 56 0 0 1 248 80Z"/></clipPath>
+</defs>
+<path d="M248 80H656L832 256V888A56 56 0 0 1 776 944H248A56 56 0 0 1 192 888V136A56 56 0 0 1 248 80Z" fill="url(#wash)"/>
+<rect x="192" y="540" width="640" height="404" fill="#D2414D" clip-path="url(#page)"/>
+<rect x="401.12" y="189.12" width="155.4" height="57.12" rx="14.28" fill="#1c2233"/><rect x="565.76" y="189.12" width="57.12" height="155.4" rx="14.28" fill="#1c2233"/><rect x="467.48" y="353.76" width="155.4" height="57.12" rx="14.28" fill="#1c2233"/><rect x="401.12" y="255.48" width="57.12" height="155.4" rx="14.28" fill="#1c2233"/>
+
+<path d="M248 80H656L832 256V888A56 56 0 0 1 776 944H248A56 56 0 0 1 192 888V136A56 56 0 0 1 248 80Z" fill="none" stroke="#1c2233" stroke-opacity="0.28" stroke-width="52" stroke-linejoin="round"/>
+<path d="M656 80V212A44 44 0 0 0 700 256H832Z" fill="#FFFFFF" fill-opacity="0.85" stroke="#1c2233" stroke-opacity="0.28" stroke-width="52" stroke-linejoin="round"/>
+</svg>

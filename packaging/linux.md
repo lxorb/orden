@@ -68,6 +68,16 @@ is still short of two things, which every package here repairs:
   256x256 image means "128 logical pixels at 2x" and every theme lookup scales
   it wrong. Tauri puts `128x128@2x.png` there by name rather than by size.
 
+No package installs an icon or a definition for `application/pdf` (nothing under
+`icons/*/mimetypes/` or `mime/packages/`). A freedesktop MIME icon belongs to the type,
+whichever program opens it, so one from Orden would replace the PDF icon of every theme
+on the system, Orden being their reader or not. Orden's document icons
+(`apps/desktop/src-tauri/icons/documents`, drawn by `scripts/make-document-icons.mjs`)
+go to Windows and the Mac, where the icon a file shows is the one its default program
+names. The `wayland` workflow's `deb` and `rpm` jobs hold the packages to it. The
+AppImage carries the build machine's hicolor theme, `mimetypes/` and all, which stays
+inside it, so its `build` job asks only that it define no type and draw no PDF icon.
+
 `Maintainer:` is `bundle.publisher`, a name with no email address, which Debian's
 policy asks for and nothing here enforces.
 
