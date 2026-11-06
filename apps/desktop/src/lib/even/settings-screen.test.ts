@@ -3,13 +3,6 @@ import { beforeEach, describe, expect, test } from 'vitest'
 import { Session } from './session'
 import { type Option, type SettingRow, type Settings, Shell, type Words, type World } from './shell'
 
-/** The settings, on the glasses.
- *
- *  Every glasses setting is reachable without the phone, and adding one is adding
- *  an entry to the schema both surfaces are drawn from. Nothing in the shell knows
- *  which settings there are, which is what these tests stand on: the fake below is
- *  the whole of what the screen is told. */
-
 const WORDS: Words = {
   spaces: 'Spaces',
   notes: 'Notes',
@@ -28,7 +21,6 @@ const WORDS: Words = {
 
 const paging = { breakAt: 2, gutter: 0, inner: BODY_INNER, rows: BODY_ROWS }
 
-/** A world with nothing in it: none of these tests is about the lists. */
 const WORLD: World = {
   space: () => 'Work',
   contents: () => [],
@@ -89,7 +81,6 @@ beforeEach(() => {
   shell = new Shell(WORLD, () => WORDS, session, settings)
 })
 
-/** A hold, then the fourth choice. */
 function openSettings() {
   shell.handle('hold')
   for (let at = 0; at < 3; at++) shell.handle('down')
@@ -122,7 +113,6 @@ describe('the settings screen', () => {
     expect(shell.handle('tap')).toBe('draw')
 
     expect(settings.numbers).toBe(false)
-    // And the row says so at once, without a second gesture.
     expect(shell.view().body).toContain('Off')
     expect(shell.screen.kind).toBe('settings')
   })
@@ -168,7 +158,6 @@ describe('the settings screen', () => {
     shell.handle('down')
     expect(shell.screen).toMatchObject({ at: 1 })
     shell.handle('down')
-    // The reset, and then the end of the list.
     expect(shell.screen).toMatchObject({ at: 2 })
     shell.handle('down')
     expect(shell.screen).toMatchObject({ at: 2 })

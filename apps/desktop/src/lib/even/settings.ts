@@ -1,21 +1,3 @@
-/** Every setting the glasses have, said once.
- *
- *  Two surfaces show these: the Glasses section of the phone's own Settings, and
- *  a settings screen on the panel itself, reachable from the hold modal so that
- *  nothing about the glasses needs the phone. Neither has a list of its own. A
- *  setting is one entry here - what it is called, what kind of control it is, how
- *  to read it and how to write it - and both surfaces render that.
- *
- *  Which is the whole point: adding a setting is adding one entry. The phone's
- *  pane, the glasses' rows, the reset on both of them and the search that reads
- *  the settings all follow, and none of them can be forgotten because none of
- *  them holds a second copy.
- *
- *  The kinds are the app's own three, from preferences.ts: a switch is a toggle, a
- *  select is a choice, a slider is a number. A phone draws them as it draws every
- *  other setting; the glasses draw a row with the value on the right, and a tap
- *  either flips it or opens the choices as a list like any other. */
-
 import { COMPACTIONS, DEFAULT_COMPACTION, type Marks } from '@orden/glasses/choices'
 import { key, t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
@@ -23,52 +5,19 @@ import type { Field, Group } from '../preferences'
 import { resetFields } from '../reset-fields'
 import { commandWords, DEFAULT_WORDS } from './commands'
 
-/** There is no scrolling setting either.
- *
- *  There was, and it offered two answers to "who moves the note": the app cutting it
- *  into panels and turning them, or the whole note handed to the firmware to scroll
- *  itself. The second one never worked on a device - nothing in the SDK scrolls a
- *  container, `TextContainerUpgrade`'s `contentOffset` is undocumented and inert, and
- *  what the firmware did instead was show a scroll bar and ignore every flick. The
- *  app scrolled it in the end, a line at a time, which is the app turning pages of
- *  one row: the same mechanism with a worse page.
- *
- *  Emil: *"please remove the scrolling 'nib turns the pages / glasses scroll'
- *  setting from the glasses section of the settings. Effectively it should be always
- *  nib who turns the pages."* So there is one behaviour and no row for it, and the
- *  page number means something again on every page.
- *
- *  There is no page-number setting either.
- *
- *  There was, and Emil turned it off and on again and found it broken; the mechanism
- *  was fixed and the setting was still the wrong idea. A page number means something
- *  exactly where the app is cutting the note into panels and turning them - which is
- *  now the only thing it ever does - so it is always there and nothing decides it. A
- *  value an older build saved is ignored. See `place` in shell.ts. */
-
-/** One setting, and where it appears. */
 export interface Setting {
-  /** What the glasses name it in a tap. Also what the reset walks. */
   id: string
-  /** The heading it sits under, on both surfaces. */
   group: string
   field: Field
-  /** False for the handful that only make sense with a keyboard: a phrase is
-   *  typed, and a pair of glasses has nothing to type with. */
   onGlasses: boolean
 }
 
-/** The words for the levels of compaction, which are ours rather than the type's:
- *  "aggressive" is a name for a behaviour, not something to put in front of
- *  somebody. */
 const COMPACTION_WORDS: Record<string, string> = {
   none: key('Every line break'),
   collapse: key('One break between blocks'),
   aggressive: key('As little as possible'),
 }
 
-/** The markers a reader may turn on, in the order the pane lists them: what a
- *  construct *is* first, then what merely styles it. */
 const MARK_WORDS: { id: keyof Marks; label: string }[] = [
   { id: 'fence', label: key('Code fences') },
   { id: 'code', label: key('Inline code') },
@@ -80,10 +29,6 @@ const MARK_WORDS: { id: keyof Marks; label: string }[] = [
   { id: 'highlight', label: key('Highlight') },
 ]
 
-/** How a string is turned into words. `t` for the phone, `panelWord` for the glass:
- *  the firmware's font has no Devanagari, Thai or Arabic, so a panel written in one
- *  of those is a panel of boxes. See panel-words.ts, and `undrawable` in the glasses
- *  package, which is what decides it. */
 type Say = (text: string) => string
 
 function chooser(
@@ -107,11 +52,6 @@ function chooser(
   }
 }
 
-/** Everything the glasses have, in the order both surfaces show it.
- *
- *  `say` is how the labels are put into words: the phone's pane leaves it alone and
- *  gets the reader's language, and the glasses hand in `panelWord`, which is English
- *  wherever the firmware cannot draw that language. One schema either way. */
 export function glassesSettings(say: Say = t): Setting[] {
   const reading = say('Reading')
   const marked = say('Markdown on the panel')
@@ -123,10 +63,6 @@ export function glassesSettings(say: Say = t): Setting[] {
       group: reading,
       onGlasses: true,
       field: {
-        // Where a page begins. The one setting that changes how the panel reads
-        // rather than what is on it: a section that starts at the top of a panel,
-        // with its heading staying put above every page of it, is a document; a
-        // note cut every seven lines wherever they fall is a scroll.
         kind: 'select',
         label: say('New page at'),
         hint: t('Which headings start a new page on the glasses.'),
@@ -202,7 +138,6 @@ export function glassesSettings(say: Say = t): Setting[] {
   ]
 }
 
-/** What each marker starts as: rule one, from the mapping's own defaults. */
 const MARKS_INITIAL: Marks = {
   heading: false,
   bold: false,
@@ -214,7 +149,6 @@ const MARKS_INITIAL: Marks = {
   link: false,
 }
 
-/** The same settings as the phone's pane draws them, grouped in order. */
 export function glassesGroups(): Group[] {
   const out: Group[] = []
   for (const setting of glassesSettings()) {
@@ -226,11 +160,6 @@ export function glassesGroups(): Group[] {
   return out
 }
 
-/** The phrases each spoken command answers to, as fields for the phone.
- *
- *  Phone only: a phrase is typed, and a pair of glasses has nothing to type with.
- *  Each shows the default as its placeholder and an empty field puts it back, so
- *  the reset is a field that is already there rather than a button beside it. */
 export function wordFields(): Field[] {
   return commandWords().map((one): Field => ({
     kind: 'text',
@@ -243,24 +172,12 @@ export function wordFields(): Field[] {
   }))
 }
 
-/** Every glasses setting, as one string that changes whenever any of them does.
- *
- *  What the bridge watches so that a setting reaches the panel at once. Emil turned
- *  the page number off and on again and it never came back: the page had not
- *  changed a character, so nothing was sent, so the panel kept the words it had -
- *  and the reader is left holding a switch that does nothing. Built from the schema
- *  rather than written out, so a setting added tomorrow is watched by having been
- *  added. See the bridge's `watch`. */
 export function glassesStamp(): string {
   return glassesSettings()
     .map((one) => `${one.id}=${String(one.field.get())}`)
     .join('|')
 }
 
-/** Every glasses setting back to what it started as, from either surface.
- *
- *  Through the same reset the phone's own panes use; see reset-fields.ts. The
- *  spoken phrases go with them: they are a glasses setting like any other. */
 export function resetGlasses(): void {
   resetFields(glassesSettings().map(({ field }) => field))
 

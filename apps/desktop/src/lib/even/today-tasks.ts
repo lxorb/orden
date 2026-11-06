@@ -1,7 +1,3 @@
-/** Today on the glasses, read the lean way: the open space's tasks off the link index's
- *  own scan (a note saved since is read again), Today worked out by hand rather than by
- *  the rows engine, which the plugin does not carry (docs/even.md, `todayTasks`). */
-
 import { links } from '../link-index.svelte'
 import { modes } from '../modes.svelte'
 import { AGENTS_NAME } from '../note-name'

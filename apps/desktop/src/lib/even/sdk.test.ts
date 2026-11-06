@@ -1,24 +1,15 @@
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import { connectGlasses, connectStore, type Input } from './sdk'
 
-/** What the SDK hands back once the channel is open. The real one puts its
- *  singleton on the page and answers with it; this is that, without the SDK,
- *  because the SDK wants a browser and these tests do not have one. */
 const fromSdk = vi.hoisted((): { value: unknown } => ({ value: null }))
 
 vi.mock('@evenrealities/even_hub_sdk', () => ({
   waitForEvenAppBridge: () => Promise.resolve(fromSdk.value),
 }))
 
-/** The host's side of the bridge, as much as the plugin touches.
- *
- *  A stand-in on `window.EvenAppBridge` is what the SDK itself puts there, so
- *  this is the same door the real one comes through - which is also how the
- *  plugin is driven in a browser. */
 class Host {
   readonly calls: { method: string; payload: unknown }[] = []
   push: (event: unknown) => void = () => undefined
-  /** What the host answers to a rebuild or to the microphone. */
   answer: unknown = true
   page: unknown = 0
 
@@ -76,38 +67,24 @@ async function heard(events: unknown[]): Promise<Input[]> {
   return got
 }
 
-/** Longer than the module ever waits for a channel, so a test can watch it give
- *  up without waiting itself. */
 const PAST_WAITING = 12_000
 
-/** The channel the phone app installs into the WebView, which is the thing the
- *  plugin waits for. Separate from the bridge on purpose: on a real launch the
- *  channel lands first and the SDK's own singleton follows it. */
 function channel(open: boolean): void {
   const global = globalThis as { flutter_inappwebview?: { callHandler: () => void } }
   if (open) global.flutter_inappwebview = { callHandler: () => undefined }
   else delete global.flutter_inappwebview
 }
 
-/** The module graph, compiled once and outside anybody's budget. Every launch
- *  below re-imports the store to get a fresh one, and the first of those would
- *  otherwise pay for compiling it inside a five second test; see
- *  docs/conventions.md. */
 beforeAll(async () => {
   await import('./sdk')
 })
 
-/** A module of its own, so that the one wait it shares between callers is not
- *  also shared between tests. */
 async function freshly(): Promise<typeof import('./sdk')> {
   vi.useRealTimers()
   vi.resetModules()
   return import('./sdk')
 }
 
-/** Asks for the glasses on made-up time, optionally opening the channel partway
- *  through, and answers what it settled on. The waiting is the thing under test,
- *  so no test may do any of it. */
 async function asking(plan: { opensAt?: number; waits: number }): Promise<unknown> {
   const { connectGlasses: ask } = await freshly()
 
@@ -138,14 +115,6 @@ describe('finding the glasses', () => {
     expect(await connectGlasses()).not.toBeNull()
   })
 
-  /** The bug these are about, and the whole reason a packed build drew nothing
-   *  while the simulator drew the note perfectly.
-   *
-   *  The phone app installs its channel into the WebView while the page is
-   *  already loading, so it is not there when the plugin's first line runs.
-   *  Looking once and giving up meant no glasses for the life of the app, and
-   *  nothing said about it. The simulator installs the channel before the page
-   *  runs, which is why one look was always enough there. */
   test('waits for a channel that is not on the page yet', async () => {
     fromSdk.value = new Host()
 
@@ -164,20 +133,7 @@ describe('finding the glasses', () => {
     expect(await asking({ opensAt: 8000, waits: PAST_WAITING })).not.toBeNull()
   })
 
-  /** The SDK's own readiness is not the question, and this is what stops it
-   *  being mistaken for one.
-   *
-   *  Run against the real 0.0.15: `waitForEvenAppBridge()` resolves in nought
-   *  milliseconds with `ready: true` on a page with no phone app anywhere near
-   *  it, because its readiness is about its own initialisation and the DOM. It
-   *  registers no window event, so there is nothing to have missed by listening
-   *  late. Every call then goes out through `flutter_inappwebview.callHandler`
-   *  and comes back `1`, invalid, with "Flutter handler not available" on the
-   *  console. So a ready SDK says nothing at all about there being glasses, and
-   *  the channel is the only thing that does. */
   test('does not take a ready SDK for a phone app', async () => {
-    // The SDK is there and answers at once, as it always does. The channel is
-    // not.
     fromSdk.value = new Host()
 
     expect(await asking({ waits: PAST_WAITING })).toBeNull()
@@ -193,8 +149,6 @@ describe('finding the glasses', () => {
       await vi.advanceTimersByTimeAsync(PAST_WAITING)
       expect(await missed).toBeNull()
 
-      // The channel turns up late, after the plugin had already given up once.
-      // A remembered miss would leave the glasses unreachable for good.
       channel(true)
       expect(await ask()).not.toBeNull()
     } finally {
@@ -205,9 +159,6 @@ describe('finding the glasses', () => {
 
 describe('reading what the glasses send', () => {
   test('reads a single tap that arrives with no type at all', async () => {
-    // Protobuf leaves a zero out and a tap is zero, so this is what one really
-    // looks like. Reading the default outside the envelope check would turn
-    // every other event into a tap; see sdk.ts.
     expect(await heard([{ sysEvent: { eventSource: 1 } }])).toEqual([
       { kind: 'gesture', gesture: 'tap', from: 'right' },
     ])
@@ -275,8 +226,6 @@ describe('reading what the glasses send', () => {
   })
 
   test('reads both ways out of the app as gone, and only says so once', async () => {
-    // A disconnect and a confirmed exit mean the same thing to the plugin, so
-    // the two together are one going.
     expect(await heard([{ sysEvent: { eventType: 6 } }])).toEqual([{ kind: 'life', life: 'gone' }])
     expect(await heard([{ sysEvent: { eventType: 7 } }])).toEqual([{ kind: 'life', life: 'gone' }])
     expect(
@@ -291,9 +240,6 @@ describe('reading what the glasses send', () => {
 
 describe('what the plugin asks of the glasses', () => {
   test('reads the host’s answer to a page, whichever shape it takes', async () => {
-    // Kept as the host's own word rather than a boolean: a page too big for the
-    // panel and a page nothing heard are both a dark panel, and only the corner
-    // saying which makes a device worth reading.
     for (const [answer, wanted] of [
       [0, 'made'],
       ['success', 'made'],
@@ -346,8 +292,6 @@ describe('what the plugin asks of the glasses', () => {
     expect(await glasses?.microphone(true)).toBe(true)
     await glasses?.microphone(false)
 
-    // The glasses rather than the phone: the reader is speaking into the glasses
-    // and the phone may be in a pocket.
     expect(host.calls).toEqual([
       { method: 'microphone', payload: { open: true, source: 'glasses' } },
       { method: 'microphone', payload: { open: false, source: 'glasses' } },
@@ -375,9 +319,6 @@ describe('what the plugin asks of the glasses', () => {
   })
 
   test('never reads a frame of sound as a tap', async () => {
-    // Protobuf leaves a zero field out and a tap is zero, so anything read with
-    // the wrong default becomes a tap. An audio frame arrives fifty times a
-    // second, which would be fifty taps a second.
     const host = new Host()
     put(host)
     const glasses = await connectGlasses()
@@ -395,22 +336,15 @@ describe('what the plugin asks of the glasses', () => {
     const glasses = await connectGlasses()
     await glasses?.leave()
 
-    // Mode 1, not 0: the system asks, rather than the app closing itself. Every
-    // app is checked for this on its root page.
     expect(host.calls).toEqual([{ method: 'leave', payload: 1 }])
   })
 })
 
-/** The phone app's own store, which is where a packed plugin's session token
- *  outlives a launch. See vault.ts. */
 describe('what the phone app keeps', () => {
-  /** A host with a store, which the glasses-only stand-in above does not have. */
   class Keeper extends Host {
     readonly held = new Map<string, string>()
 
     getLocalStorage(key: string): Promise<unknown> {
-      // An absent key comes back as the empty string, which is what the real
-      // host does and the reason `read` cannot just pass it through.
       return Promise.resolve(this.held.get(key) ?? '')
     }
 

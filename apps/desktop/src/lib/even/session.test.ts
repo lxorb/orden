@@ -22,7 +22,6 @@ function opened(over: Partial<OpenNote> = {}): Session {
   return session
 }
 
-/** The rules in the file's own header, one test each. */
 describe('which note the glasses show', () => {
   test('shows the note the plugin has active', () => {
     const session = opened()
@@ -66,7 +65,6 @@ describe('which note the glasses show', () => {
     session.follow(note({ key: 'b', text: 'Other.\n' }), paging)
     expect(session.showing?.page).toBe(0)
 
-    // Back to the first, and back to page four of it.
     session.follow(note(), paging)
     expect(session.showing?.page).toBe(3)
   })
@@ -100,7 +98,6 @@ describe('turning a page', () => {
   })
 })
 
-/** Item three: the phone's scroll and the page on the glasses are one thing. */
 describe('the scroll binding', () => {
   test('goes to the page an offset in the note falls on', () => {
     const session = opened()
@@ -128,8 +125,6 @@ describe('the scroll binding', () => {
     expect(page).not.toBeNull()
     expect(session.holds(page?.from ?? 0)).toBe(true)
     expect(session.holds((page?.to ?? 0) - 1)).toBe(true)
-    // Which is what stops the binding chasing its own tail: most of a scroll is
-    // inside the page that is already up.
     expect(session.holds(page?.to ?? 0)).toBe(false)
   })
 
@@ -161,14 +156,12 @@ describe('the scroll binding', () => {
   })
 })
 
-/** An edit keeps the reader on the words in front of them. */
 describe('an edit under the reader', () => {
   test('keeps them on the same page when the page did not change', () => {
     const session = opened()
     session.goTo(5)
     const before = session.page?.hash
 
-    // An edit far below the page they are on.
     session.follow(note({ text: `${LONG}\n\nOne more paragraph at the end.` }), paging)
 
     expect(session.showing?.page).toBe(5)
@@ -205,10 +198,6 @@ describe('an edit under the reader', () => {
       paging,
     )
 
-    // The words the reader was looking at, still in front of them - which is the
-    // rule. Not necessarily at the top of the page any more: an insertion moves
-    // where the pages are cut, and the page that holds those words now holds a
-    // little of what came before them too.
     const first = words?.split('\n')[0] ?? ''
     expect(first).not.toBe('')
     expect(session.page?.words).toContain(first)
@@ -224,7 +213,6 @@ describe('an edit under the reader', () => {
 
     const now = session.page
     expect(now).not.toBeNull()
-    // Within a page of where they were, which is the best a rewrite allows.
     expect(Math.abs((now?.index ?? 0) - 6)).toBeLessThanOrEqual(1)
   })
 
@@ -234,7 +222,6 @@ describe('an edit under the reader', () => {
     expect(session.page).toBeNull()
     expect(session.showing).toBeNull()
     expect(session.pages).toEqual([])
-    // And nothing it is asked to do throws.
     session.turn(1)
     session.goTo(3)
     session.goToOffset(50)
@@ -242,7 +229,6 @@ describe('an edit under the reader', () => {
   })
 })
 
-/** The paging settings reach the pages, which is what item two asks. */
 describe('the paging the reader chose', () => {
   test('breaks at the heading level they chose', () => {
     const source = '# One\n\nwords\n\n## Two\n\nwords\n\n### Three\n\nwords\n'
@@ -266,13 +252,6 @@ describe('the paging the reader chose', () => {
   })
 })
 
-/** What the card on the phone follows while a finger is dragging.
- *
- *  Emil: *"it doesn't change WHILE scrolling but you kinda need to pause for it to
- *  react."* The card was drawn around the page the glasses had, and the glasses are
- *  told a tenth of a second after the thumb stops - so it sat still through the drag
- *  and jumped afterwards. `regionAt` answers the same question about any offset, with
- *  none of the consequences: nothing sent, nothing written down. */
 describe('where the panel would be', () => {
   const paged = () => {
     const session = new Session()
@@ -286,8 +265,6 @@ describe('where the panel would be', () => {
 
     const later = session.regionAt(LONG.length - 200)
     expect(later?.from).toBeGreaterThan(first?.from ?? 0)
-    // Nothing moved: the glasses are still where they were, and nothing was written
-    // down about a page the reader only scrolled past.
     expect(session.showing?.from).toBe(first?.from)
     expect(session.showing?.page).toBe(first?.page)
   })
@@ -311,9 +288,6 @@ describe('where the panel would be', () => {
   })
 })
 
-/** One behaviour, since Emil asked for the choice to go: *"effectively it should be
- *  always nib who turns the pages."* A page is the panel, a flick is a page, and the
- *  number in the head always means something. */
 describe('who turns the pages', () => {
   test('is the app, a whole panel at a time', () => {
     const session = new Session()
@@ -325,8 +299,6 @@ describe('who turns the pages', () => {
     session.turn(1)
     expect(session.words).not.toBe(first)
     expect(session.showing?.page).toBe(1)
-    // A page of the note, not a row of it: the second page begins where the first
-    // one ended.
     expect(session.showing?.firstLine).toBeGreaterThan(1)
   })
 

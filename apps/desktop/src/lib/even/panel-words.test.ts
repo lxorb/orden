@@ -5,17 +5,6 @@ import { SCRIPTS, undrawable } from '@orden/glasses'
 import { i18n, t } from '../i18n.svelte'
 import { forgetPanelLanguage, panelDrawable, panelWord } from './panel-words'
 
-/** Which language the panel is written in.
- *
- *  The app has forty interface catalogues and the firmware has one font. That
- *  font draws Latin, Cyrillic, Greek, CJK and emoji: a catalogue in Devanagari,
- *  Bengali, Tamil, Telugu, Kannada, Malayalam, Gurmukhi, Gujarati, Arabic, Persian,
- *  Pashto, Urdu, Thai, Burmese or Amharic reaches the glass as a row of boxes.
- *
- *  Two languages are enough to say the rule, and they are the two ends of it: German,
- *  which the font draws, and Thai, which it has not one glyph of. */
-
-/** The catalogue in force, awaited: `load` is what fetches it. */
 async function reading(language: string): Promise<void> {
   i18n.choice = language
   await i18n.load()
@@ -59,8 +48,6 @@ describe('a language the firmware has no glyphs for', () => {
   test('is drawn as boxes, which is what this is about', async () => {
     await reading('th')
 
-    // The words are right and the glass cannot draw them: a third of the letters
-    // have no glyph at all.
     expect(t('Settings')).not.toBe('Settings')
     expect(undrawable(t('Settings'))).toBeGreaterThan(0.3)
   })
@@ -80,8 +67,6 @@ describe('a language the firmware has no glyphs for', () => {
     expect(panelWord('Page {page} of {count}', { page: 2, count: 8 })).toBe('Page 2 of 8')
   })
 
-  /** The phone is not the glass: a reader holding it reads their own language, on a
-   *  screen with every font on it. Only what is sent to the firmware falls back. */
   test('while the phone keeps the reader’s own language', async () => {
     await reading('th')
 
@@ -96,8 +81,6 @@ describe('the decision itself', () => {
 
     i18n.choice = 'th'
     await i18n.load()
-    // Nothing forgotten by hand this time: the language it was decided for is part
-    // of what was decided.
     expect(panelDrawable()).toBe(false)
   })
 
@@ -110,9 +93,6 @@ describe('the decision itself', () => {
 })
 
 describe('the rule is about scripts rather than languages', () => {
-  /** Hindi and Marathi are one question, and Arabic answers for Persian, Pashto and
-   *  Urdu as well. A list of languages would have been four lines that can disagree;
-   *  the script is one line that cannot. */
   test('every language in a script the font lacks is answered the same way', async () => {
     for (const one of ['hi', 'mr', 'bn', 'ta', 'te', 'kn', 'ml', 'pa', 'gu']) {
       await reading(one)
@@ -137,12 +117,6 @@ describe('the rule is about scripts rather than languages', () => {
   })
 })
 
-/** The catalogues this app has, against the scripts the glasses package lists.
- *
- *  That list decides the panel's language and what the plugin build packs, so a
- *  catalogue in a script nobody has listed is a language neither has an answer for.
- *  Here rather than in the glasses package, which has no business knowing where this
- *  app keeps its words. */
 describe('every catalogue is in a script the list names', () => {
   test('and no language is named twice', () => {
     const where = resolve(import.meta.dirname, '../../locales')
@@ -152,16 +126,12 @@ describe('every catalogue is in a script the list names', () => {
     const listed = SCRIPTS.flatMap((one) => one.languages)
 
     expect(catalogues.length).toBeGreaterThan(30)
-    // English is in the list and has no file of its own: every string is its key.
     expect(listed).toContain('en')
     expect(catalogues.filter((one) => !listed.includes(one))).toEqual([])
     expect(new Set(listed).size).toBe(listed.length)
   })
 })
 
-/** Cantonese, the fortieth catalogue. Han, so the firmware draws it: a reader in
- *  `yue` gets their own words on the glass rather than English, and that is worth a
- *  test of its own because it is the first catalogue added since the rule existed. */
 describe('a catalogue added after the rule', () => {
   test('is drawn in its own words where the font has the script', async () => {
     await reading('yue')
@@ -169,7 +139,6 @@ describe('a catalogue added after the rule', () => {
     expect(panelDrawable()).toBe(true)
     expect(t('Switch space')).not.toBe('Switch space')
     expect(panelWord('Switch space')).toBe(t('Switch space'))
-    // And every letter of what the panel will say has a glyph.
     const said = ['Settings', 'Switch space', 'Change note', 'Voice off', 'Done']
     expect(undrawable(said.map((one) => panelWord(one)).join(' '))).toBe(0)
   })

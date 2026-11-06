@@ -1,24 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The key field's four states, which are the whole of what the pane can show.
- *
- *  Emil's rule is "it stays in the account, but after you set it you can't read it
- *  anymore", so the field is not a field with a value in it. It is: nothing set,
- *  saving, set and ending in four characters, or a sentence about what went wrong.
- *  Nothing in this file ever has a key in its hand, because nothing in the app
- *  does. */
-
 const server = vi.hoisted(() => ({
-  /** Whether there is an account behind this machine. */
   signedIn: true,
-  /** What the account holds, as the routes answer it. */
   set: false,
   tail: '',
-  /** Set to make the key routes refuse, in the server's own words. */
   refuse: '',
-  /** What the models route answers. */
   models: ['gpt-6-astra', 'gpt-5.6-sol'] as string[],
-  /** Every call, in order, so a test can say what was and was not asked for. */
   asked: [] as string[],
 }))
 
@@ -60,7 +47,6 @@ vi.mock('../i18n.svelte', () => ({
   key: (text: string) => text,
 }))
 
-/** The model select, which is the one thing the key store's neighbour writes to. */
 const chosen = vi.hoisted(() => ({ model: '' }))
 
 vi.mock('../modes.svelte', () => ({
@@ -102,7 +88,6 @@ describe('what this machine knows about the account’s key', () => {
 
     expect(glassesKey.set).toBe(true)
     expect(glassesKey.tail).toBe('4f2a')
-    // There is nowhere on this store to put a key, which is the point.
     expect(Object.values(glassesKey).join(' ')).not.toContain('sk-')
   })
 
@@ -178,8 +163,6 @@ describe('the line under the field', () => {
     expect(server.asked).toEqual(['put sk-proj-example-4f2a', 'models'])
     expect(offered.models).toEqual(['gpt-6-astra', 'gpt-5.6-sol'])
     expect(offered.said).toBe('')
-    // Nothing chosen yet, so the newest family is taken: a select with nothing in
-    // it is a question the reader cannot answer.
     expect(chosen.model).toBe('gpt-6-astra')
   })
 

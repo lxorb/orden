@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { bare, bestOf, commandIn, likeness, numberIn } from './commands'
 
-/** Every phrase Emil named, and the shapes a recogniser hands them over in. */
 describe('the command grammar', () => {
   test.each([
     ['next', { kind: 'next' }],
@@ -46,11 +45,8 @@ describe('the command grammar', () => {
   })
 
   test('reads the longer phrase first, so off is never on', () => {
-    // "voice commands off" starts with "voice commands on" only if the table is
-    // read in the wrong order, and then every off was an on.
     expect(commandIn('voice commands off')).toEqual({ kind: 'voice', on: false })
     expect(commandIn('switch space to home')).toEqual({ kind: 'switchSpace', name: 'home' })
-    // Without the name it is the picker rather than a switch to nowhere.
     expect(commandIn('switch space')).toEqual({ kind: 'spaces' })
     expect(commandIn('switch note')).toEqual({ kind: 'notes' })
   })
@@ -65,8 +61,6 @@ describe('the command grammar', () => {
   })
 
   test('hears nothing in a sentence that only mentions a command', () => {
-    // A phrase has to open what was said: a reader dictating a note is not
-    // turning pages.
     expect(commandIn('the next thing to do is close the door')).toBeNull()
     expect(commandIn('and back again')).toBeNull()
     expect(commandIn('')).toBeNull()
@@ -74,7 +68,6 @@ describe('the command grammar', () => {
   })
 })
 
-/** The words a phrase is matched on, once the recogniser's habits come off. */
 describe('folding what was heard', () => {
   test('leaves bare lowercase words', () => {
     expect(bare('  Open Page 4! ')).toBe('open page 4')
@@ -91,7 +84,6 @@ describe('folding what was heard', () => {
   })
 })
 
-/** Names, which are the part a recogniser gets wrong. */
 describe('matching a name that was said out loud', () => {
   const notes = ['Meeting Notes 2026', 'Monday standup', 'Reading list', 'Even Realities glasses']
 

@@ -1,16 +1,6 @@
-/** Today on the glasses: the open tasks for today and overdue, a box in front of each
- *  (docs/tasks.md 5.18), and a task said aloud.
- *
- *  The list is what Today was when it was put up. A tap ticks a task and fills its box
- *  where it stands, so the row the reader just tapped is still under the cursor and a
- *  mis-tap is a second tap away; what was ticked leaves the list the next time it is
- *  put up. The rows are read and written through the app's own task actions
- *  (task-actions.ts), handed in, so the whole of this is a test. */
-
 import { shownWords } from '@orden/markdown/escapes'
 import type { Row } from './shell'
 
-/** One task as the list holds it. */
 interface Held {
   id: string
   at: string
@@ -19,17 +9,12 @@ interface Held {
   done: boolean
 }
 
-/** What the list needs of the app. */
 export interface TodayHost {
-  /** Today's tasks, as `list_tasks` answers them. */
   load: () => Promise<readonly { at: string; space: string; text: string }[]>
-  /** Ticks one, or opens it again; answers whether it was found. */
   tick: (at: string, space: string, done: boolean) => Promise<boolean>
-  /** The panel, drawn again. */
   redraw: () => void
 }
 
-/** A box, as the firmware's font draws one: `□` open, `■` done. */
 const OPEN = '□ '
 const DONE = '■ '
 
@@ -40,7 +25,6 @@ export class Today {
 
   rows(): Row[] {
     return this.held.map((one) => ({
-      // The words, not the line: `milk \$3` is read as `milk $3`.
       label: `${one.done ? DONE : OPEN}${shownWords(one.text)}`,
       depth: 0,
       folder: false,
@@ -50,7 +34,6 @@ export class Today {
     }))
   }
 
-  /** Reads Today again, and draws it once it is here. */
   fresh(): void {
     void this.host
       .load()
@@ -67,7 +50,6 @@ export class Today {
       .catch(() => undefined)
   }
 
-  /** Ticks a row at once, and puts it back where the note no longer has the task. */
   tick(id: string): void {
     const one = this.held.find((row) => row.id === id)
     if (!one) return
@@ -84,9 +66,6 @@ export class Today {
   }
 }
 
-/** What follows the word that made an utterance a task, as it was said: "Task, call
- *  Mum tomorrow." is "call Mum tomorrow". The recogniser's capitals are kept, because
- *  a name is a name; its full stop is not, because a task is not a sentence. */
 export function spokenTask(said: string): string {
   return said
     .trim()

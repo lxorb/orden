@@ -2,9 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { englishIn, handedTo, inColumn, serverWords, stringsIn } from '../../../even-catalogues'
 import { rowsOf } from './catalogue-keys'
 
-/** The two halves of trimming a catalogue for the plugin, on code small enough to
- *  read; bundle.test.ts asks the same of the package itself. */
-
 describe('the strings a piece of code writes out', () => {
   test('are its literals, however they are quoted', () => {
     expect(stringsIn('t(\'Save\'); t("Close"); t(`Open`)')).toEqual(

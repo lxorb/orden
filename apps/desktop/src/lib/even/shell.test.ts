@@ -27,8 +27,6 @@ const WORDS: Words = {
   today: 'Today',
 }
 
-/** Settings that answer like the app's own and write down what they were told.
- *  Two of them, one of each kind, which is the whole of what the screen does. */
 class FakeSettings implements Settings {
   numbers = true
   breakAt = '2'
@@ -75,7 +73,6 @@ function row(label: string, over: Partial<Row> = {}): Row {
   return { label, depth: 0, folder: false, open: false, pick: true, id: label, ...over }
 }
 
-/** A world that answers like the app's own, and writes down what it was asked. */
 class Fake implements World {
   spaceName = 'Work'
   contentRows: Row[] = [
@@ -102,13 +99,10 @@ class Fake implements World {
     this.on = on
   }
   listening = () => this.on
-  /** Where the reader already is, which is where a list opens. Empty by default,
-   *  so the cases that are not about that behave as they always did. */
   space_ = ''
   note_ = ''
   atSpace = () => this.space_
   atNote = () => this.note_
-  /** Today as the list holds it, and what was ticked and asked for again. */
   todayRows: Row[] = [row('□ Call Mum'), row('□ Pay rent')]
   readonly ticked: string[] = []
   fresh = 0
@@ -132,7 +126,6 @@ beforeEach(() => {
   shell = new Shell(world, () => WORDS, session, settings)
 })
 
-/** The table in the file's own header, as tests. */
 describe('what a gesture does', () => {
   test('a tap on the note opens the sidebar', () => {
     expect(shell.handle('tap')).toBe('draw')
@@ -154,22 +147,16 @@ describe('what a gesture does', () => {
 
     shell.handle('tap')
     expect(shell.screen.kind).toBe('spaces')
-    // Held again from inside another screen, and it is the modal again rather
-    // than one more thing on the stack.
     shell.handle('hold')
     expect(shell.screen.kind).toBe('modal')
   })
 
-  /** Emil, on his own glasses: switching space should land in that space's notes.
-   *  Nobody switches space to look at the note they were already reading. */
   test('choosing a space goes straight into that space’s notes', () => {
     shell.show('spaces')
     expect(shell.handle('tap')).toBe('draw')
 
     expect(world.entered).toEqual(['Work'])
     expect(shell.screen.kind).toBe('tree')
-    // And one double tap is back to the note rather than back to the spaces: the
-    // spaces screen was a step on the way, not somewhere to return to.
     expect(shell.handle('double')).toBe('draw')
     expect(shell.screen.kind).toBe('note')
   })
@@ -195,13 +182,10 @@ describe('what a gesture does', () => {
     world.note_ = 'Somewhere else'
     shell.show('sidebar')
 
-    // Back to the first row the cursor may land on, which is where a list opened
-    // before any of this.
     expect(shell.screen).toEqual({ kind: 'sidebar', at: 0 })
   })
 
   test('a double tap on the note asks the system to leave the app', () => {
-    // The one gesture the platform reserves, and every app is checked for it.
     expect(shell.handle('double')).toBe('leave')
     expect(shell.screen.kind).toBe('note')
   })
@@ -211,12 +195,10 @@ describe('what a gesture does', () => {
     shell.handle('tap')
     expect(shell.screen.kind).toBe('spaces')
 
-    // One level at a time: the picker, then the modal, then the note.
     expect(shell.handle('double')).toBe('draw')
     expect(shell.screen.kind).toBe('modal')
     expect(shell.handle('double')).toBe('draw')
     expect(shell.screen.kind).toBe('note')
-    // And only then the system's own question.
     expect(shell.handle('double')).toBe('leave')
   })
 
@@ -246,12 +228,10 @@ describe('what a gesture does', () => {
     expect(shell.screen).toMatchObject({ at: 0 })
     for (let n = 0; n < 20; n++) shell.handle('down')
     expect(shell.screen).toMatchObject({ at: world.contentRows.length - 1 })
-    // And says so, rather than redrawing a panel that has not changed.
     expect(shell.handle('down')).toBe('none')
   })
 })
 
-/** The tree, which is the one list where a tap does two different things. */
 describe('the note picker', () => {
   beforeEach(() => {
     shell.handle('hold')
@@ -285,7 +265,6 @@ describe('the note picker', () => {
   })
 })
 
-/** The modal, which is three rows and the same cursor as every other list. */
 describe('the modal', () => {
   test('offers switch space, change note, the microphone and the settings', () => {
     shell.handle('hold')
@@ -297,9 +276,6 @@ describe('the modal', () => {
     expect(body).toContain('Settings')
   })
 
-  /** And says so with the dot in the corner and nothing else. It used to flash the
-   *  words in the head, where the heading a reader is under belongs: Emil, on his own
-   *  glasses, found "Voice off" sitting where the section should be. */
   test('turns the microphone on, and the head keeps the heading', () => {
     shell.handle('hold')
     shell.handle('down')
@@ -310,7 +286,6 @@ describe('the modal', () => {
     expect(shell.screen.kind).toBe('note')
     expect(shell.view().head).toContain('THE TITLE')
     expect(shell.view().head).not.toContain('Voice')
-    // The dot is the answer, beside the page number.
     expect(shell.view().mic).toBe('●')
   })
 
@@ -322,8 +297,6 @@ describe('the modal', () => {
   })
 })
 
-/** Every screen is the same five bands, which is the whole reason a gesture costs
- *  two sends and not a rebuild. */
 describe('the view', () => {
   test('never puts more rows in the body than the panel holds', () => {
     for (const open of [() => undefined, () => shell.handle('tap'), () => shell.handle('hold')]) {
@@ -337,15 +310,9 @@ describe('the view', () => {
     const view = shell.view()
 
     expect(view.rule).toMatch(/^═+$/)
-    // One band, with the count pushed against the right hand edge beside the
-    // microphone's corner: a text container has no alignment, so the gap is spent on
-    // spaces. Emil: "the page number should be shown in the top right".
     expect(view.head.trimEnd()).toMatch(/^THE TITLE {2,}1\/\d+$/)
   })
 
-  /** There is no setting for this any more. It used to be off wherever the glasses
-   *  were scrolling the note themselves, and that mode is gone: the app turns every
-   *  page, so a number always means a page. See even/settings.ts. */
   test('and the number is there on every page, because the app turns them all', () => {
     expect(shell.view().head.trimEnd()).toMatch(/\d+\/\d+$/)
 
@@ -371,8 +338,6 @@ describe('the view', () => {
     shell.handle('tap')
     const rows = shell.view().body.split('\n')
 
-    // The cursor has a column of its own: a row that is not chosen is indented by
-    // the room the triangle took, so the words do not jump sideways as it moves.
     for (const row_ of rows) expect(row_.slice(0, 2)).toMatch(/^(▶ | {2})$/)
   })
 
@@ -380,14 +345,10 @@ describe('the view', () => {
     shell.handle('tap')
     shell.handle('down')
 
-    // Against the right hand edge, where the page count goes on the note screen: one
-    // place on the panel means one thing, whichever screen is up.
     expect(shell.view().head.trimEnd()).toMatch(/^Work {2,}2\/4$/)
   })
 
   test('steps the cursor over a folder in the sidebar, so every tap opens a note', () => {
-    // Every folder in the sidebar is already open, so a tap on one could do nothing
-    // at all. Its name still shows, because that is what says where a note lives.
     world.contentRows = [
       row('Inbox', { folder: true, open: true, pick: false }),
       row('Monday standup', { depth: 1 }),
@@ -396,10 +357,8 @@ describe('the view', () => {
     ]
     shell.handle('tap')
 
-    // Opens on the first note rather than on the folder above it.
     expect(shell.view().head.trimEnd()).toMatch(/ 2\/4$/)
     shell.handle('down')
-    // And steps straight over the second folder to the note under it.
     expect(shell.view().head.trimEnd()).toMatch(/ 4\/4$/)
 
     shell.handle('tap')
@@ -422,7 +381,6 @@ describe('the view', () => {
     shell.handle('tap')
 
     expect(shell.view().body).toBe('Nothing here')
-    // The space's name, and nothing at the right: there is no row to be at.
     expect(shell.view().head).toBe('Work')
   })
 
@@ -441,10 +399,7 @@ describe('the view', () => {
   })
 })
 
-/** The answer view, which is the one screen that scrolls a line at a time. */
 describe('an answer from the model', () => {
-  // One sentence, a blank line, and then the detail: the shape the model is asked
-  // for, and long enough that the reader has to scroll through it.
   const answer = [
     'The short answer.',
     '',
@@ -469,7 +424,6 @@ describe('an answer from the model', () => {
     shell.handle('down')
     const second = shell.view().body.split('\n')[0]
     expect(second).not.toBe(first)
-    // One line, not seven: the second row of the first view is the first of this.
     expect(second).toBe('')
   })
 
@@ -485,8 +439,6 @@ describe('an answer from the model', () => {
     shell.answered('q', answer)
     const rows = shell.answerRows
 
-    // A panel of rows out of however many the answer came to, against the right
-    // hand edge beside the microphone's corner.
     const where = ` ${String(BODY_ROWS)}/${String(rows)}`
     expect(shell.view().head.trimEnd().endsWith(where)).toBe(true)
     expect(rows).toBeGreaterThan(BODY_ROWS)
@@ -500,8 +452,6 @@ describe('an answer from the model', () => {
   })
 
   test('flows the model’s own line breaks, and keeps its paragraphs', () => {
-    // A model hard wraps at whatever width it was trained to; a panel is 560 pixels
-    // wide. Read as breaks, its lines are a ragged column of two words a row.
     shell.answered('q', 'One short\nsentence first.\n\nThen a second\nparagraph.')
     const rows = shell.view().body.split('\n')
 
@@ -513,8 +463,6 @@ describe('an answer from the model', () => {
   test('says it is thinking while the model is', () => {
     shell.asking('what did I decide')
 
-    // The question in the head, and the waiting where the note's words go: the
-    // last line of the panel is the note, so nothing else may sit there.
     expect(shell.view().head).toBe('what did I decide')
     expect(shell.view().body).toBe('Thinking')
   })
@@ -534,7 +482,6 @@ describe('an answer from the model', () => {
   })
 })
 
-/** What a spoken command asks of the shell. */
 describe('what a command asks for', () => {
   test('puts a screen up by name', () => {
     shell.show('spaces')
@@ -574,8 +521,6 @@ describe('what a command asks for', () => {
 
   test('flashes what it heard in the head, and forgets it', () => {
     shell.flash('Next')
-    // A word just heard takes the line for a moment: it is the one thing more
-    // urgent than which section you are in.
     expect(shell.view().head.trimEnd()).toMatch(/^Next {2,}1\/\d+$/)
 
     shell.clearFlash()
@@ -583,13 +528,6 @@ describe('what a command asks for', () => {
   })
 })
 
-/** The words on the glass, in the reader's language as it stands *now*.
- *
- *  They used to be an object built once, when the bridge connected - and a plugin
- *  reaches the glasses in milliseconds while its interface catalogue is a dynamic
- *  import that lands a moment later. So a German reader read "Settings" over a list
- *  of German rows: the rows are built per render, and the labels were built once,
- *  before the catalogue existed. */
 describe('a catalogue that lands after the glasses did', () => {
   test('reaches the panel, with nothing rebuilt and no screen reopened', () => {
     const said = { ...WORDS }
@@ -600,12 +538,10 @@ describe('a catalogue that lands after the glasses did', () => {
     late.handle('hold')
     expect(late.view().body).toContain(WORDS.switchSpace)
 
-    // The catalogue arrives, and the next render is in the reader's language.
     said.switchSpace = 'Raum wechseln'
     said.settings = 'Einstellungen'
     expect(late.view().body).toContain('Raum wechseln')
 
-    // Including the head of a screen opened before it landed.
     late.handle('down')
     late.handle('down')
     late.handle('down')
@@ -614,8 +550,6 @@ describe('a catalogue that lands after the glasses did', () => {
   })
 })
 
-/** Today, the modal's fifth row (docs/tasks.md 5.18): eight lines like any list, a tap
- *  ticks and the row stays, a double tap leaves. */
 describe('today', () => {
   test('is the fifth row of the modal, and read afresh when it is put up', () => {
     shell.handle('hold')

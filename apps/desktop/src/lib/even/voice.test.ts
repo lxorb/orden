@@ -1,16 +1,12 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { type Ears, type Listening, loudnessOf, QUIET, Utterance, Voice, wavOf } from './voice'
 
-/** Twenty milliseconds of sound at 16 kHz, sixteen bit: 320 samples, 640 bytes.
- *  The frame size the glasses' audio path sends. */
 const FRAME = 640
 
 function frame(loudness: number): Uint8Array {
   const pcm = new Uint8Array(FRAME)
   const view = new DataView(pcm.buffer)
   for (let at = 0; at < FRAME / 2; at++) {
-    // A square wave, so that every sample is at the amplitude asked for and the
-    // root mean square of the frame is exactly it.
     view.setInt16(at * 2, Math.round(loudness * 0x7fff) * (at % 2 ? 1 : -1), true)
   }
 
@@ -20,8 +16,6 @@ function frame(loudness: number): Uint8Array {
 const SPEECH = frame(0.2)
 const SILENCE = frame(0.001)
 
-/** Where a phrase begins and ends, which is the one number the plugin itself adds
- *  to the latency of a spoken command. */
 describe('cutting an utterance out of the stream', () => {
   test('says nothing while nobody is talking', () => {
     const utterance = new Utterance()
@@ -47,17 +41,13 @@ describe('cutting an utterance out of the stream', () => {
       return utterance.hear(pcm, now)
     }
 
-    // Half a second of speech.
     for (let at = 0; at < 25; at++) expect(feed(SPEECH)).toBeNull()
-    // Then quiet. Nothing until the pause is long enough to be the end.
     const hang = QUIET / 20
     for (let at = 0; at < hang - 1; at++) expect(feed(SILENCE)).toBeNull()
 
     const whole = feed(SILENCE)
     expect(whole).not.toBeNull()
-    // The speech and the silence after it, which is what was heard.
     expect(whole?.pcm.length).toBe(FRAME * (25 + hang))
-    // And how much of that was somebody talking, which is what the diagnostics say.
     expect(whole?.spoken).toBe(500)
   })
 
@@ -74,8 +64,6 @@ describe('cutting an utterance out of the stream', () => {
     let whole = null
     while (!whole) whole = feed(SILENCE)
 
-    // This is what a latency has to be measured from: the moment the reader stopped
-    // talking, and not the moment the pause became long enough to act on.
     expect(whole.ended).toBeCloseTo(stopped, -1)
     expect(now - whole.ended).toBeGreaterThanOrEqual(QUIET)
   })
@@ -88,7 +76,6 @@ describe('cutting an utterance out of the stream', () => {
       return utterance.hear(pcm, now)
     }
 
-    // A tenth of a second: a door, a cough, a knuckle on a temple.
     for (let at = 0; at < 5; at++) feed(SPEECH)
     for (let at = 0; at < 40; at++) expect(feed(SILENCE)).toBeNull()
   })
@@ -136,13 +123,11 @@ describe('cutting an utterance out of the stream', () => {
       return utterance.hear(pcm, now)
     }
 
-    // Two seconds of a quiet room first.
     for (let at = 0; at < 100; at++) feed(SILENCE)
     for (let at = 0; at < 25; at++) feed(SPEECH)
     let whole = null
     while (!whole) whole = feed(SILENCE)
 
-    // The phrase and its trailing pause, and none of the two seconds before it.
     expect(whole.pcm.length).toBe(FRAME * (25 + QUIET / 20))
   })
 })
@@ -174,15 +159,14 @@ describe('the file a transcriber is sent', () => {
   test('says one channel of sixteen bit at 16 kHz, which is what the glasses send', () => {
     const view = new DataView(wavOf(new Uint8Array(4)).buffer)
 
-    expect(view.getUint16(20, true)).toBe(1) // uncompressed PCM
-    expect(view.getUint16(22, true)).toBe(1) // one channel
+    expect(view.getUint16(20, true)).toBe(1)
+    expect(view.getUint16(22, true)).toBe(1)
     expect(view.getUint32(24, true)).toBe(16_000)
-    expect(view.getUint16(34, true)).toBe(16) // bits a sample
-    expect(view.getUint32(28, true)).toBe(32_000) // bytes a second
+    expect(view.getUint16(34, true)).toBe(16)
+    expect(view.getUint32(28, true)).toBe(32_000)
   })
 })
 
-/** Which of the two paths a device has, and what it does with the one it has. */
 describe('listening', () => {
   function ears(over: Partial<Ears> = {}): {
     ears: Ears
@@ -230,11 +214,6 @@ describe('listening', () => {
     expect(voice.listening).toBe(false)
   })
 
-  /** Emil's account had no OpenAI key at all, and the plugin answered "no way to
-   *  listen". It was telling the truth about the key and it was the wrong thing to
-   *  say: the glasses have a microphone either way, so it opens either way, and which
-   *  model makes words of what it hears is the Worker's business. What is left here is
-   *  the one case where an utterance has nowhere to go at all: no account. */
   test('opens the microphone whatever the account has, and says nothing about it', async () => {
     const { ears: one, failed } = ears()
     const voice = new Voice(one)
@@ -276,7 +255,6 @@ describe('listening', () => {
     await vi.waitFor(() => expect(heard).toEqual(['next']))
 
     expect(one.transcribe).toHaveBeenCalledTimes(1)
-    // A wav, header and all.
     const sent = vi.mocked(one.transcribe as (wav: Uint8Array) => Promise<string | null>).mock
       .calls[0]?.[0]
     expect(String.fromCharCode(...(sent?.slice(0, 4) ?? []))).toBe('RIFF')
@@ -303,7 +281,6 @@ describe('listening', () => {
     for (let at = 0; at < 25; at++) voice.frame(SPEECH)
     for (let at = 0; at < 40; at++) voice.frame(SILENCE)
     await vi.waitFor(() => expect(failed).toEqual(['the words did not come back']))
-    // The platform's own words beside ours, so the phone says which fault it was.
     expect(voice.state.detail).toBe('no signal')
   })
 
@@ -317,21 +294,12 @@ describe('listening', () => {
     await vi.waitFor(() => expect(one.transcribe).toHaveBeenCalled())
 
     expect(heard).toEqual([])
-    // Sent, and nothing came back. A different fault from one that never went, and
-    // the phone says which; see the readout in Glasses.svelte.
     await vi.waitFor(() => expect(voice.state.nothing).toBe(true))
   })
 })
 
-/* ── When the phone's own recogniser is not a recogniser ──────────────── */
-
-/** Chromium's `webkitSpeechRecognition`, as an embedded WebView has it: the
- *  constructor is there, `start()` is perfectly happy, and a moment later it says
- *  it cannot reach the service that does the recognising. That is the shape of
- *  Emil's "voice mode simply doesn't work whatever I say". */
 class FakeRecogniser {
   static made: FakeRecogniser[] = []
-  /** What `start()` throws, if anything. */
   static throws: string | null = null
 
   continuous = false
@@ -360,7 +328,6 @@ class FakeRecogniser {
     this.aborted++
   }
 
-  /** One final result, the shape the platform sends it in. */
   say(transcript: string) {
     this.onresult?.({
       resultIndex: 0,
@@ -407,8 +374,6 @@ describe('the fallback order', () => {
     expect(one.microphone).not.toHaveBeenCalled()
   })
 
-  /** The one that matters: the constructor being on the page says nothing at all
-   *  about whether this WebView can recognise anything. */
   test('falls to the glasses at once when the phone says it cannot listen', async () => {
     const made = withRecogniser()
     const { ears: one, failed } = ears()
@@ -422,7 +387,6 @@ describe('the fallback order', () => {
     expect(voice.state.detail).toBe('service-not-allowed')
     expect(voice.path).toBe('glasses')
     expect(voice.listening).toBe(true)
-    // And it is not tried again: it has already said it cannot.
     expect(made.made[0]?.aborted).toBe(1)
   })
 
@@ -477,15 +441,11 @@ describe('the fallback order', () => {
     expect(failed).toEqual(['no microphone'])
   })
 
-  /** The key lives on the account and the account answers a moment after the
-   *  bridge comes up. Decided once at the start, the answer was always no. */
   test('asks whether there is a key every time rather than once at the start', async () => {
     let key = false
     const { ears: one } = ears({ canTranscribe: () => key })
     const voice = new Voice(one)
 
-    // The microphone opens either way; what changes is whether anything can be made
-    // of what it hears, and that is asked when an utterance arrives.
     await voice.start()
     for (let at = 0; at < 25; at++) voice.frame(SPEECH)
     for (let at = 0; at < 40; at++) voice.frame(SILENCE)
@@ -497,8 +457,6 @@ describe('the fallback order', () => {
     await vi.waitFor(() => expect(one.transcribe).toHaveBeenCalled())
   })
 })
-
-/* ── What one screenshot of the phone has to answer ───────────────────── */
 
 describe('the readout', () => {
   function ears(over: Partial<Ears> = {}): { ears: Ears; states: Listening[] } {

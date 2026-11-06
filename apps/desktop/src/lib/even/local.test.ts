@@ -12,14 +12,6 @@ import {
   TAGS_KEY,
 } from '../workspace/device.svelte'
 
-/** Device-local settings across launches of a packed plugin.
- *
- *  The plugin is served from `http://127.0.0.1:<port>` with a new port every
- *  launch, so the page's own `localStorage` is a different origin's each time
- *  and always empty. The cookie is the exception: cookies are scoped to the host
- *  and ignore the port, which is why on a real device it was the one page store
- *  that came back with anything. This is that, twice over. */
-
 const phone = vi.hoisted(() => ({ held: new Map<string, string>(), reachable: false }))
 
 vi.mock('./sdk', () => ({
@@ -36,21 +28,12 @@ vi.mock('./sdk', () => ({
   },
 }))
 
-/** The one thing that outlives a launch on the page's side. */
 let jar = ''
 
-/** The module graph, compiled once and outside anybody's budget. Every launch
- *  below re-imports the store to get a fresh one, and the first of those would
- *  otherwise pay for compiling it inside a five second test; see
- *  docs/conventions.md. */
 beforeAll(async () => {
   await import('./local')
 })
 
-/** A new port, so a new origin, so an empty `localStorage`. The cookie stays.
- *
- *  Real timers while the module loads: a dynamic import is not something to run
- *  the clock over. */
 async function launch() {
   vi.useRealTimers()
   vi.resetModules()
@@ -102,7 +85,6 @@ describe('settings across launches', () => {
     const first = await launch()
     const one = first.installLocal()
     localStorage.setItem('nib:theme', 'dark')
-    // The write settles rather than going out per keystroke.
     await vi.advanceTimersByTimeAsync(1000)
 
     const second = await launch()
@@ -118,8 +100,6 @@ describe('settings across launches', () => {
     localStorage.setItem('nib:theme', 'dark')
     await vi.advanceTimersByTimeAsync(1000)
 
-    // The channel never arrives this launch. The cookie is synchronous, so what
-    // decides the first paint is known before anything is painted.
     phone.reachable = false
     const second = await launch()
     second.installLocal()
@@ -131,13 +111,11 @@ describe('settings across launches', () => {
     const first = await launch()
     first.installLocal()
     localStorage.setItem('nib:theme', 'dark')
-    // Far past what a cookie will take, so only the phone app can hold it.
     localStorage.setItem('nib:layouts', 'x'.repeat(6000))
     await vi.advanceTimersByTimeAsync(1000)
 
     const second = await launch()
     const local = second.installLocal()
-    // The small one rode the cookie and is here already.
     expect(localStorage.getItem('nib:theme')).toBe('dark')
     expect(localStorage.getItem('nib:layouts')).toBeNull()
 
@@ -153,7 +131,6 @@ describe('settings across launches', () => {
 
     const second = await launch()
     const local = second.installLocal()
-    // Somebody changes it before the channel arrives.
     localStorage.setItem('nib:theme', 'light')
 
     await second.fillLocal(local)
@@ -171,19 +148,7 @@ describe('settings across launches', () => {
   })
 })
 
-/** Which store a key belongs in.
- *
- *  Measured on Emil's own account: `nib:mirrors` - what the syncing knows about every
- *  note it has seen - is 133 bytes plus the path per note. That is 4,408 bytes for his
- *  twenty notes, 7,706 once the cookie's own URI encoding is counted, against a 3,500
- *  byte cookie. It stopped fitting at about fourteen notes, and because the cookie was
- *  filled smallest first it was the first thing dropped: read back as nothing, written
- *  back as nothing, and the syncing then believed it had never seen those notes.
- *
- *  So size does not decide it any more. Bookkeeping rides the phone app's own store,
- *  which is unbounded; the cookie carries what the first paint is made of. */
 describe('which store a key rides in', () => {
-  /** A mirrors map about the size of Emil's: twenty notes of bookkeeping. */
   function mirrors(notes: number): string {
     const held: Record<string, unknown> = {}
     for (let at = 0; at < notes; at++) {
@@ -199,9 +164,6 @@ describe('which store a key rides in', () => {
   }
 
   test('is decided by what it is for, not by how big it is', async () => {
-    // Bigger than the cookie on its own, measured the way the cookie measures it -
-    // URI encoded, which is where Emil's 4,408 bytes became 7,706. This is the case
-    // that was losing notes.
     expect(encodeURIComponent(mirrors(20)).length).toBeGreaterThan(3500)
 
     const first = await launch()
@@ -212,8 +174,6 @@ describe('which store a key rides in', () => {
     localStorage.setItem('nib:recent', JSON.stringify(['/Notes/One.md', '/Notes/Two.md']))
     await vi.advanceTimersByTimeAsync(1000)
 
-    // A launch the phone app never answers in: the cookie is the whole of what is
-    // known, and every first-paint key is on it.
     phone.reachable = false
     const second = await launch()
     second.installLocal()
@@ -224,7 +184,6 @@ describe('which store a key rides in', () => {
     expect(localStorage.getItem('nib:recent')).toBeNull()
   })
 
-  /** The whole point: what the cookie will not carry is late rather than lost. */
   test('and the bookkeeping comes back whole when the phone answers', async () => {
     const first = await launch()
     first.installLocal()
@@ -239,9 +198,6 @@ describe('which store a key rides in', () => {
     expect(localStorage.getItem('nib:mirrors')).toBe(mirrors(20))
   })
 
-  /** A cookie an older build wrote still has a cut-down mirrors map in it, and half a
-   *  map is worse than none: `fillFrom` leaves alone whatever is already held, so the
-   *  short one would stand and the phone app's full copy would never land. */
   test('and one an older build truncated into the cookie is not read at all', async () => {
     const first = await launch()
     first.installLocal()
@@ -279,10 +235,6 @@ describe('which store a key rides in', () => {
     ])
   })
 
-  /** The list in local.ts is written out rather than imported, because that file runs
-   *  before any store exists and an import would build the store graph too early - the
-   *  bug that hid the space icons. So the names are held to the modules that own them
-   *  here instead. */
   test('names the keys those stores actually use', () => {
     const owned = [
       MIRRORS_KEY,

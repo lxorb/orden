@@ -1,17 +1,3 @@
-/** Obeying a command before the reader has stopped saying it.
- *
- *  Emil, on even 0.5.7: *"right now it's extremely delayed ... it takes so long for a
- *  voice command that there's no reason to use it."* Most of that wait was the plugin
- *  being careful. A command is one or two words; the plugin held the microphone open
- *  through the silence after them in case a longer phrase was coming, then cut the
- *  utterance, then sent it, then waited for a model.
- *
- *  After "next" nothing longer can be coming - no phrase begins with it - so there is
- *  nothing to wait for. The speech so far is sent while the reader is still speaking,
- *  and a phrase the grammar calls settled is obeyed where it lands. This measures the
- *  two halves of that: which phrases are settled, and what the voice does with a look
- *  that comes back as one. */
-
 import { describe, expect, test, vi } from 'vitest'
 import { settled } from './commands'
 import { type Ears, type Listening, Utterance, Voice } from './voice'
@@ -31,8 +17,6 @@ function frame(level: number): Uint8Array {
 const SPEECH = frame(0.2)
 const SILENCE = frame(0.001)
 
-/* ── Which phrases are already the whole of a command ─────────────────── */
-
 describe('a phrase that is settled', () => {
   test('is one nothing longer could begin with', () => {
     expect(settled('next')).toBe(true)
@@ -42,9 +26,6 @@ describe('a phrase that is settled', () => {
     expect(settled('voice commands off')).toBe(true)
   })
 
-  /** The one that would have been a bug: a reader saying "switch space to work" says
-   *  "switch space" on the way, and a plugin that jumped to the picker there would be
-   *  worse than one that waited. */
   test('is not one that a longer phrase begins with', () => {
     expect(settled('switch space')).toBe(false)
     expect(settled('switch note')).toBe(false)
@@ -71,19 +52,13 @@ describe('a phrase that is settled', () => {
     expect(settled('  CLOSE  ')).toBe(true)
   })
 
-  /** A reader who rebinds a phrase rebinds this too, or the words they actually say
-   *  would be the ones that wait. */
   test('follows the phrases this reader has', () => {
     expect(settled('weiter', { next: 'weiter' })).toBe(true)
     expect(settled('next', { next: 'weiter' })).toBe(false)
 
-    // And a rebinding that makes one phrase the start of another is still caught:
-    // nothing may be acted on early while a longer phrase begins with it.
     expect(settled('open', { next: 'open', page: 'open page' })).toBe(false)
   })
 })
-
-/* ── The look itself ──────────────────────────────────────────────────── */
 
 describe('a look at half an utterance', () => {
   function ears(over: Partial<Ears> = {}): {
@@ -121,8 +96,6 @@ describe('a look at half an utterance', () => {
     }
   }
 
-  /** Half a second of somebody talking, and no silence at all: the reader has not
-   *  stopped, so nothing here is an utterance yet. */
   function speak(voice: Voice, frames = 25): void {
     for (let at = 0; at < frames; at++) voice.frame(SPEECH)
   }
@@ -135,7 +108,6 @@ describe('a look at half an utterance', () => {
     speak(voice)
     await vi.waitFor(() => expect(one.heard).toEqual(['next']))
 
-    // Acted on with no silence measured at all: the reader is still talking.
     expect(one.failed).toEqual([])
     expect(one.sent).toBe(1)
   })
@@ -148,15 +120,12 @@ describe('a look at half an utterance', () => {
     speak(voice)
     await vi.waitFor(() => expect(one.heard).toEqual(['next']))
 
-    // The reader stops. What is left is the tail of a phrase already obeyed.
     for (let at = 0; at < 40; at++) voice.frame(SILENCE)
     await Promise.resolve()
 
     expect(one.heard).toEqual(['next'])
   })
 
-  /** The other half of the rule: a look that is not a whole command changes nothing,
-   *  and the utterance goes on being gathered. */
   test('is ignored where the words are not yet the whole of a command', async () => {
     const one = ears({ transcribe: vi.fn(async () => 'switch space') })
     const voice = new Voice(one.ears)
@@ -166,7 +135,6 @@ describe('a look at half an utterance', () => {
     await Promise.resolve()
     expect(one.heard).toEqual([])
 
-    // And the whole of it is still sent when the reader stops.
     for (let at = 0; at < 40; at++) voice.frame(SILENCE)
     await vi.waitFor(() => expect(one.heard).toEqual(['switch space']))
   })
@@ -194,8 +162,6 @@ describe('a look at half an utterance', () => {
 
   test('is not taken at all where nothing can say what is settled', async () => {
     const one = ears()
-    // A plugin whose grammar cannot answer the question - which is what the shape of
-    // `Ears` says is allowed - never looks early at all.
     const deaf: Ears = { ...one.ears }
     delete deaf.settled
     const voice = new Voice(deaf)
@@ -218,13 +184,10 @@ describe('a look at half an utterance', () => {
 
     const took = voice.state.took
     expect(took).not.toBeNull()
-    // No waiting for a silence: that is the whole of what this saves.
     expect(took?.hang).toBe(0)
     expect(took?.spoke).toBeGreaterThanOrEqual(400)
   })
 })
-
-/* ── How often a look may be taken ────────────────────────────────────── */
 
 describe('an utterance being gathered', () => {
   test('is worth a look once there is enough of it to be worth one', () => {
@@ -236,7 +199,6 @@ describe('an utterance being gathered', () => {
       return utterance.peek(now)
     }
 
-    // Under four hundred milliseconds of speech: not yet.
     for (let at = 0; at < 19; at++) expect(feed(SPEECH)).toBeNull()
     expect(feed(SPEECH)).not.toBeNull()
   })

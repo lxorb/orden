@@ -1,13 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { Frame, MOVE, SNAP } from './frame.svelte'
 
-/** The card on the note: following a finger, or springing into place.
- *
- *  The screenshot Emil sent is a card, not an outline, and the thing a card has to
- *  get right is when it moves. Following while the finger drags, springing when it
- *  lets go, and never easing its way down a scroll - which is a card that lags
- *  behind the words it is supposed to be around. */
-
 let frame: Frame
 
 beforeEach(() => {
@@ -26,10 +19,6 @@ describe('the card', () => {
     expect(frame.following).toBe(false)
   })
 
-  /** What the card's own loop runs on. Emil: *"it doesn't change WHILE scrolling but
-   *  you kinda need to pause for it to react."* A scroll event is not a frame, and
-   *  there is no event at all for a scroll that is still going, so the card measures
-   *  on the clock while this is true. */
   test('says a finger is on the glass while the scrolls keep arriving', () => {
     expect(frame.following).toBe(false)
 
@@ -66,7 +55,6 @@ describe('the card', () => {
     frame.scrolled()
     expect(frame.moving).toBe(false)
 
-    // Every frame of a drag is another scroll, and none of them springs.
     for (let at = 0; at < 20; at++) {
       vi.advanceTimersByTime(16)
       frame.scrolled()
@@ -114,8 +102,6 @@ describe('the card', () => {
     frame.turned()
     expect(frame.moving).toBe(true)
 
-    // The drag's own spring was cancelled by the turn: after one spring's time it is
-    // still rather than starting again.
     vi.advanceTimersByTime(MOVE + SNAP + 10)
     expect(frame.moving).toBe(false)
   })
