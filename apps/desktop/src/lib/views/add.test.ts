@@ -219,6 +219,16 @@ describe('a task added in a group of Todos', () => {
     })
   })
 
+  test('of every space in a note’s group goes into that note of its own space (#1157)', () => {
+    on.root = '/s/Shared'
+    expect(
+      prefillOf({ builtin: 'todos' }, today, { property: 'file.path', key: 'Mine//Errands.md' }),
+    ).toEqual({ root: '/s/Private', path: '/s/Private/Errands.md' })
+    expect(
+      prefillOf({ builtin: 'todos' }, today, { property: 'file.path', key: 'Gone//Errands.md' }),
+    ).toEqual({})
+  })
+
   test('a label of another space too, and with two of that name, nowhere it could not know', async () => {
     added.length = 0
     await addTyped('Pay', prefillOf({ builtin: 'label', tag: 'x', space: 'Mine' }, today))

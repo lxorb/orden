@@ -1689,6 +1689,18 @@ describe('to-dos and bases', () => {
     }
   })
 
+  test('the reader’s `tasks add` and `nib://add-task` go to the one inbox too (#1157)', async () => {
+    workspace.activeSpaceId = 'home'
+    try {
+      const added = await call('add_task', { text: 'Call Ada' }, READER)
+      expect(added).toMatchObject({ result: { space: 'Work' } })
+      expect(files.get('/s/Work/.Inbox.md')).toBe('- [ ] Call Ada\n')
+      expect(files.has('/s/Home/.Inbox.md')).toBe(false)
+    } finally {
+      workspace.activeSpaceId = 'work'
+    }
+  })
+
   test('Todos is every space’s one list, as the panel has it (#1153)', async () => {
     const todos = await call('list_tasks', { view: 'todos' })
     const tasks = (todos as { result: { tasks: { text: string; space: string }[] } }).result.tasks

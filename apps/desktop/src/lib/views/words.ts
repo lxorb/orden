@@ -5,7 +5,7 @@
  *  values rather than words (Today groups by whether a task is overdue), and this is
  *  where a value becomes what the reader reads, in their language. */
 
-import { addDays, groupName, isWhen, type Value } from '@orden/bases'
+import { addDays, groupName, isWhen, placeOfKey, type Value } from '@orden/bases'
 import { i18n, key, t } from '../i18n.svelte'
 import { dateAt } from './days'
 import { bare } from './columns'
@@ -158,12 +158,15 @@ export function groupLabel(
   return groupName(value)
 }
 
-/** A note's group by its name, and its folder where another group's note has that name. */
-function noteLabel(path: string, names: NoteNames | undefined): string {
+/** A note's group by its name, and its space and folder where another group's note has
+ *  that name. */
+function noteLabel(key: string, names: NoteNames | undefined): string {
+  const { space, path } = placeOfKey(key)
   const name = nameOf(path)
   if ((names?.get(name) ?? 0) < 2) return name
-  const folder = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '/'
-  return `${name} · ${folder}`
+  const folder = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : null
+  if (space === null) return `${name} · ${folder ?? '/'}`
+  return `${name} · ${folder === null ? space : `${space}/${folder}`}`
 }
 
 /** A day of Upcoming said the way Todoist heads it: the date and its weekday, and Today

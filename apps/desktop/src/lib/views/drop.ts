@@ -15,6 +15,7 @@ import { deadlineField, deadlineOf, startField, startOf } from '@orden/markdown/
 import {
   addDays,
   groupName,
+  placeOfKey,
   type Priority,
   type Row,
   type TaskChange,
@@ -158,7 +159,9 @@ export function dropInto(
 
   // A task grouped by the note it is in moves to that note.
   if ((property === 'file.path' || property === 'file.basename') && row.kind === 'task') {
-    return typeof key === 'string' && key ? { move: { path: key } } : null
+    if (typeof key !== 'string' || !key) return null
+    const { space, path } = property === 'file.path' ? placeOfKey(key) : { space: null, path: key }
+    return space === null || space === row.space ? { move: { path } } : null
   }
 
   if (!isNoteProperty(property)) return null

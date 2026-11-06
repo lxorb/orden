@@ -52,7 +52,7 @@
 
   /** What the view's prefill is as quick add's: its note by its path in the space. */
   function quick(prefill: Prefill): QuickPrefill {
-    const root = workspace.activeSpace?.root
+    const root = prefill.root ?? workspace.activeSpace?.root
     const note =
       prefill.path !== undefined && root !== undefined
         ? withoutExtension(relativeTo(root, prefill.path))

@@ -835,7 +835,7 @@ class Bridge {
     }
   }
 
-  /** A task said aloud, into the inbox of the space the reader is in: "task call Mum
+  /** A task said aloud, into the reader's one inbox: "task call Mum
    *  tomorrow", through the same reading every other way in has (task-actions.ts).
    *  The foot says it landed. */
   private async addSpoken(words: string): Promise<void> {

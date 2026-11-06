@@ -180,7 +180,7 @@ async function taken(word: string): Promise<void> {
       log('error', 'shared: no space may be written in, so the share is kept')
     } else if (where === 'here') await intoTheOpenNote(arrived, bytes)
     else if (where === 'new' && root !== null) await intoANewNote(arrived, bytes, root)
-    else if (where === 'task' && root !== null) await asATask(arrived, root)
+    else if (where === 'task' && root !== null) await asATask(arrived)
   } catch (error) {
     log('error', `shared: ${error instanceof Error ? error.message : String(error)}`)
   } finally {
@@ -232,7 +232,7 @@ async function carried(arrived: Arrived, word: string): Promise<Map<number, Uint
   return held
 }
 
-/** The space a new note or a task from a share goes into: the open one where it may
+/** The space a new note from a share goes into: the open one where it may
  *  be written in, else the first that may, as a PDF from outside is (pdf/arrival.ts),
  *  else none. Never one shared with this account to be read, which the sync refuses
  *  on every pass. Fetched, as sharing.svelte.ts reads the workspace. */
@@ -277,11 +277,11 @@ async function ask(
   return null
 }
 
-/** A line in the inbox of the space it lands in, the share's title linked to where it
- *  came from. */
-async function asATask(arrived: Arrived, root: string) {
+/** A line in the reader's one inbox (rows/home.svelte.ts), the share's title linked to
+ *  where it came from. */
+async function asATask(arrived: Arrived) {
   const { addTask } = await import('../task-actions')
-  await addTask(sharedTask(arrived), { root, typed: false })
+  await addTask(sharedTask(arrived), { typed: false })
 }
 
 /** What arrived, in one line, so the question is about something the reader can

@@ -118,11 +118,11 @@ describe('a share while the open space is shared to be read', () => {
     expect(world.done).toBe(1)
   })
 
-  test('makes its task in that space too', async () => {
+  test("makes its task in the reader's one inbox, naming no space (#1157)", async () => {
     world.answer = 'task'
     await share()
     // Shared words are the task's words, never read as quick add's grammar.
-    await vi.waitFor(() => expect(world.tasks).toEqual([{ root: '/mine', typed: false }]))
+    await vi.waitFor(() => expect(world.tasks).toEqual([{ typed: false }]))
   })
 
   test("in the reader's own space, stays there", async () => {

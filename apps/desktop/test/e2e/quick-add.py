@@ -3,10 +3,11 @@
 docs/tasks.md 5.6. The palette's Add task row turns into the quick add field. Typed
 words become chips as they are recognised - a day, a tag, a priority - and the row of
 controls under the field says what was understood. A chip pressed is words again
-(Todoist's undo of a misread), and stays words. Enter writes the task into the space's
-Inbox, made the first time, and keeps the field up for the next one; Escape puts it
-away. The Inbox then shows each task as its words and a row of chips, the fields hidden
-the way marks are (5.7).
+(Todoist's undo of a misread), and stays words. Enter writes the task into the reader's
+one inbox, Orden's own `.Inbox.md` in no file list (#1044, #1153), made the first time,
+and keeps the field up for the next one; Escape puts it away. The inbox, opened, then
+shows each task as its words and a row of chips, the fields hidden the way marks are
+(5.7).
 
     python apps/desktop/test/e2e/quick-add.py
 
@@ -14,6 +15,8 @@ Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist. Shots go under `shots/quick-add
 """
 
 from __future__ import annotations
+
+import json
 
 from playwright.sync_api import Browser, Page
 
@@ -121,9 +124,25 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("Escape")
     wait_for(page, f"!document.querySelector('{FIELD}')", "quick add put away")
 
-    # The Inbox holds both, as the Tasks plugin writes them.
-    page.evaluate("() => window.nibApp.workspace.loadTree()")
-    DRIVE.open_note(page, "Inbox")
+    # The inbox holds both, as the Tasks plugin writes them.
+    wait_for(page, "window.nibApp.tasks", "the rows on the handle")
+    inbox = page.evaluate(
+        """async () => {
+          const { rows } = await window.nibApp.tasks()
+          const path = await rows.inbox()
+          await window.nibApp.workspace.openEntry(path, { activate: true })
+          return path
+        }"""
+    )
+    say(f"inbox: {inbox}")
+    if not inbox or not inbox.replace("\\", "/").endswith("/.Inbox.md"):
+        wrong(f"the inbox is {inbox!r}, not Orden's own .Inbox.md")
+    wait_for(
+        page,
+        f"window.nibApp.workspace.active?.path === {json.dumps(inbox)} && document.querySelector('.cm-content')",
+        "the inbox open",
+    )
+    DRIVE.settled(page)
     text = page.evaluate("() => window.nib.state.doc.toString()")
     say(f"Inbox: {text!r}")
     lines = [line for line in text.splitlines() if line.strip()]
@@ -167,4 +186,4 @@ def drive(browser: Browser) -> None:
 
 
 if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "quick add wrote two tasks into the Inbox"))
+    raise SystemExit(DRIVE.run(drive, "quick add wrote two tasks into the inbox"))

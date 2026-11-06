@@ -99,6 +99,17 @@ export function groupName(key: Value): string {
   return key === null ? '' : text(key)
 }
 
+function spacedPath(space: string, path: string): string {
+  return `${space}//${path}`
+}
+
+export function placeOfKey(key: string): { space: string | null; path: string } {
+  const at = key.lastIndexOf('//')
+  return at === -1
+    ? { space: null, path: key }
+    : { space: key.slice(0, at), path: key.slice(at + 2) }
+}
+
 /** Two notes' paths in the order of the notes' names, then of the paths: a view
  *  grouped by note heads its groups by name, so they read in that order. */
 function byNoteName(a: string, b: string): number {
@@ -235,6 +246,9 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       }
       return a.at - b.at
     })
+    const manySpaces =
+      [view.groupBy, view.nib.subGroupBy].some((by) => by?.property === 'file.path') &&
+      new Set(kept.map((one) => one.row.space)).size > 1
     const limit = view.limit && view.limit > 0 ? view.limit : null
     const cut = <T>(members: T[]): T[] => (limit === null ? members : members.slice(0, limit))
 
@@ -268,6 +282,7 @@ export function compileView(base: Base, which?: string | number): CompiledView {
         return [{ key: null, rows: only.map((one) => one.row), summaries: summaries(only) }]
       }
       const options = optionOrder(base, by.property)
+      const spaced = by.property === 'file.path' && manySpaces
       const groups = new Map<string, { key: Value; members: { row: Row; facts: RowFacts }[] }>()
       for (const option of options) groups.set(option, { key: option, members: [] })
       const into = (key: Value, one: { row: Row; facts: RowFacts }) => {
@@ -278,7 +293,8 @@ export function compileView(base: Base, which?: string | number): CompiledView {
         } else groups.set(name, { key, members: [one] })
       }
       for (const one of members) {
-        const key = settled(keyOf(one.facts))
+        const said = settled(keyOf(one.facts))
+        const key = spaced && typeof said === 'string' ? spacedPath(one.row.space, said) : said
         // A board grouped by a list puts a card in the column of each of its members,
         // Notion's multi-select board; a list of none is the group of no value.
         if (fanOut && Array.isArray(key)) {

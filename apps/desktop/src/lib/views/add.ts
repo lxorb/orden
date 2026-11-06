@@ -13,6 +13,7 @@ import {
   type Base,
   isWhen,
   nextId,
+  placeOfKey,
   type Priority,
   rowsInBase,
   type Value,
@@ -102,10 +103,15 @@ export function prefillOf(
   else if (isWhen(property) && (key === 'today' || key === 'tomorrow')) {
     // Todos' due today, due tomorrow (#1046).
     out.deadline = key === 'today' ? today : addDays(today, 1)
-  } else if (property === 'file.path' && typeof key === 'string' && key && spec.space) {
+  } else if (property === 'file.path' && typeof key === 'string' && key) {
     // A project's column of Todos: the task goes into that note.
-    const space = workspace.spaces.find((one) => one.name === spec.space)
-    if (space) out.path = insideSpace(space.root, key)
+    const place = placeOfKey(key)
+    const named = place.space ?? spec.space
+    const [space, other] = workspace.spaces.filter((one) => one.name === named)
+    if (space && !other) {
+      out.path = insideSpace(space.root, place.path)
+      if (place.space !== null) out.root = space.root
+    }
   } else if (property === 'formula.day' || /^task\.(due|date|scheduled)$/.test(property)) {
     // A day of Upcoming, a date column: the day the group is.
     const day = dayIn(key)

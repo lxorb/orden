@@ -1608,8 +1608,8 @@ says how many of each before anything is written, as the other importers do.
   options take tones by name, nothing brings a colour of its own.
 
 **As built** (lane 6). The phone's share sheet asks once more for words alone: **As a
-task** puts the share's title, linked to where it came from, in the open space's inbox
-(`mobile/shared.ts` `sharedTask`). The Today widget is a second widget beside the notes
+task** puts the share's title, linked to where it came from, in the reader's one inbox
+(`mobile/shared.ts` `sharedTask`, #1157). The Today widget is a second widget beside the notes
 one (`TodayWidget.kt`, `res/layout/widget_today.xml`), drawn from the JSON the page
 already hands over (`mobile/widgets.svelte.ts`, its `today`), read again when the rows
 change; a box opens the app with the task's anchor and the page ticks it through the one

@@ -158,6 +158,46 @@ describe('a view grouped by note', () => {
   })
 })
 
+describe('Todos grouped by note across two spaces (#1157)', () => {
+  const rows = [
+    ...taskRowsOfText('Work', '.Inbox.md', '- [ ] Work one'),
+    ...taskRowsOfText('Home', '.Inbox.md', '- [ ] Home one'),
+    ...taskRowsOfText('Home', 'Garden.md', '- [ ] Water the plants'),
+  ]
+  const todos = builtinView('todos')
+  const byNote = withGrouping(todos, 0, 'note', todos.views[0] ?? null)
+  const property = byNote.views[0]?.groupBy?.property ?? ''
+  const context = contextFor({ rows, today: TODAY, now: `${TODAY}T09:00:00` })
+  const groups = answer(displayed(byNote, 0), 0, rows, context).groups
+  const keys = groups.map((group) => group.key)
+
+  test('keeps two spaces’ notes of one path apart, each named with its space', () => {
+    expect(
+      groups.map((group) => group.rows.map((row) => `${row.space} ${row.task?.text}`)),
+    ).toEqual([['Home Home one'], ['Work Work one'], ['Home Water the plants']])
+    const names = noteNames(keys)
+    expect(keys.map((key) => groupLabel(property, key, TODAY, names))).toEqual([
+      '.Inbox · Home',
+      '.Inbox · Work',
+      'Garden',
+    ])
+  })
+
+  test('a task dropped on a group moves to that note in its own space only', () => {
+    const garden = rows[2]!
+    expect(dropInto(property, keys[0] ?? null, garden, TODAY)).toEqual({
+      move: { path: '.Inbox.md' },
+    })
+    expect(dropInto(property, keys[1] ?? null, garden, TODAY)).toBeNull()
+  })
+
+  test('one space’s groups are keyed by path alone, as before', () => {
+    const one = rows.filter((row) => row.space === 'Home')
+    const alone = answer(displayed(byNote, 0), 0, one, context).groups
+    expect(alone.map((group) => group.key)).toEqual(['.Inbox.md', 'Garden.md'])
+  })
+})
+
 // #1046: one view of a space's tasks, with Todoist's Display over it.
 describe('the Display menu over Todos', () => {
   const rows = taskRowsOfText(

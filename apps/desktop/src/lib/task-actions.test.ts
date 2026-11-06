@@ -8,11 +8,16 @@ import { todayOf } from '@orden/bases'
 
 const files = new Map<string, string>()
 const home = { name: 'Home', root: '/s/Home' }
+const work = { name: 'Work', root: '/s/Work' }
+const front = vi.hoisted(() => ({ name: 'Home' }))
 
 vi.mock('./workspace.svelte', () => ({
   workspace: {
-    spaces: [home],
-    activeSpace: home,
+    spaces: [home, work],
+    shownSpaces: [home, work],
+    get activeSpace() {
+      return front.name === 'Work' ? work : home
+    },
     notes: [],
     recent: [],
     noteText: (path: string) => Promise.resolve(files.get(path) ?? null),
@@ -22,7 +27,11 @@ vi.mock('./workspace.svelte', () => ({
 // The reader's own space, unless a test shares it with them to be read. What adding a
 // task refuses there is quick-add/write.test.ts's; a tick is here.
 const share = vi.hoisted(() => ({ readOnly: false }))
-vi.mock('./sharing.svelte', () => ({ canWriteAt: () => !share.readOnly }))
+vi.mock('./sharing.svelte', () => ({
+  canWriteAt: () => !share.readOnly,
+  roleOf: () => 'owner',
+  isShared: () => false,
+}))
 
 vi.mock('./workspace/note-text', () => ({
   noteText: (_ws: unknown, path: string) => Promise.resolve(files.get(path) ?? null),
@@ -58,6 +67,7 @@ const { addTask, listed, tickTask } = await import('./task-actions')
 const today = todayOf()
 
 beforeEach(() => {
+  front.name = 'Home'
   share.readOnly = false
   files.clear()
   files.set('/s/Home/Plan.md', `# Plan\n- [ ] Water the plants 🔁 every day 📅 ${today}\n`)
@@ -76,6 +86,20 @@ describe("the reader's own task actions", () => {
       line: 0,
     })
     expect(files.get('/s/Home/Inbox.md')).toBe('- [ ] Why p1 matters !! tomorrow >Plan\n')
+  })
+
+  test("the reader's one inbox whatever space is open, typed or shared (#1157)", async () => {
+    front.name = 'Work'
+    expect(await addTask('Call Mum')).toEqual({ path: '/s/Home/Inbox.md', line: 0 })
+    expect(await addTask('Read this', { typed: false })).toEqual({
+      path: '/s/Home/Inbox.md',
+      line: 1,
+    })
+    expect(files.has('/s/Work/Inbox.md')).toBe(false)
+    expect(await addTask('Given', { root: '/s/Work', typed: false })).toEqual({
+      path: '/s/Work/Inbox.md',
+      line: 0,
+    })
   })
 
   test('a recurring task ticked writes its next line above, in one edit', async () => {

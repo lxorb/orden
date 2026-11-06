@@ -20,8 +20,8 @@ import { replaceInNotes } from './workspace/note-text'
 
 /** Adds a line of words as a task, read the way quick add reads them (`tomorrow 4pm
  *  p1 >Note /Heading`) in the reader's language, and written the way quick add writes
- *  one: to the note the words name, else the space's inbox, made the first time
- *  (quick-add/write.ts). Answers where it went, or null where it went nowhere.
+ *  one: to the note the words name, else the reader's one inbox (rows/home.svelte.ts),
+ *  made the first time (quick-add/write.ts). Answers where it went, or null where it went nowhere.
  *
  *  `typed: false` is for words the reader did not type, a share from another app:
  *  those are the task's words as they are, and `p1`, `#tips` or `tomorrow` in a
@@ -32,11 +32,10 @@ export async function addTask(
 ): Promise<{ path: string; line: number } | null> {
   const said = text.trim()
   if (!said) return null
+  const into = options.root === undefined ? {} : { root: options.root }
   if (options.typed === false) {
-    const root = options.root ?? workspace.activeSpace?.root
-    if (root === undefined) return null
     const write = await import('./quick-add/write')
-    return write.addTask({ text: said, fields: { tags: [], remind: [] } }, { root })
+    return write.addTask({ text: said, fields: { tags: [], remind: [] } }, into)
   }
   const [{ parseQuickAdd }, { i18n }, write] = await Promise.all([
     import('@orden/bases/language'),
@@ -44,8 +43,8 @@ export async function addTask(
     import('./quick-add/write'),
   ])
   const root = options.root ?? workspace.activeSpace?.root
-  if (root === undefined) return null
-  const read = parseQuickAdd(said, [i18n.language], new Date(), { notes: write.noteNames(root) })
+  const notes = root === undefined ? {} : { notes: write.noteNames(root) }
+  const read = parseQuickAdd(said, [i18n.language], new Date(), notes)
   return write.addTask(
     {
       text: read.text || said,
@@ -53,7 +52,7 @@ export async function addTask(
       ...(read.note === undefined ? {} : { note: read.note }),
       ...(read.heading === undefined ? {} : { heading: read.heading }),
     },
-    { root },
+    into,
   )
 }
 

@@ -8,7 +8,7 @@ export * from './types'
 // What the views (apps/desktop/src/lib/views) and the rows store ask of the engine.
 export { listAsWritten, noteValues, scalarValue, taskHash } from './note-values'
 export { finish, nextOccurrence, type OccurrenceOptions, skip, tick } from './occurrence'
-export { answer, cellValue, groupName, orderId, rowId } from './answer'
+export { answer, cellValue, groupName, orderId, placeOfKey, rowId } from './answer'
 export { readBase, writeBase } from './base-file'
 export { refusedPattern } from './expr/pattern'
 export {
