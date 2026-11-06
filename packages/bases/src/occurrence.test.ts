@@ -226,3 +226,37 @@ describe('a repeating task with a block id', () => {
     ])
   })
 })
+
+describe('a repeat for so many times', () => {
+  test('counts down with each tick and stops after the last', () => {
+    const first = ticked('- [ ] Pill 🔁 every day for 3 times 📅 2026-10-07\n', 0, '2026-10-07')
+    expect(first).toBe(
+      '- [ ] Pill 🔁 every day for 2 times 📅 2026-10-08\n' +
+        '- [x] Pill 🔁 every day for 3 times 📅 2026-10-07 ✅ 2026-10-07\n',
+    )
+    const second = ticked(first, 0, '2026-10-08')
+    expect(second.split('\n')[0]).toBe('- [ ] Pill 🔁 every day for 1 time 📅 2026-10-09')
+    const last = ticked(second, 0, '2026-10-09')
+    expect(last.split('\n')[0]).toBe(
+      '- [x] Pill 🔁 every day for 1 time 📅 2026-10-09 ✅ 2026-10-09',
+    )
+    expect(last.split('\n').filter((line) => line.startsWith('- [ ]'))).toEqual([])
+  })
+
+  test('when done keeps its words after the count', () => {
+    const next = nextOccurrence(
+      readTask('- [ ] Pill 🔁 every day for 2 times when done 📅 2026-10-07')!,
+      '2026-10-07',
+    )
+    expect(next?.recurrence).toBe('every day for 1 time when done')
+  })
+
+  test('a skip spends one of the times', () => {
+    const line = '- [ ] Pill 🔁 every week for 2 times 📅 2026-10-07'
+    expect(appliedEdits(line, skip(line, '2026-10-07'))).toBe(
+      '- [ ] Pill 🔁 every week for 1 time 📅 2026-10-14',
+    )
+    const last = '- [ ] Pill 🔁 every week for 1 time 📅 2026-10-14'
+    expect(skip(last, '2026-10-14')).toEqual([])
+  })
+})

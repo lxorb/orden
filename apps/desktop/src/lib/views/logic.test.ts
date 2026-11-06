@@ -585,6 +585,14 @@ describe('the calendar', () => {
     expect(ghosts.map((one) => one.day)).toEqual(['2026-01-07', '2026-01-10'])
   })
 
+  test('a repeat for so many times has only that many, whatever days are shown', () => {
+    const pill = taskRow('Health.md', '- [ ] Pill 🔁 every day for 3 times 📅 2026-10-04')
+    const all = occurrences(place(pill, '2026-10-04'), '2026-10-20')
+    expect(all.map((one) => one.day)).toEqual(['2026-10-05', '2026-10-06'])
+    const later = occurrences(place(pill, '2026-10-04'), '2026-10-20', 62, '2026-10-06')
+    expect(later.map((one) => one.day)).toEqual(['2026-10-06'])
+  })
+
   test('keeps what has no day for the tray', () => {
     const rows = [taskRow('A.md', '- [ ] Dated 📅 2026-10-05'), taskRow('A.md', '- [ ] Not', 1)]
     const placed = placedByDay(rows, ['2026-10-04', '2026-10-05'], (row) => row.task?.due ?? null)

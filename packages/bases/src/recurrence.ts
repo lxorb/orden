@@ -262,6 +262,12 @@ export function parseRule(written: string): Rule | null {
   return rule
 }
 
+const timesText = (count: number) => `${count} time${count === 1 ? '' : 's'}`
+
+export function fewerTimes(written: string, count: number): string {
+  return written.replace(/ for \d+ times?(?= when done$|$)/i, ` for ${timesText(count)}`)
+}
+
 function nthText(nth: number): string {
   if (nth === -1) return 'last'
   if (nth < 0) return `${nthText(-nth)} last`
@@ -317,7 +323,7 @@ export function ruleText(rule: Rule): string {
   }
 
   if (rule.until) text += ` until ${untilText(rule.until)}`
-  if (rule.count !== undefined) text += ` for ${rule.count} times`
+  if (rule.count !== undefined) text += ` for ${timesText(rule.count)}`
   if (rule.whenDone) text += ' when done'
   return text
 }

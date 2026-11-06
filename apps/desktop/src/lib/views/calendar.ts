@@ -68,12 +68,15 @@ export function occurrences(placed: Placed, last: string, most = 62, first = pla
   const rule = parseRule(task.recurrence)
   if (!rule || rule.whenDone) return []
   const out: Placed[] = []
-  let after = first > placed.day ? addDays(first, -1) : placed.day
-  while (out.length < most) {
+  const counted = rule.count !== undefined
+  let left = counted ? (rule.count ?? 1) - 1 : Infinity
+  let after = first > placed.day && !counted ? addDays(first, -1) : placed.day
+  while (out.length < most && left > 0) {
     const next = nextDate(rule, placed.day, after)
     if (next === null || next > last) break
-    out.push({ ...placed, day: next, ghost: true })
+    if (next >= first) out.push({ ...placed, day: next, ghost: true })
     after = next
+    left--
   }
   return out
 }
