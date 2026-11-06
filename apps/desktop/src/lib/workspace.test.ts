@@ -5061,6 +5061,17 @@ describe('a space and its AGENTS.md', () => {
     workspace.tree = null
   })
 
+  test('dropped against a pane side opens its settings and moves no other tab', async () => {
+    await workspace.open('/space/a.md')
+    const [only] = workspace.panes.all
+    if (!only) throw new Error('nothing opened')
+
+    await workspace.dropNotes([AGENTS], { kind: 'pane', paneId: only.id, zone: 'right' })
+
+    expect(workspace.panes.count).toBe(1)
+    expect(workspace.tabsIn(only.id).map((tab) => tab.path)).toEqual(['/space/a.md'])
+  })
+
   test('is on the disk still, and in the listing that says so', () => {
     expect(walked(workspace.tree)).toContain(AGENTS)
     expect(workspace.entryAt(AGENTS)?.path).toBe(AGENTS)
