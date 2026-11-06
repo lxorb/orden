@@ -849,7 +849,7 @@ describe('the Nix edge', () => {
 
   test('is started out of the pushed flake the way the release is', () => {
     expect(release).toMatch(
-      /uses: \.\/\.github\/workflows\/nix\.yml\n\s+with:\n\s+flake: github:\$\{\{ github\.repository \}\}\/\$\{\{ needs\.nix-edge\.outputs\.sha \}\}\?dir=packaging\/nix\n\s+package: orden-unstable/,
+      /\n {4}if: \$\{\{ !cancelled\(\) && needs\.nix-edge\.result == 'success' \}\}\n[\s\S]*?uses: \.\/\.github\/workflows\/nix\.yml\n\s+with:\n\s+flake: github:\$\{\{ github\.repository \}\}\/\$\{\{ needs\.nix-edge\.outputs\.sha \}\}\?dir=packaging\/nix\n\s+package: orden-unstable/,
     )
   })
 })

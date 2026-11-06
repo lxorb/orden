@@ -599,8 +599,11 @@ jobs:
           done
           echo "sha=$(git rev-parse HEAD)" >>"$GITHUB_OUTPUT"
 
+  # Its own `if`: a job's default one is false whenever a job anywhere above it was
+  # skipped, and a push to `unstable` always skips `draft`.
   nix:
     needs: nix-edge
+    if: ${{ !cancelled() && needs.nix-edge.result == 'success' }}
     permissions:
       contents: read
     uses: ./.github/workflows/nix.yml
