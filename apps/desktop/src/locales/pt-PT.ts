@@ -2241,7 +2241,19 @@ export const ptPT: Dictionary = {
   Extensions: 'Extensões',
   'Add extension': 'Adicionar extensão',
   'Manage extensions': 'Gerir extensões',
-  'Paste a Chrome Web Store link': 'Cole uma ligação da Chrome Web Store',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Cole uma ligação da Chrome Web Store ou do Firefox Add-ons',
+  'Not all of it works in Orden:': 'Nem tudo funciona no Orden:',
+  'It can’t block or change what pages load.':
+    'Não consegue bloquear nem alterar o que as páginas carregam.',
+  'Its containers are its own: tabs don’t open in them.':
+    'Os contentores são dele: os separadores não abrem neles.',
+  'Its sidebar opens as a tab.': 'A barra lateral abre como um separador.',
+  'Tabs it hides stay in the tab bar.': 'Os separadores que oculta ficam na barra de separadores.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'Partes exclusivas do Firefox que usa e que aqui não funcionam: {list}',
+  'Install anyway': 'Instalar na mesma',
+  'Starts when Orden next opens': 'Começa da próxima vez que o Orden abrir',
   'Did not load': 'Não foi carregada',
   Permissions: 'Permissões',
   Options: 'Opções',

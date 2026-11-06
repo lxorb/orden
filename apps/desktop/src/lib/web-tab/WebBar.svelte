@@ -109,7 +109,7 @@
       open: string | null
       onpress: (id: string, anchor: HTMLElement) => void
       onlist: (anchor: HTMLElement) => void
-      onadd: () => void
+      onadd: (anchor: HTMLElement) => void
     } | null
   } = $props()
 

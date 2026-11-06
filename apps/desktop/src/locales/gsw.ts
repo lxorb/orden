@@ -2197,7 +2197,18 @@ export const gsw: Dictionary = {
   Extensions: 'Erwiiterige',
   'Add extension': 'Erwiiterig hinzuefüege',
   'Manage extensions': 'Erwiiterige verwalte',
-  'Paste a Chrome Web Store link': 'Link us em Chrome Web Store iifüege',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Link us em Chrome Web Store oder vo Firefox Add-ons iifüege',
+  'Not all of it works in Orden:': 'Nöd alles devo gaht in Orden:',
+  'It can’t block or change what pages load.': 'Es chan nöd sperre oder ändere, was Siite lade.',
+  'Its containers are its own: tabs don’t open in them.':
+    'Sini Container sind sini eigene: Tabs gönd nöd drin uf.',
+  'Its sidebar opens as a tab.': 'Sini Siiteleiste gaht als Tab uf.',
+  'Tabs it hides stay in the tab bar.': 'Tabs, wo s versteckt, blibed i de Tableiste.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'Teil nur für Firefox, wo s bruucht und wo da nöd laufed: {list}',
+  'Install anyway': 'Glich installiere',
+  'Starts when Orden next opens': 'Startet bim nächschte Öffne vo Orden',
   'Did not load': 'Nöd glade',
   Permissions: 'Berächtigunge',
   Options: 'Optione',

@@ -2196,7 +2196,18 @@ export const te: Dictionary = {
   Extensions: 'ఎక్స్‌టెన్షన్‌లు',
   'Add extension': 'ఎక్స్‌టెన్షన్ జోడించు',
   'Manage extensions': 'ఎక్స్‌టెన్షన్‌లను నిర్వహించు',
-  'Paste a Chrome Web Store link': 'Chrome వెబ్ స్టోర్ లింక్‌ను అతికించండి',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Chrome వెబ్ స్టోర్ లేదా Firefox Add-ons లింక్‌ను అతికించండి',
+  'Not all of it works in Orden:': 'దీనిలో అన్నీ Orden‌లో పని చేయవు:',
+  'It can’t block or change what pages load.': 'పేజీలు లోడ్ చేసేదాన్ని ఇది ఆపలేదు లేదా మార్చలేదు.',
+  'Its containers are its own: tabs don’t open in them.':
+    'దీని కంటైనర్‌లు దీనివే: ట్యాబ్‌లు వాటిలో తెరుచుకోవు.',
+  'Its sidebar opens as a tab.': 'దీని సైడ్‌బార్ ఒక ట్యాబ్‌గా తెరుచుకుంటుంది.',
+  'Tabs it hides stay in the tab bar.': 'ఇది దాచే ట్యాబ్‌లు ట్యాబ్ బార్‌లోనే ఉంటాయి.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'ఇది వాడే, ఇక్కడ పని చేయని Firefox‌కు మాత్రమే ఉన్న భాగాలు: {list}',
+  'Install anyway': 'అయినా ఇన్‌స్టాల్ చేయండి',
+  'Starts when Orden next opens': 'Orden తర్వాత తెరిచినప్పుడు మొదలవుతుంది',
   'Did not load': 'లోడ్ కాలేదు',
   Permissions: 'అనుమతులు',
   Options: 'ఎంపికలు',

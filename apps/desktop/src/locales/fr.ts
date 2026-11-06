@@ -2254,7 +2254,19 @@ export const fr: Dictionary = {
   Extensions: 'Extensions',
   'Add extension': 'Ajouter l’extension',
   'Manage extensions': 'Gérer les extensions',
-  'Paste a Chrome Web Store link': 'Collez un lien du Chrome Web Store',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Collez un lien du Chrome Web Store ou de Firefox Add-ons',
+  'Not all of it works in Orden:': 'Tout ne fonctionne pas dans Orden :',
+  'It can’t block or change what pages load.':
+    'Il ne peut ni bloquer ni modifier ce que chargent les pages.',
+  'Its containers are its own: tabs don’t open in them.':
+    'Ses conteneurs sont les siens : les onglets ne s’y ouvrent pas.',
+  'Its sidebar opens as a tab.': 'Son panneau latéral s’ouvre dans un onglet.',
+  'Tabs it hides stay in the tab bar.': 'Les onglets qu’il masque restent dans la barre d’onglets.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'Parties propres à Firefox qu’il utilise et qui ne fonctionnent pas ici : {list}',
+  'Install anyway': 'Installer quand même',
+  'Starts when Orden next opens': 'Démarre à la prochaine ouverture d’Orden',
   'Did not load': 'Non chargée',
   Permissions: 'Autorisations',
   Options: 'Options',

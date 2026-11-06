@@ -11,7 +11,15 @@ have to name it, and `extensions_remove` has to take it away - out of the engine
 and out of Settings. With `again`, after the app is started again without it: the list
 has to stay empty.
 
-    python3 scripts/extensions-drive.py <out folder> <installed|again> <name>
+#1155: a Firefox add-on, installed from addons.mozilla.org by its link. With
+`firefox-install`: `extensions_install` has to install it as a Firefox add-on that starts
+with the next launch, which Settings has to say, since this engine loads one only as it
+starts. With `firefox-run`, after the app is started again: the engine has to run it, its
+background page as an offscreen document with the Firefox layer in it, and its button in
+the web bar has to open its popup, drawn, with `browser` and Firefox's own API in it - read
+over the engine's debugging port (scripts/devtools.py), which presses nothing.
+
+    python3 scripts/extensions-drive.py <out folder> <installed|again|firefox-install|firefox-run> <name>
 """
 
 import json
@@ -25,6 +33,10 @@ from pathlib import Path
 OUT, PHASE, NAME = Path(sys.argv[1]), sys.argv[2], sys.argv[3]
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
 failures = []
+
+#: A Firefox add-on with a popup and a background page, as a reader would paste it.
+FIREFOX = "https://addons.mozilla.org/en-US/firefox/addon/sponsorblock/"
+DEBUG_PORT = int(os.environ.get("NIB_CEF_DEBUG_PORT", "9339"))
 
 
 def fail(what):
@@ -157,6 +169,97 @@ if PHASE == "installed":
     else:
         print(f"installed: Settings after the removal: {(rows or '').strip()[:120]!r}")
     closed()
+elif PHASE == "firefox-install":
+    said = run(
+        "window.__TAURI_INTERNALS__.invoke('extensions_install', "
+        f"{{ link: {json.dumps(FIREFOX)}, anyway: true }})"
+        ".then((done) => JSON.stringify(done), (error) => 'refused: ' + error)",
+        180,
+    )
+    try:
+        done = json.loads(said)
+    except (TypeError, ValueError):
+        done = None
+    if not isinstance(done, dict) or done.get("store") != "firefox":
+        raise SystemExit(f"::error::firefox-install: it was not installed as a Firefox add-on: {said!r}")
+    print(f"firefox-install: installed {done.get('name')!r} as {done.get('id')}, gaps {done.get('gaps')}")
+    if not done.get("pending"):
+        fail("it was said to run before Orden starts again, which this engine cannot do")
+    rows = settings_rows()
+    if not rows or "Starts when Orden next opens" not in rows:
+        fail(f"Settings does not say it starts with the next launch: {rows!r}")
+    else:
+        print(f"firefox-install: Settings says {rows.strip()[:160]!r}")
+    closed()
+elif PHASE == "firefox-run":
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from devtools import Session, targets
+
+    one = None
+    for _ in range(60):
+        one = next((each for each in listed() or [] if each.get("store") == "firefox"), None)
+        if one and not one.get("pending"):
+            break
+        time.sleep(1)
+    if not one or one.get("pending"):
+        raise SystemExit(f"::error::firefox-run: the engine did not load it as it started: {one}")
+    print(f"firefox-run: the engine runs {one['name']!r} as {one['id']}")
+    base = f"chrome-extension://{one['id']}/"
+
+    def target(ending):
+        for _ in range(40):
+            for each in targets(DEBUG_PORT):
+                url = str(each.get("url", ""))
+                if url.startswith(base) and url.split("#")[0].split("?")[0].endswith(ending):
+                    return each
+            time.sleep(0.5)
+        return None
+
+    background = target("orden/background.html")
+    if not background:
+        fail(f"no background page runs: {[each.get('url') for each in targets(DEBUG_PORT)]}")
+    else:
+        page = Session(background)
+        said = page.value("JSON.stringify([globalThis.__ordenBackground === true, typeof browser.runtime.getBrowserInfo])")
+        page.close()
+        print(f"firefox-run: its background page says {said}")
+        if said != '[true,"function"]':
+            fail(f"its background page has not the Firefox layer: {said!r}")
+
+    if not run("!!document.querySelector('[data-opens=\"extensions\"]')"):
+        run("(nib.workspace.openPage('http://127.0.0.1:8765/', 'front'), 'opened')")
+    pressed = None
+    for _ in range(40):
+        pressed = run(
+            "(() => { const button = [...document.querySelectorAll('button.extension')]"
+            f".find((each) => each.getAttribute('aria-label') === {json.dumps(one['name'])});"
+            " if (!button) return null; button.click(); return 'pressed' })()"
+        )
+        if pressed:
+            break
+        time.sleep(0.5)
+    if not pressed:
+        raise SystemExit("::error::firefox-run: its button is not in the web bar")
+    popup = target(one.get("popup") or "popup.html")
+    subprocess.run(["grim", str(OUT / "firefox-popup.png")], check=False)
+    if not popup:
+        fail("its popup did not open")
+    else:
+        page = Session(popup)
+        said = None
+        for _ in range(20):
+            said = page.value(
+                "JSON.stringify([typeof browser.runtime.getBrowserInfo, typeof browser.contextualIdentities,"
+                " (document.body?.innerText ?? '').trim().length > 0])"
+            )
+            if said == '["function","object",true]':
+                break
+            time.sleep(0.5)
+        page.close()
+        print(f"firefox-run: its popup says {said}")
+        if said != '["function","object",true]':
+            fail(f"its popup has not drawn with the Firefox layer in it: {said!r}")
+    run("(document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })), 'closed')")
 else:
     time.sleep(5)
     left = listed()

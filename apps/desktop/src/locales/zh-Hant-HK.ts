@@ -2124,7 +2124,18 @@ export const zhHantHK: Dictionary = {
   Extensions: '擴充功能',
   'Add extension': '新增擴充功能',
   'Manage extensions': '管理擴充功能',
-  'Paste a Chrome Web Store link': '貼上 Chrome 線上應用程式商店連結',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    '貼上 Chrome 線上應用程式商店或 Firefox Add-ons 連結',
+  'Not all of it works in Orden:': '並非全部都能在 Orden 中運作：',
+  'It can’t block or change what pages load.': '它無法封鎖或更改網頁載入的內容。',
+  'Its containers are its own: tabs don’t open in them.':
+    '它的容器是它自己的：分頁不會在其中開啟。',
+  'Its sidebar opens as a tab.': '它的側邊欄會以分頁開啟。',
+  'Tabs it hides stay in the tab bar.': '它隱藏的分頁仍留在分頁列中。',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    '它使用的、在這裡無法運作的 Firefox 專有部分：{list}',
+  'Install anyway': '仍然安裝',
+  'Starts when Orden next opens': '下次開啟 Orden 時啟動',
   'Did not load': '未能載入',
   Permissions: '權限',
   Options: '選項',

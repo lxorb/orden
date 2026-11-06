@@ -2187,7 +2187,18 @@ export const mr: Dictionary = {
   Extensions: 'विस्तार',
   'Add extension': 'विस्तार जोडा',
   'Manage extensions': 'विस्तार व्यवस्थापित करा',
-  'Paste a Chrome Web Store link': 'Chrome वेब स्टोअरची लिंक पेस्ट करा',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Chrome वेब स्टोअर किंवा Firefox Add-ons ची लिंक पेस्ट करा',
+  'Not all of it works in Orden:': 'याचे सर्व Orden मध्ये चालत नाही:',
+  'It can’t block or change what pages load.': 'पेज जे लोड करतात ते हे अडवू किंवा बदलू शकत नाही.',
+  'Its containers are its own: tabs don’t open in them.':
+    'याचे कंटेनर याचे स्वतःचे आहेत: टॅब त्यात उघडत नाहीत.',
+  'Its sidebar opens as a tab.': 'याचा साइडबार टॅब म्हणून उघडतो.',
+  'Tabs it hides stay in the tab bar.': 'हे लपवते ते टॅब टॅब बारमध्येच राहतात.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'हे वापरते असे फक्त Firefox चे भाग जे इथे चालत नाहीत: {list}',
+  'Install anyway': 'तरीही इन्स्टॉल करा',
+  'Starts when Orden next opens': 'Orden पुढच्या वेळी उघडल्यावर सुरू होईल',
   'Did not load': 'लोड झाले नाही',
   Permissions: 'परवानग्या',
   Options: 'पर्याय',

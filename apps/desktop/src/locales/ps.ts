@@ -2186,7 +2186,19 @@ export const ps: Dictionary = {
   Extensions: 'غځونې',
   'Add extension': 'غځونه زیاته کړئ',
   'Manage extensions': 'غځونې اداره کړئ',
-  'Paste a Chrome Web Store link': 'د Chrome ویب پلورنځي لینک ونښلوئ',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'د Chrome ویب پلورنځي یا Firefox Add-ons لینک ونښلوئ',
+  'Not all of it works in Orden:': 'ټول یې په Orden کې کار نه کوي:',
+  'It can’t block or change what pages load.':
+    'هغه څه نه شي بندولی یا بدلولی چې پاڼې یې پورته کوي.',
+  'Its containers are its own: tabs don’t open in them.':
+    'د هغه کانټینرونه خپل دي: ټبونه په کې نه پرانیستل کېږي.',
+  'Its sidebar opens as a tab.': 'د هغه څنګ پټه د یوه ټب په توګه پرانیستل کېږي.',
+  'Tabs it hides stay in the tab bar.': 'هغه ټبونه چې پټوي یې د ټب پټه کې پاتې کېږي.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'یوازې د Firefox برخې چې کاروي یې او دلته نه چلېږي: {list}',
+  'Install anyway': 'بیا هم یې نصب کړئ',
+  'Starts when Orden next opens': 'کله چې Orden بیا پرانیستل شي پیلېږي',
   'Did not load': 'بار نه شو',
   Permissions: 'اجازې',
   Options: 'غوراوي',

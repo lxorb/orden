@@ -2183,7 +2183,18 @@ export const hi: Dictionary = {
   Extensions: 'एक्सटेंशन',
   'Add extension': 'एक्सटेंशन जोड़ें',
   'Manage extensions': 'एक्सटेंशन प्रबंधित करें',
-  'Paste a Chrome Web Store link': 'Chrome वेब स्टोर का लिंक चिपकाएं',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Chrome वेब स्टोर या Firefox Add-ons का लिंक चिपकाएं',
+  'Not all of it works in Orden:': 'इसका सब कुछ Orden में काम नहीं करता:',
+  'It can’t block or change what pages load.': 'पेज जो लोड करते हैं उसे यह रोक या बदल नहीं सकता।',
+  'Its containers are its own: tabs don’t open in them.':
+    'इसके कंटेनर इसके अपने हैं: टैब उनमें नहीं खुलते।',
+  'Its sidebar opens as a tab.': 'इसका साइडबार एक टैब के रूप में खुलता है।',
+  'Tabs it hides stay in the tab bar.': 'यह जिन टैब को छिपाता है वे टैब बार में ही रहते हैं।',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'यह Firefox के जिन खास हिस्सों का उपयोग करता है जो यहां नहीं चलते: {list}',
+  'Install anyway': 'फिर भी इंस्टॉल करें',
+  'Starts when Orden next opens': 'Orden अगली बार खुलने पर शुरू होगा',
   'Did not load': 'लोड नहीं हुआ',
   Permissions: 'अनुमतियां',
   Options: 'विकल्प',

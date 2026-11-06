@@ -2266,7 +2266,19 @@ export const uk: Dictionary = {
   Extensions: 'Розширення',
   'Add extension': 'Додати розширення',
   'Manage extensions': 'Керувати розширеннями',
-  'Paste a Chrome Web Store link': 'Вставте посилання з Chrome Web Store',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Вставте посилання з Chrome Web Store або Firefox Add-ons',
+  'Not all of it works in Orden:': 'В Orden працює не все:',
+  'It can’t block or change what pages load.':
+    'Воно не може блокувати чи змінювати те, що завантажують сторінки.',
+  'Its containers are its own: tabs don’t open in them.':
+    'Його контейнери належать йому: вкладки в них не відкриваються.',
+  'Its sidebar opens as a tab.': 'Його бічна панель відкривається у вкладці.',
+  'Tabs it hides stay in the tab bar.': 'Приховані ним вкладки лишаються на панелі вкладок.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'Частини лише для Firefox, які воно використовує і які тут не працюють: {list}',
+  'Install anyway': 'Усе одно встановити',
+  'Starts when Orden next opens': 'Запуститься під час наступного відкриття Orden',
   'Did not load': 'Не завантажено',
   Permissions: 'Дозволи',
   Options: 'Параметри',

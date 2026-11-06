@@ -2121,7 +2121,17 @@ export const yue: Dictionary = {
   Extensions: '擴充功能',
   'Add extension': '加入擴充功能',
   'Manage extensions': '管理擴充功能',
-  'Paste a Chrome Web Store link': '貼上 Chrome 線上應用程式商店連結',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    '貼上 Chrome 線上應用程式商店或者 Firefox Add-ons 連結',
+  'Not all of it works in Orden:': '佢唔係全部都喺 Orden 用到：',
+  'It can’t block or change what pages load.': '佢冇辦法封鎖或者改變網頁載入嘅嘢。',
+  'Its containers are its own: tabs don’t open in them.': '佢嘅容器係佢自己嘅：分頁唔會喺入面開。',
+  'Its sidebar opens as a tab.': '佢嘅側邊欄會以分頁開。',
+  'Tabs it hides stay in the tab bar.': '佢隱藏嘅分頁仍然留喺分頁列。',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    '佢用到而喺呢度行唔到嘅 Firefox 專有部分：{list}',
+  'Install anyway': '照樣安裝',
+  'Starts when Orden next opens': '下次開 Orden 嗰陣先開始',
   'Did not load': '載入唔到',
   Permissions: '權限',
   Options: '選項',

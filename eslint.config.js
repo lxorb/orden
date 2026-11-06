@@ -36,6 +36,9 @@ export default tseslint.config(
       'packaging/**',
       'apps/desktop/src-tauri/gen/**',
       'docs/**',
+      // The WebExtension polyfill, as Mozilla publishes it; see
+      // apps/desktop/src-tauri/src/extensions/firefox.rs.
+      'apps/desktop/src-tauri/src/extensions/firefox/browser-polyfill.js',
     ],
   },
   js.configs.recommended,
@@ -141,7 +144,8 @@ export default tseslint.config(
     // src-tauri/src/page_scheme.js, and the one that keeps what it stores,
     // src-tauri/src/kept.js, and the one that says what will not play,
     // src-tauri/src/web_media.js, and an agent's reach into a page on a Mac,
-    // src-tauri/src/agents/engines/snapshot.js.
+    // src-tauri/src/agents/engines/snapshot.js, and the Firefox layer an add-on runs,
+    // src-tauri/src/extensions/firefox/*.js.
     // And the frame script, a classic script every sandboxed frame carries inline; see
     // packages/editor/src/frame-script.js.
     files: [
@@ -158,9 +162,16 @@ export default tseslint.config(
       'apps/desktop/src-tauri/src/page_scheme.js',
       'apps/desktop/src-tauri/src/kept.js',
       'apps/desktop/src-tauri/src/agents/engines/snapshot.js',
+      'apps/desktop/src-tauri/src/extensions/firefox/*.js',
       'packages/editor/src/frame-script.js',
     ],
     ...tseslint.configs.disableTypeChecked,
+  },
+  {
+    // The Firefox layer runs inside an add-on, where `chrome` is the extension API and its
+    // service worker has `importScripts`; see src-tauri/src/extensions/firefox.rs.
+    files: ['apps/desktop/src-tauri/src/extensions/firefox/*.js'],
+    languageOptions: { globals: { ...globals.serviceworker, ...globals.webextensions } },
   },
   {
     // The Worker's `fetch` throws "Illegal invocation" when it is called as a method of

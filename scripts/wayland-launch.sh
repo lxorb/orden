@@ -55,7 +55,9 @@
 #   - with EXTENSIONS=1, a small extension of the run's own loaded (`--load-extension`):
 #     seen in the web bar and in Settings, removed through the engine and gone from both,
 #     and still gone once Orden is started again without it (#789,
-#     scripts/extensions-drive.py);
+#     scripts/extensions-drive.py); then a Firefox add-on installed from
+#     addons.mozilla.org, loaded when Orden starts again, and its popup drawn with
+#     `browser` in it (#1155);
 #   - with GLOBALS=1, a page and a frame in a web tab: a classic script's `let ipc` has to
 #     run and nothing of the app's be on `window`, while the app's page keeps the channel
 #     and quick add and the presenter's window are heard from the app's profile
@@ -219,8 +221,8 @@ endpoint() {
 }
 command=("$@")
 # With DRIVE=1, Chromium's DevTools port, which says how Chromium runs (#390,
-# scripts/compositing-check.py).
-if [ "${DRIVE:-0}" = 1 ] || [ "${SESSION:-0}" = 1 ]; then
+# scripts/compositing-check.py); with EXTENSIONS=1, what a Firefox add-on's popup says.
+if [ "${DRIVE:-0}" = 1 ] || [ "${SESSION:-0}" = 1 ] || [ "${EXTENSIONS:-0}" = 1 ]; then
   NIB_CEF_DEBUG_PORT=${NIB_CEF_DEBUG_PORT:-9339}
   export NIB_CEF_DEBUG_PORT
 fi
@@ -554,22 +556,40 @@ if [ "$status" = 0 ] && [ "${GRANTS:-0}" = 1 ]; then
 fi
 
 if [ "$status" = 0 ] && [ "${EXTENSIONS:-0}" = 1 ]; then
-  sleep 3
-  if python3 "$here/extensions-drive.py" "$out" installed "$ext_name"; then
-    # Started again without it on the command line: what was removed stays removed.
-    unset NIB_CEF_ARGS
+  # Orden started again, its log in orden-<name>.log; answers whether its window mapped.
+  started_again() {
     kill -TERM "$app_pid" 2>/dev/null || true
     for _ in $(seq 50); do kill -0 "$app_pid" 2>/dev/null || break; sleep 0.2; done
     kill -KILL "$app_pid" 2>/dev/null || true
     wait "$app_pid" 2>/dev/null || true
     endpoint
-    "${command[@]}" > "$out/orden-again.log" 2>&1 &
+    "${command[@]}" > "$out/orden-$1.log" 2>&1 &
     app_pid=$!
     if wait_for_views 1; then
       sleep 3
+      return 0
+    fi
+    echo "::error::no window mapped when started again ($1)"
+    return 1
+  }
+  sleep 3
+  if python3 "$here/extensions-drive.py" "$out" installed "$ext_name"; then
+    # Started again without it on the command line: what was removed stays removed.
+    unset NIB_CEF_ARGS
+    if started_again again; then
       python3 "$here/extensions-drive.py" "$out" again "$ext_name" || status=1
     else
-      echo "::error::no window mapped when started again"
+      status=1
+    fi
+    # A Firefox add-on from addons.mozilla.org: installed, then loaded as Orden starts
+    # again, and its popup drawn with the Firefox layer in it (#1155).
+    if [ "$status" = 0 ] && python3 "$here/extensions-drive.py" "$out" firefox-install "$ext_name"; then
+      if started_again firefox; then
+        python3 "$here/extensions-drive.py" "$out" firefox-run "$ext_name" || status=1
+      else
+        status=1
+      fi
+    else
       status=1
     fi
   else

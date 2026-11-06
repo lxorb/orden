@@ -2187,7 +2187,19 @@ export const fa: Dictionary = {
   Extensions: 'افزونه‌ها',
   'Add extension': 'افزودن افزونه',
   'Manage extensions': 'مدیریت افزونه‌ها',
-  'Paste a Chrome Web Store link': 'پیوند فروشگاه وب Chrome را جای‌گذاری کنید',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'پیوند فروشگاه وب Chrome یا Firefox Add-ons را جای‌گذاری کنید',
+  'Not all of it works in Orden:': 'همهٔ آن در Orden کار نمی‌کند:',
+  'It can’t block or change what pages load.':
+    'نمی‌تواند آنچه صفحه‌ها بار می‌کنند را مسدود یا تغییر دهد.',
+  'Its containers are its own: tabs don’t open in them.':
+    'ظرف‌هایش مال خودش است: زبانه‌ها در آن‌ها باز نمی‌شوند.',
+  'Its sidebar opens as a tab.': 'نوار کناری‌اش به‌صورت یک زبانه باز می‌شود.',
+  'Tabs it hides stay in the tab bar.': 'زبانه‌هایی که پنهان می‌کند در نوار زبانه می‌مانند.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'بخش‌های مخصوص Firefox که به کار می‌برد و اینجا اجرا نمی‌شوند: {list}',
+  'Install anyway': 'به‌هرحال نصب کن',
+  'Starts when Orden next opens': 'دفعهٔ بعد که Orden باز شود شروع می‌شود',
   'Did not load': 'بارگیری نشد',
   Permissions: 'مجوزها',
   Options: 'گزینه‌ها',

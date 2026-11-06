@@ -20,15 +20,15 @@
 
 use std::collections::BTreeMap;
 use std::fs;
-use std::path::Path;
-#[cfg(not(feature = "cef"))]
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
+use super::firefox::{self, Gaps};
 use super::link::Store;
+use super::unzip;
 #[cfg(not(feature = "cef"))]
-use super::{crx, manifest, unzip};
+use super::{crx, manifest};
 
 /// The list's file.
 const LIST: &str = "library.json";
@@ -55,10 +55,13 @@ pub struct Kept {
     /// extensions glyph. Chrome's pin, on from the start: somebody who installed an
     /// extension with a button wants to press it.
     pub pinned: bool,
+    /// The slug addons.mozilla.org names a Firefox add-on by, which it is updated by and
+    /// which the bar's Add on its AMO page is matched against.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub addon: Option<String>,
 }
 
-/// The folder the extensions live in.
-#[cfg(not(feature = "cef"))]
+/// The folder an extension's version lives in.
 pub fn folder_of(root: &Path, id: &str, version: &str) -> PathBuf {
     root.join(id).join(version)
 }
@@ -154,10 +157,40 @@ pub fn unpack(root: &Path, store: Store, id: &str, bytes: &[u8]) -> Result<Strin
 /// The second half of `unpack`, for a file already checked.
 #[cfg(not(feature = "cef"))]
 pub fn unpack_checked(root: &Path, checked: &crx::Checked<'_>) -> Result<String, String> {
+    unpack_with(root, &checked.id, checked.zip, |folder| {
+        manifest::keyed(folder, &checked.key)
+    })
+}
+
+/// Unpacks a Firefox add-on's file for extension `id`, made one Chromium runs
+/// (firefox.rs), answering its version and what of it will not run. A version already
+/// there is kept as it is.
+pub fn unpack_firefox(
+    root: &Path,
+    id: &str,
+    zip: &[u8],
+    guid: &str,
+) -> Result<(String, Gaps), String> {
+    let mut gaps = Gaps::default();
+    let version = unpack_with(root, id, zip, |folder| {
+        gaps = firefox::apply(folder, guid)?;
+        Ok(())
+    })?;
+    Ok((version, gaps))
+}
+
+/// A zip unpacked into its version's folder, by way of a folder of its own that `finish`
+/// readies before it is moved into place.
+fn unpack_with(
+    root: &Path,
+    id: &str,
+    zip: &[u8],
+    finish: impl FnOnce(&Path) -> Result<(), String>,
+) -> Result<String, String> {
     // A name of its own per install, so two at once never write into one folder.
     static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
-    let home = root.join(&checked.id);
+    let home = root.join(id);
     fs::create_dir_all(&home).map_err(|error| error.to_string())?;
     let making = home.join(format!(
         ".unpacking-{}-{}",
@@ -167,9 +200,9 @@ pub fn unpack_checked(root: &Path, checked: &crx::Checked<'_>) -> Result<String,
     let _ = fs::remove_dir_all(&making);
 
     let made = (|| {
-        unzip::unzip(checked.zip, &making)?;
-        manifest::keyed(&making, &checked.key)?;
-        let about = manifest::read(&making)?;
+        unzip::unzip(zip, &making)?;
+        finish(&making)?;
+        let about = super::manifest::read(&making)?;
         if !plain_version(&about.version) {
             return Err("that extension's version is not one".to_string());
         }
@@ -194,11 +227,6 @@ pub fn unpack_checked(root: &Path, checked: &crx::Checked<'_>) -> Result<String,
 }
 
 /// Every version folder of `id` but `keep`, and anything an install cut short left.
-#[cfg(not(feature = "cef"))]
-#[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "the tidy that calls it is WebView2's alone")
-)]
 pub fn prune(root: &Path, id: &str, keep: &str) {
     let Ok(entries) = fs::read_dir(root.join(id)) else {
         return;
@@ -211,15 +239,53 @@ pub fn prune(root: &Path, id: &str, keep: &str) {
 }
 
 /// An extension's folders, all of them.
-#[cfg(not(feature = "cef"))]
-#[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "the tidy that calls it is WebView2's alone")
-)]
 pub fn forget(root: &Path, id: &str) {
     if super::link::is_id(id) {
         let _ = fs::remove_dir_all(root.join(id));
     }
+}
+
+/// Folders nothing on the list names any more, and versions an update left behind. Never
+/// while an engine may still have one of them: on `WebView2` once its stores have the
+/// list, on Orden's own Chromium the first time the list is read in a run, when the
+/// versions on it are the ones the engine loaded as it started.
+#[cfg_attr(
+    not(any(windows, feature = "cef")),
+    allow(
+        dead_code,
+        reason = "only an engine that runs extensions leaves folders behind"
+    )
+)]
+pub fn tidy(root: &Path) {
+    let list = read(root);
+    let Ok(entries) = fs::read_dir(root) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let name = entry.file_name().to_string_lossy().to_string();
+        if !entry.path().is_dir() {
+            continue;
+        }
+        match list.iter().find(|one| one.id == name) {
+            Some(one) => prune(root, &one.id, &one.version),
+            None => forget(root, &name),
+        }
+    }
+}
+
+/// The folders of the Firefox add-ons that are on, which Orden's own Chromium loads as it
+/// starts (`--load-extension`, engine.rs): it installs no folder while it runs. Only read:
+/// every process of the engine asks, and only the app's own tidies (`listed`).
+#[cfg(feature = "cef")]
+pub fn firefox_folders(root: &Path) -> Vec<PathBuf> {
+    read(root)
+        .into_iter()
+        .filter(|one| one.store == Store::Firefox && one.enabled)
+        .map(|one| folder_of(root, &one.id, &one.version))
+        .filter(|folder| {
+            folder.join("manifest.json").is_file() && !folder.to_string_lossy().contains(',')
+        })
+        .collect()
 }
 
 #[cfg(all(test, not(feature = "cef")))]
@@ -293,11 +359,114 @@ mod tests {
             version: "1.0".into(),
             enabled: true,
             pinned: true,
+            addon: None,
         };
         let mut bad = one.clone();
         bad.id = "../../x".into();
         write(&root, &[one.clone(), bad]).expect("written");
         assert_eq!(read(&root), vec![one]);
         let _ = std::fs::remove_dir_all(&root);
+    }
+}
+
+#[cfg(test)]
+mod amo_tests {
+    use sha2::{Digest as _, Sha256};
+
+    use super::super::amo::{checked, Kind, Listing};
+    use super::super::firefox::{chromium_version, id_and_key};
+    use super::super::unzip::tests::zip;
+    use super::{folder_of, read, tidy, unpack_firefox, write, Kept, Store};
+
+    fn xpi(version: &str) -> (Vec<u8>, Listing) {
+        let manifest = format!(
+            r#"{{"manifest_version": 2, "name": "Fixture", "version": "{version}",
+                "browser_specific_settings": {{ "gecko": {{ "id": "fixture@example.com" }} }},
+                "browser_action": {{ "default_popup": "popup.html" }},
+                "background": {{ "scripts": ["bg.js"] }}}}"#
+        );
+        let bytes = zip(&[
+            ("manifest.json", manifest.as_bytes()),
+            ("popup.html", b"<html><head></head><body>hi</body></html>"),
+            (
+                "bg.js",
+                b"browser.runtime.onInstalled.addListener(() => {})",
+            ),
+            ("META-INF/cose.sig", b"signed"),
+        ]);
+        let hash = Sha256::digest(&bytes)
+            .iter()
+            .fold(String::new(), |mut out, byte| {
+                use std::fmt::Write as _;
+                let _ = write!(out, "{byte:02x}");
+                out
+            });
+        let listing = Listing {
+            guid: "fixture@example.com".into(),
+            slug: "fixture".into(),
+            kind: Kind::Extension,
+            version: version.into(),
+            url: "https://addons.mozilla.org/firefox/downloads/file/1/fixture.xpi".into(),
+            hash,
+            size: bytes.len() as u64,
+        };
+        (bytes, listing)
+    }
+
+    /// An add-on as AMO serves one (#1155): its file held to what the listing says of it,
+    /// made one Chromium runs, put on the list, updated, and the old version tidied away.
+    #[test]
+    fn an_amo_add_on_installs_from_its_file_and_updates() {
+        let root = tempfile::tempdir().expect("a folder");
+        let root = root.path();
+        let (bytes, listing) = xpi("1.0b1");
+        checked(&bytes, &listing).expect("as AMO lists it");
+        let mut other = listing.clone();
+        other.hash = "0".repeat(64);
+        assert!(checked(&bytes, &other).is_err());
+
+        let (id, key) = id_and_key(&listing.guid);
+        let (version, gaps) = unpack_firefox(root, &id, &bytes, &listing.guid).expect("unpacked");
+        assert_eq!(version, chromium_version("1.0b1"));
+        assert!(gaps.is_empty(), "{gaps:?}");
+        let folder = folder_of(root, &id, &version);
+        let manifest: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(folder.join("manifest.json")).expect("there"),
+        )
+        .expect("a manifest");
+        assert_eq!(manifest["manifest_version"], 3);
+        assert_eq!(manifest["key"], key);
+        assert_eq!(manifest["version_name"], "1.0b1");
+        assert_eq!(manifest["action"]["default_popup"], "popup.html");
+        assert_eq!(manifest["background"]["service_worker"], "orden/host.js");
+        assert!(folder.join("orden/background.html").is_file());
+        let popup = std::fs::read_to_string(folder.join("popup.html")).expect("there");
+        assert!(popup.contains("/orden/browser-polyfill.js"), "{popup}");
+
+        let kept = Kept {
+            id: id.clone(),
+            store: Store::Firefox,
+            version: version.clone(),
+            enabled: true,
+            pinned: true,
+            addon: Some(listing.slug.clone()),
+        };
+        write(root, std::slice::from_ref(&kept)).expect("written");
+        assert_eq!(read(root), vec![kept.clone()]);
+
+        let (bytes, listing) = xpi("1.0");
+        let (newer, _) = unpack_firefox(root, &id, &bytes, &listing.guid).expect("unpacked");
+        assert_eq!(newer, "1.0");
+        write(
+            root,
+            &[Kept {
+                version: newer.clone(),
+                ..kept
+            }],
+        )
+        .expect("written");
+        tidy(root);
+        assert!(folder_of(root, &id, &newer).is_dir());
+        assert!(!folder.exists());
     }
 }

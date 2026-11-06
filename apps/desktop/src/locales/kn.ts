@@ -2209,7 +2209,19 @@ export const kn: Dictionary = {
   Extensions: 'ವಿಸ್ತರಣೆಗಳು',
   'Add extension': 'ವಿಸ್ತರಣೆ ಸೇರಿಸಿ',
   'Manage extensions': 'ವಿಸ್ತರಣೆಗಳನ್ನು ನಿರ್ವಹಿಸಿ',
-  'Paste a Chrome Web Store link': 'Chrome ವೆಬ್ ಸ್ಟೋರ್ ಲಿಂಕ್ ಅಂಟಿಸಿ',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Chrome ವೆಬ್ ಸ್ಟೋರ್ ಅಥವಾ Firefox Add-ons ಲಿಂಕ್ ಅಂಟಿಸಿ',
+  'Not all of it works in Orden:': 'ಇದರ ಎಲ್ಲವೂ Orden ನಲ್ಲಿ ಕೆಲಸ ಮಾಡುವುದಿಲ್ಲ:',
+  'It can’t block or change what pages load.':
+    'ಪುಟಗಳು ಲೋಡ್ ಮಾಡುವುದನ್ನು ಇದು ತಡೆಯಲು ಅಥವಾ ಬದಲಿಸಲು ಆಗುವುದಿಲ್ಲ.',
+  'Its containers are its own: tabs don’t open in them.':
+    'ಇದರ ಕಂಟೇನರ್‌ಗಳು ಇದರದ್ದೇ: ಟ್ಯಾಬ್‌ಗಳು ಅವುಗಳಲ್ಲಿ ತೆರೆಯುವುದಿಲ್ಲ.',
+  'Its sidebar opens as a tab.': 'ಇದರ ಸೈಡ್‌ಬಾರ್ ಟ್ಯಾಬ್ ಆಗಿ ತೆರೆಯುತ್ತದೆ.',
+  'Tabs it hides stay in the tab bar.': 'ಇದು ಮರೆಮಾಡುವ ಟ್ಯಾಬ್‌ಗಳು ಟ್ಯಾಬ್ ಬಾರ್‌ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'ಇದು ಬಳಸುವ, ಇಲ್ಲಿ ನಡೆಯದ Firefox ಮಾತ್ರದ ಭಾಗಗಳು: {list}',
+  'Install anyway': 'ಹಾಗಿದ್ದರೂ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ',
+  'Starts when Orden next opens': 'Orden ಮುಂದಿನ ಬಾರಿ ತೆರೆದಾಗ ಆರಂಭವಾಗುತ್ತದೆ',
   'Did not load': 'ಲೋಡ್ ಆಗಲಿಲ್ಲ',
   Permissions: 'ಅನುಮತಿಗಳು',
   Options: 'ಆಯ್ಕೆಗಳು',

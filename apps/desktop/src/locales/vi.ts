@@ -2161,7 +2161,18 @@ export const vi: Dictionary = {
   Extensions: 'Tiện ích',
   'Add extension': 'Thêm tiện ích',
   'Manage extensions': 'Quản lý tiện ích',
-  'Paste a Chrome Web Store link': 'Dán đường liên kết Cửa hàng Chrome trực tuyến',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Dán đường liên kết Cửa hàng Chrome trực tuyến hoặc Firefox Add-ons',
+  'Not all of it works in Orden:': 'Không phải mọi thứ đều chạy trong Orden:',
+  'It can’t block or change what pages load.': 'Không thể chặn hay thay đổi những gì trang tải.',
+  'Its containers are its own: tabs don’t open in them.':
+    'Các vùng chứa là của riêng nó: thẻ không mở trong đó.',
+  'Its sidebar opens as a tab.': 'Thanh bên của nó mở thành một thẻ.',
+  'Tabs it hides stay in the tab bar.': 'Các thẻ nó ẩn vẫn ở trên thanh thẻ.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'Những phần chỉ có ở Firefox mà nó dùng và không chạy ở đây: {list}',
+  'Install anyway': 'Vẫn cài đặt',
+  'Starts when Orden next opens': 'Bắt đầu khi Orden mở lần tới',
   'Did not load': 'Không tải được',
   Permissions: 'Quyền',
   Options: 'Tùy chọn',

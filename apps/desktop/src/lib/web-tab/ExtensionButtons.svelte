@@ -28,7 +28,7 @@
     open: string | null
     onpress: (id: string, anchor: HTMLElement) => void
     onlist: (anchor: HTMLElement) => void
-    onadd: () => void
+    onadd: (anchor: HTMLElement) => void
   } = $props()
 
   const pinned = $derived(pinnedOf(extensions.list))
@@ -63,7 +63,7 @@
     class="nib-chip add"
     disabled={extensions.installing !== null}
     title={t('Add extension')}
-    onclick={onadd}
+    onclick={(event) => onadd(event.currentTarget)}
     transition:scale={{ start: 0.6, duration: dur(160), easing: cubicOut }}
   >
     <svg viewBox="0 0 24 24" aria-hidden="true">

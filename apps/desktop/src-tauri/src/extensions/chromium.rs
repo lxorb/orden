@@ -89,6 +89,7 @@ fn entries(all: &[Value], profile: &Path) -> Vec<(Kept, PathBuf)> {
                 version,
                 enabled: one["enabled"].as_bool().unwrap_or(true),
                 pinned: true,
+                addon: None,
             };
             Some((kept, folder))
         })

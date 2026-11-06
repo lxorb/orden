@@ -20,3 +20,6 @@ services/sync/src/blog/math.ts
 
 # Tauri reads it as WiX source; prettier would take a .wxs for a WeChat script
 apps/desktop/src-tauri/wix
+
+# The WebExtension polyfill, as Mozilla publishes it; see apps/desktop/src-tauri/src/extensions/firefox.rs
+apps/desktop/src-tauri/src/extensions/firefox/browser-polyfill.js

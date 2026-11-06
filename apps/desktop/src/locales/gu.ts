@@ -2175,7 +2175,19 @@ export const gu: Dictionary = {
   Extensions: 'એક્સ્ટેન્શન',
   'Add extension': 'એક્સ્ટેન્શન ઉમેરો',
   'Manage extensions': 'એક્સ્ટેન્શન મેનેજ કરો',
-  'Paste a Chrome Web Store link': 'Chrome વેબ સ્ટોરની લિંક પેસ્ટ કરો',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Chrome વેબ સ્ટોર અથવા Firefox Add-onsની લિંક પેસ્ટ કરો',
+  'Not all of it works in Orden:': 'તેનું બધું Ordenમાં કામ કરતું નથી:',
+  'It can’t block or change what pages load.':
+    'પેજ જે લોડ કરે છે તેને તે અટકાવી કે બદલી શકતું નથી.',
+  'Its containers are its own: tabs don’t open in them.':
+    'તેના કન્ટેનર તેના પોતાના છે: ટૅબ તેમાં ખૂલતા નથી.',
+  'Its sidebar opens as a tab.': 'તેની સાઇડબાર ટૅબ તરીકે ખૂલે છે.',
+  'Tabs it hides stay in the tab bar.': 'તે જે ટૅબ છુપાવે છે તે ટૅબ બારમાં જ રહે છે.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'તે વાપરે છે એવા ફક્ત Firefoxના ભાગ જે અહીં ચાલતા નથી: {list}',
+  'Install anyway': 'છતાં ઇન્સ્ટોલ કરો',
+  'Starts when Orden next opens': 'Orden આગલી વાર ખૂલે ત્યારે શરૂ થશે',
   'Did not load': 'લોડ થયું નથી',
   Permissions: 'પરવાનગીઓ',
   Options: 'વિકલ્પો',

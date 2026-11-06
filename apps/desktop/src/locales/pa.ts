@@ -2189,7 +2189,20 @@ export const pa: Dictionary = {
   Extensions: 'ਐਕਸਟੈਂਸ਼ਨਾਂ',
   'Add extension': 'ਐਕਸਟੈਂਸ਼ਨ ਸ਼ਾਮਲ ਕਰੋ',
   'Manage extensions': 'ਐਕਸਟੈਂਸ਼ਨਾਂ ਦਾ ਪ੍ਰਬੰਧਨ ਕਰੋ',
-  'Paste a Chrome Web Store link': 'Chrome ਵੈੱਬ ਸਟੋਰ ਦਾ ਲਿੰਕ ਪੇਸਟ ਕਰੋ',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Chrome ਵੈੱਬ ਸਟੋਰ ਜਾਂ Firefox Add-ons ਦਾ ਲਿੰਕ ਪੇਸਟ ਕਰੋ',
+  'Not all of it works in Orden:': 'ਇਸ ਦਾ ਸਭ ਕੁਝ Orden ਵਿੱਚ ਕੰਮ ਨਹੀਂ ਕਰਦਾ:',
+  'It can’t block or change what pages load.':
+    'ਪੰਨੇ ਜੋ ਲੋਡ ਕਰਦੇ ਹਨ ਉਸ ਨੂੰ ਇਹ ਰੋਕ ਜਾਂ ਬਦਲ ਨਹੀਂ ਸਕਦਾ।',
+  'Its containers are its own: tabs don’t open in them.':
+    'ਇਸ ਦੇ ਕੰਟੇਨਰ ਇਸ ਦੇ ਆਪਣੇ ਹਨ: ਟੈਬ ਉਨ੍ਹਾਂ ਵਿੱਚ ਨਹੀਂ ਖੁੱਲ੍ਹਦੀਆਂ।',
+  'Its sidebar opens as a tab.': 'ਇਸ ਦੀ ਸਾਈਡਬਾਰ ਇੱਕ ਟੈਬ ਵਜੋਂ ਖੁੱਲ੍ਹਦੀ ਹੈ।',
+  'Tabs it hides stay in the tab bar.':
+    'ਇਹ ਜਿਹੜੀਆਂ ਟੈਬਾਂ ਲੁਕਾਉਂਦਾ ਹੈ ਉਹ ਟੈਬ ਬਾਰ ਵਿੱਚ ਹੀ ਰਹਿੰਦੀਆਂ ਹਨ।',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'ਇਹ ਵਰਤਦਾ ਹੈ ਅਜਿਹੇ ਸਿਰਫ਼ Firefox ਦੇ ਹਿੱਸੇ ਜੋ ਇੱਥੇ ਨਹੀਂ ਚੱਲਦੇ: {list}',
+  'Install anyway': 'ਫਿਰ ਵੀ ਇੰਸਟਾਲ ਕਰੋ',
+  'Starts when Orden next opens': 'Orden ਅਗਲੀ ਵਾਰ ਖੁੱਲ੍ਹਣ ’ਤੇ ਸ਼ੁਰੂ ਹੋਵੇਗਾ',
   'Did not load': 'ਲੋਡ ਨਹੀਂ ਹੋਇਆ',
   Permissions: 'ਇਜਾਜ਼ਤਾਂ',
   Options: 'ਵਿਕਲਪ',

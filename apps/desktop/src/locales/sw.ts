@@ -2216,7 +2216,19 @@ export const sw: Dictionary = {
   Extensions: 'Viendelezi',
   'Add extension': 'Ongeza kiendelezi',
   'Manage extensions': 'Dhibiti viendelezi',
-  'Paste a Chrome Web Store link': 'Bandika kiungo cha Chrome Web Store',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Bandika kiungo cha Chrome Web Store au Firefox Add-ons',
+  'Not all of it works in Orden:': 'Si kila kitu chake kinafanya kazi katika Orden:',
+  'It can’t block or change what pages load.':
+    'Hakiwezi kuzuia wala kubadilisha kile kurasa zinapakia.',
+  'Its containers are its own: tabs don’t open in them.':
+    'Makontena yake ni yake mwenyewe: vichupo havifunguki ndani yake.',
+  'Its sidebar opens as a tab.': 'Upau wake wa pembeni unafunguka kama kichupo.',
+  'Tabs it hides stay in the tab bar.': 'Vichupo inavyovificha vinabaki kwenye upau wa vichupo.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'Sehemu za Firefox pekee inazotumia ambazo hazifanyi kazi hapa: {list}',
+  'Install anyway': 'Sakinisha hata hivyo',
+  'Starts when Orden next opens': 'Itaanza Orden itakapofunguliwa tena',
   'Did not load': 'Hakijapakiwa',
   Permissions: 'Ruhusa',
   Options: 'Chaguo',

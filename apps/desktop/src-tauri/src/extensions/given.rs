@@ -71,6 +71,7 @@ mod tests {
             version: version.into(),
             enabled: true,
             pinned: true,
+            addon: None,
         }
     }
 

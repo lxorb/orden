@@ -2140,7 +2140,18 @@ export const th: Dictionary = {
   Extensions: 'ส่วนขยาย',
   'Add extension': 'เพิ่มส่วนขยาย',
   'Manage extensions': 'จัดการส่วนขยาย',
-  'Paste a Chrome Web Store link': 'วางลิงก์ Chrome เว็บสโตร์',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'วางลิงก์ Chrome เว็บสโตร์หรือ Firefox Add-ons',
+  'Not all of it works in Orden:': 'ใช้ใน Orden ได้ไม่ทั้งหมด:',
+  'It can’t block or change what pages load.': 'บล็อกหรือเปลี่ยนสิ่งที่หน้าเว็บโหลดไม่ได้',
+  'Its containers are its own: tabs don’t open in them.':
+    'คอนเทนเนอร์เป็นของส่วนเสริมเอง แท็บไม่เปิดในนั้น',
+  'Its sidebar opens as a tab.': 'แถบด้านข้างจะเปิดเป็นแท็บ',
+  'Tabs it hides stay in the tab bar.': 'แท็บที่ซ่อนยังอยู่ในแถบแท็บ',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'ส่วนเฉพาะของ Firefox ที่ใช้และใช้ที่นี่ไม่ได้: {list}',
+  'Install anyway': 'ติดตั้งต่อไป',
+  'Starts when Orden next opens': 'จะเริ่มเมื่อเปิด Orden ครั้งถัดไป',
   'Did not load': 'โหลดไม่สำเร็จ',
   Permissions: 'สิทธิ์',
   Options: 'ตัวเลือก',

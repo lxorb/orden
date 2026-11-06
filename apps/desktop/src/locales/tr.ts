@@ -2196,7 +2196,19 @@ export const tr: Dictionary = {
   Extensions: 'Uzantılar',
   'Add extension': 'Uzantı ekle',
   'Manage extensions': 'Uzantıları yönet',
-  'Paste a Chrome Web Store link': 'Chrome Web Mağazası bağlantısı yapıştırın',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Chrome Web Mağazası veya Firefox Add-ons bağlantısı yapıştırın',
+  'Not all of it works in Orden:': 'Hepsi Orden’da çalışmaz:',
+  'It can’t block or change what pages load.':
+    'Sayfaların yüklediklerini engelleyemez ya da değiştiremez.',
+  'Its containers are its own: tabs don’t open in them.':
+    'Kapsayıcıları kendisine ait: sekmeler onlarda açılmaz.',
+  'Its sidebar opens as a tab.': 'Kenar çubuğu bir sekme olarak açılır.',
+  'Tabs it hides stay in the tab bar.': 'Gizlediği sekmeler sekme çubuğunda kalır.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'Kullandığı ve burada çalışmayan yalnızca Firefox’a ait kısımlar: {list}',
+  'Install anyway': 'Yine de yükle',
+  'Starts when Orden next opens': 'Orden bir dahaki açılışta başlar',
   'Did not load': 'Yüklenmedi',
   Permissions: 'İzinler',
   Options: 'Seçenekler',

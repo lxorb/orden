@@ -2155,7 +2155,17 @@ export const am: Dictionary = {
   Extensions: 'ቅጥያዎች',
   'Add extension': 'ቅጥያ አክል',
   'Manage extensions': 'ቅጥያዎችን አስተዳድር',
-  'Paste a Chrome Web Store link': 'የChrome ድር መደብር አገናኝ ለጥፍ',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'የChrome ድር መደብር ወይም የFirefox Add-ons አገናኝ ለጥፍ',
+  'Not all of it works in Orden:': 'ሁሉም ነገሩ በOrden ውስጥ አይሰራም፦',
+  'It can’t block or change what pages load.': 'ገጾች የሚጭኑትን ማገድ ወይም መቀየር አይችልም።',
+  'Its containers are its own: tabs don’t open in them.': 'መያዣዎቹ የራሱ ናቸው፤ ትሮች በውስጣቸው አይከፈቱም።',
+  'Its sidebar opens as a tab.': 'የጎን አሞሌው እንደ ትር ይከፈታል።',
+  'Tabs it hides stay in the tab bar.': 'የሚደብቃቸው ትሮች በትር አሞሌው ላይ ይቆያሉ።',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'የሚጠቀማቸው እዚህ የማይሰሩ የFirefox ብቻ ክፍሎች፦ {list}',
+  'Install anyway': 'ለማንኛውም ጫን',
+  'Starts when Orden next opens': 'Orden በሚቀጥለው ሲከፈት ይጀምራል',
   'Did not load': 'አልተጫነም',
   Permissions: 'ፈቃዶች',
   Options: 'አማራጮች',

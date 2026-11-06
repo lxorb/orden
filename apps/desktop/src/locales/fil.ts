@@ -2230,7 +2230,19 @@ export const fil: Dictionary = {
   Extensions: 'Mga extension',
   'Add extension': 'Magdagdag ng extension',
   'Manage extensions': 'Pamahalaan ang mga extension',
-  'Paste a Chrome Web Store link': 'I-paste ang link mula sa Chrome Web Store',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'I-paste ang link mula sa Chrome Web Store o Firefox Add-ons',
+  'Not all of it works in Orden:': 'Hindi lahat nito gumagana sa Orden:',
+  'It can’t block or change what pages load.':
+    'Hindi nito kayang i-block o baguhin ang nilo-load ng mga page.',
+  'Its containers are its own: tabs don’t open in them.':
+    'Sarili nito ang mga container nito: hindi nagbubukas ang mga tab sa mga ito.',
+  'Its sidebar opens as a tab.': 'Nagbubukas ang sidebar nito bilang tab.',
+  'Tabs it hides stay in the tab bar.': 'Nananatili sa tab bar ang mga tab na itinatago nito.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'Mga bahaging pang-Firefox lang na ginagamit nito na hindi tumatakbo rito: {list}',
+  'Install anyway': 'I-install pa rin',
+  'Starts when Orden next opens': 'Magsisimula sa susunod na pagbukas ng Orden',
   'Did not load': 'Hindi na-load',
   Permissions: 'Mga pahintulot',
   Options: 'Mga opsyon',

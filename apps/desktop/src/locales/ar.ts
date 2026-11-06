@@ -2301,7 +2301,17 @@ export const ar: Dictionary = {
   Extensions: 'الإضافات',
   'Add extension': 'إضافة إضافة',
   'Manage extensions': 'إدارة الإضافات',
-  'Paste a Chrome Web Store link': 'الصق رابطًا من سوق Chrome الإلكتروني',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'الصق رابطًا من سوق Chrome الإلكتروني أو من Firefox Add-ons',
+  'Not all of it works in Orden:': 'لا يعمل كله في Orden:',
+  'It can’t block or change what pages load.': 'لا يستطيع حظر ما تحمّله الصفحات أو تغييره.',
+  'Its containers are its own: tabs don’t open in them.': 'حاوياته خاصة به: لا تُفتح الألسنة فيها.',
+  'Its sidebar opens as a tab.': 'يُفتح شريطه الجانبي كلسان.',
+  'Tabs it hides stay in the tab bar.': 'الألسنة التي يخفيها تبقى في شريط الألسنة.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'أجزاء خاصة بـ Firefox يستخدمها ولا تعمل هنا: {list}',
+  'Install anyway': 'ثبّت على أي حال',
+  'Starts when Orden next opens': 'يبدأ عند فتح Orden في المرة القادمة',
   'Did not load': 'لم يتم التحميل',
   Permissions: 'الأذونات',
   Options: 'الخيارات',

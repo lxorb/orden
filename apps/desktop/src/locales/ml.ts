@@ -2216,7 +2216,19 @@ export const ml: Dictionary = {
   Extensions: 'എക്സ്റ്റൻഷനുകൾ',
   'Add extension': 'എക്സ്റ്റൻഷൻ ചേർക്കുക',
   'Manage extensions': 'എക്സ്റ്റൻഷനുകൾ നിയന്ത്രിക്കുക',
-  'Paste a Chrome Web Store link': 'Chrome വെബ് സ്റ്റോർ ലിങ്ക് ഒട്ടിക്കുക',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Chrome വെബ് സ്റ്റോർ അല്ലെങ്കിൽ Firefox Add-ons ലിങ്ക് ഒട്ടിക്കുക',
+  'Not all of it works in Orden:': 'ഇതിന്റെ എല്ലാം Orden-ൽ പ്രവർത്തിക്കില്ല:',
+  'It can’t block or change what pages load.':
+    'പേജുകൾ ലോഡ് ചെയ്യുന്നത് തടയാനോ മാറ്റാനോ ഇതിന് കഴിയില്ല.',
+  'Its containers are its own: tabs don’t open in them.':
+    'ഇതിന്റെ കണ്ടെയ്‌നറുകൾ ഇതിന്റേത് മാത്രം: ടാബുകൾ അവയിൽ തുറക്കില്ല.',
+  'Its sidebar opens as a tab.': 'ഇതിന്റെ സൈഡ്‌ബാർ ഒരു ടാബായി തുറക്കുന്നു.',
+  'Tabs it hides stay in the tab bar.': 'ഇത് മറയ്ക്കുന്ന ടാബുകൾ ടാബ് ബാറിൽ തന്നെ നിൽക്കും.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'ഇത് ഉപയോഗിക്കുന്ന, ഇവിടെ പ്രവർത്തിക്കാത്ത Firefox-ന് മാത്രമുള്ള ഭാഗങ്ങൾ: {list}',
+  'Install anyway': 'എന്നാലും ഇൻസ്റ്റാൾ ചെയ്യുക',
+  'Starts when Orden next opens': 'അടുത്ത തവണ Orden തുറക്കുമ്പോൾ തുടങ്ങും',
   'Did not load': 'ലോഡ് ആയില്ല',
   Permissions: 'അനുമതികൾ',
   Options: 'ഓപ്ഷനുകൾ',

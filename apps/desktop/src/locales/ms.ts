@@ -2176,7 +2176,19 @@ export const ms: Dictionary = {
   Extensions: 'Sambungan',
   'Add extension': 'Tambah sambungan',
   'Manage extensions': 'Urus sambungan',
-  'Paste a Chrome Web Store link': 'Tampal pautan Chrome Web Store',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Tampal pautan Chrome Web Store atau Firefox Add-ons',
+  'Not all of it works in Orden:': 'Bukan semuanya berfungsi dalam Orden:',
+  'It can’t block or change what pages load.':
+    'Ia tidak boleh menyekat atau mengubah apa yang dimuatkan halaman.',
+  'Its containers are its own: tabs don’t open in them.':
+    'Bekasnya miliknya sendiri: tab tidak dibuka di dalamnya.',
+  'Its sidebar opens as a tab.': 'Bar sisinya dibuka sebagai tab.',
+  'Tabs it hides stay in the tab bar.': 'Tab yang disembunyikannya kekal dalam bar tab.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'Bahagian khas Firefox yang digunakannya dan tidak berjalan di sini: {list}',
+  'Install anyway': 'Pasang juga',
+  'Starts when Orden next opens': 'Bermula apabila Orden dibuka seterusnya',
   'Did not load': 'Tidak dimuatkan',
   Permissions: 'Kebenaran',
   Options: 'Pilihan',

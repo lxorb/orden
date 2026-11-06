@@ -693,7 +693,9 @@
    *  the bar offers Add for it. */
   let onStore = $state<string | null>(null)
   const addable = $derived(
-    onStore !== null && !extensions.list.some((one) => one.id === onStore) ? onStore : null,
+    onStore !== null && !extensions.list.some((one) => one.id === onStore || one.addon === onStore)
+      ? onStore
+      : null,
   )
 
   $effect(() => {
@@ -930,8 +932,14 @@
               showingSite = false
               showingDownloads = false
             },
-            onadd: () => {
-              if (page.url) void extensions.install(page.url)
+            onadd: (anchor: HTMLElement) => {
+              if (!page.url) return
+              void extensions.install(page.url).then(() => {
+                // A Firefox add-on that does not run whole says so in the bubble.
+                if (!extensions.asking) return
+                hangs = under(anchor)
+                showingExtensions = true
+              })
             },
           }
         : null}

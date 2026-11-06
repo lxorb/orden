@@ -2167,7 +2167,18 @@ export const jv: Dictionary = {
   Extensions: 'Ekstensi',
   'Add extension': 'Tambah ekstensi',
   'Manage extensions': 'Atur ekstensi',
-  'Paste a Chrome Web Store link': 'Tempel link Chrome Web Store',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Tempel link Chrome Web Store utawa Firefox Add-ons',
+  'Not all of it works in Orden:': 'Ora kabèh bisa mlaku ing Orden:',
+  'It can’t block or change what pages load.': 'Ora bisa mblokir utawa ngowahi sing dimuat kaca.',
+  'Its containers are its own: tabs don’t open in them.':
+    'Kontainer-é duwèké dhéwé: tab ora mbukak ing kono.',
+  'Its sidebar opens as a tab.': 'Bilah sisih-é mbukak dadi tab.',
+  'Tabs it hides stay in the tab bar.': 'Tab sing didhelikaké tetep ana ing bilah tab.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'Bagéan khusus Firefox sing dienggo lan ora mlaku ing kéné: {list}',
+  'Install anyway': 'Tetep pasang',
+  'Starts when Orden next opens': 'Diwiwiti nalika Orden dibukak manèh',
   'Did not load': 'Ora kemot',
   Permissions: 'Idin',
   Options: 'Pilihan',

@@ -1,5 +1,6 @@
 //! An extension's file, from its store: the store's own update service, which is what
-//! Chrome and Edge ask too, and which needs no key and no account.
+//! Chrome and Edge ask too, and which needs no key and no account. The download itself
+//! is addons.mozilla.org's too (amo.rs), on either engine.
 //!
 //! Two questions, one protocol (Omaha's `update2`, the GET form). `crx` asks for the file
 //! and is redirected to it; `newer` asks whether there is a version past the one here and
@@ -7,29 +8,34 @@
 //! checked as a CRX before a byte of it is unpacked (crx.rs), so an answer from somebody
 //! in the middle - Edge's own download is plain HTTP - is a file that fails that check.
 
+#[cfg(not(feature = "cef"))]
 use super::link::Store;
 
 /// The Chromium version Orden says it is, which a store reads to decide whether an
 /// extension that asks for a newer browser may have it. A current one: Orden's engines are.
+#[cfg(not(feature = "cef"))]
 const PRODUCT_VERSION: &str = "140.0.0.0";
 
 /// The largest file taken, which is past every extension in either store.
 const MOST_BYTES: usize = 256 * 1024 * 1024;
 
-/// The service's address, with the question in `x`.
-fn service(store: Store, response: &str, x: &str) -> String {
+/// The service's address, with the question in `x`. AMO has none of its own of this kind;
+/// see amo.rs.
+#[cfg(not(feature = "cef"))]
+fn service(store: Store, response: &str, x: &str) -> Result<String, String> {
     match store {
-        Store::Chrome => format!(
+        Store::Chrome => Ok(format!(
             "https://clients2.google.com/service/update2/crx?response={response}&acceptformat=crx3&prodversion={PRODUCT_VERSION}&x={x}"
-        ),
-        Store::Edge => format!(
+        )),
+        Store::Edge => Ok(format!(
             "https://edge.microsoft.com/extensionwebstorebase/v1/crx?response={response}&prod=chromiumcrx&prodchannel=&prodversion={PRODUCT_VERSION}&x={x}"
-        ),
+        )),
+        Store::Firefox => Err("addons.mozilla.org is asked through its own API".into()),
     }
 }
 
 /// The client every request goes out on: rustls, as the updater's, with no cookies.
-fn client() -> Result<reqwest::Client, String> {
+pub fn client() -> Result<reqwest::Client, String> {
     // Set once for the process; a second setting is refused harmlessly.
     let _ = rustls::crypto::ring::default_provider().install_default();
     reqwest::Client::builder()
@@ -38,13 +44,15 @@ fn client() -> Result<reqwest::Client, String> {
 }
 
 /// The newest file of extension `id`, as the store hands it out.
+#[cfg(not(feature = "cef"))]
 pub async fn crx(store: Store, id: &str) -> Result<Vec<u8>, String> {
     let x = format!("id%3D{id}%26installsource%3Dondemand%26uc");
-    download(&service(store, "redirect", &x)).await
+    download(&service(store, "redirect", &x)?).await
 }
 
 /// A version newer than `version` and where to fetch it, or `None` when this is the
 /// newest.
+#[cfg(not(feature = "cef"))]
 pub async fn newer(
     store: Store,
     id: &str,
@@ -52,7 +60,7 @@ pub async fn newer(
 ) -> Result<Option<(String, String)>, String> {
     let x = format!("id%3D{id}%26v%3D{version}%26uc");
     let said = client()?
-        .get(service(store, "updatecheck", &x))
+        .get(service(store, "updatecheck", &x)?)
         .send()
         .await
         .and_then(reqwest::Response::error_for_status)
@@ -85,11 +93,12 @@ pub async fn download(url: &str) -> Result<Vec<u8>, String> {
 }
 
 /// What a failed request is said as.
-fn offline(error: reqwest::Error) -> String {
+pub fn offline(error: reqwest::Error) -> String {
     format!("the store could not be reached: {error}")
 }
 
 /// The version and the file in an update answer, if it offers one.
+#[cfg(any(not(feature = "cef"), test))]
 fn update_in(xml: &str) -> Option<(String, String)> {
     let at = xml.find("<updatecheck")?;
     let tag = &xml[at..at + xml[at..].find('>')?];
@@ -106,6 +115,7 @@ fn update_in(xml: &str) -> Option<(String, String)> {
 
 /// Whether version `a` is past `b`, as Chromium compares them: up to four numbers, each
 /// as a number.
+#[cfg(any(not(feature = "cef"), test))]
 pub fn later(a: &str, b: &str) -> bool {
     let numbers = |version: &str| -> Vec<u64> {
         version

@@ -2175,7 +2175,19 @@ export const id: Dictionary = {
   Extensions: 'Ekstensi',
   'Add extension': 'Tambahkan ekstensi',
   'Manage extensions': 'Kelola ekstensi',
-  'Paste a Chrome Web Store link': 'Tempel tautan Chrome Web Store',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Tempel tautan Chrome Web Store atau Firefox Add-ons',
+  'Not all of it works in Orden:': 'Tidak semuanya berfungsi di Orden:',
+  'It can’t block or change what pages load.':
+    'Tidak dapat memblokir atau mengubah yang dimuat halaman.',
+  'Its containers are its own: tabs don’t open in them.':
+    'Kontainernya miliknya sendiri: tab tidak terbuka di dalamnya.',
+  'Its sidebar opens as a tab.': 'Bilah sisinya terbuka sebagai tab.',
+  'Tabs it hides stay in the tab bar.': 'Tab yang disembunyikannya tetap ada di bilah tab.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'Bagian khusus Firefox yang dipakainya dan tidak berjalan di sini: {list}',
+  'Install anyway': 'Tetap pasang',
+  'Starts when Orden next opens': 'Mulai saat Orden dibuka berikutnya',
   'Did not load': 'Tidak dimuat',
   Permissions: 'Izin',
   Options: 'Opsi',

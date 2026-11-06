@@ -2151,7 +2151,18 @@ export const ko: Dictionary = {
   Extensions: '확장 프로그램',
   'Add extension': '확장 프로그램 추가',
   'Manage extensions': '확장 프로그램 관리',
-  'Paste a Chrome Web Store link': 'Chrome 웹 스토어 링크 붙여넣기',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Chrome 웹 스토어나 Firefox Add-ons 링크 붙여넣기',
+  'Not all of it works in Orden:': 'Orden에서 모두 작동하지는 않습니다:',
+  'It can’t block or change what pages load.': '페이지가 불러오는 것을 막거나 바꿀 수 없습니다.',
+  'Its containers are its own: tabs don’t open in them.':
+    '컨테이너는 부가 기능의 것이며 탭이 그 안에서 열리지 않습니다.',
+  'Its sidebar opens as a tab.': '사이드바는 탭으로 열립니다.',
+  'Tabs it hides stay in the tab bar.': '숨긴 탭도 탭 막대에 남습니다.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    '여기서 작동하지 않는 Firefox 전용 기능: {list}',
+  'Install anyway': '그래도 설치',
+  'Starts when Orden next opens': '다음에 Orden을 열면 시작됩니다',
   'Did not load': '로드되지 않음',
   Permissions: '권한',
   Options: '옵션',

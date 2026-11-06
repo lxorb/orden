@@ -2244,7 +2244,19 @@ export const es: Dictionary = {
   Extensions: 'Extensiones',
   'Add extension': 'Añadir extensión',
   'Manage extensions': 'Gestionar extensiones',
-  'Paste a Chrome Web Store link': 'Pega un enlace de Chrome Web Store',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Pega un enlace de Chrome Web Store o de Firefox Add-ons',
+  'Not all of it works in Orden:': 'No todo funciona en Orden:',
+  'It can’t block or change what pages load.':
+    'No puede bloquear ni cambiar lo que cargan las páginas.',
+  'Its containers are its own: tabs don’t open in them.':
+    'Sus contenedores son suyos: las pestañas no se abren en ellos.',
+  'Its sidebar opens as a tab.': 'Su barra lateral se abre como una pestaña.',
+  'Tabs it hides stay in the tab bar.': 'Las pestañas que oculta siguen en la barra de pestañas.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'Partes exclusivas de Firefox que usa y que aquí no funcionan: {list}',
+  'Install anyway': 'Instalar de todos modos',
+  'Starts when Orden next opens': 'Se inicia la próxima vez que abras Orden',
   'Did not load': 'No se cargó',
   Permissions: 'Permisos',
   Options: 'Opciones',

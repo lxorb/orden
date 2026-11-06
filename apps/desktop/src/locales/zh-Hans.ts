@@ -2125,7 +2125,17 @@ export const zhHans: Dictionary = {
   Extensions: '扩展程序',
   'Add extension': '添加扩展程序',
   'Manage extensions': '管理扩展程序',
-  'Paste a Chrome Web Store link': '粘贴 Chrome 应用商店链接',
+  'Paste a Chrome Web Store or Firefox Add-ons link': '粘贴 Chrome 应用商店或 Firefox Add-ons 链接',
+  'Not all of it works in Orden:': '并非全部都能在 Orden 中运行：',
+  'It can’t block or change what pages load.': '它无法拦截或更改网页加载的内容。',
+  'Its containers are its own: tabs don’t open in them.':
+    '它的容器是它自己的：标签页不会在其中打开。',
+  'Its sidebar opens as a tab.': '它的侧边栏会以标签页打开。',
+  'Tabs it hides stay in the tab bar.': '它隐藏的标签页仍留在标签栏中。',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    '它使用的、在这里无法运行的 Firefox 专有部分：{list}',
+  'Install anyway': '仍然安装',
+  'Starts when Orden next opens': '下次打开 Orden 时启动',
   'Did not load': '未加载',
   Permissions: '权限',
   Options: '选项',

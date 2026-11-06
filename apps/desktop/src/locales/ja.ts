@@ -2169,7 +2169,19 @@ export const ja: Dictionary = {
   Extensions: '拡張機能',
   'Add extension': '拡張機能を追加',
   'Manage extensions': '拡張機能を管理',
-  'Paste a Chrome Web Store link': 'Chrome ウェブストアのリンクを貼り付け',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Chrome ウェブストアか Firefox Add-ons のリンクを貼り付け',
+  'Not all of it works in Orden:': 'Orden ではすべては動きません:',
+  'It can’t block or change what pages load.':
+    'ページが読み込むものをブロックしたり変えたりできません。',
+  'Its containers are its own: tabs don’t open in them.':
+    'コンテナーは拡張機能独自のもので、タブはその中で開きません。',
+  'Its sidebar opens as a tab.': 'サイドバーはタブとして開きます。',
+  'Tabs it hides stay in the tab bar.': '隠したタブもタブバーに残ります。',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'ここでは動かない Firefox 専用の機能: {list}',
+  'Install anyway': 'それでもインストール',
+  'Starts when Orden next opens': '次に Orden を開いたときに始まります',
   'Did not load': '読み込まれませんでした',
   Permissions: '権限',
   Options: 'オプション',

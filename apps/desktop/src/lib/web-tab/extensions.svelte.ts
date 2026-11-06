@@ -7,6 +7,7 @@
 
 import { keepJson, stored } from '../stored'
 import { invoke, isDesktop, platform } from '../tauri'
+import type { BrowserTheme } from '../themes/browser'
 import { ASK_AGAIN, NOT_ANSWERING } from './answering'
 
 /** Whether this build's engine runs extensions in web tabs: `WebView2` on Windows and
@@ -15,10 +16,20 @@ import { ASK_AGAIN, NOT_ANSWERING } from './answering'
  *  nor removed, since the bar's button and the Settings list were Windows' alone (#789). */
 export const runsExtensions = isDesktop && (platform() === 'windows' || platform() === 'linux')
 
+/** What of a Firefox add-on does not run in Orden, as the crate reads it off the add-on
+ *  (src-tauri/src/extensions/firefox.rs): what is said in a sentence of its own, and the
+ *  other Firefox-only parts by name. */
+export interface Gaps {
+  said: string[]
+  apis: string[]
+}
+
 /** One extension, as the crate describes it. */
 export interface Extension {
   id: string
-  store: 'chrome' | 'edge'
+  store: 'chrome' | 'edge' | 'firefox'
+  /** The slug addons.mozilla.org names a Firefox add-on by. */
+  addon: string | null
   version: string
   enabled: boolean
   pinned: boolean
@@ -34,6 +45,18 @@ export interface Extension {
   permissions: string[]
   /** Why it did not load this run, if it did not. */
   problem: string | null
+  /** What of a Firefox add-on does not run in Orden. */
+  gaps: Gaps | null
+  /** Whether it starts with Orden's next launch: a Firefox add-on on Linux, whose engine
+   *  loads one only as it starts. */
+  pending: boolean
+}
+
+/** What a Firefox add-on that does not run whole is, while the reader decides. */
+export interface Asking {
+  link: string
+  name: string
+  gaps: Gaps
 }
 
 /** An extension out of what the crate sent, or null for anything that is not one. */
@@ -45,7 +68,8 @@ export function readExtension(value: unknown): Extension | null {
   const text = (field: unknown) => (typeof field === 'string' && field ? field : null)
   return {
     id: said.id,
-    store: said.store === 'edge' ? 'edge' : 'chrome',
+    store: said.store === 'edge' || said.store === 'firefox' ? said.store : 'chrome',
+    addon: text(said.addon),
     version: said.version,
     enabled: said.enabled !== false,
     pinned: said.pinned !== false,
@@ -58,12 +82,47 @@ export function readExtension(value: unknown): Extension | null {
       ? said.permissions.filter((one): one is string => typeof one === 'string')
       : [],
     problem: text(said.problem),
+    gaps: readGaps(said.gaps),
+    pending: said.pending === true,
   }
 }
 
-/** The buttons the bar shows: what is on, has a button and is pinned. */
+/** What does not run, out of what the crate sent, or null for nothing. */
+export function readGaps(value: unknown): Gaps | null {
+  if (typeof value !== 'object' || value === null) return null
+  const said = value as Record<string, unknown>
+  const words = (field: unknown) =>
+    Array.isArray(field) ? field.filter((one): one is string => typeof one === 'string') : []
+  const gaps = { said: words(said.said), apis: words(said.apis) }
+  return gaps.said.length || gaps.apis.length ? gaps : null
+}
+
+/** The sentence each part a Firefox add-on cannot run is said in; see `Gaps`. */
+export const GAP_WORDS: Record<string, string> = {
+  blocking: 'It can’t block or change what pages load.',
+  containers: 'Its containers are its own: tabs don’t open in them.',
+  sidebar: 'Its sidebar opens as a tab.',
+  hiddenTabs: 'Tabs it hides stay in the tab bar.',
+}
+
+/** What an install came to, out of what the crate answered. */
+export function readDone(
+  value: unknown,
+): { asks: { name: string; gaps: Gaps } } | { theme: BrowserTheme } | null {
+  if (typeof value !== 'object' || value === null) return null
+  const said = value as Record<string, unknown>
+  const gaps = readGaps(said.asks)
+  if (gaps) return { asks: { name: typeof said.name === 'string' ? said.name : '', gaps } }
+  const theme = said.theme as Record<string, unknown> | undefined
+  if (typeof theme?.name === 'string' && typeof theme.source === 'string') {
+    return { theme: { name: theme.name, source: theme.source, css: false, pages: '' } }
+  }
+  return null
+}
+
+/** The buttons the bar shows: what is on, has a button and is pinned, and runs already. */
 export function pinnedOf(list: readonly Extension[]): Extension[] {
-  return list.filter((one) => one.enabled && one.action && one.pinned)
+  return list.filter((one) => one.enabled && one.action && one.pinned && !one.pending)
 }
 
 /** How long between two looks for newer versions: Chrome looks every five hours. */
@@ -100,6 +159,8 @@ class Extensions {
   installing = $state<string | null>(null)
   /** Why the last install did not work. */
   failed = $state<string | null>(null)
+  /** A Firefox add-on that does not run whole, until the reader installs it or not. */
+  asking = $state<Asking | null>(null)
   /** The popup that is open. */
   popped = $state<Popped | null>(null)
 
@@ -125,16 +186,33 @@ class Extensions {
     this.read = true
   }
 
-  /** Installs what a store link or an id names. Answers whether it worked. */
-  async install(link: string): Promise<boolean> {
+  /** Installs what a store link or an id names. Answers whether it worked. A Firefox
+   *  add-on that does not run whole waits in `asking` until `install` is asked again with
+   *  `anyway`; a Firefox theme becomes one of Orden's. */
+  async install(link: string, anyway = false): Promise<boolean> {
     this.installing = link
     this.failed = null
+    this.asking = null
     try {
-      await invoke('extensions_install', { link })
+      const done = readDone(await invoke<unknown>('extensions_install', { link, anyway }))
+      if (done && 'asks' in done) {
+        this.asking = { link, ...done.asks }
+        return false
+      }
+      if (done && 'theme' in done) {
+        const { wearFirefoxTheme } = await import('../themes/kept')
+        await wearFirefoxTheme(done.theme)
+        return true
+      }
       await this.load()
       return true
     } catch (error) {
-      this.failed = typeof error === 'string' ? error : 'that did not work'
+      this.failed =
+        typeof error === 'string'
+          ? error
+          : error instanceof Error
+            ? error.message
+            : 'that did not work'
       return false
     } finally {
       this.installing = null

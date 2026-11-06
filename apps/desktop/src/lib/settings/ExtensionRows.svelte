@@ -5,7 +5,9 @@
      version, and the switch; pressing the name opens the row, which lists what the
      extension asks to be allowed in Chromium's own words and holds Options and Remove.
      Under the rows, the field a store link is pasted into. What the engine said when an
-     extension did not load is the one line that is not asked for. The list and every
+     extension did not load is the one line that is not asked for; a Firefox add-on's row
+     also says what of it does not run in Orden, and on Linux, where the engine loads one
+     only as it starts, that it starts with the next launch. The list and every
      press are lib/web-tab/extensions.svelte.ts's. -->
 <script lang="ts">
   import { onMount } from 'svelte'
@@ -15,6 +17,7 @@
   import { dur } from '../motion'
   import { settings } from '../settings.svelte'
   import { workspace } from '../workspace.svelte'
+  import ExtensionGaps from '../web-tab/ExtensionGaps.svelte'
   import { extensions } from '../web-tab/extensions.svelte'
 
   /** The row that is open, if any. */
@@ -57,6 +60,8 @@
         <span class="named">{one.name}</span>
         {#if one.problem}
           <small class="warn">{t('Did not load')}</small>
+        {:else if one.pending}
+          <small>{t('Starts when Orden next opens')}</small>
         {:else}
           <small>{one.version}</small>
         {/if}
@@ -76,6 +81,9 @@
     <div class="details" transition:slide={{ duration: dur(140) }}>
       {#if one.problem}
         <p class="warn">{one.problem}</p>
+      {/if}
+      {#if one.gaps}
+        <ExtensionGaps gaps={one.gaps} />
       {/if}
       {#if one.permissions.length}
         <ul class="asks" aria-label={t('Permissions')}>
@@ -103,8 +111,8 @@
     class="nib-field"
     type="url"
     bind:value={link}
-    placeholder={t('Paste a Chrome Web Store link')}
-    aria-label={t('Paste a Chrome Web Store link')}
+    placeholder={t('Paste a Chrome Web Store or Firefox Add-ons link')}
+    aria-label={t('Paste a Chrome Web Store or Firefox Add-ons link')}
     spellcheck="false"
     autocomplete="off"
     disabled={extensions.installing !== null}
@@ -112,6 +120,8 @@
 </form>
 {#if extensions.failed}
   <p class="warn">{t(extensions.failed)}</p>
+{:else if extensions.asking}
+  <ExtensionGaps gaps={extensions.asking.gaps} asking />
 {/if}
 
 <style>

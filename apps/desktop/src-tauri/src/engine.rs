@@ -173,6 +173,14 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
         });
 
     let (swipe_feature, swipe_switch, swipe_off) = ENGINE_SWIPE;
+    // The Firefox add-ons that are on, which this engine loads as it starts and in no other
+    // way; see extensions.rs.
+    let mut asked = switches(&from_run("NIB_CEF_ARGS").unwrap_or_default());
+    let firefox = cef_root()
+        .and_then(|root| Some(root.parent()?.join("extensions")))
+        .map(|root| crate::extensions::library::firefox_folders(&root))
+        .unwrap_or_default();
+    let loading = loaded(&mut asked, &firefox);
     let mut engine = Cef::default()
         .sandbox(sandbox)
         .deep_link_schemes(["nib"])
@@ -184,7 +192,7 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
             crate::page_scale::SWITCH.0,
             Some(crate::page_scale::SWITCH.1),
         )])
-        .command_line_args(switches(&from_run("NIB_CEF_ARGS").unwrap_or_default()))
+        .command_line_args(asked)
         // A web tab's developer tools in the build that ships, as in a browser; Orden's own
         // window turns its own off outside a development build (`ui_window`).
         .devtools(DevToolsPolicy::Allowed)
@@ -197,6 +205,9 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
     #[cfg(target_os = "linux")]
     {
         engine = engine.enable_features([OVERLAY_BARS]);
+    }
+    if loading {
+        engine = engine.disable_features([LOAD_EXTENSION_OFF]);
     }
     if let Some(root) = cef_root() {
         // An agent's own tab is a browser with no window, which CEF can make only when
@@ -217,6 +228,35 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
         engine = engine.root_cache_path(root);
     }
     engine
+}
+
+/// The feature that keeps Chromium from loading what `--load-extension` names.
+#[cfg(feature = "cef")]
+const LOAD_EXTENSION_OFF: &str = "DisableLoadExtensionCommandLineSwitch";
+
+/// `--load-extension` with `folders` too, beside whatever a run asked for of it already.
+/// Answers whether anything is to be loaded.
+#[cfg(any(feature = "cef", test))]
+fn loaded(asked: &mut Vec<(String, Option<String>)>, folders: &[PathBuf]) -> bool {
+    const SWITCH: &str = "load-extension";
+    let ours: Vec<String> = folders
+        .iter()
+        .map(|folder| folder.to_string_lossy().into_owned())
+        .collect();
+    if let Some((_, value)) = asked
+        .iter_mut()
+        .find(|(key, _)| key.trim_start_matches('-') == SWITCH)
+    {
+        let mut all: Vec<String> = value.iter().cloned().collect();
+        all.extend(ours);
+        *value = Some(all.join(","));
+        return true;
+    }
+    if ours.is_empty() {
+        return false;
+    }
+    asked.push((SWITCH.to_owned(), Some(ours.join(","))));
+    true
 }
 
 /// One of `cef_runtime`'s variables, as this run set it.
@@ -797,6 +837,37 @@ mod tests {
             vec![("--noerrdialogs".to_owned(), None)]
         );
         assert!(super::switches("").is_empty());
+    }
+
+    /// The Firefox add-ons are loaded beside what a run loads itself, and nothing is asked
+    /// for when there is nothing to load (#1155).
+    #[test]
+    fn the_firefox_add_ons_join_what_a_run_loads() {
+        use std::path::PathBuf;
+        let ours = [
+            PathBuf::from("/c/extensions/a/1"),
+            PathBuf::from("/c/extensions/b/2"),
+        ];
+        let mut asked = super::switches("load-extension=/run/x,v=1");
+        assert!(super::loaded(&mut asked, &ours));
+        assert_eq!(
+            asked[0],
+            (
+                "load-extension".to_owned(),
+                Some("/run/x,/c/extensions/a/1,/c/extensions/b/2".to_owned())
+            )
+        );
+        let mut none = super::switches("v=1");
+        assert!(!super::loaded(&mut none, &[]));
+        assert_eq!(none.len(), 1);
+        assert!(super::loaded(&mut none, &ours[..1]));
+        assert_eq!(
+            none[1],
+            (
+                "load-extension".to_owned(),
+                Some("/c/extensions/a/1".to_owned())
+            )
+        );
     }
 
     /// A feature list a run asks for joins the engine's own (#1084). Put on the command

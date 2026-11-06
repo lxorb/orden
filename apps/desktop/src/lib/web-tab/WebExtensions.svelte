@@ -4,8 +4,9 @@
    *
    *  A row is an extension's picture and name; pressing it opens its popup, or its options
    *  where it has no popup. At the end of the row its pin, which puts its button in the
-   *  bar or takes it out. Under the rows, a field that takes a Chrome Web Store or Edge
-   *  Add-ons link and installs what it names. Turning one off, its permissions and taking
+   *  bar or takes it out. Under the rows, a field that takes a Chrome Web Store, Edge
+   *  Add-ons or addons.mozilla.org link and installs what it names, and what of a Firefox
+   *  add-on will not run before it is installed. Turning one off, its permissions and taking
    *  it away are Settings' (Settings > General > Browser > Extensions), one row below the
    *  list here. */
 
@@ -19,6 +20,7 @@
   import { dur } from '../motion'
   import { overlays } from '../overlays'
   import { settings } from '../settings.svelte'
+  import ExtensionGaps from './ExtensionGaps.svelte'
   import { extensions, type Extension } from './extensions.svelte'
 
   const {
@@ -107,8 +109,8 @@
       class="nib-field"
       type="url"
       bind:value={link}
-      placeholder={t('Paste a Chrome Web Store link')}
-      aria-label={t('Paste a Chrome Web Store link')}
+      placeholder={t('Paste a Chrome Web Store or Firefox Add-ons link')}
+      aria-label={t('Paste a Chrome Web Store or Firefox Add-ons link')}
       spellcheck="false"
       autocomplete="off"
       disabled={extensions.installing !== null}
@@ -118,6 +120,8 @@
     <span class="line sweeping"><span class="done"></span></span>
   {:else if extensions.failed}
     <p class="said">{t(extensions.failed)}</p>
+  {:else if extensions.asking}
+    <ExtensionGaps gaps={extensions.asking.gaps} asking />
   {/if}
 
   <button

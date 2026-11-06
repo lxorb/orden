@@ -15,11 +15,11 @@
   import { overlays } from '../overlays'
   import { prompt } from '../prompt.svelte'
   import { invoke } from '../tauri'
-  import { type Scheme, theme } from '../theme.svelte'
+  import type { Scheme } from '../theme.svelte'
   import { type Look, lookOf } from '../theme-picker/looks'
   import Mini from '../theme-picker/Mini.svelte'
   import { type BrowserTheme, ordenTheme } from '../themes/browser'
-  import { stamped } from '../themes/stamp'
+  import { keepTheme } from '../themes/kept'
   import { trap } from '../trap'
 
   const BROWSERS = ['Chrome', 'Firefox'] as const
@@ -60,20 +60,7 @@
     )?.trim()
     if (!name) return
 
-    const slug =
-      name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '')
-        .slice(0, 36) || 'theme'
-    let id = slug
-    for (let n = 2; theme.all.some((held) => held.id === `file:${id}`); n++) id = `${slug}-${n}`
-
-    await invoke('write_theme', {
-      id,
-      css: stamped({ id, name, author: browser, version: '1' }, one.css),
-    })
-    await theme.reload()
+    await keepTheme(name, one.css, browser)
     shown = null
   }
 </script>

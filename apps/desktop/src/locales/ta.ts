@@ -2219,7 +2219,19 @@ export const ta: Dictionary = {
   Extensions: 'நீட்டிப்புகள்',
   'Add extension': 'நீட்டிப்பைச் சேர்',
   'Manage extensions': 'நீட்டிப்புகளை நிர்வகி',
-  'Paste a Chrome Web Store link': 'Chrome இணைய அங்காடி இணைப்பை ஒட்டவும்',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Chrome இணைய அங்காடி அல்லது Firefox Add-ons இணைப்பை ஒட்டவும்',
+  'Not all of it works in Orden:': 'இதன் எல்லாமே Orden-இல் இயங்காது:',
+  'It can’t block or change what pages load.':
+    'பக்கங்கள் ஏற்றுவதை இதனால் தடுக்கவோ மாற்றவோ முடியாது.',
+  'Its containers are its own: tabs don’t open in them.':
+    'இதன் கண்டெய்னர்கள் இதற்கே உரியவை: தாவல்கள் அவற்றில் திறக்காது.',
+  'Its sidebar opens as a tab.': 'இதன் பக்கப்பட்டி ஒரு தாவலாகத் திறக்கும்.',
+  'Tabs it hides stay in the tab bar.': 'இது மறைக்கும் தாவல்கள் தாவல் பட்டியிலேயே இருக்கும்.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'இது பயன்படுத்தும், இங்கே இயங்காத Firefox-க்கு மட்டுமான பகுதிகள்: {list}',
+  'Install anyway': 'பரவாயில்லை, நிறுவு',
+  'Starts when Orden next opens': 'அடுத்த முறை Orden திறக்கும்போது தொடங்கும்',
   'Did not load': 'ஏற்றப்படவில்லை',
   Permissions: 'அனுமதிகள்',
   Options: 'விருப்பங்கள்',

@@ -2169,7 +2169,19 @@ export const my: Dictionary = {
   Extensions: 'တိုးချဲ့မှုများ',
   'Add extension': 'တိုးချဲ့မှု ထည့်ရန်',
   'Manage extensions': 'တိုးချဲ့မှုများ စီမံရန်',
-  'Paste a Chrome Web Store link': 'Chrome Web Store လင့်ခ်ကို ကူးထည့်ပါ',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Chrome Web Store သို့မဟုတ် Firefox Add-ons လင့်ခ်ကို ကူးထည့်ပါ',
+  'Not all of it works in Orden:': 'Orden တွင် အားလုံး အလုပ်မလုပ်ပါ -',
+  'It can’t block or change what pages load.':
+    'စာမျက်နှာများ ဖွင့်တင်သည်ကို ပိတ်ဆို့ခြင်း သို့မဟုတ် ပြောင်းခြင်း မလုပ်နိုင်ပါ။',
+  'Its containers are its own: tabs don’t open in them.':
+    'ကွန်တိန်နာများသည် ၎င်း၏ကိုယ်ပိုင်ဖြစ်သည် - တက်ဘ်များ ၎င်းတို့ထဲတွင် မဖွင့်ပါ။',
+  'Its sidebar opens as a tab.': '၎င်း၏ ဘေးဘားသည် တက်ဘ်တစ်ခုအဖြစ် ပွင့်သည်။',
+  'Tabs it hides stay in the tab bar.': '၎င်း ဝှက်ထားသော တက်ဘ်များသည် တက်ဘ်ဘားတွင် ကျန်နေသည်။',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'ဤနေရာတွင် အလုပ်မလုပ်သော Firefox သီးသန့် အစိတ်အပိုင်းများ - {list}',
+  'Install anyway': 'မည်သို့ပင်ဖြစ်စေ ထည့်သွင်းပါ',
+  'Starts when Orden next opens': 'Orden ကို နောက်တစ်ကြိမ် ဖွင့်သောအခါ စတင်မည်',
   'Did not load': 'မဖွင့်နိုင်ပါ',
   Permissions: 'ခွင့်ပြုချက်များ',
   Options: 'ရွေးချယ်စရာများ',

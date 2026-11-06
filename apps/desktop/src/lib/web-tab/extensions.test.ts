@@ -15,6 +15,21 @@ vi.mock('../tauri', async (importOriginal) => ({
   invoke: (command: string, args?: Record<string, unknown>) => {
     asked.push({ command, args })
     if (command === 'extensions_list') return Promise.resolve([row({ id: 'a', enabled: true })])
+    if (command === 'extensions_install' && String(args?.link).includes('theme')) {
+      return Promise.resolve({
+        theme: { name: 'Balanced', source: '{"colors":{}}', css: false, pages: '' },
+      })
+    }
+    if (
+      command === 'extensions_install' &&
+      args?.anyway !== true &&
+      String(args?.link).includes('mozilla')
+    ) {
+      return Promise.resolve({
+        name: 'Tree Style Tab',
+        asks: { said: ['sidebar', 'unknown'], apis: ['dns'] },
+      })
+    }
     if (command === 'extension_popup_open') {
       const said = builds.shift() ?? null
       // The crate refuses with its words, as a string, which is what the window reads.
@@ -22,6 +37,14 @@ vi.mock('../tauri', async (importOriginal) => ({
       return said === null ? Promise.resolve(undefined) : Promise.reject(said)
     }
     return refuse ? Promise.reject(new Error('no')) : Promise.resolve(undefined)
+  },
+}))
+
+const worn: unknown[] = []
+vi.mock('../themes/kept', () => ({
+  wearFirefoxTheme: (theme: unknown) => {
+    worn.push(theme)
+    return Promise.resolve()
   },
 }))
 
@@ -64,12 +87,60 @@ test('a row is read whole, and anything that is not one is nothing', () => {
   })
 })
 
-test('the bar shows what is on, has a button and is pinned', () => {
+test('a Firefox add-on’s row says its slug, what of it does not run, and that it waits', () => {
+  expect(readExtension(row({}))).toMatchObject({ addon: null, gaps: null, pending: false })
+  expect(
+    readExtension(
+      row({
+        store: 'firefox',
+        addon: 'tree-style-tab',
+        gaps: { said: ['sidebar', 3], apis: ['dns'] },
+        pending: true,
+      }),
+    ),
+  ).toMatchObject({
+    store: 'firefox',
+    addon: 'tree-style-tab',
+    gaps: { said: ['sidebar'], apis: ['dns'] },
+    pending: true,
+  })
+  expect(readExtension(row({ store: 'safari', gaps: { said: [], apis: [] } }))).toMatchObject({
+    store: 'chrome',
+    gaps: null,
+  })
+})
+
+test('a Firefox add-on that does not run whole waits for the reader, and is installed only when asked again', async () => {
+  const link = 'https://addons.mozilla.org/en-US/firefox/addon/tree-style-tab/'
+  asked.length = 0
+  expect(await extensions.install(link)).toBe(false)
+  expect(extensions.asking).toEqual({
+    link,
+    name: 'Tree Style Tab',
+    gaps: { said: ['sidebar', 'unknown'], apis: ['dns'] },
+  })
+  expect(await extensions.install(link, true)).toBe(true)
+  expect(extensions.asking).toBeNull()
+  expect(
+    asked.filter((one) => one.command === 'extensions_install').map((one) => one.args),
+  ).toEqual([
+    { link, anyway: false },
+    { link, anyway: true },
+  ])
+})
+
+test('a Firefox theme becomes one of Orden’s rather than an extension', async () => {
+  expect(await extensions.install('https://addons.mozilla.org/firefox/addon/a-theme/')).toBe(true)
+  expect(worn).toEqual([{ name: 'Balanced', source: '{"colors":{}}', css: false, pages: '' }])
+})
+
+test('the bar shows what is on, has a button and is pinned, and runs already', () => {
   const list = [
     row({ id: 'on' }),
     row({ id: 'off', enabled: false }),
     row({ id: 'buttonless', action: false }),
     row({ id: 'unpinned', pinned: false }),
+    row({ id: 'next-launch', store: 'firefox', pending: true }),
   ].map((one) => readExtension(one))
   expect(pinnedOf(list.filter((one) => one !== null)).map((one) => one.id)).toEqual(['on'])
 })

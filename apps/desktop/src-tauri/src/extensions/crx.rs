@@ -114,7 +114,7 @@ pub fn checked<'a>(bytes: &'a [u8], id: &str, store: Option<Store>) -> Result<Ch
         .find_map(|(field, value)| (field == 1).then_some(value))
         .filter(|value| value.len() == 16)
         .ok_or("that extension's file is not one: no signed id")?;
-    if id_of(crx_id) != id {
+    if super::link::id_of(crx_id) != id {
         return refused("it is another extension");
     }
 
@@ -143,6 +143,8 @@ pub fn checked<'a>(bytes: &'a [u8], id: &str, store: Option<Store>) -> Result<Ch
         publisher |= match store {
             Some(Store::Chrome) => hash == CHROME_PUBLISHER,
             Some(Store::Edge) => hash == EDGE_PUBLISHER,
+            // AMO serves no CRX file; see amo.rs.
+            Some(Store::Firefox) => false,
             None => true,
         };
     }
@@ -164,19 +166,10 @@ pub fn checked<'a>(bytes: &'a [u8], id: &str, store: Option<Store>) -> Result<Ch
     })
 }
 
-/// How Chromium writes sixteen bytes as an id: each half-byte a letter from `a`.
-pub fn id_of(bytes: &[u8]) -> String {
-    bytes
-        .iter()
-        .flat_map(|byte| [byte >> 4, byte & 0x0f])
-        .map(|nibble| char::from(b'a' + nibble))
-        .collect()
-}
-
 /// The id an extension with this public key has.
 #[cfg(test)]
 pub fn id_of_key(key: &[u8]) -> String {
-    id_of(&Sha256::digest(key)[..16])
+    super::link::id_of(&Sha256::digest(key)[..16])
 }
 
 /// What a proof's signature came to.

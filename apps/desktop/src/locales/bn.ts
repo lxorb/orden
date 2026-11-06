@@ -2184,7 +2184,18 @@ export const bn: Dictionary = {
   Extensions: 'এক্সটেনশন',
   'Add extension': 'এক্সটেনশন যোগ করুন',
   'Manage extensions': 'এক্সটেনশন পরিচালনা করুন',
-  'Paste a Chrome Web Store link': 'Chrome ওয়েব স্টোরের লিংক পেস্ট করুন',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Chrome ওয়েব স্টোর বা Firefox Add-ons-এর লিংক পেস্ট করুন',
+  'Not all of it works in Orden:': 'এর সবকিছু Orden-এ কাজ করে না:',
+  'It can’t block or change what pages load.': 'পেজ যা লোড করে তা এটি আটকাতে বা বদলাতে পারে না।',
+  'Its containers are its own: tabs don’t open in them.':
+    'এর কন্টেইনারগুলো এর নিজের: ট্যাব সেগুলোতে খোলে না।',
+  'Its sidebar opens as a tab.': 'এর সাইডবার একটি ট্যাব হিসেবে খোলে।',
+  'Tabs it hides stay in the tab bar.': 'এটি যে ট্যাবগুলো লুকায় সেগুলো ট্যাব বারে থেকে যায়।',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'এটি যে Firefox-এর নিজস্ব অংশ ব্যবহার করে যা এখানে চলে না: {list}',
+  'Install anyway': 'তবুও ইনস্টল করুন',
+  'Starts when Orden next opens': 'Orden পরের বার খুললে চালু হবে',
   'Did not load': 'লোড হয়নি',
   Permissions: 'অনুমতি',
   Options: 'বিকল্প',

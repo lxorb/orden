@@ -2216,7 +2216,19 @@ export const ha: Dictionary = {
   Extensions: 'Ƙarin shirye-shirye',
   'Add extension': 'Ƙara ƙarin shiri',
   'Manage extensions': 'Sarrafa ƙarin shirye-shirye',
-  'Paste a Chrome Web Store link': 'Liƙa hanyar haɗi daga Chrome Web Store',
+  'Paste a Chrome Web Store or Firefox Add-ons link':
+    'Liƙa hanyar haɗi daga Chrome Web Store ko Firefox Add-ons',
+  'Not all of it works in Orden:': 'Ba duka nasa ke aiki a Orden ba:',
+  'It can’t block or change what pages load.':
+    'Ba zai iya toshe ko canza abin da shafuka ke lodawa ba.',
+  'Its containers are its own: tabs don’t open in them.':
+    'Kwantenoninsa nasa ne: shafuka ba sa buɗewa a cikinsu.',
+  'Its sidebar opens as a tab.': 'Labarun gefensa yana buɗewa a matsayin shafi.',
+  'Tabs it hides stay in the tab bar.': 'Shafukan da yake ɓoyewa suna zama a sandar shafuka.',
+  'Firefox-only parts it uses that don’t run here: {list}':
+    'Sassan Firefox kaɗai da yake amfani da su waɗanda ba sa aiki a nan: {list}',
+  'Install anyway': 'Shigar da shi duk da haka',
+  'Starts when Orden next opens': 'Zai fara idan aka sake buɗe Orden',
   'Did not load': 'Bai buɗu ba',
   Permissions: 'Izini',
   Options: 'Zaɓuɓɓuka',
