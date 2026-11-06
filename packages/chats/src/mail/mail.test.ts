@@ -388,6 +388,29 @@ describe('a mailbox, end to end against a server', () => {
     await connection.close()
   })
 
+  test('a reply is kept in the sent mail even where the crate carries writes out of order', async () => {
+    const latin1 = (bytes: Uint8Array) => String.fromCharCode(...bytes)
+    const unordered: Host = {
+      ...host,
+      socket: async (ask) => {
+        const socket = await nodeSocket(ask)
+        return {
+          ...socket,
+          write: async (bytes) => {
+            if (latin1(bytes).endsWith('}\r\n'))
+              await new Promise((resolve) => setTimeout(resolve, 50))
+            await socket.write(bytes)
+          },
+        }
+      },
+    }
+    const connection = await mailProvider.connect(config(), unordered)
+    await connection.send('lunch@example.org', { text: 'See you there' })
+    expect(server.boxes.get('Sent')).toHaveLength(2)
+    expect(latin(server.boxes.get('Sent')?.[1]?.raw ?? new Uint8Array())).toContain('Re: Lunch')
+    await connection.close()
+  })
+
   test('the files of a mail, by their place in it', async () => {
     server.deliver(
       'INBOX',

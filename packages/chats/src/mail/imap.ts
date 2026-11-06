@@ -2,7 +2,7 @@
  *  mailboxes with. Literals in both directions, STARTTLS, SASL PLAIN, IDLE (RFC 2177). */
 
 import type { Socket, SocketAsk } from '../provider'
-import { ascii, fromLatin, latin, Reader, toBase64 } from './bytes'
+import { ascii, concat, fromLatin, latin, Reader, toBase64 } from './bytes'
 
 /** A parsed value: an atom or a string (a literal's bytes as Latin-1), NIL, or a list. */
 export type Value = string | null | Value[]
@@ -225,10 +225,14 @@ export class Imap {
         return
       }
       const plus = this.capabilities.has('LITERAL+')
-      void this.socket.write(fromLatin(`${tag} ${text} {${literal.length}${plus ? '+' : ''}}\r\n`))
-      const rest = () => void this.socket.write(new Uint8Array([...literal, 13, 10]))
-      if (plus) rest()
-      else this.continued = rest
+      const head = fromLatin(`${tag} ${text} {${literal.length}${plus ? '+' : ''}}\r\n`)
+      const rest = concat([literal, new Uint8Array([13, 10])])
+      if (plus) {
+        void this.socket.write(concat([head, rest])).catch(failed)
+        return
+      }
+      this.continued = () => void this.socket.write(rest).catch(failed)
+      void this.socket.write(head).catch(failed)
     })
   }
 
