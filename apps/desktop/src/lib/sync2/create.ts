@@ -381,8 +381,7 @@ function making(space: SpaceState, id: string, unsent = false): boolean {
 }
 
 /** This device's delete of an entry whose making has not gone either, taken out of the
- *  outbox: the account will hear of neither, and a restore behind them would name an
- *  entry it never had, the two folded away before it (`coalesce`). */
+ *  outbox: the account will hear of neither, and needs no restore behind them. */
 function unsent(space: SpaceState, id: string, changes: Change[]): boolean {
   const one = space.outbox.find(
     (op) =>
@@ -480,8 +479,9 @@ export async function restored(
       if (text !== null) changes.push(...(await wrote(core, entry, text)))
     }
     // Made here and not gone yet: the delete behind it goes instead, and nothing else.
-    // Where the delete was of a folder around it, that delete still goes and takes it,
-    // so it goes up as a restore behind it like the rest (#1068).
+    // Where a delete of a folder around it still goes and takes it, it goes up as a
+    // restore behind that delete like the rest, which keeps the fold from taking it
+    // (`coalesce`, #1068).
     if (making(space, entry.id, true)) {
       const folded = unsent(space, entry.id, changes)
       // And its words, let go of with the delete, are its file's again: the account has
@@ -494,7 +494,7 @@ export async function restored(
         doc.flush()
         changes.push(...core.docChanges(doc), ...(await wrote(core, entry, text)))
       }
-      if (folded) continue
+      if (folded && space.shown().entries.get(entry.id)?.deleted === false) continue
     }
     // Even where it shows: somebody else's delete this device has not heard of yet may
     // be on the account, and a person asking for it back outweighs a delete that had

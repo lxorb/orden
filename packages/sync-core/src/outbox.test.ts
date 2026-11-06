@@ -122,6 +122,21 @@ describe('coalesce', () => {
     expect(coalesce(ops)).toEqual([create('4', 'kept', 'Kept.md'), remove('5.0', 'old')])
   })
 
+  test('what a restore in the queue brings back is not folded away, before it or after it (#1068)', () => {
+    const restore = (op: string, id: string): Op => ({ op, t: 'restore', id, seen: 0 })
+    const inner = [
+      mkdir('1', 'f', 'Old'),
+      create('2', 'n', 'Plan.md', 'f'),
+      mkdir('3', 'w', 'work', 'f'),
+      remove('4', 'w'),
+      remove('5', 'f'),
+      restore('6', 'w'),
+    ]
+    expect(coalesce(inner)).toEqual(inner)
+    const again = [mkdir('1', 'f', 'Old'), remove('2', 'f'), restore('3', 'f'), remove('4', 'f')]
+    expect(coalesce(again)).toEqual(again)
+  })
+
   test('a delete of something the account already has stays', () => {
     const ops = [rename('1', 'n', 'A'), remove('2', 'n')]
     expect(coalesce(ops)).toEqual(ops)
@@ -143,6 +158,7 @@ type Choice =
   | { t: 'rename'; id: number; name: number }
   | { t: 'move'; id: number; parent: number }
   | { t: 'delete'; id: number }
+  | { t: 'restore'; id: number }
 
 const NAMES = ['A.md', 'a.md', 'B.md', 'Work', 'Plan.md']
 
@@ -155,6 +171,7 @@ const choice: fc.Arbitrary<Choice> = fc.oneof(
   fc.record({ t: fc.constant('rename' as const), id: fc.nat(), name: fc.nat() }),
   fc.record({ t: fc.constant('move' as const), id: fc.nat(), parent: fc.nat() }),
   fc.record({ t: fc.constant('delete' as const), id: fc.nat() }),
+  fc.record({ t: fc.constant('restore' as const), id: fc.nat() }),
 )
 
 /** A device's own ops, made against its own tree as it goes, so each one names
@@ -185,6 +202,12 @@ function made(start: TreeState, choices: readonly Choice[]): Op[] {
         one.t === 'mkdir'
           ? { op, t: 'mkdir', id, parent, name: name.replace('.md', ''), seen: state.cursor }
           : { op, t: 'create', id, kind: 'note', parent, name, seen: state.cursor }
+    } else if (one.t === 'restore') {
+      const target = pick(
+        [...state.entries.values()].filter((entry) => entry.deleted),
+        one.id,
+      )
+      if (target) next = { op, t: 'restore', id: target.id, seen: state.cursor }
     } else {
       const target = pick(live, one.id)
       if (!target) continue

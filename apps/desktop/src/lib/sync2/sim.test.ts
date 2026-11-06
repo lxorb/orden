@@ -337,8 +337,9 @@ describe('the tree walked at random, the engine as every device', () => {
   /** Each restored, while away, a folder made inside one this device deleted, and the
    *  account never brought it back: 2412 said only the outer folder's restore, its delete
    *  already on its way and taking the inner one with it; 9654 put the folder back beside
-   *  one its trash did not see on the disk (#1068). */
-  test.each([2412, 9654])(
+   *  one its trash did not see on the disk; 8388 had made the outer folder too, and its
+   *  delete folded every one of them away as never made, the restore with them (#1068). */
+  test.each([2412, 9654, 8388])(
     'seed %i of the tree on many devices brings back what was restored',
     async (seed) => {
       const report = await simulate({
@@ -348,18 +349,6 @@ describe('the tree walked at random, the engine as every device', () => {
       expect(report.failures).toEqual([])
     },
   )
-
-  /** A known gap (docs/tree-sync.md): a folder made inside one made here, both deleted
-   *  here, the inner first, and the inner put back from the trash, all before the account
-   *  heard of either. The outer's delete folds every one of them away as never made, and
-   *  the restore with them (#1068). */
-  test.fails('seed 8388 of the tree on many devices brings back what was restored', async () => {
-    const report = await simulate({
-      ...crowded(8388, 'tree'),
-      device: (id, clock, random, seeded) => new EngineDevice(id, clock, random, seeded),
-    })
-    expect(report.failures).toEqual([])
-  })
 })
 
 /** Rows dragged among the rest of their folders as well as the tree walked (#1068): every

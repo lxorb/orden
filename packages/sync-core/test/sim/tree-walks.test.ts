@@ -75,4 +75,18 @@ describe('the tree, walked at random on five devices', () => {
       expect((await simulate(crowded(seed, 'tree'))).failures).toEqual([])
     },
   )
+
+  /** Deleted a folder made here, restored it and deleted it again while away, the second
+   *  delete refused here for a note inside whose words it had not pulled again: the
+   *  account hears the folder's making, both deletes and the restore in order (#1068). */
+  test('seed 2316 of the tree on many devices keeps a folder restored here', async () => {
+    expect((await simulate(crowded(2316, 'tree'))).failures).toEqual([])
+  })
+
+  /** Restored a folder, then asked for it deleted again, which this device's own view of
+   *  the rules kept and the account, knowing more, took: the person's delete, though it
+   *  took nothing here (#1068). */
+  test('seed 23652 of the tree on many devices lets a delete asked for after a restore stand', async () => {
+    expect((await simulate(crowded(23652, 'tree'))).failures).toEqual([])
+  })
 })

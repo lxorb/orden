@@ -6,7 +6,9 @@ import type {
   Answer,
   Classification,
   DeviceAdapter,
+  EntryView,
   Link,
+  Pick,
   View,
 } from './adapters'
 import { judge, type Ledger, ledger, markersIn } from './checks'
@@ -68,6 +70,21 @@ export const SEEDED: readonly Seeded[] = [
 
 async function drain() {
   for (let turn = 0; turn < 64; turn++) await Promise.resolve()
+}
+
+function asked(live: readonly EntryView[], pick: Pick): string[] {
+  const target = live[Math.min(live.length - 1, Math.floor(pick * live.length))]
+  if (!target) return []
+  const parents = new Map(live.map((entry) => [entry.id, entry.parent]))
+  const inside = (id: string): boolean => {
+    const seen = new Set<string>()
+    for (let at: string | null = id; at !== null && !seen.has(at); at = parents.get(at) ?? null) {
+      if (at === target.id) return true
+      seen.add(at)
+    }
+    return false
+  }
+  return live.filter((entry) => inside(entry.id)).map((entry) => entry.id)
 }
 
 class Run {
@@ -258,14 +275,15 @@ class Run {
       case 'act': {
         if (!device?.running) break
         const before = await this.markersOf(device)
-        const idsBefore = await this.idsOf(device)
+        const shownBefore = (await device.view()).entries
+        const idsBefore = new Set(shownBefore.map((entry) => entry.id))
         await device.act(step.action)
         const after = await this.markersOf(device)
         for (const marker of after) if (!before.has(marker)) this.book.typed.add(marker)
         for (const marker of before) if (!after.has(marker)) this.book.retired.add(marker)
         const idsAfter = await this.idsOf(device)
         for (const id of idsAfter) if (!idsBefore.has(id)) this.book.made.add(id)
-        this.noteTree(step.device, step.action, idsBefore, idsAfter)
+        this.noteTree(step.device, step.action, shownBefore, idsAfter)
         break
       }
       case 'answer': {
@@ -319,13 +337,13 @@ class Run {
   private noteTree(
     device: number,
     action: Action,
-    before: ReadonlySet<string>,
+    before: readonly EntryView[],
     after: ReadonlySet<string>,
   ) {
     const at = this.trace.length
     if (action.t === 'delete') {
-      const gone = [...before].filter((id) => !after.has(id))
-      for (const id of gone) this.book.deleted.set(id, at)
+      const gone = before.map((entry) => entry.id).filter((id) => !after.has(id))
+      for (const id of [...gone, ...asked(before, action.target)]) this.book.deleted.set(id, at)
       this.trash.set(device, [...(this.trash.get(device) ?? []), ...gone])
     }
     if (action.t === 'restore') {

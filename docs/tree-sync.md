@@ -292,15 +292,25 @@ keeps it through that app's writing the list back.
 
 A delete made here is said to the engine with a word to put it back by: the trash's id
 for what it holds, or the undo's own. The engine keeps where the entry and everything in
-it were on this disk (`gone:<space>` in the sync store's `meta`, the newest two hundred),
-so when the trash or an undo puts the files back and says so with that word, each comes
-back as the entry it was, under its id: a `restore` to the account, which brings it back
-with the folders above it, over a delete that had not seen it, and its words come down
-again by the next pull, what the file said kept as a version where they differ. One made
-here whose making has not gone yet loses the delete behind it instead, its words its
-file's; one the account never heard of, or no longer has, is made again under its id
-with what its file says. A file put back by no such word, or where something else is now,
-is a file made.
+it were on this disk (`gone:<space>` in the sync store's `meta`, the newest two
+hundred), so when the trash or an undo puts the files back and says so with that word,
+each comes back as the entry it was, under its id: a `restore` to the account, which
+brings it back with the folders above it, over a delete that had not seen it, and its
+words come down again by the next pull, what the file said kept as a version where they
+differ. One made here whose making has not gone yet loses the delete behind it instead,
+its words its file's, and where a delete of a folder around it waits to go as well, it
+goes up as a restore behind that delete too; one the account never heard of, or no
+longer has, is made again under its id with what its file says. A file put back by no
+such word, or where something else is now, is a file made.
+
+What waits in the outbox is folded before it goes (`coalesce` in
+@orden/sync-core/outbox): a create and a delete of one entry, the account having heard
+of neither, cancel, with everything made inside it. Not where a restore waiting with them
+names anything that delete takes, before the delete or after it: what the account makes
+of the delete then turns on the restore, and on what the deleting device had seen, so
+all of them go as they were made and the account applies them in order. Nor does a move
+fold back into its create past a restore, which would put the entry in a folder before
+the restore brought back what was deleted with it.
 
 A delete is a fact, not an absence: the account keeps the entry with a tombstone and the
 cursor it was deleted at, so a device that comes back after a week does not send up the
@@ -320,7 +330,8 @@ then checks what everybody holds once it goes quiet (checks.ts):
 - nothing exists that nobody made, and no note's words are live in two notes at once
   (bar a copy a person asked for by keeping both sides of a question);
 - every word ever typed is in a note or in a version, unless a person took it out;
-- what a person restored is there, under its id, unless somebody deleted it again.
+- what a person restored is there, under its id, unless somebody deleted it, or asked
+  to, again.
 
 The tree walks (`mix: 'tree'`) draw mostly moves, renames, deletes and restores on four or
 five devices; the order walks (`mix: 'order'`) draw rows dragged among the rest of their
@@ -343,25 +354,34 @@ device shows until the feed said it again, so a folder deleted in that moment di
 take the note just moved into it, though the account did (seed 5244). The engine's walks
 never showed either.
 
-Ten thousand seeds of the tree with the engine as every device found three more. Two are
-fixed: a folder made here inside one deleted here, put back from the trash while away,
+Ten thousand seeds of the tree with the engine as every device found three more, all
+fixed. A folder made here inside one deleted here, put back from the trash while away,
 was said to the account only as the outer folder's restore when the outer delete was
 already on its way, and that delete had taken the inner one with it; it now goes up as a
-restore of its own (seed 2412). And the simulated trash put a folder back beside one
-whose folder on disk it did not look at (seed 9654). The third is a known gap, below.
+restore of its own (seed 2412). The simulated trash put a folder back beside one
+whose folder on disk it did not look at (seed 9654). And a folder made here inside one
+made here, the inner deleted, then the outer, and the inner put back from the trash, all
+while away, was lost: the outer delete folded every one of them away as never made, the
+restore with them (seed 8388). Keeping a delete from folding only when a restore follows
+it was not enough: a reference walk deletes the restored folder again, that second
+delete refused for a note inside whose words the device had not pulled again, and the
+second delete then folded the folder, its first delete and the restore away (seed 2316).
+A restore anywhere in the queue now keeps the fold from taking what it names, as above.
+
+Forty thousand reference seeds past the first ten thousand found a fault in the walks'
+own check (tree seeds 10326, 20682, 23652, 31395, 48588; order seed 39664). It counted
+a delete only by what left the device's tree, so a delete a person asked for after a
+restore, which the device's own view of the rules kept and the account, knowing more,
+took, read as the restore lost. It now counts what the delete asked for as well.
 
 ## Known gaps
 
-What the tree walks found when they were first run, each pinned as an expected failure
-until the step of #1068 that removes it lands:
+What is still open:
 
-- **A folder restored inside one deleted after it, all before the account heard of
-  either, is lost.** A device makes a folder inside another, deletes the inner one, then
-  the outer, and puts the inner one back from the trash, all while away. The outer
-  folder's delete folds every one of them away as never made (`coalesce` in
-  @orden/sync-core/outbox), and the restore goes with them (engine seed 8388). Keeping
-  them in the outbox when a restore follows broke a reference walk that deletes the
-  restored folder again (seed 2316); the fold has to tell those two apart.
+- **Engine tree seeds past the first ten thousand.** Seeds 15786, 19363, 21591 and
+  25006 lose a restore and 23076 loses words, with the engine as every device, as they
+  did before the fold kept restores; not looked into yet. In 15786 the restore is of a
+  note another device's move had already brought back on this device in another folder.
 
 - **An older app's drag in a folder that has places is not read.** Builds from before
   places still keep the order per folder path as a list of names (`arranged`, synced

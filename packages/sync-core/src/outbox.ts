@@ -10,12 +10,14 @@
  *    is its last rename, at the last one's place in the queue;
  *  - a rename or a move of an id whose create is still waiting is folded into the
  *    create, which then makes it under its final name in its final folder (unless
- *    that folder is itself made later in the queue, when the move has to wait for it);
+ *    that folder is itself made later in the queue, or a restore stands between the
+ *    two, when the move has to wait for it);
  *    a day's note given another name or folder that way is no longer made `mergeable`;
  *  - a create followed by a delete of the same id cancels both, with every op on that
  *    id in between, and for a folder everything made inside it meanwhile. Something
  *    that already existed and was moved into such a folder is deleted instead, which
- *    is what happened to it on this device.
+ *    is what happened to it on this device. Not where the queue also restores any of
+ *    them: the account then hears all of it as it was, in order.
  *
  *  Only ever handed the ops that have not been sent: an op in flight is the account's
  *  already, and folding it into another would leave its answer with nobody to hear
@@ -78,10 +80,12 @@ export function coalesce(ops: readonly Op[]): Op[] {
   /** Where the last drag of each id within its folder stands, while nothing else has
    *  touched the id. */
   const placing = new Map<string, number>()
+  let restoring = -1
 
   for (let at = 0; at < queue.length; at++) {
     const op = queue[at]
     if (!op) continue
+    if (op.t === 'restore') restoring = at
 
     if (isMaking(op)) {
       making.set(op.id, at)
@@ -102,7 +106,14 @@ export function coalesce(ops: readonly Op[]): Op[] {
       continue
     }
 
-    if (op.t === 'move' && foldable && create && isMaking(create) && made !== undefined) {
+    if (
+      op.t === 'move' &&
+      foldable &&
+      create &&
+      isMaking(create) &&
+      made !== undefined &&
+      restoring < made
+    ) {
       // Folded only where its folder already exists when the create goes.
       const folder = op.parent === null ? undefined : making.get(op.parent)
       if (folder === undefined || folder < made) {
@@ -151,6 +162,8 @@ export function coalesce(ops: readonly Op[]): Op[] {
         one && 'parent' in one && one.parent !== null && gone.has(one.parent) && !gone.has(one.id),
     )
     if (named) continue
+
+    if (queue.some((one) => one?.t === 'restore' && gone.has(one.id))) continue
 
     for (let other = 0; other <= at; other++) {
       const one = queue[other]
