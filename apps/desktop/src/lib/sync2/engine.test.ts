@@ -995,6 +995,85 @@ describe('a delete put back (#1068)', () => {
     expect(await textOn(account, note ?? '')).toBe('ship it mk5z')
   })
 
+  test('of a note another device brought back meanwhile keeps it where it is, over a later delete', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const here = await device(account, 'd0')
+    const there = await device(account, 'd1')
+    const third = await device(account, 'd2')
+
+    const words = here.disk.files.get(`${ROOT}/Plan.md`) ?? ''
+    await here.disk.remove(`${ROOT}/Plan.md`)
+    await here.engine.removed(`${ROOT}/Plan.md`, 'trash-1')
+    await here.engine.pass(SPACE)
+
+    // Moved by a device that had not heard of the delete, which brings it back.
+    await there.disk.mkdir(`${ROOT}/Work`)
+    await there.engine.created(`${ROOT}/Work`, true)
+    await there.disk.move(`${ROOT}/Plan.md`, `${ROOT}/Work/Plan.md`)
+    await there.engine.moved(`${ROOT}/Plan.md`, `${ROOT}/Work/Plan.md`)
+    await there.engine.pass(SPACE)
+    await here.engine.pass(SPACE)
+    expect(here.disk.files.has(`${ROOT}/Work/Plan.md`)).toBe(true)
+
+    // Deleted again by a third, which this device has not heard of when it asks for it back.
+    await third.engine.pass(SPACE)
+    await third.disk.remove(`${ROOT}/Work/Plan.md`)
+    await third.engine.removed(`${ROOT}/Work/Plan.md`)
+    await third.engine.pass(SPACE)
+    expect((await account.view()).entries.map((entry) => entry.id)).not.toContain(PLAN)
+
+    await here.disk.write(`${ROOT}/Plan.md`, words)
+    expect(await here.engine.restored(`${ROOT}/Plan.md`, 'trash-1')).toBe(true)
+    expect(here.disk.files.has(`${ROOT}/Plan.md`)).toBe(false)
+    await here.engine.pass(SPACE)
+    await here.engine.pass(SPACE)
+
+    const plan = (await account.view()).entries.find((entry) => entry.id === PLAN)
+    expect(plan?.name).toBe('Plan.md')
+    expect(plan?.parent).not.toBeNull()
+    expect(here.engine.core.spaces.get(SPACE)?.at('Work/Plan.md')?.id).toBe(PLAN)
+    expect([...here.disk.files.keys()].filter((path) => path.endsWith('Plan.md'))).toEqual([
+      `${ROOT}/Work/Plan.md`,
+    ])
+  })
+
+  test('of a folder another device brought back meanwhile puts what it held into it', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const here = await device(account, 'd0')
+    const there = await device(account, 'd1')
+    await here.disk.mkdir(`${ROOT}/Work`)
+    const folder = await here.engine.created(`${ROOT}/Work`, true)
+    await here.disk.move(`${ROOT}/Plan.md`, `${ROOT}/Work/Plan.md`)
+    await here.engine.moved(`${ROOT}/Plan.md`, `${ROOT}/Work/Plan.md`)
+    await here.engine.pass(SPACE)
+    await there.engine.pass(SPACE)
+
+    const words = here.disk.files.get(`${ROOT}/Work/Plan.md`) ?? ''
+    await here.disk.remove(`${ROOT}/Work`)
+    await here.engine.removed(`${ROOT}/Work`, 'trash-1')
+    await here.engine.pass(SPACE)
+
+    // Renamed by a device that had not heard of the delete: the folder alone comes back.
+    await there.disk.move(`${ROOT}/Work`, `${ROOT}/Old`)
+    await there.engine.moved(`${ROOT}/Work`, `${ROOT}/Old`)
+    await there.engine.pass(SPACE)
+    await here.engine.pass(SPACE)
+    expect(here.disk.folders.has(`${ROOT}/Old`)).toBe(true)
+
+    await here.disk.mkdir(`${ROOT}/Work`)
+    await here.disk.write(`${ROOT}/Work/Plan.md`, words)
+    expect(await here.engine.restored(`${ROOT}/Work`, 'trash-1')).toBe(true)
+    await here.engine.pass(SPACE)
+    await here.engine.pass(SPACE)
+
+    const live = (await account.view()).entries
+    expect(live.find((entry) => entry.id === folder)?.name).toBe('Old')
+    expect(live.find((entry) => entry.id === PLAN)?.parent).toBe(folder)
+    expect(await textOn(account, PLAN)).toBe(words)
+    expect(here.disk.files.get(`${ROOT}/Old/Plan.md`)).toBe(words)
+    expect(here.disk.folders.has(`${ROOT}/Work`)).toBe(false)
+  })
+
   test('is a file made where nothing was deleted by that word', async () => {
     const here = await device()
     await here.disk.write(`${ROOT}/Other.md`, 'words')

@@ -368,6 +368,11 @@ export function removed(core: Core, space: SpaceState, path: string, back?: stri
   return changes
 }
 
+/** Whether an entry is on this disk and shown. */
+function here(space: SpaceState, entry: EntryRow): boolean {
+  return entry.local_path !== '' && space.shown().entries.get(entry.id)?.deleted === false
+}
+
 /** Whether an op that makes an entry is still in the outbox - `unsent`: and has not
  *  gone yet. */
 function making(space: SpaceState, id: string, unsent = false): boolean {
@@ -407,9 +412,12 @@ function unsent(space: SpaceState, id: string, changes: Change[]): boolean {
  *  back on the account with the folders above it, over a delete made without having
  *  seen it, and its words come down again by the next pull. A folder's entries are
  *  found where this device last had them (`gone` on the space), else where their names
- *  put them inside it. Answers null where the
- *  entry is not this space's, or another entry's file is at `path`: what is there is
- *  then a file made. */
+ *  put them inside it. One this device shows again already, another device's change
+ *  having brought it back here meanwhile, stays where it is and goes up as a `restore`
+ *  too: its copy out of the trash goes the way a file the account no longer shows goes,
+ *  and what this device had inside it that is not here goes into where it is. Answers
+ *  null where the entry is not this space's, or another entry's file is at `path`: what
+ *  is there is then a file made. */
 export async function restored(
   core: Core,
   space: SpaceState,
@@ -419,7 +427,7 @@ export async function restored(
   const top = space.entries.get(id)
   if (!top) return null
   const holder = space.at(path)
-  if (holder) return holder.id === id ? [] : null
+  if (holder && (holder.id !== id || !here(space, top))) return holder.id === id ? [] : null
 
   // Where each was when this device deleted it, else where the names put it.
   const back: { entry: EntryRow; at: string }[] = []
@@ -428,9 +436,13 @@ export async function restored(
   if (was && from !== undefined) {
     for (const [one, at] of was) {
       const entry = space.entries.get(one)
-      if (entry && !entry.local_path) back.push({ entry, at: `${path}${at.slice(from.length)}` })
+      if (entry && (!entry.local_path || here(space, entry))) {
+        back.push({ entry, at: `${path}${at.slice(from.length)}` })
+      }
     }
     back.sort((a, b) => a.at.split(SEP).length - b.at.split(SEP).length)
+  } else if (here(space, top)) {
+    back.push({ entry: top, at: path })
   } else {
     const walk = (entry: EntryRow, at: string, depth: number) => {
       back.push({ entry, at })
@@ -443,10 +455,46 @@ export async function restored(
     walk(top, path, 0)
   }
 
+  const stays = here(space, top)
   const changes: Change[] = []
+  const full = (at: string) => core.world.join(space.row.root, at)
+  const copies: { at: string; home: string; kind: EntryKind }[] = []
+  const homeOf = (at: string) => {
+    for (const copy of copies) {
+      if (space.key(at).startsWith(space.key(`${copy.at}${SEP}`))) {
+        return `${copy.home}${at.slice(copy.at.length)}`
+      }
+    }
+    return at
+  }
   let wants = false
-  for (const { entry, at } of back) {
-    if (space.at(at) || !(await core.world.disk.exists(core.world.join(space.row.root, at)))) {
+  for (const { entry, at: copy } of back) {
+    if (here(space, entry)) {
+      if (space.key(entry.local_path) !== space.key(copy) && !space.at(copy)) {
+        copies.push({ at: copy, home: entry.local_path, kind: entry.kind as EntryKind })
+      }
+      const seen = space.row.cursor
+      changes.push(
+        ...queue(core, space, { op: core.nextId('o'), t: 'restore', id: entry.id, seen }),
+      )
+      continue
+    }
+    const at = homeOf(copy)
+    if (at !== copy) {
+      if (space.at(at) || (await core.world.disk.exists(full(at)))) continue
+      if (!(await core.world.disk.exists(full(copy)))) continue
+      try {
+        await core.world.disk.mkdir(full(folderOf(at)))
+        await core.world.disk.move(
+          full(copy),
+          full(at),
+          entry.kind === 'folder' ? 'folder' : 'file',
+        )
+      } catch {
+        continue
+      }
+    }
+    if (space.at(at) || !(await core.world.disk.exists(full(at)))) {
       if (entry === top) return null
       continue
     }
@@ -503,11 +551,19 @@ export async function restored(
     changes.push(...queue(core, space, { op: core.nextId('o'), t: 'restore', id: entry.id, seen }))
   }
 
+  for (const copy of copies) {
+    if (homeOf(copy.at) !== copy.at) continue
+    if (!(await core.world.disk.exists(full(copy.at)))) continue
+    await core.world.disk
+      .remove(full(copy.at), copy.kind === 'folder' ? 'folder' : 'file')
+      .catch(() => undefined)
+  }
+
   // Put back beside something that took its name meanwhile: under the name it came
   // back with.
   const now = space.shown().entries.get(id)
   const name = nameOf(path)
-  if (now && !now.deleted && space.key(space.spelled(now.name)) !== space.key(name)) {
+  if (!stays && now && !now.deleted && space.key(space.spelled(now.name)) !== space.key(name)) {
     const seen = space.row.cursor
     changes.push(...queue(core, space, { op: core.nextId('o'), t: 'rename', id, name, seen }))
   }
