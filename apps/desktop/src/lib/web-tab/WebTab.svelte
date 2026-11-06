@@ -21,7 +21,7 @@
   import type { Tab } from '../workspace.svelte'
   import { workspace } from '../workspace.svelte'
   import { favicon, plainOrigin } from './address'
-  import { isLocalFile, mayBeSecret, webAddress } from './typed'
+  import { unopened, webAddress } from './typed'
   import { upgradeOf } from './upgrade'
   import type { ZoomStep } from './bar-keys'
   import { clipPage } from './clip'
@@ -601,8 +601,10 @@
       onaddress={(said: string, aside: boolean, typed: string) => {
         const url = webAddress(said, searchEngine.url)
         if (!url) {
-          if (isLocalFile(said)) page.notice = t('That file could not be read')
-          else if (mayBeSecret(said)) page.notice = t('that link could not be followed')
+          const why = unopened(said)
+          if (why === 'own page') actions.history()
+          else if (why === 'file') page.notice = t('That file could not be read')
+          else if (why === 'link') page.notice = t('that link could not be followed')
           return
         }
 

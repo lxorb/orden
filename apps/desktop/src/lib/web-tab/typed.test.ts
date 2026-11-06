@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { dotCom, isLocalFile, mayBeSecret, typedAddress, webAddress } from './typed'
+import { dotCom, isLocalFile, mayBeSecret, typedAddress, unopened, webAddress } from './typed'
 
 describe('the dot-com press', () => {
   test('makes one word a site', () => {
@@ -359,5 +359,33 @@ describe('a word that names a secret, in the languages a page is read in', () =>
   test('and words about one are a search', () => {
     expect(webAddress('passwort vergessen')).toContain('google')
     expect(webAddress('wie lang: passwort')).toContain('google')
+  })
+})
+
+describe('what Enter does when the bar opens no page', () => {
+  test('Orden’s own page opens, as its address is shown', () => {
+    expect(webAddress('nib://history')).toBeNull()
+    expect(unopened('nib://history')).toBe('own page')
+    expect(unopened('  NIB://history ')).toBe('own page')
+  })
+
+  test('every other address that opens nothing says so', () => {
+    for (const said of [
+      'about:blank',
+      'chrome://settings',
+      'ftp://x.org',
+      'mailto:a@b.c',
+      'javascript:alert(1)',
+      'password: hunter2',
+    ]) {
+      expect(webAddress(said)).toBeNull()
+      expect(unopened(said)).toBe('link')
+    }
+  })
+
+  test('a file says it could not be read, and an empty bar says nothing', () => {
+    expect(unopened('/etc/hosts')).toBe('file')
+    expect(unopened('C:\\a.txt')).toBe('file')
+    expect(unopened('   ')).toBe('nothing')
   })
 })
