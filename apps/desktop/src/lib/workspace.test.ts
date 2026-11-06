@@ -4758,6 +4758,24 @@ describe('an essential', () => {
   const keep = (path: string) =>
     workspace.bookmarks.toggle(workspace.bookmarks.forEntry({ path, is_dir: false }))
 
+  test('takes no place in the strip a tab is dragged to or reopened into', async () => {
+    keep('/space/a.md')
+    await (await import('./essentials.svelte')).openEssential('/space/a.md')
+    for (const name of ['b', 'c']) await workspace.open(`/space/${name}.md`)
+    expect(workspace.tabs).toHaveLength(3)
+    expect(strip()).toEqual(['/space/b.md', '/space/c.md'])
+
+    const b = workspace.tabs.find((one) => one.path === '/space/b.md')!
+    workspace.moveTab(b.id, workspace.panes.focusedId, 1)
+    expect(strip()).toEqual(['/space/c.md', '/space/b.md'])
+
+    workspace.moveTab(b.id, workspace.panes.focusedId, 0)
+    const c = workspace.tabs.find((one) => one.path === '/space/c.md')!
+    workspace.close(c.id)
+    await workspace.reopenClosed()
+    expect(strip()).toEqual(['/space/b.md', '/space/c.md'])
+  })
+
   test('shows its file with no tab in the strip', async () => {
     keep('/space/a.md')
     await (await import('./essentials.svelte')).openEssential('/space/a.md')

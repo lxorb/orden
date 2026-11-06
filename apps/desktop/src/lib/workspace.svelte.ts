@@ -2606,7 +2606,7 @@ class Workspace {
 
   private placed(tab: Tab, paneId: string, at: number | null): Tab[] {
     const rest = this.tabs.filter((one) => one.id !== tab.id)
-    const strip = rest.filter((one) => one.paneId === paneId)
+    const strip = rest.filter((one) => one.paneId === paneId && !one.essential)
     const after = at === null ? undefined : strip[Math.max(0, at)]
     const index = after ? rest.findIndex((one) => one.id === after.id) : -1
     if (index < 0) return [...rest, tab]
