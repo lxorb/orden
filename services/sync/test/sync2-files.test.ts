@@ -363,6 +363,40 @@ describe('a file replaced', () => {
     expect(phone.json.moved.hash).toBe(await hashOf(second))
   })
 
+  /** #1068: the account keeps every device's latest change, so replacing the bytes after
+   *  another device did leaves that one's standing against this device's stale delete. */
+  test("by another device stand against a delete that had not seen them, though this one's came since", async () => {
+    const other = await signIn(env, 'files@example.com')
+    const versions = [bytes(100, 1), bytes(100, 2), bytes(100, 3)]
+    for (const one of versions) await upload(one)
+    const placed = await place('picture.bin', await hashOf(versions[0] ?? bytes(0)))
+    const id = (placed.results[0] as { id: string }).id
+    const seen = (
+      await call<{ cursor: number }>(env, `/v2/spaces/${space}/feed?since=0`, { token })
+    ).json.cursor
+
+    for (const [as, at] of [
+      [other, 1],
+      [token, 2],
+    ] as const) {
+      const answer = await call(env, `/v2/files/${space}/${id}`, {
+        method: 'PUT',
+        token: as,
+        body: {
+          hash: await hashOf(versions[at] ?? bytes(0)),
+          base: await hashOf(versions[at - 1] ?? bytes(0)),
+        },
+      })
+      expect(answer.json).toMatchObject({ ok: true })
+    }
+
+    const deleted = await call<OpsResponse>(env, `/v2/spaces/${space}/ops`, {
+      token,
+      body: { ops: [{ op: 'op-gone', t: 'delete', id, seen }] },
+    })
+    expect(deleted.json.results[0]).toMatchObject({ refused: 'edited' })
+  })
+
   test('by nobody who may only read the space', async () => {
     const data = bytes(64)
     await upload(data)

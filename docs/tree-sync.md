@@ -46,7 +46,7 @@ the same tree. An operation carries its own id, so one that arrives twice is app
 | move and delete | A move made without having seen the delete brings the entry back; a move the device made knowing of the delete cannot, since it no longer shows the entry. |
 | delete of a folder and a change inside it | Whatever another device created, moved in, renamed, restored or edited inside since the deleting device last looked stays, and keeps the folder. |
 | edit and delete | The edit wins: a delete of a note whose words changed since the deleting device last pulled them is refused, and that device puts the note back. |
-| a rename, move or restore and a delete that had not seen it | The other change wins, as an edit does: a delete takes only what its device had seen. A device's own changes never stand against its own delete, and neither does the account's bookkeeping (folders made from paths at the move to v2). |
+| a rename, move or restore and a delete that had not seen it | The other change wins, as an edit does: a delete takes only what its device had seen. A device's own changes never stand against its own delete, and neither does the account's bookkeeping (folders made from paths at the move to v2). Nor do they hide another device's: a change of the deleting device's own made since, a restore or words, does not let its delete take a change by somebody else it had never seen. |
 | delete and restore | The restore brings the entry back under its id, with its folders. A restore of something already back still counts as that person's change, so a delete that had not seen it leaves the entry. |
 | two creates of the day's note | One note, both texts merged (docs/sync-v2.md 5.9). |
 | reorder and reorder | Each drag moves only the row that was dragged, so two people arranging one folder at once both keep what they did; two drags of one row, the later to arrive stands; two rows dropped into one gap stand side by side, their ids deciding which first. |
@@ -76,6 +76,18 @@ keeps apart (`placed_seq` and `placed_by` on a note, 0068). Writing in a note ma
 writer the last to change it, but not the one who put it in its folder: a device that
 wrote in a note somebody else had moved into a folder, never having seen it there, has
 still not seen it there, and its delete of the folder leaves it.
+
+The last changer is one device, and a delete has to know about every other one. So the
+account also keeps, on each folder and note, the cursor of each device's latest change to
+it, a delete aside (`changes_by`, a JSON object from device to cursor, 0074), written by
+the tree's rules and by every save that names its device. A delete is refused if any
+device but its own has a cursor there past its `seen`. Without it, a device that deleted
+a note, restored it and deleted it again while away came back with its own restore as
+the note's latest change, and a restore another device made in between, which it had
+never seen, did not stand against the second delete (seeds 3175 and 3900). A delete that
+stands empties it: it had seen every change it took, so none of them stands against the
+next delete once something brings the entry back. A row without it, or written by a
+Worker from before it, answers by its last changer as before; an app never reads it.
 
 ## What this device does
 
@@ -335,15 +347,6 @@ never showed either.
 
 What the tree walks found when they were first run, each pinned as an expected failure
 until the step of #1068 that removes it lands:
-
-- **A device's own restore hides another's from its delete.** A delete is refused when
-  somebody else changed the entry after its `seen`, and the account reads that off the
-  entry's latest change. A device that deletes a note, restores it and deletes it again
-  while away has its own restore as the latest change when it comes back, so a restore
-  another device made in between, which it never saw, does not stand against the second
-  delete (reference seeds 3175 and 3900, on four and three devices). The account would
-  have to keep the latest change by anybody but the last changer as well, which is a
-  column of its own.
 
 - **An older app's drag in a folder that has places is not read.** Builds from before
   places still keep the order per folder path as a list of names (`arranged`, synced

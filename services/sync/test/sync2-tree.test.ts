@@ -346,6 +346,60 @@ describe('tree operations', () => {
     expect(folders()[0]?.deleted).toBe(0)
   })
 
+  /** #1068: the account keeps every device's latest change, not only the last changer's,
+   *  so a device's own restore or words since do not hide another device's from its
+   *  delete, and a delete that stands answers for all it had seen. */
+  test("refuse a delete that had not seen another device's restore, though its own came since", async () => {
+    const { cursor } = await ops([
+      op('create', { id: 'n', kind: 'note', parent: null, name: 'n.md' }),
+      op('mkdir', { id: 'f', parent: null, name: 'Folder' }),
+    ])
+    await ops([op('delete', { id: 'n' }, cursor), op('delete', { id: 'f' }, cursor)], other)
+    const gone = (await feed()).cursor
+    await ops([op('restore', { id: 'n' }, gone), op('restore', { id: 'f' }, gone)], other)
+
+    const results = (
+      await ops([
+        op('delete', { id: 'n' }, cursor),
+        op('restore', { id: 'n' }, cursor),
+        op('delete', { id: 'n' }, cursor),
+        op('delete', { id: 'f' }, cursor),
+        op('restore', { id: 'f' }, cursor),
+        op('delete', { id: 'f' }, cursor),
+      ])
+    ).results
+    expect([results[2], results[5]]).toMatchObject([{ refused: 'edited' }, { refused: 'edited' }])
+    expect(row('n').deleted).toBe(0)
+    expect(folders()[0]?.deleted).toBe(0)
+
+    expect(await one(op('delete', { id: 'n' }, (await feed()).cursor))).toMatchObject({
+      ok: true,
+    })
+    const kept = env.db.prepare('select changes_by from notes where id = ?').get('n') as {
+      changes_by: string | null
+    }
+    expect(kept.changes_by).toBeNull()
+  })
+
+  test("refuse a delete that had not seen another device's words, though its own came since", async () => {
+    const id = await made('Plan.md', 'first\n')
+    const before = (await feed()).cursor
+    for (const [as, content] of [
+      [other, 'first\nsecond\n'],
+      [token, 'first\nsecond\nmine\n'],
+    ] as const) {
+      const put = await call(env, `/v1/notes/${id}`, {
+        method: 'PUT',
+        token: as,
+        body: { content, baseVersion: row(id).version },
+      })
+      expect(put.status, put.text).toBe(200)
+    }
+
+    expect(await one(op('delete', { id }, before))).toMatchObject({ refused: 'edited' })
+    expect(row(id).deleted).toBe(0)
+  })
+
   /** #1068: where somebody put an entry among the rest of its folder is the entry's own,
    *  kept through a rename, said in the feed, and only what was dragged moves. */
   test('keep a position on the entry, through a rename, in the feed', async () => {

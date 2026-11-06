@@ -138,6 +138,14 @@ export function placedOn(words: string): string {
 
 const PLACED_ON_WORDS = placedOn('?9')
 
+/** The device that changed a row, kept in its `changes_by` at the cursor the statement
+ *  takes (0074, #1068); see `changesBy` in @orden/sync-core/tree. `device` is the SQL that
+ *  names it, and a null names nobody. */
+export function changesBy(device: string): string {
+  return `changes_by = case when ${device} is null then changes_by
+            else json_patch(coalesce(changes_by, '{}'), json_object(${device}, ${TAKEN_SEQ})) end`
+}
+
 /** The statement that moves a space's cursor on, for the batch that writes under it. */
 export function takeSeq(env: Env, spaceId: string): D1PreparedStatement {
   return env.DB.prepare(
@@ -442,7 +450,7 @@ export async function saveNote(
       `update notes set path = ?2, seq = ${TAKEN_SEQ}, version = ?3, updated_at = ?4, deleted = 0,
                         size = ?5, hash = ?6, front = ?7, front_rev = ?8,
                         doc_seq = case when ?9 then ${TAKEN_SEQ} else ?10 end, doc_by = ?11,
-                        updated_by = ?12,
+                        updated_by = ?12, ${changesBy('?12')},
                         ${PLACED_ON_WORDS}
         where id = ?13 and version = ?14 and epoch = ?15`,
     ).bind(

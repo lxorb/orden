@@ -64,6 +64,10 @@ export interface TreeEntry {
    *  Nothing where its latest change was to its place, which `seq` and `by` then say. */
   placedSeq?: number
   placedBy?: string
+  /** The cursor of each device's latest change to it, a delete aside, kept until a
+   *  delete takes it. `by` names only the last of them, and a device's own change since
+   *  must not hide another's from its delete (#1068). */
+  changesBy?: Record<string, number>
   /** Where somebody put it among the others in its folder, by hand (order.ts); nothing
    *  where nobody has, and then it stands after every entry that has one. */
   pos?: string
@@ -185,6 +189,18 @@ function holds(state: TreeState, ancestor: string, id: string | null): boolean {
  *  the folder deleted next, from the same device that never saw the note in it, took the
  *  note and its words (#514). */
 function changed(state: TreeState, entry: TreeEntry, device: string | undefined, seen?: number) {
+  stamped(state, entry, device, seen)
+  if (device !== undefined) entry.changesBy = { ...entry.changesBy, [device]: entry.seq }
+}
+
+/** A delete that stands: it had seen every change it takes, so none of them stands
+ *  against the next delete once something brings the entry back. */
+function taken(state: TreeState, entry: TreeEntry, device: string | undefined) {
+  stamped(state, entry, device)
+  delete entry.changesBy
+}
+
+function stamped(state: TreeState, entry: TreeEntry, device: string | undefined, seen?: number) {
   // Its place as its placer left it: words written in since do not make their writer the
   // one whose move this device had seen (#1068).
   const place = placing(entry)
@@ -258,6 +274,12 @@ function under(state: TreeState, folder: string): TreeEntry[] {
   return out
 }
 
+/** Whether a device other than the deleting one changed the entry after `seen`, even
+ *  where a change of the deleting device's came after that. */
+function othersAfter(entry: TreeEntry, seen: number, device: string | undefined): boolean {
+  return Object.entries(entry.changesBy ?? {}).some(([by, at]) => by !== device && at > seen)
+}
+
 /** Whether something written after `seen` by another device stands against a delete. */
 function writtenSince(entry: TreeEntry, seen: number, device: string | undefined): boolean {
   const byOther = (by: string | undefined) => device === undefined || by !== device
@@ -282,7 +304,11 @@ function placing(entry: TreeEntry): { seq: number; by: string | undefined } {
 function changedSince(entry: TreeEntry, seen: number, device: string | undefined): boolean {
   const place = placing(entry)
   const byOther = device === undefined || place.by !== device
-  return (place.seq > seen && byOther) || writtenSince(entry, seen, device)
+  return (
+    (place.seq > seen && byOther) ||
+    writtenSince(entry, seen, device) ||
+    othersAfter(entry, seen, device)
+  )
 }
 
 /** Whether a delete of the entry itself has to leave it: another device wrote in it,
@@ -292,7 +318,11 @@ function changedSince(entry: TreeEntry, seen: number, device: string | undefined
 function othersSince(entry: TreeEntry, seen: number, device: string | undefined): boolean {
   const place = placing(entry)
   const byOther = place.by !== undefined && (device === undefined || place.by !== device)
-  return (place.seq > seen && byOther) || writtenSince(entry, seen, device)
+  return (
+    (place.seq > seen && byOther) ||
+    writtenSince(entry, seen, device) ||
+    othersAfter(entry, seen, device)
+  )
 }
 
 /** The rules, with one op's device in hand. */
@@ -416,7 +446,7 @@ class Rules {
     if (entry.kind !== 'folder') {
       if (othersSince(entry, op.seen, device)) return { op: op.op, refused: 'edited' }
       entry.deleted = true
-      changed(state, entry, device)
+      taken(state, entry, device)
       entry.deletedIn = entry.seq
       return { op: op.op, ok: true }
     }
@@ -442,13 +472,13 @@ class Rules {
       if (kept.has(one.id)) continue
       one.deleted = true
       one.deletedIn = batch
-      changed(state, one, device)
+      taken(state, one, device)
     }
 
     if (kept.has(entry.id)) return { op: op.op, refused: 'edited' }
     entry.deleted = true
     entry.deletedIn = batch
-    changed(state, entry, device)
+    taken(state, entry, device)
     return { op: op.op, ok: true }
   }
 

@@ -66,7 +66,10 @@ describe('the tree, walked at random on five devices', () => {
     },
   )
 
-  test.fails.each([3175, 3900])(
+  /** Each deleted, restored and deleted again a note while away, and its own restore
+   *  hid from the account another device's restore in between, which the second delete
+   *  had never seen (#1068). */
+  test.each([3175, 3900])(
     'seed %i of the tree on many devices keeps what another device restored',
     async (seed) => {
       expect((await simulate(crowded(seed, 'tree'))).failures).toEqual([])

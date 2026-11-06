@@ -254,6 +254,56 @@ describe('tree', () => {
     expect(live(state, 'n')).toBe(true)
   })
 
+  /** #1068, the reference walks' seeds 3175 and 3900: a device that deleted a note,
+   *  restored it and deleted it again while away came back with its own restore as the
+   *  note's latest change, which hid another device's restore from its second delete. */
+  test("a device's own restore since does not hide another's from its delete", () => {
+    const state = treeState()
+    create(state, 'n', 'Plan.md')
+    mkdir(state, 'f', 'Work')
+    const seen = state.cursor
+    applyOp(state, { op: opId(), t: 'delete', id: 'n', seen }, PHONE)
+    applyOp(state, { op: opId(), t: 'delete', id: 'f', seen }, PHONE)
+    applyOp(state, { op: opId(), t: 'restore', id: 'n', seen: state.cursor }, PHONE)
+    applyOp(state, { op: opId(), t: 'restore', id: 'f', seen: state.cursor }, PHONE)
+
+    for (const id of ['n', 'f']) {
+      applyOp(state, { op: opId(), t: 'delete', id, seen }, OWNER)
+      applyOp(state, { op: opId(), t: 'restore', id, seen }, OWNER)
+      expect(applyOp(state, { op: opId(), t: 'delete', id, seen }, OWNER)).toMatchObject({
+        refused: 'edited',
+      })
+    }
+    expect([live(state, 'n'), live(state, 'f')]).toEqual([true, true])
+  })
+
+  test("nor do its own words since hide another device's from its delete", () => {
+    const state = treeState()
+    create(state, 'n', 'Plan.md')
+    const seen = state.cursor
+    contentChanged(state, 'n', PHONE.device)
+    contentChanged(state, 'n', OWNER.device)
+
+    expect(applyOp(state, { op: opId(), t: 'delete', id: 'n', seen }, OWNER)).toMatchObject({
+      refused: 'edited',
+    })
+    expect(live(state, 'n')).toBe(true)
+  })
+
+  test('a delete that stood leaves nothing it had seen to stand against the next', () => {
+    const state = treeState()
+    create(state, 'n', 'Plan.md')
+    const seen = state.cursor
+    applyOp(state, { op: opId(), t: 'rename', id: 'n', name: 'Notes.md', seen }, PHONE)
+    applyOp(state, { op: opId(), t: 'delete', id: 'n', seen: state.cursor }, PHONE)
+
+    applyOp(state, { op: opId(), t: 'restore', id: 'n', seen }, OWNER)
+    expect(applyOp(state, { op: opId(), t: 'delete', id: 'n', seen }, OWNER)).toMatchObject({
+      ok: true,
+    })
+    expect(live(state, 'n')).toBe(false)
+  })
+
   test('a delete of a note another device renamed or moved unseen leaves it', () => {
     const state = treeState()
     create(state, 'n', 'Plan.md')
