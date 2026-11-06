@@ -39,7 +39,7 @@ test('is seen while the keyboard is on it, and said again once it leaves', () =>
   expect(toggle.classList.contains('nib-said')).toBe(true)
 })
 
-test('the drawer head and the bar on a phone both say it and do not show it', async () => {
+test('the drawer head on a phone says it and does not show it, and the bar shows a way back', async () => {
   Element.prototype.scrollIntoView = () => undefined
   globalThis.ResizeObserver = class {
     observe() {
@@ -70,14 +70,20 @@ test('the drawer head and the bar on a phone both say it and do not show it', as
     workspace.showPanel('tree')
     flushSync()
     const inHead = host.querySelector<HTMLButtonElement>('.head [data-side-toggle="left"]')!
-    const inBar = host.querySelector<HTMLButtonElement>('header [data-side-toggle="left"]')!
     expect(inHead.classList.contains('nib-said')).toBe(true)
     expect(inHead.getAttribute('aria-label')).toBe('Hide left sidebar')
-    expect(inBar.classList.contains('nib-said')).toBe(true)
+    expect(host.querySelector('header [data-side-toggle="left"]')).toBeNull()
 
     inHead.click()
     flushSync()
     expect(workspace.openOn('left')).toBeFalsy()
+
+    const back = host.querySelector<HTMLButtonElement>('header [data-phone-back]')!
+    expect(back.classList.contains('nib-said')).toBe(false)
+    expect(back.getAttribute('aria-label')).toBe('Back')
+    back.click()
+    flushSync()
+    expect(workspace.openOn('left')).toBe('tree')
 
     fullscreen.on = true
     workspace.showPanel('tree')

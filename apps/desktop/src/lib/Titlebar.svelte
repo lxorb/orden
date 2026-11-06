@@ -36,6 +36,8 @@
 
   const swiped = $derived(swipeOpens())
 
+  const BACK_MARK = 'M8.2 2.2 3.9 6.5l4.3 4.3'
+
   $effect(() => {
     if (swiped && workspace.openOn('left')) {
       void import('./hints.svelte').then(({ hints }) => hints.dismiss('drawer'))
@@ -238,7 +240,18 @@
     : `max(0px, calc(${overPanes}px + var(--lights-end, 0px) - var(--card-inset)))`}
 >
   {#if viewport.touch}
-    {@render leftToggle()}
+    {#if viewport.device === 'phone' && !listless && !__EVEN_PLUGIN__}
+      <button
+        class="nib-glyph back"
+        data-phone-back
+        aria-label={t('Back')}
+        onclick={() => workspace.toggleSidebar()}
+      >
+        <svg viewBox="0 0 13 13"><path d={BACK_MARK} /></svg>
+      </button>
+    {:else}
+      {@render leftToggle()}
+    {/if}
 
     <h1 class="title" data-save-anchor>
       {#if showing}<TabMark tab={showing} />{:else if pad.on}<FileMark mark="note" />{/if}
@@ -450,7 +463,16 @@
     padding-inline-start: calc(var(--inset-start) + (var(--row-height) - var(--icon-lg)) / 2);
   }
 
+  .back svg {
+    transform: scaleX(var(--dir));
+    stroke-width: 1.4;
+  }
+
   :global([data-touch]) header:has(> :global([data-side-toggle='left']:not(.nib-said))) {
+    padding-inline-start: var(--inset-start);
+  }
+
+  :global([data-touch]) header:has(> [data-phone-back]) {
     padding-inline-start: var(--inset-start);
   }
 </style>

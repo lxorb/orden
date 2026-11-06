@@ -266,7 +266,7 @@
     }
   }
 
-  :global([data-touch]) .foot {
+  :global([data-touch]:not([data-device='phone'])) .foot {
     padding-bottom: max(0px, calc(var(--inset-bottom) - var(--keyboard, 0px)));
   }
 </style>

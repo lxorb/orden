@@ -285,6 +285,7 @@ class Workspace {
   right = $state<Panel[]>(panels.rightFrom(undefined))
   rightPanel = $state<Panel | null>(null)
   lastRight: Panel | null = null
+  private lastLeft = $state<Panel>('tree')
   previewTabId = $state<string | null>(null)
   private besideLast: { opener: string; tab: string } | null = null
   private choosing: string | null = null
@@ -3653,21 +3654,39 @@ class Workspace {
   }
 
   private get sides(): Sides {
-    return { panel: this.panel, rightPanel: this.rightPanel, right: this.right, covered: pad.on }
+    return {
+      panel: this.panel,
+      rightPanel: this.rightPanel,
+      right: this.rightHere,
+      covered: pad.on,
+    }
   }
 
   private set sides(next: Sides) {
     this.panel = next.panel
     this.rightPanel = next.rightPanel
-    this.right = next.right
+    if (next.panel) this.lastLeft = next.panel
+    if (!this.phone) this.right = next.right
     if (next.rightPanel) this.lastRight = next.rightPanel
     if (pad.on && !next.covered) pad.hide()
     this.panelChosen = true
     this.persist()
   }
 
+  private get phone(): boolean {
+    return viewport.device === 'phone'
+  }
+
+  private get rightHere(): Panel[] {
+    return this.phone ? panels.phoneRight(this.right) : this.right
+  }
+
+  get reopens(): Panel {
+    return this.phone && this.offers(this.lastLeft) ? this.lastLeft : 'tree'
+  }
+
   sideOf(panel: Panel): PanelSide {
-    return panels.sideOf(this.right, panel)
+    return panels.sideOf(this.rightHere, panel)
   }
 
   openOn(side: PanelSide): Panel | null {
@@ -3676,7 +3695,7 @@ class Workspace {
   }
 
   panelsOn(side: PanelSide, every: readonly Panel[]): Panel[] {
-    return panels.panelsOn(this.right, side, every).filter((one) => this.offers(one))
+    return panels.panelsOn(this.rightHere, side, every).filter((one) => this.offers(one))
   }
 
   offers(panel: Panel): boolean {
@@ -3685,7 +3704,7 @@ class Workspace {
 
   get nextRight(): Panel | null {
     const last = this.lastRight
-    const right = this.right.filter((one) => this.offers(one))
+    const right = this.rightHere.filter((one) => this.offers(one))
     const open = this.rightPanel && this.offers(this.rightPanel) ? this.rightPanel : null
     return open ?? (last && right.includes(last) ? last : right[0]) ?? null
   }
@@ -3760,7 +3779,7 @@ class Workspace {
     }
     if (this.unfill() && this.openOn(side)) return
 
-    this.panel = this.panel ? null : 'tree'
+    this.panel = this.panel ? null : this.reopens
     this.panelChosen = true
     this.persist()
   }

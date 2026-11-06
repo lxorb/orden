@@ -114,6 +114,10 @@ export const findBar = held(() => import('./FindBar.svelte'))
 
 export const searchPanel = held(() => import('./SearchPanel.svelte'))
 
+export const phoneTabsBar = held(() =>
+  __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('./phone/PhoneTabs.svelte'),
+)
+
 export const settingsSheet = latched(() => import('./SettingsPanel.svelte'))
 
 export const pagesNavigator = held(() =>

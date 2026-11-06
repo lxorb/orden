@@ -43,7 +43,7 @@ class Drawer {
 
   open() {
     if (this.side === 'left') {
-      workspace.showPanel('tree')
+      workspace.showPanel(workspace.reopens)
       return
     }
 
