@@ -334,7 +334,7 @@ jobs:
           path: apps-windows.png
           if-no-files-found: ignore
 
-  android-touched:
+  mobile-touched:
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -368,8 +368,8 @@ jobs:
           fi
 
   android-check:
-    needs: android-touched
-    if: needs.android-touched.outputs.touched == 'true'
+    needs: mobile-touched
+    if: needs.mobile-touched.outputs.touched == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -431,6 +431,60 @@ jobs:
           else
             echo "R8 wrote no mapping folder"
           fi
+
+  mobile-clippy:
+    needs: mobile-touched
+    if: needs.mobile-touched.outputs.touched == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: aarch64-linux-android
+          - os: macos-latest
+            target: aarch64-apple-ios
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      TARGET: ${{ matrix.target }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: stable
+          targets: ${{ matrix.target }}
+          components: clippy
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+        with:
+          workspaces: apps/desktop/src-tauri
+          shared-key: clippy-${{ matrix.target }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Frontend
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @orden/desktop build
+
+      - name: Clippy, as the phone builds it
+        run: |
+          if [ "$TARGET" = aarch64-linux-android ]; then
+            ndk="$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+            export CC_aarch64_linux_android="$ndk/aarch64-linux-android24-clang"
+            export AR_aarch64_linux_android="$ndk/llvm-ar"
+          fi
+          cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml \
+            --target "$TARGET" -- -D warnings
 
   deploy:
     needs: [test, lint]

@@ -866,6 +866,14 @@ one step further on, inside R8. Both of those are now asserted in
 `test/android.test.ts`, along with every `@JavascriptInterface` method the page
 calls by name and the rule that keeps it through minifying.
 
+Beside `android-check`, `mobile-clippy` runs clippy with warnings as errors for
+`aarch64-linux-android` on Linux and `aarch64-apple-ios` on a Mac, the same two
+lints `publish-mobile.yml` runs after its builds. Code only the desktop uses - a
+helper left outside `#[cfg(desktop)]` - is dead code on a phone, and a phone's
+clippy fails on it. Before this job only `publish-mobile` found that, ten minutes
+into its build, after the push to unstable (#1164, #1189).
+`test/packaging.test.ts` holds the two lists of targets equal.
+
 ### What R8 has to be told
 
 `app/proguard-rules.pro`, and only two lines of it are not about our own code:

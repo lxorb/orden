@@ -356,7 +356,7 @@ describe('what a release build shrinks', () => {
 
   test('is what the pull request assembles, not only what a release does', () => {
     const job = workflow.slice(workflow.indexOf('android-check:'))
-    const built = /tauri android build[^\n]*(?:\\\n[^\n]*)*/.exec(job)?.[0] ?? ''
+    const built = /tauri android build(?:[^\n]*\\\n)*[^\n]*/.exec(job)?.[0] ?? ''
 
     expect(built).toContain('--apk')
     expect(built, 'a debug assembly does not run R8').not.toContain('--debug')

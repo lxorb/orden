@@ -523,6 +523,30 @@ describe('a check that cannot hang', () => {
   })
 })
 
+describe('the phones, linted before a push to unstable finds them', () => {
+  const clippies = (text: string) =>
+    [...text.matchAll(/cargo clippy(?:[^\n]*\\\n)*[^\n]*/g)].map((one) => one[0])
+  const published = clippies(repo('.github', 'workflows', 'publish-mobile.yml'))
+  const check = repo('.github', 'workflows', 'check.yml')
+  const job =
+    check.slice(check.indexOf('\n  mobile-clippy:\n')).split(/\n(?= {2}[\w-]+:\n)/)[1] ?? ''
+
+  test('every target the release lints with warnings as errors, check lints the same way', () => {
+    const targets = published
+      .filter((line) => line.includes('-D warnings'))
+      .map((line) => /--target (\S+)/.exec(line)?.[1])
+    expect(targets).toEqual(['aarch64-linux-android', 'aarch64-apple-ios'])
+
+    const matrix = [...job.matchAll(/^ +target: ([\w-]+)$/gm)].map((one) => one[1])
+    expect(matrix).toEqual(targets)
+
+    const [lint = ''] = clippies(job)
+    expect(lint).toContain('--target "$TARGET"')
+    expect(lint).toContain('-D warnings')
+    expect(job).toContain('TARGET: ${{ matrix.target }}')
+  })
+})
+
 describe('what nib claims to open', () => {
   const tauri = (...parts: string[]) => repo('apps', 'desktop', 'src-tauri', ...parts)
 
