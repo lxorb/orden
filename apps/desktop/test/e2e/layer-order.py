@@ -25,6 +25,41 @@ BROWSE = """
 }
 """
 
+MENU = """
+() => {
+  const row = [...document.querySelectorAll('.nib-row:has(.nib-row-label)')].find((one) => one.checkVisibility())
+  if (!row) return false
+  const box = row.getBoundingClientRect()
+  row.dispatchEvent(new MouseEvent('contextmenu', {
+    bubbles: true, cancelable: true, button: 2, clientX: box.left + 12, clientY: box.top + box.height / 2,
+  }))
+  return true
+}
+"""
+
+MENUS = "() => [...document.querySelectorAll('[role=\"menu\"]')].filter((one) => one.checkVisibility()).length"
+
+def shortcut_over_a_menu(browser: Browser) -> None:
+    context = browser.new_context(viewport={"width": 1280, "height": 800})
+    page = context.new_page()
+    page.on("pageerror", lambda error: wrong(f"[menu] page error: {error}"))
+    DRIVE.open(page)
+    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+    wait_for(page, f"({MENU})()", "a row in the file list to hold a menu")
+    wait_for(page, f"({MENUS})() > 0", "the row's menu")
+    page.keyboard.press("Control+Comma")
+    wait_for(page, "document.querySelector('[role=\"dialog\"] nav')", "Settings, from its shortcut")
+    up = state(page)
+    menus = page.evaluate(MENUS)
+    say(f"[menu] Ctrl+, over a row's menu: {up}, {menus} menu(s) up")
+    if menus:
+        wrong("a row's menu stays up under Settings opened by its shortcut")
+    page.keyboard.press("Escape")
+    left = state(page)
+    if left["settings"] or left["depth"] or page.evaluate(MENUS):
+        wrong(f"one Escape after it should leave nothing up: {left}")
+    context.close()
+
 def state(page: Any) -> dict[str, Any]:
     page.wait_for_timeout(500)
     return page.evaluate(STATE)
@@ -72,6 +107,7 @@ def main() -> int:
     with DRIVE.session() as browser:
         drive(browser, phone=False)
         drive(browser, phone=True)
+        shortcut_over_a_menu(browser)
 
     return DRIVE.verdict("a layer opened over Settings in the same moment is the first to close")
 
