@@ -3,8 +3,8 @@ import { escapeAll } from '@orden/markdown/html'
 import { mapSources } from '@orden/markdown/sources'
 import type { TagHref } from '@orden/markdown/tags'
 import { t } from '../i18n.svelte'
+import { keptCoverOf } from '../kept-cover'
 import { links } from '../link-index.svelte'
-import { modes } from '../modes.svelte'
 import { notePicture } from '../note-images'
 import { queryRowsHtml } from '../query-block'
 import type { Scheme } from '../theme.svelte'
@@ -56,8 +56,7 @@ export async function readingHtml(
     renderMarkdown(note.text, {
       footnotes: true,
       blockAnchors: true,
-      properties: modes.properties,
-      cover: true,
+      cover: keptCoverOf(note.path) ?? true,
       toc: true,
       escapeHtml: !trusted,
       code: fence,

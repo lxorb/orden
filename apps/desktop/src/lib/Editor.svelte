@@ -1,11 +1,13 @@
 <script lang="ts">
   import { untrack } from 'svelte'
+  import type { Cover } from '@orden/markdown/cover'
   import {
     createEditor,
     editorState,
     type EditorView,
     type FindAsk,
     HeldState,
+    keptCoverEffect,
     type LinkPress,
     modeEffects,
     type NoteIndex,
@@ -22,9 +24,9 @@
   import { EditorStates } from './editor-states'
   import { firstScreen } from './first-screen.svelte'
   import { t } from './i18n.svelte'
+  import { keptCoverOf, setCoverPosition } from './kept-cover'
   import { mark } from './trace'
   import { modes } from './modes.svelte'
-  import { PROPERTY_CHOICES } from './property-choices'
   import { type OverlayScrollbar, overlayScrollbar } from './scrollbar'
   import { shortcuts } from './shortcuts.svelte'
   import { trustsHtmlIn } from './sharing.svelte'
@@ -103,9 +105,12 @@
       carriedNotes: (transfer) => workspace.carriedNotes(transfer),
       carriedFiles,
       ...(onfind ? { onFind: onfind } : {}),
-      propertyChoices: PROPERTY_CHOICES,
       shortcuts: shortcuts.forEditor,
       trustedMarkup: trustsHtmlIn(one.note),
+      cover: keptCoverOf(one.path),
+      moveCover: (position: number) => {
+        if (one.path) setCoverPosition(one.path, position)
+      },
       editPreview: previewCard,
       coveredBelow: () => viewport.covered,
       ...(one.folds?.length ? { folds: one.folds } : {}),
@@ -124,6 +129,7 @@
     one: Tab,
     index: NoteIndex | undefined,
     trusted: boolean,
+    cover: Cover | null,
   ): StateEffect<unknown>[] {
     const stamp = dressing(one)
     const dressed = states.fitted(one) === stamp
@@ -132,6 +138,7 @@
     return [
       ...(index ? [noteIndexEffect(index)] : []),
       trustedMarkupEffect(trusted),
+      keptCoverEffect(cover),
       ...(dressed ? [] : modeEffects(modes.settingsFor(one))),
       ...(dressed ? [] : [shortcutEffect(shortcuts.forEditor)]),
     ]
@@ -177,10 +184,11 @@
     const switching = !states.shows(showing)
     const index = notes?.(showing)
     const trusted = trustsHtmlIn(showing.note)
+    const cover = keptCoverOf(showing.path)
 
     untrack(() => {
       modes.shows(current, showing, () => workspace.scheduleSession())
-      states.show(current, showing, () => build(showing), fitting(showing, index, trusted))
+      states.show(current, showing, () => build(showing), fitting(showing, index, trusted, cover))
 
       if (switching) bar?.settle()
 

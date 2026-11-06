@@ -14,7 +14,6 @@ import {
   insertCodeFence,
   insertComment,
   insertFootnote,
-  insertFrontMatter,
   insertLink,
   insertHorizontalRule,
   insertSlideBreak,
@@ -576,17 +575,6 @@ describe('the blocks a menu row inserts', () => {
 
   test('a table of contents is a line of its own', () => {
     expect(run(insertToc, 'words\n|')).toBe('words\n[toc]\n')
-  })
-
-  test('front matter goes to the very top, whatever the caret was doing', () => {
-    expect(run(insertFrontMatter, '# Head\n\nwords|')).toBe('---\ntitle: \n---\n\n# Head\n\nwords')
-    expect(runSelection(insertFrontMatter, 'words|')).toEqual([11, 11])
-  })
-
-  test('front matter that is there already gets the caret rather than a second block', () => {
-    const note = '---\ntitle: Hi\n---\n\nwords|'
-    expect(run(insertFrontMatter, note)).toBe('---\ntitle: Hi\n---\n\nwords')
-    expect(runSelection(insertFrontMatter, note)).toEqual([13, 13])
   })
 
   test('a comment wraps what is selected, and unwraps it again', () => {

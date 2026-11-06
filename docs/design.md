@@ -1097,12 +1097,11 @@ The session writes down which panels the build that wrote it knew, so a panel ad
 later takes its own home rather than quietly appearing on the left of somebody who
 had moved their outline over before it existed; see `rightFrom`.
 
-Three of the right side's panels are fetched rather than carried: Ask and Properties
-when one of them is first shown - the conversation carries everything the app knows
-about talking to a model, and a window that opens on a note has not been asked for
-it - and the Links panel with its rows at the launch's last turn, as the Search panel
-is, so its tab is never a wait. `test/weight.test.ts` holds all three out of the first
-paint.
+Two of the right side's panels are fetched rather than carried: Ask when it is first
+shown - the conversation carries everything the app knows about talking to a model, and
+a window that opens on a note has not been asked for it - and the Links panel with its
+rows at the launch's last turn, as the Search panel is, so its tab is never a wait.
+`test/weight.test.ts` holds both out of the first paint.
 
 One component draws both sides; the side is a prop. What differs is what belongs
 to the window rather than to a panel: the identity row - the space's name and its
@@ -1128,21 +1127,13 @@ Which side each panel is on, which of them is open over there, and which it show
 last is part of what the window remembers - beside which notes are open, and per
 window rather than per account, the way the sidebar's width already is.
 
-### Properties in the note
+### Front matter in the note
 
-A note's front matter is a strip at the top of the note (#1120), as Obsidian and Notion
-draw it, and only where the note has front matter. Folded, which is where every note
-starts, it is one quiet line: the word, the count, and each key with what it says, ending
-where the column does. Open, it is the keys as rows, each with the control its value
-asks for - a field, a number, a date, a checkbox, chips for a list, a menu where the app
-has fixed answers - and a row to add one. A key is renamed or removed in the YAML, which
-a click on the key goes to. Every change is one edit of exactly the characters that
-change, through `property-edits.ts` in @orden/markdown, into the note's own document:
-the note's own undo takes it back, and every pane showing the note has it at once. A
-block Orden cannot read without guessing - a comment, a nested shape - is shown as the
-YAML it is and not turned into rows. **Properties** in the palette opens the strip and
-puts the keyboard on it; **Add a property** writes the first key, or another, with its
-name selected. Settings > Markdown > Front matter still offers the YAML or nothing.
+A note has no properties of its own to show or edit (#1210). Front matter a note arrived
+with - from Obsidian, from an import - is part of its words, written out as the YAML it
+is, fences and all, and edited as text. What Orden itself keeps about a note - its icon,
+its colour, its cover and where the cover sits - is the note's own metadata in Orden's
+storage, beside its place in the tree, and never front matter (`docs/icons.md`).
 
 The value controls in a view's table cell are `lib/properties/PropertyValue.svelte`
 (docs/tasks.md 5.12).

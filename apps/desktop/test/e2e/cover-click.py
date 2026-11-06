@@ -173,7 +173,6 @@ def drive(browser: Browser) -> None:
     page.route(f"**{LATE}", held.asked)
     page.evaluate("() => document.documentElement.style.setProperty('--cover-height', 'auto')")
     DRIVE.seed(page, NOTE.format(origin=DRIVE.origin))
-    page.evaluate("() => window.nibApp.modes.setProperties('properties')")
     DRIVE.open_note(page, "Banner")
     wait_for(page, "document.querySelector('#write .nib-cover img')", "the cover")
 
@@ -205,12 +204,6 @@ def drive(browser: Browser) -> None:
     click(page, near[1], "03-first-click-at-the-band-height")
     click_round(page, "03-band-height", near)
     scrolled_round(page, "04-scrolled")
-
-    page.evaluate("() => window.nibApp.modes.setProperties('hidden')")
-    DRIVE.settled(page)
-    click_round(page, "05-properties-hidden", near)
-    scrolled_round(page, "06-properties-hidden-scrolled")
-    page.evaluate("() => window.nibApp.modes.setProperties('properties')")
 
     page.evaluate("() => window.nibApp.modes.setZoom(1.5)")
     DRIVE.settled(page)

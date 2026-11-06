@@ -130,7 +130,6 @@ const PANELS = new Set([
   'hold-panel',
   'links-panel',
   'outline-panel',
-  'properties-panel',
   'quick-question',
   'reveal',
   'right-sidebar',

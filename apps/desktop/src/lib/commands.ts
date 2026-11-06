@@ -15,7 +15,6 @@ import {
   insertCodeFence,
   insertComment,
   insertFootnote,
-  insertFrontMatter,
   insertHorizontalRule,
   insertLink,
   insertMathBlock,
@@ -28,8 +27,6 @@ import {
   lowerCase,
   moveBlockDown,
   moveBlockUp,
-  newProperty,
-  showProperties,
   pastePlain,
   redoEdit,
   reformatDocument,
@@ -86,8 +83,6 @@ import { archiveEntry, DIVIDER } from './menu.svelte'
 import { lockAllEntry, protectEntries } from './protect/entries'
 import { updates } from './updates.svelte'
 import { modes } from './modes.svelte'
-import { PROPERTIES_MODES } from '@orden/markdown/properties'
-import { PROPERTIES_WORDS } from './properties-words'
 import { type KindName, settings } from './settings.svelte'
 import { touchedBy } from './agents/docs/touched'
 import { agentMarks } from './agent-marks.svelte'
@@ -745,7 +740,6 @@ const BLOCKS: Block[] = [
   block('format.link', () => t('Link'), insertLink),
   block('paragraph.footnote', () => t('Footnote'), insertFootnote),
   block('paragraph.toc', () => t('Table of contents'), insertToc),
-  block('paragraph.front-matter', () => t('Front matter'), insertFrontMatter),
   block('format.comment', () => t('Comment'), insertComment),
   block('paragraph.rule', () => t('Horizontal rule'), insertHorizontalRule),
   block('slide-break', () => t('New slide'), insertSlideBreak),
@@ -846,7 +840,8 @@ function spaceCommands(): Command[] {
             run: () =>
               busy.start(t('Exporting'), async () => {
                 const { exportSpace } = await import('./internal/export')
-                await exportSpace(space.root, space.name)
+                const items = workspace.itemMeta.itemsOf(space.root)
+                await exportSpace(space.root, space.name, (path) => items[path] ?? null)
               }),
           },
         ]
@@ -1349,12 +1344,6 @@ export function appCommands(view?: EditorView): Command[] {
           checked: swatch.id === theme.accent,
           run: () => theme.setAccent(swatch.id),
         }))),
-    ...PROPERTIES_MODES.map((mode) => ({
-      id: `properties:${mode}`,
-      label: t('Front matter: {name}', { name: t(PROPERTIES_WORDS[mode]) }),
-      checked: mode === modes.properties,
-      run: () => modes.setProperties(mode, view),
-    })),
     ...CODE_PALETTES.map((palette) => ({
       id: `code-theme:${palette.id}`,
       label: t('Code theme: {name}', { name: palette.name }),
@@ -1431,23 +1420,6 @@ export function appCommands(view?: EditorView): Command[] {
       label: t('Links'),
       hint: shortcuts.hint('app.links'),
       run: () => revealPanel('links'),
-    },
-    {
-      id: 'show-properties',
-      label: t('Properties'),
-      hint: shortcuts.hint('app.properties'),
-      disabled: !view || !tidies(workspace.active?.path ?? null),
-      run: () => {
-        if (view) showProperties(view)
-      },
-    },
-    {
-      id: 'add-property',
-      label: t('Add a property'),
-      disabled: !view || view.state.readOnly || !tidies(workspace.active?.path ?? null),
-      run: () => {
-        if (view) newProperty(view)
-      },
     },
     ...(viewport.touch
       ? []

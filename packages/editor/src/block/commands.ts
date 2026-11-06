@@ -88,7 +88,7 @@ export function blockTarget(view: EditorView, pos: number): string | null {
     return words ? `#${words}` : null
   }
 
-  if (span.kind === 'properties') return null
+  if (span.kind === 'front-matter') return null
 
   const rows = rowsOf(doc.toString())
   const verbatim = verbatimLines(view.state, span.from, span.to)

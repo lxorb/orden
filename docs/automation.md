@@ -138,7 +138,7 @@ listen on. Run against the web app it says so rather than failing to connect.
 | `orphans` | notes nothing links to and which link to nothing |
 | `tags` | every tag in the space, most used first |
 | `properties read [path]` | the front matter, by kind |
-| `properties set <key> [value] [--path P]` | sets one key, or removes it with no value |
+| `properties set <key> [value] [--path P]` | sets one key, or removes it with no value; `icon`, `icon-color`, `cover` and `cover-position` are the note's own metadata rather than front matter |
 | `outline [path]` | the headings |
 | `bookmarks` | what is kept above the file list |
 | `words [path]` | what the status bar counts |

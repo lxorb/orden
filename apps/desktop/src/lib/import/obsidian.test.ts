@@ -115,7 +115,6 @@ describe('what a vault carries into the settings', () => {
       linkFormat: 'wikilink',
       hardBreaks: true,
       attachments: 'space',
-      properties: 'properties',
       vim: false,
       quietMarks: false,
       keys: 'obsidian',
@@ -136,7 +135,6 @@ describe('what a vault carries into the settings', () => {
       linkFormat: 'relative',
       hardBreaks: false,
       attachments: 'note',
-      properties: 'source',
       vim: true,
     })
   })

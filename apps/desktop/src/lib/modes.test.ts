@@ -1105,39 +1105,20 @@ describe('the front matter', () => {
   const saved = () =>
     JSON.parse(localStorage.getItem('nib:modes') ?? '{}') as Record<string, unknown>
 
-  test('starts as the strip', () => {
-    expect(modes.properties).toBe('properties')
-  })
-
-  test('is remembered across a restart when somebody asks to hide it', async () => {
-    modes.setProperties('hidden')
-    expect((await restarted()).properties).toBe('hidden')
-    expect(saved()).toHaveProperty('frontMatterDrawn', 'hidden')
-  })
-
-  test('takes no answer from the hidden an older build wrote down for everybody', async () => {
-    localStorage.setItem('nib:modes', JSON.stringify({ frontMatter: 'hidden', vim: true }))
-
-    const back = await restarted()
-    expect(back.properties).toBe('properties')
-    expect(back.vim).toBe(true)
-    expect(saved()).not.toHaveProperty('frontMatter')
-    expect(saved()).toHaveProperty('frontMatterDrawn', 'properties')
-  })
-
-  test('nor from the rows the build before that wrote down', async () => {
-    localStorage.setItem('nib:modes', JSON.stringify({ properties: 'properties', vim: true }))
-
-    const back = await restarted()
-    expect(back.properties).toBe('properties')
-    expect(saved()).not.toHaveProperty('properties')
-  })
-
-  test('but keeps the source, which nobody had without asking for it', async () => {
-    localStorage.setItem('nib:modes', JSON.stringify({ properties: 'source' }))
-    expect((await restarted()).properties).toBe('source')
-    localStorage.setItem('nib:modes', JSON.stringify({ frontMatter: 'source' }))
-    expect((await restarted()).properties).toBe('source')
+  test('is no setting at all: what older builds wrote down about it is dropped', async () => {
+    for (const old of [
+      { frontMatterDrawn: 'hidden', vim: true },
+      { frontMatter: 'source', vim: true },
+      { properties: 'properties', vim: true },
+    ]) {
+      localStorage.setItem('nib:modes', JSON.stringify(old))
+      const back = await restarted()
+      expect(back.vim).toBe(true)
+      expect('properties' in back).toBe(false)
+      for (const key of ['frontMatterDrawn', 'frontMatter', 'properties']) {
+        expect(saved()).not.toHaveProperty(key)
+      }
+    }
   })
 })
 

@@ -323,7 +323,6 @@ def drive_quiet(page: Page) -> None:
         wrong(f"a hash in the middle of a word offered tags: {inside}")
 
 def drive_front_matter(page: Page, paths: list[str]) -> None:
-    page.evaluate("() => window.nibApp.modes.setProperties('source')")
     open_note(page, paths[2])
 
     page.evaluate(
@@ -353,8 +352,6 @@ def drive_front_matter(page: Page, paths: list[str]) -> None:
         wrong(f"the tag was not written into the list: {json.dumps(written[:60])}")
     if "#reading" in written.split("---")[1]:
         wrong("a hash was written into the front matter, where YAML reads one as a comment")
-
-    page.evaluate("() => window.nibApp.modes.setProperties('hidden')")
 
 def drive_finger(browser: Browser) -> None:
     page, names = fresh(browser, finger=True)

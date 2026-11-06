@@ -1,9 +1,8 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import { Compartment, EditorSelection, EditorState } from '@codemirror/state'
-import type { PropertiesMode } from '@orden/markdown/properties'
+import { EditorSelection, EditorState, type Extension } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { blockDecorations } from './blocks'
-import { propertiesMode } from './hidden-front-matter'
+import { keptCoverEffect, keptCoverExtension } from './kept-cover'
 import { ChartWidget, DiagramWidget, MathWidget } from './render'
 import { dragFreeze, setDragging } from './dragging'
 import { external } from '../external'
@@ -36,8 +35,6 @@ function spans(doc: string, cursor = 0): string[] {
     .field(blockDecorations)
     .spans.map((span) => doc.slice(span.from, span.to))
 }
-
-const asked = new Compartment()
 
 const TABLE = '| a | b |\n| - | - |\n| 1 | 2 |'
 const PROSE = 'one **two** three [four](five) `six`\n\nseven eight nine\n\n'
@@ -356,7 +353,7 @@ describe('prose typed away from every construct', () => {
   })
 
   test('but punctuation at the head of a line is looked at properly', () => {
-    const top = '--\ntitle: x\n---\n\nbody\n'
+    const top = '--\ncover: x.jpg\n---\n\nbody\n'
     const { was, is } = afterTyping(top, 0, '-')
     expect(was.decorations.size).toBe(0)
     expect(is.decorations.size).toBe(1)
@@ -473,65 +470,59 @@ describe('a note cover', () => {
   })
 })
 
-describe('what the front matter is drawn as', () => {
+describe('front matter', () => {
   const NOTE = '---\ntitle: A note\ntags: [one]\n---\n\n# Head\n'
 
-  const built = (mode: PropertiesMode, cursor = NOTE.length - 1) =>
+  const widgets = (doc: string, extensions: Extension[] = [], cursor = doc.length - 1) => {
+    const names: (string | null)[] = []
     parsed(
       EditorState.create({
-        doc: NOTE,
+        doc,
         selection: EditorSelection.cursor(cursor),
         extensions: [
           markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
           dragFreeze,
-          propertiesMode.of(mode),
-          blockDecorations,
-        ],
-      }),
-    ).field(blockDecorations)
-
-  const widgets = (mode: PropertiesMode, cursor?: number) => {
-    const names: (string | null)[] = []
-    built(mode, cursor).decorations.between(0, NOTE.length, (_from, _to, value) => {
-      names.push(value.spec.widget?.constructor.name ?? null)
-    })
-    return names
-  }
-
-  test('is the rows where the reader asked for the rows', () => {
-    expect(widgets('properties')).toEqual(['PropertiesWidget'])
-  })
-
-  test('is the source, always, where the reader asked for the source', () => {
-    expect(widgets('source')).toEqual([])
-    expect(widgets('source', 0)).toEqual([])
-  })
-
-  test('is nothing at all where the reader asked for nothing', () => {
-    expect(widgets('hidden')).toEqual([null])
-  })
-
-  test('and changing the answer redraws without the note or the caret moving', () => {
-    const state = parsed(
-      EditorState.create({
-        doc: NOTE,
-        selection: EditorSelection.cursor(NOTE.length - 1),
-        extensions: [
-          markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
-          dragFreeze,
-          asked.of(propertiesMode.of('properties')),
+          ...extensions,
           blockDecorations,
         ],
       }),
     )
+      .field(blockDecorations)
+      .decorations.between(0, doc.length, (_from, _to, value) => {
+        names.push(value.spec.widget?.constructor.name ?? null)
+      })
+    return names
+  }
 
-    expect(state.field(blockDecorations).decorations.size).toBe(1)
-    const after = state.update({ effects: asked.reconfigure(propertiesMode.of('hidden')) }).state
-    const names: (string | null)[] = []
-    after.field(blockDecorations).decorations.between(0, NOTE.length, (_f, _t, value) => {
-      names.push(value.spec.widget?.constructor.name ?? null)
-    })
+  test('is the words as written, never rows and never hidden, wherever the caret is', () => {
+    expect(widgets(NOTE)).toEqual([])
+    expect(widgets(NOTE, [], 0)).toEqual([])
+  })
 
-    expect(names).toEqual([null])
+  test("a cover kept as the note's own metadata is drawn above a note with no front matter", () => {
+    const cover = keptCoverExtension({ src: 'assets/wide.jpg', position: 40 })
+    expect(widgets('# Wide\n\nWords.\n', [cover])).toEqual(['CoverWidget'])
+    expect(widgets('---\ncover: other.jpg\n---\n\n# Wide\n', [cover])).toEqual(['CoverWidget'])
+  })
+
+  test('a kept cover that changes redraws, and one taken away is gone', () => {
+    const start = parsed(
+      EditorState.create({
+        doc: '# Wide\n',
+        extensions: [
+          markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+          dragFreeze,
+          keptCoverExtension(null),
+          blockDecorations,
+        ],
+      }),
+    )
+    expect(start.field(blockDecorations).decorations.size).toBe(0)
+    const shown = start.update({
+      effects: keptCoverEffect({ src: 'a.jpg', position: 50 }),
+    }).state
+    expect(shown.field(blockDecorations).decorations.size).toBe(1)
+    const gone = shown.update({ effects: keptCoverEffect(null) }).state
+    expect(gone.field(blockDecorations).decorations.size).toBe(0)
   })
 })

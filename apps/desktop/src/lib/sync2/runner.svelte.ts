@@ -355,6 +355,12 @@ class Runner {
         ),
       ),
     )
+    this.stops.push(
+      workspace.itemMeta.describeBy({
+        describedIn: (root) => engine.describedIn(root),
+        describe: (root, patches) => engine.describe(root, patches),
+      }),
+    )
     rooms.drawn = () => this.rebind()
     this.stops.push(() => (rooms.drawn = null))
     if (isDesktop) {
@@ -772,7 +778,12 @@ class Runner {
           const passed = await engine.pass(id)
           await this.awayHeard(engine, true)
           if (passed?.finished) await this.indexHeard(engine)
-          if (!this.local) this.placesHeard(engine, space.row.root)
+          if (!this.local) {
+            this.placesHeard(engine, space.row.root)
+            void this.describedHeard(space.row.root).catch((error: unknown) =>
+              log('warn', `sync: metadata not heard: ${String(error)}`),
+            )
+          }
           if (passed?.full) this.full.add(id)
           else if (passed?.finished) this.full.delete(id)
           for (const one of this.full) if (!engine.core.spaces.has(one)) this.full.delete(one)
@@ -809,6 +820,13 @@ class Runner {
       this.status = 'error'
       this.lastError = error instanceof Error ? error.message : String(error)
     }
+  }
+
+  private async describedHeard(root: string) {
+    await workspace.itemMeta.fromEngine(root)
+    if (!workspace.itemMeta.describes(root)) return
+    const { moveOwnKeysSoon } = await import('../workspace/own-keys-moved')
+    moveOwnKeysSoon(root, workspace, true)
   }
 
   private reorders = -1

@@ -17,7 +17,6 @@ import {
   insertCodeFence,
   insertComment,
   insertFootnote,
-  insertFrontMatter,
   insertHorizontalRule,
   insertImage,
   insertLink,
@@ -179,7 +178,6 @@ export const nibBindings: BindingSpec[] = [
   { id: 'paragraph.callout', key: null, run: insertCallout, preventDefault: true },
   { id: 'paragraph.footnote', key: null, run: insertFootnote, preventDefault: true },
   { id: 'paragraph.toc', key: null, run: insertToc, preventDefault: true },
-  { id: 'paragraph.front-matter', key: null, run: insertFrontMatter, preventDefault: true },
 
   { id: 'edit.indent', key: 'Mod-[', run: indentItems, preventDefault: true },
   { id: 'edit.outdent', key: 'Mod-]', run: outdentItems, preventDefault: true },

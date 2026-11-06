@@ -1,7 +1,8 @@
 import { isChatTarget, isPagesTarget, isTermTarget } from '@orden/markdown/links'
+import type { ItemMeta } from '@orden/sync-core/meta'
 import type { FileMark } from './file-mark'
 import { folderNote, isFolderNote } from './folder-notes'
-import { brandIcon, readIcon, siteBrand } from './icons'
+import { brandIcon, ICON_COLOUR_KEY, ICON_KEY, readIcon, siteBrand } from './icons'
 import { links } from './link-index.svelte'
 import { elsewhere } from './marks-elsewhere.svelte'
 import { folderOf, isMarkdownPath, samePath, withinSpace } from './space-paths'
@@ -23,8 +24,16 @@ function awayIn(path: string): string | null {
   return home === null || samePath(home, open) ? null : home
 }
 
+function keptMeta(path: string): ItemMeta | null {
+  if (!isMarkdownPath(path)) return null
+  const meta = workspace.itemMeta.of(path)
+  return meta?.[ICON_KEY] === undefined ? null : meta
+}
+
 export function chosenIcon(path: string): string | null {
   if (isChatTarget(path) || isTermTarget(path)) return elsewhere.of(path)?.icon ?? null
+  const kept = keptMeta(path)
+  if (kept) return kept[ICON_KEY] ?? null
   const away = awayIn(path)
   if (away === null) return links.iconOf(path) ?? workspace.folderIcons.iconOf(mapKey(path))
 
@@ -104,6 +113,8 @@ function liveMarkOf(path: string): string | null {
 
 export function chosenTint(path: string): string | null {
   if (isChatTarget(path) || isTermTarget(path)) return elsewhere.of(path)?.iconColor ?? null
+  const kept = keptMeta(path)
+  if (kept) return kept[ICON_COLOUR_KEY] ?? null
   const away = awayIn(path)
   if (away === null) return links.tintOf(path) ?? workspace.folderIcons.tintOf(mapKey(path))
 

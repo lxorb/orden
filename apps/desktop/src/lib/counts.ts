@@ -1,6 +1,3 @@
-import { frontMatterBlock } from '@orden/markdown/front-matter'
-import type { PropertiesMode } from '@orden/markdown/properties'
-
 export interface Counts {
   words: number
   characters: number
@@ -37,9 +34,4 @@ export function countText(text: string): Counts {
     lines,
     minutes: Math.max(1, Math.round(words / 200)),
   }
-}
-
-export function countNote(text: string, properties: PropertiesMode): Counts {
-  const block = properties === 'hidden' ? frontMatterBlock(text) : null
-  return countText(block ? text.slice(block.to) : text)
 }

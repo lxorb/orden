@@ -110,10 +110,7 @@ BLOCKS = """
     picture:
       [...root.querySelectorAll('img')].map((one) => one.getAttribute('src')).find(Boolean) ??
       null,
-    properties: !!root.querySelector('.nib-properties'),
-    propertyKeys: [...root.querySelectorAll('.property-key')].map((one) => one.textContent),
     footnotes: root.querySelectorAll('.nib-footnote').length,
-    // Front matter must not reach the words of the note: it is rows, not YAML.
     raw: root.textContent.includes('tags:'),
   }
 }
@@ -229,7 +226,6 @@ def fresh(
     page.on("console", lambda message: complain(label, message))
     DRIVE.open(page)
     say(f"[{label}] the space holds {page.evaluate(SEED, [TARGET, SOURCE])}")
-    page.evaluate("() => window.nibApp.modes.setProperties('properties')")
 
     wait_for(page, "window.nibApp.workspace.notes.length > 1", f"[{label}] the notes")
     for _ in range(6):
@@ -343,10 +339,8 @@ def drive_desktop(browser: Browser) -> None:
         wrong("the embedded picture drew no element at all")
     elif "/asset/" not in card["picture"]:
         wrong(f"the picture is not at the space's own address: {card['picture']!r}")
-    if not card["properties"]:
-        wrong("the note's own metadata is not shown as rows")
-    if card["raw"]:
-        wrong("the front matter is in the words of the note")
+    if not card["raw"]:
+        wrong("the front matter is not shown as its own source")
     if not card["footnotes"]:
         wrong("the footnotes were not drawn")
 
@@ -388,7 +382,6 @@ def drive_desktop(browser: Browser) -> None:
         "maths",
         "tasks",
         "ticked",
-        "properties",
         "footnotes",
         "raw",
     ):
@@ -413,8 +406,6 @@ def drive_section(browser: Browser) -> None:
 
     if "Only this much" not in card["showing"]:
         wrong(f"the card did not open on the heading the link names: {card['showing']!r}")
-    if card["raw"]:
-        wrong("the front matter is in the words of the note")
 
     page.context.close()
 
@@ -433,8 +424,6 @@ def drive_still(browser: Browser) -> None:
         wrong(f"the card still moves where no motion was asked for: {card['duration']}")
     if not card["fence"]:
         wrong("the card lost its blocks along with its motion")
-    if card["raw"]:
-        wrong("the front matter is in the words of the note")
 
     page.context.close()
 

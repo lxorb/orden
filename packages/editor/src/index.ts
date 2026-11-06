@@ -28,7 +28,6 @@ export {
   insertCodeFence,
   insertComment,
   insertFootnote,
-  insertFrontMatter,
   insertLink,
   insertHorizontalRule,
   insertMathBlock,
@@ -102,7 +101,6 @@ export { fenceLanguages } from './languages'
 export { sequenceToMermaid } from './live-preview/sequence'
 export { nibHighlightStyle, nibTheme } from './theme'
 export { livePreview } from './live-preview'
-export { newProperty, showProperties } from './live-preview/properties'
 export { selectedImage } from './live-preview/image'
 export { type CarriedFiles, imageResolver, type ImageSink } from './images'
 export { hrefOf, type LinkPress, linkOpener, modifier as linkModifier } from './links'
@@ -125,6 +123,7 @@ export {
   type TaskHelp,
 } from './wikilink/notes'
 export { trustedMarkupEffect } from './markup'
+export { keptCoverEffect } from './live-preview/kept-cover'
 export { type PreviewMount, type PreviewNote } from './wikilink/hover'
 export { renderNote } from './wikilink/preview'
 export { setBlocks, type SlashBlock } from './slash'
@@ -145,7 +144,6 @@ export {
   tooLongToParse,
   setLigatures,
   setLineHeight,
-  setProperties,
   setQuietMarks,
   setMeasure,
   remeasure,

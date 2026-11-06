@@ -33,6 +33,7 @@ const HOST_ONLY = new Set([
   'nib:expanded-tags',
   'nib:icons',
   'nib:folder-icons',
+  'nib:item-meta',
   'nib:icon-tints',
   'nib:archived',
 ])

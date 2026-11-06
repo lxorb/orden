@@ -1,7 +1,7 @@
 import { syntaxTree } from '@codemirror/language'
 import type { ChangeSpec, EditorState, Line } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
-import { frontMatterSpan } from '../live-preview/hidden-front-matter'
+import { frontMatterSpan } from '../live-preview/front-matter'
 import { enclosing } from '../nodes'
 import { above, below, gap, indentOf, itemsAround, type Side } from './separation'
 import type { BlockSpan } from './span'
@@ -61,7 +61,7 @@ function landingOf(
   block: Measured,
   at: number,
 ): number | null {
-  if (span.kind === 'properties') return null
+  if (span.kind === 'front-matter') return null
 
   const doc = state.doc
   let to = settled(state, at)

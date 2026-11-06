@@ -1,6 +1,5 @@
 import { COVER_KEY, COVER_POSITION_KEY } from '@orden/markdown/cover'
 import { frontMatterEdits } from '@orden/markdown/front-matter'
-import { scalar } from '@orden/markdown/yaml'
 import { storeImage } from './assets'
 import { busy } from './busy.svelte'
 import { chooseFiles, PICTURES } from './choose-files'
@@ -16,11 +15,13 @@ export function canHaveCover(path: string | null | undefined): boolean {
 }
 
 export async function setCover(path: string, src: string | null): Promise<void> {
+  workspace.itemMeta.set(path, { [COVER_KEY]: src, [COVER_POSITION_KEY]: null })
+
   const before = await workspace.noteText(path)
   if (before === null) return
 
   const edit = frontMatterEdits(before, [
-    [COVER_KEY, src === null ? null : scalar(src)],
+    [COVER_KEY, null],
     [COVER_POSITION_KEY, null],
   ])
   if (!edit) return

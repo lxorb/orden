@@ -12,7 +12,6 @@
   import { modes } from '../../modes.svelte'
   import { dur } from '../../motion'
   import { followHref, followNoteFrom } from '../../open-link'
-  import { PROPERTY_CHOICES } from '../../property-choices'
   import { shortcuts } from '../../shortcuts.svelte'
   import { insideSpace } from '../../space-paths'
   import { workspace } from '../../workspace.svelte'
@@ -118,7 +117,6 @@
       openLink: followHref,
       writeLink: pickedLink,
       shortcuts: shortcuts.forEditor,
-      propertyChoices: PROPERTY_CHOICES,
       trustedMarkup: false,
     })
     made.dispatch({ effects: modeEffects(modes.settings) })

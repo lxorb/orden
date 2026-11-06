@@ -27,9 +27,11 @@ const store = new RowsStore({
   now: () => Date.now(),
   own: () => [INBOX],
   vault: isVault,
+  meta: (root, path) => workspace.itemMeta.itemsOf(root)[path] ?? null,
 })
 
 links.hearSaves((path, content) => store.saved(path, content))
+workspace.itemMeta.hear((path) => store.described(path))
 links.hearIndexed((root, scans) => store.indexed(root, scans))
 workspace.fileOps.follow((op) => store.follow(op))
 workspace.fileOps.follow(keeping(inboxes))

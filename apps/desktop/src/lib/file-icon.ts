@@ -1,5 +1,4 @@
 import { frontMatterEdits } from '@orden/markdown/front-matter'
-import { scalar } from '@orden/markdown/yaml'
 import {
   isCanvasTarget,
   isChatTarget,
@@ -13,7 +12,7 @@ import { ICON_COLOUR_KEY, ICON_KEY, readTint } from './icons'
 import { key, message } from './i18n.svelte'
 import { changeOf } from './search/replace'
 import { settings } from './settings.svelte'
-import { folderOf } from './space-paths'
+import { folderOf, isMarkdownPath } from './space-paths'
 import { workspace } from './workspace.svelte'
 
 export async function setFileIcon(
@@ -21,12 +20,19 @@ export async function setFileIcon(
   value: string | null,
   tint: string | null = null,
 ): Promise<void> {
+  const colour = value === null ? null : readTint(tint)
+
+  if (isMarkdownPath(path)) {
+    if (isFolderNote(path)) workspace.setFolderIcon(folderOf(path), null)
+    workspace.itemMeta.set(path, { [ICON_KEY]: value, [ICON_COLOUR_KEY]: colour })
+    await withoutOwnKeys(path, [ICON_KEY, ICON_COLOUR_KEY])
+    return
+  }
+
   const before = await workspace.noteText(path)
   if (before === null) return
 
   if (isFolderNote(path)) workspace.setFolderIcon(folderOf(path), null)
-
-  const colour = value === null ? null : readTint(tint)
 
   const edit = isWebTarget(path)
     ? await webIconEdit(path, before, value, colour)
@@ -36,14 +42,26 @@ export async function setFileIcon(
         ? await termIconEdit(before, value, colour)
         : isCanvasTarget(path) || isPagesTarget(path)
           ? (await import('@orden/markdown/canvas')).canvasIconEdit(before, value, colour)
-          : frontMatterEdits(before, [
-              [ICON_KEY, value === null ? null : scalar(value)],
-              [ICON_COLOUR_KEY, colour],
-            ])
+          : null
   if (!edit) return
 
   try {
     await workspace.replaceInNotes([changeOf(path, before, [edit])], { anyFile: true })
+  } catch (error) {
+    settings.error = message(error, key('That icon could not be written.'))
+  }
+}
+
+export async function withoutOwnKeys(path: string, keys: readonly string[]): Promise<void> {
+  const before = await workspace.noteText(path)
+  if (before === null) return
+  const edit = frontMatterEdits(
+    before,
+    keys.map((one) => [one, null]),
+  )
+  if (!edit) return
+  try {
+    await workspace.replaceInNotes([changeOf(path, before, [edit])])
   } catch (error) {
     settings.error = message(error, key('That icon could not be written.'))
   }

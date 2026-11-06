@@ -2,6 +2,7 @@ import { history } from '@codemirror/commands'
 import { deleteMarkupBackward, insertNewlineContinueMarkupCommand } from '@codemirror/lang-markdown'
 import { bracketMatching, indentOnInput, syntaxHighlighting } from '@codemirror/language'
 import { EditorState, type Extension, Prec, type Text } from '@codemirror/state'
+import type { Cover } from '@orden/markdown/cover'
 import {
   crosshairCursor,
   dropCursor,
@@ -20,9 +21,9 @@ import { blockHandles } from './block/handle'
 import { landing } from './landing'
 import { folding, foldsChanged, type FoldLines, withFolds } from './fold'
 import { type CarriedFiles, imageHandling, imageResolver, type ImageSink } from './images'
-import { propertyChoices } from './live-preview/properties'
 import { linkClicks, type LinkPress, linkOpener } from './links'
 import { tagClicks, tagOpener, type TagOpener } from './tag-press'
+import { coverMover, keptCoverExtension } from './live-preview/kept-cover'
 import { trustedMarkup } from './markup'
 import { wikilinks } from './wikilink'
 import { blockNamer } from './wikilink/block-namer'
@@ -61,7 +62,6 @@ export interface StateOptions {
   onImage?: ImageSink
   carriedFiles?: CarriedFiles
   resolveImage?: (src: string) => string
-  propertyChoices?: Record<string, readonly string[]>
   onSelection?: (view: EditorView) => void
   codeTheme?: string
   openLink?: (href: string, press: LinkPress) => void
@@ -75,6 +75,8 @@ export interface StateOptions {
   folds?: readonly FoldLines[]
   onFind?: (ask: FindAsk | null) => void
   trustedMarkup?: boolean
+  cover?: Cover | null
+  moveCover?: (position: number) => void
   editPreview?: PreviewMount
   coveredBelow?: () => number
 }
@@ -143,12 +145,13 @@ export function editorState(options: StateOptions): EditorState {
       richCopy(),
       openTail(),
       ...(resolveImage ? [imageResolver.of(resolveImage)] : []),
-      ...(options.propertyChoices ? [propertyChoices.of(options.propertyChoices)] : []),
       linkClicks,
       ...(openLink ? [linkOpener.of(openLink)] : []),
       wikilinks(),
       noteIndexExtension(options.notes),
       trustedMarkup(options.trustedMarkup),
+      keptCoverExtension(options.cover),
+      ...(options.moveCover ? [coverMover.of(options.moveCover)] : []),
       ...(openNote ? [noteOpener.of(openNote)] : []),
       tagClicks,
       ...(options.openTag ? [tagOpener.of(options.openTag)] : []),

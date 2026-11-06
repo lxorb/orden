@@ -538,16 +538,6 @@
     "default": true,
     "description": "Offers this type when you make something new; off only takes it out of that list."
   },
-  "markdown.frontMatter": {
-    "type": "string",
-    "enum": [
-      "properties",
-      "source",
-      "hidden"
-    ],
-    "default": "properties",
-    "description": "Properties draws the rows and edits them in place; Source is the YAML as typed."
-  },
   "markdown.newlineBreaks": {
     "type": "boolean",
     "default": false,
@@ -795,10 +785,6 @@
   "shortcuts.app-print": {
     "type": "string",
     "description": "The key that runs Print, as the keys file writes it; empty for none."
-  },
-  "shortcuts.app-properties": {
-    "type": "string",
-    "description": "The key that runs Properties, as the keys file writes it; empty for none."
   },
   "shortcuts.app-quick-add": {
     "type": "string",
@@ -1447,10 +1433,6 @@
   "shortcuts.paragraph-footnote": {
     "type": "string",
     "description": "The key that runs Footnote, as the keys file writes it; empty for none."
-  },
-  "shortcuts.paragraph-front-matter": {
-    "type": "string",
-    "description": "The key that runs Front matter, as the keys file writes it; empty for none."
   },
   "shortcuts.paragraph-heading-1": {
     "type": "string",

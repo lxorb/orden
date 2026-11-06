@@ -4,6 +4,7 @@ import { frontMatterEdit } from '@orden/markdown/front-matter'
 import { imageResolver } from '../images'
 import { label } from '../labels'
 import { applied, clearOfBlock } from './front-matter'
+import { coverMover, keptCover } from './kept-cover'
 import { NibWidget } from './widget'
 
 const STEP = 5
@@ -12,7 +13,16 @@ function inside(value: number): number {
   return Math.min(100, Math.max(0, Math.round(value)))
 }
 
+function shownCover(view: EditorView): Cover | null {
+  return keptCover(view.state) ?? coverOf(view.state.doc.toString())
+}
+
 function writePosition(view: EditorView, position: number) {
+  const mover = view.state.facet(coverMover)
+  if (keptCover(view.state) && mover) {
+    mover(position)
+    return
+  }
   const source = view.state.doc.toString()
   const edit = frontMatterEdit(source, COVER_POSITION_KEY, String(position))
   if (!edit) return
@@ -93,7 +103,7 @@ export class CoverWidget extends NibWidget {
       if (view.state.readOnly || event.button !== 0) return
       event.preventDefault()
       at = event.clientY
-      from = coverOf(view.state.doc.toString())?.position ?? COVER_MIDDLE
+      from = shownCover(view)?.position ?? COVER_MIDDLE
       handle.setPointerCapture(event.pointerId)
     }
 
@@ -101,7 +111,7 @@ export class CoverWidget extends NibWidget {
       const step = event.key === 'ArrowUp' ? STEP : event.key === 'ArrowDown' ? -STEP : 0
       if (step === 0 || view.state.readOnly) return
       event.preventDefault()
-      const now = inside((coverOf(view.state.doc.toString())?.position ?? COVER_MIDDLE) + step)
+      const now = inside((shownCover(view)?.position ?? COVER_MIDDLE) + step)
       show(now)
       writePosition(view, now)
     }

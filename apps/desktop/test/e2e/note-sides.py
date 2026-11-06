@@ -47,14 +47,6 @@ async (note) => {
 }
 """
 
-ROWS = """
-() => [...document.querySelectorAll('.property')].map((one) => ({
-  key: one.dataset.key,
-  value: one.querySelector('.property-value')?.textContent?.trim(),
-  chips: one.querySelectorAll('.property-chip').length,
-}))
-"""
-
 def fresh(browser: Browser, finger: bool) -> Page:
     context = browser.new_context(
         viewport={"width": 420, "height": 880} if finger else {"width": 1240, "height": 880},
@@ -74,53 +66,10 @@ def fresh(browser: Browser, finger: bool) -> Page:
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
-    page.evaluate("() => window.nibApp.modes.setProperties('properties')")
     wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(900)
-    unfold(page)
     return page
 
-
-def unfold(page: Page) -> None:
-    folded = page.locator('.nib-properties-head[aria-expanded="false"]')
-    if folded.count():
-        folded.first.click()
-        page.wait_for_timeout(300)
-
-def properties(page: Page) -> None:
-    rows = page.evaluate(ROWS)
-    say(f"[properties] {json.dumps(rows)}")
-    shot(page, "01-properties")
-
-    if len(rows) != 7:
-        wrong(f"the block drew {len(rows)} rows, not 7")
-    keys = [one["key"] for one in rows]
-    if keys != ["title", "tags", "aliases", "count", "date", "done", "export"]:
-        wrong(f"the rows are not the note's own keys in order: {keys}")
-
-    tags = next((one for one in rows if one["key"] == "tags"), None)
-    if not tags or tags["chips"] != 2:
-        wrong(f"a list did not draw as chips: {tags}")
-
-    nested = next((one for one in rows if one["key"] == "export"), None)
-    if not nested or "paper: A4" not in (nested["value"] or ""):
-        wrong(f"the export map did not draw: {nested}")
-
-    if page.evaluate("() => document.querySelectorAll('.nib-property-add').length") != 1:
-        wrong("there is no way to add a property")
-
-    page.click('.property[data-key="title"] .property-key')
-    page.wait_for_timeout(500)
-    caret = page.evaluate("() => window.nib.state.selection.main.head")
-    source = page.evaluate("() => document.querySelectorAll('.property').length === 0")
-    line = page.evaluate("() => window.nib.state.doc.lineAt(window.nib.state.selection.main.head).text")
-    say(f"[click] caret {caret} on {json.dumps(line)}, source shown: {source}")
-    shot(page, "02-source")
-
-    if not source:
-        wrong("the caret in the block did not show its source")
-    if "title" not in line:
-        wrong(f"the caret did not land on the row's own line: {line!r}")
 
 def selection(page: Page) -> None:
     page.evaluate(
@@ -234,47 +183,15 @@ def dictionary(page: Page) -> None:
     elif quiet[0]["spellcheck"] != "false":
         wrong(f"the mark does not turn the checker off: {quiet[0]}")
 
-def reading(page: Page) -> None:
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
-    page.wait_for_timeout(800)
-
-    rows = page.evaluate(ROWS)
-    say(f"[reading] {len(rows)} rows")
-    shot(page, "08-reading")
-
-    if len(rows) != 7:
-        wrong(f"the reading view drew {len(rows)} property rows, not 7")
-
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
-    page.wait_for_timeout(400)
-
 def drive(browser: Browser) -> None:
     page = fresh(browser, finger=False)
-    properties(page)
     selection(page)
     outline(page)
     dictionary(page)
-    reading(page)
     page.context.close()
 
 def finger(browser: Browser) -> None:
     page = fresh(browser, finger=True)
-
-    rows = page.evaluate(ROWS)
-    boxes = page.evaluate(
-        """() => [...document.querySelectorAll('.property')].map((one) => {
-          const box = one.getBoundingClientRect()
-          return { left: Math.round(box.left), right: Math.round(box.right) }
-        })"""
-    )
-    say(f"[phone] {len(rows)} property rows")
-    shot(page, "10-phone-properties")
-
-    if len(rows) != 7:
-        wrong(f"the phone drew {len(rows)} property rows, not 7")
-    for box in boxes:
-        if box["left"] < 0 or box["right"] > 420:
-            wrong(f"a property row runs off the screen: {box}")
 
     page.evaluate("() => window.nibApp.workspace.showPanel('outline')")
     page.wait_for_timeout(700)
@@ -293,7 +210,7 @@ def main() -> int:
         say("--- a finger ---")
         finger(browser)
 
-    return DRIVE.verdict("properties read, a selection counts, a section moves, a word is a word")
+    return DRIVE.verdict("a selection counts, a section moves, a word is a word")
 
 if __name__ == "__main__":
     raise SystemExit(main())

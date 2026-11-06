@@ -13,6 +13,7 @@ export interface NoteRead {
   stamp: Stamp | null
   tags: readonly string[]
   links: readonly { target: string; embed: boolean }[]
+  meta?: Readonly<Record<string, string>> | null | undefined
 }
 
 export function rowsOf(space: string, read: NoteRead): Row[] {
@@ -20,7 +21,10 @@ export function rowsOf(space: string, read: NoteRead): Row[] {
   const file = inbox
     ? { ...fileInfo(read), name: `${INBOX_NAME}.md`, basename: INBOX_NAME }
     : fileInfo(read)
-  const note: Record<string, Value> = read.front === null ? {} : noteValues(read.front)
+  const note: Record<string, Value> = {
+    ...(read.front === null ? {} : noteValues(read.front)),
+    ...read.meta,
+  }
   const tasks = taskRowsOf(space, read.path, read.tasks, file, note)
   if (inbox) return tasks
   const own: Row = { kind: 'note', space, path: read.path, file, note }

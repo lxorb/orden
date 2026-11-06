@@ -120,7 +120,6 @@ const AWAY = {
   canvasTurnSnaps: false,
   highlightTone: 3,
   hardBreaks: true,
-  frontMatterDrawn: 'source',
   linkFormat: 'markdown',
 }
 

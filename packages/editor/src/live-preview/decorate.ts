@@ -26,7 +26,6 @@ import { readChart } from '@orden/markdown/chart'
 import { onEngines } from '@orden/markdown/engines'
 import { readHighlight } from '@orden/markdown/highlights'
 import { blockIdOf, embedKind, linkTarget } from '@orden/markdown/links'
-import { readProperties } from '@orden/markdown/properties'
 import { type LinkSpan, noteLinkOfNode, wikilinkOfNode } from '../wikilink/at'
 import { embedOfBlock, EmbedImageWidget, EmbedMediaWidget } from '../wikilink/embed'
 import { noteLinkTitle } from '../wikilink/follow'
@@ -102,18 +101,10 @@ class Decorator {
   private visit(node: SyntaxNode): boolean {
     const name = node.name
 
-    if (
-      name === 'FrontMatter' &&
-      !overlaps(this.state, node.from, node.to) &&
-      readProperties(this.state.doc.sliceString(node.from, node.to)) !== null
-    ) {
-      return false
-    }
-
     const lineClass = LINE_CLASS[name]
     if (lineClass) {
       this.markLines(node, lineClass)
-      return true
+      return name !== 'FrontMatter'
     }
 
     switch (name) {

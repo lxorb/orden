@@ -28,7 +28,6 @@ import {
   type ViewUpdate,
 } from '@codemirror/view'
 import { type FindSpec, type FindTally, findShown, MOST_COUNTED, NO_TALLY } from './find'
-import { onThePage } from './live-preview/hidden-front-matter'
 
 export function tally(state: EditorState): FindTally {
   const query = getSearchQuery(state)
@@ -109,10 +108,6 @@ export function searching(): Extension {
   return [search(), findHighlighter, highlightSelectionMatches()]
 }
 
-function onPage(_match: string, state: EditorState, from: number): boolean {
-  return onThePage(state, from)
-}
-
 export function queryFor(spec: FindSpec): SearchQuery {
   return new SearchQuery({
     search: spec.query,
@@ -120,7 +115,6 @@ export function queryFor(spec: FindSpec): SearchQuery {
     caseSensitive: spec.caseSensitive,
     regexp: spec.regexp,
     wholeWord: spec.wholeWord,
-    test: onPage,
   })
 }
 

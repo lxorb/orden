@@ -1,9 +1,12 @@
 import { frontMatterEdit, isPropertyName } from '@orden/markdown/front-matter'
 import { taskAt } from '@orden/markdown/tasks'
+import { LONGEST_META_VALUE } from '@orden/sync-core/meta'
 import { flowItem, scalar } from '@orden/markdown/yaml'
 import type { AgentAnswer } from '../../automation/caller'
 import { onDisk as there } from '../../on-disk'
+import { OWN_KEYS } from '../../own-keys'
 import { notePath } from '../../space-paths'
+import { joinPath } from '../../tauri'
 import { writeFile } from '../../workspace/write-file'
 import { type Tab, workspace } from '../../workspace.svelte'
 import { isDraft } from '../../workspace/drafts'
@@ -176,6 +179,21 @@ export async function setProperty(call: Call): Promise<AgentAnswer> {
 
   const question = await asked(call, null, `Set ${key} of ${relative}`)
   if (question) return question
+
+  const own = OWN_KEYS.find((one) => one === key.toLowerCase())
+  if (own) {
+    const said = call.args.value
+    const kept =
+      typeof said === 'string' || typeof said === 'number' || typeof said === 'boolean'
+        ? String(said) || null
+        : null
+    if (kept !== null && kept.length > LONGEST_META_VALUE) {
+      throw new Refused('bad_arguments', `${key} is too long`)
+    }
+    const root = named.place.space.root
+    workspace.itemMeta.set(joinPath(root, relative), { [own]: kept }, root)
+    return done({ path: relative, key: own, value: kept, changed: true })
+  }
 
   for (let tries = 0; ; tries++) {
     const read = await notes.readNote(at(named), ['text'])

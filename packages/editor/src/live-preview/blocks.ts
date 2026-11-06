@@ -16,10 +16,8 @@ import { readChart } from '@orden/markdown/chart'
 import { htmlBlockCard } from '@orden/markdown/html-block'
 import { type EmbedKind, embedKind } from '@orden/markdown/links'
 import { coverOf } from '@orden/markdown/cover'
-import { readProperties } from '@orden/markdown/properties'
 import { CoverWidget } from './cover'
-import { drawnAs, propertiesMode, shownChanged } from './hidden-front-matter'
-import { openedChanged, PropertiesWidget, propertiesOpen } from './properties'
+import { keptCover, keptCoverChanged } from './kept-cover'
 import { embedOfBlock, embedWidget } from '../wikilink/embed'
 import { trustChanged, trustsMarkup } from '../markup'
 import { noteIndex, type NoteIndex } from '../wikilink/notes'
@@ -87,7 +85,7 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
   let toc = false
   const doc = state.doc
   const numbered = state.facet(numberEquations)
-  const shown = drawnAs(state)
+  const kept = keptCover(state)
   resetEquationLabels()
   const equationNumbers = numbered ? collectEquationLabels(state) : new Map<number, number>()
 
@@ -100,6 +98,12 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
     const span = wholeLines(from, to)
     spans.push(span)
     return { ...span, revealed: reveals && overlaps(state, span.from, span.to) }
+  }
+
+  if (kept) {
+    ranges.push(
+      Decoration.widget({ widget: new CoverWidget(kept), block: true, side: -1 }).range(0),
+    )
   }
 
   syntaxTree(state).iterate({
@@ -122,9 +126,7 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
 
         case 'FrontMatter': {
           const span = found(node.from, node.to)
-          const source = doc.sliceString(node.from, node.to)
-
-          const cover = coverOf(source)
+          const cover = kept ? null : coverOf(doc.sliceString(node.from, node.to))
           if (cover) {
             ranges.push(
               Decoration.widget({
@@ -134,23 +136,6 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
               }).range(span.from),
             )
           }
-
-          if (shown === 'hidden' && node.node.getChildren('FrontMatterMark').length > 1) {
-            ranges.push(Decoration.replace({ block: true }).range(span.from, span.to))
-            return false
-          }
-
-          if (shown !== 'properties') return false
-
-          if (span.revealed) return false
-          if (readProperties(source) === null) return false
-
-          ranges.push(
-            Decoration.replace({
-              widget: new PropertiesWidget(source, state.field(propertiesOpen, false) === true),
-              block: true,
-            }).range(span.from, span.to),
-          )
           return false
         }
 
@@ -343,9 +328,7 @@ function settingsChanged(transaction: Transaction): boolean {
   return (
     before.facet(noReveal) !== after.facet(noReveal) ||
     before.facet(numberEquations) !== after.facet(numberEquations) ||
-    before.facet(propertiesMode) !== after.facet(propertiesMode) ||
-    shownChanged(before, after) ||
-    openedChanged(before, after) ||
+    keptCoverChanged(before, after) ||
     before.facet(noteIndex) !== after.facet(noteIndex) ||
     trustChanged(before, after)
   )

@@ -5,7 +5,6 @@ import '@orden/markdown/eager'
 import { buildDecorations } from './decorate'
 import { FenceHeaderWidget } from './widgets'
 import { buildBlockDecorations } from './blocks'
-import { propertiesMode } from './hidden-front-matter'
 import { trustedMarkup } from '../markup'
 import { nibMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
@@ -20,7 +19,6 @@ function state(doc: string, cursor: number, trusted = false) {
       extensions: [
         markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
         trustedMarkup(trusted),
-        propertiesMode.of('properties'),
       ],
     }),
   )
@@ -437,16 +435,11 @@ describe('extensions', () => {
     expect(concealed('text[^1] more')).toEqual(['[^', ']'])
   })
 
-  test('draws front matter as its rows, and shows the source with the caret in it', () => {
+  test('writes front matter out as it is, fences and all, the caret in it or not', () => {
     const note = '---\ntitle: Hi\n---\n\nbody'
-    expect(blocks(note)).toEqual(['---\ntitle: Hi\n---'])
-    expect(blocks(note, 6)).toEqual([])
-  })
-
-  test('and hides the fences of a block it cannot draw as rows', () => {
-    const note = '---\njust some words\n---\n\nbody'
     expect(blocks(note)).toEqual([])
-    expect(concealed(note)).toEqual(['---', '---'])
+    expect(blocks(note, 6)).toEqual([])
+    expect(concealed(note)).toEqual([])
   })
 
   test('replaces a callout tag with its label', () => {

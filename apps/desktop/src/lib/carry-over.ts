@@ -12,7 +12,6 @@ export async function carryOver(carried: Carried) {
   if (carried.vim !== undefined) modes.setVimKeys(carried.vim)
   if (carried.linkFormat) modes.setLinkFormat(carried.linkFormat)
   if (carried.attachments) modes.setAttachments(carried.attachments)
-  if (carried.properties) modes.setProperties(carried.properties)
   if (carried.hardBreaks !== undefined && carried.hardBreaks !== modes.hardBreaks) {
     modes.toggleHardBreaks()
   }

@@ -16,6 +16,8 @@ const FILES: Record<string, string> = {
   '/Home/Written.md': '# Written\n\nWords.\n',
 }
 
+const KEPT: Record<string, Record<string, string>> = {}
+
 const PAPERS = new Set(['/Home/Lecture.pages.pdf'])
 const asked: string[] = []
 
@@ -101,6 +103,7 @@ vi.mock('./workspace.svelte', () => ({
       return { root: index.root }
     },
     folderIcons: { iconOf: () => null, tintOf: () => null },
+    itemMeta: { of: (path: string) => KEPT[path] ?? null },
     tabs,
     entryAt: (path: string) =>
       path === '/Work/Made.pages'
@@ -138,6 +141,19 @@ async function settled<T>(ask: () => T): Promise<T> {
 
 beforeEach(() => {
   reads.length = 0
+})
+
+describe("a note's own metadata (#1210)", () => {
+  test('is the icon and colour it wears, over what its front matter still says', () => {
+    open('/Work')
+    KEPT['/Work/Plan.md'] = { icon: 'star', 'icon-color': 'red' }
+    expect(chosenIcon('/Work/Plan.md')).toBe('star')
+    expect(chosenTint('/Work/Plan.md')).toBe('red')
+
+    KEPT['/Work/Plan.md'] = { cover: 'sea.png' }
+    expect(chosenIcon('/Work/Plan.md')).toBe('rocket')
+    delete KEPT['/Work/Plan.md']
+  })
 })
 
 describe('two spaces with a tab each', () => {

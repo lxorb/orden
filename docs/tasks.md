@@ -990,7 +990,7 @@ change what the view groups by, onto a note in the tree to move it there.
 **Table**: a row per row, a column per property, virtualised with
 `apps/desktop/src/lib/row-window.ts` (every row one row tall, so nothing is measured). A cell
 edits in place with the property control for its type
-(`apps/desktop/src/lib/properties/PropertyValue.svelte`, `apps/desktop/src/lib/property-choices.ts`).
+(`apps/desktop/src/lib/properties/PropertyValue.svelte`).
 Column headers sort on press, resize on drag, reorder on drag; the summary row sits under
 the last row. Arrow keys move between cells, Enter edits, Escape leaves, as a spreadsheet.
 

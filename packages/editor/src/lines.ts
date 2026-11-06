@@ -7,18 +7,19 @@ import {
   type StateCommand,
 } from '@codemirror/state'
 import { type Lines, linesOf } from './commands'
-import { hiddenFrontMatter } from './live-preview/hidden-front-matter'
+import { frontMatterSpan } from './live-preview/front-matter'
 
-function firstShown(state: EditorState): number {
-  const hidden = hiddenFrontMatter(state)
-  return hidden ? state.doc.lineAt(hidden.after).number : 1
+function firstOfBody(state: EditorState, number: number): number {
+  const front = frontMatterSpan(state)
+  const below = front ? state.doc.lineAt(front.after).number : 1
+  return number >= below ? below : 1
 }
 
 const blank = (line: Line) => line.text.trim() === ''
 
 function runAround(state: EditorState, number: number): Lines {
   const doc = state.doc
-  const top = firstShown(state)
+  const top = firstOfBody(state, number)
   let first = number
   let last = number
   while (first > top && !blank(doc.line(first - 1))) first--

@@ -70,6 +70,7 @@ const desk: Desk = {
   },
   linksOf: (path) => links.outgoing(path),
   backlinksOf: (path) => links.backlinks(path),
+  metaOf: (path) => workspace.itemMeta.of(path),
   snapshot: async (path, content, source) => {
     await invoke('snapshot_note', { path, content, source }).catch(() => undefined)
   },

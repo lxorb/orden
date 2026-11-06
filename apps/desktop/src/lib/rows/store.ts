@@ -31,6 +31,7 @@ export interface Host {
   now(): number
   own?(root: string): readonly string[]
   vault(root: string): Promise<boolean>
+  meta?(root: string, path: string): Readonly<Record<string, string>> | null
 }
 
 const CHUNK = 250
@@ -156,7 +157,7 @@ export class RowsStore {
 
   private rowsIn(held: Held, read: NoteRead): Row[] {
     if (samePath(read.path, AGENTS_NAME, held.root)) return []
-    const rows = rowsOf(held.name, read)
+    const rows = rowsOf(held.name, { ...read, meta: this.host.meta?.(held.root, read.path) })
     if (held.vault) for (const row of rows) if (row.task) row.task.dueReads = 'deadline'
     return rows
   }
@@ -298,6 +299,10 @@ export class RowsStore {
       if (path !== undefined && within(at, path, held.root) !== null) keys.push(key)
     }
     return keys
+  }
+
+  described(path: string): void {
+    void this.fileCame(path)
   }
 
   private async fileCame(path: string) {

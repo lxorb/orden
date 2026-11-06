@@ -76,79 +76,40 @@ function written(path: string): string | null {
 
 function fresh() {
   notes = { ...SPACE }
+  workspace.spaces = [{ id: 's', name: 'space', root: '/space' }]
+  workspace.itemMeta.forget('/space')
   workspace.tabs = []
   workspace.activeTabId = null
   workspace.undone.stack = []
   sent.length = 0
 }
 
-describe('the icon a note is given', () => {
-  test('opens a front matter block on a note that had none', async () => {
+const kept = (path: string) => workspace.itemMeta.of(path, '/space')
+
+describe('the icon a note is given (#1210)', () => {
+  test("is the note's own metadata, and the note's words are not touched", async () => {
     fresh()
     await setFileIcon('/space/plain.md', 'rocket')
 
-    expect(written('/space/plain.md')).toBe('---\nicon: rocket\n---\n# Plain\n\nwords\n')
-  })
-
-  test('an emoji YAML would read as something else is quoted', async () => {
-    fresh()
-    await setFileIcon('/space/plain.md', '#\uFE0F\u20E3')
-
-    expect(written('/space/plain.md')).toBe("---\nicon: '#\uFE0F\u20E3'\n---\n# Plain\n\nwords\n")
-  })
-
-  test('an emoji the note already wears in other quotes writes nothing at all', async () => {
-    fresh()
-    notes['/space/plain.md'] = '---\nicon: "#\uFE0F\u20E3"\n---\n# Plain\n'
-    await setFileIcon('/space/plain.md', '#\uFE0F\u20E3')
-
+    expect(kept('/space/plain.md')).toEqual({ icon: 'rocket' })
     expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
   })
 
-  test('joins the keys a note already had', async () => {
-    fresh()
-    await setFileIcon('/space/titled.md', 'file-text')
-
-    expect(written('/space/titled.md')).toBe(
-      '---\ntitle: Titled\nicon: file-text\n---\n\n# Titled\n',
-    )
-  })
-
-  test('replaces the one that was there', async () => {
+  test('replaces the one that was there, and takes an icon its front matter still said out of it', async () => {
     fresh()
     await setFileIcon('/space/marked.md', 'anchor')
 
-    expect(written('/space/marked.md')).toBe('---\nicon: anchor\n---\n\n# Marked\n')
+    expect(kept('/space/marked.md')).toEqual({ icon: 'anchor' })
+    expect(written('/space/marked.md')).toBe('# Marked\n')
   })
 
-  test('keeps the words that were there before it', async () => {
+  test('leaves the rest of the front matter as it was', async () => {
     fresh()
-    await setFileIcon('/space/marked.md', 'compass')
+    notes['/space/titled.md'] = '---\ntitle: Titled\nicon: star\n---\n\n# Titled\n'
+    await setFileIcon('/space/titled.md', 'file-text')
 
-    const touched = sent.filter((one) => one.path === '/space/marked.md')
-    expect(touched.map((one) => one.command)).toEqual([
-      'read_note',
-      'read_note',
-      'snapshot_note',
-      'write_note',
-    ])
-    expect(touched[2]?.content).toContain('icon: rocket')
-  })
-
-  test('and is one thing to undo', async () => {
-    fresh()
-    await setFileIcon('/space/marked.md', 'feather')
-
-    expect(workspace.undone.stack).toHaveLength(1)
-  })
-
-  test('choosing the icon a note already wears writes nothing at all', async () => {
-    fresh()
-    await setFileIcon('/space/marked.md', 'feather')
-    sent.length = 0
-
-    await setFileIcon('/space/marked.md', 'feather')
-    expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
+    expect(written('/space/titled.md')).toBe('---\ntitle: Titled\n---\n\n# Titled\n')
+    expect(kept('/space/titled.md')).toEqual({ icon: 'file-text' })
   })
 })
 
@@ -205,15 +166,15 @@ describe('the icon an online terminal is given', () => {
 })
 
 describe('taking a note s icon away', () => {
-  test('takes the key with it', async () => {
+  test('takes it and its colour out of the metadata', async () => {
     fresh()
-    await setFileIcon('/space/titled.md', 'rocket')
+    await setFileIcon('/space/titled.md', 'rocket', 'violet')
     await setFileIcon('/space/titled.md', null)
 
-    expect(written('/space/titled.md')).toBe('---\ntitle: Titled\n---\n\n# Titled\n')
+    expect(kept('/space/titled.md')).toBeNull()
   })
 
-  test('and the whole block where the icon was all it held', async () => {
+  test('and out of the front matter where the note still said it, the block with it', async () => {
     fresh()
     await setFileIcon('/space/only.md', null)
 
@@ -229,25 +190,24 @@ describe('taking a note s icon away', () => {
 })
 
 describe('a note that is open while its icon changes', () => {
-  test('takes the change in its own document, and stays saved', async () => {
+  test('keeps its words as they were, and stays saved', async () => {
     fresh()
     await workspace.open('/space/plain.md')
     await setFileIcon('/space/plain.md', 'rocket')
 
     const tab = workspace.tabs.find((one) => one.path === '/space/plain.md')
-    expect(tab?.doc).toBe('---\nicon: rocket\n---\n# Plain\n\nwords\n')
+    expect(tab?.doc).toBe('# Plain\n\nwords\n')
     expect(tab?.dirty).toBe(false)
   })
 
-  test('and undoing puts the note back the way its reader had it', async () => {
+  test('loses an icon its front matter still said, in its own document', async () => {
     fresh()
-    await workspace.open('/space/titled.md')
-    await setFileIcon('/space/titled.md', 'rocket')
-    await workspace.undoFileAction()
+    await workspace.open('/space/marked.md')
+    await setFileIcon('/space/marked.md', 'rocket')
 
-    expect(workspace.tabs.find((one) => one.path === '/space/titled.md')?.doc).toBe(
-      '---\ntitle: Titled\n---\n\n# Titled\n',
-    )
+    const tab = workspace.tabs.find((one) => one.path === '/space/marked.md')
+    expect(tab?.doc).toBe('# Marked\n')
+    expect(tab?.dirty).toBe(false)
   })
 })
 
@@ -322,40 +282,28 @@ describe('what each kind of icon is written as', () => {
     fresh()
     await setFileIcon('/space/plain.md', '🚀')
 
-    expect(written('/space/plain.md')).toBe('---\nicon: 🚀\n---\n# Plain\n\nwords\n')
+    expect(kept('/space/plain.md')).toEqual({ icon: '🚀' })
   })
 
   test('a drawing out of another set, under that set s own name', async () => {
     fresh()
     await setFileIcon('/space/plain.md', 'flat-color-icons:calendar')
 
-    expect(written('/space/plain.md')).toContain('icon: flat-color-icons:calendar')
+    expect(kept('/space/plain.md')).toEqual({ icon: 'flat-color-icons:calendar' })
   })
 
-  test('and a line icon with a colour, as two keys in one write', async () => {
+  test('and a line icon with a colour, as two keys', async () => {
     fresh()
     await setFileIcon('/space/plain.md', 'rocket', 'violet')
 
-    expect(written('/space/plain.md')).toBe(
-      '---\nicon: rocket\nicon-color: violet\n---\n# Plain\n\nwords\n',
-    )
-    expect(sent.filter((one) => one.command === 'write_note')).toHaveLength(1)
-    expect(workspace.undone.stack).toHaveLength(1)
+    expect(kept('/space/plain.md')).toEqual({ icon: 'rocket', 'icon-color': 'violet' })
   })
 
-  test('a colour this build has never heard of is not written at all', async () => {
+  test('a colour this build has never heard of is not kept at all', async () => {
     fresh()
     await setFileIcon('/space/plain.md', 'rocket', 'chartreuse')
 
-    expect(written('/space/plain.md')).toBe('---\nicon: rocket\n---\n# Plain\n\nwords\n')
-  })
-
-  test('and taking the icon away takes the colour with it', async () => {
-    fresh()
-    await setFileIcon('/space/plain.md', 'rocket', 'violet')
-    await setFileIcon('/space/plain.md', null)
-
-    expect(written('/space/plain.md')).toBe('# Plain\n\nwords\n')
+    expect(kept('/space/plain.md')).toEqual({ icon: 'rocket' })
   })
 
   test('a canvas keeps the colour beside the icon, under the same key', async () => {

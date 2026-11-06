@@ -117,7 +117,6 @@ const EDITOR_ENTRIES: Record<string, [Category, () => string]> = {
   'paragraph.callout': ['paragraph', () => t('Callout')],
   'paragraph.footnote': ['paragraph', () => t('Footnote')],
   'paragraph.toc': ['paragraph', () => t('Table of contents')],
-  'paragraph.front-matter': ['paragraph', () => t('Front matter')],
 
   'view.fold': ['view', () => t('Fold')],
   'view.fold-all': ['view', () => t('Fold everything')],
@@ -806,14 +805,6 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Shift-x',
     alias: true,
     run: () => toggleScratchpad(),
-  },
-  {
-    id: 'app.properties',
-    label: () => t('Properties'),
-    category: 'view',
-    scope: 'app',
-    key: null,
-    run: () => void import('../show-properties').then((one) => one.showNoteProperties()),
   },
   {
     id: 'agents.stop',

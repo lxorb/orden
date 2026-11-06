@@ -2,13 +2,12 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { blockDecorations } from './blocks'
-import { propertiesMode } from './hidden-front-matter'
 import { edgeBeside } from './stepping'
 import { dragFreeze } from './dragging'
 import { nibMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
-function state(doc: string, cursor = 0, mode: 'hidden' | 'properties' = 'properties') {
+function state(doc: string, cursor = 0) {
   return parsed(
     EditorState.create({
       doc,
@@ -17,7 +16,6 @@ function state(doc: string, cursor = 0, mode: 'hidden' | 'properties' = 'propert
         markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
         dragFreeze,
         blockDecorations,
-        propertiesMode.of(mode),
       ],
     }),
   )
@@ -70,13 +68,8 @@ describe('a press onto a block that draws itself', () => {
 
   const META = '---\ntitle: One\n---\n\nwords\n'
 
-  test('nothing for metadata somebody asked to hide, which has no source to open', () => {
+  test('nothing for front matter, which is written out as it is and has nothing to open', () => {
     const blank = at(META, '\nwords')
-    expect(edgeBeside(state(META, blank, 'hidden'), blank, false)).toBe(null)
-  })
-
-  test('but the metadata itself opens like any other block', () => {
-    const blank = at(META, '\nwords')
-    expect(edgeBeside(state(META, blank), blank, false)).toBe(at(META, '\n\nwords'))
+    expect(edgeBeside(state(META, blank), blank, false)).toBe(null)
   })
 })

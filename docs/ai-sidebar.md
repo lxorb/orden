@@ -25,9 +25,8 @@ Read with `docs/ai.md` (the providers, the plan rules, the seam) and `docs/agent
 
 1. **One panel replaces Ask**, in the same slot on the right and on the same key
    (**Ctrl+Shift+A**). Ask - answers from the notes with numbered citations - becomes the
-   panel's first mode, Approve, rather than a panel of its own. A note's properties are the
-   strip in the note, and an outside agent's session is a row of this panel's chat list
-   (#1120).
+   panel's first mode, Approve, rather than a panel of its own, and an outside agent's
+   session is a row of this panel's chat list (#1120).
 2. **Three modes on one chip: Approve, Agent, Plan** (**Shift+Tab** cycles them, as in
    Claude Code and Cursor). Approve does what Agent does, and each change waits in its row
    for **Approve**, **Deny** or **Always**; reads never ask, and answers cite. Agent acts on
