@@ -2984,4 +2984,36 @@ export const hi: Dictionary = {
     one: '{all}, {count} चुना गया ({size})',
     other: '{all}, {count} चुने गए ({size})',
   },
+  'New folder': 'नया फ़ोल्डर',
+  'This cannot be undone.': 'इसे पहले जैसा नहीं किया जा सकता।',
+  'Delete for good': 'हमेशा के लिए मिटाएँ',
+  'could not make the folder': 'फ़ोल्डर नहीं बनाया जा सका',
+  'could not rename this': 'इसका नाम नहीं बदला जा सका',
+  'could not move this to the trash': 'इसे ट्रैश में नहीं ले जाया जा सका',
+  'could not delete this': 'इसे मिटाया नहीं जा सका',
+  'could not copy this': 'इसकी कॉपी नहीं बनाई जा सकी',
+  'Open with the system app': 'सिस्टम के ऐप में खोलें',
+  'Copy to the other pane': 'दूसरे पेन में कॉपी करें',
+  'Move to the other pane': 'दूसरे पेन में ले जाएँ',
+  'Copy path': 'पाथ कॉपी करें',
+  'Move to Trash': 'ट्रैश में ले जाएँ',
+  'This file is too large to bring into a space.':
+    'यह फ़ाइल किसी स्पेस में लाने के लिए बहुत बड़ी है।',
+  'Delete {count} items for good?': {
+    one: '{count} आइटम हमेशा के लिए मिटाएँ?',
+    other: '{count} आइटम हमेशा के लिए मिटाएँ?',
+  },
+  'Moving {count} items': {
+    one: '{count} आइटम ले जाया जा रहा है',
+    other: '{count} आइटम ले जाए जा रहे हैं',
+  },
+  'Copying {count} items': {
+    one: '{count} आइटम कॉपी हो रहा है',
+    other: '{count} आइटम कॉपी हो रहे हैं',
+  },
+  '{name} is already here': '{name} यहाँ पहले से है',
+  '{count} names are already here': {
+    one: '{count} नाम यहाँ पहले से हैं',
+    other: '{count} नाम यहाँ पहले से हैं',
+  },
 }

@@ -115,7 +115,10 @@ describe('making a folder', () => {
     read('lib/menu.svelte.ts'),
     read('lib/commands.ts'),
     read('lib/app-menu.ts'),
-    read('lib/shortcuts/registry.ts'),
+    read('lib/shortcuts/registry.ts')
+      .split('\n')
+      .filter((line) => !line.includes("['explorer."))
+      .join('\n'),
   ].join('\n')
 
   test('is not offered anywhere, under any name', () => {

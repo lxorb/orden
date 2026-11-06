@@ -2,8 +2,11 @@
   import { onMount, untrack } from 'svelte'
   import { i18n, plural, t } from '../i18n.svelte'
   import { shortcuts } from '../shortcuts.svelte'
+  import { fileClipboard } from '../list-landing.svelte'
   import { readableSize } from '../usage.svelte'
-  import type { Tab } from '../workspace.svelte'
+  import { type Tab, workspace } from '../workspace.svelte'
+  import { newFolder, paste, removeForGood, trash } from './changes'
+  import { jobs } from './jobs.svelte'
   import ExplorerBar from './ExplorerBar.svelte'
   import ExplorerList from './ExplorerList.svelte'
   import ExplorerPlaces from './ExplorerPlaces.svelte'
@@ -15,7 +18,7 @@
   const view = viewOf(tab)
 
   let typing = $state(false)
-  let list = $state<{ focus: () => void }>()
+  let list = $state<{ focus: () => void; menuHere: () => void }>()
 
   onMount(() => {
     void view.appear()
@@ -44,9 +47,23 @@
     if (event.defaultPrevented || event.target instanceof HTMLInputElement) return
     const pressed = (id: string) => shortcuts.pressed(id, event)
     let run: (() => unknown) | null = null
+    const chosen = view.chosen
     if (pressed('explorer.parent') || pressed('explorer.parent.alt')) run = () => view.up()
     else if (pressed('explorer.location')) run = () => (typing = true)
     else if (pressed('explorer.hidden')) run = () => explorerPrefs.toggleHidden()
+    else if (pressed('explorer.new-folder')) run = () => newFolder(view)
+    else if (pressed('explorer.delete')) run = () => removeForGood(view, chosen)
+    else if (pressed('tree.delete')) run = () => trash(view, chosen)
+    else if (pressed('tree.rename') && view.picked.cursor !== null)
+      run = () => (view.renaming = view.picked.cursor)
+    else if (pressed('fixed.copy') && chosen.length) run = () => fileClipboard.hold(chosen, false)
+    else if (pressed('fixed.cut') && chosen.length) run = () => fileClipboard.hold(chosen, true)
+    else if (pressed('fixed.paste')) run = () => paste(view)
+    else if (pressed('edit.undo')) run = () => workspace.undoFileAction()
+    else if (pressed('edit.redo') || pressed('edit.redo.alt'))
+      run = () => workspace.redoFileAction()
+    else if (event.key === 'ContextMenu' || (event.key === 'F10' && event.shiftKey))
+      run = () => list?.menuHere()
     if (!run) return
     event.preventDefault()
     void run()
@@ -62,8 +79,25 @@
     {/if}
     <ExplorerList {view} bind:this={list} />
   </div>
+  {#each jobs.list.filter((one) => one.shown) as job (job.id)}
+    <div class="job" role="status">
+      <span class="what">{job.label}</span>
+      <div class="nib-meter">
+        <div
+          class="nib-meter-fill"
+          style:width="{job.total ? Math.min(100, (job.bytes / job.total) * 100) : 0}%"
+        ></div>
+      </div>
+      <span class="far">{readableSize(job.bytes)} / {readableSize(job.total)}</span>
+      <button type="button" class="nib-button is-quiet" onclick={() => jobs.cancel(job.id)}
+        >{t('Cancel')}</button
+      >
+    </div>
+  {/each}
   <div class="foot" role="status">
-    {#if view.listing?.cut}
+    {#if view.said}
+      <span class="said">{view.said}</span>
+    {:else if view.listing?.cut}
       <span class="cut"
         >{t('Only the first {count} are shown.', { count: i18n.amount(100_000) })}</span
       >
@@ -100,7 +134,35 @@
     font-variant-numeric: tabular-nums;
   }
 
-  .cut {
+  .cut,
+  .said {
     margin-inline-end: auto;
+  }
+
+  .said {
+    color: var(--danger);
+  }
+
+  .job {
+    display: grid;
+    flex: none;
+    grid-template-columns: minmax(0, 1fr) minmax(6rem, 14rem) auto auto;
+    gap: var(--space-3);
+    align-items: center;
+    padding: var(--space-1) var(--space-3);
+    border-top: 1px solid var(--line);
+    font-size: var(--text-xs);
+  }
+
+  .what {
+    overflow: hidden;
+    color: var(--text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .far {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
   }
 </style>

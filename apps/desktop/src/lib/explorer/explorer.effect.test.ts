@@ -44,7 +44,24 @@ vi.mock('./commands', () => ({
     opened.push(path)
     return Promise.resolve()
   },
+  renameTo: (path: string, name: string) => {
+    changed.push(`rename ${path} ${name}`)
+    return Promise.resolve(`/home/me/${name}`)
+  },
+  trashPaths: (paths: string[]) => {
+    changed.push(`trash ${paths.join(',')}`)
+    return Promise.resolve(paths.map((path) => ({ path, back: path, at: 1 })))
+  },
+  makeIn: (folder: string, name: string) => {
+    changed.push(`make ${folder} ${name}`)
+    return Promise.resolve(`${folder}/${name}`)
+  },
+  showInSystem: () => Promise.resolve(),
+  PROGRESS: 'explorer://progress',
+  cancelJob: () => Promise.resolve(),
 }))
+
+const changed: string[] = []
 
 const { workspace } = await import('../workspace.svelte')
 const ExplorerTab = (await import('./ExplorerTab.svelte')).default
@@ -71,13 +88,15 @@ function rows(): string[] {
 }
 
 function press(key: string, more: KeyboardEventInit = {}) {
-  const on = document.activeElement ?? target.querySelector('.rows')
+  const focused = document.activeElement
+  const on = focused && target.contains(focused) ? focused : target.querySelector('.rows')
   on?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...more }))
   flushSync()
 }
 
 beforeEach(() => {
   opened.length = 0
+  changed.length = 0
   target = document.createElement('div')
   document.body.append(target)
 })
@@ -148,5 +167,42 @@ describe('a file explorer', () => {
     await settled()
     expect(view.folder).toBe('/home/me/Music')
     expect(target.querySelector('.said')?.textContent).toContain('empty')
+  })
+
+  test('renames in place with F2, the ending left out of what is chosen', async () => {
+    await explorer()
+    press('n')
+    press('F2')
+    await settled()
+    const field = target.querySelector<HTMLInputElement>('input.rename')
+    expect(field?.value).toBe('notes.txt')
+    expect([field?.selectionStart, field?.selectionEnd]).toEqual([0, 5])
+    if (!field) return
+    field.value = 'letters.txt'
+    field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await settled()
+    expect(changed).toEqual(['rename /home/me/notes.txt letters.txt'])
+  })
+
+  test('puts what is picked in the trash with Delete, and makes a folder with its key', async () => {
+    const { workspace: ws } = await import('../workspace.svelte')
+    await explorer()
+    press('p')
+    press('l')
+    press('Delete')
+    await settled()
+    expect(changed).toEqual(['trash /home/me/plan.pdf'])
+    expect(ws.undone.last).toEqual({
+      kind: 'outside',
+      steps: [
+        {
+          op: 'trashed',
+          tickets: [{ path: '/home/me/plan.pdf', back: '/home/me/plan.pdf', at: 1 }],
+        },
+      ],
+    })
+    press('N', { ctrlKey: true, shiftKey: true })
+    await settled()
+    expect(changed.at(-1)).toBe('make /home/me New folder')
   })
 })

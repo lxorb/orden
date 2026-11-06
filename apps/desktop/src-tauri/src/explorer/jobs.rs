@@ -162,7 +162,7 @@ pub fn explorer_transfer(
     let mut out = Transferred::default();
     let plan = planned(&froms, &folder, how, clash, &mut out);
     let mut meter = Meter {
-        app: &app,
+        app: Some(&app),
         job: &job,
         total: plan.iter().map(|(from, _)| weight(from, &running)).sum(),
         bytes: 0,
@@ -279,7 +279,7 @@ enum Stop {
 }
 
 struct Meter<'a> {
-    app: &'a AppHandle,
+    app: Option<&'a AppHandle>,
     job: &'a str,
     total: u64,
     bytes: u64,
@@ -305,7 +305,10 @@ impl Meter<'_> {
     }
 
     fn emit(&self, name: &str) {
-        let _ = self.app.emit(
+        let Some(app) = self.app else {
+            return;
+        };
+        let _ = app.emit(
             PROGRESS,
             Progress {
                 job: self.job,
@@ -379,6 +382,71 @@ fn copied(from: &Path, to: &Path, running: &Job, meter: &mut Meter) -> Result<()
     }
     let _ = target.set_permissions(meta.permissions());
     Ok(())
+}
+
+#[derive(Deserialize, Clone, Debug)]
+pub struct Pair {
+    pub from: String,
+    pub to: String,
+}
+
+#[tauri::command(async)]
+pub fn explorer_put(
+    app: AppHandle,
+    job: String,
+    pairs: Vec<Pair>,
+    how: How,
+) -> Result<Transferred, String> {
+    let using = if how == How::Move {
+        Use::Change
+    } else {
+        Use::Look
+    };
+    let judged: Vec<(PathBuf, PathBuf)> = pairs
+        .iter()
+        .map(|one| {
+            Ok((
+                asked(&app, &one.from, using)?,
+                asked(&app, &one.to, Use::Change)?,
+            ))
+        })
+        .collect::<Result<_, String>>()?;
+    let running = Job::begin(&job);
+    let mut out = Transferred::default();
+    let mut meter = Meter {
+        app: Some(&app),
+        job: &job,
+        total: judged.iter().map(|(from, _)| weight(from, &running)).sum(),
+        bytes: 0,
+        items: 0,
+        count: judged.len(),
+        said: None,
+    };
+    for (from, to) in judged {
+        if running.stopped() {
+            out.cancelled = true;
+            break;
+        }
+        if fs::symlink_metadata(&to).is_ok() {
+            out.failed
+                .push(failed(&from, format!("{} is there already", to.display())));
+            continue;
+        }
+        match carried(&from, &to, how, &running, &mut meter) {
+            Ok(()) => out.done.push(Moved {
+                from: from.display().to_string(),
+                to: to.display().to_string(),
+            }),
+            Err(Stop::Cancelled) => {
+                out.cancelled = true;
+                break;
+            }
+            Err(Stop::Failed(why)) => out.failed.push(failed(&from, why)),
+        }
+        meter.items += 1;
+    }
+    meter.say(true);
+    Ok(out)
 }
 
 #[derive(Serialize, Default)]
@@ -529,7 +597,9 @@ fn walk_matching(
 
 #[cfg(test)]
 mod tests {
-    use super::{planned, walk_matching, Clash, How, Job, Searched, Transferred};
+    use super::{
+        carried, planned, walk_matching, Clash, How, Job, Meter, Searched, Stop, Transferred,
+    };
     use std::fs;
     use std::path::PathBuf;
 
@@ -587,6 +657,60 @@ mod tests {
         );
         assert!(plan.is_empty());
         assert_eq!(out.failed.len(), 1);
+    }
+
+    fn meter() -> Meter<'static> {
+        Meter {
+            app: None,
+            job: "test",
+            total: 0,
+            bytes: 0,
+            items: 0,
+            count: 0,
+            said: None,
+        }
+    }
+
+    #[test]
+    fn a_folder_is_copied_whole_and_moved_with_nothing_left_behind() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let from = dir.path().join("from");
+        fs::create_dir_all(from.join("inner")).expect("folders");
+        fs::write(from.join("inner/a.txt"), "four").expect("a file");
+        fs::write(from.join("b.txt"), "six!!!").expect("a file");
+        let running = Job::begin("test-copy");
+        let mut counted = meter();
+        let copy = dir.path().join("copy");
+        assert!(carried(&from, &copy, How::Copy, &running, &mut counted).is_ok());
+        assert_eq!(
+            fs::read_to_string(copy.join("inner/a.txt")).expect("copied"),
+            "four"
+        );
+        assert_eq!(counted.bytes, 10);
+        let moved = dir.path().join("moved");
+        assert!(carried(&copy, &moved, How::Move, &running, &mut counted).is_ok());
+        assert!(!copy.exists());
+        assert!(moved.join("b.txt").is_file());
+        assert!(from.join("b.txt").is_file());
+    }
+
+    #[test]
+    fn a_cancelled_copy_takes_away_what_it_wrote() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let from = dir.path().join("from");
+        fs::create_dir_all(&from).expect("a folder");
+        fs::write(from.join("a.txt"), "a").expect("a file");
+        let running = Job::begin("test-cancel");
+        files_tab_cancel_named("test-cancel");
+        let to = dir.path().join("to");
+        let copied = carried(&from, &to, How::Copy, &running, &mut meter());
+        assert!(matches!(copied, Err(Stop::Cancelled)));
+        assert!(!to.exists());
+        assert!(from.join("a.txt").is_file());
+    }
+
+    fn files_tab_cancel_named(job: &str) {
+        super::explorer_cancel(job.to_owned());
     }
 
     #[test]

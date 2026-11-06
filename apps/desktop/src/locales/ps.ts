@@ -2983,4 +2983,36 @@ export const ps: Dictionary = {
     one: '{all}، {count} ټاکل شوی ({size})',
     other: '{all}، {count} ټاکل شوي ({size})',
   },
+  'New folder': 'نوی فولډر',
+  'This cannot be undone.': 'دا بېرته نه شي ګرځول کېدای.',
+  'Delete for good': 'د تل لپاره ړنګ کړئ',
+  'could not make the folder': 'فولډر جوړ نه شو',
+  'could not rename this': 'نوم یې بدل نه شو',
+  'could not move this to the trash': 'کثافاتو ته ونه وړل شو',
+  'could not delete this': 'ړنګ نه شو',
+  'could not copy this': 'کاپي نه شو',
+  'Open with the system app': 'د سیسټم په اپ کې پرانیزئ',
+  'Copy to the other pane': 'بلې برخې ته کاپي کړئ',
+  'Move to the other pane': 'بلې برخې ته یې یوسئ',
+  'Copy path': 'لاره کاپي کړئ',
+  'Move to Trash': 'کثافاتو ته یې یوسئ',
+  'This file is too large to bring into a space.':
+    'دا دوتنه یوه ځای ته د راوړلو لپاره ډېره لویه ده.',
+  'Delete {count} items for good?': {
+    one: '{count} توکی د تل لپاره ړنګ شي؟',
+    other: '{count} توکي د تل لپاره ړنګ شي؟',
+  },
+  'Moving {count} items': {
+    one: '{count} توکی وړل کېږي',
+    other: '{count} توکي وړل کېږي',
+  },
+  'Copying {count} items': {
+    one: '{count} توکی کاپي کېږي',
+    other: '{count} توکي کاپي کېږي',
+  },
+  '{name} is already here': '{name} دمخه دلته دی',
+  '{count} names are already here': {
+    one: '{count} نومونه دمخه دلته دي',
+    other: '{count} نومونه دمخه دلته دي',
+  },
 }

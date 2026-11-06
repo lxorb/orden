@@ -98,6 +98,18 @@ export type FileAction =
       restored: string[]
       closed: string[]
     }
+  | { kind: 'outside'; steps: OutsideStep[] }
+
+export type OutsideStep =
+  | { op: 'moved' | 'copied'; pairs: { from: string; to: string }[] }
+  | { op: 'made'; path: string; ticket?: OutsideTicket }
+  | { op: 'trashed' | 'replaced'; tickets: OutsideTicket[] }
+
+export interface OutsideTicket {
+  path: string
+  back: string
+  at: number
+}
 
 export type Kept = Omit<Extract<FileAction, { kind: 'delete' }>, 'kind' | 'path'>
 
@@ -116,7 +128,7 @@ export interface Copied {
 }
 
 import { shownName } from '../note-name'
-import { nameOf, samePath } from '../space-paths'
+import { folderOf, nameOf, samePath } from '../space-paths'
 import type { FileOp } from './file-ops'
 
 /** Twenty is far more than anyone reaches back through, and stops a long
@@ -293,6 +305,8 @@ function labelOf(action: FileAction | undefined): string | null {
       })
     case 'create':
       return t('Undo making {name}', { name: shownName(nameOf(action.path)) })
+    case 'outside':
+      return outsideLabel(action.steps)
     case 'keep':
       return t('Undo the move')
     case 'many': {
@@ -321,12 +335,39 @@ function doesAgain(action: FileAction): boolean {
       return action.steps.every(doesAgain)
     case 'copy':
       return action.made.every((one) => one.from !== undefined)
+    case 'outside':
+      return true
     case 'merge':
     case 'split':
     case 'extract':
     case 'replace':
     case 'import':
       return false
+  }
+}
+
+function outsideLabel(steps: readonly OutsideStep[]): string | null {
+  const step = steps.find((one) => one.op !== 'replaced')
+  if (!step) return null
+  switch (step.op) {
+    case 'moved': {
+      const [only, ...more] = step.pairs
+      if (!only || more.length) return t('Undo the move')
+      return samePath(folderOf(only.from), folderOf(only.to))
+        ? t('Undo renaming {name}', { name: nameOf(only.to) })
+        : t('Undo moving {name}', { name: nameOf(only.to) })
+    }
+    case 'copied':
+      return t('Undo the copy')
+    case 'made':
+      return t('Undo making {name}', { name: nameOf(step.path) })
+    case 'trashed':
+    case 'replaced': {
+      const [only, ...more] = step.tickets
+      return only && !more.length
+        ? t('Undo deleting {name}', { name: nameOf(only.path) })
+        : t('Undo the deletion')
+    }
   }
 }
 

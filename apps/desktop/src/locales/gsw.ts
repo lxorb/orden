@@ -3005,4 +3005,36 @@ export const gsw: Dictionary = {
     one: '{all}, {count} usgwählt ({size})',
     other: '{all}, {count} usgwählt ({size})',
   },
+  'New folder': 'Neue Ordner',
+  'This cannot be undone.': 'Das cha mer nöd rückgängig mache.',
+  'Delete for good': 'Für immer lösche',
+  'could not make the folder': 'de Ordner het nöd chöne aagleit wärde',
+  'could not rename this': 'das het nöd chöne umbenennt wärde',
+  'could not move this to the trash': 'das het nöd chöne in Papierchorb gleit wärde',
+  'could not delete this': 'das het nöd chöne glöscht wärde',
+  'could not copy this': 'das het nöd chöne kopiert wärde',
+  'Open with the system app': 'Mit de App vom System öffne',
+  'Copy to the other pane': 'In de ander Bereich kopiere',
+  'Move to the other pane': 'In de ander Bereich verschiebe',
+  'Copy path': 'Pfad kopiere',
+  'Move to Trash': 'In de Papierchorb',
+  'This file is too large to bring into a space.':
+    'Die Datei isch z gross, zum si i en Bereich z hole.',
+  'Delete {count} items for good?': {
+    one: '{count} Element für immer lösche?',
+    other: '{count} Element für immer lösche?',
+  },
+  'Moving {count} items': {
+    one: '{count} Element wird verschobe',
+    other: '{count} Element wärded verschobe',
+  },
+  'Copying {count} items': {
+    one: '{count} Element wird kopiert',
+    other: '{count} Element wärded kopiert',
+  },
+  '{name} is already here': '{name} isch scho da',
+  '{count} names are already here': {
+    one: '{count} Näme sind scho da',
+    other: '{count} Näme sind scho da',
+  },
 }

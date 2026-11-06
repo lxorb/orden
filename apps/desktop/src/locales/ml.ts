@@ -3029,4 +3029,36 @@ export const ml: Dictionary = {
     one: '{all}, {count} തിരഞ്ഞെടുത്തു ({size})',
     other: '{all}, {count} തിരഞ്ഞെടുത്തു ({size})',
   },
+  'New folder': 'പുതിയ ഫോൾഡർ',
+  'This cannot be undone.': 'ഇത് പഴയപടിയാക്കാനാവില്ല.',
+  'Delete for good': 'എന്നന്നേക്കുമായി ഇല്ലാതാക്കുക',
+  'could not make the folder': 'ഫോൾഡർ ഉണ്ടാക്കാനായില്ല',
+  'could not rename this': 'പേര് മാറ്റാനായില്ല',
+  'could not move this to the trash': 'ട്രാഷിലേക്ക് നീക്കാനായില്ല',
+  'could not delete this': 'ഇല്ലാതാക്കാനായില്ല',
+  'could not copy this': 'പകർത്താനായില്ല',
+  'Open with the system app': 'സിസ്റ്റത്തിന്റെ ആപ്പിൽ തുറക്കുക',
+  'Copy to the other pane': 'മറ്റേ പാളിയിലേക്ക് പകർത്തുക',
+  'Move to the other pane': 'മറ്റേ പാളിയിലേക്ക് നീക്കുക',
+  'Copy path': 'പാത്ത് പകർത്തുക',
+  'Move to Trash': 'ട്രാഷിലേക്ക് നീക്കുക',
+  'This file is too large to bring into a space.':
+    'ഈ ഫയൽ ഒരു സ്പേസിലേക്ക് കൊണ്ടുവരാൻ വളരെ വലുതാണ്.',
+  'Delete {count} items for good?': {
+    one: '{count} ഇനം എന്നന്നേക്കുമായി ഇല്ലാതാക്കണോ?',
+    other: '{count} ഇനങ്ങൾ എന്നന്നേക്കുമായി ഇല്ലാതാക്കണോ?',
+  },
+  'Moving {count} items': {
+    one: '{count} ഇനം നീക്കുന്നു',
+    other: '{count} ഇനങ്ങൾ നീക്കുന്നു',
+  },
+  'Copying {count} items': {
+    one: '{count} ഇനം പകർത്തുന്നു',
+    other: '{count} ഇനങ്ങൾ പകർത്തുന്നു',
+  },
+  '{name} is already here': '{name} ഇതിനകം ഇവിടെയുണ്ട്',
+  '{count} names are already here': {
+    one: '{count} പേരുകൾ ഇതിനകം ഇവിടെയുണ്ട്',
+    other: '{count} പേരുകൾ ഇതിനകം ഇവിടെയുണ്ട്',
+  },
 }

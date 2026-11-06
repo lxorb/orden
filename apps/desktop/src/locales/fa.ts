@@ -2987,4 +2987,36 @@ export const fa: Dictionary = {
     one: '{all}، {count} انتخاب‌شده ({size})',
     other: '{all}، {count} انتخاب‌شده ({size})',
   },
+  'New folder': 'پوشهٔ تازه',
+  'This cannot be undone.': 'این کار برگشت‌پذیر نیست.',
+  'Delete for good': 'حذف همیشگی',
+  'could not make the folder': 'ساختن پوشه ممکن نشد',
+  'could not rename this': 'تغییر نام ممکن نشد',
+  'could not move this to the trash': 'بردن به زباله‌دان ممکن نشد',
+  'could not delete this': 'حذف ممکن نشد',
+  'could not copy this': 'رونوشت ممکن نشد',
+  'Open with the system app': 'باز کردن با برنامهٔ سیستم',
+  'Copy to the other pane': 'رونوشت در بخش دیگر',
+  'Move to the other pane': 'جابه‌جایی به بخش دیگر',
+  'Copy path': 'رونوشت مسیر',
+  'Move to Trash': 'بردن به زباله‌دان',
+  'This file is too large to bring into a space.':
+    'این پرونده برای آوردن به یک فضا بیش از اندازه بزرگ است.',
+  'Delete {count} items for good?': {
+    one: '{count} مورد برای همیشه حذف شود؟',
+    other: '{count} مورد برای همیشه حذف شود؟',
+  },
+  'Moving {count} items': {
+    one: 'جابه‌جایی {count} مورد',
+    other: 'جابه‌جایی {count} مورد',
+  },
+  'Copying {count} items': {
+    one: 'رونوشت {count} مورد',
+    other: 'رونوشت {count} مورد',
+  },
+  '{name} is already here': '{name} از پیش اینجاست',
+  '{count} names are already here': {
+    one: '{count} نام از پیش اینجاست',
+    other: '{count} نام از پیش اینجاست',
+  },
 }

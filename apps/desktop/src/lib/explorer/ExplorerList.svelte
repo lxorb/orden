@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from 'svelte'
   import { fileMark } from '../file-mark'
   import FileMark from '../FileMark.svelte'
   import { t } from '../i18n.svelte'
@@ -6,8 +7,11 @@
   import { shortcuts } from '../shortcuts.svelte'
   import { readableSize } from '../usage.svelte'
   import { walked } from '../walk'
+  import { menu } from '../menu.svelte'
   import { when } from '../when'
+  import { renamePath } from './changes'
   import type { Entry } from './commands'
+  import { roomMenu, rowMenu } from './menu'
   import { openFile } from './open'
   import { endingOf, type SortKey } from './order'
   import type { How } from './picked'
@@ -143,7 +147,95 @@
   }
 
   function pressEmpty(event: MouseEvent) {
-    if (event.target === event.currentTarget) view.pickNone()
+    if (banded) banded = false
+    else if (event.target === event.currentTarget || event.target === room) view.pickNone()
+  }
+
+  let room = $state<HTMLElement>()
+  let band = $state<{ from: number; to: number; kept: string[] } | null>(null)
+  let banded = $state(false)
+
+  function bandStart(event: PointerEvent) {
+    if (event.button !== 0 || (event.target !== scroller && event.target !== room) || !room) return
+    const y = event.clientY - room.getBoundingClientRect().top
+    const kept = event.ctrlKey || event.metaKey ? [...view.picked.names] : []
+    band = { from: y, to: y, kept }
+    ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
+  }
+
+  function bandMove(event: PointerEvent) {
+    if (!band || !room) return
+    band = { ...band, to: event.clientY - room.getBoundingClientRect().top }
+    const top = Math.min(band.from, band.to)
+    const bottom = Math.max(band.from, band.to)
+    if (bottom - top < 4) return
+    banded = true
+    const first = Math.max(0, Math.floor(top / rowHeight))
+    const last = Math.min(rows.length - 1, Math.floor(bottom / rowHeight))
+    view.pickNames([...band.kept, ...view.names.slice(first, last + 1)])
+  }
+
+  function bandEnd() {
+    band = null
+  }
+
+  function rowMenuAt(event: MouseEvent, entry: Entry) {
+    event.preventDefault()
+    menu.show(event, rowMenu(view, entry))
+  }
+
+  function roomMenuAt(event: MouseEvent) {
+    if (event.target !== scroller && event.target !== room) return
+    event.preventDefault()
+    menu.show(event, roomMenu(view))
+  }
+
+  export function menuHere() {
+    const entry = rows[cursorAt]
+    const row = scroller?.querySelector<HTMLElement>(`[data-index="${cursorAt}"]`)
+    if (!entry || !row) return
+    const box = row.getBoundingClientRect()
+    menu.show(
+      new MouseEvent('contextmenu', { clientX: box.left + 24, clientY: box.bottom }),
+      rowMenu(view, entry),
+    )
+  }
+
+  function naming(field: HTMLInputElement) {
+    void tick().then(() => {
+      field.focus()
+      const dot = field.value.lastIndexOf('.')
+      field.setSelectionRange(0, dot > 0 ? dot : field.value.length)
+    })
+  }
+
+  let committing = false
+
+  async function commit(entry: Entry, name: string) {
+    if (committing) return
+    committing = true
+    view.renaming = null
+    try {
+      await renamePath(view, view.pathOf(entry.name), name)
+    } finally {
+      committing = false
+      focus()
+    }
+  }
+
+  function nameKey(event: KeyboardEvent, entry: Entry) {
+    const field = event.currentTarget as HTMLInputElement
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      void commit(entry, field.value)
+    } else if (event.key === 'Escape') {
+      event.preventDefault()
+      committing = true
+      view.renaming = null
+      committing = false
+      focus()
+    }
+    event.stopPropagation()
   }
 
   function kindOf(entry: Entry): string {
@@ -184,6 +276,11 @@
     onscroll={() => (scrollTop = scroller?.scrollTop ?? 0)}
     onkeydown={onkey}
     onclick={pressEmpty}
+    onpointerdown={bandStart}
+    onpointermove={bandMove}
+    onpointerup={bandEnd}
+    onpointercancel={bandEnd}
+    oncontextmenu={roomMenuAt}
     data-entry={rows.length ? undefined : ''}
   >
     {#if view.wrong}
@@ -191,7 +288,14 @@
     {:else if view.listing && !rows.length}
       <p class="said">{t('This folder is empty.')}</p>
     {/if}
-    <div class="room" style:height="{rows.length * rowHeight}px">
+    <div class="room" bind:this={room} style:height="{rows.length * rowHeight}px">
+      {#if band && banded}
+        <div
+          class="band"
+          style:top="{Math.min(band.from, band.to)}px"
+          style:height="{Math.abs(band.to - band.from)}px"
+        ></div>
+      {/if}
       {#each drawn as index (rows[index]?.name ?? index)}
         {@const entry = rows[index]}
         {#if entry}
@@ -209,10 +313,26 @@
             use:measure
             onclick={(event) => press(event, entry)}
             ondblclick={() => open(entry)}
+            oncontextmenu={(event) => rowMenuAt(event, entry)}
           >
             <span class="name">
               <FileMark mark={entry.folder ? 'folder' : fileMark(entry.name)} />
-              <span class="nib-row-label">{entry.name}</span>
+              {#if view.renaming === entry.name}
+                <input
+                  class="nib-field rename"
+                  value={entry.name}
+                  aria-label={t('Rename')}
+                  spellcheck="false"
+                  autocomplete="off"
+                  use:naming
+                  onkeydown={(event) => nameKey(event, entry)}
+                  onblur={(event) => void commit(entry, event.currentTarget.value)}
+                  onclick={(event) => event.stopPropagation()}
+                  ondblclick={(event) => event.stopPropagation()}
+                />
+              {:else}
+                <span class="nib-row-label">{entry.name}</span>
+              {/if}
             </span>
             <span class="nib-row-meta modified">{when(entry.modified, 'short')}</span>
             <span class="nib-row-meta size">{entry.folder ? '' : readableSize(entry.size)}</span>
@@ -317,6 +437,23 @@
 
   .size {
     text-align: end;
+  }
+
+  .rename {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    height: calc(var(--row-height) - var(--space-1));
+  }
+
+  .band {
+    position: absolute;
+    inset-inline: 0;
+    z-index: var(--z-raised);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+    pointer-events: none;
   }
 
   .said {

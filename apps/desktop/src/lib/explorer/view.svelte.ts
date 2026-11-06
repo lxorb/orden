@@ -13,7 +13,15 @@ import {
 } from './commands'
 import { folderName, parentOf } from './crumbs'
 import { ordered } from './order'
-import { NOTHING, type Picked, pickedAt, pickedAll, stillThere, type How } from './picked'
+import {
+  type How,
+  NOTHING,
+  type Picked,
+  pickedAll,
+  pickedAt,
+  pickedOnly,
+  stillThere,
+} from './picked'
 import { places } from './places.svelte'
 import { explorerPrefs } from './prefs.svelte'
 import { readSpec, type Spec, steppedBack, steppedForward, wentTo, writeSpec } from './spec'
@@ -25,6 +33,9 @@ export class ExplorerView {
   listing = $state<Listing | null>(null)
   wrong = $state<string | null>(null)
   picked = $state<Picked>(NOTHING)
+  renaming = $state<string | null>(null)
+  said = $state<string | null>(null)
+  #saying: ReturnType<typeof setTimeout> | undefined
 
   readonly rows = $derived<Entry[]>(
     this.listing ? ordered(this.listing.entries, explorerPrefs.sort, explorerPrefs.hidden) : [],
@@ -109,6 +120,10 @@ export class ExplorerView {
     this.picked = pickedAt(this.picked, this.names, name, how)
   }
 
+  pickNames(names: readonly string[]) {
+    this.picked = pickedOnly(names)
+  }
+
   pickAll() {
     this.picked = pickedAll(this.picked, this.names)
   }
@@ -124,6 +139,12 @@ export class ExplorerView {
         ? []
         : [this.picked.cursor]
     return names.map((one) => this.pathOf(one))
+  }
+
+  tell(said: string) {
+    this.said = said
+    clearTimeout(this.#saying)
+    this.#saying = setTimeout(() => (this.said = null), SAID_FOR)
   }
 
   stop() {
@@ -168,6 +189,8 @@ export class ExplorerView {
   }
 }
 
+const SAID_FOR = 6000
+
 function fresh(folder: string): Spec {
   return { folder, back: [], ahead: [] }
 }
@@ -181,6 +204,12 @@ export function viewOf(tab: Tab): ExplorerView {
     views.set(tab, view)
   }
   return view
+}
+
+export function relistAll() {
+  for (const tab of workspace.tabs) {
+    if (tab.kind === 'explorer') void views.get(tab)?.reload()
+  }
 }
 
 let hearing = false

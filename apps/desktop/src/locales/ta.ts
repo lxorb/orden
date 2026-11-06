@@ -3035,4 +3035,36 @@ export const ta: Dictionary = {
     one: '{all}, {count} தேர்ந்தெடுக்கப்பட்டது ({size})',
     other: '{all}, {count} தேர்ந்தெடுக்கப்பட்டன ({size})',
   },
+  'New folder': 'புதிய கோப்புறை',
+  'This cannot be undone.': 'இதைத் திரும்பப் பெற முடியாது.',
+  'Delete for good': 'நிரந்தரமாக நீக்கு',
+  'could not make the folder': 'கோப்புறையை உருவாக்க முடியவில்லை',
+  'could not rename this': 'பெயரை மாற்ற முடியவில்லை',
+  'could not move this to the trash': 'குப்பைக்கு நகர்த்த முடியவில்லை',
+  'could not delete this': 'நீக்க முடியவில்லை',
+  'could not copy this': 'நகலெடுக்க முடியவில்லை',
+  'Open with the system app': 'கணினியின் ஆப்பில் திற',
+  'Copy to the other pane': 'மற்றப் பலகத்துக்கு நகலெடு',
+  'Move to the other pane': 'மற்றப் பலகத்துக்கு நகர்த்து',
+  'Copy path': 'பாதையை நகலெடு',
+  'Move to Trash': 'குப்பைக்கு நகர்த்து',
+  'This file is too large to bring into a space.':
+    'இந்தக் கோப்பு ஓர் இடத்துக்குக் கொண்டுவர மிகப் பெரியது.',
+  'Delete {count} items for good?': {
+    one: '{count} உருப்படியை நிரந்தரமாக நீக்கவா?',
+    other: '{count} உருப்படிகளை நிரந்தரமாக நீக்கவா?',
+  },
+  'Moving {count} items': {
+    one: '{count} உருப்படி நகர்த்தப்படுகிறது',
+    other: '{count} உருப்படிகள் நகர்த்தப்படுகின்றன',
+  },
+  'Copying {count} items': {
+    one: '{count} உருப்படி நகலெடுக்கப்படுகிறது',
+    other: '{count} உருப்படிகள் நகலெடுக்கப்படுகின்றன',
+  },
+  '{name} is already here': '{name} ஏற்கெனவே இங்கே உள்ளது',
+  '{count} names are already here': {
+    one: '{count} பெயர்கள் ஏற்கெனவே இங்கே உள்ளன',
+    other: '{count} பெயர்கள் ஏற்கெனவே இங்கே உள்ளன',
+  },
 }

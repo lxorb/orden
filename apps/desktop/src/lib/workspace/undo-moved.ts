@@ -72,5 +72,7 @@ export function rewritten(action: FileAction, from: string, to: string) {
       action.restored = action.restored.map(at)
       action.closed = action.closed.map(at)
       break
+    case 'outside':
+      break
   }
 }

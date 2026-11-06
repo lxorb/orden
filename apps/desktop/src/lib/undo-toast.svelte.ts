@@ -14,7 +14,7 @@
  *  actions of the same kind arriving while the toast is up join it, and Undo takes all
  *  of them back. A different kind of action is a different gesture and starts again. */
 
-import type { FileAction } from './workspace/undo.svelte'
+import type { FileAction, OutsideStep } from './workspace/undo.svelte'
 
 /** What a view's write to tasks was: completed, scheduled, moved, deleted. */
 export type Said = 'done' | 'scheduled' | 'moved' | 'deleted'
@@ -36,6 +36,7 @@ type Told = 'delete' | 'move' | 'archive' | 'unarchive' | Said
 function toldOf(action: Offered): Told {
   const one = headOf(action)
   if (one.kind === 'replace') return told.get(one) ?? 'done'
+  if (one.kind === 'outside') return outsideTold(one.steps) ?? 'move'
   return one.kind as Exclude<Told, Said>
 }
 
@@ -56,8 +57,16 @@ function offered(action: FileAction): boolean {
     action.kind === 'move' ||
     action.kind === 'archive' ||
     action.kind === 'unarchive' ||
-    (action.kind === 'replace' && told.has(action))
+    (action.kind === 'replace' && told.has(action)) ||
+    (action.kind === 'outside' && outsideTold(action.steps) !== null)
   )
+}
+
+function outsideTold(steps: readonly OutsideStep[]): 'delete' | 'move' | null {
+  const step = steps.find((one) => one.op !== 'replaced')
+  if (step?.op === 'trashed') return 'delete'
+  if (step?.op === 'moved') return 'move'
+  return null
 }
 
 /** What the toast offers once the stack reads `stack`, having offered `batch`, where

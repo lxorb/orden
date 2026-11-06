@@ -193,7 +193,8 @@ describe.each(['default', 'notion', 'obsidian', 'vscode', 'vim'])('the %s keyboa
         one.scope === 'panel' &&
         !one.id.startsWith('web.') &&
         !one.id.startsWith('ai.') &&
-        !one.id.startsWith('tasks.'),
+        !one.id.startsWith('tasks.') &&
+        !one.id.startsWith('explorer.'),
     )
     const app = registry.SHORTCUTS.filter((one) => !one.contextual && one.scope === 'app')
     const shared = new Set(['canvas.duplicate app.deselect-tab'])

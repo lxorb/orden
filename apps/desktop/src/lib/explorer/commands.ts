@@ -1,4 +1,5 @@
 import { invoke } from '../tauri'
+import type { OutsideTicket } from '../workspace/undo.svelte'
 
 export interface Entry {
   name: string
@@ -57,3 +58,75 @@ export function unwatchFolder(folder: string): Promise<void> {
 }
 
 export const CHANGED = 'explorer://changed'
+
+export interface Pair {
+  from: string
+  to: string
+}
+
+export interface Transferred {
+  done: Pair[]
+  replaced: OutsideTicket[]
+  skipped: string[]
+  failed: { path: string; why: string }[]
+  cancelled: boolean
+}
+
+export type Clash = 'replace' | 'skip' | 'keep'
+
+export function makeIn(folder: string, name: string, file: boolean): Promise<string> {
+  return invoke<string>('explorer_make', { folder, name, file })
+}
+
+export function renameTo(path: string, name: string): Promise<string> {
+  return invoke<string>('explorer_rename', { path, name })
+}
+
+export interface Trashing {
+  why: string
+  went: OutsideTicket[]
+}
+
+export function trashPaths(paths: readonly string[]): Promise<OutsideTicket[]> {
+  return invoke<OutsideTicket[]>('explorer_trash', { paths })
+}
+
+export function untrash(tickets: readonly OutsideTicket[]): Promise<string[]> {
+  return invoke<string[]>('explorer_untrash', { tickets })
+}
+
+export function deleteForGood(paths: readonly string[]): Promise<void> {
+  return invoke<undefined>('explorer_delete', { paths })
+}
+
+export function clashesIn(sources: readonly string[], folder: string): Promise<string[]> {
+  return invoke<string[]>('explorer_clashes', { sources, folder })
+}
+
+export function transfer(
+  job: string,
+  sources: readonly string[],
+  folder: string,
+  how: 'copy' | 'move',
+  clash: Clash,
+): Promise<Transferred> {
+  return invoke<Transferred>('explorer_transfer', { job, sources, folder, how, clash })
+}
+
+export function put(
+  job: string,
+  pairs: readonly Pair[],
+  how: 'copy' | 'move',
+): Promise<Transferred> {
+  return invoke<Transferred>('explorer_put', { job, pairs, how })
+}
+
+export function cancelJob(job: string): Promise<void> {
+  return invoke<undefined>('explorer_cancel', { job })
+}
+
+export const PROGRESS = 'explorer://progress'
+
+export function showInSystem(path: string): Promise<void> {
+  return invoke<undefined>('explorer_reveal', { path })
+}

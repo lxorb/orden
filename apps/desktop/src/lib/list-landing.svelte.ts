@@ -16,6 +16,7 @@ import {
   landing,
 } from './drag-paths'
 import { shortcuts } from './shortcuts.svelte'
+import { within } from './space-paths'
 import { workspace } from './workspace.svelte'
 
 class FileClipboard {
@@ -36,6 +37,15 @@ class FileClipboard {
   /** A cut moves, once; a copy copies. Rows gone since are left out. */
   async paste(into: string) {
     const paths = this.paths.filter((one) => workspace.entryAt(one) !== null)
+    const outside = this.paths.filter(
+      (one) => !workspace.spaces.some((space) => within(space.root, one) !== null),
+    )
+    if (outside.length && !__EVEN_PLUGIN__) {
+      const cut = this.cut
+      if (cut) this.hold([], false)
+      const { carry } = await import('./explorer/changes')
+      return carry(null, this.paths, into, cut ? 'move' : 'copy')
+    }
     if (!paths.length) return
     if (!this.cut) return workspace.copyMany(paths, into)
 

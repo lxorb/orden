@@ -3027,4 +3027,36 @@ export const ha: Dictionary = {
     one: '{all}, an zaɓi {count} ({size})',
     other: '{all}, an zaɓi {count} ({size})',
   },
+  'New folder': 'Sabon babban fayil',
+  'This cannot be undone.': 'Ba za a iya mayar da wannan ba.',
+  'Delete for good': 'Goge har abada',
+  'could not make the folder': 'ba a iya yin babban fayil ɗin ba',
+  'could not rename this': 'ba a iya canza sunan wannan ba',
+  'could not move this to the trash': 'ba a iya kai wannan sharar ba',
+  'could not delete this': 'ba a iya goge wannan ba',
+  'could not copy this': 'ba a iya kwafin wannan ba',
+  'Open with the system app': 'Buɗe da manhajar tsarin',
+  'Copy to the other pane': 'Kwafa zuwa ɗayan ɓangaren',
+  'Move to the other pane': 'Matsar zuwa ɗayan ɓangaren',
+  'Copy path': 'Kwafi hanyar',
+  'Move to Trash': 'Matsar zuwa Shara',
+  'This file is too large to bring into a space.':
+    'Wannan fayil ya yi girma da yawa don a kawo shi cikin wuri.',
+  'Delete {count} items for good?': {
+    one: 'A goge abu {count} har abada?',
+    other: 'A goge abubuwa {count} har abada?',
+  },
+  'Moving {count} items': {
+    one: 'Ana matsar da abu {count}',
+    other: 'Ana matsar da abubuwa {count}',
+  },
+  'Copying {count} items': {
+    one: 'Ana kwafin abu {count}',
+    other: 'Ana kwafin abubuwa {count}',
+  },
+  '{name} is already here': '{name} yana nan tuni',
+  '{count} names are already here': {
+    one: 'Sunaye {count} suna nan tuni',
+    other: 'Sunaye {count} suna nan tuni',
+  },
 }

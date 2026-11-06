@@ -1834,6 +1834,8 @@ const EXPLORER_ENTRIES: Shortcut[] = (
     ['explorer.parent.alt', () => t('Folder above'), 'Alt-ArrowUp', 'Alt-ArrowUp'],
     ['explorer.location', () => t('Type a location'), 'Mod-l', 'Mod-Shift-g'],
     ['explorer.hidden', () => t('Hidden files'), 'Mod-h', 'Mod-Shift-h'],
+    ['explorer.new-folder', () => t('New folder'), 'Mod-Shift-n', 'Mod-Shift-n'],
+    ['explorer.delete', () => t('Delete for good'), 'Shift-Delete', 'Mod-Alt-Backspace'],
   ] as const
 ).map(([id, label, key, mac]) => ({
   id,

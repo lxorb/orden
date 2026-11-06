@@ -54,6 +54,21 @@ file, and is never a selection mode.
 | Ctrl+L (Cmd+Shift+G) | type a path |
 | Ctrl+H (Cmd+Shift+H) | hidden files |
 | Enter, a double click | open |
+| F2 (Cmd+Enter) | rename in place, with the name chosen and its ending left out |
+| Ctrl+C, Ctrl+X, Ctrl+V | copy, cut, paste: the file list's own clipboard, so a row copied in either pastes in the other |
+| Ctrl+Shift+N | a new folder, waiting for its name |
+| Delete (Cmd+Backspace) | to the trash |
+| Shift+Delete (Cmd+Alt+Backspace) | delete for good, after a question |
+| Ctrl+Z, Ctrl+Y | undo, redo |
+| Shift+F10, the menu key | the row's menu |
+
+The mouse picks as in every file manager: a click, Ctrl and Shift with it, and a drag
+from the room under the rows across the rows it covers (with Ctrl, added to what was
+picked). The row's menu is short and the same every time: Open, Open with the system app
+(for a file Orden opens), Show in the system's file manager, Cut, Copy, Paste into a
+folder, Copy to and Move to the other pane where an explorer shows a folder there,
+Duplicate, Rename, Copy path, Move to Trash and Delete for good. The room under the rows
+has New folder, Paste, Hidden files and Show in the system's file manager.
 
 ## Opening
 
@@ -80,8 +95,38 @@ change for the explorer has been asked on the issue.
   holds one of them.
 - On Windows, no stream and no 8.3 alias.
 
-The commands that change things are in the crate already: `explorer/changes.rs` makes,
-renames, trashes, brings back out of the trash and deletes for good, and `explorer/jobs.rs`
-copies and moves with progress and a Cancel, counts a folder and searches below one. The
-system's own trash, and the way back out of it for an undo, is `explorer/bin.rs`: the Mac's
-`NSFileManager`, and the `trash` crate's Recycle Bin and freedesktop.org trash.
+## Changes
+
+`explorer/changes.ts` decides how each change is made:
+
+- **Outside the spaces**, through the crate (`explorer/changes.rs` and `explorer/jobs.rs`).
+  Each change is recorded on the app's one file-undo stack as an `outside` action, which
+  `explorer/undo.ts` takes back and does again. So `Ctrl+Z` in an explorer, the toast's
+  Undo and the file list's own undo are one history.
+- **Inside a space**, through the file list's own operations (`workspace.rename`,
+  `removeMany`, `copyMany`, `moveMany`, `bringIn`), which keep links, Recently deleted,
+  versions and sync right and record their own undo. A new folder there is the
+  `create_folder` command, as an agent's is.
+- **Between the two.** A copy into a space is an import, the way a file dropped on the file
+  list is: its bytes are read through the window, at most 48 MB a file. A copy out of a
+  space is a copy. A move either way is that copy, with the original deleted afterwards in
+  its own way (Recently deleted, or the system's trash). One gesture is one undo, however
+  many of these it took.
+
+Every change outside the spaces can be undone except Delete for good, which asks first. A
+trash comes back out of the system's trash (`explorer/bin.rs`: the Mac's `NSFileManager`,
+which says where it put the file, and the `trash` crate's Recycle Bin and freedesktop.org
+trash, found again by where each came from and when). A copy is undone into the trash, not
+deleted. A move or a rename goes back exactly where it was (`explorer_put`). A new folder
+goes to the trash.
+
+A copy or a move runs in the crate as a job (`explorer/jobs.svelte.ts`). It shows at the
+foot with its progress and a Cancel once it has run for 400 ms. A cancelled copy stops
+between two chunks of a file and takes away the half it wrote. A move on one disk is a
+rename; across disks it is a copy, and the original goes only once the copy is whole.
+Names already in the folder are asked about once, before anything is written: Keep both
+(`name 2`), Replace or Skip. What Replace replaces goes to the trash first, so it can be
+undone too. A folder never goes inside itself.
+
+A folder in Orden's own folders, the folder of the spaces and its trash are shown and
+offer no change.

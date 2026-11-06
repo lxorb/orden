@@ -668,6 +668,7 @@ macro_rules! desktop_commands {
             explorer::jobs::explorer_cancel,
             explorer::jobs::explorer_clashes,
             explorer::jobs::explorer_transfer,
+            explorer::jobs::explorer_put,
             explorer::jobs::explorer_count,
             explorer::jobs::explorer_search,
             explorer::watch::explorer_watch,

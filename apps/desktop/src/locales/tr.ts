@@ -3003,4 +3003,36 @@ export const tr: Dictionary = {
     one: '{all}, {count} seçili ({size})',
     other: '{all}, {count} seçili ({size})',
   },
+  'New folder': 'Yeni klasör',
+  'This cannot be undone.': 'Bu geri alınamaz.',
+  'Delete for good': 'Kalıcı olarak sil',
+  'could not make the folder': 'klasör oluşturulamadı',
+  'could not rename this': 'yeniden adlandırılamadı',
+  'could not move this to the trash': 'çöpe taşınamadı',
+  'could not delete this': 'silinemedi',
+  'could not copy this': 'kopyalanamadı',
+  'Open with the system app': 'Sistemin uygulamasıyla aç',
+  'Copy to the other pane': 'Diğer bölmeye kopyala',
+  'Move to the other pane': 'Diğer bölmeye taşı',
+  'Copy path': 'Yolu kopyala',
+  'Move to Trash': 'Çöpe taşı',
+  'This file is too large to bring into a space.':
+    'Bu dosya bir alana getirilemeyecek kadar büyük.',
+  'Delete {count} items for good?': {
+    one: '{count} öğe kalıcı olarak silinsin mi?',
+    other: '{count} öğe kalıcı olarak silinsin mi?',
+  },
+  'Moving {count} items': {
+    one: '{count} öğe taşınıyor',
+    other: '{count} öğe taşınıyor',
+  },
+  'Copying {count} items': {
+    one: '{count} öğe kopyalanıyor',
+    other: '{count} öğe kopyalanıyor',
+  },
+  '{name} is already here': '{name} zaten burada',
+  '{count} names are already here': {
+    one: '{count} ad zaten burada',
+    other: '{count} ad zaten burada',
+  },
 }

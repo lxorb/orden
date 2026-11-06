@@ -3046,4 +3046,36 @@ export const de: Dictionary = {
     one: '{all}, {count} ausgewählt ({size})',
     other: '{all}, {count} ausgewählt ({size})',
   },
+  'New folder': 'Neuer Ordner',
+  'This cannot be undone.': 'Das lässt sich nicht rückgängig machen.',
+  'Delete for good': 'Endgültig löschen',
+  'could not make the folder': 'der Ordner konnte nicht angelegt werden',
+  'could not rename this': 'das konnte nicht umbenannt werden',
+  'could not move this to the trash': 'das konnte nicht in den Papierkorb gelegt werden',
+  'could not delete this': 'das konnte nicht gelöscht werden',
+  'could not copy this': 'das konnte nicht kopiert werden',
+  'Open with the system app': 'Mit der App des Systems öffnen',
+  'Copy to the other pane': 'In den anderen Bereich kopieren',
+  'Move to the other pane': 'In den anderen Bereich verschieben',
+  'Copy path': 'Pfad kopieren',
+  'Move to Trash': 'In den Papierkorb',
+  'This file is too large to bring into a space.':
+    'Diese Datei ist zu groß, um sie in einen Bereich zu holen.',
+  'Delete {count} items for good?': {
+    one: '{count} Element endgültig löschen?',
+    other: '{count} Elemente endgültig löschen?',
+  },
+  'Moving {count} items': {
+    one: '{count} Element wird verschoben',
+    other: '{count} Elemente werden verschoben',
+  },
+  'Copying {count} items': {
+    one: '{count} Element wird kopiert',
+    other: '{count} Elemente werden kopiert',
+  },
+  '{name} is already here': '{name} ist schon hier',
+  '{count} names are already here': {
+    one: '{count} Namen sind schon hier',
+    other: '{count} Namen sind schon hier',
+  },
 }

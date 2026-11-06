@@ -3046,4 +3046,36 @@ export const fil: Dictionary = {
     one: '{all}, {count} ang napili ({size})',
     other: '{all}, {count} ang napili ({size})',
   },
+  'New folder': 'Bagong folder',
+  'This cannot be undone.': 'Hindi na ito maibabalik.',
+  'Delete for good': 'Burahin nang tuluyan',
+  'could not make the folder': 'hindi magawa ang folder',
+  'could not rename this': 'hindi mapalitan ang pangalan nito',
+  'could not move this to the trash': 'hindi mailipat ito sa basurahan',
+  'could not delete this': 'hindi mabura ito',
+  'could not copy this': 'hindi makopya ito',
+  'Open with the system app': 'Buksan sa app ng system',
+  'Copy to the other pane': 'Kopyahin sa kabilang pane',
+  'Move to the other pane': 'Ilipat sa kabilang pane',
+  'Copy path': 'Kopyahin ang path',
+  'Move to Trash': 'Ilipat sa Basurahan',
+  'This file is too large to bring into a space.':
+    'Masyadong malaki ang file na ito para dalhin sa isang espasyo.',
+  'Delete {count} items for good?': {
+    one: 'Burahin nang tuluyan ang {count} item?',
+    other: 'Burahin nang tuluyan ang {count} na item?',
+  },
+  'Moving {count} items': {
+    one: 'Inililipat ang {count} item',
+    other: 'Inililipat ang {count} na item',
+  },
+  'Copying {count} items': {
+    one: 'Kinokopya ang {count} item',
+    other: 'Kinokopya ang {count} na item',
+  },
+  '{name} is already here': 'Nandito na ang {name}',
+  '{count} names are already here': {
+    one: 'Nandito na ang {count} na pangalan',
+    other: 'Nandito na ang {count} na pangalan',
+  },
 }

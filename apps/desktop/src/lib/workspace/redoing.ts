@@ -85,6 +85,9 @@ async function again(ws: DoesAgain, action: FileAction): Promise<void> {
       // Never in the glasses' plugin, which has no archiving to do again.
       if (!__EVEN_PLUGIN__) (await import('../archiving')).archiveAgain(action)
       break
+    case 'outside':
+      if (!__EVEN_PLUGIN__) await (await import('../explorer/undo')).redoOutside(action)
+      break
     // Never ahead: they kept only the way back; see `doesAgain`.
     case 'merge':
     case 'split':

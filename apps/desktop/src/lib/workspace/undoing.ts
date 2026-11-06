@@ -164,6 +164,9 @@ async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
       case 'unarchive':
         await unarchive(ws, action)
         break
+      case 'outside':
+        if (!__EVEN_PLUGIN__) await (await import('../explorer/undo')).undoOutside(action)
+        break
     }
   } catch {
     // Something else has since changed the file; leave what is there alone.

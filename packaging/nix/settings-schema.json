@@ -1196,6 +1196,10 @@
     "type": "string",
     "description": "The key that runs Upper case, as the keys file writes it; empty for none."
   },
+  "shortcuts.explorer-delete": {
+    "type": "string",
+    "description": "The key that runs Delete for good, as the keys file writes it; empty for none."
+  },
   "shortcuts.explorer-hidden": {
     "type": "string",
     "description": "The key that runs Hidden files, as the keys file writes it; empty for none."
@@ -1203,6 +1207,10 @@
   "shortcuts.explorer-location": {
     "type": "string",
     "description": "The key that runs Type a location, as the keys file writes it; empty for none."
+  },
+  "shortcuts.explorer-new-folder": {
+    "type": "string",
+    "description": "The key that runs New folder, as the keys file writes it; empty for none."
   },
   "shortcuts.explorer-parent": {
     "type": "string",
