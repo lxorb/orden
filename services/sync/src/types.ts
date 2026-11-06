@@ -47,6 +47,8 @@ export interface Env {
   GITHUB_FEEDBACK_TOKEN?: string
   FEEDBACK_PROJECT?: string
 
+  CRASH_READER_TOKEN?: string
+
   AI?: { run(model: string, input: unknown): Promise<unknown> }
 
   OPENAI_KEY_SECRET?: string

@@ -11,6 +11,8 @@ const HOLDS_NOTHING: Record<string, string> = {
   online_service: "the online terminal service's own switches, about no account",
   sync_rollout: "sync v2's switch for the whole service, about no account",
   guest_sessions: "a guest's way in: a guest only says it is at an address (#488)",
+  crash_reports: 'crash reports are kept without saying whose they are (#1226)',
+  crash_groups: 'crash reports grouped by their stack, about no account (#1226)',
 }
 
 const WHOSE = ['user_id', 'email', 'space_id', 'note_id', 'who']

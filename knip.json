@@ -16,7 +16,8 @@
   "workspaces": {
     ".": {
       "entry": ["scripts/**/*.{ts,js,mjs}"],
-      "ignoreDependencies": ["vite"]
+      "ignoreDependencies": ["vite"],
+      "ignoreBinaries": ["llvm-symbolizer"]
     },
     "packages/bases": {},
     "packages/chats": {},
