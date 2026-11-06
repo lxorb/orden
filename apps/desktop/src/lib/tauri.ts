@@ -173,3 +173,16 @@ export async function openExternal(url: string): Promise<void> {
   const { openUrl } = await import('@tauri-apps/plugin-opener')
   await openUrl(url)
 }
+
+export function whenScreenGivenBack(given: () => void): () => void {
+  if (typeof document === 'undefined' || !document.fullscreenElement) return () => undefined
+
+  const heard = () => {
+    if (document.fullscreenElement) return
+    stop()
+    given()
+  }
+  const stop = () => document.removeEventListener('fullscreenchange', heard)
+  document.addEventListener('fullscreenchange', heard)
+  return stop
+}

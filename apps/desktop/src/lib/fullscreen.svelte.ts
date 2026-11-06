@@ -1,4 +1,4 @@
-import { currentWindow } from './tauri'
+import { currentWindow, whenScreenGivenBack } from './tauri'
 import { afterQuiet } from './timing'
 
 export interface Panes {
@@ -28,6 +28,7 @@ class FullScreen {
   private stirred = 0
   private panes: Panes | null = null
   private filledBefore: string | null = null
+  private unheard: (() => void) | null = null
 
   async toggle(panes: Panes) {
     if (this.on) await this.leave()
@@ -55,15 +56,9 @@ class FullScreen {
     if (panes) panes.fills = this.filledBefore === panes.focusedId ? this.filledBefore : null
     this.panes = null
     this.filledBefore = null
-    if (typeof document !== 'undefined')
-      document.removeEventListener('fullscreenchange', this.given)
+    this.unheard?.()
+    this.unheard = null
     await this.window(false)
-  }
-
-  private readonly given = () => {
-    if (document.fullscreenElement !== null) return
-    document.removeEventListener('fullscreenchange', this.given)
-    void this.leave()
   }
 
   stir(now: number = Date.now()) {
@@ -90,9 +85,7 @@ class FullScreen {
     try {
       const window = await currentWindow()
       await window.setFullscreen(on)
-      if (on && this.on && typeof document !== 'undefined' && document.fullscreenElement) {
-        document.addEventListener('fullscreenchange', this.given)
-      }
+      if (on && this.on) this.unheard = whenScreenGivenBack(() => void this.leave())
     } catch {
       // Nothing to say to the reader: the document is full screen either way.
     }

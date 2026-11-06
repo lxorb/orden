@@ -1,5 +1,5 @@
 import { isDeck } from '@orden/markdown/slide-breaks'
-import { currentWindow } from '../tauri'
+import { currentWindow, whenScreenGivenBack } from '../tauri'
 import { workspace } from '../workspace.svelte'
 
 class Present {
@@ -12,6 +12,8 @@ class Present {
   private filled = false
 
   private turn: Promise<void> = Promise.resolve()
+
+  private unheard: (() => void) | null = null
 
   start(tabId: string | null = workspace.activeTabId) {
     const tab = workspace.tabs.find((one) => one.id === tabId)
@@ -28,6 +30,8 @@ class Present {
     if (this.tabId === null) return
 
     this.tabId = null
+    this.unheard?.()
+    this.unheard = null
     this.follow()
   }
 
@@ -55,6 +59,8 @@ class Present {
       this.wasFullscreen = await window.isFullscreen()
       this.filled = true
       if (!this.wasFullscreen) await window.setFullscreen(true)
+      this.unheard?.()
+      this.unheard = this.tabId === null ? null : whenScreenGivenBack(() => this.stop())
       return
     }
 
