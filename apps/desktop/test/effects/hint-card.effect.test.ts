@@ -1,4 +1,5 @@
 import { flushSync, mount, unmount } from 'svelte'
+import { SvelteMap } from 'svelte/reactivity'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import HintCard from '../../src/lib/HintCard.svelte'
 import { hints } from '../../src/lib/hints.svelte'
@@ -67,4 +68,48 @@ test('its cross puts it away', () => {
 
   expect(hints.current).toBeNull()
   expect(hints.seen).toEqual(['graph'])
+})
+
+test('a card stays up while what it waits on changes but still holds (#677)', () => {
+  const notes = new SvelteMap([['count', 6]])
+  hints.settle()
+  shown = mount(HintCard, {
+    target: host,
+    props: {
+      hint: 'graph',
+      text: 'See them',
+      get when() {
+        return (notes.get('count') ?? 0) > 4
+      },
+    },
+  })
+  flushSync()
+  expect(hints.current).toBe('graph')
+
+  notes.set('count', 7)
+  flushSync()
+
+  expect(hints.current).toBe('graph')
+  expect(card()?.textContent).toContain('See them')
+})
+
+test('a card put away earlier never works out whether it matters (#677)', () => {
+  hints.dismiss('graph')
+  hints.settle()
+  let asked = 0
+  shown = mount(HintCard, {
+    target: host,
+    props: {
+      hint: 'graph',
+      text: 'See them',
+      get when() {
+        asked++
+        return true
+      },
+    },
+  })
+  flushSync()
+
+  expect(asked).toBe(0)
+  expect(card()).toBeNull()
 })

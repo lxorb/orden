@@ -10,7 +10,7 @@
   const {
     hint,
     text,
-    when = true,
+    when,
     side = 'above',
     onpress,
   }: {
@@ -22,9 +22,10 @@
   } = $props()
 
   $effect(() => {
-    hints.want(hint, when)
-    return () => hints.want(hint, false)
+    hints.want(hint, hints.open(hint) && when !== false)
   })
+
+  $effect(() => () => hints.want(hint, false))
 
   function press() {
     hints.dismiss(hint)

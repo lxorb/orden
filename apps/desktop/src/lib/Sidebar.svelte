@@ -50,6 +50,8 @@
   import { pullable } from './pull.svelte'
   import { scrollbar } from './scrollbar'
   import { workspace } from './workspace.svelte'
+  import { links } from './link-index.svelte'
+  import { worthAGraph } from './graph'
   import { DEEPEST, SHALLOWEST } from './workspace/graph-settings.svelte'
   import { search } from './search.svelte'
   import { SidebarWidth } from './sidebar-width.svelte'
@@ -635,7 +637,7 @@
             hint="graph"
             side="below"
             text={t('See how your notes connect.')}
-            when={workspace.notes.length > 2}
+            when={worthAGraph(links.graph)}
             onpress={() => workspace.openGraph()}
           />
         {/await}

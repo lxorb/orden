@@ -18,7 +18,7 @@ class Hints {
 
   private settled = false
 
-  private spent = false
+  private spent = $state(false)
 
   constructor() {
     this.restore()
@@ -37,6 +37,11 @@ class Hints {
   settle() {
     this.settled = true
     this.pick()
+  }
+
+  open(hint: Hint): boolean {
+    if (this.seen.includes(hint)) return false
+    return this.current === hint || (this.current === null && !this.spent)
   }
 
   want(hint: Hint, yes: boolean) {
