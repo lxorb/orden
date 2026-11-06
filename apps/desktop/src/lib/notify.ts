@@ -30,11 +30,18 @@ export function show(one: Notice): void {
   }
   if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
 
-  const shown = new Notification(one.title, {
+  const options: NotificationOptions = {
     body: one.from ? `${one.body}\n${one.from}` : one.body,
     ...(one.tag ? { tag: one.tag } : {}),
     ...(one.silent ? { silent: true } : {}),
-  })
+  }
+  let shown: Notification
+  try {
+    shown = new Notification(one.title, options)
+  } catch {
+    shownByTheWorker(one, options)
+    return
+  }
   shown.onclick = () => {
     window.focus()
     one.opened?.()
@@ -51,11 +58,59 @@ export function askToShow(): void {
 export function unshow(tag: string): void {
   up.get(tag)?.close()
   up.delete(tag)
+  if (byWorker.delete(tag)) closeByTheWorker(tag)
   const id = showing.get(tag)
   if (id === undefined) return
   showing.delete(tag)
   answering.delete(id)
   if (isDesktop) void invoke('notice_clear', { tag }).catch(() => undefined)
+}
+
+const byWorker = new Map<string, Notice>()
+let hearingTheWorker = false
+
+function worker(): ServiceWorkerContainer | null {
+  return typeof navigator !== 'undefined' && 'serviceWorker' in navigator
+    ? navigator.serviceWorker
+    : null
+}
+
+function shownByTheWorker(one: Notice, options: NotificationOptions): void {
+  const workers = worker()
+  if (!workers) return
+
+  const tag = one.tag ?? fresh()
+  byWorker.delete(tag)
+  byWorker.set(tag, one)
+  for (const old of byWorker.keys()) {
+    if (byWorker.size <= KEPT) break
+    byWorker.delete(old)
+  }
+
+  if (!hearingTheWorker) {
+    hearingTheWorker = true
+    workers.addEventListener('message', (event: MessageEvent) => {
+      const said: unknown = event.data
+      const pressed =
+        typeof said === 'object' && said !== null
+          ? (said as { nibNotice?: unknown }).nibNotice
+          : null
+      if (typeof pressed === 'string') byWorker.get(pressed)?.opened?.()
+    })
+    workers.startMessages()
+  }
+
+  void workers.ready
+    .then((held) => held.showNotification(one.title, { ...options, tag, data: { nibNotice: tag } }))
+    .catch(() => undefined)
+}
+
+function closeByTheWorker(tag: string): void {
+  void worker()
+    ?.getRegistration()
+    .then((held) => held?.getNotifications({ tag }))
+    .then((shown) => shown?.forEach((one) => one.close()))
+    .catch(() => undefined)
 }
 
 function shownByTheCrate(one: Notice): void {

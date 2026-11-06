@@ -16,18 +16,42 @@ interface Row {
   modified: number
 }
 
-interface Worker {
-  fetch(url: string, method?: string): Promise<Response | null>
+interface OpenWindow {
+  focused: number
+  said: unknown[]
 }
 
-function load(rows: readonly Row[], options: { store?: boolean; broken?: boolean } = {}): Worker {
-  const { store = true, broken = false } = options
+interface Worker {
+  fetch(url: string, method?: string): Promise<Response | null>
+  press(data: unknown): Promise<{ closed: boolean; opened: string[] }>
+}
+
+function load(
+  rows: readonly Row[],
+  options: { store?: boolean; broken?: boolean; windows?: OpenWindow[] } = {},
+): Worker {
+  const { store = true, broken = false, windows = [] } = options
+  const opened: string[] = []
+  const client = (one: OpenWindow) => ({
+    focus: () => {
+      one.focused++
+      return Promise.resolve(one)
+    },
+    postMessage: (said: unknown) => one.said.push(said),
+  })
   const listeners = new Map<string, (event: unknown) => void>()
 
   const self = {
     location: { origin: ORIGIN },
     skipWaiting: () => undefined,
-    clients: { claim: () => Promise.resolve() },
+    clients: {
+      claim: () => Promise.resolve(),
+      matchAll: () => Promise.resolve(windows.map(client)),
+      openWindow: (url: string) => {
+        opened.push(url)
+        return Promise.resolve(null)
+      },
+    },
     addEventListener: (kind: string, heard: (event: unknown) => void) => {
       listeners.set(kind, heard)
     },
@@ -85,6 +109,19 @@ function load(rows: readonly Row[], options: { store?: boolean; broken?: boolean
       })
 
       return Promise.resolve(answered)
+    },
+    press: async (data: unknown) => {
+      const heard = listeners.get('notificationclick')
+      if (!heard) throw new Error('the worker never listened for a press on a notice')
+
+      let closed = false
+      let waited: Promise<unknown> = Promise.resolve()
+      heard({
+        notification: { data, close: () => (closed = true) },
+        waitUntil: (until: Promise<unknown>) => (waited = until),
+      })
+      await waited
+      return { closed, opened }
     },
   }
 }
@@ -178,5 +215,26 @@ describe('the asset worker', () => {
   test('storage that will not open gets a miss too', async () => {
     const shut = load([], { broken: true })
     expect((await shut.fetch(`${ORIGIN}/asset/Work/a.png`))?.status).toBe(404)
+  })
+})
+
+describe('a notice the worker showed, pressed', () => {
+  test('brings the open window forward and tells it which notice it was', async () => {
+    const window: OpenWindow = { focused: 0, said: [] }
+    const pressed = await load([], { windows: [window] }).press({ nibNotice: 'c_2' })
+
+    expect(pressed).toEqual({ closed: true, opened: [] })
+    expect(window).toEqual({ focused: 1, said: [{ nibNotice: 'c_2' }] })
+  })
+
+  test('opens Orden when no window of it is open', async () => {
+    expect(await load([]).press({ nibNotice: 'c_2' })).toEqual({ closed: true, opened: ['/'] })
+  })
+
+  test('tells nothing of a notice it did not name', async () => {
+    const window: OpenWindow = { focused: 0, said: [] }
+    await load([], { windows: [window] }).press(undefined)
+
+    expect(window).toEqual({ focused: 1, said: [] })
   })
 })
