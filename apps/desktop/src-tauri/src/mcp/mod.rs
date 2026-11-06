@@ -32,10 +32,7 @@
 //! starts in milliseconds and grows no dependency graph of its own.
 
 mod app;
-// The settings folder found without Tauri, which the Mac's App Intents read too; see
-// siri.rs.
 pub(crate) mod home;
-// The AI sidebar's agent, served from inside the app; see ai_agent.rs.
 pub(crate) mod host;
 mod link;
 mod marks;
@@ -47,8 +44,6 @@ mod server;
 mod shared;
 mod tools;
 
-/// This process's standard handles kept out of the programs it starts, which the app
-/// needs too; see `keep_the_pipes` in app.rs.
 #[cfg(windows)]
 pub(crate) use app::keep_the_pipes;
 

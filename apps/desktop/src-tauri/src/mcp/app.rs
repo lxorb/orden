@@ -1,20 +1,3 @@
-//! The running app, as `nib mcp` reaches it: the endpoint file it writes at every launch,
-//! one request to that endpoint, and starting the app when it is not running.
-//!
-//! **The file is read, never trusted to be current.** The app writes its port, its pid
-//! and the installation's secret into `automation.json` as it starts and leaves the file
-//! behind when it ends, so a port in it may be a port nobody listens on any more, or one
-//! something else has taken since. Before the secret or a token is sent to a port, the
-//! port is asked once with neither, and only Orden's own refusal - a 401 with a sentence in
-//! JSON - counts as Orden. See endpoint.rs for the other side.
-//!
-//! **Started minimised, and without the keyboard.** A client that runs `nib mcp` while Orden
-//! is closed gets Orden, the way the design says (docs/agent-native.md 10), and the reader
-//! gets nothing in their face: on Windows through `start /min`, which is the first window
-//! a process shows taking `SW_SHOWMINNOACTIVE` from its start-up info; on a Mac through
-//! `open -g -j`, in the background and hidden. The app is handed nothing of this process's
-//! stdio, which is the client's protocol, not even by inheritance.
-
 use std::io::{Read, Write};
 use std::net::{Ipv4Addr, SocketAddr, TcpStream};
 use std::path::Path;
@@ -24,43 +7,29 @@ use std::time::{Duration, Instant};
 use serde::Deserialize;
 use serde_json::Value;
 
-/// How long a connection to the loopback may take before the app counts as not there.
 const CONNECT: Duration = Duration::from_secs(2);
 
-/// How long a started app has to open its endpoint. A cold launch of `WebView2` on a slow
-/// machine is a few seconds; the endpoint comes up before the window does.
 const STARTING: Duration = Duration::from_secs(30);
 
-/// What the endpoint file says.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 pub struct Endpoint {
-    /// The port of this launch.
     pub port: u16,
-    /// The installation's secret: the reader's own command line, and pairing.
     pub secret: String,
-    /// The process that wrote it.
     #[serde(default)]
     pub pid: u32,
 }
 
-/// The endpoint file in the settings folder, read; `None` when there is none or it
-/// cannot be read.
 pub fn endpoint(dir: &Path) -> Option<Endpoint> {
     let text = std::fs::read_to_string(dir.join("automation.json")).ok()?;
     serde_json::from_str(&text).ok()
 }
 
-/// One answer from the endpoint: its status and its body, read as JSON where it is.
 #[derive(Debug)]
 pub struct Said {
-    /// The HTTP status.
     pub status: u16,
-    /// The body; a string when it was not JSON.
     pub body: Value,
 }
 
-/// One verb posted to the endpoint, with `bearer` as its credential, waiting at most
-/// `patience` for the answer. An error is the endpoint not being there at all.
 pub fn post(
     endpoint: &Endpoint,
     bearer: Option<&str>,
@@ -85,14 +54,12 @@ pub fn post(
     stream.write_all(body.as_bytes())?;
     stream.flush()?;
 
-    // The endpoint answers once and closes, so the answer is everything until then.
     let mut bytes = Vec::new();
     stream.read_to_end(&mut bytes)?;
     parse(&bytes)
         .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidData, "not an HTTP answer"))
 }
 
-/// An HTTP answer: the status off the first line, the body after the blank line.
 fn parse(bytes: &[u8]) -> Option<Said> {
     let text = String::from_utf8_lossy(bytes);
     let (head, body) = text.split_once("\r\n\r\n")?;
@@ -107,8 +74,6 @@ fn parse(bytes: &[u8]) -> Option<Said> {
     Some(Said { status, body })
 }
 
-/// Whether Orden answers on the file's port: asked with no credential at all, which Orden
-/// refuses in its own words. Anything else listening there is not told a secret.
 pub fn answers(endpoint: &Endpoint) -> bool {
     let asked = serde_json::json!({ "verb": "agent_status" });
     post(endpoint, None, &asked, CONNECT).is_ok_and(|said| {
@@ -116,15 +81,10 @@ pub fn answers(endpoint: &Endpoint) -> bool {
     })
 }
 
-/// The app's endpoint, when an app is answering on it.
 pub fn running(dir: &Path) -> Option<Endpoint> {
     endpoint(dir).filter(answers)
 }
 
-/// Starts the app with no window on screen (`launch::BACKGROUND_FLAG`, #1091) and without
-/// the keyboard, and waits for its endpoint. An agent connecting never opens, raises or
-/// focuses the reader's window: the app serves it from the tray, and the reader opens it
-/// as they always do.
 pub fn start(dir: &Path) -> Result<Endpoint, String> {
     let before = endpoint(dir);
     launch()?;
@@ -133,8 +93,6 @@ pub fn start(dir: &Path) -> Result<Endpoint, String> {
     while started.elapsed() < STARTING {
         std::thread::sleep(Duration::from_millis(100));
         if let Some(now) = endpoint(dir) {
-            // A file left by a launch that has ended names that launch's port; a new
-            // launch writes its own.
             if Some(&now) != before.as_ref() && answers(&now) {
                 return Ok(now);
             }
@@ -143,14 +101,10 @@ pub fn start(dir: &Path) -> Result<Endpoint, String> {
     Err("Orden did not start in 30 seconds".to_owned())
 }
 
-/// The app, started. On Windows through `cmd /c start /min`, run with no console of its
-/// own: `start` gives the app its minimised, unfocused first window. None of the client's
-/// pipes goes with it; see `keep_the_pipes`.
 #[cfg(windows)]
 fn launch() -> Result<(), String> {
     use std::os::windows::process::CommandExt as _;
 
-    /// `CREATE_NO_WINDOW`: cmd runs without a console window of its own.
     const NO_WINDOW: u32 = 0x0800_0000;
 
     keep_the_pipes();
@@ -173,12 +127,6 @@ fn launch() -> Result<(), String> {
         .map(drop)
 }
 
-/// This process's stdin, stdout and stderr kept to itself. They are the client's pipes,
-/// handed over inheritable, and `start` passes every inheritable handle on to the program
-/// it starts - measured: a pipe cmd was given stayed open until the started program
-/// ended. The app would then hold the client's stdout for as long as Orden runs, and a
-/// client waiting for this server's output to end would wait for Orden to quit. The app
-/// asks the same before it starts Claude Code or Codex; see `ai_cli/family.rs`.
 #[allow(
     unsafe_code,
     reason = "whether a handle is inherited is Win32's own flag, with no safe wrapper"
@@ -196,15 +144,11 @@ pub(crate) fn keep_the_pipes() {
         std::io::stderr().as_raw_handle(),
     ];
     for raw in handles.into_iter().filter(|one| !one.is_null()) {
-        // SAFETY: each is one of this process's own standard handles, open for as long as
-        // it runs; only whether a child inherits it changes.
         let _ =
             unsafe { SetHandleInformation(HANDLE(raw), HANDLE_FLAG_INHERIT.0, HANDLE_FLAGS(0)) };
     }
 }
 
-/// The app, started. On a Mac through `open`, in the background (`-g`) and hidden
-/// (`-j`); outside a bundle, a development build, as itself.
 #[cfg(target_os = "macos")]
 fn launch() -> Result<(), String> {
     let program = super::program::program()?;
@@ -225,15 +169,11 @@ fn launch() -> Result<(), String> {
     }
 }
 
-/// The app, started, in a process group of its own, asked for no window (#1091).
 #[cfg(all(unix, not(target_os = "macos")))]
 fn launch() -> Result<(), String> {
     detached(&super::program::program()?)
 }
 
-/// A program started with nothing of this process's stdio and outside its process group,
-/// so the client's Ctrl+C is not the app's; waited for on a thread of its own so it
-/// leaves nothing behind when it ends first.
 #[cfg(unix)]
 fn detached(program: &Path) -> Result<(), String> {
     use std::os::unix::process::CommandExt as _;
@@ -249,7 +189,6 @@ fn detached(program: &Path) -> Result<(), String> {
     Ok(())
 }
 
-/// No stdio of this process's: its stdout is the protocol.
 fn quiet(command: &mut Command) -> &mut Command {
     command
         .stdin(Stdio::null())
@@ -292,8 +231,6 @@ mod tests {
         );
     }
 
-    /// Something else on the port is not Orden, and is never sent a credential: the
-    /// question that decides it carries none.
     #[test]
     fn a_stranger_on_the_port_is_not_nib() {
         let listener = TcpListener::bind("127.0.0.1:0").expect("a port");
@@ -324,7 +261,6 @@ mod tests {
             .and_then(|one| one.local_addr())
             .expect("a port")
             .port();
-        // The listener is gone: the port now answers nothing.
         assert!(!answers(&Endpoint {
             port,
             secret: String::new(),

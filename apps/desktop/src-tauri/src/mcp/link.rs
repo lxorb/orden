@@ -1,25 +1,3 @@
-//! The connection to the running app, from finding it to the last call: the app found or
-//! started, the client paired, its grant read, and all of it watched while the session
-//! lasts.
-//!
-//! **Nothing here holds up the client.** `initialize` is answered at once and all of this
-//! happens on a thread of its own: Codex gives a server ten seconds to start, and the reader
-//! may be away from the bubble for an hour. The server waits for the link only as long as a
-//! client would wait anyway (`seen`), and the tools a client was shown change when the link
-//! does (`heard`, which sends `notifications/tools/list_changed`).
-//!
-//! **The pairing** (docs/agent-native.md 9.1): a client with a kept token proves it with
-//! `agent_status`; one without asks through `agent_pair`, which raises the bubble, and waits
-//! for it twenty seconds at a time, looking between the waits for a token a second run of
-//! the same client may have been given meanwhile. A no is final for this run; so is a token
-//! that stops working, which is the reader having removed the agent, and a client that asked
-//! again at once would be arguing with them.
-//!
-//! **Watched, not polled.** Every two seconds the modified times of two files are read,
-//! nothing more: `automation.json`, which a launch writes (the app started again, on another
-//! port), and `agents.json`, which every change to a grant writes (a scope added, the agent
-//! removed). Only a change costs a call.
-
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Condvar, Mutex, MutexGuard, PoisonError};
@@ -32,67 +10,39 @@ use super::pairing::{self, Client, Kept};
 use super::results::Outcome;
 use crate::agents::grants::Grant;
 
-/// How long one pairing question is waited on inside one call, before looking again.
 const PAIRING_WAIT: Duration = Duration::from_secs(20);
 
-/// How often the two files are looked at.
 const LOOK_EVERY: Duration = Duration::from_secs(2);
 
-/// The longest a call waits for its answer: a browser wait is 120 s at most, and the
-/// settling after it a few more.
 const PATIENCE: Duration = Duration::from_secs(150);
 
-/// How long the sidebar's own session waits for the reader to approve a call: with the
-/// call made again after it (`PATIENCE`), inside the ten minutes each program gives a
-/// tool (`src/ai_cli/args.rs`).
 const APPROVAL_WAIT: Duration = Duration::from_secs(7 * 60);
 
-/// How often a waiting call looks for the reader's answer.
 const APPROVAL_LOOK: Duration = Duration::from_millis(400);
 
-/// How long a helper's call is held open while the helper works: inside the ten minutes
-/// each program gives a tool (`src/ai_cli/args.rs`), each look itself waiting in the
-/// window up to twenty seconds (src/lib/ai/helpers/run.ts). Past it, the model is told
-/// the helper is still running and asks again with `agent_result`.
 const HELPER_WAIT: Duration = Duration::from_secs(9 * 60);
 
-/// How long a window that is still loading has to say which verbs it answers before
-/// the link settles without them; the watch asks again every two seconds after.
 const WINDOW_WAIT: Duration = Duration::from_secs(5);
 
-/// Where the link stands.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Standing {
-    /// Finding the app, starting it, or reading the kept token.
     Connecting,
-    /// The reader has been asked about this client and has not answered.
     Asked,
-    /// The reader said no.
     Refused,
-    /// The token stopped working: the reader removed this agent.
     Removed,
-    /// No app to reach, and why.
     Unreachable(String),
-    /// Paired: the token works.
     Paired,
 }
 
-/// What the server reads of the link at one moment.
 #[derive(Clone, Debug)]
 pub struct Seen {
-    /// Where it stands.
     pub standing: Standing,
-    /// The agent's grant, once paired.
     pub grant: Option<Grant>,
-    /// The window's verbs, once it has said.
     pub window: Option<BTreeSet<String>>,
 }
 
-/// Why a token was not taken.
 enum Refusal {
-    /// Orden does not know it.
     Unknown,
-    /// Orden did not answer.
     Unreachable(String),
 }
 
@@ -105,10 +55,8 @@ struct Held {
     window: Option<BTreeSet<String>>,
 }
 
-/// The link, shared by the server's threads.
 pub struct Link {
     dir: Option<PathBuf>,
-    /// The client it is for.
     pub client: Client,
     held: Mutex<Held>,
     changed: Condvar,
@@ -116,8 +64,6 @@ pub struct Link {
 }
 
 impl Link {
-    /// A link for a client, started on a thread of its own. `heard` is called whenever
-    /// something the tool list is made from changed.
     pub fn open(client: Client, heard: impl Fn() + Send + Sync + 'static) -> Arc<Self> {
         let link = Arc::new(Link {
             dir: super::home::config_dir(),
@@ -135,7 +81,6 @@ impl Link {
         self.held.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
-    /// Where it stands, and what it knows.
     fn seen_now(&self) -> Seen {
         let held = self.held();
         Seen {
@@ -145,8 +90,6 @@ impl Link {
         }
     }
 
-    /// What the link knows, once it is past connecting - and past the reader's answer to
-    /// the pairing, when `through_asking` - or once `patience` has gone by.
     pub fn seen(&self, patience: Duration, through_asking: bool) -> Seen {
         let started = Instant::now();
         let mut held = self.held();
@@ -168,7 +111,6 @@ impl Link {
         self.seen_now()
     }
 
-    /// Changes what is held, and tells whoever waits and the server.
     fn change(&self, change: impl FnOnce(&mut Held)) {
         change(&mut self.held());
         self.changed.notify_all();
@@ -179,13 +121,11 @@ impl Link {
         self.change(|held| held.standing = Some(standing));
     }
 
-    /// Settles where a pairing ended without one.
     fn ended(&self, standing: Standing) -> bool {
         self.settle(standing);
         false
     }
 
-    /// The whole session's work: reach the app, then watch the two files.
     fn run(&self) {
         let Some(dir) = self.dir.clone() else {
             self.settle(Standing::Unreachable(
@@ -200,8 +140,6 @@ impl Link {
         self.watch(&dir);
     }
 
-    /// Pairs with the app on this endpoint, and asks its window which verbs it answers
-    /// before settling, so the first list a client is given is already the whole one.
     fn reach(&self, dir: &Path, endpoint: Endpoint) {
         self.change(|held| {
             held.endpoint = Some(endpoint.clone());
@@ -213,8 +151,6 @@ impl Link {
         }
     }
 
-    /// The kept token proved, or the reader asked until they answer. Answers whether the
-    /// client is paired; every other end is settled here.
     fn pair(&self, dir: &Path, endpoint: &Endpoint) -> bool {
         if let Some(token) = handed() {
             return self.prove_handed(endpoint, token);
@@ -267,7 +203,6 @@ impl Link {
                     if let Err(why) = pairing::keep(dir, &self.client, &kept) {
                         return self.ended(Standing::Unreachable(why));
                     }
-                    // Round again: the token is read back from the file and proved.
                 }
                 Outcome::Asked { .. } => {
                     if self.seen_now().standing != Standing::Asked {
@@ -284,8 +219,6 @@ impl Link {
         }
     }
 
-    /// A token the app handed this run (see `handed`), proved and never written down: a
-    /// no is final, since nobody can be asked on the app's own agent's behalf.
     fn prove_handed(&self, endpoint: &Endpoint, token: String) -> bool {
         match grant_of(endpoint, &token) {
             Ok(grant) => {
@@ -303,10 +236,6 @@ impl Link {
         }
     }
 
-    /// Asks the window which verbs it answers, until it says or `patience` runs out: a
-    /// window still loading, or none open, answers nothing yet. A window that is loading
-    /// never hears the question at all, so each is given up on after a moment rather than
-    /// the endpoint's thirty seconds.
     fn ask_window(&self, endpoint: &Endpoint, patience: Duration) {
         let started = Instant::now();
         loop {
@@ -336,7 +265,6 @@ impl Link {
         }
     }
 
-    /// Looks at the two files every two seconds for as long as the session lasts.
     fn watch(&self, dir: &Path) {
         let automation = dir.join("automation.json");
         let grants = dir.join("agents.json");
@@ -365,7 +293,6 @@ impl Link {
         }
     }
 
-    /// The app wrote its endpoint file again: a launch, perhaps on another port.
     fn relaunched(&self, dir: &Path) {
         let Some(now) = app::endpoint(dir) else {
             return;
@@ -374,13 +301,11 @@ impl Link {
             return;
         }
         match self.seen_now().standing {
-            // The reader's answer holds for the whole run.
             Standing::Refused | Standing::Removed => {}
             _ => self.reach(dir, now),
         }
     }
 
-    /// A grant changed somewhere: this agent's is read again.
     fn regrant(&self) {
         let (endpoint, kept) = {
             let held = self.held();
@@ -400,7 +325,6 @@ impl Link {
         }
     }
 
-    /// The reader removed this agent: its token is forgotten, and its tools go.
     fn removed(&self) {
         if let (Some(dir), None) = (&self.dir, handed()) {
             pairing::forget(dir, &self.client);
@@ -412,9 +336,6 @@ impl Link {
         });
     }
 
-    /// One verb, called as this agent. The sidebar's own sessions wait on a question
-    /// the call raised, the way the sidebar's own loop does (`answered`): the reader
-    /// approves inline, and the call goes ahead then.
     pub fn call(&self, verb: &str, args: &Value) -> Outcome {
         let outcome = self.call_once(verb, args);
         if verb == "run_agent" || verb == "agent_result" {
@@ -433,8 +354,6 @@ impl Link {
         }
     }
 
-    /// A helper's answer, waited for while it says it is still working: the call is held
-    /// open the way the agent's own subagent tool holds it, up to `HELPER_WAIT`.
     fn helped(&self, mut outcome: Outcome) -> Outcome {
         let started = Instant::now();
         while let Some(agent) = super::results::still_working(&outcome) {
@@ -446,9 +365,6 @@ impl Link {
         outcome
     }
 
-    /// Waits for the reader's answer to a question: allowed, refused, or `None` when it
-    /// was not answered in time (the model is then told it was asked, as an outside
-    /// agent is).
     fn answered(&self, approval: &str) -> Option<bool> {
         let started = Instant::now();
         while started.elapsed() < APPROVAL_WAIT {
@@ -466,8 +382,6 @@ impl Link {
         None
     }
 
-    /// One verb, called once. A call that finds no app on the port it knew looks at the
-    /// endpoint file once, for a launch on another port.
     fn call_once(&self, verb: &str, args: &Value) -> Outcome {
         let (endpoint, kept) = {
             let held = self.held();
@@ -477,8 +391,6 @@ impl Link {
             return Outcome::failed("not_paired", self.sentence());
         };
         let mut asked = json!({ "verb": verb, "args": args, "rest": [] });
-        // The sidebar's own session says which thread it is, so a helper it starts is
-        // that thread's (src/ai_cli.rs sets it beside the token).
         if let (Some(thread), Some(_)) = (thread_handed(), handed()) {
             asked["thread"] = json!(thread);
         }
@@ -507,7 +419,6 @@ impl Link {
         Outcome::from_endpoint(said.status, &said.body)
     }
 
-    /// The client is going: its tabs close in ten minutes unless it comes back.
     pub fn bye(&self) {
         let (endpoint, kept) = {
             let held = self.held();
@@ -519,8 +430,6 @@ impl Link {
         }
     }
 
-    /// Where the link stands, in a sentence for a model: what `agent_status` answers
-    /// before the pairing, and why a call could not be made.
     pub fn sentence(&self) -> String {
         let name = &self.client.name;
         match self.seen_now().standing {
@@ -540,19 +449,12 @@ impl Link {
     }
 }
 
-/// The token the app itself handed this run, when it started the client: the AI
-/// sidebar's Claude Code or Codex, whose only tool is `nib mcp` under the sidebar's own
-/// grant (`src/ai_cli.rs`). It comes in the environment, never on a command line, and it
-/// stands in for pairing: the client's own kept file, which is the reader's pairing of
-/// their own Claude Code, is neither read nor written nor forgotten.
 fn handed() -> Option<String> {
     std::env::var("NIB_MCP_TOKEN")
         .ok()
         .filter(|token| !token.is_empty() && token.bytes().all(|one| one.is_ascii_alphanumeric()))
 }
 
-/// The thread the app said this session is for, beside its token: an id of the window's
-/// own, letters, digits and `-`.
 fn thread_handed() -> Option<String> {
     std::env::var(THREAD_VAR).ok().filter(|thread| {
         !thread.is_empty()
@@ -563,10 +465,8 @@ fn thread_handed() -> Option<String> {
     })
 }
 
-/// Where it is said; see `src/ai_cli/args.rs`.
 const THREAD_VAR: &str = "NIB_MCP_THREAD";
 
-/// A token proved: the grant it belongs to, or why not.
 fn grant_of(endpoint: &Endpoint, token: &str) -> Result<Grant, Refusal> {
     let asked = json!({ "verb": "agent_status", "args": {} });
     let said = app::post(endpoint, Some(token), &asked, Duration::from_secs(10))
@@ -585,12 +485,10 @@ fn grant_of(endpoint: &Endpoint, token: &str) -> Result<Grant, Refusal> {
     }
 }
 
-/// Why Orden did not answer, in a sentence: the reader closed it, most likely.
 fn unreachable(error: &std::io::Error) -> String {
     format!("Orden is not running or did not answer ({error}); ask the reader to open Orden, then call again")
 }
 
-/// When a file last changed; `None` for a file that is not there.
 fn modified(path: &Path) -> Option<SystemTime> {
     std::fs::metadata(path).and_then(|one| one.modified()).ok()
 }

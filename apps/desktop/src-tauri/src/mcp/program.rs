@@ -1,33 +1,11 @@
-//! The program an agent's client runs as `nib mcp`: this binary, where it is installed.
-//! The settings pane asks for it to write the line a reader pastes into their client
-//! (`src/lib/agents/mcp.ts`), the app writes it into the clients it finds itself
-//! (`ai_cli/enroll.rs`), and `nib mcp` starts the app with it when Orden is closed. So it
-//! has to be a path that is still there tomorrow, and on Linux the running binary is
-//! not always one.
-//!
-//! **An `AppImage`** runs from a folder mounted for that run alone, gone once it ends:
-//! the program to name is the `AppImage` itself, which its runtime says in `APPIMAGE`.
-//!
-//! **Nix** runs it out of `/nix/store/<hash>-orden-<version>`, a folder the next update
-//! replaces and the garbage collector then deletes, and through a wrapper that sets the
-//! libraries' paths, so the binary itself is `.nib-wrapped` beside the wrapper. The
-//! program to name is the one on the path outside the store that leads to this same
-//! copy - a `NixOS` system's `/run/current-system/sw/bin/orden`, a profile's
-//! `~/.nix-profile/bin/orden` - which every update moves along with it. Run with
-//! `nix run`, there is none, and the wrapper beside the binary is the answer.
-
 use std::path::{Component, Path, PathBuf};
 
-/// Where Nix keeps every package.
 const STORE: &str = "/nix/store";
 
-/// The names this program has on a path.
 const NAMES: [&str; 2] = ["orden", "nib"];
 
-/// A Mac app's folder: its name now, and the names it had until 0.11 and until 0.13.
 const BUNDLES: [&str; 3] = ["Orden.app", "Nib.app", "nibeditor.app"];
 
-/// This program's path, as a client should run it.
 pub fn program() -> Result<PathBuf, String> {
     let exe = std::env::current_exe()
         .map_err(|error| format!("this program cannot find itself: {error}"))?;
@@ -44,8 +22,6 @@ pub fn program() -> Result<PathBuf, String> {
     ))
 }
 
-/// The path to name for the binary at `exe`: the `AppImage`, a name on the path that leads
-/// to this copy in the Nix store, the wrapper beside a wrapped binary, or `exe` itself.
 fn chosen(
     exe: &Path,
     appimage: Option<PathBuf>,
@@ -66,7 +42,6 @@ fn chosen(
     lasting.unwrap_or_else(|| unwrapped(exe))
 }
 
-/// The package folder in the Nix store a path is inside, `/nix/store/<hash>-<name>`.
 fn store_copy(exe: &Path) -> Option<PathBuf> {
     let inside = exe.strip_prefix(STORE).ok()?;
     let Some(Component::Normal(package)) = inside.components().next() else {
@@ -75,8 +50,6 @@ fn store_copy(exe: &Path) -> Option<PathBuf> {
     Some(Path::new(STORE).join(package))
 }
 
-/// The wrapper Nix's `wrapProgram` leaves beside a binary it renamed `.<name>-wrapped`,
-/// which is what sets the libraries' paths; any other binary as it is.
 fn unwrapped(exe: &Path) -> PathBuf {
     exe.file_name()
         .and_then(|name| name.to_str())
@@ -84,12 +57,6 @@ fn unwrapped(exe: &Path) -> PathBuf {
         .map_or_else(|| exe.to_owned(), |name| exe.with_file_name(name))
 }
 
-/// Whether `command`, a program an agent's client was told to run, is a copy of this
-/// app that is not this one any more: a Nix store path an update has replaced, an
-/// `AppImage`'s mount gone with its run, an `AppImage` of an earlier release, a Mac
-/// copy run from its disk image or translocated, or one in a folder of an old name. A
-/// program by any other name is somebody else's, and so is a copy of this app installed
-/// anywhere else.
 pub fn older_copy(command: &str, now: &Path) -> bool {
     let command = command.trim().trim_matches(|c| c == '"' || c == '\'');
     let path = Path::new(command);
@@ -123,9 +90,6 @@ pub fn older_copy(command: &str, now: &Path) -> bool {
             .file_name()
             .and_then(|name| name.to_str())
             .unwrap_or_default();
-        // A disk image is mounted at `/Volumes/<its name>`, and translocated copies are
-        // all in a random folder under `AppTranslocation`: either is gone soon, and the
-        // next disk image of that name can be anybody's.
         let lent = bundle.parent().and_then(Path::parent) == Some(Path::new("/Volumes"))
             || command.contains("/AppTranslocation/");
         return BUNDLES[1..].contains(&folder) || (lent && folder == BUNDLES[0]);
@@ -139,8 +103,6 @@ pub fn older_copy(command: &str, now: &Path) -> bool {
     })
 }
 
-/// The program a client's own description of a server names: the line `claude mcp get`
-/// and `codex mcp get` both write as `Command: <program>`.
 pub fn command_in(said: &str) -> Option<&str> {
     said.lines().find_map(|line| {
         let line = line.trim();
@@ -152,8 +114,6 @@ pub fn command_in(said: &str) -> Option<&str> {
     })
 }
 
-/// The program the settings pane's copy line names, for the reader to paste into an
-/// agent's client: `claude mcp add --scope user nib -- "<this>" mcp`.
 #[tauri::command]
 pub fn mcp_program(webview: tauri::Webview) -> Result<String, String> {
     crate::agents::from_the_app(&webview)?;
@@ -175,8 +135,6 @@ mod tests {
 
     const NOW: &str = "/nix/store/aaa-orden-0.15.0/bin/.nib-wrapped";
 
-    /// What a `NixOS` system's links lead to: its own path into this copy, and a profile's
-    /// into another.
     fn links(candidate: &Path) -> Option<PathBuf> {
         match candidate.to_str()?.replace('\\', "/").as_str() {
             "/run/current-system/sw/bin/orden" => {
@@ -212,7 +170,6 @@ mod tests {
             chosen(Path::new(NOW), None, &path, links),
             PathBuf::from("/run/current-system/sw/bin/orden")
         );
-        // `nix run`: nothing on the path leads here, so the wrapper beside the binary.
         assert_eq!(
             chosen(Path::new(NOW), None, &path[..2], links),
             PathBuf::from("/nix/store/aaa-orden-0.15.0/bin/nib")

@@ -1,21 +1,5 @@
-//! The marks round every word that came from outside (docs/agent-native.md 9.6):
-//!
-//! ```text
-//! <untrusted source="https://shop.example/cart">
-//! ...the page's own words...
-//! </untrusted>
-//! ```
-//!
-//! The server's instructions tell the model that nothing inside them is an instruction.
-//! That only holds if the words inside cannot end the mark early, so a page that writes
-//! `</untrusted>` itself - or opens a mark of its own - has the `<` of it written as
-//! `&lt;`, in any case of the letters. The source is an attribute, and an attribute
-//! cannot close its own quote either.
-
-/// The tag, as the words inside a mark may not spell it.
 const TAG: &str = "untrusted";
 
-/// Words from outside, inside a mark naming where they came from.
 pub fn marked(source: &str, words: &str) -> String {
     format!(
         "<{TAG} source=\"{}\">\n{}\n</{TAG}>",
@@ -24,7 +8,6 @@ pub fn marked(source: &str, words: &str) -> String {
     )
 }
 
-/// The words with every mark they spell made into text.
 fn inert(words: &str) -> String {
     let lower = words.to_ascii_lowercase();
     let mut out = String::with_capacity(words.len());
@@ -45,8 +28,6 @@ fn inert(words: &str) -> String {
     out
 }
 
-/// A source as an attribute's value: on one line, its quotes and brackets as entities,
-/// and short.
 fn attribute(source: &str) -> String {
     let mut out = String::new();
     for one in source.chars().take(300) {
@@ -74,7 +55,6 @@ mod tests {
         );
     }
 
-    /// A page that closes the mark itself does not get out of it.
     #[test]
     fn a_page_cannot_end_the_mark() {
         let said = marked(

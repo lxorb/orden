@@ -1,25 +1,3 @@
-//! The tools, as a model is shown them: one table, `tools.json`, and the part of it an
-//! agent's grant reaches (docs/agent-native.md 5).
-//!
-//! **One table, held to the verbs.** Each row is a verb of the crate's table
-//! (agents/verbs.rs `NAMES`) or one of the window's verbs an agent may call
-//! (`window::AGENT_VERBS`), and nothing else: the tests below fail when a verb has no row
-//! or a row no verb. A crate verb's schema is checked against the verb's own arguments by
-//! serde itself - every field it takes, which of them it needs, every word an enum
-//! accepts, and a sample of each shape read back - so a verb and its tool cannot drift.
-//! The window's verbs have no Rust type to check against; their argument names are the
-//! table's, which the window's dispatcher reads, and `services/sync/test/local-tools.test.ts`
-//! holds the six the account connector shares to its names.
-//!
-//! **Descriptions are written for a model**: what the tool does, when to use it rather
-//! than another, and what an answer means for the next call. The instructions
-//! (`server.rs`) carry what every tool shares, once.
-//!
-//! **Only what the grant reaches is listed**, so an agent with notes and no browser spends
-//! no context on the browser. And of the window's verbs, only those the running window
-//! answers, once it has said: a tool that could only answer "there is no such verb" is not
-//! offered.
-
 use std::collections::BTreeSet;
 use std::sync::OnceLock;
 
@@ -29,23 +7,17 @@ use serde_json::{json, Value};
 use crate::agents::grants::{Grant, Scope};
 use crate::agents::verbs::{window::AGENT_VERBS, NAMES};
 
-/// One row of the table.
 #[derive(Debug, Deserialize)]
 pub struct Tool {
-    /// The tool's name, which is its verb's.
     pub name: String,
-    /// What a model reads about it.
     pub description: String,
-    /// Its arguments, as JSON Schema.
     #[serde(rename = "inputSchema")]
     pub input: Value,
-    /// Hints for the client: read-only, destructive, open world.
     #[serde(default)]
     pub annotations: Option<Value>,
 }
 
 impl Tool {
-    /// The row as `tools/list` answers it.
     pub fn listed(&self) -> Value {
         let mut said = json!({
             "name": self.name,
@@ -59,49 +31,34 @@ impl Tool {
     }
 }
 
-/// The table.
 pub fn table() -> &'static [Tool] {
     static TABLE: OnceLock<Vec<Tool>> = OnceLock::new();
-    TABLE.get_or_init(|| {
-        // The table is part of this binary and a test reads it whole; a row that did
-        // not read would have failed the build's tests long before it could fail here.
-        serde_json::from_str(include_str!("tools.json")).unwrap_or_default()
-    })
+    TABLE.get_or_init(|| serde_json::from_str(include_str!("tools.json")).unwrap_or_default())
 }
 
-/// A tool by name.
 pub fn find(name: &str) -> Option<&'static Tool> {
     table().iter().find(|tool| tool.name == name)
 }
 
-/// Whether a tool is one of the crate's verbs, answered without the window.
 pub fn of_the_crate(name: &str) -> bool {
     NAMES.contains(&name)
 }
 
-/// Whether a grant reaches a tool at all.
 pub fn reaches(grant: &Grant, name: &str) -> bool {
     let browsing = grant.holds(Scope::Browser) || grant.holds(Scope::BrowserReader);
     match name {
         "agent_status" | "approval_status" => true,
-        // A tab of the agent's own, and what only its own tabs do.
         "browser_open" | "browser_close" | "browser_show" | "browser_downloads" => {
             grant.holds(Scope::Browser)
         }
-        // Scripts need the scope and at least one site they are allowed on (9.2), which
-        // under Full permissions is every site (#1072).
         "browser_evaluate" => {
             browsing
                 && grant.holds(Scope::BrowserScript)
                 && (grant.asks_nothing() || !grant.scripts.is_empty())
         }
         name if name.starts_with("browser_") => browsing,
-        // Files anywhere outside the spaces (#1078).
         "files" => grant.holds(Scope::Files),
-        // Programs on this computer, and the system around the app, which starts one to
-        // open a file (#1078).
         "process" | "system" => grant.holds(Scope::Processes),
-        // Requests to any site (#1078).
         "http" => grant.holds(Scope::Network),
         name => AGENT_VERBS
             .iter()
@@ -110,8 +67,6 @@ pub fn reaches(grant: &Grant, name: &str) -> bool {
     }
 }
 
-/// The tools a paired agent is shown: what its grant reaches, and of the window's verbs
-/// only those the window answers, once it has said which. Until it has, none of them.
 pub fn listed(grant: &Grant, window: Option<&BTreeSet<String>>) -> Vec<&'static Tool> {
     table()
         .iter()
@@ -122,8 +77,6 @@ pub fn listed(grant: &Grant, window: Option<&BTreeSet<String>>) -> Vec<&'static 
         .collect()
 }
 
-/// The one tool of a client Orden has not paired yet: `agent_status`, answered by this
-/// process with where the pairing stands.
 pub fn unpaired() -> Vec<&'static Tool> {
     find("agent_status").into_iter().collect()
 }
@@ -134,7 +87,6 @@ mod tests {
     use crate::agents::verbs::Verb;
     use std::collections::BTreeMap;
 
-    /// The verbs of the crate's table that `nib mcp` calls itself and a model never does.
     const OWN: [&str; 2] = ["agent_pair", "agent_bye"];
 
     const PROBE: &str = "__nib_probe";
@@ -160,7 +112,6 @@ mod tests {
         }
     }
 
-    /// Every verb a model may call has a row, and every row is such a verb.
     #[test]
     fn every_verb_is_a_tool_and_every_tool_a_verb() {
         let verbs: BTreeSet<&str> = NAMES
@@ -172,7 +123,6 @@ mod tests {
         assert_eq!(names(), verbs);
     }
 
-    /// A sample value of a schema: the first word of an enum, the first shape of several.
     fn sample(schema: &Value) -> Value {
         if let Some(first) = schema.get("enum").and_then(|all| all.get(0)) {
             return first.clone();
@@ -199,8 +149,6 @@ mod tests {
         }
     }
 
-    /// Every object schema inside a tool's, by where it sits: `[]` for the arguments
-    /// themselves, `["cookie"]`, `["fields", 0]`.
     fn objects(schema: &Value, at: &[Value], found: &mut Vec<(Vec<Value>, Value)>) {
         if schema.get("type").and_then(Value::as_str) == Some("object")
             && schema.get("properties").is_some()
@@ -219,7 +167,6 @@ mod tests {
         }
     }
 
-    /// The value at a place in a sample.
     fn at<'a>(value: &'a mut Value, place: &[Value]) -> &'a mut Value {
         place.iter().fold(value, |inside, step| match step {
             Value::String(key) => &mut inside[key.as_str()],
@@ -227,7 +174,6 @@ mod tests {
         })
     }
 
-    /// What serde says about arguments it refuses.
     fn refusal(verb: &str, args: Value) -> String {
         match Verb::read(verb, args.clone()) {
             Some(Err(why)) => why,
@@ -235,7 +181,6 @@ mod tests {
         }
     }
 
-    /// The words serde lists in backticks after `expected` in a refusal.
     fn expected(why: &str) -> BTreeSet<String> {
         let Some((_, after)) = why.split_once("expected") else {
             return BTreeSet::new();
@@ -267,8 +212,6 @@ mod tests {
             .unwrap_or_default()
     }
 
-    /// Every crate verb's schema, held to the verb's own arguments by serde: the fields
-    /// each object takes, which of them it needs, and every word each enum accepts.
     #[test]
     fn every_crate_tools_schema_is_its_verbs_own() {
         for tool in table().iter().filter(|tool| of_the_crate(&tool.name)) {
@@ -282,8 +225,6 @@ mod tests {
             let mut found = Vec::new();
             objects(&tool.input, &[], &mut found);
             for (place, schema) in found {
-                // The fields: an object holding only a name nobody takes is refused with
-                // the list of every name that is taken.
                 let mut probed = full.clone();
                 *at(&mut probed, &place) = json!({ PROBE: 0 });
                 let why = refusal(verb, probed);
@@ -294,7 +235,6 @@ mod tests {
                 };
                 assert_eq!(keys(&schema), takes, "{verb} at {place:?}: {why}");
 
-                // Which of them it needs: each left out in turn.
                 let mut needs = BTreeSet::new();
                 for key in keys(&schema) {
                     let mut without = full.clone();
@@ -312,7 +252,6 @@ mod tests {
                 }
                 assert_eq!(required(&schema), needs, "{verb} at {place:?}");
 
-                // Every word an enum takes, where serde holds it to a list.
                 for (key, one) in schema["properties"].as_object().into_iter().flatten() {
                     let (words, inside_a_list) = match (one.get("enum"), one["items"].get("enum")) {
                         (Some(words), _) => (words, false),
@@ -327,7 +266,6 @@ mod tests {
                     };
                     at(&mut bogus, &place)[key.as_str()] = bad;
                     let Some(Err(why)) = Verb::read(verb, bogus) else {
-                        // A string the verb takes whatever it says; the list is advice.
                         continue;
                     };
                     let listed: BTreeSet<String> = words
@@ -343,8 +281,6 @@ mod tests {
         }
     }
 
-    /// The shapes a value may take, each read back: `browser_wait`'s `for` is a word or
-    /// one of three objects, a form field's value a tick, words or a list.
     #[test]
     fn every_shape_of_several_reads_back() {
         for tool in table().iter().filter(|tool| of_the_crate(&tool.name)) {
@@ -432,8 +368,6 @@ mod tests {
         assert!(!after.contains("edit_note"));
     }
 
-    /// Emil's own defaults (9.1) reach everything but scripts, the reader's storage and
-    /// settings: the terminal is in since 2026-10-12, as the AI panel's own agent has it.
     #[test]
     fn emils_defaults_list_all_but_three_kinds() {
         let every: BTreeSet<String> = AGENT_VERBS
@@ -457,43 +391,6 @@ mod tests {
         assert_eq!(names, ["agent_status"]);
     }
 
-    /// What the table costs a model's context, per tool and in all, as characters of the
-    /// JSON a client is sent: printed for the record, held under a ceiling so a
-    /// description cannot grow without anybody deciding it should. Raised from 24 000
-    /// to 28 000 on 2026-10-03 for every kind of tab (Emil: the agent reaches every tab,
-    /// terminals among them): three tools and the tab verbs' new arguments. Raised to
-    /// 31 000 on 2026-10-04 for the to-dos and bases (Emil: "my agent in here can
-    /// directly edit my todos"): seven tools, 3 767 characters, about 950 tokens. Raised
-    /// to 33 000 on 2026-10-07 for chats (docs/chats.md 4.14, "the agent reads and posts",
-    /// Emil's ask): six tools, 2 101 characters, about 530 tokens, and listed only to a
-    /// grant holding chats.read or chats.write. Raised to 34 500 on 2026-10-12 for helpers
-    /// (Emil: "claude can create subagents of openai models"): two tools, about 1 000
-    /// characters, listed only to a grant holding agents. Raised to 35 000 on 2026-10-18
-    /// for a task's start date and deadline (#371): `add_task` names both marks, 56
-    /// characters, from a table at 34 499. Raised to 35 900 on 2026-11-04 for files
-    /// anywhere (#1078: an agent does everything a VS Code extension can): one tool,
-    /// `files`, 829 characters, listed only to a grant holding files, from a table at
-    /// 34 968. The other rows were read for what they could give back first: each says
-    /// what its model needs and nothing twice, so the room is the new tool's own. Raised
-    /// to 36 800 on 2026-11-04 for programs (#1078, step 2): one tool, `process`, 943
-    /// characters, listed only to a grant holding processes, from a table at 35 789.
-    /// Raised to 36 900 the next day for a terminal of the reader's, online ones too, to run
-    /// a command in (#1125): `run_terminal`'s `tab`, 75 characters, from a table at 36 732.
-    /// Raised to 37 500 on 2026-11-05 for requests (#1078, step 3): one tool, `http`, 631
-    /// characters, listed only to a grant holding network, from a table at 36 807.
-    /// Raised to 38 800 the same day for the app and its window (#1078, step 4): two tools,
-    /// `system_clipboard` 238 and `ask_reader` 471 characters, each listed only to a grant
-    /// holding its scope, and the words `workspace_tabs`, `run_command` and `read_setting`
-    /// need for moving and arranging tabs, a dialog's path and every setting by its key,
-    /// from a table at 37 438. Raised to 39 600 the same day for a note's editor (#1078,
-    /// step 5): one tool, `note_editor`, 822 characters, listed only to a grant holding
-    /// editor, from a table at 38 677. Raised to 40 100 the same day for the system around
-    /// the app (#1078, step 6): one tool, `system`, 487 characters, listed only to a grant
-    /// holding processes, from a table at 39 499. Raised to 40 700 on 2026-11-05 for the
-    /// reader's applications (#1063, step 7): one tool, `application_tabs`, 563 characters,
-    /// listed only to a grant holding applications, from a table at 39 986. A row was held
-    /// under 1 600 until 2026-11-05, then under 1 700 for an online terminal an agent opens
-    /// (#1125): `workspace_tabs`' kind `online`, 88 characters, from a row at 1 576.
     #[test]
     fn the_table_stays_small() {
         let mut sizes = BTreeMap::new();

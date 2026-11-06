@@ -1,24 +1,5 @@
-//! The six tools Orden's account connector has too - `list_spaces`, `list_notes`,
-//! `read_note`, `search_notes`, `list_backlinks` and `write_note` - answered in the
-//! connector's own words (services/sync/src/mcp/tools.ts), so a prompt or a skill written
-//! against one reads the other's answers the same way (docs/agent-native.md 10).
-//!
-//! The window answers these as data; the text is written here:
-//!
-//! | tool | the window answers | the text |
-//! | --- | --- | --- |
-//! | `list_spaces` | spaces, as names or `{name}` | a name a line, or `No spaces yet.` |
-//! | `list_notes` | notes, as paths or `{path}` | a path a line, or `No notes yet.` |
-//! | `read_note` | `NoteRead` (lib/agents/docs/read.ts) | its `text`; with `include`, the whole answer as JSON |
-//! | `search_notes` | rows `{space?, path, text}` | `space/path: text` a line, or `Nothing found.` |
-//! | `list_backlinks` | rows `{path, line}`, the line counted from 1 | `path:line` a line, or `Nothing links to <path>.` |
-//! | `write_note` | `{path}` | `Saved <path>.` |
-//!
-//! A window that answers the connector's text itself, as a string, is passed through.
-
 use serde_json::Value;
 
-/// The tools this file answers.
 pub const SHARED: [&str; 6] = [
     "list_spaces",
     "list_notes",
@@ -28,8 +9,6 @@ pub const SHARED: [&str; 6] = [
     "write_note",
 ];
 
-/// The connector's text for one of the six, or `None` for any other tool, or for a
-/// `read_note` that asked for more than the words.
 pub fn text(tool: &str, args: &Value, result: &Value) -> Option<String> {
     if !SHARED.contains(&tool) {
         return None;
@@ -77,7 +56,6 @@ pub fn text(tool: &str, args: &Value, result: &Value) -> Option<String> {
     })
 }
 
-/// A list's rows, one a line, or the sentence for none.
 fn lines(result: &Value, row: impl Fn(&Value) -> Option<String>, none: &str) -> String {
     let rows: Vec<String> = result
         .as_array()
@@ -90,14 +68,12 @@ fn lines(result: &Value, row: impl Fn(&Value) -> Option<String>, none: &str) -> 
     }
 }
 
-/// A row that is a string, or one field of a row that is an object.
 fn field(row: &Value, key: &str) -> Option<String> {
     row.as_str()
         .or_else(|| row.get(key).and_then(Value::as_str))
         .map(str::to_owned)
 }
 
-/// A string field, or nothing.
 fn words(value: &Value, key: &str) -> String {
     value
         .get(key)
@@ -111,8 +87,6 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    /// Each is the connector's own text for the same answer; see
-    /// services/sync/src/mcp/tools.ts and services/sync/test/mcp.test.ts.
     #[test]
     fn the_six_answer_in_the_connectors_words() {
         assert_eq!(

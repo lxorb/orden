@@ -1,35 +1,11 @@
-//! An answer as the model reads it: a tool call's result, written from the contract's
-//! `Answer` (agents/verbs.rs) or the window's `{ok, value}`.
-//!
-//! **Text for the model, the contract for programs.** Claude Code and Codex hand a model
-//! only `structuredContent` when a result has one, and would drop the text with its marks
-//! (anthropics/claude-code#55677, openai/codex#10334), so a result here has none. The text
-//! is written for reading: a snapshot as its tree, a find as snapshot lines, a screenshot
-//! as a picture. A program that wants the answer itself - the harness, a script - reads it
-//! under `_meta`, which no model is shown.
-//!
-//! **Words from outside are marked** (9.6): page text, snapshot names, console and network
-//! lines, evaluated values, storage, tab titles, downloads, a dialog's message, a
-//! question's summary (it quotes the button), PDF text, and whatever the window says came
-//! from a shared space.
-//!
-//! **Three shapes, three kinds of text.** Done is the verb's own answer. `needs_approval`
-//! is not an error: the call did not happen, nothing failed, and the text says to carry on
-//! and ask `approval_status` later. An error is `isError` with the verb's own sentence, its
-//! code in front, and for the codes where the next step is not obvious, that step.
-
 use serde_json::{json, Map, Value};
 
 use super::marks::marked;
 use super::shared;
 use crate::agents::verbs::Dialog;
 
-/// Where the contract's answer is, under a result's `_meta`.
 pub const META: &str = "ch.emilvinu.nib/answer";
 
-/// The chats' tools, whose window answers the text itself (`@orden/chats/agent`, the
-/// account connector's words too), each message of somebody else's inside its own
-/// untrusted mark naming the chat and the person: passed through as it is.
 const CHATS: [&str; 6] = [
     "list_chats",
     "read_chat",
@@ -39,39 +15,25 @@ const CHATS: [&str; 6] = [
     "react",
 ];
 
-/// A call's outcome, whichever road it took.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Outcome {
-    /// Done.
     Done {
-        /// The verb's own answer.
         result: Value,
-        /// Where its words came from, when from outside.
         untrusted: Option<String>,
-        /// A dialog the page is holding.
         dialog: Option<Dialog>,
     },
-    /// Not done: the reader was asked.
     Asked {
-        /// The question.
         approval: String,
-        /// What they were asked, in one line.
         summary: String,
     },
-    /// Not done.
     Failed {
-        /// Why, as a word: the contract's code, or the window's.
         code: String,
-        /// Why, in a sentence.
         message: String,
-        /// A dialog the page is holding.
         dialog: Option<Dialog>,
     },
 }
 
 impl Outcome {
-    /// An answer in the contract's shape - `status` and the rest - read without holding
-    /// the window to the contract's list of codes, which its own verbs extend.
     pub fn read(said: &Value) -> Option<Self> {
         let words = |key: &str| said.get(key).and_then(Value::as_str).map(str::to_owned);
         let dialog = || {
@@ -97,8 +59,6 @@ impl Outcome {
         }
     }
 
-    /// What the endpoint said to a call, as an outcome: the contract's answer from the
-    /// crate, the window's `{ok, value}` or `{ok, error}`, or the endpoint's own refusal.
     pub fn from_endpoint(status: u16, body: &Value) -> Self {
         if status == 200 {
             if let Some(read) = Outcome::read(body) {
@@ -107,7 +67,6 @@ impl Outcome {
             match body.get("ok").and_then(Value::as_bool) {
                 Some(true) => {
                     let value = body.get("value").cloned().unwrap_or(Value::Null);
-                    // A window verb that asks, or marks, answers in the contract's shape.
                     return Outcome::read(&value).unwrap_or(Outcome::Done {
                         result: value,
                         untrusted: None,
@@ -127,7 +86,6 @@ impl Outcome {
         Outcome::failed(code, refusal(body))
     }
 
-    /// Not done, with no dialog to tell of.
     pub fn failed(code: &str, message: impl Into<String>) -> Self {
         Outcome::Failed {
             code: code.to_owned(),
@@ -143,8 +101,6 @@ impl Outcome {
         }
     }
 
-    /// The outcome in the contract's shape, for `_meta`: without a picture's bytes, which
-    /// the result carries once already.
     fn for_programs(&self) -> Value {
         let mut said = Map::new();
         match self {
@@ -188,7 +144,6 @@ impl Outcome {
     }
 }
 
-/// The sentence a refusal carries: the window's `error`, or the endpoint's.
 fn refusal(body: &Value) -> String {
     body.get("error")
         .and_then(Value::as_str)
@@ -197,7 +152,6 @@ fn refusal(body: &Value) -> String {
         .unwrap_or_else(|| "Orden did not say why".to_owned())
 }
 
-/// A tool call's result: the text a model reads, and the contract's answer beside it.
 pub fn rendered(tool: &str, args: &Value, outcome: &Outcome) -> Value {
     let mut content = match outcome {
         Outcome::Done {
@@ -216,8 +170,6 @@ pub fn rendered(tool: &str, args: &Value, outcome: &Outcome) -> Value {
     })
 }
 
-/// A result that is only a sentence of Orden's own: the state of the pairing, or why a
-/// call could not be made at all.
 pub fn said(sentence: &str, error: bool) -> Value {
     json!({ "content": [text(sentence)], "isError": error })
 }
@@ -226,8 +178,6 @@ fn text(words: &str) -> Value {
     json!({ "type": "text", "text": words })
 }
 
-/// Where words came from when the crate did not say: the tools whose answers are made of
-/// other people's words by what they are.
 fn source_of(tool: &str, args: &Value) -> Option<String> {
     let path = || args.get("path").and_then(Value::as_str).unwrap_or("a PDF");
     Some(match tool {
@@ -242,7 +192,6 @@ fn source_of(tool: &str, args: &Value) -> Option<String> {
     })
 }
 
-/// A done call's content.
 fn done(tool: &str, args: &Value, result: &Value, untrusted: Option<&str>) -> Vec<Value> {
     let words = |key: &str| result.get(key).and_then(Value::as_str).unwrap_or_default();
     let source = untrusted
@@ -307,7 +256,6 @@ fn done(tool: &str, args: &Value, result: &Value, untrusted: Option<&str>) -> Ve
                 )),
             ]
         }
-        // An application's frame (#1063): a picture, as a page's screenshot is.
         "application_tabs" if result.get("png").is_some() => {
             let size = |key: &str| result.get(key).and_then(Value::as_u64).unwrap_or(0);
             vec![
@@ -335,9 +283,6 @@ fn done(tool: &str, args: &Value, result: &Value, untrusted: Option<&str>) -> Ve
     }
 }
 
-/// Where a helper stands, as the model that started it reads it: its answer once it has
-/// one, and how to wait for it while it works (src/lib/ai/helpers/run.ts says the same for
-/// the sidebar's own loop).
 pub fn helper(result: &Value) -> String {
     let words = |key: &str| result.get(key).and_then(Value::as_str).unwrap_or_default();
     let model = [words("model"), words("provider")]
@@ -373,7 +318,6 @@ pub fn helper(result: &Value) -> String {
     }
 }
 
-/// Whether a helper's answer says it is still working, which `nib mcp` waits on.
 pub fn still_working(outcome: &Outcome) -> Option<String> {
     let Outcome::Done { result, .. } = outcome else {
         return None;
@@ -388,7 +332,6 @@ pub fn still_working(outcome: &Outcome) -> Option<String> {
         .flatten()
 }
 
-/// What a call that asked says.
 fn asked(tool: &str, args: &Value, approval: &str, summary: &str) -> String {
     let tab = args.get("tab").and_then(Value::as_str);
     let about = marked(
@@ -405,8 +348,6 @@ fn asked(tool: &str, args: &Value, approval: &str, summary: &str) -> String {
     )
 }
 
-/// What a call that failed says: its code, its sentence, and the next step where the
-/// code alone does not make it plain.
 fn failed(code: &str, message: &str) -> String {
     let next = match code {
         "no_such_ref" => "Take a new browser_snapshot and use its refs.",
@@ -430,7 +371,6 @@ fn failed(code: &str, message: &str) -> String {
     }
 }
 
-/// The dialog a page is holding, told on whatever answer comes next.
 fn held(dialog: &Dialog) -> String {
     let kind = serde_json::to_value(dialog.kind)
         .ok()
@@ -565,8 +505,6 @@ hi
         assert_eq!(result["_meta"][META]["result"]["width"], 1280);
     }
 
-    /// An application's frame (#1063) is a picture too, its bytes said once, and its
-    /// words never the reader's.
     #[test]
     fn an_applications_frame_is_a_picture() {
         let answer = Answer::Ok {
