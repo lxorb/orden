@@ -1,7 +1,3 @@
-/** Priorities put to work (#321): every new message by somebody else, in any connected
- *  account, has its conversation's level asked, and notifies where the reader's levels
- *  say so. Orden's own chats are given a level too, and keep their own notifications. */
-
 import { complete } from '../ai/complete'
 import { ai } from '../ai/store.svelte'
 import { notify } from '../notify'
@@ -53,8 +49,6 @@ export function startPriorities(): void {
   })
 }
 
-/** A conversation's level asked again, and a reply and a task suggested, as switched on.
- *  Answers the level. */
 async function considered(
   key: string,
   title: string,

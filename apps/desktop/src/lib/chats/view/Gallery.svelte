@@ -1,9 +1,4 @@
 <script lang="ts">
-  /** A message's pictures and videos (docs/chats.md 4.8): one alone as wide as the
-   *  column allows and never taller than 360, two to six as a grid, more as six with a
-   *  count on the last. Each is the sender's 480 px preview at the size the sender
-   *  stated, so the row is already the right height before anything loads; a press opens
-   *  the lightbox. A video plays in place over its first frame. */
   import type { FileRef } from '@orden/chats'
   import { amount } from '../../i18n.svelte'
   import { fitted, gallery, isVideo } from './media'
@@ -124,7 +119,6 @@
     font-weight: var(--weight-strong);
   }
 
-  /* The count of the rest, and a video's mark: the ink on the accent, over the picture. */
   .more {
     background: color-mix(in srgb, var(--accent) 72%, transparent);
   }

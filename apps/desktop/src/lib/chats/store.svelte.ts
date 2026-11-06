@@ -1,13 +1,3 @@
-/** The chats' store: the one place every surface reads a chat from and says anything in
- *  one (docs/chats.md 4.4, 4.5, 4.12 and 6.1). The shapes are ./api.ts.
- *
- *  Started after the launch (start.svelte.ts), for anybody signed in, on sync v1 and v2
- *  alike: the account's list of chats (`GET /v2/chats`), joined with the pointers this
- *  device holds, kept current by the hub's pokes; the device's store of every chat's
- *  messages (the crate's on a desktop and a phone, memory in the browser), caught up in
- *  the background; and the outbox. A chat opened is a `View` (view.svelte.ts), the same
- *  one for every surface that holds it, with a socket while any does. */
-
 import {
   type Event,
   type FileRef,
@@ -49,19 +39,13 @@ import { chatName, findPointers, makePointer, type Place, readPointer } from './
 import { forgetMoves, keepOwnPointer, ownPointer, ownPointers, startedFor } from './places'
 import { type Host, View } from './view.svelte'
 
-/** The reader's switch for read receipts, reciprocal (4.10): off, nobody sees theirs and
- *  they see nobody's. */
 const RECEIPTS = 'nib:chat-receipts'
 
-/** A wikilink's target: what `[[` holds up to a heading, a block, an alias or its end. */
 const WIKILINK = /\[\[([^\]|#^]+)/g
 
-/** How soon the pointers are looked for again when a chat in a space on this device
- *  turns up without one, doubling to the longest wait while it does not come. */
 const LOOK_FIRST = 2000
 const LOOK_AGAIN = 30_000
 
-/** The account, over HTTP, as the engine asks it. */
 const remote: Remote = {
   list: () => http.listChats(),
   events: (chat, after) => http.eventsOf(chat, { after }),
@@ -70,26 +54,22 @@ const remote: Remote = {
     try {
       return await http.postEvents(chat, events)
     } catch {
-      // Refused whole: the chat is not this account's to write in any more.
       return 'gone'
     }
   },
   read: (chat, seq, back) => http.postRead(chat, seq, back).catch(() => false),
 }
 
-/** A new id: a ULID made now. */
 function newId(): string {
   return ulid(Date.now(), Math.random)
 }
 
-/** The day a moment is on, where the reader is. */
 function dayOf(at: number): string {
   const date = new Date(at)
   const pad = (one: number) => String(one).padStart(2, '0')
   return `${String(date.getFullYear())}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
-/** The first moment of a reader's day. */
 function startOf(day: string): number {
   const [year, month, date] = day.split('-').map(Number)
   return new Date(year ?? 1970, (month ?? 1) - 1, date ?? 1).getTime()
@@ -104,12 +84,8 @@ class ChatsStore implements Chats {
   private account: string | null = null
   private readonly views = new Map<string, { view: View; holds: number }>()
   private places = new Map<string, Place>()
-  /** Chats whose pointer went from this device - to Recently deleted, or by a sync from
-   *  another - which are not listed, though the account lists them until it has heard
-   *  the pointer went; see `pointerMoved` (#375). */
   private readonly gone = new Set<string>()
   private readonly unread = new Map<string, number>()
-  /** The read place each chat's unread count was worked out from. */
   private readonly countedAt = new Map<string, number>()
   private readonly drafts = new Map<string, string>()
   private readonly people = new Map<string, Promise<ChatMember[]>>()
@@ -125,8 +101,6 @@ class ChatsStore implements Chats {
     return null
   }
 
-  /** Starts for the session signed in now, by its account's or guest's id; a different
-   *  one is stopped first. */
   async start(id: string | null): Promise<void> {
     if (id === this.account) return
     this.stop()
@@ -163,7 +137,6 @@ class ChatsStore implements Chats {
     await this.lookForPointers()
   }
 
-  /** The session ended: everything of it goes, the device's store too. */
   async forget(): Promise<void> {
     const cache = this.cache
     this.stop()
@@ -197,8 +170,6 @@ class ChatsStore implements Chats {
     this.ready = false
   }
 
-  /** The hub or the network came back: pokes may have been missed, so the list is asked
-   *  again, and whatever waited is sent. */
   async reconnected(): Promise<void> {
     const engine = this.engine
     if (!engine) return
@@ -206,12 +177,10 @@ class ChatsStore implements Chats {
     await engine.refresh()
   }
 
-  /** A folder or a space moved: the pointers are looked for again. */
   lookAgain(): Promise<void> {
     return this.engine ? this.lookForPointers() : Promise.resolve()
   }
 
-  /** The hub's `chat` frame, read with its check. */
   poked(said: unknown): void {
     const poke = chatPokeOf(said)
     if (poke) this.engine?.poked(poke)
@@ -222,7 +191,6 @@ class ChatsStore implements Chats {
     return () => this.listeners.delete(listener)
   }
 
-  /** New messages by others, once the device holds them: what notifications read. */
   heard(listener: (chat: string, messages: readonly Message[]) => void): () => void {
     this.arrivals.add(listener)
     return () => this.arrivals.delete(listener)
@@ -258,8 +226,6 @@ class ChatsStore implements Chats {
         if (root) spaces.set(row.space, root)
       }
       const behind = row.lastSeq > row.readSeq && row.lastBy !== this.me
-      // Read since the count was made, here or on another device: counted again, and
-      // nothing unread meanwhile where the read place is the head.
       if (this.countedAt.get(chat.id) !== row.readSeq) this.countLater(chat.id)
       const counted = row.readSeq >= row.lastSeq ? 0 : (this.unread.get(chat.id) ?? 0)
       entries.push({
@@ -288,10 +254,6 @@ class ChatsStore implements Chats {
     else this.lookWait = LOOK_FIRST
   }
 
-  /** A chat the account lists whose pointer is not on this device yet: it was just made
-   *  on another device, or its space has only just been shared here, and the pointer is
-   *  on its way through the space's sync. The sync is asked for a pass now rather than at its idle interval,
-   *  and the pointers are looked for again, sooner at first, until it has come. */
   private awaitPointers(): void {
     if (this.looking) return
     sync.nudge()
@@ -302,9 +264,6 @@ class ChatsStore implements Chats {
     }, this.lookWait)
   }
 
-  /** Which of a chat's pointers it is listed at, highest first: one in the chat's own
-   *  space on the account, then the one this device keeps as its own (places.ts), so a
-   *  copy, wherever it lies and whatever it is called, never takes its place (B542). */
   private rank(chat: string, place: Place): number {
     const space = this.engine?.chats.get(chat)?.row?.space ?? null
     const home = space !== null && this.remoteOf(place.root) === space ? 2 : 0
@@ -312,14 +271,12 @@ class ChatsStore implements Chats {
     return home + (own !== null && samePath(own, place.path) ? 1 : 0)
   }
 
-  /** A space's id on the account: the same under either sync. */
   private remoteOf(root: string): string | null {
     return sync.remoteIdFor(root)
   }
 
   private counting = new Set<string>()
 
-  /** A chat's unread count, worked out from the store once it settles. */
   private countLater(chat: string): void {
     if (this.counting.has(chat)) return
     this.counting.add(chat)
@@ -342,8 +299,6 @@ class ChatsStore implements Chats {
   }
 
   private async lookForPointers(): Promise<void> {
-    // Every pointer of a chat named more than once is ranked (`findPointers`), so what
-    // the ranks were says whether one of them came first or two tied.
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and read in this call
     const ranked = new Map<string, Map<string, number>>()
     const unread: string[] = []
@@ -359,12 +314,7 @@ class ChatsStore implements Chats {
     ).catch(() => null)
     const engine = this.engine
     if (!found || !engine) return
-    // The chat's own pointer: the one that came first, and nobody where two tied - a
-    // fresh device, or the kept one renamed away, never picks by the tree's order. One
-    // not found is let go of, unless its space would not read this time.
     for (const [chat, place] of found) {
-      // Kept where it was, in a space that would not read this time, it stays: the
-      // pointer found elsewhere may be a copy.
       const own = ownPointer(chat)
       if (own !== null && unread.some((root) => within(root, own) !== null)) continue
       const ranks = [...(ranked.get(chat)?.values() ?? [])]
@@ -375,21 +325,15 @@ class ChatsStore implements Chats {
       if (found.has(chat) || unread.some((root) => within(root, path) !== null)) continue
       keepOwnPointer(chat, null)
     }
-    // A pointer that was here and is not: deleted by the sync, or with its folder; its
-    // chat goes off the list as one deleted here does (`pointerMoved`, #375).
     const went = [...this.places.keys()].filter((chat) => !found.has(chat))
     for (const chat of went) this.gone.add(chat)
     for (const chat of found.keys()) this.gone.delete(chat)
     this.places = found
     if (went.length) void engine.refresh().catch(() => false)
-    // A pointer to a chat the account has not listed here yet: made on another device
-    // since the list was asked for, which no poke says until somebody posts in it.
     if ([...found.keys()].some((chat) => !engine.chats.get(chat)?.row)) await engine.refresh()
     this.drawList()
   }
 
-  /** A folder moved or renamed: the chats' own pointers in it are where it went. The
-   *  file operations say a folder's move once, not each pointer in it. */
   folderMoved(from: string, to: string): void {
     for (const [chat, path] of ownPointers()) {
       const inside = within(from, path)
@@ -397,10 +341,6 @@ class ChatsStore implements Chats {
     }
   }
 
-  /** The pointers the file list of the space at `root` holds now: one this device has not
-   *  placed - come by the sync, a move, a copy - is looked for, and its chat listed; and
-   *  one placed there that the list no longer holds - deleted by the sync, which says
-   *  nothing to the file operations - is looked for too, and its chat let go. */
   pointersSeen(root: string | null, paths: readonly string[]): void {
     if (!this.engine) return
     const placed = [...this.places.values()]
@@ -410,9 +350,6 @@ class ChatsStore implements Chats {
     const went = root !== null && placed.some((one) => one.root === root && !held.has(one.path))
     if (came || went) void this.lookForPointers()
   }
-
-  // -------------------------------------------------------------------------
-  // Opening
 
   open(chat: string): ChatView {
     const held = this.views.get(chat)
@@ -456,9 +393,6 @@ class ChatsStore implements Chats {
       },
     }
   }
-
-  // -------------------------------------------------------------------------
-  // Saying things
 
   async send(chat: string, event: Event): Promise<void> {
     const engine = this.engine
@@ -513,8 +447,6 @@ class ChatsStore implements Chats {
   }
 
   async remove(chat: string, message: string): Promise<void> {
-    // A post the account has not placed is taken out of the outbox, with everything
-    // said about it since: it never happened anywhere else.
     const engine = this.engine
     const waiting = engine?.pending(chat).filter((row) => {
       const event = row.event
@@ -569,7 +501,6 @@ class ChatsStore implements Chats {
     return last.body
   }
 
-  /** The outbox rows about one message. */
   private rowsAbout(chat: string, message: string) {
     return (this.engine?.pending(chat) ?? []).filter((row) => {
       const event = row.event
@@ -608,9 +539,6 @@ class ChatsStore implements Chats {
     }
     return asked
   }
-
-  // -------------------------------------------------------------------------
-  // Searching
 
   parse(query: string): SearchQuery {
     return parseSearch(query, dayOf(Date.now()))
@@ -672,7 +600,6 @@ class ChatsStore implements Chats {
     const wanted = new Set(names.map((name) => name.trim().toLowerCase()).filter(Boolean))
     const hits: Hit[] = []
     for (const name of wanted) {
-      // The store finds the messages with the name's words; the link itself decides.
       const words = name.split(/[^\p{L}\p{N}]+/u).filter(Boolean)
       if (!words.length) continue
       for (const { chat, kept } of await cache.search({ words, limit: 500 })) {
@@ -691,7 +618,6 @@ class ChatsStore implements Chats {
     const engine = this.engine
     const cache = this.cache
     if (!engine || !cache) return []
-    // Caught up first, so an agent asking about a chat reads what is there now.
     await engine.sync(chat).catch(() => undefined)
     const limit = Math.max(1, ask.limit)
     let around: number | undefined
@@ -700,7 +626,6 @@ class ChatsStore implements Chats {
       const found = (await cache.messages(chat, [ask.around]))[0]?.message
       if (!found) return []
       around = found.seq
-      // Around a reply is among its parent's replies, where it is shown.
       if (found.parent && !found.alsoToChat) parent ??= found.parent
     }
     const kept = await cache.window({
@@ -713,9 +638,6 @@ class ChatsStore implements Chats {
     })
     return kept.map((one) => one.message)
   }
-
-  // -------------------------------------------------------------------------
-  // Drafts, files, previews, pointers
 
   draft(chat: string): string {
     return this.drafts.get(chat) ?? ''
@@ -744,8 +666,6 @@ class ChatsStore implements Chats {
     return offer
   }
 
-  /** A note's space on the account and its own id there, or null for one that is not
-   *  the account's yet. */
   private remoteNote(path: string): { space: string; note: string } | null {
     const root = workspace.spaces.find((one) => within(one.root, path) !== null)?.root
     const space = root ? this.remoteOf(root) : null
@@ -782,7 +702,6 @@ class ChatsStore implements Chats {
     return (await http.putBlob(hash, bytes)) ? hash : null
   }
 
-  /** Addresses by reader, so one who just signed in is never handed the last one's. */
   private readonly urls = new Map<string, Promise<string | null>>()
   fileEpoch = $state(0)
 
@@ -790,7 +709,6 @@ class ChatsStore implements Chats {
     const key = `${this.me}/${chat}/${hash}`
     let url = this.urls.get(key)
     if (!url) {
-      // Only an address is kept: a null (offline, a 5xx, a 404 not yet folded) is asked again.
       url = http.fileOf(chat, hash).then((blob) => {
         if (blob) return URL.createObjectURL(blob)
         if (this.urls.get(key) === url) this.urls.delete(key)
@@ -801,8 +719,6 @@ class ChatsStore implements Chats {
     return url
   }
 
-  /** Lets go of the addresses, all of them or all but the reader's now: a stop for the
-   *  next session comes after the reader changed, and a row may have asked already. */
   private forgetFiles(all: boolean): void {
     const mine = `${this.me}/`
     this.fileEpoch++
@@ -829,8 +745,6 @@ class ChatsStore implements Chats {
     return place.path
   }
 
-  /** The pointer this device lists the chat at, of any copies the one `rank` puts first.
-   *  Null when it is not placed here yet. */
   placedAt(chat: string): string | null {
     return this.places.get(chat)?.path ?? null
   }
@@ -839,7 +753,6 @@ class ChatsStore implements Chats {
     return readPointer(path)
   }
 
-  /** The reader's switch for receipts. */
   get receipts(): boolean {
     return storedText(RECEIPTS) !== 'off'
   }
@@ -848,22 +761,6 @@ class ChatsStore implements Chats {
     keep(RECEIPTS, on ? 'on' : 'off')
   }
 
-  /** A pointer moved, came or went on this device (workspace/file-ops.ts): where its
-   *  chat is listed now. Nothing here moves a chat on the account: the one move that
-   *  does, its own pointer carried into another space, is asked of the account before
-   *  the file moves, under the rule chat-carry.ts holds it to (chat-leaving.ts). A pointer
-   *  that came from nowhere, or moved inside its space, is a file and nothing more.
-   *
-   *  A chat named by two pointers (a copy, a duplicate, an import) is listed at the one
-   *  in its own space on the account, else the one it had, as `findPointers` ranks them.
-   *  Access is the chat's space, never the file (docs/chats.md 4.2), so a copy in
-   *  another space reaches nothing there (B542).
-   *
-   *  One that went - deleted here, or its deletion brought by the sync - takes its chat
-   *  off the list at once, rather than leaving the row the account still lists until it
-   *  hears, with no pointer and so no name: Emil's nine rows of a lone `#` (#375). The
-   *  account is asked again, and stops listing a chat whose pointer is in Recently
-   *  deleted; put back, the pointer brings its chat back with it. */
   async pointerMoved(from: string | null, to: string | null): Promise<void> {
     const before = [...this.places].find(([, place]) => from !== null && place.path === from)
     const chat = to ? await readPointer(to) : null
@@ -876,16 +773,11 @@ class ChatsStore implements Chats {
     const root = to
       ? (workspace.spaces.find((one) => within(one.root, to) !== null)?.root ?? null)
       : null
-    // Listed where the account has it no longer, after a move chat-leaving.ts made: asked.
     const moved =
       before !== undefined && row !== null && root !== null && this.remoteOf(root) !== row.space
     if ((before && !chat) || (chat !== null && !row) || moved) {
       void this.engine?.refresh().catch(() => false)
     }
-    // Its own pointer moved: its own where it went. A pointer that came, or one moved
-    // while the own is not known, is never made its own here: a copy put back by undo or
-    // made before the launch scan looks just like the first pointer of a chat. A scan
-    // decides that, or making the chat, or the owner carrying it (B542).
     const own = chat ? ownPointer(chat) : null
     if (chat && to && own !== null && from !== null && samePath(own, from)) {
       keepOwnPointer(chat, to)

@@ -1,9 +1,5 @@
 import { expect, test, vi } from 'vitest'
 
-/** A new chat's pointer is written beside the note it is for, which can be in a space
- *  that is not on screen. Its name was chosen from the listing on screen, so a chat
- *  made there was written over that space's own `Chat.chat`, another chat's pointer. */
-
 const disk = vi.hoisted(() => ({ current: null as import('../../../test/disk').Disk | null }))
 
 vi.mock('../tauri', async (importOriginal) => ({

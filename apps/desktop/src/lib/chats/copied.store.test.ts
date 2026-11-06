@@ -1,20 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
-/** A copy of a chat's pointer is a second pointer, never a move (B542).
- *
- *  A copy says only that a file came (`fileCame`, workspace/copying.ts), which the chats
- *  hear as a pointer from nowhere. Taken as the chat's new place, a copy pasted into
- *  another space moved the chat there on the account, nobody asked: the first space's
- *  people lost it and the second's could read its whole history. Access is the chat's
- *  space, never the file (docs/chats.md 4.2), so a copy stays a pointer that reaches
- *  the chat for those who already could, and the chat stays where it lives.
- *
- *  Where it is listed is the account's to say, not the order of the spaces or the
- *  names: a scan, a deleted original or a restored one never hands its place to a
- *  copy, and only its own pointer carried into another space moves it, through the
- *  rule chat-leaving.ts asks the account under. The disk here is a map of pointers,
- *  scanned in the spaces' order and by name as the tree sorts them. */
-
 const CHAT = `c_${'1'.repeat(32)}`
 const POINTER = '/space/Plans.chat'
 
@@ -75,8 +60,6 @@ vi.mock('../sharing.svelte', async (importOriginal) => ({
 
 vi.mock('./pointers', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./pointers')>()),
-  // As the real one walks them: space by space in the order they are listed, and by
-  // name inside each, `Plans copy.chat` before `Plans.chat` as the tree sorts them.
   findPointers: async (
     rank: (chat: string, place: { root: string; path: string }) => number = () => 0,
     unread: (root: string) => void = () => undefined,
@@ -128,7 +111,6 @@ const OTHER_FIRST = [
   { id: 'space-3', name: 'Third', root: '/third' },
 ]
 
-/** A file operation as the chats hear it, with the disk changed first. */
 async function came(path: string) {
   disk.pointers.set(path, CHAT)
   await chats.pointerMoved(null, path)
@@ -234,10 +216,6 @@ test('a copy in another space carried on, its original deleted, never moves the 
   expect(moves).toEqual([])
 })
 
-/** What the device knows is all it goes by, and where it does not know it does not
- *  carry: before the chats have started, after a relaunch, and before the account's
- *  listing has heard of a move just made (review of #991). */
-
 test('before the chats have started, a copy in another space carried on moves nothing', async () => {
   await came('/other/Plans.chat')
   await chats.forget()
@@ -271,7 +249,6 @@ test('a move into another space undone before the listing has heard brings the c
   account.space = 'space-2'
   account.heard = false
   await moved(POINTER, '/other/Plans.chat')
-  // As workspace/undoing.ts asks it: from where the pointer is, back to where it was.
   expect((await carried('/other/Plans.chat', '/space', 'chat')).asked).not.toBeNull()
 
   expect(moves).toEqual([`${CHAT} space-2`, `${CHAT} space-1`])
@@ -307,15 +284,8 @@ test('the account not heard and no move of its own to go by, the move is refused
   expect(moves).toEqual([])
 })
 
-/** Two pointers in the chat's own space and neither kept as its own: a device that was
- *  not running when the duplicate was made, the kept one renamed away by the sync or
- *  outside the app. Which is the original is not decided by the tree's order, where
- *  the copy sorts first: carrying either asks the owner, naming the chat and where it
- *  would go, and moves the chat only when told to (third review of #991). */
-
 const COPY = '/space/Plans copy.chat'
 
-/** A carry that may ask: the question it put, if any, answered with `answer`. */
 async function carried(path: string, folder: string, answer: string | null) {
   let asked: string | null = null
   const done = chatsCarried(path, folder).then(
@@ -335,7 +305,6 @@ async function carried(path: string, folder: string, answer: string | null) {
 
 const QUESTION = 'Move the chat Plans to Other?'
 
-/** A device that has never run for this account, with the chat and its duplicate there. */
 async function freshDevice() {
   await chats.forget()
   disk.pointers = new Map([
@@ -419,11 +388,6 @@ test('a space that would not read for one scan keeps the own pointer found in it
   expect(asked).toBeNull()
   expect(moves).toEqual([])
 })
-
-/** Whatever the device has inferred, a pointer carried into another space carries its
- *  chat only on the owner's word given then: the one move it skips without asking is a
- *  copy whose chat's own pointer is known, still there, and staying behind (fourth
- *  review of #991). */
 
 test('a duplicate deleted and put back by undo is still a copy: carrying it asks', async () => {
   await freshDevice()

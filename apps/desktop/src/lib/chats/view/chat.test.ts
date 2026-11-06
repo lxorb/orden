@@ -94,7 +94,6 @@ describe('a chat of 100,000 messages', () => {
     const started = performance.now()
     const items = page.items
     expect(items.length).toBeGreaterThan(1000)
-    // Rows for a whole window are a pass over it, never over the chat.
     expect(performance.now() - started).toBeLessThan(200)
     await page.bottom()
     expect(page.after).toBe(false)

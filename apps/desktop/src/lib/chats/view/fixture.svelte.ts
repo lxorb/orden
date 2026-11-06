@@ -1,17 +1,3 @@
-/** A chats store in memory, with the client store's shapes (../api.ts): what the
- *  surfaces are tested and photographed against without an account, and what a drive
- *  steers (docs/chats.md 6.2, lane 5).
- *
- *  It keeps the promises the real one makes, by the same code where there is code to
- *  share: every event goes through `apply` from `@orden/chats`, so an edit, a delete, a
- *  reaction, a pin or a vote looks here as it will look from the account; a post waits
- *  in the outbox for a moment before it is placed, drawn as sending; a chat's view is a
- *  window of at most a thousand messages, paged two hundred at a time; a search reads
- *  the language with `parseSearch` and `matches`. `speak` is somebody else writing, for
- *  a drive that needs an arrival.
- *
- *  Never the app's store: nothing builds one but a test, a drive or the screenshots. */
-
 import {
   apply,
   type ChatState,
@@ -48,7 +34,6 @@ import type {
 } from '../api'
 import { dayOf } from './when'
 
-/** Rows a window opens with, pages by, and holds at most: the real store's. */
 const OPENING = 100
 const PAGE = 200
 const MOST_HELD = 1000
@@ -56,7 +41,6 @@ const MOST_HELD = 1000
 interface Held {
   entry: ChatEntry
   state: ChatState
-  /** The chat's own messages, in `seq` order, and where each is in that list. */
   ordered: Message[]
   at: Map<string, number>
   members: ChatMember[]
@@ -67,7 +51,6 @@ interface Held {
   typing: { who: Who; parent?: string }[]
 }
 
-/** A random number the same every run, so a fixture's ids are too. */
 function seeded(seed: number): () => number {
   let state = seed >>> 0
   return () => {
@@ -84,7 +67,6 @@ export class FixtureChats implements Chats {
   list = $state.raw<ChatEntry[]>([])
   ready = true
   receipts = true
-  /** How long a post waits in the outbox before it is placed. */
   delay = 250
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- the fixture's own books; `list` and the views are what draw
   private readonly held = new Map<string, Held>()
@@ -106,10 +88,6 @@ export class FixtureChats implements Chats {
     this.now = options.now ?? (() => Date.now())
   }
 
-  // ---------------------------------------------------------------------------
-  // Steering, for tests and drives
-
-  /** A chat with these people, and nothing said yet. */
   add(name: string, members: ChatMember[], more: Partial<ChatEntry> = {}): string {
     const id = `c_${Array.from({ length: 32 }, () => Math.floor(this.random() * 16).toString(16)).join('')}`
     const entry: ChatEntry = {
@@ -149,8 +127,6 @@ export class FixtureChats implements Chats {
     return id
   }
 
-  /** An event as somebody placed it at `at`, past the outbox: history being seeded, or
-   *  another person writing. */
   place(chat: string, author: Who, event: Event, at = this.now()): void {
     const held = this.must(chat)
     const logged = { ...event, seq: held.state.seq + 1, at, author } as Logged
@@ -182,20 +158,17 @@ export class FixtureChats implements Chats {
     }
   }
 
-  /** Somebody else posts words. Answers the message's id. */
   speak(chat: string, author: Who, body: string, more: Partial<Post> = {}): string {
     const message = this.id()
     this.place(chat, author, { kind: 'post', id: this.id(), message, body, ...more })
     return message
   }
 
-  /** Where somebody else has read to. */
   readTo(chat: string, who: Who, seq: number): void {
     this.must(chat).reads.set(who, seq)
     for (const view of this.must(chat).views) view.refresh()
   }
 
-  /** Somebody typing, or stopping. */
   typing(chat: string, who: Who, on: boolean, parent?: string): void {
     const held = this.must(chat)
     held.typing = held.typing.filter((one) => one.who !== who)
@@ -203,7 +176,6 @@ export class FixtureChats implements Chats {
     for (const view of held.views) view.refresh()
   }
 
-  /** Where the reader has read to, as if read on another device. */
   readHere(chat: string, seq: number, unread = 0): void {
     this.setEntry(chat, { ...this.must(chat).entry, readSeq: seq, unread, mentions: 0 })
   }
@@ -227,9 +199,6 @@ export class FixtureChats implements Chats {
     this.list = this.list.map((one) => (one.id === chat ? entry : one))
     for (const listener of this.listeners) listener()
   }
-
-  // ---------------------------------------------------------------------------
-  // The store's shapes
 
   watch(listener: () => void): () => void {
     this.listeners.add(listener)
@@ -435,7 +404,6 @@ export class FixtureChats implements Chats {
   private readonly offered = new Set<(offer: Offer) => void>()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- likewise
   private readonly waitingOffers = new Map<string, Offer>()
-  /** Who cannot open a note, by its path, for a test or a drive to say. */
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- the fixture's own books
   readonly reaches = new Map<string, { missing: ChatMember[]; share: boolean }>()
 
@@ -520,7 +488,6 @@ export class FixtureChats implements Chats {
   }
 }
 
-/** A post as it is drawn from the outbox, before it has a place. */
 function outboxMessage(post: Post, author: Who, at: number): Message {
   return {
     id: post.message,
@@ -543,7 +510,6 @@ function outboxMessage(post: Post, author: Who, at: number): Message {
   }
 }
 
-/** A window of a chat, by the first and last `seq` it holds. */
 class FixtureView implements ChatView {
   messages = $state.raw<Shown[]>([])
   pending = $state.raw<Shown[]>([])
@@ -586,7 +552,6 @@ class FixtureView implements ChatView {
     return Promise.resolve()
   }
 
-  /** Holds the messages from index `from` to `to` (not) of the chat's own. */
   private window(from: number, to: number): void {
     const all = this.store.ordered(this.chat)
     if (to - from > MOST_HELD) to = from + MOST_HELD
@@ -732,8 +697,6 @@ class FixtureReplies implements RepliesView {
   }
 }
 
-/** A picture for a hash nobody uploaded: a soft gradient, different for each hash, so a
- *  gallery in a screenshot looks like pictures rather than empty boxes. */
 function pictureOf(hash: string): string {
   const hue = (parseInt(hash.slice(0, 2), 16) || 0) * 1.4
   const svg =
@@ -748,7 +711,6 @@ function pictureOf(hash: string): string {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`
 }
 
-/** A file of a fixture's own, by a made-up hash. */
 export function fixtureFile(random: () => number, more: Omit<FileRef, 'hash'>): FileRef {
   const hash = Array.from({ length: 64 }, () => Math.floor(random() * 16).toString(16)).join('')
   return { hash, ...more }

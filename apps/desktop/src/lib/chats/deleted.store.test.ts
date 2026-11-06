@@ -1,14 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
-/** A chat whose pointer was deleted is not listed (#375).
- *
- *  The Chats panel lists the account's chats by the pointers on this device, and the
- *  account went on listing a chat whose `.chat` pointer was in Recently deleted, so every
- *  device drew a row for it with no pointer and no name: Emil's nine rows of a lone `#`.
- *  The account no longer lists one (services/sync, `LISTED`); this is the device's half,
- *  between the delete and the account hearing of it: the row goes at once, and a pointer
- *  put back brings it back. A chat whose pointer has not come yet keeps its row. */
-
 const CHAT = `c_${'1'.repeat(32)}`
 const OTHER = `c_${'2'.repeat(32)}`
 const POINTER = '/space/Plans.chat'
@@ -102,7 +93,6 @@ test('its pointer deleted by the sync, which tells the file operations nothing, 
   disk.pointers.delete(POINTER)
   chats.pointersSeen('/space', [])
   await vi.waitFor(() => expect(listed()).toEqual([]))
-  // And brought back by the sync, it comes back.
   disk.pointers.set(POINTER, CHAT)
   chats.pointersSeen('/space', [POINTER])
   await vi.waitFor(() => expect(listed()).toEqual([[CHAT, 'Plans']]))

@@ -1,20 +1,7 @@
-/** The device's store of chats, as the window speaks to it (docs/chats.md 4.17): a few
- *  questions and a list of changes applied together, never SQL.
- *
- *  Two of them answer the same questions the same way: the crate's, a file beside the
- *  sync store with every message's words indexed (native-cache.ts and
- *  src-tauri/src/sync_store/chats.rs), and this module's own in memory, which the tests
- *  and the browser build use. The browser keeps no history between visits: it is online
- *  whenever it is open, and the account is its store, as Slack's web client's is. */
-
 import { type Event, type Has, hasOf, type Message, type Who } from '@orden/chats'
 import type { ChatRow, Refusal } from '@orden/chats/wire'
 import type { Kept } from './fold'
 
-/** One chat as the device holds it: the log's place every message here is current to,
- *  the reader's read place, where the next older page starts (`older`, the account's
- *  `before`; null once the chat's first message is here, which is `complete`), and the
- *  account's last listing row for it. */
 export interface CachedChat {
   id: string
   space: string
@@ -25,8 +12,6 @@ export interface CachedChat {
   row: ChatRow | null
 }
 
-/** One event this device said that the account has not placed, and why not once it
- *  would not. */
 export interface OutboxRow {
   id: string
   chat: string
@@ -42,7 +27,6 @@ export interface DraftRow {
   at: number
 }
 
-/** A window of a chat by `seq`: its own rows, or one message's replies. */
 export interface WindowAsk {
   chat: string
   parent?: string
@@ -52,8 +36,6 @@ export interface WindowAsk {
   limit: number
 }
 
-/** The candidates of a search, newest first: every part given must hold. Times are
- *  instants; the caller turns the reader's days into them. */
 export interface SearchAsk {
   chats?: string[]
   words?: string[]
@@ -81,28 +63,21 @@ export interface ChatCache {
   window(ask: WindowAsk): Promise<Kept[]>
   messages(chat: string, ids: readonly string[]): Promise<Kept[]>
   search(ask: SearchAsk): Promise<{ chat: string; kept: Kept }[]>
-  /** Messages of the chat itself after `after` by anybody but `me`. */
   unread(chat: string, after: number, me: Who): Promise<number>
   outbox(): Promise<OutboxRow[]>
   drafts(): Promise<DraftRow[]>
-  /** Every change, all or nothing. */
   write(changes: readonly CacheChange[]): Promise<void>
-  /** Everything gone: the account signed out. */
   forget(): Promise<void>
 }
 
-/** Whether the chat itself shows a message: not a reply, or a reply sent to it too. */
 export function isMain(message: Message): boolean {
   return message.parent === undefined || message.alsoToChat
 }
 
-/** What `has:` reads of a message, each word between spaces, as the crate's column. */
 export function hasColumn(message: Message): string {
   return ` ${hasOf(message).join(' ')} `
 }
 
-/** Text as a search compares it: no case, no accents, as `@orden/chats` and FTS5's
- *  `remove_diacritics` both fold it. */
 function folded(text: string): string {
   return text.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase()
 }
@@ -113,10 +88,8 @@ function wordsOf(text: string): string[] {
     .filter(Boolean)
 }
 
-/** The cache in memory. */
 export class MemoryCache implements ChatCache {
   private readonly chatRows = new Map<string, CachedChat>()
-  /** Messages per chat, by id. */
   private readonly rows = new Map<string, Map<string, Kept>>()
   private readonly queued = new Map<string, OutboxRow>()
   private readonly drafted = new Map<string, DraftRow>()

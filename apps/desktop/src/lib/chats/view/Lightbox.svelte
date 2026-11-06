@@ -1,8 +1,4 @@
 <script lang="ts">
-  /** A message's pictures, one at a time, over everything (docs/chats.md 4.8): the
-   *  original as it arrives over the preview already drawn, ← and → (or a swipe) between
-   *  them, a press to see it at its own size and again to fit it, Save, and Escape, back
-   *  or the scrim to leave. */
   import type { FileRef } from '@orden/chats'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -39,7 +35,6 @@
   $effect(() => overlays.show(onclose))
   $effect(() => closeOnBack(true, onclose))
 
-  /** A swipe of more than a thumb's width is the next picture, or the one before. */
   function swiped(event: PointerEvent) {
     if (swipeFrom === null) return
     const moved = event.clientX - swipeFrom

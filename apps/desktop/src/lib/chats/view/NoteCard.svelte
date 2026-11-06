@@ -1,10 +1,4 @@
 <script lang="ts">
-  /** A note a message links, as a live card under its words (docs/chats.md 4.13, Teams'
-   *  Loop and Slack's file card): the note's mark, its name and folder, and its first
-   *  lines, read again whenever the space's index says a note was saved, so the card
-   *  says what the note says now rather than what it said when it was sent. A press
-   *  opens the note beside the chat. A link the reader's space cannot answer draws no
-   *  card: the words already carry it. */
   import FileMark from '../../FileMark.svelte'
   import { fileMark } from '../../file-mark'
   import { links } from '../../link-index.svelte'
@@ -12,7 +6,6 @@
   import { workspace } from '../../workspace.svelte'
   import { cardLines } from './note-card'
 
-  /** `from`: the chat's pointer, whose space the link is read in. */
   const { target, from = null }: { target: string; from?: string | null } = $props()
 
   const relative = $derived(links.targetOf(from, { kind: 'wikilink', target }))
@@ -23,7 +16,6 @@
 
   let lines = $state.raw<string[]>([])
 
-  /** Reads a value for its own sake, so the effect around it follows it. */
   const follows = (_value: unknown) => undefined
 
   $effect(() => {
@@ -56,7 +48,6 @@
 {/if}
 
 <style>
-  /* The link preview's shape, with the note's own mark in place of the site's picture. */
   .card {
     display: flex;
     align-items: flex-start;

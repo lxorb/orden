@@ -72,8 +72,6 @@ describe('at the size of a long chat', () => {
       const top = list.top(row)
       expect(list.at(top)).toBe(row)
     }
-    // Ten thousand measurements and lookups: a pass over the chat each would be a
-    // billion steps and many seconds; a walk each is a few milliseconds.
     expect(performance.now() - started).toBeLessThan(1000)
   })
 })

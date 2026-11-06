@@ -1,9 +1,4 @@
 <script lang="ts">
-  /** A small layer beside what was pressed, the one shape every layer a chat puts up
-   *  wears: the emoji picker, the pins, the members, who reacted. The profile card's
-   *  behaviour (people/ProfileCard.svelte): it rises 6 px into place, and Escape, back
-   *  and a press anywhere else close it. On a phone it is a sheet from the bottom, as
-   *  every menu there is. See place.ts for where it goes. */
   import type { Snippet } from 'svelte'
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -21,9 +16,7 @@
     onclose,
     children,
   }: {
-    /** What was pressed; null while the layer is down. */
     at: Box | null
-    /** Line up the end edges rather than the start ones: a button at a row's end. */
     end?: boolean
     label: string
     width?: string
@@ -47,7 +40,6 @@
       : { left: 0, top: 0 },
   )
 
-  // Closed by Escape, a press past it and the window losing the focus; see overlays.ts.
   $effect(() => (at ? overlays.show(onclose, () => [layer]) : undefined))
   $effect(() => closeOnBack(!!at, onclose))
 </script>
@@ -86,7 +78,6 @@
     color: var(--text);
   }
 
-  /* A phone's: across the foot of the screen, over the keyboard's inset. */
   .float.sheet {
     left: 0;
     right: 0;

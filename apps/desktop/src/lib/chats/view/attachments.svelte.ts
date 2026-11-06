@@ -1,14 +1,8 @@
-/** The files waiting in a composer (docs/chats.md 4.15): dropped anywhere on the chat,
- *  pasted, or picked, each a chip that goes up as a blob the moment it lands, so Send
- *  has nothing left to wait for by the time the words are written. A message carries at
- *  most `MOST_FILES`. */
-
 import type { FileRef } from '@orden/chats'
 import { MOST_FILES } from '@orden/chats/limits'
 import { prepared } from './prepare'
 import { store } from './source.svelte'
 
-/** A file's bytes up to the account; answers its hash, and throws where it could not go. */
 export async function put(file: Blob): Promise<string> {
   const hash = await store().upload(new Uint8Array(await file.arrayBuffer()))
   if (!hash) throw new Error('the file did not go up')
@@ -20,7 +14,6 @@ export interface Attachment {
   name: string
   type: string
   size: number
-  /** A picture of it while it is here, for a picture's chip. */
   thumb: string | null
   ref: FileRef | null
   failed: boolean
@@ -58,7 +51,6 @@ export class Attachments {
     }
   }
 
-  /** A file made ready elsewhere, already up: a voice message. */
   addRef(ref: FileRef): void {
     const id = (made += 1)
     this.list = [

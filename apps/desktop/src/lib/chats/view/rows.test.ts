@@ -42,7 +42,6 @@ function rows(messages: Message[], more: Partial<Rowing> = {}): Item[] {
   })
 }
 
-/** The rows as short words: a day, the line, a head with its author, or a follower. */
 function said(items: Item[]): string[] {
   return items.map((item) => {
     if (item.kind === 'day') return `day ${item.day}`

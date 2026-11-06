@@ -1,18 +1,3 @@
-/** An open chat's socket to its `ChatLog` (docs/chats.md 4.4).
- *
- *  Held while a chat is open and by nothing else: every other chat hears through the
- *  account's hub. It says `hello` with the place the device holds, and the log answers
- *  with every event after it, or `behind` when the device is too far back for that, then
- *  who is here; from then on it hears events as they are placed, typing, read places and
- *  profile changes. It sends typing and read places. A post never goes this way: the
- *  outbox posts over HTTP and waits for each answer in turn, as Slack's clients post
- *  through its API and listen on its socket, so the order of one device's events never
- *  depends on two ends of a socket agreeing about it.
- *
- *  Comes back on its own after a drop, saying `hello` again with whatever place the
- *  device holds by then. A close the log made on purpose (the reader was taken out of
- *  the space, or the chat is gone) is not reconnected after. */
-
 import type { Logged, Who } from '@orden/chats'
 import { serverFrameOf, socketPath, text, type ClientFrame } from '@orden/chats/wire'
 import { subprotocol } from '@orden/rooms'
@@ -20,10 +5,8 @@ import { BEAT, DEVICE_PROTOCOL } from '@orden/sync-core/wire'
 import { BASE } from '../api'
 import { BEAT_EVERY, roomDelay } from '../backoff'
 
-/** The log closed the socket on purpose: access ended, or the chat did. */
 const ENDED = 1008
 
-/** What a socket hears, handed to whoever opened it. */
 export interface Heard {
   events(events: Logged[]): void
   behind(seq: number): void
@@ -31,13 +14,10 @@ export interface Heard {
   read(who: Who, seq: number): void
   here(who: Who[]): void
   profile(who: Who): void
-  /** Open and greeted, or gone. */
   state(open: boolean): void
-  /** Closed for good by the log. */
   ended(): void
 }
 
-/** A socket, as much of it as this uses, so a test hands in its own. */
 export interface Wire {
   send(text: string): void
   close(): void
@@ -49,7 +29,6 @@ export type Dial = (
   on: { opened(): void; heard(text: string): void; closed(code: number): void },
 ) => Wire
 
-/** The browser's own WebSocket. */
 const dialWebSocket: Dial = (url, protocols, on) => {
   const socket = new WebSocket(url, protocols)
   socket.onopen = () => on.opened()
@@ -80,7 +59,6 @@ export class ChatSocket {
     private readonly chat: string,
     private readonly token: string,
     private readonly device: string | null,
-    /** The place the device holds now, said with every `hello`. */
     private readonly since: () => number,
     private readonly heard: Heard,
     private readonly dial: Dial = dialWebSocket,
@@ -92,8 +70,6 @@ export class ChatSocket {
     return this.greeted
   }
 
-  /** The composer's words changed. The log relays at most one every three seconds, so
-   *  this sends no more than that either. */
   typing(parent?: string): boolean {
     return this.say(parent ? { t: 'typing', parent } : { t: 'typing' })
   }
@@ -188,7 +164,6 @@ export class ChatSocket {
         break
       case 'placed':
       case 'refused':
-        // The outbox posts over HTTP and reads its answers there.
         break
     }
   }

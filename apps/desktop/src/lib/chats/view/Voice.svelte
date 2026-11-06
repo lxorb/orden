@@ -1,10 +1,4 @@
 <script lang="ts">
-  /** A voice message, or any sound a message carries (docs/chats.md 4.8): play, the 64
-   *  bars the sender made filling as it plays, a press or a drag on them to seek, and
-   *  1×, 1.5×, 2×. The bars are drawn before the sound loads, which it does on the
-   *  first press. Transcribe turns it into words on this device's road (the provider
-   *  the reader set up, or the account's, as a recording in a note is), shown under it
-   *  and never sent. */
   import type { FileRef } from '@orden/chats'
   import { WAVE_BARS } from '@orden/chats/limits'
   import { message as errorWords, t } from '../../i18n.svelte'

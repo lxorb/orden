@@ -1,12 +1,4 @@
 <script lang="ts">
-  /** A chat in a tab (docs/chats.md 4.15): its head, its rows, its composer, and one
-   *  message's replies beside it. The tab's file is the chat's `.chat` pointer; which
-   *  chat it names is the store's to read (4.2).
-   *
-   *  The layers a chat puts up live here, once for the tab: the emoji picker (for the
-   *  composer and for reactions), the lightbox, a new poll, the bubble. A file dropped
-   *  anywhere on the chat lands in the composer, and a row of the file list as a link. Ctrl+J goes to the New line and
-   *  Escape to the bottom (4.16). On a phone the replies are the page. */
   import { chatOf, type FileRef, type Message, type Poll } from '@orden/chats'
   import { onDestroy, untrack } from 'svelte'
   import { draggedTab, isTreeDrag } from '../../drag-paths'
@@ -55,15 +47,9 @@
   let dropping = $state(false)
 
   const space = $derived(page?.entry?.space ?? null)
-  /** What a chat somebody shared on its own is called: the name its pointer has on the
-   *  account, which came with the tab. A chat's own name is its pointer's, and there is
-   *  no pointer of it here to read one off (#386). */
   const lentName = $derived(tab.note.shared ? chatName(tab.note.name) : null)
   const phone = $derived(viewport.device === 'phone')
 
-  // The chat the pointer names, opened once the store has started and says which it is:
-  // a tab put back by the launch comes before the store does. A pointer somebody shared
-  // on its own has no path here: its words came down with the tab, and they name it.
   $effect(() => {
     const path = tab.path
     const lent = tab.note.shared ? (chatOf(tab.note.text)?.chat ?? null) : null
@@ -78,7 +64,6 @@
     })
   })
 
-  /** A message a link or a search hit asked this chat to open at, once it is open. */
   function jumpWaiting() {
     if (!page?.ready || !tab.path) return
     const message = takeJump(tab.path)
@@ -95,15 +80,11 @@
     }),
   )
 
-  // Drawn is on screen: a pane draws the tab in front of it and no other, and nothing
-  // pings for a chat the reader is looking at (docs/chats.md 4.11).
   $effect(() => {
     const id = page?.id
     if (id) return onScreen(id)
   })
 
-  // Words offered into one message's replies open them, so the composer they wait in is
-  // on screen.
   $effect(() =>
     store().offers((offer) => {
       if (page?.id === offer.chat && offer.parent) page.replying = offer.parent
@@ -157,7 +138,6 @@
       composer?.addNotes(notes)
       return
     }
-    // A web tab let go of on the chat, as its page's address; see tab-strip/chat-drop.ts.
     const web = workspace.tabs.find((one) => one.id === draggedTab(event.dataTransfer))
     const address = web && (pages.addressOf(web.id) ?? web.address ?? workspace.webAddressOf(web))
     if (address) {
@@ -238,7 +218,6 @@
       {/key}
     {/if}
   {:else if missing}
-    <!-- A pointer that names no chat this account reaches: the chat's mark, faded. -->
     <p class="missing"><Glyph name="hash" /></p>
   {/if}
 </div>

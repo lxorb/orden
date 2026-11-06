@@ -1,6 +1,3 @@
-/** What pings for every chat: kept from what the reader typed, handed to the account,
- *  and taken from it only where it reads. */
-
 import { describe, expect, it, vi } from 'vitest'
 
 const saved = vi.hoisted(() => [] as Record<string, unknown>[])
@@ -23,7 +20,6 @@ describe('hush', () => {
     expect(hush.keywords).toEqual(['thesis', 'final draft'])
     expect(saved.at(-1)).toEqual({ chatKeywords: ['thesis', 'final draft'] })
 
-    // The same words again say nothing new.
     const before = saved.length
     hush.setKeywords('thesis, final draft')
     expect(saved).toHaveLength(before)

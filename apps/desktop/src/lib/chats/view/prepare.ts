@@ -1,10 +1,3 @@
-/** A file made ready to leave the device (docs/chats.md 4.8): a picture turned the way
- *  it was taken and written again without its metadata (no GPS, no camera), with a 480
- *  px preview and its size stated; a video's first frame as its preview; a sound's
- *  length and its 64 bars. Everything a reader's device needs to draw the message at
- *  its final size before a byte of the file arrives. Pictures the browser cannot draw
- *  (an SVG, an animated GIF) go as they are. */
-
 import { barsOf } from './media'
 
 export interface Prepared {
@@ -18,10 +11,8 @@ export interface Prepared {
   wave?: number[]
 }
 
-/** The longest side of a preview. */
 const PREVIEW_SIDE = 480
 
-/** Pictures a canvas would flatten or spoil, sent as they are. */
 const AS_THEY_ARE = new Set(['image/gif', 'image/svg+xml'])
 
 export async function prepared(file: File): Promise<Prepared> {
@@ -65,8 +56,6 @@ async function picture(file: File): Promise<Prepared> {
   }
 }
 
-/** A picture drawn into a canvas of this size and written as WebP: nothing of the
- *  original file but its pixels survives. */
 async function encoded(
   source: CanvasImageSource,
   width: number,
@@ -115,8 +104,6 @@ async function videoFrame(file: File): Promise<Partial<Prepared>> {
   }
 }
 
-/** A sound's length and its bars, from the bytes: decoded once, here, so nobody else
- *  has to. */
 export async function sound(bytes: ArrayBuffer): Promise<Partial<Prepared>> {
   const context = new AudioContext()
   try {

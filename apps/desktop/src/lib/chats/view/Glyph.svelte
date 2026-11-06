@@ -1,5 +1,4 @@
 <script lang="ts">
-  /** One of a chat's marks, stroked in the current colour; see glyphs.ts. */
   import { GLYPHS, type GlyphName } from './glyphs'
 
   const { name, filled = false }: { name: GlyphName; filled?: boolean } = $props()

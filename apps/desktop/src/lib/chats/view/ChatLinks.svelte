@@ -1,10 +1,4 @@
 <script lang="ts">
-  /** The messages that link a note, under its backlinks in the Links panel (docs/chats.md
-   *  4.13): a message that says `[[thesis]]` is a backlink like a note that does, read
-   *  out of the chats' store rather than out of any file, since nothing of a chat is
-   *  written into the space. A row is the message's first line, its chat and who wrote
-   *  it, and a press opens the chat at it. Looked for while the panel shows, and again
-   *  when a message arrives. */
   import { t } from '../../i18n.svelte'
   import FileMark from '../../FileMark.svelte'
   import { nameOf as fileName, relativeTo, withoutExtension } from '../../space-paths'
@@ -17,16 +11,13 @@
   const { path }: { path: string } = $props()
 
   let hits = $state.raw<Hit[]>([])
-  /** Bumped when a message arrives anywhere, so the list is asked again. */
   let heard = $state(0)
 
   $effect(() => store().heard(() => heard++))
 
-  /** Reads a value for its own sake, so the effect around it follows it. */
   const follows = (_value: unknown) => undefined
 
   $effect(() => {
-    // The note's own space, which a note still open from another one is not the active.
     const root = workspace.rootHolding(path)
     const names = [withoutExtension(fileName(path))]
     if (root) names.push(withoutExtension(relativeTo(root, path)))

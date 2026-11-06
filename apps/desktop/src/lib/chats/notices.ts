@@ -1,17 +1,3 @@
-/** The app's chat notifications: `ChatNotices` (./notify.ts) fed by the chats' store,
- *  with the store, the reader's choices and the window as its world (docs/chats.md 4.11).
- *
- *  Started with the chats (start.svelte.ts) for a signed-in desktop or browser, never
- *  the glasses' plugin, and never a phone: a phone's notifications are the activity's,
- *  and phone push is off (decision 7.4). Importing this is starting it.
- *
- *  The store hands over every new message by others once the device holds it
- *  (`chats.heard`), in the one window that holds the hub's socket so a message pings once
- *  a device; its list says where the reader has read to on every device, which takes a
- *  notification back, and whether the account has any chat, which keeps Orden in the tray.
- *  A chat tab says it is on screen (./on-screen.ts); a press opens the chat at the message
- *  as a link to it would (view/open.ts). */
-
 import { MUTED_FOR_GOOD } from '@orden/chats/notify'
 import { account } from '../account.svelte'
 import { t } from '../i18n.svelte'
@@ -27,7 +13,6 @@ import { inFront } from './on-screen'
 import { chats } from './store.svelte'
 import { openChat } from './view/open'
 
-/** Do not disturb, as the reader's status says it now: a moment, for good, or none. */
 function dndUntil(): number | null {
   const status = account.user?.status
   if (!status?.quiet || !stands(status, Date.now())) return null

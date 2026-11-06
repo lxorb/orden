@@ -1,8 +1,4 @@
 <script lang="ts">
-  /** Who in the chat cannot open the note the words link (docs/chats.md 4.13), over the
-   *  composer before the message goes: their faces, and Share where the reader owns the
-   *  note, which lets them read it in one press. Slack's prompt when a file's link goes
-   *  where some cannot follow it. Sending without it sends the link alone. */
   import type { Member } from '@orden/chats'
   import { fade } from 'svelte/transition'
   import { t } from '../../i18n.svelte'
@@ -20,7 +16,6 @@
     space,
   }: { chat: string; path: string; members: readonly Member[]; space: string | null } = $props()
 
-  /** The most faces drawn; the rest are in the bubble. */
   const FACES = 5
 
   let reach = $state.raw<{ missing: ChatMember[]; share: boolean } | null>(null)
@@ -80,7 +75,6 @@
     display: flex;
   }
 
-  /* Overlapping, as a tab's people are. */
   .face + .face {
     margin-inline-start: -6px;
   }

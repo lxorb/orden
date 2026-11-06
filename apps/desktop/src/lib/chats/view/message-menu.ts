@@ -1,8 +1,3 @@
-/** A message's own menu (docs/chats.md 4.15): the same rows on ⋯ in the hover bar, a
- *  right click and a long press. Only what the reader may do is offered, by the roles
- *  table every end decides by (`may`), so a row is never there for something the
- *  account would refuse. */
-
 import { may, type Message, type Role } from '@orden/chats'
 import { copyText } from '../../clipboard'
 import { t } from '../../i18n.svelte'
@@ -25,7 +20,6 @@ export function messageMenu(
   const posting = page.view.meta.posting
   const mine = page.me !== null && message.author === page.me
   const canPost = may(role, 'post', posting)
-  // Save as note writes beside the chat, which a space shared to be read refuses.
   const canKeep = !page.entry?.path || canWriteAt(page.entry.path)
   if (message.deleted) return []
   return [

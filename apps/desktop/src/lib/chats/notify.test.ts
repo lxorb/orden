@@ -7,7 +7,6 @@ const ME: Who = 'user:me'
 const LUCILE: Who = 'user:lucile'
 const CHAT = 'c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e'
 
-/** Tuesday 7 October 2026, 14:00 here. */
 const NOW = new Date(2026, 9, 6, 14, 0).getTime()
 
 function message(seq: number, change: Partial<Message> = {}): Message {
@@ -29,7 +28,6 @@ function message(seq: number, change: Partial<Message> = {}): Message {
   }
 }
 
-/** A world of one chat of three with nothing chosen, and a log of `log`. */
 function world(log: Message[], change: Partial<Told> = {}, chosen: Partial<Chosen> = {}) {
   const shown: Notice[] = []
   const unshown: string[] = []
@@ -92,7 +90,6 @@ function world(log: Message[], change: Partial<Told> = {}, chosen: Partial<Chose
   }
 }
 
-/** Every turn the notices have queued, run out. */
 const settled = () => new Promise((done) => setTimeout(done, 0))
 
 describe('ChatNotices', () => {

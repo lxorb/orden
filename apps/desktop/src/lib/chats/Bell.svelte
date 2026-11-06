@@ -1,9 +1,4 @@
 <script lang="ts">
-  /** The bell in a chat's head (docs/chats.md 4.11): what pings for this chat, all,
-   *  mentions or nothing, and Mute, until turned back or, from the row's chevron, for an
-   *  hour, the evening, a day or a week. The chat's own setting, kept by the account so
-   *  every device agrees; the head hands it in and takes the change (the chats' store,
-   *  `notifyFor`). A chat of more than ten people starts at mentions, the rest at all. */
   import type { Notify } from '@orden/chats'
   import { DIVIDER, type MenuEntry, menu } from '../menu.svelte'
   import { plural, t } from '../i18n.svelte'
@@ -22,7 +17,6 @@
     onchange: (notify: Notify | null, mutedUntil: number | null) => void
   } = $props()
 
-  /** Once a minute is enough to see a mute run out. */
   let now = $state(Date.now())
   $effect(() => {
     const ticking = setInterval(() => (now = Date.now()), 60_000)
@@ -39,7 +33,6 @@
   }
 
   function open(event: MouseEvent) {
-    // A browser asks before it shows anything, and a press is the moment it may ask.
     askToShow()
     const level = ringOf(notify, null, members, now)
     const levels: [Notify, string][] = [
@@ -94,8 +87,6 @@
 </button>
 
 <style>
-  /* Mentions only: the bell with the accent's dot, the mark a mention wears in the
-     Chats panel. */
   .dot {
     fill: var(--accent);
     stroke: var(--bg);

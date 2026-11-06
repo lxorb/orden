@@ -1,8 +1,3 @@
-/** Where a small layer goes beside what was pressed: under it with their start edges
- *  lined up, above it where there is no room below, and always inside the window. The
- *  profile card's rule (people/ProfileCard.svelte), said once for every layer a chat
- *  puts up: the emoji picker, the pins, the members, who reacted. Pure. */
-
 export interface Box {
   left: number
   top: number

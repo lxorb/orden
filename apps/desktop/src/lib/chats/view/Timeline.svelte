@@ -1,17 +1,4 @@
 <script lang="ts">
-  /** The chat itself: its rows in a measured window (docs/chats.md 4.15, 4.17).
-   *
-   *  Only the rows near the screen are in the page, about sixty, with two boxes standing
-   *  in for the rest; every row starts at a height guessed from what it says and is
-   *  measured once drawn (window.ts, estimate.ts). Where the reader is looking is held
-   *  still across everything that moves rows: history paging in above, a picture's row
-   *  settling, an edit. At the bottom it stays at the bottom as messages arrive; scrolled
-   *  up, a pill says how many are below. It opens at the New line, with a pill above
-   *  while that line is off screen, and reads to where the reader has looked.
-   *
-   *  Keyboard first: Tab from the composer lands on the rows, ↑ and ↓ walk them, and R,
-   *  Q, E, P, S, Delete and + act on the lit one (4.16). A screen reader hears it as a
-   *  log, arrivals spoken politely. */
   import type { Message } from '@orden/chats'
   import { may } from '@orden/chats'
   import { onMount, untrack } from 'svelte'
@@ -46,13 +33,10 @@
     onedit: (message: Message) => void
     onpicker: (message: Message, from: HTMLElement) => void
     onfiles: (message: Message, index: number) => void
-    /** The keyboard back to the composer. */
     oncompose: () => void
   } = $props()
 
-  /** Rows kept beyond either edge, in pixels. */
   const OVERSCAN = 700
-  /** Rows from either end at which the next page is asked for. */
   const NEAR = 25
 
   let scroller = $state<HTMLElement>()
@@ -60,21 +44,15 @@
   let top = $state(0)
   let room = $state(0)
   let width = $state(0)
-  /** Bumped when a row's measured height changed the window. */
   let version = $state(0)
-  /** Whether the reader is at the bottom, which keeps them there. */
   let stuck = $state(true)
   let lit = $state<string | null>(null)
   let hovered = $state<{ id: string; top: number } | null>(null)
 
-  /** Heights as drawn, by row, kept across windows. */
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- measurements, read when a window is built
   const measured = new Map<string, number>()
-  /** The row being read and where it sits, for holding still. */
   let anchor: Anchor | null = null
-  /** Where the next settle should put the reader, once. */
   let target: { key: string; where: 'line' | 'centre' } | null = null
-  /** Messages newer than this rise in as they arrive. */
   let arrivedAfter = $state(Number.MAX_SAFE_INTEGER)
 
   const role = $derived(page.view.role)
@@ -95,9 +73,6 @@
     })
   })
 
-  /** The rows in the page and the two boxes standing in for the rest. `_measured` is
-   *  how many times a height was measured, which the window's own numbers cannot say
-   *  to anything that draws from them. */
   function windowAt(_measured: number, at: number, shown: number) {
     const { heights } = layout
     const { from, to } = heights.span(at, shown, OVERSCAN)
@@ -106,8 +81,6 @@
 
   const span = $derived(windowAt(version, top, room))
 
-  // One observer for every row in the page: a height that changed is written into the
-  // window, and the reader held still across it.
   const observer = new ResizeObserver((entries) => {
     let changed = false
     for (const entry of entries) {
@@ -138,8 +111,6 @@
 
   onMount(() => () => observer.disconnect())
 
-  /** Puts the scroll where it belongs after anything moved: a target asked for, the
-   *  bottom while stuck to it, or the anchored row where it was. */
   function settle() {
     const box = scroller
     if (!box || !page.ready) return
@@ -166,14 +137,12 @@
     top = box.scrollTop
   }
 
-  /** Settles once whatever was measured or held has been drawn. */
   function settleAfter(_measured: number, _held: unknown) {
     untrack(settle)
   }
 
   $effect(() => settleAfter(version, layout))
 
-  // The first page in: at the New line where there is one, else at the bottom.
   let opened = false
   $effect(() => {
     if (!page.ready || opened) return
@@ -188,7 +157,6 @@
     })
   })
 
-  // A jump: to the row, in the middle, tinted.
   $effect(() => {
     const id = page.flashed
     if (!id) return
@@ -209,7 +177,6 @@
     hovered = null
   }
 
-  // The next page as either end comes near.
   $effect(() => {
     const { from, to } = span
     const count = layout.items.length
@@ -220,7 +187,6 @@
     })
   })
 
-  /** The newest message on screen, told as read while the window is in front. */
   function readOnScreen() {
     if (typeof document === 'undefined' || document.hidden || !document.hasFocus()) return
     const last = layout.heights.at(top + room - 8)
@@ -233,14 +199,12 @@
     }
   }
 
-  /** Reads to the screen once a window is drawn. */
   function readAfter(_shown: unknown, _held: unknown) {
     untrack(readOnScreen)
   }
 
   $effect(() => readAfter(span, layout))
 
-  /** The New line's row, and the messages under it, for the pill above. */
   const newAt = $derived(layout.index.get('new'))
   const newAbove = $derived(lineAbove(version, top))
   const unreadBelow = $derived(unreadUnder(version, top, stuck))
@@ -260,14 +224,12 @@
     return count
   }
 
-  /** Ctrl+J: to the New line. */
   export function toNew(): void {
     if (newAt === undefined) return
     target = { key: 'new', where: 'line' }
     settle()
   }
 
-  /** To the bottom, and everything read: Escape's, and the pill's below. */
   export async function toBottom(): Promise<void> {
     if (page.after) await page.bottom()
     stuck = true
@@ -275,7 +237,6 @@
     settle()
   }
 
-  /** The keyboard on the rows, the newest lit: Tab from the composer. */
   export function focusRows(): void {
     const last = [...layout.items].reverse().find((item) => item.kind === 'message')
     lit = last?.key ?? null
@@ -295,7 +256,6 @@
     lit = next.id
     target = { key: next.id, where: 'centre' }
     const row = layout.index.get(next.id)
-    // Only scrolled to when it is not already on screen.
     if (row !== undefined) {
       const rowTop = layout.heights.top(row)
       if (rowTop >= top && rowTop + layout.heights.heightOf(row) <= top + room) target = null
@@ -360,7 +320,6 @@
     )
   }
 
-  /** The row under the pointer, for the one hover bar. */
   function pointing(event: PointerEvent) {
     if (event.pointerType !== 'mouse') return
     const row = (event.target as Element | null)?.closest('[data-message]')
@@ -393,7 +352,6 @@
 <svelte:window onfocus={readOnScreen} />
 
 <div class="timeline">
-  <!-- The rows take the keyboard as one list, the arrows walking them (4.16). -->
   <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
   <div
     class="scroller nib-scrolls"
@@ -531,7 +489,6 @@
     order: -1;
   }
 
-  /* Where the two pills sit; what they look like is `.nib-pill` in the themes package. */
   .jump {
     --glyph-size: 14px;
     position: absolute;

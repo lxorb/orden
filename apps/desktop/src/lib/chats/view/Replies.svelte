@@ -1,9 +1,4 @@
 <script lang="ts">
-  /** One message's replies, beside the chat (docs/chats.md 4.15): the message, a line
-   *  with how many replies, each reply as a row, and a composer that writes into them,
-   *  with "Also send to" the chat as Slack has it. It slides in as every right panel
-   *  does, Escape and ✕ close it, and on a phone it is the page. Replies are few beside
-   *  a chat, so they are drawn whole and kept current from the store's changes. */
   import type { Message } from '@orden/chats'
   import { may } from '@orden/chats'
   import { onMount } from 'svelte'
@@ -43,7 +38,6 @@
   let scroller = $state<HTMLElement>()
   let composer = $state<{ focus: () => void }>()
 
-  /** The store's view of the replies, kept current, and let go as the pane goes. */
   const replies = page.view.replies(parent)
 
   onMount(() => {
@@ -51,7 +45,6 @@
     return () => replies.close()
   })
 
-  // A new reply is shown: the pane goes to its foot, where the composer is.
   $effect(() => {
     if (!items.length) return
     queueMicrotask(() => scroller?.scrollTo({ top: scroller.scrollHeight }))

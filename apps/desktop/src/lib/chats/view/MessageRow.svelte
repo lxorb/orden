@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** One message as a row of the chat (docs/chats.md 4.15): the face and the name on
-   *  the first row of a group, then only the words, with the time in the gutter on
-   *  hover; the line it quotes; the words drawn as markdown, "edited" after them with
-   *  what they said before on the bubble; its pictures, sounds and files; a link's
-   *  preview; a poll; reactions; the count of its replies; and, in a small chat, who
-   *  has read to here. A post still in the outbox wears a faint clock; one the account
-   *  refused says so, with Try again and Delete.
-   *
-   *  The row draws and the chat acts: every press is a call on the chat's page. */
   import type { Message, Who } from '@orden/chats'
   import { chatLinkOf } from '@orden/chats/links'
   import type { Shown } from '../api'
@@ -66,10 +57,8 @@
     column: number
     lit: boolean
     flashed: boolean
-    /** Messages placed after this arrived while the chat was open, so they rise into place. */
     arrivedAfter: number
     canPost: boolean
-    /** Drawn in the replies pane, where it has no replies of its own to count. */
     inReplies?: boolean
     onreply: (message: Message) => void
     onreact: (message: Message, from: HTMLElement) => void
@@ -92,15 +81,10 @@
     ),
   )
   const big = $derived(!message.files.length && onlyEmoji(message.body))
-  /** The note the message is about, drawn as a live card under its words. */
   const linked = $derived(message.deleted ? null : cardTarget(message.body))
 
-  /** The chat's pointer, which the links in its messages are read from: its own space,
-   *  which a chat still open from another space is not the active one. */
   const home = $derived(page.entry?.path ?? null)
 
-  /** The words, drawn, with the names they call marked. Run again when they change,
-   *  and when the index does, which is when another space's links come to resolve. */
   function words(
     node: HTMLElement,
     said: {
@@ -118,8 +102,6 @@
       node.innerHTML = bodyHtml(next.body, next.from)
       markMentions(node, callable)
       if (!next.edited) return
-      // "Edited" after the last words where they end in a paragraph, under them
-      // otherwise; what they said before is on its bubble.
       const mark = document.createElement('span')
       mark.className = 'edited'
       mark.textContent = t('Edited')
@@ -132,8 +114,6 @@
     return { update: draw, destroy: () => untip?.destroy() }
   }
 
-  /** A press inside the words: a link to a message opens it here, a link out goes out,
-   *  and a link to a note opens the note. */
   function follow(event: MouseEvent) {
     const anchor = (event.target as Element | null)?.closest('a')
     const href = anchor?.getAttribute('href')
@@ -162,7 +142,6 @@
   <span class="agent" aria-hidden="true">✦</span>
 {/snippet}
 
-<!-- A right click is the row's menu, which the keyboard reaches through the rows' list. -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="message"
@@ -375,7 +354,6 @@
     background: var(--surface-selected);
   }
 
-  /* A jump's landing, tinted in the accent and let go over a second. */
   .message.flash {
     animation: landed 1.2s var(--ease-out);
   }
@@ -507,8 +485,6 @@
     overflow-wrap: anywhere;
   }
 
-  /* The words of a message are a small page of the note's own type, without the
-     page's margins. */
   .body :global(:is(p, ul, ol, pre, blockquote, table, h1, h2, h3, h4, h5, h6)) {
     margin: 0;
   }

@@ -4,11 +4,6 @@ import type { Who } from '@orden/chats'
 import type { Chats } from '../api'
 import { computed, root, watch } from '../../../../test/effects/runes.svelte'
 
-/** A file whose fetch failed is asked again while a row still draws it (B545). The store
- *  answers null for a dropped connection or a 5xx, and the row kept that null until the app
- *  restarted. A retry belongs to the rows that draw the file and to the session that asked:
- *  a closed chat, a row gone, or another account asks nothing more. */
-
 const { useStore } = await import('./source.svelte')
 const { fileUrl } = await import('./urls.svelte')
 
@@ -18,7 +13,6 @@ function storeOf(me: Who | null, ask: Ask): Chats {
   return { me, fileUrl: ask } as unknown as Chats
 }
 
-/** A row drawing the file, as a template reads it. Answers what it shows and how to close. */
 function row(chat: string, hash: string): { shown: () => string | null; close: () => void } {
   let shown: string | null = null
   const close = root(() => {
@@ -94,7 +88,6 @@ test('a file that never lands is asked with growing waits, then every five minut
   expect(early).toBeGreaterThan(2)
   expect(early).toBeLessThan(12)
   await wait(60 * 60_000)
-  // twelve an hour at the longest wait, give or take
   expect(ask.mock.calls.length - early).toBeGreaterThanOrEqual(11)
   expect(ask.mock.calls.length - early).toBeLessThanOrEqual(13)
   view.close()
@@ -139,7 +132,6 @@ test('online before the network works does not end the retries', async () => {
   window.dispatchEvent(new Event('online'))
   await wait(0)
   up = true
-  // the wait starts over after online: well under the longest wait
   await wait(10_000)
   expect(view.shown()).toBe('blob:ok')
   view.close()
@@ -158,7 +150,6 @@ test('coming back online asks at once', async () => {
 })
 
 test('online while an ask is on its way starts no second chain (review of #990, M1)', async () => {
-  // a file the reader may no longer see: every answer is null, and each takes a second
   let open = 0
   let most = 0
   const ask = vi.fn<Ask>(() => {
@@ -175,18 +166,15 @@ test('online while an ask is on its way starts no second chain (review of #990, 
 
   let flaps = 0
   for (let second = 0; second < 30 * 60; second++) {
-    // the Wi-Fi flaps five times, each while an ask is out
     if (flaps < 5 && open > 0) {
       window.dispatchEvent(new Event('online'))
       flaps++
     }
     await wait(1000)
-    // the answer's own timer, and at most one wait
     expect(vi.getTimerCount()).toBeLessThanOrEqual(2)
   }
   expect(flaps).toBe(5)
   expect(most).toBe(1)
-  // one chain: the backoff to the longest wait, and one ask per flap
   expect(ask.mock.calls.length).toBeLessThanOrEqual(8 + 5 + 7)
   view.close()
 })
@@ -247,7 +235,6 @@ test('signing out and back in as the same reader asks again: the last addresses 
   expect(before.shown()).toBe('blob:1')
   before.close()
 
-  // sign-out: the store revokes what it made, and says so
   fake.me = null
   fake.fileEpoch++
   fake.me = 'user:a'

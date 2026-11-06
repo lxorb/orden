@@ -1,8 +1,3 @@
-/** Three devices, one chat, an account that places what they send (docs/chats.md 6.2,
- *  lane 4's simulator): posts, replies, edits, deletes and reactions made offline and
- *  crossing, devices that crash with an outbox full, and every device ending with the
- *  one state the reducer makes of the account's log. */
-
 import { type Event, type Message, ulid, type Who } from '@orden/chats'
 import { afterEach, describe, expect, test } from 'vitest'
 import { MemoryCache } from './cache'
@@ -35,8 +30,6 @@ async function device(account: Account, who: Who, cache = new MemoryCache()): Pr
   return made
 }
 
-/** Everything a device keeps of the chat, by id: the chat itself, and every message's
- *  replies under it. */
 async function kept(one: Device): Promise<Map<string, Message>> {
   const out = new Map<string, Message>()
   const asked = new Set<string>()
@@ -54,7 +47,6 @@ async function kept(one: Device): Promise<Map<string, Message>> {
   return out
 }
 
-/** Every device online, sending and catching up until nothing moves. */
 async function settle(devices: readonly Device[]): Promise<void> {
   for (const one of devices) one.online = true
   for (let round = 0; round < 4; round++) {
@@ -73,7 +65,6 @@ async function expectOneState(account: Account, devices: readonly Device[]): Pro
   const truth = new Map([...account.state()].filter(([, message]) => keepsRow(message)))
   for (const one of devices) {
     expect(await kept(one), one.who).toEqual(truth)
-    // What is left is only what crossed a delete on another device: refused as gone.
     const left = one.engine.pending(CHAT).map((row) => row.refused)
     expect(
       left.filter((refused) => refused !== 'gone'),
@@ -125,7 +116,6 @@ describe('three devices in one chat', () => {
         } else {
           event = { kind: 'react', id: id(), target: target.id, emoji: '👍', on: next() < 0.7 }
         }
-        // An edit or a delete of somebody else's message is one the composer never offers.
         if ((event.kind === 'edit' || event.kind === 'delete') && target?.author !== one.who)
           continue
         await one.engine.queue(CHAT, event)
@@ -148,7 +138,6 @@ describe('three devices in one chat', () => {
     await first.engine.queue(CHAT, { kind: 'post', id: id(), message, body: 'before the crash' })
     await first.engine.queue(CHAT, { kind: 'edit', id: id(), target: message, body: 'and after' })
 
-    // The account placed the post but its answer was lost, then the app died.
     const [post] = await cache.outbox()
     if (post) account.place('user:ana', post.event)
     first.engine.stop()

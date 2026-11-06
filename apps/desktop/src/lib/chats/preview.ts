@@ -1,17 +1,9 @@
-/** A link's preview for a message the reader is writing (docs/chats.md 4.8): the crate
- *  reads the page (src-tauri/src/link_preview.rs), and its picture goes up as a blob,
- *  made small first, so the message names it by hash and nobody who reads the message
- *  ever asks the site. A desktop's alone; elsewhere a message has no preview. */
-
 import type { Preview } from '@orden/chats'
 import { isRecord, isString } from '../stored'
 import { invoke, isDesktop } from '../tauri'
 
-/** The widest a preview's picture is kept. */
 const WIDEST = 480
 
-/** A picture's bytes made small, as WebP; the bytes as they were where the window cannot
- *  draw them. */
 async function smaller(bytes: Uint8Array, type: string): Promise<Uint8Array> {
   if (typeof createImageBitmap !== 'function' || typeof OffscreenCanvas !== 'function') return bytes
   try {
@@ -37,7 +29,6 @@ function bytesOf(base64: string): Uint8Array {
   return out
 }
 
-/** The preview of a link, its picture uploaded with `upload`; null for none. */
 export async function previewOf(
   url: string,
   upload: (bytes: Uint8Array) => Promise<string | null>,

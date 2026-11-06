@@ -1,14 +1,3 @@
-/** A note, or part of one, sent to a chat (docs/chats.md 4.13): Send to chat on a note's
- *  row, on a selection, and in the palette.
- *
- *  A chat is picked by name - the chats of the note's own space first, and a new one in
- *  that space last - and its tab opens with the composer holding a link to the note,
- *  which every member who can open the note sees as a live card; a selection goes as a
- *  quote above a link to the heading it is under. Nothing is sent until the reader
- *  presses Enter, and the composer shows who in the chat could not open the note, with
- *  Share where the reader owns it. Fetched by the first press; never in the glasses'
- *  plugin. */
-
 import { may } from '@orden/chats'
 import { account } from '../account.svelte'
 import { hiddenKinds } from '../settings.svelte'
@@ -20,10 +9,8 @@ import { headingAbove, sentWords } from './sent-words'
 import { openChat } from './view/open'
 import { store } from './view/source.svelte'
 
-/** What a picker row for a new chat is called by, apart from every chat's id. */
 const NEW = '\0new'
 
-/** Sends a note, or a quote of it, to a chat the reader picks. */
 export async function sendToChat(
   note: string,
   quote?: { text: string; heading?: string | null },
@@ -64,7 +51,6 @@ export async function sendToChat(
   chats.offer(chat, sentWords(withoutExtension(nameOf(note)), quote), { note })
 }
 
-/** A selection of a note sent to a chat: quoted, under the heading it sits in. */
 export function sendSelection(note: string, text: string, from: number, to: number): Promise<void> {
   return sendToChat(note, { text: text.slice(from, to), heading: headingAbove(text, from) })
 }

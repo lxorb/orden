@@ -1,10 +1,4 @@
 <script lang="ts">
-  /** A voice message being recorded, in the composer's place (docs/chats.md 4.8): a
-   *  dot, the time running, ✕ to throw it away and ➤ to send it; Escape throws it away,
-   *  Ctrl+Shift+M or Enter sends it. The microphone is the recorder notes use
-   *  (lib/recorder), Opus where the platform has it, and it stops itself at twenty
-   *  minutes. Sending works out the length and the 64 bars here, once, and puts the
-   *  sound up as a blob. */
   import type { FileRef } from '@orden/chats'
   import { MOST_VOICE_SECONDS } from '@orden/chats/limits'
   import { onMount } from 'svelte'
@@ -21,7 +15,6 @@
     ondone,
   }: {
     onsend: (file: FileRef) => void
-    /** Over, sent or not: the composer comes back. */
     ondone: () => void
   } = $props()
 
@@ -43,7 +36,6 @@
         started = performance.now()
       })
       .catch((error: unknown) => (refused = errorWords(error, t('Record'))))
-    // The keys while it records, wherever the keyboard is: the field it replaced is gone.
     const keys = (event: KeyboardEvent) => {
       if (event.key === 'Escape') cancel()
       else if (event.key === 'Enter' || shortcuts.pressed('chat.record', event)) void send()
@@ -64,7 +56,6 @@
     }
   })
 
-  /** Ends it and sends it. */
   export async function send(): Promise<void> {
     const one = recording
     if (!one || sending) return

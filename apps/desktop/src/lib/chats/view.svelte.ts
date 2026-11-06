@@ -1,14 +1,3 @@
-/** An open chat, and one message's replies, as the surfaces draw them (docs/chats.md 4.15
- *  and 4.17): a window of messages from the device's store, the outbox drawn over it, and
- *  the chat's socket while it is open.
- *
- *  A window, never the chat: the 100 rows around the read place when it opens, 200 more
- *  as the reader nears either end, at most `MOST_HELD` at once, trimmed at the end the
- *  reader is furthest from. Every change the store says about the chat is put into the
- *  window where it falls - a new message at the end only when the window reaches the end
- *  - so a chat of 100,000 messages costs what its window costs. Every list is replaced,
- *  never changed in place. */
-
 import { type Who } from '@orden/chats'
 import { RECEIPTS_UP_TO, TYPING_EVERY, TYPING_SHOWN } from '@orden/chats/limits'
 import type {
@@ -27,30 +16,23 @@ import type { Kept } from './fold'
 import { type Filter, overlay } from './overlay'
 import { ChatSocket } from './socket'
 
-/** Rows a window opens with, pages by, and holds at most (4.17). */
 const OPENING = 100
 const PAGE = 200
 const MOST_HELD = 1000
 
-/** What a view needs from the store that made it. */
 export interface Host {
   engine: ChatEngine
   cache: ChatCache
   me(): Who
   entry(chat: string): ChatEntry | null
-  /** The account's session, for the socket. */
   token(): string | null
   device(): Promise<string | null>
   members(chat: string): Promise<ChatMember[]>
-  /** Whether the reader shows and is shown read receipts. */
   receipts(): boolean
-  /** Somebody changed their profile. */
   profile(who: Who): void
-  /** One holder let the view go: answers whether it was the last. */
   release(chat: string): boolean
 }
 
-/** A window of one list of a chat, kept current. */
 class Listing implements MessageList {
   messages = $state.raw<Shown[]>([])
   pending = $state.raw<Shown[]>([])
@@ -58,7 +40,6 @@ class Listing implements MessageList {
   atEnd = $state(true)
   loading = $state(false)
 
-  /** The placed window, oldest first. */
   protected window: Kept[] = []
   private readonly listeners = new Set<() => void>()
   private drawing = 0
@@ -69,7 +50,6 @@ class Listing implements MessageList {
     private readonly scope: string | undefined,
   ) {}
 
-  /** Which messages this list draws. */
   protected readonly filter: Filter = (message) =>
     this.scope === undefined ? isMain(message) : message.parent === this.scope
 
@@ -78,7 +58,6 @@ class Listing implements MessageList {
     return () => this.listeners.delete(listener)
   }
 
-  /** The store said something about this chat. */
   heard(change: Change): void {
     if (change.t === 'outbox') {
       void this.draw()
@@ -159,7 +138,6 @@ class Listing implements MessageList {
     })
   }
 
-  /** The window around one place. */
   protected async around(seq: number): Promise<void> {
     await this.loadingWith(async () => {
       const half = OPENING / 2
@@ -177,8 +155,6 @@ class Listing implements MessageList {
     return this.host.engine.chats.get(this.chat)?.complete === true
   }
 
-  /** Rows from the store, the account's older pages filled in first while the store
-   *  has fewer than `enough` asks for. */
   private async filled(
     where: { before?: number; around?: number; limit: number },
     enough: (rows: readonly Kept[]) => boolean,
@@ -206,7 +182,6 @@ class Listing implements MessageList {
     }
   }
 
-  /** The window and the outbox, drawn: the latest call's answer wins. */
   protected async draw(): Promise<void> {
     const turn = ++this.drawing
     const outbox: readonly OutboxRow[] = this.host.engine.pending(this.chat)
@@ -297,8 +272,6 @@ export class View extends Listing implements ChatView {
     return this.entry?.role ?? null
   }
 
-  /** The rows around the read place from the store, then the socket and the people
-   *  once the first frame is drawn, then whatever the store did not have yet. */
   async open(): Promise<void> {
     const head = this.host.engine.chats.get(this.chat)?.seq ?? 0
     if (this.lineAt > 0 && this.lineAt < head) await this.around(this.lineAt + 1)
@@ -324,7 +297,6 @@ export class View extends Listing implements ChatView {
       ;[kept] = await this.host.cache.messages(this.chat, [message])
     }
     if (!kept) return false
-    // A reply the chat itself does not show is found under the message it answers.
     let seq = kept.message.seq
     if (!isMain(kept.message) && kept.message.parent) {
       const [parent] = await this.host.cache.messages(this.chat, [kept.message.parent])
@@ -358,8 +330,6 @@ export class View extends Listing implements ChatView {
     if (this.socket?.typing(parent)) this.typedAt = now
   }
 
-  /** Let go of by one holder; by the last, the socket goes and the store stops telling
-   *  it. */
   close(): void {
     if (this.closed || !this.host.release(this.chat)) return
     this.closed = true
@@ -371,7 +341,6 @@ export class View extends Listing implements ChatView {
 
   private readTimer: ReturnType<typeof setTimeout> | undefined
 
-  /** A read place said over HTTP, once the reader stops scrolling. */
   private readLater(seq: number, back: boolean): void {
     clearTimeout(this.readTimer)
     this.readTimer = setTimeout(() => {
@@ -411,7 +380,6 @@ export class View extends Listing implements ChatView {
             this.presence = { ...this.presence, here: [] }
             return
           }
-          // Back after a drop: whatever was said meanwhile, and our place.
           void engine.sync(this.chat)
           const readSeq = this.entry?.readSeq
           if (readSeq) this.socket?.read(readSeq)
@@ -421,7 +389,6 @@ export class View extends Listing implements ChatView {
     )
   }
 
-  /** Whether a holder still holds it: asked again after every wait. */
   private alive(): boolean {
     return !this.closed
   }

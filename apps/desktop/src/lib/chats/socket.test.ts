@@ -3,7 +3,6 @@ import { ChatSocket, type Dial, type Heard } from './socket'
 
 const CHAT = `c_${'c'.repeat(32)}`
 
-/** A dial whose sockets the test opens, speaks into and closes. */
 function dialed() {
   const sockets: {
     protocols: string[]

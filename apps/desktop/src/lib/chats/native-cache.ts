@@ -1,9 +1,3 @@
-/** The chats' store on a desktop and a phone: the crate's file beside the sync store,
- *  reached through three commands (src-tauri/src/sync_store/chats.rs). Every row it
- *  answers is checked on the way in: a message with `messageOf`, an event with
- *  `eventOf`, so a row a newer Orden wrote that this one cannot read is left out rather
- *  than trusted. */
-
 import { chatRowOf, eventOf, messageOf, REFUSALS } from '@orden/chats/wire'
 import { isRecord } from '../stored'
 import { invoke } from '../tauri'
@@ -73,7 +67,6 @@ function outboxOf(row: Row): OutboxRow | null {
   }
 }
 
-/** A change as the crate takes it. */
 function wired(change: CacheChange): Row {
   switch (change.t) {
     case 'chat': {
@@ -130,7 +123,6 @@ function wired(change: CacheChange): Row {
   }
 }
 
-/** The crate's store of the account's chats. */
 export function nativeCache(account: string): ChatCache {
   const read = async (ask: Row): Promise<unknown> => {
     const answers = await invoke<unknown[]>('chat_store_read', { account, asks: [ask] })

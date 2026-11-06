@@ -1,16 +1,3 @@
-/** A message kept outside its chat (docs/chats.md 4.13), each linking back to it:
- *
- *  - **Add as task** opens quick add with the message's first line and a `+Name` for each
- *    person it called, and the message's link as the task's description, so the task in
- *    the inbox says where it came from in one press.
- *  - **Save as note** writes a note beside the chat, named from the message's first
- *    words: the message and its replies as quotes under each writer's name and time,
- *    their files copied beside the note, and the link back at its foot; it opens in a
- *    tab.
- *
- *  The link is the message's own, `nib://chat/<chat>/<message>`, which opens the chat at
- *  it from anywhere in Orden. */
-
 import type { Message } from '@orden/chats'
 import { isWho } from '@orden/chats/wire'
 import { chatLink } from '@orden/chats/links'
@@ -28,12 +15,10 @@ import { nameOf } from './people'
 import { store } from './source.svelte'
 import { fullTime } from './when'
 
-/** The link back to a message, under the chat's name. */
 function linkBack(page: ChatPage, message: Message): string {
   return `[#${page.entry?.name ?? ''}](${chatLink(page.id, message.id)})`
 }
 
-/** Add as task: quick add, filled in. */
 export function addAsTask(page: ChatPage, message: Message, space: string | null): void {
   const called = message.mentions
     .filter(isWho)
@@ -45,11 +30,6 @@ export function addAsTask(page: ChatPage, message: Message, space: string | null
   })
 }
 
-/** Save as note: written beside the chat, and opened.
- *
- *  Nothing beside a chat in a space shared with this account to be read: the note and
- *  its files would be written into the owner's space, and every member of the chat
- *  has its menu, readers of the space as well. */
 export async function saveAsNote(
   page: ChatPage,
   message: Message,
@@ -59,7 +39,6 @@ export async function saveAsNote(
   if (!entry?.path || !canWriteAt(entry.path)) return
   const folder = folderOf(entry.path)
   const name = noteNameOf(message.body, entry.name ?? t('Chat'))
-  // The chat can be a tab from a space that is not on screen, so the disk is asked.
   const path = joinPath(folder, await workspace.freeNameOnDisk(folder, `${name}.md`))
 
   const replies = message.replies

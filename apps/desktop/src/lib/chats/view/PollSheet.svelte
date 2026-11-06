@@ -1,7 +1,4 @@
 <script lang="ts">
-  /** A new poll (docs/chats.md 4.8): a question, two to ten answers (a new field
-   *  appears as the last one is written in), one answer or several, and when it ends.
-   *  Discord's shape in the app's sheet. */
   import type { Poll } from '@orden/chats'
   import {
     FEWEST_ANSWERS,

@@ -1,13 +1,3 @@
-/** Messages as the palette finds them (docs/chats.md 4.12): Shift Shift searches the
- *  reader's chats beside the notes, a row a message, opening the chat at it.
- *
- *  The words are the chats' search language, read by the store as the Search panel and
- *  the agent read it, so `in:#thesis`, `from:@Lucile` and `has:image` mean the same
- *  everywhere; a query that asks with any of them is about messages, and the palette
- *  then shows messages alone. Plain words show a few messages under the notes. Fetched
- *  by the palette the first time three letters are typed, and never in the glasses'
- *  plugin. */
-
 import { hasModifiers, type Member } from '@orden/chats'
 import { t } from '../../i18n.svelte'
 import type { Row } from '../../palette/rows'
@@ -15,11 +5,9 @@ import { firstLine } from './body'
 import { nameOf } from './people'
 import { store } from './source.svelte'
 
-/** Messages under the notes for plain words, and a whole list for a chat's modifiers. */
 const UNDER_NOTES = 6
 const ALONE = 50
 
-/** The longest first line a row shows. */
 const LINE = 140
 
 export async function messageHits(words: string): Promise<{ rows: Row[]; only: boolean }> {

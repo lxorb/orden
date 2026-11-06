@@ -1,6 +1,3 @@
-/** Orden's own chats as a provider (#321): the chats store seen through
- *  `@orden/chats/provider`. A conversation of it still opens in the chat tab. */
-
 import type { Message } from '@orden/chats'
 import type {
   Connection,

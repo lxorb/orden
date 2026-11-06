@@ -1,8 +1,4 @@
 <script lang="ts">
-  /** Who an `@` could be, over the composer (docs/chats.md 3, #36): each person's face
-   *  and the name the chat calls them, then @nib (the reader's own agent, at the start
-   *  of a message), @here and @everyone. The composer keeps
-   *  the keys; this draws the list and takes a press. */
   import type { Member } from '@orden/chats'
   import type { Special } from './compose'
   import { fly } from 'svelte/transition'
@@ -25,7 +21,6 @@
     onpick: (choice: Member | Special) => void
   } = $props()
 
-  /** Each choice as a row: a person of the chat, or @here and @everyone. */
   const rows = $derived(
     choices.map((choice) =>
       typeof choice === 'string'

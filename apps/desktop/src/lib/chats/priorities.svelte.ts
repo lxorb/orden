@@ -1,8 +1,3 @@
-/** Each conversation's priority (#321), off until switched on in Settings > Chats: asked
- *  of the reader's own AI on this device when a message by somebody else arrives,
- *  changed by the reader whenever they like, and learnt from those changes. Which levels
- *  notify is the reader's too. */
-
 import {
   type Assigned,
   isLevel,
@@ -23,7 +18,6 @@ import { isNumber, isRecord, isString, keepJson, stored } from '../stored'
 const KEY = 'nib:chat-priorities'
 const MOST_LESSONS = 50
 
-/** What a priority is asked with: the reader's AI, given messages, answering words. */
 export type Asker = (messages: { role: 'system' | 'user'; content: string }[]) => Promise<string>
 
 export function rowKey(provider: string, account: string, conversation: string): string {
@@ -81,7 +75,6 @@ export class Priorities {
   assigned = $state.raw<Readonly<Record<string, Assigned>>>({})
   lessons = $state.raw<readonly Lesson[]>([])
   drafting = $state(false)
-  /** Suggestions on this device only, for as long as the window is open. */
   suggestions = $state.raw<Readonly<Record<string, Suggestion & { at: number }>>>({})
   private ask: () => Asker | null = () => null
 
@@ -119,8 +112,6 @@ export class Priorities {
     this.keep()
   }
 
-  /** A suggestion for the newest message by somebody else, unless drafting is off or no
-   *  AI is set up. `mine` is the reader's own writing, the style it is written in. */
   async suggest(
     key: string,
     title: string,
@@ -143,7 +134,6 @@ export class Priorities {
     return found
   }
 
-  /** The reader used or dismissed part of a suggestion. */
   settle(key: string, part: 'reply' | 'todo' | 'all'): void {
     const held = this.suggestions[key]
     if (!held) return
@@ -171,15 +161,12 @@ export class Priorities {
     this.keep()
   }
 
-  /** The reader moved a conversation to another level: kept, and taught. */
   reassign(key: string, level: Level, about: { title: string; from: string; words: string }): void {
     this.assign(key, { level, by: 'reader', at: this.assigned[key]?.at ?? Date.now() })
     this.lessons = [...this.lessons, { ...about, level }].slice(-MOST_LESSONS)
     this.keep()
   }
 
-  /** A new message by somebody else: the conversation's level asked again, unless it is
-   *  off or no AI is set up. Answers the level, or null where none was asked. */
   async heard(
     key: string,
     title: string,

@@ -1,10 +1,3 @@
-/** The names a message calls, drawn as names (docs/chats.md 3, #36): `@Lucile` in the
- *  accent's tint, and stronger where it is the reader who is called, Slack's highlight.
- *  Done on the drawn words rather than in the markdown, because the renderer is the
- *  notes' and knows nothing of people; nothing inside code or a link is a mention, as
- *  `mentionsIn` reads it. An action, on the element the HTML was put into. */
-
-/** Who a body may call: each label they answer to, and whether that is the reader. */
 export interface Callable {
   label: string
   me: boolean
@@ -12,7 +5,6 @@ export interface Callable {
 
 const SKIP = new Set(['CODE', 'PRE', 'A', 'KBD'])
 
-/** Wraps every `@label` in the element's text in a mention mark. */
 export function markMentions(root: HTMLElement, callable: readonly Callable[]): void {
   if (!root.textContent.includes('@')) return
   const labels = [...callable, { label: 'here', me: true }, { label: 'everyone', me: true }]
@@ -48,7 +40,6 @@ export function markMentions(root: HTMLElement, callable: readonly Callable[]): 
   }
 }
 
-/** The first `@label` in a run of text that is not inside a word. */
 function firstCall(
   value: string,
   labels: readonly Callable[],

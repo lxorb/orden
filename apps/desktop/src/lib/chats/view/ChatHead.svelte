@@ -1,9 +1,4 @@
 <script lang="ts">
-  /** A chat's head (docs/chats.md 4.15): its name and topic, who is in it, and what is
-   *  pinned, and what pings for it. The topic is written in place by whoever may set it; the
-   *  faces open the members, active first; the pin opens the pinned messages, each a jump;
-   *  the bell is the chat's level and mute (../Bell.svelte, 4.11); the glass searches the
-   *  chat, in the palette with the chat filled in. */
   import type { Message, Notify } from '@orden/chats'
   import { may } from '@orden/chats'
   import { LONGEST_TOPIC } from '@orden/chats/limits'
@@ -30,8 +25,6 @@
   }: {
     page: ChatPage
     space: string | null
-    /** The name to show where the chat's entry has none: a chat shared on its own,
-     *  whose pointer is not on this device. */
     named?: string | null
   } = $props()
 
@@ -48,7 +41,6 @@
       return id ? [id] : []
     }),
   )
-  /** Active first, then away, then the rest; by name within each. */
   const members = $derived(
     [...page.members].sort((a, b) => {
       const rank = (who: typeof a.who) => {
@@ -296,8 +288,6 @@
     }
   }
 
-  /* The first few people, each over the one before, ringed in the ground as the
-     switcher's faces are (people/Faces.svelte). */
   .faces {
     display: inline-flex;
   }

@@ -1,7 +1,3 @@
-/** An open chat's window over the device's store: it opens at the read place, pages in
- *  both directions to its ceiling, draws what the reader says at once and keeps it
- *  through its placing, and keeps replies out of the chat itself. */
-
 import { ulid, type Who } from '@orden/chats'
 import { afterEach, describe, expect, test } from 'vitest'
 import { MemoryCache } from './cache'
@@ -88,7 +84,6 @@ describe('a chat’s window', () => {
     stops.push(view.watch(() => drawn.push(view.pending.length + view.messages.length)))
 
     await engine.queue(CHAT, { kind: 'post', id: 'e1', message: 'mine', body: 'hello' })
-    // The send and the catch-up after it run on their own; the post is never undrawn.
     await engine.flush(CHAT)
     await engine.sync(CHAT)
     expect(view.pending).toEqual([])

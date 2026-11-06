@@ -1,19 +1,4 @@
 <script lang="ts">
-  /** Where a message is written (docs/chats.md 4.15): a small Orden editor, the notes'
-   *  own live preview, one line that grows to a third of the chat and then scrolls,
-   *  with the chat's name faint in it while it is empty.
-   *
-   *  Enter sends, Shift+Enter is a new line, and inside a fence or a list Enter goes on
-   *  writing it (compose.ts). `@` offers the chat's people, `[[` the space's notes and
-   *  `:` the emoji, the last two the editor's own. ↑ in an empty composer edits the
-   *  reader's last message; Ctrl+Z in an empty one within fifteen seconds takes the last
-   *  message back; Tab from an empty one walks the rows; Escape leaves a quote or an
-   *  edit. ⊕ attaches a file or a poll, ☺ is the picker, the microphone records, and ➤
-   *  sends, its chevron later. The draft is kept for the chat after the typing pauses,
-   *  and typing is told to the others at most every three seconds by the store.
-   *
-   *  Nothing here costs anything per keystroke that grows with the chat: the editor is
-   *  the composer's words and nothing else. */
   import type { FileRef, Member, Poll } from '@orden/chats'
   import { ASK_EVERYONE_PAST } from '@orden/chats/limits'
   import { createEditor, EditorView, modeEffects, setNoteIndex } from '@orden/editor'
@@ -66,9 +51,7 @@
   }: {
     page: ChatPage
     space: string | null
-    /** The chat's pointer, which `[[` completes notes relative to. */
     path: string | null
-    /** The message whose replies this writes into; none for the chat itself. */
     parent?: string
     onrows?: () => void
     onescape?: () => void
@@ -76,7 +59,6 @@
     onpoll?: (send: (poll: Poll) => void) => void
   } = $props()
 
-  /** Where the draft is kept: the chat's, or one message's replies'. */
   const draftKey = $derived(parent ? `${page.id}/${parent}` : page.id)
 
   let host = $state<HTMLDivElement>()
@@ -86,18 +68,14 @@
   let alsoToChat = $state(false)
   let mention = $state<{ from: number; query: string } | null>(null)
   let mentionLit = $state(0)
-  /** The words that were in the composer before an edit took it over. */
   let before: string | null = null
   const attachments = new Attachments()
 
-  /** The note the words link, whose reach the bar over the field shows: one sent to the
-   *  chat (`offered`), or the first `[[` the words hold, read on the quiet pause. */
   let offered: string | null = null
   let dropped = $state<string | null>(null)
 
   function linkedNote(words: string): string | null {
     const target = /\[\[([^\]|#^]+)/.exec(words)?.[1]?.trim()
-    // Resolved in the chat's own space, which `targetOf` answers for too.
     const root = workspace.rootHolding(path)
     const found = target ? links.targetOf(path, { kind: 'wikilink', target }) : null
     return found && root ? insideSpace(root, found) : null
@@ -110,7 +88,6 @@
     if (!editingAside()) store().keepDraft(draftKey, words)
   }, 600)
 
-  /** The aside is the chat's, so a reply pane's composer never takes it. */
   const aside = $derived(parent ? null : page.aside)
   const editingAside = () => aside?.kind === 'edit'
   const choices = $derived(
@@ -142,14 +119,11 @@
       writeLink: pickedLink,
       shortcuts: shortcuts.forEditor,
       propertyChoices: PROPERTY_CHOICES,
-      // Pasted words from anywhere: markup in them is never run.
       trustedMarkup: false,
     })
     made.dispatch({ effects: modeEffects(modes.settings) })
     empty = made.state.doc.length === 0
     editor = made
-    // Words offered from outside - an agent's draft, the AI sidebar's answer, a quote
-    // sent from a note - take the field over, for the reader to send or change.
     const take = (offer: { note?: string } | null) => {
       offered = offer?.note ?? null
       if (offered) dropped = offered
@@ -171,16 +145,11 @@
     }
   })
 
-  // The chat's space's links, kept up to date the way a pane's are (Editor.svelte):
-  // handed once as the field came, a note made since was a link to nothing, and one
-  // the scan had not reached yet was too.
   $effect(() => {
     const index = links.index(path)
     if (editor) setNoteIndex(editor, index)
   })
 
-  // An edit takes the composer over with the message's words; leaving it gives the
-  // draft back. A quote leaves the words alone and only moves the keyboard here.
   let wasEditing: string | null = null
   $effect(() => {
     const now = aside?.kind === 'edit' ? aside.message : null
@@ -210,26 +179,21 @@
     })
   }
 
-  /** The keyboard into the words. */
   export function focus(): void {
     editor?.focus()
   }
 
-  /** Files dropped anywhere on the chat land here. */
   export function addFiles(files: readonly File[]): void {
     attachments.add(files)
     focus()
   }
 
-  /** Rows of the file list dropped on the chat, as links at the caret (#416), the
-   *  words a drop on a note writes. */
   export function addNotes(paths: readonly string[]): void {
     void import('@orden/editor/note-links').then(({ noteLinks }) =>
       insert(`${noteLinks(links.index(path), paths, pickedLink)} `),
     )
   }
 
-  /** Words put in at the caret: an emoji from the picker, a web tab's address dropped. */
   export function insert(words: string) {
     if (!editor) return
     editor.dispatch(editor.state.replaceSelection(words))
@@ -245,8 +209,6 @@
       return
     }
     if (!words.trim() && !attachments.refs.length) return
-    // `@nib` and a question asks the reader's own agent, in the AI sidebar, and nothing
-    // is sent: the answer comes back here as a draft (docs/chats.md 4.14).
     const question = nibAsked(words)
     if (question !== null && !attachments.refs.length) {
       setText('')
@@ -295,8 +257,6 @@
     editor.focus()
   }
 
-  /** The keys the composer answers before its editor: caught on the way down, so the
-   *  editor never sees a key the composer spent. */
   function onKey(event: KeyboardEvent) {
     if (!editor || event.isComposing || recording) return
     const spend = () => {
@@ -351,7 +311,6 @@
       return
     }
     if (mod && !event.shiftKey && event.key.toLowerCase() === 'z' && empty) {
-      // An empty composer has nothing of its own to undo: the press is Unsend's.
       spend()
       void page.unsend().then((back) => {
         if (back !== null && text() === '') setText(back)
@@ -395,7 +354,6 @@
     ])
   }
 
-  /** The send button's chevron: later today, tomorrow morning, next Monday morning. */
   function later(event: MouseEvent) {
     const words = text()
     if (!words.trim()) return
@@ -415,8 +373,6 @@
     )
   }
 
-  /** Posts waiting for their time, the account's to hold (4.4): a clock in the foot with
-   *  how many, each taken back from its menu. */
   let waiting = $state.raw<Scheduled[]>([])
 
   async function lookWaiting() {
@@ -596,8 +552,6 @@
     padding: 0 var(--space-4) 0;
   }
 
-  /* A field with things in it beside the words, which `.nib-field` draws and answers
-     the keyboard for; here only how the words and the tools sit in it. */
   .box {
     align-items: flex-end;
     gap: var(--space-1);
@@ -633,8 +587,6 @@
     line-height: 1.45;
   }
 
-  /* The note's own type, in a line rather than on a page: none of the page's margins,
-     and the chat's size. */
   .editor :global(.cm-content:is(#write, .nib-write)) {
     max-width: none;
     margin: 0;

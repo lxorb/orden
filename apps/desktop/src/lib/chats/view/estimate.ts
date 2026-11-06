@@ -1,17 +1,9 @@
-/** How tall a row will be before it is drawn (docs/chats.md 4.17): from what the
- *  message already says, the lines of its words at the column's width and the stated
- *  size of its pictures, so the window's guess is close and a scroll through history
- *  barely moves once the rows are measured. Pure; the numbers are the tab's own
- *  stylesheet's, in pixels. */
-
 import type { Message } from '@orden/chats'
 import { fitted, gallery, sortFiles } from './media'
 import type { Item } from './rows'
 
-/** A line of words, and the room the avatar column and the gutters take. */
 const LINE = 21
 const GUTTER = 64
-/** An average character's width at the chat's size. */
 const CHARACTER = 7.2
 
 export function estimate(item: Item, width: number): number {
@@ -41,7 +33,6 @@ function messageHeight(message: Message, head: boolean, width: number): number {
   return height
 }
 
-/** Lines the words take: each written line, wrapped at the column. */
 function linesOf(body: string, column: number): number {
   if (!body) return 0
   const across = Math.max(10, Math.floor(column / CHARACTER))

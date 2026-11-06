@@ -1,13 +1,3 @@
-/** A chat's `.chat` pointer in its space: made, read and found (docs/chats.md 4.2).
- *
- *  A chat is made on the account (`POST /v2/chats {space}`), and its pointer written at
- *  once, in the space the account made it in, so the account links the pointer's file the
- *  first time either sync carries it up. The pointer is the chat's name and place and
- *  nothing else: everything a chat holds is the account's, and a pointer read anywhere
- *  names the same chat. Finding the pointers is reading every space's files for `.chat`,
- *  which the chats' start does once after the launch and again when a chat turns up whose
- *  pointer is not known yet. */
-
 import { CHAT_EXTENSION, chatOf, chatText } from '@orden/chats'
 import { nameOf, within } from '../space-paths'
 import { sync } from '../sync.svelte'
@@ -16,25 +6,20 @@ import { type Entry, workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
 import { makeChat } from './http'
 
-/** Where a chat's pointer is on this device. */
 export interface Place {
   root: string
   path: string
 }
 
-/** A chat's name: its pointer's file name without `.chat`. */
 export function chatName(path: string): string {
   const name = nameOf(path)
   return name.toLowerCase().endsWith(CHAT_EXTENSION) ? name.slice(0, -CHAT_EXTENSION.length) : name
 }
 
-/** The space a folder is in. */
 function spaceOf(folder: string) {
   return workspace.spaces.find((one) => within(one.root, folder) !== null) ?? null
 }
 
-/** A new chat in a folder of a space: made on the account, its pointer written there.
- *  Null where the space is not on the account, or the account would not. */
 export async function makePointer(folder: string, name: string): Promise<Place | null> {
   const space = spaceOf(folder)
   const remote = space ? sync.remoteIdFor(space.root) : null
@@ -42,19 +27,14 @@ export async function makePointer(folder: string, name: string): Promise<Place |
   const pointer = await makeChat(remote)
   if (!pointer) return null
 
-  // The folder is the note's, which can be in a space that is not on screen: asked of
-  // the disk, or another chat's pointer there is written over.
   const path = joinPath(folder, await workspace.freeNameOnDisk(folder, `${name}${CHAT_EXTENSION}`))
   const text = chatText(pointer)
   await writeFile(path, text)
   await workspace.fileCame(path, 'file')
-  // Told to the sync at once, as a saved note is, so the chat's pointer reaches the
-  // others' devices with the next pass rather than at the idle one's leisure.
   sync.wrote(path, text)
   return { root: space.root, path }
 }
 
-/** The chat a file names, or null for a file that is not a pointer. */
 export async function readPointer(path: string): Promise<string | null> {
   if (!path.toLowerCase().endsWith(CHAT_EXTENSION)) return null
   const text = await invoke<string>('read_note', { path }).catch(() => null)
@@ -69,14 +49,6 @@ function pointerPaths(entry: Entry, out: string[]): string[] {
   return out
 }
 
-/** Every pointer in every space on this device, by the chat it names. A chat named by
- *  two pointers (a copy pasted beside it, or into another space) keeps the one `rank`
- *  puts highest, and the first of those: the store ranks the pointer in the chat's own
- *  space on the account first, so neither the order of the spaces nor a copy's name
- *  decides where a chat is (B542). `rank` is asked of every pointer of a chat named
- *  more than once, and of no other, which is how the store tells a tie (places.ts).
- *  `unread` hears of a space whose tree would not read, so what was found in it before
- *  is not taken for gone. */
 export async function findPointers(
   rank: (chat: string, place: Place) => number = () => 0,
   unread: (root: string) => void = () => undefined,

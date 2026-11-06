@@ -1,7 +1,3 @@
-/** Every chat service the reader is connected to, as one list (#321): Orden's own chats
- *  from the chats store, and each connected account's conversations as its provider
- *  says them. */
-
 import type {
   Account,
   ChatProvider,
@@ -70,7 +66,6 @@ export class Connected {
     (provider: string, account: string, event: ProviderEvent) => void
   >()
 
-  /** Orden's chats first, then every account's, each newest first. */
   rows(): Row[] {
     const own = store().list.map((entry) => ({
       provider: ORDEN,
@@ -91,7 +86,6 @@ export class Connected {
     return this.linked.find((one) => one.provider.id === provider && one.account.id === account)
   }
 
-  /** Hears every event of every account. Answers how to stop. */
   hear(listener: (provider: string, account: string, event: ProviderEvent) => void): () => void {
     this.hearers.add(listener)
     return () => this.hearers.delete(listener)
@@ -139,7 +133,6 @@ export class Connected {
     await found?.connection.close().catch(() => undefined)
   }
 
-  /** The reader opened a conversation: nothing in it is unread now. */
   seen(provider: string, account: string, conversation: string): void {
     this.linked = this.linked.map((one) =>
       one.provider.id === provider && one.account.id === account

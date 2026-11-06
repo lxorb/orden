@@ -1,10 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Save as note in a chat that sits in a space shared to be read. The note and its
- *  files would be written into the owner's space, which nothing may be written in
- *  (B273), so the gesture refuses there and the message's menu does not offer it.
- *  Every write the gesture can make is stood in for and logged. */
-
 const wrote = vi.hoisted(() => [] as string[])
 const readOnly = vi.hoisted(() => new Set<string>())
 

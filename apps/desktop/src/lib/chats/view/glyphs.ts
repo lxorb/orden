@@ -1,8 +1,3 @@
-/** The marks a chat is drawn with, as stroked paths on a 24-unit square: Lucide's
- *  drawings (ISC), which is the set the rest of the app is drawn in, written out here
- *  rather than imported one module each, so the chat's own chunk carries a few lines of
- *  paths and nothing else. A dot is a path of no length, drawn by the round cap. */
-
 const RING = 'M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0'
 
 export const GLYPHS = {

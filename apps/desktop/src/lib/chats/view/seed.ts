@@ -1,11 +1,3 @@
-/** A team's chats, said in a store in memory: what the surfaces' tests, the drive and
- *  the screenshots read (docs/chats.md 6.2, lane 5). Every kind of message a chat
- *  draws is in `thesis` - words in markdown, code, a mention, an edit, a quote, a reply
- *  and its replies, a gallery and a picture alone, a voice message, a file, a link's
- *  preview, a poll with votes, reactions, a pin - over two days, with the reader's read
- *  place partway through so the New line shows; and `big` is a chat of as many messages
- *  as a test asks for. Times are counted back from `now`. */
-
 import type { Who } from '@orden/chats'
 import type { ChatMember } from '../api'
 import { FixtureChats, fixtureFile } from './fixture.svelte'
@@ -24,7 +16,6 @@ const TEAM: ChatMember[] = [
 
 const MINUTE = 60_000
 
-/** Sixty-four bars of a voice, rising and falling like speech. */
 function voice(random: () => number): number[] {
   return Array.from({ length: 64 }, (_, at) =>
     Math.round(60 + 150 * Math.abs(Math.sin(at / 3.1)) * (0.5 + random() / 2)),
@@ -128,7 +119,6 @@ export function seeded(now = Date.now()): { store: FixtureChats; thesis: string;
     ],
   })
 
-  // This morning, after where the reader read to.
   const morning = new Date(now)
   morning.setHours(9, 0, 0, 0)
   const later = (minutes: number) => (morning.getTime() - start) / MINUTE + minutes
@@ -175,7 +165,6 @@ export function seeded(now = Date.now()): { store: FixtureChats; thesis: string;
   return { store, thesis, general }
 }
 
-/** A chat of `count` messages from four people, for the window's tests and the drive. */
 export function bigChat(count: number, now = Date.now()): { store: FixtureChats; chat: string } {
   let at = now - count * MINUTE
   const store = new FixtureChats(EMIL, { seed: 5, now: () => at })

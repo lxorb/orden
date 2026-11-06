@@ -1,8 +1,4 @@
 <script lang="ts">
-  /** A poll in a message (docs/chats.md 4.8): the question, each answer a bar as long
-   *  as its share with its count, the reader's own ticked, and who chose it on the
-   *  bubble. A press votes, or takes the vote back; one answer or several, as the poll
-   *  says, until it ends. */
   import type { Message, Who } from '@orden/chats'
   import { amount, i18n } from '../../i18n.svelte'
   import type { ChatPage } from './chat.svelte'

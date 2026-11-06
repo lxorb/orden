@@ -1,8 +1,3 @@
-/** A chat's account as the tests meet it: one log, placed by the reducer's rules as
- *  `ChatLog` places it, read in small pages so every device pages, and reachable only
- *  while a device says it is online. What engine.test.ts and view.test.ts run devices
- *  against. */
-
 import {
   apply,
   chatState,
@@ -28,8 +23,6 @@ export function random(seed: number): () => number {
   }
 }
 
-/** The account: one chat's log, placed by the reducer's rules, read in small pages so
- *  every device pages. */
 export class Account {
   readonly log: Logged[] = []
   private clock = 1_000_000

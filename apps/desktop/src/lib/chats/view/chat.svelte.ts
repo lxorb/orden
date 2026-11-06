@@ -1,13 +1,3 @@
-/** One chat open in a tab: the store's view of it, what the tab draws of that, and
- *  every gesture made in it turned into the store's one write (docs/chats.md 4.15,
- *  4.16).
- *
- *  The store holds the window of messages, pages it and keeps it current (../view.svelte.ts);
- *  this is what a tab adds over it: the rows with their day lines, groups, New line and
- *  receipts (`rowsOf`), the replies pane, a quote or an edit in the composer, the row a
- *  jump landed on. The tab's components read this and call it; none of them builds an
- *  event. */
-
 import type { FileRef, Member, Message, Poll, Preview, Who } from '@orden/chats'
 import { chatLink } from '@orden/chats/links'
 import { copyText } from '../../clipboard'
@@ -20,16 +10,13 @@ import { saved } from './saved.svelte'
 import { store } from './source.svelte'
 import { dayOf } from './when'
 
-/** What the composer is doing besides writing a new message. */
 export type Aside = { kind: 'quote'; message: Message } | { kind: 'edit'; message: Message } | null
 
 export class ChatPage {
   readonly id: string
   readonly view: ChatView
-  /** The message whose replies are open beside the chat. */
   replying = $state<string | null>(null)
   aside = $state<Aside>(null)
-  /** The row a jump landed on, tinted for a moment. */
   flashed = $state<string | null>(null)
 
   constructor(id: string) {
@@ -49,7 +36,6 @@ export class ChatPage {
     return this.view.messages
   }
 
-  /** More messages before the first held, and after the last. */
   get before(): boolean {
     return !this.view.atStart
   }
@@ -58,18 +44,14 @@ export class ChatPage {
     return !this.view.atEnd
   }
 
-  /** The chat's people as mentions and names read them. A deleted account is called
-   *  what it is. */
   readonly members: Member[] = $derived.by(() =>
     this.view.members.map((one) => ({ who: one.who, name: one.name ?? t('Deleted account') })),
   )
 
-  /** Whether the first page is in. */
   get ready(): boolean {
     return !this.view.loading || this.view.messages.length > 0
   }
 
-  /** The rows, as the tab draws them. */
   readonly items: Item<Shown>[] = $derived.by(() =>
     rowsOf({
       messages: this.view.messages,
@@ -89,7 +71,6 @@ export class ChatPage {
     return this.view.atEnd ? Promise.resolve() : this.view.newer()
   }
 
-  /** To a message, loading the window around it where it is not held, and tinting it. */
   async jump(message: string): Promise<void> {
     if (!this.view.messages.some((one) => one.id === message)) {
       if (!(await this.view.jump(message))) return
@@ -97,12 +78,10 @@ export class ChatPage {
     this.flashed = message
   }
 
-  /** To the newest, loading it where it is not held. */
   bottom(): Promise<void> {
     return this.view.atEnd ? Promise.resolve() : this.view.latest()
   }
 
-  /** The newest message the reader has seen; the store keeps it on every device. */
   seen(seq: number): void {
     const entry = this.entry
     if (!entry || seq > entry.readSeq) this.view.read(seq)
@@ -112,7 +91,6 @@ export class ChatPage {
     this.view.markUnread(message.seq)
   }
 
-  /** A new message, or a reply where `parent` says. */
   post(
     text: string,
     more: {
@@ -138,13 +116,11 @@ export class ChatPage {
     if (!more.parent) this.aside = null
   }
 
-  /** The same, held by the account until `sendAt`. */
   schedule(text: string, sendAt: number): void {
     const body = trimmed(text)
     if (body) void store().schedule(this.id, { body }, sendAt)
   }
 
-  /** Unsend: the reader's last message back for the composer, within its window. */
   unsend(): Promise<string | null> {
     return store().unsend(this.id)
   }
@@ -160,7 +136,6 @@ export class ChatPage {
     void store().remove(this.id, message)
   }
 
-  /** A reaction put on, or taken back where the reader already wears it. */
   react(message: Message, emoji: string): void {
     const me = this.me
     const on = !(me && message.reactions[emoji]?.includes(me))
@@ -191,12 +166,10 @@ export class ChatPage {
     saved.toggle(this.id, message)
   }
 
-  /** The message as a task, through quick add, linking back to it. */
   addAsTask(message: Message): void {
     void import('./keep').then((keep) => keep.addAsTask(this, message, this.entry?.space ?? null))
   }
 
-  /** The message and its replies as a note beside the chat, linking back to it. */
   async saveAsNote(message: Message): Promise<void> {
     const keep = await import('./keep')
     await keep.saveAsNote(this, message, this.entry?.space ?? null)
@@ -206,7 +179,6 @@ export class ChatPage {
     return saved.has(this.id, message.id)
   }
 
-  /** This chat's search: the palette, with the chat filled in (4.12). */
   search(): void {
     const name = this.entry?.name ?? ''
     paletteWords.words = /[\s"]/.test(name) ? `in:"${name.replace(/"/g, '')}" ` : `in:#${name} `
@@ -216,13 +188,11 @@ export class ChatPage {
     return copyText(chatLink(this.id, message.id))
   }
 
-  /** The pinned messages: every message held or in the store that is pinned. */
   async pinned(): Promise<Message[]> {
     const found = await store().search('has:pin', this.id)
     return found.map((one) => one.message)
   }
 
-  /** The reader's newest message in the chat, for ↑ in an empty composer. */
   lastOwn(): Message | null {
     const me = this.me
     for (let at = this.messages.length - 1; at >= 0; at--) {

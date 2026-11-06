@@ -1,8 +1,3 @@
-/** Messages the reader saved for later (docs/chats.md 3, #17), the Saved list in the
- *  Chats panel. Each kept with what the list draws - who, the first line, when - so the
- *  list is there before any chat is opened, and a press opens the chat at the message.
- *  Kept on this device; see `stored.ts`. */
-
 import type { Message } from '@orden/chats'
 import { isNumber, isRecord, isString, keepJson, stored } from '../../stored'
 
@@ -46,7 +41,6 @@ class Saved {
     return this.list.some((one) => one.chat === chat && one.message === message)
   }
 
-  /** Saves a message, or lets it go when it is saved already. */
   toggle(chat: string, message: Message): void {
     const rest = this.list.filter((one) => !(one.chat === chat && one.message === message.id))
     this.list =

@@ -6,8 +6,6 @@ import { random } from './test-account'
 const PEOPLE: Who[] = ['user:ana', 'user:ben', 'guest:cy']
 const EMOJI = ['👍', '❤️', '👀']
 
-/** A log as the account would place it: every event about a message that exists and is
- *  not deleted, most by people who may, some that change nothing. */
 function logOf(seed: number, length: number): Logged[] {
   const next = random(seed)
   const pick = <T>(list: readonly T[]): T => list[Math.floor(next() * list.length)] as T
@@ -52,7 +50,6 @@ function logOf(seed: number, length: number): Logged[] {
       } else {
         event = { kind: 'meta', id, topic: `topic ${String(seq)}` }
       }
-      // The account refuses an edit of somebody else's message, so none is logged.
       if (event.kind === 'edit' && about) {
         log.push({ ...event, seq, at, author: about.author })
         continue
@@ -63,14 +60,12 @@ function logOf(seed: number, length: number): Logged[] {
   return log
 }
 
-/** What the reducer says, as a device keeps it: rows that keep a place. */
 function reduced(log: readonly Logged[]): Map<string, Message> {
   const state = chatState()
   for (const event of log) apply(state, event)
   return new Map([...state.messages].filter(([, message]) => keepsRow(message)))
 }
 
-/** A device's store in memory. */
 class Store implements Lookup {
   readonly rows = new Map<string, Kept>()
   seq = 0
@@ -99,9 +94,6 @@ class Store implements Lookup {
   }
 }
 
-/** Reactions with each emoji's people in a fixed order: what a state page cannot say is
- *  when each was set, so a person setting one they already had is drawn in either
- *  place. */
 function settled(messages: Map<string, Message>): Map<string, Message> {
   return new Map(
     [...messages].map(([id, message]) => [
@@ -137,7 +129,6 @@ describe('folding in order is the reducer', () => {
         const size = 1 + Math.floor(next() * 30)
         const page = log.slice(at, at + size)
         await store.fold(page)
-        // The socket and a page saying the same events: folded once.
         if (next() < 0.3) await store.fold(page)
         at += size
       }
@@ -154,8 +145,6 @@ describe('folding in order is the reducer', () => {
         store.rows.set(id, { message, upto: cut, marks: marksOf(message, cut) })
       }
       store.seq = cut
-      // The page was read a little later than its head: events it already holds come
-      // again and change nothing.
       await store.fold(log.slice(Math.max(0, cut - 5)))
       expect(settled(store.messages()), `seed ${String(seed)}`).toEqual(settled(reduced(log)))
     }
