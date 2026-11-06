@@ -1,15 +1,4 @@
 #!/usr/bin/env python3
-"""A page in a web tab has its workers run, as it opens and after the app is started
-again. #777: Anubis works its check out in workers its page starts, and in a web tab
-they never ran a line - "Calculating... Speed: 0kH/s", for good.
-
-Run with Orden up on scripts/wayland-launch.sh's page for it (WORKER=1): a page that
-starts a worker the way Anubis does, from a blob, and takes the worker's answer into its
-title, with the moment the page was loaded. The title has to come back with an answer,
-from a page loaded after `since` (milliseconds since the epoch) where that is given.
-
-    python3 scripts/worker-drive.py <out folder> <label> [since]
-"""
 
 import json
 import os
@@ -24,7 +13,6 @@ SINCE = int(sys.argv[3]) if len(sys.argv) > 3 else 0
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
 ANSWERED = re.compile(r"a worker answered at (\d+)")
 
-
 def endpoint():
     for _ in range(120):
         try:
@@ -36,9 +24,7 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
-
 
 def run(code):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
@@ -56,7 +42,6 @@ def run(code):
         except (TimeoutError, OSError):
             time.sleep(1)
     return None
-
 
 seen = ""
 for _ in range(60):

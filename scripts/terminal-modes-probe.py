@@ -33,9 +33,7 @@ ROOT = HERE.parent
 
 failures: list[str] = []
 
-
 def borrowed(name: str, file: str):
-    """Another probe's helpers, read from its file: the names have dashes in them."""
 
     spec = importlib.util.spec_from_file_location(name, HERE / file)
     if spec is None or spec.loader is None:
@@ -44,13 +42,10 @@ def borrowed(name: str, file: str):
     spec.loader.exec_module(module)
     return module
 
-
 tabs = borrowed("tabs", "new-tabs-probe.py")
 terminal = borrowed("terminal", "terminal-probe.py")
 until = terminal.until
 
-#: The program: its console switched to VT input (ENABLE_VIRTUAL_TERMINAL_INPUT), then
-#: any-event tracking asked for, and never taken back.
 MOUSE_ON = (
     "Add-Type -ErrorAction SilentlyContinue -Name K -Namespace N -MemberDefinition "
     "'[DllImport(\"kernel32.dll\")] public static extern IntPtr GetStdHandle(int n); "
@@ -60,10 +55,8 @@ MOUSE_ON = (
     "$null = [N.K]::SetConsoleMode($h, $m -bor 0x200); Write-Host -NoNewline \"$([char]27)[?1003h\""
 )
 
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 
 def check(ok: bool, words: str) -> None:
     if ok:
@@ -72,9 +65,7 @@ def check(ok: bool, words: str) -> None:
         failures.append(words)
         say(f"FAIL {words}")
 
-
 def moved(window) -> None:
-    """The mouse moved across the terminal, a dozen times, as the page's own events."""
 
     window.run(
         "(() => { const screen = document.querySelector('.xterm-screen'); "
@@ -85,33 +76,20 @@ def moved(window) -> None:
     )
     time.sleep(1.5)
 
-
 def reporting(window) -> bool:
-    """Whether xterm.js reports the mouse: it marks its element while it does."""
 
     return window.run("document.querySelector('.nib-terminal .xterm').classList.contains('enable-mouse-events')") is True
 
-
 def screen(window) -> str:
-    """Every line of the screen that has anything on it: a prompt that wraps - conda's
-    `(base)` before a long folder - is more than its last row."""
 
     return "\n".join(row for row in window.rows() if row.strip())
 
-
 def prompted(window, after: str = "", seconds: float = 120.0) -> str:
-    """The screen once the shell is at its prompt and has stopped drawing: its last line
-    ends at `>`, below `after` where that is said - the end of the line just typed - and
-    the screen is the same a second later. A line typed at it is echoed across as many
-    rows as it wraps over, `Add-Type` compiles for seconds first, and a shell whose
-    profile starts conda takes many more to draw its first prompt, so a fixed pause read
-    the command's own rows, or the prompt before it, as the prompt after it."""
 
     end = time.perf_counter() + seconds
     last = ""
     while time.perf_counter() < end:
         now = screen(window)
-        # Rows put back together, so a line that wrapped is found whole.
         whole = now.replace("\n", "")
         below = whole.rsplit(after, 1)[-1] if after and after in whole else ""
         if now == last and now.endswith(">") and (not after or ">" in below):
@@ -120,11 +98,7 @@ def prompted(window, after: str = "", seconds: float = 120.0) -> str:
         time.sleep(1.0)
     return last
 
-
 def quit_anyway(app, window) -> bool:
-    """Closes the window with a program running, answering Quit anyway where the question
-    that names what runs comes up; see quit-warning-probe.py. A cmdlet runs inside the
-    shell, which asks nothing."""
 
     user32.PostMessageW(main_window(app.pid), WM_CLOSE, 0, 0)
     asked = "document.querySelector('[role=\"alertdialog\"] .nib-button.is-danger')"
@@ -144,7 +118,6 @@ def quit_anyway(app, window) -> bool:
         return False
     return True
 
-
 def launched(exe: pathlib.Path, environment: dict[str, str], identifier: str, unlike: int):
     app = run_probe(exe, env=environment)
     if not until(lambda: main_window(app.pid), 120, 0.25):
@@ -153,7 +126,6 @@ def launched(exe: pathlib.Path, environment: dict[str, str], identifier: str, un
     window = terminal.Window(port, secret)
     until(lambda: window.run("1 + 1") == 2, 30)
     return app, window, port
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -188,7 +160,6 @@ def main() -> int:
         say(f"{shell} in tab {tab}")
         check(prompted(window).endswith(">"), "PowerShell draws its prompt")
 
-        # The program asks for every move and ends without taking it back.
         window.typed(f"{MOUSE_ON}\r")
         before = prompted(window, after=MOUSE_ON[-12:])
         check(before.endswith(">"), "the shell comes back to its prompt")
@@ -198,7 +169,6 @@ def main() -> int:
         say(f"prompt before the moves {before.splitlines()[-1]!r}, after {after.splitlines()[-1]!r}")
         check(after == before, "the prompt after it gets nothing when the mouse moves")
 
-        # Now a program still running with the mouse reported as the app goes.
         window.typed(f"{MOUSE_ON}; Start-Sleep 600\r")
         check(bool(until(lambda: reporting(window), 10)), "a running program has the mouse reported")
         time.sleep(3.0)
@@ -233,7 +203,6 @@ def main() -> int:
 
     print("every check passed")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,24 +1,3 @@
-"""Does the sidebar open and shut at 60 fps? The web build, in Chromium, on the real GPU.
-
-Emil, 2026-10-03: the sidebar opened and shut in steps, "CHUCK CHUCK". web-smooth had
-measured a GPU task of 70 to 400 ms in the app's page whenever the panel was built or
-thrown away. This opens and shuts it three times each in the default theme, glass and
-wallpaper, with a space of 300 notes and an 80-section note open, and reads two things:
-
-* the page's own frames, from `requestAnimationFrame`: the gaps between them from the
-  press until the slide has settled, and how many are over 20 ms;
-* a trace of the whole browser: the longest tasks on the page's main thread and on the
-  GPU's, and what the longest of them were made of.
-
-    pnpm --dir apps/desktop exec vite build --mode drive --outDir <folder>
-    python scripts/sidebar-smooth-drive.py <folder> [default glass wallpaper] [--cpu 4]
-
-`--cpu 4` slows the page's processor fourfold, the way the launch numbers are measured,
-which is what shows a task the machine itself is fast enough to hide. Headless, never on
-the screen. A GPU task of several hundred milliseconds that lands on a caret's blink is
-the machine's GPU being busy with something else rather than this page; run it again.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -65,7 +44,6 @@ ROWS = [["/Notes/Smooth.md", LONG]] + [
     [f"/Notes/Folder {f}/Note {f}-{i}.md", f"# Note {i}\n\ntext"] for f in range(12) for i in range(25)
 ]
 
-# One press, and the page's frames from it until the slide has long settled.
 TOGGLE = """
 async () => {
   const stamps = []
@@ -83,8 +61,6 @@ async () => {
 }
 """
 
-# A picture for the wallpaper theme: colour everywhere, which is what makes a panel
-# over it expensive to draw.
 PICTURE = """
 async () => {
   const canvas = document.createElement('canvas')
@@ -121,7 +97,6 @@ CATEGORIES = [
 
 TASK = "ThreadControllerImpl::RunTask"
 
-
 class Quiet(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *_args):
         pass
@@ -131,7 +106,6 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
             super().handle()
         except ConnectionError:
             pass
-
 
 def serve(folder: pathlib.Path):
     with socket.socket() as sock:
@@ -143,10 +117,7 @@ def serve(folder: pathlib.Path):
     threading.Thread(target=server.serve_forever, daemon=True).start()
     return f"http://127.0.0.1:{port}/", server
 
-
 def threads(trace) -> dict:
-    """The longest tasks on the page's main thread and the GPU's, and the biggest parts
-    of the longest one on each."""
     events = trace["traceEvents"] if isinstance(trace, dict) else trace
     names = {
         (e["pid"], e["tid"]): e["args"]["name"]
@@ -187,7 +158,6 @@ def threads(trace) -> dict:
             ],
         }
     return out
-
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -253,7 +223,6 @@ def main() -> None:
             server.shutdown()
 
     print(json.dumps(report, indent=2, ensure_ascii=False))
-
 
 if __name__ == "__main__":
     main()

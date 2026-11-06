@@ -1,29 +1,4 @@
 #!/usr/bin/env bash
-# Starts Orden out of a flake inside a headless sway and says whether it came up:
-# a window has to map, stay mapped, and the log must name no missing library and
-# no display or EGL failure. What .github/workflows/nix.yml runs, on a runner with
-# no screen and no GPU.
-#
-#   scripts/nix-start.sh wayland <flake>   native Wayland: no Xwayland, no DISPLAY
-#   scripts/nix-start.sh x11 <flake>       X11, through sway's Xwayland, with no
-#                                          WAYLAND_DISPLAY for GTK to prefer
-#
-# A third argument names the engine the build runs on, `webkit` unless it says `cef`.
-# On CEF the window is an X11 one in every session - the runtime asks GTK and Chromium
-# for X11 itself, because CEF parents its browsers into X11 windows (src-tauri's
-# linux.rs) - so a Wayland session is one with Xwayland in it, both displays set, as a
-# desktop's is, and the window it maps is an xwayland one (#438).
-#
-# sway is wlroots, like Hyprland, and it says what each window is: `shell` is
-# xdg_shell for a Wayland client and xwayland for an X11 one. Leaves <mode>.log,
-# <mode>.png, <mode>.json and <mode>.env in the working directory.
-#
-# With STRANGER_PLUGINS set to a folder of shared libraries that are not
-# GStreamer's, the app is started with both of GStreamer's plugin paths pointing
-# at it, the way a NixOS profile's lib/ full of Qt and KDE plugins reaches a
-# session. The app's environment must have neither, and with GST_INSPECT set,
-# GStreamer itself is started in exactly that environment and must load its own
-# plugins and nothing else.
 set -euo pipefail
 
 mode=${1:?wayland or x11}
@@ -58,8 +33,6 @@ done
 [ -n "${SWAYSOCK:-}" ] || { cat "$out/sway-$mode.log"; exit 1; }
 export SWAYSOCK
 
-# Started by sway, so it gets sway's own WAYLAND_DISPLAY and, with Xwayland on,
-# its DISPLAY; the other one is taken away.
 swaymsg exec "env ${drop:+-u $drop} $stranger nix run '$flake' >'$out/$mode.log' 2>&1" >/dev/null
 
 views='[recurse(.nodes[]?, .floating_nodes[]?) | select(.pid? != null and (.type == "con" or .type == "floating_con"))]'
@@ -77,13 +50,10 @@ elif ! jq -e --arg shell "$shell" 'all(.shell == $shell)' "$out/$mode.json" >/de
   echo "::error::the window on $mode is not an $shell one"
   failed=1
 else
-  # Long enough for the page to load and paint in software.
   sleep 15
   WAYLAND_DISPLAY=$(cd "$XDG_RUNTIME_DIR" && ls wayland-? | head -1) grim "$out/$mode.png"
   pid=$(jq '.[0].pid' "$out/$mode.json")
 
-  # What it runs with: GTK picks the backend itself, on Mesa the DMA-BUF
-  # renderer stays on, and GStreamer looks at its own plugins only.
   mapfile -d '' environment <"/proc/$pid/environ"
   printf '%s\n' "${environment[@]}" |
     grep -E '^(GDK_BACKEND|WEBKIT_DISABLE_DMABUF_RENDERER|WAYLAND_DISPLAY|DISPLAY|GST_[A-Z_0-9]*|LD_PRELOAD|LD_LIBRARY_PATH)=' |
@@ -111,7 +81,6 @@ else
     fi
   fi
   if [ -n "${GST_INSPECT:-}" ]; then
-    # The elements WebKit plays a video and its sound with.
     for element in queue typefind playbin autoaudiosink videoconvert vp9dec avdec_h264 opusdec; do
       if ! env -i "${environment[@]}" "$GST_INSPECT" "$element" >>"$out/$mode.gst.log" 2>&1; then
         echo "::error::GStreamer, as the app runs it, has no $element"

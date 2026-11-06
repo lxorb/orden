@@ -1,37 +1,3 @@
-"""The glass theme in the packaged app, on Windows: what the compositor draws behind the
-window, whether every word on the chrome still reads, and what it costs a launch.
-
-What it checks, through the app's own automation endpoint and off the window itself:
-
-* **The material.** Choosing glass puts Mica Alt behind the window - asked of DWM with
-  `DwmGetWindowAttribute`, not of the app - tinted by the scheme the page is in, and
-  choosing the built-in again takes it away. The Appearance pane has no Translucency row.
-* **The words, on the window's own picture.** The window is photographed with
-  capture-window.ps1 and every reading is taken off the pixels: the brightest or darkest
-  pixel of a line of words against the colour most of the box round it is. Taken over
-  the material as the probe window has it - which, for a window that is never the one
-  in front, is Mica's own flat colour - and over the worst desks there are, painted
-  where the material would be: white and black under Acrylic's wash, and the edges of
-  the band Mica can be under Mica's.
-* **The launch.** Three launches on the built-in theme and three on glass, with
-  `NIB_TRACE_STARTUP` on, compared on when the shell was painted.
-
-A desk of the reader's own is never touched: the probe is off the screen and never in
-front (see probe_app.py), so what Windows composites behind it is Mica's flat colour,
-and the wallpaper is left alone rather than swapped behind somebody's back. The painted
-desks are the stricter test in any case - Mica keeps its own brightness whatever the
-wallpaper is, and a white or a black desk is the most any wallpaper can be.
-
-    pnpm --dir apps/desktop tauri build --no-bundle \\
-      --config '{"identifier":"ch.emilvinu.nib.probe.glass","version":"99.0.0",
-                 "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-    python scripts/glass-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
-      --identifier ch.emilvinu.nib.probe.glass
-
-Wipes that identifier's settings and webview profile first, and refuses one whose name
-does not say `probe`. Photographs go to target/glass-probe/.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -57,7 +23,6 @@ from probe_app import close_app, main_window, run_probe, sized
 HERE = pathlib.Path(__file__).resolve().parent
 SHOTS = HERE.parent / "target" / "glass-probe"
 
-#: What DWM calls the material behind a window. Mica Alt is the tabbed one.
 DWMWA_USE_IMMERSIVE_DARK_MODE = 20
 DWMWA_SYSTEMBACKDROP_TYPE = 38
 DWMSBT_TABBEDWINDOW = 4
@@ -73,15 +38,12 @@ Ordinary words, and *some* of them `marked up`, with a [link](https://example.co
 
 failures: list[str] = []
 
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 
 def wrong(words: str) -> None:
     failures.append(words)
     say(f"WRONG {words}")
-
 
 def attribute(hwnd: int, which: int) -> int:
     held = ctypes.c_int(0)
@@ -90,17 +52,11 @@ def attribute(hwnd: int, which: int) -> int:
     )
     return held.value
 
-
-# ── the app ─────────────────────────────────────────────────────────────────
-
-
 def roaming(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["APPDATA"]) / identifier
 
-
 def local(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["LOCALAPPDATA"]) / identifier
-
 
 def wipe(identifier: str) -> None:
     if "probe" not in identifier:
@@ -108,16 +64,13 @@ def wipe(identifier: str) -> None:
     shutil.rmtree(roaming(identifier), ignore_errors=True)
     shutil.rmtree(local(identifier), ignore_errors=True)
 
-
 def allow_eval(identifier: str) -> pathlib.Path:
-    """`eval` turned on in the endpoint file, which is the only way it can be."""
     path = roaming(identifier) / "automation.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps({"port": 0, "secret": secrets.token_hex(32), "eval": True}), encoding="utf-8"
     )
     return path
-
 
 def waited_for(path: pathlib.Path, patience: float = 90) -> dict:
     until = time.monotonic() + patience
@@ -131,7 +84,6 @@ def waited_for(path: pathlib.Path, patience: float = 90) -> dict:
         time.sleep(0.3)
     raise SystemExit(f"no endpoint at {path} after {patience:.0f}s")
 
-
 def asked(held: dict, verb: str, args: dict) -> dict:
     body = json.dumps({"verb": verb, "args": args, "rest": []}).encode()
     request = urllib.request.Request(
@@ -142,7 +94,6 @@ def asked(held: dict, verb: str, args: dict) -> dict:
     with urllib.request.urlopen(request, timeout=30) as answer:
         return json.loads(answer.read().decode())
 
-
 def ran(held: dict, code: str) -> object:
     answer = asked(held, "eval", {"code": code, "yes": True})
     if not answer.get("ok"):
@@ -150,14 +101,11 @@ def ran(held: dict, code: str) -> object:
         return None
     return answer.get("value")
 
-
 def pressed(held: dict, command: str, settle: float = 1.2) -> None:
-    """One row of the palette, by its own id: the row a reader presses."""
     answer = asked(held, "commands.run", {"id": command})
     if not answer.get("ok"):
         wrong(f"the {command} command would not run: {answer.get('error')}")
     time.sleep(settle)
-
 
 def started(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, trace: bool = False):
     endpoint = allow_eval(identifier)
@@ -171,15 +119,10 @@ def started(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, trace: boo
         time.sleep(0.2)
     return app, held
 
-
 def ended(app: subprocess.Popen[bytes]) -> None:
     if not close_app(app):
         app.kill()
         app.wait(timeout=30)
-
-
-# ── the picture ─────────────────────────────────────────────────────────────
-
 
 def photographed(pid: int, name: str) -> pathlib.Path:
     SHOTS.mkdir(parents=True, exist_ok=True)
@@ -205,7 +148,6 @@ def photographed(pid: int, name: str) -> pathlib.Path:
     say(f"photographed {out.name}")
     return out
 
-
 def luminance(rgb: tuple[int, int, int]) -> float:
     def channel(one: int) -> float:
         value = one / 255
@@ -214,15 +156,10 @@ def luminance(rgb: tuple[int, int, int]) -> float:
     r, g, b = rgb
     return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
 
-
 def ratio(a: tuple[int, int, int], b: tuple[int, int, int]) -> float:
     high, low = sorted((luminance(a), luminance(b)), reverse=True)
     return round((high + 0.05) / (low + 0.05), 2)
 
-
-#: Boxes round lines of words the chrome carries, read off the page: a tab's name in
-#: the bar, a note's name in the list, and the list's own heading, which is the quiet
-#: grey. The window's own coordinates, in CSS pixels.
 BOXES = """
 JSON.stringify((() => {
   const box = (label, element) => {
@@ -239,9 +176,7 @@ JSON.stringify((() => {
 })())
 """
 
-
 def readings(held: dict, picture: pathlib.Path, where: str) -> None:
-    """Every line of words on the chrome, read off the window's own picture."""
     found = json.loads(str(ran(held, BOXES) or "[]"))
     scale = next((one[1] for one in found if one[0] == "scale"), 1)
     image = Image.open(picture).convert("RGB")
@@ -264,9 +199,6 @@ def readings(held: dict, picture: pathlib.Path, where: str) -> None:
         else:
             wrong(line)
 
-
-#: A desk painted where the material would be composited, and the page told what it is
-#: standing on, the way material.ts tells it.
 DESK = """
 (() => {{
   document.getElementById('nib-desk')?.remove()
@@ -283,18 +215,12 @@ UNDESK = """
 (() => { document.getElementById('nib-desk')?.remove(); return true })()
 """
 
-
-# ── the drive ───────────────────────────────────────────────────────────────
-
-
 def looks(exe: pathlib.Path, identifier: str, spaces: pathlib.Path) -> None:
     app, held = started(exe, identifier, spaces)
     try:
         hwnd = main_window(app.pid)
         sized(hwnd, 1240, 760)
         time.sleep(2.5)
-        # The list open, and a second tab beside the first, so the bar has a tab that is
-        # not the open one to read.
         pressed(held, "files")
         pressed(held, "new")
 
@@ -323,7 +249,6 @@ def looks(exe: pathlib.Path, identifier: str, spaces: pathlib.Path) -> None:
             picture = photographed(app.pid, f"{scheme}-glass")
             readings(held, picture, f"{scheme} glass, the material as the probe has it")
 
-            # The worst desks there are, painted where the material would be.
             desks = {
                 "dark": [("acrylic", "#ffffff"), ("acrylic", "#000000"), ("mica", "rgb(58,58,58)"), ("mica", "#000000")],
                 "light": [("acrylic", "#000000"), ("acrylic", "#ffffff"), ("mica", "rgb(192,192,192)"), ("mica", "#ffffff")],
@@ -336,8 +261,6 @@ def looks(exe: pathlib.Path, identifier: str, spaces: pathlib.Path) -> None:
             ran(held, UNDESK)
             pressed(held, "theme:glass", settle=1.0)
 
-        # The other surfaces a pane can hold, on glass in the last scheme: a web tab's
-        # bar with its tab running down into it, and a terminal on the pane's paper.
         pressed(held, "theme:glass", settle=1.0)
         pressed(held, "new-website", settle=1.5)
         photographed(app.pid, "light-glass-web")
@@ -357,7 +280,6 @@ def looks(exe: pathlib.Path, identifier: str, spaces: pathlib.Path) -> None:
         else:
             say("     the strip's plus offered no terminal to open")
 
-        # Appearance: the Window group is the frame alone now.
         pressed(held, "settings", settle=1.2)
         ran(
             held,
@@ -380,7 +302,6 @@ def looks(exe: pathlib.Path, identifier: str, spaces: pathlib.Path) -> None:
         ran(held, "window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))")
         time.sleep(0.6)
 
-        # The theme picker, where glass has a card of its own drawn over a desk.
         pressed(held, "themes", settle=1.5)
         photographed(app.pid, "light-glass-picker")
         ran(held, "window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))")
@@ -394,20 +315,14 @@ def looks(exe: pathlib.Path, identifier: str, spaces: pathlib.Path) -> None:
     finally:
         ended(app)
 
-
 def painted_at(identifier: str, step: str) -> list[float]:
-    """When each launch in the trace reached a step of the window's, in milliseconds."""
     path = local(identifier) / "logs" / "startup-trace.log"
     if not path.exists():
         return []
     found = re.findall(rf"^window: {step}\s+([\d.]+) ms", path.read_text(encoding="utf-8"), re.M)
     return [float(one) for one in found]
 
-
 def launches(exe: pathlib.Path, identifier: str, spaces: pathlib.Path) -> None:
-    """Three launches on each theme, the theme chosen by the launch before them, compared
-    on their best: a machine running builds beside this makes the worst of three a
-    question about the machine, and the best of three a question about the app."""
     best: dict[str, float] = {}
     for theme in ("default", "glass"):
         app, held = started(exe, identifier, spaces)
@@ -419,8 +334,6 @@ def launches(exe: pathlib.Path, identifier: str, spaces: pathlib.Path) -> None:
         log.unlink(missing_ok=True)
         for _ in range(3):
             app, held = started(exe, identifier, spaces, trace=True)
-            # The page hands its half over three seconds after the launch's last stage;
-            # see `sendTrace` in trace.ts.
             time.sleep(7.0)
             ended(app)
         for step in ("shell painted", "active tab painted"):
@@ -443,7 +356,6 @@ def launches(exe: pathlib.Path, identifier: str, spaces: pathlib.Path) -> None:
         if glass > 1000:
             wrong(f"glass reaches {step} after a second even at its best")
 
-
 def main() -> int:
     if sys.platform != "win32":
         print("this drive reads the Windows compositor", flush=True)
@@ -459,7 +371,6 @@ def main() -> int:
     shutil.rmtree(SHOTS, ignore_errors=True)
     wipe(said.identifier)
     with tempfile.TemporaryDirectory(prefix="nib-glass-probe-") as spaces:
-        # A space with two notes in it, so the list has names to read.
         space = pathlib.Path(spaces) / "Notes"
         space.mkdir()
         (space / "A window with a desk behind it.md").write_text(NOTE, encoding="utf-8")
@@ -477,7 +388,6 @@ def main() -> int:
 
     print("\nglass stands on Mica Alt, every word on it reads, and it costs a launch nothing")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

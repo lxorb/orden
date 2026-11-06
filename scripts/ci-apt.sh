@@ -1,15 +1,4 @@
 #!/usr/bin/env bash
-# Installs packages on a CI runner, in a time it bounds (issue 1160).
-#
-#     bash scripts/ci-apt.sh pkg...                # the package lists brought up to date, then pkg...
-#     bash scripts/ci-apt.sh --playwright browser  # what Playwright's browser needs, as --with-deps
-#
-# The runner's first mirror (azure.archive.ubuntu.com, in /etc/apt/apt-mirrors.txt)
-# sometimes trickles at a few kilobytes a second without ever failing, which apt does
-# not count as a failure, so a plain `apt-get install` sat for over an hour and held
-# the job. Here the lists and the packages are fetched under `timeout`; a fetch that
-# runs out is tried again without that mirror, keeping what it already has, and only
-# then are the packages installed, from the runner's own disk.
 set -euo pipefail
 
 mirrors=/etc/apt/apt-mirrors.txt

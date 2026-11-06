@@ -1,33 +1,3 @@
-"""The order the file list is read in, in the built app.
-
-Seeds a space of sixty notes in nested folders in a temp folder of its own, launches
-a probe build, photographs the panel in each of the seven orders, moves a row within
-the order somebody arranged, and relaunches to prove the choice and the arrangement
-came back off the disk rather than out of a store still in memory.
-
-The pointer drag itself is not here: a window has no pointer to lend, so the gesture
-is driven where a driver can hold one, against the same component in the same code -
-see apps/desktop/test/e2e/tree-order.py, which lifts a row with a mouse and with a
-finger. What this proves is the half that only a built app can answer: that the
-orders read as they should in the shipped bundle, and that both halves of what is
-remembered survive the process ending.
-
-Windows only, and a probe build only: `--exe` must be a build made under its own
-identifier, because the notes it writes go wherever `NIB_SPACES_DIR` says and the
-settings folder it wipes is that identifier's.
-
-    pnpm --dir apps/desktop tauri build --no-bundle \
-      --config '{"identifier":"ch.emilvinu.nib.probe.order","version":"99.0.0",
-                 "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-    python scripts/order-probe.py --exe "<the built exe>"
-
-An identifier of its own rather than the shared `ch.emilvinu.nib.probe`, because the
-single-instance plugin keys on it: two drives holding probe builds under one
-identifier hand off to each other, and the second one never gets a window. And one
-that never updates, because this drive closes the app's window - which is when an
-update installs; see scripts/probe_app.py.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -50,8 +20,6 @@ SPACES_DIR = "NIB_SPACES_DIR"
 SPACE = "Order"
 SHOTS = pathlib.Path(__file__).resolve().parents[1] / "target" / "order-probe"
 
-# The seven orders, and what each is called in the menu, so the log says what was
-# pressed and not only what was stored.
 ORDERS = [
     ("name", "Name, A to Z"),
     ("name-desc", "Name, Z to A"),
@@ -65,29 +33,19 @@ ORDERS = [
 user32 = ctypes.windll.user32 if sys.platform == "win32" else None
 problems: list[str] = []
 
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 
 def wrong(words: str) -> None:
     problems.append(words)
     print(f"  WRONG: {words}", flush=True)
 
-
 def spaces_root() -> pathlib.Path:
-    """A spaces root of this drive's own, in the temp area. Never `Documents/Nib`:
-    the identifier a probe runs under says nothing at all about where the spaces
-    are; see docs/automation.md."""
     made = pathlib.Path(tempfile.mkdtemp(prefix="nib-order-probe-"))
     os.environ[SPACES_DIR] = str(made)
     atexit.register(shutil.rmtree, made, ignore_errors=True)
     return made
 
-
-# Sixty notes, in five folders, written in an order that is not their names' so that
-# the created order and the name order cannot be the same answer by accident. `Note
-# 2` and `Note 10` are the one thing a name order has to get right.
 TOP = ["zeta", "Note 12", "Note 2", "Note 10", "Alpha", "Note 1", "beta", "Note 3"]
 NESTED = {
     "Reading": ["Chapter two", "Chapter one", "Notes on it", "Later", "Earlier"],
@@ -96,10 +54,7 @@ NESTED = {
     "Work/Q3": ["Week 2", "Week 10", "Week 1", "Week 20"],
     "Archive": ["Last year", "Older still", "Oldest of all"],
 }
-# Filled out to sixty with numbered notes, so the window has more rows than it can
-# draw and the drive is measuring a virtualised list.
 FILLER = 60 - len(TOP) - sum(len(names) for names in NESTED.values())
-
 
 def space() -> pathlib.Path:
     made = spaces_root() / SPACE
@@ -109,8 +64,6 @@ def space() -> pathlib.Path:
         folder.mkdir(parents=True, exist_ok=True)
         path = folder / f"{name}.md"
         path.write_text(f"# {name}\n\nwritten for the drive\n", encoding="utf-8")
-        # Distinct times, a minute apart, in the order they are written: the order the
-        # notes were made is then something the drive can say for itself.
         os.utime(path, (at, at))
 
     started = time.time() - 60 * 60 * 24
@@ -126,8 +79,6 @@ def space() -> pathlib.Path:
         write(made, f"Filler {index + 1}", started + step * 60)
         step += 1
 
-    # And a handful written in again, long after, so the last-modified order is not
-    # the order they were made in.
     later = time.time() - 60 * 5
     for name in ("Note 12", "Alpha"):
         path = made / f"{name}.md"
@@ -137,23 +88,19 @@ def space() -> pathlib.Path:
 
     return made
 
-
 def config_dir(identifier: str) -> pathlib.Path:
     roaming = os.environ.get("APPDATA") or str(pathlib.Path.home() / "AppData" / "Roaming")
     return pathlib.Path(roaming) / identifier
 
-
 def local_dir(identifier: str) -> pathlib.Path:
     local = os.environ.get("LOCALAPPDATA") or str(pathlib.Path.home() / "AppData" / "Local")
     return pathlib.Path(local) / identifier
-
 
 def wipe(identifier: str) -> None:
     if "probe" not in identifier:
         raise SystemExit(f"{identifier} is not a probe identifier: refusing to delete its folders")
     for one in (config_dir(identifier), local_dir(identifier)):
         shutil.rmtree(one, ignore_errors=True)
-
 
 def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str]:
     path = config_dir(identifier) / "automation.json"
@@ -168,15 +115,11 @@ def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str
         time.sleep(0.2)
     raise SystemExit(f"the app never wrote {path}")
 
-
 def allow_eval(identifier: str) -> None:
-    """Turns on the one verb that can ask a question of the window. Between two
-    launches, because the crate reads the flag when it opens the socket."""
     path = config_dir(identifier) / "automation.json"
     said = json.loads(path.read_text(encoding="utf-8"))
     said["eval"] = True
     path.write_text(json.dumps(said), encoding="utf-8")
-
 
 def act(port: int, secret: str, verb: str, args: dict[str, object], seconds: float = 90) -> object:
     body = json.dumps({"verb": verb, "args": args, "rest": []}).encode()
@@ -192,7 +135,6 @@ def act(port: int, secret: str, verb: str, args: dict[str, object], seconds: flo
         return {"ok": False, "error": f"{refused.code} {refused.read().decode('utf-8', 'replace')}"}
     except Exception as error:  # noqa: BLE001 - a frozen app fails in its own ways
         return {"ok": False, "error": f"no answer: {error}"}
-
 
 class App:
     def __init__(self, port: int, secret: str) -> None:
@@ -211,14 +153,7 @@ class App:
                 return value
         return value
 
-
 def launch(exe: pathlib.Path, identifier: str, unlike: int = 0):
-    """The app started, and the endpoint it wrote for this launch.
-
-    `unlike` is the port the launch before it used: the file is rewritten every
-    launch, and a read that arrives before the rewrite hands back a port nothing is
-    listening on any more. Waiting for a port that is not the old one is what tells
-    the two apart; see docs/automation.md."""
     app = run_probe(exe, quiet=True)
     port, secret = endpoint(identifier, 120, unlike)
 
@@ -234,17 +169,7 @@ def launch(exe: pathlib.Path, identifier: str, unlike: int = 0):
     time.sleep(2.0)
     return app, App(port, secret)
 
-
 def stop(app: subprocess.Popen) -> None:
-    """The window asked to close, and the process killed only if it will not.
-
-    Asked rather than killed, because what this drive is about is what survives the
-    app ending: a WebView flushes its local storage on a clean shutdown, and a process
-    ended outright loses the last of it - which is what made this run say an order had
-    not survived when it had.
-
-    Only ever the process this drive started, by its pid, and never by name: the
-    reader's own app is running."""
     if close_app(app, 40):
         return
     say("the window would not close when it was asked, so it is being ended")
@@ -256,7 +181,6 @@ def stop(app: subprocess.Popen) -> None:
         app.wait(timeout=30)
     except subprocess.TimeoutExpired:
         app.kill()
-
 
 def shot(pid: int, name: str) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
@@ -273,14 +197,9 @@ def shot(pid: int, name: str) -> None:
     else:
         say(f"wrote {out.name}: {(done.stdout or '').strip()}")
 
-
-# The whole order of the top of the space, which is the app's own answer rather than
-# the twenty rows that happen to be mounted.
 TOP_NAMES = """JSON.stringify(nib.workspace.shownTree
   ? nib.workspace.shownTree.children.map((one) => one.name) : [])"""
 
-# Alt and the up arrow on zeta's row, which is how a person moves it without a drag.
-# False when the row is not in the page to press on.
 MOVE_ZETA_UP = r"""(() => {
   const path = nib.workspace.activeSpace.root + '\\zeta.md'
   const row = [...document.querySelectorAll('.row[data-path]')].find(
@@ -299,14 +218,9 @@ KEPT = """JSON.stringify({
   files: nib.workspace.files.length,
 })"""
 
-
 def showing(app: App) -> None:
-    """The file list on screen. Asked for only when something else is there: pressing
-    the tab of the panel already showing is what closes the sidebar, and a relaunch
-    comes back with the panel it was left on."""
     app.ask("nib.workspace.panel === 'tree' ? true : nib.workspace.showPanel('tree')")
     time.sleep(0.8)
-
 
 def ready(app: App) -> None:
     until = time.perf_counter() + 90
@@ -317,7 +231,6 @@ def ready(app: App) -> None:
         time.sleep(0.5)
     wrong(f"the space never came up: {app.ask(KEPT)}")
 
-
 def main() -> int:
     if sys.platform != "win32":
         print("this probe drives a Windows build")
@@ -325,9 +238,6 @@ def main() -> int:
 
     parsed = argparse.ArgumentParser()
     parsed.add_argument("--exe", required=True, type=pathlib.Path)
-    # An identifier of this drive's own rather than the shared `ch.emilvinu.nib.probe`:
-    # the single-instance plugin keys on it, so two drives running probe builds under
-    # one identifier hand off to each other and the second never gets a window.
     parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe.order")
     args = parsed.parse_args()
 
@@ -339,8 +249,6 @@ def main() -> int:
     wipe(args.identifier)
     shutil.rmtree(SHOTS, ignore_errors=True)
 
-    # The first launch only writes automation.json; `eval` is read when the socket
-    # opens, so it is turned on between two launches.
     app, first = launch(args.exe, args.identifier)
     stop(app)
     allow_eval(args.identifier)
@@ -377,8 +285,6 @@ def main() -> int:
         if orders.get("manual") != by_name:
             wrong("Manual did not start out as name order for a space nobody has arranged")
 
-        # A row moved within the order somebody arranged, with the keys a person uses;
-        # see `moveInOrder` in tree-lift.ts. Whether it moved is the order read after.
         talk.ask("nib.workspace.setSort('manual')")
         time.sleep(0.3)
         before = talk.ask(TOP_NAMES)
@@ -399,14 +305,10 @@ def main() -> int:
         if not isinstance(kept, dict) or not kept.get("arranged"):
             wrong(f"nothing was written down for the space: {kept}")
 
-        # A moment for the store's own settling timer, so what reaches the disk is
-        # everything the gesture wrote; see SETTLING in workspace/arranged.svelte.ts.
         time.sleep(1.5)
     finally:
         stop(app)
 
-    # And again, from cold: both halves of what is remembered are read off this
-    # machine rather than held in a store that never went away.
     app, talk = launch(args.exe, args.identifier, was_on)
     try:
         ready(talk)
@@ -433,7 +335,6 @@ def main() -> int:
 
     print(f"\nthe built app read the space seven ways and kept the seventh; shots in {SHOTS}")
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

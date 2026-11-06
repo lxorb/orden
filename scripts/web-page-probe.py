@@ -1,40 +1,3 @@
-"""The page itself, on the packaged app: find, the speaker and Mute site, the zoom the
-engine reports, and a page's source in a tab. Windows only.
-
-Each is the engine's own event or call, so each is only proven on the engine; the unit
-tests beside the code hold the logic on either side of it. See "The page itself" in
-docs/web-tabs.md.
-
-* **find** - Ctrl+F on the pane opens the find bar, a word typed into it comes back as
-  the engine's tally (`1 of 3`), Enter and Shift+Enter walk it, and Escape closes it.
-* **page first** - Ctrl+F and Ctrl+L pressed inside a page are the page's first, as in
-  Chrome: a page with no answer of its own gets Orden's find bar and its address field,
-  and one that answers them itself keeps them. The keys are pressed in the page through
-  the engine's own devtools protocol, which is a trusted key in that page and nothing on
-  the screen.
-* **sound** - a page playing a tone puts the speaker on its tab; Mute site in the tab's
-  own menu strikes it through, keeps the site muted, and the engine says it is.
-* **zoom** - Zoom in, in the dots, is kept for the site: another site in the same tab
-  opens at a hundred per cent, and the first one at its size again. Any zoom the engine
-  reports on the way is listed too; one made with Ctrl and the wheel needs a real hand.
-* **source** - `view-source:` and a page's address opens as a tab and loads.
-
-A tone that plays by itself needs the engine's autoplay rule relaxed, which a page on
-the web never gets without a press, and a key pressed inside a page needs the engine's
-devtools port; the probe asks for both in the process it starts, and nothing the app
-ships changes.
-
-What it does not drive, and why: a page's own full screen and the developer tools each
-put a window of their own on the screen, which a probe may not do. Those are the crate's
-unit tests.
-
-    python scripts/web-page-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
-      --identifier ch.emilvinu.nib.probe.<name>
-
-The exe is a probe build that never updates, built as `scripts/probe_app.py` says;
-`run_probe` starts it off the screen and without the keyboard, and nothing here moves it.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -65,7 +28,6 @@ PORT_TO = 23819
 
 SPACE = "Web page probe"
 
-
 def free_port() -> int:
     for port in range(PORT_FROM, PORT_TO + 1):
         with socket.socket() as sock:
@@ -76,9 +38,7 @@ def free_port() -> int:
             return port
     raise SystemExit(f"no port free in {PORT_FROM}-{PORT_TO}")
 
-
 def tone() -> bytes:
-    """A second of a quiet tone, as a WAV the page loops."""
 
     rate = 22050
     frames = b"".join(
@@ -92,7 +52,6 @@ def tone() -> bytes:
         made.writeframes(frames)
     return out.getvalue()
 
-
 PAGES = {
     "/find": b"""<!doctype html><title>Find page</title>
 <body style="font:16px system-ui;padding:2rem">
@@ -101,7 +60,6 @@ PAGES = {
     "/sound": b"""<!doctype html><title>Sound page</title>
 <body style="font:16px system-ui;padding:2rem"><p>A tone.</p>
 <audio src="/tone.wav" autoplay loop></audio></body>""",
-    # A site with a find of its own, the way Google Docs and Notion have one.
     "/own": b"""<!doctype html><title>Own find</title>
 <body style="font:16px system-ui;padding:2rem"><p>A needle of its own.</p>
 <script>
@@ -120,10 +78,8 @@ addEventListener('keydown', function (event) {
 </script></body>""",
 }
 
-
 class Server(http.server.ThreadingHTTPServer):
     daemon_threads = True
-
 
 def serve(port: int) -> None:
     wav = tone()
@@ -146,13 +102,10 @@ def serve(port: int) -> None:
     made = Server(("127.0.0.1", port), Handler)
     threading.Thread(target=made.serve_forever, daemon=True).start()
 
-
 def shortcut(url: str, title: str) -> str:
     return f"[InternetShortcut]\r\nURL={url}\r\nTitle={title}\r\n"
 
-
 def space(port: int) -> pathlib.Path:
-    """A spaces root of this probe's own, never anybody's Documents/Nib."""
 
     root = pathlib.Path(tempfile.mkdtemp(prefix="nib-page-probe-"))
     os.environ["NIB_SPACES_DIR"] = str(root)
@@ -166,17 +119,14 @@ def space(port: int) -> pathlib.Path:
         )
     return made
 
-
 def config_dir(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["APPDATA"]) / identifier
-
 
 def wipe(identifier: str) -> None:
     if "probe" not in identifier:
         raise SystemExit(f"{identifier} is not a probe identifier: refusing to delete its folders")
     for base in (os.environ["APPDATA"], os.environ["LOCALAPPDATA"]):
         shutil.rmtree(pathlib.Path(base) / identifier, ignore_errors=True)
-
 
 def endpoint(identifier: str, unlike: int = 0) -> tuple[int, str, int]:
     path = config_dir(identifier) / "automation.json"
@@ -191,13 +141,11 @@ def endpoint(identifier: str, unlike: int = 0) -> tuple[int, str, int]:
         time.sleep(0.2)
     raise SystemExit(f"the app never wrote {path}; close any Orden running under this identifier")
 
-
 def allow_eval(identifier: str) -> None:
     path = config_dir(identifier) / "automation.json"
     said = json.loads(path.read_text(encoding="utf-8-sig"))
     said["eval"] = True
     path.write_bytes(json.dumps(said).encode("utf-8"))
-
 
 class App:
     def __init__(self, port: int, secret: str) -> None:
@@ -231,16 +179,9 @@ class App:
                 return value
         return value
 
-
-#: The engine's own switches for the probe's process only: a sound that starts without a
-#: press, since the tone below has nobody to press play, and a devtools port on every
-#: browser process, which is how a key is pressed inside a page without a keyboard. Each
-#: process picks its own port and writes it beside its data.
 ENGINE_ARGS = "--autoplay-policy=no-user-gesture-required --remote-debugging-port=0"
 
-
 def debug_ports(identifier: str) -> list[int]:
-    """The devtools port of every engine process the app started."""
 
     ports: list[int] = []
     for base in (os.environ["APPDATA"], os.environ["LOCALAPPDATA"]):
@@ -251,9 +192,7 @@ def debug_ports(identifier: str) -> list[int]:
                 continue
     return ports
 
-
 def page_socket(identifier: str, path: str) -> str | None:
-    """The devtools socket of the page whose address ends in `path`."""
 
     for port in debug_ports(identifier):
         try:
@@ -266,9 +205,7 @@ def page_socket(identifier: str, path: str) -> str | None:
                 return str(one["webSocketDebuggerUrl"])
     return None
 
-
 class Devtools:
-    """The least of a WebSocket that speaks the devtools protocol to one page."""
 
     def __init__(self, url: str) -> None:
         rest = url.removeprefix("ws://")
@@ -322,7 +259,6 @@ class Devtools:
                 return said
 
     def ctrl(self, letter: str) -> None:
-        """Ctrl and a letter, pressed in the page: a trusted key, the page's handlers first."""
 
         key = {
             "modifiers": 2,
@@ -341,10 +277,7 @@ class Devtools:
     def close(self) -> None:
         self.sock.close()
 
-
 def press_in_page(identifier: str, path: str, letter: str = "f") -> dict[str, object]:
-    """Ctrl and `letter` in the page at `path`, and how many times the page's own find
-    and its own Ctrl+L answered."""
 
     url = None
     until = time.perf_counter() + 20
@@ -363,7 +296,6 @@ def press_in_page(identifier: str, path: str, letter: str = "f") -> dict[str, ob
     finally:
         tools.close()
 
-
 def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subprocess.Popen[bytes], App]:
     env = {**os.environ, "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": ENGINE_ARGS}
     running = run_probe(exe, env=env, quiet=True)
@@ -379,9 +311,6 @@ def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subproc
     time.sleep(1.5)
     return running, App(port, secret)
 
-
-# Helpers every step below is written against: waiting on the window's own clock, the
-# web tab in front, and its pane's own elements.
 PRELUDE = r"""
 const ws = nib.workspace
 const wait = async (ok, ms = 15000) => {
@@ -405,11 +334,9 @@ const key = (target, init) =>
 const invoke = window.__TAURI_INTERNALS__.invoke
 """
 
-
 def step(app: App, body: str, seconds: float = 60) -> dict[str, object]:
     said = app.ask(f"(async () => {{ {PRELUDE}\n{body} }})()", seconds)
     return said if isinstance(said, dict) else {"error": said}
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -436,7 +363,6 @@ def main() -> int:
         time.sleep(1)
         running, app = launch(args.exe, args.identifier, unlike=app.port)
 
-        # English, so the words read below are the words this file expects.
         app.ask("(localStorage.setItem('nib:language', 'en'), location.reload(), 1)")
         time.sleep(4)
         app.act("open", {"path": "Idea.md", "space": SPACE})
@@ -463,7 +389,6 @@ def main() -> int:
 """,
         )
 
-        # Ctrl+F inside a page with no find of its own: Orden's bar, with the keyboard.
         shut = step(app, "return { shut: !document.querySelector('.findbar') }")
         pressed = press_in_page(args.identifier, "/find")
         opened = step(
@@ -478,7 +403,6 @@ def main() -> int:
         )
         said["page first"] = {"shut before": shut, "plain": {**pressed, **opened}}
 
-        # Ctrl+L inside it: the address field, with the keyboard.
         before = step(app, "return { address: document.activeElement === bar() }")
         pressed = press_in_page(args.identifier, "/find", "l")
         taken = step(
@@ -551,7 +475,6 @@ def main() -> int:
 """,
         )
 
-        # And inside one that answers Ctrl+F itself: the page's find, and no bar.
         own = step(
             app,
             f"""
@@ -635,7 +558,6 @@ def main() -> int:
     for one in wrong:
         print(f"WRONG: {one}")
     return 1 if wrong else 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

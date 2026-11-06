@@ -54,7 +54,6 @@ from ctypes import wintypes
 
 from probe_app import run_probe, refuse_updating
 
-# Where a drive of this repository may listen; see docs/conventions.md.
 PORT = 23760
 
 SPACES_DIR = "NIB_SPACES_DIR"
@@ -73,15 +72,12 @@ PAGE = b"""<!doctype html>
 
 failures: list[str] = []
 
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 
 def wrong(words: str) -> None:
     failures.append(words)
     print(f"  FAIL {words}", flush=True)
-
 
 class Quiet(http.server.BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802 - the library's own name
@@ -94,29 +90,22 @@ class Quiet(http.server.BaseHTTPRequestHandler):
     def log_message(self, *args: object) -> None:
         return
 
-
 def config_dir(identifier: str) -> pathlib.Path:
     roaming = os.environ.get("APPDATA") or str(pathlib.Path.home() / "AppData" / "Roaming")
     return pathlib.Path(roaming) / identifier
-
 
 def local_dir(identifier: str) -> pathlib.Path:
     local = os.environ.get("LOCALAPPDATA") or str(pathlib.Path.home() / "AppData" / "Local")
     return pathlib.Path(local) / identifier
 
-
 def wipe(identifier: str) -> None:
-    """Everything the last run left. Refused for anything but a probe."""
     if "probe" not in identifier:
         raise SystemExit(f"{identifier} is not a probe identifier; refusing to wipe it")
 
     for path in (config_dir(identifier), local_dir(identifier)):
         shutil.rmtree(path, ignore_errors=True)
 
-
 def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str]:
-    """The port and the secret this launch is listening behind, once it has written them
-    down; see src-tauri/src/endpoint.rs."""
     path = config_dir(identifier) / "automation.json"
     until = time.perf_counter() + seconds
     while time.perf_counter() < until:
@@ -130,15 +119,11 @@ def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str
 
     raise SystemExit(f"the app never wrote {path}")
 
-
 def allow_eval(identifier: str) -> None:
-    """`eval` is off until this installation's own file says otherwise, which is
-    deliberately the same file the secret is in; see docs/automation.md."""
     path = config_dir(identifier) / "automation.json"
     said = json.loads(path.read_text(encoding="utf-8"))
     said["eval"] = True
     path.write_text(json.dumps(said), encoding="utf-8")
-
 
 def verb(port: int, secret: str, name: str, args: dict[str, object], seconds: float = 20.0) -> str:
     body = json.dumps({"verb": name, "args": args, "rest": []}).encode()
@@ -155,12 +140,7 @@ def verb(port: int, secret: str, name: str, args: dict[str, object], seconds: fl
     except Exception as error:  # noqa: BLE001 - a frozen app fails in its own ways
         return f"no answer: {error}"
 
-
 def ran(port: int, secret: str, code: str) -> object:
-    """One expression in the window, and what it came back as.
-
-    `yes` because every verb that changes something asks for it, and `eval` changes
-    whatever it is sent; see `confirms` in automation/verbs.ts."""
     said = verb(port, secret, "eval", {"code": code, "yes": True})
     try:
         answer = json.loads(said)
@@ -174,7 +154,6 @@ def ran(port: int, secret: str, code: str) -> object:
             return answer["value"]
 
     return answer
-
 
 def windows_of(pid: int) -> list[int]:
     user32 = ctypes.WinDLL("user32", use_last_error=True)
@@ -192,7 +171,6 @@ def windows_of(pid: int) -> list[int]:
     user32.EnumWindows(proc(each), 0)
     return found
 
-
 def wait_for_window(app: subprocess.Popen[bytes], seconds: float) -> int:
     until = time.perf_counter() + seconds
     while time.perf_counter() < until:
@@ -202,9 +180,7 @@ def wait_for_window(app: subprocess.Popen[bytes], seconds: float) -> int:
         time.sleep(0.25)
     return 0
 
-
 def shoot(pid: int, out: pathlib.Path) -> None:
-    """A photograph of the window, by pid and nothing else; see capture-window.ps1."""
     subprocess.run(
         [
             "powershell",
@@ -222,9 +198,6 @@ def shoot(pid: int, out: pathlib.Path) -> None:
         capture_output=True,
     )
 
-
-# One keystroke, as the window would hand one over: the app reads its own keys off the
-# window, so this is the very handler a press goes through.
 PRESS = """
 (() => {
   const press = (key, code, shift) => window.dispatchEvent(new KeyboardEvent('keydown', {
@@ -261,14 +234,12 @@ MENU = """
 })()
 """
 
-
 def state(port: int, secret: str) -> dict:
     said = ran(port, secret, STATE)
     try:
         return json.loads(said if isinstance(said, str) else json.dumps(said))
     except ValueError:
         return {}
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -299,9 +270,6 @@ def main() -> int:
     wipe(args.identifier)
     environment = {**os.environ, SPACES_DIR: str(spaces)}
 
-    # Twice, because `eval` is read once when the endpoint starts listening: the first
-    # launch is what writes the file this turns it on in, and the second is the one that
-    # answers. See `eval` in src-tauri/src/endpoint.rs.
     first = run_probe(exe, env=environment)
     was, _ = endpoint(args.identifier, 150)
     allow_eval(args.identifier)
@@ -311,9 +279,6 @@ def main() -> int:
         first.wait(timeout=15)
     except subprocess.TimeoutExpired:
         first.kill()
-    # Long enough for the single-instance lock to go with it: a launch while the last one
-    # is still holding it hands its arguments over and exits, and then there is no window
-    # of this process to wait for. See tauri-plugin-single-instance.
     time.sleep(6.0)
 
     app = run_probe(exe, env=environment)
@@ -381,9 +346,6 @@ def main() -> int:
             say(f"the space              -> still {after}")
 
         say("--- the chord over a web tab ---")
-        # Where the bar would have pointed it: the tab remembers the address, and the
-        # pane asks for the page the next time anything moves - a press is one of the
-        # things that makes it look again. See `follow` in WebTab.svelte.
         ran(
             port,
             secret,
@@ -462,7 +424,6 @@ def main() -> int:
 
     print("\neverything the probe checked was right")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

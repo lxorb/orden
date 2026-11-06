@@ -1,41 +1,3 @@
-"""Does a web tab's page stay glued to its pane? Windows only.
-
-Emil, 2026-10-03: *"web sites display feels very buggy"* - while resizing the window the
-page sometimes froze where it was, opening the sidebar moved the page in steps, and while
-a toast showed or something was hovered the page was sometimes invisible. A page is a
-native webview placed over the pane's hole, so none of that can be unit tested: it is a
-question about where a window of another process is, and when. This asks the windows.
-
-The app's window is driven with messages to its own HWND - `SetWindowPos` while it stays
-off the screen - and the page's window is sampled as fast as Python can ask, on a thread
-of its own: its rectangle, whether it is shown and what region it may draw in. What it
-reports:
-
-* **resize** - a window resized in eighty steps a frame apart. `lag ms` is how long after
-  the app's own view took a new width the page did; `never caught up` counts the steps
-  the page skipped altogether, which is the freeze.
-* **sidebar** - the panel opened and shut: how many times the page moved, the longest gap
-  between two moves, and the app's own frames over 20 ms while it slid. The page should
-  move once per frame the app draws.
-* **hover a tab**, **address suggestions**, **toast**, **settings** - whether the page was
-  ever hidden or emptied (`out of sight ms`), how often its region changed, and whether
-  the window's own photograph shows the page or its still in a corner the layer is not
-  over. A layer that is not over the page must leave it alone; one that is must never
-  leave the pane blank.
-
-    python scripts/web-smooth-probe.py --exe path/to/nib.exe --identifier ch.emilvinu.nib.probe.<name>
-
-The exe is a probe build a drive can steer, so `window.nibApp` is there:
-
-    npx vite build --mode drive                     # in apps/desktop
-    pnpm --dir apps/desktop tauri build --no-bundle \\
-      --config '{"identifier":"ch.emilvinu.nib.probe.<name>","version":"99.0.0",
-                 "build":{"beforeBuildCommand":""},
-                 "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-
-Launched through `probe_app.run_probe`, off the screen and never in front.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -57,21 +19,17 @@ HERE = pathlib.Path(__file__).resolve().parent
 
 SPACE = "Web smooth probe"
 
-#: A page of one colour, so a photograph says at a glance whether the page is there.
 FLAT = b"""<!doctype html><title>Flat</title>
 <body style="margin:0;background:#ff0080;height:100vh"></body>"""
 TALL = b"""<!doctype html><title>Tall</title>
 <body style="margin:0;font:16px system-ui"><h1 style="margin:0;padding:2rem">Tall</h1>
 <div style="height:9000px;background:linear-gradient(#fff,#048)"></div></body>"""
 
-#: `GetWindowRgnBox`: no region is the whole window, an empty one is none of it.
 REGIONS = {0: "whole", 1: "empty", 2: "rect", 3: "cut"}
 
 user32 = ctypes.WinDLL("user32", use_last_error=True) if sys.platform == "win32" else None
 
-
 def borrowed(name: str) -> Any:
-    """Another drive's helpers, so the two cannot drift apart."""
 
     spec = importlib.util.spec_from_file_location(name.replace("-", "_"), HERE / f"{name}.py")
     if spec is None or spec.loader is None:
@@ -80,27 +38,22 @@ def borrowed(name: str) -> Any:
     spec.loader.exec_module(module)
     return module
 
-
 def rect(hwnd: int) -> tuple[int, int, int, int]:
     assert user32 is not None
     box = wintypes.RECT()
     user32.GetWindowRect(wintypes.HWND(hwnd), ctypes.byref(box))
     return (box.left, box.top, box.right, box.bottom)
 
-
 def shown(hwnd: int) -> bool:
     assert user32 is not None
     return bool(user32.IsWindowVisible(wintypes.HWND(hwnd)))
-
 
 def region(hwnd: int) -> int:
     assert user32 is not None
     box = wintypes.RECT()
     return int(user32.GetWindowRgnBox(wintypes.HWND(hwnd), ctypes.byref(box)))
 
-
 def views(hwnd: int) -> list[int]:
-    """Every webview straight under the window, the app's own and each page's."""
 
     assert user32 is not None
     user32.GetAncestor.restype = wintypes.HWND
@@ -117,14 +70,11 @@ def views(hwnd: int) -> list[int]:
     user32.EnumChildWindows(wintypes.HWND(hwnd), kind(each), 0)
     return found
 
-
 def area(box: tuple[int, int, int, int]) -> int:
     return (box[2] - box[0]) * (box[3] - box[1])
 
-
 def app_view(hwnd: int) -> int:
     return max(views(hwnd), key=lambda one: area(rect(one)))
-
 
 def page_view(hwnd: int, seconds: float = 60) -> int:
     until = time.perf_counter() + seconds
@@ -136,9 +86,7 @@ def page_view(hwnd: int, seconds: float = 60) -> int:
         time.sleep(0.05)
     raise SystemExit("the page never appeared")
 
-
 class Sampler:
-    """The page's window and the app's own, asked about as fast as they answer."""
 
     def __init__(self, page: int, own: int) -> None:
         self.page, self.own = page, own
@@ -165,7 +113,6 @@ class Sampler:
         self.on = False
         self.thread.join()
 
-
 def changes(rows: list[Any], key: Any) -> list[tuple[float, Any]]:
     out: list[tuple[float, Any]] = []
     last: Any = object()
@@ -176,9 +123,6 @@ def changes(rows: list[Any], key: Any) -> list[tuple[float, Any]]:
             last = value
     return out
 
-
-# Every placement and photograph the window asks the crate for, counted at the fetch the
-# runtime sends it down. `invoke` itself is frozen; `fetch` is not.
 COUNT = """(() => {
   if (!window.__counted) {
     const real = window.fetch.bind(window)
@@ -204,9 +148,7 @@ FRAMES = """(() => { window.__frames = []; let last = performance.now(); const u
   const tick = (now) => { window.__frames.push(now - last); last = now; if (now < until) requestAnimationFrame(tick) };
   requestAnimationFrame(tick); return 'ok' })()"""
 
-
 def resize(hwnd: int, page: int, own: int, steps: int = 40, by: int = 24) -> dict[str, object]:
-    """The window resized a frame at a time, out and back, by messages to its own HWND."""
 
     x0, y0, x1, y1 = rect(hwnd)
     width, height = x1 - x0, y1 - y0
@@ -235,9 +177,7 @@ def resize(hwnd: int, page: int, own: int, steps: int = 40, by: int = 24) -> dic
         "at rest with the app": rows[-1][1][2] == rows[-1][3][2],
     }
 
-
 def slide(app: Any, page: int, own: int, code: str) -> dict[str, object]:
-    """The sidebar opened or shut: every move of the page, and the app's own frames."""
 
     app.ask(COUNT)
     app.ask(FRAMES % 800)
@@ -256,10 +196,7 @@ def slide(app: Any, page: int, own: int, code: str) -> dict[str, object]:
         "placements": len(placed) if isinstance(placed, list) else placed,
     }
 
-
 def watch(app: Any, hwnd: int, page: int, own: int, code: str, corner: tuple[int, int], seconds: float, shoot: Any) -> dict[str, object]:
-    """A layer opened and closed: whether the page was ever hidden or emptied, and
-    whether a corner the layer is not over shows the page or its still throughout."""
 
     from PIL import Image
 
@@ -280,8 +217,6 @@ def watch(app: Any, hwnd: int, page: int, own: int, code: str, corner: tuple[int
     return {
         "out of sight ms": round(gone),
         "hidden": sum(1 for _, one in changes(rows, lambda row: row[2])[1:] if not one),
-        # Which shapes the page's window was given, in the order first seen. Asked of another
-        # process's window while it is being reshaped, the answer is now and then "none".
         "regions": list(dict.fromkeys(REGIONS.get(row[4], row[4]) for row in rows)),
         "page in the free corner": f"{sum(seen)}/{len(seen)}",
         "placements hiding it": sum(1 for one in placed if one[1] == "web_place" and one[2] is False)
@@ -289,7 +224,6 @@ def watch(app: Any, hwnd: int, page: int, own: int, code: str, corner: tuple[int
         else placed,
         "photographs": sum(1 for one in placed if one[1] == "web_shot") if isinstance(placed, list) else None,
     }
-
 
 HOVER = """(() => {
   const tab = [...document.querySelectorAll('[data-strip] .tab')].find((one) => one.textContent.includes('Tall'))
@@ -299,8 +233,6 @@ HOVER = """(() => {
   return 'ok'
 })()"""
 
-# The field's own focus event, since a probe's window is never in front and its document
-# never has the keyboard to hand to the field.
 SUGGEST = """(() => {
   const field = document.querySelector('.webbar input')
   if (!field) return 'no field'
@@ -318,7 +250,6 @@ TOAST = """(() => {
 })()"""
 
 SETTINGS = "nibApp.settings.show(), setTimeout(() => (nibApp.settings.open = false), 1300), 'ok'"
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -366,7 +297,6 @@ def main() -> int:
     said: dict[str, object] = {}
     running = None
     try:
-        # One launch to write the endpoint file, so eval can be turned on in it.
         running, app, _ = switch.launch(args.exe, args.identifier)
         running.terminate()
         running.wait(timeout=30)
@@ -411,7 +341,6 @@ def main() -> int:
 
     print(json.dumps(said, indent=1))
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

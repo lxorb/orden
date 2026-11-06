@@ -1,30 +1,3 @@
-"""Does the window hand its own page the keyboard as it comes back, once a web tab has
-closed in it? Windows only, `WebView2`.
-
-Emil, 2026-10-13: *"when I alt tab out of nib and then alt tab onto it again ... when I
-then want to do ctrl tab nothing happens. i have to click into nib first."* wry gives the
-window's keyboard to its own page from a subclass of the window, and drops that subclass
-as soon as any webview in the window goes; see the top of src-tauri/src/keyboard.rs. So
-after one web tab had closed, coming back left the keyboard on the bare window.
-
-A probe is never handed the keyboard and never activated (src-tauri/src/foreground.rs),
-so no real Alt+Tab is played and nothing here takes the foreground. Instead the drive
-sends the probe's window the two messages Alt+Tab sends it, `WM_ACTIVATE` and
-`WM_SETFOCUS`, after a web tab has opened and closed, and reads:
-
-* **the rule** - what the crate says on stderr where it would have handed the keyboard:
-  the window's own page, and that it kept that page to hand it to. Before the fix there
-  was no own page to hand it to; wry was trusted, and wry had let go.
-* **held** - the probe never the window in front, and the window its own thread would
-  hand a key to the same before and after: the probe-quiet rule holding.
-* **Ctrl+Tab** - a Ctrl+Tab keydown played on the app's window afterwards, the way
-  scripts/web-bar-probe.py plays keys, moves from one note to the next.
-
-    python scripts/refocus-probe.py --exe path/to/nib.exe --identifier ch.emilvinu.nib.probe.<name>
-
-Build the exe as `scripts/probe_app.py` says.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -54,9 +27,7 @@ WEB = "A page"
 
 user32 = ctypes.WinDLL("user32", use_last_error=True) if sys.platform == "win32" else None
 
-
 def borrowed():
-    """The switch probe's own helpers: the space, the endpoint, `eval`."""
 
     spec = importlib.util.spec_from_file_location("switch", HERE / "web-switch-probe.py")
     if spec is None or spec.loader is None:
@@ -65,9 +36,7 @@ def borrowed():
     spec.loader.exec_module(module)
     return module
 
-
 def launch(switch, exe: pathlib.Path, identifier: str, errors, unlike: int = 0):
-    """The probe, with what it says on stderr kept in `errors`."""
 
     running = run_probe(exe, errors=errors)
     port, secret = switch.endpoint(identifier, 90, unlike)
@@ -82,15 +51,12 @@ def launch(switch, exe: pathlib.Path, identifier: str, errors, unlike: int = 0):
     time.sleep(1.5)
     return running, switch.App(port, secret), hwnd
 
-
 def front_tab(app) -> object:
     return app.ask(
         "JSON.stringify(nib.workspace.tabs.find((one) => one.id === nib.workspace.activeTabId)?.name ?? null)"
     )
 
-
 def ctrl_tab(app) -> object:
-    """Ctrl+Tab, played on the app's window, which is where the app reads its chords."""
 
     init = {"key": "Tab", "code": "Tab", "ctrlKey": True, "bubbles": True, "cancelable": True}
     return app.ask(
@@ -98,7 +64,6 @@ def ctrl_tab(app) -> object:
         f" window.dispatchEvent(new KeyboardEvent('keyup', {json.dumps({**init, 'key': 'Control', 'code': 'ControlLeft', 'ctrlKey': False})})),"
         " JSON.stringify(true))"
     )
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -199,8 +164,6 @@ def main() -> int:
     else:
         if after.get("front is ours"):
             failed.append("the probe took the foreground")
-        # The window in front is the reader's to change meanwhile; the probe's thread's
-        # keyboard is not.
         if before.get("app thread focus") != after.get("app thread focus"):
             failed.append("the probe thread's keyboard moved")
     if not str(said["front tab before"]).startswith(FIRST) or not str(
@@ -210,7 +173,6 @@ def main() -> int:
     for one in failed:
         print(f"FAIL: {one}")
     return 1 if failed else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

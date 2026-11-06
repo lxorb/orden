@@ -1,34 +1,3 @@
-"""Local dictation engines measured on the recordings of #1128 (#1151): accuracy, how
-fast the live words and the final words come, and what each costs to keep.
-
-Every engine runs here on this machine's CPU, through the same runtime the app loads
-(sherpa-onnx, ONNX Runtime underneath) or, for Whisper with a prompt, CTranslate2 as
-faster-whisper ships it. The recordings are `scripts/dictation-bench/`: twelve real
-phone calls and nine dictation-style sentences with names, German, English and both.
-
-What is measured, per engine:
-
-* **WER** on normalised words, split as the #1128 table is: mixed German/English,
-  German or English dictation, real phone calls. **Names**: the terms in
-  `samples.json` spelled exactly.
-* **final s**: the final pass, the whole sentence heard once, as the reader waits after
-  stopping. **RTF**: compute time over audio time, for the final passes together.
-* **live s**: how long one live pass takes, the open stretch heard again every half
-  second as the voice goes on (median and slowest, the dictation sentences only), and
-  the live WER of the pass before the end. A streaming engine is fed in chunks
-  instead, and its live time is one chunk's compute.
-* **load s** and **MB**: the model's files and the time to open them.
-
-    pip install sherpa-onnx==2.0.1 soundfile numpy [faster-whisper]
-    python scripts/dictation-bench.py --models ~/.cache/orden-bench \\
-        [--only parakeet-v3,qwen3-asr] [--out results.json]
-    python scripts/dictation-bench.py --export DIR   # for the app's own engine:
-    ORDEN_DICTATION_SAMPLES=DIR cargo test --lib heard_here -- --ignored --nocapture
-
-Models are downloaded once into `--models`. The engines named `-hotwords` or `-prompt`
-hear the dictation sentences with the names of `samples.json` as context words.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -51,13 +20,10 @@ RATE = 16_000
 LIVE_STEP = 0.5
 SHERPA = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/"
 
-
 def threads() -> int:
     return max(1, min(4, os.cpu_count() or 1))
 
-
 def fetched(models: Path, name: str) -> Path:
-    """A sherpa-onnx model package, downloaded and unpacked once."""
     folder = models / name
     if folder.is_dir():
         return folder
@@ -71,14 +37,10 @@ def fetched(models: Path, name: str) -> Path:
     archive.unlink()
     return folder
 
-
 def size_of(folder: Path) -> float:
     return sum(f.stat().st_size for f in folder.rglob("*") if f.is_file()) / 1e6
 
-
 def bpe_vocab(folder: Path) -> str:
-    """The SentencePiece vocabulary sherpa-onnx encodes hotwords with, made from the
-    package's tokens.txt: pieces in their order, the earlier merges scoring higher."""
     vocab = folder / "bpe.vocab"
     if not vocab.exists():
         lines = (folder / "tokens.txt").read_text(encoding="utf-8").splitlines()
@@ -86,9 +48,7 @@ def bpe_vocab(folder: Path) -> str:
         vocab.write_text("".join(f"{p}\t{-i}\n" for i, p in enumerate(pieces)), encoding="utf-8")
     return str(vocab)
 
-
 class Offline:
-    """An engine that hears a stretch whole: every live pass hears it again."""
 
     streaming = False
 
@@ -108,9 +68,7 @@ class Offline:
         self.recognizer.decode_stream(stream)
         return stream.result.text.strip()
 
-
 class Streaming:
-    """An engine that hears as the samples arrive, chunk by chunk."""
 
     streaming = True
     CHUNK = 0.16
@@ -141,7 +99,6 @@ class Streaming:
     def hear(self, samples: np.ndarray, context: list[str]) -> str:
         return self.run(samples)[0]
 
-
 class FasterWhisper:
     streaming = False
 
@@ -154,7 +111,6 @@ class FasterWhisper:
             samples, beam_size=1, initial_prompt=prompt, vad_filter=False, condition_on_previous_text=False
         )
         return " ".join(p.text.strip() for p in parts).strip()
-
 
 def parakeet(models: Path, beam: bool, score: float = 1.5):
     import sherpa_onnx
@@ -171,7 +127,6 @@ def parakeet(models: Path, beam: bool, score: float = 1.5):
     )
     return Offline(r, hotwords=(lambda c: "/".join(c)) if beam else None), d
 
-
 def nemotron(models: Path, ms: int):
     import sherpa_onnx
 
@@ -184,7 +139,6 @@ def nemotron(models: Path, ms: int):
     engine.CHUNK = ms / 1000
     return engine, d
 
-
 def qwen3(models: Path):
     import sherpa_onnx
 
@@ -195,7 +149,6 @@ def qwen3(models: Path):
         num_threads=threads(), max_new_tokens=256,
     )
     return Offline(r, options={"hotwords": lambda c: ",".join(c)}), d
-
 
 def sherpa_whisper(models: Path, name: str):
     import sherpa_onnx
@@ -209,7 +162,6 @@ def sherpa_whisper(models: Path, name: str):
     )
     return Offline(r), d
 
-
 def moonshine(models: Path):
     import sherpa_onnx
 
@@ -221,14 +173,12 @@ def moonshine(models: Path):
     )
     return Offline(r), d
 
-
 def faster_whisper(models: Path, name: str):
     from faster_whisper import WhisperModel
 
     root = models / "faster-whisper"
     model = WhisperModel(name, device="cpu", compute_type="int8", cpu_threads=threads(), download_root=str(root))
     return FasterWhisper(model), root
-
 
 ENGINES = {
     "parakeet-v3": (lambda m: parakeet(m, False), "CC BY 4.0", False),
@@ -245,11 +195,9 @@ ENGINES = {
     "fw-small-prompt": (lambda m: faster_whisper(m, "small"), "MIT", True),
 }
 
-
 def norm(text: str) -> list[str]:
     text = unicodedata.normalize("NFC", text).lower().replace("-", " ")
     return re.sub(r"[^\w\s']", " ", text).split()
-
 
 def edits(ref: list[str], hyp: list[str]) -> int:
     row = list(range(len(hyp) + 1))
@@ -259,11 +207,9 @@ def edits(ref: list[str], hyp: list[str]) -> int:
             prev, row[j] = row[j], min(row[j] + 1, row[j - 1] + 1, prev + (r != h))
     return row[-1]
 
-
 def wer(pairs: list[tuple[str, str]]) -> float:
     words = sum(len(norm(r)) for r, _ in pairs)
     return sum(edits(norm(r), norm(h)) for r, h in pairs) / max(1, words)
-
 
 def recordings() -> tuple[list[dict], list[str]]:
     doc = json.loads((HERE / "samples.json").read_text(encoding="utf-8"))
@@ -282,12 +228,10 @@ def recordings() -> tuple[list[dict], list[str]]:
         out.append({**s, "samples": np.concatenate([room, x, room]).astype(np.float32)})
     return out, doc["context"]
 
-
 def group(s: dict) -> str:
     if s["kind"] == "real-phone":
         return "phone"
     return "mixed" if "+" in s["lang"] else "mono"
-
 
 def measure(name: str, models: Path, samples: list[dict], context: list[str]) -> dict:
     make, licence, takes_context = ENGINES[name]
@@ -339,7 +283,6 @@ def measure(name: str, models: Path, samples: list[dict], context: list[str]) ->
         "rows": rows,
     }
 
-
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     p = argparse.ArgumentParser()
@@ -362,7 +305,7 @@ def main() -> None:
         print(f"{name}", flush=True)
         try:
             results.append(measure(name, args.models, samples, context))
-        except Exception as error:  # one engine that cannot run says so, and the rest go on
+        except Exception as error:
             print(f"  failed: {error!r}", flush=True)
             results.append({"engine": name, "error": repr(error)})
     head = "| engine | licence | MB | mixed WER | DE/EN WER | phone WER | names | live WER | live s (p50/max) | final s | RTF | load s |"
@@ -376,7 +319,6 @@ def main() -> None:
               f"| {r['live_wer']} | {r['live_p50']}/{r['live_max']} | {r['final_s']} | {r['rtf']} | {r['load']} |")
     if args.out:
         args.out.write_text(json.dumps(results, ensure_ascii=False, indent=1), encoding="utf-8")
-
 
 if __name__ == "__main__":
     main()

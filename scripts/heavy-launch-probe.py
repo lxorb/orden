@@ -52,9 +52,7 @@ sys.path.insert(0, str(HERE))
 
 from probe_app import close_app, main_window, run_probe, sized  # noqa: E402
 
-
 def borrowed(name: str, file: pathlib.Path):
-    """Another drive's helpers, read from its file: the names have dashes in them."""
 
     spec = importlib.util.spec_from_file_location(name, file)
     if spec is None or spec.loader is None:
@@ -63,17 +61,13 @@ def borrowed(name: str, file: pathlib.Path):
     spec.loader.exec_module(module)
     return module
 
-
 switch = borrowed("switch", HERE / "web-switch-probe.py")
 launch_drive = borrowed("launch_drive", HERE.parent / "apps" / "desktop" / "test" / "e2e" / "launch.py")
 
-#: How many spaces, and how the five thousand notes are spread over them: one big one,
-#: the rest a few hundred each.
 SPACES = 12
 NOTES = 5000
 BIG = 2000
 
-#: Real sites among the web tabs.
 PUBLIC = [
     ("Wikipedia", "https://en.wikipedia.org/wiki/Main_Page"),
     ("VS Code", "https://github.com/microsoft/vscode"),
@@ -81,17 +75,13 @@ PUBLIC = [
     ("Hacker News", "https://news.ycombinator.com/"),
 ]
 
-#: Web tabs per space.
 PER_SPACE = 2
 
-#: Spaces with a terminal, and how many lines each prints before the session ends.
 TERMINALS = 3
 LINES = 4000
 
-#: The extension installed, from its store link.
 EXTENSION = "https://chromewebstore.google.com/detail/ublock-origin-lite/ddkjiahejlhfcafbddmgiahcphecmpfh"
 
-#: A picture kept the way the wallpaper store keeps one; see wallpaper-probe.py.
 WALLPAPER = """
 (() => {
   const canvas = document.createElement('canvas')
@@ -122,16 +112,10 @@ SendMessageTimeoutW.argtypes = [
 ]
 SendMessageTimeoutW.restype = ctypes.c_size_t
 
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
 
-
-# ---------------------------------------------------------------------------- pages
-
-
 class Heard:
-    """Which heavy pages told the server they had loaded, and when."""
 
     def __init__(self) -> None:
         self.lock = threading.Lock()
@@ -144,7 +128,6 @@ class Heard:
     def clear(self) -> None:
         with self.lock:
             self.loaded.clear()
-
 
 def heavy(page: str) -> bytes:
     rows = "".join(
@@ -170,9 +153,7 @@ setInterval(() => {{
 addEventListener('load', () => fetch('/loaded?page={page}').catch(() => undefined))
 </script></body></html>""".encode()
 
-
 ICON = b"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#e86a3a"/></svg>"""
-
 
 def serve(port: int, heard: Heard) -> http.server.ThreadingHTTPServer:
     class Pages(http.server.BaseHTTPRequestHandler):
@@ -201,17 +182,10 @@ def serve(port: int, heard: Heard) -> http.server.ThreadingHTTPServer:
     threading.Thread(target=server.serve_forever, daemon=True).start()
     return server
 
-
-# ---------------------------------------------------------------------------- the disk
-
-
 def space_name(at: int) -> str:
     return f"Space {at + 1:02d}"
 
-
 def seed(root: pathlib.Path, port: int) -> dict[str, list[str]]:
-    """The spaces on the disk, once: the notes, and each space's web notes. Answers the
-    web notes' paths by space."""
 
     webs: dict[str, list[str]] = {}
     marker = root / ".seeded"
@@ -240,14 +214,7 @@ def seed(root: pathlib.Path, port: int) -> dict[str, list[str]]:
     marker.write_text("seeded", encoding="utf-8")
     return webs
 
-
-# ---------------------------------------------------------------------------- the app
-
-
 def endpoint_of(identifier: str, pid: int, seconds: float) -> tuple[int, str]:
-    """The endpoint the launch with this process number wrote. The file stays behind after
-    an app has gone, and a port can come round again, so the number is what says whose
-    it is."""
 
     path = switch.config_dir(identifier) / "automation.json"
     until_at = time.perf_counter() + seconds
@@ -260,7 +227,6 @@ def endpoint_of(identifier: str, pid: int, seconds: float) -> tuple[int, str]:
             pass
         time.sleep(0.1)
     raise SystemExit(f"the launch {pid} never wrote {path}")
-
 
 def started(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, trace: bool):
     env = {**os.environ, "NIB_SPACES_DIR": str(spaces)}
@@ -282,13 +248,11 @@ def started(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, trace: boo
         sized(hwnd, 1440, 900)
     return app, switch.App(port, secret), hwnd, begun
 
-
 def ended(app) -> None:
     if not close_app(app, seconds=30):
         app.kill()
         app.wait(timeout=30)
     launch_drive.settled(app_identifier)
-
 
 def until(test, seconds: float, step: float = 0.25):
     end = time.perf_counter() + seconds
@@ -299,14 +263,11 @@ def until(test, seconds: float, step: float = 0.25):
         time.sleep(step)
     return None
 
-
 def space_ids(app) -> dict[str, str]:
     said = app.ask("JSON.stringify(Object.fromEntries(nib.workspace.spaces.map((one) => [one.name, one.id])))")
     return said if isinstance(said, dict) else {}
 
-
 def prime(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, webs: dict[str, list[str]]) -> None:
-    """One session that opens everything, the way somebody would, and closes."""
 
     switch.wipe(identifier)
     app, _, _, _ = started(exe, identifier, spaces, trace=False)
@@ -318,7 +279,6 @@ def prime(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, webs: dict[s
         ids = until(lambda: (lambda all: all if len(all) >= SPACES else None)(space_ids(window)), 90)
         if not ids:
             raise SystemExit(f"the spaces never came: {space_ids(window)}")
-        # Every space keeps tabs of its own, the way somebody with this many spaces does.
         window.ask(
             f"localStorage.setItem('nib:space-tabs', {json.dumps(json.dumps({one: 'space' for one in ids.values()}))}) || 'kept'"
         )
@@ -352,7 +312,6 @@ def prime(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, webs: dict[s
         )
         say(f"extension: {installed}")
 
-        # End on the first space, with a heavy page in front.
         first = space_name(0)
         window.ask(f"nib.workspace.showSpace({json.dumps(ids[first])}).then(() => 'shown')")
         time.sleep(1)
@@ -364,7 +323,6 @@ def prime(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, webs: dict[s
     finally:
         ended(app)
 
-
 def typed(window, words: str) -> None:
     window.ask(
         "(() => { const field = document.querySelector('.xterm-helper-textarea'); if (!field) return 'none'; "
@@ -372,13 +330,8 @@ def typed(window, words: str) -> None:
         "return 'typed' })()"
     )
 
-
 def asked(window, verb: str, args: dict) -> object:
     return switch.act(window.port, window.secret, verb, args)
-
-
-# ---------------------------------------------------------------------------- launch
-
 
 def launches(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, runs: int, heard: Heard) -> dict:
     trace = launch_drive.trace_file(identifier)
@@ -403,7 +356,7 @@ def launches(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, runs: int
                     row.setdefault(step["step"], step["at"])
             if loaded:
                 row["front web page loaded (probe)"] = (loaded - begun) * 1000
-            if at > 0:  # the first launch after a prime is not counted
+            if at > 0:
                 rows.append(row)
             say(f"launch {at}: {'trace' if read else 'no trace'}, web page {'loaded' if loaded else 'not loaded'}")
         finally:
@@ -436,13 +389,7 @@ def launches(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, runs: int
         print(f"    {key[:60]:60} {statistics.median(values):9.1f}")
     return {"rows": rows, "medians": medians}
 
-
-# ---------------------------------------------------------------------------- use
-
-
 class Pulse:
-    """Asks the window's thread every 100 ms whether it answers, from a thread of this
-    probe's own: the longest it went without answering, and every time over a frame."""
 
     def __init__(self, hwnd: int) -> None:
         self.hwnd = hwnd
@@ -465,9 +412,7 @@ class Pulse:
         self.running = False
         self.thread.join(timeout=35)
 
-
 def use(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, seconds: float) -> dict:
-    """A minute of Emil's afternoon, with the window's thread and the page's watched."""
 
     log = launch_drive.local(identifier) / "logs" / "nib.log"
     before = log.read_text(encoding="utf-8", errors="replace") if log.exists() else ""
@@ -475,7 +420,7 @@ def use(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, seconds: float
     page: list[float] = []
     try:
         until(lambda: len(space_ids(window)) >= SPACES, 60)
-        time.sleep(8)  # the launch order and its background passes
+        time.sleep(8)
         ids = space_ids(window)
         pulse = Pulse(hwnd)
         names = sorted(ids)
@@ -486,7 +431,6 @@ def use(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, seconds: float
             began = time.perf_counter()
             window.ask(f"nib.workspace.showSpace({json.dumps(ids[name])}).then(() => 'shown')")
             page.append((time.perf_counter() - began) * 1000)
-            # Ctrl+Tab through what this space has open.
             for _ in range(3):
                 began = time.perf_counter()
                 window.ask(
@@ -523,9 +467,7 @@ def use(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, seconds: float
         print(f"    {line[:300]}")
     return {"window": [took for _, took in stalls], "page": page, "log": lines}
 
-
 app_identifier = ""
-
 
 def main() -> int:
     global app_identifier
@@ -574,7 +516,6 @@ def main() -> int:
     if told.json:
         told.json.write_text(json.dumps(out, indent=1), encoding="utf-8")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

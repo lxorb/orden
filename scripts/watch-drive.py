@@ -1,17 +1,4 @@
 #!/usr/bin/env python3
-"""Changes made in a space by another program are heard though a folder in it cannot be
-watched, and past the system's limit of watched folders, which the watch says. #481: on
-Linux one unreadable folder, or the inotify limit, stopped file watching for every space.
-
-Run with Orden up on its spaces folder (WATCH=1 in scripts/wayland-launch.sh). The
-crate's watch of the space is asked for as the window asks for it. With `folders`: the
-space holds a folder nobody may read; a note written into it by another program, at its
-top and deep in it, has to be heard. With `limit`, started again under a lowered limit:
-the watch has to say the limit was reached, and a note written at the top still has to
-be heard. That the window tells the reader is lib/sync2/watching.test.ts's.
-
-    python3 scripts/watch-drive.py <out folder> <folders|limit> <space folder>
-"""
 
 import json
 import os
@@ -24,11 +11,9 @@ OUT, PHASE, SPACE = Path(sys.argv[1]), sys.argv[2], Path(sys.argv[3])
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
 failures = []
 
-
 def fail(what):
     print(f"::error::{PHASE}: {what}")
     failures.append(what)
-
 
 def endpoint():
     for _ in range(120):
@@ -41,9 +26,7 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
-
 
 def run(code):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
@@ -62,21 +45,13 @@ def run(code):
             time.sleep(1)
     return None
 
-
-# The crate's own watch of the space, asked for here as the window asks for it (see
-# lib/space-watch.ts), and every message it sends kept on the page. The crate keeps one
-# watch and the window has started it by the end of its launch, signed in or not (see
-# lib/workspace/outside.svelte.ts). That one holds the folders under the lowered limit,
-# and has to give them back to this one, as a re-arm by the window does.
 ARM = """(() => { window.nibHeard = []; const internals = window.__TAURI_INTERNALS__;
   const id = internals.transformCallback((raw) => { if (raw && 'message' in raw) window.nibHeard.push(raw.message) });
   return internals.invoke('space_watch', { roots: [ROOT], news: '__CHANNEL__:' + id })
     .then(() => 'armed', (error) => 'refused: ' + error) })()"""
 
-
 def heard():
     return run("JSON.stringify(window.nibHeard ?? [])") or "[]"
-
 
 for _ in range(120):
     if run("performance.getEntriesByName('nib: launch order finished').length > 0"):

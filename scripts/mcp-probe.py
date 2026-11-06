@@ -68,19 +68,15 @@ from probe_app import (
     run_probe,
 )
 
-#: Where this drive's pages listen; see docs/conventions.md.
 PORT_FROM = 23600
 PORT_TO = 23639
 
-#: The client this drive is, and the one that is refused.
 CLIENT = {"name": "nib-mcp-probe", "title": "MCP probe", "version": "1"}
 REFUSED = {"name": "nib-mcp-probe-refused", "title": "MCP probe refused", "version": "1"}
 CLAUDE = {"name": "claude-code", "title": "Claude Code", "version": "probe"}
 
-#: What the drive asks for, which Orden answers as it is.
 PROTOCOL = "2025-06-18"
 
-#: Where the contract's answer rides on a result, out of any model's sight.
 META = "ch.emilvinu.nib/answer"
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
@@ -101,7 +97,6 @@ SHOP = """<!doctype html><title>Shop</title>
 </form>
 """
 
-
 def free_port() -> int:
     for port in range(PORT_FROM, PORT_TO + 1):
         with socket.socket() as sock:
@@ -112,10 +107,8 @@ def free_port() -> int:
             return port
     raise SystemExit(f"no port free in {PORT_FROM}-{PORT_TO}")
 
-
 class Server(http.server.ThreadingHTTPServer):
     daemon_threads = True
-
 
 def serve(port: int) -> Server:
     pages = {"/form": FORM.encode(), "/shop": SHOP.encode()}
@@ -136,18 +129,7 @@ def serve(port: int) -> Server:
     threading.Thread(target=made.serve_forever, daemon=True).start()
     return made
 
-
-# ---- the app's family, watched ----
-
-
 class Family:
-    """Every process of the app's, looked at every 4 ms from the moment it is known: the
-    app's own windows and every engine process under it. One on a screen, or in front,
-    ends the drive at once with exit 3, the tree killed first.
-
-    The app `nib mcp` starts is nobody's child by the time it has a window - `start` hands
-    it over and ends - so every process of this exe is looked for as well, every 20 ms,
-    which is well inside the time the app takes to build its first window."""
 
     def __init__(self, exe: pathlib.Path) -> None:
         self.exe = exe.resolve()
@@ -182,8 +164,6 @@ class Family:
         return found
 
     def _look(self) -> None:
-        # The screen's own pixels, as run_probe's watch reads them: a window is compared
-        # with a screen in one unit.
         in_physical_pixels()
         while True:
             members = self.members()
@@ -198,13 +178,8 @@ class Family:
                 os._exit(3)
             time.sleep(0.004)
 
-
-# ---- the probe's own settings ----
-
-
 def config_dir(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["APPDATA"]) / identifier
-
 
 def endpoint(folder: pathlib.Path) -> dict[str, Any] | None:
     try:
@@ -212,10 +187,7 @@ def endpoint(folder: pathlib.Path) -> dict[str, Any] | None:
     except (OSError, ValueError):
         return None
 
-
 def app_pid(folder: pathlib.Path, exe: pathlib.Path) -> int | None:
-    """The probe app's pid when it is running: the endpoint file's, if that process is
-    this exe and not an `mcp` of it."""
 
     said = endpoint(folder) or {}
     try:
@@ -226,10 +198,7 @@ def app_pid(folder: pathlib.Path, exe: pathlib.Path) -> int | None:
         return None
     return None
 
-
 def fresh(folder: pathlib.Path) -> None:
-    """The probe's settings as nobody has paired anything, with `eval` on in its own
-    endpoint file so the drive can answer as the reader, the way web-session-probe does."""
 
     folder.mkdir(parents=True, exist_ok=True)
     for gone in ("agents.json",):
@@ -241,9 +210,7 @@ def fresh(folder: pathlib.Path) -> None:
         json.dumps({"port": 0, "secret": secret, "eval": True, "pid": 0}), encoding="utf-8"
     )
 
-
 def ask(folder: pathlib.Path, verb: str, args: dict[str, Any], seconds: float = 30) -> Any:
-    """A verb posted with the installation's secret, as the reader's own command line."""
 
     said = endpoint(folder) or {}
     request = urllib.request.Request(
@@ -254,10 +221,7 @@ def ask(folder: pathlib.Path, verb: str, args: dict[str, Any], seconds: float = 
     with urllib.request.urlopen(request, timeout=seconds) as answer:
         return json.loads(answer.read().decode())
 
-
 def window(folder: pathlib.Path, command: str, args: dict[str, Any] | None = None) -> Any:
-    """One of the window's own commands, run in the window through `eval`: what the
-    activity panel and Settings > Agents call, as the reader."""
 
     code = (
         "(async () => JSON.stringify(await window.__TAURI_INTERNALS__.invoke("
@@ -268,9 +232,7 @@ def window(folder: pathlib.Path, command: str, args: dict[str, Any] | None = Non
         raise RuntimeError(f"{command}: {said.get('error')}")
     return json.loads(said["value"])
 
-
 def answer_pairing(folder: pathlib.Path, name: str, allow: bool, seconds: float = 40) -> str:
-    """The reader's answer to a client's pairing bubble."""
 
     until = time.monotonic() + seconds
     while time.monotonic() < until:
@@ -286,12 +248,7 @@ def answer_pairing(folder: pathlib.Path, name: str, allow: bool, seconds: float 
         time.sleep(0.3)
     raise AssertionError(f"no pairing question for {name} in {seconds:.0f} s")
 
-
-# ---- the client ----
-
-
 class Client:
-    """`nib mcp` as a client runs it: a child with three pipes, newline-delimited JSON-RPC."""
 
     def __init__(self, exe: pathlib.Path, env: dict[str, str], info: dict[str, str]) -> None:
         self.process = subprocess.Popen(
@@ -379,17 +336,11 @@ class Client:
         self.process.stdin.close()
         return self.process.wait(timeout=15)
 
-
 def text(result: dict[str, Any]) -> str:
     return "\n".join(one.get("text", "") for one in result.get("content", []) if one.get("type") == "text")
 
-
 def contract(result: dict[str, Any]) -> dict[str, Any]:
     return (result.get("_meta") or {}).get(META) or {}
-
-
-# ---- the drive ----
-
 
 class Drive:
     def __init__(self, exe: pathlib.Path, identifier: str, spaces: pathlib.Path, site: str) -> None:
@@ -419,14 +370,10 @@ class Drive:
             if pid:
                 self.family.add(pid)
                 return pid
-            # Not faster: the app writes this file by renaming over it, which fails while
-            # Python has it open, and the family watch is what keeps the screen safe.
             time.sleep(0.25)
         raise AssertionError("the app never wrote its endpoint")
 
     def window_up(self, seconds: float = 40) -> None:
-        """Until the window answers: a session that starts later meets an app somebody
-        has open, which is the one the first list is measured against."""
 
         until = time.monotonic() + seconds
         while time.monotonic() < until:
@@ -442,7 +389,6 @@ class Drive:
         print("not running: nib mcp starts nib, and pairs", flush=True)
         started = time.monotonic()
         mcp = self.client(CLIENT)
-        # The app appears as nib mcp starts it; watched from that moment.
         pid = self.watch_app()
         self.check("initialize answers at once", mcp.initialize_ms < 500, f"{mcp.initialize_ms:.0f} ms")
         self.check("instructions say what the marks mean", "<untrusted" in mcp.opened.get("instructions", ""))
@@ -450,7 +396,6 @@ class Drive:
         self.check("the probe's own version", mcp.opened.get("serverInfo", {}).get("version") == "99.0.0")
         self.check("tools list changes", mcp.opened.get("capabilities", {}).get("tools", {}).get("listChanged") is True)
 
-        # The first list waits a few seconds for the reader, then says what it knows.
         before = mcp.tools()
         self.check("before the Allow, only agent_status", before == ["agent_status"], str(before))
         status = text(mcp.call("agent_status"))
@@ -466,17 +411,12 @@ class Drive:
         kept = self.folder / "agents" / "clients" / "nib-mcp-probe"
         self.check("the token is kept under the client's name", kept.is_file())
 
-        # Measured on this machine: STARTUPINFO's SW_SHOWMINNOACTIVE (cmd's start /min)
-        # replaces a first ShowWindow of SW_SHOW or SW_SHOWNORMAL - which is how a real
-        # launch shows the window - and not SW_SHOWNOACTIVATE, which is how a probe sent
-        # off the screen shows it. So here it can only be read, not required.
         hwnd = main_window(pid)
         self.note("the app nib mcp started", "minimised" if hwnd and user32.IsIconic(hwnd) else "off the screen, not minimised")
         self.check("from nothing to paired", True, f"{(time.monotonic() - started):.1f} s")
         return mcp
 
     def settled(self, mcp: Client, holds: Any, seconds: float = 15) -> tuple[bool, float, list[str]]:
-        """Lists until the list holds, and says how long it took."""
 
         started = time.monotonic()
         tools: list[str] = []
@@ -541,7 +481,6 @@ class Drive:
         ref = found.get("result", {}).get("matches", [{}])[0].get("ref", "")
         mcp.call("browser_click", {"tab": tab, "ref": ref})
         removed = mcp.call("browser_click", {"tab": tab, "ref": ref})
-        # Informational: a node taken out of the page may still be alive in the engine.
         self.check("a removed element pressed again is an error", bool(removed.get("isError")), text(removed))
 
         save = contract(mcp.call("browser_find", {"tab": tab, "role": "button", "name": "Save"}))
@@ -627,14 +566,10 @@ class Drive:
 
     def claude(self) -> None:
         print("claude: Claude Code itself", flush=True)
-        # By its full path: on Windows the command is npm's claude.cmd, which a process
-        # started without a shell finds only by name.
         claude = shutil.which("claude")
         if not claude:
             self.check("claude is installed", False)
             return
-        # Paired as Claude Code first, so the real client finds its token and every tool
-        # at its first list; the pairing itself is proved above.
         pre = self.client(CLAUDE)
         answer_pairing(self.folder, CLAUDE["title"], allow=True)
         paired, _, _ = self.settled(pre, lambda now: "browser_open" in now, 40)
@@ -643,7 +578,6 @@ class Drive:
 
         room = pathlib.Path(tempfile.mkdtemp(prefix="nib-mcp-claude-"))
         add = [
-            # The name before -e, which takes every word after it until the next option.
             claude, "mcp", "add", "--scope", "project", "nib",
             "-e", f"{OFF_SCREEN}=1", "-e", f"NIB_SPACES_DIR={self.env['NIB_SPACES_DIR']}",
             "--", str(self.exe), "mcp",
@@ -681,7 +615,6 @@ class Drive:
         except psutil.Error:
             pass
 
-
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--exe", required=True, type=pathlib.Path)
@@ -708,8 +641,6 @@ def main() -> int:
     front = user32.GetForegroundWindow()
     app: subprocess.Popen[bytes] | None = None
     try:
-        # nib mcp starts the app itself, then everything else runs against a launch of
-        # run_probe's, watched by it as well as by the drive.
         first = drive.not_running()
         drive.shut(first)
         drive.quit()
@@ -749,7 +680,6 @@ def main() -> int:
     failed = [name for name, ok, _ in drive.results if not ok]
     print(f"\n{len(drive.results) - len(failed)} of {len(drive.results)} passed", flush=True)
     return 1 if failed else 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

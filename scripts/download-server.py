@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-"""A page with a file to download, for scripts/download-drive.py (#788): `/slow` sends
-`report.bin` a little at a time, so it can be stopped on its way, and `/fast` sends the
-same name at once. Each request's fate is written to the log: sent whole, or the reader
-hung up after so many pieces.
-
-    python3 scripts/download-server.py <port> <log>
-"""
 
 import http.server
 import sys
@@ -15,11 +8,9 @@ PORT, LOG = int(sys.argv[1]), sys.argv[2]
 PIECE = b"x" * 65536
 PIECES = 200
 
-
 def say(line):
     with open(LOG, "a") as log:
         log.write(line + "\n")
-
 
 class Serve(http.server.BaseHTTPRequestHandler):
     def do_GET(self):  # noqa: N802
@@ -48,6 +39,5 @@ class Serve(http.server.BaseHTTPRequestHandler):
 
     def log_message(self, *_):
         pass
-
 
 http.server.ThreadingHTTPServer(("127.0.0.1", PORT), Serve).serve_forever()

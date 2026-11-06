@@ -1,20 +1,3 @@
-"""The menu bar and a rich paste, in a real browser against the web build.
-
-Two things a unit test cannot see. The menu's shape is data and is tested as data,
-but whether a person can actually reach Export under File, and whether the rows are
-legible in both schemes, is a picture; and a paste is a browser event carrying two
-flavours of clipboard at once, which is exactly the part no state-level test has.
-
-So this opens the built app, pastes a page of HTML into a note and reads back the
-markdown that landed, then photographs all six menus in the light scheme and again
-in the dark one.
-
-Run it with the repository's own Chromium:
-
-    python scripts/menu-e2e.py
-
-It builds nothing. `pnpm --filter @orden/desktop build` first, then this."""
-
 import functools
 import http.server
 import json
@@ -36,11 +19,8 @@ CHROME_HOME = pathlib.Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
 NOTE_PATH = "/Notes/Menus.md"
 NOTE = "# Menus\n\nA note for the pictures below.\n"
 
-# The groups the menu bar holds, by the word each one shows.
 GROUPS = ["File", "Edit", "Paragraph", "Format", "View", "Help"]
 
-# A page as a browser puts it on the clipboard: a whole document, head and all,
-# with everything the converter has an opinion about.
 PASTED_HTML = """<html><head><title>A tab nobody wants</title>
 <style>p { color: red }</style></head><body>
 <h2>Pasted heading</h2>
@@ -55,7 +35,6 @@ and a <a href="https://orden.so">link</a>.</p>
 <script>window.mischief = 1</script>
 </body></html>"""
 
-# What has to be in the note afterwards, and what must not.
 WANTED = [
     "## Pasted heading",
     "**bold** and *italic*",
@@ -77,12 +56,8 @@ UNWANTED = [
     "A tab nobody wants",
     "color: red",
     "window.mischief",
-    # Turndown's own three spaces after a bullet, which the app does not write.
     "-   one",
     "<strong>",
-    # Ctrl+/ is source mode. CodeMirror binds its own comment toggle to the same
-    # chord underneath, and both used to fire: reading the note back wrapped the
-    # line the caret was on in a comment. See `claim` in the editor's keymap.
     "<!--",
 ]
 
@@ -112,8 +87,6 @@ async ([path, text]) => {
 }
 """
 
-# A paste as the browser raises one: both flavours on one event, aimed at the
-# writing surface, which is where CodeMirror listens.
 PASTE = """
 (html) => {
   const surface = document.querySelector('.cm-content')
@@ -130,34 +103,26 @@ PASTE = """
 }
 """
 
-# The note as written, read off the surface. Only correct in source mode, where
-# nothing is concealed and every line of the document is a line in the page.
 LINES = """() =>
   [...document.querySelectorAll('.cm-content .cm-line')].map((line) => line.textContent).join('\\n')
 """
 
-
 def chrome() -> pathlib.Path:
-    """The newest Chromium the repository's Playwright has fetched."""
     found = sorted(CHROME_HOME.glob("chromium-1*/chrome-win*/chrome.exe"))
     if not found:
         raise SystemExit(f"no Chromium under {CHROME_HOME}")
 
     return found[-1]
 
-
 def free_port() -> int:
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         return int(sock.getsockname()[1])
 
-
 class Quiet(http.server.SimpleHTTPRequestHandler):
-    """The build, served without a line per request."""
 
     def log_message(self, *_args):
         pass
-
 
 def serve() -> tuple[str, http.server.ThreadingHTTPServer]:
     port = free_port()
@@ -168,7 +133,6 @@ def serve() -> tuple[str, http.server.ThreadingHTTPServer]:
 
     return f"http://127.0.0.1:{port}/", server
 
-
 def open_note(page, name: str) -> None:
     page.keyboard.press("Control+o")
     page.wait_for_timeout(300)
@@ -177,12 +141,9 @@ def open_note(page, name: str) -> None:
     page.keyboard.press("Enter")
     page.wait_for_timeout(1500)
 
-
 def paste_a_page(page) -> list[str]:
-    """Pastes the HTML above and answers what is wrong with what landed."""
     page.click(".cm-content")
     page.wait_for_timeout(200)
-    # At the end of the note, so the paste has the whole document to itself below.
     page.keyboard.press("Control+End")
     page.keyboard.press("Enter")
     page.wait_for_timeout(200)
@@ -192,8 +153,6 @@ def paste_a_page(page) -> list[str]:
 
     page.wait_for_timeout(600)
 
-    # Source mode, where the markdown is the markdown: live preview replaces the
-    # syntax it hides, and replaced text is not in the page to read.
     page.keyboard.press("Control+/")
     page.wait_for_timeout(600)
     text = page.evaluate(LINES)
@@ -206,9 +165,7 @@ def paste_a_page(page) -> list[str]:
     bad += [f"still holds {junk!r}" for junk in UNWANTED if junk in text]
     return bad
 
-
 def photograph(page, scheme: str) -> list[str]:
-    """One picture per menu, and one of Export inside File."""
     shots: list[str] = []
 
     def shoot(name: str) -> None:
@@ -234,7 +191,6 @@ def photograph(page, scheme: str) -> list[str]:
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
     return shots
-
 
 def main() -> int:
     if not DIST.is_dir():
@@ -304,7 +260,6 @@ def main() -> int:
 
     print(f"\nall good; the pictures are in {OUT}")
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -1,25 +1,3 @@
-"""#535: what a hand does to a large plane, far and near, in Chromium.
-
-A plane of N cards in a square grid, joined each to the next, and three cards below
-it with a long connector between two of them. Far (framed whole, drawn as boxes on
-one canvas) and near (a card found and framed, drawn as cards): one card dragged, a
-selection dragged by one of its cards, a connector's end dragged onto another card;
-a card found with Ctrl+F and framed as a card; the zoom taken across the line between
-the two both ways with a card picked, every frame sampled for one that drew nothing;
-then the plane exported as SVG and PNG, printed, and made a PDF, from far away. Each
-check says PASS or FAIL, and the last line counts them.
-
-Run against the web build under Vite's dev server, which serves the app's own modules
-by path so the drive can make a plane through them:
-
-    pnpm --filter @orden/desktop exec vite --port 5535 --strictPort --host 127.0.0.1
-    python3 scripts/canvas-large-probe.py [cards]
-
-with Playwright's Chromium (the drives ran it headless in Playwright's own image, on
-the host's network). A Vite that has reloaded a module since the page last loaded hands
-it out under another address, and the drive then makes its plane in a second copy of
-the workspace nobody sees: start the server again after an edit.
-"""
 import json, re, sys
 from playwright.sync_api import sync_playwright
 
@@ -76,8 +54,6 @@ with sync_playwright() as p:
     def escape_all():
         page.keyboard.press("Escape"); page.wait_for_timeout(200)
     def empty():
-        """A press on bare plane, inside the pane: the band between the grid and the three
-        cards below it, or near, just under the grid's first row."""
         if far():
             x, y = screen(1500, made["below"] - 1000)
         else:
@@ -87,14 +63,12 @@ with sync_playwright() as p:
     def hands(mode):
         f0 = page.evaluate(FILE); s = view()[2]
         check(f"{mode}: drawn {'far' if far() else 'near'} at scale {s:.3f}", far() == (mode == "far"))
-        # One card, by its middle.
         n0 = node(f0, "n0"); x, y = screen(n0["x"] + 125, n0["y"] + 30)
         drag(x, y, x + 60, y)
         f1 = page.evaluate(FILE); moved = node(f1, "n0")["x"] - n0["x"]
         want = 60 / s
         check(f"{mode}: drag one card", abs(moved - want) <= max(12, 0.2 * want) and node(f1, "n1")["x"] == node(f0, "n1")["x"], f"moved {moved:.0f}, wanted about {want:.0f} (snapped)")
         page.keyboard.press("Control+z"); page.wait_for_timeout(500)
-        # Everything picked, by one of them.
         page.keyboard.press("Control+a"); page.wait_for_timeout(300)
         f1 = page.evaluate(FILE); n0 = node(f1, "n0"); n1 = node(f1, "n1"); x, y = screen(n0["x"] + 125, n0["y"] + 30)
         drag(x, y, x, y + 40)
@@ -103,7 +77,6 @@ with sync_playwright() as p:
         check(f"{mode}: drag a selection", d0 > 0 and d0 == d1, f"n0 {d0:.0f}, n1 {d1:.0f}")
         page.keyboard.press("Control+z"); page.wait_for_timeout(800); escape_all(); empty()
         f2 = page.evaluate(FILE)
-        # An edge's end, onto another card: the long one far, a short one near.
         if mode == "far":
             a, b, c = node(f2, "iso1"), node(f2, "iso2"), node(f2, "iso3"); eid = "long"
         else:
@@ -116,9 +89,7 @@ with sync_playwright() as p:
         check(f"{mode}: drag an edge's end onto another card", edge(f3, eid)["toNode"] == c["id"], edge(f3, eid))
         page.keyboard.press("Control+z"); page.wait_for_timeout(800); escape_all(); empty()
 
-    # ---- far
     hands("far")
-    # Find, and jump to it.
     empty()
     page.keyboard.press("Control+f"); page.wait_for_timeout(400)
     page.keyboard.type(f"card {N - 7}"); page.wait_for_timeout(400); page.keyboard.press("Enter"); page.wait_for_timeout(1500)
@@ -129,14 +100,12 @@ with sync_playwright() as p:
     check("find: the card found is on screen as a card, picked", inside and "picked" in (target.get_attribute("class") or ""), f"scale {view()[2]:.2f}")
     page.keyboard.press("Escape"); page.wait_for_timeout(300)
 
-    # ---- near: n0 found and framed, which is reading size.
     page.keyboard.press("Control+f"); page.wait_for_timeout(400)
     page.keyboard.type("card 0"); page.wait_for_timeout(400); page.keyboard.press("Enter"); page.wait_for_timeout(1500)
     page.keyboard.press("Escape"); page.wait_for_timeout(500)
     empty()
     hands("near")
 
-    # ---- crossing 0.35 both ways, n0 picked, every frame sampled.
     f = page.evaluate(FILE); n0 = node(f, "n0")
     page.mouse.click(*screen(n0["x"] + 125, n0["y"] + 30)); page.wait_for_timeout(400)
     page.evaluate("""() => {
@@ -176,15 +145,12 @@ with sync_playwright() as p:
     page.keyboard.press("Delete"); page.wait_for_timeout(1500)
     f = page.evaluate(FILE)
     check("crossing 0.35: it is still that card that is picked", not any(n["id"] == "n0" for n in f["nodes"]) and len(f["nodes"]) == N + 2, len(f["nodes"]))
-    # Export and print last, far away again: a print's frame keeps the keyboard in a
-    # browser with no dialog to close.
     page.mouse.move(800, 500); page.keyboard.down("Control")
     for _ in range(300):
         if far(): break
         page.mouse.wheel(0, 120); page.wait_for_timeout(25)
     page.keyboard.up("Control"); page.wait_for_timeout(1000)
     check("export: from far away", far())
-    # Export and print, from far away.
     page.evaluate("() => { window.__frames = []; new MutationObserver((list) => { for (const m of list) for (const n of m.addedNodes) if (n.tagName === 'IFRAME') window.__frames.push(n) }).observe(document.body, { childList: true, subtree: true }) }")
     for kind, call in [("svg", "exportCanvasSvg"), ("png", "exportCanvasPng")]:
         with page.expect_download(timeout=60000) as got:

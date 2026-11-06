@@ -1,24 +1,3 @@
-"""The plugin driven in a real browser, against a bridge that answers like the
-device.
-
-The unit tests measure the pieces: the mapping, the pager, the gesture machine, the
-command grammar, the question flow. This measures the whole road - `even.html`
-boots the app, finds a bridge, makes its page, sets a note into six text
-containers, and answers a tap, a hold, a double tap and a scroll off a temple. A
-mapping can be right and the plugin still be wrong: a container never made, a
-gesture never wired up, a band never sent.
-
-What it cannot do is prove anything about a pair of glasses. There is no radio and
-no firmware here, so every timing is the plugin's own share and the panel pictures
-are drawn with the firmware's metrics and a stand-in face; see
-`scripts/even-panel.mjs` and the device checklist in docs/even.md.
-
-Run it with the repository's own Chromium, after the plugin's own build:
-
-    pnpm --filter @orden/desktop build:even
-    python scripts/even-e2e.py
-"""
-
 import functools
 import http.server
 import json
@@ -44,19 +23,9 @@ NOTE_PATH = f"{SPACE}/Even Realities glasses.md"
 OTHER_PATH = f"{SPACE}/Monday standup.md"
 DEEP_PATH = f"{SPACE}/Inbox/Reading list.md"
 CANVAS_PATH = f"{SPACE}/A canvas.canvas"
-# Everything the app has learned to write since the mapping was last driven: the
-# properties at the head of a note, a fence with a caption, callouts by name, a
-# comment to nobody, and a folded section. Its own note rather than more of the one
-# above, so every assertion about that note's pages still says what it said.
 MORE_PATH = f"{SPACE}/Everything else.md"
-# One line per writing system, to see on the glass which of them the firmware's one
-# font actually draws. The samples are read out of the glasses package rather than
-# written again here: that list is data with a test of its own against the metrics,
-# and this puts the same data in front of the firmware's own folding.
 SCRIPTS_PATH = f"{SPACE}/Scripts.md"
 
-# The hosts the manifest's network whitelist allows, read off the manifest: the plugin
-# may reach those and nothing else.
 WHITELIST = {
     origin.removeprefix("https://")
     for one in json.loads((ROOT / "apps" / "desktop" / "even.app.json").read_text(encoding="utf-8"))[
@@ -66,7 +35,6 @@ WHITELIST = {
     for origin in one["whitelist"]
 }
 
-# A second space, for the icons: one that chose an icon and one that did not.
 OTHER_SPACE = "/Uni"
 UNI_PATH = f"{OTHER_SPACE}/Lecture.md"
 ICON = "GraduationCap"
@@ -178,10 +146,6 @@ $$
 """
 
 def scripts() -> list[dict]:
-    """The writing systems, read out of packages/glasses/src/scripts.ts.
-
-    One source for the samples: that file is data with a test against the firmware's
-    own metrics, and a second copy here would be a second copy to go stale."""
     text = (ROOT / "packages" / "glasses" / "src" / "scripts.ts").read_text(encoding="utf-8")
     found = re.findall(
         r"code: '(\w+)',\s*name: '([^']+)',\s*sample: '([^']+)',\s*draws: (true|false)",
@@ -193,7 +157,6 @@ def scripts() -> list[dict]:
         for one in found
     ]
 
-
 SCRIPTS = scripts()
 SCRIPTS_NOTE = "# Scripts\n\n" + "".join(f"- {one['name']}: {one['sample']}\n" for one in SCRIPTS)
 
@@ -202,9 +165,6 @@ DEEP = "# Reading list\n\nA note one folder in.\n"
 UNI = "# Lecture\n\nA note in the second space.\n"
 CANVAS = '{"nodes":[],"edges":[]}'
 
-# The bridge, installed before a line of the app runs, exactly as the phone app
-# installs the real one. It answers what the host answers and writes down every
-# call, so what reached the glasses can be read back off the page.
 BRIDGE = r"""
 window.__even = { calls: [], containers: {}, page: null, mic: false }
 
@@ -546,33 +506,25 @@ async ([rows]) => {
 }
 """
 
-
 def chrome() -> pathlib.Path:
-    """The newest Chromium the repository's Playwright has fetched."""
     found = sorted(CHROME_HOME.glob("chromium-1*/chrome-win*/chrome.exe"))
     if not found:
         raise SystemExit(f"no Chromium under {CHROME_HOME}")
 
     return found[-1]
 
-
 def free_port() -> int:
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         return int(sock.getsockname()[1])
 
-
 class Quiet(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *_args):
         pass
 
-
 class Server(http.server.ThreadingHTTPServer):
-    """A backlog the size of a page's first burst of chunks. The default of five
-    refuses most of them on Windows, and the plugin never finds its bridge."""
 
     request_queue_size = 256
-
 
 def serve() -> tuple[str, Server]:
     port = free_port()
@@ -582,7 +534,6 @@ def serve() -> tuple[str, Server]:
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
     return f"http://127.0.0.1:{port}/", server
-
 
 class Report:
     def __init__(self):
@@ -600,7 +551,6 @@ class Report:
     def show(self):
         print("\n".join(self.lines))
         print(f"\n{len(self.lines)} lines, {self.bad} failures")
-
 
 def main() -> int:
     if not (DIST / "even.html").exists():
@@ -631,11 +581,8 @@ def main() -> int:
                 lambda one: missing.append(f"{one.status} {one.url}") if one.status >= 400 else None,
             )
 
-            # The bridge before the app, which is how the phone installs the real
-            # one: a call made before it lands does nothing and says nothing.
             page.add_init_script(BRIDGE)
 
-            # The notes have to exist before the app reads its space.
             page.goto(f"{address}even.html")
             page.wait_for_timeout(400)
             page.evaluate(
@@ -672,14 +619,10 @@ def main() -> int:
                 }
                 """
             )
-            # The plugin's own store flushes to a cookie after a pause, because a
-            # packed plugin's localStorage belongs to a port that never comes back;
-            # see lib/even/local.ts. Nothing survives a reload before it has.
             page.wait_for_timeout(700)
             page.reload()
             page.wait_for_timeout(1200)
 
-            # The page the plugin asked for.
             made = page.evaluate("window.__even.page")
             report.ok("the plugin found the bridge and made its page", made is not None)
             if made is None:
@@ -717,8 +660,6 @@ def main() -> int:
                 ),
             )
 
-            # A note has to be opened before there is anything to show. The plugin
-            # opens on its own welcome note, so the sidebar is the way to another.
             open_note(page, "Even Realities glasses")
 
             bands = page.evaluate("window.__bands()")
@@ -755,8 +696,6 @@ def main() -> int:
             )
             screens.append({"name": "glasses-1", "lineNumbers": True, **naming(bands)})
 
-            # A scroll off a temple turns the page, and the frame in the plugin
-            # follows it.
             before = bands.get("nibHead", "")
             page.evaluate("window.__gesture('down')")
             page.wait_for_timeout(500)
@@ -767,8 +706,6 @@ def main() -> int:
                 turned.get("nibHead", "").rstrip(),
             )
 
-            # A white card over the region with the rest of the note faded, which is
-            # the screenshot Emil sent; see even/Glasses.svelte.
             report.ok(
                 "the plugin marks the region with one frame around the words",
                 page.locator(".frame").count() == 1,
@@ -780,8 +717,6 @@ def main() -> int:
                     "return one ? one.getBoundingClientRect().height > 12 : false }"
                 ),
             )
-            # Emil: "the note on the phone is very dark and hardly visible." Nothing
-            # covers the note and nothing paints over the words.
             report.ok(
                 "and nothing is laid over the note to dim it",
                 page.evaluate(
@@ -802,7 +737,6 @@ def main() -> int:
             )
             page.screenshot(path=str(OUT / "phone-frame.png"))
 
-            # Sent again only where it changed: the head and the rule did not.
             page.evaluate("window.__even.calls = []")
             page.evaluate("window.__gesture('down')")
             page.wait_for_timeout(500)
@@ -817,7 +751,6 @@ def main() -> int:
             deeper = page.evaluate("window.__bands()")
             screens.append({"name": "glasses-2", "lineNumbers": True, **naming(deeper)})
 
-            # A tap opens the sidebar.
             page.evaluate("window.__gesture('tap')")
             page.wait_for_timeout(500)
             side = page.evaluate("window.__bands()")
@@ -841,7 +774,6 @@ def main() -> int:
             )
             screens.append({"name": "sidebar", "lineNumbers": True, **naming(side)})
 
-            # And a scroll moves the cursor rather than the page.
             page.evaluate("window.__gesture('down')")
             page.wait_for_timeout(300)
             moved = page.evaluate("window.__bands()")
@@ -851,7 +783,6 @@ def main() -> int:
                 moved.get("nibHead", "").rstrip(),
             )
 
-            # A double tap closes it rather than leaving the app.
             page.evaluate("window.__even.calls = []")
             page.evaluate("window.__gesture('double')")
             page.wait_for_timeout(400)
@@ -863,7 +794,6 @@ def main() -> int:
                 after.get("nibHead", ""),
             )
 
-            # And on the note it is the system's own question, which a review checks.
             page.evaluate("window.__even.calls = []")
             page.evaluate("window.__gesture('double')")
             page.wait_for_timeout(400)
@@ -874,7 +804,6 @@ def main() -> int:
                 json.dumps(left),
             )
 
-            # A hold opens the modal.
             page.evaluate("window.__gesture('hold')")
             page.wait_for_timeout(400)
             modal = page.evaluate("window.__bands()")
@@ -886,7 +815,6 @@ def main() -> int:
             )
             screens.append({"name": "modal", "lineNumbers": True, **naming(modal)})
 
-            # Switch space is a list of the spaces.
             page.evaluate("window.__gesture('tap')")
             page.wait_for_timeout(400)
             spaces = page.evaluate("window.__bands()")
@@ -897,9 +825,6 @@ def main() -> int:
             )
             screens.append({"name": "spaces", "lineNumbers": True, **naming(spaces)})
 
-            # Change note is the tree, with folders that open and shut. It opens with
-            # the cursor on the note the reader is in, which is Emil's rule, so the
-            # folder above it is one step up.
             page.evaluate("window.__gesture('hold')")
             page.wait_for_timeout(300)
             page.evaluate("window.__gesture('down')")
@@ -929,7 +854,6 @@ def main() -> int:
             )
             screens.append({"name": "notes", "lineNumbers": True, **naming(opened)})
 
-            # A tap on a note opens it and puts the tree away.
             page.evaluate("window.__gesture('down')")
             page.evaluate("window.__gesture('tap')")
             page.wait_for_timeout(1200)
@@ -940,9 +864,6 @@ def main() -> int:
                 switched.get("nibHead", ""),
             )
 
-            # The settings, on the glasses. Every one of them is reachable without the
-            # phone, and the rows come from the one schema the phone's own Settings
-            # section is drawn from; see even/settings.ts.
             def open_settings():
                 page.evaluate("window.__gesture('hold')")
                 page.wait_for_timeout(300)
@@ -959,10 +880,6 @@ def main() -> int:
                 "Line numbers" in rows and "New page at" in rows and "On" in rows,
                 rows.replace(chr(10), " | "),
             )
-            # Two rows this section has not got: the page number, and who scrolls.
-            # Both were choices about the same thing, and the answer is one behaviour
-            # now - Emil: "effectively it should be always nib who turns the pages."
-            # Every other row is where it was; see the walk below for the whole list.
             report.ok(
                 "and neither a page-number nor a scrolling row, which are one answer now",
                 "Page number" not in rows and "Scrolling" not in rows,
@@ -970,8 +887,6 @@ def main() -> int:
             )
             screens.append({"name": "settings", "lineNumbers": True, **naming(settings)})
 
-            # The reset is at the foot of them, where an action belongs. Walked to
-            # rather than looked for: the cursor stops at the end of the list.
             seen = []
             for _step in range(40):
                 seen.append(page.evaluate("window.__bands()").get("nibBody", ""))
@@ -981,10 +896,6 @@ def main() -> int:
                 any("Reset glasses settings" in one for one in seen),
             )
 
-            # A tap on a toggle flips it where it stands, and the panel says so at
-            # once. This is the mechanism behind Emil's page number: he turned a
-            # setting off and on again and it never came back, because nothing was sent
-            # when the page had not changed a character.
             open_settings()
             page.evaluate("window.__gesture('down')")
             page.evaluate("window.__gesture('tap')")
@@ -1005,12 +916,6 @@ def main() -> int:
             page.evaluate("window.__gesture('double')")
             page.wait_for_timeout(700)
 
-            # Who turns the pages: the app, always. There was a setting offering the
-            # glasses' own scrolling instead, and no firmware ever did it - Emil, on
-            # the device: "the bar at the side shows but scrolling does nothing" - so
-            # Emil asked for the row to go: "effectively it should be always nib who
-            # turns the pages." What is left is one behaviour, and this is it on the
-            # glass: a page number that always means a page, and a flick that turns one.
             open_note(page, "Even Realities glasses")
             paged = page.evaluate("window.__bands()")
             report.ok(
@@ -1020,8 +925,6 @@ def main() -> int:
             )
 
             def walk_to(word: str) -> bool:
-                """The cursor onto the row whose label holds `word`. Walked to rather
-                than counted to, so another setting between them changes nothing."""
                 for _one in range(40):
                     rows_now = page.evaluate("window.__bands()").get("nibBody", "")
                     on = next((one for one in rows_now.split(chr(10)) if one.startswith("▶")), "")
@@ -1040,7 +943,6 @@ def main() -> int:
             page.wait_for_timeout(700)
 
             def numbered() -> tuple[int, int]:
-                """Which page of how many the head says, as two numbers."""
                 said = page.evaluate("window.__bands()").get("nibHead", "").rstrip()
                 found = re.search(r"(\d+)/(\d+)$", said)
                 return (int(found[1]), int(found[2])) if found else (0, 0)
@@ -1059,9 +961,6 @@ def main() -> int:
                 f"{was}/{count} then {now}/{still}",
             )
 
-            # Voice, driven through a recogniser of our own: the words arrive exactly
-            # as the WebView's own hands them over, and what the plugin does with them
-            # is the whole of what is being measured.
             report.ok(
                 "opens the microphone when the reader asks for it",
                 page.evaluate("(() => { window.__listen(); return true })()") is True,
@@ -1084,8 +983,6 @@ def main() -> int:
                 page.evaluate("(text) => window.__say(text)", said)
                 page.wait_for_timeout(400)
                 heard = page.evaluate("window.__bands()")
-                # Either the words are still flashed in the foot, or the screen the
-                # command asked for is up. Both are the command having been obeyed.
                 report.ok(
                     f'hears "{said}" and {wanted}',
                     said.split()[0] in heard.get("nibHead", "").lower()
@@ -1093,9 +990,6 @@ def main() -> int:
                     heard.get("nibHead", "").rstrip(),
                 )
 
-            # How long the plugin itself takes over a command, from the words arriving
-            # to the panel being written. What the recogniser took before that is the
-            # recogniser's own and is not ours to measure.
             page.evaluate("window.__even.calls = []; window.__heardAt = 0; window.__wroteAt = 0")
             worst = 0.0
             for _round in range(10):
@@ -1104,10 +998,6 @@ def main() -> int:
                 took = page.evaluate("window.__wroteAt - window.__heardAt")
                 worst = max(worst, float(took or 0))
 
-            # Nothing on the phone about the voice. Emil, on the panel this used to
-            # put over his note: "that ugly listening overlay". The facts are still
-            # here, in an element that is never drawn, so the drive can read them and a
-            # reader is never shown them.
             report.ok(
                 "puts no listening panel on the note at all",
                 page.locator(".voice").count() == 0,
@@ -1123,7 +1013,6 @@ def main() -> int:
             report.ok("answers a spoken command inside one frame", worst < 16, f"{worst:.2f} ms worst")
             report.say(f"a command costs the plugin {worst:.2f} ms from the word to the panel")
 
-            # A question, with the model answering from a stub.
             page.evaluate("window.__say('question what did I decide about the font')")
             page.wait_for_timeout(300)
             asking = page.evaluate("window.__bands()")
@@ -1171,7 +1060,6 @@ def main() -> int:
             page.screenshot(path=str(OUT / "phone-answer.png"))
             screens.append({"name": "answer", "lineNumbers": True, **naming(answered)})
 
-            # A scroll goes down the answer a line at a time.
             first = answered.get("nibBody", "").split("\n")[0]
             page.evaluate("window.__gesture('down')")
             page.wait_for_timeout(300)
@@ -1192,17 +1080,11 @@ def main() -> int:
                 closed.get("nibHead", "").rstrip(),
             )
 
-            # The frame, and the note on the phone, with the glasses on page one.
             open_note(page, "Even Realities glasses")
             page.screenshot(path=str(OUT / "phone-note.png"))
             back = page.evaluate("window.__bands()")
             screens.append({"name": "glasses-3", "lineNumbers": True, **naming(back)})
 
-            # ── Everything the app has learned to write since ─────────────────
-            # The mapping has unit tests for each of these; what this says is that a
-            # note holding all of them reaches the panel through the whole road - the
-            # app's own reader, the plugin's paging, the containers - and that nothing
-            # the reader was never meant to see came with it.
             open_note(page, "Everything else")
             page.wait_for_timeout(900)
             whole = []
@@ -1245,12 +1127,6 @@ def main() -> int:
             )
             page.screenshot(path=str(OUT / "phone-everything.png"))
 
-            # ── Which scripts the firmware actually draws ─────────────────────
-            # One line per writing system, on the glass, through the whole road: the
-            # app's reader, the mapping, the firmware's own folding, the containers.
-            # `packages/glasses/src/scripts.ts` is the list as data and its own test
-            # holds it to the metrics; this is the same data seen on the panel, which
-            # is where a claim about a font becomes a picture.
             open_note(page, "Scripts")
             page.wait_for_timeout(900)
             drawn = []
@@ -1289,12 +1165,6 @@ def main() -> int:
             open_note(page, "Even Realities glasses")
             page.wait_for_timeout(900)
 
-            # ── The glasses' own microphone, and what a command costs on it ──
-            # Emil, on even 0.5.7: "right now it's extremely delayed ... it takes so
-            # long for a voice command that there's no reason to use it." This is the
-            # path he is on: the WebView's recogniser answers `service-not-allowed` a
-            # moment after starting, the plugin falls to the glasses' microphone, and
-            # every word has to go to a model and come back.
             page.evaluate("window.__warmed = 0")
             page.evaluate("window.__refuse()")
             page.wait_for_timeout(400)
@@ -1310,14 +1180,8 @@ def main() -> int:
                 f"{page.evaluate('window.__warmed')} warm-ups",
             )
 
-            # Half a second of "next", spoken into the glasses, and then quiet. What
-            # is measured is what a person feels: from the last sound they made to the
-            # panel in front of their eye changing.
             spoken = []
             for _round in range(5):
-                # Alternating, so the page always has somewhere to go: "next" at the
-                # end of a note writes nothing, and nothing written is nothing to
-                # measure.
                 page.evaluate(
                     "(word) => { window.__heardSays = word; window.__heardAt = 0;"
                     " window.__wroteAt = 0; window.__spokeAt = 0; window.__heardAsked = [] }",
@@ -1356,11 +1220,6 @@ def main() -> int:
                 took,
             )
 
-            # Emil: "it doesn't change WHILE scrolling but you kinda need to pause for
-            # it to react." The card is measured every frame off the note's own
-            # scroll, so a drag moves it forty times rather than twice. Driven by
-            # moving the scroller a little on each frame, which is what a finger on a
-            # phone produces.
             followed = page.evaluate(
                 """
                 () => new Promise((done) => {
@@ -1398,17 +1257,7 @@ def main() -> int:
             )
             page.wait_for_timeout(700)
 
-            # Emil: "when I open the sidebar I can still see that frame." A mark on a
-            # note has no business floating over the file list.
-            #
-            # Only true where the sidebar is a *drawer* over the note, which is what it
-            # is on a phone and is not what it is in a headless browser at the same
-            # width: the layout asks whether the pointer is a finger, not only how wide
-            # the window is. So the rest of this drive runs as the phone it is about -
-            # a coarse pointer, no hover, and Emil's own user agent - which is worth
-            # having anyway.
             phone = page.context.new_cdp_session(page)
-            # A finger rather than a mouse, which is what decides the layout.
             phone.send("Emulation.setTouchEmulationEnabled", {"enabled": True, "maxTouchPoints": 5})
             phone.send(
                 "Emulation.setEmulatedMedia",
@@ -1426,7 +1275,6 @@ def main() -> int:
                     " (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36"
                 },
             )
-            # The layout measures itself on a resize, so it is nudged rather than told.
             page.set_viewport_size({"width": 419, "height": 900})
             page.wait_for_timeout(200)
             page.set_viewport_size({"width": 420, "height": 900})
@@ -1464,14 +1312,6 @@ def main() -> int:
                 ),
             )
 
-            # ── The icons of the spaces ───────────────────────────────────────
-            # Emil, on his phone with even 0.5.6: "I don't see the icons of the
-            # spaces on the Even Realities plugin right now." The icon a space wears
-            # comes down with the account and is written into the plugin's own
-            # storage - which is not the page's, because a packed plugin's port never
-            # comes back - and the store that reads it was built before that storage
-            # was in place. Both halves are measured: a space that chose an icon, and
-            # one that did not and shows its letter instead.
             page.evaluate(SEED, [[[UNI_PATH, UNI]]])
             page.evaluate(
                 "([icon]) => localStorage.setItem('nib:icons', JSON.stringify({ '/Notes': icon }))",
@@ -1483,9 +1323,6 @@ def main() -> int:
             press(page, "Show left sidebar")
             page.wait_for_timeout(400)
 
-            # The rail of squares is gone: the spaces are a switcher at the top of the
-            # sidebar now, and each row wears its mark in a badge. Opened by its own
-            # name, which is the button that says which space is up.
             opened = press(page, "Notes") or press(page, "Uni")
             page.wait_for_timeout(500)
 
@@ -1529,14 +1366,6 @@ def main() -> int:
             )
             page.screenshot(path=str(OUT / "phone-spaces.png"))
 
-            # ── A language the firmware has no glyphs for ─────────────────────
-            # The app has thirty-nine interface catalogues; the firmware's one font
-            # draws Latin, Cyrillic, Greek, CJK and emoji. A reader in Thai, Hindi or
-            # Arabic had a menu of boxes on the glass, so the panel falls back to
-            # English - and the catalogues the font cannot draw are not in the package
-            # at all, which is 1.2 MB of it. Both halves are here: the panel is in
-            # English, and the chunk that would have said otherwise is missing without
-            # anything on the page breaking over it.
             page.evaluate("localStorage.setItem('nib:language', 'th')")
             page.wait_for_timeout(700)
             page.reload()
@@ -1558,12 +1387,6 @@ def main() -> int:
             page.evaluate("window.__gesture('double')")
             page.wait_for_timeout(400)
 
-            # ── And two the firmware draws ────────────────────────────────────
-            # A reader whose script the font has keeps their own words on the glass.
-            # German, the app's own second language, and Cantonese, the fortieth
-            # catalogue and the first added since the rule existed: Han, so it draws.
-            # A picture of the settings panel in each, because a panel of somebody
-            # else's words is the one thing a screenshot settles.
             def panel_in(language: str) -> dict:
                 page.evaluate("([one]) => localStorage.setItem('nib:language', one)", [language])
                 page.wait_for_timeout(700)
@@ -1600,18 +1423,11 @@ def main() -> int:
 
             page.evaluate("localStorage.removeItem('nib:language')")
 
-            # The note names a picture on purpose, to exercise the one block that
-            # cannot be what it is on a panel of one font. Where the editor looks for
-            # it in a browser is the editor's own business and not the plugin's, so
-            # its miss is left out of this and everything else is not.
             astray = [one for one in missing if "sketch.png" not in one]
             report.ok("asks the server for nothing that is not there", not astray, "; ".join(astray[:3]))
             loose = [one for one in errors if "404" not in one]
             report.ok("no page errors anywhere along the way", not loose, "; ".join(loose[:3]))
         except Exception as bad:  # noqa: BLE001
-            # The report is the whole point: a failure half way through has still
-            # measured everything before it, and hiding that behind a traceback
-            # makes the run useless.
             report.ok(f"the drive finished: {bad}"[:160], False)
         finally:
             browser.close()
@@ -1628,7 +1444,6 @@ def main() -> int:
         cwd=ROOT / "packages" / "glasses",
     )
 
-    # And the panels themselves, as pictures.
     with sync_playwright() as play:
         browser = play.chromium.launch(executable_path=str(chrome()))
         try:
@@ -1641,9 +1456,6 @@ def main() -> int:
         finally:
             browser.close()
 
-    # The pictures docs/even.md shows are these, so they are put where it looks for
-    # them rather than copied by hand: a document with last month's panel in it is
-    # worse than one with none.
     DOCS.mkdir(parents=True, exist_ok=True)
     for one in sorted(OUT.glob("*.png")):
         if one.name == "debug.png":
@@ -1655,16 +1467,8 @@ def main() -> int:
     report.show()
     return 1 if report.bad else 0
 
-
 def press(page, name: str) -> bool:
-    """Presses the first button by that name a finger could actually reach.
-
-    Not simply the first in the document: the rail lives inside the drawer, so on a
-    phone layout there are two buttons called `Show left sidebar` and the one in the closed
-    drawer is `inert` - which is right, and is not what a reader would press."""
     for one in page.get_by_role("button", name=name).all():
-        # Visible is not the same as reachable: what is inside the closed drawer is
-        # `inert`, which is drawn and takes no press at all.
         if not one.is_visible() or one.evaluate("el => !!el.closest('[inert]')"):
             continue
 
@@ -1676,13 +1480,7 @@ def press(page, name: str) -> bool:
 
     return False
 
-
 def open_note(page, name: str) -> None:
-    """A note opened the way a reader opens one: the sidebar, and a row in it.
-
-    By its row in the file list rather than by its words anywhere on the page: the
-    note's own heading says the same thing, and a click that lands in the editor
-    instead of on the list opens nothing."""
     if press(page, "Show left sidebar"):
         page.wait_for_timeout(300)
 
@@ -1694,9 +1492,7 @@ def open_note(page, name: str) -> None:
 
     page.wait_for_timeout(1400)
 
-
 def naming(bands: dict) -> dict:
-    """The bands, by the name `even-panel.mjs` draws them under."""
     return {
         "head": bands.get("nibHead", ""),
         "rule": bands.get("nibRule", ""),
@@ -1706,8 +1502,6 @@ def naming(bands: dict) -> dict:
         "mic": bands.get("nibMic", ""),
     }
 
-
 if __name__ == "__main__":
-    # The report quotes the panel, arrows and all, and a Windows console is not UTF-8.
     sys.stdout.reconfigure(encoding="utf-8")
     sys.exit(main())

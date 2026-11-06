@@ -46,9 +46,7 @@ from probe_app import close_app
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
 
-
 def borrowed(name: str, file: str):
-    """Another probe's helpers, read from its file: the names have dashes in them."""
 
     spec = importlib.util.spec_from_file_location(name, HERE / file)
     if spec is None or spec.loader is None:
@@ -57,15 +55,12 @@ def borrowed(name: str, file: str):
     spec.loader.exec_module(module)
     return module
 
-
 switch = borrowed("switch", "web-switch-probe.py")
 terminal = borrowed("terminal", "terminal-probe.py")
 until = terminal.until
 
 failures: list[str] = []
 
-#: A page that says it is running: every fifth of a second it asks this probe's server for
-#: the next number, so a page frozen by the engine is a page that stops asking.
 CLOCK = b"""<!doctype html>
 <title>Clock</title>
 <body style="margin:0;font:48px system-ui;display:grid;place-items:center;height:100vh">
@@ -80,9 +75,7 @@ setInterval(() => {
 </script>
 """
 
-
 class Ticks:
-    """When the page last asked, and what it last said."""
 
     def __init__(self) -> None:
         self.lock = threading.Lock()
@@ -97,7 +90,6 @@ class Ticks:
     def since(self, moment: float) -> int:
         with self.lock:
             return sum(1 for one in self.at if one >= moment)
-
 
 def serve(port: int, ticks: Ticks) -> http.server.ThreadingHTTPServer:
     class Handler(http.server.BaseHTTPRequestHandler):
@@ -120,10 +112,8 @@ def serve(port: int, ticks: Ticks) -> http.server.ThreadingHTTPServer:
     threading.Thread(target=made.serve_forever, daemon=True).start()
     return made
 
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 
 def check(ok: bool, words: str) -> None:
     if ok:
@@ -132,9 +122,7 @@ def check(ok: bool, words: str) -> None:
         failures.append(words)
         say(f"FAIL {words}")
 
-
 def ask(app, code: str, seconds: float = 60) -> object:
-    """What the window answers, asked again while it is still coming up."""
     end = time.perf_counter() + seconds
     said: object = None
     while time.perf_counter() < end:
@@ -144,11 +132,8 @@ def ask(app, code: str, seconds: float = 60) -> object:
         time.sleep(0.5)
     return said
 
-
-#: Each space's id, by name.
 IDS = "JSON.stringify(Object.fromEntries(nib.workspace.spaces.map((one) => [one.name, one.id])))"
 
-#: What is on screen: the space, and the tabs of the panes on screen, by kind and name.
 SHOWN = """JSON.stringify((() => {
   const ws = nib.workspace
   return {
@@ -158,29 +143,21 @@ SHOWN = """JSON.stringify((() => {
   }
 })())"""
 
-
 def cmd_of(pid: int) -> list[tuple[int, str]]:
-    """The command prompts below the app: the shell itself, not the console host, which
-    comes and goes around it."""
     return [one for one in terminal.shells_of(pid) if one[1].lower() == "cmd.exe"]
-
 
 def shown(app) -> dict:
     said = ask(app, SHOWN)
     return said if isinstance(said, dict) else {}
 
-
 def to_space(app, space: str) -> None:
     ask(app, f"nib.workspace.showSpace({json.dumps(space)}).then(() => 'shown')")
     time.sleep(0.6)
 
-
 def ticking(ticks: Ticks, seconds: float) -> int:
-    """How many times the page asked over the next few seconds."""
     start = time.perf_counter()
     time.sleep(seconds)
     return ticks.since(start)
-
 
 def front(app, kind: str) -> object:
     return ask(
@@ -189,10 +166,7 @@ def front(app, kind: str) -> object:
         "if (!tab) return null; nib.workspace.activate(tab.id); return tab.id })()",
     )
 
-
 def shoot(identifier: str, out: pathlib.Path) -> None:
-    """The app's own page as its engine draws it (`Page.captureScreenshot`): a window off
-    every screen has no picture of its own to hand over."""
     at = port(switch.local_dir(identifier) / "EBWebView")
     page = next(
         (one for one in (targets(at) if at else []) if str(one.get("url", "")).startswith("http://tauri.localhost")),
@@ -209,10 +183,7 @@ def shoot(identifier: str, out: pathlib.Path) -> None:
     finally:
         session.close()
 
-
 def settings_shot(app, identifier: str, scheme: str, shots: pathlib.Path) -> None:
-    """The Hidden tabs row, in a scheme: the page is loaded again in it, which is how a
-    scheme chosen in Settings comes to a window that was already open."""
     ask(app, f"localStorage.setItem('nib:theme-scheme', {json.dumps(scheme)}) || 'kept'")
     ask(app, "(location.reload(), 'reloading')", 10)
     time.sleep(3)
@@ -226,7 +197,6 @@ def settings_shot(app, identifier: str, scheme: str, shots: pathlib.Path) -> Non
     check(row is True, f"Settings shows the Hidden tabs row ({scheme})")
     shoot(identifier, shots / f"settings-hidden-tabs-{scheme}.png")
     ask(app, "(nib.settings.hide ? nib.settings.hide() : (nib.settings.open = false), 'closed')")
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -244,7 +214,6 @@ def main() -> int:
     shots.mkdir(parents=True, exist_ok=True)
 
     switch.wipe(args.identifier)
-    # Each engine process opens a debugging port, which is how the pictures are taken.
     os.environ["WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"] = SWITCHES
     serving = switch.free_port()
     ticks = Ticks()
@@ -262,7 +231,6 @@ def main() -> int:
 
     running = None
     try:
-        # One launch to write the endpoint file, so eval can be turned on in it.
         running, app, _ = switch.launch(args.exe, args.identifier)
         if not close_app(running):
             running.terminate()
@@ -277,7 +245,6 @@ def main() -> int:
         work, home = str(ids["Work"]), str(ids["Home"])
         say(f"Work {work}, Home {home}")
 
-        # Work keeps its own tabs; hidden pages keep running.
         ask(app, f"localStorage.setItem('nib:space-tabs', {json.dumps(json.dumps({work: 'space'}))}) || 'kept'")
         ask(app, "localStorage.setItem('nib:hidden-tabs', '\"run\"') || 'kept'")
 
@@ -321,10 +288,8 @@ def main() -> int:
         to_space(app, work)
         check(shown(app).get("tabs") == in_work.get("tabs"), "Work comes back with its three tabs")
         to_space(app, home)
-        # Pause from the next launch on: the answer this one read stays this one's.
         ask(app, "localStorage.setItem('nib:hidden-tabs', '\"pause\"') || 'kept'")
 
-        # The restart, on Home.
         first = app.port
         if not close_app(running):
             raise SystemExit("the app did not close when asked")
@@ -348,7 +313,6 @@ def main() -> int:
         front(app, "web")
         time.sleep(1.5)
 
-        # Pause.
         to_space(app, home)
         time.sleep(1.5)
         stopped = ticking(ticks, 3)
@@ -359,8 +323,6 @@ def main() -> int:
         check(bool(until(lambda: ticks.last > stood, 10)), "Work shown again: its page ticks again")
         check(ticks.last <= stood + 30, f"from where it was, with no reload ({stood} then {ticks.last})")
 
-        # The pictures last: a page the protocol is attached to is one the engine will not
-        # suspend, and nothing above is asked of a page with a debugger on it.
         shoot(args.identifier, work_shot)
         to_space(app, home)
         shoot(args.identifier, home_shot)
@@ -373,7 +335,6 @@ def main() -> int:
 
     print("PASS" if not failures else f"FAIL: {failures}")
     return 1 if failures else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

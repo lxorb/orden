@@ -1,41 +1,3 @@
-"""Does a page in a reader's web tab see anything a browser would not show it?
-
-Emil, 2026-10-03: *"Cloudflare says: there was a problem with verification, please
-reload and try again, every time I want to log in."* A bot check - Cloudflare's
-Turnstile, hCaptcha, reCAPTCHA, Akamai - fails a browser that looks driven, and one that
-loses the cookies its challenge sets. This drive asks a page what it can see, in the page
-and in a frame from another site (where a challenge runs), and fails on any of it:
-
-    navigator.webdriver    true only for a browser under automation
-    the console domain     a DevTools client with `Runtime` on serialises what a page
-                           logs, and a getter on what it logs says so: the best-known
-                           sign of a driven page
-    Orden's globals          anything of Orden's or the runtime's on the page's `window`
-    window.name            nib's channel names (`nib-...`) left behind on a window
-
-A worker that frame starts has to run, too. Emil, 2026-10-13: *"login button just wasn't
-clickable on cloudflare."* Turnstile's frame starts its challenge in a worker, and a frame's
-session, asked by Orden to hold what it follows at its start, held that worker too and never
-attached it, so nothing let it go (src-tauri/src/web_worlds.rs): no answer, a sign in
-button that stayed disabled, and a minute later *"There was a problem with verification"*.
-
-And a cookie its site sets twice, as Cloudflare's challenge frame does: partitioned, and
-unpartitioned beside it for a browser that allows third-party cookies. Both are still
-there after the pages that make logins last have loaded (src-tauri/src/web_cookies.rs):
-the clean-up of an old bug took the second one away as its "twin", which is what broke
-the challenge (web_cookies/twins.rs).
-
-`EmbeddedBrowserWebView` on `window` and `Microsoft Edge WebView2` among the client
-hints' brands are `WebView2`'s own, in every app built on it, and are reported but not
-failed on: Orden cannot take them away without lying about the engine.
-
-    python scripts/web-bot-probe.py --exe path/to/nib.exe \\
-      --identifier ch.emilvinu.nib.probe.<name>
-
-Launched through `run_probe`, off the screen, with `NIB_SPACES_DIR` in a temp folder;
-everything it loads is served on the loopback.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -53,7 +15,6 @@ from typing import Any
 
 from probe_app import identifier_of
 
-# The drive's own helpers for a probe build: launch, eval, the clip reader.
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 _parity = __import__("importlib").import_module("importlib.util")
 _spec = _parity.spec_from_file_location("browser_parity", pathlib.Path(__file__).parent / "browser-parity-probe.py")
@@ -61,7 +22,6 @@ assert _spec and _spec.loader
 bp: Any = _parity.module_from_spec(_spec)
 _spec.loader.exec_module(bp)
 
-# What a page can see, asked the same way in the page and in the frame.
 SIGNS = r"""
 function signs(where) {
   var said = { where: where, webdriver: String(navigator.webdriver), name: window.name,
@@ -97,8 +57,6 @@ document.body.appendChild(frame)
 </script></body>"""
 )
 
-# The frame starts a worker before it answers, as Turnstile's challenge frame does, and
-# says whether the worker ever ran: one held at its start never posts.
 FRAME = (
     "<!doctype html><script>"
     + SIGNS
@@ -111,15 +69,12 @@ setTimeout(function () { answer('held') }, 3000)
 </script>"""
 )
 
-# The site's one cookie, set twice: in the frame's partition, and outside it.
 TWICE = [
     "fb=1; Path=/; Secure; SameSite=None; Partitioned",
     "fb=1; Path=/; Secure; SameSite=None",
 ]
 
-# The engine's own, in every app on WebView2: reported, never failed on.
 ENGINE_OWN = {"EmbeddedBrowserWebView"}
-
 
 def serve(port: int) -> None:
     class Handler(http.server.BaseHTTPRequestHandler):
@@ -141,7 +96,6 @@ def serve(port: int) -> None:
     server = http.server.ThreadingHTTPServer(("127.0.0.1", port), Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
-
 def read(app: Any, tab: str) -> list[dict[str, Any]]:
     def look() -> list[dict[str, Any]]:
         said = app.ask(f"window.__TAURI_INTERNALS__.invoke('web_clip', {{ tab: '{tab}', selection: false }})")
@@ -154,9 +108,7 @@ def read(app: Any, tab: str) -> list[dict[str, Any]]:
 
     return bp.until(look) or []
 
-
 def clean(seen: dict[str, Any]) -> list[str]:
-    """What a page should not have seen, in words."""
 
     wrong = []
     if seen.get("webdriver") != "false":
@@ -171,7 +123,6 @@ def clean(seen: dict[str, Any]) -> list[str]:
     if seen.get("webview") != "no":
         wrong.append("window.chrome.webview is there")
     return wrong
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -209,7 +160,6 @@ def main() -> int:
         time.sleep(2)
 
         page = f"http://127.0.0.1:{port}/"
-        # The first load sets the cookie twice; the ones after it only read it.
         tab = str(app.ask(f"nib.workspace.openPage('{page}?set', 'front')"))
         time.sleep(4)
         first = read(app, tab)
@@ -221,8 +171,6 @@ def main() -> int:
         framed = next((one for one in first if one.get("where") == "frame"), {})
         checks["a worker a frame from another site starts runs"] = framed.get("worker") == "ran"
 
-        # Two more loads, each of which makes the store's logins last; the cookie set
-        # twice must still be there twice after them.
         bp.go(app, tab, page)
         bp.go(app, tab, page)
         time.sleep(1)
@@ -246,7 +194,6 @@ def main() -> int:
     passed = all(checks.values())
     print("\nPASS" if passed else "\nFAIL")
     return 0 if passed else 1
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

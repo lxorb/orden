@@ -1,17 +1,4 @@
 #!/usr/bin/env bash
-# Puts the unstable web build beside the release's, in the release's dist, so that
-# one Worker deploy serves both (services/sync/src/channel.ts, #424).
-#
-#   scripts/web-channels.sh <release dist> <unstable dist>
-#
-# The unstable build's bundle goes into the release's `assets/`. Every name in there
-# carries the hash of its bytes, so a name both builds wrote is the same file, and the
-# folder stays one the edge serves without the Worker. A name written twice with
-# different bytes would mean that is no longer true, and stops the deploy rather than
-# serving one build the other's file.
-#
-# Everything else the unstable build wrote - its pages and the files of its `public/` -
-# goes under `_unstable/`, which is where the Worker looks for them.
 set -euo pipefail
 
 if [ $# -ne 2 ]; then

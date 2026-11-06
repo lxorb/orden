@@ -1,21 +1,4 @@
 #!/usr/bin/env python3
-"""A sign-in that lives in a session cookie lasts across a restart, and nothing else comes
-back with it. #483: Moodle's and Shibboleth's were gone at every launch on Linux.
-
-Run with Orden up on scripts/wayland-launch.sh's page for it (SESSION=1): a page that makes
-a cookie with no expiry the first time and says in its title whether it found one, with
-`?private` a cookie of another name. Every step counts the engine's page targets
-(`Target.getTargets`) and sway's windows as well as reading the title, because Chromium's
-own session restore would bring back hidden copies of the last run's windows that hold the
-process open, and a title read off whichever tab answers would not show them.
-
-    python3 scripts/session-drive.py <out folder> first
-    python3 scripts/session-drive.py <out folder> again <pages> <windows>
-    python3 scripts/session-drive.py <out folder> killed <pages> <windows>
-
-`first` writes what it counted to <out folder>/session-counts, for the launch script to
-hand to the other two. It opens a private tab, which `again` must not find on the disk.
-"""
 
 import json
 import os
@@ -33,7 +16,6 @@ OUT, STEP = Path(sys.argv[1]), sys.argv[2]
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
 DEBUG = os.environ["NIB_CEF_DEBUG_PORT"]
 
-
 def endpoint():
     for _ in range(120):
         try:
@@ -45,9 +27,7 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
-
 
 def run(code):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
@@ -66,9 +46,7 @@ def run(code):
             time.sleep(1)
     return None
 
-
 def pages():
-    """Every page the engine has, hidden or not."""
     with urllib.request.urlopen(f"http://127.0.0.1:{DEBUG}/json/version", timeout=5) as answer:
         browser = json.loads(answer.read())["webSocketDebuggerUrl"]
     session = Session({"webSocketDebuggerUrl": browser, "url": "", "title": "browser"})
@@ -78,9 +56,7 @@ def pages():
         session.close()
     return [one for one in found if one.get("type") == "page"]
 
-
 def windows():
-    """The windows sway has."""
     tree = json.loads(subprocess.check_output(["swaymsg", "-t", "get_tree"]))
 
     def walk(node):
@@ -89,7 +65,6 @@ def windows():
 
     return walk(tree)
 
-
 def site(found, private=False):
     return [
         one
@@ -97,9 +72,7 @@ def site(found, private=False):
         if one.get("url", "").startswith("http://127.0.0.1") and ("?private" in one["url"]) == private
     ]
 
-
 def titled(said, private=False):
-    """The one page of the run's site, once its title says `said`."""
     found = []
     for _ in range(60):
         found = pages()
@@ -109,15 +82,12 @@ def titled(said, private=False):
     (OUT / "session-targets.json").write_text(json.dumps(found, indent=1))
     raise SystemExit(f"::error::{STEP}: no page of the site says {said!r}; see session-targets.json")
 
-
 def cookies():
-    """Every cookie on the disk, in every profile: name, and whether it lasts."""
     found = []
     for store in (CONFIG / "chromium").rglob("Cookies"):
         with sqlite3.connect(f"file:{store}?mode=ro", uri=True) as db:
             found += [tuple(row) for row in db.execute("select name, is_persistent from cookies")]
     return found
-
 
 def counted(found, wanted_pages=None, wanted_windows=None):
     seen, shown = len(found), windows()
@@ -129,14 +99,12 @@ def counted(found, wanted_pages=None, wanted_windows=None):
         raise SystemExit(f"::error::{STEP}: {shown} windows where the first run had {wanted_windows}")
     return seen, shown
 
-
 if STEP == "first":
     found = titled("a session cookie made")
     seen, shown = counted(found)
     if len(site(found)) != 1:
         raise SystemExit(f"::error::first: {len(site(found))} pages of the site")
     (OUT / "session-counts").write_text(f"{seen} {shown}\n")
-    # A private tab making a session cookie of its own, still open when the app quits.
     normal = run("nib.workspace.activeTabId")
     run("nib.workspace.openWebsite(true); true")
     private = None

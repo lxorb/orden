@@ -41,21 +41,13 @@ IDENTIFIER = "ch.emilvinu.nib.probe.reminders"
 GROUP = "nib.reminders"
 SPACE = "Reminders probe"
 
-#: How far out the reminder is: far enough that no run of this script lasts that long,
-#: near enough that a toast left behind by a crash would be noticed, not lost.
 OUT_MINUTES = 20
 
-#: How long the app has to read the space, plan and hand it over.
 PATIENCE = 90.0
-
 
 def say(words: str) -> None:
     print(words, flush=True)
 
-
-#: Windows PowerShell 5.1 projects WinRT, where `CreateToastNotifierWithId` is the
-#: `CreateToastNotifier` overload that takes the id. Lists the id's scheduled toasts one
-#: per line, or with `-Remove` takes every one off.
 SCHEDULE_PS1 = r"""
 param([string]$Id, [switch]$Remove)
 $ErrorActionPreference = 'Stop'
@@ -67,17 +59,12 @@ foreach ($t in $n.GetScheduledToastNotifications()) {
 }
 """
 
-
 def schedule_script() -> pathlib.Path:
     path = pathlib.Path(tempfile.gettempdir()) / "nib-reminders-probe-schedule.ps1"
     path.write_text(SCHEDULE_PS1, encoding="utf-8")
     return path
 
-
 def schedule(remove: bool = False) -> list[str]:
-    """The probe id's scheduled toasts, as `group|tag|delivery in UTC`; or every one of
-    them taken off. Raises where PowerShell could not answer, so a failure to look is
-    never read as nothing left."""
     done = subprocess.run(
         [
             "powershell.exe",
@@ -99,14 +86,11 @@ def schedule(remove: bool = False) -> list[str]:
         raise RuntimeError(f"the schedule could not be read: {done.stderr.strip()}")
     return [line[len("TOAST|") :] for line in done.stdout.splitlines() if line.startswith("TOAST|")]
 
-
 def scheduled() -> list[str]:
     return schedule()
 
-
 def unschedule() -> None:
     schedule(remove=True)
-
 
 def register_id() -> None:
     import winreg
@@ -117,7 +101,6 @@ def register_id() -> None:
     winreg.SetValueEx(key, "DisplayName", 0, winreg.REG_SZ, "Orden probe")
     winreg.CloseKey(key)
 
-
 def unregister_id() -> None:
     import winreg
 
@@ -126,13 +109,10 @@ def unregister_id() -> None:
     except FileNotFoundError:
         pass
 
-
 def wipe_profile() -> None:
-    """What the last run of this identifier left, so a plan is made from nothing."""
     for base in (os.environ.get("APPDATA"), os.environ.get("LOCALAPPDATA")):
         if base:
             shutil.rmtree(pathlib.Path(base) / IDENTIFIER, ignore_errors=True)
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -197,7 +177,6 @@ def main() -> int:
         say(f"WRONG: {one}")
     say("PASS" if not failures else "FAIL")
     return 1 if failures else 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

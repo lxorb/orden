@@ -1,17 +1,4 @@
 #!/usr/bin/env python3
-"""What the app has taken in survives the app being killed. #961: on Linux, a setting
-changed and an Untitled draft written in the few seconds before a kill were gone after
-a restart - neither the setting nor the draft came back, nor was the draft in the
-trash - because the engine had not yet put its storage on the disk.
-
-Run with Orden up (KILL=1 in scripts/wayland-launch.sh). With `write`: the app's scheme
-is switched with its own button, a new note is opened and words typed into it, a word
-is put in the page's storage, and a tenth of a second later the run kills every process
-of the app. With `read`, after it is started again: the scheme has to be the one
-switched to, a tab has to hold the words, and the storage has to hold the word.
-
-    python3 scripts/kill-drive.py <out folder> <write|read>
-"""
 
 import json
 import os
@@ -25,7 +12,6 @@ CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.
 WORDS = "Words written just before the kill"
 SAID = OUT / "kill-said.json"
 
-
 def endpoint():
     for _ in range(120):
         try:
@@ -37,9 +23,7 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
-
 
 def run(code):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
@@ -58,10 +42,8 @@ def run(code):
             time.sleep(1)
     return None
 
-
 def scheme():
     return run("document.documentElement.dataset.theme")
-
 
 def drafts():
     return run(
@@ -69,7 +51,6 @@ def drafts():
         + json.dumps(WORDS)
         + ")).length"
     )
-
 
 if PHASE == "write":
     for _ in range(40):
@@ -96,8 +77,6 @@ if PHASE == "write":
         )
         if typed:
             break
-    # The note's words are taken in a moment after they are typed, then written into
-    # the session a moment after that; the kill is a tenth of a second after both.
     held = 0
     for _ in range(40):
         held = drafts()
@@ -106,8 +85,6 @@ if PHASE == "write":
         time.sleep(0.25)
     if not typed or not held:
         raise SystemExit(f"::error::write: the words did not go into a new note ({typed}, {held})")
-    # And last, a word put straight into the page's storage, which nothing else keeps:
-    # what the engine itself had not yet put on the disk when the kill came.
     probe = run("(() => { const token = 'kept ' + Date.now(); localStorage.setItem('nib:kill-probe', token); return token })()")
     SAID.write_text(json.dumps({"scheme": now, "probe": probe}))
     print(f"write: the scheme switched {was} -> {now}, and a new note holds the words")

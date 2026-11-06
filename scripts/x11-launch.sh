@@ -1,22 +1,4 @@
 #!/usr/bin/env bash
-# Orden started under a bare X server, Xvfb, with no compositor and no Wayland at all:
-# the session an X11 desktop gives it. The window has to map and the app has to stay up,
-# and a picture of the screen is kept. #427 was the AppImage's own WebKitGTK aborting on
-# Fedora 44 at start; this is that start, under X11.
-#
-# With KWIN=1, KWin is the window manager on that server, and with DRAG=1 the window is
-# then moved by its tab strip, resized by its edge and maximised by a double click on the
-# strip with xdotool's pointer (scripts/window-drag.py, #427). With TREE=1 or ZOOM=1, a note
-# is dragged in the file list and the interface is zoomed (scripts/page-drive.py).
-#
-# Run inside `dbus-run-session`, with the command that starts Orden:
-#
-#   dbus-run-session -- scripts/x11-launch.sh /path/to/AppRun
-#
-# Every window with a title has to be under the name the desktop entry's StartupWMClass
-# says, CLASS (nib unless said), and none Chromium's own (#1148).
-#
-# Everything it saw is left in $OUT (default ./x11-out).
 set -euo pipefail
 
 out=${OUT:-$PWD/x11-out}
@@ -34,10 +16,7 @@ for _ in $(seq 50); do xdpyinfo > /dev/null 2>&1 && break; sleep 0.1; done
 here=$(cd "$(dirname "$0")" && pwd)
 wm=""
 if [ "${KWIN:-0}" = 1 ]; then
-  # KWin's own services, started by the session bus, on the same display; without it its
-  # shortcut service aborts and KWin goes with it.
   dbus-update-activation-environment DISPLAY XDG_RUNTIME_DIR 2>/dev/null || true
-  # Without compositing, which a server with no GPU has nothing to do it with.
   KWIN_COMPOSE=N QT_QPA_PLATFORM=xcb kwin_x11 --replace > "$out/kwin.log" 2>&1 &
   wm=$!
   for _ in $(seq 40); do
@@ -51,19 +30,16 @@ if [ "${KWIN:-0}" = 1 ]; then
   fi
   echo "KWin is the window manager: $(xprop -root _NET_SUPPORTING_WM_CHECK)"
 fi
-# With POPUP=1, a page of one colour served, for a web tab the popups open over.
 site=""
 if [ "${POPUP:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${ZOOM:-0}" = 1 ]; then
   mkdir -p "$out/site"
   printf '<!doctype html><title>one colour</title><style>html,body{margin:0;height:100%%;background:#ff00ff}</style>' > "$out/site/index.html"
-  # With FLASH=1, a dark page, which any white in it is not (#762).
   [ "${FLASH:-0}" = 1 ] && printf '<!doctype html><title>dark</title><meta name="color-scheme" content="dark"><style>html,body{margin:0;height:100%%;background:#1e1e1e}</style>' > "$out/site/index.html"
   python3 -m http.server 8765 --bind 127.0.0.1 --directory "$out/site" > "$out/site.log" 2>&1 &
   site=$!
   set -- "$@" http://127.0.0.1:8765/
 fi
 if [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${TREE:-0}" = 1 ] || [ "${ZOOM:-0}" = 1 ]; then
-  # The app's endpoint open to `eval`, for where its tab strip is.
   config="${XDG_CONFIG_HOME:-$HOME/.config}/ch.emilvinu.nib"
   mkdir -p "$config"
   printf '{"port":0,"secret":"%s","eval":true,"pid":0}' "$(python3 -c 'import secrets; print(secrets.token_hex(32))')" > "$config/automation.json"
@@ -90,9 +66,7 @@ done
 [ "$status" = 0 ] && [ -z "$mapped" ] && { echo "::error::no window mapped under X11 in 60 s"; status=1; }
 if [ "$status" = 0 ]; then
   echo "the window mapped under X11:"
-  # Said, not checked: a window that goes while the tree is walked ends the walk.
   xwininfo -root -tree 2>/dev/null | grep -iE 'orden|nib|read me' | head || true
-  # Up for a while, and still up after it.
   sleep 10
   strangers=$(xwininfo -root -children 2>/dev/null | python3 -c '
 import re, subprocess, sys
@@ -108,7 +82,6 @@ for one in re.finditer(r"^\s+(0x[0-9a-f]+) \"(.*)\": \(\"([^\"]*)\"", sys.stdin.
   fi
   kill -0 "$app" 2>/dev/null || { echo "::error::Orden ended after its window mapped"; status=1; }
 fi
-# Idle, before anything is done with it: what it costs the CPU (#427, scripts/idle-cpu.py).
 if [ "$status" = 0 ] && [ "${IDLE:-0}" = 1 ]; then
   sleep 15
   python3 "$here/idle-cpu.py" "$app" 20 | tee "$out/idle.txt"

@@ -1,33 +1,3 @@
-"""The recorder in the real app, which is the one place it was broken.
-
-The bug: `getUserMedia` in the window's own page never settled. A `WebView2` webview
-with nothing listening for `PermissionRequested` answers such a request with neither an
-allow nor a deny, and every web tab had that listener while the window's own page had
-none. So the pill sat at 0:00, no file was written, and nothing was said. Every unit test
-passed, because there is no `WebView2` under node.
-
-So this is driven against a built app and nothing else:
-
-    python scripts/recorder-e2e.py --app "<path to the probe .exe>"
-
-What it proves:
-
-    a microphone opens at all - the pill appears and its clock moves
-    a file lands in the space, beside the note, and is a sound file with sound in it
-    the note says so, as an embed a player can read
-    and the promise is bounded either way: nothing here waits for ever
-
-`NIB_SPACES_DIR` points inside `target/`, so the note and the recording are written
-nowhere near anybody's own notes - and the space is read off the disk afterwards, which
-is the real proof that a file was written.
-
-Chrome's fake microphone is not available to a Tauri build, so this wants a real input:
-with no microphone at all the app is right to refuse, and the drive says which of the two
-it saw rather than passing on silence.
-
-Never an exe that would update itself; see scripts/probe_app.py.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -51,54 +21,34 @@ SHOTS = WORK / "shots"
 
 failures: list[str] = []
 
-
 def say(what: str) -> None:
     print(f"  {what}", flush=True)
-
 
 def wrong(what: str) -> None:
     failures.append(what)
     print(f"  FAIL {what}", flush=True)
 
-
 def endpoint_of(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["APPDATA"]) / identifier / "automation.json"
 
-
 def profile_of(identifier: str) -> pathlib.Path:
-    """Where this build keeps its webview's own store.
-
-    Wiped before the run, and that is not tidiness: `WebView2` remembers what a
-    permission request was answered for an origin, so a refusal from an earlier run is a
-    refusal this run would inherit without the engine ever raising the request again.
-    Only this probe's own folder, never anybody's real profile.
-    """
     return pathlib.Path(os.environ["LOCALAPPDATA"]) / identifier
 
-
 def allow_eval(path: pathlib.Path) -> None:
-    """`eval` turned on in the endpoint file, which is the only way it can be."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps({"port": 0, "secret": secrets.token_hex(32), "eval": True}),
         encoding="utf-8",
     )
 
-
 def started(app: pathlib.Path) -> subprocess.Popen[bytes]:
     SPACES.mkdir(parents=True, exist_ok=True)
     return run_probe(
         app,
-        # The launch trace as well, which is where the crate says what it did with a
-        # permission request: which origin asked for what, and what it was told. A
-        # refusal is invisible from the window - all a reader sees is a clock that does
-        # not move - so a drive about a microphone reads it. See trace.rs.
         env={**os.environ, "NIB_SPACES_DIR": str(SPACES), "NIB_TRACE_STARTUP": "1"},
     )
 
-
 def trace_of(identifier: str) -> list[str]:
-    """What the launch trace says about the microphone, if anything."""
     path = pathlib.Path(os.environ["LOCALAPPDATA"]) / identifier / "logs" / "startup-trace.log"
     if not path.exists():
         return []
@@ -108,7 +58,6 @@ def trace_of(identifier: str) -> list[str]:
         for line in path.read_text(encoding="utf-8", errors="replace").split("\n")
         if "microphone" in line
     ]
-
 
 def waited_for(path: pathlib.Path, patience: float = 90) -> dict:
     until = time.monotonic() + patience
@@ -123,7 +72,6 @@ def waited_for(path: pathlib.Path, patience: float = 90) -> dict:
 
     raise SystemExit(f"no endpoint at {path} after {patience:.0f}s")
 
-
 def asked(held: dict, verb: str, args: dict) -> dict:
     body = json.dumps({"verb": verb, "args": args, "rest": []}).encode()
     request = urllib.request.Request(
@@ -135,7 +83,6 @@ def asked(held: dict, verb: str, args: dict) -> dict:
     with urllib.request.urlopen(request, timeout=60) as answer:
         return json.loads(answer.read().decode())
 
-
 def ran(held: dict, code: str) -> object:
     answer = asked(held, "eval", {"code": code, "yes": True})
     if not answer.get("ok"):
@@ -143,7 +90,6 @@ def ran(held: dict, code: str) -> object:
         return None
 
     return answer.get("value")
-
 
 def shot(pid: int, name: str) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
@@ -167,10 +113,6 @@ def shot(pid: int, name: str) -> None:
     )
     say(f"photographed {name}.png")
 
-
-# Whether the machine has an input at all, asked of the page rather than assumed: the
-# whole bug was a promise that never settled while `enumerateDevices` listed a
-# microphone, so the two questions are asked separately here as well.
 HAS_INPUT = """
 navigator.mediaDevices.enumerateDevices().then((all) => JSON.stringify({
   inputs: all.filter((one) => one.kind === 'audioinput').length,
@@ -182,9 +124,6 @@ navigator.mediaDevices.enumerateDevices().then((all) => JSON.stringify({
 }))
 """
 
-# The microphone opened directly, with a clock on it. This is the call that used to hang:
-# it answers how long it took and what happened, and never waits longer than the
-# recorder itself would.
 OPENS = """
 (async () => {
   const began = Date.now()
@@ -201,7 +140,6 @@ OPENS = """
   }
 })()
 """
-
 
 def drive(app: pathlib.Path, given: str | None) -> None:
     identifier = identifier_of(app, given)
@@ -222,18 +160,12 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         for line in trace_of(identifier):
             say(f"trace: {line}")
 
-        # ── the call that used to hang ─────────────────────────────────────
         opened = ran(held, OPENS)
         if not isinstance(opened, dict):
             wrong(f"the window said nothing about the microphone: {opened!r}")
             return
 
         if "refused" in opened:
-            # An answer, which is what the fix is about: the bug was a promise that never
-            # settled at all, so the pill sat at 0:00 with nothing said. Whether this
-            # machine then grants a microphone is the machine's own business - Windows'
-            # privacy settings, a desk with no microphone on it, a session with nobody
-            # sitting in front of it - and a refusal is something the app can say.
             say(f"the microphone was refused in {opened['ms']}ms: {opened['refused']!r}")
             for line in trace_of(identifier):
                 say(f"trace: {line}")
@@ -250,10 +182,6 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         if opened["ms"] > 20000:
             wrong(f"opening the microphone took {opened['ms']}ms, which is a reader waiting")
 
-        # ── and the recorder around it ─────────────────────────────────────
-        # A space first. `NIB_SPACES_DIR` points at an empty folder, which is a first
-        # run: there is nowhere to write a note and the Record row says so rather than
-        # recording into nothing. So the drive does what a reader does on that screen.
         space = ran(
             held,
             "nib.workspace.activeSpace"
@@ -268,9 +196,6 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         note = ran(held, "nib.workspace.createNote().then(() => nib.workspace.active?.path ?? null)")
         say(f"recording into {note!r}")
 
-        # The same row the palette shows, pressed by its own id. `byHand` keeps it out of
-        # a *link's* reach and not out of the command line's, which is the road a drive
-        # is on; see `runCommand` in automation/acts.ts.
         answer = asked(held, "commands.run", {"id": "record"})
         if not answer.get("ok"):
             wrong(f"the Record command would not run: {answer}")
@@ -302,7 +227,6 @@ def drive(app: pathlib.Path, given: str | None) -> None:
 
         shot(process.pid, "03-written")
 
-        # The file itself, read off the disk rather than off the app's opinion of it.
         sounds = sorted(SPACES.rglob("recording-*.*"))
         if not sounds:
             wrong(f"no recording was written under {SPACES}")
@@ -318,7 +242,6 @@ def drive(app: pathlib.Path, given: str | None) -> None:
     finally:
         process.terminate()
         time.sleep(1.5)
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -341,7 +264,6 @@ def main() -> int:
 
     print("\nthe microphone answers in the app, and what it heard is a file in the space")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

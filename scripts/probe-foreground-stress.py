@@ -48,26 +48,19 @@ sys.path.insert(0, str(ROOT / "apps" / "desktop" / "test" / "e2e"))
 
 from probe_app import IN_VIEW_EXIT, close_app, family, main_window, run_probe  # noqa: E402
 
-#: How often the window in front is asked for, in seconds.
 EVERY = 0.02
 
-#: What the probe says on its error stream when it started able to take the foreground;
-#: see `run_on` in src-tauri/src/lib.rs.
 ABLE = "started able to take the foreground"
 
-#: How long one launch may take before it is ended, in seconds.
 PATIENCE = 90
 
-#: `SetWinEventHook`: a change of the window in front, heard out of context.
 EVENT_SYSTEM_FOREGROUND = 0x0003
 WINEVENT_OUTOFCONTEXT = 0x0000
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 user32.GetForegroundWindow.restype = wintypes.HWND
 
-
 def owner(hwnd: int | None) -> int:
-    """The process a window belongs to, or 0 for no window."""
 
     if not hwnd:
         return 0
@@ -75,24 +68,14 @@ def owner(hwnd: int | None) -> int:
     user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
     return pid.value
 
-
 def able_to_take_the_front() -> bool:
-    """Whether this process could take the foreground now: the system grants a lock on
-    it only to a process that could. Released at once, so nobody is held back by it."""
 
     if user32.LockSetForegroundWindow(1):
         user32.LockSetForegroundWindow(2)
         return True
     return False
 
-
-# ---- one launch, in a process of its own ----
-
-
 def one(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, cold: bool, prime: bool) -> int:
-    """Launches the probe once, says its process number on the first line of output as
-    soon as it has one, waits for the launch order to finish, and closes it. Its exit is
-    the drive's: the watch's own when it ended the probe."""
 
     import launch
 
@@ -121,13 +104,7 @@ def one(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, cold: bool, pr
         launch.settled(identifier)
     return 0
 
-
-# ---- the run ----
-
-
 class Front:
-    """Who owns the window in front: asked every `EVERY` seconds, and told of each change
-    as it happens. `seen` is every owner with when it was seen."""
 
     def __init__(self) -> None:
         self.seen: list[tuple[float, int]] = []
@@ -176,17 +153,12 @@ class Front:
         with self.lock:
             return [pid for at, pid in self.seen if at >= start]
 
-
 def plan(launches: int) -> list[tuple[str, bool]]:
-    """Which space and whether cold, launch by launch: half on each space, every fifth
-    one cold, so both spaces are launched cold and warm."""
 
     half = launches // 2
     return [("empty" if at < half else "big", (at % half) % 5 == 0) for at in range(launches)]
 
-
 def watched(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, cold: bool, prime: bool, front: Front) -> dict:
-    """One launch in a process of its own, and what the front did while it ran."""
 
     begun = time.perf_counter()
     child = subprocess.Popen(
@@ -243,7 +215,6 @@ def watched(exe: pathlib.Path, identifier: str, spaces: pathlib.Path, cold: bool
         "said": [line for line in err.splitlines() if "PROBE IN VIEW" in line or ABLE in line],
     }
 
-
 def main() -> int:
     if sys.platform != "win32":
         print("this drive launches a Windows build")
@@ -278,8 +249,6 @@ def main() -> int:
             if kind not in made:
                 launch.corpus(kind, spaces)
                 made.add(kind)
-            # The first cold launch of the big space opens a note in it, so every warm one
-            # after it reopens the note, as somebody reopening the app would.
             prime = kind == "big" and cold
             run = {"launch": at + 1, "space": kind, "cold": cold, **watched(told.exe, told.identifier, spaces, cold, prime, front)}
             runs.append(run)
@@ -307,7 +276,6 @@ def main() -> int:
     if told.json:
         told.json.write_text(json.dumps(runs, indent=1), encoding="utf-8")
     return 1 if failed else 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

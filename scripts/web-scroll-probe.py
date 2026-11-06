@@ -1,46 +1,3 @@
-"""One notch of the wheel over a web tab, measured against Chrome on the same machine.
-Windows only.
-
-Emil, 2026-09-30: *"the scrolling doesn't feel like it should. I have the feeling it may
-be faster than it should be (this is only when scrolling in a web tab)"*. It was twice as
-fast. See src-tauri/src/web_wheel.rs for why and for the fix.
-
-What it measures, all on one plain page tall enough to scroll, read back from the page
-itself frame by frame:
-
-* **the input window** - a notch delivered to the engine's input window over the page
-  (`Chrome_RenderWidgetHostHWND`), which is where Windows delivers a wheel whenever the
-  keyboard is not inside the page: the address field, the sidebar, a note, a tab just
-  switched to. How many wheel events the page hears, how far it moves, over how many
-  frames. Two events and twice the distance is the engine handling one message twice.
-* **the page's window** - the same notch delivered to the page's own window, its parent,
-  which is where `web_wheel.rs` now sends every wheel over a page. One event, one notch.
-* **Ctrl+wheel** - the zoom steps each of the two takes, where the engine zooms on it.
-* **the hook** - whether the thread that sends wheels there is running once a page is
-  open.
-* **Chrome** - Chrome 153 headless on the same page at the same size and scale, handed
-  the notch the machine's own *lines to scroll* makes (lines x 100/3 pixels, Chromium's
-  `kScrollbarPixelsPerLine`), against Orden's page handed the same through the engine's
-  devtools. Distance, frames with movement and the curve: Chrome's animation is the
-  engine's own in both.
-
-What it cannot drive: a real wheel or a precision touchpad. Real input goes to the window
-under the pointer on the screen, and a probe is never on the screen; a touchpad pans the
-page through Direct Manipulation, which only a hand starts. The hook is the one part a
-posted message never passes through, so the Rust tests in web_wheel.rs hold that it sends
-a wheel over a page's input window to the page's window, once, with the keys held.
-
-    python scripts/web-scroll-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
-      --identifier ch.emilvinu.nib.probe.<name>
-
-The exe is a probe build that never updates, built as `scripts/probe_app.py` says;
-`run_probe` starts it off the screen and without the keyboard. A posted wheel is aimed by
-the engine at whatever `WindowFromPoint` finds at its point, and every probe is sent to
-the same corner, so the window is moved to a corner of this drive's own - still on no
-screen, which is checked before it moves - and every notch is only sent once the page is
-what is found there.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -68,26 +25,18 @@ SPACE = "Web scroll probe"
 PORT_FROM = 23920
 PORT_TO = 23939
 
-#: The corner this drive's window is moved to: off every screen, and away from the one
-#: every other probe is sent to.
 CORNER = (-26000, -12000)
 
-#: The window's size, in physical pixels: a pane of about 1190 x 720 at 200 per cent.
 SIZE = (2400, 1600)
 
 WM_MOUSEWHEEL = 0x020A
 MK_CONTROL = 0x0008
 NOTCH = 120
 
-#: `SetWindowPos`: keep the size, the order and the keyboard.
 SWP_NOSIZE = 0x0001
 SWP_NOZORDER = 0x0004
 SWP_NOACTIVATE = 0x0010
 
-#: A devtools port on every engine process the probe starts, which is how the page is
-#: read, and a window off the screen drawn at full rate rather than as a window nobody
-#: can see - which is what the engine otherwise takes it for, and then it draws a frame
-#: when it gets round to it. The probe's own process only; nothing the app ships changes.
 ENGINE_ARGS = (
     "--remote-debugging-port=0 --disable-features=CalculateNativeWinOcclusion "
     "--disable-backgrounding-occluded-windows --disable-renderer-backgrounding"
@@ -95,8 +44,6 @@ ENGINE_ARGS = (
 
 CHROME = pathlib.Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe")
 
-#: The page: a striped column 40 000 pixels tall that records where it is on every frame
-#: and every wheel event it hears, from `__start()` on.
 PAGE = b"""<!doctype html>
 <title>Scroll page</title>
 <body style="margin:0;font:16px system-ui">
@@ -130,7 +77,6 @@ window.__size = function () {
 user32 = ctypes.WinDLL("user32", use_last_error=True) if sys.platform == "win32" else None
 kernel32 = ctypes.WinDLL("kernel32", use_last_error=True) if sys.platform == "win32" else None
 if user32 is not None:
-    # Physical pixels, which is what the engine and `WindowFromPoint` speak.
     user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))
     user32.WindowFromPoint.restype = wintypes.HWND
     user32.WindowFromPoint.argtypes = [wintypes.POINT]
@@ -147,9 +93,7 @@ if user32 is not None:
         wintypes.UINT,
     ]
 
-
 def borrowed():
-    """The page probe's own devtools client, and its helpers for a launch."""
 
     spec = importlib.util.spec_from_file_location("page_probe", HERE / "web-page-probe.py")
     if spec is None or spec.loader is None:
@@ -158,13 +102,11 @@ def borrowed():
     spec.loader.exec_module(module)
     return module
 
-
 def class_of(hwnd: int) -> str:
     assert user32 is not None
     name = ctypes.create_unicode_buffer(128)
     user32.GetClassNameW(wintypes.HWND(hwnd), name, 128)
     return name.value
-
 
 def children(hwnd: int) -> list[int]:
     assert user32 is not None
@@ -173,13 +115,11 @@ def children(hwnd: int) -> list[int]:
     user32.EnumChildWindows(wintypes.HWND(hwnd), kind(lambda one, _l: found.append(one) or True), 0)
     return found
 
-
 def rect(hwnd: int) -> tuple[int, int, int, int]:
     assert user32 is not None
     box = wintypes.RECT()
     user32.GetWindowRect(wintypes.HWND(hwnd), ctypes.byref(box))
     return box.left, box.top, box.right, box.bottom
-
 
 def pid_of(hwnd: int) -> int:
     assert user32 is not None
@@ -187,19 +127,14 @@ def pid_of(hwnd: int) -> int:
     user32.GetWindowThreadProcessId(wintypes.HWND(hwnd), ctypes.byref(owner))
     return owner.value
 
-
 def lines_per_notch() -> int:
-    """The machine's own *lines to scroll*, which is what a notch is worth in Chrome."""
 
     assert user32 is not None
     lines = wintypes.UINT()
     user32.SystemParametersInfoW(0x0068, 0, ctypes.byref(lines), 0)
     return lines.value
 
-
 def to_corner(window: int) -> None:
-    """Moves the window to this drive's own corner, which is on no screen: checked first,
-    so a corner that is on one after all stops the drive instead."""
 
     assert user32 is not None
     left, top, right, bottom = rect(window)
@@ -212,10 +147,7 @@ def to_corner(window: int) -> None:
     )
     time.sleep(0.5)
 
-
 def page_windows(window: int) -> tuple[int, int]:
-    """The site's input window and the page's own window above it: the smaller of the two
-    webviews on screen is the site's, the app's own page filling the window."""
 
     assert user32 is not None
     shown = [
@@ -236,10 +168,7 @@ def page_windows(window: int) -> tuple[int, int]:
         raise SystemExit("the site's webview has no input window")
     return inputs[0], int(user32.GetParent(wintypes.HWND(inputs[0])) or 0)
 
-
 def aimed_at(input_window: int) -> tuple[int, int]:
-    """The middle of the input window, once `WindowFromPoint` finds that very window
-    there: what the engine aims a posted wheel by."""
 
     assert user32 is not None
     left, top, right, bottom = rect(input_window)
@@ -252,9 +181,7 @@ def aimed_at(input_window: int) -> tuple[int, int]:
         )
     return x, y
 
-
 def notch(target: int, x: int, y: int, keys: int = 0, down: bool = True) -> None:
-    """One notch of the wheel, posted the way Windows writes it."""
 
     assert user32 is not None
     turn = (-NOTCH if down else NOTCH) & 0xFFFF
@@ -262,10 +189,7 @@ def notch(target: int, x: int, y: int, keys: int = 0, down: bool = True) -> None
         wintypes.HWND(target), WM_MOUSEWHEEL, (turn << 16) | keys, ((y & 0xFFFF) << 16) | (x & 0xFFFF)
     )
 
-
 def traced(tools, send) -> dict[str, object]:
-    """What the page did after `send`: wheel events heard, distance, frames with movement,
-    how long it moved for, and where it was on each of those frames."""
 
     tools.value("__start()")
     time.sleep(0.4)
@@ -285,10 +209,7 @@ def traced(tools, send) -> dict[str, object]:
         "curve": [round(where - first, 1) for _, where in moving],
     }
 
-
 def zoom_steps(tools, send) -> float:
-    """How far one `send` zooms the page, in steps of Chrome's ladder near 100 per cent:
-    90 and 80 per cent are one and two steps out."""
 
     before = json.loads(str(tools.value("__size()")))["dpr"]
     send()
@@ -298,9 +219,7 @@ def zoom_steps(tools, send) -> float:
     ratio = after / before
     return float(min(range(len(ladder)), key=lambda step: abs(ladder[step] - ratio)))
 
-
 def threads_named(pid: int, name: str) -> int:
-    """How many threads of the process carry `name`, which Rust gives a thread it spawns."""
 
     assert kernel32 is not None
 
@@ -325,7 +244,6 @@ def threads_named(pid: int, name: str) -> int:
     more = kernel32.Thread32First(snapshot, ctypes.byref(entry))
     while more:
         if entry.th32OwnerProcessID == pid:
-            # THREAD_QUERY_INFORMATION: the limited right is refused a description.
             handle = kernel32.OpenThread(0x0040, False, entry.th32ThreadID)
             if handle:
                 described = ctypes.c_wchar_p()
@@ -337,7 +255,6 @@ def threads_named(pid: int, name: str) -> int:
         more = kernel32.Thread32Next(snapshot, ctypes.byref(entry))
     kernel32.CloseHandle(snapshot)
     return count
-
 
 def serve() -> tuple[http.server.ThreadingHTTPServer, int]:
     import socket
@@ -364,9 +281,7 @@ def serve() -> tuple[http.server.ThreadingHTTPServer, int]:
         return server, port
     raise SystemExit(f"no port free in {PORT_FROM}-{PORT_TO}")
 
-
 def chrome_reference(port: int, width: int, height: int, pixels: float) -> dict[str, object]:
-    """Chrome, headless, at the pane's size and the screen's scale, handed one notch."""
 
     page_probe = borrowed()
     data = pathlib.Path(tempfile.mkdtemp(prefix="nib-scroll-chrome-"))
@@ -406,7 +321,6 @@ def chrome_reference(port: int, width: int, height: int, pixels: float) -> dict[
             return {"error": "Chrome never opened the page"}
         tools = page_probe.Devtools(url)
         try:
-            # A page takes no wheel until it has drawn: one to wake it, then the one kept.
             time.sleep(1.5)
             traced(tools, lambda: wheel_in_engine(tools, pixels))
             return traced(tools, lambda: wheel_in_engine(tools, pixels))
@@ -420,16 +334,12 @@ def chrome_reference(port: int, width: int, height: int, pixels: float) -> dict[
             chrome.kill()
         shutil.rmtree(data, ignore_errors=True)
 
-
 def wheel_in_engine(tools, pixels: float) -> None:
-    """A wheel of `pixels`, handed to the engine past the platform: the path a notch takes
-    once Windows' message has become one, which is where the animation happens."""
 
     tools.call(
         "Input.emulateTouchFromMouseEvent",
         {"type": "mouseWheel", "x": 300, "y": 300, "button": "none", "deltaX": 0, "deltaY": -pixels},
     )
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -501,7 +411,6 @@ def main() -> int:
             )
             doubled = zoom_steps(tools, lambda: notch(input_window, x, y, MK_CONTROL))
             said["Ctrl+wheel steps at the input window"] = doubled
-            # Back to a hundred per cent, where one notch is one step.
             for _ in range(round(doubled)):
                 notch(page_window, x, y, MK_CONTROL, down=False)
                 time.sleep(0.4)
@@ -548,7 +457,6 @@ def main() -> int:
         print(f"FAIL: {one}")
     return 1 if failed else 0
 
-
 def row(measured: object) -> tuple[object, ...]:
     if not isinstance(measured, dict):
         return ("?", "?", "?", "?")
@@ -558,7 +466,6 @@ def row(measured: object) -> tuple[object, ...]:
         measured.get("frames", "?"),
         measured.get("ms", "?"),
     )
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -47,7 +47,6 @@ kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 kernel32.OpenThread.restype = wintypes.HANDLE
 THREAD_SUSPEND_RESUME = 0x0002
 
-#: What each web tab's page is doing: name, in front, live, on its way.
 PAGES = (
     "JSON.stringify(nib.workspace.tabs.filter((t) => t.kind === 'web').map((t) => {"
     " const p = nib.pages.of(t.id); return [t.name, t.id === nib.workspace.activeTabId, p.live, p.opening] }))"
@@ -55,10 +54,8 @@ PAGES = (
 
 failures: list[str] = []
 
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 
 def check(ok: bool, words: str) -> None:
     if ok:
@@ -67,20 +64,16 @@ def check(ok: bool, words: str) -> None:
         failures.append(words)
         say(f"FAIL {words}")
 
-
 def answered(window, seconds: float = 3) -> float | None:
-    """How long the window's page took to answer a sum, or None where it did not."""
     began = time.perf_counter()
     said = window.ask("1 + 1", seconds=seconds)
     return (time.perf_counter() - began) * 1000 if said == 2 else None
-
 
 def front(window, name: str) -> None:
     window.ask(
         f"(() => {{ const ws = nib.workspace; const t = ws.tabs.find((t) => t.name === {json.dumps(name)}); ws.activate(t.id); return 'ok' }})()",
         seconds=5,
     )
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -112,7 +105,6 @@ def main() -> int:
     held: list[int] = []
     app = None
     try:
-        # Twice: the first launch writes the file `eval` is turned on in.
         app, _, _, _ = heavy.started(told.exe, told.identifier, spaces, trace=False)
         heavy.ended(app)
         heavy.switch.allow_eval(told.identifier)
@@ -179,7 +171,6 @@ def main() -> int:
     print()
     print("FAILED: " + "; ".join(failures) if failures else "all good")
     return 1 if failures else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

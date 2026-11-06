@@ -56,9 +56,7 @@ SPACE = "Terminal probe"
 
 failures: list[str] = []
 
-
 def borrowed(name: str, file: str):
-    """Another drive's helpers, read from its file: the names have dashes in them."""
 
     spec = importlib.util.spec_from_file_location(name, HERE / file)
     if spec is None or spec.loader is None:
@@ -67,13 +65,10 @@ def borrowed(name: str, file: str):
     spec.loader.exec_module(module)
     return module
 
-
 tabs = borrowed("tabs", "new-tabs-probe.py")
-
 
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 
 def check(ok: bool, words: str) -> None:
     if ok:
@@ -82,9 +77,7 @@ def check(ok: bool, words: str) -> None:
         failures.append(words)
         say(f"FAIL {words}")
 
-
 class Entry(ctypes.Structure):
-    """`PROCESSENTRY32W`."""
 
     _fields_ = [
         ("dwSize", wintypes.DWORD),
@@ -99,9 +92,7 @@ class Entry(ctypes.Structure):
         ("szExeFile", ctypes.c_wchar * 260),
     ]
 
-
 def processes() -> list[tuple[int, int, str]]:
-    """Every process, with its parent and its name, from the toolhelp snapshot."""
 
     kernel = ctypes.WinDLL("kernel32", use_last_error=True)
     kernel.CreateToolhelp32Snapshot.restype = wintypes.HANDLE
@@ -116,13 +107,9 @@ def processes() -> list[tuple[int, int, str]]:
     kernel.CloseHandle(snapshot)
     return found
 
-
-#: What a terminal leaves behind if it leaves anything: the shells and their consoles.
 SHELLS = {"cmd.exe", "powershell.exe", "pwsh.exe", "conhost.exe", "openconsole.exe", "ping.exe"}
 
-
 def shells_of(pid: int) -> list[tuple[int, str]]:
-    """The shells and consoles below the app, however deep."""
 
     listed = processes()
     below = {pid}
@@ -135,13 +122,10 @@ def shells_of(pid: int) -> list[tuple[int, str]]:
                 grew = True
     return [(one, name) for one, parent, name in listed if one in below and name in SHELLS]
 
-
 def alive(pid: int) -> bool:
     return any(one == pid for one, _parent, _name in processes())
 
-
 class Window:
-    """The app's window, through `eval`."""
 
     def __init__(self, port: int, secret: str) -> None:
         self.port = port
@@ -169,7 +153,6 @@ class Window:
             return []
 
     def typed(self, words: str) -> None:
-        """Through xterm.js's own input, as the keyboard's text arrives."""
 
         self.run(
             "(() => { const field = document.querySelector('.xterm-helper-textarea'); "
@@ -178,8 +161,6 @@ class Window:
         )
 
     def chord(self, key: str, code: str, key_code: int) -> None:
-        """Ctrl and a key, pressed where the terminal has the keyboard, with the key code
-        a real keyboard gives - which xterm.js reads a control character off."""
 
         self.run(
             "(() => { const field = document.querySelector('.xterm-helper-textarea'); "
@@ -206,10 +187,7 @@ class Window:
         said = self.run("JSON.stringify(nib.workspace.tabs.map((one) => one.id))")
         return json.loads(said) if isinstance(said, str) else []
 
-
 def paged(window, key: str, code: int, times: int) -> None:
-    """Shift and a paging key, pressed where the terminal has the keyboard: xterm.js's own
-    way through its scrollback."""
 
     window.run(
         "(() => { const field = document.querySelector('.xterm-helper-textarea'); "
@@ -220,20 +198,14 @@ def paged(window, key: str, code: int, times: int) -> None:
     )
     time.sleep(0.5)
 
-
 def above(window) -> list[str]:
-    """The rows at the top of the terminal's scrollback, where a restart on Windows puts
-    what the screen had (see `restoredAbove` in lib/terminal/history.ts): paged up to the
-    top, read, and paged back down to the prompt."""
 
     paged(window, "PageUp", 33, 20)
     rows = window.rows()
     paged(window, "PageDown", 34, 20)
     return rows
 
-
 def until(ask, seconds: float = 20.0, every: float = 0.25):
-    """The first answer `ask` gives that is truthy, or its last one."""
 
     end = time.perf_counter() + seconds
     got = ask()
@@ -242,12 +214,9 @@ def until(ask, seconds: float = 20.0, every: float = 0.25):
         got = ask()
     return got
 
-
 def main() -> int:
     if sys.platform != "win32":
         raise SystemExit("this probe is Windows only")
-    # The menus say what is chosen with a tick, which a Windows console's own code page
-    # has no character for.
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(errors="replace")
 
@@ -269,8 +238,6 @@ def main() -> int:
     tabs.wipe(args.identifier)
     environment = {**os.environ, "NIB_SPACES_DIR": str(spaces)}
 
-    # Twice: the first launch writes the file `eval` is turned on in, and the second is the
-    # one that answers; see new-tabs-probe.py.
     first = run_probe(exe, env=environment)
     was, _ = tabs.endpoint(args.identifier, 150)
     tabs.allow_eval(args.identifier)
@@ -288,7 +255,6 @@ def main() -> int:
         until(lambda: window.run("1 + 1") == 2, 30)
         say(f"window 0x{hwnd:X}, pid {app.pid}, endpoint {port}")
 
-        # -- Command Prompt -------------------------------------------------------
         cmd = window.open("cmd", "Command Prompt", "probe-cmd")
         say(f"command prompt tab {cmd}")
         prompt = until(lambda: any(row.endswith(">") for row in window.rows()), 30)
@@ -298,7 +264,6 @@ def main() -> int:
         answered = until(lambda: "hi" in window.rows(), 20)
         check(bool(answered), "echo hi comes back as a line of its own in Command Prompt")
 
-        # The folder a restart would put it back in follows a cd.
         start = window.spec(cmd).get("folder")
         window.typed("cd inside\r")
         moved = until(lambda: window.spec(cmd).get("folder") != start, 10)
@@ -307,7 +272,6 @@ def main() -> int:
             f"cd is said back, and the tab's folder follows it ({window.spec(cmd).get('folder')})",
         )
 
-        # Busy while something runs, and not once Ctrl+C has stopped it.
         pty = f"{cmd}-1"
         window.typed("ping -n 30 127.0.0.1\r")
         time.sleep(1.5)
@@ -316,12 +280,10 @@ def main() -> int:
         idle = until(lambda: window.invoke("pty_busy", {"id": pty}) is False, 10)
         check(bool(idle), "Ctrl+C stops it, and the shell is idle again")
 
-        # Ctrl+W is the shell's: the tab stays.
         window.chord("w", "KeyW", 87)
         time.sleep(0.5)
         check(cmd in window.open_tabs(), "Ctrl+W in a terminal is the shell's and closes nothing")
 
-        # A right click is the terminal's own menu.
         window.run(
             "(() => { const screen = document.querySelector('.xterm-screen'); const box = screen.getBoundingClientRect(); "
             "screen.dispatchEvent(new MouseEvent('contextmenu', { clientX: box.left + 40, clientY: box.top + 40, button: 2, bubbles: true, cancelable: true })); "
@@ -344,7 +306,6 @@ def main() -> int:
         )
         time.sleep(0.4)
 
-        # A row of the file list dropped on it is its path at the prompt, quoted for cmd.
         note = str(spaces / SPACE / "A note.md")
         window.run(
             "(() => { const transfer = new DataTransfer(); "
@@ -353,12 +314,9 @@ def main() -> int:
             "host.dispatchEvent(new DragEvent('drop', { dataTransfer: transfer, clientX: box.left + box.width / 2, clientY: box.top + box.height / 2, bubbles: true, cancelable: true })); "
             "return true })()"
         )
-        # Compared without spaces, since a long line wraps and a row's trailing space is
-        # not part of what the screen reads back.
         wanted = f'"{note}"'.replace(" ", "")
         typed_path = until(lambda: wanted in "".join(window.rows()).replace(" ", ""), 10)
         check(bool(typed_path), "a row dropped on the terminal is its quoted path at the prompt")
-        # Escape clears Command Prompt's line again.
         window.typed("\x1b")
         time.sleep(0.4)
 
@@ -369,8 +327,6 @@ def main() -> int:
         before = shells_of(app.pid)
         say(f"running below the app: {before}")
 
-        # Ctrl+T is both the app's and the shell's: the first press asks which, and New tab
-        # is a new tab whose cards have the terminal's. See lib/terminal/two-ways.ts.
         window.chord("t", "KeyT", 84)
         asked = until(
             lambda: window.run(
@@ -400,8 +356,6 @@ def main() -> int:
         window.run("(() => { nib.workspace.close(nib.workspace.activeTabId); return true })()")
         time.sleep(0.5)
 
-        # The plus is the same new tab, and the chevron on its terminal card lists the
-        # other shells, in a menu at the card.
         window.run("(() => { document.querySelector('.strip button.new').click(); return true })()")
         until(lambda: window.run("!!document.querySelector('[data-new-here] [data-more]')") is True, 5)
         time.sleep(0.3)
@@ -425,7 +379,6 @@ def main() -> int:
         window.run("(() => { nib.workspace.close(nib.workspace.activeTabId); return true })()")
         time.sleep(0.4)
 
-        # -- PowerShell -----------------------------------------------------------
         shells = window.invoke("terminal_shells", {})
         ids = [one.get("id") for one in shells] if isinstance(shells, list) else []
         say(f"shells found: {ids}")
@@ -465,19 +418,13 @@ def main() -> int:
         tabs.shoot(app.pid, shoot)
         say(f"photographed {shoot}")
 
-        # `exit` closes its own tab.
         window.typed("exit\r")
         gone = until(lambda: power not in window.open_tabs(), 15)
         check(bool(gone), "exit in PowerShell closes its own tab")
 
-        # Quitting takes every shell with it, without a question, and the next launch
-        # puts the terminal back: its shell, the folder it was last in, its last lines,
-        # and a fresh prompt under them.
-        # Escape first, which is Command Prompt's way of clearing the ^W left on the line.
         window.typed("\x1becho nib-before-restart\r")
         until(lambda: "nib-before-restart" in window.rows(), 10)
         running = shells_of(app.pid)
-        # The last lines are written down once the output has rested.
         time.sleep(3.0)
         check(close_app(app), "the window closes with a shell running in it, asking nothing")
         ended = until(lambda: not any(alive(pid) for pid, _name in running), 15)
@@ -501,8 +448,6 @@ def main() -> int:
             check(folder.endswith("inside"), f"in the folder it was last in ({folder})")
             again = until(lambda: any(row.endswith("inside>") for row in window.rows()), 30)
             check(bool(again), "with a fresh shell at its prompt there")
-            # Above the screen, on Windows, with the line saying when as its first row; see
-            # `restoredAbove` in lib/terminal/history.ts and terminal-restore-probe.py.
             first = window.rows()[:1]
             check(bool(first) and first[0].startswith("Restored "), "under a line saying when")
             check(
@@ -533,7 +478,6 @@ def main() -> int:
 
     print("every check passed")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

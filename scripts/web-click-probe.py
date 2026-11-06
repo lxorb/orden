@@ -1,43 +1,3 @@
-"""What each press on a link opens: inside a web tab's page, and on a website's row in
-the file list. Windows only.
-
-Emil, 2026-09-30: *"Ctrl + click to open a new web page doesn't work."* Chrome's rule is
-the one held here, and every press of it is made and checked:
-
-    press        a link         target=_blank   a script's own link
-    plain        this tab       a tab in front  this tab
-    Ctrl         a tab behind   a tab behind    this tab
-    Ctrl+Shift   a tab in front a tab in front  this tab
-    middle       a tab behind   a tab behind    nothing
-
-A script's own link is a `span` whose click handler sets `location`: Chrome opens no tab
-for one, whatever is held, because the page navigates itself and no link was followed.
-A tab behind is beside the page and not in front; a tab in front is beside it and in
-front. Anything else - no tab, a tab on the wrong side, the page leaving as well as a tab
-arriving - fails the run.
-
-**Pressed in the page, not on the screen.** Each press is the engine's own devtools
-protocol (`Input.dispatchMouseEvent`, with its `modifiers`) on the probe's own page, which
-is a trusted press in that page with the keys it names held - and no key held on the
-machine and no pointer moved. So what is checked is what the page saw, which is what a
-real hand gives it too: the press's own modifiers, not the keyboard's.
-
-**The file list, too.** In case "a new web page" meant a website's row: Ctrl+click,
-Ctrl+Shift+click and the middle button on a `.url` in the file list open it in a tab
-behind, in front, and behind.
-
-    pnpm --dir apps/desktop tauri build --no-bundle \\
-      --config '{"identifier":"ch.emilvinu.nib.probe.<name>","version":"99.0.0",
-                 "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-    python scripts/web-click-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
-      --identifier ch.emilvinu.nib.probe.<name>
-
-`run_probe` in scripts/probe_app.py starts it off the screen and without the keyboard,
-and ends the run if any of it is ever in view. No key is pressed in a page here: a key
-Orden answers from inside a page hands the keyboard back to the window, which is what
-puts a probe in front of somebody; see the page-first step of web-page-probe.py.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -68,12 +28,8 @@ SPACE = "Click probe"
 NOTE = "Idea"
 SITE = "Site"
 
-#: The devtools port for the probe's own process, which is how a press is made inside a
-#: page without a mouse. Each engine process picks its own and writes it beside its data.
 ENGINE_ARGS = "--remote-debugging-port=0"
 
-#: The page every press is made on: one link of each kind, each a block big enough to
-#: aim at the middle of.
 LINKS = """<!doctype html>
 <title>Links</title>
 <body style="margin:0;font:16px system-ui">
@@ -83,7 +39,6 @@ LINKS = """<!doctype html>
 </body>
 """
 
-#: The DOM's buttons, and the protocol's modifier bits: Alt 1, Ctrl 2, Meta 4, Shift 8.
 PRESSES: dict[str, tuple[str, int]] = {
     "plain": ("left", 0),
     "ctrl": ("left", 2),
@@ -91,7 +46,6 @@ PRESSES: dict[str, tuple[str, int]] = {
     "middle": ("middle", 0),
 }
 
-#: Chrome's answer to each press on each link; see the top of this file.
 EXPECTED: dict[tuple[str, str], str] = {
     ("link", "plain"): "this tab",
     ("link", "ctrl"): "behind",
@@ -107,18 +61,13 @@ EXPECTED: dict[tuple[str, str], str] = {
     ("script", "middle"): "nothing",
 }
 
-#: How long a press has to show what it did. One that should do nothing is given all of
-#: it, so a tab arriving late is still seen.
 SETTLE = 4.0
-
 
 def target(name: str) -> str:
     return f"<!doctype html><title>{name}</title><h1>{name}</h1>"
 
-
 class Server(http.server.ThreadingHTTPServer):
     daemon_threads = True
-
 
 def serve(port: int) -> None:
     class Handler(http.server.BaseHTTPRequestHandler):
@@ -137,7 +86,6 @@ def serve(port: int) -> None:
     made = Server(("127.0.0.1", port), Handler)
     threading.Thread(target=made.serve_forever, daemon=True).start()
 
-
 def free_port() -> int:
     for port in range(PORT_FROM, PORT_TO + 1):
         with socket.socket() as sock:
@@ -148,10 +96,7 @@ def free_port() -> int:
             return port
     raise SystemExit(f"no port free in {PORT_FROM}-{PORT_TO}")
 
-
 def space(port: int) -> pathlib.Path:
-    """A spaces root of this probe's own, never anybody's Documents/Nib: a note to open
-    the space on, and a website for the file list's rows."""
 
     root = pathlib.Path(tempfile.mkdtemp(prefix="nib-click-probe-"))
     os.environ["NIB_SPACES_DIR"] = str(root)
@@ -163,17 +108,14 @@ def space(port: int) -> pathlib.Path:
     (made / f"{SITE}.url").write_text(shortcut, "utf-8")
     return made
 
-
 def config_dir(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["APPDATA"]) / identifier
-
 
 def wipe(identifier: str) -> None:
     if "probe" not in identifier:
         raise SystemExit(f"{identifier} is not a probe identifier: refusing to delete its folders")
     for base in (os.environ["APPDATA"], os.environ["LOCALAPPDATA"]):
         shutil.rmtree(pathlib.Path(base) / identifier, ignore_errors=True)
-
 
 def endpoint(identifier: str, unlike: int = 0) -> tuple[int, str, int]:
     path = config_dir(identifier) / "automation.json"
@@ -188,13 +130,11 @@ def endpoint(identifier: str, unlike: int = 0) -> tuple[int, str, int]:
         time.sleep(0.2)
     raise SystemExit(f"the app never wrote {path}; close any Orden running under this identifier")
 
-
 def allow_eval(identifier: str) -> None:
     path = config_dir(identifier) / "automation.json"
     said = json.loads(path.read_text(encoding="utf-8-sig"))
     said["eval"] = True
     path.write_bytes(json.dumps(said).encode("utf-8"))
-
 
 class App:
     def __init__(self, port: int, secret: str) -> None:
@@ -228,9 +168,7 @@ class App:
                 return value
         return value
 
-
 def debug_ports(identifier: str) -> list[int]:
-    """The devtools port of every engine process the app started."""
 
     ports: list[int] = []
     for base in (os.environ["APPDATA"], os.environ["LOCALAPPDATA"]):
@@ -241,9 +179,7 @@ def debug_ports(identifier: str) -> list[int]:
                 continue
     return ports
 
-
 def page_socket(identifier: str, ending: str) -> str | None:
-    """The devtools socket of the page whose address ends in `ending`."""
 
     for port in debug_ports(identifier):
         try:
@@ -256,9 +192,7 @@ def page_socket(identifier: str, ending: str) -> str | None:
                 return str(one["webSocketDebuggerUrl"])
     return None
 
-
 class Devtools:
-    """The least of a WebSocket that speaks the devtools protocol to one page."""
 
     def __init__(self, url: str) -> None:
         rest = url.removeprefix("ws://")
@@ -317,7 +251,6 @@ class Devtools:
         return result.get("result", {}).get("value") if isinstance(result, dict) else None
 
     def click(self, x: float, y: float, button: str, modifiers: int) -> None:
-        """One press and its release at `x`, `y` in the page, with `modifiers` held."""
 
         held = {"left": 1, "middle": 4}[button]
         at = {"x": x, "y": y, "modifiers": modifiers}
@@ -328,7 +261,6 @@ class Devtools:
 
     def close(self) -> None:
         self.sock.close()
-
 
 def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subprocess.Popen[bytes], App]:
     env = {**os.environ, "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": ENGINE_ARGS}
@@ -344,8 +276,6 @@ def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subproc
     time.sleep(1.5)
     return running, App(port, secret)
 
-
-#: The strip: every tab's id and address or path, and which one is in front.
 STRIP = r"""
 (() => {
   const ws = nib.workspace
@@ -356,7 +286,6 @@ STRIP = r"""
 })()
 """
 
-#: Every web tab closed, and the page of links opened as a tab of its own, in front.
 FRESH = r"""
 (() => {
   const ws = nib.workspace
@@ -365,14 +294,11 @@ FRESH = r"""
 })()
 """
 
-
 def strip(app: App) -> dict[str, object]:
     said = app.ask(STRIP)
     return said if isinstance(said, dict) else {"tabs": [], "front": None}
 
-
 def reached(identifier: str, ending: str, seconds: float = 30) -> Devtools | None:
-    """The page at `ending`, loaded, as a socket to press in."""
 
     until = time.perf_counter() + seconds
     while time.perf_counter() < until:
@@ -385,10 +311,7 @@ def reached(identifier: str, ending: str, seconds: float = 30) -> Devtools | Non
         time.sleep(0.3)
     return None
 
-
 def outcome(before: dict[str, object], after: dict[str, object], opener: str, left: bool, to: str) -> str:
-    """What a press did, in the table's words: where a tab for `to` went, and whether the
-    page itself left for it."""
 
     had = {str(one["id"]) for one in before["tabs"]}  # type: ignore[index, union-attr]
     tabs = after["tabs"]  # type: ignore[index]
@@ -404,9 +327,7 @@ def outcome(before: dict[str, object], after: dict[str, object], opener: str, le
         said.append("this tab")
     return " + ".join(said) or "nothing"
 
-
 def press_in_page(app: App, identifier: str, base: str, link: str, press: str) -> str:
-    """One press on one link in a fresh page, and what it did."""
 
     mark = f"{link}-{press}".replace("+", "-")
     ending = f"/links?{mark}"
@@ -415,8 +336,6 @@ def press_in_page(app: App, identifier: str, base: str, link: str, press: str) -
     if tools is None or not isinstance(opener, str):
         return "no page to press in"
     try:
-        # The page is found as soon as its address is, which can be before its body has
-        # the link: asked again until it does.
         rect = None
         until = time.perf_counter() + 10
         while rect is None and time.perf_counter() < until:
@@ -443,8 +362,6 @@ def press_in_page(app: App, identifier: str, base: str, link: str, press: str) -
             except OSError:
                 left = False
             said = outcome(before, strip(app), opener, left, to)
-            # A press that did what it should has nothing more to show; one that did
-            # nothing, or should do nothing, is watched to the end.
             if said != "nothing" and said == expected:
                 time.sleep(0.8)
                 left = tools.value("location.pathname") == to
@@ -454,9 +371,6 @@ def press_in_page(app: App, identifier: str, base: str, link: str, press: str) -
     finally:
         tools.close()
 
-
-#: A press on the file list's row for the website, made as a click on it with the
-#: modifiers held, and where the website's tab then is.
 ROW = r"""
 (async () => {
   const ws = nib.workspace
@@ -494,7 +408,6 @@ ROW_PRESSES: dict[str, tuple[dict[str, object], str]] = {
     "middle": ({"button": 1}, "behind"),
 }
 
-
 def press_on_row(app: App, press: str) -> str:
     init, _ = ROW_PRESSES[press]
     code = (
@@ -508,7 +421,6 @@ def press_on_row(app: App, press: str) -> str:
     if not said.get("tab"):
         return "nothing"
     return "front" if said.get("front") else "behind"
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -562,7 +474,6 @@ def main() -> int:
     for one in wrong:
         print(f"WRONG: {one}")
     return 1 if wrong else 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

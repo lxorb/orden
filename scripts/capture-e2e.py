@@ -1,29 +1,3 @@
-"""`nib screenshot` against two nibs running at once.
-
-What it proves, and each of the three was wrong before:
-
-    the picture is of the window that answered, not of whichever process Windows
-      listed first. The two windows are given different sizes, and each picture comes
-      back the size of its own window - which no picture of the other could be
-    the picture is the window drawing itself and not a copy of the screen: the same
-      rectangle, copied off the screen, is a different picture
-    nothing is raised or focused - the window in front is the same one before and
-      after
-
-Two nibs means two identifiers: the single instance plugin hands a second copy of the
-same app over to the first, and rightly. So this wants two probe builds, each with an
-identifier of its own, and it is told where they are:
-
-    python scripts/capture-e2e.py --app "<path to probe a.exe>" --app "<path to probe b.exe>"
-
-Every app is launched with `NIB_SPACES_DIR` pointing inside `target/`, so nothing here
-goes anywhere near anybody's notes.
-
-Windows only: it is the platform whose capture this is about.
-
-Never an exe that would update itself; see scripts/probe_app.py.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -48,38 +22,23 @@ SHOTS = WORK / "shots"
 
 failures: list[str] = []
 
-
 def say(what: str) -> None:
     print(f"  {what}", flush=True)
-
 
 def wrong(what: str) -> None:
     failures.append(what)
     print(f"  FAIL {what}", flush=True)
 
-
-# ── the window in front, and where a window is ──────────────────────────────
-
 user32 = ctypes.windll.user32 if sys.platform == "win32" else None
-
 
 class Rect(ctypes.Structure):
     _fields_ = [("left", ctypes.c_long), ("top", ctypes.c_long), ("right", ctypes.c_long), ("bottom", ctypes.c_long)]
 
-
 def in_front() -> int:
-    """Which window has the keyboard. Nothing here may change it."""
     assert user32
     return int(user32.GetForegroundWindow())
 
-
 def windows_of(pid: int) -> list[tuple[int, int, int, int, int]]:
-    """The sizeable visible windows of one process: handle, x, y, width, height.
-
-    The same filter the capture script uses, and for the same reason: a Tauri process
-    owns more than one top-level window - the single instance plugin keeps a 13 by 13
-    listener with a title of its own - so size is what decides among them.
-    """
     assert user32
     found: list[tuple[int, int, int, int, int]] = []
 
@@ -102,15 +61,7 @@ def windows_of(pid: int) -> list[tuple[int, int, int, int, int]]:
     user32.EnumWindows(each, None)
     return sorted(found, key=lambda one: -one[3])
 
-
 def off_the_screen(hwnd: int, out: pathlib.Path) -> bool:
-    """The same rectangle copied off the screen, which is what the capture used to do.
-
-    True where it came out as something other than the window: a menu in front of it, a
-    notification over the corner, or - as on a machine with no desk in front of it at all
-    - one flat colour. Either way it is not a picture of the app, which is the whole
-    reason the capture asks the window to draw itself instead.
-    """
     ran = subprocess.run(
         [
             shutil.which("powershell") or "powershell",
@@ -139,24 +90,16 @@ def off_the_screen(hwnd: int, out: pathlib.Path) -> bool:
 
     return out.exists() and ran.returncode == 0
 
-
-# ── the app, and the endpoint it writes ─────────────────────────────────────
-
-
 def endpoint_of(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["APPDATA"]) / identifier / "automation.json"
 
-
 def start(app: pathlib.Path, label: str) -> subprocess.Popen[bytes]:
-    """One app, running, with its notes somewhere nobody keeps notes."""
     spaces = WORK / label / "spaces"
     spaces.mkdir(parents=True, exist_ok=True)
 
     return run_probe(app, env={**os.environ, "NIB_SPACES_DIR": str(spaces)})
 
-
 def waited_for(path: pathlib.Path, patience: float = 60) -> dict:
-    """The endpoint file this launch wrote, once it is there and holds a port."""
     until = time.monotonic() + patience
     while time.monotonic() < until:
         try:
@@ -169,9 +112,7 @@ def waited_for(path: pathlib.Path, patience: float = 60) -> dict:
 
     raise SystemExit(f"no endpoint at {path} after {patience:.0f}s")
 
-
 def asked(held: dict, verb: str, args: dict | None = None) -> dict:
-    """One request to one app, the way `nib` makes it."""
     body = json.dumps({"verb": verb, "args": args or {}, "rest": []}).encode()
     request = urllib.request.Request(
         f"http://127.0.0.1:{held['port']}/",
@@ -185,12 +126,7 @@ def asked(held: dict, verb: str, args: dict | None = None) -> dict:
     with urllib.request.urlopen(request, timeout=20) as answer:
         return json.loads(answer.read().decode())
 
-
-# ── the picture ─────────────────────────────────────────────────────────────
-
-
 def capture(pid: int, out: pathlib.Path) -> str:
-    """The capture script, asked for one process's window."""
     ran = subprocess.run(
         [
             shutil.which("powershell") or "powershell",
@@ -215,20 +151,13 @@ def capture(pid: int, out: pathlib.Path) -> str:
 
     return ran.stdout.strip()
 
-
 def size_of(png: pathlib.Path) -> tuple[int, int]:
-    """How big a PNG is, out of its own header rather than a library."""
     held = png.read_bytes()
     wide, tall = struct.unpack(">II", held[16:24])
     return wide, tall
 
-
 def ink_of(png: pathlib.Path) -> int:
-    """Something that differs between two pictures of two different windows. The bytes
-    themselves: a PNG of the same window twice is near enough the same file, and of two
-    windows showing two notes is not."""
     return hash(png.read_bytes())
-
 
 def drive(apps: list[pathlib.Path], given: list[str]) -> None:
     running: list[tuple[str, subprocess.Popen[bytes], dict]] = []
@@ -250,10 +179,6 @@ def drive(apps: list[pathlib.Path], given: list[str]) -> None:
 
         time.sleep(2.5)
 
-        # One window over the other, and each a size of its own. Over, because that is
-        # the case the old capture got wrong - it copied the screen, and the screen there
-        # is the other app; a size of its own, because that is what a picture of the wrong
-        # window cannot fake.
         first = windows_of(running[0][1].pid)
         second = windows_of(running[1][1].pid)
         if not first or not second:
@@ -295,9 +220,6 @@ def drive(apps: list[pathlib.Path], given: list[str]) -> None:
         elif len(pictures) == 2:
             say("the two pictures are two different windows, by their own two shapes")
 
-        # And the picture is the window rather than the screen. The same rectangle off
-        # the screen is a different picture: what is in front of a window is not what a
-        # screenshot of the app should hold.
         screen = SHOTS / "a-off-the-screen.png"
         if not off_the_screen(first[0][0], screen):
             say("the screen could not be copied here, which is answer enough on its own")
@@ -308,11 +230,8 @@ def drive(apps: list[pathlib.Path], given: list[str]) -> None:
 
     finally:
         for _label, process, _held in running:
-            # Only the ones this drive started. Never by name: somebody's own Orden may be
-            # running, and it is not this drive's to close.
             process.terminate()
         time.sleep(1.0)
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -338,7 +257,6 @@ def main() -> int:
 
     print("\nthe picture is of the window that answered, and nothing was raised to take it")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

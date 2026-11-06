@@ -1,22 +1,11 @@
-/* The Orden mark, once, for every script that draws it: four bars locking into a
-   square O, on a tile washed in the Glass default (light blue top left, soft pink
-   bottom right, the same two colours the theme opens on).
-
-   Everything here is a function of a point on a 1024 grid, so any size is drawn
-   straight from the shapes rather than scaled from a bitmap: a 16 px
-   icon is as sharp as the 1024 master. Dependency-free so the repo stays clean. */
-
 import { deflateSync } from 'node:zlib'
 
 export const GRID = 1024
 
-/** The Glass default pair (packages/themes, light scheme) and the ink on it. */
 export const SKY = [0xbf, 0xdd, 0xfb]
 export const BLUSH = [0xe7, 0xc6, 0xec]
 export const INK = [0x1c, 0x22, 0x33]
 
-/** The bars on a tile that fills the grid: 136 thick, 22 apart, a 528 square,
-   each bar running on into the next corner so the four turn like a lock. */
 const T = 136
 const GAP = 22
 const A = 248
@@ -37,7 +26,6 @@ function inRoundedRect(x, y, [x0, y0, x1, y1]) {
   return (x - cx) ** 2 + (y - cy) ** 2 <= R * R
 }
 
-/** Whether a point of a tile `size` wide, centred on the grid, falls on a bar. */
 export function onBars(x, y, size = GRID) {
   const k = GRID / size
   const gx = GRID / 2 + (x - GRID / 2) * k
@@ -45,7 +33,6 @@ export function onBars(x, y, size = GRID) {
   return BARS.some((bar) => inRoundedRect(gx, gy, bar))
 }
 
-/** Apple's continuous-corner tile, near enough: a superellipse of degree five. */
 export function inSquircle(x, y, size = GRID) {
   const a = size / 2
   const dx = Math.abs(x - GRID / 2) / a
@@ -55,8 +42,6 @@ export function inSquircle(x, y, size = GRID) {
 
 const mix = (p, q, t) => p.map((v, i) => v + (q[i] - v) * t)
 
-/** The wash: a diagonal blend with a faint glow of each colour in its own corner,
-   measured on the tile so a smaller tile carries the same picture. */
 export function wash(x, y, size = GRID) {
   const o = (GRID - size) / 2
   const u = (x - o) / size
@@ -92,8 +77,6 @@ function chunk(type, data) {
   return Buffer.concat([length, body, crc])
 }
 
-/** The PNG around rows of samples: `type` is PNG's colour type, `palette` and
-   `alpha` the PLTE and tRNS of an indexed picture. */
 function encode(size, type, raw, palette, alpha) {
   const ihdr = Buffer.alloc(13)
   ihdr.writeUInt32BE(size, 0)
@@ -109,11 +92,6 @@ function encode(size, type, raw, palette, alpha) {
   ])
 }
 
-/** The same picture with a palette of at most 256 entries, a byte a pixel instead of
-   four. The wash runs along one line between its two colours and coverage comes in
-   sixteenths, so few colours are ever drawn. Each channel is rounded to a step of
-   three (more where an edge still brings too many): bands a third of what the eye
-   tells apart on a pastel, and long runs of one index for deflate to fold up. */
 function indexed(size, rgba) {
   for (let step = 3; ; step++) {
     const round = (v) => Math.min(255, Math.round(v / step) * step)
@@ -149,10 +127,6 @@ function indexed(size, rgba) {
 
 const SS = 4
 
-/** Draws `at(x, y)` (a colour on the 1024 grid, or null for nothing) into a
-   square PNG `size` wide, supersampled four by four. `grey` writes grey plus
-   alpha and expects `at` to return one number; `small` writes the palette form,
-   for the files a download carries. */
 export function png(size, at, { grey = false, small = false } = {}) {
   const rgba = Buffer.alloc(size * size * 4)
   for (let y = 0; y < size; y++) {

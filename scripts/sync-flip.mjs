@@ -1,39 +1,4 @@
 #!/usr/bin/env node
-/** Accounts moved to sync v2, or back, through the admin's routes
- *  (`/v2/admin/sync-version` and `/v2/admin/sync-rollout`, services/sync/src/sync2/admin.ts).
- *
- *  Usage, one account:
- *
- *    node scripts/sync-flip.mjs status someone@example.com [--min 0.14.0]
- *    node scripts/sync-flip.mjs to2 someone@example.com --min 0.14.0 [--allow <id>]... [--dry]
- *    node scripts/sync-flip.mjs to1 someone@example.com [--min 0.14.0]
- *
- *  Everybody (services/sync/src/sync2/rollout.ts):
- *
- *    node scripts/sync-flip.mjs rollout                 the switch, the counts, the last moves
- *    node scripts/sync-flip.mjs rollout off             nothing moves by itself
- *    node scripts/sync-flip.mjs rollout new             new accounts start on v2
- *    node scripts/sync-flip.mjs rollout all --min 0.13.1-573
- *                                                       and v1 accounts move at a device's hello
- *                                                       once every live device runs >= min
- *    node scripts/sync-flip.mjs everyone-to1 [--dry]    every v2 account back to 1, switch off
- *
- *  Setting the switch moves nobody by itself, and setting it back moves nobody back:
- *  `everyone-to1` is the way back for all.
- *
- *  `to2` is refused while a device of the account whose session is live runs an app
- *  older than `--min`, or a live session has no device behind it (an app from before
- *  the hub, or the Even plugin, which stays on v1). The refusal names each one; look at
- *  it, and name the ones that may stay behind with `--allow`. `to1` is the rollback and
- *  is never refused; it names the devices too old to roll back cleanly.
- *
- *  The token is the admin's session: `NIB_TOKEN=...`, or `--sign-in you@example.com`,
- *  which asks for the mailed code here, and signs that session out again at the end.
- *  A program token cannot reach the route. `NIB_API` points somewhere else for a test
- *  (`http://127.0.0.1:8787` for `wrangler dev`); it defaults to the service.
- *
- *  A device notices at its next launch: the app reads the version from `/v1/me` as it
- *  starts. See docs/sync-v2.md section 11. */
 
 import { createInterface } from 'node:readline/promises'
 
@@ -63,8 +28,6 @@ async function ask(path, token, body) {
   return { status: response.status, json }
 }
 
-/** A session for the admin, by the mailed code (and the second factor, if the account
- *  has one). */
 async function signIn(email) {
   const prompt = createInterface({ input: process.stdin, output: process.stdout })
   try {
@@ -103,7 +66,6 @@ function showRollout(json) {
   }
 }
 
-/** The switch for everybody: read, set, or every account back. */
 async function rollout(what, mode, flags, token) {
   if (what === 'everyone-to1') {
     return await ask('/v2/admin/sync-rollout/back', token, {
@@ -159,7 +121,6 @@ async function main() {
     else words.push(one)
   }
   const [what, email] = words
-  // `rollout`'s second word is a mode, not an address.
   const mode = email
   const everybody = what === 'rollout' || what === 'everyone-to1'
   if (

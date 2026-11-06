@@ -44,16 +44,11 @@ IDENTIFIER = "ch.emilvinu.nib.probe.chats-notify"
 GROUP = "nib.notices"
 CHAT = "c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e"
 
-#: How long the app has to come up and open its page's debugging port.
 PATIENCE = 90.0
-
 
 def say(words: str) -> None:
     print(words, flush=True)
 
-
-#: The id's toasts in the action centre, one per line, or with `-Remove` every one of
-#: them taken off. Windows PowerShell 5.1 projects WinRT.
 HISTORY_PS1 = r"""
 param([string]$Id, [switch]$Remove)
 $ErrorActionPreference = 'Stop'
@@ -66,17 +61,12 @@ foreach ($t in $history.GetHistory($Id)) {
 }
 """
 
-
 def history_script() -> pathlib.Path:
     path = pathlib.Path(tempfile.gettempdir()) / "nib-chat-notify-probe-history.ps1"
     path.write_text(HISTORY_PS1, encoding="utf-8")
     return path
 
-
 def history(remove: bool = False) -> list[list[str]]:
-    """The probe id's toasts in the action centre, each as group, tag, whether it was
-    shown without a banner, and its XML; or every one of them taken off. Raises where
-    PowerShell could not answer, so a failure to look is never read as nothing left."""
     done = subprocess.run(
         [
             "powershell.exe",
@@ -103,14 +93,12 @@ def history(remove: bool = False) -> list[list[str]]:
         if line.startswith("TOAST|")
     ]
 
-
 def register_id() -> None:
     import winreg
 
     key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, rf"Software\Classes\AppUserModelId\{IDENTIFIER}")
     winreg.SetValueEx(key, "DisplayName", 0, winreg.REG_SZ, "Orden probe")
     winreg.CloseKey(key)
-
 
 def unregister_id() -> None:
     import winreg
@@ -120,15 +108,12 @@ def unregister_id() -> None:
     except FileNotFoundError:
         pass
 
-
 def wipe_profile() -> None:
     for base in (os.environ.get("APPDATA"), os.environ.get("LOCALAPPDATA")):
         if base:
             shutil.rmtree(pathlib.Path(base) / IDENTIFIER, ignore_errors=True)
 
-
 def the_page() -> Session:
-    """The app's own page, once its browser has opened a debugging port."""
     profile = pathlib.Path(os.environ["LOCALAPPDATA"]) / IDENTIFIER
     deadline = time.monotonic() + PATIENCE
     while time.monotonic() < deadline:
@@ -143,9 +128,7 @@ def the_page() -> Session:
         time.sleep(1.0)
     raise RuntimeError("the app's page never opened a debugging port")
 
-
 def ask(page: Session, command: str, args: dict) -> object:
-    """A command through the page's own bridge, as the page asks it."""
     expression = (
         f"window.__TAURI_INTERNALS__.invoke({json.dumps(command)}, {json.dumps(args)})"
         ".then(() => 'ok', (error) => 'refused: ' + String(error))"
@@ -154,7 +137,6 @@ def ask(page: Session, command: str, args: dict) -> object:
         "Runtime.evaluate", {"expression": expression, "awaitPromise": True, "returnByValue": True}
     )
     return said.get("result", {}).get("value", said)
-
 
 def notice(words: str) -> dict:
     return {
@@ -169,11 +151,7 @@ def notice(words: str) -> dict:
         }
     }
 
-
 def setting() -> str:
-    """Whether Windows holds this id's toasts at all: `Enabled`, or why not. Somebody who
-    turned notifications off for every app (`DisabledForUser`) has a machine on which no
-    toast is ever held, and that is theirs to choose, never a probe's to change."""
     done = subprocess.run(
         [
             "powershell.exe",
@@ -196,13 +174,10 @@ def setting() -> str:
             return line[len("SETTING|") :]
     return "unknown"
 
-
 def ours() -> list[list[str]]:
     return [one for one in history() if one[0] == GROUP]
 
-
 def settled(wanted: int) -> list[list[str]]:
-    """The action centre once it holds `wanted` of ours, or after ten seconds."""
     deadline = time.monotonic() + 10
     found = ours()
     while len(found) != wanted and time.monotonic() < deadline:
@@ -210,10 +185,7 @@ def settled(wanted: int) -> list[list[str]]:
         found = ours()
     return found
 
-
 def held_checks(page: Session, app, failures: list[str]) -> None:
-    """What the action centre says: one toast per chat, as the crate wrote it, taken
-    back by the page and gone with the app."""
     found = settled(1)
     if len(found) != 1:
         failures.append(f"{len(found)} toasts of ours in the action centre, not one")
@@ -259,7 +231,6 @@ def held_checks(page: Session, app, failures: list[str]) -> None:
     else:
         say("gone with the app: none left")
 
-
 def main() -> int:
     if sys.platform != "win32":
         raise SystemExit("this probe is Windows only")
@@ -282,8 +253,6 @@ def main() -> int:
         app = run_probe(exe, env=environment)
         page = the_page()
 
-        # Asked the way the page asks: the toast's XML is read and the toast made by
-        # Windows before this answers, so a toast it would refuse is a refusal here.
         said = ask(page, "notice_show", notice("The figures are in"))
         if said != "ok":
             failures.append(f"the notice was not shown: {said}")
@@ -319,7 +288,6 @@ def main() -> int:
         say(f"WRONG: {one}")
     say("PASS" if not failures else "FAIL")
     return 1 if failures else 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

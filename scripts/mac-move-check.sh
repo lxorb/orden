@@ -1,9 +1,4 @@
 #!/bin/bash
-# The way out for a Mac's copy that cannot update itself: this build, started from a
-# disk image as somebody who never dragged it anywhere starts it, says it is stuck,
-# moves itself into Applications and comes back from there, no longer stuck. On a
-# runner that is nobody's machine, under an identifier of its own and with the updater
-# pointed nowhere. Usage: mac-move-check.sh <the built .app>
 set -u
 
 built="$1"

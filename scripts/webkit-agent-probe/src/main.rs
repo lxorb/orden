@@ -1,25 +1,3 @@
-//! A page nobody sees, on the system's engine of a Mac (`WKWebView`) and of Linux
-//! (`WebKitGTK`): every way the engine offers to have one, each measured the way the spike
-//! measured `WebView2` (docs/agent-native.md 3 and 12), with nothing of the app around it.
-//!
-//! The ways, each a page with a counter of animation frames, a 10 ms timer, its visibility
-//! and the events it saw:
-//!
-//! - `front`: a child webview on the window, in sight - what a tab in front gets.
-//! - `away`: a child webview outside the window's content, as `WebView2`'s agent tab is.
-//! - `away-none` (Mac): the same, then told `inactiveSchedulingPolicy = .none` (macOS 14),
-//!   through the configuration wry built it with.
-//! - `own-none` (Mac): a `WKWebView` made here with that policy in its configuration from
-//!   the start, outside the window's content.
-//! - `offscreen` (Linux): a `WebKitGTK` view in a `GtkOffscreenWindow`, which renders and
-//!   is mapped with no window on any screen.
-//! - `hidden`: a child webview the engine is told is hidden - the control.
-//!
-//! Then, on the pages out of sight: a picture (`takeSnapshot`, `webkit_web_view_get_snapshot`),
-//! a press from an isolated world (`WKContentWorld`, a script world) and whether the page
-//! can tell it from a person's (`isTrusted`), and on a Mac a press and a key as `NSEvent`s
-//! sent to the view itself, with whether the window was key or the app active before and
-//! after. Prints one JSON document and exits.
 
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -29,7 +7,6 @@ use tao::event::Event;
 use tao::event_loop::{ControlFlow, EventLoopBuilder};
 use tao::window::WindowBuilder;
 
-/// The page every way loads.
 const PAGE: &str = r#"<!doctype html><meta charset=utf-8><title>probe</title>
 <body style="margin:0;background:#ff00ff">
 <button id="b" style="position:absolute;left:20px;top:20px;width:200px;height:60px">Press</button>
@@ -46,22 +23,18 @@ window.m = function () {
 }
 </script>"#;
 
-/// What a press from an isolated world does, and what it can see of the page's world.
 #[cfg_attr(
     not(any(target_os = "macos", target_os = "linux")),
     allow(dead_code, reason = "the probe measures a Mac and Linux")
 )]
 const WORLD_PRESS: &str = "(function () { document.getElementById('b').click(); return JSON.stringify({ pageGlobal: typeof window.m, button: !!document.getElementById('b') }) })()";
 
-/// Where an out-of-sight page sits: as `WebView2`'s agent tab does.
 const AWAY: f64 = -10_000.0;
 const WIDTH: f64 = 1280.0;
 const HEIGHT: f64 = 800.0;
 
-/// Things measured, in the order they arrive.
 type Log = Arc<Mutex<Vec<Value>>>;
 
-/// One way of having a page, and what can be asked of it.
 struct Way {
     name: &'static str,
     notes: Log,
@@ -71,7 +44,6 @@ struct Way {
     picture: Option<Box<dyn Fn(Log)>>,
 }
 
-/// A JSON answer that may be a JSON string of a JSON document.
 fn unwrapped(said: &str) -> Value {
     match serde_json::from_str::<Value>(said) {
         Ok(Value::String(inner)) => serde_json::from_str(&inner).unwrap_or(Value::String(inner)),
@@ -84,7 +56,6 @@ fn push(log: &Log, value: Value) {
     log.lock().unwrap().push(value);
 }
 
-/// A page through wry, as a child of the window at `bounds`.
 fn wry_way(
     name: &'static str,
     window: &tao::window::Window,
@@ -125,7 +96,6 @@ fn wry_way(
     (way, view)
 }
 
-/// Frames and timer ticks a second between two samples, and the state at the second.
 fn rates(samples: &[Value]) -> Value {
     let (Some(first), Some(second)) = (samples.first(), samples.get(1)) else {
         return json!({ "error": "fewer than two samples", "samples": samples });
@@ -181,8 +151,6 @@ fn main() {
     ways.push(hidden);
     kept.push(Box::new(view));
 
-    // A second window, shown later and put in front: the reader's window behind
-    // somebody else's.
     let other = WindowBuilder::new()
         .with_title("in front")
         .with_inner_size(tao::dpi::LogicalSize::new(500.0, 400.0))
@@ -193,10 +161,8 @@ fn main() {
     let started = Instant::now();
     let mut done: Vec<&'static str> = Vec::new();
     let window_states = Log::default();
-    // Every way's samples, by phase.
     let mut sampled: Vec<(usize, &'static str, Log)> = Vec::new();
     event_loop.run(move |event, _, flow| {
-        // Linux's toolkit hands a page's answers back only while its loop turns.
         *flow = if cfg!(target_os = "linux") {
             ControlFlow::Poll
         } else {
@@ -428,8 +394,6 @@ mod platform {
         unsafe { web.takeSnapshotWithConfiguration_completionHandler(None, &done) };
     }
 
-    /// A press on the button and the letter a into the box, as events sent to the view
-    /// itself, never through the system's queue.
     fn native_input(web: &WKWebView, log: Log) {
         let view: &NSView = web;
         let Some(window) = view.window() else {
@@ -491,8 +455,6 @@ mod platform {
         );
     }
 
-    /// The press from the isolated world, the native events and the picture, on a page
-    /// through wry; and with `none`, the scheduling policy set on wry's configuration.
     pub fn extend(
         way: &mut Way,
         view: &Rc<wry::WebView>,
@@ -525,8 +487,6 @@ mod platform {
         way.picture = Some(Box::new(move |log| picture(&c.webview(), log)));
     }
 
-    /// A `WKWebView` of this probe's own, with the policy in its configuration from the
-    /// start, outside the window's content.
     pub fn own_ways(window: &tao::window::Window) -> Vec<(Way, Box<dyn std::any::Any>)> {
         use tao::platform::macos::WindowExtMacOS as _;
         let mtm = MainThreadMarker::new().expect("the main thread");
@@ -569,9 +529,6 @@ mod platform {
         ]
     }
 
-    /// A window of its own for the page, borderless, at (-10000, -10000) on no screen,
-    /// ordered behind every other window and never made key: whether a page can outlive
-    /// the reader's window being minimised.
     fn own_window(mtm: MainThreadMarker) -> (Way, Box<dyn std::any::Any>) {
         use objc2_app_kit::{NSBackingStoreType, NSWindow, NSWindowStyleMask};
         let configuration = unsafe { WKWebViewConfiguration::new(mtm) };
@@ -672,8 +629,6 @@ mod platform {
         static FIXED: std::cell::RefCell<Option<gtk::Fixed>> = const { std::cell::RefCell::new(None) };
     }
 
-    /// The window's one fixed container, which every child page is placed in, as Tauri
-    /// places a child webview.
     pub fn fixed(window: &tao::window::Window) -> gtk::Fixed {
         use tao::platform::unix::WindowExtUnix as _;
         FIXED.with_borrow_mut(|held| {
@@ -761,7 +716,6 @@ mod platform {
         scripted(way, &web);
     }
 
-    /// A page in an off-screen window: mapped, rendered, and on no screen.
     pub fn own_ways(_window: &tao::window::Window) -> Vec<(Way, Box<dyn std::any::Any>)> {
         let offscreen = gtk::OffscreenWindow::new();
         let web = webkit2gtk::WebView::new();

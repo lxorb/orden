@@ -1,39 +1,4 @@
 #!/usr/bin/env python3
-"""A web tab under Wayland, looked at: where its page is drawn, on every screen.
-
-Run by scripts/wayland-launch.sh with DRIVE=1, once Orden's window is up under the
-headless sway it started, and Orden started on this script's own page - a page of one
-colour edge to edge, so where it is drawn can be read off a picture of the screen.
-Every click is the compositor's own (scripts/wayland-pointer.py), so it lands on
-whatever is on top where it is, the way a reader's does. For every screen sway has (a
-portrait one at 1.77, one at 1, one at 1.75, one at 2):
-
-  - the window moved there, the page asked where the window put its hole (`eval`
-    through the app's own endpoint), and a picture of the screen taken (grim);
-  - the page's colour has to fill that hole and nothing else, to a pixel or two:
-    the report this came from had the site in the bottom half of the window, cut off,
-    and then over the tab strip (#387);
-  - the tab strip answers a click: another tab chosen, the page gone with it, and the web
-    tab chosen again, the page back in its hole;
-  - each of the app's layers over the page (`LAYERS`), opened by a click on its button,
-    has to show over it, the page has to show round it - live, or as its still picture -
-    and come back whole after;
-  - and the window's own page has to still be drawn after all of it: the tab strip has
-    its ink (#387's window flashing between light and dark);
-  - the Undo toast, after a note made and deleted for it, has to float over the page at
-    the foot of the pane, which keeps its hole and shows round the toast, and comes back
-    whole after (#512);
-  - and once, the window made smaller: the page follows;
-  - and on the last screen, the page clicked into so it holds the keyboard, and
-    Ctrl+R pressed three times and F5 once, each a load of the page (#344: the key
-    reloaded once, and then the page had the keyboard and every press after did
-    nothing). Only where the launch could make a keyboard (`KEY_MAP`).
-
-With `cold` after the app's pid, a launch that came back to the web tab on its own
-instead: the same on the screen it opened on, once.
-
-    python3 scripts/wayland-drive.py <out folder> <app pid> [cold]
-"""
 
 import json
 import os
@@ -53,17 +18,13 @@ POINTER = OUT / "pointer.fifo"
 SLACK = 3
 failures = []
 
-# What opens over a web tab's page, and the button that opens it. The app menu was the
-# second until the window had no menu button any more (424fd9d4d).
 LAYERS = [
     ("the web tab's menu", '.webbar button[aria-haspopup="menu"]'),
 ]
 
-
 def fail(what):
     print(f"::error::{what}")
     failures.append(what)
-
 
 def endpoint():
     for _ in range(120):
@@ -76,14 +37,9 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
 
-
 def run(code):
-    """`code` run in the window's page, and what it came to. Asked again where nothing
-    answers: an `eval` that reaches the endpoint while the window's page is still coming
-    up is never answered at all."""
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
     asked = urllib.request.Request(
         f"http://127.0.0.1:{PORT}/",
@@ -105,13 +61,10 @@ def run(code):
         return None
     return said.get("value")
 
-
 def sway(*words):
     return json.loads(subprocess.check_output(["swaymsg", "-r", *words]))
 
-
 def window_node():
-    """The app's biggest window: the document window, not quick add's."""
 
     def walk(node):
         if str(node.get("pid")) == APP:
@@ -125,16 +78,9 @@ def window_node():
     )
     return found[-1] if found else None
 
-
-# The window's page's pixel ratio: what it measures in, times this, is the window's
-# pixels. More than one where the desktop's scale is the page's zoom (DPI=n); see `look`.
 RATIO = [1.0]
 
-
 def click(node, x, y):
-    """A press of the compositor's pointer at `x`, `y` of the window, as its page measures
-    them, and the pointer then left over the middle of the window's page area, out of the
-    way of the strip's cards."""
     at = node["rect"]
     with open(POINTER, "w") as pointer:
         pointer.write(f"move {at['x'] + x * RATIO[0]} {at['y'] + y * RATIO[0]}\nclick\n")
@@ -142,18 +88,14 @@ def click(node, x, y):
     with open(POINTER, "w") as pointer:
         pointer.write(f"move {at['x'] + at['width'] * 0.6} {at['y'] + at['height'] * 0.6}\n")
 
-
 def box(selector):
-    """Where an element of the window's page is, in the window's pixels."""
     return run(
         "(() => { const one = document.querySelector(%s); if (!one) return null;"
         " const r = one.getBoundingClientRect();"
         " return { x: r.x, y: r.y, width: r.width, height: r.height } })()" % json.dumps(selector)
     )
 
-
 def tabs():
-    """The tab strip's tabs: which is which, which is chosen, and where each is."""
     return (
         run(
             "[...document.querySelectorAll('.tab .pick[data-tab]')].map((one) => {"
@@ -164,9 +106,7 @@ def tabs():
         or []
     )
 
-
 def choose(node, tab):
-    """The tab chosen by a click on it in the strip, and whether the window says it is."""
     click(node, tab["x"], tab["y"])
     for _ in range(20):
         time.sleep(0.25)
@@ -174,11 +114,7 @@ def choose(node, tab):
             return True
     return False
 
-
 def settled():
-    """Once the strip has stopped changing: a launch opens what it opens - the read-me of a
-    first run, the tabs of the last - for a few seconds after its window is up, and a tab
-    chosen before that is chosen away again."""
     seen, same = None, 0
     for _ in range(40):
         now = [(one["id"], one["chosen"]) for one in tabs()]
@@ -188,13 +124,10 @@ def settled():
         seen = now
         time.sleep(1)
 
-
 def web_tab():
     return next((one for one in tabs() if one["web"]), None)
 
-
 def hole():
-    """Where the window put the web tab's hole, in its own pixels, once it has one."""
     for _ in range(60):
         sent = run(
             "(() => { const all = nib.pages.each().map(([, page]) => page.sent)"
@@ -205,14 +138,11 @@ def hole():
         time.sleep(0.5)
     return None
 
-
 def is_page(rgb):
     red, green, blue = rgb
     return red > 230 and blue > 230 and green < 40
 
-
 def bounding(shot):
-    """Where the page's colour is in a picture."""
     image = Image.open(shot).convert("RGB")
     pixels = image.load()
     width, height = image.size
@@ -226,10 +156,7 @@ def bounding(shot):
         return None
     return min(xs), min(ys), max(xs) + 1, max(ys) + 1
 
-
 def left_of(hole, layer):
-    """How much of a hole a layer leaves uncovered, both as pictures have them: the most
-    of the hole a page can show in under it."""
     def size(one):
         return max(0, one[2] - one[0]) * max(0, one[3] - one[1])
 
@@ -237,9 +164,7 @@ def left_of(hole, layer):
     whole = size(hole)
     return (whole - size(both)) / whole if whole else 0
 
-
 def share(shot, area):
-    """How much of `area` in a picture is the page's colour."""
     image = Image.open(shot).convert("RGB")
     pixels = image.load()
     width, height = image.size
@@ -252,9 +177,7 @@ def share(shot, area):
             hits += is_page(pixels[x, y])
     return hits / max(1, seen)
 
-
 def ink(shot, area):
-    """How many dark pixels - words, marks - there are in `area` of a picture."""
     image = Image.open(shot).convert("RGB")
     pixels = image.load()
     width, height = image.size
@@ -267,22 +190,17 @@ def ink(shot, area):
         if sum(pixels[x, y]) < 300
     )
 
-
 def shoot(output, name, scale):
-    """The output in its own pixels: grim's default is the biggest scale of any output."""
     path = OUT / f"{name}-{output}.png"
     subprocess.run(["grim", "-s", str(scale), "-o", output, str(path)], check=True)
     return path
-
 
 def near(got, want, scale):
     return got is not None and all(
         abs(a - b) <= SLACK * max(1, scale) for a, b in zip(got, want)
     )
 
-
 def where_now():
-    """The output the window is on, as sway's tree has it."""
 
     def walk(node, output):
         if node.get("type") == "output":
@@ -293,7 +211,6 @@ def where_now():
             yield from walk(child, output)
 
     return next(walk(sway("-t", "get_tree"), None), None) or sway("-t", "get_outputs")[0]["name"]
-
 
 def look(output, moved=True, tag=""):
     info = next(one for one in sway("-t", "get_outputs") if one["name"] == output)
@@ -309,11 +226,8 @@ def look(output, moved=True, tag=""):
         return
     origin = (node["rect"]["x"] - info["rect"]["x"], node["rect"]["y"] - info["rect"]["y"])
 
-    # The window's page measures in its own pixels, which are the window's at its pixel
-    # ratio: more than one where the desktop's scale is the page's zoom (DPI=n).
     ratio = run("devicePixelRatio") or 1
     RATIO[0] = ratio
-    # And on a desktop scaled for X11 applications, that ratio is the desktop's scale.
     if os.environ.get("DPI") and abs(ratio - int(os.environ["DPI"]) / 96) > 0.02:
         fail(f"{output}: the window's page is drawn at {ratio}, not the desktop's {int(os.environ['DPI']) / 96:.3f}")
 
@@ -325,8 +239,6 @@ def look(output, moved=True, tag=""):
             (origin[1] + (rect["y"] + rect["height"] - inset) * ratio) * scale,
         )
 
-    # The web tab chosen in the strip, as a reader would: a launch may have come up on
-    # another tab, and a page over the strip would take this click.
     web = web_tab()
     if web is None:
         fail(f"{output}: no web tab in the strip")
@@ -339,7 +251,6 @@ def look(output, moved=True, tag=""):
         fail(f"{output}: no hole to look at")
         return
     want = on_screen(pane)
-    # The page drawn, which on the first screen is the page still loading.
     for _ in range(40):
         first = shoot(output, f"{tag}page", scale)
         got = bounding(first)
@@ -354,7 +265,6 @@ def look(output, moved=True, tag=""):
     strip_area = on_screen(strip) if isinstance(strip, dict) else None
     inked = ink(first, strip_area) if strip_area else 0
 
-    # Another tab and back, both by a click in the strip.
     other = next((one for one in tabs() if not one["web"]), None)
     if other is None:
         fail(f"{output}: no other tab in the strip to choose")
@@ -392,15 +302,11 @@ def look(output, moved=True, tag=""):
             shoot(output, f"{tag}missed-{slug}", scale)
             fail(f"{output}: {name} did not open for a click on its button")
         else:
-            # A big page's still picture takes a moment longer to stand in under the layer
-            # on a machine with no GPU: looked at again for up to three seconds.
             began = time.monotonic()
             while True:
                 shot = shoot(output, f"{tag}{slug}", scale)
                 covered = share(shot, on_screen(layer, 4))
                 under = share(shot, want)
-                # Most of what the layer leaves of the hole: a big layer on a small
-                # screen leaves less than half of it, and the page still shows there.
                 least = 0.8 * left_of(want, on_screen(layer))
                 if (covered <= 0.05 and under >= least) or time.monotonic() - began > 3:
                     break
@@ -426,9 +332,6 @@ def look(output, moved=True, tag=""):
         if strip_area and inked and ink(after, strip_area) < inked * 0.3:
             fail(f"{output}: after {name} the window's own page is not drawn: no tab strip")
 
-    # A toast at the foot of the pane - the Undo after a delete, a note made and deleted
-    # for it - floats over the page, which is cut round it and keeps its hole: it used to
-    # take a band of the pane under the page of its own, the page ended above it (#512).
     run(
         "(async () => { const path = await nib.workspace.noteFrom('# A toast over a page\\n');"
         " if (path) await nib.workspace.remove(path, false); return path })()"
@@ -442,7 +345,6 @@ def look(output, moved=True, tag=""):
     if not isinstance(card, dict) or card.get("height", 0) <= 0:
         fail(f"{output}: the Undo toast did not come up")
     else:
-        # It flies in over a fifth of a second; the page is asked again once it lands.
         time.sleep(0.8)
         card = box("[data-notices] > .toast") or card
         under_card = hole()
@@ -462,7 +364,6 @@ def look(output, moved=True, tag=""):
             fail(f"{output}: the page is drawn over the Undo toast ({covered:.0%})")
         if under < 0.5:
             fail(f"{output}: under the Undo toast the page is gone ({under:.0%} of its hole)")
-        # Gone by itself, after its while.
         for _ in range(60):
             gone = box("[data-notices] > .toast")
             if not isinstance(gone, dict) or gone.get("height", 0) <= 0:
@@ -473,17 +374,13 @@ def look(output, moved=True, tag=""):
         if not near(back, want, scale):
             fail(f"{output}: the page did not come back whole after the Undo toast ({back})")
 
-
 def loads():
-    """How many times the page has been asked for: the site's own log, a line a load."""
     try:
         return (OUT / "site.log").read_text().count('"GET / ')
     except OSError:
         return 0
 
-
 def reloads(output):
-    """Ctrl+R three times and F5 once with the page holding the keyboard, each a load."""
     if not (OUT / "pointer.log").read_text().count("and a keyboard"):
         print("no keyboard to press with: the reloads are not driven here")
         return
@@ -492,7 +389,6 @@ def reloads(output):
     if not node or not pane:
         fail(f"{output}: no page to reload")
         return
-    # Into the page, so the keyboard is the page's, as it is after a reload.
     click(node, pane["x"] + pane["width"] / 2, pane["y"] + pane["height"] / 2)
     time.sleep(1.0)
     for times, (held, code, name) in enumerate(
@@ -511,7 +407,6 @@ def reloads(output):
         else:
             fail(f"{output}: {name} pressed in the page did not reload it (press {times})")
 
-
 settled()
 if COLD:
     look(where_now(), moved=False)
@@ -521,7 +416,6 @@ else:
         look(output)
     reloads(where_now())
 
-    # Smaller: floating, at a size of its own, and the page has to follow.
     subprocess.run(["swaymsg", f"[pid={APP}] floating enable, resize set 900 650"], check=False)
     time.sleep(2.5)
     look(outputs[1], tag="smaller-")

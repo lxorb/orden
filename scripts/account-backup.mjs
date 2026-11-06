@@ -1,38 +1,4 @@
 #!/usr/bin/env node
-/** Everything an account holds, copied to a folder, without changing anything.
- *
- *  What it is for: the copy to keep before a change to how an account syncs (the move
- *  to sync v2), and any time after. A folder copy of a computer's spaces holds what
- *  that computer has; this holds what the account has: every space it can reach, the
- *  notes in Recently deleted, and every version the account kept of every note.
- *
- *  It only reads. Every request is a GET of the ordinary sync API, so a read-only
- *  token from Settings > LLM access is enough and is the one to use:
- *
- *    NIB_TOKEN=nib_... node scripts/account-backup.mjs ./nib-backup-2026-10-07
- *    NIB_TOKEN=nib_... node scripts/account-backup.mjs ./backup --no-history
- *
- *  What it writes:
- *
- *    spaces/<space>/<path>     every live note, the tree as the account names it
- *    deleted/<space>/<path>    every note in Recently deleted whose words are still held
- *    versions/<sha256>.txt     every version's words, stored once per distinct text
- *    blobs/<sha256>.<ext>      every file a note links at /i/<hash>
- *    index.json                each space and note: id, path, version, hash, deleted,
- *                              the file it was written as, and its versions
- *    SHA256SUMS                a checksum per file, for `sha256sum -c`
- *
- *  A name a disk cannot hold (`CON.md`, a trailing dot, `:`), or two names one disk
- *  cannot tell apart (`Plan.md` beside `plan.md`), is written under a safe spelling
- *  and `index.json` says which file is which note. Run it again into the same folder
- *  and it fetches only what changed since; a file an earlier run wrote for a note that
- *  has since moved stays, and `index.json` and `SHA256SUMS` name only what is current.
- *
- *  What it cannot reach with a program token: a whole space in Recently deleted (a
- *  session token lists their names, which is all the API gives), and the files of a
- *  space other than notes, which v1 never sent (pictures live in the space's folder on
- *  each computer; copy that folder too). `NIB_API` points it somewhere else for a test,
- *  such as `wrangler dev` on http://127.0.0.1:8787. */
 
 import { createHash } from 'node:crypto'
 import { existsSync } from 'node:fs'
@@ -42,14 +8,10 @@ import { dirname, extname, join } from 'node:path'
 const API = (process.env.NIB_API || 'https://orden.so').replace(/\/$/, '')
 const TOKEN = process.env.NIB_TOKEN ?? ''
 
-/** How many requests are in flight at once: enough to be quick, few enough that
- *  the service's limits never notice. */
 const AT_ONCE = 6
 
-/** How many times one request is tried before the backup says it failed. */
 const TRIES = 6
 
-/** A file a note links on the service, by its hash. */
 const LINKED = /\/i\/([a-f0-9]{64})(\.[a-z0-9]{1,8})?/gi
 
 function say(words) {
@@ -58,8 +20,6 @@ function say(words) {
 
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
-/** One GET, tried again on a refusal that passes (429, 5xx, a dropped connection),
- *  waiting longer each time and as long as the service asks. */
 async function get(path, { auth = true, bytes = false } = {}) {
   for (let attempt = 1; ; attempt++) {
     let response
@@ -102,7 +62,6 @@ async function need(path) {
   return body
 }
 
-/** Runs `work` over every item, `AT_ONCE` at a time. */
 async function pool(items, work) {
   let next = 0
   const lanes = Array.from({ length: Math.min(AT_ONCE, items.length) }, async () => {
@@ -118,9 +77,6 @@ function sha256(data) {
   return createHash('sha256').update(data).digest('hex')
 }
 
-/** What Windows holds in no name, which a backup avoids on every disk so that the
- *  folder can be carried to any computer. The same rule the app spells a space's files
- *  with on Windows (apps/desktop/src/lib/sync2/places.ts). */
 const RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)/i
 const FORBIDDEN = '<>:"\\|?*'
 
@@ -133,8 +89,6 @@ function safeName(name) {
   return out || '_'
 }
 
-/** Hands out local paths under one root, so two names a disk cannot tell apart (case,
- *  composition, the safe spelling) never land in one file: the second gets its id. */
 function namer() {
   const taken = new Set()
   return (path, id) => {
@@ -149,7 +103,6 @@ function namer() {
   }
 }
 
-/** Writes a file unless the one there already says exactly this. */
 async function put(root, local, data) {
   const where = join(root, ...local.split('/'))
   if (existsSync(where)) {
@@ -160,8 +113,6 @@ async function put(root, local, data) {
   await writeFile(where, data)
 }
 
-/** What an earlier run into this folder wrote down, so a second run fetches only what
- *  moved. */
 async function earlier(root) {
   try {
     const index = JSON.parse(await readFile(join(root, 'index.json'), 'utf8'))
@@ -174,7 +125,6 @@ async function earlier(root) {
   }
 }
 
-/** Every note of a space the feed lists, tombstones included, newest row per id. */
 async function feedOf(space) {
   const notes = new Map()
   let cursor = 0
@@ -195,22 +145,17 @@ async function backup(root, { history }) {
 
   const listing = await need('/v1/spaces')
 
-  // Recently deleted as the account lists it: a session token reads it, a program
-  // token is refused, and a refusal is not a failure of the backup.
   const trash = await get('/v1/trash')
   const deletedSpaces = trash.status === 200 ? (trash.body.spaces ?? []) : null
 
   const folders = namer()
   const spaces = []
   for (const space of listing.spaces) {
-    // A space's name is one folder, whatever it holds.
     const folder = folders(space.name.replaceAll('/', '_'), space.id)
     const live = namer()
     const gone = namer()
     const notes = []
 
-    // Named before anything is fetched, in one order, so a collision always gives the
-    // same note the same file and a second run finds it where the first put it.
     const rows = (await feedOf(space))
       .sort((one, two) => (one.path + one.id < two.path + two.id ? -1 : 1))
       .map((row) => ({
@@ -252,8 +197,6 @@ async function backup(root, { history }) {
 
       if (content !== null) {
         if (sha256(content) !== row.hash) {
-          // A note in Recently deleted whose words were taken away for good reads as
-          // nothing; anything else that disagrees is worth a look.
           if (row.deleted && content === '') entry.purged = true
           else
             problems.push(
@@ -284,7 +227,6 @@ async function backup(root, { history }) {
     }
     const { status, body } = await get(`/i/${hash}${ext}`, { auth: false, bytes: true })
     if (status !== 200 || !body) {
-      // Documents are served only from a published space; say so rather than fail.
       linked.push({ hash, file: null, status })
       return
     }
@@ -306,7 +248,6 @@ async function backup(root, { history }) {
   await put(root, 'index.json', `${JSON.stringify(index, null, 2)}\n`)
   await sums(root, index)
 
-  // A document is served only from a published space, so a link to one can be a 404.
   const unserved = linked.filter((one) => !one.file).length
   say(
     `${spaces.length} spaces, ${counts.notes} notes, ${counts.deleted} in Recently deleted, ` +
@@ -318,13 +259,11 @@ async function backup(root, { history }) {
   if (problems.length) process.exitCode = 2
 }
 
-/** Every file a text links on the service, into `blobs` as hash and extension. */
 function linkedIn(text, blobs) {
   for (const match of text.matchAll(LINKED))
     blobs.set(match[1].toLowerCase(), (match[2] ?? '').toLowerCase())
 }
 
-/** A note's versions: the list, and each text once by its hash. */
 async function versionsOf(root, entry, kept, problems, counts, blobs) {
   const { status, body } = await get(`/v1/notes/${encodeURIComponent(entry.id)}/versions`)
   if (status !== 200) {
@@ -356,7 +295,6 @@ async function versionsOf(root, entry, kept, problems, counts, blobs) {
   }
 }
 
-/** `SHA256SUMS` over every file the index names, in the format `sha256sum -c` reads. */
 async function sums(root, index) {
   const files = new Set(['index.json'])
   for (const space of index.spaces) {

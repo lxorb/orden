@@ -1,18 +1,4 @@
 #!/usr/bin/env python3
-"""The certificate a web tab's page came with, shown from the site's popover. #776:
-"Connection is secure" was said from the address alone, and the certificate could not be
-seen.
-
-Run with Orden up on scripts/wayland-launch.sh's site for it (CERT=1), a site served
-over https. The popover behind the mark at the left of the address field is opened, its
-"Connection is secure" line pressed, and what it shows has to be the certificate the
-site serves - whom it was issued to and by, as a TLS connection made here reads them -
-with a SHA-256 fingerprint, and the chain it was trusted through: the site's first,
-then the one that issued it, up to a root, read from the page's own connection and not
-separately.
-
-    python3 scripts/cert-drive.py <out folder> <host>
-"""
 
 import json
 import os
@@ -29,11 +15,9 @@ OUT, HOST = Path(sys.argv[1]), sys.argv[2]
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
 failures = []
 
-
 def fail(what):
     print(f"::error::{what}")
     failures.append(what)
-
 
 def endpoint():
     for _ in range(120):
@@ -46,9 +30,7 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
-
 
 def run(code):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
@@ -67,9 +49,7 @@ def run(code):
             time.sleep(1)
     return None
 
-
 def served():
-    """Whom the site's certificate was issued to and by, read over a connection of our own."""
     context = ssl.create_default_context()
     with socket.create_connection((HOST, 443), timeout=10) as raw:
         with context.wrap_socket(raw, server_hostname=HOST) as tls:
@@ -77,8 +57,6 @@ def served():
     name = lambda part: dict(pair for one in peer[part] for pair in one)  # noqa: E731
     return name("subject").get("commonName", ""), name("issuer").get("commonName", "")
 
-
-# The page has loaded, over https, before its popover can say anything of it.
 for _ in range(60):
     if run("[...document.querySelectorAll('input')].some((one) => one.value.startsWith('https://'))"):
         break
@@ -93,7 +71,6 @@ said = run("document.querySelector('.site.nib-bubble')?.innerText ?? ''") or ""
 if "Connection is secure" not in said:
     fail(f"the popover does not say the connection is secure: {said!r}")
 
-# The line itself is what is pressed, as in a browser.
 pressed = run("(() => { const one = document.querySelector('.site.nib-bubble button.how'); if (!one) return false; one.click(); return true })()")
 if not pressed:
     fail("the line saying the connection is secure cannot be pressed")
@@ -131,7 +108,6 @@ if not re.search(r"SHA-256 fingerprint\s*\n([0-9A-F]{2}:){31}[0-9A-F]{2}", detai
 if not re.search(r"Serial number\s*\n([0-9A-F]{2})(:[0-9A-F]{2})*", details):
     fail("there is no serial number")
 
-# The chain: the site's, then the one that issued it, and a root at the top.
 roles = [role for role, _ in chain]
 if len(chain) < 2 or roles[0] != "site":
     fail(f"the chain is not the site's and its issuers: {chain!r}")

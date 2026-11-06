@@ -1,33 +1,4 @@
 #!/usr/bin/env bash
-# Puts Linux's manifest in place of the app's, so Cargo and the Tauri CLI build Orden on
-# CEF (Chromium) from the same folder and the same files as every other platform.
-#
-# Linux is the one platform on Tauri 3 and `tauri-runtime-cef`; macOS, Windows and the
-# phones stay on Tauri 2, and one manifest cannot hold both (see the `cef` feature in
-# apps/desktop/src-tauri/Cargo.toml). apps/desktop/src-tauri/linux/Cargo.toml is written
-# from the app's own by scripts/linux-manifest.mjs, with its own lock file beside it.
-#
-#     bash scripts/linux-cef.sh              # Linux's manifest and lock in place
-#     bash scripts/linux-cef.sh back         # the app's own again
-#     bash scripts/linux-cef.sh lock         # Linux's lock file brought up to its manifest
-#     bash scripts/linux-cef.sh tauri build  # the Tauri CLI at Linux's pin, from apps/desktop
-#     bash scripts/linux-cef.sh cef [dir]    # the CEF distribution the pin names, in dir
-#
-# A CI job runs the first in a fresh checkout and never the second. The Tauri 2 CLI in
-# package.json cannot build a Tauri 3 app, so a Linux build or `dev` runs the CLI at the
-# version of Tauri Linux's manifest pins, through the last line above, which puts the
-# manifest in place first.
-#
-# **The CEF distribution.** The `cef` crate's build script downloads the engine itself
-# where CEF_PATH names none, and the Tauri bundler copies it into each package from
-# there. `cef` lays it out beforehand instead, from the same server and checked against
-# the digest the server's index gives, in `dir` (default ~/.cache/orden-cef), and says
-# CEF_PATH for the rest of a CI job. One thing is added: two empty libraries under the
-# names of ANGLE's, libEGL.so and libGLESv2.so. CEF 154 links ANGLE into libcef.so on
-# Linux and no longer ships the two, and the bundler (tauri-bundler 3.0.0-alpha.4)
-# still copies them into the .deb and .rpm by name, failing on a file that is not there.
-# Chromium loads them from beside libcef.so only when ANGLE is not linked in, so they
-# are never opened. Take them out once the bundler stops naming them.
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")/.." && pwd)"
@@ -70,18 +41,9 @@ case "${1:-use}" in
     shift
     pin=$(sed -n 's/^tauri = { version = "=\([^"]*\)".*/\1/p' "$app/linux/Cargo.toml" | head -1)
     [ -n "$pin" ] || { echo "no tauri pin in $app/linux/Cargo.toml" >&2; exit 1; }
-    # The AppImage is made by quick-sharun, which the bundler fetches and which fetches
-    # two C files of its own from a repository that has since moved them; they are
-    # named here, at the commit of the fork the bundler takes the script from.
     sharun=https://raw.githubusercontent.com/FabianLars/Anylinux-AppImages/3e280d1b2270fecfcb2c2c823b490c782ecf1277/useful-tools/lib
     export ANYLINUX_LIB_SOURCE="${ANYLINUX_LIB_SOURCE:-$sharun/anylinux.c}"
     export GTK_CLASS_FIX_SOURCE="${GTK_CLASS_FIX_SOURCE:-$sharun/gtk-class-fix.c}"
-    # And NSS's own modules in the AppImage, which quick-sharun leaves out though Chromium
-    # cannot start without them: NSS opens libsoftokn3.so and libfreeblpriv3.so beside
-    # its libnss3.so, and an AppImage carrying the one and not the others met the host's
-    # - a newer NSS's, on Arch, or none, on a Fedora without nss-softokn - and Chromium
-    # ended at its start (#427). Named as AppImage files, which the bundler hands
-    # quick-sharun with the rest.
     case "${1:-}" in
       build | bundle)
         lib="/usr/lib/$(uname -m)-linux-gnu"
@@ -94,14 +56,6 @@ case "${1:-use}" in
             fi
           done
         done
-        # And Mesa whole, for the same reason (#427): the AppImage runs on the glibc it
-        # carries, under which a newer host's Mesa cannot load - Fedora 44's needs glibc
-        # 2.43 - and quick-sharun carries only what the app links to, which is GBM and
-        # none of what draws. Without its own, EGL and GLX found no driver, Chromium's
-        # GPU process ended at its start, and every page was drawn on the CPU. Its EGL and
-        # GLX drivers and gallium, from which quick-sharun follows their libraries; the
-        # loaders the DRI drivers are; and glvnd's word for which EGL driver is Mesa's,
-        # where sharun points glvnd.
         for module in "$lib"/libEGL_mesa.so.0 "$lib"/libGLX_mesa.so.0 "$lib"/libgallium-*.so "$lib"/dri/*_dri.so; do
           [ -f "$module" ] || continue
           name="${module#"$lib"/}"
@@ -122,7 +76,6 @@ case "${1:-use}" in
       aarch64) platform=linuxarm64 ;;
       *) echo "no CEF for $(uname -m)" >&2; exit 1 ;;
     esac
-    # The crate's version is the engine's after the plus: 154.5.0+154.0.34 is CEF 154.0.34.
     lock_version=$(sed -n '/^name = "cef"$/{n;s/^version = "\(.*\)"$/\1/p}' "$app/linux/Cargo.lock" | head -1)
     engine="${lock_version#*+}"
     if [ ! -f "$dir/archive.json" ] || ! grep -q "cef_binary_$engine+" "$dir/archive.json"; then

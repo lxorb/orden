@@ -1,22 +1,3 @@
-/** The script a published page runs, bundled into the Worker.
- *
- *  A page's own behaviour - the slash that focuses the search box, the theme
- *  toggle, the card a link shows on hover, the graph - is written once, in
- *  `apps/desktop/src/site/site.ts`, and imports the app's own graph layout and
- *  painter rather than a second copy of them. This turns that into one file the
- *  Worker can serve from the site's own domain.
- *
- *  Why the Worker carries it rather than a CDN: the same reason it carries
- *  KaTeX's faces. A script fetched from somebody else's domain tells them who is
- *  reading what, and it breaks for anybody offline or behind a blocker. Served
- *  at a path that is its own hash, cached forever, so a reader fetches it once
- *  for a whole blog.
- *
- *  Run `pnpm blog:js` after changing the site script or anything it imports.
- *  What it writes is committed, so the Worker needs no build step of its own,
- *  and `services/sync/test/site-script.test.ts` fails if the two have drifted.
- */
-
 import { createHash } from 'node:crypto'
 import { writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
@@ -28,16 +9,7 @@ const ROOT = new URL('../', import.meta.url)
 const ENTRY = fileURLToPath(new URL('apps/desktop/src/site/site.ts', ROOT))
 const TARGET = fileURLToPath(new URL('services/sync/src/blog/script.ts', ROOT))
 
-/** The bundle: one file, no imports, minified, for a browser.
- *
- *  Vite rather than a bundler of its own, because the app is built with vite and
- *  the modules being bundled are the app's: one toolchain decides what "the same
- *  code" means. In memory - nothing is written to disk but the module below. */
 async function bundle(): Promise<string> {
-  // Vite as the app's own copy of it, resolved rather than imported: it is a
-  // dependency of the app whose modules are being bundled, and one toolchain is
-  // what makes "the same code" mean something. The same way blog-css.ts reaches
-  // for the katex the app renders with.
   const vite = (await import(
     pathToFileURL(
       createRequire(fileURLToPath(new URL('apps/desktop/package.json', ROOT))).resolve('vite'),
@@ -67,14 +39,6 @@ async function bundle(): Promise<string> {
   throw new Error('the site script bundled to nothing')
 }
 
-/** The one line that puts the reader's chosen theme on the page before it is
- *  painted.
- *
- *  Inline, and the only inline script a site carries: the alternative is a page
- *  that paints in the wrong scheme and then corrects itself, which is the flash
- *  every site with a theme toggle used to have. The policy names it by the hash
- *  of these very characters, so this script may run and no other inline one can;
- *  see `csp` in blog.ts. */
 const THEME_JS =
   "try{var t=localStorage.getItem('nib:site-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}"
 
@@ -106,8 +70,6 @@ export const SITE_JS_SOURCES = ${JSON.stringify(sourceHash())}
 `
 }
 
-// Run rather than imported. `argv[1]` is the path as it was typed, so both
-// sides are resolved before they are compared.
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const written = await siteScript()
   writeFileSync(TARGET, written)

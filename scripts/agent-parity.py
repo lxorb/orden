@@ -1,24 +1,3 @@
-"""One agent's browser script, run the same against every engine (#1092).
-
-Every browser verb an agent has, called on a page this script serves, through the app's
-own endpoint with the installation's secret - the reader's own command line, which holds
-every scope and is asked nothing - and what each answered checked the same way whatever
-engine the build runs: `WebView2` on Windows, Orden's own Chromium on Linux, `WKWebView`
-on a Mac. A verb an engine has no honest way to do must answer
-`unsupported_on_this_engine`, and only the verbs `CANNOT` names for that engine may; a
-verb that answers anything else, or a verb that has started working without the table
-being told, fails the run. So a tool missing on one engine fails CI, and the table here is
-kept by hand as the engines' own (`agents/engines/mod.rs`) is, so the two are read against
-each other.
-
-    python scripts/agent-parity.py --exe <the built app> --identifier <a probe identifier> \\
-      --engine wkwebview|webview2|chromium [--out parity.json]
-
-The build has to be a probe (scripts/probe_app.py): its own identifier, so its folders are
-nobody's, which this script empties before it starts. Run by .github/workflows/agent-parity.yml
-on a runner of each kind.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -39,8 +18,6 @@ import urllib.request
 from collections.abc import Callable
 from typing import Any
 
-#: What each engine has no honest way to do, by verb; see `WEBKIT_CANNOT` and
-#: `CDP_CANNOT` in apps/desktop/src-tauri/src/agents/engines/mod.rs.
 CANNOT: dict[str, set[str]] = {
     "webview2": set(),
     "chromium": set(),
@@ -52,21 +29,16 @@ CANNOT: dict[str, set[str]] = {
     },
 }
 
-#: What an engine should do and does not yet, by the check's name, with its issue: run and
-#: written down as known, and a failure the day it starts working, so this is told.
 KNOWN: dict[str, dict[str, str]] = {}
 
-#: The code a verb an engine cannot do answers.
 UNSUPPORTED = "unsupported_on_this_engine"
 
 STYLE = "<style>body{font:16px system-ui;margin:2rem;max-width:40rem}label{display:block;margin:.5rem 0}</style>"
-
 
 def page(title: str, body: str, script: str = "") -> bytes:
     return (
         f"<!doctype html><meta charset=utf-8><title>{title}</title>{STYLE}<h1>{title}</h1>{body}<script>{script}</script>"
     ).encode()
-
 
 FORM = page(
     "Parity form",
@@ -109,13 +81,10 @@ PAGES: dict[str, bytes] = {
     "/ping": b"pong",
 }
 
-#: The sign-in the served site asks for.
 USER, PASSWORD = "parity", "s3cret-parity"
-
 
 class Site(http.server.ThreadingHTTPServer):
     daemon_threads = True
-
 
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_: Any) -> None:
@@ -158,7 +127,6 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-
 def config_dir(identifier: str) -> pathlib.Path:
     if sys.platform == "win32":
         return pathlib.Path(os.environ["APPDATA"]) / identifier
@@ -166,12 +134,10 @@ def config_dir(identifier: str) -> pathlib.Path:
         return pathlib.Path.home() / "Library" / "Application Support" / identifier
     return pathlib.Path(os.environ.get("XDG_CONFIG_HOME") or pathlib.Path.home() / ".config") / identifier
 
-
 def wipe(identifier: str) -> None:
     if "probe" not in identifier:
         raise SystemExit(f"{identifier} is not a probe identifier: refusing to delete its folders")
     shutil.rmtree(config_dir(identifier), ignore_errors=True)
-
 
 class Endpoint:
     def __init__(self, port: int, secret: str) -> None:
@@ -192,7 +158,6 @@ class Endpoint:
         except Exception as error:  # noqa: BLE001 - a wedged app fails in its own ways
             return {"status": "error", "code": "no answer", "message": str(error)}
 
-
 def endpoint(identifier: str, pid: int, seconds: float = 120) -> Endpoint:
     path = config_dir(identifier) / "automation.json"
     until = time.monotonic() + seconds
@@ -206,9 +171,7 @@ def endpoint(identifier: str, pid: int, seconds: float = 120) -> Endpoint:
         time.sleep(0.25)
     raise SystemExit(f"the app never wrote {path}")
 
-
 class Run:
-    """The script, one check at a time, each written down."""
 
     def __init__(self, engine: str, api: Endpoint, base: str, upload: pathlib.Path) -> None:
         self.engine, self.api, self.base, self.upload = engine, api, base, upload
@@ -217,8 +180,6 @@ class Run:
         self.refs: dict[str, str] = {}
 
     def check(self, name: str, verb: str, args: dict[str, Any], judge: Callable[[dict[str, Any]], str | None] | None = None) -> dict[str, Any]:
-        """One call: answered `unsupported_on_this_engine` exactly where `CANNOT` says,
-        and otherwise as `judge` wants (by default, `ok`)."""
 
         said = self.api.call(verb, args)
         cannot = verb in CANNOT[self.engine]
@@ -235,7 +196,6 @@ class Run:
         return said
 
     def note(self, name: str, verb: str, cannot: bool, problem: str | None, said: Any) -> None:
-        """A check written down, a known gap of this engine's as known."""
 
         known = KNOWN.get(self.engine, {}).get(name)
         if known and problem:
@@ -255,7 +215,6 @@ class Run:
 
     def script(self) -> None:
         base = self.base
-        # The window an agent's tab lives in is built after the endpoint answers.
         until = time.monotonic() + 120
         while time.monotonic() < until:
             tried = self.api.call("browser_open", {"url": "about:blank", "store": "agent"})
@@ -277,7 +236,6 @@ class Run:
         )
         self.wait_for("the page's words", "alpha words")
 
-        # Reading.
         snap = self.check(
             "the snapshot",
             "browser_snapshot",
@@ -301,7 +259,6 @@ class Run:
         self.check("evaluate in the page's world", "browser_evaluate", {"tab": self.tab, "expression": "document.title", "world": "page"}, lambda said: None if said.get("result", {}).get("value") == "Parity form" else f"the title was {said.get('result')}")
         self.check("a screenshot", "browser_screenshot", {"tab": self.tab}, png_judge)
 
-        # Acting.
         self.check("type into a field", "browser_type", {"tab": self.tab, "ref": self.refs["textbox"], "text": "Ada"})
         self.check("click a button", "browser_click", {"tab": self.tab, "ref": self.refs["button"]})
         if self.done("browser_click"):
@@ -324,14 +281,12 @@ class Run:
             self.wait_for("the file is in the field", f"file {self.upload.name}")
         self.check("drag", "browser_drag", {"tab": self.tab, "from": self.refs["drag"], "to": self.refs["drop"]})
 
-        # What the page did.
         self.check("its console", "browser_console", {"tab": self.tab}, lambda said: None if any("parity console" in str(one.get("text", "")) for one in said.get("result", {}).get("lines", [])) else f"no line of the page's in {said.get('result')}")
         self.check("its cookies", "browser_storage", {"tab": self.tab, "op": "cookies"}, lambda said: None if any(one.get("name") == "parity" for one in said.get("result", {}).get("cookies") or []) else f"no parity cookie in {said.get('result')}")
         self.check("its local storage", "browser_storage", {"tab": self.tab, "op": "local"}, lambda said: None if (said.get("result", {}).get("local") or {}).get("parity") == "yes" else f"no parity in {said.get('result')}")
         self.check("a cookie set", "browser_storage", {"tab": self.tab, "op": "set_cookie", "cookie": {"name": "set", "value": "by-agent", "domain": "127.0.0.1", "path": "/"}})
         self.check("its storage cleared", "browser_storage", {"tab": self.tab, "op": "clear"})
 
-        # Going.
         self.check("navigate", "browser_navigate", {"tab": self.tab, "url": f"{base}/b"}, lambda said: None if str(said.get("result", {}).get("url", "")).endswith("/b") else f"it is at {said.get('result')}")
         self.check("wait for an address", "browser_wait", {"tab": self.tab, "for": {"url": "/b"}})
         self.wait_for("the second page's words", "beta words")
@@ -339,22 +294,17 @@ class Run:
         self.check("forward", "browser_navigate", {"tab": self.tab, "forward": True}, lambda said: None if str(said.get("result", {}).get("url", "")).endswith("/b") else f"forward went to {said.get('result')}")
         self.check("reload", "browser_navigate", {"tab": self.tab, "reload": True})
         self.check("wait for the network to be idle", "browser_wait", {"tab": self.tab, "for": "network_idle"})
-        # The network is followed from an agent's first call on a page, so what the page
-        # fetches as it loads again is in it.
         self.check("navigate back to the form", "browser_navigate", {"tab": self.tab, "url": f"{base}/a"})
         self.check("its requests", "browser_network", {"tab": self.tab}, lambda said: None if any("/ping" in str(one.get("url", "")) for one in said.get("result", {}).get("requests", [])) else f"no /ping in {said.get('result')}")
 
-        # Dialogs.
         self.dialog("alert", "/alert", {"accept": True}, "alerted")
         self.dialog("confirm", "/confirm", {"accept": True}, "confirmed true")
         self.dialog("prompt", "/prompt", {"accept": True, "text": "parity"}, "prompted parity")
         self.dialog("sign_in", "/auth", {"accept": True, "username": USER, "password": PASSWORD}, "signed in")
 
-        # A download.
         self.api.call("browser_navigate", {"tab": self.tab, "url": f"{base}/file"})
         self.check("its download", "browser_downloads", {"tab": self.tab}, self.downloaded)
 
-        # Showing it, which the command line has nothing to ask about.
         self.check("show it", "browser_show", {"tab": self.tab})
         self.check(
             "close it",
@@ -364,8 +314,6 @@ class Run:
         self.check("it is gone", "browser_tabs", {}, lambda said: None if not any(one.get("id") == self.tab for one in said.get("result", {}).get("agent", [])) else f"{self.tab} is still listed")
 
     def dialog(self, kind: str, path: str, answer: dict[str, Any], words: str) -> None:
-        """A page that raises a dialog: the dialog rides on the next answer, is answered,
-        and the page goes on with the answer it was given."""
 
         self.api.call("browser_navigate", {"tab": self.tab, "url": f"{self.base}{path}"})
         until = time.monotonic() + 15
@@ -389,11 +337,9 @@ class Run:
             time.sleep(0.5)
             said = self.api.call("browser_downloads", {"tab": self.tab})
 
-
 def missing(text: str, wanted: list[str]) -> str | None:
     gone = [one for one in wanted if one not in text]
     return None if not gone else f"{gone} not in {text[:600]!r}"
-
 
 def ref_of(text: str, name: str) -> str | None:
     for line in text.splitlines():
@@ -402,7 +348,6 @@ def ref_of(text: str, name: str) -> str | None:
             if found:
                 return found.group(1)
     return None
-
 
 def png_judge(said: dict[str, Any]) -> str | None:
     picture = said.get("result", {}).get("png", "")
@@ -415,11 +360,9 @@ def png_judge(said: dict[str, Any]) -> str | None:
     width, height = int.from_bytes(raw[16:20], "big"), int.from_bytes(raw[20:24], "big")
     return None if width > 100 and height > 100 else f"the picture is {width} by {height}"
 
-
 def brief(said: Any) -> Any:
     text = json.dumps(said)
     return said if len(text) < 2000 else text[:2000]
-
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -437,8 +380,6 @@ def main() -> int:
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="nib-agent-parity-"))
     upload = spaces / "parity-upload.txt"
     upload.write_text("an agent's upload\n", encoding="utf-8")
-    # `NIB_AGENT_PAGES` has Orden's own Chromium able to make agents' pages from this
-    # launch, as it otherwise is from the launch after the first agent was paired.
     app = subprocess.Popen([str(args.exe)], env={**os.environ, "NIB_SPACES_DIR": str(spaces), "NIB_AGENT_PAGES": "1"})
     try:
         api = endpoint(args.identifier, app.pid)
@@ -460,7 +401,6 @@ def main() -> int:
         args.out.write_text(json.dumps({"engine": args.engine, "results": run.results}, indent=2), encoding="utf-8")
     print(f"\n{len(run.results) - len(failed)} of {len(run.results)} as this engine's table says on {args.engine}")
     return 1 if failed else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

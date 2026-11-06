@@ -1,30 +1,3 @@
-"""Does Settings > Import > Zen bring a Zen profile's spaces in as spaces? Windows only.
-
-Emil, 2026-10-13: *"should be possible to import your tabs from zen browser. spaces
-translate to spaces and the tabs will get directly into the sidebar of nib. folders
-will just be empty nib notes and so on."*
-
-The probe writes a Zen of its own - a `profiles.ini` with two profiles and the first
-one's `zen-sessions.jsonlz4`, the file Zen keeps its sidebar in - and points the app
-at it with `NIB_ZEN_DIR`, so nobody's own Zen is ever read. Then, in an app started
-off the screen through `run_probe`, it opens Settings > Import, presses Zen, picks the
-profile out of the two, and asks:
-
-* the spaces: Home, Work and Reading, Zen's three, in Zen's order;
-* the files: every tab a web note where the sidebar had it, the folders folders, the
-  empty folder an empty note, the settings page left behind;
-* the order the file list draws them in, the Essential as a bookmark, the space's icon;
-* a second import: nothing written twice.
-
-And three pictures of the probe's own window, taken by its own engine: the Import
-pane, the profile list, and the Work space's file list afterwards.
-
-    python scripts/zen-import-probe.py --exe path/to/nib.exe \\
-        --identifier ch.emilvinu.nib.probe.<name> --shots <folder>
-
-Build the exe as `scripts/probe_app.py` says.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -43,9 +16,7 @@ from probe_app import close_app
 
 HERE = pathlib.Path(__file__).resolve().parent
 
-#: What the app reads for where Zen is; see src-tauri/src/zen_profiles.rs.
 ZEN_DIR = "NIB_ZEN_DIR"
-
 
 def borrowed(name: str, file: str):
     spec = importlib.util.spec_from_file_location(name, HERE / file)
@@ -55,9 +26,7 @@ def borrowed(name: str, file: str):
     spec.loader.exec_module(module)
     return module
 
-
 def moz_lz4(data: bytes) -> bytes:
-    """Bytes as a `.jsonlz4`: the header and one LZ4 block of nothing but literals."""
 
     token = min(len(data), 15) << 4
     length = b""
@@ -66,12 +35,9 @@ def moz_lz4(data: bytes) -> bytes:
         length = b"\xff" * (rest // 255) + bytes([rest % 255])
     return b"mozLz40\0" + struct.pack("<I", len(data)) + bytes([token]) + length + data
 
-
 def tab(sync: str, url: str, title: str, **more: object) -> dict[str, object]:
     return {"zenSyncId": sync, "entries": [{"url": url, "title": title}], "index": 1, **more}
 
-
-#: A sidebar of the shape apps/desktop/src/lib/import/zen.fixture.ts holds.
 SIDEBAR = {
     "spaces": [
         {
@@ -112,17 +78,13 @@ PROFILES_INI = (
     "[General]\r\nStartWithLastProfile=1\r\nVersion=2\r\n"
 )
 
-
 def zen_home() -> pathlib.Path:
-    """A Zen of the probe's own, said to the app in `NIB_ZEN_DIR`."""
 
     made = pathlib.Path(tempfile.mkdtemp(prefix="nib-zen-probe-"))
     (made / "profiles.ini").write_text(PROFILES_INI, encoding="utf-8")
     first = made / "Profiles" / "b2.Default (release)"
     first.mkdir(parents=True)
     (first / "zen-sessions.jsonlz4").write_bytes(moz_lz4(json.dumps(SIDEBAR).encode()))
-    # The second profile is Firefox's session alone, the way a profile from before
-    # Zen's own file is; it is listed, and not the one imported.
     second = made / "Profiles" / "c3.Work" / "sessionstore-backups"
     second.mkdir(parents=True)
     (second / "recovery.jsonlz4").write_bytes(moz_lz4(json.dumps({"windows": []}).encode()))
@@ -130,8 +92,6 @@ def zen_home() -> pathlib.Path:
     atexit.register(shutil.rmtree, made, ignore_errors=True)
     return made
 
-
-#: Presses the button of the Import pane's row with this name.
 PRESS = """(async () => {
   const row = [...document.querySelectorAll('.nib-setting')]
     .find((one) => one.querySelector('.name')?.textContent?.trim() === %s)
@@ -141,11 +101,9 @@ PRESS = """(async () => {
   return 'pressed'
 })()"""
 
-#: The rows the Import pane shows.
 ROWS = """JSON.stringify([...document.querySelectorAll('.nib-setting .name')]
   .map((one) => one.textContent.trim()))"""
 
-#: What the app now holds: its spaces, and what it keeps beside them.
 HELD = """JSON.stringify({
   spaces: nib.workspace.spaces.map((one) => one.name),
   open: nib.workspace.activeSpace?.name ?? null,
@@ -155,12 +113,10 @@ HELD = """JSON.stringify({
   icons: JSON.parse(localStorage.getItem('nib:icons') ?? '{}'),
 })"""
 
-
 def files_under(root: pathlib.Path) -> list[str]:
     return sorted(
         str(path.relative_to(root)).replace("\\", "/") for path in root.rglob("*") if path.is_file()
     )
-
 
 def until(app, code: str, done, seconds: float = 30):
     said = None
@@ -171,7 +127,6 @@ def until(app, code: str, done, seconds: float = 30):
             return said
         time.sleep(0.4)
     return said
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -239,7 +194,6 @@ def main() -> int:
         time.sleep(2)
         said["work"] = camera.photograph(args.identifier, (args.shots / "zen-import-work.png").resolve())
 
-        # Again, the same profile: nothing is written twice.
         app.ask("nib.settings.show('import') || 'shown'")
         until(app, ROWS, lambda one: isinstance(one, list) and "Zen" in one)
         app.ask(PRESS % json.dumps("Zen"))
@@ -279,7 +233,6 @@ def main() -> int:
     )
     print("PASS" if good else "FAIL")
     return 0 if good else 1
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

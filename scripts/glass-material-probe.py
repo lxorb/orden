@@ -1,22 +1,3 @@
-"""Glass's Material row in the packaged app, on Windows: each material is what DWM draws
-behind the window, and the one last chosen is back on the next launch.
-
-Asked of DWM with `DwmGetWindowAttribute`, not of the app. The probe is off the screen
-and never in front (see probe_app.py), so what it can say is which backdrop DWM was told
-to draw - which is the whole of what the crate does - rather than how it looks over a
-desk; scripts/glass-probe.py and apps/desktop/test/e2e/theme-options.py read the words.
-
-A row of Settings is a press in a sheet, which an off-screen window cannot be given, so
-the choice is written where the app keeps it and the page is loaded again, which is a
-launch's own road to the same call.
-
-    pnpm --dir apps/desktop tauri build --no-bundle \\
-      --config '{"identifier":"ch.emilvinu.nib.probe.theme-options","version":"99.0.0",
-                 "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-    python scripts/glass-material-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
-      --identifier ch.emilvinu.nib.probe.theme-options
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -36,20 +17,16 @@ from probe_app import close_app, main_window, run_probe
 
 DWMWA_SYSTEMBACKDROP_TYPE = 38
 
-#: What DWM calls each backdrop; window-vibrancy asks for these on Windows 11 22H2 on.
 BACKDROPS = {"mica-alt": 4, "mica": 2, "acrylic": 3, "clear": 1}
 
 failures: list[str] = []
 
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 
 def wrong(words: str) -> None:
     failures.append(words)
     say(f"WRONG {words}")
-
 
 def attribute(hwnd: int, which: int) -> int:
     held = ctypes.c_int(0)
@@ -58,10 +35,8 @@ def attribute(hwnd: int, which: int) -> int:
     )
     return held.value
 
-
 def roaming(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["APPDATA"]) / identifier
-
 
 def wipe(identifier: str) -> None:
     if "probe" not in identifier:
@@ -69,13 +44,11 @@ def wipe(identifier: str) -> None:
     shutil.rmtree(roaming(identifier), ignore_errors=True)
     shutil.rmtree(pathlib.Path(os.environ["LOCALAPPDATA"]) / identifier, ignore_errors=True)
 
-
 def allow_eval(identifier: str) -> pathlib.Path:
     path = roaming(identifier) / "automation.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps({"port": 0, "secret": secrets.token_hex(32), "eval": True}), encoding="utf-8")
     return path
-
 
 def endpoint(path: pathlib.Path, patience: float = 90) -> dict:
     until = time.monotonic() + patience
@@ -89,7 +62,6 @@ def endpoint(path: pathlib.Path, patience: float = 90) -> dict:
         time.sleep(0.3)
     raise SystemExit(f"no endpoint at {path} after {patience:.0f}s")
 
-
 def asked(held: dict, verb: str, args: dict) -> dict:
     body = json.dumps({"verb": verb, "args": args, "rest": []}).encode()
     request = urllib.request.Request(
@@ -100,14 +72,12 @@ def asked(held: dict, verb: str, args: dict) -> dict:
     with urllib.request.urlopen(request, timeout=30) as answer:
         return json.loads(answer.read().decode())
 
-
 def ran(held: dict, code: str) -> object:
     try:
         answer = asked(held, "eval", {"code": code, "yes": True})
     except OSError as error:
         return f"unanswered: {error}"
     return answer.get("value") if answer.get("ok") else f"refused: {answer.get('error')}"
-
 
 def started(exe: pathlib.Path, identifier: str, spaces: pathlib.Path):
     path = allow_eval(identifier)
@@ -119,12 +89,10 @@ def started(exe: pathlib.Path, identifier: str, spaces: pathlib.Path):
     time.sleep(2.5)
     return app, held
 
-
 def ended(app) -> None:
     if not close_app(app):
         app.kill()
         app.wait(timeout=30)
-
 
 CHOOSE = """
 (() => {
@@ -136,7 +104,6 @@ CHOOSE = """
   return true
 })()
 """
-
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -159,7 +126,6 @@ def main() -> int:
             else:
                 wrong(f"{kind}: DWM draws backdrop {found}, wanted {backdrop}; the page says {said!r}")
 
-        # Acrylic chosen last, then a new launch: the crate puts it back before the page.
         ran(held, CHOOSE % json.dumps("acrylic"))
         time.sleep(4)
     finally:
@@ -180,7 +146,6 @@ def main() -> int:
 
     print("\n" + ("every material held" if not failures else f"{len(failures)} wrong"))
     return 1 if failures else 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

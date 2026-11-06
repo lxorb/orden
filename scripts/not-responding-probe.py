@@ -54,10 +54,8 @@ THREAD_SUSPEND_RESUME = 0x0002
 
 failures: list[str] = []
 
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 
 def check(ok: bool, words: str) -> None:
     if ok:
@@ -65,7 +63,6 @@ def check(ok: bool, words: str) -> None:
     else:
         failures.append(words)
         say(f"FAIL {words}")
-
 
 def until(test, seconds: float, step: float = 0.1):
     end = time.perf_counter() + seconds
@@ -76,14 +73,11 @@ def until(test, seconds: float, step: float = 0.1):
         time.sleep(step)
     return None
 
-
 def config_dir(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["APPDATA"]) / identifier
 
-
 def local_dir(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["LOCALAPPDATA"]) / identifier
-
 
 def log_of(identifier: str) -> str:
     try:
@@ -91,16 +85,13 @@ def log_of(identifier: str) -> str:
     except OSError:
         return ""
 
-
 def endpoint_port(identifier: str) -> int:
     try:
         return int(json.loads((config_dir(identifier) / "automation.json").read_text(encoding="utf-8"))["port"])
     except (OSError, ValueError, KeyError, TypeError):
         return 0
 
-
 class Frozen:
-    """A probe's window thread, suspended from outside, and let go again."""
 
     def __init__(self, hwnd: int) -> None:
         thread = user32.GetWindowThreadProcessId(hwnd, None)
@@ -115,26 +106,21 @@ class Frozen:
             kernel32.CloseHandle(self.handle)
             self.handle = None
 
-
 def first(exe: pathlib.Path, env: dict[str, str]):
     app = run_probe(exe, env=env, quiet=True)
     hwnd = until(lambda: main_window(app.pid), 60)
     if not hwnd:
         raise SystemExit("the first launch never showed its window")
-    # Its launch order, so the window thread is idle rather than mid-launch when frozen.
     time.sleep(6)
     return app, hwnd
 
-
 def second(exe: pathlib.Path, env: dict[str, str], answer: str):
     return run_probe(exe, env={**env, "NIB_PROBE_NOT_RESPONDING": answer}, quiet=True)
-
 
 def gone(app) -> None:
     if app.poll() is None and not close_app(app, seconds=20):
         app.kill()
         app.wait(timeout=30)
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -198,14 +184,13 @@ def main() -> int:
         started.append(app)
         was = endpoint_port(told.identifier)
         frozen = Frozen(hwnd)
-        # Long enough to be written down as a hang; see stall.rs.
         time.sleep(6.5)
         began = time.perf_counter()
         other = second(told.exe, env, "end")
         started.append(other)
         ended = until(lambda: app.poll() is not None, 15)
         check(bool(ended), f"the frozen one is ended ({time.perf_counter() - began:.1f} s)")
-        frozen.handle = None  # its process is gone, and the handle with it
+        frozen.handle = None
         shown = until(lambda: main_window(other.pid), 30)
         check(bool(shown), f"the second launch comes up as the first ({time.perf_counter() - began:.1f} s to its window)")
         fresh = until(lambda: (lambda port: port if port and port != was else 0)(endpoint_port(told.identifier)), 30)
@@ -230,7 +215,6 @@ def main() -> int:
     print()
     print("FAILED: " + "; ".join(failures) if failures else "all good")
     return 1 if failures else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,24 +1,4 @@
 #!/usr/bin/env python3
-"""Orden's popups chosen from with a pointer, the way a hand does, over a web tab's page.
-#661: on Linux a press in a popup - a space in the space switcher - sometimes did not
-choose it, and the popup closed as though the press had been outside it.
-
-Run with Orden up on a web tab, its endpoint open to `eval` (as scripts/wayland-launch.sh
-and scripts/x11-launch.sh leave it with POPUP=1), under one of two desktops:
-
-  sway   the compositor's own pointer (scripts/wayland-pointer.py's FIFO in <out>), and
-         sway's tree for where the window is.
-  x11    xdotool's pointer on the X server, and the window as the X server has it.
-
-    python3 scripts/popup-drive.py <sway|x11> <out folder> <app pid> [rounds]
-
-Each round: the space switcher opened and another space chosen from it, and the first
-chosen back; the web tab's menu opened, the pointer rested over the live page beside it,
-and Zoom in and 100% pressed, each of which keeps the menu open and says the new size;
-and once a canvas is open, its pens' panel opened and another kind of pen pressed in it.
-Every press has to do what it says and leave the popup as it should be; a miss is a
-picture in <out> and a line in <out>/popups.json, and the run fails.
-"""
 
 import json
 import os
@@ -35,7 +15,6 @@ POINTER = OUT / "pointer.fifo"
 failures = []
 done = []
 
-
 def endpoint():
     for _ in range(120):
         try:
@@ -47,9 +26,7 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
-
 
 def run(code):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
@@ -67,7 +44,6 @@ def run(code):
         except (TimeoutError, OSError):
             time.sleep(1)
     return None
-
 
 if DESK == "sway":
 
@@ -96,8 +72,6 @@ if DESK == "sway":
     def shoot(name):
         subprocess.run(["grim", str(OUT / f"popup-{name}.png")], check=False)
 
-    # On the wide screen at scale 1, where the sidebar and its space switcher show: on
-    # the narrow one the sidebar is folded away.
     subprocess.run(["swaymsg", f"[pid={APP}] move container to output HEADLESS-2, focus"], check=False)
     time.sleep(2)
 
@@ -127,14 +101,10 @@ else:
     def shoot(name):
         subprocess.run(["import", "-window", "root", str(OUT / f"popup-{name}.png")], check=False)
 
-
 def ratio():
     return run("devicePixelRatio") or 1
 
-
 def box(selector, text=None):
-    """Where an element of the window's page is, in its own pixels: the first that
-    matches and is drawn, with `text` as its words where given."""
     return run(
         "(() => { for (const one of document.querySelectorAll(%s)) {"
         " const r = one.getBoundingClientRect(); if (r.width <= 0 || r.height <= 0) continue;"
@@ -143,19 +113,15 @@ def box(selector, text=None):
         % (json.dumps(selector), json.dumps(text), json.dumps(text))
     )
 
-
 def at(rect):
-    """The middle of `rect` on the screen."""
     x, y = window()
     scale = ratio()
     return x + (rect["x"] + rect["width"] / 2) * scale, y + (rect["y"] + rect["height"] / 2) * scale
-
 
 def press(rect):
     move(*at(rect))
     time.sleep(0.25)
     click()
-
 
 def until(code, seconds=4):
     for _ in range(int(seconds / 0.2)):
@@ -164,7 +130,6 @@ def until(code, seconds=4):
             return said
         time.sleep(0.2)
     return None
-
 
 HEARD = (
     "(() => { if (window.__popupHeard) return true; window.__popupHeard = [];"
@@ -178,16 +143,13 @@ HEARD = (
     " return true })()"
 )
 
-
 def fail(what, name):
     print(f"::error::{DESK}: {what}")
     print(f"{DESK}: the page heard: {run('window.__popupHeard')}")
     failures.append(what)
     shoot(name)
 
-
 def over_the_page():
-    """The pointer rested over the middle of the web tab's page, wherever it is."""
     pane = run(
         "(() => { const all = nib.pages.each().map(([, page]) => page.sent)"
         ".filter((one) => one && one.visible); return all[0] ? all[0].pane : null })()"
@@ -197,10 +159,7 @@ def over_the_page():
         time.sleep(0.5)
     return isinstance(pane, dict)
 
-
 def answer():
-    """The app's question about hidden tabs, asked the first time a switch of space
-    hides a page, answered as a reader would: Keep running, which is then the setting."""
     for _ in range(3):
         button = run(
             "(() => { const one = [...document.querySelectorAll('button')]"
@@ -213,14 +172,11 @@ def answer():
         press(button)
         time.sleep(1)
 
-
 ACTIVE = "nib.workspace.activeSpace && nib.workspace.activeSpace.name"
 SWITCHER = '[data-space-drop="switcher"]'
 SPACES = "[data-spaces-open]"
 
-
 def choose_space(name, round_):
-    """The space called `name` chosen from the switcher, as a hand would."""
     answer()
     button = box(SWITCHER)
     if not isinstance(button, dict):
@@ -238,14 +194,11 @@ def choose_space(name, round_):
     if not until(f"!!document.querySelector('{SPACES}')"):
         fail(f"round {round_}: the space switcher did not open", f"{round_}-switcher-shut")
         return
-    # Over the page and back, which is where a pointer goes on its way to a row.
     over_the_page()
     row = box(f"{SPACES} [role=menuitem] .nib-row-label", name)
     if not isinstance(row, dict):
         fail(f"round {round_}: no row for the space {name}", f"{round_}-switcher-row")
         return
-    # What is on top where the row is, as the page has it: the row, or something drawn
-    # over it that a press there would land on instead.
     under = run(
         f"(() => {{ const r = [...document.querySelectorAll('{SPACES} [role=menuitem] .nib-row-label')]"
         f".find((o) => o.textContent.trim() === {json.dumps(name)}); if (!r) return null;"
@@ -268,12 +221,9 @@ def choose_space(name, round_):
             f"{round_}-switcher-missed",
         )
 
-
 MENU = '[role="menu"]'
 
-
 def zoom_in_the_menu(round_):
-    """The web tab's menu: Zoom in and 100% pressed, the pointer over the page between."""
     answer()
     button = box('.webbar button[aria-haspopup="menu"]')
     if not isinstance(button, dict):
@@ -289,7 +239,6 @@ def zoom_in_the_menu(round_):
             fail(f"round {round_}: the web tab's menu closed with the pointer over the page", f"{round_}-menu-left")
             return
         if size:
-            # The row that says the size, whatever it says now: a press on it is 100%.
             row = run(
                 f"(() => {{ const one = [...document.querySelectorAll('{MENU} [role=menuitem]')]"
                 ".find((item) => /^\\d+%$/.test(item.textContent.trim()));"
@@ -322,12 +271,9 @@ def zoom_in_the_menu(round_):
     run("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))")
     until(f"!document.querySelector('{MENU}')", 2)
 
-
 PANEL = ".cluster .panel"
 
-
 def pens(round_):
-    """The canvas's pens' panel opened from the pen in hand, and another kind pressed in it."""
     answer()
     pen = box(".cluster button.pen")
     if not isinstance(pen, dict):
@@ -365,7 +311,6 @@ def pens(round_):
     run("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))")
     until(f"!document.querySelector('{PANEL}')", 2)
 
-
 VISIBLE = "nib.pages.each().some(([, page]) => page.sent && page.sent.visible)"
 WEB_TAB = (
     "(() => { const one = [...document.querySelectorAll('.tab .pick[data-tab]')]"
@@ -374,10 +319,7 @@ WEB_TAB = (
     " return { x: r.x, y: r.y, width: r.width, height: r.height } })()"
 )
 
-
 def web_tab_in_front():
-    """The web tab chosen in the strip, as a reader would: a launch opens on what it
-    opens on - the read-me of a first run - and the web tab waits beside it."""
     for _ in range(30):
         if run(VISIBLE):
             return True
@@ -387,8 +329,6 @@ def web_tab_in_front():
         time.sleep(1)
     return bool(run(VISIBLE))
 
-
-# A web tab's page in the pane, and a second space to choose.
 if not web_tab_in_front():
     raise SystemExit(f"::error::{DESK}: no web tab's page in sight to put popups over")
 first = run(ACTIVE)
@@ -411,7 +351,6 @@ for round_ in range(1, ROUNDS + 1):
     zoom_in_the_menu(round_)
     time.sleep(0.5)
 
-# The canvas last: it takes the pane from the web tab.
 run("nib.workspace.newCanvas()")
 if until("!!document.querySelector('.cluster button.pen')", 10):
     for round_ in range(1, ROUNDS + 1):

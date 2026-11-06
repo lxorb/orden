@@ -1,26 +1,4 @@
 #!/usr/bin/env node
-// A stand-in for Claude Code and Codex: the same questions answered in the same shapes,
-// with nobody's account behind it.
-//
-//     node scripts/fake-ai-cli.mjs claude -p --output-format stream-json ...
-//     node scripts/fake-ai-cli.mjs claude -p --input-format stream-json ...   (a session)
-//     node scripts/fake-ai-cli.mjs codex app-server -c ...
-//
-// The crate's tests start it in place of the real programs (src-tauri/src/ai_cli.rs), and
-// a native probe points the app at it through NIB_AI_CLAUDE_CODE and NIB_AI_CODEX, so the
-// settings rows, a streamed answer, a stop and a plan's limit are all seen without
-// signing anybody in. It refuses a question asked without the flags that keep the real
-// ones from touching the machine, which is how the tests know those flags arrive; and a
-// session says, in its own first lines, what it was started with - its MCP servers,
-// whether a token came with them, the tools it may call - so a test can read it back.
-//
-// FAKE_AI_CLI_MODE says how it behaves: `answer` (the default), `slow`, `hang` (starts a
-// child of its own, writes both numbers to FAKE_AI_CLI_PIDS and never ends), `limit`,
-// `signed-out`, and for Codex `approval` (asks to run a command and says what it was
-// told).
-//
-// Every ending sets an exit code rather than calling `process.exit`, which on Windows can
-// end the process before a pipe has taken what was written to it.
 
 import { spawn } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
@@ -35,8 +13,6 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 const has = (flag) => args.includes(flag)
 const after = (flag) => (has(flag) ? args[args.indexOf(flag) + 1] : undefined)
 
-/** The question on stdin, as its last line of words: Orden wraps a question in tags, and
- *  the answer echoes what was asked rather than the tag that closed it. */
 async function question() {
   let text = ''
   for await (const chunk of process.stdin) text += chunk
@@ -49,9 +25,6 @@ function refuse(why) {
   process.exitCode = 2
 }
 
-/** `mcp get`, `mcp add` and `mcp remove`, as both programs spell them, kept in a file of
- *  the program's home (`CLAUDE_CONFIG_DIR` or `CODEX_HOME`, else `HOME`): what a test of
- *  Orden connecting itself to the agents on a machine reads back. Never a real config. */
 function mcp(home) {
   const file = join(home, 'fake-mcp.json')
   let servers = {}
@@ -84,7 +57,6 @@ function mcp(home) {
   writeFileSync(file, JSON.stringify(servers))
 }
 
-/** Starts a child that ends only with its family, and never ends either on its own. */
 function hang() {
   const child = spawn(process.execPath, ['-e', 'setInterval(Date.now, 1000)'], {
     stdio: 'ignore',
@@ -95,7 +67,6 @@ function hang() {
   setInterval(Date.now, 1000)
 }
 
-/** Each line of stdin, in order, to `heard`; then `ended`. */
 function linesIn(heard, ended) {
   const reader = createInterface({ input: process.stdin })
   reader.on('line', (line) => {
@@ -132,8 +103,6 @@ async function claude() {
     console.log(CLAUDE_HELP)
     return
   }
-  // A second account's home says so in its email, and a key left in the environment
-  // says so in its method, which is how a test sees the home and the key reach it.
   const home = process.env.CLAUDE_CONFIG_DIR
   if (args[0] === 'mcp') return mcp(home ?? process.env.HOME ?? '.')
   if (args[0] === 'auth' && args[1] === 'logout') {
@@ -229,8 +198,6 @@ async function claude() {
   })
 }
 
-/** The MCP servers a session was given, as Claude Code's init lists them: none under
- *  `--safe-mode`, which drops even `--mcp-config`'s (measured on 2.1.280). */
 function claudeServers() {
   const file = after('--mcp-config')
   if (!file) return []
@@ -242,7 +209,6 @@ function claudeServers() {
   return has('--safe-mode') ? [] : [{ name: 'orden', status: 'connected' }]
 }
 
-/** A Claude Code kept open: a `user` message per turn, control requests between. */
 function claudeSession() {
   let servers
   try {
@@ -491,7 +457,6 @@ async function codex() {
   appServer()
 }
 
-/** Codex's app-server: JSON-RPC lines without the `jsonrpc` field. */
 function appServer() {
   let ready = false
   let threads = 0

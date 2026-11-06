@@ -1,16 +1,4 @@
 #!/usr/bin/env python3
-"""Tabs switched in the dark, filmed frame by frame: no frame of the pane may be white.
-#762: on Linux every switch of tab flashed the page white for a moment.
-
-Run with Orden up on scripts/wayland-launch.sh's or scripts/x11-launch.sh's dark page
-(FLASH=1), under one of two desktops; the screen is filmed for the whole of it, by
-wf-recorder under sway and by ffmpeg's x11grab under an X server. The app is put in its
-dark scheme, and the strip's note tab and web tab chosen in turn, ten times each. Every
-frame's pane is read: a pane more than a tenth white in any frame is a flash, and the
-run fails with that frame kept in <out>.
-
-    python3 scripts/flash-drive.py <sway|x11> <out folder> <app pid> [switches]
-"""
 
 import json
 import os
@@ -27,7 +15,6 @@ POINTER = OUT / "pointer.fifo"
 failures = []
 done = []
 
-
 def endpoint():
     for _ in range(120):
         try:
@@ -39,9 +26,7 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
-
 
 def run(code):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
@@ -59,7 +44,6 @@ def run(code):
         except (TimeoutError, OSError):
             time.sleep(1)
     return None
-
 
 if DESK == "sway":
 
@@ -88,8 +72,6 @@ if DESK == "sway":
     def shoot(name):
         subprocess.run(["grim", str(OUT / f"flash-{name}.png")], check=False)
 
-    # On the wide screen at scale 1, where the sidebar and its space switcher show: on
-    # the narrow one the sidebar is folded away.
     subprocess.run(["swaymsg", f"[pid={APP}] move container to output HEADLESS-2, focus"], check=False)
     time.sleep(2)
 
@@ -119,14 +101,10 @@ else:
     def shoot(name):
         subprocess.run(["import", "-window", "root", str(OUT / f"flash-{name}.png")], check=False)
 
-
 def ratio():
     return run("devicePixelRatio") or 1
 
-
 def box(selector, text=None):
-    """Where an element of the window's page is, in its own pixels: the first that
-    matches and is drawn, with `text` as its words where given."""
     return run(
         "(() => { for (const one of document.querySelectorAll(%s)) {"
         " const r = one.getBoundingClientRect(); if (r.width <= 0 || r.height <= 0) continue;"
@@ -135,19 +113,15 @@ def box(selector, text=None):
         % (json.dumps(selector), json.dumps(text), json.dumps(text))
     )
 
-
 def at(rect):
-    """The middle of `rect` on the screen."""
     x, y = window()
     scale = ratio()
     return x + (rect["x"] + rect["width"] / 2) * scale, y + (rect["y"] + rect["height"] / 2) * scale
-
 
 def press(rect):
     move(*at(rect))
     time.sleep(0.25)
     click()
-
 
 def until(code, seconds=4):
     for _ in range(int(seconds / 0.2)):
@@ -157,14 +131,11 @@ def until(code, seconds=4):
         time.sleep(0.2)
     return None
 
-
 SWITCHES = int(sys.argv[4]) if len(sys.argv) > 4 else 10
-
 
 def fail(what, name):
     print(f"::error::{DESK}: {what}")
     failures.append(what)
-
 
 TABS = (
     "[...document.querySelectorAll('.tab .pick[data-tab]')].map((one) => { const r = one.getBoundingClientRect();"
@@ -177,12 +148,9 @@ PANE = (
 )
 TOGGLE = "button.act[aria-label='Light'], button.act[aria-label='Dark']"
 
-
 def tabs():
     return run(TABS) or []
 
-
-# Dark, as the reader who was flashed: the scheme switched where it is light.
 for _ in range(3):
     if run("document.documentElement.dataset.theme") == "dark":
         break
@@ -201,7 +169,6 @@ press(web)
 until("nib.pages.each().some(([, page]) => page.sent && page.sent.visible)", 20)
 time.sleep(3)
 
-# Where the pane is on the screen, in the screen's pixels: what every frame is read in.
 x0, y0 = window()
 scale = ratio()
 hole = run(
@@ -247,15 +214,12 @@ else:
 try:
     recorder.wait(timeout=15)
 except subprocess.TimeoutExpired:
-    # wf-recorder on a headless output can wait on a frame that never comes to stop;
-    # what it has written is kept.
     recorder.terminate()
     try:
         recorder.wait(timeout=15)
     except subprocess.TimeoutExpired:
         recorder.kill()
 
-# Every frame's pane: how much of it is white.
 frames = OUT / "frames"
 frames.mkdir(exist_ok=True)
 left, top, right, bottom = area

@@ -1,19 +1,4 @@
 #!/usr/bin/env python3
-"""A web tab's page in the rounded card it fills: its two bottom corners are the card's,
-not square. #1088: what is open stands in a card with rounded corners, and a web tab's
-page - a native view, drawn over the card - stood square out of both of its lower corners.
-
-A page of one colour, magenta edge to edge, in a web tab, and a picture of the screen: just
-inside each bottom corner of the page's rectangle there must be no magenta - the card's
-corner is there - while the middle of its bottom edge and its two top corners, under the
-bar, are the page's.
-
-Run with Orden up (CORNER=1 in scripts/wayland-launch.sh):
-
-    python3 scripts/corner-drive.py <sway|x11> <out folder> <app pid>
-
-`sway` photographs with grim, `x11` through the X server, on $DISPLAY.
-"""
 
 import ctypes
 import http.server
@@ -32,7 +17,6 @@ CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.
 PAGES = 8772
 MAGENTA = (255, 0, 255)
 
-
 class Pages(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_):
         pass
@@ -43,11 +27,9 @@ class Pages(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b"<!doctype html><title>magenta</title><body style='margin:0;height:100vh;background:#ff00ff'>")
 
-
 class Serving(socketserver.ThreadingMixIn, http.server.HTTPServer):
     daemon_threads = True
     allow_reuse_address = True
-
 
 def endpoint():
     for _ in range(120):
@@ -60,9 +42,7 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
-
 
 def run(code, timeout=10):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
@@ -81,12 +61,9 @@ def run(code, timeout=10):
             time.sleep(1)
     return None
 
-
 if DESK == "sway":
 
     def picture():
-        """The screen the window is on, as its width, height and RGB bytes: grim's PPM of
-        that one output, since grim draws every output at once at the largest scale."""
         subprocess.run(["swaymsg", f"[pid={APP}] move container to output HEADLESS-2, focus"], check=False)
         time.sleep(2)
         raw = subprocess.run(
@@ -116,7 +93,6 @@ else:
     SHOWN = X.XOpenDisplay(os.environ.get("DISPLAY", ":0").encode())
 
     def picture():
-        """The X server's screen, as its width, height and RGB bytes."""
         image = X.XGetImage(SHOWN, X.XDefaultRootWindow(SHOWN), 0, 0, 1600, 1000, 0xFFFFFFFF, 2).contents
         line = image.bytes_per_line
         raw = ctypes.string_at(image.data, line * image.height)
@@ -127,10 +103,8 @@ else:
                 rgb += bytes((row[x + 2], row[x + 1], row[x]))
         return image.width, image.height, bytes(rgb)
 
-
 def near(colour, other, slack=40):
     return all(abs(one - two) <= slack for one, two in zip(colour, other))
-
 
 threading.Thread(target=Serving(("127.0.0.1", PAGES), Pages).serve_forever, daemon=True).start()
 for _ in range(60):
@@ -155,14 +129,10 @@ if not isinstance(place, dict) or not corner:
 
 wide, tall, data = picture()
 
-
 def at(x, y):
     one = (y * wide + x) * 3
     return tuple(data[one : one + 3])
 
-
-# The page's own rectangle, read off the picture rather than worked out: every row that
-# holds magenta, and the furthest it reaches either way.
 MARK = bytes(MAGENTA)
 rows = []
 for y in range(tall):

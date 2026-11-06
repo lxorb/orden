@@ -1,18 +1,4 @@
 #!/usr/bin/env python3
-"""A page note made from a PDF wears the PDF's mark in the file list and on its tab.
-#676: it wore the page note's, the same as a page note started blank, so nothing in
-the list said which of them was the paper somebody brought in.
-
-Run with Orden up (PDFMARK=1 in scripts/wayland-launch.sh). Two PDFs and a blank page
-note are put in the open space, and one of the PDFs is opened, which makes it a page
-note holding its paper (pages/from-pdf.ts). Its row and its tab have to wear the mark
-the other PDF's row wears, and the blank page note's row has to wear another. Then a
-second space is made and opened, and the page note opened from it, in a tab of that
-space: the tab has to wear the PDF's mark still, though the list in front is another
-space's and says nothing of it.
-
-    python3 scripts/pdf-mark-drive.py <out folder>
-"""
 
 import json
 import os
@@ -25,7 +11,6 @@ from pathlib import Path
 OUT = Path(sys.argv[1])
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
 
-
 def endpoint():
     for _ in range(120):
         try:
@@ -37,9 +22,7 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
-
 
 def run(code):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
@@ -58,7 +41,6 @@ def run(code):
             time.sleep(1)
     return None
 
-
 def until(code, seconds=20):
     for _ in range(seconds * 4):
         said = run(code)
@@ -67,9 +49,7 @@ def until(code, seconds=20):
         time.sleep(0.25)
     return None
 
-
 def pdf(title):
-    """One A4 page with a line of text on it, which pdf.js reads."""
     stream = f"BT /F1 24 Tf 72 720 Td ({title}) Tj ET".encode()
     objects = [
         b"<< /Type /Catalog /Pages 2 0 R >>",
@@ -91,15 +71,11 @@ def pdf(title):
     out += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (len(objects) + 1, table)
     return bytes(out)
 
-
 def mark(path):
-    """The drawing a row wears, as its markup: two rows wear the same mark when it is
-    the same."""
     return run(
         f"(() => {{ const row = document.querySelector('.row[data-path=\"' + CSS.escape({json.dumps(path)}) + '\"]');"
         " const mark = row && row.querySelector('.mark svg'); return mark ? mark.innerHTML : null })()"
     )
-
 
 root = until("nib.workspace.activeSpace && nib.workspace.activeSpace.root")
 if not root:
@@ -111,8 +87,6 @@ leaflet.write_bytes(pdf("Leaflet"))
 sketch.write_text('{"nodes":[],"edges":[]}')
 print(f"pdf mark: two PDFs and a blank page note put in {root}")
 
-# The list is read again as the space's watch hears a change; asked here as well, so a
-# watch slow to hear is not what the run measures.
 LISTED = "void nib.workspace.loadTree(), "
 
 if not until(
@@ -152,9 +126,6 @@ elif tab_mark != pdf_mark:
 else:
     print("pdf mark: its tab wears the PDF's mark too")
 
-# Another space in front, whose list says nothing of the note: the tab it is opened in
-# there has to know it all the same. Its tab here is closed first, or opening it would
-# bring this space back to show the tab it already has.
 run(f"(() => {{ for (const tab of nib.workspace.tabs) if (tab.path === {json.dumps(made)}) nib.workspace.close(tab.id); return true }})()")
 time.sleep(1)
 run("void nib.workspace.addSpace('Elsewhere'), true")

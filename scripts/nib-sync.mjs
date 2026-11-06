@@ -1,30 +1,4 @@
 #!/usr/bin/env node
-/** A space, in or out of a folder, without the app.
- *
- *  What it is for: a repository of notes that publishes or mirrors from CI. A
- *  GitHub Action that wants to write the week's notes into a site, or keep a
- *  folder in git as the copy of record, needs the same two things the app needs
- *  and nothing else - what changed, and a note written back.
- *
- *  So this speaks the ordinary sync API rather than a second one of its own:
- *  `GET /v1/spaces/:id/changes` with a cursor, `GET /v1/notes/:id` for the
- *  words, `PUT`/`POST` to send them. Which means there is nothing here for the
- *  service to keep in step with, and anything the app can sync, this can.
- *
- *  Usage:
- *
- *    NIB_TOKEN=nib_... node scripts/nib-sync.mjs pull "Work" ./notes
- *    NIB_TOKEN=nib_... node scripts/nib-sync.mjs push "Work" ./notes
- *    NIB_TOKEN=nib_... node scripts/nib-sync.mjs back "Work" 7 --dry
- *
- *  The token is the one in Settings > LLM access, which is a token for a program
- *  acting for you: read-only, or read and write. `NIB_API` points it somewhere
- *  else for a test; it defaults to the service.
- *
- *  What it deliberately does not do: delete. A note taken away in the app comes
- *  down here as a tombstone and the file is removed, but a file missing from the
- *  folder is never read as "delete it from the account" - a checkout that failed
- *  half way is not an instruction to empty a space. See docs/sync.md. */
 
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, relative, sep } from 'node:path'
@@ -32,10 +6,8 @@ import { dirname, join, relative, sep } from 'node:path'
 const API = process.env.NIB_API ?? 'https://orden.so'
 const TOKEN = process.env.NIB_TOKEN ?? ''
 
-/** What a note's path may end in, which is what the service accepts. */
 const NOTES = /\.(md|markdown|mdown|mkd|canvas)$/i
 
-/** Where the cursor is kept, so a second run only asks for what has changed. */
 const CURSOR = '.nib-cursor'
 
 function say(words) {
@@ -71,7 +43,6 @@ async function spaceNamed(name) {
   return found
 }
 
-/** Everything that has changed since the cursor the folder remembers. */
 async function pull(name, folder) {
   const space = await spaceNamed(name)
   const since = Number(await readFile(join(folder, CURSOR), 'utf8').catch(() => 0)) || 0
@@ -109,8 +80,6 @@ async function pull(name, folder) {
   say(`pulled ${written} notes, removed ${removed}, cursor ${cursor}`)
 }
 
-/** Every note in the folder, sent. A note the account does not hold is created;
- *  one it holds is written when the words differ. */
 async function push(name, folder) {
   const space = await spaceNamed(name)
   const held = new Map()
@@ -151,22 +120,8 @@ async function push(name, folder) {
   say(`pushed ${sent} notes`)
 }
 
-/** How many times a bulk restore will ask. The service puts back four hundred notes
- *  per request, so this is forty thousand - more than a space holds, and a ceiling
- *  all the same, because a loop that talks to a server should have one. The app's
- *  pane loops the same way; see `roll` in SyncPane.svelte. */
 const ROUNDS = 100
 
-/** A space, or one folder of it, back to how it read a number of days ago.
- *
- *  The rescue a job needs and the one thing here that undoes rather than sends: a
- *  build that wrote a thousand notes wrong is not something to undo by hand in a
- *  settings pane. It says what would change before it changes anything, the way the
- *  pane does, and `--dry` stops there.
- *
- *  Nothing is thrown away by it: every note it changes keeps what it said as a
- *  version, so a wrong number here is another run of this away from being undone.
- *  Which is why a token may reach it at all; see services/sync/src/programs.ts. */
 async function back(name, days, options = {}) {
   const space = await spaceNamed(name)
   const since = Number(days)
@@ -201,7 +156,6 @@ async function sha256(text) {
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
-/** Every note under a folder, by its path in the space. */
 async function walk(root, folder) {
   const found = []
 

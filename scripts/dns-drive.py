@@ -1,18 +1,4 @@
 #!/usr/bin/env python3
-"""The DNS the web tabs' pages look names up with, chosen in Settings. #766, #767: the
-pages asked the system's resolver and nothing could change that - no other DNS, no
-DNS over HTTPS.
-
-Run with Orden up on scripts/wayland-launch.sh's setup for it (DNS=1): a name only a
-DNS over HTTPS server of the run's own knows (scripts/doh-server.py), and the web tab
-opened on that name. With `choose`: the tab cannot reach it on the system's DNS; then
-Settings > General > DNS is set to another provider, that server, by pressing and
-typing; and the tab, sent to the name again, reaches it at once, the lookup having gone
-through the server. With `again`, after Orden is quit and started again: the tab
-reaches the name the moment it loads, the choice kept.
-
-    python3 scripts/dns-drive.py <out folder> <choose|again> <name> <provider> <server log>
-"""
 
 import json
 import os
@@ -27,11 +13,9 @@ CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.
 REACHED = "reached by name"
 failures = []
 
-
 def fail(what):
     print(f"::error::{PHASE}: {what}")
     failures.append(what)
-
 
 def endpoint():
     for _ in range(120):
@@ -44,9 +28,7 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
-
 
 def run(code):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
@@ -65,7 +47,6 @@ def run(code):
             time.sleep(1)
     return None
 
-
 def reached(within):
     for _ in range(within * 2):
         if REACHED in (run("document.body.innerText") or ""):
@@ -73,17 +54,14 @@ def reached(within):
         time.sleep(0.5)
     return False
 
-
 def looked_up():
     try:
         return NAME in SERVED.read_text()
     except OSError:
         return False
 
-
 def shot(name):
     subprocess.run(["grim", str(OUT / f"dns-{name}.png")], check=False)
-
 
 if PHASE == "choose":
     if reached(8):
@@ -134,7 +112,6 @@ if PHASE == "choose":
     run("(nib.settings.hide ? nib.settings.hide() : (nib.settings.open = false), 'closed')")
     time.sleep(1)
 
-    # The tab sent to the name again, now: the engine was told at once.
     tab = run(
         "[...document.querySelectorAll('.tab .pick[data-tab]')].map((one) => one.dataset.tab)"
         ".find((id) => nib.pages.each().some(([page]) => page === id)) ?? null"

@@ -46,11 +46,9 @@ HERE = pathlib.Path(__file__).resolve().parent
 
 SPACE = "No reload probe"
 PAGES = 10
-#: Five minutes is when a page out of sight is frozen (resting.ts), and a little more.
 FROZEN_BY = 5 * 60 + 40
 
 failures: list[str] = []
-
 
 def borrowed(name: str, file: str):
     spec = importlib.util.spec_from_file_location(name, HERE / file)
@@ -60,9 +58,7 @@ def borrowed(name: str, file: str):
     spec.loader.exec_module(module)
     return module
 
-
 switch = borrowed("switch", "web-switch-probe.py")
-
 
 def page(index: int) -> bytes:
     return f"""<!doctype html>
@@ -80,9 +76,7 @@ setInterval(() => {{
 </script>
 """.encode()
 
-
 class Heard:
-    """Loads and ticks per page."""
 
     def __init__(self) -> None:
         self.lock = threading.Lock()
@@ -109,7 +103,6 @@ class Heard:
         with self.lock:
             self.loads = [0] * PAGES
             self.ticks = []
-
 
 def serve(at: int, heard: Heard) -> http.server.ThreadingHTTPServer:
     class Handler(http.server.BaseHTTPRequestHandler):
@@ -141,16 +134,13 @@ def serve(at: int, heard: Heard) -> http.server.ThreadingHTTPServer:
     threading.Thread(target=made.serve_forever, daemon=True).start()
     return made
 
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 
 def check(ok: bool, words: str) -> None:
     say(("ok   " if ok else "FAIL ") + words)
     if not ok:
         failures.append(words)
-
 
 def ask(app, code: str, seconds: float = 60) -> object:
     end = time.perf_counter() + seconds
@@ -162,29 +152,21 @@ def ask(app, code: str, seconds: float = 60) -> object:
         time.sleep(0.5)
     return said
 
-
-#: What each web tab's page is doing, as the window's own store says: on screen, frozen or
-#: running.
 STATE = (
     "JSON.stringify(Object.fromEntries(nib.pages.each().map(([id, one]) => {"
     " const tab = nib.workspace.tabs.find((each) => each.id === id);"
     " return [tab ? tab.name : id, one.onScreen ? 'on screen' : one.frozen ? 'frozen' : 'running'] })))"
 )
 
-
 ACTIVE = "JSON.stringify(nib.workspace.active ? nib.workspace.active.name : null)"
 
-#: Ctrl+Tab, as the window hears it: a key in the app's own document, so nothing outside
-#: the app is pressed and nothing is brought forward.
 CTRL_TAB = (
     "(window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', code: 'Tab', ctrlKey: true,"
     " bubbles: true, cancelable: true })), window.dispatchEvent(new KeyboardEvent('keyup',"
     " { key: 'Control', code: 'ControlLeft', bubbles: true })), 'pressed')"
 )
 
-
 def round_of(app, steps: int, rest: float = 0.6) -> list[object]:
-    """Ctrl+Tab `steps` times, a moment on each tab; the tabs it landed on."""
     seen = []
     for _ in range(steps):
         ask(app, CTRL_TAB)
@@ -192,21 +174,16 @@ def round_of(app, steps: int, rest: float = 0.6) -> list[object]:
         seen.append(ask(app, ACTIVE))
     return seen
 
-
 def web_targets(identifier: str) -> list[dict]:
-    # The pages' own browser, in the `web` store every space shares; see web_stores.rs.
     at = port(switch.config_dir(identifier) / "web")
     if not at:
         return []
     return [one for one in targets(at) if "/p?" in str(one.get("url", "")) and one.get("type") == "page"]
 
-
 def index_of(target: dict) -> int:
     return int(str(target["url"]).rsplit("?", 1)[1]) % PAGES
 
-
 def fields(identifier: str, write: bool) -> dict[int, object]:
-    """Each page's field, typed into (`write`) or read back, through the protocol."""
     out: dict[int, object] = {}
     for target in web_targets(identifier):
         index = index_of(target)
@@ -222,9 +199,7 @@ def fields(identifier: str, write: bool) -> dict[int, object]:
             session.close()
     return out
 
-
 def processes(pid: int) -> list[tuple[str, int]]:
-    """The engine processes under the app: each one's type and working set."""
     script = (
         "$all = Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,WorkingSetSize,CommandLine;"
         f" $mine = @({pid}); $grew = $true;"
@@ -246,7 +221,6 @@ def processes(pid: int) -> list[tuple[str, int]]:
             rows.append((kind, int(size)))
     return rows
 
-
 def memory(pid: int, words: str) -> int:
     rows = processes(pid)
     total = sum(size for _, size in rows)
@@ -256,7 +230,6 @@ def memory(pid: int, words: str) -> int:
         f" renderers {[round(one / 2**20) for one in renderers]} MB"
     )
     return total
-
 
 def make_space(at: int) -> pathlib.Path:
     made = switch.spaces_root() / SPACE
@@ -269,13 +242,11 @@ def make_space(at: int) -> pathlib.Path:
         )
     return made
 
-
 def open_all(app) -> None:
     for index in range(PAGES):
         app.open(f"Page {index}.url", SPACE)
         time.sleep(1.2)
     time.sleep(3)
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -321,7 +292,6 @@ def main() -> int:
         check(heard.loads == [1] * PAGES, f"no page loaded again going round twice ({heard.loads})")
 
         say(f"out of sight for {FROZEN_BY} s")
-        # A page in front for the wait, whichever tab the round ended on.
         ask(app, "(nib.workspace.activate(nib.workspace.tabs.find((one) => one.name.startsWith('Page 0')).id), 'shown')")
         time.sleep(FROZEN_BY)
         front = ask(app, ACTIVE)
@@ -373,7 +343,6 @@ def main() -> int:
 
     print("PASS" if not failures else f"FAIL: {failures}")
     return 1 if failures else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

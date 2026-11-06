@@ -1,21 +1,4 @@
 #!/usr/bin/env python3
-"""Web tabs closed one after another as fast as Ctrl+W closes them, and the window still
-answering. #1031: on Linux the whole app froze for good, and only a kill ended it.
-
-Each tab closed brings the next one to the front, and a tab restored from the last run has
-no page yet, so it is built as it comes up - and closed again before it is done. The page
-being built was registered with its `DevTools` agent from a thread of its own, which waited
-for the window's thread while holding the list of pages; the window's thread, closing the
-tab before it, wanted the same list (`engine/devtools.rs`). Nothing answered again.
-
-Run with Orden up (CLOSING=1 in scripts/wayland-launch.sh). With `open`: web tabs opened on
-pages of this run's own, some still loading, and left for the run to keep. With `close`,
-after Orden is started again on them: the tab in front closed, and the next, and so on,
-without waiting for each - the road Ctrl+W takes - and then the window has to answer a
-question every 200 ms for ten seconds, and every web tab has to be gone.
-
-    python3 scripts/closing-drive.py <out folder> <open|close>
-"""
 
 import http.server
 import json
@@ -31,10 +14,7 @@ OUT, PHASE = Path(sys.argv[1]), sys.argv[2]
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
 PORT_PAGES = 8768
 SITE = f"http://127.0.0.1:{PORT_PAGES}"
-# Some done, some still loading when they are closed: a page that sends its body a dot
-# at a time for twenty seconds is one whose load never ends while the drive runs.
 PAGES = ["plain?1", "slow?1", "plain?2", "slow?2", "plain?3", "slow?3", "plain?4", "slow?4"]
-
 
 class Pages(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_):
@@ -56,11 +36,9 @@ class Pages(http.server.BaseHTTPRequestHandler):
         except OSError:
             pass
 
-
 class Serving(socketserver.ThreadingMixIn, http.server.HTTPServer):
     daemon_threads = True
     allow_reuse_address = True
-
 
 def endpoint():
     for _ in range(120):
@@ -73,12 +51,9 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
 
-
 def run(code, timeout=10.0):
-    """The window's answer, or None when it gave none in `timeout` seconds."""
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
     asked = urllib.request.Request(
         f"http://127.0.0.1:{PORT}/",
@@ -92,7 +67,6 @@ def run(code, timeout=10.0):
         return said.get("value") if said.get("ok") else said.get("error")
     except (TimeoutError, OSError):
         return None
-
 
 WEB_TABS = "nib.workspace.tabs.filter((tab) => tab.kind === 'web').length"
 

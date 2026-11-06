@@ -1,19 +1,3 @@
-"""Every export, run in a real browser against the web build, and the file each
-one produced opened again and looked at.
-
-The unit tests measure the converters; this measures the whole road: the palette
-row a person presses, the note the app holds, the pictures it reads out of its own
-storage, and the file the browser is handed to save. A converter can be right and
-the export still be wrong - a row that is not wired up, a picture the page never
-fetched, a download with the wrong name - and none of that shows up in a unit
-test.
-
-Run it with the repository's own Chromium:
-
-    python scripts/export-e2e.py
-
-It builds nothing. `pnpm --filter @orden/desktop build` first, then this."""
-
 import base64
 import functools
 import http.server
@@ -108,9 +92,6 @@ graph TD; A-->B
 
 OTHER = "# Another note\n\nSomewhere for the wikilink to point.\n"
 
-# The nine formats plus PNG, by the label the palette shows and the file each is
-# expected to hand over. PDF is not here: on the web it goes to the print dialog,
-# which a headless browser has no way to answer. See `report` at the bottom.
 DOWNLOADS = [
     ("txt", "Export as Plain text", "Export corpus.txt"),
     ("md", "Export as Markdown", "Export corpus.md"),
@@ -125,31 +106,24 @@ DOWNLOADS = [
     ("html-bare", "Export as HTML without styles", "Export corpus.html"),
 ]
 
-
 def chrome() -> pathlib.Path:
-    """The newest Chromium the repository's Playwright has fetched."""
     found = sorted(CHROME_HOME.glob("chromium-1*/chrome-win*/chrome.exe"))
     if not found:
         raise SystemExit(f"no Chromium under {CHROME_HOME}")
 
     return found[-1]
 
-
 def free_port() -> int:
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         return int(sock.getsockname()[1])
 
-
 class Quiet(http.server.SimpleHTTPRequestHandler):
-    """The build, served without a line per request."""
 
     def log_message(self, *_args):
         pass
 
     def do_GET(self):  # noqa: N802
-        # The note names one picture the app has to fetch rather than read out of
-        # its own storage, which is what proves a remote picture reaches the file.
         if self.path == "/remote.png":
             body = (ROOT / "target" / "export-e2e" / "remote.png").read_bytes()
             self.send_response(200)
@@ -161,7 +135,6 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
 
         super().do_GET()
 
-
 def serve() -> tuple[str, http.server.ThreadingHTTPServer]:
     port = free_port()
     server = http.server.ThreadingHTTPServer(
@@ -171,9 +144,7 @@ def serve() -> tuple[str, http.server.ThreadingHTTPServer]:
 
     return f"http://127.0.0.1:{port}/", server
 
-
 def png(width: int, height: int, tint: int) -> bytes:
-    """A real PNG of a given size, so what comes out can be measured."""
     import struct
     import zlib
 
@@ -197,7 +168,6 @@ def png(width: int, height: int, tint: int) -> bytes:
         + chunk(b"IDAT", zlib.compress(raw))
         + chunk(b"IEND", b"")
     )
-
 
 SEED = """
 async ([notePath, note, otherPath, other, assetPath, assetData]) => {
@@ -235,14 +205,10 @@ async ([notePath, note, otherPath, other, assetPath, assetData]) => {
 }
 """
 
-# The palette's rows. They are `.nib-row` now, the same row the file list is made
-# of, and the words in one are its `.nib-row-label`; the palette had a row shape of
-# its own with a `.text` in it when this was written. See Palette.svelte.
 ROWS = """() =>
   [...document.querySelectorAll('.palette .nib-row .nib-row-label')]
     .map((row) => row.textContent.trim())
 """
-
 
 def open_note(page, name: str) -> None:
     page.keyboard.press("Control+o")
@@ -252,7 +218,6 @@ def open_note(page, name: str) -> None:
     page.keyboard.press("Enter")
     page.wait_for_timeout(1800)
 
-
 def palette(page, term: str) -> list[str]:
     page.keyboard.press("Control+o")
     page.wait_for_timeout(250)
@@ -261,13 +226,7 @@ def palette(page, term: str) -> list[str]:
 
     return page.evaluate(ROWS)
 
-
 def run_export(page, key: str, label: str) -> tuple[str, pathlib.Path] | None:
-    """Runs one export row and saves what the browser was handed.
-
-    Each in a folder of its own: two rows hand over a file of the same name - the
-    page with its styles and the page without them are both `.html` - and one
-    folder would leave only whichever ran last."""
     page.keyboard.press("Control+o")
     page.wait_for_timeout(250)
     page.keyboard.type(">" + label)
@@ -289,14 +248,9 @@ def run_export(page, key: str, label: str) -> tuple[str, pathlib.Path] | None:
 
     return download.suggested_filename, target
 
-
-# ── What each file has to hold ────────────────────────────────────────
-
 WANTED_TEXT = [
     "Export corpus",
     "Prose with bold, italic, struck, marked, inline code",
-    # The paragraph wraps in the source, and a plain text export keeps the
-    # note's own line breaks rather than reflowing them.
     "link (https://orden.so)",
     "const answer: number = 42",
     "  const indented = true",
@@ -304,13 +258,11 @@ WANTED_TEXT = [
     "- [ ] open",
     "> Note",
     "[Pasted picture]",
-    # The columns line up, and the right hand one is right aligned.
     "Left  Middle  Right",
     "one   alpha       1",
     "two   beta       22",
     "[one] The footnote's own words.",
 ]
-
 
 def check_txt(path: pathlib.Path) -> list[str]:
     text = path.read_text(encoding="utf-8")
@@ -320,7 +272,6 @@ def check_txt(path: pathlib.Path) -> list[str]:
             bad.append(f"still holds {mark!r}")
 
     return bad
-
 
 def check_md(path: pathlib.Path) -> list[str]:
     text = path.read_text(encoding="utf-8")
@@ -337,7 +288,6 @@ def check_md(path: pathlib.Path) -> list[str]:
         bad.append("the note itself was changed")
 
     return bad
-
 
 def check_html(path: pathlib.Path, standalone: bool) -> list[str]:
     text = path.read_text(encoding="utf-8")
@@ -369,15 +319,12 @@ def check_html(path: pathlib.Path, standalone: bool) -> list[str]:
         if remote:
             bad.append(f"not offline-complete: {remote}")
     else:
-        # A drawn diagram carries a `<style>` of its own inside its SVG, so what
-        # says the page is bare is the absence of the theme, not of the tag.
         if "--bg:" in text or "@page" in text:
             bad.append("the bare page carries the theme")
         if not any(src.startswith("assets/") for src in pictures):
             bad.append("the bare page lost the path the note wrote")
 
     return bad
-
 
 def check_rtf(path: pathlib.Path) -> list[str]:
     text = path.read_text(encoding="latin-1")
@@ -398,7 +345,6 @@ def check_rtf(path: pathlib.Path) -> list[str]:
         bad.append("no title")
 
     return bad
-
 
 def check_docx(path: pathlib.Path) -> list[str]:
     bad = []
@@ -423,7 +369,6 @@ def check_docx(path: pathlib.Path) -> list[str]:
         if len(media) != 2:
             bad.append(f"{len(media)} pictures in the package, wanted 2")
 
-        # Every relationship the document names has to resolve.
         declared = set(re.findall(r'Id="([^"]+)"', rels))
         used = set(re.findall(r'r:(?:id|embed)="([^"]+)"', document))
         if used - declared:
@@ -449,7 +394,6 @@ def check_docx(path: pathlib.Path) -> list[str]:
 
     return bad
 
-
 def check_epub(path: pathlib.Path) -> list[str]:
     bad = []
     with zipfile.ZipFile(path) as zip_:
@@ -474,8 +418,6 @@ def check_epub(path: pathlib.Path) -> list[str]:
         if "dcterms:modified" not in opf:
             bad.append("no modified date, which EPUB 3 requires")
 
-        # Every manifest href has to be a part that is actually there, and every
-        # spine idref a manifest item.
         hrefs = dict(re.findall(r'id="([^"]+)"[^>]*?href="([^"]+)"', opf))
         for one, href in hrefs.items():
             if f"OEBPS/{href}" not in names:
@@ -505,7 +447,6 @@ def check_epub(path: pathlib.Path) -> list[str]:
 
     return bad
 
-
 def check_textpack(path: pathlib.Path) -> list[str]:
     bad = []
     with zipfile.ZipFile(path) as zip_:
@@ -533,7 +474,6 @@ def check_textpack(path: pathlib.Path) -> list[str]:
 
     return bad
 
-
 def check_zip_beside(path: pathlib.Path) -> list[str]:
     bad = []
     with zipfile.ZipFile(path) as zip_:
@@ -547,7 +487,6 @@ def check_zip_beside(path: pathlib.Path) -> list[str]:
             bad.append(f"pictures: {names}")
 
     return bad
-
 
 def check_picture(path: pathlib.Path, kind: str) -> list[str]:
     raw = path.read_bytes()
@@ -573,17 +512,14 @@ def check_picture(path: pathlib.Path, kind: str) -> list[str]:
 
     return bad
 
-
 def size_notes(width: int, height: int) -> list[str]:
     bad = []
-    # Two device pixels per CSS pixel, over a page a good deal taller than wide.
     if width < 1200:
         bad.append(f"only {width} pixels wide, so it is not drawn at 2x")
     if height < width:
         bad.append(f"{width}x{height} is not the shape of a note")
 
     return bad
-
 
 def jpeg_size(raw: bytes) -> tuple[int, int]:
     at = 2
@@ -602,7 +538,6 @@ def jpeg_size(raw: bytes) -> tuple[int, int]:
 
     return 0, 0
 
-
 CHECKS = {
     "txt": check_txt,
     "md": check_md,
@@ -617,13 +552,10 @@ CHECKS = {
     "html-bare": lambda path: check_html(path, False),
 }
 
-
 def main() -> int:
     if not DIST.is_dir():
         raise SystemExit(f"no build at {DIST}; run pnpm --filter @orden/desktop build")
 
-    # Emptied rather than removed: a document still open in a word processor
-    # holds its folder, and a run that cannot start is worse than a stale file.
     shutil.rmtree(OUT, ignore_errors=True)
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "remote.png").write_bytes(png(160, 90, 40))
@@ -705,10 +637,6 @@ def main() -> int:
     (OUT / "report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(json.dumps(report, indent=2))
 
-    # PDF is the one row this cannot press: on the web it opens the browser's own
-    # print dialog, which is the only place "Save as PDF" lives there, and a
-    # headless browser has nothing to answer it with. The desktop build writes the
-    # file itself through the webview's print engine; see pdf.rs.
     print("\nnot exercised here: PDF, which on the web is the browser's print dialog")
 
     if failures:
@@ -719,7 +647,6 @@ def main() -> int:
 
     print("\nevery export produced a file that opens and holds what the note said")
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

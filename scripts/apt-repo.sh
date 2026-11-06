@@ -1,25 +1,4 @@
 #!/usr/bin/env bash
-# Puts a release's .debs into the apt repository, as one suite, signed.
-#
-#   APT_KEY_FINGERPRINT=<the signing key, imported into gpg already> \
-#   APT_BASE_URL=https://apt.orden.so \
-#     scripts/apt-repo.sh <stable|unstable> <folder of .debs> <folder to write into>
-#
-# The repository is plain files in Cloudflare R2 (the bucket orden-apt), served at
-# https://apt.orden.so, laid out the way apt reads one, and written here with nothing but
-# apt-ftparchive and gpg: no database beside the files. A run writes one suite and the
-# files at the root into a folder, and .github/workflows/apt.yml puts that suite into
-# the bucket in place of what was there; the other suite is never touched.
-#
-#   dists/<suite>/InRelease, Release, Release.gpg
-#   dists/<suite>/main/binary-{amd64,arm64}/Packages(.gz)
-#   pool/<suite>/orden_<version>_<arch>.deb
-#   orden-archive-keyring.asc, .gpg, index.html, README.md
-#
-# A suite holds one version, the newest: its pool is emptied and filled with the .debs
-# handed over, and its indices are written again. The other suite is left exactly as it
-# was. Everything older stays on its release page on GitHub, where a .deb can always be
-# fetched by hand. See packaging/linux.md, "apt".
 set -euo pipefail
 
 suite=${1:?stable or unstable}
@@ -49,7 +28,6 @@ if [ ${#found[@]} -eq 0 ]; then
   exit 1
 fi
 
-# The pool, emptied and filled again: one version of the suite.
 pool="pool/$suite"
 rm -rf "$pool"
 mkdir -p "$pool"
@@ -61,7 +39,6 @@ for deb in "${found[@]}"; do
   echo "$suite: $name $version $arch"
 done
 
-# The indices, read off the pool, per architecture.
 dists="dists/$suite"
 rm -rf "$dists"
 for arch in amd64 arm64; do
@@ -82,13 +59,9 @@ apt-ftparchive \
   release "$dists" >"$dists/Release.next"
 mv "$dists/Release.next" "$dists/Release"
 
-# Signed both ways apt reads: InRelease, the one it asks for first, and Release.gpg
-# beside Release for an apt that asks for that.
 gpg --batch --yes --local-user "$key" --clearsign --output "$dists/InRelease" "$dists/Release"
 gpg --batch --yes --local-user "$key" --armor --detach-sign --output "$dists/Release.gpg" "$dists/Release"
 
-# What a person needs to add it, at the root: the key both ways, and the page that says
-# how, with the address it is served from written in.
 cp "$here/packaging/apt/orden-archive-keyring.asc" orden-archive-keyring.asc
 gpg --batch --yes --dearmor --output orden-archive-keyring.gpg orden-archive-keyring.asc
 for page in index.html README.md; do

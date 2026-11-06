@@ -1,37 +1,3 @@
-"""Is what the app opens over a web page drawn *over* it? Windows only.
-
-Emil, 2026-09-13: *"Also some stuff with the overlay / z ordering is very fucked up for
-browser pages."*
-
-A web tab's page is a native child webview, and a native webview draws above every
-pixel of HTML in the window - so anything the app opens over it has to be answered by
-hiding the page, or the menu comes up behind the page and nobody can see it. Whether
-that actually happens cannot be unit tested and cannot be seen from inside the window:
-it is a question about pixels, so this asks the pixels.
-
-The page it opens is one flat colour and nothing else. For each kind of overlay the app
-has - the dots menu, the popover behind the mark in the bar, the palette - the drive
-opens it over the page, photographs the window, asks the window where that overlay is,
-and counts how much of the overlay's own rectangle is still the page's colour. A
-rectangle full of it is a page drawn in front of the overlay, which is the bug and which
-is what a reader sees as a menu that does not appear.
-
-It cannot be the pane as a whole, because the pane is *meant* to stay the page's colour
-now: what the app holds under an overlay is a still picture of the page, so that nothing
-flashes, and a picture of a magenta page is magenta.
-
-It also drives the one thing no unit test can reach: **a site asking for something.**
-The served page calls `getCurrentPosition` as it loads, the engine raises its own
-permission request, and the bubble under the address bar is what answers it - so the
-photograph is proof that the whole road works, from the engine's event through the
-crate's deferral to the reader's press.
-
-    python scripts/web-overlays-probe.py --exe path/to/nib.exe
-
-The exe is a release build under an identifier of its own; see web-switch-probe.py,
-whose helpers this drive borrows so the two cannot drift apart.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -45,19 +11,12 @@ import time
 HERE = pathlib.Path(__file__).resolve().parent
 OUT = HERE.parent / "target" / "web-overlays"
 
-# The colour the page is, and how near a pixel has to be to count as it: a screen copy
-# is exact, and this is for the edge of a rounded corner.
 PAGE_COLOUR = (0xFF, 0x00, 0x80)
 NEAR = 40
 
-# How much of the pane may still be the page for an overlay to count as being in front
-# of it. A menu is a small thing over a large page, so the question is not "the page is
-# gone" but "the page is no longer all of it".
 ENOUGH = 0.6
 
-
 def borrowed():
-    """The switch probe's own helpers: the space, the launch, the endpoint, `eval`."""
 
     spec = importlib.util.spec_from_file_location("switch", HERE / "web-switch-probe.py")
     if spec is None or spec.loader is None:
@@ -66,7 +25,6 @@ def borrowed():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
-
 
 PAGES = {
     "/flat": b"""<!doctype html>
@@ -99,16 +57,7 @@ PAGES = {
 """,
 }
 
-
 def shoot(hwnd: int, name: str) -> pathlib.Path:
-    """A photograph of the window itself, not of the screen where it is.
-
-    `PrintWindow` with `PW_RENDERFULLCONTENT` asks the window to draw itself into a
-    bitmap, which is the only capture that works here: a drive cannot bring the window
-    to the front - Windows refuses the foreground to a process that has not had it - so
-    a copy of the screen at the window's rectangle is a copy of whatever is actually in
-    front, which on this machine is the wallpaper. Asking the window instead needs
-    nothing of the window manager."""
 
     import ctypes
     from ctypes import wintypes
@@ -128,8 +77,6 @@ def shoot(hwnd: int, name: str) -> pathlib.Path:
     bitmap = gdi32.CreateCompatibleBitmap(window, width, height)
     gdi32.SelectObject(made, bitmap)
 
-    # PW_RENDERFULLCONTENT: the flag that makes this work for a window whose content is
-    # composited rather than painted, which is every webview.
     user32.PrintWindow(wintypes.HWND(hwnd), made, 0x0000_0002)
 
     class BITMAPINFOHEADER(ctypes.Structure):
@@ -150,7 +97,6 @@ def shoot(hwnd: int, name: str) -> pathlib.Path:
     header = BITMAPINFOHEADER()
     header.biSize = ctypes.sizeof(BITMAPINFOHEADER)
     header.biWidth = width
-    # Negative, so the rows come back the way a picture is read rather than upside down.
     header.biHeight = -height
     header.biPlanes = 1
     header.biBitCount = 32
@@ -168,26 +114,13 @@ def shoot(hwnd: int, name: str) -> pathlib.Path:
     picture.convert("RGB").save(out)
     return out
 
-
 def how_much(shot: pathlib.Path, box: tuple[int, int, int, int] | None = None) -> float:
-    """How much of a rectangle of the window is the page's own colour.
-
-    Given a rectangle, it is the overlay's own - which is the whole test: if the page is
-    drawn in front, every pixel where the menu should be is the page's colour and the
-    menu is invisible; if the overlay is in front, almost none of it is. Given none, it
-    is the pane, which says whether there is a page there at all.
-
-    A rectangle is needed rather than the pane as a whole because the pane is *meant* to
-    stay the page's colour: the still picture of the page is what the app now holds under
-    an overlay, and a picture of a magenta page is magenta. That is the feature, so the
-    measurement cannot be "is there any magenta left"."""
 
     from PIL import Image
 
     with Image.open(shot) as picture:
         page = picture.convert("RGB")
         width, height = page.size
-        # The pane, roughly: below the strip and the bar, and inside the window.
         cut = box if box else (width // 3, height // 4, width - 8, height - 8)
         inside = page.crop(cut)
         counted = 0
@@ -199,9 +132,6 @@ def how_much(shot: pathlib.Path, box: tuple[int, int, int, int] | None = None) -
 
     return counted / max(1, total)
 
-
-# Each overlay, and the line that opens it in the window. `commands.run` would reach
-# some of them, but a line of script reaches all of them and says which one it meant.
 OVERLAYS = [
     (
         "the dots",
@@ -220,8 +150,6 @@ OVERLAYS = [
     ),
 ]
 
-# Where the overlay is, in the window's own pixels, asked of the window rather than
-# guessed: the drive then looks at exactly the rectangle the overlay claims.
 WHERE = """(() => {
   const one = document.querySelector('%s')
   if (!one) return JSON.stringify(null)
@@ -230,7 +158,6 @@ WHERE = """(() => {
     Math.round(box.x), Math.round(box.y), Math.round(box.right), Math.round(box.bottom),
   ])
 })()"""
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -249,7 +176,6 @@ def main() -> int:
     switch.wipe(args.identifier)
     port = switch.free_port()
 
-    # The two pages this drive serves, in the switch probe's own server.
     import http.server
     import threading
 
@@ -306,13 +232,7 @@ def main() -> int:
                 said[name] = "the overlay never opened"
                 continue
 
-            # Inside the overlay's own rectangle, in the window's pixels rather than the
-            # page's: a scaled screen would move the crop, so both come from the same
-            # picture. The pane's scale is 1 on this machine and the drive says so by
-            # failing visibly rather than by correcting silently.
             said[name] = round(how_much(shot, tuple(int(one) for one in where)), 3)
-            # And what the pane is holding under it: the still picture of the page, which
-            # is what keeps an overlay from being a flash of empty pane. See `web_shot`.
             said[f"{name}: the picture under it"] = app.ask(
                 "JSON.stringify((document.querySelector('.hole')?.style?.backgroundImage ?? '')"
                 ".slice(0, 30))"
@@ -320,10 +240,6 @@ def main() -> int:
             app.ask("window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))")
             time.sleep(0.8)
 
-        # The one the engine raises for itself: a site asking where you are. Waited for
-        # rather than slept through - the page has to load and ask, and the bubble
-        # arrives on a transition - and photographed once it is really there, because a
-        # photograph taken a moment early is a photograph of nothing.
         app.open("A page that asks.url")
         asked = ""
         until = time.perf_counter() + 30
@@ -342,19 +258,6 @@ def main() -> int:
         if not asked:
             print("FAIL: a site asked for where you are and no bubble went up")
 
-        # And the far end of it: **Don't allow** is pressed, the request the engine has
-        # been holding open is let go of with that answer, and the page's own callback
-        # runs. `refused 1` is `PERMISSION_DENIED` - the one code that can only come from
-        # the answer actually reaching the engine, with no network and no location
-        # provider involved in saying it. Allow is the other half of the pair and cannot
-        # be read this way on a machine with no location to give: it answers with code 2
-        # after a wait, or not at all.
-        #
-        # First, whether a hand could press them at all. `click()` goes straight to the
-        # button and a pointer does not: it lands on whatever the window's hit test finds
-        # there, and for two weeks that was the page's hole under a card that let every
-        # press through - drawn, and pressed here, and never once by a person. So the
-        # window is asked what is at the middle of each answer, as a pointer would be.
         said["the answers can be pressed"] = app.ask(
             "JSON.stringify([...document.querySelectorAll('.ask .nib-button')].map((one) => {"
             " const box = one.getBoundingClientRect();"
@@ -378,9 +281,6 @@ def main() -> int:
         said["the bubble is gone"] = app.ask(
             "JSON.stringify(document.querySelector('.ask[role=dialog]') === null)"
         )
-        # Read off the bar, which shows the site and then the page's own title: the page
-        # wrote what the engine told it into that title, so this is the answer arriving
-        # as a reader would see it.
         said["what the engine told the page"] = told
         said["what the site is allowed now"] = app.ask(
             "JSON.stringify(JSON.parse(localStorage.getItem('nib:web-grants') ?? '{}'))"
@@ -389,8 +289,6 @@ def main() -> int:
         if "refused 1" not in told:
             print(f"FAIL: the page was told {told!r} rather than that it was refused")
 
-        # And once is once: the page is loaded again, asks again, and is answered from
-        # what the reader said - no bubble, and the same answer in the title.
         app.ask(
             "window.__TAURI_INTERNALS__.invoke('web_step', { tab: '"
             + (switch.tab_of(app, "A page that asks") or "")
@@ -415,7 +313,6 @@ def main() -> int:
             print(f"FAIL: {name} left {said[name]} of the pane as the page: it is behind it")
 
     return 1 if [one for one in over if one != "the page alone"] else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

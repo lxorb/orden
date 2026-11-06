@@ -1,19 +1,3 @@
-/** A starting catalogue for a language, so nobody writes a thousand rows by hand
- *  from nothing.
- *
- *      node scripts/locale-template.mjs sv nl
- *
- *  Writes `target/locale-templates/<id>.ts`: the same rows in the same order as
- *  `apps/desktop/src/locales/de.ts`, with the same section comments, English
- *  values, and every count row already shaped for the plural forms that language
- *  actually has. Copy it to `apps/desktop/src/locales/<id>.ts`, translate the
- *  values, and leave everything else alone; `src/lib/i18n.test.ts` is what says
- *  whether it is right.
- *
- *  Nothing here reads a list of rows or of plural keys: the German catalogue is
- *  the reference, and a row it holds as forms rather than as one string is a row
- *  a count decides. A list beside it would be a second thing to keep in step. */
-
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -21,12 +5,8 @@ const ROOT = new URL('..', import.meta.url).pathname.replace(/^\//, '')
 const LOCALES = `${ROOT}apps/desktop/src/locales/`
 const OUT = `${ROOT}target/locale-templates/`
 
-/** The order the forms are written in, which is how CLDR reads them out. */
 const FORM_ORDER = ['zero', 'one', 'two', 'few', 'many', 'other']
 
-/** The reference catalogue, as a list of comments and keys in file order, and as
- *  the object itself. Read as text as well as evaluated because the comments are
- *  half of what makes the file readable and an object has none. */
 function reference() {
   const text = readFileSync(`${LOCALES}de.ts`, 'utf8')
   const body = text.slice(text.indexOf('= {') + 3)
@@ -55,9 +35,6 @@ function reference() {
   return { rows, catalogue }
 }
 
-/** The English singular for a count row, read off the call site that asks for it:
- *  `plural(n, { one: '{count} note', other: '{count} notes' })` names both, and
- *  the `other` form is what the row is filed under. */
 function singulars() {
   const found = new Map()
   const pattern = /one:\s*'((?:[^'\\]|\\.)*)'[\s\S]{0,400}?other:\s*'((?:[^'\\]|\\.)*)'/g
@@ -85,11 +62,8 @@ function singulars() {
 const quote = (text) =>
   `'${text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n')}'`
 
-/** `Save:` reads better than `'Save':`, and prettier writes it that way. */
 const asKey = (text) => (/^[A-Za-z_$][\w$]*$/.test(text) ? text : quote(text))
 
-/** What a catalogue's export is called: the id in camel case, because `pt-BR` is
- *  not a name. */
 const exportName = (id) =>
   id
     .split('-')
@@ -109,7 +83,6 @@ function template(id, { rows, catalogue }, one) {
   for (const { comments, key } of rows) {
     for (const comment of comments) lines.push(`  ${comment}`)
 
-    // A row the reference holds as forms is a row a count decides.
     if (typeof catalogue[key] === 'string' || forms.length === 1) {
       lines.push(`  ${asKey(key)}: ${quote(key)},`)
       continue

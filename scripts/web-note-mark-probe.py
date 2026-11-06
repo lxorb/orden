@@ -39,9 +39,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 SPACE = "Marks probe"
 NOTE = "Chat"
 
-
 def borrowed(name: str, file: str):
-    """Another drive's helpers, read from its file: the names have dashes in them."""
 
     spec = importlib.util.spec_from_file_location(name, HERE / file)
     if spec is None or spec.loader is None:
@@ -50,23 +48,18 @@ def borrowed(name: str, file: str):
     spec.loader.exec_module(module)
     return module
 
-
 probe = borrowed("extensions_probe", "extensions-probe.py")
 failures: list[str] = []
 
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 
 def check(ok: bool, words: str) -> None:
     say(f"{'ok  ' if ok else 'FAIL'} {words}")
     if not ok:
         failures.append(words)
 
-
 def square(rgb: tuple[int, int, int]) -> str:
-    """A 16-pixel square of one colour, as a PNG data address: a mark told apart by colour."""
 
     row = b"\x00" + bytes(rgb) * 16
     raw = row * 16
@@ -82,14 +75,12 @@ def square(rgb: tuple[int, int, int]) -> str:
     )
     return "data:image/png;base64," + base64.b64encode(png).decode()
 
-
 PLAIN = square((40, 120, 220))
 UNREAD = square((220, 40, 40))
 READ = square((40, 180, 80))
 
 PAGE = f"""<!doctype html><html><head><meta charset="utf-8"><title>Chat</title>
 <link rel="icon" href="{PLAIN}"></head><body><p>A chat.</p></body></html>""".encode()
-
 
 def serve() -> int:
     class Handler(http.server.BaseHTTPRequestHandler):
@@ -111,7 +102,6 @@ def serve() -> int:
     threading.Thread(target=made.serve_forever, daemon=True).start()
     return free
 
-
 SHOWN = """JSON.stringify((() => {
   const picture = (one) => one ? one.getAttribute('src') : null
   const row = document.querySelector('.row[data-path$=%s] img')
@@ -119,16 +109,12 @@ SHOWN = """JSON.stringify((() => {
   return { row: picture(row), tab: picture(tab) }
 })())"""
 
-
 def pictures_of(app, tab: str) -> tuple[str | None, str | None]:
-    """The row's picture and the tab's, off Orden's own page."""
 
     said = app.ask(SHOWN % (json.dumps(f"{NOTE}.url"), json.dumps(tab)))
     return (said.get("row"), said.get("tab")) if isinstance(said, dict) else (None, None)
 
-
 def same_mark(app, tab: str, seconds: float = 15) -> tuple[str | None, str | None]:
-    """The row's and the tab's pictures once they agree, or as they last were."""
 
     until = time.perf_counter() + seconds
     row, worn = pictures_of(app, tab)
@@ -139,10 +125,7 @@ def same_mark(app, tab: str, seconds: float = 15) -> tuple[str | None, str | Non
         time.sleep(0.3)
     return row, worn
 
-
 def swap(target: dict, icon: str, where: str) -> None:
-    """The page moves on within itself - another channel, as Slack does - and redraws its
-    mark, as a chat site does with an unread count."""
 
     session = Session(target)
     try:
@@ -150,7 +133,6 @@ def swap(target: dict, icon: str, where: str) -> None:
         session.value(f"document.querySelector('link[rel=icon]').href = {json.dumps(icon)}")
     finally:
         session._socket.close()
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -187,7 +169,6 @@ def main() -> int:
         tab = probe.wait_for_tab(app, NOTE)
         say(f"web tab {tab}")
 
-        # The engine writes its port down once its browser process is up.
         web_port = 0
         page = None
         until = time.perf_counter() + 30
@@ -231,7 +212,6 @@ def main() -> int:
     print()
     print("every check passed" if not failures else f"{len(failures)} failed: {failures}")
     return 1 if failures else 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

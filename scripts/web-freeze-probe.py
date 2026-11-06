@@ -79,16 +79,11 @@ from ctypes import wintypes
 
 from probe_app import run_probe, refuse_updating, sized
 
-# Where a drive of this repository may listen; see docs/conventions.md.
 PORT_FROM = 21500
 PORT_TO = 21599
 
-# What says where the notes go. The identifier a probe build runs under does not keep
-# anybody's notes apart, so this is the one thing that does; see `spaces_root` and
-# docs/automation.md.
 SPACES_DIR = "NIB_SPACES_DIR"
 
-# The space the probe makes for itself, and the note in it.
 SPACE = "Web freeze probe"
 NOTE = "A page in a tab"
 
@@ -96,21 +91,13 @@ WM_NULL = 0x0000
 SMTO_BLOCK = 0x0001
 SMTO_ABORTIFHUNG = 0x0002
 
-# A WM_NULL a running loop answers in microseconds. A second is long enough that a
-# slow frame is not read as a freeze, and short enough that a run against a dead
-# window still finishes.
 WAIT_MS = 1000
 
-# How often the pump is asked. Four times a second is fine enough to catch the
-# moment a page opens and coarse enough to leave the window alone.
 EVERY = 0.25
 
 user32 = ctypes.WinDLL("user32", use_last_error=True) if sys.platform == "win32" else None
 
-
 def bind_names() -> None:
-    """Says what each call takes, because a handle passed as a plain int is a handle
-    cut in half on a 64 bit machine."""
 
     assert user32 is not None
     user32.SendMessageTimeoutW.argtypes = [
@@ -134,17 +121,7 @@ def bind_names() -> None:
     user32.GetWindowRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
     user32.GetWindowRect.restype = wintypes.BOOL
 
-
 def windows_of(pid: int) -> list[int]:
-    """The windows worth measuring, widest first.
-
-    A Tauri window is a visible top level window with a title; a webview's own window
-    is not top level, and the browser process that draws a page is not this pid. Two
-    other windows of this process are, though, and neither is the app: the single
-    instance plugin keeps a 13 by 13 listener with a title of its own, and there is
-    an unnamed one beside it. They are on threads of their own, so measuring one of
-    those would be measuring a pump nobody is looking at - which is why size decides
-    here, exactly as it does in capture-window.ps1."""
 
     assert user32 is not None
     found: list[tuple[int, int]] = []
@@ -169,12 +146,7 @@ def windows_of(pid: int) -> list[int]:
     user32.EnumWindows(kind(each), 0)
     return [hwnd for _wide, hwnd in sorted(found, reverse=True)]
 
-
 def ask(hwnd: int) -> tuple[bool, float]:
-    """Sends the window a message that does nothing, and times the answer.
-
-    Nothing about the window changes: WM_NULL is the message defined to mean
-    nothing, which is why it is what every probe of a pump sends."""
 
     assert user32 is not None
     answer = ctypes.c_size_t()
@@ -184,9 +156,7 @@ def ask(hwnd: int) -> tuple[bool, float]:
     )
     return bool(got), (time.perf_counter() - began) * 1000
 
-
 class Sample:
-    """One reading: when it was taken, what it cost, and what the two flags said."""
 
     def __init__(self, at: float, answered: bool, cost: float, hung: bool) -> None:
         self.at = at
@@ -202,9 +172,7 @@ class Sample:
         state = "hung" if self.hung else ("answered" if self.answered else "no answer")
         return f"  {self.at:6.2f}s  {self.cost:8.2f} ms  {state}"
 
-
 def measure(hwnd: int, seconds: float, began: float, out: list[Sample]) -> None:
-    """Asks the pump every quarter second for as long as it is told to."""
 
     assert user32 is not None
     until = time.perf_counter() + seconds
@@ -216,7 +184,6 @@ def measure(hwnd: int, seconds: float, began: float, out: list[Sample]) -> None:
         print(sample.line(), flush=True)
         time.sleep(EVERY)
 
-
 def free_port() -> int:
     for port in range(PORT_FROM, PORT_TO + 1):
         with socket.socket() as sock:
@@ -227,7 +194,6 @@ def free_port() -> int:
             return port
     raise SystemExit(f"no port free in {PORT_FROM}-{PORT_TO}")
 
-
 PAGE = b"""<!doctype html>
 <title>A page in a tab</title>
 <body style="font: 16px system-ui; padding: 3rem">
@@ -235,7 +201,6 @@ PAGE = b"""<!doctype html>
 <p>Served by scripts/web-freeze-probe.py, so the measurement is about the app.</p>
 </body>
 """
-
 
 class Quiet(http.server.BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802 - the base class names it
@@ -248,35 +213,17 @@ class Quiet(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_args: object) -> None:
         pass
 
-
 def serve(port: int) -> http.server.ThreadingHTTPServer:
     httpd = http.server.ThreadingHTTPServer(("127.0.0.1", port), Quiet)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     return httpd
 
-
 def spaces_root() -> pathlib.Path:
-    """A spaces root of this drive's own, in the temp area, said to the app in
-    `NIB_SPACES_DIR` and taken away when the drive exits.
-
-    **Never `Documents/Nib`.** The identifier a probe build runs under moves the
-    settings folder and the browsing profile and says nothing at all about where the
-    spaces are, so a drive that wrote its space the obvious way wrote it beside
-    somebody's real notes - which is what happened, and had to be deleted by hand. The
-    variable is read by `spaces_dir` at call time and wins over the documents folder;
-    see docs/automation.md.
-
-    Set in this process's environment, so the app inherits it when it is launched, and
-    removed through `atexit` rather than a `finally`, because this drive leaves by
-    `SystemExit` in several places - a window that never appeared, a page that never
-    loaded - and every one of them has to take the folder with it.
-    """
 
     made = pathlib.Path(tempfile.mkdtemp(prefix="nib-freeze-probe-"))
     os.environ[SPACES_DIR] = str(made)
     atexit.register(shutil.rmtree, made, ignore_errors=True)
     return made
-
 
 def space_with_a_website(url: str) -> pathlib.Path:
     space = spaces_root() / SPACE
@@ -288,23 +235,15 @@ def space_with_a_website(url: str) -> pathlib.Path:
     )
     return space
 
-
 def config_dir(identifier: str) -> pathlib.Path:
     roaming = os.environ.get("APPDATA") or str(pathlib.Path.home() / "AppData" / "Roaming")
     return pathlib.Path(roaming) / identifier
-
 
 def local_dir(identifier: str) -> pathlib.Path:
     local = os.environ.get("LOCALAPPDATA") or str(pathlib.Path.home() / "AppData" / "Local")
     return pathlib.Path(local) / identifier
 
-
 def wipe(identifier: str) -> None:
-    """Everything the last run left: the session, the log, the webview's profile.
-
-    A drive that starts from what the run before it left behind is not a drive. The
-    name is checked first, because these two folders are where an installed app
-    keeps everything it has and this is a script that deletes them."""
 
     if "probe" not in identifier:
         raise SystemExit(f"{identifier} is not a probe identifier: refusing to delete its folders")
@@ -312,14 +251,7 @@ def wipe(identifier: str) -> None:
     for one in (config_dir(identifier), local_dir(identifier)):
         shutil.rmtree(one, ignore_errors=True)
 
-
 def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str]:
-    """The port and the secret this launch is listening behind, once it has written
-    them down. The app's own handshake file; see src-tauri/src/endpoint.rs.
-
-    `unlike` is the port the launch before it had: the file is rewritten on every
-    launch because the system hands out a new port each time, so a run that has just
-    restarted the app waits for a number that is not the one it already knows."""
 
     path = config_dir(identifier) / "automation.json"
     until = time.perf_counter() + seconds
@@ -333,11 +265,9 @@ def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str
         time.sleep(0.2)
     raise SystemExit(f"the app never wrote {path}")
 
-
 def act(
     port: int, secret: str, verb: str, args: dict[str, object], seconds: float = 60
 ) -> str:
-    """One request to the running app, the way `nib` makes one."""
 
     body = json.dumps({"verb": verb, "args": args, "rest": []}).encode()
     request = urllib.request.Request(
@@ -353,14 +283,7 @@ def act(
     except Exception as error:  # noqa: BLE001 - a frozen app fails in its own ways
         return f"no answer: {error}"
 
-
 class Heartbeat:
-    """Asks the window itself, once a second, whether it is still answering.
-
-    One cheap verb - `window`, which reads where the window is and touches nothing -
-    over the app's own endpoint. The answer comes back through the window's own IPC,
-    which is exactly what a page built on the wrong thread wedges, so this is the
-    one reading that catches the freeze. A timeout is an answer: it means no."""
 
     def __init__(self, port: int, secret: str) -> None:
         self.port = port
@@ -398,25 +321,14 @@ class Heartbeat:
     def worst(self, after: float) -> float:
         return max((cost for at, ok, cost in self.beats if at >= after and ok), default=0.0)
 
-
 def log_lines(identifier: str) -> list[str]:
-    """What the app wrote down about itself. Every uncaught error in the window is
-    appended to this file; see lib/log.ts and src-tauri/src/logs.rs."""
 
     path = local_dir(identifier) / "logs" / "nib.log"
     if not path.is_file():
         return []
     return path.read_text(encoding="utf-8", errors="replace").splitlines()
 
-
 def picture(pid: int, out: pathlib.Path) -> None:
-    """A photograph of the window, taken by the platform: a webview cannot photograph
-    the window it is drawn in. The same script `nib screenshot` shells out to.
-
-    By pid, which is the only thing the script takes. It used to be asked by name, and
-    on a machine that is building nib there is more than one process called that - so
-    what came back was another application's window, which is worse than no picture at
-    all. The pid here is the app this probe launched."""
 
     here = pathlib.Path(__file__).resolve().parent / "capture-window.ps1"
     try:
@@ -438,14 +350,11 @@ def picture(pid: int, out: pathlib.Path) -> None:
     except (OSError, subprocess.SubprocessError):
         pass
 
-
 def worst(samples: list[Sample]) -> float:
     return max((one.cost for one in samples), default=0.0)
 
-
 def dead(samples: list[Sample]) -> int:
     return sum(1 for one in samples if one.dead)
-
 
 def wait_for_window(app: subprocess.Popen[bytes], seconds: float) -> int:
     until = time.perf_counter() + seconds
@@ -455,7 +364,6 @@ def wait_for_window(app: subprocess.Popen[bytes], seconds: float) -> int:
             return found[0]
         time.sleep(0.2)
     return 0
-
 
 def main() -> int:
     parsed = argparse.ArgumentParser(description=__doc__)
@@ -516,19 +424,11 @@ def main() -> int:
     print("\nopen: the website, through the app's own endpoint")
     where, secret = endpoint(args.identifier, 20)
     said: list[str] = []
-    # From here on the window is asked once a second whether it is still answering
-    # anything at all, because that - and not the pump, and not a photograph - is
-    # what this freeze takes away.
     beating = Heartbeat(where, secret)
     beating.start(began)
     from_here = time.perf_counter() - began
 
     def open_it() -> None:
-        # Twice, and the first one is only the space. A website is a website because
-        # the link index says so, and the index of a space that has just been switched
-        # to has not read it yet - so the first open lands on the note the file also
-        # is, exactly as `openEntry` says it will. The second is the one a reader
-        # makes: a row in the file list, with the globe already on it.
         said.append(act(where, secret, "open", {"space": SPACE, "path": f"{NOTE}.md"}))
         time.sleep(4)
         said.append(act(where, secret, "open", {"path": f"{NOTE}.md"}))
@@ -589,8 +489,6 @@ def main() -> int:
             f"    restart  worst {beats.worst(since):8.2f} ms  "
             f"unanswered {beats.missed(since)}/{beats.answered(since)}"
         )
-    # Only where one of the counted asks went nowhere. An ask that was still in
-    # the air when the app was killed for the restart is the run's own doing.
     if missed:
         for one in (beating.refused + (beats.refused if beats else []))[:4]:
             print(f"    an ask came back: {one}")
@@ -619,7 +517,6 @@ def main() -> int:
 
     print("\nthe window answered every message and every ask, and nothing threw")
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

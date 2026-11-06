@@ -42,9 +42,7 @@ SPACE = "Names probe"
 
 failures: list[str] = []
 
-
 def borrowed(name: str, file: str):
-    """Another drive's helpers, read from its file: the names have dashes in them."""
 
     spec = importlib.util.spec_from_file_location(name, HERE / file)
     if spec is None or spec.loader is None:
@@ -53,15 +51,12 @@ def borrowed(name: str, file: str):
     spec.loader.exec_module(module)
     return module
 
-
 tabs = borrowed("tabs", "new-tabs-probe.py")
 terminal = borrowed("terminal", "terminal-probe.py")
 until = terminal.until
 
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 
 def check(ok: bool, words: str) -> None:
     if ok:
@@ -70,16 +65,13 @@ def check(ok: bool, words: str) -> None:
         failures.append(words)
         say(f"FAIL {words}")
 
-
 def shown(window, tab: str) -> str:
-    """What the strip says on the tab, off the page itself."""
 
     said = window.run(
         f"(() => {{ const label = document.querySelector('.pick[data-tab={json.dumps(tab)}] .label'); "
         "return label ? label.textContent : null })()"
     )
     return said if isinstance(said, str) else ""
-
 
 def mark(window, tab: str) -> str:
     said = window.run(
@@ -88,9 +80,7 @@ def mark(window, tab: str) -> str:
     )
     return said if isinstance(said, str) else ""
 
-
 def named(window, tab: str, words: str, key: str = "Enter") -> bool:
-    """The field over the tab's name, typed into and left with `key`."""
 
     up = until(
         lambda: window.run("!!document.querySelector('.tab input.field')") is True,
@@ -105,7 +95,6 @@ def named(window, tab: str, words: str, key: str = "Enter") -> bool:
         "return true })()"
     )
     return True
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -127,8 +116,6 @@ def main() -> int:
     folder = spaces / SPACE
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "A note.md").write_text("# A note\n", encoding="utf-8")
-    # A program that only waits, and one that names its terminal the way Claude Code
-    # does and then waits.
     (folder / "wait.js").write_text("setTimeout(() => {}, 6000);" + chr(10), encoding="utf-8")
     (folder / "titled.js").write_text(
         "process.stdout.write('\\x1b]0;\\u2733 Probe topic\\x07');\nsetTimeout(() => {}, 5000);\n",
@@ -139,8 +126,6 @@ def main() -> int:
     tabs.wipe(args.identifier)
     environment = {**os.environ, "NIB_SPACES_DIR": str(spaces)}
 
-    # Twice: the first launch writes the file `eval` is turned on in, and the second is the
-    # one that answers; see new-tabs-probe.py.
     first = run_probe(exe, env=environment)
     was, _ = tabs.endpoint(args.identifier, 150)
     tabs.allow_eval(args.identifier)
@@ -169,7 +154,6 @@ def main() -> int:
         check(bool(until(lambda: shown(window, tab) == resting, 10)), f"at the prompt: {shown(window, tab)!r}")
         check(mark(window, tab) == "powershell", f"wearing PowerShell's mark ({mark(window, tab)})")
 
-        # -- A program in front ----------------------------------------------------
         window.typed("node wait.js\r")
         running = until(lambda: shown(window, tab) == f"node · {SPACE}", 10)
         check(bool(running), f"node running: {shown(window, tab)!r}")
@@ -178,7 +162,6 @@ def main() -> int:
         back = until(lambda: shown(window, tab) == resting, 15)
         check(bool(back), f"and the shell's name once node has finished: {shown(window, tab)!r}")
 
-        # -- A title -------------------------------------------------------------
         window.typed("node titled.js\r")
         titled = until(lambda: shown(window, tab) == "Probe topic", 10)
         check(bool(titled), f"a program's title, its glyph left off: {shown(window, tab)!r}")
@@ -186,7 +169,6 @@ def main() -> int:
         gone = until(lambda: shown(window, tab) == resting, 15)
         check(bool(gone), f"and not once it has gone: {shown(window, tab)!r}")
 
-        # -- A name of one's own ------------------------------------------------------
         window.run(
             f"(() => {{ document.querySelector('.pick[data-tab={json.dumps(tab)}]')"
             ".dispatchEvent(new MouseEvent('dblclick', { bubbles: true })); return true })()"
@@ -209,7 +191,6 @@ def main() -> int:
         cleared = until(lambda: shown(window, tab) == resting, 5)
         check(bool(cleared), f"and an empty name gives the tab back: {shown(window, tab)!r}")
 
-        # -- A restart -----------------------------------------------------------
         window.run(
             f"(() => {{ document.querySelector('.pick[data-tab={json.dumps(tab)}]')"
             ".dispatchEvent(new MouseEvent('dblclick', { bubbles: true })); return true })()"
@@ -248,7 +229,6 @@ def main() -> int:
 
     print("every check passed")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

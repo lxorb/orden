@@ -1,30 +1,3 @@
-"""The window's frame and its material, toggled in the real app.
-
-What it proves:
-
-    the window starts with Orden's own frame and no material behind it
-    the system's frame is the system's: a titlebar appears, which is a client area
-      that no longer fills the window
-    the glass theme asks the compositor for the window's material (Mica Alt), and the
-      built-in takes it away again - read back off the window itself with
-      `DwmGetWindowAttribute`, not off the app's own opinion of what it did
-    both choices are remembered: the app is stopped, started again, and comes up the
-      way it was left
-    nothing here is a screenshot of a hope - each state is photographed
-
-It drives a probe build, which is told where to keep its notes:
-
-    python scripts/appearance-e2e.py --app "<path to the probe .exe>"
-
-`NIB_SPACES_DIR` points inside `target/`, so nothing goes near anybody's notes. The
-app's own `eval` is turned on in the probe's endpoint file before it starts, which is
-how the two settings are pressed from out here; see docs/automation.md.
-
-Windows only, which is where Mica is.
-
-Never an exe that would update itself; see scripts/probe_app.py.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -46,27 +19,21 @@ ROOT = HERE.parent
 WORK = ROOT / "target" / "appearance-e2e"
 SHOTS = WORK / "shots"
 
-# What DWM calls the material behind a window, and what it calls none. Mica Alt is the
-# tabbed one, which is what glass wears; see appearance.rs.
 DWMWA_SYSTEMBACKDROP_TYPE = 38
 DWMSBT_DISABLE = 1
 DWMSBT_TABBEDWINDOW = 4
 
 failures: list[str] = []
 
-
 def say(what: str) -> None:
     print(f"  {what}", flush=True)
-
 
 def wrong(what: str) -> None:
     failures.append(what)
     print(f"  FAIL {what}", flush=True)
 
-
 user32 = ctypes.windll.user32 if sys.platform == "win32" else None
 dwmapi = ctypes.windll.dwmapi if sys.platform == "win32" else None
-
 
 class Rect(ctypes.Structure):
     _fields_ = [
@@ -76,13 +43,7 @@ class Rect(ctypes.Structure):
         ("bottom", ctypes.c_long),
     ]
 
-
 def window_of(pid: int, patience: float = 60) -> int:
-    """The app's own window, once it has shown one: `main_window` in probe_app, which
-    knows it by its class rather than by its size. Waited for rather than slept for,
-    because a busy machine shows it seconds after the endpoint is up, and three seconds
-    of sleep was a run that stopped with "has no window" on a window about to appear.
-    """
     until = time.monotonic() + patience
     while time.monotonic() < until:
         found = main_window(pid)
@@ -92,13 +53,7 @@ def window_of(pid: int, patience: float = 60) -> int:
 
     raise SystemExit(f"process {pid} has no window")
 
-
 def frame_of(hwnd: int) -> int:
-    """How many pixels of the window the system's own frame takes.
-
-    The window rect against the client rect: an undecorated window is all client, and a
-    decorated one has a titlebar the app never sees.
-    """
     assert user32
     whole = Rect()
     client = Rect()
@@ -107,12 +62,7 @@ def frame_of(hwnd: int) -> int:
 
     return (whole.bottom - whole.top) - (client.bottom - client.top)
 
-
 def backdrop_of(hwnd: int) -> int:
-    """Which material the compositor is drawing behind the window, asked of DWM.
-
-    The app's own claim about what it did is not evidence; this is what Windows says.
-    """
     assert dwmapi
     held = ctypes.c_int(0)
     dwmapi.DwmGetWindowAttribute(
@@ -124,42 +74,24 @@ def backdrop_of(hwnd: int) -> int:
 
     return held.value
 
-
-# ── the app ─────────────────────────────────────────────────────────────────
-
-
 def endpoint_of(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["APPDATA"]) / identifier / "automation.json"
 
-
 def profile_of(identifier: str) -> pathlib.Path:
-    """Where this build keeps its webview's own store, which is where the two settings
-    are remembered: the app's `localStorage`, inside the `EBWebView` folder Tauri gives
-    each identifier. Wiped before the run, so the drive starts where a fresh install
-    does - and only this probe's own, never anybody's real profile."""
     return pathlib.Path(os.environ["LOCALAPPDATA"]) / identifier
 
-
 def allow_eval(path: pathlib.Path) -> None:
-    """`eval` turned on in the endpoint file, which is the only way it can be.
-
-    Deliberately not reachable from a request or a link: it runs whatever it is sent
-    inside the window, so turning it on costs opening the file the secret is in. A drive
-    is exactly the caller that should have to.
-    """
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps({"port": 0, "secret": secrets.token_hex(32), "eval": True}),
         encoding="utf-8",
     )
 
-
 def started(app: pathlib.Path) -> subprocess.Popen[bytes]:
     spaces = WORK / "spaces"
     spaces.mkdir(parents=True, exist_ok=True)
 
     return run_probe(app, env={**os.environ, "NIB_SPACES_DIR": str(spaces)})
-
 
 def waited_for(path: pathlib.Path, patience: float = 90) -> dict:
     until = time.monotonic() + patience
@@ -174,7 +106,6 @@ def waited_for(path: pathlib.Path, patience: float = 90) -> dict:
 
     raise SystemExit(f"no endpoint at {path} after {patience:.0f}s")
 
-
 def asked(held: dict, verb: str, args: dict) -> dict:
     body = json.dumps({"verb": verb, "args": args, "rest": []}).encode()
     request = urllib.request.Request(
@@ -186,14 +117,7 @@ def asked(held: dict, verb: str, args: dict) -> dict:
     with urllib.request.urlopen(request, timeout=30) as answer:
         return json.loads(answer.read().decode())
 
-
 def ran(held: dict, code: str) -> object:
-    """One line of JavaScript, inside the window.
-
-    For reading only. A built app is not a development build, so `window.nibApp` - the
-    handle every drive of the web build reaches the stores through - is not there: it is
-    behind `import.meta.env.DEV`. What is there is the page, which is what this asks.
-    """
     answer = asked(held, "eval", {"code": code, "yes": True})
     if not answer.get("ok"):
         wrong(f"the window would not run {code!r}: {answer.get('error')}")
@@ -201,15 +125,7 @@ def ran(held: dict, code: str) -> object:
 
     return answer.get("value")
 
-
 def pressed(held: dict, command: str) -> None:
-    """One row of the palette, run by its own id.
-
-    Which is how the two settings are changed here, and it is better evidence than a
-    store poked from outside: it is the row a reader presses. `byHand` keeps a row out of
-    a *link's* reach and not out of the command line's; see `runCommand` in
-    automation/acts.ts.
-    """
     answer = asked(held, "commands.run", {"id": command})
     if not answer.get("ok"):
         wrong(f"the {command} command would not run: {answer.get('error')}")
@@ -217,27 +133,19 @@ def pressed(held: dict, command: str) -> None:
 
     time.sleep(1.5)
 
-
 def frame_said(held: dict) -> str:
-    """Which frame the page says is on, which is what the shell's own bar reads."""
     return str(ran(held, "document.documentElement.dataset.frame") or "")
-
 
 def translucent_said(held: dict) -> bool:
     return bool(ran(held, "document.documentElement.hasAttribute('data-translucent')"))
 
-
 def framed_as(held: dict, wanted: str) -> None:
-    """The frame put where this check wants it, whichever it was."""
     if frame_said(held) != wanted:
         pressed(held, "window-frame")
 
-
 def translucent_as(held: dict, wanted: bool) -> None:
-    """The material on or off, which is the glass theme on or the built-in."""
     if translucent_said(held) != wanted:
         pressed(held, "theme:glass" if wanted else "theme:default")
-
 
 def shot(pid: int, name: str) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
@@ -261,13 +169,10 @@ def shot(pid: int, name: str) -> None:
     )
     say(f"photographed {name}.png")
 
-
 def drive(app: pathlib.Path, given: str | None) -> None:
     identifier = identifier_of(app, given)
     endpoint = endpoint_of(identifier)
 
-    # Both of the settings under test are remembered, which is half of what this checks -
-    # so the run starts from nothing remembered at all.
     shutil.rmtree(profile_of(identifier), ignore_errors=True)
     allow_eval(endpoint)
 
@@ -280,11 +185,6 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         hwnd = window_of(process.pid)
         say(f"its window is {hwnd}")
 
-        # ── as it comes up ─────────────────────────────────────────────────
-        # What the window measures with Orden's own frame on it. Not nought: an undecorated
-        # window still has the invisible border the compositor gives every window to grab,
-        # which is a few pixels the app neither draws nor sees. It is the *difference* a
-        # titlebar makes that says whether the system is drawing one.
         bare = frame_of(hwnd)
         if frame_said(held) != "nib":
             wrong(f"a window came up saying its frame is {frame_said(held)!r}")
@@ -298,7 +198,6 @@ def drive(app: pathlib.Path, given: str | None) -> None:
             wrong("the window came up with a material behind it, which is not the default")
         shot(process.pid, "01-nib-frame")
 
-        # ── the system's frame ─────────────────────────────────────────────
         pressed(held, "window-frame")
 
         framed = frame_of(hwnd)
@@ -307,7 +206,6 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         else:
             say(f"the system's frame: {framed - bare}px more than before, which is its titlebar")
 
-        # And the app's own three buttons stand down, because the system draws them now.
         if frame_said(held) != "system":
             wrong("the root does not say which frame is on, so the shell cannot read it")
         if ran(held, "!!document.querySelector('header .controls')"):
@@ -321,7 +219,6 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         if frame_of(hwnd) != bare:
             wrong(f"going back to Orden's own frame left {frame_of(hwnd) - bare}px of the system's")
 
-        # ── the material, which is the glass theme ─────────────────────────
         translucent_as(held, True)
 
         behind = backdrop_of(hwnd)
@@ -340,13 +237,9 @@ def drive(app: pathlib.Path, given: str | None) -> None:
 
         shot(process.pid, "03-translucent")
 
-        # And the pane the frame is chosen in, which is where a reader meets it. The
-        # material has no row there any more: it is the glass theme, under Style.
         asked(held, "commands.run", {"id": "settings"})
         time.sleep(1.2)
 
-        # The sheet opens on General, so the Appearance section is pressed the way a
-        # reader presses it: the row in the sheet's own list, by the word on it.
         went = ran(
             held,
             "(() => { const row = [...document.querySelectorAll('button')]"
@@ -368,8 +261,6 @@ def drive(app: pathlib.Path, given: str | None) -> None:
             wrong(f"the Appearance pane should show the Frame row and no Translucency: {pane}")
 
         shot(process.pid, "03b-the-pane")
-        # And shut again, so the rest of the drive is looking at the window rather
-        # than at a sheet over it.
         ran(held, "window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))")
         time.sleep(0.8)
 
@@ -379,20 +270,13 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         else:
             say("off again: the material is cleared")
 
-        # ── and both of them are remembered ────────────────────────────────
         framed_as(held, "system")
         translucent_as(held, True)
 
     finally:
-        # Only this drive's own process, by its pid. Never by name: somebody's own Orden
-        # may be running, and it is not this drive's to close.
         process.terminate()
         process.wait(timeout=30)
 
-    # The endpoint file taken away, so what is waited for below is the *next* launch's
-    # port rather than the one that has just gone with the process that wrote it. Written
-    # again rather than only deleted: `eval` is off in a file the app wrote itself, and it
-    # is what this drive reads the page through.
     endpoint.unlink(missing_ok=True)
     allow_eval(endpoint)
     time.sleep(1.5)
@@ -415,13 +299,11 @@ def drive(app: pathlib.Path, given: str | None) -> None:
 
         shot(process.pid, "04-remembered")
 
-        # Left as it was found, so the next run of this starts where this one did.
         framed_as(held, "nib")
         translucent_as(held, False)
     finally:
         process.terminate()
         process.wait(timeout=30)
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -444,7 +326,6 @@ def main() -> int:
 
     print("\nthe frame and the material are both the reader's, and both are remembered")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

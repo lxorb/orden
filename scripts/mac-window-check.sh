@@ -1,9 +1,4 @@
 #!/bin/bash
-# Where a Mac puts Orden's window when it opens (#679, #343): the first time, with no
-# place kept, it has to sit at the top of the screen's working area - straight under
-# the menu bar, with no strip of desktop over it - and across the middle; a place the
-# reader left it in has to be where it opens next. On a runner that is nobody's
-# machine, under an identifier of its own. Usage: mac-window-check.sh <the built .app>
 set -u
 
 app="$1"
@@ -31,8 +26,6 @@ quit_app() {
   sleep 2
 }
 
-# Where the window is against the working area of the screen it is on, in points: the
-# strip of desktop over it, and how far off the middle it is across.
 where='(async () => {
   const i = window.__TAURI_INTERNALS__
   const at = await i.invoke("plugin:window|outer_position", { label: "main" })
@@ -48,7 +41,6 @@ where='(async () => {
 
 read_place() { say_eval "await $where" | tail -1; }
 
-# The eval verb, for the questions below, and no place kept.
 rm -rf "$support"
 open "$app"
 up || exit 1
@@ -83,8 +75,6 @@ for one in problems:
 sys.exit(1 if problems else 0)
 PY
 
-# Somewhere of the reader's own, as the last close wrote it down, and it is where the
-# next launch opens.
 quit_app
 printf '{"x":140,"y":220,"width":600,"height":400,"maximized":false}' > "$support/window.json"
 open "$app"

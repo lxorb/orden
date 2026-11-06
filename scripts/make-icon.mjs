@@ -1,20 +1,3 @@
-/* Draws the Orden mark and fans it out to every icon the apps ship, in one go:
-
-     node scripts/make-icon.mjs
-
-   Each platform gets the tile it expects, drawn from the shapes in mark.mjs
-   rather than cut from one bitmap:
-   - macOS: the squircle on Apple's grid (824 of 1024, the rest clear), so the
-     Dock shows it the size of its neighbours and Tahoe has nothing to re-mask;
-   - Windows, Linux and the Store tiles: the same squircle filling the square;
-   - iOS: the wash to the very edge, because the system cuts its own corners;
-   - Android: an adaptive pair, the wash behind and the bars in front inside the
-     66 dp circle no launcher mask ever reaches, plus the one-colour layer that
-     themed icons take;
-   - the web app: drawn straight at its sizes.
-   `tauri icon` does the encoding (icns, ico, the Android and iOS sets); this
-   script picks from three passes of it what each platform should keep. */
-
 import { execSync } from 'node:child_process'
 import { copyFileSync, cpSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -25,10 +8,7 @@ const TAURI = 'apps/desktop/src-tauri'
 const ICONS = join(TAURI, 'icons')
 const RES = join(TAURI, 'gen/android/app/src/main/res')
 
-/** The bars sit on a tile 824 wide on the macOS grid and fill it everywhere else. */
 const MAC = 824
-/** On Android the visible 72 dp of a 108 dp layer is the tile, so the bars are drawn
-   at two thirds of the layer and stay well inside its 66 dp safe circle. */
 const ANDROID = (GRID * 72) / 108
 
 const tile =
@@ -65,7 +45,6 @@ writeFileSync(
   }),
 )
 
-// pnpm runs the command inside apps/desktop, so every path it gets is absolute.
 const fan = (input, out) =>
   execSync(
     `pnpm --filter @orden/desktop exec tauri icon "${resolve(input)}" -o "${resolve(out)}"`,
@@ -89,9 +68,6 @@ for (const platform of ['ios', 'android']) {
   rmSync(join(ICONS, platform), { recursive: true, force: true })
   cpSync(join(mobile, platform), join(ICONS, platform), { recursive: true })
 }
-// Before Android 8 a launcher shows a plain bitmap; tauri makes it from the front
-// layer alone, so the bars would fill it. Drawn here instead: the tile, and the
-// disc for launchers that ask for a round one.
 const LEGACY = { mdpi: 48, hdpi: 72, xhdpi: 96, xxhdpi: 144, xxxhdpi: 192 }
 const disc = (x, y, size) => Math.hypot(x - GRID / 2, y - GRID / 2) <= size / 2
 for (const [density, size] of Object.entries(LEGACY)) {
@@ -99,11 +75,8 @@ for (const [density, size] of Object.entries(LEGACY)) {
   writeFileSync(join(dir, 'ic_launcher.png'), png(size, tile(GRID * 0.84)))
   writeFileSync(join(dir, 'ic_launcher_round.png'), png(size, tile(GRID * 0.92, disc)))
 }
-// The Android project builds from its own copy of the launcher set.
 cpSync(join(ICONS, 'android'), RES, { recursive: true })
 
-// The web icons ride in every download of the web app and the Even plugin, so they
-// take the palette form.
 const web = 'apps/desktop/public'
 for (const size of [256, 512])
   writeFileSync(join(web, `icon-${size}.png`), png(size, tile(GRID, edge), { small: true }))

@@ -1,28 +1,3 @@
-"""The Apple Notes database the crate's tests read, built from the documented
-schema.
-
-A real `NoteStore.sqlite` is somebody's notes, so none is committed and none could
-be: the fixture is written here instead, from what the format is known to be -
-Core Data's own `Z_PRIMARYKEY` and `ZICCLOUDSYNCINGOBJECT` tables, one row per
-account, folder, note and attachment, and the note's own words as a gzipped
-protobuf in `ZICNOTEDATA.ZDATA`.
-
-What it holds is one of each thing the reader has to get right: a note in the
-folder Notes starts with, a note in a folder somebody named, a note two folders
-deep, a note behind a password, a note in the bin, a picture, a link from one
-note to another, and the answer to a sum and a link to the locked note, which are
-words Notes keeps on an attachment's row. And the things Notes keeps as documents and pictures of its own:
-a table, a sketch with the picture Notes drew of it, a scan of two pages - one
-with Notes' cropped preview on the disk and one without - a marked-up scan with
-the PDF Notes made of it, and a sketch whose picture is not on this Mac.
-
-Run it from the repository root after changing what the reader expects:
-
-    python scripts/apple-notes-fixture.py
-
-It writes apps/desktop/src-tauri/tests/apple-notes, which is committed, so the
-macOS runner proves the reader without a Mac's own notes anywhere near it."""
-
 import gzip
 import pathlib
 import sqlite3
@@ -33,31 +8,22 @@ import zlib
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "apps" / "desktop" / "src-tauri" / "tests" / "apple-notes"
 
-# Apple counts seconds from 2001 where everything else counts from 1970.
 FROM_2001 = 978_307_200
 
-# 2026-09-04 and 2026-09-05, as seconds since 1970. The reader shifts them back,
-# and apple_notes.rs asserts the first of these.
 MADE = 1_788_480_000
 EDITED = 1_788_566_400
 
 ACCOUNT = "ACCT-0001-0002-0003"
 NOTE_ONE = "11111111-2222-3333-4444-555555555555"
 
-# Where an attachment sits in a note's words.
 OBJECT = "￼"
 
-# Which kind each row is. The numbers are a database's own, which is why the
-# reader reads them out of `Z_PRIMARYKEY` rather than knowing them.
 KINDS = {"ICAccount": 7, "ICAttachment": 9, "ICFolder": 12, "ICMedia": 14, "ICNote": 16}
 
-# What `styleType` calls each paragraph.
 TITLE = 0
 CHECKBOX = 103
 
-
 def varint(value: int) -> bytes:
-    """A number, as protobuf writes one."""
     out = bytearray()
     while True:
         byte = value & 0x7F
@@ -68,18 +34,13 @@ def varint(value: int) -> bytes:
             out.append(byte)
             return bytes(out)
 
-
 def number(field: int, value: int) -> bytes:
     return varint(field << 3) + varint(value)
-
 
 def block(field: int, value: bytes) -> bytes:
     return varint((field << 3) | 2) + varint(len(value)) + value
 
-
 def style(kind: int, indent: int = 0, done: bool | None = None) -> bytes:
-    """A `ParagraphStyle`: which paragraph this is, how deep, and whether its box
-    is ticked."""
     out = number(1, kind)
     if indent:
         out += number(4, indent)
@@ -88,30 +49,18 @@ def style(kind: int, indent: int = 0, done: bool | None = None) -> bytes:
 
     return out
 
-
 def run(text: str, parts: bytes = b"") -> bytes:
-    """One `AttributeRun` over as many UTF-16 units as the text takes, which is
-    how Notes counts: an emoji is two."""
     units = sum(2 if ord(one) > 0xFFFF else 1 for one in text)
     return block(5, number(1, units) + parts)
 
-
 def attachment(identifier: str, uti: str) -> bytes:
-    """An `AttachmentInfo`, which says which attachment sits here."""
     return block(12, block(1, identifier.encode()) + block(2, uti.encode()))
 
-
 def note_data(text: str, runs: list[bytes]) -> bytes:
-    """A whole note's `ZDATA`: a `NoteStoreProto` holding a `Document` holding a
-    `Note`, gzipped, which is the shape Notes writes on the row."""
     inner = block(2, text.encode()) + b"".join(runs)
-    # mtime zero, so the same notes give the same bytes every run and the
-    # committed fixture only changes when what it says changes.
     return gzip.compress(block(2, block(3, inner)), mtime=0)
 
-
 def object_id(*, index: int | None = None, count: int | None = None, text: str | None = None) -> bytes:
-    """An `ObjectID`: an index into the document's objects, a number, or a string."""
     out = b""
     if count is not None:
         out += number(2, count)
@@ -121,27 +70,20 @@ def object_id(*, index: int | None = None, count: int | None = None, text: str |
         out += number(6, index)
     return out
 
-
 def custom_map(kind: int, entries: list[tuple[int, bytes]]) -> bytes:
-    """A `MergeableDataObjectMap` of one type, each entry a key and an `ObjectID`."""
     inner = number(1, kind)
     for key, value in entries:
         inner += block(3, number(1, key) + block(2, value))
     return block(13, inner)
 
-
 def dictionary(pairs: list[tuple[int, int]]) -> bytes:
-    """A `Dictionary` from object to object."""
     inner = b"".join(
         block(1, block(1, object_id(index=key)) + block(2, object_id(index=value)))
         for key, value in pairs
     )
     return block(6, inner)
 
-
 def ordered(uuids: list[bytes], pairs: list[tuple[int, int]]) -> bytes:
-    """An `OrderedSet`: the identifiers in the order they are drawn, and which
-    object names each element's identifier."""
     array = b"".join(
         block(2, number(1, at) + block(2, uuid)) for at, uuid in enumerate(uuids)
     )
@@ -151,25 +93,17 @@ def ordered(uuids: list[bytes], pairs: list[tuple[int, int]]) -> bytes:
     )
     return block(16, block(1, block(1, array) + block(2, contents)))
 
-
 def cell(text: str) -> bytes:
-    """A table's cell, which is a note of its own."""
     return block(10, block(2, text.encode()) + run(text))
 
-
 def mergeable(objects: list[bytes], keys: list[str], types: list[str], uuids: list[bytes]) -> bytes:
-    """A `MergableDataProto`, gzipped: what a table's or a scan's row carries in
-    `ZMERGEABLEDATA1`."""
     data = b"".join(block(3, one) for one in objects)
     data += b"".join(block(4, one.encode()) for one in keys)
     data += b"".join(block(5, one.encode()) for one in types)
     data += b"".join(block(6, one) for one in uuids)
     return gzip.compress(block(2, block(3, data)), mtime=0)
 
-
 def table() -> bytes:
-    """A table of two rows and two columns, its columns stored in the opposite
-    order to the one they are drawn in."""
     rows = [b"row-0-uuid-00000", b"row-1-uuid-00000"]
     columns = [b"col-0-uuid-00000", b"col-1-uuid-00000"]
 
@@ -199,15 +133,11 @@ def table() -> bytes:
         rows + columns,
     )
 
-
 def gallery(pages: list[str]) -> bytes:
-    """A scan: each page an object naming the page's own attachment."""
     objects = [custom_map(0, [(0, object_id(text=page))]) for page in pages]
     return mergeable(objects, ["self"], ["com.apple.notes.gallery"], [])
 
-
 def png() -> bytes:
-    """A real one-pixel PNG, so what the reader hands over is a picture."""
 
     def chunk(kind: bytes, body: bytes) -> bytes:
         return (
@@ -224,9 +154,6 @@ def png() -> bytes:
         + chunk(b"IEND", b"")
     )
 
-
-# Every column the reader asks for. A real database has some hundreds of them and
-# one table for all of it, which is Core Data's own shape rather than Notes'.
 OBJECT_COLUMNS = [
     "Z_PK INTEGER PRIMARY KEY",
     "Z_ENT INTEGER",
@@ -258,7 +185,6 @@ OBJECT_COLUMNS = [
     "ZSIZEHEIGHT REAL",
 ]
 
-
 def build(db: sqlite3.Connection) -> None:
     db.execute("CREATE TABLE Z_PRIMARYKEY (Z_ENT INTEGER, Z_NAME TEXT)")
     db.execute(f"CREATE TABLE ZICCLOUDSYNCINGOBJECT ({', '.join(OBJECT_COLUMNS)})")
@@ -271,8 +197,6 @@ def build(db: sqlite3.Connection) -> None:
 
     row(db, 1, "ICAccount", ZNAME="iCloud", ZIDENTIFIER=ACCOUNT)
 
-    # The folder Notes starts with says so in its identifier, and its notes go
-    # straight into the import rather than into a folder called Notes.
     row(db, 2, "ICFolder", ZTITLE2="Notes", ZIDENTIFIER="DefaultFolder-CloudKit", ZOWNER=1)
     row(db, 3, "ICFolder", ZTITLE2="Work", ZIDENTIFIER="folder-work", ZOWNER=1)
     row(db, 4, "ICFolder", ZTITLE2="Deeper", ZIDENTIFIER="folder-deep", ZPARENT=3, ZOWNER=1)
@@ -285,7 +209,6 @@ def build(db: sqlite3.Connection) -> None:
         ZFOLDERTYPE=1,
         ZOWNER=1,
     )
-    # A smart folder holds no notes of its own, and the reader leaves it alone.
     row(
         db,
         6,
@@ -299,9 +222,7 @@ def build(db: sqlite3.Connection) -> None:
     notes(db)
     attachments(db)
 
-
 def row(db: sqlite3.Connection, pk: int, kind: str, **values: object) -> None:
-    """One row of the one table Core Data keeps everything in."""
     values = {"Z_PK": pk, "Z_ENT": KINDS[kind], **values}
     names = ", ".join(values)
     marks = ", ".join("?" for _ in values)
@@ -310,9 +231,7 @@ def row(db: sqlite3.Connection, pk: int, kind: str, **values: object) -> None:
         tuple(values.values()),
     )
 
-
 def notes(db: sqlite3.Connection) -> None:
-    """The notes, and the words of the ones that come over."""
     groceries = "Groceries\nMilk\nEggs\n"
     made(
         db,
@@ -330,8 +249,6 @@ def notes(db: sqlite3.Connection) -> None:
         ),
     )
 
-    # A picture and a link to the note above, both of which Notes stores as an
-    # attachment sitting at an object character in the words.
     ideas = f"Ideas\nSee {OBJECT} and {OBJECT}\n"
     made(
         db,
@@ -355,7 +272,6 @@ def notes(db: sqlite3.Connection) -> None:
         ),
     )
 
-    # Everything Notes keeps as a document or a picture of its own, one per line.
     kinds = [
         ("Table", "att-table", "com.apple.notes.table"),
         ("Sketch", "att-drawing", "com.apple.paper"),
@@ -376,8 +292,6 @@ def notes(db: sqlite3.Connection) -> None:
         data=note_data(plans, parts),
     )
 
-    # The answer to a sum in Math Notes, and a link to the locked note, which does
-    # not come over: both are words Notes keeps on the attachment's row.
     sums = f"Sums\n2 + 2 {OBJECT}\nSee {OBJECT}\n"
     made(
         db,
@@ -416,7 +330,6 @@ def notes(db: sqlite3.Connection) -> None:
         ),
     )
 
-    # A note behind a password: its row is there and its words are not.
     made(db, 13, "44444444-2222-3333-4444-555555555555", folder=3, title="Locked", locked=True)
 
     made(
@@ -428,7 +341,6 @@ def notes(db: sqlite3.Connection) -> None:
         data=note_data("Binned\n", [run("Binned\n", block(2, style(TITLE)))]),
     )
 
-
 def made(
     db: sqlite3.Connection,
     pk: int,
@@ -439,7 +351,6 @@ def made(
     data: bytes | None = None,
     locked: bool = False,
 ) -> None:
-    """One note: its row, and the body on the row beside it."""
     row(
         db,
         pk,
@@ -456,9 +367,7 @@ def made(
         (pk, None if data is None else sqlite3.Binary(data)),
     )
 
-
 def attachments(db: sqlite3.Connection) -> None:
-    """The picture and the link, and the file the picture is."""
     row(db, 20, "ICMedia", ZIDENTIFIER="media-photo", ZFILENAME="photo.png", ZGENERATION1=None)
     row(db, 21, "ICAttachment", ZIDENTIFIER="att-photo", ZMEDIA=20)
     row(
@@ -485,10 +394,7 @@ def attachments(db: sqlite3.Connection) -> None:
 
     drawn(db)
 
-
 def drawn(db: sqlite3.Connection) -> None:
-    """The table, the sketch, the two scans and the sketch with no picture, and the
-    pictures Notes drew of them where it drew one."""
     row(db, 30, "ICAttachment", ZIDENTIFIER="att-table", ZMERGEABLEDATA1=table())
     row(db, 31, "ICAttachment", ZIDENTIFIER="att-drawing", ZFALLBACKIMAGEGENERATION="gen-1")
     row(db, 32, "ICAttachment", ZIDENTIFIER="att-scan", ZMERGEABLEDATA1=gallery(["page-one", "page-two"]))
@@ -509,7 +415,6 @@ def drawn(db: sqlite3.Connection) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(body)
 
-
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     database = OUT / "NoteStore.sqlite"
@@ -525,7 +430,6 @@ def main() -> int:
     print(f"wrote {database.relative_to(ROOT)} ({database.stat().st_size} bytes)")
     print(f"and   {(OUT / 'Accounts').relative_to(ROOT)}")
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

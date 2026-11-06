@@ -1,4 +1,3 @@
-"""#349: a finger held on the bare plane, then moved, lassos - on a canvas and a page note."""
 import json, re, sys
 from playwright.sync_api import sync_playwright
 results = []
@@ -40,7 +39,6 @@ with sync_playwright() as p:
         return menu_up, menu_after
     def ring(cx, cy, rx, ry, n=24):
         import math
-        # From its leftmost point, which is bare plane left of the first card.
         return [(cx - rx * math.cos(2 * math.pi * i / n), cy + ry * math.sin(2 * math.pi * i / n)) for i in range(n + 1)]
 
     for name, make, plane_sel, item in [("canvas", CANVAS, ".canvas .plane", "n"), ("page note", PAGES, ".pages, .canvas", "w")]:
@@ -48,7 +46,6 @@ with sync_playwright() as p:
         page.evaluate(make); page.wait_for_timeout(3000)
         f = page.evaluate(FILE)
         items = [n for n in f["nodes"] if n["id"].startswith(item)]
-        # Where those items are on screen, from their elements.
         def box(id):
             return page.locator(f"[data-id='{id}']").first.bounding_box()
         boxes = {n["id"]: box(n["id"]) for n in items}
@@ -56,7 +53,6 @@ with sync_playwright() as p:
             check(f"{name}: its cards are drawn", False, {k: v is not None for k, v in boxes.items()}); continue
         first, second = items[0]["id"], items[1]["id"]
         a, b = boxes[first], boxes[second]
-        # A loop round the first two, from bare plane just left of the first.
         left, top = a["x"] - 25, a["y"] - 25
         right, bottom = b["x"] + b["width"] + 25, max(a["y"] + a["height"], b["y"] + b["height"]) + 25
         cx, cy = (left + right) / 2, (top + bottom) / 2
@@ -67,12 +63,10 @@ with sync_playwright() as p:
         check(f"{name}: moved on, the menu goes", not after)
         picked = page.evaluate("[...document.querySelectorAll('[data-id].picked, [data-id][class*=picked]')].map((one) => one.dataset.id)")
         check(f"{name}: the loop picked the two cards it went round", sorted(set(picked)) == sorted([first, second]), picked)
-        # Held and let go: the menu stays, nothing picked anew.
         page.keyboard.press("Escape"); page.wait_for_timeout(300)
         up2, _ = loop(start[0], start[1], [], hold=800)
         check(f"{name}: held and let go, the menu stays", page.locator(".menu, [role=menu]").count() > 0)
         page.keyboard.press("Escape"); page.wait_for_timeout(300)
-        # A finger moved at once moves the plane rather than lassoing.
         before = page.locator(f"[data-id='{first}']").first.bounding_box()
         touch("touchStart", start[0], start[1]); 
         for i in range(1, 8): touch("touchMove", start[0] + 10 * i, start[1] + 10 * i); page.wait_for_timeout(20)

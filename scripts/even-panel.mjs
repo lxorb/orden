@@ -1,32 +1,7 @@
-/* The panel as a picture, for the docs and for looking at.
-
-   Nobody outside Even Realities has the firmware's font, so a preview cannot be
-   drawn with the real glyphs. What it can be drawn with is the real *metrics*:
-   `@evenrealities/pretext` carries the advance width of every codepoint the
-   firmware has, so every character can be placed at exactly the pixel the glasses
-   will place it at, and the bands, the rules, the gutter and the wrapping are then
-   right to the pixel even though the letterforms are a stand-in.
-
-   So what these pictures prove is the layout, and they are honest about the rest.
-
-   Reads a JSON array of screens on stdin, or from a file named as the first
-   argument:
-
-     [{ "name": "note", "head": "...", "rule": "...", "nums": "...",
-        "body": "...", "foot": "...", "mic": "●", "lineNumbers": true }]
-
-   and writes one HTML file per screen next to it, each 576 by 288, which
-   `scripts/even-e2e.py` screenshots.
-
-     node scripts/even-panel.mjs target/even-e2e/screens.json */
-
 import { getAdvW, getTextWidth } from '@evenrealities/pretext'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 
-/** Where each band sits. The same numbers as `packages/glasses/src/panel.ts`,
-   because both ends of this have to agree on them to the pixel; a test in that
-   package is what holds them together. */
 const LINE = 27
 const WIDTH = 576
 const HEIGHT = 288
@@ -38,28 +13,16 @@ function bands(lineNumbers) {
     head: { x: MARGIN, y: 2, width: WIDTH - MARGIN - 42, colour: 4 },
     mic: { x: WIDTH - 34, y: 2, width: 26, colour: 3 },
     rule: { x: MARGIN, y: 29, width: WIDTH - 2 * MARGIN, colour: 2 },
-    // Over the left of the body rather than beside it; the note's own rows carry a
-    // constant indent to clear it. See `packages/glasses/src/panel.ts`.
     nums: { x: MARGIN, y: 56, width: lineNumbers ? NUMS : 0, colour: 2 },
     body: { x: MARGIN, y: 56, width: WIDTH - 2 * MARGIN, colour: 4 },
     foot: { x: MARGIN, y: 256, width: WIDTH - 2 * MARGIN, colour: 2 },
   }
 }
 
-/** The firmware's five brightnesses, as the green a G2 lights.
-   Level zero is a pixel that is off, which on these glasses is see-through. */
 const GREEN = ['#0c150f', '#2f7d52', '#49b072', '#63d98d', '#8bffb0']
 
 const escape = (text) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
-/** The glyphs a stand-in face draws badly, drawn as rules instead.
- *
- *  A box drawing character is a line that reaches both edges of its advance, and
- *  the firmware's does; a text face's does not, so a run of them comes out as a row
- *  of dashes with gaps where the firmware draws a solid rule. Since a rule is the
- *  one piece of structure the panel has, drawing it wrong would misrepresent the
- *  thing these pictures exist to show. Each is a stack of bands down its own line,
- *  as a fraction of the 27 pixels it sits in. */
 const RULES = {
   '─': [[0.52, 0.07]],
   '━': [[0.48, 0.15]],
@@ -71,17 +34,7 @@ const RULES = {
   '┃': null,
 }
 
-/** Every character of a row, at the pixel the firmware will put it at.
- *
- *  Per glyph, and each advance rounded on its own, which is what LVGL does; see
- *  pretext's own note about it. Kerning is left out here: it moves a character by at
- *  most a pixel and carrying it would mean carrying pretext's tables too. */
 function glyphs(text, left, top) {
-  // The advances summed one at a time come out a few percent wider than the
-  // firmware sets the same row, because the firmware kerns and pretext only exposes
-  // kerning inside its own measurement. So the row is laid out per glyph and then
-  // pulled back to the width the row actually measures: every character is within a
-  // pixel of where the glasses put it, and the end of the line is exact.
   let sum = 0
   for (const one of text) sum += Math.round(getAdvW(one.codePointAt(0) ?? 32) / 16)
   const scale = sum > 0 ? getTextWidth(text) / sum : 1
@@ -102,7 +55,6 @@ function glyphs(text, left, top) {
         )
       }
     } else if (rule === null) {
-      // The uprights, which are a band down rather than across.
       out.push(
         `<b style="left:${String(at + Math.floor(room / 2))}px;top:${String(top)}px;width:2px;height:${String(LINE)}px"></b>`,
       )

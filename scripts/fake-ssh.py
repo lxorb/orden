@@ -1,27 +1,8 @@
-"""A stand-in for `ssh`, for the remote terminal's probe: it never reaches a machine.
-
-Orden starts the system's `ssh` in a terminal's pseudo console (docs/terminal.md, _Another
-machine_). A probe cannot connect anywhere real - not to a reader's own hosts, not to the
-internet - and this machine has no `sshd` to connect to, so `NIB_SSH` points the crate at
-this instead, through a one-line `.cmd` the probe writes beside its own temp files.
-
-What it does is what the probe checks against:
-
-* writes the arguments it was given, one JSON line a start, to `FAKE_SSH_LOG`;
-* says it is connected to the destination after `--`, and draws a prompt;
-* `drop` ends it the way a connection that went away ends `ssh`: a line, and 255;
-* `exit` ends it with 0, as a remote shell's `exit` does;
-* anything else is said back, so a keystroke is seen to arrive.
-
-    NIB_SSH=fake-ssh.cmd FAKE_SSH_LOG=log.jsonl nib.exe
-"""
-
 from __future__ import annotations
 
 import json
 import os
 import sys
-
 
 def main() -> int:
     args = sys.argv[1:]
@@ -46,7 +27,6 @@ def main() -> int:
             sys.stdout.flush()
             return 255
         sys.stdout.write(f"you said: {said}\r\n")
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

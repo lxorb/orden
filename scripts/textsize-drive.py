@@ -1,14 +1,4 @@
 #!/usr/bin/env python3
-"""Settings > Editor > Text size moved with a pointer, the way a hand does, and the
-note's text looked at. #680: on Linux the slider changed nothing a reader could see.
-
-    python3 scripts/textsize-drive.py <sway|x11> <out folder> <app pid>
-
-Settings opened by its key, the Editor pane chosen, the Text size slider dragged from a
-quarter of the way to nearly three quarters; the editor's text has to be larger, as the
-page computes it and as the screen shows it, after Settings is closed, and still after
-the page is loaded again.
-"""
 
 import json
 import os
@@ -25,7 +15,6 @@ POINTER = OUT / "pointer.fifo"
 failures = []
 done = []
 
-
 def endpoint():
     for _ in range(120):
         try:
@@ -37,9 +26,7 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
-
 
 def run(code):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
@@ -57,7 +44,6 @@ def run(code):
         except (TimeoutError, OSError):
             time.sleep(1)
     return None
-
 
 if DESK == "sway":
 
@@ -86,8 +72,6 @@ if DESK == "sway":
     def shoot(name):
         subprocess.run(["grim", str(OUT / f"textsize-{name}.png")], check=False)
 
-    # On the wide screen at scale 1, where the sidebar and its space switcher show: on
-    # the narrow one the sidebar is folded away.
     subprocess.run(["swaymsg", f"[pid={APP}] move container to output HEADLESS-2, focus"], check=False)
     time.sleep(2)
 
@@ -117,14 +101,10 @@ else:
     def shoot(name):
         subprocess.run(["import", "-window", "root", str(OUT / f"textsize-{name}.png")], check=False)
 
-
 def ratio():
     return run("devicePixelRatio") or 1
 
-
 def box(selector, text=None):
-    """Where an element of the window's page is, in its own pixels: the first that
-    matches and is drawn, with `text` as its words where given."""
     return run(
         "(() => { for (const one of document.querySelectorAll(%s)) {"
         " const r = one.getBoundingClientRect(); if (r.width <= 0 || r.height <= 0) continue;"
@@ -133,19 +113,15 @@ def box(selector, text=None):
         % (json.dumps(selector), json.dumps(text), json.dumps(text))
     )
 
-
 def at(rect):
-    """The middle of `rect` on the screen."""
     x, y = window()
     scale = ratio()
     return x + (rect["x"] + rect["width"] / 2) * scale, y + (rect["y"] + rect["height"] / 2) * scale
-
 
 def press(rect):
     move(*at(rect))
     time.sleep(0.25)
     click()
-
 
 def until(code, seconds=4):
     for _ in range(int(seconds / 0.2)):
@@ -155,24 +131,19 @@ def until(code, seconds=4):
         time.sleep(0.2)
     return None
 
-
 def fail(what, name):
     print(f"::error::{DESK}: {what}")
     failures.append(what)
     shoot(name)
 
-
 SIZE = "(() => { const c = document.querySelector('.cm-content'); return c ? parseFloat(getComputedStyle(c).fontSize) : null })()"
 SLIDER = "input[type=range][min='0.8']"
-
 
 def text_box():
     return run("(() => { const c = document.querySelector('.cm-content'); if (!c) return null; const r = c.getBoundingClientRect();"
                " return { x: r.x, y: r.y, width: Math.min(r.width, 500), height: Math.min(r.height, 220) } })()")
 
-
 def ink(name):
-    """How many dark pixels the start of the note's text has on the screen."""
     from PIL import Image
 
     shoot(name)
@@ -183,7 +154,6 @@ def ink(name):
     scale = ratio()
     image = Image.open(OUT / f"textsize-{name}.png").convert("L")
     if DESK == "sway":
-        # grim shoots every output at the largest scale: the window's place, in its pixels.
         outputs = json.loads(subprocess.check_output(["swaymsg", "-r", "-t", "get_outputs"]))
         most = max(one["scale"] for one in outputs)
         left = min(one["rect"]["x"] for one in outputs)
@@ -196,7 +166,6 @@ def ink(name):
             int(x + (box["x"] + box["width"]) * scale * k), int(y + (box["y"] + box["height"]) * scale * k))
     crop = image.crop(area)
     return sum(1 for value in crop.getdata() if value < 110)
-
 
 until("!!document.querySelector('.cm-content')", 30)
 time.sleep(2)

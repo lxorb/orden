@@ -1,24 +1,3 @@
-/** The online terminal end to end, with no container and no Cloudflare resource
- *  (docs/online-terminal-live.md, "A drive against a local nibd"): the Worker under
- *  `wrangler dev`, its `Machine` linked to a `nibd` already listening on 127.0.0.1:7680
- *  with the secret `dev` (the image's, in CI's machine workflow), and the app's socket
- *  protocol driven as the app drives it (apps/desktop/src/lib/online/link.ts):
- *
- *  1. a session made the way a device on sync v1 makes one, `POST /v2/online/terms {}`;
- *  2. its socket opened, `echo` typed, the output read;
- *  3. the socket dropped while a command is still printing, and opened again with
- *     `since`: the rest arrives, and nothing drawn already;
- *  4. a second socket, a late joiner, is sent the screen;
- *  5. keystroke round trips, a key sent to its echo heard, at a quiet prompt and while a
- *     program prints all the time, which is what the coalescing in nibd is measured by;
- *  6. `xdg-open` on the machine reaches the owner's socket as `browse`, and a sign-in
- *     callback the app hands back is made on the machine;
- *  7. a paste larger than one input frame, in the frames the app cuts it into, arrives
- *     whole.
- *
- *  Run from the repository's root: `node scripts/online-e2e.mjs`. Everything local goes
- *  into a temporary folder that is removed afterwards. */
-
 import { spawn, spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
@@ -36,20 +15,17 @@ const TOKEN = 'e2e-token-0123456789abcdef'
 const USER = 'e2e-user'
 const DEVICE = 'e2edevice01'
 const windows = process.platform === 'win32'
-/** wrangler's own entry, run by this node: no shell between, so no argument is split. */
 const WRANGLER = join(SYNC, 'node_modules/wrangler/bin/wrangler.js')
 
 const state = mkdtempSync(join(tmpdir(), 'nib-online-e2e-'))
 const vars = join(state, 'dev.vars')
 let worker = null
-/** Every socket opened, for the log when something fails. */
 const opened = []
 
 function log(...what) {
   console.log('[online-e2e]', ...what)
 }
 
-/** wrangler, from services/sync, waited for. */
 function wrangler(args) {
   const done = spawnSync(process.execPath, [WRANGLER, ...args], {
     cwd: SYNC,
@@ -89,7 +65,6 @@ async function until(what, check, ms) {
   }
 }
 
-/** What the door answered a socket it would not take, for the log. */
 function refusal(url) {
   return new Promise((settle) => {
     const asked = request(url.replace(/^ws/, 'http'), {
@@ -112,19 +87,14 @@ function refusal(url) {
   })
 }
 
-/** One socket as the app opens one: the token and the device in the subprotocols, a
- *  `hello`, and everything it hears kept. */
 async function socket(session, since) {
   const url = `${BASE.replace(/^http/, 'ws')}/v2/online/${encodeURIComponent(session)}/socket`
   const ws = new WebSocket(url, [`nib.token.${TOKEN}`, `nib.device.${DEVICE}`])
   ws.binaryType = 'arraybuffer'
   const born = performance.now()
-  /** Milliseconds from the socket's making to its opening, its first frame of each kind
-   *  and its first output: where a connect's time goes. */
   const at = {}
   const first = (what) => (at[what] ??= Math.round(performance.now() - born))
   const heard = { frames: [], out: [], closed: false, at }
-  /** Those waiting for output with something in it; see `echoOf`. */
   const waiting = new Set()
   opened.push(heard)
   ws.onmessage = (event) => {
@@ -155,21 +125,16 @@ async function socket(session, since) {
   )
   return {
     heard,
-    /** Everything printed, as the screen frames and the output say it. */
     text: () =>
       heard.frames
         .filter((one) => one.t === 'screen')
         .map((one) => one.data)
         .join('') + heard.out.map((one) => one.data).join(''),
-    /** The offset after the last byte heard. */
     end: () => Math.max(0, ...heard.out.map((one) => one.seq + one.length)),
     type: (data) => ws.send(JSON.stringify({ t: 'in', data })),
-    /** Any frame of the app's, as text. */
     send: (frame) => ws.send(JSON.stringify(frame)),
-    /** Input as bytes, as the app sends a key xterm.js encoded itself. */
     typeBytes: (data) => ws.send(new TextEncoder().encode(data)),
     close: () => ws.close(),
-    /** Milliseconds from `key` sent to output with `key` in it heard. */
     echoOf: (key) =>
       new Promise((settle, failed) => {
         const from = performance.now()
@@ -189,7 +154,6 @@ async function socket(session, since) {
   }
 }
 
-/** Keystroke round trips on `on`, one key at a time with a typist's pause between. */
 async function roundTrips(on, label) {
   const times = []
   for (let at = 0; at < 40; at++) {
@@ -213,7 +177,6 @@ async function main() {
       ),
     120_000,
   )
-  // The built app is the Worker's assets; a drive of the API needs only the folder.
   mkdirSync(join(ROOT, 'apps/desktop/dist'), { recursive: true })
   writeFileSync(vars, `MACHINE_DEV_NIBD="${NIBD}"\nMACHINE_DEV_SECRET="dev"\n`)
 
@@ -283,7 +246,6 @@ async function main() {
   )
   log('Worker up')
 
-  // 1. A session the way a device on sync v1 makes one: no file id.
   const asked = performance.now()
   const made = await api('/v2/online/terms', { method: 'POST', body: '{}' })
   const term = await made.json()
@@ -292,7 +254,6 @@ async function main() {
   }
   log('session', term.session, 'on', term.machine, `in ${Math.round(performance.now() - asked)} ms`)
 
-  // 2. Opened, typed into, answered.
   const first = await socket(term.session)
   await until(
     'the machine awake',
@@ -307,7 +268,6 @@ async function main() {
   await until('bytes-25 printed', () => first.text().includes('bytes-25'), 30_000)
   log('typed and answered, as text and as bytes')
 
-  // 3. Dropped while a command still prints, and back with `since`: the rest, and only it.
   first.type('sleep 3; echo later-$((7*6))\r')
   await pause(500)
   const since = first.end()
@@ -324,7 +284,6 @@ async function main() {
   }
   log('reconnected from', since, 'and got the rest')
 
-  // 4. A late joiner, with nothing drawn, is sent the screen.
   const late = await socket(term.session)
   await until(
     'the late joiner’s screen',
@@ -334,8 +293,6 @@ async function main() {
   if (!late.text().includes('hi-42')) throw new Error('the late joiner’s screen is missing hi-42')
   log('late joiner got the screen')
 
-  // 5. Keystroke round trips: at a quiet prompt, read by the line editor; and while a
-  // loop prints a dot every few milliseconds, echoed by the kernel's line discipline.
   await roundTrips(back, 'at a quiet prompt')
   back.type('\x15')
   back.type('while :; do printf .; sleep 0.003; done\r')
@@ -343,9 +300,6 @@ async function main() {
   await roundTrips(back, 'under steady output')
   back.type('\x03')
   await pause(500)
-  // 6. A program asking for a browser: the owner's computer is told the address, once
-  //    (docs/online-terminal.md 4.13), and a sign-in's callback is made on the machine.
-  //    Both sockets here are one device's, so either may be the one told.
   late.close()
   back.type("xdg-open 'https://example.com/?from=e2e'; echo opened-$?\r")
   await until(
@@ -370,8 +324,6 @@ async function main() {
   )
   log('a sign-in callback was made on the machine')
 
-  // 7. A paste of 200 000 bytes, in the app's frames (inputChunks in @orden/online/wire),
-  //    read by `head` in raw mode so no line limit of the terminal's stands in the way.
   back.type('stty -icanon; head -c 200000 > /tmp/big; stty icanon; echo big-$(wc -c < /tmp/big)\r')
   await pause(1000)
   const paste = 'x'.repeat(200_000)
@@ -384,7 +336,6 @@ async function main() {
   log('passed')
 }
 
-/** The Worker stopped, and waited for, so its files can go. */
 async function stop() {
   if (worker && worker.exitCode === null) {
     const exited = new Promise((settle) => worker.once('exit', settle))

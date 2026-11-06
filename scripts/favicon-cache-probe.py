@@ -1,29 +1,3 @@
-"""Does a web tab wear its site's mark after a restart, before its page is there? Windows
-only.
-
-Emil, 2026-09-30: *"When I restart nib all the icons from previously opened websites are
-gone and I only see them when I actually load them. But they could be cached."*
-
-A page served here shows a mark nobody could mistake - a magenta square - and is opened
-as a browser tab with no file, the tab Ctrl+T and a link make, which is the tab that lost
-its mark. Once the mark is in the strip the note is put in front, so the web tab is one a
-restart brings back without building its page, and the app is closed the way a person
-closes it. Then it is started again and asked, before anything has loaded that tab:
-
-* what the window says: the tab's mark in the strip is the site's picture, and the crate
-  has no page for that tab;
-* what the window looks like: a picture of the probe's own window, with the magenta
-  square in the strip. Taken by the window's own engine through its DevTools port, the
-  way launch.py reaches it: PrintWindow answers black for a window kept off the screen.
-
-    python scripts/favicon-cache-probe.py --exe path/to/nib.exe \\
-        --identifier ch.emilvinu.nib.probe.<name>
-
-Build the exe as `scripts/probe_app.py` says. Every launch goes through `run_probe`, off
-every screen and never taking the keyboard, and the app is driven through its automation
-endpoint; the picture is of the probe's own page and nothing else.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -43,12 +17,9 @@ from probe_app import close_app
 
 HERE = pathlib.Path(__file__).resolve().parent
 
-#: The mark, as the capture finds it: magenta, which no part of Orden is drawn in.
 MAGENTA = (255, 0, 255)
 
-
 def borrowed():
-    """The switch probe's own helpers: the space, the launch, the endpoint, `eval`."""
 
     spec = importlib.util.spec_from_file_location("switch", HERE / "web-switch-probe.py")
     if spec is None or spec.loader is None:
@@ -57,9 +28,7 @@ def borrowed():
     spec.loader.exec_module(module)
     return module
 
-
 def png(size: int, rgb: tuple[int, int, int]) -> bytes:
-    """A square of one colour, as a PNG, with nothing but the standard library."""
 
     def chunk(kind: bytes, data: bytes) -> bytes:
         body = kind + data
@@ -74,12 +43,10 @@ def png(size: int, rgb: tuple[int, int, int]) -> bytes:
         + chunk(b"IEND", b"")
     )
 
-
 PAGE = (
     b'<!doctype html><title>Magenta</title><link rel="icon" href="/mark.png">'
     b'<body style="font:16px system-ui;padding:2rem"><h1>Magenta</h1></body>'
 )
-
 
 def serve(port: int) -> http.server.ThreadingHTTPServer:
     routes = {"/page": ("text/html", PAGE), "/mark.png": ("image/png", png(32, MAGENTA))}
@@ -100,8 +67,6 @@ def serve(port: int) -> http.server.ThreadingHTTPServer:
     threading.Thread(target=made.serve_forever, daemon=True).start()
     return made
 
-
-#: The browser tab on the page, and what the strip draws for it.
 STRIP = """(async () => {
   const tab = nib.workspace.tabs.find((one) => one.kind === 'web' && (one.address ?? '').includes('/page'))
   if (!tab) return JSON.stringify({ tab: null })
@@ -126,12 +91,9 @@ STRIP = """(async () => {
   })
 })()"""
 
-
 def photograph(identifier: str, shot: pathlib.Path) -> str:
-    """The app's own page as its engine draws it, into `shot`, through the DevTools port
-    the launch was given. Says what went wrong, or nothing."""
 
-    from playwright.sync_api import sync_playwright  # A drive's own, not the app's.
+    from playwright.sync_api import sync_playwright
 
     port_file = next(borrowed().local_dir(identifier).rglob("DevToolsActivePort"), None)
     if port_file is None:
@@ -154,19 +116,15 @@ def photograph(identifier: str, shot: pathlib.Path) -> str:
         browser.close()
     return ""
 
-
 def magenta_in_strip(picture: pathlib.Path) -> int:
-    """How many pixels of the mark's colour are in the top band of the window, where the
-    tab strip is."""
 
-    from PIL import Image  # A drive's own dependency, not the app's.
+    from PIL import Image
 
     with Image.open(picture) as image:
         rgb = image.convert("RGB")
         width, height = rgb.size
         band = rgb.crop((0, 0, width, min(height, max(120, height // 8))))
         return sum(1 for r, g, b in band.get_flattened_data() if r > 200 and g < 70 and b > 200)
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -190,7 +148,6 @@ def main() -> int:
     space.mkdir(parents=True, exist_ok=True)
     (space / "Idea.md").write_text("# Idea\n\nA note.\n", encoding="utf-8")
 
-    # Every launch opens its engine's DevTools on a port of its own, for the picture.
     os.environ["WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"] = "--remote-debugging-port=0"
 
     said: dict[str, object] = {}
@@ -203,12 +160,9 @@ def main() -> int:
         switch.allow_eval(args.identifier)
         time.sleep(2)
 
-        # The run before: a browser tab on the page, until its mark is in the strip and
-        # written down, then put behind the note.
         running, app, _ = switch.launch(args.exe, args.identifier, unlike=app.port)
         app.open("Idea.md", switch.SPACE)
         time.sleep(2)
-        # Asked until the window answers: on a busy machine it can still be coming up.
         until = time.perf_counter() + 60
         opened: object = None
         while time.perf_counter() < until and opened != "opened":
@@ -233,7 +187,6 @@ def main() -> int:
             raise SystemExit("the app did not close when asked")
         first_port = app.port
 
-        # The restart, asked the moment it answers.
         running, app, hwnd = switch.launch(args.exe, args.identifier, unlike=first_port)
         after: object = None
         until = time.perf_counter() + 30
@@ -242,7 +195,6 @@ def main() -> int:
             if isinstance(after, dict) and after.get("tab") and after.get("mark") != "globe":
                 break
             time.sleep(0.2)
-        # And once more, for the picture to have decoded.
         time.sleep(0.5)
         after = app.ask(STRIP)
         said["after the restart"] = after
@@ -269,7 +221,6 @@ def main() -> int:
     )
     print("PASS" if good else "FAIL")
     return 0 if good else 1
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

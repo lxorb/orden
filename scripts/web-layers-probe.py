@@ -1,30 +1,3 @@
-"""Is a web page ever hidden for a layer of the app's that covers only part of it? Windows only.
-
-Emil, 2026-10-13: *"sometimes when there are toasts, e.g. for a new version, or other stuff
-you hover over, the web tab is just not visible - completely black - until you click it
-away."* A page is a native webview over the pane, so whether it is on screen round a layer
-is a question about another process's window, which this asks the windows: for each kind
-of layer the app has, the layer is opened over a page, held, and closed, while the page's
-window is sampled as fast as it answers - whether it is shown, and what region it may
-draw in (see src-tauri/src/web_cut.rs).
-
-* **over a page** - the update notice, the undo toast, a tab's hover card, the address
-  field's suggestions, the bar's menu, and a layer nothing announces (put into the
-  document by hand, on no overlay stack and by no press). None of them covers the whole
-  page, so the page must never be hidden or emptied: `out of sight ms` is 0 and the
-  region is `cut` while the layer is up.
-* **a page built under one** - a web note opened while the update notice is up, and while
-  a tab's card is. The page that arrives must arrive cut round the layer, not hidden.
-* **settings** - a sheet over a scrim covers the whole window, so the page may be emptied
-  there, but the window's own photograph must show the page or its still in a corner the
-  sheet is not over, never an empty pane.
-
-    python scripts/web-layers-probe.py --exe path/to/nib.exe --identifier ch.emilvinu.nib.probe.<name>
-
-The exe is a probe build a drive can steer; see web-smooth-probe.py for how one is built.
-Launched through `probe_app.run_probe`, off the screen and never in front.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -47,9 +20,7 @@ SPACE = "Web layers probe"
 FLAT = b"""<!doctype html><title>Flat</title>
 <body style="margin:0;background:#ff0080;height:100vh"></body>"""
 
-
 def borrowed(name: str) -> Any:
-    """Another drive's helpers, so the two cannot drift apart."""
 
     spec = importlib.util.spec_from_file_location(name.replace("-", "_"), HERE / f"{name}.py")
     if spec is None or spec.loader is None:
@@ -58,13 +29,9 @@ def borrowed(name: str) -> Any:
     spec.loader.exec_module(module)
     return module
 
-
 smooth = borrowed("web-smooth-probe")
 
-
 class Pages:
-    """Every page's window under the app's, asked about as fast as they answer: which
-    ones there are, whether each is shown and what region it may draw in."""
 
     def __init__(self, hwnd: int, own: int) -> None:
         self.hwnd, self.own = hwnd, own
@@ -94,9 +61,7 @@ class Pages:
         self.on = False
         self.thread.join()
 
-
 def gone(rows: list[tuple[float, dict[int, tuple[bool, int]]]], page: int, since: float, until: float) -> dict[str, object]:
-    """How long `page` was out of sight between two moments, and the regions it had."""
 
     within = [(at, seen[page]) for at, seen in rows if since <= at <= until and page in seen]
     out = 0.0
@@ -108,12 +73,9 @@ def gone(rows: list[tuple[float, dict[int, tuple[bool, int]]]], page: int, since
         "regions": list(dict.fromkeys(smooth.REGIONS.get(region, region) for _, (_, region) in within)),
     }
 
-
 def over(
     app: Any, hwnd: int, page: int, own: int, opening: str, closing: str, held: float = 1.6, after: float = 1.5
 ) -> dict[str, object]:
-    """A layer opened over a live page, held, and closed: the page while it is up, and
-    the page once it has had the time to go."""
 
     with Pages(hwnd, own) as sampled:
         time.sleep(0.2)
@@ -131,18 +93,13 @@ def over(
         "layers left": app.ask(LEFT),
     }
 
-
-#: What of the app's floats on the window, by its class: what a page is still cut round.
 LEFT = """JSON.stringify([...document.querySelectorAll(
   '.nib-layer, .nib-bubble, .nib-screen, .nib-scrim, [data-notices] > *')].map((one) => {
     const box = one.getBoundingClientRect()
     return [one.className, Math.round(box.x), Math.round(box.y), Math.round(box.width), Math.round(box.height), one.checkVisibility({ opacityProperty: true, visibilityProperty: true })]
   }))"""
 
-
 def built_under(app: Any, hwnd: int, own: int, opening: str, closing: str, note: str) -> dict[str, object]:
-    """A web note opened while a layer is up: the page that arrives, from the moment its
-    window is there until the layer is closed."""
 
     before = set(smooth.views(hwnd))
     with Pages(hwnd, own) as sampled:
@@ -162,13 +119,9 @@ def built_under(app: Any, hwnd: int, own: int, opening: str, closing: str, note:
         time.sleep(0.8)
     if not page:
         return {"said": said, "page": "never built"}
-    # A page is built over a second or so after its window exists; what counts is that
-    # it is not left out of sight once it has arrived.
     return {"said": said, **gone(sampled.rows, page, arrived + 1.5, ended)}
 
-
 def corner(app: Any, hwnd: int, page: int, opening: str, closing: str, shoot: Any) -> dict[str, object]:
-    """A sheet over the whole window: the page or its still in a corner it is not over."""
 
     from PIL import Image
 
@@ -185,7 +138,6 @@ def corner(app: Any, hwnd: int, page: int, opening: str, closing: str, shoot: An
     time.sleep(0.8)
     return {"said": said, "page or its still in the free corner": f"{sum(seen)}/{len(seen)}"}
 
-
 UPDATE = "nibApp.updates.ready = '99.9.9', 'ok'"
 UPDATE_GONE = "nibApp.updates.dismiss(), 'ok'"
 
@@ -196,14 +148,12 @@ TOAST = """(() => {
   return 'ok'
 })()"""
 
-#: A tab's card, held until it is put away.
 CARD = """(() => {
   const tab = [...document.querySelectorAll('[data-strip] .tab')].find((one) => one.textContent.includes('%s'))
   if (!tab) return 'no tab'
   tab.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }))
   return 'ok'
 })()"""
-#: Put away the way a press puts it away: it is on the overlay stack while it is over a page.
 CARD_GONE = "nibApp.overlays.escape(), 'ok'"
 
 SUGGEST = """(() => {
@@ -224,8 +174,6 @@ MENU = """(() => {
 })()"""
 MENU_GONE = "nibApp.overlays.escape(), 'ok'"
 
-#: A layer of the theme's own shape over the middle of the page, by no press and on no
-#: overlay stack: what a hint or a card a row puts up under the pointer is.
 STRANGER = """(() => {
   const hole = document.querySelector('[data-pane] .hole')
   if (!hole) return 'no hole'
@@ -241,7 +189,6 @@ STRANGER_GONE = "document.querySelector('.probe-layer')?.remove(), 'ok'"
 
 SETTINGS = "nibApp.settings.show(), 'ok'"
 SETTINGS_GONE = "nibApp.settings.open = false, 'ok'"
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -288,7 +235,6 @@ def main() -> int:
     said: dict[str, object] = {}
     running = None
     try:
-        # One launch to write the endpoint file, so eval can be turned on in it.
         running, app, _ = switch.launch(args.exe, args.identifier)
         running.terminate()
         running.wait(timeout=30)
@@ -313,7 +259,6 @@ def main() -> int:
         time.sleep(2)
 
         said["update notice"] = over(app, hwnd, page, own, UPDATE, UPDATE_GONE)
-        # The toast goes by itself, after a few seconds.
         said["undo toast"] = over(app, hwnd, page, own, TOAST, "'ok'", held=2.0, after=6.0)
         said["a tab's hover card"] = over(app, hwnd, page, own, CARD % "Other", CARD_GONE)
         said["address suggestions"] = over(app, hwnd, page, own, SUGGEST, SUGGEST_GONE)
@@ -331,7 +276,6 @@ def main() -> int:
 
     print(json.dumps(said, indent=1))
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

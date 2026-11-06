@@ -1,51 +1,3 @@
-"""What a web tab hands a page: nothing. Windows only; Linux's is scripts/globals-drive.py.
-
-Emil, 2026-09-30: every Google Sheet he opens in a web tab shows Google's own *"Loading
-issue - Troubleshoot this issue by clearing application resources"* over a sheet that had
-started to draw. The page's console said why: `Uncaught SyntaxError: Identifier 'ipc' has
-already been declared`, in the editor's own bundle. wry writes a non-configurable
-`window.ipc` into every document a Tauri webview creates, and a classic script may not
-declare a top level `let ipc` while the global object carries one - the whole script is a
-`SyntaxError`, and the editor never starts. See docs/web-tabs.md, "What a page is given:
-nothing", and src-tauri/src/web_worlds.rs.
-
-What this asks, of a page served on the loopback in a real web tab, read back over the
-engine's own `DevTools` protocol (see `devtools.py`):
-
-* **a page may declare `ipc`** - a classic script with `let ipc` at the top level runs.
-* **nothing of the app is on its `window`** - no `ipc`, `isTauri` or `__TAURI_*`, and no
-  `window.chrome.webview`.
-* **nib's own scripts are in nib's world and not the page's** - the listeners for a link
-  pressed for a tab of its own, for the keys and for a modifier tapped twice are on the
-  window in the world named `nib`, and none of them in the page's own; in the page, in a
-  frame from the same site, and in a frame from another site, which runs in a process of
-  its own.
-* **a window asked for from nib's world reaches the app** - `nib-behind`, as the middle
-  button asks, opens a tab behind the page.
-* **a page's dialogs are the page's** - `confirm()` holds the page's script until Orden's
-  card is answered and gives back `true` or `false`, never a promise; `prompt()` gives
-  back the words typed or `null`; `alert()` shows. The dialog plugin used to answer a
-  site's `confirm()` with a truthy promise at once, so *"Delete this?"* went ahead as if
-  the reader had said yes. The card is answered by pressing its own buttons in the app's
-  page; no dialog of the system's is ever drawn.
-
-With `--real` it also opens real sites and reads each one's uncaught exceptions over a
-reload: Google Sheets, Docs, Slides and the sign-in page, YouTube, GitHub, Proton Mail and
-Moodle's sign-in. A `SyntaxError` from a declared global, or Google's editor never
-starting, is a failure; `--shots` keeps a picture of each page, taken by the engine
-itself, off the screen.
-
-    python scripts/web-globals-probe.py --exe path/to/nib.exe \\
-        --identifier ch.emilvinu.nib.probe.<name> [--real] [--shots DIR]
-
-Build the exe as `scripts/probe_app.py` says, with `--mode drive` for the window's
-`nib` handle: `npx vite build --mode drive` in apps/desktop, then `tauri build` with
-`"build":{"beforeBuildCommand":""}` in its `--config`. Nothing here presses a key, moves
-the pointer or looks at the screen, and the app's own page is kept from asking for the
-keyboard: a site asking for something raises a bubble that takes the keyboard back into
-the app's page, and a window off the screen must not be asked to come anywhere.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -67,12 +19,8 @@ from probe_app import close_app
 
 HERE = pathlib.Path(__file__).resolve().parent
 
-#: The names a runtime puts on a page's `window`: its own, and `ipc` where it is the
-#: runtime's frozen channel rather than something the page declared itself - Google's
-#: spreadsheet editor has a function of that name once it has started.
 APP_GLOBALS = r"^__TAURI|^isTauri$"
 
-#: What Google's editors throw when their bundle did not run.
 NEVER_STARTED = re.compile(
     r"has already been declared|RITZ_initializeModules|DOCS_initialLoadTiming|waffle_api"
 )
@@ -88,11 +36,6 @@ REAL = {
     "Moodle": "https://moodle-app2.let.ethz.ch/",
 }
 
-# The page asks itself, in the shape Google's bundle is: a classic script whose first
-# statement is a top level lexical declaration of `ipc`. If the global object already
-# carries a non-configurable `ipc`, the script is a SyntaxError as a whole and never runs
-# a line. The frames are one from the page's own site and one from another, which runs in
-# a process of its own.
 PAGE = """<!doctype html>
 <title>asked</title>
 <body style="margin:0;font:16px system-ui;padding:2rem">a page asking what it was given
@@ -106,9 +49,6 @@ PAGE = """<!doctype html>
 
 FRAME = "<!doctype html><title>frame</title><a href='https://example.com/'>a link</a>"
 
-# The page's dialogs, opened on the next turn so the question that opens one comes back
-# at once: the page's script stops at the dialog until it is answered, and what it was
-# answered with - and how long it waited - is left on the page to be read afterwards.
 DIALOGS = """<!doctype html><title>dialogs</title><p>a page with questions</p>
 <script>
   window.__said = {}
@@ -124,8 +64,6 @@ DIALOGS = """<!doctype html><title>dialogs</title><p>a page with questions</p>
 </script>
 """
 
-#: Each case: the name it is kept under, the dialog, what is pressed on the card, what the
-#: prompt's field holds when it is, and what the page must be left with.
 DIALOG_CASES = [
     ("confirm, cancelled", "confirm", "cancel", None, {"type": "boolean", "value": False}),
     ("confirm, OK", "confirm", "ok", None, {"type": "boolean", "value": True}),
@@ -134,11 +72,8 @@ DIALOG_CASES = [
     ("alert", "alert", "ok", None, {"type": "undefined", "value": None}),
 ]
 
-#: How long the card is left up before it is answered: a page that did not wait for it
-#: would have answered itself long before.
 HELD = 1.5
 
-# The card, as the app's page draws it: what it says, and its buttons.
 CARD = """JSON.stringify((() => {
   const card = document.querySelector('.dialog[role=alertdialog]')
   if (!card) return null
@@ -178,12 +113,8 @@ ASKED = f"""(() => {{
 
 LISTENING = "JSON.stringify(Object.keys(getEventListeners(window)).sort())"
 
-# Orden's listeners on a page's window: a link pressed for a tab of its own, the keys a page
-# lets go by, and a modifier tapped twice (see web_opens.rs).
 NIBS = {"auxclick", "click", "keydown", "keyup"}
 
-# The app's own page keeps from asking for the keyboard while a probe runs: its `fetch`
-# is how every call reaches the crate, and a call to focus is answered here instead.
 FOCUSLESS = r"""(() => {
   const real = window.fetch.bind(window)
   window.fetch = function (input, init) {
@@ -209,9 +140,7 @@ SHOT = """(async () => window.__TAURI_INTERNALS__.invoke('web_shot', {
 HWND_BOTTOM = 1
 SWP_NOSIZE, SWP_NOMOVE, SWP_NOACTIVATE = 0x0001, 0x0002, 0x0010
 
-
 def borrowed():
-    """The switch probe's own helpers: the space, the launch, the endpoint, `eval`."""
 
     spec = importlib.util.spec_from_file_location("switch", HERE / "web-switch-probe.py")
     if spec is None or spec.loader is None:
@@ -219,7 +148,6 @@ def borrowed():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
-
 
 def serve(port: int) -> http.server.ThreadingHTTPServer:
     pages = {
@@ -246,10 +174,7 @@ def serve(port: int) -> http.server.ThreadingHTTPServer:
     threading.Thread(target=made.serve_forever, daemon=True).start()
     return made
 
-
 def ready(app, seconds: float = 90) -> None:
-    """Waits for the window to answer. The endpoint listens before the window is there to
-    ask, and a request sent in between is refused rather than queued."""
 
     until = time.perf_counter() + seconds
     while time.perf_counter() < until:
@@ -258,18 +183,13 @@ def ready(app, seconds: float = 90) -> None:
         time.sleep(0.5)
     raise SystemExit("the window never answered")
 
-
 def lowest(hwnd: int) -> None:
-    """The probe at the bottom of the z-order, so a window closing elsewhere never hands
-    it the foreground."""
 
     ctypes.WinDLL("user32").SetWindowPos(
         hwnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE
     )
 
-
 def page_of(at: int, address: str, seconds: float = 30) -> dict | None:
-    """The page target showing `address`, or one on its host, once there is one."""
 
     host = address.split("/")[2]
     until = time.perf_counter() + seconds
@@ -284,11 +204,7 @@ def page_of(at: int, address: str, seconds: float = 30) -> dict | None:
         time.sleep(0.5)
     return None
 
-
 def listeners(at: int, port: int) -> dict[str, dict[str, object]]:
-    """Which listeners each frame of the loopback page has on its window, by the frame's
-    path: in nib's world, and - for a frame that is a target of its own, the page and the
-    frame from another site - in the page's own world as well."""
 
     out: dict[str, dict[str, object]] = {}
     for target in devtools.targets(at):
@@ -302,8 +218,6 @@ def listeners(at: int, port: int) -> dict[str, dict[str, object]]:
                 node = frames.pop()
                 frames.extend(node.get("childFrames", []))
                 frame = node.get("frame", {})
-                # A frame in a process of its own is listed here too, and answered by its
-                # own target: no world can be made for it from this one.
                 world = session.world("nib", frame.get("id"))
                 if world is None:
                     continue
@@ -315,10 +229,7 @@ def listeners(at: int, port: int) -> dict[str, dict[str, object]]:
             session.close()
     return out
 
-
 def dialogs(app, at: int, port: int) -> tuple[dict[str, object], list[str]]:
-    """Opens each of the page's dialogs, answers Orden's card for it, and reads back what
-    the page's script was given."""
 
     said: dict[str, object] = {}
     wrong: list[str] = []
@@ -364,7 +275,6 @@ def dialogs(app, at: int, port: int) -> tuple[dict[str, object], list[str]]:
             wrong.append(f"{name}: the page did not wait for the answer ({got.get('waited')} ms)")
     return said, wrong
 
-
 def shot(app, to: pathlib.Path | None, name: str) -> str:
     if to is None:
         return ""
@@ -375,7 +285,6 @@ def shot(app, to: pathlib.Path | None, name: str) -> str:
     path = to / f"{name}.png"
     path.write_bytes(base64.b64decode(picture.split(",", 1)[1]))
     return str(path)
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -442,8 +351,6 @@ def main() -> int:
         asked = json.loads(asked) if isinstance(asked, str) else {"letIpc": str(asked)}
         frames = listeners(at, port)
         before = app.ask(TABS)
-        # The middle button's own request, from nib's world, as if pressed: the press is
-        # `userGesture`, which is the page's word that a person asked and not a key.
         session.call(
             "Runtime.evaluate",
             {
@@ -479,9 +386,6 @@ def main() -> int:
         if not any(one.get("kind") == "web" and not one.get("showing") for one in added):
             wrong.append(f"a window asked for from nib's world opened no tab behind: {after}")
 
-        # Only on a build whose pages are handed nothing: an older one leaves the page's
-        # `prompt` to the engine's own window, which is drawn by the engine's process -
-        # where the probe's watch over the app's own windows cannot see it.
         if wrong:
             wrong.append("the dialogs were not asked: this build still hands the page the app's")
         else:
@@ -526,7 +430,6 @@ def main() -> int:
     for one in wrong:
         print(f"WRONG: {one}")
     return 1 if wrong else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

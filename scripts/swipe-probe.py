@@ -1,40 +1,3 @@
-"""A swipe over a note and over a page, in the native app, from wheel messages posted to
-the probe's own window. Windows only.
-
-Emil, 2026-10-03: *"Swiping (left/right) to go to the previous / redo page."* See
-apps/desktop/src/lib/back-swipe for the gesture and src-tauri/src/web_swipe.rs for a
-page's half. What a drive in a browser cannot reach, and this does:
-
-* **a note** - sideways wheel messages, a fraction of a notch each the way a touchpad
-  that is not under Direct Manipulation reports, posted to the window of the app's own
-  page: the arrow comes in, and the tab goes back to the note it showed before; the same
-  the other way goes forward again;
-* **a page** - the same posted to the window of a site's page in a web tab: the script
-  in nib's world there says it through its binding, the crate says it to the window, and
-  the tab goes back along its trail;
-* **the arrow over the page** - while it is out, the page's window is given a region
-  with the arrow's circle cut out of it, and once it has gone the whole page again;
-* **a precision touchpad's gestures, replayed** - every replay in
-  apps/desktop/test/effects/swipe-replays.json that a posted wheel can play, over the note
-  and over the page: the wheel messages posted as above, and the fingers landing and
-  lifting said as the crate says them (`nib://touchpad`, emitted from the app's page,
-  since no report of a real pad reaches a probe). Among them a hand held still past the
-  distance for three seconds, which must go nowhere until the fingers lift (#209), and one
-  brought back before it lifts. The sweeps above run first, before the pad has said
-  anything, so they hold the window's way of ending a stream where no pad says so.
-
-No real input is used and nothing is ever on a screen: the probe is started by
-`run_probe` and moved to a corner of this probe's own, still on no screen, so the point
-each message carries is over its own window (the engine aims a posted wheel at whatever
-`WindowFromPoint` finds there). A precision touchpad's own report reaches a page through
-Direct Manipulation, which only a hand starts; gesture.test.ts holds the numbers.
-
-    python scripts/swipe-probe.py --exe apps/desktop/src-tauri/target/debug/nib.exe \\
-      --identifier ch.emilvinu.nib.probe.<name>
-
-The exe is a probe build that never updates, built as `scripts/probe_app.py` says.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -59,27 +22,17 @@ HERE = pathlib.Path(__file__).resolve().parent
 
 SPACE = "Swipe probe"
 
-#: This probe's own corner, off every screen and away from every other probe's.
 CORNER = (-27000, -13000)
 
-#: The window, in physical pixels.
 SIZE = (2000, 1400)
 
 WM_MOUSEHWHEEL = 0x020E
 WM_MOUSEWHEEL = 0x020A
 
-#: A replay's step, a tenth of a notch: about the ten pixels of the replays' own steps, so
-#: a short sweep there is a short sweep here. Still never a whole notch in one frame.
 TURN = 12
 
-#: A fraction of a notch a message: a wheel that turns finer than a notch, which is how a
-#: touchpad's scroll reaches a window that is not reading it through Direct Manipulation.
-#: Not a third: the engine adds up messages that arrive within a frame, and three thirds
-#: would be one whole notch, which a swipe never starts on.
 STEP = 35
 
-#: The engine's own switches for the probe's process only: a devtools port, and a window
-#: off the screen drawn at full rate rather than as one nobody can see.
 ENGINE_ARGS = (
     "--remote-debugging-port=0 --disable-features=CalculateNativeWinOcclusion "
     "--disable-backgrounding-occluded-windows --disable-renderer-backgrounding"
@@ -94,7 +47,6 @@ if user32 is not None:
     user32.GetParent.restype = wintypes.HWND
     user32.PostMessageW.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
 
-
 def borrowed(name: str):
     spec = importlib.util.spec_from_file_location(name.replace("-", "_"), HERE / f"{name}.py")
     if spec is None or spec.loader is None:
@@ -103,13 +55,10 @@ def borrowed(name: str):
     spec.loader.exec_module(module)
     return module
 
-
 page_probe = borrowed("web-page-probe")
 scroll_probe = borrowed("web-scroll-probe")
 scroll_probe.CORNER = CORNER
 
-#: Two pages of a site, each linking to the other. Any other address is a page too, named
-#: after itself, for the replays to walk a fresh trail each.
 PAGES = {
     "/one": b"<!doctype html><title>One</title><body style='font:20px system-ui'><h1>One</h1>",
     "/two": b"<!doctype html><title>Two</title><body style='font:20px system-ui'><h1>Two</h1>",
@@ -119,7 +68,6 @@ REPLAYS = json.loads(
     (HERE.parent / "apps" / "desktop" / "test" / "effects" / "swipe-replays.json").read_text(encoding="utf-8")
 )["replays"]
 
-#: Every press of Back and Forward, kept by the page from here on, whoever pressed it.
 PRESSES = """
 if (!window.__pressing) {
   for (const [way, name] of [['goBack', 'back'], ['goForward', 'forward']]) {
@@ -139,7 +87,6 @@ if (!window.__measuring) {
 }
 return true
 """
-
 
 def serve() -> tuple[http.server.ThreadingHTTPServer, int]:
     class Handler(http.server.BaseHTTPRequestHandler):
@@ -164,11 +111,7 @@ def serve() -> tuple[http.server.ThreadingHTTPServer, int]:
     threading.Thread(target=server.serve_forever, daemon=True).start()
     return server, port
 
-
 def sweep(target: int, x: int, y: int, steps: int, turn: int) -> None:
-    """`steps` sideways turns of `turn` each, posted to `target` as Windows writes them,
-    twelve milliseconds apart. A turn below nought scrolls towards the left, which is the
-    fingers moving right: Back."""
     assert user32 is not None
     word = turn & 0xFFFF
     for _ in range(steps):
@@ -177,18 +120,13 @@ def sweep(target: int, x: int, y: int, steps: int, turn: int) -> None:
         )
         time.sleep(0.012)
 
-
 def wheel(target: int, x: int, y: int, message: int, turn: int) -> None:
     assert user32 is not None
     user32.PostMessageW(
         wintypes.HWND(target), message, (turn & 0xFFFF) << 16, ((y & 0xFFFF) << 16) | (x & 0xFFFF)
     )
 
-
 def replay(app, target: int, x: int, y: int, ops: list[list[object]]) -> list[tuple[list[str], list[str]]]:
-    """Plays one replay over `target`, and answers each `expect` with what was pressed by
-    then. A step is posted every twelve milliseconds, and the fingers are said through the
-    app's page as the crate says them."""
     seen: list[tuple[list[str], list[str]]] = []
     for op in ops:
         kind = op[0]
@@ -216,9 +154,7 @@ def replay(app, target: int, x: int, y: int, ops: list[list[object]]) -> list[tu
             seen.append(([str(one) for one in op[1]], [str(one) for one in got] if isinstance(got, list) else [repr(got)]))
     return seen
 
-
 def replays(app, target: int, x: int, y: int, fresh, where: str, said: dict[str, object], failed: list[str]) -> None:
-    """Every replay a posted wheel can play, each from a fresh trail that `fresh` makes."""
     for number, one in enumerate(REPLAYS):
         if not one.get("native"):
             continue
@@ -230,27 +166,21 @@ def replays(app, target: int, x: int, y: int, fresh, where: str, said: dict[str,
         for wanted, got in seen:
             if wanted != got:
                 failed.append(f"{where}: {one['name']}: wanted {wanted}, got {got}")
-        # The arrow played out, and the fingers off the pad.
         time.sleep(0.6)
 
-
 def region_holes(hwnd: int) -> int | None:
-    """The size of the window's region, or None for no region: a page whole has none,
-    and one with something of the app's cut out of it has one (see web_cut.rs)."""
     assert user32 is not None and gdi32 is not None
     region = gdi32.CreateRectRgn(0, 0, 0, 0)
     try:
         kind = user32.GetWindowRgn(wintypes.HWND(hwnd), region)
-        if kind == 0:  # ERROR: no region
+        if kind == 0:
             return None
         size = gdi32.GetRegionData(region, 0, None)
         return int(size)
     finally:
         gdi32.DeleteObject(region)
 
-
 def webviews(window: int) -> list[int]:
-    """The webviews on the window, largest first: the app's own page, then a site's."""
     assert user32 is not None
     shown = [
         one
@@ -264,16 +194,13 @@ def webviews(window: int) -> list[int]:
 
     return sorted(shown, key=area, reverse=True)
 
-
 def app_input(window: int) -> tuple[int, int]:
-    """The app's own page's input window and its parent."""
     assert user32 is not None
     app = webviews(window)[0]
     inputs = [one for one in scroll_probe.children(app) if scroll_probe.class_of(one) == "Chrome_RenderWidgetHostHWND"]
     if not inputs:
         raise SystemExit("the app's webview has no input window")
     return inputs[0], int(user32.GetParent(wintypes.HWND(inputs[0])) or 0)
-
 
 PRELUDE = r"""
 const ws = nib.workspace
@@ -288,7 +215,6 @@ const wait = async (ok, ms = 15000) => {
 }
 """
 
-#: Whether the arrow came in at all, kept by the page since the last `WATCH`.
 WATCH = """
 window.__arrow = false
 window.__watching?.disconnect()
@@ -299,10 +225,8 @@ window.__watching.observe(document.body, { childList: true, subtree: true })
 return true
 """
 
-
 def ask(app, body: str) -> object:
     return app.ask(f"(async () => {{ {PRELUDE}\n{body} }})()")
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -328,7 +252,6 @@ def main() -> int:
     said: dict[str, object] = {}
     failed: list[str] = []
 
-    # Once to write the endpoint file, and again with `eval` turned on in it.
     running = run_probe(args.exe, env=env, quiet=True)
     first, _, _ = page_probe.endpoint(args.identifier)
     until = time.perf_counter() + 90
@@ -356,8 +279,6 @@ def main() -> int:
         scroll_probe.to_corner(window)
         time.sleep(2)
 
-        # A note tab that has shown Alpha and then Beta, once the launch is over: the
-        # listeners are fetched at its last turn.
         said["trail"] = ask(
             app,
             """
@@ -404,7 +325,6 @@ def main() -> int:
         if not (isinstance(short, dict) and str(short.get("note", "")).startswith("Beta")):
             failed.append(f"a short sweep went somewhere: {short}")
 
-        # A web tab on one page and then the other.
         app.act("open", {"path": "Site.url", "space": SPACE})
         url = None
         until = time.perf_counter() + 40
@@ -457,8 +377,6 @@ def main() -> int:
         if holes[2] is not None:
             failed.append(f"the page was not whole again after the arrow: {holes}")
 
-        # The replays, from here on with the pad saying when the fingers lift. Over the
-        # note first, each from a trail of Alpha and then Beta.
         def fresh_note(_number: int) -> None:
             ask(
                 app,
@@ -478,8 +396,6 @@ def main() -> int:
         replays(app, page, (box[0] + box[2]) // 2, (box[1] + box[3]) // 2, fresh_note, "note", said, failed)
         said["note: pixels a replay's step scrolled, on average"] = ask(app, "return window.__across")
 
-        # And over the page, the same web tab brought to the front again, each replay from a
-        # fresh address of the site's.
         visited = ["/one", "/two"]
 
         def fresh_page(number: int) -> None:
@@ -530,7 +446,6 @@ def main() -> int:
     if not failed:
         print("swipes go back and forward over a note and a page")
     return 1 if failed else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

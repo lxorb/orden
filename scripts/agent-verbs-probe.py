@@ -46,8 +46,6 @@ import psutil
 
 from probe_app import close_app, refuse_updating, run_probe
 
-# mcp-probe.py's client, family watch and endpoint helpers, taken as they are: its name
-# has a dash, so it is loaded by path rather than imported by name.
 _spec = importlib.util.spec_from_file_location("mcp_probe", pathlib.Path(__file__).with_name("mcp-probe.py"))
 assert _spec is not None and _spec.loader is not None
 mcp = importlib.util.module_from_spec(_spec)
@@ -57,11 +55,9 @@ CLIENT = {"name": "nib-verbs-probe", "title": "Verbs probe", "version": "1"}
 
 SPACE = "Verbs probe"
 
-#: What the shell is asked to print, which nothing else on a screen says.
 MARK = "nib-verbs-probe-42"
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
-
 
 class Drive(mcp.Drive):
     def __init__(self, exe: pathlib.Path, identifier: str, spaces: pathlib.Path) -> None:
@@ -70,7 +66,6 @@ class Drive(mcp.Drive):
         self.timings: list[tuple[str, float]] = []
 
     def call(self, agent: Any, tool: str, args: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
-        """A call, timed, with the model's answer and the contract's beside it."""
 
         started = time.perf_counter()
         said = agent.call(tool, args)
@@ -89,7 +84,6 @@ class Drive(mcp.Drive):
         listed, _, _ = self.settled(agent, lambda now: "workspace_tabs" in now, 40)
         self.check("paired", listed)
 
-        # The terminal, and one program it may start without asking.
         grants = mcp.window(self.folder, "agents_read")
         mine = next(one for one in grants if one["client"] == CLIENT["title"])
         mine["scopes"] = sorted({*mine["scopes"], "terminal"})
@@ -102,7 +96,6 @@ class Drive(mcp.Drive):
         return agent
 
     def selected(self, agent: Any) -> str:
-        # Null where no tab is selected yet: a fresh profile opens none.
         return ((self.result(agent, "get_context", {}) or {}).get("selected") or {}).get("id", "")
 
     def context(self, agent: Any) -> str:
@@ -198,7 +191,6 @@ class Drive(mcp.Drive):
         self.result(agent, "workspace_tabs", {"op": "focus", "tab": other})
         self.check("focus selects it", self.selected(agent) == other)
 
-
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--exe", required=True, type=pathlib.Path)
@@ -259,7 +251,6 @@ def main() -> int:
     failed = [name for name, ok, _ in drive.results if not ok]
     print(f"\n{len(drive.results) - len(failed)} of {len(drive.results)} passed", flush=True)
     return 1 if failed else 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

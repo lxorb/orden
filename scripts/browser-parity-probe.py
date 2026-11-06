@@ -1,25 +1,3 @@
-"""History, Delete browsing data, a private tab, the search engine and a link dropped on
-the file list, driven on a probe build.
-
-What Chrome keeps inside the browser stays inside nib (Emil, 2026-09-13); these are the
-ones that were missing. Each step drives the app the way a person does - the keys, the
-rows, the dialog's own buttons - through the probe's automation endpoint, and reads the
-answer back out of the page a loopback server serves, so what is proved is what the
-engine kept and not what the app believes. See docs/web-tabs.md, "History, Delete
-browsing data, a private tab".
-
-    pnpm --dir apps/desktop tauri build --no-bundle \\
-      --config '{"identifier":"ch.emilvinu.nib.probe.browserparity","version":"99.0.0",
-                 "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-    python scripts/browser-parity-probe.py --exe path/to/nib.exe \\
-      --identifier ch.emilvinu.nib.probe.browserparity
-
-Launched through `run_probe`, so the window is off the screen and never in front, with
-`NIB_SPACES_DIR` in a temp folder. A drag between two webviews is a drag the system
-carries and no probe may make with the real pointer, so the drops are played as the
-drop events the window hears; what a real drag hands over is the same transfer.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -47,7 +25,6 @@ PORT_TO = 22499
 SPACE = "Browser parity probe"
 NOTE = "Idea"
 
-# The page every step reads: what the store holds for this site, on one line.
 PAGE = """<!doctype html><title>__TITLE__</title><body><article>
 RESULT|cookie:__COOKIE__|ls:<span id=ls></span>|END
 <p>A paragraph so the reader keeps the article: it says nothing the line above does not,
@@ -59,7 +36,6 @@ if (set) localStorage.setItem('ls', set)
 document.getElementById('ls').textContent = localStorage.getItem('ls') || ''
 </script></body>"""
 
-
 def free_port() -> int:
     for port in range(PORT_FROM, PORT_TO + 1):
         with socket.socket() as sock:
@@ -69,7 +45,6 @@ def free_port() -> int:
                 continue
             return port
     raise SystemExit(f"no port free in {PORT_FROM}-{PORT_TO}")
-
 
 def serve(port: int) -> None:
     class Handler(http.server.BaseHTTPRequestHandler):
@@ -98,11 +73,9 @@ def serve(port: int) -> None:
     server = http.server.ThreadingHTTPServer(("127.0.0.1", port), Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
-
 def config_dir(identifier: str) -> pathlib.Path:
     roaming = os.environ.get("APPDATA") or str(pathlib.Path.home() / "AppData" / "Roaming")
     return pathlib.Path(roaming) / identifier
-
 
 def wipe(identifier: str) -> None:
     if "probe" not in identifier:
@@ -110,7 +83,6 @@ def wipe(identifier: str) -> None:
     local = os.environ.get("LOCALAPPDATA") or str(pathlib.Path.home() / "AppData" / "Local")
     for one in (config_dir(identifier), pathlib.Path(local) / identifier):
         shutil.rmtree(one, ignore_errors=True)
-
 
 def endpoint(identifier: str, unlike: int = 0) -> tuple[int, str]:
     path = config_dir(identifier) / "automation.json"
@@ -124,7 +96,6 @@ def endpoint(identifier: str, unlike: int = 0) -> tuple[int, str]:
             pass
         time.sleep(0.2)
     raise SystemExit(f"the app never wrote {path}")
-
 
 class App:
     def __init__(self, port: int, secret: str) -> None:
@@ -156,7 +127,6 @@ class App:
                 return value
         return value
 
-
 def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subprocess.Popen[bytes], App]:
     app = run_probe(exe, quiet=True)
     port, secret = endpoint(identifier, unlike)
@@ -171,9 +141,7 @@ def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subproc
     time.sleep(1.5)
     return app, App(port, secret)
 
-
 def until(check, seconds: float = 20, every: float = 0.4):  # type: ignore[no-untyped-def]
-    """The first answer `check` gives that is worth having, or its last."""
 
     end = time.perf_counter() + seconds
     said = check()
@@ -182,24 +150,19 @@ def until(check, seconds: float = 20, every: float = 0.4):  # type: ignore[no-un
         said = check()
     return said
 
-
 TABS = """JSON.stringify(nib.workspace.tabs.map((one) => ({
   id: one.id, kind: one.kind, name: one.name, path: one.path, private: one.inPrivate,
   url: nib.pages.addressOf(one.id), active: one.id === nib.workspace.activeTabId,
 })))"""
 
-
 def tabs(app: App) -> list[dict[str, object]]:
     said = app.ask(TABS)
     return said if isinstance(said, list) else []
 
-
 def active(app: App) -> dict[str, object]:
     return next((one for one in tabs(app) if one.get("active")), {})
 
-
 def key(app: App, key: str, code: str, ctrl: bool = True, shift: bool = False) -> None:
-    """A chord, played on the window as the app's own key handler reads it."""
 
     app.ask(
         "window.dispatchEvent(new KeyboardEvent('keydown', "
@@ -209,9 +172,7 @@ def key(app: App, key: str, code: str, ctrl: bool = True, shift: bool = False) -
         + ")); true"
     )
 
-
 def read(app: App, tab: str) -> dict[str, str]:
-    """What the page in `tab` says its store holds: `cookie` and `ls`."""
 
     def look() -> dict[str, str]:
         said = app.ask(f"window.__TAURI_INTERNALS__.invoke('web_clip', {{ tab: '{tab}', selection: false }})")
@@ -224,21 +185,17 @@ def read(app: App, tab: str) -> dict[str, str]:
 
     return until(look) or {}
 
-
 def go(app: App, tab: str, url: str) -> None:
     app.ask(f"nib.pages.go('{tab}', '{url}'); true")
     time.sleep(2.5)
-
 
 def history_rows(app: App) -> list[str]:
     said = app.ask("[...document.querySelectorAll('.history .page .nib-row-label')].map((one) => one.textContent)")
     return said if isinstance(said, list) else []
 
-
 def visits(app: App) -> list[str]:
     said = app.ask("(JSON.parse(localStorage.getItem('nib:web-visits') || '[]')).map((one) => one.url)")
     return said if isinstance(said, list) else []
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -272,13 +229,11 @@ def main() -> int:
         written = json.loads(eval_file.read_text(encoding="utf-8"))
         written["eval"] = True
         eval_file.write_text(json.dumps(written), encoding="utf-8")
-        # The search engine, chosen before the launch reads it: a custom one on the loopback.
         time.sleep(1)
         running, app = launch(args.exe, identifier, unlike=app.port)
         app.act("open", {"path": f"{NOTE}.md", "space": SPACE})
         time.sleep(2)
 
-        # ── History ──────────────────────────────────────────────────────────────────
         first = app.ask(f"nib.workspace.openPage('{site}/alpha', 'front')")
         tab = str(first)
         time.sleep(3)
@@ -328,7 +283,6 @@ def main() -> int:
         said["after pressing a row"] = here
         checks["a row opens its page in the History tab"] = str(here.get("url", "")).startswith(f"{site}/gamma")
 
-        # ── A private tab ────────────────────────────────────────────────────────────
         go(app, tab, f"{site}/plain?set=normal")
         key(app, "N", "KeyN", shift=True)
         private = until(lambda: next((one for one in tabs(app) if one.get("private")), None))
@@ -337,8 +291,6 @@ def main() -> int:
         secret_tab = str(private.get("id")) if isinstance(private, dict) else ""
         go(app, secret_tab, f"{site}/secret?set=private")
         time.sleep(1.5)
-        # The page says what the request carried, so the cookie it was given shows on the
-        # next one.
         go(app, secret_tab, f"{site}/secret")
         inside = read(app, secret_tab)
         said["the private page"] = inside
@@ -370,7 +322,6 @@ def main() -> int:
         app.ask(f"nib.workspace.close('{again_tab}'); true")
         time.sleep(1)
 
-        # ── Delete browsing data ─────────────────────────────────────────────────────
         app.ask(f"nib.workspace.activate('{tab}'); true")
         time.sleep(1)
         go(app, tab, f"{site}/plain?set=kept")
@@ -391,7 +342,6 @@ def main() -> int:
         checks["cookies and site data are gone"] = before.get("ls") == "kept" and after.get("cookie") == "" and after.get("ls") == ""
         checks["the last hour's history is gone"] = not any(url.startswith(f"{site}/alpha") for url in visits(app))
 
-        # ── A link dropped on the file list, and on the strip ────────────────────────
         dropped = app.ask(
             "(() => { const data = new DataTransfer();"
             f" data.setData('text/uri-list', '{site}/dropped');"
@@ -420,7 +370,6 @@ def main() -> int:
             str(one.get("url", "")).startswith(f"{site}/onstrip") for one in tabs(app)
         )
 
-        # ── The search engine ────────────────────────────────────────────────────────
         app.ask(
             "localStorage.setItem('nib:search-engine', JSON.stringify({ id: 'custom',"
             f" custom: '{site}/search?q=%s' }})); true"
@@ -458,7 +407,6 @@ def main() -> int:
     passed = all(checks.values())
     print("\nPASS" if passed else "\nFAIL")
     return 0 if passed else 1
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

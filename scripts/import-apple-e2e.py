@@ -1,25 +1,3 @@
-"""Apple's two apps imported for real, in a browser, against the web build.
-
-The unit tests measure the readers on plain objects. This measures the whole road:
-the palette row somebody presses, the sheet that says what it found, the file
-chooser the drop zone opens, and the notes that are in the space afterwards - read
-back out of the app's own storage rather than out of the plan the sheet held.
-
-Two exports go in, both built here from the shape Apple's own export and the
-third-party exporters are documented to write:
-
-  AppleJournalEntries.zip   Index.html, Entries/<date>_<id>.html, Resources/
-  Apple Notes export.zip    a folder per notebook, a file per note, Apple's HTML
-
-And one thing is checked by not being there: the row that reads the Mac's own
-Notes database is a desktop-on-macOS row, and a browser must not offer it.
-
-Run it with the repository's own Chromium:
-
-    python scripts/import-apple-e2e.py
-
-It builds nothing. `pnpm --filter @orden/desktop build` first, then this."""
-
 import functools
 import http.server
 import json
@@ -41,18 +19,13 @@ OUT = ROOT / "target" / "import-apple-e2e"
 
 CHROME_HOME = pathlib.Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
 
-# The range this repository's drives are allowed to listen on.
 PORTS = range(19400, 19500)
 
-# One note, so the space exists and the import has somewhere to land.
 SEEDED = "/Notes/Already here.md"
 
 PHOTO = "A1B2C3D4-1111-2222-3333-444455556666"
 CLIP = "B2C3D4E5-1111-2222-3333-444455556666"
 MOOD = "C3D4E5F6-1111-2222-3333-444455556666"
-
-
-# ── The two exports ───────────────────────────────────────────────────
 
 ENTRY = """<!DOCTYPE html>
 <html>
@@ -86,16 +59,12 @@ ENTRY = """<!DOCTYPE html>
 </html>
 """.replace("PHOTO", PHOTO).replace("CLIP", CLIP).replace("MOOD", MOOD)
 
-# A second entry the same day, with no title: what an entry somebody only wrote
-# in looks like.
 BARE = """<html><body>
 <div class="pageHeader">Saturday, September 5, 2026</div>
 <div class="bodyText"><p class="p2"><span class="s2">Rained all afternoon.</span></p></div>
 </body></html>
 """
 
-# What every Apple Notes exporter hands over, because every one of them asks the
-# system for the note's rich text and macOS writes rich text this way.
 EXPORTED = """<html>
 <head><meta name="Generator" content="Cocoa HTML Writer"></head>
 <body>
@@ -106,9 +75,7 @@ EXPORTED = """<html>
 </html>
 """
 
-
 def png(width: int, height: int, tint: int) -> bytes:
-    """A real PNG, so what arrives beside the notes is a picture."""
 
     def chunk(kind: bytes, body: bytes) -> bytes:
         return (
@@ -131,9 +98,7 @@ def png(width: int, height: int, tint: int) -> bytes:
         + chunk(b"IEND", b"")
     )
 
-
 def journal_export() -> pathlib.Path:
-    """Journal's own export: entries as HTML, media and metadata beside them."""
     path = OUT / "AppleJournalEntries.zip"
 
     with zipfile.ZipFile(path, "w") as zip_:
@@ -143,8 +108,6 @@ def journal_export() -> pathlib.Path:
         )
         zip_.writestr("AppleJournalEntries/Entries/2026-09-04_9E1C2D3E.html", ENTRY)
         zip_.writestr("AppleJournalEntries/Entries/2026-09-05_1F2A3B4C.html", BARE)
-        # HEIC by name, since what matters here is that it is said out loud and
-        # carried whole rather than what is inside it.
         zip_.writestr(f"AppleJournalEntries/Resources/{PHOTO}.heic", png(24, 16, 90))
         zip_.writestr(f"AppleJournalEntries/Resources/{CLIP}.mov", b"\x00\x00\x00\x14ftypqt  ")
         zip_.writestr(
@@ -154,9 +117,7 @@ def journal_export() -> pathlib.Path:
 
     return path
 
-
 def notes_export() -> pathlib.Path:
-    """What a third-party exporter writes: a folder per notebook, at the top."""
     path = OUT / "Apple Notes export.zip"
 
     with zipfile.ZipFile(path, "w") as zip_:
@@ -172,22 +133,14 @@ def notes_export() -> pathlib.Path:
 
     return path
 
-
-# ── The app ───────────────────────────────────────────────────────────
-
-
 def chrome() -> pathlib.Path:
-    """The newest Chromium the repository's Playwright has fetched."""
     found = sorted(CHROME_HOME.glob("chromium-1*/chrome-win*/chrome.exe"))
     if not found:
         raise SystemExit(f"no Chromium under {CHROME_HOME}")
 
     return found[-1]
 
-
 def free_port() -> int:
-    """A port in this repository's own range, so two drives at once do not
-    collide and neither of them takes the dev server's."""
     for port in PORTS:
         with socket.socket() as sock:
             try:
@@ -198,13 +151,10 @@ def free_port() -> int:
 
     raise SystemExit(f"no free port in {PORTS.start}-{PORTS.stop - 1}")
 
-
 class Quiet(http.server.SimpleHTTPRequestHandler):
-    """The build, served without a line per request."""
 
     def log_message(self, *_args):
         pass
-
 
 def serve() -> tuple[str, http.server.ThreadingHTTPServer]:
     port = free_port()
@@ -214,7 +164,6 @@ def serve() -> tuple[str, http.server.ThreadingHTTPServer]:
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
     return f"http://127.0.0.1:{port}/", server
-
 
 SEED = """
 async ([notePath, note]) => {
@@ -280,9 +229,7 @@ SHEET = """() => {
 }
 """
 
-
 def open_import(page) -> list[str]:
-    """The palette's own Import row, pressed."""
     page.keyboard.press("Control+o")
     page.wait_for_timeout(250)
     page.keyboard.type(">Import")
@@ -294,25 +241,18 @@ def open_import(page) -> list[str]:
 
     return rows
 
-
 def hand_over(page, export: pathlib.Path) -> None:
-    """The export, handed to the drop zone's own file chooser."""
     with page.expect_file_chooser(timeout=20000) as caught:
         page.click(".sheet button.drop")
 
     caught.value.set_files(str(export))
     page.wait_for_timeout(2500)
 
-
 def press_import(page) -> None:
-    # The sheet's buttons are the app's one button shape now (`nib-button`), so the
-    # press is found by what it says rather than by a class it no longer has.
     page.locator(".sheet").get_by_role("button", name="Import", exact=True).click()
     page.wait_for_timeout(2500)
 
-
 def one_import(page, export: pathlib.Path, key: str, report: dict) -> str:
-    """One whole import: the sheet, the press, and what the sheet said."""
     open_import(page)
     hand_over(page, export)
 
@@ -324,15 +264,12 @@ def one_import(page, export: pathlib.Path, key: str, report: dict) -> str:
     report[f"{key}: what it said after"] = page.evaluate(SHEET)
     page.screenshot(path=str(OUT / f"{key}-written.png"))
 
-    # Done, so the sheet closes and the next import starts clean.
     page.keyboard.press("Escape")
     page.wait_for_timeout(600)
 
     return said
 
-
 def faults_journal(said: str, stored: dict) -> list[str]:
-    """What the Journal import has to have done."""
     bad = []
     notes = stored["notes"]
 
@@ -377,16 +314,13 @@ def faults_journal(said: str, stored: dict) -> list[str]:
 
     return bad
 
-
 def faults_notes(said: str, stored: dict) -> list[str]:
-    """And what the exporter's folder has to have done."""
     bad = []
     notes = stored["notes"]
 
     if "Apple Notes" not in said:
         bad.append("the sheet did not name the format")
 
-    # Named after the file that was picked, which is the rule for every import.
     first = "/Notes/Apple Notes export/Notes/Groceries.md"
     if first not in notes:
         return bad + [f"no note at {first}: {sorted(notes)}"]
@@ -401,7 +335,6 @@ def faults_notes(said: str, stored: dict) -> list[str]:
         bad.append("the second notebook did not arrive as a folder")
 
     return bad
-
 
 def main() -> int:
     if not DIST.is_dir():
@@ -443,8 +376,6 @@ def main() -> int:
             if not rows or rows[0] != "Import":
                 failures.append(f"the palette has no Import row: {rows}")
 
-            # The Mac's own database is a desktop row on macOS, so a browser must
-            # not offer it however the sheet is opened.
             waiting = page.evaluate(SHEET)
             report["the sheet before anything is picked"] = waiting
             if "this Mac" in waiting:
@@ -491,7 +422,6 @@ def main() -> int:
 
     print("\nboth of Apple's exports arrived whole, through the sheet a reader presses")
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -1,38 +1,3 @@
-"""Is a web tab's page exactly over its pane after every change of the layout? Windows only.
-
-Emil, 2026-10-12 (#246): *"there are a lot of issues for displaying web tabs. often they
-just freeze in a wrong sizing and so on."* A page is a native webview placed over the
-hole its pane leaves, so where it is can only be asked of the windows: this asks them
-after each thing a reader does to the layout, once the page has stopped moving, and
-compares the page's window with the hole the app laid out for it, edge by edge, in the
-screen's own pixels.
-
-Each step is one row: what was done, whether every hole on screen has its page over it to
-the pixel and no page is on screen without a hole, and the worst edge off. The steps:
-
-* **open**, **wider**, **narrower** - the page, and the window resized round it.
-* **sidebar open**, **sidebar shut**, **sidebar to the other side** - the file list
-  opened and shut, and moved across the window, which moves the panes without changing
-  their size: a change a resize observer never hears.
-* **split**, **divider**, **unsplit** - the pane split beside a note, the divider dragged
-  and the other pane closed.
-* **to a note and back**, **to another page and back** - the tab switched away and back.
-* **too short for the page**, **room again** - a window with no room under the bar, where
-  no page may be on screen, and the room back.
-* **menu over the edge** - a layer of the app's half over the page's left edge, its
-  rounded corners included: the page must not be drawn in the corner of the layer.
-
-Never minimised: a minimised window with no taskbar button, which a probe's is, is drawn
-by the shell as a title bar in the corner of the screen, which the watch ends the probe
-for. web_follow.rs's tests hold what a minimised window may do to a page.
-
-    python scripts/web-bounds-probe.py --exe path/to/nib.exe --identifier ch.emilvinu.nib.probe.<name>
-
-The exe is a probe build a drive can steer; see web-smooth-probe.py for how to make one.
-Launched through `probe_app.run_probe`, off the screen and never in front. Exits non-zero
-when a step found the page anywhere but over its pane.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -54,12 +19,8 @@ HERE = pathlib.Path(__file__).resolve().parent
 
 SPACE = "Web bounds probe"
 
-#: How far an edge may be from the hole's and still be over it: a pixel, for the one a
-#: rounding of a fractional scale is owed.
 NEAR = 1
 
-#: How long a step's page is given to be over its hole, in seconds: a page built for the
-#: first time, on a machine with other builds on it, takes a second at worst.
 WAITS = 8.0
 
 FLAT = b"""<!doctype html><title>Flat</title>
@@ -71,7 +32,6 @@ user32 = ctypes.WinDLL("user32", use_last_error=True) if sys.platform == "win32"
 gdi32 = ctypes.WinDLL("gdi32", use_last_error=True) if sys.platform == "win32" else None
 
 def borrowed(name: str) -> Any:
-    """Another drive's helpers, so the two cannot drift apart."""
 
     spec = importlib.util.spec_from_file_location(name.replace("-", "_"), HERE / f"{name}.py")
     if spec is None or spec.loader is None:
@@ -80,18 +40,14 @@ def borrowed(name: str) -> Any:
     spec.loader.exec_module(module)
     return module
 
-
 def origin(hwnd: int) -> tuple[int, int]:
-    """Where a window's client area starts on the screen."""
 
     assert user32 is not None
     point = wintypes.POINT(0, 0)
     user32.ClientToScreen(wintypes.HWND(hwnd), ctypes.byref(point))
     return (point.x, point.y)
 
-
 def drawn_at(hwnd: int, x: int, y: int) -> bool:
-    """Whether a window may draw at a point of its own: no region is all of it."""
 
     assert user32 is not None and gdi32 is not None
     region = gdi32.CreateRectRgn(0, 0, 0, 0)
@@ -102,9 +58,6 @@ def drawn_at(hwnd: int, x: int, y: int) -> bool:
     finally:
         gdi32.DeleteObject(region)
 
-
-# The holes the app laid out, in its own pixels, and what one of them is worth on the screen;
-# and the app's layers over any of them, which a page is rightly cut round.
 HOLES = """(() => {
   const holes = [...document.querySelectorAll('.hole')].map((one) => one.getBoundingClientRect())
     .filter((box) => box.width >= 1 && box.height >= 1)
@@ -121,32 +74,25 @@ HOLES = """(() => {
   })
 })()"""
 
-
 def client_size(hwnd: int) -> tuple[int, int]:
     assert user32 is not None
     box = wintypes.RECT()
     user32.GetClientRect(wintypes.HWND(hwnd), ctypes.byref(box))
     return (box.right - box.left, box.bottom - box.top)
 
-
 def clipped(box: tuple[int, ...], width: int, height: int) -> tuple[int, int, int, int]:
     left, top, right, bottom = box
     return (max(left, 0), max(top, 0), min(right, width), min(bottom, height))
 
-
 def snapped(length: float) -> int:
-    """A length rounded to the screen's pixels the way the window's compositor rounds an
-    edge: half a pixel goes up, where Python's own `round` would go to the even one."""
 
     return math.floor(length + 0.5)
-
 
 def asked(app: Any) -> dict[str, Any]:
     said = app.ask(HOLES)
     if not isinstance(said, dict):
         raise SystemExit(f"the window did not say where its holes are: {said}")
     return said
-
 
 def expected(app: Any) -> tuple[float, list[tuple[int, int, int, int]]]:
     said = asked(app)
@@ -156,15 +102,12 @@ def expected(app: Any) -> tuple[float, list[tuple[int, int, int, int]]]:
         for hole in said["holes"]
     ]
 
-
 def region_box(hwnd: int) -> tuple[int, tuple[int, int, int, int]]:
-    """A window's region: its kind (see web-smooth-probe.py) and its bounding box."""
 
     assert user32 is not None
     box = wintypes.RECT()
     kind = int(user32.GetWindowRgnBox(wintypes.HWND(hwnd), ctypes.byref(box)))
     return kind, (box.left, box.top, box.right, box.bottom)
-
 
 class Probe:
     def __init__(self, app: Any, hwnd: int, smooth: Any) -> None:
@@ -173,8 +116,6 @@ class Probe:
         self.app_view = 0
 
     def own(self) -> int:
-        """The app's own view: the largest webview in the window before any page is, kept,
-        since a page left at its old size in a window made smaller is larger than it."""
 
         if not self.app_view:
             self.app_view = int(self.smooth.app_view(self.hwnd))
@@ -185,7 +126,6 @@ class Probe:
         return [one for one in self.smooth.views(self.hwnd) if one != own]
 
     def shown_pages(self) -> list[tuple[int, tuple[int, int, int, int]]]:
-        """Every page on screen, where it is in the app's own view."""
 
         ox, oy = origin(self.own())
         found = []
@@ -197,7 +137,6 @@ class Probe:
         return found
 
     def settled(self, seconds: float = 6.0) -> None:
-        """Until no page has moved for half a second."""
 
         last: object = None
         still = time.perf_counter()
@@ -211,9 +150,6 @@ class Probe:
             time.sleep(0.03)
 
     def check(self, step: str, extra: dict[str, object] | None = None) -> dict[str, object]:
-        """The step's row, once the page is over its hole or after `WAITS` seconds of it
-        not being: a page still on its way is given its time, and one that never comes
-        is the freeze."""
 
         began = time.perf_counter()
         while True:
@@ -230,8 +166,6 @@ class Probe:
     def measured(self, step: str, extra: dict[str, object] | None) -> dict[str, object]:
         said = asked(self.app)
         scale = float(said["scale"])
-        # Clipped to the app's own view: a hole laid out half a pixel past the window's
-        # edge is drawn to the edge and no further, and so is the page over it.
         width, height = client_size(self.own())
         holes = [
             clipped(tuple(snapped(edge * scale) for edge in hole), width, height)
@@ -256,8 +190,6 @@ class Probe:
                 apart = {"hole": hole, "page": best[1]}
             worst = max(worst, off)
             free.remove(best)
-            # Nothing of the app's is over the page in these steps, so all of it is drawn:
-            # no region, or one that is the whole page.
             kind, box = region_box(best[0])
             whole = (0, 0, best[1][2] - best[1][0], best[1][3] - best[1][1])
             if kind != 0 and not (kind == 2 and box == whole) and not layers:
@@ -281,13 +213,11 @@ class Probe:
         row["ok"] = bool(worst <= NEAR and not free and not unmatched and not cut and row.get("ok", True))
         return row
 
-
 def tabs(app: Any) -> list[list[Any]]:
     said = app.ask(
         "JSON.stringify(nibApp.workspace.tabs.map((one) => [one.id, one.name, one.paneId]))"
     )
     return said if isinstance(said, list) else []
-
 
 def tab_id(app: Any, name: str) -> str:
     said = tabs(app)
@@ -296,17 +226,13 @@ def tab_id(app: Any, name: str) -> str:
             return str(tab)
     raise SystemExit(f"no tab called {name}: {said}")
 
-
 def menu_over_the_edge(probe: Probe) -> dict[str, object]:
-    """A rounded layer of the app's own half over the page's left edge: inside the layer
-    the page must draw nothing, its corners included."""
 
     shown = probe.shown_pages()
     if not shown:
         return {"step": "menu over the edge", "ok": False, "error": "no page on screen"}
     page, (left, top, right, bottom) = shown[0]
     scale, _ = expected(probe.app)
-    # 240 by 200 of the app's pixels, two thirds of it left of the page, radius 12.
     width, height, radius = 240, 200, 12
     x = left / scale - width * 2 / 3
     y = top / scale + 60
@@ -322,8 +248,6 @@ def menu_over_the_edge(probe: Probe) -> dict[str, object]:
     )
     time.sleep(1.0)
     probe.settled()
-    # In the page's own pixels: the layer's corner on the page's edge, two pixels in, and
-    # the middle of the part of the layer over the page.
     inside = round(2 * scale)
     corner = (inside, round((y - top / scale) * scale) + inside)
     middle = (round((x + width - left / scale) * scale / 2), round((y + height / 2 - top / scale) * scale))
@@ -345,7 +269,6 @@ def menu_over_the_edge(probe: Probe) -> dict[str, object]:
     probe.rows.append(said)
     print(json.dumps(said), flush=True)
     return said
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -392,7 +315,6 @@ def main() -> int:
     running = None
     probe: Probe | None = None
     try:
-        # One launch to write the endpoint file, so eval can be turned on in it.
         running, app, _ = switch.launch(args.exe, args.identifier)
         running.terminate()
         running.wait(timeout=30)
@@ -411,7 +333,6 @@ def main() -> int:
 
         app.open("Idea.md", SPACE)
         time.sleep(1.5)
-        # Kept, so the page opened next takes a tab of its own beside it.
         app.ask("nibApp.workspace.keep(nibApp.workspace.activeTabId), 'ok'")
         app.ask("nibApp.workspace.closePanel(), 'ok'")
         app.open("Flat.url")
@@ -433,8 +354,6 @@ def main() -> int:
         app.ask("nibApp.workspace.closePanel(), 'ok'")
         probe.check("sidebar shut")
 
-        # The same, as fast as a hand does them: a window dragged a frame at a time, the
-        # sidebar pressed over and over, and each left to settle only at the end.
         for step in range(1, 31):
             sized(hwnd, 1300 + step * 17, 860 + step * 9)
             time.sleep(0.016)
@@ -454,8 +373,6 @@ def main() -> int:
         probe.check("resized while the sidebar shut")
 
         flat = tab_id(app, "Flat")
-        # A page kept, so the note opened next has a tab of its own beside it whichever
-        # tab the launch left as the one to be replaced.
         app.ask(f"nibApp.workspace.keep('{flat}'), 'ok'")
         if not any(str(one[1]).startswith("Idea") for one in tabs(app)):
             app.open("Idea.md")
@@ -480,8 +397,6 @@ def main() -> int:
             app.ask(f"nibApp.workspace.panes.resize('{split}', 0.3, {room}), nibApp.workspace.panes.settle(), 'ok'")
         probe.check("divider")
 
-        # The page's pane filling the window and giving it back, and the other pane
-        # showing nothing for a moment: panes hidden and shown again.
         if len(panes) >= 2:
             app.ask(f"nibApp.workspace.panes.fills = '{panes[-1]}', 'ok'")
             probe.check("pane fills the window")
@@ -508,7 +423,6 @@ def main() -> int:
         app.open("Flat.url")
         probe.check("and back again")
 
-        # A window too short for anything under the bar: no room, so no page.
         sized(hwnd, 1410, 120)
         probe.check("too short for the page", {"room": asked(app)["holes"]})
         sized(hwnd, 1410, 910)
@@ -517,7 +431,6 @@ def main() -> int:
         menu_over_the_edge(probe)
         probe.check("menu gone")
 
-        # A layer up while the window is resized, and gone after: the page whole again.
         app.ask(
             "(() => { const one = document.createElement('div'); one.className = 'nib-layer probe-layer';"
             " one.style.cssText = 'position:fixed;right:40px;top:120px;width:220px;height:160px;border-radius:12px;background:#888';"
@@ -537,7 +450,6 @@ def main() -> int:
     failed = [row for row in (probe.rows if probe else []) if not row.get("ok")]
     print(json.dumps({"steps": len(probe.rows) if probe else 0, "failed": [row["step"] for row in failed]}))
     return 1 if failed or probe is None else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

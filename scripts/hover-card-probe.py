@@ -1,26 +1,3 @@
-"""Is a tab's hover card all in front of the page under it - a web page and a PDF - the
-first time and after it slides to the next tab? Windows only.
-
-Emil, 2026-10-05, a picture: the card under a tab, and of it only the name, over the bar;
-the rest of it behind the page - a PDF - but for a narrow strip in which the card's still
-showed. The card had slid on from the tab beside it, and the page was still cut round
-where the card had been: the strip was where the two places met. A native page draws over
-every pixel of HTML in the window, so the card is the window's own HTML showing through a
-hole cut in the page (`web_cut.rs`), and the hole has to go wherever the card goes.
-
-The drive rests a mouse on a tab - a pointer event of the window's own, never the
-machine's pointer - waits Chrome's delay, moves on to the tab beside, and photographs the
-window. The card's rectangle is then compared with a photograph of the same window with
-no card up: a card in front of the page differs from it almost everywhere, a card behind
-it is the page again. And the card's still, of a green page, has to be green.
-
-    python scripts/hover-card-probe.py --exe path/to/nib.exe --identifier ch.emilvinu.nib.probe.hovercard
-
-The exe is a probe build a drive can steer (see web-smooth-probe.py for how one is built),
-launched through `probe_app.run_probe`, off the screen and never in front. The photographs
-go to `--out`.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -42,17 +19,11 @@ HERE = pathlib.Path(__file__).resolve().parent
 
 SPACE = "Hover card probe"
 
-#: How much of the card may match the window with no card for the card to count as in
-#: front: its shadow and rounded corners, and a pixel or two where the card's own colour
-#: happens to be the page's.
 ENOUGH = 0.15
 
-#: How much of the still has to be the green page for the still to be that page.
 GREEN_ENOUGH = 0.8
 
-#: How near two pixels have to be to count as the same.
 NEAR = 24
-
 
 def page(colour: str, title: str) -> bytes:
     return (
@@ -60,10 +31,7 @@ def page(colour: str, title: str) -> bytes:
         f'<body style="margin:0;background:{colour};height:100vh"></body>'
     ).encode()
 
-
 def pdf() -> bytes:
-    """A one-page PDF filled magenta, written by hand: the engine's own viewer draws its
-    bar and its grey round it, which is the native view in Emil's picture."""
 
     stream = b"1 0 0.5 rg 0 0 612 792 re f"
     objects = [
@@ -84,13 +52,11 @@ def pdf() -> bytes:
     out += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (len(objects) + 1, xref)
     return bytes(out)
 
-
 PAGES: dict[str, tuple[str, bytes]] = {
     "/green": ("text/html; charset=utf-8", page("#00c040", "Green")),
     "/flat": ("text/html; charset=utf-8", page("#ff0080", "Flat")),
     "/doc.pdf": ("application/pdf", pdf()),
 }
-
 
 def borrowed(name: str) -> Any:
     spec = importlib.util.spec_from_file_location(name.replace("-", "_"), HERE / f"{name}.py")
@@ -100,9 +66,6 @@ def borrowed(name: str) -> Any:
     spec.loader.exec_module(module)
     return module
 
-
-# A mouse resting on a tab, or leaving it: the strip's own pointer events, on the tab
-# whose name starts with the given words.
 POINT = """(() => {
   const tab = [...document.querySelectorAll('[data-strip] .tab')]
     .find((one) => (one.textContent ?? '').trim().startsWith('%s'))
@@ -111,9 +74,6 @@ POINT = """(() => {
   return JSON.stringify(true)
 })()"""
 
-# The pointer going from one tab straight on to the next, in one breath as a real mouse
-# does it: two asks would leave the card time to go between them, and the next would
-# arrive rather than slide.
 ACROSS = """(() => {
   const tabs = [...document.querySelectorAll('[data-strip] .tab')]
   const named = (words) => tabs.find((one) => (one.textContent ?? '').trim().startsWith(words))
@@ -126,7 +86,6 @@ ACROSS = """(() => {
 
 SLIDING = "JSON.stringify(document.querySelector('.card')?.classList.contains('sliding') ?? null)"
 
-# Where the card and its still are, in the window's own pixels.
 WHERE = """(() => {
   const scale = window.devicePixelRatio || 1
   const box = (one) => {
@@ -139,12 +98,9 @@ WHERE = """(() => {
 
 NAMES = "JSON.stringify([...document.querySelectorAll('[data-strip] .tab')].map((one) => one.textContent.trim()))"
 
-# The press that photographs the page in front, as the press that switches tabs does.
 PRESS = "window.dispatchEvent(new PointerEvent('pointerdown')), 'ok'"
 
-
 def client_origin(hwnd: int) -> tuple[int, int]:
-    """Where the window's client area starts in a photograph of the whole window."""
 
     user32 = ctypes.WinDLL("user32", use_last_error=True)
     whole = wintypes.RECT()
@@ -153,13 +109,10 @@ def client_origin(hwnd: int) -> tuple[int, int]:
     user32.ClientToScreen(wintypes.HWND(hwnd), ctypes.byref(corner))
     return corner.x - whole.left, corner.y - whole.top
 
-
 def same(one: tuple[int, ...], other: tuple[int, ...]) -> bool:
     return all(abs(a - b) <= NEAR for a, b in zip(one, other))
 
-
 def matching(base: pathlib.Path, shot: pathlib.Path, box: list[int], origin: tuple[int, int], inset: int = 8) -> float:
-    """How much of `box` in `shot` is what the window showed there with no card up."""
 
     from PIL import Image
 
@@ -170,7 +123,6 @@ def matching(base: pathlib.Path, shot: pathlib.Path, box: list[int], origin: tup
         b = list(after.convert("RGB").crop(crop).get_flattened_data())
     return sum(1 for x, y in zip(a, b) if same(x, y)) / max(1, len(a))
 
-
 def green(shot: pathlib.Path, box: list[int], origin: tuple[int, int], inset: int = 4) -> float:
     from PIL import Image
 
@@ -179,7 +131,6 @@ def green(shot: pathlib.Path, box: list[int], origin: tuple[int, int], inset: in
     with Image.open(shot) as picture:
         seen = list(picture.convert("RGB").crop(crop).get_flattened_data())
     return sum(1 for one in seen if same(one, (0x00, 0xC0, 0x40))) / max(1, len(seen))
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -230,8 +181,6 @@ def main() -> int:
     running = None
 
     def hover(name: str, shot: str, base: pathlib.Path, origin: tuple[int, int], slide_from: str | None) -> None:
-        """Rests on a tab - straight away, or by way of the one beside it - and asks the
-        photograph whether the card is in front."""
 
         if slide_from:
             app.ask(POINT % (slide_from, "pointerenter"))
@@ -294,7 +243,6 @@ def main() -> int:
         switch.allow_eval(args.identifier)
         time.sleep(1)
         running, app, _ = switch.launch(args.exe, args.identifier, unlike=app.port)
-        # The app's own window, not the first the process shows.
         hwnd = 0
         until = time.perf_counter() + 30
         while not hwnd and time.perf_counter() < until:
@@ -303,15 +251,12 @@ def main() -> int:
         sized(hwnd, 1600, 1000)
         time.sleep(1)
         origin = client_origin(hwnd)
-        # Which code this is, so a picture is never read against the wrong build.
         said["build"] = app.ask("JSON.stringify(window.nibBuild)")
 
         app.open("Idea.md", SPACE)
         time.sleep(2)
         app.open("Green.url")
         time.sleep(4)
-        # The press that leaves a page is the one that photographs it, so the green
-        # page's still is there for its card.
         app.ask(PRESS)
         time.sleep(1)
         app.open("Flat.url")
@@ -339,7 +284,6 @@ def main() -> int:
     for one in failed:
         print(f"FAIL: {one}")
     return 1 if failed else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

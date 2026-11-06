@@ -1,27 +1,3 @@
-"""Two computers on sync v2, one of them offline while both write: the real packaged app.
-
-docs/sync-v2.md section 12 asks for this once in the native app, beside the browser
-drives (conflict.py, offline-days.py): two probe builds - two identifiers, so two devices
-with two sync stores - signed in to one account on the real Worker under `wrangler dev`,
-the account moved to v2:
-
-  1. A starts with a space holding a note and a picture; B starts with nothing. B is
-     handed both: the note's words and the picture's bytes, through the space.
-  2. B's network goes: its only road to the Worker is a proxy this probe cuts. B's corner
-     light goes hollow, never red.
-  3. Both write in the note, a line each at its end, while apart.
-  4. B's network comes back. Both machines end with one note holding both lines: no
-     `(from another device` file anywhere, nothing asked, and the account says the same.
-
-Every window through `probe_app.run_probe`, off the screen; spaces in temp folders. Both
-builds bake the Worker's address in - A the Worker itself, B the proxy in front of it:
-
-    scratchpad\\sync-client-engine\\build-probes.cmd   (two `tauri build --no-bundle --debug`
-        of a `vite build --mode drive`, identifiers ch.emilvinu.nib.probe.sync-engine-a/-b,
-        VITE_NIB_API http://127.0.0.1:8798 for A and :8799 for B, the updater blocked)
-    python scripts/sync-engine-probe.py --a path/to/a/nib.exe --b path/to/b/nib.exe
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -61,24 +37,17 @@ COPY = "(from another device"
 
 failures: list[str] = []
 
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 
 def wrong(words: str) -> None:
     failures.append(words)
     print(f"  WRONG: {words}", flush=True)
 
-
-# ---- the Worker, and the road B reaches it by ----
-
-
 def free_port() -> int:
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         return int(sock.getsockname()[1])
-
 
 def npx(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
@@ -91,12 +60,10 @@ def npx(*args: str) -> subprocess.CompletedProcess[str]:
         check=False,
     )
 
-
 def api(path: str, token: str) -> object:
     call = urllib.request.Request(f"{API}{path}", headers={"authorization": f"Bearer {token}"})
     with urllib.request.urlopen(call, timeout=20) as answer:
         return json.loads(answer.read() or b"null")
-
 
 class Worker:
     def __init__(self, log: pathlib.Path) -> None:
@@ -124,8 +91,6 @@ class Worker:
                 str(PORT),
                 "--ip",
                 "127.0.0.1",
-                # Its own, since other Workers may be running, and an empty folder for the
-                # web app it would otherwise serve: the probes bring their own.
                 "--inspector-port",
                 str(free_port()),
                 "--assets",
@@ -157,7 +122,6 @@ class Worker:
         raise SystemExit(f"that query failed:\n{statement}\n{done.stdout}\n{done.stderr}")
 
     def account(self) -> tuple[str, str]:
-        """One account on sync v2, with a session for each computer."""
         tokens = [uuid.uuid4().hex + uuid.uuid4().hex for _ in range(2)]
         now = int(time.time() * 1000)
         user = str(uuid.uuid4())
@@ -175,7 +139,6 @@ class Worker:
         return tokens[0], tokens[1]
 
     def stop(self) -> None:
-        # Only the process this probe started, by its PID, with what it started.
         if self.process:
             subprocess.run(["taskkill", "/T", "/F", "/PID", str(self.process.pid)], capture_output=True, check=False)
             self.process = None
@@ -184,11 +147,7 @@ class Worker:
         shutil.rmtree(self.state, ignore_errors=True)
         shutil.rmtree(self.assets, ignore_errors=True)
 
-
 class Road:
-    """A TCP proxy in front of the Worker, which this probe cuts and mends: B's network.
-    Cut, every connection through it is closed and every new one refused at once, the
-    way a laptop that lost its Wi-Fi finds the world."""
 
     def __init__(self) -> None:
         self.server = socket.create_server(("127.0.0.1", PROXY))
@@ -251,19 +210,13 @@ class Road:
         self.cut()
         self.server.close()
 
-
-# ---- the two computers ----
-
-
 def config_dir(identifier: str) -> pathlib.Path:
     roaming = os.environ.get("APPDATA") or str(pathlib.Path.home() / "AppData" / "Roaming")
     return pathlib.Path(roaming) / identifier
 
-
 def local_dir(identifier: str) -> pathlib.Path:
     local = os.environ.get("LOCALAPPDATA") or str(pathlib.Path.home() / "AppData" / "Local")
     return pathlib.Path(local) / identifier
-
 
 def wipe(identifier: str) -> None:
     if ".probe." not in identifier:
@@ -273,7 +226,6 @@ def wipe(identifier: str) -> None:
         while one.exists() and time.perf_counter() < until:
             shutil.rmtree(one, ignore_errors=True)
             time.sleep(0.5)
-
 
 class Computer:
     def __init__(self, label: str, exe: pathlib.Path, token: str, seeded: bool) -> None:
@@ -308,7 +260,6 @@ class Computer:
     def launch(self) -> None:
         wipe(self.identifier)
         env = {**os.environ, "NIB_SPACES_DIR": str(self.spaces)}
-        # Once to write the endpoint file, so eval can be turned on in it.
         self.process = run_probe(self.exe, env=env, quiet=True)
         self.endpoint()
         if not close_app(self.process):
@@ -361,8 +312,6 @@ class Computer:
         return self.spaces / SPACE
 
     def write_line(self, words: str) -> None:
-        """A line typed at the end of the note, through the editor, and written down the
-        way the pause does."""
         opened = self.ask(
             """(async () => {
               const ws = window.nibApp.workspace
@@ -412,7 +361,6 @@ class Computer:
         if self.process and self.process.poll() is None and not close_app(self.process):
             self.process.kill()
         self.process = None
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -540,7 +488,6 @@ def main() -> int:
         return 1
     print("\ntwo computers, one offline, one note with both lines and no copy", flush=True)
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

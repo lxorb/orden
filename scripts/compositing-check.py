@@ -1,26 +1,4 @@
 #!/usr/bin/env python3
-"""Whether Orden's pages are put together on the graphics card on Linux, as far as the
-app decides it: Chromium runs without the switches that turn that off, unless Settings ›
-General › Hardware acceleration did.
-
-#390: under `WebKitGTK` the window flickered on Wayland (#387), and the fix turned
-accelerated compositing off for every webview of the app, web tabs included, which is
-what took the card away from the sites in them. Orden on Linux runs on CEF now, where
-that switch went with `WebKitGTK` (bb5ac23a0) and nothing turns compositing off for a
-page, the app's own or a site's - which this holds the app to. Whether the card is used
-then is Chromium's and the machine's to say: a runner with no graphics card draws in
-software either way, so the switches are what is held to, and what Chromium says of
-compositing is printed beside them.
-
-Asked of Chromium itself, over the `DevTools` port the run opened (`NIB_CEF_DEBUG_PORT`):
-`SystemInfo.getInfo` answers with the command line the browser runs with - the switches
-the app gives it through CEF among them, which no process's own command line shows - and
-with what it says of each feature, compositing among them.
-
-    python3 scripts/compositing-check.py <port> [off]
-
-With `off`, the run has Hardware acceleration off, and the switches have to be there.
-"""
 
 import json
 import sys
@@ -35,7 +13,6 @@ PORT = int(sys.argv[1])
 OFF = len(sys.argv) > 2 and sys.argv[2] == "off"
 SWITCHES = ("--disable-gpu-compositing", "--disable-gpu")
 
-
 def browser():
     for _ in range(60):
         try:
@@ -44,7 +21,6 @@ def browser():
         except (OSError, ValueError, KeyError):
             time.sleep(0.5)
     sys.exit(f"::error::compositing: Chromium's DevTools port {PORT} never answered")
-
 
 session = Session({"webSocketDebuggerUrl": browser()})
 info = session.call("SystemInfo.getInfo")

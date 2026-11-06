@@ -13,11 +13,9 @@ OUT, APP = Path(sys.argv[1]), sys.argv[2]
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
 failures = []
 
-
 def fail(what):
     print(f"::error::globals: {what}")
     failures.append(what)
-
 
 def endpoint():
     for _ in range(120):
@@ -30,9 +28,7 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
-
 
 def run(code):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
@@ -51,7 +47,6 @@ def run(code):
             time.sleep(1)
     return None
 
-
 def until(code, seconds=20):
     for _ in range(seconds * 4):
         said = run(code)
@@ -59,7 +54,6 @@ def until(code, seconds=20):
             return said
         time.sleep(0.25)
     return None
-
 
 def reports(seconds=30):
     found = {}
@@ -72,7 +66,6 @@ def reports(seconds=30):
             return found
         time.sleep(0.5)
     return found
-
 
 said = reports()
 for who in ("page", "frame"):
@@ -93,7 +86,6 @@ print(f"globals: the app's page holds {kept}")
 if kept != '{"kind":"object"}':
     fail(f"the app's page lost window.ipc: {kept}")
 
-
 def hears(channel, kind):
     name = re.sub(r"\W", "_", channel)
     run(
@@ -106,7 +98,6 @@ def hears(channel, kind):
 }})()"""
     )
     return f"window.__{name}"
-
 
 heard = hears("nib:presenter", "here")
 opened = run("window.__TAURI_INTERNALS__.invoke('presenter_open', {}).then(() => 'opened', (error) => String(error))")

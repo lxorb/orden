@@ -1,29 +1,3 @@
-"""Do Chrome extensions install and run in web tabs? Windows only.
-
-Emil, 2026-10-03: extensions on both engines, installed from a store link, with the
-popup in a bubble and the options page as a tab, and the ten most used tried. This
-installs each of `TOP` through the app's own command from its store link, opens a page
-of the probe's own in a web tab, and reads back, per extension:
-
-    installed   the crate fetched, checked and unpacked it, and listed it
-    background  its service worker or background page is running
-    content     its content script ran in the page: a world of its own in the page,
-                which the engine opens for an extension's script and nothing else
-    popup       its popup page opened in the bubble's webview and drew something
-    options     its options page opened as a tab
-
-What a page does is read over the engine's debugging port (scripts/devtools.py), which
-presses nothing.
-
-Nothing is pressed on the machine: every step is the app's own command, through the
-automation endpoint.
-
-    pnpm --dir apps/desktop tauri build --no-bundle \\
-      --config '{"identifier":"ch.emilvinu.nib.probe.extensions","version":"99.0.0",
-                 "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-    python scripts/extensions-probe.py --exe path/to/nib.exe
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -47,7 +21,6 @@ from ctypes import wintypes
 from devtools import Session, debugged, port, targets
 from probe_app import run_probe, sized
 
-#: The ten most used, by kind, as the store link a reader would paste.
 TOP: dict[str, str] = {
     "uBlock Origin Lite": "https://chromewebstore.google.com/detail/ublock-origin-lite/ddkjiahejlhfcafbddmgiahcphecmpfh",
     "Bitwarden": "https://chromewebstore.google.com/detail/bitwarden-password-manager/nngceckbapebfimnlniiiahkandclblb",
@@ -59,7 +32,6 @@ TOP: dict[str, str] = {
     "React Developer Tools": "https://chromewebstore.google.com/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi",
     "Honey": "https://chromewebstore.google.com/detail/honey-automatic-coupons-re/bmnlcjabgnpnenekpadlanbbkooimhnj",
     "LastPass": "https://chromewebstore.google.com/detail/lastpass-free-password-ma/hdokiejnpimakedhajhdlcegeplioahd",
-    # The other store: uBlock Origin Lite as Edge Add-ons serves it.
     "uBlock Origin Lite (Edge Add-ons)": "https://microsoftedge.microsoft.com/addons/detail/ublock-origin-lite/cimighlppcgcoapaliogpjjdehbnofhn",
 }
 
@@ -67,9 +39,6 @@ SPACE = "Extensions probe"
 NOTE = "Idea"
 SITE = "Shop"
 
-#: The page every extension is tried on: a sign-in form for the password managers, words
-#: for the grammar checker and the translator, an ad script for the blocker, a price for
-#: the coupon finder.
 PAGE = b"""<!doctype html>
 <html lang="de"><head><meta charset="utf-8"><title>Shop</title></head>
 <body>
@@ -89,10 +58,8 @@ PAGE = b"""<!doctype html>
 
 user32 = ctypes.WinDLL("user32", use_last_error=True) if sys.platform == "win32" else None
 
-
 class Server(http.server.ThreadingHTTPServer):
     daemon_threads = True
-
 
 def serve() -> int:
     class Handler(http.server.BaseHTTPRequestHandler):
@@ -113,23 +80,19 @@ def serve() -> int:
     threading.Thread(target=made.serve_forever, daemon=True).start()
     return free
 
-
 def config_dir(identifier: str) -> pathlib.Path:
     roaming = os.environ.get("APPDATA") or str(pathlib.Path.home() / "AppData" / "Roaming")
     return pathlib.Path(roaming) / identifier
 
-
 def local_dir(identifier: str) -> pathlib.Path:
     local = os.environ.get("LOCALAPPDATA") or str(pathlib.Path.home() / "AppData" / "Local")
     return pathlib.Path(local) / identifier
-
 
 def wipe(identifier: str) -> None:
     if "probe" not in identifier:
         raise SystemExit(f"{identifier} is not a probe identifier: refusing to delete its folders")
     for one in (config_dir(identifier), local_dir(identifier)):
         shutil.rmtree(one, ignore_errors=True)
-
 
 def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str]:
     path = config_dir(identifier) / "automation.json"
@@ -144,13 +107,11 @@ def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str
         time.sleep(0.2)
     raise SystemExit(f"the app never wrote {path}")
 
-
 def allow_eval(identifier: str) -> None:
     path = config_dir(identifier) / "automation.json"
     said = json.loads(path.read_text(encoding="utf-8"))
     said["eval"] = True
     path.write_text(json.dumps(said), encoding="utf-8")
-
 
 class App:
     def __init__(self, at: int, secret: str) -> None:
@@ -194,14 +155,11 @@ class App:
             ".then((said) => JSON.stringify({ ok: true, said }), (why) => JSON.stringify({ ok: false, why: String(why) }))"
         )
 
-
 TABS = """JSON.stringify(nib.workspace.tabs.map((one) => ({ id: one.id, kind: one.kind, name: one.name })))"""
-
 
 def tabs(app: App) -> list[dict[str, str]]:
     said = app.ask(TABS)
     return [one for one in said if isinstance(one, dict)] if isinstance(said, list) else []
-
 
 def wait_for_tab(app: App, name: str, seconds: float = 25) -> str:
     until = time.perf_counter() + seconds
@@ -211,7 +169,6 @@ def wait_for_tab(app: App, name: str, seconds: float = 25) -> str:
                 return str(one["id"])
         time.sleep(0.3)
     raise SystemExit(f"the app never opened {name}: {app.ask(TABS)}")
-
 
 def windows_of(pid: int) -> list[int]:
     assert user32 is not None
@@ -228,12 +185,7 @@ def windows_of(pid: int) -> list[int]:
     user32.EnumWindows(kind(each), 0)
     return found
 
-
-#: How long a terminated app is given to be gone. The engine takes its browser, renderers
-#: and GPU process down with it, and on a machine busy building that has taken over thirty
-#: seconds (2026-10-03), the process still listed with no program behind it.
 GONE = 120
-
 
 def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subprocess.Popen[bytes], App]:
     running = run_probe(exe, env=debugged(), quiet=True)
@@ -250,10 +202,7 @@ def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subproc
     time.sleep(1.5)
     return running, App(at, secret)
 
-
 def shoot(target: dict | None, to: pathlib.Path) -> None:
-    """A page's own picture, through its debugging port: a window off the screen paints
-    nothing a capture of the window can read, and the page still draws for its agent."""
 
     if target is None:
         return
@@ -266,9 +215,7 @@ def shoot(target: dict | None, to: pathlib.Path) -> None:
     finally:
         session._socket.close()
 
-
 def interface(identifier: str) -> dict | None:
-    """nib's own page, on the debugging port of the interface's browser process."""
 
     at = port(local_dir(identifier))
     if not at:
@@ -278,16 +225,13 @@ def interface(identifier: str) -> dict | None:
             return one
     return None
 
-
 def page_target(web_port: int, prefix: str) -> dict | None:
     for one in targets(web_port):
         if one.get("type") == "page" and str(one.get("url", "")).startswith(prefix):
             return one
     return None
 
-
 def worlds(target: dict) -> dict[str, str]:
-    """The extensions whose scripts have a world of their own in the page: id to name."""
 
     session = Session(target)
     try:
@@ -305,14 +249,12 @@ def worlds(target: dict) -> dict[str, str]:
     finally:
         session._socket.close()
 
-
 def page_says(target: dict, expression: str) -> object:
     session = Session(target)
     try:
         return session.value(expression)
     finally:
         session._socket.close()
-
 
 def main() -> int:
     parsed = argparse.ArgumentParser()
@@ -344,7 +286,6 @@ def main() -> int:
         time.sleep(1)
         running, app = launch(args.exe, args.identifier, unlike=app.at)
 
-        # The endpoint answers before the window does.
         until = time.perf_counter() + 60
         while time.perf_counter() < until and not isinstance(app.ask("nib.workspace.tabs.length"), int):
             time.sleep(0.5)
@@ -371,8 +312,6 @@ def main() -> int:
                 report[name]["why"] = said
             print(name, json.dumps(report[name]), flush=True)
 
-        # A page loaded after every extension is in, so each content script has had its
-        # chance to run in it.
         time.sleep(3)
         app.invoke("web_step", {"tab": tab, "step": "reload"})
         time.sleep(8)
@@ -389,9 +328,6 @@ def main() -> int:
             title = page_says(target, "document.title") if target else None
             react = page_says(target, "typeof window.__REACT_DEVTOOLS_GLOBAL_HOOK__") if target else None
             dark = page_says(target, "document.documentElement.getAttribute('data-darkreader-scheme') || (document.querySelector('style.darkreader') ? 'style' : null)") if target else None
-            # Whether the ad script came off the network. The title cannot say: a blocker
-            # may answer the request with a harmless stand-in of its own, as uBlock Origin
-            # Lite does for this one on WebView2, and the stand-in fires `onload` too.
             fetched = page_says(target, "performance.getEntriesByType('resource').some((one) => one.name.includes('googlesyndication'))") if target else None
             everything = targets(web_port)
             report["(page)"] = {"title": title, "ad script fetched": fetched, "react hook": react, "dark reader": dark, "worlds": ran}
@@ -407,14 +343,11 @@ def main() -> int:
                     for t in everything
                 )
 
-            # Each popup, in the bubble's own webview, and what it drew.
             for name in chosen:
                 one = report[name]
                 ident = str(one.get("id") or "")
                 if not ident or not one.get("popup page"):
                     continue
-                # Its button in the bar, pressed the way the window presses it: the bubble
-                # comes up and the popup's own page is put inside it.
                 press = (
                     "(() => { const all = [...document.querySelectorAll('.webbar button.extension')];"
                     f" const one = all.find((b) => b.title === {json.dumps(str(one.get('name') or ''))});"
@@ -431,7 +364,6 @@ def main() -> int:
                 app.ask(press)
                 time.sleep(0.8)
 
-            # Each options page, as a tab.
             for name in chosen:
                 one = report[name]
                 ident = str(one.get("id") or "")
@@ -447,8 +379,6 @@ def main() -> int:
                         app.ask(f"nib.workspace.close('{other['id']}')")
                 time.sleep(0.5)
 
-        # A store's own page for an extension that is not installed: the bar offers Add,
-        # and the store's own button is read for what it says in this engine.
         store_page = "https://chromewebstore.google.com/detail/json-formatter/bcjindcccaagfpapjjmafapmmgkkhgoa"
         app.ask(f"nib.workspace.activate?.('{tab}')")
         app.invoke("web_navigate", {"tab": tab, "url": store_page})
@@ -479,7 +409,6 @@ def main() -> int:
 
     print(json.dumps(report, indent=2, default=str))
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

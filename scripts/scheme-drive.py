@@ -1,14 +1,4 @@
 #!/usr/bin/env python3
-"""A web tab's page drawn in the app's scheme, light or dark, rather than the system's.
-#427: on a dark desktop with Orden light every site was dark, and the other way round.
-
-Run with Orden up on scripts/wayland-launch.sh's page for it (SCHEME=1): blue where the
-page is asked for light, green where for dark. The app's own scheme switched with the
-button at the foot of its sidebar, a few times, and each time the page has to be the
-colour of the app's scheme.
-
-    python3 scripts/scheme-drive.py <sway|x11> <out folder> <app pid>
-"""
 
 import json
 import os
@@ -25,7 +15,6 @@ POINTER = OUT / "pointer.fifo"
 failures = []
 done = []
 
-
 def endpoint():
     for _ in range(120):
         try:
@@ -37,9 +26,7 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
-
 
 def run(code):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
@@ -57,7 +44,6 @@ def run(code):
         except (TimeoutError, OSError):
             time.sleep(1)
     return None
-
 
 if DESK == "sway":
 
@@ -86,8 +72,6 @@ if DESK == "sway":
     def shoot(name):
         subprocess.run(["grim", str(OUT / f"scheme-{name}.png")], check=False)
 
-    # On the wide screen at scale 1, where the sidebar and its space switcher show: on
-    # the narrow one the sidebar is folded away.
     subprocess.run(["swaymsg", f"[pid={APP}] move container to output HEADLESS-2, focus"], check=False)
     time.sleep(2)
 
@@ -117,14 +101,10 @@ else:
     def shoot(name):
         subprocess.run(["import", "-window", "root", str(OUT / f"scheme-{name}.png")], check=False)
 
-
 def ratio():
     return run("devicePixelRatio") or 1
 
-
 def box(selector, text=None):
-    """Where an element of the window's page is, in its own pixels: the first that
-    matches and is drawn, with `text` as its words where given."""
     return run(
         "(() => { for (const one of document.querySelectorAll(%s)) {"
         " const r = one.getBoundingClientRect(); if (r.width <= 0 || r.height <= 0) continue;"
@@ -133,19 +113,15 @@ def box(selector, text=None):
         % (json.dumps(selector), json.dumps(text), json.dumps(text))
     )
 
-
 def at(rect):
-    """The middle of `rect` on the screen."""
     x, y = window()
     scale = ratio()
     return x + (rect["x"] + rect["width"] / 2) * scale, y + (rect["y"] + rect["height"] / 2) * scale
-
 
 def press(rect):
     move(*at(rect))
     time.sleep(0.25)
     click()
-
 
 def until(code, seconds=4):
     for _ in range(int(seconds / 0.2)):
@@ -155,12 +131,10 @@ def until(code, seconds=4):
         time.sleep(0.2)
     return None
 
-
 def fail(what, name):
     print(f"::error::{DESK}: {what}")
     failures.append(what)
     shoot(name)
-
 
 VISIBLE = "nib.pages.each().some(([, page]) => page.sent && page.sent.visible)"
 WEB_TAB = (
@@ -175,9 +149,7 @@ HOLE = (
 )
 TOGGLE = "button.act[aria-label='Light'], button.act[aria-label='Dark']"
 
-
 def colour_at(x, y):
-    """The colour on the screen at `x`, `y`, as the screen has it."""
     shot = OUT / "scheme-now.png"
     if DESK == "sway":
         subprocess.run(["grim", "-g", f"{int(x)},{int(y)} 1x1", str(shot)], check=False)
@@ -190,7 +162,6 @@ def colour_at(x, y):
     except Exception:  # noqa: BLE001 - a picture that could not be read is no colour
         return None
 
-
 def page_is(colour):
     if colour is None:
         return None
@@ -200,7 +171,6 @@ def page_is(colour):
     if green > 180 and blue < 80 and red < 80:
         return "dark"
     return None
-
 
 for _ in range(30):
     if run(VISIBLE):

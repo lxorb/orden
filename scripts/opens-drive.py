@@ -1,39 +1,4 @@
 #!/usr/bin/env python3
-"""Every way a page opens a window, pressed by a pointer the way a hand presses it, and
-what came of each. #1074: on some sites a press that opens a window did nothing.
-
-A page of this run's own, in a web tab, with one wide button or link for each way:
-
-  - a link with `target="_blank"`, and with `rel="noopener"`: a tab at the address;
-  - `window.open(url)` in the press, after a `setTimeout` and after an `await`: opened;
-  - `window.open(url, name, 'width=..,height=..')`, a sign-in's popup, and
-    `window.open(url)` with nothing more, as Google's and GitHub's sign-ins open: the page
-    gets the window back, the popup has `window.opener` and its message reaches the page;
-  - `window.open(url, '_blank', 'noopener')`: `null`, as the call promises, and a tab;
-  - `window.open(url)` six seconds after the press, with nothing pressed for it: blocked
-    as Chrome blocks it, offered on the tab's bar, and opened by the bar's Open;
-  - `window.open('about:blank')` and `window.open()`, then sent somewhere, and
-    `window.open('')` written into: the page gets the window, and it goes there;
-  - a form sent by POST to `target="_blank"`: the server hears a POST;
-  - `window.open(url)` from a frame, and from a sandboxed frame with `allow-popups`;
-  - `window.open` of a file the server hands over as a download: the server is asked.
-
-Each case is pressed, and the server this drive runs says what the page and whatever it
-opened asked for; a case whose requests are not all heard in time is a failure. And while
-each is waited on, every window on the screen has to be under the app's own name
-(CLASS, nib unless said) and none of them Chromium's own: before #1148 a sign-in's popup
-was a whole Chromium window, tab strip, address bar and "Sign in to Chromium?" and all,
-which a desktop showed as Chromium. Before
-#1074 the popup lost its opener, and the blank windows and the POST opened nothing, or
-the wrong thing: the page was answered `null` and a tab was built afresh at the address.
-
-Run with Orden up (OPENS=1 in scripts/wayland-launch.sh):
-
-    python3 scripts/opens-drive.py <sway|x11> <out folder> <app pid>
-
-`sway` presses with the compositor's own pointer (scripts/wayland-pointer.py's FIFO in
-<out>); `x11` with the X server's test extension, on $DISPLAY.
-"""
 
 import ctypes
 import http.server
@@ -55,7 +20,6 @@ POINTER = OUT / "pointer.fifo"
 PAGES = 8770
 SITE = f"http://127.0.0.1:{PAGES}"
 
-# Each case: what is pressed, and every request that has to be heard once it is.
 CASES = {
     "link_blank": ["GET /landing?link_blank"],
     "link_noopener": ["GET /landing?link_noopener"],
@@ -67,7 +31,6 @@ CASES = {
         "GET /signin?opener_yes",
         "GET /said?message_signed_in",
     ],
-    # A sign-in opened with nothing more than its address, as Google's and GitHub's are.
     "open_plain_signin": [
         "GET /said?open_plain_signin_win",
         "GET /signin?opener_yes",
@@ -80,13 +43,10 @@ CASES = {
     "form_post": ["POST /posted?form_post"],
     "frame": ["GET /landing?frame"],
     "sandboxed": ["GET /landing?sandboxed"],
-    # Long after the press, so nothing pressed for it: blocked, said on the tab's bar, and
-    # opened by the bar's Open.
     "blocked": ["GET /said?blocked_null", "GET /landing?blocked"],
     "download": ["GET /download.bin"],
 }
 
-# How long after its press a case's window is asked for.
 LATE = {"blocked": 6.5}
 
 BUTTON = "display:block;box-sizing:border-box;width:100%;height:30px;margin:0 0 2px;font:14px sans-serif"
@@ -124,19 +84,16 @@ addEventListener('load', () => {{
 """
 FRAME = f"""<!doctype html><style>body{{margin:0}}button{{{BUTTON}}}</style>
 <button onclick="window.open('/landing?' + location.search.slice(1))">frame</button>"""
-# A sign-in's popup: it tells the page that opened it, and closes, as an OAuth one does.
 SIGNIN = """<!doctype html><title>sign-in</title><script>
 fetch('/signin?opener_' + (window.opener ? 'yes' : 'no'))
 if (window.opener) window.opener.postMessage('signed_in', '*')
 setTimeout(() => window.close(), 500)
 </script>signed in"""
-# Anything opened goes again once it has loaded, so no window is left over the page.
 LANDED = """<!doctype html><title>landed</title>landed<script>
 if (window.opener) setTimeout(() => window.close(), 500)
 </script>"""
 
 heard = []
-
 
 class Pages(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_):
@@ -169,11 +126,9 @@ class Pages(http.server.BaseHTTPRequestHandler):
         heard.append(f"POST {self.path}")
         self.reply(LANDED)
 
-
 class Serving(socketserver.ThreadingMixIn, http.server.HTTPServer):
     daemon_threads = True
     allow_reuse_address = True
-
 
 def endpoint():
     for _ in range(120):
@@ -186,9 +141,7 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
-
 
 def run(code, timeout=10):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
@@ -206,7 +159,6 @@ def run(code, timeout=10):
         except (TimeoutError, OSError):
             time.sleep(1)
     return None
-
 
 if DESK == "sway":
 
@@ -227,7 +179,6 @@ if DESK == "sway":
             pointer.write(f"move {x} {y}\nclick\n")
 
     def shown():
-        """Each window on the screen: its WM_CLASS instance and its title."""
 
         def walk(node):
             if node.get("pid") and node.get("type") in ("con", "floating_con"):
@@ -237,7 +188,6 @@ if DESK == "sway":
 
         return list(walk(json.loads(subprocess.check_output(["swaymsg", "-r", "-t", "get_tree"]))))
 
-    # On the wide screen at scale 1, as popup-drive.py puts it.
     subprocess.run(["swaymsg", f"[pid={APP}] move container to output HEADLESS-2, focus"], check=False)
     time.sleep(2)
 
@@ -261,7 +211,6 @@ else:
         X.XFlush(SHOWN)
 
     def shown():
-        """Each window on the screen with a title: its WM_CLASS instance and the title."""
         listed = subprocess.run(["xwininfo", "-root", "-children"], capture_output=True, text=True).stdout
         return [
             (one.group(3), one.group(2))
@@ -270,25 +219,18 @@ else:
             in subprocess.run(["xwininfo", "-id", one.group(1)], capture_output=True, text=True).stdout
         ]
 
-
 CLASS = os.environ.get("CLASS", "nib")
 
-
 def strangers():
-    """The windows on the screen not under the app's name, or Chromium's own."""
     return [(name, title) for name, title in shown() if name != CLASS or title.endswith("Chromium")]
 
-
 def where():
-    """Each case's middle in the page, as the page last said."""
     for one in reversed(heard):
         if one.startswith("GET /said?at="):
             return json.loads(unquote(one[len("GET /said?at=") :]))
     return {}
 
-
 def hole():
-    """Where the window put the web tab's page, in the window's own pixels."""
     for _ in range(40):
         sent = run(
             "(() => { const all = nib.pages.each().map(([, page]) => page.sent)"
@@ -298,7 +240,6 @@ def hole():
             return sent
         time.sleep(0.5)
     return None
-
 
 threading.Thread(target=Serving(("127.0.0.1", PAGES), Pages).serve_forever, daemon=True).start()
 
@@ -331,7 +272,6 @@ for case, wanted in CASES.items():
         failures.append(f"{case}: not on the page")
         continue
     left, top = window()
-    # Where the page is now: the tab's bar above it comes and goes.
     place = hole() or place
     began = len(heard)
     press(left + (place["x"] + at[0]) * RATIO, top + (place["y"] + at[1]) * RATIO)

@@ -1,11 +1,4 @@
 #!/bin/bash
-# A Mac's update, end to end, on a runner that is nobody's machine: a released Orden
-# put somewhere a person puts it, launched, left to find the next release the way it
-# does by itself, told "Restart now" the way the notice is pressed, and then asked what
-# it is. Usage: mac-update-check.sh <dmg> <where> <version it should come back as>
-#
-# <where> is `applications` (dragged to /Applications), `home` (~/Applications), or
-# `image` (started from the mounted disk image, never copied anywhere).
 set -u
 
 dmg="$1"
@@ -35,7 +28,6 @@ echo "running $app"
 
 running() { pgrep -f "$1/Contents/MacOS/" >/dev/null; }
 
-# A copy from before a rename carries itself over to the new name on its first launch.
 carried() {
   for name in Orden.app nibeditor.app; do
     [ ! -d "$app" ] && [ -d "$folder/$name" ] && app="$folder/$name"
@@ -65,7 +57,6 @@ quit_app() {
   sleep 2
 }
 
-# The endpoint answers `eval` only when its own file says so, and it is read at launch.
 rm -rf "$support"
 launch || exit 1
 python3 - "$endpoint" <<'EOF'
@@ -75,8 +66,6 @@ held = json.load(open(path))
 held["eval"] = True
 json.dump(held, open(path, "w"))
 EOF
-# Quitting puts a downloaded update in place on the way out, so the launch's own look
-# may already have updated the copy here; it comes back as the new version then.
 quit_app
 carried
 launch || exit 1
@@ -89,7 +78,6 @@ case "$version" in *"$expect"*)
   exit 0 ;;
 esac
 
-# The notice, once the launch's own look has found and downloaded the release.
 logs() {
   for log in "$HOME/Library/Logs/ch.emilvinu.nib"/*; do
     [ -f "$log" ] && { echo "--- $log"; tail -40 "$log"; }
@@ -101,7 +89,6 @@ for at in $(seq 120); do
   notice="$(say_eval "document.querySelector('.notice')?.textContent?.trim() ?? ''")"
   case "$notice" in *"$expect"*) break ;; esac
   [ $((at % 20)) = 1 ] && echo "($at) said: $notice"
-  # Asked by name as well, halfway, the way the menu's Check for updates asks.
   [ "$at" = 60 ] && node "$cli" commands run update 2>&1
   sleep 2
 done
@@ -111,7 +98,6 @@ case "$notice" in *"$expect"*) ;; *) echo "no notice offered $expect"; logs; qui
 log_before="$(ls -t "$HOME/Library/Logs/ch.emilvinu.nib" 2>/dev/null | head -1)"
 say_eval "[...document.querySelectorAll('.notice .nib-button')].at(-1).click(), 'pressed'"
 
-# Gone, and back on its own.
 for _ in $(seq 60); do running "$app" || break; sleep 1; done
 back=no
 for _ in $(seq 60); do

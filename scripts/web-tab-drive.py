@@ -1,16 +1,3 @@
-"""A probe build opens a web tab and still answers (#1145).
-
-From #1094 Orden froze for good on Windows the moment a web tab opened: the window's thread
-waited on itself inside the runtime (see `with_platform!` in src-tauri/src/engine.rs), so
-the window stopped answering Windows and the endpoint every request. A probe build is
-started on the runner's own desktop, a note opened, and then, with the window in front so
-that each page takes the focus as it does for a person, three web tabs one after another.
-After each, every request must be answered, its page must come up, and on Windows the
-window must answer a message sent to it.
-
-    python scripts/web-tab-drive.py --exe <probe build> --identifier <probe id>
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -30,11 +17,8 @@ import urllib.request
 from typing import Any
 
 PAGE = b"<!doctype html><title>a page</title><p>a page"
-#: How many web tabs are opened, one after another.
 TABS = 3
-#: How long after each tab opens the app must keep answering.
 WATCHED = 10.0
-
 
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_: Any) -> None:
@@ -47,7 +31,6 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(PAGE)
 
-
 def config_of(identifier: str) -> pathlib.Path:
     if sys.platform == "win32":
         return pathlib.Path(os.environ["APPDATA"]) / identifier
@@ -55,9 +38,7 @@ def config_of(identifier: str) -> pathlib.Path:
         return pathlib.Path.home() / "Library" / "Application Support" / identifier
     return pathlib.Path(os.environ.get("XDG_CONFIG_HOME") or pathlib.Path.home() / ".config") / identifier
 
-
 def window_answers(pid: int) -> str | None:
-    """On Windows, why the app's window does not answer a message sent to it, if it does not."""
 
     if sys.platform != "win32":
         return None
@@ -72,15 +53,11 @@ def window_answers(pid: int) -> str | None:
     if not hwnd:
         return "the app has no window"
     result = wintypes.DWORD()
-    # WM_NULL, given up on after three seconds or at once if Windows already calls it hung.
     if not user32.SendMessageTimeoutW(hwnd, 0, 0, 0, 0x0002, 3000, ctypes.byref(result)):
         return "the window does not answer Windows"
     return None
 
-
 def forward(pid: int) -> None:
-    """On Windows, the app's window in front, as a person's is when they open a tab: the page
-    then takes the focus while it is set up, which is what hung (see the module's docs)."""
 
     if sys.platform != "win32":
         return
@@ -99,9 +76,7 @@ def forward(pid: int) -> None:
     user32.BringWindowToTop(hwnd)
     user32.AttachThreadInput(ours, theirs, False)
 
-
 def watched(app: App, pid: int, count: int) -> list[str]:
-    """What went wrong while the app was watched after its `count`th web tab opened."""
 
     opened, live = time.monotonic(), False
     while time.monotonic() - opened < WATCHED:
@@ -116,7 +91,6 @@ def watched(app: App, pid: int, count: int) -> list[str]:
         time.sleep(0.5)
     print(f"web tab {count}: answered for {WATCHED:.0f} s, its page up: {live}", flush=True)
     return [] if live else [f"web tab {count}: its page never came up in {WATCHED:.0f} s"]
-
 
 class App:
     def __init__(self, port: int, secret: str) -> None:
@@ -137,7 +111,6 @@ class App:
         except (urllib.error.URLError, TimeoutError, OSError) as error:
             return {"error": str(error)}
 
-
 def endpoint(config: pathlib.Path, pid: int, secret: str) -> App:
     path = config / "automation.json"
     until = time.monotonic() + 120
@@ -151,9 +124,7 @@ def endpoint(config: pathlib.Path, pid: int, secret: str) -> App:
         time.sleep(0.25)
     raise SystemExit(f"the app never wrote {path}")
 
-
 def stalls(identifier: str) -> list[str]:
-    """What the app's log says of its window's thread stalling; see src-tauri/src/stall.rs."""
 
     home = pathlib.Path.home()
     folders = [
@@ -165,7 +136,6 @@ def stalls(identifier: str) -> list[str]:
     for log in (one for folder in folders for one in folder.glob("**/nib.log")):
         lines += [line for line in log.read_text(encoding="utf-8", errors="replace").splitlines() if "stall" in line]
     return lines[-20:]
-
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -221,7 +191,6 @@ def main() -> int:
     for one in wrong:
         print(f"::error::{one}", flush=True)
     return 1 if wrong else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

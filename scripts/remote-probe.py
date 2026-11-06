@@ -40,9 +40,7 @@ SPACE = "Remote probe"
 
 failures: list[str] = []
 
-
 def borrowed(name: str, file: str):
-    """Another drive's helpers, read from its file: the names have dashes in them."""
 
     spec = importlib.util.spec_from_file_location(name, HERE / file)
     if spec is None or spec.loader is None:
@@ -51,15 +49,12 @@ def borrowed(name: str, file: str):
     spec.loader.exec_module(module)
     return module
 
-
 tabs = borrowed("tabs", "new-tabs-probe.py")
 terminal = borrowed("terminal", "terminal-probe.py")
 until = terminal.until
 
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 
 def check(ok: bool, words: str) -> None:
     if ok:
@@ -67,7 +62,6 @@ def check(ok: bool, words: str) -> None:
     else:
         failures.append(words)
         say(f"FAIL {words}")
-
 
 CONFIG = """# A config of the probe's own; never the reader's.
 Host *
@@ -84,14 +78,11 @@ Match host fakepi
 Include extra.d/*
 """
 
-
 def starts(log: pathlib.Path) -> list[list[str]]:
-    """Every start of the stand-in, with its arguments."""
 
     if not log.exists():
         return []
     return [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines() if line]
-
 
 def shown(window, tab: str) -> str:
     said = window.run(
@@ -100,7 +91,6 @@ def shown(window, tab: str) -> str:
     )
     return said if isinstance(said, str) else ""
 
-
 def mark(window, tab: str) -> str:
     said = window.run(
         f"(() => {{ const one = document.querySelector('.pick[data-tab={json.dumps(tab)}] [data-mark]'); "
@@ -108,14 +98,11 @@ def mark(window, tab: str) -> str:
     )
     return said if isinstance(said, str) else ""
 
-
 def bar(window) -> bool:
     return window.run("!!document.querySelector('.terminal .offline button')") is True
 
-
 def reconnect(window) -> None:
     window.run("(() => { document.querySelector('.terminal .offline button').click(); return true })()")
-
 
 def refused(window, command: str, args: dict[str, object]) -> bool:
     said = window.run(
@@ -123,7 +110,6 @@ def refused(window, command: str, args: dict[str, object]) -> bool:
         ".then(() => 'taken', () => 'refused')"
     )
     return said == "refused"
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -148,8 +134,6 @@ def main() -> int:
 
     own = pathlib.Path(tempfile.mkdtemp(prefix="nib-remote-ssh-"))
     config = own / "config"
-    # Relative includes are read against `~/.ssh`, which is the reader's; this one is
-    # absolute, so nothing of theirs is read.
     config.write_text(CONFIG.replace("extra.d/*", str(own / "extra.d" / "*")), encoding="utf-8")
     (own / "extra.d").mkdir()
     (own / "extra.d" / "lab").write_text("Host labbox\n  HostName 127.0.0.2\n", encoding="utf-8")
@@ -182,7 +166,6 @@ def main() -> int:
         window = terminal.Window(port, secret)
         until(lambda: window.run("1 + 1") == 2, 30)
 
-        # -- What the crate reads --------------------------------------------------
         hosts = window.invoke("remote_hosts", {})
         listed = hosts.get("config", []) if isinstance(hosts, dict) else []
         ids = [one.get("id") for one in listed]
@@ -197,7 +180,6 @@ def main() -> int:
         bad = {"own": [{"id": "n-bad", "name": "Bad", "hostname": "-oProxyCommand=calc"}]}
         check(refused(window, "remote_keep", {"kept": bad}), "an address that reads as an option is refused")
 
-        # -- Put back by a restart: it waits --------------------------------------
         tab = window.open("ssh:fakepi", "fakepi", "remote-probe")
         say(f"remote tab {tab}")
         waiting = until(lambda: bar(window), 15)
@@ -222,7 +204,6 @@ def main() -> int:
         check(bool(until(lambda: any("you said: hello" in row for row in window.rows()), 10)), "keystrokes reach it")
         tabs.shoot(app.pid, shots / "remote-connected.png")
 
-        # -- Dropped -------------------------------------------------------------
         window.typed("drop\r")
         check(bool(until(lambda: bar(window), 10)), "a dropped connection puts the bar up")
         check(tab in window.open_tabs(), "and keeps the tab")
@@ -234,14 +215,10 @@ def main() -> int:
         check(bool(until(lambda: len(starts(log)) == 2, 15)), "Enter connects again")
         check(bool(until(lambda: not bar(window), 5)), "and the bar goes")
 
-        # -- exit ----------------------------------------------------------------
         until(lambda: window.rows() and window.rows()[-1].strip().endswith("$"), 10)
         window.typed("exit\r")
         check(bool(until(lambda: tab not in window.open_tabs(), 15)), "exit closes the tab")
 
-        # -- Ctrl+T, S, a digit -------------------------------------------------------
-        # The chord pressed and let go where the window reads it, then S on the dialog:
-        # the host picker, numbered, with the config's hosts in it.
         window.run(
             "(() => { const at = document.activeElement || document.body; "
             "for (const [type, key, ctrl] of [['keydown', 'Control', true], ['keydown', 't', true], ['keyup', 't', true]]) "
@@ -281,7 +258,6 @@ def main() -> int:
 
     print("every check passed")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

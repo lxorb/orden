@@ -1,32 +1,3 @@
-"""Every surface in five hard languages, at two widths, photographed and measured.
-
-A catalogue can be right word by word and still break the app: German compounds
-are twice the length of the English they replace, Japanese has no spaces to wrap
-at, Thai has none either and stacks its vowels above and below the line, Bengali
-hangs its glyphs off a headline and needs more height than Latin, and Arabic is
-written the other way round.
-
-So this opens the built app once per language per width, reaches every surface
-that has words on it, photographs each one, and asks the page itself what is
-clipped: an element whose `scrollWidth` is past its `clientWidth` while its
-`overflow-x` is not a scroller is a label that has been cut off. English at the
-same width is the baseline, so only what the *translation* broke is a failure -
-a name that was already elided in English is the design working.
-
-Arabic, Persian, Pashto and Urdu are also written the other way round, and the
-whole interface turns round with them: so this measures the mirroring too - which
-side the list is on, which way a chevron points, which side the status bar sits -
-and it holds one thing still while everything else turns, the note, which reads
-whichever way it was written and never whichever way the app does.
-
-Run it with the repository's own Chromium, against a build:
-
-    pnpm --filter @orden/desktop build
-    python scripts/locale-e2e.py
-
-`--languages de,ja` and `--widths desktop` narrow it while something is being
-fixed."""
-
 import argparse
 import functools
 import http.server
@@ -65,7 +36,6 @@ const greeting: string = 'hello'
 > A quote, which the reader sees rendered.
 """
 
-# The languages, and what each one is here to catch.
 LANGUAGES = {
     "en": "the baseline",
     "de": "long compounds",
@@ -76,30 +46,17 @@ LANGUAGES = {
     "bn": "tall glyphs",
 }
 
-# Which of them turn the interface round; the same four as direction.ts.
 RIGHT_TO_LEFT = {"ar", "fa", "ps", "ur"}
 
 WIDTHS = {"desktop": (1400, 900), "phone": (390, 844)}
 
-# The phone layout is not a width. lib/viewport.svelte.ts asks the machine first -
-# a handheld in the user agent and a finger on the glass - and only then the width,
-# so that a desktop window dragged narrow stays a desktop. A Chrome launched on
-# Windows says "Windows NT", which that code reads as a desktop however small the
-# window is, and the phone pass would then screenshot the desktop settings sheet
-# squeezed into 390 pixels and call every heading in it clipped.
 PHONE_AGENT = (
     "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15"
     " (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
 )
 
-# And which chord that platform uses. The app takes its modifier from the machine
-# too, so a pass pretending to be an iPhone has to ask for Cmd: Ctrl reaches
-# nothing there, and the settings sheet - the largest body of words in the app -
-# would go unphotographed while the drive reported it as reached.
 MOD = {"desktop": "Control", "phone": "Meta"}
 
-# What the app keeps its notes in, seeded before the first paint so a launch finds
-# a space with something in it. The same shape as the other drives use.
 SEED = """
 async ([path, text, language]) => {
   localStorage.setItem('nib:language', language)
@@ -142,8 +99,6 @@ async ([path, text, language]) => {
 }
 """
 
-# A note two devices rewrote while apart, held for the question, for whatever is in
-# front: the words are the note's and stay English; what is measured is the sheet's.
 HOLD = """
 () => {
   // Only a build a drive may steer carries it (`--mode drive`); a release has none.
@@ -160,10 +115,6 @@ HOLD = """
 }
 """
 
-# What the page says about itself: every element that is drawn, that is not a
-# scroller, and whose contents are wider than the room it has. A path made of the
-# nearest few tags and classes names it, so the same row in two languages is the
-# same row here.
 CLIPPED = """
 () => {
   const path = (element) => {
@@ -220,8 +171,6 @@ CLIPPED = """
 }
 """
 
-# Where right-to-left text has ended up in a left-to-right box. Nothing is fixed
-# here; the point is the list the next batch works from.
 BIDI = """
 () => {
   const rtl = /[\\u0590-\\u08FF\\uFB1D-\\uFDFF\\uFE70-\\uFEFF]/
@@ -250,11 +199,6 @@ BIDI = """
 }
 """
 
-
-# Which way round the app has actually laid itself out. Boxes rather than
-# stylesheets: where the list ended up, where the note ended up, where the bar at
-# the foot ended up, which way each mark that points along a line points, and -
-# the one thing that must not have turned - which way the note itself reads.
 MIRRORED = """
 () => {
   const page = document.documentElement
@@ -298,11 +242,7 @@ MIRRORED = """
 }
 """
 
-
 def mirroring(language: str, width: str, reading: dict) -> list[str]:
-    """What the layout got wrong about which way the app reads. The note is here
-    too, and is the one box that must not have turned: a Latin note in an Arabic
-    app still reads left to right."""
     faults: list[str] = []
     wanted = "rtl" if language in RIGHT_TO_LEFT else "ltr"
     if reading["dir"] != wanted:
@@ -312,8 +252,6 @@ def mirroring(language: str, width: str, reading: dict) -> list[str]:
     if not writing:
         faults.append("no writing surface on screen")
     elif writing["direction"] != "ltr":
-        # The seeded note is Latin and its Right to left mode is off, so it reads
-        # left to right in every interface there is.
         faults.append(f"the note followed the interface: {writing['direction']}")
 
     for mark in reading["marks"]:
@@ -324,8 +262,6 @@ def mirroring(language: str, width: str, reading: dict) -> list[str]:
     panels, note, status = reading["panels"], reading["note"], reading["status"]
     edge = reading["window"]
 
-    # At a desktop width the list and the note are two columns of one row, so which
-    # of them is against which edge is the whole of the mirroring.
     if width == "desktop" and panels and note and panels["width"] > 2:
         if wanted == "rtl" and not (panels["right"] >= edge - 2 and note["left"] <= 2):
             faults.append(f"the list is not against the right edge: {panels} in {edge}")
@@ -340,28 +276,22 @@ def mirroring(language: str, width: str, reading: dict) -> list[str]:
 
     return faults
 
-
 def chrome() -> pathlib.Path:
-    """The newest Chromium the repository's Playwright has fetched."""
     found = sorted(CHROME_HOME.glob("chromium-1*/chrome-win*/chrome.exe"))
     if not found:
         raise SystemExit(f"no Chromium under {CHROME_HOME}")
 
     return found[-1]
 
-
 def free_port() -> int:
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         return int(sock.getsockname()[1])
 
-
 class Quiet(http.server.SimpleHTTPRequestHandler):
-    """The build, served without a line per request."""
 
     def log_message(self, *_args):
         pass
-
 
 def serve() -> tuple[str, http.server.ThreadingHTTPServer]:
     port = free_port()
@@ -372,10 +302,7 @@ def serve() -> tuple[str, http.server.ThreadingHTTPServer]:
 
     return f"http://127.0.0.1:{port}/", server
 
-
 def open_note(page, mod: str) -> None:
-    """The seeded note, by the palette, which takes the name rather than a word
-    of the interface and so works in every language."""
     page.keyboard.press(f"{mod}+p")
     page.wait_for_timeout(300)
     page.keyboard.type("Sprachen")
@@ -383,16 +310,12 @@ def open_note(page, mod: str) -> None:
     page.keyboard.press("Enter")
     page.wait_for_timeout(1200)
 
-
 def away(page) -> None:
-    """Whatever is open, closed, without knowing what it was."""
     for _ in range(3):
         page.keyboard.press("Escape")
         page.wait_for_timeout(120)
 
-
 class Shots:
-    """One folder per language and width, and a reading taken with each picture."""
 
     def __init__(self, page, language: str, width: str) -> None:
         self.page = page
@@ -408,12 +331,7 @@ class Shots:
         self.page.screenshot(path=str(target))
         self.readings[name] = self.page.evaluate(CLIPPED)
 
-
 def walk(page, shots: Shots, mod: str) -> list[str]:
-    """Every surface with words on it, photographed and measured. Answers the
-    surfaces it could not reach, which on a phone is some of them by design.
-
-    `mod` is the chord the platform this pass pretends to be uses; see MOD."""
     missed: list[str] = []
 
     def reach(name: str, open_it) -> None:
@@ -427,11 +345,8 @@ def walk(page, shots: Shots, mod: str) -> list[str]:
         shots.take(name)
         away(page)
 
-    # The shell: the list, the note, the bar under it.
     shots.take("shell")
 
-    # The palette, both halves of it: the files it opens with, and the commands
-    # behind `>`, which is where most of the app's words are.
     def files():
         page.keyboard.press(f"{mod}+p")
         page.wait_for_timeout(400)
@@ -446,8 +361,6 @@ def walk(page, shots: Shots, mod: str) -> list[str]:
 
     reach("palette-commands", commands)
 
-    # The menus. Reached by position rather than by name, because the name is the
-    # thing being tested.
     groups = 0
 
     def menu():
@@ -467,8 +380,6 @@ def walk(page, shots: Shots, mod: str) -> list[str]:
 
         reach(f"menu-{index + 1}", group)
 
-    # Settings, and every pane of it. `Mod-,` rather than a row somebody has to
-    # read, and the panes by position for the same reason.
     panes = 0
 
     def settings():
@@ -488,9 +399,6 @@ def walk(page, shots: Shots, mod: str) -> list[str]:
 
         reach(f"settings-{index + 1}", pane)
 
-    # Sync v2's question over the note in front, and the toast a note that came back
-    # says, both from the fake engine a drivable build carries; see
-    # apps/desktop/test/e2e/diverged.py.
     def diverged():
         page.evaluate(HOLD)
         page.wait_for_selector("[role=dialog] .sides", timeout=4000)
@@ -508,17 +416,12 @@ def walk(page, shots: Shots, mod: str) -> list[str]:
 
     return missed
 
-
 def regressions(baseline: dict[str, dict], readings: dict[str, dict]) -> list[str]:
-    """What the translation broke, and only that: a row already cut off in English
-    is the design, a row cut off only here is the catalogue."""
     faults: list[str] = []
 
     for surface, reading in readings.items():
         was = baseline.get(surface, {})
 
-        # One row of a list clipped is the same fault as the twenty beside it, so
-        # each place is named once, with the worst overflow it had.
         for kind, said in (("clipped", "cut off by"), ("tall", "too tall by")):
             before = {one["where"] for one in was.get(kind, [])}
             worst: dict[str, tuple[int, str]] = {}
@@ -537,11 +440,7 @@ def regressions(baseline: dict[str, dict], readings: dict[str, dict]) -> list[st
 
     return faults
 
-
 def elisions(baseline: dict[str, dict], readings: dict[str, dict]) -> list[str]:
-    """Where this language asked for the ellipsis it was offered and English did
-    not. Not a failure - the element declared that its text may be cut - but the
-    shortlist of rows whose translation could stand to be shorter."""
     found: list[str] = []
 
     for surface, reading in readings.items():
@@ -559,11 +458,7 @@ def elisions(baseline: dict[str, dict], readings: dict[str, dict]) -> list[str]:
 
     return found
 
-
 def main() -> int:
-    # The report is Arabic, Thai and Bengali; a console in the system codepage
-    # cannot print it, and a drive that falls over on its own output has found
-    # nothing.
     sys.stdout.reconfigure(encoding="utf-8")
 
     parser = argparse.ArgumentParser()
@@ -600,8 +495,6 @@ def main() -> int:
                 for language in languages:
                     context = browser.new_context(
                         viewport={"width": size[0], "height": size[1]},
-                        # A phone is a phone: the app reads the machine, not the width
-                        # alone, and half its layout hangs off that. See PHONE_AGENT.
                         has_touch=width == "phone",
                         is_mobile=width == "phone",
                         **({"user_agent": PHONE_AGENT} if width == "phone" else {}),
@@ -622,9 +515,6 @@ def main() -> int:
 
                         shots = Shots(page, language, width)
 
-                        # The list beside the note, which is what mirrors: the
-                        # window opens with it shut on a phone, and a column of
-                        # nothing says nothing about which side it is on.
                         away(page)
                         if page.locator(".panels").evaluate("one => one.clientWidth") < 2:
                             page.click(".nib-glyph.toggle", timeout=4000)
@@ -656,10 +546,6 @@ def main() -> int:
                             if elided:
                                 report[f"{said}: elided where English fits"] = elided
 
-                        # With a pane of the interface's own words open: the
-                        # shell on its own is file names, which are whatever
-                        # somebody typed, and the marks that point along a line
-                        # are mostly in the settings.
                         page.keyboard.press(f"{MOD[width]}+Comma")
                         page.wait_for_timeout(700)
                         turned["marks"] = page.evaluate(MIRRORED)["marks"]
@@ -669,7 +555,6 @@ def main() -> int:
                             )
                         away(page)
 
-                        # Which way round the app laid itself out.
                         report[f"{said}: laid out"] = turned
                         turns = mirroring(language, width, turned)
                         report[f"{said}: mirroring"] = turns or "the way it reads"
@@ -698,7 +583,6 @@ def main() -> int:
 
     print(f"\nall good; the pictures and the report are in {OUT}")
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

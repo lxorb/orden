@@ -1,22 +1,3 @@
-"""#535: how long a large canvas holds the main thread, in Chromium, on the web build.
-
-The longest task and the sum of long tasks for opening a plane of N cards, Ctrl+A, one
-arrow-key nudge of everything, deleting everything and undoing that - framed whole, or
-with `near`, zoomed in to reading size first - and what the file says after each, so a
-step that did nothing cannot pass for a fast one. With a profile prefix, a CPU profile
-of each step beside it.
-
-Run against the web build under Vite's dev server, which serves the app's own modules
-by path so the drive can make a plane through them:
-
-    pnpm --filter @orden/desktop exec vite --port 5535 --strictPort --host 127.0.0.1
-    python3 scripts/canvas-large-timing.py <cards> [profile prefix] [near]
-
-with Playwright's Chromium (the drives ran it headless in Playwright's own image, on
-the host's network). A Vite that has reloaded a module since the page last loaded hands
-it out under another address, and the drive then makes its plane in a second copy of
-the workspace nobody sees: start the server again after an edit.
-"""
 import json, sys, time
 from playwright.sync_api import sync_playwright
 
@@ -39,7 +20,6 @@ MAKE = """async (n) => {
 }"""
 
 def settle(page, quiet=1.5, most=60):
-    """Waits until no long task for `quiet` seconds; answers the long tasks since."""
     start = time.time()
     seen = -1
     still = time.time()
@@ -79,7 +59,6 @@ with sync_playwright() as p:
     page.mouse.click(box["x"] + 5, box["y"] + box["height"] - 5)
     settle(page, 0.5)
     if "near" in sys.argv:
-        # Zoomed in to reading size over the middle of the plane, Ctrl and the wheel.
         page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
         scale = lambda: page.evaluate("Number(/scale\\(([0-9.e-]+)\\)/.exec(document.querySelector('.canvas .plane').style.transform)?.[1] ?? 0)")
         page.keyboard.down("Control")

@@ -1,48 +1,4 @@
 #!/usr/bin/env node
-/** Synthetic spaces for testing sync at the size and with the mess a real account has
- *  (docs/sync-v2.md section 12; the v2 readiness audit's test plan, 3.1 and 3.2).
- *
- *  Everything is decided by `--seed`, so two runs write the same bytes and a manifest
- *  written once can be checked against any copy later.
- *
- *    node scripts/v2-seed.mjs make <spaces dir> [--seed 1] [--scale 1] [--light] [--only test|big]
- *    node scripts/v2-seed.mjs churn <spaces dir> [--seed 1] [--scale 1]
- *    node scripts/v2-seed.mjs manifest <spaces dir> <out.json>
- *    node scripts/v2-seed.mjs check <manifest.json> <folder>...
- *    NIB_TOKEN=... NIB_API=http://127.0.0.1:8787 node scripts/v2-seed.mjs api "V2 Test"
- *
- *  `make` writes two spaces into a spaces folder (a probe's NIB_SPACES_DIR):
- *
- *  - "V2 Test": 3,000 notes in folders up to five deep, each with words of its own
- *    (`mk-<n>-<six letters>`), front matter on 300, tasks, tables, code fences, CJK and
- *    emoji, links between notes; 30 web notes in the real `.url` format; 10 canvases and
- *    2 page notes; 60 pictures from 2 KB to 14 MB, 3 PDFs and one 70 MB file (above the
- *    64 MB a file travels in one piece); 5 `.term` files; `CON.md`, `aux.md` and a path
- *    of 200 characters.
- *  - "Big": 12,000 small notes, the size `prepare` has to take in one request.
- *
- *  `--scale 0.01` makes a hundredth of every count for a quick run, and `--light` caps
- *  every binary file at 256 KB. The manifest (`<spaces dir>.manifest.json` unless
- *  `--manifest` says) holds a sha256 per path and every marker word.
- *
- *  `churn` is the history to make under v1 with the app running and syncing: 100
- *  renames, 20 folder moves (the first one holding 300 notes), 30 deletes, 300 edits
- *  each adding a marker (`ed-<n>-<six letters>`), and a line added to a day note. It
- *  writes the new markers into the manifest. A restore from Recently deleted is the
- *  app's, so it is not here.
- *
- *  `check` says whether every marker in a manifest is in at least one file under the
- *  folders given: a copy of the spaces, or an account backup (scripts/account-backup.mjs
- *  writes the notes, Recently deleted and every version's words as files).
- *
- *  `api` creates, through the account, the names no Windows disk can hold side by side:
- *  `Plan.md` beside `plan.md`, one name in NFC and in NFD, and folders ending in a dot
- *  and in a space. It needs a token that may write, and refuses the real service unless
- *  `--prod` is given: writing to production is the manager's call.
- *
- *  The `.term` files name a machine and a session that do not exist (a tab says the
- *  terminal is gone and offers a new one); terminals with a running shell are made in
- *  the app, which writes their files itself. */
 
 import { createHash } from 'node:crypto'
 import { existsSync } from 'node:fs'
@@ -53,18 +9,14 @@ import { deflateSync } from 'node:zlib'
 const TEST = 'V2 Test'
 const BIG = 'Big'
 
-/** A marker word: unique to one note, so finding it proves those words arrived. */
 const MARKER = /\b(?:mk|ed)-[a-z0-9]+-[a-z0-9]{6}\b/g
 
-/** Files the manifest reads as text, so it can find markers in them. */
 const TEXT = /\.(md|canvas|pages|url|term)$/i
 
 function say(words) {
   process.stdout.write(`${words}\n`)
 }
 
-/** A small generator with a seed: mulberry32 over an FNV-1a hash of the name, so each
- *  file's bytes depend on the seed and its own name and on nothing made before it. */
 function random(...parts) {
   let state = 0x811c9dc5
   for (const char of parts.join(':')) {
@@ -121,7 +73,6 @@ function sentence(rng, length) {
   return `${words[0][0].toUpperCase()}${words.join(' ').slice(1)}.`
 }
 
-/** Where note `n` of the test space lives: up to five folders deep. */
 function folderOf(rng) {
   const depth = rng.int(6)
   const parts = []
@@ -131,7 +82,6 @@ function folderOf(rng) {
   return parts
 }
 
-/** A note's words, with its marker and whichever features its number asks for. */
 function noteText(seed, n, title, total) {
   const rng = random(seed, 'note', n)
   const marker = `mk-${n}-${rng.word(6)}`
@@ -183,8 +133,6 @@ function noteText(seed, n, title, total) {
   return { text: lines.join('\n'), marker }
 }
 
-/** A PNG of noise, about `size` bytes: stored rather than compressed, so the size is
- *  what was asked and the bytes cannot be shrunk by anything on the way. */
 function png(rng, size) {
   const width = 256
   const height = Math.max(1, Math.round(size / (width * 3 + 1)))
@@ -226,7 +174,6 @@ function crc32(data) {
   return (c ^ 0xffffffff) >>> 0
 }
 
-/** A one-page PDF that says `words`, with a correct cross-reference table. */
 function pdf(words) {
   const stream = `BT /F1 18 Tf 72 720 Td (${words.replace(/[()\\]/g, '')}) Tj ET`
   const objects = [
@@ -253,7 +200,6 @@ function shortcut(url, title, when) {
   return `[InternetShortcut]\r\nURL=${url}\r\nTitle=${title}\r\nNib-Added=${when}\r\n`
 }
 
-/** A canvas the way the app writes one: JSON Canvas, tabs, a closing newline. */
 function canvas(rng, n) {
   const nodes = []
   const edges = []
@@ -282,7 +228,6 @@ function canvas(rng, n) {
   return `${JSON.stringify({ nodes, edges }, null, '\t')}\n`
 }
 
-/** A page note: the pages as labelled groups, and their paper under `nib.pages`. */
 function pages(rng, count) {
   const nodes = []
   const records = []
@@ -324,7 +269,6 @@ async function makeTest(root, seed, scale, light) {
     notes.push(path)
   }
 
-  // Names a Windows disk holds only with care, and a path at the account's long end.
   await put(space, 'Tricky/CON.md', noteText(seed, 'con', 'CON', total).text)
   await put(space, 'Tricky/aux.md', noteText(seed, 'aux', 'aux', total).text)
   await put(space, 'Tricky/Café ☕ & 100% «quotes».md', noteText(seed, 'cafe', 'Café', total).text)
@@ -350,7 +294,6 @@ async function makeTest(root, seed, scale, light) {
   for (let n = 0; n < scaled(2, scale); n++)
     await put(space, `Boards/Pages ${n}.pages`, pages(random(seed, 'pages', n), 3 + n))
 
-  // Pictures between 2 KB and 14 MB, spread evenly on a log scale.
   const cap = light ? 256 * 1024 : Infinity
   const pictures = scaled(60, scale)
   for (let n = 0; n < pictures; n++) {
@@ -407,7 +350,6 @@ async function makeBig(root, seed, scale) {
   return total
 }
 
-/** Every file under a folder, by its path inside it, forward-slashed. */
 async function walk(root, folder = root) {
   const found = []
   for (const entry of await readdir(folder, { withFileTypes: true })) {
@@ -419,7 +361,6 @@ async function walk(root, folder = root) {
   return found
 }
 
-/** A sha256 per path and every marker each text file holds. */
 async function manifest(root) {
   const files = {}
   const markers = {}
@@ -436,7 +377,6 @@ async function writeManifest(where, body) {
   await writeFile(where, `${JSON.stringify(body, null, 1)}\n`)
 }
 
-/** The history: renames, folder moves, deletes, edits and a day note, all by seed. */
 async function churn(root, seed, scale, manifestPath) {
   const space = join(root, TEST)
   const rng = random(seed, 'churn')
@@ -444,9 +384,6 @@ async function churn(root, seed, scale, manifestPath) {
   const log = []
   const markers = {}
 
-  // Folder moves first, while the folders are whole. The top folder holding the most
-  // notes goes first, so one move carries some hundreds of them; then folders one
-  // level down, from the other top folders.
   const before = (await walk(space)).filter(isNote)
   const held = new Map()
   for (const path of before.filter((one) => one.includes('/'))) {
@@ -527,7 +464,6 @@ async function churn(root, seed, scale, manifestPath) {
   )
 }
 
-/** Whether every marker of a manifest is somewhere in the text under these folders. */
 async function check(manifestPath, folders) {
   const { markers } = JSON.parse(await readFile(manifestPath, 'utf8'))
   const found = new Set()
@@ -549,7 +485,6 @@ async function check(manifestPath, folders) {
   if (missing.length) process.exitCode = 2
 }
 
-/** The names a disk cannot hold side by side, made through the account. */
 async function viaApi(spaceName, prod) {
   const api = (process.env.NIB_API || 'https://orden.so').replace(/\/$/, '')
   const token = process.env.NIB_TOKEN ?? ''

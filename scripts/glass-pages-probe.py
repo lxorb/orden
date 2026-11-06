@@ -1,27 +1,3 @@
-"""Glass following real pages in the packaged app, on Windows.
-
-The glass frame takes its colour from the page in front (lib/glass in the app; the
-crate reads the page through `web_tint`). This opens pages in web tabs of a probe
-build, through the app's own automation endpoint, and reads the result off the window's
-own picture: the colour the bar and the frame took, and the contrast of the quietest
-word on the title bar, the list and the bar against the pixels under it.
-
-The pages: six of the probe's own, served from the loopback (white, black, red with a
-`theme-color`, yellow with none, and issue #238's two: black named white, as YouTube is
-in the dark, and white named black, as react.dev is in the light), and some of the web's,
-dark and light, which a machine with no network simply reports as unread. A dark page's
-frame has to be dark and a light one's light; see `DARKNESS`.
-
-    pnpm --dir apps/desktop tauri build --no-bundle \\
-      --config '{"identifier":"ch.emilvinu.nib.probe.glass-redo","version":"99.0.0",
-                 "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-    python scripts/glass-pages-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
-      --identifier ch.emilvinu.nib.probe.glass-redo
-
-Off the screen and never in front, through probe_app.py's run_probe, like every probe.
-Pictures go to target/glass-pages-probe/.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -39,7 +15,6 @@ from PIL import Image
 HERE = pathlib.Path(__file__).resolve().parent
 SHOTS = HERE.parent / "target" / "glass-pages-probe"
 
-# The glass probe's own hands on the app: the endpoint, a command, a picture.
 _spec = importlib.util.spec_from_file_location("glass_probe", HERE / "glass-probe.py")
 assert _spec and _spec.loader
 glass = importlib.util.module_from_spec(_spec)
@@ -49,14 +24,12 @@ glass.SHOTS = SHOTS
 
 FLOOR = 4.5
 
-
 def site(ground: str, header: str, theme: str | None, title: str, ink: str) -> bytes:
     meta = f'<meta name="theme-color" content="{theme}">' if theme else ""
     return f"""<!doctype html><html><head><meta charset="utf-8">{meta}<title>{title}</title>
 <style>html,body{{margin:0;background:{ground};color:{ink};font:15px/1.5 system-ui,sans-serif}}
 header{{background:{header};padding:18px 24px;font-weight:600}}main{{padding:24px}}</style></head>
 <body><header>{title}</header><main><p>A page standing on a colour of its own.</p></main></body></html>""".encode()
-
 
 PAGES = {
     "white": site("#ffffff", "#ffffff", None, "White", "#111111"),
@@ -67,8 +40,6 @@ PAGES = {
     "lightstale": site("#ffffff", "#ffffff", "#23272f", "lightstale", "#111111"),
 }
 
-#: The web's, by a word their address says, and how dark each is in either scheme: a
-#: site that follows the scheme is named under both, one that keeps its own under one.
 WEB = {
     "google": "https://www.google.com/",
     "youtube": "https://www.youtube.com/",
@@ -77,20 +48,16 @@ WEB = {
     "twitch": "https://www.twitch.tv/",
     "wikipedia": "https://en.wikipedia.org/",
     "ycombinator": "https://news.ycombinator.com/",
-    # The owner's example in issue #238: a deep violet named over a gradient, both schemes.
     "proton": "https://account.proton.me/login",
 }
 
-#: Which pages must wear a dark frame, per scheme; the rest of `LIGHT_PAGES` a light one.
 DARKNESS = {
     "dark": {"black", "darkstale", "youtube", "github", "spotify", "twitch", "proton"},
     "light": {"black", "darkstale", "github", "spotify", "proton"},
 }
 LIGHT_PAGES = {"white", "lightstale", "wikipedia", "ycombinator"}
 
-#: Where black ink and white ink read equally well.
 MIDDLE = 0.179
-
 
 class Pages(http.server.BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802 - the standard library's name
@@ -109,9 +76,6 @@ class Pages(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_: object) -> None:
         pass
 
-
-#: Where to read each part of the frame, and the ink its quietest word is written in
-#: there, in CSS pixels; the picture is in device pixels.
 PARTS = """
 JSON.stringify((() => {
   const ink = (one) => {
@@ -148,33 +112,23 @@ JSON.stringify((() => {
 })())
 """
 
-
 def opened(held: dict, name: str) -> None:
     answer = glass.asked(held, "open", {"path": f"{name}.url"})
     if not answer.get("ok"):
         glass.wrong(f"{name} would not open: {answer.get('error')}")
 
-
-#: The edges of the band Mica can be, per scheme, painted where the material would be
-#: composited: a window that is not in front has no Mica in its own picture, so the
-#: frame's wash is read over these instead, as glass-probe.py reads it.
 BANDS = {"dark": ["#000000", "rgb(58,58,58)"], "light": ["rgb(192,192,192)", "#ffffff"]}
 
-
 def parts(held: dict, host: str) -> dict:
-    """The frame once the page in front is the one asked for and has said its colour."""
     until = time.monotonic() + 20
     said: dict = {}
     while time.monotonic() < until:
         said = json.loads(str(glass.ran(held, PARTS) or "{}"))
         if host in said.get("at", "").lower() and said.get("bar"):
-            # A page of a site seen before wears the site's last colour at once, and its
-            # own a moment after it has landed and been read.
             time.sleep(3.0)
             return json.loads(str(glass.ran(held, PARTS) or "{}"))
         time.sleep(0.4)
     return said
-
 
 def read(held: dict, app_pid: int, scheme: str, name: str, host: str) -> None:
     said = parts(held, host)
@@ -206,7 +160,6 @@ def read(held: dict, app_pid: int, scheme: str, name: str, host: str) -> None:
             else:
                 glass.wrong(line)
     glass.ran(held, glass.UNDESK)
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -244,8 +197,6 @@ def main() -> int:
                     glass.pressed(held, "theme:glass", settle=1.5)
                     for name in sites:
                         opened(held, name)
-                        # The address field says the site and the page's title, and each
-                        # page here names itself after its file.
                         read(held, app.pid, scheme, name, name)
             finally:
                 glass.ended(app)
@@ -259,7 +210,6 @@ def main() -> int:
         return 1
     print("\nglass took every page's colour, and every word on the frame reads")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

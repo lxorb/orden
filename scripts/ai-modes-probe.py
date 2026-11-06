@@ -1,35 +1,3 @@
-"""The AI panel's modes in the packaged app, against a provider of our own. Windows only.
-
-docs/ai-sidebar.md 4.4: Agent never stops to ask, and Approve asks before every change.
-What only the real crate can answer - the built-in grant, the policy, the questions it
-raises and the window's verbs that move and delete files - is driven here, with a fake
-OpenAI-compatible server that answers each message with the tool calls the step wants
-and then a word. No key, no network, no bill.
-
-* **Agent deletes and renames without a prompt.** One message, two calls: a note to
-  Recently deleted and another renamed. Both happen on the disk, and no question is ever
-  drawn in the thread.
-* **Undo restores.** The changes bar lists both; its Undo brings the deleted note back
-  and the renamed one back under its name.
-* **Approve shows the inline approval.** A delete waits in its row, with Approve, Deny
-  and Always, the note still on the disk; Approve and it goes.
-* **Deny tells the model no.** A rename denied leaves the note where it is, and the
-  model's next request carries the refusal.
-
-The words are put in the field and Enter said through the page's own script over the
-DevTools protocol, which presses nothing and brings nothing forward; see devtools.py.
-
-    npx vite build --mode drive                     # in apps/desktop
-    pnpm --dir apps/desktop tauri build --no-bundle \\
-      --config '{"identifier":"ch.emilvinu.nib.probe.aimodes","version":"99.0.0",
-                 "build":{"beforeBuildCommand":""},
-                 "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-    python scripts/ai-modes-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe
-
-This wipes the probe identifier's settings folder and webview profile at the start of
-every run. Screenshots go to `--shots` when given.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -52,19 +20,14 @@ failures: list[str] = []
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 
 def wrong(words: str) -> None:
     failures.append(words)
     print(f"  WRONG: {words}", flush=True)
 
-
 class Model(http.server.BaseHTTPRequestHandler):
-    """An OpenAI-compatible provider: each message is answered with the next calls on
-    `calls`, and the answer to those calls with one word."""
 
     calls: list[list[tuple[str, dict]]] = []
     seen: list[dict] = []
@@ -119,22 +82,17 @@ class Model(http.server.BaseHTTPRequestHandler):
         self.wfile.write(b"data: [DONE]\n\n")
         self.wfile.flush()
 
-
 def serve() -> tuple[http.server.ThreadingHTTPServer, str]:
     server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Model)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     return server, f"http://localhost:{server.server_address[1]}"
 
-
 def wiped(identifier: str) -> None:
-    """The probe's settings and webview profile, gone: a grant from an earlier run is not
-    this run's. Refused for a name that is not a probe's."""
 
     if ".probe." not in identifier:
         raise SystemExit(f"{identifier} is not a probe's identifier")
     for base in (os.environ["APPDATA"], os.environ["LOCALAPPDATA"]):
         shutil.rmtree(pathlib.Path(base) / identifier, ignore_errors=True)
-
 
 def until(test, what: str, seconds: float = 60.0):
     end = time.monotonic() + seconds
@@ -145,7 +103,6 @@ def until(test, what: str, seconds: float = 60.0):
         time.sleep(0.25)
     wrong(f"gave up waiting for {what}")
     return None
-
 
 def main_page() -> Session | None:
     web = pathlib.Path(os.environ["LOCALAPPDATA"]) / IDENTIFIER / "EBWebView"
@@ -164,7 +121,6 @@ def main_page() -> Session | None:
 
     page = until(found, "the app's page")
     return Session(page) if page else None
-
 
 SETUP = """
 (async (base) => {
@@ -185,17 +141,14 @@ SETUP = """
 
 FIELD = "document.querySelector('.ask textarea')"
 
-
 def key(page: Session, name: str, shift: bool = False) -> None:
     page.value(
         f"{FIELD}.dispatchEvent(new KeyboardEvent('keydown', "
         f"{{ key: {json.dumps(name)}, shiftKey: {json.dumps(shift)}, bubbles: true, cancelable: true }}))"
     )
 
-
 def mode(page: Session) -> str:
     return str(page.value("document.querySelector('.ask .mode')?.textContent?.trim() ?? ''"))
-
 
 def to_mode(page: Session, wanted: str) -> None:
     for _ in range(4):
@@ -206,7 +159,6 @@ def to_mode(page: Session, wanted: str) -> None:
     if mode(page) != wanted:
         wrong(f"Shift+Tab never reached {wanted}: the chip says {mode(page)!r}")
 
-
 def send(page: Session, words: str) -> None:
     page.value(
         f"(() => {{ const f = {FIELD}; f.value = {json.dumps(words)}; "
@@ -215,10 +167,8 @@ def send(page: Session, words: str) -> None:
     time.sleep(0.2)
     key(page, "Enter")
 
-
 def running(page: Session) -> bool:
     return bool(page.value("!!document.querySelector('.ask .go[aria-label=\"Stop\"]')"))
-
 
 def shot(page: Session, folder: pathlib.Path | None, name: str) -> None:
     if folder is None:
@@ -228,7 +178,6 @@ def shot(page: Session, folder: pathlib.Path | None, name: str) -> None:
     if data:
         folder.mkdir(parents=True, exist_ok=True)
         (folder / f"{name}.png").write_bytes(base64.b64decode(data))
-
 
 def agent_acts_and_undo_restores(page: Session, space: pathlib.Path, shots: pathlib.Path | None) -> None:
     print("Agent: a delete and a rename, nothing asked, and Undo", flush=True)
@@ -271,7 +220,6 @@ def agent_acts_and_undo_restores(page: Session, space: pathlib.Path, shots: path
     )
     if back:
         say("Undo brought the deleted note back and put the name back")
-
 
 def approve_asks_inline(page: Session, space: pathlib.Path, shots: pathlib.Path | None) -> None:
     print("Approve: the delete waits in its row", flush=True)
@@ -318,7 +266,6 @@ def approve_asks_inline(page: Session, space: pathlib.Path, shots: pathlib.Path 
     else:
         say("denied: the note stayed, and the model was told no")
 
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exe", required=True, type=pathlib.Path)
@@ -356,14 +303,12 @@ def main() -> int:
         page.close()
     finally:
         if not close_app(app):
-            # Ours, by its handle: never anything by name.
             app.kill()
         server.shutdown()
         shutil.rmtree(spaces, ignore_errors=True)
 
     print("FAILED" if failures else "OK", flush=True)
     return 1 if failures else 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

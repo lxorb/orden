@@ -1,32 +1,3 @@
-"""Does Settings > Import bring Firefox, Chrome and Safari in as spaces? Windows only.
-
-Issue #377: *"firefox and chrome import (based on tab groups and so on)"*. A profile is
-a space; a pinned tab one of the Essentials; a tab group a folder; Firefox's saved
-groups a folder of them; the bookmarks a folder called Bookmarks (docs/import.md).
-
-The probe writes browsers of its own - a Firefox with a `profiles.ini`, a session and a
-`places.sqlite`, and a Chrome with a `Local State`, a `Bookmarks` file and a session
-written command by command the way Chromium writes one, and a Safari: its binary
-`Bookmarks.plist` with a Reading List, and a `SafariTabs.db` laid out the way macOS
-15's Safari lays it out, which the crate reads wherever a probe puts it although only a
-Mac has a Safari of its own - and points the app at them
-with `NIB_BROWSERS_DIR`, so nobody's own browser is ever read. Then, in an app started
-off the screen through `run_probe`, it opens Settings > Import, presses Firefox,
-Chrome and Safari, and asks:
-
-* the rows: Safari, Firefox and Chrome there, and no row for a browser it did not write;
-* the spaces: Firefox, Chrome and Safari, each holding its tabs where the browser had them, the
-  groups as folders, the bookmarks under Bookmarks, the pinned tab an Essential;
-* a second import: nothing written twice.
-
-And pictures of the probe's own window: the Import pane and the Chrome space's list.
-
-    python scripts/browser-import-probe.py --exe path/to/nib.exe \\
-        --identifier ch.emilvinu.nib.probe.<name> --shots <folder>
-
-Build the exe as `scripts/probe_app.py` says.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -47,9 +18,7 @@ from probe_app import close_app
 
 HERE = pathlib.Path(__file__).resolve().parent
 
-#: What the app reads for where the browsers are; see src-tauri/src/firefox_profiles.rs.
 BROWSERS_DIR = "NIB_BROWSERS_DIR"
-
 
 def borrowed(name: str, file: str):
     spec = importlib.util.spec_from_file_location(name, HERE / file)
@@ -59,15 +28,11 @@ def borrowed(name: str, file: str):
     spec.loader.exec_module(module)
     return module
 
-
 zen = borrowed("zen", "zen-import-probe.py")
-
 
 def page(url: str, title: str, **more: object) -> dict[str, object]:
     return {"entries": [{"url": url, "title": title}], "index": 1, **more}
 
-
-#: Firefox's session: a pinned tab, a group of two, a tab on its own, a saved group.
 FIREFOX_SESSION = {
     "windows": [
         {
@@ -85,9 +50,7 @@ FIREFOX_SESSION = {
     ],
 }
 
-
 def places(at: pathlib.Path) -> None:
-    """A `places.sqlite` as far as the bookmarks go: Work on the toolbar, Recipes in the menu."""
 
     db = sqlite3.connect(at)
     db.executescript(
@@ -109,10 +72,7 @@ def places(at: pathlib.Path) -> None:
     db.commit()
     db.close()
 
-
 def snss(tabs: list[tuple[str, str, bool, bytes | None]], groups: dict[bytes, str]) -> bytes:
-    """A Chromium session, command by command (session_service_commands.cc): one window
-    of `(url, title, pinned, group token)` tabs, and each group's name."""
 
     def record(command: int, payload: bytes) -> bytes:
         return struct.pack("<HB", len(payload) + 1, command) + payload
@@ -146,7 +106,6 @@ def snss(tabs: list[tuple[str, str, bool, bytes | None]], groups: dict[bytes, st
         words = name.encode("utf-16-le")
         out.append(record(27, pickle(token + struct.pack("<i", len(name)) + padded(words) + struct.pack("<ii", 1, 0))))
     return b"".join(out)
-
 
 DOCS = bytes(range(16))
 
@@ -183,10 +142,7 @@ CHROME_BOOKMARKS = {
     "version": 1,
 }
 
-
 def safari_bookmarks() -> dict[str, object]:
-    """Bookmarks.plist as Safari writes it: lists and leaves under a root, the Favorites
-    bar, the menu and the Reading List among them."""
 
     def leaf(url: str, title: str, **more: object) -> dict[str, object]:
         return {"WebBookmarkType": "WebBookmarkTypeLeaf", "URLString": url,
@@ -203,9 +159,7 @@ def safari_bookmarks() -> dict[str, object]:
         folder("com.apple.ReadingList", [leaf("https://long.example.com/", "A long read")]),
     ])
 
-
 def safari_tabs(at: pathlib.Path) -> None:
-    """SafariTabs.db: a tab group of two, its pinned tab, and the window's own tab."""
 
     db = sqlite3.connect(at)
     db.executescript(
@@ -229,9 +183,7 @@ def safari_tabs(at: pathlib.Path) -> None:
     db.commit()
     db.close()
 
-
 def browsers_home() -> pathlib.Path:
-    """Browsers of the probe's own, said to the app in `NIB_BROWSERS_DIR`."""
 
     made = pathlib.Path(tempfile.mkdtemp(prefix="nib-browsers-probe-"))
     firefox = made / "firefox"
@@ -268,8 +220,6 @@ def browsers_home() -> pathlib.Path:
     atexit.register(shutil.rmtree, made, ignore_errors=True)
     return made
 
-
-#: Every file each space should hold, by space.
 EXPECTED = {
     "Firefox": [
         "Board.url",
@@ -298,7 +248,6 @@ EXPECTED = {
         "Reading List/A long read.url",
     ],
 }
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -358,7 +307,6 @@ def main() -> int:
         said["files"] = files = {name: zen.files_under(spaces / name) for name in EXPECTED}
         said["chrome"] = camera.photograph(args.identifier, (args.shots / "browser-import-chrome.png").resolve())
 
-        # Again: nothing is written twice.
         bring("Firefox")
         bring("Chrome")
         bring("Safari")
@@ -385,7 +333,6 @@ def main() -> int:
     )
     print("PASS" if good else "FAIL")
     return 0 if good else 1
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

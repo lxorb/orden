@@ -1,17 +1,4 @@
 #!/usr/bin/env python3
-"""A download stopped in a web tab stops, and the next one of the same name is a file of
-its own. #788: on Linux, Cancel only marked the list - the engine went on writing - and
-a second download of the same name was given the same file, which the first one's end
-then marked as done.
-
-Run with Orden up on scripts/wayland-launch.sh's page for it (DOWNLOAD=1). The tab is
-sent to a file that arrives slowly; once it is on its way it is stopped from the list,
-and the server has to see the engine hang up, the list has to say it stopped, and no
-file may be left. Then the same name again, quickly: it has to arrive whole, as a file of
-its own, and be the one the list says is done.
-
-    python3 scripts/download-drive.py <out folder> <downloads folder> <server log>
-"""
 
 import json
 import os
@@ -25,11 +12,9 @@ CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.
 WHOLE = 65536 * 200
 failures = []
 
-
 def fail(what):
     print(f"::error::{what}")
     failures.append(what)
-
 
 def endpoint():
     for _ in range(120):
@@ -42,9 +27,7 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
-
 
 def run(code):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
@@ -63,10 +46,8 @@ def run(code):
             time.sleep(1)
     return None
 
-
 def listed():
     return run("window.__TAURI_INTERNALS__.invoke('web_downloads')") or []
-
 
 def tab():
     for _ in range(60):
@@ -79,17 +60,14 @@ def tab():
         time.sleep(0.5)
     raise SystemExit("::error::there is no web tab")
 
-
 def send(to):
     run(f"window.__TAURI_INTERNALS__.invoke('web_navigate', {{ tab: {json.dumps(tab())}, url: {json.dumps(to)} }}).then(() => 'sent')")
-
 
 def served():
     try:
         return SERVED.read_text()
     except OSError:
         return ""
-
 
 time.sleep(2)
 send("http://127.0.0.1:8765/slow")

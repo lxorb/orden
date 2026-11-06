@@ -1,16 +1,4 @@
 #!/usr/bin/env python3
-"""Export PDF on Linux: `Page.printToPDF` in a window nobody sees writes a file with the
-note's pages and words in it, and nothing a page points at on the disk comes along. #483.
-
-Run with Orden up on scripts/wayland-launch.sh's page for it (EXPORTPDF=1), with
-`NIB_SPACES_DIR` set, which is where the file may go. The page is handed to the command the
-export calls (`print_pdf`), whose file chooser only names a path. It holds every way markup
-has of pulling in a file; an export's own page holds none of them (see
-apps/desktop/src/lib/export.test.ts), and this is the window's own answer should one get
-through. A secret is written beside the run for them to reach for.
-
-    python3 scripts/pdf-drive.py <out folder>
-"""
 
 import json
 import os
@@ -26,7 +14,6 @@ SPACES = Path(os.environ["NIB_SPACES_DIR"])
 SECRET_WORDS = "sekretbytes4711"
 WORDS = "the words of the note"
 
-
 def endpoint():
     for _ in range(120):
         try:
@@ -38,9 +25,7 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, KEY = endpoint()
-
 
 def run(code):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
@@ -59,10 +44,7 @@ def run(code):
             time.sleep(1)
     return None
 
-
 def printed(html, name):
-    """The page printed to a file of its own, its answer kept under the same name: a call
-    `run` had to send twice answers for that file and no later one."""
     target = SPACES / f"{name}.pdf"
     page = {"width": 8.27, "height": 11.69, "margin": 1, "landscape": False}
     args = json.dumps({"html": html, "output": str(target), "page": page})
@@ -87,7 +69,6 @@ def printed(html, name):
     pages = next(int(line.split()[1]) for line in info.splitlines() if line.startswith("Pages:"))
     print(f"pdf: {name}: {pages} pages, {target.stat().st_size} bytes")
     return pages, text
-
 
 secret = OUT / "pdf-secret.txt"
 secret.write_text(SECRET_WORDS + "\n")

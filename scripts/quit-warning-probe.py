@@ -32,9 +32,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 
 failures: list[str] = []
 
-
 def borrowed(name: str, file: str):
-    """Another probe's helpers, read from its file: the names have dashes in them."""
 
     spec = importlib.util.spec_from_file_location(name, HERE / file)
     if spec is None or spec.loader is None:
@@ -43,18 +41,14 @@ def borrowed(name: str, file: str):
     spec.loader.exec_module(module)
     return module
 
-
 tabs = borrowed("tabs", "new-tabs-probe.py")
 terminal = borrowed("terminal", "terminal-probe.py")
 until = terminal.until
 
-#: A program the shell starts and waits on, for ten minutes.
 BUSY = "ping -n 600 127.0.0.1 > $null"
-
 
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 
 def check(ok: bool, words: str) -> None:
     if ok:
@@ -63,9 +57,7 @@ def check(ok: bool, words: str) -> None:
         failures.append(words)
         say(f"FAIL {words}")
 
-
 def asking(window) -> dict | None:
-    """The question while it is up: its title and the names of its rows."""
 
     said = window.run(
         "(() => { const sheet = document.querySelector('[role=\"alertdialog\"]:not([inert])'); "
@@ -78,24 +70,19 @@ def asking(window) -> dict | None:
     except ValueError:
         return None
 
-
 def press(window, selector: str) -> None:
     window.run(
         f"(() => {{ document.querySelector('[role=\"alertdialog\"]:not([inert]) {selector}')?.click(); return true }})()"
     )
 
-
 def closed_by_hand(app) -> None:
-    """The window's close button, pressed: WM_CLOSE, without waiting for the end."""
 
     hwnd = main_window(app.pid)
     if hwnd:
         user32.PostMessageW(hwnd, WM_CLOSE, 0, 0)
 
-
 def active(window) -> str:
     return str(window.run("nib.workspace.activeTabId"))
-
 
 def launched(exe: pathlib.Path, environment: dict[str, str], identifier: str, unlike: int):
     app = run_probe(exe, env=environment)
@@ -105,7 +92,6 @@ def launched(exe: pathlib.Path, environment: dict[str, str], identifier: str, un
     window = terminal.Window(port, secret)
     until(lambda: window.run("1 + 1") == 2, 30)
     return app, window, port
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -148,7 +134,6 @@ def main() -> int:
         busy_name = window.run(f"nib.workspace.tabs.find((one) => one.id === {json.dumps(busy)})?.shown")
         say(f"busy tab {busy} is called {busy_name!r}, idle tab {idle}")
 
-        # The close button: the question, naming the busy one only.
         closed_by_hand(app)
         question = until(lambda: asking(window), 15)
         say(f"asked {question}")
@@ -157,13 +142,11 @@ def main() -> int:
             check(question["title"].startswith("Quit"), "as quitting, the window being the last")
             check(question["rows"] == [busy_name], "naming the busy terminal and not the idle one")
 
-        # Cancel: nothing stops.
         press(window, ".nib-button.is-quiet")
         time.sleep(1.5)
         check(app.poll() is None and asking(window) is None, "Cancel keeps the app running")
         check(window.open_tabs().count(busy) == 1 and idle in window.open_tabs(), "with both terminals")
 
-        # A row: the quit is off, and the busy terminal is in front.
         until(lambda: asking(window) is None, 10)
         closed_by_hand(app)
         until(lambda: asking(window), 15)
@@ -171,8 +154,6 @@ def main() -> int:
         check(bool(until(lambda: active(window) == busy, 5)), "pressing the row goes to its terminal")
         check(app.poll() is None, "and keeps the app running")
 
-        # Quit anyway: every shell goes with the app. Once the last question has gone: a
-        # sheet on its way out is inert, and answers nothing.
         until(lambda: asking(window) is None, 10)
         running = terminal.shells_of(app.pid)
         closed_by_hand(app)
@@ -189,7 +170,6 @@ def main() -> int:
         gone = until(lambda: not any(terminal.alive(pid) for pid, _name in running), 15)
         check(bool(gone), f"and every shell with it (were {running})")
 
-        # The next launch puts both back, and quits without a word: nothing runs yet.
         time.sleep(6.0)
         app, window, port = launched(exe, environment, args.identifier, port)
         back = window.run("JSON.stringify(nib.workspace.tabs.filter((one) => one.kind === 'terminal').length)")
@@ -216,7 +196,6 @@ def main() -> int:
 
     print("every check passed")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,48 +1,3 @@
-"""Zoom in a web tab, Chrome's way, on the packaged app. Windows only.
-
-Ctrl and the wheel over a page did nothing at all - `scripts/web-scroll-probe.py`
-measured no step - because the engine's own zoom is off in every webview unless it is
-asked for. See "Zoom" in docs/web-tabs.md for what it does now, and `web_page.rs` for why
-a zoom made in the page is set again as the app's own.
-
-What it drives, all on pages of its own served here, read back from the page's own
-`devicePixelRatio` through the engine's devtools and from the app's own state:
-
-* **the wheel** - a notch of Ctrl and the wheel posted to the page's own window, which
-  is exactly what `web_wheel.rs` posts for a real one, zooms the page one rung of
-  Chrome's ladder: 110 per cent, and a second notch 125. The dots' percentage says so
-  and the site keeps it.
-* **the same site** - another page of it opens at that size, rather than back at the
-  last size the app set, which is where the engine alone would put it.
-* **another site** - opens at a hundred per cent, and the first at its own size again.
-* **a site's own** - a page that answers Ctrl and the wheel itself (a map) hears the
-  notch, and the page is not zoomed.
-* **devtools** - the same notch handed to the engine through its devtools
-  (`Input.dispatchMouseEvent` with Ctrl) reaches the page's own handler with Ctrl held.
-  The engine takes a wheel from there as a touchpad's, in precise pixels, and zooms
-  nothing on one, as Chrome does; the number is written down, not judged.
-* **the keys in the app** - Ctrl+=, Ctrl and `+`, Ctrl+- and Ctrl+0, pressed on whatever
-  in the app has the keyboard with a page in the focused pane, zoom the page and leave
-  the size of a note's words alone.
-* **Ctrl+0 inside the page** - the ask the page's own script makes when nothing in the
-  page took Ctrl+0, made the same way through devtools with a user's gesture rather than
-  as a key: the page is at a hundred per cent and the site forgotten.
-
-What it does not drive: a real wheel, a real key inside the page, or a pinch. Real input
-goes to the window under the pointer on the screen, and a probe is never on the screen;
-a key pressed inside a page through devtools puts the probe's window in front (see
-scripts/web-page-probe.py). The Rust tests hold the hook's part (`web_wheel.rs`), the
-script's names (`web_opens.rs`) and the bar's keys (`bar-keys.test.ts`).
-
-    python scripts/web-zoom-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
-      --identifier ch.emilvinu.nib.probe.<name>
-
-The exe is a probe build that never updates, built as `scripts/probe_app.py` says;
-`run_probe` starts it off the screen and without the keyboard. A posted wheel is aimed by
-`WindowFromPoint`, so the window is moved to a corner of this drive's own - on no screen,
-which is checked before it moves.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -67,11 +22,8 @@ SPACE = "Web zoom probe"
 PORT_FROM = 23940
 PORT_TO = 23959
 
-#: This drive's own corner: off every screen, and away from every other probe's.
 CORNER = (-29000, -15000)
 
-#: A plain page tall enough to scroll, which says how large it is drawn. `/maps` answers
-#: Ctrl and the wheel itself, the way a map or a spreadsheet does, and counts them.
 PAGE = """<!doctype html><title>{title}</title>
 <body style="margin:0;font:16px system-ui"><div style="height:4000px">{title}</div>
 <script>
@@ -83,7 +35,6 @@ addEventListener('wheel', function (event) {{
 }}, {{ passive: false }})
 </script></body>"""
 
-
 def load(name: str, file: str):
     spec = importlib.util.spec_from_file_location(name, HERE / file)
     if spec is None or spec.loader is None:
@@ -92,11 +43,8 @@ def load(name: str, file: str):
     spec.loader.exec_module(module)
     return module
 
-
-#: The page probe's devtools client and launch, and the scroll probe's windows and wheel.
 page_probe = load("page_probe", "web-page-probe.py")
 scroll_probe = load("scroll_probe", "web-scroll-probe.py")
-
 
 def serve() -> int:
     class Handler(http.server.BaseHTTPRequestHandler):
@@ -125,9 +73,6 @@ def serve() -> int:
         return port
     raise SystemExit(f"no port free in {PORT_FROM}-{PORT_TO}")
 
-
-#: What every step below is written against, beside the page probe's own helpers: the
-#: size the dots say, the text size of a note, and a page along the tab's trail.
 PRELUDE = r"""
 const menuSize = async () => {
   document.querySelector('.webbar [aria-label="More"]').click()
@@ -149,10 +94,8 @@ const go = async (url, title) => {
 }
 """
 
-
 def step(app, body: str) -> dict[str, object]:
     return page_probe.step(app, PRELUDE + body)
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -176,8 +119,6 @@ def main() -> int:
     made.mkdir(parents=True)
     (made / "Idea.md").write_text("# Idea\n\nA note to open the space on.\n", encoding="utf-8")
     (made / "Page a.url").write_text(page_probe.shortcut(f"{home}/a", "Page a"), encoding="utf-8")
-    # The page probe's launch, with the scroll probe's switches: a devtools port, and a
-    # window off the screen drawn at full rate.
     page_probe.ENGINE_ARGS = scroll_probe.ENGINE_ARGS
     scroll_probe.CORNER = CORNER
 
@@ -286,8 +227,6 @@ def main() -> int:
             ("Ctrl+-", "{ key: '-', code: 'Minus', ctrlKey: true }"),
             ("Ctrl+0", "{ key: '0', code: 'Digit0', ctrlKey: true }"),
         ):
-            # On whatever has the keyboard, as a real key is: the window's own handlers run on
-            # its way down and back up, in the order a press meets them.
             press = f"key(document.activeElement ?? document.body, {init})"
             step(app, f"{press}; await new Promise((go) => setTimeout(go, 800)); return 1")
             keys[name] = state()
@@ -295,7 +234,6 @@ def main() -> int:
 
         notch()
         before = state()
-        # The very ask the page's script makes for Ctrl+0 nothing in the page took.
         url = page_probe.page_socket(args.identifier, "/a")
         tools = page_probe.Devtools(url)
         try:
@@ -356,7 +294,6 @@ def main() -> int:
     for one in wrong:
         print(f"WRONG: {one}")
     return 1 if wrong else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,21 +1,4 @@
 #!/usr/bin/env bash
-# Puts a release's .rpms into the dnf and zypper repository, as one suite, signed.
-#
-#   APT_KEY_FINGERPRINT=<the signing key, imported into gpg already> \
-#   RPM_BASE_URL=https://rpm.orden.so \
-#   APT_PUBLIC_KEY=<its public half; packaging/apt/orden-archive-keyring.asc if unset> \
-#     scripts/rpm-repo.sh <stable|unstable> <folder of .rpms> <folder to write into>
-#
-# The apt repository's bucket and key (scripts/apt-repo.sh), under `rpm/`, which is what
-# https://rpm.orden.so serves: `rpm.orden.so/<x>` is the bucket's `rpm/<x>`.
-#
-#   rpm/<suite>/orden-<version>-<release>.<arch>.rpm, each signed
-#   rpm/<suite>/repodata/repomd.xml, repomd.xml.asc and what repomd.xml names
-#   rpm/orden.repo (stable) or rpm/orden-unstable.repo, the file a reader drops in
-#   rpm/orden-archive-keyring.asc, which both .repo files name
-#
-# A suite holds one version, the newest, as an apt suite does; the other suite is never
-# touched. See packaging/linux.md, "dnf and zypper".
 set -euo pipefail
 
 suite=${1:?stable or unstable}
@@ -57,10 +40,7 @@ for rpm in "${found[@]}"; do
   echo "$suite: $file"
 done
 
-# Each package signed in its header, which dnf and zypper check against the key the
-# .repo file names (gpgcheck), and the index signed beside it (repo_gpgcheck).
 rpmsign --addsign --define "__gpg $(command -v gpg)" --define "_gpg_name $key" --define '_gpg_digest_algo sha256' "$dir"/*.rpm
-# And read back with the published key alone, as a reader's rpm reads them.
 keys=$(mktemp -d)
 trap 'rm -rf "$keys"' EXIT
 rpmkeys --dbpath "$keys" --import "$public"
@@ -72,7 +52,6 @@ for rpm in "$dir"/*.rpm; do
   }
 done
 
-# gzip rather than zstd, which an older libsolv or dnf cannot read.
 createrepo_c --quiet --no-database --general-compress-type=gz --checksum=sha256 "$dir"
 gpg --batch --yes --local-user "$key" --armor --detach-sign --output "$dir/repodata/repomd.xml.asc" "$dir/repodata/repomd.xml"
 

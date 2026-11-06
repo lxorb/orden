@@ -1,37 +1,3 @@
-"""Does every web tab wear its site's mark, and does its file keep it? Windows only.
-
-Emil, 2026-09-28: *"I don't always get the proper icon, e.g. sometimes whatsapp just
-doesn't get its icon and keeps at the default icon."*
-
-Each case below is a page served here that hands its mark over in one of the ways the
-web does, plus a few real sites. For each, the probe opens the note, waits, and reads
-three things: the picture the tab strip draws (and whether it loaded, and its size),
-the `Nib-Icon` the `.url` on disk now keeps, and what the file list's index says. A
-tab that shows the globe, a picture that did not load, or a file that keeps nothing
-is a failure.
-
-* **late** - the mark is added by a script after the page has loaded and is served
-  with `Cross-Origin-Resource-Policy: same-origin`, which is web.whatsapp.com's shape.
-* **svg**, **data**, **plain** (only `/favicon.ico`), **touch** (only an
-  `apple-touch-icon`), **sizes** (16, 32, 64 and 192 declared at once).
-* **cookie** - the mark answers 403 without a cookie the page itself set.
-* **redirect** - the note points at one origin, which redirects to another.
-* **worker** - the mark exists only in a service worker.
-* **swap** - from five seconds after it loads the mark is redrawn every half second,
-  an unread count's shape; the tab follows it and the file keeps the one the page
-  arrived with, which is green.
-* **worker** is reported and not judged: the engine does not fetch a mark through the
-  page's service worker, so it wears none, as Chrome's own tab does.
-
-    python scripts/web-favicons-probe.py --exe path/to/nib.exe \\
-        --identifier ch.emilvinu.nib.probe.<name> [--real]
-
-Build the exe as `scripts/probe_app.py` says. The switch drive's launch starts it through
-`run_probe`, off every screen and never taking the keyboard. Nothing here moves the
-pointer, presses a key or looks at the screen: the app is driven through its automation
-endpoint.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -51,9 +17,7 @@ from probe_app import close_app
 
 HERE = pathlib.Path(__file__).resolve().parent
 
-
 def borrowed():
-    """The switch probe's own helpers: the space, the launch, the endpoint, `eval`."""
 
     spec = importlib.util.spec_from_file_location("switch", HERE / "web-switch-probe.py")
     if spec is None or spec.loader is None:
@@ -62,9 +26,7 @@ def borrowed():
     spec.loader.exec_module(module)
     return module
 
-
 def png(size: int, rgb: tuple[int, int, int]) -> bytes:
-    """A square of one colour, as a PNG, with nothing but the standard library."""
 
     def chunk(kind: bytes, data: bytes) -> bytes:
         body = kind + data
@@ -79,17 +41,14 @@ def png(size: int, rgb: tuple[int, int, int]) -> bytes:
         + chunk(b"IEND", b"")
     )
 
-
 RED, GREEN, BLUE, GREY = (220, 40, 40), (40, 180, 60), (40, 80, 220), (128, 128, 128)
 SVG = b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#c3c"/></svg>'
-
 
 def html(title: str, head: str = "", body: str = "") -> bytes:
     return (
         f"<!doctype html><title>{title}</title>{head}"
         f'<body style="font:16px system-ui;padding:2rem"><h1>{title}</h1>{body}</body>'
     ).encode()
-
 
 LATE = """<script>
 addEventListener('load', () => setTimeout(() => {
@@ -123,9 +82,7 @@ self.addEventListener('fetch', (event) => {
   }
 })"""
 
-
 def routes(port: int) -> dict[str, tuple[int, dict[str, str], bytes]]:
-    """Every path the server answers: a status, headers and a body."""
 
     image = {"content-type": "image/png"}
     own = {**image, "cross-origin-resource-policy": "same-origin"}
@@ -175,7 +132,6 @@ def routes(port: int) -> dict[str, tuple[int, dict[str, str], bytes]]:
         ),
     }
 
-
 def serve(port: int) -> http.server.ThreadingHTTPServer:
     table = routes(port)
 
@@ -204,7 +160,6 @@ def serve(port: int) -> http.server.ThreadingHTTPServer:
     threading.Thread(target=made.serve_forever, daemon=True).start()
     return made
 
-
 LOCAL = ["late", "svg", "data", "plain", "touch", "sizes", "cookie", "redirect", "worker", "swap"]
 REAL = {
     "whatsapp": "https://web.whatsapp.com/",
@@ -214,7 +169,6 @@ REAL = {
     "google": "https://www.google.com/maps",
 }
 
-# What the tab strip draws for a tab, and how large the picture it holds is.
 DRAWN = """(async () => {
   const tab = nib.workspace.tabs.find((one) => one.name.startsWith('%s'))
   if (!tab) return JSON.stringify({ tab: null })
@@ -244,10 +198,7 @@ DRAWN = """(async () => {
   })
 })()"""
 
-
 def kept(space: pathlib.Path, name: str) -> str:
-    """The `Nib-Icon` the file now keeps, shortened, with the colour of its first pixel
-    where it is one of the plain squares this probe serves."""
 
     text = (space / f"{name}.url").read_text(encoding="utf-8")
     for line in text.splitlines():
@@ -255,7 +206,6 @@ def kept(space: pathlib.Path, name: str) -> str:
             value = line[len("nib-icon=") :]
             return f"{value[:30]}... ({len(value)} chars, first pixel {first_pixel(value)})"
     return ""
-
 
 def first_pixel(address: str) -> str | None:
     try:
@@ -266,7 +216,6 @@ def first_pixel(address: str) -> str | None:
         return ",".join(str(one) for one in rows[1:4])
     except (ValueError, IndexError, zlib.error, struct.error):
         return None
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -317,7 +266,6 @@ def main() -> int:
             time.sleep(args.wait)
             one = app.ask(DRAWN % name)
             if name == "swap":
-                # The tab follows the mark as the page redraws it.
                 seen = set()
                 for _ in range(20):
                     drawn = app.ask(DRAWN % name)
@@ -328,7 +276,6 @@ def main() -> int:
                     one["colours seen"] = sorted(str(colour) for colour in seen)
             said[name] = one
 
-        # The file is written a couple of seconds after the reading settles.
         time.sleep(4)
         for name in sites:
             entry = said.get(name)
@@ -340,9 +287,6 @@ def main() -> int:
         server.shutdown()
 
     print(json.dumps(said, indent=2))
-    # A tab whose document never read its file has nothing to write the mark into, and
-    # that is the tab's opening and not the mark: said apart, so it is not mistaken for
-    # this. Seen on both sides of the fix, for a different case each run.
     unread = [name for name, one in said.items() if isinstance(one, dict) and one.get("words") == 0]
     if unread:
         print(f"note: the document of {unread} never read its file")
@@ -360,7 +304,6 @@ def main() -> int:
         print(f"FAIL: no mark for {failed}")
         return 1
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

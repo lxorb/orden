@@ -1,33 +1,3 @@
-"""The web tab's bar and keys, driven in a native Windows build.
-
-What it asks, each against a page served on the loopback that counts its own requests:
-
-* **F6 inside the page** reaches the address field: the crate takes it before the page
-  sees it (`web_keys.rs`) and the bar reads it as Chrome's way out of the page.
-* **F5 inside the page** is the engine's own reload, which needs nothing of Orden's.
-* **F5, Ctrl+R and Ctrl+Shift+R in the app** reload the page in front and never
-  present anything; the last goes past the cache, which the request says
-  (`Cache-Control: no-cache`).
-* **The reload glyph is a cross while a page is coming**, and pressing it stops it.
-* **A right click on Back lists the pages behind**, nearest first, and a row two steps
-  back goes there in one jump with the trail kept whole (`web_trail`, `web_step`).
-* **Alt+Enter in the address field** opens a tab of its own and leaves this one.
-* **The middle button on reload** opens the page again in a tab behind.
-* **Ctrl+1 in the app** jumps to the first tab while a page is in front.
-
-Keys inside the page are posted to the engine's own window, which is what the keyboard
-would deliver: nothing touches the real keyboard or mouse, and the reader's window stays
-in front. Only keys with no modifier can be posted that way - the crate asks the keyboard
-whether Ctrl is down - so Ctrl+L and Alt+D inside a page are left to web_keys.rs's own
-tests.
-
-    python scripts/web-bar-probe.py --exe path/to/nib.exe --identifier ch.emilvinu.nib.probe.<name>
-
-Build the exe as `scripts/probe_app.py` says. The switch drive's launch starts it through
-`run_probe`, off the screen and without the keyboard, and nothing here moves it: the keys
-are posted and the rest is read out of the page.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -47,9 +17,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 VK_F5 = 0x74
 VK_F6 = 0x75
 
-
 def borrowed(name: str, file: str):
-    """Another drive's helpers, read from its file: the names have dashes in them."""
 
     spec = importlib.util.spec_from_file_location(name, HERE / file)
     if spec is None or spec.loader is None:
@@ -58,13 +26,10 @@ def borrowed(name: str, file: str):
     spec.loader.exec_module(module)
     return module
 
-
 switch = borrowed("switch", "web-switch-probe.py")
 cursor = borrowed("cursor", "web-cursor-probe.py")
 
-#: Every request the server has had: the path and the cache header it came with.
 HEARD: list[tuple[str, str]] = []
-
 
 def page(name: str) -> bytes:
     return f"""<!doctype html>
@@ -74,7 +39,6 @@ def page(name: str) -> bytes:
 <input id="field" style="margin:2rem">
 </body>
 """.encode()
-
 
 def serve(port: int) -> http.server.ThreadingHTTPServer:
     class Handler(http.server.BaseHTTPRequestHandler):
@@ -97,13 +61,10 @@ def serve(port: int) -> http.server.ThreadingHTTPServer:
     threading.Thread(target=made.serve_forever, daemon=True).start()
     return made
 
-
 def hits(path: str) -> list[str]:
     return [header for heard, header in HEARD if heard == path]
 
-
 def post_key(engine: int, vk: int) -> None:
-    """A key with no modifier, posted to an engine window with the focus on it."""
 
     assert cursor.user32 is not None
     cursor.focus(engine)
@@ -111,10 +72,7 @@ def post_key(engine: int, vk: int) -> None:
     cursor.user32.PostMessageW(cursor.wintypes.HWND(engine), cursor.WM_KEYUP, vk, 0xC000_0001)
     time.sleep(1.2)
 
-
 def key_in_app(app, key: str, code: str, **held: bool) -> object:
-    """A key pressed in the app's own page, with nothing in the page having the keyboard:
-    played on the window, which is where the app reads its keys."""
 
     init = {"key": key, "code": code, "bubbles": True, "cancelable": True}
     init.update({f"{name}Key": value for name, value in held.items()})
@@ -124,9 +82,7 @@ def key_in_app(app, key: str, code: str, **held: bool) -> object:
         " return JSON.stringify(true) })()"
     )
 
-
 def bar(app) -> object:
-    """What the reload glyph says it would do, and what has the keyboard."""
 
     return app.ask(
         """JSON.stringify({
@@ -135,7 +91,6 @@ def bar(app) -> object:
   presenting: !!document.querySelector('.deck, .present'),
 })"""
     )
-
 
 def invoke(app, command: str, args: dict[str, object]) -> object:
     return app.ask(
@@ -146,11 +101,9 @@ def invoke(app, command: str, args: dict[str, object]) -> object:
         + ")) } catch (error) { return JSON.stringify({ error: String(error) }) } })()"
     )
 
-
 def go(app, tab: str, url: str) -> None:
     invoke(app, "web_navigate", {"tab": tab, "url": url})
     time.sleep(2.5)
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -205,17 +158,14 @@ def main() -> int:
             raise SystemExit(f"expected the app's page and the site's, found {shown}")
         site = min(shown, key=lambda one: cursor.area(one[0]))[1]
 
-        # F6 inside the page: the keyboard leaves the page for the address field.
         post_key(site, VK_F6)
         said["F6 in the page: what has the keyboard"] = bar(app)
 
-        # F5 inside the page: the engine's own reload.
         before = len(hits("/a"))
         post_key(site, VK_F5)
         time.sleep(1)
         said["F5 in the page: requests"] = len(hits("/a")) - before
 
-        # F5, Ctrl+R, Ctrl+Shift+R and Ctrl+F5 in the app, with the page in front.
         for name, key, code, held in [
             ("F5", "F5", "F5", {}),
             ("Ctrl+R", "r", "KeyR", {"ctrl": True}),
@@ -229,7 +179,6 @@ def main() -> int:
             said[f"{name} in the app: requests, cache header"] = [len(fresh), fresh[-1:] or None]
         said["after the reloads"] = bar(app)
 
-        # The cross, and stopping.
         invoke(app, "web_navigate", {"tab": tab, "url": f"{base}/slow"})
         time.sleep(1)
         said["while /slow is coming"] = bar(app)
@@ -247,7 +196,6 @@ def main() -> int:
         )
         said["the page's own title then"] = switch.place(app, tab)
 
-        # The history under a held Back.
         for path in ("/b", "/c"):
             go(app, tab, f"{base}{path}")
         said["trail"] = invoke(app, "web_trail", {"tab": tab})
@@ -273,7 +221,6 @@ def main() -> int:
         time.sleep(3)
         said["trail after the second row"] = invoke(app, "web_trail", {"tab": tab})
 
-        # Alt+Enter in the address field.
         count = app.ask("JSON.stringify(nib.workspace.tabs.length)")
         app.ask(
             f"""(() => {{
@@ -299,7 +246,6 @@ def main() -> int:
             + "')?.address ?? null)"
         )
 
-        # The middle button on reload: the page again, behind.
         count = app.ask("JSON.stringify(nib.workspace.tabs.length)")
         app.ask(
             "(() => { document.querySelectorAll('.webbar .nib-glyph')[2]?.dispatchEvent("
@@ -313,7 +259,6 @@ def main() -> int:
             app.ask("JSON.stringify(nib.workspace.active?.address ?? null)"),
         ]
 
-        # Ctrl+1 with a page in front: the first tab along the strip.
         said["the strip"] = app.ask(
             "JSON.stringify(nib.workspace.tabsIn(nib.workspace.panes.focusedId)"
             ".map((one) => one.name))"
@@ -330,7 +275,6 @@ def main() -> int:
         print(f"{name}: {json.dumps(value)}")
 
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

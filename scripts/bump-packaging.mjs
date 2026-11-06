@@ -1,22 +1,4 @@
 #!/usr/bin/env node
-// Moves every in-repo package manifest to a released version: the version, the
-// URLs and the digests of the files each one ships, read off the release page.
-//
-//   node scripts/bump-packaging.mjs 0.15.0
-//   node scripts/bump-packaging.mjs edge [0.19.1-1088]
-//
-// The publishers in publish.yml and publish-linux.yml rewrite their copies in
-// flight anyway; this keeps the committed files on the release they describe, so
-// `nix run github:lxorb/orden?dir=packaging/nix` installs the current release and
-// validate-linux-packaging.yml checks what is really shipped. Run by
-// .github/workflows/packaging-bump.yml after every stable release.
-//
-// `edge` writes packaging/nix/edge.json alone, the .debs of the `edge` pre-release
-// that the flake's orden-unstable installs; release.yml runs it after every edge build.
-//
-// Every rewrite has to match exactly as often as it is written to: a manifest
-// whose shape moved fails here, loudly, instead of being left half on the old
-// version.
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -50,7 +32,6 @@ if (!edge && (release.draft || release.prerelease)) {
   throw new Error(`${tag} is not a stable release`)
 }
 
-// What the files are called there: `Orden-<version>-<platform>`.
 const asset = 'Orden'
 const version = edge
   ? (process.argv[3] ??
@@ -58,8 +39,6 @@ const version = edge
   : asked
 if (!version) throw new Error(`${tag}: no Linux .deb on the release`)
 
-// The digest GitHub computed when the file was uploaded, the same one the snap
-// is pinned to; nothing is downloaded here.
 const digest = (name) => {
   const found = release.assets.find((one) => one.name === name)
   const hex = /^sha256:([0-9a-f]{64})$/.exec(found?.digest ?? '')?.[1]
@@ -85,11 +64,8 @@ if (edge) {
   process.exit(0)
 }
 
-// What a URL naming some earlier release looks like, under either name it had.
 const OLD = String.raw`releases/download/v[0-9][^/'"]*/[A-Za-z]+-[0-9][^-]*`
 
-// Every file is rewritten in memory first and written only once all of them
-// matched, so a failure leaves the tree as it was.
 const pending = new Map()
 const edit = (path, rewrites) => {
   let text = pending.get(path) ?? readFileSync(join(ROOT, 'packaging', path), 'utf8')
@@ -102,14 +78,6 @@ const edit = (path, rewrites) => {
   pending.set(path, text)
 }
 
-// The flake holds two derivations now, the release out of the .deb and the
-// source-built orden-unstable, so `pname = ` and `version = ` each appear more
-// than once in it. Every rewrite below is anchored inside its `release = { ... }`
-// attrset, which is the only part of the file a release moves: the lookbehind
-// cannot cross that attrset's closing brace, so a pattern can never land on the
-// source build's own names. The counts stay at one apiece - a release that
-// matched the source build instead would be a silent wrong rewrite, and a flake
-// whose shape moved still throws here.
 const inRelease = (field) => new RegExp(String.raw`(?<=release = \{[^}]*?)(\s*${field} = )"[^"]*";`)
 
 const flake = readFileSync(join(ROOT, 'packaging/nix/flake.nix'), 'utf8')
@@ -153,7 +121,6 @@ edit('snap/snapcraft.yaml', [
   [/^(\s*- on arm64: )https:\/\/.*\.deb$/m, `$1${download}/${file('linux-arm64', '.deb')}`],
   [/(on amd64: sha256\/)[0-9a-f]{64}/, `$1${debX64}`],
   [/(on arm64: sha256\/)[0-9a-f]{64}/, `$1${debArm64}`],
-  // The one line snapcraft reads, which the snap workflow sets per architecture.
   [/^( *source-checksum: sha256\/)[0-9a-f]{64}$/m, `$1${debX64}`],
 ])
 
@@ -172,13 +139,10 @@ edit('chocolatey/orden.nuspec', [
   [/(orden@v)[0-9][^/]*/, `$1${version}`],
   [/(releases\/tag\/v)[0-9][^<]*</, `$1${version}<`],
 ])
-// `nib`, the name up to 0.15.0, is an empty package that depends on `orden`; publish.yml
-// pushes it as this version with the release's date after it.
 edit('chocolatey/nib.nuspec', [
   [/<version>[^<]*<\/version>/, `<version>${version}</version>`],
   [/(<dependency id="orden" version=")[^"]*"/, `$1${version}"`],
 ])
-// Each digest is the first one below the url it belongs to.
 edit('chocolatey/tools/chocolateyinstall.ps1', [
   ...['x64', 'arm64'].map((arch) => [
     new RegExp(

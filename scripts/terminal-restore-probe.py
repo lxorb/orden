@@ -35,9 +35,7 @@ SPACE = "Restore probe"
 
 failures: list[str] = []
 
-
 def borrowed(name: str, file: str):
-    """Another probe's helpers, read from its file: the names have dashes in them."""
 
     spec = importlib.util.spec_from_file_location(name, HERE / file)
     if spec is None or spec.loader is None:
@@ -46,15 +44,12 @@ def borrowed(name: str, file: str):
     spec.loader.exec_module(module)
     return module
 
-
 tabs = borrowed("tabs", "new-tabs-probe.py")
 terminal = borrowed("terminal", "terminal-probe.py")
 until = terminal.until
 
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 
 def check(ok: bool, words: str) -> None:
     if ok:
@@ -63,24 +58,18 @@ def check(ok: bool, words: str) -> None:
         failures.append(words)
         say(f"FAIL {words}")
 
-
 def strip(window) -> list[list[str]]:
-    """Every tab of the strip, in order: its kind and its name."""
 
     said = window.run("JSON.stringify(nib.workspace.tabs.map((one) => [one.kind, one.name]))")
     return json.loads(said) if isinstance(said, str) else []
 
-
 def histories(identifier: str) -> list[pathlib.Path]:
-    """Every history file the app keeps; see src-tauri/src/terminal/history.rs."""
 
     folder = tabs.local_dir(identifier) / "terminal"
     return sorted(folder.rglob("*.json")) if folder.exists() else []
 
-
 def holding(paths: list[pathlib.Path], words: str) -> list[pathlib.Path]:
     return [path for path in paths if words in path.read_text(encoding="utf-8", errors="replace")]
-
 
 def launched(exe: pathlib.Path, environment: dict[str, str], identifier: str, unlike: int):
     app = run_probe(exe, env=environment)
@@ -90,7 +79,6 @@ def launched(exe: pathlib.Path, environment: dict[str, str], identifier: str, un
     window = terminal.Window(port, secret)
     until(lambda: window.run("1 + 1") == 2, 30)
     return app, window, port
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -112,7 +100,6 @@ def main() -> int:
     (spaces / SPACE).mkdir(parents=True, exist_ok=True)
     (spaces / SPACE / "Before.md").write_text("# Before\n\nWords.\n", encoding="utf-8")
     (spaces / SPACE / "After.md").write_text("# After\n\nWords.\n", encoding="utf-8")
-    # Where the shell goes: outside every space, with a space in its name.
     here = pathlib.Path(tempfile.mkdtemp(prefix="nib restore here "))
     marker = f"nib-marker-{secrets.token_hex(4)}"
     say(f"spaces root {spaces}, shell goes to {here}, marker {marker}")
@@ -120,7 +107,6 @@ def main() -> int:
     tabs.wipe(args.identifier)
     environment = {**os.environ, "NIB_SPACES_DIR": str(spaces)}
 
-    # Twice: the first launch writes the file `eval` is turned on in; see new-tabs-probe.py.
     first = run_probe(exe, env=environment)
     was, _ = tabs.endpoint(args.identifier, 150)
     tabs.allow_eval(args.identifier)
@@ -132,7 +118,6 @@ def main() -> int:
     try:
         say(f"pid {app.pid}, endpoint {port}")
 
-        # A note, the terminal, a note: the terminal in the middle of the strip.
         root = window.run("nib.workspace.activeSpace ? nib.workspace.activeSpace.root : null")
         for name in ("Before.md", "After.md"):
             window.run(f"nib.workspace.openEntry({json.dumps(str(pathlib.Path(str(root)) / name))}).then(() => true)")
@@ -160,14 +145,11 @@ def main() -> int:
         window.typed(f"echo {marker}\r")
         check(bool(until(lambda: marker in window.rows(), 10)), "the marker is on the screen")
 
-        # Written down once the output rests, into the app's own folder and nowhere else.
         kept = until(lambda: holding(histories(args.identifier), marker), 10)
         check(bool(kept), f"its lines are written into the app's data folder ({kept})")
         leaked = [path for path in spaces.rglob("*") if path.is_file() and marker in path.read_text(errors="replace")]
         check(not leaked, f"and into no space ({leaked})")
 
-        # And a line printed the moment before the window goes, long before the output
-        # could rest: written as the window goes, which waits for it.
         last = f"{marker}-last"
         window.typed(f"echo {last}\r")
         check(bool(until(lambda: last in window.rows(), 5, 0.05)), "a last line is on the screen")
@@ -207,7 +189,6 @@ def main() -> int:
             check(str(window.spec(back).get("folder", "")).rstrip("\\") == str(here), "and so is the tab's")
             tabs.shoot(app.pid, shots / "terminal-restored.png")
 
-            # A narrower window: the pseudo console repaints, the history stays.
             hwnd = main_window(app.pid)
             box = wintypes.RECT()
             ctypes.WinDLL("user32").GetWindowRect(hwnd, ctypes.byref(box))
@@ -219,8 +200,6 @@ def main() -> int:
             check(last in history and marker in history, "and so is the history above it")
             tabs.shoot(app.pid, shots / "terminal-restored-narrow.png")
 
-            # Closing the tab takes its file with it; Reopen closed tab brings the lines back
-            # from memory, and they are written down again once the new shell has spoken.
             running = terminal.shells_of(app.pid)
             window.run(f"nib.workspace.close({json.dumps(back)})")
             gone = until(lambda: not holding(histories(args.identifier), marker), 10)
@@ -253,7 +232,6 @@ def main() -> int:
 
     print("every check passed")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,31 +1,4 @@
 #!/usr/bin/env python3
-"""What #418 asked of Orden on Linux, looked at and measured, the same way on any build.
-
-Run by scripts/wayland-launch.sh with CHECK=1, once Orden's window is up under the
-headless sway it started, on the drive's page of one colour, with the compositor's own
-pointer and keyboard (scripts/wayland-pointer.py). The same script runs against the CEF
-build and against the last WebKitGTK one, on the same runner, so each number has the
-other beside it. Nothing here reaches into the app's insides: the window's own page is
-asked through the app's endpoint (`eval`), and everything else is looked at.
-
-  launch     the window up, and a picture of it.
-  buttons    each button with words on it in the window, and how far its ink sits from
-             the middle: WebKitGTK drew the words high in their buttons.
-  search     Settings' search typed into, a key at a time: from each key to the results
-             changed and drawn, and the frames the window drew meanwhile.
-  ctrl-tab   Ctrl+Tab pressed with the keyboard in the window's own page, and then in a
-             web tab's page: the tab strip has to move on both times.
-  switch     a web tab chosen in the strip, photographed as fast as the compositor lets:
-             the page has to be where its hole is in every picture it is in at all
-             (WebKitGTK drew it elsewhere for a few frames first).
-  video      a page of three videos - VP9 and Opus, AV1 and Opus, H.264 and AAC - and
-             which of them played. The standard CEF build has the open codecs and not
-             H.264 or AAC.
-
-Everything goes to <out>/418.json, with pictures beside it.
-
-    python3 scripts/wayland-418.py <out folder> <app pid>
-"""
 
 import json
 import os
@@ -47,10 +20,8 @@ POINTER = OUT / "pointer.fifo"
 SITE = "http://127.0.0.1:8765"
 found = {}
 
-# evdev codes.
 TAB, COMMA, BACKSPACE = 15, 51, 14
 LETTERS = {"f": 33, "o": 24, "n": 49, "t": 20, "h": 35, "e": 18, "m": 50}
-
 
 def endpoint():
     for _ in range(120):
@@ -63,12 +34,9 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
 
-
 def run(code):
-    """`code` run in the window's page, and what it came to."""
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
     asked = urllib.request.Request(
         f"http://127.0.0.1:{PORT}/",
@@ -90,10 +58,8 @@ def run(code):
         return None
     return said.get("value")
 
-
 def sway(*words):
     return json.loads(subprocess.check_output(["swaymsg", "-r", *words]))
-
 
 def window_node():
     def walk(node):
@@ -108,7 +74,6 @@ def window_node():
     )
     return every[-1] if every else None
 
-
 def output_of_window():
     def walk(node, output):
         if node.get("type") == "output":
@@ -121,21 +86,16 @@ def output_of_window():
     name = next(walk(sway("-t", "get_tree"), None), None)
     return next(one for one in sway("-t", "get_outputs") if one["name"] == name)
 
-
 def tell(line):
     with open(POINTER, "w") as pointer:
         pointer.write(line + "\n")
 
-
 def click(x, y):
-    """A press of the compositor's pointer at `x`, `y` of the window, in its own pixels."""
     at = window_node()["rect"]
     tell(f"move {at['x'] + x} {at['y'] + y}\nclick")
     time.sleep(0.3)
 
-
 def shoot(name):
-    """The window's output, in its own pixels, and the scale and origin to read it with."""
     output = output_of_window()
     node = window_node()
     scale = output["scale"]
@@ -146,7 +106,6 @@ def shoot(name):
         node["rect"]["y"] - output["rect"]["y"],
     )
     return path, scale, origin
-
 
 def tabs():
     return (
@@ -159,10 +118,8 @@ def tabs():
         or []
     )
 
-
 def chosen():
     return next((one["id"] for one in tabs() if one["chosen"]), None)
-
 
 def choose(tab):
     click(tab["x"], tab["y"])
@@ -171,7 +128,6 @@ def choose(tab):
         if chosen() == tab["id"]:
             return True
     return False
-
 
 def hole():
     for _ in range(60):
@@ -184,7 +140,6 @@ def hole():
         time.sleep(0.5)
     return None
 
-
 def settled():
     seen, same = None, 0
     for _ in range(40):
@@ -195,11 +150,9 @@ def settled():
         seen = now
         time.sleep(1)
 
-
 def is_page(rgb):
     red, green, blue = rgb[:3]
     return red > 230 and blue > 230 and green < 40
-
 
 def launch():
     path, _, _ = shoot("launch")
@@ -211,10 +164,7 @@ def launch():
     }
     print(f"launch: {found['launch']}")
 
-
 def ink_rows(image, box, scale):
-    """The first and last row of ink inside `box` (the window's pixels) of a picture: the
-    pixels far from the button's own colour, read off its inside edge."""
     pixels = image.load()
     width, height = image.size
     left, top, right, bottom = (int(round(v * scale)) for v in box)
@@ -239,7 +189,6 @@ def ink_rows(image, box, scale):
     if not rows:
         return None
     return rows[0], rows[-1], top, bottom
-
 
 def buttons(where):
     listed = run(
@@ -273,7 +222,6 @@ def buttons(where):
                 **one,
                 "above": round(above, 1),
                 "below": round(below, 1),
-                # Positive: the ink sits high in its button.
                 "high_by": round((below - above) / 2, 1),
             }
         )
@@ -294,7 +242,6 @@ def buttons(where):
     }
     print(f"buttons ({where}): median {found[f'buttons-{where}']['median_high_by_px']} px high, {len(measured)} buttons")
 
-
 def settings_open():
     if run("!!document.querySelector('.nib-field.search input')"):
         return True
@@ -312,7 +259,6 @@ def settings_open():
         if run("!!document.querySelector('.nib-field.search input')"):
             return True
     return False
-
 
 SEARCH_SETUP = """
 const input = document.querySelector('.nib-field.search input')
@@ -334,8 +280,6 @@ new MutationObserver(() => {
 return document.activeElement === input
 """
 
-# The same search typed by the page itself, a value at a time: what Svelte, the layout
-# and the engine's next two frames cost, with nothing of the keyboard's path in it.
 SEARCH_SET = """
 const input = document.querySelector('.nib-field.search input')
 const twoFrames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
@@ -356,7 +300,6 @@ m.on = false
 return { keys: m.keys, frames: m.frames }
 """
 
-
 def frame_stats(frames):
     frames = sorted(frames[2:])
     if not frames:
@@ -375,14 +318,12 @@ def frame_stats(frames):
         "over_50ms": sum(1 for one in frames if one > 50),
     }
 
-
 def search():
     if not settings_open():
         found["search"] = {"error": "Settings did not open"}
         print("::warning::Settings did not open")
         return
     time.sleep(1.0)
-    # Clicked into, as a hand does, so the keyboard is the field's whatever had it.
     field = run(
         "(() => { const r = document.querySelector('.nib-field.search input').getBoundingClientRect();"
         " return { x: r.x + r.width / 2, y: r.y + r.height / 2 } })()"
@@ -390,7 +331,6 @@ def search():
     if isinstance(field, dict):
         click(field["x"], field["y"])
     focused = run(SEARCH_SETUP)
-    # Idle first, for a second, so the frames typed through are told from the ones at rest.
     time.sleep(1.0)
     for word in ["font", "theme"]:
         for letter in word:
@@ -428,9 +368,8 @@ def search():
         "frames": frame_stats(read.get("frames", [])),
     }
     print(f"search: keys {found['search']['key_to_drawn_ms']} set {found['search']['value_set_to_drawn_ms']} frames {found['search']['frames']}")
-    tell("key 1")  # Escape
+    tell("key 1")
     time.sleep(0.8)
-
 
 def ctrl_tab():
     result = {}
@@ -441,7 +380,6 @@ def ctrl_tab():
         found["ctrl-tab"] = {"error": f"two tabs wanted, the strip has {every}"}
         print("::warning::no two tabs for Ctrl+Tab")
         return
-    # In the window's own page.
     choose(other)
     time.sleep(0.5)
     before = chosen()
@@ -450,7 +388,6 @@ def ctrl_tab():
     after = chosen()
     shoot("ctrl-tab-from-app")
     result["from_the_window"] = {"before": before, "after": after, "moved": before != after}
-    # In the web tab's page: chosen, clicked into, then Ctrl+Tab.
     choose(web)
     time.sleep(1.0)
     pane = hole()
@@ -465,7 +402,6 @@ def ctrl_tab():
         result["from_a_web_page"] = {"before": before, "after": after, "moved": before != after}
     found["ctrl-tab"] = result
     print(f"ctrl-tab: {result}")
-
 
 def switch():
     every = tabs()
@@ -527,7 +463,6 @@ def switch():
             state = "in place" if off <= 4 else "misplaced"
         seen.append({"ms": round((at - clicked) * 1000), "state": state, "box": box, "picture": path.name})
     misplaced = [one for one in seen if one["state"] == "misplaced"]
-    # Keep the pictures worth looking at: the misplaced ones and the first in place.
     kept = {one["picture"] for one in misplaced}
     kept |= {next((one["picture"] for one in seen if one["state"] == "in place"), "")}
     for _, path in frames:
@@ -542,7 +477,6 @@ def switch():
         "since_start_ms": round((clicked - began) * 1000),
     }
     print(f"switch: {len(seen)} pictures, {len(misplaced)} misplaced")
-
 
 def video():
     command = os.environ.get("APP_COMMAND")
@@ -568,12 +502,11 @@ def video():
     found["video"] = {"reports": said}
     print(f"video: {said}")
 
-
 settled()
 for step in (launch, lambda: buttons("window"), search, ctrl_tab, switch, video):
     try:
         step()
-    except Exception as error:  # a step that broke is a row, not the end of the run
+    except Exception as error:
         print(f"::warning::{getattr(step, '__name__', 'step')} broke: {error}")
         found.setdefault("broken", []).append(f"{getattr(step, '__name__', 'step')}: {error}")
 if settings_open():

@@ -1,45 +1,3 @@
-"""What every drive of a native probe build shares: the build it may launch, and the one
-window of it that is the app's.
-
-Not a drive. Imported by name, which works because Python puts a script's own folder
-first on the path: `from probe_app import run_probe, main_window, close_app`.
-
-**A probe is never in front of anybody.** Somebody is working at the machine a drive runs
-on, and a window that pops up in their face - or takes their typing - is a drive that
-interrupted them. So every probe is started by `run_probe`, which sets `NIB_OFF_SCREEN`:
-the app then builds each of its windows hidden, sends it off the screen, and shows it
-there without bringing it forward (see `built_away` in src-tauri/src/placement.rs). And
-`run_probe` checks: from the moment the process exists it watches every window of the
-app **and of every process under it** - the engine's browser, its renderers, its GPU
-process - and one that is ever visible on a screen, or ever the window in front, ends
-the whole family and the drive at once. The engine's own because a `<select>`'s list, a
-date picker, a dialog or a popup a page raises is a window of an engine process, not of
-the app, and the app's own watch never saw one (docs/agent-native.md 6.5). A drive that
-wants the window a size of its own gives it one with `sized`, which leaves it where it is.
-
-**A probe build never updates.** A release build looks for a new version as it starts,
-downloads it, and runs the installer as it closes - over the reader's own Orden, which is
-what probes that ignored this did on 2026-09-27. So a probe is built as a version no
-release passes, looking for updates on a loopback port nothing listens on:
-
-    pnpm --dir apps/desktop tauri build --no-bundle \\
-      --config '{"identifier":"ch.emilvinu.nib.probe.<name>","version":"99.0.0",
-                 "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-
-An `http://` endpoint would not do: the updater refuses it, and the app exits 1. The
-version is what `refuse_updating` reads back off the exe, so a build made without the
-two is never launched.
-
-**The app's window, and only that.** tao keeps a window of its own on the event loop's
-thread, visible to `EnumWindows` though never drawn. Closing it breaks the loop, and
-the app then never quits; so closing every window the process owns only ever looked
-like a quit while the updater's installer was there to kill the app.
-
-**What the watch decides is a pure function** (`in_view`, over a `Look`), so it is tested
-with windows and screens that are only numbers - apps/desktop/test/agents/watch_test.py -
-and never by putting a real window on a screen to see whether it is caught.
-"""
-
 from __future__ import annotations
 
 import ctypes
@@ -55,67 +13,40 @@ from ctypes import wintypes
 from dataclasses import dataclass
 from typing import Any
 
-#: The version a probe is built as; see the module's own docs.
 PROBE_VERSION = "99.0.0"
 
-#: What a window is sent when its close button is pressed.
 WM_CLOSE = 0x0010
 
-#: The class of every window Tauri makes. tao's event-loop window has one of its own.
 APP_CLASS = "Tauri Window"
 
-#: What the app reads to open every window off the screen; see src-tauri/src/placement.rs.
 OFF_SCREEN = "NIB_OFF_SCREEN"
 
-#: How often the watch looks, in seconds: inside one frame of a 240 Hz screen, and slow
-#: enough that walking every window on the desktop leaves the machine a core.
 LOOK_EVERY = 0.004
 
-#: How often the watch asks again which processes are the app's. An engine process is
-#: started well before it can have a window, so this is not a gap a window fits through.
 FAMILY_EVERY = 0.25
 
-#: How long the family is still watched after the app has ended: an engine process can
-#: outlive its host by a moment, and a window it shows in that moment is still somebody's.
 AFTERLIFE = 2.0
 
-#: The exit code of a drive the watch ended.
 IN_VIEW_EXIT = 3
 
-#: `STARTUPINFO`'s say in the first window a process shows: without coming forward,
-#: which holds even for a build from before the app did so itself.
 STARTF_USESHOWWINDOW = 0x0001
 SW_SHOWNOACTIVATE = 4
 
-#: `SetErrorMode`: none of the system's own boxes - "has stopped working", "there is no
-#: disk in the drive", "cannot find the file" - for the probe or anything under it. The
-#: system raises them, not the probe, so no hook inside the app can hold them off the
-#: screen; and a process starts with the error mode of the one that started it, which is
-#: the drive. What Chromium's own test runner sets (base/test/test_suite.cc).
 SEM_FAILCRITICALERRORS = 0x0001
 SEM_NOGPFAULTERRORBOX = 0x0002
 SEM_NOOPENFILEERRORBOX = 0x8000
 NO_ERROR_BOXES = SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX
 
-#: `SetWindowPos`: keep the place, the order and the keyboard.
 SWP_NOMOVE = 0x0002
 SWP_NOZORDER = 0x0004
 SWP_NOACTIVATE = 0x0010
 
-#: Windows a process keeps for messages alone: visible by their style and 13 pixels
-#: square in the corner of the primary screen, and never drawn. tao's event loop has one,
-#: winit's has its twin, and the single instance plugin one named after the identifier
-#: with `-sic` on the end.
 UNDRAWN = frozenset({"Tao Thread Event Target", "Winit Thread Event Target"})
 UNDRAWN_SUFFIX = "-sic"
 
-#: Every rectangle here is in the screen's own pixels, whatever the scale of the screen,
-#: because the watch thread says it can read them that way.
 DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = -4
 
-#: `CreateToolhelp32Snapshot`: every process, with its parent.
 TH32CS_SNAPPROCESS = 0x00000002
-#: `OpenProcess`: enough to ask when a process started, and to end one.
 PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
 PROCESS_TERMINATE = 0x0001
 INVALID_HANDLE_VALUE = ctypes.c_void_p(-1).value
@@ -144,10 +75,7 @@ if user32 is not None and kernel32 is not None:
     kernel32.SetErrorMode.restype = wintypes.UINT
     kernel32.GetProcessTimes.argtypes = [wintypes.HANDLE, *[ctypes.POINTER(wintypes.FILETIME)] * 4]
 
-
 def version_of(exe: pathlib.Path) -> str:
-    """The version the exe was built as, off its own version resource - which is the
-    configuration's `version`, `--config` included."""
 
     library = ctypes.WinDLL("version")
     library.GetFileVersionInfoSizeW.argtypes = [wintypes.LPCWSTR, wintypes.LPDWORD]
@@ -174,14 +102,10 @@ def version_of(exe: pathlib.Path) -> str:
     length = wintypes.UINT()
     if not library.VerQueryValueW(data, "\\", ctypes.byref(fixed), ctypes.byref(length)):
         return ""
-    # VS_FIXEDFILEINFO: a signature, a structure version, then the file version's two
-    # halves, major.minor and patch.build.
     info = ctypes.cast(fixed, ctypes.POINTER(wintypes.DWORD * 4)).contents
     return f"{info[2] >> 16}.{info[2] & 0xFFFF}.{info[3] >> 16}"
 
-
 def refuse_updating(exe: pathlib.Path) -> None:
-    """Stops the drive before it launches a build that would update itself."""
 
     found = version_of(exe)
     if found != PROBE_VERSION:
@@ -190,12 +114,7 @@ def refuse_updating(exe: pathlib.Path) -> None:
             "real update and install it on close. Build it as scripts/probe_app.py says."
         )
 
-
 def identifier_of(exe: pathlib.Path, given: str | None = None) -> str:
-    """The identifier a probe build was made under, which names its endpoint file and its
-    webview's store: the one the drive was told with `--identifier`, as every probe is,
-    or a `nib-probe-identifier.json` beside the exe for a build that wrote one. Nothing in
-    the repository writes that file, so a drive that only read it could not be run."""
 
     if given:
         return given
@@ -204,9 +123,7 @@ def identifier_of(exe: pathlib.Path, given: str | None = None) -> str:
         raise SystemExit(f"which identifier was {exe} built under? pass --identifier")
     return str(json.loads(beside.read_text(encoding="utf-8"))["identifier"])
 
-
 def main_window(pid: int) -> int:
-    """The app's own window in this process, or 0 while it has none on screen."""
 
     assert user32 is not None
     found: list[int] = []
@@ -227,13 +144,7 @@ def main_window(pid: int) -> int:
     user32.EnumWindows(kind(each), 0)
     return found[0] if found else 0
 
-
 def close_app(app: subprocess.Popen[bytes], seconds: float = 30) -> bool:
-    """Closes the app's window the way a person does, and waits for the process to end.
-
-    Not `terminate`, which is the task manager's kill: the engine then gets no word that
-    the app is going. False if there was no window to close or the app outlived the
-    wait; the process is left running for the caller to end."""
 
     assert user32 is not None
     hwnd = main_window(app.pid)
@@ -246,7 +157,6 @@ def close_app(app: subprocess.Popen[bytes], seconds: float = 30) -> bool:
         return False
     return True
 
-
 def run_probe(
     exe: pathlib.Path,
     env: dict[str, str] | None = None,
@@ -255,17 +165,6 @@ def run_probe(
     piped: bool = False,
     errors: Any = None,
 ) -> subprocess.Popen[bytes]:
-    """Starts a probe build off the screen and without the keyboard, and watches that it
-    and every process under it stay there for as long as they run.
-
-    `env` is the whole environment, `os.environ` where it is not given, and it must name
-    `NIB_SPACES_DIR`: a probe that opened the reader's own notes is as bad as one that
-    opened in front of them. `quiet` sends the app's own output nowhere. `args` is the
-    command line after the program, the way the system writes one for a link or a file:
-    a second launch hands it to the probe already running and exits, watched all the
-    same. `piped` hands the drive the process's stdin and stdout, which is how `nib mcp`
-    is spoken to. `errors`, a file, takes what the app says on stderr instead of the
-    drive's own stderr, for a drive that reads it."""
 
     refuse_updating(exe)
     environment = {**(os.environ if env is None else env), OFF_SCREEN: "1"}
@@ -289,29 +188,12 @@ def run_probe(
     threading.Thread(target=_watch, args=(app,), name="off-screen watch", daemon=True).start()
     return app
 
-
 def without_error_boxes() -> None:
-    """Gives the drive, and so every process it starts from now on, an error mode that
-    raises none of the system's boxes; see `NO_ERROR_BOXES`. What the drive had stays."""
 
     assert kernel32 is not None
     kernel32.SetErrorMode(kernel32.SetErrorMode(NO_ERROR_BOXES) | NO_ERROR_BOXES)
 
-
 def _started_bare(argv: list[str], **how: Any) -> subprocess.Popen[bytes]:
-    """Starts a process from a thread that has never asked the window manager anything.
-
-    Windows hands the right to take the foreground on to a new process from the thread
-    that created it: a process started while its creator could come forward may come
-    forward itself, and the first window it activates is then the window in front, off
-    the screen or not. A drive's own threads are windowing threads - the watch walks
-    every window, `main_window` asks for the app's - and a drive started from an agent's
-    shell, whose terminal is often the window in front, can hold that right. A thread
-    that has never called into the window manager has no windowing state for the right
-    to be read from: in scripts/probe-foreground-stress.py four launches were started by
-    a process that could have taken the foreground, and not one of the four probes
-    could. The probe holds itself out of the foreground besides; see
-    apps/desktop/src-tauri/src/foreground.rs."""
 
     made: list[subprocess.Popen[bytes] | BaseException] = []
 
@@ -328,14 +210,8 @@ def _started_bare(argv: list[str], **how: Any) -> subprocess.Popen[bytes]:
         raise made[0]
     return made[0]
 
-
-# ---- the watch: what is in view, decided over numbers ----
-
-
 @dataclass(frozen=True)
 class Seen:
-    """One top-level window: whose it is, what kind, whether it is shown, and where, as
-    left, top, right and bottom in the screen's own pixels."""
 
     hwnd: int
     pid: int
@@ -343,21 +219,14 @@ class Seen:
     visible: bool
     box: tuple[int, int, int, int]
 
-
 @dataclass(frozen=True)
 class Look:
-    """Everything on the desktop at one moment: its windows, the one in front, and the
-    screens, each a rectangle as a window's is."""
 
     windows: tuple[Seen, ...]
     front: int
     screens: tuple[tuple[int, int, int, int], ...]
 
-
 def on_a_screen(box: tuple[int, int, int, int], screens: Iterable[tuple[int, int, int, int]]) -> bool:
-    """Whether any pixel of the rectangle is on any screen, which is what `MonitorFromRect`
-    answers with no default. A screen left of the primary one has negative coordinates,
-    and one above it too; a rectangle with no area is on none."""
 
     left, top, right, bottom = box
     if right <= left or bottom <= top:
@@ -367,11 +236,7 @@ def on_a_screen(box: tuple[int, int, int, int], screens: Iterable[tuple[int, int
         for s_left, s_top, s_right, s_bottom in screens
     )
 
-
 def in_view(look: Look, pids: Collection[int]) -> list[str]:
-    """What of these processes is in front of somebody: a window of theirs that is the
-    window in front, whatever it is and wherever, or one visible on a screen. Empty where
-    there is nothing."""
 
     found: list[str] = []
     for one in look.windows:
@@ -387,14 +252,7 @@ def in_view(look: Look, pids: Collection[int]) -> list[str]:
             found.append(f"{one.kind} 0x{one.hwnd:X} of pid {one.pid} is on a screen at {where}")
     return found
 
-
 def descendants(root: int, parents: Mapping[int, int], born: Callable[[int], int | None]) -> set[int]:
-    """The process and every process under it, from each process's parent.
-
-    A child has to have started after its parent, because a parent's number is free for
-    anybody once it has ended: a process whose parent died long ago names a number the app
-    may have been handed since, and without this the reader's own explorer could be
-    counted as the probe's and a window of theirs taken for the probe's."""
 
     found = {root}
     waiting = [root]
@@ -410,12 +268,7 @@ def descendants(root: int, parents: Mapping[int, int], born: Callable[[int], int
                 waiting.append(child)
     return found
 
-
-# ---- the watch: the operating system's side ----
-
-
 class _Entry(ctypes.Structure):
-    """`PROCESSENTRY32W`."""
 
     _fields_ = [
         ("dwSize", wintypes.DWORD),
@@ -430,9 +283,7 @@ class _Entry(ctypes.Structure):
         ("szExeFile", ctypes.c_wchar * 260),
     ]
 
-
 def parents() -> dict[int, int]:
-    """Every process on the machine, by number, with its parent's number."""
 
     assert kernel32 is not None
     snapshot = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
@@ -450,10 +301,7 @@ def parents() -> dict[int, int]:
         kernel32.CloseHandle(snapshot)
     return found
 
-
 def born(pid: int) -> int | None:
-    """When a process started, in the system's hundred-nanosecond ticks, or None for one
-    that has ended or may not be asked."""
 
     assert kernel32 is not None
     handle = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
@@ -469,19 +317,11 @@ def born(pid: int) -> int | None:
     finally:
         kernel32.CloseHandle(handle)
 
-
 def family(pid: int) -> set[int]:
-    """The app and every process under it: the engine's browser, renderers, GPU."""
 
     return descendants(pid, parents(), born)
 
-
 def look(of: Collection[int] | None = None) -> Look:
-    """The desktop now: the top-level windows of these processes (of every process where
-    none are named), the window in front, and every screen.
-
-    In the pixels of whichever thread asks; the watch's thread reads the screen's own
-    (`in_physical_pixels`), and so should any other that compares a window with a screen."""
 
     assert user32 is not None
     windows: list[Seen] = []
@@ -522,18 +362,12 @@ def look(of: Collection[int] | None = None) -> Look:
     user32.EnumDisplayMonitors(None, None, screen_kind(screen), 0)
     return Look(windows=tuple(windows), front=front, screens=tuple(screens))
 
-
 def in_physical_pixels() -> None:
-    """Makes the calling thread read every rectangle in the screen's own pixels. Per
-    thread, so a drive that sizes windows in the scaled pixels it always has keeps them."""
 
     if user32 is not None:
         user32.SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)
 
-
 def end_all(pids: Iterable[int]) -> None:
-    """Ends every one of these processes, by number, now. The task manager's kill: a
-    window in front of somebody does not wait for a graceful close."""
 
     assert kernel32 is not None
     for pid in pids:
@@ -542,12 +376,7 @@ def end_all(pids: Iterable[int]) -> None:
             kernel32.TerminateProcess(handle, IN_VIEW_EXIT)
             kernel32.CloseHandle(handle)
 
-
 def _watch(app: subprocess.Popen[bytes]) -> None:
-    """Looks every few milliseconds from the moment the process exists until it and its
-    family have ended, and ends all of them and the whole drive the moment any of it is
-    in view: loudly, and without the drive's own clean-up, which is time the window would
-    stay there."""
 
     in_physical_pixels()
     started = time.perf_counter()
@@ -559,8 +388,6 @@ def _watch(app: subprocess.Popen[bytes]) -> None:
         if app.poll() is None:
             if now - asked > FAMILY_EVERY:
                 living = parents()
-                # Those seen before stay while they live: an engine process whose own
-                # parent has ended is no longer under the app, and still its.
                 pids = descendants(app.pid, living, born) | (pids & living.keys())
                 asked = now
         else:
@@ -582,12 +409,7 @@ def _watch(app: subprocess.Popen[bytes]) -> None:
             os._exit(IN_VIEW_EXIT)
         time.sleep(LOOK_EVERY)
 
-
-# ---- what a drive asks before and after a step ----
-
-
 class _GuiThread(ctypes.Structure):
-    """`GUITHREADINFO`."""
 
     _fields_ = [
         ("cbSize", wintypes.DWORD),
@@ -601,11 +423,7 @@ class _GuiThread(ctypes.Structure):
         ("rcCaret", wintypes.RECT),
     ]
 
-
 def described(hwnd: int | None) -> str:
-    """A window as `class@pid 0xHWND`. The handle as well, because every page of the
-    engine is a `Chrome_WidgetWin_1` of the same browser process: without it the keyboard
-    moving from the reader's page to an agent's reads as nothing having changed."""
 
     assert user32 is not None
     if not hwnd:
@@ -616,11 +434,7 @@ def described(hwnd: int | None) -> str:
     user32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
     return f"{name.value}@{owner.value} 0x{hwnd:X}"
 
-
 def keyboard(pid: int) -> dict[str, object]:
-    """Where a key pressed now would go: the window in front, whether it is the probe's or
-    an engine process under it, and the window the app's own thread would hand a key to.
-    Read before and after a step, the three must not change."""
 
     assert user32 is not None
     front = user32.GetForegroundWindow()
@@ -639,16 +453,11 @@ def keyboard(pid: int) -> dict[str, object]:
         "app thread focus": focus,
     }
 
-
 class _LastInput(ctypes.Structure):
-    """`LASTINPUTINFO`."""
 
     _fields_ = [("cbSize", wintypes.UINT), ("dwTime", wintypes.DWORD)]
 
-
 def idle_seconds() -> float:
-    """How long since anybody touched the keyboard or the mouse, in seconds: the one
-    step that could put an engine window on a screen waits for a minute of this."""
 
     assert user32 is not None and kernel32 is not None
     last = _LastInput()
@@ -657,20 +466,14 @@ def idle_seconds() -> float:
         return 0.0
     return ((kernel32.GetTickCount() - last.dwTime) & 0xFFFFFFFF) / 1000
 
-
 def sized(hwnd: int, width: int, height: int) -> None:
-    """Gives a window a size and leaves it where it is - off the screen - without
-    touching which window is in front or has the keyboard."""
 
     assert user32 is not None
     user32.SetWindowPos(
         hwnd, None, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE
     )
 
-
 def spaces_folder(name: str) -> pathlib.Path:
-    """A spaces folder of the drive's own for `NIB_SPACES_DIR`: a temp folder named
-    after the drive, never the reader's Documents/Nib. The caller removes it."""
 
     import tempfile
 

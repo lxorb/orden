@@ -1,41 +1,3 @@
-"""Agents in Orden, measured: every browser verb of docs/agent-native.md 5.2 on WebView2, on a
-page set of our own, with nothing of it ever on a screen or in front.
-
-Windows only, on a probe build (version 99.0.0, updater blocked), launched by `run_probe`.
-
-What it asks, and how:
-
-* **Out of sight.** An agent's pages are the crate's own agent tabs (src/agents/tabs.rs):
-  children of the app's window, shown, outside its client area. Every page the agent opens
-  is magenta, and the window is photographed by pid (`capture-window.ps1`): not one
-  magenta pixel may be in it. Every top-level window of the app *and of every engine
-  process under it* is watched from launch to the end, and one that is ever on a screen or
-  in front ends the run (`run_probe`'s own watch, in scripts/probe_app.py), because a
-  dialog, a picker or a popup a page raises belongs to an engine process.
-* **No keyboard.** The window in front, and the app thread's focus window, are read before
-  and after every step; neither may change. Keys are pressed into an agent's page through
-  the engine (`Input.dispatchKeyEvent`) with that check around each press: this is the
-  proof `browser_press` rests on.
-* **Not throttled.** The page counts `requestAnimationFrame` and a 10 ms interval; the
-  rates are read twice with the wall clock between.
-* **Every verb.** Called over the endpoint exactly as an MCP server calls it, as the
-  reader's own command line (the installation's secret) and as a paired agent with a
-  token and Emil's default grant, on: a shop with a card form, a sign-in form, a page with
-  a frame from another origin, dialogs (alert, confirm, prompt, beforeunload), a popup that
-  posts to its opener, a download, a file input, a `<select>`, a date input. Each is
-  timed.
-* **The reader's tab is shared.** An agent acts in the reader's own web tab, and its
-  presses never move the keyboard.
-* **The reader's logins, not their extensions.** An agent tab asked for the reader's store
-  is in its twin (src/agents/engines/mod.rs): a cookie the reader's store holds is there,
-  and the agent's own cookie never reaches the reader's store.
-
-    python scripts/agent-tab-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
-      --identifier ch.emilvinu.nib.probe.<name>
-
-Prints one JSON document; exits non-zero when a check fails.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -77,7 +39,6 @@ window.m = function () {
 }
 </script>"""
 
-
 def page(title: str, body: str, colour: str = MAGENTA) -> str:
     return (
         f"<!doctype html><meta charset=utf-8><title>{title}</title>"
@@ -85,9 +46,7 @@ def page(title: str, body: str, colour: str = MAGENTA) -> str:
         f"{body}</main>{METER}</body>"
     )
 
-
 def pages(other: str) -> dict[str, tuple[str, str]]:
-    """Every page, by path: (content type, body). `other` is the second origin."""
 
     html = "text/html; charset=utf-8"
     return {
@@ -171,7 +130,6 @@ def pages(other: str) -> dict[str, tuple[str, str]]:
         "/api/cart": ("application/json", '{"items": 1}'),
     }
 
-
 def free_port(skip: int = 0) -> int:
     for port in range(PORT_FROM, PORT_TO + 1):
         if port == skip:
@@ -184,10 +142,8 @@ def free_port(skip: int = 0) -> int:
             return port
     raise SystemExit(f"no port free in {PORT_FROM}-{PORT_TO}")
 
-
 class Server(http.server.ThreadingHTTPServer):
     daemon_threads = True
-
 
 def serve(port: int, other: str) -> None:
     served = pages(other)
@@ -223,7 +179,6 @@ def serve(port: int, other: str) -> None:
     made = Server(("127.0.0.1", port), Handler)
     threading.Thread(target=made.serve_forever, daemon=True).start()
 
-
 def space(port: int) -> tuple[pathlib.Path, pathlib.Path]:
     root = pathlib.Path(tempfile.mkdtemp(prefix="nib-agent-probe-"))
     os.environ["NIB_SPACES_DIR"] = str(root / "spaces")
@@ -239,17 +194,14 @@ def space(port: int) -> tuple[pathlib.Path, pathlib.Path]:
     )
     return made, root / "downloads"
 
-
 def config_dir(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["APPDATA"]) / identifier
-
 
 def wipe(identifier: str) -> None:
     if "probe" not in identifier:
         raise SystemExit(f"{identifier} is not a probe identifier: refusing to delete its folders")
     for base in (os.environ["APPDATA"], os.environ["LOCALAPPDATA"]):
         shutil.rmtree(pathlib.Path(base) / identifier, ignore_errors=True)
-
 
 def endpoint(identifier: str, unlike: int = 0) -> tuple[int, str, int]:
     path = config_dir(identifier) / "automation.json"
@@ -264,16 +216,13 @@ def endpoint(identifier: str, unlike: int = 0) -> tuple[int, str, int]:
         time.sleep(0.2)
     raise SystemExit(f"the app never wrote {path}")
 
-
 def allow_eval(identifier: str) -> None:
     path = config_dir(identifier) / "automation.json"
     said = json.loads(path.read_text(encoding="utf-8-sig"))
     said["eval"] = True
     path.write_bytes(json.dumps(said).encode("utf-8"))
 
-
 class Endpoint:
-    """The app's endpoint, called the way `nib mcp` calls it."""
 
     def __init__(self, port: int, bearer: str) -> None:
         self.port = port
@@ -303,8 +252,6 @@ class Endpoint:
         return out
 
     def window(self, code: str) -> object:
-        """Runs code in the app's own window through `eval`: the window's half of what the
-        reader does - answering a question, pressing the stop."""
 
         said, _ = self.raw("eval", {"code": code, "yes": True}, 90)
         if not isinstance(said, dict) or not said.get("ok"):
@@ -317,14 +264,7 @@ class Endpoint:
                 return value
         return value
 
-
-# ---- what the operating system says: the engines, and the window itself ----
-#
-# The window in front, the app thread's focus and the watch over every engine process are
-# scripts/probe_app.py's, which every probe shares.
-
 user32 = ctypes.WinDLL("user32", use_last_error=True)
-
 
 def engine_memory(pid: int) -> dict[str, float]:
     import psutil
@@ -338,7 +278,6 @@ def engine_memory(pid: int) -> dict[str, float]:
             continue
         count += 1
     return {"processes": count, "working set MB": round(total / 2**20, 1)}
-
 
 def photograph(pid: int, out: pathlib.Path) -> dict[str, object]:
     from PIL import Image
@@ -359,7 +298,6 @@ def photograph(pid: int, out: pathlib.Path) -> dict[str, object]:
             green += 1
     return {"size": picture.size, "agent (magenta) pixels": magenta, "reader page (green) pixels": green}
 
-
 def png_of(said: dict[str, object]) -> tuple[int, int] | None:
     result = said.get("result")
     if not isinstance(result, dict) or not isinstance(result.get("png"), str):
@@ -369,9 +307,7 @@ def png_of(said: dict[str, object]) -> tuple[int, int] | None:
     picture = Image.open(io.BytesIO(base64.b64decode(result["png"])))
     return picture.size
 
-
 def ref_of(snapshot: dict[str, object], role: str, name: str) -> str | None:
-    """The ref of the first line with that role and name in a snapshot's text."""
 
     text = str((snapshot.get("result") or {}).get("text", "")) if isinstance(snapshot.get("result"), dict) else ""
     for line in text.splitlines():
@@ -380,11 +316,9 @@ def ref_of(snapshot: dict[str, object], role: str, name: str) -> str | None:
             return line.split("[ref=")[1].split("]")[0]
     return None
 
-
 def result(said: dict[str, object]) -> dict[str, object]:
     got = said.get("result")
     return got if isinstance(got, dict) else {}
-
 
 def rates(before: object, after: object) -> dict[str, object]:
     if not isinstance(before, dict) or not isinstance(after, dict) or "raf" not in before:
@@ -396,9 +330,7 @@ def rates(before: object, after: object) -> dict[str, object]:
         "visibilityState": after["state"],
     }
 
-
 def pair(cli: "Endpoint", check: "Checks", said: dict[str, object]) -> str:
-    """A client becomes an agent, the reader answering in the window; its token."""
 
     asked = cli.call("agent_pair", client="Probe Agent")
     said["pair asked"] = asked
@@ -410,7 +342,6 @@ def pair(cli: "Endpoint", check: "Checks", said: dict[str, object]) -> str:
     check.that("pairing answers a token once allowed", len(token) == 64, paired)
     return token
 
-
 class Checks:
     def __init__(self) -> None:
         self.failed: list[str] = []
@@ -419,7 +350,6 @@ class Checks:
         if not ok:
             self.failed.append(f"{name}: {json.dumps(said, default=str)[:600]}")
         return ok
-
 
 def main() -> int:  # noqa: PLR0915 - one run, step by step
     if sys.platform != "win32":
@@ -470,7 +400,6 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
         cli.raw("open", {"path": "Idea.md", "space": SPACE})
         time.sleep(1.5)
 
-        # The reader's own web tab, visible, green.
         opened = cli.window(f"""(async () => {{
   const ws = nib.workspace
   ws.openWeb({json.dumps(str(made / 'User.url'))})
@@ -501,7 +430,6 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
         written, _ = agent.raw("files.write", {"path": "x.md", "content": "x", "yes": True})
         check.that("an agent never reaches the command line's own verbs", isinstance(written, dict) and written.get("code") == 403, written)
 
-        # ---- an agent tab, out of sight, running at full speed ----
         meter = cli.call("browser_open", url=f"{site}/meter")
         said["open"] = meter
         tab = str(result(meter).get("tab", ""))
@@ -514,7 +442,6 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
         check.that("agent tab not throttled", isinstance(said["agent tab rates"], dict) and said["agent tab rates"].get("rAF per s", 0) > 50, said["agent tab rates"])
         unmoved("open")
         if reader_tab:
-            # The reader's own page, beside it: an agent's page costs it nothing.
             mine = cli.call("browser_navigate", tab=reader_tab, url=f"{site}/meter")
             first = result(cli.call("browser_evaluate", tab=reader_tab, expression="window.m()", world="page")).get("value")
             time.sleep(4)
@@ -523,7 +450,6 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
             cli.call("browser_navigate", tab=reader_tab, url=f"{site}/user")
             unmoved("the reader's tab measured")
 
-        # ---- the twin: the reader's logins, and nothing of the agent's back ----
         if reader_tab:
             cli.call("browser_evaluate", tab=reader_tab, world="page", expression="document.cookie = 'reader=1; max-age=3600; path=/'")
             twin = cli.call("browser_open", url=f"{site}/meter")
@@ -539,9 +465,6 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
             unmoved("the twin")
 
         if args.host:
-            # Where agent tabs could live instead: a window nobody ever sees. Measured by
-            # hiding the window they are in (never activating it, never on a screen), and
-            # minimising it, then putting it back as it was.
             hwnd = main_window(running.pid)
             host = {}
             for how, show in (("hidden", 0), ("minimised", 7)):
@@ -555,13 +478,9 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
                 user32.ShowWindow(hwnd, 4)
                 time.sleep(1.5)
             said["host window"] = host
-            # Hiding a window hands its thread's focus from the page to the window itself;
-            # that is this measurement's doing, not an agent's, so what follows is held to
-            # the window as it now is.
             before.update(keyboard(running.pid))
             said["keyboard after the host window"] = dict(before)
 
-        # ---- the shop: snapshot, find, fill, select, date, checkbox, file, press ----
         shop = cli.call("browser_navigate", tab=tab, url=f"{site}/shop")
         said["navigate"] = shop
         snap = cli.call("browser_snapshot", tab=tab)
@@ -593,7 +512,6 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
         check.that("the form took every value", values == {"name": "Grace Hopper", "quantity": "3", "when": "2026-10-01", "gift": False, "receipt": "receipt.txt"}, values)
         unmoved("the shop")
 
-        # ---- keys pressed inside an agent's page, with the keyboard watched around each ----
         cli.call("browser_navigate", tab=tab, url=f"{site}/keys")
         keys_snap = cli.call("browser_snapshot", tab=tab)
         box = ref_of(keys_snap, "textbox", "Box")
@@ -606,7 +524,6 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
         said["keys"] = {"ms": {k: v.get("ms") for k, v in presses.items()}, "page": keyed}
         check.that("keys arrive trusted and Enter submits", isinstance(keyed, dict) and keyed.get("sent") == "sent ac" and all(one[1] for one in keyed.get("keys", [])), keyed)
 
-        # ---- dialogs, held for the agent ----
         cli.call("browser_navigate", tab=tab, url=f"{site}/dialogs")
         dsnap = cli.call("browser_snapshot", tab=tab)
         dialogs = {}
@@ -629,12 +546,10 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
         check.that("beforeunload reaches the agent", isinstance(dialogs["beforeunload"]["held"], dict), dialogs["beforeunload"])
         check.that("print does nothing", isinstance(page_side, dict) and page_side.get("printed") == "undefined", page_side)
         unmoved("dialogs")
-        # Leaving for good this time: the page asks again, and is told yes.
         again = cli.call("browser_navigate", tab=tab, url=f"{site}/meter")
         dialogs["leave"] = {"held": again.get("dialog"), "answer": cli.call("browser_dialog", tab=tab, accept=True)}
         cli.call("browser_wait", tab=tab, **{"for": {"url": "/meter"}, "timeout_ms": 5000})
 
-        # ---- a popup that posts to its opener: another agent tab, opener kept ----
         cli.call("browser_navigate", tab=tab, url=f"{site}/popup")
         psnap = cli.call("browser_snapshot", tab=tab)
         popped = cli.call("browser_click", tab=tab, ref=ref_of(psnap, "button", "Sign in with a popup"))
@@ -643,7 +558,6 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
         check.that("a popup is an agent tab with its opener", bool(result(popped).get("opened")) and waited.get("status") == "ok", said["popup"])
         unmoved("popup")
 
-        # ---- a download, into the agent's own folder ----
         cli.call("browser_navigate", tab=tab, url=f"{site}/shop")
         ssnap = cli.call("browser_snapshot", tab=tab)
         cli.call("browser_click", tab=tab, ref=ref_of(ssnap, "link", "Invoice"))
@@ -655,7 +569,6 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
         check.that("the download is in Downloads/nib agents/<agent>", any(f.startswith("nib agents") for f in files), files)
         unmoved("download")
 
-        # ---- a frame from another origin, in a process of its own ----
         cli.call("browser_navigate", tab=tab, url=f"{site}/frames")
         time.sleep(1)
         fsnap = cli.call("browser_snapshot", tab=tab)
@@ -668,7 +581,6 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
             said["frames"]["page"] = result(cli.call("browser_evaluate", tab=tab, world="page", expression="document.getElementById('said').textContent")).get("value")
         check.that("a frame from another origin has f-refs and is pressed", bool(away) and "away" in str(said["frames"].get("page")), said["frames"])
 
-        # ---- screenshots, console, network, read, storage ----
         cli.call("browser_navigate", tab=tab, url=f"{site}/shop")
         view = cli.call("browser_screenshot", tab=tab)
         whole = cli.call("browser_screenshot", tab=tab, full_page=True)
@@ -689,7 +601,6 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
             "clear": cli.call("browser_storage", tab=own_tab, op="clear"),
         }
 
-        # ---- the rest of the verbs: hover, drag, scroll, waits, the chooser, permissions ----
         cli.call("browser_navigate", tab=tab, url=f"{site}/more")
         msnap = cli.call("browser_snapshot", tab=tab)
         mtext = str(result(msnap).get("text", ""))
@@ -735,7 +646,6 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
         check.that("basic authentication is refused and said", bool(more["basic auth"]), more)
         unmoved("the rest of the verbs")
 
-        # ---- the agent's grant and the policy, recognised from the page ----
         atab = str(result(agent.call("browser_open", url=f"{site}/shop")).get("tab", ""))
         asnap = agent.call("browser_snapshot", tab=atab)
         paying = agent.call("browser_click", tab=atab, ref=ref_of(asnap, "button", "Place order"))
@@ -762,7 +672,6 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
                                      "state": {k: (len(v) if isinstance(v, list) else v) for k, v in state.items()} if isinstance(state, dict) else state}
         check.that("a takeover asks and the tab stays the agent's all the while", taken.get("status") == "needs_approval" and meanwhile.get("status") == "ok" and handed.get("status") == "ok", said["show and takeover"])
 
-        # ---- the reader's own tab: the agent's presses never take the keyboard ----
         if reader_tab:
             rsnap = agent.call("browser_snapshot", tab=reader_tab)
             pressed = agent.call("browser_click", tab=reader_tab, ref=ref_of(rsnap, "button", "Mine"))
@@ -772,7 +681,6 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
             check.that("the agent acts in the reader's tab and is never stopped by it", pressed.get("status") == "ok" and not result(after).get("stopped"), said["reader tab"])
             unmoved("reader tab")
 
-        # ---- the stop ----
         cli.window("window.__TAURI_INTERNALS__.invoke('agents_stop')")
         stopped = agent.call("browser_tabs")
         cli.window("window.__TAURI_INTERNALS__.invoke('agents_resume', {})")
@@ -780,7 +688,6 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
         said["stop"] = {"stopped": stopped.get("code"), "resumed": resumed.get("status")}
         check.that("the stop stops and resumes", stopped.get("code") == "stopped" and resumed.get("status") == "ok", said["stop"])
 
-        # ---- the audit log: every call, one line each, no secret in it ----
         logs = pathlib.Path(os.environ["LOCALAPPDATA"]) / args.identifier / "agents" / "log"
         lines = [json.loads(line) for day in sorted(logs.glob("*.jsonl")) for line in day.read_text(encoding="utf-8").splitlines() if line]
         raw = "\n".join(day.read_text(encoding="utf-8") for day in logs.glob("*.jsonl"))
@@ -807,7 +714,6 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
                 running.kill()
 
     return 1 if check.failed else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

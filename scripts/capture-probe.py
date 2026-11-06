@@ -50,14 +50,11 @@ from PIL import Image
 
 from probe_app import close_app, refuse_updating, run_probe
 
-# mcp-probe.py's client, family watch and endpoint helpers, taken as they are: its name
-# has a dash, so it is loaded by path rather than imported by name.
 _spec = importlib.util.spec_from_file_location("mcp_probe", pathlib.Path(__file__).with_name("mcp-probe.py"))
 assert _spec is not None and _spec.loader is not None
 mcp = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(mcp)
 
-#: Where this drive's pages listen: a range of its own beside mcp-probe's.
 PORT_FROM = 23640
 PORT_TO = 23659
 
@@ -66,12 +63,9 @@ OTHER = {"name": "nib-capture-probe-other", "title": "Capture probe other", "ver
 
 SPACE = "Capture probe"
 
-#: The grey a secret field is painted in (agents/page.rs `PAINTED`), and the red both
-#: fields are drawn in so either colour is unmistakable.
 GREY = (128, 128, 128)
 RED = (255, 0, 0)
 
-#: Where the two fields are, in CSS pixels, which a picture's pixels are one to one.
 SECRET_BOX = (40, 20, 280, 60)
 NAME_BOX = (40, 80, 280, 120)
 
@@ -119,7 +113,6 @@ PLAIN = """<!doctype html><title>Plain page</title>
 printed, which a page holding a filled password field is not.</p></article>
 """
 
-
 def free_port() -> int:
     for port in range(PORT_FROM, PORT_TO + 1):
         with socket.socket() as sock:
@@ -129,7 +122,6 @@ def free_port() -> int:
                 continue
             return port
     raise SystemExit(f"no port free in {PORT_FROM}-{PORT_TO}")
-
 
 def serve(port: int) -> http.server.ThreadingHTTPServer:
     pages = {"/fields": FIELDS.encode(), "/plain": PLAIN.encode()}
@@ -150,17 +142,12 @@ def serve(port: int) -> http.server.ThreadingHTTPServer:
     threading.Thread(target=made.serve_forever, daemon=True).start()
     return made
 
-
 def words_of(note: str) -> str:
-    """A clip's words under its front matter, without the line the page writes what it
-    saw into, which a tab of the reader's and one of an agent's may say differently."""
 
     under = note.split("\n---\n", 1)[-1]
     return "\n".join(one for one in under.splitlines() if "touched" not in one and "globals" not in one)
 
-
 def box_is(picture: Image.Image, box: tuple[int, int, int, int], colour: tuple[int, int, int]) -> tuple[bool, str]:
-    """Whether every pixel inside a box, a pixel in from its edge, is one colour."""
 
     left, top, right, bottom = box
     wrong = 0
@@ -173,13 +160,11 @@ def box_is(picture: Image.Image, box: tuple[int, int, int, int], colour: tuple[i
                 seen = pixel
     return wrong == 0, f"{wrong} of {(right - left - 2) * (bottom - top - 2)} pixels off" + (f", e.g. {seen}" if wrong else "")
 
-
 class Drive(mcp.Drive):
     def __init__(self, exe: pathlib.Path, identifier: str, spaces: pathlib.Path, site: str) -> None:
         super().__init__(exe, identifier, spaces, site)
         self.space = spaces / SPACE
         self.timings: list[tuple[str, float]] = []
-        #: The log is kept by day, so a run reads only its own lines.
         self.started_ms = int(time.time() * 1000)
 
     def capture(self, agent: Any, args: dict[str, Any]) -> tuple[dict[str, Any], float]:
@@ -194,7 +179,6 @@ class Drive(mcp.Drive):
         return path.read_text(encoding="utf-8") if path.is_file() else ""
 
     def kept(self, text: str) -> pathlib.Path | None:
-        """The file a note embeds, `![[...]]`, found in the space."""
 
         found = re.search(r"!\[\[([^\]]+)\]\]", text)
         if not found:
@@ -239,8 +223,6 @@ class Drive(mcp.Drive):
         self.check("the clip ran no script of Orden's in the page and left no global", line == "untouched", line)
 
     def seen_by_the_picture(self, agent: Any, tab: str) -> None:
-        # Not a check: the picture's secret scan is browser_screenshot's own, and runs in
-        # the page's world for its frame (agents/page.rs `secrets`); said, so it is known.
         self.note("after the picture, the page says", self.said_by_the_page(agent, tab))
 
     def screenshot(self, agent: Any, tab: str, note: str) -> None:
@@ -272,8 +254,6 @@ class Drive(mcp.Drive):
         kept = self.kept(self.written("Printed"))
         body = kept.read_bytes() if kept else b""
         self.check("the note embeds a PDF kept in the space", body.startswith(b"%PDF"), f"{kept}: {len(body)} bytes")
-        # The reader's paper, which is A4 until Settings says otherwise: 8.27 by 11.69
-        # inches, in the PDF's points.
         sheet = re.search(rb"/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)\s*\]", body)
         size = (float(sheet.group(1)), float(sheet.group(2))) if sheet else (0.0, 0.0)
         self.check("on the reader's paper", abs(size[0] - 595.4) < 2 and abs(size[1] - 841.7) < 2, f"{size[0]:.1f} by {size[1]:.1f} points")
@@ -327,7 +307,6 @@ class Drive(mcp.Drive):
         self.check("a refused print is error (password_field)", ("error", "password_field") in statuses, str(statuses))
         self.check("another's tab is error (no_such_tab)", ("error", "no_such_tab") in statuses)
         self.check("the rest are ok", sum(1 for status, _ in statuses if status == "ok") == len(lines) - 2)
-
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -399,7 +378,6 @@ def main() -> int:
     failed = [name for name, ok, _ in drive.results if not ok]
     print(f"\n{len(drive.results) - len(failed)} of {len(drive.results)} passed", flush=True)
     return 1 if failed else 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

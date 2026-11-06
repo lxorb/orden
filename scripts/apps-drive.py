@@ -1,22 +1,3 @@
-"""A probe build hosts an application on Windows and shows it in WebView2 (#1063).
-
-A probe build is started on the runner's own desktop, and from its window, through the
-same commands an Application tab and its host use:
-
-- what this computer has installed is listed, with icons, and holds Notepad;
-- Notepad is started on a desktop of its own: no window of it on the runner's desktop;
-- WebView2's own `RTCPeerConnection` offers to take its picture, the host answers, and
-  frames are decoded;
-- a click and text over the data channel type into Notepad, read back off its own
-  desktop;
-- the picture is saved as a PNG beside the run (`--shot`), and the application stopped.
-
-No account and no relay: the drive hands the offer and the answer between the window and
-the host itself, as the relay would.
-
-    python scripts/apps-drive.py --exe <probe build> --identifier <probe id> [--shot out.png]
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -35,10 +16,8 @@ import urllib.error
 import urllib.request
 from typing import Any
 
-#: What is typed into the application, and looked for in it.
 TYPED = "typed from afar"
 KEY = "drive-1063"
-
 
 class App:
     def __init__(self, port: int, secret: str) -> None:
@@ -65,7 +44,6 @@ class App:
             raise SystemExit(f"the window answered an error: {said['error']}\n{code}")
         return said.get("value")
 
-
 def endpoint(config: pathlib.Path, pid: int, secret: str) -> App:
     path = config / "automation.json"
     until = time.monotonic() + 120
@@ -78,7 +56,6 @@ def endpoint(config: pathlib.Path, pid: int, secret: str) -> App:
             pass
         time.sleep(0.25)
     raise SystemExit(f"the app never wrote {path}")
-
 
 INVOKE = "window.__TAURI_INTERNALS__.invoke"
 
@@ -144,10 +121,7 @@ window.__drive?.pc.close();
 return true;
 """
 
-
 def text_on_desktop(name: str) -> str:
-    """Every window's text on a desktop of ours, read by a thread moved onto it: Windows
-    passes no message from one desktop to another."""
 
     import ctypes
     from ctypes import wintypes
@@ -181,9 +155,7 @@ def text_on_desktop(name: str) -> str:
     thread.join(30)
     return "\n".join(found)
 
-
 def notepads_here() -> int:
-    """How many Notepad windows the runner's own desktop has."""
 
     import ctypes
     from ctypes import wintypes
@@ -201,7 +173,6 @@ def notepads_here() -> int:
 
     user32.EnumWindows(ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)(each), 0)
     return count
-
 
 def drive(app: App, pid: int, shot: pathlib.Path | None) -> list[str]:
     wrong: list[str] = []
@@ -268,7 +239,6 @@ def drive(app: App, pid: int, shot: pathlib.Path | None) -> list[str]:
     app.value(STOP)
     return wrong
 
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exe", required=True, type=pathlib.Path)
@@ -304,7 +274,6 @@ def main() -> int:
     if not wrong:
         print("Notepad was listed, run on a desktop of its own, shown in WebView2 and typed into", flush=True)
     return 1 if wrong else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

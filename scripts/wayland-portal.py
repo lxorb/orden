@@ -1,18 +1,4 @@
 #!/usr/bin/env python3
-"""A desktop portal with nothing in it but global shortcuts, for the Wayland CI job.
-
-GNOME's, KDE's and Hyprland's portals each want their whole desktop running behind
-them, so the job stands this one up on the session bus instead: the
-org.freedesktop.portal.GlobalShortcuts interface at version 2 and the host registry,
-answered the way xdg-desktop-portal answers them - every request a Request object
-whose Response signal carries the result. It binds whatever is asked with the key it
-was asked for, writes each call to the log file it was given as a line of JSON, and
-two seconds after a bind presses the first key, with an activation token, so the job
-can see Orden take the press (`.github/workflows/wayland.yml`,
-`apps/desktop/src-tauri/src/hotkeys/portal.rs`).
-
-    python3 scripts/wayland-portal.py <log>
-"""
 
 import json
 import sys
@@ -72,17 +58,13 @@ INTERFACES = Gio.DBusNodeInfo.new_for_xml(
 log_file = open(sys.argv[1], "a", buffering=1)
 sessions = {}
 
-
 def said(**what):
     log_file.write(json.dumps(what) + "\n")
-
 
 def sender_part(sender):
     return sender.lstrip(":").replace(".", "_")
 
-
 def respond(bus, path, results):
-    """The Response signal on the request, after the reply that named it."""
 
     def send():
         bus.emit_signal(
@@ -95,7 +77,6 @@ def respond(bus, path, results):
         return False
 
     GLib.timeout_add(50, send)
-
 
 def press(bus, session, shortcut):
     def send():
@@ -119,12 +100,10 @@ def press(bus, session, shortcut):
 
     GLib.timeout_add(2000, send)
 
-
 def session_call(bus, sender, path, interface, method, variant, invocation):
     said(call=method, session=path)
     sessions.pop(path, None)
     invocation.return_value(None)
-
 
 def call(bus, sender, path, interface, method, variant, invocation):
     who = sender_part(sender)
@@ -171,19 +150,15 @@ def call(bus, sender, path, interface, method, variant, invocation):
         said(call=method, session=params[0])
         invocation.return_value(None)
 
-
 def property_of(bus, sender, path, interface, name):
     return GLib.Variant("u", 2)
-
 
 def acquired(bus, name):
     bus.register_object(PATH, INTERFACES.interfaces[0], call, property_of, None)
     bus.register_object(PATH, INTERFACES.interfaces[1], call, None, None)
 
-
 def owned(bus, name):
     said(call="owned", name=name)
-
 
 Gio.bus_own_name(
     Gio.BusType.SESSION, DESKTOP, Gio.BusNameOwnerFlags.NONE, acquired, owned, None

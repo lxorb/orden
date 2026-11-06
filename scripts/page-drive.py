@@ -1,22 +1,4 @@
 #!/usr/bin/env python3
-"""Two things only a real pointer on a real X server can say, on Linux's CEF, each looked at.
-
-  tree  A note dragged in the file list with xdotool's pointer, as a hand does it: into the
-        order in Manual, then into another note (#427). On CEF the engine's own drag ended
-        as it started, so neither did anything; see src-tauri/src/page_drag.rs.
-        A drag whose window loses the focus with the button held ends and moves nothing; a
-        right button pressed and let go during one leaves it going; a word dragged inside
-        the editor moves.
-  zoom  Settings > Appearance > Window > Zoom (#680) at each rung: the page's own ratio, the
-        sidebar as many screen pixels wider, and the web tab's page, a native window placed
-        from the layout, in its hole to the pixel: its colour on the hole's four inside
-        corners and not one pixel beyond its left and top edges. Its site's zoom stays.
-
-Run with Orden up on a web tab of one colour (zoom), its endpoint open to `eval`, as
-scripts/x11-launch.sh leaves it:
-
-    python3 scripts/page-drive.py <tree|zoom> <out folder>
-"""
 
 import json
 import os
@@ -33,11 +15,9 @@ CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.
 SITE = (255, 0, 255)
 failures = []
 
-
 def fail(what):
     print(f"::error::{what}")
     failures.append(what)
-
 
 def endpoint():
     for _ in range(120):
@@ -50,9 +30,7 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
-
 
 def run(code):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
@@ -71,7 +49,6 @@ def run(code):
             time.sleep(1)
     return None
 
-
 def until(code, what, patience=20.0):
     ends = time.monotonic() + patience
     while time.monotonic() < ends:
@@ -82,13 +59,10 @@ def until(code, what, patience=20.0):
     fail(f"gave up waiting for {what}")
     return None
 
-
 def xdo(*words):
     subprocess.run(["xdotool", *map(str, words)], capture_output=True, check=False)
 
-
 def origin():
-    """Where the window's page starts on the screen, under whatever frame a desktop gave it."""
     found = subprocess.run(["xdotool", "search", "--name", "Orden"], capture_output=True, text=True, check=False)
     said = subprocess.run(
         ["xwininfo", "-id", found.stdout.split()[0]], capture_output=True, text=True, check=False
@@ -97,15 +71,11 @@ def origin():
     y = said.split("Absolute upper-left Y:")[1].split()[0]
     return int(x), int(y)
 
-
 def move(x, y):
-    """The pointer to a place in the window's screen pixels."""
     left, top = origin()
     xdo("mousemove", int(x + left), int(y + top))
 
-
 def picture(name):
-    """The whole screen, as the X server has it."""
     path = OUT / f"{name}.png"
     raw = subprocess.run(["xwd", "-root", "-silent"], capture_output=True, check=False).stdout
     subprocess.run(
@@ -115,16 +85,12 @@ def picture(name):
     )
     return Image.open(path).convert("RGB")
 
-
-# The rows by where they stand, top first, in the page's own units.
 ROWS = """[...document.querySelectorAll('aside:not(.right) .row')].map((row) => {
   const box = row.getBoundingClientRect()
   return { name: row.querySelector('.nib-row-label')?.textContent.trim(), x: box.x, y: box.y, height: box.height }
 }).sort((a, b) => a.y - b.y)"""
 
-
 def dragged(start, end, y):
-    """Pressed on a row and let go at `y` of the way down another, in a hand's steps."""
     ratio = run("devicePixelRatio") or 1
     x = (start["x"] + 40) * ratio
     y0 = (start["y"] + start["height"] / 2) * ratio
@@ -134,11 +100,9 @@ def dragged(start, end, y):
     for step in range(1, 13):
         move(x, y0 + (y1 - y0) * step / 12)
         time.sleep(0.05)
-    # At rest a moment, as a hand comes to rest before it lets go.
     time.sleep(0.5)
     picture(f"over-{end['name']}")
     xdo("mouseup", 1)
-
 
 def tree():
     run("""(async () => {
@@ -152,10 +116,8 @@ def tree():
     if not rows:
         return
     print("before", [one["name"] for one in rows])
-    # Not the first row, which the first run's tip stands over.
     moving, under = rows[-1], rows[1]
     dragged(moving, under, 0.1)
-    # Settled, for its order to be read off where the rows stand.
     until(f"(() => !nib.workspace.arranged.dragging && !document.getAnimations().length)()", "the rows settled")
     now = run(ROWS) or []
     names = [one["name"] for one in now]
@@ -177,8 +139,6 @@ def tree():
     chord()
     words()
 
-
-# Every drag event the page hears, for what was said after a given moment.
 HEAR = """(() => {
   window.__heard = []
   for (const type of ['dragover', 'drop', 'dragend'])
@@ -186,9 +146,7 @@ HEAR = """(() => {
   return true
 })()"""
 
-
 def lifted(start, end):
-    """Pressed on a row and held in the middle of another, the button still down."""
     x = (start["x"] + 40)
     y0 = start["y"] + start["height"] / 2
     y1 = end["y"] + end["height"] / 2
@@ -199,15 +157,11 @@ def lifted(start, end):
         time.sleep(0.05)
     time.sleep(0.5)
 
-
 def stale():
-    """The window loses the focus with the button down, as alt-tab does: nothing goes on. Only
-    a window manager moves the focus as a desktop does, so without one it is not asked."""
     wm = subprocess.run(["xprop", "-root", "_NET_SUPPORTING_WM_CHECK"], capture_output=True, text=True, check=False)
     if "window id" not in wm.stdout:
         print("stale: no window manager to take the focus away, not asked")
         return
-    # xterm and not xmessage; see the kwin job in wayland.yml.
     other = subprocess.Popen(["xterm", "-geometry", "20x5+1300+800", "-title", "another app"])
     found = ""
     for _ in range(50):
@@ -219,7 +173,6 @@ def stale():
     xdo("windowactivate", "--sync", own[0])
     run(HEAR)
     rows = run(ROWS) or []
-    # A press of its own first, for the page to have the keyboard, as a hand's would.
     move(600, 400)
     xdo("click", 1)
     time.sleep(0.3)
@@ -233,7 +186,6 @@ def stale():
     heard = run("window.__heard.splice(0)") or []
     if "dragend" not in heard:
         fail(f"the window lost the focus and the drag went on: {heard[-5:]}")
-    # Three times over the rate a resting pointer says `dragover` at.
     time.sleep(1.1)
     late = run("window.__heard.splice(0)") or []
     if late:
@@ -242,7 +194,6 @@ def stale():
     time.sleep(0.3)
     other.kill()
     xdo("windowactivate", "--sync", own[0])
-    # The next plain click, anywhere, that used to end it on the row it was over.
     move(600, 400)
     xdo("click", 1)
     time.sleep(0.5)
@@ -253,9 +204,7 @@ def stale():
         fail("a drag that lost its pointer dropped")
     print("stale: ended with the focus, nothing moved")
 
-
 def chord():
-    """The right button pressed and let go during a left drag leaves it going."""
     run(HEAR)
     rows = run(ROWS) or []
     lifted(rows[-1], rows[1])
@@ -274,8 +223,6 @@ def chord():
         fail("Escape did not end the drag")
     print("chord: went on, Escape ended it")
 
-
-# Where a word is on the screen, by a range over its text in the editor.
 WORD = """((word) => {
   const walker = document.createTreeWalker(document.querySelector('.cm-content'), NodeFilter.SHOW_TEXT)
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
@@ -290,9 +237,7 @@ WORD = """((word) => {
   return null
 })"""
 
-
 def words():
-    """A word selected in the editor and dragged to another line moves there."""
     run("""(async () => {
       const ws = nib.workspace
       const made = await ws.noteFrom('# Words\\n\\nalpha beta gamma\\n\\ndelta epsilon\\n', ws.activeSpace.root)
@@ -307,7 +252,6 @@ def words():
     x, y = word["x"] + word["width"] / 2, word["y"] + word["height"] / 2
     move(x, y)
     xdo("click", "--repeat", 2, "--delay", 60, 1)
-    # Past the time a third press would be a triple click.
     time.sleep(0.8)
     print("selected", run("getSelection().toString()"))
     xdo("mousedown", 1)
@@ -327,8 +271,6 @@ def words():
     if "beta" in first or "beta" not in second:
         fail(f"the word did not move: {text}")
 
-
-# Where the web tab's hole is, in the page's own units, and what the zoom has made of the page.
 HOLE = """(() => {
   const hole = document.querySelector('.hole')
   const aside = document.querySelector('aside:not(.right)')
@@ -340,14 +282,11 @@ HOLE = """(() => {
   }
 })()"""
 
-
 def corners(shot, hole, label):
-    """The site's colour in the hole's four inside corners, and not beyond two of its edges."""
     ratio = hole["ratio"]
     at_x, at_y = origin()
     left, top = hole["x"] * ratio + at_x, hole["y"] * ratio + at_y
     right, bottom = left + hole["width"] * ratio, top + hole["height"] * ratio
-    # Five pixels in, past a pane's rounded corner; two out, past a rounded fractional edge.
     for x, y, name in (
         (left + 8, top + 8, "top left"),
         (right - 8, top + 8, "top right"),
@@ -362,9 +301,7 @@ def corners(shot, hole, label):
         if pixel == SITE:
             fail(f"{label}: the page is drawn {name} its hole, at ({int(x)}, {int(y)})")
 
-
 def zoom():
-    # In front again, whatever ran before it: the tree's last drive leaves a note there.
     front = run("""(() => {
       const ws = nib.workspace
       const tab = ws.tabs.find((one) => one.kind === 'web')
@@ -378,14 +315,13 @@ def zoom():
     first = until(HOLE, "the web tab's hole")
     if not first:
         return
-    site = run("nib.workspace")  # Only that the endpoint answers.
+    site = run("nib.workspace")
     width = first["sidebar"] * first["ratio"]
     print("at 100%", first, site is not None)
     corners(picture("zoom-100"), first, "100%")
     for factor in (1.25, 0.8, 1.5, 2, 1):
         run(f"window.__TAURI_INTERNALS__.invoke('interface_zoom_choose', {{ factor: {factor} }}).then(() => true)")
         until(f"Math.abs(devicePixelRatio - {factor}) < 0.01", f"the page at {factor}")
-        # The rungs are a layout and a placement away from the ratio.
         hole = None
         for _ in range(40):
             time.sleep(0.25)
@@ -409,7 +345,6 @@ def zoom():
     kept = (CONFIG / "interface-zoom").read_text().strip()
     if float(kept) != 1:
         fail(f"the file keeps {kept}, not the last chosen")
-
 
 {"tree": tree, "zoom": zoom}[WHAT]()
 print(f"{WHAT}: {len(failures)} failures")

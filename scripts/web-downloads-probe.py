@@ -1,41 +1,3 @@
-"""Does a download in a web tab land in the Downloads folder? Windows only.
-
-Emil, 2026-09-27: *"downloads currently don't work, please fix"*. The everyday case is
-a course page on Moodle: a link to a PDF behind a login, which the server sends as an
-attachment. This probe serves the shapes a download takes on the web from the loopback
-and follows each of them in a real web tab of a probe build:
-
-    attach   a plain link to a file sent with `Content-Disposition: attachment`
-    named    an `<a download="...">` link to a file the server would show inline
-    inline   a link to a PDF sent inline, which a browser shows rather than saves
-    blob     a file a script made in the page, saved through a `blob:` address
-    data     a file written into a `data:` address
-    cookie   a file only a signed-in session may have, the way Moodle's
-             pluginfile.php is
-    blank    a `target="_blank"` link to an attachment, which asks for a window first
-    again    the first file a second time, which a browser saves as `name (1).ext`
-    slow     a four megabyte file over three seconds, read halfway along
-    stop     the same file, stopped halfway
-    closed   the same file in a tab a page asked for, which closes as the file starts
-    public   an attachment from a public site, httpbin.org; only when `--only` names it
-
-Each page follows its own link as it loads, so nothing on the machine is pointed at
-and the probe can run beside somebody working. What it reads back is the folder the
-files arrive in, the tabs the window has, and the list of downloads the crate keeps.
-
-    pnpm --dir apps/desktop tauri build --no-bundle \
-      --config '{"identifier":"ch.emilvinu.nib.probe.downloads","version":"99.0.0",
-                 "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-    python scripts/web-downloads-probe.py --exe path/to/nib.exe \
-      --identifier ch.emilvinu.nib.probe.downloads
-
-The files go to a folder of this probe's own, named in `NIB_DOWNLOADS_DIR`, so a run
-never writes into anybody's Downloads; see `downloads::folder` in src-tauri. A build
-that predates that variable writes into the real Downloads folder, and `--watch` says
-where to look for it; the probe then takes away only the files it wrote itself, which
-all start with `nibprobe-`.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -65,8 +27,6 @@ SPACE = "Web downloads probe"
 NOTE = "Idea"
 SITE = "Course page"
 
-# The smallest file every PDF viewer will open, so an inline PDF is a page and a saved
-# one is a document somebody could read.
 PDF = (
     b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n"
     b"2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n"
@@ -74,8 +34,6 @@ PDF = (
     b"trailer<</Root 1 0 R>>\n%%EOF\n"
 )
 
-# A page that follows one link as it loads. The link fills the page, so a person
-# watching sees what was followed, and a real click lands on it too.
 FOLLOW = """<!doctype html>
 <title>__NAME__</title>
 <body style="margin:0;font:16px system-ui">
@@ -99,7 +57,6 @@ LOGIN = """<!doctype html>
 
 user32 = ctypes.WinDLL("user32", use_last_error=True) if sys.platform == "win32" else None
 
-
 def page(name: str, attrs: str, before: str = "") -> bytes:
     return (
         FOLLOW.replace("__NAME__", name)
@@ -107,7 +64,6 @@ def page(name: str, attrs: str, before: str = "") -> bytes:
         .replace("__BEFORE__", before)
         .encode()
     )
-
 
 DATA = "data:text/plain;base64," + base64.b64encode(b"written into an address").decode()
 
@@ -118,7 +74,6 @@ CASES: dict[str, bytes] = {
     "blob": page("blob", 'download="nibprobe-blob.txt"', BLOB),
     "data": page("data", f'href="{DATA}" download="nibprobe-data.txt"'),
     "cookie": page("cookie", 'href="/pluginfile.php/42/mod_resource/content/1/nibprobe-cookie.pdf"'),
-    # Not followed by script: a page gets a window only for a press; see `main`.
     "blank": page("blank", 'href="/files/blank" target="_blank"').replace(
         b"setTimeout(function () { document.getElementById('go').click() }, 300)", b""
     ),
@@ -129,13 +84,11 @@ CASES: dict[str, bytes] = {
     ),
     "slow": page("slow", 'href="/files/slow"'),
     "stop": page("stop", 'href="/files/slow?stop"'),
-    # A large file a page asked a window for, whose tab is closed while it is on its way.
     "closed": page("closed", 'href="/files/slow?closed" target="_blank"').replace(
         b"setTimeout(function () { document.getElementById('go').click() }, 300)", b""
     ),
 }
 
-# What each case should leave in the folder, if downloads work the way a browser's do.
 EXPECTED: dict[str, str | None] = {
     "attach": "nibprobe-report.pdf",
     "named": "nibprobe-named.txt",
@@ -151,16 +104,13 @@ EXPECTED: dict[str, str | None] = {
     "closed": "nibprobe-slow (1).bin",
 }
 
-
 class Server(http.server.ThreadingHTTPServer):
     daemon_threads = True
-
 
 HITS: list[str] = []
 
 SLOW = 4 * 1024 * 1024
 CHUNK = 64 * 1024
-
 
 def serve(port: int) -> Server:
     class Handler(http.server.BaseHTTPRequestHandler):
@@ -195,8 +145,6 @@ def serve(port: int) -> Server:
                     "content-disposition": 'attachment; filename="nibprobe-blank.pdf"',
                 })
             elif path == "/files/slow":
-                # A file large enough to be seen on its way: four megabytes over about
-                # three seconds, with its size said up front the way a server says it.
                 self.send_response(200)
                 self.send_header("content-type", "application/octet-stream")
                 self.send_header("content-length", str(SLOW))
@@ -226,12 +174,9 @@ def serve(port: int) -> Server:
         def log_message(self, *_args: object) -> None:
             return
 
-    # Every loopback address rather than one, because each case is served from a host
-    # of its own; see `host`.
     made = Server(("0.0.0.0", port), Handler)
     threading.Thread(target=made.serve_forever, daemon=True).start()
     return made
-
 
 def free_port() -> int:
     for port in range(PORT_FROM, PORT_TO + 1):
@@ -242,7 +187,6 @@ def free_port() -> int:
                 continue
             return port
     raise SystemExit(f"no port free in {PORT_FROM}-{PORT_TO}")
-
 
 def windows_of(pid: int) -> list[int]:
     assert user32 is not None
@@ -259,23 +203,19 @@ def windows_of(pid: int) -> list[int]:
     user32.EnumWindows(kind(each), 0)
     return found
 
-
 def config_dir(identifier: str) -> pathlib.Path:
     roaming = os.environ.get("APPDATA") or str(pathlib.Path.home() / "AppData" / "Roaming")
     return pathlib.Path(roaming) / identifier
 
-
 def local_dir(identifier: str) -> pathlib.Path:
     local = os.environ.get("LOCALAPPDATA") or str(pathlib.Path.home() / "AppData" / "Local")
     return pathlib.Path(local) / identifier
-
 
 def wipe(identifier: str) -> None:
     if "probe" not in identifier:
         raise SystemExit(f"{identifier} is not a probe identifier: refusing to delete its folders")
     for one in (config_dir(identifier), local_dir(identifier)):
         shutil.rmtree(one, ignore_errors=True)
-
 
 def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str]:
     path = config_dir(identifier) / "automation.json"
@@ -290,13 +230,11 @@ def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str
         time.sleep(0.2)
     raise SystemExit(f"the app never wrote {path}")
 
-
 def allow_eval(identifier: str) -> None:
     path = config_dir(identifier) / "automation.json"
     said = json.loads(path.read_text(encoding="utf-8"))
     said["eval"] = True
     path.write_text(json.dumps(said), encoding="utf-8")
-
 
 def act(port: int, secret: str, verb: str, args: dict[str, object], seconds: float = 60) -> object:
     body = json.dumps({"verb": verb, "args": args, "rest": []}).encode()
@@ -310,7 +248,6 @@ def act(port: int, secret: str, verb: str, args: dict[str, object], seconds: flo
             return json.loads(answer.read().decode("utf-8", "replace"))
     except urllib.error.HTTPError as refused:
         return {"ok": False, "error": f"{refused.code} {refused.read().decode('utf-8', 'replace')}"}
-
 
 class App:
     def __init__(self, port: int, secret: str) -> None:
@@ -335,16 +272,13 @@ class App:
                 return value
         return value
 
-
 TABS = """JSON.stringify(nib.workspace.tabs.map((one) => ({
   id: one.id, kind: one.kind, name: one.name,
 })))"""
 
-
 def tabs(app: App) -> list[dict[str, str]]:
     said = app.ask(TABS)
     return [one for one in said if isinstance(one, dict)] if isinstance(said, list) else []
-
 
 def wait_for_tab(app: App, name: str, seconds: float = 25) -> str:
     until = time.perf_counter() + seconds
@@ -354,7 +288,6 @@ def wait_for_tab(app: App, name: str, seconds: float = 25) -> str:
                 return str(one["id"])
         time.sleep(0.3)
     raise SystemExit(f"the app never opened {name}: {app.ask(TABS)}")
-
 
 def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subprocess.Popen[bytes], App]:
     running = run_probe(exe, quiet=True)
@@ -373,45 +306,29 @@ def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subproc
     time.sleep(1.5)
     return running, App(port, secret)
 
-
 def ours(folder: pathlib.Path) -> set[str]:
     try:
         return {one.name for one in folder.iterdir() if one.name.startswith("nibprobe-")}
     except OSError:
         return set()
 
-
 def host(number: int, port: int) -> str:
-    """A loopback host of its own for each case.
-
-    Chromium lets a page start one download without a press and asks before the
-    second - the "automatic downloads" question - and it keeps that count per tab until
-    the tab goes somewhere else. A probe that follows every link by script would be
-    asking that question from the second case on, so each case is somewhere else:
-    `127.0.0.10`, `127.0.0.11` and so on, which are all this machine."""
 
     return f"http://127.0.0.{10 + number}:{port}"
-
 
 def go(app: App, tab: str, url: str) -> object:
     return app.ask(
         "window.__TAURI_INTERNALS__.invoke('web_navigate', { tab: '" + tab + f"', url: '{url}' }})"
     )
 
-
 def quiet(app: App) -> None:
-    """Puts away the notice that a newer build is ready. It sits over the corner of the
-    page, and a page with anything of the app's over it is out of sight - which is
-    not the page a reader presses on."""
 
     app.ask(
         "[...document.querySelectorAll('.update button, button')]"
         ".find((one) => one.textContent.trim() === 'Later')?.click()"
     )
 
-
 def shoot(pid: int, to: pathlib.Path) -> None:
-    """The window as it is now, into a picture, through the repository's own capture."""
 
     to.parent.mkdir(parents=True, exist_ok=True)
     script = pathlib.Path(__file__).with_name("capture-window.ps1")
@@ -420,7 +337,6 @@ def shoot(pid: int, to: pathlib.Path) -> None:
         check=False,
         capture_output=True,
     )
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -473,7 +389,6 @@ def main() -> int:
         tab = wait_for_tab(app, SITE)
         time.sleep(3)
 
-        # The one case that leaves this machine runs only when it is asked for by name.
         named = args.only.split(",") if args.only else [one for one in CASES if one != "public"]
         chosen = [one for one in CASES if one in named]
         for number, case in enumerate(chosen):
@@ -481,25 +396,18 @@ def main() -> int:
             count = len(tabs(app))
             at = host(number, port)
             if case == "cookie":
-                # Signed in first, on the host the file is on, the way somebody reading
-                # a course page already is.
                 go(app, tab, f"{at}/login")
                 time.sleep(2)
             quiet(app)
             HITS.clear()
             go(app, tab, f"{at}/case/{case}")
             if case in ("blank", "closed"):
-                # A page gets a window only for a press, and this probe presses nothing
-                # on the machine. So the window hears what the crate says when the
-                # page's press arrives - `nib://web-open`, with the tab that asked - and
-                # opens a tab for it exactly as it would for the page.
                 time.sleep(1)
                 app.ask(
                     "window.__TAURI_INTERNALS__.invoke('plugin:event|emit', { event: 'nib://web-open',"
                     f" payload: {{ tab: '{tab}', url: '{at}/files/{'blank' if case == 'blank' else 'slow'}' }} }})"
                 )
             if case in ("slow", "stop", "closed"):
-                # Halfway: the file is on its way, and the list says how far.
                 time.sleep(1.6)
                 listed = app.ask("window.__TAURI_INTERNALS__.invoke('web_downloads')")
                 going = [one for one in listed if isinstance(one, dict) and one.get("state") == "going"] if isinstance(listed, list) else []
@@ -509,7 +417,6 @@ def main() -> int:
                 if not going or not going[-1].get("received") or going[-1].get("total") != SLOW:
                     failed += 1
                 if case == "closed":
-                    # The tab the file is fetched in, closed by the reader halfway.
                     for one in tabs(app):
                         if one["id"] != tab and str(one.get("kind")) == "web":
                             app.ask(f"nib.workspace.close('{one['id']}')")
@@ -523,8 +430,6 @@ def main() -> int:
             now = tabs(app)
             arrived = sorted(after - before)
             want = EXPECTED[case]
-            # And no tab left behind: a tab a page opened for a file closes again, the way
-            # a browser's does.
             ok = arrived == ([want] if want else []) and len(now) == count
             failed += 0 if ok else 1
             report[case] = {
@@ -534,8 +439,6 @@ def main() -> int:
                 "tabs": f"{count} -> {len(now)}",
                 "server saw": HITS[:],
             }
-            # A tab a case left behind is closed, so the next case starts where this one
-            # did - in the tab the probe is steering.
             for one in now:
                 if one["id"] != tab and str(one.get("kind")) == "web" and not str(one.get("name", "")).startswith(SITE):
                     app.ask(f"nib.workspace.close('{one['id']}')")
@@ -544,12 +447,9 @@ def main() -> int:
         listed = app.ask("window.__TAURI_INTERNALS__.invoke('web_downloads')")
         report["the crate's list"] = listed
         if args.shots:
-            # The list under the bar, opened the way a press opens it.
             app.ask("document.querySelector('.webbar .saving')?.click()")
             time.sleep(1)
             shoot(running.pid, args.shots / "list.png")
-        # Everything has ended one way or another: a download the list still calls going
-        # is one the bar would turn its ring for for ever.
         stuck = [one for one in listed if isinstance(one, dict) and one.get("state") == "going"] if isinstance(listed, list) else ["no list"]
         report["still going at the end"] = stuck
         failed += 1 if stuck else 0
@@ -567,7 +467,6 @@ def main() -> int:
     print(json.dumps(report, indent=2))
     print("\nPASS" if failed == 0 else f"\nFAIL ({failed})")
     return 0 if failed == 0 else 1
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

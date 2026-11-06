@@ -54,36 +54,28 @@ ACCOUNT = "probe-account"
 
 failures: list[str] = []
 
-
 def say(words: str) -> None:
     print(words, flush=True)
-
 
 def wrong(words: str) -> None:
     failures.append(words)
     say(f"WRONG: {words}")
 
-
 def roaming(identifier: str) -> pathlib.Path:
     base = os.environ.get("APPDATA") or str(pathlib.Path.home() / "AppData" / "Roaming")
     return pathlib.Path(base) / identifier
-
 
 def local(identifier: str) -> pathlib.Path:
     base = os.environ.get("LOCALAPPDATA") or str(pathlib.Path.home() / "AppData" / "Local")
     return pathlib.Path(base) / identifier
 
-
 def wipe(identifier: str) -> None:
-    """Everything the last run left. Refused for anything but a probe."""
     if "probe" not in identifier:
         raise SystemExit(f"{identifier} is not a probe identifier; refusing to wipe it")
     for path in (roaming(identifier), local(identifier)):
         shutil.rmtree(path, ignore_errors=True)
 
-
 def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str]:
-    """The port and the secret this launch listens behind; see src-tauri/src/endpoint.rs."""
     path = roaming(identifier) / "automation.json"
     until = time.perf_counter() + seconds
     while time.perf_counter() < until:
@@ -96,16 +88,13 @@ def endpoint(identifier: str, seconds: float, unlike: int = 0) -> tuple[int, str
         time.sleep(0.2)
     raise SystemExit(f"the app never wrote {path}")
 
-
 def allow_eval(identifier: str) -> None:
     path = roaming(identifier) / "automation.json"
     said = json.loads(path.read_text(encoding="utf-8"))
     said["eval"] = True
     path.write_text(json.dumps(said), encoding="utf-8")
 
-
 def ran(port: int, secret: str, code: str) -> object:
-    """One expression in the window, and what it came back as."""
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []}).encode()
     request = urllib.request.Request(
         f"http://127.0.0.1:{port}/",
@@ -127,9 +116,6 @@ def ran(port: int, secret: str, code: str) -> object:
         return answer["value"]
     return answer
 
-
-# The envelope, the same few lines as `frame` and `unframe` in packages/sync-core/src/
-# frame.ts, because the bundle's own modules cannot be imported from an eval.
 FRAME = """
 const frame = (value) => {
   const parts = []
@@ -342,7 +328,6 @@ STORE = (
 """
 )
 
-
 def launch(exe: pathlib.Path, environment: dict[str, str], identifier: str, was: int) -> tuple:
     app = run_probe(exe, env=environment)
     until = time.perf_counter() + 120
@@ -355,7 +340,6 @@ def launch(exe: pathlib.Path, environment: dict[str, str], identifier: str, was:
     if ran(port, secret, "1 + 1") != 2:
         raise SystemExit("the endpoint would not run anything; is eval on?")
     return app, port, secret
-
 
 def check(said: dict, store_file: pathlib.Path) -> None:
     opened = said.get("opened", {})
@@ -382,7 +366,6 @@ def check(said: dict, store_file: pathlib.Path) -> None:
     if store_file.exists():
         wrong(f"forgetting left {store_file}")
 
-
 def main() -> int:
     if sys.platform != "win32":
         raise SystemExit("this probe is Windows only")
@@ -407,8 +390,6 @@ def main() -> int:
     wipe(args.identifier)
     environment = {**os.environ, SPACES_DIR: str(spaces)}
 
-    # Twice, because `eval` is read once when the endpoint starts listening: the first
-    # launch writes the file this turns it on in. See src-tauri/src/endpoint.rs.
     first = run_probe(exe, env=environment)
     was, _ = endpoint(args.identifier, 150)
     allow_eval(args.identifier)
@@ -452,7 +433,6 @@ def main() -> int:
         return 1
     print("\nall good")
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -1,38 +1,3 @@
-"""A space's own web data, folded into the store every page shares (#239), proved across two
-builds. Windows only.
-
-Emil, 2026-10-13: the per-space web data option goes, and web data is global. A reader who
-kept a space apart is signed in there, and the build without the option must not sign them
-out. This drives the build from before (`--old`), which still has the option, and then the
-build after (`--new`), on one and the same profile:
-
-1. **old, a page in the shared store** - a local site's second origin (`localhost`) is given
-   a cookie that ends in a day, `pref=global`, one that ends in thirty, `keep=global`, and
-   `localStorage.token = global`;
-2. **old, the space kept apart** - the space's choice set to its own store before any page
-   of the run is built, and both origins visited there: `127.0.0.1` gets a session cookie
-   `sid` (HttpOnly), `localStorage.token = space-a` and an IndexedDB record; `localhost`
-   gets `pref=space` ending in ten days, `keep=space` ending in one, and `token = space-b`;
-3. **new** - the same web note opened again, now in the shared store:
-   * `127.0.0.1` has `sid`, `token = space-a` and the IndexedDB record: everything the
-     shared store did not have came over;
-   * `localhost` has `pref=space` (the later end wins), `keep=global` (so does the shared
-     store's, where its end is later) and `token = global` (an origin the shared store had
-     storage for keeps its own);
-   * the space's own store is still on disk, and the merge is marked done;
-4. **new, the note kept apart** - `Nib-Data` written into the note's file on disk, the way
-   another computer's choice arrives: its open page is built again in `note_<id>`, where
-   `127.0.0.1` has nothing; the key taken out again, and the page is back on the shared
-   store and its login.
-
-The cookies are read by the site itself, which says back the `Cookie` header it was sent,
-so an HttpOnly cookie is seen as a site sees it. No real input is used and nothing is ever
-on a screen; see probe_app.py.
-
-    python scripts/web-data-probe.py --old <before>/nib.exe --new <after>/nib.exe \\
-      --identifier ch.emilvinu.nib.probe.<name>
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -54,12 +19,10 @@ from probe_app import close_app, main_window, run_probe
 HERE = pathlib.Path(__file__).resolve().parent
 SPACE = "Web data probe"
 
-#: A devtools port for the probe's engines, and a window off the screen drawn at full rate.
 ENGINE_ARGS = (
     "--remote-debugging-port=0 --disable-features=CalculateNativeWinOcclusion "
     "--disable-backgrounding-occluded-windows --disable-renderer-backgrounding"
 )
-
 
 def borrowed(name: str):
     spec = importlib.util.spec_from_file_location(name.replace("-", "_"), HERE / f"{name}.py")
@@ -69,19 +32,16 @@ def borrowed(name: str):
     spec.loader.exec_module(module)
     return module
 
-
 page_probe = borrowed("web-page-probe")
 
 DAY = 86400
 
-#: What each page sets, as cookies with their lifetimes and the storage it writes.
 SETS = {
     "/global": ([("pref", "global", DAY), ("keep", "global", 30 * DAY)], "global", False),
     "/space-a": ([("sid", "space-a", None)], "space-a", True),
     "/space-b": ([("pref", "space", 10 * DAY), ("keep", "space", DAY)], "space-b", False),
 }
 
-#: The page that reads it all back: the Cookie header it was sent, the token, the record.
 CHECK = """<!doctype html><title>check</title><script>
 const said = { cookie: %s, token: localStorage.getItem('token'), record: null }
 const asked = indexedDB.open('app', 1)
@@ -109,7 +69,6 @@ if (record) {
   window.__done = true
 }
 </script>"""
-
 
 def serve() -> int:
     class Handler(http.server.BaseHTTPRequestHandler):
@@ -145,7 +104,6 @@ def serve() -> int:
     threading.Thread(target=server.serve_forever, daemon=True).start()
     return port
 
-
 PRELUDE = r"""
 const ws = nib.workspace
 const wait = async (ok, ms = 20000) => {
@@ -159,13 +117,10 @@ const wait = async (ok, ms = 20000) => {
 }
 """
 
-
 def ask(app, body: str, seconds: float = 90) -> object:
     return app.ask(f"(async () => {{ {PRELUDE}\n{body} }})()", seconds)
 
-
 class Run:
-    """One launch of a build, with eval on, until `close`."""
 
     def __init__(self, exe: pathlib.Path, identifier: str, env: dict[str, str], unlike: int) -> None:
         self.running = run_probe(exe, env=env, quiet=True)
@@ -185,9 +140,7 @@ class Run:
             self.running.terminate()
         time.sleep(1.5)
 
-
 def page_now(identifier: str, seconds: float) -> str | None:
-    """The devtools socket of the web tab's page, wherever it is in the site."""
     until = time.perf_counter() + seconds
     while time.perf_counter() < until:
         for path in ("/home", "/check", *SETS):
@@ -197,10 +150,7 @@ def page_now(identifier: str, seconds: float) -> str | None:
         time.sleep(0.3)
     return None
 
-
 def go(identifier: str, address: str, seconds: float = 20) -> object:
-    """The web tab's page sent to `address`, and what it said when it was done there. A
-    socket the engine closes - a page built again in another store - is found again."""
     for _ in range(4):
         url = page_now(identifier, seconds)
         if url is None:
@@ -225,8 +175,6 @@ def go(identifier: str, address: str, seconds: float = 20) -> object:
             tools.close()
     raise SystemExit(f"the site's page would not go to {address}")
 
-
-#: The open web note's words with its last line of Orden's own data replaced by `%s`.
 OWN = r"""
 const web = ws.tabs.find((one) => one.kind === 'web')
 const doc = ws.documentAt(web.path)
@@ -234,14 +182,12 @@ const words = doc.text.replace(/(\r?\nNib-Data=[0-9a-f]+)?\r?\n$/, '') + %s
 doc.replace(words, false)
 """
 
-#: The store the web tab's page is in once it is the one wanted, waited for.
 STORE_OF = """
 const tab = await wait(() => ws.tabs.find((one) => one.kind === 'web'))
 await wait(() => (nib.pages?.of?.(tab.id)?.store ?? '') === 'note_3f9a0c17e2b4d685' && nib.pages?.of?.(tab.id)?.live, 12000)
 await new Promise((go) => setTimeout(go, 1500))
 return nib.pages?.of?.(tab.id)?.store ?? ''
 """
-
 
 def open_site(app, store_check: str | None = None) -> object:
     ask(app, f"for (const one of [...ws.tabs]) ws.close(one.id); {store_check or ''}; return true")
@@ -257,7 +203,6 @@ def open_site(app, store_check: str | None = None) -> object:
     )
     print(f"opened: {said}", file=sys.stderr, flush=True)
     return said
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -281,7 +226,6 @@ def main() -> int:
     said: dict[str, object] = {}
     failed: list[str] = []
 
-    # Once to write the endpoint file, then with `eval` on in it.
     first = run_probe(args.old, env=env, quiet=True)
     port_one, _, _ = page_probe.endpoint(args.identifier)
     time.sleep(3)
@@ -289,7 +233,6 @@ def main() -> int:
     page_probe.allow_eval(args.identifier)
     time.sleep(1)
 
-    # 1. The old build, a page in the shared store.
     run = Run(args.old, args.identifier, env, port_one)
     try:
         said["old, shared"] = open_site(run.app)
@@ -297,14 +240,11 @@ def main() -> int:
         ask(run.app, "for (const one of [...ws.tabs]) ws.close(one.id); return true")
         space = ask(run.app, "return ws.spaces.find((one) => one.name === %s)?.id" % json.dumps(SPACE))
         said["space"] = space
-        # The space's choice, as the old build keeps it, for its next launch to read: the
-        # build reads it once, as the first page of a run is built.
         ask(run.app, "localStorage.setItem('nib:web-data', JSON.stringify({ %s: 'space' })); return true" % json.dumps(space))
     finally:
         run.close()
     last = run.port
 
-    # 2. The old build, the space kept apart.
     run = Run(args.old, args.identifier, env, last)
     try:
         said["old, apart"] = open_site(run.app)
@@ -319,7 +259,6 @@ def main() -> int:
     if not store_folder.is_dir():
         failed.append(f"the old build kept no store of the space's own at {store_folder}")
 
-    # 3. The new build: the same note, in the shared store now.
     run = Run(args.new, args.identifier, env, last)
     try:
         said["new"] = open_site(run.app)
@@ -330,9 +269,6 @@ def main() -> int:
         said["new: merged"] = ask(run.app, "return localStorage.getItem('nib:web-data-merged')")
         said["new: choice left"] = ask(run.app, "return localStorage.getItem('nib:web-data')")
 
-        # 4. The note keeps its own web data, said in its words the way a change synced from
-        # another computer arrives in an open note: its page is built again in a store of
-        # its own, signed out; and taken out again, back on the shared store and its login.
         said["apart"] = ask(run.app, OWN % r"'\r\nNib-Data=3f9a0c17e2b4d685\r\n'" + STORE_OF, 40)
         said["apart: 127.0.0.1"] = go(args.identifier, f"{a}/check")
         said["shared again"] = ask(run.app, OWN % r"'\r\n'" + STORE_OF.replace("note_3f9a0c17e2b4d685", ""), 40)
@@ -375,7 +311,6 @@ def main() -> int:
     if not failed:
         print("a space's logins and storage are in the shared store, and nothing was deleted")
     return 1 if failed else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

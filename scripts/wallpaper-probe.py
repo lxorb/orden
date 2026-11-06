@@ -1,24 +1,3 @@
-"""The wallpaper theme in the packaged app: what it costs a launch, and its card.
-
-Three launches on the built-in theme and three on the wallpaper with a picture chosen,
-with `NIB_TRACE_STARTUP` on, compared on when the shell and the open tab were painted -
-the wallpaper's picture rides in the sheet a launch wears early, so it should cost the
-first paint nothing. Then the theme picker, photographed off the window, with the
-wallpaper's card drawn from the picture.
-
-Every launch goes through `run_probe` in probe_app.py, off the screen and never in
-front, on a spaces folder of its own; the helpers are glass-probe.py's.
-
-    pnpm --dir apps/desktop tauri build --no-bundle \\
-      --config '{"identifier":"ch.emilvinu.nib.probe.wallpaper","version":"99.0.0",
-                 "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-    python scripts/wallpaper-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
-      --identifier ch.emilvinu.nib.probe.wallpaper
-
-Wipes that identifier's settings and webview profile first, and refuses one whose name
-does not say `probe`. Photographs go to target/glass-probe/.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -34,9 +13,6 @@ assert _spec and _spec.loader
 glass = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(glass)
 
-# A picture as the store would have kept it - small, already blurred - written where it
-# keeps one, since a release build has no handle to hand the store a file through. The
-# theme is chosen after, so its sheet is read with the picture in it.
 KEEP = """
 (() => {
   const canvas = document.createElement('canvas')
@@ -55,7 +31,6 @@ KEEP = """
   return localStorage.getItem('nib:wallpaper').length
 })()
 """
-
 
 def launches(exe: pathlib.Path, identifier: str, spaces: pathlib.Path) -> None:
     best: dict[str, float] = {}
@@ -98,7 +73,6 @@ def launches(exe: pathlib.Path, identifier: str, spaces: pathlib.Path) -> None:
         else:
             glass.say(f"ok   the wallpaper reaches {step} in {pictured:.0f} ms against the built-in's {plain:.0f}")
 
-
 def main() -> int:
     if sys.platform != "win32":
         print("this drive runs the Windows probe", flush=True)
@@ -124,7 +98,6 @@ def main() -> int:
 
     print("\nthe wallpaper costs a launch nothing")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

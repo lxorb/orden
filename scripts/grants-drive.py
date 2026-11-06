@@ -1,22 +1,4 @@
 #!/usr/bin/env python3
-"""A private tab's answer to a site's request, kept for that private session and nowhere
-else. #787: a camera allowed in a private tab was written to the device's store, a
-normal tab on the same site was then allowed with no bubble, and the site's info named
-the private visit.
-
-Run with Orden up on a web tab (GRANTS=1 in scripts/wayland-launch.sh). A private tab
-is opened on the same site, the site asks for the camera there and Allow is pressed in
-the bubble; the store must not name the site. The private tab is closed and the site
-asks again from the normal tab: the bubble has to come up there, since nothing a
-private tab said may answer a normal one.
-
-The request arrives as the crate sends it, `nib://web-ask`, emitted from the app's own
-page: on Orden's own Chromium the engine asks with its own prompt and the crate sends
-none, while on `WebView2` and a Mac this event is the request, and the window's answer
-to it is what this proves.
-
-    python3 scripts/grants-drive.py <out folder>
-"""
 
 import json
 import os
@@ -30,7 +12,6 @@ OUT = Path(sys.argv[1])
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ch.emilvinu.nib"
 SITE = "http://127.0.0.1:8765"
 
-
 def endpoint():
     for _ in range(120):
         try:
@@ -42,9 +23,7 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
-
 
 def run(code):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
@@ -63,7 +42,6 @@ def run(code):
             time.sleep(1)
     return None
 
-
 def until(code, seconds=15):
     for _ in range(seconds * 4):
         said = run(code)
@@ -72,14 +50,12 @@ def until(code, seconds=15):
         time.sleep(0.25)
     return None
 
-
 def ask(tab, number):
     payload = {"tab": tab, "id": number, "origin": f"{SITE}/", "kind": "camera"}
     return run(
         "window.__TAURI_INTERNALS__.invoke('plugin:event|emit', "
         f"{{ event: 'nib://web-ask', payload: {json.dumps(payload)} }}).then(() => true, (e) => String(e))"
     )
-
 
 BUBBLE = "document.querySelector('.ask[role=\"dialog\"]') !== null"
 STORED = "localStorage.getItem('nib:web-grants') || ''"

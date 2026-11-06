@@ -1,21 +1,4 @@
 #!/usr/bin/env python3
-"""Orden's window moved by its own tab strip, resized by its edge and maximised by a
-double click on the strip, the way a hand does each - and each looked at. #427: under
-KDE the strip moved nothing on CEF (src-tauri/src/window_drag.rs).
-
-Run with Orden up, its endpoint open to `eval` (as scripts/wayland-launch.sh and
-scripts/x11-launch.sh leave it), under one of two desktops:
-
-  sway   the compositor's own pointer (scripts/wayland-pointer.py's FIFO in <out>), and
-         sway's tree for where the window is. The window is floated first, as only a
-         floating window moves under a tiling compositor.
-  x11    xdotool's pointer on the X server, and the window as the X server has it.
-
-    python3 scripts/window-drag.py <sway|x11> <out folder> <app pid>
-
-Every step leaves a picture in <out> and its numbers in <out>/drag.json, and the run
-fails where the window did not move, grow or fill the screen.
-"""
 
 import json
 import os
@@ -31,7 +14,6 @@ POINTER = OUT / "pointer.fifo"
 seen = {}
 failures = []
 
-
 def endpoint():
     for _ in range(120):
         try:
@@ -43,9 +25,7 @@ def endpoint():
         time.sleep(0.5)
     raise SystemExit("::error::the app wrote no endpoint")
 
-
 PORT, SECRET = endpoint()
-
 
 def run(code):
     body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
@@ -64,13 +44,10 @@ def run(code):
             time.sleep(1)
     return None
 
-
 def fail(what):
     print(f"::error::{what}")
     failures.append(what)
 
-
-# Where the window is on the screen, x, y, width, height, and the pointer's moves.
 if DESK == "sway":
 
     def sway(*words):
@@ -114,7 +91,6 @@ if DESK == "sway":
         output = next(one for one in sway("-t", "get_outputs") if one["name"] == "HEADLESS-2")["rect"]
         return output["width"], output["height"]
 
-    # On the screen at scale 1, wide enough for the window to stay on it as it moves and grows.
     subprocess.run(
         ["swaymsg", '[title="Orden"] floating enable, move container to output HEADLESS-2, resize set 900 600, move position 100 100'],
         check=False,
@@ -126,8 +102,6 @@ else:
         return subprocess.run(["xdotool", *words], capture_output=True, text=True, check=False).stdout
 
     def wid():
-        # By its title, which is the page's and ends in the app's name; its pid is not
-        # always said on the window.
         found = [w for w in xdo("search", "--onlyvisible", "--name", "Orden").split() if w]
         best, area = None, 0
         for one in found:
@@ -162,14 +136,11 @@ else:
         size = xdo("getdisplaygeometry").split()
         return int(size[0]), int(size[1])
 
-    # A size of its own, away from the corner, so a move and a resize both show.
     xdo("windowsize", wid(), "900", "600")
     xdo("windowmove", wid(), "100", "100")
     time.sleep(1.5)
 
-
 def drag(start, by, steps=12):
-    """The button pressed at `start` on the screen, the pointer carried `by`, let go."""
     move(*start)
     time.sleep(0.3)
     press()
@@ -181,10 +152,6 @@ def drag(start, by, steps=12):
     release()
     time.sleep(1.0)
 
-
-# A press on the tab strip's own empty part, where Tauri's drag region is.
-# A point the region itself is on top at, looked for across its width: the strip's
-# region lies under the tabs, and shows only where there are none.
 region = run(
     "(() => { for (const one of document.querySelectorAll('[data-tauri-drag-region]')) {"
     " const r = one.getBoundingClientRect(); if (r.width < 20 || r.height < 8) continue;"
@@ -207,9 +174,6 @@ print(f"{DESK}: the strip dragged by (160, 90): {before} -> {moved}")
 if abs(moved[0] - before[0] - 160) > 20 or abs(moved[1] - before[1] - 90) > 20:
     fail(f"{DESK}: the window did not follow the strip ({before} -> {moved})")
 
-# What the page hears of the pointer from here on, kept in the page and read back with
-# the numbers: a drag that moved nothing is then a press the page never had, or one it
-# had and did nothing with.
 run(
     "(() => { window.__dragHeard = []; for (const kind of ['mousedown', 'mouseup', 'pointercancel', 'lostpointercapture', 'blur', 'focus'])"
     " window.addEventListener(kind, (e) => window.__dragHeard.push([kind, Math.round(performance.now()),"
@@ -217,7 +181,6 @@ run(
     " return true })()"
 )
 
-# The right edge, two pixels in, carried out by 120.
 at = window()
 drag((at[0] + at[2] - 2, at[1] + at[3] // 2), (120, 0))
 grown = window()
@@ -229,8 +192,6 @@ print(f"{DESK}: the right edge dragged by 120: {at} -> {grown}")
 if grown[2] - at[2] < 80:
     fail(f"{DESK}: the window did not grow by its edge ({at} -> {grown})")
 
-# A double click on the strip, which maximises. Not under sway, which has no such state
-# for a floating window.
 if DESK != "sway":
     at = window()
     move(at[0] + region["x"], at[1] + region["y"])

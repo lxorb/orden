@@ -1,24 +1,3 @@
-"""F11 full screen (#259), driven on a Windows probe build, read through automation only.
-
-A probe never goes full screen on anybody's screen: under `NIB_OFF_SCREEN` the crate
-keeps what was asked and leaves the window where it is (src-tauri/src/full_screen.rs), and
-`run_probe`'s watchdog ends the app if any window of it ever reaches a screen. So what is
-checked is what the app says and draws, never the screen:
-
-* **in** - F11 in a split puts the pane worked in alone in the window: no strips, no
-  bars, no other pane, and the window asked for full screen (`window_is_fullscreen`),
-  while the real window is still the off-screen one it was.
-* **out** - F11 again gives everything back, the split included.
-* **Escape** - leaves too, where nothing else had a use for it.
-* **a web tab** - is its page alone: the address bar is gone, and no button is drawn.
-
-Keys are played on the app's own page as events, so no real key is pressed and nothing is
-asked of the foreground.
-
-    python scripts/fullscreen-probe.py --exe <probe nib.exe> \\
-      --identifier ch.emilvinu.nib.probe.<name>
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -41,7 +20,6 @@ _spec.loader.exec_module(browser)
 
 SPACE = "Full screen probe"
 
-# What the window shows, as far as full screen is concerned.
 STATE = r"""
 (async () => {
   const ws = nib.workspace
@@ -63,18 +41,15 @@ STATE = r"""
 })()
 """
 
-
 def key(name: str) -> str:
     return (
         "window.dispatchEvent(new KeyboardEvent('keydown', "
         f"{{ key: '{name}', code: '{name}', bubbles: true, cancelable: true }}))"
     )
 
-
 def state(port: int, secret: str) -> dict[str, object]:
     said = browser.ask(port, secret, STATE)
     return said if isinstance(said, dict) else {"error": said}
-
 
 def settled(port: int, secret: str, full: bool) -> dict[str, object]:
     until = time.perf_counter() + 20
@@ -86,7 +61,6 @@ def settled(port: int, secret: str, full: bool) -> dict[str, object]:
         time.sleep(0.3)
     return said
 
-
 def window_rect(hwnd: int) -> tuple[int, int, int, int]:
     import ctypes
     from ctypes import wintypes
@@ -94,7 +68,6 @@ def window_rect(hwnd: int) -> tuple[int, int, int, int]:
     rect = wintypes.RECT()
     ctypes.windll.user32.GetWindowRect(hwnd, ctypes.byref(rect))
     return rect.left, rect.top, rect.right, rect.bottom
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -139,7 +112,6 @@ def main() -> int:
         time.sleep(3)
         before_rect = window_rect(hwnd) if hwnd else None
 
-        # A split: One on the left, Two beside it, the right one worked in.
         browser.act(port, secret, "open", {"path": "One.md", "space": SPACE})
         time.sleep(1)
         browser.ask(port, secret, "nib.workspace.split('row')")
@@ -178,7 +150,6 @@ def main() -> int:
         if escaped.get("full") is not False:
             wrong.append(f"Escape did not leave full screen: {escaped}")
 
-        # A web tab: its page alone.
         browser.ask(port, secret, f"nib.workspace.openPage('{site}/page', 'front')")
         time.sleep(3)
         browser.ask(port, secret, key("F11"))
@@ -202,7 +173,6 @@ def main() -> int:
     for one in wrong:
         print(f"WRONG: {one}")
     return 1 if wrong else 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

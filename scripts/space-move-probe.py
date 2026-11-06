@@ -44,9 +44,7 @@ ROOT = HERE.parent
 
 failures: list[str] = []
 
-
 def borrowed(name: str, file: str):
-    """Another probe's helpers, read from its file: the names have dashes in them."""
 
     spec = importlib.util.spec_from_file_location(name, HERE / file)
     if spec is None or spec.loader is None:
@@ -54,7 +52,6 @@ def borrowed(name: str, file: str):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
-
 
 switch = borrowed("switch", "web-switch-probe.py")
 terminal = borrowed("terminal", "terminal-probe.py")
@@ -67,10 +64,8 @@ MARK = "moved-with-its-shell"
 AFTER = "still-the-same-shell"
 KEY = "space-move-probe"
 
-
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
-
 
 def check(ok: bool, words: str) -> None:
     if ok:
@@ -79,10 +74,8 @@ def check(ok: bool, words: str) -> None:
         failures.append(words)
         say(f"FAIL {words}")
 
-
 def cmd_of(pid: int) -> list[int]:
     return sorted(one for one, name in terminal.shells_of(pid) if name == "cmd.exe")
-
 
 def rows(app) -> list[str]:
     said = ask(
@@ -92,7 +85,6 @@ def rows(app) -> list[str]:
     )
     return said if isinstance(said, list) else []
 
-
 def typed(app, words: str) -> None:
     ask(
         app,
@@ -101,14 +93,11 @@ def typed(app, words: str) -> None:
         "return true })()",
     )
 
-
 def shown(app) -> dict:
     said = ask(app, tabs_probe.SHOWN)
     return said if isinstance(said, dict) else {}
 
-
 def menu_on(app, tab: str) -> object:
-    """The tab's own menu, opened by a right click dispatched on it."""
 
     return ask(
         app,
@@ -118,7 +107,6 @@ def menu_on(app, tab: str) -> object:
         "return 'opened' })()",
     )
 
-
 def menu_rows(app) -> list[str]:
     said = ask(
         app,
@@ -126,9 +114,7 @@ def menu_rows(app) -> list[str]:
     )
     return said if isinstance(said, list) else []
 
-
 def chevron_of(app, label: str) -> object:
-    """The chevron at the end of a menu's row: the row's alternatives."""
 
     return ask(
         app,
@@ -138,7 +124,6 @@ def chevron_of(app, label: str) -> object:
         "more.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); return 'shown' })()",
     )
 
-
 def press_row(app, label: str) -> object:
     return ask(
         app,
@@ -147,9 +132,7 @@ def press_row(app, label: str) -> object:
         "if (!row) return 'no row'; row.click(); return 'pressed' })()",
     )
 
-
 def moved_by_menu(app, tab: str, space: str, shots: pathlib.Path | None, identifier: str) -> None:
-    """Move to space, its chevron, the space: the tab's own menu, as a person uses it."""
 
     check(menu_on(app, tab) == "opened", "the tab's menu opens")
     time.sleep(0.6)
@@ -167,11 +150,9 @@ def moved_by_menu(app, tab: str, space: str, shots: pathlib.Path | None, identif
     check(press_row(app, space) == "pressed", f"{space} pressed")
     time.sleep(1.5)
 
-
 def histories(identifier: str, space: str) -> list[str]:
     folder = switch.local_dir(identifier) / "terminal" / space
     return sorted(one.name for one in folder.glob("*.json")) if folder.exists() else []
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -240,7 +221,6 @@ def main() -> int:
         before = until(lambda: cmd_of(running.pid), 20)
         say(f"Command Prompt PIDs before the move: {before}")
         check(len(before) == 1, "one shell runs")
-        # The output rests, and its lines are written down under Work.
         until(lambda: histories(args.identifier, work), 10)
         check(bool(histories(args.identifier, work)), f"its last lines are kept under Work ({histories(args.identifier, work)})")
 
@@ -273,7 +253,6 @@ def main() -> int:
         check(cmd_of(running.pid) == before, f"still the one shell ({cmd_of(running.pid)})")
         tabs_probe.shoot(args.identifier, shots / "home-terminal.png")
 
-        # The note, moved the same way: its file goes with it.
         tabs_probe.to_space(app, work)
         note = ask(app, "(() => { const tab = nib.workspace.tabs.find((one) => one.name === 'Idea.md'); return tab ? tab.id : null })()")
         if isinstance(note, str):
@@ -292,7 +271,6 @@ def main() -> int:
 
     print("PASS" if not failures else f"FAIL: {failures}")
     return 1 if failures else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

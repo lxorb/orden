@@ -1,33 +1,3 @@
-"""A web tab's Clip, driven in a native Windows build: the page writes itself down in
-nib's own world, and the window clips it with the article extractor.
-
-What it asks, against a news article served on the loopback (the extractor's own
-fixture, packages/markdown/src/fixtures/news.html) with three things added to the page:
-a password field holding a password, a field holding words, and a script that wraps
-`cloneNode`, `querySelectorAll` and `getSelection` and writes on the page's root how
-often anything called them.
-
-* **`web_clip` answers a snapshot**: a doctype in front, the article in it, no script,
-  no field's value and no password field.
-* **The page never saw it**: a second snapshot carries the root's count as the first
-  read left it, and it is nought - the reader ran in nib's world, where the page's
-  wrappers are not the ones called (`web_tabs::web_clip`).
-* **Save as a note, behind the dots, writes the clipper's note**: `source:`, `title:` from the article's
-  own name, `clipped:`, the page's tags, one heading, the article's words and none of
-  the cookie banner, the navigation or the footer.
-* **A selection wins**: on the same page with a paragraph selected by the page itself,
-  the note is that paragraph and nothing else.
-
-Nothing here presses a key or moves the mouse: the glyph is pressed in the app's own
-page by the automation endpoint's `eval`, and every question to the page is the
-crate's own command.
-
-    python scripts/web-clip-probe.py --exe path/to/nib.exe --identifier ch.emilvinu.nib.probe.<name>
-
-Build the exe as `scripts/probe_app.py` says. The launch is `run_probe`'s, off the
-screen and without the keyboard.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -46,9 +16,7 @@ from probe_app import close_app
 HERE = pathlib.Path(__file__).resolve().parent
 FIXTURE = HERE.parent / "packages" / "markdown" / "src" / "fixtures" / "news.html"
 
-
 def borrowed(name: str, file: str):
-    """Another drive's helpers, read from its file: the names have dashes in them."""
 
     spec = importlib.util.spec_from_file_location(name, HERE / file)
     if spec is None or spec.loader is None:
@@ -57,10 +25,8 @@ def borrowed(name: str, file: str):
     spec.loader.exec_module(module)
     return module
 
-
 switch = borrowed("switch", "web-switch-probe.py")
 
-#: What the page adds to the article: two fields, and the wrappers that count.
 ADDED = """
 <form><input name="q" value="words somebody typed"><input type="password" value="hunter2"></form>
 <script>
@@ -94,11 +60,9 @@ ADDED = """
 </script>
 """
 
-
 def article() -> bytes:
     html = FIXTURE.read_text(encoding="utf-8")
     return html.replace("</body>", ADDED + "</body>").encode()
-
 
 def serve(port: int) -> http.server.ThreadingHTTPServer:
     class Handler(http.server.BaseHTTPRequestHandler):
@@ -117,7 +81,6 @@ def serve(port: int) -> http.server.ThreadingHTTPServer:
     threading.Thread(target=made.serve_forever, daemon=True).start()
     return made
 
-
 def clip(app, tab: str, selection: bool) -> dict[str, object]:
     said = app.ask(
         "(async () => { try { return JSON.stringify(await window.__TAURI_INTERNALS__.invoke("
@@ -126,9 +89,7 @@ def clip(app, tab: str, selection: bool) -> dict[str, object]:
     )
     return said if isinstance(said, dict) else {"error": said}
 
-
 def press_clip(app) -> object:
-    """Save as a note, behind the dots: the scissors are off the bar (#405)."""
     return app.ask(
         "(async () => { document.querySelector('.webbar button[aria-label=\"More\"]')?.click();"
         " await new Promise((go) => setTimeout(go, 400));"
@@ -136,7 +97,6 @@ def press_clip(app) -> object:
         ".find((one) => one.textContent.includes('Save as a note'));"
         " row?.click(); return JSON.stringify(!!row) })()"
     )
-
 
 def newest_note(space: pathlib.Path, before: set[str], seconds: float = 20) -> tuple[str, str] | None:
     until = time.perf_counter() + seconds
@@ -147,7 +107,6 @@ def newest_note(space: pathlib.Path, before: set[str], seconds: float = 20) -> t
             return fresh[0].name, fresh[0].read_text(encoding="utf-8")
         time.sleep(0.25)
     return None
-
 
 def main() -> int:
     if sys.platform != "win32":
@@ -262,7 +221,6 @@ def main() -> int:
     print(json.dumps(said, indent=2, ensure_ascii=False))
     print("FAILED: " + ", ".join(failures) if failures else "all good")
     return 1 if failures else 0
-
 
 if __name__ == "__main__":
     sys.exit(main())
