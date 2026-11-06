@@ -37,7 +37,28 @@ export function standingOf(kind: LocalKind, said: Said | null): Standing {
   const base = { program: said.program, plan: null, account: null }
   if (said.timedOut) return { ...base, state: 'unknown' }
 
+  if (kind === 'gemini-cli') return geminiStanding(said, base)
   return kind === 'claude-code' ? claudeStanding(said, base) : codexStanding(said, base)
+}
+
+const GEMINI_PLANS: Record<string, string> = { 'api-key': 'API key', vertex: 'Vertex AI' }
+
+function geminiStanding(said: Said, base: Omit<Standing, 'state'>): Standing {
+  let status: Record<string, unknown> = {}
+  try {
+    const value: unknown = JSON.parse(said.out)
+    if (typeof value === 'object' && value !== null) status = value as Record<string, unknown>
+  } catch {
+    return { ...base, state: 'unknown' }
+  }
+  if (status.signedIn !== true) return { ...base, state: 'out' }
+  const method = typeof status.method === 'string' ? status.method : ''
+  return {
+    ...base,
+    state: 'in',
+    plan: GEMINI_PLANS[method] ?? null,
+    account: typeof status.email === 'string' && status.email ? status.email : null,
+  }
 }
 
 function claudeStanding(said: Said, base: Omit<Standing, 'state'>): Standing {

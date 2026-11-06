@@ -324,7 +324,7 @@
           </label>
         {/if}
 
-        {#if !__EVEN_PLUGIN__ && (provider.kind === 'claude-code' || provider.kind === 'codex')}
+        {#if !__EVEN_PLUGIN__ && (provider.kind === 'claude-code' || provider.kind === 'codex' || provider.kind === 'gemini-cli')}
           <PlanRows {provider} kind={provider.kind} {refresh} trouble={said(provider)} />
         {:else}
           {#if !__EVEN_PLUGIN__ && provider.kind === 'chatgpt'}
@@ -344,7 +344,11 @@
                   class="nib-field is-value"
                   type="password"
                   value=""
-                  placeholder={provider.kind === 'compatible' ? t('Optional') : 'sk-'}
+                  placeholder={provider.kind === 'compatible'
+                    ? t('Optional')
+                    : provider.kind === 'gemini'
+                      ? 'AIza'
+                      : 'sk-'}
                   spellcheck="false"
                   autocomplete="off"
                   onchange={(event) => {

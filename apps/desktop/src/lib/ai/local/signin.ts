@@ -5,10 +5,12 @@ import type { LocalKind } from '../providers'
 const LOGIN: Record<LocalKind, string> = {
   'claude-code': 'auth login',
   codex: 'login',
+  'gemini-cli': '',
 }
 const LOGOUT: Record<LocalKind, string> = {
   'claude-code': 'auth logout',
   codex: 'logout',
+  'gemini-cli': '',
 }
 
 const STARTING = 20_000
@@ -16,6 +18,7 @@ const STARTING = 20_000
 const HOME_VARIABLE: Record<LocalKind, string> = {
   'claude-code': 'CLAUDE_CONFIG_DIR',
   codex: 'CODEX_HOME',
+  'gemini-cli': 'GEMINI_CLI_HOME',
 }
 
 const posix = (word: string) => `'${word.replace(/'/g, `'\\''`)}'`
@@ -28,7 +31,7 @@ export function loginLine(
   home: string | null = null,
 ): string {
   const quoted = windows ? `"${program}"` : posix(program)
-  const line = `${quoted} ${(out ? LOGOUT : LOGIN)[kind]}`
+  const line = [quoted, (out ? LOGOUT : LOGIN)[kind]].filter(Boolean).join(' ')
   if (!home) return line
   return windows
     ? `set "${HOME_VARIABLE[kind]}=${home}" && ${line}`

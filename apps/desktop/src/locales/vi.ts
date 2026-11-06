@@ -1985,6 +1985,8 @@ export const vi: Dictionary = {
   'Your account’s connector': 'Trình kết nối của tài khoản',
   'Orden asks you once, the first time it connects.':
     'Orden hỏi bạn một lần, khi nó kết nối lần đầu.',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'Trong Antigravity, mở menu … ở đầu bảng tác nhân, rồi MCP Servers → Manage MCP Servers → View raw config, và thêm mục này vào đó.',
   'A client on another machine?': 'Một ứng dụng khách trên máy khác?',
   'Shown only once.': 'Chỉ hiện một lần.',
   'Remove {name}?': 'Gỡ {name}?',

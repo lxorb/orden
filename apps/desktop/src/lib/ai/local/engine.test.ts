@@ -65,6 +65,12 @@ const CLAUDE: Provider & { kind: 'claude-code' } = {
   model: '',
 }
 const CODEX: Provider & { kind: 'codex' } = { id: 'cx', kind: 'codex', name: 'Codex', model: '' }
+const GEMINI: Provider & { kind: 'gemini-cli' } = {
+  id: 'gm',
+  kind: 'gemini-cli',
+  name: 'Gemini CLI',
+  model: '',
+}
 
 function thread(provider: Provider, extra: Partial<Thread> = {}): Thread {
   return {
@@ -92,7 +98,9 @@ const QUIET = {
 }
 
 function engine(provider: Provider, instructions = '') {
-  return createLocalEngine(provider.kind === 'codex' ? 'codex' : 'claude-code', {
+  const kind =
+    provider.kind === 'codex' || provider.kind === 'gemini-cli' ? provider.kind : 'claude-code'
+  return createLocalEngine(kind, {
     provider: (id) => (id === provider.id ? provider : null),
     answers: QUIET,
     instructions: () => Promise.resolve(instructions),
@@ -776,5 +784,63 @@ describe('a program’s own goal', () => {
 
     expect((await pursue(built, on, { do: 'pause' })).state).toBe('paused')
     expect(opened[0]?.said.at(-1)).toEqual({ kind: 'goal', goal: { do: 'clear' } })
+  })
+})
+
+describe('the Gemini CLI', () => {
+  beforeEach(() => {
+    opened = []
+    listed = null
+  })
+
+  test('opens with no effort, hears its stream-json, and offers its aliases', async () => {
+    answer = (_open, said) =>
+      said.kind === 'turn'
+        ? [
+            '{"type":"init","session_id":"s-1","model":"gemini-3.8-flash"}',
+            '{"type":"tool_use","tool_name":"mcp_orden_read_note","tool_id":"r1","parameters":{"path":"a.md"}}',
+            '{"type":"tool_result","tool_id":"r1","status":"success","output":"Herons."}',
+            '{"type":"message","role":"assistant","content":"Herons.","delta":true}',
+            '{"type":"result","status":"success","stats":{"input_tokens":9,"output_tokens":2,"cached":0}}',
+          ]
+        : []
+    const on = thread(GEMINI, { effort: 'high' })
+    const built = engine(GEMINI)
+    const events = await send(GEMINI, on, 'What is in a.md?', built)
+
+    expect(opened[0]?.opening).toMatchObject({ tool: 'gemini-cli', effort: null, mode: 'approve' })
+    expect(events.at(-1)).toEqual({ type: 'done', stop: 'end' })
+    expect(events).toContainEqual({ type: 'model', model: 'gemini-3.8-flash' })
+    const model = on.turns[1]
+    expect(model?.parts.map((one) => one.kind)).toEqual(['tool', 'text'])
+    expect(model?.parts[0]).toMatchObject({ verb: 'read_note', state: 'ok' })
+    expect(on.usage).toMatchObject({ input: 9, output: 2 })
+    expect((await built.models(GEMINI)).map((one) => one.id)).toEqual([
+      'auto',
+      'pro',
+      'flash',
+      'flash-lite',
+    ])
+    expect(await built.steer(on, 'and a stork')).toBe(false)
+  })
+
+  test('a session that ends unanswered says the program’s last words', async () => {
+    answer = (open, said) => {
+      if (said.kind === 'turn') {
+        setTimeout(() => {
+          open.channel.onmessage({
+            kind: 'end',
+            code: 1,
+            timedOut: false,
+            stopped: false,
+            err: 'Error: boom\n',
+          })
+        }, 0)
+      }
+      return []
+    }
+    const on = thread(GEMINI)
+    const events = await send(GEMINI, on, 'Hello')
+    expect(events.at(-1)).toEqual({ type: 'done', stop: 'error', error: 'Error: boom' })
   })
 })

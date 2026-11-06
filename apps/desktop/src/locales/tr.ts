@@ -2017,6 +2017,8 @@ export const tr: Dictionary = {
   'Agents on this computer': 'Bu bilgisayardaki ajanlar',
   'Your account’s connector': 'Hesabının bağlayıcısı',
   'Orden asks you once, the first time it connects.': 'Orden ilk bağlandığında sana bir kez sorar.',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'Antigravity’de aracı panelinin üstündeki … menüsünü açın, ardından MCP Servers → Manage MCP Servers → View raw config, ve bu girdiyi ekleyin.',
   'A client on another machine?': 'Başka bir makinedeki bir istemci mi?',
   'Shown only once.': 'Yalnızca bir kez gösterilir.',
   'Remove {name}?': '{name} kaldırılsın mı?',

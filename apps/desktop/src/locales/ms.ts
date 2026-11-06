@@ -2000,6 +2000,8 @@ export const ms: Dictionary = {
   'Your account’s connector': 'Penyambung akaun anda',
   'Orden asks you once, the first time it connects.':
     'Orden bertanya sekali, kali pertama ia bersambung.',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'Dalam Antigravity, buka menu … di bahagian atas panel ejen, kemudian MCP Servers → Manage MCP Servers → View raw config, dan tambahkan entri ini ke dalamnya.',
   'A client on another machine?': 'Klien pada mesin lain?',
   'Shown only once.': 'Ditunjukkan sekali sahaja.',
   'Remove {name}?': 'Buang {name}?',

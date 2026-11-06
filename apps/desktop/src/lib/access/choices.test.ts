@@ -3,11 +3,18 @@ import { choices, shownFirst, viaAccount } from './choices'
 
 describe('the ways in Access offers', () => {
   test('a desktop with an account offers both roads and Other', () => {
-    expect(choices(true, true)).toEqual(['claude-code', 'codex', 'claude', 'chatgpt', 'other'])
+    expect(choices(true, true)).toEqual([
+      'claude-code',
+      'codex',
+      'antigravity',
+      'claude',
+      'chatgpt',
+      'other',
+    ])
   })
 
   test('a desktop without an account offers the agents on this computer', () => {
-    expect(choices(true, false)).toEqual(['claude-code', 'codex', 'other'])
+    expect(choices(true, false)).toEqual(['claude-code', 'codex', 'antigravity', 'other'])
   })
 
   test('a browser or a phone with an account offers the connector', () => {
@@ -26,7 +33,9 @@ describe('the ways in Access offers', () => {
 
   test('Claude and ChatGPT are the account’s, the rest this computer’s or both', () => {
     expect(
-      ['claude-code', 'codex', 'claude', 'chatgpt', 'other'].map((one) => viaAccount(one as never)),
-    ).toEqual([false, false, true, true, false])
+      ['claude-code', 'codex', 'antigravity', 'claude', 'chatgpt', 'other'].map((one) =>
+        viaAccount(one as never),
+      ),
+    ).toEqual([false, false, false, true, true, false])
   })
 })

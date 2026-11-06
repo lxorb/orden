@@ -2,6 +2,7 @@ mod args;
 mod codex_app;
 mod enroll;
 pub(crate) mod family;
+mod gemini;
 mod home;
 pub(crate) mod program;
 mod run;
@@ -24,6 +25,7 @@ use crate::ai_agent::Builtin;
 pub use args::Tool;
 use args::{Effort, Mode, Shape};
 use codex_app::Host;
+use gemini::Gemini;
 use home::Home;
 use program::Program;
 use run::{Heard, Running, Said};
@@ -61,6 +63,7 @@ struct Session {
 enum On {
     Claude(Claude),
     Codex(Arc<Host>),
+    Gemini(Box<Gemini>),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -92,8 +95,10 @@ impl Asks {
             ids.iter().filter_map(|id| sessions.remove(id)).collect()
         };
         for session in sessions {
-            if let On::Claude(claude) = session.on {
-                claude.stop();
+            match session.on {
+                On::Claude(claude) => claude.stop(),
+                On::Gemini(gemini) => gemini.stop(),
+                On::Codex(_) => {}
             }
         }
         let hosts: Vec<Arc<Host>> = {
@@ -220,11 +225,14 @@ pub fn ai_cli_status(
     };
     let home = home_for(webview.app_handle(), tool, account.as_deref())?;
     let folder = workroom(webview.app_handle())?;
-    let said = run::run_to_end(
+    let mut said = run::run_to_end(
         command(&program, args::status(tool), &folder, home.as_ref()),
         TELLING,
     )
     .map_err(|error| error.to_string())?;
+    if tool == Tool::Gemini && !said.ended.timed_out {
+        said.out = gemini::standing(home.as_ref()).to_string();
+    }
     Ok(Some(Status {
         program: program.exe.to_string_lossy().into_owned(),
         home: home.map(|one| one.dir().to_string_lossy().into_owned()),
@@ -255,7 +263,7 @@ pub fn ai_cli_forget(webview: Webview, tool: Tool, account: String) -> Result<()
     let Some(home) = home_for(webview.app_handle(), tool, Some(&account))? else {
         return Ok(());
     };
-    if let Some(program) = program::find(tool) {
+    if let Some(program) = program::find(tool).filter(|_| !args::logout(tool).is_empty()) {
         let folder = workroom(webview.app_handle())?;
         let _ = run::run_to_end(
             command(&program, args::logout(tool), &folder, Some(&home)),
@@ -429,7 +437,7 @@ pub fn ai_cli_open(
             token.as_deref(),
             home.as_ref(),
         )?),
-        Tool::Codex => None,
+        Tool::Codex | Tool::Gemini => None,
     };
 
     let asks = webview.state::<Asks>();
@@ -462,6 +470,30 @@ pub fn ai_cli_open(
             };
             host.open(&id, output, opening.mode, model, opening.effort, from)?;
             On::Codex(host)
+        }
+        (Tool::Gemini, _) => {
+            if opening.effort.is_some() {
+                return Err("Gemini CLI has no effort to set".to_owned());
+            }
+            let nib = match opening.mode {
+                Some(_) => Some(crate::mcp::program::program()?),
+                None => None,
+            };
+            let caps = caps_of(&program, &folder);
+            let room = folder.clone();
+            let launch = gemini::Launch {
+                base: Box::new(move |args: &[String]| {
+                    command(&program, args, &room, home.as_ref())
+                }),
+                folder,
+                caps,
+                token,
+                thread: opening.thread.clone(),
+                mode: opening.mode,
+                without: opening.without.clone(),
+            };
+            let gemini = Gemini::start(launch, &id, model, IDLE, nib.as_deref(), output)?;
+            On::Gemini(Box::new(gemini))
         }
     };
     sessions.insert(
@@ -550,6 +582,7 @@ pub fn ai_cli_say(webview: Webview, id: String, say: Value) -> Result<(), String
     match &session.on {
         On::Claude(claude) => claude.say(&say),
         On::Codex(host) => host.say(&id, say),
+        On::Gemini(gemini) => gemini.say(say),
     }
 }
 
@@ -567,6 +600,7 @@ pub fn ai_cli_close(webview: Webview, id: String) -> Result<(), String> {
     match session.map(|one| one.on) {
         Some(On::Claude(claude)) => claude.stop(),
         Some(On::Codex(host)) => host.close(&id),
+        Some(On::Gemini(gemini)) => gemini.stop(),
         None => {}
     }
     Ok(())
@@ -610,6 +644,7 @@ pub fn ai_cli_models(
             };
             host_for(&asks, key, &program, &folder, None)?.models(TELLING)
         }
+        Tool::Gemini => Err("Gemini CLI names its models by alias".to_owned()),
     }
 }
 
@@ -1498,5 +1533,139 @@ exec node '{}' {name} \"$@\"
         let models = claude.ask(serde_json::json!({ "subtype": "list_models" }), TELLING);
         assert!(models.is_ok_and(|models| models["models"].is_array()));
         claude.stop();
+    }
+
+    fn gemini_session(
+        mode: &'static str,
+        folder: &Path,
+        tools: Option<Mode>,
+    ) -> (Gemini, Receiver<Message>) {
+        let (output, heard) = route();
+        let caps = args::Caps::from_help("--output-format --skip-trust --resume --model");
+        let launch = gemini::Launch {
+            base: Box::new(move |args: &[String]| fake(Tool::Gemini, mode, args)),
+            folder: folder.to_path_buf(),
+            caps,
+            token: tools.map(|_| "abc123".to_owned()),
+            thread: Some("nib-thread-1".to_owned()),
+            mode: tools,
+            without: Vec::new(),
+        };
+        let nib = tools.map(|_| PathBuf::from("nib.exe"));
+        let gemini =
+            Gemini::start(launch, "g-1", None, IDLE, nib.as_deref(), output).expect("started");
+        (gemini, heard)
+    }
+
+    fn lines_until_result(heard: &Receiver<Message>) -> Vec<String> {
+        until(heard, TELLING, |one| {
+            matches!(one, Message::End(_))
+                || matches!(one, Message::Line { line } if line.contains("\"result\""))
+        })
+        .into_iter()
+        .map(|one| match one {
+            Message::Line { line } => line,
+            other => panic!("not a line: {other:?}"),
+        })
+        .collect()
+    }
+
+    #[test]
+    fn a_gemini_session_resumes_its_session_turn_by_turn_and_lends_orden() {
+        if !node() {
+            eprintln!("no node here; skipped");
+            return;
+        }
+        let dir = tempfile::tempdir().expect("a folder");
+        let (gemini, heard) = gemini_session("answer", dir.path(), Some(Mode::Full));
+        gemini.say(turn("what is a heron")).expect("said");
+        let first = lines_until_result(&heard).join("\n");
+        assert!(first.contains("fake-session-1"), "{first}");
+        assert!(first.contains("mcp_orden_read_note"), "{first}");
+        assert!(first.contains("set:abc123"), "{first}");
+        assert!(first.contains(r#""content":" what is a heron""#), "{first}");
+
+        let mut said = Err(String::new());
+        for _ in 0..100 {
+            said = gemini.say(turn("and a stork"));
+            if said.is_ok() {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        said.expect("said again");
+        let second = lines_until_result(&heard).join("\n");
+        assert!(second.contains(r#""content":"again""#), "{second}");
+        assert!(second.contains("fake-session-1"), "{second}");
+        assert!(heard.recv_timeout(Duration::from_millis(500)).is_err());
+
+        let pictured = Say::Turn {
+            text: "this".to_owned(),
+            images: vec![say::Image {
+                mime: "image/png".to_owned(),
+                data: "iVBORw0KGgo=".to_owned(),
+            }],
+        };
+        assert!(gemini.say(pictured).is_err());
+        assert!(gemini.say(Say::Fast { on: true }).is_err());
+        assert!(gemini.say(Say::Effort { effort: None }).is_ok());
+        gemini.stop();
+        assert!(!dir.path().join("gemini").join("g-1").exists());
+    }
+
+    #[test]
+    fn a_gemini_turn_that_dies_unanswered_ends_the_session_with_its_words() {
+        if !node() {
+            eprintln!("no node here; skipped");
+            return;
+        }
+        let dir = tempfile::tempdir().expect("a folder");
+        let (gemini, heard) = gemini_session("crash", dir.path(), None);
+        gemini.say(turn("hello")).expect("said");
+        let end = until(&heard, TELLING, |one| matches!(one, Message::End(_)));
+        assert!(
+            matches!(end.last(), Some(Message::End(ended)) if ended.code == Some(1) && ended.err.contains("boom"))
+        );
+
+        let (signed_out, heard) = gemini_session("signed-out", dir.path(), None);
+        signed_out.say(turn("hello")).expect("said");
+        let lines = lines_until_result(&heard).join("\n");
+        assert!(lines.contains("Auth method"), "{lines}");
+        assert!(heard.recv_timeout(Duration::from_millis(500)).is_err());
+    }
+
+    #[test]
+    fn an_interrupted_gemini_turn_ends_stopped() {
+        if !node() {
+            eprintln!("no node here; skipped");
+            return;
+        }
+        let dir = tempfile::tempdir().expect("a folder");
+        let pids = dir.path().join("pids");
+        let (output, heard) = route();
+        let watched = pids.clone();
+        let launch = gemini::Launch {
+            base: Box::new(move |args: &[String]| {
+                let mut command = fake(Tool::Gemini, "hang", args);
+                command.env("FAKE_AI_CLI_PIDS", &watched);
+                command
+            }),
+            folder: dir.path().to_path_buf(),
+            caps: args::Caps::from_help("--output-format"),
+            token: None,
+            thread: None,
+            mode: None,
+            without: Vec::new(),
+        };
+        let gemini = Gemini::start(launch, "g-2", None, IDLE, None, output).expect("started");
+        gemini.say(turn("hold on")).expect("said");
+        let family = pids_in(&pids);
+        assert!(gemini.say(turn("again")).is_err());
+        gemini.say(Say::Interrupt).expect("interrupted");
+        let end = until(&heard, TELLING, |one| matches!(one, Message::End(_)));
+        assert!(matches!(end.last(), Some(Message::End(ended)) if ended.stopped));
+        for pid in family {
+            assert!(gone_soon(pid), "{pid} outlived the interrupt");
+        }
     }
 }

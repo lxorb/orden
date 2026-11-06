@@ -1978,6 +1978,8 @@ export const am: Dictionary = {
   'Agents on this computer': 'በዚህ ኮምፒውተር ላይ ያሉ ወኪሎች',
   'Your account’s connector': 'የመለያዎ ማገናኛ',
   'Orden asks you once, the first time it connects.': 'Orden ለመጀመሪያ ጊዜ ሲገናኝ አንድ ጊዜ ይጠይቅዎታል።',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'በAntigravity ውስጥ በወኪሉ ፓነል አናት ላይ ያለውን … ምናሌ ይክፈቱ፣ ከዚያ MCP Servers → Manage MCP Servers → View raw config፣ እና ይህን ግቤት ያክሉበት።',
   'A client on another machine?': 'በሌላ ማሽን ላይ ያለ ደንበኛ?',
   'Shown only once.': 'አንድ ጊዜ ብቻ ይታያል።',
   'Remove {name}?': '{name} ይወገድ?',

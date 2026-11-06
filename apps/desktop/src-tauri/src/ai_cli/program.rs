@@ -77,6 +77,7 @@ fn named_outright(tool: Tool) -> Option<PathBuf> {
     let name = match tool {
         Tool::ClaudeCode => "NIB_AI_CLAUDE_CODE",
         Tool::Codex => "NIB_AI_CODEX",
+        Tool::Gemini => "NIB_AI_GEMINI",
     };
     std::env::var_os(name)
         .map(PathBuf::from)

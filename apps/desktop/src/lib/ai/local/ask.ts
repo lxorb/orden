@@ -5,14 +5,18 @@ import { invoke, isDesktop } from '../../tauri'
 import type { Ask } from '../complete'
 import { KIND_NAMES, type LocalKind } from '../providers'
 import { claudeReader } from './claude'
-import { codexReader } from './codex'
 import type { Heard } from './heard'
 import { promptFor } from './prompt'
+import { readerOf } from './readers'
 import { heardIn, openSession, type Session } from './session'
 import { plans } from './status.svelte'
 import { type Ending, troubleOf } from './trouble'
 
-export const PLANS: Record<LocalKind, string> = { 'claude-code': 'Claude', codex: 'ChatGPT' }
+export const PLANS: Record<LocalKind, string> = {
+  'claude-code': 'Claude',
+  codex: 'ChatGPT',
+  'gemini-cli': 'Gemini',
+}
 
 function stopped(): DOMException {
   return new DOMException('The question was stopped.', 'AbortError')
@@ -66,7 +70,8 @@ function startError(error: unknown, kind: LocalKind): Error {
 export async function askLocal(ask: Ask & { provider: { kind: LocalKind } }): Promise<string> {
   if (!isDesktop) throw new Error(t('Only in the desktop app.'))
   if (ask.signal?.aborted) throw stopped()
-  return ask.provider.kind === 'codex' ? await askCodex(ask) : await askClaude(ask)
+  const { kind } = ask.provider
+  return kind === 'claude-code' ? await askClaude(ask) : await askInSession(kind, ask)
 }
 
 async function askClaude(ask: Ask): Promise<string> {
@@ -103,15 +108,15 @@ async function askClaude(ask: Ask): Promise<string> {
   }
 }
 
-async function askCodex(ask: Ask): Promise<string> {
-  const listening = new Listening('codex', ask, codexReader())
+async function askInSession(kind: Exclude<LocalKind, 'claude-code'>, ask: Ask): Promise<string> {
+  const listening = new Listening(kind, ask, readerOf(kind))
   let done: (end: Ending) => void = () => undefined
   const ended = new Promise<Ending>((resolve) => (done = resolve))
   let session: Session
   try {
     session = await openSession(
       {
-        tool: 'codex',
+        tool: kind,
         agent: { id: ask.provider.id, name: ask.provider.name },
         mode: null,
         model: ask.model.trim() || null,
@@ -135,7 +140,7 @@ async function askCodex(ask: Ask): Promise<string> {
       },
     )
   } catch (error) {
-    throw startError(error, 'codex')
+    throw startError(error, kind)
   }
 
   const stop = () => void session.say({ kind: 'interrupt' }).catch(() => undefined)

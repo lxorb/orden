@@ -18,8 +18,6 @@ import { always, type Answers, crateAnswers } from '../chat/approvals'
 import { KIND_NAMES, type LocalKind, type Message, type Provider } from '../providers'
 import { agentOf } from '../review/changes'
 import { PLANS } from './ask'
-import { claudeReader } from './claude'
-import { codexReader } from './codex'
 import {
   GOAL_CLEARED,
   goalHeld,
@@ -32,6 +30,7 @@ import {
 import type { Heard as Read } from './heard'
 import { modelsIn } from './models'
 import { promptFor } from './prompt'
+import { readerOf } from './readers'
 import {
   listedModels,
   type Heard,
@@ -76,7 +75,7 @@ interface Pursuit {
 }
 
 function levelOf(kind: LocalKind, effort: Effort): Level | null {
-  if (effort === 'auto') return null
+  if (effort === 'auto' || kind === 'gemini-cli') return null
   if (kind === 'claude-code' && (effort === 'off' || effort === 'minimal')) return null
   return effort
 }
@@ -231,7 +230,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       return 'error'
     }
 
-    const read: (line: string) => Read = kind === 'claude-code' ? claudeReader() : codexReader()
+    const read: (line: string) => Read = readerOf(kind)
     const heard: Read = {}
     let answered = ''
     let named = false
@@ -532,7 +531,10 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
   return {
     async models(provider) {
       if (provider.kind !== kind) return []
-      listed = modelsIn(kind, await listedModels(kind, provider.id))
+      listed =
+        kind === 'gemini-cli'
+          ? modelsIn(kind, null)
+          : modelsIn(kind, await listedModels(kind, provider.id))
       return listed.map((one) => ({ ...one, window: one.window ?? windows.get(one.id) ?? null }))
     },
     async send(thread, message, on, signal) {
@@ -560,7 +562,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     async steer(thread, text) {
       const flight = running.get(thread.id)
       const live = sessions.get(thread.id)
-      if (!flight || !live || live.session.ended) return false
+      if (!flight || !live || live.session.ended || kind === 'gemini-cli') return false
       if (kind === 'codex') {
         await live.session.say({ kind: 'steer', text })
       } else {
@@ -574,7 +576,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       const live = sessions.get(thread.id)
       if (!live || live.session.ended || running.has(thread.id)) return
       await new Promise<void>((resolve) => {
-        const read: (line: string) => Read = kind === 'claude-code' ? claudeReader() : codexReader()
+        const read: (line: string) => Read = readerOf(kind)
         const timer = setTimeout(() => {
           done()
         }, 120_000)

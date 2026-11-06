@@ -1,4 +1,4 @@
-import { isLocal, modelsUrl, NOT_CHAT, type Provider } from '../providers'
+import { isLocal, modelsUrl, NOT_CHAT, type Provider, talkable } from '../providers'
 import { sseJson } from '../stream'
 import { ordered, SCALE } from './effort'
 import { learnt } from './learned'
@@ -97,6 +97,36 @@ export function planModels(body: unknown): ModelInfo[] {
   })
 }
 
+const LEVELS: readonly Effort[] = ['minimal', 'low', 'medium', 'high']
+
+function geminiEfforts(id: string, thinks: boolean): Effort[] {
+  const major = Number(/^gemini-(\d+)/.exec(id)?.[1] ?? 0)
+  return thinks && major >= 3 ? ordered(LEVELS) : ['auto']
+}
+
+function geminiModels(body: unknown): ModelInfo[] {
+  return rows(body, 'models').flatMap((row) => {
+    const id = text(row.name).replace(/^models\//, '')
+    const methods = row.supportedGenerationMethods
+    if (!id || !Array.isArray(methods) || !methods.includes('generateContent')) return []
+    if (!talkable('gemini', [id]).length) return []
+    const thinks = row.thinking === true
+    const output = count(row.outputTokenLimit)
+    return [
+      {
+        id,
+        name: text(row.displayName) || id,
+        window: count(row.inputTokenLimit),
+        efforts: geminiEfforts(id, thinks),
+        images: true,
+        fast: false,
+        ...(output ? { output } : {}),
+        thinking: thinks,
+      },
+    ]
+  })
+}
+
 export function compatibleModels(body: unknown): ModelInfo[] {
   return rows(body, 'data').flatMap((row) => {
     const id = text(row.id)
@@ -150,8 +180,25 @@ async function anthropicList(provider: Provider, signal?: AbortSignal): Promise<
   return found
 }
 
+async function geminiList(provider: Provider, signal?: AbortSignal): Promise<ModelInfo[]> {
+  const found: ModelInfo[] = []
+  let token = ''
+  for (let page = 0; page < 10; page++) {
+    const url = `${modelsUrl(provider)}${token ? `&pageToken=${encodeURIComponent(token)}` : ''}`
+    const response = await request(provider, url, { method: 'GET' }, signal)
+    const body = sseJson(await response.text())
+    found.push(...geminiModels(body))
+    token = text(record(body)?.nextPageToken)
+    if (!token) break
+  }
+  return found
+}
+
 export async function catalogue(provider: Provider, signal?: AbortSignal): Promise<ModelInfo[]> {
   if (isLocal(provider.kind)) return []
+  if (provider.kind === 'gemini') {
+    return (await geminiList(provider, signal)).map((one) => withLearnt(provider.id, one))
+  }
   if (provider.kind === 'anthropic') {
     return (await anthropicList(provider, signal)).map((one) => withLearnt(provider.id, one))
   }
@@ -173,7 +220,7 @@ export function unlisted(provider: Provider, id: string): ModelInfo {
     id,
     name: id,
     window: null,
-    efforts: keyed ? [...SCALE] : ['auto'],
+    efforts: keyed ? [...SCALE] : provider.kind === 'gemini' ? geminiEfforts(id, true) : ['auto'],
     images: provider.kind !== 'compatible',
     fast: false,
   })

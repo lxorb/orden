@@ -62,6 +62,7 @@
   const LABELS: Record<Choice, () => string> = {
     'claude-code': () => 'Claude Code',
     codex: () => 'Codex',
+    antigravity: () => 'Antigravity',
     claude: () => 'Claude',
     chatgpt: () => 'ChatGPT',
     other: () => t('Other'),
@@ -257,7 +258,7 @@
             {/each}
           </div>
 
-          {#if pane && (choice === 'claude-code' || choice === 'codex' || choice === 'other')}
+          {#if pane && (choice === 'claude-code' || choice === 'codex' || choice === 'antigravity' || choice === 'other')}
             <LocalSteps {pane} client={choice} />
           {/if}
           {#if account.user && (viaAccount(choice) || choice === 'other')}

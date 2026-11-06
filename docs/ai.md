@@ -97,6 +97,30 @@ It runs as `codex app-server`, one per window, the JSON-RPC protocol OpenAI's ow
 extension speaks: a question is a thread with no tool, answered word by word and closed;
 a sidebar thread is a thread that stays (docs/ai-sidebar.md 5.2).
 
+### Gemini: a key, or the reader's own Gemini CLI (#358)
+
+A **Gemini** key asks Google's `generateContent` API itself (`lib/ai/chat/gemini.ts`):
+`models/<id>:streamGenerateContent?alt=sse` with the key in `x-goog-api-key`, Orden's
+tools as `functionDeclarations` (`parametersJsonSchema`), thinking shown
+(`thinkingConfig.includeThoughts`) and its level (`thinkingLevel`, `minimal` to `high`)
+on Gemini 3 and later. A turn replays as Gemini sent it, `thoughtSignature` and all; a
+call from another provider's turn goes back with the documented
+`skip_thought_signature_validator` on the first call. Google calls `generateContent`
+legacy since its Interactions API (checked 2026-11-06), still supported.
+
+The **Gemini CLI** is the third program, signed in by the CLI itself: Orden types `gemini`
+in a terminal tab and the reader picks a sign-in there; its state is read from its own
+folder (`oauth_creds.json`, `google_accounts.json`, `settings.json`), as it has no status
+command. Each turn is one headless run, `gemini --output-format stream-json`, the words on
+stdin, `--resume <session>` from the second turn on; Orden's system prompt by
+`GEMINI_SYSTEM_MD`, its workroom trusted for the run (`GEMINI_CLI_TRUST_WORKSPACE`, else
+a headless run in an untrusted folder exits), and its settings by
+`GEMINI_CLI_SYSTEM_SETTINGS_PATH`: the built-in
+tools excluded, skills and hooks off, and for a sidebar thread `nib mcp` alone
+(`--allowed-mcp-server-names orden`, `includeTools` for the mode, the token by
+`${NIB_MCP_TOKEN}` from the environment). Its models are its aliases (Auto, Pro, Flash,
+Flash-Lite); it has no effort, no steering and no pictures from Orden.
+
 ### What a program is run with
 
 Fixed in the crate (`src-tauri/src/ai_cli/args.rs`); the page names a tool, a model, an
@@ -117,6 +141,7 @@ effort, a mode and a thread, and sends words, never an argument or a protocol me
   2.1.280), and the reader's `CLAUDE.md` files off by `CLAUDE_CODE_DISABLE_CLAUDE_MDS`.
   A message that starts with `/` goes with a space in front, so the reader's words are
   never one of Claude Code's commands.
+- **Gemini CLI**: one headless run per turn, see Gemini above.
 - **Codex**: `app-server`, read-only and asking nobody (`sandbox_mode`,
   `approval_policy`), the shell tool, web search and MCP servers off, `AGENTS.md`
   unread, nothing in its history; each thread ephemeral, with Orden's instructions, and
@@ -158,15 +183,17 @@ usage** on the row goes to the plan's own page.
 
 ## Providers
 
-Settings > AI. Six kinds, the three plans on a desktop only:
+Settings > AI. Eight kinds, the four plans on a desktop only:
 
 | Kind | What it needs | Where the models come from |
 | --- | --- | --- |
 | Claude Code | Claude Code installed and signed in | the program's own default, or a name typed |
 | ChatGPT | Continue with ChatGPT | the plan's own catalogue, `api.openai.com/v1/models` |
 | Codex | Codex installed and signed in | the program's own default, or a name typed |
+| Gemini CLI | Gemini CLI installed and signed in | its aliases, or a name typed |
 | Claude | An Anthropic API key | `api.anthropic.com/v1/models` |
 | OpenAI | An OpenAI API key | `api.openai.com/v1/models` |
+| Gemini | A Gemini API key | `generativelanguage.googleapis.com/v1beta/models` |
 | OpenAI-compatible | A base URL, and a key if the server wants one | `<base>/v1/models` |
 
 As many compatible ones as you have servers: Ollama on this machine,
@@ -180,8 +207,10 @@ below, and Used for. **Access**: everything that can reach the notes, in one lis
 agents on this computer, through `nib mcp` (docs/agent-native.md 9.1, 10), and the apps
 connected through the account's connector - each row saying what it reaches and when it
 was last used; an agent's row opens its grant. Under the list, one **Connect** chooser
-over both roads (Claude Code, Codex, Claude, ChatGPT, Other), each way only where it
-applies (`lib/access/choices.ts`). Until 2026-10-12 these were three panes, AI, Agents and
+over both roads (Claude Code, Codex, Antigravity, Claude, ChatGPT, Other), each way only
+where it applies (`lib/access/choices.ts`). Antigravity's tab shows the `mcpServers` entry
+to paste under its agent panel's MCP Servers → Manage MCP Servers → View raw config;
+Orden does not write that file. Until 2026-10-12 these were three panes, AI, Agents and
 LLM access, split by plumbing rather than by what a reader wants; a link to either of the
 last two (`settings.show('agents')`, the palette, `/mcp`) still lands on Access, and the
 settings search still finds them by their old words.
@@ -193,7 +222,8 @@ course if you have multiple accounts for the same provider then only one will be
 still, openai and claude could be active at the same time."
 
 A **provider** is who serves the model: Claude (through Claude Code or an Anthropic key),
-OpenAI (through Codex, ChatGPT or an OpenAI key), and each compatible server on its own.
+OpenAI (through Codex, ChatGPT or an OpenAI key), Gemini (through the Gemini CLI or a
+Gemini key), and each compatible server on its own.
 Each row above is an **account** of one, and a provider may have several: a work key
 beside one's own, two Claude Code sign-ins. Exactly one account of each provider is in
 use, and every provider is in use at once. Everything that asks a model asks a provider -
@@ -206,7 +236,7 @@ one in use marked on its card and **Use** on each other one; the palette lists
 `AI account: Claude · Work` for each, the one in use ticked. A provider's name wears its
 logo out of the shared brand set (`accountBrand` in `provider-brand.ts`), as do its Add
 row and its chip in the composer's model picker: Claude for Claude's key and Claude Code,
-OpenAI for its key, ChatGPT and Codex, and a compatible server by its address (OpenRouter,
+OpenAI for its key, ChatGPT and Codex, Gemini for its key and the Gemini CLI, and a compatible server by its address (OpenRouter,
 Mistral, Gemini, DeepSeek), by the port of a program on this machine (Ollama's 11434, LM
 Studio's 1234), then by the name it was given; one that names no one wears a server.
 

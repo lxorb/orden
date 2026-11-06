@@ -1951,6 +1951,8 @@ export const zhHans: Dictionary = {
   'Agents on this computer': '这台电脑上的代理',
   'Your account’s connector': '你账号的连接器',
   'Orden asks you once, the first time it connects.': '首次连接时，Orden 会问你一次。',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    '在 Antigravity 中打开代理面板顶部的 … 菜单，然后依次选择 MCP Servers → Manage MCP Servers → View raw config，并把这一项加进去。',
   'A client on another machine?': '另一台机器上的客户端？',
   'Shown only once.': '只显示一次。',
   'Remove {name}?': '移除 {name}？',

@@ -1977,6 +1977,8 @@ export const ko: Dictionary = {
   'Agents on this computer': '이 컴퓨터의 에이전트',
   'Your account’s connector': '계정의 커넥터',
   'Orden asks you once, the first time it connects.': '처음 연결할 때 Orden이 한 번 묻습니다.',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'Antigravity에서 에이전트 패널 위쪽의 … 메뉴를 열고 MCP Servers → Manage MCP Servers → View raw config로 가서 이 항목을 추가하세요.',
   'A client on another machine?': '다른 기기의 클라이언트인가요?',
   'Shown only once.': '한 번만 표시됩니다.',
   'Remove {name}?': '{name}을(를) 제거할까요?',

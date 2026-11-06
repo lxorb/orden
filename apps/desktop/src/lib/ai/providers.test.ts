@@ -255,6 +255,31 @@ describe('the model a provider starts on', () => {
     ).toBe('claude-sonnet-5')
   })
 
+  test('is Google’s newest Gemini that talks, Pro before Flash, stable before preview', () => {
+    const listed = [
+      'gemini-2.5-flash',
+      'gemini-3-flash-preview',
+      'gemini-3.1-pro-preview',
+      'gemini-3.6-flash',
+      'gemini-3.8-flash',
+      'gemini-3.8-flash-tts',
+      'gemini-3.8-live',
+      'gemini-embedding-2',
+      'gemini-4-argon',
+    ]
+    expect(firstModel('gemini', listed)).toBe('gemini-4-argon')
+    expect(
+      firstModel(
+        'gemini',
+        listed.filter((one) => one !== 'gemini-4-argon'),
+      ),
+    ).toBe('gemini-3.8-flash')
+    expect(firstModel('gemini', ['gemini-3-flash', 'gemini-3-pro-preview', 'gemini-3-pro'])).toBe(
+      'gemini-3-pro',
+    )
+    expect(firstModel('gemini', ['gemini-embedding-2', 'imagen-4.0-generate'])).toBeNull()
+  })
+
   test('is another server’s first, nib knowing nothing of its names', () => {
     expect(firstModel('compatible', ['llama3', 'babbage-like'])).toBe('llama3')
     expect(firstModel('compatible', [])).toBeNull()
@@ -266,8 +291,15 @@ describe('the plans', () => {
   const program: Provider = { id: 'codex', kind: 'codex', name: '', model: '' }
 
   test('are offered on a desktop only, first, and Claude Code only where the build has it', () => {
-    expect(offeredKinds(false, true)).toEqual(['anthropic', 'openai', 'compatible'])
-    expect(offeredKinds(true, true).slice(0, 3)).toEqual(['claude-code', 'chatgpt', 'codex'])
+    expect(offeredKinds(false, true)).toEqual(['anthropic', 'openai', 'gemini', 'compatible'])
+    expect(offeredKinds(true, true).slice(0, 4)).toEqual([
+      'claude-code',
+      'chatgpt',
+      'codex',
+      'gemini-cli',
+    ])
+    expect(isLocal('gemini-cli')).toBe(true)
+    expect(isLocal('gemini')).toBe(false)
     expect(offeredKinds(true, false)).not.toContain('claude-code')
   })
 
@@ -302,5 +334,62 @@ describe('the plans', () => {
     expect(transcribes(program)).toBe(false)
     expect(transcribes(plan)).toBe(false)
     expect(transcribes(openai)).toBe(true)
+  })
+})
+
+describe('a Gemini key', () => {
+  const gemini: Provider = { id: 'gemini', kind: 'gemini', name: '', model: 'gemini-3-flash' }
+
+  test('asks Google’s address with the key in its own header, streaming', () => {
+    const root = 'https://generativelanguage.googleapis.com/v1beta'
+    expect(apiRoot(gemini)).toBe(root)
+    expect(askUrl(gemini)).toBe(`${root}/models/gemini-3-flash:streamGenerateContent?alt=sse`)
+    expect(modelsUrl(gemini)).toBe(`${root}/models?pageSize=1000`)
+    expect(headersFor(gemini, 'AIza-1')).toEqual({
+      'content-type': 'application/json',
+      'x-goog-api-key': 'AIza-1',
+    })
+    expect(reachable(gemini, false)).toBe(false)
+    expect(transcribes(gemini)).toBe(false)
+  })
+
+  test('lists the models that answer by their names, not the ones that embed', () => {
+    expect(
+      modelsIn({
+        models: [
+          { name: 'models/gemini-3-flash', supportedGenerationMethods: ['generateContent'] },
+          { name: 'models/gemini-embedding-2', supportedGenerationMethods: ['embedContent'] },
+        ],
+      }),
+    ).toEqual(['gemini-3-flash'])
+  })
+
+  test('the words of an event are its parts’ text, never its thoughts', () => {
+    const event = {
+      candidates: [{ content: { parts: [{ text: 'hmm', thought: true }, { text: 'Herons' }] } }],
+    }
+    expect(deltaIn('gemini', event)).toBe('Herons')
+    expect(deltaIn('gemini', { candidates: [] })).toBe('')
+  })
+
+  test('the system goes apart and the answer is the model’s', () => {
+    const asked: Message[] = [
+      { role: 'system', content: 'Brief.' },
+      { role: 'user', content: 'Hi' },
+      { role: 'assistant', content: 'Hello' },
+    ]
+    expect(JSON.parse(bodyFor(gemini, asked, true))).toEqual({
+      systemInstruction: { parts: [{ text: 'Brief.' }] },
+      contents: [
+        { role: 'user', parts: [{ text: 'Hi' }] },
+        { role: 'model', parts: [{ text: 'Hello' }] },
+      ],
+    })
+  })
+
+  test('a trouble said as a list is its first error’s words', () => {
+    expect(troubleIn([{ error: { code: 429, message: 'Quota exceeded.' } }])).toBe(
+      'Quota exceeded.',
+    )
   })
 })

@@ -1965,6 +1965,8 @@ export const th: Dictionary = {
   'Your account’s connector': 'ตัวเชื่อมต่อของบัญชีคุณ',
   'Orden asks you once, the first time it connects.':
     'Orden จะถามคุณครั้งเดียว เมื่อเชื่อมต่อครั้งแรก',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'ใน Antigravity เปิดเมนู … ที่ด้านบนของแผงเอเจนต์ จากนั้น MCP Servers → Manage MCP Servers → View raw config แล้วเพิ่มรายการนี้ลงไป',
   'A client on another machine?': 'ไคลเอนต์บนเครื่องอื่นใช่ไหม',
   'Shown only once.': 'แสดงเพียงครั้งเดียว',
   'Remove {name}?': 'นำ {name} ออกไหม',

@@ -11,6 +11,7 @@ const CLAUDE_OVERRIDES: [&str; 3] = [
     "CLAUDE_CODE_OAUTH_TOKEN",
 ];
 const CODEX_OVERRIDES: [&str; 2] = ["OPENAI_API_KEY", "CODEX_API_KEY"];
+const GEMINI_OVERRIDES: [&str; 2] = ["GEMINI_API_KEY", "GOOGLE_API_KEY"];
 
 #[cfg(not(target_os = "macos"))]
 const CODEX_CONFIG: &str = "cli_auth_credentials_store = \"keyring\"\n";
@@ -42,6 +43,7 @@ impl Home {
         match self.tool {
             Tool::ClaudeCode => "CLAUDE_CONFIG_DIR",
             Tool::Codex => "CODEX_HOME",
+            Tool::Gemini => "GEMINI_CLI_HOME",
         }
     }
 
@@ -53,6 +55,7 @@ impl Home {
         let overrides: &[&str] = match self.tool {
             Tool::ClaudeCode => &CLAUDE_OVERRIDES,
             Tool::Codex => &CODEX_OVERRIDES,
+            Tool::Gemini => &GEMINI_OVERRIDES,
         };
         for name in overrides {
             command.env_remove(name);
@@ -77,6 +80,7 @@ fn kind_of(tool: Tool) -> &'static str {
     match tool {
         Tool::ClaudeCode => "claude-code",
         Tool::Codex => "codex",
+        Tool::Gemini => "gemini-cli",
     }
 }
 

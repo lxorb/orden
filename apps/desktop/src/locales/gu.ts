@@ -1997,6 +1997,8 @@ export const gu: Dictionary = {
   'Your account’s connector': 'તમારા ખાતાનું કનેક્ટર',
   'Orden asks you once, the first time it connects.':
     'પહેલી વાર જોડાય ત્યારે Orden તમને એક વાર પૂછે છે.',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'Antigravityમાં એજન્ટ પેનલની ટોચ પરનું … મેનૂ ખોલો, પછી MCP Servers → Manage MCP Servers → View raw config, અને તેમાં આ એન્ટ્રી ઉમેરો.',
   'A client on another machine?': 'બીજા મશીન પરનો ક્લાયન્ટ?',
   'Shown only once.': 'ફક્ત એક જ વાર બતાવાય છે.',
   'Remove {name}?': '{name} દૂર કરીએ?',

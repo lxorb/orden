@@ -38,7 +38,7 @@ export async function complete(ask: Ask): Promise<string> {
   const apiKey = await keyFor(provider)
   if (!reachable(provider, !!apiKey)) throw new Error(t('That provider is not set up yet.'))
 
-  const streaming = !!ask.stream || provider.kind === 'chatgpt'
+  const streaming = !!ask.stream || provider.kind === 'chatgpt' || provider.kind === 'gemini'
 
   const response = await fetch(askUrl(provider), {
     method: 'POST',

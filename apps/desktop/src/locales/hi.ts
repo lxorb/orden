@@ -2005,6 +2005,8 @@ export const hi: Dictionary = {
   'Your account’s connector': 'आपके खाते का कनेक्टर',
   'Orden asks you once, the first time it connects.':
     'पहली बार जुड़ने पर Orden आपसे एक बार पूछता है।',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'Antigravity में एजेंट पैनल के ऊपर का … मेनू खोलें, फिर MCP Servers → Manage MCP Servers → View raw config, और उसमें यह एंट्री जोड़ें।',
   'A client on another machine?': 'किसी दूसरी मशीन पर क्लाइंट?',
   'Shown only once.': 'केवल एक बार दिखाया जाता है।',
   'Remove {name}?': '{name} हटाएँ?',

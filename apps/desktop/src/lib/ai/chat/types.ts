@@ -87,7 +87,7 @@ export interface Replay {
   messages: unknown[]
 }
 
-export type Api = 'anthropic' | 'responses' | 'completions'
+export type Api = 'anthropic' | 'responses' | 'completions' | 'gemini'
 
 export interface Turn {
   id: string

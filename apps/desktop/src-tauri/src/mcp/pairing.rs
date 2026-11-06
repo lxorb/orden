@@ -7,10 +7,11 @@ use crate::paths::{made, write_privately};
 
 const LONGEST_NAME: usize = 60;
 
-const KNOWN: [(&str, &str); 3] = [
+const KNOWN: [(&str, &str); 4] = [
     ("claude-code", "Claude Code"),
     ("claude-ai", "Claude Desktop"),
     ("codex-mcp-client", "Codex"),
+    ("gemini-cli-mcp-client", "Gemini CLI"),
 ];
 
 #[derive(Clone, Debug, PartialEq, Eq)]

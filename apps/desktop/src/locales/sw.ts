@@ -2037,6 +2037,8 @@ export const sw: Dictionary = {
   'Your account’s connector': 'Kiunganishi cha akaunti yako',
   'Orden asks you once, the first time it connects.':
     'Orden hukuuliza mara moja, mara ya kwanza inapounganishwa.',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'Katika Antigravity, fungua menyu … juu ya paneli ya wakala, kisha MCP Servers → Manage MCP Servers → View raw config, na uongeze ingizo hili humo.',
   'A client on another machine?': 'Kiteja kwenye mashine nyingine?',
   'Shown only once.': 'Huonyeshwa mara moja tu.',
   'Remove {name}?': 'Ondoa {name}?',
