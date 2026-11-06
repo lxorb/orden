@@ -365,6 +365,12 @@ async function moveHighlights(source: string, target: string) {
   if (side) await files.move([{ ...side, path: sidecarOf(target), modified: now() }], [side.path])
 }
 
+async function bringBackUnder(source: string) {
+  for (const away of keptAway.under(source)) {
+    if (!(await keptAway.bringBack(away.path))) throw new Error(NOT_HERE)
+  }
+}
+
 async function copyPath(from: string, to: string) {
   const source = normalise(from)
   const target = normalise(to)
@@ -378,9 +384,7 @@ async function copyPath(from: string, to: string) {
   const there = await paperInTheWay(source, target)
   if (there) throw new Error(`${there} is already there`)
 
-  for (const away of keptAway.under(source)) {
-    if (!(await keptAway.bringBack(away.path))) throw new Error(NOT_HERE)
-  }
+  await bringBackUnder(source)
 
   const under = (one: string) => one === source || one.startsWith(`${source}/`)
   const copied = (one: string) => target + one.slice(source.length)
@@ -561,6 +565,7 @@ async function trashItem(path: string, kind: string, alone = false): Promise<Tra
   const name = basename(source)
   const tree = treeAt(source)
   if (tree) return trashInTree(tree, source, { id: `internal-${id}`, kind, name, alone })
+  await bringBackUnder(source)
   await renameNote(source, `${TRASH}/${id}/${name}`, false, alone)
 
   const entry = {
