@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
@@ -173,7 +175,7 @@ test('the tab worked in is over every other window on every frame, and nothing i
     if (tabOverview.out.length) seen.add(`${front()} over ${[...new Set(others())].join(',')}`)
   }
   expect(frames).toBeGreaterThan(5)
-  expect([...seen]).toEqual(['calc(var(--z-drawer) - 1) over behind'])
+  expect([...seen]).toEqual(['var(--z-float) over behind'])
   tabOverview.open = true
   flushSync()
   frame()
@@ -264,4 +266,77 @@ test('no frame of the way out, a zoom or the way home makes a layer of its own o
     asked.push(...layered())
   }
   expect(asked).toEqual([])
+})
+
+const TOKENS = readFileSync(resolve('../../packages/themes/src/tokens.css'), 'utf8')
+const SOURCE = await import('../../src/lib/overview/Overview.svelte?raw')
+
+function rung(value: string): number {
+  const named = /var\((--z-[a-z]+)\)/.exec(value)?.[1] ?? ''
+  const at = Number(new RegExp(`${named}:\\s*(-?\\d+);`).exec(TOKENS)?.[1] ?? NaN)
+  return value.includes('- 1') ? at - 1 : at
+}
+
+test('the bar is over every window on every frame, and a window under it is cut at its edge', async () => {
+  const bar = app[0]!
+  bar.getBoundingClientRect = () => new DOMRect(0, 0, 900, 40)
+  Element.prototype.setPointerCapture = () => undefined
+  const style = SOURCE.default.slice(SOURCE.default.indexOf('<style>'))
+  const zOf = (selector: string) =>
+    [...style.matchAll(/\n {2}([^{}]+)\{([^}]*)\}/g)]
+      .filter(([, head]) => head?.split(',').some((one) => one.trim() === selector))
+      .map(([, , body]) => /z-index:\s*([^;]+);/.exec(body ?? '')?.[1] ?? '')
+      .filter(Boolean)
+  const barZ = rung(zOf(":global(html[data-overview] header[data-chrome='top'])")[0] ?? '')
+  expect(barZ).toBe(rung('var(--z-bar)'))
+  for (const one of [
+    '.window',
+    '.window.is-front',
+    '.window.is-held',
+    '.closer.is-front',
+    '.closer.is-held',
+    '.rider.is-front',
+  ])
+    for (const value of zOf(one)) expect(rung(value), one).toBeLessThan(barZ)
+
+  tabOverview.open = true
+  flushSync()
+  await drawnNow()
+  const pane = document.querySelector<HTMLElement>(`[data-pane="${workspace.panes.all[0]?.id}"]`)
+  for (let i = 0; i < 200 && waiting.size; i++) {
+    frame()
+    if (pane?.style.zIndex) expect(rung(pane.style.zIndex)).toBeLessThan(barZ)
+  }
+  const floor = document.querySelector<HTMLElement>('.floor')
+  const send = (type: string, y: number) =>
+    floor?.dispatchEvent(
+      new MouseEvent(type, { clientX: 400, clientY: y, button: 0, bubbles: true }),
+    )
+  send('pointerdown', 600)
+  for (const y of [580, 500, 400, 300, 200]) {
+    send('pointermove', y)
+    frame()
+  }
+  send('pointerup', 200)
+  frame()
+  const windows = [...document.querySelectorAll<HTMLElement>('.window')]
+  const under = windows.filter((one) => {
+    const [, y] = (/translate\(([-\d.]+)px, ([-\d.]+)px\)/.exec(one.style.transform) ?? [])
+      .slice(1)
+      .map(Number)
+    return (y ?? 0) < 40
+  })
+  expect(under.length).toBeGreaterThan(0)
+  for (const one of under) {
+    const [y, sy] = (
+      /translate\([-\d.]+px, ([-\d.]+)px\) scale\([-\d.]+, ([-\d.]+)\)/.exec(one.style.transform) ??
+      []
+    )
+      .slice(1)
+      .map(Number)
+    const cut = Number(/inset\(([-\d.]+)px/.exec(one.style.clipPath)?.[1] ?? 0)
+    expect(cut * (sy ?? 1)).toBeCloseTo(40 - (y ?? 0), 3)
+    expect((one.nextElementSibling as HTMLElement | null)?.style.visibility).toBe('hidden')
+  }
+  expect(pane?.style.clipPath).toMatch(/^inset\(/)
 })

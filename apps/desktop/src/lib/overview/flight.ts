@@ -108,6 +108,7 @@ export function paneDrawn(
   head: number,
   corner: number,
   open: number,
+  floor = Number.NEGATIVE_INFINITY,
 ) {
   const x = camera.x + pose.x * camera.zoom
   const y = camera.y + pose.y * camera.zoom
@@ -115,7 +116,7 @@ export function paneDrawn(
   const h = Math.max(pose.h * camera.zoom, 1)
   const scale = w / Math.max(box.width, 1)
   const shown = Math.max(box.height - head, 1)
-  const cut = head * clamp(open)
+  const cut = Math.max(head * clamp(open), head + (floor - y) / scale, 0)
   const below = Math.max(0, shown - h / scale)
   return {
     transform: `translate(${x - box.x}px, ${y - box.y - scale * head}px) scale(${scale})`,

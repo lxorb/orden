@@ -31,7 +31,7 @@
   import { places } from './places.svelte'
   import { type Cell, cellAt } from './cells'
   import Cells from './Cells.svelte'
-  import { grownOf } from './bubble'
+  import { boundsOf, boxOutline, moved as shifted, type Outline, outlineOf } from './outline'
   import { modes } from '../modes.svelte'
   import { keep, storedText } from '../stored'
   import { canWriteAt } from '../sharing.svelte'
@@ -108,22 +108,37 @@
   }
 
   function wholeOf(cells: readonly Cell[]): Box {
-    return around(cells.map(({ box }) => extentOf(box))) ?? room
+    return around(cells.flatMap(({ key }) => outlineAt(key) ?? []).map(boundsOf)) ?? room
   }
 
-  function extentOf(box: Box): Box {
-    const grown = grownOf(box)
-    return { ...grown, y: grown.y - NAME_ROOM, h: grown.h + NAME_ROOM }
+  const CELLS_APART = 4
+
+  function nameWide(key: string): number {
+    const name = [...document.querySelectorAll<HTMLElement>('[data-space-name]')].find(
+      (one) => one.dataset.spaceName === key,
+    )
+    const said = workspace.spaces.find((space) => space.id === key)?.name ?? ''
+    const wide = name && name.offsetWidth > 0 ? name.offsetWidth : said.length * 13
+    return wide * SPACE_NAMES_MOST
   }
 
-  const CELLS_APART = 56
+  function outlineFor(key: string, boxes: readonly Box[]): Outline | null {
+    return outlineOf(boxes.map(captioned), NAME_ROOM, nameWide(key))
+  }
 
-  function cellAlone(key: string): Box | null {
+  function outlineAt(key: string): Outline | null {
+    const inside = resting.filter((slot) => cellOf.get(slot.id) === key && !heldIds.has(slot.id))
+    if (inside.length) return outlineFor(key, inside)
+    return outlineOf([standIn(placeOf(key))], NAME_ROOM, nameWide(key))
+  }
+
+  function cellAlone(key: string): Outline | null {
     const panesOf = key === spaceKey ? frame : sets?.frameOf(key)
     if (!panesOf) return null
     const corner = { x: 0, y: 0, w: screenRoom.w, h: screenRoom.h }
-    const inside = around(lay(panesOf, corner, { tabsOf, shapeOf }).slots)
-    return extentOf(inside ? captioned(inside) : standIn(corner))
+    const slots = lay(panesOf, corner, { tabsOf, shapeOf }).slots
+    if (slots.length) return outlineFor(key, slots)
+    return outlineOf([standIn(corner)], NAME_ROOM, nameWide(key))
   }
 
   function standIn(place: Box): Box {
@@ -136,23 +151,16 @@
     return key === spaceKey ? room : (places.at(key) ?? room)
   }
 
-  function packedPlaces(keys: readonly string[], taken: readonly Box[], middle: Point) {
+  function packedPlaces(keys: readonly string[], taken: readonly Outline[], middle: Point) {
     const cells = keys.flatMap((key) => {
-      const box = cellAlone(key)
-      return box ? [{ key, box }] : []
+      const outline = cellAlone(key)
+      return outline ? [{ key, outline }] : []
     })
-    const spots = packed(
-      cells.map(({ key, box }) => ({ key, w: box.w, h: box.h })),
-      CELLS_APART,
-      taken,
-      middle,
-      screenRoom.w / screenRoom.h,
-    )
+    const spots = packed(cells, CELLS_APART, taken, middle, screenRoom.w / screenRoom.h)
     const out: Record<string, Box> = {}
-    for (const { key, box } of cells) {
+    for (const { key } of cells) {
       const spot = spots[key]
-      if (spot)
-        out[key] = { x: spot.x - box.x, y: spot.y - box.y, w: screenRoom.w, h: screenRoom.h }
+      if (spot) out[key] = { x: spot.x, y: spot.y, w: screenRoom.w, h: screenRoom.h }
     }
     return out
   }
@@ -160,12 +168,11 @@
   function placeNew(keys: readonly string[]) {
     const fresh = keys.filter((key) => !places.at(key))
     if (!fresh.length) return
-    const known = new Map(cellBoxes.map((one) => [one.key, one.box]))
-    const taken = Object.entries(places.every()).map(([key, place]) => {
-      const box = known.get(key)
-      return box ? extentOf(box) : place
-    })
-    const whole = around(taken)
+    const known = new Set(cellBoxes.map((one) => one.key))
+    const taken = Object.entries(places.every()).map(
+      ([key, place]) => (known.has(key) ? outlineAt(key) : null) ?? boxOutline(place),
+    )
+    const whole = around(taken.map(boundsOf))
     const middle = whole
       ? { x: whole.x + whole.w / 2, y: whole.y + whole.h / 2 }
       : { x: screenRoom.w / 2, y: screenRoom.h / 2 }
@@ -263,21 +270,23 @@
   })
 
   function apartAll() {
-    const taken: Box[] = []
+    const taken: Outline[] = []
     const order = [...cellBoxes].sort(
       (a, b) => Number(b.key === spaceKey) - Number(a.key === spaceKey),
     )
-    for (const { key, box: cell } of order) {
-      const box = extentOf(cell)
-      if (!taken.some((one) => meets(one, box, CELLS_APART))) {
-        taken.push(box)
+    for (const { key } of order) {
+      const outline = outlineAt(key)
+      if (!outline) continue
+      if (!taken.some((one) => meets(one, outline, CELLS_APART))) {
+        taken.push(outline)
         continue
       }
+      const box = boundsOf(outline)
       const middle = { x: box.x + box.w / 2, y: box.y + box.h / 2 }
-      const spot = packed([{ key, w: box.w, h: box.h }], CELLS_APART, taken, middle)[key]
+      const spot = packed([{ key, outline }], CELLS_APART, taken, middle)[key]
       if (!spot) continue
-      shiftSpace(key, spot.x - box.x, spot.y - box.y)
-      taken.push(spot)
+      shiftSpace(key, spot.x, spot.y)
+      taken.push(shifted(outline, spot.x, spot.y))
     }
   }
 
@@ -358,24 +367,21 @@
     })
   })
 
-  let aside = $state<Record<string, Box>>({})
+  let aside = $state<Record<string, Point>>({})
 
   function offsetOf(key: string): Point | null {
-    const to = aside[key]
-    const from = to && cellBoxes.find((one) => one.key === key)
-    if (!to || !from) return null
-    const rest = extentOf(from.box)
-    return { x: to.x - rest.x, y: to.y - rest.y }
+    return aside[key] ?? null
   }
 
   function pushAside() {
     const whole = held?.whole
-    const carried = whole ? around([...heldBoxes.values()]) : null
+    const carried = whole ? outlineFor(whole, [...heldBoxes.values()]) : null
     if (!whole || !carried) return
-    const others = cellBoxes
-      .filter((one) => one.key !== whole)
-      .map((one) => ({ key: one.key, box: extentOf(one.box) }))
-    aside = pushedAside(extentOf(captioned(carried)), others, CELLS_APART, aside)
+    const others = cellBoxes.flatMap((one) => {
+      const outline = one.key === whole ? null : outlineAt(one.key)
+      return outline ? [{ key: one.key, outline }] : []
+    })
+    aside = pushedAside(carried, others, CELLS_APART, aside)
   }
 
   const laid = $derived({
@@ -485,12 +491,12 @@
   }
 
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once a frame, never rendered
-  const riders = new Map<string, { dx: number; dy: number; width: number }>()
+  const riders = new Map<string, { dx: number; dy: number; width: number; tall: number }>()
 
   function rides(id: string, box: DOMRect) {
     const chip = marked('box', id)?.getBoundingClientRect()
     if (!chip || chip.width <= 0) return void riders.delete(id)
-    riders.set(id, { dx: chip.x - box.x, dy: chip.y - box.y, width: box.width })
+    riders.set(id, { dx: chip.x - box.x, dy: chip.y - box.y, width: box.width, tall: chip.height })
   }
 
   function onCanvas(box: DOMRect, tab: number): Pose {
@@ -591,8 +597,28 @@
   }
 
   function stackOf(id: string): string {
-    if (heldIds.has(id)) return 'var(--z-drawer)'
-    return id === workspace.activeTabId ? 'calc(var(--z-drawer) - 1)' : 'var(--z-bar)'
+    if (heldIds.has(id)) return 'calc(var(--z-bar) - 1)'
+    return id === workspace.activeTabId ? 'var(--z-float)' : 'var(--z-popover)'
+  }
+
+  function underBar(bottom: number): boolean {
+    return bottom <= barBottom + 0.5
+  }
+
+  function tabUnderBar(id: string): boolean {
+    const pose = flights.get(id)?.pose
+    if (!pose) return false
+    const at = riders.get(id)
+    if (at && movesAsWindow(id)) {
+      const scale = (pose.w * camera.zoom) / Math.max(at.width, 1)
+      return underBar(camera.y + pose.y * camera.zoom + (at.dy + at.tall) * scale)
+    }
+    return underBar(camera.y + (pose.y + pose.h) * camera.zoom)
+  }
+
+  function cutAtBar(top: number, scale: number): string {
+    const cut = (barBottom - top) / Math.max(scale, 1e-6)
+    return cut > 0 ? `inset(${cut}px -400px -400px -400px)` : 'none'
   }
 
   const opening = spring(0, SHARE)
@@ -651,7 +677,7 @@
     for (const id of flights.keys()) {
       const home = homes.get(id)
       const off = out ? null : fromHome(id)
-      const gone = off === null || off >= NEAR
+      const gone = (off === null || off >= NEAR) && !tabUnderBar(id)
       if (home && home.alpha > 0.5 && home.tab < 0.5) {
         const pane = byId.get(id)?.paneId
         if (gone && pane && !movesAsWindow(id)) lifted.push(pane)
@@ -680,7 +706,9 @@
     const home = started ? (out ? null : fromHome(id)) : 0
     if (home !== null && home < NEAR)
       styles.window.opacity = String(Number(styles.window.opacity) * (home / NEAR))
-    Object.assign(parts.window.style, styles.window)
+    Object.assign(parts.window.style, styles.window, {
+      clipPath: cutAtBar(camera.y + pose.y * camera.zoom, (pose.h / slot.h) * camera.zoom),
+    })
     Object.assign(parts.face.style, styles.face)
     Object.assign(parts.chip.style, styles.chip)
     parts.window.style.setProperty('--overview-lift', String(opening.at))
@@ -699,8 +727,10 @@
     if (caption) caption.style.opacity = String(near)
     const closer = closers.get(id)
     if (!closer) return
+    const cornerY = camera.y + slot.y * camera.zoom
     closer.style.setProperty('--near', String(near))
-    closer.style.translate = `${camera.x + (slot.x + slot.w) * camera.zoom}px ${camera.y + slot.y * camera.zoom}px`
+    closer.style.translate = `${camera.x + (slot.x + slot.w) * camera.zoom}px ${cornerY}px`
+    closer.style.visibility = cornerY < barBottom ? 'hidden' : ''
   }
 
   function paintRider(id: string, near: number | null = null) {
@@ -723,6 +753,7 @@
     if (near !== null && near < NEAR) alpha *= near / NEAR
     node.style.transform = `translate(${x}px, ${y}px) scale(${scale})`
     node.style.opacity = String(alpha)
+    node.style.clipPath = cutAtBar(y, scale)
   }
 
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
@@ -749,7 +780,7 @@
     const one = panesAsWindows.get(id)
     if (!one) return
     if (!movesAsWindow(id)) return putBack(one.node)
-    const styles = paneDrawn(pose, camera, one.box, one.head, corner, opening.at)
+    const styles = paneDrawn(pose, camera, one.box, one.head, corner, opening.at, barBottom)
     Object.assign(one.node.style, styles, {
       transformOrigin: '0 0',
       zIndex: stackOf(id),
@@ -1148,11 +1179,13 @@
     const hand = held
     if (!hand) return
     dragged = true
-    const rest = new Map(resting.map((one) => [one.id, one]))
-    const lying = laid.slots.map((one) =>
-      aside[cellOf.get(one.id) ?? ''] ? (rest.get(one.id) ?? one) : one,
-    )
+    const lying = laid.slots
+    const pushed = Object.entries(aside)
     aside = {}
+    for (const [key, by] of pushed) {
+      const place = places.at(key)
+      if (place) places.arrange({ [key]: { ...place, x: place.x + by.x, y: place.y + by.y } })
+    }
     const box = hand.box
     const was = resting.find((one) => one.id === hand.id)
     const ids = [hand.id, ...hand.with.map((one) => one.id)]
@@ -1188,24 +1221,30 @@
   async function settleApart(key: string, itself: boolean) {
     await laidOut()
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read here and thrown away
-    const extents = new Map(cellBoxes.map((one) => [one.key, extentOf(one.box)]))
-    const mine = extents.get(key)
+    const outlines = new Map(
+      cellBoxes.flatMap((one) => {
+        const outline = outlineAt(one.key)
+        return outline ? [[one.key, outline] as const] : []
+      }),
+    )
+    const mine = outlines.get(key)
     if (!mine) return
     const movers = itself
       ? [key]
-      : [...extents]
-          .filter(([other, box]) => other !== key && meets(box, mine, CELLS_APART))
+      : [...outlines]
+          .filter(([other, one]) => other !== key && meets(one, mine, CELLS_APART))
           .map(([other]) => other)
     for (const mover of movers) {
-      const box = extents.get(mover)
-      if (!box) continue
-      const others = [...extents].filter(([other]) => other !== mover).map(([, one]) => one)
-      if (!others.some((one) => meets(one, box, CELLS_APART))) continue
+      const outline = outlines.get(mover)
+      if (!outline) continue
+      const others = [...outlines].filter(([other]) => other !== mover).map(([, one]) => one)
+      if (!others.some((one) => meets(one, outline, CELLS_APART))) continue
+      const box = boundsOf(outline)
       const middle = { x: box.x + box.w / 2, y: box.y + box.h / 2 }
-      const spot = packed([{ key: mover, w: box.w, h: box.h }], CELLS_APART, others, middle)[mover]
+      const spot = packed([{ key: mover, outline }], CELLS_APART, others, middle)[mover]
       if (!spot) continue
-      shiftSpace(mover, spot.x - box.x, spot.y - box.y)
-      extents.set(mover, spot)
+      shiftSpace(mover, spot.x, spot.y)
+      outlines.set(mover, shifted(outline, spot.x, spot.y))
     }
   }
 
@@ -1632,7 +1671,7 @@
 
   .top {
     position: fixed;
-    z-index: var(--z-drawer);
+    z-index: var(--z-bar);
     top: calc(var(--overview-top, 0px) + var(--space-3));
     left: 50%;
     display: flex;
@@ -1705,21 +1744,25 @@
     pointer-events: auto;
   }
 
+  :global(html[data-overview] header[data-chrome='top']) {
+    z-index: var(--z-bar);
+  }
+
   .window,
   .closer,
   .rider {
-    z-index: var(--z-bar);
+    z-index: var(--z-popover);
   }
 
   .window.is-front,
   .closer.is-front,
   .rider.is-front {
-    z-index: calc(var(--z-drawer) - 1);
+    z-index: var(--z-float);
   }
 
   .window.is-held,
   .closer.is-held {
-    z-index: var(--z-drawer);
+    z-index: calc(var(--z-bar) - 1);
   }
 
   .window.is-held {

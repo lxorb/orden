@@ -1,6 +1,6 @@
 import type { Box } from './layout'
 
-const N = 120
+export const N = 120
 
 export const PAD = 16
 
@@ -22,8 +22,8 @@ const SEAM = 4
 const STEP = 8
 
 const TAU = 2 * Math.PI
-const COS = Float64Array.from({ length: N }, (_, i) => Math.cos((i / N) * TAU))
-const SIN = Float64Array.from({ length: N }, (_, i) => Math.sin((i / N) * TAU))
+export const COS = Float64Array.from({ length: N }, (_, i) => Math.cos((i / N) * TAU))
+export const SIN = Float64Array.from({ length: N }, (_, i) => Math.sin((i / N) * TAU))
 
 function reachOf(boxes: readonly Box[], by: number): Float64Array | null {
   if (!boxes.length) return null
@@ -91,6 +91,11 @@ function softened(h: Float64Array): Float64Array {
   }
   for (let i = 0; i < N; i++) out[i] = (out[i] ?? 0) + short + x * (COS[i] ?? 0) + y * (SIN[i] ?? 0)
   return out
+}
+
+export function restingOf(boxes: readonly Box[]): Float64Array | null {
+  const round = roundOf(boxes)
+  return round && softened(round)
 }
 
 export function grownOf(box: Box): Box {
