@@ -143,7 +143,11 @@ export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
   // workspace/file-ops.ts.
   await ws.fileGone(space.root, 'space')
   ws.spaces = ws.spaces.filter((entry) => entry.id !== id)
-  if (!ws.spaces.some((entry) => entry.name === space.name)) forgetSpaceViews(space.name)
+  if (!ws.spaces.some((entry) => entry.name === space.name)) {
+    forgetSpaceViews(space.name)
+    const { forgetSpaceTabs } = await import('../views/space-follow')
+    forgetSpaceTabs(space.name, ws.tabs)
+  }
   // The sets, fetched after the list so the shared set of older builds is not given to
   // this space, and before the space on screen changes, since by the switch below they
   // would take what is left of its tabs for the next space's. See `selectSpace`.

@@ -53,7 +53,7 @@ const {
   spaceRenamed,
   todosView,
 } = await import('./kept-views')
-const { followSpaceName } = await import('./space-follow')
+const { followSpaceName, forgetSpaceTabs } = await import('./space-follow')
 const { builtinBase, tabSource } = await import('./source')
 const { readSpec, writeSpec } = await import('./spec')
 
@@ -227,6 +227,16 @@ describe('Todos, one list of every space (#1153)', () => {
     expect(builtinBase({ builtin: 'todos' }).views[0]?.type).toBe('kanban')
   })
 
+  test('put back as Orden ships it, stays so, and takes no space’s old layout again', async () => {
+    keepTodosView('Job', todosIn('Job'))
+    expect(builtinBase({ builtin: 'todos' }).views[0]?.type).toBe('kanban')
+    const tab = tabOf(writeSpec({ builtin: 'todos' }))
+    await tabSource(tab as never).save(builtinView('todos'))
+    expect(builtinBase({ builtin: 'todos' }).views[0]?.type).toBe(
+      builtinView('todos').views[0]?.type,
+    )
+  })
+
   test('is the same list whatever space is open', async () => {
     const tab = tabOf(writeSpec({ builtin: 'todos' }))
     await tabSource(tab as never).save(readBase(narrowed(builtinView('todos'))))
@@ -250,6 +260,23 @@ describe('Todos, one list of every space (#1153)', () => {
     expect(only(readSpec(tab.doc)?.yaml)?.space).toBe('Job')
     expect(only(todosView(''))?.space).toBe('Job')
   })
+
+  test('narrowed to a note of a space, follows it when the space is renamed or goes', () => {
+    const base = builtinView('todos')
+    const [view] = base.views
+    const yaml = writeBase({
+      ...base,
+      views: view
+        ? [{ ...view, nib: { ...view.nib, kept: { only: { project: 'Work//Plan.md' } } } }]
+        : [],
+    })
+    keepTodosView('', yaml)
+    const only = () => builtinBase({ builtin: 'todos' }).views[0]?.nib.kept.only
+    followSpaceName('Work', 'Job', [], [])
+    expect(only()).toEqual({ project: 'Job//Plan.md' })
+    forgetSpaceViews('Job')
+    expect(only()).toBeUndefined()
+  })
 })
 
 describe('what a deleted space kept', () => {
@@ -263,6 +290,35 @@ describe('what a deleted space kept', () => {
     expect(projectView('Old', 'Plan.md')).toBeUndefined()
     expect([...foldsOf('todos:Old')]).toEqual([])
     expect([...foldsOf('project:Old/Plan.md')]).toEqual([])
+  })
+
+  test('and every space’s Todos narrowed to it is narrowed no more', () => {
+    const base = builtinView('todos')
+    const [view] = base.views
+    keepTodosView(
+      '',
+      writeBase({
+        ...base,
+        views: view ? [{ ...view, nib: { ...view.nib, kept: { only: { space: 'Old' } } } }] : [],
+      }),
+    )
+    forgetSpaceViews('Old')
+    expect(builtinBase({ builtin: 'todos' }).views[0]?.nib.kept.only).toBeUndefined()
+  })
+
+  test('and a tab of every space narrowed to it keeps the rest of its narrowing', () => {
+    const base = builtinView('todos')
+    const [view] = base.views
+    const only = { space: 'Old', priority: 1 }
+    const yaml = writeBase({
+      ...base,
+      views: view ? [{ ...view, nib: { ...view.nib, kept: { only } } }] : [],
+    })
+    const tab = tabOf(writeSpec({ builtin: 'todos', yaml }))
+    forgetSpaceTabs('Old', [tab])
+    expect(readBase(readSpec(tab.doc)?.yaml ?? '').views[0]?.nib.kept.only).toEqual({
+      priority: 1,
+    })
   })
 
   test('and a rename onto a name left behind brings its own, not what stood there', () => {

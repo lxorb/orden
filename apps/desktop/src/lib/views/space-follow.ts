@@ -1,6 +1,6 @@
-import { type Base, type Filter, readBase, type View, writeBase } from '@orden/bases'
+import { type Base, type Filter, placeOfKey, readBase, type View, writeBase } from '@orden/bases'
 import { isRecord } from '../stored'
-import { followSpaceViews, forgetSpaceViews, spaceRenamed } from './kept-views'
+import { followSpaceViews, forgetSpaceViews, spaceRenamed, unnarrowed } from './kept-views'
 import { readSpec, writeSpec } from './spec'
 
 interface ViewHolder {
@@ -21,8 +21,16 @@ function refiltered(filter: Filter, from: string, to: string): Filter {
 
 function narrowedTo(view: View, from: string, to: string): View {
   const only = view.nib.kept.only
-  if (!isRecord(only) || only.space !== from) return view
-  return { ...view, nib: { ...view.nib, kept: { ...view.nib.kept, only: { ...only, space: to } } } }
+  if (!isRecord(only)) return view
+  const project = typeof only.project === 'string' ? placeOfKey(only.project) : null
+  const inSpace = project?.space === from
+  if (only.space !== from && !inSpace) return view
+  const next = {
+    ...only,
+    ...(only.space === from ? { space: to } : {}),
+    ...(inSpace ? { project: `${to}//${project.path}` } : {}),
+  }
+  return { ...view, nib: { ...view.nib, kept: { ...view.nib.kept, only: next } } }
 }
 
 function followed(words: string, from: string, to: string): string {
@@ -90,6 +98,16 @@ export function followSpaceTabs(from: string, to: string, tabs: readonly ViewHol
     if (spec?.space !== from) continue
     const yaml = spec.yaml === undefined ? {} : { yaml: followed(spec.yaml, from, to) }
     tab.note.replace(writeSpec({ ...spec, space: to, ...yaml }), false)
+  }
+}
+
+export function forgetSpaceTabs(space: string, tabs: readonly ViewHolder[]): void {
+  for (const tab of tabs) {
+    if (tab.kind !== 'view' || tab.path !== null) continue
+    const spec = readSpec(tab.doc)
+    if (spec?.space !== undefined || spec?.yaml === undefined) continue
+    const yaml = unnarrowed(spec.yaml, space)
+    if (yaml !== spec.yaml) tab.note.replace(writeSpec({ ...spec, yaml }), false)
   }
 }
 

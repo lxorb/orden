@@ -11,6 +11,7 @@
 import {
   type Base,
   isWhen,
+  placeOfKey,
   type Row,
   SMART_SORT,
   type View,
@@ -139,12 +140,25 @@ export function spacesIn(rows: readonly Row[], order: readonly string[]): string
   return [...seen].sort((a, b) => at(a) - at(b) || a.localeCompare(b))
 }
 
-/** The notes a view's rows are in, by name, for the project it can be narrowed to. */
+/** The notes a view's rows are in, by name, for the project it can be narrowed to. Of
+ *  rows of more than one space, a note is its space and its path, as a view grouped by
+ *  note keys it (`placeOfKey`), and named with its space where another has its name. */
 export function notesIn(rows: readonly Row[]): { path: string; name: string }[] {
-  const seen = new Map<string, string>()
-  for (const row of rows) if (row.task) seen.set(row.path, row.file.basename)
+  const many = rows.some((row) => row.space !== rows[0]?.space)
+  const seen = new Map<string, { space: string; name: string }>()
+  for (const row of rows)
+    if (row.task)
+      seen.set(many ? `${row.space}//${row.path}` : row.path, {
+        space: row.space,
+        name: row.file.basename,
+      })
+  const named = new Map<string, number>()
+  for (const { name } of seen.values()) named.set(name, (named.get(name) ?? 0) + 1)
   return [...seen]
-    .map(([path, name]) => ({ path, name }))
+    .map(([path, { space, name }]) => ({
+      path,
+      name: many && (named.get(name) ?? 0) > 1 ? `${name} · ${space}` : name,
+    }))
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 
@@ -344,7 +358,11 @@ export function onlyFilter(only: Only): string | null {
   else if (only.date === 'today') parts.push('task.date == today()')
   else if (only.date === 'week') parts.push('task.date >= today() && task.date <= today() + "6d"')
   else if (only.date === 'none') parts.push('!task.date')
-  if (only.project !== undefined) parts.push(`file.path == ${JSON.stringify(only.project)}`)
+  if (only.project !== undefined) {
+    const { space, path } = placeOfKey(only.project)
+    if (space !== null) parts.push(`file.space == ${JSON.stringify(space)}`)
+    parts.push(`file.path == ${JSON.stringify(path)}`)
+  }
   if (only.created === 'today') parts.push('task.created == today()')
   else if (only.created === 'week') parts.push('task.created >= today() - "6d"')
   else if (only.created === 'month') parts.push('task.created >= today() - "29d"')

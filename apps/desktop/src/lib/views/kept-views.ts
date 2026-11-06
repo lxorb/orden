@@ -5,6 +5,7 @@
  *  Kept by the view's name (`viewKey`): a project by its space and its note, a view Orden
  *  ships by its name, a base by its file. */
 
+import { type Base, placeOfKey, readBase, writeBase } from '@orden/bases'
 import { isRecord, keepJson, stored, stringList } from '../stored'
 import type { ViewSpec } from './spec'
 
@@ -75,6 +76,12 @@ export function keepTodosView(space: string, words: string | undefined): void {
   keepJson(TODOS, all)
 }
 
+/** Every space's Todos laid out as one space's was, which no Todos of one space is
+ *  read for again (#1153): a Reset later puts back what Orden ships, not that space's. */
+export function takeOverTodosView(words: string): void {
+  keepJson(TODOS, { [EVERY_SPACE]: words })
+}
+
 function foldOf(key: string, space: string): string | null {
   if (key === `todos:${space}`) return ''
   const project = `project:${space}/`
@@ -106,13 +113,41 @@ export function followSpaceViews(
     keepJson(FOLDS, Object.fromEntries(moved))
 }
 
+/** A view's words with what Display narrowed to a space that is gone, or to a note of
+ *  it, taken out. */
+export function unnarrowed(words: string, space: string): string {
+  let base: Base
+  try {
+    base = readBase(words)
+  } catch {
+    return words
+  }
+  const views = base.views.map((view) => {
+    const only = view.nib.kept.only
+    if (!isRecord(only)) return view
+    const project = typeof only.project === 'string' ? placeOfKey(only.project).space : null
+    const gone = (key: string) =>
+      (key === 'space' && only.space === space) || (key === 'project' && project === space)
+    if (!Object.keys(only).some(gone)) return view
+    const rest = without(only, gone)
+    const kept = without(view.nib.kept, (key) => key === 'only')
+    return {
+      ...view,
+      nib: { ...view.nib, kept: Object.keys(rest).length ? { ...kept, only: rest } : kept },
+    }
+  })
+  return views.some((view, at) => view !== base.views[at]) ? writeBase({ ...base, views }) : words
+}
+
 export function forgetSpaceViews(space: string): void {
   const todos = read(TODOS)
-  if (space in todos)
-    keepJson(
-      TODOS,
-      without(todos, (one) => one === space),
-    )
+  const every = todos[EVERY_SPACE]
+  const left = typeof every === 'string' ? unnarrowed(every, space) : every
+  if (space in todos || left !== every)
+    keepJson(TODOS, {
+      ...without(todos, (one) => one === space),
+      ...(left === every ? {} : { [EVERY_SPACE]: left }),
+    })
   const projects = read(PROJECTS)
   const under = (key: string) => key.startsWith(`${space}/`)
   if (Object.keys(projects).some(under)) keepJson(PROJECTS, without(projects, under))

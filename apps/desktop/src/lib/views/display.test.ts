@@ -92,6 +92,19 @@ describe('the Display menu', () => {
     expect(notesIn(ROWS)).toEqual([{ path: 'Errands.md', name: 'Errands' }])
     expect(withOnly(narrowed, 0, {}).views[0]?.nib.kept.only).toBeUndefined()
   })
+
+  test('narrowed to a note of one space, leaves out the note of that path in another', () => {
+    const both = [...ROWS, ...taskRowsOfText('Work', 'Errands.md', '- [ ] Ship it 📅 2026-10-13')]
+    const notes = notesIn(both)
+    expect(notes).toHaveLength(2)
+    const at = { rows: both, today: TODAY, now: `${TODAY}T09:00:00` }
+    const shown = notes.map((one) =>
+      answer(displayed(withOnly(today, 0, { project: one.path }), 0), 0, both, contextFor(at))
+        .groups.flatMap((group) => group.rows.map((row) => row.space))
+        .filter((space, index, all) => all.indexOf(space) === index),
+    )
+    expect(shown.sort()).toEqual([['Notes'], ['Work']])
+  })
 })
 
 describe('a view grouped by note', () => {

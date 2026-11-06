@@ -26,6 +26,7 @@ import {
   keepTodosView,
   projectView,
   renamedTo,
+  takeOverTodosView,
   todosView,
 } from './kept-views'
 import type { Shown, Source } from './live.svelte'
@@ -146,7 +147,7 @@ function everyTodosView(): string | undefined {
   const was = space === undefined ? undefined : todosView(space)
   if (space === undefined || was === undefined) return undefined
   const now = unscoped(was, space)
-  keepTodosView(EVERY_SPACE, now)
+  takeOverTodosView(now)
   return now
 }
 
