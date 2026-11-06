@@ -687,9 +687,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  Raised on 2026-11-06 for #1150, each AI provider's logo beside its name (ai/provider-brand.ts,
  *  ai/ProviderMark.svelte): the code to 6,144,800, measured 6,144,408, and the styles to
  *  293,500, measured 293,214.
+ *
+ *  Raised on 2026-11-06 for #1068, the file list following another device's changes by
+ *  row ids, with its rows sliding into place (row-ids.ts, tree-settle.ts, Tree.svelte):
+ *  the code to 6,148,200, measured 6,147,925.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_144_800,
+  code: 6_148_200,
   catalogues: 1_020_700,
   styles: 293_500,
   fonts: 260_000,

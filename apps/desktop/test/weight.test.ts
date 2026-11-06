@@ -1321,9 +1321,14 @@ function holds(tail: string): boolean {
  *
  *  Raised on 2026-11-05, to 3,676,200, for #1147: the update notice's Update through
  *  PackageKit for a .deb or an .rpm (UpdateNotice.svelte, updates.svelte.ts, updater.ts).
- *  Measured 3,675,918 in 398. */
-const BUDGET = 3_676_200
-const MOST_FILES = 399
+ *  Measured 3,675,918 in 398.
+ *
+ *  Raised on 2026-11-06, to 3,683,600 in 401 files, for #1068: the file list keeps each row
+ *  by an id that follows its moves, holds the keyboard, the pick and the scroll through
+ *  another device's changes and slides the rows into place (row-ids.ts, tree-settle.ts,
+ *  Tree.svelte). Measured 3,683,326 in 400. */
+const BUDGET = 3_683_600
+const MOST_FILES = 401
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
