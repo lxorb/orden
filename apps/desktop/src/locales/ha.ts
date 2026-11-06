@@ -3059,4 +3059,5 @@ export const ha: Dictionary = {
     one: 'Sunaye {count} suna nan tuni',
     other: 'Sunaye {count} suna nan tuni',
   },
+  'Pin to Places': 'Maƙala a Wurare',
 }

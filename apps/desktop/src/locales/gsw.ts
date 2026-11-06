@@ -3037,4 +3037,5 @@ export const gsw: Dictionary = {
     one: '{count} Näme sind scho da',
     other: '{count} Näme sind scho da',
   },
+  'Pin to Places': 'A Ört aaheftä',
 }

@@ -2994,4 +2994,5 @@ export const ms: Dictionary = {
   'Copying {count} items': 'Menyalin {count} item',
   '{name} is already here': '{name} sudah ada di sini',
   '{count} names are already here': '{count} nama sudah ada di sini',
+  'Pin to Places': 'Sematkan pada Tempat',
 }

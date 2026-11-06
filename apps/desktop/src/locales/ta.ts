@@ -3067,4 +3067,5 @@ export const ta: Dictionary = {
     one: '{count} பெயர்கள் ஏற்கெனவே இங்கே உள்ளன',
     other: '{count} பெயர்கள் ஏற்கெனவே இங்கே உள்ளன',
   },
+  'Pin to Places': 'இடங்களில் பொருத்து',
 }

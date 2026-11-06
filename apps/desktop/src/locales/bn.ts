@@ -3010,4 +3010,5 @@ export const bn: Dictionary = {
     one: '{count}টি নাম এখানে আগে থেকেই আছে',
     other: '{count}টি নাম এখানে আগে থেকেই আছে',
   },
+  'Pin to Places': 'স্থানে পিন করুন',
 }

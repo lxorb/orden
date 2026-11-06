@@ -5,6 +5,7 @@ const MANY = 'text/nib-paths'
 const BOOKMARK = 'text/nib-bookmark'
 const SECTION = 'text/nib-section'
 const TAB = 'text/nib-tab'
+const EXPLORER = 'text/nib-explorer'
 
 let carrying: readonly string[] = []
 
@@ -25,6 +26,29 @@ export function carriedNothing() {
   carrying = []
   carryingTile = false
   carryingMark = null
+}
+
+export function carryFromExplorer(transfer: DataTransfer, paths: string[], inSpaces: boolean) {
+  transfer.setData(EXPLORER, JSON.stringify(paths))
+  transfer.setData('text/plain', paths.join('\n'))
+  if (inSpaces) carry(transfer, paths)
+  transfer.effectAllowed = 'copyMove'
+  carrying = paths
+}
+
+export function isExplorerDrag(transfer: DataTransfer | null): boolean {
+  return !!transfer?.types.includes(EXPLORER)
+}
+
+export function explorerDragged(transfer: DataTransfer | null): string[] {
+  try {
+    const said = transfer?.getData(EXPLORER) ?? ''
+    const paths = JSON.parse(said === '' ? '[]' : said) as unknown
+    if (Array.isArray(paths) && paths.every((one) => typeof one === 'string')) return paths
+  } catch {
+    return [...carrying]
+  }
+  return [...carrying]
 }
 
 export function isTreeDrag(transfer: DataTransfer | null): boolean {
@@ -64,6 +88,7 @@ export function landing(
   platform: Platform,
 ): 'move' | 'copy' | null {
   if (isFileDrop(event.dataTransfer) || isLinkDrop(event.dataTransfer)) return 'copy'
+  if (isExplorerDrag(event.dataTransfer) && !isTreeDrag(event.dataTransfer)) return 'copy'
   if (carryingTile && isBookmarkDrag(event.dataTransfer)) return 'move'
   if (!isTreeDrag(event.dataTransfer)) return null
 

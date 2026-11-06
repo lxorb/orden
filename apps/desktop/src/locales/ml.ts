@@ -3061,4 +3061,5 @@ export const ml: Dictionary = {
     one: '{count} പേരുകൾ ഇതിനകം ഇവിടെയുണ്ട്',
     other: '{count} പേരുകൾ ഇതിനകം ഇവിടെയുണ്ട്',
   },
+  'Pin to Places': 'സ്ഥലങ്ങളിൽ പിൻ ചെയ്യുക',
 }

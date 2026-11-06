@@ -3001,4 +3001,5 @@ export const gu: Dictionary = {
     one: '{count} નામો અહીં પહેલેથી છે',
     other: '{count} નામો અહીં પહેલેથી છે',
   },
+  'Pin to Places': 'સ્થાનોમાં પિન કરો',
 }

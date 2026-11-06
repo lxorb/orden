@@ -3024,4 +3024,5 @@ export const pa: Dictionary = {
     one: '{count} ਨਾਂ ਪਹਿਲਾਂ ਹੀ ਇੱਥੇ ਹਨ',
     other: '{count} ਨਾਂ ਪਹਿਲਾਂ ਹੀ ਇੱਥੇ ਹਨ',
   },
+  'Pin to Places': 'ਥਾਵਾਂ ਵਿੱਚ ਪਿੰਨ ਕਰੋ',
 }

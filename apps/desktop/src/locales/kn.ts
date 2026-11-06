@@ -3049,4 +3049,5 @@ export const kn: Dictionary = {
     one: '{count} ಹೆಸರುಗಳು ಈಗಾಗಲೇ ಇಲ್ಲಿವೆ',
     other: '{count} ಹೆಸರುಗಳು ಈಗಾಗಲೇ ಇಲ್ಲಿವೆ',
   },
+  'Pin to Places': 'ಸ್ಥಳಗಳಿಗೆ ಪಿನ್ ಮಾಡಿ',
 }

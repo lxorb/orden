@@ -10,6 +10,7 @@
   import { menu } from '../menu.svelte'
   import { when } from '../when'
   import { renamePath } from './changes'
+  import { dropInto, endDrag, over, startDrag } from './drag'
   import type { Entry } from './commands'
   import { roomMenu, rowMenu } from './menu'
   import { openFile } from './open'
@@ -209,6 +210,45 @@
     })
   }
 
+  let taking = $state<string | null>(null)
+  let opening: ReturnType<typeof setTimeout> | undefined
+
+  function dragFrom(event: DragEvent, entry: Entry) {
+    if (!view.picked.names.has(entry.name)) view.pick(entry.name, 'one')
+    startDrag(event, view.chosen)
+  }
+
+  function overRow(event: DragEvent, entry: Entry) {
+    if (!entry.folder || view.picked.names.has(entry.name)) return
+    if (!over(event)) return
+    event.stopPropagation()
+    if (taking === entry.name) return
+    taking = entry.name
+    clearTimeout(opening)
+    opening = setTimeout(() => {
+      if (taking === entry.name) void view.go(view.pathOf(entry.name))
+    }, 800)
+  }
+
+  function leaveRow(entry: Entry) {
+    if (taking !== entry.name) return
+    taking = null
+    clearTimeout(opening)
+  }
+
+  function dropOnRow(event: DragEvent, entry: Entry) {
+    if (!entry.folder || view.picked.names.has(entry.name)) return
+    event.stopPropagation()
+    taking = null
+    clearTimeout(opening)
+    dropInto(view, event, view.pathOf(entry.name))
+  }
+
+  function dropOnRoom(event: DragEvent) {
+    const folder = view.listing?.path
+    if (folder) dropInto(view, event, folder)
+  }
+
   let committing = false
 
   async function commit(entry: Entry, name: string) {
@@ -280,6 +320,8 @@
     onpointermove={bandMove}
     onpointerup={bandEnd}
     onpointercancel={bandEnd}
+    ondragover={(event) => over(event)}
+    ondrop={dropOnRoom}
     oncontextmenu={roomMenuAt}
     data-entry={rows.length ? undefined : ''}
   >
@@ -303,6 +345,7 @@
           <div
             class="nib-row entry"
             class:is-picked={view.picked.names.has(entry.name)}
+            class:is-taking={taking === entry.name}
             class:is-quiet={entry.hidden}
             role="option"
             aria-selected={view.picked.names.has(entry.name)}
@@ -314,6 +357,12 @@
             onclick={(event) => press(event, entry)}
             ondblclick={() => open(entry)}
             oncontextmenu={(event) => rowMenuAt(event, entry)}
+            draggable={view.renaming !== entry.name}
+            ondragstart={(event) => dragFrom(event, entry)}
+            ondragend={endDrag}
+            ondragover={(event) => overRow(event, entry)}
+            ondragleave={() => leaveRow(entry)}
+            ondrop={(event) => dropOnRow(event, entry)}
           >
             <span class="name">
               <FileMark mark={entry.folder ? 'folder' : fileMark(entry.name)} />

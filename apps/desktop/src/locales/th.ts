@@ -2936,4 +2936,5 @@ export const th: Dictionary = {
   'Copying {count} items': 'กำลังคัดลอก {count} รายการ',
   '{name} is already here': 'มี {name} อยู่แล้ว',
   '{count} names are already here': 'มีชื่อนี้อยู่แล้ว {count} ชื่อ',
+  'Pin to Places': 'ปักหมุดไว้ในสถานที่',
 }

@@ -3078,4 +3078,5 @@ export const de: Dictionary = {
     one: '{count} Namen sind schon hier',
     other: '{count} Namen sind schon hier',
   },
+  'Pin to Places': 'An Orte anheften',
 }

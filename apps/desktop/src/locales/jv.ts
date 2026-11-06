@@ -2980,4 +2980,5 @@ export const jv: Dictionary = {
   'Copying {count} items': 'Nyalin {count} item',
   '{name} is already here': '{name} wis ana ing kene',
   '{count} names are already here': '{count} jeneng wis ana ing kene',
+  'Pin to Places': 'Pasang ing Panggonan',
 }

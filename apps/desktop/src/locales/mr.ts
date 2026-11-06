@@ -3014,4 +3014,5 @@ export const mr: Dictionary = {
     one: '{count} नावे आधीच इथे आहेत',
     other: '{count} नावे आधीच इथे आहेत',
   },
+  'Pin to Places': 'ठिकाणांमध्ये पिन करा',
 }

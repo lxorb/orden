@@ -39,6 +39,39 @@ pub fn explorer_make(
 }
 
 #[tauri::command(async)]
+pub fn explorer_write(
+    app: AppHandle,
+    folder: String,
+    under: String,
+    bytes: String,
+) -> Result<String, String> {
+    use base64::Engine as _;
+    let folder = asked(&app, &folder, Use::Into)?;
+    let path = placed(&folder, &under)?;
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(bytes)
+        .map_err(|why| why.to_string())?;
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(|why| format!("{}: {why}", parent.display()))?;
+    }
+    let mut file =
+        fs::File::create_new(&path).map_err(|why| format!("{}: {why}", path.display()))?;
+    std::io::Write::write_all(&mut file, &bytes)
+        .map_err(|why| format!("{}: {why}", path.display()))?;
+    Ok(path.display().to_string())
+}
+
+pub(super) fn placed(folder: &Path, under: &str) -> Result<PathBuf, String> {
+    let steps: Vec<&str> = under.split('/').collect();
+    if steps.iter().any(|step| bad_name(step).is_some()) {
+        return Err(format!("{under} is not a place in a folder"));
+    }
+    Ok(steps
+        .iter()
+        .fold(folder.to_path_buf(), |path, step| path.join(step)))
+}
+
+#[tauri::command(async)]
 pub fn explorer_rename(app: AppHandle, path: String, name: String) -> Result<String, String> {
     if let Some(why) = bad_name(&name) {
         return Err(why);
@@ -114,6 +147,18 @@ pub(super) fn gone(path: &Path) -> Result<(), String> {
 mod tests {
     use super::{bad_name, renamed};
     use std::fs;
+
+    #[test]
+    fn a_dropped_file_lands_under_the_folder_and_nowhere_else() {
+        let folder = std::path::Path::new("/a/b");
+        assert_eq!(
+            super::placed(folder, "Photos/2026/x.png").expect("placed"),
+            folder.join("Photos").join("2026").join("x.png")
+        );
+        for bad in ["../x", "a/../../x", "/x", "a//b", "a/./b"] {
+            assert!(super::placed(folder, bad).is_err(), "{bad}");
+        }
+    }
 
     #[test]
     fn a_name_is_one_name() {

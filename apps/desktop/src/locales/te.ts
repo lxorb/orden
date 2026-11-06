@@ -3028,4 +3028,5 @@ export const te: Dictionary = {
     one: '{count} పేర్లు ఇప్పటికే ఇక్కడ ఉన్నాయి',
     other: '{count} పేర్లు ఇప్పటికే ఇక్కడ ఉన్నాయి',
   },
+  'Pin to Places': 'స్థలాలకు పిన్ చేయి',
 }

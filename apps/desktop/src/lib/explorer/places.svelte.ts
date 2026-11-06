@@ -9,6 +9,8 @@ import Library from 'lucide/dist/esm/icons/library.mjs'
 import Monitor from 'lucide/dist/esm/icons/monitor.mjs'
 import Music from 'lucide/dist/esm/icons/music.mjs'
 import { t } from '../i18n.svelte'
+import { samePath } from '../space-paths'
+import { keepJson, stored, stringList } from '../stored'
 import { listPlaces, type Place, type PlaceKind } from './commands'
 
 const SHOWN: Record<PlaceKind, { name: () => string; mark: IconNode }> = {
@@ -32,9 +34,27 @@ export function placeMark(place: Place): IconNode {
   return SHOWN[place.kind].mark
 }
 
+const PINNED = 'nib:explorer-pinned'
+
 class Places {
   list = $state<Place[]>([])
+  pinned = $state<string[]>(stringList(stored(PINNED)) ?? [])
   #asked: Promise<Place[]> | null = null
+
+  pin(path: string) {
+    if (this.pinned.some((one) => samePath(one, path))) return
+    this.pinned = [...this.pinned, path]
+    keepJson(PINNED, this.pinned)
+  }
+
+  unpin(path: string) {
+    this.pinned = this.pinned.filter((one) => !samePath(one, path))
+    keepJson(PINNED, this.pinned)
+  }
+
+  isPinned(path: string): boolean {
+    return this.pinned.some((one) => samePath(one, path))
+  }
 
   ask(again = false): Promise<Place[]> {
     if (!this.#asked || again)

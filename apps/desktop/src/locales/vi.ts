@@ -2968,4 +2968,5 @@ export const vi: Dictionary = {
   'Copying {count} items': 'Đang sao chép {count} mục',
   '{name} is already here': '{name} đã có ở đây',
   '{count} names are already here': 'Đã có {count} tên ở đây',
+  'Pin to Places': 'Ghim vào Địa điểm',
 }

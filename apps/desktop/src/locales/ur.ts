@@ -3010,4 +3010,5 @@ export const ur: Dictionary = {
     one: '{count} نام پہلے سے یہاں ہیں',
     other: '{count} نام پہلے سے یہاں ہیں',
   },
+  'Pin to Places': 'مقامات میں پن کریں',
 }

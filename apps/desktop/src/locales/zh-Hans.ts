@@ -2903,4 +2903,5 @@ export const zhHans: Dictionary = {
   'Copying {count} items': '正在复制 {count} 个项目',
   '{name} is already here': '这里已有 {name}',
   '{count} names are already here': '这里已有 {count} 个同名项目',
+  'Pin to Places': '固定到位置',
 }

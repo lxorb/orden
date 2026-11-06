@@ -3076,4 +3076,5 @@ export const ptBR: Dictionary = {
     many: '{count} de nomes já estão aqui',
     other: '{count} nomes já estão aqui',
   },
+  'Pin to Places': 'Fixar em Locais',
 }

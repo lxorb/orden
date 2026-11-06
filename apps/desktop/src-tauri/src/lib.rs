@@ -662,6 +662,7 @@ macro_rules! desktop_commands {
             explorer::listing::explorer_reveal,
             explorer::changes::explorer_make,
             explorer::changes::explorer_rename,
+            explorer::changes::explorer_write,
             explorer::changes::explorer_trash,
             explorer::changes::explorer_untrash,
             explorer::changes::explorer_delete,

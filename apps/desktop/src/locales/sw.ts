@@ -3055,4 +3055,5 @@ export const sw: Dictionary = {
     one: 'Majina {count} yapo hapa tayari',
     other: 'Majina {count} yapo hapa tayari',
   },
+  'Pin to Places': 'Bandika kwenye Maeneo',
 }

@@ -2972,4 +2972,5 @@ export const ja: Dictionary = {
   'Copying {count} items': '{count}項目をコピー中',
   '{name} is already here': '{name} はすでにあります',
   '{count} names are already here': '{count}個の名前がすでにあります',
+  'Pin to Places': '場所にピン留め',
 }

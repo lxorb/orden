@@ -2959,4 +2959,5 @@ export const ko: Dictionary = {
   'Copying {count} items': '{count}개 항목 복사 중',
   '{name} is already here': '{name}이(가) 이미 있습니다',
   '{count} names are already here': '이름 {count}개가 이미 있습니다',
+  'Pin to Places': '위치 목록에 고정',
 }

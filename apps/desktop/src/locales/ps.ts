@@ -3015,4 +3015,5 @@ export const ps: Dictionary = {
     one: '{count} نومونه دمخه دلته دي',
     other: '{count} نومونه دمخه دلته دي',
   },
+  'Pin to Places': 'په ځايونو کې يې ونښلوئ',
 }

@@ -3019,4 +3019,5 @@ export const fa: Dictionary = {
     one: '{count} نام از پیش اینجاست',
     other: '{count} نام از پیش اینجاست',
   },
+  'Pin to Places': 'سنجاق در مکان‌ها',
 }

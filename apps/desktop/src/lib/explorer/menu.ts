@@ -8,6 +8,7 @@ import { workspace } from '../workspace.svelte'
 import { carry, changeable, duplicate, newFolder, paste, removeForGood, trash } from './changes'
 import { type Entry, openWithSystem, showInSystem } from './commands'
 import { inASpace, openFile, ordenOpens } from './open'
+import { places } from './places.svelte'
 import { explorerPrefs } from './prefs.svelte'
 import { viewOf, type ExplorerView } from './view.svelte'
 
@@ -87,6 +88,9 @@ export function rowMenu(view: ExplorerView, entry: Entry): MenuEntry[] {
         ]
       : []),
     { label: t('Copy path'), run: () => void copyText(paths.join('\n')) },
+    ...(entry.folder && !places.isPinned(path)
+      ? [{ label: t('Pin to Places'), run: () => places.pin(path) }]
+      : []),
     ...(writes
       ? [
           DIVIDER,

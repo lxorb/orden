@@ -3078,4 +3078,5 @@ export const fil: Dictionary = {
     one: 'Nandito na ang {count} na pangalan',
     other: 'Nandito na ang {count} na pangalan',
   },
+  'Pin to Places': 'I-pin sa Mga lugar',
 }

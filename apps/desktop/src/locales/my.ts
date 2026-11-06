@@ -2988,4 +2988,5 @@ export const my: Dictionary = {
   'Copying {count} items': '{count} ခုကို ကူးနေသည်',
   '{name} is already here': '{name} ဤနေရာတွင် ရှိပြီးသား',
   '{count} names are already here': 'အမည် {count} ခု ဤနေရာတွင် ရှိပြီးသား',
+  'Pin to Places': 'နေရာများတွင် ပင်ထိုးရန်',
 }

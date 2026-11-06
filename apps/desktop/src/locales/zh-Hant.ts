@@ -2906,4 +2906,5 @@ export const zhHant: Dictionary = {
   'Copying {count} items': '正在複製 {count} 個項目',
   '{name} is already here': '這裡已有 {name}',
   '{count} names are already here': '這裡已有 {count} 個同名項目',
+  'Pin to Places': '釘選到位置',
 }

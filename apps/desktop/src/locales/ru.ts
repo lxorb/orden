@@ -3124,4 +3124,5 @@ export const ru: Dictionary = {
     many: 'Здесь уже {count} имён',
     other: 'Здесь уже {count} имени',
   },
+  'Pin to Places': 'Закрепить в Местах',
 }

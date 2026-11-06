@@ -3035,4 +3035,5 @@ export const tr: Dictionary = {
     one: '{count} ad zaten burada',
     other: '{count} ad zaten burada',
   },
+  'Pin to Places': 'Yerlere sabitle',
 }

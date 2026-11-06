@@ -2896,4 +2896,5 @@ export const yue: Dictionary = {
   'Copying {count} items': '複製緊 {count} 個項目',
   '{name} is already here': '{name} 已經喺度',
   '{count} names are already here': '已經有 {count} 個名喺度',
+  'Pin to Places': '釘喺位置',
 }

@@ -3016,4 +3016,5 @@ export const hi: Dictionary = {
     one: '{count} नाम यहाँ पहले से हैं',
     other: '{count} नाम यहाँ पहले से हैं',
   },
+  'Pin to Places': 'जगहों में पिन करें',
 }

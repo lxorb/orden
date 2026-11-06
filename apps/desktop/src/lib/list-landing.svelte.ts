@@ -10,9 +10,12 @@ import {
   caughtFiles,
   dragged,
   draggedBookmark,
+  explorerDragged,
   isBookmarkDrag,
+  isExplorerDrag,
   isFileDrop,
   isLinkDrop,
+  isTreeDrag,
   landing,
 } from './drag-paths'
 import { shortcuts } from './shortcuts.svelte'
@@ -73,6 +76,11 @@ export function moving(change: () => void): void {
  *  or files from outside copied in. */
 export function dropOnList(event: DragEvent, folder: string) {
   const transfer = event.dataTransfer
+  if (transfer && isExplorerDrag(transfer) && !isTreeDrag(transfer) && !__EVEN_PLUGIN__) {
+    const paths = explorerDragged(transfer)
+    void import('./explorer/changes').then(({ carry }) => carry(null, paths, folder, 'copy'))
+    return
+  }
   // A phone has no Explorer to drop from, and the glasses plugin carries no walk of
   // a dropped folder; see vite.even.config.ts.
   if (transfer && isFileDrop(transfer) && !__EVEN_PLUGIN__) {

@@ -3118,4 +3118,5 @@ export const uk: Dictionary = {
     many: 'Тут уже {count} назв',
     other: 'Тут уже {count} назви',
   },
+  'Pin to Places': 'Закріпити в Місцях',
 }

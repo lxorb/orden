@@ -3095,4 +3095,5 @@ export const es: Dictionary = {
     many: 'Ya hay {count} de nombres aquí',
     other: 'Ya hay {count} nombres aquí',
   },
+  'Pin to Places': 'Fijar en Lugares',
 }

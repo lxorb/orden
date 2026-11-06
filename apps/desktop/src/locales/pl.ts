@@ -3124,4 +3124,5 @@ export const pl: Dictionary = {
     many: '{count} nazw już tu jest',
     other: '{count} nazwy już tu jest',
   },
+  'Pin to Places': 'Przypnij do Miejsc',
 }

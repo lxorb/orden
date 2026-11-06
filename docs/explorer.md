@@ -95,6 +95,27 @@ change for the explorer has been asked on the issue.
   holds one of them.
 - On Windows, no stream and no 8.3 alias.
 
+## Drag and drop
+
+- **Rows** drag as the picked rows, or the one row grabbed. Holding a drag over a folder
+  row for a moment opens it.
+- **Within and between explorers**, in a split or another window: a drop on a folder row,
+  a crumb, a place or the room under the rows moves there; Ctrl (Alt on a Mac) copies.
+  Out of a space it copies, and Shift moves.
+- **Into a note, the tab strip or a pane**: rows that are all in a space carry the file
+  list's own drag as well (`carryFromExplorer` in `drag-paths.ts`), so a note links them,
+  a pane opens them and the file list moves them. Anything else carries its path as text.
+- **Onto the file list**: rows from outside the spaces are copied in, as files dropped from
+  another app are (`dropOnList` in `list-landing.svelte.ts`).
+- **From another app**: files and folders dropped on an explorer are written into the
+  folder (`explorer_write`), each under a free name, and one undo takes them away again;
+  into a space they come in as the file list's import.
+- **Onto Places**: a folder dropped between the places is pinned there. A pinned folder's
+  menu unpins it, and a folder's own row menu has Pin to Places. Pins are this device's.
+- **To other apps**: not possible. On Linux `page_drag.rs` keeps every drag inside the
+  window, and the other engines give a page no way to start a drag of files. Copy path is
+  the way out.
+
 ## Changes
 
 `explorer/changes.ts` decides how each change is made:

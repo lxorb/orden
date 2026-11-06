@@ -9,6 +9,7 @@
   import { t } from '../i18n.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import { crumbsOf, typedFolder } from './crumbs'
+  import { dropInto, over } from './drag'
   import { places } from './places.svelte'
   import { explorerPrefs } from './prefs.svelte'
   import type { ExplorerView } from './view.svelte'
@@ -103,6 +104,8 @@
         <button
           class="crumb"
           class:is-here={index === crumbs.length - 1}
+          ondragover={(event) => over(event)}
+          ondrop={(event) => dropInto(view, event, crumb.path)}
           aria-current={index === crumbs.length - 1 ? 'location' : undefined}
           onclick={() => view.go(crumb.path)}>{crumb.name}</button
         >

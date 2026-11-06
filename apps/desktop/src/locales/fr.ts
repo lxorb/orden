@@ -3111,4 +3111,5 @@ export const fr: Dictionary = {
     many: '{count} de noms sont déjà ici',
     other: '{count} noms sont déjà ici',
   },
+  'Pin to Places': 'Épingler dans Emplacements',
 }

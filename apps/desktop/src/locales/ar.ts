@@ -3144,4 +3144,5 @@ export const ar: Dictionary = {
     many: '{count} اسمًا موجودًا هنا من قبل',
     other: '{count} اسم موجود هنا من قبل',
   },
+  'Pin to Places': 'تثبيت في الأماكن',
 }

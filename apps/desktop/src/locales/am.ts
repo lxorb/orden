@@ -2955,4 +2955,5 @@ export const am: Dictionary = {
     one: '{count} ስሞች እዚህ አሉ',
     other: '{count} ስሞች እዚህ አሉ',
   },
+  'Pin to Places': 'ወደ ቦታዎች ሰካ',
 }

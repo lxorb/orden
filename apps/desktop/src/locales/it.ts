@@ -3104,4 +3104,5 @@ export const it: Dictionary = {
     many: '{count} di nomi sono già qui',
     other: '{count} nomi sono già qui',
   },
+  'Pin to Places': 'Fissa in Risorse',
 }
