@@ -183,7 +183,9 @@
                 })}
             >
               <FileMark mark={row.mark} path={row.markPath} />
-              <span class="nib-row-label">{rowName(row.entry.name, row.entry.is_dir)}</span>
+              <span class="nib-row-label"
+                ><bdi>{rowName(row.entry.name, row.entry.is_dir)}</bdi></span
+              >
               {#if row.from}<span class="nib-row-meta">{row.from}</span>{/if}
             </button>
 

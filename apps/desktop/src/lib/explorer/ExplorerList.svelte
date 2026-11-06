@@ -478,7 +478,9 @@
                   ondblclick={(event) => event.stopPropagation()}
                 />
               {:else}
-                <span class="nib-row-label">{view.search ? nameOf(entry.name) : entry.name}</span>
+                <span class="nib-row-label"
+                  ><bdi>{view.search ? nameOf(entry.name) : entry.name}</bdi></span
+                >
               {/if}
             </span>
             {#if !grid}

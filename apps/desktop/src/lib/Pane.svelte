@@ -510,7 +510,7 @@
             aria-pressed={one.id === pane.activeTabId}
             onclick={() => workspace.activate(one.id)}
           >
-            <span class="nib-row-label">{one.shown}</span>
+            <span class="nib-row-label"><bdi>{one.shown}</bdi></span>
           </button>
           <div
             class="sheet"

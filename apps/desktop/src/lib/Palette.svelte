@@ -604,9 +604,11 @@
                 >
               {/if}
               <span class="nib-row-label"
-                >{#each pieces(label(row), mode === 'everything' || mode === 'commands' || mode === 'headings' || mode === 'hosts' ? term : '') as piece, at (at)}{#if piece.hit}<b
-                      >{piece.text}</b
-                    >{:else}{piece.text}{/if}{/each}</span
+                ><bdi
+                  >{#each pieces(label(row), mode === 'everything' || mode === 'commands' || mode === 'headings' || mode === 'hosts' ? term : '') as piece, at (at)}{#if piece.hit}<b
+                        >{piece.text}</b
+                      >{:else}{piece.text}{/if}{/each}</bdi
+                ></span
               >
               {#if row.kind === 'tab' && unsavedTab(row)}<UnsavedDot />{/if}
               {#if where}<span class="where">{where}</span>{/if}

@@ -32,8 +32,10 @@
 
 <SpacePlace {place} {typed} {held}><SpaceBadge {space} {on} /></SpacePlace>
 <span class="nib-row-label"
-  >{#each name as piece, at (at)}{#if piece.hit}<b>{piece.text}</b
-      >{:else}{piece.text}{/if}{/each}</span
+  ><bdi
+    >{#each name as piece, at (at)}{#if piece.hit}<b>{piece.text}</b
+        >{:else}{piece.text}{/if}{/each}</bdi
+  ></span
 >
 {#if !__EVEN_PLUGIN__ && others.length}
   {#await import('./people/Faces.svelte') then faces}<faces.default ids={others} />{/await}

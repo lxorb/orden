@@ -127,7 +127,7 @@
     class:is-on={cell.on}
     data-space-name={cell.key}
     aria-hidden="true"
-    use:named={cell.key}>{cell.name}</span
+    use:named={cell.key}><bdi>{cell.name}</bdi></span
   >
 {/each}
 

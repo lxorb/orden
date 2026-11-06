@@ -19,7 +19,7 @@
   aria-hidden="true"
 >
   <TabMark {tab} />
-  <span class="label">{tab.shown}</span>
+  <span class="label"><bdi>{tab.shown}</bdi></span>
 </div>
 
 <style>

@@ -874,7 +874,7 @@
                       ondragend={endSection}
                       ondrop={(event) => dropSection(event, index)}
                     >
-                      <span class="nib-row-label">{heading.text}</span>
+                      <span class="nib-row-label"><bdi>{heading.text}</bdi></span>
                     </button>
                   </li>
                 {/each}
@@ -888,7 +888,7 @@
                       style:--level={part.level}
                       onclick={() => toPage(part.page)}
                     >
-                      <span class="nib-row-label">{part.title}</span>
+                      <span class="nib-row-label"><bdi>{part.title}</bdi></span>
                       <span class="nib-row-meta">{part.page}</span>
                     </button>
                   </li>
@@ -907,7 +907,7 @@
                       onclick={() => jump(note.line)}
                     >
                       <span class="nib-row-mark note-id">{note.id}</span>
-                      <span class="nib-row-label">{note.text}</span>
+                      <span class="nib-row-label"><bdi>{note.text}</bdi></span>
                     </button>
                   </li>
                 {/each}

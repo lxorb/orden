@@ -181,7 +181,7 @@
                 <span class="nib-row-mark">
                   {#if mark}<img src={mark} alt="" draggable="false" />{/if}
                 </span>
-                <span class="nib-row-label">{titleOf(visit)}</span>
+                <span class="nib-row-label"><bdi>{titleOf(visit)}</bdi></span>
                 <span class="nib-row-meta host">{hostOf(visit.url)}</span>
               </button>
               <button
