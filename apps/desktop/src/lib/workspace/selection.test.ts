@@ -170,3 +170,23 @@ describe('what asking costs', () => {
     expect(rows[0]?.split('/').length).toBe(DEEP + 2)
   })
 })
+
+describe('rows that move under the selection', () => {
+  test('stay picked under their new paths, a folder taking what is in it', () => {
+    picked.select('/f/b.md')
+    picked.toggle('/d.md')
+    picked.moved('/f', '/g')
+    picked.moved('/d.md', '/e.md')
+    expect(picked.paths).toEqual(['/g/b.md', '/e.md'])
+
+    picked.range('/a.md', ['/a.md', '/g', '/g/b.md', '/g/c.md', '/e.md'])
+    expect(picked.paths).toEqual(['/a.md', '/g', '/g/b.md', '/g/c.md', '/e.md'])
+  })
+
+  test('and a row deleted elsewhere leaves it, with what was inside', () => {
+    picked.select('/f/b.md')
+    picked.toggle('/a.md')
+    picked.gone('/f')
+    expect(picked.paths).toEqual(['/a.md'])
+  })
+})

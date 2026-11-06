@@ -4,6 +4,7 @@ import { Clock, ReferenceAccount, SEEDED } from '@orden/sync-core/sim'
 import { frame, unframe } from '@orden/sync-core/wire'
 import * as Y from 'yjs'
 import { Engine } from './engine'
+import { placesOf } from './placing'
 import { MemoryDisk } from './memory-disk'
 import { MemoryStore } from './memory-store'
 import { numbersRow, wantedRow } from './records'
@@ -146,6 +147,25 @@ describe('places', () => {
     const again = await one.launch()
     expect(again.placedIn(ROOT)).toEqual(['Ideas.md', 'Plan.md'])
     expect(again.placedFolders(ROOT)).toEqual(new Map([['', ['Ideas.md', 'Plan.md']]]))
+  })
+
+  test('a drag the file list makes asks for a pass at once, and one that places nothing does not', async () => {
+    const one = await device()
+    await one.engine.pass(SPACE)
+    let asked = 0
+    const list = placesOf(
+      one.engine,
+      () => null,
+      () => (asked += 1),
+    )
+
+    expect(await list.arrange(ROOT, '', ['Ideas.md', 'Plan.md'])?.done).toBe(true)
+    expect(asked).toBe(1)
+
+    one.keeps = false
+    await one.engine.pass(SPACE)
+    expect(list.arrange(ROOT, '', ['Plan.md', 'Ideas.md'])).toBeNull()
+    expect(asked).toBe(1)
   })
 
   test('another spelling of the space is the space only on a disk where it is one folder', async () => {

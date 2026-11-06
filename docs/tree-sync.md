@@ -103,6 +103,36 @@ any other, and there is no row to move. What its delete takes is what the person
 listed, as of the space's cursor: anything written or moved in before then goes with it,
 and anything after is kept from the delete, as for a delete made anywhere else.
 
+## What the file list shows of it
+
+A change from another device reaches the file list as the engine makes it on this disk,
+not at the end of the pass that brought it: each move or rename the engine makes is the
+row moved in the list at once (`heardMove` in workspace.svelte.ts), each delete the row
+gone (`heardGone`), and what came to be is listed with the pass, as a note's words are.
+A row is kept by an id of its own that follows every move and rename said to the
+workspace (row-ids.ts), not by its path, so:
+
+- the row is the same element before and after, and the keyboard stays on it: the list
+  puts it back on the row in the same frame if moving the element took it off;
+- what is picked follows its rows to their new paths, and a row deleted elsewhere leaves
+  the selection with what was inside it (workspace/selection.svelte.ts);
+- the note being read, renamed or moved elsewhere, is still the row lit and picked, and
+  the list is not scrolled to it;
+- where the reader has scrolled, rows that came or went above what is in view move the
+  scroll by as many rows, so what was in view stays where it was; a row moved within the
+  view, or out of it, leaves the scroll alone (`anchorShift` in tree-settle.ts);
+- every row that changed place slides from where it was to where it is, and a row that
+  was not there fades in (`settle`). Nothing moves for a reader who asked for as little
+  movement as possible; the rows are simply where they are.
+
+Twists are not part of this: a folder opened or shut slides as it always has.
+
+What this device does goes up as soon as it is done, a row dragged among the rest of its
+folder as well as a move or a rename (a pass a moment later, as for words saved), so
+another device sees it a couple of seconds after. apps/desktop/test/e2e/tree-live.py holds
+all of this on two devices against the real Worker, frame by frame, and a third that asked
+for less movement.
+
 ## Signed out
 
 A space used with nobody signed in is kept by the same engine, with no account behind it
@@ -285,10 +315,35 @@ five devices; the order walks (`mix: 'order'`) draw rows dragged among the rest 
 folders as well, and every device has to end with each row where the account has it. They run against the reference account and devices (`tree-walks.test.ts`)
 and with the app's own sync engine as every device (`apps/desktop/src/lib/sync2/sim.test.ts`).
 
+Every night both walk seeds no night walked before, from three to eight devices by the
+seed (`crowded` in the simulator's run.ts), each with long stretches offline, quits and
+crashes (.github/workflows/walks.yml): ten thousand seeds of each mix against the
+reference devices (`SIM_MIX=tree` or `order` for `pnpm --filter @orden/sync-core
+sim:long`), and ten thousand of each with the engine as every device (`SIM_MIX` for
+`pnpm --filter @orden/desktop sim:long`). A failure names its seed and its mix, and
+`SIM_MIX=<mix> SIM_FROM=<seed> SIM_SEEDS=1` replays it.
+
+What the many devices found in the reference devices themselves, and fixed there (the
+engine already did both): words pulled while the same note was being deleted here were
+taken for the whole note when they were only what this device lacked, leaving it empty
+for good (seeds 528, 226); and an operation the account had answered left the tree a
+device shows until the feed said it again, so a folder deleted in that moment did not
+take the note just moved into it, though the account did (seed 5244). The engine's walks
+never showed either.
+
 ## Known gaps
 
 What the tree walks found when they were first run, each pinned as an expected failure
 until the step of #1068 that removes it lands:
+
+- **A device's own restore hides another's from its delete.** A delete is refused when
+  somebody else changed the entry after its `seen`, and the account reads that off the
+  entry's latest change. A device that deletes a note, restores it and deletes it again
+  while away has its own restore as the latest change when it comes back, so a restore
+  another device made in between, which it never saw, does not stand against the second
+  delete (reference seeds 3175 and 3900, on four and three devices). The account would
+  have to keep the latest change by anybody but the last changer as well, which is a
+  column of its own.
 
 - **An older app's drag in a folder that has places is not read.** Builds from before
   places still keep the order per folder path as a list of names (`arranged`, synced

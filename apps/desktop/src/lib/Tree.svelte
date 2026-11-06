@@ -81,6 +81,8 @@
   import Twist from './Twist.svelte'
   import { dur } from './motion'
   import { keptAway } from './web/away.svelte'
+  import { rowIds } from './row-ids'
+  import { indexed, settle } from './tree-settle'
 
   const { tree }: { tree: Entry } = $props()
 
@@ -118,6 +120,10 @@
   /** Where each row is, by path: what turns the row an event came off into the
    *  number the window and the walk speak in. */
   const at = $derived(rowIndex(flat))
+
+  const ids = $derived(flat.map((row) => rowIds.idOf(row.entry.path)))
+
+  const atId = $derived(indexed(ids))
 
   /** Where each row stands among the rows of its own note, and how many there are: what a
    *  tree tells a screen reader, which the list's one flat column of rows does not say
@@ -172,6 +178,7 @@
   /** Where in the list the row the keyboard is on was, so a row deleted under the
    *  keyboard hands it on to the row that comes up into its place. */
   let standingAt = -1
+  let standingPath = ''
   /** Whether what is deleting the row came from the keyboard on it: its Delete key, or a
    *  menu Shift+F10 asked for, which took the keyboard off the row on the way. */
   let keyedOn = false
@@ -183,10 +190,16 @@
   // with the keyboard after a delete (#523). Only while the keyboard is still nowhere:
   // a press that has since put it somewhere else is left where it put it.
   $effect(() => {
-    const gone = standing !== null && !at.has(standing)
-    if (!gone) return
+    const gone = standing !== null && !atId.has(standing)
+    if (!gone) {
+      if (standing !== null) {
+        standingAt = atId.get(standing) ?? standingAt
+        standingPath = flat[standingAt]?.entry.path ?? standingPath
+      }
+      return
+    }
     untrack(() => {
-      const was = standing ?? ''
+      const was = standingPath
       standing = null
       const index = Math.min(standingAt, flat.length - 1)
       const next = flat[index]
@@ -213,9 +226,9 @@
    *  the keyboard, and whatever a key or an open has just asked for. Three at the
    *  very most, and usually the same one three times over. */
   const pinned = $derived(
-    [workspace.naming?.path, standing, reaching]
-      .map(pathAt)
-      .filter((one): one is number => one !== null),
+    [pathAt(workspace.naming?.path), idAt(standing), idAt(reaching)].filter(
+      (one): one is number => one !== null,
+    ),
   )
 
   const rows = $derived<Rows>({
@@ -237,6 +250,7 @@
     index: number
     /** Held although the window is elsewhere, so out of the flow; see `.away`. */
     away: boolean
+    id: string
   }
 
   /** The rows to draw: the window's own, and the few the list is holding on to
@@ -257,12 +271,12 @@
       if (skip && index >= skip.from && index <= skip.to) continue
 
       const row = flat[index]
-      if (row) out.push({ row, index, away: false })
+      if (row) out.push({ row, index, away: false, id: ids[index] ?? row.entry.path })
     }
 
     for (const index of view.pinned) {
       const row = flat[index]
-      if (row) out.push({ row, index, away: true })
+      if (row) out.push({ row, index, away: true, id: ids[index] ?? row.entry.path })
     }
 
     return out.sort((one, other) => one.index - other.index)
@@ -276,13 +290,17 @@
     () =>
       (lastSlots.held = slotsFor(
         lastSlots.held,
-        drawn.map((one) => one.row.entry.path),
+        drawn.map((one) => one.id),
       )),
   )
 
   function pathAt(path: string | null | undefined): number | null {
     if (path === null || path === undefined) return null
     return at.get(path) ?? null
+  }
+
+  function idAt(id: string | null): number | null {
+    return id === null ? null : (atId.get(id) ?? null)
   }
 
   /** Ctrl+click (Cmd on a Mac) opens the row in a tab of its own, as a link does in
@@ -338,7 +356,7 @@
     const row = flat[index]
     if (!row) return null
 
-    reaching = row.entry.path
+    reaching = ids[index] ?? null
     await tick()
 
     const line = list?.querySelector(`li[data-row="${index}"]`)
@@ -985,6 +1003,7 @@
 
   let wasPaths: string[] = []
   let wasRows: FlatRow[] = []
+  let wasIds: string[] = []
   let sliding: number | null = null
 
   /** The band coming out or going in, over `FOLDING` milliseconds, which is what
@@ -1029,25 +1048,57 @@
     const now = live
     const paths = now.map((one) => one.entry.path)
     const before = wasRows
+    const beforeIds = wasIds
+    const nowIds = now.map((one) => rowIds.idOf(one.entry.path))
     const moved = blockMoved(wasPaths, paths)
 
     wasPaths = paths
     wasRows = now
+    wasIds = nowIds
 
-    if (!moved || moved.at < 1) return
+    untrack(keepFocus)
+    if (twisted(moved, before, now)) return
+    untrack(() => settleRows(beforeIds, nowIds))
+  })
+
+  function twisted(
+    moved: { at: number; rows: number } | null,
+    before: FlatRow[],
+    now: FlatRow[],
+  ): boolean {
+    if (!moved || moved.at < 1) return false
 
     // The row the block belongs to, which is the one above it and is in both
     // lists. A twist, and nothing else: a note arriving from a sync appears
     // under a row that holds nothing, or is one of several a folder gained, and
     // neither is a fold.
-    const opening = paths.length > before.length
+    const opening = now.length > before.length
     const twist = (opening ? now : before)[moved.at - 1]
-    if (!twist?.entry.is_dir) return
-    if (workspace.isExpanded(twist.entry.path) !== opening) return
-    if (heldRows(twist.entry, isOpen) !== moved.rows) return
+    if (!twist?.entry.is_dir) return false
+    if (workspace.isExpanded(twist.entry.path) !== opening) return false
+    if (heldRows(twist.entry, isOpen) !== moved.rows) return false
 
     slide(moved.at - 1, moved.rows, !opening, before)
-  })
+    return true
+  }
+
+  function keepFocus() {
+    const had = document.activeElement
+    if (!(had instanceof HTMLElement) || !list?.contains(had)) return
+    void tick().then(() => {
+      const now = document.activeElement
+      if (!had.isConnected || now === had || (now !== null && now !== document.body)) return
+      had.focus({ preventScroll: true })
+    })
+  }
+
+  function settleRows(was: string[], now: string[]) {
+    const box = where.box
+    if (!list || !box || fold !== null || frozen !== null) return
+    if (carrying.length || workspace.arranged.dragging) return
+    if (workspace.activeSpace?.root !== listed) return
+    settle(was, now, { list, box, row: rowHeight, top: where.top, refresh: () => where.refresh() })
+  }
 
   $effect(() => () => {
     if (sliding !== null) cancelAnimationFrame(sliding)
@@ -1096,14 +1147,21 @@
     wrong = false
     wasRows = untrack(() => live)
     wasPaths = wasRows.map((one) => one.entry.path)
+    wasIds = wasRows.map((one) => rowIds.idOf(one.entry.path))
     showing = untrack(() => workspace.active?.path ?? null)
+    showingId = showing === null ? undefined : rowIds.peek(showing)
     opened = true
   })
+
+  let showingId: string | undefined
 
   $effect(() => {
     const note = workspace.active?.path ?? null
     if (note === showing) return
+    const was = showingId
     showing = note
+    showingId = note === null ? undefined : rowIds.peek(note)
+    if (was !== undefined && showingId === was) return
 
     if (!opened) {
       opened = true
@@ -1156,9 +1214,12 @@
    *  then scrolls. */
   function onFocus(event: FocusEvent) {
     const from = event.target instanceof Element ? event.target.closest('.row') : null
-    standing = from instanceof HTMLElement ? (from.dataset.path ?? null) : null
+    const path = from instanceof HTMLElement ? (from.dataset.path ?? null) : null
+    const index = path === null ? undefined : at.get(path)
+    standing = index === undefined ? null : (ids[index] ?? null)
     keyedOn = false
-    standingAt = standing === null ? -1 : (at.get(standing) ?? -1)
+    standingAt = index ?? -1
+    standingPath = path ?? ''
   }
 
   /** The next thing a person does, once nothing is over the list, ends what `keyedOn`
@@ -1217,7 +1278,7 @@
   <!-- The rows above the window, as height. -->
   <li class="gap" style:height="{view.above}px" aria-hidden="true"></li>
 
-  {#each drawn as one (slots.get(one.row.entry.path) ?? one.row.entry.path)}
+  {#each drawn as one (slots.get(one.id) ?? one.id)}
     {@render line(one)}
   {/each}
 
@@ -1235,6 +1296,7 @@
   {@const cut = fold === null || one.away ? rowHeight : heightOf(one.index, rows)}
   <li
     data-row={one.index}
+    data-id={one.id}
     class:away={one.away}
     class:cut={cut < rowHeight}
     style:top={one.away ? `${offsetOf(one.index, rows)}px` : undefined}

@@ -20,6 +20,7 @@ import type { Engine } from './engine'
 export function placesOf(
   engine: Engine,
   childrenIn: (root: string, folder: string) => readonly Entry[] | null,
+  placed: () => void = () => undefined,
 ): Positioned {
   const full = (root: string, folder: string) => (folder ? joinPath(root, folder) : root)
   return {
@@ -33,7 +34,11 @@ export function placesOf(
       // after them in the folder's own order.
       const drawn = children ? shownNames(children, 'manual', names) : [...names]
       const count = drawn.filter((name) => names.includes(name)).length
-      return { drawn, done: engine.arrange(path, drawn, count) }
+      const done = engine.arrange(path, drawn, count).then((made) => {
+        if (made) placed()
+        return made
+      })
+      return { drawn, done }
     },
   }
 }

@@ -119,6 +119,7 @@ import {
 import { carriedRows } from './drag-paths'
 import { anyOpen, flatRows, standsOpen } from './tree-flat'
 import { entryAt, withComing, withEntry, withMove, withoutEntry, withoutRows } from './tree-edits'
+import { rowIds } from './row-ids'
 import { orderedTree, type SortMode } from './tree-order'
 import { Arranged, SpaceSorting } from './workspace/arranged.svelte'
 import { log } from './log'
@@ -520,7 +521,12 @@ class Workspace {
         if (to) tab.essential = to
       }
     })
+    this.fileOps.follow((op) => {
+      if (op.op === 'moved') rowIds.moved(op.from, op.to)
+      else if (op.op === 'removed') rowIds.gone(op.path)
+    })
     for (const store of [
+      this.picked,
       this.bookmarks,
       this.folderIcons,
       this.arranged,
@@ -4061,7 +4067,20 @@ class Workspace {
   }
 
   private showMove(from: string, to: string) {
+    rowIds.moved(from, to)
     if (this.tree) this.tree = withMove(this.tree, from, to)
+  }
+
+  heardMove(from: string, to: string) {
+    const tree = this.tree
+    if (!tree || !entryAt(tree, from)) return
+    if (!entryAt(tree, folderOf(to))?.is_dir) return
+    this.showMove(from, to)
+  }
+
+  heardGone(path: string) {
+    const tree = this.tree
+    if (tree && !samePath(tree.path, path) && entryAt(tree, path)) this.hideEntry(path)
   }
 
   /** A row for something that is about to exist. The times are now, which is

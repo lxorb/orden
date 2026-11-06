@@ -96,20 +96,18 @@ describe('the row a name is being typed on', () => {
    *  And what keeps a scroll cheap: the rows a window slides in and out are keyed,
    *  so a scroll of one row makes one row rather than remaking twenty.
    *
-   *  Keyed by the element a path was given, which is the path's for as long as it
+   *  Keyed by the element a row's id was given, which is the id's for as long as it
    *  is drawn and is handed to a new row only when nothing drawn before is drawn
    *  now - another space's rows; see `slotsFor` in row-window.ts. */
-  test('and the list is keyed by path, so a fresh listing does not remake it', () => {
-    expect(tree).toContain(
-      '{#each drawn as one (slots.get(one.row.entry.path) ?? one.row.entry.path)}',
-    )
-    expect(tree).toContain('drawn.map((one) => one.row.entry.path)')
+  test('and the list is keyed by row id, so a fresh listing or a rename does not remake it', () => {
+    expect(tree).toContain('{#each drawn as one (slots.get(one.id) ?? one.id)}')
+    expect(tree).toContain('drawn.map((one) => one.id)')
   })
 
   /** And a name being typed on a row far off screen is a row the window has to keep:
    *  the field would otherwise be taken out of the page mid-word. */
   test('and the row being named is held in the page wherever the scroll is', () => {
-    expect(tree).toContain('[workspace.naming?.path, standing, reaching]')
+    expect(tree).toContain('[pathAt(workspace.naming?.path), idAt(standing), idAt(reaching)]')
   })
 
   /** Held and drawn by the one list, so a row that is being held at its own offset

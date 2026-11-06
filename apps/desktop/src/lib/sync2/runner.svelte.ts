@@ -404,13 +404,17 @@ class Runner {
     // The file list's hand-arranged order, by the places the account keeps (#1068).
     this.stops.push(
       workspace.arranged.placeBy(
-        placesOf(engine, (root, folder) => {
-          const tree = workspace.tree
-          if (!tree || !samePath(tree.path, root)) return null
-          return folder
-            ? (workspace.entryAt(joinPath(root, folder))?.children ?? null)
-            : tree.children
-        }),
+        placesOf(
+          engine,
+          (root, folder) => {
+            const tree = workspace.tree
+            if (!tree || !samePath(tree.path, root)) return null
+            return folder
+              ? (workspace.entryAt(joinPath(root, folder))?.children ?? null)
+              : tree.children
+          },
+          () => this.nudge(),
+        ),
       ),
     )
     // A canvas's surface arrives after its tab: the planes are joined once it has.
@@ -1032,6 +1036,7 @@ class Runner {
       this.own.add(`moved:${from}`)
       try {
         await workspace.fileMoved(from, to, kind)
+        workspace.heardMove(from, to)
         await workspace.undone.moved(from, to)
       } finally {
         this.own.delete(`moved:${from}`)
@@ -1041,6 +1046,7 @@ class Runner {
       this.own.add(`removed:${path}`)
       try {
         await workspace.fileGone(path, kind)
+        workspace.heardGone(path)
         // Remote deletions update every path-based store above, but unlike a
         // downloaded document they do not call `written`. Refresh the sidebar
         // after the deletion has reached those stores so its row disappears now.

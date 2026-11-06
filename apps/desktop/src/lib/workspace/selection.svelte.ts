@@ -6,6 +6,8 @@
  *  needs to be handed the rows rather than working them out - a folder's
  *  children are only between anything while the folder is open. */
 
+import { movedTo } from '../space-paths'
+
 export class Selection {
   /** The picked rows, as paths. In the order the rows are shown, because that is
    *  the order a move or a deletion walks them in. */
@@ -71,6 +73,23 @@ export class Selection {
   clear() {
     this.paths = []
     this.anchor = null
+  }
+
+  moved(from: string, to: string) {
+    const now = this.paths.map((path) => movedTo(path, from, to) ?? path)
+    if (now.some((path, at) => path !== this.paths[at])) this.paths = now
+    if (this.anchor !== null) this.anchor = movedTo(this.anchor, from, to) ?? this.anchor
+  }
+
+  spaceMoved(from: string, to: string) {
+    this.moved(from, to)
+  }
+
+  gone(path: string) {
+    if (this.paths.some((one) => movedTo(one, path, path) !== null)) {
+      this.paths = this.paths.filter((one) => movedTo(one, path, path) === null)
+    }
+    if (this.anchor !== null && movedTo(this.anchor, path, path) !== null) this.anchor = null
   }
 
   /** Rows that have gone away take themselves out. */
