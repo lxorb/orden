@@ -23,6 +23,7 @@ WRITE = """async ([path, text]) => {
   const ws = window.nibApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
   await window.tasks.writeFile(`${root}/${path}`, text)
+  window.tasks.makeList(`${root}/${path}`)
   await ws.loadTree()
 }"""
 

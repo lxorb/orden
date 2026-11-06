@@ -218,6 +218,8 @@ export const bn: Dictionary = {
   'Set cover': 'কভার নির্বাচন করুন',
   'Change cover': 'কভার পরিবর্তন করুন',
   'Remove cover': 'কভার সরান',
+  'Use as todo list': 'করণীয় তালিকা হিসেবে ব্যবহার করুন',
+  'Stop using as todo list': 'করণীয় তালিকা হিসেবে ব্যবহার বন্ধ করুন',
   Wallpaper: 'ওয়ালপেপার',
   Blur: 'ঝাপসা',
   Dim: 'আবছা',

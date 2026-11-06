@@ -6,6 +6,7 @@ import {
   type OpContext,
   type OpResult,
 } from '@orden/sync-core'
+import type { ItemMeta } from '@orden/sync-core/meta'
 import { newId } from '../crypto'
 import type { Env } from '../types'
 import type { Reached } from '../spaces/space'
@@ -154,6 +155,7 @@ export async function createByPath(
   device: string | undefined,
   path: string,
   content: Content,
+  meta?: ItemMeta,
 ): Promise<{ made: string } | { taken: string }> {
   const context: OpContext = { role: 'write', ...(device === undefined ? {} : { device }) }
   const { value } = await changeTree(env, spaceId, device, (tree) => {
@@ -180,6 +182,7 @@ export async function createByPath(
       entry.docSeq = entry.seq
       if (device === undefined) delete entry.docBy
       else entry.docBy = device
+      if (meta) entry.meta = meta
     }
     return { made: id }
   })

@@ -220,6 +220,8 @@ export const kn: Dictionary = {
   'Set cover': 'ಮುಖಪುಟ ಆಯ್ಕೆ ಮಾಡಿ',
   'Change cover': 'ಮುಖಪುಟ ಬದಲಿಸಿ',
   'Remove cover': 'ಮುಖಪುಟ ತೆಗೆದುಹಾಕಿ',
+  'Use as todo list': 'ಮಾಡಬೇಕಾದ ಪಟ್ಟಿಯಾಗಿ ಬಳಸಿ',
+  'Stop using as todo list': 'ಮಾಡಬೇಕಾದ ಪಟ್ಟಿಯಾಗಿ ಬಳಸುವುದನ್ನು ನಿಲ್ಲಿಸಿ',
   Wallpaper: 'ವಾಲ್‌ಪೇಪರ್',
   Blur: 'ಮಸುಕು',
   Dim: 'ಮಂದಗೊಳಿಸಿ',

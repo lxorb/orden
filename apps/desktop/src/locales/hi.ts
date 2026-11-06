@@ -218,6 +218,8 @@ export const hi: Dictionary = {
   'Set cover': 'कवर चुनें',
   'Change cover': 'कवर बदलें',
   'Remove cover': 'कवर हटाएँ',
+  'Use as todo list': 'कार्य सूची के रूप में उपयोग करें',
+  'Stop using as todo list': 'कार्य सूची के रूप में उपयोग बंद करें',
   Wallpaper: 'वॉलपेपर',
   Blur: 'धुंधलापन',
   Dim: 'मंद करें',

@@ -4,11 +4,9 @@ import { changeOf } from '../search/replace'
 import {
   folderOf,
   insideSpace,
-  isMarkdownPath,
   nameOf,
   relativeTo,
   samePath,
-  within,
   withoutExtension,
 } from '../space-paths'
 import { links } from '../link-index.svelte'
@@ -20,13 +18,13 @@ import { workspace } from '../workspace.svelte'
 import { noteText, replaceInNotes } from '../workspace/note-text'
 import { writeFile } from '../workspace/write-file'
 import { type Entry, linesOf, placeIn } from './entry'
+import { isListed, listNamed, listsIn, makeList } from '../rows/todo-lists'
 
 export function noteNames(root: string): string[] {
-  const recent = new Map(workspace.recent.map((path, index) => [path, index]))
-  return workspace.notes
-    .filter((one) => isMarkdownPath(one.path))
-    .sort((a, b) => (recent.get(a.path) ?? 1e9) - (recent.get(b.path) ?? 1e9))
-    .map((one) => withoutExtension(relativeTo(root, one.path)))
+  const recent = new Map(workspace.recent.map((path, index) => [relativeTo(root, path), index]))
+  return listsIn(root)
+    .sort((a, b) => (recent.get(a) ?? 1e9) - (recent.get(b) ?? 1e9))
+    .map((one) => withoutExtension(one))
 }
 
 export function headingsOf(root: string, said: string): readonly string[] {
@@ -39,13 +37,11 @@ export function headingsOf(root: string, said: string): readonly string[] {
 function named(root: string, said: string): string | null {
   const key = (words: string) => words.normalize('NFC').toLowerCase()
   const wanted = key(said.replace(/\.md$/i, ''))
-  const notes = workspace.notes.filter(
-    (one) => isMarkdownPath(one.path) && within(root, one.path, root) !== null,
-  )
+  const lists = listsIn(root)
   const found =
-    notes.find((one) => key(withoutExtension(relativeTo(root, one.path))) === wanted) ??
-    notes.find((one) => key(withoutExtension(one.name)) === wanted.split('/').at(-1))
-  return found?.path ?? null
+    lists.find((one) => key(withoutExtension(one)) === wanted) ??
+    lists.find((one) => key(withoutExtension(nameOf(one))) === wanted.split('/').at(-1))
+  return found === undefined ? null : insideSpace(root, found)
 }
 
 async function targetOf(entry: Entry, root: string): Promise<string | null> {
@@ -53,17 +49,19 @@ async function targetOf(entry: Entry, root: string): Promise<string | null> {
   const existing = named(root, entry.note)
   if (existing) return existing
 
-  const relative = insideOnly(`${entry.note.replace(/\.md$/i, '')}.md`)
+  const said = insideOnly(`${entry.note.replace(/\.md$/i, '')}.md`)
+  const relative = said === null ? null : listNamed(root, said)
   if (relative === null) return null
   const path = insideSpace(root, relative)
   if (isAgentsName(nameOf(path)) && (samePath(folderOf(path), root) || !(await onDisk(path)))) {
     void import('../reserved-name.svelte').then((one) => one.reservedName.tell(root))
     return null
   }
-  if (await onDisk(path)) return path
+  if (await onDisk(path)) return isListed(path) ? path : null
   await writeFile(path, '')
   await workspace.loadTree()
   await workspace.fileCame(path, 'file')
+  makeList(path)
   return path
 }
 

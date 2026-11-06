@@ -7,11 +7,12 @@ import { insideSpace } from '../space-paths'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { keeping } from '../workspace/file-ops'
-import { INBOX, inboxes, inboxOf } from './inbox'
+import { hearInboxChosen, INBOX, inboxes, inboxOf } from './inbox'
 import { projectFolders } from './projects'
 import { inboxNote } from './inbox-note'
 import { homeRoot } from './home.svelte'
 import { type RowsListener, RowsStore } from './store'
+import { listedAt } from './todo-lists'
 import { isVault } from './vault'
 import { type RowChange, writeRow } from './write'
 
@@ -28,10 +29,14 @@ const store = new RowsStore({
   own: () => [INBOX],
   vault: isVault,
   meta: (root, path) => workspace.itemMeta.itemsOf(root)[path] ?? null,
+  list: (root, path, meta) => listedAt(root, path, meta),
+  dated: (root, path, patch) => workspace.itemMeta.set(insideSpace(root, path), patch, root),
 })
 
 links.hearSaves((path, content) => store.saved(path, content))
 workspace.itemMeta.hear((path) => store.described(path))
+hearInboxChosen((root) => store.again(root))
+links.listsBy((root, relative) => listedAt(root, relative))
 links.hearIndexed((root, scans) => store.indexed(root, scans))
 workspace.fileOps.follow((op) => store.follow(op))
 workspace.fileOps.follow(keeping(inboxes))

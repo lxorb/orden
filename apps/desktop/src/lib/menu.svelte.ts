@@ -6,6 +6,8 @@ import {
   isWebTarget,
 } from '@orden/markdown/links'
 import { COVER_KEY } from '@orden/markdown/cover'
+import { isTodoList, LIST_KEY, LIST_VALUE } from '@orden/bases/todo-lists'
+import { inboxOf } from './rows/inbox'
 import { DIVIDER, type MenuEntry } from './menu-item'
 import { chosenIcon } from './chosen-icon'
 import { iconChoice } from './icon-choice.svelte'
@@ -177,6 +179,23 @@ export function coverEntries(path: string | null | undefined): MenuEntry[] {
           },
         ]
       : []),
+  ]
+}
+
+export function listEntry(path: string | null | undefined): MenuEntry[] {
+  const root = path ? workspace.rootHolding(path) : null
+  if (__EVEN_PLUGIN__ || !path || root === null || !isMarkdownPath(path) || !canWriteAt(path)) {
+    return []
+  }
+  const relative = withinSpace(root, path)
+  if (relative === null || isTodoList(relative, null, inboxOf(root))) return []
+  const listed = workspace.itemMeta.valueOf(path, LIST_KEY, root) === LIST_VALUE
+  const lists = () => import('./rows/todo-lists')
+  return [
+    {
+      label: listed ? t('Stop using as todo list') : t('Use as todo list'),
+      run: () => void lists().then((one) => (listed ? one.unmakeList(path) : one.makeList(path))),
+    },
   ]
 }
 

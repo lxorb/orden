@@ -219,6 +219,8 @@ export const gsw: Dictionary = {
   'Set cover': 'Titelbild uswähle',
   'Change cover': 'Titelbild ändere',
   'Remove cover': 'Titelbild wegnäh',
+  'Use as todo list': 'Als To-do-Lischte bruuche',
+  'Stop using as todo list': 'Nüm als To-do-Lischte bruuche',
   Wallpaper: 'Hintergrundbild',
   Blur: 'Unschärfi',
   Dim: 'Abdunkle',

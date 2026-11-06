@@ -214,6 +214,8 @@ export const id: Dictionary = {
   'Set cover': 'Atur sampul',
   'Change cover': 'Ubah sampul',
   'Remove cover': 'Hapus sampul',
+  'Use as todo list': 'Gunakan sebagai daftar tugas',
+  'Stop using as todo list': 'Berhenti gunakan sebagai daftar tugas',
   Wallpaper: 'Wallpaper aplikasi',
   Blur: 'Buram',
   Dim: 'Redupkan',

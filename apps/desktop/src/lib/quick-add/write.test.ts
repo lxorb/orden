@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-const { notes, disk, written, told } = vi.hoisted(() => ({
+const { notes, disk, written, told, lists } = vi.hoisted(() => ({
+  lists: new Set<string>(),
   notes: [] as { path: string; name: string }[],
   disk: new Map<string, string>(),
   written: [] as string[],
@@ -11,6 +12,12 @@ vi.mock('../workspace.svelte', () => ({
   workspace: {
     notes,
     recent: [],
+    rootHolding: (path: string) => '/' + (path.split('/')[1] ?? ''),
+    itemMeta: {
+      of: (path: string) => (lists.has(path) ? { 'todo-list': 'yes' } : null),
+      set: (path: string, patch: Record<string, string | null>) =>
+        patch['todo-list'] ? lists.add(path) : lists.delete(path),
+    },
     loadTree: async () => undefined,
     fileCame: async () => undefined,
   },
@@ -38,7 +45,13 @@ const { addTask } = await import('./write')
 const task = (note: string) =>
   ({ text: 'buy milk', fields: { tags: [], remind: [] }, note }) as never
 
+const listed = (path: string) => {
+  notes.push({ path, name: path.split('/').pop() ?? path })
+  lists.add(path)
+}
+
 beforeEach(() => {
+  lists.clear()
   notes.length = 0
   disk.clear()
   written.length = 0
@@ -48,7 +61,7 @@ beforeEach(() => {
 describe('a task sent to a note by name', () => {
   test('finds a note whose name is stored decomposed, typed composed', async () => {
     const stored = '/s/Café.md'
-    notes.push({ path: stored, name: 'Café.md' })
+    listed(stored)
     disk.set(stored, 'my words\n')
 
     const landed = await addTask(task('Café'), { root: '/s' })
@@ -58,24 +71,36 @@ describe('a task sent to a note by name', () => {
   })
 
   test('never writes over a note the listing has not caught up with', async () => {
-    disk.set('/s/Plan.md', 'my words\n')
+    disk.set('/s/Projects/Plan.md', 'my words\n')
 
-    const landed = await addTask(task('Plan'), { root: '/s' })
-
-    expect(landed?.path).toBe('/s/Plan.md')
+    expect(await addTask(task('Plan'), { root: '/s' })).toBeNull()
     expect(written).toEqual([])
-    expect(disk.get('/s/Plan.md')).toBe('my words\n')
+    expect(disk.get('/s/Projects/Plan.md')).toBe('my words\n')
+    expect(lists.has('/s/Projects/Plan.md')).toBe(false)
   })
 
-  test('makes the note where there is none', async () => {
+  test('makes a to-do list in the Projects folder where there is none (#1229)', async () => {
     const landed = await addTask(task('Ideas'), { root: '/s' })
 
-    expect(landed?.path).toBe('/s/Ideas.md')
-    expect(written).toEqual(['/s/Ideas.md'])
+    expect(landed?.path).toBe('/s/Projects/Ideas.md')
+    expect(written).toEqual(['/s/Projects/Ideas.md'])
+    expect(lists.has('/s/Projects/Ideas.md')).toBe(true)
+  })
+
+  test('never goes into a note that is no to-do list, its checkboxes left alone (#1229)', async () => {
+    notes.push({ path: '/s/Meeting.md', name: 'Meeting.md' })
+    disk.set('/s/Meeting.md', '- [ ] Ask about the budget\n')
+
+    const landed = await addTask(task('Meeting'), { root: '/s' })
+
+    expect(landed?.path).toBe('/s/Projects/Meeting.md')
+    expect(disk.get('/s/Meeting.md')).toBe('- [ ] Ask about the budget\n')
+    expect(lists.has('/s/Meeting.md')).toBe(false)
   })
 
   test('into another space finds the note of that space, not the open one of that name', async () => {
-    notes.push({ path: '/open/Errands.md', name: 'Errands.md' })
+    listed('/open/Errands.md')
+    listed('/other/Errands.md')
     disk.set('/open/Errands.md', 'the open space\n')
     disk.set('/other/Errands.md', 'the other space\n')
 
@@ -104,7 +129,7 @@ describe('a task sent to the name the space keeps for its instructions', () => {
   })
 
   test('a note in a folder under the name is a note, and is written to', async () => {
-    notes.push({ path: '/space/sub/AGENTS.md', name: 'AGENTS.md' })
+    listed('/space/sub/AGENTS.md')
     disk.set('/space/sub/AGENTS.md', 'a note')
     expect((await addTask(task('sub/AGENTS'), { root: '/space' }))?.path).toBe(
       '/space/sub/AGENTS.md',

@@ -101,7 +101,7 @@ describe("the reader's own task actions", () => {
     expect(await tickTask(tasks[0]?.at ?? '', 'Home', true)).toBe(true)
     const lines = files.get('/s/Home/Plan.md')?.split('\n') ?? []
     expect(lines[1]).toMatch(/^- \[ \] Water the plants 🔁 every day 📅 \d{4}-\d{2}-\d{2}$/)
-    expect(lines[2]).toBe(`- [x] Water the plants 🔁 every day 📅 ${today} ✅ ${today}`)
+    expect(lines[2]).toBe(`- [x] Water the plants 🔁 every day 📅 ${today}`)
   })
 
   test('nothing ticked in a space shared to be read', async () => {

@@ -219,6 +219,8 @@ export const sw: Dictionary = {
   'Set cover': 'Weka jalada',
   'Change cover': 'Badilisha jalada',
   'Remove cover': 'Ondoa jalada',
+  'Use as todo list': 'Tumia kama orodha ya kazi',
+  'Stop using as todo list': 'Acha kutumia kama orodha ya kazi',
   Wallpaper: 'Pazia',
   Blur: 'Ukungu',
   Dim: 'Fifisha',

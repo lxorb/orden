@@ -464,7 +464,13 @@
               import('./lib/rows/rows.svelte'),
               import('./lib/views/open'),
               import('./lib/workspace/write-file'),
-            ]).then(([{ rows }, views, { writeFile }]) => ({ rows, ...views, writeFile })),
+              import('./lib/rows/todo-lists'),
+            ]).then(([{ rows }, views, { writeFile }, { makeList }]) => ({
+              rows,
+              ...views,
+              writeFile,
+              makeList,
+            })),
           chats: () =>
             __EVEN_PLUGIN__
               ? Promise.reject(new Error('no chats in the Even Realities plugin'))

@@ -98,6 +98,16 @@ describe("a note's own metadata", () => {
     expect(meta.of('/other/Big plan.md')).toEqual({ icon: 'rocket' })
   })
 
+  test('tells who listens where a note it moved now is, so its rows are read with it (#1229)', () => {
+    meta.set('/space/Work/A.md', { icon: 'a' })
+    meta.set('/space/B.md', { icon: 'b' })
+    const heard: string[] = []
+    meta.hear((path) => heard.push(path))
+    meta.moved('/space/Work', '/space/Jobs')
+    meta.moved('/space/B.md', '/other/B.md', ROOT, OTHER)
+    expect(heard).toEqual(['/space/Jobs/A.md', '/other/B.md'])
+  })
+
   test('goes with the note, and with everything in a folder that goes', () => {
     meta.set('/space/Work/A.md', { icon: 'a' })
     meta.set('/space/B.md', { icon: 'b' })

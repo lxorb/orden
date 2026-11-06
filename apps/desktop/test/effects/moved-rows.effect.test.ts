@@ -69,6 +69,8 @@ beforeAll(async () => {
     { id: 'home', name: 'Home', root: HOME },
   ]
   workspace.activeSpaceId = 'work'
+  for (const root of [WORK, HOME])
+    workspace.itemMeta.set(`${root}/A/Plan.md`, { 'todo-list': 'yes' })
   await workspace.loadTree()
   void startup.shown()
   await links.build(WORK)
@@ -85,12 +87,16 @@ test('a note moved to another folder, its own relative link rewritten, keeps the
   await workspace.writesSettled()
 
   expect(one?.files.get(`${WORK}/B/Plan.md`)).toBe('- [ ] Read [spec](../A/Spec.md)\n')
-  expect(tasks('Work')).toEqual(['B/Plan.md: Read [spec](../A/Spec.md)'])
+  await vi.waitFor(() => {
+    expect(tasks('Work')).toEqual(['B/Plan.md: Read [spec](../A/Spec.md)'])
+  })
 
   await workspace.undoFileAction()
   await workspace.writesSettled()
   expect(one?.files.get(`${WORK}/A/Plan.md`)).toBe('- [ ] Read [spec](../A/Spec.md)\n')
-  expect(tasks('Work')).toEqual(['A/Plan.md: Read [spec](../A/Spec.md)'])
+  await vi.waitFor(() => {
+    expect(tasks('Work')).toEqual(['A/Plan.md: Read [spec](../A/Spec.md)'])
+  })
 })
 
 test('and the same when an agent moves it in a space not in front', async () => {
@@ -109,5 +115,7 @@ test('and the same when an agent moves it in a space not in front', async () => 
   expect(answer).toMatchObject({ ok: true })
 
   expect(disk.current?.files.get(`${HOME}/B/Plan.md`)).toBe('- [ ] Read [spec](../A/Spec.md)\n')
-  expect(tasks('Home')).toEqual(['B/Plan.md: Read [spec](../A/Spec.md)'])
+  await vi.waitFor(() => {
+    expect(tasks('Home')).toEqual(['B/Plan.md: Read [spec](../A/Spec.md)'])
+  })
 })

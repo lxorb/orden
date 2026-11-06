@@ -221,6 +221,8 @@ export const uk: Dictionary = {
   'Set cover': 'Вибрати обкладинку',
   'Change cover': 'Змінити обкладинку',
   'Remove cover': 'Вилучити обкладинку',
+  'Use as todo list': 'Використовувати як список справ',
+  'Stop using as todo list': 'Не використовувати як список справ',
   Wallpaper: 'Шпалери',
   Blur: 'Розмиття',
   Dim: 'Затемнення',

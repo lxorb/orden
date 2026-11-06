@@ -6,6 +6,8 @@ import { scanRows } from '@orden/bases/scan'
 import { insideSpace, isMarkdownPath, pathKey, samePath, within } from '../space-paths'
 import { type FileOp } from '../workspace/file-ops'
 import { movedRows, type NoteRead, rowsOf } from '@orden/bases/rows'
+import { datesChanged, type DatesPatch, withDates } from '@orden/bases/todo-lists'
+import { todayOf } from '@orden/bases'
 
 export interface SpaceName {
   root: string
@@ -32,6 +34,8 @@ export interface Host {
   own?(root: string): readonly string[]
   vault(root: string): Promise<boolean>
   meta?(root: string, path: string): Readonly<Record<string, string>> | null
+  list?(root: string, path: string, meta: Readonly<Record<string, string>> | null): boolean
+  dated?(root: string, path: string, patch: DatesPatch): void
 }
 
 const CHUNK = 250
@@ -105,7 +109,7 @@ export class RowsStore {
     }
   }
 
-  saved(path: string, content: string) {
+  saved(path: string, content: string, settles = true) {
     const held = this.holding(path)
     if (!held) return
     const relative = within(held.root, path, held.root)
@@ -113,6 +117,7 @@ export class RowsStore {
 
     const key = pathKey(relative, held.root)
     const now = this.host.now()
+    const was = held.reading ? undefined : held.files.get(key)
     this.edit(held, key, (before) => {
       const known = before?.[0]?.file.ctime ?? 0
       const ctime = known > 0 ? known : now
@@ -122,6 +127,14 @@ export class RowsStore {
         readOf({ ...scanNote(relative, content), ...scanRows(content), stamp }),
       )
     })
+    if (settles) this.settle(held, relative, was ?? null, held.files.get(key) ?? [], now)
+  }
+
+  private settle(held: Held, relative: string, was: Row[] | null, now: Row[], at: number) {
+    if (!this.host.dated) return
+    const meta = this.host.meta?.(held.root, relative) ?? null
+    const patch = datesChanged(was, now, meta, todayOf(new Date(at)))
+    if (patch) this.host.dated(held.root, relative, patch)
   }
 
   indexed(root: string, scans: readonly ScannedNote[]) {
@@ -157,7 +170,12 @@ export class RowsStore {
 
   private rowsIn(held: Held, read: NoteRead): Row[] {
     if (samePath(read.path, AGENTS_NAME, held.root)) return []
-    const rows = rowsOf(held.name, { ...read, meta: this.host.meta?.(held.root, read.path) })
+    const meta = this.host.meta?.(held.root, read.path) ?? null
+    const listed = this.host.list?.(held.root, read.path, meta) ?? true
+    const rows = withDates(
+      rowsOf(held.name, { ...read, tasks: listed ? read.tasks : [], meta }),
+      meta,
+    )
     if (held.vault) for (const row of rows) if (row.task) row.task.dueReads = 'deadline'
     return rows
   }
@@ -301,15 +319,23 @@ export class RowsStore {
     return keys
   }
 
-  described(path: string): void {
-    void this.fileCame(path)
+  again(root: string) {
+    const held = this.spaces.get(pathKey(root))
+    if (!held || held.reading) return
+    held.reading = true
+    this.queue.push(held)
+    void this.drain()
   }
 
-  private async fileCame(path: string) {
+  described(path: string): void {
+    void this.fileCame(path, false)
+  }
+
+  private async fileCame(path: string, settles = true) {
     const held = this.holding(path)
     if (!held || !isMarkdownPath(path)) return
     const content = await this.host.read(path)
-    if (content !== null) this.saved(path, content)
+    if (content !== null) this.saved(path, content, settles)
   }
 
   private async folderCame(path: string) {

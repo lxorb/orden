@@ -216,6 +216,8 @@ export const my: Dictionary = {
   'Set cover': 'အဖုံး ရွေးရန်',
   'Change cover': 'အဖုံး ပြောင်းရန်',
   'Remove cover': 'အဖုံး ဖယ်ရန်',
+  'Use as todo list': 'လုပ်ရန်စာရင်းအဖြစ် သုံးမည်',
+  'Stop using as todo list': 'လုပ်ရန်စာရင်းအဖြစ် မသုံးတော့ပါ',
   Wallpaper: 'နောက်ခံပုံ',
   Blur: 'ဝါးခြင်း',
   Dim: 'မှိန်စေခြင်း',

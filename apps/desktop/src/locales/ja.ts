@@ -215,6 +215,8 @@ export const ja: Dictionary = {
   'Set cover': 'カバーを選ぶ',
   'Change cover': 'カバーを変更',
   'Remove cover': 'カバーを削除',
+  'Use as todo list': 'ToDo リストとして使う',
+  'Stop using as todo list': 'ToDo リストとして使うのをやめる',
   Wallpaper: '壁紙',
   Blur: 'ぼかし',
   Dim: '暗さ',

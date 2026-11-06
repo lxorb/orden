@@ -3,6 +3,7 @@ import { projectsFolder } from '../rows/projects'
 import { t } from '../i18n.svelte'
 import type { MenuEntry } from '../menu.svelte'
 import { inboxOf } from '../rows/inbox'
+import { listsIn, makeList } from '../rows/todo-lists'
 import { inboxNote } from '../rows/inbox-note'
 import { isAgentsName } from '../note-name'
 import { canWriteAt } from '../sharing.svelte'
@@ -40,6 +41,7 @@ async function made(folder: string, words: string, template?: string): Promise<s
   await writeFile(path, text)
   await workspace.loadTree()
   await workspace.fileCame(path, 'file')
+  makeList(path)
   return path
 }
 
@@ -83,15 +85,6 @@ function spaceProjects(root: string, count: (note: string) => number): ProjectNo
   return projectNodes(folder, (path) => workspace.arranged.listOf(path), count)
 }
 
-async function ensureProject(note: string): Promise<boolean> {
-  if (workspace.notes.some((one) => samePath(one.path, note))) return true
-  if (!canWriteAt(note)) return false
-  await writeFile(note, '')
-  await workspace.loadTree()
-  await workspace.fileCame(note, 'file')
-  return true
-}
-
 const inboxNoteAt = (root: string) => insideSpace(root, inboxOf(root))
 
 export function offersPlaces(): boolean {
@@ -116,22 +109,18 @@ export function placeEntries(
         ),
     },
   ]
-  const walk = (nodes: readonly ProjectNode[], above: string) => {
-    for (const node of nodes) {
-      const name = above ? `${above} / ${node.name}` : node.name
-      out.push({
-        label: name,
-        checked: here(node.note),
-        run: () =>
-          void ensureProject(node.note).then((there) => (there ? go(node.note) : undefined)),
-      })
-      walk(node.children, name)
-    }
+  const inbox = inboxNoteAt(root)
+  const lists = listsIn(root)
+    .map((relative) => insideSpace(root, relative))
+    .filter((note) => !samePath(note, inbox))
+    .sort((a, b) => nameOf(a).localeCompare(nameOf(b)))
+  for (const note of lists) {
+    out.push({
+      label: nameOf(note).replace(/\.md$/i, ''),
+      checked: here(note),
+      run: () => go(note),
+    })
   }
-  walk(
-    spaceProjects(root, () => 0),
-    '',
-  )
   return out
 }
 

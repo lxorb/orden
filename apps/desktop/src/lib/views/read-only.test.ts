@@ -85,6 +85,8 @@ vi.mock('../workspace.svelte', () => ({
     documentAt: () => null,
     noteText: (path: string) => Promise.resolve(disk.get(path) ?? null),
     undone: { last: null, stack: [] },
+    rootHolding: (path: string) => (path.startsWith(`${MINE.root}/`) ? MINE.root : THEIRS.root),
+    itemMeta: { of: () => null, set: () => undefined },
   },
 }))
 

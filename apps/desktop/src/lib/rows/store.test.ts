@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { Row } from '@orden/bases'
+import { type Row, todayOf } from '@orden/bases'
 import { scanNote, type ScannedNote, type SpaceLinks } from '@orden/scan/note'
 import { scanRows } from '@orden/bases/scan'
 import { type Host, type RowsChange, RowsStore } from './store'
@@ -27,6 +27,7 @@ function rig(
   disk: Record<string, string>,
   open: string | null = null,
   vaults: readonly string[] = [],
+  more: Partial<Host> = {},
 ): Rig {
   const files = new Map(Object.entries(disk))
   const waiting = new Map<string, () => void>()
@@ -51,6 +52,7 @@ function rig(
     breathe: () => Promise.resolve(),
     now: () => 42,
     vault: (root) => Promise.resolve(vaults.includes(root)),
+    ...more,
   }
 
   const store = new RowsStore(host)
@@ -500,5 +502,59 @@ describe('the rows a view shows', () => {
     const shut = (path: string) => path.startsWith(`${WORK}/Diary/`)
     expect(tasks(store.openOf(undefined, shut))).toEqual(['Work:Plan.md:Ship it'])
     expect(tasks(store.openOf('Work', () => false))).toHaveLength(2)
+  })
+})
+
+describe('the rows of a todo list and of a note (#1229, #1228)', () => {
+  function listed(disk: Record<string, string>) {
+    const meta = new Map<string, Record<string, string>>([['Errands.md', { 'todo-list': 'yes' }]])
+    const dated: [string, Record<string, string | null>][] = []
+    const made = rig(disk, null, [], {
+      meta: (_root, path) => meta.get(path) ?? null,
+      list: (_root, path, said) => path === '.Inbox.md' || said?.['todo-list'] === 'yes',
+      dated: (_root, path, patch) => {
+        dated.push([path, patch])
+        const now = Object.entries({ ...meta.get(path), ...patch }).filter(
+          (one): one is [string, string] => one[1] !== null,
+        )
+        meta.set(path, Object.fromEntries(now))
+      },
+    })
+    return { ...made, meta, dated }
+  }
+
+  test('a checkbox in a note is no task, and one in a list is', async () => {
+    const { store, answer, settled } = listed({
+      [`${WORK}/Errands.md`]: '- [ ] Post the letter\n',
+      [`${WORK}/Meeting.md`]: '- [ ] Ask about the budget\n',
+      [`${WORK}/Projects/Notes.md`]: '- [ ] Not a todo either\n',
+    })
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    await settled()
+    answer(WORK)
+    await settled()
+    expect(tasks(store.of())).toEqual(['Work:Errands.md:Post the letter'])
+    store.saved(`${WORK}/Meeting.md`, '- [x] Ask about the budget\n')
+    expect(tasks(store.of())).toEqual(['Work:Errands.md:Post the letter'])
+  })
+
+  test('ticking a todo keeps its date as the list’s metadata, its words untouched', async () => {
+    const { store, answer, settled, dated, disk } = listed({
+      [`${WORK}/Errands.md`]: '- [ ] Post the letter\n',
+      [`${WORK}/Meeting.md`]: '- [ ] Ask about the budget\n',
+    })
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    await settled()
+    answer(WORK)
+    await settled()
+    disk.set(`${WORK}/Errands.md`, '- [x] Post the letter\n')
+    store.saved(`${WORK}/Errands.md`, '- [x] Post the letter\n')
+    store.saved(`${WORK}/Meeting.md`, '- [x] Ask about the budget\n')
+    expect(dated.map(([path]) => path)).toEqual(['Errands.md'])
+    store.described(`${WORK}/Errands.md`)
+    await settled()
+    const done = store.of().find((row) => row.task?.text === 'Post the letter')
+    expect(done?.task?.completed).toBe(todayOf(new Date(42)))
+    expect(done?.task?.text).toBe('Post the letter')
   })
 })

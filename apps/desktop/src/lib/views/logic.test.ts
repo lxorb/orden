@@ -215,7 +215,7 @@ describe('a drop into a group', () => {
       change: { task: { status: ' ', completed: null, cancelledOn: null } },
     })
     expect(dropInto('task.status', '-', bank, TODAY)).toEqual({
-      change: { task: { cancelled: true, cancelledOn: TODAY, completed: null } },
+      change: { task: { cancelled: true, completed: null } },
     })
   })
 
@@ -388,8 +388,8 @@ describe('a repeating task', () => {
     expect(editedLines(note, [water], (line) => skip(line, '2026-10-13'))).toBe(
       '- [ ] Water 🔁 every week 📅 2026-10-19\n- [ ] Read\n',
     )
-    expect(editedLines(note, [water], (line) => finish(line, '2026-10-13'))).toBe(
-      '- [x] Water 📅 2026-10-12 ✅ 2026-10-13\n- [ ] Read\n',
+    expect(editedLines(note, [water], (line) => finish(line))).toBe(
+      '- [x] Water 📅 2026-10-12\n- [ ] Read\n',
     )
   })
 })

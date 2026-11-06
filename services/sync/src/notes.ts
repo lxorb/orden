@@ -1,6 +1,7 @@
 import { type Context, Hono } from 'hono'
 import { NOT_A_PATH, NO_SUCH_NOTE, OUT_OF_SPACE, ROOM_AWAY } from './refused'
 import { mergeCanvasFiles } from '@orden/markdown/canvas-merge'
+import { type ItemMeta, metaText } from '@orden/sync-core/meta'
 import { isPagesTarget } from '@orden/markdown/links'
 import { isName, LONGEST_NAME, shortened } from '@orden/sync-core'
 import { conflictPath, freePath, numbered } from '@orden/markdown/paths'
@@ -117,11 +118,12 @@ export async function addNote(
   content: string,
   by = '',
   device?: string,
+  meta?: ItemMeta,
 ): Promise<Note> {
   const space = await env.DB.prepare('select prepared_at from spaces where id = ?')
     .bind(spaceId)
     .first<{ prepared_at: number | null }>()
-  if (space?.prepared_at) return await placeNote(env, spaceId, path, content, by, device)
+  if (space?.prepared_at) return await placeNote(env, spaceId, path, content, by, device, meta)
 
   const note: Note = {
     id: newId(),
@@ -135,6 +137,7 @@ export async function addNote(
     size: byteLength(content),
     hash: await sha256(content),
     front: writeFront(content),
+    meta: metaText(meta),
   }
 
   note.seq = (
@@ -143,8 +146,8 @@ export async function addNote(
       spaceId,
       env.DB.prepare(
         `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash, front,
-                            front_rev)
-         values (?2, ?1, ?3, ${TAKEN_SEQ}, ?4, ?5, 0, ?6, ?7, ?8, ?9)`,
+                            front_rev, meta)
+         values (?2, ?1, ?3, ${TAKEN_SEQ}, ?4, ?5, 0, ?6, ?7, ?8, ?9, ?10)`,
       ).bind(
         note.space_id,
         note.id,
@@ -155,6 +158,7 @@ export async function addNote(
         note.hash,
         note.front,
         FRONT_REV,
+        note.meta,
       ),
     )
   ).seq
@@ -178,16 +182,24 @@ async function placeNote(
   content: string,
   by: string,
   device: string | undefined,
+  meta: ItemMeta | undefined,
 ): Promise<Note> {
   const hash = await sha256(content)
   const document = DOCUMENT_KINDS.has(kindOfName(path))
-  const placed = await createByPath(env, spaceId, device, path, {
-    hash,
-    size: byteLength(content),
-    front: writeFront(content),
-    epoch: document ? 1 : 0,
-    epochBase: document ? hash : null,
-  })
+  const placed = await createByPath(
+    env,
+    spaceId,
+    device,
+    path,
+    {
+      hash,
+      size: byteLength(content),
+      front: writeFront(content),
+      epoch: document ? 1 : 0,
+      epochBase: document ? hash : null,
+    },
+    meta,
+  )
   if ('taken' in placed) throw new NoteTaken(placed.taken)
 
   const note = await env.DB.prepare('select * from notes where id = ?')

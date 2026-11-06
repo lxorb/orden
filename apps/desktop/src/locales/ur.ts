@@ -218,6 +218,8 @@ export const ur: Dictionary = {
   'Set cover': 'سرورق منتخب کریں',
   'Change cover': 'سرورق بدلیں',
   'Remove cover': 'سرورق ہٹائیں',
+  'Use as todo list': 'کاموں کی فہرست کے طور پر استعمال کریں',
+  'Stop using as todo list': 'کاموں کی فہرست کے طور پر استعمال بند کریں',
   Wallpaper: 'وال پیپر',
   Blur: 'دھندلاپن',
   Dim: 'مدھم کریں',

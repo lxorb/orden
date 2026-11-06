@@ -219,6 +219,8 @@ export const fil: Dictionary = {
   'Set cover': 'Itakda ang pabalat',
   'Change cover': 'Baguhin ang pabalat',
   'Remove cover': 'Alisin ang pabalat',
+  'Use as todo list': 'Gamitin bilang listahan ng gagawin',
+  'Stop using as todo list': 'Huwag nang gamitin bilang listahan ng gagawin',
   Wallpaper: 'Wallpaper ng app',
   Blur: 'Labo',
   Dim: 'Padilimin',

@@ -214,6 +214,8 @@ export const ms: Dictionary = {
   'Set cover': 'Tetapkan kulit',
   'Change cover': 'Tukar kulit',
   'Remove cover': 'Buang kulit',
+  'Use as todo list': 'Guna sebagai senarai tugasan',
+  'Stop using as todo list': 'Berhenti guna sebagai senarai tugasan',
   Wallpaper: 'Kertas dinding',
   Blur: 'Kabur',
   Dim: 'Malapkan',

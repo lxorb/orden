@@ -147,12 +147,12 @@ export function tick(
     return [{ from: target.from, to: end, insert: '' }]
   }
 
-  edits.push(...placed(writeTask(target.text, { done: true, completed: today }), target.from))
+  edits.push(...placed(writeTask(target.text, { done: true }), target.from))
   for (const index of children) {
     const child = lines[index]
     const fields = child ? readTask(child.text) : null
     if (!child || !fields || fields.done || fields.cancelled) continue
-    edits.push(...placed(writeTask(child.text, { done: true, completed: today }), child.from))
+    edits.push(...placed(writeTask(child.text, { done: true }), child.from))
   }
   return edits
 }
@@ -184,8 +184,8 @@ export function skip(line: string, today: string, options: OccurrenceOptions = {
   return next ? writeTask(line, changeBetween(task, { ...next, status: task.status })) : []
 }
 
-export function finish(line: string, today: string): TextEdit[] {
-  return writeTask(line, { done: true, completed: today, recurrence: null })
+export function finish(line: string): TextEdit[] {
+  return writeTask(line, { done: true, recurrence: null })
 }
 
 export { todayOf }

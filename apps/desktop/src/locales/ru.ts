@@ -221,6 +221,8 @@ export const ru: Dictionary = {
   'Set cover': 'Выбрать обложку',
   'Change cover': 'Изменить обложку',
   'Remove cover': 'Убрать обложку',
+  'Use as todo list': 'Использовать как список дел',
+  'Stop using as todo list': 'Не использовать как список дел',
   Wallpaper: 'Обои',
   Blur: 'Размытие',
   Dim: 'Затемнение',

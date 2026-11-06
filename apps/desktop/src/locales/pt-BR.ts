@@ -220,6 +220,8 @@ export const ptBR: Dictionary = {
   'Set cover': 'Definir capa',
   'Change cover': 'Alterar capa',
   'Remove cover': 'Remover capa',
+  'Use as todo list': 'Usar como lista de tarefas',
+  'Stop using as todo list': 'Deixar de usar como lista de tarefas',
   Wallpaper: 'Papel de parede',
   Blur: 'Desfoque',
   Dim: 'Escurecer',

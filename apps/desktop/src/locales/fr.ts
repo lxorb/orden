@@ -222,6 +222,8 @@ export const fr: Dictionary = {
   'Set cover': 'Choisir une couverture',
   'Change cover': 'Changer la couverture',
   'Remove cover': 'Retirer la couverture',
+  'Use as todo list': 'Utiliser comme liste de tâches',
+  'Stop using as todo list': 'Ne plus utiliser comme liste de tâches',
   Wallpaper: 'Fond d’écran',
   Blur: 'Flou',
   Dim: 'Assombrir',

@@ -24,6 +24,9 @@ def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
     DRIVE.open(page)
     DRIVE.seed(page, "# Plan\n\nWhat we are doing.\n\n## Today\n\n## Later\n")
+    page.evaluate(
+        "async () => (await window.nibApp.tasks()).makeList(window.nibApp.workspace.notes.find((one) => one.name === 'Plan.md').path)"
+    )
     DRIVE.open_note(page, "Plan")
 
     page.keyboard.press("Control+o")

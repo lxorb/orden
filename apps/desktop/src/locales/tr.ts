@@ -219,6 +219,8 @@ export const tr: Dictionary = {
   'Set cover': 'Kapak seç',
   'Change cover': 'Kapağı değiştir',
   'Remove cover': 'Kapağı kaldır',
+  'Use as todo list': 'Yapılacaklar listesi olarak kullan',
+  'Stop using as todo list': 'Yapılacaklar listesi olarak kullanmayı bırak',
   Wallpaper: 'Duvar kâğıdı',
   Blur: 'Bulanıklık',
   Dim: 'Karartma',

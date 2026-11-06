@@ -218,6 +218,8 @@ export const te: Dictionary = {
   'Set cover': 'కవర్ ఎంచుకోండి',
   'Change cover': 'కవర్ మార్చండి',
   'Remove cover': 'కవర్ తీసివేయండి',
+  'Use as todo list': 'చేయవలసిన పనుల జాబితాగా ఉపయోగించు',
+  'Stop using as todo list': 'చేయవలసిన పనుల జాబితాగా ఉపయోగించడం ఆపు',
   Wallpaper: 'వాల్‌పేపర్',
   Blur: 'మసక',
   Dim: 'మందగించు',

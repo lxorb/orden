@@ -38,8 +38,7 @@ function taskDrop(field: string, key: Value, row: Row, today: string): Drop | nu
       field === 'done' ? (key === true ? 'x' : ' ') : typeof key === 'string' ? key : ' '
     if (status === task.status) return null
     if (status.toLowerCase() === 'x') return task.done ? null : { tick: true }
-    if (status === '-')
-      return { change: { task: { cancelled: true, cancelledOn: today, completed: null } } }
+    if (status === '-') return { change: { task: { cancelled: true, completed: null } } }
     return { change: { task: { status, completed: null, cancelledOn: null } } }
   }
 

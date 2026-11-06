@@ -217,6 +217,8 @@ export const ps: Dictionary = {
   'Set cover': 'پوښ وټاکه',
   'Change cover': 'پوښ بدل کړه',
   'Remove cover': 'پوښ لرې کړه',
+  'Use as todo list': 'د کارونو د لړلیک په توګه وکاروئ',
+  'Stop using as todo list': 'د کارونو د لړلیک په توګه کارول ودروئ',
   Wallpaper: 'د شالید انځور',
   Blur: 'تتوالی',
   Dim: 'تیاره کول',

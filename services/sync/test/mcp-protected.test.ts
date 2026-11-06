@@ -24,6 +24,7 @@ beforeEach(async () => {
   home = (await call(env, '/v1/spaces', { token, body: { name: 'Home' } })).json.space.id
   await note('Diary/Today.md', '# Today\n- [ ] Call her\nthe secret words\n')
   await note('Plans.md', '# Plans\n- [ ] Ship it\nsee [[Today]] and the secret words\n')
+  env.db.prepare('update notes set meta = ? where space_id = ?').run('{"todo-list":"yes"}', home)
   await call(env, `/v1/protected/spaces/${home}`, {
     method: 'PUT',
     token,

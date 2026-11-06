@@ -289,11 +289,11 @@ describe('a task field written from a view', () => {
     expect(changed('# Plan\n- [ ] Something else\n', row, { task: { done: true } })).toBeNull()
   })
 
-  test('ticks the way the engine ticks: the done date, and a recurring task comes back above', () => {
+  test('ticks the way the engine ticks: no done date in its words, and a recurring task comes back above', () => {
     const plants = '- [ ] Water the plants 🔁 every 3 days 📅 2026-10-06\n'
     expect(changed(plants, taskRow(plants, 'Water the plants'), { task: { done: true } })).toBe(
       '- [ ] Water the plants 🔁 every 3 days 📅 2026-10-09\n' +
-        '- [x] Water the plants 🔁 every 3 days 📅 2026-10-06 ✅ 2026-10-07\n',
+        '- [x] Water the plants 🔁 every 3 days 📅 2026-10-06\n',
     )
   })
 
@@ -305,7 +305,7 @@ describe('a task field written from a view', () => {
   test('a field and the tick in one change', () => {
     const go = '- [ ] Go\n'
     expect(changed(go, taskRow(go, 'Go'), { task: { done: true, priority: 1 } })).toBe(
-      '- [x] Go 🔺 ✅ 2026-10-07\n',
+      '- [x] Go 🔺\n',
     )
   })
 
@@ -333,8 +333,8 @@ describe('the write itself', () => {
     expect(await writeRow(ws, PATH, taskRow('- [ ] Go\n', 'Go'), { task: { done: true } })).toBe(
       true,
     )
-    expect(note?.text).toBe('- [x] Go ✅ 2026-10-07\nwords typed since\n')
-    expect(disk.get(PATH)).toBe('- [x] Go ✅ 2026-10-07\nwords typed since\n')
+    expect(note?.text).toBe('- [x] Go\nwords typed since\n')
+    expect(disk.get(PATH)).toBe('- [x] Go\nwords typed since\n')
   })
 
   test('a note in a space shared to be read is not written, and answers so', async () => {

@@ -221,6 +221,8 @@ export const ar: Dictionary = {
   'Set cover': 'تعيين غلاف',
   'Change cover': 'تغيير الغلاف',
   'Remove cover': 'إزالة الغلاف',
+  'Use as todo list': 'استخدام كقائمة مهام',
+  'Stop using as todo list': 'إيقاف الاستخدام كقائمة مهام',
   Wallpaper: 'خلفية',
   Blur: 'تمويه',
   Dim: 'تعتيم',

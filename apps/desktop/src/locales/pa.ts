@@ -217,6 +217,8 @@ export const pa: Dictionary = {
   'Set cover': 'ਕਵਰ ਚੁਣੋ',
   'Change cover': 'ਕਵਰ ਬਦਲੋ',
   'Remove cover': 'ਕਵਰ ਹਟਾਓ',
+  'Use as todo list': 'ਕਰਨ ਵਾਲੇ ਕੰਮਾਂ ਦੀ ਸੂਚੀ ਵਜੋਂ ਵਰਤੋ',
+  'Stop using as todo list': 'ਕਰਨ ਵਾਲੇ ਕੰਮਾਂ ਦੀ ਸੂਚੀ ਵਜੋਂ ਵਰਤਣਾ ਬੰਦ ਕਰੋ',
   Wallpaper: 'ਵਾਲਪੇਪਰ',
   Blur: 'ਧੁੰਦਲਾਪਣ',
   Dim: 'ਮੱਧਮ ਕਰੋ',

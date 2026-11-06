@@ -86,7 +86,7 @@ function ticked(text: string, from: number, done: boolean): string {
 
   const today = todayOf()
   if (done && fields.cancelled) {
-    const edits = writeTask(line, { done: true, completed: today, cancelledOn: null })
+    const edits = writeTask(line, { done: true, cancelledOn: null })
     return appliedEdits(
       text,
       edits.map((edit) => ({ ...edit, from: edit.from + from, to: edit.to + from })),
