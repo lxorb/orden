@@ -342,9 +342,11 @@
   const enter = (x: number) =>
     viewport.touch ? { x, duration: dur(200), easing: cubicOut } : { duration: dur(0) }
 
-  $effect(() => (settings.open ? overlays.show(() => (settings.open = false)) : undefined))
-  $effect(() => closeOnBack(settings.open, () => (settings.open = false)))
-  $effect(() => closeOnBack(settings.open && !settings.listing, () => (settings.listing = true)))
+  $effect.pre(() => (settings.open ? overlays.show(() => (settings.open = false)) : undefined))
+  $effect.pre(() => closeOnBack(settings.open, () => (settings.open = false)))
+  $effect.pre(() =>
+    closeOnBack(settings.open && !settings.listing, () => (settings.listing = true)),
+  )
 </script>
 
 {#if settings.open}
