@@ -402,7 +402,7 @@ describe('what hides a web page', () => {
     const app = read('App.svelte')
     const panes = app.slice(app.indexOf('class="panes"'))
     const inPanes = panes.slice(0, panes.indexOf('\n        </div>'))
-    expect(inPanes).toContain('{#if !viewport.drawer}\n            {@render notices()}')
+    expect(inPanes).toContain('{#if !noticesOver}\n            {@render notices()}')
 
     const style = app.slice(app.indexOf('<style>'))
     const row = style.slice(style.indexOf('  .notices {'))
@@ -411,12 +411,15 @@ describe('what hides a web page', () => {
     expect(rule).toMatch(/pointer-events:\s*none/)
   })
 
-  test('where the panels are a drawer it is over the list and the note, not in the note', () => {
+  test('where the panels are a drawer, or the note too narrow for it, it is over the list and the note, not in the note', () => {
     const app = read('App.svelte')
+    expect(app).toMatch(
+      /const noticesOver = \$derived\(viewport\.drawer \|\| \(panesWide > 0 && panesWide < NOTICE_ROOM\)\)/,
+    )
     const main = app.slice(app.indexOf('<div class="middle"'), app.indexOf('</main>'))
     const after = main.slice(main.lastIndexOf('\n  </div>'))
 
-    expect(after).toContain('{#if viewport.drawer}')
+    expect(after).toContain('{#if noticesOver}')
     expect(after).toContain('{@render notices()}')
     const style = app.slice(app.indexOf('<style>'))
     expect(style).toMatch(/\.notices\.over \{\s*position: fixed;/)
