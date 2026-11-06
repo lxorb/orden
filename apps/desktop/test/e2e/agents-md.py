@@ -59,7 +59,8 @@ def drive(browser: Browser) -> None:
         say("the tree shows no root AGENTS.md")
 
         new_row(page, "agents")
-        hint = page.locator(".naming button")
+        # Hung over the window from the name since #1129, outside the row.
+        hint = page.locator(".reason.held button")
         hint.wait_for()
         hint.evaluate(
             "(one) => Promise.all(one.closest('.reason').getAnimations().map((a) => a.finished))"
@@ -76,7 +77,7 @@ def drive(browser: Browser) -> None:
             raise SystemExit(f"the hint is not under the name: {hint_at} and {field_at}")
         if "AGENTS" not in hint.inner_text():
             raise SystemExit(f"the hint says {hint.inner_text()!r}")
-        if page.locator(".naming [aria-live=polite] button").count() != 1:
+        if page.locator(".reason[aria-live=polite] button").count() != 1:
             raise SystemExit("the hint is not in a live region")
         hint.click()
 
@@ -106,11 +107,11 @@ def drive(browser: Browser) -> None:
             raise SystemExit(f"the refused name wrote something: {names}")
 
         new_row(page, "AGENTS")
-        page.wait_for_selector(".naming button")
+        page.wait_for_selector(".reason.held button")
         page.keyboard.press("Tab")
         wait_for(
             page,
-            "() => document.activeElement?.tagName === 'BUTTON' && document.activeElement.closest('.naming') !== null",
+            "() => document.activeElement?.tagName === 'BUTTON' && document.activeElement.closest('.reason') !== null",
             "the keyboard on the hint",
         )
         page.keyboard.press("Enter")
@@ -123,7 +124,7 @@ def drive(browser: Browser) -> None:
         say("the keyboard reaches the hint and goes through it")
 
         new_row(page, "AGENTS")
-        page.wait_for_selector(".naming button")
+        page.wait_for_selector(".reason.held button")
         page.keyboard.press("Enter")
         toast = page.locator(".toast button")
         toast.wait_for()
