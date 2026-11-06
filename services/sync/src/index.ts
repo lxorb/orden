@@ -53,6 +53,7 @@ import { v2Maps } from './sync2/maps'
 import { sweepTreeOps } from './sync2/tree'
 import { spaces } from './spaces'
 import { join } from './spaces/join'
+import { crashes, sweepCrashes } from './crashes'
 import { feedback } from './feedback'
 import { openWaitingIssues } from './feedback-issues'
 import { recheckDomains } from './spaces/proof'
@@ -107,6 +108,8 @@ app.route('/v2/online/machine', machineBundle)
 app.route('/v1/join', join)
 
 app.route('/v1/feedback', feedback)
+
+app.route('/v1/crashes', crashes)
 
 app.use('/.well-known/*', anyOrigin)
 app.route('/.well-known', oauthMetadata)
@@ -306,6 +309,7 @@ function scheduled(event: ScheduledEvent, env: Env, context: ExecutionContext) {
   context.waitUntil(sweepAnswers(env, at))
   context.waitUntil(sweepChats(env, at))
   context.waitUntil(sweepAudit(env, at))
+  context.waitUntil(sweepCrashes(env, at))
   context.waitUntil(forgetHalfDone(env, at))
   context.waitUntil(resealBorrowed(env))
   context.waitUntil(sweepLeftovers(env))
