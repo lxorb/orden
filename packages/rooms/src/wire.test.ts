@@ -17,9 +17,6 @@ import {
   unattended,
 } from './wire'
 
-/** Two ends of a wire, each with its own document, joined by hand: whatever one
- *  says, the other hears, and whatever it answers goes back. Which is the whole
- *  of what a room does, without a room. */
 class End {
   readonly doc = new Y.Doc()
   readonly awareness: Awareness
@@ -33,13 +30,11 @@ class End {
     return this.text.toJSON()
   }
 
-  /** A message arriving, and whatever this end says back. */
   hear(message: Uint8Array): Uint8Array | null {
     return receive(message, this.doc, this.awareness, 'wire')
   }
 }
 
-/** Messages passed back and forth until neither end has anything left to say. */
 function exchange(from: End, to: End, first: Uint8Array) {
   let message: Uint8Array | null = first
   let side: [End, End] = [to, from]
@@ -96,8 +91,6 @@ describe('the wire', () => {
   })
 
   test('has nothing to say about an unattended room', () => {
-    // A room is a place rather than somebody in it, so its own awareness holds
-    // no entry and there is nobody to announce; see `unattended`.
     const room = new End()
     unattended(room.awareness)
 
@@ -133,20 +126,12 @@ describe('the wire', () => {
   })
 
   test('answers nothing to a message it cannot read at all', () => {
-    // Bytes off a socket are bytes: the other end may be a build that speaks
-    // something else, a proxy that cut a frame in half, or somebody in the room
-    // sending whatever they like. Whichever it is, one unreadable frame must not
-    // take the connection down with it - a throw here is an unhandled rejection
-    // on the client and a room that never finishes joining.
     const one = new End()
 
-    // Nothing at all, and each kind with its body missing.
     expect(one.hear(new Uint8Array())).toBeNull()
     expect(one.hear(new Uint8Array([0]))).toBeNull()
     expect(one.hear(new Uint8Array([1]))).toBeNull()
-    // A sync message whose body is not one.
     expect(one.hear(new Uint8Array([0, 2, 200, 200, 200]))).toBeNull()
-    // An awareness message whose body is not one.
     expect(one.hear(new Uint8Array([1, 3, 200, 200, 200]))).toBeNull()
   })
 })
@@ -179,7 +164,6 @@ describe('which messages would write', () => {
 
     expect(isEdit(syncUpdate(Y.encodeStateAsUpdate(one.doc)))).toBe(true)
 
-    // Step 2, which is what one end answers a state vector with.
     const answer = one.hear(syncStep1(two.doc))
     expect(answer).not.toBeNull()
     if (answer) expect(isEdit(answer)).toBe(true)
@@ -197,8 +181,6 @@ describe('which messages would write', () => {
   })
 
   test('and anything that cannot be read at all counts as one', () => {
-    // The only thing to do with a message like this is drop it, and a reader's
-    // messages are dropped by being called edits.
     expect(isEdit(new Uint8Array([0]))).toBe(true)
     expect(isEdit(new Uint8Array())).toBe(true)
   })

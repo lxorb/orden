@@ -21,17 +21,11 @@ import {
   seedPlane,
 } from './plane'
 
-/** Two devices on one plane, each with its own document, joined by hand: whatever
- *  one writes the other is given, which is the whole of what a room does without a
- *  room in the way. */
 class Device {
   readonly doc = new Y.Doc()
 
-  /** The canvas this device is looking at. */
   canvas: Canvas = emptyCanvas()
 
-  /** Which ids the last change from the room touched, which is what the surface
-   *  is told so it can keep the objects it already had. */
   changed = new Set<string>()
 
   constructor() {
@@ -42,37 +36,29 @@ class Device {
     })
   }
 
-  /** An edit made here, as the surface makes one: the whole canvas, stamped, and
-   *  only what changed written into the document. */
   edit(next: Canvas, now = 1000) {
     const before = this.canvas
     this.canvas = stamped(before, next, now)
     this.doc.transact(() => pushPlane(this.doc, before, this.canvas), 'here')
   }
 
-  /** Reads the plane back from scratch, which is what joining does. */
   reread() {
     this.canvas = readPlane(this.doc)
   }
 }
 
-/** Which ids a transaction touched: the entries of the plane that changed, and
- *  the objects whose own fields did. */
 function touched(transaction: Y.Transaction): Set<string> {
   const ids = new Set<string>()
 
   for (const [type, keys] of transaction.changed) {
     const parent = type._item
     if (parent === null) {
-      // A root map: the plane itself, or the tombstones. Its keys are ids.
       for (const key of keys) {
         if (key !== null) ids.add(key)
       }
       continue
     }
 
-    // An object's own map, or a card's words inside it. Which object it is is the key
-    // the object's own map hangs on, however far down the change was.
     let item = parent
     while (item.parent instanceof Y.AbstractType && item.parent._item) item = item.parent._item
     const key = item.parentSub
@@ -82,7 +68,6 @@ function touched(transaction: Y.Transaction): Set<string> {
   return ids
 }
 
-/** Everything one device holds, handed to another. */
 function carry(from: Device, to: Device) {
   Y.applyUpdate(to.doc, Y.encodeStateAsUpdate(from.doc, Y.encodeStateVector(to.doc)), 'room')
 }
@@ -146,7 +131,6 @@ describe('a canvas as a room holds it', () => {
     const doc = new Y.Doc()
     seedPlane(doc, canvas)
 
-    // Byte for byte as a file, which is what the settle writes.
     expect(writeCanvas(readPlane(doc))).toBe(writeCanvas(canvas))
   })
 
@@ -156,7 +140,6 @@ describe('a canvas as a room holds it', () => {
 
     const record = planeOf(doc).get('long')
     expect(record).toBeDefined()
-    // The points are one value, packed as a file packs them: six numbers a point.
     expect(record?.get('points')).toHaveLength(300 * 6)
     expect(readPlane(doc).ink[0]?.points).toHaveLength(300)
   })
@@ -169,7 +152,6 @@ describe('two devices on one plane', () => {
     one.edit(withNodes(emptyCanvas(), [card('a'), card('b')]))
     carry(one, two)
 
-    // Each moves a different card, neither having heard the other.
     one.edit(withNodes(one.canvas, [{ ...card('a'), x: 100 }, card('b')]), 2000)
     two.edit(withNodes(two.canvas, [card('a'), { ...card('b'), y: 200 }]), 2000)
     both(one, two)
@@ -186,7 +168,6 @@ describe('two devices on one plane', () => {
     one.edit(withNodes(emptyCanvas(), [card('a')]))
     carry(one, two)
 
-    // One moves it, the other colours it. Both are true afterwards.
     one.edit(withNodes(one.canvas, [{ ...card('a'), x: 300, y: 40 }]), 2000)
     two.edit(withNodes(two.canvas, [{ ...card('a'), color: '4' }]), 2000)
     both(one, two)
@@ -213,7 +194,6 @@ describe('two devices on one plane', () => {
       const node = device.canvas.nodes[0]
       expect(node && 'text' in node ? node.text : null).toBe('Maybe we ship on Monday morning.')
     }
-    // And the file is the one a string would have written.
     expect(writeCanvas(one.canvas)).toBe(writeCanvas(two.canvas))
   })
 
@@ -231,7 +211,6 @@ describe('two devices on one plane', () => {
     expect(new Set(one.canvas.ink.map((held) => held.id))).toEqual(
       new Set(['base', 'mine', 'yours']),
     )
-    // The one that was already there stays under both of them.
     expect(one.canvas.ink[0]?.id).toBe('base')
   })
 
@@ -276,7 +255,6 @@ describe('two devices on one plane', () => {
     one.edit(withInk(emptyCanvas(), [stroke('shared')]))
     carry(one, two)
 
-    // Two goes away. Both draw.
     one.edit(withInk(one.canvas, [...one.canvas.ink, stroke('while-away-one')]), 2000)
     two.edit(withInk(two.canvas, [...two.canvas.ink, stroke('while-away-two')]), 2100)
     both(one, two)
@@ -314,8 +292,6 @@ describe('two devices on one plane', () => {
     one.edit(withInk(one.canvas, [...one.canvas.ink, stroke('third')]), 2000)
     carry(one, two)
 
-    // The identity is what keeps a traced outline cached and a plane of five
-    // thousand strokes from being repainted because somebody drew one.
     expect(two.canvas.ink[0]).toBe(before[0])
     expect(two.canvas.ink[1]).toBe(before[1])
     expect(two.canvas.ink[2]?.id).toBe('third')
@@ -336,9 +312,6 @@ describe('two devices on one plane', () => {
 
 describe('the room and the file say the same thing', () => {
   test('what the room settles to is what merging the two files gives', () => {
-    // The same two edits, once through the room and once as two files put back
-    // together by the merge an offline device uses. Both answers have to hold
-    // every stroke, which is the promise the format makes.
     const one = new Device()
     const two = new Device()
     one.edit(withInk(emptyCanvas(), [stroke('shared')]))
@@ -359,9 +332,6 @@ describe('the room and the file say the same thing', () => {
   })
 })
 
-/** What a file held that the format does not read - another app's node, the edge to it,
- *  a field on a card, a key beside the lists - kept by the room, so its settle writes the
- *  file back with them in it (#780). */
 describe('a plane holding what this app does not read', () => {
   const VAULT = JSON.stringify({
     nodes: [
@@ -419,7 +389,6 @@ describe('a plane holding what this app does not read', () => {
         .nodes.map((one) => one.id)
         .sort(),
     ).toEqual(['a', 'b', 'x'])
-    // The one edit is the card: the extras' own map is not in it.
     const touched = new Y.Doc()
     Y.applyUpdateV2(touched, updates[0] ?? new Uint8Array())
     expect(touched.getMap(EXTRAS).size).toBe(0)
@@ -439,8 +408,6 @@ describe('a plane holding what this app does not read', () => {
   })
 })
 
-/** The stack is a number on each thing, and moving something in it writes that number
- *  (#783). What `ordered` in the app hands over: new objects for what moved. */
 describe('the order of the stack in a room', () => {
   const twoDevices = (...ids: string[]) => {
     const one = new Device()
@@ -502,7 +469,6 @@ describe('the order of the stack in a room', () => {
     }
   })
 
-  /** Every record's place as it stands, to see which were written. */
   const places = (doc: Y.Doc) =>
     Object.fromEntries([...planeOf(doc)].map(([id, record]) => [id, record.get('z')]))
 
@@ -512,13 +478,11 @@ describe('the order of the stack in a room', () => {
     const base = [card('a'), card('b'), card('c'), card('d')]
     one.edit({ ...emptyCanvas(), nodes: base })
     carry(one, two)
-    // Each adds at the same moment, so the two new ones share a place.
     one.edit({ ...one.canvas, nodes: [...one.canvas.nodes, card('x')] }, 2000)
     two.edit({ ...two.canvas, nodes: [...two.canvas.nodes, card('y')] }, 2000)
     both(one, two)
     expect(places(one.doc).x).toBe(places(one.doc).y)
 
-    // A card put between the tied pair moves the upper of them, and leaves the rest alone.
     const was = places(one.doc)
     one.edit(moved(one.canvas, 'b', 'c', 'd', 'x', 'a', 'y'), 3000)
     const is = places(one.doc)
@@ -551,7 +515,6 @@ describe('the order of the stack in a room', () => {
     }
     carry(one, two)
     const is = places(one.doc)
-    // What sits under the pair never moved, however long that went on.
     expect(is.a).toBe(0)
     expect(is.top).toBe(4)
     expect(order(two.canvas)).toEqual(['a', 'b', 'c', 'high', 'top'])
@@ -564,7 +527,6 @@ describe('the order of the stack in a room', () => {
       captureTimeout: 0,
     })
 
-    // `a` leaves place 0 for the top, and `d`, sent to the back elsewhere, lands on it.
     one.edit(moved(one.canvas, 'b', 'c', 'd', 'a'), 2000)
     carry(one, two)
     two.edit(moved(two.canvas, 'd', 'b', 'c', 'a'), 3000)
@@ -574,10 +536,8 @@ describe('the order of the stack in a room', () => {
     history.undo()
     carry(one, two)
     expect(places(one.doc).a).toBe(0)
-    // One place, so by id: the same order on both, which is all a tie has to be.
     expect(order(readPlane(one.doc))).toEqual(['a', 'd', 'b', 'c'])
     expect(order(readPlane(two.doc))).toEqual(['a', 'd', 'b', 'c'])
-    // And a move onto the tie sees it through, with the rest left where it is.
     one.reread()
     one.edit(moved(one.canvas, 'a', 'b', 'd', 'c'), 4000)
     expect(order(readPlane(one.doc))).toEqual(['a', 'b', 'd', 'c'])
@@ -590,7 +550,6 @@ describe('the order of the stack in a room', () => {
     carry(one, two)
     expect(readPlane(two.doc).moved).toEqual({ a: 5000 })
 
-    // A copy that moved `c` to the back before that, and a card's words typed since.
     const stale = stamped(
       emptyCanvas(),
       { ...emptyCanvas(), nodes: [card('c'), card('a'), card('b')] },
@@ -614,7 +573,6 @@ describe('the order of the stack in a room', () => {
     expect(planeOf(doc).get('a')?.has('moved')).toBe(false)
   })
 
-  /** What a seed leaving the times out comes to; see `seedPlane`. */
   describe('a room seeded from a file with moves in it', () => {
     const file = {
       ...emptyCanvas(),
