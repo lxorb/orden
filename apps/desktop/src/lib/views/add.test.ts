@@ -229,6 +229,18 @@ describe('a task added in a group of Todos', () => {
     ).toEqual({})
   })
 
+  test('in a project of another space says that space, so the add row writes there', () => {
+    on.root = '/s/Shared'
+    expect(prefillOf({ builtin: 'project', space: 'Mine', path: 'Errands.md' }, today)).toEqual({
+      root: '/s/Private',
+      path: '/s/Private/Errands.md',
+    })
+    on.root = '/s/Private'
+    expect(prefillOf({ builtin: 'project', space: 'Mine', path: 'Errands.md' }, today)).toEqual({
+      path: '/s/Private/Errands.md',
+    })
+  })
+
   test('a label of another space too, and with two of that name, nowhere it could not know', async () => {
     added.length = 0
     await addTyped('Pay', prefillOf({ builtin: 'label', tag: 'x', space: 'Mine' }, today))

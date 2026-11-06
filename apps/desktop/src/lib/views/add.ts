@@ -92,6 +92,9 @@ export function prefillOf(
   if (spec.builtin === 'project' && spec.space !== undefined && spec.path !== undefined) {
     const space = workspace.spaces.find((one) => one.name === spec.space)
     if (space) out.path = insideSpace(space.root, spec.path)
+    // The add row reads a note by its path in the space it is told, the open one where
+    // none is said.
+    if (space && space.root !== workspace.activeSpace?.root) out.root = space.root
   }
   if (!group) return out
 
