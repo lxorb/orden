@@ -27,26 +27,6 @@ const NOT_OURS = [
   /^apps\/desktop\/src-tauri\/linux\/Cargo\.toml$/,
 ]
 
-const LATER = new Set([
-  'apps/desktop/test/e2e/access.py',
-  'apps/desktop/test/e2e/address-kept.py',
-  'apps/desktop/test/e2e/agents-md.py',
-  'apps/desktop/test/e2e/agents-settings.py',
-  'apps/desktop/test/e2e/alt-numbers-follow.py',
-  'apps/desktop/test/e2e/chats-live.py',
-  'apps/desktop/test/e2e/ctrl-t-web-notes.py',
-  'apps/desktop/test/e2e/deck-keys.py',
-  'apps/desktop/test/e2e/note-sides.py',
-  'apps/desktop/test/e2e/pen-shapes.py',
-  'apps/desktop/test/e2e/profiles.py',
-  'apps/desktop/test/e2e/quick-tools.py',
-  'apps/desktop/test/e2e/tab-close.py',
-  'apps/desktop/test/e2e/tabs-hints.py',
-  'apps/desktop/test/e2e/version.py',
-  'apps/desktop/test/e2e/writing-feel.py',
-  'packages/themes/src/editor.css',
-])
-
 const LANGUAGES: [RegExp, (text: string) => string[]][] = [
   [/\.(rs|kt|kts|swift|gradle|jsonc)$/, slashed],
   [/\.css$/, (text) => blocks(text)],
@@ -208,9 +188,7 @@ function python(text: string): string[] {
   return found
 }
 
-const files = walk(ROOT).filter(
-  (path) => !LATER.has(path) && !NOT_OURS.some((one) => one.test(path)),
-)
+const files = walk(ROOT).filter((path) => !NOT_OURS.some((one) => one.test(path)))
 
 describe('no comments', () => {
   test('there are files to read', () => {
