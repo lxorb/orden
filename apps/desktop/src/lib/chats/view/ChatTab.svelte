@@ -1,7 +1,7 @@
 <script lang="ts">
   import { chatOf, type FileRef, type Message, type Poll } from '@orden/chats'
   import { onDestroy, untrack } from 'svelte'
-  import { draggedTab, isTreeDrag } from '../../drag-paths'
+  import { carriedFiles, carriesFiles, draggedTab, isTreeDrag } from '../../drag-paths'
   import { pages } from '../../web-tab/pages.svelte'
   import EmojiPicker from '../../emoji/EmojiPicker.svelte'
   import { t } from '../../i18n.svelte'
@@ -125,7 +125,7 @@
   }
 
   function dragging(event: DragEvent) {
-    if (!event.dataTransfer?.types.includes('Files') && !isTreeDrag(event.dataTransfer)) return
+    if (!carriesFiles(event.dataTransfer) && !isTreeDrag(event.dataTransfer)) return
     event.preventDefault()
     dropping = true
   }
@@ -146,9 +146,13 @@
       return
     }
     const files = [...(event.dataTransfer?.files ?? [])]
-    if (!files.length) return
+    const reading = files.length ? null : carriedFiles.read(event.dataTransfer)
+    if (!files.length && !reading) return
     event.preventDefault()
-    composer?.addFiles(files)
+    if (files.length) composer?.addFiles(files)
+    void reading?.then((read) => {
+      if (read.length) composer?.addFiles(read)
+    })
   }
 </script>
 

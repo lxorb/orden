@@ -4,6 +4,11 @@ import { embedKind, encodeTarget, formatWikilink } from '@orden/markdown/links'
 
 export type ImageSink = (file: File) => Promise<string | null>
 
+export interface CarriedFiles {
+  carries: (transfer: DataTransfer | null) => boolean
+  read: (transfer: DataTransfer | null) => Promise<File[]> | null
+}
+
 export const imageResolver = Facet.define<(src: string) => string, (src: string) => string>({
   combine: (values) => values[0] ?? ((src) => src),
 })
@@ -84,7 +89,7 @@ export async function receiveImages(
   })
 }
 
-export function imageHandling(sink: ImageSink): Extension {
+export function imageHandling(sink: ImageSink, carried?: CarriedFiles): Extension {
   return [
     dropPoint,
     EditorView.domEventHandlers({
@@ -109,15 +114,19 @@ export function imageHandling(sink: ImageSink): Extension {
         if (view.state.readOnly) return false
 
         const files = [...(event.dataTransfer?.files ?? [])]
-        if (!files.some(isKept)) return false
+        const reading = files.length ? null : (carried?.read(event.dataTransfer) ?? null)
+        if (!reading && !files.some(isKept)) return false
 
         event.preventDefault()
-        void receiveImages(
-          view,
-          files,
-          sink,
-          view.posAtCoords({ x: event.clientX, y: event.clientY }),
-        )
+        const at = view.posAtCoords({ x: event.clientX, y: event.clientY })
+        if (!reading) {
+          void receiveImages(view, files, sink, at)
+          return true
+        }
+        void reading.then((read) => {
+          const kept = read.filter(isKept)
+          if (kept.length && !view.state.readOnly) void receiveImages(view, kept, sink, at)
+        })
         return true
       },
 
@@ -125,6 +134,7 @@ export function imageHandling(sink: ImageSink): Extension {
         if (view.state.readOnly) return false
 
         if (
+          carried?.carries(event.dataTransfer) ||
           [...(event.dataTransfer?.items ?? [])].some(
             (item) => item.kind === 'file' && item.type !== 'application/pdf',
           )

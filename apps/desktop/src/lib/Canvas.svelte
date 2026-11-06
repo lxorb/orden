@@ -82,7 +82,7 @@
   import { facingSide, SIDES, sidePoint } from './canvas/geometry'
   import { CanvasStore } from './canvas/store.svelte'
   import { tools } from './canvas/tools.svelte'
-  import { dragged as draggedPaths, isTreeDrag } from './drag-paths'
+  import { carriedFiles, carriesFiles, dragged as draggedPaths, isTreeDrag } from './drag-paths'
   import { t } from './i18n.svelte'
   import { menu } from './menu.svelte'
   import { followNote } from './open-link'
@@ -1364,17 +1364,29 @@
           .filter((file): file is File => file !== null),
       )
     }
-    const files = dropped.filter(
-      (one) => one.type.startsWith('image/') || isPicture(one.name) || isPdfFile(one),
-    )
+    const reading = dropped.length ? null : carriedFiles.read(transfer ?? null)
+    if (reading) {
+      event.preventDefault()
+      void reading.then((read) => placeFiles(read.filter(isCanvasFile), point))
+      return
+    }
+    const files = dropped.filter(isCanvasFile)
     if (!files.length) return
 
     event.preventDefault()
+    placeFiles(files, point)
+  }
+
+  function placeFiles(files: readonly File[], point: { x: number; y: number }) {
     for (const [index, file] of files.entries()) {
       const at = { x: point.x, y: point.y + index * GRID * 10 }
       if (isPdfFile(file)) void run.dropPdf(store, file, at, tab.path)
       else void run.dropImage(store, file, at, tab.path)
     }
+  }
+
+  function isCanvasFile(file: File): boolean {
+    return file.type.startsWith('image/') || isPicture(file.name) || isPdfFile(file)
   }
 
   function isPdfFile(file: File): boolean {
@@ -1508,7 +1520,7 @@
   onpaste={onPaste}
   oncontextmenu={onContextMenu}
   ondragover={(event) => {
-    if (isTreeDrag(event.dataTransfer) || event.dataTransfer?.types.includes('Files')) {
+    if (isTreeDrag(event.dataTransfer) || carriesFiles(event.dataTransfer)) {
       event.preventDefault()
     }
   }}

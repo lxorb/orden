@@ -43,6 +43,12 @@ fn readable(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
     if let Some(dropped) = crate::dropped_paths::dropped_readable(path) {
         return Ok(dropped);
     }
+    #[cfg(desktop)]
+    if let Ok(shown) = crate::explorer::shown(app, path) {
+        if shown.is_file() {
+            return Ok(shown);
+        }
+    }
     Err(refused)
 }
 

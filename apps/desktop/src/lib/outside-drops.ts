@@ -177,17 +177,24 @@ export class OutsideDrops {
     held.taken = !said('dragover', under, over, held) && over.dropEffect !== 'none'
   }
 
-  private async files(paths: readonly string[]): Promise<File[]> {
-    const read = await Promise.all(
-      paths.map(async (path) => {
-        const bytes = await this.engine.read(path).catch(() => null)
-        return bytes
-          ? new File([bytes as Uint8Array<ArrayBuffer>], nameOf(path), { type: typeOf(path) })
-          : null
-      }),
-    )
-    return read.filter((one): one is File => one !== null)
+  private files(paths: readonly string[]): Promise<File[]> {
+    return filesAt(paths, this.engine.read)
   }
+}
+
+export async function filesAt(
+  paths: readonly string[],
+  read: (path: string) => Promise<Uint8Array> = engine.read,
+): Promise<File[]> {
+  const files = await Promise.all(
+    paths.map(async (path) => {
+      const bytes = await read(path).catch(() => null)
+      return bytes
+        ? new File([bytes as Uint8Array<ArrayBuffer>], nameOf(path), { type: typeOf(path) })
+        : null
+    }),
+  )
+  return files.filter((one): one is File => one !== null)
 }
 
 export async function hearOutsideDrops(): Promise<() => void> {

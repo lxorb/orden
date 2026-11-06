@@ -141,7 +141,12 @@ change for the explorer has been asked on the issue.
   Out of a space it copies, and Shift moves.
 - **Into a note, the tab strip or a pane**: rows that are all in a space carry the file
   list's own drag as well (`carryFromExplorer` in `drag-paths.ts`), so a note links them,
-  a pane opens them and the file list moves them. Anything else carries its path as text.
+  a pane opens them and the file list moves them. Rows from outside the spaces are taken
+  as the files themselves wherever a file from another app is: embedded in a note,
+  attached in a chat, placed on a canvas (`carriedFiles` in `drag-paths.ts`, read
+  through `read_file` from any folder an explorer has shown), their paths at a
+  terminal's prompt, and the file itself on a web page (`carryToPages`, as the file
+  list's rows are).
 - **Onto the file list**: rows from outside the spaces are copied in, as files dropped from
   another app are (`dropOnList` in `list-landing.svelte.ts`).
 - **From another app**: files and folders dropped on an explorer are written into the

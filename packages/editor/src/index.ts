@@ -104,7 +104,7 @@ export { nibHighlightStyle, nibTheme } from './theme'
 export { livePreview } from './live-preview'
 export { newProperty, showProperties } from './live-preview/properties'
 export { selectedImage } from './live-preview/image'
-export { imageResolver, type ImageSink } from './images'
+export { type CarriedFiles, imageResolver, type ImageSink } from './images'
 export { hrefOf, type LinkPress, linkOpener, modifier as linkModifier } from './links'
 export { type TagOpener } from './tag-press'
 export {

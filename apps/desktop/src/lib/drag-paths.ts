@@ -1,3 +1,4 @@
+import type { CarriedFiles } from '@orden/editor'
 import type { Platform } from './keys'
 
 const ONE = 'text/nib-path'
@@ -64,6 +65,26 @@ export function isTreeDrag(transfer: DataTransfer | null): boolean {
 export function mayCarryAddress(types: readonly string[]): boolean {
   if (types.includes('Files') || types.some((one) => one.startsWith('text/nib-'))) return false
   return types.includes('text/uri-list') || types.includes('text/plain')
+}
+
+export function outsideRows(transfer: DataTransfer | null): readonly string[] {
+  if (!isExplorerDrag(transfer) || isTreeDrag(transfer)) return []
+
+  const rows = explorerDragged(transfer)
+  return rows.length ? rows : carrying
+}
+
+export function carriesFiles(transfer: DataTransfer | null): boolean {
+  return !!transfer?.types.includes('Files') || outsideRows(transfer).length > 0
+}
+
+export const carriedFiles: CarriedFiles = {
+  carries: (transfer) => outsideRows(transfer).length > 0,
+  read(transfer) {
+    const rows = outsideRows(transfer)
+    if (!rows.length) return null
+    return import('./outside-drops').then(({ filesAt }) => filesAt(rows))
+  },
 }
 
 export function isFileDrop(transfer: DataTransfer | null): boolean {
