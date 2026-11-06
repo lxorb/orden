@@ -25,6 +25,7 @@
   import ModeMark from './ModeMark.svelte'
   import { type Mention, mentionAt, mentionOf, ranked, type Row, sameMention } from './mentions'
   import ModelPicker from './ModelPicker.svelte'
+  import { chatPicture } from './picture'
   import { minutes, tokens } from './numbers'
   import Queue from './Queue.svelte'
   import Ring from './Ring.svelte'
@@ -324,17 +325,15 @@
   function take(file: File) {
     const reader = new FileReader()
     if (file.type.startsWith('image/')) {
-      reader.onload = () => {
-        const url = typeof reader.result === 'string' ? reader.result : ''
-        const data = url.slice(url.indexOf(',') + 1)
+      void chatPicture(file).then((image) => {
+        if (!image) return
         addChip({
           kind: 'picture',
           id: crypto.randomUUID(),
           label: file.name || t('Picture'),
-          image: { mime: file.type, data },
+          image,
         })
-      }
-      reader.readAsDataURL(file)
+      })
       return
     }
     if (file.size > 2_000_000) return
