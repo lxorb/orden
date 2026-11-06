@@ -703,9 +703,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  Raised on 2026-11-06 for #1165, what the reader protected and which of it is open,
  *  which the plugin carries without its lock screen (protect/): the code to 6,040,600,
  *  measured 6,040,085, and the catalogues to 1,021,300, measured 1,021,055.
+ *
+ *  Raised on 2026-11-06 for #419's round of fixes, the mail connection's turns, the
+ *  PDF marks changed one at a time and the Todos narrowings that follow a space: the
+ *  code to 6,044,000, measured 6,043,634.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_040_600,
+  code: 6_044_000,
   catalogues: 1_021_300,
   styles: 293_500,
   fonts: 260_000,
