@@ -2891,4 +2891,9 @@ export const gu: Dictionary = {
   'Unlock what you protected in Orden': 'Ordenમાં તમે સુરક્ષિત કરેલું ખોલો',
   'Protect with': 'આનાથી સુરક્ષિત કરો',
   'Let agents read': 'એજન્ટને વાંચવા દો',
+  'That did not work: {reason}': 'તે કામ ન કર્યું: {reason}',
+  'Waiting for {way}…': '{way}ની રાહ જોઈ રહ્યા છીએ…',
+  '{way} could not be asked: {reason}': '{way}ને પૂછી શકાયું નહીં: {reason}',
+  '{way} did not confirm it was you': '{way}એ પુષ્ટિ ન કરી કે તે તમે છો',
+  'That could not be protected: {reason}': 'સુરક્ષિત કરી શકાયું નહીં: {reason}',
 }

@@ -2995,4 +2995,9 @@ export const it: Dictionary = {
   'Unlock what you protected in Orden': 'Apri ciò che hai protetto in Orden',
   'Protect with': 'Proteggi con',
   'Let agents read': 'Lascia leggere agli agenti',
+  'That did not work: {reason}': 'Non ha funzionato: {reason}',
+  'Waiting for {way}…': 'In attesa di {way}…',
+  '{way} could not be asked: {reason}': 'Impossibile chiedere a {way}: {reason}',
+  '{way} did not confirm it was you': '{way} non ha confermato che sei tu',
+  'That could not be protected: {reason}': 'Impossibile proteggere: {reason}',
 }

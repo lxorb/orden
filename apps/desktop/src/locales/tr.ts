@@ -2925,4 +2925,9 @@ export const tr: Dictionary = {
   'Unlock what you protected in Orden': 'Orden’da koruduklarınızı açın',
   'Protect with': 'Şununla koru',
   'Let agents read': 'Ajanların okumasına izin ver',
+  'That did not work: {reason}': 'Olmadı: {reason}',
+  'Waiting for {way}…': '{way} bekleniyor…',
+  '{way} could not be asked: {reason}': '{way} sorulamadı: {reason}',
+  '{way} did not confirm it was you': '{way} sizin olduğunuzu doğrulamadı',
+  'That could not be protected: {reason}': 'Korunamadı: {reason}',
 }

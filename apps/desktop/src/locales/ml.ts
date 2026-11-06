@@ -2951,4 +2951,9 @@ export const ml: Dictionary = {
   'Unlock what you protected in Orden': 'Orden-ൽ നിങ്ങൾ സംരക്ഷിച്ചത് തുറക്കുക',
   'Protect with': 'ഇതുപയോഗിച്ച് സംരക്ഷിക്കുക',
   'Let agents read': 'ഏജന്റുകളെ വായിക്കാൻ അനുവദിക്കുക',
+  'That did not work: {reason}': 'അത് പ്രവർത്തിച്ചില്ല: {reason}',
+  'Waiting for {way}…': '{way}-നായി കാത്തിരിക്കുന്നു…',
+  '{way} could not be asked: {reason}': '{way}-നോട് ചോദിക്കാനായില്ല: {reason}',
+  '{way} did not confirm it was you': 'ഇത് നിങ്ങളാണെന്ന് {way} സ്ഥിരീകരിച്ചില്ല',
+  'That could not be protected: {reason}': 'സംരക്ഷിക്കാനായില്ല: {reason}',
 }

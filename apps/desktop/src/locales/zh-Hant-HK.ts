@@ -2791,4 +2791,9 @@ export const zhHantHK: Dictionary = {
   'Unlock what you protected in Orden': '打開你在 Orden 中保護的內容',
   'Protect with': '保護方式',
   'Let agents read': '允許代理讀取',
+  'That did not work: {reason}': '沒有成功：{reason}',
+  'Waiting for {way}…': '正在等待 {way}…',
+  '{way} could not be asked: {reason}': '無法詢問 {way}：{reason}',
+  '{way} did not confirm it was you': '{way} 未確認是你本人',
+  'That could not be protected: {reason}': '無法保護：{reason}',
 }

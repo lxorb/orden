@@ -31,7 +31,7 @@ export function deviceCan(): Promise<boolean> {
 export async function deviceSays(reason: string): Promise<boolean> {
   if (!(await deviceCan())) return false
   const ask = isMobile ? method('ownerCheck') : undefined
-  if (!ask) return (await invoke<unknown>('owner_check', { reason }).catch(() => false)) === true
+  if (!ask) return (await invoke<unknown>('owner_check', { reason })) === true
   const word = await frameWord()
   return new Promise((resolve) => {
     answer('__nibOwner', (said: string) => {

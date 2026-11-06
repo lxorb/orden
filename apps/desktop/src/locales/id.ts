@@ -2883,4 +2883,9 @@ export const id: Dictionary = {
   'Unlock what you protected in Orden': 'Buka yang Anda lindungi di Orden',
   'Protect with': 'Lindungi dengan',
   'Let agents read': 'Izinkan agen membaca',
+  'That did not work: {reason}': 'Tidak berhasil: {reason}',
+  'Waiting for {way}…': 'Menunggu {way}…',
+  '{way} could not be asked: {reason}': '{way} tidak dapat ditanya: {reason}',
+  '{way} did not confirm it was you': '{way} tidak memastikan bahwa ini Anda',
+  'That could not be protected: {reason}': 'Tidak dapat dilindungi: {reason}',
 }

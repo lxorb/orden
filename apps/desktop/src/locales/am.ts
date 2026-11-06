@@ -2845,4 +2845,9 @@ export const am: Dictionary = {
   'Unlock what you protected in Orden': 'በOrden የጠበቁትን ይክፈቱ',
   'Protect with': 'ጠብቅ በ',
   'Let agents read': 'ወኪሎች እንዲያነቡ ፍቀድ',
+  'That did not work: {reason}': 'አልሰራም፦ {reason}',
+  'Waiting for {way}…': '{way}ን በመጠበቅ ላይ…',
+  '{way} could not be asked: {reason}': '{way}ን መጠየቅ አልተቻለም፦ {reason}',
+  '{way} did not confirm it was you': '{way} እርስዎ መሆንዎን አላረጋገጠም',
+  'That could not be protected: {reason}': 'ሊጠበቅ አልቻለም፦ {reason}',
 }

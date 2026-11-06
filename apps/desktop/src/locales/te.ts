@@ -2918,4 +2918,9 @@ export const te: Dictionary = {
   'Unlock what you protected in Orden': 'Orden‌లో మీరు రక్షించినది తెరవండి',
   'Protect with': 'దీనితో రక్షించు',
   'Let agents read': 'ఏజెంట్‌లను చదవనివ్వండి',
+  'That did not work: {reason}': 'అది పని చేయలేదు: {reason}',
+  'Waiting for {way}…': '{way} కోసం ఎదురుచూస్తోంది…',
+  '{way} could not be asked: {reason}': '{way}‌ను అడగలేకపోయాం: {reason}',
+  '{way} did not confirm it was you': 'ఇది మీరేనని {way} నిర్ధారించలేదు',
+  'That could not be protected: {reason}': 'రక్షించలేకపోయాం: {reason}',
 }

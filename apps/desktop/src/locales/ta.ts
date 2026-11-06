@@ -2957,4 +2957,9 @@ export const ta: Dictionary = {
   'Unlock what you protected in Orden': 'Orden-இல் நீங்கள் பாதுகாத்ததைத் திறக்கவும்',
   'Protect with': 'இதன் மூலம் பாதுகா',
   'Let agents read': 'முகவர்களைப் படிக்க விடு',
+  'That did not work: {reason}': 'அது வேலை செய்யவில்லை: {reason}',
+  'Waiting for {way}…': '{way}-க்காகக் காத்திருக்கிறது…',
+  '{way} could not be asked: {reason}': '{way}-இடம் கேட்க முடியவில்லை: {reason}',
+  '{way} did not confirm it was you': 'இது நீங்கள்தான் என்று {way} உறுதிசெய்யவில்லை',
+  'That could not be protected: {reason}': 'பாதுகாக்க முடியவில்லை: {reason}',
 }

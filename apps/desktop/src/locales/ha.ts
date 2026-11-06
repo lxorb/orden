@@ -2949,4 +2949,9 @@ export const ha: Dictionary = {
   'Unlock what you protected in Orden': 'Buɗe abin da ka kare a Orden',
   'Protect with': 'Kare da',
   'Let agents read': 'Bari wakilai su karanta',
+  'That did not work: {reason}': 'Bai yi aiki ba: {reason}',
+  'Waiting for {way}…': 'Ana jiran {way}…',
+  '{way} could not be asked: {reason}': 'Ba a iya tambayar {way} ba: {reason}',
+  '{way} did not confirm it was you': '{way} bai tabbatar cewa kai ne ba',
+  'That could not be protected: {reason}': 'Ba a iya karewa ba: {reason}',
 }

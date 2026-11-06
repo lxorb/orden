@@ -2968,4 +2968,9 @@ export const fil: Dictionary = {
   'Unlock what you protected in Orden': 'Buksan ang pinrotektahan mo sa Orden',
   'Protect with': 'Protektahan gamit ang',
   'Let agents read': 'Payagang basahin ng mga agent',
+  'That did not work: {reason}': 'Hindi ito gumana: {reason}',
+  'Waiting for {way}…': 'Hinihintay ang {way}…',
+  '{way} could not be asked: {reason}': 'Hindi matanong ang {way}: {reason}',
+  '{way} did not confirm it was you': 'Hindi kinumpirma ng {way} na ikaw ito',
+  'That could not be protected: {reason}': 'Hindi ito maprotektahan: {reason}',
 }

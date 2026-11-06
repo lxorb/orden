@@ -2823,4 +2823,9 @@ export const th: Dictionary = {
   'Unlock what you protected in Orden': 'เปิดสิ่งที่คุณป้องกันไว้ใน Orden',
   'Protect with': 'ป้องกันด้วย',
   'Let agents read': 'ให้เอเจนต์อ่านได้',
+  'That did not work: {reason}': 'ไม่สำเร็จ: {reason}',
+  'Waiting for {way}…': 'กำลังรอ {way}…',
+  '{way} could not be asked: {reason}': 'ถาม {way} ไม่ได้: {reason}',
+  '{way} did not confirm it was you': '{way} ไม่ได้ยืนยันว่าเป็นคุณ',
+  'That could not be protected: {reason}': 'ป้องกันไม่ได้: {reason}',
 }

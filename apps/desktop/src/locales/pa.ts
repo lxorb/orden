@@ -2914,4 +2914,9 @@ export const pa: Dictionary = {
   'Unlock what you protected in Orden': 'Orden ਵਿੱਚ ਆਪਣੀ ਸੁਰੱਖਿਅਤ ਚੀਜ਼ ਖੋਲ੍ਹੋ',
   'Protect with': 'ਇਸ ਨਾਲ ਸੁਰੱਖਿਅਤ ਕਰੋ',
   'Let agents read': 'ਏਜੰਟਾਂ ਨੂੰ ਪੜ੍ਹਨ ਦਿਓ',
+  'That did not work: {reason}': 'ਇਹ ਕੰਮ ਨਹੀਂ ਕੀਤਾ: {reason}',
+  'Waiting for {way}…': '{way} ਦੀ ਉਡੀਕ…',
+  '{way} could not be asked: {reason}': '{way} ਨੂੰ ਪੁੱਛਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ: {reason}',
+  '{way} did not confirm it was you': '{way} ਨੇ ਪੁਸ਼ਟੀ ਨਹੀਂ ਕੀਤੀ ਕਿ ਇਹ ਤੁਸੀਂ ਹੋ',
+  'That could not be protected: {reason}': 'ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ: {reason}',
 }

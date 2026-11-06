@@ -2783,4 +2783,9 @@ export const yue: Dictionary = {
   'Unlock what you protected in Orden': '打開你喺 Orden 保護嘅嘢',
   'Protect with': '用以下方法保護',
   'Let agents read': '俾代理讀',
+  'That did not work: {reason}': '做唔到：{reason}',
+  'Waiting for {way}…': '等緊 {way}…',
+  '{way} could not be asked: {reason}': '問唔到 {way}：{reason}',
+  '{way} did not confirm it was you': '{way} 冇確認係你',
+  'That could not be protected: {reason}': '保護唔到：{reason}',
 }

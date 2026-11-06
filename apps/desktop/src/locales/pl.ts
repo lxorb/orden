@@ -3016,4 +3016,9 @@ export const pl: Dictionary = {
   'Unlock what you protected in Orden': 'Otwórz to, co chronisz w Orden',
   'Protect with': 'Chroń za pomocą',
   'Let agents read': 'Pozwól agentom czytać',
+  'That did not work: {reason}': 'Nie udało się: {reason}',
+  'Waiting for {way}…': 'Czekam na {way}…',
+  '{way} could not be asked: {reason}': 'Nie udało się zapytać {way}: {reason}',
+  '{way} did not confirm it was you': '{way} nie potwierdził, że to ty',
+  'That could not be protected: {reason}': 'Nie udało się chronić: {reason}',
 }

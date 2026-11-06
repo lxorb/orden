@@ -2881,4 +2881,9 @@ export const ms: Dictionary = {
   'Unlock what you protected in Orden': 'Buka apa yang anda lindungi dalam Orden',
   'Protect with': 'Lindungi dengan',
   'Let agents read': 'Benarkan ejen membaca',
+  'That did not work: {reason}': 'Ia tidak berjaya: {reason}',
+  'Waiting for {way}…': 'Menunggu {way}…',
+  '{way} could not be asked: {reason}': '{way} tidak dapat ditanya: {reason}',
+  '{way} did not confirm it was you': '{way} tidak mengesahkan bahawa ini anda',
+  'That could not be protected: {reason}': 'Tidak dapat dilindungi: {reason}',
 }

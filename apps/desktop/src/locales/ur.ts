@@ -2900,4 +2900,9 @@ export const ur: Dictionary = {
   'Unlock what you protected in Orden': 'Orden میں اپنی محفوظ کردہ چیز کھولیں',
   'Protect with': 'اس سے محفوظ کریں',
   'Let agents read': 'ایجنٹس کو پڑھنے دیں',
+  'That did not work: {reason}': 'یہ کام نہیں ہوا: {reason}',
+  'Waiting for {way}…': '{way} کا انتظار…',
+  '{way} could not be asked: {reason}': '{way} سے پوچھا نہیں جا سکا: {reason}',
+  '{way} did not confirm it was you': '{way} نے تصدیق نہیں کی کہ یہ آپ ہیں',
+  'That could not be protected: {reason}': 'محفوظ نہیں کیا جا سکا: {reason}',
 }

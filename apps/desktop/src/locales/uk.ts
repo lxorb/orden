@@ -3010,4 +3010,9 @@ export const uk: Dictionary = {
   'Unlock what you protected in Orden': 'Відкрийте захищене в Orden',
   'Protect with': 'Захистити за допомогою',
   'Let agents read': 'Дозволити агентам читати',
+  'That did not work: {reason}': 'Не вдалося: {reason}',
+  'Waiting for {way}…': 'Очікування {way}…',
+  '{way} could not be asked: {reason}': 'Не вдалося звернутися до {way}: {reason}',
+  '{way} did not confirm it was you': '{way} не підтвердив, що це ви',
+  'That could not be protected: {reason}': 'Не вдалося захистити: {reason}',
 }

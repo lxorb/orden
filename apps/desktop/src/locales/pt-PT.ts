@@ -2982,4 +2982,9 @@ export const ptPT: Dictionary = {
   'Unlock what you protected in Orden': 'Abrir o que protegeu no Orden',
   'Protect with': 'Proteger com',
   'Let agents read': 'Deixar os agentes ler',
+  'That did not work: {reason}': 'Não resultou: {reason}',
+  'Waiting for {way}…': 'A aguardar {way}…',
+  '{way} could not be asked: {reason}': 'Não foi possível consultar {way}: {reason}',
+  '{way} did not confirm it was you': '{way} não confirmou que era você',
+  'That could not be protected: {reason}': 'Não foi possível proteger: {reason}',
 }

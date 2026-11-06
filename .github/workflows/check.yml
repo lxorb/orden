@@ -330,11 +330,20 @@ jobs:
             --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/nib.exe" \
             --identifier "$IDENTIFIER" --shot apps-windows.png
 
+      - name: A note protected, locked and opened with its password
+        if: always()
+        run: |
+          python scripts/protect-drive.py \
+            --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/nib.exe" \
+            --identifier "$IDENTIFIER" --out protect
+
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: apps-windows
-          path: apps-windows.png
+          path: |
+            apps-windows.png
+            protect
           if-no-files-found: ignore
 
   mobile-touched:

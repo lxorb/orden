@@ -2904,4 +2904,9 @@ export const mr: Dictionary = {
   'Unlock what you protected in Orden': 'Orden मध्ये तुम्ही संरक्षित केलेले उघडा',
   'Protect with': 'याने संरक्षित करा',
   'Let agents read': 'एजंटना वाचू द्या',
+  'That did not work: {reason}': 'ते चालले नाही: {reason}',
+  'Waiting for {way}…': '{way} ची वाट पाहत आहे…',
+  '{way} could not be asked: {reason}': '{way} ला विचारता आले नाही: {reason}',
+  '{way} did not confirm it was you': '{way} ने ते तुम्हीच असल्याची पुष्टी केली नाही',
+  'That could not be protected: {reason}': 'संरक्षित करता आले नाही: {reason}',
 }

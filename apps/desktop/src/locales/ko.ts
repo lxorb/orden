@@ -2846,4 +2846,9 @@ export const ko: Dictionary = {
   'Unlock what you protected in Orden': 'Orden에서 보호한 항목 열기',
   'Protect with': '보호 방법',
   'Let agents read': '에이전트가 읽게 하기',
+  'That did not work: {reason}': '실패했습니다: {reason}',
+  'Waiting for {way}…': '{way} 기다리는 중…',
+  '{way} could not be asked: {reason}': '{way}에 요청할 수 없습니다: {reason}',
+  '{way} did not confirm it was you': '{way}이(가) 본인임을 확인하지 못했습니다',
+  'That could not be protected: {reason}': '보호할 수 없습니다: {reason}',
 }
