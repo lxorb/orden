@@ -439,6 +439,76 @@ function mayPointAt(said: string, options: FromHtmlOptions, picture = false): bo
   return safeHref(said)
 }
 
+const CALLOUT_HEAD = ['callout-title', 'markdown-alert-title']
+
+function calloutType(node: Element): string | null {
+  const said = node.getAttribute('data-callout')
+  if (node.classList.contains('callout') && said) return said
+  if (!node.classList.contains('markdown-alert')) return null
+
+  const named = Array.from(node.classList).find((one) => one.startsWith('markdown-alert-'))
+  return named?.slice('markdown-alert-'.length) ?? null
+}
+
+function calloutHead(node: Element): Element | null {
+  return (
+    Array.from(node.children).find((one) =>
+      CALLOUT_HEAD.some((name) => one.classList.contains(name)),
+    ) ?? null
+  )
+}
+
+const FOOTNOTE_LABEL = /^[^\]\s]+$/
+
+function labelled(said: string | null | undefined): string | null {
+  const label = said?.trim() ?? ''
+  return FOOTNOTE_LABEL.test(label) ? label : null
+}
+
+function fromFragment(href: string, prefix: RegExp): string | null {
+  const rest = href.replace(prefix, '')
+  if (rest === href) return null
+  try {
+    return labelled(decodeURIComponent(rest))
+  } catch {
+    return labelled(rest)
+  }
+}
+
+function footnoteRefLabel(node: Element): string | null {
+  if (node.nodeName !== 'SUP' || node.children.length !== 1) return null
+  const link = node.firstElementChild
+  if (link?.nodeName !== 'A') return null
+
+  const href = link.getAttribute('href') ?? ''
+  if (link.hasAttribute('data-footnote-ref')) return fromFragment(href, /^#(?:user-content-)?fn-/)
+  if (node.classList.contains('footnote-ref') && href.startsWith('#fn-')) {
+    return labelled(link.textContent)
+  }
+  return null
+}
+
+function isBackLink(node: Element): boolean {
+  return (
+    node.nodeName === 'A' &&
+    (node.classList.contains('footnote-back') || node.hasAttribute('data-footnote-backref'))
+  )
+}
+
+function footnoteDefLabel(node: Element): string | null {
+  if (node.nodeName !== 'LI') return null
+
+  const own = Array.from(node.children).find((one) => one.classList.contains('footnote-back'))
+  if (own && node.id.startsWith('fn-')) return labelled(own.textContent)
+
+  if (!node.querySelector('a[data-footnote-backref]')) return null
+  return fromFragment(`#${node.id}`, /^#(?:user-content-)?fn-/)
+}
+
+function quoted(lines: readonly string[]): string {
+  return lines.map((line) => (line ? `> ${line}` : '>')).join('\n')
+}
+
 function converter(options: FromHtmlOptions): TurndownService {
   const service = new TurndownService({
     headingStyle: 'atx',
@@ -685,6 +755,73 @@ function converter(options: FromHtmlOptions): TurndownService {
 
       const alt = altOf(node)
       return `![${alt}](${destination(options.image ? options.image(source, alt) : source)})`
+    },
+  })
+
+  service.addRule('definitionList', {
+    filter: 'dl',
+    replacement: (content) => (content.trim() ? `\n\n${content.trim()}\n\n` : ''),
+  })
+
+  service.addRule('definitionTerm', {
+    filter: 'dt',
+    replacement: (content, node) => {
+      const words = content.replace(/\s*\n+\s*/g, ' ').trim()
+      const after = (node as Element).previousElementSibling?.nodeName === 'DD' ? '\n' : ''
+      return words ? `${after}${words}\n` : ''
+    },
+  })
+
+  service.addRule('definitionDetail', {
+    filter: 'dd',
+    replacement: (content) => {
+      const words = content.replace(/\s*\n+\s*/g, ' ').trim()
+      return words ? `: ${words}\n` : ''
+    },
+  })
+
+  service.addRule('calloutHead', {
+    filter: (node) => {
+      const parent = node.parentElement
+      return parent !== null && calloutType(parent) !== null && calloutHead(parent) === node
+    },
+    replacement: () => '',
+  })
+
+  service.addRule('callout', {
+    filter: (node) => calloutType(node) !== null,
+    replacement: (content, node) => {
+      const type = calloutType(node) ?? 'note'
+      const title = calloutHead(node)?.textContent.replace(/\s+/g, ' ').trim() ?? ''
+      const sign = node.nodeName === 'DETAILS' ? (node.hasAttribute('open') ? '+' : '-') : ''
+      const named = title && title.toLowerCase() !== type.toLowerCase() ? ` ${title}` : ''
+      const body = content.replace(/^\n+|\n+$/g, '')
+
+      return `\n\n${quoted([`[!${type}]${sign}${named}`, ...(body ? body.split('\n') : [])])}\n\n`
+    },
+  })
+
+  service.addRule('footnoteBack', {
+    filter: (node) => isBackLink(node),
+    replacement: () => '',
+  })
+
+  service.addRule('footnoteHeading', {
+    filter: (node) =>
+      node.id === 'footnote-label' && node.closest('section[data-footnotes]') !== null,
+    replacement: () => '',
+  })
+
+  service.addRule('footnoteRef', {
+    filter: (node) => footnoteRefLabel(node) !== null,
+    replacement: (_content, node) => `[^${footnoteRefLabel(node) ?? ''}]`,
+  })
+
+  service.addRule('footnoteDef', {
+    filter: (node) => footnoteDefLabel(node) !== null,
+    replacement: (content, node) => {
+      const words = content.replace(/^\n+|\n+$/g, '').replace(/\n/g, '\n    ')
+      return `[^${footnoteDefLabel(node) ?? ''}]: ${words.trim()}\n`
     },
   })
 
