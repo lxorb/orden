@@ -114,7 +114,7 @@ pub fn command_in(said: &str) -> Option<&str> {
     })
 }
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn mcp_program(webview: tauri::Webview) -> Result<String, String> {
     crate::agents::from_the_app(&webview)?;
     program().map(|path| path.display().to_string())
