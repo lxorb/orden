@@ -1,4 +1,3 @@
-// First, before anything of this run is written; see RenameNotice.svelte.
 import './lib/renamed.svelte'
 import '@orden/themes'
 import { mount } from 'svelte'
@@ -8,32 +7,12 @@ import { serveAssets } from './lib/web/asset-worker'
 import { isDesktop, isMobile, platform } from './lib/tauri'
 import { watchPresses } from './lib/downloads/started'
 
-// Everything above this line is the webview evaluating the app's modules, which on
-// a slow machine is a real part of a launch and is not otherwise visible from
-// inside it. Free unless somebody is tracing; see lib/trace.ts.
 mark('modules evaluated')
 
-// Before the app, so the worker that answers for the pictures in a note is there
-// by the time a note is open. Nothing at all in the app builds; see public/sw.js.
 serveAssets()
 
-// Which code this actually is, said out loud, on every build rather than only on a
-// development one.
-//
-// The stamp has been baked into every bundle since the glasses package needed it
-// (see `stamp()` in vite.config.ts) and nothing has ever read it. Meanwhile the two
-// handles a drive steers the app by - `window.nibApp` and `window.nib` - are both
-// behind `import.meta.env.DEV`, so the build that ships is the one build nothing can
-// identify or drive. That cost a day: Emil reported three bugs that could not be
-// reproduced anywhere in main, and there was no way to ask his window what it was
-// running. One line answers it, from a console, from a drive, from any build.
 Object.assign(window, { nibBuild: __EVEN_BUILD__ })
 
-// The app on a phone does not zoom as a page, the way no app on a phone does. On an
-// iPhone two fingers anywhere grew the whole of it, bars and all, and a field set
-// smaller than 16 px zoomed it a little as it took the caret and left it that way,
-// with the bar pushed off the top. What zooms on a phone zooms itself: a page note,
-// a canvas, a PDF.
 if (isMobile) {
   const meta = document.querySelector('meta[name="viewport"]')
   meta?.setAttribute(
@@ -42,32 +21,16 @@ if (isMobile) {
   )
 }
 
-// index.html carries it, so a missing one means the page itself is wrong -
-// worth saying outright rather than mounting into nothing.
-// Orden's own Chromium on Linux draws overlay scrollbars of its own, which a styled bar is
-// never drawn as; so the stylesheet leaves its bars alone there (#775). Before anything
-// is mounted, since the engine settles a scroller's bar as the scroller is made. See
-// `cef_runtime` in src-tauri/src/engine.rs and packages/themes/src/base.css.
 document.documentElement.toggleAttribute('data-engine-bars', isDesktop && platform() === 'linux')
 
 const target = document.getElementById('app')
 if (!target) throw new Error('index.html has no #app to mount into')
 
-// A phone's spaces folder moves with every update of the app, and everything stored
-// about a note names the folder it was in. When it has moved, what was stored is said
-// again under the new one and the page starts over, before any store has read it; see
-// lib/workspace/moved.ts. A phone's alone, and fetched only there, so a desktop's
-// first paint carries none of it.
 if (isMobile && (await (await import('./lib/workspace/moved')).spacesMoved())) {
   location.reload()
-  // Nothing below runs on a page that is about to be replaced.
   await new Promise<never>(() => undefined)
 }
 
-// A spaces folder a hand-edited setting pointed outside Orden's own (#552): its spaces
-// taken in once, what was stored about them said again under their new roots, and the
-// page started over the same way; see lib/workspace/outside.ts. Fetched only where the
-// crate said there is one, which early.ts asked before a module of the app ran.
 const outside: unknown = await (window as { nibOutside?: Promise<unknown> }).nibOutside
 if (
   isDesktop &&
@@ -80,20 +43,12 @@ if (
 
 mark('mounting')
 
-// What somebody does first, whenever they do it: the one honest reading of
-// "interactive" is a key answered in the frame it was pressed in. See lib/trace.ts.
 watchFirstInput()
 
-// Where the last press was, which is where a download it starts flies from; see
-// lib/downloads/started.ts.
 watchPresses()
 
 const app = mount(App, { target })
 
-// The shell on screen: the header, the rail, the sidebar's width and the pane, drawn
-// before any note or any listing has been read. It is the frame that decides whether
-// the app feels like it has opened, so it is a step of its own rather than part of
-// whatever lands next.
 markPainted('shell painted')
 
 export default app

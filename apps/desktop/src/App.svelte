@@ -107,10 +107,7 @@
   import { type AppContext, runEntry } from './lib/shortcuts/registry'
   import { writeNew } from './lib/write-new'
 
-  // The app's new name, on the one launch that says it.
   if (renamed.showing) void renameNotice.ask()
-  // A Mac's AI keys, typed once more now that the keychain is not asked (#1090): checked
-  // after the first paint, and the card fetched only where there is something to say.
   if (isDesktop && !__EVEN_PLUGIN__) {
     setTimeout(() => {
       void import('./lib/ai/keys-moved.svelte')
@@ -119,11 +116,8 @@
     }, 3000)
   }
 
-  // A spaces folder outside Orden's own, taken in as the page started (#552).
   if (isDesktop && !__EVEN_PLUGIN__ && storedText(OUTSIDE) !== null) void outsideNotice.ask()
 
-  // The applications this computer runs for the reader's other devices (docs/apps.md):
-  // developer mode's, on a desktop and signed in, and fetched only then.
   $effect(() => {
     if (!isDesktop || __EVEN_PLUGIN__ || !modes.coder || !account.accountToken) return
     let stop: (() => void) | null = null
@@ -137,20 +131,14 @@
     }
   })
 
-  /** The editor of the pane that has the focus, which is what every key, every
-   *  menu and the palette act on. Each pane leaves its own here; see
-   *  views.svelte.ts. */
   const view = $derived(views.of(workspace.panes.focusedId))
 
-  /** The scratchpad as the one note on a touch screen (#404). */
   const padOver = $derived(viewport.touch && pad.on)
 
-  /** What commands and the keyboard's strip act on. */
   const writingIn = $derived(padOver ? (pad.view ?? view) : view)
 
   const fabLabel = $derived(hiddenKinds.offers('note') ? t('New note') : t('New tab'))
 
-  // Where a right click keeps the Mac's own menu; see system-menu.ts.
   let keepsSystemMenu: typeof import('./lib/system-menu').keepsSystemMenu = () => false
   let macMenuKey: typeof import('./lib/system-menu').macMenuKey = () => false
   if (currentPlatform() === 'mac') {
@@ -159,30 +147,14 @@
       macMenuKey = one.macMenuKey
     })
   }
-  /** The tab whose note is on the stage, while one is. The deck goes over the
-   *  whole window, and the note stays open behind it. */
   const presenting = $derived(workspace.tabs.find((tab) => tab.id === present.tabId) ?? null)
-  /** Whether the note on the stage is one this account may write in. A space
-   *  somebody shared to read says the same word in the strip that the reader's
-   *  own read-only switch does; see sharing.svelte.ts. */
   const canWriteHere = $derived(canWriteIn(workspace.active?.note))
-  /** Whether a tab fills the window; see lib/tab-fill. */
   const filled = $derived(workspace.panes.fills !== null)
   const bare = $derived(fullscreen.on || alone.on)
-  /** Nothing of the app's round what is open: the card flush (#1103). */
   const flush = $derived(bare || filled)
-  /** Whether each side's panel is built. Once it has been open it stays built, shut
-   *  or not, and the launch's last turns build it shut where it never was: opening
-   *  it is then a column sliding open over rows already laid out, never a panel made
-   *  in the frame it was asked for. See the column in Sidebar.svelte. A turn for each
-   *  side, see startup.svelte.ts; and none for a right side every panel has left,
-   *  which has nothing it could open on. Latched, so a side never goes back to
-   *  unbuilt. */
   const built = { left: false, right: false }
   const keptLeft = $derived((built.left ||= workspace.panel !== null || startup.reached('left')))
-  /** Whether the scratchpad is the right side's tab, which a desktop's is (#1032). */
   const padDocked = $derived(!viewport.touch && !__EVEN_PLUGIN__)
-  /** Whether the right side is open: showing a panel, or on a desktop the scratchpad. */
   const rightOpen = $derived(
     padDocked ? workspace.rightShows !== null : workspace.openOn('right') !== null,
   )
@@ -192,41 +164,12 @@
       (padDocked && pad.on) ||
       (startup.reached('right') && (workspace.nextRight !== null || padDocked))),
   )
-  /** How wide the panes are drawn, which the strips in the bar line up with (#1037). */
   let panesWide = $state(0)
   let palette = $state(false)
-  /** The palette itself, for the one thing a flag cannot say: Ctrl+Shift+P opens it
-   *  on the commands, which is a `>` in its field and a caret after it. */
   let paletteScreen = $state<{ showCommands(): void; dismiss(): void }>()
-  /** The formatting bar, once it is on the page. */
   let formatBar = $state<{ follow(view: EditorView): void }>()
-  /** The element holding both layers, which is what the drawer gesture
-   *  listens on. */
   let middle = $state<HTMLElement>()
 
-  /** The overlays, knocked on.
-   *
-   *  Every sheet the app opens over what is under it is fetched rather than imported:
-   *  none of them is on screen when the window opens, and between them they were the
-   *  larger half of what the shell still carried. Each is mounted the first time
-   *  something opens it and kept mounted afterwards, so its own way in and out is
-   *  exactly what it was - a component unmounted the moment it closed would have no
-   *  way out to play, and the sheet's own `{#if}` is what plays it either way.
-   *
-   *  Each door remembers being asked, so what is on the page is the door's own
-   *  answer rather than a second list of flags here; see surfaces.svelte.ts. Set once
-   *  and kept unless the fetch failed: `{#await}` on a promise that has already
-   *  resolved renders in the same pass, so the second open costs nothing and only the
-   *  first ever sees an empty frame.
-   *
-   *  Four of the six are knocked on here, because their stores are ones this
-   *  component already holds and none of them has a single way in to say it from. The
-   *  publish sheet and the import sheet are not: neither store is carried here at
-   *  all, and each knocks on its own door as it is shown.
-   *
-   *  The deck is not here either: it takes the tab it is presenting as a prop, so
-   *  there is nothing for it to be while nothing is presented and its own `{#if}` is
-   *  the boundary already. */
   $effect(() => {
     if (settings.open) void settingsSheet.ask()
     if (settings.historyOpen) void historySheet.ask()
@@ -236,18 +179,11 @@
     if (account.open) void signInSheet.ask()
     if (joining.step) void joinSheet.ask()
     if (joining.aside) void joinPending.ask()
-    // A phone's strip over the keys is up whenever the note is being written in,
-    // selection or none; see FormatBar.svelte.
     if (viewport.touch && viewport.typing) void formatBarDoor.ask()
   })
 
-  // Everything that has to happen as the app comes up; see start.ts.
   onDestroy(start())
 
-  // What `:w`, `:q` and `:e` mean, since all three act on the app rather than
-  // on the text. The palette is this component's own state, which is why this
-  // is said here rather than in start.ts; `:e` opens it on its note search,
-  // which is what a reader typing `:e` is after.
   setVimCommands({
     write: saveFront,
     quit: () => void workspace.closeActive(),
@@ -258,10 +194,6 @@
 
   const onMac = platform() === 'macos'
 
-  // The header shows no title, so the note's name goes to the window itself -
-  // which is what the taskbar and the window switcher read. Fetched rather than
-  // carried, since nothing about it has to be there for the first paint; the
-  // facts are read here so the effect follows them. See window-document.ts.
   $effect(() => {
     const active = workspace.active
     const facts = active && { shown: active.shown, path: active.path, draft: isDraft(active.note) }
@@ -272,10 +204,6 @@
     })
   })
 
-  // The account's settings come along with the account: when the session is
-  // restored at start, and again on signing in. One request brings all of
-  // them, so what the modes fetched is handed on rather than asked for twice.
-  // A guest has no settings on any account, so there is nothing to ask for.
   $effect(() => {
     const token = account.accountToken
     if (token) {
@@ -287,22 +215,13 @@
         pull.receive(remote)
         void import('./lib/kind-choice').then((one) => one.receive(remote))
         recovery.receive(remote)
-        // Which spaces are put away, the same on every device; see lib/space-archive.ts.
         void import('./lib/space-archive').then((one) => one.receive(remote))
-        // What pings for every chat, fetched with the chats rather than in front of the
-        // first paint; see lib/chats/hush.svelte.ts.
         if (!__EVEN_PLUGIN__)
           void import('./lib/chats/hush.svelte').then(({ hush }) => hush.receive(remote))
       })
     }
   })
 
-  // Each pane applies the modes and the keys to its own editor as it builds it;
-  // see Pane.svelte. What is left here is the formatting bar, which follows the
-  // selection of whichever pane is being written in.
-  //
-  // The bar is fetched rather than carried (see surfaces.svelte.ts), so a selection
-  // made before it has landed asks for it and is followed as it arrives.
   async function followWhenLanded(current: EditorView) {
     await formatBarDoor.ask()
     await tick()
@@ -319,8 +238,6 @@
     }
   })
 
-  // A fresh start opens on the welcome note; see fresh-start.ts. Fetched only with no
-  // space, and what it reads is read here, so a change to any of it asks again.
   $effect(() => {
     if (__EVEN_PLUGIN__ || !workspace.restored || workspace.spaces.length) return
     const now = {
@@ -336,15 +253,8 @@
     void firstSpaceDoor().then(({ firstSpace }) => firstSpace.start(now))
   })
 
-  // Ctrl and the wheel over the note, which a trackpad pinch also arrives as.
-  // Here rather than on the surface, because the surface is rebuilt with every
-  // note; see text-size.ts.
   $effect(() => watchTextSize())
 
-  // What pulling a list or a note down past its top runs. The surfaces it is
-  // attached to have no idea what the app is showing, so the runner is left
-  // here, where the context the keyboard uses is already built; see
-  // pull.svelte.ts.
   $effect(() => {
     pull.runs = () => void runEntry(pull.id, appContext())
     return () => {
@@ -352,14 +262,8 @@
     }
   })
 
-  // A phone and a tablet show one document at a time, so an arrangement made on a
-  // desktop - or on this window before it became one of those devices - comes
-  // down to one pane with one document in it. See `workspace.oneDocument`.
   $effect(() => workspace.oneDocument())
 
-  // Where a task added from Shortcuts lands: the reader's one inbox, whatever space is
-  // in front (#1153). Only a Mac has the action, and the module is fetched rather than
-  // in the first paint.
   $effect(() => {
     if (!isDesktop || platform() !== 'macos') return
     let stop: (() => void) | null = null
@@ -373,14 +277,6 @@
     }
   })
 
-  // The icons the account holds for a space's folders, how it says the space's
-  // graph is drawn, and what it leaves out of its own search, taken on whenever its
-  // listing changes. Neither has a file to
-  // live in - a folder has no file, and a filter is not something a note says - so
-  // unlike a note's icon they come down with the space; here rather than in the
-  // syncing loop because both are written by a gesture in the app and this is where
-  // the account's listing is already being watched. See workspace/folder-icons and
-  // workspace/graph-settings.
   $effect(() => {
     const who = account.user?.id
     if (!who) return
@@ -399,18 +295,10 @@
     }
   })
 
-  // The keyboard takes the bottom of the window with it, and the line being
-  // written can be left behind it. The height is read so this runs again at each
-  // step of the keyboard's arrival rather than once, before there is room, and
-  // `panned` so it runs when WebKit slid the page to show the caret instead.
   $effect(() => {
     const [height, panned] = [viewport.height, viewport.panned]
     if (!viewport.typing || !height || panned < 0) return
 
-    // A field that is not the note has the caret - a table's cell, a name being
-    // changed in the file list - and was left under the keys once the page was
-    // put back. It is brought up in whatever scrolls it: the note for a cell, the
-    // list for a name. A card's own editor is the plane's to show; see Canvas.svelte.
     const field = document.activeElement
     if (field instanceof HTMLElement && field !== view?.contentDOM) {
       const scroller = view?.contentDOM.contains(field) ? view.scrollDOM : scrollerOf(field)
@@ -427,19 +315,12 @@
     })
   })
 
-  // A deck whose tab has been closed from somewhere else is no longer being
-  // presented, and the window goes back to the size it was.
   $effect(() => {
     if (present.on && !presenting) present.stop()
   })
 
-  // The colours a fenced block wears wherever the renderer drew it; see
-  // highlight.ts. Here rather than in the theme, because it is the code palette
-  // that decides them and that is a mode.
   $effect(() => paintCodePalette(modes.codeTheme))
 
-  // Two panes on one note, scrolling together while the link is on; see
-  // linked-scroll.ts. By document position, so a heading stays level in both.
   $effect(() => {
     const panes = workspace.panes.all.filter((pane) => pane.linked)
     const stops = pairs(panes.map((pane) => pane.id))
@@ -455,32 +336,14 @@
     }
   })
 
-  // A drawer over the note is one more thing over the note, so Escape closes it,
-  // the way it closes every drawer anybody has used. Only where it is a drawer: a
-  // sidebar docked beside the note is over nothing and Escape in the file list
-  // still clears the selection.
   $effect(() =>
     viewport.drawer && workspace.panel ? overlays.show(() => workspace.closePanel()) : undefined,
   )
 
-  // The same for the other side, which is a drawer over the note wherever the
-  // left one is; see the right-hand rules in the stylesheet below.
   $effect(() =>
     viewport.drawer && rightOpen ? overlays.show(() => workspace.closeRight()) : undefined,
   )
 
-  // On a phone each of these is a screen of its own, so back closes it rather
-  // than leaving the app - newest first, the way Android expects.
-  //
-  // Whether a side is covered, worked out before the effect reads it. A `!!` does
-  // not narrow what an effect depends on: written inline, these two read `panel`
-  // itself, so asking for another panel while the drawer stood re-ran the effect -
-  // its teardown gave the history entry back and its body took a new one, in one
-  // turn, with `history.back()` answered a turn later. The count drifted, and the
-  // third panel in a row walked the window off the end of its own history and out
-  // of the app: the drawer went, and `window.nibApp` with it, silently. A derived
-  // only wakes what reads it when its own value changes, so a drawer that stays
-  // open through three panels is one layer and one entry.
   const covered = $derived(!!workspace.panel)
   const coveredRight = $derived(rightOpen)
 
@@ -491,34 +354,21 @@
       palette = false
     }),
   )
-  // Asked to open before the launch's last turn has fetched it: fetched now, and it
-  // opens as it lands, since it arrives already open. See surfaces.svelte.ts.
   $effect(() => {
     if (palette) void paletteDoor.ask()
   })
-  // Asked to open on words (a chat's Ctrl+F).
   $effect(() => {
     if (paletteWords.words !== null) palette = true
   })
-  // And the same for a question asked before then.
   $effect(() => {
     if (prompt.open) void promptSheet.ask()
   })
   $effect(() => closeOnBack(menu.open, () => menu.hide()))
 
-  // Full screen is one more thing back closes: a screen with nothing on it but the
-  // document has to be as easy to leave as everything else. Escape is in `onKeydown`.
   $effect(() => closeOnBack(fullscreen.on, () => void fullscreen.leave()))
 
-  // And it keeps to the pane worked in; see fullscreen.svelte.ts.
   $effect(() => fullscreen.follow())
 
-  // Both drawers follow the finger, the way a phone app's do; see
-  // drawer-follow.ts, which is one engine for the two edges. Only where the
-  // panels are a drawer: a tablet on its side keeps the sidebar open beside the
-  // note, and a column in the layout is not dragged. Fetched rather than carried,
-  // for the same reason: a desktop never has a drawer to drag, and a phone's
-  // first drag is a thumb that arrives well after the first paint.
   $effect(() => {
     const host = middle
     if (!host || !swipeOpens()) return
@@ -535,15 +385,6 @@
     }
   })
 
-  // Syncing only runs while there is an account behind it - and not before a
-  // fresh sign-in has settled what happens to the notes already here.
-  //
-  // Keyed on whose sync it is and which engine, and nothing else. The effect used to
-  // run again whenever anything it read changed - the account's user read back a
-  // moment after signing in, say - and each run started a second loop over the first:
-  // two first passes, the second finding the first already running and lifting the
-  // waiting state with nothing counted, while the notes went on arriving behind it
-  // (test/e2e/signin.py).
   const syncing = $derived(
     account.syncable ? `${account.user?.id ?? ''}:${account.user?.syncVersion === 2}` : null,
   )
@@ -551,7 +392,6 @@
     if (syncing !== null) {
       untrack(() => {
         sync.start()
-        // The bytes are an account's, and a guest is writing into somebody else's.
         if (account.user) void usage.refresh()
       })
     } else {
@@ -562,37 +402,17 @@
     }
   })
 
-  // The name over a caret is whoever is at this device, and it can change while
-  // the note is open: a guest a link let in renaming themselves, or an account
-  // choosing a name. Every room they are in hears it at once.
   $effect(() => rooms.rename(account.name ?? undefined))
 
-  // Every open note joins the room its other devices are in. Which notes are open
-  // and what the account holds for each are both things the app already knows, so
-  // this is the whole of the wiring: no call site has to remember to join or to
-  // leave. See rooms.svelte.ts.
-  // Last of the things a launch does, because it is the only one of them nobody is
-  // looking at: a socket per open note, opened into a window that is already being
-  // read and written in. See startup.svelte.ts for the order and why.
-  // Which of them is `inRooms`'s.
   $effect(() => {
     const open = account.syncable && startup.reached('rooms') ? workspace.openNotes : []
     rooms.follow(inRooms(open, sync.version === 1 ? (path) => sync.tracked(path) : null))
   })
 
-  // A caret is drawn in the shade its colour needs on this background, so the
-  // theme changing repaints every room's. Read for its own sake and nothing else:
-  // the scheme is what this listens to.
   $effect(() => {
     rooms.repaint(theme.current)
   })
 
-  // `window.nib` is the editor view; this is the surrounding app state.
-  //
-  // Not `import.meta.env.DEV`, which is what this used to be. Every drive in
-  // test/e2e steers the app through this object, and DEV is false in a bundle, so
-  // the only build anything could drive was the one nobody ships. See
-  // `__DRIVEABLE__` in env.d.ts.
   if (__DRIVEABLE__) {
     Object.assign(window, {
       nibApp: {
@@ -600,31 +420,15 @@
         arriving,
         busy,
         fullscreen,
-        // The picker is opened from a row's menu, which a drive cannot reach; this
-        // is how a screenshot run opens it on a note, a canvas or a folder.
         iconChoice,
         overlays,
-        // Whether a deck is up, and which tab is on the stage. The stage covers the
-        // whole window with no chrome of its own, so a drive that pressed Present has
-        // nothing in the page to read it off; see slides/present.svelte.ts.
         present,
-        // The page note in front, which is the only way to reach its surface's store
-        // from outside its pane: the thumbnails and the page counter already do, and a
-        // drive turns pages and reads what is on them the same way. See
-        // apps/desktop/test/e2e/pages.py.
         pages,
         rooms,
         share,
-        // The files other people shared on their own, so a drive can watch one
-        // arrive at the foot of the switcher and disappear again when it is
-        // taken back; see apps/desktop/test/e2e/share.py.
         sharedWithYou,
         sync,
-        // The update notice, which only a release server puts up; see
-        // test/e2e/notices.py.
         updates,
-        // The questions the app asks, so a drive can put up one only a terminal raises -
-        // Ctrl+N in a terminal - in a browser that has none; see test/e2e/layout-sweep.py.
         prompt,
         workspace,
         search,
@@ -632,9 +436,6 @@
         modes,
         shortcuts,
         theme,
-        // What the phone's format bar holds, which a drive puts together and
-        // presses, and which command a pull down past the top runs; see
-        // apps/desktop/test/e2e/phone-bar.py.
         toolbar,
         pull,
         viewport,
@@ -643,21 +444,6 @@
       },
     })
 
-    // The stores the shell no longer carries, put on the same handle once they arrive.
-    // Each is a sheet or a subsystem a drive reaches by name rather than by pointing -
-    // the import sheet opens from a row in File and walks a file chooser, the publish
-    // sheet from a space's own menu, the rewrite sheet from a right-click in the note,
-    // and the AI providers are set up against a fake OpenAI-compatible server rather
-    // than anybody's key - and none of them is any use to the app until somebody asks.
-    // See surfaces.svelte.ts, test/e2e/import.py, test/e2e/site.py and test/e2e/ai.py.
-    // Fetched here rather than imported so that a development build is the only one
-    // that pays for them, and awaited by every drive the same way the space is:
-    // nothing reaches any of these before the space is open. The agents' stand-in is
-    // how a drive sees Settings > Agents in a browser, which has no crate to ask; see
-    // agents/settings/fake.ts. And the theme gallery, which a drive cannot reach by
-    // pointing either: it sits over the settings sheet. Its store brings the catalogue
-    // and the reviewer every installed theme goes through, and a shell that imported it
-    // for this handle carried both into every launch; see test/weight.test.ts.
     void Promise.all([
       import('./lib/importing.svelte'),
       import('./lib/publishing.svelte'),
@@ -665,7 +451,6 @@
       import('./lib/ai/rewriting.svelte'),
       import('./lib/sync2/fake-engine.svelte'),
       import('./lib/agents/settings/fake'),
-      // The wallpaper, whose picture a drive hands over as bytes.
       import('./lib/wallpaper/wallpaper.svelte'),
       import('./lib/themes/store.svelte'),
     ]).then(
@@ -680,8 +465,6 @@
         { store },
       ]) => {
         Object.assign((window as unknown as { nibApp: object }).nibApp, {
-          // The rows and the views, which a drive opens by name and reads back: fetched
-          // when it asks, being the largest graph here; see test/e2e/tasks.py.
           tasks: () =>
             Promise.all([
               import('./lib/rows/rows.svelte'),
@@ -697,14 +480,10 @@
                 ]).then(([{ chats }, open]) => ({ chats, ...open })),
           agents: { standIn },
           ai,
-          // The AI panel's chats, which a drive lays out without a provider to make them
-          // with; see test/e2e/chat-rows.py.
           aiChats: () =>
             __EVEN_PLUGIN__
               ? Promise.reject(new Error('no AI panel in the Even Realities plugin'))
               : import('./lib/ai/sidebar/chat.svelte').then(({ chat }) => chat),
-          // The AI accounts on every device, which a drive of two devices reads and
-          // steers; see test/e2e/ai-vault.py.
           aiVault: () =>
             __EVEN_PLUGIN__
               ? Promise.reject(new Error('no AI vault in the Even Realities plugin'))
@@ -721,19 +500,14 @@
           sync2,
           wallpaper,
           themeStore: store,
-          // A web tab's downloads, which only a download puts a button up for; see
-          // test/e2e/popups.py.
           downloads: () => import('./lib/web-tab/downloads.svelte').then((one) => one.downloads),
         })
       },
     )
   }
 
-  /** A canvas and a page note, which have a bar of their own with a way to add. */
   const ownBar = (kind: TabKind | undefined) => kind !== undefined && TAB_KINDS[kind].ownBar
 
-  // What floats in the note's corners is the focused pane's to draw, inside its box
-  // (#1076); see pane-corners.svelte.ts.
   $effect(() => {
     paneCorners.draw = corners
     return () => {
@@ -741,7 +515,6 @@
     }
   })
 
-  /** Every pair of panes in a list of them, each pair once. */
   function pairs(ids: string[]): [string, string][] {
     const out: [string, string][] = []
     for (const [at, one] of ids.entries()) {
@@ -751,8 +524,6 @@
     return out
   }
 
-  /** An editor as one end of a scroll link: where it is in the note, and how to
-   *  put it somewhere in it. */
   function scrollEnd(current: EditorView): ScrollEnd {
     return {
       top: () => topLine(current),
@@ -764,23 +535,17 @@
     }
   }
 
-  /** A text field's own menu, on the way down so a row holding the field does not
-   *  offer its own instead; see field-menu.ts. A phone has the system's. */
   function onFieldMenu(event: MouseEvent) {
     const field = viewport.touch ? null : textFieldOf(event.target)
     if (!field) return
 
     event.preventDefault()
     event.stopPropagation()
-    // Not in the glasses' plugin, which is a phone's and so never asks.
     if (!__EVEN_PLUGIN__) {
       void import('./lib/field-menu').then((one) => one.showFieldMenu(event, field))
     }
   }
 
-  /** The two buttons on the side of a mouse. They are the browser's back and
-   *  forward everywhere else, so they are the tab's here - and the browser's own
-   *  is taken off them, or the web build would leave the app entirely. */
   function onMouse(event: MouseEvent) {
     if (event.button !== 3 && event.button !== 4) return
 
@@ -789,32 +554,21 @@
     else workspace.goForward()
   }
 
-  /** What waits for a note to come to the front of its pane before it is acted on:
-   *  a pane has one editor, and until the note is swapped in that editor holds
-   *  another. See `viewShowing` in views.svelte.ts. */
   const shown = new WhenShown(
     (id) => workspace.tabs.find((tab) => tab.id === id),
     (paneId) => views.of(paneId),
   )
 
-  /** Raised while an action waits in `shown`; an effect further down settles it. */
   let settling = $state(false)
 
-  /** Acts on a tab's note through its pane's editor and never through the note in
-   *  front of it: a tab behind another one is brought to the front, and the action
-   *  waits until the pane is showing it. */
   function onNote(tab: ShownTab, act: (on: EditorView) => void) {
     if (tab.id !== workspace.activeTabId) workspace.activate(tab.id)
     if (!shown.run(tab, act)) settling = true
   }
 
-  /** Takes the reader to a line of the active note. */
   function goto(line: number) {
     const tab = workspace.active
     if (tab && view && !viewShowing(tab, () => view)) {
-      // The pane has only just been asked for this note - a held outline's
-      // heading pressed while another tab was in front - and still shows the
-      // other one.
       onNote(tab, (on) => land(on, line))
       return
     }
@@ -823,15 +577,11 @@
   }
 
   function land(on: EditorView, line: number) {
-    // Going somewhere in the note means wanting to see it, and a drawer is in
-    // the way. A sidebar docked beside the note is not, and stays.
     if (viewport.drawer) workspace.closePanel()
 
     const target = on.state.doc.line(Math.min(line + 1, on.state.doc.lines))
     on.dispatch({
       selection: { anchor: target.from },
-      // The block it landed on says so for a moment: a caret is a pixel wide and
-      // the eye was somewhere else. See landing.ts in @orden/editor.
       effects: [
         EditorView.scrollIntoView(target.from, { y: 'start', yMargin: 72 }),
         landed.of(target.from),
@@ -840,15 +590,7 @@
     on.focus()
   }
 
-  /** A whole section moved, from the outline. One transaction, so it is one
-   *  thing to undo, and the words it moves are the only words that change - a
-   *  note open in another pane keeps every caret outside them where it was; see
-   *  sections.ts and shared.ts. */
   function moveSectionTo(from: number, to: number) {
-    // The note the outline is about, which is the one being worked in unless a
-    // panel is held on another; see panelTab in workspace.svelte.ts. Dragging a
-    // section moves the note the rows came from - through its own pane's editor,
-    // which is another note's while a tab is in front of it there.
     const tab = workspace.panelTab
     if (!tab) return
 
@@ -868,32 +610,14 @@
     })
   }
 
-  // A followed link, or a bookmarked heading, lands on a line the editor cannot
-  // know: the workspace works it out from the note it just loaded and leaves it
-  // here.
-  //
-  // Two things about the timing, both of which used to leave the note open at
-  // its top instead. The view is waited for rather than checked inside `goto`,
-  // because opening another note builds a new one and for a moment there is
-  // none. And the jump is made on the next frame, because a fresh view is given
-  // the place the note was last read at on the frame after it appears - see
-  // placement.svelte.ts, whose effect is declared above this one and so takes
-  // that frame first. Being asked for a heading is newer than being remembered
-  // at a line, so this lands on top.
   $effect(() => {
     const asked = workspace.goto
     if (!asked || !view || workspace.active?.path !== asked.path || workspace.active.reading) return
 
-    // Taking the ask down runs this effect again, so nothing is returned to
-    // undo the frame: a teardown here would cancel the very jump just asked
-    // for. The frame is harmless on its own - `goto` needs a view.
     workspace.goto = null
     requestAnimationFrame(() => goto(asked.line))
   })
 
-  // What waits in `shown` is run on the frame after, for the reason the jump
-  // above waits for one: by then the pane has swapped the note in and given it
-  // its remembered place, and the action lands on top of that.
   $effect(() => {
     if (!settling) return
 
@@ -901,23 +625,10 @@
     requestAnimationFrame(() => shown.settle())
   })
 
-  /** What is showing in the pane that has the focus, as the caret rule reads it. */
   const showing = $derived(workspace.showing(workspace.panes.focusedId))
 
-  // The caret goes into the note that is showing, whichever of the many doors it
-  // was opened by; see caret.ts for the rule and why there is one. On the frame
-  // after, for the reason the jump below waits too: a fresh view is given its
-  // remembered place a frame after it appears, and taking the keyboard before
-  // that would scroll the note to the caret instead of to where it was left.
   $effect(() => {
     const current = view
-    // Read, not used: these are what this effect is watching for. Whether the
-    // caret may be taken is decided on the frame, by which time whatever was
-    // over the note - the palette a note was chosen in - has gone.
-    // Which panel is open is not one of them. A panel opening is not a note
-    // arriving, and a key that opens one asks for the keyboard to go into it - so
-    // watching the panel here is how Ctrl+Shift+E opened the file list and then
-    // took the keyboard straight back out of it. See revealPanel in focus.ts.
     const reasons = [showing?.id, showing?.kind, showing?.reading, workspace.naming, palette]
     if (!current || !reasons.length) return
 
@@ -935,7 +646,6 @@
     return () => cancelAnimationFrame(frame)
   })
 
-  /** Ctrl+Z for what was done in a sidebar; see `sidebarKey`. */
   function sidebarUndo(event: KeyboardEvent) {
     const own = sidebarKey(event, (id) => shortcuts.pressed(id, event))
     if (!own) return
@@ -944,23 +654,11 @@
     void (own === 'undo' ? workspace.undoFileAction() : workspace.redoFileAction())
   }
 
-  /** Every app-level key comes from one registry, so a rebind reaches the
-   *  keyboard, the menus and the palette at once. The one thing it cannot reach
-   *  on its own is here: the palette is this component's own state. */
   function onKeydown(event: KeyboardEvent) {
     if (macMenuKey(event)) return
 
-    // Escape closes whatever is over the note, newest first: the settings, a
-    // sheet, the palette, a menu, a dropdown inside one of them. Only when
-    // there is one, so Escape in the file list still clears the selection and
-    // Escape in the editor still steps off a picture. The press goes no further
-    // than the one it closed, which is what keeps a note's find bar open under a
-    // palette somebody has just dismissed. See overlays.ts.
     if (event.key === 'Escape' && overlays.escape(event)) return
 
-    // Then full screen, which is a mode and not a layer: on the stack it hid a web
-    // tab's page, the thing it is meant to fill the screen with. See overlays.ts.
-    // Decided once the press has been everywhere; see `escapeLeaves`.
     if (event.key === 'Escape' && fullscreen.on) {
       const holder = document.activeElement
       queueMicrotask(() => {
@@ -969,55 +667,34 @@
       return
     }
 
-    // A deck covers the window, so anything the app would open under it is a
-    // window nobody can see holding the keyboard nobody can get back. While a
-    // note is being presented the only app key is the one that stops.
     if (present.on && !shortcuts.pressed('app.present', event)) return
 
-    // Ctrl+S last, and only where no command took the chord; see `writeKey`.
     if (!shortcuts.handle(event, appContext())) shortcuts.writeKey(event)
   }
 
-  // Shift twice, heard from the launch's last turn; see tapped.ts.
   let untap: (() => void) | undefined
   void startup
     .turn('doors')
     .then(() => import('./lib/tapped').then(({ hear }) => (untap = hear(appContext))))
   onDestroy(() => untap?.())
 
-  /** The palette on the commands, waiting for it the once it has not arrived yet. */
   async function showCommands() {
     await paletteDoor.ask()
     await tick()
     paletteScreen?.showCommands()
   }
 
-  /** What a command from the registry needs that only the running app has. Built
-   *  here rather than twice, because the keyboard is not the only thing that
-   *  presses one: the buttons on the format bar are registry commands too, and a
-   *  bar that built its own context would be a second answer to what the app is
-   *  showing. */
   function appContext(): AppContext {
     return {
       view: writingIn,
       palette: (mode, again) => {
-        // Shift Shift over the palette puts it away, as Escape does, and the keyboard
-        // goes back where it was; see `tapped` in the registry.
         if (again && palette) paletteScreen?.dismiss()
         else if (mode === 'commands') void showCommands()
         else palette = true
       },
-      // The document alone, with the app out of the way and the window's own
-      // frame with it; see fullscreen.svelte.ts.
       fullscreen: () => void fullscreen.toggle(workspace.panes),
     }
   }
-  // On a Mac the app's menu is the menu bar across the top of the screen, which is
-  // why Titlebar.svelte draws no button for it there. Fetched at the launch's last
-  // turn, with the in-window menu's rows it is built from, since no other platform
-  // has one and nothing about it is needed to show a note. See native-menu.ts. The
-  // plugin build is never a Mac, and says so first so the bundler leaves the menu
-  // bar and Tauri's menu API out of its package; see vite.even.config.ts.
   if (!__EVEN_PLUGIN__ && isDesktop && platform() === 'macos') {
     void startup
       .turn('doors')
@@ -1032,11 +709,6 @@
       )
   }
 
-  /** Where sync is, for a reader who is listening: a pass running, the last one
-   *  failed, the account out of reach. Nothing on screen says it.
-   *
-   *  Said here rather than in a component, because the region is one region: see
-   *  said.svelte.ts. */
   $effect(() => {
     const status = sync.status
     if (status === 'syncing') said.say(t('Syncing'))
@@ -1045,7 +717,6 @@
   })
 </script>
 
-<!-- Nothing in the app ever shows the browser's own menu. -->
 <svelte:window
   onkeydown={onKeydown}
   onkeydowncapture={sidebarUndo}
@@ -1069,26 +740,10 @@
   onpointerdown={() => fullscreen.stir()}
 />
 
-<!-- The page's one heading, which is the note in front of it. There was none at
-     all on a desktop: the phone's title bar draws the name as an `h1` and a desktop
-     draws it on a tab, so anything reading the page down found a window with no
-     top to it. Said and not shown, because the name is already on screen twice. -->
 <h1 class="nib-said">{workspace.active?.shown ?? 'Orden'}</h1>
 
-<!-- What just happened, for whoever is listening rather than looking. On the page
-     before there is anything in it and outside everything that can be made inert,
-     which is the whole of what makes a live region work; see said.svelte.ts. -->
 <p class="nib-said" role="status" aria-live="polite">{said.words}</p>
 
-<!-- The sidebar runs the full height, so the window's one header row sits beside
-     it rather than above everything, and the panel and the document start on
-     the same line. -->
-<!-- Nothing in the app is reachable while the account's writing is still on
-     its way: a note half arrived is not one to type into. See FirstSync.svelte. -->
-<!-- As tall as what can be seen, on a touch screen: an iPhone's keyboard covers the
-     window rather than shortening it, so a frame the height of the window ended under
-     the keys, and WebKit scrolled the whole page up to show the line being typed -
-     the bar with it, off the top, and the format bar out of sight. See pageHeight. -->
 <main
   class:focus={modes.focus}
   class:full={bare}
@@ -1097,19 +752,6 @@
   style:height={pageHeight()}
 >
   <div class="middle" bind:this={middle}>
-    <!-- Side by side on a desktop; a drawer over the document on a phone,
-         where there is no room for three columns at once. While a finger is on
-         it the transform comes from the drag instead, so it tracks the thumb. -->
-    <!-- Wherever the panels are a drawer, a shut drawer is off screen: at the
-         narrow end it is behind the note, and above that it is slid off to the
-         side. Either way nothing in it can be reached, so nothing in it is
-         announced or reachable by a key either - which is what keeps the
-         drawer's own sidebar button from being read out on a phone held
-         sideways, where the only thing a thumb can reach is the bar's. -->
-    <!-- Full screen leaves the document and nothing else: no file list, no
-         bars. Left out rather than slid away, so nothing in them can be reached
-         by a key while they are gone; see fullscreen.svelte.ts. A tab filling the
-         window leaves the same, and its bar at the top edge; see lib/tab-fill. -->
     {#if !bare && !filled}
       <div
         class="panels"
@@ -1132,13 +774,6 @@
       </div>
     {/if}
 
-    <!-- On a phone too narrow for the drawer to leave any of the note showing,
-         the layers swap: the list is the floor and the note is what moves,
-         sliding off to the right to uncover it and back over it. The same
-         drag drives both; only which layer it moves differs. -->
-    <!-- Off to the side, the note is out of reach as a shut drawer is. WebKit
-         scrolls even this page to show what takes the focus: the note taking it
-         as Orden started slid it across, over the list the phone had open. -->
     <div
       class="document"
       inert={viewport.narrow && viewport.drawer && !!workspace.panel && !bare}
@@ -1155,11 +790,6 @@
     >
       {#if (workspace.panel !== null || rightOpen) && !bare}
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-        <!-- One scrim for both drawers, which is why it fades with whichever of
-             them a finger is on. Only one can be moving: a gesture belongs to one
-             edge. Inside the document, because the right drawer is too: at the
-             narrow end the document is a layer of its own, and a scrim outside it
-             was drawn over the drawer it was meant to be under. -->
         <div
           class="scrim"
           class:over={rightOpen}
@@ -1183,26 +813,7 @@
         {/if}
       {/if}
 
-      <!-- The note and, beside it, the other side of the window - which is empty
-           for everybody until a panel is moved over to it: nothing is drawn at all
-           until then, so the left side, the foot row and the tab strip are exactly
-           where they always were. Its own toggle is in it on a desktop, and shut it
-           comes out at the window's edge (#1038); see Sidebar.svelte and Titlebar.svelte.
-
-           Under the bar rather than beside it, which is where the left sidebar
-           sits: the bar carries the window's own buttons at its right end, and a
-           column to the right of it would push them out of the corner every
-           window on every platform keeps them in.
-
-           Wherever the panels are drawers - a phone, a tablet held upright - this
-           one comes in from the right over the note, the way a members panel
-           does, and the same scrim dismisses it. A thumb drags it out and back,
-           with the same claim, the same clamp and the same settle the left one
-           has: one engine serves both edges and each drawer carries the sign that
-           says which edge is its own. See drawer.svelte.ts. -->
       <div class="body">
-        <!-- One pane, or up to four of them; see PaneTree.svelte. Anything slow
-             enough to be waited for draws a line along the top of them. -->
         <div
           class="panes"
           data-panes
@@ -1212,23 +823,15 @@
           bind:clientWidth={panesWide}
         >
           <Progress />
-          <!-- What the app says about itself, over the foot of the panes rather than
-               shoving them up (#218); a web page is cut round it (web-tab/covers.ts).
-               Ahead of the panes in the page and only there, since it is placed by hand:
-               Tab stays in a note it reaches, so a card after one was out of reach (#523). -->
           {#if !viewport.drawer}
             {@render notices()}
           {/if}
           <PaneTree frame={workspace.panes.frame} />
-          <!-- The note the window was left on, as it was left, until its editor is up;
-               see first-screen.svelte.ts. Not on a pair of glasses. -->
           {#if !__EVEN_PLUGIN__}
             <FirstScreen />
           {/if}
         </div>
 
-        <!-- A phone's and a tablet's card, over the note; see scratchpad/pad.ts. On a
-             desktop the card is the right side's own tab, in the column below (#1032). -->
         {#if !bare && !filled && !__EVEN_PLUGIN__ && viewport.touch}
           <PadColumn />
         {/if}
@@ -1256,15 +859,11 @@
         {/if}
       </div>
 
-      <!-- The way back out of full screen; see FullscreenLeave.svelte. Never over a
-           web page, which would draw over it. -->
       {#if fullscreen.on && workspace.active?.kind !== 'web'}
         {#await fullscreenWayOut() then WayOut}
           <WayOut />
         {/await}
       {:else if alone.on && account.guest}
-        <!-- A guest alone in one shared file: their name, and the way to an account,
-             which the panel's foot held; see GuestCorner.svelte. -->
         {#await guestCorner() then Corner}
           <Corner />
         {/await}
@@ -1272,21 +871,12 @@
     </div>
   </div>
 
-  <!-- Over the drawer as well: in the note the row slid off with it whenever the list
-       was out, and an Undo with it. -->
   {#if viewport.drawer}
     {@render notices()}
   {/if}
 </main>
 
-<!-- What floats in the note's corners, drawn by the focused pane inside its own box
-     (#1076): never against the window, where the right side and the scratchpad beside
-     the note would be under it. See pane-corners.svelte.ts. -->
 {#snippet corners()}
-  <!-- Over a note and nowhere else: the graph, a canvas and a page note have no
-       words for it to count, so it is left out rather than drawn empty and F6
-       steps straight past it. One rule, in regions.ts, which is also what the
-       keyboard's own table describes. -->
   {#if hasStatusBar(workspace.active?.kind) && !bare && !filled}
     <StatusBar
       doc={workspace.active?.doc ?? ''}
@@ -1295,10 +885,6 @@
     />
   {/if}
 
-  <!-- A thumb cannot reach the plus beside the tabs, and on a phone the
-       thing you came to do is write a note. Out of the way while the
-       keyboard is up, because then you are already writing one, and over a
-       canvas or a page note, where it read as adding to the page. -->
   {#if viewport.touch && !workspace.panel && !viewport.typing && !ownBar(workspace.active?.kind) && !bare}
     <button class="fab" aria-label={fabLabel} onclick={writeNew}>
       <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
@@ -1355,7 +941,6 @@
       />
     {/if}
     {#if reloading.offered}
-      <!-- A chunk the network lost; see reloading.svelte.ts. -->
       <div class="reload" role="alert">
         <button class="nib-button" onclick={() => location.reload()}>{t('Reload')}</button>
       </div>
@@ -1372,20 +957,14 @@
   />
 {/snippet}
 
-<!-- Over everything, with no chrome of its own: while a note is being presented
-     the window is the deck. Fetched when a deck is first asked for, and the promise
-     kept, so the second presentation opens in the same pass as the `{#if}`; see
-     surfaces.svelte.ts. -->
 {#if presenting}
   {#await slidesStage() then Slides}
     <Slides tab={presenting} />
   {/await}
 {/if}
 
-<!-- What a pull has come to, while a thumb is on it. -->
 <PullMark />
 
-<!-- What the text size has just become, after a pinch or a key. -->
 <SizeBadge />
 
 {#if paletteDoor.asked}
@@ -1408,23 +987,16 @@
     <SignIn />
   {/await}
 {/if}
-<!-- The one word a link owes whoever followed it, when it owes one. -->
 {#if joinSheet.asked}
   {#await joinSheet.asked then JoinSheet}
     <JoinSheet />
   {/await}
 {/if}
-<!-- Send feedback, once somebody has asked for it; see feedback.svelte.ts. -->
 {#if feedbackSheet.asked}
   {#await feedbackSheet.asked then FeedbackSheet}
     <FeedbackSheet />
   {/await}
 {/if}
-<!-- The sheets, each fetched the first time something opens it and kept mounted
-     afterwards; the effect above says why, and surfaces.svelte.ts holds the doors.
-     The largest of them is the settings sheet - the pane per section, the theme
-     store, the sync pane, the AI pane, the security pane - and none of them is on
-     screen when the window opens. -->
 {#if settingsSheet.asked}
   {#await settingsSheet.asked then SettingsPanel}
     <SettingsPanel {view} />
@@ -1470,8 +1042,6 @@
     <PromptSheet />
   {/await}
 {/if}
-<!-- Another space, from Ctrl+Space: mounted at the launch's last turn, so the first press
-     already has it; see surfaces.svelte.ts. -->
 {#if spacePickerDialog.asked}
   {#await spacePickerDialog.asked then SpacePicker}
     <SpacePicker />
@@ -1492,8 +1062,6 @@
     <ContextMenu />
   {/await}
 {/if}
-<!-- Over everything, because everything that wears an icon asks the same sheet
-     for one: a space in the switcher, a note in the file list. -->
 {#if iconPicker.asked}
   {#await iconPicker.asked then IconPicker}
     <IconPicker />
@@ -1503,22 +1071,15 @@
 
 <style>
   main {
-    /* The way out of full screen; see FullscreenLeave.svelte. */
     --leave-size: 30px;
     display: flex;
     flex-direction: column;
-    /* Dynamic units: a phone's address bar eats into the viewport as it
-       scrolls, and `vh` would leave the editor taller than the screen. */
     height: 100vh;
     height: 100dvh;
-    /* What the shell stands on rather than a colour: under the glass theme the
-       platform's material with a wash of the theme's own over it. See base.css. */
     background: var(--shell-ground);
     transition: background var(--dur-slow) var(--ease-out);
   }
 
-  /* The chrome round what is open: one surface for the top bar and the sidebars, which
-     the panes' cards float on (#1088; the frame block in tokens.css). */
   .middle {
     flex: 1;
     min-height: 0;
@@ -1543,8 +1104,6 @@
     flex-direction: column;
   }
 
-  /* The note and the other side of the window, side by side under the bar. One
-     row, because the bar above it spans both: see the note in the markup. */
   .body {
     position: relative;
     flex: 1;
@@ -1553,16 +1112,12 @@
     display: flex;
   }
 
-  /* Positioned, so the line that says the app is busy draws along the top of
-     the panes rather than over the window's own bar. */
   .panes {
     position: relative;
     flex: 1;
     min-width: 0;
     min-height: 0;
     display: flex;
-    /* In from the chrome on every side but the bar's, whose strip the card's open tab
-       stands on. */
     padding: 0 var(--card-inset) var(--card-inset);
   }
 
@@ -1574,8 +1129,6 @@
     padding-bottom: 0;
   }
 
-  /* Start, middle and end, whichever of them is up; each card names its track.
-     Floating, so nothing under it moves; only the cards take the pointer. */
   .notices {
     position: absolute;
     inset-inline: 0;
@@ -1592,7 +1145,6 @@
     pointer-events: auto;
   }
 
-  /* One column on a phone, where the cards stack. */
   :global([data-touch]) .notices {
     grid-template-columns: 1fr;
   }
@@ -1606,7 +1158,6 @@
     grid-column: 1;
   }
 
-  /* Over the drawer, which is fixed over the whole height of the window. */
   .notices.over {
     position: fixed;
   }
@@ -1616,30 +1167,21 @@
     z-index: var(--z-sheet);
   }
 
-  /* Room only around something. `:global`, or the compiler drops a rule about
-     another component's element. */
   .notices:has(> :global(*)) {
     padding: var(--space-2) max(var(--space-4), var(--inset-end))
       calc(var(--space-3) + var(--inset-bottom)) max(var(--space-4), var(--inset-start));
   }
 
-  /* Clear of the new-note button in the same corner. Global, because the button is
-     drawn in the focused pane (the `corners` snippet), out of this file's sight. */
   main:has(:global(.fab)) .notices:has(> :global(*)) {
     padding-inline-end: calc(
       max(var(--space-4), var(--inset-end)) + var(--touch-row) + var(--space-2)
     );
   }
 
-  /* Full screen: the panes are the whole window, so what the system keeps for
-     its clock, its cutout and its gesture bar is kept clear here instead of by
-     the bars that have gone. */
   main.full .panes {
     padding: var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left);
   }
 
-  /* No card where the whole window is the note (`flush`), and none on a phone or a tablet,
-     whose screen is all the note there is room for: flush and square, as the window was. */
   main.flush,
   :global([data-touch]) main {
     --card-radius: 0px;
@@ -1650,12 +1192,10 @@
     --chrome-seam: var(--line);
   }
 
-  /* A thumb's target rather than a pointer's; see FullscreenLeave.svelte. */
   :global([data-touch]) main {
     --leave-size: var(--touch-target);
   }
 
-  /* Sits above the document, clear of the gesture bar. */
   .fab {
     position: absolute;
     inset-inline-end: max(var(--space-4), var(--inset-end));
@@ -1687,17 +1227,10 @@
     stroke-linecap: round;
   }
 
-  /* Clear of a notch or a rounded corner, whether the panels are a drawer over
-     the note or a column beside it. */
   :global([data-touch]) .panels {
     padding-inline-start: var(--inset-start);
   }
 
-  /* ── Where the sidebar is a drawer over the note ─────────────────── */
-
-  /* Down to the keys rather than the foot of the window: an iPhone's keyboard
-     covers the window instead of shortening it, and a name being changed low in
-     the list was left under the keys, in a list that could not scroll it up. */
   :global([data-drawer]) .panels {
     position: fixed;
     inset-block: 0 var(--keyboard, 0px);
@@ -1715,10 +1248,6 @@
     transform: none;
   }
 
-  /* A finger is down on something that is about to move. Promoting the layer
-     now rather than on the first move means the drag starts on the frame it
-     was asked for, and the hint goes again the moment the finger lifts: a
-     layer nothing is moving is a layer paid for and not used. */
   :global([data-drawer]) .panels.held,
   :global([data-drawer]) .document.held {
     will-change: transform;
@@ -1728,25 +1257,16 @@
     will-change: opacity;
   }
 
-  /* The finger is the animation while it is down; CSS takes over on release
-     and eases the drawer the rest of the way. */
   :global([data-drawer]) .panels.dragging,
   :global([data-drawer]) .scrim.dragging {
     transition: none;
     animation: none;
   }
 
-  /* After a drag: as long as the distance left asks for, on a curve that
-     starts at the finger's pace and eases to a stop rather than snapping. Never
-     under a finger: a drawer caught again before it has settled follows the new
-     drag at once rather than easing after it (#1066). */
   :global([data-drawer]) .panels.settling:not(.dragging) {
     transition: transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
   }
 
-  /* Colour and nothing else. A blur here is a filter the compositor has to
-     redraw over the whole screen on every frame of the drag, which is most of
-     what a drawer swipe used to cost. */
   :global([data-drawer]) .scrim {
     display: block;
     position: fixed;
@@ -1762,9 +1282,6 @@
     }
   }
 
-  /* The other side's drawer comes in from the right and stays a drawer at every
-     width: it is a panel over the note, the way a members panel is, rather than
-     a floor the note slides off. */
   :global([data-drawer]) .panels.right {
     inset-block: 0;
     inset-inline: auto 0;
@@ -1775,11 +1292,6 @@
     transform: none;
   }
 
-  /* Not the whole screen, even at the narrowest: a panel that covered
-     everything would be a panel with nothing beside it to press to get out, and
-     the strip of note left showing is what the scrim is. The left drawer can
-     cover the lot because the note slides off to uncover it - this one is over
-     the note rather than beside it. */
   :global([data-drawer][data-narrow]) .panels.right {
     width: min(86%, 20rem);
     z-index: var(--z-drawer);
@@ -1792,10 +1304,6 @@
     transform: none;
   }
 
-  /* While a thumb is on it, and the ease that finishes the drag. The same two
-     rules the left drawer has, said again for this one because the narrow rule
-     above declares a transition of its own and would otherwise animate against
-     the finger. After it, so this is the one that stands. */
   :global([data-drawer]) .panels.right.dragging {
     transition: none;
     animation: none;
@@ -1805,12 +1313,6 @@
     transition: transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
   }
 
-  /* Full width rather than leaving a sliver of the document showing - and once
-     it covers everything it is no longer a drawer over the note but the layer
-     beneath it. Only where the panels are a drawer at all: `data-narrow` is the
-     width and nothing else, and a desktop window dragged this narrow still has
-     its columns. So here the note is what slides: off to the right to uncover
-     the list, back over it when a note is chosen. */
   :global([data-drawer][data-narrow]) .panels {
     width: 100%;
     z-index: var(--z-raised);
@@ -1819,8 +1321,6 @@
     transition: none;
   }
 
-  /* The note's shadow on the list fades as the note goes, following the finger
-     in a drag: at rest off the screen it was a grey band over the list's end. */
   :global([data-drawer][data-narrow]) .document {
     position: relative;
     z-index: var(--z-lifted);
@@ -1847,9 +1347,6 @@
       box-shadow var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
   }
 
-  /* Nothing to dim: the note is either over the list or off the screen - unless
-     what is open is the other side's drawer, which is over the note at every
-     width and is dismissed by pressing the note it is over. */
   :global([data-drawer][data-narrow]) .scrim:not(.over) {
     display: none;
   }

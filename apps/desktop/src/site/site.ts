@@ -1,39 +1,14 @@
-/** What a published page does in a browser.
- *
- *  Four small things, and the reason they are one file is that a page should
- *  fetch one script or none: the slash that focuses the search box, the theme
- *  toggle, the card a link shows on hover, and the graph.
- *
- *  Every one of them is an addition to a page that already works without it. The
- *  search box is a form, the theme follows the reader's system, a link is a link
- *  and the graph page carries the same list of pages as words above the canvas.
- *  A reader with scripting off loses the niceties and nothing else, which is the
- *  rule a published note is held to; see docs/publishing.md.
- *
- *  It is bundled into the Worker by scripts/site-js.ts and served from the site's
- *  own domain at a path that is its own hash - never from a CDN, for the reason
- *  the KaTeX faces are not either. The graph is the app's own layout and painter,
- *  imported rather than reimplemented: one graph in Orden, drawn by one piece of
- *  code, on a canvas in the app and on a canvas on the page. */
-
 import { framing, nodeAt } from '../lib/camera'
 import type { NoteGraph } from '../lib/graph'
 import { neighbours } from '../lib/graph-walk'
 import { Layout } from '../lib/graph-layout'
 import { paint, radiusOf } from '../lib/graph-paint'
 
-/** Where the reader's choice of theme is kept. Per site, because it is a
- *  decision about this site rather than about the browser. */
 const THEME_KEY = 'nib:site-theme'
 
-/** How long a hover waits before it fetches anything, and how long the pointer
- *  has to leave before the card goes. Both are what the app's own preview uses;
- *  see docs/links.md. */
 const HOVER_IN = 320
 const HOVER_OUT = 180
 
-/** How many pages of previews are kept. A reader who runs down a list of links
- *  fetches each once. */
 const MOST_CACHED = 40
 
 function ready(run: () => void) {
@@ -41,11 +16,6 @@ function ready(run: () => void) {
   else run()
 }
 
-/* ── The search box ──────────────────────────────────────────────── */
-
-/** `/` focuses it, the way it does in the app and in every reader on the web.
- *  Not while somebody is typing in something else, and not when a modifier is
- *  held: `Ctrl+/` belongs to the browser. */
 function slashFocuses() {
   document.addEventListener('keydown', (event) => {
     if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return
@@ -62,13 +32,6 @@ function slashFocuses() {
   })
 }
 
-/* ── Light or dark ───────────────────────────────────────────────── */
-
-/** The reader's own choice, remembered for this site and applied before the
- *  first paint by the tiny script in the page's head; this is only the button.
- *
- *  Three states rather than two, because "what my system says" is a real answer
- *  and the only one that keeps up when the sun goes down. */
 function themeToggle() {
   const button = document.querySelector<HTMLButtonElement>('.theme')
   if (!button) return
@@ -98,12 +61,6 @@ function themeToggle() {
     if (held === 'system') document.documentElement.removeAttribute('data-theme')
     else document.documentElement.setAttribute('data-theme', held)
 
-    // The one write in the app that does not go through `keep` in stored.ts, and
-    // the reason is what this file is: a handful of lines bundled into the Worker
-    // and served to a stranger's browser. Importing that module here would pull
-    // the app's log into a public page to guard one write of a reader's own theme
-    // choice. So the guard is here, and it is the same guard: a browser with
-    // storage turned off still switches, it just forgets. See stored.test.ts.
     try {
       if (held === 'system') localStorage.removeItem(THEME_KEY)
       else localStorage.setItem(THEME_KEY, held)
@@ -114,8 +71,6 @@ function themeToggle() {
     say(held)
   })
 }
-
-/* ── The card a link shows on hover ──────────────────────────────── */
 
 const held = new Map<string, string>()
 
@@ -131,9 +86,6 @@ async function preview(href: string): Promise<string | null> {
     const write = page.querySelector('#write')
     if (!write) return null
 
-    // The note and nothing around it: no navigation, no byline, no footer, and
-    // no picture of the page's own furniture inside a card the size of a
-    // paragraph.
     for (const gone of write.querySelectorAll('nav, footer, .back, .present, .find, .toc')) {
       gone.remove()
     }
@@ -187,8 +139,6 @@ function hoverCards() {
 
   const inside = (target: EventTarget | null): HTMLAnchorElement | null => {
     const link = (target as HTMLElement | null)?.closest<HTMLAnchorElement>('a[href^="/"]')
-    // A link to a file, an address of somebody else's, or the page itself: none
-    // of those has a note to show.
     if (!link || link.getAttribute('href')?.startsWith('/i/')) return null
     if (link.pathname === location.pathname) return null
 
@@ -208,8 +158,6 @@ function hoverCards() {
     if (inside(event.target)) hide()
   })
 
-  // A finger has no hover, so a long press is the gesture. The link still opens
-  // on a tap: nothing here cancels it.
   document.addEventListener(
     'contextmenu',
     (event) => {
@@ -227,19 +175,6 @@ function hoverCards() {
   document.addEventListener('scroll', () => (card.hidden = true), { passive: true })
 }
 
-/* ── The graph ───────────────────────────────────────────────────── */
-
-/** The app's own layout and painter, on a canvas on the page.
- *
- *  What is here is only the part that is a page rather than an app: reading the
- *  graph the server wrote into the document, sizing the canvas, framing what
- *  came, and following a link when somebody presses a node. The physics, the
- *  radii, the framing and every pixel are the app's, imported - one graph in
- *  Orden, drawn by one piece of code.
- *
- *  No dragging, no zoom, no controls. A reader of a blog is being shown how the
- *  pages hang together and then following one; the dials are for somebody
- *  standing in their own vault. */
 function graphs() {
   for (const holder of document.querySelectorAll<HTMLElement>('.graph')) {
     const said = holder.querySelector('script[type="application/json"]')?.textContent
@@ -278,13 +213,9 @@ function graphs() {
       current: token('--accent') || '#6f5ce0',
       label: token('--muted-strong') || '#b6b6c0',
       font: token('--font-ui') || 'sans-serif',
-      // The page draws no colour groups: a group is something a reader of the
-      // app puts a note in, and a page has nobody to ask.
       groups: [],
     }
 
-    /** Which node is the page being read, from the address the server marked it
-     *  with, so the picture says "you are here" the way the app's does. */
     const current = graph.nodes.findIndex((one) => one.path === holder.dataset.here)
     let hovered = -1
     let width = 0
@@ -322,18 +253,12 @@ function graphs() {
         shown,
         tint,
         arrows: false,
-        // What the card's dials do unasked. A published page is the site's own
-        // picture rather than the reader's: there is no card on it, and a stranger
-        // arriving at a page is shown what a picture of a space looks like.
         lines: 2,
         fade: 1,
         ratio,
       })
     }
 
-    /** Laid out to a budget and framed, the way the app does it: a few frames of
-     *  settling rather than a loop that holds the thread, and the camera then
-     *  fits what came. */
     const settle = () => {
       const done = layout.settle(12)
       camera = framing(layout.x, layout.y, count, width, height, 28)
