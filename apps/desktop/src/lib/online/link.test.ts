@@ -3,8 +3,6 @@ import { describe, expect, test } from 'vitest'
 import { BEAT_EVERY } from '../backoff'
 import { type Heard, Link, type LinkWorld, OPEN_WITHIN, PROBE_WITHIN } from './link'
 
-/** A world with sockets nobody opens until told, and a clock that runs when asked: a
- *  timer runs by hand, or with the time it was set for by `pass`. */
 function fakeWorld(token: string | null = 'tok') {
   const sockets: {
     url: string
@@ -72,7 +70,6 @@ function fakeWorld(token: string | null = 'tok') {
     },
   }
 
-  /** The network back, or the window looked at again. */
   const back = () => {
     for (const one of [...backs]) one()
   }
@@ -80,7 +77,6 @@ function fakeWorld(token: string | null = 'tok') {
   return { world, sockets, timers, clock, back, backs }
 }
 
-/** The clock moved on by `ms`, every timer that falls due on the way run at its time. */
 function pass(found: ReturnType<typeof fakeWorld>, ms: number) {
   const until = found.clock.now + ms
   for (;;) {
@@ -99,7 +95,6 @@ const beats = (socket: { sent: (string | Uint8Array)[] }) =>
 
 const settle = () => new Promise((done) => setTimeout(done, 0))
 
-/** The timers still to run: a reconnect's wait, or the next beat. */
 function waiting(found: ReturnType<typeof fakeWorld>) {
   return found.timers.filter((one) => !one.cancelled && !one.ran)
 }
@@ -172,7 +167,6 @@ describe('the socket to an online session', () => {
 
     const second = opened(found)
     expect(second.sent).toEqual([text({ t: 'hello', cols: 80, rows: 24, since: 11, hold: true })])
-    // Sent again from before what was drawn: only the new part is drawn.
     second.events.heard(at(6, 'world!'))
     expect(drawn).toEqual(['hello ', 'world', '!'])
   })
@@ -243,8 +237,6 @@ describe('the socket to an online session', () => {
     expect(found.sockets).toHaveLength(2)
   })
 
-  /** 2026-10-07: a tab whose session was gone - its machine replaced - retried silently
-   *  forever, since the door's 404 reached the page as a drop. The door says it now. */
   test('stops for good once its session is gone, and never says it dropped', async () => {
     const found = fakeWorld()
     const heard: Heard[] = []
@@ -274,7 +266,6 @@ describe('the socket to an online session', () => {
     link.resize(120, 40)
     expect(socket.sent.slice(1)).toEqual([
       text({ t: 'in', data: 'ls\r' }),
-      // The look a key brings, that the socket still answers.
       'beat',
       text({ t: 'size', cols: 120, rows: 40 }),
     ])
@@ -294,7 +285,6 @@ describe('the socket to an online session', () => {
     await settle()
     const first = opened(found)
 
-    // Answered: it goes on beating.
     for (let beat = 0; beat < 5; beat++) {
       waiting(found)[0]?.run()
       first.events.heard('ok')
@@ -302,7 +292,6 @@ describe('the socket to an online session', () => {
     expect(first.sent.filter((one) => one === 'beat')).toHaveLength(5)
     expect(first.closed).toBe(false)
 
-    // Nothing comes back: the third silent beat drops it and a new one is made.
     for (let beat = 0; beat < 3; beat++) waiting(found)[0]?.run()
     expect(first.closed).toBe(true)
     expect(heard.at(-1)).toEqual({ t: 'dropped' })
@@ -312,14 +301,11 @@ describe('the socket to an online session', () => {
     expect(link.live).toBe(false)
   })
 
-  /** Issue 208: a laptop back on the network waited out a backoff of up to twenty
-   *  seconds while every website loaded at once. */
   test('tries at once when the network comes back, rather than waiting out its wait', async () => {
     const found = fakeWorld()
     const link = new Link('t1', found.world, () => undefined, 80, 24)
     link.open()
     await settle()
-    // Six failures in a row: the wait is at its longest.
     for (let tried = 0; tried < 6; tried++) {
       found.sockets.at(-1)?.events.closed(1006)
       waiting(found)
@@ -334,7 +320,6 @@ describe('the socket to an online session', () => {
     found.back()
     await settle()
     expect(found.sockets).toHaveLength(before + 1)
-    // No wait left over: only the new socket's own limit to open.
     expect(waiting(found).map((one) => one.ms)).toEqual([OPEN_WITHIN])
     opened(found)
     expect(link.live).toBe(true)
@@ -379,7 +364,6 @@ describe('the socket to an online session', () => {
     new Link('t1', found.world, () => undefined, 80, 24).open()
     await settle()
 
-    // A moment after it was begun, a look at the window leaves it be.
     pass(found, 500)
     found.back()
     expect(found.sockets[0]?.closed).toBe(false)
@@ -400,7 +384,6 @@ describe('the socket to an online session', () => {
 
     found.back()
     expect(beats(socket)).toBe(1)
-    // One look at a time.
     found.back()
     expect(beats(socket)).toBe(1)
     pass(found, 200)
@@ -425,7 +408,6 @@ describe('the socket to an online session', () => {
     expect(socket.closed).toBe(true)
     expect(heard.at(-1)).toEqual({ t: 'dropped' })
 
-    // Seconds, not the half a minute three silent beats take.
     pass(found, 400)
     await settle()
     expect(found.sockets).toHaveLength(2)
@@ -442,12 +424,10 @@ describe('the socket to an online session', () => {
     link.say({ t: 'in', data: 'l' })
     link.sayBytes(new Uint8Array([115]))
     expect(beats(socket)).toBe(1)
-    // The echo is an answer.
     socket.events.heard(at(0, 'ls'))
     pass(found, PROBE_WITHIN)
     expect(socket.closed).toBe(false)
 
-    // The next keys go nowhere.
     link.say({ t: 'in', data: '\r' })
     pass(found, PROBE_WITHIN)
     expect(socket.closed).toBe(true)
@@ -476,7 +456,6 @@ describe('the socket to an online session', () => {
     await settle()
     const socket = opened(found)
 
-    // Asleep for an hour: the beat set before it runs as the computer wakes.
     found.clock.now += 60 * 60_000
     const beat = waiting(found).find((one) => one.ms === BEAT_EVERY)
     beat?.run()

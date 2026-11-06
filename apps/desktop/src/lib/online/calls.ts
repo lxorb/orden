@@ -1,11 +1,3 @@
-/** What the app asks the account about its online machine, over HTTP: the machine and the
- *  month's use, the session a `.term` names, and Start and Stop (docs/online-terminal.md
- *  4.5, 4.9 and 4.10; the routes are services/sync/src/machines/routes.ts). The terminal
- *  itself is the socket's; see link.ts.
- *
- *  Read rather than trusted, as every answer from the service is checked into its type
- *  or into null. */
-
 import {
   type Allowance,
   type Disk,
@@ -18,12 +10,8 @@ import { account } from '../account.svelte'
 import { ApiError, request } from '../api'
 import { isNumber, isRecord, isString } from '../stored'
 
-/** The server under a machine that is always on (4.15): its type, where it is, its cores,
- *  memory and disk in GB, and what it costs a month, as Hetzner said them when it was
- *  made. */
 interface ServerInfo {
   type: string
-  /** Hetzner's name for the place, `nbg1`; null from a service that does not say. */
   location: string | null
   cores: number
   memoryGb: number
@@ -35,27 +23,20 @@ interface ServerInfo {
 interface MachineInfo {
   id: string
   state: MachineState
-  /** Stopped by a flag, until it is let go (4.8). */
   held: boolean
   host: HostKind
   server: ServerInfo | null
-  /** The disk the home is on, as nibd last said it; null before it has. */
   disk: Disk | null
 }
 
-/** Everything Settings and the tab ask about: whether the account may have a machine at
- *  all, the machine if there is one yet, this month's use, its ceiling and when it starts
- *  again. */
 export interface Online {
   allowed: boolean
   machine: MachineInfo | null
   used: Allowance
   limit: Allowance
-  /** When the month's allowance starts again, in ms. */
   resets: number
 }
 
-/** Why the account would not do it, in the words the service refuses with. */
 export type Refused =
   'signed-out' | 'list' | 'allowance' | 'budget' | 'off' | 'flag' | 'sessions' | 'other'
 
@@ -103,8 +84,6 @@ function machineOf(value: unknown): MachineInfo | null {
   }
 }
 
-/** Hetzner's places by the city they are in, as Hetzner names them; a place not here is
- *  its own name. */
 const CITIES: Record<string, string> = {
   nbg1: 'Nuremberg',
   fsn1: 'Falkenstein',
@@ -114,12 +93,10 @@ const CITIES: Record<string, string> = {
   sin: 'Singapore',
 }
 
-/** Where a server is, for Settings' line about it. */
 export function cityOf(location: string): string {
   return CITIES[location] ?? location
 }
 
-/** The account's answer to `GET /v2/online/machine`, or null for one that does not read. */
 export function onlineOf(value: unknown): Online | null {
   if (!isRecord(value)) return null
   const used = allowanceOf(value.used)
@@ -136,11 +113,9 @@ export function onlineOf(value: unknown): Online | null {
 
 const REFUSALS: readonly Refused[] = ['list', 'allowance', 'budget', 'off', 'flag', 'sessions']
 
-/** A refusal as one of ours. */
 export function refusedOf(error: unknown): Refused {
   if (!(error instanceof ApiError)) return 'other'
   if (error.status === 401) return 'signed-out'
-  // Every route answers 404 while the service is off.
   if (error.status === 404) return 'off'
   const said = isRecord(error.body) && isString(error.body.error) ? error.body.error : ''
   return REFUSALS.find((one) => one === said) ?? 'other'
@@ -152,18 +127,10 @@ function token(): string {
   return now
 }
 
-/** The machine and the month. */
 export async function online(): Promise<Online | null> {
   return onlineOf(await request<unknown>('/v2/online/machine', { token: token() }))
 }
 
-/** The session a `.term` names, by the file's id on the account: made on the asker's own
- *  machine the first time - and the machine with it, if there is none yet - and the same
- *  one every time after; or `session`, the one the file's words name, where its owner
- *  made it on sync v1. A file the account has not been sent yet answers 404.
- *
- *  With no id (`null`), a new session of the asker's alone, in no space: what a device on
- *  sync v1 makes, whose files have no id the account knows. Its own id names its socket. */
 export async function termSession(term: string | null, session?: string): Promise<Term> {
   const said = await request<unknown>('/v2/online/terms', {
     method: 'POST',
@@ -175,7 +142,6 @@ export async function termSession(term: string | null, session?: string): Promis
   return found
 }
 
-/** Start or Stop; on a machine that is always on, Stop is Restart (4.15). */
 export async function startStop(start: boolean): Promise<void> {
   await request<unknown>(`/v2/online/machine/${start ? 'start' : 'stop'}`, {
     method: 'POST',
@@ -183,10 +149,6 @@ export async function startStop(start: boolean): Promise<void> {
   })
 }
 
-/** A session on the account's machine, as Settings lists it (`GET /v2/online/terms`): the
- *  `.term` that names it (null for one no file names any more, which can only be ended),
- *  where that file is on the account, and what the machine says of it now - null for
- *  `alive` where the machine could not be asked. */
 export interface Listed {
   term: string | null
   session: string
@@ -219,7 +181,6 @@ function listedOf(value: unknown): Listed | null {
   }
 }
 
-/** Every session the account answered about, read; the ones that do not read left out. */
 export function listOf(value: unknown): Listed[] {
   if (!isRecord(value) || !Array.isArray(value.terms)) return []
   return value.terms.flatMap((one) => {
@@ -228,13 +189,10 @@ export function listOf(value: unknown): Listed[] {
   })
 }
 
-/** The sessions on the account's machine, open in a tab or not. */
 export async function listed(): Promise<Listed[]> {
   return listOf(await request<unknown>('/v2/online/terms', { token: token() }))
 }
 
-/** A session ended, and its program: by its file's id, or by its own where no file names
- *  it. */
 export async function endSession(id: string): Promise<void> {
   await request<unknown>(`/v2/online/terms/${encodeURIComponent(id)}`, {
     method: 'DELETE',

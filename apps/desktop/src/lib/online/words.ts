@@ -1,8 +1,3 @@
-/** What a refusal says, wherever it is said: under a terminal's screen, in the sheet that
- *  answers New online terminal, and in Settings. One sentence each, or none for a refusal
- *  that needs no words - typing refused (the screen still shows), a frame too fast or too
- *  large, a rate a second press will not hit. */
-
 import type { Refusal } from '@orden/online/wire'
 import { t } from '../i18n.svelte'
 import type { Refused } from './calls'

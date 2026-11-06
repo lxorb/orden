@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { type EchoScreen, HIDE_UNDER, Predictor, SHOW_FROM } from './echo'
 
-/** A screen that prints what the machine would: characters at the cursor, a newline
- *  down to the next line's start. */
 class Screen implements EchoScreen {
   cols = 40
   private readonly lines: string[][] = [[]]
@@ -30,7 +28,6 @@ class Screen implements EchoScreen {
     }
   }
 
-  /** Something on the screen after the cursor that is not typed: a suggestion. */
   ahead(text: string) {
     const line = (this.lines[this.y] ??= [])
     for (let at = 0; at < text.length; at++) line[this.x + at] = text.charAt(at)
@@ -43,7 +40,6 @@ function world() {
   const predictor = new Predictor(() => now)
   const pass = (ms: number) => (now += ms)
   const shown = () => predictor.shown.map((guess) => guess.char).join('')
-  /** Keys typed one by one, each echoed after `latency`. */
   const typeEchoed = (text: string, latency: number) => {
     for (const char of text) {
       predictor.typed(char, screen, true)
@@ -55,8 +51,6 @@ function world() {
   return { screen, predictor, pass, shown, typeEchoed }
 }
 
-/** A link measured slow: enough echoes at `latency` that guessing ahead is worth it,
- *  then Enter and a fresh prompt. */
 function slow(latency = 120) {
   const it = world()
   it.screen.print('$ ')
@@ -85,7 +79,6 @@ describe('predictive echo', () => {
     predictor.typed('s', screen, true)
     expect(shown()).toBe('')
 
-    // The probe's echo: the machine echoes, so what follows it is drawn ahead.
     pass(120)
     screen.print('l')
     predictor.check(screen, true)
@@ -94,7 +87,6 @@ describe('predictive echo', () => {
     expect(shown()).toBe('s -la')
     expect(predictor.shown.map((guess) => guess.x)).toEqual([3, 4, 5, 6, 7])
 
-    // Each echo takes its guess away as it is drawn for real.
     screen.print('s -')
     predictor.check(screen, true)
     expect(shown()).toBe('la')
@@ -111,7 +103,6 @@ describe('predictive echo', () => {
       expect(shown()).toBe('')
       pass(50)
     }
-    // Nothing echoed in time: every guess goes.
     pass(1000)
     predictor.check(screen, true)
     expect(predictor.deadline).toBeNull()
@@ -125,7 +116,6 @@ describe('predictive echo', () => {
     predictor.typed('it', screen, true)
     expect(shown()).toBe('it')
 
-    // Somebody else typed, or the shell drew something else there.
     pass(120)
     screen.print('X')
     predictor.check(screen, true)
@@ -140,14 +130,11 @@ describe('predictive echo', () => {
     const { predictor, screen, pass, shown, typeEchoed } = slow()
     typeEchoed('l', 120)
     predictor.typed('s\rcd', screen, true)
-    // `s` was typed at the prompt and stays drawn; `cd` goes wherever Enter leaves the
-    // cursor, which is the shell's to say.
     expect(shown()).toBe('s')
     pass(120)
     screen.print('s\n')
     predictor.check(screen, true)
     expect(predictor.deadline).toBeNull()
-    // And the next key is a probe again.
     predictor.typed('x', screen, true)
     expect(shown()).toBe('')
   })

@@ -5,8 +5,6 @@ import type { Said } from '../terminal/source'
 import { termSession } from './calls'
 import { OnlineSource } from './source'
 
-/** The seams a start goes through under v2: the file's words, sync's id for it, the
- *  account's answer, and the write - the socket itself stays shut. */
 const seen = vi.hoisted((): { words: string | null; written: string[]; passes: number } => ({
   words: '',
   written: [],
@@ -63,7 +61,6 @@ const source = () =>
     { pages: false, native: false },
   )
 
-/** What the socket's frames become for the terminal, read off the source's own seam. */
 function hearing(frame: ServerFrame): Said[] {
   const said: Said[] = []
   ;(source() as unknown as { heard(frame: ServerFrame, said: (what: Said) => void): void }).heard(
@@ -87,8 +84,6 @@ describe('an online source told it is refused', () => {
   })
 })
 
-/** 2026-10-07: a `.term` made on sync v1 opened under v2 with a new shell beside its old
- *  one, which went on counting toward the eight. */
 describe('an online source starting under v2', () => {
   const asked = vi.mocked(termSession)
   const OLD = '{"v":1,"machine":"m1","session":"s_old"}\n'
@@ -127,8 +122,6 @@ describe('an online source starting under v2', () => {
   })
 })
 
-/** Issue 208: a new terminal asked the account for its file on a blind half second while
- *  sync sent it, which was most of its wait. */
 describe('an online source whose file the account does not have yet', () => {
   const asked = vi.mocked(termSession)
 
@@ -162,8 +155,6 @@ describe('an online source whose file the account does not have yet', () => {
   })
 })
 
-/** Issue 228: a picture pasted into an online terminal is written on the machine, and its
- *  path is what the terminal pastes. */
 describe('an online source carrying a picture up', () => {
   interface Inside {
     link: { say(frame: ClientFrame): boolean } | null

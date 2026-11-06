@@ -1,24 +1,4 @@
 <script lang="ts">
-  /** Settings, Online terminal: the reader's machine - its state, Start and Stop - and the
-   *  month's use as one bar per allowance (hours, CPU, home, the web), with the day it
-   *  starts again (docs/online-terminal.md 4.9, 4.10). A bar turns amber past 80%, which
-   *  is also when a tab's mark does.
-   *
-   *  A server of its own (4.15) has no allowance to meter: it is one line of what it is
-   *  and costs a month, Restart in place of Stop, and its disk, the bar that matters,
-   *  amber at 80% as every disk's is.
-   *
-   *  Laid out as every other pane is. The machine is one row of settings: its name and
-   *  what it is on the left, and at the end what it is doing beside what can be done
-   *  about it, as the AI pane's account rows are. The bars are a card of their own, with
-   *  the day they start again under it.
-   *
-   *  Under the machine, every session on it, a tab open on it or not, one row each: what
-   *  runs in it, the file's name and when it last printed, and at the end Open (its tab,
-   *  or a new one) and End, which ends its program and asks first as every ending does.
-   *  The list follows sessions made and ended on any device (sessions.svelte.ts).
-   *
-   *  Fetched as it is opened, never before. */
   import { i18n, t } from '../i18n.svelte'
   import { diskNear, diskShare, shares } from '@orden/online'
   import { prompt } from '../prompt.svelte'
@@ -43,8 +23,6 @@
 
   const rows = $derived(rowsOf(sessions.list ?? []))
 
-  /** Where Open goes for each session: its file on this disk, or nowhere - a file in the
-   *  trash, in a space this device does not sync, or no file at all. */
   const files = $derived(
     new Map(
       (sessions.list ?? []).map((one) => [
@@ -56,11 +34,9 @@
 
   const when = (stamp: number) => i18n.when(stamp, { dateStyle: 'short', timeStyle: 'short' })
 
-  /** The file's name and when it last printed, as the row's second line. */
   const detail = (row: SessionRow) =>
     [row.file, row.at === null ? null : when(row.at)].filter((one) => one !== null).join(' · ')
 
-  /** Its tab, in front, or a new tab for it, in the space it is in; Settings goes. */
   async function open(path: string) {
     const space = workspace.spaces.find((one) => within(one.root, path) !== null)
     if (space && space.id !== workspace.activeSpaceId) await workspace.showSpace(space.id)
@@ -82,22 +58,14 @@
   const awake = $derived(state === 'awake' || state === 'starting')
   const server = $derived(known?.machine?.host === 'hetzner')
 
-  /** Gigabytes as Hetzner counts them, whole. */
   const gb = (value: number) => `${i18n.amount(Math.round(value))} GB`
 
-  /** Bytes as the service counts them, in thousands rather than 1024s, so the month's
-   *  5 GB of home reads 5 GB and not 4.7; to one place under ten. */
   function bytes(value: number): string {
     const [amount, unit] = value >= 1e9 ? [value / 1e9, 'GB'] : [value / 1e6, 'MB']
     const shown = amount < 10 ? Math.round(amount * 10) / 10 : Math.round(amount)
     return `${i18n.amount(shown)} ${unit}`
   }
 
-  /** What the server is, where, and what it costs, one line:
-   *  CX43 · Falkenstein · 8 vCPU · 16 GB · 160 GB · €16.49 a month. Where the line has
-   *  to wrap, as it does beside the row's end on a phone, it wraps between two facts and
-   *  never inside one, with the dot at the end of a line rather than the start of the
-   *  next. */
   const spec = $derived.by(() => {
     const about = known?.machine?.server
     if (!about) return null
@@ -128,7 +96,6 @@
           : t('Asleep'),
   )
 
-  /** Hours, from seconds, to one place. */
   const hours = (seconds: number) =>
     i18n.amount(Math.round(seconds / (seconds < 36_000 ? 360 : 3600)) / (seconds < 36_000 ? 10 : 1))
 
@@ -270,9 +237,6 @@
 </div>
 
 <style>
-  /* The settings pane's own shapes, with the panel's values: a section in a component
-     of its own does not inherit the panel's rules, which are scoped to it. See
-     SettingsPanel.svelte, and AiPane.svelte, which does the same. */
   .online {
     display: flex;
     flex-direction: column;
@@ -280,7 +244,6 @@
     width: 100%;
   }
 
-  /* A run of rows. Plain on a desktop; a phone draws the box around it. */
   .card {
     display: flex;
     flex-direction: column;
@@ -299,7 +262,6 @@
     color: var(--muted);
   }
 
-  /* What the machine is doing, and what can be done about it, at the end of its row. */
   .row {
     flex: none;
     display: flex;
@@ -314,7 +276,6 @@
     width: 100%;
   }
 
-  /* One allowance: its name and its numbers on a line, the bar under them. */
   .meter {
     display: flex;
     flex-direction: column;
@@ -343,14 +304,10 @@
     line-height: 1.5;
   }
 
-  /* Under the card it explains, closer to it than the next group. */
   .hint.caption {
     margin-top: calc(-1 * var(--space-2));
   }
 
-  /* A phone draws the box, the touch row and the room inside the box, at the sizes
-     the panel's own cards have there. The sheet is the panel's, so that half of the
-     selector is global. */
   :global(.sheet.phone) .card {
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);

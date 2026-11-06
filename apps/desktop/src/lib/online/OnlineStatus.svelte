@@ -1,15 +1,4 @@
 <script lang="ts">
-  /** Over an online terminal until its session's screen is there: one line saying what
-   *  it waits on, with the line the app draws for work worth waiting on under it - or,
-   *  once the wait ended without the screen, why, and Try again, which Enter is too - or,
-   *  for a session that is no more, New online terminal in its place; for one another device
-   *  holds, who and since when, and Take over (Take back, where it was taken from here).
-   *  Centred over the pane, over the cached screen dimmed where there is one, and never
-   *  an empty pane in its place. See arrival.svelte.ts.
-   *
-   *  Held back a moment while it waits, so a socket that opens at once never flashes a
-   *  line at anyone; a failure is the answer and is shown at once. */
-
   import { t } from '../i18n.svelte'
   import Sweep from '../Sweep.svelte'
   import { type Status, statusLine } from './arrival.svelte'
@@ -18,7 +7,6 @@
 
   const failed = $derived('failed' in status)
   const gone = $derived('gone' in status)
-  // Another device holds the session (issue 1055): Take over, or Take back.
   const held = $derived('held' in status ? status : null)
 </script>
 
@@ -38,7 +26,6 @@
 </div>
 
 <style>
-  /* A floating layer's card, as the Reconnect bar is, in the middle of the pane. */
   .status {
     position: absolute;
     top: 50%;

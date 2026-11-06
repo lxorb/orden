@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { Arrival, BOOT_PATIENCE, heldLine, PATIENCE, statusLine } from './arrival.svelte'
 import { refusalWords } from './words'
 
-/** A clock that runs only when told: what is due, and the time it is due at. */
 function fakeClock() {
   let now = 0
   let due: { at: number; run: () => void }[] = []
@@ -52,7 +51,6 @@ describe('an online terminal on its way to its screen', () => {
   test('a machine asleep again after starting is a boot that failed, with Try again', () => {
     const { arrival } = arriving()
     arrival.linkedNow(true)
-    // Asleep from a restart before this wait is only how it was left, not a failure.
     arrival.machine('asleep', 'restart')
     expect(arrival.failure).toBeNull()
 
@@ -60,7 +58,6 @@ describe('an online terminal on its way to its screen', () => {
     arrival.machine('asleep', 'restart')
     expect(arrival.status).toEqual({ failed: 'Your machine could not start' })
 
-    // Try again is a new wait.
     arrival.begin()
     expect(arrival.status).toEqual({ waiting: 'connecting' })
   })
@@ -86,7 +83,6 @@ describe('an online terminal on its way to its screen', () => {
     arrival.linkedNow(true)
     clock.pass(PATIENCE - 1)
     arrival.machine('starting')
-    // A machine starting is given longer: its start is bounded on the server.
     clock.pass(BOOT_PATIENCE - 1)
     expect(arrival.failure).toBeNull()
 
@@ -158,7 +154,6 @@ describe('a terminal whose session is gone', () => {
     arrival.fail(refusalWords('gone') ?? '', true)
     expect(arrival.status).toEqual({ failed: 'This terminal is gone', gone: true })
 
-    // Nothing after it waits again or gives up a second time.
     arrival.heard()
     clock.pass(BOOT_PATIENCE)
     expect(arrival.status).toEqual({ failed: 'This terminal is gone', gone: true })

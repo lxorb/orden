@@ -17,8 +17,6 @@ describe('an online terminal, told apart', () => {
     expect(isOnlineTab({ kind: 'note', path: '/n/Terminal.term' })).toBe(false)
   })
 
-  /** Not saved yet (issue 1055): no file, its words a `.term`'s; a local shell's words
-   *  are its spec, which is no `.term`. */
   test('or one not saved yet, whose words name its session', () => {
     const words = '{"v":1,"machine":"m_1","session":"s_1"}\n'
     expect(isOnlineTab({ kind: 'terminal', path: null, doc: words })).toBe(true)
@@ -26,7 +24,6 @@ describe('an online terminal, told apart', () => {
     expect(isOnlineTab({ kind: 'note', path: null, doc: words })).toBe(false)
   })
 
-  /** The file's name is the tab's, unless it is still the one it was made with. */
   test('is called by its file, unless that is still the name it was made with', () => {
     expect(termName('Build.term')).toBe('Build')
     expect(isMadeName('Terminal.term')).toBe(true)
@@ -37,7 +34,6 @@ describe('an online terminal, told apart', () => {
 })
 
 describe('Resume', () => {
-  /** Exactly the commands docs/online-terminal.md 4.7 names. */
   test('types each agent its own continue command', () => {
     expect(resumeCommand('claude')).toBe('claude --continue')
     expect(resumeCommand('codex')).toBe('codex resume --last')
@@ -67,7 +63,6 @@ describe("the account's answer about the machine", () => {
     })
   })
 
-  /** A server of its own (4.15): what it is, what it costs, and how full its disk is. */
   test('with the server under it and its disk', () => {
     const server = {
       type: 'cx43',
@@ -95,7 +90,6 @@ describe("the account's answer about the machine", () => {
       machine: { ...month.machine, host: 'hetzner', server: { ...server, price: null } },
     })?.machine
     expect(unpriced?.server?.price).toBeNull()
-    // A service from before it said where.
     const unplaced = onlineOf({
       ...month,
       machine: { ...month.machine, host: 'hetzner', server: { ...server, location: undefined } },
@@ -123,7 +117,6 @@ describe("the account's answer about the machine", () => {
 describe('a session on sync v1, which has no file id', () => {
   const made = { v: 1 as const, machine: 'm1', session: 's_new' }
 
-  /** A file with the words given, and what was made and written. */
   function file(words: string | null) {
     const did = { made: 0, written: [] as string[] }
     return {
@@ -168,7 +161,6 @@ describe('a session on sync v1, which has no file id', () => {
 })
 
 describe('the program in front of an online terminal', () => {
-  /** nibd names the program and leaves the mark to the app, as a local terminal's. */
   test('wears the mark its name gives, the shell’s otherwise', () => {
     expect(terminalMark('', 'claude')).toBe('claude')
     expect(terminalMark('', 'codex')).toBe('codex')

@@ -24,7 +24,6 @@ describe('a session as a row', () => {
       'Fix the build',
     )
     expect(rowOf(listed({ program: 'vim' })).name).toBe('vim')
-    // A title with nobody in front is the shell's own, never a name.
     expect(rowOf(listed({ title: 'nib@machine: ~' })).name).toBe('Terminal 2')
     expect(rowOf(listed({ term: null, path: null })).name).toBeNull()
   })

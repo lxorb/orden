@@ -1,7 +1,6 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 import type { Listed } from './calls'
 
-/** The account's sessions, as the fake account has them now. */
 let there: Listed[] = []
 const ended: string[] = []
 const listeners = new Map<string, () => void>()

@@ -1,9 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
-/** A new online terminal is a tab like any other (issue 1055): not saved, no file, no row
- *  in the list - its words naming its session - until the reader saves it, which writes
- *  its `.term` where they say. A space shared to be read takes no file. */
-
 const readOnly = vi.hoisted(() => new Set<string>())
 const written = vi.hoisted(() => [] as { path: string; text: string }[])
 

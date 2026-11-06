@@ -1,40 +1,3 @@
-/** The socket from one online terminal to its session (docs/online-terminal.md 4.6): the
- *  account's `Machine` at `/v2/online/:term/socket`, which checks the space's role and
- *  passes the session's output on.
- *
- *  - **Opening** says `hello` with the screen's size and, after a drop, the offset of the
- *    first byte not yet drawn, so a reconnect is sent only what it missed - or the whole
- *    screen, where that is no longer kept.
- *  - **Output** is a binary frame, its offset and its bytes. A frame from before the
- *    offset (sent again across a reconnect) loses what was drawn; a screen starts the
- *    count again at its own.
- *  - **One device at a time** (issue 1055): the hello says it takes part in the session's
- *    lock. Held off by another device, it is told so and sent nothing; `take` asks for
- *    the session, and once it holds it (`hold`) it says hello again, with what it last
- *    drew, and is sent the rest. Closing it says `leave`, so the session is free at once
- *    rather than after the grace a drop is given.
- *  - **Dropping** brings it back by itself, sooner first and then less often: a laptop
- *    that slept, a train in a tunnel. Not after a refusal that waiting cannot change - no
- *    role, not on the list, the month's hours used - which waits for the reader instead.
- *  - **A heartbeat** every ten seconds, which the `Machine` answers without waking: a
- *    socket that has heard nothing for three of them is dead whether or not the browser
- *    ever says so - a laptop's Wi-Fi on a plane, a network that changed under it - and
- *    is dropped and made again, so a terminal never looks live on a dead socket.
- *  - **A quick look** where three beats would be felt (issue 208): the network coming
- *    back, the window looked at again, a computer waking from sleep (a beat that fires
- *    far later than it was set for), and keys typed. A beat goes at once, and a socket
- *    that answers nothing within `PROBE_WITHIN` is dropped and made again. A wait
- *    between tries is cut short then, and a socket still being made on the network that
- *    was is made again; one that never opens is given up after `OPEN_WITHIN` rather than
- *    left to the browser, which can wait minutes on a network that went.
- *
- *  Pure of the page: the socket, the clock and the token are the world's, so the tests
- *  drive it with a fake (link.test.ts).
- *
- *  All of that but what the frames are is `Channel`'s, which an application's socket
- *  is made of too (apps/link.ts, issue 1063): its own frames, the same lock, the same
- *  beats, looks and tries. */
-
 import {
   type ClientFrame,
   outOf,
@@ -46,17 +9,14 @@ import {
 import { BEAT } from '@orden/sync-core/wire'
 import { BEAT_EVERY, linkDelay } from '../backoff'
 
-/** What a socket looks like from here; the browser's, or the tests'. */
 export interface LinkSocket {
   readonly open: boolean
-  /** Bytes sent and not yet on the network. */
   readonly buffered: number
   send(data: string | Uint8Array): void
   close(): void
 }
 
 export interface LinkWorld {
-  /** The service's address, `https://...`. */
   base: string
   token(): string | null
   device(): Promise<string>
@@ -69,61 +29,37 @@ export interface LinkWorld {
       closed(code: number): void
     },
   ): LinkSocket
-  /** Calls `run` after `ms`; answers what cancels it. */
   after(ms: number, run: () => void): () => void
-  /** The time, in ms. */
   now(): number
-  /** Whether the window is out of sight. */
   hidden(): boolean
-  /** Calls `back` when the network comes back or the window is looked at again;
-   *  answers what stops that. */
   watch(back: () => void): () => void
 }
 
-/** What any channel tells its owner besides its frames: the socket is open and said
- *  hello, or it dropped and is coming back by itself. */
 export type Opened = { t: 'open' } | { t: 'dropped' }
 
-/** What the link tells the terminal. */
 export type Heard = { t: 'out'; data: Uint8Array } | ServerFrame | Opened
 
-/** Beats with nothing heard after which a socket is counted dead. */
 const SILENT_BEATS = 3
 
-/** How long a quick look waits for anything at all: the `Machine`'s runtime answers a
- *  beat at once, so a second or two is the network's own slowness, and more is a socket
- *  that is gone. */
 export const PROBE_WITHIN = 3_000
 
-/** How long a socket may take to open: the door's checks and the `Machine`'s welcome
- *  take well under a second, so this is a network that went while it was being made. */
 export const OPEN_WITHIN = 10_000
 
-/** A beat this much later than it was set for is a computer that slept in between: the
- *  socket it had is most likely gone. */
 const SLEPT = BEAT_EVERY
 
-/** Refusals that the same socket, asked again later, would get again. */
 const FINAL: readonly Refusal[] = ['gone', 'list', 'allowance', 'budget', 'off', 'flag']
 
-/** A socket that comes back by itself, beats and is looked at, and takes part in its
- *  session's lock: everything about one but its frames, which `In` and `Out` are. */
 export abstract class Channel<In extends { t: string }, Out extends { t: string }> {
   private socket: LinkSocket | null = null
   private retry: (() => void) | null = null
   private tries = 0
   private closed = false
-  /** Whether a refusal that waits for the reader was given. */
   private stopped = false
-  /** Beats since anything was heard, and what stops the next one. */
   private quiet = 0
   private stopBeat: (() => void) | null = null
-  /** What gives up on a quick look, while one waits for an answer. */
   private probing: (() => void) | null = null
-  /** What gives up on a socket that has not opened yet, and when it was begun. */
   private opening: (() => void) | null = null
   private madeAt = 0
-  /** What stops listening for the network and the window. */
   private unwatch: (() => void) | null = null
 
   constructor(
@@ -132,26 +68,18 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
     protected readonly heard: (what: In | Opened) => void,
   ) {}
 
-  /** The socket's address, from the service's root, for the name it was made with. */
   protected abstract path(name: string): string
-  /** The hello it opens with, and says again once handed the session. */
   protected abstract helloFrame(): Out
-  /** A message as the frame it is, or null for one to drop. */
   protected abstract read(data: string | ArrayBuffer): In | null
-  /** Whether a frame is a refusal that asking again would get again. */
   protected abstract final(frame: In): boolean
-  /** Whether a frame from up is typing, which a socket that is gone would swallow. */
   protected typing(_frame: Out): boolean {
     return false
   }
 
-  /** Subprotocols it names besides the token and the device: an application's host
-   *  names its role (`nib.role.host`, apps/host.svelte.ts). */
   protected role(): string[] {
     return []
   }
 
-  /** Opens it; and again, after a refusal that waited for the reader. */
   open(): void {
     this.closed = false
     this.stopped = false
@@ -163,9 +91,6 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
     this.connect()
   }
 
-  /** The network came back or the window is looked at again: an open socket is looked
-   *  at, a socket still being made on the network that was is made again, and a wait
-   *  between tries is cut short. Nothing after a refusal, or once closed. */
   private back(): void {
     if (this.closed || this.stopped) return
     const socket = this.socket
@@ -174,7 +99,6 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
       return
     }
     if (socket) {
-      // One begun a moment ago is left to finish: a click on the window is no news.
       if (this.world.now() - this.madeAt < PROBE_WITHIN) return
       this.tries = 0
       this.drop(socket, true)
@@ -223,7 +147,6 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
             },
           })
         } catch {
-          // An address the page will not open a socket to: tried again, as a drop is.
           this.again()
           return
         }
@@ -241,8 +164,6 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
     )
   }
 
-  /** The next beat, and a socket silent for `SILENT_BEATS` of them dropped and made
-   *  again. Anything heard is an answer: the `ok` to a beat, output, a frame. */
   private beat(socket: LinkSocket): void {
     this.stopBeat?.()
     const set = this.world.now()
@@ -250,7 +171,6 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
       this.stopBeat = null
       if (this.socket !== socket) return
       this.beat(socket)
-      // Asleep in between: whatever the count says, the socket is asked now.
       if (this.world.now() - set > BEAT_EVERY + SLEPT) {
         this.probe()
         return
@@ -264,8 +184,6 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
     })
   }
 
-  /** A beat now, and the socket dropped and made again if nothing at all comes back
-   *  within `PROBE_WITHIN`; one look at a time, and only at a socket that is open. */
   private probe(): void {
     const socket = this.socket
     if (!socket?.open || this.probing) return
@@ -273,9 +191,6 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
     this.answer(socket)
   }
 
-  /** The look's deadline. A socket still sending - a long paste on a slow uplink, the
-   *  beat behind it - is given another while it does; one that is gone is still caught
-   *  by its silent beats. */
   private answer(socket: LinkSocket): void {
     this.probing = this.world.after(PROBE_WITHIN, () => {
       this.probing = null
@@ -285,15 +200,12 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
     })
   }
 
-  /** A socket given up on: closed, and made again - at once with `now`. */
   private drop(socket: LinkSocket, now = false): void {
     this.socket = null
     socket.close()
     this.again(now)
   }
 
-  /** Back after a wait that grows with each try - or at once with `now` - unless it was
-   *  closed or refused. */
   private again(now = false): void {
     this.stopBeat?.()
     this.stopBeat = null
@@ -314,7 +226,6 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
     })
   }
 
-  /** A frame up, where the socket still takes one. */
   private send(socket: LinkSocket, data: string | Uint8Array): void {
     try {
       socket.send(data)
@@ -326,24 +237,18 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
   private hear(data: string | ArrayBuffer): void {
     const frame = this.read(data)
     if (!frame) return
-    // Held off until now: what it missed is asked for as on any other hello.
     if (frame.t === 'hold') this.hello()
     if (this.final(frame)) this.stopped = true
     this.heard(frame)
   }
 
-  /** A frame up, if the socket is open; nothing waits for one that is not, since what
-   *  the reader typed into a dropped terminal is not what they would type into the
-   *  screen they will see when it is back. */
   say(frame: Out): boolean {
     if (!this.socket?.open) return false
     this.send(this.socket, JSON.stringify(frame))
-    // Keys going into a socket that is gone would be felt at once: looked at now.
     if (this.typing(frame)) this.probe()
     return true
   }
 
-  /** Bytes up, as they were made. */
   protected sayRaw(bytes: Uint8Array): boolean {
     if (!this.socket?.open) return false
     this.send(this.socket, bytes)
@@ -351,20 +256,17 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
     return true
   }
 
-  /** The hello a socket opens with, and that it takes part in the session's lock. */
   private hello(): void {
     if (!this.socket?.open) return
     this.send(this.socket, JSON.stringify(this.helloFrame()))
   }
 
-  /** Take over: the session handed to this device, where another holds it. */
   take(): boolean {
     if (!this.socket?.open) return false
     this.send(this.socket, JSON.stringify({ t: 'take' }))
     return true
   }
 
-  /** Whether it is open now. */
   get live(): boolean {
     return this.socket?.open === true
   }
@@ -383,15 +285,12 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
     this.unwatch = null
     const socket = this.socket
     this.socket = null
-    // The session let go of now, for another device to have at once.
     if (socket?.open) this.send(socket, JSON.stringify({ t: 'leave' }))
     socket?.close()
   }
 }
 
-/** The socket from one online terminal to its session. */
 export class Link extends Channel<Exclude<Heard, Opened>, ClientFrame> {
-  /** The offset of the first byte not drawn, once anything has been. */
   private since: number | null = null
   private size: { cols: number; rows: number }
 
@@ -410,7 +309,6 @@ export class Link extends Channel<Exclude<Heard, Opened>, ClientFrame> {
     return socketPath(term)
   }
 
-  /** The screen's size, the offset drawn up to, and that it takes part in the lock. */
   protected helloFrame(): ClientFrame {
     return {
       t: 'hello',
@@ -425,7 +323,6 @@ export class Link extends Channel<Exclude<Heard, Opened>, ClientFrame> {
       const out = outOf(new Uint8Array(data))
       if (!out) return null
       const end = out.seq + out.data.length
-      // Drawn already, all or some of it: what a reconnect sends again.
       if (this.since !== null && end <= this.since) return null
       const skip = this.since === null ? 0 : Math.max(0, this.since - out.seq)
       this.since = end
@@ -444,12 +341,10 @@ export class Link extends Channel<Exclude<Heard, Opened>, ClientFrame> {
     return frame.t === 'in'
   }
 
-  /** Bytes up, as they were made: a key xterm.js encoded itself. */
   sayBytes(bytes: Uint8Array): boolean {
     return this.sayRaw(bytes)
   }
 
-  /** The screen's size here, said now and with every hello after. */
   resize(cols: number, rows: number): void {
     if (cols === this.size.cols && rows === this.size.rows) return
     this.size = { cols, rows }
@@ -457,7 +352,6 @@ export class Link extends Channel<Exclude<Heard, Opened>, ClientFrame> {
   }
 }
 
-/** The page's world: the browser's socket and clock. */
 export function pageWorld(
   base: string,
   token: () => string | null,
@@ -480,7 +374,6 @@ export function pageWorld(
       socket.onclose = (event) => {
         events.closed(event.code)
       }
-      // A socket that failed reports an error and then a close; the close brings it back.
       socket.onerror = () => undefined
       return {
         get open() {
