@@ -10,15 +10,6 @@ import { CSP } from './src/csp'
 
 const host = process.env.TAURI_DEV_HOST
 
-/** The version this build is, as the installer and the updater know it.
- *
- *  A build of main is given its number on the command line (`tauri build --config
- *  '{"version":"0.13.1-573"}'`, scripts/build-version.sh), and the Tauri CLI hands that
- *  to this build as `TAURI_CONFIG`. The file only says the last release, so every build
- *  of main said `0.13.0` to the account's hub, and the account could not tell a build
- *  with the sync v2 fixes from one without (services/sync/src/sync2/gate.ts). A build
- *  with no number given, the web's included, says the last release: never more than
- *  it is. */
 function appVersion(): string {
   try {
     const given: unknown = JSON.parse(process.env.TAURI_CONFIG ?? '{}')
@@ -30,29 +21,11 @@ function appVersion(): string {
   return tauri.version
 }
 
-/** Which code this is, in one line, baked in where a screenshot can read it.
- *
- *  A build installed on a phone has no other way of saying which build it is,
- *  and "did the new one actually reach the device" is the first question when
- *  nothing appears to have changed. The app puts it on `window.nibBuild`; see
- *  src/main.ts.
- *
- *  `serving` is the difference between a bundle and a dev server, and it is the
- *  whole point of this function rather than a detail of it. A bundle is the
- *  commit it was built from, for as long as it exists. A dev server reads its
- *  config once and then serves whatever is on disk for days, so the commit read
- *  here names the moment the server started and says nothing about the code it is
- *  handing out now. A server two days old was found serving code from an hour
- *  ago, and a stamp that answered with the older sha would have sent whoever
- *  asked looking for a bug in the wrong commit. So it does not answer: it says
- *  what it actually knows, which is when the server started. */
 function stamp(serving: boolean): string {
   if (serving) return `${manifest.version} dev server started ${when()}`
   return `${manifest.version} ${commit(false) || 'unknown'} ${when()}`
 }
 
-/** The commit a bundle was built from, short, or nothing: from a dev server, for the
- *  reason above, and from a tree with no git in it, which still builds. */
 function commit(serving: boolean): string {
   if (serving) return ''
   try {
@@ -66,14 +39,9 @@ function when(): string {
   return `${new Date().toISOString().slice(0, 16)}Z`
 }
 
-/** Every rule about `#write` reaching every page a note is on, in the app's own
- *  stylesheets and in each component's: the app has several of those pages at once and
- *  only one of them can be the id. The sheets say `#write`, as Typora and every theme
- *  do, and an exported or a published note keeps its one; see @orden/themes/write. */
 const everyPage = {
   postcssPlugin: 'nib-every-page',
   Rule(rule: { selector: string }) {
-    // Only when it changes: a rule that changed is visited again.
     const wide = everySurface(rule.selector)
     if (wide !== rule.selector) rule.selector = wide
   },
@@ -81,30 +49,11 @@ const everyPage = {
 
 export default defineConfig(({ command, mode }) => ({
   plugins: [svelte(), emojiOutlines()],
-  // This build is the editor: on the desktop, on the web, in the presenter's
-  // window, and on the `/even/` page the web serves. The package that goes on a
-  // phone is built by `vite.even.config.ts`, which sets the second of these true
-  // and leaves out what a pair of glasses cannot use.
-  // `__DRIVEABLE__` is on while a dev server serves, in `--mode drive` and in a
-  // development build, and off in a release. See env.d.ts for what it guards and why
-  // a release must not.
-  //
-  // Development is in the list because that is what the eighty-nine drives beside
-  // smoke.py build for themselves, and `command` is `build` for every one of them:
-  // with only `serve` and `drive` on the list the handles were stripped out of the
-  // very build those drives then waited for, and each of them sat there until it
-  // gave up waiting for the app. `drive` is still the one that matters - it is the
-  // shipping shape - and this only says that a build nobody ships may be steered.
   define: {
     __EVEN_BUILD__: JSON.stringify(stamp(command === 'serve')),
     __EVEN_PLUGIN__: 'false',
-    // The version the installer carries: under the name on the space chooser, where
-    // Obsidian's vault chooser says its own, and in the hub's hello (sync2/hub.svelte.ts).
     __APP_VERSION__: JSON.stringify(appVersion()),
-    // Which commit it is, beside the version in Settings (settings/version.svelte.ts).
     __APP_COMMIT__: JSON.stringify(commit(command === 'serve')),
-    // Whether Settings > AI offers Claude Code. On unless the build is made with
-    // `NIB_CLAUDE_CODE=off`, which the crate reads too; see env.d.ts and docs/ai.md.
     __CLAUDE_CODE__: JSON.stringify(
       !['off', '0', 'false'].includes(process.env.NIB_CLAUDE_CODE ?? ''),
     ),
@@ -114,13 +63,6 @@ export default defineConfig(({ command, mode }) => ({
   },
   css: { postcss: { plugins: [everyPage] } },
   clearScreen: false,
-  // The same policy the installed app is served with. `tauri dev` loads the dev
-  // server rather than the bundle, so without this the app being worked on is a
-  // looser app than the one that ships - and a policy nobody develops under is a
-  // policy that breaks on the day it is turned on. These two send it as a header,
-  // so they get the form with `frame-ancestors` in it: the meta in index.html
-  // cannot carry that directive and the browser says so out loud when it tries.
-  // See src/csp.ts.
   server: {
     port: 1420,
     strictPort: true,
@@ -136,21 +78,6 @@ export default defineConfig(({ command, mode }) => ({
   build: {
     target: 'esnext',
     sourcemap: !!process.env.TAURI_ENV_DEBUG,
-    // Four pages out of one bundle: the editor, the window a presenter reads
-    // their notes in, the global quick add window, and the plugin's page as the web
-    // serves it at `/even/`. The presenter's window and quick add's carry none of the
-    // app; see docs/slides.md and docs/tasks.md 5.6.
-    //
-    // `even.html` is here so that opening `/even/` in a phone's browser reaches a
-    // page with the bridge in it, which is how the glasses are tried without
-    // packing anything. It is *not* what goes on a phone: the package is built by
-    // `vite.even.config.ts`, which leaves out what a pair of glasses cannot use,
-    // and the browser drive runs that build rather than this page. One bundle
-    // cannot leave something out of one of its entries, which is why there are two
-    // builds at all. See docs/even.md.
-    //
-    // `handoff.html` is the old address's page that hands a browser's notes to the
-    // new one; the assets router answers `/handoff` with it. See src/lib/web/handoff.ts.
     rollupOptions: {
       input: {
         main: resolve(import.meta.dirname, 'index.html'),

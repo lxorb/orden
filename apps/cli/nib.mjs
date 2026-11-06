@@ -1,31 +1,4 @@
 #!/usr/bin/env node
-/** `orden`, and `nib` under the name it had before: the running app, from a terminal.
- *
- *  What it is, in one line: a request to the socket the app opened on 127.0.0.1,
- *  with the secret out of the app's own config folder, and whatever the app said
- *  printed back. Every verb happens inside the app - the same call the palette, a
- *  key or a click would make - so a note this writes is a note that appears on
- *  screen, is undoable and syncs. The whole of what the verbs are lives in the
- *  app; see apps/desktop/src/lib/automation/verbs.ts.
- *
- *  What is deliberately not here: any knowledge of what a verb does. This script
- *  turns words into `{ verb, args, rest }`, sends it, and prints. That is why it
- *  can stay this short, and why it cannot come to a different answer from the app
- *  about anything. `orden help` asks the app for the list of verbs, so even the help
- *  is the app's answer rather than a second copy of it.
- *
- *  Where it ships: nowhere, on purpose, and that is the lightest thing it could be.
- *  A sidecar would be a second compiled binary in every installer on every platform
- *  for something almost nobody runs, and a sidecar is the only way an installer can
- *  ship a command at all. Node is already this repository's answer for driving Orden
- *  without the app - see scripts/nib-sync.mjs - so this is a Node script beside it.
- *  Run it as `node apps/cli/nib.mjs ...`, or put it on the path with
- *  `pnpm --filter @orden/cli link --global`.
- *
- *  There is no browser build of this and there never will be: a tab has no socket
- *  to listen on. `orden` against the web app says so rather than failing to connect.
- *
- *  Usage, and the security notes: docs/automation.md. */
 
 import { spawnSync } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
@@ -33,9 +6,6 @@ import { homedir, platform, tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-/** Where the app writes the port and the secret, per platform. The same folder
- *  Tauri's own `app_config_dir` answers with for this identifier; see
- *  src-tauri/src/endpoint.rs. */
 function endpointFile() {
   if (process.env.NIB_ENDPOINT) return process.env.NIB_ENDPOINT
 
@@ -55,22 +25,6 @@ function endpointFile() {
   return join(config, identifier, 'automation.json')
 }
 
-/** The words a caller typed, as something to send.
- *
- *  `orden files read notes/plan.md --json` becomes the verb `files`, the rest
- *  `['read', 'notes/plan.md']` and the flag `json`, which is this script's rather
- *  than the app's. The app joins the first two into `files.read` itself, because
- *  the app is the one that knows which verbs are written as two words; see
- *  `dispatch` in the automation folder.
- *
- *  `--name value` is a named argument; `--name` on its own is a yes, the same way a
- *  query string writes one. A value may start with dashes - a note's front matter
- *  opens with `---` - so only a word that reads as a flag ends one.
- *
- *  `--help` and `-h` ask for the help only where a flag goes: the value of a flag is
- *  that value, so `orden append log.md --content -h` appends `-h`. And a bare `--` is
- *  the end of the flags, as everywhere else on a command line: every word after it is
- *  a word, whatever it starts with. */
 const FLAG = /^--[a-z]/i
 
 function parseArgv(argv) {
@@ -125,8 +79,6 @@ function parseArgv(argv) {
   return { verb, args, rest, ...mine }
 }
 
-/** What `orden --help` prints when the app is not there to answer. Short on purpose:
- *  the reference is docs/automation.md, and the list of verbs is the app's. */
 const USAGE = `orden - drive the running Orden
 
   orden <verb> [words...] [--name value] [--json] [--yes]
@@ -185,7 +137,6 @@ async function main() {
   return show(answered, asked)
 }
 
-/** The help, with the app's own list of verbs under it when the app is running. */
 async function help() {
   console.log(USAGE)
 
@@ -195,8 +146,6 @@ async function help() {
   return 0
 }
 
-/** `files write --from FILE`, or `--from -` for what is on the standard input, so
- *  a note does not have to be a shell argument. */
 async function fromFile(asked) {
   const from = asked.args.from
   if (from === undefined) return
@@ -215,7 +164,6 @@ function readStdin() {
   })
 }
 
-/** One request to the app. */
 async function ask(verb, args, rest) {
   const { port, secret } = await endpoint()
 
@@ -249,36 +197,14 @@ async function endpoint() {
   const { port, secret, pid } = JSON.parse(held)
   if (!port || !secret) throw new Error(`${path} says no port or no secret`)
 
-  // The process that wrote this file is the process listening on that port, which is
-  // what `screenshot` needs: two nibs can be running and only one of them answered.
   return { port, secret, pid }
 }
 
-/** A picture of the window.
- *
- *  The app says where its window is; the picture is taken by the platform, because
- *  a webview cannot photograph the window it is drawn in.
- *
- *  Windows is handed the pid the app wrote beside its port, so the window in the picture
- *  is the window of the app that answered - two nibs can be running, and going by name
- *  photographed whichever Windows listed first. The script asks that window to draw
- *  itself rather than copying the screen, so nothing in front of it lands in the file,
- *  and it raises nothing: a screenshot must not take the keyboard off whatever somebody
- *  is typing in.
- *
- *  macOS is handed the same pid, and `screencapture -l` the number of that process's
- *  window, which it draws on its own: copying the rectangle off the screen put whatever
- *  was in front of the window into the picture, a system dialog or another app's
- *  window over a corner. Linux is told the truth: X11 and Wayland have no one tool
- *  between them, so there is nothing honest to shell out to. */
 async function screenshot(asked) {
   const out = asked.out ?? join(tmpdir(), 'nib-window.png')
   const rect = await ask('window', {}, [])
   if (!rect.ok) return show(rect, asked)
 
-  // A pid or nothing. The window is found by pid and never by name, because a name once
-  // matched another application's window entirely; an endpoint file with no pid in it
-  // is an app too old to say which window is its own.
   const byPid = platform() === 'win32' || platform() === 'darwin'
   const { pid } = byPid ? await endpoint() : {}
   if (byPid && !pid)
@@ -307,7 +233,6 @@ async function screenshot(asked) {
     if (ran.status !== 0) throw new Error(ran.stderr.trim() || 'the capture failed')
   } else if (platform() === 'darwin') {
     const id = macWindow(pid, rect.value)
-    // `-o` leaves the shadow out, so the picture is the window's own size.
     const ran = spawnSync('screencapture', ['-x', '-o', `-l${id}`, out], { encoding: 'utf8' })
     if (ran.status !== 0) throw new Error(ran.stderr.trim() || 'the capture failed')
   } else {
@@ -319,10 +244,6 @@ async function screenshot(asked) {
   return show({ ok: true, value: { file: out, ...rect.value } }, asked)
 }
 
-/** The window server's number for the window of `pid` that is where the app said its
- *  window is, in points: the process has a few windows nobody sees besides the one it
- *  draws in. Asked of CoreGraphics through JavaScript for Automation, which every Mac
- *  has, so the command line still needs nothing installed. */
 const MAC_WINDOWS = `ObjC.import('CoreGraphics')
 function run(argv) {
   const all = ObjC.deepUnwrap(ObjC.castRefToObject($.CGWindowListCopyWindowInfo($.kCGWindowListOptionOnScreenOnly, 0)))
@@ -345,11 +266,6 @@ function macWindow(pid, { x, y, width, height, scale }) {
   return found.id
 }
 
-/** What the app said, printed.
- *
- *  `--json` is the whole answer as it came. Without it the answer is read for the
- *  shape it has: a list of things becomes a line each, and anything else becomes
- *  its own fields, because a wall of JSON is not an answer to a person. */
 function show(answered, asked) {
   if (asked.json) {
     console.log(JSON.stringify(answered, null, 2))
@@ -383,8 +299,6 @@ function show(answered, asked) {
   return 0
 }
 
-/** One row of a list, as a line. A string is itself; anything else is its values
- *  with tabs between them, which is what a shell can cut on. */
 function asLine(one) {
   if (one === null || typeof one !== 'object') return String(one)
 
