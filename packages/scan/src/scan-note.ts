@@ -1,11 +1,3 @@
-/** One note read into what the link index holds.
- *
- *  The same shape the desktop's `scan_links` returns, and the same reading: the
- *  browser's stand-in for that command uses this for every note in its store, and
- *  the index uses it again for the one note that has just been saved. One
- *  function, so a note re-read after a save cannot come back looking different
- *  from the same note read by the first scan. */
-
 import { COVER_KEY } from '@orden/markdown/cover'
 import { frontMatterList, frontMatterValue, stripFrontMatter } from '@orden/markdown/front-matter'
 import { blockIds, findLinks, headingsOf, type LinkKind } from '@orden/markdown/links'
@@ -13,18 +5,9 @@ import type { ScannedTask, Stamp } from '@orden/bases/scan'
 import { tagsIn } from './search/tags'
 import { readWebFile } from './shortcut'
 
-/** The two keys a note keeps this under, and the names the same two things go by in
- *  a canvas's `nib` key and in a space's own store.
- *
- *  Written out here, beside the scan, because three readers have to agree on them:
- *  the writer (the app's icons.ts), the scan that reads a whole space, and the Rust
- *  twin of that scan. `icon` is Obsidian's Iconize spelling, which is the point of it;
- *  the colour is hyphenated beside it in the way YAML keys in a note usually are. */
 export const ICON_KEY = 'icon'
 export const ICON_COLOUR_KEY = 'icon-color'
 
-/** One link out of a note. Named for the shape below rather than for a caller:
- *  everything outside reads a whole note, never one of its links. */
 interface ScannedLink {
   kind: LinkKind
   target: string
@@ -32,75 +15,25 @@ interface ScannedLink {
   block: string | null
   alias: string | null
   embed: boolean
-  /** The line it sits on, counting from zero. */
   line: number
-  /** The line itself, so a row in the Links panel reads like the note. */
   text: string
 }
 
 export interface ScannedNote {
-  /** Relative to the space, `/`-separated, which is how a link speaks of it. */
   path: string
-  /** The file's name without its extension, which is what a link uses. */
   name: string
   headings: string[]
   blocks: string[]
   links: ScannedLink[]
-  /** The tags the note carries, folded and without the hash, each once - which is
-   *  what the `tag:` operator compares against. Read on this pass because the
-   *  space is already being read, and because the picture of the space colours and
-   *  filters by them: a graph that had to ask the disk which notes carry `#work`
-   *  would ask once per note. */
   tags: string[]
-  /** What the note's front matter says it wears in the file list, as written, or
-   *  null where it says nothing. Read in this pass rather than in one of its own:
-   *  every row of the tree wants it, and the space has already been read here. */
   icon: string | null
-  /** The colour a stroked icon is drawn in, as written, or null. A second key
-   *  rather than part of the first so that another app reading the note still finds
-   *  the icon; see chosen-icon.ts. */
   iconColor: string | null
-  /** The other names the note gave itself, as its front matter lists them.
-   *  Read on this pass for the same reason the icon is: the space is already
-   *  being read. */
   aliases: string[]
-  /** The address the note points at, for a note that is a website rather than
-   *  words: `url:` in its front matter. Null for every ordinary note.
-   *
-   *  Read on this pass for the reason the icon is, and read at all because it is
-   *  what tells the two apart: the row wears a globe and a click on it opens a web
-   *  tab. The twin of the same field in links.rs. See web-tab/note.ts. */
   url: string | null
-  /** The site's own mark, as an address: a website's `Nib-Icon`, so the file list
-   *  draws the favicon in front of the row rather than the plain globe - before the
-   *  page has loaded and on a machine that has never opened it. Null for every note
-   *  and canvas, and for a website nobody has followed a link out of yet. The twin of
-   *  the same field in links.rs. See @orden/scan/shortcut. */
   favicon: string | null
-  /** Where a website points, which the device's own marks are looked up by; null for
-   *  everything else. Not `url`, which says a note is a website in the old format. The
-   *  twin of the same field in links.rs. */
   address: string | null
-  /** The picture across the top of the note, as its front matter says it under
-   *  `cover:`, or null where it says nothing - which is almost every note.
-   *
-   *  Read on this pass for the reason the icon is, and read at all because the
-   *  row's own menu has to know whether there is a cover to change or to take
-   *  away. Where the band is taken from is not read: no list asks it, and the
-   *  surface that draws the banner reads it out of the note. See cover.ts in
-   *  @orden/markdown. */
   cover: string | null
-  /** Whether the note says nothing yet: whitespace, or its own name as its heading and
-   *  nothing under it. It then wears the empty page, and the folder where it holds
-   *  notes (#1042). Read on this pass for the reason the icon is: every row wants it,
-   *  and the space is already being read. False for a canvas and a website. The twin of
-   *  the same field in links.rs; see `saysNothing` in scan-note.ts. */
   bare: boolean
-  /** The rows of a space ride on the same pass (docs/tasks.md 5.3): the front matter
-   *  as written, the task lines with the headings above them, and the file's size and
-   *  times. What the crate's scan and the browser's carry for every note; a note read
-   *  again after a save leaves them out, because the rows read that save themselves
-   *  (see `@orden/bases/scan`) and the index has no use for them. */
   front?: string | null
   tasks?: ScannedTask[]
   stamp?: Stamp | null
@@ -108,14 +41,11 @@ export interface ScannedNote {
 
 export interface SpaceLinks {
   notes: ScannedNote[]
-  /** Everything in the space that is not a note, so `![[picture.png]]` finds a
-   *  picture wherever it lives, the way Obsidian does. */
   files: string[]
 }
 
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 
-/** How much of a line a row shows, matched to what a search hit shows. */
 const CONTEXT = 200
 
 export function scanNote(path: string, content: string): ScannedNote {
@@ -130,8 +60,6 @@ export function scanNote(path: string, content: string): ScannedNote {
     iconColor: frontMatterValue(content, ICON_COLOUR_KEY),
     aliases: frontMatterList(content, 'aliases'),
     url: frontMatterValue(content, 'url'),
-    // A note wears its own front-matter icon, not a site's favicon; that is a
-    // website's, read in `scanShortcut`.
     favicon: null,
     address: null,
     cover: frontMatterValue(content, COVER_KEY),
@@ -143,52 +71,25 @@ export function scanNote(path: string, content: string): ScannedNote {
       block: link.block,
       alias: link.alias,
       embed: link.embed,
-      // Off the link rather than worked out again: the pass that found it walked
-      // the note line by line and knew which line it was on. See `line` on
-      // `FoundLink`, and scan-note.perf.test.ts for what counting the newlines
-      // before every link cost a note with a thousand of them.
       line: link.line,
       text: contextAt(content, link.from),
     })),
   }
 }
 
-/** A canvas read into the same shape a note is.
- *
- *  A canvas has no words of its own worth indexing - the JSON is a drawing, not
- *  prose - but the notes its file nodes name are links out of it, so the Links
- *  panel can say what a canvas points at and a note can say which canvas points
- *  at it. Each file node becomes one link written the way a wikilink is, which is
- *  how the index resolves a path relative to the space.
- *
- *  Headings and blocks stay empty: nothing points into a canvas, only at it. */
-/** A website as the link index sees it: a name, and the site's own mark.
- *
- *  A shortcut file holds an address and no words: no links out, no headings, no
- *  tags, and no front-matter icon of its own. It is in the index so that a link can
- *  be made to it and so that the graph has a node for it, which is what a website in a
- *  space is - and it carries the one thing the file list wants that the name cannot
- *  give, the favicon out of its `Nib-Icon` key. The desktop's `shortcut_note` in
- *  links.rs says the same thing on the other side. */
 export function scanShortcut(path: string, content: string): ScannedNote {
   const said = readWebFile(path, content)
 
   return {
     path,
-    // The extension is part of the name, the way it is for a canvas: a link may be
-    // written `[[Svelte docs.url]]` as well as `[[Svelte docs]]`.
     name: path.split('/').pop() ?? path,
     headings: [],
     blocks: [],
     tags: [],
-    // The icon the reader chose over the site's mark, kept in the file (#1098).
     icon: said?.chosen ?? null,
     iconColor: said?.chosenColour ?? null,
     aliases: [],
-    // What `url:` means is a note that is a website in the old format and wants
-    // converting; a shortcut is already one. See @orden/scan/shortcut.
     url: null,
-    // The site's mark for the row, and where it points; a `.webloc` has no mark.
     favicon: said?.icon ?? null,
     address: said?.url ?? null,
     cover: null,
@@ -197,16 +98,10 @@ export function scanShortcut(path: string, content: string): ScannedNote {
   }
 }
 
-/** The tags of one note as the index keeps them: each once, folded, without the
- *  hash. `tagsIn` answers once per use and with the hash, because the tag tree
- *  counts uses; a picture of the space asks whether a note carries a tag at all.
- *
- *  The twin of `note_tags` in links.rs. */
 function noteTags(content: string): string[] {
   return [...new Set(tagsIn(content).map((tag) => tag.slice(1).toLowerCase()))]
 }
 
-/** The line an offset sits on, as the context a row is read in. */
 function contextAt(text: string, at: number): string {
   const from = text.lastIndexOf('\n', at) + 1
   const end = text.indexOf('\n', at)
@@ -216,12 +111,8 @@ function contextAt(text: string, at: number): string {
     .slice(0, CONTEXT)
 }
 
-/** A heading line and its words, as markdown reads it: up to three spaces of indent. A
- *  closing run of hashes is taken off below, the way `heading_of` in links.rs does. */
 const BARE_HEADING = /^ {0,3}#{1,6}[ \t](.*)$/
 
-/** A title and a name put the same way, so the two can be compared: what `nameFromTitle`
- *  in note-name.ts turns into spaces is a space here, and the runs and ends go. */
 function loose(words: string): string {
   return words
     .replace(/[<>:"/\\|?* -]/g, ' ')
@@ -229,17 +120,6 @@ function loose(words: string): string {
     .replace(/^[.\s]+|[.\s]+$/g, '')
 }
 
-/** Whether a note says nothing yet (#1042): nothing but whitespace, or nothing but its
- *  own name as a heading - which is what a new note is written with (`# Name`, see
- *  `createNote` in the workspace) - with any front matter above it, a `title:` there
- *  included. Such a note wears the empty page rather than the page with writing on,
- *  and the folder where it holds notes; see `sourceMark` in chosen-icon.ts.
- *
- *  Asked once per reading of a note, by the scan the link index already makes of it
- *  (`scanNote` below, and `bare` in links.rs, its twin), never by a row as it draws.
- *
- *  "Its own name" the way a name is made from a title: the characters a file name
- *  cannot hold are spaces in either, so `# Q1: costs` is the title of `Q1 costs`. */
 export function saysNothing(content: string, name: string): boolean {
   const lines = stripFrontMatter(content)
     .split(/\r?\n/)

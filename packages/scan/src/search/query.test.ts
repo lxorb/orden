@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { isEmpty, parseQuery, type Query } from './query'
 
-/** The parser's answers are compared whole, so a term that quietly grew a
- *  field would fail rather than pass. */
 const word = (text: string, fold = true): Query => ({ kind: 'text', text, fold })
 
 describe('bare words', () => {
@@ -424,8 +422,6 @@ describe('front matter', () => {
   })
 })
 
-/** A task is a kind of line rather than a distance, so it is a unit: a note
- *  matches when one task in it matches every term. */
 describe('tasks', () => {
   test('hold terms to one task item', () => {
     expect(parseQuery('task:(a b)')).toEqual({
@@ -448,8 +444,6 @@ describe('tasks', () => {
     })
   })
 
-  /** Which is the question most often asked of a space, and the one thing a unit
-   *  with nothing in it can mean: there is no such question about a line. */
   test('and with nothing said about them ask which notes have one', () => {
     expect(parseQuery('task-todo:')).toEqual({
       kind: 'scope',

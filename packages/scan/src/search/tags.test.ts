@@ -1,9 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { tagCuts, tagsIn, tagSpans, tagUses } from './tags'
 
-/** The twin of this file is the tests in tags.rs: the same notes, the same tags.
- *  A case added here belongs there too. */
-
 describe('the tags in a note', () => {
   test('are the words after a hash, once per use', () => {
     expect(tagsIn('#work and #work again, plus #other')).toEqual(['#work', '#work', '#other'])
@@ -88,8 +85,6 @@ describe('the tags in a note', () => {
     ])
   })
 
-  /** The rows of `PARITY` in @orden/markdown's tags.test.ts, which the page is held
-   *  to, and of `reads_the_parity_rows` in tags.rs. */
   test('alike on the page and in the index, row by row', () => {
     const rows: [string, string[]][] = [
       ['see https://x.test/?q=#x', []],
@@ -145,8 +140,6 @@ describe('the tags in the front matter', () => {
   })
 
   test('while the block itself is not read for hashes', () => {
-    // A `#` in the front matter is a YAML comment, and the tags it holds have
-    // been read from their key already.
     expect(front('status: done # not a tag')).toEqual([])
   })
 
@@ -196,7 +189,6 @@ describe('where a tag sits', () => {
 })
 
 describe('what taking a tag away has to cut', () => {
-  /** The note with the tag gone. */
   const without = (body: string, path: string) => {
     let out = ''
     let at = 0

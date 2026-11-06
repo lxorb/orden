@@ -16,11 +16,6 @@ describe('reading a note for the index', () => {
     expect(note.links.map((link) => link.target)).toEqual(['Other', '../notes/Third.md'])
   })
 
-  /** The shape the Rust pass hands back, read by the browser build here. Every
-   *  case has its twin in `front_matter_list`'s tests at the bottom of
-   *  `apps/desktop/src-tauri/src/links.rs`: two languages cannot share one
-   *  reader, so what keeps them from drifting is that both are asked the same
-   *  questions. */
   test('reads the other names the note gives itself, whichever way they are written', () => {
     const aliases = (body: string) => scanNote('Plan.md', body).aliases
 
@@ -34,8 +29,6 @@ describe('reading a note for the index', () => {
     expect(aliases('---\naliases: ["One", \'Two\']\n---\n')).toEqual(['One', 'Two'])
   })
 
-  /** Twin of `reads_front_matter_tags_in_a_crlf_note` in tags.rs, so the launch
-   *  scan and a save give a CRLF note the same tags. */
   test('reads the front matter tags of a note written with CRLF endings', () => {
     expect(scanNote('N.md', '---\r\ntags: [work]\r\n---\r\nx\r\n').tags).toEqual(['work'])
     expect(scanNote('N.md', '---\r\ntags:\r\n  - work\r\n---\r\nx #nib\r\n').tags).toEqual([
@@ -91,8 +84,6 @@ describe('reading a canvas for the index', () => {
     expect(links[2]).toMatchObject({ heading: null, block: 'abc123' })
   })
 
-  /** Nothing points into a canvas, only at it, so there is nothing to point at
-   *  inside one. */
   test('has no headings and no blocks of its own', () => {
     const read = scanCanvas('Board.canvas', canvas)
 
@@ -107,9 +98,6 @@ describe('reading a canvas for the index', () => {
     expect(read.path).toBe('Board.canvas')
   })
 
-  /** JSON has no front matter, so a canvas says what it wears under the one key
-   *  the spec leaves for us. Every case here has its twin in the Rust scan; see
-   *  `canvas_note` in src-tauri/src/links.rs. */
   test('wears what its own file says, under the key that carries the ink', () => {
     const marked = JSON.stringify({ nodes: [], edges: [], nib: { version: 1, icon: 'rocket' } })
     expect(scanCanvas('Board.canvas', marked).icon).toBe('rocket')
@@ -127,16 +115,10 @@ describe('reading a canvas for the index', () => {
     expect(scanCanvas('Board.canvas', 'not json').icon).toBeNull()
   })
 
-  /** A canvas has no other name for itself: an alias is something a link is
-   *  written with, and nothing writes `[[Board]]` for a canvas. */
   test('and never an alias', () => {
     expect(scanCanvas('Board.canvas', '{"nib":{"icon":"rocket"}}').aliases).toEqual([])
   })
 
-  /** A plane of ten thousand strokes is megabytes of ink, and the scan of a space
-   *  read all of it into strokes to find a row's icon: the chunk holding a plane of
-   *  seven megabytes was a third of a second in one task. What is counted is what
-   *  was handed to `JSON.parse`, which is what building the plane costs. */
   test('reads the cards and the icon of a plane without reading its ink', () => {
     const ink = Array.from({ length: 10_000 }, (_, one) => ({
       id: `s${one}`,
@@ -170,16 +152,12 @@ describe('reading a canvas for the index', () => {
 
     expect(parsed).toBeLessThan(plane.length / 1000)
 
-    // And it is the reading the whole plane gives.
     const whole = readCanvas(plane)
     expect(read.icon).toBe(whole.icon)
     expect(read.iconColor).toBe(whole.iconColor)
     expect(read.links.map((link) => [link.target, link.heading])).toEqual([['Plan.md', 'Later']])
   })
 
-  /** Every write of a plane is read for the index, so what the walk may skip is
-   *  counted by what it could not have got past: a plane in the order this app
-   *  writes one is read to its icon, and ink that would stop a walk is never met. */
   test('stops at the icon of a plane in the order this app writes one', () => {
     const cards =
       '"nodes":[{"id":"a","type":"file","x":0,"y":0,"width":1,"height":1,"file":"Plan.md"}]'
@@ -199,10 +177,6 @@ describe('reading a canvas for the index', () => {
   })
 })
 
-/** A website is a shortcut file, and the one thing the file list wants off it that
- *  its name cannot give is the site's own mark. Emil, 2026-09-13: *"the website
- *  favicon should also be used in the sidebar."* The twin of `shortcut_note`'s tests
- *  in links.rs. */
 describe('reading a website for the index', () => {
   const url =
     '[InternetShortcut]\nURL=https://svelte.dev/docs\nNib-Icon=https://svelte.dev/favicon.png\n'
@@ -211,10 +185,7 @@ describe('reading a website for the index', () => {
     const site = scanShortcut('Reading/Svelte docs.url', url)
     expect(site.name).toBe('Svelte docs.url')
     expect(site.favicon).toBe('https://svelte.dev/favicon.png')
-    // And where it points, which this device's own sight of the site is kept under;
-    // see `favicons` in web-tab/pages.svelte.ts.
     expect(site.address).toBe('https://svelte.dev/docs')
-    // A shortcut is a name, a mark and an address, and nothing else the index reads.
     expect(site.url).toBeNull()
     expect(site.icon).toBeNull()
     expect(site.links).toEqual([])
@@ -223,7 +194,6 @@ describe('reading a website for the index', () => {
   test('and the plain globe where there is no mark yet', () => {
     const bare = scanShortcut('A.url', '[InternetShortcut]\nURL=https://a.example/\n')
     expect(bare.favicon).toBeNull()
-    // A .webloc carries no such key either.
     expect(scanShortcut('A.webloc', '<plist><dict></dict></plist>').favicon).toBeNull()
   })
 

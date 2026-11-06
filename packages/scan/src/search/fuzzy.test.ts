@@ -3,21 +3,14 @@ import { fit, Fuzzy, fuzzyTerms, withoutWords } from './fuzzy'
 import { foldedOnce, Matcher, type SearchNote } from './match'
 import { parseQuery } from './query'
 
-/** The twin of this file is the tests in fuzzy.rs: the same terms, the same
- *  lines, the same order. A case added here belongs there too. */
-
-/** What a term scores on a line, or null when its letters are not all there. */
 const score = (term: string, line: string) => fit(term, line)?.score ?? null
 
-/** The letters a term marks on a line, in order, so a ranking case can say what
- *  it thinks matched as well as how well. */
 function marked(term: string, line: string): string {
   const found = fit(term, line)
   if (!found) return ''
   return found.ranges.map((range) => line.slice(range.from, range.to)).join('')
 }
 
-/** Which of two lines a term prefers. */
 function better(term: string, one: string, other: string): string {
   const first = score(term, one)
   const second = score(term, other)
@@ -30,15 +23,12 @@ describe('a term against a line', () => {
   test('matches its letters in order, wherever they sit', () => {
     expect(score('rdm', 'read me')).not.toBeNull()
     expect(score('read', 'read me')).not.toBeNull()
-    // Out of order is not a match: the letters have to come in the order typed.
     expect(score('mdr', 'read me')).toBeNull()
     expect(score('zq', 'read me')).toBeNull()
   })
 
   test('matches a typo, which is the point', () => {
-    // A letter left out.
     expect(score('meting', 'Meeting notes')).not.toBeNull()
-    // Letters typed the wrong way round lose their second one and still match.
     expect(score('recieve', 'i before e receipt')).toBeNull()
     expect(score('recept', 'i before e receipt')).not.toBeNull()
   })
@@ -61,14 +51,11 @@ describe('a term against a line', () => {
 describe('what the score rewards', () => {
   test('letters next to each other over letters apart', () => {
     expect(better('run', 'a run of it', 'rather unusual number')).toBe('a run of it')
-    // And a run beats a word start, or a term found whole in one word would rank
-    // level with the same letters picked one from each of six.
     expect(better('quater', 'The quarter plan', 'q u a t e r')).toBe('The quarter plan')
   })
 
   test('a word start over the middle of a word', () => {
     expect(score('me', 'me first')).toBeGreaterThan(score('me', 'somewhere') ?? 0)
-    // Initials work by their word starts, which is what earns the bonus.
     expect(score('rdm', 'read me')).toBeGreaterThan(score('rdm', 'a random thing') ?? 0)
   })
 
@@ -76,9 +63,6 @@ describe('what the score rewards', () => {
     expect(score('rm', 'readMe')).toBeGreaterThan(score('rm', 'rummage') ?? 0)
   })
 
-  /** Where in a line a term sits is not in the score; it settles a tie. Two
-   *  places that score alike leave the earlier one marked, which is what a
-   *  reader glancing at the row expects to see lit up. */
   test('and where it sits only settles a tie', () => {
     expect(score('plan', 'plan and plan')).toBe(score('plan', 'plan') ?? 0)
     expect(fit('plan', 'plan and plan')?.ranges).toEqual([{ from: 0, to: 4 }])
@@ -89,8 +73,6 @@ describe('what the score rewards', () => {
   })
 
   test('and picks the best place the term fits, not the first', () => {
-    // The first `p` is in `paper`; the run in `plan` is worth more, so that is
-    // what is marked.
     expect(marked('plan', 'paper: the plan')).toBe('plan')
   })
 })
@@ -116,8 +98,6 @@ describe('which queries are relaxed at all', () => {
     expect(terms('line:(a b)')).toEqual([])
     expect(terms('case: Alpha')).toEqual([])
     expect(terms('content:meting')).toEqual([])
-    // One precise term takes the whole query out: half a loose answer under a
-    // precise question is still noise.
     expect(terms('meting "a phrase"')).toEqual([])
   })
 
@@ -159,11 +139,6 @@ const note = (over: Partial<SearchNote> = {}): SearchNote => ({
   ...over,
 })
 
-/** The two passes over a note, and the one folded copy they share.
- *
- *  The saving is the whole reason `SearchNote.folded` exists, and it is invisible
- *  in an answer: both passes give the same rows whether they fold once or twice.
- *  So it is counted instead. */
 describe('the fold both passes read', () => {
   function counted(body: string) {
     const calls = { made: 0 }
@@ -188,7 +163,6 @@ describe('the fold both passes read', () => {
     const make = foldedOnce('The Quarter Plan')
 
     expect(make()).toBe('the quarter plan')
-    // The same string back, not an equal one: the second ask folds nothing.
     expect(make()).toBe(make())
     expect(Object.is(make(), make())).toBe(true)
   })
@@ -201,15 +175,12 @@ describe('the fold both passes read', () => {
     expect(calls.made).toBe(1)
 
     expect(new Fuzzy(fuzzyTerms(query)).best(one)).not.toBeNull()
-    // Twice asked and, by the test above, once folded.
     expect(calls.made).toBe(2)
   })
 
   test('and not at all for a query that never reads the words', () => {
     const { calls, note: one } = counted(NOTE)
 
-    // `path:` asks about the note rather than about what it says, so nothing
-    // ever wants the note folded and nothing folds it.
     expect(new Matcher(parseQuery('path:nowhere')).hits(one, 1)).toEqual([])
     expect(calls.made).toBe(0)
   })
@@ -234,14 +205,12 @@ describe('a note, loosely', () => {
   })
 
   test('one row and no more, because a guess is worth one', () => {
-    // Both the heading and the last line hold every letter of `bta`.
     const found = best('bta')
     expect(found).not.toBeNull()
     expect(found?.score).toBeGreaterThan(0)
   })
 
   test('needs every term on one line', () => {
-    // `alpha` is on one line and `plan` on another, so no line holds both.
     expect(best('alpha plan')).toBeNull()
     expect(best('alpha monday')).not.toBeNull()
   })
@@ -250,10 +219,6 @@ describe('a note, loosely', () => {
     expect(best('zzz')).toBeNull()
   })
 
-  /** The walk keeps a moving cursor per term, and a term whose first letter runs
-   *  out partway down a note has to end the walk rather than end the term: a line
-   *  where only some of the terms were even looked for is not a line that holds
-   *  them all. */
   test('and nothing for a note whose lines each hold only one of the terms', () => {
     const split = { body: 'qqq one\nxyz\nwww three\n' }
     expect(best('qqq www', split)).toBeNull()
@@ -270,8 +235,6 @@ describe('a note, loosely', () => {
 
   test('marks where the letters are in the row, not in the note', () => {
     const found = best('meting')
-    // The row is the heading with its hash and space trimmed off, so the marks
-    // have moved with it.
     expect(found?.text).toBe('# Meeting notes')
     for (const range of found?.ranges ?? []) {
       expect(range.from).toBeGreaterThanOrEqual(0)
@@ -284,7 +247,6 @@ describe('a note, loosely', () => {
 })
 
 describe('ranking notes against each other', () => {
-  /** The paths of some notes in the order a loose search would list them. */
   function ranked(source: string, bodies: Record<string, string>): string[] {
     const fuzzy = new Fuzzy(fuzzyTerms(parseQuery(source)))
 

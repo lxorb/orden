@@ -3,7 +3,6 @@ import { indexed } from './indexed'
 import { parseQuery } from './search/query'
 import { indexAnswerOf, indexRequestOf, queryOf, searchAnswerOf, searchRequestOf } from './wire'
 
-/** Queries of every shape the field parses into. */
 const QUERIES = [
   'garden',
   '"a phrase" -not OR other',

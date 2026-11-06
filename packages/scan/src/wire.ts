@@ -1,17 +1,3 @@
-/** What a browser that keeps only some of a space's notes asks the account about the
- *  rest, and what it is answered (#1126): the scan of each note it holds no words of,
- *  and a search over them. The Worker reads requests with these and a device reads the
- *  answers with them, so the two sides cannot disagree about a shape; anything that
- *  does not read as one is null, and is refused or left alone.
- *
- *  - `POST /v2/spaces/:space/index` with `{ ids }`, at most `INDEX_BATCH`, answers
- *    `{ items }`: for each id the account could read, the scan `scan_links` makes of
- *    it and the `docSeq` of the words it was made from, or `refused: 'gone'`. An id it
- *    left out - its words were being saved, or the answer was full - is asked again.
- *  - `POST /v2/spaces/:space/search` with the parsed query answers the hits among the
- *    space's notes from `after` on, in id order, a page at a time, with the `after` to
- *    go on from, or null at the end. */
-
 import type { ScannedRows, ScannedTask, Stamp } from '@orden/bases/scan'
 import type { LinkKind } from '@orden/markdown/links'
 import type { ScannedNote } from './scan-note'
@@ -19,25 +5,18 @@ import type { FuzzyHit } from './search/fuzzy'
 import type { Hit, Range } from './search/match'
 import type { Query, Unit } from './search/query'
 
-/** How many notes one index request names. */
 const INDEX_BATCH = 200
 
-/** The most hits one search request asks for. */
 const MOST_HITS = 200
 
-/** How many notes a search may say it reads itself, and leaves out of the walk. */
 const MOST_SKIPPED = 5000
 
-/** How many notes and folders a search may say the space leaves out. */
 const MOST_EXCLUDED = 2000
 
-/** The longest id, string or term either side sends. */
 const LONGEST = 4096
 
-/** How deep a query may nest: further than anybody types, and short of a stack. */
 const DEEPEST = 32
 
-/** What the index holds of a note: the scan, and what the rows of a space ride on. */
 export type IndexedNote = ScannedNote & Partial<ScannedRows> & { stamp?: Stamp | null }
 
 export type IndexItem =
@@ -56,7 +35,6 @@ export interface SearchRequest {
   excluded?: string[]
 }
 
-/** A hit, by the id of the note it is in; `path` is the note's path in the space. */
 export type FoundHit = Hit & { id: string }
 export type FoundLoose = FuzzyHit & { id: string }
 
@@ -97,7 +75,6 @@ function isIds(value: unknown, most: number): value is string[] {
 const UNITS: readonly Unit[] = ['line', 'block', 'section', 'task', 'task-todo', 'task-done']
 const COMPARES = ['has', 'is', 'null', 'lt', 'lte', 'gt', 'gte', 'range']
 
-/** A parsed query as `parseQuery` builds it, or null. */
 export function queryOf(value: unknown, depth = 0): Query | null {
   if (!isRecord(value) || depth > DEEPEST) return null
   const deeper = (one: unknown) => queryOf(one, depth + 1)
@@ -157,13 +134,11 @@ export function queryOf(value: unknown, depth = 0): Query | null {
   }
 }
 
-/** `POST /v2/spaces/:space/index`, as the Worker reads it. */
 export function indexRequestOf(value: unknown): IndexRequest | null {
   if (!isRecord(value) || !isIds(value.ids, INDEX_BATCH)) return null
   return { ids: value.ids }
 }
 
-/** `POST /v2/spaces/:space/search`, as the Worker reads it. */
 export function searchRequestOf(value: unknown): SearchRequest | null {
   if (!isRecord(value)) return null
   const query = queryOf(value.query)
@@ -224,7 +199,6 @@ function strings(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((one) => typeof one === 'string')
 }
 
-/** A note's scan as the account sent it, or null. */
 export function indexedOf(value: unknown): IndexedNote | null {
   if (!isRecord(value)) return null
   const fields =
@@ -260,8 +234,6 @@ function indexItemOf(value: unknown): IndexItem | null {
   return scan ? { id: value.id, docSeq: value.docSeq, scan } : null
 }
 
-/** The account's answer to an index request, as a device reads it: the items that
- *  read as one, any other left out, to be asked again. */
 export function indexAnswerOf(value: unknown): IndexItem[] | null {
   if (!isRecord(value) || !Array.isArray(value.items)) return null
   return value.items.flatMap((one) => {
@@ -295,7 +267,6 @@ function isLoose(value: unknown): value is FoundLoose {
   return isRecord(value) && typeof value.score === 'number' && isHit(value)
 }
 
-/** The account's answer to a search, as a device reads it. */
 export function searchAnswerOf(value: unknown): SearchAnswer | null {
   if (!isRecord(value) || !(value.after === null || isText(value.after))) return null
   if (!Array.isArray(value.hits) || !value.hits.every(isHit)) return null

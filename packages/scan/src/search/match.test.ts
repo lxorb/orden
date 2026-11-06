@@ -3,9 +3,6 @@ import { lineAt, lineStarts } from './lines'
 import { Matcher, type SearchNote } from './match'
 import { parseQuery } from './query'
 
-/** The twin of this file is the tests in query.rs: the same notes, the same
- *  queries, the same answers. A case added here belongs there too. */
-
 const NOTE = `---
 status: done
 project: Nib
@@ -33,17 +30,14 @@ const note = (over: Partial<SearchNote> = {}): SearchNote => ({
   ...over,
 })
 
-/** Does the note answer the query at all. */
 function answers(source: string, over: Partial<SearchNote> = {}): boolean {
   return new Matcher(parseQuery(source)).spans(note(over)) !== null
 }
 
-/** The lines a query finds, as the words the rows would show. */
 function lines(source: string, over: Partial<SearchNote> = {}): string[] {
   return new Matcher(parseQuery(source)).hits(note(over), 50).map((hit) => hit.text)
 }
 
-/** The words each hit emphasises. */
 function marked(source: string, over: Partial<SearchNote> = {}): string[] {
   return new Matcher(parseQuery(source))
     .hits(note(over), 50)
@@ -126,9 +120,6 @@ describe('path and file', () => {
     expect(answers('file:Agenda')).toBe(false)
   })
 
-  /** The row stands in for a line, since no line of the note is why it was found.
-   *  The note's own words, stepping over the front matter: a row saying `---` says
-   *  nothing about the note it is about. */
   test('find a note nothing in the text says, and read like the note', () => {
     expect(lines('file:Meeting')).toEqual(['# Meeting notes #work/2026'])
     expect(marked('file:Meeting')).toEqual([])
@@ -136,14 +127,11 @@ describe('path and file', () => {
 
   test('and fall back to the first line where there is no front matter', () => {
     expect(lines('file:Meeting', { body: '\nthe first words\n' })).toEqual(['the first words'])
-    // A block nobody closed is not a block.
     expect(lines('file:Meeting', { body: '---\nstatus: done\n' })).toEqual(['---'])
   })
 })
 
 describe('content', () => {
-  /** A bare word reads the whole file, front matter and all. `content:` is the
-   *  narrower question: the words a reader of the note would see. */
   test('asks the note’s own words and not its front matter', () => {
     expect(answers('nib')).toBe(true)
     expect(answers('content:nib')).toBe(false)
@@ -159,8 +147,6 @@ describe('content', () => {
 
   test('reads a note with no front matter from the top', () => {
     expect(answers('content:first', { body: 'the first words\n' })).toBe(true)
-    // A block nobody closed is a note that opens with a rule, so its words are all
-    // of it - the same reading `path:` and the row fall back to.
     expect(answers('content:status', { body: '---\nstatus: done\n' })).toBe(true)
   })
 
@@ -196,9 +182,6 @@ describe('tags', () => {
     expect(answers('tag:Meeting')).toBe(false)
   })
 
-  /** A tag with slashes is a path in a tree of any depth, and an ancestor stands
-   *  for everything beneath it. Which is what the tag tree draws; see
-   *  tag-tree.ts. */
   test('match at every depth, and narrow as the path grows', () => {
     const deep = { body: 'words #work/nib/canvas/edges more\n' }
 
@@ -206,7 +189,6 @@ describe('tags', () => {
     expect(answers('tag:work/nib', deep)).toBe(true)
     expect(answers('tag:work/nib/canvas', deep)).toBe(true)
     expect(answers('tag:work/nib/canvas/edges', deep)).toBe(true)
-    // A longer segment is a different tag, not a child of a shorter one.
     expect(answers('tag:work/ni', deep)).toBe(false)
     expect(answers('tag:work/nib/canvas/edges/deeper', deep)).toBe(false)
   })
@@ -247,18 +229,11 @@ describe('front matter', () => {
     expect(answers('[status]', { body: 'status: done\n' })).toBe(false)
   })
 
-  /** The block has to close, which is Obsidian's rule and the one the readers in
-   *  @orden/markdown follow: a note that opens with a fence and never closes it
-   *  opens with a rule instead, so there is no key in it to find. The same note
-   *  read by the renderer and by the properties table is in render.test.ts, and
-   *  the twin of this is in matcher.rs. */
   test('is nothing at all in a block nobody closed', () => {
     const open = { body: '---\nstatus: done\n\n# Plan\n' }
 
     expect(answers('[status]', open)).toBe(false)
     expect(answers('[status:done]', open)).toBe(false)
-    // And the row the note falls back to is its own first line, because the rule
-    // it opens with is the first thing it says.
     expect(lines('file:Meeting', open)).toEqual(['---'])
   })
 })
@@ -348,8 +323,6 @@ describe('a row', () => {
   })
 })
 
-/** A task item is a unit, so a note answers when one task of it answers every
- *  term; the row is the task, not the note's first line. */
 describe('tasks', () => {
   const TASKS = `# This week
 
@@ -376,8 +349,6 @@ describe('tasks', () => {
     expect(asked('task:').length).toBe(4)
   })
 
-  /** What Replace counts and replaces: a row with no words of the query on it has
-   *  nothing to put a replacement into. */
   test('and a row with no words to replace says so', () => {
     const rows = (source: string) =>
       new Matcher(parseQuery(source))
@@ -461,15 +432,12 @@ Words.
   test('and asks for a key the note has not got', () => {
     expect(asked('[missing:null]')).toBe(true)
     expect(asked('[status:null]')).toBe(false)
-    // A key with nothing after its colon is a key that says nothing.
     expect(asked('[empty:null]')).toBe(true)
   })
 
   test('and falls back to the words where the two are not the same kind of thing', () => {
     expect(asked('[status:>a]')).toBe(true)
     expect(asked('[status:>z]')).toBe(false)
-    // A date held against a number is two different questions, so it is the words
-    // that answer: `2026-09-01` comes before `5`.
     expect(asked('[due:>5]')).toBe(false)
     expect(asked('[due:<5]')).toBe(true)
   })

@@ -1,26 +1,8 @@
-/** A few keys of a big JSON object, found without parsing the rest of it.
- *
- *  A canvas of ten thousand strokes is megabytes of JSON, nearly all of it ink, and
- *  what the link index wants out of it is a handful of cards and an icon. Parsing the
- *  whole of it to get those builds every point of every stroke first: a plane of
- *  seven megabytes was a third of a second of the space's scan in one task, for a
- *  row of the file list. So this walks the text and hands back where the wanted
- *  values are, and the caller parses those and nothing else.
- *
- *  What is skipped is walked for its structure - the brackets and the strings, so a
- *  bracket inside a string is not taken for one that closes - and not for every
- *  comma and colon in it. That is what the crate's reader does with the same keys
- *  (serde's `IgnoredAny`), and it is enough to find the end of a value. Whether a
- *  plane is well formed is `readCanvas`'s question, asked when the plane is opened. */
-
-/** Where a value is in the text: `text.slice(from, to)` is its JSON. */
 export interface Span {
   from: number
   to: number
 }
 
-/** How deeply the skipped part may nest before the text is not believed. Far past
- *  anything a canvas writes, and short of what would take the walk's stack with it. */
 const DEEPEST = 512
 
 const QUOTE = 0x22
@@ -42,8 +24,6 @@ function skipSpace(text: string, at: number, end: number): number {
   return one
 }
 
-/** Past the string that starts at `at`, or -1 where it never closes. A quote with
- *  an odd run of backslashes before it is one of the string's own characters. */
 function pastString(text: string, at: number, end: number): number {
   let close = text.indexOf('"', at + 1)
 
@@ -57,16 +37,6 @@ function pastString(text: string, at: number, end: number): number {
   return -1
 }
 
-/** Past the object or array that starts at `at`, or -1 where its brackets do not
- *  close in order.
- *
- *  From one character that says something to the next, found with `indexOf`, which
- *  the engine runs over a string far faster than a loop can look at each character:
- *  the ink is a million numbers, and walking them one character at a time was slower
- *  than `JSON.parse` building every one of them. Five places are kept - the next
- *  quote and the next of each bracket - and only the one used is looked for again,
- *  so the text is gone over five times at most, at that speed. A bracket inside a
- *  string moves on past it with the string. */
 function pastContainer(text: string, at: number, end: number): number {
   const next = (mark: string, from: number) => {
     const found = text.indexOf(mark, from)
@@ -114,13 +84,11 @@ function pastContainer(text: string, at: number, end: number): number {
   }
 }
 
-/** Past the value that starts at `at`, or -1. */
 function pastValue(text: string, at: number, end: number): number {
   const code = text.charCodeAt(at)
   if (code === QUOTE) return pastString(text, at, end)
   if (code === OPEN_BRACE || code === OPEN_BRACKET) return pastContainer(text, at, end)
 
-  // A number, `true`, `false` or `null`: up to whatever ends it.
   let one = at
   while (one < end) {
     const next = text.charCodeAt(one)
@@ -131,20 +99,11 @@ function pastValue(text: string, at: number, end: number): number {
   return one > at ? one : -1
 }
 
-/** What a caller knows of the order the object was written in, so the walk can stop
- *  before the end of it. Both are about text this app wrote; see scan-canvas.ts. */
 export interface Order {
-  /** The keys a writer puts first, in its order: an object whose first key is the
-   *  first of these is read no further than the first key that is none of them. */
   ahead?: readonly string[]
-  /** The key a writer puts last: once it is reached with every other wanted key
-   *  found, its value is taken to run to the end of `within`, unread. */
   last?: string
 }
 
-/** Where each of `keys` is in the object that `within` spans (the whole text when
- *  it is not given), or null when that is not an object. A key written twice is the
- *  later one, as `JSON.parse` has it; a key not there is not in the answer. */
 export function skim(
   text: string,
   keys: readonly string[],
@@ -165,8 +124,6 @@ export function skim(
     const named = pastString(text, at, end)
     if (named < 0) return null
 
-    // A key with an escape in it is read the long way; every key a canvas writes is
-    // plain.
     const raw = text.slice(at + 1, named - 1)
     const key = raw.includes('\\') ? String(JSON.parse(text.slice(at, named)) as unknown) : raw
 

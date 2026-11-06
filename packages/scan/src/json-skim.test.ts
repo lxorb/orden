@@ -1,7 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import { skim } from './json-skim'
 
-/** What `JSON.parse` says a key holds, and what the skim says, read the same way. */
 function both(text: string, keys: string[]) {
   const whole = JSON.parse(text) as Record<string, unknown>
   const spans = skim(text, keys)
@@ -66,8 +65,6 @@ describe('a few keys of a JSON object', () => {
   })
 
   test('walks megabytes of what it skips without parsing any of it', () => {
-    // A plane's worth of ink: seven megabytes of numbers, and the one key wanted
-    // after it.
     const ink = Array.from({ length: 25_000 }, (_, one) => ({
       id: `s${one}`,
       points: Array.from({ length: 60 }, (_, at) => Math.round((one * 7 + at) * 13.7) / 10),
