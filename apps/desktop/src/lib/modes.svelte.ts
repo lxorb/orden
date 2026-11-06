@@ -165,15 +165,11 @@ function clamp(value: number, steps: readonly number[]): number {
   return steps.reduce((best, one) => (Math.abs(one - value) < Math.abs(best - value) ? one : best))
 }
 
-function step<T extends number>(
-  steps: readonly T[],
-  current: number,
-  direction: number,
-  fallback: T,
-): T {
-  const at = steps.findIndex((one) => one === current)
-  const from = at >= 0 ? at : steps.findIndex((one) => one === fallback)
-  return steps[Math.min(steps.length - 1, Math.max(0, from + direction))] ?? fallback
+function step(steps: readonly number[], current: number, direction: number, fallback: number) {
+  if (!Number.isFinite(current)) return fallback
+  if (direction > 0) return steps.find((one) => one > current) ?? current
+  if (direction < 0) return [...steps].reverse().find((one) => one < current) ?? current
+  return current
 }
 
 export type FontPlace = 'ui' | 'content' | 'mono'
