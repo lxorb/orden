@@ -6,6 +6,7 @@ import {
   opOf,
   unframe,
 } from '@orden/sync-core/wire'
+import { type ItemMeta, metaOf } from '@orden/sync-core/meta'
 import { isPosition } from '@orden/sync-core/order'
 import type { MetaRow } from './store'
 
@@ -145,6 +146,12 @@ export function wantedRow(space: string, wanted: ReadonlyMap<string, Wanted>): M
 export interface Ordering {
   on: boolean
   positions: Map<string, string>
+  describes: boolean
+  meta: Map<string, ItemMeta>
+}
+
+export function emptyOrdering(): Ordering {
+  return { on: false, positions: new Map(), describes: false, meta: new Map() }
 }
 
 const ORDER = 'order:'
@@ -164,7 +171,17 @@ export function orderingOf(row: MetaRow): { space: string; ordering: Ordering } 
         if (isPosition(pos)) positions.set(id, pos)
       }
     }
-    return { space: row.key.slice(ORDER.length), ordering: { on: value.on === true, positions } }
+    const meta = new Map<string, ItemMeta>()
+    if (isRecord(value.meta)) {
+      for (const [id, said] of Object.entries(value.meta)) {
+        const read = metaOf(said)
+        if (read && Object.keys(read).length) meta.set(id, read)
+      }
+    }
+    return {
+      space: row.key.slice(ORDER.length),
+      ordering: { on: value.on === true, positions, describes: value.about === true, meta },
+    }
   } catch {
     return null
   }
@@ -173,7 +190,12 @@ export function orderingOf(row: MetaRow): { space: string; ordering: Ordering } 
 export function orderingRow(space: string, ordering: Ordering): MetaRow {
   return {
     key: orderKey(space),
-    value: JSON.stringify({ on: ordering.on, pos: Object.fromEntries(ordering.positions) }),
+    value: JSON.stringify({
+      on: ordering.on,
+      pos: Object.fromEntries(ordering.positions),
+      ...(ordering.describes ? { about: true } : {}),
+      ...(ordering.meta.size ? { meta: Object.fromEntries(ordering.meta) } : {}),
+    }),
   }
 }
 

@@ -10,7 +10,7 @@ import {
   readProperties,
 } from './properties'
 import { withoutComments } from './comments'
-import { coverFigure, coverOf } from './cover'
+import { type Cover, coverFigure, coverOf } from './cover'
 import { stripFrontMatter } from './front-matter'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
 import { htmlBlockCard, ownMarkup } from './html-block'
@@ -49,7 +49,7 @@ import { noSetextHeadings } from './blocks'
 export interface RenderOptions {
   footnotes?: boolean
   properties?: PropertiesMode
-  cover?: boolean
+  cover?: boolean | Cover
   escapeHtml?: boolean
   toc?: boolean
   code?: (code: string, language: string) => string | null
@@ -448,7 +448,8 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
     html = propertiesSource(source) + html
   }
 
-  return options.cover ? coverFigure(coverOf(source)) + html : html
+  if (!options.cover) return html
+  return coverFigure(options.cover === true ? coverOf(source) : options.cover) + html
 }
 
 export function tableOfContents(headings: Heading[]): string {

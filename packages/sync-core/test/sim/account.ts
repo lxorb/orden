@@ -144,11 +144,12 @@ export class ReferenceAccount implements AccountAdapter {
       by: this.changedBy.get(entry.id) ?? '',
       at: this.changedAt.get(entry.id) ?? 0,
       ...(entry.pos === undefined ? {} : { pos: entry.pos }),
+      ...(entry.meta === undefined ? {} : { meta: entry.meta }),
     }))
     const last = page.at(-1)
     const more = changed.length > page.length
     const cursor = more && last ? last.seq : this.tree.cursor
-    return { items, cursor, more, order: true, device }
+    return { items, cursor, more, order: true, meta: true, device }
   }
 
   private pull(value: unknown) {
@@ -202,12 +203,13 @@ export class ReferenceAccount implements AccountAdapter {
   async view(): Promise<AccountView> {
     const entries = [...this.tree.entries.values()]
       .filter((entry) => !entry.deleted)
-      .map(({ id, kind, parent, name, pos }) => ({
+      .map(({ id, kind, parent, name, pos, meta }) => ({
         id,
         kind,
         parent,
         name,
         ...(pos === undefined ? {} : { pos }),
+        ...(meta === undefined ? {} : { meta }),
       }))
     const texts: Record<string, string> = {}
     for (const entry of entries) {

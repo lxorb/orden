@@ -12,7 +12,9 @@ import {
   type TreeState,
   treeState,
 } from '@orden/sync-core'
+import { metaFromText, metaText } from '@orden/sync-core/meta'
 import { chunks } from '../bound'
+import { picturesOfMeta } from '../pictures'
 import { newId, now } from '../crypto'
 import type { Env } from '../types'
 
@@ -60,6 +62,7 @@ function snapshotOf(entry: TreeEntry): Snapshot {
   if (entry.placedSeq !== undefined) snapshot.placedSeq = entry.placedSeq
   if (entry.placedBy !== undefined) snapshot.placedBy = entry.placedBy
   if (entry.pos !== undefined) snapshot.pos = entry.pos
+  if (entry.meta !== undefined) snapshot.meta = entry.meta
   if (entry.changesBy !== undefined) snapshot.changesBy = entry.changesBy
   return snapshot
 }
@@ -77,6 +80,7 @@ function sameAs(entry: TreeEntry, before: Snapshot): boolean {
     entry.placedSeq === before.placedSeq &&
     entry.placedBy === before.placedBy &&
     entry.pos === before.pos &&
+    metaText(entry.meta) === metaText(before.meta) &&
     entry.changesBy === before.changesBy
   )
 }
@@ -90,6 +94,7 @@ interface FolderRow {
   updated_by: string | null
   deleted_in: number | null
   pos: string | null
+  meta: string | null
   changes_by: string | null
 }
 
@@ -107,6 +112,7 @@ interface NoteRow {
   placed_seq: number | null
   placed_by: string | null
   pos: string | null
+  meta: string | null
   changes_by: string | null
   path: string
   epoch: number
@@ -305,6 +311,7 @@ export class Tree {
         deletedIn: entry.deletedIn ?? null,
         by: entry.by ?? null,
         pos: entry.pos ?? null,
+        meta: metaText(entry.meta),
         changesBy: entry.changesBy ? JSON.stringify(entry.changesBy) : null,
       }
 
@@ -339,6 +346,13 @@ export class Tree {
         epochBase: content.epochBase,
       })
     }
+
+    const described = [...this.state.entries.values()].flatMap((entry) => {
+      if (entry.kind === 'folder') return []
+      const before = this.before.get(entry.id)
+      if (metaText(entry.meta) === metaText(before?.meta)) return []
+      return picturesOfMeta(entry.meta).map((hash) => ({ id: entry.id, hash }))
+    })
 
     const ops = [...this.answered].map(([op, result]) => ({
       id: `${this.spaceId}/${op}`,
@@ -398,6 +412,17 @@ export class Tree {
     }
 
     if (this.unmarked) out.push(markEpochs(db, space))
+
+    for (const piece of chunks(described, 500)) {
+      out.push(
+        db
+          .prepare(
+            `insert or ignore into note_pictures (note_id, hash)
+             select json_extract(value, '$.id'), json_extract(value, '$.hash') from json_each(?1)`,
+          )
+          .bind(JSON.stringify(piece)),
+      )
+    }
 
     for (const piece of chunks(ops, 200)) {
       out.push(
@@ -462,11 +487,11 @@ function updateFolders(
               deleted = c.deleted,
               deleted_at = case c.gone when 1 then ?2 when 0 then null else folders.deleted_at end,
               deleted_in = c.deleted_in, updated_at = ?2, updated_by = c.by, pos = c.pos,
-              changes_by = c.changes_by
+              meta = c.meta, changes_by = c.changes_by
          from (select ${field('id')} as fid, ${field('parent')} as parent, ${field('name')} as name,
                       ${field('key')} as key, ${field('seq')} as seq, ${field('deleted')} as deleted,
                       ${field('gone')} as gone, ${field('deletedIn')} as deleted_in,
-                      ${field('by')} as by, ${field('pos')} as pos,
+                      ${field('by')} as by, ${field('pos')} as pos, ${field('meta')} as meta,
                       ${field('changesBy')} as changes_by
                  from json_each(?3)) as c
         where folders.id = c.fid and folders.space_id = ?1`,
@@ -483,11 +508,12 @@ function insertFolders(
   return db
     .prepare(
       `insert into folders (id, space_id, parent_id, name, name_key, seq, deleted, deleted_at,
-                            deleted_in, updated_at, updated_by, pos, changes_by)
+                            deleted_in, updated_at, updated_by, pos, meta, changes_by)
        select ${field('id')}, ?1, ${field('parent')}, ${field('name')}, ${field('key')},
               ${field('seq')}, ${field('deleted')},
               case ${field('deleted')} when 1 then ?2 else null end,
-              ${field('deletedIn')}, ?2, ${field('by')}, ${field('pos')}, ${field('changesBy')}
+              ${field('deletedIn')}, ?2, ${field('by')}, ${field('pos')}, ${field('meta')},
+              ${field('changesBy')}
          from json_each(?3)`,
     )
     .bind(space, at, JSON.stringify(rows))
@@ -506,7 +532,7 @@ function updateNotes(
               deleted_at = case c.gone when 1 then ?2 when 0 then null else notes.deleted_at end,
               deleted_in = c.deleted_in, updated_by = c.by, doc_seq = c.doc_seq,
               doc_by = c.doc_by, placed_seq = c.placed_seq, placed_by = c.placed_by, pos = c.pos,
-              changes_by = c.changes_by, version = notes.version + c.bump,
+              meta = c.meta, changes_by = c.changes_by, version = notes.version + c.bump,
               updated_at = case c.bump when 1 then ?2 else notes.updated_at end
          from (select ${field('id')} as nid, ${field('parent')} as parent, ${field('name')} as name,
                       ${field('key')} as key, ${field('kind')} as kind, ${field('path')} as path,
@@ -515,7 +541,8 @@ function updateNotes(
                       ${field('by')} as by, ${field('docSeq')} as doc_seq,
                       ${field('docBy')} as doc_by, ${field('placedSeq')} as placed_seq,
                       ${field('placedBy')} as placed_by, ${field('pos')} as pos,
-                      ${field('changesBy')} as changes_by, ${field('bump')} as bump
+                      ${field('meta')} as meta, ${field('changesBy')} as changes_by,
+                      ${field('bump')} as bump
                  from json_each(?3)) as c
         where notes.id = c.nid and notes.space_id = ?1`,
     )
@@ -533,13 +560,14 @@ function insertNotes(
       `insert into notes (id, space_id, path, seq, version, updated_at, deleted, deleted_at, size,
                           hash, front, folder_id, name, name_key, kind, epoch, epoch_base,
                           doc_seq, doc_by, updated_by, deleted_in, placed_seq, placed_by, pos,
-                          changes_by)
+                          meta, changes_by)
        select ${field('id')}, ?1, ${field('path')}, ${field('seq')}, 1, ?2, ${field('deleted')},
               case ${field('deleted')} when 1 then ?2 else null end, ${field('size')},
               ${field('hash')}, ${field('front')}, ${field('parent')}, ${field('name')},
               ${field('key')}, ${field('kind')}, ${field('epoch')}, ${field('epochBase')},
               ${field('docSeq')}, ${field('docBy')}, ${field('by')}, ${field('deletedIn')},
-              ${field('placedSeq')}, ${field('placedBy')}, ${field('pos')}, ${field('changesBy')}
+              ${field('placedSeq')}, ${field('placedBy')}, ${field('pos')}, ${field('meta')},
+              ${field('changesBy')}
          from json_each(?3)`,
     )
     .bind(space, at, JSON.stringify(rows))
@@ -558,6 +586,8 @@ function folderEntry(row: FolderRow): TreeEntry {
   if (row.updated_by !== null) entry.by = row.updated_by
   if (row.deleted_in !== null) entry.deletedIn = row.deleted_in
   if (row.pos !== null) entry.pos = row.pos
+  const meta = metaFromText(row.meta)
+  if (meta) entry.meta = meta
   const changes = changesIn(row.changes_by)
   if (changes) entry.changesBy = changes
   return entry
@@ -595,6 +625,8 @@ function noteEntry(row: NoteRow, name: string): TreeEntry {
   if (row.placed_seq !== null) entry.placedSeq = row.placed_seq
   if (row.placed_by !== null) entry.placedBy = row.placed_by
   if (row.pos !== null) entry.pos = row.pos
+  const meta = metaFromText(row.meta)
+  if (meta) entry.meta = meta
   const changes = changesIn(row.changes_by)
   if (changes) entry.changesBy = changes
   return entry
@@ -605,14 +637,14 @@ export async function readTree(env: Env, spaceId: string, device?: string): Prom
     .bind(spaceId)
     .first<{ next: number }>()
   const folders = await env.DB.prepare(
-    `select id, parent_id, name, deleted, seq, updated_by, deleted_in, pos, changes_by
+    `select id, parent_id, name, deleted, seq, updated_by, deleted_in, pos, meta, changes_by
        from folders where space_id = ?`,
   )
     .bind(spaceId)
     .all<FolderRow>()
   const notes = await env.DB.prepare(
     `select id, kind, folder_id, name, deleted, seq, doc_seq, updated_by, doc_by, deleted_in,
-            placed_seq, placed_by, pos, changes_by, path, epoch
+            placed_seq, placed_by, pos, meta, changes_by, path, epoch
        from notes where space_id = ? and not (deleted = 1 and deleted_at is null)`,
   )
     .bind(spaceId)

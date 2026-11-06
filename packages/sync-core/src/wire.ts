@@ -1,3 +1,4 @@
+import { type ItemMeta, type MetaPatch, metaOf, metaPatchOf } from './meta'
 import { isPosition } from './order'
 
 export type EntryKind = 'note' | 'canvas' | 'pages' | 'url' | 'term' | 'chat' | 'file' | 'folder'
@@ -28,6 +29,7 @@ export interface FeedItem {
   by: string
   at: number
   pos?: string
+  meta?: ItemMeta
 }
 
 export interface FeedPage {
@@ -35,6 +37,7 @@ export interface FeedPage {
   cursor: number
   more: boolean
   order?: true
+  meta?: true
   index?: true
   device?: string
 }
@@ -87,6 +90,12 @@ export interface PlaceOp extends OpBase {
   pos: string
 }
 
+export interface MetaOp extends OpBase {
+  t: 'meta'
+  id: string
+  meta: MetaPatch
+}
+
 export interface DeleteOp extends OpBase {
   t: 'delete'
   id: string
@@ -97,7 +106,7 @@ export interface RestoreOp extends OpBase {
   id: string
 }
 
-export type Op = MkdirOp | CreateOp | RenameOp | MoveOp | DeleteOp | RestoreOp | PlaceOp
+export type Op = MkdirOp | CreateOp | RenameOp | MoveOp | DeleteOp | RestoreOp | PlaceOp | MetaOp
 
 export type Refusal = 'cycle' | 'edited' | 'role' | 'gone'
 
@@ -338,6 +347,11 @@ export function opOf(value: unknown): Op | null {
     case 'place':
       return isPosition(value.pos) ? { op, t: 'place', id, pos: value.pos, seen } : null
 
+    case 'meta': {
+      const meta = metaPatchOf(value.meta)
+      return meta ? { op, t: 'meta', id, meta, seen } : null
+    }
+
     case 'delete':
       return { op, t: 'delete', id, seen }
 
@@ -395,6 +409,7 @@ function feedItemOf(value: unknown): FeedItem | null {
     by,
     at,
     pos,
+    meta,
   } = value
   if (!isId(id) || !isKind(kind) || !isParent(parent) || !isName(name)) return null
   if (typeof deleted !== 'boolean' || !isCount(seq) || typeof hash !== 'string') return null
@@ -403,12 +418,15 @@ function feedItemOf(value: unknown): FeedItem | null {
   if (epoch !== undefined && !isCount(epoch)) return null
   if (epochBase !== undefined && typeof epochBase !== 'string') return null
   if (pos !== undefined && !isPosition(pos)) return null
+  const kept = meta === undefined ? undefined : metaOf(meta)
+  if (kept === null) return null
 
   const item: FeedItem = { id, kind, parent, name, deleted, seq, hash, size, by, at }
   if (docSeq !== undefined) item.docSeq = docSeq
   if (epoch !== undefined) item.epoch = epoch
   if (epochBase !== undefined) item.epochBase = epochBase
   if (pos !== undefined) item.pos = pos
+  if (kept && Object.keys(kept).length) item.meta = kept
   return item
 }
 
@@ -449,6 +467,7 @@ export function feedPageOf(value: unknown): FeedPage | null {
   if (!items) return null
   const page: FeedPage = { items, cursor: value.cursor, more: value.more }
   if (value.order === true) page.order = true
+  if (value.meta === true) page.meta = true
   if (value.index === true) page.index = true
   if (typeof value.device === 'string' && value.device) page.device = value.device
   return page

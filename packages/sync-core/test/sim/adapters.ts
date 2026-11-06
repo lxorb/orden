@@ -1,5 +1,6 @@
 import type { Times } from '../../src/diverge'
 import type { EntryKind } from '../../src/wire'
+import type { ItemMeta } from '../../src/meta'
 
 export type Route = 'ops' | 'feed' | 'pull' | 'push' | 'keep'
 
@@ -9,6 +10,7 @@ export interface EntryView {
   parent: string | null
   name: string
   pos?: string
+  meta?: ItemMeta
 }
 
 export interface View {

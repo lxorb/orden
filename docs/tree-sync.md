@@ -28,6 +28,7 @@ had seen when it did it (`seen`):
 | `delete` | an entry gone, and for a folder everything in it the device had seen |
 | `restore` | a deleted entry back, with the folders above it, and for a folder what was deleted with it |
 | `place` | an entry put somewhere else among the rest of its folder, by hand (its new position) |
+| `meta` | keys of an entry's own metadata set or cleared (#1210) |
 
 `mkdir`, `create` and `move` may carry a position too: where the entry was dropped.
 
@@ -100,6 +101,28 @@ last wrote) a device does not hear; where that keeps something its delete took, 
 account refuses the delete and the device puts back what the account still holds, as for
 any refused delete. An account from before this says no id, so nothing in its feed counts
 as the device's own, and such a folder shows as kept until the account answers.
+
+## Item metadata
+
+What Orden keeps about an entry beyond its name and place - a note's icon and its colour,
+its cover and where the cover sits - is the entry's own metadata (`meta`, a map of short
+lowercase keys to words, `@orden/sync-core/meta`), kept on the entry by the account (0078)
+and said in the feed, which also says the account keeps it (`meta: true`). A `meta`
+operation sets or clears keys, and only those: two devices setting different keys of one
+note both keep theirs, two setting one key, the later to arrive stands. It goes with the
+entry through every rename and move, counts as a change a delete that had not seen it
+cannot take, and comes back with the entry from the account's trash.
+
+On a device the file list reads it from `nib:item-meta`, by path, so it is there at the
+first paint and on a machine that is not signed in, and follows moves, renames and deletes
+like the other maps by path; the engine keeps the account's copy by id beside the tree (in
+`order:<space>`). Where the account keeps metadata, what this device set goes up as `meta`
+operations and the account's answer is what the list shows; a device sends them only to an
+account whose feed says it keeps them, and drops them if the account answers a batch with
+one in it as a request it cannot read. A space signed in for the first time sends what it
+held. Notes whose front matter held Orden's own keys have them moved into the metadata once
+per space, on a machine that is not signed in or where the account keeps metadata, so
+another device never loses an icon to the move.
 
 ## What this device does
 

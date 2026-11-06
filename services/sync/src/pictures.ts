@@ -2,6 +2,7 @@ import { lexMarkdown, withoutComments } from '@orden/markdown'
 import { coverOf } from '@orden/markdown/cover'
 import { frontMatterValue, stripFrontMatter } from '@orden/markdown/front-matter'
 import { withoutBlockIds } from '@orden/markdown/links'
+import { metaFromText } from '@orden/sync-core/meta'
 import type { Env } from './types'
 
 const FRONT_PICTURES = ['image'] as const
@@ -9,6 +10,17 @@ const FRONT_PICTURES = ['image'] as const
 const PICTURE = /\/i\/([a-f0-9]{64})(?:\.[a-z0-9]+)?(?:[?#].*)?$/i
 
 const ANYWHERE = /\/i\/([a-f0-9]{64})(?![a-f0-9])/gi
+
+export function picturesOfMeta(
+  meta: Readonly<Record<string, string>> | null | undefined,
+): string[] {
+  const out: string[] = []
+  for (const said of Object.values(meta ?? {})) {
+    const hash = PICTURE.exec(said.trim())?.[1]
+    if (hash) out.push(hash.toLowerCase())
+  }
+  return out
+}
 
 export function picturesOf(source: string, liveHtml = false): Set<string> {
   const found = new Set<string>()
@@ -105,12 +117,17 @@ export async function keepPictures(
 ): Promise<boolean> {
   try {
     const live = await htmlIsLive(env, note.space_id)
+    const row = await env.DB.prepare('select meta from notes where id = ?')
+      .bind(note.id)
+      .first<{ meta: string | null }>()
+    const pictures = picturesOf(content, live)
+    for (const hash of picturesOfMeta(metaFromText(row?.meta))) pictures.add(hash)
     await env.DB.batch([
       env.DB.prepare('delete from note_pictures where note_id = ?').bind(note.id),
       env.DB.prepare(
         `insert or ignore into note_pictures (note_id, hash)
            select ?1, value from json_each(?2)`,
-      ).bind(note.id, JSON.stringify([...picturesOf(content, live)])),
+      ).bind(note.id, JSON.stringify([...pictures])),
     ])
     return true
   } catch {

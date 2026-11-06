@@ -21,6 +21,8 @@ interface Device {
   sent: { t: string; pos?: string }[]
   keeps: boolean
   old: boolean
+  describes: boolean
+  oldMeta: boolean
   engine: Engine
   launch(): Promise<Engine>
 }
@@ -80,6 +82,8 @@ async function device(foldsCase = true): Promise<Device> {
     sent: [],
     keeps: true,
     old: false,
+    describes: true,
+    oldMeta: false,
     engine: null as unknown as Engine,
     async launch() {
       const world: World = {
@@ -92,10 +96,14 @@ async function device(foldsCase = true): Promise<Device> {
               if (made.old && ops.some((op) => op.t === 'place' || op.pos !== undefined)) {
                 throw new Refused(400, 'not a request')
               }
+              if (made.oldMeta && ops.some((op) => op.t === 'meta')) {
+                throw new Refused(400, 'not a request')
+              }
               made.sent.push(...ops)
             }
             const answer = unframe(await account.handle('d0', route, frame(body)))
             if (route === 'feed' && !made.keeps) delete (answer as { order?: true }).order
+            if (route === 'feed' && !made.describes) delete (answer as { meta?: true }).meta
             return answer
           },
         },
@@ -209,5 +217,78 @@ describe('places', () => {
     await one.engine.created(`${ROOT}/Other.md`, false, 'other')
     await one.engine.pass(SPACE)
     expect(one.sent.some((op) => op.t === 'place' || op.pos !== undefined)).toBe(false)
+  })
+})
+
+const described = async (account: ReferenceAccount) =>
+  Object.fromEntries((await account.view()).entries.map((entry) => [entry.name, entry.meta]))
+
+describe("an item's metadata", () => {
+  test('goes up by id, comes back by path, and is kept across a relaunch', async () => {
+    const one = await device()
+    await one.engine.pass(SPACE)
+    expect(one.engine.describedIn(ROOT)).toEqual({})
+
+    const left = await one.engine.describe(ROOT, {
+      'Plan.md': { icon: 'rocket', 'icon-color': 'red' },
+      'Nowhere.md': { icon: 'star' },
+    })
+    expect(left).toEqual(['Nowhere.md'])
+    expect(one.engine.describedIn(ROOT)?.['Plan.md']).toEqual({
+      icon: 'rocket',
+      'icon-color': 'red',
+    })
+    await one.engine.pass(SPACE)
+    expect((await described(one.account))['Plan.md']).toEqual({
+      icon: 'rocket',
+      'icon-color': 'red',
+    })
+
+    await one.engine.describe(ROOT, { 'Plan.md': { 'icon-color': null } })
+    await one.engine.pass(SPACE)
+    expect((await described(one.account))['Plan.md']).toEqual({ icon: 'rocket' })
+
+    one.engine.stop()
+    const again = await one.launch()
+    expect(again.describedIn(ROOT)?.['Plan.md']).toEqual({ icon: 'rocket' })
+  })
+
+  test("another device's metadata arrives with the feed, and follows a rename", async () => {
+    const one = await device()
+    await one.engine.pass(SPACE)
+    const id = (await one.account.view()).entries.find((entry) => entry.name === 'Plan.md')?.id
+    const seen = (await one.account.view()).entries.length
+    const ops = (list: object[]) =>
+      one.account.handle('d9', 'ops', frame({ ops: list })).then((bytes) => unframe(bytes))
+    await ops([
+      { op: 'x1', t: 'meta', id, meta: { cover: 'sea.png' }, seen },
+      { op: 'x2', t: 'rename', id, name: 'Renamed.md', seen },
+    ])
+    await one.engine.pass(SPACE)
+    expect(one.engine.describedIn(ROOT)).toEqual({ 'Renamed.md': { cover: 'sea.png' } })
+  })
+
+  test('an account that does not say it keeps metadata is sent none, and the place is null', async () => {
+    const one = await device()
+    one.describes = false
+    await one.engine.pass(SPACE)
+    expect(one.engine.describedIn(ROOT)).toBeNull()
+    expect(await one.engine.describe(ROOT, { 'Plan.md': { icon: 'x' } })).toBeNull()
+    await one.engine.pass(SPACE)
+    expect(one.sent.some((op) => op.t === 'meta')).toBe(false)
+  })
+
+  test('metadata waiting when the account is put back to a build before it is dropped, and the pass goes on', async () => {
+    const one = await device()
+    await one.engine.pass(SPACE)
+    await one.engine.describe(ROOT, { 'Plan.md': { icon: 'x' } })
+    await one.engine.created(`${ROOT}/New.md`, false, 'new')
+    one.describes = false
+    one.oldMeta = true
+    const passed = await one.engine.pass(SPACE)
+    expect(passed?.finished).toBe(true)
+    expect(one.engine.describedIn(ROOT)).toBeNull()
+    expect(one.engine.keepsPlaces(ROOT)).toBe(true)
+    expect((await one.account.view()).entries.map((entry) => entry.name)).toContain('New.md')
   })
 })

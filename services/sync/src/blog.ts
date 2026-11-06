@@ -18,6 +18,7 @@ import { blogFence } from './blog/code'
 import { feed, type FeedPage, newestFirst, robots, rss, sitemap } from './blog/feed'
 import { answersFrom, formHtml, formOf } from './blog/form'
 import { type NoteFront, readFront } from './blog/front'
+import { keptCover } from './blog/kept-cover'
 import { gateBody, letIn, matches, newTicket, ticketCookie } from './blog/gate'
 import { escape, type Head, headOf } from './blog/head'
 import { MATH_CSS, MATH_CSS_PATH, MATH_FONTS } from './blog/math'
@@ -899,7 +900,7 @@ async function served(
       escapeHtml: true,
       code: fencesOf(only.id, url, request, await diagramsIn(env, space, source)),
       breaks,
-      cover: true,
+      cover: keptCover(only.meta) ?? true,
       locale: PAGE_LANGUAGE,
       resolveLink: linkResolver([], files),
       resolveNoteHref: noteHrefResolver(only.path, [], files),
@@ -915,7 +916,8 @@ async function served(
       url: `${url.origin}/`,
       description: front.description ?? front.summary ?? site.description,
       image:
-        pictureAt(front.image, byFile, url.origin) ?? pictureAt(site.image, byFile, url.origin),
+        pictureAt(front.image ?? keptCover(only.meta)?.src, byFile, url.origin) ??
+        pictureAt(site.image, byFile, url.origin),
       date: front.date,
       feed: false,
     })
@@ -1096,7 +1098,7 @@ async function served(
     escapeHtml: true,
     code: fencesOf(note.id, url, request, await diagramsIn(env, space, source)),
     breaks,
-    cover: true,
+    cover: keptCover(note.meta) ?? true,
     locale: PAGE_LANGUAGE,
     resolveLink: linkResolver(pageList, files),
     resolveNoteHref: noteHrefResolver(note.path, pageList, files),
@@ -1113,7 +1115,8 @@ async function served(
     url: `${url.origin}/${found.slug}`,
     description: found.front.description ?? found.front.summary ?? site.description,
     image:
-      pictureAt(found.front.image, byFile, url.origin) ?? pictureAt(site.image, byFile, url.origin),
+      pictureAt(found.front.image ?? keptCover(note.meta)?.src, byFile, url.origin) ??
+      pictureAt(site.image, byFile, url.origin),
     date: found.front.date,
   })
 
