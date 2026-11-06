@@ -2874,4 +2874,6 @@ export const jv: Dictionary = {
   '{way} could not be asked: {reason}': '{way} ora bisa ditakoni: {reason}',
   '{way} did not confirm it was you': '{way} ora mesthekake yèn iki sampéyan',
   'That could not be protected: {reason}': 'Ora bisa dilindhungi: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} ora ditambahake: obrolan nampa gambar lan berkas teks nganti 2 MB.',
 }

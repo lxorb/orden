@@ -2852,4 +2852,6 @@ export const am: Dictionary = {
   '{way} could not be asked: {reason}': '{way}ን መጠየቅ አልተቻለም፦ {reason}',
   '{way} did not confirm it was you': '{way} እርስዎ መሆንዎን አላረጋገጠም',
   'That could not be protected: {reason}': 'ሊጠበቅ አልቻለም፦ {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} አልታከለም፦ ውይይት ምስሎችን እና እስከ 2 MB የሆኑ የጽሑፍ ፋይሎችን ይቀበላል።',
 }

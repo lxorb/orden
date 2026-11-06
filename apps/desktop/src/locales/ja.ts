@@ -2866,4 +2866,6 @@ export const ja: Dictionary = {
   '{way} could not be asked: {reason}': '{way} に問い合わせできませんでした: {reason}',
   '{way} did not confirm it was you': '{way} で本人確認できませんでした',
   'That could not be protected: {reason}': '保護できませんでした: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} は追加されませんでした: チャットに追加できるのは画像と 2 MB までのテキストファイルです。',
 }

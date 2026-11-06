@@ -2853,4 +2853,6 @@ export const ko: Dictionary = {
   '{way} could not be asked: {reason}': '{way}에 요청할 수 없습니다: {reason}',
   '{way} did not confirm it was you': '{way}이(가) 본인임을 확인하지 못했습니다',
   'That could not be protected: {reason}': '보호할 수 없습니다: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name}을(를) 추가하지 않았습니다: 채팅에는 이미지와 2 MB 이하의 텍스트 파일만 추가할 수 있습니다.',
 }

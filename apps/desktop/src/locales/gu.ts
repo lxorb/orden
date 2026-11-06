@@ -2898,4 +2898,6 @@ export const gu: Dictionary = {
   '{way} could not be asked: {reason}': '{way}ને પૂછી શકાયું નહીં: {reason}',
   '{way} did not confirm it was you': '{way}એ પુષ્ટિ ન કરી કે તે તમે છો',
   'That could not be protected: {reason}': 'સુરક્ષિત કરી શકાયું નહીં: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} ઉમેરાયું નહીં: ચેટ ચિત્રો અને 2 MB સુધીની ટેક્સ્ટ ફાઇલો લે છે.',
 }

@@ -2952,4 +2952,6 @@ export const sw: Dictionary = {
   '{way} could not be asked: {reason}': '{way} haikuweza kuulizwa: {reason}',
   '{way} did not confirm it was you': '{way} haikuthibitisha kuwa ni wewe',
   'That could not be protected: {reason}': 'Haikuweza kulindwa: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} haikuongezwa: gumzo hupokea picha na faili za maandishi hadi MB 2.',
 }

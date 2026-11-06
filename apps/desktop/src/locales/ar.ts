@@ -3045,4 +3045,6 @@ export const ar: Dictionary = {
   '{way} could not be asked: {reason}': 'تعذّر سؤال {way}: {reason}',
   '{way} did not confirm it was you': 'لم يؤكّد {way} أنك أنت',
   'That could not be protected: {reason}': 'تعذّرت الحماية: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    'لم تُضف {name}: تقبل المحادثة الصور والملفات النصية حتى 2 MB.',
 }

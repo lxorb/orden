@@ -2911,4 +2911,6 @@ export const mr: Dictionary = {
   '{way} could not be asked: {reason}': '{way} ला विचारता आले नाही: {reason}',
   '{way} did not confirm it was you': '{way} ने ते तुम्हीच असल्याची पुष्टी केली नाही',
   'That could not be protected: {reason}': 'संरक्षित करता आले नाही: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} जोडले नाही: चॅटमध्ये चित्रे आणि 2 MB पर्यंतच्या मजकूर फाइल्स जोडता येतात.',
 }

@@ -2862,4 +2862,6 @@ export const vi: Dictionary = {
   '{way} could not be asked: {reason}': 'Không thể hỏi {way}: {reason}',
   '{way} did not confirm it was you': '{way} không xác nhận đó là bạn',
   'That could not be protected: {reason}': 'Không thể bảo vệ: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    'Chưa thêm {name}: cuộc trò chuyện nhận hình ảnh và tệp văn bản tối đa 2 MB.',
 }

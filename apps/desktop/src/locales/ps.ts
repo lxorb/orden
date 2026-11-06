@@ -2912,4 +2912,6 @@ export const ps: Dictionary = {
   '{way} could not be asked: {reason}': 'له {way} پوښتنه ونه شوه: {reason}',
   '{way} did not confirm it was you': '{way} تایید نه کړه چې دا تاسو یاست',
   'That could not be protected: {reason}': 'خوندي نه شو: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} ورنه کړل شو: چټ انځورونه او تر 2 MB پورې متني فایلونه مني.',
 }

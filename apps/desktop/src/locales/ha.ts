@@ -2956,4 +2956,6 @@ export const ha: Dictionary = {
   '{way} could not be asked: {reason}': 'Ba a iya tambayar {way} ba: {reason}',
   '{way} did not confirm it was you': '{way} bai tabbatar cewa kai ne ba',
   'That could not be protected: {reason}': 'Ba a iya karewa ba: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    'Ba a ƙara {name} ba: hira tana karɓar hotuna da fayilolin rubutu har zuwa 2 MB.',
 }

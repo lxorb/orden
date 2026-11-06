@@ -2975,4 +2975,6 @@ export const fil: Dictionary = {
   '{way} could not be asked: {reason}': 'Hindi matanong ang {way}: {reason}',
   '{way} did not confirm it was you': 'Hindi kinumpirma ng {way} na ikaw ito',
   'That could not be protected: {reason}': 'Hindi ito maprotektahan: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    'Hindi naidagdag ang {name}: tumatanggap ang chat ng mga larawan at text file na hanggang 2 MB.',
 }

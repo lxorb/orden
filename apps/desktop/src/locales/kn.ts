@@ -2946,4 +2946,6 @@ export const kn: Dictionary = {
   '{way} could not be asked: {reason}': '{way} ಅನ್ನು ಕೇಳಲಾಗಲಿಲ್ಲ: {reason}',
   '{way} did not confirm it was you': 'ಅದು ನೀವೇ ಎಂದು {way} ದೃಢೀಕರಿಸಲಿಲ್ಲ',
   'That could not be protected: {reason}': 'ರಕ್ಷಿಸಲಾಗಲಿಲ್ಲ: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} ಸೇರಿಸಲಾಗಲಿಲ್ಲ: ಚಾಟ್ ಚಿತ್ರಗಳನ್ನು ಮತ್ತು 2 MB ವರೆಗಿನ ಪಠ್ಯ ಫೈಲ್‌ಗಳನ್ನು ಸ್ವೀಕರಿಸುತ್ತದೆ.',
 }

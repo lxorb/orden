@@ -2964,4 +2964,6 @@ export const ta: Dictionary = {
   '{way} could not be asked: {reason}': '{way}-இடம் கேட்க முடியவில்லை: {reason}',
   '{way} did not confirm it was you': 'இது நீங்கள்தான் என்று {way} உறுதிசெய்யவில்லை',
   'That could not be protected: {reason}': 'பாதுகாக்க முடியவில்லை: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} சேர்க்கப்படவில்லை: அரட்டை படங்களையும் 2 MB வரையிலான உரைக் கோப்புகளையும் ஏற்கும்.',
 }

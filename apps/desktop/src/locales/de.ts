@@ -2975,4 +2975,6 @@ export const de: Dictionary = {
   '{way} could not be asked: {reason}': '{way} konnte nicht gefragt werden: {reason}',
   '{way} did not confirm it was you': '{way} hat nicht bestätigt, dass du es bist',
   'That could not be protected: {reason}': 'Das konnte nicht geschützt werden: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} wurde nicht hinzugefügt: Ein Chat nimmt Bilder und Textdateien bis 2 MB.',
 }

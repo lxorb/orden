@@ -2882,4 +2882,6 @@ export const my: Dictionary = {
   '{way} could not be asked: {reason}': '{way} ကို မေး၍ မရပါ - {reason}',
   '{way} did not confirm it was you': '{way} က သင်ဖြစ်ကြောင်း အတည်မပြုပါ',
   'That could not be protected: {reason}': 'ကာကွယ်၍ မရပါ - {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} ကို မထည့်ရပါ - ချတ်တွင် ပုံများနှင့် 2 MB အထိ စာသားဖိုင်များသာ ထည့်နိုင်သည်။',
 }

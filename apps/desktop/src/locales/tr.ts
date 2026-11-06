@@ -2932,4 +2932,6 @@ export const tr: Dictionary = {
   '{way} could not be asked: {reason}': '{way} sorulamadı: {reason}',
   '{way} did not confirm it was you': '{way} sizin olduğunuzu doğrulamadı',
   'That could not be protected: {reason}': 'Korunamadı: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} eklenmedi: sohbet resimleri ve en fazla 2 MB metin dosyalarını kabul eder.',
 }

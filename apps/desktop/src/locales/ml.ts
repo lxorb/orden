@@ -2958,4 +2958,6 @@ export const ml: Dictionary = {
   '{way} could not be asked: {reason}': '{way}-നോട് ചോദിക്കാനായില്ല: {reason}',
   '{way} did not confirm it was you': 'ഇത് നിങ്ങളാണെന്ന് {way} സ്ഥിരീകരിച്ചില്ല',
   'That could not be protected: {reason}': 'സംരക്ഷിക്കാനായില്ല: {reason}',
+  '{name} was not added: a chat takes pictures, and text files up to 2 MB.':
+    '{name} ചേർത്തില്ല: ചാറ്റിൽ ചിത്രങ്ങളും 2 MB വരെയുള്ള ടെക്സ്റ്റ് ഫയലുകളും മാത്രമേ ചേർക്കാനാകൂ.',
 }
