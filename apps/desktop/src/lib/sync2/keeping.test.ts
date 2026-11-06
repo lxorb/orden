@@ -130,6 +130,37 @@ describe('a browser that keeps only the words it uses', () => {
     ).toEqual([`${ROOT}/Ideas.md`, `${ROOT}/Plan.md`])
   })
 
+  test('puts what it makes in a folder it keeps no words of into that folder, not a new one of its name', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const other = await fresh(account, 'o', { lazy: false })
+    await other.engine.pass(SPACE)
+    await other.disk.write(`${ROOT}/Work/Plan.md`, '# Plan\n')
+    await other.engine.created(`${ROOT}/Work`, true)
+    await other.engine.created(`${ROOT}/Work/Plan.md`, false, '# Plan\n')
+    await other.engine.pass(SPACE)
+
+    const browser = await fresh(account, 'b')
+    await browser.engine.pass(SPACE)
+    expect(browser.engine.awayFiles().map((one) => one.path)).toContain(`${ROOT}/Work/Plan.md`)
+    const space = browser.engine.core.spaces.get(SPACE)
+    const work = [...(space?.entries.values() ?? [])].find((one) => one.name === 'Work')
+
+    await browser.disk.write(`${ROOT}/Work/Idea.md`, '# Idea\n')
+    await browser.engine.created(`${ROOT}/Work`, true)
+    await browser.engine.created(`${ROOT}/Work/Idea.md`, false, '# Idea\n')
+    const ops = (space?.outbox ?? []).flatMap((one) =>
+      one.record.t === 'op' ? [one.record.op] : [],
+    )
+    expect(ops.map((one) => one.t)).toEqual(['create'])
+    expect(ops[0] && 'parent' in ops[0] ? ops[0].parent : null).toBe(work?.id)
+
+    await browser.engine.pass(SPACE)
+    await other.engine.pass(SPACE)
+    expect(
+      [...other.disk.files.keys()].filter((one) => one.startsWith(`${ROOT}/Work`)).sort(),
+    ).toEqual([`${ROOT}/Work/Idea.md`, `${ROOT}/Work/Plan.md`])
+  })
+
   test('with a second window of the app open keeps every word, those it kept away too', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const browser = await fresh(account, 'b')

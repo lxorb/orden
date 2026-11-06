@@ -376,6 +376,7 @@ export class Engine implements AskedEngine {
         await this.core.commit(mergeableAfter(placed.space, there, mergeable))
       return null
     }
+    if (folder && placed.space.folderAt(placed.path) !== undefined) return null
     if (!folder && (await this.heldPaper(path))) return null
     const { id, changes } = await made(this.core, placed.space, {
       path: placed.path,
