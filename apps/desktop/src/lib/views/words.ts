@@ -1,10 +1,3 @@
-/** The words the views say: a view's name, a layout's, a group's, a column's, a day's.
- *
- *  Names and counts and nothing else (docs/tasks.md 5.19): a group is called by its
- *  value, a day by the day, a column by its property. The engine's group keys are
- *  values rather than words (Today groups by whether a task is overdue), and this is
- *  where a value becomes what the reader reads, in their language. */
-
 import { addDays, groupName, isWhen, placeOfKey, type Value } from '@orden/bases'
 import { i18n, key, t } from '../i18n.svelte'
 import { dateAt } from './days'
@@ -26,7 +19,6 @@ const BUILTIN_NAMES: Record<Builtin, string> = {
 
 export const builtinName = (builtin: Builtin): string => t(BUILTIN_NAMES[builtin])
 
-/** Every layout a view can be drawn as, in the order the switch offers them. */
 export const LAYOUTS = [
   'list',
   'table',
@@ -50,9 +42,6 @@ const LAYOUT_NAMES: Record<Layout, string> = {
   form: key('Form'),
 }
 
-/** The layout a view's type draws as: Bases' own names, and `board` read as the
- *  kanban Obsidian 1.14 writes. A type Orden has no layout for is drawn as a table, the
- *  way Obsidian falls back for one it does not know. */
 export function layoutOf(type: string): Layout {
   if (type === 'board') return 'kanban'
   return LAYOUTS.find((one) => one === type) ?? 'table'
@@ -96,8 +85,6 @@ const FIELD_NAMES: Record<string, string> = {
   'task.completed': key('Done'),
 }
 
-/** What a column is called: the base's display name, Orden's word for a field it
- *  knows, else the property's own name. */
 export function propertyName(property: string, displayName?: string): string {
   if (displayName) return displayName
   const known = FIELD_NAMES[property]
@@ -105,17 +92,12 @@ export function propertyName(property: string, displayName?: string): string {
   return bare(property).replace(/^(formula|button)\./, '')
 }
 
-/** The words of a priority, `p1` to `p4`; the two low ones Tasks has read as `p5`
- *  and `p6`. A name rather than a word, the way Todoist writes it in every language. */
 export const priorityName = (priority: number): string => `p${priority}`
 
-/** Each name a view's note groups have, and how many groups have it. */
 export type NoteNames = ReadonlyMap<string, number>
 
 const nameOf = (path: string) => (path.split('/').pop() ?? path).replace(/\.md$/i, '')
 
-/** The view's note groups (their keys, paths) counted by name, once for every head,
- *  so a note's group is called by its folder too where two names clash. */
 export function noteNames(keys: readonly Value[]): NoteNames {
   const counts = new Map<string, number>()
   for (const key of keys) {
@@ -126,8 +108,6 @@ export function noteNames(keys: readonly Value[]): NoteNames {
   return counts
 }
 
-/** What a group of a view is called. `names` counts the view's note groups by name
- *  (`noteNames`), where it groups by note. */
 export function groupLabel(
   property: string | undefined,
   value: Value,
@@ -136,7 +116,6 @@ export function groupLabel(
 ): string {
   if (property === 'formula.overdue') return value === true ? t('Overdue') : t('Today')
   if (value === 'overdue') return t('Overdue')
-  // Todos' groups of when a task is due (`WHEN` in @orden/bases, #1046).
   if (isWhen(property)) {
     if (value === 'today') return t('Today')
     if (value === 'tomorrow') return t('Tomorrow')
@@ -158,8 +137,6 @@ export function groupLabel(
   return groupName(value)
 }
 
-/** A note's group by its name, and its space and folder where another group's note has
- *  that name. */
 function noteLabel(key: string, names: NoteNames | undefined): string {
   const { space, path } = placeOfKey(key)
   const name = nameOf(path)
@@ -169,8 +146,6 @@ function noteLabel(key: string, names: NoteNames | undefined): string {
   return `${name} · ${folder === null ? space : `${space}/${folder}`}`
 }
 
-/** A day of Upcoming said the way Todoist heads it: the date and its weekday, and Today
- *  or Tomorrow beside the two that are; a group that is no day by its own word. */
 export function dayHead(value: Value, today: string): string {
   const day = dayIn(value)
   if (day === null) return value === 'overdue' ? t('Overdue') : groupName(value)
@@ -179,7 +154,6 @@ export function dayHead(value: Value, today: string): string {
   return day === today || day === addDays(today, 1) ? `${date} · ${near}` : date
 }
 
-/** A status character as its word. */
 export const statusName = (status: string): string => t(STATUS_NAMES[status] ?? 'To do')
 
 const CHART_NAMES: Record<ChartKind, string> = {
@@ -202,7 +176,6 @@ const MEASURE_NAMES: Record<Measure, string> = {
 
 export const measureName = (measure: Measure): string => t(MEASURE_NAMES[measure])
 
-/** Bases' summaries by the names its files write, in the reader's language. */
 const SUMMARY_NAMES: Record<string, string> = {
   Average: key('Average'),
   Min: key('Min'),
@@ -213,8 +186,6 @@ const SUMMARY_NAMES: Record<string, string> = {
   Stddev: key('Stddev'),
   Earliest: key('Earliest'),
   Latest: key('Latest'),
-  // A summary counts boxes and values; the app's own `Checked` and `Empty` are a
-  // verification and a verb, so these four say what they count.
   Checked: key('Ticked'),
   Unchecked: key('Not ticked'),
   Empty: key('Without a value'),
@@ -222,7 +193,6 @@ const SUMMARY_NAMES: Record<string, string> = {
   Unique: key('Unique'),
 }
 
-/** A summary's name as the reader reads it; a base's own formula is its own name. */
 export const summaryName = (name: string): string => {
   const known = SUMMARY_NAMES[name]
   return known ? t(known) : name

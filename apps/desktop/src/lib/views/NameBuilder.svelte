@@ -1,7 +1,4 @@
 <script lang="ts">
-  /** What a column is called in this base: Bases' `properties.<key>.displayName`, which
-   *  Obsidian shows too. The property in the notes keeps its own name; emptied, the
-   *  column is called by that again. */
   import { t } from '../i18n.svelte'
   import { displayName } from './columns'
   import { setDisplayName } from './edit'

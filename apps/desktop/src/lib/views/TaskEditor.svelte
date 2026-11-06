@@ -1,12 +1,4 @@
 <script lang="ts">
-  /** Todoist's inline editor: quick add's field standing in a list, where a task is added
-   *  (the end of a section, a day, a column) or where one is changed (Ctrl+E, the pencil).
-   *  It floats over the rows under it rather than pushing them down, so the list's
-   *  arithmetic of rows stays what it was; Escape or Cancel puts it away.
-   *
-   *  Adding keeps it up for the next task, the way quick add does; a task's own words and
-   *  fields saved put it away. Every write is quick add's own (quick-add/write.ts) or the
-   *  views' one write path (act.ts). */
   import type { Row } from '@orden/bases'
   import { ai } from '../ai/store.svelte'
   import { onMount } from 'svelte'
@@ -32,12 +24,10 @@
     onsize,
   }: {
     kit: Kit
-    /** The task being changed; a new one is added where absent. */
     row?: Row | null
     prefill?: Prefill
     root?: string | undefined
     onclose: () => void
-    /** How tall it is drawn, as that changes, so the list can make room under it. */
     onsize?: ((tall: number) => void) | undefined
   } = $props()
 
@@ -45,8 +35,6 @@
   const notes = $derived(root ? noteNames(root) : [])
   const tags = $derived(labelsOf(kit.live.rows))
 
-  /** What the field starts with: the prefill, or the task and its description as they are
-   *  now, read once. */
   let start = $state<Prefill | null>(null)
   let description: string | null = null
 
@@ -88,7 +76,6 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<!-- Its keys, presses and drags are the field's own, not the row's under it. -->
 <div
   bind:this={box}
   class="editor"
@@ -115,8 +102,6 @@
 </div>
 
 <style>
-  /* Over the rows under it, at the width of the list: a card of the field, in the
-     elevation a thing that floats over a panel wears. */
   .editor {
     position: absolute;
     inset: 0 0 auto;

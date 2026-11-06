@@ -1,13 +1,3 @@
-/** A list view's answer as the rows it draws, one row tall each: a group's head, its
- *  tasks with their sub-tasks under them, and the add row at the end of a group.
- *
- *  A sub-task sits under its parent wherever both are in the group, indented a level,
- *  and a parent wears a twist that folds them (docs/tasks.md 3, row 97). A note sits
- *  under the note its `parent` property links to, Notion's sub-items, the same way
- *  (docs/tasks.md 4, "sub-items"). One flat list
- *  of same-height rows is what the window arithmetic needs (row-window.ts), so a
- *  Completed view of ten thousand done lines mounts the thirty on screen. Pure. */
-
 import { addDays, type Group, groupName, type Row, rowId } from '@orden/bases'
 import { dayIn } from './values'
 import { isTitle } from './sections'
@@ -25,29 +15,18 @@ export type Item =
   | { kind: 'add'; id: string; group: Group | null }
 
 export interface ListOptions {
-  /** Whether the view groups at all: an ungrouped view draws no heads. */
   grouped: boolean
-  /** Whether the group of rows with no value goes without a head: a project's tasks
-   *  above its first heading are Todoist's tasks in no section, which have none. */
   bareNone?: boolean
-  /** The note a project is, whose title heading holds no section: its group goes
-   *  without a head too. */
   title?: string
-  /** Groups folded, by name. */
   folded: ReadonlySet<string>
-  /** Parents whose sub-tasks are folded, by `foldKey`. */
   shut: ReadonlySet<string>
-  /** Groups the view keeps out of sight, by name. */
   hidden?: readonly string[]
-  /** Whether each group ends in an add row. */
   adding: boolean
-  /** The row id of the note a note row sits under, where it names one. */
   parentOf?: (row: Row) => string | null
 }
 
 export const foldKey = (row: Row): string => `${row.space}\n${rowId(row)}`
 
-/** A group's rows in tree order, each with its depth. */
 function tree(
   rows: readonly Row[],
   shut: ReadonlySet<string>,
@@ -69,8 +48,6 @@ function tree(
     } else roots.push(row)
   }
 
-  // Notes that name each other as parents have no root among them; the first of each
-  // such ring is shown at the top rather than lost.
   const reached = new Set<string>()
   const reach = (row: Row) => {
     const key = foldKey(row)
@@ -113,7 +90,6 @@ export function everyRow(groups: readonly Group[]): Row[] {
   return [...new Set(groups.flatMap((group) => group.rows))]
 }
 
-/** The items a list draws for an answer's groups. */
 export function listItems(groups: readonly Group[], options: ListOptions): Item[] {
   const out: Item[] = []
   const keyOfRow = distinctKeys()
@@ -148,7 +124,6 @@ export function listItems(groups: readonly Group[], options: ListOptions): Item[
   return out
 }
 
-/** A set with a key put in, or taken out where it was there: a fold toggled. */
 export function toggled(set: ReadonlySet<string>, key: string): Set<string> {
   const next = new Set(set)
   if (next.has(key)) next.delete(key)
@@ -156,8 +131,6 @@ export function toggled(set: ReadonlySet<string>, key: string): Set<string> {
   return next
 }
 
-/** The rows selected once one more is pressed: it alone toggled, or with `from` (the
- *  last one pressed, in `order`) every row between the two put in. */
 export function withPicked(
   picked: ReadonlySet<string>,
   order: readonly string[],
@@ -170,8 +143,6 @@ export function withPicked(
   return new Set([...picked, ...order.slice(Math.min(start, at), Math.max(start, at) + 1)])
 }
 
-/** A board's swimlanes: every key the columns' sub-groups have, in the order they first
- *  come. */
 export function laneKeys(groups: readonly Group[]): Group['key'][] {
   const seen = new Map<string, Group['key']>()
   for (const group of groups)
@@ -179,13 +150,8 @@ export function laneKeys(groups: readonly Group[]): Group['key'][] {
   return [...seen.values()]
 }
 
-/** No keys: nothing folded yet. */
 export const EMPTY: ReadonlySet<string> = new Set()
 
-/** Upcoming's days, every one from `from` through `through` whether it holds a task or
- *  not, so a day can be planned into before anything is in it (Todoist's way): the
- *  groups that are not days first (what is overdue), then the days, a day nothing is
- *  due on an empty group of its own, then any later day that holds tasks. */
 export function withEveryDay(groups: readonly Group[], from: string, through: string): Group[] {
   const days = new Map<string, Group>()
   const out: Group[] = []
@@ -203,10 +169,6 @@ export function withEveryDay(groups: readonly Group[], from: string, through: st
   return out
 }
 
-/** A project's groups with every section of its note, the empty ones too, in the order
- *  the note has them: Todoist draws a section with nothing in it yet, ready to be added
- *  to. The tasks in no section, and the title's, come first; a group the note has no
- *  heading for any more stays at the end. */
 export function withEverySection(
   groups: readonly Group[],
   headings: readonly string[],
@@ -227,8 +189,6 @@ export function withEverySection(
   return [...out, ...named.values()]
 }
 
-/** Every-day groups cut to the days from one through another: a board of two weeks has
- *  no column outside them. A group that is no day, what is overdue, stays. */
 export function withinDays(groups: readonly Group[], from: string, through: string): Group[] {
   return groups.filter((group) => {
     const day = dayIn(group.key)

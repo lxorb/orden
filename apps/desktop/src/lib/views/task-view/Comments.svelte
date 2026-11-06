@@ -1,9 +1,4 @@
 <script lang="ts">
-  /** A task's comments in its view, Todoist's way the Orden way: the list items under the
-   *  task that are no tasks (task-body.ts), each with when it was written, and a field
-   *  under them that writes one more, stamped. Enter sends, Shift and Enter is a new line,
-   *  and a comment's cross takes it away again; each is one edit of the note, one undo.
-   *  Read again whenever the task's row changes, which is when its note was written. */
   import type { Row } from '@orden/bases'
   import { i18n, t } from '../../i18n.svelte'
   import Cross from '../../Cross.svelte'
@@ -24,8 +19,6 @@
   }: {
     row: Row
     path: string
-    /** Whether the note may be written: a task of a space shared with this account to
-     *  be read shows its comments and offers no way to add or take one away (B285). */
     writable?: boolean
   } = $props()
 
@@ -44,7 +37,6 @@
     return () => (gone = true)
   })
 
-  /** When a comment was written, as a reader says it: the day and the time. */
   function when(at: string): string {
     const [day = '', time = ''] = at.split('T')
     const date = dateAt(day)
@@ -54,8 +46,6 @@
     return i18n.when(date, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
   }
 
-  /** The words stay in the field until the comment is written: one the store turns
-   *  away is still there to keep or copy, rather than gone with nothing said. */
   let sending = false
   async function send() {
     const said = words.trim()
@@ -68,7 +58,6 @@
     }
   }
 
-  /** The field, for the `c` key of the task's view. */
   export function focus() {
     field?.focus()
   }
@@ -92,10 +81,6 @@
     </div>
   {/each}
   {#if writable}
-    <!-- A quiet row like Add sub-task above it, its mark the one a task's row comments
-         with, and the words on the row's line rather than at the top of a box (#667). It
-         wears the field as well, for what a field says as the keyboard lands in it: round
-         the row, the box here, rather than a square round the words inside it. -->
     <label class="nib-row nib-field composer-row">
       <span class="nib-row-mark"><Glyph icon={Message} /></span>
       <textarea
@@ -167,12 +152,9 @@
     opacity: 1;
   }
 
-  /* The field's border is there all the time, so it comes off the row's own room to
-     leave the words where Add sub-task's are. */
   .composer-row {
     align-items: flex-start;
     padding-inline: calc(var(--row-pad) - 1px);
-    /* A quiet row until the keyboard lands; the field's answer to that is base.css's. */
     border-color: transparent;
     color: var(--muted);
     cursor: text;
@@ -186,8 +168,6 @@
     height: calc(var(--row-height) - 2px);
   }
 
-  /* One line of words is the row's line, centred in its height the way a row's label
-     is; more lines grow it downwards from there. */
   .composer-row .composer {
     flex: 1;
     min-width: 0;

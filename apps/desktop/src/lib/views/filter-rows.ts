@@ -1,12 +1,3 @@
-/** A view's filter as rows to click, and the rows back into Bases' filter: Notion's
- *  filter builder over Obsidian's YAML (docs/tasks.md 4, "filter builder without
- *  typing").
- *
- *  A row is a property, an operator and a value, and becomes one expression. The rows
- *  are joined by the view's `and` or `or`; whatever the builder cannot show as a row
- *  (a formula somebody wrote, a group inside a group) is kept as it was written and
- *  shown as its words, so opening the builder never loses a filter. Pure. */
-
 import type { Filter } from '@orden/bases'
 
 export type Operator =
@@ -24,32 +15,20 @@ export const OPERATORS: readonly Operator[] = [
   'tag',
 ]
 
-export type FilterRow =
-  | { property: string; op: Operator; value: string }
-  /** An expression or a group the builder keeps as written. */
-  | { kept: Filter }
+export type FilterRow = { property: string; op: Operator; value: string } | { kept: Filter }
 
 export interface FilterRows {
   join: 'and' | 'or'
   rows: FilterRow[]
 }
 
-/** What a property holds, as far as asking it whether it is empty goes: `truth` a
- *  checkbox, `number` a number, `link` one link, `other` a text, a date or a list.
- *  Undefined where it is not known (a formula, a task's field Orden does not list). */
 export type Holds = 'truth' | 'number' | 'link' | 'other'
 export type HoldsOf = (property: string) => Holds | undefined
 
-/** Whether `== null` asks a property whether it is empty: Obsidian documents
- *  `isEmpty()` for a text, a number, a date, a list and an object, not for a checkbox
- *  or a link, and `null` reads the same in both. */
 const askedByNull = (holds: Holds | undefined) => holds === 'truth' || holds === 'link'
 
-/** Whether an operator takes a value. */
 export const takesValue = (op: Operator): boolean => op !== 'empty' && op !== 'filled'
 
-/** A value as the literal an expression writes: a number as itself, `true` and
- *  `false`, a day as `date("…")`, a call (`today()`) as itself, and words quoted. */
 export function literal(value: string): string {
   const trimmed = value.trim()
   if (/^-?\d+(\.\d+)?$/.test(trimmed)) return trimmed
@@ -59,7 +38,6 @@ export function literal(value: string): string {
   return JSON.stringify(value)
 }
 
-/** A literal read back into what the field shows. */
 function unliteral(written: string): string | null {
   const trimmed = written.trim()
   if (/^-?\d+(\.\d+)?$/.test(trimmed) || trimmed === 'true' || trimmed === 'false') return trimmed
@@ -70,7 +48,6 @@ function unliteral(written: string): string | null {
   return null
 }
 
-/** One row as the expression it stands for. */
 export function expressionOf(
   row: { property: string; op: Operator; value: string },
   holds?: HoldsOf,
@@ -84,8 +61,6 @@ export function expressionOf(
     case '<=':
     case '>=':
       return `${property} ${op} ${literal(value)}`
-    // `isEmpty()`, as Obsidian writes it: 0 and false are values, only a missing
-    // property, an empty text or an empty list is empty.
     case 'empty':
       return askedByNull(holds?.(property)) ? `${property} == null` : `${property}.isEmpty()`
     case 'filled':
@@ -99,8 +74,6 @@ export function expressionOf(
   }
 }
 
-/** One expression as a row, where the builder can show it as one. `holds` says what
- *  each property holds, for the rows an older builder wrote as `!prop` and `prop`. */
 export function rowOf(expression: string, holds?: HoldsOf): FilterRow {
   const text = expression.trim()
 
@@ -130,10 +103,6 @@ export function rowOf(expression: string, holds?: HoldsOf): FilterRow {
   const empty = /^(!?)([A-Za-z_][\w.]*)\.isEmpty\(\)$/.exec(text)
   if (empty?.[2]) return { property: empty[2], op: empty[1] ? 'filled' : 'empty', value: '' }
 
-  // The builder once wrote "is empty" as `!prop` and "is not empty" as `prop`, which
-  // ask whether it is true. For a text, a date or a list that is whether it is empty,
-  // so the row is read and saved again the new way; a number's 0 and a checkbox's
-  // false are not true but are there, so there it is kept as written.
   const bare = /^(!?)([A-Za-z_][\w.]*)$/.exec(text)
   if (bare?.[2] && bare[2].includes('.') && holds?.(bare[2]) === 'other') {
     return { property: bare[2], op: bare[1] ? 'empty' : 'filled', value: '' }
@@ -141,7 +110,6 @@ export function rowOf(expression: string, holds?: HoldsOf): FilterRow {
   return { kept: expression }
 }
 
-/** A view's filter as rows: its top level's `and` or `or`, one row per member. */
 export function rowsOf(filter: Filter | undefined, holds?: HoldsOf): FilterRows {
   const memberRow = (member: Filter): FilterRow =>
     typeof member === 'string' ? rowOf(member, holds) : { kept: member }
@@ -152,7 +120,6 @@ export function rowsOf(filter: Filter | undefined, holds?: HoldsOf): FilterRows 
   return { join: 'and', rows: [{ kept: filter }] }
 }
 
-/** The rows back as a filter: nothing for no rows, the one for one, else the join. */
 export function filterOf(rows: FilterRows, holds?: HoldsOf): Filter | undefined {
   const members = rows.rows.map((row): Filter =>
     'kept' in row ? row.kept : expressionOf(row, holds),

@@ -11,7 +11,6 @@ import {
   typedWhen,
 } from './schedule'
 
-// Monday 12 October 2026, at ten in the morning.
 const NOW = new Date(2026, 9, 12, 10, 0)
 
 describe('the scheduler', () => {
@@ -23,7 +22,6 @@ describe('the scheduler', () => {
       { kind: 'weekend', day: '2026-10-17' },
       { kind: 'next-week', day: '2026-10-19' },
     ])
-    // A Thursday has no later this week; a Saturday's weekend is the next one.
     expect(quickDays('2026-10-15').map((one) => one.kind)).toEqual([
       'today',
       'tomorrow',
@@ -82,12 +80,10 @@ describe('the scheduler', () => {
       time: null,
       recurrence: null,
     })
-    // A task with no day yet is given a start date (#371).
     expect(changeFor(null, { due: '2026-10-13', recurrence: 'every day' })).toEqual({
       start: '2026-10-13',
       recurrence: 'every day',
     })
-    // In a vault a `📅` is the deadline, which a pick of the start date leaves alone.
     expect(changeFor({ due: '2026-10-20', dueReads: 'deadline' }, { due: '2026-10-13' })).toEqual({
       start: '2026-10-13',
     })

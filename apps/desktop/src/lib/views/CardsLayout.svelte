@@ -1,12 +1,4 @@
 <script lang="ts">
-  /** Cards: Bases' gallery. A cover from the view's image property (fit, ratio and size
-   *  under the names Bases writes them, `imageFit`, `imageAspectRatio`, `cardSize`),
-   *  the title and the view's other properties under it (docs/tasks.md 5.9).
-   *
-   *  A picture in the space loads at once; one on the web does not, since nothing loads
-   *  from a third party until the reader asks (docs/conventions.md, Security): the card
-   *  keeps the space for it and says whose it is. A card pressed opens its note beside
-   *  the view; carried to another group it is written into it. */
   import { cellValue, groupName, type Row, rowId } from '@orden/bases'
   import { linkModifier } from '@orden/editor'
   import { imageUrl } from '../images'
@@ -23,7 +15,6 @@
 
   const live = $derived(kit.live)
   const view = $derived(live.view)
-  /** The groups' note names, for what each group is called. */
   const names = $derived(noteNames((live.answer?.groups ?? []).map((group) => group.key)))
   const property = $derived(view?.groupBy?.property)
   const image = $derived(typeof view?.options.image === 'string' ? view.options.image : null)
@@ -32,7 +23,6 @@
     typeof view?.options.imageAspectRatio === 'number' ? view.options.imageAspectRatio : 0.5,
   )
   const size = $derived(typeof view?.options.cardSize === 'number' ? view.options.cardSize : 220)
-  /** The properties under the title: the view's columns but the one that is the title. */
   const shown = $derived(
     live.columns
       .filter(
@@ -42,8 +32,6 @@
       .slice(0, 4),
   )
 
-  /** The cover a row's image property points at: a picture in the space as an address
-   *  the webview loads, one on the web as the host it is on. */
   function coverOf(row: Row): { src: string } | { host: string } | null {
     const base = live.base
     if (!base || image === null) return null
@@ -243,7 +231,6 @@
     box-shadow: 0 0 0 1px var(--accent);
   }
 
-  /* The view's conditional colour (nib.colour), the row's tone over its ground. */
   .toned {
     background: color-mix(in srgb, var(--row-tone) 14%, var(--bg));
   }

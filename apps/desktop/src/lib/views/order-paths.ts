@@ -1,23 +1,15 @@
-/** A board's manual order following its cards: a note renamed or moved, or a folder
- *  of them, has its old path rewritten in every `.base` of its space that orders it,
- *  and in the fence of a database's note,
- *  the way links to it are (`retarget` in link-index.svelte.ts). Without it a renamed
- *  card would lose its place in its column. Fetched with the first move. */
-
 import { type Base, readBase, writeBase } from '@orden/bases'
 import { folderNotePath } from '../folder-notes'
 import { folderOf, relativeTo } from '../space-paths'
 import { type Entry, workspace } from '../workspace.svelte'
 import { noteText, writeNoteText } from '../workspace/note-text'
 
-/** An order id with `from` (a path in the space, a note's or a folder's) moved to `to`. */
 function movedId(id: string, from: string, to: string): string {
   if (id === from) return to
   if (id.startsWith(`${from}#`) || id.startsWith(`${from}/`)) return to + id.slice(from.length)
   return id
 }
 
-/** The base with every manual order naming `from` naming `to`, or null where none did. */
 export function movedOrder(base: Base, from: string, to: string): Base | null {
   let changed = false as boolean
   const views = base.views.map((view) => {
@@ -35,7 +27,6 @@ export function movedOrder(base: Base, from: string, to: string): Base | null {
   return changed ? { ...base, views } : null
 }
 
-/** Every `.base` file under a folder of the tree. */
 function basesIn(entry: Entry, found: string[] = []): string[] {
   for (const one of entry.children) {
     if (one.is_dir) basesIn(one, found)
@@ -44,16 +35,11 @@ function basesIn(entry: Entry, found: string[] = []): string[] {
   return found
 }
 
-/** A path on this disk with `from` (a note's or a folder's) moved to `to`. */
 function movedPath(path: string, from: string, to: string): string {
   if (path === from) return to
   return path.startsWith(`${from}/`) ? to + path.slice(from.length) : path
 }
 
-/** The notes a database's board could stand in, as a fence: the note of each folder
- *  the moved note is in, `A/A.md` as Orden writes it and `A.md` beside `A/` as an
- *  import from Notion does. Only these are read, so a rename reads a handful of notes
- *  and not the space. */
 function foldersNotes(root: string, path: string): string[] {
   const found: string[] = []
   for (let dir = folderOf(path); dir.length > root.length; dir = folderOf(dir)) {
@@ -62,12 +48,7 @@ function foldersNotes(root: string, path: string): string[] {
   return found
 }
 
-/** The notes a database inside a moved folder could stand in, where they are once it
- *  moved: the folder's own, and each folder's under it, at any depth. Every one of them
- *  names its cards by the old path. */
 function movedFoldersNotes(tree: Entry, from: string, to: string): string[] {
-  // The tree the app hands over has the move in it already (`showMove` draws it
-  // first), and one read before the move does not: either way it is the same folder.
   const moved = entryAt(tree, to) ?? entryAt(tree, from)
   if (!moved?.is_dir) return [folderNotePath(to), `${to}.md`]
   const found: string[] = []
@@ -88,8 +69,6 @@ function entryAt(entry: Entry, path: string): Entry | null {
 
 const FENCE = /^(```+|~~~+)base[^\n]*\n([\s\S]*?)^\1[^\S\n]*$/gm
 
-/** The words of a `.base` file, or of a note's base fences, with the move made; null
- *  where nothing named it. */
 export function movedWords(text: string, fenced: boolean, was: string, now: string): string | null {
   const rewrite = (words: string): string | null => {
     let base: Base
@@ -113,10 +92,6 @@ export function movedWords(text: string, fenced: boolean, was: string, now: stri
   return changed ? after : null
 }
 
-/** A move told to the bases of the space it happened in (`tree`, that space's, with
- *  the move drawn in it or not yet): every `.base` file, where it is now, and the notes a
- *  database's fence could be in. Read and written the way every note is, so an open
- *  board and an open note take the change. */
 export async function orderMoved(
   tree: Entry,
   root: string,
@@ -127,8 +102,6 @@ export async function orderMoved(
   const now = relativeTo(root, to)
   if (!was || !now || was === now) return
   const files = basesIn(tree).map((path) => ({ path: movedPath(path, from, to), fenced: false }))
-  // A folder moved is a database renamed as often as not: its own note too, and those
-  // of the folders it holds.
   const own = [...movedFoldersNotes(tree, from, to), `${from}.md`]
   const notes = [...new Set([...own, ...foldersNotes(root, to)])].map((path) => ({
     path,

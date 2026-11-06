@@ -1,13 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Today and Upcoming list the tasks of every space, and two spaces each have their
- *  `Inbox.md` with a task on its first line. Stepping from one to the other (`j`) is a
- *  step to another task: its description and its comment field are its own, and what is
- *  typed there goes into its note and no other (B461). So is a sub-task begun.
- *
- *  In the jsdom project because the sheet is mounted, stepped and typed into. */
-
 const said = vi.hoisted(
   (): { described: [string, string][]; comments: string[]; subtasks: string[] } => ({
     described: [],
@@ -56,11 +49,6 @@ const { taskRow } = await import('../fixture')
 const WORK = taskRow('Inbox.md', '- [ ] Send invoice', 0, { space: 'Work' })
 const HOME = taskRow('Inbox.md', '- [ ] Buy milk', 0, { space: 'Home' })
 
-/** How the store answers the sheet: with the rows of the one space asked for, as the
- *  app's does, which the sheet has one pass after the step; or with every space's in
- *  the same pass. The sheet finds its task among them by where it is written, its space
- *  too (rowFor), and may not tell two tasks apart only because its rows of the new
- *  space come one pass late, which is all that hid this in the first. */
 const store = vi.hoisted(() => ({ together: false }))
 vi.mock('../../rows/rows.svelte', () => ({
   rows: {
@@ -71,8 +59,6 @@ vi.mock('../../rows/rows.svelte', () => ({
   },
 }))
 
-/** CodeMirror measures the text it drew, and jsdom has no layout to measure. Nothing
- *  here asks where anything is. */
 Range.prototype.getClientRects = () => [] as unknown as DOMRectList
 Range.prototype.getBoundingClientRect = () => new DOMRect()
 
@@ -99,7 +85,6 @@ afterEach(() => {
   document.body.replaceChildren()
 })
 
-/** The sheet of Work's task, over a list of it and Home's, stepped down to Home's. */
 async function stepped(before?: () => void) {
   const work = refOf(WORK)
   const home = refOf(HOME)

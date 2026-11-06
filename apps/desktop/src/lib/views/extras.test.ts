@@ -1,7 +1,3 @@
-/** Lane 7's logic in the app: what a base does when its rows change (automate.ts), a
- *  property's choices (options.ts), a column's format (format.ts), and an automation's
- *  write folded into the undo of the edit that fired it (workspace/undo-join.ts). */
-
 import { readBase, type Row } from '@orden/bases'
 import { describe, expect, test } from 'vitest'
 import type { FileAction } from '../workspace/undo.svelte'
@@ -100,7 +96,6 @@ describe('a base at work on a change', () => {
     expect(plan([was], [now], [older, now]).writes).toEqual([
       { row: now, change: { note: { status: 'To do', id: 'BUG-2' } } },
     ])
-    // From another space, it is new to this one's base as well.
     const away = noteRow('Bugs/Crash.md', '', { ctime: day('2026-02-01') }, 'Elsewhere')
     expect(plan([away], [now], [older, now]).writes).toHaveLength(1)
   })

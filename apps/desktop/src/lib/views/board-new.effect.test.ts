@@ -2,12 +2,6 @@ import { readBase } from '@orden/bases'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** A column's New page whose note was not made (B284): a base in a space shared to be
- *  read, or a folder the account may not write in, answers null rather than throwing.
- *  The title typed is kept in the card, so the reader loses nothing to a refusal.
- *
- *  In the jsdom project because the card is typed into and Enter pressed. */
-
 const made = vi.hoisted((): { path: string | null; titles: string[] } => ({
   path: null,
   titles: [],

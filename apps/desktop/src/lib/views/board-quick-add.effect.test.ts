@@ -2,12 +2,6 @@ import { answer, readBase } from '@orden/bases'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 
-/** Q on a card of a task board adds to its column, and a board shown in a view of no
- *  file, as Today can be, may be changed while a task added to it lands in a space
- *  shared to be read, where nothing is kept (B293). There Q opens no quick add.
- *
- *  In the jsdom project because a key is pressed on a mounted board. */
-
 vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
 
 const { taskRow } = await import('./fixture')
@@ -24,7 +18,6 @@ afterEach(() => {
   document.body.replaceChildren()
 })
 
-/** A board of one task, whose kit says whether an add has somewhere to land. */
 function board(adds: boolean) {
   const base = readBase(`views:
   - type: kanban

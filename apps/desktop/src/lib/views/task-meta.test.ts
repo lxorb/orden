@@ -45,7 +45,6 @@ describe('the meta line under a task', () => {
     ).map((row) => row.task)
     if (!done || !timed || !started) throw new Error('no task')
     expect(metaOf(done, TODAY, true, undefined)[0]).toMatchObject({ tone: 'later' })
-    // A start date that has come says nothing under the task (#371).
     expect(metaOf(started, TODAY, true, undefined)).toEqual([])
     expect(metaOf(timed, TODAY, false, undefined).map((one) => one.kind)).toEqual(['date'])
     expect(metaOf(timed, TODAY, false, undefined)[0]).toMatchObject({ repeat: false })
@@ -96,7 +95,6 @@ describe('the meta line under a task', () => {
     expect(lineCount(described, hasMeta(described, true, undefined, TODAY), false)).toBe(3)
   })
 
-  // #1043: Todoist's `18 Sep ↻` - the repeat on the first day the line names, said once.
   test('a repeat is said once, on the start date to come, else on the deadline', () => {
     const [ahead, due, alone, timed] = rows(
       [

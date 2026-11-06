@@ -2,11 +2,8 @@ import { renderMarkdown } from '@orden/markdown'
 import { expect, test } from 'vitest'
 import { plain } from './inline'
 
-/** Lines of letters, blanks, backslashes and backticks, drawn by the view and by the
- *  renderer: the same words, whatever the backslashes and the backticks make of it. */
 const ALPHABET = ['a', 'b', ' ', '\\', '`']
 
-/** A seeded run, so a failure is the same failure again. */
 function lines(count: number): string[] {
   let seed = 7
   const next = () => (seed = (seed * 1103515245 + 12345) % 2147483648)

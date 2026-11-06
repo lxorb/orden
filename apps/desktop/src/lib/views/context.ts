@@ -1,11 +1,3 @@
-/** What a view's expressions are answered against beyond the row: today, now, `this`,
- *  the words typed into its search, and the three questions about other files an
- *  expression may ask (a link resolved, the note at a path, the notes linking here).
- *
- *  All of it out of the rows a view already has in hand, so answering a view reads no
- *  file. The lookups are built the first time an expression asks one of them and not
- *  at all for a view that never does, which is nearly every task view. */
-
 import type { Context, Row } from '@orden/bases'
 
 interface Lookups {
@@ -14,7 +6,6 @@ interface Lookups {
   linking: Map<string, string[]>
 }
 
-/** A link target as the name it is resolved by: no folder, no `.md`, any case. */
 function nameOf(target: string): string {
   return (target.split('/').pop() ?? target).replace(/\.md$/i, '').toLowerCase()
 }
@@ -53,7 +44,6 @@ export interface ContextStart {
   me?: string | undefined
 }
 
-/** The context a view is answered in. */
 export function contextFor(start: ContextStart): Context {
   let made: Lookups | null = null
   const look = () => (made ??= lookups(start.rows))

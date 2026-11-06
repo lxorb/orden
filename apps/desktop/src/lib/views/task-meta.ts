@@ -1,21 +1,8 @@
-/** What a task row says under its words, Todoist's way: the line of meta after the
- *  description - the day it starts while that is still to come, in the colour of how
- *  near it is (once it has come, nothing: #371), its time, ↻ for a repeat, the
- *  deadline, the duration, a bell for a reminder, how many of its sub-tasks are done,
- *  how many comments it has, its labels and its assignee - and how many lines the row
- *  takes, which is what the list is laid out by (`Heights` in chats/view/window.ts).
- *
- *  Pure, and in its own file because the row, the board's card and the list's
- *  arithmetic all ask it the same question and have to get one answer. */
-
 import { dayNumber, INBOX_PATH, type Row, type TaskRow } from '@orden/bases'
 import { dayWords, timeWords } from '@orden/editor/task-days'
 import { deadlineOf, startOf } from '@orden/markdown/task-dates'
 import { ACCENTS, accentColour, DEFAULT_ACCENT } from '../accents'
 
-/** How near a day is, which is the colour its words are drawn in: Todoist's red for
- *  a day gone by, green for today, orange for tomorrow, purple for the rest of the
- *  week, and the row's own ink after that. */
 export type DayTone = 'late' | 'today' | 'tomorrow' | 'week' | 'later'
 
 export function dayTone(day: string, today: string): DayTone {
@@ -27,7 +14,6 @@ export function dayTone(day: string, today: string): DayTone {
   return 'later'
 }
 
-/** One thing the meta line says. */
 export type Meta =
   | { kind: 'date'; text: string; tone: DayTone; repeat: boolean }
   | { kind: 'deadline'; text: string; late: boolean; repeat: boolean }
@@ -38,21 +24,15 @@ export type Meta =
   | { kind: 'tag'; tag: string }
   | { kind: 'assignee'; name: string }
 
-/** How many of a task's own sub-tasks there are and how many are done. */
 export interface Subtasks {
   done: number
   total: number
 }
 
-/** The key a task is known by among the rows of every space: its space, its note and
- *  its line, which is what a sub-task's `parent` names. */
 export function taskKey(space: string, path: string, line: number): string {
   return `${space}\n${path}#${line}`
 }
 
-/** Every task's direct sub-tasks, counted, over all the rows a view is over: one pass,
- *  asked again only when the rows change. A view that shows a parent without its
- *  sub-tasks (Today holds a dated parent and not its undated steps) still says 1/3. */
 export function subtaskCounts(rows: readonly Row[]): Map<string, Subtasks> {
   const out = new Map<string, Subtasks>()
   for (const row of rows) {
@@ -67,16 +47,12 @@ export function subtaskCounts(rows: readonly Row[]): Map<string, Subtasks> {
   return out
 }
 
-/** Every label the tasks carry, once each, in the reader's order: what a task's label
- *  choice offers. */
 export function labelsOf(rows: readonly Row[]): string[] {
   const seen = new Set<string>()
   for (const row of rows) for (const tag of row.task?.tags ?? []) seen.add(tag)
   return [...seen].sort((a, b) => a.localeCompare(b))
 }
 
-/** The meta line of a task, in the order Todoist draws it. `dated` false leaves the
- *  day off, for a view whose groups already are the days. */
 export function metaOf(
   task: TaskRow,
   today: string,
@@ -87,8 +63,6 @@ export function metaOf(
   const open = !task.done && !task.cancelled
   const day = ahead(task, today)
   const deadline = deadlineOf(task, task.dueReads)
-  // ↻ is said once, on the first day the line names: the start date while it is still
-  // to come, else the deadline (Todoist's `18 Sep ↻`), else on its own.
   let repeat = task.recurrence !== undefined
   if (dated && day) {
     out.push({
@@ -99,8 +73,6 @@ export function metaOf(
     })
     repeat = false
   } else if (task.time || (repeat && !deadline)) {
-    // A day the group already says, or one that has come, still has its time and its
-    // repeat to say.
     out.push({
       kind: 'date',
       text: task.time ? timeWords(task.time) : '',
@@ -126,16 +98,11 @@ export function metaOf(
   return out
 }
 
-/** The day a task starts or is scheduled for, while that is still to come: the only day
- *  a row says under its words besides a deadline. */
 function ahead(task: TaskRow, today: string): string | undefined {
   const day = startOf(task, task.dueReads) ?? task.scheduled
   return day !== undefined && day > today ? day : undefined
 }
 
-/** Whether a task has anything to say on its meta line: what `metaOf` would answer
- *  something for, asked without writing a word of it, because the list asks it of every
- *  row it holds and only draws the ones on screen. */
 export function hasMeta(
   task: TaskRow,
   dated: boolean,
@@ -156,15 +123,10 @@ export function hasMeta(
   )
 }
 
-/** How many lines a task row is: its words, its description where it has one, and the
- *  meta line where there is something to say on it - which a view that names each
- *  task's note always has. */
 export function lineCount(task: TaskRow, meta: boolean, where: boolean): number {
   return 1 + (task.description ? 1 : 0) + (meta || where ? 1 : 0)
 }
 
-/** Where a task lives, which its card's meta line ends with: the space's own inbox, or
- *  its note and the heading it is under (not a note's title over the whole of it). */
 export interface Place {
   inbox: boolean
   name: string
@@ -180,9 +142,6 @@ export function placeOf(row: Row): Place {
   }
 }
 
-/** The colour a task's label wears on its card (#1043), a function of its name the way
- *  `accentFor` is, so a label is one colour on every card and device with nothing
- *  stored; here and not in accents.ts, which the first paint carries. Slate is left out: grey beside the card's grey words is no colour at all. */
 export function labelColour(tag: string, scheme: 'dark' | 'light'): string {
   const hues = ACCENTS.filter((one) => one.id !== 'slate')
   let sum = 0

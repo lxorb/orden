@@ -1,7 +1,4 @@
 <script lang="ts">
-  /** The table on a phone: a row per row, its name and the first three of the view's
-   *  other columns under it, since a phone has no width for a grid (docs/tasks.md 5.9).
-   *  A press opens the note. */
   import { cellValue, groupName, rowId } from '@orden/bases'
   import { valueText } from './chips'
   import { displayName } from './columns'
@@ -14,7 +11,6 @@
 
   const live = $derived(kit.live)
   const property = $derived(live.view?.groupBy?.property)
-  /** The groups' note names, for what each group is called. */
   const names = $derived(noteNames((live.answer?.groups ?? []).map((group) => group.key)))
   const shown = $derived(
     live.columns

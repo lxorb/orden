@@ -1,18 +1,8 @@
-/** A base drawn inside a note: what the editor's ` ```base ` fence and `![[x.base]]`
- *  embed ask the app for (`mountBase` on the editor's note index), and what the reading
- *  view does over the placeholders the renderer left for the same two (docs/tasks.md
- *  5.11). Both put the same component in the same box, so a base reads the same on
- *  either face of a note.
- *
- *  Fetched the first time a note holds one, behind the door in link-index.svelte.ts
- *  and Reading.svelte: nothing of the views is in the first paint. */
-
 import { mount, unmount } from 'svelte'
 import { nameOf } from '../space-paths'
 import BaseBlock from './BaseBlock.svelte'
 import { embeddedPath } from './source'
 
-/** What is drawn: a fence's words, or a base file a link names and one of its views. */
 export type BaseAsk = { code: string } | { target: string; view: string | null }
 
 export function mountBase(
@@ -33,8 +23,6 @@ export function mountBase(
   return () => void unmount(made)
 }
 
-/** Every base placeholder on a page the reading view rendered, drawn; answers what
- *  takes them all away. */
 export function mountBases(
   surface: HTMLElement,
   from: string | null,

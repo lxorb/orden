@@ -1,15 +1,4 @@
 <script lang="ts">
-  /** One cell of a table (and one property on a card): the value as words, and, while
-   *  it is being edited, the control its column's kind asks for. A note's property is
-   *  edited in the one property control (properties/PropertyValue.svelte); a
-   *  task's field in the control that field needs - a date, a time, a priority, a
-   *  status. Whatever it becomes is written through the one write path (kit.write),
-   *  one undo per edit.
-   *
-   *  Shown, a property with choices is its choices as chips in their tones, a property
-   *  with a format is that format (format.ts: a percentage, money, a bar, an address
-   *  a press opens), and a button column is its button, which a press runs on the row
-   *  (press.ts). */
   import type { Row, Value } from '@orden/bases'
   import { cellValue } from '@orden/bases'
   import { tick } from 'svelte'
@@ -60,11 +49,9 @@
     return base ? cellValue(base, property, row, kit.live.context) : null
   })
   const shown = $derived(valueText(value, kit.live.today))
-  /** The value as its column's format shows it, where it has one. */
   const styled = $derived(
     kit.live.base ? formatted(value, formatOf(kit.live.base, property)) : null,
   )
-  /** A property with choices, each value as a chip in its tone. */
   const chips = $derived.by(() => {
     const base = kit.live.base
     if (editor !== 'select' || !base) return null
@@ -74,8 +61,6 @@
       return { words, colour: toneColour(toneOf(base, property, words)) }
     })
   })
-  // Not a row of a space shared to be read either, which Today and a base across every
-  // space show beside the reader's own: its cells are read, never edited.
   const writable = $derived(
     editor !== 'none' &&
       editor !== 'button' &&
@@ -88,18 +73,11 @@
     if (change) kit.write(row, change)
   }
 
-  /** Whether the cell is edited as a list: a list column, and one with options whose
-   *  value is a list, or whose column holds lists. Options make a column a select, and
-   *  a select is one value - picking `b` for `tags: [a, c]` would write `tags: b`. */
   const listed = $derived(
     editor === 'list' ||
       (editor === 'select' && (Array.isArray(value) || holdsLists(property, kit.live.rows))),
   )
 
-  /** The value as a property row, for the shared control. Its items are the members
-   *  as shown, which is all a cell holds: a note's list is changed a chip at a time
-   *  (`onchip`), against the members as the note writes them, so a link stays a link
-   *  and a date a date rather than the words `Beta` or `Today`. */
   const asProperty = $derived.by((): Property => {
     const items = Array.isArray(value) ? value.map((one) => valueText(one, kit.live.today)) : []
     const kind = listed
@@ -133,13 +111,10 @@
 
   const choices = $derived(kit.live.base ? optionsOf(kit.live.base, property) : [])
 
-  /** A member of a list the control wrote whole, which is a task's tags: one it left
-   *  alone comes back as the words it was shown as. */
   function shownMember(item: ListItem): Value {
     return item !== null && typeof item === 'object' ? item.asWritten : item
   }
 
-  /** Words written from the shared control, as the value the field holds. */
   function fromWords(words: string | null): Value | null {
     if (words === null || words === '') return null
     if (editor === 'number') return Number.isFinite(Number(words)) ? Number(words) : words
@@ -155,7 +130,6 @@
     if (event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()
-      // Back to the cell once the control has gone, or the keyboard went with it (#523).
       const cell = (event.currentTarget as HTMLElement).closest<HTMLElement>('[role="gridcell"]')
       onstop?.()
       void tick().then(() => cell?.focus())

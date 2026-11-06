@@ -1,10 +1,3 @@
-/** An open project follows its note: renamed in the panel or the file list, moved into a
- *  folder, or its folder renamed, every tab showing it is about the note where it is
- *  now - its name, the note its tasks are read from, and how this device keeps its
- *  layout (kept-views.ts) - rather than an empty list about a note that is gone.
- *
- *  Loaded with the first view, and before any view a session brings back is drawn. */
-
 import { builtinView, readBase, type View, writeBase } from '@orden/bases'
 import { movedTo, samePath } from '../space-paths'
 import { workspace } from '../workspace.svelte'
@@ -14,9 +7,6 @@ import { readSpec, writeSpec } from './spec'
 
 const nameOf = (path: string) => path.replace(/^.*\//, '').replace(/\.md$/i, '')
 
-/** A project's view as its tab changed it, about the note at `to` in space `there`
- *  instead of `from` in `space`: the filter and the name Orden gave it follow, and
- *  whatever the reader changed stays. */
 function followed(yaml: string, space: string, from: string, to: string, there = space): string {
   const was = builtinView('project', { note: { space, path: from } }).views[0]
   const now = builtinView('project', { note: { space: there, path: to } }).views[0]
@@ -40,8 +30,6 @@ workspace.fileOps.follow(
     moved(from, to, root, into) {
       const space = root === null ? undefined : spaceAt(root)
       if (!space || root === null) return
-      // Into another space, `into`, the project is that space's, as it speaks of the
-      // note; out of every space there is no project to follow.
       const move = moving(from, to, root, into)
       const there = move.across ? spaceAt(move.there) : space
       if (!there || move.now === null) return

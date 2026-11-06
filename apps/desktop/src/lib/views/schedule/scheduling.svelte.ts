@@ -1,14 +1,6 @@
-/** Which scheduler is up, and where: a date chip, a row's calendar, the task view's
- *  date, the bulk bar and the T key all open one beside what asked, with what the task
- *  says now, and hear back what was picked (schedule.ts says what a pick changes).
- *
- *  One at a time, put on the page the first time it is asked for, the way a person's
- *  card is (people/card.svelte.ts): nothing of it is fetched before somebody schedules. */
-
 import { mount } from 'svelte'
 import type { Scheduled } from './schedule'
 
-/** Where the press was: the box of what was pressed, in the window's pixels. */
 export interface Box {
   left: number
   top: number
@@ -16,11 +8,9 @@ export interface Box {
   bottom: number
 }
 
-/** What a task says about its day now. */
 interface Current {
   due?: string | undefined
   time?: string | undefined
-  /** How long it takes. */
   minutes?: number | undefined
   recurrence?: string | undefined
 }
@@ -29,14 +19,10 @@ export interface Asked {
   at: Box
   current: Current
   today: string
-  /** How many open tasks each day holds already, for the calendar's dots. */
   load: ReadonlyMap<string, number>
   pick: (picked: Scheduled) => void
-  /** Told when it closes, picked or not, so a key's focus can go back where it was. */
   closed?: () => void
-  /** For a repeating task: its dates moved on to the next occurrence, nothing ticked. */
   skip?: () => void
-  /** A day and nothing else: a deadline has no time, no length and no repeat. */
   dateOnly?: boolean
 }
 
@@ -54,7 +40,6 @@ export const scheduling = new Scheduling()
 
 let mounted = false
 
-/** Opens the scheduler beside an element, or beside a box. */
 export function showScheduler(from: Element | Box, asked: Omit<Asked, 'at'>): void {
   const box = 'getBoundingClientRect' in from ? from.getBoundingClientRect() : from
   scheduling.shown = {
@@ -66,8 +51,6 @@ export function showScheduler(from: Element | Box, asked: Omit<Asked, 'at'>): vo
   void import('./Scheduler.svelte').then((one) => mount(one.default, { target: document.body }))
 }
 
-/** Where a layer of this size stands beside a box: under it where it fits, else over
- *  it, and held inside the window by a margin. */
 export function besideBox(
   at: Box,
   size: { width: number; height: number },

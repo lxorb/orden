@@ -1,12 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** A task's comments and description where the note may not be written (B285): in a
- *  space shared with this account to be read the sheet offers neither, and a comment
- *  the store still turns away stays in its field rather than being lost.
- *
- *  In the jsdom project because a field is typed into and the editor mounted. */
-
 const said = vi.hoisted((): { ok: boolean; comments: string[] } => ({ ok: false, comments: [] }))
 vi.mock('../act', () => ({
   addComment: (_row: unknown, words: string) => {
@@ -23,8 +17,6 @@ vi.mock('../../workspace/note-text', () => ({
     ),
 }))
 
-/** CodeMirror measures the text it drew, and jsdom has no layout to measure. Nothing
- *  here asks where anything is. */
 Range.prototype.getClientRects = () => [] as unknown as DOMRectList
 Range.prototype.getBoundingClientRect = () => new DOMRect()
 

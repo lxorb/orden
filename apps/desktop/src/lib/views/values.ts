@@ -1,8 +1,3 @@
-/** What kind of value a property holds, asked the one way: a date, a span of time,
- *  a link, or a day written as words. Values are the engine's (`Value` in
- *  @orden/bases), and a map that happens to have a `kind` key is still a map, so the
- *  question is asked of the shape and not of the key alone. */
-
 import type { DateValue, DurationValue, LinkValue, Value } from '@orden/bases'
 
 function kindOf(value: Value | undefined): string | null {
@@ -30,7 +25,6 @@ export function isLinkValue(value: Value | undefined): value is LinkValue {
   return kindOf(value) === 'link'
 }
 
-/** A value as a day, where it is one: a date, or words that start with one. */
 export function dayIn(value: Value | undefined): string | null {
   if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10)
   return isDateValue(value) ? value.iso : null

@@ -1,8 +1,4 @@
 <script lang="ts">
-  /** One row of a list: a task's box, its words, where it lives and its chips, or a
-   *  note's name. Pressing the words opens the note at the line beside the view
-   *  (Ctrl or Cmd: in a tab); pressing where it lives does the same. Carried by the
-   *  pointer onto another group, which writes what that group is (drop.ts). */
   import type { Row, Value } from '@orden/bases'
   import { t } from '../i18n.svelte'
   import { linkModifier } from '@orden/editor'
@@ -43,11 +39,7 @@
   const chips = $derived(task ? chipsOf(task, kit.live.today, dated) : [])
   const section = $derived(task?.section.at(-1))
   const label = $derived(task ? plain(task.text) : row.file.basename)
-  /** Which space, where it is not the open one (decision 8.4). */
-  /** The open task this one waits on (`⛔`), if any: a blocked task dims and says
-   *  why under the pointer (docs/tasks.md 4, "dependencies, blocked-by"). */
   const blocker = $derived(task?.dependsOn.length ? blockerOf(task, kit.live.rows) : null)
-  /** The view's conditional colour for this row, if any. */
   const tone = $derived(kit.live.colourOf(row))
   const elsewhere = $derived(
     kit.spec.builtin !== undefined && row.space !== workspace.activeSpace?.name ? row.space : null,
@@ -216,7 +208,6 @@
     display: none;
   }
 
-  /* The view's conditional colour (nib.colour), the row's tone over its ground. */
   .toned {
     background: color-mix(in srgb, var(--row-tone) 14%, var(--bg));
   }

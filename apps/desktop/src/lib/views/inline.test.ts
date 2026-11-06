@@ -2,8 +2,6 @@ import { readTask } from '@orden/markdown/task-line'
 import { describe, expect, test } from 'vitest'
 import { pieces, plain } from './inline'
 
-/** A task's words as a view draws them: its own markup as itself, and a character the
- *  note had to escape as the character, never with its backslash. */
 describe('a task line drawn in a view', () => {
   test('shows an escaped character as the character', () => {
     const task = readTask('- [ ] Prices \\$5-\\$10 \\~5 min a=\\=b milk \\$3')

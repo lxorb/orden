@@ -1,11 +1,4 @@
 <script lang="ts">
-  /** A task's description, edited the way a note is: Orden's own editor, live preview and
-   *  all, over the prose written under the task (task-body.ts). What is typed is written
-   *  back into the note a moment after the typing stops, as one edit, indented to be the
-   *  task's own; the note's other words are never touched.
-   *
-   *  Read once as it opens and never again while it is up: the words in it are the
-   *  reader's own, and a write coming back from the note would only move the caret. */
   import { createEditor, type EditorView, modeEffects } from '@orden/editor'
   import { onMount } from 'svelte'
   import { pickedLink } from '../../composer'
@@ -26,13 +19,8 @@
     anchor,
     writable = true,
   }: {
-    /** The note, on this disk. */
     path: string
-    /** Where the task is now, asked at every write: its words may have changed. */
     anchor: () => { line: number; hash: string } | null
-    /** Whether the note may be written. A task of a space shared with this account to
-     *  be read has its description read here and never typed into: what was typed would
-     *  be turned away by the store a moment later, and lost (B285). */
     writable?: boolean
   } = $props()
 
@@ -40,8 +28,6 @@
   let view: EditorView | null = null
   let empty = $state(true)
   let focused = $state(false)
-  /** Whether anything has been typed since the last write: a focus moving on or the view
-   *  closing writes only what is owed. */
   let owed = false
 
   function flush() {
@@ -112,8 +98,6 @@
 </div>
 
 <style>
-  /* A note's editor at the size of the words around it: a row's type rather than the
-     page's, and none of the page's margins or height. */
   .description {
     --text-content: var(--text-row);
     position: relative;

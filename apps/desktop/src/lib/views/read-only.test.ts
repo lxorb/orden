@@ -2,19 +2,10 @@ import { answer, readBase, type Row } from '@orden/bases'
 import { render } from 'svelte/server'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** A view over a space shared with this account to be read (B280). Today, Upcoming and
- *  a base across every space draw that space's rows beside the reader's own, and its
- *  base files and repeating templates are read here like any other. Nothing a view
- *  does may write there: the copy here would stop being the space's, and the sync
- *  refuses it on every pass. So a tick, a cell, a drop, an add and a change of the view
- *  write nothing and say so, and the runner makes no note and runs no automation. */
-
 const disk = new Map<string, string>()
-/** Every whole file written, by path, and every folder made. */
 const written: string[] = []
 const folders: string[] = []
 
-/** The roots of the spaces shared with this account to be read. */
 const readOnly = new Set<string>()
 const insideOf = (root: string, path: string) => path === root || path.startsWith(`${root}/`)
 
@@ -25,7 +16,6 @@ vi.mock('../sharing.svelte', () => ({
   trustsHtmlAt: () => true,
 }))
 
-/** Every address a press opened. */
 const opened: string[] = []
 
 vi.mock('../tauri', async (original) => ({
@@ -53,8 +43,6 @@ vi.mock('../workspace/write-file', () => ({
   },
 }))
 
-// As the real one: a note in a space shared to be read is passed over, and the answer
-// is how many were written (workspace/note-text.ts).
 vi.mock('../workspace/note-text', () => ({
   noteText: (_ws: unknown, path: string) => Promise.resolve(disk.get(path) ?? null),
   writeNoteText: () => Promise.resolve(),
@@ -100,7 +88,6 @@ vi.mock('../workspace.svelte', () => ({
   },
 }))
 
-/** The rows every shown space holds, the read one's among them. */
 let shown: Row[] = []
 
 vi.mock('../rows/rows.svelte', () => ({
@@ -123,8 +110,6 @@ vi.mock('../surfaces.svelte', () => ({ showQuickAdd: () => undefined }))
 vi.mock('./open', () => ({ openBaseFile: () => undefined }))
 vi.mock('../reminders/platform', () => ({ show: () => undefined }))
 
-/** What the automations of a base would do once a note settles: write its rows and
- *  move its note, both into the space the base is in. */
 const planning = vi.hoisted((): { plan: unknown } => ({
   plan: { writes: [], moves: [], notices: [] },
 }))
@@ -145,7 +130,6 @@ const TaskSheet = (await import('./task-view/TaskSheet.svelte')).default
 const PLAN = 'Plan.md'
 const TASK = '- [ ] water the plants'
 
-/** A view over every space, as Today is, of a view of notes grouped by status. */
 function viewOver(file: string | null) {
   const base = readBase('views:\n  - type: table\n    name: All\n')
   const changes: unknown[] = []
@@ -243,8 +227,6 @@ describe('a view over a space shared to be read', () => {
   })
 })
 
-/** A board of a base file, grouped by status, over this space's notes, drawn as
- *  LiveView would hold it. */
 function boardOver(file: string) {
   const base = readBase(`views:
   - type: kanban
@@ -287,9 +269,6 @@ describe('a board of a base in a space shared to be read', () => {
   })
 })
 
-/** A board of tasks shown in a view of no file, as Today can be: a task added lands in
- *  the reader's one inbox (#1153), whatever space is open, and where no space takes it
- *  nothing is kept (B293). */
 function taskBoard() {
   const base = readBase(`views:
   - type: kanban
@@ -333,7 +312,6 @@ describe('a board of tasks whose adds would land in a space shared to be read', 
   })
 })
 
-/** A base whose button sets a row's status and opens an address. */
 const SHIP = readBase(`nib:
   buttons:
     Ship:
@@ -378,7 +356,6 @@ describe('a button of a row in a space shared to be read', () => {
   })
 })
 
-/** A cell of a row, being edited as a table edits the one the keyboard is on. */
 function cellOf(row: Row, property: string, editor: string) {
   const { kit } = viewOver(null)
   const props = { row, property, editor, kit, editing: true }
@@ -410,8 +387,6 @@ describe('the runner, in a space shared to be read', () => {
     expect(folders).toEqual([])
   })
 
-  /** A base's automations, run once a note of the space settles. Each test settles a
-   *  note of its own, since the runner hears its own write of one as its own. */
   async function settle(name: string) {
     const row = noteRow(name, { status: 'open' }, {}, 'Theirs')
     disk.set(`${THEIRS.root}/${name}`, '---\nstatus: open\n---\n')
@@ -431,7 +406,6 @@ describe('the runner, in a space shared to be read', () => {
     } finally {
       vi.useRealTimers()
     }
-    // The run's own writes, which are awaited one after the other past the timer.
     await new Promise((done) => setTimeout(done, 20))
   }
 
@@ -449,7 +423,6 @@ describe('the runner, in a space shared to be read', () => {
   })
 })
 
-/** A task's own view, of a task of the space shared to be read and of the reader's. */
 function sheetOf(space: 'Theirs' | 'Mine') {
   const row = taskRow(PLAN, TASK, 3, { space })
   shown = [row]
@@ -477,8 +450,6 @@ describe("a task's view, in a space shared to be read", () => {
   })
 })
 
-/** A move between spaces writes two notes, the cut and the arrival, and is only a move
- *  where both land (B287). */
 describe('a move with one end in a space shared to be read', () => {
   const mine = () => taskRow(PLAN, TASK, 3, { space: 'Mine' })
 
@@ -501,8 +472,6 @@ describe('a move with one end in a space shared to be read', () => {
   })
 })
 
-/** The Tasks panel, over a space shared to be read: it makes no project and saves no
- *  filter there, since each is a file written into the space (B292). */
 describe('the Tasks panel, in a space shared to be read', () => {
   const reading = { lang: 'en', today: '2026-10-24' } as never
 
@@ -531,8 +500,6 @@ describe('the Tasks panel, in a space shared to be read', () => {
   })
 })
 
-/** A task typed into Today, Upcoming or the panel lands in the open space's inbox, made
- *  the first time; in a space shared to be read there is nowhere for it (B293). */
 describe('an add whose task would land in a space shared to be read', () => {
   test('makes no inbox there', async () => {
     const { inboxNote } = await import('../rows/inbox-note')
@@ -556,7 +523,6 @@ describe('an add whose task would land in a space shared to be read', () => {
   })
 })
 
-/** Copy to a base writes the view as a file at the root of the open space (B294). */
 describe('copy to a base, in a space shared to be read', () => {
   test('writes no base, and is not offered', async () => {
     const { copiesToBase, copyToBase } = await import('./save')

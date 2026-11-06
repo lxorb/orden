@@ -1,8 +1,3 @@
-/** A view as CSV (docs/tasks.md 4): its rows in the order and the groups it shows them,
- *  its columns as their names, every cell the value a spreadsheet reads
- *  (`csvValue` in @orden/bases). Copied, or saved as a file the way an export is. A
- *  button column has nothing to say in a spreadsheet and is left out. */
-
 import { cellValue, csvText, csvValue, isButton, sheetSafe } from '@orden/bases'
 import { copyText } from '../clipboard'
 import { deliver } from '../export/save'
@@ -12,7 +7,6 @@ import { everyRow } from './list-items'
 import type { LiveView } from './live.svelte'
 import { propertyName } from './words'
 
-/** The view showing, as CSV; null where there is nothing to show. */
 function viewCsv(live: LiveView): string | null {
   const base = live.base
   const answer = live.answer

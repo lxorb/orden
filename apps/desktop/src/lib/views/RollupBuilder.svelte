@@ -1,9 +1,4 @@
 <script lang="ts">
-  /** A rollup, made from three choices rather than a formula (docs/tasks.md 5.12): the
-   *  relation (a property of links, or a column of notes linking here), what of the
-   *  related notes to read, and how to sum them up. Written as a formula Obsidian reads
-   *  too (`rollupFormula` in @orden/bases) and shown as a column; pressed on a rollup's
-   *  column again, the choices it was made from come back. */
   import { readReverse, readRollup, type Rollup, ROLLUPS, rollupFormula } from '@orden/bases'
   import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'
@@ -16,7 +11,6 @@
 
   const live = $derived(kit.live)
   const base = $derived(live.base)
-  /** The rollup's column: the one it was opened on, or the one its first choice made. */
   let made = $state<string | undefined>(undefined)
   const target = $derived(made ?? column)
   const editing = $derived(
@@ -24,8 +18,6 @@
   )
   const was = $derived(editing === null ? null : readRollup(editing))
 
-  /** Every relation a rollup can start from: the views' notes' link properties, and
-   *  the base's reverse columns. */
   const relations = $derived([
     ...Object.entries(base?.formulas ?? {})
       .filter(([, source]) => readReverse(source) !== null)
@@ -36,7 +28,6 @@
     })),
   ])
 
-  /** Every front matter key the space's notes have: what of a related note to read. */
   const keys = $derived.by(() => {
     const seen: Record<string, true> = {}
     for (const row of live.rows) {
@@ -70,13 +61,9 @@
     calc = was?.calc ?? 'count'
   })
 
-  /** What a rollup is called where nobody named it: the way its header should read,
-   *  the relation, what of it, and how. */
   const autoName = (spec: { relation: string; property?: string | undefined; calc: Rollup }) =>
     [propertyName(spec.relation), spec.property, NAMES[spec.calc]].filter(Boolean).join(' · ')
 
-  /** Writes the rollup: the formula where it was, or a new one shown as a column. A
-   *  rollup still under the name it was given here is renamed with its choices. */
   function write() {
     if (!relation || !base) return
     const spec =

@@ -1,8 +1,4 @@
 <script lang="ts">
-  /** A tone as a dot to press: the option's or the rule's colour, and, pressed, the
-   *  theme's six beside it to pick from (CanvasColours, the one row of colours the app
-   *  has), with no colour at all as the seventh. A base's tones are the theme's own,
-   *  so nothing here mixes a colour of its own (docs/tasks.md 5.19). */
   import CanvasColours from '../CanvasColours.svelte'
   import { t } from '../i18n.svelte'
   import { overlays } from '../overlays'
@@ -15,8 +11,6 @@
   let host = $state<HTMLElement>()
   const colour = $derived(toneColour(tone))
 
-  // Closed by a press past it, by Escape and by the window losing the focus, as every
-  // popup is; see overlays.ts.
   $effect(() =>
     open
       ? overlays.show(

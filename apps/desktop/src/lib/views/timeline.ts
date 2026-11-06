@@ -1,13 +1,3 @@
-/** The timeline's arithmetic: a bar per row from a start to an end, on a scale of
- *  days, weeks, months or quarters, and what a drag of a bar or one of its edges
- *  writes.
- *
- *  A task's bar runs from its start date (else its scheduled one) to its deadline,
- *  and is one day where it has only one; a note's runs between the two properties the
- *  view names (`nib.date`, `nib.end`), Notion's date range. Which field a drag writes
- *  is the field the bar's edge was read from, so moving a bar moves the dates the task
- *  actually has and gives it none it did not. */
-
 import { addDays, dayNumber, type Row, type Value } from '@orden/bases'
 import { deadlineOf, startOf } from '@orden/markdown/task-dates'
 import { dayIn, isDateValue } from './values'
@@ -15,14 +5,12 @@ import { dayIn, isDateValue } from './values'
 export type Scale = 'day' | 'week' | 'month' | 'quarter'
 export const SCALES: readonly Scale[] = ['day', 'week', 'month', 'quarter']
 
-/** How wide a day is drawn on each scale. */
 export const DAY_WIDTH: Record<Scale, number> = { day: 36, week: 14, month: 4.5, quarter: 1.6 }
 
 export interface Bar {
   row: Row
   start: string
   end: string
-  /** The properties the two edges were read from, which a drag writes. */
   from: string
   to: string
   fromTime?: string
@@ -35,16 +23,12 @@ function timeIn(value: Value): string {
   return `T${value.time.replace(/:00$/, '')}${value.zone ?? ''}`
 }
 
-/** The bar of one row, or null for a row with no date at all. `read` gives a note
- *  property's value; `dates` are the view's own start and end properties. */
 export function barOf(
   row: Row,
   dates: { start?: string | undefined; end?: string | undefined },
   read: (row: Row, property: string) => Value,
 ): Bar | null {
   if (row.task && !dates.start) {
-    // From the day it starts (or is scheduled for) to its deadline, as its space reads
-    // a `📅` (#371).
     const task = row.task
     const begins = startOf(task, task.dueReads)
     const deadline = deadlineOf(task, task.dueReads)
@@ -84,10 +68,6 @@ export function barOf(
 
 const FURTHEST = 3650
 
-/** The days the timeline spans: from a little before the first bar to a little after
- *  the last, and a month around today where today is anywhere near them, or around the
- *  bars where they are all long ago. A bar past `FURTHEST` from the median of them does
- *  not stretch it, and is drawn at its edge (`drawnOf`). */
 export function spanOf(bars: readonly Bar[], today: string): { first: string; last: string } {
   const starts = bars.map((bar) => bar.start).sort()
   const middle = starts[Math.floor(starts.length / 2)] ?? today
@@ -112,11 +92,8 @@ export function drawnOf(
   return { start, end, far: start !== bar.start || end !== bar.end }
 }
 
-/** How many days lie from one day to another. */
 export const daysBetween = (from: string, to: string): number => dayNumber(to) - dayNumber(from)
 
-/** What a drag writes: the bar moved by whole days, or one edge moved, as the
- *  properties and their new days. The edge that would pass the other stops at it. */
 export function dragged(
   bar: Bar,
   part: 'move' | 'start' | 'end',
@@ -131,7 +108,6 @@ export function dragged(
   }
   if (part === 'start') {
     const start = addDays(bar.start, days)
-    // A task of one date pulled wider gets a start of its own rather than moving.
     const field =
       bar.from === bar.to && bar.row.task && bar.from === 'task.deadline' ? 'task.start' : bar.from
     return { [field]: `${start > bar.end ? bar.end : start}${fromTime}` }
@@ -141,12 +117,10 @@ export function dragged(
 }
 
 export interface Arrow {
-  /** From the end of the bar blocking, to the start of the bar it blocks. */
   from: { bar: Bar; at: number }
   to: { bar: Bar; at: number }
 }
 
-/** The dependencies among the bars: a task's `⛔` naming another's `🆔`. */
 export function arrowsOf(bars: readonly Bar[]): Arrow[] {
   const byId = new Map<string, { bar: Bar; at: number }>()
   bars.forEach((bar, at) => {

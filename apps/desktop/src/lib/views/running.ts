@@ -1,7 +1,3 @@
-/** What the runner does (runner.svelte.ts): the bases worth running, a note's change
- *  looked at once it settles, and the repeating templates. Plain state, kept apart from
- *  the runes that wire it to the app. See runner.svelte.ts for the why. */
-
 import { idNumber, inBase, readBase, readAutomations, repeatDue, type Row } from '@orden/bases'
 import { withProperties } from '@orden/bases/agent'
 import { insideOnly } from '../automation/inside'
@@ -22,16 +18,13 @@ import { landing, onLanded } from './moving'
 import { nowHere, todayHere } from './days'
 import { templatesFolder, templateWords } from './templates'
 
-/** The bases worth running, by path on this disk. */
 const held = new Map<string, HeldBase>()
 
-/** The open space's base files are these: the rest are forgotten, the new ones read. */
 export function basesAre(paths: readonly string[]) {
   for (const path of [...held.keys()]) if (!paths.includes(path)) held.delete(path)
   for (const path of paths) if (!held.has(path)) void readHeld(path)
 }
 
-/** Whether any base is worth running at all. */
 const running = (): boolean => held.size > 0
 
 function heldIn(space: string): HeldBase[] {
@@ -40,11 +33,7 @@ function heldIn(space: string): HeldBase[] {
     return base ? [{ ...one, base }] : []
   })
 }
-/** Notes the runner just wrote, whose next change is its own. */
 const ours = new Set<string>()
-/** Notes waiting for their quiet moment, with the rows they had before it. One written
- *  where a move under way is going has no timer yet: it waits at `at`, its path on
- *  disk, for the move to be told or to be over (moving.ts). */
 const waiting = new Map<
   string,
   {
@@ -56,9 +45,6 @@ const waiting = new Map<
   }
 >()
 
-/** How long a note is left to settle before its bases look at it: long enough for the
- *  write that changed it to have finished recording its undo, so the runner's write can
- *  join it. */
 const SETTLE = 80
 
 const keyOf = (space: string, path: string) => `${space}\n${path}`
@@ -86,22 +72,16 @@ export async function readHeld(path: string): Promise<void> {
   held.delete(path)
 }
 
-/** The rows of one note, as the store has them now. */
 function rowsOf(space: string, path: string): readonly Row[] {
   return rows.of(space).filter((row) => row.path === path)
 }
 
-/** The space holding a path, and the bases of it that number their rows. */
 function numbering(path: string) {
   const space = workspace.spaces.find((one) => within(one.root, path, one.root) !== null)
   const bases = space ? heldIn(space.name).filter((one) => one.base.nib.id) : []
   return { space, bases }
 }
 
-/** A copy's words without the ids of the bases it is a row of where it landed, or null
- *  where it holds none. A copy outside every base keeps its id: nothing reads it as a
- *  row, and a base without a prefix reads any number as one of its ids. See
- *  `idsLeftBehind` in workspace/copying.ts. */
 function withoutIds(path: string, text: string): string | null {
   const { space, bases } = numbering(path)
   const relative = space && within(space.root, path, space.root)
@@ -119,9 +99,6 @@ function withoutIds(path: string, text: string): string | null {
 }
 leaveIdsBy({ numbers: (path) => numbering(path).bases.length > 0, without: withoutIds })
 
-/** A base's automations, run on a note of its space that changed. Not in a space
- *  shared with this account to be read: what they write and move would be refused by
- *  the sync on every pass, and the space's own people run them where they write. */
 async function run(space: string, path: string, removed: readonly Row[]) {
   const bases = heldIn(space)
   const root = workspace.spaces.find((one) => one.name === space)?.root
@@ -137,9 +114,6 @@ async function run(space: string, path: string, removed: readonly Row[]) {
   }
 
   for (const move of plan.moves) {
-    // The folder is the base's words, which anybody who can write the space can write;
-    // joined as written, `../Private` moved the note out into another space. Read the
-    // way a link's path is, and a folder that leaves the space moves nothing.
     const said = move.folder.replace(/^\/+|\/+$/g, '')
     const inside = said ? insideOnly(said) : ''
     if (inside === null) continue
@@ -166,9 +140,6 @@ async function run(space: string, path: string, removed: readonly Row[]) {
   }
 }
 
-/** A change the rows store told: a note's, with a note row after it, is heard. A note
- *  renamed or moved is heard as it was where it came from, so its bases see a move,
- *  not a note just made (B551). */
 export function heardChange(change: RowsChange) {
   if (change.path === null || !running()) return
   if (!change.added.some((row) => row.kind === 'note')) return
@@ -179,7 +150,6 @@ export function heardChange(change: RowsChange) {
   }
 }
 
-/** Looks at a note once it has settled. */
 function settling(key: string, space: string, path: string, before: readonly Row[]) {
   waiting.set(key, {
     space,
@@ -192,18 +162,12 @@ function settling(key: string, space: string, path: string, before: readonly Row
   })
 }
 
-// A move that is over without telling where a note waiting for it went: the note is
-// looked at as what it is.
 onLanded(() => {
   for (const [key, one] of waiting) {
     if (one.at !== undefined && !landing(one.at)) settling(key, one.space, one.path, one.removed)
   }
 })
 
-/** A note's rows changed: looked at once they settle, unless the change is the runner's.
- *  `from` is where a moved note was: what it was there, still waiting to be looked at,
- *  is what it was before, and what a save at its new path told first is not. `at` is
- *  the note's path on disk where a move under way is going there: it waits for it. */
 export function heard(
   space: string,
   path: string,
@@ -226,11 +190,6 @@ export function heard(
   else waiting.set(key, { space, path, removed: before, at })
 }
 
-// ---- repeating templates ------------------------------------------------------------
-
-/** Makes the note every repeating template of the open space owes today. None in a
- *  space shared with this account to be read: every reader's device would make it
- *  there each day, and the sync would refuse each one. Its own people make them. */
 export async function repeatTemplates() {
   const space = workspace.activeSpace
   if (!space || !rows.ready || !canWriteAt(space.root)) return
@@ -243,9 +202,6 @@ export async function repeatTemplates() {
     const due = repeatDue(row.note, today)
     if (!due) continue
 
-    // The template's `folder:` is words anybody who can write the space can write, and
-    // joined as written `../Private` made the note in another space, over what was
-    // there. Read the way a link's path is; one that leaves the space makes nothing.
     const said =
       typeof row.note.folder === 'string' ? row.note.folder.trim().replace(/^\/+|\/+$/g, '') : ''
     const inside = said ? insideOnly(said) : ''
@@ -259,7 +215,6 @@ export async function repeatTemplates() {
     await writeFile(made, due.missed.length ? withProperties(words, { missed: due.missed }) : words)
     await workspace.fileCame(made, 'file')
 
-    // Said in the template itself, which syncs, so another device does not make it too.
     const template = await workspace.noteText(path)
     if (template !== null) await writeFile(path, withProperties(template, { made: due.day }))
   }

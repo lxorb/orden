@@ -1,12 +1,4 @@
 <script lang="ts">
-  /** A column's head, Notion's: the group's name as a pill in its option's tone (a value
-   *  no option holds is a quiet pill with no tone), the count, which is a button for the
-   *  column's calculation, then ⋯ and + while the head is pointed at, and always under a
-   *  thumb. The right button is the ⋯.
-   *
-   *  A board of tasks heads its columns as GitHub's project board does (#1046): a
-   *  status circle in the group's tone, the name, the count in a badge, and a line
-   *  under them that says what the column is, where it says anything. */
   import { t } from '../i18n.svelte'
   import { ADD_MARK } from './marks'
 
@@ -27,15 +19,10 @@
     name: string
     tone: string | null
     count: number
-    /** The column's calculations, as they read: `21`, `Oct 9`. */
     sums?: readonly string[]
-    /** A value no option holds. */
     muted?: boolean
-    /** Headed with a status circle rather than a pill: a board of tasks. */
     circle?: boolean
-    /** One line under the head, saying what the column holds. */
     about?: string | undefined
-    /** Carried by its head to reorder the columns. */
     carries?: boolean
     canAdd?: boolean
     onmenu: (event: MouseEvent) => void
@@ -120,7 +107,6 @@
     font-weight: var(--weight-strong);
   }
 
-  /* An option's tone, as a card's pill wears it, deep enough to read in light and dark. */
   .tag.toned {
     background: color-mix(in srgb, var(--pill) 22%, transparent);
     color: color-mix(in srgb, var(--pill) 62%, var(--text-strong));
@@ -140,7 +126,6 @@
     white-space: nowrap;
   }
 
-  /* GitHub's status circle: a ring in the group's tone round a dot of it. */
   .circle {
     flex: none;
     box-sizing: border-box;

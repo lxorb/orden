@@ -1,19 +1,5 @@
-/** A row carried from one place in a view to another: a card to another column, a task
- *  to another day, a row of the list onto another group.
- *
- *  Pointer events rather than the browser's drag and drop, for two reasons the canvas
- *  and the tab strip already found: a phone has no drag and drop at all, and the
- *  picture a browser drags is a grey copy nobody can style. So a press that moves
- *  (or, under a thumb, a press held and then moved, as on the canvas) lifts the row,
- *  a card of its words follows the pointer with the canvas's shadow, and whatever the
- *  pointer is over that takes rows (`droppable`) lights up and is told where it landed.
- *
- *  Escape, or a release over nothing that takes it, puts the row back where it was:
- *  nothing is written until a drop lands. */
-
 import type { Row, Value } from '@orden/bases'
 
-/** Where a drop landed, in the window's pixels. */
 export interface Point {
   x: number
   y: number
@@ -21,9 +7,7 @@ export interface Point {
 
 type Take = (row: Row, at: Point, place: HTMLElement, from: Value | undefined) => void
 
-/** How far a mouse moves before a press is a drag rather than a click. */
 const SLOP = 4
-/** How long a thumb holds before a press is a drag rather than a scroll. */
 export const HOLD = 350
 export const THUMB_SLOP = SLOP * 2
 
@@ -59,24 +43,18 @@ export function holdsThumb(node: HTMLElement) {
 }
 
 class Dragging {
-  /** The row being carried, or null. */
   row = $state.raw<Row | null>(null)
-  /** What the card following the pointer says. */
   label = $state('')
   x = $state(0)
   y = $state(0)
-  /** The place the row would land if let go now. */
   over = $state.raw<HTMLElement | null>(null)
 }
 
 export const dragging = new Dragging()
 
-/** Which view draws the card that follows the pointer: the first one on screen, so two
- *  views side by side do not draw two. */
 const ghosts: symbol[] = []
 let drawing = $state<symbol | null>(null)
 
-/** A view asking to draw the card; answers whether it does, now, and the way to stop. */
 export function ghostOwner(): { mine: () => boolean; release: () => void } {
   const me = Symbol('ghost')
   ghosts.push(me)
@@ -92,7 +70,6 @@ export function ghostOwner(): { mine: () => boolean; release: () => void } {
 
 const takers = new WeakMap<HTMLElement, Take>()
 
-/** A place rows can be dropped on. */
 export function droppable(node: HTMLElement, take: Take) {
   takers.set(node, take)
   node.dataset.drop = ''
@@ -106,13 +83,11 @@ export function droppable(node: HTMLElement, take: Take) {
   }
 }
 
-/** The place under a point that takes rows, if any. */
 function targetAt(at: Point): HTMLElement | null {
   const found = document.elementFromPoint(at.x, at.y)?.closest<HTMLElement>('[data-drop]')
   return found ?? null
 }
 
-/** The nearest box that scrolls, for carrying a row past the edge of what is shown. */
 function scrollerAt(at: Point): HTMLElement | null {
   for (let box = document.elementFromPoint(at.x, at.y); box; box = box.parentElement) {
     if (!(box instanceof HTMLElement)) continue
@@ -127,7 +102,6 @@ function scrollerAt(at: Point): HTMLElement | null {
   return null
 }
 
-/** Brings rows in under a pointer held near the edge of what scrolls. */
 function nudge(at: Point) {
   const box = scrollerAt(at)
   if (!box) return
@@ -147,8 +121,6 @@ export interface Carry {
   from?: Value | undefined
 }
 
-/** A row that can be carried. The press that does not become a drag is left alone,
- *  so a click still opens and a box still ticks. */
 export function draggable(node: HTMLElement, start: Carry) {
   let carry = start
   let from: Point | null = null
@@ -172,7 +144,6 @@ export function draggable(node: HTMLElement, start: Carry) {
       if (!from) return
       const far = Math.hypot(at.x - from.x, at.y - from.y)
       if (event.pointerType === 'touch') {
-        // A thumb that moves before the hold is a scroll, not a drag.
         if (far > THUMB_SLOP) cancel()
         return
       }
@@ -213,7 +184,6 @@ export function draggable(node: HTMLElement, start: Carry) {
     dragging.row = null
     dragging.over = null
     if (!was) return
-    // The click a drag ends in is not a press of whatever it was over.
     window.addEventListener('click', swallow, { capture: true, once: true })
     setTimeout(() => window.removeEventListener('click', swallow, true), 0)
     if (event && target && row)
@@ -280,8 +250,6 @@ function swallow(event: MouseEvent) {
   event.stopPropagation()
 }
 
-/** Where among a list of items a point falls: the index before which a row dropped
- *  there goes, from the items' own boxes. */
 export function placeAmong(items: readonly Element[], at: Point, across = false): number {
   for (let index = 0; index < items.length; index++) {
     const box = items[index]?.getBoundingClientRect()

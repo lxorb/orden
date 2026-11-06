@@ -1,9 +1,4 @@
 <script lang="ts">
-  /** The timeline: rows down, time across, a bar from each row's start to its end, and
-   *  the rows' names beside it, as Notion draws one (docs/tasks.md 5.9). A bar dragged
-   *  moves both its dates; an edge dragged moves one. A task blocked by another (`⛔`)
-   *  has an arrow from the end of the one it waits for. The scale is days, weeks,
-   *  months or quarters, and today is a line in the accent. */
   import { addDays, cellValue, type Row, rowId, type Value } from '@orden/bases'
   import { linkModifier } from '@orden/editor'
   import { i18n, t } from '../i18n.svelte'
@@ -56,13 +51,10 @@
   const width = $derived(DAY_WIDTH[scale])
   const total = $derived((daysBetween(span.first, span.last) + 1) * width)
   const ROW = 32
-  /** How wide a bar has to be to hold its own words. */
   const NAMED = 80
 
   const x = (day: string) => daysBetween(span.first, day) * width
 
-  /** The marks along the top: every day, the Mondays, the firsts of the month or of a
-   *  quarter, as the scale has room for. */
   const ticks = $derived.by(() => {
     const out: { day: string; label: string }[] = []
     for (let day = span.first; day <= span.last; day = addDays(day, 1)) {
@@ -79,7 +71,6 @@
     return out
   })
 
-  /** Where each task with an id ends, for the arrows from it. */
   const arrows = $derived(
     arrowsOf(bars).map((one) => ({
       from: { x: x(drawnOf(one.from.bar, span).end) + width, y: one.from.at * ROW + ROW / 2 },
@@ -87,7 +78,6 @@
     })),
   )
 
-  /** A bar or an edge dragged: whole days, written once on letting go. */
   function drag(event: PointerEvent, bar: Bar, part: 'move' | 'start' | 'end') {
     if (event.button !== 0) return
     event.preventDefault()
@@ -222,7 +212,6 @@
               <span class="edge end" onpointerdown={(event) => drag(event, bar, 'end')}></span>
             </div>
             {#if long < NAMED}
-              <!-- A bar too short to hold its words has them beside it. -->
               <span
                 class="beside"
                 style:top={`${at * ROW + 5}px`}

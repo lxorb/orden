@@ -1,19 +1,4 @@
 <script lang="ts">
-  /** A task in a list, Todoist's in Orden's shapes: the box, the words with their
-   *  inline marks, the first line of the description under them, and a meta line
-   *  (TaskMeta.svelte) - the day in the colour of how near it is, ↻, the deadline, the
-   *  duration, the bell, how many sub-tasks are done, how many comments, the labels -
-   *  with where it lives at its end. Under the pointer or the focus it offers to
-   *  schedule it and its menu (task-actions.ts). `card` draws it as Todoist's card, a
-   *  rounded one on a raised ground with room between it and the next (#1043); without,
-   *  it is a row over a hairline, as the sub-tasks of a task's view are.
-   *
-   *  Ctrl or Cmd and a press selects it, Shift and a press every row from the last one
-   *  selected, and while anything is selected a press selects; the middle button opens
-   *  its note in a tab. On a touch screen it is swiped (swipe-row.ts).
-   *
-   *  As tall as its lines, exactly (`lines`, worked out by the list from task-meta.ts),
-   *  so the list places every row by arithmetic and measures none. */
   import type { Row, Value } from '@orden/bases'
   import { linkModifier } from '@orden/editor'
   import Calendar from 'lucide/dist/esm/icons/calendar-days.mjs'
@@ -64,9 +49,7 @@
   }: {
     row: Row
     kit: Kit
-    /** How many lines it is drawn on: 1 to 3. */
     lines: number
-    /** Drawn as a card (see the top): what the views' lists are. */
     card?: boolean
     dated?: boolean
     where?: boolean
@@ -76,15 +59,11 @@
     selected?: boolean
     onselect?: () => void
     subtasks?: Subtasks | undefined
-    /** Whether the task is being changed in its own field over the row. */
     editing?: boolean
     onedit?: (on: boolean) => void
-    /** How tall the field standing in the row is, as it changes. */
     onsize?: (tall: number) => void
-    /** Whether it is one of the rows selected, and whether any are. */
     picked?: boolean
     picking?: boolean
-    /** Selects it or lets it go; `range` every row from the last one selected. */
     onpick?: (range: boolean) => void
     from?: Value
   } = $props()
@@ -94,27 +73,21 @@
   const meta = $derived(task ? metaOf(task, kit.live.today, dated, subtasks) : [])
   const blocker = $derived(task?.dependsOn.length ? blockerOf(task, kit.live.rows) : null)
   const tone = $derived(kit.live.colourOf(row))
-  /** Which space, where it is not the open one (decision 8.4). */
   const elsewhere = $derived(
     kit.spec.builtin !== undefined && row.space !== workspace.activeSpace?.name ? row.space : null,
   )
 
-  /** The note at the line, beside the view (with Ctrl or Cmd, in a tab). */
   function open(event: MouseEvent) {
     onselect?.()
     kit.open(row, linkModifier(event) ? 'tab' : 'aside')
   }
 
-  /** The task's own view, or the row selected (see the top). */
   function view(event: MouseEvent) {
     onselect?.()
     if (onpick && (event.shiftKey || linkModifier(event) || picking)) onpick(event.shiftKey)
     else kit.openTask(row)
   }
 
-  /** A press anywhere else on the row, past its controls, selects it as one on the words
-   *  does: with Ctrl or Cmd, Shift, or while any are selected (#1110). In a narrow list -
-   *  the Tasks panel's - the words are a short run and the actions lie over their end. */
   function press(event: MouseEvent) {
     if (!onpick || !(event.target instanceof Element)) return
     if (event.target.closest('button, a, input, textarea, [contenteditable="true"]')) return
@@ -123,11 +96,6 @@
     onpick(event.shiftKey)
   }
 
-  /** A press on a control inside the row leaves the keyboard on the row, never on the
-   *  control: the words and the buttons are not a Tab's stop, and one holding the
-   *  keyboard drew a ring of its own round the title - after a sheet it opened closed,
-   *  and the keyboard came back to it - where the row's own state already says which
-   *  row it is (#1110). The press goes on to the control as before. */
   function holdOnRow(event: MouseEvent) {
     if (event.button !== 0 || !(event.target instanceof Element)) return
     if (!event.target.closest('button')) return
@@ -136,7 +104,6 @@
       event.currentTarget.focus({ preventScroll: true })
   }
 
-  /** The middle button: its note in a tab, as a link opens. */
   function aux(event: MouseEvent) {
     if (event.button !== 1) return
     event.preventDefault()
@@ -164,8 +131,6 @@
         ><Glyph icon={Calendar} /></span
       ></span
     >
-    <!-- The keyboard selects a row with x, heard by the list (row-keys.ts); the press is
-         the pointer's way to the same. -->
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
       class="task"
@@ -194,9 +159,6 @@
       oncontextmenu={more}
       onauxclick={aux}
     >
-      <!-- Todoist's grip: the row is carried from anywhere on it, and this says so. In the
-           row's own margin, so the row is what it is placed in: inside the head, which
-           holds the actions over the words, it lay over the box (#1110). -->
       <span class="grip" aria-hidden="true"><Glyph icon={Grip} /></span>
       <div class="head">
         {#if twist}
@@ -253,7 +215,6 @@
               kit.openTask(row, true)
             }}><Glyph icon={Message} /></button
           >
-          <!-- Done in a chat of its own in the AI panel's list (#325); the glasses have none. -->
           {#if !__EVEN_PLUGIN__ && !task.done && !task.cancelled}
             <button
               type="button"
@@ -302,7 +263,6 @@
 {/if}
 
 <style>
-  /* What a swipe shows under the row it moves: done to the right, a day to the left. */
   .swipe {
     position: relative;
     overflow-x: clip;
@@ -352,7 +312,6 @@
   }
 
   .task {
-    /* The box's width, which the lines under the words start past. */
     --box: 20px;
     position: relative;
     box-sizing: border-box;
@@ -374,8 +333,6 @@
       translate var(--dur-base) var(--ease-out);
   }
 
-  /* A hairline between tasks, as a list of things to do reads: from the words' edge,
-     so the boxes stand on the margin uninterrupted. */
   .task::after {
     content: '';
     position: absolute;
@@ -396,9 +353,6 @@
     background: var(--surface-selected);
   }
 
-  /* The card: its padding and the room under it are the list's (ListLayout.svelte), so
-     the list's arithmetic and the drawing are one number each; its edge a ring rather
-     than a border, which would take from the room inside. */
   .card {
     --card-pad: var(--task-pad, 6px);
     padding-block-end: var(--task-gap, 6px);
@@ -409,8 +363,6 @@
     border-radius: var(--radius-md);
   }
 
-  /* The card's start has room for its grip inside it, an inset from the card's edge on
-     either side of it, rather than the hairline's margin a row has (#1110). */
   .card .task {
     --grip-room: calc(var(--row-pad) + var(--space-2));
     padding-inline-start: calc(var(--grip-room) + var(--depth) * var(--row-indent));
@@ -455,8 +407,6 @@
     background: var(--accent-soft);
   }
 
-  /* Under the finger the row is solid over what the swipe shows, and follows it
-     exactly; let go, it slides home. */
   .task:global(.is-swiping) {
     background: var(--bg);
     transition: none;
@@ -524,11 +474,6 @@
     cursor: default;
   }
 
-  /* Out of the way at rest, so a narrow list - the Tasks panel's (#374) - gives the words
-     the whole row; beside them, taking their end, once the pointer or the focus is on it.
-     Never over them on a ground of its own: the row's grounds are see-through, and a
-     second coat of one is a box round the buttons the row's own state does not have
-     (#1110). */
   .actions {
     position: absolute;
     inset-inline-end: 0;
@@ -585,7 +530,6 @@
     transform: scale(0.94);
   }
 
-  /* Every line under the words starts where the words do: past the box and its gap. */
   .line {
     flex: none;
     display: flex;
@@ -630,8 +574,6 @@
     text-decoration-color: var(--line-strong);
   }
 
-  /* Ticked and not written back yet: the box fills at once (TaskBox.svelte), and the
-     words strike through and the task quiets with it, before the list lets it go. */
   .words {
     transition: color var(--dur-base) var(--ease-out);
   }

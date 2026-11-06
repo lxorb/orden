@@ -1,15 +1,4 @@
 <script lang="ts">
-  /** One card of a board, Notion's: the title clamped to the lines its size gives it,
-   *  then a line per property the view shows, every line kept whether it holds anything
-   *  or not, so every card of the view is one height (docs/design.md). A select's value
-   *  is a pill in its option's tone, a list its first members and how many more, a date
-   *  past in the danger tone unless the card is done. A note with task lines says how
-   *  many are done; a task wears its box, ringed in its priority's tone, and the meta
-   *  line a list's card has (TaskMeta.svelte, #1043), so a task is one card in both.
-   *
-   *  The card is one stop of the board's roving focus; its ⋯ beside it opens what the
-   *  right button does. A card carried to another column and not written yet is drawn
-   *  there already, a little faded. */
   import { cellValue, type Row } from '@orden/bases'
   import { linkModifier } from '@orden/editor'
   import { t } from '../i18n.svelte'
@@ -39,15 +28,11 @@
     kit: Kit
     row: Row
     lines: { title: number; props: number }
-    /** The properties the view shows on its cards, in order. */
     shown: readonly string[]
     checklist: { done: number; total: number } | undefined
-    /** In a done group: no date is late, and the title is quieter. */
     done: boolean
     pending?: boolean
-    /** The card the board's focus is on, the one Tab reaches. */
     focused?: boolean
-    /** Whether the card can be carried at all. */
     carry?: boolean
     onmenu: (event: MouseEvent, row: Row) => void
     onfocus: () => void
@@ -57,7 +42,6 @@
   const title = $derived(row.task ? plain(row.task.text) : row.file.basename)
   const tone = $derived(live.colourOf(row))
 
-  /** What each property line holds: the view's properties, as many as there are lines. */
   const values = $derived.by((): (CardLine | null)[] => {
     const base = live.base
     if (!base || row.task) return []
@@ -77,14 +61,11 @@
     })
   })
 
-  /** The property lines, every one the size gives room for, filled or not. */
   const slots = $derived(Array.from({ length: lines.props }, (_, at) => values[at] ?? null))
   const ticked = $derived(checklist && checklist.total > 0 ? checklist : null)
 
   function keydown(event: KeyboardEvent) {
     if (event.target !== event.currentTarget) return
-    // Each key is the card's alone, so the board's row keys do not do it a second time;
-    // but Ctrl+Enter and Space on a task, which tick it there.
     if (event.key === 'Enter' || event.key === ' ') {
       const modded = event.ctrlKey || event.metaKey
       if (row.task && modded && event.key === 'Enter') return
@@ -223,7 +204,6 @@
     border-radius: inherit;
     outline: none;
     cursor: default;
-    /* Carried, not selected: a drag across the board selects no words. */
     -webkit-user-select: none;
     user-select: none;
   }
@@ -309,7 +289,6 @@
     text-overflow: ellipsis;
   }
 
-  /* An option's tone: a wash of it, and words in it deep enough to read on the wash. */
   .tag.toned {
     background: color-mix(in srgb, var(--pill) 16%, transparent);
     color: color-mix(in srgb, var(--pill) 62%, var(--text-strong));
@@ -330,9 +309,6 @@
     color: var(--success);
   }
 
-  /* Over the title's end, on no ground of its own: a card's ground is its tone's, or
-     see-through under glass, and the surface laid under the button was a box the card
-     does not have (#1110). The title fades out under it instead. */
   .menu {
     position: absolute;
     top: 3px;
@@ -372,15 +348,12 @@
     opacity: 1;
   }
 
-  /* Always there under a thumb, and as tall as the title's line, so it never covers the
-     meta line under it on a card of two lines. */
   :global([data-touch]) .menu {
     width: var(--row-height-sm);
     height: var(--row-height-sm);
     opacity: 1;
   }
 
-  /* The view's conditional colour (nib.colour), the row's tone over its ground. */
   .tinted {
     background: color-mix(in srgb, var(--row-tone) 14%, var(--bg));
   }

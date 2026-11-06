@@ -1,8 +1,4 @@
 <script lang="ts">
-  /** A chart of the view's groups: bars (up or across), a line, a donut or one number,
-   *  measured by a count, a sum, an average, the earliest or the latest, with a running
-   *  total where asked (docs/tasks.md 5.9). Drawn as SVG in the theme's six tones, and
-   *  read-only, as Notion's are; its settings are kept under the view's `nib:`. */
   import { groupName } from '@orden/bases'
   import { amount, t } from '../i18n.svelte'
   import Select from '../Select.svelte'
@@ -50,8 +46,6 @@
     'var(--canvas-1)',
     'var(--canvas-3)',
   ]
-  /** A group's colour: the tone its option has where the base gives it one (a status's
-   *  green Done), else the next of the six. */
   const tone = (at: number) => {
     const key = points[at]?.key
     const own =

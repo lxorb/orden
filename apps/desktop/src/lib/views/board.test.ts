@@ -24,7 +24,6 @@ const group = (key: string, rows: Row[], sub?: Group[]): Group => ({
 
 describe('orderAfter and indexWithout', () => {
   it('lands a card carried down its own column where it was let go', () => {
-    // A between B and C: the slot under the pointer is 2 counting A's own.
     const ids = ['A', 'B', 'C']
     expect(orderAfter(ids, 'A', indexWithout(2, 0))).toEqual(['B', 'A', 'C'])
     expect(orderAfter(ids, 'A', indexWithout(3, 0))).toEqual(['B', 'C', 'A'])
@@ -38,7 +37,6 @@ describe('orderAfter and indexWithout', () => {
 
 describe('mergedOrder', () => {
   it('keeps the other lanes where they were', () => {
-    // Lane one holds A and C, lane two B and D; lane one turned round.
     expect(mergedOrder(['A', 'B', 'C', 'D'], ['C', 'A'])).toEqual(['C', 'B', 'A', 'D'])
   })
 
@@ -49,7 +47,6 @@ describe('mergedOrder', () => {
   })
 
   it('takes a card from another lane of the column into this one', () => {
-    // B was in lane two and is put first in lane one (A, C).
     expect(mergedOrder(['A', 'B', 'C'], ['B', 'A', 'C'])).toEqual(['B', 'A', 'C'])
   })
 })
@@ -131,7 +128,6 @@ describe('nextCard and nextLaned', () => {
   })
 
   it('goes on to the next lane with cards in the column', () => {
-    // Three lanes of two columns: the middle lane has none in the first column.
     const counts = [
       [2, 1],
       [0, 3],

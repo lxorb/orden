@@ -1,26 +1,3 @@
-/** What a key pressed on a row of a view does (docs/tasks.md 5.16): Todoist's keys, read
- *  the same in every layout that has rows, each one a row of the shortcuts registry
- *  (`tasks.*`), so it is shown in the settings and can be put on another key.
- *
- *    ↑ ↓, j k             the row below, the row above
- *    Enter                the task's own view (a note: the note, beside the view)
- *    o                    the note at the line, beside the view
- *    e, Ctrl+Enter, Space complete (Space: the card's box, #1043)
- *    t, Shift+T           the scheduler; the date taken away
- *    y, 1 2 3 4           priority: its menu, or one of them
- *    l, v, .              labels, move to a project, the task's menu
- *    c                    its view, to write a comment
- *    x, Esc               select the row; the selection let go
- *    Ctrl+E               change the task in its own field (Todoist's inline editor)
- *    Ctrl+] Ctrl+[, Tab   a sub-task of the one above, or lifted out
- *    Ctrl+↑ ↓, Alt+↑ ↓    up or down among its siblings in the note
- *    Shift+E              its sub-tasks folded or unfolded
- *    Shift+Delete         delete
- *    Ctrl+Shift+C         copy its link
- *    q, a, Shift+A        add a task here, at the end of the list, at its top
- *
- *  Pure: a keystroke in, an action out, and the layout does it. */
-
 import { type Keystroke, matchesCombination, type Platform } from '../keys'
 
 export type RowKey =
@@ -46,7 +23,6 @@ export type RowKey =
   | { kind: 'add'; where?: 'end' | 'top' }
   | { kind: 'edit' }
 
-/** Which registry row asks for which action, in the order they are tried. */
 const ROW_KEYS: readonly (readonly [string, RowKey])[] = [
   ['tasks.next', { kind: 'step', by: 1 }],
   ['tasks.previous', { kind: 'step', by: -1 }],
@@ -84,7 +60,6 @@ const ROW_KEYS: readonly (readonly [string, RowKey])[] = [
   ['tasks.add-top', { kind: 'add', where: 'top' }],
 ]
 
-/** The arrows and Escape, which belong to every list and are on no other key. */
 function fixed(press: Keystroke): RowKey | null {
   if (press.ctrlKey || press.metaKey || press.altKey || press.shiftKey) return null
   if (press.key === 'ArrowDown') return { kind: 'step', by: 1 }
@@ -93,8 +68,6 @@ function fixed(press: Keystroke): RowKey | null {
   return null
 }
 
-/** The action a key on a row asks for, or null for a key that is not one of these.
- *  `keyFor` answers the key a registry row is on now (`shortcuts.keyFor`). */
 export function rowKey(
   press: Keystroke,
   keyFor: (id: string) => string | null,

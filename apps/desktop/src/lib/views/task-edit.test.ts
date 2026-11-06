@@ -110,7 +110,6 @@ describe('a task in quick add’s field and back', () => {
       const fields = { tags: [], remind: [], ...prefillFor(one, null).fields }
       return changedTask(line, changeOf(one, { text: 'Pay rent', fields }))
     }
-    // A vault's `📅` is a deadline, and the line stays as it was.
     expect(save('- [ ] Pay rent 🔁 every month 📅 2026-11-01', 'deadline')).toBe(
       '- [ ] Pay rent 🔁 every month 📅 2026-11-01',
     )

@@ -1,7 +1,4 @@
 <script lang="ts">
-  /** The card that follows the pointer while a row is carried: its words, lifted with
-   *  the canvas's shadow and tilted a little, the way a card picked up off a board is.
-   *  One for the whole window, wherever the row was picked up. */
   import { scale } from 'svelte/transition'
   import { dur } from '../motion'
   import { dragging } from './drag.svelte'

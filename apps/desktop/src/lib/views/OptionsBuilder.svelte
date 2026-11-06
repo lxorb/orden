@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** A property's choices, Notion's select and status (docs/tasks.md 4): each a tone,
-   *  its words and, for a status, To do, Doing or Done. Renaming a choice renames it in
-   *  every note that holds it, as one write. A column that had none starts with the
-   *  values its notes already hold, each in the next tone, which is how a text column
-   *  becomes a select. Their order is the board's columns and the groups', so a choice
-   *  is carried up or down by its grip to reorder them.
-   *
-   *  The column of a base's ids has no choices: it has its prefix, and a new one is
-   *  written into every id at once. */
   import { inBase, type SelectOption } from '@orden/bases'
   import Cross from '../Cross.svelte'
   import { t } from '../i18n.svelte'
@@ -54,7 +45,6 @@
     write([...options, { value, tone: String((options.length % 6) + 1) }])
   }
 
-  /** A choice carried by its grip and let go over another: it takes that one's place. */
   function carry(event: PointerEvent, from: number) {
     event.preventDefault()
     const list = (event.currentTarget as HTMLElement).closest('.options')

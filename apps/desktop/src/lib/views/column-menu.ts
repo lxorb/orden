@@ -1,13 +1,3 @@
-/** A column's menu, the table's header pressed with the other button and a form's
- *  field: its sort and its summary, the columns that can be added beside it, what its
- *  property is (its choices, its format), a rollup's or a button's own builder, the
- *  freeze, and hiding it (docs/tasks.md 4).
- *
- *  "Add a column" offers every property the rows have, then what lane 7 adds: the
- *  notes elsewhere that link here as a reverse column, a rollup, a button, and the
- *  base's ids where it has none. Turning ids on numbers every row the base has, in the
- *  order they were made, as one write. */
-
 import {
   DEFAULT_SUMMARIES,
   idRepairs,
@@ -42,7 +32,6 @@ import type { Kit } from './kit'
 import { optionsAt, optionsFor, valuesOf } from './options'
 import { propertyName, summaryName } from './words'
 
-/** What a format is called in its menu: a currency by its sign. */
 function formatName(format: string): string {
   if (format.startsWith('currency:')) {
     const code = format.slice(9)
@@ -72,10 +61,8 @@ function formatName(format: string): string {
   }
 }
 
-/** The key nib.properties keeps a column's settings under. */
 const keyOf = (column: string) => (column.startsWith('formula.') ? column.slice(8) : bare(column))
 
-/** The rows a menu offers to add beside the columns showing. */
 function additions(kit: Kit, columns: readonly string[]): MenuEntry[] {
   const live = kit.live
   const base = live.base
@@ -138,8 +125,6 @@ function additions(kit: Kit, columns: readonly string[]): MenuEntry[] {
   ]
 }
 
-/** A row that is only its alternatives: pressed, it shows them where the menu was, as its
- *  chevron does. */
 export function grouped(
   event: MouseEvent | undefined,
   label: string,
@@ -149,9 +134,6 @@ export function grouped(
     label,
     more,
     run: () => {
-      // No wait for the press to finish reaching the window: a press that began before
-      // the menu opened does not shut it (`pressed` in overlays.ts), the way the row's
-      // chevron already opens these in ContextMenu.
       if (event) void more().then((rows) => menu.show(event, rows, { title: label }))
     },
   }

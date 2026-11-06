@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** The add row at the end of a group, and Todoist's inline editor it opens: quick add's
-   *  field where the row is, knowing what the group is - its note, its section, its day,
-   *  its label, its priority (TaskEditor.svelte). Enter adds and keeps the field for the
-   *  next task; Escape or Cancel puts the row back. No toast: the new row arrives in the
-   *  view above the field.
-   *
-   *  A view of notes adds a note where its filter points instead (add.ts), and a column
-   *  that stands for a box's mark, which quick add cannot carry, takes the words in a
-   *  plain field of its own and writes them with that mark. */
   import type { Group } from '@orden/bases'
   import { untrack } from 'svelte'
   import { t } from '../i18n.svelte'
@@ -28,18 +19,12 @@
   }: {
     kit: Kit
     group?: Group | null
-    /** Counts the times a key or the head's plus asked for the field rather than a
-     *  press on the row: each new count opens it. */
     asked?: number
-    /** The field put away, for a host that drew the row only to hold it. */
     onclose?: () => void
-    /** How tall the field standing in the row is, as it changes; nought once it goes. */
     onsize?: (tall: number) => void
   } = $props()
 
-  /** The plain field's prefill, for a column quick add cannot carry. */
   let plain = $state<Prefill | null>(null)
-  /** The inline editor's, for every other task. */
   let editing = $state<QuickPrefill | null>(null)
   let into = $state<string | undefined>()
   let words = $state('')
@@ -47,10 +32,8 @@
 
   const property = $derived(kit.live.view?.groupBy?.property)
   const notes = $derived((kit.live.view?.nib.rows ?? 'notes') === 'notes')
-  /** A view of notes adds a note, where its filter points; see add.ts. */
   const label = $derived(notes ? t('New note') : t('Add task'))
 
-  /** What the view's prefill is as quick add's: its note by its path in the space. */
   function quick(prefill: Prefill): QuickPrefill {
     const root = prefill.root ?? workspace.activeSpace?.root
     const note =
@@ -99,13 +82,10 @@
     const said = words
     if (!plain || !said.trim()) return
     words = ''
-    // A task that was not written keeps its words in the field, unless more were typed
-    // while it was being tried.
     if (!(await addTyped(said, plain)) && !words) words = said
   }
 </script>
 
-<!-- None where the task or note would land in a space shared to be read. -->
 {#if kit.adds}
   <div class="add-row">
     {#if plain}

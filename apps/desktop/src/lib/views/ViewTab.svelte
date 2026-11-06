@@ -1,11 +1,4 @@
 <script lang="ts">
-  /** A view in a tab of its own (docs/tasks.md 5.5): Today, a project, a label, or a
-   *  `.base` file's views, full width, splittable beside a note and put back with the
-   *  session. Which view it is lives in the tab's words (spec.ts); a base file's own
-   *  changes are written into the file, a built-in view's into the tab.
-   *
-   *  The surface Pane.svelte fetches the first time a view tab is shown; nothing of
-   *  this is in the first paint (surfaces.svelte.ts). */
   import { untrack } from 'svelte'
   import { modes } from '../modes.svelte'
   import type { Tab } from '../workspace/documents.svelte'
@@ -17,14 +10,11 @@
 
   const { tab }: { tab: Tab } = $props()
 
-  /** Which view the tab is: the same tab may come to be about another note, a project
-   *  whose note was renamed (project-follow.ts), and is then made again. */
   const which = $derived.by(() => {
     const spec = readSpec(tab.doc) ?? {}
     return JSON.stringify([spec.builtin, spec.space, spec.path, spec.tag, spec.view])
   })
 
-  /** Made once per view the tab is: the pane keys this surface by the tab's id. */
   const made = $derived.by(() => {
     const view = which
     return untrack(() => make(view))
@@ -37,15 +27,11 @@
     return { view, live, kit: kitFor(live, spec, path, false) }
   }
 
-  // Untracked: starting reads the base, and what it reads on the way is not something
-  // this view should start again for.
   $effect(() => {
     const now = made
     return untrack(() => now.live.start())
   })
 
-  /** Words changed from outside the view (Open as board on a project already open):
-   *  the view reads them again. Its own writes say what it already shows. */
   let seen = untrack(() => tab.doc)
   $effect(() => {
     const words = tab.doc
@@ -54,8 +40,6 @@
     if (tab.path === null) untrack(() => void made.live.reload())
   })
 
-  /** Today read again when Settings turns the tasks with no start date in or out of it
-   *  (`builtinBase`). */
   let undated = untrack(() => modes.undatedInToday)
   $effect(() => {
     const now = modes.undatedInToday

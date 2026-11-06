@@ -1,10 +1,4 @@
 <script lang="ts">
-  /** A view's conditional colour, Notion's (docs/tasks.md 4): rules of a condition and
-   *  a tone, the first that holds colouring the row. A condition is a filter's row, a
-   *  property, how it compares and a value (filter-rows.ts), so it reads the way the
-   *  filter does; the rules are kept as one expression under the view's `nib.colour`
-   *  (`colourExpression`). An expression written by hand that is not rules is kept and
-   *  shown as its words, never lost by opening this. */
   import { type ColourRule, colourExpression, colourRules } from '@orden/bases'
   import Cross from '../Cross.svelte'
   import { t } from '../i18n.svelte'
@@ -22,8 +16,6 @@
   const view = $derived(live.view)
   const written = $derived(view?.nib.colour)
   const rules = $derived(colourRules(written))
-  /** Each rule beside the filter row its condition reads as, where it reads as one. */
-  /** What each property holds, for how a condition asks it whether it is empty. */
   const holds = $derived(live.base ? holdsOf(live.base, live.rows) : undefined)
   const shownRules = $derived(
     (rules ?? []).map((rule) => ({ rule, shown: rowOf(rule.when, holds) })),

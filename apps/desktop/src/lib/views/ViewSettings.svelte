@@ -1,8 +1,4 @@
 <script lang="ts">
-  /** A view's settings, Notion's ⋯ panel in the head of a base (docs/tasks.md 5.5): the
-   *  layout, how it is grouped, which rows it is of, a board's card size and columns,
-   *  which properties it shows (on a board, on its cards, in that order), and the rest
-   *  of what can be done to a view, which `more` names. */
   import type { CardSize, RowKinds } from '@orden/bases'
   import { t } from '../i18n.svelte'
   import type { MenuEntry } from '../menu.svelte'
@@ -21,7 +17,6 @@
     more,
   }: {
     kit: Kit
-    /** The rest of what can be done to the view, as menu rows; `event` is the press. */
     more: (event?: MouseEvent) => MenuEntry[]
   } = $props()
 
@@ -45,7 +40,6 @@
         )
       : [],
   )
-  /** The view's own order first, then the properties it does not show. */
   const listed = $derived([
     ...live.columns,
     ...properties.filter((one) => !live.columns.includes(one)),
@@ -71,7 +65,6 @@
     kit.change((one, at) => setColumns(one, at, order))
   }
 
-  /** A property carried up or down the list of shown ones by its grip. */
   function carry(event: PointerEvent, from: string) {
     event.preventDefault()
     const list = (event.currentTarget as HTMLElement).closest('.shown')
@@ -79,7 +72,6 @@
       window.removeEventListener('pointerup', up)
       window.removeEventListener('pointercancel', done)
     }
-    // A carry the system took away (a touch turned into a scroll) puts nothing down.
     const up = (one: PointerEvent) => {
       done()
       const rows = [...(list?.querySelectorAll<HTMLElement>('[data-shown]') ?? [])]

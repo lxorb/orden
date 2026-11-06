@@ -1,25 +1,4 @@
 <script lang="ts">
-  /** The board, Notion's: a column per group, in the view's own column order, then the
-   *  options', empty columns kept unless the view hides them, the group of no value at
-   *  the end (or first, where the view says so), the groups hidden from their menu in
-   *  a column of their own at the end that still takes cards, and a sub-group
-   *  splitting the columns into swimlanes (docs/tasks.md 5.9).
-   *
-   *  Grouped by a list, a card stands in the column of each of its members. A card
-   *  carried to another column writes the property the board groups by (only the
-   *  member it was carried from, for a list) and where it was let go, as one undo; it
-   *  stands there at once and goes back only if the write fails, with a way to try
-   *  again. Carried within its column it keeps the view's manual order (`nib.order`),
-   *  which a sort set on the view would overrule, so the board asks once whether to
-   *  take the sort away. Grouped by status, a task line's box is the column.
-   *
-   *  Every card of a view is one height, set by its card size, so a column of two
-   *  thousand cards mounts the dozen on screen. The board is one stop for Tab: the
-   *  arrows walk its cards, Alt and an arrow carries one, Enter opens it, Q adds to its
-   *  column, and the row keys do to a task what they do in a list.
-   *
-   *  A project's board is Todoist's: a column per section, each with the section's menu
-   *  (section-actions.ts), the tasks in no section first, and Add section at the end. */
   import {
     type Answer,
     groupName,
@@ -105,10 +84,7 @@
     adding = 0,
   }: {
     kit: Kit
-    /** Every day from one through another a column, empty ones too: Upcoming's board. */
     days?: { from: string; through: string } | undefined
-    /** How many times the head's New asked for a page: the first column's New page
-     *  opens, the phone's column on a phone. */
     adding?: number
   } = $props()
 
@@ -120,30 +96,17 @@
   const hidden = $derived(view?.nib.hidden ?? [])
   const kinds = $derived(view?.nib.rows ?? 'notes')
   const notes = $derived(kinds === 'notes')
-  /** Pages are added in every board, a block's too, unless what is added would land in a
-   *  space shared with this account to be read: nothing added there would be kept (B284),
-   *  so no column offers it, as the view's own New does not (ViewHead.svelte). That is
-   *  `adds` and not `writable`: a board of tasks in a view of no file may be changed,
-   *  while its tasks go into the open space's inbox, which may be read only (B293). */
   const pages = $derived(kit.adds)
-  /** A board in a note's fence has no room for a new group or section: the base's own
-   *  tab has, where the base may be written. */
   const grows = $derived(!kit.compact && kit.writable)
   const sorted = $derived((view?.sort.length ?? 0) > 0)
-  /** Whether a card can be carried to another column at all. */
   const carries = $derived(droppableBy(property, kinds))
   const coloured = $derived(view?.nib.colourColumns !== false)
   const phone = $derived(viewport.device === 'phone')
-  /** The project the board is of, its columns its sections. */
   const project = $derived(property === 'task.section' ? projectOf(kit) : null)
-  /** The property's choices, when it has them: its columns are the options. */
   const options = $derived(base && property ? optionsAt(base, property) : [])
   const lists = $derived(property?.startsWith('note.') ? holdsLists(live.rows, property) : false)
 
-  /** Cards carried and not written yet, drawn where they were let go. */
   let pending = $state<Pending[]>([])
-  /** A column's manual order written and not read back yet, drawn already, so the
-   *  keyboard that reordered it finds its card where it went. */
   let shuffled = $state<{ column: string; order: string[] } | null>(null)
 
   const answered = $derived(
@@ -168,10 +131,8 @@
     ),
   )
   const hiddenGroups = $derived(groups.filter((group) => hidden.includes(groupName(group.key))))
-  /** The columns' keys as text, in the order they stand. */
   const names = $derived(shownGroups.map((group) => groupName(group.key)))
 
-  // Written cards come back from the rows; the pending ones they were drawn as go.
   let seen: Answer | null = null
   $effect(() => {
     const answer = live.answer
@@ -183,49 +144,38 @@
     })
   })
 
-  /** The swimlanes: every sub-group key any column has, in the order they first come. */
   const lanes = $derived(sub === undefined ? [] : laneKeys(shownGroups))
-  /** The columns' and the lanes' note names, for what each is called. */
   const noteCounts = $derived(noteNames(groups.map((one) => one.key)))
   const laneNames = $derived(noteNames(lanes))
-  /** The lanes the keyboard walks: a board without them is one lane of no key. */
   const walked = $derived<(Value | undefined)[]>(lanes.length ? lanes : [undefined])
-  /** Whether the lane property holds lists, so a new card holds a list of its lane's one. */
   const laneLists = $derived(sub?.startsWith('note.') ? holdsLists(live.rows, sub) : false)
 
-  /** A lane's key, from its key as text. */
   const laneOf = (lane: string | null): Value | undefined =>
     lane === null ? undefined : lanes.find((one) => groupName(one) === lane)
 
-  /** One column of one lane, by column and lane as text, apart from every other. */
   const placeKey = (column: string, lane: string | null) =>
     lane === null ? column : `${column}\n${lane}`
 
-  /** The box of one column of one lane, for finding a card in it. */
   const placeSelector = (column: string, lane: string | null) =>
     `[data-column="${CSS.escape(column)}"]` +
     (lane === null ? '' : `[data-lane="${CSS.escape(lane)}"]`)
 
-  /** What a card shows under its title, and how tall that makes every card. */
   const shown = $derived(cardProperties(live.columns, property, sub))
   const checked = $derived(checklists(live.rows))
   const anyChecklist = $derived(
     shownGroups.some((group) => group.rows.some((row) => checked.has(noteKey(row)))),
   )
   const lines = $derived(
-    // A task's card draws its one meta line whatever the view's properties are.
     cardLines(sizeOf(view?.nib.cardSize, notes), notes ? shown.length : 0, !notes || anyChecklist),
   )
   const height = $derived(cardHeight(lines, viewport.touch))
 
-  /** The section a column is, or null for one that is none: no heading, or the title. */
   function sectionOf(group: Group): string | null {
     const key = group.key
     if (!project || typeof key !== 'string' || !key || isTitle(key, project.name)) return null
     return key
   }
 
-  /** What the column of no value is called: No and the property's name. */
   const nothing = $derived(
     property && !project && !days
       ? t('No {property}', {
@@ -234,25 +184,20 @@
       : t('None'),
   )
 
-  /** What a column is called: a project's tasks in no section are that, not its title. */
   function columnName(group: Group): string {
     if (project && sectionOf(group) === null) return t('None')
     if (days) return dayHead(group.key, live.today)
-    // Todos' tasks with no deadline are No date, as its list says.
     if (isWhen(property)) return groupLabel(property, group.key, live.today)
     if (group.key === null || group.key === '') return nothing
     return groupLabel(property, group.key, live.today, noteCounts)
   }
 
-  /** The tone a column's head wears: its option's, a task's box's or its priority's. */
   function toneOfGroup(group: Group): string | null {
     if (!coloured) return null
     const key = group.key
     if (property === 'task.status' && typeof key === 'string')
       return key === '/' ? 'var(--canvas-3)' : key.toLowerCase() === 'x' ? 'var(--canvas-4)' : null
     if (property === 'task.priority' && typeof key === 'number') return priorityTone(key) ?? null
-    // A label's own colour, as its cards wear it; when a task is due, as a card's day is
-    // drawn (#1046).
     if (property === 'task.tags' && typeof key === 'string' && key)
       return labelColour(key, theme.current)
     if (isWhen(property))
@@ -268,7 +213,6 @@
     return toneColour(optionFor(base, property ?? '', key)?.tone)
   }
 
-  /** A value the notes hold that no option does, where the property has options. */
   function unlisted(group: Group): boolean {
     const key = group.key
     return (
@@ -279,7 +223,6 @@
     )
   }
 
-  /** A column's head being renamed in place, by key as text. */
   let renaming = $state<string | null>(null)
 
   function moveColumn(name: string, step: -1 | 1) {
@@ -329,7 +272,6 @@
     )
   }
 
-  /** A column's calculation: Count, or a summary of one of the view's properties. */
   function countMenu(event: MouseEvent) {
     if (!base) return
     const summaries = view?.summaries ?? {}
@@ -370,27 +312,20 @@
     )
   }
 
-  /** What a column's calculations read. */
   function sumsOf(group: Group): string[] {
     return Object.keys(view?.summaries ?? {})
       .map((one) => valueText(group.summaries[one] ?? null, live.today))
       .filter(Boolean)
   }
 
-  /** A name asked for, then written. */
   function ask(title: string, value: string, write: (words: string) => void) {
     void prompt
       .ask({ title, value, confirmLabel: title })
       .then((words) => (words?.trim() ? write(words) : undefined))
   }
 
-  /** The column a carried card was picked up from, which a list's card needs: it
-   *  stands in a column per member, and only that member is carried. Set by a press
-   *  that may not become a carry, so a carry trusts it only where the card is. */
   let pickedFrom: { column: string; lane: string | null } | null = null
 
-  /** Where among a column's cards a point falls, counting the ones scrolled out of
-   *  sight: the cards are windowed, so only those on screen can be asked. */
   function indexAt(place: HTMLElement, at: Point): number {
     const slots = [...place.querySelectorAll<HTMLElement>('[data-index]')]
     const found = placeAmong(slots, at)
@@ -398,21 +333,17 @@
     return slots.length ? first + found : 0
   }
 
-  /** The cards of a column, or of one lane of it, as they stand. */
   function rowsOf(group: Group, laneKey: Value | undefined): readonly Row[] {
     if (laneKey === undefined) return group.rows
     return group.sub?.find((one) => groupName(one.key) === groupName(laneKey))?.rows ?? []
   }
 
-  /** Whether a card stands in a column (and a lane of it) now. */
   function holds(where: { column: string; lane: string | null }, row: Row): boolean {
     const group = groups.find((one) => groupName(one.key) === where.column)
     const key = cardKey(row)
     return !!group && rowsOf(group, laneOf(where.lane)).some((one) => cardKey(one) === key)
   }
 
-  /** Where a card stands now: in `column`, or else the first column that has it, and
-   *  its lane in that one. */
   function whereIs(row: Row, given?: string): { column: string; lane: string | null } {
     const column = given ?? columnOf(row) ?? ''
     const group = groups.find((one) => groupName(one.key) === column)
@@ -421,17 +352,12 @@
     return { column, lane: lane ? groupName(lane.key) : null }
   }
 
-  /** A card let go over a column (or a lane of it), at a place among its cards: the
-   *  place counts the card's own slot where it stands there still. */
   function land(row: Row, group: Group, laneKey: Value | undefined, at: Point, place: HTMLElement) {
     const key = cardKey(row)
     const was = rowsOf(group, laneKey).findIndex((one) => cardKey(one) === key)
     carryTo(row, group, laneKey, indexWithout(indexAt(place, at), was), at)
   }
 
-  /** The order `drops` are written in: a field before a tick and a tick before a
-   *  move, since a move takes the line to where the row no longer says it is. Two
-   *  fields are one write. */
   function inTurn(drops: readonly (Drop | null)[]): Drop[] {
     const given = drops.filter((one): one is Drop => one !== null)
     const changes = given.flatMap((one) => ('change' in one ? [one.change] : []))
@@ -466,14 +392,11 @@
     pickedFrom = null
     const from =
       picked && (picked.lane !== null || sub === undefined) ? picked : whereIs(row, picked?.column)
-    // Carried with no lane said, from the menu or onto a hidden group, a card keeps
-    // the lane it stands in.
     const toLane = laneKey ?? (sub === undefined ? undefined : laneOf(from.lane))
     const lane = toLane === undefined ? null : groupName(toLane)
     const ids = rowsOf(group, toLane).map(orderId)
     const id = orderId(row)
     const laneOrder = orderAfter(ids, id, index)
-    // A lane's order is written into its column's, where the other lanes' are kept.
     const order = toLane === undefined ? laneOrder : mergedOrder(group.rows.map(orderId), laneOrder)
 
     if (from.column === name && (lane === null || from.lane === lane)) {
@@ -483,8 +406,6 @@
     }
     if (!carries) return
 
-    // Only what changed is written: the column where the card left its column, the lane
-    // where it left its lane, each a member swapped where the property is a list.
     const fromKey = groups.find((one) => groupName(one.key) === from.column)?.key
     const first = from.column === name ? null : dropInto(by, group.key, row, live.today, fromKey)
     const second =
@@ -507,8 +428,6 @@
     }
     pending = [...pending.filter((one) => one.card !== card), moving]
     announce(t('{card} moved to {group}', { card: titleOf(row), group: columnName(group) }))
-    // Where it was let go is kept unless a sort places it, or it went to the end of a
-    // column with no order of its own, which is where it lands anyway.
     const others = ids.filter((one) => one !== id).length
     const stored = (view?.nib.order?.[name]?.length ?? 0) > 0
     const keepOrder = !sorted && (stored || index < others)
@@ -521,8 +440,6 @@
         () => (wrote && keepOrder ? writeOrder(name, order) : Promise.resolve(false)),
       ])
       if (wrote) {
-        // The rows may already have come back while the write ran; then nothing else will
-        // clear the card it was drawn as.
         pending =
           live.answer === before
             ? pending.map((one) => (one === moving ? { ...one, written: true } : one))
@@ -538,7 +455,6 @@
     void write()
   }
 
-  /** A column's manual order written, the ids of cards no longer anywhere left out. */
   function writeOrder(name: string, order: string[], unsorted = false): Promise<boolean> {
     const alive = new Set(live.rows.flatMap((row) => [orderId(row), rowId(row)]))
     return kit.changed((one, view) =>
@@ -551,8 +467,6 @@
     )
   }
 
-  /** A card reordered within its column, unless a sort says where it goes: then the
-   *  board asks once whether to take the sort away. */
   function reorder(name: string, order: string[], at: Point | null) {
     if (!sorted) {
       shuffle(name, order, false)
@@ -572,8 +486,6 @@
     )
   }
 
-  /** A column's manual order drawn at once and written, drawn as it was again if the
-   *  write is turned away. */
   function shuffle(name: string, order: string[], unsorted: boolean) {
     const mine = { column: name, order }
     shuffled = mine
@@ -582,7 +494,6 @@
     })
   }
 
-  /** The column a card stands in now, by key as text. */
   function columnOf(row: Row): string | null {
     const key = cardKey(row)
     const found = shownGroups.find((group) => group.rows.some((one) => cardKey(one) === key))
@@ -591,7 +502,6 @@
 
   const titleOf = (row: Row) => row.task?.text ?? row.file.basename
 
-  /** What the live region last said. */
   let said = $state('')
   function announce(words: string) {
     said = words
@@ -623,11 +533,8 @@
     )
   }
 
-  /** The card the keyboard is on, by column, lane and card. */
   let focus = $state<{ column: string; lane: string | null; card: string } | null>(null)
-  /** Each column's cards, by column and lane (`placeKey`). */
   const columns: Record<string, { reveal: (index: number) => void } | undefined> = {}
-  /** How many times Q asked a column's New page to open, by column and lane. */
   let asked = $state<Record<string, number>>({})
 
   function askNew(column: string, lane: string | null) {
@@ -635,8 +542,6 @@
     asked = { ...asked, [key]: (asked[key] ?? 0) + 1 }
   }
 
-  /** The card Tab reaches: the one the keyboard was on while it is still there, else
-   *  the board's first. */
   const rover = $derived.by(() => {
     if (focus) {
       const at = focus
@@ -662,7 +567,6 @@
     return rover?.column === column && rover.lane === lane && rover.card === cardKey(row)
   }
 
-  /** Puts the keyboard on the card at `index` of a column's lane, or its New page. */
   async function focusAt(column: number, lane: number, index: number) {
     const group = shownGroups[column]
     if (!group) return
@@ -678,8 +582,6 @@
     await focusCard(name, laneKey, row)
   }
 
-  /** Puts the keyboard on a card by which card it is, wherever in its column and lane
-   *  it stands once what was just done to it is drawn. */
   async function focusCard(name: string, laneKey: Value | undefined, row: Row) {
     await tick()
     const group = shownGroups.find((one) => groupName(one.key) === name)
@@ -735,7 +637,6 @@
           laneKey === undefined ? order : mergedOrder(group.rows.map(orderId), order),
           null,
         )
-        // A sort asks first, and the menu that asks has the keyboard.
         if (!sorted) void focusCard(name, laneKey, row)
       }
       return
@@ -751,7 +652,6 @@
     if (!key || key.kind === 'step' || key.kind === 'pick' || key.kind === 'unpick') return
     if (key.kind === 'fold' || key.kind === 'edit' || key.kind === 'indent') return
     if (key.kind === 'add') {
-      // The board's own add, which the view's Q would otherwise make a second of.
       event.preventDefault()
       event.stopPropagation()
       if (!pages) return
@@ -769,15 +669,11 @@
     if (runKey(kit, [row], key, box)) event.preventDefault()
   }
 
-  /** The phone's one column, by key as text. */
   let showing = $state<string | null>(null)
   const phoneColumn = $derived(
     shownGroups.find((group) => groupName(group.key) === showing) ?? shownGroups[0],
   )
 
-  /** On a phone the columns are pages: a finger swiped across the one shown turns to
-   *  the next or the one before, as the strip's tabs do (#1046). A card being carried
-   *  is the carry's, not a swipe. */
   let swipeFrom: { x: number; y: number; id: number } | null = null
   function swipeStart(event: PointerEvent) {
     swipeFrom = isFinger(event.pointerType)
@@ -793,14 +689,11 @@
     const dy = event.clientY - from.y
     if (Math.abs(dx) < 64 || !claimsGesture(dx, dy)) return
     const at = phoneColumn ? shownGroups.indexOf(phoneColumn) : -1
-    // Towards where the words read from is back.
     const forward = dx < 0 !== (document.documentElement.dir === 'rtl')
     const next = shownGroups[at + (forward ? 1 : -1)]
     if (next) showing = groupName(next.key)
   }
 
-  // Only a New pressed while the board is up opens a page: a board drawn again, its
-  // layout switched back to, opens nothing for the presses before it.
   let addingSeen = untrack(() => adding)
   $effect(() => {
     if (adding <= addingSeen) return
@@ -811,7 +704,6 @@
     untrack(() => askNew(groupName(first.key), lane === undefined ? null : groupName(lane)))
   })
 
-  /** A new group: an option of the property the board groups by. */
   let naming = $state(false)
   function addGroup(words: string) {
     const value = words.trim()
@@ -824,7 +716,6 @@
       }),
     )
   }
-  /** Whether the board's columns are a property's options, which a new one can join. */
   const groupable = $derived(!project && !days && grows && property?.startsWith('note.') === true)
 </script>
 
@@ -1063,7 +954,6 @@
 </div>
 
 <style>
-  /* Columns as tall as their cards, the way Notion's are, up to the board's height. */
   .board {
     display: flex;
     gap: var(--space-3);
@@ -1176,7 +1066,6 @@
     transition: box-shadow var(--dur-fast) var(--ease-out);
   }
 
-  /* An option's tone as a faint wash over the column, Notion's coloured groups. */
   .column.washed {
     background: color-mix(in srgb, var(--wash) 7%, var(--surface-2));
   }
@@ -1204,7 +1093,6 @@
     min-height: var(--row-height-sm);
   }
 
-  /* Where the next column would stand: a column's width, quiet until pointed at. */
   .add-column {
     flex: none;
     display: flex;
@@ -1282,7 +1170,6 @@
     box-shadow: inset 0 0 0 1px var(--accent);
   }
 
-  /* A grouping no drop can write (a formula, a file's facts) takes no card. */
   .column.closed:global(.is-taking) {
     box-shadow: inset 0 0 0 1px var(--line-strong);
     cursor: not-allowed;

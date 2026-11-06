@@ -69,7 +69,6 @@ describe('what is written under a task', () => {
   })
 
   test('a description written at every pause is the one description, read back as typed', () => {
-    // The task view writes its whole text a moment after each pause in the typing.
     const task = at(0, 'task')
     let note = '- [ ] task\n'
     for (const typed of ['hello\n- a', 'hello\n- ab', 'hello\n- abc']) {
@@ -77,7 +76,6 @@ describe('what is written under a task', () => {
       expect(descriptionOf(note, task)?.text).toBe(typed)
     }
     expect(note).toBe('- [ ] task\n  hello\n  \\- abc\n')
-    // A task typed into it is words of the description, never a sub-task.
     const sub = withDescription(note, task, '- [ ] x') ?? note
     expect(descriptionOf(sub, task)?.text).toBe('- [ ] x')
     expect(withDescription(sub, task, '- [ ] xy')?.split('\n')).toEqual([
@@ -128,8 +126,6 @@ describe('what is written under a task', () => {
       'Fix config',
       'Next',
     ])
-    // A fence left open is no code block yet: it is written escaped, or it would hide
-    // every later line of the note from the index, and what follows it stays escaped.
     const open = withDescription('- [ ] Fix config\n- [ ] Next\n', task, '```\n- a') ?? ''
     expect(open).toBe('- [ ] Fix config\n  \\```\n  \\- a\n- [ ] Next\n')
     expect(descriptionOf(open, task)?.text).toBe('```\n- a')
@@ -171,7 +167,6 @@ describe('what is written under a task', () => {
         words,
       ).toEqual([words])
 
-      // Typed as a description, it is escaped, and reads back as typed.
       const typed = withDescription('- [ ] Task\n- [ ] Next\n', task, words) ?? ''
       expect(descriptionOf(typed, task)?.text, words).toBe(words)
       expect(commentsOf(typed, task), words).toEqual([])
@@ -179,8 +174,6 @@ describe('what is written under a task', () => {
   })
 
   test('a code block under a tab-indented task in a CRLF note is written as typed', () => {
-    // Under a task of its own: a tab at the margin with no list above it is indented
-    // code to the page, and holds no task.
     const task = at(2, 'Task')
     const note = '# H\r\n- [ ] Top\r\n\t- [ ] Task\r\n- [ ] Next\r\n'
     const typed = '```\n- a\n```\n~~~'
@@ -280,9 +273,6 @@ describe('what is written under a task, fuzzed', () => {
   const STARTS = ['- ', '\\- ', '1. ', '1\\. ', '* ', '+ ', '  ', '\t', '[ ] ', '\\[ ] ', '', '-']
   const FENCES = ['```', '~~~', '```js', '\\```', '\\\\~~~', '   ```', '    ```', '\t```']
   const MORE = ['x ', '> ', '# ', '    - ', '- [ ] ', '* [x] ', '1. [ ] ', '\\- [ ] ', '- \\[ ] ']
-  /** Marks with code after them: a quote or an item that opens indented code on its
-   *  own line. A heading typed into a description moves the tasks below it into its
-   *  section, a separate matter, so these are fuzzed without one. */
   const CODE_AFTER = [
     ...MORE.filter((one) => one !== '# '),
     '>     ',
@@ -294,7 +284,6 @@ describe('what is written under a task, fuzzed', () => {
   const WORDS = ['a', 'b c', ' ', '', '- d', '\\', '[x]', '[ ] e']
   let marks = MORE
   const line = () => (random(6) === 0 ? pick(FENCES) : pick([...STARTS, ...marks]) + pick(WORDS))
-  /** Words as they are typed: lines, and code blocks that are closed. */
   function typed(): string {
     const out: string[] = []
     for (let n = 1 + random(5); n > 0; n--) {
@@ -308,7 +297,6 @@ describe('what is written under a task, fuzzed', () => {
     }
     return out.join('\n')
   }
-  /** The note's tasks, each with the task and the heading it is under. */
   const tasksOf = (note: string) => {
     const rows = taskRowsOfText('S', 'n.md', note)
     const at = new Map(rows.map((row) => [row.anchor?.line, row.task?.text]))
@@ -415,8 +403,6 @@ describe('the task edit field writes its words and its description together', ()
   })
 })
 
-/** #325: an agent that could not finish a task asks in a comment under it and flags it
- *  `needs-input`; the reader's comment is the answer, and the flag comes off with it. */
 describe('a task flagged as needing input', () => {
   test('loses the flag, and keeps every other tag', () => {
     const note = '- [ ] Book the room #work #needs-input\n- [ ] Next\n'
@@ -431,8 +417,6 @@ describe('a task flagged as needing input', () => {
   })
 })
 
-/** #325: a chat that ended with its task neither ticked nor asked about leaves it asking
- *  in the chat's last words, as the button promised; one already settled is left alone. */
 describe('a task left asking', () => {
   test('gets the words as a comment, and the flag beside its other tags', () => {
     const note = '- [ ] Write to the landlord #home\n- [ ] Next\n'

@@ -1,8 +1,3 @@
-/** Todoist's keys on a row of a view (row-keys.ts, docs/tasks.md 5.16), read by the list
- *  where the focus is and put in the shortcuts registry when the first view is drawn, or
- *  the settings are opened, rather than with the first paint. An id ending `.alt` (or
- *  `.alt2`) is another key for the one before. */
-
 import { t } from '../i18n.svelte'
 import { BY_ID, CATEGORIES, SHORTCUTS, type Shortcut } from '../shortcuts/registry'
 
@@ -54,7 +49,6 @@ const TASK_ENTRIES: Shortcut[] = (
   ...(/\.alt\d*$/.test(id) ? { alias: true } : {}),
 }))
 
-// Into the registry, and its group into the list, once: the first paint carries neither.
 if (!BY_ID.has('tasks.next')) {
   CATEGORIES.splice(-1, 0, { id: 'tasks', label: () => t('Tasks') })
   for (const one of TASK_ENTRIES) {

@@ -1,12 +1,3 @@
-/** A chart of a view: its groups as bars, a line, a donut or one number, measured by a
- *  count, a sum, an average, the earliest or the latest (Notion's charts, docs/tasks.md
- *  5.9). What is measured is the engine's answer, so a chart says exactly what the
- *  list beside it lists.
- *
- *  The settings live under the view's `nib:` (`chart`, `measure`, `of`, `cumulative`),
- *  which Obsidian keeps without reading. Pure: the series and the shapes, as numbers;
- *  the layout draws them as SVG in the six tones. */
-
 import { type Answer, type Base, cellValue, type Context, dayNumber, type View } from '@orden/bases'
 import { everyRow } from './list-items'
 import { dayIn } from './values'
@@ -20,7 +11,6 @@ export const MEASURES: readonly Measure[] = ['count', 'sum', 'average', 'earlies
 export interface ChartSettings {
   kind: ChartKind
   measure: Measure
-  /** The property summed, averaged or dated; none for a count. */
   of?: string
   cumulative: boolean
 }
@@ -28,11 +18,9 @@ export interface ChartSettings {
 export interface Point {
   key: Answer['groups'][number]['key']
   value: number
-  /** A date measure's day, which is what its label says. */
   day?: string
 }
 
-/** A view's chart settings, read from what it keeps. */
 export function settingsOf(view: View): ChartSettings {
   const kept = view.nib.kept
   const kind = CHART_KINDS.find((one) => one === kept.chart) ?? 'bar'
@@ -42,7 +30,6 @@ export function settingsOf(view: View): ChartSettings {
   return settings
 }
 
-/** One group measured. */
 function measured(
   rows: Answer['groups'][number]['rows'],
   settings: ChartSettings,
@@ -68,8 +55,6 @@ function measured(
   return { value: numbers.length ? sum / numbers.length : 0 }
 }
 
-/** The chart's points, a group each, in the view's group order; running totals when
- *  the chart is cumulative. */
 export function seriesOf(
   answer: Answer,
   settings: ChartSettings,
@@ -85,7 +70,6 @@ export function seriesOf(
   })
 }
 
-/** The one number a number chart shows: the measure over every row. */
 export function totalOf(
   answer: Answer,
   settings: ChartSettings,
@@ -97,8 +81,6 @@ export function totalOf(
   return { key: null, value: one.value, ...(one.day === undefined ? {} : { day: one.day }) }
 }
 
-/** The heights of bars, as fractions of the tallest: dates measured from the
- *  earliest, so a bar of a later date is the longer one. */
 export function heights(points: readonly Point[]): number[] {
   const dated = points.some((one) => one.day !== undefined)
   const values = points.map((one) => one.value)
@@ -107,7 +89,6 @@ export function heights(points: readonly Point[]): number[] {
   return values.map((one) => (top > 0 ? (one - floor) / top : 0))
 }
 
-/** A line through the points, in a box of `width` by `height`. */
 export function linePath(fractions: readonly number[], width: number, height: number): string {
   if (!fractions.length) return ''
   const step = fractions.length > 1 ? width / (fractions.length - 1) : 0
@@ -119,15 +100,12 @@ export function linePath(fractions: readonly number[], width: number, height: nu
     .join(' ')
 }
 
-/** The slices of a donut of radius `r` and hole `inner`, centred on 0,0, as paths. */
 export function donutPaths(values: readonly number[], r: number, inner: number): string[] {
   const total = values.reduce((sum, one) => sum + Math.max(0, one), 0)
   if (total <= 0) return []
   let angle = -Math.PI / 2
   return values.map((one) => {
     const share = Math.max(0, one) / total
-    // A slice of the whole circle is drawn as two halves: an arc cannot end where it
-    // began.
     const sweep = Math.min(share, 0.9999) * Math.PI * 2
     const start = angle
     const end = angle + sweep

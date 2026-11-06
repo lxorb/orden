@@ -1,11 +1,4 @@
 <script lang="ts">
-  /** One column's cards, scrolling on their own, with only the cards on screen mounted:
-   *  every card is one height, so where one sits is arithmetic (row-window.ts) and a
-   *  column of two thousand costs the dozen a reader can see.
-   *
-   *  The card being carried stays mounted wherever the scroll goes, drawn at its own
-   *  place out of the flow: the carry lives on it, and a card taken out of the page
-   *  mid-carry would put the card back. */
   import { type Row, rowId } from '@orden/bases'
   import { untrack, type Snippet } from 'svelte'
   import { windowFor } from '../row-window'
@@ -18,7 +11,6 @@
     card,
   }: {
     rows: readonly Row[]
-    /** One card's height, gap included. */
     height: number
     card: Snippet<[Row, number]>
   } = $props()
@@ -34,7 +26,6 @@
 
   const keyOf = (row: Row) => `${row.space}:${rowId(row)}`
 
-  /** Where the card being carried stands in this column, or -1. */
   const carried = $derived.by(() => {
     const row = dragging.row
     if (!row) return -1
@@ -53,9 +44,6 @@
     }),
   )
 
-  /** The cards to draw: the window's, and the carried one held out of it, in one list
-   *  in the column's order, so the held card is the same element when the window
-   *  reaches it. */
   const drawn = $derived.by(() => {
     const out: { row: Row; index: number; away: boolean }[] = []
     for (let index = shown.first; index <= shown.last; index++) {
@@ -69,7 +57,6 @@
     return out.sort((one, other) => one.index - other.index)
   })
 
-  /** Scrolls the card at `index` into sight, for the keyboard landing on it. */
   export function reveal(index: number) {
     const box = scroller
     if (!box) return
@@ -77,8 +64,6 @@
     if (top < box.scrollTop) box.scrollTop = top
     else if (top + height > box.scrollTop + box.clientHeight)
       box.scrollTop = top + height - box.clientHeight
-    // The window follows the scroll on its event, which comes after the keyboard has
-    // looked for the card: read it now, so the card is mounted when it looks.
     win.refresh()
   }
 
@@ -94,7 +79,6 @@
     style:--card={`${height}px`}
   >
     {#each drawn as one (keyOf(one.row))}
-      <!-- A held card has no place among the window's, which is what data-index says. -->
       <div
         class="slot"
         class:away={one.away}

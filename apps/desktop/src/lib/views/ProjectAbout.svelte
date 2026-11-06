@@ -1,8 +1,4 @@
 <script lang="ts">
-  /** Todoist's project description, the Orden way: the words at the top of the project's
-   *  note (`aboutOf`), under the head in the muted ink, one line. A press opens the note
-   *  beside the view at its top, where they are written. Read again only when the note
-   *  itself changes. */
   import { untrack } from 'svelte'
   import { rows } from '../rows/rows.svelte'
   import { insideSpace, samePath } from '../space-paths'

@@ -1,7 +1,3 @@
-/** The marks of the views, on the 13 unit grid the panel's marks are drawn on (see
- *  panel-marks.ts): one per layout for the switch, and the three of the head's tools.
- *  A shape says it where a word would be a label (docs/conventions.md, Product). */
-
 import type { Layout } from './words'
 
 export const LAYOUT_MARKS: Record<Layout, string> = {
@@ -15,22 +11,16 @@ export const LAYOUT_MARKS: Record<Layout, string> = {
   form: 'M2 2.5h9M2 4.5h9v1.8H2zM2 8h9M8 10.2h3v1.3H8z',
 }
 
-/** Two sliders: how a view is shown, Todoist's Display. */
 export const DISPLAY_MARK = 'M1.5 4h10M1.5 9h10M4.5 2.5v3M8.5 7.5v3'
 
-/** A funnel: what is let through. */
 export const FILTER_MARK = 'M1.5 2.5h10l-4 4.6v4l-2-1.1V7.1z'
 
-/** Rows in two piles: a grouping. */
 export const GROUP_MARK = 'M1.5 2.2h10M1.5 4.6h6.5M1.5 8.3h10M1.5 10.7h6.5'
 
-/** The rows of the panel: Todos a sun-less clock face, a view the grid of a base, a
- *  note a page with a box, a label the hash. */
 export const TODAY_MARK = 'M6.5 1.5a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM6.5 3.8v2.7l1.8 1.2'
 export const VIEW_MARK = LAYOUT_MARKS.table
 export const PROJECT_MARK = 'M6.5 1.5a5 5 0 1 0 0 10 5 5 0 0 0 0-10z'
 export const LABEL_MARK = 'M4.8 1.8 3.8 11.2M9.2 1.8l-1 9.4M1.8 4.6h9.6M1.4 8.4h9.6'
 export const ADD_MARK = 'M6.5 2v9M2 6.5h9'
 
-/** A padlock: the view or its base is locked. */
 export const LOCK_MARK = 'M3.2 6.2h6.6v5H3.2zM4.6 6.2V4.4a1.9 1.9 0 0 1 3.8 0v1.8'

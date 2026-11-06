@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** The meta line of a task's card, Todoist's (#1043): each thing task-meta.ts says, a
-   *  small mark before it - the day in the colour of how near it is, the deadline red once
-   *  it is due, ↻ after the first day of a task that repeats, the duration, the bell, the
-   *  sub-tasks done, the comments, each label in its own colour - and where the task lives
-   *  at its end, the inbox or its note. One line for the list's card and the board's, so
-   *  the two are one design.
-   *
-   *  A label's colour is a function of its name (`labelColour`): the same label is the same
-   *  colour on every card, every device and in both schemes, with nothing stored. */
   import type { Row } from '@orden/bases'
   import Bell from 'lucide/dist/esm/icons/bell.mjs'
   import Calendar from 'lucide/dist/esm/icons/calendar-days.mjs'
@@ -35,12 +26,8 @@
   }: {
     row: Row
     meta: readonly Meta[]
-    /** Whether the line ends with where the task lives. */
     where?: boolean
-    /** The space it is in, where that is not the open one. */
     elsewhere?: string | null
-    /** Opens its note; without it the place is words, not a button (inside a card that
-     *  is a button of its own). */
     onwhere?: (event: MouseEvent) => void
   } = $props()
 

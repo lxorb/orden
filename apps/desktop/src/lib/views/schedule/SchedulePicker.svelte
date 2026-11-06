@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** Todoist's scheduler, Orden's shapes: a field that reads a typed date with quick add's
-   *  grammar and says what it understood; Today, Tomorrow, Later this week, This weekend,
-   *  Next week and No date, each with its day; a month with today ringed, the day picked
-   *  filled and a dot under every day that already holds tasks; and the time, the
-   *  duration and the repeat, each a press away.
-   *
-   *  A day, a typed phrase and a repeat are picks that close it. The time and the
-   *  duration are kept as they are changed, as every other setting in the app is, and
-   *  it stays up for the next. Arrows walk the rows, Enter takes one, Escape closes. */
   import { addDays, addMonths } from '@orden/bases'
   import { dayWords, timeWords } from '@orden/editor/task-days'
   import ArrowRight from 'lucide/dist/esm/icons/arrow-right.mjs'
@@ -49,8 +40,6 @@
 
   const { asked, onclose }: { asked: Asked; onclose: () => void } = $props()
 
-  // What the task says, kept here as it is changed so the time and the duration can be
-  // set one after the other without the layer closing in between.
   // svelte-ignore state_referenced_locally
   let due = $state(asked.current.due)
   // svelte-ignore state_referenced_locally
@@ -79,16 +68,13 @@
 
   const preview = $derived(typedWhen(typed, [i18n.language], new Date()))
 
-  /** The first day of a week where the app's language keeps it, as the calendar has it. */
   const first = $derived.by(() => {
     try {
-      // `getWeekInfo` is newer than the library types this is checked against.
       const locale = new Intl.Locale(i18n.language) as Intl.Locale & {
         getWeekInfo?: () => { firstDay?: number }
       }
       return (locale.getWeekInfo?.().firstDay ?? 1) % 7
     } catch {
-      // A language tag the engine cannot read starts the week on Monday.
       return 1
     }
   })
@@ -107,8 +93,6 @@
     'next-week': { icon: ArrowRight, label: t('Next week') },
   }
   const quick = $derived(quickDays(today))
-  /** Every row the arrows walk: Skip for a repeating task (Todoist's Postpone, its date
-   *  moved to the next occurrence), the quick days, then No date where there is a date. */
   const rows: { icon: IconNode; label: string; day: string | null; skip?: true }[] = $derived([
     ...(asked.skip
       ? [{ icon: SkipForward, label: t('Skip'), day: null, skip: true as const }]
@@ -117,7 +101,6 @@
     ...(due ? [{ icon: CircleSlash, label: t('No date'), day: null }] : []),
   ])
 
-  /** A quick row pressed: its day, or the skip. */
   function choose(row: (typeof rows)[number]) {
     if (row.skip && asked.skip) {
       asked.skip()
@@ -127,7 +110,6 @@
 
   const DURATIONS = [15, 30, 45, 60, 90, 120, 180]
 
-  /** A repeat's words for the day it repeats from. */
   function repeatLabel(kind: RepeatKind, day: string): string {
     const at = dateAt(day)
     switch (kind) {
@@ -147,15 +129,9 @@
   const repeatKind = $derived(repeatKindOf(recurrence, repeatDay))
 
   onMount(() => {
-    // The keyboard goes back to the list it was opened from when the layer goes, so the
-    // list still hears its keys and an undo straight after a pick is the pick undone. To
-    // the row or the list rather than the button that asked: a button can go with what
-    // it was about (Overdue's own, once nothing is overdue), and the keyboard with it.
     const before = document.activeElement
     const home = before?.closest('[role=option]') ?? before?.closest('[role=listbox]') ?? before
     if (layer) size = { width: layer.offsetWidth, height: layer.offsetHeight }
-    // Under a thumb the system's keyboard would cover half of it for a field
-    // nobody asked to type into.
     if (!phone) void tick().then(() => field?.focus())
     return () => {
       if (home instanceof HTMLElement && home.isConnected) home.focus({ preventScroll: true })
@@ -163,7 +139,6 @@
   })
 
   $effect(() => closeOnBack(true, onclose))
-  // Closed by Escape, a press past it and the window losing the focus; see overlays.ts.
   $effect(() => overlays.show(onclose, () => [layer]))
 
   function pick(picked: Scheduled) {
@@ -171,7 +146,6 @@
     onclose()
   }
 
-  /** The time or the duration, kept as it changes, on the day the task has or today. */
   function keep(change: { time?: string | null; minutes?: number | null }) {
     const day = due ?? today
     due = day
@@ -212,8 +186,6 @@
   }
 </script>
 
-<!-- A press anywhere else is the same answer as Escape. Under a thumb the sheet stands
-     over the page the way every sheet does, the page dimmed behind it. -->
 <div
   class="nib-scrim catch"
   class:is-clear={!phone}

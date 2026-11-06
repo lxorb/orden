@@ -1,7 +1,4 @@
 <script lang="ts">
-  /** How a view's rows are put in order and into groups: sorts one under another, a
-   *  grouping and a grouping under it (swimlanes on a board), each a property and a
-   *  direction (docs/tasks.md 5.9). `part` says which of the two the head asked for. */
   import type { Sort } from '@orden/bases'
   import Cross from '../Cross.svelte'
   import { t } from '../i18n.svelte'

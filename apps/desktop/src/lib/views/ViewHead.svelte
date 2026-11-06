@@ -1,16 +1,4 @@
 <script lang="ts">
-  /** The head every view wears (docs/tasks.md 5.5): its name, which is a menu of the
-   *  base's views and what can be done to them; the layout switch, as marks; the
-   *  filter, the sort and the group, each a small layer; the view's own search; and
-   *  the plus. A mark lights when what it stands for is set. Names and counts and
-   *  nothing else.
-   *
-   *  The name's menu also holds what lane 7 added (docs/tasks.md 4): the conditional
-   *  colour, a table's row height, the base's automations, the default template, the
-   *  view as CSV, and the locks. A builder a menu row asks for hangs under the name
-   *  (`live.builder`), whichever layout asked. A locked view shows its padlock, which
-   *  shakes when a change is turned away and opens the lock when pressed. The plus's
-   *  own menu makes a note from a template. */
   import { type Base, writeBase } from '@orden/bases'
   import { t } from '../i18n.svelte'
   import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
@@ -57,7 +45,6 @@
     onadd,
   }: {
     kit: Kit
-    /** What the view is called where it has no name of its own: the tab's name. */
     title: string
     onadd: () => void
   } = $props()
@@ -66,10 +53,7 @@
   const view = $derived(live.view)
   const base = $derived(live.base)
   const layout = $derived(layoutOf(view?.type ?? 'table'))
-  /** What the head calls the view: its own name, else the tab's. */
-  // Todos is named as its tab is, in the reader's language, whatever its base says.
   const named = $derived(kit.spec.builtin !== 'todos' && view?.name.trim() ? view.name : title)
-  /** The layouts this place has room for: a fence and a phone leave the timeline out. */
   const offered = $derived(
     LAYOUTS.filter(
       (one) =>
@@ -86,18 +70,9 @@
   ] as const
 
   let open = $state<Tool | 'display' | 'settings' | 'chip-filter' | 'chip-sort' | null>(null)
-  /** The project the view is of, whose name is its note's. */
   const project = $derived(projectOf(kit))
-  /** A view of tasks has Todoist's Display: in a built-in view's head, its name, the
-   *  search, Display and the plus; in a base's, beside Filter and Sort. */
   const tasky = $derived(kit.spec.builtin !== undefined || view?.nib.rows === 'tasks')
-  /** A base of its own (a `.base` file, a fence, a database) wears Notion's head: its
-   *  title over the view tabs, Filter, Sort, the search, ⋯ for the view's settings and
-   *  New, whichever rows it is of, so Rows in its settings never takes the head away;
-   *  a built-in view keeps its own. */
   const tabbed = $derived(kit.spec.builtin === undefined)
-  /** How many of Display's settings differ from the view as it came: Todoist's
-   *  `Display: 1` (#1046). */
   const displayChanged = $derived.by(() => {
     if (!view) return 0
     const original =
@@ -106,7 +81,6 @@
   })
   const notes = $derived((view?.nib.rows ?? 'notes') === 'notes')
 
-  /** What each builder is called, for the layer that holds it. */
   const BUILDERS: Record<Builder['kind'], string> = {
     colour: t('Colour'),
     automations: t('Automations'),
@@ -117,20 +91,17 @@
     name: t('Rename'),
   }
 
-  /** A table's three heights, in lines. */
   const HEIGHTS = [
     { lines: 1, label: t('Short') },
     { lines: 2, label: t('Medium') },
     { lines: 4, label: t('Tall') },
   ]
 
-  /** A template as a base names it: a link to its path in the space, without `.md`. */
   function linkTo(path: string): string {
     const root = workspace.activeSpace?.root ?? ''
     return `[[${relativeTo(root, path).replace(/\.md$/i, '')}]]`
   }
 
-  /** The templates a new row can start from, as menu rows; `pick` gets a link or null. */
   async function templateRows(
     chosen: string | undefined,
     pick: (link: string | null) => void,
@@ -146,7 +117,6 @@
     ]
   }
 
-  /** The plus's own menu: a new note, blank or from a template. */
   function plusMenu(event: MouseEvent) {
     if (!notes || !base) return
     event.preventDefault()
@@ -158,7 +128,6 @@
 
   const toggle = (which: NonNullable<typeof open>) => (open = open === which ? null : which)
 
-  /** A view Orden ships, the way it came. */
   function reset() {
     open = null
     kit.change(() => shippedBase(kit.spec))
@@ -168,11 +137,9 @@
     kit.change((one, at) => switched(one, at, next, live.rows))
   }
 
-  /** The base's views and what can be done to them: the name's menu's first half. */
   function viewRows(base: Base): MenuEntry[] {
     const views = base.views
     return [
-      // A project's own: its note named again, a section added, the note itself.
       ...(project
         ? [
             { label: t('Rename'), run: () => (renaming = true) },
@@ -185,7 +152,6 @@
                   .then((words) => (words?.trim() ? addSection(kit, words) : undefined)),
             },
             { label: t('Open in note'), run: () => void workspace.open(project.path) },
-            // What the panel's project menu had, before the panel was one view (#1046).
             {
               label: t('Save as CSV'),
               run: () =>
@@ -236,9 +202,6 @@
     ]
   }
 
-  /** The rest of what can be done to a view: its colour, its rows' height, the base's
-   *  automations, its template, the view as CSV, the locks. In the name's menu of a
-   *  built-in view and in the settings of a base's. */
   function moreRows(event?: MouseEvent): MenuEntry[] {
     if (!base) return []
     if (!kit.writable) return csvRows()
@@ -320,10 +283,8 @@
     menu.show(event, [...viewRows(base), DIVIDER, ...moreRows(event)], { title: named })
   }
 
-  /** The tab being named again, by its index. */
   let naming = $state<number | null>(null)
 
-  /** A view picked from the '+': one more, of that layout, after the last, shown. */
   function addTab(event: MouseEvent) {
     if (!base) return
     const last = base.views.length - 1
@@ -345,7 +306,6 @@
                     order: [],
                     sort: [],
                     summaries: {},
-                    // A view of the same rows as the one it was made from.
                     nib: {
                       kept: {},
                       ...(rows ? { rows } : {}),
@@ -362,7 +322,6 @@
     )
   }
 
-  /** A tab's own menu: name it, duplicate it, link to it, delete it. */
   function tabMenu(event: MouseEvent, at: number) {
     if (!base) return
     event.preventDefault()
@@ -398,7 +357,6 @@
                 label: t('Delete view'),
                 danger: true,
                 run: () => {
-                  // The view showing stays the one showing, unless it is the one going.
                   const showing = live.at
                   void kit
                     .changed((b) => removeView(b, at), showing > at ? showing - 1 : undefined)
@@ -412,7 +370,6 @@
     )
   }
 
-  /** The sorts set, as the chip under the tabs reads them. */
   const sortWords = $derived(
     (view?.sort ?? [])
       .map((one) => propertyName(one.property, base ? displayName(base, one.property) : undefined))
@@ -538,7 +495,6 @@
       {#if displayChanged}<span class="display-count">{displayChanged}</span>{/if}
     </button>
     {#if viewport.device === 'phone'}
-      <!-- On a phone, a sheet from the bottom rather than a layer under the button. -->
       <Sheet open={open === 'display'} title={t('Display')} onclose={() => (open = null)}>
         <DisplayBuilder {kit} onreset={kit.spec.builtin !== undefined ? reset : undefined} />
       </Sheet>
@@ -550,8 +506,6 @@
   </div>
 {/snippet}
 {#snippet plusButton()}
-  <!-- None on a base or a fence in a space shared to be read, which takes no new row,
-       nor where what is added would land in one, as Today's task in its inbox. -->
   {#if kit.adds}
     <button
       type="button"
@@ -653,7 +607,6 @@
       {@render lock()}
       <span class="spring"></span>
       {#if kit.writable}{@render tools(['filter', 'sort'])}{/if}
-      <!-- A base of tasks keeps what Todoist's Display narrows a view of tasks by. -->
       {#if tasky && kit.writable}{@render display()}{/if}
       {@render searchField()}
       {#if kit.writable}<div class="tool">
@@ -969,7 +922,6 @@
     color: var(--accent);
   }
 
-  /* Display says its name, and how many of its settings are not the view's own. */
   .display-button {
     display: inline-flex;
     flex-direction: row;
@@ -1005,15 +957,11 @@
     display: none;
   }
 
-  /* A phone has no width for one row of it: the name and the tools on the first line,
-     the layout switch under them, the whole width. */
   :global([data-touch]) .head {
     flex-wrap: wrap;
     row-gap: var(--space-1);
   }
 
-  /* Notion's head stays a column: a wrapped column sizes to its content and would push
-     the tools past the edge. The tabs scroll instead. */
   :global([data-touch]) .head.tabbed {
     flex-wrap: nowrap;
   }

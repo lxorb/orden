@@ -1,7 +1,3 @@
-/** A board's arithmetic, apart from what draws it: how tall its cards are, which
- *  properties they show, a note's checklist, which groups are done, where a card
- *  carried but not yet written stands, and where the arrow keys go. Pure. */
-
 import {
   type Base,
   type CardSize,
@@ -14,39 +10,25 @@ import {
 } from '@orden/bases'
 import { bare, isNoteProperty } from './columns'
 
-/** The size a board's cards are where its view says none: Notion's own default. */
 const DEFAULT_SIZE: CardSize = 'medium'
 
 export const CARD_SIZES: readonly CardSize[] = ['small', 'medium', 'large']
 
-/** The size a board's cards are: the view's, else Notion's medium for notes, and for
- *  tasks Todoist's card - a line of words and a line of meta, no room left over under
- *  them (#1046). */
 export function sizeOf(size: CardSize | undefined, notes: boolean): CardSize {
   return size ?? (notes ? DEFAULT_SIZE : 'small')
 }
 
-/** How many lines a card's title takes at most, and how many property lines it has
- *  room for, at each size. */
 const LINES: Record<CardSize, { title: number; props: number }> = {
   small: { title: 1, props: 1 },
   medium: { title: 2, props: 2 },
   large: { title: 3, props: 3 },
 }
 
-/** One line of a card's title and of a property under it, its padding and its border,
- *  and the gap between cards, in pixels; a thumb's card is roomier. */
 const TITLE_LINE = 19
 const PROP_LINE = 20
 const PAD = 16
 const GAP = 6
 
-/** The lines a card of this size has: its title's and its properties', which every
- *  card of the view keeps, filled or not, so every card is one height. `shown` is how
- *  many properties the view puts on its cards; `extra` a line every card keeps for its
- *  checklist or its task's chips where the view shows no property. A task's card has
- *  its one meta line and no other (BoardCard.svelte), so a board of tasks asks with
- *  none shown and the line extra. */
 export function cardLines(
   size: CardSize,
   shown: number,
@@ -56,14 +38,11 @@ export function cardLines(
   return { title: room.title, props: Math.min(room.props, shown + (extra && !shown ? 1 : 0)) }
 }
 
-/** A card's height on the board, the gap after it included. */
 export function cardHeight(lines: { title: number; props: number }, touch: boolean): number {
   const props = lines.props ? 4 + lines.props * PROP_LINE : 0
   return PAD + lines.title * TITLE_LINE + props + 2 + GAP + (touch ? 12 : 0)
 }
 
-/** What a card shows under its title: the view's properties in its order, but the
- *  title itself and what the columns and lanes already say. */
 export function cardProperties(
   columns: readonly string[],
   groupBy: string | undefined,
@@ -74,7 +53,6 @@ export function cardProperties(
   )
 }
 
-/** A note's own checklist, its task lines done of all of them, by note. */
 export function checklists(rows: readonly Row[]): Map<string, { done: number; total: number }> {
   const out = new Map<string, { done: number; total: number }>()
   for (const row of rows) {
@@ -86,14 +64,10 @@ export function checklists(rows: readonly Row[]): Map<string, { done: number; to
   return out
 }
 
-/** A note named apart from every other space's. */
 export const noteKey = (row: Pick<Row, 'space' | 'path'>): string => `${row.space}\n${row.path}`
 
-/** A card named apart from every other card on screen. */
 export const cardKey = (row: Row): string => `${row.space}:${rowId(row)}`
 
-/** Whether a group is one of the done ones: its option's group is Done, Notion's
- *  Complete, or a task's box is ticked. */
 export function isDoneGroup(base: Base | null, property: string | undefined, key: Value): boolean {
   if (property === 'task.status') return typeof key === 'string' && key.toLowerCase() === 'x'
   if (property === 'task.done') return key === true
@@ -102,9 +76,6 @@ export function isDoneGroup(base: Base | null, property: string | undefined, key
   return option?.group === 'done'
 }
 
-/** Whether a drop into a group of this grouping can be written: a note's property, a
- *  task's field, the days and halves of the views Orden ships. A formula, a rollup or a
- *  file's facts cannot. */
 export function droppableBy(
   property: string | undefined,
   rows: 'notes' | 'tasks' | 'both',
@@ -121,27 +92,18 @@ export function droppableBy(
   return isNoteProperty(property)
 }
 
-/** A card carried to another column and not written yet, so it stands there at once. */
 export interface Pending {
   card: string
   row: Row
-  /** The column it was carried out of, and the one it went to, by key as text. */
   from: string
   to: string
   key: Value
-  /** The swimlane it was carried out of, by key as text, where the board has them and
-   *  it is known. */
   fromLane?: string
-  /** The swimlane it went to, by key, where the board has them. */
   lane?: Value
-  /** Where among the new column's cards it was let go, or among its lane's where it
-   *  went to one. */
   index: number
-  /** Written, and waiting for the rows to say so. */
   written?: boolean
 }
 
-/** The groups with each pending card where it was carried to, in its lane too. */
 export function withPending(groups: readonly Group[], pending: readonly Pending[]): Group[] {
   if (!pending.length) return [...groups]
   const moving = new Map(pending.map((one) => [one.card, one]))
@@ -158,8 +120,6 @@ export function withPending(groups: readonly Group[], pending: readonly Pending[
       const kept = lane.rows.filter((row) => {
         const one = moving.get(cardKey(row))
         if (!one) return true
-        // A card leaving the column leaves every lane of it; one arriving leaves the
-        // lane it came from and the one it goes to, where it is put back.
         if (one.to !== name) return one.from !== name
         return (
           one.lane === undefined ||
@@ -185,8 +145,6 @@ export function withPending(groups: readonly Group[], pending: readonly Pending[
       const lane = sub[at]
       if (!lane) continue
       const laneRows = [...lane.rows]
-      // In the column's own cards it goes before the lane's card it was let go above,
-      // or after the lane's last, or at the end where the lane had none.
       const before = laneRows[one.index]
       const after = laneRows.at(-1)
       const place = before ? rows.indexOf(before) : after ? rows.indexOf(after) + 1 : rows.length
@@ -198,9 +156,6 @@ export function withPending(groups: readonly Group[], pending: readonly Pending[
   })
 }
 
-/** The groups with one column drawn in a manual order not written yet, its lanes
- *  following it, the way the engine orders them (answer.ts). `order` names cards by
- *  `orderId`; a card it does not name goes after the ones it does. */
 export function withOrder(
   groups: readonly Group[],
   column: string,
@@ -223,11 +178,6 @@ export function withOrder(
   )
 }
 
-/** A column's whole manual order after one of its lanes was put in a new one: the
- *  lane's cards take the places the lane's cards held among the column's, in the
- *  lane's new order, and every other card stays where it was. `column` is the
- *  column's cards as they stand; a card new to the column goes beside the lane's card
- *  next to it. One order a column, as the engine reads it, keeps every lane's. */
 export function mergedOrder(column: readonly string[], lane: readonly string[]): string[] {
   const out = [...column]
   lane.forEach((id, at) => {
@@ -252,10 +202,6 @@ export function mergedOrder(column: readonly string[], lane: readonly string[]):
 
 type BoardKey = 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight' | 'Home' | 'End'
 
-/** Where the keyboard goes from a card (`column`, `index`) on a board whose columns
- *  hold `counts` cards: up and down a column, left and right to the card at the same
- *  height in the next column that has any, or its add row (index = its count) where it
- *  has none. Null where there is nowhere. */
 export function nextCard(
   counts: readonly number[],
   at: { column: number; index: number },
@@ -273,10 +219,6 @@ export function nextCard(
   return { column, index: Math.min(at.index, Math.max(0, there - 1)) }
 }
 
-/** The same on a board of swimlanes, `counts[lane][column]` the cards of each: left
- *  and right stay in the lane, and up past a lane's first card (or down past its last)
- *  goes on to the nearest lane above (or below) with cards in that column. A board
- *  with no lanes is one lane. */
 export function nextLaned(
   counts: readonly (readonly number[])[],
   at: { lane: number; column: number; index: number },
@@ -293,36 +235,26 @@ export function nextLaned(
   return null
 }
 
-/** The ids a column's manual order is written with after a card is let go at `index`
- *  among `ids`, the column's cards as they stand without it. */
 export function orderAfter(ids: readonly string[], id: string, index: number): string[] {
   const order = ids.filter((one) => one !== id)
   order.splice(Math.min(index, order.length), 0, id)
   return order
 }
 
-/** Where among a column's cards a card let go at `index` goes, `index` counted with
- *  the card itself still standing at `was` (-1 where it stands elsewhere): the place
- *  it leaves closes up, so a card carried down lands one higher than it was let go. */
 export function indexWithout(index: number, was: number): number {
   return was !== -1 && was < index ? index - 1 : index
 }
 
-/** The members a card shows of a list, and how many more there are. */
 function someOf<T>(values: readonly T[], most: number): { shown: T[]; more: number } {
   return { shown: values.slice(0, most), more: Math.max(0, values.length - most) }
 }
 
-/** One property line of a card: pills for a select or a list, words for the rest. */
 export type CardLine =
   | { kind: 'pills'; pills: { text: string; tone: string | null }[]; more: number }
   | { kind: 'words'; text: string; late: boolean }
 
-/** How many members of a list a card's line shows before saying how many more. */
 const MOST_PILLS = 2
 
-/** A property's value as a card's line shows it, `done` saying the card is done, so a
- *  date past is not late. Null for a value that shows nothing. */
 export function cardLine(
   value: Value,
   options: (value: string) => string | null | undefined,

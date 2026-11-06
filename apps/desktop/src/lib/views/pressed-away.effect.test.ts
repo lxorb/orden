@@ -2,9 +2,6 @@ import { afterEach, describe, expect, test } from 'vitest'
 import { overlays } from '../overlays'
 import { hearPressesAway, pressedAway } from './pressed-away'
 
-/** #1110: a press past a list's selection lets it go; one on a row, on the bar that acts
- *  on the selection, or inside a layer over the list does not. */
-
 function page() {
   document.body.innerHTML = `
     <div class="list"><div role="option" class="row"><button class="words">Call</button></div>

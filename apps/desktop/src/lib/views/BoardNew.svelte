@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** A column's New page, Notion's: a press opens a card to type the title into, and
-   *  Enter makes the note in that column (its value written, the base's template, the
-   *  filter's pinned values) and leaves a fresh card for the next one. Nothing is
-   *  written before a title is: Escape, or leaving it empty, writes nothing. The title
-   *  is the note's name on disk, with what a file name cannot hold replaced (add.ts).
-   *
-   *  `asked` counts the times a key asked for it rather than a press; only a count
-   *  higher than the one it was drawn with opens it, so a card drawn again opens
-   *  nothing on its own. In a swimlane the note is given the lane's value too. */
   import type { Group, Value } from '@orden/bases'
   import { untrack } from 'svelte'
   import { t } from '../i18n.svelte'
@@ -26,22 +17,16 @@
   }: {
     kit: Kit
     group: Group
-    /** The property the board groups by, which a new card is given its column's value of. */
     property: string | undefined
-    /** Whether that property holds lists, so a new card holds a list of its column's one. */
     list?: boolean
-    /** The swimlane it is in: the property the board sub-groups by, the lane's value
-     *  of it, and whether that property holds lists. */
     lane?: { property: string; key: Value; list: boolean } | undefined
     asked?: number
-    /** A note made, by its path. */
     onmade?: (path: string) => void
   } = $props()
 
   let typing = $state(false)
   let words = $state('')
   let field = $state<HTMLInputElement>()
-  /** A commit already on its way, so Enter and the blur after it do not make two. */
   let making = false
 
   let seen = untrack(() => asked)
@@ -56,7 +41,6 @@
     queueMicrotask(() => field?.focus())
   }
 
-  /** The values a new card of this column holds, and of its lane. */
   function valued(): Record<string, Value> {
     const out: Record<string, Value> = {}
     const key = group.key
@@ -86,18 +70,11 @@
       )
       if (path) onmade?.(path)
     } catch {
-      // The card was emptied for the next title before the note was written, so a write
-      // that failed would take the title typed with it. It goes back into the card, still
-      // open, which is the sign nothing was made, unless a next title is already there.
-      // Focus is left where it went, so a blur that failed does not pull it back.
       if (!words) words = title
       typing = true
       return
     } finally {
       making = false
-      // No note made, where the space or the folder may not be written in, or the write
-      // failed: the title goes back in the card, which stays open, rather than being
-      // lost with nothing said (B284). Words typed since are the reader's own.
       if (!path) words ||= title
     }
     if (again) field?.focus()

@@ -1,14 +1,4 @@
 <script lang="ts">
-  /** The calendar: a month, a week, three days or a day (docs/tasks.md 5.9). Rows sit
-   *  on their date property - a task's due date, else its scheduled one, unless the
-   *  view names another (`nib.date`) - and a task with a time sits at its hour in the
-   *  week and the day, as tall as its duration.
-   *
-   *  A row carried to another day is given that day; carried onto an hour it is given
-   *  the time as well; its bottom edge pulled changes its duration. The tray on the
-   *  left is what has no date, Todoist's no-date sidebar: carried out of it a task gets
-   *  one. A repeating task's next occurrences are drawn faded, and today wears the
-   *  accent. */
   import { cellValue, type Row, rowId, type TaskChange } from '@orden/bases'
   import { untrack } from 'svelte'
   import { i18n, t } from '../i18n.svelte'
@@ -38,26 +28,20 @@
   const view = $derived(live.view)
 
   let mode = $state<CalendarMode>('month')
-  /** The day the calendar is showing around; today to begin with. */
   let anchor = $state(untrack(() => kit.live.today))
 
-  /** The first day of a week where the app's language keeps it: Monday unless the
-   *  locale says otherwise. */
   const first = $derived.by(() => {
     try {
-      // `getWeekInfo` is newer than the library types this is checked against.
       const locale = new Intl.Locale(i18n.language) as Intl.Locale & {
         getWeekInfo?: () => { firstDay?: number }
       }
       return (locale.getWeekInfo?.().firstDay ?? 1) % 7
     } catch {
-      // A language tag the engine cannot read starts the week on Monday.
       return 1
     }
   })
 
   const days = $derived(daysShown(mode, anchor, first))
-  /** The property a row is placed by. */
   const dateProperty = $derived(view?.nib.date ?? 'task.date')
   const rows = $derived(everyRow(live.answer?.groups ?? []))
   const placed = $derived(
@@ -81,18 +65,14 @@
     day: t('Day'),
   }
 
-  /** How tall an hour is in the week and the day. */
   const HOUR = 44
 
   const labelOf = (row: Row) => (row.task ? plain(row.task.text) : row.file.basename)
 
-  /** A row let go on a day. */
   function onDay(row: Row, day: string) {
     kit.drop(row, day, dateProperty)
   }
 
-  /** A row let go on an hour of a day: the day, and the time where the pointer was,
-   *  to the quarter hour. */
   function onHour(row: Row, day: string, at: Point, place: HTMLElement) {
     if (!row.task) {
       onDay(row, day)
@@ -100,21 +80,16 @@
     }
     const box = place.getBoundingClientRect()
     const minutes = Math.round((((at.y - box.top) / HOUR) * 60) / 15) * 15
-    // The drop on that day the calendar is placed by, an overdue deadline moved with it
-    // (drop.ts), and the time.
     const drop = hourDrop(dateProperty, day, timeOf(minutes), row, live.today)
     if (drop && 'change' in drop) kit.write(row, drop.change)
   }
 
-  /** A task's length as the change that writes it. Set rather than spelled as a key:
-   *  a `duration` key reads, to the motion test, as a transition's. */
   function lasting(minutes: number): TaskChange {
     const change: TaskChange = {}
     change.duration = minutes
     return change
   }
 
-  /** A timed task's bottom edge pulled: its duration, to the quarter hour. */
   function stretch(event: PointerEvent, one: Placed) {
     event.preventDefault()
     event.stopPropagation()
@@ -140,7 +115,6 @@
 
   let hours = $state<HTMLElement>()
   $effect(() => {
-    // The working day in view first, as every calendar opens.
     if (hours && mode !== 'month') hours.scrollTop = HOUR * 7
   })
 </script>

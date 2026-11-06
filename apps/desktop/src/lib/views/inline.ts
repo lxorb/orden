@@ -1,16 +1,3 @@
-/** A task's words drawn the way the line reads: bold, italic, code, struck and links
- *  as themselves, the marks gone (docs/tasks.md 5.5, "markdown drawn inline").
- *
- *  As pieces rather than as HTML, so a view never puts somebody's markup into the page
- *  (a task line can come from a shared space): each piece is text with how it looks,
- *  and the component draws text. One pass over one line; nothing here is per row more
- *  than once.
- *
- *  A character the note escaped is the character: `milk \$3` is drawn `milk $3`, and
- *  `\*a\*` is two stars around a word rather than emphasis. The escapes are held while
- *  the forms are looked for and given back after (`heldEscapes`), as the characters, or
- *  as written inside code, which shows its backslashes. */
-
 import { heldEscapes, released } from '@orden/markdown/escapes'
 
 export interface Piece {
@@ -19,11 +6,9 @@ export interface Piece {
   em?: boolean
   code?: boolean
   struck?: boolean
-  /** A wikilink's note or a link's address. */
   link?: string
 }
 
-/** The inline forms, earliest match first. Each names its words' group. */
 const FORMS: { pattern: RegExp; make: (found: RegExpExecArray) => Piece }[] = [
   { pattern: /`([^`]+)`/, make: (found) => ({ text: found[1] ?? '', code: true }) },
   {
@@ -46,7 +31,6 @@ const FORMS: { pattern: RegExp; make: (found: RegExpExecArray) => Piece }[] = [
   },
 ]
 
-/** The words as pieces. */
 export function pieces(words: string): Piece[] {
   return heldPieces(heldEscapes(words)).map((one) => {
     const text = released(one.text, one.code === true)
@@ -76,7 +60,6 @@ function heldPieces(words: string): Piece[] {
   return out
 }
 
-/** The words with every mark taken off, for a card's title and a search. */
 export function plain(words: string): string {
   return pieces(words)
     .map((one) => one.text)

@@ -3,11 +3,6 @@ import { timeWords } from '@orden/editor/task-days'
 import { render } from 'svelte/server'
 import { describe, expect, test, vi } from 'vitest'
 
-/** What each layout draws for an answer: the rows, the groups, the columns, the days.
- *  Rendered on the server, as the panels' tests are: the markup is what a reader gets.
- *  What a press writes is act.ts's and drop.ts's, tested in logic.test.ts, and the drive
- *  (test/e2e/tasks.py) drags and ticks in a browser. */
-
 vi.mock('../rooms.svelte', () => ({ rooms: { present: {}, following: null } }))
 vi.mock('../rows/home.svelte', () => ({ homeRoot: () => '/s/Home' }))
 vi.mock('../rows/rows.svelte', () => ({
@@ -42,8 +37,6 @@ const Cell = (await import('./Cell.svelte')).default
 
 const TODAY = '2026-10-04'
 
-/** A view on screen, as the layouts read one: what LiveView would hold for this base
- *  over these rows. */
 function kitOf(base: Base, rows: readonly Row[], spec = {}) {
   const context = contextFor({ rows, today: TODAY, now: `${TODAY}T10:00:00` })
   const live = {
@@ -69,12 +62,10 @@ function kitOf(base: Base, rows: readonly Row[], spec = {}) {
       return typeof tone === 'string' ? toneColour(tone) : null
     },
   }
-  // A LiveView is a store with runes; the layouts read only these fields of it.
   return kitFor(live as unknown as Parameters<typeof kitFor>[0], spec, null, false)
 }
 
 const TASKS = [
-  // Overdue by its deadline (#371).
   taskRow('Errands.md', '- [ ] Call the bank [time:: 16:00] [deadline:: 2026-10-01] ⏫', 2, {
     section: ['Errands'],
   }),
@@ -205,7 +196,6 @@ views:
     }).body
     expect(html).not.toContain('<select')
     expect(html.match(/class="chip[ "]/g)).toHaveLength(2)
-    // Only the options the list does not hold yet.
     const offered = /<datalist[^>]*>(.*)<\/datalist>/s.exec(html)?.[1] ?? ''
     expect([...offered.matchAll(/value="([^"]*)"/g)].map(([, one]) => one)).toEqual(['b'])
   })
@@ -338,8 +328,6 @@ describe('the frame', () => {
     expect(tasks).not.toContain('aria-label="Filter"')
     expect(tasks).toContain('Call the bank')
 
-    // A base of tasks keeps its tabs, so Rows in its settings never takes them away,
-    // and keeps Display beside Filter and Sort.
     const based = render(ViewFrame, {
       props: { kit: kitOf(builtinView('today'), TASKS), title: 'Today' },
     }).body
@@ -348,7 +336,6 @@ describe('the frame', () => {
     expect(based).toContain('aria-label="Display"')
 
     const notes = render(ViewFrame, { props: { kit: kitOf(BUGS, NOTES), title: 'Bugs' } }).body
-    // Notion's head: a tab for each view, Filter and Sort, and the view's settings.
     expect(notes.match(/role="tab"/g)?.length).toBe(BUGS.views.length)
     expect(notes).toContain('aria-label="New view"')
     expect(notes).toContain('aria-label="Filter"')

@@ -1,9 +1,4 @@
 <script lang="ts">
-  /** A base inside a note: a ` ```base ` fence, or `![[Bugs.base]]` and
-   *  `![[Bugs.base#Board]]` (docs/tasks.md 5.11). Drawn where it stands, in the editor
-   *  and in the reading view, with a smaller head and rows that edit like anywhere
-   *  else. `this` is the note it stands in, Bases' rule, so one base embedded in many
-   *  notes shows each its own. */
   import { untrack } from 'svelte'
   import { kitFor } from './kit'
   import { LiveView } from './live.svelte'
@@ -18,13 +13,9 @@
     stranger = false,
     title,
   }: {
-    /** A fence's own words. */
     code?: string | null
-    /** An embedded base file, on this disk. */
     file?: string | null
-    /** Which of its views, by name. */
     view?: string | undefined
-    /** The note it stands in, on this disk, or null for one with no file yet. */
     from: string | null
     stranger?: boolean
     title: string

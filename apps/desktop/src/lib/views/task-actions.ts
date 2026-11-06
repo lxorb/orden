@@ -1,13 +1,3 @@
-/** What can be done to a task from a view, in one place: schedule it (the scheduler,
- *  for one task or many as one write), its labels, its project, and its menu - complete,
- *  schedule, priority, move, duplicate, copy its link, open it in its note, delete. The
- *  row's ⋯, its context menu, the bulk bar and the keys (row-keys.ts) reach the same
- *  functions, for one task or every one selected, so a task is scheduled one way from
- *  everywhere.
- *
- *  Every write is the views' one write path (act.ts): one edit of each note it touches,
- *  one undo. */
-
 import type { Priority, Row } from '@orden/bases'
 import { copyText } from '../clipboard'
 import { t } from '../i18n.svelte'
@@ -35,8 +25,6 @@ import { changeFor, loadByDay } from './schedule/schedule'
 import { type Box, showScheduler } from './schedule/scheduling.svelte'
 import { labelsOf } from './task-meta'
 
-/** The scheduler, beside what asked, for these tasks: what it picks is written to every
- *  one of them as one write. It opens on the first task's day. */
 export function scheduleRows(
   rows: readonly Row[],
   from: Element | Box,
@@ -48,7 +36,6 @@ export function scheduleRows(
   if (!first) return
   showScheduler(from, {
     current: {
-      // The day it starts (#371).
       due: startOf(first, first.dueReads) ?? first.scheduled,
       time: first.time,
       minutes: first.duration,
@@ -69,10 +56,6 @@ export function scheduleRows(
   })
 }
 
-/** The scheduler for tasks' deadline: a day and nothing else, written as each one's
- *  `[deadline::]` - or the `📅` that is a vault's deadline - or taken away by No date.
- *  What the overdue group's Reschedule opens, since only a deadline makes a task late
- *  (#371). It opens on the first task's deadline. */
 export function scheduleDeadline(rows: Row | readonly Row[], from: Element | Box, kit: Kit): void {
   const tasks: Row[] = (Array.isArray(rows) ? [...(rows as readonly Row[])] : [rows as Row]).filter(
     (row) => row.task,
@@ -95,14 +78,12 @@ export function scheduleDeadline(rows: Row | readonly Row[], from: Element | Box
   })
 }
 
-/** Priority for these tasks, as one write. */
 export function prioritise(rows: readonly Row[], priority: Priority): Promise<boolean> {
   return writeEach(
     rows.filter((row) => row.task).map((row) => ({ row, change: { task: { priority } } })),
   )
 }
 
-/** The rows of the priority choice, p1 to p4, the one in force ticked. */
 export function priorityEntries(current: number, set: (priority: Priority) => void): MenuEntry[] {
   return ([1, 2, 3, 4] as const).map((level) => ({
     label: t('Priority {level}', { level }),
@@ -111,7 +92,6 @@ export function priorityEntries(current: number, set: (priority: Priority) => vo
   }))
 }
 
-/** The date taken off these tasks, its time and its repeat with it: Shift+T. */
 function undate(rows: readonly Row[]): Promise<boolean> {
   const tasks = rows.filter((row) => row.task)
   return writeEach(
@@ -121,8 +101,6 @@ function undate(rows: readonly Row[]): Promise<boolean> {
   )
 }
 
-/** The labels these tasks can be given: every tag the space's tasks carry, ticked where
- *  every one of them has it. A press gives it to all of them, or takes it off all. */
 export function labelEntries(rows: readonly Row[]): MenuEntry[] {
   const tasks = rows.filter((row) => row.task)
   const space = tasks[0]?.space
@@ -147,8 +125,6 @@ export function labelEntries(rows: readonly Row[]): MenuEntry[] {
   })
 }
 
-/** Where these tasks can be moved: the Inbox and every project of the open space. The
- *  note they are all in now is ticked. */
 export function moveEntries(rows: readonly Row[]): MenuEntry[] {
   const tasks = rows.filter((row) => row.task)
   const root = workspace.activeSpace?.root
@@ -161,14 +137,10 @@ export function moveEntries(rows: readonly Row[]): MenuEntry[] {
   )
 }
 
-/** A row that opens rows of its own, worked out when it is opened. */
 function more(label: string, entries: () => MenuEntry[]): MenuEntry {
   return { label, run: () => undefined, more: () => Promise.resolve(entries()) }
 }
 
-/** A task's own menu: from its ⋯, a press with the other button, or the `.` key. With
- *  many selected, theirs: what is done to all of them at once. `select` offers to select
- *  the row, the way into selecting on a touch screen. */
 export function taskMenu(
   event: MouseEvent | Box,
   rows: readonly Row[],
@@ -186,7 +158,6 @@ export function taskMenu(
     ...(select ? [{ label: t('Select'), run: select }, DIVIDER] : []),
     { label: open ? t('Complete') : t('Reopen'), run: () => void tickRows(tasks, kit.live.today) },
     { label: t('Schedule'), asks: true, run: () => scheduleRows(tasks, at, kit) },
-    // A repeating task's own two: on to the next occurrence, or done for good.
     ...(tasks.every((row) => row.task?.recurrence) && open
       ? [
           { label: t('Skip'), run: () => void skipRows(tasks, kit.live.today) },
@@ -208,7 +179,6 @@ export function taskMenu(
   menu.show('clientX' in event ? event : pointEvent(event), items)
 }
 
-/** The links to these tasks, one a line, on the clipboard. */
 async function copyLinks(rows: readonly Row[]): Promise<void> {
   const links: string[] = []
   for (const row of rows) {
@@ -218,15 +188,10 @@ async function copyLinks(rows: readonly Row[]): Promise<void> {
   if (links.length) await copyText(links.join('\n'))
 }
 
-/** A menu of these entries under a row. */
 function menuAt(at: Box, items: MenuEntry[]): void {
   if (items.length) menu.show(pointEvent(at), items)
 }
 
-/** A key of row-keys.ts done to these rows - the one the keyboard is on, or every one
- *  selected - with `at` the row's box, for what opens beside it. Answers whether it was
- *  one of a row's own; stepping, selecting, folding and adding are the layout's, which
- *  knows what is above and below. */
 export function runKey(kit: Kit, rows: readonly Row[], key: RowKey, at: Box): boolean {
   const first = rows[0]
   if (!first) return false
@@ -237,7 +202,6 @@ export function runKey(kit: Kit, rows: readonly Row[], key: RowKey, at: Box): bo
   return true
 }
 
-/** The keys that are about tasks, done to the tasks among the rows. */
 function runTaskKey(kit: Kit, rows: readonly Row[], key: RowKey, at: Box): boolean {
   const tasks = rows.filter((row) => row.task)
   const task = tasks[0]
@@ -298,12 +262,10 @@ function runTaskKey(kit: Kit, rows: readonly Row[], key: RowKey, at: Box): boole
   }
 }
 
-/** The box a press is, for a layer put up where the pointer was. */
 function pointBox(event: MouseEvent): Box {
   return { left: event.clientX, top: event.clientY, right: event.clientX, bottom: event.clientY }
 }
 
-/** A press at a box's corner, for the menu a key opens under its row. */
 function pointEvent(at: Box): MouseEvent {
   return new MouseEvent('contextmenu', { clientX: at.left, clientY: at.bottom })
 }

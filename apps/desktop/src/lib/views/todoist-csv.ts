@@ -1,12 +1,3 @@
-/** A project written out as Todoist writes one (docs/tasks.md 5.17): the CSV Todoist
- *  imports into a project and exports from one, so a project made here can be taken to
- *  Todoist, shared as a template, and brought back by Orden's own importer unchanged.
- *
- *  A section a `section` row, a task a `task` row indented as deep as it sits, its labels
- *  `@label` in its words, its priority as people count it, its day (or its repeat in
- *  words), its duration and its deadline, and each comment a `note` row under it. Pure,
- *  but for `saveProjectCsv`, which reads the note and hands the file over. */
-
 import { csvText, type Row } from '@orden/bases'
 import { deadlineOf, startOf } from '@orden/markdown/task-dates'
 import { deliver } from '../export/save'
@@ -34,13 +25,10 @@ const HEADER = [
   'DEADLINE_LANG',
 ]
 
-/** A row of the CSV, its columns by name. */
 function line(fields: Partial<Record<(typeof HEADER)[number], string>>): string[] {
   return HEADER.map((name) => fields[name] ?? '')
 }
 
-/** A note's tasks, in the order they are written, as Todoist's CSV. `text` is the note
- *  they are in, for each task's whole description and its comments. */
 export function todoistCsv(tasks: readonly Row[], text: string): string {
   const ordered = [...tasks]
     .filter((row) => row.task && row.anchor)
@@ -67,15 +55,12 @@ export function todoistCsv(tasks: readonly Row[], text: string): string {
     }
     if (level === 1) section = heading
     const labels = task.tags.filter((tag) => !task.text.includes(`#${tag}`))
-    // Todoist's date is the day a task starts; its deadline is ours (#371).
     const day = startOf(task, task.dueReads) ?? task.scheduled
     const deadline = deadlineOf(task, task.dueReads)
     out.push(
       line({
         TYPE: 'task',
         CONTENT: [task.text, ...labels.map((tag) => `@${tag}`)].join(' '),
-        // The whole description, not the scan's first line of it: csvText quotes a
-        // cell with lines in it, which Todoist and Orden's importer read back whole.
         DESCRIPTION: descriptionOf(text, anchor)?.text ?? task.description ?? '',
         PRIORITY: String(Math.min(Math.max(task.priority, 1), 4)),
         INDENT: String(level),
@@ -94,7 +79,6 @@ export function todoistCsv(tasks: readonly Row[], text: string): string {
   return csvText(HEADER, out)
 }
 
-/** A project's note (on this disk) saved as Todoist's CSV, named as the project is. */
 export async function saveProjectCsv(note: string, name: string): Promise<void> {
   const space = workspace.activeSpace
   if (!space) return

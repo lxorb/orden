@@ -1,17 +1,4 @@
 <script lang="ts">
-  /** The table: a row per row, a column per property, every row one row tall so a
-   *  window of what is on screen is all that is mounted (docs/tasks.md 5.9).
-   *
-   *  A spreadsheet's keys: the arrows move between cells, Enter edits the cell in the
-   *  control its kind asks for (Cell.svelte), Escape leaves. A header pressed sorts by
-   *  its column, dragged by its edge resizes it (Obsidian's `columnSize`), dragged by
-   *  its name moves it; its menu hides it, sorts it, and puts a summary under it. The
-   *  summaries sit in a row under the last row, and under each group where it groups.
-   *
-   *  What lane 7 added (docs/tasks.md 4): rows one, two or four lines tall, the words
-   *  wrapping within (`nib.lines`), so every row is still one height and nothing is
-   *  measured; the first columns frozen while the rest scroll across (`nib.freeze`);
-   *  each row in its conditional colour; and the header's menu (column-menu.ts). */
   import { type Group, groupName, type Row } from '@orden/bases'
   import { untrack } from 'svelte'
   import { menu } from '../menu.svelte'
@@ -38,8 +25,6 @@
 
   const summed = $derived(columns.some((column) => view?.summaries[column]))
 
-  /** The rows in order, a group's head before its rows and its summaries after them
-   *  where the view groups. */
   type Line =
     | { kind: 'head'; id: string; label: string; count: number }
     | { kind: 'row'; id: string; row: Row }
@@ -66,7 +51,6 @@
     return out
   })
 
-  /** How many lines a row is tall, and the columns frozen from the first. */
   const tall = $derived(view?.nib.lines ?? 1)
   const frozen = $derived(Math.min(view?.nib.freeze ?? 0, columns.length))
 
@@ -80,7 +64,6 @@
   const widthOf = (column: string) =>
     widths[column] ?? (column === 'task.text' || column === 'file.name' ? 280 : 150)
   const template = $derived(columns.map((column) => `${widthOf(column)}px`).join(' ') + ' 1fr')
-  /** Where each frozen column starts, from the table's start edge. */
   const stuck = $derived.by(() => {
     const out: number[] = []
     let at = 0
@@ -99,8 +82,6 @@
     const touch = viewport.touch
     return untrack(() => win.follow(box, () => tokenRow(touch)))
   })
-  /** A row's height: the token's one line, and a line of words more for each line
-   *  more it is asked to be, so the window's arithmetic stays one number. */
   const rowHeight = $derived(Math.round((win.row || 28) * (1 + (tall - 1) * 0.62)))
   const shown = $derived(
     windowFor({
@@ -112,11 +93,8 @@
     }),
   )
 
-  /** The cell the keyboard is on, and whether it is being edited. */
   let at = $state<{ line: number; column: number } | null>(null)
   let editing = $state(false)
-  /** The cell Tab lands on: the one the keyboard was last on, else the first row's
-   *  first cell, so the grid is one tab stop before anything has been pressed. */
   const cursor = $derived(at ?? { line: lines.findIndex((line) => line.kind === 'row'), column: 0 })
 
   function sortBy(column: string) {
@@ -135,7 +113,6 @@
     })
   }
 
-  /** A header's edge dragged: the column wider or narrower, written once on letting go. */
   function resize(event: PointerEvent, column: string) {
     event.preventDefault()
     event.stopPropagation()
@@ -156,7 +133,6 @@
     window.addEventListener('pointerup', up)
   }
 
-  /** A header dragged sideways past another: the columns in their new order. */
   function reorder(event: PointerEvent, column: string) {
     if (event.button !== 0 || (event.target as HTMLElement).closest('.grip')) return
     const startX = event.clientX
@@ -182,7 +158,6 @@
       const next = columns.filter((one) => one !== column)
       next.splice(target, 0, column)
       kit.change((b, i) => setColumns(b, i, next))
-      // The click this press ends in is not a sort.
       window.addEventListener('click', (click) => click.stopPropagation(), {
         capture: true,
         once: true,
@@ -430,8 +405,6 @@
     background: color-mix(in srgb, var(--row-tone) 14%, var(--bg));
   }
 
-  /* A frozen column stays where it is while the rest scroll under it, so it wears
-     the row's own ground rather than letting the scrolled cells show through. */
   .stuck {
     position: sticky;
     z-index: var(--z-raised);

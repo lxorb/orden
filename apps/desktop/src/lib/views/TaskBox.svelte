@@ -1,11 +1,4 @@
 <script lang="ts">
-  /** A task's box in a view: Todoist's circle, ringed in its priority's tone, half
-   *  filled while it is being done, filled and ticked once it is. Pressing it ticks the
-   *  task through the engine's tick (act.ts), which is the editor's tick: a recurring
-   *  task writes its next occurrence in the same edit. The fill answers the press at
-   *  once and the row follows when the note is written; and goes back where nothing
-   *  was, a note in a space shared to be read, so a task is never drawn done that is
-   *  not. */
   import type { TaskRow } from '@orden/bases'
   import { priorityTone } from '../quick-add/labels'
 
@@ -17,14 +10,10 @@
   }: {
     task: TaskRow
     label: string
-    /** Answers false where the tick was not written. */
     ontick: () => unknown
     disabled?: boolean
   } = $props()
 
-  /** The task as it was when the box was pressed and before the note was written back:
-   *  drawn ticked so the press lands at once. The row that comes back from the note is
-   *  another object, and whatever it says is the truth from then on. */
   let pressed = $state.raw<TaskRow | null>(null)
   const done = $derived(task.done || pressed === task)
 

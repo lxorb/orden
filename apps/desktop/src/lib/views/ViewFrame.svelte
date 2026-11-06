@@ -1,12 +1,4 @@
 <script lang="ts">
-  /** A view, whole: its head and the layout its type asks for, over the engine's answer
-   *  (docs/tasks.md 5.9). One frame for a view in a tab, a ` ```base ` fence and an
-   *  embedded base, which differ only in how much room they have (`kit.compact`).
-   *
-   *  The layout switch swaps the body with the app's swap motion. On a phone the table
-   *  becomes rows with their first properties under them, the calendar an agenda, and
-   *  there is no timeline. Q adds a task, and G then T, U or I goes to Today, Upcoming
-   *  or the Inbox, Todoist's own keys, wherever no field has the keyboard. */
   import { onDestroy } from 'svelte'
   import { t } from '../i18n.svelte'
   import { shortcuts } from '../shortcuts.svelte'
@@ -40,15 +32,12 @@
   const phone = $derived(viewport.device === 'phone')
   const project = $derived(kit.spec.builtin === 'project')
 
-  /** The add row the plus or Q asked for, over whichever layout is showing, and how
-   *  many times it was asked (AddRow's `asked`). */
   let adding = $state(false)
   let asked = $state(0)
 
   const ghost = ghostOwner()
   onDestroy(ghost.release)
 
-  /** G pressed, waiting for the letter that says where to. */
   let going = false
   let goingTimer: ReturnType<typeof setTimeout> | undefined
 
@@ -59,8 +48,6 @@
       target.closest('input, textarea, select, [contenteditable]')
     )
       return
-    // Undo and redo are the notes' own: a cell, a drop or a tick made here is a write
-    // of a note, and the file actions' undo is the one that takes it back.
     if (shortcuts.pressed('edit.undo', event)) {
       event.preventDefault()
       void workspace.undoFileAction()
@@ -75,8 +62,6 @@
     if (going) {
       going = false
       clearTimeout(goingTimer)
-      // Todoist's G then T, U or I: Today, Upcoming and the Inbox are one view now,
-      // the open space's Todos (#1046).
       if (event.key === 't' || event.key === 'u' || event.key === 'i') {
         event.preventDefault()
         openTodos()
@@ -89,7 +74,6 @@
     } else if (
       shortcuts.pressed('tasks.quick-add', event) &&
       layout !== 'list' &&
-      // A layout that added for the key itself (a board's column) has said so.
       !event.defaultPrevented
     ) {
       event.preventDefault()
@@ -97,11 +81,9 @@
     }
   }
 
-  /** How many times New asked a board of notes for a page: its first column's. */
   let boardAdding = $state(0)
 
   function add() {
-    // The key as the plus: nothing to add to a view of a space shared to be read.
     if (!kit.adds) return
     if (layout === 'kanban' && (live.view?.nib.rows ?? 'notes') === 'notes') {
       boardAdding++

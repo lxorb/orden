@@ -1,9 +1,4 @@
 <script lang="ts">
-  /** What can be done to every task selected at once, Todoist's bulk bar in Orden's
-   *  floating bar (`.nib-bar`): how many, the day, the project, the labels, the
-   *  priority, and the rest in ⋯ (task-actions.ts). Each is one write of all of them,
-   *  so one undo takes it back. It stands at the foot of the list while the list is on
-   *  screen. */
   import type { Row } from '@orden/bases'
   import Calendar from 'lucide/dist/esm/icons/calendar-days.mjs'
   import Ellipsis from 'lucide/dist/esm/icons/ellipsis.mjs'
@@ -28,7 +23,6 @@
 
   const { rows, kit, onclear }: { rows: readonly Row[]; kit: Kit; onclear: () => void } = $props()
 
-  /** The box a button is, for what opens over it. */
   const boxOf = (event: MouseEvent): Box =>
     event.currentTarget instanceof Element
       ? event.currentTarget.getBoundingClientRect()
@@ -84,8 +78,6 @@
 </div>
 
 <style>
-  /* No room of its own in the list: a line at the foot of what is on screen, the bar
-     standing on it. */
   .holder {
     position: sticky;
     bottom: 0;

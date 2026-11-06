@@ -1,7 +1,3 @@
-/** Rows for the views' tests, built the way the rows store builds them (rows/build.ts):
- *  a note's front matter through `noteValues`, a task line through `readTask`. Only
- *  the tests import this. */
-
 import {
   type FileInfo,
   noteValues,
@@ -31,7 +27,6 @@ function fileAt(path: string, extra: Partial<FileInfo> = {}): FileInfo {
   }
 }
 
-/** A note row; `note` is front matter as YAML lines, or values. */
 export function noteRow(
   path: string,
   note: string | Record<string, Value> = {},
@@ -47,7 +42,6 @@ export function noteRow(
   }
 }
 
-/** A task row from its line, at a line of its note. */
 export function taskRow(
   path: string,
   line: string,

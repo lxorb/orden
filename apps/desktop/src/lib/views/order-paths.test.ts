@@ -58,8 +58,6 @@ describe('a board following its cards', () => {
     expect(movedWords(BASE, false, 'Other.md', 'Else.md')).toBeNull()
   })
 
-  /** A folder renamed carries every database inside it, at any depth, and each one's
-   *  board names its cards by the folder's old name. */
   test('and in the databases a renamed folder holds, however deep', async () => {
     const fenced = (dir: string) => `\`\`\`base\n${BASE.replaceAll('Plans/', `${dir}/`)}\`\`\`\n`
     const tree = folder(
@@ -70,7 +68,6 @@ describe('a board following its cards', () => {
         folder('/s/Work/Old', folder('/s/Work/Old/Deep', note('/s/Work/Old/Deep/Deep.md'))),
       ),
     )
-    // Where they are once the folder moved, which is where they are read.
     notes.set('/s/Renamed/Plans/Plans.md', fenced('Work/Plans'))
     notes.set('/s/Renamed/Old/Deep/Deep.md', fenced('Work/Old/Deep'))
 
@@ -80,7 +77,6 @@ describe('a board following its cards', () => {
     expect(notes.get('/s/Renamed/Old/Deep/Deep.md')).toContain('- Renamed/Old/Deep/Ship.md')
   })
 
-  /** The app hands the follower its tree with the move already drawn in it. */
   test('and the same where the tree already shows the folder moved', async () => {
     const fenced = (dir: string) => `\`\`\`base\n${BASE.replaceAll('Plans/', `${dir}/`)}\`\`\`\n`
     const tree = folder(

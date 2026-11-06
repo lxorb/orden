@@ -1,24 +1,10 @@
-/** A task row swiped on a touch screen, Todoist's way: to the right completes it, to
- *  the left schedules it. The row follows the finger over what the swipe will do, and
- *  past a third of its width (or a hand's breadth on a wide screen) letting go does it;
- *  short of that it slides back.
- *
- *  A swipe begun on the row is the row's, not the drawer's that a phone pulls out from
- *  anywhere: the touch is kept from reaching it, except at the screen's edges, where a
- *  drawer and the way back are always found. A thumb that moves up or down first is a
- *  scroll, and a hold is the row's drag (drag.svelte.ts), which a swipe moves too fast
- *  to wake. */
-
 import { claimsGesture, CLAIM } from '../swipe'
 import { dragging } from './drag.svelte'
 
-/** How near the screen's side a touch is left to the drawer and the way back. */
 const EDGE = 24
 
-/** How far a swipe has to go, at most, to be done when the finger lifts. */
 const FAR = 120
 
-/** Which way a swipe this far along a row this wide is done, or null to slide back. */
 export function swiped(dx: number, width: number): 'right' | 'left' | null {
   const far = Math.min(FAR, width / 3)
   if (dx >= far) return 'right'
@@ -27,7 +13,6 @@ export function swiped(dx: number, width: number): 'right' | 'left' | null {
 }
 
 export interface Swipes {
-  /** Whether the row takes swipes at all: a touch screen's, not being edited. */
   on: boolean
   right: () => void
   left: (row: HTMLElement) => void

@@ -1,13 +1,3 @@
-/** A task's fields as the quiet chips after its words, the way the editor draws them
- *  (docs/tasks.md 5.7): the start date while it is still to come, as a weekday within
- *  the week and a short date past it - once it has come it says nothing (#371); the
- *  time; ↻ for a repeat; ⏱ and the duration; ⚑ and the
- *  deadline; 🔔 when a reminder is set; the assignee. The priority is the box's colour,
- *  not a chip.
- *
- *  Lane 3 draws the same fields in the editor; the words here are the views' own and
- *  read the same fields, so the two cannot say a task is due on different days. */
-
 import type { Row, TaskRow, Value } from '@orden/bases'
 import { amount } from '../i18n.svelte'
 import { isDateValue, isDurationValue, isLinkValue } from './values'
@@ -18,11 +8,9 @@ import { deadlineOf, startOf } from '@orden/markdown/task-dates'
 export interface Chip {
   kind: 'date' | 'time' | 'repeat' | 'duration' | 'deadline' | 'remind' | 'assignee'
   text: string
-  /** A date in the past, drawn in the danger tone. */
   late?: boolean
 }
 
-/** Minutes as the views write them: `45m`, `2h`, `1h 30m`. */
 function minutesText(minutes: number): string {
   const hours = Math.floor(minutes / 60)
   const rest = minutes % 60
@@ -30,11 +18,8 @@ function minutesText(minutes: number): string {
   return rest ? `${amount(hours)}h ${amount(rest)}m` : `${amount(hours)}h`
 }
 
-/** The chips one task wears, in the order the editor draws them. `dated` false leaves
- *  the date off, for a view whose groups already are the days (Upcoming, a calendar). */
 export function chipsOf(task: TaskRow, today: string, dated = true): Chip[] {
   const out: Chip[] = []
-  // The day it starts, while that is still to come; a start date is never late.
   const day = startOf(task, task.dueReads) ?? task.scheduled
   const open = !task.done && !task.cancelled
   if (dated && day && day > today) out.push({ kind: 'date', text: dayWords(day, today) })
@@ -54,7 +39,6 @@ export function chipsOf(task: TaskRow, today: string, dated = true): Chip[] {
   return out
 }
 
-/** A cell's value as the words it shows. */
 export function valueText(value: Value, today: string): string {
   if (value === null) return ''
   if (typeof value === 'string') return value
@@ -74,7 +58,6 @@ export function valueText(value: Value, today: string): string {
   return ''
 }
 
-/** A tone a base names for an option (`tone: warning`, `tone: 3`), as a CSS colour. */
 export function toneColour(tone: string | undefined): string | null {
   switch (tone) {
     case undefined:
@@ -106,7 +89,6 @@ export function toneColour(tone: string | undefined): string | null {
   }
 }
 
-/** The words of the first open task this one waits on (its `⛔` ids), or null. */
 export function blockerOf(task: TaskRow, rows: readonly Row[]): string | null {
   for (const row of rows) {
     const other = row.task

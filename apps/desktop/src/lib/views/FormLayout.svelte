@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** A form, Notion's (docs/tasks.md 5.9): the view's properties as fields under a name,
-   *  and Send makes the note where the base's rows go, with what was filled in, the
-   *  base's template and its next id (add.ts), then empties itself for the next one.
-   *  A field the view says is required (`nib.required`) has to be filled before it
-   *  sends; one that is not shakes. A field's menu is a column's (column-menu.ts), so
-   *  hiding, adding and making a field required are where a table has them.
-   *
-   *  Its own controls rather than a cell's: a form fills a note that does not exist
-   *  yet, so there is nothing for the one write path to write into until it is sent. */
   import type { Value } from '@orden/bases'
   import { t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
@@ -24,7 +15,6 @@
   const live = $derived(kit.live)
   const base = $derived(live.base)
   const view = $derived(live.view)
-  /** The fields: the view's columns that are a note's own properties, but its id. */
   const fields = $derived(
     live.columns.filter((one) => isNoteProperty(one) && bare(one) !== base?.nib.id?.property),
   )
@@ -32,14 +22,12 @@
 
   let title = $state('')
   let values = $state<Record<string, string | boolean>>({})
-  /** The fields that were empty when Send was pressed, and the note the last send made. */
   let missing = $state<string[]>([])
   let sent = $state<{ path: string; name: string } | null>(null)
   let sending = $state(false)
 
   const kindOf = (field: string) => (base ? editorOf(base, field, live.rows) : 'text')
 
-  /** What a field's words are worth as a property. */
   function valueOf(field: string, said: string | boolean): Value | null {
     if (typeof said === 'boolean') return said
     const words = said.trim()
@@ -56,8 +44,6 @@
   }
 
   async function send() {
-    // Where the note would land in a space shared to be read, Send is not offered and
-    // a press that comes anyway (Enter in a field) sends nothing.
     if (!base || sending || !kit.adds) return
     const properties: Record<string, Value> = {}
     for (const field of fields) {
@@ -74,8 +60,6 @@
         properties,
         open: false,
       })
-      // Emptied only for a note that was made: one refused keeps what was typed, to
-      // send again or copy elsewhere.
       if (path === null) return
       sent = { path, name }
       title = ''

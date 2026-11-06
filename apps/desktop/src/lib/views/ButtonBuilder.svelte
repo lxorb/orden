@@ -1,9 +1,4 @@
 <script lang="ts">
-  /** A button column, Notion's button without a script (docs/tasks.md 5.13): its name is
-   *  its label, and a press sets properties on its row (`{{date}}` and the rest of a
-   *  template's placeholders allowed), adds a task to the row's note, runs a palette
-   *  command and opens an address, whichever of them it says. Kept under the base's
-   *  `nib.buttons`; the column is `button.<name>` in the view. */
   import { BUTTON, type Button, readButtons, withButton } from '@orden/bases'
   import { appCommands } from '../commands'
   import Cross from '../Cross.svelte'
@@ -16,7 +11,6 @@
   const { kit, column }: { kit: Kit; column?: string | undefined } = $props()
 
   const live = $derived(kit.live)
-  /** The button's name: the one it was opened on, or the one it was made with here. */
   let made = $state<string | undefined>(undefined)
   const name = $derived(made ?? (column?.startsWith(BUTTON) ? column.slice(BUTTON.length) : ''))
   const button = $derived(
@@ -37,8 +31,6 @@
 
   const blank = (): Button => ({ name, set: {}, kept: {} })
 
-  /** The button as it is now, changed; the first change of a new one names it and
-   *  puts its column in the view. */
   function write(change: Partial<Button>) {
     const next = { ...(button ?? blank()), ...change }
     for (const key of ['task', 'command', 'open'] as const) {

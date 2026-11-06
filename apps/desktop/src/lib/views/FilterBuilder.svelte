@@ -1,10 +1,4 @@
 <script lang="ts">
-  /** The view's filter as rows to click: a property, how it compares, and a value, all
-   *  of them or any of them (filter-rows.ts). The field above them takes Todoist's
-   *  filter language as typed (`today & #work | overdue`) and turns it into the same
-   *  rows (docs/tasks.md 5.8). A row the builder cannot show - a formula, a group
-   *  inside a group - stays as written, with its words. Saved as Bases' YAML, so
-   *  Obsidian reads the filter too. */
   import { fromTodoist } from '@orden/bases'
   import { i18n, t } from '../i18n.svelte'
   import Cross from '../Cross.svelte'
@@ -27,14 +21,12 @@
 
   const live = $derived(kit.live)
   const view = $derived(live.view)
-  /** What each property holds, for how a row asks it whether it is empty. */
   const holds = $derived(live.base ? holdsOf(live.base, live.rows) : undefined)
   const rows = $derived(rowsOf(view?.filters, holds))
   const kinds = $derived(view?.nib.rows ?? 'notes')
   const properties = $derived(live.base ? knownProperties(live.base, kinds, live.rows) : [])
 
   let typed = $state('')
-  /** What the field holds before anything is typed: a filter, in Todoist's words. */
   const EXAMPLE = 'today & #work | overdue'
 
   const OPERATOR_NAMES: Record<Operator, string> = {
@@ -66,8 +58,6 @@
     write({ ...rows, rows: [...rows.rows, { property, op: '==', value: '' }] })
   }
 
-  /** Todoist's words, read into the view's filter. The first list where a comma makes
-   *  several. */
   function readTyped() {
     const words = typed.trim()
     if (!words) return

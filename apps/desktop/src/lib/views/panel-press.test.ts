@@ -10,7 +10,6 @@ vi.mock('./open', () => ({
 
 const { choose, chosenIn, openInTab, sameRow, specOf } = await import('./panel-press')
 
-// #374: a row of the Tasks panel is chosen there; a tab is only ever asked for.
 describe('a press on a row of the Tasks panel', () => {
   test('chooses the row, and only Ctrl, Cmd or the middle button asks for a tab', () => {
     expect(choose({ button: 0 })).toBe('select')

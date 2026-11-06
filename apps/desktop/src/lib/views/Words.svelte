@@ -1,5 +1,4 @@
 <script lang="ts">
-  /** A line's words with their inline marks drawn rather than shown; see inline.ts. */
   import { pieces } from './inline'
 
   const { words }: { words: string } = $props()

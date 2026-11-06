@@ -1,13 +1,3 @@
-/** What the Tasks panel does to a project: makes one, makes one inside another, names
- *  it again. A project is a note in the space's projects folder (rows/projects.ts), so
- *  each of these is the file list's own operation on that note, and the file list, the
- *  panel and every view of the note follow it the way they follow any rename or move
- *  (workspace/file-ops.ts).
- *
- *  A project is made empty, Todoist's way, and not with its name as a heading: a
- *  heading in a project is a section, and the first section of every new project would
- *  otherwise be its own name. */
-
 import { folderFor } from '../folder-notes'
 import { projectsFolder } from '../rows/projects'
 import { t } from '../i18n.svelte'
@@ -26,7 +16,6 @@ import { type ProjectNode, projectNodes } from './project-tree'
 import { retitled } from './sections'
 import { templateWords } from './templates'
 
-/** A file name a project may have: the words, without what a file name cannot hold. */
 function projectName(words: string): string | null {
   const name = words
     .replace(/[\\/:*?"<>|]+/g, ' ')
@@ -35,8 +24,6 @@ function projectName(words: string): string | null {
   return name && !/^\.+$/.test(name) ? name : null
 }
 
-/** Whether a project's name is the one no note takes, which it is told to the space
- *  holding `path`; see `isAgentsName`. */
 function refused(path: string, name: string): boolean {
   if (!isAgentsName(`${name}.md`)) return false
   const root = workspace.rootHolding(path)
@@ -45,10 +32,6 @@ function refused(path: string, name: string): boolean {
   return true
 }
 
-/** A new, empty project in a folder, under the first free name its words make; answers
- *  its note on this disk, or null where the words make no name or the folder is in a
- *  space shared to be read, which takes no new note. Asked here, as every way a project
- *  is made comes through it. */
 async function made(folder: string, words: string, template?: string): Promise<string | null> {
   const name = projectName(words)
   if (name === null || !canWriteAt(folder) || refused(folder, name)) return null
@@ -60,14 +43,10 @@ async function made(folder: string, words: string, template?: string): Promise<s
   return path
 }
 
-/** A project at the top of the space's projects folder: empty, or from a template. */
 export function addProject(root: string, words: string, template?: string): Promise<string | null> {
   return made(projectsFolder(root), words, template)
 }
 
-/** A project inside another. A project that is a folder already takes it in; one that
- *  is a note becomes a folder with its note in it first, the file list's own nesting
- *  (`A.md` to `A/A.md`), exactly as a drop onto it would. */
 export async function addSubproject(
   parent: { note: string; folder: string | null },
   words: string,
@@ -80,8 +59,6 @@ export async function addSubproject(
   return joinPath(into, nameOf(path))
 }
 
-/** A project named again: a folder project's folder, which takes its note with it, or
- *  the note of one that is a note. */
 export async function renameProject(
   project: { note: string; folder: string | null },
   words: string,
@@ -97,21 +74,15 @@ export async function renameProject(
     await workspace.rename(project.note, `${name}.md`)
     note = joinPath(folderOf(project.note), `${name}.md`)
   }
-  // A title that said the old name says the new one: it is the project's name too.
   await rewriteNotes([{ path: note, after: (text) => retitled(text, was, name) }])
 }
 
-/** The projects of a space, as the panel draws them; `count` answers a note's open
- *  tasks. */
 function spaceProjects(root: string, count: (note: string) => number): ProjectNode[] {
   const folder = entryAt(workspace.tree, projectsFolder(root))
   if (!folder?.is_dir) return []
   return projectNodes(folder, (path) => workspace.arranged.listOf(path), count)
 }
 
-/** A project's note written empty where it is not there yet: a folder's namesake, which
- *  the panel shows before anything is in it. Answers whether it is there now: not where
- *  it would be made in a space shared to be read. */
 async function ensureProject(note: string): Promise<boolean> {
   if (workspace.notes.some((one) => samePath(one.path, note))) return true
   if (!canWriteAt(note)) return false
@@ -121,20 +92,13 @@ async function ensureProject(note: string): Promise<boolean> {
   return true
 }
 
-/** The inbox of a space, on this disk, whether it is there yet or not. */
 const inboxNoteAt = (root: string) => insideSpace(root, inboxOf(root))
 
-/** Whether there is anywhere in the open space to take a task or a section to: not in
- *  one shared to be read, where Move to is not offered. */
 export function offersPlaces(): boolean {
   const root = workspace.activeSpace?.root
   return root !== undefined && canWriteAt(root)
 }
 
-/** The places a task or a section can be taken to, as menu rows: the Inbox and every
- *  project of the open space, a sub-project under its parent's name. `go` is handed the
- *  note on this disk, made first where it is not there yet; `here` ticks a row. None
- *  where the open space is shared to be read: nothing can arrive there. */
 export function placeEntries(
   go: (note: string) => void,
   here: (note: string) => boolean = () => false,
@@ -171,8 +135,6 @@ export function placeEntries(
   return out
 }
 
-/** The project a note is, as the panel has it: a folder's namesake renamed with its
- *  folder. A note that is no project of the open space is one on its own. */
 export function projectAt(note: string): { note: string; folder: string | null } {
   const root = workspace.activeSpace?.root
   const walk = (nodes: readonly ProjectNode[]): ProjectNode | undefined => {
@@ -187,13 +149,8 @@ export function projectAt(note: string): { note: string; folder: string | null }
   return { note, folder: found?.folder ?? null }
 }
 
-/** Where a project is in the file list: its folder, or its note. */
 const placeOf = (project: { note: string; folder: string | null }) => project.folder ?? project.note
 
-/** A project put just before or after another, the file list's own Manual order of the
- *  folder they share (`placedBeside`), so the panel and the file list stay one order. A
- *  project from another folder is moved into that one first, as a drop there would.
- *  Nothing happens for a project put beside itself or inside its own sub-projects. */
 async function placeProject(
   moving: { note: string; folder: string | null },
   target: { note: string; folder: string | null },
@@ -219,7 +176,6 @@ async function placeProject(
   workspace.arranged.set(folder, names)
 }
 
-/** A new project just above or below another, Todoist's Add project above and below. */
 export async function addProjectBeside(
   target: { note: string; folder: string | null },
   words: string,

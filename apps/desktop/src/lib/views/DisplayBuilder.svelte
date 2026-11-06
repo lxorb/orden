@@ -1,11 +1,4 @@
 <script lang="ts">
-  /** Todoist's Display menu (#1046), in the view's head where a view is of tasks: the
-   *  layout (list, board, calendar), whether done tasks stay, then Sort - how it is
-   *  grouped and how it is sorted - and Filter - a priority, a label, when it was written
-   *  down, who it is assigned to - each folded away with a count of what differs from
-   *  the view as it came, a dot beside each such row, and Reset all at the foot
-   *  (display.ts). Every choice is a change of the view, kept where the view keeps its
-   *  changes: Todos and a project here, a base in its file. */
   import Hint from '../Hint.svelte'
   import { t } from '../i18n.svelte'
   import Select from '../Select.svelte'
@@ -47,7 +40,6 @@
 
   const live = $derived(kit.live)
   const view = $derived(live.view)
-  /** The view as it came, for a view Orden ships: what each row's default is. */
   const original = $derived.by(() => {
     if (kit.spec.builtin === undefined) return null
     return shippedBase(kit.spec).views[0] ?? null
@@ -61,7 +53,6 @@
   const only = $derived(view ? onlyOf(view) : {})
   const labels = $derived(labelsOf(live.rows))
   const project = $derived(kit.spec.builtin === 'project')
-  /** The projects a view of more than one can be narrowed to: not a project's own. */
   const notes = $derived(project ? [] : notesIn(live.rows))
   const assignees = $derived(assigneesOf(live.rows))
   const spaces = $derived(
@@ -72,12 +63,9 @@
         )
       : [],
   )
-  /** Who a task is assigned to is a question in a space shared with others. */
   const shared = $derived(assignees.length > 0 || live.rows.some((one) => one.file.shared))
   const changed = $derived(view ? changedFrom(view, original) : { sort: 0, filter: 0, total: 0 })
 
-  /** The grouping and the sorting as the menu names them: the view's own as it came
-   *  under the name of what it is, where it has one. */
   const groupingShown = $derived(grouping === 'default' ? shippedGrouping(original) : grouping)
   const sortingShown = $derived(
     sorting.sorting === 'default' ? shippedSorting(original) : sorting.sorting,
@@ -87,7 +75,6 @@
 
   const groupings = $derived.by(() => {
     const offered: Grouping[] = groupingsFor(project)
-    // What the view is grouped by now is always a choice, whatever it is.
     if (!offered.includes(groupingShown)) offered.push(groupingShown)
     return offered
   })
@@ -128,7 +115,6 @@
   function group(next: string) {
     const chosen = GROUPINGS.find((one) => one === next)
     if (!chosen) return
-    // The view's own grouping, chosen again, is the view as it came, its order and all.
     const back = chosen === shippedGrouping(original) && original !== null
     kit.change((base, at) => withGrouping(base, at, back ? 'default' : chosen, original))
   }
@@ -142,7 +128,6 @@
     )
   }
 
-  /** The view narrowed by one choice more, or by one less where All was chosen. */
   function narrow(change: Partial<Record<keyof Only, string>>) {
     const next: Only = { ...only }
     if (change.priority !== undefined) {
@@ -179,8 +164,6 @@
     kit.change((base, at) => withOnly(base, at, next))
   }
 
-  /** Everything back as the view came: a view Orden ships as it shipped, a base's
-   *  narrowing and its done tasks as a plain list has them. */
   function resetAll() {
     if (onreset) {
       onreset()
@@ -332,8 +315,6 @@
         />
       </div>
     {/if}
-    <!-- Todos' grouping already says when each task is due; another view of tasks can be
-         narrowed to a day. -->
     {#if kit.spec.builtin !== 'todos' || only.date !== undefined}
       <div class="pair">
         <span class="name">{t('Date')}{@render dot(only.date !== undefined)}</span>

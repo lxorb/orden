@@ -1,16 +1,3 @@
-/** What a row dropped into a group means: the change that makes the row belong there.
- *
- *  A board's columns, the days of Upcoming and the calendar, Today's two halves and a
- *  project's headings are all groups of one property, so a drop is one question asked
- *  of that property: which value would put this row in that group? A status column
- *  answers with the box's character, a day with the date, a heading with a move of the
- *  line, a note property with the property. A group whose property no row can be
- *  written through (a formula, a file's size) answers nothing, and the card goes back.
- *
- *  Pure. The tab writes what this answers through the one write path, or ticks
- *  through the engine where the answer is "done", so a recurring task dropped on Done
- *  makes its next occurrence as a tick in the editor would. */
-
 import { deadlineField, deadlineOf, startField, startOf } from '@orden/markdown/task-dates'
 import {
   addDays,
@@ -27,12 +14,7 @@ import { bare, isNoteProperty } from './columns'
 import { dayIn } from './values'
 
 export type Drop =
-  /** A field or a property written. */
-  | { change: RowChange }
-  /** The task ticked, as its box would be. */
-  | { tick: true }
-  /** The task's lines moved under another heading of its note, or to another note. */
-  | { move: { path?: string; heading?: string } }
+  { change: RowChange } | { tick: true } | { move: { path?: string; heading?: string } }
 
 type DateField = 'due' | 'scheduled' | 'start' | 'deadline'
 const DATE_FIELDS: readonly string[] = ['due', 'scheduled', 'start', 'deadline']
@@ -41,14 +23,12 @@ const isDateField = (field: string): field is DateField => DATE_FIELDS.includes(
 export const isPriority = (value: Value): value is Priority =>
   typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 6
 
-/** One date field set, or taken away. */
 function dated(field: DateField, day: string | null): TaskChange {
   const change: TaskChange = {}
   change[field] = day
   return change
 }
 
-/** What a task row dropped into a group of one of its own fields means. */
 function taskDrop(field: string, key: Value, row: Row, today: string): Drop | null {
   const task = row.task
   if (!task) return null
@@ -71,9 +51,6 @@ function taskDrop(field: string, key: Value, row: Row, today: string): Drop | nu
   if (isDateField(field) || field === 'date') {
     const day = key === null ? null : dayIn(key)
     if (key !== null && day === null) return null
-    // `task.date` and `task.start` are the day the task starts, `task.deadline` its
-    // deadline, each as its space reads a `📅` (#371): a drop moves the field that holds
-    // it, and gives a task with none a `🛫` or a `[deadline::]`.
     const reads = task.dueReads
     const which: DateField =
       field === 'date' || field === 'start'
@@ -82,11 +59,6 @@ function taskDrop(field: string, key: Value, row: Row, today: string): Drop | nu
           ? deadlineField(task, reads)
           : field
     const change = dated(which, day)
-    // A task whose deadline has passed is late by that deadline, so a drop on a day
-    // moves the deadline there, as Todoist's drag reschedules an overdue task: it
-    // leaves Overdue and shows on that day. Its start, where it has one, moves with it;
-    // one with a deadline alone gets no start date. Upcoming's days, its week strip,
-    // the calendar's days and hours (`hourDrop`) and the agenda all drop here.
     const deadline = deadlineOf(task, reads)
     const late = field === 'date' && day !== null && !task.done && !task.cancelled
     if (late && deadline !== undefined && deadline < today) {
@@ -108,12 +80,6 @@ function taskDrop(field: string, key: Value, row: Row, today: string): Drop | nu
   return null
 }
 
-/** The drop into the group keyed `key` of a view grouped by `property`, or null
- *  where no write would put the row there. `today` is the reader's day. `from` is the
- *  key of the group the row was carried out of, where it was in one: a card of a list
- *  sits in a column per member, and carrying it from one to another swaps that member
- *  alone, carrying it to the group of no value takes that member out, and carrying it
- *  out of the group of no value adds one. */
 export function dropInto(
   property: string,
   key: Value,
@@ -121,8 +87,6 @@ export function dropInto(
   today: string,
   from?: Value,
 ): Drop | null {
-  // A task carried from one label to another swaps that label alone, as a list
-  // property's card does; to no label, it loses that one (#1046).
   if (property === 'task.tags') {
     const task = row.task
     if (!task) return null
@@ -134,9 +98,6 @@ export function dropInto(
   }
   if (property.startsWith('task.')) return taskDrop(property.slice(5), key, row, today)
 
-  // Todos' groups of when a task is due (`WHEN` in @orden/bases): today and tomorrow are
-  // its deadline, no date takes the deadline away. Overdue and Later name no one day, so
-  // a card carried there goes back; the scheduler is the way to a day of them.
   if (isWhen(property)) {
     if (!row.task || row.task.done || row.task.cancelled) return null
     if (key === 'today') return taskDrop('deadline', today, row, today)
@@ -145,19 +106,14 @@ export function dropInto(
     return null
   }
 
-  // The built-in views' own groupings: Today's overdue half and its today half, and
-  // Upcoming's days. Their names are the builtins' (see builtins.ts in @orden/bases).
-  // Out of the overdue half, a task is due today: its deadline is what made it late.
   if (property === 'formula.overdue') {
     return key === false && row.task ? taskDrop('deadline', today, row, today) : null
   }
-  // Completed's days are the days its tasks were done, which no drop changes.
   if (property === 'formula.day') {
     const task = row.task
     return task && !task.done && !task.cancelled ? taskDrop('date', key, row, today) : null
   }
 
-  // A task grouped by the note it is in moves to that note.
   if ((property === 'file.path' || property === 'file.basename') && row.kind === 'task') {
     if (typeof key !== 'string' || !key) return null
     const { space, path } = property === 'file.path' ? placeOfKey(key) : { space: null, path: key }
@@ -172,9 +128,6 @@ export function dropInto(
   return { change: { note: { [name]: next } } }
 }
 
-/** A row let go on an hour of a calendar placed by `property`: the drop on that day,
- *  and the time where it was let go when the day is the one the task starts on, is
- *  scheduled for or is due (a deadline has no time). */
 export function hourDrop(
   property: string,
   day: string,
@@ -188,10 +141,6 @@ export function hourDrop(
   return { change: { ...drop.change, task: { ...drop.change.task, time } } }
 }
 
-/** A list with the member it was carried out of (`from`) swapped for `key`: taken out
- *  where `key` is no value, added where it came from no value. Carried from nowhere
- *  known, or from a group that was the whole list, the list becomes that one member, as a
- *  drop always made it. */
 function swapped(now: readonly Value[], key: Value, from: Value | undefined): Value {
   if (Array.isArray(key)) return key
   if (from === undefined || Array.isArray(from)) return key === null ? null : [key]

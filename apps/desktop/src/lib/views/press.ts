@@ -1,9 +1,3 @@
-/** A button cell pressed (docs/tasks.md 5.13): what the base's button says, done to
- *  the row. Its properties and its task are one write of the row's note; a palette
- *  command and an address come after, each the way a link would ask for one, because
- *  a base can be written by anybody a space is shared with and a press should never
- *  do what a link to the same command could not. */
-
 import { type Base, pressed, readButtons, type Row } from '@orden/bases'
 import { openExternal } from '../tauri'
 import { pressRow } from './act'

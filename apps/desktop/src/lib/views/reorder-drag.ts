@@ -1,31 +1,12 @@
-/** One of a list's own things carried to another place in it, Todoist's drag to
- *  reorder: a project up or down the Tasks panel (`placeProject`), a board's column
- *  along the board (`placedSection`). Past a few pixels with a mouse or a pen it is
- *  lifted, the one under the pointer shows a line on the side it would land on, and
- *  letting go places it there. Escape puts it back, and the press that ends a drag opens
- *  nothing.
- *
- *  A Svelte action on each, which says what it carries and among what:
- *
- *      <div use:reorderDrag={{ id: node.note, among: 'project', place }}>
- *
- *  It lands on the ones wearing `data-<among>`, whose value is the id `place` is handed;
- *  `across` reads the pointer left and right rather than up and down. Under a finger a
- *  held one is its menu, as everywhere else, so a drag is a pointer's. */
-
-/** How far a pointer travels before it is a drag. */
 const SLOP = 6
 
 export interface Carry {
-  /** What it is, as `data-<among>` names it; empty for one that is not carried. */
   id: string
   among: string
-  /** Along a row of them rather than down a column. */
   across?: boolean
   place: (moving: string, target: string, after: boolean) => void
 }
 
-/** Which half of a thing a point is over: past the middle lands after it. */
 export function landsAfter(at: number, start: number, size: number): boolean {
   return at > start + size / 2
 }
@@ -50,13 +31,11 @@ export function reorderDrag(node: HTMLElement, start: Carry) {
     )
   }
 
-  /** What is carried: the one the action is on, or the one it is the handle of. */
   const carried = () => node.closest<HTMLElement>(`[data-${carry.among}]`) ?? node
 
   const lift = () => {
     lifted = true
     carried().classList.add('is-carried')
-    // A drag is not a selection: nothing it passes over is chosen on the way.
     window.getSelection()?.removeAllRanges()
     document.documentElement.classList.add('nib-unselectable')
   }

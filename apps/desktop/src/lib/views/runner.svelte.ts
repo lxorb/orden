@@ -1,16 +1,3 @@
-/** A space's bases at work while Orden runs (docs/tasks.md 5.13): their automations and
- *  their ids on every change to a note, and the repeating templates on their days.
- *
- *  Fetched with the rows (rows/rows.svelte.ts), at the launch order's last turn and never
- *  in the first paint; importing this is starting it. It reads the open space's `.base` files
- *  once and again when one is written, keeps only the ones that automate something or
- *  number their rows, and listens to the rows (`rows.watch`), one note at a time.
- *
- *  What a change brings about is written as one edit joined to the undo of the edit
- *  that caused it (`writeEach(…, true)`), so one Ctrl+Z takes both back; and the change
- *  that write makes is the runner's own and is not run again, so automations never set
- *  each other off. A move is a file operation and is undone as one. */
-
 import { untrack } from 'svelte'
 import { links } from '../link-index.svelte'
 import { rows } from '../rows/rows.svelte'
@@ -18,7 +5,6 @@ import { workspace } from '../workspace.svelte'
 import { basesAre, heardChange, readHeld, repeatTemplates } from './running'
 
 $effect.root(() => {
-  // The open space's base files, read again whenever the list of them changes.
   $effect(() => {
     const paths = workspace.files.filter((one) => /\.base$/i.test(one.name)).map((one) => one.path)
     untrack(() => basesAre(paths))
@@ -31,8 +17,6 @@ links.hearSaves((path) => {
 
 rows.watch(heardChange)
 
-// Once the rows are all read, and then every half hour, which also catches the day
-// turning over.
 const repeat = () => void repeatTemplates().catch(() => undefined)
 if (rows.ready) repeat()
 else {

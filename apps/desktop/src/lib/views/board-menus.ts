@@ -1,11 +1,3 @@
-/** A board's two menus, Notion's: a column's (rename its option, its colour, hide it,
- *  move it, delete the option; a value no option holds can become one or be merged
- *  into one) and a card's (open it, move it to a group, duplicate it, copy a link to
- *  it, delete it). And what their rows write: an option renamed is renamed in this
- *  base's notes and in every key the base keeps it under, as one undo; an option
- *  deleted takes the value out of this base's notes, and those cards go to the group
- *  of no value. */
-
 import {
   type Base,
   type Group,
@@ -25,7 +17,6 @@ import { forgottenGroup, renamedGroup, setHidden, setProperty } from './edit'
 import { notePath, type Kit } from './kit'
 import { clearedInBase, optionsAt, renamedInBase } from './options'
 
-/** The six tones as a menu names them, in the canvas's order. */
 const TONES: readonly { tone: string; label: () => string }[] = [
   { tone: '1', label: () => t('Red') },
   { tone: '2', label: () => t('Orange') },
@@ -41,7 +32,6 @@ function writeOptions(kit: Kit, property: string, next: SelectOption[]) {
   )
 }
 
-/** A choice renamed: in the options, in this base's notes, and in its keys. */
 export function renameOption(kit: Kit, property: string, from: string, to: string): boolean {
   const base = kit.live.base
   const value = to.trim()
@@ -66,7 +56,6 @@ export function renameOption(kit: Kit, property: string, from: string, to: strin
   return true
 }
 
-/** A choice's tone, or none. */
 function toneOption(kit: Kit, property: string, value: string, tone: string | null) {
   const base = kit.live.base
   if (!base) return
@@ -83,7 +72,6 @@ function toneOption(kit: Kit, property: string, value: string, tone: string | nu
   )
 }
 
-/** A value the notes hold and no option does, made one, in the next tone. */
 function addAsOption(kit: Kit, property: string, value: string) {
   const base = kit.live.base
   if (!base) return
@@ -92,7 +80,6 @@ function addAsOption(kit: Kit, property: string, value: string) {
   writeOptions(kit, property, [...options, { value, tone: String((options.length % 6) + 1) }])
 }
 
-/** A value the notes hold written as another, in this base's notes. */
 function mergeInto(kit: Kit, property: string, from: string, to: string) {
   const base = kit.live.base
   if (!base || from === to) return
@@ -103,7 +90,6 @@ function mergeInto(kit: Kit, property: string, from: string, to: string) {
   ])
 }
 
-/** A choice taken away, and its value out of this base's notes. */
 function deleteOption(kit: Kit, property: string, value: string) {
   const base = kit.live.base
   if (!base) return
@@ -125,21 +111,15 @@ export interface ColumnAsk {
   event: MouseEvent
   property: string
   group: Group
-  /** What the column is called, for the menu's title. */
   name: string
-  /** Whether a note property's option is behind the column, and whether its value is
-   *  one the notes hold and no option does. */
   option: SelectOption | undefined
   unlisted: boolean
-  /** The columns' keys as text, as they stand, for Move left and Move right. */
   names: readonly string[]
   rename: () => void
   move: (step: -1 | 1) => void
-  /** Rows of the column's own, ahead of the rest: a section's. */
   extra?: MenuEntry[]
 }
 
-/** A column's menu. */
 export function columnEntries(ask: ColumnAsk): MenuEntry[] {
   const { kit, event, property, group, option, unlisted, names } = ask
   const name = groupName(group.key)
@@ -213,17 +193,14 @@ export interface CardAsk {
   kit: Kit
   event: MouseEvent
   row: Row
-  /** The groups a card can be moved to, by key, with what they are called. */
   targets: readonly { key: Value; name: string; here: boolean }[]
   move: (key: Value) => void
 }
 
-/** A link to a note, as a property or a link in a note writes it. */
 function noteLink(row: Row): string {
   return `[[${row.path.replace(/\.md$/i, '')}]]`
 }
 
-/** A card's menu. */
 export function cardEntries(ask: CardAsk): MenuEntry[] {
   const { kit, event, row, targets } = ask
   const path = notePath(row)
@@ -271,7 +248,6 @@ export function cardEntries(ask: CardAsk): MenuEntry[] {
   ]
 }
 
-/** Whether the base names a choice for this value of the property. */
 export function optionFor(
   base: Base | null,
   property: string,

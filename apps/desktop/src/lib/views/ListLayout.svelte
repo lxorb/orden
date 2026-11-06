@@ -1,20 +1,4 @@
 <script lang="ts">
-  /** The list layout: the view's groups, each a head with its count and its rows, the
-   *  sub-tasks under their parents, and an add row at the end (docs/tasks.md 5.9).
-   *
-   *  A task is Todoist's card of up to three lines (TaskRow.svelte, #1043), and how many
-   *  is arithmetic over what it carries (task-meta.ts), so the list still keeps a window
-   *  of what is on screen without measuring a row: a Completed of ten thousand lines
-   *  mounts thirty (`Heights`, the chat's own). The three heights a line can be, and the
-   *  card's padding with the room under it, are read off a probe once, and again when
-   *  the box is resized. The keyboard walks the
-   *  rows and every key of row-keys.ts works on the one it is on, or on every one
-   *  selected (x, Ctrl or Shift and a press), with the bulk bar at the foot of the list
-   *  for the same with a pointer. In a project grouped by its sections each head has the
-   *  section's menu (section-actions.ts) and the list ends in Add section; which groups
-   *  are folded is kept on this device (kept-views.ts). A row carried onto
-   *  another group is written into it; onto another task of its own note, it moves its
-   *  lines there. */
   import { groupName, type Row, type Value } from '@orden/bases'
   import { untrack } from 'svelte'
   import { Heights } from '../chats/view/window'
@@ -69,16 +53,10 @@
     reveal,
   }: {
     kit: Kit
-    /** Whether a row says its date: not where the groups are the days. */
     dated?: boolean
-    /** Whether a row says which note it is in: not in a project's own view. */
     where?: boolean
-    /** Every day from one through another drawn, empty ones too: Upcoming. */
     days?: { from: string; through: string } | undefined
-    /** Told when the rows drawn come near the end of the list, for one that grows. */
     onnearend?: (() => void) | undefined
-    /** An item to scroll to the top, and a count that says each new ask (AddRow's
-     *  `asked`). */
     reveal?: { id: string; asked: number } | undefined
   } = $props()
 
@@ -86,30 +64,21 @@
   const view = $derived(live.view)
   const property = $derived(view?.groupBy?.property)
 
-  /** Groups folded, and parents whose sub-tasks are folded: replaced whole on each
-   *  press (`toggled`), so plain state is all they need. The groups are as the view was
-   *  left on this device. */
   const kept = untrack(() => viewKey(kit.spec, kit.file))
   let folded = $state.raw<ReadonlySet<string>>(untrack(() => foldsOf(kept)))
   function fold(name: string) {
     folded = toggled(folded, name)
     keepFolds(kept, folded)
   }
-  /** The project the view is of, grouped by its sections: the heads are its sections. */
   const project = $derived(property === 'task.section' ? projectOf(kit) : null)
-  /** The section whose head is a field, being named again; the field at the end, open. */
   let renaming = $state<string | null>(null)
   let naming = $state(false)
   let shut = $state.raw<ReadonlySet<string>>(EMPTY)
   let selected = $state<string | null>(null)
-  /** The row whose task is being changed in its own field, Todoist's inline editor. */
   let editing = $state<string | null>(null)
-  /** The rows selected, by item, and the one a Shift and a press counts from. */
   let picked = $state.raw<ReadonlySet<string>>(EMPTY)
   let pickedFrom: string | null = null
-  /** The add row Q asked for, by group name, and how many times; see AddRow's `asked`. */
   let adding = $state({ group: '', count: 0 })
-  /** The groups' note names, for what each group is called. */
   const names = $derived(noteNames((live.answer?.groups ?? []).map((group) => group.key)))
 
   const items = $derived(
@@ -136,18 +105,15 @@
     ),
   )
   const rows = $derived(items.flatMap((item) => (item.kind === 'row' ? [item] : [])))
-  /** The rows selected that are still in the list: a task completed out of it goes. */
   const pickedRows = $derived(picked.size ? rows.filter((one) => picked.has(one.id)) : [])
   const pickedTasks = $derived([...new Set(pickedRows.map((one) => one.row))])
 
-  /** A row selected or let go; `range` selects every row from the last one pressed. */
   function pick(id: string, range: boolean) {
     const order = rows.map((one) => one.id)
     picked = withPicked(picked, order, id, range ? pickedFrom : null)
     pickedFrom = id
   }
 
-  /** Enter writes a field's words, Escape leaves them; either way the field goes. */
   function named(event: KeyboardEvent, write: (words: string) => void) {
     event.stopPropagation()
     if (event.key !== 'Enter' && event.key !== 'Escape') return
@@ -164,13 +130,10 @@
     pickedFrom = null
   }
 
-  /** Every task's sub-tasks, counted over all the rows the view is over. */
   const subtasks = $derived(subtaskCounts(live.rows))
   const countsOf = (row: Row) =>
     row.anchor ? subtasks.get(taskKey(row.space, row.path, row.anchor.line)) : undefined
 
-  /** How many lines each item is drawn on: a task as many as it has things to say,
-   *  everything else one. */
   const lines = $derived(
     items.map((item) => {
       const task = item.kind === 'row' ? item.row.task : undefined
@@ -181,8 +144,6 @@
 
   let list = $state<HTMLElement>()
   let probe = $state<HTMLElement>()
-  /** The three heights a task's lines come in, and what its card adds round them (its
-   *  padding and the room under it), read off the probe. */
   let pitch = $state({ head: 28, line: 18, foot: 6, card: 18 })
   const win = new ListView()
   $effect(() => {
@@ -201,8 +162,6 @@
     )
   })
 
-  /** How much taller than its row an item is drawn while a field stands in it: the one
-   *  height measured, the editor's, so the rows under it make room as Todoist's do. */
   let grown = $state.raw<Record<string, number>>({})
   function grow(id: string, by: number) {
     const now = Math.max(0, Math.round(by))
@@ -210,7 +169,6 @@
     grown = now ? { ...grown, [id]: now } : without(grown, id)
   }
 
-  /** How tall an item is drawn at rest. */
   function restingHeight(item: (typeof items)[number], many: number): number {
     const row = win.row || 28
     const { head, line, foot, card } = pitch
@@ -224,13 +182,10 @@
         items.map((item, at) => restingHeight(item, lines[at] ?? 1) + (grown[item.id] ?? 0)),
       ),
   )
-  // A list that grows is told as its end comes into the window, not before.
   $effect(() => {
     if (onnearend && items.length && shown.last >= items.length - 12) untrack(onnearend)
   })
 
-  /** Scrolls an item to the top of the box the list scrolls in, whether it is drawn
-   *  yet or not: where it is is arithmetic. */
   function scrollTo(id: string): void {
     const at = items.findIndex((item) => item.id === id)
     const box = win.box
@@ -254,8 +209,6 @@
     }
   })
 
-  /** A row let go over another row: within its own note, its lines move beside that
-   *  one's; anywhere else, it joins that row's group. */
   function landOnRow(
     target: Row,
     key: Value,
@@ -336,11 +289,8 @@
     if (key.kind === 'tick' || key.kind === 'delete') unpick()
   }
 
-  /** The bulk bar's own room, which a press in does not clear the selection from. */
   let bulk = $state<HTMLElement>()
 
-  // A press past the rows selected, or past the one row the keyboard is on, lets them go
-  // (#1110); see pressed-away.ts.
   $effect(() => {
     if (selected === null && !picked.size) return
     return untrack(() =>
@@ -362,9 +312,6 @@
     )
   }
 
-  /** Where the keyboard's row was, so a row that leaves the list - completed out of
-   *  Today, its date taken away - hands the keyboard to the one that takes its place,
-   *  as Todoist's does, rather than to nothing, where no key of the view is heard. */
   let selectedAt = 0
   $effect(() => {
     const now = rows
@@ -559,10 +506,6 @@
 {/if}
 
 <style>
-  /* A task's three heights: the line of its words, each line under them, and the room
-     under the last; and its card's padding over and under them, and the room between
-     it and the next. Read back by the probe, so the arithmetic and the drawing are one
-     number each. */
   .list {
     --task-head: var(--row-height);
     --task-line: 18px;
@@ -688,7 +631,6 @@
     margin: var(--space-3) var(--space-2);
   }
 
-  /* Todoist's line between sections that offers one more: quiet until pointed at. */
   .add-section {
     flex: none;
     display: flex;
@@ -724,7 +666,6 @@
     letter-spacing: 0;
   }
 
-  /* No box of its own: the bar inside is held to the foot of what scrolls. */
   .bulk {
     display: contents;
   }

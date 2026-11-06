@@ -87,9 +87,6 @@ describe('a base changed from the head', () => {
     expect(setSort(base, 0, []).views[0]?.sort).toEqual([])
   })
 
-  /** Filters Orden cannot read are kept as written until the view is given its own,
-   *  and taking a view's filters away is giving it none: the old ones must not
-   *  come back on the next write. */
   test('takes away filters it could not read, and does not bring them back', () => {
     const source = 'views:\n  - type: table\n    name: A\n    filters:\n      xor:\n        - b\n'
     const read = readBase(source)
@@ -113,14 +110,11 @@ describe('a base changed from the head', () => {
 
   test("a reorder of the cards on screen keeps the hidden cards' places", () => {
     const stored = setManualOrder(base, 0, 'To do', ['a', 'h1', 'b', 'h2', 'c'])
-    // Searched down to a, b and c, then c carried to the top.
     expect(setManualOrder(stored, 0, 'To do', ['c', 'a', 'b']).views[0]?.nib.order).toEqual({
       'To do': ['c', 'h1', 'a', 'h2', 'b'],
     })
-    // A card new to the order rides with the card before it on screen.
     expect(mergedOrder(['a', 'h', 'b'], ['a', 'x', 'b'])).toEqual(['a', 'x', 'h', 'b'])
     expect(mergedOrder(['a', 'h', 'b'], ['x', 'b', 'a'])).toEqual(['x', 'b', 'h', 'a'])
-    // None of the shown cards had a place yet: they come after the stored ones.
     expect(mergedOrder(['h'], ['a', 'b'])).toEqual(['h', 'a', 'b'])
     expect(mergedOrder([], ['b', 'a'])).toEqual(['b', 'a'])
   })
@@ -229,7 +223,6 @@ describe('a drop into a group', () => {
     expect(dropInto('formula.day', { kind: 'date', iso: '2026-10-09' }, bank, TODAY)).toEqual({
       change: { task: { due: '2026-10-09' } },
     })
-    // Out of overdue is a deadline of today: only a deadline makes a task late (#371).
     expect(dropInto('formula.overdue', false, bank, TODAY)).toEqual({
       change: { task: { deadline: TODAY } },
     })
@@ -241,7 +234,6 @@ describe('a drop into a group', () => {
       change: { note: { status: 'Done' } },
     })
     expect(dropInto('note.status', 'To do', noteRow('Bug.md', 'status: To do'), TODAY)).toBeNull()
-    // A list stays a list.
     expect(dropInto('note.tags', 'c', noteRow('Bug.md', 'tags: [b]'), TODAY)).toEqual({
       change: { note: { tags: ['c'] } },
     })
@@ -256,7 +248,6 @@ describe('a drop into a group', () => {
       if (row.task) row.task.dueReads = 'deadline'
       return row
     }
-    // Its deadline is what made it late, and that is the day it now shows on.
     expect(dropInto('formula.day', day, vault('- [ ] Pay bill 📅 2026-10-01'), TODAY)).toEqual({
       change: { task: { due: '2026-10-09' } },
     })
@@ -264,7 +255,6 @@ describe('a drop into a group', () => {
     expect(dropInto('formula.day', day, nib, TODAY)).toEqual({
       change: { task: { deadline: '2026-10-09' } },
     })
-    // A start date moves with it, so the task is on that day and not before.
     const started = vault('- [ ] Pay bill 🛫 2026-09-28 📅 2026-10-01')
     expect(dropInto('formula.day', day, started, TODAY)).toEqual({
       change: { task: { start: '2026-10-09', due: '2026-10-09' } },
@@ -274,15 +264,12 @@ describe('a drop into a group', () => {
     expect(change && changedTask('- [ ] Pay bill 🛫 2026-09-28 📅 2026-10-01', change)).toBe(
       '- [ ] Pay bill 🛫 2026-10-09 📅 2026-10-09',
     )
-    // The same on Upcoming's week strip, the calendar and the agenda, which drop on the
-    // task's date.
     expect(
       dropInto('task.date', '2026-10-09', vault('- [ ] Pay bill 📅 2026-10-01'), TODAY),
     ).toEqual({ change: { task: { due: '2026-10-09' } } })
     expect(dropInto('task.date', '2026-10-09', started, TODAY)).toEqual({
       change: { task: { start: '2026-10-09', due: '2026-10-09' } },
     })
-    // And on an hour of the calendar's week or day, with the time where it was let go.
     const bill = vault('- [ ] Pay bill 🔁 every month 📅 2026-10-01')
     expect(hourDrop('task.date', '2026-10-09', '10:00', bill, TODAY)).toEqual({
       change: { task: { due: '2026-10-09', time: '10:00' } },
@@ -290,20 +277,17 @@ describe('a drop into a group', () => {
     expect(hourDrop('task.date', '2026-10-09', '10:00', started, TODAY)).toEqual({
       change: { task: { start: '2026-10-09', due: '2026-10-09', time: '10:00' } },
     })
-    // A calendar placed by another date moves that one, and a time only with a start.
     expect(hourDrop('task.deadline', '2026-10-09', '10:00', started, TODAY)).toEqual({
       change: { task: { due: '2026-10-09' } },
     })
     expect(hourDrop('note.when', '2026-10-09', '10:00', bill, TODAY)).toEqual({
       change: { note: { when: '2026-10-09' } },
     })
-    // A done task is late no longer, and Completed's days are the days it was done.
     const paid = vault('- [x] Pay bill 📅 2026-09-01 ✅ 2026-09-03')
     expect(dropInto('formula.day', day, paid, TODAY)).toBeNull()
     expect(dropInto('task.date', '2026-10-09', paid, TODAY)).toEqual({
       change: { task: { start: '2026-10-09' } },
     })
-    // A deadline still to come stays where it is.
     const later = vault('- [ ] Pay bill 🛫 2026-10-02 📅 2026-10-20')
     expect(dropInto('formula.day', day, later, TODAY)).toEqual({
       change: { task: { start: '2026-10-09' } },
@@ -315,18 +299,15 @@ describe('a drop into a group', () => {
     expect(dropInto('note.tags', 'Mac', card, TODAY, 'iOS')).toEqual({
       change: { note: { tags: ['Sync', 'Mac'] } },
     })
-    // Onto a member it already holds: the one it came from goes.
     expect(dropInto('note.tags', 'Sync', card, TODAY, 'iOS')).toEqual({
       change: { note: { tags: ['Sync'] } },
     })
-    // Onto no value: that member alone goes, and the last one takes the key away.
     expect(dropInto('note.tags', null, card, TODAY, 'iOS')).toEqual({
       change: { note: { tags: ['Sync'] } },
     })
     expect(dropInto('note.tags', null, noteRow('a.md', 'tags: [iOS]'), TODAY, 'iOS')).toEqual({
       change: { note: { tags: null } },
     })
-    // Out of no value: one added.
     expect(dropInto('note.tags', 'iOS', noteRow('a.md', 'tags: []'), TODAY, null)).toEqual({
       change: { note: { tags: ['iOS'] } },
     })
@@ -527,7 +508,6 @@ describe('the filter builder on empty values', () => {
         })
       }
     }
-    // A bare property asks whether it is true, not whether it is empty.
     expect(rowOf('!note.cover')).toEqual({ kept: '!note.cover' })
     expect(rowOf('note.cover')).toEqual({ kept: 'note.cover' })
   })
@@ -553,20 +533,16 @@ describe('the filter builder on empty values', () => {
       { ...typed, nib: { ...typed.nib, properties: { size: { format: 'percent', kept: {} } } } },
       notes,
     )
-    // Text, a date or a list: the old rows mean what new ones do.
     expect(rowOf('!note.cover', holds)).toEqual({ property: 'note.cover', op: 'empty', value: '' })
     expect(rowOf('note.when', holds)).toEqual({ property: 'note.when', op: 'filled', value: '' })
     expect(rowOf('!task.due', holds)).toEqual({ property: 'task.due', op: 'empty', value: '' })
-    // A number or a checkbox, where 0 and false are not true but are there: kept as written.
     expect(rowOf('note.estimate', holds)).toEqual({ kept: 'note.estimate' })
     expect(rowOf('!note.done', holds)).toEqual({ kept: '!note.done' })
     expect(rowOf('note.size', holds)).toEqual({ kept: 'note.size' })
-    // A property no note has a value for may yet hold a number: kept as written.
     expect(rowOf('note.nothing', holds)).toEqual({ kept: 'note.nothing' })
     expect(rowOf('!task.done', holds)).toEqual({ kept: '!task.done' })
     expect(rowOf('task.priority', holds)).toEqual({ kept: 'task.priority' })
     expect(rowOf('formula.x', holds)).toEqual({ kept: 'formula.x' })
-    // Saved again, an older row is written the new way.
     const rows = rowsOf({ and: ['!note.cover', 'note.estimate'] }, holds)
     expect(filterOf(rows, holds)).toEqual({ and: ['note.cover.isEmpty()', 'note.estimate'] })
   })
@@ -672,7 +648,6 @@ describe('the timeline', () => {
 
   const read = () => null
   test('runs a task from its start to its deadline and writes what a drag moved', () => {
-    // Beside a `🛫`, a `📅` is the deadline (#371).
     const talk = taskRow('T.md', '- [ ] Talk 🛫 2026-10-05 📅 2026-10-08')
     const bar = barOf(talk, {}, read)
     expect(bar).toMatchObject({
@@ -796,7 +771,6 @@ describe('the keys of a row', () => {
     expect(on('k')).toEqual({ kind: 'step', by: -1 })
     expect(on('Enter')).toEqual({ kind: 'open' })
     expect(on('o')).toEqual({ kind: 'note' })
-    // Space ticks the card the focus is on, as its box would (#1043).
     expect(on(' ')).toEqual({ kind: 'tick' })
     expect(on('e')).toEqual({ kind: 'tick' })
     expect(on('Enter', { ctrlKey: true })).toEqual({ kind: 'tick' })
@@ -849,14 +823,12 @@ describe('the panel', () => {
   test('counts every space’s Todos as its view answers it, and the notes and labels', () => {
     const rows = [
       taskRow('Inbox.md', '- [ ] Idea'),
-      // Late by its deadline: a start date past is never late (#371).
       taskRow('Errands.md', '- [ ] Late #admin [deadline:: 2026-10-01]'),
       taskRow('Errands.md', '- [ ] Now 📅 2026-10-04', 1),
       taskRow('Thesis.md', '- [ ] Later #admin 📅 2026-10-09'),
       taskRow('Thesis.md', '- [x] Done ✅ 2026-10-01', 1),
     ]
     const counts = panelCounts(rows, TODAY, 'Notes')
-    // Later's start date has not come, so it waits (#371); the done one is out.
     expect(counts).toMatchObject({ todos: 3, overdue: true })
     expect(panelCounts(rows, TODAY, 'Elsewhere').todos).toBe(3)
     expect(counts.notes.map((one) => `${one.name} ${one.count}`).sort()).toEqual([

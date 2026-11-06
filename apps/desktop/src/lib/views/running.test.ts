@@ -1,12 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Where a base's automations and a repeating template put a note.
- *
- *  Both are told the folder by words anybody who can write the space can write: a
- *  base's `move` effect, and the template's `folder:` property. Joined to the root as
- *  written, `../Private` moved a note into another space, or made the day's note
- *  there over whatever was there. */
-
 const { written, template, moved, plan, before, writing, trusted, ran } = vi.hoisted(() => ({
   trusted: { yes: true },
   ran: [] as { base: { guarded?: boolean } }[][],
@@ -21,7 +14,6 @@ const { written, template, moved, plan, before, writing, trusted, ran } = vi.hoi
 vi.mock('@orden/bases', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@orden/bases')>()),
   repeatDue: () => ({ day: '2026-10-24', missed: [] }),
-  // Every base is one worth running.
   readBase: () => ({ nib: { id: 'tasks' } }),
   readAutomations: () => [],
 }))
@@ -80,7 +72,6 @@ vi.mock('../workspace/write-file', () => ({
   writeFile: async (path: string, content: string) => void written.set(path, content),
 }))
 vi.mock('../reminders/platform', () => ({ show: () => undefined }))
-// Every space here may be written in; one that may not is read-only.test.ts's.
 vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true, trustsHtmlAt: () => trusted.yes }))
 
 const { heard, heardChange, readHeld, repeatTemplates } = await import('./running')
@@ -109,7 +100,6 @@ describe('a base somebody else could have written', () => {
 })
 
 describe("a base's automation that moves a note", () => {
-  /** A change to the note heard, and the moment it is left to settle waited out. */
   async function changed() {
     await readHeld('/s/Shared/Tasks.base')
     heard('Shared', 'Inbox/a.md', [])
@@ -205,7 +195,6 @@ describe('a note renamed or moved', () => {
   test('written where it goes before the move is told, is still a move (B498)', async () => {
     plan.folder = '../Private'
     await readHeld('/s/Shared/Tasks.base')
-    // The link rewrite's save at the new path, then the move with the rows it had.
     heardChange({ ...change, removed: [], added: [now] as never })
     heardChange({ ...change, removed: [now] as never, added: [now] as never, from })
     await settle()

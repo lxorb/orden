@@ -1,8 +1,3 @@
-/** A view switched to another layout, with what that layout needs to say anything:
- *  a board needs a grouping (a task's box, or the first property of a note that has
- *  choices), a calendar and a timeline of notes need a date property. Everything else
- *  the view had is kept, so switching back is the view it was. Pure. */
-
 import type { Base, Row } from '@orden/bases'
 import { editorOf, knownProperties, optionsOf } from './columns'
 import { setGroup, setLayout, setNibOption } from './edit'

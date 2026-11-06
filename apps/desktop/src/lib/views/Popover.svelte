@@ -1,7 +1,4 @@
 <script lang="ts">
-  /** A small layer under a button of a view's head: the filter, the sort, the group.
-   *  `.nib-layer`, rising the way every layer of the app rises (motion.ts), closed by
-   *  Escape, by a press outside it, and on a phone by back. */
   import type { Snippet } from 'svelte'
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -20,17 +17,12 @@
     onclose: () => void
     label: string
     children: Snippet
-    /** Hung from the start of what opened it rather than its end. */
     start?: boolean
   } = $props()
 
   let layer = $state<HTMLElement>()
 
   $effect(() => closeOnBack(open, onclose))
-  // Closed by a press past it and by the window losing the focus, as every popup is;
-  // see overlays.ts. A press on what opened it is that button's own: it closes it by
-  // itself. And a menu or a list a control in here dropped is part of what is being
-  // chosen.
   $effect(() =>
     open
       ? overlays.show(onclose, () => [

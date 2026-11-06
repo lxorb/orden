@@ -1,10 +1,3 @@
-/** The space's templates (docs/tasks.md 5.13): the notes in its templates folder,
- *  `Templates` unless the space's Obsidian settings name another, as the core
- *  Templates plugin does, so a space opened in both apps has one folder of them.
- *
- *  A template is found the way a link is, by its path or its name, and its words are
- *  filled (`fillTemplate` in @orden/bases) for the note made from it. */
-
 import { fillTemplate, withoutTemplateKeys } from '@orden/bases'
 import { t } from '../i18n.svelte'
 import { menu } from '../menu.svelte'
@@ -15,10 +8,8 @@ import { type Entry, workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
 import { nowHere } from './days'
 
-/** The folder Obsidian's Templates plugin was told, per space root, read once. */
 const folders = new Map<string, Promise<string>>()
 
-/** The space's templates folder, relative to it. */
 export function templatesFolder(root: string): Promise<string> {
   let found = folders.get(root)
   if (!found) {
@@ -37,7 +28,6 @@ export function templatesFolder(root: string): Promise<string> {
   return found
 }
 
-/** The notes in the open space's templates folder, by name. */
 export async function templates(): Promise<Entry[]> {
   const root = workspace.activeSpace?.root
   if (root === undefined) return []
@@ -47,14 +37,6 @@ export async function templates(): Promise<Entry[]> {
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 
-/** The template a link names (`[[Templates/Bug]]`, `Bug`), on this disk; null where the
- *  space has no such note.
- *
- *  Looked for in `space`, the space on screen unless said: a base kept in a tab across
- *  a space switch names its template in its own space. Read from the listing on screen,
- *  a board shared with others took the reader's private `Journal.md` into the note it
- *  made in the shared space, which every member then had. A space not on screen has no
- *  listing here, so its notes are the rows store's, which holds every space. */
 export function templatePath(link: string, space = workspace.activeSpace): string | null {
   if (!space) return null
   const root = space.root
@@ -77,8 +59,6 @@ export function templatePath(link: string, space = workspace.activeSpace): strin
   return found ? insideSpace(root, found.relative) : null
 }
 
-/** A template's words, filled for a note called `title` made now; empty for a template
- *  that cannot be read. */
 export async function templateWords(path: string, title: string): Promise<string> {
   const text = await workspace.noteText(path).catch(() => null)
   if (text === null) return ''
@@ -88,8 +68,6 @@ export async function templateWords(path: string, title: string): Promise<string
   )
 }
 
-/** A new note from a template the reader picks, in the folder of the note in front (the
- *  space's root where none is), opened: the palette's "New note from template". */
 export async function pickTemplate(): Promise<void> {
   const space = workspace.activeSpace
   if (!space) return
@@ -106,7 +84,6 @@ export async function pickTemplate(): Promise<void> {
     await workspace.fileCame(path, 'file')
     await workspace.open(path)
   }
-  // The palette has closed by now; the choice is asked where it was, in the window's middle.
   const at = new MouseEvent('contextmenu', {
     clientX: window.innerWidth / 2,
     clientY: window.innerHeight / 3,
