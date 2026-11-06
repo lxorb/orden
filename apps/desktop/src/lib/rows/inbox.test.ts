@@ -100,6 +100,22 @@ describe('the inbox of a space', () => {
     expect(inboxOf(ROOT)).toBe('Desk/Triage.md')
   })
 
+  test("is Orden's own again once the note chosen for it is deleted or moved to another space", () => {
+    setInbox(ROOT, 'Capture/Triage.md')
+    inboxes.gone?.(`${ROOT}/Capture/Other.md`, ROOT)
+    expect(inboxOf(ROOT)).toBe('Capture/Triage.md')
+    inboxes.gone?.(`${ROOT}/Capture`, ROOT)
+    expect(inboxOf(ROOT)).toBe(INBOX)
+
+    setInbox(ROOT, 'Triage.md')
+    inboxes.gone?.(`${ROOT}/Triage.md`, ROOT)
+    expect(chosenInbox(ROOT)).toBeNull()
+
+    setInbox(ROOT, 'Triage.md')
+    inboxes.moved?.(`${ROOT}/Triage.md`, '/spaces/Home/Triage.md', ROOT, '/spaces/Home')
+    expect(inboxOf(ROOT)).toBe(INBOX)
+  })
+
   test('goes with its space when the space is renamed, and is forgotten with it', () => {
     setInbox(ROOT, 'Triage.md')
     inboxes.spaceMoved?.(ROOT, '/spaces/Job')

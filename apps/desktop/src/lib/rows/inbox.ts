@@ -70,12 +70,21 @@ export async function ensureInbox(
 }
 
 export const inboxes: KeptByPath = {
-  moved(from, to, root) {
+  moved(from, to, root, into) {
     if (root === null) return
     const now = inboxOf(root)
     const was = relativeTo(root, from)
     const after = movedTo(now, was, relativeTo(root, to), root)
-    if (after !== null) setInbox(root, after)
+    if (after === null) return
+    // Into another space, the note is no longer this space's to be its inbox.
+    setInbox(root, into !== undefined && into !== null && !samePath(into, root) ? INBOX : after)
+  },
+  gone(path, root) {
+    if (root === null) return
+    const chosen = chosenInbox(root)
+    if (chosen !== null && movedTo(chosen, relativeTo(root, path), '', root) !== null) {
+      setInbox(root, INBOX)
+    }
   },
   spaceMoved(from, to) {
     const all = read()
