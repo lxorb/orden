@@ -174,18 +174,17 @@ vi.mock('./tauri', async (importOriginal) => ({
         for (const one of [...folders]) if (under(one)) folders.delete(one)
         return { id: `trash-${path}` }
       }
-      case 'bring_in_pdf': {
-        // The crate's answer, from a disk outside the spaces; see handed_pdfs.rs.
+      case 'same_pdf': {
         const words = outside.get(text(args?.from))
         const root = text(args?.space)
         if (words === undefined) throw new Error('not handed to nib')
         const there = [...files].find(([one, held]) => one.startsWith(`${root}/`) && held === words)
-        if (there) return { path: there[0], fresh: false }
-        const name = text(args?.from).split('/').pop() ?? ''
-        let at = `${root}/${name}`
-        for (let n = 2; files.has(at); n++) at = `${root}/${name.replace(/\.pdf$/, ` ${n}.pdf`)}`
-        files.set(at, words)
-        return { path: at, fresh: true }
+        return there?.[0] ?? null
+      }
+      case 'read_file': {
+        const held = outside.get(path) ?? files.get(path)
+        if (held === undefined) throw new Error(`no such file: ${path}`)
+        return new TextEncoder().encode(held).buffer
       }
       case 'read_tree': {
         // As the crate does: a root that is not a folder is refused.
@@ -210,12 +209,28 @@ vi.mock('./tauri', async (importOriginal) => ({
 vi.mock('./pdf/document', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./pdf/document')>()),
   pageSizes: (path: string) =>
-    files.get(path)?.startsWith('%PDF')
+    (files.get(path) ?? outside.get(path))?.startsWith('%PDF')
       ? Promise.resolve([
           { width: 794, height: 1123 },
           { width: 816, height: 1056 },
         ])
       : Promise.reject(new Error(`${path} is not a PDF`)),
+}))
+
+const sheet = vi.hoisted(() => ({ asked: [] as string[], answer: null as string | null }))
+
+vi.mock('./prompt.svelte', () => ({
+  prompt: {
+    choose: (options: { title: string }) => {
+      sheet.asked.push(options.title)
+      return Promise.resolve(sheet.answer)
+    },
+  },
+}))
+
+vi.mock('./save-place/door', () => ({
+  askPlace: () => undefined,
+  saveFront: () => undefined,
 }))
 
 function memoryStorage(): Storage {
@@ -238,6 +253,7 @@ const { workspace } = await import('./workspace.svelte')
 const { sync } = await import('./sync.svelte')
 const { unread } = await import('./unread.svelte')
 const { account } = await import('./account.svelte')
+const { isDraft } = await import('./workspace/drafts')
 type RemoteSpace = import('./api').RemoteSpace
 
 /** A file dropped from outside the app, at `path` inside what was dropped. */
@@ -802,43 +818,109 @@ describe('files dropped from outside', () => {
   })
 })
 
-/** A PDF another program opened with nib: copied in at the top of the space like a
- *  file dropped there, unless the space holds it already, and its page note from the
- *  moment it lands. */
 describe('a PDF opened with nib', () => {
+  const OUTSIDE = '/downloads/Paper.pdf'
+  const writing = () => sent.filter((one) => /^(write|rename|copy|create|delete|trash)/.test(one))
+
   beforeEach(() => {
-    outside.set('/downloads/Paper.pdf', '%PDF paper')
+    outside.clear()
+    outside.set(OUTSIDE, '%PDF paper')
+    sheet.asked = []
+    sheet.answer = null
+    workspace.closed.stack = []
   })
 
-  test('arrives at the top of the space as its page note, one undo away', async () => {
-    const landed = await workspace.bringInPdf('/downloads/Paper.pdf', '/space')
+  async function opened() {
+    const { showPdfs } = await import('./pdf/handed')
+    await showPdfs([OUTSIDE])
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
+    return tab
+  }
 
-    expect(landed).toBe('/space/Paper.pages')
-    expect(rows()).toContain('/space/Paper.pages')
-    expect(rows()).not.toContain('/space/Paper.pdf')
-    expect(rows()).not.toContain('/space/Paper.pages.pdf')
+  function drawnOn(tab: { note: { text: string; replace(text: string): void } }) {
+    const plane = JSON.parse(tab.note.text) as { nodes: Record<string, unknown>[] }
+    plane.nodes.push({ id: 'ink', type: 'text', text: 'marked', x: 0, y: 0, width: 9, height: 9 })
+    tab.note.replace(JSON.stringify(plane))
+  }
+
+  test('opens as a page note nobody has saved, and the space is left as it was', async () => {
+    const was = [...files.entries()].sort()
+    const listed = rows()
+
+    const tab = await opened()
+
+    expect(tab.kind).toBe('pages')
+    expect(tab.path).toBeNull()
+    expect(tab.shown).toBe('Paper')
+    expect(isDraft(tab.note)).toBe(true)
+    expect([...files.entries()].sort()).toEqual(was)
+    expect(rows()).toEqual(listed)
+    expect(writing()).toEqual([])
+  })
+
+  test('closes without a question while nothing on it has changed', async () => {
+    const tab = await opened()
+
+    await workspace.closeAsking(tab.id)
+
+    expect(sheet.asked).toEqual([])
+    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(false)
+    expect(writing()).toEqual([])
+  })
+
+  test('asks before it closes once something is marked on it', async () => {
+    const tab = await opened()
+    drawnOn(tab)
+
+    await workspace.closeAsking(tab.id)
+
+    expect(sheet.asked).toEqual(['Save changes to Paper?'])
+    expect(workspace.tabs.some((one) => one.id === tab.id)).toBe(true)
+  })
+
+  test('saved, it is a page note in the space holding the paper', async () => {
+    const tab = await opened()
+    drawnOn(tab)
+
+    expect(await workspace.save(tab, '/space')).toBe('/space/Paper.pages')
+
     expect(files.get('/space/Paper.pages.pdf')).toBe('%PDF paper')
-    expect(workspace.undoLabel).toBe('Undo the copy')
-
-    await workspace.undoFileAction()
-    expect(files.has('/space/Paper.pages')).toBe(false)
-    expect(files.has('/space/Paper.pages.pdf')).toBe(false)
+    expect(pagesIn('/space/Paper.pages').map((page) => page.file)).toEqual([
+      'Paper.pages.pdf',
+      'Paper.pages.pdf',
+    ])
+    expect(files.get('/space/Paper.pages')).toContain('marked')
+    expect(rows()).toContain('/space/Paper.pages')
+    expect(rows()).not.toContain('/space/Paper.pages.pdf')
+    expect(outside.get(OUTSIDE)).toBe('%PDF paper')
   })
 
-  test('and is the copy the space has when it has one', async () => {
+  test('opened again while it is open, it is the one tab', async () => {
+    const first = await opened()
+    const second = await opened()
+
+    expect(second.id).toBe(first.id)
+    expect(workspace.tabs.filter((one) => one.kind === 'pages')).toHaveLength(1)
+  })
+
+  test('is the copy the space has when it has one', async () => {
     files.set('/space/Work/Read.pdf', '%PDF paper')
     await workspace.loadTree()
-    const before = workspace.undoLabel
 
-    expect(await workspace.bringInPdf('/downloads/Paper.pdf', '/space')).toBe(
-      '/space/Work/Read.pdf',
-    )
-    expect(files.has('/space/Paper.pdf')).toBe(false)
-    expect(workspace.undoLabel).toBe(before)
+    const tab = await opened()
+
+    expect(tab.path).toBe('/space/Work/Read.pages')
+    expect(files.has('/space/Paper.pages')).toBe(false)
   })
 
-  test('and nothing at all when it could not be brought in', async () => {
-    expect(await workspace.bringInPdf('/downloads/Gone.pdf', '/space')).toBeNull()
+  test('and nothing at all when it could not be read', async () => {
+    outside.set(OUTSIDE, 'not a paper')
+
+    const { showPdfs } = await import('./pdf/handed')
+    await showPdfs([OUTSIDE])
+
+    expect(workspace.tabs).toEqual([])
   })
 })
 

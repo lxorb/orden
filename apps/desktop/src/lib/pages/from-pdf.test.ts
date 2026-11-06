@@ -1,7 +1,14 @@
 import { readCanvas } from '@orden/markdown/canvas'
 import { pagesOf } from '@orden/markdown/pages'
 import { describe, expect, test } from 'vitest'
-import { adoptBeside, asPageNote, type Turning } from './from-pdf'
+import {
+  adoptBeside,
+  asDraft,
+  asPageNote,
+  paperNamed,
+  paperOutside,
+  type Turning,
+} from './from-pdf'
 
 /** A disk in a map, and every move made on it. */
 function disk(start: Record<string, string>, refuse: boolean | 'after' = false) {
@@ -160,5 +167,42 @@ describe('a page note an older build made beside its PDF, opened', () => {
     })
     expect(await adoptBeside('/s/Lecture.pages', second.how)).toBe(false)
     expect(second.moves).toEqual([])
+  })
+})
+
+describe('a PDF from outside every space, as a page note nobody has saved', () => {
+  const sizes = () =>
+    Promise.resolve([
+      { width: 794, height: 1123 },
+      { width: 816, height: 1056 },
+    ])
+  const nowhere = () => false
+
+  test('every page reads the paper where it lies', async () => {
+    const text = await asDraft('C:\\Users\\me\\Downloads\\Paper.pdf', sizes)
+
+    expect(pagesOf(readCanvas(text)).map((page) => page.file)).toEqual([
+      'C:\\Users\\me\\Downloads\\Paper.pdf',
+      'C:\\Users\\me\\Downloads\\Paper.pdf',
+    ])
+    expect(paperOutside(text, nowhere)).toBe('C:\\Users\\me\\Downloads\\Paper.pdf')
+  })
+
+  test('a paper of a space or named from the note is no paper from outside', async () => {
+    expect(
+      paperOutside(await asDraft('/s/Paper.pdf', sizes), (path) => path.startsWith('/s/')),
+    ).toBe(null)
+    expect(paperOutside(await asDraft('Paper.pdf', sizes), nowhere)).toBeNull()
+    expect(paperOutside('not a plane', nowhere)).toBeNull()
+  })
+
+  test('saved, its pages name the paper the note holds', async () => {
+    const text = await asDraft('/downloads/Paper.pdf', sizes)
+    const plane = readCanvas(text)
+
+    const named = paperNamed(plane, '/downloads/Paper.pdf', 'Paper.pages.pdf')
+
+    expect(pagesOf(named).map((page) => page.file)).toEqual(['Paper.pages.pdf', 'Paper.pages.pdf'])
+    expect(paperNamed(named, '/downloads/Paper.pdf', 'Paper.pages.pdf')).toBe(named)
   })
 })

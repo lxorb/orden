@@ -95,12 +95,12 @@ const TRASH_COMMANDS = new Set([
 ])
 
 /** The crate's commands that would stand in a space's folder on the disk, by the
- *  argument that names it: a shell's folder, a handed PDF's landing, the inbox the Mac's
- *  Shortcuts write into from the crate alone. None of them has a folder to stand in
+ *  argument that names it: a shell's folder, the space a handed PDF is sought in, the
+ *  inbox the Mac's Shortcuts write into from the crate alone. None of them has a folder to stand in
  *  for a kept space; internal/route.ts says what each does instead. */
 const ON_DISK: Record<string, string> = {
   pty_spawn: 'folder',
-  bring_in_pdf: 'space',
+  same_pdf: 'space',
   remember_inbox: 'path',
 }
 

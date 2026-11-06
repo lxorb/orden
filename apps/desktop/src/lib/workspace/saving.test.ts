@@ -136,6 +136,7 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
     },
     born: () => undefined,
     touched: () => undefined,
+    keepPaper: () => Promise.resolve(),
     fileCame(path: string, _kind: 'file' | 'folder', key?: string) {
       came.push({ path, key })
       return Promise.resolve()

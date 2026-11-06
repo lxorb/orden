@@ -4,8 +4,8 @@
  *  paper's pages, holding the paper itself - byte for byte, so Obsidian, a browser and
  *  every other reader still open it. The plan is the paper, marked to become its page
  *  note the moment it has landed, which is the one way any PDF becomes one; see
- *  pages/from-pdf.ts. So an import, a drop and a PDF opened with nib all make the same
- *  page note, and a name that is taken steps aside the same way.
+ *  pages/from-pdf.ts. So an import and a drop make the same page note, and a name that
+ *  is taken steps aside the same way.
  *
  *  Nothing of the PDF is baked into the note: each page says which file and which
  *  page of it, and the picture is drawn from the paper when somebody looks at it. See

@@ -265,9 +265,7 @@ export async function internalInvoke<T>(
   // inbox is; a kept space's inbox is no file there, so the crate is not told of it and
   // keeps the one it had.
   if (command === 'remember_inbox') return undefined as T
-  if (command === 'bring_in_pdf') {
-    throw new Error('a PDF handed to Orden cannot be brought into a space it keeps itself yet')
-  }
+  if (command === 'same_pdf') return null as T
   if (
     command === 'list_trash' ||
     command === 'restore_trash' ||

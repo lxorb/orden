@@ -40,7 +40,7 @@ pub(crate) const FILE_LIMIT: u64 = 192 * 1024 * 1024;
 /// thirty megabyte PDF a copy rather than a hundred megabytes of numbers.
 #[tauri::command(async)]
 pub fn read_file(app: AppHandle, path: String) -> Result<tauri::ipc::Response, String> {
-    let target = in_spaces(&app, &path)?;
+    let target = readable(&app, &path)?;
     // A PDF iCloud took off this Mac is brought back before it is read.
     #[cfg(target_os = "macos")]
     crate::notes::icloud::fetched(&app, &target)?;
@@ -49,6 +49,18 @@ pub fn read_file(app: AppHandle, path: String) -> Result<tauri::ipc::Response, S
     };
 
     Ok(tauri::ipc::Response::new(bytes))
+}
+
+fn readable(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
+    let refused = match in_spaces(app, path) {
+        Ok(target) => return Ok(target),
+        Err(refused) => refused,
+    };
+    #[cfg(desktop)]
+    if let Some(handed) = crate::handed_pdfs::handed_pdf(app, path) {
+        return Ok(handed);
+    }
+    Err(refused)
 }
 
 /// A picture as a `data:` URI, so an exported page carries its own pictures.

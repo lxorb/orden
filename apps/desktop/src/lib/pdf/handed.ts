@@ -3,8 +3,9 @@
  *  The crate hears them - a launch, a second launch, a Mac's "open these" - and hands
  *  them to one window, the way it hands a link (see src-tauri/src/launch.rs). This is
  *  that window's half: each PDF as its page note, in a tab in front, in the space
- *  arrival.ts chooses, brought into it first when it came from outside every space -
- *  which is when it becomes that page note (workspace/copying.ts).
+ *  arrival.ts chooses. One from outside every space is the copy that space already
+ *  has, or else a page note nobody has saved yet, reading the PDF where it lies, which
+ *  Save puts into a space (#1162).
  *
  *  Fetched with the rest of the roads in, after the space has restored. */
 
@@ -41,14 +42,15 @@ export async function showPdfs(said: unknown) {
 
 async function showPdf(handed: string) {
   const arrival = arrivalOf(handed, workspace.spaces, workspace.activeSpaceId, canWriteAt)
-  if (!arrival) {
-    log('warn', 'pdf: a file was handed over with no space to put it in')
+  if (arrival && arrival.spaceId !== workspace.activeSpaceId) {
+    await workspace.selectSpace(arrival.spaceId)
+  }
+  if (arrival?.kind === 'open') {
+    await workspace.openPdf(arrival.path)
     return
   }
 
-  if (arrival.spaceId !== workspace.activeSpaceId) await workspace.selectSpace(arrival.spaceId)
-  const path =
-    arrival.kind === 'open' ? arrival.path : await workspace.bringInPdf(handed, arrival.root)
-
-  if (path) await workspace.openPdf(path)
+  const same = arrival ? await workspace.samePdfIn(handed, arrival.root) : null
+  if (same) await workspace.openPdf(same)
+  else await workspace.draftPdf(handed)
 }

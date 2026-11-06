@@ -61,6 +61,7 @@ export interface Writes {
   /** A file that came to be, said once to everything that keeps files by path; `key`
    *  names the open document it is. See workspace/file-ops.ts. */
   fileCame(path: string, kind: 'file' | 'folder', key?: string): Promise<void>
+  keepPaper(note: NoteDoc, path: string): Promise<void>
 }
 
 /** How long a move of sync's waits for a write in the air, in milliseconds. A write on a
@@ -500,6 +501,7 @@ export class Saving {
 
     const path = await this.claim(note, folder, file)
     if (path === null) return null
+    if (note.kind === 'pages') await this.ws.keepPaper(note, path)
     note.name = nameOf(path)
     // What the tab holds is what the file has to say, typed in or not: an untouched
     // plane is a blank plane's worth of JSON.

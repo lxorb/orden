@@ -1,8 +1,7 @@
 /** Files copied into the space: rows of its own pasted, duplicated or dragged with
- *  Ctrl, files dropped onto the list from outside the app, and a PDF another program
- *  opened with nib.
+ *  Ctrl, and files dropped onto the list from outside the app.
  *
- *  A PDF that comes in from outside on its own - dropped, or opened with nib - is a
+ *  A PDF that comes in from outside on its own, dropped, is a
  *  page note the moment it has landed, holding the paper (pages/from-pdf.ts): the
  *  file list gains one row, the page note. One inside a dropped folder is that
  *  folder's, the attachment a note in it may point at, and stays the file it is until
@@ -78,32 +77,6 @@ function ownNoteRenamed(entry: Entry, to: string): { from: string; to: string } 
   if (renamed === own.name) return null
 
   return { from: joinPath(to, own.name), to: joinPath(to, renamed) }
-}
-
-/** What the crate answers when it has brought a handed PDF in; see handed_pdfs.rs. */
-interface Landed {
-  path: string
-  /** Copied now, rather than found in the space already. */
-  fresh: boolean
-}
-
-/** A PDF another program opened with nib, brought into the space at `root` by the
- *  crate, which reads it from where it is: the copy already in the space when there
- *  is one with the same bytes - a paper a page note holds among them - else a new one
- *  at the top. A new one is a copy like any other here - on the list, in the link
- *  index and one undo away - and is its page note by the time this answers, which is
- *  the path that comes back. Null when it could not be brought in. */
-export async function broughtPdf(ws: Copies, from: string, root: string): Promise<string | null> {
-  const landed = await invoke<Landed>('bring_in_pdf', { from, space: root }).catch(() => null)
-  if (!landed) return null
-
-  if (!landed.fresh) return landed.path
-
-  ws.showEntry(ws.freshEntry(landed.path, false))
-  await ws.fileCame(landed.path, 'file')
-  const path = (await ws.pageNoteForPdf(landed.path)) ?? landed.path
-  ws.undone.record({ kind: 'copy', made: [{ path, folder: false }] })
-  return path
 }
 
 /** Copies rows of the space, each into its own folder, and answers where each

@@ -227,9 +227,9 @@ describe('the call to the crate, on a desktop', () => {
     expect(crate.calls).toEqual([{ command: 'pty_spawn', args: { id: 't1', folder: null } }])
 
     await internalInvoke('remember_inbox', { path: `${root}\\.Inbox.md` }, all())
-    await expect(
-      internalInvoke('bring_in_pdf', { from: '/tmp/Paper.pdf', space: root }, all()),
-    ).rejects.toThrow('cannot be brought')
+    expect(
+      await internalInvoke('same_pdf', { from: '/tmp/Paper.pdf', space: root }, all()),
+    ).toBeNull()
     expect(crate.calls).toHaveLength(1)
   })
 })

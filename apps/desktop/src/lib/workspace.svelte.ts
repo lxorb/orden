@@ -3981,14 +3981,19 @@ class Workspace {
     await this.copied(await bringIn(this, files, intoFolder), intoFolder)
   }
 
-  /** Where a PDF opened with nib is once in the space; see pdf/handed.ts. Null for a
-   *  space shared to be read, which the copy would be written into. */
-  async bringInPdf(from: string, root: string): Promise<string | null> {
-    if (!(await this.writableAt(root))) return null
-    const { broughtPdf } = await import('./workspace/copying')
-    const landed = await broughtPdf(this, from, root)
-    if (landed) await this.copied([landed], root)
-    return landed
+  samePdfIn(from: string, root: string): Promise<string | null> {
+    return invoke<string | null>('same_pdf', { from, space: root }).catch(() => null)
+  }
+
+  async draftPdf(from: string): Promise<void> {
+    const drafts = __EVEN_PLUGIN__ ? null : await import('./workspace/handed-drafts')
+    const open = drafts ? await drafts.draftPdf(this, from) : null
+    if (open) this.showTab(open.note)
+  }
+
+  async keepPaper(note: NoteDoc, path: string): Promise<void> {
+    const drafts = __EVEN_PLUGIN__ ? null : await import('./workspace/handed-drafts')
+    await drafts?.keepPaper(this, note, path)
   }
 
   /** What every copy ends with: the listing read again, the folder the rows went

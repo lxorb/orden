@@ -540,7 +540,7 @@ macro_rules! desktop_commands {
             page_style::wear_page_styles,
             launch::take_startup_pages,
             launch::take_startup_pdfs,
-            handed_pdfs::bring_in_pdf,
+            handed_pdfs::same_pdf,
             launch::new_window,
             launch::show_window,
             ahead::launch_ahead,

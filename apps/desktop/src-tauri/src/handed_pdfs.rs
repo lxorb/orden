@@ -2,48 +2,49 @@
 //! With, a file manager on Linux, or `nib paper.pdf` in a terminal.
 //!
 //! Emil, 2026-10-13: *"open with nib should be possible for pdfs"*. The one kind of
-//! file from outside the spaces Orden takes, and taken the way Apple Books and `GoodNotes`
-//! take a PDF opened with them: one already in a space opens where it is, and one from
-//! anywhere else is brought into the space that is open and opens from there. So what
-//! the viewer reads is always a file of a space - its highlights, its words and its
-//! sync come with that - and nib still opens nothing from outside its spaces.
+//! file from outside the spaces Orden takes: one already in a space opens where it is,
+//! and one from anywhere else opens as a page note nobody has saved yet, reading the
+//! PDF where it lies, until it is saved into a space (#1162).
 //!
 //! Each installer lists nib for PDFs and claims nothing: Windows' `OpenWithProgids`, a
 //! Mac's `LSHandlerRank` of `Alternate` and a Linux desktop entry's `MimeType`, the way
 //! VS Code and Chrome stand in "Open with" without taking the default from the PDF
 //! reader somebody chose.
 //!
-//! What a launch named is held here for the run, and only that is what `bring_in_pdf`
-//! will read outside the spaces: no note, link or page can add to it.
+//! What a launch named is held here, and kept for the next runs, and only that is
+//! what `read_file` and `same_pdf` will read outside the spaces: no note, link or page
+//! can add to it.
 
-use std::collections::HashSet;
 use std::ffi::OsStr;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-use serde::Serialize;
 use tauri::{AppHandle, Manager, Url};
 
-use crate::paths::{
-    a_space, at_most, cannot, files_in, folded, free_spot, inside, is_pdf, is_reserved,
-    write_atomically,
-};
+use crate::paths::{a_space, cannot, files_in, folded, inside, is_pdf, write_atomically};
 
 /// The longest argument read as a path: the longest command line Windows starts a
 /// program with.
 const LONGEST: usize = 32 * 1024;
 
-/// The PDFs handed to Orden this run, by where they are.
+/// The PDFs handed to Orden, by where they are, the latest last.
 #[derive(Default)]
-pub struct Handed(Mutex<HashSet<PathBuf>>);
+pub struct Handed(Mutex<Vec<PathBuf>>);
+
+const KEPT: &str = "handed-pdfs.json";
+
+const MOST_KEPT: usize = 256;
 
 impl Handed {
     /// Takes these in, and answers them as the window is told them.
     fn admit(&self, pdfs: Vec<PathBuf>) -> Vec<String> {
         if let Ok(mut held) = self.0.lock() {
+            held.retain(|one| !pdfs.iter().any(|new| same_handed(one, new)));
             held.extend(pdfs.iter().cloned());
+            let over = held.len().saturating_sub(MOST_KEPT);
+            held.drain(..over);
         }
         pdfs.iter()
             .map(|one| one.to_string_lossy().into_owned())
@@ -53,21 +54,75 @@ impl Handed {
     /// Whether a path is one that was handed over, in whichever case it is written
     /// back.
     fn holds(&self, path: &Path) -> bool {
-        self.0.lock().is_ok_and(|held| {
-            held.iter()
-                .any(|one| inside(one, path) && inside(path, one))
-        })
+        self.0
+            .lock()
+            .is_ok_and(|held| held.iter().any(|one| same_handed(one, path)))
+    }
+
+    fn listed(&self) -> Vec<PathBuf> {
+        self.0.lock().map(|held| held.clone()).unwrap_or_default()
     }
 }
 
-/// The PDFs handed over, taken in and spelled for the window; see launch.rs. The
-/// set is made with the first, so a run nobody hands a PDF to never holds one.
-pub fn admitted(app: &AppHandle, pdfs: Vec<PathBuf>) -> Vec<String> {
+fn same_handed(one: &Path, other: &Path) -> bool {
+    inside(one, other) && inside(other, one)
+}
+
+fn handed_list_at(app: &AppHandle) -> Option<PathBuf> {
+    app.path()
+        .app_local_data_dir()
+        .ok()
+        .map(|dir| dir.join(KEPT))
+}
+
+fn read_handed_list(at: &Path) -> Vec<PathBuf> {
+    fs::read_to_string(at)
+        .ok()
+        .and_then(|text| serde_json::from_str::<Vec<String>>(&text).ok())
+        .unwrap_or_default()
+        .into_iter()
+        .map(PathBuf::from)
+        .filter(|one| one.is_file())
+        .collect()
+}
+
+fn write_handed_list(at: &Path, pdfs: &[PathBuf]) -> Result<(), String> {
+    let said: Vec<&str> = pdfs.iter().filter_map(|one| one.to_str()).collect();
+    let text = serde_json::to_string(&said).map_err(|error| error.to_string())?;
+    if let Some(folder) = at.parent() {
+        fs::create_dir_all(folder).map_err(|error| cannot("make", folder, &error))?;
+    }
+    write_atomically(at, text.as_bytes())
+}
+
+fn handed_set(app: &AppHandle) -> tauri::State<'_, Handed> {
+    if app.try_state::<Handed>().is_none() {
+        let kept = handed_list_at(app)
+            .map(|at| read_handed_list(&at))
+            .unwrap_or_default();
+        app.manage(Handed(Mutex::new(kept)));
+    }
+    app.state::<Handed>()
+}
+
+/// The PDFs handed over, taken in and spelled for the window; see launch.rs.
+pub fn admit_handed(app: &AppHandle, pdfs: Vec<PathBuf>) -> Vec<String> {
     if pdfs.is_empty() {
         return Vec::new();
     }
-    app.manage(Handed::default());
-    app.state::<Handed>().admit(pdfs)
+    let handed = handed_set(app);
+    let said = handed.admit(pdfs);
+    if let Some(at) = handed_list_at(app) {
+        if let Err(error) = write_handed_list(&at, &handed.listed()) {
+            crate::logs::say(app, "warn", &format!("handed PDFs: {error}"));
+        }
+    }
+    said
+}
+
+pub fn handed_pdf(app: &AppHandle, path: &str) -> Option<PathBuf> {
+    let path = folded(Path::new(path));
+    handed_set(app).holds(&path).then_some(path)
 }
 
 /// The PDFs a command line names, each once, in the order given. A path relative to
@@ -128,60 +183,11 @@ fn named(said: &OsStr, cwd: &Path) -> Option<PathBuf> {
     (is_pdf(&path) && path.is_file()).then_some(path)
 }
 
-/// Where a handed PDF is in the space now, and whether it was copied there or was
-/// there already.
-#[derive(Serialize)]
-pub struct Landed {
-    path: String,
-    fresh: bool,
-}
-
-/// Brings a PDF that was handed over into a space: the copy already somewhere in it
-/// when there is one with the very same bytes, so opening one paper twice does not
-/// make two; else a copy at the top of the space, under its own name or the next free
-/// one beside it.
 #[tauri::command(async)]
-pub fn bring_in_pdf(app: AppHandle, from: String, space: String) -> Result<Landed, String> {
-    let from = folded(Path::new(&from));
-    if !app
-        .try_state::<Handed>()
-        .is_some_and(|handed| handed.holds(&from))
-    {
-        return Err(format!("{} was not handed to nib", from.display()));
-    }
+pub fn same_pdf(app: AppHandle, from: String, space: String) -> Result<Option<String>, String> {
+    let pdf = handed_pdf(&app, &from).ok_or_else(|| format!("{from} was not handed to nib"))?;
     let root = a_space(&app, &space)?;
-    landed(&from, &root)
-}
-
-/// The bringing in, with the space passed in, so what it does can be said without an
-/// app around it.
-fn landed(from: &Path, root: &Path) -> Result<Landed, String> {
-    if let Some(there) = same_in(root, from) {
-        return Ok(Landed {
-            path: there.to_string_lossy().into_owned(),
-            fresh: false,
-        });
-    }
-
-    let name = from
-        .file_name()
-        .ok_or_else(|| format!("{} names no file", from.display()))?;
-    let Some(bytes) = at_most(from, crate::assets::FILE_LIMIT)? else {
-        return Err(format!("{} is too large to open", from.display()));
-    };
-    // A name Windows keeps for a device, which a Mac or Linux allows, is one the space
-    // cannot sync to every machine; see `is_reserved`.
-    let name = match name.to_str() {
-        Some(said) if is_reserved(said) => format!("_{said}").into(),
-        _ => name.to_os_string(),
-    };
-    let target = free_spot(&root.join(name), true);
-    write_atomically(&target, &bytes)?;
-
-    Ok(Landed {
-        path: target.to_string_lossy().into_owned(),
-        fresh: true,
-    })
+    Ok(same_in(&root, &pdf).map(|there| there.to_string_lossy().into_owned()))
 }
 
 /// A PDF of the space holding the same bytes as `pdf`. Only one of the same size is
@@ -222,7 +228,9 @@ fn same_bytes(one: &Path, other: &Path) -> Result<bool, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{landed, pdfs_among, pdfs_in, Handed};
+    use super::{
+        pdfs_among, pdfs_in, read_handed_list, same_in, write_handed_list, Handed, MOST_KEPT,
+    };
     use std::fs;
     use std::path::Path;
     use tauri::Url;
@@ -342,61 +350,50 @@ mod tests {
         assert!(!handed.holds(dir.path()));
     }
 
-    /// A PDF macOS Pages saved, `Report.pages.pdf`, handed over to a space with a page
-    /// note `Report.pages` in it lands under a name of its own: under that one the note
-    /// would take it for its paper.
     #[test]
-    fn a_pdf_handed_over_never_becomes_a_page_notes_paper() {
+    fn what_was_handed_over_is_kept_for_the_next_runs_while_it_is_there() {
         let dir = tempfile::tempdir().expect("a temp folder");
-        let space = dir.path().join("Space");
-        file(&space.join("Report.pages"), b"{}");
-        let from = dir.path().join("Downloads").join("Report.pages.pdf");
-        file(&from, b"%PDF mine");
+        let one = dir.path().join("one.pdf");
+        file(&one, b"%PDF");
+        let gone = dir.path().join("gone.pdf");
+        let at = dir.path().join("data").join("handed-pdfs.json");
 
-        let put = landed(&from, &space).expect("brought in");
-        assert_eq!(
-            Path::new(&put.path),
-            space.join("Report.pages 2.pdf").as_path()
-        );
-    }
-
-    /// A PDF called `CON.pdf`, which a Mac or Linux allows, lands under a name Windows
-    /// can hold too: the space syncs to every machine the reader has.
-    #[cfg(not(windows))]
-    #[test]
-    fn a_pdf_handed_over_never_takes_a_device_name() {
-        let dir = tempfile::tempdir().expect("a temp folder");
-        let space = dir.path().join("Space");
-        fs::create_dir_all(&space).expect("the space");
-        let from = dir.path().join("Downloads").join("CON.pdf");
-        file(&from, b"%PDF");
-
-        let put = landed(&from, &space).expect("brought in");
-        assert_eq!(Path::new(&put.path), space.join("_CON.pdf").as_path());
+        write_handed_list(&at, &[one.clone(), gone]).expect("written");
+        assert_eq!(read_handed_list(&at), vec![one]);
+        assert!(read_handed_list(&dir.path().join("none.json")).is_empty());
     }
 
     #[test]
-    fn a_pdf_is_copied_to_the_top_of_the_space_beside_one_of_its_name() {
+    fn the_latest_handed_over_are_kept_and_no_more() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let handed = Handed::default();
+        let paper = |n: usize| dir.path().join(format!("{n}.pdf"));
+        handed.admit((0..MOST_KEPT).map(paper).collect());
+        handed.admit(vec![paper(0)]);
+        handed.admit(vec![paper(MOST_KEPT)]);
+
+        let listed = handed.listed();
+        assert_eq!(listed.len(), MOST_KEPT);
+        assert!(!handed.holds(&paper(1)));
+        assert!(handed.holds(&paper(0)));
+        assert_eq!(listed.last(), Some(&paper(MOST_KEPT)));
+    }
+
+    #[test]
+    fn the_same_paper_is_the_copy_the_space_has_wherever_it_is() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let space = dir.path().join("Space");
         file(&space.join("Paper.pdf"), b"%PDF another paper");
+        file(&space.join("Papers").join("Read.pdf"), b"%PDF the paper");
         let from = dir.path().join("Downloads").join("Paper.pdf");
         file(&from, b"%PDF the paper");
 
-        let first = landed(&from, &space).expect("brought in");
-        assert!(first.fresh);
-        assert_eq!(Path::new(&first.path), space.join("Paper 2.pdf"));
-        assert_eq!(fs::read(&first.path).expect("the copy"), b"%PDF the paper");
-
-        // The same paper again is the copy it already has, wherever it was moved to.
-        fs::create_dir_all(space.join("Papers")).expect("a folder");
-        fs::rename(&first.path, space.join("Papers").join("Read.pdf")).expect("moved");
-        let again = landed(&from, &space).expect("brought in");
-        assert!(!again.fresh);
         assert_eq!(
-            Path::new(&again.path),
-            space.join("Papers").join("Read.pdf")
+            same_in(&space, &from),
+            Some(space.join("Papers").join("Read.pdf"))
         );
+        file(&from, b"%PDF changed");
+        assert_eq!(same_in(&space, &from), None);
     }
 
     fn source(relative: &str) -> String {

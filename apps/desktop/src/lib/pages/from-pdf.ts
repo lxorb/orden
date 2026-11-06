@@ -1,8 +1,8 @@
 /** A PDF, turned into the page note that holds it.
  *
  *  A PDF in a space is a page note, not a PDF with a page note beside it. Every road
- *  a PDF comes in by - the Import door, a drop onto the file list, a PDF another
- *  program opened with nib - ends here as soon as the file has landed, and a PDF that
+ *  a PDF comes in by - the Import door, a drop onto the file list - ends here as soon
+ *  as the file has landed, and a PDF that
  *  was already in the space ends here the first time it is opened. What comes out is
  *  one thing in the file list: `Lecture 4.pages`, in the folder the PDF was in and
  *  under its name, every page of it a page of the paper, with the paper's bytes moved
@@ -22,7 +22,14 @@
  *
  *  Pure but for what `Turning` does, so every case is a line of from-pdf.test.ts. */
 
-import { readCanvas, writeCanvas } from '@orden/markdown/canvas'
+import {
+  type Canvas,
+  type CanvasNode,
+  isPage,
+  type PageNode,
+  readCanvas,
+  writeCanvas,
+} from '@orden/markdown/canvas'
 import { pagesFromPdf, pagesOf } from '@orden/markdown/pages'
 import { folderOf, nameOf, placesOf, samePath } from '../space-paths'
 import { joinPath } from '../tauri'
@@ -100,6 +107,39 @@ export async function asItself(
   sizes: (path: string) => Promise<{ width: number; height: number }[]>,
 ): Promise<string> {
   return writeCanvas(pagesFromPdf(nameOf(pdf), await sizes(pdf)))
+}
+
+export async function asDraft(
+  pdf: string,
+  sizes: (path: string) => Promise<{ width: number; height: number }[]>,
+): Promise<string> {
+  return writeCanvas(pagesFromPdf(pdf, await sizes(pdf)))
+}
+
+export function paperOutside(text: string, inSpace: (path: string) => boolean): string | null {
+  let pages
+  try {
+    pages = pagesOf(readCanvas(text))
+  } catch {
+    return null
+  }
+  const file = pages.find((page) => page.file && isAbsolute(page.file))?.file
+  return file && !inSpace(file) ? file : null
+}
+
+export function paperNamed(canvas: Canvas, from: string, name: string): Canvas {
+  const held = (node: CanvasNode): node is PageNode =>
+    isPage(node) && !!node.file && samePath(node.file, from)
+  if (!canvas.nodes.some(held)) return canvas
+
+  return {
+    ...canvas,
+    nodes: canvas.nodes.map((node) => (held(node) ? { ...node, file: name } : node)),
+  }
+}
+
+function isAbsolute(path: string): boolean {
+  return /^[/\\]/.test(path) || /^[A-Za-z]:/.test(path)
 }
 
 /** A page note an older build made beside its PDF, given the PDF to hold: what

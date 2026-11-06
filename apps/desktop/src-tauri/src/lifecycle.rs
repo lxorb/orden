@@ -160,7 +160,7 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             launch::hand_over(
                 app,
                 launch::Handed::Pdfs,
-                crate::handed_pdfs::admitted(app, pdfs),
+                crate::handed_pdfs::admit_handed(app, pdfs),
             );
         }
 

@@ -1,9 +1,8 @@
 /** Where a PDF another program opened with nib goes.
  *
- *  One already in a space opens where it is, in that space; one from anywhere else is
- *  brought into the space that is open, the way Apple Books takes a PDF opened with
- *  it, so the viewer only ever reads a file of a space. The crate does the bringing;
- *  see src-tauri/src/handed_pdfs.rs.
+ *  One already in a space opens where it is, in that space; one from anywhere else
+ *  opens with the space that is open, as the copy it holds or as a page note not saved
+ *  yet; see handed.ts and src-tauri/src/handed_pdfs.rs.
  *
  *  Pure, so every case is a line of arrival.test.ts; handed.ts acts on the answer. */
 
@@ -22,8 +21,7 @@ export type Arrival =
  *
  *  `writable` says which spaces a copy may go into: not one shared with this account
  *  to be read, which is the owner's to write in. The open space when it may, else the
- *  first that may, else none - a PDF from outside is then not opened at all, because
- *  the viewer only reads a file of a space. */
+ *  first that may, else none. */
 export function arrivalOf(
   path: string,
   spaces: readonly Space[],

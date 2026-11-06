@@ -159,7 +159,7 @@ pub fn hold_handed(app: &AppHandle, args: &[std::ffi::OsString], cwd: &std::path
             .collect();
         pending.hold(Handed::Pages, handed_by(&words));
         let pdfs = crate::handed_pdfs::pdfs_in(args, cwd);
-        pending.hold(Handed::Pdfs, crate::handed_pdfs::admitted(app, pdfs));
+        pending.hold(Handed::Pdfs, crate::handed_pdfs::admit_handed(app, pdfs));
     }
 }
 
@@ -240,7 +240,11 @@ fn second_launch(app: &AppHandle, argv: &[String], cwd: &str) {
 
     hand_over(app, Handed::Pages, handed_by(argv));
     let pdfs = crate::handed_pdfs::pdfs_in(argv, std::path::Path::new(cwd));
-    hand_over(app, Handed::Pdfs, crate::handed_pdfs::admitted(app, pdfs));
+    hand_over(
+        app,
+        Handed::Pdfs,
+        crate::handed_pdfs::admit_handed(app, pdfs),
+    );
 }
 
 /// Whether the window's page is up and its engine still there: it asked for its pages
