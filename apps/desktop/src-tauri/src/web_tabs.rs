@@ -986,13 +986,15 @@ pub async fn web_open(
 
     let (building, storing) = (app.clone(), store.clone());
     let posted = app.run_on_main_thread(move || {
-        let _ = sending.try_send(page_built(
-            &window,
-            builder,
-            &pane,
-            &building,
-            storing.as_deref(),
-        ));
+        crate::engine::once_built(move || {
+            let _ = sending.try_send(page_built(
+                &window,
+                builder,
+                &pane,
+                &building,
+                storing.as_deref(),
+            ));
+        });
     });
 
     let made = match posted {

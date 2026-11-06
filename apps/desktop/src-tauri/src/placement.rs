@@ -240,7 +240,7 @@ fn last_place(app: &AppHandle) -> Option<Placement> {
 pub fn settled<R: Runtime, M: Manager<R>>(
     building: WebviewWindowBuilder<'_, R, M>,
 ) -> tauri::Result<WebviewWindow<R>> {
-    let window = building.build()?;
+    let window = crate::engine::one_at_a_time(|| building.build())?;
     settle(&window);
     Ok(window)
 }
@@ -358,9 +358,9 @@ pub fn built_away<R: Runtime, M: Manager<R>>(
         .skip_taskbar(true)
         .always_on_bottom(true);
     #[cfg(windows)]
-    let window = created_away::during(|| building.build())?;
+    let window = crate::engine::one_at_a_time(|| created_away::during(|| building.build()))?;
     #[cfg(not(windows))]
-    let window = building.build()?;
+    let window = crate::engine::one_at_a_time(|| building.build())?;
     crate::top_edge::mind(&window.as_ref().window());
     moved_as_it_is(&window, LogicalPosition::new(x, y))?;
     window.show()?;
@@ -432,7 +432,7 @@ pub fn built<R: Runtime, M: Manager<R>>(
     if let Some(at) = away() {
         return built_away(building, at);
     }
-    let window = building.build()?;
+    let window = crate::engine::one_at_a_time(|| building.build())?;
     crate::top_edge::mind(&window.as_ref().window());
     Ok(window)
 }
