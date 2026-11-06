@@ -707,10 +707,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  Raised on 2026-11-06 for #419's round of fixes, the mail connection's turns, the
  *  PDF marks changed one at a time and the Todos narrowings that follow a space: the
  *  code to 6,044,000, measured 6,043,634.
+ *
+ *  Raised on 2026-11-06 for #1164, the file explorer as a kind of tab, whose branches and
+ *  keys the plugin carries and never takes (Pane.svelte, shortcuts/registry.ts,
+ *  kind-words.ts): the code to 6,045,400, measured 6,044,979, and the catalogues to
+ *  1,023,700, measured 1,023,246, for the names the registry and the kinds give it.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_044_000,
-  catalogues: 1_021_300,
+  code: 6_045_400,
+  catalogues: 1_023_700,
   styles: 293_500,
   fonts: 260_000,
   pages: 40_000,

@@ -1344,8 +1344,13 @@ function holds(tail: string): boolean {
  *  Measured 3,140,501 in 403.
  *
  *  Lowered on 2026-11-06, to 2,112,500, for #1045: the desktop app's own source carries
- *  no comments. Measured 2,112,170 in 403. */
-const BUDGET = 2_112_500
+ *  no comments. Measured 2,112,170 in 403.
+ *
+ *  Raised on 2026-11-06, to 2,114,900, for #1164: the file explorer is a kind of tab, made
+ *  from the new tab's kinds, the palette and Ctrl+Alt+E, with its own keys in the registry
+ *  and its branch in the pane (tab-kinds.ts, new-kinds.ts, shortcuts/registry.ts,
+ *  Pane.svelte, workspace.svelte.ts). Measured 2,114,467 in 403. */
+const BUDGET = 2_114_900
 const MOST_FILES = 404
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
