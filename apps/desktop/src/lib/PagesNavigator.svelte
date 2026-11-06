@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { dropOver } from './drag-paths'
   import { moved, removed, reshaped } from '@orden/markdown/pages'
   import type { Canvas } from './canvas/format'
   import { PAPER_NAMES, PATTERNS, type PageNode, type Paper, type Pattern } from './canvas/format'
   import { paintInk } from './canvas/paint'
   import { readPalette } from './canvas/palette'
+  import { carryPage, draggedPage, dropOver, isPageDrag } from './drag-paths'
   import { t } from './i18n.svelte'
   import { longPress } from './longpress'
   import { DIVIDER, type MenuEntry, menu } from './menu.svelte'
@@ -225,13 +225,13 @@
     ]
   }
 
-  function start(event: DragEvent, at: number) {
-    event.dataTransfer?.setData('application/nib-page', String(at))
-    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
+  function start(event: DragEvent, page: PageNode) {
+    const note = store?.path
+    if (note) carryPage(event.dataTransfer, { note, page: page.id })
   }
 
   function overPage(event: DragEvent, at: number) {
-    if (!event.dataTransfer?.types.includes('application/nib-page')) return
+    if (!isPageDrag(event.dataTransfer)) return
 
     event.preventDefault()
     const box = (event.currentTarget as HTMLElement).getBoundingClientRect()
@@ -240,18 +240,17 @@
   }
 
   function drop(event: DragEvent, at: number) {
-    const said = event.dataTransfer?.getData('application/nib-page')
+    const carried = draggedPage(event.dataTransfer)
     over = null
-    if (said === undefined || said === '') return
+    if (!carried) return
 
     event.preventDefault()
-    const from = Number(said)
-    const page = pages[from]
     const canvas = store?.canvas
-    if (!page || !canvas || Number.isNaN(from)) return
+    const from = pages.findIndex((one) => one.id === carried.page)
+    if (!canvas || carried.note !== store.path || from < 0) return
 
     const to = above ? at : at + 1
-    edit(moved(canvas, page.id, to > from ? to - 1 : to))
+    edit(moved(canvas, carried.page, to > from ? to - 1 : to))
   }
 </script>
 
@@ -273,7 +272,7 @@
               menu.show(event, pageMenu(page), { title: t('Page {number}', { number: at + 1 }) })}
             use:longPress={(event) =>
               menu.show(event, pageMenu(page), { title: t('Page {number}', { number: at + 1 }) })}
-            ondragstart={(event) => start(event, at)}
+            ondragstart={(event) => start(event, page)}
             use:dropOver={(event) => overPage(event, at)}
             ondragleave={() => (over = null)}
             ondragend={() => (over = null)}

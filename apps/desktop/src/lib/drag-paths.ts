@@ -8,6 +8,8 @@ const BOOKMARK = 'text/nib-bookmark'
 const SECTION = 'text/nib-section'
 const TAB = 'text/nib-tab'
 const EXPLORER = 'text/nib-explorer'
+const PAGE = 'text/nib-page'
+const HERE = `text/nib-from-${crypto.randomUUID()}`
 
 let carrying: readonly string[] = []
 
@@ -149,7 +151,7 @@ let carryingTile = false
 export function carryBookmark(transfer: DataTransfer | null, at: number, tile = false) {
   if (!transfer) return
 
-  transfer.setData(BOOKMARK, String(at))
+  carryHere(transfer, BOOKMARK, String(at))
   transfer.effectAllowed = 'move'
   carryingTile = tile
   carryingMark = at
@@ -162,7 +164,7 @@ export function carriedMark(): number | null {
 }
 
 export function isBookmarkDrag(transfer: DataTransfer | null): boolean {
-  return !!transfer?.types.includes(BOOKMARK)
+  return fromHere(transfer, BOOKMARK)
 }
 
 export function draggedBookmark(transfer: DataTransfer | null): number | null {
@@ -172,12 +174,12 @@ export function draggedBookmark(transfer: DataTransfer | null): number | null {
 export function carrySection(transfer: DataTransfer | null, at: number) {
   if (!transfer) return
 
-  transfer.setData(SECTION, String(at))
+  carryHere(transfer, SECTION, String(at))
   transfer.effectAllowed = 'move'
 }
 
 export function isSectionDrag(transfer: DataTransfer | null): boolean {
-  return !!transfer?.types.includes(SECTION)
+  return fromHere(transfer, SECTION)
 }
 
 export function draggedSection(transfer: DataTransfer | null): number | null {
@@ -192,7 +194,46 @@ export function draggedTab(transfer: DataTransfer | null): string | undefined {
   return transfer?.getData(TAB)
 }
 
+export interface CarriedPage {
+  note: string
+  page: string
+}
+
+export function carryPage(transfer: DataTransfer | null, carried: CarriedPage) {
+  if (!transfer) return
+
+  carryHere(transfer, PAGE, JSON.stringify(carried))
+  transfer.effectAllowed = 'move'
+}
+
+export function isPageDrag(transfer: DataTransfer | null): boolean {
+  return fromHere(transfer, PAGE)
+}
+
+export function draggedPage(transfer: DataTransfer | null): CarriedPage | null {
+  if (!transfer || !isPageDrag(transfer)) return null
+  try {
+    const said = JSON.parse(transfer.getData(PAGE)) as Partial<CarriedPage> | null
+    return typeof said?.note === 'string' && typeof said.page === 'string'
+      ? { note: said.note, page: said.page }
+      : null
+  } catch {
+    return null
+  }
+}
+
+function carryHere(transfer: DataTransfer, type: string, value: string) {
+  transfer.setData(type, value)
+  transfer.setData(HERE, type)
+}
+
+function fromHere(transfer: DataTransfer | null, type: string): boolean {
+  const types = transfer?.types ?? []
+  return types.includes(type) && types.includes(HERE)
+}
+
 function index(transfer: DataTransfer | null, type: string): number | null {
+  if (!fromHere(transfer, type)) return null
   const written = transfer?.getData(type) ?? ''
   const at = Number(written)
 
