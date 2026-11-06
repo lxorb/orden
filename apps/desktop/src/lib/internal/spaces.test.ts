@@ -738,6 +738,28 @@ describe('making a folder a kept space, whatever happens on the way', () => {
     busy.clear()
   })
 
+  test('converts once when two windows ask at once', async () => {
+    notes()
+    const { convertAll } = await import('./convert')
+    const away = './convert?window=two'
+    const other = (await import(away)) as typeof import('./convert')
+    expect(other.convertAll).not.toBe(convertAll)
+    const one = workspace('/spaces/Notes')
+    const two = workspace('/spaces/Notes')
+    await Promise.all([convertAll(one.ws), other.convertAll(two.ws)])
+    const root = '/spaces/.orden/Notes/Notes'
+    expect([...one.said, ...two.said]).toEqual([`/spaces/Notes -> ${root}`])
+    const { busy } = await import('../busy.svelte')
+    expect(busy.trouble).toBeNull()
+    expect(disk.files.has(root)).toBe(true)
+    expect([...disk.files.keys()].filter((one) => one.includes('/.backups/'))).toHaveLength(2)
+    expect(await call('list_spaces')).toEqual([{ name: 'Notes', path: root }])
+    expect([...disk.dirs].filter((dir) => /^\/spaces\/\.orden\/[^/.][^/]*$/.test(dir))).toEqual([
+      '/spaces/.orden/Notes',
+    ])
+    expect(await call('read_note', { path: `${root}/Work/Old.md` })).toBe('old')
+  })
+
   test('keeps names of every kind, and refuses two that are one name here', async () => {
     const { convertSpace } = await import('./convert')
     disk.dirs.add('/spaces/Notes')

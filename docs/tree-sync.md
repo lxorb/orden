@@ -269,7 +269,7 @@ copied whole into `.orden/.backups`; while the copy is made, the kept folder say
 listed, and the next launch goes on from where it stopped: what the kept folder already
 holds, byte for byte, is not written again. Its index is written every 200 files or two
 seconds, not once a file, so a large space costs about one write of each file. One
-conversion runs at a time, the window says which space and how many of its files are
+conversion runs at a time across the app's windows, the window says which space and how many of its files are
 in, and a space that stays a folder is named at the top of the window, with nothing of
 it lost and another try at the next launch. A kept space that already has the name
 gives the converted one the next free name (`Notes 2`), as a rename does. There is no

@@ -1,6 +1,7 @@
 import { nameKey } from '@orden/sync-core/tree'
 import { busy } from '../busy.svelte'
 import { t } from '../i18n.svelte'
+import { locksHere, locksWork } from '../locks'
 import { log } from '../log'
 import { invoke as crate } from '../native'
 import { joinPath, platform } from '../tauri'
@@ -133,8 +134,15 @@ async function backedUp(from: string, name: string): Promise<string> {
 
 let turn: Promise<unknown> = Promise.resolve()
 
+const CONVERTING_LOCK = 'nib:converting'
+
 function oneAtATime<T>(run: () => Promise<T>): Promise<T> {
-  const mine = turn.then(run, run)
+  const locked = async (): Promise<T> => {
+    const locks = locksHere()
+    if (!locks || !(await locksWork(locks))) return run()
+    return locks.request(CONVERTING_LOCK, run) as Promise<T>
+  }
+  const mine = turn.then(locked, locked)
   turn = mine.catch(() => undefined)
   return mine
 }
