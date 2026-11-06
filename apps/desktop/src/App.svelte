@@ -158,6 +158,11 @@
   const rightOpen = $derived(
     padDocked ? workspace.rightShows !== null : workspace.openOn('right') !== null,
   )
+  const docked = $derived(
+    viewport.drawer || bare || filled
+      ? 0
+      : (workspace.panel !== null ? 1 : 0) + (rightOpen ? 1 : 0),
+  )
   const keptRight = $derived(
     (built.right ||=
       workspace.rightPanel !== null ||
@@ -735,6 +740,9 @@
   class:tabbed={viewport.device === 'phone' && !!workspace.panel && !bare && !__EVEN_PLUGIN__}
   inert={workspace.nothingToShow}
   style:height={pageHeight()}
+  style:--panel-room={docked
+    ? `max(var(--panel-narrowest), (100vw - var(--panes-floor)) / ${docked})`
+    : undefined}
 >
   <div class="middle" bind:this={middle}>
     {#if !bare && !filled}

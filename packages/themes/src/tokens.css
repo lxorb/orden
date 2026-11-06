@@ -97,6 +97,8 @@
   --scrollbar-thumb: 6px;
 
   --sidebar-width: 252px;
+  --panel-narrowest: 180px;
+  --panes-floor: 240px;
   --titlebar-height: 38px;
   --traffic-lights: 78px;
   --header-height: var(--titlebar-height);

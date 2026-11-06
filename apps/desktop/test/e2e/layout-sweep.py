@@ -26,7 +26,7 @@ PHONE_AGENT = (
     " Chrome/140.0.0.0 Mobile Safari/537.36"
 )
 
-DESKTOP_WIDTHS = (1280, 960, 720)
+DESKTOP_WIDTHS = (1280, 960, 720, 520)
 DESKTOP_HEIGHT = 800
 PHONE = {"width": 390, "height": 844}
 SCHEMES = ("light", "dark")
