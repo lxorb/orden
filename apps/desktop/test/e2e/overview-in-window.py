@@ -41,7 +41,7 @@ SAMPLE = """
         name: tab.shown,
         front: fronts.has(tab.id),
         strip: seen(document.querySelector(`[data-box="${tab.id}"]`)),
-        window: window ? seen(window) : null,
+        window: window ? seen(fronts.has(tab.id) ? (window.nextElementSibling?.nextElementSibling?.matches('.rider') ? window.nextElementSibling.nextElementSibling.firstElementChild : null) : window) : null,
         picture: window ? !!window.querySelector('.face-box > .face') : false,
       }
     })

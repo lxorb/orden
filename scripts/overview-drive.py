@@ -117,6 +117,16 @@ if sys.platform == "win32":
             user32.SetCursorPos(x, y)
             user32.mouse_event(WHEEL, 0, 0, ctypes.c_uint32((120 * notches) & 0xFFFFFFFF).value, 0)
 
+        @staticmethod
+        def drag(start: tuple[int, int], end: tuple[int, int]) -> None:
+            user32.SetCursorPos(*start)
+            time.sleep(0.1)
+            user32.mouse_event(LEFTDOWN, 0, 0, 0, 0)
+            for step in range(1, 21):
+                user32.SetCursorPos(start[0] + (end[0] - start[0]) * step // 20, start[1] + (end[1] - start[1]) * step // 20)
+                time.sleep(0.03)
+            user32.mouse_event(LEFTUP, 0, 0, 0, 0)
+
 else:
 
     def xdo(*words: str) -> str:
@@ -174,6 +184,15 @@ else:
         def wheel(x: int, y: int, notches: int) -> None:
             xdo("mousemove", str(x), str(y))
             xdo("click", "4" if notches > 0 else "5")
+
+        @staticmethod
+        def drag(start: tuple[int, int], end: tuple[int, int]) -> None:
+            xdo("mousemove", str(start[0]), str(start[1]))
+            xdo("mousedown", "1")
+            for step in range(1, 21):
+                xdo("mousemove", str(start[0] + (end[0] - start[0]) * step // 20), str(start[1] + (end[1] - start[1]) * step // 20))
+                time.sleep(0.03)
+            xdo("mouseup", "1")
 
 class App:
     def __init__(self, port: int, secret: str) -> None:
@@ -403,11 +422,17 @@ def round_trip(app: App, desk: Desk, name: str, hole: dict[str, float] | None, o
     time.sleep(0.4)
     how = toggled(app, desk, True, pressed)
     time.sleep(1.6)
-    for notches in (-1, -1, -1, 1, 1, 1):
+    bar = float(app.eval("document.querySelector('header[data-chrome=\"top\"]')?.getBoundingClientRect().bottom ?? 0") or 0)
+    pressed.append((time.time() * 1000, "pan"))
+    floor = (box[0] + round(28 * scale), round(box[1] + (bar + 160) * scale))
+    desk.drag(floor, (floor[0], floor[1] - round(320 * scale)))
+    time.sleep(0.5)
+    for notches in (1, 1, 1, -1, -1, -1):
         pressed.append((time.time() * 1000, "wheel"))
         desk.wheel(*middle, notches)
         time.sleep(0.35)
     time.sleep(1.2)
+    log_bar = round(bar * scale)
     how += " " + toggled(app, desk, False, pressed)
     time.sleep(1.8)
     frames = film.stop()
@@ -415,7 +440,26 @@ def round_trip(app: App, desk: Desk, name: str, hole: dict[str, float] | None, o
     if not isinstance(log, dict) or "frames" not in log:
         log = {"frames": [], "puts": [], "said": log}
     print(f"[{name}] opened and closed by {how}", flush=True)
-    return judged(name, frames, log, pressed, hole, out, scale)
+    return judged(name, frames, log, pressed, hole, out, scale) + barred(name, frames, pressed, log_bar)
+
+
+def barred(name: str, frames: list[tuple[float, Image.Image]], pressed: list[tuple[float, str]], bar: int) -> list[str]:
+    start = next((at for at, what in pressed if what == "pan"), None)
+    end = next((at for at, what in pressed if what == "close"), None)
+    if start is None or end is None or bar < 8:
+        return [f"[{name}] the bar was not measured: {bar}"]
+    band = lambda image: numpy.asarray(image.crop((0, 0, image.width, bar - 2)).convert("L").resize((image.width // 8, max(1, (bar - 2) // 4))), dtype=numpy.float32)  # noqa: E731
+    during = [(at, band(one)) for at, one in frames if start - 60 <= at <= end]
+    if len(during) < 2:
+        return [f"[{name}] no frames of the bar while the canvas moved"]
+    first = during[0][1]
+    worst = 0.0
+    for _, one in during[1:]:
+        columns = numpy.abs(one - first).mean(axis=0)
+        wide = columns[: len(columns) // 5 * 5].reshape(-1, 5).mean(axis=1) if len(columns) >= 5 else columns
+        worst = max(worst, float(wide.max()))
+    print(f"[{name}] the bar changed by at most {worst:.1f} while the canvas was panned and zoomed under it", flush=True)
+    return [f"[{name}] a window was drawn over the bar: {worst:.1f}"] if worst > 12 else []
 
 def main() -> int:
     parser = argparse.ArgumentParser()

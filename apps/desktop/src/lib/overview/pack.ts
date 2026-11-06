@@ -1,118 +1,125 @@
-import type { Box } from './layout'
+import { COS, N, SIN } from './bubble'
+import { gapOf, middleOf, moved, type Outline } from './outline'
 
-export interface Sized {
+export interface Shaped {
   key: string
-  w: number
-  h: number
+  outline: Outline
 }
 
-export function meets(a: Box, b: Box, gap: number): boolean {
-  return (
-    a.x < b.x + b.w + gap - 0.01 &&
-    b.x < a.x + a.w + gap - 0.01 &&
-    a.y < b.y + b.h + gap - 0.01 &&
-    b.y < a.y + a.h + gap - 0.01
-  )
+export interface Shift {
+  x: number
+  y: number
 }
 
-const clamp = (value: number, low: number, high: number) =>
-  Math.min(Math.max(value, low), Math.max(low, high))
+export function meets(a: Outline, b: Outline, gap: number): boolean {
+  return gapOf(a, b) < gap - 0.01
+}
+
+const AROUND = 2
 
 export function packed(
-  items: readonly Sized[],
+  items: readonly Shaped[],
   gap: number,
-  taken: readonly Box[] = [],
+  taken: readonly Outline[] = [],
   middle: { x: number; y: number } = { x: 0, y: 0 },
   wide = 1,
-): Record<string, Box> {
-  const placed: Box[] = [...taken]
-  const out: Record<string, Box> = {}
-  const far = (box: Box) =>
-    Math.hypot((box.x + box.w / 2 - middle.x) / wide, box.y + box.h / 2 - middle.y)
+): Record<string, Shift> {
+  const placed: Outline[] = [...taken]
+  const out: Record<string, Shift> = {}
   for (const item of items) {
-    const { w, h } = item
-    const best: { box: Box | null; off: number } = { box: null, off: Number.POSITIVE_INFINITY }
-    const tryAt = (x: number, y: number) => {
-      const box = { x, y, w, h }
-      const off = far(box)
+    const own = middleOf(item.outline)
+    const best: { shift: Shift | null; off: number } = {
+      shift: null,
+      off: Number.POSITIVE_INFINITY,
+    }
+    const tryAt = (shift: Shift) => {
+      const off = Math.hypot((own.x + shift.x - middle.x) / wide, own.y + shift.y - middle.y)
       if (off >= best.off - 1e-6) return
-      if (placed.some((one) => meets(one, box, gap))) return
-      best.box = box
+      const there = moved(item.outline, shift.x, shift.y)
+      if (placed.some((one) => meets(one, there, gap))) return
+      best.shift = shift
       best.off = off
     }
-    tryAt(middle.x - w / 2, middle.y - h / 2)
-    if (!best.box) {
-      const xs = [middle.x - w / 2]
-      const ys = [middle.y - h / 2]
+    tryAt({ x: middle.x - own.x, y: middle.y - own.y })
+    if (!best.shift) {
       for (const one of placed) {
-        xs.push(one.x, one.x + one.w - w, one.x + one.w + gap, one.x - w - gap)
-        ys.push(one.y, one.y + one.h - h, one.y + one.h + gap, one.y - h - gap)
-      }
-      for (const one of placed) {
-        for (const x of [one.x + one.w + gap, one.x - w - gap])
-          for (const y of ys) tryAt(x, clamp(y, one.y - h + 1, one.y + one.h - 1))
-        for (const y of [one.y + one.h + gap, one.y - h - gap])
-          for (const x of xs) tryAt(clamp(x, one.x - w + 1, one.x + one.w - 1), y)
+        const centre = middleOf(one)
+        const base = { x: centre.x - own.x, y: centre.y - own.y }
+        for (let i = 0; i < N; i += AROUND) {
+          const c = COS[i] ?? 0
+          const s = SIN[i] ?? 0
+          const reach =
+            gap + (one[i] ?? 0) + (item.outline[(i + N / 2) % N] ?? 0) - (base.x * c + base.y * s)
+          tryAt({ x: base.x + c * reach, y: base.y + s * reach })
+        }
       }
     }
-    const box: Box = best.box ?? { x: middle.x - w / 2, y: middle.y - h / 2, w, h }
-    placed.push(box)
-    out[item.key] = box
+    const shift = best.shift ?? { x: middle.x - own.x, y: middle.y - own.y }
+    placed.push(moved(item.outline, shift.x, shift.y))
+    out[item.key] = shift
   }
   return out
 }
 
-function clearAlong(a: Box, b: Box, x: number, y: number, gap: number): number {
-  let least = Number.POSITIVE_INFINITY
-  if (x > 1e-9) least = Math.min(least, (a.x + a.w + gap - b.x) / x)
-  if (x < -1e-9) least = Math.min(least, (b.x + b.w + gap - a.x) / -x)
-  if (y > 1e-9) least = Math.min(least, (a.y + a.h + gap - b.y) / y)
-  if (y < -1e-9) least = Math.min(least, (b.y + b.h + gap - a.y) / -y)
-  return Math.max(0, least)
+function clearAlong(pusher: Outline, box: Outline, x: number, y: number, gap: number): number {
+  let low = 0
+  let high = 64
+  while (meets(pusher, moved(box, x * high, y * high), gap) && high < 1e6) high *= 2
+  for (let i = 0; i < 30; i++) {
+    const mid = (low + high) / 2
+    if (meets(pusher, moved(box, x * mid, y * mid), gap)) low = mid
+    else high = mid
+  }
+  return high
 }
 
 export function pushedAside(
-  held: Box,
-  others: readonly { key: string; box: Box }[],
+  held: Outline,
+  others: readonly Shaped[],
   gap: number,
-  was: Readonly<Record<string, Box>> = {},
-): Record<string, Box> {
-  const middleOf = (box: Box) => ({ x: box.x + box.w / 2, y: box.y + box.h / 2 })
+  was: Readonly<Record<string, Shift>> = {},
+): Record<string, Shift> {
   const from = middleOf(held)
-  const now = new Map(others.map(({ key, box }) => [key, { ...(was[key] ?? box) }]))
+  const now = new Map(others.map(({ key }) => [key, { ...(was[key] ?? { x: 0, y: 0 }) }]))
+  const rest = new Map(others.map(({ key, outline }) => [key, outline]))
+  const shapeOf = (key: string): Outline | null => {
+    const outline = rest.get(key)
+    const shift = now.get(key)
+    return outline && shift ? moved(outline, shift.x, shift.y) : null
+  }
   const far = (key: string) => {
-    const box = now.get(key)
-    if (!box) return 0
-    const at = middleOf(box)
+    const shape = shapeOf(key)
+    if (!shape) return 0
+    const at = middleOf(shape)
     return Math.hypot(at.x - from.x, at.y - from.y)
   }
   const order = others.map(({ key }) => key).sort((a, b) => far(a) - far(b))
   for (let pass = 0; pass <= order.length; pass++) {
-    let moved = false
-    const pushers: Box[] = [held]
+    let moving = false
+    const pushers: Outline[] = [held]
     for (const key of order) {
-      const box = now.get(key)
-      if (!box) continue
+      const shift = now.get(key)
+      if (!shift) continue
       for (const pusher of pushers) {
-        if (!meets(pusher, box, gap)) continue
+        const shape = shapeOf(key)
+        if (!shape || !meets(pusher, shape, gap)) continue
         const a = middleOf(pusher)
-        const b = middleOf(box)
+        const b = middleOf(shape)
         const apart = Math.hypot(b.x - a.x, b.y - a.y)
         const x = apart > 1e-6 ? (b.x - a.x) / apart : 1
         const y = apart > 1e-6 ? (b.y - a.y) / apart : 0
-        const by = clearAlong(pusher, box, x, y, gap)
-        box.x += x * by
-        box.y += y * by
-        moved = true
+        const by = clearAlong(pusher, shape, x, y, gap)
+        shift.x += x * by
+        shift.y += y * by
+        moving = true
       }
-      pushers.push(box)
+      const shape = shapeOf(key)
+      if (shape) pushers.push(shape)
     }
-    if (!moved) break
+    if (!moving) break
   }
-  const out: Record<string, Box> = {}
-  for (const { key, box } of others) {
-    const at = now.get(key)
-    if (at && (Math.abs(at.x - box.x) > 0.01 || Math.abs(at.y - box.y) > 0.01)) out[key] = at
-  }
+  const out: Record<string, Shift> = {}
+  for (const [key, shift] of now)
+    if (Math.abs(shift.x) > 0.01 || Math.abs(shift.y) > 0.01) out[key] = shift
   return out
 }

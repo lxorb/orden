@@ -79,6 +79,21 @@ CROSSED = """
 }
 """
 
+NEAREST = """
+(pair) => {
+  const names = [...document.querySelectorAll('[data-space-name]')].map((one) => one.textContent.trim())
+  const paths = [...document.querySelectorAll('.bubble')]
+  const [a, b] = pair.map((name) => paths[names.indexOf(name)])
+  if (!a || !b) return null
+  const along = (path) => { const length = path.getTotalLength(); return Array.from({ length: 480 }, (_, k) => path.getPointAtLength((k / 480) * length)) }
+  const one = along(a)
+  const other = along(b)
+  let least = Infinity
+  for (const p of one) for (const q of other) least = Math.min(least, Math.hypot(p.x - q.x, p.y - q.y))
+  return least
+}
+"""
+
 def meet(a: list[float], b: list[float]) -> bool:
     return a[0] < b[0] + b[2] and b[0] < a[0] + a[2] and a[1] < b[1] + b[3] and b[1] < a[1] + a[3]
 
@@ -161,16 +176,37 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(600)
     shot(page, "pushed")
     at_rest(page, "pushed")
+    pushed = {one["name"]: one for one in page.evaluate(BUBBLES)}.get("Ideas")
+    nearest = page.evaluate(NEAREST, ["Work", "Ideas"])
+    say(f"[carry] Work's and Ideas' outlines {nearest:.1f} apart while one pushes the other")
+    if nearest is None or nearest > 10:
+        wrong(f"[carry] Ideas was pushed before the outlines met: {nearest}")
+    if not pushed or max(abs(pushed["box"][0] - ideas["box"][0]), abs(pushed["box"][1] - ideas["box"][1])) < 20:
+        wrong("[carry] Work never pushed Ideas aside")
     page.mouse.up()
     page.wait_for_timeout(1600)
     shot(page, "let-go")
-    after = {one["name"]: one for one in page.evaluate(BUBBLES)}
-    back = after.get("Ideas")
-    if back:
-        off = max(abs(back["box"][0] - ideas["box"][0]), abs(back["box"][1] - ideas["box"][1]))
-        if off > 8:
-            wrong(f"[let go] Ideas did not go back where it was: {off:.0f} away")
+
+    def stayed(label: str) -> None:
+        now = {one["name"]: one for one in page.evaluate(BUBBLES)}.get("Ideas")
+        if now and pushed:
+            off = max(abs(now["box"][0] - pushed["box"][0]), abs(now["box"][1] - pushed["box"][1]))
+            if off > 8:
+                wrong(f"[{label}] Ideas did not stay where it was pushed: {off:.0f} away")
+
+    stayed("let go")
     at_rest(page, "let go")
+    page.keyboard.press("Alt")
+    page.keyboard.press("Alt")
+    wait_for(page, "!document.querySelector('.canvas')", "the overview put away")
+    page.wait_for_timeout(400)
+    page.keyboard.press("Alt")
+    page.keyboard.press("Alt")
+    wait_for(page, "document.querySelectorAll('[data-space-name]').length >= 5", "every space's bubble again")
+    page.wait_for_timeout(1400)
+    shot(page, "again")
+    stayed("again")
+    at_rest(page, "again")
     page.close()
 
 if __name__ == "__main__":
