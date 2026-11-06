@@ -2859,4 +2859,9 @@ export const ja: Dictionary = {
   'Unlock what you protected in Orden': 'Orden で保護したものを開きます',
   'Protect with': '保護の方法',
   'Let agents read': 'エージェントに読ませる',
+  'That did not work: {reason}': 'うまくいきませんでした: {reason}',
+  'Waiting for {way}…': '{way} を待っています…',
+  '{way} could not be asked: {reason}': '{way} に問い合わせできませんでした: {reason}',
+  '{way} did not confirm it was you': '{way} で本人確認できませんでした',
+  'That could not be protected: {reason}': '保護できませんでした: {reason}',
 }

@@ -60,8 +60,8 @@ mod platform {
     )]
     pub fn check(reason: &str, _window: Option<isize>) -> Result<bool, String> {
         let (said, heard) = mpsc::channel();
-        let reply = RcBlock::new(move |yes: Bool, _error: *mut NSError| {
-            let _ = said.send(yes.as_bool());
+        let reply = RcBlock::new(move |yes: Bool, error: *mut NSError| {
+            let _ = said.send(answer(yes.as_bool(), unsafe { error.as_ref() }));
         });
         unsafe {
             LAContext::new().evaluatePolicy_localizedReason_reply(
@@ -70,14 +70,28 @@ mod platform {
                 &reply,
             );
         }
-        heard.recv().map_err(|error| error.to_string())
+        heard.recv().map_err(|error| error.to_string())?
+    }
+
+    const TURNED_AWAY: [isize; 3] = [-2, -4, -9];
+
+    fn answer(yes: bool, error: Option<&NSError>) -> Result<bool, String> {
+        match error {
+            _ if yes => Ok(true),
+            Some(error) if !TURNED_AWAY.contains(&error.code()) => {
+                Err(error.localizedDescription().to_string())
+            }
+            _ => Ok(false),
+        }
     }
 }
 
 #[cfg(target_os = "windows")]
 mod platform {
+    use std::time::{Duration, Instant};
+
     use windows::core::{factory, HSTRING};
-    use windows::Foundation::IAsyncOperation;
+    use windows::Foundation::{AsyncStatus, IAsyncOperation};
     use windows::Security::Credentials::UI::{
         UserConsentVerificationResult, UserConsentVerifier, UserConsentVerifierAvailability,
     };
@@ -90,29 +104,63 @@ mod platform {
             .is_ok_and(|answer| answer == UserConsentVerifierAvailability::Available)
     }
 
+    const PATIENCE: Duration = Duration::from_secs(120);
+    const LOOK: Duration = Duration::from_millis(50);
+
+    pub(super) fn said(answer: UserConsentVerificationResult) -> Result<bool, String> {
+        match answer {
+            UserConsentVerificationResult::Verified => Ok(true),
+            UserConsentVerificationResult::Canceled => Ok(false),
+            UserConsentVerificationResult::DeviceNotPresent => {
+                Err("Windows Hello has no device to ask with".into())
+            }
+            UserConsentVerificationResult::NotConfiguredForUser => {
+                Err("Windows Hello is not set up for this account".into())
+            }
+            UserConsentVerificationResult::DisabledByPolicy => {
+                Err("Windows Hello is turned off by policy".into())
+            }
+            UserConsentVerificationResult::DeviceBusy => Err("Windows Hello is busy".into()),
+            UserConsentVerificationResult::RetriesExhausted => {
+                Err("Windows Hello was tried too many times".into())
+            }
+            other => Err(format!("Windows Hello answered {}", other.0)),
+        }
+    }
+
     #[allow(
         unsafe_code,
         reason = "Windows Hello is asked over a window through its COM interop interface"
     )]
     pub fn check(reason: &str, window: Option<isize>) -> Result<bool, String> {
         let message = HSTRING::from(reason);
-        let asked: IAsyncOperation<UserConsentVerificationResult> = match window {
-            Some(hwnd) => {
-                let interop = factory::<UserConsentVerifier, IUserConsentVerifierInterop>()
-                    .map_err(|error| error.to_string())?;
-                unsafe {
-                    interop.RequestVerificationForWindowAsync(
-                        HWND(hwnd as *mut core::ffi::c_void),
-                        &message,
-                    )
-                }
-                .map_err(|error| error.to_string())?
+        let hwnd = window.ok_or("the window that asks has no handle")?;
+        let interop = factory::<UserConsentVerifier, IUserConsentVerifierInterop>()
+            .map_err(|error| error.to_string())?;
+        let asked: IAsyncOperation<UserConsentVerificationResult> = unsafe {
+            interop
+                .RequestVerificationForWindowAsync(HWND(hwnd as *mut core::ffi::c_void), &message)
+        }
+        .map_err(|error| error.to_string())?;
+        let until = Instant::now() + PATIENCE;
+        loop {
+            let status = asked.Status().map_err(|error| error.to_string())?;
+            if status == AsyncStatus::Completed {
+                return said(asked.GetResults().map_err(|error| error.to_string())?);
             }
-            None => UserConsentVerifier::RequestVerificationAsync(&message)
-                .map_err(|error| error.to_string())?,
-        };
-        let answer = asked.get().map_err(|error| error.to_string())?;
-        Ok(answer == UserConsentVerificationResult::Verified)
+            if status == AsyncStatus::Canceled {
+                return Ok(false);
+            }
+            if status == AsyncStatus::Error {
+                let code = asked.ErrorCode().map_err(|error| error.to_string())?;
+                return Err(windows::core::Error::from(code).to_string());
+            }
+            if Instant::now() > until {
+                let _ = asked.Cancel();
+                return Err("Windows Hello did not answer".into());
+            }
+            std::thread::sleep(LOOK);
+        }
     }
 }
 
@@ -196,5 +244,19 @@ mod tests {
             Some(&zbus::zvariant::Value::from(std::process::id()))
         );
         assert!(details.contains_key("start-time"));
+    }
+}
+
+#[cfg(all(test, target_os = "windows"))]
+mod windows_tests {
+    use windows::Security::Credentials::UI::UserConsentVerificationResult as Answer;
+
+    #[test]
+    fn says_why_windows_hello_could_not_ask() {
+        assert_eq!(super::platform::said(Answer::Verified), Ok(true));
+        assert_eq!(super::platform::said(Answer::Canceled), Ok(false));
+        let unset = super::platform::said(Answer::NotConfiguredForUser);
+        assert!(unset.is_err_and(|why| why.contains("not set up")));
+        assert!(super::platform::said(Answer::DeviceNotPresent).is_err());
     }
 }

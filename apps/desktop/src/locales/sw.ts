@@ -2945,4 +2945,9 @@ export const sw: Dictionary = {
   'Unlock what you protected in Orden': 'Fungua ulichokilinda katika Orden',
   'Protect with': 'Linda kwa',
   'Let agents read': 'Ruhusu mawakala wasome',
+  'That did not work: {reason}': 'Haikufanya kazi: {reason}',
+  'Waiting for {way}…': 'Inasubiri {way}…',
+  '{way} could not be asked: {reason}': '{way} haikuweza kuulizwa: {reason}',
+  '{way} did not confirm it was you': '{way} haikuthibitisha kuwa ni wewe',
+  'That could not be protected: {reason}': 'Haikuweza kulindwa: {reason}',
 }

@@ -26,6 +26,7 @@
   import { rowName } from './note-name'
   import { roving } from './roving'
   import SharedMark from './SharedMark.svelte'
+  import { LOCK_MARK } from './protect/entries'
   import { canWriteAt, isSharedItem, othersIn } from './sharing.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { syncMark } from './surfaces.svelte'
@@ -1023,6 +1024,10 @@
       {/if}
       {#if othersIn(opens)}<SharedMark label={t('Also open elsewhere')} />
       {:else if isSharedItem(opens)}<SharedMark />{/if}
+      {#if workspace.protection.any && workspace.activeSpace && workspace.protection.own(workspace.activeSpace.root, entry.path)}<SharedMark
+          label={t('Protected')}
+          icon={LOCK_MARK}
+        />{/if}
       {#if syncMark.asked}{#await syncMark.asked then Held}<Held path={opens} />{/await}{/if}
       {#if nested.length}{@render twist(entry)}{/if}
     </button>

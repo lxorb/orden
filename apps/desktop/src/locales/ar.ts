@@ -3038,4 +3038,9 @@ export const ar: Dictionary = {
   'Unlock what you protected in Orden': 'افتح ما حميته في Orden',
   'Protect with': 'الحماية باستخدام',
   'Let agents read': 'السماح للوكلاء بالقراءة',
+  'That did not work: {reason}': 'لم ينجح ذلك: {reason}',
+  'Waiting for {way}…': 'بانتظار {way}…',
+  '{way} could not be asked: {reason}': 'تعذّر سؤال {way}: {reason}',
+  '{way} did not confirm it was you': 'لم يؤكّد {way} أنك أنت',
+  'That could not be protected: {reason}': 'تعذّرت الحماية: {reason}',
 }

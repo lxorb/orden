@@ -2927,4 +2927,9 @@ export const gsw: Dictionary = {
   'Unlock what you protected in Orden': 'Gschützts in Orden öffne',
   'Protect with': 'Schütze mit',
   'Let agents read': 'Agänte la läse',
+  'That did not work: {reason}': 'Das hät nöd klappt: {reason}',
+  'Waiting for {way}…': 'Warte uf {way} …',
+  '{way} could not be asked: {reason}': '{way} hät nöd chöne gfrögt wärde: {reason}',
+  '{way} did not confirm it was you': '{way} hät nöd bestätigt, dass du s bisch',
+  'That could not be protected: {reason}': 'Das hät nöd chöne gschützt wärde: {reason}',
 }

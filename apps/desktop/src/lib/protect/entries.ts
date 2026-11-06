@@ -1,4 +1,6 @@
+import { busy } from '../busy.svelte'
 import { t } from '../i18n.svelte'
+import type { IconNode } from 'lucide'
 import type { MenuItem } from '../menu-item'
 import { samePath, within } from '../space-paths'
 import { workspace } from '../workspace.svelte'
@@ -8,6 +10,18 @@ const unlocking = () =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('nothing is protected in the Even Realities plugin'))
     : import('./unlocking')
+
+const failed = (error: unknown) =>
+  busy.failed(
+    t('That did not work: {reason}', {
+      reason: error instanceof Error ? error.message : String(error),
+    }),
+  )
+
+export const LOCK_MARK: IconNode = [
+  ['rect', { width: '18', height: '11', x: '3', y: '11', rx: '2', ry: '2' }],
+  ['path', { d: 'M7 11V7a5 5 0 0 1 10 0v4' }],
+]
 
 export interface ProtectRow extends MenuItem {
   id: 'protect' | 'unprotect' | 'lock' | 'lock-all' | 'agents'
@@ -42,7 +56,7 @@ export function protectEntries(path: string | null | undefined): ProtectRow[] {
       {
         id: 'unprotect',
         label: t('Remove protection'),
-        run: () => void unlocking().then((one) => one.unprotect(root, path)),
+        run: () => void unlocking().then((one) => one.unprotect(root, path), failed),
       },
     ]
   }
@@ -51,7 +65,7 @@ export function protectEntries(path: string | null | undefined): ProtectRow[] {
     {
       id: 'protect',
       label: samePath(root, path) ? t('Protect space') : t('Protect'),
-      run: () => void unlocking().then((one) => one.protect(root, path)),
+      run: () => void unlocking().then((one) => one.protect(root, path), failed),
     },
   ]
 }

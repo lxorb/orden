@@ -2900,4 +2900,9 @@ export const bn: Dictionary = {
   'Unlock what you protected in Orden': 'Orden-এ আপনার সুরক্ষিত জিনিস খুলুন',
   'Protect with': 'যা দিয়ে সুরক্ষিত করবেন',
   'Let agents read': 'এজেন্টদের পড়তে দিন',
+  'That did not work: {reason}': 'এটি কাজ করেনি: {reason}',
+  'Waiting for {way}…': '{way}-এর অপেক্ষায়…',
+  '{way} could not be asked: {reason}': '{way}-কে জিজ্ঞাসা করা যায়নি: {reason}',
+  '{way} did not confirm it was you': '{way} নিশ্চিত করেনি যে এটি আপনি',
+  'That could not be protected: {reason}': 'সুরক্ষিত করা যায়নি: {reason}',
 }

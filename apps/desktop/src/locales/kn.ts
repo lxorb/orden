@@ -2939,4 +2939,9 @@ export const kn: Dictionary = {
   'Unlock what you protected in Orden': 'Orden ನಲ್ಲಿ ನೀವು ರಕ್ಷಿಸಿದುದನ್ನು ತೆರೆಯಿರಿ',
   'Protect with': 'ಇದರಿಂದ ರಕ್ಷಿಸಿ',
   'Let agents read': 'ಏಜೆಂಟ್‌ಗಳಿಗೆ ಓದಲು ಬಿಡಿ',
+  'That did not work: {reason}': 'ಅದು ಕೆಲಸ ಮಾಡಲಿಲ್ಲ: {reason}',
+  'Waiting for {way}…': '{way} ಗಾಗಿ ಕಾಯಲಾಗುತ್ತಿದೆ…',
+  '{way} could not be asked: {reason}': '{way} ಅನ್ನು ಕೇಳಲಾಗಲಿಲ್ಲ: {reason}',
+  '{way} did not confirm it was you': 'ಅದು ನೀವೇ ಎಂದು {way} ದೃಢೀಕರಿಸಲಿಲ್ಲ',
+  'That could not be protected: {reason}': 'ರಕ್ಷಿಸಲಾಗಲಿಲ್ಲ: {reason}',
 }

@@ -2875,4 +2875,9 @@ export const my: Dictionary = {
   'Unlock what you protected in Orden': 'Orden တွင် သင်ကာကွယ်ထားသည်ကို ဖွင့်ရန်',
   'Protect with': 'ဖြင့် ကာကွယ်ရန်',
   'Let agents read': 'အေးဂျင့်များကို ဖတ်ခွင့်ပြုရန်',
+  'That did not work: {reason}': 'မအောင်မြင်ပါ - {reason}',
+  'Waiting for {way}…': '{way} ကို စောင့်နေသည်…',
+  '{way} could not be asked: {reason}': '{way} ကို မေး၍ မရပါ - {reason}',
+  '{way} did not confirm it was you': '{way} က သင်ဖြစ်ကြောင်း အတည်မပြုပါ',
+  'That could not be protected: {reason}': 'ကာကွယ်၍ မရပါ - {reason}',
 }

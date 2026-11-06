@@ -2906,4 +2906,9 @@ export const hi: Dictionary = {
   'Unlock what you protected in Orden': 'Orden में अपनी सुरक्षित चीज़ खोलें',
   'Protect with': 'इससे सुरक्षित करें',
   'Let agents read': 'एजेंट को पढ़ने दें',
+  'That did not work: {reason}': 'यह काम नहीं किया: {reason}',
+  'Waiting for {way}…': '{way} की प्रतीक्षा…',
+  '{way} could not be asked: {reason}': '{way} से पूछा नहीं जा सका: {reason}',
+  '{way} did not confirm it was you': '{way} ने पुष्टि नहीं की कि यह आप हैं',
+  'That could not be protected: {reason}': 'सुरक्षित नहीं किया जा सका: {reason}',
 }

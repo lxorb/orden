@@ -2855,4 +2855,9 @@ export const vi: Dictionary = {
   'Unlock what you protected in Orden': 'Mở những gì bạn đã bảo vệ trong Orden',
   'Protect with': 'Bảo vệ bằng',
   'Let agents read': 'Cho phép tác nhân đọc',
+  'That did not work: {reason}': 'Không thành công: {reason}',
+  'Waiting for {way}…': 'Đang chờ {way}…',
+  '{way} could not be asked: {reason}': 'Không thể hỏi {way}: {reason}',
+  '{way} did not confirm it was you': '{way} không xác nhận đó là bạn',
+  'That could not be protected: {reason}': 'Không thể bảo vệ: {reason}',
 }

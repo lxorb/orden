@@ -2790,4 +2790,9 @@ export const zhHans: Dictionary = {
   'Unlock what you protected in Orden': '打开你在 Orden 中保护的内容',
   'Protect with': '保护方式',
   'Let agents read': '允许智能体读取',
+  'That did not work: {reason}': '没有成功：{reason}',
+  'Waiting for {way}…': '正在等待 {way}…',
+  '{way} could not be asked: {reason}': '无法询问 {way}：{reason}',
+  '{way} did not confirm it was you': '{way} 未确认是你本人',
+  'That could not be protected: {reason}': '无法保护：{reason}',
 }

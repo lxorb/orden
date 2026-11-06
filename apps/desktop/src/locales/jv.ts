@@ -2867,4 +2867,9 @@ export const jv: Dictionary = {
   'Unlock what you protected in Orden': 'Bukak sing koklindhungi ing Orden',
   'Protect with': 'Lindhungi nganggo',
   'Let agents read': 'Keparengaké agen maca',
+  'That did not work: {reason}': 'Ora kasil: {reason}',
+  'Waiting for {way}…': 'Ngenteni {way}…',
+  '{way} could not be asked: {reason}': '{way} ora bisa ditakoni: {reason}',
+  '{way} did not confirm it was you': '{way} ora mesthekake yèn iki sampéyan',
+  'That could not be protected: {reason}': 'Ora bisa dilindhungi: {reason}',
 }

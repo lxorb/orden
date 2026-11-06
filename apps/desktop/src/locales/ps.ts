@@ -2905,4 +2905,9 @@ export const ps: Dictionary = {
   'Unlock what you protected in Orden': 'هغه څه پرانیزئ چې په Orden کې مو خوندي کړي',
   'Protect with': 'خوندي کول په',
   'Let agents read': 'اجنټانو ته د لوستلو اجازه ورکړئ',
+  'That did not work: {reason}': 'کار یې ونه کړ: {reason}',
+  'Waiting for {way}…': 'د {way} انتظار…',
+  '{way} could not be asked: {reason}': 'له {way} پوښتنه ونه شوه: {reason}',
+  '{way} did not confirm it was you': '{way} تایید نه کړه چې دا تاسو یاست',
+  'That could not be protected: {reason}': 'خوندي نه شو: {reason}',
 }

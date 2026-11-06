@@ -2909,4 +2909,9 @@ export const fa: Dictionary = {
   'Unlock what you protected in Orden': 'آنچه در Orden محافظت کرده‌اید را باز کنید',
   'Protect with': 'محافظت با',
   'Let agents read': 'اجازهٔ خواندن به عامل‌ها',
+  'That did not work: {reason}': 'کار نکرد: {reason}',
+  'Waiting for {way}…': 'در انتظار {way}…',
+  '{way} could not be asked: {reason}': 'نشد از {way} پرسید: {reason}',
+  '{way} did not confirm it was you': '{way} تأیید نکرد که خودتان هستید',
+  'That could not be protected: {reason}': 'محافظت نشد: {reason}',
 }
