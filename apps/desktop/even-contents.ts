@@ -683,11 +683,15 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  Raised on 2026-11-06 for #1155, a Firefox add-on said before it is installed, what of
  *  it does not run and its theme (web-tab/extensions.svelte.ts): the code to 6,143,000,
  *  measured 6,142,653.
+ *
+ *  Raised on 2026-11-06 for #1150, each AI provider's logo beside its name (ai/provider-brand.ts,
+ *  ai/ProviderMark.svelte): the code to 6,144,800, measured 6,144,408, and the styles to
+ *  293,500, measured 293,214.
  */
 export const BUDGETS: Record<Part, number> = {
-  code: 6_143_000,
+  code: 6_144_800,
   catalogues: 1_020_700,
-  styles: 293_100,
+  styles: 293_500,
   fonts: 260_000,
   pages: 40_000,
 }
