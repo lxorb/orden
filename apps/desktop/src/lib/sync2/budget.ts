@@ -1,3 +1,5 @@
+import { locksHere, locksWork } from '../locks'
+
 const BYTES_PER_CHARACTER = 6
 
 const SHARE = 0.2
@@ -42,8 +44,8 @@ export function holdThisWindow(): void {
 }
 
 export async function aloneHere(): Promise<boolean> {
-  const locks = 'locks' in navigator ? navigator.locks : undefined
-  if (!locks) return false
+  const locks = locksHere()
+  if (!locks || !(await locksWork(locks))) return false
   await holdWindow(locks)
   const state = await locks.query().catch(() => null)
   if (!state) return false

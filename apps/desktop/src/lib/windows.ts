@@ -1,4 +1,4 @@
-import { locksHere, locksWork } from './locks'
+import { inTurn } from './locks'
 import { pathKey } from './space-paths'
 
 export interface Said {
@@ -82,22 +82,6 @@ export const windows = /* @__PURE__ */ new Windows(() =>
 
 const FILE_TURN_AT_MOST = 3_000
 
-export async function oneWriteAt<T>(path: string, run: () => Promise<T>): Promise<T> {
-  const locks = locksHere()
-  if (!locks || !(await locksWork(locks))) return run()
-  return new Promise<T>((resolve, reject) => {
-    let started = false
-    const go = () => {
-      if (started) return undefined
-      started = true
-      clearTimeout(timer)
-      return (async () => run())().then(resolve, reject)
-    }
-    const timer = setTimeout(() => void go(), FILE_TURN_AT_MOST)
-    try {
-      locks.request(`nib:file:${pathKey(path)}`, go).catch(go)
-    } catch {
-      void go()
-    }
-  })
+export function oneWriteAt<T>(path: string, run: () => Promise<T>): Promise<T> {
+  return inTurn(() => `nib:file:${pathKey(path)}`, run, FILE_TURN_AT_MOST)
 }
