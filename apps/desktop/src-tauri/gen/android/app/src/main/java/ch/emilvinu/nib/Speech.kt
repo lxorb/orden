@@ -9,52 +9,21 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import org.json.JSONObject
 
-/**
- * The phone's own speech recogniser, writing into the note.
- *
- * The web's `SpeechRecognition` is Chrome's and not the webview's, so a page in
- * this app has no dictation of its own; this is the same feature through the API
- * Android hands every app. What comes back is words, and the page puts them where
- * the caret is - the same place a paste lands - so there is nothing new on screen
- * except the mark that says it is listening.
- *
- * Each turn says what it hears as it goes, as well as the sentence at its end: the
- * partial words and the voice's level, a few times a second, which a field's
- * dictation draws as live words and a meter (dictation/device.ts in the app). The
- * note's own dictation reads only the sentences.
- *
- * It listens in turns, because that is what Android offers: the recogniser ends
- * each time the speaker pauses, and it is started again while dictation is still
- * on. Errors that mean "nothing was said" are part of that rhythm and are not
- * reported; anything else stops it, so a recogniser that cannot work does not sit
- * there restarting itself against the battery.
- */
 class Dictation(private val activity: MainActivity) {
-  /** How many failures in a row are a rhythm, and how many are a fault. */
   private val MOST_FAILURES = 3
 
   private var recogniser: SpeechRecognizer? = null
   private var wanted = false
   private var failures = 0
 
-  /** When the level was last said, so the page hears it a few times a second rather
-   *  than at the recogniser's own rate. */
   private var levelSaid = 0L
 
-  /** Whether this phone has a recogniser at all. Asked before the row is offered
-   *  rather than after it is pressed. */
   fun available(): Boolean = SpeechRecognizer.isRecognitionAvailable(activity)
 
-  /** Whether the microphone has been granted to the app. */
   private fun allowed(): Boolean =
     activity.checkSelfPermission(Manifest.permission.RECORD_AUDIO) ==
       PackageManager.PERMISSION_GRANTED
 
-  /**
-   * Turns dictation on or off. Answers whether it is on afterwards, which is
-   * false when the microphone has still to be asked for: the page hears about the
-   * answer through `heard` instead, once the reader has given one.
-   */
   fun listen(on: Boolean): Boolean {
     if (!on) {
       wanted = false
@@ -76,7 +45,6 @@ class Dictation(private val activity: MainActivity) {
     return true
   }
 
-  /** Called when the reader has answered the microphone question. */
   fun allowedNow(granted: Boolean) {
     if (!wanted) return
 
@@ -102,8 +70,6 @@ class Dictation(private val activity: MainActivity) {
           RecognizerIntent.EXTRA_LANGUAGE_MODEL,
           RecognizerIntent.LANGUAGE_MODEL_FREE_FORM,
         )
-        // No language of its own: whatever the phone is set to is the language
-        // its owner is about to speak.
         .putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
         .putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
 
@@ -125,8 +91,6 @@ class Dictation(private val activity: MainActivity) {
     activity.heard(state("off"))
   }
 
-  /** One turn ended. Another is started while dictation is still wanted, which is
-   *  how a pause between sentences does not end it. */
   private fun again() {
     if (!wanted) return
 
@@ -200,9 +164,6 @@ class Dictation(private val activity: MainActivity) {
       override fun onEvent(type: Int, params: Bundle?) {}
 
       override fun onError(error: Int) {
-        // Nothing said, or a pause long enough to end the turn. Both are the
-        // rhythm rather than a fault, up to a point: a recogniser that answers
-        // this immediately, over and over, is one that is not going to work.
         val quiet =
           error == SpeechRecognizer.ERROR_NO_MATCH ||
             error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT

@@ -1,17 +1,8 @@
 <resources>
-    <!-- The window Orden is drawn in. Its background is the page's own colour, so
-         a launch shows what the app is about to paint rather than a white flash
-         before the first frame; see packages/themes/src/tokens.css. Edge to
-         edge, with the system bars over the page, is set in MainActivity. -->
     <style name="Theme.nib" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:windowBackground">@color/launch</item>
     </style>
 
-    <!-- One row of a widget, written once because five of them are the widget.
-         The numbers are the touch scale's, from packages/themes/src/tokens.css: a
-         row a thumb lands on, its words at the size a row's words are, and the
-         side padding every row in the app keeps. No stylesheet reaches a
-         launcher's process, so this is where they are said on that side. -->
     <style name="NibWidgetRow">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">44dp</item>
@@ -24,8 +15,6 @@
         <item name="android:textSize">16sp</item>
     </style>
 
-    <!-- A row of the Today widget: a box, then the task's words, at a note row's
-         height so a task reads like a note beside it. -->
     <style name="NibWidgetTask">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">44dp</item>
@@ -34,7 +23,6 @@
         <item name="android:paddingEnd">14dp</item>
     </style>
 
-    <!-- The box: a 44dp target with the mark in it. -->
     <style name="NibWidgetBox">
         <item name="android:layout_width">44dp</item>
         <item name="android:layout_height">44dp</item>

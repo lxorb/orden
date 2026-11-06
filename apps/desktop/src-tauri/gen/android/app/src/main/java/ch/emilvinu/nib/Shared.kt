@@ -11,39 +11,15 @@ import java.io.File
 import org.json.JSONArray
 import org.json.JSONObject
 
-/**
- * What another app handed this one: the text, link, picture or file behind a
- * share. Never a file to open where it lies: nib opens nothing from outside its
- * spaces, so what arrives is copied into one.
- *
- * Android gives an activity a `content://` URI and a grant that lasts as long as
- * the activity does. The page cannot read one - it has no file system of its own
- * and the crate refuses every path outside a space - so the bytes are copied into
- * the app's own cache here, while the grant is good, and handed to the page in
- * slices through the bridge. The page writes them the way an import does and says
- * when it is finished, which is when the copies go.
- *
- * Nothing is decided here beyond what the intent itself says. What becomes a note,
- * what becomes a picture beside one and what the front matter carries is the
- * page's business, in mobile/shared.ts, where it is one answer for every platform.
- */
 object Shared {
   private const val TAG = "nib"
 
-  /** Where a copy waits while the page reads it. Emptied on the way in and on the
-   *  way out: a share nobody finished with must not still be there next launch. */
   private const val FOLDER = "shared"
 
-  /** How much of one share is worth copying. A picture the app will refuse is
-   *  still a picture somebody chose, so the ceiling is the crate's own twelve
-   *  megabytes with room for a handful of them rather than a number of its own. */
   private const val MOST_BYTES = 64L * 1024 * 1024
 
-  /** How large a buffer one copy reads through. */
   private const val STEP = 64 * 1024
 
-  /** One thing that arrived. `text` is the whole of a shared text or link; `file`
-   *  is where the copy landed for everything else, and exactly one is ever set. */
   private class Item(
     val name: String,
     val mime: String,
@@ -55,24 +31,14 @@ object Shared {
   private var subject = ""
   private var items = listOf<Item>()
 
-  /** Whether there is something waiting for the page. */
   val waiting: Boolean
     get() = items.isNotEmpty()
 
-  /**
-   * Reads an intent, if it is one of ours, and answers whether it was.
-   *
-   * What could not be opened is left out rather than reported: a share of five
-   * files where one has already been deleted is still four files somebody meant
-   * to send, and the page says what it actually received.
-   */
   fun take(context: Context, intent: Intent): Boolean {
     val uris =
       when (intent.action) {
         Intent.ACTION_SEND -> listOfNotNull(stream(intent))
         Intent.ACTION_SEND_MULTIPLE -> streams(intent)
-        // A VIEW is a `nib://` link, which is read in the window, and a share has
-        // no business clearing it; see docs/automation.md.
         else -> return false
       }
 
@@ -100,7 +66,6 @@ object Shared {
     return waiting
   }
 
-  /** What arrived, as the page asks for it: everything except the bytes. */
   fun json(): String {
     val listed = JSONArray()
     for (item in items) {
@@ -119,13 +84,6 @@ object Shared {
     return all.toString()
   }
 
-  /**
-   * One slice of one item's bytes as base64, or an empty string past the end.
-   *
-   * In slices because a share can be a photograph, and a string crossing into the
-   * page costs what it is worth twice over. How much to hold at once is the page's
-   * choice; see mobile/bridge.ts.
-   */
   fun bytes(index: Int, offset: Int, length: Int): String {
     val file = items.getOrNull(index)?.file ?: return ""
     if (offset < 0 || length <= 0) return ""
@@ -164,7 +122,6 @@ object Shared {
     return Base64.encodeToString(slice, Base64.NO_WRAP)
   }
 
-  /** Forgets what arrived, and takes the copies with it. */
   fun clear(context: Context) {
     action = ""
     subject = ""
@@ -180,11 +137,6 @@ object Shared {
     return dir
   }
 
-  /**
-   * Copies one shared URI into the cache. Answers null when it could not be read
-   * at all, or when it alone is larger than the room that is left, which a
-   * revoked grant, a deleted file and a film all look like from here.
-   */
   private fun copy(context: Context, uri: Uri, at: Int, room: Long): Item? {
     if (!foreign(context, uri)) {
       Log.w(TAG, "a shared address that is not another app's content was left out")
@@ -227,7 +179,6 @@ object Shared {
     return Item(name = name, mime = mime, text = null, file = target)
   }
 
-  /** The name the sending app gave the file, or one of ours when it gave none. */
   private fun nameOf(resolver: ContentResolver, uri: Uri, at: Int): String {
     val given =
       try {
@@ -242,7 +193,6 @@ object Shared {
     return safe(given ?: uri.lastPathSegment ?: "shared-$at")
   }
 
-  /** A name that is a name: no folder in it, nothing hidden, and not endless. */
   private fun safe(name: String): String {
     val kept =
       name
@@ -257,8 +207,6 @@ object Shared {
     return if (kept.isBlank()) "shared" else kept
   }
 
-  /** What a URI with no type of its own holds, going by its name. Only a note is
-   *  worth guessing at: anything else the page treats as a file either way. */
   private fun typeOf(uri: Uri): String {
     val name = uri.lastPathSegment?.lowercase() ?: ""
     val markdown = name.endsWith(".md") || name.endsWith(".markdown")

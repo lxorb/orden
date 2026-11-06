@@ -1,14 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  The widget: the space's name and two marks along the top, then the notes last
-  written in, one per row.
-
-  A launcher inflates this in its own process, so it may only hold the views
-  RemoteViews knows and it reads none of the app's CSS: the sizes here are the
-  touch scale's numbers written out once (a 48dp target, 17sp words, 14dp of side
-  padding), and the colours are @color/widget_*. Rows past what the page handed
-  over are hidden by the provider rather than left blank; see Widgets.kt.
--->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"

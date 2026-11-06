@@ -5,8 +5,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** The phone's reminders as a list: what a plan sets and cancels, and what a push for a
- *  reminder the phone already rings does. See AlarmList.kt. */
 class AlarmListTest {
   private fun alarm(id: String, at: Long) =
     Alarm(id, at, "Call the bank", "Plan", "Work", "Plan.md", "abc", 2)

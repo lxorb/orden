@@ -2,57 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!--
-      The microphone, for the two things that listen, and nothing else.
-
-      Dictation, where the words go straight into the note through Android's own
-      recogniser and are never kept as sound; see Speech.kt and mobile/dictation.ts.
-      And the recorder, where the sound *is* the point: `getUserMedia` inside the
-      WebView asks the app for this same permission, and an app that never declared
-      it is refused before the reader is ever asked. See
-      apps/desktop/src/lib/recorder. Either way it is asked for the first time
-      somebody starts one rather than at install.
-
-      There is deliberately no CAMERA permission. Taking a photo into a note is
-      `ACTION_IMAGE_CAPTURE`, which the camera app serves and which needs nothing
-      of ours - and declaring the permission anyway would make the webview demand
-      a grant before it would open the camera at all. See docs/mobile.md.
-    -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <!--
-      And beside it the one wry's WebChromeClient asks for together with the microphone
-      whenever a page calls `getUserMedia` (RustWebChromeClient.onPermissionRequest): it
-      grants the page only if every permission asked for was granted, and a permission
-      the manifest never declared is refused. A normal permission, granted at install
-      and never asked about; without it the recorder and field dictation (#1128) would be
-      refused the microphone however the reader answered.
-    -->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
-    <!--
-      Reminders that ring with nib closed (docs/tasks.md 5.10; see Reminders.kt): leave
-      to show a notification (asked the first time a reminder is set, from Android 13),
-      alarms at the minute where the reader allows them (not granted to a new install
-      from Android 14; the switch is offered once, and an alarm within a few minutes is
-      what rings without it), and the alarms set again after a reboot.
-      USE_EXACT_ALARM is not asked for: it is for clocks and calendars.
-    -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
-    <!-- AndroidTV support -->
     <uses-feature android:name="android.software.leanback" android:required="false" />
 
-    <!--
-      The two things the app looks for on the phone. From Android 11 an app sees
-      only the other apps it has named, and both of these are asked with a
-      question rather than started blind: the webview asks whether anything
-      answers `IMAGE_CAPTURE` before it offers the camera for a `capture` input,
-      and `SpeechRecognizer.isRecognitionAvailable` asks whether anything answers
-      the recogniser. Without these two the answer is no on every modern phone and
-      both features quietly do nothing.
-    -->
     <queries>
         <intent>
             <action android:name="android.media.action.IMAGE_CAPTURE" />
@@ -62,19 +20,6 @@
         </intent>
     </queries>
 
-    <!--
-      Notes stay on the phone. Somebody's notes are the most private thing this
-      app holds, and Android's own backup would put them in Google's cloud and on
-      whatever phone the reader migrates to next, encrypted with a key Orden does
-      not hold and readable by whoever ends up with the account. Nothing here is
-      state a new install needs, either: a note is a file the reader keeps
-      themselves.
-
-      Both switches are needed. `allowBackup` turns off the cloud backup, and up
-      to Android 11 that is the whole of it; from Android 12 some manufacturers
-      go on transferring an app's data to a new device anyway, and only the rules
-      resource speaks to that. See res/xml/data_extraction_rules.xml.
-    -->
     <application
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -92,31 +37,9 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-                <!-- AndroidTV support -->
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
 
-            <!--
-              Anything shared to Orden becomes a note. The filters sit on the
-              launcher activity rather than on an activity of their own, which is
-              what puts the app's own icon and name in the share sheet's row and
-              what makes the second share of the day arrive in the app that is
-              already open (`singleTask`, and `onNewIntent`).
-
-              A share is a copy into a space, the way Import is, and so it stays
-              while nib opens nothing from outside its spaces: what arrives is
-              bytes and a name, written into the space, and never a file opened
-              where it lies. Which is also why there is no VIEW filter for a
-              `.md`: that is nib offering itself to open somebody's file, in a
-              file manager's "Open with", and it opens none.
-
-              `*/*` on purpose. A note is where anything goes that somebody wants
-              to keep a word about, and Android only ever offers this row to
-              somebody who asked to share something; what the thing is decides
-              what happens to it, in mobile/shared.ts, where text becomes words, a
-              picture becomes a picture beside the note, and everything else
-              becomes a file linked from it.
-            -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -131,14 +54,6 @@
                 <data android:mimeType="*/*" />
             </intent-filter>
 
-            <!--
-              `nib://` links, which is how anything else on the phone asks this app
-              for something: a shortcut, Tasker, a link in another note. The
-              activity is already `singleTask`, so a link reaching an app that is
-              already open goes to the window that is there rather than starting a
-              second one. What a link means is read in the window; see
-              apps/desktop/src/lib/automation and docs/automation.md.
-            -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -147,19 +62,6 @@
             </intent-filter>
         </activity>
 
-        <!--
-          The three quick settings tiles. Each carries the id of a command in the
-          page's own registry and nothing else, so a tile cannot come to mean
-          something slightly different from the row it is named after; see
-          Tiles.kt and commands.ts.
-
-          All three are on, and the picker offers all three. The recorder's was
-          held back while `record` was another batch's - a service the picker does
-          not offer is a cleaner answer than a tile that does nothing - and that
-          command landed, so nothing here is switched off any more.
-          test/android.test.ts holds both halves of that: every tile's id is a row
-          the app answers to, and no tile is disabled.
-        -->
         <service
             android:name=".NewNoteTile"
             android:exported="true"
@@ -191,11 +93,6 @@
             </intent-filter>
         </service>
 
-        <!-- The widget: the notes last written in, a new one, and the search. One
-             receiver for both surfaces a widget can sit on - the home screen and
-             the lock screen - because it is one widget; which of them a copy of it
-             is on decides only how many rows it has room for. See Widgets.kt,
-             res/xml/widget_notes.xml and docs/mobile.md. -->
         <receiver
             android:name=".NotesWidget"
             android:exported="false">
@@ -207,8 +104,6 @@
                 android:resource="@xml/widget_notes" />
         </receiver>
 
-        <!-- Each reminder's alarm and its two buttons, and the system saying the alarms
-             were lost: a reboot, an update, a new time zone. See Reminders.kt. -->
         <receiver
             android:name=".ReminderReceiver"
             android:exported="false">
@@ -220,9 +115,6 @@
             </intent-filter>
         </receiver>
 
-        <!-- Today, the second widget: the open tasks for today and overdue, a box
-             each that ticks it through the app. See TodayWidget.kt and
-             res/xml/widget_today.xml. -->
         <receiver
             android:name=".TodayWidget"
             android:exported="false">

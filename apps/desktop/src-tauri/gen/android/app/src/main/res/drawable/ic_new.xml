@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  The app's own plus, the one Sidebar.svelte draws, at a finger's size. White,
-  because everything that draws it tints it: a quick settings tile in the system's
-  own ink, a widget in @color/widget_text.
--->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"

@@ -1,15 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  The same widget on a lock screen: the space's name and two marks along the top,
-  then the notes last written in, one per row.
-
-  Every part of it is the home screen's, at the same sizes and in the same
-  colours - see layout/widget_notes.xml, which is the drawing this is a shorter
-  cut of. Three rows rather than five, because a lock screen offers a card a few
-  rows tall and a row the host crops is a note nobody reads. The row ids are the
-  first three of the home layout's, so the provider hands both surfaces the same
-  notes out of one list; see Widgets.kt.
--->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"

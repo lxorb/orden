@@ -11,17 +11,6 @@ import android.view.View
 import android.widget.RemoteViews
 import org.json.JSONObject
 
-/**
- * Today on the home screen: the open tasks for today and overdue, a box in front of
- * each, and a plus for quick add (docs/tasks.md 5.18).
- *
- * Drawn like the notes widget beside it, out of what the page last handed over (the
- * same JSON, under `today`; see mobile/widgets.svelte.ts), because a launcher cannot
- * ask the app anything. A box ticks the task through the app's own write: the press
- * opens the app with the task's anchor, the page ticks it in its note the way a box in
- * any view does, and the rows it hands back are the widget's next drawing. The words
- * of a row open the note the task is in.
- */
 class TodayWidget : AppWidgetProvider() {
   override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
     val state = read(context)
@@ -29,8 +18,6 @@ class TodayWidget : AppWidgetProvider() {
   }
 
   companion object {
-    /** As many rows as the layout has, each a box and the task's words. Held to
-     *  `widget_today.xml` and to the page's own count by test/android.test.ts. */
     private val ROWS =
       intArrayOf(
         R.id.nib_today_row_0,
@@ -56,7 +43,6 @@ class TodayWidget : AppWidgetProvider() {
         R.id.nib_today_text_4,
       )
 
-    /** Draws every Today widget again; called when the page hands over new rows. */
     fun refresh(context: Context) {
       val manager = AppWidgetManager.getInstance(context) ?: return
       val ids = manager.getAppWidgetIds(ComponentName(context, TodayWidget::class.java))
@@ -108,7 +94,6 @@ class TodayWidget : AppWidgetProvider() {
     private fun open(context: Context, path: String, at: Int): PendingIntent =
       pending(context, intent(context).putExtra(MainActivity.EXTRA_OPEN, path), at)
 
-    /** A box: the task's anchor and its space, for the page to tick. */
     private fun tick(context: Context, task: Task, at: Int): PendingIntent =
       pending(
         context,

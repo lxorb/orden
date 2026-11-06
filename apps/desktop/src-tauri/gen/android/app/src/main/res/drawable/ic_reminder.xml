@@ -1,8 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  A bell, the mark a task with a reminder wears in the editor's chips, as the status
-  bar's small icon for a reminder that rang. White, because the system tints it.
--->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"

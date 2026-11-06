@@ -13,11 +13,6 @@ val tauriProperties = Properties().apply {
     }
 }
 
-// How a release APK is signed. `keystore.properties` is written by whoever is
-// building - the workflow makes one from the ANDROID_KEYSTORE secrets, or from a
-// keystore it generates itself so the APK still installs on a phone - and is
-// never committed. With no file there the release build is simply unsigned,
-// which is what a local `tauri android build` produces. See docs/mobile.md.
 val keystoreProperties = Properties().apply {
     val propFile = rootProject.file("keystore.properties")
     if (propFile.exists()) {
@@ -86,17 +81,6 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.10.1")
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.lifecycle:lifecycle-process:2.10.0")
-    // An AI provider's key, in the file Android encrypts with a Keystore key. The
-    // phone's half of what the Credential Manager and the Keychain do on a desktop;
-    // see secrets.rs and the Secrets bridge in MainActivity.kt.
-    //
-    // 1.1.0 and not 1.0.0. `MasterKey`, which is the class that asks the Keystore
-    // for a hardware-backed key, was added in 1.1.0; the 1.0.0 artifact holds only
-    // the alias-based `MasterKeys` it replaced, and with that on the path the
-    // import does not resolve and the `create` call falls through to the overload
-    // that takes a file name first - which is why the build failed with "inferred
-    // type is MainActivity but String was expected" rather than with anything
-    // about a version.
     implementation("androidx.security:security-crypto:1.1.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.4")

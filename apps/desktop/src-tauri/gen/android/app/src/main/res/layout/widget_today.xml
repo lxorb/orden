@@ -1,12 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  Today: its heading and a plus along the top, then the open tasks for today and
-  overdue, a box and the task's words a row.
-
-  The notes widget's card, sizes and colours (see widget_notes.xml), with each row
-  split in two: the box ticks the task, the words open its note. Rows past what the
-  page handed over are hidden by the provider; see TodayWidget.kt.
--->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"

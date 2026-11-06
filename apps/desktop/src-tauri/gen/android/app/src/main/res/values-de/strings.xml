@@ -1,9 +1,4 @@
 <resources>
-    <!--
-      The same words in German, which is the other language the app has; see
-      src/locales/de.ts, where the page's own words live. A phone set to anything
-      else reads the English above, which is what the app itself falls back to.
-    -->
     <string name="tile_new">Neue Notiz</string>
     <string name="tile_search">Suchen</string>
     <string name="tile_record">Aufnehmen</string>
