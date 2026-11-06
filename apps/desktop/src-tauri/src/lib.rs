@@ -33,6 +33,8 @@ mod browser_profiles;
 mod browser_themes;
 #[cfg(desktop)]
 mod bundle_name;
+#[cfg(test)]
+mod calls;
 mod carry;
 #[cfg(desktop)]
 mod chatgpt;
@@ -968,15 +970,14 @@ pub(crate) fn app_dir() -> std::path::PathBuf {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{HashMap, HashSet};
-    use std::fs;
+    use crate::calls;
 
     const EXCEPTED: [&str; 5] = [
-        "write_log",
-        "new_menu_registered",
-        "set_new_menu",
-        "kept_write",
-        "kept_forget",
+        "crate::logs::write_log",
+        "crate::shell_menu::new_menu_registered",
+        "crate::shell_menu::set_new_menu",
+        "crate::kept::kept_write",
+        "crate::kept::kept_forget",
     ];
 
     const WAITS: [&str; 9] = [
@@ -993,175 +994,55 @@ mod tests {
 
     const BUILDS: [&str; 2] = ["WebviewWindowBuilder::new(", "WebviewBuilder::new("];
 
-    const BUILT_OFF_THE_CALLBACK: [&str; 1] = ["bring_up"];
+    const BUILT_OFF_THE_CALLBACK: [&str; 1] = ["crate::quick_add::bring_up"];
 
-    struct Function {
-        name: String,
-        body: String,
-    }
-
-    fn functions(source: &str) -> Vec<Function> {
-        let mut found = Vec::new();
-        let lines: Vec<&str> = source.lines().collect();
-
-        for (at, line) in lines.iter().enumerate() {
-            let Some((indent, name)) = signature(line) else {
-                continue;
-            };
-
-            let closes = format!("{}}}", " ".repeat(indent));
-            let body = lines[at + 1..]
-                .iter()
-                .take_while(|held| **held != closes)
-                .fold(String::new(), |mut body, held| {
-                    body.push_str(held);
-                    body.push('\n');
-                    body
-                });
-
-            found.push(Function { name, body });
-        }
-
-        found
-    }
-
-    fn signature(line: &str) -> Option<(usize, String)> {
-        let indent = line.len() - line.trim_start().len();
-        let mut rest = line.trim_start();
-        for said in ["pub(crate) ", "pub ", "async "] {
-            rest = rest.strip_prefix(said).unwrap_or(rest);
-        }
-
-        let name = rest
-            .strip_prefix("fn ")?
-            .split(['(', '<'])
-            .next()?
-            .to_owned();
-        Some((indent, name))
-    }
-
-    fn calls(body: &str) -> HashSet<String> {
-        let mut found = HashSet::new();
-        let letters: Vec<char> = body.chars().collect();
-        let mut at = 0;
-
-        while at < letters.len() {
-            if !letters[at].is_alphanumeric() && letters[at] != '_' {
-                at += 1;
-                continue;
-            }
-
-            let from = at;
-            while at < letters.len() && (letters[at].is_alphanumeric() || letters[at] == '_') {
-                at += 1;
-            }
-
-            let after_a_dot = from > 0 && letters[from - 1] == '.';
-            if !after_a_dot && !after_a_type(&letters, from) && letters.get(at) == Some(&'(') {
-                found.insert(letters[from..at].iter().collect());
-            }
-        }
-
-        found
-    }
-
-    fn after_a_type(letters: &[char], from: usize) -> bool {
-        if from < 2 || letters[from - 1] != ':' || letters[from - 2] != ':' {
-            return false;
-        }
-
-        let mut start = from - 2;
-        while start > 0 && (letters[start - 1].is_alphanumeric() || letters[start - 1] == '_') {
-            start -= 1;
-        }
-        letters[start].is_uppercase()
-    }
-
-    fn waiting(functions: &[Function]) -> HashSet<String> {
-        reaching(functions, &WAITS, &[])
-    }
-
-    fn reaching(functions: &[Function], words: &[&str], stops: &[&str]) -> HashSet<String> {
-        let mut waits: HashSet<String> = HashSet::new();
-        let mut made_by: HashMap<String, HashSet<String>> = HashMap::new();
-
-        for function in functions {
-            if stops.contains(&function.name.as_str()) {
-                continue;
-            }
-            if words.iter().any(|said| function.body.contains(said)) {
-                waits.insert(function.name.clone());
-            }
-            made_by
-                .entry(function.name.clone())
-                .or_default()
-                .extend(calls(&function.body));
-        }
-
-        loop {
-            let found: Vec<String> = made_by
-                .iter()
-                .filter(|(name, called)| {
-                    !waits.contains(*name) && called.iter().any(|one| waits.contains(one))
-                })
-                .map(|(name, _)| name.clone())
-                .collect();
-            if found.is_empty() {
-                return waits;
-            }
-            waits.extend(found);
-        }
-    }
-
-    fn on_the_calling_thread(source: &str) -> Vec<String> {
-        let mut found = Vec::new();
-        let mut lines = source.lines();
-
-        while let Some(line) = lines.next() {
-            if line.trim() != "#[tauri::command]" {
-                continue;
-            }
-            let Some(line) = lines.find(|one| one.contains("fn ")) else {
-                break;
-            };
-            if line.contains("async fn ") {
-                continue;
-            }
-            if let Some((_indent, name)) = signature(line) {
-                found.push(name);
-            }
-        }
-
-        found
+    fn own() -> calls::Crate {
+        let own = calls::read(&crate::app_dir().join("src").join("lib.rs"));
+        assert!(
+            own.modules() > 20,
+            "only {} modules were read",
+            own.modules()
+        );
+        own
     }
 
     #[test]
     fn a_command_that_waits_says_async() {
-        let sources = own_sources();
-        let functions: Vec<Function> = sources.iter().flat_map(|one| functions(one)).collect();
-        let waits = waiting(&functions);
+        let own = own();
+        let waits = own.reaching(&WAITS, &[]);
 
-        for name in sources.iter().flat_map(|one| on_the_calling_thread(one)) {
+        for excepted in EXCEPTED {
             assert!(
-                !waits.contains(&name) || EXCEPTED.contains(&name.as_str()),
-                "{name} waits without saying async",
+                own.commands().iter().any(|one| one == excepted),
+                "{excepted} is no command on the calling thread"
             );
         }
+        let late: Vec<&String> = own
+            .commands()
+            .iter()
+            .filter(|path| waits.contains(*path) && !EXCEPTED.contains(&path.as_str()))
+            .collect();
+        assert!(late.is_empty(), "{late:?} wait without saying async");
     }
 
     #[test]
     fn a_command_that_builds_a_webview_says_async() {
-        let sources = own_sources();
-        let functions: Vec<Function> = sources.iter().flat_map(|one| functions(one)).collect();
-        let builds = reaching(&functions, &BUILDS, &BUILT_OFF_THE_CALLBACK);
-        assert!(builds.contains("built_window") && builds.contains("open_window"));
+        let own = own();
+        let builds = own.reaching(&BUILDS, &BUILT_OFF_THE_CALLBACK);
+        assert!(
+            builds.contains("crate::presenter::built_window")
+                && builds.contains("crate::launch::open_window")
+        );
 
-        for name in sources.iter().flat_map(|one| on_the_calling_thread(one)) {
-            assert!(
-                !builds.contains(&name),
-                "{name} builds a webview without saying async"
-            );
-        }
+        let late: Vec<&String> = own
+            .commands()
+            .iter()
+            .filter(|path| builds.contains(*path))
+            .collect();
+        assert!(
+            late.is_empty(),
+            "{late:?} build a webview without saying async"
+        );
     }
 
     #[test]
@@ -1172,28 +1053,10 @@ mod tests {
             "#[tauri::command]\npub fn child() {\n    let _ = WebviewBuilder::new(one, two);\n}\n\n",
             "#[tauri::command]\npub async fn waited() {\n    opened();\n}\n",
         );
-        let builds = reaching(&functions(source), &BUILDS, &[]);
-        let sync = on_the_calling_thread(source);
-        assert!(sync.iter().all(|one| builds.contains(one)));
-        assert_eq!(sync, vec!["opens".to_owned(), "child".to_owned()]);
-    }
-
-    fn own_sources() -> Vec<String> {
-        let src = crate::app_dir().join("src");
-        let mut sources = Vec::new();
-
-        for file in fs::read_dir(src).expect("the crate's own source").flatten() {
-            let path = file.path();
-            if path.extension().is_some_and(|one| one == "rs") {
-                sources.push(fs::read_to_string(&path).expect("one module"));
-            }
-        }
-        assert!(
-            sources.len() > 20,
-            "only {} modules were read",
-            sources.len()
-        );
-        sources
+        let own = calls::of(&[("crate", source)]);
+        let builds = own.reaching(&BUILDS, &[]);
+        assert!(own.commands().iter().all(|one| builds.contains(one)));
+        assert_eq!(own.commands(), ["crate::opens", "crate::child"]);
     }
 
     #[test]
@@ -1205,15 +1068,77 @@ mod tests {
             "#[tauri::command(async)]\npub fn elsewhere() {\n    fs::read(two);\n}\n\n",
             "#[tauri::command]\npub async fn waited() {\n    fs::read(three);\n}\n",
         );
+        let own = calls::of(&[("crate", source)]);
+        assert_eq!(own.commands(), ["crate::here"]);
 
-        assert_eq!(on_the_calling_thread(source), vec!["here".to_owned()]);
+        let waits = own.reaching(&WAITS, &[]);
+        assert!(waits.contains("crate::here"), "the chain was not followed");
+        assert!(waits.contains("crate::deeper"));
+        assert!(!calls::called("one.read(two)").contains("read"));
+        assert!(calls::called("read(two)").contains("read"));
+        assert!(calls::called("held::<u8>(one)").contains("held"));
+        assert!(calls::called("DispatchQueue::main()").contains("DispatchQueue::main"));
+        assert!(calls::called("crate::launch::main()").contains("crate::launch::main"));
+    }
 
-        let waits = waiting(&functions(source));
-        assert!(waits.contains("here"), "the chain was not followed");
-        assert!(waits.contains("deeper"));
-        assert!(!calls("one.read(two)").contains("read"));
-        assert!(calls("read(two)").contains("read"));
-        assert!(!calls("DispatchQueue::main()").contains("main"));
-        assert!(calls("crate::launch::main()").contains("main"));
+    #[test]
+    fn a_name_another_module_shares_is_not_what_is_called() {
+        let quiet = concat!(
+            "pub fn take() -> u8 {\n    1\n}\n\n",
+            "pub fn prefs() -> u8 {\n    crate::prefs::get()\n}\n\n",
+            "pub struct Shelf;\n\n",
+            "impl Shelf {\n    pub fn held() -> u8 {\n        Self::counted()\n    }\n\n",
+            "    fn counted() -> u8 {\n        2\n    }\n}\n",
+        );
+        let loud = concat!(
+            "use std::fs;\n\n",
+            "pub fn take() -> Vec<u8> {\n    fs::read(one).unwrap()\n}\n\n",
+            "pub fn counted() -> u8 {\n    3\n}\n\n",
+            "pub struct Shelf;\n\n",
+            "impl Shelf {\n    pub fn held() -> Vec<u8> {\n        Self::read()\n    }\n\n",
+            "    fn read() -> Vec<u8> {\n        File::open(two)\n    }\n}\n",
+        );
+        let prefs = "pub fn get() -> u8 {\n    4\n}\n";
+        let root = concat!(
+            "use crate::quiet::take;\nuse quiet::Shelf;\n\n",
+            "fn held() -> u8 {\n    take() + Shelf::held()\n}\n\n",
+            "#[tauri::command]\npub fn kept() -> u8 {\n    take() + Shelf::held() + held() + quiet::prefs()\n}\n\n",
+            "#[tauri::command]\npub fn taken() -> Vec<u8> {\n    loud::take()\n}\n\n",
+            "#[tauri::command]\npub fn shelved() -> Vec<u8> {\n    crate::loud::Shelf::held()\n}\n\n",
+            "#[tauri::command]\npub fn counted() -> u8 {\n    use crate::loud::*;\n    counted_twice()\n}\n\n",
+            "fn counted_twice() -> u8 {\n    loud::counted() * 2\n}\n",
+        );
+        let own = calls::of(&[
+            ("crate::quiet", quiet),
+            ("crate::loud", loud),
+            ("crate::prefs", prefs),
+            ("crate", root),
+        ]);
+        let waits = own.reaching(&WAITS, &[]);
+
+        assert_eq!(
+            own.commands(),
+            [
+                "crate::kept",
+                "crate::taken",
+                "crate::shelved",
+                "crate::counted"
+            ]
+        );
+        assert!(waits.contains("crate::taken") && waits.contains("crate::shelved"));
+        assert!(waits.contains("crate::loud::Shelf::held"));
+        for quiet in [
+            "crate::kept",
+            "crate::held",
+            "crate::counted",
+            "crate::quiet::take",
+            "crate::quiet::prefs",
+            "crate::quiet::Shelf::held",
+        ] {
+            assert!(
+                !waits.contains(quiet),
+                "{quiet} was taken for one that waits"
+            );
+        }
     }
 }
