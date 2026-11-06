@@ -1679,7 +1679,10 @@ class Workspace {
   /** A draft written where it goes with nobody asked; see `draftHome`. */
   private async placeAtHome(note: NoteDoc): Promise<void> {
     const home = await this.draftHome(note.home).catch(() => null)
-    if (home !== null) await this.saving.place(note, home, draftFile(note))
+    if (home === null) return
+    await this.saving.place(note, home, draftFile(note)).catch((error: unknown) => {
+      log('warn', `a new draft was not written where it goes: ${String(error)}`)
+    })
   }
 
   /** A new plane, and a new stack of paper: a tab, and nothing else.
@@ -2014,7 +2017,11 @@ class Workspace {
     this.puttingAway.add(tab)
     this.close(tab.id, false)
 
-    void import('./workspace/placing').then((one) => one.putAway(this, tab, paneId, at))
+    void import('./workspace/placing')
+      .then((one) => one.putAway(this, tab, paneId, at))
+      .catch((error: unknown) => {
+        log('warn', `a put-away draft's words did not reach Recently deleted: ${String(error)}`)
+      })
   }
 
   putAwayDone(tab: Tab, paneId: string, at: number) {

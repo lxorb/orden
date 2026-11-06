@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const notes = new Map<string, string>()
+let binFull = false
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
 
@@ -21,6 +22,9 @@ vi.mock('./tauri', async (importOriginal) => ({
       case 'write_note':
         notes.set(path, text(args?.content))
         return undefined
+      case 'trash_words':
+        if (binFull) throw new Error('the bin is full')
+        return { id: 't' }
       case 'list_spaces':
         return [{ name: 'space', path: '/space' }]
       case 'read_tree':
@@ -60,6 +64,7 @@ const { viewport } = await import('./viewport.svelte')
 const open = () => workspace.tabs.map((tab) => tab.shown)
 
 beforeEach(() => {
+  binFull = false
   notes.clear()
   notes.set('/space/One.md', '# One')
   notes.set('/space/Two.md', '# Two')
@@ -161,6 +166,27 @@ describe('a phone and a tablet', () => {
 
     await workspace.reopenClosed()
     expect(workspace.active?.doc).toBe('Shopping list\nmilk and eggs')
+  })
+
+  test('one that cannot be written down or binned is still put away, and nothing is left unhandled', async () => {
+    viewport.device = 'phone'
+    binFull = true
+    const unheard: unknown[] = []
+    const hear = (error: unknown) => unheard.push(error)
+    process.on('unhandledRejection', hear)
+    const save = vi.spyOn(workspace, 'save').mockResolvedValue(null)
+    try {
+      workspace.openBlank()
+      workspace.active?.note.live.edit([{ from: 0, to: 0, insert: 'Shopping list' }])
+      workspace.openBlank()
+
+      await vi.waitFor(() => expect(workspace.closed.stack).toHaveLength(1))
+      await new Promise((done) => setTimeout(done, 50))
+      expect(unheard).toEqual([])
+    } finally {
+      save.mockRestore()
+      process.off('unhandledRejection', hear)
+    }
   })
 
   test('so does one the plus put away', async () => {

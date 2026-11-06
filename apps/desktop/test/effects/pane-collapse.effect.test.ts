@@ -85,12 +85,14 @@ beforeEach(() => {
   workspace.activeSpaceId = 's'
   thrown.length = 0
   process.on('uncaughtException', heard)
+  process.on('unhandledRejection', heard)
   target = document.createElement('div')
   document.body.append(target)
 })
 
 afterEach(() => {
   process.off('uncaughtException', heard)
+  process.off('unhandledRejection', heard)
   if (shown) void unmount(shown, { outro: false })
   shown = null
   target.remove()
@@ -112,6 +114,10 @@ async function sideBySide(focus: 'left' | 'right') {
   const [left, right] = workspace.panes.all
   if (!left || !right) throw new Error('no second pane')
   workspace.focusPane(focus === 'left' ? left.id : right.id)
+  const drafts = workspace.tabs.map((tab) => tab.note)
+  await vi.waitFor(() => expect(drafts.map((note) => note.path)).not.toContain(null), {
+    timeout: 15_000,
+  })
   shown = mount(App, { target })
   await settle()
   expect(target.querySelectorAll('[data-pane]')).toHaveLength(2)
