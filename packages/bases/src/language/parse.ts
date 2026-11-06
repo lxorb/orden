@@ -254,7 +254,10 @@ function foundAt(
         if (time && into.fields.time === undefined) into.fields.time = time
         if (into.fields.due === undefined || first) {
           const from = first ?? clock.today
-          into.fields.due = nextDate(rule, from, addDays(from, -1)) ?? from
+          const due = nextDate(rule, from, addDays(from, -1)) ?? from
+          const at = into.fields.time
+          const gone = !first && due === clock.today && at !== undefined && !ahead(at, clock)
+          into.fields.due = gone ? (nextDate(rule, addDays(due, 1), due) ?? due) : due
         }
       },
     }
@@ -277,6 +280,9 @@ function foundAt(
     },
   }
 }
+
+const ahead = (time: string, clock: Clock): boolean =>
+  Number(time.slice(0, 2)) * 60 + Number(time.slice(3)) > clock.minutes
 
 const kept = (keep: readonly { from: number; to: number }[], from: number, to: number): boolean =>
   keep.some((span) => span.from < to && span.to > from)
@@ -330,8 +336,7 @@ export function parseQuickAdd(
 
   const { time } = result.fields
   if (time && result.fields.due === undefined) {
-    const minutes = Number(time.slice(0, 2)) * 60 + Number(time.slice(3))
-    result.fields.due = minutes > clock.minutes ? clock.today : addDays(clock.today, 1)
+    result.fields.due = ahead(time, clock) ? clock.today : addDays(clock.today, 1)
   }
 
   result.chips = chosen.map((one) => ({
