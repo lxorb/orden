@@ -22,6 +22,7 @@ export interface Desk {
   frontView(note: NoteDoc): EditorView | null
   linksOf(path: string): unknown[]
   backlinksOf(path: string): unknown[]
+  metaOf?(path: string): Readonly<Record<string, string>> | null
   snapshot(path: string, content: string, source: string): Promise<void>
   draftIn(tab: string): NoteDoc | null
   padText(): Promise<string>

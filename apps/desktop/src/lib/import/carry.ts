@@ -1,4 +1,3 @@
-import type { PropertiesMode } from '@orden/markdown/properties'
 import type { AttachmentFolder } from '../attachments'
 import type { LinkFormat } from '../link-format'
 import type { FormatId } from './plan'
@@ -8,7 +7,6 @@ export interface Carried {
   linkFormat?: LinkFormat
   hardBreaks?: boolean
   attachments?: AttachmentFolder
-  properties?: PropertiesMode
   vim?: boolean
   quietMarks?: boolean
   keys?: 'obsidian' | 'notion'
@@ -16,7 +14,6 @@ export interface Carried {
 
 export const NOTION: Carried = {
   quietMarks: true,
-  properties: 'properties',
   hardBreaks: true,
   keys: 'notion',
 }

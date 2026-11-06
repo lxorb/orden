@@ -9,7 +9,7 @@ import {
 } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
 import { headingLevel } from './headings'
-import { hiddenFrontMatter } from './live-preview/hidden-front-matter'
+import { frontMatterSpan } from './live-preview/front-matter'
 import { enclosing } from './nodes'
 
 interface Span {
@@ -120,10 +120,10 @@ function grown(state: EditorState, range: SelectionRange, top: number): Selectio
 }
 
 export const expandSelection: StateCommand = ({ state, dispatch }) => {
-  const hidden = hiddenFrontMatter(state)
-  const top = hidden ? hidden.after : 0
+  const front = frontMatterSpan(state)
+  const topOf = (range: SelectionRange) => (front && range.from > front.end ? front.after : 0)
   const next = EditorSelection.create(
-    state.selection.ranges.map((range) => grown(state, range, top)),
+    state.selection.ranges.map((range) => grown(state, range, topOf(range))),
     state.selection.mainIndex,
   )
   if (next.eq(state.selection)) return false

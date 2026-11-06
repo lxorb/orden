@@ -9,7 +9,6 @@ import {
   setLigatures,
   setLineHeight,
   setMeasure,
-  setProperties,
   setQuietMarks,
   setReadOnlyMode,
   setRightToLeft,
@@ -31,7 +30,6 @@ import {
 } from '@orden/editor'
 import { setHardBreaks } from '@orden/markdown/breaks'
 import { highlightTone, type HighlightColour } from '@orden/markdown/highlights'
-import { type PropertiesMode, propertiesMode } from '@orden/markdown/properties'
 import { SvelteMap } from 'svelte/reactivity'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
@@ -151,7 +149,6 @@ interface Saved {
   highlightTone: number | null
   hardBreaks: boolean
   linkFormat: LinkFormat
-  frontMatterDrawn: PropertiesMode
 }
 
 export const VIM_WORDS: Record<VimMode, string> = {
@@ -260,7 +257,6 @@ export const DEFAULTS = {
   highlightTone: null as number | null,
   hardBreaks: false,
   linkFormat: 'wikilink' as LinkFormat,
-  properties: 'properties' as PropertiesMode,
 }
 
 function on(value: unknown, fallback: boolean): boolean {
@@ -349,8 +345,6 @@ class Modes {
 
   linkFormat = $state<LinkFormat>(DEFAULTS.linkFormat)
 
-  properties = $state<PropertiesMode>(DEFAULTS.properties)
-
   constructor() {
     onVimMode((view, mode) => {
       if (mode) this.vimModes.set(view, mode)
@@ -412,13 +406,7 @@ class Modes {
         content: familyName(fonts.content),
         mono: familyName(fonts.mono),
       }
-      this.properties =
-        'frontMatterDrawn' in saved
-          ? propertiesMode(saved.frontMatterDrawn)
-          : saved.frontMatter === 'source' || saved.properties === 'source'
-            ? 'source'
-            : DEFAULTS.properties
-      stale ||= 'properties' in saved || 'frontMatter' in saved
+      stale ||= 'properties' in saved || 'frontMatter' in saved || 'frontMatterDrawn' in saved
       this.canvasTurns = on(saved.turnsCanvas, DEFAULTS.canvasTurns)
       stale ||= 'canvasTurns' in saved
     }
@@ -532,7 +520,6 @@ class Modes {
       words: this.spellWords,
       closeBrackets: this.closeBrackets,
       ligatures: this.ligatures,
-      properties: this.properties,
       vim: this.vim,
     }
   }
@@ -743,16 +730,6 @@ class Modes {
 
   get highlight(): HighlightColour {
     return highlightTone(this.highlightTone)
-  }
-
-  setProperties(mode: string, view?: EditorView) {
-    const wanted = propertiesMode(mode)
-    if (wanted === this.properties) return
-
-    this.properties = wanted
-    this.each(view, (one) => setProperties(one, wanted))
-    this.persist()
-    this.share({ properties: wanted })
   }
 
   toggleHardBreaks() {
@@ -1047,16 +1024,6 @@ class Modes {
       this.persist()
     }
 
-    const shown = remote.properties
-    if (typeof shown === 'string' && unheard) {
-      const wanted = propertiesMode(shown)
-      if (wanted !== this.properties) {
-        this.properties = wanted
-        this.each(undefined, (one) => setProperties(one, wanted))
-        this.persist()
-      }
-    }
-
     const spelling = remote.linkFormat
     if (isLinkFormat(spelling) && unheard && spelling !== this.linkFormat) {
       this.linkFormat = spelling
@@ -1319,7 +1286,6 @@ class Modes {
       canvasTurnSnaps: this.canvasTurnSnaps,
       highlightTone: this.highlightTone,
       hardBreaks: this.hardBreaks,
-      frontMatterDrawn: this.properties,
       linkFormat: this.linkFormat,
     }
     return state

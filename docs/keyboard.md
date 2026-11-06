@@ -272,7 +272,7 @@ The two without a key ship unbound in Obsidian and VS Code as well. Both are row
 the palette, Show in the file list is a row in a tab's own menu too, and while a row
 is unfolded the collapse is a glyph beside the order of the files.
 
-Footnotes and Properties have no key of their own. A combination nobody asked for is
+Footnotes has no key of its own. A combination nobody asked for is
 a key taken away from whatever a reader might have wanted it for: the tab strip and
 the palette are how they are reached, and both are rows in the Shortcuts pane with no
 key on them, so a reader who wants one has a row to put it on.

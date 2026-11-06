@@ -4,7 +4,6 @@ import { pickedLink } from './composer'
 import { links } from './link-index.svelte'
 import { modes } from './modes.svelte'
 import { notePicture } from './note-images'
-import { PROPERTY_CHOICES } from './property-choices'
 import { canWriteAt, trustsHtmlAt } from './sharing.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { insideSpace } from './space-paths'
@@ -54,7 +53,6 @@ export function mountPreview(
     trustedMarkup: trustsHtmlAt(path),
     openLink: followHref,
     resolveImage: (src: string) => notePicture(src, path, said),
-    propertyChoices: PROPERTY_CHOICES,
   })
 
   const settings = modes.settings

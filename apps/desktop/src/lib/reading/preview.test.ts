@@ -80,7 +80,7 @@ vi.mock('../note-images', () => ({
 const { links } = await import('../link-index.svelte')
 const { startup } = await import('../startup.svelte')
 const { readingHtml } = await import('./render')
-const { modes } = await import('../modes.svelte')
+await import('../modes.svelte')
 const { EditorState, noteIndexExtension, renderNote } = await import('@orden/editor')
 
 await import('../export')
@@ -124,10 +124,7 @@ describe('the note behind a hover preview', () => {
   })
 
   test('has every kind of block the reading view has', async () => {
-    modes.setProperties('properties')
-    const html = await renderNote(FIXTURE, RELATIVE, shown()).finally(() => {
-      modes.setProperties('hidden')
-    })
+    const html = await renderNote(FIXTURE, RELATIVE, shown())
 
     expect(html).toContain('<figure class="code"')
     expect(html).toContain('pipeline.ts')
@@ -143,7 +140,7 @@ describe('the note behind a hover preview', () => {
     expect(html).toContain('src="asset://shot.png"')
     expect(html).toContain('<figure class="embed">')
     expect(html).toContain('The plan itself.')
-    expect(html).toContain('class="properties"')
+    expect(html).not.toContain('class="properties"')
     expect(html).toContain('Everything')
     expect(html).toContain('href="Plan.md#why-it-works"')
     expect(html).toContain('<a class="wikilink" href="ideas/Later.md">later</a>')

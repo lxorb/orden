@@ -1,9 +1,9 @@
 <script lang="ts">
   import { tooLongToParse, type VimMode } from '@orden/editor'
-  import { countNote, countText } from './counts'
+  import { countText } from './counts'
   import { chrome } from './glass/chrome.svelte'
   import { amount, t } from './i18n.svelte'
-  import { modes, VIM_WORDS } from './modes.svelte'
+  import { VIM_WORDS } from './modes.svelte'
   import { pages } from './pages/showing.svelte'
   import { views } from './views.svelte'
 
@@ -26,7 +26,7 @@
 
   const asked = $derived(looking || held)
 
-  const counts = $derived(asked ? countNote(doc, modes.properties) : null)
+  const counts = $derived(asked ? countText(doc) : null)
 
   const chosen = $derived(asked && views.chosen > 0 ? countText(views.selectedText()) : null)
 

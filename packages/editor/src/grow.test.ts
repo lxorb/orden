@@ -3,7 +3,6 @@ import { EditorSelection, EditorState, type StateCommand } from '@codemirror/sta
 import { describe, expect, test } from 'vitest'
 import { parsed } from '../test/parsed'
 import { expandSelection, shrinkSelection } from './grow'
-import { hiddenFrontMatterGuard } from './live-preview/hidden-front-matter'
 import { nibMarkdownExtensions } from './markdown/extensions'
 
 function stateOf(doc: string, caret: number): EditorState {
@@ -11,10 +10,7 @@ function stateOf(doc: string, caret: number): EditorState {
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(caret),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
-        hiddenFrontMatterGuard,
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
     }),
   )
 }
@@ -79,7 +75,7 @@ describe('growing the selection', () => {
     ])
   })
 
-  test('never grows into hidden metadata', () => {
+  test('never grows into the front matter', () => {
     const meta = '---\nicon: x\n---\n'
     const doc = `${meta}words here`
     const last = steps(doc, doc.indexOf('here')).at(-1)

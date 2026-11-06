@@ -59,77 +59,61 @@ function written(path: string): string | null {
 
 function fresh() {
   notes = { ...SPACE }
+  workspace.spaces = [{ id: 's', name: 'space', root: '/space' }]
+  workspace.itemMeta.forget('/space')
   workspace.tabs = []
   workspace.activeTabId = null
   workspace.undone.stack = []
   sent.length = 0
 }
 
-describe('the cover a note is given', () => {
-  test('opens a front matter block on a note that had none', async () => {
+const kept = (path: string) => workspace.itemMeta.of(path, '/space')
+
+describe('the cover a note is given (#1210)', () => {
+  test("is the note's own metadata, and the note's words are not touched", async () => {
     fresh()
     await setCover('/space/plain.md', 'assets/wide.jpg')
 
-    expect(written('/space/plain.md')).toBe('---\ncover: assets/wide.jpg\n---\n# Plain\n\nwords\n')
+    expect(kept('/space/plain.md')).toEqual({ cover: 'assets/wide.jpg' })
+    expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
   })
 
-  test('a picture whose name YAML would read as more than a name is quoted', async () => {
+  test('a picture whose name YAML would read as more than a name is kept as it is', async () => {
     fresh()
     await setCover('/space/plain.md', 'assets/Meeting: notes.jpg')
 
-    expect(written('/space/plain.md')).toBe(
-      "---\ncover: 'assets/Meeting: notes.jpg'\n---\n# Plain\n\nwords\n",
-    )
+    expect(kept('/space/plain.md')).toEqual({ cover: 'assets/Meeting: notes.jpg' })
   })
 
-  test('joins the keys a note already had', async () => {
+  test('replaces the picture that was there, puts its band back in the middle, and takes the keys its front matter still said out of it', async () => {
     fresh()
+    workspace.itemMeta.set('/space/plain.md', { cover: 'assets/old.jpg', 'cover-position': '20' })
+    await setCover('/space/plain.md', 'assets/new.jpg')
+    expect(kept('/space/plain.md')).toEqual({ cover: 'assets/new.jpg' })
+
+    await setCover('/space/covered.md', 'assets/new.jpg')
+    expect(written('/space/covered.md')).toBe('# Covered\n')
+  })
+
+  test('leaves the rest of the front matter as it was', async () => {
+    fresh()
+    notes['/space/titled.md'] = '---\ntitle: Titled\ncover: a.jpg\n---\n\n# Titled\n'
     await setCover('/space/titled.md', 'assets/wide.jpg')
 
-    expect(written('/space/titled.md')).toBe(
-      '---\ntitle: Titled\ncover: assets/wide.jpg\n---\n\n# Titled\n',
-    )
-  })
-
-  test('replaces the picture that was there, and puts its band back in the middle', async () => {
-    fresh()
-    await setCover('/space/covered.md', 'assets/new.jpg')
-
-    expect(written('/space/covered.md')).toBe('---\ncover: assets/new.jpg\n---\n\n# Covered\n')
-  })
-
-  test('keeps the words that were there before it, and is one thing to undo', async () => {
-    fresh()
-    await setCover('/space/covered.md', 'assets/new.jpg')
-
-    const touched = sent.filter((one) => one.path === '/space/covered.md')
-    expect(touched.map((one) => one.command)).toEqual([
-      'read_note',
-      'read_note',
-      'snapshot_note',
-      'write_note',
-    ])
-    expect(touched[2]?.content).toContain('cover: assets/old.jpg')
-    expect(workspace.undone.stack).toHaveLength(1)
-  })
-
-  test('choosing the cover a note already has writes nothing at all', async () => {
-    fresh()
-    await setCover('/space/only.md', 'assets/only.jpg')
-
-    expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
+    expect(written('/space/titled.md')).toBe('---\ntitle: Titled\n---\n\n# Titled\n')
   })
 })
 
 describe('taking a note’s cover away', () => {
-  test('takes both keys with it', async () => {
+  test('takes it and its place out of the metadata', async () => {
     fresh()
-    await removeCover('/space/covered.md')
+    await setCover('/space/plain.md', 'assets/wide.jpg')
+    await removeCover('/space/plain.md')
 
-    expect(written('/space/covered.md')).toBe('# Covered\n')
+    expect(kept('/space/plain.md')).toBeNull()
   })
 
-  test('and the whole block where the cover was all it held', async () => {
+  test('and out of the front matter where the note still said it, the block with it', async () => {
     fresh()
     await removeCover('/space/only.md')
 
@@ -145,25 +129,14 @@ describe('taking a note’s cover away', () => {
 })
 
 describe('a note that is open while its cover changes', () => {
-  test('takes the change in its own document, and stays saved', async () => {
+  test('keeps its words as they were, and stays saved', async () => {
     fresh()
     await workspace.open('/space/plain.md')
     await setCover('/space/plain.md', 'assets/wide.jpg')
 
     const tab = workspace.tabs.find((one) => one.path === '/space/plain.md')
-    expect(tab?.doc).toBe('---\ncover: assets/wide.jpg\n---\n# Plain\n\nwords\n')
+    expect(tab?.doc).toBe('# Plain\n\nwords\n')
     expect(tab?.dirty).toBe(false)
-  })
-
-  test('and undoing puts the note back the way its reader had it', async () => {
-    fresh()
-    await workspace.open('/space/covered.md')
-    await setCover('/space/covered.md', 'assets/new.jpg')
-    await workspace.undoFileAction()
-
-    expect(workspace.tabs.find((one) => one.path === '/space/covered.md')?.doc).toBe(
-      SPACE['/space/covered.md'],
-    )
   })
 })
 

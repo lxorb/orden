@@ -116,7 +116,7 @@ describe("the cover's stylesheets", () => {
   })
 
   test('give the blocks over a note no margin of their own, outside the box the editor measures', () => {
-    for (const selector of ['#write .nib-cover-block', '.nib-properties', '.nib-toc']) {
+    for (const selector of ['#write .nib-cover-block', '.nib-toc']) {
       expect(body(sheet('editor.css'), selector), selector).not.toMatch(/\bmargin/)
     }
   })

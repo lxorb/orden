@@ -18,11 +18,9 @@ import type { SyntaxNode } from '@lezer/common'
 import { commonmarkLanguage, markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { isExternal } from './external'
 import { fenceLanguage } from './languages'
-import type { PropertiesMode } from '@orden/markdown/properties'
 import { livePreview } from './live-preview'
 import { noReveal, quietMarks } from './live-preview/reveal'
 import { numberEquations } from './live-preview/blocks'
-import { propertiesMode } from './live-preview/hidden-front-matter'
 import { nibMarkdownExtensions, NoSetextHeadings } from './markdown/extensions'
 import { enclosing } from './nodes'
 import { flushTableEdits } from './table/widget'
@@ -42,7 +40,6 @@ const typewriter = new Compartment()
 const punctuation = new Compartment()
 const language = new Compartment()
 const equations = new Compartment()
-const metadata = new Compartment()
 const spelling = new Compartment()
 const spellWords = new Compartment()
 const brackets = new Compartment()
@@ -189,7 +186,6 @@ export function modeExtensions(length = 0): Extension {
     typewriter.of(typewriterFor(false)),
     punctuation.of(punctuationFor(false)),
     equations.of(numberEquations.of(false)),
-    metadata.of(propertiesMode.of('hidden')),
     spelling.of(spellingFor(false)),
     spellWords.of(spellWordsFor('')),
     brackets.of(bracketsFor(true)),
@@ -358,7 +354,6 @@ export interface ModeSettings {
   rtl: boolean
   strict: boolean
   equationNumbers: boolean
-  properties: PropertiesMode
   spellcheck: boolean
   dictionary?: string | undefined
   words?: readonly string[] | undefined
@@ -380,7 +375,6 @@ export function modeEffects(settings: ModeSettings): StateEffect<unknown>[] {
     typewriter.reconfigure(typewriterFor(settings.typewriter)),
     punctuation.reconfigure(punctuationFor(settings.punctuation)),
     equations.reconfigure(numberEquations.of(settings.equationNumbers)),
-    metadata.reconfigure(propertiesMode.of(settings.properties)),
     spelling.reconfigure(spellingFor(settings.spellcheck, settings.dictionary)),
     spellWords.reconfigure(spellWordsFor(joined(settings.words))),
     brackets.reconfigure(bracketsFor(settings.closeBrackets)),
@@ -403,10 +397,6 @@ export function setStrictMode(view: EditorView, on: boolean) {
 
 export function parsedFully(state: EditorState): boolean {
   return state.facet(currentLanguage) !== null
-}
-
-export function setProperties(view: EditorView, mode: PropertiesMode) {
-  view.dispatch({ effects: metadata.reconfigure(propertiesMode.of(mode)) })
 }
 
 export function setEquationNumbers(view: EditorView, on: boolean) {

@@ -1,8 +1,6 @@
 import type { EditorView } from '@orden/editor'
 import { t } from '../i18n.svelte'
 import { DEFAULTS, modes } from '../modes.svelte'
-import { PROPERTIES_MODES } from '@orden/markdown/properties'
-import { PROPERTIES_WORDS } from '../properties-words'
 import type { Pane } from './fields'
 
 export function markdownPane(view: EditorView | undefined): Pane {
@@ -68,23 +66,6 @@ export function markdownPane(view: EditorView | undefined): Pane {
             initial: DEFAULTS.hardBreaks,
             get: () => modes.hardBreaks,
             set: () => modes.toggleHardBreaks(),
-          },
-          {
-            kind: 'segmented',
-            key: 'markdown.frontMatter',
-            store: { on: modes, name: 'properties', shared: 'properties' },
-            label: t('Front matter'),
-            words: ['properties', 'yaml', 'metadata'],
-            hint: t(
-              'Properties draws the rows and edits them in place; Source is the YAML as typed.',
-            ),
-            options: PROPERTIES_MODES.map((one) => ({
-              value: one,
-              label: t(PROPERTIES_WORDS[one]),
-            })),
-            initial: DEFAULTS.properties,
-            get: () => modes.properties,
-            set: (value) => modes.setProperties(value, view),
           },
         ],
       },

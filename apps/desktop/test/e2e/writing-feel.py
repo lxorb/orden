@@ -43,8 +43,6 @@ async (note) => {
 }
 """
 
-SAID = "() => window.nibApp.workspace.active?.doc ?? ''"
-
 PILLS = """
 (scope) => [...document.querySelectorAll(`${scope} .tag`)].map((one) => {
   const look = getComputedStyle(one)
@@ -209,34 +207,6 @@ def the_pointer(page: Page) -> None:
     quiet(page)
 
 
-def a_quoted_comma(page: Page) -> None:
-    page.evaluate("() => window.nibApp.modes.setProperties('properties')")
-    wait_for(page, "document.querySelector('#write .nib-properties-head')", "the properties strip")
-    folded = page.locator('#write .nib-properties-head[aria-expanded="false"]')
-    if folded.count():
-        folded.first.click()
-    wait_for(page, "document.querySelector('#write .property[data-key=\\'tags\\']')", "the rows")
-    quiet(page)
-
-    chips = "() => [...document.querySelectorAll('#write .property[data-key=\\'tags\\'] .property-chip')].map((one) => one.firstChild.textContent)"
-    is_true(page.evaluate(chips) == ["a, b", "c"], f"the rows read {page.evaluate(chips)}")
-    shot(page, "05-rows")
-
-    page.locator("#write .property[data-key='tags'] .property-chip-off").nth(1).click()
-    quiet(page)
-    said = next((one for one in page.evaluate(SAID).split("\n") if one.startswith("tags:")), "")
-    is_true(said == 'tags: ["a, b"]', f"taking c off wrote {said!r}")
-    is_true(page.evaluate(chips) == ["a, b"], f"the rows then read {page.evaluate(chips)}")
-
-    page.fill("#write .property[data-key='tags'] .property-add", "d, e")
-    page.keyboard.press("Enter")
-    quiet(page)
-    said = next((one for one in page.evaluate(SAID).split("\n") if one.startswith("tags:")), "")
-    is_true(said == """tags: ["a, b", 'd, e']""", f"adding wrote {said!r}")
-    is_true(page.evaluate(chips) == ["a, b", "d, e"], f"the rows then read {page.evaluate(chips)}")
-    shot(page, "06-rows-after")
-
-
 def the_format_bar(page: Page) -> None:
     bar = "() => !!document.querySelector('.nib-bar-at')"
     line = page.locator(".cm-line", has_text="The last line")
@@ -271,14 +241,13 @@ def drive(browser: Browser) -> None:
     the_caret_in_a_tag(page)
     pressing_a_tag(page)
     the_pointer(page)
-    a_quoted_comma(page)
     the_format_bar(page)
 
     context.close()
 
 
 def main() -> int:
-    return DRIVE.run(drive, "tags, the pointer, a quoted comma and the format bar all behave")
+    return DRIVE.run(drive, "tags, the pointer and the format bar all behave")
 
 
 if __name__ == "__main__":

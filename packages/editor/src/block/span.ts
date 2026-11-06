@@ -12,7 +12,7 @@ export type BlockKind =
   | 'code'
   | 'table'
   | 'math'
-  | 'properties'
+  | 'front-matter'
   | 'rule'
   | 'block'
 
@@ -30,7 +30,7 @@ const KINDS: Readonly<Record<string, BlockKind>> = {
   CodeBlock: 'code',
   Table: 'table',
   BlockMath: 'math',
-  FrontMatter: 'properties',
+  FrontMatter: 'front-matter',
   HorizontalRule: 'rule',
   HTMLBlock: 'block',
   LinkReference: 'block',

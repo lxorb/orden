@@ -5,6 +5,7 @@ import {
   isTermTarget,
   isWebTarget,
 } from '@orden/markdown/links'
+import { COVER_KEY } from '@orden/markdown/cover'
 import { DIVIDER, type MenuEntry } from './menu-item'
 import { chosenIcon } from './chosen-icon'
 import { iconChoice } from './icon-choice.svelte'
@@ -160,7 +161,7 @@ export function iconEntries(path: string | null | undefined, folder = false): Me
 export function coverEntries(path: string | null | undefined): MenuEntry[] {
   if (!path || !isMarkdownPath(path) || !canWriteAt(path)) return []
 
-  const there = links.coverOf(path) !== null
+  const there = links.coverOf(path) !== null || workspace.itemMeta.valueOf(path, COVER_KEY) !== null
   const cover = () => import('./note-cover')
 
   return [

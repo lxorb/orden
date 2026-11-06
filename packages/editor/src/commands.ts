@@ -7,7 +7,6 @@ import {
   type SelectionRange,
   type StateCommand,
 } from '@codemirror/state'
-import { opensFrontMatter } from '@orden/markdown/front-matter'
 import { type Callout, calloutOf } from '@orden/markdown/callouts'
 import { closesFence } from '@orden/markdown/fences'
 import { blockIdOf } from '@orden/markdown/links'
@@ -17,7 +16,6 @@ import { inCode } from './code'
 import { marksAcross } from './line-door'
 import { noteIndex } from './wikilink/notes'
 import { headingLevel } from './headings'
-import { showFrontMatter } from './live-preview/hidden-front-matter'
 import { enclosing, enclosingNamed } from './nodes'
 
 export function toggleWrap(before: string, after = before): StateCommand {
@@ -543,32 +541,6 @@ export function setCalloutSign(sign: '+' | '-'): StateCommand {
 }
 
 export const insertToc = insertBlock(() => ({ text: '[toc]\n', caret: 6 }))
-
-export const insertFrontMatter: StateCommand = ({ state, dispatch }) => {
-  if (opensFrontMatter(state.doc.toString())) {
-    const inside = state.doc.line(Math.min(2, state.doc.lines))
-    dispatch(
-      state.update({
-        selection: EditorSelection.cursor(inside.to),
-        effects: showFrontMatter.of(null),
-        scrollIntoView: true,
-      }),
-    )
-    return true
-  }
-
-  const block = '---\ntitle: \n---\n\n'
-  dispatch(
-    state.update({
-      changes: { from: 0, insert: block },
-      selection: EditorSelection.cursor(block.indexOf('\n---\n')),
-      effects: showFrontMatter.of(null),
-      scrollIntoView: true,
-      userEvent: 'input',
-    }),
-  )
-  return true
-}
 
 export const insertFootnote: StateCommand = ({ state, dispatch }) => {
   const text = state.doc.toString()

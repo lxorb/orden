@@ -203,7 +203,6 @@ def drive(browser: Browser) -> None:
     DRIVE.open(page)
     wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
     say(f"the space holds {page.evaluate(SEED, [COVERED, PLAIN])}")
-    page.evaluate("() => window.nibApp.modes.setProperties('properties')")
 
     before = a_note_with_no_cover(page, "05")
 

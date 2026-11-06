@@ -65,6 +65,7 @@ import {
 import type { Across } from './workspace/across'
 import { Bookmarks } from './workspace/bookmarks.svelte'
 import { FolderIcons } from './workspace/folder-icons.svelte'
+import { ItemMetaStore } from './workspace/item-meta.svelte'
 import { Excluded } from './workspace/excluded.svelte'
 import { protection } from './protect/protection.svelte'
 import { unlocks } from './protect/unlocked.svelte'
@@ -304,6 +305,7 @@ class Workspace {
     },
   )
   readonly folderIcons = new FolderIcons(() => this.activeSpace?.root ?? null)
+  readonly itemMeta = new ItemMetaStore((path) => this.rootHolding(path))
   readonly arranged = new Arranged(() => this.activeSpace?.root ?? null)
   readonly graphSettings = new SpaceGraphSettings(() => this.activeSpace?.root ?? null)
   readonly sorting = new SpaceSorting(() => this.activeSpace?.root ?? null)
@@ -365,6 +367,7 @@ class Workspace {
       this.picked,
       this.bookmarks,
       this.folderIcons,
+      this.itemMeta,
       this.arranged,
       this.excluded,
       this.archive,
@@ -2111,6 +2114,10 @@ class Workspace {
             }),
           unfetched,
         ),
+      )
+      void import('./workspace/own-keys-moved').then(
+        ({ moveOwnKeysSoon }) => moveOwnKeysSoon(root, this, account.signedIn),
+        unfetched,
       )
       void import('./search/warm.svelte').then(({ warm }) => warm.forSpace(root), unfetched)
       const listed = this.files

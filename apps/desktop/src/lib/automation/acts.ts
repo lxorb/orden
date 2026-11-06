@@ -2,12 +2,14 @@ import { protection } from '../protect/protection.svelte'
 import type { TextEdit } from '@orden/markdown/edits'
 import { typedItem, writeList, writeProperty } from '@orden/markdown/property-edits'
 import { isQuoted, unquoted, writtenFlowItems } from '@orden/markdown/yaml'
+import { LONGEST_META_VALUE } from '@orden/sync-core/meta'
 import { appCommands } from '../commands'
 import { links } from '../link-index.svelte'
 import { extensionOf, nameToWrite } from '../naming'
 import { search } from '../search.svelte'
 import { AGENTS_NAME, isAgentsName } from '../note-name'
 import { onDisk } from '../on-disk'
+import { OWN_KEYS } from '../own-keys'
 import { folderOf, insideSpace, isMarkdownPath, nameOf, relativeTo, samePath } from '../space-paths'
 import { joinPath } from '../tauri'
 import { views } from '../views.svelte'
@@ -346,6 +348,11 @@ export async function setProperty(args: Said): Promise<unknown> {
   if (!key) throw new Error('say which key')
 
   const value = said(args, 'value')
+  const own = OWN_KEYS.find((one) => one === key.toLowerCase())
+  if (own) {
+    workspace.itemMeta.set(note.path, { [own]: value ? value.slice(0, LONGEST_META_VALUE) : null })
+    return { path: note.relative, key: own, value, changed: true }
+  }
   const edit = propertyEdit(note.text, key, value)
   if (!edit) return { path: note.relative, key, value, changed: false }
 

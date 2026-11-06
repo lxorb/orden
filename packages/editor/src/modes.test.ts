@@ -253,7 +253,6 @@ const DEFAULTS: ModeSettings = {
   rtl: false,
   strict: false,
   equationNumbers: false,
-  properties: 'properties',
   spellcheck: false,
   closeBrackets: true,
   ligatures: 'off',

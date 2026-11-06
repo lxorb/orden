@@ -11,7 +11,7 @@ that thing has.
 
 | Wearer | Where | Why there |
 | --- | --- | --- |
-| a note | `icon:` in its own front matter | The one place a markdown file has for metadata. It travels with the file into another vault, and Obsidian's Iconize plugin reads the same key. |
+| a note | `icon` and `icon-color` in the note's own metadata in Orden's storage (#1210) | Not in the note's words: a reader never sees a properties block, and the value rides the tree by the note's id through every rename and move (`docs/tree-sync.md`, Item metadata). Front matter that still says `icon:` - a vault from Obsidian's Iconize, an export brought back - is read where the metadata says nothing; choosing or removing an icon writes the metadata and takes those keys out of the text. An export as Markdown and folders writes them back as front matter, so it round-trips. |
 | a canvas | `nib.icon` in the `.canvas` JSON | A canvas has no front matter. `nib` is the one top-level key the JSON Canvas spec leaves for what is ours, and the ink already lives there; under it the file is the spec exactly. |
 | a chat | `icon` and `iconColor` in its `.chat` pointer, after the id | A chat's log is the account's, but the pointer is the one file it has in the space and already carries its name and place (`docs/chats.md` 4.2). So the icon goes wherever the chat goes, by either sync, to everybody who can reach the space, exactly as a canvas's does. A Orden from before these keys drops them and reads the same chat. |
 | a folder with no note of its own | one map per space, `icons: { <path>: <name> }` | A folder is not a file. Kept beside the space rather than inside the folder: nothing is added to anybody's folders, the map is the size of what was chosen, and it goes where the space's other settings go. |

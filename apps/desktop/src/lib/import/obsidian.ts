@@ -1,4 +1,3 @@
-import type { PropertiesMode } from '@orden/markdown/properties'
 import type { AttachmentFolder } from '../attachments'
 import { key } from '../i18n.svelte'
 import type { LinkFormat } from '../link-format'
@@ -81,7 +80,6 @@ export function fromAppJson(said: unknown): Carried {
     linkFormat: linkFormatOf(app.useMarkdownLinks, app.newLinkFormat),
     hardBreaks: app.strictLineBreaks !== true,
     attachments: attachmentsOf(app.attachmentFolderPath),
-    properties: propertiesOf(app.propertiesInDocument),
     vim: app.vimMode === true,
     quietMarks: false,
     keys: 'obsidian',
@@ -96,15 +94,4 @@ function linkFormatOf(markdown: unknown, format: unknown): LinkFormat {
 function attachmentsOf(path: unknown): AttachmentFolder {
   if (typeof path !== 'string') return 'space'
   return path.startsWith('./') ? 'note' : 'space'
-}
-
-function propertiesOf(mode: unknown): PropertiesMode {
-  switch (mode) {
-    case 'source':
-      return 'source'
-    case 'hidden':
-      return 'hidden'
-    default:
-      return 'properties'
-  }
 }

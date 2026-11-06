@@ -3,7 +3,6 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState, type StateCommand } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { parsed } from '../test/parsed'
-import { hiddenFrontMatterGuard } from './live-preview/hidden-front-matter'
 import { nibMarkdownExtensions } from './markdown/extensions'
 import { deleteLine, insertLineAbove, joinLines, reverseLines, sortLines } from './lines'
 
@@ -19,10 +18,7 @@ function run(command: StateCommand, marked: string): { took: boolean; note: stri
     EditorState.create({
       doc,
       selection,
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
-        hiddenFrontMatterGuard,
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
     }),
   )
 
@@ -70,7 +66,7 @@ describe('sorting and reversing lines', () => {
     expect(run(sortLines, 'alone|').took).toBe(false)
   })
 
-  test('stops at hidden metadata rather than sorting its fences in', () => {
+  test('stops at the front matter rather than sorting its fences in', () => {
     expect(note(sortLines, `${META}b|\na`)).toBe(`${META}«a\nb»`)
   })
 })
@@ -104,7 +100,7 @@ describe('a line above', () => {
     expect(note(insertLineAbove, 'one\n  two|')).toBe('one\n  |\n  two')
   })
 
-  test('opens it under hidden metadata rather than inside it', () => {
+  test('opens it under the front matter rather than inside it', () => {
     expect(note(insertLineAbove, `${META}# Title|`)).toBe(`${META}|\n# Title`)
   })
 })
@@ -114,12 +110,8 @@ describe('deleting a line', () => {
     expect(note(deleteLine, 'one\ntw|o\nthree')).toBe('one\nth|ree')
   })
 
-  test('deletes the first line that shows and leaves hidden metadata whole', () => {
+  test('deletes the first line that shows and leaves the front matter whole', () => {
     expect(note(deleteLine, `${META}# Tit|le\nwords`)).toBe(`${META}words|`)
-  })
-
-  test('empties the only line that shows rather than eating the fence', () => {
-    expect(run(deleteLine, `${META}words|`).note.startsWith(META)).toBe(true)
   })
 
   test('never leaves the caret inside an emoji on the line that comes up', () => {

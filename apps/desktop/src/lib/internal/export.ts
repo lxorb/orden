@@ -1,3 +1,4 @@
+import type { ItemMeta } from '@orden/sync-core/meta'
 import { toBase64 } from '../bytes'
 import { invoke as crate } from '../native'
 import { joinPath } from '../tauri'
@@ -67,20 +68,41 @@ async function freeFolder(picked: string, name: string): Promise<string> {
   }
 }
 
-export async function exportSpaceTo(root: string, name: string, picked: string): Promise<string> {
+type MetaOf = (path: string) => ItemMeta | null
+
+async function bytesOut(file: { path: string; read: () => Promise<Uint8Array> }, metaOf: MetaOf) {
+  const bytes = await file.read()
+  const meta = /\.(md|markdown)$/i.test(file.path) ? metaOf(file.path) : null
+  if (!meta) return bytes
+  const { withOwnKeys } = await import('../own-keys')
+  const text = new TextDecoder().decode(bytes)
+  const written = withOwnKeys(text, meta)
+  return written === text ? bytes : new TextEncoder().encode(written)
+}
+
+export async function exportSpaceTo(
+  root: string,
+  name: string,
+  picked: string,
+  metaOf: MetaOf = () => null,
+): Promise<string> {
   const into = await freeFolder(picked, name)
   for (const file of await filesOf(root)) {
     const path = joinPath(into, file.path)
-    await crate('write_bytes', { path, base64: toBase64(await file.read()) })
+    await crate('write_bytes', { path, base64: toBase64(await bytesOut(file, metaOf)) })
   }
   return into
 }
 
-export async function exportSpace(root: string, name: string): Promise<string | null> {
+export async function exportSpace(
+  root: string,
+  name: string,
+  metaOf: MetaOf = () => null,
+): Promise<string | null> {
   const given = (await import('../dialog-answer')).dialogAnswer()
   const picked = given
     ? await given(true)
     : await (await import('@tauri-apps/plugin-dialog')).open({ directory: true })
   if (typeof picked !== 'string') return null
-  return exportSpaceTo(root, name, picked)
+  return exportSpaceTo(root, name, picked, metaOf)
 }

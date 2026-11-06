@@ -278,7 +278,7 @@ describe('front matter', () => {
       }),
     )
     const span = blockAt(state, 1)
-    expect(span?.kind).toBe('properties')
+    expect(span?.kind).toBe('front-matter')
     expect(moveBlock(state, span!, state.doc.length)).toBeNull()
   })
 

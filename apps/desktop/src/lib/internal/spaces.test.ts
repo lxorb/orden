@@ -479,6 +479,28 @@ describe('a space written out as Markdown and folders', () => {
   })
 })
 
+describe("a space written out keeps each note's own metadata (#1210)", () => {
+  test("writes a note's icon and cover back as front matter, and leaves the rest as it is", async () => {
+    const { exportSpaceTo } = await import('./export')
+    disk.dirs.add('/spaces/Disk')
+    disk.dirs.add('/spaces/Disk/Work')
+    disk.files.set('/spaces/Disk/Work/Plan.md', '# Plan\n')
+    disk.files.set('/spaces/Disk/Bare.md', 'words\n')
+    disk.files.set('/spaces/Disk/cat.png', 'AQI=')
+    const meta: Record<string, Record<string, string>> = {
+      'Work/Plan.md': { icon: 'rocket', 'icon-color': 'red', cover: 'cat.png' },
+      'cat.png': { icon: 'ignored' },
+    }
+
+    await exportSpaceTo('/spaces/Disk', 'Disk', '/picked', (path) => meta[path] ?? null)
+    const read = (path: string) => new TextDecoder().decode(disk.files.get(path) as Uint8Array)
+    expect(read('/picked/Disk/Work/Plan.md')).toBe(
+      '---\nicon: rocket\nicon-color: red\ncover: cat.png\n---\n# Plan\n',
+    )
+    expect(read('/picked/Disk/Bare.md')).toBe('words\n')
+  })
+})
+
 describe("a space written out for an agent's command (#1078)", () => {
   test('goes into the folder its path names, and the dialog is never shown', async () => {
     const { answerNextDialog } = await import('../dialog-answer')

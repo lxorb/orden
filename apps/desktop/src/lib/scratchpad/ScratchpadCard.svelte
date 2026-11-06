@@ -18,7 +18,6 @@
   import { links } from '../link-index.svelte'
   import { modes } from '../modes.svelte'
   import { followHref, followNoteFrom } from '../open-link'
-  import { PROPERTY_CHOICES } from '../property-choices'
   import { shortcuts } from '../shortcuts.svelte'
   import { afterQuiet } from '../timing'
   import { scratchpad } from './pad'
@@ -72,7 +71,6 @@
         openLink: followHref,
         writeLink: pickedLink,
         shortcuts: shortcuts.forEditor,
-        propertyChoices: PROPERTY_CHOICES,
         trustedMarkup: false,
       })
       modes.apply(made)

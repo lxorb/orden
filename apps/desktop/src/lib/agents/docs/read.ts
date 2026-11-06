@@ -73,6 +73,7 @@ export interface NoteRead {
   tasks?: TaskRow[]
   blocks?: BlockRow[]
   properties?: Property[]
+  meta?: Readonly<Record<string, string>>
   links?: unknown[]
   backlinks?: unknown[]
   selection?: Where | null
@@ -176,7 +177,9 @@ export async function readNote(desk: Desk, at: NoteAt, include?: unknown): Promi
     ...(asked.has('outline') ? { outline: outlineOf(text) } : {}),
     ...(asked.has('tasks') ? { tasks: tasksOf(text) } : {}),
     ...(asked.has('blocks') ? { blocks: blocksIn(text) } : {}),
-    ...(asked.has('properties') ? { properties: readProperties(text) ?? [] } : {}),
+    ...(asked.has('properties')
+      ? { properties: readProperties(text) ?? [], meta: desk.metaOf?.(note.path) ?? {} }
+      : {}),
     ...(asked.has('links') ? { links: desk.linksOf(note.path) } : {}),
     ...(asked.has('backlinks') ? { backlinks: desk.backlinksOf(note.path) } : {}),
     ...(asked.has('selection') ? { selection: view ? whereIn(view) : null } : {}),

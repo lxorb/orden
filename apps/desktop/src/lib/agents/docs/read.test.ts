@@ -82,6 +82,7 @@ describe('a note, read', () => {
     ])
 
     expect(Object.keys(read).sort()).toEqual([
+      'meta',
       'open',
       'path',
       'properties',

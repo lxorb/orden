@@ -87,8 +87,8 @@ function blockName(kind: BlockKind): string {
       return t('Table')
     case 'math':
       return t('Equation')
-    case 'properties':
-      return t('Properties')
+    case 'front-matter':
+      return t('Front matter')
     case 'rule':
       return t('Horizontal rule')
     case 'block':

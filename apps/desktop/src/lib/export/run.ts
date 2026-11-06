@@ -13,6 +13,7 @@ import {
 import { t } from '../i18n.svelte'
 import { pageSetupFor, paperInches, type PaperTwips, paperTwips, runningDate } from '../page-setup'
 import { DEFAULT_PAGE_SETUP } from '../paper'
+import { withOwnKeys } from '../own-keys'
 import { nameOf } from '../space-paths'
 import { invoke, isDesktop, isNative } from '../tauri'
 import { documentOf, picturesIn } from './document'
@@ -24,6 +25,7 @@ import { type Picture, readPictures, sourcesIn } from './pictures'
 import { chooseTarget, deliver, type Payload } from './save'
 import { toPlainText } from './text'
 import { bundleFiles, packEntries } from './textbundle'
+import { workspace } from '../workspace.svelte'
 import { zipOf } from './zip'
 
 export interface Note {
@@ -241,11 +243,17 @@ async function payloadFor(id: OneFile, note: Note, options: RunOptions): Promise
   }
 }
 
+function withKept(note: Note): Note {
+  const meta = note.path === null ? null : workspace.itemMeta.of(note.path)
+  return meta ? { ...note, source: withOwnKeys(note.source, meta) } : note
+}
+
 export async function runExport(
   id: Exportable,
-  note: Note,
+  given: Note,
   options: RunOptions = {},
 ): Promise<string | null> {
+  const note = withKept(given)
   await loadFor(note.source)
 
   if (id === 'pdf') return exportPdf(note, options)

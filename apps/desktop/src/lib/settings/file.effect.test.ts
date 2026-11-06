@@ -213,11 +213,10 @@ describe('what the settings file holds', () => {
 
   test('stays as it says when another device says otherwise', async () => {
     await launch(JSON.stringify({ markdown: { newlineBreaks: false, frontMatter: 'source' } }))
-    account = { hardBreaks: true, properties: 'table', canvasTurns: !modes.canvasTurns }
+    account = { hardBreaks: true, canvasTurns: !modes.canvasTurns }
     const turns = modes.canvasTurns
     await modes.adopt('token')
     expect(modes.hardBreaks).toBe(false)
-    expect(modes.properties).toBe('source')
     expect(modes.canvasTurns).toBe(!turns)
   })
 
@@ -321,13 +320,13 @@ describe('what is the reader’s own while the file holds a setting', () => {
 
   test('is what was written beneath it while held: another device’s value', async () => {
     held.clear()
-    modes.setProperties('properties')
-    await launch(JSON.stringify({ markdown: { frontMatter: 'source' } }))
-    account = { properties: 'hidden' }
+    modes.setLinkFormat('wikilink')
+    await launch(JSON.stringify({ editor: { newLinks: 'relative' } }))
+    account = { linkFormat: 'absolute' }
     await modes.adopt('token')
-    expect(modes.properties).toBe('source')
+    expect(modes.linkFormat).toBe('relative')
     await launch(JSON.stringify({}))
-    expect(modes.properties).toBe('hidden')
+    expect(modes.linkFormat).toBe('absolute')
   })
 
   test('a list given back member by member, and a font a part of its store', async () => {
