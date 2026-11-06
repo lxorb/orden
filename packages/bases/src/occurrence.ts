@@ -2,7 +2,7 @@ import type { TextEdit } from '@orden/markdown/edits'
 import { changedTask, type TaskChange, writeTask } from '@orden/markdown/task-edits'
 import { parseTask, readTask, type TaskFields } from '@orden/markdown/task-line'
 import { addDays, dayNumber, todayOf } from './dates'
-import { nextDate, parseRule } from './recurrence'
+import { fewerTimes, nextDate, parseRule } from './recurrence'
 
 export interface OccurrenceOptions {
   skipPast?: boolean
@@ -23,9 +23,11 @@ export function nextOccurrence(
   if (!task.recurrence) return null
   const rule = parseRule(task.recurrence)
   if (!rule) return null
+  if (rule.count !== undefined && rule.count <= 1) return null
 
   const reference = referenceOf(task)
   const next: TaskFields = { ...task, status: ' ', done: false, cancelled: false }
+  if (rule.count !== undefined) next.recurrence = fewerTimes(task.recurrence, rule.count - 1)
   delete next.completed
   delete next.cancelledOn
   if (options.created) next.created = today
@@ -59,6 +61,7 @@ function changeBetween(before: TaskFields, after: TaskFields): TaskChange {
   const change: TaskChange = {}
   const fields = [
     'status',
+    'recurrence',
     'due',
     'scheduled',
     'start',
