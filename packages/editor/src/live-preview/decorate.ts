@@ -679,10 +679,13 @@ export function buildDecorations(
 
 const enginesLanded = StateEffect.define()
 
+const COMPOSITION_SETTLES = 50
+
 export const livePreviewDecorations = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet
     atomic: DecorationSet
+    private behind = false
     private readonly stopWaiting: () => void
 
     constructor(view: EditorView) {
@@ -699,6 +702,7 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
     }
 
     destroy() {
+      this.behind = false
       this.stopWaiting()
     }
 
@@ -726,16 +730,38 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
         reparsed ||
         sealed ||
         asked ||
-        landed
+        landed ||
+        this.behind
       ) {
-        const built = buildDecorations(update.view.state, update.view.visibleRanges)
-        this.decorations = built.decorations
-        this.atomic = built.atomic
+        this.rebuild(update)
       }
+    }
+
+    private rebuild(update: ViewUpdate) {
+      if (update.view.compositionStarted) {
+        this.decorations = this.decorations.map(update.changes)
+        this.atomic = this.atomic.map(update.changes)
+        this.behind = true
+        return
+      }
+
+      const built = buildDecorations(update.view.state, update.view.visibleRanges)
+      this.decorations = built.decorations
+      this.atomic = built.atomic
+      this.behind = false
+    }
+
+    catchUp(view: EditorView) {
+      if (this.behind && !view.compositionStarted) view.dispatch({})
     }
   },
   {
     decorations: (plugin) => plugin.decorations,
+    eventObservers: {
+      compositionend(_event, view) {
+        setTimeout(() => this.catchUp(view), COMPOSITION_SETTLES)
+      },
+    },
     provide: (plugin) =>
       EditorView.atomicRanges.of((view) => view.plugin(plugin)?.atomic ?? Decoration.none),
   },
