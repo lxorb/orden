@@ -27,7 +27,6 @@ test('one pane’s tabs are a grid of windows the pane’s shape, none over anot
 test('one tab alone is a window on the canvas, not the pane again', () => {
   const [only] = lay(pane('p'), room, panes({ p: ['a'] })).slots
   expect(only?.w).toBeLessThan(room.w / 2)
-  // In the middle.
   expect((only?.x ?? 0) + (only?.w ?? 0) / 2).toBeCloseTo(600)
 })
 
@@ -68,7 +67,6 @@ test('one above the other is two groups stacked, the seam across', () => {
 })
 
 test('the grid chosen gives each window the most room', () => {
-  // Four windows in a wide room: two rows of two beat one row of four.
   expect(gridFor(4, 16 / 10, { x: 0, y: 0, w: 1000, h: 700 }, 1000).across).toBe(2)
   expect(gridFor(3, 16 / 10, { x: 0, y: 0, w: 2000, h: 300 }, 2000).across).toBe(3)
 })
@@ -91,7 +89,6 @@ test('windows moved anywhere still have a seam between a split’s sides, where 
   })
   const apart = seamsAmong(frame, [slot('a', 'left', 0, 0), slot('b', 'right', 300, 200)])
   expect(apart).toEqual([{ id: 's', along: 'row', from: { x: 200, y: 0 }, to: { x: 200, y: 260 } }])
-  // One side's window moved in among the other's: no line across a window.
   expect(seamsAmong(frame, [slot('a', 'left', 0, 0), slot('b', 'right', 50, 100)])).toEqual([])
 })
 

@@ -1,14 +1,3 @@
-/** Where each window of the overview lies, and where the lines between a split's sides
- *  run (issue #331).
- *
- *  The canvas is the panes drawn small: a split side by side is two groups of windows side
- *  by side, one above the other is two groups stacked, and each pane's tabs are a grid of
- *  windows the shape of that pane. So what is beside what in the window is beside what
- *  here, before a word is read, and a seam - a curve in the gap between a split's two
- *  sides - says where one side ends and the other begins.
- *
- *  Pure: the frame, each pane's tabs and shape, and the room, in; boxes out. */
-
 import { type Frame, panesIn } from '../workspace/pane-tree'
 
 export interface Box {
@@ -18,15 +7,11 @@ export interface Box {
   h: number
 }
 
-/** A window's place, and the pane it belongs to. */
 export interface Slot extends Box {
   id: string
   paneId: string
 }
 
-/** The line between a split's two sides: from one end of the gap to the other, down
- *  its middle. `along` is the split's own: `row` is a vertical line between two sides
- *  side by side. */
 export interface Seam {
   id: string
   along: 'row' | 'column'
@@ -39,30 +24,18 @@ export interface Laid {
   seams: Seam[]
 }
 
-/** What `lay` needs to know of the panes. */
 export interface Panes {
-  /** A pane's tabs, in its strip's order. */
   tabsOf: (paneId: string) => readonly string[]
-  /** Width over height of what a pane shows, which each of its windows takes. */
   shapeOf: (paneId: string) => number
-  /** How much room a window's name takes under it on the canvas, where that is more than
-   *  the gap between two rows: the camera drawn back, the names their size on the
-   *  screen. */
   named?: number
 }
 
-/** The room between two windows, and between a split's sides, which the seam runs in. */
 const GAP = 28
-/** And between two rows, which holds the name under each window of the upper. */
 const ROW_GAP = 60
 const SEAM_GAP = 56
 
-/** No window wider than this share of the room, so one tab alone is a window on a
- *  canvas and not the pane again. */
 export const WIDEST = 0.46
 
-/** A side's share of a split, by how many windows it holds: a pane of eight tabs next to
- *  a pane of one is given more of the room, never all of it. */
 function shareOf(first: number, second: number): number {
   const a = Math.sqrt(Math.max(first, 1))
   const b = Math.sqrt(Math.max(second, 1))
@@ -74,8 +47,6 @@ function countIn(frame: Frame, panes: Panes): number {
   return countIn(frame.sides[0], panes) + countIn(frame.sides[1], panes)
 }
 
-/** The grid that gives `count` windows of `shape` the most room in `room`: how many
- *  across, and how wide each is. */
 export function gridFor(count: number, shape: number, room: Box, widest: number, rowGap = ROW_GAP) {
   let best = { across: 1, w: 0 }
   for (let across = 1; across <= Math.max(count, 1); across++) {
@@ -88,7 +59,6 @@ export function gridFor(count: number, shape: number, room: Box, widest: number,
   return best
 }
 
-/** One pane's windows, centred in its room, the last row centred under the others. */
 function grid(paneId: string, room: Box, panes: Panes, widest: number): Slot[] {
   const ids = panes.tabsOf(paneId)
   const shape = panes.shapeOf(paneId)
@@ -115,7 +85,6 @@ function grid(paneId: string, room: Box, panes: Panes, widest: number): Slot[] {
   })
 }
 
-/** The box round some slots. */
 export function around(slots: readonly Box[]): Box | null {
   if (!slots.length) return null
   const x = Math.min(...slots.map((one) => one.x))
@@ -148,7 +117,6 @@ function layIn(frame: Frame, room: Box, panes: Panes, widest: number): Laid {
   const slots = [...left.slots, ...right.slots]
   const seams = [...left.seams, ...right.seams]
 
-  // Down the middle of the gap, as long as the windows on either side reach.
   const reach = around(slots)
   if (reach) {
     const middle = across ? room.x + one + SEAM_GAP / 2 : room.y + one + SEAM_GAP / 2
@@ -172,15 +140,10 @@ function layIn(frame: Frame, room: Box, panes: Panes, widest: number): Laid {
   return { slots, seams }
 }
 
-/** Every window and seam of `frame` in `room`. */
 export function lay(frame: Frame, room: Box, panes: Panes): Laid {
   return layIn(frame, room, panes, room.w * WIDEST)
 }
 
-/** The seams between a split's sides where its windows lie anywhere (free.ts): down the
- *  middle of the gap between the two sides' windows, where there is one to run in. Two
- *  sides whose windows were moved in among each other's have no line between them,
- *  rather than one drawn across a window. */
 export function seamsAmong(frame: Frame, slots: readonly Slot[]): Seam[] {
   if (frame.kind === 'pane') return []
   const [first, second] = frame.sides
@@ -217,8 +180,6 @@ export function seamsAmong(frame: Frame, slots: readonly Slot[]): Seam[] {
   return seams
 }
 
-/** A seam as a path: a gentle S from one end to the other, bowing a little to either
- *  side of the gap's middle, so it reads as drawn by a hand rather than ruled. */
 export function seamPath(seam: Seam): string {
   const { from, to } = seam
   const bow = Math.min(SEAM_GAP / 3, Math.hypot(to.x - from.x, to.y - from.y) / 10)

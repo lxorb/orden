@@ -3,7 +3,6 @@ import { walk, wayOf } from './walk'
 
 const box = (x: number, y: number) => ({ x, y, w: 100, h: 60 })
 
-// Two in a row on the left, one tall pane's window on the right.
 const boxes = [box(0, 0), box(120, 0), box(0, 80), box(400, 40)]
 
 test('an arrow goes to the nearest window that way', () => {

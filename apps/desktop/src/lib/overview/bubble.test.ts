@@ -2,7 +2,6 @@ import { expect, test } from 'vitest'
 import { apart, Bubble, CLEAR, PAD } from './bubble'
 import type { Box } from './layout'
 
-/** The curve as drawn, sampled finely: every Bézier of the path at many points. */
 function outline(one: Bubble): [number, number][] {
   const out: [number, number][] = []
   for (const [x0, y0, c1x, c1y, c2x, c2y, x1, y1] of one.curves()) {
@@ -28,8 +27,6 @@ function insideOf(poly: readonly (readonly [number, number])[], x: number, y: nu
   return inside
 }
 
-/** Whether every window is inside the drawn bubble, by `by` at least: its corners and
- *  points along its edges. */
 function encloses(one: Bubble, windows: readonly Box[], by = CLEAR / 2): boolean {
   const poly = outline(one)
   return windows.every((w) => {
@@ -47,7 +44,6 @@ function encloses(one: Bubble, windows: readonly Box[], by = CLEAR / 2): boolean
   })
 }
 
-/** How far past `box`, at the most, the drawn bubble reaches. */
 function farthest(one: Bubble, box: Box): number {
   let most = 0
   for (const [x, y] of outline(one)) {
@@ -58,8 +54,6 @@ function farthest(one: Bubble, box: Box): number {
   return most
 }
 
-/** How far past a window, at the most, its own round shape reaches: a quarter of its
- *  half-size, past `PAD`, at the middle of its long sides. */
 const reachPast = (box: Box) => 0.25 * (Math.max(box.w, box.h) / 2 + PAD) + PAD + 4
 
 const run = (one: Bubble, windows: () => readonly Box[], frames: number, from = 0) => {
@@ -67,13 +61,11 @@ const run = (one: Bubble, windows: () => readonly Box[], frames: number, from = 
 }
 
 test('round one window it is that window grown a little, and nowhere further', () => {
-  // Emil's Orga: one window at the bottom left of a space's room, and a blob over all of it.
   const only = { x: 40, y: 900, w: 360, h: 260 }
   const one = new Bubble([only])
   run(one, () => [only], 240)
   expect(farthest(one, only)).toBeLessThan(reachPast(only))
   expect(encloses(one, [only], PAD / 2)).toBe(true)
-  // Round at every corner: the curve never turns sharply from one stretch to the next.
   const curve = outline(one)
   let sharpest = 0
   for (let i = 0; i < curve.length; i++) {
@@ -87,9 +79,6 @@ test('round one window it is that window grown a little, and nowhere further', (
   expect(sharpest).toBeLessThan((8 * Math.PI) / 180)
 })
 
-/** How tight the drawn curve bends at its tightest: the radius of the circle through
- *  three points of it ten pixels apart along it, the least such radius round it. A hard
- *  corner is a bend of a few pixels, whatever the resolution it is drawn at. */
 function tightestOf(one: Bubble): number {
   const curve = outline(one)
   const even: [number, number][] = []
@@ -117,8 +106,6 @@ function tightestOf(one: Bubble): number {
 }
 
 test('a window pushed against its bubble from inside swells it round, never into a corner', () => {
-  // Emil, round 4: a window dragged against a bubble's edge, quicker than the bubble
-  // follows, pressed a hard corner into it where the window's own corner was.
   for (const [dx, dy] of [
     [1, 0],
     [0, 1],
@@ -133,15 +120,12 @@ test('a window pushed against its bubble from inside swells it round, never into
       held.y += dy * 30
       one.step(1 / 60, frame / 60, [still, held])
       expect(encloses(one, [still, held])).toBe(true)
-      // As round as a window's own bubble is at its corners, give or take.
       expect(tightestOf(one)).toBeGreaterThan(40)
     }
   }
 })
 
 test('dragged at any speed, turned at once, or late a frame, it stays round', () => {
-  // Emil: a window dragged very fast, or turned about all of a sudden, still pressed hard
-  // corners into its bubble.
   let seed = 11
   const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647
   for (const speed of [30, 120, 250]) {
@@ -189,7 +173,6 @@ test('its one window dragged away takes the bubble and its name with it', () => 
   }
   run(one, () => [now], 60, 120)
   expect(farthest(one, now)).toBeLessThan(reachPast(now))
-  // Nothing of it is left where the window was.
   expect(insideOf(outline(one), was.x + was.w / 2, was.y + was.h / 2)).toBe(false)
   const crown = one.crown()
   expect(crown.x - crownBefore.x).toBeCloseTo(now.x - was.x, -1)
@@ -198,7 +181,6 @@ test('its one window dragged away takes the bubble and its name with it', () => 
 })
 
 test('every window is inside it on every frame: dragged, thrown, arriving and leaving', () => {
-  // A seeded walk, so a failure is the same failure again.
   let seed = 7
   const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647
   for (let round = 0; round < 24; round++) {
@@ -273,7 +255,6 @@ test('asked for less movement it stands still, and follows its windows at once',
   expect(insideOf(outline(one), 200, 150)).toBe(false)
 })
 
-/** The curve as drawn, walked at an even step of `step` pixels. */
 function walked(one: Bubble, step = 2): [number, number][] {
   const curve = outline(one)
   const out: [number, number][] = []
@@ -287,8 +268,6 @@ function walked(one: Bubble, step = 2): [number, number][] {
   return out
 }
 
-/** The longest stretch of the curve that is straight: that keeps within two pixels of
- *  the line from its one end to its other. */
 function straightest(points: readonly [number, number][]): number {
   const n = points.length
   const at = (i: number) => points[((i % n) + n) % n] ?? [0, 0]
@@ -312,8 +291,6 @@ function straightest(points: readonly [number, number][]): number {
 }
 
 test('round rows of windows it is round all the way, with no long straight edge', () => {
-  // Emil: the bubbles round two rows of windows, the lower one shorter, had long straight
-  // edges and corners, not a round shape.
   const W = 400
   const H = 260
   const row = (count: number, y: number, x = 0) =>
@@ -329,7 +306,6 @@ test('round rows of windows it is round all the way, with no long straight edge'
     const one = new Bubble(boxes)
     run(one, () => boxes, 120)
     const points = walked(one)
-    // Each step is two pixels: the straightest stretch, against the whole way round.
     const share = straightest(points) / points.length
     expect(share, name).toBeLessThan(0.2)
     expect(encloses(one, boxes, PAD / 2), name).toBe(true)

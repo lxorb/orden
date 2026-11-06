@@ -22,7 +22,6 @@ const turn = { deltaX: 0, deltaY: 0, deltaMode: 0, ctrlKey: false, metaKey: fals
 test('opens with the space’s place filling the room, one to one', () => {
   const camera = lookingAt({ x: 2000, y: 0, w: 800, h: 600 }, { x: 56, y: 88, w: 800, h: 600 })
   expect(toCanvas(camera, { x: 56, y: 88 })).toEqual({ x: 2000, y: 0 })
-  // Placed in a larger window than this one: all of it, smaller, in the middle.
   const smaller = lookingAt({ x: 0, y: 0, w: 1600, h: 600 }, { x: 0, y: 0, w: 800, h: 600 })
   expect(smaller.zoom).toBe(0.5)
   expect(toCanvas(smaller, { x: 0, y: 150 })).toEqual({ x: 0, y: 0 })
@@ -37,9 +36,7 @@ test('two fingers scrolling zoom about the pointer and never move it, Ctrl or no
     expect(under.y).toBeCloseTo(200)
     expect(turned(still, { ...turn, deltaY: 10, ctrlKey }).zoom).toBeLessThan(1)
   }
-  // Sideways alone neither zooms nor moves it.
   expect(turned(still, { ...turn, deltaX: 30 })).toEqual(still)
-  // A wheel that counts in lines zooms by as many pixels' worth.
   expect(turned(still, { ...turn, deltaY: 1, deltaMode: 1 }).zoom).toBeCloseTo(
     turned(still, { ...turn, deltaY: 40 }).zoom,
   )
@@ -97,11 +94,8 @@ test('a notch of the wheel eases to its zoom, Ctrl or not, fingers are followed'
   expect(notched(1, { ...notch, ctrlKey: false })).toBe(notched(1, notch))
   expect(isNotch({ ...notch, deltaY: -3.5 })).toBe(false)
   expect(isNotch({ ...notch, deltaY: -1, deltaMode: 1 })).toBe(true)
-  // Two notches in quick succession aim twice as far, not from where it has got to.
   const goal = notched(notched(1, notch), notch)
   expect(goal).toBeCloseTo(Math.exp(0.4))
-  // On its way there frame by frame: never past it, never back, the pointer's point
-  // still under the pointer, and there within half a second.
   let camera = still
   let before = camera.zoom
   for (let frame = 0; frame < 30; frame++) {
@@ -112,7 +106,6 @@ test('a notch of the wheel eases to its zoom, Ctrl or not, fingers are followed'
   }
   expect(camera.zoom).toBe(goal)
   expect(toCanvas(camera, { x: 300, y: 200 }).x).toBeCloseTo(300)
-  // The first frame already moves: no wait before it starts.
   expect(eased(still, goal, { x: 0, y: 0 }, 1 / 60).zoom).toBeGreaterThan(1.05)
 })
 
@@ -126,9 +119,6 @@ test('a box is on view while its middle is, at the camera’s own zoom', () => {
 })
 
 test('fingers handed over in few, large turns are followed smoothly, frame by frame', () => {
-  // Emil, round 4: smooth in Firefox, in steps in the app. WebView2 can hand a touchpad's
-  // fingers over a dozen times a second in turns of tens of pixels, and a mouse's wheel in
-  // lines; each turn aims the zoom, and the camera eases there a frame at a time.
   const at = { x: 300, y: 200 }
   for (const turn of [
     { deltaX: 0, deltaY: -36, deltaMode: 0, ctrlKey: false, metaKey: false, ...at },
@@ -140,7 +130,6 @@ test('fingers handed over in few, large turns are followed smoothly, frame by fr
     let goal = { zoom: camera.zoom, ease: 0.08 }
     let sharpest = 0
     for (let frame = 0; frame < 90; frame++) {
-      // A turn every sixth frame, ten a second, for the first half second.
       if (frame % 6 === 0 && frame < 30) goal = aimed(goal.zoom, turn)
       const next = eased(camera, goal.zoom, at, 1 / 60, goal.ease)
       sharpest = Math.max(sharpest, Math.abs(Math.log(next.zoom / camera.zoom)))
@@ -148,7 +137,6 @@ test('fingers handed over in few, large turns are followed smoothly, frame by fr
     }
     expect(camera.zoom).toBeCloseTo(goal.zoom, 2)
     expect(camera.zoom).toBeGreaterThan(0.5)
-    // No frame is a leap: each is well under what the same turn all at once would be.
     const leap = Math.abs(Math.log(aimed(0.5, turn).zoom / 0.5))
     expect(sharpest).toBeLessThan(leap * 0.5)
   }

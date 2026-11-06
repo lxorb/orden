@@ -21,7 +21,6 @@ test('a window let go on others keeps its place, and they are pushed out of its 
   const after = settled(windows, new Set(['held']))
   expect(after.find((one) => one.id === 'held')).toEqual(windows[3])
   expect(clear(after)).toBe(true)
-  // The one it was let go on was moved out of its way.
   expect(after.find((one) => one.id === 'b')).not.toEqual(windows[1])
 })
 
@@ -50,12 +49,10 @@ test('let go among a pane’s windows, it lands in its strip where it reads amon
     paneId: 'p',
     before: 'b',
   })
-  // Below the first row, before the one on the second.
   expect(stripLanding(slots, 'x', { x: -260, y: 310, w: 200, h: 120 })).toEqual({
     paneId: 'p',
     before: 'c',
   })
-  // Nearest another pane's window: into that pane, at its end.
   expect(stripLanding(slots, 'x', { x: 1150, y: 0, w: 200, h: 120 })).toEqual({
     paneId: 'other',
     before: null,
@@ -64,7 +61,6 @@ test('let go among a pane’s windows, it lands in its strip where it reads amon
 })
 
 test('a window is never pushed onto the name under another, however much room the name takes', () => {
-  // The camera drawn back: each name takes more of the canvas than the usual gap.
   const named = 140
   const windows = [at('a', 0, 0), at('b', 0, 150), at('c', 230, 100), at('held', 10, 260)]
   const after = settled(windows, new Set(['held']), named)
@@ -72,7 +68,6 @@ test('a window is never pushed onto the name under another, however much room th
     for (const other of after) {
       if (one === other) continue
       const beside = one.x + one.w <= other.x || other.x + other.w <= one.x
-      // Below one, the next window starts only past its name.
       if (!beside && other.y >= one.y)
         expect(other.y).toBeGreaterThanOrEqual(one.y + one.h + named - 1)
     }
@@ -81,18 +76,15 @@ test('a window is never pushed onto the name under another, however much room th
 })
 
 test('a held window pushes only the windows of the cell it is in, so a cell of one window it comes to is still there to point into', () => {
-  // Space a with two windows, space b with one; a's window is held right over b's.
   const windows = [at('a1', 0, 0), at('a2', 240, 0), at('b1', 900, 0), at('held', 0, 0)]
   const cell = (id: string) => (id.startsWith('b') ? 'b' : 'a')
   const over = { x: 880, y: 10, w: 200, h: 120 }
   const inA = roomFor(windows, new Map([['held', over]]), (id) => cell(id) === 'a')
-  // b's one window stays where it lies under the hand, and the pointer on it is in b.
   expect(inA.find((one) => one.id === 'b1')).toEqual(windows[2])
   const box = (key: string) =>
     around(inA.filter((one) => one.id !== 'held' && cell(one.id) === key)) ?? over
   const cells = ['a', 'b'].map((key) => ({ key, box: box(key) }))
   expect(cellAt(cells, 'a', 980, 60)).toBe('b')
-  // Once it is in b, b's window makes room for it, and a's are left alone.
   const inB = roomFor(windows, new Map([['held', over]]), (id) => cell(id) === 'b')
   expect(inB.find((one) => one.id === 'b1')).not.toEqual(windows[2])
   expect(inB.filter((one) => cell(one.id) === 'a' && one.id !== 'held')).toEqual(
@@ -102,7 +94,6 @@ test('a held window pushes only the windows of the cell it is in, so a cell of o
 })
 
 test('several windows held at once each stay under the hand, and the cell makes room for all', () => {
-  // Emil, round 4: Ctrl+Click chooses several windows, and they move and drop together.
   const windows = [at('a1', 0, 0), at('a2', 228, 0), at('a3', 456, 0), at('x', 0, 300)]
   const held = new Map([
     ['x', { x: 200, y: 10, w: 200, h: 120 }],

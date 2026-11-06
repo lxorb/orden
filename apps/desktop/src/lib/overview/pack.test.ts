@@ -38,14 +38,12 @@ test('the first goes on the middle, and none comes nearer another than the gap',
 })
 
 test('they pack round the middle, not in a row: a squarish heap, mostly filled', () => {
-  // Emil, round 4: Tidy up laid them out in a straight line.
   const boxes = Object.values(packed(sizes, GAP))
   const all = around(boxes)
   const wide = Math.max(all.w / all.h, all.h / all.w)
   expect(wide).toBeLessThan(2)
   const area = boxes.reduce((sum, one) => sum + one.w * one.h, 0)
   expect(area / (all.w * all.h)).toBeGreaterThan(0.5)
-  // Round the middle: it is inside the heap, nearer its middle than its edge.
   expect(Math.abs(all.x + all.w / 2)).toBeLessThan(all.w / 4)
   expect(Math.abs(all.y + all.h / 2)).toBeLessThan(all.h / 4)
 })
@@ -61,7 +59,6 @@ test('each goes in the free place nearest the middle: on a wide screen, two go s
     { x: 0, y: 0 },
     16 / 10,
   )
-  // Beside the first and level with it, rather than anywhere further.
   expect(out.b?.y).toBe(-150)
   expect(Math.abs(out.b?.x ?? 0)).toBe(200 + GAP)
 })
@@ -73,7 +70,6 @@ test('what is taken already stays, and the new ones pack round it', () => {
   expect(box).toBeDefined()
   if (!box) return
   expect(apart(box, taken[0] as Box)).toBe(true)
-  // Right against it, the gap away, not somewhere off in the distance.
   const taken0 = taken[0] as Box
   const gapX = Math.max(box.x - (taken0.x + taken0.w), taken0.x - (box.x + box.w))
   const gapY = Math.max(box.y - (taken0.y + taken0.h), taken0.y - (box.y + box.h))
@@ -85,7 +81,6 @@ test('the same spaces pack the same way every time, at any zoom: nothing here kn
 })
 
 test('a bubble carried through others pushes them aside, smoothly, and none ever meets another', () => {
-  // Emil: a space dragged over another lay right on it.
   const rest = [
     { key: 'a', box: { x: 600, y: 0, w: 500, h: 400 } },
     { key: 'b', box: { x: 1140, y: 40, w: 300, h: 300 } },
@@ -109,7 +104,6 @@ test('a bubble carried through others pushes them aside, smoothly, and none ever
       }
       was = now
     }
-    // Where they were pushed to, they stay while the hand is on: none is left behind it.
     expect(Object.keys(was).length).toBeGreaterThan(0)
     held.x = 6000
     expect(pushedAside(held, rest, GAP, was)).toEqual(was)

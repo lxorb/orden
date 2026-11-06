@@ -1,11 +1,4 @@
 <script lang="ts">
-  /** The spaces' bubbles in All spaces: one round each space's windows, as each is drawn
-   *  this frame, and its name over it (issue #331). What a bubble does is bubble.ts; this
-   *  keeps one per space, moves each round its windows every frame for as long as it is
-   *  up, keeps any two from overlapping, and draws them. A bubble is its windows: one
-   *  dragged away takes its bubble and its name with it. Asked for less movement, the
-   *  bubbles stand still and follow at once. */
-
   import { onDestroy } from 'svelte'
   import { stillness } from '../motion'
   import { apart, Bubble } from './bubble'
@@ -25,11 +18,8 @@
     inside,
   }: {
     cells: readonly Shown[]
-    /** The windows in a cell, where each is drawn this frame, read every frame. */
     inside: (key: string) => readonly Box[]
-    /** Whether a window is held, which a bubble standing still wakes for. */
     holding: boolean
-    /** The windows held, and the cell they are in now, read every frame. */
     pushed: () => { key: string; boxes: readonly Box[] } | null
   } = $props()
 
@@ -42,7 +32,6 @@
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
   const kept = new Map<string, Kept>()
 
-  /** A cell's windows this frame, the held ones with them while they are in this cell. */
   function boxesOf(
     key: string,
     hand: { key: string; boxes: readonly Box[] } | null,
@@ -80,7 +69,6 @@
 
   let frame = 0
   let before = performance.now()
-  /** What each cell's windows were last frame, so a bubble standing still knows to move. */
   let last = ''
 
   function tick(now: number) {
@@ -94,7 +82,6 @@
       boxes: boxesOf(cell.key, hand),
     }))
     for (const { one, boxes } of all) one.bubble.step(seconds, now / 1000, boxes, still)
-    // No two overlap: where they would, they meet along a line between their windows.
     for (let i = 0; i < all.length; i++) {
       for (let j = i + 1; j < all.length; j++) {
         const a = all[i]
@@ -104,19 +91,16 @@
     }
     for (const { one } of all) {
       one.path?.setAttribute('d', one.bubble.pathOf())
-      // The name rides the top of the bubble, just over it, wherever its windows took it.
       const crown = one.bubble.crown()
       if (one.name) one.name.style.translate = `${crown.x}px ${crown.y}px`
     }
 
-    // Never still, unless asked to be: then only while something is moving.
     const seen = JSON.stringify(all.map(({ boxes }) => boxes))
     const moving = !still || hand !== null || seen !== last
     last = seen
     frame = moving ? requestAnimationFrame(tick) : 0
   }
 
-  /** A change of cells, or a window taken hold of, wakes a loop that stood still. */
   $effect(() => {
     if ((cells.length || holding) && !frame) {
       before = performance.now()
@@ -138,7 +122,6 @@
   {/each}
 </svg>
 {#each cells as cell (cell.key)}
-  <!-- What a space is carried by, its windows and all (Overview.svelte `grounded`). -->
   <span
     class="name"
     class:is-on={cell.on}
@@ -157,16 +140,11 @@
     pointer-events: none;
   }
 
-  /* In with the windows and out with them, never there before them or after: as far as
-     the overview is out (Overview.svelte). */
   .cells,
   .name {
     opacity: var(--overview-open, 0);
   }
 
-  /* A bubble: a faint wash of the space's colour inside, a soft line at its edge - the
-     same weight on the screen however far out the camera is (`--overview-line` is the
-     canvas's length of a pixel of the screen). */
   .bubble {
     fill: color-mix(in srgb, var(--tint) 7%, transparent);
     stroke: color-mix(in srgb, var(--tint) 50%, transparent);
@@ -179,11 +157,6 @@
     stroke: color-mix(in srgb, var(--tint) 70%, transparent);
   }
 
-  /* A space's name, over the top of its bubble, at the overview's own size for it until
-     it would take more than the room kept over the bubble for it, and from there as
-     small as the camera draws the canvas (`--overview-space-names`, Overview.svelte):
-     the room is the canvas's, the same at every zoom, and no name lies on another
-     bubble. It carries its space, windows and all (Overview.svelte `grounded`). */
   .name {
     position: absolute;
     top: 0;

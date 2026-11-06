@@ -1,14 +1,3 @@
-/** The spaces' bubbles packed close round a middle nobody sees (issue #331).
- *
- *  Emil, round 4: Tidy up laid the bubbles out in one long row. They go round a middle
- *  instead, each in the free place nearest it, so they lie close together, none on
- *  another, the way coins pushed together on a table do. The first goes on the middle
- *  itself; every next one is tried against every side of every one placed, at every
- *  height or width that lines it up with something there, and takes the free place
- *  whose middle is nearest the middle of all. Lengths are on the canvas only: nothing
- *  here knows the zoom, so where a bubble lies never changes as the camera moves in or
- *  out. Pure. */
-
 import type { Box } from './layout'
 
 export interface Sized {
@@ -17,7 +6,6 @@ export interface Sized {
   h: number
 }
 
-/** Whether two boxes come nearer than `gap` to each other. */
 export function meets(a: Box, b: Box, gap: number): boolean {
   return (
     a.x < b.x + b.w + gap - 0.01 &&
@@ -30,10 +18,6 @@ export function meets(a: Box, b: Box, gap: number): boolean {
 const clamp = (value: number, low: number, high: number) =>
   Math.min(Math.max(value, low), Math.max(low, high))
 
-/** Where each of `items` goes, by key: packed round `middle`, `gap` apart from each
- *  other and from every box of `taken`, which stay where they are. `wide` stretches how
- *  far counts as near across against down, so the pack takes the shape of a screen
- *  rather than of a coin. */
 export function packed(
   items: readonly Sized[],
   gap: number,
@@ -58,7 +42,6 @@ export function packed(
     }
     tryAt(middle.x - w / 2, middle.y - h / 2)
     if (!best.box) {
-      // What a new box can be lined up with: the middle, and every edge of every box.
       const xs = [middle.x - w / 2]
       const ys = [middle.y - h / 2]
       for (const one of placed) {
@@ -66,8 +49,6 @@ export function packed(
         ys.push(one.y, one.y + one.h - h, one.y + one.h + gap, one.y - h - gap)
       }
       for (const one of placed) {
-        // Beside it, right or left, at any height that still meets its side; and over or
-        // under it, at any width that still meets its top or foot.
         for (const x of [one.x + one.w + gap, one.x - w - gap])
           for (const y of ys) tryAt(x, clamp(y, one.y - h + 1, one.y + one.h - 1))
         for (const y of [one.y + one.h + gap, one.y - h - gap])
@@ -81,7 +62,6 @@ export function packed(
   return out
 }
 
-/** How far along `x`, `y` box `b` goes before it is `gap` clear of `a`, at the least. */
 function clearAlong(a: Box, b: Box, x: number, y: number, gap: number): number {
   let least = Number.POSITIVE_INFINITY
   if (x > 1e-9) least = Math.min(least, (a.x + a.w + gap - b.x) / x)
@@ -91,13 +71,6 @@ function clearAlong(a: Box, b: Box, x: number, y: number, gap: number): number {
   return Math.max(0, least)
 }
 
-/** Where each of `others` is pushed to by `held`, a bubble carried in among them, by key:
- *  every one it comes nearer than `gap` to slides away from it, from middle to middle,
- *  until it is clear, and pushes on any it is then pushed onto, as one coin pushes
- *  another across a table (Emil: a space dragged over another lay on it). Each starts
- *  from where it was pushed to last (`was`, the last call's answer) and stays there
- *  while the hand moves on: one pushed ahead stays ahead, and none jumps across the one
- *  carried. Only those away from where they rest are given. Pure. */
 export function pushedAside(
   held: Box,
   others: readonly { key: string; box: Box }[],

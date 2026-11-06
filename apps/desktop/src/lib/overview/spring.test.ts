@@ -1,8 +1,6 @@
 import { expect, test } from 'vitest'
 import { FLIGHT, land, PIXELS, resting, spring, step } from './spring'
 
-/** Runs a spring at sixty frames a second until it rests; answers how long it took and
- *  the farthest it went past where it was going. */
 function settle(from: number, to: number, frames = 600) {
   const one = spring(from)
   one.to = to
@@ -32,7 +30,6 @@ test('sent somewhere else mid-flight, it turns from where it is at the speed it 
 
   one.to = 0
   step(one, 1 / 60)
-  // No jump: one frame on from where it was, still carried by its speed.
   expect(Math.abs(one.at - at)).toBeLessThan(speed / 60 + 1)
   expect(one.at).toBeGreaterThan(at - 1)
 })

@@ -1,18 +1,3 @@
-/** The pictures of the windows, taken as their tabs leave the screen and kept from run to
- *  run (issue #331; what a picture is, is faces.ts).
- *
- *  A pane's tab in front is photographed the moment another takes its place - another
- *  tab, a space switched, the pane closed - while the pane still shows it: `$effect.pre`
- *  runs before the change reaches the page. A web page's picture is the one the engine
- *  already takes as anything is drawn over it (`shot` in web-tab/pages.svelte.ts). A tab
- *  closed takes its picture with it. What is kept is read back the first time the
- *  overview asks. A private tab has no picture kept, here or on disk: nothing is written
- *  about it (web-tab/private.ts), and its window draws the page's own photograph while
- *  the tab is open.
- *
- *  Started at the launch's last turn on the desktop (start.ts), and fetched by the
- *  overview too. */
-
 import { untrack } from 'svelte'
 import { pages } from '../web-tab/pages.svelte'
 import { type Tab, workspace } from '../workspace.svelte'
@@ -31,23 +16,17 @@ import { shownBox, snapshotOf } from './mirror'
 import { upgradeWindows } from './places.svelte'
 import { lastingKeys } from './tab-keys'
 
-/** How long after it was copied a picture is made into markup: after the switch that took
- *  it, or the overview's way in, has been drawn. */
 const TAKE_LATER = 700
 
 class Faces {
-  /** The pictures of this run's tabs, by tab id. */
   private byId = $state.raw<Record<string, Face>>({})
   private written = new Map<string, string>()
   private reading: Promise<void> | null = null
 
-  /** The picture of tab `id`, or null where there is none. */
   of(id: string): Face | null {
     return this.byId[id] ?? null
   }
 
-  /** What was kept in earlier runs, put with the tabs it is of, once; and the oldest let
-   *  go where there is more than the store's size. A picture taken this run stays. */
   read(): Promise<void> {
     this.reading ??= readFaces().then((kept) => {
       const names = lastingKeys(workspace.tabs)
@@ -67,10 +46,7 @@ class Faces {
     return this.reading
   }
 
-  /** A picture of what the pane shows now, kept as `tab`'s: copied at once, made into
-   *  markup once the moment has passed. */
   take(paneId: string, tab: Tab) {
-    // Only what is drawn from a picture keeps one; the rest is drawn from what it holds.
     if (tab.inPrivate || TAB_KINDS[tab.kind].preview !== 'picture') return
     const later = snapshotOf(paneId)
     if (!later) return
@@ -82,7 +58,6 @@ class Faces {
     }, TAKE_LATER)
   }
 
-  /** A web page's photograph, kept as its tab's. */
   photographed(tab: Tab, shot: string) {
     if (tab.inPrivate || this.byId[tab.id]?.shot === shot || shot.length > LARGEST) return
     const box = shownBox(tab.paneId)
@@ -104,8 +79,6 @@ class Faces {
     }
   }
 
-  /** The pictures of tabs that closed, let go: `names` is each tab's lasting name before,
-   *  by id, and `open` the tabs there are now. */
   closed(names: ReadonlyMap<string, string>, open: readonly Tab[]) {
     const now = lastingKeys(open)
     const still = new Set(now.values())
@@ -124,7 +97,6 @@ void upgradeFaces()
 upgradeWindows()
 
 $effect.root(() => {
-  /** The tab in front of each pane as last seen, which is photographed as it goes. */
   let fronts = new Map<string, string>()
   $effect.pre(() => {
     const now = new Map(workspace.panes.all.map((pane) => [pane.id, pane.activeTabId ?? '']))
@@ -138,7 +110,6 @@ $effect.root(() => {
     })
   })
 
-  // Each web page's photograph, as the engine takes a new one.
   $effect(() => {
     for (const tab of workspace.tabs) {
       if (tab.kind !== 'web') continue
@@ -147,10 +118,8 @@ $effect.root(() => {
     }
   })
 
-  // A tab closed, its picture with it; once the tabs of the last run are back.
   let names = new Map<string, string>()
   $effect(() => {
-    // Every tab read, so a tab gone is heard.
     const open = [...workspace.tabs]
     if (!workspace.restored) return
     untrack(() => {

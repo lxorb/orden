@@ -1,28 +1,12 @@
-/** What a pane shows, and a tab in its strip, copied (issue #331): the picture kept of a
- *  pane's tab in front, which its window is drawn from in a later run when it is no longer
- *  in front (`snapshotOf`, faces.svelte.ts), and the tab as its strip draws it, which its
- *  window leaves the strip as (`tabCopyOf`). The pane in front itself is its window while
- *  the overview is up, and is never copied for that.
- *
- *  A copy of the pane's own elements is exactly what it was showing - the editor's own
- *  lines, its scroll - with nothing to render and nothing to wait for. What a copy would
- *  get wrong is put right here - a canvas is copied blank, so its pixels are drawn
- *  across; a frame would load its page again, so it goes; an id would be in the document
- *  twice, and a focusable element would be a second stop for Tab, so neither is kept; and
- *  how the overview draws a pane moving as its window is no part of what it shows. */
-
-/** The element whose `data-` attribute `name` says `value`. */
 export function marked(name: string, value: string): HTMLElement | null {
   const all = document.querySelectorAll<HTMLElement>(`[data-${name}]`)
   return [...all].find((one) => one.getAttribute(`data-${name}`) === value) ?? null
 }
 
-/** Where a pane's own surface is, under its strip. */
 function paneBody(paneId: string): HTMLElement | null {
   return marked('pane', paneId)
 }
 
-/** The pane's box, less its strip: where its tab in front is drawn. */
 export function shownBox(paneId: string): DOMRect | null {
   const pane = paneBody(paneId)
   if (!pane) return null
@@ -32,12 +16,6 @@ export function shownBox(paneId: string): DOMRect | null {
   return new DOMRect(box.left, top, box.width, box.bottom - top)
 }
 
-/** A copy of a pane's own elements as they are, and what the copy cannot carry by
- *  itself, paired off before anything is taken out of it: each canvas with its twin, and
- *  each scroller with its twin and where it is scrolled to. Paired by walking the two
- *  together while they are still one shape - by index after the strip was taken out of
- *  the copy, the scrollers landed on the wrong elements and the copy opened at another
- *  place than the pane showed. */
 function copyOf(pane: HTMLElement, box: DOMRect) {
   const copy = pane.cloneNode(true) as HTMLElement
   const from = [...pane.querySelectorAll('*')]
@@ -59,7 +37,6 @@ function copyOf(pane: HTMLElement, box: DOMRect) {
   copy.style.width = `${box.width}px`
   copy.style.height = `${box.height}px`
 
-  // And the caret, which would stand still in a copy where the pane's blinks.
   for (const one of copy.querySelectorAll('iframe, video, audio, object, embed, .cm-cursorLayer'))
     one.remove()
   for (const one of copy.querySelectorAll('[id]')) one.removeAttribute('id')
@@ -71,11 +48,6 @@ function copyOf(pane: HTMLElement, box: DOMRect) {
   return { copy, scrolls }
 }
 
-/** A copy of the tab `id` in its strip, as it is drawn there - its shape, its mark, its
- *  name, the colours of the strip it is in - which the window it becomes starts and ends
- *  as, so the window that leaves the strip is the tab and not a likeness of it; or null
- *  for a tab not drawn in a strip. The colours are its strip's: a copy elsewhere would
- *  take the overview's, so what it inherits is written on it. */
 export function tabCopyOf(id: string, inherited: Map<Element, string>): HTMLElement | null {
   const tab = marked('box', id)
   const box = tab?.getBoundingClientRect()
@@ -107,11 +79,6 @@ export function tabCopyOf(id: string, inherited: Map<Element, string>): HTMLElem
   return copy
 }
 
-/** What `paneId` shows, copied now, and a way to make it markup that can be kept and
- *  drawn again in another run - each canvas a picture, where each scroller was scrolled
- *  written on it (`SCROLLED`) - later, when there is time: the copy is taken while the
- *  pane still shows it, which is the moment it is leaving, and what is slow about it
- *  waits. Null where the pane is not on screen. */
 export function snapshotOf(paneId: string): (() => { html: string; w: number; h: number }) | null {
   const pane = paneBody(paneId)
   const box = shownBox(paneId)
@@ -136,10 +103,8 @@ export function snapshotOf(paneId: string): (() => { html: string; w: number; h:
   }
 }
 
-/** The attribute a snapshot writes where a scroller was scrolled to, top then left. */
 const SCROLLED = 'data-overview-scrolled'
 
-/** Every scroller a drawn snapshot holds put back where it was. */
 export function scrolledBack(root: Element) {
   const places: [Element, number, number][] = []
   for (const one of root.querySelectorAll(`[${SCROLLED}]`)) {
@@ -156,7 +121,6 @@ function scrolledTo(places: readonly [Element, number, number][]) {
   }
 }
 
-/** A canvas's pixels, drawn onto its copy. */
 function drawnOnto(canvas: HTMLCanvasElement, twin: HTMLCanvasElement) {
   const paint = twin.getContext('2d')
   if (!paint || !canvas.width || !canvas.height) return
