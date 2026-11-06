@@ -838,14 +838,17 @@ const PRESSES_SAID: bool = cfg!(any(windows, feature = "cef"));
 ///
 /// A tab for what a person pressed for (`said`): a link, which is what a browser opens a
 /// tab for. A window the page asked for itself with no press behind it (`unasked`) is
-/// blocked, as Chrome blocks it, and the tab's bar offers it. Anything else the page asked
-/// for itself - `window.open`, with or without a size, on an address or on `about:blank`,
-/// a form sent to `target="_blank"` - is a window of its own built by the engine, because
-/// only that hands the page what it asked for: the window back, with `window.opener` in
-/// it, which a sign-in reports back through and a blank window is sent or written into. A
-/// tab built afresh at the address answered `null`, kept no opener, and asked for a form's
-/// address by GET. A tab cannot hold an engine's own window, so it is a window. Where the
-/// pages say nothing of presses, a web address with nothing more stays a tab, as before.
+/// blocked, as Chrome blocks it, and the tab's bar offers it. An extension's own page is a
+/// tab too: the extension asked for it - `chrome.tabs.create`, which `WebView2` may raise
+/// as a page's request for a window - and no site's sign-in reports back from one (#1161).
+/// Anything else the page asked for itself - `window.open`, with or without a size, on an
+/// address or on `about:blank`, a form sent to `target="_blank"` - is a window of its own
+/// built by the engine, because only that hands the page what it asked for: the window
+/// back, with `window.opener` in it, which a sign-in reports back through and a blank
+/// window is sent or written into. A tab built afresh at the address answered `null`, kept
+/// no opener, and asked for a form's address by GET. A tab cannot hold an engine's own
+/// window, so it is a window. Where the pages say nothing of presses, a web address with
+/// nothing more stays a tab, as before.
 /// An address no tab may be on opens nothing; see `handed_over`.
 pub(crate) fn becomes(url: &Url, sized: bool, said: bool, unasked: bool) -> Becomes {
     if said {
@@ -853,6 +856,9 @@ pub(crate) fn becomes(url: &Url, sized: bool, said: bool, unasked: bool) -> Beco
     }
     if unasked {
         return handed_over(url).map_or(Becomes::Nothing, Becomes::Blocked);
+    }
+    if crate::extensions::ours(url) {
+        return Becomes::Tab(url.to_string());
     }
     if sized || blank(url) || (PRESSES_SAID && tab_may_open(url)) {
         return Becomes::Window;
@@ -3460,6 +3466,21 @@ mod tests {
             );
         }
         assert_eq!(becomes(&at(BLANK), false, true, false), Becomes::Nothing);
+    }
+
+    /// #1161: an extension's own page asked for as a window - `chrome.tabs.create`, as
+    /// `WebView2` may raise it - is a tab, never a window of its own.
+    #[test]
+    fn an_extension_s_own_page_becomes_a_tab() {
+        let id = "abcdefghijklmnopabcdefghijklmnop";
+        crate::extensions::known(id);
+        let page = format!("chrome-extension://{id}/dashboard.html");
+        let tab = Becomes::Tab(page.clone());
+        assert_eq!(becomes(&at(&page), false, false, false), tab);
+        assert_eq!(becomes(&at(&page), true, false, false), tab);
+        assert_eq!(becomes(&at(&page), false, true, false), tab);
+        let other = "chrome-extension://ponmlkjihgfedcbaponmlkjihgfedcba/dashboard.html";
+        assert_eq!(becomes(&at(other), false, false, false), Becomes::Nothing);
     }
 
     fn at(url: &str) -> Url {

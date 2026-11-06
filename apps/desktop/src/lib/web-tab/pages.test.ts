@@ -1165,6 +1165,12 @@ describe('what a page asking for a window says', () => {
   test('names nothing a tab may not hold', () => {
     expect(readOpening({ tab: 't', url: 'file:///C:/Windows/', behind: true })).toBeNull()
     expect(readOpening({ url: 'https://example.com/' })).toBeNull()
+    expect(readOpening({ tab: 't', url: 'chrome-extension://short/page.html' })).toBeNull()
+  })
+
+  test("names an extension's own page, which its popup opens as a tab (#1161)", () => {
+    const page = 'chrome-extension://abcdefghijklmnopabcdefghijklmnop/dashboard.html'
+    expect(readOpening({ tab: 't', url: page })).toEqual({ tab: 't', url: page, behind: false })
   })
 })
 

@@ -19,6 +19,7 @@ wrap_browser_process_handler! {
     deep_link_schemes: Vec<String>,
     // The `Cef::cef_api_version` override, if set.
     api_version: Option<i32>,
+    unhosted_tab_handler: Option<Arc<crate::UnhostedTabHandler>>,
   }
 
   impl BrowserProcessHandler {
@@ -46,7 +47,7 @@ wrap_browser_process_handler! {
     }
 
     fn default_client(&self) -> Option<Client> {
-      Some(super::unhosted::client())
+      Some(super::unhosted::client(self.unhosted_tab_handler.clone()))
     }
 
     fn on_already_running_app_relaunch(

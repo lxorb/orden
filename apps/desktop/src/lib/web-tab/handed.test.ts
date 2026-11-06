@@ -97,3 +97,10 @@ test('nothing but a page on the web opens anything', () => {
 
   expect(world.opened).toEqual([{ url: 'https://fine.example/', ask: 'front' }])
 })
+
+test("an extension's own page it opened by itself is a tab too, and no other of its scheme", () => {
+  const page = 'chrome-extension://abcdefghijklmnopabcdefghijklmnop/welcome.html?installed'
+  showPages([page, 'chrome-extension://not-an-id/welcome.html', 'chrome://settings/'])
+
+  expect(world.opened).toEqual([{ url: page, ask: 'front' }])
+})

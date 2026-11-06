@@ -76,6 +76,9 @@ pub type NativeWindowEventHandler = dyn Fn(&str, &dyn ActiveEventLoop, Arc<dyn w
   + Send
   + Sync;
 
+/// The address of a tab Chrome's own UI opened, see [`Cef::on_unhosted_tab`].
+pub type UnhostedTabHandler = dyn Fn(url::Url) + Send + Sync;
+
 /// Customizes the CEF settings before initialization, see [`Cef::with_settings`].
 type SettingsCallback = dyn FnOnce(&mut cef::Settings) + Send + Sync;
 
@@ -499,6 +502,7 @@ pub struct Cef {
   downgrade: DowngradePolicy,
   settings_callback: Option<Box<SettingsCallback>>,
   window_event_handler: Option<Arc<NativeWindowEventHandler>>,
+  unhosted_tab_handler: Option<Arc<UnhostedTabHandler>>,
 }
 
 impl fmt::Debug for Cef {
@@ -538,6 +542,7 @@ impl fmt::Debug for Cef {
       .field("downgrade", &self.downgrade)
       .field("settings_callback", &self.settings_callback.is_some())
       .field("window_event_handler", &self.window_event_handler.is_some())
+      .field("unhosted_tab_handler", &self.unhosted_tab_handler.is_some())
       .finish()
   }
 }
@@ -558,6 +563,21 @@ impl Cef {
       + 'static,
   {
     self.window_event_handler = Some(Arc::new(handler));
+    self
+  }
+
+  /// Hears the address of every tab Chrome's own UI opens rather than the application: an
+  /// extension's `chrome.tabs.create` or `chrome.windows.create`, the page it opens about
+  /// its own install. Chrome would put it in a window of its own, tab strip, address bar
+  /// and all; the runtime takes that window off the screen as it is made, hands the address
+  /// its first navigation goes to here, for the application to open where it opens pages,
+  /// and closes the browser. On the browser process's UI thread.
+  #[must_use]
+  pub fn on_unhosted_tab<F>(mut self, handler: F) -> Self
+  where
+    F: Fn(url::Url) + Send + Sync + 'static,
+  {
+    self.unhosted_tab_handler = Some(Arc::new(handler));
     self
   }
 
@@ -2612,6 +2632,7 @@ wrap_with_args! {
     context: RuntimeContext<T>,
     context_initialized: Arc<AtomicBool>,
     deep_link_schemes: Vec<String>,
+    unhosted_tab_handler: Option<Arc<UnhostedTabHandler>>,
     // Whether the deep link URL this process was launched with has to be put back
     // onto Chromium's command line. See `on_before_command_line_processing`.
     restore_deep_link_arguments: bool,
@@ -2654,6 +2675,7 @@ wrap_with_args! {
         self.context_initialized.clone(),
         self.deep_link_schemes.clone(),
         self.api_version,
+        self.unhosted_tab_handler.clone(),
       ))
     }
 
@@ -3132,6 +3154,7 @@ impl<T: UserEvent> CefRuntime<T> {
       downgrade: downgrade_policy,
       settings_callback,
       window_event_handler,
+      unhosted_tab_handler,
       // Already applied, above, before the first CEF call.
       api_version: _,
     } = runtime_args.runtime_init_attrs;
@@ -3424,6 +3447,7 @@ impl<T: UserEvent> CefRuntime<T> {
       context: context.clone(),
       context_initialized: context_initialized.clone(),
       deep_link_schemes,
+      unhosted_tab_handler,
       restore_deep_link_arguments: command_line_args_disabled,
       internal_command_line_args,
       browser_command_line_args,

@@ -383,8 +383,9 @@ if [ "${WATCH:-0}" = 1 ]; then
   export NIB_SPACES_DIR
   endpoint
 fi
-# With EXTENSIONS=1, an extension of the run's own, with a button, loaded into the
-# browsing profile as Chromium loads one from the command line (#789).
+# With EXTENSIONS=1, an extension of the run's own, with a button and a popup, loaded into
+# the browsing profile as Chromium loads one from the command line (#789), and tabs of its
+# own to open (#1161).
 ext_name="Orden run extension"
 if [ "${EXTENSIONS:-0}" = 1 ]; then
   mkdir -p "$out/extension"
@@ -398,10 +399,19 @@ rows = b"".join(b"\x00" + b"\x2b\x8a\x6e\xff" * 16 for _ in range(16))
 icon = (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 16, 16, 8, 6, 0, 0, 0))
         + chunk(b"IDAT", zlib.compress(rows)) + chunk(b"IEND", b""))
 (folder / "icon.png").write_bytes(icon)
+# A popup, and a page of its own its background opens when the popup asks (#1161).
+(folder / "popup.html").write_text(f"<!doctype html><title>{name} popup</title><p>{name}</p>")
+(folder / "page.html").write_text(f"<!doctype html><title>{name} page</title><p>{name}</p>")
+(folder / "background.js").write_text(
+    "chrome.runtime.onMessage.addListener((asked) => {\n"
+    "  if (asked === 'open') chrome.tabs.create({ url: chrome.runtime.getURL('page.html?background') })\n"
+    "})\n"
+)
 (folder / "manifest.json").write_text(json.dumps({
     "manifest_version": 3, "name": name, "version": "1.0",
     "icons": {"16": "icon.png"},
-    "action": {"default_title": name, "default_icon": "icon.png"},
+    "action": {"default_title": name, "default_icon": "icon.png", "default_popup": "popup.html"},
+    "background": {"service_worker": "background.js"},
 }))
 MAKE
   # With a feature list of the run's own, as somebody chasing an extension passes one:

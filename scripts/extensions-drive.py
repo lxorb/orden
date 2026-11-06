@@ -11,6 +11,14 @@ have to name it, and `extensions_remove` has to take it away - out of the engine
 and out of Settings. With `again`, after the app is started again without it: the list
 has to stay empty.
 
+#1161: a tab the extension opens - `chrome.tabs.create` from its background and from its
+popup, and `window.open` from its popup - has to open as one tab of Orden's, in the pane
+the reader is in, and no window of Chromium's own may appear meanwhile: since #1148 such a
+tab was closed as Chrome's own UI made it, and before that it was a whole Chromium window.
+One asked for as Orden starts - `runtime.onInstalled` as the launch loads the extension -
+Chromium itself refuses with "No current window" and makes no browser, so there is nothing
+to hand over (measured 2026-11-06); the background is asked once the app is up.
+
 #1155: a Firefox add-on, installed from addons.mozilla.org by its link. With
 `firefox-install`: `extensions_install` has to install it as a Firefox add-on that starts
 with the next launch, which Settings has to say, since this engine loads one only as it
@@ -107,6 +115,135 @@ def closed():
     time.sleep(0.5)
 
 
+CLASS = os.environ.get("CLASS", "nib")
+
+
+def strangers():
+    """The X11 windows sway has not under the app's name, or titled as Chromium's."""
+
+    def walk(node):
+        if node.get("pid") and node.get("type") in ("con", "floating_con") and node.get("shell") == "xwayland":
+            name, title = (node.get("window_properties") or {}).get("instance"), node.get("name") or ""
+            if name != CLASS or title.endswith("Chromium"):
+                yield (name, title)
+        for child in node.get("nodes", []) + node.get("floating_nodes", []):
+            yield from walk(child)
+
+    if not CLASS:
+        return []
+    try:
+        return list(walk(json.loads(subprocess.check_output(["swaymsg", "-r", "-t", "get_tree"]))))
+    except (OSError, subprocess.CalledProcessError, ValueError):
+        return []
+
+
+def listing(code):
+    """What a `JSON.stringify` the window ran comes to, or None."""
+    try:
+        return json.loads(run(code))
+    except (TypeError, ValueError):
+        return None
+
+
+def tabs_at(address):
+    """The panes of the tabs on `address`."""
+    return listing(
+        "JSON.stringify(nib.workspace.tabs"
+        f".filter((tab) => tab.address === {json.dumps(address)}).map((tab) => tab.paneId))"
+    )
+
+
+def opened_as_a_tab(address, pane, what, seconds=20):
+    """Whether `address` came to be one tab, in `pane`, with no window of Chromium's own on
+    the way. Waits a moment more once it is there, for a second one."""
+    strange, panes = set(), None
+    for _ in range(seconds * 2):
+        strange.update(strangers())
+        panes = tabs_at(address)
+        if panes:
+            break
+        time.sleep(0.5)
+    for _ in range(4):
+        strange.update(strangers())
+        time.sleep(0.5)
+    panes = tabs_at(address)
+    if strange:
+        fail(f"{what}: windows not under {CLASS}, or Chromium's: {sorted(strange)}")
+    if panes != [pane]:
+        fail(f"{what}: not one tab in the reader's pane {pane}, but in {panes}")
+        for log in Path.home().rglob("nib.log"):
+            if "ch.emilvinu.nib" in str(log):
+                said = [line for line in log.read_text(errors="replace").splitlines() if "extensions" in line]
+                print(f"{log}: {said[-10:]}")
+        return False
+    print(f"installed: {what} opened one tab of Orden's, in the reader's pane")
+    return True
+
+
+def reader_tab():
+    """The reader's own web tab, on the run's page, and its pane: opened if none is."""
+    find = (
+        "JSON.stringify(nib.workspace.tabs.filter((tab) => (tab.address ?? '').startsWith('http'))"
+        ".map((tab) => [tab.id, tab.paneId]))"
+    )
+    found = listing(find)
+    if not found:
+        run("(nib.workspace.openPage('http://127.0.0.1:8765/', 'front'), 'opened')")
+        time.sleep(2)
+        found = listing(find)
+    if not found:
+        raise SystemExit(f"::error::{PHASE}: the reader's own web tab is not there")
+    return found[0]
+
+
+def popup_of(one, front):
+    """The extension's popup, opened from its button over the reader's own tab."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from devtools import Session, targets
+
+    run("(document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })), 'closed')")
+    time.sleep(0.5)
+    run(f"(nib.workspace.activate({json.dumps(front)}), 'shown')")
+    time.sleep(1)
+    pressed = None
+    for _ in range(40):
+        pressed = run(
+            "(() => { const button = [...document.querySelectorAll('button.extension')]"
+            f".find((each) => each.getAttribute('aria-label') === {json.dumps(one['name'])});"
+            " if (!button) return null; button.click(); return 'pressed' })()"
+        )
+        if pressed:
+            break
+        time.sleep(0.5)
+    if not pressed:
+        fail("its button is not in the web bar")
+        return None
+    popup = f"chrome-extension://{one['id']}/popup.html"
+    for _ in range(40):
+        found = next((each for each in targets(DEBUG_PORT) if str(each.get("url", "")) == popup), None)
+        if found:
+            return Session(found)
+        time.sleep(0.5)
+    fail(f"its popup did not open: {[each.get('url') for each in targets(DEBUG_PORT)]}")
+    return None
+
+
+def from_popup(one, front, code, address, pane, what):
+    page = popup_of(one, front)
+    if not page:
+        return
+    try:
+        said = page.call("Runtime.evaluate", {"expression": code, "userGesture": True, "returnByValue": True})
+        page.close()
+    except OSError:
+        # The popup closes as it opens a window, as a browser's does, before it answers.
+        said = {}
+    if "error" in said or said.get("exceptionDetails"):
+        fail(f"{what}: the popup could not ask: {said}")
+        return
+    opened_as_a_tab(address, pane, what)
+
+
 if PHASE == "installed":
     found = []
     for _ in range(60):
@@ -118,6 +255,10 @@ if PHASE == "installed":
         raise SystemExit(f"::error::installed: the engine never listed {NAME}: {listed()}")
     one = found[0]
     print(f"installed: the engine lists {NAME} as {one.get('id')}")
+    base = f"chrome-extension://{one['id']}/"
+    front, pane = reader_tab()
+    run(f"(nib.workspace.activate({json.dumps(front)}), 'shown')")
+    time.sleep(1)
 
     for _ in range(40):
         if run("!!document.querySelector('[data-opens=\"extensions\"]')"):
@@ -144,6 +285,25 @@ if PHASE == "installed":
     else:
         print(f"installed: Settings > General > Extensions names it: {rows.strip()[:120]!r}")
     closed()
+
+    from_popup(
+        one, front, "chrome.runtime.sendMessage('open'), 'asked'",
+        f"{base}page.html?background", pane, "chrome.tabs.create from its background",
+    )
+    from_popup(
+        one, front, f"chrome.tabs.create({{ url: {json.dumps(base + 'page.html?tabs')} }}), 'asked'",
+        f"{base}page.html?tabs", pane, "chrome.tabs.create from its popup",
+    )
+    from_popup(
+        one, front, f"window.open({json.dumps(base + 'page.html?open')}), 'asked'",
+        f"{base}page.html?open", pane, "window.open from its popup",
+    )
+    subprocess.run(["grim", str(OUT / "extension-tabs.png")], check=False)
+    run(
+        f"(nib.workspace.tabs.filter((tab) => (tab.address ?? '').startsWith({json.dumps(base)}))"
+        ".forEach((tab) => nib.workspace.close(tab.id)), 'closed')"
+    )
+    run("(document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })), 'closed')")
 
     removed = run(
         f"window.__TAURI_INTERNALS__.invoke('extensions_remove', {{ id: {json.dumps(one['id'])} }})"
@@ -226,8 +386,25 @@ elif PHASE == "firefox-run":
         if said != '[true,"function"]':
             fail(f"its background page has not the Firefox layer: {said!r}")
 
-    if not run("!!document.querySelector('[data-opens=\"extensions\"]')"):
-        run("(nib.workspace.openPage('http://127.0.0.1:8765/', 'front'), 'opened')")
+    # Its page about its own install, if it opens one as SponsorBlock does: a tab of
+    # Orden's, never Chromium's own window (#1148, #1161).
+    strange, welcome = set(), []
+    for _ in range(30):
+        strange.update(strangers())
+        welcome = [
+            address
+            for address in listing("JSON.stringify(nib.workspace.tabs.map((tab) => tab.address ?? ''))") or []
+            if address.startswith(base)
+        ]
+        if welcome:
+            break
+        time.sleep(0.5)
+    print(f"firefox-run: the tabs it opened of its own: {welcome}")
+    if strange:
+        fail(f"windows not under {CLASS}, or Chromium's: {sorted(strange)}")
+    front, _ = reader_tab()
+    run(f"(nib.workspace.activate({json.dumps(front)}), 'shown')")
+    time.sleep(1)
     pressed = None
     for _ in range(40):
         pressed = run(

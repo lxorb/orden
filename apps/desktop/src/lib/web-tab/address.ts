@@ -14,6 +14,13 @@ const SOURCE = /^view-source:/i
 /** Whether an address is one a web tab may open; see @orden/scan/web-address. */
 export { isWebAddress } from '@orden/scan/web-address'
 
+/** Whether an address is an extension's own page, `chrome-extension://<id>/...`: never one
+ *  typed, but one a tab opens when the extension asks for it, from its popup or by itself
+ *  (#1161). Which extensions are installed is the crate's to say. */
+export function isExtensionPage(url: string): boolean {
+  return /^chrome-extension:\/\/[a-p]{32}\//.test(url)
+}
+
 /** How a host reads, once idn.ts has been loaded: most sessions never meet a name that is
  *  not ASCII, and what decides about one is a table too large to read before the first
  *  paint. Until then such a name reads as punycode, which is the safe way to be wrong. */

@@ -14,7 +14,7 @@
 import { log } from '../log'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
-import { isWebAddress } from './address'
+import { isExtensionPage, isWebAddress } from './address'
 
 /** Listens for pages, takes the ones the app was started for, and answers how to stop.
  *  On this window alone, and listening before asking, because asking is what tells the
@@ -30,12 +30,14 @@ export async function hearPages(): Promise<() => void> {
 }
 
 /** Each page a tab. What crossed from the crate is read as unknown and judged again,
- *  by the rule the address field is held to: the web, and never the app. */
+ *  by the rule the address field is held to: the web, and never the app. And an
+ *  extension's own page, which only an extension's own tab is handed over as (#1161). */
 export function showPages(said: unknown) {
   if (!Array.isArray(said)) return
 
   for (const url of said) {
-    if (typeof url === 'string' && isWebAddress(url)) workspace.openPage(url, 'front')
+    if (typeof url === 'string' && (isWebAddress(url) || isExtensionPage(url)))
+      workspace.openPage(url, 'front')
     else log('warn', `web: a page handed over was not one: ${String(url)}`)
   }
 }

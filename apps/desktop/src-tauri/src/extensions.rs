@@ -53,6 +53,8 @@ pub mod welcome;
 
 #[cfg(feature = "cef")]
 mod chromium;
+#[cfg(feature = "cef")]
+pub mod tabs;
 #[cfg(all(windows, not(feature = "cef")))]
 pub mod webview2;
 
@@ -133,6 +135,15 @@ pub fn ours(url: &Url) -> bool {
                 .unwrap_or_else(PoisonError::into_inner)
                 .contains(id)
         })
+}
+
+/// An extension `ours` knows of before the list is read.
+#[cfg(test)]
+pub fn known(id: &str) {
+    KNOWN
+        .write()
+        .unwrap_or_else(PoisonError::into_inner)
+        .insert(id.to_owned());
 }
 
 /// The list as written down: on `WebView2`, what Orden installed; on Orden's own Chromium,

@@ -1029,6 +1029,7 @@ fn engine_started(handle: &tauri::AppHandle<Engine>) {
     #[cfg(target_os = "linux")]
     page_scale::start(handle);
     secure_dns::start(handle);
+    extensions::tabs::start(handle);
 }
 
 fn ready(

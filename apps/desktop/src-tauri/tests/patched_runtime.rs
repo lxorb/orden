@@ -131,3 +131,29 @@ fn every_window_is_orden_s_and_none_chromium_s() {
     let unhosted = read(&root().join("src/cef_impl/client/unhosted.rs"));
     assert!(unhosted.contains("host.close_browser(1);"));
 }
+
+/// #1161: closing an extension's tab as Chrome's own UI made it dropped the tabs the reader
+/// asked for - a popup's button for the extension's dashboard - and the page an extension
+/// opens about its own install. Its address is handed over first, and opened as a tab.
+#[test]
+fn a_tab_chrome_s_own_ui_opens_is_handed_over_before_it_is_closed() {
+    let process = read(&root().join("src/cef_impl/client/process.rs"));
+    assert!(process.contains("super::unhosted::client(self.unhosted_tab_handler.clone())"));
+    let unhosted = read(&root().join("src/cef_impl/client/unhosted.rs"));
+    let browsing = unhosted
+        .find("fn on_before_browse(")
+        .expect("its first navigation is heard");
+    let handing = unhosted
+        .find("handler(url);")
+        .expect("the address is handed over");
+    let closing = unhosted
+        .find("host.close_browser(1);")
+        .expect("the browser is closed");
+    assert!(browsing < handing && handing < closing);
+    // And its window is off the screen from the moment it is made.
+    assert!(unhosted.contains("crate::platform::linux::put_out_of_sight(host.window_handle());"));
+    let runtime = read(&root().join("src/runtime.rs"));
+    assert!(runtime.contains("pub fn on_unhosted_tab<F>(mut self, handler: F) -> Self"));
+    let engine = read(&Path::new(env!("CARGO_MANIFEST_DIR")).join("src/engine.rs"));
+    assert!(engine.contains(".on_unhosted_tab(crate::extensions::tabs::opened)"));
+}

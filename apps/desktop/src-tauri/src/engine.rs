@@ -184,6 +184,7 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
     let mut engine = Cef::default()
         .sandbox(sandbox)
         .deep_link_schemes(["nib"])
+        .on_unhosted_tab(crate::extensions::tabs::opened)
         .disable_features([swipe_feature])
         .command_line_args([(swipe_switch, Some(swipe_off))])
         // Chromium's scale at 1, which CEF on X11 sizes windows by correctly; the

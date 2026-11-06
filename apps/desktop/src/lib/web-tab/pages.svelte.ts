@@ -30,7 +30,7 @@
 import { landed } from '../glass/chrome.svelte'
 import { isNumber, isRecord, isString, stored, storedText } from '../stored'
 import { invoke, isDesktop } from '../tauri'
-import { isWebAddress } from './address'
+import { isExtensionPage, isWebAddress } from './address'
 import { ASK_AGAIN, NOT_ANSWERING } from './answering'
 import type { Cut } from './covers'
 import type { NotArrived } from './heard'
@@ -318,7 +318,7 @@ export function readOpening(value: unknown): Opening | null {
   const said = value as Record<string, unknown>
   if (typeof said.tab !== 'string' || typeof said.url !== 'string') return null
 
-  return isWebAddress(said.url)
+  return isWebAddress(said.url) || isExtensionPage(said.url)
     ? { tab: said.tab, url: said.url, behind: said.behind === true }
     : null
 }

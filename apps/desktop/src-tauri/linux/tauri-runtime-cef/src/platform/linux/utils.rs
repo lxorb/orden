@@ -45,6 +45,45 @@ pub(super) fn with_cef_display<R>(
   result
 }
 
+/// The window the window manager has for `window`: that one, or the one above it that is
+/// the root's child. `None` once the window is gone.
+///
+/// # Safety
+///
+/// `display` is an open connection `xlib` made.
+pub(super) unsafe fn top_level(
+  xlib: &xlib::Xlib,
+  display: *mut xlib::Display,
+  mut window: xlib::Window,
+) -> Option<xlib::Window> {
+  loop {
+    let mut root = 0;
+    let mut parent = 0;
+    let mut children = std::ptr::null_mut();
+    let mut count = 0;
+    let status = unsafe {
+      (xlib.XQueryTree)(
+        display,
+        window,
+        &mut root,
+        &mut parent,
+        &mut children,
+        &mut count,
+      )
+    };
+    if !children.is_null() {
+      unsafe { (xlib.XFree)(children.cast()) };
+    }
+    if status == 0 {
+      return None;
+    }
+    if parent == root || parent == 0 {
+      return Some(window);
+    }
+    window = parent;
+  }
+}
+
 pub(super) fn with_x11<R>(default: R, f: impl FnOnce(&xlib::Xlib, *mut xlib::Display) -> R) -> R {
   let Some(xlib) = XLIB.as_ref() else {
     return default;

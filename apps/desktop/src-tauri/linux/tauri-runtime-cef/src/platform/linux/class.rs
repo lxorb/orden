@@ -22,7 +22,10 @@ use std::{
 };
 use x11_dl::xlib;
 
-use super::{utils::with_cef_display, webview::known};
+use super::{
+  utils::{top_level, with_cef_display},
+  webview::known,
+};
 
 /// The command `argv0` names, without its folder.
 fn program_name(argv0: &OsStr) -> Option<String> {
@@ -49,37 +52,16 @@ pub(crate) fn name_windows() {
 /// The window CEF made for a popup, whose browser's own X window is `browser`, named as
 /// GTK's are: the window the window manager has, which is that one or one above it.
 pub(crate) fn name_popup(browser: c_ulong) {
-  let Some(mut window) = known(browser) else {
+  let Some(window) = known(browser) else {
     return;
   };
   let Some(name) = gtk::glib::prgname().and_then(|name| CString::new(name.as_str()).ok()) else {
     return;
   };
   with_cef_display((), |xlib, display| unsafe {
-    loop {
-      let mut root = 0;
-      let mut parent = 0;
-      let mut children = std::ptr::null_mut();
-      let mut count = 0;
-      let status = (xlib.XQueryTree)(
-        display,
-        window,
-        &mut root,
-        &mut parent,
-        &mut children,
-        &mut count,
-      );
-      if !children.is_null() {
-        (xlib.XFree)(children.cast());
-      }
-      if status == 0 {
-        return;
-      }
-      if parent == root || parent == 0 {
-        break;
-      }
-      window = parent;
-    }
+    let Some(window) = top_level(xlib, display, window) else {
+      return;
+    };
     let mut hint = xlib::XClassHint {
       res_name: name.as_ptr().cast_mut(),
       res_class: name.as_ptr().cast_mut(),
