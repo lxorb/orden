@@ -123,14 +123,18 @@ test('Alt tapped twice opens it, and again puts it away', async () => {
   expect(layer()).toBe(null)
 })
 
-test('a web tab’s window shows its page as it was left, a tab nowhere in the file list is dashed', async () => {
+test('a web tab’s window shows its page as it was left, and only a draft’s window is dashed', async () => {
   const page = workspace.openPage('https://example.com/') ?? ''
   pages.of(page).shot = 'data:image/png;base64,AA=='
   await opened()
   const web = windows().find((one) => one.querySelector('img'))
   expect(web?.querySelector('img')?.getAttribute('src')).toBe(pages.of(page).shot)
-  // Every tab here is a draft or a page nobody kept.
-  expect(windows().every((one) => one.classList.contains('unsaved'))).toBe(true)
+  // Dashed where the strip draws its dot: words with no file. A page nobody kept loses
+  // nothing, and wears neither (Emil: many windows were dashed).
+  expect(web?.classList.contains('unsaved')).toBe(false)
+  const drafts = windows().filter((one) => one !== web)
+  expect(drafts.length).toBeGreaterThan(0)
+  expect(drafts.every((one) => one.classList.contains('unsaved'))).toBe(true)
 })
 
 test('nothing in it is chosen as text, and a drag is never the browser’s own', async () => {

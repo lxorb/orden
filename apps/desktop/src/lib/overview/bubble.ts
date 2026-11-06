@@ -110,11 +110,48 @@ function roundOf(boxes: readonly Box[], by = PAD): Float64Array | null {
   return out
 }
 
+/** How far round, each way, a bubble's reach is averaged over (`softened`): a share of a
+ *  turn either side, in steps of `N`. */
+const SOFT = Math.round((N * 0.4) / TAU)
+const SOFTNESS = Float64Array.from({ length: 2 * SOFT + 1 }, (_, k) => {
+  const at = (k - SOFT) / (SOFT + 1)
+  return 0.5 + 0.5 * Math.cos(Math.PI * at)
+})
+const SOFT_SUM = SOFTNESS.reduce((sum, one) => sum + one, 0)
+
+/** A reach made round all the way: averaged over the directions either side of each,
+ *  about its middle, so a straight stretch between two windows bows out and a corner
+ *  opens into a curve (Emil: long straight edges and corners round a row of windows over
+ *  a shorter one); and grown back out to where it reached, so it never comes nearer
+ *  any window than it did. An average of reaches is a reach, so it is a round shape
+ *  still, and nowhere straight. */
+function softened(h: Float64Array): Float64Array {
+  const at = (share: number) => h[Math.round(share * N) % N] ?? 0
+  const x = (at(0) - at(0.5)) / 2
+  const y = (at(0.25) - at(0.75)) / 2
+  const own = Float64Array.from(h, (one, i) => one - x * (COS[i] ?? 0) - y * (SIN[i] ?? 0))
+  const out = new Float64Array(N)
+  let short = 0
+  for (let i = 0; i < N; i++) {
+    let sum = 0
+    for (let k = -SOFT; k <= SOFT; k++)
+      sum += (own[(i + k + N) % N] ?? 0) * (SOFTNESS[k + SOFT] ?? 0)
+    out[i] = sum / SOFT_SUM
+    short = Math.max(short, (own[i] ?? 0) - (out[i] ?? 0))
+  }
+  for (let i = 0; i < N; i++) out[i] = (out[i] ?? 0) + short + x * (COS[i] ?? 0) + y * (SIN[i] ?? 0)
+  return out
+}
+
 /** The box a bubble round `box` takes at rest, at the most: what a camera frames. */
 export function grownOf(box: Box): Box {
-  const x = (box.w / 2 + PAD) * SWELL
-  const y = (box.h / 2 + PAD) * SWELL
-  return { x: box.x + box.w / 2 - x, y: box.y + box.h / 2 - y, w: 2 * x, h: 2 * y }
+  const round = roundOf([box])
+  if (!round) return box
+  const h = softened(round)
+  const at = (share: number) => h[Math.round(share * N) % N] ?? 0
+  const left = -at(0.5)
+  const top = -at(0.75)
+  return { x: left, y: top, w: at(0) - left, h: at(0.25) - top }
 }
 
 /** The line a half-plane ends at: every point `p` with `p.x * x + p.y * y <= at`. */
@@ -213,7 +250,8 @@ export class Bubble {
 
   /** Where its windows are now; none leaves it a small round bubble where it was. */
   private aim(boxes: readonly Box[]) {
-    const goal = roundOf(boxes)
+    const tight = roundOf(boxes)
+    const goal = tight && softened(tight)
     const floor = roundOf(boxes, CLEAR)
     if (goal && floor) {
       this.goal = goal

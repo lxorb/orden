@@ -44,7 +44,7 @@
   import TabMark from '../TabMark.svelte'
   import { trap } from '../trap'
   import { pages } from '../web-tab/pages.svelte'
-  import { isUnsaved } from '../workspace/drafts'
+  import { isDraft } from '../workspace/drafts'
   import { type Tab, workspace } from '../workspace.svelte'
   import {
     aimed,
@@ -959,12 +959,15 @@
   }
 
   /** The camera moved - a pan, a pinch, a notch - and the panes moving as their windows
-   *  with it, which no world they are in moves for them, and the tabs riding on them. */
+   *  with it, which no world they are in moves for them, and the tabs riding on them.
+   *  Nothing is made a layer of its own for it, nor let go of as one after: a layer made
+   *  as a zoom starts and let go of as it stops was drawn again at another size each
+   *  time, and the windows and the bubbles flashed (Emil); each frame of a zoom is drawn
+   *  at the size it is shown. */
   $effect(() => {
     const looking = { ...camera }
     untrack(() => {
       if (!shown || !started || looking.zoom <= 0) return
-      stirred()
       for (const id of panesAsWindows.keys()) {
         const pose = flights.get(id)?.pose
         if (pose) movePane(id, pose)
@@ -973,7 +976,7 @@
     })
   })
 
-  /** Whether anything moves: a window flying, the camera, a hand. While it does, the
+  /** Whether anything moves: a window flying, or one under the hand. While it does, the
    *  windows, the panes moving as theirs and the canvas under them are each a layer of
    *  their own, which the screen only moves and scales; a moment after it stops, each is
    *  drawn again at the size it is shown at - a page's picture smoothly scaled once, the
@@ -996,7 +999,7 @@
   }
 
   function settle() {
-    if (frameAsked || zoomFrame || flyFrame || held) {
+    if (frameAsked || held) {
       stillLater = setTimeout(settle, 180)
       return
     }
@@ -1873,7 +1876,7 @@
         <button
           class="window"
           class:is-at={at === tab.id}
-          class:unsaved={isUnsaved(tab.note)}
+          class:unsaved={isDraft(tab.note)}
           style:width="{slot.w}px"
           style:height="{slot.h}px"
           aria-label={tab.shown}
@@ -2203,8 +2206,8 @@
     text-overflow: ellipsis;
   }
 
-  /* A line round a window whose tab is somewhere in the file list, a dashed one round one
-     that is nowhere yet; the accent round the keyboard's, and round those chosen. Each
+  /* A line round a window whose tab is somewhere in the file list, a dashed one round a
+     draft, words with no file, where the strip draws its dot; the accent round the keyboard's, and round those chosen. Each
      `--ring` wide on the screen however far out the camera is and however small the
      window flies (`--overview-line`, and `--flight-x` and `--flight-y` from `paint`). */
   .ring {

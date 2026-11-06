@@ -232,3 +232,39 @@ test('a window drawn before is drawn at once the next time, never waited on', as
   frame()
   expect(tabOverview.out.length).toBeGreaterThan(0)
 })
+
+test('a zoom makes no layer of its own and lets none go: every frame of it is drawn as it is shown', async () => {
+  // Emil: zooming in or out made the bubbles and the windows flash.
+  tabOverview.open = true
+  flushSync()
+  await drawnNow()
+  for (let i = 0; i < 200; i++) frame()
+  // Landed, and a moment after: drawn at the size it is shown, as it rests.
+  for (let i = 0; i < 8; i++) {
+    await new Promise((go) => setTimeout(go, 60))
+    frame()
+  }
+  const canvas = document.querySelector<HTMLElement>('.canvas')
+  expect(canvas?.classList.contains('is-moving')).toBe(false)
+  const world = () => document.querySelector<HTMLElement>('.canvas .world')?.style.transform
+  const pane = document.querySelector<HTMLElement>(`[data-pane="${workspace.panes.all[0]?.id}"]`)
+  const before = world()
+  const layered: string[] = []
+  for (let i = 0; i < 60; i++) {
+    if (i % 6 === 0)
+      canvas?.dispatchEvent(
+        new WheelEvent('wheel', {
+          deltaY: i < 30 ? -100 : 100,
+          clientX: 400,
+          clientY: 300,
+          bubbles: true,
+          cancelable: true,
+        }),
+      )
+    frame()
+    if (canvas?.classList.contains('is-moving')) layered.push(`frame ${i}: the canvas`)
+    if (pane?.style.willChange === 'transform') layered.push(`frame ${i}: the pane`)
+  }
+  expect(world()).not.toBe(before)
+  expect(layered).toEqual([])
+})

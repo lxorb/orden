@@ -58,9 +58,9 @@ function farthest(one: Bubble, box: Box): number {
   return most
 }
 
-/** How far past a window, at the most, its own round shape reaches: a fifth of its
+/** How far past a window, at the most, its own round shape reaches: a quarter of its
  *  half-size, past `PAD`, at the middle of its long sides. */
-const reachPast = (box: Box) => 0.2 * (Math.max(box.w, box.h) / 2 + PAD) + PAD + 2
+const reachPast = (box: Box) => 0.25 * (Math.max(box.w, box.h) / 2 + PAD) + PAD + 4
 
 const run = (one: Bubble, windows: () => readonly Box[], frames: number, from = 0) => {
   for (let frame = 0; frame < frames; frame++) one.step(1 / 60, (from + frame) / 60, windows())
@@ -168,12 +168,12 @@ test('dragged at any speed, turned at once, or late a frame, it stays round', ()
   }
 })
 
-test('round two windows far apart it is their hull, never wider where there are none', () => {
+test('round two windows far apart it bows out between them, and only a little', () => {
   const left = { x: 0, y: 0, w: 300, h: 200 }
   const right = { x: 900, y: 0, w: 300, h: 200 }
   const one = new Bubble([left, right])
   run(one, () => [left, right], 120)
-  expect(farthest(one, { x: 0, y: 0, w: 1200, h: 200 })).toBeLessThan(reachPast(left))
+  expect(farthest(one, { x: 0, y: 0, w: 1200, h: 200 })).toBeLessThan(PAD + 0.1 * 1200)
 })
 
 test('its one window dragged away takes the bubble and its name with it', () => {
@@ -271,4 +271,67 @@ test('asked for less movement it stands still, and follows its windows at once',
   one.step(1 / 60, 1, [moved], true)
   expect(farthest(one, moved)).toBeLessThan(reachPast(moved))
   expect(insideOf(outline(one), 200, 150)).toBe(false)
+})
+
+/** The curve as drawn, walked at an even step of `step` pixels. */
+function walked(one: Bubble, step = 2): [number, number][] {
+  const curve = outline(one)
+  const out: [number, number][] = []
+  for (let i = 0; i < curve.length; i++) {
+    const [ax, ay] = curve[i] ?? [0, 0]
+    const [bx, by] = curve[(i + 1) % curve.length] ?? [0, 0]
+    const steps = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / step))
+    for (let k = 0; k < steps; k++)
+      out.push([ax + ((bx - ax) * k) / steps, ay + ((by - ay) * k) / steps])
+  }
+  return out
+}
+
+/** The longest stretch of the curve that is straight: that keeps within two pixels of
+ *  the line from its one end to its other. */
+function straightest(points: readonly [number, number][]): number {
+  const n = points.length
+  const at = (i: number) => points[((i % n) + n) % n] ?? [0, 0]
+  let longest = 0
+  for (let i = 0; i < n; i += 3) {
+    let j = i + 2
+    for (; j < i + n; j++) {
+      const [ax, ay] = at(i)
+      const [bx, by] = at(j)
+      const length = Math.hypot(bx - ax, by - ay) || 1
+      let straight = true
+      for (let k = i + 1; k < j && straight; k++) {
+        const [px, py] = at(k)
+        straight = Math.abs((bx - ax) * (ay - py) - (ax - px) * (by - ay)) / length <= 2
+      }
+      if (!straight) break
+    }
+    longest = Math.max(longest, j - 1 - i)
+  }
+  return longest
+}
+
+test('round rows of windows it is round all the way, with no long straight edge', () => {
+  // Emil: the bubbles round two rows of windows, the lower one shorter, had long straight
+  // edges and corners, not a round shape.
+  const W = 400
+  const H = 260
+  const row = (count: number, y: number, x = 0) =>
+    Array.from({ length: count }, (_, i) => ({ x: x + i * (W + 40), y, w: W, h: H }))
+  const layouts: Record<string, Box[]> = {
+    one: row(1, 0),
+    'a row of three': row(3, 0),
+    'two over one': [...row(2, 0), ...row(1, H + 80, (W + 40) / 2)],
+    'four over three': [...row(4, 0), ...row(3, H + 80, (W + 40) / 2)],
+    'three rows': [...row(4, 0), ...row(4, H + 80), ...row(3, 2 * (H + 80), (W + 40) / 2)],
+  }
+  for (const [name, boxes] of Object.entries(layouts)) {
+    const one = new Bubble(boxes)
+    run(one, () => boxes, 120)
+    const points = walked(one)
+    // Each step is two pixels: the straightest stretch, against the whole way round.
+    const share = straightest(points) / points.length
+    expect(share, name).toBeLessThan(0.2)
+    expect(encloses(one, boxes, PAD / 2), name).toBe(true)
+  }
 })
