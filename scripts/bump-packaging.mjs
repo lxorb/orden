@@ -116,7 +116,6 @@ edit('aur/nib-bin/.SRCINFO', [
 
 edit('snap/snapcraft.yaml', [
   [/^version: .*$/m, `version: '${version}'`],
-  [/(orden_)[0-9][^_]*(_amd64\.snap)/, `$1${version}$2`],
   [/^(\s*- on amd64: )https:\/\/.*\.deb$/m, `$1${download}/${file('linux-x64', '.deb')}`],
   [/^(\s*- on arm64: )https:\/\/.*\.deb$/m, `$1${download}/${file('linux-arm64', '.deb')}`],
   [/(on amd64: sha256\/)[0-9a-f]{64}/, `$1${debX64}`],

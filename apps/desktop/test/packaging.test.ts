@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
 import {
   chmodSync,
+  cpSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
@@ -1031,5 +1032,92 @@ describe('the Nix edge', () => {
     expect(release).toMatch(
       /\n {4}if: \$\{\{ !cancelled\(\) && needs\.nix-edge\.result == 'success' \}\}\n[\s\S]*?uses: \.\/\.github\/workflows\/nix\.yml\n\s+with:\n\s+flake: github:\$\{\{ github\.repository \}\}\/\$\{\{ needs\.nix-edge\.outputs\.sha \}\}\?dir=packaging\/nix\n\s+package: orden-unstable/,
     )
+  })
+})
+
+describe('the packaging bump', () => {
+  const kinds = [
+    'linux-x64.deb',
+    'linux-arm64.deb',
+    'windows-x64-setup.exe',
+    'windows-arm64-setup.exe',
+    'windows-x64.msi',
+    'windows-arm64.msi',
+    'macos-universal.dmg',
+  ]
+  const moved = [
+    'nix/flake.nix',
+    'aur/nib-bin/PKGBUILD',
+    'aur/nib-bin/.SRCINFO',
+    'snap/snapcraft.yaml',
+    'scoop/orden.json',
+    'chocolatey/orden.nuspec',
+    'chocolatey/nib.nuspec',
+    'chocolatey/tools/chocolateyinstall.ps1',
+    'homebrew/orden.rb',
+  ]
+  const hex = (version: string, kind: string) =>
+    createHash('sha256').update(`${version} ${kind}`).digest('hex')
+  const sri = (digest: string) => `sha256-${Buffer.from(digest, 'hex').toString('base64')}`
+
+  const bump = (at: string, version: string) => {
+    const release = {
+      draft: false,
+      prerelease: false,
+      assets: kinds.map((kind) => ({
+        name: `Orden-${version}-${kind}`,
+        digest: `sha256:${hex(version, kind)}`,
+      })),
+    }
+    return spawnSync(
+      process.execPath,
+      ['--import', join(at, 'fetch.mjs'), join(at, 'scripts', 'bump-packaging.mjs'), `v${version}`],
+      { encoding: 'utf8', env: { ...process.env, RELEASE: JSON.stringify(release) } },
+    )
+  }
+
+  test('finds every line it rewrites in the files as committed, and again in what it wrote', () => {
+    const at = mkdtempSync(join(tmpdir(), 'nib-bump-'))
+    mkdirSync(join(at, 'scripts'))
+    cpSync(join(HERE, 'scripts', 'bump-packaging.mjs'), join(at, 'scripts', 'bump-packaging.mjs'))
+    cpSync(ROOT, join(at, 'packaging'), { recursive: true })
+    writeFileSync(
+      join(at, 'fetch.mjs'),
+      'const release = JSON.parse(process.env.RELEASE)\n' +
+        'globalThis.fetch = async () => ({ ok: true, status: 200, json: async () => release })\n',
+    )
+    const current = /release = \{[^}]*?\s*version = "([^"]+)";/.exec(read('nix', 'flake.nix'))?.[1]
+    const parts = /^(\d+)\.(\d+)\.\d+$/.exec(current ?? '')
+    expect(parts, current).not.toBeNull()
+    const major = Number(parts?.[1])
+    const minor = Number(parts?.[2])
+    let before = current ?? ''
+
+    for (const version of [`${major}.${minor + 1}.0`, `${major}.${minor + 2}.0`]) {
+      const ran = bump(at, version)
+      expect(ran.stderr, version).toBe('')
+      expect(ran.status, version).toBe(0)
+
+      const text = (path: string) => readFileSync(join(at, 'packaging', path), 'utf8')
+      for (const path of moved) {
+        expect(text(path), path).toContain(version)
+        expect(text(path), path).not.toContain(before)
+      }
+      const deb = hex(version, 'linux-x64.deb')
+      const debArm = hex(version, 'linux-arm64.deb')
+      expect(text('nix/flake.nix')).toContain(sri(deb))
+      expect(text('nix/flake.nix')).toContain(sri(debArm))
+      expect(text('aur/nib-bin/PKGBUILD')).toContain(deb)
+      expect(text('aur/nib-bin/.SRCINFO')).toContain(debArm)
+      expect(text('snap/snapcraft.yaml')).toContain(`on amd64: sha256/${deb}`)
+      expect(text('snap/snapcraft.yaml')).toContain(`on arm64: sha256/${debArm}`)
+      expect(text('snap/snapcraft.yaml')).toContain(`source-checksum: sha256/${deb}`)
+      expect(text('scoop/orden.json')).toContain(hex(version, 'windows-arm64-setup.exe'))
+      expect(text('chocolatey/tools/chocolateyinstall.ps1')).toContain(
+        hex(version, 'windows-arm64.msi').toUpperCase(),
+      )
+      expect(text('homebrew/orden.rb')).toContain(hex(version, 'macos-universal.dmg'))
+      before = version
+    }
   })
 })
