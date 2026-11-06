@@ -57,12 +57,12 @@ export class Today {
     const done = one.done
     void this.host
       .tick(one.at, one.space, done)
+      .catch(() => false)
       .then((found) => {
-        if (found) return
+        if (found || one.done !== done) return
         one.done = !done
         this.host.redraw()
       })
-      .catch(() => undefined)
   }
 }
 
