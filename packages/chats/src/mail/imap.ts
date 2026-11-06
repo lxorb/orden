@@ -39,7 +39,7 @@ export function parseValues(text: string): Value[] {
         }
         at++
         out.push(value)
-      } else if (char === '{') {
+      } else if (char === '{' && /^\{\d+\+?\}/.test(text.slice(at))) {
         const close = text.indexOf('}', at)
         const count = Number.parseInt(text.slice(at + 1, close), 10)
         at = close + 1

@@ -35,6 +35,18 @@ describe('IMAP responses', () => {
     ])
   })
 
+  test('a brace that opens no literal is a word of the line, read once', () => {
+    expect(untaggedOf('* OK [ALERT] Only {3 messages fit').values).toEqual([
+      '[ALERT]',
+      'Only',
+      '{3',
+      'messages',
+      'fit',
+    ])
+    expect(parseValues('{x} {12')).toEqual(['{x}', '{12'])
+    expect(parseValues('(A {2}ok B)')).toEqual([['A', 'ok', 'B']])
+  })
+
   test('a FETCH line, by its items', () => {
     const line = untaggedOf('* 3 FETCH (UID 12 FLAGS ())')
     expect(line).toMatchObject({ kind: 'FETCH', number: 3 })
