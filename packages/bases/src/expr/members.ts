@@ -1,11 +1,3 @@
-/** `.name` and `[index]`: what a file, a note, a task, a date, a list or an object
- *  answers when it is asked for a part of itself.
- *
- *  `file.*` is Bases' list (name, basename, path, folder, ext, size, ctime, mtime,
- *  properties, tags, links, embeds, backlinks, file) and two of Orden's (space,
- *  shared). `task.*` is Orden's: a task row's fields, and the few answers views ask
- *  of every task (`open`, `date`, `at`, `started`, `subtask`). */
-
 import { dayOf, deadlineOf, hasStarted, startOf } from '@orden/markdown/task-dates'
 import { writeRemind } from '@orden/markdown/task-line'
 import { dateAt, wallClock } from '../dates'
@@ -29,7 +21,6 @@ const DAY = 86_400_000
 const dateValue = (iso: string | undefined): DateValue | null =>
   iso ? { kind: 'date', iso } : null
 
-/** A file's own fields. */
 export function fileField(row: Row, name: string, scope: Scope): Val {
   const file = row.file
   switch (name) {
@@ -73,7 +64,6 @@ export function fileField(row: Row, name: string, scope: Scope): Val {
   }
 }
 
-/** A task's fields, and what views ask of every task. Null on a note row. */
 export function taskField(row: Row, name: string, scope: Scope): Val {
   const task = row.task
   if (!task) return null
@@ -94,7 +84,6 @@ export function taskField(row: Row, name: string, scope: Scope): Val {
     case 'completed':
     case 'cancelledOn':
       return dateValue(task[name])
-    // The two a reader sets, as the task's space reads its `📅`; see task-dates.
     case 'start':
       return dateValue(startOf(task, task.dueReads))
     case 'deadline':
@@ -155,7 +144,6 @@ export function taskField(row: Row, name: string, scope: Scope): Val {
   }
 }
 
-/** A date's fields, Bases' table. */
 function dateField(date: DateValue, name: string): Val {
   const [hours = 0, minutes = 0, seconds = 0] = (date.time ?? '')
     .split(':')
@@ -180,7 +168,6 @@ function dateField(date: DateValue, name: string): Val {
   }
 }
 
-/** A duration's size in each unit, whole units toward zero: `(now() - file.ctime).days`. */
 function durationField(ms: number, months: number, name: string): Val {
   const whole = (value: number) => Math.trunc(value)
   const total = ms + months * 30 * DAY
@@ -206,7 +193,6 @@ function durationField(ms: number, months: number, name: string): Val {
   }
 }
 
-/** `value.name`. */
 export function member(object: Val, name: string, scope: Scope): Val {
   if (object === null) return null
   if (object instanceof FileRef) return fileField(object.row, name, scope)
@@ -227,7 +213,6 @@ export function member(object: Val, name: string, scope: Scope): Val {
   return null
 }
 
-/** `value[index]`. */
 export function indexed(object: Val, index: Val, scope: Scope): Val {
   if (object === null || index === null) return null
   if (typeof index === 'number') {

@@ -1,9 +1,3 @@
-/** What both servers' task and base verbs share: `nib mcp`'s window verbs and the
- *  account connector read their arguments, answer their rows and work out their edits
- *  here, and only reading and writing the notes is each server's own
- *  (docs/tasks.md 5.15). Its own entry, `@orden/bases/agent`; the half without the
- *  engine is `@orden/bases/tasks` (light.ts). */
-
 export { readBase, writeBase } from '../base-file'
 export { editedBase, noteName, rowPlace, withProperties } from './bases'
 export { clockOf } from './clock'

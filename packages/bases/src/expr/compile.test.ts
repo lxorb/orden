@@ -29,7 +29,6 @@ const run = (
   formulas: Record<string, string> = {},
 ): Value => compile(source).evaluate(row, context, formulas)
 
-/** Bases' functions page, every example with the answer it documents. */
 const DOCUMENTED: [string, Value][] = [
   ['"hello".contains("ell")', true],
   ['"hello".containsAll("h", "e")', true],

@@ -1,20 +1,9 @@
-/** Unique ids for the rows of a base: `BUG-45`, Notion's ID property, kept in a front
- *  matter key the base names (`nib.id: { property: id, prefix: BUG }`).
- *
- *  The next id is one more than the highest the rows hold, so an id is never handed out
- *  twice while its row exists. Two devices offline can both make 45; whoever looks
- *  first after the second sync renumbers one of them (`idRepairs`). Which one is decided
- *  by the note's path, spelled the same way on every disk: a file's creation time is
- *  each disk's own and sync does not carry it (B552). Pure. */
-
 import type { Row, Value } from './types'
 
-/** How a number is written with its prefix. */
 export function idText(prefix: string, number: number): string {
   return prefix ? `${prefix}-${number}` : String(number)
 }
 
-/** The number an id holds, where it is one of this prefix's. */
 export function idNumber(value: Value | undefined, prefix: string): number | null {
   if (typeof value === 'number') return !prefix && Number.isInteger(value) ? value : null
   if (typeof value !== 'string') return null
@@ -25,7 +14,6 @@ export function idNumber(value: Value | undefined, prefix: string): number | nul
   return found?.[1] ? Number(found[1]) : null
 }
 
-/** The next free id: one past the highest of these rows. */
 export function nextId(rows: readonly Row[], property: string, prefix: string): string {
   let highest = 0
   for (const row of rows) {
@@ -36,14 +24,8 @@ export function nextId(rows: readonly Row[], property: string, prefix: string): 
   return idText(prefix, highest + 1)
 }
 
-/** What Windows holds in no name, beside the control characters. */
 const FORBIDDEN = '<>:"\\|?*'
 
-/** A path's folders and name as every device spells them: each disk writes a name it cannot hold its own
- *  way (a `:` as `_` on a Mac, `<>:"\|?*` and a trailing dot or space as `_` on
- *  Windows; sync2/places.ts `localName`), a Mac may hold it decomposed, and a disk may
- *  fold case. Without its `.md`, so a copy, `Crash copy` or `Crash 2`, comes after the
- *  note it was copied from (`Crash`). */
 function spelledAlike(path: string): string[] {
   const names = path
     .normalize('NFC')
@@ -54,20 +36,13 @@ function spelledAlike(path: string): string[] {
         .replace(/[. ]+$/, (tail) => '_'.repeat(tail.length))
         .toLowerCase(),
     )
-  // The ending goes after the disk's spelling, which reads the whole name: `v1..md`
-  // keeps its dot before `.md`, and so comes before its copy `v1. copy.md`.
   const last = names.length - 1
   names[last] = (names[last] ?? '').replace(/\.md$/, '')
   return names
 }
 
-/** By code unit rather than by this device's locale, so every device orders alike. */
 const byCode = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
 
-/** By that spelling, one folder or name at a time, so a copied folder comes after the
- *  one it was copied from as a copied name does (`Projects/X` before `Projects copy/X`,
- *  where the whole path would put the space before the `/`); the path as this disk has
- *  it only breaks a tie. */
 function byPath(a: Row, b: Row): number {
   const one = spelledAlike(a.path)
   const other = spelledAlike(b.path)
@@ -78,14 +53,8 @@ function byPath(a: Row, b: Row): number {
   return one.length - other.length || byCode(a.path, b.path)
 }
 
-/** Older first on this disk, for rows only this device numbers. */
 const older = (a: Row, b: Row) => a.file.ctime - b.file.ctime || byPath(a, b)
 
-/** The ids to write so that every row has one and no two share one: of two rows
- *  sharing one the later by path gets the next, in path order, so every device writes
- *  the same; then a row without one gets the next, in the order the rows were made.
- *  `missing` false leaves rows without one alone, which is what looking does; turning
- *  ids on gives every row one. */
 export function idRepairs(
   rows: readonly Row[],
   property: string,

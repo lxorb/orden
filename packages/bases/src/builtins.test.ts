@@ -9,8 +9,6 @@ const context = contextAt()
 const keyed = (result: Answer) =>
   result.groups.map((group) => [group.key, group.rows.map((row) => row.task?.text)])
 
-// Today is 2026-10-04 (contextAt). A start date is `🛫`, a deadline `[deadline:: ]`; a
-// `📅` is a start date in a space of Orden's own and a deadline in an Obsidian vault (#371).
 const rows: Row[] = [
   taskRow('Inbox.md', '- [ ] Call the bank [time:: 16:00] ⏫ 🛫 2026-10-04', 0),
   taskRow('Inbox.md', '- [ ] Renew passport [deadline:: 2026-09-26] 🛫 2026-09-20', 1),
@@ -36,7 +34,6 @@ const rows: Row[] = [
 ]
 
 describe('the built-in views', () => {
-  // #1046: one view of a space's tasks, grouped by when each is due.
   test('Todos: a space’s started tasks by when they are due, the undated last, done ones out', () => {
     const due = [
       taskRow('Due.md', '- [ ] Late [deadline:: 2026-10-01]', 0),
@@ -65,9 +62,7 @@ describe('the built-in views', () => {
 
   test('Today: overdue first, then today, by priority and time; not started and done ones out', () => {
     expect(keyed(answer(builtinView('today'), 0, rows, context))).toEqual([
-      // Overdue is a deadline past: Orden's own, or a vault's `📅`.
       [true, ['Renew passport', 'Vault due']],
-      // A start date come stays in Today, and is never overdue: an old `📅` included.
       [false, ['Gym', 'Call the bank', 'Old date', 'Draft talk']],
     ])
   })
@@ -75,8 +70,6 @@ describe('the built-in views', () => {
   test('Today with undated tasks: one with no day of its own is in it, as begun (#408)', () => {
     expect(keyed(answer(builtinView('today', { undated: true }), 0, rows, context))).toEqual([
       [true, ['Renew passport', 'Vault due']],
-      // No start date and no day scheduled: in, whatever its deadline says, which still
-      // only makes it overdue once past. One whose start is still to come stays out.
       [
         false,
         [
@@ -110,7 +103,6 @@ describe('the built-in views', () => {
   test('Upcoming: what is overdue, then by day from today, a start still to come on its day', () => {
     expect(keyed(answer(builtinView('upcoming'), 0, rows, context))).toEqual([
       ['overdue', ['Renew passport', 'Vault due']],
-      // Started already: today, which is when it can be done.
       [{ kind: 'date', iso: '2026-10-04' }, ['Old date', 'Gym', 'Call the bank', 'Draft talk']],
       [{ kind: 'date', iso: '2026-10-05' }, ['Review PR']],
       [{ kind: 'date', iso: '2026-10-06' }, ['Dentist']],
@@ -144,7 +136,6 @@ describe('the built-in views', () => {
     expect(project.views[0]?.name).toBe('Errands')
     expect(keyed(answer(project, 0, rows, context))).toEqual([
       ['Health', ['Gym', 'Dentist']],
-      // A project is its note: what has not started is there too.
       ['Admin', ['Taxes']],
       [null, ['Review PR', 'Fix the bug']],
     ])
@@ -159,7 +150,6 @@ describe('the built-in views', () => {
         group.rows.map((row) => row.task?.text ?? row.file.basename),
       ]),
     ).toEqual([
-      // Review PR starts tomorrow. By space and path, so two notes of one name stay apart.
       ['Notes//Errands.md', ['Fix the bug']],
       ['Notes//Projects/Thesis.md', ['Thesis']],
       ['Work//Work.md', ['Ship it']],

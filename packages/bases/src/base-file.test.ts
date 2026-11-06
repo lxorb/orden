@@ -6,8 +6,6 @@ import { readBase, writeBase } from './base-file'
 const here = join(import.meta.dirname, 'fixtures')
 const fixture = (name: string) => readFileSync(join(here, name), 'utf8')
 
-/** Bases Obsidian itself wrote (kepano/kepano-obsidian, MIT, see fixtures/kepano/LICENSE),
- *  the help page's example, and the design's example with nib's key. */
 const FILES = [
   ...readdirSync(join(here, 'kepano'))
     .filter((name) => name.endsWith('.base'))
@@ -166,8 +164,6 @@ describe('writing a change', () => {
   })
 
   test('filters set on a base whose own Orden could not read replace them, once', () => {
-    // The unreadable filters are kept only until the base is given filters of its
-    // own: kept after them, they would be written over the new ones.
     const source = 'filters:\n  xor:\n    - a\nviews:\n  - type: table\n    name: A\n'
     const base = readBase(source)
     base.filters = 'b == 1'
@@ -181,9 +177,6 @@ describe('writing a change', () => {
   })
 
   test("a view's filters and limit Orden cannot read stay as written when another key changes", () => {
-    // A filter of a shape the reader does not know, and a limit written as text,
-    // are not Orden's to understand but are the file's own: dropping them on the
-    // next write would widen what the view shows in Obsidian too.
     const source =
       'views:\n  - type: table\n    name: A\n    filters:\n      xor:\n        - a\n    limit: "10"\n'
     const base = readBase(source)

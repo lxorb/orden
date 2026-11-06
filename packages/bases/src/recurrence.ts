@@ -1,21 +1,3 @@
-/** The rule a task repeats by, in the Tasks plugin's words, and the dates it gives.
- *
- *  The Tasks plugin hands its rules to the rrule library's English reader, so the
- *  grammar is that one: `every 3 days`, `every weekday`, `every week on Tuesday,
- *  Friday`, `every 2 weeks`, `every month on the last Friday`, `every month on the
- *  2nd last Friday`, `every January on the 15th`, `every April and December on the
- *  1st and 24th`, `every year`, `until`, `for 3 times`, and the plugin's own
- *  `when done`. Todoist's words that mean the same are read too (`every other
- *  week`, `every workday`, `every weekend`, `every mon, fri`, `every year on 3
- *  March`), and a rule is always written back in the plugin's.
- *
- *  Dates follow rrule as the plugin uses it: the rule's period is counted from the
- *  task's own date (its reference: due, else scheduled, else start), and `every
- *  month` or `every year` with no day named keeps the reference's day, the last
- *  of a shorter month standing in for a day it does not have (the plugin's own
- *  correction; `every month on the 31st` still skips the short months, as the
- *  plugin's documentation warns). */
-
 import {
   addDays,
   civil,
@@ -31,13 +13,9 @@ import {
 export interface Rule {
   every: number
   unit: 'day' | 'week' | 'month' | 'year'
-  /** 0 for Sunday to 6 for Saturday; `nth` counts within the month, -1 the last. */
   weekdays: { day: number; nth?: number }[]
-  /** Days of the month, -1 the last, -2 the one before it. */
   monthDays: number[]
-  /** 1 to 12. */
   months: number[]
-  /** From the day it was done rather than from its date: Todoist's `every!`. */
   whenDone: boolean
   until?: string
   count?: number
@@ -85,7 +63,6 @@ const WORDS: Record<string, number> = {
   other: 2,
 }
 
-/** `1st`, `2nd`, `3`, `twenty`... as a number, or null. */
 function ordinal(word: string): number | null {
   const found = /^(\d+)(?:st|nd|rd|th)?$/.exec(word)
   if (found) return Number(found[1])
@@ -93,7 +70,6 @@ function ordinal(word: string): number | null {
   return named === -1 ? null : named + 1
 }
 
-/** A date after `until`: `2026-12-24`, `December 24, 2026`, `24 December 2026`. */
 function readUntil(words: string): string | null {
   const text = words.trim().replace(/,/g, ' ').replace(/\s+/g, ' ')
   if (civil(text)) return text
@@ -111,7 +87,6 @@ function readUntil(words: string): string | null {
   return isoOf(year, month, day)
 }
 
-/** A rule's words as a rule, or null for words that are not one. */
 export function parseRule(written: string): Rule | null {
   let text = written.trim().toLowerCase().replace(/\s+/g, ' ')
   const rule: Rule = {
@@ -217,9 +192,6 @@ export function parseRule(written: string): Rule | null {
     return out
   }
 
-  // `every 2 years in March on the 3rd`: months a rule repeats in every few years
-  // cannot stand in for the unit the way `every March` does, so they follow it, in
-  // the words ruleText writes them with (rrule's reader takes `in` as it does `on`).
   if (rule.unit === 'year' && peek() === 'in' && MONTH_NAMES[words[at + 1] ?? ''] !== undefined) {
     at++
     rule.months = readMonths()
@@ -233,7 +205,6 @@ export function parseRule(written: string): Rule | null {
     } else if (DAY_NAMES[peek()] !== undefined) {
       rule.weekdays = readWeekdays()
     } else if (ordinal(peek()) !== null && MONTH_NAMES[words[at + 1] ?? ''] !== undefined) {
-      // Todoist's `every year on 3 March`.
       rule.monthDays = [ordinal(take()) ?? 1]
       rule.months = [MONTH_NAMES[take()] ?? 1]
     } else if (MONTH_NAMES[peek()] !== undefined && ordinal(words[at + 1] ?? '') !== null) {
@@ -244,8 +215,6 @@ export function parseRule(written: string): Rule | null {
     }
   }
 
-  /** `the 1st and 24th`, `the last`, `the 2nd last`, `the last Friday`, `the 2nd
-   *  Wednesday`, `the 2nd last Friday`. */
   function readOnThe(): boolean {
     if (at >= words.length) return false
     while (at < words.length) {
@@ -277,7 +246,6 @@ export function parseRule(written: string): Rule | null {
   return rule
 }
 
-/** `1st`, `22nd`, `the last`, `2nd last`. */
 function nthText(nth: number): string {
   if (nth === -1) return 'last'
   if (nth < 0) return `${nthText(-nth)} last`
@@ -289,7 +257,6 @@ function nthText(nth: number): string {
 const sameDays = (a: readonly { day: number; nth?: number }[], days: readonly number[]) =>
   a.length === days.length && a.every((one) => one.nth === undefined && days.includes(one.day))
 
-/** Weekdays in the order a week runs, Monday first. */
 const mondayFirst = (day: number) => (day + 6) % 7
 
 function joined(parts: readonly string[], last = ' and '): string {
@@ -298,14 +265,11 @@ function joined(parts: readonly string[], last = ' and '): string {
     : `${parts.slice(0, -1).join(', ')}${last}${parts.at(-1) ?? ''}`
 }
 
-/** A date for an `until`, the way the plugin reads one: `December 24, 2026`. Its
- *  own grammar has no `-`, so an ISO date would end its reading of the line. */
 function untilText(iso: string): string {
   const parts = civil(iso)
   return parts ? `${monthName(parts.month)} ${parts.day}, ${parts.year}` : iso
 }
 
-/** A rule in the plugin's own words. */
 export function ruleText(rule: Rule): string {
   const plural = (unit: string) =>
     rule.every === 1 ? `every ${unit}` : `every ${rule.every} ${unit}s`
@@ -342,8 +306,6 @@ export function ruleText(rule: Rule): string {
   return text
 }
 
-/** The days of one month the rule names, in order. `fallback` is the reference's
- *  day, kept where the rule names none. */
 function daysIn(
   rule: Rule,
   year: number,
@@ -376,7 +338,6 @@ function daysIn(
   return [...days].sort((a, b) => a - b)
 }
 
-/** The rule's periods, the n-th from the reference's: every candidate date in it. */
 function candidates(rule: Rule, start: string, period: number): string[] {
   const parts = civil(start)
   if (!parts) return []
@@ -413,25 +374,14 @@ function candidates(rule: Rule, start: string, period: number): string[] {
   }
 }
 
-/** How many of the rule's periods lie between two dates, roughly, so the search
- *  for the next date starts near it rather than at the reference. The search only
- *  walks forward from here, so the guess may fall short but must never pass the
- *  period `to` is in: a month or a year is taken at its longest, 31 days and 366,
- *  since one taken shorter than it is (a month as 28) counts more months than went
- *  by, and a task a few years overdue would skip as many months as it is years
- *  late. */
 function periodsBetween(rule: Rule, from: string, to: string): number {
   const days = dayNumber(to) - dayNumber(from)
   const size = { day: 1, week: 7, month: 31, year: 366 }[rule.unit] * rule.every
   return Math.max(0, Math.floor(days / size) - 1)
 }
 
-/** The longest search before a rule is taken to name no date at all (`every
- *  February on the 30th`). */
 const MOST_PERIODS = 2000
 
-/** The rule's first date after `after`, counting its periods from `start`; null
- *  when there is none, or none before its `until`. */
 export function nextDate(rule: Rule, start: string, after: string): string | null {
   const first = after < start ? 0 : periodsBetween(rule, start, after)
   for (let period = first; period < first + MOST_PERIODS; period++) {

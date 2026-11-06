@@ -4,7 +4,6 @@ import { readBase } from './base-file'
 import { contextAt, noteRow } from './fixtures/rows'
 import type { Row } from './types'
 
-/** How often a view reads a row's file, which is what working a row out costs. */
 function counting(rows: readonly Row[]): { rows: Row[]; reads: () => number } {
   let reads = 0
   const counted = rows.map(

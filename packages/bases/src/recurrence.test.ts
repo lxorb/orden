@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { nextDate, parseRule, type Rule, ruleText } from './recurrence'
 
-/** The rules of the Tasks plugin's documentation, each read and written back in
- *  its own words. */
 const PLUGIN_RULES = [
   'every 3 days',
   'every 10 days when done',
@@ -68,9 +66,6 @@ describe('a rule', () => {
     expect(parseRule(text)).toBeNull()
   })
 
-  /** Every shape a yearly rule can take, so each way ruleText can write one is
-   *  read back: a ticked task writes its rule anew, and words the reader cannot
-   *  take would leave the next occurrence with a rule that never repeats. */
   const YEARLY: Rule[] = [1, 2].flatMap((every) =>
     [[], [3], [4, 12]].flatMap((months) =>
       [
@@ -103,31 +98,25 @@ describe('a rule', () => {
   })
 })
 
-/** [rule, reference date, after, next]. */
 const DATES: [string, string, string, string | null][] = [
-  // The plugin's documented examples.
   ['every Sunday', '2021-04-25', '2021-04-25', '2021-05-02'],
   ['every 2 weeks', '2021-10-30', '2021-10-30', '2021-11-13'],
   ['every week', '2021-02-06', '2021-02-06', '2021-02-13'],
   ['every month on the last', '2022-01-31', '2022-01-31', '2022-02-28'],
   ['every month on the last', '2022-02-28', '2022-02-28', '2022-03-31'],
   ['every month on the last', '2022-04-30', '2022-04-30', '2022-05-31'],
-  // `every month` keeps the day, the month's last standing in where it has none.
   ['every month', '2021-10-31', '2021-10-31', '2021-11-30'],
   ['every month', '2021-11-30', '2021-11-30', '2021-12-30'],
   ['every month', '2021-12-30', '2021-12-30', '2022-01-30'],
   ['every month', '2022-01-30', '2022-01-30', '2022-02-28'],
   ['every month', '2022-02-28', '2022-02-28', '2022-03-28'],
-  // `on the 31st` skips the months without one, as the plugin warns.
   ['every month on the 31st', '2022-01-31', '2022-01-31', '2022-03-31'],
   ['every month on the 31st', '2022-03-31', '2022-03-31', '2022-05-31'],
   ['every month on the 31st', '2022-05-31', '2022-05-31', '2022-07-31'],
-  // Leap days.
   ['every year', '2024-02-29', '2024-02-29', '2025-02-28'],
   ['every February on the last', '2023-02-28', '2023-02-28', '2024-02-29'],
   ['every 4 years', '2024-02-29', '2024-02-29', '2028-02-29'],
   ['every day', '2024-02-28', '2024-02-28', '2024-02-29'],
-  // Weeks.
   ['every weekday', '2026-10-02', '2026-10-02', '2026-10-05'],
   ['every weekday', '2026-10-05', '2026-10-05', '2026-10-06'],
   ['every week on Tuesday, Friday', '2026-10-06', '2026-10-06', '2026-10-09'],
@@ -135,34 +124,25 @@ const DATES: [string, string, string, string | null][] = [
   ['every 2 weeks on Monday', '2026-10-05', '2026-10-05', '2026-10-19'],
   ['every 3 weeks on Friday', '2026-10-09', '2026-10-09', '2026-10-30'],
   ['every weekend', '2026-10-03', '2026-10-03', '2026-10-04'],
-  // Months by weekday.
   ['every month on the last Friday', '2026-10-30', '2026-10-30', '2026-11-27'],
   ['every month on the 2nd last Friday', '2026-10-23', '2026-10-23', '2026-11-20'],
   ['every 6 months on the 2nd Wednesday', '2026-10-14', '2026-10-14', '2027-04-14'],
   ['every month on the 1st', '2026-10-01', '2026-10-01', '2026-11-01'],
-  // Years by month.
   ['every January on the 15th', '2026-01-15', '2026-01-15', '2027-01-15'],
   ['every April and December on the 1st and 24th', '2026-04-24', '2026-04-24', '2026-12-01'],
   ['every April and December on the 1st and 24th', '2026-12-24', '2026-12-24', '2027-04-01'],
   ['every year on 3 March', '2026-03-03', '2026-03-03', '2027-03-03'],
-  // Days.
   ['every 3 days', '2026-10-01', '2026-10-01', '2026-10-04'],
-  // Past occurrences skipped: the first after `after`, on the rule's own beat.
   ['every 3 days', '2026-09-01', '2026-10-04', '2026-10-07'],
   ['every week', '2026-09-01', '2026-10-04', '2026-10-06'],
   ['every month', '2025-01-31', '2026-10-04', '2026-10-31'],
-  // Long overdue: years of months behind, the search must still start at or before
-  // the month after `after`, never past it. Months are 28 to 31 days long, so a
-  // jump that took them as 28 ran a month ahead for every year behind.
   ['every month', '2020-01-01', '2026-01-01', '2026-02-01'],
   ['every month on the 1st', '2023-01-01', '2026-10-16', '2026-11-01'],
   ['every month on the last Friday', '2023-01-27', '2026-10-16', '2026-10-30'],
   ['every 3 months', '2010-01-15', '2026-10-16', '2027-01-15'],
   ['every year', '1900-03-01', '2026-10-16', '2027-03-01'],
-  // Until.
   ['every day until 2026-10-05', '2026-10-04', '2026-10-04', '2026-10-05'],
   ['every day until 2026-10-05', '2026-10-05', '2026-10-05', null],
-  // A rule that names no date at all.
   ['every February on the 30th', '2026-01-01', '2026-01-01', null],
 ]
 

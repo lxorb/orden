@@ -1,31 +1,13 @@
-/** Todoist's filter language, compiled to Bases' filters over task rows.
- *
- *  `today & #work | overdue`, `(p1 | p2) & 7 days`, `##Thesis & !/Admin`,
- *  `search: dentist`, `assigned to: me`, `no date, overdue`: the words Todoist's
- *  help documents, in English and in German, each turned into a Bases expression
- *  over `task.*` and `file.*`, and `&`, `|`, `!` and parentheses into `and`, `or`
- *  and `not`. A comma makes several lists, one under the other, as in Todoist, so
- *  the answer is one filter per list.
- *
- *  Relative dates stay relative: `tomorrow` is `today() + "1d"` and `friday` is
- *  worked out from `today()` too, so a saved filter is still right next week. A
- *  date written as a day of a month without its year is this year's.
- *
- *  `#Name` is a note when a note has that name and a tag otherwise, which the
- *  caller answers through `isNote`; quick add does not guess (docs/tasks.md 5.8). */
-
 import { type DateWordOptions, dateWords, weekdayFrom } from './date-words'
 import { BasesError } from './errors'
 import type { Filter } from './types'
 
 export interface TodoistOptions extends DateWordOptions {
-  /** Whether a note of this name exists, so `#Name` means it rather than a tag. */
   isNote?: (name: string) => boolean
 }
 
 const quote = (text: string) => JSON.stringify(text)
 
-/** A name with `*` in it as a pattern; null for a name without one. */
 function wildcard(name: string): string | null {
   if (!name.includes('*')) return null
   const pattern = name
@@ -35,8 +17,6 @@ function wildcard(name: string): string | null {
   return `/^${pattern}$/i`
 }
 
-/** `name` compared with a value, as Todoist compares names: case aside, `*` a
- *  wildcard. */
 function named(value: string, name: string): string {
   const pattern = wildcard(name)
   return pattern
@@ -44,7 +24,6 @@ function named(value: string, name: string): string {
     : `${value}.lower() == ${quote(name.toLowerCase())}`
 }
 
-/** A comparison of a date field with a date in words. */
 function onDate(
   field: string,
   op: '==' | '<' | '>',
@@ -61,7 +40,6 @@ function onDate(
   return `${field} ${op} ${date.expression}`
 }
 
-/** One term of the language, as a Bases expression. */
 function term(raw: string, options: TodoistOptions, at: number): string {
   const text = raw.trim()
   const lower = text.toLowerCase()
@@ -80,8 +58,6 @@ function term(raw: string, options: TodoistOptions, at: number): string {
     case 'od':
     case 'überfällig':
     case 'ueberfaellig':
-      // Only a deadline makes a task late; a start date past is a task that can be done
-      // (#371, `@orden/markdown/task-dates`).
       return 'task.deadline < today()'
     case 'no date':
     case 'kein datum':
@@ -140,7 +116,6 @@ function term(raw: string, options: TodoistOptions, at: number): string {
     const value = (keyed[2] ?? '').trim()
     const field = /^(date|datum|due|fällig)( before| after| vor| nach)?$/.exec(key)
     if (field) {
-      // Todoist's due date is its date, which here is the day a task starts.
       const which = 'task.date'
       const op = !field[2] ? '==' : /before|vor/.test(field[2]) ? '<' : '>'
       return onDate(which, op, value, options, at)
@@ -173,7 +148,6 @@ function term(raw: string, options: TodoistOptions, at: number): string {
   }
   if (text.startsWith('#')) {
     const name = text.slice(1).trim()
-    // A wildcard names projects in Todoist's help, so it matches notes.
     if (name.includes('*') || options.isNote?.(name)) return named('file.basename', name)
     return `task.hasTag(${quote(name)})`
   }
@@ -197,8 +171,6 @@ function term(raw: string, options: TodoistOptions, at: number): string {
 
 type Token = { kind: 'op'; text: string; at: number } | { kind: 'term'; text: string; at: number }
 
-/** The filter cut at its operators; a backslash keeps the next character as a
- *  character, so `#a\&b` is one name. */
 function tokens(source: string): Token[] {
   const out: Token[] = []
   let term = ''
@@ -215,7 +187,6 @@ function tokens(source: string): Token[] {
       at++
       continue
     }
-    // A `!` opens a term only where a term would start; inside one it is a letter.
     const startsTerm = term.trim() === ''
     if ('&|(),'.includes(char) || (char === '!' && startsTerm)) {
       flush()
@@ -229,7 +200,6 @@ function tokens(source: string): Token[] {
   return out
 }
 
-/** One comma-separated list's tokens as a filter. */
 function parseList(list: Token[], options: TodoistOptions): Filter {
   let at = 0
   const peek = () => list[at]
@@ -281,8 +251,6 @@ function parseList(list: Token[], options: TodoistOptions): Filter {
   return filter
 }
 
-/** A Todoist filter as one Bases filter per comma-separated list. Throws a
- *  BasesError naming the part it could not read and where. */
 export function fromTodoist(source: string, options: TodoistOptions = {}): Filter[] {
   const lists: Token[][] = [[]]
   let depth = 0

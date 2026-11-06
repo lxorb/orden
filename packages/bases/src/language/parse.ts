@@ -1,17 +1,3 @@
-/** Quick add's line, read: `Call mum tomorrow 4pm #family p1 every sunday` as the words
- *  `Call mum` and the fields a task line carries (docs/tasks.md 5.6).
- *
- *  Every recognised phrase is a chip over the characters it was read from, so the
- *  field can draw it where it was typed and a press can turn it back into words: the
- *  spans the reader turned back come in as `keep`, and nothing overlapping one is read
- *  again. The app's language is tried first and English always after it, so a German
- *  reader typing `tomorrow` is understood too; short words that are also ordinary
- *  words (`sun`, German `Do`) need a word in front that says a day is meant.
- *
- *  Where two phrases say the same field, the last one is the field and the earlier
- *  stays words: people put the date at the end, and the words before it are free to
- *  mention a Friday. */
-
 import { TAG_NAME } from '@orden/markdown/tags'
 import { tagsIn } from '@orden/markdown/task-line'
 import type { Priority, Remind } from '@orden/markdown/task-line'
@@ -24,21 +10,16 @@ import { repeatAt } from './repeat'
 import { type Clock, clockOf, dayAt, timeAt, whenAt } from './when'
 import { bare, type Word, wordsOf } from './words'
 
-/** What a chip stands for. */
 export type ChipKind =
   'when' | 'repeat' | 'priority' | 'where' | 'tag' | 'assignee' | 'remind' | 'deadline' | 'duration'
 
-/** A recognised phrase, as a span of the line. */
 export interface Chip {
   kind: ChipKind
   from: number
   to: number
 }
 
-/** The fields quick add writes. */
 export interface QuickFields {
-  /** The day the words or the picker say: a task's date, which is written as its start
-   *  date, `🛫` (#371, `@orden/markdown/task-dates`). Its deadline is `deadline`. */
   due?: string
   time?: string
   recurrence?: string
@@ -51,31 +32,21 @@ export interface QuickFields {
 }
 
 export interface QuickAdd {
-  /** The words, every chip taken out. */
   text: string
   fields: QuickFields
-  /** `>Note`, as written: the note's name or path, without `.md`. */
   note?: string
-  /** `/Heading` after it. */
   heading?: string
   chips: Chip[]
 }
 
 export interface QuickAddOptions {
-  /** Spans turned back into words: nothing overlapping one is read. */
   keep?: readonly { from: number; to: number }[]
-  /** Characters the line was written with escaped, `#` where a task says `\#tips`:
-   *  words, never read, and not a tag either the way a tag turned back is, since the
-   *  line keeps its escape. */
   escaped?: readonly { from: number; to: number }[]
-  /** The space's notes, by name or path without `.md`: a `>` name with spaces in it is
-   *  the longest of these it matches. */
   notes?: readonly string[]
 }
 
 const GRAMMARS: Record<string, Grammar> = { en: EN, 'en-us': EN_US, de: DE }
 
-/** The tables to read with: the app's language, then English. */
 function grammarsFor(langs: readonly string[]): Grammar[] {
   const out: Grammar[] = []
   for (const lang of [...langs, 'en']) {
@@ -86,14 +57,10 @@ function grammarsFor(langs: readonly string[]): Grammar[] {
   return out
 }
 
-/** A phrase found, before it is known whether it is kept. */
 interface Found {
   kind: ChipKind
-  /** Words, end exclusive. */
   at: number
   end: number
-  /** The fields it fills, where that is not its kind's alone: a `when` fills the day,
-   *  the time or both. */
   slots?: readonly string[]
   apply(into: QuickAdd): void
 }
@@ -102,8 +69,6 @@ const TAG = new RegExp(String.raw`^[#@%](${TAG_NAME})$`, 'u')
 const PERSON = /^\+([\p{L}][\p{L}\p{N}\-_.]*)$/u
 const PRIORITY = /^p([1-4])$/i
 
-/** `>Note`, `>Folder/Note`, `>"Moving flat"`, `>Moving flat` where the space has that
- *  note, and `/Heading` after any of them. */
 function whereAt(words: readonly Word[], at: number, notes: readonly string[]): Found | null {
   const first = words[at]?.raw ?? ''
   if (!first.startsWith('>') || first.length < 2) return null
@@ -119,7 +84,6 @@ function whereAt(words: readonly Word[], at: number, notes: readonly string[]): 
     }
     name = name.slice(1, -1)
   } else {
-    // The longest name of the space's that the words from here spell.
     for (let count = Math.min(words.length - at, 8); count > 1; count--) {
       const said = [name, ...words.slice(at + 1, at + count).map((one) => one.raw)].join(' ')
       if (notes.some((note) => note.toLowerCase() === said.toLowerCase())) {
@@ -150,7 +114,6 @@ function whereAt(words: readonly Word[], at: number, notes: readonly string[]): 
   }
 }
 
-/** `!30m`, `!1h`, `!9am`, `!9:00`, `!tomorrow 9am`, `!9 Uhr`, as reminders. */
 function remindAt(words: readonly Word[], at: number, g: Grammar, clock: Clock): Found | null {
   const first = words[at]
   if (!first?.key.startsWith('!') || first.key.length < 2) return null
@@ -167,7 +130,6 @@ function remindAt(words: readonly Word[], at: number, g: Grammar, clock: Clock):
     }
   }
 
-  // The rest read as a phrase of its own, with the `!` taken off its first word.
   const shown = [
     { ...first, raw: first.raw.slice(1), key: first.key.slice(1) },
     ...words.slice(at + 1),
@@ -187,7 +149,6 @@ function remindAt(words: readonly Word[], at: number, g: Grammar, clock: Clock):
   }
 }
 
-/** `{fri}`, `{oct 10}`, `{Fr}`: a deadline. */
 function deadlineAt(words: readonly Word[], at: number, g: Grammar, clock: Clock): Found | null {
   const first = words[at]
   if (!first?.raw.startsWith('{')) return null
@@ -207,7 +168,6 @@ function deadlineAt(words: readonly Word[], at: number, g: Grammar, clock: Clock
   return { kind: 'deadline', at, end: close + 1, apply: (into) => (into.fields.deadline = date) }
 }
 
-/** `for 45m`, `for 1h30`, `for 2 hours`, `für 45 Min`, `1,5 Std`: minutes. */
 function durationAt(words: readonly Word[], at: number, g: Grammar): Found | null {
   const lead = g.lasting.has(bare(words[at])) ? 1 : 0
   if (!lead && !g.bareDuration) return null
@@ -217,7 +177,6 @@ function durationAt(words: readonly Word[], at: number, g: Grammar): Found | nul
   let read = false
   for (let part = 0; part < 2; part++) {
     const key = words[index]?.key ?? ''
-    // `45m`, `1h30`, `1h30m`, `1.5h`, written as one word.
     const glued = /^(?:(\d+(?:[.,]\d+)?)h)?(?:(\d+)(?:m|min)?)?$/.exec(key)
     if (glued && key !== '' && (glued[1] !== undefined || /m(?:in)?$/.test(key))) {
       minutes +=
@@ -226,7 +185,6 @@ function durationAt(words: readonly Word[], at: number, g: Grammar): Found | nul
       index++
       continue
     }
-    // `45 min`, `1,5 Std`, `2 hours`, `an hour`.
     const count = /^\d+(?:[.,]\d+)?$/.test(key)
       ? Number(key.replace(',', '.'))
       : (g.numbers[bare(words[index])] ?? null)
@@ -236,12 +194,10 @@ function durationAt(words: readonly Word[], at: number, g: Grammar): Found | nul
     read = true
     index += 2
   }
-  // A bare German span is only one with its unit written out: `1,5 Std`, not `3`.
   if (!read || minutes <= 0 || minutes > 1440 || (!lead && index - at < 2)) return null
   return { kind: 'duration', at, end: index, apply: (into) => (into.fields.duration = minutes) }
 }
 
-/** One word's own fields: a tag, a person, a priority. */
 function wordAt(words: readonly Word[], at: number): Found | null {
   const raw = words[at]?.raw ?? ''
   const key = words[at]?.key ?? ''
@@ -270,8 +226,6 @@ function wordAt(words: readonly Word[], at: number): Found | null {
   return null
 }
 
-/** Everything that can stand at word `at`, in one language: the longest, the kinds
- *  with a mark of their own first. */
 function foundAt(
   words: readonly Word[],
   at: number,
@@ -297,9 +251,7 @@ function foundAt(
       slots: ['repeat'],
       apply(into) {
         into.fields.recurrence = text
-        // A time said beside the rule is the time; `every morning` only gives one.
         if (time && into.fields.time === undefined) into.fields.time = time
-        // The rule's first day where no phrase names one, or the one `starting` names.
         if (into.fields.due === undefined || first) {
           const from = first ?? clock.today
           into.fields.due = nextDate(rule, from, addDays(from, -1)) ?? from
@@ -326,17 +278,13 @@ function foundAt(
   }
 }
 
-/** Whether a span of the line was turned back into words. */
 const kept = (keep: readonly { from: number; to: number }[], from: number, to: number): boolean =>
   keep.some((span) => span.from < to && span.to > from)
 
-/** The fields each phrase fills: its kind's, or the day and the time a `when` named. */
 const slotsOf = (one: Found): readonly string[] => one.slots ?? [one.kind]
 
-/** Kinds every phrase of counts, rather than the last. */
 const MANY = new Set<string>(['tag', 'remind'])
 
-/** The phrases that stand: of the ones saying the same field, the last. */
 function standing(found: readonly Found[]): Found[] {
   const last = new Map<string, Found>()
   for (const one of found) for (const slot of slotsOf(one)) last.set(slot, one)
@@ -345,7 +293,6 @@ function standing(found: readonly Found[]): Found[] {
   )
 }
 
-/** The line, read. `now` is the reader's wall clock; `langs` the app's language first. */
 export function parseQuickAdd(
   text: string,
   langs: readonly string[],
@@ -378,12 +325,9 @@ export function parseQuickAdd(
 
   const chosen = standing(found)
   const result: QuickAdd = { text: '', fields: { tags: [], remind: [] }, chips: [] }
-  // In the order they were typed, a repeat after every day said, so a day said beside
-  // a rule is its first.
   for (const one of chosen) if (one.kind !== 'repeat') one.apply(result)
   for (const one of chosen) if (one.kind === 'repeat') one.apply(result)
 
-  // A time and no day: today's, or tomorrow's once today's has gone by.
   const { time } = result.fields
   if (time && result.fields.due === undefined) {
     const minutes = Number(time.slice(0, 2)) * 60 + Number(time.slice(3))
@@ -397,8 +341,6 @@ export function parseQuickAdd(
   }))
   result.text = wordsLeft(text, result.chips)
 
-  // A tag turned back into words is still a tag: the note will read it as one. One
-  // the line escaped is not, as the note does not.
   const notTags = new Set(escapedTags(text, escaped))
   for (const tag of tagsIn(result.text)) {
     if (!notTags.has(tag) && !result.fields.tags.includes(tag)) result.fields.tags.push(tag)
@@ -406,7 +348,6 @@ export function parseQuickAdd(
   return result
 }
 
-/** The names of the tags whose `#` the line escaped. */
 function escapedTags(text: string, escaped: readonly { from: number }[]): string[] {
   const out: string[] = []
   for (const { from } of escaped) {
@@ -418,7 +359,6 @@ function escapedTags(text: string, escaped: readonly { from: number }[]): string
 
 const ESCAPED_TAG = new RegExp(String.raw`^#(${TAG_NAME})`, 'u')
 
-/** The line with every chip taken out, the blanks they leave closed up. */
 function wordsLeft(text: string, chips: readonly Chip[]): string {
   let left = ''
   let at = 0

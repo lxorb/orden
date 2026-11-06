@@ -1,30 +1,14 @@
-/** Templates: a note whose words a new note starts from, with Obsidian's core
- *  Templates plugin's placeholders filled in, and a template that makes its own note
- *  on a schedule (docs/tasks.md 5.13).
- *
- *  `{{title}}`, `{{date}}`, `{{time}}` and `{{date:YYYY-MM-DD}}` are Obsidian's;
- *  `{{date+7d}}` (and `-`, with `d`, `w`, `M`, `y`) is Orden's, so a project template
- *  can write its tasks' dates relative to the day it is used: `📅 {{date+7d}}`.
- *
- *  A repeating template says `repeat: every Monday` in its front matter. Whoever runs
- *  Orden on a day the rule names makes the note; a stretch Orden was closed for makes one
- *  note, not one per missed week, with the missed days listed in it. The template
- *  keeps the last day it made a note for in `made:`, which syncs, so two devices agree
- *  on whether this week's is made. Pure: the day and the time come in. */
-
 import { writeProperty } from '@orden/markdown/property-edits'
 import { addDays, addMonths, formatDate } from './dates'
 import { nextDate, parseRule } from './recurrence'
 import type { Value } from './types'
 
-/** What a placeholder is filled with. `time` is `HH:mm`. */
 export interface Filling {
   title: string
   today: string
   time: string
 }
 
-/** A day moved by `+7d`, `-1w`, `+1M`, `+1y`. */
 function shifted(today: string, by: string | undefined): string {
   if (!by) return today
   const found = /^([+-])(\d+)([dwMy])$/.exec(by)
@@ -44,7 +28,6 @@ function shifted(today: string, by: string | undefined): string {
 
 const PLACEHOLDER = /\{\{\s*(title|date|time)\s*([+-]\d+[dwMy])?\s*(?::([^}]*))?\}\}/g
 
-/** A template's words with every placeholder filled. One it does not know is kept. */
 export function fillTemplate(text: string, filling: Filling): string {
   return text.replace(
     PLACEHOLDER,
@@ -58,21 +41,17 @@ export function fillTemplate(text: string, filling: Filling): string {
   )
 }
 
-/** The front matter keys that are the template's own and never the note's. */
 const TEMPLATE_KEYS = ['repeat', 'made', 'folder'] as const
 
-/** A template's words as a note's: its own keys taken off its front matter. */
 export function withoutTemplateKeys(text: string): string {
   let out = text
   for (const key of TEMPLATE_KEYS) {
     const edit = writeProperty(out, key, null)
     if (edit) out = out.slice(0, edit.from) + edit.insert + out.slice(edit.to)
   }
-  // A front matter block left with nothing in it goes too.
   return out.replace(/^---\r?\n---\r?\n(\r?\n)?/, '')
 }
 
-/** A day a property holds, as `YYYY-MM-DD`. */
 function dayIn(value: Value | undefined): string | null {
   if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10)
   if (value && typeof value === 'object' && !Array.isArray(value) && value.kind === 'date')
@@ -80,9 +59,6 @@ function dayIn(value: Value | undefined): string | null {
   return null
 }
 
-/** What a repeating template owes on `today`: the day its note is for and the days
- *  it missed before that, oldest first; null when nothing is due. A template that never
- *  made a note starts with the first day its rule names from today on. */
 export function repeatDue(
   note: Record<string, Value>,
   today: string,

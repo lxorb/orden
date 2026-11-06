@@ -1,13 +1,8 @@
-/** The summary under a column: Bases' defaults by name (Average, Min, Max, Sum,
- *  Range, Median, Stddev, Earliest, Latest, Checked, Unchecked, Empty, Filled,
- *  Unique), or a base's own formula over `values`. */
-
 import { msOf } from './dates'
 import { compile, scopeFor } from './expr/compile'
 import { asDate, equal, settled, type Scope, sortCompare, type Val } from './expr/runtime'
 import type { Context, DateValue, Value } from './types'
 
-/** The names Bases ships, which a view's `summaries` refers to by name. */
 export const DEFAULT_SUMMARIES = [
   'Average',
   'Min',
@@ -96,8 +91,6 @@ function defaultSummary(name: string, values: readonly Val[], scope: Scope): Val
   }
 }
 
-/** A column's summary: a default by name, else the base's own formula of that
- *  name over `values`. Null where the formula fails or the name is nobody's. */
 export function summarize(
   name: string,
   values: readonly Val[],

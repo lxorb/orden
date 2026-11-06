@@ -1,14 +1,3 @@
-/** What an expression works with while it runs, and the rules every operator and
- *  method shares: what is true, what is equal, what comes first, what a value says
- *  as words.
- *
- *  Beyond the values a property can hold (types.ts), an expression meets a file
- *  (`file`, `this`, `link.asFile()`), the note's properties as a whole (`note`),
- *  a task (`task`), a regular expression, and the things a view draws rather than
- *  reads (`image()`, `icon()`, `html()`). Those are classes here, so a check of
- *  which one a value is cannot be fooled by a property that happens to hold an
- *  object with the same keys. */
-
 import { addMonths, dateAt, dayNumber, msOf, readDate } from '../dates'
 import { BasesError } from '../errors'
 import { spend, stepsOfText } from './pattern'
@@ -23,40 +12,32 @@ import type {
   ValueRecord,
 } from '../types'
 
-/** A file an expression holds: `file`, `this.file`, `link.asFile()`. */
 export class FileRef {
   constructor(readonly row: Row) {}
 }
 
-/** `note`: the front matter of the row, readable by `note.key` and `note["a key"]`. */
 export class NoteRef {
   constructor(readonly row: Row) {}
 }
 
-/** `this`: the embedding note. Its `file` is a file, anything else a property. */
 export class ThisRef {
   constructor(readonly row: Row) {}
 }
 
-/** `task`: a task row's fields. */
 export class TaskRef {
   constructor(readonly row: Row) {}
 }
 
-/** `image()`, `icon()`, `html()`: values a view draws. */
 export class Rendered {
   constructor(readonly value: RenderedValue) {}
 }
 
 export type Val = Value | FileRef | NoteRef | ThisRef | TaskRef | Rendered | RegExp
 
-/** Where an expression runs: the row, the context, and the names a list method
- *  binds (`value`, `index`, `acc`) or a summary does (`values`). */
 export interface Scope {
   row: Row | null
   context: Context
   locals: Record<string, Val> | null
-  /** The formula of this name on this row, evaluated once. */
   formula: (name: string, row: Row) => Val
 }
 
@@ -73,21 +54,15 @@ export function isLink(value: Val): value is LinkValue {
 }
 
 function isRecordLike(value: Val): value is ValueRecord {
-  // A value a property holds is a plain object; every class an expression makes
-  // (a file, a pattern, a list) has a prototype of its own. One check, asked of
-  // every date in every comparison of every row.
   if (value === null || typeof value !== 'object') return false
   const prototype: unknown = Object.getPrototypeOf(value)
   return prototype === Object.prototype || prototype === null
 }
 
-/** A plain object property, the dates, durations and links that are objects too
- *  aside. */
 export function isObject(value: Val): value is ValueRecord {
   return isRecordLike(value) && !isDate(value) && !isDuration(value) && !isLink(value)
 }
 
-/** The file a value stands for: a file, `this`, or a link that resolves to one. */
 export function fileOf(value: Val, scope: Scope): Row | null {
   if (value instanceof FileRef || value instanceof ThisRef) return value.row
   if (isLink(value) || typeof value === 'string') {
@@ -100,8 +75,6 @@ export function fileOf(value: Val, scope: Scope): Row | null {
   return null
 }
 
-/** A link target or a path, as two of them are compared when nothing resolves
- *  them: case aside, `.md` aside, `[[` and `]]` aside. */
 export function plainTarget(target: string): string {
   return target
     .replace(/^!?\[\[|\]\]$/g, '')
@@ -111,7 +84,6 @@ export function plainTarget(target: string): string {
     .toLowerCase()
 }
 
-/** Whether a link target written in `from` points at the file at `path`. */
 export function pointsAt(
   target: string,
   path: string,
@@ -128,7 +100,6 @@ export function pointsAt(
   return !wanted.includes('/') && have.slice(have.lastIndexOf('/') + 1) === wanted
 }
 
-/** Bases' truth: nothing, false, zero, an empty string and an empty list are false. */
 export function truthy(value: Val): boolean {
   if (value === null || value === false || value === 0 || value === '') return false
   if (typeof value === 'number') return !Number.isNaN(value)
@@ -136,12 +107,10 @@ export function truthy(value: Val): boolean {
   return true
 }
 
-/** The path a file-like value is at, for comparing it with a link. */
 function pathOf(value: Val): string | null {
   return value instanceof FileRef || value instanceof ThisRef ? value.row.path : null
 }
 
-/** `==`: the same value, dates by their moment, links by the file they point at. */
 export function equal(a: Val, b: Val, scope: Scope): boolean {
   if (a === b) return true
   if (a === null || b === null) return false
@@ -189,15 +158,12 @@ export function equal(a: Val, b: Val, scope: Scope): boolean {
   return false
 }
 
-/** A date, or a string that reads as one. */
 export function asDate(value: Val): DateValue | null {
   if (isDate(value)) return value
   if (typeof value === 'string') return readDate(value)
   return null
 }
 
-/** `<` and the rest: numbers, strings, dates, durations; null for two values that
- *  do not compare, which makes every comparison false, as in Bases. */
 export function compare(a: Val, b: Val): number | null {
   if (a === null || b === null) return null
   if (typeof a === 'number' && typeof b === 'number') return a - b
@@ -223,8 +189,6 @@ export function compare(a: Val, b: Val): number | null {
   return null
 }
 
-/** A duration, or a number of milliseconds, as milliseconds; months counted as
- *  thirty days, which is only ever asked when comparing. */
 function durationMs(value: Val): number | null {
   if (typeof value === 'number') return value
   if (isDuration(value)) return value.ms + value.months * 30 * 86_400_000
@@ -233,8 +197,6 @@ function durationMs(value: Val): number | null {
 
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
 
-/** The rank of each kind of value in a sort, so a column of mixed values still
- *  sorts the same way every time. Nothing sorts last. */
 function sortRank(value: Val): number {
   if (typeof value === 'boolean') return 0
   if (typeof value === 'number') return 1
@@ -244,8 +206,6 @@ function sortRank(value: Val): number {
   return 5
 }
 
-/** A total order for sorting: kinds apart, then by value, words as people read
- *  them (`file 2` before `file 10`), nothing at the end either way round. */
 export function sortCompare(a: Val, b: Val): number {
   if (a === null || b === null) return a === b ? 0 : a === null ? 1 : -1
   const rankA = sortRank(a)
@@ -284,7 +244,6 @@ export function textsOf(list: readonly Val[]): string[] {
   })
 }
 
-/** A value as words: what a cell shows, what `+` joins to a string, `toString()`. */
 export function text(value: Val): string {
   if (value === null) return ''
   if (typeof value === 'string') return value
@@ -325,9 +284,6 @@ function durationText(value: DurationValue): string {
   return parts.length ? parts.join(' ') : '0s'
 }
 
-/** The units a duration is written in, Bases' table: `y`, `M`, `w`, `d`, `h`, `m`,
- *  `s`, and their words. One letter is case-sensitive (`M` months, `m` minutes);
- *  a word is not. */
 const UNITS: Record<string, { ms: number; months: number }> = {
   y: { ms: 0, months: 12 },
   year: { ms: 0, months: 12 },
@@ -353,8 +309,6 @@ const UNITS: Record<string, { ms: number; months: number }> = {
   ms: { ms: 1, months: 0 },
 }
 
-/** `"1d"`, `"2 weeks"`, `"1M 4h"`, `"-3d"`: a duration, or null for words that are
- *  not one. */
 export function readDuration(written: string): DurationValue | null {
   const source = written.trim()
   if (source === '') return null
@@ -379,15 +333,12 @@ export function readDuration(written: string): DurationValue | null {
   return { kind: 'duration', ms: sign * ms, months: sign * months }
 }
 
-/** A duration, or words that are one. */
 function asDuration(value: Val): DurationValue | null {
   if (isDuration(value)) return value
   if (typeof value === 'string') return readDuration(value)
   return null
 }
 
-/** A date moved by a duration: the months first, the way Moment adds them, then
- *  the rest. A date with no time stays one when the rest is whole days. */
 function shifted(date: DateValue, by: DurationValue, sign: 1 | -1): DateValue {
   const moved: DateValue = {
     ...date,
@@ -405,7 +356,6 @@ function shifted(date: DateValue, by: DurationValue, sign: 1 | -1): DateValue {
   return date.zone ? { ...result, zone: date.zone } : result
 }
 
-/** `+`. */
 export function add(a: Val, b: Val): Val {
   if (typeof a === 'number' && typeof b === 'number') return a + b
   if (isDate(a)) {
@@ -428,7 +378,6 @@ export function add(a: Val, b: Val): Val {
   throw new BasesError(`Cannot add ${kindName(b)} to ${kindName(a)}`)
 }
 
-/** `-`. Two dates apart are a duration. */
 export function subtract(a: Val, b: Val): Val {
   if (typeof a === 'number' && typeof b === 'number') return a - b
   if (isDate(a)) {
@@ -446,7 +395,6 @@ export function subtract(a: Val, b: Val): Val {
   throw new BasesError(`Cannot subtract ${kindName(b)} from ${kindName(a)}`)
 }
 
-/** `*`, `/` and `%`. A duration may be on the left of a number, as Bases says. */
 export function arithmetic(op: '*' | '/' | '%', a: Val, b: Val): Val {
   if (a === null || b === null) return null
   if (typeof a === 'number' && typeof b === 'number') {
@@ -462,7 +410,6 @@ export function arithmetic(op: '*' | '/' | '%', a: Val, b: Val): Val {
   throw new BasesError(`Cannot use ${op} on ${kindName(a)} and ${kindName(b)}`)
 }
 
-/** What kind a value is, in the words `isType()` takes. */
 export function kindName(value: Val): string {
   if (value === null) return 'null'
   if (typeof value === 'string') return 'string'
@@ -479,8 +426,6 @@ export function kindName(value: Val): string {
   return 'object'
 }
 
-/** A value an expression made, as a value a cell holds: files become links to
- *  themselves, the drawn ones their own kind, a note's properties an object. */
 export function settled(value: Val): Value {
   if (value === null || typeof value !== 'object') return value
   if (Array.isArray(value)) {
@@ -496,9 +441,6 @@ export function settled(value: Val): Value {
   return value
 }
 
-/** A field of a plain object property. `isObject` has already told an object from
- *  the drawn values, which TypeScript narrows in alongside it because their shapes
- *  fit an index signature too. */
 export function fieldOf(object: ValueRecord | RenderedValue, name: string): Val {
   return Object.hasOwn(object, name) ? ((object as ValueRecord)[name] ?? null) : null
 }

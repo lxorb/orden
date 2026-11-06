@@ -1,12 +1,3 @@
-/** `add_row`, `edit_rows` and `edit_base` in their pure half: a new note made where a
- *  base would show it, front matter written on a note, and a base changed as the YAML
- *  it is written in, every key nobody named kept (docs/tasks.md 5.15).
- *
- *  Obsidian files a new card in the vault's root whatever the base's filter says, which
- *  is the complaint about it (2.3). Here a new row goes where the filter looks: the
- *  folder `file.inFolder()` names, the tags `file.hasTag()` names and the values a
- *  `prop == "value"` names, so the row it makes is a row of the view it was made from. */
-
 import { isPropertyName } from '@orden/markdown/front-matter'
 import { type ListItem, writeList, writeProperty } from '@orden/markdown/property-edits'
 import { readFilter } from '../filter'
@@ -18,19 +9,12 @@ type Args = Record<string, unknown>
 const isRecord = (value: unknown): value is Args =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
 
-/** The key a property is written under: a base's `note.status` is the note's
- *  `status`, so the prefix comes off rather than being written as a key of its own
- *  beside it. Null for a name front matter would not read back as that key (see
- *  `isPropertyName`), and for a file's or a formula's property, which no front matter
- *  holds. */
 function keyOf(name: string): string | null {
   const key = name.startsWith('note.') ? name.slice(5) : name
   if (/^(?:file|formula)\./.test(key) || !isPropertyName(key)) return null
   return key
 }
 
-/** The note's words with each property set, or taken away where it is null. A list is
- *  written as one, a number and a yes or no bare, everything else as words. */
 export function withProperties(text: string, properties: Args): string {
   let after = text
   for (const [name, value] of Object.entries(properties)) {
@@ -57,16 +41,11 @@ export function withProperties(text: string, properties: Args): string {
   return after
 }
 
-/** A list member the agent sent, as itself where a list can hold it bare: a number,
- *  a yes or no, or nothing. Words are words, and anything else is written as the JSON
- *  it came in as rather than as `[object Object]`. */
 function listItem(value: unknown): ListItem {
   if (value === null || typeof value === 'number' || typeof value === 'boolean') return value
   return typeof value === 'string' ? value : JSON.stringify(value)
 }
 
-/** The expressions every row of a view must satisfy: the base's and the view's, and
- *  each side of an `and`, never an `or` or a `not`. */
 function required(filter: Filter | undefined): string[] {
   if (filter === undefined) return []
   if (typeof filter === 'string') return [filter]
@@ -81,8 +60,6 @@ const EQUALS = new RegExp(
   String.raw`^\s*(?:note\.)?([A-Za-z_][\w-]*)\s*==\s*(?:${QUOTED}|(true|false|-?\d+(?:\.\d+)?))\s*$`,
 )
 
-/** Where a new row of a base goes and what it says, by its filters: the folder, the
- *  tags and the values a row has to have to be shown. */
 export function rowPlace(base: Base, view?: string): { folder?: string; properties: Args } {
   const chosen = view === undefined ? base.views[0] : base.views.find((one) => one.name === view)
   const properties: Args = {}
@@ -115,7 +92,6 @@ export function rowPlace(base: Base, view?: string): { folder?: string; properti
   return { ...(folder === undefined ? {} : { folder }), properties }
 }
 
-/** A note's name out of a title: what a file name may hold, at most 120 characters. */
 export function noteName(title: string): string {
   const name = title
     .replace(/[\\/:*?"<>|#^[\]]+/g, ' ')
@@ -125,8 +101,6 @@ export function noteName(title: string): string {
     .trim()
   return name.replace(/\.+$/, '') || 'Untitled'
 }
-
-// ---- edit_base -------------------------------------------------------------------------
 
 function words(value: unknown, name: string): string {
   if (typeof value !== 'string' || !value.trim())
@@ -155,14 +129,11 @@ function filterOf(value: unknown): Filter {
   return filter
 }
 
-/** A view's keys as an op says them, onto a view. */
 function viewWith(view: View, said: Args): View {
   const next: View = { ...view, nib: { ...view.nib }, options: { ...view.options } }
   if (said.type !== undefined) next.type = words(said.type, 'type')
   if (said.name !== undefined) next.name = words(said.name, 'name')
   if (said.filters !== undefined) {
-    // Filters Orden could not read are kept as written only until the view is given
-    // its own, and none is its own too; see `viewPlain` in base-file.ts.
     delete next.options.filters
     if (said.filters === null) delete next.filters
     else next.filters = filterOf(said.filters)
@@ -196,7 +167,6 @@ function viewWith(view: View, said: Args): View {
   return next
 }
 
-/** The view an op names, by name, or the first where it names none. */
 function named(base: Base, said: Args): number {
   if (said.view === undefined && said.name === undefined) return 0
   const name = typeof said.view === 'string' ? said.view : said.name
@@ -205,7 +175,6 @@ function named(base: Base, said: Args): number {
   return at
 }
 
-/** The base with each op made, in order. Answers a new Base, never the one handed in. */
 export function editedBase(base: Base, ops: unknown): Base {
   if (!Array.isArray(ops) || !ops.length)
     throw new AgentError('bad_arguments', 'ops is a list of edits')
@@ -254,7 +223,6 @@ export function editedBase(base: Base, ops: unknown): Base {
       }
       case 'set_filter': {
         if (raw.view === undefined) {
-          // As a view's: the unreadable filters go once the base is given its own.
           next = { ...next, kept: { ...next.kept } }
           delete next.kept.filters
           if (raw.filter === null) delete next.filters

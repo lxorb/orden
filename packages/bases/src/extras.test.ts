@@ -1,5 +1,3 @@
-/** Lane 7's engine: ids, automations, templates, colour, buttons and CSV. */
-
 import { describe, expect, test } from 'vitest'
 import { fired, inBase, readAutomations, withAutomations } from './automations'
 import { readBase, writeBase } from './base-file'
@@ -38,14 +36,11 @@ describe('unique ids', () => {
   })
 
   test('two devices that disagree on when the rows were made renumber the same one, and settle', () => {
-    // ctime is each disk's own birth time, which sync does not carry: A made X and B
-    // made Y offline, so each device thinks the other's note is the younger.
     const paths = ['Bugs/X.md', 'Bugs/Y.md', 'Bugs/Z.md']
     const ctimes = {
       A: { 'Bugs/X.md': 1, 'Bugs/Y.md': 3, 'Bugs/Z.md': 5 },
       B: { 'Bugs/X.md': 4, 'Bugs/Y.md': 2, 'Bugs/Z.md': 6 },
     }
-    // What has synced: every note's id, the same on both devices.
     let ids: Record<string, string> = Object.fromEntries(paths.map((path) => [path, 'BUG-45']))
     const seenOn = (device: 'A' | 'B') => [
       ...bugs,
@@ -58,7 +53,6 @@ describe('unique ids', () => {
       const a = idRepairs(seenOn('A'), 'id', 'BUG', false)
       const b = idRepairs(seenOn('B'), 'id', 'BUG', false)
       expect(a.map((one) => [one.row.path, one.id])).toEqual(b.map((one) => [one.row.path, one.id]))
-      // Each device writes its repairs; the sync then carries both.
       const next = { ...ids }
       for (const one of [...a, ...b]) next[one.row.path] = one.id
       ids = next
@@ -120,7 +114,6 @@ describe('unique ids', () => {
   })
 
   test('devices that spell a name differently on disk still pick the same twin', () => {
-    // A `:` is `_` on a Mac and on Windows, and a Mac may hold a name decomposed.
     const spelled = {
       linux: { X: 'Bugs/Meeting: Q3.md', Y: 'Bugs/MeetingA.md', Z: 'Bugs/\u00dcbel.md' },
       mac: { X: 'Bugs/Meeting_ Q3.md', Y: 'Bugs/MeetingA.md', Z: 'Bugs/U\u0308bel.md' },
@@ -204,7 +197,6 @@ nib:
   test('fires once per change: an edit to a row already Done fires nothing', () => {
     const renamed = noteRow('Bugs/Crash.md', 'status: Done\nowner: Lucile\npriority: high')
     expect(fired(automations, done, renamed, filling)).toBeNull()
-    // Looking again at the same row is no change at all.
     expect(fired(automations, done, done, filling)).toBeNull()
   })
 

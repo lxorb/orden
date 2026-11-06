@@ -1,8 +1,3 @@
-/** Bases' filters: an expression, or `and`, `or` and `not` of filters to any depth,
- *  compiled to one test per row. `not` is "none of these are true", which is how
- *  Bases' own filter menu reads it. A row whose expression fails (a method on the
- *  wrong kind of value) is left out rather than stopping the view. */
-
 import { compile } from './expr/compile'
 import { type Scope, truthy } from './expr/runtime'
 import type { Context, Filter, Row } from './types'
@@ -10,9 +5,7 @@ import { scopeFor } from './expr/compile'
 
 export interface CompiledFilter {
   test: (scope: Scope) => boolean
-  /** Whether the test reads the row, today, now and `this` alone. */
   local: boolean
-  /** Whether it reads the clock, not only the day. */
   clock: boolean
 }
 
@@ -53,8 +46,6 @@ function compileOne(filter: Filter): CompiledFilter {
   }
 }
 
-/** Several filters that must all hold: the base's and the view's. Throws a
- *  BasesError for an expression that does not parse. */
 export function compileFilters(...filters: (Filter | undefined)[]): CompiledFilter {
   const present = filters.filter((one): one is Filter => one !== undefined)
   if (!present.length) return ALWAYS
@@ -62,14 +53,11 @@ export function compileFilters(...filters: (Filter | undefined)[]): CompiledFilt
   return compileOne({ and: present })
 }
 
-/** A filter as a test of one row, for a caller with a single question. */
 export function compileFilter(filter: Filter): (row: Row, context: Context) => boolean {
   const compiled = compileOne(filter)
   return (row, context) => compiled.test(scopeFor(row, context))
 }
 
-/** A filter read from YAML, checked: an expression, or one of `and`, `or` and `not`
- *  holding a list of filters. Null for anything else. */
 export function readFilter(raw: unknown): Filter | null {
   if (typeof raw === 'string') return raw
   if (typeof raw === 'number' || typeof raw === 'boolean') return String(raw)

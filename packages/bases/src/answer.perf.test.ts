@@ -5,21 +5,6 @@ import { builtinView } from './builtins'
 import { contextAt, noteRow, taskRow } from './fixtures/rows'
 import type { Row } from './types'
 
-/** What a view costs over a big space: ten thousand task rows across five thousand
- *  notes, the size docs/tasks.md budgets for, answered as Today (two filters, a
- *  formula, a grouping, two sorts) and as a table of five thousand notes (a filter,
- *  a formula, a grouping, a sort, three summaries).
- *
- *  On the machine this was written on, a Snapdragon X Elite with other agents'
- *  builds on it, measured in this runner: Today over 10,000 tasks 12 to 17 ms
- *  answered whole (5.4 to 7.5 ms bundled and run in plain Node, where the test
- *  runner's module wrapping is not in the way) and 1.5 to 2.7 ms answered again after
- *  one row changed; the notes table 8 to 15 ms whole. Counting days once per date
- *  (dates.ts) took Today from 17 to 19 ms down to 12 to 13. The clock
- *  is asked only of a run that set `NIB_PERF=1` (see search/fuzzy.perf.test.ts in
- *  the app for why); the bound is the design's, 20 ms, and a change of shape (work
- *  that grows with something other than the rows) misses it by far more than a busy
- *  machine does. */
 const CLOCKED = process.env.NIB_PERF === '1'
 
 const context = contextAt()
@@ -62,7 +47,6 @@ views:
       formula.long: Checked
 `)
 
-/** Milliseconds per call, the best of a few: the floor, which is the work. */
 function timed(run: () => unknown, times = 5): number {
   let best = Infinity
   for (let one = 0; one < times; one++) {
@@ -100,7 +84,6 @@ test('a table of five thousand notes, grouped and summarised', () => {
   const result = answer(table, 'T', notes, context)
   expect(result.groups.map((group) => group.key)).toEqual(['Doing', 'Done', 'To do'])
 
-  // A copy each time, so nothing a previous answer kept is reused.
   const whole = timed(() => answer(structuredClone(table), 'T', notes, context))
   if (CLOCKED) expect(whole).toBeLessThan(20)
 })

@@ -1,12 +1,3 @@
-/** A rule as somebody types it: `every day`, `every other week`, `every 2nd monday`,
- *  `every!`, `daily`, `jeden Tag`, `werktags`, `alle 3 Monate`, `jeden 2. Montag`,
- *  `montags`, with `starting` and `until` after it.
- *
- *  Whatever language it was typed in, the answer is a `Rule` (recurrence.ts), which
- *  is written back in the Tasks plugin's English, the words both apps read. English
- *  is handed to that reader whole, after Todoist's own ways of saying a rule the
- *  plugin's grammar does not have are said its way; German is read here. */
-
 import { type Rule, parseRule } from '../recurrence'
 import type { Grammar } from './grammar'
 import { type Clock, dayAt, timeInPart } from './when'
@@ -15,30 +6,22 @@ import { bare, type Word } from './words'
 export interface Repeat {
   end: number
   rule: Rule
-  /** The day `starting` named: the rule's first. */
   first?: string
-  /** The time a part of the day gave it: `every morning`. */
   time?: string
 }
 
-/** The longest rule the plugin's reader takes, of at most this many words. */
 const MOST_WORDS = 9
 
 const ORDINAL_EN = /^(\d{1,2})(?:st|nd|rd|th)$/
 const DAY_EN = /^(mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)(day)?s?$/
 const UNIT_EN = /^(day|week|month|year)$/
 
-/** An ordinal in figures, the way the plugin writes one: `1st`, `3rd`. */
 const figures = (count: number): string =>
   `${count}${count % 10 === 1 && count !== 11 ? 'st' : count % 10 === 2 && count !== 12 ? 'nd' : count % 10 === 3 && count !== 13 ? 'rd' : 'th'}`
 
-/** Todoist's words for a rule, in the plugin's: `every 2nd monday` is `every month on
- *  the 2nd monday`, `every last day` is `every month on the last`, `every other monday`
- *  is `every 2 weeks on monday`. */
 function pluginWords(words: readonly string[]): string {
   const [every = '', second = '', third = ''] = words
   const rest = words.slice(2).join(' ')
-  // `every 2nd week` is every two weeks, not the second of every month.
   if (ORDINAL_EN.test(second) && UNIT_EN.test(third) && words.length === 3) {
     return `${every} ${Number.parseInt(second, 10)} ${third}s`
   }
@@ -56,7 +39,6 @@ function pluginWords(words: readonly string[]): string {
   return words.join(' ')
 }
 
-/** An English rule standing at `at`, handed to the plugin's reader. */
 function englishRule(words: readonly Word[], at: number, g: Grammar): Repeat | null {
   const key = bare(words[at])
   const whole = g.rules[key]
@@ -69,8 +51,6 @@ function englishRule(words: readonly Word[], at: number, g: Grammar): Repeat | n
   const most = Math.min(words.length - at, MOST_WORDS)
   for (let count = most; count >= 2 || (count === 1 && g.everyDone.has(key)); count--) {
     const said = words.slice(at, at + count).map((word) => bare(word))
-    // `each` is `every`, `second` is `other`, which are the words the plugin reads, and
-    // `first` is `1st`.
     if (said[0] === 'each') said[0] = 'every'
     if (g.other.has(said[1] ?? '')) said[1] = 'other'
     const nth = g.ordinals[said[1] ?? '']
@@ -90,8 +70,6 @@ const emptyRule = (): Rule => ({
   whenDone: false,
 })
 
-/** The weekdays named from `at`, `Montag und Freitag`, `Mo, Fr`: how many words they
- *  took, and the days. */
 function daysFrom(words: readonly Word[], at: number, g: Grammar): { end: number; days: number[] } {
   const days: number[] = []
   let index = at
@@ -105,7 +83,6 @@ function daysFrom(words: readonly Word[], at: number, g: Grammar): { end: number
   return { end: index, days }
 }
 
-/** A German rule standing at `at`. */
 function germanRule(words: readonly Word[], at: number, g: Grammar): Repeat | null {
   const key = bare(words[at])
   const whole = g.rules[key]
@@ -120,8 +97,6 @@ function germanRule(words: readonly Word[], at: number, g: Grammar): Repeat | nu
   let index = at + 1
   const word = () => bare(words[index])
 
-  // `alle 3 Monate`, `alle drei Tage`, `jede zweite Woche`, `jede 2. Woche`.
-  // Figures with no dot after them: `2.` is the second, not every two.
   const written = g.ordinal.exec(words[index]?.key ?? '')?.[1]
   const nth = written === undefined ? g.ordinals[word()] : Number(written)
   const counted = g.numbers[word()]
@@ -142,7 +117,6 @@ function germanRule(words: readonly Word[], at: number, g: Grammar): Repeat | nu
     index++
   }
 
-  // `jeden 2. Montag`, `jeden ersten Montag`, `jeden letzten Freitag`, `jeden 15.`.
   const last = g.last.has(word())
   if ((nth !== undefined || last) && rule.every === 1) {
     index++
@@ -185,14 +159,12 @@ function germanRule(words: readonly Word[], at: number, g: Grammar): Repeat | nu
   return { end: index, rule }
 }
 
-/** A rule standing at `at`, with what follows it: `starting` a day and `until` one. */
 export function repeatAt(
   words: readonly Word[],
   at: number,
   g: Grammar,
   clock: Clock,
 ): Repeat | null {
-  // `every morning`, `jeden Abend`: every day, at that part of it.
   const part = g.every.has(bare(words[at])) ? g.partsOfDay[bare(words[at + 1])] : undefined
   if (part) {
     const later = timeInPart(words, at + 2, g, part)

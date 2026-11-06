@@ -1,11 +1,3 @@
-/** `value.method(...)`: every method of Bases' functions page, by the type of the
- *  value it is called on, and the few a list needs for summaries and rollups
- *  (`sum`, `mean`, `median`, `stddev`, `min`, `max`).
- *
- *  Arguments arrive unevaluated, as thunks, because `filter`, `map` and `reduce`
- *  run theirs once per item with `value`, `index` and `acc` bound. Every other
- *  method evaluates its arguments once, up front. */
-
 import { formatDate, msOf, readDate, relative } from '../dates'
 import { BasesError } from '../errors'
 import type { DateValue, Row, Value } from '../types'
@@ -31,7 +23,6 @@ import {
   type Val,
 } from './runtime'
 
-/** An argument not yet evaluated; list methods bind names for each item. */
 export type Arg = (locals?: Record<string, Val>) => Val
 
 const evaluated = (args: readonly Arg[]) => args.map((arg) => arg())
@@ -41,7 +32,6 @@ const number = (value: Val, method: string): number => {
   return value
 }
 
-/** `isTruthy`, `isType` and `toString`, which every value has. */
 function anyMethod(receiver: Val, name: string, args: readonly Arg[]): { value: Val } | null {
   switch (name) {
     case 'isTruthy':
@@ -58,11 +48,8 @@ function anyMethod(receiver: Val, name: string, args: readonly Arg[]): { value: 
   }
 }
 
-/** A tag as compared: `#` off, case aside. */
 const tagKey = (tag: string) => tag.replace(/^#/, '').toLowerCase()
 
-/** Whether a set of tags holds one of these, nested tags counted: `#work/nib` is
- *  under `work`. */
 function hasTag(tags: readonly string[], wanted: readonly Val[]): boolean {
   const keys = tags.map(tagKey)
   return wanted.some((one) => {
@@ -71,7 +58,6 @@ function hasTag(tags: readonly string[], wanted: readonly Val[]): boolean {
   })
 }
 
-/** Whether the row's file links to what `other` stands for. */
 function linksTo(row: Row, other: Val, scope: Scope): boolean {
   const target = fileOf(other, scope)
   if (target) return row.file.links.some((link) => pointsAt(link, target.path, row, scope.context))
@@ -204,7 +190,6 @@ function numberMethod(value: number, name: string, args: readonly Arg[]): { valu
   }
 }
 
-/** The numbers of a list, the rest left out. */
 const numbersOf = (list: readonly Val[]) =>
   list.filter((one): one is number => typeof one === 'number')
 
@@ -347,8 +332,6 @@ function objectMethod(object: Record<string, Value>, name: string): { value: Val
   }
 }
 
-/** Calls `name` on `receiver`. Null is forgiving, as a missing property is common:
- *  `isEmpty()` is true of it and every other method answers null. */
 export function callMethod(receiver: Val, name: string, args: readonly Arg[], scope: Scope): Val {
   const any = anyMethod(receiver, name, args)
   if (any) return any.value
@@ -399,7 +382,6 @@ export function callMethod(receiver: Val, name: string, args: readonly Arg[], sc
   return found.value
 }
 
-/** A list with every list inside it opened, to any depth. */
 function flattened(list: readonly Val[], out: Value[] = []): Value[] {
   spend(list.length)
   for (const one of list) {

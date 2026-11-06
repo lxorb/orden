@@ -1,28 +1,12 @@
-/** A note's front matter as values, and a task's words as the hash its anchor
- *  carries: the two things the rows store asks of the engine for every file it
- *  reads.
- *
- *  The front matter is read the cheap way first, by the properties reader the
- *  Properties panel already uses (`@orden/markdown/properties`), which is a regex
- *  per line. Only a block that reader will not draw (a comment in it, a nested
- *  list, a shape it cannot name) is handed to a real YAML parser, so five thousand
- *  ordinary notes cost five thousand small regex passes and the odd note still
- *  gets its values. */
-
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { type Property, readProperties } from '@orden/markdown/properties'
 import { isScalar, isSeq, parse, parseDocument, type Scalar, visit } from 'yaml'
 import type { Value } from './types'
 
-/** `[[target]]`, `[[target|display]]`, `![[target]]`, as a property holds one. */
 const WIKILINK = /^!?\[\[([^\]|#]*(?:#[^\]|]*)?)(?:\|([^\]]*))?\]\]$/
 
-/** A date, a date with a time, as YAML and Obsidian write them. */
 const DATE = /^(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2}(?::\d{2})?)(?:\.\d+)?(Z|[+-]\d{2}:?\d{2})?)?$/
 
-/** A scalar written in front matter, as the value it means. Written plain, that is:
- *  a value that was in quotes is `stringValue`'s, because the quotes are YAML saying
- *  "these characters", and `'007'` read as the number seven is a zip code lost. */
 export function scalarValue(written: string): Value {
   const text = written.trim()
   if (text === '' || text === 'null' || text === '~') return null
@@ -31,9 +15,6 @@ export function scalarValue(written: string): Value {
   return stringValue(text)
 }
 
-/** A string as the value it means: never nothing, a box or a number, which only a
- *  plain scalar can be, but still a link or a date, because those are strings to
- *  YAML too and Obsidian writes a link in quotes as often as not. */
 function stringValue(written: string): Value {
   const text = written.trim()
   const link = WIKILINK.exec(text)
@@ -54,12 +35,10 @@ function stringValue(written: string): Value {
   return text
 }
 
-/** A value the reader handed back with its quotes off, read the way its quotes say. */
 function readValue(text: string, quoted: boolean | undefined): Value {
   return quoted ? stringValue(text) : scalarValue(text)
 }
 
-/** A row of the properties reader as a value. */
 function propertyValue(property: Property): Value {
   const quoted = property.quotedItems ?? []
   switch (property.kind) {
@@ -80,10 +59,6 @@ function propertyValue(property: Property): Value {
   }
 }
 
-/** What a YAML parser answered, as values: strings read the way a quoted scalar is,
- *  so a link and a date mean the same whichever reader met them. Not as a plain one:
- *  the parser has already made every plain `7`, `true` and `null` what it means, so
- *  a string that still says one of them was written in quotes to stay a string. */
 function fromYaml(read: unknown): Value {
   if (read === null || read === undefined) return null
   if (typeof read === 'string') return stringValue(read)
@@ -95,9 +70,6 @@ function fromYaml(read: unknown): Value {
   return null
 }
 
-/** A note's front matter as values by key, or nothing for a note without any or
- *  with a block that is not YAML. Takes the note, or the block's lines alone
- *  without their fences, which is what the scan carries. */
 export function noteValues(text: string): Record<string, Value> {
   const source = text.startsWith('---')
     ? text
@@ -112,8 +84,6 @@ export function noteValues(text: string): Record<string, Value> {
   const block = frontMatterBlock(source)
   if (!block) return {}
   try {
-    // The core schema reads a timestamp as the string it is written as, which the
-    // scalar reader then takes for a date the way the fast path does.
     const read: unknown = parse(source.slice(block.body.from, block.body.to), { schema: 'core' })
     if (read === null || typeof read !== 'object' || Array.isArray(read)) return {}
     return Object.fromEntries(Object.entries(read).map(([key, value]) => [key, fromYaml(value)]))
@@ -128,23 +98,11 @@ export function noteValues(text: string): Record<string, Value> {
       if (read === null || typeof read !== 'object' || Array.isArray(read)) return {}
       return Object.fromEntries(Object.entries(read).map(([key, value]) => [key, fromYaml(value)]))
     } catch {
-      // A block that is not YAML holds no values; the note is still a row.
       return {}
     }
   }
 }
 
-/** Where a key's list sits in a block the properties reader will not draw (a comment
- *  line, a block scalar), with its members as written, read by YAML: what a chip put on
- *  or taken off such a list is applied to, so the members the cell showed are the ones
- *  written back. `absent` for a block that reads as YAML and holds no such key, and
- *  null wherever the list cannot be rewritten without losing something the block says:
- *  a block that is not YAML, the key twice, a comment among the members, a member that
- *  is not a single value, or a span that does not hold every member YAML reads there.
- *
- *  `from` and `to` are the key's own lines in `text`, so a rewrite replaces those and
- *  nothing else. A single value is a list of one, and a key with nothing a list of
- *  none. */
 export function listAsWritten(
   text: string,
   key: string,
@@ -160,8 +118,6 @@ export function listAsWritten(
     return null
   }
   if (whole !== null && (typeof whole !== 'object' || Array.isArray(whole))) return null
-  // The key in the note's own spelling, found the way `frontMatterEdit` finds it: in
-  // the case asked for where the note has it, else the first in another.
   const read = whole === null ? {} : (whole as Record<string, unknown>)
   const spelled =
     key in read
@@ -169,9 +125,6 @@ export function listAsWritten(
       : (Object.keys(read).find((one) => one.toLowerCase() === key.toLowerCase()) ?? key)
   const held = read[spelled]
 
-  // The key's own lines: its line, and every line after it that is indented under it
-  // or is one of its `- ` items, which YAML lets sit at the key's own margin. Cut at
-  // `\n` so the offsets stay the note's; a CRLF note's lines each keep their `\r`.
   const lines = body.split('\n')
   const opens = new RegExp(`^${spelled.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[ \\t]*:`)
   const starts = lines.flatMap((line, at) => (opens.test(line) ? [at] : []))
@@ -186,8 +139,6 @@ export function listAsWritten(
   }
   const from = block.body.from + lines.slice(0, first).reduce((sum, one) => sum + one.length + 1, 0)
   const own = lines.slice(first, last + 1)
-  // The span stops short of the last line's `\r`, which belongs to its line break, and
-  // is read without the `\r`s, which YAML takes for part of a value.
   const to = from + own.join('\n').replace(/\r$/, '').length
   const span = own.map((line) => line.replace(/\r$/, '')).join('\n')
 
@@ -226,8 +177,6 @@ export function listAsWritten(
     quoted.push(inQuotes)
   }
 
-  // Every member YAML reads under the key is in the span, or the rewrite would leave
-  // the rest behind as lines of their own.
   const members: unknown = isSeq(value) ? value.toJSON() : nodes.map((one) => (one as Scalar).value)
   const expected = held === undefined || held === null ? [] : Array.isArray(held) ? held : [held]
   if (JSON.stringify(members) !== JSON.stringify(expected)) return null

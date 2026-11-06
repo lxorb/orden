@@ -30,11 +30,9 @@ describe('a tasks fence', () => {
     ['due after 2026-09-30', ['Write report']],
     ['no due date', ['Paint', 'Someday', 'Water', 'Halfway']],
     ['has scheduled date', ['Paint']],
-    // 2026-10-04 is a Sunday: this week ends today, and the 8th is next week's.
     ['scheduled this week', []],
     ['happens next week', ['Paint']],
     ['happens last week', []],
-    // In a space of Orden's own a `📅` is a start date (#371): Write report starts today.
     ['starts before today', ['Old thing', 'Paint', 'Water', 'Halfway']],
     ['is recurring', ['Paint']],
     ['priority is highest', ['Write report']],

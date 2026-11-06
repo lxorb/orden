@@ -1,24 +1,13 @@
-/** A ` ```tasks ` fence, the Tasks plugin's query block, read as a view.
- *
- *  Obsidian users keep their lists in these: `not done`, `due before tomorrow`,
- *  `path includes Work`, `group by heading`, `sort by priority`, `limit 10`. Each
- *  line becomes a filter, a grouping, a sort or a limit of one list view of task
- *  rows, so the block is drawn as a live list in Orden instead of as code. A line
- *  this cannot read is answered back rather than guessed at, and the block keeps
- *  its source either way. */
-
 import { dateWords } from './date-words'
 import type { Base, Filter, Sort, View } from './types'
 
 export interface TasksQuery {
   base: Base
-  /** The lines Orden does not read, as written. */
   unsupported: string[]
 }
 
 const quote = (text: string) => JSON.stringify(text)
 
-/** The plugin's date fields, by the word its queries use. */
 const DATE_FIELDS: Record<string, string> = {
   due: 'task.due',
   scheduled: 'task.scheduled',
@@ -39,10 +28,8 @@ const PRIORITIES: Record<string, number> = {
   lowest: 6,
 }
 
-/** The start of this week, Monday, as an expression. */
 const MONDAY = 'today() - duration((number(today().format("E")) - 1) + "d")'
 
-/** A date or a span of dates in the plugin's words: `[from, to]`, both inclusive. */
 function span(words: string): [string, string] | null {
   const text = words.trim().toLowerCase()
   const weeks: Record<string, number> = { 'this week': 0, 'next week': 1, 'last week': -1 }
@@ -57,7 +44,6 @@ function span(words: string): [string, string] | null {
   return one && !one.clock ? [one.expression, one.expression] : null
 }
 
-/** One date line: `due before tomorrow`, `happens on 2026-10-06`, `starts after today`. */
 function dateLine(field: string, op: string, words: string): string | null {
   const dates = span(words)
   if (!dates) return null
@@ -80,11 +66,9 @@ function dateLine(field: string, op: string, words: string): string | null {
     return ['task.due', 'task.scheduled', 'task.start'].map((one) => `(${test(one)})`).join(' || ')
   const value = DATE_FIELDS[field]
   if (!value) return null
-  // A task with no start date has started, so `starts before` keeps it, as in the plugin.
   return field === 'starts' || field === 'start' ? `!${value} || (${test(value)})` : test(value)
 }
 
-/** A text field matched the plugin's way: `includes` ignores case. */
 function textLine(value: string, op: string, words: string): string | null {
   const wanted = words.trim()
   switch (op) {
@@ -112,7 +96,6 @@ const TEXT_FIELDS: Record<string, string> = {
   root: 'file.path',
 }
 
-/** One filter line as an expression, or null for one this does not read. */
 function filterLine(line: string): string | null {
   const text = line.trim().toLowerCase()
   switch (text) {
@@ -201,8 +184,6 @@ function filterLine(line: string): string | null {
   return null
 }
 
-/** `(A) AND (B)`, `(A) OR NOT (B)`, `NOT (A)`: the plugin's boolean lines, read
- *  with the filter lines inside them. */
 function booleanLine(line: string): Filter | null {
   const text = line.trim()
   if (!text.startsWith('(') && !/^not\s*\(/i.test(text)) return null
@@ -257,7 +238,6 @@ function booleanLine(line: string): Filter | null {
   }
 }
 
-/** The plugin's grouping and sorting words, as properties. */
 const PROPERTIES: Record<string, string> = {
   due: 'task.due',
   scheduled: 'task.scheduled',
@@ -282,10 +262,8 @@ const PROPERTIES: Record<string, string> = {
   urgency: 'task.priority',
 }
 
-/** Lines that only change how the plugin draws a list, which Orden draws its own way. */
 const DRAWING = /^(hide|show|short mode|full mode|short|full|explain|ignore global query|layout)\b/i
 
-/** A ` ```tasks ` fence's lines as a list view of task rows. */
 export function readTasksQuery(source: string): TasksQuery {
   const filters: Filter[] = []
   const sort: Sort[] = []

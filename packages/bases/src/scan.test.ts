@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { LONGEST_DESCRIPTION, LONGEST_TASK, scanRows } from './scan'
 
-/** The twins of the crate's cases in links.rs: the same notes, the same answers. */
 describe('what a note gives the rows of its space', () => {
   test('its task lines and the sections above them', () => {
     const { tasks } = scanRows(

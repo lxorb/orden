@@ -77,7 +77,6 @@ describe('front matter as values', () => {
       author: { kind: 'link', target: 'Frank Herbert' },
     }
     expect(noteValues(`---\n${quoted.join('\n')}\n---\n`)).toEqual(expected)
-    // The same block with a comment in it goes the YAML way, and has to agree.
     expect(noteValues(`---\n# c\n${quoted.join('\n')}\n---\n`)).toEqual(expected)
   })
 
@@ -108,7 +107,6 @@ describe('a task hash', () => {
 })
 
 describe('a block list rewritten with a chip', () => {
-  /** The note with `z` put on `ids`, as YAML reads it back. */
   function readBack(note: string): unknown {
     const ids = readProperties(note)?.find((one) => one.key === 'ids')
     const items = ids ? withItem(ids, 'z') : null
@@ -123,7 +121,6 @@ describe('a block list rewritten with a chip', () => {
     expect(readBack('---\nids:\n  - a\n  - e # note\n  - 007\n---\n')).toEqual(['a', 'e', 7, 'z'])
     expect(readBack('---\nids:\n- - x\n- b\n---\n')).toEqual([['x'], 'b', 'z'])
     expect(readBack('---\nids:\n  - a, b\n  - c: d\n---\n')).toEqual(['a, b', { c: 'd' }, 'z'])
-    // A quoted member with a comment after it: the quotes do not end the member.
     expect(readBack('---\nids:\n  - "x" # see "y"\n  - b\n---\n')).toEqual(['x', 'b', 'z'])
     expect(readBack("---\nids:\n  - 'x' # it's 'y'\n  - b\n---\n")).toEqual(['x', 'b', 'z'])
   })

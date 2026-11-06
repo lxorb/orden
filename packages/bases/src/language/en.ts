@@ -1,6 +1,3 @@
-/** English, as quick add reads it: Todoist's words, and the Tasks plugin's for a
- *  rule. See grammar.ts for what each row is. */
-
 import type { Grammar } from './grammar'
 
 const days: [number, string[]][] = [
@@ -34,13 +31,11 @@ const byName = (rows: [number, string[]][]) =>
 export const EN: Grammar = {
   lang: 'en',
   today: ['today', 'tod'],
-  // Not `tom`: that is somebody's name far more often than it is tomorrow.
   tomorrow: ['tomorrow', 'tmr', 'tmrw'],
   dayAfter: [['day', 'after', 'tomorrow']],
   yesterday: ['yesterday'],
 
   weekdays: byName(days),
-  // Words of their own: "sit in the sun", "wed in May", "sat down".
   shortDays: new Set(['sun', 'sat', 'wed']),
   context: new Set(['on', 'next', 'this', 'by', 'due', 'until', 'starting', 'from', 'every']),
 
@@ -127,11 +122,9 @@ export const EN: Grammar = {
   bareDuration: false,
 
   ordinal: /^(\d{1,2})(?:st|nd|rd|th)$/,
-  // `second` is `other`, as German's `zweite` is: `every second week` is every two.
   ordinals: { first: 1, third: 3, fourth: 4, fifth: 5 },
   articles: new Set(['the']),
   monthFirst: false,
 }
 
-/** American English: `6/10` is the tenth of June. */
 export const EN_US: Grammar = { ...EN, lang: 'en-US', monthFirst: true }

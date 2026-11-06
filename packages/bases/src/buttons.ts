@@ -1,23 +1,3 @@
-/** A base's buttons: a column whose cell is a button, Notion's button property
- *  without a scripting language (docs/tasks.md 5.13). Kept under `nib.buttons`, a
- *  column named `button.<name>` in a view's `order`; Obsidian draws that column empty,
- *  which is the graceful version of a button it cannot press.
- *
- *  ```yaml
- *  nib:
- *    buttons:
- *      Done:
- *        set: { status: Done, finished: "{{date}}" }
- *      Follow up:
- *        task: "Follow up with {{title}} tomorrow"
- *        command: app.tasks
- *        open: https://example.com
- *  ```
- *
- *  A press sets properties on its row, adds a task to its note, runs a palette command
- *  and opens an address, in that order, whichever it says; the sets and the task are
- *  one write. Pure: what a press does is answered here and done by the app. */
-
 import type { Base, Value } from './types'
 import { scalarValue } from './note-values'
 import { fillTemplate, type Filling } from './templates'
@@ -41,12 +21,10 @@ const word = (value: unknown): string | undefined =>
     ? String(value)
     : undefined
 
-/** How a view's `order` names a button's column. */
 export const BUTTON = 'button.'
 
 export const isButton = (column: string): boolean => column.startsWith(BUTTON)
 
-/** The buttons a base keeps, by name. */
 export function readButtons(base: Base): Button[] {
   const raw = base.nib.kept.buttons
   if (!isPlain(raw)) return []
@@ -71,7 +49,6 @@ export function readButtons(base: Base): Button[] {
   })
 }
 
-/** The base with a button made, changed or (null) taken away, a new base. */
 export function withButton(base: Base, name: string, button: Button | null): Base {
   const kept = { ...base.nib.kept }
   const all: Plain = isPlain(kept.buttons) ? { ...kept.buttons } : {}
@@ -90,7 +67,6 @@ export function withButton(base: Base, name: string, button: Button | null): Bas
   return { ...base, nib: { ...base.nib, kept } }
 }
 
-/** What one press does on a row called `title`. */
 export interface Press {
   set: Record<string, Value | null>
   task?: string

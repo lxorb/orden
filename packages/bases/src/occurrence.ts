@@ -1,18 +1,3 @@
-/** Ticking a task, as one set of edits to its note: the box, the done date, the
- *  open sub-tasks under it, and for a recurring task its next occurrence.
- *
- *  What the Tasks plugin does, so both apps agree on the file: the next occurrence
- *  is a new open line written above the ticked one (the plugin's default), every
- *  date moved by the same number of days so the gaps between them stay; the ticked
- *  line keeps its place and gets `✅` and today, and is the history. `when done`
- *  (Todoist's `every!`) counts from today. Unlike the plugin, past occurrences are
- *  skipped as Todoist skips them, so a daily task a week overdue comes back
- *  tomorrow rather than six days ago; `skipPast: false` gives the plugin's date.
- *
- *  Every answer here is a list of edits with offsets into the note as it was, in
- *  order and never overlapping, so the caller applies them as one transaction and
- *  one undo takes them all back. */
-
 import type { TextEdit } from '@orden/markdown/edits'
 import { changedTask, type TaskChange, writeTask } from '@orden/markdown/task-edits'
 import { parseTask, readTask, type TaskFields } from '@orden/markdown/task-line'
@@ -20,22 +5,16 @@ import { addDays, dayNumber, todayOf } from './dates'
 import { nextDate, parseRule } from './recurrence'
 
 export interface OccurrenceOptions {
-  /** Skip occurrences already past, as Todoist does. On by default. */
   skipPast?: boolean
-  /** Write a `➕` created date on the new line, the plugin's setting. */
   created?: boolean
 }
 
-/** The date a rule counts from: due, else scheduled, else start, the plugin's order,
- *  else a deadline, which a task with no other date repeats by. */
 function referenceOf(task: TaskFields): string | undefined {
   return task.due ?? task.scheduled ?? task.start ?? task.deadline
 }
 
 const later = (a: string, b: string) => (a > b ? a : b)
 
-/** The task's next occurrence: open, its dates moved together. Null for a task
- *  that does not repeat, a rule that cannot be read, or one past its `until`. */
 export function nextOccurrence(
   task: TaskFields,
   today: string,
@@ -64,7 +43,6 @@ export function nextOccurrence(
   return shiftedBy(next, dayNumber(date) - dayNumber(reference))
 }
 
-/** Every date of a task moved by a number of days. */
 function shiftedBy(task: TaskFields, days: number): TaskFields {
   const moved = { ...task }
   for (const field of ['due', 'scheduled', 'start', 'deadline'] as const) {
@@ -77,7 +55,6 @@ function shiftedBy(task: TaskFields, days: number): TaskFields {
   return moved
 }
 
-/** The change that turns one set of fields into another. */
 function changeBetween(before: TaskFields, after: TaskFields): TaskChange {
   const change: TaskChange = {}
   const fields = [
@@ -99,7 +76,6 @@ function changeBetween(before: TaskFields, after: TaskFields): TaskChange {
   return change
 }
 
-/** A note's lines with where each starts. */
 function linesOf(note: string): { text: string; from: number }[] {
   const out: { text: string; from: number }[] = []
   let from = 0
@@ -112,8 +88,6 @@ function linesOf(note: string): { text: string; from: number }[] {
 
 const indentOf = (line: string) => /^[ \t]*/.exec(line)?.[0].length ?? 0
 
-/** The lines under a task: everything after it indented deeper, blank lines
- *  inside included, up to the first line that is not. */
 function childrenOf(lines: readonly { text: string }[], at: number): number[] {
   const own = indentOf(lines[at]?.text ?? '')
   const out: number[] = []
@@ -131,12 +105,9 @@ function childrenOf(lines: readonly { text: string }[], at: number): number[] {
   return out
 }
 
-/** Edits of one line, moved to where the line starts in the note. */
 const placed = (edits: readonly TextEdit[], from: number): TextEdit[] =>
   edits.map((edit) => ({ from: edit.from + from, to: edit.to + from, insert: edit.insert }))
 
-/** The edits that tick the task on line `line` of the note, or open it again when
- *  it is done or cancelled. None for a line that is not a task. */
 export function tick(
   note: string,
   line: number,
@@ -183,9 +154,6 @@ export function tick(
   return edits
 }
 
-/** What a recurring task's next occurrence takes from under it: the description
- *  (the lines before its first sub-task) and its sub-tasks, open again. Comments
- *  after that stay with the occurrence they were written on. */
 function repeatedChildren(
   lines: readonly { text: string }[],
   children: readonly number[],
@@ -206,7 +174,6 @@ function repeatedChildren(
   return out
 }
 
-/** Skip: the dates move to the next occurrence and nothing is ticked. */
 export function skip(line: string, today: string, options: OccurrenceOptions = {}): TextEdit[] {
   const task = readTask(line)
   if (!task) return []
@@ -214,11 +181,8 @@ export function skip(line: string, today: string, options: OccurrenceOptions = {
   return next ? writeTask(line, changeBetween(task, { ...next, status: task.status })) : []
 }
 
-/** Complete forever: ticked, and the rule taken off, in one edit. */
 export function finish(line: string, today: string): TextEdit[] {
   return writeTask(line, { done: true, completed: today, recurrence: null })
 }
 
-/** Today on this machine's wall clock, the day a box ticked now is done on; here as
- *  well as at the package's root, for a caller that wants the tick and nothing else. */
 export { todayOf }

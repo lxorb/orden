@@ -1,17 +1,6 @@
-/** Bases' expression language, read into a tree.
- *
- *  The language is JavaScript's expressions without assignment: literals (numbers,
- *  strings in either quote, `true`, `false`, `null`, `[lists]`, `{"objects": 1}`,
- *  `/regular expressions/g`), names, `.member`, `[index]`, calls, `!` and unary
- *  minus, `* / %`, `+ -`, comparisons, `== !=`, `&&`, `||`. Obsidian documents it
- *  on its Bases syntax and functions pages; this reads exactly that and refuses
- *  the rest with where it stopped, so the formula field can say where. */
-
 import { BasesError } from '../errors'
 
 export type Node =
-  /** A string also says where its quotes stand in the source, so a rewrite can
-   *  replace just it (`renamedLiteral`). */
   | { type: 'literal'; value: null | boolean | number | string; at?: number; end?: number }
   | { type: 'regex'; pattern: string; flags: string }
   | { type: 'list'; items: Node[] }
@@ -31,7 +20,6 @@ type TokenKind = 'number' | 'string' | 'regex' | 'name' | 'punct' | 'end'
 interface Token {
   kind: TokenKind
   text: string
-  /** The value of a number or a string, the flags of a regex. */
   value?: string | number
   at: number
 }
@@ -65,8 +53,6 @@ const PUNCT = [
 const NAME_START = /[\p{L}_$]/u
 const NAME_PART = /[\p{L}\p{N}_$]/u
 
-/** Whether a `/` here starts a regular expression rather than a division: after a
- *  value it divides, anywhere else it opens a pattern. */
 function opensRegex(previous: Token | undefined): boolean {
   if (!previous) return true
   if (previous.kind === 'number' || previous.kind === 'string' || previous.kind === 'regex')
@@ -164,7 +150,6 @@ function tokens(source: string): Token[] {
   return out
 }
 
-/** Binding strength of each binary operator, weakest first. */
 const LEVELS: string[][] = [
   ['||'],
   ['&&'],
@@ -174,8 +159,6 @@ const LEVELS: string[][] = [
   ['*', '/', '%'],
 ]
 
-/** Reads an expression into its tree, or throws a BasesError saying where it
- *  stopped making sense. */
 export function parseExpression(source: string): Node {
   const list = tokens(source)
   let at = 0

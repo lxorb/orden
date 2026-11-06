@@ -1,18 +1,7 @@
-/** Dates in words, as Bases expressions: `today`, `tomorrow`, `friday`, `next
- *  mon`, `in 3 days`, `-365 days`, `+4 hours`, `oct 6`, `6. Oktober`, `6/10`,
- *  `2026-10-06`, in English and German. What Todoist's filters and the Tasks
- *  plugin's queries both say about a day; quick add's own grammar is the
- *  language tables (lane 3), which read far more.
- *
- *  Relative words stay relative (`today() + "1d"`), so a saved filter is right on
- *  every day it is read. */
-
 import { civil, isoOf, todayOf } from './dates'
 
 export interface DateWordOptions {
-  /** The app's language; `en-US` reads `6/10` as June 10, every other one as 6 October. */
   lang?: string
-  /** `YYYY-MM-DD`, for the year of a date written without one. */
   today?: string
 }
 
@@ -71,8 +60,6 @@ const TODAY = new Set(['today', 'tod', 'heute'])
 const TOMORROW = new Set(['tomorrow', 'tmr', 'tom', 'morgen'])
 const YESTERDAY = new Set(['yesterday', 'gestern'])
 
-/** The next day of the week with this ISO number (1 Monday to 7 Sunday), today
- *  counted when `fromToday`. */
 export function weekdayFrom(day: number, fromToday: boolean): string {
   const ahead = `(${day} - number(today().format("E")) + 7) % 7`
   return fromToday
@@ -80,7 +67,6 @@ export function weekdayFrom(day: number, fromToday: boolean): string {
     : `today() + duration(((${ahead}) || 7) + "d")`
 }
 
-/** A span written `4 hours`, `3 days`, `2 weeks`: Bases' duration words. */
 function spanOf(count: string, unit: string): { text: string; clock: boolean } | null {
   const word = unit.toLowerCase()
   if (/^(hours?|hrs?|h|stunden?|std)$/.test(word)) return { text: `${count}h`, clock: true }
@@ -92,8 +78,6 @@ function spanOf(count: string, unit: string): { text: string; clock: boolean } |
   return null
 }
 
-/** A date in Todoist's words as a Bases expression for that date; `clock` when it
- *  is a moment rather than a day. */
 export function dateWords(
   words: string,
   options: DateWordOptions,
@@ -123,8 +107,6 @@ export function dateWords(
   const day = DAYS[text]
   if (day !== undefined) return { expression: weekdayFrom(day, true), clock: false }
 
-  // Today on this machine's clock, not UTC's, which is a day off near midnight and
-  // so a year off on New Year's Eve and Day.
   const year = Number((options.today ?? todayOf()).slice(0, 4))
   const named =
     /^(?:([a-zäö]+)\.? (\d{1,2})(?:st|nd|rd|th)?|(\d{1,2})(?:st|nd|rd|th|\.)? ([a-zäö]+)\.?)(?:,? (\d{4}))?$/.exec(

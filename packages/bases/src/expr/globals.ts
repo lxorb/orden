@@ -1,7 +1,3 @@
-/** The global functions of Bases' functions page: `if`, `now`, `today`, `date`,
- *  `duration`, `number`, `list`, `link`, `file`, `image`, `icon`, `html`,
- *  `escapeHTML`, `max`, `min`, `random`. */
-
 import { msOf, readDate } from '../dates'
 import { BasesError } from '../errors'
 import type { Value } from '../types'
@@ -31,7 +27,6 @@ const ESCAPED: Record<string, string> = {
   "'": '&#39;',
 }
 
-/** `[[target|display]]` or a path, as a link's target. */
 function linkTarget(value: Val): string {
   if (value instanceof FileRef || value instanceof ThisRef) return value.row.file.path
   if (isLink(value)) return value.target
@@ -40,8 +35,6 @@ function linkTarget(value: Val): string {
     .replace(/\|.*$/, '')
 }
 
-/** Whether a global of this name exists, so `file` alone is the row's file and
- *  `file(...)` is the function. */
 export const GLOBALS = new Set([
   'if',
   'now',

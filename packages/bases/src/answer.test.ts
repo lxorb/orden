@@ -206,9 +206,6 @@ describe('groups', () => {
   })
 
   test("a lane keeps its column's order, not the order of a column of its name", () => {
-    // The board writes a lane's order into its column's. Here both cards once stood
-    // in the column of no status, whose order still names them, and the lane of no
-    // priority in Doing was then sorted b before a.
     const cards = [noteRow('a.md', 'status: Doing'), noteRow('b.md', 'status: Doing')]
     const view = readBase(`views:
   - type: kanban

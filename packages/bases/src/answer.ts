@@ -1,23 +1,3 @@
-/** A view of a base answered over a set of rows: which rows, in what order, in
- *  which groups, with which summaries.
- *
- *  In the order Bases applies them: the base's filters and the view's, the view's
- *  own search, the sort, the grouping and a second grouping under it, the limit,
- *  then the summaries of each group and of all of it. The limit is Notion's load
- *  limit: it cuts each group after its manual order, so a board's columns each keep
- *  their first cards instead of the sort's first rows deciding which columns empty. Groups come in the order the
- *  property's options give (empty ones included, so a board keeps a column for a
- *  status nothing has yet), then by value, and the group of rows with no value
- *  last.
- *
- *  Answering again is cheap. A compiled view keeps, per row object, whether the
- *  row passed and its sort and group keys, for as long as the context's day,
- *  clock, `this` and search stay the same. The rows store replaces a row object
- *  only when its file changed, so a second answer after one save evaluates the
- *  rows of that file and reuses every other row's work. A view whose expressions
- *  read other files (`asFile()`, backlinks) cannot keep anything and is evaluated
- *  whole, which is still a loop over closures. */
-
 import { compile, formulaReader } from './expr/compile'
 import { refusing, underGuard } from './expr/pattern'
 import { fieldOf, type Scope, settled, sortCompare, text, type Val } from './expr/runtime'
@@ -26,17 +6,14 @@ import { summarize } from './summaries'
 import type { Answer, Base, Context, Group, Row, Sort, Value, View } from './types'
 import { BasesError } from './errors'
 
-/** What a view keeps about one row while the context stays the same. */
 interface RowFacts {
   pass: boolean
   sort: Val[]
   group: Val
   sub: Val
-  /** The words the view's search looks through, read the first time a search asks. */
   words: string | null
 }
 
-/** A property of a view, as a function of the row. */
 interface Getter {
   run: (scope: Scope) => Val
   local: boolean
@@ -59,9 +36,6 @@ function getter(property: string): Getter {
     }
   } catch (error) {
     if (!(error instanceof BasesError)) throw error
-    // A property name an expression cannot spell, `note.my prop`, read as it is; a
-    // formula named so, `formula.My tasks`, read as that formula (a reverse column is
-    // named after a folder, which may have a space in it).
     if (property.startsWith('formula.')) {
       const formula = property.slice(8)
       return {
@@ -87,14 +61,11 @@ function getter(property: string): Getter {
 
 const NONE: Getter = { local: true, clock: false, run: () => null }
 
-/** The view a name or a place in the list stands for: the first when it names none. */
 export function viewOf(base: Base, view: string | number | undefined): View | undefined {
   if (typeof view === 'number') return base.views[view]
   return base.views.find((one) => one.name === view) ?? base.views[0]
 }
 
-/** A group key as text, for the map that collects groups and for the manual order
- *  and hidden groups the view keeps. */
 export function groupName(key: Value): string {
   return key === null ? '' : text(key)
 }
@@ -110,14 +81,11 @@ export function placeOfKey(key: string): { space: string | null; path: string } 
     : { space: key.slice(0, at), path: key.slice(at + 2) }
 }
 
-/** Two notes' paths in the order of the notes' names, then of the paths: a view
- *  grouped by note heads its groups by name, so they read in that order. */
 function byNoteName(a: string, b: string): number {
   const name = (path: string) => path.slice(path.lastIndexOf('/') + 1).replace(/\.md$/i, '')
   return sortCompare(name(a), name(b)) || sortCompare(a, b)
 }
 
-/** The options a property's groups come in, Orden's select options. */
 function optionOrder(base: Base, property: string | undefined): string[] {
   if (!property) return []
   const key = property.replace(/^note\./, '')
@@ -139,8 +107,6 @@ const DEFAULT_VIEW: View = {
   options: {},
 }
 
-/** A view compiled once for many answers. Throws a BasesError for a filter or a
- *  formula that does not parse. */
 export function compileView(base: Base, which?: string | number): CompiledView {
   const view = viewOf(base, which) ?? DEFAULT_VIEW
   const filter = compileFilters(base.filters, view.filters)
@@ -155,7 +121,6 @@ export function compileView(base: Base, which?: string | number): CompiledView {
     try {
       return [compile(source)]
     } catch {
-      // A formula that does not parse answers nothing, which keeps nothing stale.
       return []
     }
   })
@@ -164,8 +129,6 @@ export function compileView(base: Base, which?: string | number): CompiledView {
   const clock = filter.clock || [...formulas, ...getters].some((one) => one.clock)
 
   const kinds = view.nib.rows ?? 'notes'
-  // A board grouped by a list puts a row under each member; so does any layout grouped
-  // by a task's labels, Todoist's grouping by label (#1046).
   const fanOut =
     view.type === 'kanban' || view.type === 'board' || view.groupBy?.property === 'task.tags'
   const showCompleted = view.nib.showCompleted ?? false
@@ -272,9 +235,6 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       inner?: (members: { row: Row; facts: RowFacts }[]) => Group[],
       top = false,
     ): Group[] => {
-      /** A group's members in its manual order, cut to the limit, at the top level. A
-       *  sub-group's members come already in their group's order, where the board
-       *  writes a lane's: an order under the lane's own name is a column's. */
       const cutGroup = (inGroup: { row: Row; facts: RowFacts }[], name: string) =>
         top ? cut(ordered(inGroup, name)) : inGroup
       if (!by) {
@@ -295,8 +255,6 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       for (const one of members) {
         const said = settled(keyOf(one.facts))
         const key = spaced && typeof said === 'string' ? spacedPath(one.row.space, said) : said
-        // A board grouped by a list puts a card in the column of each of its members,
-        // Notion's multi-select board; a list of none is the group of no value.
         if (fanOut && Array.isArray(key)) {
           const each = key.filter((member) => member !== null && groupName(member) !== '')
           if (!each.length) into(null, one)
@@ -304,8 +262,6 @@ export function compileView(base: Base, which?: string | number): CompiledView {
         } else into(key, one)
       }
       const keys = [...groups.values()]
-      // The view's own column order first, then the options', then by value; the
-      // group of no value last, or first where the view says so.
       const placed = view.nib.groups ?? []
       const rank = (key: Value): number => {
         const name = groupName(key)
@@ -339,7 +295,6 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       })
     }
 
-    /** The view's manual order of a group first, in that order, the rest after. */
     const ordered = <T extends { row: Row }>(members: T[], name: string): T[] => {
       const manual = view.nib.order?.[name]
       if (!manual?.length) return members
@@ -366,24 +321,16 @@ export function compileView(base: Base, which?: string | number): CompiledView {
   return { view, answer }
 }
 
-/** How a view names a row on screen: its path, and a task's line after a `#`. */
 export function rowId(row: Row): string {
   return row.anchor ? `${row.path}#${row.anchor.line}` : row.path
 }
 
-/** How a manual order names a row: its path, and a task's words' hash after `#^`, so
- *  the order holds while lines above the task come and go. An order written before
- *  names a task by its line (`rowId`), which is still read. */
 export function orderId(row: Row): string {
   return row.anchor ? `${row.path}#^${row.anchor.hash}` : row.path
 }
 
 const compiledViews = new WeakMap<Base, Map<string | number, CompiledView>>()
 
-/** The answer of one view of a base over these rows. The view is compiled the
- *  first time a base object is asked about it and kept with that object, so a base
- *  is never changed in place: an edit makes a new one (readBase of what was
- *  written, or a copy), which is compiled afresh. */
 export function answer(
   base: Base,
   view: string | number | undefined,
@@ -413,7 +360,6 @@ function answerOf(
   return compiled.answer(rows, context)
 }
 
-/** One property of one row as the view would show it: a cell. */
 export function cellValue(base: Base, property: string, row: Row, context: Context): Value {
   const read = formulaReader(base.formulas)
   const scope: Scope = { row, context, locals: null, formula: (name, at) => read(name, at, scope) }

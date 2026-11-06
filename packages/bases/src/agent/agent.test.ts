@@ -115,7 +115,6 @@ describe('words read the way quick add reads them', () => {
 
   test('the grammar, and where the words say the task goes', () => {
     const said = read('Call mum tomorrow 4pm p1 >Errands /Later')
-    // A day said is the day it starts: `🛫` (#371).
     expect(taskLine(said.fields)).toBe('- [ ] Call mum [time:: 16:00] 🔺 🛫 2026-10-05')
     expect(said).toMatchObject({ note: 'Errands', heading: 'Later' })
   })
@@ -229,8 +228,6 @@ describe('a task changed', () => {
 describe('lists', () => {
   test('Today: overdue first, then today, open only', () => {
     const { tasks } = listTasks(rows, { view: 'today' }, context)
-    // A `📅` here is a start date (#371): the plants started yesterday, and are not
-    // overdue, so the higher priority goes first.
     expect(tasks.map((one) => one.text)).toEqual(['Call the bank', 'Water the plants'])
   })
 
@@ -364,7 +361,6 @@ describe('Today without the engine', () => {
     expect(todayTasks(many, context.today).map((row) => atOf(row))).toEqual(engine)
     expect(engine).toHaveLength(5)
 
-    // And with the tasks that have no day of their own in it (#408).
     const undated = listTasks(many, { view: 'today', undated: true }, context).tasks
     expect(todayTasks(many, context.today, true).map((row) => atOf(row))).toEqual(
       undated.map((one) => one.at),
@@ -373,8 +369,6 @@ describe('Today without the engine', () => {
   })
 })
 
-/** Filters and a limit Orden cannot read are kept as written, but only until the
- *  base or the view is given its own; clearing them is giving it none. */
 describe('a base edited where Orden could not read it', () => {
   const SOURCE =
     'filters:\n  xor:\n    - a\nviews:\n  - type: table\n    name: A\n    filters:\n      xor:\n        - b\n    limit: "10"\n'

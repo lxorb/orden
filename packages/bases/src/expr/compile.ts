@@ -1,15 +1,3 @@
-/** An expression turned into a function once, so answering a view of ten thousand
- *  rows is a loop over closures rather than ten thousand parses.
- *
- *  Each node of the tree becomes a closure over the closures of its children; the
- *  names Bases gives meaning to (`file`, `note`, `formula`, `task`, `this`) are
- *  looked up while compiling, so `note.status` is one property read per row. A
- *  compiled expression also says whether it is `local`: whether its answer
- *  depends on its row, today, now and `this` alone. An answer may keep a local
- *  expression's value for a row until the row changes; one that reads another
- *  file (`asFile()`, `file()`, backlinks) or draws a random number is asked again
- *  every time. */
-
 import { BasesError } from '../errors'
 import type { Context, Row, Value } from '../types'
 import { callGlobal, GLOBALS } from './globals'
@@ -38,25 +26,16 @@ import {
 
 type Fn = (scope: Scope) => Val
 
-/** Names a list method or a summary binds, which win over a property of the same
- *  name while they are bound. */
 const BOUND = new Set(['value', 'index', 'acc', 'values'])
 
-/** Methods and fields that read a file other than the row's own. */
 const READS_OTHERS = new Set(['asFile', 'linksTo', 'backlinks'])
 
 export interface Compiled {
   source: string
-  /** Whether the answer depends on the row, today, now and `this` alone. */
   local: boolean
-  /** Whether it reads the clock (`now()`, `relative()`), so an answer kept for a
-   *  row is good only until the minute changes. Without it, a day is the limit. */
   clock: boolean
-  /** The formulas the expression reads, by name. */
   formulas: string[]
   run: (scope: Scope) => Val
-  /** The answer for a row, as a value a cell holds. Formulas it names are the
-   *  ones given. */
   evaluate: (row: Row | null, context: Context, formulas?: Record<string, string>) => Value
 }
 
@@ -66,7 +45,6 @@ interface Facts {
   formulas: Set<string>
 }
 
-/** The calls that read the clock. */
 const CLOCK = new Set(['now', 'relative'])
 
 const literal =
@@ -118,7 +96,6 @@ function compileMember(node: Extract<Node, { type: 'member' }>, facts: Facts): F
   return (scope) => member(object(scope), name, scope)
 }
 
-/** Arguments as thunks that bind a list method's names when asked to. */
 function thunks(args: readonly Fn[], scope: Scope): Arg[] {
   return args.map(
     (arg): Arg =>
@@ -144,7 +121,6 @@ function compileCall(node: Extract<Node, { type: 'call' }>, facts: Facts): Fn {
     const name = callee.name
     if (!GLOBALS.has(name)) throw new BasesError(`There is no function ${name}()`, callee.at)
     if (name === 'file' || name === 'random') facts.local = false
-    // The day and the clock, asked of every row, without a thunk to make.
     if (name === 'today' && !args.length)
       return (scope) => ({ kind: 'date', iso: scope.context.today })
     return (scope) => callGlobal(name, thunks(args, scope), scope)
@@ -195,9 +171,6 @@ function compileNode(node: Node, facts: Facts): Fn {
     case 'member':
       return compileMember(node, facts)
     case 'index': {
-      // `formula["My tasks"]`: a formula whose name is not a word, as `note["a key"]`
-      // is a property's. Bases writes either; a rollup over a reverse column named
-      // after a folder with a space in it is the one Orden writes.
       if (
         node.object.type === 'name' &&
         node.object.name === 'formula' &&
@@ -271,9 +244,6 @@ function compileNode(node: Node, facts: Facts): Fn {
   }
 }
 
-/** A formula table for one evaluation: each formula compiled once, evaluated at
- *  most once per row, and a formula that reaches itself refused rather than
- *  looping. */
 export function formulaReader(
   formulas: Record<string, string>,
 ): (name: string, row: Row, scope: Scope) => Val {
@@ -306,7 +276,6 @@ export function formulaReader(
   }
 }
 
-/** A scope to run expressions in, with a formula table of its own. */
 export function scopeFor(
   row: Row | null,
   context: Context,
@@ -325,8 +294,6 @@ export function scopeFor(
 const MOST_KEPT = 4000
 const kept = new Map<string, Compiled>()
 
-/** Bases' expression, compiled; throws a BasesError for one that does not parse
- *  or names a function that does not exist. The same source is compiled once. */
 export function compile(source: string): Compiled {
   const known = kept.get(source)
   if (known) return known

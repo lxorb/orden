@@ -1,13 +1,3 @@
-/** One note read into rows: a row for the note, and a row for every task line in it.
- *
- *  Pure, and the only place a row is made, so a note read by the first scan of a space,
- *  the same note read again after a save, and the same note read by the account
- *  connector on the Worker come back as the same rows. The fields are read by the
- *  engine's own readers (`readTask`, `noteValues`, `taskHash`), never here: the
- *  crate and the browser hand over raw lines (see scan.ts and `scan_links` in
- *  links.rs), and this is where they meet the one parser there is. Its own entry,
- *  `@orden/bases/rows`. See docs/tasks.md 5.3. */
-
 import { findLinks } from '@orden/markdown/links'
 import { tagsIn } from '@orden/markdown/task-line'
 import { INBOX_NAME, INBOX_PATH } from './inbox'
@@ -16,22 +6,15 @@ import { type ScannedTask, scanRows, type Stamp } from './scan'
 import { fileInfo, taskRowsOf } from './task-rows'
 import type { FileInfo, Row, Value } from './types'
 
-/** What a note gives its rows: the scan's fields (the app's scan-note.ts, scan.ts). */
 export interface NoteRead {
-  /** Relative to the space, `/` between folders. */
   path: string
   front: string | null
   tasks: readonly ScannedTask[]
   stamp: Stamp | null
-  /** Folded, without `#`, each once: what the link index keeps. */
   tags: readonly string[]
   links: readonly { target: string; embed: boolean }[]
 }
 
-/** The note's row first, then its tasks in the order they are written. The space's own
- *  inbox (`INBOX_PATH`) is where tasks are kept rather than a note of the reader's: its
- *  tasks are rows, named Inbox wherever a view names a task's note, and it is no row of
- *  its own for a base of notes to list. */
 export function rowsOf(space: string, read: NoteRead): Row[] {
   const inbox = read.path === INBOX_PATH
   const file = inbox
@@ -44,9 +27,6 @@ export function rowsOf(space: string, read: NoteRead): Row[] {
   return [own, ...tasks]
 }
 
-/** A note's rows from its words alone, where no scan has read it: the account
- *  connector's notes, read off storage. Its tags are the ones its lines carry and its
- *  links every link written, folded the way the link index folds them. */
 export function rowsOfText(
   space: string,
   path: string,
@@ -59,8 +39,6 @@ export function rowsOfText(
   return rowsOf(space, { path, front: scanned.front, tasks: scanned.tasks, stamp, tags, links })
 }
 
-/** The same rows under another path: a note renamed or moved keeps everything it
- *  said and only says where it is. */
 export function movedRows(rows: readonly Row[], path: string, space: string): Row[] {
   const first = rows[0]
   if (!first) return []

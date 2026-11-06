@@ -1,19 +1,8 @@
-/** A view's conditional colour (`nib.colour`), Notion's: rules of a condition and a
- *  tone, the first that holds colouring the row.
- *
- *  The view keeps one expression answering a tone, so a reader who wants more than
- *  rules can write any expression there. The rules are written as nested `if`s,
- *  `if(status == "Done", "success", if(due < today(), "danger", null))`, and read back
- *  out of that shape; an expression of any other shape is kept and drawn as written.
- *  Pure. */
-
-/** One rule: a condition (an expression) and the tone it colours a row with. */
 export interface ColourRule {
   when: string
   tone: string
 }
 
-/** The rules as the expression a view keeps; none is no expression. */
 export function colourExpression(rules: readonly ColourRule[]): string | undefined {
   if (!rules.length) return undefined
   return rules.reduceRight(
@@ -22,9 +11,6 @@ export function colourExpression(rules: readonly ColourRule[]): string | undefin
   )
 }
 
-/** The arguments of a call whose words start right after its `(`, split at the commas
- *  outside quotes and brackets; null where the brackets do not close. Answers the
- *  arguments and where the call ends. */
 function argumentsOf(text: string, from: number): { args: string[]; end: number } | null {
   const args: string[] = []
   let depth = 0
@@ -51,7 +37,6 @@ function argumentsOf(text: string, from: number): { args: string[]; end: number 
   return null
 }
 
-/** The rules an expression was written from, or null where it is not that shape. */
 export function colourRules(expression: string | undefined): ColourRule[] | null {
   if (expression === undefined) return []
   const rules: ColourRule[] = []

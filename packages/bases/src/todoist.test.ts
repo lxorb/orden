@@ -9,10 +9,8 @@ const options = {
   isNote: (name: string) => ['work', 'thesis'].includes(name.toLowerCase()),
 }
 
-/** Todoist's documented filters, and the tree each one compiles to. */
 const TREES: [string, Filter[]][] = [
   ['today', ['task.date == today()']],
-  // Only a deadline makes a task late (#371).
   ['overdue', ['task.deadline < today()']],
   ['no date', ['!task.date']],
   ['!no date', [{ not: ['!task.date'] }]],
@@ -26,7 +24,6 @@ const TREES: [string, Filter[]][] = [
   ['date before: May 5', ['task.date < date("2026-05-05")']],
   ['date after: May 5', ['task.date > date("2026-05-05")']],
   ['date before: +4 hours', ['task.at < now() + "4h"']],
-  // Todoist's due date is the day a task starts.
   ['due before: May 5', ['task.date < date("2026-05-05")']],
   ['no deadline', ['!task.deadline']],
   ['deadline: today', ['task.deadline == today()']],
@@ -125,8 +122,6 @@ describe("Todoist's documented filters", () => {
   })
 
   test("a date with no year and no today given takes this machine's year, not UTC's", () => {
-    // Just after midnight on New Year's Day in Auckland it is still the last day
-    // of the old year in UTC, and `jan 3` is the one coming, not the one gone.
     const zone = process.env.TZ
     process.env.TZ = 'Pacific/Auckland'
     vi.useFakeTimers()
@@ -162,7 +157,6 @@ describe('what a filter it compiles to keeps', () => {
 
   test.each<[string, (string | undefined)[]]>([
     ['today', ['Write report', 'Call']],
-    // A start date past is not late; a deadline past is.
     ['overdue', ['Pay rent']],
     ['no date', ['Someday']],
     ['7 days', ['Write report', 'Paint', 'Call']],

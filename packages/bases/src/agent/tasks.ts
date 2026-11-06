@@ -1,12 +1,3 @@
-/** A task as an agent reads it and changes it: the half of `list_tasks`, `add_task` and
- *  `update_task` that both servers share, `nib mcp`'s window verbs and the account
- *  connector on the Worker (docs/tasks.md 5.15).
- *
- *  A task row goes out as the few fields it has, so a list of fifty costs a model what
- *  fifty lines would, with `at` the anchor it hands back to change one. Arguments come
- *  in from another program, so every one is read here once and refused in a sentence
- *  the model can act on. Pure: the servers read and write the notes. */
-
 import type { TaskChange } from '@orden/markdown/task-edits'
 import {
   isDate,
@@ -21,7 +12,6 @@ import {
 import { parseRule } from '../recurrence'
 import type { Row } from '../types'
 
-/** What an agent said that cannot be done, and which way to put it right. */
 export class AgentError extends Error {
   constructor(
     readonly code: 'bad_arguments' | 'not_found',
@@ -32,41 +22,31 @@ export class AgentError extends Error {
   }
 }
 
-/** A task as an agent is shown it. Everything a task does not have is left out. */
 export interface TaskOut {
-  /** `path#line:hash`: what `update_task` takes back. */
   at: string
   space: string
   text: string
-  /** The box, where it is not open: `x`, `/`, `-`... */
   status?: string
   due?: string
   scheduled?: string
   start?: string
   time?: string
   deadline?: string
-  /** Minutes. */
   duration?: number
-  /** 1 to 3, Todoist's p1 to p3; none is p4. */
   priority?: number
   recurrence?: string
   remind?: string
   tags?: string[]
   assignee?: string
-  /** The nearest heading above it. */
   section?: string
   done?: string
-  /** The line of the task it is under, where it is a sub-task. */
   parent?: number
 }
 
-/** A row's anchor as one string: the note, the line, and the hash of its words. */
 export function atOf(row: Pick<Row, 'path' | 'anchor'>): string {
   return `${row.path}#${row.anchor?.line ?? 0}:${row.anchor?.hash ?? ''}`
 }
 
-/** An anchor string read back. The path is everything before the last `#`, so a note
- *  with a `#` in its name is still found. */
 export function readAt(at: unknown): { path: string; line: number; hash: string } {
   const found = typeof at === 'string' ? /^(.+)#(\d+):([0-9a-z]+)$/.exec(at.trim()) : null
   if (!found?.[1] || found[2] === undefined || !found[3]) {
@@ -77,7 +57,6 @@ export function readAt(at: unknown): { path: string; line: number; hash: string 
 
 const priorityOut = (priority: Priority) => (priority < NO_PRIORITY ? priority : undefined)
 
-/** A task row as the agent reads it. */
 export function taskOut(row: Row): TaskOut {
   const task = row.task
   const out: TaskOut = { at: atOf(row), space: row.space, text: task?.text ?? '' }
@@ -109,8 +88,6 @@ export function taskOut(row: Row): TaskOut {
   return out
 }
 
-/** The task an anchor names among a note's rows as they are now: the one on its line
- *  with its words, else the nearest one with the same words. Null where none has them. */
 export function findTask(rows: readonly Row[], anchor: { line: number; hash: string }): Row | null {
   let best: Row | null = null
   for (const row of rows) {
@@ -121,17 +98,13 @@ export function findTask(rows: readonly Row[], anchor: { line: number; hash: str
   return best
 }
 
-// ---- the arguments -----------------------------------------------------------------
-
 type Args = Record<string, unknown>
 
 const has = (args: Args, name: string) => name in args && args[name] !== undefined
 
-/** A value as the words it says: words and numbers as written, anything else nothing. */
 const words = (value: unknown): string =>
   typeof value === 'string' ? value : typeof value === 'number' ? String(value) : ''
 
-/** A date argument: `YYYY-MM-DD`, or null to take it off. */
 function dateArg(args: Args, name: string): string | null {
   const value = args[name]
   if (value === null || value === '') return null
@@ -139,7 +112,6 @@ function dateArg(args: Args, name: string): string | null {
   throw new AgentError('bad_arguments', `${name} is a date, YYYY-MM-DD, or null`)
 }
 
-/** `p1`, `1`, `"p1"`: 1 to 4, Todoist's numbers. */
 function priorityArg(value: unknown): Priority {
   if (value === null) return NO_PRIORITY
   const number = typeof value === 'string' ? Number(value.trim().replace(/^p/i, '')) : value
@@ -162,8 +134,6 @@ function tagsArg(value: unknown): string[] {
   return [...new Set(list.map((one: string) => one.trim().replace(/^#/, '')).filter(Boolean))]
 }
 
-/** What `update_task` changes, read off its arguments. `done` is the caller's: ticking
- *  is an edit of the note, not of the line. */
 export function taskChange(args: Args): TaskChange {
   const change: TaskChange = {}
   for (const name of ['due', 'scheduled', 'start', 'deadline'] as const) {
@@ -225,7 +195,6 @@ export function taskChange(args: Args): TaskChange {
   return change
 }
 
-/** A new open task with nothing on it but its words. */
 function bare(text: string): TaskFields {
   return {
     text,
@@ -240,27 +209,18 @@ function bare(text: string): TaskFields {
   }
 }
 
-/** Reads a line of words into a task's fields. The Tasks plugin's own marks and Orden's
- *  bracket fields are read as they are written (`Call 📅 2026-10-06 ⏫ #admin`); quick
- *  add's grammar reads the rest when it is handed in. */
 export type ReadWords = (text: string) => Read
 
-/** A line of words, read: the task's fields, and where the words said it goes. */
 export interface Read {
   fields: TaskFields
-  /** `>Note`, as written. */
   note?: string
-  /** `/Heading`. */
   heading?: string
 }
 
-/** The fields written in the words themselves, and nothing guessed. */
 export const writtenFields: ReadWords = (text) => ({
   fields: readTask(`- [ ] ${text}`) ?? bare(text),
 })
 
-/** The task `add_task` writes: its words read by `read`, then every field said on its
- *  own on top of them. */
 export function newTask(args: Args, read: ReadWords = writtenFields): Read {
   const fields =
     args.fields !== null && typeof args.fields === 'object' ? (args.fields as Args) : {}
@@ -280,11 +240,6 @@ export function newTask(args: Args, read: ReadWords = writtenFields): Read {
   return { ...words, fields: task }
 }
 
-// ---- the lines -----------------------------------------------------------------------
-
-/** The lines a task takes with it when it moves: its own, and every line indented
- *  under it (its description, comments and sub-tasks). Offsets into the note, the
- *  line break after the last one included. */
 export function taskBlock(
   text: string,
   line: number,

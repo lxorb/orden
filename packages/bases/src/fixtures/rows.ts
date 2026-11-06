@@ -1,11 +1,7 @@
-/** Rows for tests, built the way the rows store builds them: a note's front matter
- *  through `noteValues`, a task line through `readTask`. */
-
 import { readTask } from '@orden/markdown/task-line'
 import { noteValues, taskHash } from '../note-values'
 import type { Context, FileInfo, Row, TaskRow, Value } from '../types'
 
-/** A file at a path, with whatever a test says about it. */
 function fileAt(path: string, extra: Partial<FileInfo> = {}): FileInfo {
   const name = path.slice(path.lastIndexOf('/') + 1)
   const dot = name.lastIndexOf('.')
@@ -25,7 +21,6 @@ function fileAt(path: string, extra: Partial<FileInfo> = {}): FileInfo {
   }
 }
 
-/** A note row. `note` is front matter as YAML lines, or values. */
 export function noteRow(
   path: string,
   note: string | Record<string, Value> = {},
@@ -41,7 +36,6 @@ export function noteRow(
   }
 }
 
-/** A task row from its line. */
 export function taskRow(
   path: string,
   line: string,
@@ -67,7 +61,6 @@ export function taskRow(
   }
 }
 
-/** A context on 2026-10-04 at 10:00, Emil signed in. */
 export function contextAt(extra: Partial<Context> = {}): Context {
   return { today: '2026-10-04', now: '2026-10-04T10:00:00', me: 'Emil', ...extra }
 }

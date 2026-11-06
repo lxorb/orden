@@ -1,7 +1,3 @@
-/** German, as quick add reads it. See grammar.ts for what each row is. A rule is
- *  still written in the Tasks plugin's English (`🔁 every week on Monday`): only
- *  the reading is German. */
-
 import type { Grammar } from './grammar'
 
 const days: [number, string[]][] = [
@@ -32,10 +28,8 @@ const months: [number, string[]][] = [
 const byName = (rows: [number, string[]][]) =>
   Object.fromEntries(rows.flatMap(([number, names]) => names.map((name) => [name, number])))
 
-/** The English weekday names a rule is written with, by number. */
 const ENGLISH_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
-/** The weekdays' plural, `montags`: a rule on its own. */
 const everyDay = Object.fromEntries(
   days.map(([day, [name = '']]) => [`${name}s`, `every ${ENGLISH_DAYS[day] ?? ''}`]),
 )
@@ -48,7 +42,6 @@ export const DE: Grammar = {
   yesterday: ['gestern'],
 
   weekdays: byName(days),
-  // Every two-letter one is a word as well: "Do it", "So what", "Mi casa".
   shortDays: new Set(['mo', 'di', 'mi', 'do', 'fr', 'sa', 'so']),
   context: new Set([
     'am',
@@ -157,7 +150,6 @@ export const DE: Grammar = {
   bareDuration: true,
 
   ordinal: /^(\d{1,2})\.$/,
-  // `zweite` is `other`: `jede zweite Woche` is every two weeks.
   ordinals: {
     erste: 1,
     ersten: 1,

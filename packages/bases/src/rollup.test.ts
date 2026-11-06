@@ -5,8 +5,6 @@ import { contextAt, noteRow } from './fixtures/rows'
 import { readReverse, readRollup, reverseFormula, rollupFormula, ROLLUPS } from './rollup'
 import type { Context, Row } from './types'
 
-/** A context that finds notes by name and path and knows who links where, the way the
- *  app's (views/context.ts) does. */
 function lookups(rows: readonly Row[]): Context {
   const name = (target: string) =>
     (target.split('/').pop() ?? target).replace(/\.md$/i, '').toLowerCase()

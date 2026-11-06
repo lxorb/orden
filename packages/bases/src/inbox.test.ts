@@ -2,9 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { carriedOwn, INBOX_PATH, withTasksOf } from './inbox'
 import { rowsOfText } from './note-rows'
 
-/** The space's own inbox (#1044): a hidden note whose tasks are rows named Inbox, the
- *  one hidden file sync carries, and two lists of tasks merged without losing one. */
-
 describe("the space's own inbox", () => {
   test('is a hidden note at the root, the one hidden path sync carries', () => {
     expect(INBOX_PATH).toBe('.Inbox.md')
@@ -22,7 +19,6 @@ describe("the space's own inbox", () => {
       ['.Inbox.md', 'Inbox', 'Inbox.md'],
       ['.Inbox.md', 'Inbox', 'Inbox.md'],
     ])
-    // A note of the reader's is a row as ever.
     expect(rowsOfText('Work', 'Inbox.md', '- [ ] x\n').map((row) => row.kind)).toEqual([
       'note',
       'task',

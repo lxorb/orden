@@ -1,15 +1,6 @@
-/** Today without the engine: the open tasks that have started and are placed on or
- *  before today, or due by then, overdue - a deadline past - first, then by priority and
- *  time. The built-in Today view's own question (builtins.ts), answered by hand for the
- *  one place that cannot carry the engine: the glasses' package, held under 8 MiB
- *  (docs/even.md). today.test.ts holds it to the engine's answer for the same rows, so
- *  the two cannot drift. What the dates mean is task-dates' (#371). */
-
 import { dayOf, deadlineOf, hasStarted, isLate, startOf } from '@orden/markdown/task-dates'
 import type { Row } from '../types'
 
-/** Whether a row is on Today; with `undated`, a task with no day of its own to wait for
- *  is (`BuiltinParams.undated`). */
 function onToday(row: Row, today: string, undated: boolean): boolean {
   const task = row.task
   if (row.kind !== 'task' || !task || task.done || task.cancelled) return false
@@ -25,7 +16,6 @@ function onToday(row: Row, today: string, undated: boolean): boolean {
 const overdue = (row: Row, today: string) =>
   row.task !== undefined && isLate(row.task, today, row.task.dueReads)
 
-/** Today's rows, in Today's order. */
 export function todayTasks(rows: readonly Row[], today: string, undated = false): Row[] {
   return rows
     .filter((row) => onToday(row, today, undated))
@@ -40,7 +30,6 @@ export function todayTasks(rows: readonly Row[], today: string, undated = false)
     .map((one) => one.row)
 }
 
-/** A time before none, as a sort puts empty values last. */
 function timeOrder(a: string | undefined, b: string | undefined): number {
   if (a === b) return 0
   if (a === undefined) return 1

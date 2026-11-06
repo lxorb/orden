@@ -1,19 +1,9 @@
-/** A day, a time, or both, as somebody types them: `tomorrow 4pm`, `next fri`, `in 3
- *  days`, `oct 6`, `6/10`, `heute Abend`, `morgen um 9`, `16 Uhr`.
- *
- *  Read off one language's table (grammar.ts) at a time, starting at one word and
- *  taking as many as make one phrase. Days are counted on the floating clock of
- *  dates.ts: a date is a day wherever the reader is, and `now` is only asked for its
- *  wall clock. */
-
 import { addDays, addMonths, civil, isoOf, todayOf, weekday } from '../dates'
 import type { Grammar, Unit } from './grammar'
 import { bare, longestAt, type Word } from './words'
 
-/** Today on the reader's wall clock. */
 export interface Clock {
   today: string
-  /** Minutes since midnight. */
   minutes: number
 }
 
@@ -24,31 +14,25 @@ export function clockOf(now: Date): Clock {
   }
 }
 
-/** What a phrase said, and the word after it. */
 export interface When {
   end: number
   day?: string
   time?: string
-  /** Whether a bare hour was taken for the afternoon's: `at 4` as 16:00. */
   guessed?: boolean
 }
 
 const pad = (value: number) => String(value).padStart(2, '0')
 const timeOf = (hours: number, minutes: number) => `${pad(hours)}:${pad(minutes)}`
 
-/** The next date that is this weekday, today counted when `fromToday`. */
 function weekdayFrom(today: string, day: number, fromToday: boolean): string {
   const ahead = (day - weekday(today) + 7) % 7
   return addDays(today, ahead === 0 && !fromToday ? 7 : ahead)
 }
 
-/** A date written without its year: this year's, or next year's where this year's has
- *  gone by, the way Todoist reads `oct 6` in November. */
 function comingDate(today: string, month: number, day: number, year?: number): string | null {
   const thisYear = Number(today.slice(0, 4))
   const iso = isoOf(year ?? thisYear, month, day)
   if (!civil(iso)) {
-    // The 29th of February, in a year without one: the next year that has it.
     if (year !== undefined || month !== 2 || day !== 29) return null
     for (let next = thisYear + 1; next < thisYear + 8; next++) {
       if (civil(isoOf(next, 2, 29))) return isoOf(next, 2, 29)
@@ -59,26 +43,21 @@ function comingDate(today: string, month: number, day: number, year?: number): s
   return iso
 }
 
-/** A year written with two figures or four. */
 const yearOf = (text: string): number | undefined => {
   if (!/^\d{2}(?:\d{2})?$/.test(text)) return undefined
   const year = Number(text)
   return year < 100 ? 2000 + year : year
 }
 
-/** A year after a month's name, which only four figures can be: `oct 6 16 Uhr` is a
- *  time, not 2016. */
 const fullYear = (word: Word | undefined): number | undefined =>
   /^\d{4}$/.test(word?.key ?? '') ? Number(word?.key) : undefined
 
-/** A count: figures, or one of the table's number words. */
 function countOf(word: Word | undefined, g: Grammar): number | null {
   const key = bare(word)
   if (/^\d{1,3}$/.test(key)) return Number(key)
   return g.numbers[key] ?? null
 }
 
-/** A day of the month: `6`, `6th`, `6.`. */
 function dayOfMonth(word: Word | undefined, g: Grammar): number | null {
   const key = word?.key ?? ''
   const written = g.ordinal.exec(key)?.[1] ?? (/^\d{1,2}$/.test(key) ? key : null)
@@ -86,7 +65,6 @@ function dayOfMonth(word: Word | undefined, g: Grammar): number | null {
   return day >= 1 && day <= 31 ? day : null
 }
 
-/** A span added to today: `3 days`, `2 weeks`. */
 function after(today: string, count: number, unit: Unit): string {
   switch (unit) {
     case 'day':
@@ -103,15 +81,12 @@ function after(today: string, count: number, unit: Unit): string {
   }
 }
 
-/** Whether a short day name standing at `at` reads as a day: after a word that says
- *  a day is coming, or where the whole phrase is already known to be a date. */
 function dayHere(words: readonly Word[], at: number, g: Grammar, free: boolean): boolean {
   const name = bare(words[at])
   if (!g.shortDays.has(name)) return true
   return free || g.context.has(bare(words[at - 1]))
 }
 
-/** A day standing at `at`, without a time. */
 export function dayAt(
   words: readonly Word[],
   at: number,
@@ -147,7 +122,6 @@ export function dayAt(
     if (g.next.has(key) && g.week.has(next))
       return { end: at + 2, day: weekdayFrom(today, 1, false) }
     if (g.next.has(key) && g.weekends.has(next)) {
-      // The Saturday after this weekend's; on a Sunday this one is over already.
       const coming = weekdayFrom(today, 6, true)
       return { end: at + 2, day: weekday(today) === 0 ? coming : addDays(coming, 7) }
     }
@@ -162,7 +136,6 @@ export function dayAt(
 
   const day = g.weekdays[key]
   if (day !== undefined && dayHere(words, at, g, free)) {
-    // `wednesday next week`: that day of the week starting next Monday.
     if (g.next.has(bare(words[at + 1])) && g.week.has(bare(words[at + 2]))) {
       return { end: at + 3, day: addDays(weekdayFrom(today, 1, false), (day + 6) % 7) }
     }
@@ -181,8 +154,6 @@ export function dayAt(
   return writtenDate(words, at, g, today)
 }
 
-/** A date written out: `2026-10-06`, `6/10`, `6.10.`, `oct 6`, `6th of october`, `6.
- *  Okt 2027`. */
 function writtenDate(words: readonly Word[], at: number, g: Grammar, today: string): When | null {
   const key = words[at]?.key ?? ''
 
@@ -199,7 +170,6 @@ function writtenDate(words: readonly Word[], at: number, g: Grammar, today: stri
     return date ? { end: at + 1, day: date } : null
   }
 
-  // `oct 6`, `october 6th`, `oct 6, 2027`.
   const monthFirst = g.months[bare(words[at])]
   if (monthFirst !== undefined) {
     const day = dayOfMonth(words[at + 1], g)
@@ -209,7 +179,6 @@ function writtenDate(words: readonly Word[], at: number, g: Grammar, today: stri
     return date ? { end: at + (year ? 3 : 2), day: date } : null
   }
 
-  // `6 oct`, `6th of october`, `6. Okt`, `6. Oktober 2027`.
   const day = dayOfMonth(words[at], g)
   if (day === null) return null
   const of = bare(words[at + 1]) === 'of' ? 1 : 0
@@ -221,8 +190,6 @@ function writtenDate(words: readonly Word[], at: number, g: Grammar, today: stri
   return date ? { end: year ? yearAt + 1 : yearAt, day: date } : null
 }
 
-/** A time of day standing at `at`. `asked` is whether `at` or `um` stood before it,
- *  which is what lets a bare hour be one. */
 export function timeAt(
   words: readonly Word[],
   at: number,
@@ -236,7 +203,6 @@ export function timeAt(
   const named = g.times[bare(word)]
   if (named) return { end: at + 1, time: named }
 
-  // `4pm`, `4:30pm`, `4.30pm`, and `4` `pm` as two words.
   const glued = /^(\d{1,2})(?:[:.](\d{2}))?(a\.?m\.?|p\.?m\.?)$/.exec(key)
   const clock = /^(\d{1,2})(?:[:.](\d{2}))?$/.exec(key)
   const next = bare(words[at + 1])
@@ -260,13 +226,9 @@ export function timeAt(
   const oclock = g.oclock.has(next)
   const colon = key.includes(':')
   if (hours > 23) return null
-  // `16.30` and `16` are times only after `um` or `at`, or with `Uhr`; `16:30` always is.
   if (key.includes('.') && !oclock && !asked) return null
   if (!colon && !oclock && !asked) return null
 
-  // `at 4` is four in the afternoon: a task at four in the morning is the rarer one,
-  // and whoever means it writes `4am` or `04:00`.
-  // Minutes written out, `7.05`, are a timetable's: the hour as written.
   const afternoon =
     !colon &&
     !oclock &&
@@ -278,7 +240,6 @@ export function timeAt(
   return afternoon ? { end, time, guessed: true } : { end: oclock ? end + 1 : end, time }
 }
 
-/** A span from now: `in 2 hours`, `in 30 min`. Answers the day it lands on too. */
 function fromNow(words: readonly Word[], at: number, g: Grammar, clock: Clock): When | null {
   if (!g.within.has(bare(words[at]))) return null
   const count = countOf(words[at + 1], g)
@@ -294,7 +255,6 @@ function fromNow(words: readonly Word[], at: number, g: Grammar, clock: Clock): 
   }
 }
 
-/** A day and a time named together: `tonight`, `heute Abend`, `morgen früh`. */
 function dayTimeAt(words: readonly Word[], at: number, g: Grammar, clock: Clock): When | null {
   let best: When | null = null
   for (const one of g.dayTimes) {
@@ -309,8 +269,6 @@ function dayTimeAt(words: readonly Word[], at: number, g: Grammar, clock: Clock)
   return best
 }
 
-/** A time said after a part of the day, in that half of the day: `tonight at 8` is
- *  eight in the evening, `tomorrow morning at 7` seven in the morning. */
 export function timeInPart(
   words: readonly Word[],
   at: number,
@@ -327,7 +285,6 @@ export function timeInPart(
   return { end: said.end, time: said.time }
 }
 
-/** A time, `at` or `um` in front of it included. */
 function askedTime(words: readonly Word[], at: number, g: Grammar): When | null {
   if (g.timeWords.has(bare(words[at]))) return timeAt(words, at + 1, g, true)
   const part = g.dayWords.has(bare(words[at])) ? g.partsOfDay[bare(words[at + 1])] : undefined
@@ -335,7 +292,6 @@ function askedTime(words: readonly Word[], at: number, g: Grammar): When | null 
   return timeAt(words, at, g, false)
 }
 
-/** A day, `on` or `am` in front of it included. */
 function askedDay(
   words: readonly Word[],
   at: number,
@@ -344,7 +300,6 @@ function askedDay(
   free: boolean,
 ): When | null {
   if (g.dayWords.has(bare(words[at]))) {
-    // `am Abend` is the evening, which askedTime reads, and never tomorrow's.
     if (g.partsOfDay[bare(words[at + 1])]) return null
     const day = dayAt(words, at + 1, g, clock, true) ?? monthDayAt(words, at + 1, g, clock.today)
     if (day) return day
@@ -352,8 +307,6 @@ function askedDay(
   return dayAt(words, at, g, clock, free)
 }
 
-/** A day of the month alone, after a day word: `on the 15th`, `am 15.`. This month's,
- *  or the next month that has it once this month's has gone by. */
 function monthDayAt(words: readonly Word[], at: number, g: Grammar, today: string): When | null {
   const from = g.articles.has(bare(words[at])) ? at + 1 : at
   const written = g.ordinal.exec(words[from]?.key ?? '')?.[1]
@@ -367,9 +320,6 @@ function monthDayAt(words: readonly Word[], at: number, g: Grammar, today: strin
   return null
 }
 
-/** The longest phrase of a day and a time standing at `at`, in either order, the
- *  words that join them taken with them. `free` reads a short day name as a day
- *  wherever it stands: the phrase is already known to be a date. */
 export function whenAt(
   words: readonly Word[],
   at: number,
@@ -382,7 +332,6 @@ export function whenAt(
 
   const both = dayTimeAt(words, at, g, clock)
   if (both) {
-    // `tonight at 8`: the time said is the time meant, in the part of the day named.
     const later = timeInPart(words, both.end, g, both.time ?? '')
     return later ? { ...both, end: later.end, time: later.time ?? '' } : both
   }

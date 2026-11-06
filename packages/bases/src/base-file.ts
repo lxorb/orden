@@ -1,18 +1,3 @@
-/** A `.base` file read into a Base, and a Base written back into the file it came
- *  from.
- *
- *  Obsidian's format, whole: `filters`, `formulas`, `properties`, `summaries` and
- *  `views`, each view with its `type`, `name`, `filters`, `order`, `sort`,
- *  `groupBy`, `limit` and `summaries`, and whatever else a layout keeps (`image`,
- *  `cardSize`, `columnSize`, a map's `coordinates`). Orden's additions are under one
- *  key, `nib:`, at the top and inside a view, which Obsidian leaves alone.
- *
- *  Writing is a merge into the file as it was, not a new file: the YAML is read as
- *  a document, every value the Base changed is set in place, and every key nobody
- *  changed keeps its order, its quotes and its comments. A Base that says what the
- *  file already says gives the file back byte for byte, so opening a base in Orden
- *  and closing it again never shows up as a change in Obsidian or in sync. */
-
 import { isMap, isScalar, isSeq, type Document, parseDocument } from 'yaml'
 import { BasesError } from './errors'
 import { readFilter } from './filter'
@@ -31,7 +16,6 @@ import type {
 
 type Plain = Record<string, unknown>
 
-/** A scalar written in YAML as text; a map or a list where a word belongs is nothing. */
 const scalar = (value: unknown): string =>
   typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
     ? String(value)
@@ -45,7 +29,6 @@ const stringsOf = (value: unknown): Record<string, string> =>
     ? Object.fromEntries(Object.entries(value).map(([key, one]) => [key, scalar(one)]))
     : {}
 
-/** Everything in an object but the keys named. */
 function rest(value: Plain, known: readonly string[]): Plain {
   return Object.fromEntries(Object.entries(value).filter(([key]) => !known.includes(key)))
 }
@@ -155,9 +138,6 @@ function readView(raw: unknown, at: number): View {
     nib: readNibView(plain.nib),
     options: rest(plain, VIEW_KEYS),
   }
-  // Filters of a shape Orden cannot read and a limit that is not a count (`"10"`) are
-  // kept among the options as written, as the base's own filters are kept, so the
-  // next write gives them back instead of leaving the view showing more rows.
   const filters = readFilter(plain.filters)
   if (filters !== null) view.filters = filters
   else if (plain.filters !== undefined) view.options.filters = plain.filters
@@ -201,7 +181,6 @@ function readNibBase(raw: unknown): NibBase {
 
 const BASE_KEYS = ['filters', 'formulas', 'properties', 'summaries', 'views', 'nib']
 
-/** The YAML a document holds, or a BasesError naming the first thing wrong. */
 function documentOf(yaml: string): Document {
   const document = parseDocument(yaml)
   const [error] = document.errors
@@ -209,7 +188,6 @@ function documentOf(yaml: string): Document {
   return document
 }
 
-/** A `.base` file, or the inside of a ` ```base ` fence, as a Base. */
 export function readBase(yaml: string): Base {
   const read: unknown = yaml.trim() === '' ? {} : documentOf(yaml).toJS()
   const plain = isPlain(read) ? read : {}
@@ -237,7 +215,6 @@ export function readBase(yaml: string): Base {
   return base
 }
 
-/** An object without the keys whose value says nothing. */
 function present(entries: [string, unknown][]): Plain {
   return Object.fromEntries(
     entries.filter(([, value]) => {
@@ -277,8 +254,6 @@ function nibViewPlain(nib: NibView): Plain {
 }
 
 function viewPlain(view: View): Plain {
-  // The filters and limit kept as written stand in their own place, and only while
-  // the view has none of its own: one set since replaces what Orden could not read.
   return present([
     ['type', view.type],
     ['name', view.name],
@@ -316,10 +291,7 @@ function nibBasePlain(nib: NibBase): Plain {
   ])
 }
 
-/** A Base as the plain object its YAML says, keys in Obsidian's order. */
 function basePlain(base: Base): Plain {
-  // The filters kept as written stand in their own place, and only while the base
-  // has none of its own, as a view's do; see `viewPlain`.
   return present([
     ['filters', base.filters ?? base.kept.filters],
     ['formulas', base.formulas],
@@ -339,13 +311,10 @@ function basePlain(base: Base): Plain {
   ])
 }
 
-/** A key of a pair, as text. */
 function keyText(key: unknown): string {
   return isScalar(key) ? String(key.value) : String(key)
 }
 
-/** A value set into the document where a node was: the node kept and changed in
- *  place where it can be, so its quotes, its comments and its order stay. */
 function merged(document: Document, node: unknown, value: unknown): unknown {
   if (isPlain(value) && isMap(node)) {
     for (const [key, one] of Object.entries(value)) {
@@ -373,15 +342,12 @@ function merged(document: Document, node: unknown, value: unknown): unknown {
 
 const OUTPUT = { lineWidth: 0, singleQuote: true } as const
 
-/** The Base written into the file it was read from, every key it does not know and
- *  every key it did not change kept as written. With nothing before, a new file. */
 export function writeBase(base: Base, before = ''): string {
   const plain = basePlain(base)
   let document: Document
   try {
     document = documentOf(before)
   } catch {
-    // A file that is not YAML has nothing to keep; it is written anew.
     document = parseDocument('')
   }
 

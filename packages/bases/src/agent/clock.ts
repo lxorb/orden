@@ -1,8 +1,5 @@
-/** What the reader's clock says, as the engine reads it. */
-
 import type { Context } from '../types'
 
-/** Today and now, off the local clock or a zone's where one is named. */
 export function clockOf(now: Date, zone?: string): Pick<Context, 'today' | 'now'> {
   const parts = Object.fromEntries(
     new Intl.DateTimeFormat('en-CA', {

@@ -1,13 +1,3 @@
-/** Dates as the reader's wall clock says them, worked out without a time zone.
- *
- *  A due date is a day, and a time beside it is the wall clock wherever the reader
- *  is: floating, as calendars call it. So every date here is counted as if it were
- *  UTC, which no clock change can move, and turned into a moment only where a
- *  moment is the question (a file's creation time, a reminder). Days are counted
- *  from the epoch, months are added the way Moment adds them (the 31st of January
- *  and a month is the last of February), and formats are Moment's tokens, because
- *  Bases' `format()` takes Moment's. */
-
 import type { DateValue } from './types'
 
 const DAY = 86_400_000
@@ -18,7 +8,6 @@ export interface Civil {
   day: number
 }
 
-/** `2026-10-04` as its parts, or null for a string that is not a real date. */
 export function civil(iso: string): Civil | null {
   const found = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
   if (!found) return null
@@ -38,7 +27,6 @@ export function isoOf(year: number, month: number, day: number): string {
   return `${pad(year, 4)}-${pad(month)}-${pad(day)}`
 }
 
-/** Days since 1970-01-01. */
 export function dayNumber(iso: string): number {
   const known = dayNumbers.get(iso)
   if (known !== undefined) return known
@@ -49,9 +37,6 @@ export function dayNumber(iso: string): number {
   return days
 }
 
-/** Days already counted, by their date. A view compares the same few hundred dates
- *  ten thousand times over, and reading one is a regex and a calendar check; the
- *  answer is kept instead, up to a bound well past any space's own dates. */
 const dayNumbers = new Map<string, number>()
 const MOST_DAYS = 20_000
 
@@ -64,8 +49,6 @@ export function addDays(iso: string, days: number): string {
   return fromDayNumber(dayNumber(iso) + days)
 }
 
-/** Months added the way Moment adds them: a day the month does not have becomes
- *  its last. */
 export function addMonths(iso: string, months: number): string {
   const parts = civil(iso)
   if (!parts) return iso
@@ -75,12 +58,10 @@ export function addMonths(iso: string, months: number): string {
   return isoOf(year, month, Math.min(parts.day, daysInMonth(year, month)))
 }
 
-/** 0 for Sunday to 6 for Saturday. */
 export function weekday(iso: string): number {
   return (((dayNumber(iso) + 4) % 7) + 7) % 7
 }
 
-/** A date value as milliseconds on the floating clock. */
 export function msOf(value: DateValue): number {
   const day = dayNumber(value.iso) * DAY
   if (!value.time) return day
@@ -93,8 +74,6 @@ function millisOf(time: string): number {
   return found?.[1] ? Number(found[1].padEnd(3, '0')) : 0
 }
 
-/** Milliseconds on the floating clock as a date value: a date alone at midnight
- *  when `dateOnly` says so, else a date and its time. */
 export function dateAt(ms: number, dateOnly = false): DateValue {
   const date = new Date(ms)
   const iso = isoOf(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate())
@@ -104,8 +83,6 @@ export function dateAt(ms: number, dateOnly = false): DateValue {
   return { kind: 'date', iso, time: millis ? `${time}.${pad(millis, 3)}` : time }
 }
 
-/** A moment (a file's time, milliseconds since the epoch) as the local wall clock
- *  reads it, on the floating clock. */
 export function wallClock(epochMs: number): number {
   const date = new Date(epochMs)
   return Date.UTC(
@@ -119,8 +96,6 @@ export function wallClock(epochMs: number): number {
   )
 }
 
-/** `YYYY-MM-DDTHH:mm:ss` or `YYYY-MM-DD HH:mm`, as a date value; null for a string
- *  that is not one. */
 export function readDate(text: string): DateValue | null {
   const found = /^(\d{4}-\d{2}-\d{2})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2})(\.\d+)?)?)?(Z)?$/.exec(
     text.trim(),
@@ -161,7 +136,6 @@ function ordinal(value: number): string {
   return `${value}${['th', 'st', 'nd', 'rd'][value % 10] ?? 'th'}`
 }
 
-/** The ISO week number and its year. */
 function isoWeek(iso: string): number {
   const day = dayNumber(iso)
   const thursday = day - ((weekday(iso) + 6) % 7) + 3
@@ -169,11 +143,9 @@ function isoWeek(iso: string): number {
   return Math.floor((thursday - dayNumber(isoOf(year, 1, 1))) / 7) + 1
 }
 
-/** Moment's tokens, longest first so `MMMM` is not read as `MM` twice. */
 const TOKENS =
   /\[([^\]]*)\]|YYYY|YY|MMMM|MMM|MM|M|Do|DDDD|DD|D|dddd|ddd|dd|d|E|e|HH|H|hh|h|mm|m|ss|s|SSS|A|a|WW|W|ww|w|X|x|Q/g
 
-/** A date written with Moment's tokens, `YYYY-MM-DD HH:mm`. */
 export function formatDate(value: DateValue, format: string): string {
   const ms = msOf(value)
   const date = new Date(ms)
@@ -260,7 +232,6 @@ export function formatDate(value: DateValue, format: string): string {
   })
 }
 
-/** How far a moment is from now, in Moment's words: `3 days ago`, `in 2 hours`. */
 export function relative(ms: number, now: number): string {
   const seconds = Math.round(Math.abs(ms - now) / 1000)
   const minutes = Math.round(seconds / 60)
@@ -285,8 +256,6 @@ export function relative(ms: number, now: number): string {
   return ms <= now ? `${words} ago` : `in ${words}`
 }
 
-/** Today on this machine's wall clock, as `YYYY-MM-DD`: the day a box ticked now is
- *  done on. */
 export function todayOf(now: Date = new Date()): string {
   return isoOf(now.getFullYear(), now.getMonth() + 1, now.getDate())
 }

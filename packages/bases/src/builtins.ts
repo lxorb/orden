@@ -1,45 +1,21 @@
-/** The views Orden ships, as the bases they are: Inbox, Today, Upcoming, Completed, a
- *  project, a label, and what is assigned to me. Each is an ordinary Base, so the
- *  engine answers it like any other and "Copy to a base" writes it as a `.base`
- *  file the reader then changes. Group keys are values, never words: Today groups
- *  by whether a task is overdue, and the view says "Overdue" in the reader's
- *  language.
- *
- *  A task whose start date has not come is in none of them but Upcoming, which is where
- *  the days ahead are, and a project's own list, which is its note; and only a deadline
- *  makes a task overdue (#371, `@orden/markdown/task-dates`). A task with no start date
- *  is in Today only when the reader says so, as one whose start date has come (#408). */
-
 import type { Base, Filter, View } from './types'
 
 export type BuiltinName =
   'todos' | 'inbox' | 'today' | 'upcoming' | 'logbook' | 'project' | 'label' | 'assigned'
 
 export interface BuiltinParams {
-  /** Each space's inbox note: Inbox. */
   inboxes?: { space: string; path: string }[]
-  /** The note: a project. */
   note?: { space: string; path: string }
-  /** The tag, without `#`: a label. */
   tag?: string
-  /** The space, by its name: Todos, and a label of the open space alone. */
   space?: string
-  /** Today: a task with no day of its own, neither a start date nor a scheduled one, is
-   *  in it, as one whose start date has come. The reader's setting; off, as Todoist's
-   *  Today leaves a task with no date out. */
   undated?: boolean
 }
 
-/** What Today holds: a start date come, or a day planned or due by today; and with
- *  `undated`, a task with no day of its own to wait for. */
 const TODAY = 'task.date <= today() || task.deadline <= today()'
 const UNDATED = '!task.start && !task.scheduled'
 
 const quote = (text: string) => JSON.stringify(text)
 
-/** When a task is due, as Todos groups it (#1046): `overdue`, `today`, `tomorrow`,
- *  `later`, or no value for a task with no deadline. Only a deadline makes a task due
- *  (#371); a start date only says when it shows. */
 export const WHEN =
   'if(!task.deadline, null, if(task.deadline < today(), "overdue", if(task.deadline == today(), "today", if(task.deadline == today() + "1d", "tomorrow", "later"))))'
 
@@ -48,11 +24,8 @@ export function isWhen(property: string | undefined): boolean {
   return property === 'formula.when' || property === `formula.${WHEN_ASIDE}`
 }
 
-/** The order of WHEN's groups; the group of no value comes after them. */
 export const WHEN_GROUPS = ['overdue', 'today', 'tomorrow', 'later']
 
-/** Todoist's smart order: the most pressing first - by priority, then by deadline, then
- *  by the time of day. What Todos sorts by until the reader picks another. */
 export const SMART_SORT: View['sort'] = [
   { property: 'task.priority', direction: 'ASC' },
   { property: 'task.deadline', direction: 'ASC' },
@@ -76,18 +49,12 @@ function base(
   }
 }
 
-/** A built-in view as a Base. */
 export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base {
   switch (name) {
     case 'todos':
-      // Every task of one space that can be worked on now, in one view (#1046): what
-      // Inbox, Today and Upcoming were, grouped by when it is due. A task whose start
-      // date has not come waits for it, as everywhere (#371); done ones show only when
-      // the view says so.
       return base(
         {
           type: 'list',
-          // The head says the tab's name, in the reader's language (ViewHead.svelte).
           name: 'Todos',
           filters:
             params.space === undefined
@@ -117,8 +84,6 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
         {
           type: 'list',
           name: 'Today',
-          // Everything that can be worked on now: a start date come, or a day planned or
-          // due by today. A start date that has come stays in Today until done.
           filters: {
             and: ['task.started', params.undated ? `${UNDATED} || ${TODAY}` : TODAY],
           },
@@ -131,10 +96,6 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
         { overdue: 'task.deadline < today()' },
       )
     case 'upcoming':
-      // Todoist's Upcoming: what is overdue on top, then every day from today on. The
-      // days are in the order the rows' dates put them, which puts the overdue first.
-      // A task waiting for its start date is here, on that day; one already started is
-      // on today, since that is when it can be done.
       return base(
         {
           type: 'list',
@@ -203,9 +164,6 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
   }
 }
 
-/** A Today a tab changed, made to say `undated` the way Settings does now: a view whose
- *  filter is still the one Orden ships the other way takes this way's, so what a reader
- *  laid out stays theirs and the switch still reaches it. A filter they wrote is kept. */
 export function todayAs(base: Base, undated: boolean): Base {
   const now = builtinView('today', { undated }).views[0]?.filters
   const other = JSON.stringify(builtinView('today', { undated: !undated }).views[0]?.filters)

@@ -1,11 +1,3 @@
-/** `list_tasks` and `query_base`: which rows a view, a Todoist filter or a `.base`
- *  answers, as an agent reads them. Shared by both servers, like tasks.ts.
- *
- *  A list is the engine's own answer (`answer` over a built-in view, a base, or a
- *  filter compiled from Todoist's language) flattened into rows in the view's order,
- *  because a model reads rows; a base's groups and summaries are kept for
- *  `query_base`, where they are what was asked. */
-
 import { answer, cellValue, groupName } from '../answer'
 import { type BuiltinName, builtinView } from '../builtins'
 import { BasesError } from '../errors'
@@ -13,10 +5,8 @@ import { type TodoistOptions, fromTodoist } from '../todoist'
 import type { Answer, Base, Context, Filter, Row, Value } from '../types'
 import { AgentError, type TaskOut, taskOut } from './tasks'
 
-/** The views an agent names by a word. */
 export const VIEWS = ['todos', 'inbox', 'today', 'upcoming', 'logbook'] as const
 
-/** Every open task, the order they are written in: a list with nothing chosen. */
 function everything(filters?: Filter): Base {
   return {
     formulas: {},
@@ -39,7 +29,6 @@ function everything(filters?: Filter): Base {
   }
 }
 
-/** A view with another filter on top of its own. */
 function narrowed(base: Base, filter: Filter): Base {
   const [view, ...rest] = base.views
   if (!view) return everything(filter)
@@ -53,23 +42,15 @@ function narrowed(base: Base, filter: Filter): Base {
 }
 
 export interface ListAsk {
-  /** `inbox`, `today`, `upcoming`, `logbook`. */
   view?: string
-  /** Todoist's filter language. */
   filter?: string
-  /** A base read from a `.base` file, and which of its views. */
   base?: { base: Base; view?: string }
-  /** At most this many; 50 when unsaid, 500 at most. */
   limit?: number
-  /** Each space's inbox note, for the Inbox. */
   inboxes?: { space: string; path: string }[]
-  /** Whether Today holds a task with no start date; see `BuiltinParams`. */
   undated?: boolean
   isNote?: TodoistOptions['isNote']
 }
 
-/** The rows of a list, in its order, every list of a comma-separated filter one after
- *  the other, each task once. */
 export function listTasks(
   rows: readonly Row[],
   ask: ListAsk,
@@ -120,7 +101,6 @@ export function listTasks(
   return { total: out.length, tasks: out.slice(0, limit).map(taskOut) }
 }
 
-/** The engine's answer, its sentence handed on where a base does not read. */
 function answered(
   base: Base,
   view: string | undefined,
@@ -135,8 +115,6 @@ function answered(
   }
 }
 
-/** A value as JSON says it: a date as its words, a link as its target, a duration in
- *  minutes. */
 export function plainValue(value: Value): unknown {
   if (value === null || typeof value !== 'object') return value
   if (Array.isArray(value)) return value.map(plainValue)
@@ -153,8 +131,6 @@ export function plainValue(value: Value): unknown {
   )
 }
 
-/** A note as a row of a base: its path and the columns the view shows, or its front
- *  matter where the view names none. */
 interface NoteOut {
   path: string
   space: string
@@ -167,7 +143,6 @@ export interface QueryOut {
   summaries?: Record<string, unknown>
 }
 
-/** `query_base`: a view of a base, its groups, rows and summaries. */
 export function queryBase(
   base: Base,
   view: string | undefined,

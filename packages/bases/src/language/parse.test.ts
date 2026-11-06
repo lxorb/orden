@@ -1,14 +1,12 @@
 import { describe, expect, test } from 'vitest'
 import { parseQuickAdd, type QuickAdd } from './parse'
 
-/** Wednesday 7 October 2026, ten in the morning, on the reader's wall clock. */
 const NOW = new Date(2026, 9, 7, 10, 0)
 
 const en = (text: string, options = {}) => parseQuickAdd(text, ['en'], NOW, options)
 const de = (text: string) => parseQuickAdd(text, ['de'], NOW)
 const us = (text: string) => parseQuickAdd(text, ['en-US'], NOW)
 
-/** What a line said: its words and the fields set, nothing empty. */
 function said(add: QuickAdd) {
   const fields: Record<string, unknown> = { ...add.fields }
   if (add.fields.tags.length === 0) delete fields.tags
@@ -100,7 +98,6 @@ describe('times', () => {
     ['Call bank fri at noon', '2026-10-09', '12:00'],
     ['Call bank in 2 hours', '2026-10-07', '12:00'],
     ['Call bank in 30 min', '2026-10-07', '10:30'],
-    // Nine has gone by today, so it is tomorrow's nine.
     ['Call bank 9am', '2026-10-08', '09:00'],
   ])('%s', (text, due, time) => {
     expect(said(en(text))).toEqual({ text: 'Call bank', due, time })
