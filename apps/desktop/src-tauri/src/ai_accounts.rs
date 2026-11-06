@@ -90,7 +90,7 @@ pub fn write(root: &Path, text: &str, over: &str) -> Result<String, String> {
 
 #[cfg(desktop)]
 pub fn has_own_home(root: &Path, id: &str, kind: &str) -> Result<bool, String> {
-    if kind != "claude-code" && kind != "codex" {
+    if !matches!(kind, "claude-code" | "codex" | "gemini-cli") {
         return Ok(false);
     }
     let Some(text) = read_text(root)? else {

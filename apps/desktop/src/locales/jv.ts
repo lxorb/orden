@@ -1991,6 +1991,8 @@ export const jv: Dictionary = {
   'Your account’s connector': 'Konektor akunmu',
   'Orden asks you once, the first time it connects.':
     'Orden takon sepisan, nalika pisanan nyambung.',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'Ing Antigravity, bukak menu … ing ndhuwur panel agen, banjur MCP Servers → Manage MCP Servers → View raw config, lan tambahna entri iki ing kono.',
   'A client on another machine?': 'Klien ing mesin liya?',
   'Shown only once.': 'Mung ditampilake sepisan.',
   'Remove {name}?': 'Busak {name}?',

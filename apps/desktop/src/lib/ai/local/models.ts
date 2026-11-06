@@ -21,11 +21,28 @@ function list(value: unknown): unknown[] {
   return Array.isArray(value) ? value : []
 }
 
+const GEMINI_ALIASES: readonly [string, string][] = [
+  ['auto', 'Auto'],
+  ['pro', 'Pro'],
+  ['flash', 'Flash'],
+  ['flash-lite', 'Flash-Lite'],
+]
+
+const GEMINI_CLI_MODELS: ModelInfo[] = GEMINI_ALIASES.map(([id, name]) => ({
+  id,
+  name,
+  window: null,
+  efforts: ['auto'],
+  images: false,
+  fast: false,
+}))
+
 function claudeWindow(...names: unknown[]): number | null {
   return names.some((name) => typeof name === 'string' && name.endsWith('[1m]')) ? 1_000_000 : null
 }
 
 export function modelsIn(kind: LocalKind, listed: unknown): ModelInfo[] {
+  if (kind === 'gemini-cli') return GEMINI_CLI_MODELS
   if (kind === 'claude-code') {
     return list(record(listed).models)
       .map(record)

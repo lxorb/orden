@@ -10,6 +10,7 @@ pub use crate::ai_agent::Mode;
 pub enum Tool {
     ClaudeCode,
     Codex,
+    Gemini,
 }
 
 impl Tool {
@@ -17,6 +18,7 @@ impl Tool {
         match self {
             Self::ClaudeCode => "claude",
             Self::Codex => "codex",
+            Self::Gemini => "gemini",
         }
     }
 }
@@ -76,7 +78,7 @@ pub enum Effort {
 impl Effort {
     pub fn word(self, tool: Tool) -> Result<&'static str, String> {
         Ok(match (self, tool) {
-            (Self::Off | Self::Minimal, Tool::ClaudeCode) => {
+            (Self::Off | Self::Minimal, Tool::ClaudeCode) | (_, Tool::Gemini) => {
                 return Err(format!("{} has no such effort", tool.command()))
             }
             (Self::Off, Tool::Codex) => "none",
@@ -336,10 +338,100 @@ pub fn codex_thread(
     params
 }
 
+pub const GEMINI_SYSTEM_VAR: &str = "GEMINI_SYSTEM_MD";
+
+pub const GEMINI_SETTINGS_VAR: &str = "GEMINI_CLI_SYSTEM_SETTINGS_PATH";
+
+pub const GEMINI_TRUST_VAR: &str = "GEMINI_CLI_TRUST_WORKSPACE";
+
+const GEMINI_BUILTINS: [&str; 14] = [
+    "run_shell_command",
+    "write_file",
+    "replace",
+    "read_file",
+    "read_many_files",
+    "list_directory",
+    "glob",
+    "search_file_content",
+    "grep_search",
+    "web_fetch",
+    "google_web_search",
+    "save_memory",
+    "write_todos",
+    "activate_skill",
+];
+
+pub fn gemini_settings(mode: Option<Mode>, without: &[String], nib: &Path) -> Value {
+    let mut settings = json!({
+        "tools": { "exclude": GEMINI_BUILTINS },
+        "skills": { "enabled": false },
+        "hooksConfig": { "enabled": false },
+        "general": { "disableAutoUpdate": true },
+    });
+    if let Some(mode) = mode {
+        let (listed, left) = tools_of(mode, without);
+        let mut server = json!({
+            "command": nib,
+            "args": ["mcp"],
+            "env": {
+                TOKEN_VAR: format!("${{{TOKEN_VAR}}}"),
+                THREAD_VAR: format!("${{{THREAD_VAR}}}"),
+            },
+            "timeout": TOOL_SECONDS * 1000,
+            "trust": true,
+        });
+        if !left.is_empty() {
+            server["includeTools"] = json!(listed);
+        }
+        settings["mcpServers"] = json!({ SERVER: server });
+    }
+    settings
+}
+
+pub fn gemini_turn(
+    model: Option<&str>,
+    resume: Option<&str>,
+    caps: &Caps,
+) -> Result<Vec<String>, String> {
+    if !caps.has("--output-format") {
+        return Err("out of date".to_owned());
+    }
+    let model = checked_model(model)?;
+    let mut args: Vec<String> = [
+        "--output-format",
+        "stream-json",
+        "--allowed-mcp-server-names",
+        SERVER,
+    ]
+    .map(str::to_owned)
+    .to_vec();
+    args.extend(present(caps, &["--skip-trust"]));
+    if let Some(model) = model {
+        args.extend(["--model".to_owned(), model.to_owned()]);
+    }
+    if let Some(resume) = resume {
+        if !session_ok(resume) {
+            return Err(format!("{resume:?} is not a session"));
+        }
+        args.extend(["--resume".to_owned(), resume.to_owned()]);
+    }
+    Ok(args)
+}
+
+fn session_ok(id: &str) -> bool {
+    !id.is_empty()
+        && id.len() <= 80
+        && !id.starts_with('-')
+        && id
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+}
+
 pub fn status(tool: Tool) -> &'static [&'static str] {
     match tool {
         Tool::ClaudeCode => &["auth", "status", "--json"],
         Tool::Codex => &["login", "status"],
+        Tool::Gemini => &["--version"],
     }
 }
 
@@ -347,6 +439,7 @@ pub fn logout(tool: Tool) -> &'static [&'static str] {
     match tool {
         Tool::ClaudeCode => &["auth", "logout"],
         Tool::Codex => &["logout"],
+        Tool::Gemini => &[],
     }
 }
 
@@ -639,5 +732,61 @@ mod tests {
     fn the_status_questions_are_the_programs_own() {
         assert_eq!(status(Tool::ClaudeCode), ["auth", "status", "--json"]);
         assert_eq!(status(Tool::Codex), ["login", "status"]);
+        assert_eq!(status(Tool::Gemini), ["--version"]);
+        assert!(logout(Tool::Gemini).is_empty());
+    }
+
+    #[test]
+    fn gemini_has_no_effort_to_spell() {
+        for effort in [Effort::Off, Effort::Low, Effort::Max] {
+            assert!(effort.word(Tool::Gemini).is_err());
+        }
+    }
+
+    #[test]
+    fn a_gemini_turn_streams_with_orden_alone_and_resumes_its_session() {
+        let caps = Caps::from_help("--output-format --skip-trust --resume --model");
+        let args = gemini_turn(Some("flash"), Some("5a7c-91"), &caps).expect("args");
+        let line = args.join(" ");
+        assert!(line.contains("--output-format stream-json"), "{line}");
+        assert!(line.contains("--allowed-mcp-server-names orden"), "{line}");
+        assert!(line.contains("--model flash"), "{line}");
+        assert!(line.contains("--resume 5a7c-91"), "{line}");
+        assert!(line.contains("--skip-trust"), "{line}");
+        assert!(!line.contains("yolo"), "{line}");
+
+        let older = Caps::from_help("--output-format");
+        let first = gemini_turn(None, None, &older).expect("args");
+        assert!(!first
+            .iter()
+            .any(|one| one == "--skip-trust" || one == "--resume"));
+        assert!(gemini_turn(None, None, &Caps::default()).is_err());
+        assert!(gemini_turn(Some("--yolo"), None, &caps).is_err());
+        assert!(gemini_turn(None, Some("--yolo"), &caps).is_err());
+        assert!(gemini_turn(None, Some("a b"), &caps).is_err());
+    }
+
+    #[test]
+    fn gemini_s_settings_lend_orden_by_name_with_its_mode_s_tools_and_no_token() {
+        let nib = PathBuf::from("nib.exe");
+        let plan = gemini_settings(Some(Mode::Plan), &[], &nib);
+        let orden = &plan["mcpServers"]["orden"];
+        assert_eq!(orden["args"], json!(["mcp"]));
+        assert_eq!(orden["trust"], true);
+        assert_eq!(orden["env"][TOKEN_VAR], "${NIB_MCP_TOKEN}");
+        assert_eq!(orden["env"][THREAD_VAR], "${NIB_MCP_THREAD}");
+        let included = orden["includeTools"].as_array().expect("included");
+        assert!(included.contains(&json!("read_note")));
+        assert!(!included.contains(&json!("edit_note")));
+        assert_eq!(plan["mcpServers"].as_object().expect("servers").len(), 1);
+        let excluded = plan["tools"]["exclude"].as_array().expect("excluded");
+        assert!(excluded.contains(&json!("run_shell_command")));
+        assert!(excluded.contains(&json!("write_file")));
+
+        let full = gemini_settings(Some(Mode::Full), &[], &nib);
+        assert!(full["mcpServers"]["orden"]["includeTools"].is_null());
+        let words = gemini_settings(None, &[], &nib);
+        assert!(words.get("mcpServers").is_none());
+        assert!(!words.to_string().contains("nib.exe"));
     }
 }

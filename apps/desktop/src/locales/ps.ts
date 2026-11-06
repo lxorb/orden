@@ -2008,6 +2008,8 @@ export const ps: Dictionary = {
   'Your account’s connector': 'ستاسو د حساب نښلونکی',
   'Orden asks you once, the first time it connects.':
     'Orden له تاسو یو ځل پوښتي، کله چې لومړی ځل وصلېږي.',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'په Antigravity کې د اجنټ پینل په سر کې … مینو پرانیزئ، بیا MCP Servers → Manage MCP Servers → View raw config، او دا ننوتنه ورته ورزیاته کړئ.',
   'A client on another machine?': 'په بل ماشين کې پېرېدونکی؟',
   'Shown only once.': 'یوازې یو ځل ښودل کېږي.',
   'Remove {name}?': '{name} لرې شي؟',

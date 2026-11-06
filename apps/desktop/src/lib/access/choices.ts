@@ -1,8 +1,8 @@
-export type Choice = 'claude-code' | 'codex' | 'claude' | 'chatgpt' | 'other'
+export type Choice = 'claude-code' | 'codex' | 'antigravity' | 'claude' | 'chatgpt' | 'other'
 
 export function choices(local: boolean, account: boolean): Choice[] {
   const offered: Choice[] = [
-    ...(local ? (['claude-code', 'codex'] as const) : []),
+    ...(local ? (['claude-code', 'codex', 'antigravity'] as const) : []),
     ...(account ? (['claude', 'chatgpt'] as const) : []),
   ]
   return local || account ? [...offered, 'other'] : []

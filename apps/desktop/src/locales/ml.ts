@@ -2035,6 +2035,8 @@ export const ml: Dictionary = {
   'Your account’s connector': 'നിങ്ങളുടെ അക്കൗണ്ടിന്റെ കണക്ടർ',
   'Orden asks you once, the first time it connects.':
     'ആദ്യമായി കണക്റ്റ് ചെയ്യുമ്പോൾ Orden നിങ്ങളോട് ഒരിക്കൽ ചോദിക്കും.',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'Antigravity-യിൽ ഏജന്റ് പാനലിന്റെ മുകളിലെ … മെനു തുറക്കുക, തുടർന്ന് MCP Servers → Manage MCP Servers → View raw config, ഈ എൻട്രി അതിൽ ചേർക്കുക.',
   'A client on another machine?': 'മറ്റൊരു മെഷീനിലെ ക്ലയന്റ്?',
   'Shown only once.': 'ഒരിക്കൽ മാത്രം കാണിക്കും.',
   'Remove {name}?': '{name} നീക്കം ചെയ്യണോ?',

@@ -9,6 +9,7 @@ import {
   added,
   CLAUDE,
   defaulted,
+  GEMINI,
   isActive,
   merged,
   migrated,
@@ -34,6 +35,23 @@ describe('who serves an account', () => {
     for (const kind of ['codex', 'chatgpt', 'openai'] as const) {
       expect(vendorOf({ id: kind, kind })).toBe(OPENAI)
     }
+  })
+
+  test('a Gemini key and the Gemini CLI are Gemini, ranked after OpenAI', () => {
+    expect(vendorOf({ id: 'gemini', kind: 'gemini' })).toBe(GEMINI)
+    expect(vendorOf({ id: 'gemini-cli', kind: 'gemini-cli' })).toBe(GEMINI)
+    expect(vendors(made('compatible', 'gemini-cli', 'openai', 'anthropic'))).toEqual([
+      CLAUDE,
+      OPENAI,
+      GEMINI,
+      'compatible-1',
+    ])
+    const two = made('gemini-cli', 'gemini-cli')
+    expect(two.accounts.map((one) => [one.id, one.own])).toEqual([
+      ['gemini-cli', undefined],
+      ['gemini-cli-2', true],
+    ])
+    expect(accountsIn(JSON.parse(accountsText(two)) as unknown).accounts).toEqual(two.accounts)
   })
 
   test('each compatible server is a provider of its own', () => {
@@ -153,7 +171,7 @@ describe('kept and read back', () => {
         { id: 'anthropic', kind: 'anthropic', name: '', model: 'x' },
         { id: 'anthropic', kind: 'anthropic', name: 'twice', model: '' },
         { id: '../etc', kind: 'openai', name: '' },
-        { id: 'x', kind: 'gemini', name: '' },
+        { id: 'x', kind: 'mistral', name: '' },
         { id: 'openai', kind: 'openai', name: '', own: true },
         'nonsense',
       ],

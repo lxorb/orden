@@ -2061,6 +2061,8 @@ export const ptPT: Dictionary = {
   'Your account’s connector': 'Conector da sua conta',
   'Orden asks you once, the first time it connects.':
     'O Orden pergunta uma vez, na primeira vez que ele se liga.',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'No Antigravity, abra o menu … no topo do painel do agente, depois MCP Servers → Manage MCP Servers → View raw config, e adicione esta entrada.',
   'A client on another machine?': 'Um cliente noutra máquina?',
   'Shown only once.': 'Mostrado apenas uma vez.',
   'Remove {name}?': 'Remover {name}?',

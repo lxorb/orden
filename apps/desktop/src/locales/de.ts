@@ -2049,6 +2049,8 @@ export const de: Dictionary = {
   'Your account’s connector': 'Connector deines Kontos',
   'Orden asks you once, the first time it connects.':
     'Orden fragt dich einmal, wenn er sich zum ersten Mal verbindet.',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'Öffne in Antigravity das Menü … oben im Agent-Bereich, dann MCP Servers → Manage MCP Servers → View raw config, und füge diesen Eintrag dort hinzu.',
   'A client on another machine?': 'Ein Client auf einem anderen Gerät?',
   'Shown only once.': 'Wird nur einmal angezeigt.',
   'Remove {name}?': '{name} entfernen?',

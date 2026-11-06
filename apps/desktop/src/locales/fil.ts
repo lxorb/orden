@@ -2051,6 +2051,8 @@ export const fil: Dictionary = {
   'Your account’s connector': 'Connector ng iyong account',
   'Orden asks you once, the first time it connects.':
     'Magtatanong ang Orden nang isang beses, sa unang pagkonekta nito.',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'Sa Antigravity, buksan ang … menu sa itaas ng panel ng agent, pagkatapos MCP Servers → Manage MCP Servers → View raw config, at idagdag doon ang entry na ito.',
   'A client on another machine?': 'Isang client sa ibang makina?',
   'Shown only once.': 'Ipinapakita nang isang beses lang.',
   'Remove {name}?': 'Alisin ang {name}?',

@@ -1994,6 +1994,8 @@ export const ja: Dictionary = {
   'Your account’s connector': 'アカウントのコネクタ',
   'Orden asks you once, the first time it connects.':
     '初めて接続したときに、Orden が一度だけ確認します。',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'Antigravity でエージェントパネル上部の … メニューを開き、MCP Servers → Manage MCP Servers → View raw config を選んで、このエントリを追加します。',
   'A client on another machine?': '別のマシンのクライアントですか？',
   'Shown only once.': '一度だけ表示されます。',
   'Remove {name}?': '{name} を削除しますか？',

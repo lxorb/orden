@@ -1991,6 +1991,8 @@ export const my: Dictionary = {
   'Your account’s connector': 'သင့်အကောင့်၏ ချိတ်ဆက်ကိရိယာ',
   'Orden asks you once, the first time it connects.':
     'ပထမဆုံးချိတ်ဆက်သည့်အခါ Orden က တစ်ကြိမ်မေးပါမည်။',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'Antigravity တွင် agent panel ထိပ်ရှိ … မီနူးကိုဖွင့်ပါ၊ ထို့နောက် MCP Servers → Manage MCP Servers → View raw config၊ ဤ entry ကို ထည့်ပါ။',
   'A client on another machine?': 'အခြားစက်ပေါ်ရှိ client လား။',
   'Shown only once.': 'တစ်ကြိမ်သာ ပြသည်။',
   'Remove {name}?': '{name} ကို ဖယ်ရှားမလား။',

@@ -1,19 +1,19 @@
 import { key } from '../i18n.svelte'
 
-export type LocalKind = 'claude-code' | 'codex'
+export type LocalKind = 'claude-code' | 'codex' | 'gemini-cli'
 
-export type ProviderKind = 'anthropic' | 'openai' | 'compatible' | 'chatgpt' | LocalKind
+export type ProviderKind = 'anthropic' | 'openai' | 'gemini' | 'compatible' | 'chatgpt' | LocalKind
 
 export function isLocal(kind: ProviderKind): kind is LocalKind {
-  return kind === 'claude-code' || kind === 'codex'
+  return kind === 'claude-code' || kind === 'codex' || kind === 'gemini-cli'
 }
 
 export function offeredKinds(desktop: boolean, claudeCode: boolean): ProviderKind[] {
-  const keyed: ProviderKind[] = ['anthropic', 'openai', 'compatible']
+  const keyed: ProviderKind[] = ['anthropic', 'openai', 'gemini', 'compatible']
   if (!desktop) return keyed
   const plans: ProviderKind[] = claudeCode
-    ? ['claude-code', 'chatgpt', 'codex']
-    : ['chatgpt', 'codex']
+    ? ['claude-code', 'chatgpt', 'codex', 'gemini-cli']
+    : ['chatgpt', 'codex', 'gemini-cli']
   return [...plans, ...keyed]
 }
 
@@ -28,15 +28,18 @@ export interface Provider {
 export const KIND_NAMES: Record<ProviderKind, string> = {
   anthropic: 'Claude',
   openai: 'OpenAI',
+  gemini: 'Gemini',
   compatible: key('OpenAI-compatible'),
   chatgpt: 'ChatGPT',
   'claude-code': 'Claude Code',
   codex: 'Codex',
+  'gemini-cli': 'Gemini CLI',
 }
 
 const ROOTS: Record<Exclude<ProviderKind, 'compatible' | LocalKind>, string> = {
   anthropic: 'https://api.anthropic.com/v1',
   openai: 'https://api.openai.com/v1',
+  gemini: 'https://generativelanguage.googleapis.com/v1beta',
   chatgpt: 'https://api.openai.com/v1',
 }
 
@@ -69,16 +72,23 @@ export function reachable(provider: Provider, keyed: boolean): boolean {
 }
 
 export function modelsUrl(provider: Provider): string {
+  if (provider.kind === 'gemini') return `${apiRoot(provider)}/models?pageSize=1000`
   return `${apiRoot(provider)}/models`
 }
 
+export function geminiUrl(provider: Provider, model: string): string {
+  return `${apiRoot(provider)}/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`
+}
+
 export function askUrl(provider: Provider): string {
+  if (provider.kind === 'gemini') return geminiUrl(provider, provider.model)
   if (provider.kind === 'anthropic') return `${apiRoot(provider)}/messages`
   if (provider.kind === 'chatgpt') return `${apiRoot(provider)}/responses`
   return `${apiRoot(provider)}/chat/completions`
 }
 
 export function conversationUrl(provider: Provider): string {
+  if (provider.kind === 'gemini') return geminiUrl(provider, provider.model)
   if (provider.kind === 'anthropic') return `${apiRoot(provider)}/messages`
   if (provider.kind === 'openai' || provider.kind === 'chatgpt') {
     return `${apiRoot(provider)}/responses`
@@ -108,6 +118,10 @@ export function headersFor(provider: Provider, apiKey: string): Record<string, s
     }
   }
 
+  if (provider.kind === 'gemini') {
+    return { 'content-type': 'application/json', ...(apiKey ? { 'x-goog-api-key': apiKey } : {}) }
+  }
+
   return {
     'content-type': 'application/json',
     ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}),
@@ -129,8 +143,18 @@ export function modelsIn(body: unknown): string[] {
   const names = listed
     .map((one) => {
       if (typeof one !== 'object' || one === null) return null
-      const { id, slug, visibility } = one as { id?: unknown; slug?: unknown; visibility?: unknown }
+      const { id, slug, visibility, name, supportedGenerationMethods } = one as {
+        id?: unknown
+        slug?: unknown
+        visibility?: unknown
+        name?: unknown
+        supportedGenerationMethods?: unknown
+      }
       if (visibility !== undefined && visibility !== 'list') return null
+      if (Array.isArray(supportedGenerationMethods)) {
+        if (!supportedGenerationMethods.includes('generateContent')) return null
+        return typeof name === 'string' ? name.replace(/^models\//, '') : null
+      }
       return slug ?? id
     })
     .filter((id): id is string => typeof id === 'string' && id.length > 0)
@@ -141,7 +165,11 @@ export function modelsIn(body: unknown): string[] {
 export const NOT_CHAT =
   /embedding|whisper|tts|dall-e|moderation|transcribe|audio|realtime|image|search|babbage|davinci/i
 
+const NOT_GEMINI_CHAT =
+  /embedding|imagen|veo|lyria|tts|image|live|native-audio|transcribe|translate|robotics|aqa|deep-research|antigravity|computer-use/i
+
 export function talkable(kind: ProviderKind, ids: readonly string[]): string[] {
+  if (kind === 'gemini') return ids.filter((id) => !NOT_GEMINI_CHAT.test(id))
   if (kind !== 'openai' && kind !== 'chatgpt') return [...ids]
   return ids.filter((id) => !NOT_CHAT.test(id))
 }
@@ -157,6 +185,16 @@ function rankOf(kind: ProviderKind, id: string): number[] | null {
     if (!claude) return null
     const family = ['sonnet', 'opus', 'haiku'].indexOf(claude[1] ?? '')
     return [family, -Number(claude[2]), -Number(claude[3] ?? 0), claude[4] ? 1 : 0]
+  }
+  if (kind === 'gemini') {
+    const gemini = /^gemini-(\d+)(?:\.(\d+))?-(pro|flash|flash-lite|argon)(-preview)?$/.exec(id)
+    if (gemini) {
+      const family = ['pro', 'argon', 'flash', 'flash-lite'].indexOf(gemini[3] ?? '')
+      return [-Number(gemini[1]), -Number(gemini[2] ?? 0), family, gemini[4] ? 1 : 0]
+    }
+    const named = /^gemini-(\d+)(?:\.(\d+))?-([a-z]+)$/.exec(id)
+    if (!named) return null
+    return [-Number(named[1]), -Number(named[2] ?? 0), 1, 0]
   }
   return null
 }
@@ -183,6 +221,7 @@ export interface Message {
 
 export function bodyFor(provider: Provider, messages: readonly Message[], stream: boolean): string {
   if (provider.kind === 'chatgpt') return responsesBody(provider.model, messages)
+  if (provider.kind === 'gemini') return geminiBody(messages)
 
   if (provider.kind === 'anthropic') {
     const system = messages
@@ -200,6 +239,36 @@ export function bodyFor(provider: Provider, messages: readonly Message[], stream
   }
 
   return JSON.stringify({ model: provider.model, stream, messages })
+}
+
+function geminiBody(messages: readonly Message[]): string {
+  const system = messages
+    .filter((one) => one.role === 'system')
+    .map((one) => one.content)
+    .join('\n\n')
+
+  return JSON.stringify({
+    ...(system ? { systemInstruction: { parts: [{ text: system }] } } : {}),
+    contents: messages
+      .filter((one) => one.role !== 'system')
+      .map((one) => ({
+        role: one.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: one.content }],
+      })),
+  })
+}
+
+function geminiText(event: unknown): string {
+  const candidates = (event as { candidates?: unknown }).candidates
+  if (!Array.isArray(candidates)) return ''
+  const parts = (candidates[0] as { content?: { parts?: unknown } } | undefined)?.content?.parts
+  if (!Array.isArray(parts)) return ''
+  return parts
+    .map((one) => {
+      const part = one as { text?: unknown; thought?: unknown } | null
+      return part && part.thought !== true && typeof part.text === 'string' ? part.text : ''
+    })
+    .join('')
 }
 
 function responsesBody(model: string, messages: readonly Message[]): string {
@@ -227,6 +296,8 @@ export function deltaIn(kind: ProviderKind, event: unknown): string {
     return type === 'response.output_text.delta' && typeof delta === 'string' ? delta : ''
   }
 
+  if (kind === 'gemini') return geminiText(event)
+
   if (kind === 'anthropic') {
     const { type, delta } = event as { type?: unknown; delta?: { text?: unknown } }
     if (type !== 'content_block_delta') return ''
@@ -240,6 +311,7 @@ export function deltaIn(kind: ProviderKind, event: unknown): string {
 }
 
 export function troubleIn(body: unknown): string | null {
+  if (Array.isArray(body)) return troubleIn(body[0])
   if (typeof body !== 'object' || body === null) return null
 
   const event = body as { type?: unknown; response?: unknown; message?: unknown }

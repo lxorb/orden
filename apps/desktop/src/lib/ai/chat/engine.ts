@@ -5,6 +5,7 @@ import { always, type Answers, crateAnswers } from './approvals'
 import { catalogue, unlisted, windowIn } from './catalogue'
 import { compactThread } from './compact'
 import { completions } from './completions'
+import { gemini } from './gemini'
 import { within } from './effort'
 import { learn, learnt } from './learned'
 import { watching } from './sends'
@@ -33,10 +34,11 @@ function apiOf(kind: ProviderKind): Api | null {
   if (kind === 'anthropic') return 'anthropic'
   if (kind === 'openai' || kind === 'chatgpt') return 'responses'
   if (kind === 'compatible') return 'completions'
+  if (kind === 'gemini') return 'gemini'
   return null
 }
 
-const WIRES: Record<Api, Wire> = { anthropic, responses, completions }
+const WIRES: Record<Api, Wire> = { anthropic, responses, completions, gemini }
 
 export const MOST_ROUNDS = 40
 

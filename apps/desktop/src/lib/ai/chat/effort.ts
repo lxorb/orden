@@ -24,6 +24,10 @@ export function ordered(levels: Iterable<Effort>): Effort[] {
 export function wireEffort(api: Api, effort: Effort): string | null {
   if (effort === 'auto') return null
   if (api === 'anthropic') return effort === 'off' || effort === 'minimal' ? null : effort
+  if (api === 'gemini') {
+    if (effort === 'off' || effort === 'minimal') return 'minimal'
+    return effort === 'xhigh' || effort === 'max' ? 'high' : effort
+  }
   return effort === 'off' ? 'none' : effort
 }
 
@@ -54,12 +58,12 @@ export function within(effort: Effort, offered: readonly Effort[]): Effort {
 
 export function refusesEffort(said: string, param?: string): boolean {
   if (param && /effort/i.test(param)) return true
-  return /\beffort\b|reasoning[._]effort/i.test(said)
+  return /\beffort\b|reasoning[._]effort|thinking[._ ]?level/i.test(said)
 }
 
 export function refusesReasoning(said: string, param?: string): boolean {
   if (param && /^reasoning(?:\.summary)?$/i.test(param)) return true
-  return /reasoning\.summary|reasoning is not supported|does not support reasoning|unsupported parameter: 'reasoning'/i.test(
+  return /reasoning\.summary|reasoning is not supported|does not support reasoning|unsupported parameter: 'reasoning'|thinking is not supported|does not support thinking|thinking_?config/i.test(
     said,
   )
 }

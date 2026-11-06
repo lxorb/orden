@@ -20,6 +20,8 @@ const KINDS: Partial<Record<ProviderKind, string>> = {
   openai: 'openai',
   chatgpt: 'openai',
   codex: 'openai',
+  gemini: 'googlegemini',
+  'gemini-cli': 'googlegemini',
 }
 
 export function providerBrand(kind: ProviderKind | null | undefined, model: string): string | null {

@@ -671,6 +671,88 @@ function appServer() {
   )
 }
 
+const GEMINI_HELP = [
+  '  -m, --model  Model',
+  '  -o, --output-format  The format of the CLI output.',
+  '  --allowed-mcp-server-names  Allowed MCP server names',
+  '  -r, --resume  Resume a previous session.',
+  '  --skip-trust  Trust the current workspace for this session.',
+].join('\n')
+
+async function gemini() {
+  if (has('--version')) {
+    console.log('0.99.0')
+    return
+  }
+  if (has('--help')) {
+    console.log(GEMINI_HELP)
+    return
+  }
+  const home = process.env.GEMINI_CLI_HOME
+  if (args[0] === 'mcp') return mcp(home ?? process.env.HOME ?? '.')
+  if (after('--output-format') !== 'stream-json') return refuse('not stream-json')
+  if (after('--allowed-mcp-server-names') !== 'orden') return refuse('other servers allowed')
+  if (process.env.GEMINI_CLI_TRUST_WORKSPACE !== 'true') return refuse('the workroom is untrusted')
+  const system = process.env.GEMINI_SYSTEM_MD
+  if (!system || !readFileSync(system, 'utf8').includes('Orden')) return refuse('no system')
+  const settings = JSON.parse(readFileSync(process.env.GEMINI_CLI_SYSTEM_SETTINGS_PATH, 'utf8'))
+  if (!settings.tools?.exclude?.includes('run_shell_command')) return refuse('the shell is on')
+  if (mode === 'hang') return hang()
+
+  const asked = await question()
+  const at = () => new Date().toISOString()
+  const resumed = after('--resume')
+  const session = resumed ?? 'fake-session-1'
+  say({ type: 'init', timestamp: at(), session_id: session, model: after('--model') ?? 'auto' })
+  say({ type: 'message', timestamp: at(), role: 'user', content: asked })
+  if (mode === 'crash') {
+    process.stderr.write('boom\n')
+    process.exitCode = 1
+    return
+  }
+  if (mode === 'signed-out') {
+    say({
+      type: 'result',
+      timestamp: at(),
+      status: 'error',
+      error: { type: 'Error', message: 'Please set an Auth method in your settings.json' },
+    })
+    process.exitCode = 1
+    return
+  }
+  const orden = settings.mcpServers?.orden
+  if (orden) {
+    const token = (orden.env?.NIB_MCP_TOKEN ?? '').replace(/^\$\{(\w+)\}$/, (_, name) =>
+      name in process.env ? `set:${process.env[name]}` : 'unset',
+    )
+    say({
+      type: 'tool_use',
+      timestamp: at(),
+      tool_name: 'mcp_orden_read_note',
+      tool_id: 'read-1',
+      parameters: { path: 'heron.md' },
+    })
+    say({
+      type: 'tool_result',
+      timestamp: at(),
+      tool_id: 'read-1',
+      status: 'success',
+      output: token,
+    })
+  }
+  const words = `${resumed ? 'again: ' : ''}heard ${asked}`
+  for (const piece of [words.slice(0, 5), words.slice(5)]) {
+    say({ type: 'message', timestamp: at(), role: 'assistant', content: piece, delta: true })
+  }
+  say({
+    type: 'result',
+    timestamp: at(),
+    status: 'success',
+    stats: { total_tokens: 15, input_tokens: 12, output_tokens: 3, cached: 2, input: 10 },
+  })
+}
+
 if (tool === 'claude') await claude()
 else if (tool === 'codex') await codex()
+else if (tool === 'gemini') await gemini()
 else refuse(`no tool ${tool}`)

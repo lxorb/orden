@@ -8,7 +8,10 @@
   import { type McpClient, mcpLine } from '../agents/mcp'
   import type { AgentsPane } from '../agents/settings/pane.svelte'
 
-  const { pane, client }: { pane: AgentsPane; client: 'claude-code' | 'codex' | 'other' } = $props()
+  const {
+    pane,
+    client,
+  }: { pane: AgentsPane; client: 'claude-code' | 'codex' | 'antigravity' | 'other' } = $props()
 
   const lineOf = (way: typeof client): McpClient =>
     way === 'claude-code' ? 'claude' : way === 'codex' ? 'codex' : 'json'
@@ -27,7 +30,15 @@
 </script>
 
 {#if line !== null}
-  {#if client === 'other'}
+  {#if client === 'antigravity'}
+    <p class="hint">
+      {t(
+        'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.',
+      )}
+    </p>
+    <pre>{line}</pre>
+    <CopyButton value={line} wide />
+  {:else if client === 'other'}
     <pre>{line}</pre>
     <CopyButton value={line} wide />
   {:else}

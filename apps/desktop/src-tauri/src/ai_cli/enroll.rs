@@ -55,7 +55,7 @@ fn get_args(name: &str) -> Vec<OsString> {
 
 fn add_args(tool: Tool, nib: &Path) -> Vec<OsString> {
     let mut args: Vec<OsString> = match tool {
-        Tool::ClaudeCode => vec!["mcp", "add", "--scope", "user", NAME, "--"],
+        Tool::ClaudeCode | Tool::Gemini => vec!["mcp", "add", "--scope", "user", NAME, "--"],
         Tool::Codex => vec!["mcp", "add", NAME, "--"],
     }
     .into_iter()
@@ -67,7 +67,7 @@ fn add_args(tool: Tool, nib: &Path) -> Vec<OsString> {
 
 fn remove_args(tool: Tool, name: &str) -> Vec<OsString> {
     match tool {
-        Tool::ClaudeCode => vec!["mcp", "remove", "--scope", "user", name],
+        Tool::ClaudeCode | Tool::Gemini => vec!["mcp", "remove", "--scope", "user", name],
         Tool::Codex => vec!["mcp", "remove", name],
     }
     .into_iter()

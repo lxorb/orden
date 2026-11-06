@@ -2119,6 +2119,8 @@ export const ar: Dictionary = {
   'Agents on this computer': 'الوكلاء على هذا الحاسوب',
   'Your account’s connector': 'موصّل حسابك',
   'Orden asks you once, the first time it connects.': 'يسألك Orden مرة واحدة، عند أول اتصال.',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'في Antigravity، افتح القائمة … أعلى لوحة الوكيل، ثم MCP Servers → Manage MCP Servers → View raw config، وأضف هذا الإدخال إليه.',
   'A client on another machine?': 'عميل على جهاز آخر؟',
   'Shown only once.': 'يُعرض مرة واحدة فقط.',
   'Remove {name}?': 'إزالة {name}؟',

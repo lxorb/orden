@@ -2039,6 +2039,8 @@ export const ta: Dictionary = {
   'Your account’s connector': 'உங்கள் கணக்கின் இணைப்பான்',
   'Orden asks you once, the first time it connects.':
     'முதல் முறை இணையும்போது Orden உங்களிடம் ஒருமுறை கேட்கும்.',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'Antigravity-இல் ஏஜென்ட் பேனலின் மேலுள்ள … மெனுவைத் திறந்து, பின் MCP Servers → Manage MCP Servers → View raw config, இந்த உள்ளீட்டை அதில் சேர்க்கவும்.',
   'A client on another machine?': 'வேறு கணினியில் உள்ள கிளையன்ட்டா?',
   'Shown only once.': 'ஒருமுறை மட்டுமே காட்டப்படும்.',
   'Remove {name}?': '{name} ஐ அகற்றவா?',

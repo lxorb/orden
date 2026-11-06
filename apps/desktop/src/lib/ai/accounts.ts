@@ -6,6 +6,7 @@ export type Vendor = string
 
 export const CLAUDE: Vendor = 'claude'
 export const OPENAI: Vendor = 'openai'
+export const GEMINI: Vendor = 'gemini'
 
 export interface Account extends Provider {
   own?: true
@@ -23,9 +24,11 @@ export const NONE: Accounts = { accounts: [], active: {}, defaultVendor: '', use
 const FIRST: Record<Exclude<ProviderKind, 'compatible'>, string> = {
   anthropic: 'anthropic',
   openai: 'openai',
+  gemini: 'gemini',
   chatgpt: 'chatgpt',
   'claude-code': 'claude-code',
   codex: 'codex',
+  'gemini-cli': 'gemini-cli',
 }
 
 export function repeatable(kind: ProviderKind): boolean {
@@ -41,6 +44,9 @@ export function vendorOf(account: Pick<Provider, 'id' | 'kind'>): Vendor {
     case 'chatgpt':
     case 'codex':
       return OPENAI
+    case 'gemini':
+    case 'gemini-cli':
+      return GEMINI
     case 'compatible':
       return account.id
   }
@@ -107,7 +113,7 @@ export function accountsText(state: Accounts): string {
 
 export function vendors(state: Accounts): Vendor[] {
   const all = [...new Set(state.accounts.map(vendorOf))]
-  const rank = (one: Vendor) => (one === CLAUDE ? 0 : one === OPENAI ? 1 : 2)
+  const rank = (one: Vendor) => (one === CLAUDE ? 0 : one === OPENAI ? 1 : one === GEMINI ? 2 : 3)
   return all.sort((a, b) => rank(a) - rank(b))
 }
 

@@ -5,7 +5,7 @@ import { ai } from './store.svelte'
 
 const KEY = 'nib:keys-moved'
 
-const KEYED = new Set(['anthropic', 'openai', 'chatgpt'])
+const KEYED = new Set(['anthropic', 'openai', 'gemini', 'chatgpt'])
 
 class KeysMoved {
   showing = $state(false)

@@ -2018,6 +2018,8 @@ export const gsw: Dictionary = {
   'Your account’s connector': 'Connector vo dim Konto',
   'Orden asks you once, the first time it connects.':
     'Orden fragt di einisch, wenn er sich s erscht Mal verbindet.',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'Mach in Antigravity s Menü … obe im Agent-Bereich uf, denn MCP Servers → Manage MCP Servers → View raw config, und füeg dä Iitrag dört dezue.',
   'A client on another machine?': 'En Client uf eme andere Grät?',
   'Shown only once.': 'Wird nume einisch azeigt.',
   'Remove {name}?': '{name} entferne?',

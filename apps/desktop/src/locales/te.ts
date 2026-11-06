@@ -2018,6 +2018,8 @@ export const te: Dictionary = {
   'Your account’s connector': 'మీ ఖాతా కనెక్టర్',
   'Orden asks you once, the first time it connects.':
     'మొదటిసారి కనెక్ట్ అయినప్పుడు Orden మిమ్మల్ని ఒకసారి అడుగుతుంది.',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'Antigravity లో ఏజెంట్ ప్యానెల్ పైన ఉన్న … మెనూ తెరవండి, తర్వాత MCP Servers → Manage MCP Servers → View raw config, దానికి ఈ ఎంట్రీని జోడించండి.',
   'A client on another machine?': 'వేరే మెషీన్‌లో క్లయింట్ ఉందా?',
   'Shown only once.': 'ఒక్కసారి మాత్రమే చూపబడుతుంది.',
   'Remove {name}?': '{name}ని తీసివేయాలా?',

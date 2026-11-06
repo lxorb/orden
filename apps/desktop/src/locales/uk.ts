@@ -2085,6 +2085,8 @@ export const uk: Dictionary = {
   'Your account’s connector': 'Конектор вашого акаунта',
   'Orden asks you once, the first time it connects.':
     'Orden спитає вас один раз, під час першого підключення.',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'В Antigravity відкрийте меню … угорі панелі агента, потім MCP Servers → Manage MCP Servers → View raw config, і додайте туди цей запис.',
   'A client on another machine?': 'Клієнт на іншому комп’ютері?',
   'Shown only once.': 'Показується лише один раз.',
   'Remove {name}?': 'Видалити {name}?',

@@ -27,17 +27,20 @@
   const INSTALL: Record<LocalKind, string> = {
     'claude-code': 'https://code.claude.com/docs/en/setup',
     codex: 'https://developers.openai.com/codex/cli',
+    'gemini-cli': 'https://geminicli.com/docs/get-started/installation/',
   }
 
   const USAGE_OF: Record<LocalKind | 'chatgpt', string> = {
     'claude-code': 'https://claude.ai/settings/usage',
     codex: USAGE,
+    'gemini-cli': 'https://geminicli.com/docs/resources/quota-and-pricing/',
     chatgpt: USAGE,
   }
 
   const PLAN_OF: Record<LocalKind | 'chatgpt', string> = {
     'claude-code': 'Claude',
     codex: 'ChatGPT',
+    'gemini-cli': 'Gemini',
     chatgpt: 'ChatGPT',
   }
 

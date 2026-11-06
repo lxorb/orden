@@ -42,6 +42,18 @@ export function responsesUsage(said: unknown, window: number | null): Usage {
   }
 }
 
+export function geminiUsage(said: unknown, window: number | null): Usage {
+  const usage = record(said)
+  const thoughts = count(usage.thoughtsTokenCount)
+  return {
+    input: count(usage.promptTokenCount) + count(usage.toolUsePromptTokenCount),
+    cached: count(usage.cachedContentTokenCount),
+    output: count(usage.candidatesTokenCount) + thoughts,
+    reasoning: thoughts,
+    window,
+  }
+}
+
 export function completionsUsage(said: unknown, window: number | null): Usage {
   const usage = record(said)
   const cost = usage.cost

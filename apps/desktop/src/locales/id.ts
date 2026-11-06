@@ -1998,6 +1998,8 @@ export const id: Dictionary = {
   'Your account’s connector': 'Konektor akunmu',
   'Orden asks you once, the first time it connects.':
     'Orden bertanya sekali, saat pertama kali ia terhubung.',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'Di Antigravity, buka menu … di bagian atas panel agen, lalu MCP Servers → Manage MCP Servers → View raw config, dan tambahkan entri ini ke sana.',
   'A client on another machine?': 'Klien di mesin lain?',
   'Shown only once.': 'Ditampilkan sekali saja.',
   'Remove {name}?': 'Hapus {name}?',

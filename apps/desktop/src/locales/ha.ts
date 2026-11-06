@@ -2037,6 +2037,8 @@ export const ha: Dictionary = {
   'Your account’s connector': 'Mahaɗin asusunka',
   'Orden asks you once, the first time it connects.':
     'Orden zai tambaye ka sau ɗaya, a farkon lokacin da ya haɗu.',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'A cikin Antigravity, buɗe menu … a saman faifan wakili, sannan MCP Servers → Manage MCP Servers → View raw config, kuma ƙara wannan shigarwar a ciki.',
   'A client on another machine?': "Abokin ciniki a wata na'ura?",
   'Shown only once.': 'Ana nuna shi sau ɗaya kawai.',
   'Remove {name}?': 'Cire {name}?',

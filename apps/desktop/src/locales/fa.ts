@@ -2009,6 +2009,8 @@ export const fa: Dictionary = {
   'Your account’s connector': 'رابط حساب شما',
   'Orden asks you once, the first time it connects.':
     'Orden یک بار، هنگام نخستین اتصال، از شما می‌پرسد.',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    'در Antigravity، منوی … بالای پنل عامل را باز کنید، سپس MCP Servers → Manage MCP Servers → View raw config، و این ورودی را به آن اضافه کنید.',
   'A client on another machine?': 'کلاینتی روی دستگاهی دیگر؟',
   'Shown only once.': 'فقط یک بار نشان داده می‌شود.',
   'Remove {name}?': '{name} حذف شود؟',

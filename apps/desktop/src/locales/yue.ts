@@ -1947,6 +1947,8 @@ export const yue: Dictionary = {
   'Agents on this computer': '呢部電腦上面嘅代理',
   'Your account’s connector': '你帳戶嘅連接器',
   'Orden asks you once, the first time it connects.': '第一次連線嘅時候，Orden 會問你一次。',
+  'In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw config, and add this entry to it.':
+    '喺 Antigravity 打開代理面板頂部嘅 … 選單，再揀 MCP Servers → Manage MCP Servers → View raw config，然後將呢項加入去。',
   'A client on another machine?': '另一部機器上面嘅用戶端？',
   'Shown only once.': '只會顯示一次。',
   'Remove {name}?': '移除 {name}？',
