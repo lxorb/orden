@@ -1,43 +1,3 @@
-/* Wallpaper: a picture of the reader's own behind the frame.
-
-   The chrome - the title bar with the tabs in it, the list down the side, the foot
-   row, and a pane with nothing open - stands on a picture somebody chose, under a
-   scrim. The writing surface stands on paper of its own (see Pane.svelte), laid over
-   the picture as thinly as the Content dial asks and the words allow: Opaque is the
-   paper as it always was, Clear the least paper under which body text still reads.
-   A web page paints its own page whatever the dial says. Glass is the same layering
-   over the platform's material; this is it over a picture, and so it needs no
-   material and is offered everywhere.
-
-   ── The picture ──
-
-   Painted once, by `main`, as `--shell-ground`: the picture the app made and kept when
-   it was chosen (see lib/wallpaper in the app), a few hundred pixels across and laid
-   as the Fit dial says, at its focal point. Blurred, saturated and tinted in advance
-   rather than here, so nothing behind the frame is filtered on any frame; the app
-   makes the picture again when one of those dials moves. Under a light blur the app
-   also lays a copy at the screen's own size over it, `--wallpaper-sharp`, and a grain
-   is a tile of noise drawn once. Until a picture is chosen the theme wears a soft
-   field of the reader's accent, so choosing it looks right at once.
-
-   ── The words ──
-
-   Two scrims, one over the other. The lower one is the floor: the least scrim under
-   which the quietest word on the chrome clears four and a half to one over every
-   colour in this picture and its grain, on the list's layer and on a row under the
-   pointer, worked out from the picture itself (see look.ts in the app) - and higher
-   the sharper the picture is, since words over a sharp photograph have its edges to
-   read past as well as its colours. The upper one is the Dim dial. Two layers of a colour at f and d are
-   one at f + (1 - f) d, so the dial adds to the floor and never takes from it: no
-   position of it is unreadable, and a reader never has to balance three sliders to
-   make their own picture legible. The floors below are what the accent field needs,
-   held to it by floors.test.ts; a chosen picture says its own on the root.
-
-   The text levels are glass's, a step stronger than the built-in's, for the same
-   reason: a caption on a washed surface is the first thing to go - and the light
-   side's quiet grey a step darker again, so a row under the pointer can reach the six
-   to one a sharp picture asks for. */
-
 :root,
 [data-theme='dark'] {
   color-scheme: dark;
@@ -78,8 +38,6 @@
 }
 
 :root {
-  /* The field the theme wears before a picture is chosen: the accent from one corner
-     and the canvas's blue from the other, over a ground of the scheme's own. */
   --wallpaper-field:
     radial-gradient(
       110% 90% at 0% 0%,
@@ -93,8 +51,6 @@
     ),
     linear-gradient(160deg, var(--wallpaper-base-1), var(--wallpaper-base-2));
 
-  /* Under the picture, for the frame before any script has run and for a window
-     wider than the picture covers: the colour the whole of it comes to. */
   --window-ground: var(--wallpaper-ground);
   --shell-ground:
     linear-gradient(
@@ -112,33 +68,18 @@
       var(--wallpaper-size, cover) var(--wallpaper-repeat, no-repeat),
     var(--wallpaper-mean, var(--wallpaper-ground));
 
-  /* What a note, a terminal and a canvas are read on: the paper, laid over the picture
-     at the least alpha the Content dial and the floors allow (see look.ts in the app),
-     so the words keep the palette they were measured on. A link takes a third of the
-     strongest ink, so it is not what holds the paper opaque. */
   --content-ground: color-mix(in srgb, var(--bg) var(--content-alpha), transparent);
   --terminal-ground: color-mix(in srgb, var(--bg) var(--terminal-alpha), transparent);
   --content-link: color-mix(in srgb, var(--accent) 70%, var(--text-strong));
   --paper: var(--content-ground);
 
-  /* What stands on it: the frame the tabs are cut out of shows it, the list lays a
-     layer over it the way Windows lays a navigation pane over Mica, and a pane with
-     nothing open is the picture rather than a page, the way a browser's new tab is.
-     A row under the pointer is a lift of the ink on more of the scrim: 8% and 40% is
-     a pill at 48% that is a sixth ink, so it lights the row and steadies what is
-     under it at once, and the floor need not be raised for it. */
   --tab-frame: transparent;
   --side-bar-bg-color: var(--wallpaper-layer);
   --item-hover-bg-color: color-mix(in srgb, var(--text) 8%, var(--wallpaper-scrim) 40%);
   --empty-ground: transparent;
-  /* The open note's row is a pill of its own rather than a tint of the picture, so
-     its words read whatever is under it and the picture's floor need not answer for
-     every accent there is. */
   --active-file-bg-color: color-mix(in srgb, var(--accent) 16%, var(--wallpaper-scrim));
 }
 
-/* A system asking for less transparency is asked for less picture: the floor is
-   raised, so what shows is a hint of its colour. */
 @media (prefers-reduced-transparency: reduce) {
   :root[data-theme] {
     --wallpaper-floor: max(85%, var(--wallpaper-floor-dark, 53%));
@@ -148,15 +89,12 @@
     --wallpaper-floor: max(85%, var(--wallpaper-floor-light, 51%));
   }
 
-  /* And the note is on its paper, whatever the Content row says. */
   :root[data-theme] {
     --content-ground: var(--bg);
     --terminal-ground: var(--bg);
   }
 }
 
-/* Forced colours paint every ground the system's colour already; the picture is
-   taken away with them rather than left under the system's words. */
 @media (forced-colors: active) {
   :root {
     --shell-ground: var(--bg);

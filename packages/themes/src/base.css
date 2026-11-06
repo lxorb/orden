@@ -1,26 +1,9 @@
-/* Content styles for the writing surface.
-   Structure mirrors Typora (#write container, .md-meta syntax spans) so themes port over. */
-
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
 
-/* The window's own ground.
-   `--bg` in every window there has ever been, and the one thing a reader can take
-   away: under the glass theme it is nothing at all, so what shows through the app is
-   whatever the platform composites behind the window - Mica Alt on Windows 11. See
-   appearance.rs and material.ts in the app.
-
-   The ground and nothing else. Every surface above it keeps the token it had, so a
-   row, a card, a sheet and a menu are the colours they were measured at: a translucent
-   window must not become a window whose words are on somebody's wallpaper.
-
-   `--shell-ground` is what the app's own shell stands on over that: the same colour,
-   unless a theme lays a wash over the material. The glass theme does, and says it
-   here rather than on the ground, which `html` and `body` both paint and would lay
-   twice. See glass.css. */
 :root {
   --window-ground: var(--bg);
   --shell-ground: var(--window-ground);
@@ -41,35 +24,23 @@ body {
   font-size: var(--text-base);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  /* Phone habits an app does not have: enlarging text in ways a fixed layout
-     cannot absorb, a grey flash on every tap, and the page rubber-banding
-     behind the editor when a scroll runs out. */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
 }
 
-/* A drag that is not about words selects none on its way: a divider, a sidebar's edge,
-   a row carried. Both spellings, because a Mac's WebKit reads only the prefixed one. */
 .nib-unselectable {
   -webkit-user-select: none;
   user-select: none;
 }
 
-/* A button is pressed, not read. WebKit selects the words on one held down, and
-   on an iPhone a long press on a button's label came up selected, with Copy and
-   Look Up over it. */
 button {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
 
-/* The pointing hand over whatever can be pressed, for a reader who asked for the web's
-   way in Settings > Appearance (`data-pointer` on the root; see modes.svelte.ts). The
-   arrow is the default, which is how a desktop app draws its controls. Weighted past a
-   component's own `cursor: default`, which is the arrow this switch is about. */
 :root[data-pointer='hand']
   :is(
     button,
@@ -90,18 +61,6 @@ button {
   cursor: pointer;
 }
 
-/* ── Where the keyboard is ───────────────────────────────────────
-   One ring, on everything a key can land on, drawn from one token; see
-   `--focus-ring` in tokens.css for what it is and why it is that.
-
-   Written with `:where`, so it carries no weight at all: a control with a shape of
-   its own - a field that turns its border, a card that lifts - still says so
-   without having to out-specify this, and gets the ring for free if it does not.
-   Nothing in the app should ever need to restate the two lines below, and
-   one-of-each.test.ts fails if a component does.
-
-   `:focus-visible` and never `:focus`: a click leaves nothing behind, a key
-   leaves the ring. That is the whole of the rule Discord spends a mode on. */
 :where(
   button,
   a[href],
@@ -116,36 +75,10 @@ button {
   outline-offset: var(--focus-ring-offset);
 }
 
-/* And three places that answer a focus another way instead, so the app has
-   exactly four rules about the ring rather than thirty. Two of them are here; the
-   third is the box a caret sits in, which is the whole of the Fields section
-   below rather than a line of it, and so is written there beside the answer it is
-   half of.
-
-   The first is a box that holds the keyboard for the things inside it rather than
-   being one of them: the menu whose rows are the stops, the pane a note is read
-   in, the column of a PDF, a deck of slides, the plane. Each of them is
-   `tabindex="-1"` - never a stop Tab walks to - and each is focused by the app so
-   that the keys which move it land. A ring round the whole of what is on screen
-   answers a question nobody asked: there is nowhere else the keyboard could be.
-
-   Marked, rather than every `[tabindex="-1"]`: a region with nothing in it takes
-   the keyboard itself, and there the ring is the only thing saying that F6
-   landed. */
 .nib-host:focus-visible {
   outline: none;
 }
 
-/* The second is the writing surface. A note is a `contenteditable`, so the rule
-   above found it and drew the ring round the whole of it: a frame in the accent
-   round every word on screen, there the entire time anybody is writing. Emil,
-   with a note open: *"while editing a note, there is currently a frame around
-   it."*
-
-   It is the same question the pane answers - a region that holds the keyboard
-   rather than being a stop on the way to one - and the caret has already
-   answered it, in the accent, blinking, at the exact character the next key will
-   land on. Nothing a frame adds to that is worth a border round the reading. */
 .cm-content:focus-visible {
   outline: none;
 }
@@ -154,16 +87,6 @@ button {
   background: var(--selection);
 }
 
-/* ── Said and not shown ──────────────────────────────────────────── */
-
-/* Words that are only for whoever is listening: the note in front, named once so
-   the page has a heading; what just happened, in the one live region the app
-   announces through; the page a column of a PDF is on.
-
-   Not `display: none` and not `visibility: hidden`, either of which takes the
-   words out of the page for a screen reader as well as for an eye. A one-pixel
-   box, clipped, with the text kept on one line so nothing reflows around it -
-   which is the shape every app that needs this has settled on. */
 .nib-said {
   position: absolute;
   width: 1px;
@@ -176,16 +99,6 @@ button {
   white-space: nowrap;
 }
 
-/* ── Said for a moment ───────────────────────────────── */
-
-/* A number the app says once and then stops saying: the size of the text after a
-   pinch, how far a page note is zoomed while it is being zoomed.
-
-   One shape, because they are one thing. Two surfaces had written the same nine
-   declarations - the same radius, the same fill, the same shadow, the same
-   tabular figures - and a reader who pinches the words and then pinches the paper
-   sees the two of them within a second of each other. Where it sits is each
-   one's own; what it looks like is this. */
 .nib-pill {
   padding: 6px var(--space-3);
   border: 1px solid var(--line);
@@ -199,8 +112,6 @@ button {
   pointer-events: none;
 }
 
-/* The same shape to press: a chat's way to its New line and to its newest message,
-   floating over the rows. It takes the pointer, and answers it as a button does. */
 .nib-pill.is-pressable {
   display: inline-flex;
   align-items: center;
@@ -214,30 +125,13 @@ button {
   transform: scale(0.95);
 }
 
-/* ── Dropdowns ───────────────────────────────────────────────────── */
-
-/* One rule for every dropdown in the app. The native control brings the
-   operating system's own look with it, which is the one thing a theme cannot
-   reach, so the arrow is drawn here instead. The list that opens is still the
-   browser's - `color-scheme` on the root is what keeps that dark or light in
-   step with everything else. */
 select {
   appearance: none;
-  /* A thumb's target, said the way every other row says it: 28 under a pointer,
-     56 under a finger. The words and their padding make it taller than 28 on a
-     desktop anyway; what this is for is the phone, where a dropdown was the one
-     control in the settings under the touch floor. */
   min-height: var(--row-height);
   padding: var(--space-2) var(--space-6) var(--space-2) var(--space-3);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
   background-color: var(--bg);
-  /* The arrow, drawn here because the platform's own is the one thing a theme
-     cannot reach. It comes from `--select-arrow`, which is stated per scheme in
-     tokens.css: a `data:` URL is a picture rather than a rule, so it cannot read
-     a variable, and the one colour it held - `#8a93a2`, the light palette's
-     muted grey - was worn by every dark window in the app as well. A token is
-     the only way a theme gets a say in it. */
   background-image: var(--select-arrow);
   background-repeat: no-repeat;
   background-position: right var(--space-3) center;
@@ -257,22 +151,15 @@ select:hover {
   border-color: var(--muted);
 }
 
-/* Honoured by the popup on Windows and Linux, where it would otherwise open a
-   white list under a dark theme. */
 select option {
   background: var(--surface);
   color: var(--text);
 }
 
-/* ── Writing surface ─────────────────────────────────────────────── */
-
 #write {
   max-width: var(--measure);
   margin: 0 auto;
   padding: var(--space-7) var(--space-5) 45vh;
-  /* A phone has no room for a comfortable measure; the screen is the measure.
-     Physical on purpose: an inset is which edge of the glass the cutout is on,
-     which does not turn round with the reading direction. */
   padding-inline-start: max(var(--space-5), var(--inset-start));
   padding-inline-end: max(var(--space-5), var(--inset-end));
   font-family: var(--font-content);
@@ -286,18 +173,6 @@ select option {
   margin-top: 0;
 }
 
-/* A note reads whichever way it was written, and never whichever way the
-   interface reads: every block takes the direction of its own first strong
-   character, so an English note in an Arabic app and an Arabic note in an
-   English app both read right, and a note with both in it reads right block by
-   block. The note's own Right to left mode still sets `dir` on the surface,
-   which is what decides a block with no strong character in it at all.
-
-   Every block has to be named: `unicode-bidi` is one of the few properties that
-   does not inherit, so the value on `#write` would reach the loose words
-   directly inside it and nothing else. One rule for the writing surface, the
-   reading view and a published page, because all three are `#write`. See
-   apps/desktop/src/lib/direction.ts. */
 #write > *,
 #write p,
 #write li,
@@ -311,15 +186,10 @@ select option {
   unicode-bidi: plaintext;
 }
 
-/* Code is laid out rather than read: a line that happens to start with an Arabic
-   string would turn round and take its indentation with it. It keeps the note's
-   own direction, whatever is in it. */
 #write pre,
 #write pre * {
   unicode-bidi: normal;
 }
-
-/* ── The signature: syntax characters bleeding in like ink ───────── */
 
 .md-meta,
 .cm-formatting {
@@ -340,8 +210,6 @@ select option {
     transform: none;
   }
 }
-
-/* ── Headings ────────────────────────────────────────────────────── */
 
 #write h1,
 #write h2,
@@ -391,8 +259,6 @@ select option {
   font-weight: 400;
 }
 
-/* ── Paragraphs and inline ───────────────────────────────────────── */
-
 #write p {
   margin: 0 0 1.15em;
 }
@@ -419,11 +285,6 @@ select option {
   box-decoration-break: clone;
 }
 
-/* A highlight that named a colour, drawn in the palette tone it named. The class
-   is written by the renderer and the same five rules dress it in the reading view,
-   in an export and on a published page; the editor says the same thing about what
-   is being typed, in editor.css. The tones themselves are `--mark-*` in
-   tokens.css, which is also where the missing yellow is explained. */
 #write mark.tone-1 {
   background: var(--mark-1);
 }
@@ -469,18 +330,6 @@ select option {
   border-bottom-color: var(--accent);
 }
 
-/* One row of a settings pane: what it is on the left, what it is set to on the
-   right, and the same height whatever the control is.
-
-   Four panes had these fifteen lines word for word - the settings themselves, the
-   AI pane, the security pane and the sync pane - and forty rows are written out by
-   hand between them. A row that is a switch, a slider, a segmented control, a
-   field or a dropdown differs only in what sits at the end of it, which is each
-   pane's own; being a row is this.
-
-   Not a `.nib-row`, which is a row somebody presses: this one is read, and the
-   control in it is what is pressed. `cursor: default` is that difference said to
-   the pointer. */
 .nib-setting {
   display: flex;
   flex-wrap: wrap;
@@ -499,55 +348,17 @@ select option {
   cursor: default;
 }
 
-/* The name gives way, because the control cannot. What sits at the end of one of
-   these rows is a switch, a slider or a segmented control at the size a thumb
-   needs, so when the words do not fit the words are the only thing that can move -
-   and a row one line taller costs nothing, while a name cut in half no longer says
-   which setting it is.
-
-   `anywhere` rather than `break-word`, because only `anywhere` counts for the
-   min-content width a flex row is measured by: with `break-word` the row is still
-   laid out as though the longest word were unbreakable, and the break comes too
-   late to stop the overflow.
-
-   Not a German rule, though German is where it shows first: `Schreibmaschinenmodus`
-   is twice the English it replaces, and Thai and Japanese give a line no spaces to
-   break at at all. English rows are unaffected - a box that already fits has nothing
-   to break. */
 .nib-setting .name,
 .nib-setting .name .what,
 .nib-setting .name .nib-named {
   overflow-wrap: anywhere;
 }
 
-/* A name with the `?` that explains it (#768), in a pane of its own component: the
-   glyph in the same slot after the words as on every declared row, which the panel
-   draws with its own `.what`. One run of text, not a flex row: the glyph places
-   itself on the letters and wraps with the last word (#1052, Hint.svelte). And it
-   wraps even in a pane whose names keep to one line and are cut short: cut, the
-   words would take their `?` with them, and the reader would never learn there was
-   anything to ask (#1061). */
 .nib-setting .name .nib-named {
   display: block;
   white-space: normal;
 }
 
-/* But never below a width a name can be read at, whatever sits beside it.
-
-   A name that gives way all the way gives way to nothing: a control as wide as the
-   row - an action that is a line across a card, a dropdown that is 100% of what it
-   is in - left the name 0px, and its words were drawn a letter to a line. Settings >
-   Online terminal did it with Restart, Glasses with the OpenAI key, and Account with
-   Clear after, each one found by Emil. Each pane's own rule said `min-width: 0` for
-   the name, which is what let it go to nothing, so the floor here is `!important`:
-   it is the one thing a row promises that no pane may take back.
-
-   The floor is where the row breaks instead. It wraps, and what does not fit beside
-   the name goes onto a line of its own under it, at the end where every control
-   sits - so a control too wide for the row costs a line, the way a long name does,
-   and never the name. Nine rems is the longest English name a row holds at the
-   small size; a word longer than that, which German has, may still break, and only
-   there. */
 .nib-setting > .name {
   flex: 1 1 0;
   min-inline-size: min(9rem, 100%) !important;
@@ -557,14 +368,10 @@ select option {
   margin-inline-start: auto;
 }
 
-/* And what sits at the end is never wider than the row it ends. */
 .nib-setting > .name ~ * {
   max-inline-size: 100%;
 }
 
-/* What a row is about, drawn in front of its name: an app's or a browser's logo
-   in Settings > Import (#1057). The row mark's size, which is a thumb's under a
-   finger through `--icon-md`, so every leading mark in a pane is one size. */
 .nib-setting-mark {
   flex: none;
   display: grid;
@@ -573,32 +380,10 @@ select option {
   height: var(--icon-md);
   font-size: var(--icon-md);
   color: var(--muted-strong);
-  /* A stroked mark's ink and weight are its box's (Icon.svelte); a logo paints
-     itself. */
   stroke: currentColor;
   stroke-width: 1.75;
 }
 
-/* ── Layers over the app ───────────────────── */
-
-/* What a layer is put up over: the app, dimmed and softened, so the surface in
-   front of it reads as the thing being answered. Twelve components had written
-   the same five lines out, and by then three of them had drifted to a different
-   ink and a softer blur, so two sheets opened over two different greys.
-
-   Which layer it is put up under is the caller's, as `--scrim-z`, because that is
-   the one thing each of them genuinely means differently: a dropdown's scrim is
-   over the sheet that opened it, and the palette's is under a notice. The caller
-   names the rung its own surface stands on - `var(--z-menu)`, `var(--z-screen)` -
-   and the scrim takes the step under it, so the two can never be put the wrong
-   way round whichever of them comes first in the page. `--scrim-ink` and
-   `--scrim-blur` are there for the three that still spend less of both - the
-   store, a dropdown and a menu on a phone, each of which covers a surface that
-   has to stay readable behind it.
-
-   `is-clear` is the scrim that only catches: a menu's, on a desktop, where the
-   note it was opened from must not dim. It takes the tap and the scroll and
-   paints nothing. */
 .nib-scrim {
   position: fixed;
   inset: 0;
@@ -614,15 +399,6 @@ select option {
   backdrop-filter: none;
 }
 
-/* Level 3 of the elevation model, at the corner a thing that *floats* takes: a
-   context menu, the app menu, the list of spaces, the suggestions under a
-   `[[`, a dropdown. Five components had the same four lines of it and two had
-   already drifted - the app menu and the dropdown lit their surface a step
-   brighter, and the dropdown and the suggestions spent a smaller shadow - so a
-   menu and the dropdown beside it did not read as the same kind of thing. See
-   docs/design.md.
-
-   Where it sits and how wide it is are the caller's; what it is, is this. */
 .nib-layer {
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
@@ -630,15 +406,6 @@ select option {
   box-shadow: var(--shadow-lg);
 }
 
-/* The same level, at the corner a surface that *replaces* part of the screen
-   takes: the palette, the one small modal the app asks its questions in, the
-   sign-in panel, the word a link owes whoever followed it. Four components had
-   the same eight lines, and the drift was already on screen - one opened six vh
-   above the others and each picked its own width.
-
-   How big is one rule for all of them, in tokens.css: the width is the caller's
-   `--screen-width`, which is one of the `--screen-*` steps, and it hangs from
-   `--screen-top`, no taller than `--screen-tall` or than the window leaves. */
 .nib-screen {
   position: fixed;
   top: var(--screen-top);
@@ -651,36 +418,20 @@ select option {
   box-shadow: var(--shadow-lg);
 }
 
-/* The height on a desktop. A phone's layers are sheets from the bottom and pages the
-   size of the screen, each sized by its own rule, which is why all three of these
-   name the desktop rather than wait to be undone. */
 :root:not([data-touch]) .nib-screen {
   max-height: min(var(--screen-tall), calc(100dvh - var(--screen-top) - var(--screen-gutter)));
 }
 
-/* A layer whose size does not change while it is up - nothing in it is typed into a
-   list - stands in the middle of the window rather than hanging from a line. */
 :root:not([data-touch]) .nib-screen.is-centred {
   top: 50%;
   translate: -50% -50%;
   max-height: min(var(--screen-tall), calc(100dvh - 2 * var(--screen-gutter)));
 }
 
-/* And one with several things to show in one place - panes, versions, themes - is
-   one height whichever is showing, so moving between them never resizes it and a
-   short pane leaves room under it, the way Obsidian's and Notion's settings do.
-   `--screen-height` for one that has to be shorter than the rest. */
 :root:not([data-touch]) .nib-screen.is-steady {
   height: min(var(--screen-height, var(--screen-tall)), calc(100dvh - 2 * var(--screen-gutter)));
 }
 
-/* ── Out of anybody's hands ────────────────── */
-
-/* One fade, on everything that can be refused. Four surfaces had 0.3, 0.4, 0.5
-   and 0.55 between them, and the menus faded nothing at all - a row that cannot
-   be pressed was the same grey as one that can, and only the words gave it away.
-   `:where` so it carries no weight: a control that says it another way still
-   can, and one that says nothing gets this. */
 :where(
   button,
   [role='button'],
@@ -696,19 +447,10 @@ select option {
   opacity: 0.4;
 }
 
-/* A fieldset that is refused refuses everything in it, and every control inside
-   matches `:disabled` too - so without this the controls fade twice and come out
-   at a sixth of their ink while the words beside them are at two fifths. */
 :where(fieldset:disabled) :where(button, input, select, textarea):disabled {
   opacity: 1;
 }
 
-/* ── Floating bars ─────────────────────────── */
-
-/* One shape for the small bars that appear over a surface: the format bar
-   above a selection in the editor, and the two actions a selection in a PDF
-   offers. Here rather than in either component, because two bars that look
-   almost the same are how one design becomes two. */
 .nib-bar {
   display: flex;
   gap: 1px;
@@ -719,7 +461,6 @@ select option {
   box-shadow: var(--shadow-md);
 }
 
-/* Above the point it was given, centred on it, and clear of the caret. */
 .nib-bar-at {
   position: fixed;
   z-index: var(--z-bar);
@@ -734,10 +475,6 @@ select option {
   }
 }
 
-/* A button in one of those bars. Sized from the row scale rather than from two
-   numbers of its own, which is what makes it a thumb's target on a phone: it was
-   24px tall there, half what a finger needs, on the one bar that only ever
-   appears under a finger's own selection. */
 .nib-bar button {
   min-width: var(--row-height-sm);
   height: var(--row-height-sm);
@@ -755,10 +492,6 @@ select option {
     color var(--dur-instant) var(--ease-out);
 }
 
-/* Only where there is a pointer. A tap on a phone leaves `:hover` on the button
-   it landed on until something else is touched, so the last button pressed sat
-   there in the accent as though it were on - and on the bar over the keyboard,
-   where every press is a tap, that was every press. */
 @media (hover: hover) {
   .nib-bar button:hover {
     background: var(--accent);
@@ -771,20 +504,6 @@ select option {
   color: var(--accent-ink);
 }
 
-/* ── The row ───────────────────────────────── */
-
-/* One row, for every list of names in the app: the file tree, the bookmarks
-   above it, the outline, the tags, a search result, a backlink, a command in the
-   palette, a line of a menu. Six components had their own copy of it, with three
-   hover colours and four heights between them, and then each of those six
-   repeated itself under `[data-touch]`. That is why the app read as several
-   apps. So the row is drawn here and nowhere else; a component may say how far a
-   row is indented and how wide it is in the space it sits in, and nothing else.
-   See docs/design.md, and one-of-each.test.ts, which says so.
-
-   Three parts: a mark of exactly one size, so every name in a list starts at the
-   same place whatever the row holds; a label, which is the only part allowed to
-   give way; and, at the far end, whatever the row counts. */
 .nib-row {
   width: 100%;
   min-height: var(--row-height);
@@ -808,14 +527,10 @@ select option {
     color var(--dur-fast) var(--ease-out);
 }
 
-/* A row that is read more than it is tapped: an outline, a line of a search
-   result, a heading over a group. */
 .nib-row.is-short {
   min-height: var(--row-height-sm);
 }
 
-/* Only where there is a pointer to hover with: a touch browser keeps the last
-   tap hovered, which leaves a row lit after it has been chosen. */
 @media (hover: hover) {
   .nib-row:hover {
     background: var(--surface-hover);
@@ -823,53 +538,33 @@ select option {
   }
 }
 
-/* Opening a note, folding a folder and renaming all wait on a file, so the row
-   itself says the click landed. */
 .nib-row:active {
   background: var(--surface-press);
   color: var(--text-strong);
 }
 
-/* The one you have open. A fill rather than a weight alone: on a phone this is
-   the only thing that says which of seven names is the note behind the drawer,
-   and bold grey against grey is not an answer. */
 .nib-row.is-on {
   background: var(--surface-selected);
   color: var(--active-file-text-color);
   font-weight: var(--weight-strong);
 }
 
-/* And the quiet things on it step up with it. `--muted` is measured against the
-   page, and a row wearing a fill is not the page: the key beside a command in the
-   palette and the count at the end of a row both fell under 4.5:1 the moment the
-   row they sat on lit up. Said here, once, because every list in the app is made
-   of this row and the ones that hold a hint would each have had to remember. */
 .nib-row.is-on kbd,
 .nib-row.is-on .nib-row-meta {
   color: var(--muted-strong);
 }
 
-/* Picked with Ctrl or Shift, which is a different fact from being open: a
-   neutral fill, so a selection that happens to include the open note still reads
-   as two things. */
 .nib-row.is-picked {
   background: var(--surface-picked);
   color: var(--text-strong);
 }
 
-/* A drop would land here. */
 .nib-row.is-taking {
   background: var(--surface-selected);
   box-shadow: inset 0 0 0 1px var(--accent);
   color: var(--text-strong);
 }
 
-/* ── A tile ────────────────────────────────── */
-
-/* The Essentials above the file list, Zen's: a grid of soft cards, each wearing only
-   its file's face, the open one lifted. At least `--tile-least` a tile and the rest
-   shared out, so a narrow panel holds four, a wide one more and two tiles are two
-   halves; a thumb's row tall under a finger. See Bookmarks.svelte. */
 .nib-tiles {
   --tile-least: var(--space-7);
   --tile-height: calc(var(--row-height) + var(--space-4));
@@ -893,7 +588,6 @@ select option {
   min-width: 0;
 }
 
-/* The place for a first tile while a tab that could be one is carried. */
 .nib-tiles .is-empty {
   height: var(--tile-height);
   border: 1px dashed var(--line-strong);
@@ -929,8 +623,6 @@ select option {
     transform var(--dur-fast) var(--ease-out);
 }
 
-/* Hover and press as a veil of the text's own colour, so the step is the same on a
-   dark panel, a light one and a pane of glass, lifted or not. */
 .nib-tile::after {
   content: '';
   position: absolute;
@@ -952,7 +644,6 @@ select option {
   }
 }
 
-/* The card gives under the press, as a key does. */
 .nib-tile:active {
   transform: scale(0.96);
   color: var(--text-strong);
@@ -962,9 +653,6 @@ select option {
   opacity: 0.1;
 }
 
-/* The open one, lifted: the accent's wash over the card, a ring of the accent fading
-   into its quiet line - where Zen draws one out of the favicon's colours - and the
-   small shadow a raised card wears. */
 .nib-tile.is-on {
   background:
     linear-gradient(var(--surface-selected), var(--surface-selected)), var(--surface-hover);
@@ -972,7 +660,6 @@ select option {
   color: var(--accent);
 }
 
-/* The ring, masked out of a full card so the wash inside it stays; it fades in. */
 .nib-tile::before {
   content: '';
   position: absolute;
@@ -1000,15 +687,11 @@ select option {
   opacity: 1;
 }
 
-/* Its note's own tab in the strip is the one in front (#1110): a ring of the accent
-   standing a little off the card, around it - another state than the open one's lift
-   above, whose ring is on the card, and worn with it where both hold. */
 .nib-tile.is-front {
   outline: 1.5px solid color-mix(in srgb, var(--accent) 60%, transparent);
   outline-offset: 2px;
 }
 
-/* Where a drop would land: a line in the gap, as a list draws one between rows. */
 .nib-tile.is-before::before,
 .nib-tile.is-after::before {
   inset: var(--space-1) auto;
@@ -1029,8 +712,6 @@ select option {
   inset-inline-end: calc(-1 * var(--tile-gap) / 2 - 1px);
 }
 
-/* The face a size up from a row's mark, which reads `--icon-md`; and the letter a
-   note that chose no icon wears, at the same size. */
 .nib-tile-face {
   --icon-md: var(--icon-lg);
 
@@ -1044,26 +725,6 @@ select option {
   line-height: 1;
 }
 
-/* ── A glyph that is a button ──────────────── */
-
-/* One square with a mark in it and nothing else: the button that opens the file
-   list, the three bars beside it, the two switches in the panel's foot, the
-   cross on a sheet, the find bar's own actions, the button at the end of a
-   space's row. Seven components drew their own, and between them they had five
-   sizes (24, 28, 28 hard-coded, 30, 38), three corners (`--radius-row`,
-   `--radius-sm`, none at all) and two hover colours for one job. So it is drawn
-   here, at the same square a row is tall - 28 under a pointer, 56 under a thumb,
-   which is the touch floor without a number of its own.
-
-   `padding: 0` is load-bearing rather than tidy. A browser gives every button
-   `1px 6px` of its own, and a component that never mentions padding inherits it:
-   the panel's foot drew an 18px glyph in a 28px square and got a content box 16
-   wide, so the two marks at the bottom of the sidebar were squashed - 16 across
-   and 18 down - while every other glyph in the app was round. `flex: none` on
-   the mark is the other half of the same bug.
-
-   A component says where the button sits and what it does; the drawing is
-   here. */
 .nib-glyph {
   flex: none;
   width: var(--row-height);
@@ -1081,7 +742,6 @@ select option {
     color var(--dur-fast) var(--ease-out);
 }
 
-/* The mark inside it. `block` for the same reason a badge's is; see the badge. */
 .nib-glyph > svg {
   width: var(--icon-lg);
   height: var(--icon-lg);
@@ -1094,8 +754,6 @@ select option {
   stroke-linejoin: round;
 }
 
-/* Only where there is a pointer to hover with: a touch browser keeps the last
-   tap hovered, which leaves a button lit after it has been pressed. */
 @media (hover: hover) {
   .nib-glyph:hover:not(:disabled) {
     background: var(--surface-hover);
@@ -1108,36 +766,20 @@ select option {
   color: var(--text-strong);
 }
 
-/* The one it is about is on: the accent, which is what the open note's mark and
-   the space you are in both wear. */
 .nib-glyph.is-on {
   color: var(--accent);
 }
 
-/* One that takes something away, such as a rule out of a list: it says so in the
-   colour the app says no in when pointed at. Four panes drew their own 26px square
-   for these, each a size off the row's and none of them lit under the pointer. */
 @media (hover: hover) {
   .nib-glyph.is-danger:hover:not(:disabled) {
     color: var(--danger);
   }
 }
 
-/* A name that cannot be written, said on the thing the name is being typed in: a
-   hairline in red, and the reason as a sentence under the words. Calmly, because
-   half of what is refused is refused while it is still being typed: `Q1` is on
-   its way to `Q1 costs` and the row is not a dialog. See NameField.svelte.
-
-   Not stated as `.nib-row.is-wrong`: the space's name in the header takes the
-   same field and is a header rather than a row. */
 .is-wrong {
   box-shadow: inset 0 0 0 1px var(--danger);
 }
 
-/* Quieter than a name: a row that is a name with nothing written under it yet - a
-   folder out of somebody's vault, which the file list draws as the note nobody has
-   written. The mark and the words go quiet together, and both come back to full
-   strength the moment there are words. See docs/tree.md. */
 .nib-row.is-quiet {
   color: var(--muted);
 }
@@ -1150,13 +792,6 @@ select option {
   place-items: center;
 }
 
-/* A row's words are whatever they are named: a note called `2026-plan.md`, a
-   space called `مشروع`, a tag, an address. A name in the other direction has to
-   stay one piece inside a row that reads this way, or its own punctuation - a
-   dot, a dash, a slash, a bracket - goes to the far end of the name and the row
-   reads as a different name. Isolated, so the row places the name as one neutral
-   run and the name itself reads whichever way it is written. Every list in the
-   app is built from these two classes, so this is the one place it is said. */
 .nib-row-label,
 .nib-row-meta {
   unicode-bidi: isolate;
@@ -1170,8 +805,6 @@ select option {
   white-space: nowrap;
 }
 
-/* What the row counts, or which note a line came from: pushed to the far end,
-   where the names are not, so the column of names still reads as one. */
 .nib-row-meta {
   flex: none;
   color: var(--muted);
@@ -1183,51 +816,10 @@ select option {
   font-size: var(--text-sm);
 }
 
-/* ── A mark that points along the line ──────── */
-
-/* Back, forward, a step further into a list, a link that leaves the app: marks
-   whose whole meaning is a direction along the words. Under an interface that
-   reads the other way they point the other way, and they are turned over rather
-   than drawn twice, so there is one shape per mark to keep right.
-
-   Only on a mark that points *along* a line. A tick, a cross, a chevron pointing
-   down, a magnifying glass, a clock: those say the same thing whichever way the
-   words run, and turning them over would only make them wrong-handed. See
-   apps/desktop/src/lib/direction.ts. */
 :root[dir='rtl'] .nib-mirror {
   transform: scaleX(-1);
 }
 
-/* ── A mark after the words ────────────────── */
-
-/* A glyph that belongs to the words before it: the `?` after a setting's name
-   (Hint.svelte), the arrow after a link that leaves the app (Outward.svelte).
-   Written as `<span class="nib-mark">&#8288;<glyph/></span>` straight after the
-   last word, with no space between, and drawn as one more word of the text rather
-   than a box beside it (#1052, #1061).
-
-   A flex row that set the words and the glyph side by side centred the glyph on
-   the words' line box - the font's ascent, descent and leading - which is not
-   where the letters are, and is somewhere else again in every face, size and
-   platform; on words that wrapped it centred the glyph on all of their lines at
-   once and left a gap after the last word as wide as the longest line, and a
-   space before the glyph let a line break there and leave it alone on the next.
-   Here the glyph is centred the way CSS centres a thing on letters,
-   `vertical-align: middle`, on the middle of the words' own x-height; the word
-   joiner keeps it on the last word's line; and the gap before it is `--mark-gap`
-   in every place and in either direction.
-
-   And it takes no room of its own on the line: the glyph is pulled back over its
-   own width and drawn where it would have stood, and the element the words are in
-   keeps the gap and the glyph free at its end instead. A word joiner keeps the
-   glyph with the last word only while the two fit on a line together; a word as
-   wide as the line - German has them - is broken by `overflow-wrap: anywhere`,
-   and the glyph would be broken off with it onto a line by itself.
-
-   The first element in the mark is what is drawn. Its size and gap are said on
-   the element the words are in, `--mark-size` and `--mark-gap`, by whatever
-   draws the mark; that element keeps its end padding for them, so it must not set
-   `padding-inline-end` itself. */
 .nib-mark {
   white-space: nowrap;
 }
@@ -1246,19 +838,11 @@ select option {
   padding-inline-end: calc(var(--mark-gap, 5px) + var(--mark-size, 16px));
 }
 
-/* ── Section labels ────────────────────────── */
-
-/* A word in capitals over a group of rows, on the same left edge as the rows
-   under it. What Notion, Obsidian and Discord all use to stop a long list being
-   a wall, and what Orden had in exactly one panel. */
 .nib-section {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  /* Sized by what it says rather than by the row scale: a label is read on the
-     way past and never landed on, so it stays a caption on a phone instead of
-     becoming a 48px row that nothing can be tapped in. */
   margin: var(--space-3) 0 1px;
   padding: var(--space-1) var(--row-pad);
   font-family: var(--font-ui);
@@ -1275,7 +859,6 @@ select option {
   margin-top: 0;
 }
 
-/* Whatever the label counts keeps its own numerals and its own case. */
 .nib-section > span {
   font-variant-numeric: tabular-nums;
   font-weight: var(--weight-row);
@@ -1287,14 +870,6 @@ select option {
   font-size: var(--text-sm);
 }
 
-/* ── Not on the disk yet ───────────────────── */
-
-/* The dot after the name of a document with no file yet, wherever the name is: a
-   tab, a phone's bar, the palette's row. Something still under way, which is what a
-   dot says everywhere in the app (docs/design.md). `.is-corner` sits it on the
-   shoulder of a tab that is only its mark, ringed in the ground so it reads on any
-   mark; `.is-pressable` is where a press on it is Save, and its press reaches five
-   pixels past it, as the close button's does. See UnsavedDot.svelte. */
 .nib-unsaved {
   width: 6px;
   height: 6px;
@@ -1329,24 +904,6 @@ select option {
   }
 }
 
-/* ── Badges ────────────────────────────────── */
-
-/* The rounded square in front of a name when the name belongs to somebody or
-   somewhere rather than to a file: a space's mark in the switcher, the face in
-   the panel's foot, a person in the Share sheet. One shape, at the row scale,
-   with a corner a third of its side, so it is the same object at 24px under a
-   pointer and at 48 under a thumb; see docs/design.md.
-
-   What fills it is the caller's: `--badge-fill` and `--badge-ink` are set per
-   badge for a person, who wears their own colour, and left alone everywhere
-   else.
-
-   The default fill is `--surface-3` and not `--surface-2`, which is what it was:
-   a badge sits on a panel or in a menu, both of which are `--surface`, and one
-   step off that is a difference of four values in either scheme - so the square
-   was only a square on the row that wore the accent, and every other space in
-   the switcher had a bare mark floating in front of its name. A rounded square
-   that is only there in one state is not a shape. */
 .nib-badge {
   flex: none;
   display: grid;
@@ -1364,22 +921,16 @@ select option {
   -webkit-user-select: none;
 }
 
-/* The space you are in, and the mark of anything else that is the thing: the
-   accent, which is what the open note's mark wears too. */
 .nib-badge.is-on {
   --badge-fill: var(--accent);
   --badge-ink: var(--accent-ink);
 }
 
-/* A badge that is a place for a mark rather than an object: the plus at the
-   foot of the switcher. */
 .nib-badge.is-quiet {
   --badge-fill: transparent;
   --badge-ink: var(--muted);
 }
 
-/* A mark inside a badge is a mark in front of a name, so it is `--icon-md` like
-   every other one. */
 .nib-badge svg {
   width: var(--icon-md);
   height: var(--icon-md);
@@ -1390,14 +941,6 @@ select option {
   stroke-linejoin: round;
 }
 
-/* ── KeyTips ───────────────────────────────── */
-
-/* The number a key would pick, shown only while it can be: a tab's while Alt is held,
-   a space's in a list of spaces while Alt is held or a digit has been typed. Office's
-   KeyTips, a small quiet badge over the corner of the mark it belongs to, so it hides
-   nothing of the name and moves nothing. The muted ink on the raised ground a bubble
-   has, with the bubble's hairline. A row rather than a grid, so the figures typed so
-   far, bold, stay on one line with the rest. Where it stands is the caller's. */
 .nib-keytip {
   display: flex;
   align-items: center;
@@ -1417,13 +960,6 @@ select option {
   pointer-events: none;
 }
 
-/* ── Switches ──────────────────────────────── */
-
-/* One thing that is on or off. Three surfaces wanted the same track and the same
-   knob - a setting, an assistant's write access, a space's link - which is three
-   chances for one of them to be a different width. So it is drawn here, and the
-   row it sits in says what it is about; the row is the switch, so a screen reader
-   is told by the row's own `role` and this is `aria-hidden`. */
 .nib-switch {
   flex: none;
   position: relative;
@@ -1457,13 +993,10 @@ select option {
   transform: translateX(calc(var(--dir) * 16px));
 }
 
-/* Out of anybody's hands right now: the same fade every other disabled control
-   in the app wears. */
 .nib-switch.off {
   opacity: 0.4;
 }
 
-/* A thumb gets a bigger one, because it is aimed at rather than pointed at. */
 [data-touch] .nib-switch {
   width: 50px;
   height: 30px;
@@ -1478,24 +1011,6 @@ select option {
   transform: translateX(calc(var(--dir) * 20px));
 }
 
-/* ── A button with words in it ─────────────── */
-
-/* The one thing a sheet or a dialog is there to do, the quieter answer beside it,
-   and the one that takes something away. Seven components drew their own, and
-   between them they had five paddings (`10px 14px`, `9px 14px`, `8px 14px`,
-   `7px 13px`, `5px 12px`), two type sizes, four fades for a button that cannot be
-   pressed, and three of them lifted a pixel under the pointer while four stayed
-   put - so two dialogs open in one session did not agree about what a button is.
-
-   Sized from the row scale rather than from its padding, which is what makes it a
-   thumb's target on a phone without a `[data-touch]` block of its own: the words
-   and their room come to 36px under a pointer, and `--row-height` takes it to 56
-   under a finger.
-
-   A press is answered twice over - the fill goes a step deeper and the lift comes
-   back down - because the one thing a dialog does is usually a round trip to a
-   server, and a button whose answer takes a moment has to look pressed before it
-   looks busy. */
 .nib-button {
   min-height: var(--row-height);
   display: inline-flex;
@@ -1530,16 +1045,11 @@ select option {
   transform: none;
 }
 
-/* The answer beside the one thing: the same shape with nothing filled in, so
-   Cancel is a button and not a link pretending to be one. */
 .nib-button.is-quiet {
   background: none;
   color: var(--muted-strong);
 }
 
-/* A quiet answer that is one of several in a row, filled a step off the card so
-   each row reads as having one thing to press, as Obsidian's are: the space
-   chooser's. The hover and the press are the quiet one's. */
 .nib-button.is-quiet.is-soft {
   background: var(--surface-2);
   color: var(--text);
@@ -1558,10 +1068,6 @@ select option {
   color: var(--text-strong);
 }
 
-/* Deleting. Deeper towards the ink rather than towards black: mixed with black
-   it came out darker than the danger colour on a dark theme, which is a press
-   that reads as fading, and `filter: brightness` brightens on both sides, which
-   is the wrong direction on one of them. */
 .nib-button.is-danger {
   background: var(--danger);
 }
@@ -1577,24 +1083,10 @@ select option {
   transform: none;
 }
 
-/* The words at the size everything else on a touch screen is read at. Here
-   rather than in each sheet, which is how one of them ended up asking for a 48px
-   button while every row around it was 56. */
 [data-touch] .nib-button {
   font-size: var(--touch-text);
 }
 
-/* ── An action in a card ───────────────────── */
-
-/* A line of words in a card that does something when pressed: Sign out, Change
-   the password, Reset the shortcuts, Stop publishing. The words are the whole of
-   the control, so it is quiet until pointed at and the words step up to say so.
-   The settings, the sync pane, security, the AI pane and every sheet drew their
-   own, at three weights (one of them a bare 550).
-
-   On a phone it is a row a thumb lands on; where it sits in a grouped card - the
-   hairline between it and the next, the padding the card's rows share - is the
-   card's business. */
 .nib-action {
   display: flex;
   align-items: center;
@@ -1627,18 +1119,6 @@ select option {
   font-size: var(--touch-text);
 }
 
-/* ── A small action at the end of a row ────── */
-
-/* Where the control would be: Browse beside the theme, Turn on beside two-factor,
-   Accept beside a person, Mine and Theirs beside a clash. Five components drew
-   their own - the settings, the sync pane, security, the AI pane and every sheet -
-   and between them they had two paddings, two type sizes, three weights (one of
-   them a bare 550), two answers to hovering the quiet one, one that lit up under
-   the pointer while it could not be pressed, and two sizes under a thumb.
-
-   Outlined rather than filled, because the filled one is `.nib-button` and there
-   is one of those to a dialog; a row can hold as many of these as it has
-   answers. */
 .nib-chip {
   flex: none;
   padding: var(--space-1) var(--space-3);
@@ -1667,7 +1147,6 @@ select option {
   background: var(--accent-soft);
 }
 
-/* The answer that turns something down, beside the one that takes it. */
 .nib-chip.is-quiet {
   border-color: transparent;
   color: var(--muted);
@@ -1680,9 +1159,6 @@ select option {
   }
 }
 
-/* The one of a row of them that was chosen. The words stay the ink rather than
-   going to the accent: the accent on its own wash is 4.07 to one on a dark
-   theme, and the ring says which one it is. */
 .nib-chip.is-on {
   border-color: var(--accent);
   background: var(--accent-soft);
@@ -1695,18 +1171,10 @@ select option {
   font-size: var(--touch-text);
 }
 
-/* At work on what it was pressed for, such as an import: faded with the others it
-   stands beside, which the shared fade does, and the pointer says to wait (#1057). */
 .nib-chip[aria-busy='true'] {
   cursor: progress;
 }
 
-/* ── A word that can be taken back ─────────── */
-
-/* One word of a list somebody made, the whole of it the button that takes it out:
-   the spelling dictionary's words, an agent's words and the categories a site is
-   always allowed. Three components drew their own, at two sizes and two inks. The
-   cross is the small one (Cross.svelte). */
 .nib-tag {
   display: inline-flex;
   align-items: center;
@@ -1742,15 +1210,6 @@ select option {
   }
 }
 
-/* ── How much is used ──────────────────────── */
-
-/* A bar of what is used of something: the account's storage, and an online
-   machine's month - its hours, its CPU, its home, the web and its disk. The
-   fill is set as a width by whoever draws it. Two panes drew their own, at two
-   heights, two tracks and two corners, one above the other in the same sheet.
-
-   Amber near the end, which is also when an online terminal's tab mark turns,
-   and the refusal's red once it is full. */
 .nib-meter {
   height: 8px;
   border-radius: 99px;
@@ -1775,16 +1234,6 @@ select option {
   background: var(--danger);
 }
 
-/* ── Fields ────────────────────────────────── */
-
-/* One box for anything typed into or standing in for something typed into: the
-   Search panel's field, the settings searches and the Share sheet's field.
-
-   Worn either by the control or by a wrapper round it, and that is the whole of
-   what decides which element the box is - see the focus below, which is the only
-   thing the difference is about. A wrapper where something stands in the box
-   beside the words: a magnifier in front of the three settings searches, the role
-   and the press at the end of the Share sheet's. */
 .nib-field {
   width: 100%;
   min-height: var(--row-height);
@@ -1805,21 +1254,11 @@ select option {
     box-shadow var(--dur-fast) var(--ease-out);
 }
 
-/* A field is not a flex container; the box is the whole of what it takes. */
 input.nib-field,
 textarea.nib-field {
   display: block;
 }
 
-/* The words inside a box that is a wrapper: not a box themselves, and so nothing
-   a box has. No border, no ground and no ink of their own, no room taken by a
-   padding the wrapper already has, the rest of the row to grow into, and the
-   wrapper's own font - which is what carries the row scale into them, so a finger
-   gets the touch size here without a second rule saying so.
-
-   Said once here rather than in each field. The Share sheet and the three
-   settings searches had four copies of it between them, at three font sizes and
-   two inks, which is what the one box shape is for. */
 .nib-field :is(input, textarea) {
   flex: 1;
   min-width: 0;
@@ -1842,20 +1281,6 @@ textarea.nib-field {
   }
 }
 
-/* The value at the end of a setting's row: a field typed into, the closed dropdown
-   beside it, a status with its emoji. One box for all of them - the height, the
-   corner, the hairline, the hover and the focus - at the width of the one column
-   every value in a pane ends in (#1056).
-
-   Six panes had drawn their own: a borderless `.inline` at 12rem in four of them
-   and 14rem in a fifth, the dropdown's box at 14rem in its own component, and
-   Account's fields showing a box only while they were empty. So one row's name read
-   as plain text, the next as an empty box and the dropdown under both as a box of
-   another height, each ending at its own x. Being a value is this; what is in it
-   is the pane's.
-
-   A wrapper wears it too, where something stands in the box beside the words, the
-   way `.nib-field` is worn: the emoji in front of a status. */
 .nib-field.is-value {
   min-height: var(--row-height);
   padding: var(--space-2) var(--space-3);
@@ -1874,8 +1299,6 @@ textarea.nib-field.is-value {
   resize: none;
 }
 
-/* A value no setting can take, such as a search address without its `%s`: said in
-   the one colour the app says no in, until the keyboard is back in it. */
 .nib-field.is-value[aria-invalid='true'] {
   border-color: var(--danger);
 }
@@ -1886,10 +1309,6 @@ textarea.nib-field.is-value {
   }
 }
 
-/* A mark pressed inside a value's box, such as the emoji in front of a status or
-   the cross that clears it: the glyph button at the height of the line it stands
-   in, so the box stays the height of every other value. A finger's is the touch
-   floor, which the row's own height already has room for. */
 .nib-field.is-value > .nib-glyph {
   width: 22px;
   height: 22px;
@@ -1909,9 +1328,6 @@ textarea.nib-field.is-value {
   margin-block: calc((1.4em - var(--touch-target)) / 2);
 }
 
-/* A value that is read and not changed here, such as the account's address: the
-   words where a field's words stand, at its inset and edge, with nothing round them
-   to suggest a caret could go in. Selectable, because an address is copied. */
 .nib-field.is-value.is-read {
   border-color: transparent;
   background: none;
@@ -1923,10 +1339,6 @@ textarea.nib-field.is-value {
   -webkit-user-select: text;
 }
 
-/* The column: every value in a row ends at the row's end and starts at one x, and
-   a dropdown holding a longer word than the column grows towards the name rather
-   than past the end. A box that is the value is that wide; a control that holds
-   one, the dropdown's, is put in `.nib-setting-value`. */
 .nib-setting > .nib-field.is-value {
   flex: none;
   inline-size: var(--setting-value);
@@ -1937,18 +1349,11 @@ textarea.nib-field.is-value {
   min-inline-size: min(var(--setting-value), 100%);
 }
 
-/* A value of many choices that wraps rather than growing, such as the swatches: the
-   column's width exactly, so the choices end where every other value does and a
-   second line starts under the first. */
 .nib-setting-value.is-wrapping {
   inline-size: var(--setting-value);
   max-inline-size: 100%;
 }
 
-/* A value more than a line tall, such as a bio, or one that needs a whole line
-   under a finger, such as a status: the name stands at its first line rather than
-   at its middle, the way a label stands beside a paragraph, and on a phone the
-   value takes the line under the name. */
 .nib-setting.is-tall {
   align-items: flex-start;
 }
@@ -1958,9 +1363,6 @@ textarea.nib-field.is-value {
   line-height: 1.4;
 }
 
-/* Under a finger a value is what a phone's own settings show: the words at the end
-   of the row, with no box until the keyboard comes, the way the dropdown there is
-   drawn plain. A value taller than a line takes the row under its name. */
 [data-touch] .nib-setting > .nib-field.is-value {
   flex: 1 1 0;
   inline-size: auto;
@@ -1997,63 +1399,12 @@ textarea.nib-field.is-value {
   max-inline-size: 60%;
 }
 
-/* A value that is a row of choices, such as the swatches: a thumb's worth each is
-   wider than the room beside a name, so the name takes the first line and the
-   choices the next. */
 [data-touch] .nib-setting-value.is-wrapping {
   inline-size: auto;
   flex-basis: 100%;
   max-inline-size: none;
 }
 
-/* What a box you type into says when the keyboard lands in it: its own border
-   turns, which is the answer such a box has always given, and it gives that one
-   rather than the ring as well - two answers to one question read as a mistake.
-   The native dropdown says it the same way, so `select` is in the same rule
-   rather than in a second copy of these three lines further up the file.
-
-   The answer is the box's, and the box is whichever element carries the border,
-   because the border is what turns. Two shapes, and this is the one rule that
-   decides between them:
-
-   - The control is the box, where it draws its own border - a sheet's field, the
-     palette's line, the value at the end of a setting's row. Most of them, and
-     they need no class for it: the answer is the box's, not a class's, which is
-     what let five boxes with a shape of their own stop carrying a copy of these
-     three lines.
-   - A wrapper is the box, where something stands in it beside the words. There
-     the wrapper carries the border and wears `.nib-field`, and wearing it is the
-     whole of what makes it the box.
-
-   So a wrapper that draws a field's border and does not wear the class is the one
-   thing that cannot work, and the three settings searches were exactly that: each
-   drew its own border, answered its own `:focus-within`, and then the input
-   inside it - a box to this rule, because nothing said otherwise - lit a square
-   halo of its own inside the border that had just turned. Emil, with the keyboard
-   in one: *"there's an inner frame for all input fields ... it is redundant."*
-
-   A box you type into, and only that. The caret is the other half of this answer,
-   and it is what says which of the two kinds a control is rather than which class
-   it happens to wear: a button can wear the field for its shape - the sidebar's
-   old search pill did, a door to the Search panel - and this rule was reaching it
-   and taking the ring away. It was the weakest thing in the app to find with a
-   key. A button gets the ring.
-
-   A slider, a checkbox and a colour are inputs too and none of them holds a
-   caret: they are named out here rather than left to be caught by accident, and
-   what they answer with is the one ring.
-
-   `:is` and not `:where`, which is the opposite of the ring at the top of the
-   file and for the opposite reason. The ring weighs nothing so that a control with
-   a shape of its own can answer instead of it. This *is* the shape: a field states
-   the border it rests at, and a rule weighing nothing loses to the one word it
-   needs to change in it. Which it did - the palette's hairline never turned, and
-   nor did the Theme Store's, so a caret in either was said by a square wash of
-   accent and nothing else, and on a phone the settings search turned nothing at
-   all. Three fields had noticed and written the turn out again for themselves;
-   two of them have stopped. The third states its border as a shorthand naming a
-   colour, which outweighs the one word this changes however heavy it is, and says
-   so where it does it. One rule, heavy enough to be the answer everywhere else. */
 select:focus-visible,
 :is(
     textarea,
@@ -2065,18 +1416,10 @@ select:focus-visible,
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-/* And the other half of it: the words inside a wrapper say nothing at all when
-   the keyboard lands, or the shared ring is drawn inside the border that just
-   turned - which is the same frame twice, one of them square. This is the third
-   of the four rules the ring section at the top of the file counts, kept here
-   beside the answer it belongs to rather than a thousand lines away from it. */
 .nib-field :is(input, textarea):focus-visible {
   outline: none;
 }
 
-/* The magnifier in front of the words, quiet, at the size a row's mark is. Drawn
-   the way every mark from a path in this app is - stroked, never filled - which
-   each caller used to say again for itself at three different thicknesses. */
 .nib-field-mark {
   width: var(--icon-md);
   height: var(--icon-md);
@@ -2089,19 +1432,6 @@ select:focus-visible,
   stroke-linejoin: round;
 }
 
-/* ── The bubble a sentence appears in ──────── */
-
-/* One sentence answering something on screen, in a small card over whatever is
-   behind it: what a setting means, and why a name cannot be written. Two surfaces
-   wanted the same shape, so it is drawn here and each says only where it sits -
-   under the `i` after a label, under the name being typed.
-
-   Never a `title`. The browser's own tooltip arrives after a second of holding
-   still, in the system's font, at the pointer rather than at the thing, and a
-   finger never sees it at all, which is three ways of not being the app.
-
-   Level 2 of the elevation model: a small bar over the text, so a hairline comes
-   with the shadow; see docs/design.md. */
 .nib-bubble {
   width: max-content;
   max-width: 16rem;
@@ -2117,46 +1447,18 @@ select:focus-visible,
   line-height: 1.45;
   white-space: normal;
   text-align: start;
-  /* Read rather than pressed, and it sits over the row it is about. */
   pointer-events: none;
 }
 
-/* The same card with something in it to press: a site's question, what a site is
-   allowed, the downloads. The rule above is inherited, so a bubble that did not say
-   this drew its buttons and let every press fall through them to whatever was behind -
-   under a web tab's bar that is the page's hole, and Allow did nothing at all. */
 .nib-bubble.is-pressable {
   pointer-events: auto;
 }
 
-/* Read at arm's length, with the width of the screen to do it in. */
 [data-touch] .nib-bubble {
   max-width: min(20rem, 70vw);
   font-size: var(--text-sm);
 }
 
-/* ── Segmented controls ────────────────────── */
-
-/* A few choices that cannot both be on, drawn as one control with the chosen
-   half raised out of it. Three panels wanted the same thing - what a share link
-   hands out, where a space publishes to, which client an assistant is - so it is
-   one shape here rather than three copies that drift apart.
-
-   The markup is a row of buttons inside it, the chosen one wearing `on`; what
-   they mean to a screen reader is the component's own business, since a pair of
-   choices is a radio group and a set of panels is a tab strip.
-
-   A choice that cannot be honoured right now - a scheme the theme in force does
-   not have - stays in the row rather than being taken out of it, so the control
-   does not change shape as the thing above it is chosen. What it looks like
-   while it cannot be pressed is the one disabled fade above, not a copy here.
-
-   A grid of equal halves rather than a row of `flex: 1` ones. A row asked how wide it
-   wanted to be answered with the sum of its words and then shared that out evenly, so
-   the longer word got less than it needed and broke: "Orden's own" over two lines
-   in a groove exactly as wide as both words. Equal columns are each as wide as the
-   widest word, so a groove left to its own width is one where no half wraps; where a
-   row is too narrow for that, the halves give way together as they always did. */
 .nib-segmented {
   position: relative;
   display: grid;
@@ -2166,23 +1468,6 @@ select:focus-visible,
   padding: 3px;
   border-radius: var(--radius-md);
   background: var(--surface-2);
-  /* Which surface reads raised out of this groove, which is not the same token on
-     both sides of the palette. The surfaces step *away from the page*, and away is
-     lighter in the dark scheme and darker in the light one, so no one pair of them
-     says "raised" on both: the thumb was `--surface` inside a `--surface-2` track,
-     which is a step up out of a light card and a step down into a dark one - a
-     groove with a hole in it, measured at 1.075 the wrong way round while the light
-     scheme carried 1.067 the right way.
-
-     So the raised surface is named once here and answered per scheme, the way
-     `--scrollbar` and the select arrow are; dark is the default, as it is in
-     tokens.css, and a theme that restates the surfaces moves this with them.
-
-     Said with the attribute because the app states it on the document on every
-     change of theme - see theme.svelte.ts - and so do an export and a deck. A
-     published page is the one carrier that leaves it off and reads the
-     system instead, and no published page has a control like this on it: anything
-     that puts one there has to answer the scheme the way blog-css.ts does. */
   --segment-raised: var(--surface-3);
 }
 
@@ -2190,23 +1475,9 @@ select:focus-visible,
   --segment-raised: var(--surface);
 }
 
-/* The one raised surface that says which half is chosen. It slides from one to
-   the next rather than switching off under one and on under another, because a
-   control with four choices in it is a place you move along; see slide.ts, which
-   is what puts this in the groove and what measures where it goes.
-
-   It is laid out once, at the size of a half, and moved by a transform after
-   that: the compositor does every frame of it and the row is never laid out
-   again. `--dur-fast` is zeroed for a reader who has asked for as little
-   movement as possible, so for them the surface is simply already there. */
 .nib-segmented-thumb {
   position: absolute;
   top: 0;
-  /* Physical on purpose, and one of the few: slide.ts measures the chosen half
-     with `offsetLeft` - which counts from the left edge whichever way the row
-     reads - and moves the surface there with a transform. A logical inset here
-     would put the surface's own origin on the other side under a right-to-left
-     interface and leave the measurement pointing at the wrong half. */
   left: 0;
   z-index: var(--z-base);
   border-radius: calc(var(--radius-md) - 3px);
@@ -2218,7 +1489,6 @@ select:focus-visible,
     opacity var(--dur-fast) var(--ease-out);
 }
 
-/* Over the surface, or the words would be behind it. */
 .nib-segmented button {
   position: relative;
   z-index: var(--z-raised);
@@ -2237,11 +1507,6 @@ select:focus-visible,
   color: var(--muted-strong);
   font-family: var(--font-ui);
   font-size: var(--text-sm);
-  /* The chrome has two weights and this was a third. A button's words are
-     `--weight-strong` here as they are in a floating bar; which half is chosen
-     is said by the surface sliding under it, not by the type getting heavier -
-     a weight that changed would move the words the surface is measured
-     against. */
   font-weight: var(--weight-strong);
   cursor: default;
   transition:
@@ -2250,8 +1515,6 @@ select:focus-visible,
     box-shadow var(--dur-fast) var(--ease-out);
 }
 
-/* A mark before a half's words, the views' Display among them (#1046): the panel's
-   13-unit marks, stroked in the words' own colour. */
 .nib-segmented button svg {
   flex: none;
   width: var(--icon-sm);
@@ -2263,39 +1526,22 @@ select:focus-visible,
   stroke-linejoin: round;
 }
 
-/* What being the chosen one is, where nothing is sliding: the surface itself.
-   The words go dark either way. */
 .nib-segmented button.on {
   background: var(--segment-raised);
   color: var(--text-strong);
   box-shadow: var(--shadow-sm);
 }
 
-/* And where something is sliding, the surface belongs to the thing that slides,
-   so the button gives it up and keeps only the colour of its words. */
 .nib-segmented.has-thumb button.on {
   background: none;
   box-shadow: none;
 }
 
-/* A thumb needs the height every other row on a touch screen has, and the words
-   at the size everything else there is read at. */
 [data-touch] .nib-segmented button {
   min-height: var(--touch-target);
   font-size: var(--text-base);
 }
 
-/* ── Sliders ───────────────────────────────── */
-
-/* One shape for every dial in the app: a thin track filled to the value, and a
-   thumb that reads as one. Drawn by hand rather than left to the platform, so it
-   matches the switch beside it on every one of them, and the thumb grows under a
-   finger, which is how a control says it has the press. `--fill` is how far along
-   the value is, as a percentage; a browser that has `::-moz-range-progress` fills
-   the track itself and needs none.
-
-   Here rather than in the settings panel, because two dials that look almost the
-   same are how one design becomes two. */
 .nib-slider {
   flex: none;
   height: 24px;
@@ -2306,16 +1552,11 @@ select:focus-visible,
   cursor: default;
 }
 
-/* Room around it rather than inside it: the ring goes outside a control the
-   thickness of a line, which would otherwise swallow it. */
 .nib-slider:focus-visible {
   outline-offset: 2px;
   border-radius: 99px;
 }
 
-/* Filled from where the line starts, which is the right in a language that reads that
-   way: the engine runs the knob from the right there, and a fill drawn from the left
-   parted the two. */
 .nib-slider::-webkit-slider-runnable-track {
   height: 4px;
   border-radius: 2px;
@@ -2324,13 +1565,6 @@ select:focus-visible,
     var(--surface-3);
 }
 
-/* The knob. White - it sits on the filled half of the track and on the empty
-   half as often as not, so it is a surface of its own rather than ink on either -
-   and ringed with the hairline every other edge
-   in the app is drawn in rather than with a shade of black: 12% black against a
-   light theme's track was a white circle on a near-white groove with nothing to
-   tell them apart, and it could only ever be right on one of the two schemes.
-   The ring is a shadow rather than a border so the knob keeps its 16px. */
 .nib-slider::-webkit-slider-thumb {
   appearance: none;
   width: 16px;
@@ -2372,10 +1606,6 @@ select:focus-visible,
     var(--shadow-sm);
 }
 
-/* A dial a thumb drags rather than a pointer: a bigger thumb over a track of the
-   same weight, which is what the settings sheet has always shown on a phone.
-   The height is the whole of what can be grabbed - the track itself is four
-   pixels - so it is the touch floor and not 32, which is what it was. */
 [data-touch] .nib-slider {
   height: var(--touch-target);
 }
@@ -2391,11 +1621,6 @@ select:focus-visible,
   height: 24px;
 }
 
-/* ── Finding ───────────────────────────────── */
-
-/* What the find bar paints, in the editor's own two search colours. A highlight
-   registry name belongs to the whole document rather than to a component, and
-   two surfaces paint these: a note being read, and a PDF. */
 ::highlight(nib-find) {
   background-color: var(--accent-soft);
 }
@@ -2405,22 +1630,15 @@ select:focus-visible,
   color: var(--accent-ink);
 }
 
-/* ── Scrollbars ────────────────────────────────────── */
-
-/* Our own, over the scrollers the app draws it on; see scrollbar.ts. Away while
-   nothing moves, in on a scroll or a hover, and eased into its new shape when
-   the note under it becomes another one. */
 .nib-scrollbar {
   position: absolute;
   width: var(--scrollbar-width);
   z-index: var(--z-grip);
   opacity: 0;
-  /* Only the thumb can be grabbed; the track is not in the way of the text. */
   pointer-events: none;
   transition: opacity var(--dur-base) var(--ease-out);
 }
 
-/* Nothing to say about a scroller whose content fits. */
 .nib-scrollbar:not(.is-needed) .nib-scrollbar-thumb {
   display: none;
 }
@@ -2438,8 +1656,6 @@ select:focus-visible,
   background: var(--scrollbar);
   pointer-events: auto;
   transition: background var(--dur-fast) var(--ease-out);
-  /* The scroll itself must be answered in the frame it happened in, so the
-     thumb only eases while it is being asked to change its mind. */
   will-change: transform;
 }
 
@@ -2453,9 +1669,6 @@ select:focus-visible,
   background: var(--muted);
 }
 
-/* The note or the pane changed: the thumb shapes itself into its new place
-   rather than appearing in it. Zero under prefers-reduced-motion, where every
-   duration token is. */
 .nib-scrollbar.is-settling .nib-scrollbar-thumb {
   transition:
     transform var(--dur-fast) var(--ease-out),
@@ -2463,8 +1676,6 @@ select:focus-visible,
     background var(--dur-fast) var(--ease-out);
 }
 
-/* Where our bar is, the platform's is not: two bars for one scroller, one of
-   them reserving a gutter of the writing column, is not a design. */
 .nib-scrolls {
   scrollbar-width: none;
 }
@@ -2474,23 +1685,7 @@ select:focus-visible,
   height: 0;
 }
 
-/* The same bar on every platform. Only where a pointer can actually grab it:
-   touch scrollbars are already transient overlays, and styling them would make
-   them permanent and reserve layout width on a screen with none to give.
-
-   And not where the engine draws overlay bars of its own (`data-engine-bars`, Orden's
-   own Chromium on Linux; see main.ts and `cef_runtime` in src-tauri/src/engine.rs),
-   because a bar styled here is never drawn as one: Chromium makes every styled bar a
-   classic one, a gutter and a thumb standing the whole time the content runs past -
-   over every menu, list and sheet in the app, and over the palette's list where all
-   that ran past it was its own padding (#775). The overlay one is thin, comes in on a
-   scroll or a hover and goes again, and is grabbed and dragged like any other, which
-   is what a Linux desktop's own bars do. A styled bar also takes no later change of
-   style, so none of this could be done by showing the thumb on a hover instead. */
 @media (pointer: fine) {
-  /* Chromium and WebKit take the pseudo elements. Setting `scrollbar-width`
-     alongside them would make Chromium drop them, so Firefox is served in a
-     separate block below. */
   @supports selector(::-webkit-scrollbar) {
     :root:not([data-engine-bars]) ::-webkit-scrollbar,
     :root:not([data-engine-bars])::-webkit-scrollbar {
@@ -2505,8 +1700,6 @@ select:focus-visible,
       background: transparent;
     }
 
-    /* A transparent border clipped to the padding box is what insets the
-       thumb, so it reads as floating rather than filling a gutter. */
     :root:not([data-engine-bars]) ::-webkit-scrollbar-thumb,
     :root:not([data-engine-bars])::-webkit-scrollbar-thumb {
       background-color: var(--scrollbar);
@@ -2525,7 +1718,6 @@ select:focus-visible,
       background-color: var(--muted);
     }
 
-    /* Arrow buttons are a platform habit, not a design decision. */
     :root:not([data-engine-bars]) ::-webkit-scrollbar-button,
     :root:not([data-engine-bars])::-webkit-scrollbar-button {
       display: none;
@@ -2539,8 +1731,6 @@ select:focus-visible,
     }
   }
 }
-
-/* ── Code ────────────────────────────────────────────────────────── */
 
 #write code {
   font-family: var(--font-mono);
@@ -2570,9 +1760,6 @@ select:focus-visible,
   font-size: inherit;
 }
 
-/* A code block that says what it is: the words after the language in its own
-   fence line - a file name, most of the time - written over the block the way
-   the editor writes them on its top row. See code.ts in @orden/markdown. */
 #write figure.code {
   margin: 1.5em 0;
 }
@@ -2588,8 +1775,6 @@ select:focus-visible,
   letter-spacing: 0.02em;
   color: var(--muted);
 }
-
-/* ── Lists ───────────────────────────────────────────────────────── */
 
 #write ul,
 #write ol {
@@ -2629,8 +1814,6 @@ select:focus-visible,
 #write ol::marker {
   color: var(--muted);
 }
-
-/* Task lists */
 
 #write .task-list-item {
   list-style: none;
@@ -2696,8 +1879,6 @@ select:focus-visible,
   color: var(--muted);
 }
 
-/* ── Blockquote ──────────────────────────────────────────────────── */
-
 #write blockquote {
   margin: 1.5em 0;
   padding: 0.1em 0 0.1em 1.15em;
@@ -2709,8 +1890,6 @@ select:focus-visible,
 #write blockquote:hover {
   border-inline-start-color: var(--accent);
 }
-
-/* ── Tables ──────────────────────────────────────────────────────── */
 
 #write table {
   border-collapse: collapse;
@@ -2726,10 +1905,6 @@ select:focus-visible,
   text-align: start;
 }
 
-/* A column the note aligned keeps its side. The renderer says it with `align`,
-   and any declaration at all outranks an attribute, the `start` above included,
-   so the side is said again here. Physical rather than logical, because a
-   `---:` column is the right-hand one whichever way the note reads. */
 #write th[align='left'],
 #write td[align='left'] {
   text-align: left;
@@ -2745,8 +1920,6 @@ select:focus-visible,
   text-align: right;
 }
 
-/* The grid is a hairline; the one rule worth reading is the one under the
-   header, which is what says where the data starts. */
 #write th {
   background: var(--surface);
   border-bottom-color: var(--line-strong);
@@ -2761,8 +1934,6 @@ select:focus-visible,
 #write tbody tr:hover {
   background: var(--surface);
 }
-
-/* ── Rules, images, media ────────────────────────────────────────── */
 
 #write hr {
   border: none;
@@ -2786,8 +1957,6 @@ select:focus-visible,
   border: 1px solid var(--line);
 }
 
-/* ── Footnotes, front matter, TOC ────────────────────────────────── */
-
 #write .footnote-ref {
   font-size: 0.76em;
   vertical-align: super;
@@ -2802,8 +1971,6 @@ select:focus-visible,
   font-size: 0.9em;
   color: var(--muted-strong);
 }
-
-/* ── Definition lists and abbreviations ──────────────────────────── */
 
 #write dl {
   margin: 1.2em 0;
@@ -2858,8 +2025,6 @@ select:focus-visible,
   transform: translateX(calc(var(--dir) * 2px));
 }
 
-/* ── Math and diagrams ───────────────────────────────────────────── */
-
 #write .math-block,
 #write .diagram {
   margin: 1.7em 0;
@@ -2871,13 +2036,6 @@ select:focus-visible,
   padding: 0 0.1em;
 }
 
-/* ── Callouts ────────────────────────────────────────────────────── */
-
-/* The type as the writer wrote it rides on `data-callout`, so a theme can dress
-   a type Orden has never heard of - `[data-callout='recipe']` - without anything
-   being registered anywhere first. The look Orden does know is a class, so these
-   rules need the fifteen names rather than every other word for them. See
-   packages/markdown/src/callouts.ts. */
 #write .callout {
   margin: 1.5em 0;
   padding: 0.85em 1.1em;
@@ -2886,8 +2044,6 @@ select:focus-visible,
   background: color-mix(in srgb, var(--callout-accent, var(--accent)) 8%, transparent);
 }
 
-/* The title is the one line that wears the accent: an icon and a word, reading
-   as a label rather than as a heading. */
 #write .callout-title {
   display: flex;
   align-items: center;
@@ -2906,11 +2062,6 @@ select:focus-visible,
   flex: none;
 }
 
-/* A callout the note itself says can fold - `> [!tip]-` - is a `<details>`, so
-   it folds with no script behind it wherever the note is read: here, on paper,
-   in a book, on a published page. The chevron is the one the editor draws in
-   its margin; the browser's own triangle goes, because two marks for one thing
-   is one too many. */
 #write summary.callout-title {
   cursor: pointer;
   list-style: none;
@@ -2935,13 +2086,6 @@ select:focus-visible,
   transform: rotate(90deg);
 }
 
-/* And it opens and shuts the way a fold does in the editor: the body grows into
-   place instead of appearing. No script and no measuring - the browser's own
-   folding, moved - which is also why it is written as an enhancement: an engine
-   that has never heard of `::details-content` drops the whole rule and folds the
-   way it always did. `interpolate-size` is what lets a height of auto be
-   animated towards at all; on its own it changes nothing that was moving
-   already. */
 :root {
   interpolate-size: allow-keywords;
 }
@@ -2958,8 +2102,6 @@ select:focus-visible,
   block-size: auto;
 }
 
-/* Nothing above the first paragraph or below the last: the box's own padding is
-   the room, and a callout of one line should be one line tall. */
 #write .callout-body {
   margin-top: 0.5em;
 }
@@ -2972,7 +2114,6 @@ select:focus-visible,
   margin-bottom: 0;
 }
 
-/* A callout with nothing under its title is its title. */
 #write .callout-body:empty {
   display: none;
 }
@@ -3017,8 +2158,6 @@ select:focus-visible,
   --callout-accent: var(--callout-quote);
 }
 
-/* ── Focus mode ──────────────────────────────────────────────────── */
-
 .focus-mode #write > *:not(.is-focused) {
   opacity: 0.28;
   transition: opacity var(--dur-slow) var(--ease-out);
@@ -3028,19 +2167,12 @@ select:focus-visible,
   opacity: 1;
 }
 
-/* ── Narrow screens ──────────────────────────────────────────────── */
-
-/* A width, where the app's own chrome asks `html[data-device]` instead. These
-   are the document rather than the app: the same rules dress a published page
-   and a clipped one, where no script is running to say what kind of screen this
-   is, and what they answer to is the width of the column and not the finger. */
 @media (max-width: 720px) {
   #write {
     padding-top: var(--space-5);
     padding-bottom: 40vh;
   }
 
-  /* Wide things scroll on their own rather than stretching the page. */
   #write table,
   #write pre {
     display: block;
@@ -3049,16 +2181,6 @@ select:focus-visible,
   }
 }
 
-/* ── A query written into a note ───────────── */
-
-/* What a ` ```query ` fence answers with: the rows the Search panel draws, in a
-   block that reads as part of the note rather than as a panel inside it. The bar
-   down the left is the quote's own, because this is the same kind of thing - words
-   from elsewhere, standing where they were asked for.
-
-   Here rather than in the editor's or the document's stylesheet because both draw
-   one: the editor in a widget over the fence, the reading view in one `innerHTML`.
-   Two boxes for one block is how they drift. See query-block.ts. */
 .nib-query {
   display: flex;
   flex-direction: column;
@@ -3068,8 +2190,6 @@ select:focus-visible,
   border-inline-start: 2px solid var(--line-strong);
 }
 
-/* The first word over a group has no room above it: the bar already says where
-   the block starts. */
 .nib-query .nib-section:first-child {
   margin-top: 0;
 }
@@ -3082,8 +2202,6 @@ select:focus-visible,
   color: var(--muted);
 }
 
-/* A figure is what the renderer wraps a drawn fence in; a query is rows rather
-   than a picture, so it keeps the margins the rows brought. */
 figure.query {
   margin: 0;
 }

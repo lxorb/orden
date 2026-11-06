@@ -1,53 +1,20 @@
-/* A note presented.
- *
- * base.css and document.css already dress the prose; this is only the room it
- * is read in. A slide is laid out on a stage of a fixed size and the whole stage
- * is scaled to whatever screen it lands on, so a deck written on a laptop is the
- * deck a projector shows: the words never reflow, they only get bigger.
- *
- * One sheet in three places, like document.css: the app's own stage, a deck
- * exported as a single HTML file, and a published note read as slides.
- *
- * Every rule is scoped to a deck, or to a frame of the presenter's window: this
- * sheet is on every page of the app, and `.stage`, `.slide` and `.rail` are names
- * a panel reaches for too. Bare, any component's own `.stage` was pinned to the
- * middle of its parent at 1280 by 720 and scaled as a slide is. */
-
-/* ── The room ────────────────────────────────────────────────────── */
-
 .deck {
   position: fixed;
   inset: 0;
   z-index: var(--z-stage);
   overflow: hidden;
   background: var(--bg);
-  /* The stage is the only thing on screen, so nothing in it is selectable by
-     accident while a click is being used to move on. */
   user-select: none;
   -webkit-user-select: none;
 }
 
-/* Nothing to point at once the deck has been left alone for a moment. */
 .deck[data-still='yes'] {
   cursor: none;
 }
 
-/* ── The stage ───────────────────────────────────────────────────── */
-
 :is(.deck, .deck-frame) .stage {
-  /* How big the body text is on a stage of this size. Everything else on a slide
-     is a multiple of it, the way the prose sheet already sizes headings and code
-     against the body. The stage's own size is written in by whatever put it on
-     the page, so one place knows it: see STAGE_WIDTH in
-     apps/desktop/src/lib/slides/stage.ts. */
   --stage-text: 30px;
 
-  /* Pinned to the middle of whatever it is in rather than centred by a layout:
-     the stage is laid out at its full size and only then scaled, so on a screen
-     smaller than the stage it is an item larger than its own box - and no
-     alignment rule holds for one of those in every browser. Half its own size in
-     negative margin puts its centre on the middle, and the scale is about that
-     centre, so it lands in the middle at any size. */
   position: absolute;
   top: 50%;
   left: 50%;
@@ -64,12 +31,9 @@
   padding: 68px 96px;
   box-sizing: border-box;
   overflow: hidden;
-  /* Each slide arrives; see the keyframes at the end. */
   animation: slide-in var(--dur-stage) var(--ease-out);
 }
 
-/* The writing surface, without the app's column around it: a slide is as wide
-   as the stage, and the stage decides the size of the text. */
 :is(.deck, .deck-frame) .slide #write {
   max-width: none;
   height: 100%;
@@ -79,9 +43,6 @@
   font-size: calc(var(--stage-text) * var(--stage-fit, 1));
 }
 
-/* A slide of nothing but headings is a title, and a title sits in the middle of
-   the page. Read off what the slide holds rather than off an annotation, so the
-   markdown stays markdown. */
 :is(.deck, .deck-frame) .slide[data-shape='title'] #write {
   display: flex;
   flex-direction: column;
@@ -100,8 +61,6 @@
   font-weight: 480;
 }
 
-/* One picture and nothing else fills the stage. Contained rather than cropped:
-   a photograph somebody chose should be the photograph they chose. */
 :is(.deck, .deck-frame) .slide[data-shape='picture'] {
   padding: 0;
 }
@@ -122,8 +81,6 @@
   border-radius: 0;
 }
 
-/* Nothing on a slide bleeds in the way the editor's own ink does: the words are
-   already there when the slide arrives. */
 :is(.deck, .deck-frame) .slide #write *,
 :is(.deck, .deck-frame) .slide #write *::before,
 :is(.deck, .deck-frame) .slide #write *::after {
@@ -139,10 +96,6 @@
   overflow: hidden;
 }
 
-/* ── Items that wait for a click ─────────────────────────────────── */
-
-/* A `+` bullet arrives on its own press. Held in place rather than removed, so
-   nothing under it moves when it appears. */
 :is(.deck, .deck-frame) .slide #write li.fragment {
   opacity: 0;
   transition: opacity var(--dur-stage) var(--ease-out);
@@ -152,9 +105,6 @@
   opacity: 1;
 }
 
-/* ── The two things that are not the slide ───────────────────────── */
-
-/* How far through the deck, along the bottom edge. */
 .deck .rail {
   position: absolute;
   inset: auto 0 0 0;
@@ -170,12 +120,6 @@
   transition: width var(--dur-stage) var(--ease-out);
 }
 
-/* Which slide, shown when the deck moves and gone again a moment later.
- *
- * Scoped to the deck, like the notes below: this stylesheet is on every page of
- * the app, and a bare `.count` is a name a panel would reach for too. It took
- * the tag tree's counts out of the sidebar - absolutely positioned, at the
- * bottom of the window, transparent until a deck moved. */
 .deck .count {
   position: absolute;
   right: max(20px, var(--inset-right));
@@ -192,10 +136,6 @@
   opacity: 1;
 }
 
-/* ── The presenter's own notes, where there is no second window ───── */
-
-/* Scoped to the deck: the presenter's own window has a notes panel of its own,
-   which is a column beside the slide rather than a sheet over it. */
 .deck .notes {
   position: absolute;
   inset: auto 0 0 0;
@@ -208,8 +148,6 @@
   border-top: 1px solid var(--line);
   box-shadow: var(--shadow-lg);
   font-family: var(--font-content);
-  /* Big enough to read in one glance downwards, which is the only way it is
-     ever read. */
   font-size: 1.15rem;
   line-height: 1.55;
   color: var(--text);
@@ -218,8 +156,6 @@
   -webkit-user-select: text;
 }
 
-/* The same measure the note itself is written in, so a long note stays a
-   column rather than one line across a projector. */
 .deck .notes > * {
   max-width: 46rem;
   margin-inline: auto;
@@ -233,11 +169,6 @@
   margin-bottom: 0;
 }
 
-/* ── Motion ──────────────────────────────────────────────────────── */
-
-/* A slide arrives from the side it came from, by a few pixels and no more: at
-   this size a real slide-across reads as a lurch, while a nudge under a fade
-   says which way the deck went. */
 @keyframes slide-in {
   from {
     opacity: 0;
@@ -267,32 +198,19 @@
   --stage-from-y: -28px;
 }
 
-/* ── A deck as a page of its own ─────────────────────────────────── */
-
-/* An exported deck and a published one are the whole page rather than something
-   over an app, and they have no app to take their background from. */
 body.deck-page {
   margin: 0;
   overflow: hidden;
   background: var(--bg);
 }
 
-/* ── On paper ────────────────────────────────────────────────────── */
-
-/* One slide to a page, at the stage's own size, so a printed deck is the deck.
-   The stage is not scaled here: the paper is set to its size instead. */
 @media print {
-  /* The app pins the page and scrolls nothing; a deck on paper is as long as it
-     has slides. */
   html,
   body {
     height: auto;
     overflow: visible;
   }
 
-  /* A slide is a picture rather than a page of text: its colours are the point,
-     so they are asked for outright rather than left to a printer's habit of
-     dropping backgrounds. */
   body.deck-page,
   .deck,
   .deck .slide {
@@ -306,8 +224,6 @@ body.deck-page {
     overflow: visible;
   }
 
-  /* On paper the page is the stage, so nothing is scaled and nothing is pinned:
-     the slides simply follow one another, a sheet each. */
   :is(.deck, .deck-frame) .stage {
     position: static;
     margin: 0;
@@ -325,7 +241,6 @@ body.deck-page {
     animation: none;
   }
 
-  /* Everything waiting for a click is out on paper: nobody presses a page. */
   :is(.deck, .deck-frame) .slide #write li.fragment {
     opacity: 1;
   }

@@ -1,63 +1,9 @@
-/* Glass: the theme that is about the window rather than about the palette, and about
-   what is open in it: the frame takes its colour from the page or the note in front;
-   see "What is open" below.
-
-   The chrome - the title bar with the tabs in it, the list down the side, the foot
-   row - stands on the material the platform composites behind the window: Mica Alt,
-   Mica, Acrylic or the desk itself unblurred, as the Material row says, under a wash
-   as thick as the Opacity row and the words allow. The writing surface stands on a
-   paper of its own (see Pane.svelte), laid over the frame as thinly as the Content row
-   asks and body text allows, and a tab that is open runs down into that paper exactly
-   as it does in every other theme. It is the layering Windows 11 asks of an app on Mica
-   and the one Finder and Notes have on a Mac - the material behind the frame, the
-   content on a surface of its own - with how much of one shows through the other left
-   to the reader. A web page always paints its own page.
-
-   The window wears the material only under this theme; see material.ts in the app.
-
-   ── What it stands on ──
-
-   `data-translucent` on the root says which material the platform put there, and the
-   two kinds are not the same thing to read on.
-
-   Mica keeps its own brightness whatever the wallpaper is: it takes the wallpaper's
-   colour and not its light, and falls back to a flat colour of its own when the
-   window is not the one in front, when the system turns transparency off and on
-   battery saver. So on Mica the chrome is a thin wash of this palette's own colour and
-   the material shows, the way Terminal's tab row and Explorer's side do.
-
-   Acrylic - and a Mac's vibrancy, the day its webview can be seen through - is the
-   desk itself, blurred, and Clear is the desk unblurred; a desk may be a white
-   photograph under the dark side or a black one under the light. So on those the wash
-   is most of the colour, enough that the worst desk there is, unblurred, still leaves
-   every word on the chrome at four and a half to one - six over Clear, whose desk is
-   sharp. The Opacity row can thicken the wash and never thin it past that. apps/desktop/test/e2e/glass.py reads the ratios back off the page over
-   a white desk, a black one and a busy one, and scripts/glass-probe.py off the packaged
-   app's own picture.
-
-   Where the platform has nothing to stand on - a Mac, whose webview is opaque, Linux,
-   a browser and a phone - the window stands on the palette's own ground, and the frame
-   is the colour of what is open over that paper: the same theme without the glass.
-
-   ── The words ──
-
-   The two quiet greys are a level stronger than the built-in's, and so is the body
-   text: a caption on a washed surface is the first thing to go, and on light Mica Alt
-   the built-in's quiet grey is under four and a half to one before any wash at all.
-   The light side's quiet grey is a step darker again, so that over the desk with no
-   blur, where words aim for six to one, a row under the pointer can still reach it. */
-
 :root,
 [data-theme='dark'] {
   color-scheme: dark;
 
-  /* The colour the chrome is a wash of, and how much of it there is where the desk
-     could be anything: dark enough, at that weight, that a white desk under it still
-     leaves the quiet grey on a row under the pointer at four and a half to one. */
   --glass-chrome: #191e26;
   --glass-wash: 92%;
-  /* And what the list down the side adds over that: a layer, the way Windows lays a
-     navigation pane over Mica, which is a lift of the light rather than a colour. */
   --glass-layer: rgb(255 255 255 / 0.04);
 
   --muted: #b6bec9;
@@ -79,30 +25,16 @@
   --text-strong: #05070a;
 }
 
-/* Where the ground is transparent and the material is under it. The shell's own
-   ground is the one layer every surface of the chrome stands on - `main` paints it,
-   and the bar, the foot row and the row of notices are transparent over it - so the
-   wash is said once, there, and the frame and the list only say what they add. */
 :root[data-translucent] {
   --shell-ground: color-mix(in srgb, var(--glass-chrome) var(--glass-wash), transparent);
-  /* What a note, a terminal and a canvas are read on: the paper over the frame's colour
-     over the material, at the alpha the Content row and the floors allow (see tint.ts and
-     content-ground.ts in the app), so the words keep the palette they were measured on.
-     A link takes a third of the strongest ink, so it is not what holds the paper opaque. */
   --content-ground: color-mix(in srgb, var(--bg) var(--content-alpha, 100%), transparent);
   --terminal-ground: color-mix(in srgb, var(--bg) var(--terminal-alpha, 100%), transparent);
   --content-link: color-mix(in srgb, var(--accent) 70%, var(--text-strong));
   --tab-frame: transparent;
   --side-bar-bg-color: var(--glass-layer);
-  /* A row under the pointer is a lift of whatever it is on rather than a colour of
-     its own, so it reads the same on the list, in the bar and in a menu. */
   --item-hover-bg-color: color-mix(in srgb, var(--text) 8%, transparent);
 }
 
-/* Mica keeps its own brightness, so the chrome can let it show: enough of a wash
-   lighter than the paper to hold the frame a step off it on Mica Alt's darkest and its
-   lightest - so the open tab still reads as the paper running up into the frame - and
-   the rest is the material. */
 :root[data-translucent='mica'] {
   --glass-chrome: #232932;
   --glass-wash: 40%;
@@ -113,28 +45,7 @@
   --glass-wash: 30%;
 }
 
-/* ── What is open ──
-
-   The frame takes its colour from what is in front (see lib/glass in the app): a web
-   page's own colour - its theme colour, else what it paints along its top - and a
-   tone of a site's mark while its page has said nothing, and everywhere else glass's
-   own pair (see below). `data-tinted` says the app is following, `--glass-tint` is
-   the colour and `--glass-tinted` how much of it lies
-   over what is behind the window: the material, or where there is none, the paper. Both
-   are worked out so the quietest word on the frame clears four and a half to one over
-   every colour the material can be, so they are never guessed here; until the first
-   answer the theme's own wash stands in.
-
-   Where the colour wants the other scheme's words, the parts of the frame say
-   `data-theme` with it: the title bar, the strips, the side panels, the foot row, and a
-   web bar with the open tab on it, which stand on the page's colour solid. Every token
-   there is then that side's palette, which was measured. What the root worked out from
-   the reader's own palette is worked out again inside, and the accent is kept the
-   reader's: it is a choice, not a colour of the scheme. (A card in the theme store
-   says `data-theme` too, with `data-palette`, and is somebody else's palette.) */
 :root[data-tinted] {
-  /* The note's paper, said at the root, so a tab inside a strip in the other scheme
-     still runs down into the paper it is the tab of. */
   --paper: var(--bg);
   --shell-ground: color-mix(
     in srgb,
@@ -184,18 +95,6 @@
   color: var(--text);
 }
 
-/* ── Glass's own pair ──
-
-   Where nothing open has a colour to give - a note, a canvas, a chat, the settings, an
-   empty pane - the frame is two colours (lib/glass/pairs.ts in the app): the first in
-   the top left corner, the second in the bottom right, blended the long way across the
-   window the way a Mac's wallpaper is behind its translucent windows and Arc's spaces
-   are. A diagonal under a soft glow of each colour in its own corner, so the middle
-   is a slow turn from one to the other rather than a line; and a faint grain over it,
-   because an eight-bit screen draws a blend this soft in bands without one. Every
-   layer is a mix of the two colours alone, so the sums that hold each word to AA over
-   every colour between them (tint.ts) hold over all of it; the grain is counted too.
-   One picture, painted once: nothing here moves. */
 :root[data-tinted][data-paired] {
   --glass-from: color-mix(in srgb, var(--glass-tint) var(--glass-tinted, 100%), var(--bg));
   --glass-to: color-mix(in srgb, var(--glass-tint-2) var(--glass-tinted, 100%), var(--bg));
@@ -212,17 +111,12 @@
   --glass-to: color-mix(in srgb, var(--glass-tint-2) var(--glass-tinted, 100%), transparent);
 }
 
-/* The colour the open tab stands on, registered so a page that changes its colour eases
-   the tab's feet with its body and the bar under it, rather than the curves arriving a
-   moment before the rest. */
 @property --tab-ground {
   syntax: '<color>';
   inherits: true;
   initial-value: transparent;
 }
 
-/* A system asking for less transparency is answered with none: Windows turns Mica into
-   a flat colour by itself, and this makes the page's own chrome flat with it. */
 @media (prefers-reduced-transparency: reduce) {
   :root[data-translucent][data-theme] {
     --glass-wash: 100%;
@@ -232,14 +126,12 @@
     --shell-ground: var(--glass-tint, var(--glass-chrome));
   }
 
-  /* Glass's own pair is a blend rather than a see-through, and stays one: solid. */
   :root[data-tinted][data-paired][data-theme] {
     --glass-from: var(--glass-tint);
     --glass-to: var(--glass-tint-2);
     --shell-ground: var(--glass-blend);
   }
 
-  /* And the note is on its paper, whatever the Content row says. */
   :root[data-translucent][data-theme] {
     --content-ground: var(--bg);
     --terminal-ground: var(--bg);

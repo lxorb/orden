@@ -1,27 +1,8 @@
-/* Editor-surface styles. Text appearance comes from the syntax highlighter;
-   these rules own block-level rhythm, backgrounds and rendered widgets. */
-
-/* A line of writing is scrolled up and down and never sideways, and saying so
-   is what makes a swipe over it a scroll at once.
-
-   The note is the whole screen on a phone, so every drag over the text is one
-   the drawer might claim, and it claims them from a listener that can cancel
-   the scroll. Until that listener has answered, the browser cannot start
-   scrolling and the touch is still an undecided press on editable text: long
-   enough on a busy frame for the press to become a word selection, with the
-   handle, the buzz, and the next drag moving the handle instead of the note.
-   Naming the one gesture a line supports lets the browser scroll without
-   asking, which settles the gesture before any of that can begin. Sideways is
-   left to what actually scrolls sideways: a table's box is a sibling of the
-   lines, not part of one, and keeps its own. */
 .cm-editor .cm-line {
   padding: 0;
   touch-action: pan-y pinch-zoom;
 }
 
-/* CodeMirror pads every widget with a zero-size <img>. The writing surface
-   carries Typora's `#write` id, so any theme rule for real images lands on
-   these too and breaks the line they sit on. Outrank it on specificity. */
 #write img.cm-widgetBuffer {
   display: inline;
   width: 0;
@@ -34,33 +15,12 @@
   vertical-align: text-top;
 }
 
-/* CodeMirror sizes a selection's full-line rectangles from this element's
-   box, so the box has to be the text column itself: the gutters are margins,
-   not padding. As padding they were inside the box, and the rectangles ran
-   a gutter's width past the text on either side - out over the edge of a
-   code block. Declaring the padding on the first line instead, for CodeMirror
-   to read back, did not hold up: a table, a diagram or the unrendered top of
-   a long note comes before the first line, and a fence or a list as the first
-   line has padding of its own. The margin is the gutter plus half of whatever
-   room is left beyond the measure, which centres the column and keeps the
-   gutter on a narrow screen.
-
-   The column is also as wide as the window lets it be and never a pixel wider.
-   Without the zero minimum it is a flex item whose automatic minimum size is
-   its own content's, so one block too wide to fit - a table with eight columns
-   in it - widened the whole writing surface instead. The scroller clips what
-   overflows it (`overflow-x: hidden` in theme.ts), so on a phone the right two
-   thirds of such a table were simply cut off, and the box it scrolls in was off
-   the screen with it. A block wider than the column now overflows the column
-   and scrolls in a box of its own, which is what `.nib-table-scroll` is. */
 .cm-editor #write {
   max-width: calc(var(--measure) - 2 * var(--space-5));
   min-width: 0;
   margin: 0 max(var(--space-5), calc(50% - var(--measure) / 2 + var(--space-5)));
   padding: var(--space-7) 0 45vh;
 }
-
-/* ── Headings ────────────────────────────────────────────────────── */
 
 .cm-line[class*='nib-h'] {
   font-family: var(--font-ui);
@@ -69,17 +29,6 @@
   line-height: 1.3;
 }
 
-/* CodeMirror measures every line and block widget with getBoundingClientRect,
-   which does not include margins. A margin here is therefore space the editor
-   cannot see: it lays the caret out as if the gap were not there, and clicks
-   land further and further from the pointer the more of them are above. So
-   nothing below sets a vertical margin - the space is padding, or a transparent
-   border where a background must not stretch into it. */
-
-/* The size is the line's, so that everything on it - inline code, emphasis,
-   a ligature glyph - is measured against the heading and not the paragraph.
-   The paddings are the same distances as before, written against the new
-   size. */
 .cm-line.nib-h1 {
   font-size: 1.92em;
   line-height: 1.28;
@@ -107,11 +56,7 @@
   padding: 1.06em 0 0.32em;
 }
 
-/* ── Blockquote ──────────────────────────────────────────────────── */
-
 .cm-line.nib-quote {
-  /* The bar and the room after it: how far the line's own text comes in, which
-     is what the fold chevron backs out by. See --line-inset under Folding. */
   --line-inset: calc(1.15em + 2px);
 
   border-inline-start: 2px solid var(--blockquote-border-color);
@@ -124,18 +69,6 @@
   border-inline-start-color: var(--accent);
 }
 
-/* ── Code ────────────────────────────────────────────────────────── */
-
-/* The same box the exported HTML gives inline code, so `a` is never mistaken
-   for a. Cloned across a line break rather than one long box with the ends
-   dangling. */
-/* A link reads as one: the accent, and an underline that firms up under the
-   pointer. The caret still goes where a click lands; the modifier turns the
-   pointer into a hand and the click into a jump (links.ts). */
-/* The highlighter paints a bare address in the muted tone it gives a link's
-   target; here the address is the link, so the accent reaches inside. */
-/* `--content-link` is a translucent theme's: the accent with some of the strongest
-   ink in it, so a link is not what holds a see-through paper opaque. */
 .nib-link,
 .nib-link * {
   color: var(--content-link, var(--accent));
@@ -151,9 +84,6 @@
   cursor: pointer;
 }
 
-/* A link to a note the space has not got. Muted rather than marked wrong: the
-   note may simply not be written yet, and a click is what writes it. The dotted
-   underline is the only difference, which is enough to read at a glance. */
 .nib-link-missing,
 .nib-link-missing * {
   color: var(--muted-strong);
@@ -166,9 +96,6 @@
   text-decoration-color: var(--accent);
 }
 
-/* A link to a note the space has archived. Still a link, in the link's own colour,
-   because it still opens; faded, and dashed rather than dotted so it is not read as a
-   note that is missing. */
 .nib-link-archived,
 .nib-link-archived * {
   opacity: 0.7;
@@ -179,11 +106,6 @@
   opacity: 1;
 }
 
-/* A tag the caret is in is being written, so it reads as the words it is made
-   of: the wash fades and nothing moves, because the pill's padding stays where it
-   was (document.css draws the pill). The fade is on the element the caret made,
-   the way a revealed mark bleeds in, so a note opening does not fade every tag.
-   Written with the id, which is what the pill's own rule outranks everything with. */
 .cm-editor #write .tag.is-open {
   background: transparent;
   animation: tag-open var(--dur-fast) var(--ease-out);
@@ -195,27 +117,15 @@
   }
 }
 
-/* The hand while the modifier would make a press ask about the tag, as on a link.
-   Only on a tag that says so, which is one in an editor that can ask. */
 .cm-content.nib-modifier .tag[title] {
   cursor: pointer;
 }
 
-/* `<u>text</u>`, with the tags hidden the way `**` is. */
 .nib-underline {
   text-decoration: underline;
   text-underline-offset: 0.12em;
 }
 
-/* A highlight that named a colour, in the note being written. The same five
-   tones the reading view, an export and a published page draw it in - `--mark-*`
-   in tokens.css - so the highlight does not change colour when the note is read
-   somewhere else.
-
-   Written over the syntax theme, which paints every highlight `--accent-soft`
-   and goes on painting the ones with no colour of their own; see
-   `markTags.highlight` in theme.ts in @orden/editor. Two classes and an element
-   deep, so it wins over that one rule wherever CodeMirror puts the two. */
 .cm-content span.nib-mark.tone-1 {
   background: var(--mark-1);
 }
@@ -240,36 +150,13 @@
   background: var(--surface-2);
   border: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
   border-radius: var(--radius-sm);
-  /* The chip has to carry the same font as the code inside it. Left to inherit
-     the prose font, its box is drawn from those metrics while the glyphs are
-     smaller, which leaves a band of empty space above the text and almost none
-     below it. */
   font-family: var(--font-mono);
   font-size: 0.88em;
-  /* A shade more below than above: what is left of the font ascent. */
   padding: 0.1em 0.3em 0.14em;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
 
-/* The selection is one block per range, traced around the rectangles CodeMirror
-   measures and clipped to that outline; the shape is in selection/shape.ts in
-   @orden/editor and the colour is `--selection`. CodeMirror's own layer is here
-   too: it shows nothing, but a phone's drag handles are its, and both layers
-   behave the same way.
-
-   CodeMirror keeps a selection beneath the text, so anything with a background
-   of its own - an inline code chip, a front matter line - sat on top of it and
-   hid the selection. It is lifted above the text here and blended, so the words
-   keep their colour: screen leaves light text white on a dark page, multiply
-   leaves dark text black on a light one, and over a plain background either
-   comes out the same shade the layer had underneath. CodeMirror writes the
-   layer's depth onto the element itself, which only an important declaration
-   outranks.
-
-   Being above the text, the layer would take every click aimed at selected
-   text, and a click inside a selection - which should collapse it to a caret
-   there - would never reach the editor. So it lets the pointer through. */
 .cm-editor .cm-nib-selection,
 .cm-editor .cm-selectionLayer {
   z-index: var(--z-raised) !important;
@@ -282,36 +169,12 @@
   mix-blend-mode: multiply;
 }
 
-/* A block is a run of lines, so it is drawn line by line: a filled band on
-   each, with the first and last carrying the corners. The room above and
-   below is a transparent border rather than a margin, which CodeMirror's line
-   measuring would not see.
-
-   The fill is a pseudo-element beneath the text rather than the line's own
-   background: a background clipped to the padding box loses its corners, as
-   the radius belongs to the border box and the tall border eats it. The
-   pseudo-element's box is the padding box - exactly the part inside the
-   transparent borders - and carries a radius of its own. Its width is the
-   text column, which is also what the selection's rectangles are sized from
-   (see the writing surface above), so a selection in a block ends where the
-   block does. */
-/* A code line and a table row are laid out rather than read: base.css gives
-   every block in a note the direction of its own first strong character, and
-   these two are the exceptions. Named through `#write` so they outrank the rule
-   there, which reaches every block by the id.
-
-   A fence line that begins with an Arabic string would otherwise turn round and
-   take its indentation with it, and a table row would take its pipes, so the
-   columns would come apart row by row. Both keep the note's own direction,
-   whatever is written in them. */
 #write .cm-line.nib-code,
 #write .cm-line.nib-table {
   unicode-bidi: normal;
 }
 
 .cm-line.nib-code {
-  /* How far the block's own text comes in: the fold chevron stands outside it
-     rather than on its edge, and the caption starts level with the code. */
   --line-inset: var(--space-4);
 
   position: relative;
@@ -330,9 +193,6 @@
   pointer-events: none;
 }
 
-/* The first row holds the fence, shown or hidden, and the controls pinned to
-   its right; the last holds the closing fence. Both are there in either
-   state, so the block is the same height whether or not the caret is in it. */
 .cm-line.nib-code-open {
   padding-top: 6px;
   border-top: 1.1em solid transparent;
@@ -352,12 +212,6 @@
   border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 
-/* The fence's own line carries its language and a copy button. The widget is
-   a zero-width box in the flow of the line: enough to hold the row open when
-   the fence text is hidden (a line holding nothing in flow has no height, and
-   every click in the block would land a line lower than it looked), and not
-   enough to push anything onto a second row. The controls themselves are
-   pinned to the line's right edge, level with that first row. */
 .nib-fence-header {
   display: inline-block;
   width: 0;
@@ -367,11 +221,6 @@
   -webkit-user-select: none;
 }
 
-/* The top row of the block, from where its code begins to its right edge: what
-   the block is on the left, the language and the buttons on the right. It lies
-   over the fence's own text, which is hidden except when the caret is in the
-   block, so it lets every press through to the line underneath and only the
-   buttons take one back. */
 .nib-fence-row {
   position: absolute;
   top: 6px;
@@ -386,9 +235,6 @@
   pointer-events: none;
 }
 
-/* The row keeps the line's own face, so its `left` is measured in the same `ch`
-   as the block's padding and the caption starts exactly where the code does. The
-   words in it set their own. */
 .nib-fence-caption,
 .nib-fence-controls {
   font-family: var(--font-ui);
@@ -396,10 +242,6 @@
   line-height: 1;
 }
 
-/* What the block is: the words after the language in the fence's own line. Read
-   off the note rather than part of it, so nothing selects it and a press on it
-   is a press on the line. One line, cut short rather than wrapped, because the
-   row is the height of one row. */
 .nib-fence-caption {
   flex: 1;
   min-width: 0;
@@ -455,30 +297,8 @@
   outline: none;
 }
 
-/* ── Code line numbers ───────────────────────────────────────────── */
-
-/* A gutter of its own at the left edge of the block, the way an editor draws
-   one: the numbers right-aligned in a column exactly as wide as the block's
-   longest, a hairline beside them, and the same gap on both sides of it. Every
-   line of the block is indented past all of that, the fences included, so the
-   code reads down one straight edge.
-
-   The number is a pseudo-element reading an attribute the decorations put on the
-   line, not a CSS counter: only the lines in the viewport are in the DOM, and a
-   counter would start again at one wherever the reader had scrolled to. Which
-   line is which, and how many digits the column needs, are decided in
-   live-preview/decorate.ts in @orden/editor.
-
-   Absolutely positioned inside the line, so the number sits level with the
-   line's first row while the padding holds every row of a wrapped line clear of
-   the column, and the hairline runs the full height of the line either way -
-   which is what makes one continuous rule out of a rule per line. `ch` is the
-   width of a digit in the code face, so the column is the same size whichever
-   face that is and whether or not its ligatures are drawn. */
 .nib-line-numbers .cm-line.nib-code {
   --code-number-width: calc(var(--code-digits, 2) * 1ch);
-  /* The numbers are part of what the text comes in past, so the chevron and the
-     caption clear them too: one name for the distance, read by all three. */
   --line-inset: calc(var(--space-3) + var(--code-number-width) + var(--code-number-gap) * 2 + 1px);
 
   padding-inline-start: var(--line-inset);
@@ -495,17 +315,11 @@
   border-inline-end: 1px solid var(--code-number-rule);
   color: var(--code-number-color);
   text-align: end;
-  /* A count of the code rather than part of it: nothing here is text of the
-     document, so nothing selects it, copies it or takes a click meant for the
-     line beside it. */
   user-select: none;
   -webkit-user-select: none;
   pointer-events: none;
 }
 
-/* No box of its own, and only there while the pointer is over the block -
-   the header adds `nib-fence-hover` for that - or once something has been
-   copied, so the tick is seen. A touch screen has no hover, so it stays. */
 .nib-fence-copy {
   display: grid;
   place-items: center;
@@ -554,10 +368,6 @@
   color: var(--success);
 }
 
-/* ── Running a code block ────────────────────────────────────────── */
-
-/* Beside the copy button, and it comes and goes with it. Filled rather than
-   drawn in outline: a play triangle is read as a solid shape. */
 .nib-fence-run {
   display: grid;
   place-items: center;
@@ -598,9 +408,6 @@
   color: var(--accent);
 }
 
-/* The output of a run, which is a widget and not a word of the note: it sits
-   under the block, styled like the block, and is gone when the note is saved,
-   exported or reopened. */
 .nib-run-panel {
   display: block;
   margin: 0 0 1.2em;
@@ -627,7 +434,6 @@
   -webkit-user-select: none;
 }
 
-/* Nothing came out, so the rule under the bar would be a line to nowhere. */
 .nib-run-panel:has(.nib-run-output:empty) .nib-run-bar {
   border-bottom: none;
 }
@@ -644,8 +450,6 @@
   color: var(--danger);
 }
 
-/* Pushes the buttons to the far edge, and stays put whether or not there is a
-   word to its left. */
 .nib-run-time {
   margin-inline-end: auto;
   font-variant-numeric: tabular-nums;
@@ -705,7 +509,6 @@
   font-size: 0.86em;
   line-height: 1.62;
   color: var(--text);
-  /* Output is there to be read and taken, and a logged line can be long. */
   user-select: text;
   -webkit-user-select: text;
   white-space: pre-wrap;
@@ -729,7 +532,6 @@
   color: var(--text-strong);
 }
 
-/* The one line that is a value rather than something the code said. */
 .nib-run-tag {
   margin-inline-end: var(--space-2);
   font-family: var(--font-ui);
@@ -748,16 +550,11 @@
   color: var(--muted);
 }
 
-/* ── Lists ───────────────────────────────────────────────────────── */
-
 .cm-line.nib-li {
   padding-inline-start: 1.5em;
   text-indent: -1.5em;
 }
 
-/* The span holds no text, so without a height it collapses onto the baseline
-   and the dot centres there instead of on the line. Giving it the line's own
-   height puts the dot level with the words beside it. */
 .nib-bullet {
   display: inline-block;
   width: 1em;
@@ -800,8 +597,6 @@
 .nib-ordered-mark {
   color: var(--muted);
 }
-
-/* ── Task lists ──────────────────────────────────────────────────── */
 
 .nib-checkbox {
   appearance: none;
@@ -851,14 +646,10 @@
   transition: color var(--dur-base) var(--ease-out);
 }
 
-/* A task's fields, said again after its words while their marks are hidden: quiet, a
-   size down, each one pressable for its picker. See task-chips.ts in @orden/editor. */
 .nib-task-chips {
   display: inline-flex;
   gap: 0.5em;
   margin-inline-start: 0.75em;
-  /* A list's line hangs its first line back by the marker's width; the chips are not
-     that line's first words and stand where they are. */
   text-indent: 0;
   color: var(--muted);
   font-family: var(--font-ui);
@@ -901,8 +692,6 @@
   pointer-events: none;
 }
 
-/* A comment's when and who: said, not picked. A press goes to the words, which bring
-   the fields back to be edited. */
 .nib-comment-chips .nib-task-chip {
   cursor: text;
 }
@@ -912,7 +701,6 @@
   color: inherit;
 }
 
-/* A date typed at the end of a task, offered: Tab takes it. See task-hint.ts. */
 .nib-task-hint {
   margin-inline-start: 0.5em;
   color: var(--muted);
@@ -921,8 +709,6 @@
   opacity: 0.8;
   pointer-events: none;
 }
-
-/* ── Rules ───────────────────────────────────────────────────────── */
 
 .nib-rule {
   display: inline-block;
@@ -938,20 +724,6 @@
   );
 }
 
-/* ── Where a deck breaks ─────────────────────────────────────────── */
-
-/* A note whose rules break it into slides says so while it is being written: the
-   rule that ends a slide is drawn in the accent instead of the line colour.
-   Nothing is written anywhere and nothing is added - the mark is the shape of
-   the rule, in a different colour - and an underscore rule stays an ordinary
-   rule, because that is the one that does not break a slide.
-   There used to be a dot out in the margin as well, and it was the wrong idea
-   twice over. A rule is a line; a bead hanging off the left end of it reads as a
-   list bullet, or as the block grip, or as something gone wrong. And it appeared
-   far more widely than the name suggests: two paragraphs with a rule between
-   them is a deck as far as the detector is concerned, so an ordinary note that
-   used a rule as a divider grew an accent dot nobody asked for.
-   See packages/markdown/src/slides.ts. */
 .nib-deck .nib-slide-break .nib-rule {
   background: linear-gradient(
     to right,
@@ -962,9 +734,6 @@
   );
 }
 
-/* ── Tables ──────────────────────────────────────────────────────── */
-
-/* Source view, shown only while the caret is inside the table's text. */
 .cm-line.nib-table {
   font-family: var(--font-mono);
   font-size: 0.88em;
@@ -974,30 +743,16 @@
   color: var(--line-strong);
 }
 
-/* Rendered, editable table. The widget is exactly as tall as the table: the
-   controls that hang over the header and beside the rows sit in the page's
-   gutters and over the line above, so a reader pays no room for them. The
-   scrolling part is a box of its own, because a scroll container clips in
-   both directions and would cut off anything hanging outside it. */
 .nib-table-wrap {
   position: relative;
   animation: settle-in var(--dur-base) var(--ease-out);
 }
 
-/* Can run into the gutter at the end of the line before its cells have to
-   wrap: a table that nearly fits the column should not fold for the sake of an
-   inset. Wider than that and it scrolls. The gutter at the start is the row
-   bar's, which is outside this box and so is never scrolled away. */
 .nib-table-scroll {
   margin-inline-end: calc(-1 * var(--space-5));
   overflow-x: auto;
 }
 
-/* The export stylesheet reaches the editor too - the writing surface is
-   `#write` - and gives every table a margin, the full width and, on a phone,
-   a scrolling box of its own. Named by id here to outrank it: the widget's
-   spacing is the lines around it, its width is its content's, and the
-   scrolling is done by the box above. */
 #write .nib-table {
   display: table;
   width: auto;
@@ -1010,9 +765,6 @@
   font-size: 0.94em;
 }
 
-/* Words wrap at spaces, as they do in any table. The editor's own line
-   wrapping breaks them anywhere, which would fold a wide table into tall,
-   shattered cells rather than letting it scroll. */
 #write .nib-table th,
 #write .nib-table td {
   position: relative;
@@ -1027,9 +779,6 @@
   transition: background var(--dur-fast) var(--ease-out);
 }
 
-/* Cells render their markdown while the caret is elsewhere, so they hold real
-   elements rather than text. Bold and italic the browser already knows; these
-   are the ones that need the document's own treatment. */
 .nib-table code {
   font-family: var(--font-mono);
   font-size: 0.88em;
@@ -1057,9 +806,6 @@
   padding: 0.05em 0.2em;
 }
 
-/* The grid is a hairline - `--table-border-color` - and the one rule worth
-   reading is the one under the header. The same table on paper, on a published
-   page and here; see base.css. */
 #write .nib-table th {
   background: var(--surface);
   border-bottom-color: var(--line-strong);
@@ -1081,13 +827,10 @@
   background: var(--accent-soft);
 }
 
-/* The editor paints its own selection and hides the browser's, which is the
-   only one a cell has. */
 .cm-content .nib-table ::selection {
   background: var(--selection);
 }
 
-/* Controls stay out of the way until the cell they belong to is engaged. */
 .nib-table-columns,
 .nib-table-rows {
   gap: 1px;
@@ -1098,16 +841,9 @@
     transform var(--dur-base) var(--ease-out);
 }
 
-/* One bar for the whole table, moved over whichever header cell is hovered
-   or holds the caret. It hangs above the table, over the line before it. */
 .nib-table-columns {
   position: absolute;
   top: 0;
-  /* Physical on purpose: the bar is put over whichever header cell is being
-     worked on, measured in pixels from the left of the table's own box - and the
-     browser has already laid the cells out the way the note reads, so the
-     measurement mirrors itself. See `showColumnBar` in
-     packages/editor/src/table/view.ts. */
   left: 0;
   display: flex;
   padding-bottom: 3px;
@@ -1120,11 +856,6 @@
   transform: translateY(-100%);
 }
 
-/* One bar for the rows as well, put beside whichever row is hovered or holds
-   the caret: `top` is that row's middle, measured in view.ts. Two by two, wholly
-   to the side of the table: a strip of four would reach into the first cell and
-   sit on its text. The gap to the table is padding, so a pointer on its way from
-   the row to the bar is on the bar all the way. */
 .nib-table-rows {
   position: absolute;
   inset-inline-end: 100%;
@@ -1142,8 +873,6 @@
   transform: translate(0, -50%);
 }
 
-/* A phone's margin is 24 px and two by two is 39: the bar hung off the edge of
-   the glass. One above the other is 21, and fits. */
 @media (hover: none) {
   .nib-table-rows {
     grid-template-columns: 17px;
@@ -1194,7 +923,6 @@
   stroke-linecap: round;
 }
 
-/* The boundary between two columns, grabbable but invisible until wanted. */
 .nib-table-resize {
   position: absolute;
   top: 0;
@@ -1205,8 +933,6 @@
   z-index: var(--z-raised);
 }
 
-/* Kept inside the last cell: a handle past the table's edge is overflow,
-   and overflow is a scrollbar under every table. */
 .nib-table th:last-child .nib-table-resize {
   inset-inline-end: 0;
 }
@@ -1227,8 +953,6 @@
   opacity: 1;
 }
 
-/* ── Modes ───────────────────────────────────────────────────────── */
-
 .cm-line.nib-dim {
   opacity: 0.26;
   transition: opacity var(--dur-slow) var(--ease-out);
@@ -1238,46 +962,29 @@
   transition: opacity var(--dur-slow) var(--ease-out);
 }
 
-/* Room below the last line so the caret can still reach the middle. */
 .nib-typewriter-mode #write {
   padding-bottom: 55vh;
 }
 
-/* Reading mode. What goes is the writing chrome: the caret, and the controls
-   whose only purpose is to change something. What stays is everything a reader
-   uses - the selection, the copy button on a fence, the links, the pictures at
-   the size the note gives them.
-
-   The caret goes by way of its layer rather than the caret itself: CodeMirror's
-   own theme turns `.cm-cursor` back on with five classes' worth of specificity
-   while the surface has focus, and the surface keeps focus here so that arrows,
-   Page Down and Ctrl+F still reach it. Nothing styles the layer's display, so
-   this is uncontested. */
 .nib-read-only .cm-cursorLayer,
 .nib-read-only .cm-dropCursor {
   display: none;
 }
 
-/* The box still says whether the task is done. It is no longer a switch. */
 .nib-read-only .nib-checkbox {
   pointer-events: none;
 }
 
-/* The fence still says which language it is. The name is no longer a field. */
 .nib-read-only .nib-fence-language {
   pointer-events: none;
 }
 
-/* Rows, columns and column widths are all edits. */
 .nib-read-only .nib-table-rows,
 .nib-read-only .nib-table-columns,
 .nib-read-only .nib-table-resize {
   display: none;
 }
 
-/* A picture keeps the two controls that only read - open it, copy its
-   address - and loses the alt text, the size, the way into the markup and the
-   delete, along with the corner handles that resize it. */
 .nib-read-only .nib-image-alt,
 .nib-read-only .nib-image-size,
 .nib-read-only .nib-image-source,
@@ -1286,8 +993,6 @@
 .nib-read-only .nib-image-handle {
   display: none;
 }
-
-/* ── Page break ──────────────────────────────────────────────────── */
 
 .nib-page-break {
   position: relative;
@@ -1313,22 +1018,12 @@
   letter-spacing: 0.04em;
 }
 
-/* ── Emoji ───────────────────────────────────────────────────────── */
-
 .nib-emoji {
   font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
   font-size: 1.05em;
   line-height: 1;
 }
 
-/* ── Ligatures ──────────────────────────────────────────────────── */
-
-/* `->` and its kind, drawn as a font would draw a ligature: the characters
-   stay where they are, invisible, and the glyph is painted over the room
-   they take. Centred on the run's own box, which is the run's width in any
-   font, so columns in code still line up and nothing moves when the caret
-   goes in and the characters show again. A run must not break across
-   lines, or the glyph would sit on one of them. */
 .nib-lig {
   position: relative;
   white-space: nowrap;
@@ -1343,34 +1038,17 @@
   top: 50%;
   transform: translateY(-50%);
   text-align: center;
-  /* A positioned box starts a line of its own, and a line inherits the
-     paragraph's indent: in a list item, whose lines hang by 1.5em, that put
-     the glyph 1.5em to the left of its run. */
   text-indent: 0;
   -webkit-text-fill-color: currentcolor;
   pointer-events: none;
 }
 
-/* The code font may bring ligatures of its own - iA Writer Mono draws `->`
-   as an arrow by itself - and shows them only while the setting asks for a
-   glyph in code, so that off means off. The class follows the scope: it is
-   there for Code only and for Everywhere, both of which draw in code, and gone
-   when the setting is off. Prose is left to its font either way: fi and fl are
-   not what is being asked about. */
 .cm-editor:not(.nib-ligatures) .nib-inline-code,
 .cm-editor:not(.nib-ligatures) .cm-line.nib-code {
   font-variant-ligatures: none;
   font-feature-settings: 'calt' 0;
 }
 
-/* ── Panels ──────────────────────────────────────────────── */
-
-/* A row the library puts above or below the text. The find bar is not one of
-   these any more: it is a row of the pane, drawn as FindBar.svelte, on the
-   design system - the library's own panel was two bare inputs, three checkboxes
-   labelled in its own English and an `x`, and there is no dressing a control
-   like that into Orden. What is left here is the frame, for whatever panel the
-   library puts up next. */
 .cm-panels {
   border: none;
   background: var(--surface);
@@ -1385,8 +1063,6 @@
   border-top: 1px solid var(--line);
 }
 
-/* ── Completion popup ────────────────────────────────────────────── */
-
 .cm-tooltip.cm-tooltip-autocomplete {
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
@@ -1395,11 +1071,6 @@
   overflow: hidden;
 }
 
-/* Written from `.cm-editor` down, so these outrank the library's own rules for
-   the same elements: it writes `.cm-tooltip.cm-tooltip-autocomplete > ul`, which
-   is exactly as specific as ours and lands later in the document. Without the
-   extra class the list came out in the browser's monospace with a blue
-   selection bar - which it had been doing for the emoji list all along. */
 .cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul {
   max-height: 16em;
   font-family: var(--font-ui);
@@ -1420,15 +1091,12 @@
   color: var(--text-strong);
 }
 
-/* The letters that were typed, marked where they landed in the name. */
 .cm-editor .cm-tooltip.cm-tooltip-autocomplete .cm-completionMatchedText {
   color: var(--accent);
   text-decoration: none;
   font-weight: 600;
 }
 
-/* What a row says about itself beyond its name: the emoji a shortcode stands
-   for, the folder a note lives in. */
 .cm-editor .cm-tooltip.cm-tooltip-autocomplete .cm-completionDetail {
   margin-inline-start: auto;
   padding-inline-start: var(--space-3);
@@ -1437,8 +1105,6 @@
   font-size: 0.95em;
   white-space: nowrap;
 }
-
-/* ── Table of contents ───────────────────────────────────────────── */
 
 .nib-toc {
   display: block;
@@ -1454,7 +1120,6 @@
   padding: 0.16em 0;
   color: var(--muted-strong);
   text-decoration: none;
-  /* Themes underline links; a contents list reads better without. */
   border-bottom: none;
   transition:
     color var(--dur-fast) var(--ease-out),
@@ -1471,8 +1136,6 @@
   display: block;
   height: 1.2em;
 }
-
-/* ── Heading numbers ─────────────────────────────────────────────── */
 
 .nib-numbered #write {
   counter-reset: nib-h1 nib-h2 nib-h3 nib-h4 nib-h5 nib-h6;
@@ -1529,8 +1192,6 @@
   color: var(--muted);
 }
 
-/* ── Subscript and superscript ───────────────────────────────────── */
-
 .nib-sub,
 .nib-sup {
   font-size: 0.72em;
@@ -1544,22 +1205,10 @@
   vertical-align: 0.42em;
 }
 
-/* ── Math ────────────────────────────────────────────────────────── */
-
 .nib-math-inline {
   padding: 0 0.12em;
 }
 
-/* The room around a formula is KaTeX's own `.katex-display` margin and nothing
-   else, which is one line of it above and below - the spacing every book sets a
-   display equation with, and the spacing the reading view has always used, since
-   document.css never overrode it.
-
-   This used to add `1.4em + var(--space-3)` of its own on top of that, and the two
-   stacked: a 58px formula sat in a 162px block with 218px between the paragraphs
-   either side of it, so five sixths of the room was air and the same note read
-   differently here and in the reading view. Emil: *"way too much padding for the
-   $$."* */
 .nib-math-block {
   position: relative;
   display: block;
@@ -1584,10 +1233,6 @@
   color: var(--muted-strong);
 }
 
-/* The formula being written, drawn over its source as it is typed (#1075). Out of
-   the flow, so it never moves a line, and out of the pointer's way, so a press on
-   the words under it reaches them. The font size is the note's, set from the
-   editor, so it follows the zoom. */
 .nib-maths-preview {
   position: absolute;
   z-index: var(--z-drawn);
@@ -1602,7 +1247,6 @@
   box-shadow: var(--shadow-md);
   font-family: var(--font-content);
   pointer-events: none;
-  /* Runs each time it comes out of `hidden`, and not on a keystroke. */
   animation: settle-in var(--dur-fast) var(--ease-out);
 }
 
@@ -1634,8 +1278,6 @@
 .nib-maths-preview-body:empty + .nib-maths-preview-error {
   padding-top: 0;
 }
-
-/* ── Diagrams ────────────────────────────────────────────────────── */
 
 .nib-diagram {
   display: block;
@@ -1670,12 +1312,6 @@
   }
 }
 
-/* ── Front matter and footnotes ──────────────────────────────────── */
-
-/* Front matter opens the note, so its first line is the one CodeMirror reads
-   the text column from (see the writing surface at the top). The inset is a
-   transparent border, which CodeMirror does not count, and the rule down the
-   left is painted as a background so the border can stay transparent. */
 .cm-line.nib-frontmatter {
   font-family: var(--font-mono);
   font-size: 0.82em;
@@ -1694,20 +1330,15 @@
   color: var(--muted-strong);
 }
 
-/* A footnote's number, in the words and at the foot: pressed, it goes to the other
-   one, so it says so to the pointer; see live-preview/footnotes.ts in @orden/editor. */
 .nib-footnote-number {
   cursor: pointer;
 }
 
-/* The card a footnote's mark shows: the note preview's card, at the size of what a
-   footnote says. */
 .nib-note-preview.nib-footnote-preview {
   width: min(24rem, 78vw);
   max-height: 14em;
 }
 
-/* A definition sits under its term, indented the way it renders. */
 .cm-line.nib-definition {
   padding-inline-start: 1.6em;
   color: var(--muted-strong);
@@ -1718,35 +1349,15 @@
   color: var(--muted);
 }
 
-/* ── Folding ─────────────────────────────────────────────────────── */
-
-/* The chevron beside anything that can fold. It hangs in the margin off a slot
-   with no width of its own, so the line begins exactly where it would have and
-   the writing column is untouched - the same trick the fence controls use.
-   `position: relative` on an inline element is enough to hang it off. */
 .nib-fold {
   position: relative;
   display: inline;
 }
 
-/* `right` is measured from the slot, which sits at the line's first character,
-   so this is a fixed distance out into the margin whatever size the line's text
-   is: the chevrons of an H1 and of a list item line up in one column.
-
-   A line that insets its own text - a code block's padding, a quote's bar, the
-   column of line numbers - says how far in `--line-inset`, and the chevron backs
-   out by that much again. Without it the chevron of a fence or a callout landed
-   on the edge of the block's own box, or inside it, while a heading's sat out in
-   the margin: one gesture drawn in three places. The gap left over is the same
-   for all of them, so the chevron always stands beside its block and never on
-   it. */
 .nib-fold-hinge {
   position: absolute;
   top: 50%;
   inset-inline-end: calc(var(--space-2) + var(--line-inset, 0px));
-  /* A button does not inherit the text's font, and `--line-inset` is measured in
-     the line's own em and ch: without this the chevron of a quote and of a
-     numbered fence backed out by a few pixels less than their text came in. */
   font: inherit;
   display: flex;
   width: 15px;
@@ -1766,8 +1377,6 @@
     color var(--dur-fast) var(--ease-out);
 }
 
-/* Calm: nothing at all until the pointer is on the line. A folded line keeps
-   its chevron, because that is the one state a reader has to be able to undo. */
 .cm-line:hover > .nib-fold .nib-fold-hinge,
 .nib-fold-hinge:focus-visible,
 .nib-fold-hinge[data-folded='true'] {
@@ -1778,9 +1387,6 @@
   color: var(--text-strong);
 }
 
-/* The turn takes as long as the block takes to go, and starts with it, so the
-   two read as one movement rather than a mark that changed its mind and a block
-   that followed. What moves the block is fold-motion.ts in @orden/editor. */
 .nib-fold-hinge svg {
   width: 13px;
   height: 13px;
@@ -1792,19 +1398,12 @@
   transition: transform var(--dur-base) var(--ease-out);
 }
 
-/* Pointing at what it holds when it holds it shut, and down at what it has let
-   out when it is open. */
 .nib-fold-hinge[data-folded='false'] svg {
   transform: rotate(90deg);
 }
 
-/* A screen with no pointer has no hover to reveal anything with, so the chevron
-   is simply there - and it is a thumb's target, not a mouse's. */
 @media (hover: none) {
   .nib-fold-hinge {
-    /* A narrower gap than a pointer's, so the whole of a thumb's target fits in
-       the gutter beside the block rather than being clipped at the edge of the
-       screen. It still stands clear of the block, which is the rule. */
     inset-inline-end: calc(var(--space-1) + var(--line-inset, 0px));
     width: var(--touch-indent);
     height: var(--touch-target);
@@ -1818,12 +1417,6 @@
   }
 }
 
-/* What is left where a fold took the words away. No wording: a mark that reads
-   as "there is more" and opens on a click.
-
-   It fades in rather than appearing, because it arrives at the end of the
-   movement that took the lines away: they shrink out of sight, the fold lands,
-   and the mark is what is left. */
 .nib-folded {
   animation: fade-in var(--dur-fast) var(--ease-out);
   display: inline-block;
@@ -1848,13 +1441,6 @@
   color: var(--text-strong);
 }
 
-/* ── Where a jump landed ─────────────────────────────────────────── */
-
-/* The block a link, a bookmark or a search result put the reader on, tinted for
-   long enough to find and then let go of. The hold is a delay and the fade is
-   the movement, so somebody who asked for less movement still sees the mark and
-   simply does not see it fade. What takes it out of the state again, so a line
-   redrawn later cannot tint itself, is landing.ts in @orden/editor. */
 .cm-line.nib-landed {
   animation: nib-landed var(--dur-slower) var(--ease-out) 520ms both;
 }
@@ -1868,17 +1454,6 @@
   }
 }
 
-/* ── The mark beside a block ─────────────────────────────────────── */
-
-/* Beside every block, one column further out than the fold chevron, so a block
-   that folds carries both and they read as what they do in the order they are
-   reached: take hold of this, and open this. It hangs off a slot with no width
-   of its own, the way the chevron does, so the writing column is untouched.
-
-   Nothing until the pointer is on the line, and nothing at all where there is no
-   pointer: a finger has no hover to bring it out with and the margin is a thumb
-   wide, so a long press opens the same menu instead. See block/handle.ts in
-   @orden/editor. */
 .nib-block-slot {
   position: relative;
   display: inline;
@@ -1899,8 +1474,6 @@
   margin-top: -10px;
   background: none;
   color: var(--muted);
-  /* A button does not inherit the text's font, and `--line-inset` is measured in
-     the line's own em and ch; see the fold chevron. */
   font: inherit;
   cursor: grab;
   opacity: 0;
@@ -1939,16 +1512,10 @@
   }
 }
 
-/* A block on its way somewhere goes quiet: what matters while it moves is where
-   it is going, which is the line below. */
 .cm-line.nib-block-lifted {
   opacity: 0.4;
 }
 
-/* Where it would land. An inset shadow rather than a border or a pseudo-element:
-   a border would move the text down by its own width as the line was drawn, and
-   both pseudo-elements of a code line are taken - one by the block's background,
-   one by its numbers. */
 .cm-line.nib-block-over {
   box-shadow: inset 0 2px 0 0 var(--accent);
 }
@@ -1957,18 +1524,8 @@
   box-shadow: inset 0 -2px 0 0 var(--accent);
 }
 
-/* ── Callouts ────────────────────────────────────────────────────── */
-
-/* Every line of a callout carries the look, so the accent runs its full height,
-   and the type as written as an attribute, so a theme reaches a type Orden has
-   never heard of here the same way it does in the reading view. A callout with
-   no look at all keeps the quote's own grey bar, which is what an unknown type
-   should read as until somebody styles it. */
 .cm-line.nib-callout {
   border-inline-start-color: var(--callout-accent, var(--blockquote-border-color));
-  /* Mixed into the paper rather than laid over it, so a callout keeps a fill of its own
-     where the paper is see-through under a translucent theme; on an opaque paper it is
-     the same colour either way. The table's row and an embed below do the same. */
   background: color-mix(in srgb, var(--callout-accent, var(--bg)) 7%, var(--bg));
   padding-inline-end: var(--space-3);
 }
@@ -2013,9 +1570,6 @@
   --callout-accent: var(--callout-quote);
 }
 
-/* What stands where the `[!type]-` marker is written: the icon, and the type's
-   own name when the writer gave it no title. A title they did write is real
-   words on the line and is styled by the line, not by this. */
 .nib-callout-label {
   display: inline-flex;
   align-items: center;
@@ -2035,14 +1589,6 @@
   flex: none;
 }
 
-/* ── Images ──────────────────────────────────────────────────────── */
-
-/* How a picture behaves is described at the top of image.ts. What follows is
-   how it looks: the frame holds the room above and below, the box is the
-   picture's own edge, and handles, badge and toolbar all hang off the box. */
-
-/* The room is padding on the frame rather than on the picture, so the corner
-   radius clips the picture itself. */
 .nib-image-frame {
   display: inline-block;
   max-width: 100%;
@@ -2051,7 +1597,6 @@
   -webkit-user-select: none;
 }
 
-/* `line-height: 0` keeps the box exactly the picture's height. */
 .nib-image-box {
   position: relative;
   display: inline-block;
@@ -2066,15 +1611,9 @@
   box-shadow: 0 0 0 1px var(--accent-line);
 }
 
-/* The selection layer sits above the text (see the top of this file) and
-   would tint the picture too. Inside a wider selection that is right; when
-   the picture itself is what is selected, the frame says so and the picture
-   is lifted above the layer to stay clean. */
 .nib-image-frame.is-selected {
   position: relative;
   z-index: var(--z-lifted);
-  /* The frame's own room above and below would still show the layer through
-     it; the page's ground fills it, so the ring alone marks the selection. */
   background: var(--bg);
 }
 
@@ -2082,9 +1621,6 @@
   box-shadow: 0 0 0 2px var(--accent);
 }
 
-/* Written against `#write` because base.css styles `#write img` for exported
-   and published pages, and an id outranks any number of classes: without it
-   the picture would keep that rule's margin, and a broken one its box. */
 #write img.nib-image {
   display: block;
   max-width: 100%;
@@ -2098,21 +1634,16 @@
   transition: none;
 }
 
-/* Room is kept while a picture loads, so the text below it does not jump
-   when it arrives. Where the size is already known the room is exact. */
 .nib-image-frame.is-loading .nib-image {
   min-width: 6em;
   min-height: 3em;
   background: var(--surface-2);
 }
 
-/* Only a picture seen for the first time develops into view; one rebuilt
-   after an edit simply appears where its room was kept. */
 .nib-image-frame.is-fresh .nib-image {
   animation: develop var(--dur-slower) var(--ease-out);
 }
 
-/* A path that did not load: the path itself, so it can be fixed. */
 .nib-image-missing {
   display: none;
   align-items: center;
@@ -2152,7 +1683,6 @@
   text-overflow: ellipsis;
 }
 
-/* Corner grips, there once the picture is selected. */
 .nib-image-handle {
   position: absolute;
   width: 10px;
@@ -2167,12 +1697,6 @@
     transform var(--dur-base) var(--ease-spring);
 }
 
-/* The four corners are compass points rather than reading sides, and they stay
-   physical under a mirrored interface: the cursor a corner wears and the sign the
-   drag arithmetic multiplies by are both stated per corner, and turning the
-   corners round without turning the pointer maths round would make a picture
-   shrink as it was pulled open. See the resize in
-   packages/editor/src/live-preview/image/widget.ts. */
 .nib-image-handle[data-corner='nw'] {
   top: -5px;
   left: -5px;
@@ -2199,7 +1723,6 @@
   transform: none;
 }
 
-/* The size, read out beside whichever corner is being dragged. */
 .nib-image-badge {
   position: absolute;
   padding: 3px 7px;
@@ -2235,9 +1758,6 @@
   opacity: 1;
 }
 
-/* The toolbar hangs above the picture, centred, and flips below when the
-   picture is at the top of the view. Sized in rem like the fence controls,
-   so it stays put while the text is zoomed. */
 .nib-image-tools {
   position: absolute;
   bottom: calc(100% + 8px);
@@ -2395,7 +1915,6 @@
   text-align: center;
 }
 
-/* A picture larger than the window can be seen at its own size. */
 .nib-lightbox.can-zoom img {
   cursor: zoom-in;
 }
@@ -2431,11 +1950,6 @@
   }
 }
 
-/* ── Embedded notes ──────────────────────────────────────────────── */
-
-/* `![[Note]]` on a line of its own: the note itself, framed, with its name
-   along the bottom. The frame is the whole of what says "this is somewhere
-   else" - no heading, no icon, no sentence. */
 .nib-embed {
   display: block;
   margin: 0.6em 0 1.2em;
@@ -2447,21 +1961,13 @@
 }
 
 .nib-embed-body {
-  /* An embed of a long note scrolls inside its frame rather than pushing the
-     note being written off the screen. */
   max-height: 22em;
   padding: 0.2em var(--space-4) 0.4em;
   overflow: auto;
-  /* The writing surface is `pre-wrap`, and this holds rendered HTML rather than
-     source: without this the newlines between its tags become blank lines. */
   white-space: normal;
-  /* Smaller than the note around it, so the two are never confused and the
-     first heading inside does not shout over the writing. */
   font-size: 0.94em;
 }
 
-/* Written against `#write` so they beat the id-scoped rules the writing surface
-   gives a paragraph: an embed is a note inside a note, not a note of its own. */
 #write .nib-embed-body > :first-child {
   margin-top: 0.6em;
 }
@@ -2470,7 +1976,6 @@
   margin-bottom: 0.5em;
 }
 
-/* The name is a button because it opens the note; it reads as a caption. */
 .nib-embed-name {
   display: block;
   width: 100%;
@@ -2498,8 +2003,6 @@
   background: var(--press);
 }
 
-/* Nothing to show yet, or nothing to show at all. Both keep the frame, so the
-   markup behind it is still where the writer left it. */
 .nib-embed-loading .nib-embed-body,
 .nib-embed-missing .nib-embed-body {
   padding: var(--space-3) var(--space-4);
@@ -2512,8 +2015,6 @@
   border-style: dashed;
 }
 
-/* `![[picture.png]]`: a picture, and nothing around it. The frame, the handles
-   and the toolbar belong to `![](…)`, which is the note's own image. */
 .nib-embed-image {
   max-width: 100%;
   height: auto;
@@ -2521,9 +2022,6 @@
   vertical-align: middle;
 }
 
-/* `![[clip.mp3]]` and `![[demo.mp4]]`: the player, and nothing around it either.
-   The browser's own controls, which are the ones the reader already knows, on the
-   surface the rest of the note is on. */
 .nib-embed-media {
   max-width: 100%;
   border-radius: var(--radius-md);
@@ -2531,7 +2029,6 @@
 }
 
 .nib-embed-audio {
-  /* Wide enough to hold a scrubber, narrow enough to stay a line of the note. */
   width: min(100%, 26rem);
   height: 2.4rem;
 }
@@ -2544,13 +2041,6 @@
   border: 1px solid var(--line);
 }
 
-/* `![[paper.pdf#page=3]]` and `![[board.canvas]]`: a card that says which file and
-   opens it. The frame an embedded note gets, at the height of one row.
-
-   One row is what it is until the app draws the page or the plane into it, which it
-   does once the reader scrolls the card into view; the row then becomes the name
-   under the picture. The drawing's own rules are a little further down, and they
-   dress the reading view's card as well as this one. */
 #write .nib-embed-file {
   display: flex;
   align-items: center;
@@ -2576,8 +2066,6 @@
   background: var(--press);
 }
 
-/* The card is one row, so its name is a word in that row rather than a caption
-   under a body. */
 #write .nib-embed-file .nib-embed-name {
   display: inline;
   width: auto;
@@ -2598,64 +2086,25 @@
   color: inherit;
 }
 
-/* And the drawing over that card: the page of the paper the link named, or the
-   plane, drawn read-only once the reader has scrolled the card into view. The card
-   stays underneath as the row that names the file, which makes this the frame an
-   embedded note already reads as - something from somewhere else, with its name
-   along the bottom.
-
-   One set of rules for both faces of a note. The editor's card is a button and the
-   reading view's a figure, so the two carry different classes for themselves; the
-   drawing is the app's own element either way, and both surfaces are `#write`, so it
-   is dressed once here rather than twice. See
-   apps/desktop/src/lib/reading/drawn.ts.
-
-   Here rather than in document.css, which is the sheet the reading view shares with
-   an export and a published page: those three run no script and can never draw a
-   page of a paper, so rules for one would be bytes on somebody's blog that nothing
-   on it could ever match. */
 #write :is(.nib-embed-file, .embed-file).embed-drawn {
   flex-wrap: wrap;
 }
 
 #write .embed-sheet {
-  /* A row of its own, above the name: the card is a flex row, and a drawing that
-     wrapped in beside the icon would be a page in a column an inch wide. */
   flex: 0 0 100%;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  /* A sheet of paper, which is white whichever way the app is dressed: a paper
-     carries its own colours, and tinting the page would change them. A plane paints
-     its own ground over this. */
   background: #fff;
-  /* It arrives rather than appearing, so a page drawn a moment after the note reads
-     as the note filling in and not as the note jumping. */
   animation: fade-in var(--dur-base) var(--ease-out);
 }
 
-/* The page or the plane itself, as wide as the column and no taller than it has to
-   be. A canvas holds device pixels and an SVG its own plane units; both are sized
-   back down to the measure the note is set in. */
 #write .embed-sheet > :is(canvas, svg) {
   display: block;
   width: 100%;
   height: auto;
 }
 
-/* A note's cover. The band itself is in document.css, which the app loads too, so
-   the editor, the reading view, a document and a page all draw one cover; what the
-   writing surface adds is that it can be moved.
-
-   The handle is the whole band rather than a control in a corner: a picture you can
-   place is placed by taking hold of it. Transparent, so nothing is drawn over the
-   photograph until a pointer is on it, and focusable, so the arrow keys reach it
-   for anybody who is not holding a pointer. */
-
-/* The block the editor measures, holding the band and the room under it. A margin
-   is outside the box CodeMirror measures a block by, so the band's margin is kept
-   inside this one rather than collapsing through it, and a click under the cover
-   lands on the line it was made on; see cover.ts in the editor. */
 #write .nib-cover-block {
   display: flow-root;
 }
@@ -2676,7 +2125,6 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* A line of shade under the pointer, saying which way the picture moves. */
 #write .nib-cover-drag::after {
   content: '';
   position: absolute;
@@ -2698,11 +2146,6 @@
   outline-offset: -2px;
 }
 
-/* A note's front matter drawn as a strip: one quiet line folded, the rows open. The
-   rows themselves are in document.css, which the app loads too, so the editor and
-   the reading view are one drawing; this is what the writing surface adds on top of
-   it. The rule under it is the one the reading view's rows end on, so the strip and
-   the words stay two things either way. */
 .nib-properties {
   white-space: normal;
   margin-bottom: 0.8em;
@@ -2717,9 +2160,6 @@
   border-bottom: 0;
 }
 
-/* The strip's own line: smaller than the words and in the app's face, so it reads as
-   something about the note rather than as its first sentence. Folded, the keys and
-   what they say follow on one line that ends where the column does. */
 #write .nib-properties-head {
   display: flex;
   align-items: center;
@@ -2756,8 +2196,6 @@
   transition: transform var(--dur-base) var(--ease-out);
 }
 
-/* Pointing at what it holds when it is folded, and down at the rows when open, as
-   the chevron beside a folded block does. */
 .nib-properties[data-open='true'] .nib-properties-chevron {
   transform: rotate(90deg);
 }
@@ -2790,9 +2228,6 @@
   color: var(--muted);
 }
 
-/* The row that adds another property: at the foot of the list, where the next
-   row would go, so it reads as the empty line at the end rather than as a
-   control bolted to a corner. Quiet until the block is pointed at. */
 #write .nib-property-add {
   color: var(--muted);
   font-family: var(--font-ui);
@@ -2806,7 +2241,6 @@
   }
 }
 
-/* A finger has no hover, so there it is simply there. */
 [data-touch] #write .nib-property-add {
   opacity: 1;
 }
@@ -2815,11 +2249,6 @@
   opacity: 1;
 }
 
-/* The controls a row is edited in. Each of them is the value rather than something
-   beside it: a field with no border until it is pointed at, a real checkbox, the
-   browser's own date picker, a menu where the answers are fixed. The row has to go on
-   reading as a row of metadata, so nothing here is drawn as a form - the box comes
-   out when a pointer or a keyboard arrives, and goes away again. */
 #write .property-field,
 #write .property-menu,
 #write .property-add {
@@ -2838,8 +2267,6 @@
   width: 100%;
 }
 
-/* The field at the end of a list: as wide as the words in it and no wider, so it
-   reads as the gap after the last chip rather than as a box of its own. */
 #write .property-add {
   flex: 0 1 7em;
   min-width: 4em;
@@ -2868,9 +2295,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* The `x` on a chip. Inside the chip rather than beside it, so a tag and the way to
-   take it off are one thing to reach for; quiet until the chip is pointed at, because
-   a list of eight tags with eight crosses on it is a row of crosses. */
 #write .property-chip {
   display: inline-flex;
   align-items: center;
@@ -2895,7 +2319,6 @@
   }
 }
 
-/* A finger has no hover, and a keyboard says where it is. */
 [data-touch] #write .property-chip-off,
 #write .property-chip-off:focus-visible {
   opacity: 1;
@@ -2905,8 +2328,6 @@
   color: var(--danger);
 }
 
-/* A drawn ` ```chart ` fence. The picture and its frame are in document.css, which
-   the app loads too; this is only what the writing surface adds. */
 .nib-chart {
   margin: 0.4em 0;
   white-space: normal;
@@ -2917,10 +2338,6 @@
   margin: 0;
 }
 
-/* `![](https://youtube.com/watch?v=…)`: the same card the reading view shows,
-   built from the same markup, so the two cannot look like two things. The rules
-   are in document.css; these are the ones the writing surface needs on top,
-   because a replaced widget sits inside a `pre-wrap` line. */
 #write .embed-web {
   white-space: normal;
   cursor: default;
@@ -2931,10 +2348,6 @@
   cursor: default;
 }
 
-/* ── The note behind a link ──────────────────────────────────────── */
-
-/* Ctrl+hover over a link between notes. A card the size of a glance: the name
-   at the top, the note under it, gone when the pointer moves away. */
 .cm-tooltip.cm-tooltip-hover:has(.nib-note-preview) {
   border: none;
   background: none;
@@ -2963,18 +2376,6 @@
   text-overflow: ellipsis;
 }
 
-/* The body of the card carries `#write`, the one scope every prose rule in
-   Orden - and in a reader's own theme, which the validator holds to it - is
-   written against. CodeMirror hangs a tooltip off the editor element rather than
-   inside its content, so the card sits outside the writing surface and would
-   otherwise get none of them: an uncoloured fence with no frame, a callout with
-   no icon, a table with no rules. The reading view, a slide and the presenter all
-   carry the same id for the same reason; see hover.ts.
-
-   What follows is the three things the surface means for a pane and not for a
-   card this size. Written as `#write.nib-note-preview-body` rather than as a
-   class alone because the surface's own rules are id rules and would otherwise
-   win: the card would be a column of 45vh with the measure of a page. */
 #write.nib-note-preview-body {
   max-width: none;
   max-height: 17em;
@@ -2982,14 +2383,8 @@
   padding: 0 var(--space-3);
   overflow: hidden;
   color: var(--text);
-  /* A glance reads slightly smaller than the page it is a glance at, against the
-     note's own size rather than against whatever the tooltip inherited - the
-     surface sets one now. */
   font-size: calc(var(--text-content) * 0.9);
-  /* Rendered HTML, not source; see the embed above. */
   white-space: normal;
-  /* The note runs out under a fade rather than at a hard edge, which says
-     there is more of it without a word. */
   mask-image: linear-gradient(to bottom, #000 78%, transparent);
 }
 
@@ -3001,12 +2396,6 @@
   margin-bottom: 0.7em;
 }
 
-/* Written in rather than read: the card holds a small editor on the linked note's
-   own words, so a word of it can be fixed without opening it; see hover.ts and
-   preview-card.ts in the app. The editor brings its own padding and its own
-   scroller, and the fade at the foot goes with them - it would have sat over the
-   line being typed. Nothing about the card's size changes, so the card does not move
-   when the caret arrives in it. */
 #write.nib-note-preview-body[data-written='yes'] {
   padding: 0;
   mask-image: none;
@@ -3016,19 +2405,12 @@
   max-height: 17em;
 }
 
-/* The writing surface inside a card is the same surface, at a card's size: the
-   measure a page reads at is wider than the card, and the space a page leaves above
-   its first line and below its last is most of a card. So the column is the card and
-   the room at the ends is a line of it - which is what makes the note in the card
-   start where the card starts. */
 #write.nib-note-preview-body[data-written='yes'] .cm-editor #write {
   max-width: none;
   margin: 0 var(--space-3);
   padding: var(--space-2) 0 var(--space-4);
 }
 
-/* Before it has arrived, or when there is nothing to show: one line of words,
-   which wants the padding the note's own paragraphs bring with them. */
 #write.nib-note-preview-body:not(:has(*)) {
   padding: var(--space-3);
   color: var(--muted);

@@ -1,28 +1,3 @@
-/* A rendered note, wherever it is read.
- *
- * base.css already dresses the prose - headings, quotes, tables, callouts, the
- * table of contents. What is left here is the handful of things only the
- * renderer in packages/markdown produces, which the editor draws its own way
- * with its own classes: a real checkbox instead of a drawn one, a nested list
- * for the contents, coloured code as classes, a framed diagram, a framed embed.
- *
- * Loaded by the app, so the reading view looks like the export, and baked into
- * an exported document and a published page, so the export looks like the
- * reading view. One sheet, three places, no drift.
- *
- * `#write` is the rendered document, which is Typora's own id and is what the
- * reading view, a slide and the editor all carry. A canvas card is rendered
- * markdown too and is not a document, so it carries `.nib-rendered` instead: the
- * rules a card has to reach are written `:is(#write, .nib-rendered)`, which is the
- * same specificity as `#write` alone and so changes nothing about which rule wins.
- * See CanvasNode.svelte. */
-
-/* ── Task lists ──────────────────────────────────────────────────── */
-
-/* The renderer's checkbox is a real input, which does not inherit the text
-   size the theme measures its offset in; given the size, it sits in the
-   list's gutter the way the editor draws it. Shown but inert: nothing on this
-   page writes to the note. */
 #write .task-list-item input[type='checkbox'] {
   font-size: inherit;
   inset-inline-start: -1.45em;
@@ -43,8 +18,6 @@
   border-color: var(--accent);
 }
 
-/* ── Table of contents ───────────────────────────────────────────── */
-
 #write .toc ul {
   list-style: none;
   margin: 0;
@@ -63,19 +36,6 @@
   display: none;
 }
 
-/* ── Code ────────────────────────────────────────────────────────── */
-
-/* The groups a fence is coloured in, in the theme's own colours - which is the
-   palette called "Follow the theme", said in CSS rather than in TypeScript. The
-   classes are written by @orden/markdown/highlight.
-
-   Through `:where`, so these rules carry no weight at all: a reader who has
-   chosen GitHub or Dracula has those colours written over these, and a page that
-   never picks one - a published note, which has no app to pick in - still gets a
-   coloured fence rather than a grey one. That is the whole reason they are here
-   and not only in the app: see paletteCss in apps/desktop/src/lib/highlight.ts,
-   and FOLLOW in code-theme.ts in @orden/editor, which are the other two readings
-   of this same list. */
 :where(#write) .hl-keyword {
   color: var(--accent);
 }
@@ -108,7 +68,6 @@
   color: var(--syntax-property);
 }
 
-/* What a diff means, not what a palette makes of it. */
 :where(#write) .hl-invalid,
 :where(#write) .hl-deleted {
   color: var(--danger);
@@ -121,8 +80,6 @@
 #write .hl-comment {
   font-style: italic;
 }
-
-/* ── Diagrams ────────────────────────────────────────────────────── */
 
 #write .diagram {
   margin: 1.7em 0;
@@ -139,10 +96,6 @@
   height: auto;
 }
 
-/* ── Embedded notes ──────────────────────────────────────────────── */
-
-/* `![[Note]]` on a line of its own, rendered where it stood. The same frame the
-   editor draws around one, so a note reads the same however it is read. */
 #write .embed {
   margin: 1.2em 0;
   padding: 0 var(--space-4);
@@ -166,11 +119,6 @@
   color: var(--muted);
 }
 
-/* ── Embedded files ──────────────────────────────────────────────── */
-
-/* `![[clip.mp3]]` and `![[demo.mp4]]`: the player the browser already has, on the
-   surface the note is on and with nothing around it. The same plain treatment
-   `![[picture.png]]` gets, and for the same reason. */
 #write .embed-media {
   max-width: 100%;
   border-radius: var(--radius-md);
@@ -190,18 +138,10 @@
   border: 1px solid var(--line);
 }
 
-/* A film with no width asked for fills the column, the way a picture does. One
-   that was given a width - `![[demo.mp4|480]]` - keeps it. */
 #write video.embed-media:not([width]) {
   width: 100%;
 }
 
-/* `![[paper.pdf#page=3]]` and `![[board.canvas]]`: one row saying which file, in
-   the frame an embedded note sits in. The card the editor starts from too, and the
-   whole of it on a published page and in an exported document - neither runs a
-   script, so neither can ever draw a page of a paper. Inside the app the page or
-   the plane is drawn over this once the reader reaches it; those rules are in
-   editor.css, which only the app loads. */
 #write .embed-file {
   display: flex;
   align-items: center;
@@ -227,19 +167,6 @@
   color: var(--muted);
 }
 
-/* ── Cover ───────────────────────────────────────────────────────── */
-
-/* The note's cover: a wide band of picture across the top of it, before its name,
-   its metadata and its first word. The width of the column the words are in, so
-   the top of the note lines up with the note; a band that ran past the words would
-   have to know how wide the page around it is, and there are four of those.
-
-   A fixed height rather than the picture's own shape, so every note with a cover
-   has the same top and a tall photograph does not push the words off the screen.
-   `object-fit: cover` crops it to that band, and `object-position`, which the note
-   itself writes, says which part of the picture the band is taken from - see
-   cover.ts in @orden/markdown. Drawn here rather than per surface so the editor, the
-   reading view, an exported document and a published page all draw one cover. */
 #write .nib-cover {
   margin: 0 0 1.8em;
   overflow: hidden;
@@ -251,35 +178,17 @@
   display: block;
   width: 100%;
   height: var(--cover-height);
-  /* The band is the picture, edge to edge: base.css gives a picture in the words
-     room above and below it, which here drew a strip of the band's own grey over
-     and under the photograph. */
   margin: 0;
   object-fit: cover;
-  /* The note writes the vertical half of this; the horizontal half is the middle,
-     because a cover is only ever dragged up and down. */
   object-position: 50% 50%;
 }
 
-/* A hand's width of screen has less room to give a picture, and the words are what
-   somebody came for. */
 @media (max-width: 600px) {
   #write .nib-cover img {
     height: calc(var(--cover-height) * 0.7);
   }
 }
 
-/* ── Tags ────────────────────────────────────────────────────────── */
-
-/* `#work/nib`: a quiet pill in the tag's ink, on a wash of that ink, with the hash
-   inside it. The property chip's shape below, because a tag in the words and a tag
-   in the block above them are the same thing. Everywhere a note is drawn - the
-   reading view, an export, a published page, a card on a plane - and in the editor
-   too, whose writing surface is `#write` as well; its own states are editor.css.
-
-   A link only in the reading view, where a press asks the space about it: the
-   underline every other link wears is taken off, because the pill already says it
-   is something to press. */
 :is(#write, .nib-rendered) .tag {
   padding: 0.05em 0.4em;
   border: 0;
@@ -298,12 +207,6 @@
   color: var(--tag);
 }
 
-/* ── Properties ──────────────────────────────────────────────────── */
-
-/* A note's front matter as the rows it says. Quiet: it is what the note is
-   about, read on the way past, and the words under it are the note. The rows
-   wear `.nib-row`, drawn once in base.css, so a property reads as a row of the
-   app rather than as a table of its own. */
 #write .properties {
   margin: 0 0 1.6em;
   padding-bottom: 0.6em;
@@ -316,9 +219,6 @@
   font-family: var(--font-ui);
 }
 
-/* The key gives way, not the value: a long name matters less than the thing it
-   names, and a column of keys that all end in the same place reads as a table
-   without a rule down it. */
 #write .property-key {
   flex: none;
   width: 9rem;
@@ -335,8 +235,6 @@
   color: var(--text-strong);
 }
 
-/* One item of a list. Tags and aliases are the two every note has, and they are
-   the same shape as anything else written between brackets. */
 #write .property-chip {
   padding: 0.05em 0.5em;
   border-radius: 999px;
@@ -349,8 +247,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* A checkbox that says which way it is and cannot be pressed: pressing it would
-   be editing, and editing is what putting the caret in the line is for. */
 #write .property-check {
   width: 0.95em;
   height: 0.95em;
@@ -367,11 +263,6 @@
   content: '';
 }
 
-/* The block as it was typed, for a reader who asked for the source rather than for
-   the rows - and for a block holding a shape Orden will not guess at. The characters,
-   set the way code is set, because the point of asking for the source is that it is
-   the file: nothing here reflows it, colours it or sorts it. In the editor the source
-   is the document itself and this is never drawn. */
 #write .properties-source {
   margin: 0 0 1.6em;
   padding: var(--space-3);
@@ -383,10 +274,6 @@
   white-space: pre-wrap;
 }
 
-/* ── Charts ──────────────────────────────────────────────────────── */
-
-/* A ` ```chart ` fence. The same frame a diagram sits in, since both are a picture
-   the note made rather than a picture it points at. */
 #write .chart {
   margin: 1.7em 0;
   padding: var(--space-4);
@@ -401,7 +288,6 @@
   height: auto;
 }
 
-/* The grid is quiet enough to read the bars against and no quieter. */
 #write .chart-grid {
   stroke: var(--line);
   stroke-width: 1;
@@ -430,9 +316,6 @@
   stroke-width: 2;
 }
 
-/* A radar's shape: filled faintly and drawn firmly, which is what makes two of them
-   readable over each other - a radar of outlines alone is a tangle, and two solid
-   shapes are one shape. */
 #write .chart-area {
   fill-opacity: 0.16;
   stroke-width: 2;
@@ -470,17 +353,6 @@
   color: var(--muted);
 }
 
-/* ── Embedded pages ──────────────────────────────────────────────── */
-
-/* `![](https://youtube.com/watch?v=…)`. A card the size the frame will be, so
-   nothing on the page moves when the reader asks for it; see web-embed.ts for why
-   it is never the frame itself. A `<span>`, because it lives inside the paragraph
-   the line made.
-
-   Every surface that renders markdown, and not the document alone: the same card
-   stands on a canvas card and on a slide, and a card that was only styled inside
-   `#write` came out on a canvas as a borderless line thirty-seven pixels tall. One
-   card, one design, wherever a note is read. */
 :is(#write, .nib-rendered) .embed-web {
   display: block;
   position: relative;
@@ -497,7 +369,6 @@
   height: auto;
 }
 
-/* The whole card is the link, so there is nothing small to hit. */
 :is(#write, .nib-rendered) .embed-play {
   display: flex;
   align-items: center;

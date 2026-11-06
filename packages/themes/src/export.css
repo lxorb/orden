@@ -1,12 +1,3 @@
-/* An exported document. Sits on top of tokens.css, base.css and document.css,
-   which dress the note itself: this undoes the parts that only make sense with
-   an app around the writing surface, styles what only an export produces - the
-   running header and footer - and carries the print stylesheet. */
-
-/* ── A document rather than an app ──────────────────────────────── */
-
-/* The app pins the page and scrolls the editor inside it; a document scrolls
-   like any other page, and must be free to run past one screen when printed. */
 html,
 body {
   height: auto;
@@ -18,7 +9,6 @@ body {
   padding: var(--space-7) var(--space-5) var(--space-7);
 }
 
-/* Nothing is being typed, so nothing needs to bleed in or settle. */
 #write *,
 #write *::before,
 #write *::after {
@@ -26,11 +16,6 @@ body {
   transition: none !important;
 }
 
-/* ── Running header and footer ───────────────────────────────────── */
-
-/* The sheet is a table so a browser will repeat its head and foot on every
-   page. It must be as wide as the page even on screen, or it shrinks to its
-   content and the text no longer sits in the middle. */
 .sheet {
   width: 100%;
   border-collapse: collapse;
@@ -44,18 +29,13 @@ body {
   vertical-align: top;
 }
 
-/* Running text only exists on paper. On screen the document is the whole page. */
 .sheet > thead,
 .sheet > tfoot,
 .running-footer {
   display: none;
 }
 
-/* ── Print ───────────────────────────────────────────────────────── */
-
 @media print {
-  /* Paper is white whatever the theme was. The light palette from tokens.css,
-     restated here, so a dark export still prints as ink on paper. */
   :root,
   [data-theme='dark'],
   [data-theme='light'] {
@@ -73,8 +53,6 @@ body {
     --danger: #c01c28;
     --success: #1a8f5c;
     --selection: transparent;
-    /* Paper takes the light side's accent (see accentCss in export.ts), and with it
-       the light side's ink on a fill of it. */
     --accent-ink: #ffffff;
   }
 
@@ -83,8 +61,6 @@ body {
     background: #fff;
   }
 
-  /* The paper is the measure; the page margins come from @page. Type at a
-     document size rather than the screen's. */
   #write {
     max-width: none;
     padding: 0;
@@ -92,7 +68,6 @@ body {
     line-height: 1.55;
   }
 
-  /* Tinted surfaces are part of the design, not decoration to be dropped. */
   #write pre,
   #write code,
   #write th,
@@ -104,11 +79,6 @@ body {
     print-color-adjust: exact;
   }
 
-  /* Nothing may be hidden on paper. A callout the writer left folded is printed
-     open, and the chevron that would have opened it goes: on a sheet there is
-     nothing to press. Two ways of saying it, because a closed `<details>` hides
-     its content through `display:none` in some browsers and through the
-     `::details-content` pseudo-element in others. */
   #write details.callout > *:not(summary) {
     display: block;
   }
@@ -122,14 +92,10 @@ body {
     display: none;
   }
 
-  /* A second top-level heading starts a sheet of its own, the way a chapter
-     does. A sibling selector rather than :not(:first-child): the first heading
-     must never break, and what precedes it may be a table of contents. */
   #write h1 ~ h1 {
     break-before: page;
   }
 
-  /* A heading stays with what follows it. */
   #write h1,
   #write h2,
   #write h3,
@@ -140,16 +106,6 @@ body {
     break-inside: avoid;
   }
 
-  /* Where `break-after` is not honoured, which is WebKit - the engine a Mac prints
-     with - a heading ended a page and its section began the next. So there each
-     heading also carries room for the start of what follows: a box three lines of
-     body text tall, handed back by a margin as tall again, so it takes no room in
-     the layout and is still part of the heading, which is not split. A heading
-     with less room than that under it goes to the next sheet, with its section.
-     Not the last thing in the document, which has no section to keep with and
-     would only have made a sheet of its own. `hanging-punctuation` is how this asks
-     for WebKit, the one engine that has it; Chromium keeps a heading with its
-     section already, and is left as it was. */
   @supports (hanging-punctuation: first) {
     #write h1:not(:last-child)::after,
     #write h2:not(:last-child)::after,
@@ -172,8 +128,6 @@ body {
     widows: 3;
   }
 
-  /* Things that read as one unit are not cut across a sheet. A long code
-     block or table still breaks, between lines and between rows. */
   #write blockquote,
   #write .callout,
   #write figure,
@@ -188,7 +142,6 @@ body {
     display: table-header-group;
   }
 
-  /* Paper cannot scroll: long lines wrap instead. */
   #write pre {
     white-space: pre-wrap;
     overflow-wrap: anywhere;
@@ -200,14 +153,11 @@ body {
     font-size: 0.92em;
   }
 
-  /* A picture taller than the sheet shrinks to it rather than being cut. */
   #write img {
     max-height: 85vh;
     object-fit: contain;
   }
 
-  /* Where a link's words are not its address, the address follows in small
-     type: on paper there is nothing to click. */
   #write a[href^='http']:not(.url):not(:has(img))::after {
     content: ' (' attr(href) ')';
     font-size: 0.8em;
@@ -219,7 +169,6 @@ body {
     content: none;
   }
 
-  /* Only the sheet's own running text; browser headers are turned off. */
   .sheet > thead {
     display: table-header-group;
   }
@@ -232,7 +181,6 @@ body {
     padding-bottom: 8mm;
   }
 
-  /* The spacer reserves the room the fixed footer prints into. */
   .sheet > tfoot > tr > td {
     height: 8mm;
   }
@@ -246,8 +194,6 @@ body {
     text-align: center;
   }
 
-  /* Repeated on every sheet by the browser; the spacer above keeps the text
-     from landing on it. */
   .running-footer {
     position: fixed;
     bottom: 0;
