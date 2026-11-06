@@ -1,13 +1,4 @@
 <script lang="ts">
-  /** What the others see of the account, in Settings > Account under its name: the
-   *  face, pronouns, a few words, a status that clears itself, Do not disturb, the
-   *  accent the initial sits on, and Appear offline. Each row is kept as it is changed,
-   *  the way every setting is; there is nothing to confirm.
-   *
-   *  A picture comes from a press on Change, a file dropped or pasted on the row, or the
-   *  camera, and goes through the avatar sheet, which is the one way a face is made.
-   *  Fetched with the Account pane, so nobody who never opens it downloads any of it.
-   *  See docs/chats.md 4.9. */
   import { account } from '../account.svelte'
   import { ACCENTS, accentColour } from '../accents'
   import { chooseFiles, PICTURES } from '../choose-files'
@@ -34,11 +25,8 @@
   let source = $state<{ file: Blob } | { camera: true } | null>(null)
   let clears = $state<Clears>('today')
   let wrong = $state<string | null>(null)
-  /** Where the emoji picker hangs from while it is up. */
   let picking = $state<Box | null>(null)
 
-  /** Whether there is a camera to offer: a computer's webcam, shown in the sheet through
-   *  the browser's own question, or a phone's own camera app, through the picker. */
   const camera = typeof navigator !== 'undefined' && (viewport.touch || !!navigator.mediaDevices)
 
   const CLEAR_WORDS: Record<Clears, string> = {
@@ -67,7 +55,6 @@
     }
   }
 
-  /** The status as it would stand with these changes, ending when `clears` says. */
   function withStatus(changes: Partial<Omit<Status, 'until'>>) {
     const next = {
       emoji: status?.emoji ?? '',
@@ -88,15 +75,11 @@
     if (file) source = { file }
   }
 
-  /** A phone takes the picture with its own camera app, which is what somebody holding
-   *  one expects; a computer shows its camera in the sheet. */
   function takePhoto() {
     if (viewport.touch) void choose(true)
     else source = { camera: true }
   }
 
-  /** One press for a new picture, as there is one for taking it away: a file, or
-   *  where there is a camera, a menu of the two ways a face comes in. */
   function change(event: MouseEvent) {
     if (!camera) return void choose()
     const box = (event.currentTarget as HTMLElement).getBoundingClientRect()
@@ -203,8 +186,6 @@
           /></span
         ></span
       >
-      <!-- One field: the emoji is pressed in front of the words, as a chat's composer
-           has it, and the cross at the end takes the whole status away. -->
       <span class="nib-field is-value">
         <button
           type="button"
@@ -248,7 +229,6 @@
       {/await}
     {/if}
 
-    <!-- When the status goes again, which is only a question while there is one. -->
     {#if status}
       <div class="nib-setting setting">
         <span class="name"
@@ -339,8 +319,6 @@
 {/if}
 
 <style>
-  /* The settings pane's own shapes, carried here the way Security.svelte carries
-     them: the pane's are scoped to it. See SettingsPanel.svelte. */
   h3 {
     margin: var(--space-3) 0 calc(-1 * var(--space-2));
     font-family: var(--font-ui);
@@ -359,8 +337,6 @@
     flex: 1;
   }
 
-  /* What a row holds at its end, kept together: where there is no room for all of it
-     beside the name, it goes under the name as one, at the end. */
   .ends {
     flex: none;
     display: flex;
@@ -368,9 +344,6 @@
     gap: var(--space-2);
   }
 
-  /* A phone draws the box, the touch rows and the hairlines between them, the way
-     Security.svelte does for its own cards: the sheet is the panel's, so that half
-     of the selector is global and the rows are this pane's. */
   :global(.sheet.phone) .card {
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);

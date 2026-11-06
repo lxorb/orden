@@ -14,14 +14,11 @@ describe('the avatar sheet’s window', () => {
   })
 
   test('never leaves a corner of the window uncovered', () => {
-    // A landscape picture at zoom 1 moves sideways by what it has spare, and not at all
-    // up and down.
     expect(clampOffset({ x: 999, y: 50 }, 1200, 800, VIEW, 1)).toEqual({ x: 60, y: 0 })
     expect(clampOffset({ x: -999, y: -50 }, 1200, 800, VIEW, 1)).toEqual({ x: -60, y: 0 })
   })
 
   test('shows the part of the picture that was dragged into it', () => {
-    // Dragged left by the whole spare: the right-hand end of the picture.
     expect(sourceSquare({ zoom: 1, offset: { x: -60, y: 0 } }, 1200, 800, VIEW)).toEqual({
       left: 400,
       top: 0,
@@ -34,7 +31,6 @@ describe('the avatar sheet’s window', () => {
     const at = { x: 60, y: 60 }
     const after = zoomed(before, 2, at, 800, 800, VIEW)
 
-    // The point of the picture under `at`, before and after.
     const under = (crop: typeof before) => {
       const scale = scaleAt(800, 800, VIEW, crop.zoom)
       return { x: 400 + (at.x - crop.offset.x) / scale, y: 400 + (at.y - crop.offset.y) / scale }

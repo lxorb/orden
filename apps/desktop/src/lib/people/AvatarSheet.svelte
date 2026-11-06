@@ -1,12 +1,4 @@
 <script lang="ts">
-  /** The picture somebody chose, dropped, pasted or took, under a round window: dragged
-   *  to move, the wheel, a pinch or the slider to zoom, the turn button for a quarter,
-   *  Enter or Keep to wear it. Nothing else on it (docs/chats.md 4.15).
-   *
-   *  The window is the face: what is inside the circle is what everybody sees, at 96 and
-   *  512 pixels, made on this device with nothing but pixels in it; see encode.ts. A
-   *  camera, where the device has one, is the same window showing the camera until the
-   *  shutter is pressed. The arithmetic is crop.ts's. */
   import { onMount } from 'svelte'
   import { message, t } from '../i18n.svelte'
   import Sheet from '../Sheet.svelte'
@@ -18,12 +10,10 @@
     source,
     onclose,
   }: {
-    /** A picture to start from, or the camera. */
     source: { file: Blob } | { camera: true }
     onclose: () => void
   } = $props()
 
-  /** The window's side, in pixels: the size the card's face is drawn at, three times. */
   const VIEW = 240
 
   let bitmap = $state<ImageBitmap | null>(null)
@@ -89,8 +79,6 @@
     }
   }
 
-  /* ── The camera ─────────────────────────────────────────────────────── */
-
   async function startCamera() {
     try {
       stream = await navigator.mediaDevices.getUserMedia({
@@ -107,8 +95,6 @@
     stream = null
   }
 
-  /** The frame on screen, as the picture: mirrored the way the preview was, which is
-   *  how a person expects to see their own face. */
   async function shutter() {
     if (!video?.videoWidth) return
     const frame = document.createElement('canvas')
@@ -138,13 +124,10 @@
     }
   })
 
-  /* ── The hand ───────────────────────────────────────────────────────── */
-
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- the pointers down now; nothing renders from them
   const down = new Map<number, Point>()
   let pinch: { distance: number; zoom: number } | null = null
 
-  /** A point of the window, from its middle. */
   function fromMiddle(event: PointerEvent | WheelEvent, box: Element): Point {
     const rect = box.getBoundingClientRect()
     return {
@@ -190,14 +173,11 @@
     )
   }
 
-  /** A picture pasted or dropped onto the sheet takes the place of the one there. */
   function given(files: FileList | null | undefined) {
     const file = [...(files ?? [])].find((one) => one.type.startsWith('image/'))
     if (file) void take(file)
   }
 
-  /** Puts the prepared picture in the window: it is a canvas already, so it is shown as
-   *  itself rather than encoded again to be looked at. */
   function shows(host: HTMLElement, canvas: HTMLCanvasElement) {
     host.replaceChildren(canvas)
     return {
@@ -304,8 +284,6 @@
     padding: var(--space-2) 0 var(--space-3);
   }
 
-  /* The square the face is cut from, with the circle over it: what is outside the
-     circle is dimmed rather than hidden, so where the picture goes on is still seen. */
   .window {
     position: relative;
     width: var(--view);

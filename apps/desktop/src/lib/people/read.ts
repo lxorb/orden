@@ -1,11 +1,6 @@
-/** A person as the service said them, read rather than trusted: the boundary every
- *  answer about people crosses once, into the shapes the rest of the app trusts. See
- *  docs/conventions.md, "Types". */
-
 import { isBoolean, isNumber, isRecord, isString } from '../stored'
 import type { Avatar, Presence, Status } from './face'
 
-/** Everything a card says about somebody. */
 export interface Person {
   id: string
   name: string

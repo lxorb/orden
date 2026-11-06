@@ -1,12 +1,4 @@
 <script lang="ts">
-  /** A person's card: their face, their name, their pronouns and status, the time where
-   *  they are when it is not the reader's, and the few words they wrote about
-   *  themselves. Slack's card, with nothing that is not about the person: no Message
-   *  (Orden's chats are channels in spaces, never direct), no menu.
-   *
-   *  A layer beside what was pressed, closed by Escape, a press anywhere else and back.
-   *  On the reader's own card the one button is Edit, which is where all of it is
-   *  changed (Settings > Account). See card.svelte.ts and docs/chats.md 4.15. */
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from '../backstack.svelte'
@@ -28,8 +20,6 @@
   const now = $derived(Date.now())
   const status = $derived(person && stands(person.status, now) ? person.status : null)
 
-  /** The time where they are, when it is an hour or more from the reader's: the one
-   *  case where knowing it changes whether to write now. */
   const theirTime = $derived.by(() => {
     const zone = person?.zone
     const here = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -37,7 +27,6 @@
     return i18n.when(now, { timeStyle: 'short', timeZone: zone })
   })
 
-  /** The bio in pieces, each address a link: the one kind of markup a bio has. */
   const pieces = $derived(
     (person?.bio ?? '')
       .split(/(https?:\/\/[^\s<>"]+)/g)
@@ -49,8 +38,6 @@
   let width = $state(0)
   let height = $state(0)
 
-  /** Under what was pressed, its start edges lined up, kept inside the window; above
-   *  it where there is no room below. */
   const place = $derived.by(() => {
     if (!shown) return { left: 0, top: 0 }
     const gap = 6
@@ -66,7 +53,6 @@
 
   const close = () => card.close()
 
-  // Closed by Escape, a press past it and the window losing the focus; see overlays.ts.
   $effect(() => (shown ? overlays.show(close, () => [layer]) : undefined))
   $effect(() => closeOnBack(!!shown, close))
   $effect(() => {
@@ -154,7 +140,6 @@
 {/if}
 
 <style>
-  /* Over the sheets too: a face in the Share sheet opens one. */
   .card {
     position: fixed;
     z-index: var(--z-menu);

@@ -1,15 +1,4 @@
 <script lang="ts">
-  /** A person's face, everywhere one is drawn: the picture they chose, or their initial
-   *  on their accent. Round, where a space's mark is a rounded square, so a person and a
-   *  place are told apart by shape before anything is read (Discord's rule).
-   *
-   *  Five sizes, the ones a face is drawn at (docs/chats.md 4.9): 16 beside a caret's
-   *  name, 20 in a tab, 24 in a row, 32 in a list of people, 80 on a card. The 96 px
-   *  picture serves every size but the card's, which takes the 512. A dot in the
-   *  corner says whether they are here: filled while active, a ring while away, a moon
-   *  while they asked for quiet; nothing at all while offline, which is what most
-   *  people are most of the time. `mark` is a second thing in the other corner: the
-   *  mark of an agent writing for them. */
   import type { Snippet } from 'svelte'
   import { accentColour, accentFor } from '../accents'
   import { initial } from '../icons'
@@ -28,18 +17,13 @@
     face: Face
     size?: 16 | 20 | 24 | 32 | 80
     presence?: Presence | null
-    /** Do not disturb: the dot is a moon. */
     quiet?: boolean
     mark?: Snippet
-    /** A press opens something about them, which makes the face a button. */
     onpress?: ((event: MouseEvent) => void) | undefined
-    /** What a screen reader says for a face that is a button. */
     label?: string
   } = $props()
 
   const url = $derived(faceUrl(size > 32 ? face.avatar?.l : face.avatar?.s))
-  /** The picture said it could not be drawn: the initial stands in rather than a
-   *  broken image. Forgotten when the picture changes. */
   let failed = $state<string | null>(null)
   let loaded = $state<string | null>(null)
 
@@ -109,8 +93,6 @@
     color: var(--accent-ink);
   }
 
-  /* The picture over the initial, faded in once it has arrived so a slow one is the
-     initial and then the face, never a blank. */
   .face > * {
     grid-area: 1 / 1;
   }
@@ -137,8 +119,6 @@
     -webkit-user-select: none;
   }
 
-  /* A third of the face across at most, ringed in the ground it sits on so it reads
-     as on the face rather than in it. */
   .dot {
     position: absolute;
     inset-inline-end: -1px;
@@ -157,7 +137,6 @@
       inset 0 0 0 1.5px var(--muted);
   }
 
-  /* A moon: the dot with a bite out of its upper corner. */
   .dot.quiet {
     background: radial-gradient(
       circle at 30% 30%,

@@ -4,7 +4,6 @@ import { carriesMetadata } from './encode'
 const ascii = (text: string) => Array.from({ length: text.length }, (_, at) => text.charCodeAt(at))
 const le32 = (value: number) => [value & 255, (value >> 8) & 255, (value >> 16) & 255, value >>> 24]
 
-/** A WebP with these chunks, each a name and its bytes. */
 function webp(chunks: [string, number[]][]): Uint8Array {
   const body = chunks.flatMap(([name, bytes]) => [
     ...ascii(name),
@@ -15,8 +14,6 @@ function webp(chunks: [string, number[]][]): Uint8Array {
   return new Uint8Array([...ascii('RIFF'), ...le32(body.length + 4), ...ascii('WEBP'), ...body])
 }
 
-/** EXIF with a position in it, the way a phone writes one: the tag that points at the
- *  GPS directory (0x8825) and a latitude reference. */
 const GPS = [
   ...ascii('Exif'),
   0,
@@ -35,7 +32,6 @@ const GPS = [
   ...ascii('N'),
 ]
 
-/** A JPEG: the start, these segments, then the start of the picture's scan. */
 function jpeg(segments: [number, number[]][]): Uint8Array {
   const body = segments.flatMap(([marker, bytes]) => [
     0xff,

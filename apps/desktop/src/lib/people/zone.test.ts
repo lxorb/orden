@@ -1,9 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { farApart, zoneOffset } from './zone'
 
-/** Noon, 15 January 2026, in UTC: winter on both sides of the Atlantic. */
 const WINTER = Date.UTC(2026, 0, 15, 12)
-/** And noon on 15 July, summer. */
 const SUMMER = Date.UTC(2026, 6, 15, 12)
 
 describe('a zone’s clock', () => {

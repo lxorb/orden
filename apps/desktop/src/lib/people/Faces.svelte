@@ -1,8 +1,4 @@
 <script lang="ts">
-  /** A few people as faces overlapping, the way a shared thing says who is in it: the
-   *  switcher's row of a shared space. Each face is asked of the people store, which
-   *  asks the service once for all of them; a face it does not know yet is nothing
-   *  rather than a placeholder that turns into somebody. See docs/chats.md 4.9. */
   import Avatar from './Avatar.svelte'
   import { people } from './people.svelte'
 
@@ -36,7 +32,6 @@
     align-items: center;
   }
 
-  /* Each over the one before, ringed in the ground so the edge between two reads. */
   .one {
     display: inline-flex;
     border-radius: 50%;

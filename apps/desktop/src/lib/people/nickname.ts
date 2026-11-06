@@ -1,8 +1,3 @@
-/** What the account is called in one shared space: asked in the app's one small
- *  question, with the name it has there now filled in, and kept on the account so every
- *  device and everybody in the space uses it (docs/chats.md 4.9). Empty is its own name
- *  again. Fetched with the space menu's row. */
-
 import { account } from '../account.svelte'
 import { busy } from '../busy.svelte'
 import { key, message, t } from '../i18n.svelte'

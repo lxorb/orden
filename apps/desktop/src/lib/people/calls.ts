@@ -1,13 +1,8 @@
-/** Every call about people the app makes to the service: the routes in
- *  services/sync/src/people. Each answer is read at the boundary (read.ts). */
-
 import { api, request } from '../api'
 import { isRecord, isString } from '../stored'
 import type { Avatar, Presence, Status } from './face'
 import { type Person, readPerson, readPresence } from './read'
 
-/** What a request may change about the account's own profile; a field left out is left
- *  alone and null takes it away. */
 export interface ProfileChanges {
   pronouns?: string | null
   bio?: string | null
@@ -17,7 +12,6 @@ export interface ProfileChanges {
   hidden?: boolean
 }
 
-/** The profile as its owner edits it, which every write answers with. */
 export interface OwnProfile {
   avatar: Avatar | null
   pronouns: string | null
@@ -54,14 +48,12 @@ export async function saveProfile(token: string, changes: ProfileChanges): Promi
   return profile
 }
 
-/** One picture of a face, with the hash it is uploaded under. */
 export interface Picture {
   hash: string
   bytes: ArrayBuffer
   type: string
 }
 
-/** The two pictures, uploaded by their hashes, and then worn. */
 export async function saveAvatar(
   token: string,
   pictures: { s: Picture; l: Picture },
