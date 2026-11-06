@@ -550,8 +550,6 @@ pub(crate) enum Becomes {
     Nothing,
 }
 
-const PRESSES_SAID: bool = cfg!(any(windows, feature = "cef"));
-
 pub(crate) fn becomes(url: &Url, sized: bool, said: bool, unasked: bool) -> Becomes {
     if said {
         return handed_over(url).map_or(Becomes::Nothing, Becomes::Tab);
@@ -562,7 +560,7 @@ pub(crate) fn becomes(url: &Url, sized: bool, said: bool, unasked: bool) -> Beco
     if crate::extensions::ours(url) {
         return Becomes::Tab(url.to_string());
     }
-    if sized || blank(url) || (PRESSES_SAID && tab_may_open(url)) {
+    if sized || blank(url) || signs_in(url) {
         return Becomes::Window;
     }
     handed_over(url).map_or(Becomes::Nothing, Becomes::Tab)
@@ -578,6 +576,55 @@ pub(crate) fn popup_blocked(app: &AppHandle, window: &str, tab: &str, url: &str)
         behind: false,
     };
     let _ = app.emit_to(window, BLOCKED, payload);
+}
+
+const SIGNING_IN: &[&str] = &[
+    "auth",
+    "authorize",
+    "authorization",
+    "authenticate",
+    "oidc",
+    "openid",
+    "saml",
+    "saml2",
+    "sso",
+    "signin",
+    "login",
+    "logon",
+    "consent",
+    "3ds",
+    "threeds",
+    "challenge",
+];
+
+const SIGNING_IN_HOSTS: &[&str] = &[
+    "accounts", "account", "auth", "login", "sso", "id", "secure",
+];
+
+fn signs_in(url: &Url) -> bool {
+    let words = |text: &str| {
+        text.to_ascii_lowercase()
+            .split(|one: char| !one.is_ascii_alphanumeric())
+            .filter(|word| !word.is_empty())
+            .map(str::to_string)
+            .collect::<Vec<_>>()
+    };
+    let host = url.host_str().unwrap_or_default();
+    let first = host
+        .split('.')
+        .next()
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+    let path = words(url.path());
+    let said = |word: &str| SIGNING_IN.contains(&word) || word.starts_with("oauth");
+    SIGNING_IN_HOSTS.contains(&first.as_str())
+        || path.iter().any(|word| said(word))
+        || path.windows(2).any(|pair| {
+            matches!(
+                (pair[0].as_str(), pair[1].as_str()),
+                ("sign" | "log", "in" | "on")
+            )
+        })
 }
 
 fn blank(url: &Url) -> bool {
@@ -993,7 +1040,8 @@ fn windows_asked(
         }
 
         let unasked = crate::web_opens::unasked(&asking);
-        let address = match becomes(&url, features.size().is_some(), said.is_some(), unasked) {
+        let sized = features.size().is_some() || features.position().is_some();
+        let address = match becomes(&url, sized, said.is_some(), unasked) {
             Becomes::Nothing => return NewWindowResponse::Deny,
             Becomes::Blocked(address) => {
                 popup_blocked(&opening, &holder, &asking, &address);
@@ -2357,11 +2405,35 @@ mod tests {
             becomes(&at("about:blank#x"), false, false, false),
             Becomes::Window
         );
-        let plain = becomes(&at(site), false, false, false);
-        if super::PRESSES_SAID {
-            assert_eq!(plain, Becomes::Window);
-        } else {
-            assert_eq!(plain, web(site));
+        assert_eq!(becomes(&at(site), false, false, false), Becomes::Window);
+        for opens_a_tab in [
+            "https://docs.google.com/document/d/1/edit",
+            "https://example.com/a",
+            "https://drive.example/file/d/2/view?usp=drive_web",
+            "https://blog.example/author/jane",
+            "https://example.com/authors",
+        ] {
+            assert_eq!(
+                becomes(&at(opens_a_tab), false, false, false),
+                web(opens_a_tab),
+                "{opens_a_tab}"
+            );
+        }
+        for signs_in in [
+            "https://accounts.google.com/o/oauth2/v2/auth?client_id=1",
+            "https://github.com/login/oauth/authorize?client_id=1",
+            "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+            "https://appleid.apple.com/auth/authorize",
+            "https://bank.example/3ds/challenge",
+            "https://example.com/signin",
+            "https://example.com/sign-in",
+            "https://sso.example.com/start",
+        ] {
+            assert_eq!(
+                becomes(&at(signs_in), false, false, false),
+                Becomes::Window,
+                "{signs_in}"
+            );
         }
         assert_eq!(
             becomes(&at(site), true, false, true),
