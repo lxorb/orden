@@ -214,6 +214,8 @@ export const zhHant: Dictionary = {
   'Set cover': '設定封面',
   'Change cover': '更換封面',
   'Remove cover': '移除封面',
+  'Use as todo list': '用作待辦清單',
+  'Stop using as todo list': '不再用作待辦清單',
   Wallpaper: '桌布',
   Blur: '模糊',
   Dim: '調暗',

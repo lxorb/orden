@@ -1,3 +1,5 @@
+import { isTodoList } from '@orden/bases/todo-lists'
+import { metaFromText } from '@orden/sync-core/meta'
 import { taskHash } from '@orden/bases'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { readTask } from '@orden/markdown/task-line'
@@ -22,6 +24,7 @@ interface Saved {
   id: string
   space_id: string
   path: string
+  meta?: string | null
 }
 
 interface Kept {
@@ -107,7 +110,7 @@ export async function keepReminders(env: Env, note: Saved, content: string, now 
     .first<{ user_id: string; name: string; settings: string | null; zone: string | null }>()
 
   const forget = env.DB.prepare('delete from push_reminders where note_id = ?').bind(note.id)
-  if (!owner?.zone) {
+  if (!owner?.zone || !isTodoList(note.path, metaFromText(note.meta))) {
     await forget.run()
     return
   }

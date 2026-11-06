@@ -215,6 +215,8 @@ export const am: Dictionary = {
   'Set cover': 'ሽፋን ይምረጡ',
   'Change cover': 'ሽፋን ይቀይሩ',
   'Remove cover': 'ሽፋን ያስወግዱ',
+  'Use as todo list': 'እንደ የሥራ ዝርዝር ተጠቀም',
+  'Stop using as todo list': 'እንደ የሥራ ዝርዝር መጠቀም አቁም',
   Wallpaper: 'የግድግዳ ምስል',
   Blur: 'ብዥታ',
   Dim: 'ማደብዘዝ',

@@ -69,7 +69,8 @@ def phone(browser: Browser, dark: bool) -> None:
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
-    DRIVE.seed(page, "# Groceries\n\n- [ ] milk\n- [ ] eggs", "# Ideas\n\nA thought")
+    DRIVE.seed(page, "# Groceries\n\n- [ ] milk\n- [ ] eggs", lists=True)
+    DRIVE.seed(page, "# Ideas\n\nA thought")
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     page.wait_for_timeout(500)
 

@@ -219,6 +219,8 @@ export const de: Dictionary = {
   'Set cover': 'Titelbild wählen',
   'Change cover': 'Titelbild ändern',
   'Remove cover': 'Titelbild entfernen',
+  'Use as todo list': 'Als To-do-Liste verwenden',
+  'Stop using as todo list': 'Nicht mehr als To-do-Liste verwenden',
   Wallpaper: 'Hintergrundbild',
   Blur: 'Unschärfe',
   Dim: 'Abdunkeln',

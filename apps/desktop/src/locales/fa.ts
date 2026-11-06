@@ -218,6 +218,8 @@ export const fa: Dictionary = {
   'Set cover': 'انتخاب جلد',
   'Change cover': 'تغییر جلد',
   'Remove cover': 'حذف جلد',
+  'Use as todo list': 'استفاده به\u200cعنوان فهرست کارها',
+  'Stop using as todo list': 'توقف استفاده به\u200cعنوان فهرست کارها',
   Wallpaper: 'کاغذدیواری',
   Blur: 'محوشدگی',
   Dim: 'کم‌نور کردن',

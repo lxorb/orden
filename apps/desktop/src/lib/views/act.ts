@@ -250,9 +250,9 @@ export function skipRows(many: readonly Row[], today = dayOf(new Date())): Promi
   return editLines(repeating, (line) => skip(line, today), 'scheduled')
 }
 
-export function finishRows(many: readonly Row[], today = dayOf(new Date())): Promise<boolean> {
+export function finishRows(many: readonly Row[]): Promise<boolean> {
   const repeating = many.filter((row) => row.task?.recurrence)
-  return editLines(repeating, (line) => finish(line, today), 'done')
+  return editLines(repeating, (line) => finish(line), 'done')
 }
 
 export function deleteRows(many: readonly Row[]): Promise<boolean> {

@@ -1,5 +1,6 @@
 import { untrusted } from '@orden/chats/agent'
 import { findLinks } from '@orden/markdown'
+import type { ItemMeta } from '@orden/sync-core/meta'
 import { byteLength } from '../crypto'
 import { pokeNow } from '../hub/poke'
 import {
@@ -367,6 +368,7 @@ export async function putNote(
   content: string,
   device?: string,
   read?: Note | null,
+  meta?: ItemMeta,
 ): Promise<{ path: string } | string> {
   const size = byteLength(content)
   if (size > MAX_NOTE_BYTES) return 'That note is too large.'
@@ -402,7 +404,7 @@ export async function putNote(
   }
 
   try {
-    const made = await addNote(env, space.id, path, content, '', device)
+    const made = await addNote(env, space.id, path, content, '', device, meta)
     await pokeNow(env, space.id, made.seq, device)
     return { path: made.path }
   } catch (error) {

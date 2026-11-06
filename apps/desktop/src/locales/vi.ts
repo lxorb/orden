@@ -216,6 +216,8 @@ export const vi: Dictionary = {
   'Set cover': 'Chọn ảnh bìa',
   'Change cover': 'Đổi ảnh bìa',
   'Remove cover': 'Bỏ ảnh bìa',
+  'Use as todo list': 'Dùng làm danh sách việc cần làm',
+  'Stop using as todo list': 'Ngừng dùng làm danh sách việc cần làm',
   Wallpaper: 'Hình nền',
   Blur: 'Làm mờ',
   Dim: 'Làm tối',

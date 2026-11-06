@@ -219,6 +219,8 @@ export const ha: Dictionary = {
   'Set cover': 'Saita murfi',
   'Change cover': 'Canza murfi',
   'Remove cover': 'Cire murfi',
+  'Use as todo list': 'Yi amfani a matsayin jerin ayyuka',
+  'Stop using as todo list': 'Daina amfani a matsayin jerin ayyuka',
   Wallpaper: 'Hoton bango',
   Blur: 'Dushewa',
   Dim: 'Rage haske',

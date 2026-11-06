@@ -436,6 +436,16 @@ lanes 1, 4 and 7:
 
 ### 5.1 Where tasks live
 
+**In todo lists, never in any other note (#1229).** A todo list is the space's inbox (Orden's
+own `.Inbox.md`, or the note chosen as the inbox) or a note Orden made a list from Todos:
+a list named in quick add, `add_task`, Shortcuts, share, `nib://add-task`, the CLI or a
+Todoist import that is not there yet is made in the Projects folder. Orden remembers that a
+note is a list in its own metadata of the note (`todo-list`, #1210), never in its words, so a
+list stays one when it is moved or renamed, and a note written in the Projects folder by hand
+is still a note. **Use as todo list** and **Stop using as todo list** (the note's menu and the
+palette) change that without touching its text. A `- [ ]` in any other note is a checkbox:
+no view, widget, reminder or tool sees it, and clicking it only flips its box.
+
 **In notes, as lines.** A task is a list item with a box, as Orden already reads it
 (`packages/markdown/src/tasks.ts`), with its fields written after its words in the
 [Tasks emoji format][tasks-emoji]:
@@ -609,9 +619,11 @@ Ticking a recurring task does what the Tasks plugin does, so both apps agree on 
 
 1. A new open line with the next dates is written **above** the ticked one (Tasks'
    default), with every date moved by the same step so the gaps between them stay.
-2. The ticked line gets `✅` and today's date and stays where it is. **That line is the
-   history**: a Logbook view of `✅` dates is every occurrence ever done, synced and greppable,
-   which Todoist keeps only in its paid activity log.
+2. The ticked line gets `x` and stays where it is, its words as they were. **That line is the
+   history**: the day it was done is kept as the list's own metadata in the store (#1228),
+   so the Completed view has every occurrence ever done, which Todoist keeps only in its
+   paid activity log. A `✅ date` already in the words (from the Tasks plugin) is read as
+   the day and left alone.
 3. `every` steps from the old date; `when done` (Todoist's `every!`) steps from today.
    Past occurrences are skipped, as Todoist skips them and Tasks does not: a daily task
    overdue a week moves to tomorrow, not to six days ago. The line written is still one Tasks
@@ -927,8 +939,8 @@ The editor draws a task line as words and chips, hiding its fields the way it hi
 - **Typing a date in words at the end of a task** (`... tomorrow`) offers the chip in the
   completion menu, as `[[` offers a note; Tab takes it. The source is never rewritten
   without the reader asking.
-- **Ticking** (the box, Ctrl+Enter, or a view) writes `x` and `✅ date` in one edit, and for a
-  recurring task the new line as well (5.2). The tick animates: the box fills, the words
+- **Ticking** (the box, Ctrl+Enter, or a view) writes `x` in one edit, and for a recurring task
+  the new line as well (5.2); the day goes into the list's metadata, never into its words. The tick animates: the box fills, the words
   dim over `--dur-*`.
 - The search's `task:` operators and the ` ```query ` fence keep working and keep their live
   boxes; a ` ```tasks ` fence (the Tasks plugin's) is drawn by the engine as a list view

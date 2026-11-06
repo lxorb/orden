@@ -78,9 +78,16 @@ async function setUp() {
 
   const space = (await call(env, '/v1/spaces', { token: laptop.token, body: { name: 'Work' } }))
     .json.space.id
-  await call(env, `/v1/spaces/${space}/notes`, {
+  const made = await call(env, `/v1/spaces/${space}/notes`, {
     token: laptop.token,
-    body: { path: 'Plan.md', content: TASK },
+    body: { path: 'Plan.md', content: '' },
+  })
+  const note = (made.json as { note: { id: string; version: number } }).note
+  env.db.prepare('update notes set meta = ? where id = ?').run('{"todo-list":"yes"}', note.id)
+  await call(env, `/v1/notes/${note.id}`, {
+    method: 'PUT',
+    token: laptop.token,
+    body: { content: TASK, baseVersion: note.version },
   })
   return { phone, laptop }
 }

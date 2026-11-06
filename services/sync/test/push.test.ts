@@ -40,8 +40,15 @@ function register(body: Record<string, string>) {
   return call<{ id: string; error?: string }>(env, '/v2/push/targets', { token, body })
 }
 
-function save(path: string, content: string) {
-  return call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
+async function save(path: string, content: string) {
+  const made = await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content: '' } })
+  const note = (made.json as { note: { id: string; version: number } }).note
+  env.db.prepare('update notes set meta = ? where id = ?').run('{"todo-list":"yes"}', note.id)
+  return call(env, `/v1/notes/${note.id}`, {
+    method: 'PUT',
+    token,
+    body: { content, baseVersion: note.version },
+  })
 }
 
 function kept() {
@@ -135,6 +142,15 @@ describe('reminders kept from the notes', () => {
     await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
     await save('Other.md', TASK)
     expect(kept()).toMatchObject([{ at: AT, title: 'Call the bank', body: 'Other', sent_at: null }])
+  })
+
+  test('never from a checkbox in a note that is no to-do list (#1229)', async () => {
+    await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'Meeting.md', content: TASK },
+    })
+    expect(kept()).toEqual([])
   })
 
   test('a ticked task takes its reminder away', async () => {

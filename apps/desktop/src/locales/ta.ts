@@ -218,6 +218,8 @@ export const ta: Dictionary = {
   'Set cover': 'அட்டையை அமைக்கவும்',
   'Change cover': 'அட்டையை மாற்றவும்',
   'Remove cover': 'அட்டையை அகற்றவும்',
+  'Use as todo list': 'செய்ய வேண்டியவை பட்டியலாகப் பயன்படுத்து',
+  'Stop using as todo list': 'செய்ய வேண்டியவை பட்டியலாகப் பயன்படுத்துவதை நிறுத்து',
   Wallpaper: 'வால்பேப்பர்',
   Blur: 'மங்கல்',
   Dim: 'இருளாக்கு',

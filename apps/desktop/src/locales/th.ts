@@ -214,6 +214,8 @@ export const th: Dictionary = {
   'Set cover': 'ตั้งภาพปก',
   'Change cover': 'เปลี่ยนภาพปก',
   'Remove cover': 'ลบภาพปก',
+  'Use as todo list': 'ใช้เป็นรายการสิ่งที่ต้องทำ',
+  'Stop using as todo list': 'เลิกใช้เป็นรายการสิ่งที่ต้องทำ',
   Wallpaper: 'วอลเปเปอร์',
   Blur: 'ความเบลอ',
   Dim: 'หรี่แสง',

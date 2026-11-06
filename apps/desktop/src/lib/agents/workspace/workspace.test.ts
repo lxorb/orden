@@ -89,8 +89,22 @@ const tabs = [
 
 const marks: Record<string, { kind: string; path: string; text: string }[]> = {}
 
+const lists = new Set(['/s/Home/Soup.md'])
+
 const workspace = {
   spaces: [work, home, secret],
+  get notes() {
+    return [...files.keys()]
+      .filter((path) => path.endsWith('.md'))
+      .map((path) => ({ path, name: path.split('/').pop() ?? path }))
+  },
+  rootHolding: (path: string) =>
+    [work, home, secret].find((one) => path.startsWith(`${one.root}/`))?.root ?? null,
+  itemMeta: {
+    of: (path: string) => (lists.has(path) ? { 'todo-list': 'yes' } : null),
+    set: (path: string, patch: Record<string, string | null>) =>
+      patch['todo-list'] ? lists.add(path) : lists.delete(path),
+  },
   get shownSpaces() {
     return this.spaces
   },
@@ -1684,6 +1698,17 @@ describe('to-dos and bases', () => {
   test('a task added under a heading of a note, as the agent writes any edit', async () => {
     await call('add_task', { space: 'Home', note: 'Soup', under: 'Soup', text: 'Buy leeks' })
     expect(written()).toEqual(['# Soup\n\n- [ ] Buy milk #shop\n- [ ] Buy leeks\n'])
+  })
+
+  test('a task sent to a note that is no to-do list makes one in Projects, the note untouched (#1229)', async () => {
+    files.set('/s/Home/Meeting.md', '- [ ] Ask about the budget\n')
+    const added = await call('add_task', { space: 'Home', note: 'Meeting', text: 'Book a room' })
+    expect(added).toMatchObject({
+      result: { at: expect.stringMatching(/^Projects\/Meeting\.md#0:/) as unknown },
+    })
+    expect(files.get('/s/Home/Meeting.md')).toBe('- [ ] Ask about the budget\n')
+    expect(lists.has('/s/Home/Projects/Meeting.md')).toBe(true)
+    files.delete('/s/Home/Meeting.md')
   })
 
   test('ticking a recurring task writes its next line above, in one edit', async () => {

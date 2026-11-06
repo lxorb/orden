@@ -217,6 +217,8 @@ export const gu: Dictionary = {
   'Set cover': 'કવર પસંદ કરો',
   'Change cover': 'કવર બદલો',
   'Remove cover': 'કવર દૂર કરો',
+  'Use as todo list': 'કાર્ય યાદી તરીકે વાપરો',
+  'Stop using as todo list': 'કાર્ય યાદી તરીકે વાપરવાનું બંધ કરો',
   Wallpaper: 'વૉલપેપર',
   Blur: 'ઝાંખપ',
   Dim: 'આછું કરો',

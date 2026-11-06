@@ -545,6 +545,12 @@ class Links {
     this.read.set(relative, content)
   }
 
+  private listed: (root: string, relative: string) => boolean = () => false
+
+  listsBy(listed: (root: string, relative: string) => boolean) {
+    this.listed = listed
+  }
+
   hearSaves(hear: (path: string, content: string) => void): () => void {
     hearing.add(hear)
     return () => hearing.delete(hear)
@@ -692,6 +698,7 @@ class Links {
     const known = this.handed.get(key)
     if (known) return known
 
+    const listedHere = () => path !== null && this.root !== null && this.listed(this.root, path)
     const made: NoteIndex = {
       notes: this.refs,
       files: this.files,
@@ -712,7 +719,9 @@ class Links {
         return queryBlock.queryRowsHtml(code, t('Nothing found'))
       },
       pressRow: (target) => queryBlock?.pressRow(target) ?? false,
-      tasks: TASKS,
+      get tasks() {
+        return listedHere() ? TASKS : undefined
+      },
       render: (source, from) => this.shownHtml(source, from),
       drawFile: (card, file) => this.drawnFile(card, file),
       mountBase: (host, ask) => this.mountedBase(host, ask, path, stranger),

@@ -161,7 +161,7 @@ export function taskMenu(
     ...(tasks.every((row) => row.task?.recurrence) && open
       ? [
           { label: t('Skip'), run: () => void skipRows(tasks, kit.live.today) },
-          { label: t('Complete forever'), run: () => void finishRows(tasks, kit.live.today) },
+          { label: t('Complete forever'), run: () => void finishRows(tasks) },
         ]
       : []),
     more(t('Priority'), () =>

@@ -218,6 +218,8 @@ export const mr: Dictionary = {
   'Set cover': 'मुखपृष्ठ निवडा',
   'Change cover': 'मुखपृष्ठ बदला',
   'Remove cover': 'मुखपृष्ठ काढा',
+  'Use as todo list': 'करायच्या कामांची यादी म्हणून वापरा',
+  'Stop using as todo list': 'करायच्या कामांची यादी म्हणून वापरणे थांबवा',
   Wallpaper: 'वॉलपेपर',
   Blur: 'धूसरपणा',
   Dim: 'मंद करा',

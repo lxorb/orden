@@ -24,6 +24,9 @@ beforeEach(async () => {
   for (const [path, content] of notes) {
     await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
   }
+  env.db
+    .prepare("update notes set meta = ? where space_id = ? and path in ('Thesis.md', 'Shop.md')")
+    .run('{"todo-list":"yes"}', space)
 })
 
 afterEach(() => env.close())
@@ -151,7 +154,7 @@ describe('the to-dos, with Orden closed', () => {
     expect(ticked.next).toMatch(/^Thesis\.md#3:/)
     const after = (await read(key, 'Thesis.md')).split('\n')
     expect(after[3]).toMatch(/^- \[ \] Read 🔁 every day 📅 /)
-    expect(after[4]).toBe(`- [x] Read 🔁 every day 📅 ${today} ✅ ${today}`)
+    expect(after[4]).toBe(`- [x] Read 🔁 every day 📅 ${today}`)
 
     const intro = tasks.find((one) => one.text === 'Write the intro')
     await json(key, 'update_task', { space: 'Work', at: intro?.at, move_to: { note: 'Shop' } })
@@ -176,6 +179,23 @@ describe('the to-dos, with Orden closed', () => {
     expect(await tool(key, 'list_tasks', { space: 'Nowhere' })).toContain('No space')
   })
 
+  test('a checkbox in a note that is no to-do list is never a to-do, and takes none (#1229)', async () => {
+    const key = await connector()
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'Meeting.md', content: '- [ ] Ask about the budget\n' },
+    })
+    const { tasks } = await json(key, 'list_tasks', { space: 'Work' })
+    expect(tasks.map((one) => one.text)).not.toContain('Ask about the budget')
+    expect(await tool(key, 'add_task', { space: 'Work', note: 'Meeting', text: 'x' })).toContain(
+      'not a to-do list',
+    )
+    const made = await json(key, 'add_task', { space: 'Work', note: 'Errands', text: 'Post it' })
+    expect(made.path).toBe('Projects/Errands.md')
+    const again = await json(key, 'list_tasks', { space: 'Work' })
+    expect(again.tasks.map((one) => one.text)).toContain('Post it')
+  })
+
   test('a space shared to read is listed and never written', async () => {
     const owner = await signIn(env, 'x@y.dev')
     const theirs = await call(env, '/v1/spaces', { token: owner, body: { name: 'Club' } })
@@ -184,6 +204,7 @@ describe('the to-dos, with Orden closed', () => {
       token: owner,
       body: { path: 'Club.md', content: '- [ ] Meet\n' },
     })
+    env.db.prepare('update notes set meta = ? where space_id = ?').run('{"todo-list":"yes"}', id)
     await call(env, `/v1/spaces/${id}/share/invite`, {
       token: owner,
       body: { email: 'a@b.dev', role: 'read' },

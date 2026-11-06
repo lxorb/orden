@@ -20,7 +20,10 @@ ERRANDS = """# Errands
 WRITE = """async ([files]) => {
   const ws = window.nibApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
-  for (const [path, text] of files) await window.tasks.writeFile(`${root}/${path}`, text)
+  for (const [path, text] of files) {
+    await window.tasks.writeFile(`${root}/${path}`, text)
+    if (/\\.md$/i.test(path)) window.tasks.makeList(`${root}/${path}`)
+  }
   await ws.loadTree()
 }"""
 

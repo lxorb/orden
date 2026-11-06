@@ -220,6 +220,8 @@ export const ml: Dictionary = {
   'Set cover': 'കവർ തിരഞ്ഞെടുക്കുക',
   'Change cover': 'കവർ മാറ്റുക',
   'Remove cover': 'കവർ നീക്കുക',
+  'Use as todo list': 'ചെയ്യേണ്ടവയുടെ പട്ടികയായി ഉപയോഗിക്കുക',
+  'Stop using as todo list': 'ചെയ്യേണ്ടവയുടെ പട്ടികയായി ഉപയോഗിക്കുന്നത് നിർത്തുക',
   Wallpaper: 'വാൾപേപ്പർ',
   Blur: 'മങ്ങൽ',
   Dim: 'ഇരുട്ടാക്കുക',

@@ -13,7 +13,11 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 ARRANGE = """async () => {
   const ws = window.nibApp.workspace
   const notes = ws.activeSpace
-  const write = (root, path, text) => window.tasks.writeFile(`${root.replace(/[\\\\/]+$/, '')}/${path}`, text)
+  const write = async (root, path, text) => {
+    const at = `${root.replace(/[\\\\/]+$/, '')}/${path}`
+    await window.tasks.writeFile(at, text)
+    window.tasks.makeList(at)
+  }
   await write(notes.root, 'Errands.md', '# Errands\\n\\n- [ ] Call the bank\\n')
   const home = await ws.addSpace('Home')
   await write(home.root, 'Garden.md', '# Garden\\n\\n- [ ] Water the plants\\n')

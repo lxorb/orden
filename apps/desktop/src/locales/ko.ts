@@ -215,6 +215,8 @@ export const ko: Dictionary = {
   'Set cover': '표지 선택',
   'Change cover': '표지 변경',
   'Remove cover': '표지 제거',
+  'Use as todo list': '할 일 목록으로 사용',
+  'Stop using as todo list': '할 일 목록으로 사용 중지',
   Wallpaper: '배경화면',
   Blur: '흐림',
   Dim: '어둡게',

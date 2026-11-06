@@ -30,7 +30,7 @@ import { type AgentAnswer, threadSpaceOf } from '../../automation/caller'
 import { modes } from '../../modes.svelte'
 import { onDisk as there } from '../../on-disk'
 import { reachedByOthersIn } from '../../sharing.svelte'
-import { folderOf, nameOf } from '../../space-paths'
+import { folderOf, insideSpace, nameOf } from '../../space-paths'
 import { invoke } from '../../tauri'
 import { workspace } from '../../workspace.svelte'
 import { writeFile } from '../../workspace/write-file'
@@ -175,10 +175,8 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
   const front = placeOf(call)
   const { rows } = await import('../../rows/rows.svelte')
   const { i18n } = await import('../../i18n.svelte')
-  const names = rows
-    .of(front.space.name)
-    .filter((row) => row.kind === 'note')
-    .map((row) => row.path.replace(/.md$/i, ''))
+  const { listNamed, listsIn, makeList } = await import('../../rows/todo-lists')
+  const names = listsIn(front.space.root).map((path) => path.replace(/.md$/i, ''))
   const read = (() => {
     try {
       return newTask(call.args, quickWords([i18n.language], new Date(), names))
@@ -190,7 +188,10 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
   const named = maybe(call, 'note') ?? read.note ?? null
   const place = named === null ? await inboxPlace(call, front) : front
   const inbox = rows.inboxes().find((one) => one.space === place.space.name)?.path ?? INBOX_PATH
-  const path = named === null ? inbox : await namedOrInbox(place, named)
+  const chosen = named === null ? inbox : await namedOrInbox(place, named)
+  const path = chosen === inbox || meansInbox(chosen) ? chosen : listNamed(place.space.root, chosen)
+  if (path === null)
+    refused(new AgentError('bad_arguments', 'note names no to-do list there can be'))
   const note = writableNote({ ...call, args: { ...call.args, space: place.space.id } }, path)
   const under = maybe(call, 'under') ?? read.heading
   const line = taskLine(fields)
@@ -213,6 +214,7 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
         return { text: appliedEdits(text, [placedEdit(placed)]), said: placed.line }
       }),
   )
+  makeList(insideSpace(place.space.root, note.relative))
   return done({ at: `${note.relative}#${placedAt}:${hash}`, space: place.space.name })
 }
 

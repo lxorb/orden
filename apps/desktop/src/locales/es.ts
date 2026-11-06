@@ -221,6 +221,8 @@ export const es: Dictionary = {
   'Set cover': 'Elegir portada',
   'Change cover': 'Cambiar portada',
   'Remove cover': 'Quitar portada',
+  'Use as todo list': 'Usar como lista de tareas',
+  'Stop using as todo list': 'Dejar de usar como lista de tareas',
   Wallpaper: 'Fondo de pantalla',
   Blur: 'Desenfoque',
   Dim: 'Atenuar',

@@ -221,6 +221,8 @@ export const pl: Dictionary = {
   'Set cover': 'Wybierz okładkę',
   'Change cover': 'Zmień okładkę',
   'Remove cover': 'Usuń okładkę',
+  'Use as todo list': 'Używaj jako listy zadań',
+  'Stop using as todo list': 'Przestań używać jako listy zadań',
   Wallpaper: 'Tapeta',
   Blur: 'Rozmycie',
   Dim: 'Przyciemnienie',

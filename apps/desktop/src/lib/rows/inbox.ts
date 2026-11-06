@@ -47,6 +47,14 @@ export function setInbox(root: string, relative: string) {
   const key = keyOf(kept, root)
   const all = key === undefined ? kept : without(kept, key)
   write(isInternalInbox(relative) ? all : { ...all, [root]: relative })
+  for (const one of choosing) one(root)
+}
+
+const choosing = new Set<(root: string) => void>()
+
+export function hearInboxChosen(then: (root: string) => void): () => void {
+  choosing.add(then)
+  return () => choosing.delete(then)
 }
 
 export async function ensureInbox(

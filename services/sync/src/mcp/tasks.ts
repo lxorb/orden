@@ -22,6 +22,8 @@ import {
 import { rowsOfText } from '@orden/bases/rows'
 import { INBOX_PATH, taskHash } from '@orden/bases'
 import { meansInbox } from '@orden/bases/inbox'
+import { isTodoList, LIST_KEY, LIST_VALUE, withDates } from '@orden/bases/todo-lists'
+import { type ItemMeta, metaFromText } from '@orden/sync-core/meta'
 import { appliedEdits } from '@orden/markdown/edits'
 import { isCanvasTarget, isPagesTarget } from '@orden/markdown/links'
 import { taskLine } from '@orden/markdown/task-edits'
@@ -62,7 +64,7 @@ export const TASK_TOOLS = [
   {
     name: 'add_task',
     description:
-      "Add a to-do line to the space's inbox, or to `note` under the heading `under`. `text` may carry Tasks plugin marks (🛫 2026-10-06 the day it starts, [deadline:: 2026-10-20] its deadline, ⏫ 🔁 every week); `fields` takes what update_task does. Answers its `at`.",
+      "Add a to-do line to the space's inbox, or to the to-do list `note` (one list_tasks shows) under the heading `under`. `text` may carry Tasks plugin marks (🛫 2026-10-06 the day it starts, [deadline:: 2026-10-20] its deadline, ⏫ 🔁 every week); `fields` takes what update_task does. Answers its `at`.",
     inputSchema: {
       type: 'object',
       properties: {
@@ -143,11 +145,12 @@ const words = (args: Args, name: string): string | undefined => {
 interface Held {
   id: string
   path: string
+  meta: string | null
 }
 
 async function notesOf(env: Env, space: Space): Promise<Held[]> {
   const { results } = await env.DB.prepare(
-    `select id, path from notes where space_id = ? and deleted = 0 and kind != 'file'
+    `select id, path, meta from notes where space_id = ? and deleted = 0 and kind != 'file'
       order by path limit ?`,
   )
     .bind(space.id, MOST_READ)
@@ -173,19 +176,58 @@ async function rowsOf(
     for (let at = 0; at < reading.length; at += AT_ONCE) {
       const batch = reading.slice(at, at + AT_ONCE)
       const bodies = await Promise.all(batch.map((one) => noteBody(env, space.id, one.id)))
-      batch.forEach((one, index) =>
-        rows.push(...rowsOfText(space.name, one.path, bodies[index] ?? '')),
-      )
+      batch.forEach((one, index) => {
+        const meta = metaFromText(one.meta)
+        const listed = isTodoList(one.path, meta)
+        const read = rowsOfText(space.name, one.path, bodies[index] ?? '')
+        rows.push(...withDates(read, meta).filter((row) => listed || row.kind !== 'task'))
+      })
     }
   }
   return { rows, partial }
 }
 
-async function placeNamed(env: Env, space: Writable, named: string | undefined): Promise<string> {
-  if (named === undefined) return INBOX_PATH
+interface Place {
+  path: string
+  made?: ItemMeta
+}
+
+const LISTED: ItemMeta = { [LIST_KEY]: LIST_VALUE }
+
+const keyOf = (path: string) => path.normalize('NFC').toLowerCase()
+
+const PROJECTS = 'Projects'
+
+async function placeNamed(env: Env, space: Writable, named: string | undefined): Promise<Place> {
+  if (named === undefined) return { path: INBOX_PATH }
   const path = notePath(named)
-  if (meansInbox(named) && (await wordsAt(env, space, path)) === null) return INBOX_PATH
-  return path
+  const { results } = await env.DB.prepare(
+    `select path, meta from notes where space_id = ? and deleted = 0 and kind != 'file'
+      order by path limit ?`,
+  )
+    .bind(space.id, MOST_READ)
+    .all<{ path: string; meta: string | null }>()
+  const there = results.find((one) => keyOf(one.path) === keyOf(path))
+  if (there === undefined && meansInbox(named)) return { path: INBOX_PATH }
+  const listed = (one: { path: string; meta: string | null }) =>
+    isTodoList(one.path, metaFromText(one.meta))
+  if (there !== undefined) {
+    if (listed(there)) return { path: there.path }
+    throw new Said(
+      `${there.path} is a note, not a to-do list: its checkboxes are not to-dos. Leave note out for the inbox, or name a to-do list.`,
+    )
+  }
+  const name = path.split('/').pop() ?? path
+  const list = results.find(
+    (one) => listed(one) && keyOf(one.path.split('/').pop() ?? '') === keyOf(name),
+  )
+  if (list) return { path: list.path }
+  const taken = new Set(results.map((one) => keyOf(one.path)))
+  const stem = name.replace(MARKDOWN, '')
+  for (let count = 1; ; count++) {
+    const made = `${PROJECTS}/${count === 1 ? stem : `${stem} ${count}`}.md`
+    if (!taken.has(keyOf(made))) return { path: made, made: LISTED }
+  }
 }
 
 async function wordsAt(env: Env, space: Writable, path: string): Promise<string | null> {
@@ -240,8 +282,9 @@ async function written(
   path: string,
   words: string,
   read: Note | null,
+  made?: ItemMeta,
 ): Promise<string> {
-  const put = await putNote(env, space, path, words, undefined, read)
+  const put = await putNote(env, space, path, words, undefined, read, made)
   if (put === MOVED) throw new Moved(path)
   if (typeof put === 'string') throw new Said(put)
   return put.path
@@ -348,7 +391,8 @@ async function addTaskTo(
 ): Promise<{ at: string; space: string; path: string }> {
   const read = newTask(args, quickWords(['en', 'de'], new Date()))
   const { fields } = read
-  const path = await placeNamed(env, space, words(args, 'note') ?? read.note)
+  const place = await placeNamed(env, space, words(args, 'note') ?? read.note)
+  const path = place.path
   return await edits(async () => {
     const held = await readOf(env, space, path)
     const before = held?.words ?? ''
@@ -359,6 +403,7 @@ async function addTaskTo(
       path,
       appliedEdits(before, [placedEdit(placed)]),
       held?.note ?? null,
+      place.made,
     )
     return {
       at: `${landed}#${placed.line}:${taskHash(fields.text)}`,
@@ -399,10 +444,11 @@ async function update(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
   }
 
   const target = typeof moveTo === 'object' ? (moveTo as Args) : { note: moveTo }
-  const into =
+  const place =
     typeof target.note === 'string' && target.note.trim()
       ? await placeNamed(env, space, target.note)
-      : path
+      : { path }
+  const into = place.path
   const under = words(target, 'under')
   const placedIn = await edits(async () => {
     const { held, edited, said } = await editing()
@@ -417,6 +463,7 @@ async function update(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
       into,
       appliedEdits(before, [placedEdit(placed)]),
       there?.note ?? null,
+      place.made,
     )
     return { said, at: `${landed}#${placed.line}:${readAt(edited.at).hash}` }
   })

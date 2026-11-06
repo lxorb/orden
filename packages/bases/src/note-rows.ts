@@ -4,6 +4,7 @@ import { INBOX_NAME, INBOX_PATH } from './inbox'
 import { noteValues } from './note-values'
 import { type ScannedTask, scanRows, type Stamp } from './scan'
 import { fileInfo, taskRowsOf } from './task-rows'
+import { LIST_KEYS } from './todo-lists'
 import type { FileInfo, Row, Value } from './types'
 
 export interface NoteRead {
@@ -16,6 +17,13 @@ export interface NoteRead {
   meta?: Readonly<Record<string, string>> | null | undefined
 }
 
+function withoutListKeys(meta: NoteRead['meta']): Record<string, string> {
+  const out: Record<string, string> = {}
+  for (const [name, value] of Object.entries(meta ?? {}))
+    if (!LIST_KEYS.has(name)) out[name] = value
+  return out
+}
+
 export function rowsOf(space: string, read: NoteRead): Row[] {
   const inbox = read.path === INBOX_PATH
   const file = inbox
@@ -23,7 +31,7 @@ export function rowsOf(space: string, read: NoteRead): Row[] {
     : fileInfo(read)
   const note: Record<string, Value> = {
     ...(read.front === null ? {} : noteValues(read.front)),
-    ...read.meta,
+    ...withoutListKeys(read.meta),
   }
   const tasks = taskRowsOf(space, read.path, read.tasks, file, note)
   if (inbox) return tasks

@@ -209,6 +209,7 @@ export class ItemMetaStore {
       return
     }
     const now = move.now ?? ''
+    const landing: string[] = []
     const rekeyed = <T>(held: Record<string, T>) => {
       const next: Record<string, T> = {}
       let touched = false
@@ -216,17 +217,20 @@ export class ItemMetaStore {
         const landed = movedTo(path, move.was, now, root)
         next[landed ?? path] = value
         touched ||= landed !== null
+        if (landed !== null) landing.push(landed)
       }
       return touched ? next : null
     }
     const held = this.kept(root)
     const items = rekeyed(held.items)
     if (!items) return
+    const landed = [...landing]
     this.spaces = {
       ...this.spaces,
       [root]: { ...held, items, unsent: rekeyed(held.unsent) ?? held.unsent },
     }
     this.write()
+    this.told(root, landed)
   }
 
   private carry(move: Moving) {
@@ -260,6 +264,10 @@ export class ItemMetaStore {
       },
     }
     this.write()
+    this.told(
+      move.there,
+      items.went.map(([path]) => path),
+    )
     void this.send(move.there)
   }
 

@@ -161,7 +161,7 @@ def drive_block_links(page: Page) -> None:
         wrong(f"the link to a block of another note did not land on it: {shown}")
 
 def drive_ticks(page: Page) -> None:
-    DRIVE.seed(page, "# Y note\n\n- [ ] Alpha 🔁 every day 📅 2026-11-04\n- [ ] Bravo\n")
+    DRIVE.seed(page, "# Y note\n\n- [ ] Alpha 🔁 every day 📅 2026-11-04\n- [ ] Bravo\n", lists=True)
     DRIVE.seed(page, "# Fence note\n\n```tasks\nnot done\n```\n")
     page.wait_for_timeout(1000)
     DRIVE.open_note(page, "Fence note")

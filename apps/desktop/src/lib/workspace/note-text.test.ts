@@ -349,7 +349,7 @@ describe('a task ticked from a row', () => {
     const { ws } = space({ [NOTE]: '# to do\n\n- [ ] wash up\n- [x] done\n' })
 
     expect(await toggleTaskAt(ws, NOTE, 2)).toBe(true)
-    expect(disk.get(NOTE)).toBe('# to do\n\n- [x] wash up ✅ 2026-10-07\n- [x] done\n')
+    expect(disk.get(NOTE)).toBe('# to do\n\n- [x] wash up\n- [x] done\n')
   })
 
   test('and a recurring one comes back above, in the same write', async () => {
@@ -357,7 +357,7 @@ describe('a task ticked from a row', () => {
 
     expect(await toggleTaskAt(ws, NOTE, 0)).toBe(true)
     expect(disk.get(NOTE)).toBe(
-      '- [ ] gym 🔁 every week 📅 2026-10-12\n- [x] gym 🔁 every week 📅 2026-10-05 ✅ 2026-10-07\n',
+      '- [ ] gym 🔁 every week 📅 2026-10-12\n- [x] gym 🔁 every week 📅 2026-10-05\n',
     )
   })
 

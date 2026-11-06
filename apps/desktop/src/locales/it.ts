@@ -220,6 +220,8 @@ export const it: Dictionary = {
   'Set cover': 'Scegli la copertina',
   'Change cover': 'Cambia copertina',
   'Remove cover': 'Rimuovi copertina',
+  'Use as todo list': 'Usa come lista di cose da fare',
+  'Stop using as todo list': 'Non usare più come lista di cose da fare',
   Wallpaper: 'Sfondo',
   Blur: 'Sfocatura',
   Dim: 'Attenua',

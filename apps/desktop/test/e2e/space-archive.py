@@ -20,9 +20,10 @@ async () => {
   await ws.addSpace('Work')
   await ws.noteFrom('# Plan\\n\\nThe plan.\\n', ws.activeSpace.root)
   await ws.addSpace('Old')
-  await ws.noteFrom(`# Trip\\n\\nThe mountains, and a lighthouse.\\n\\n- [ ] Pack the bags 🛫 ${today}\\n`, ws.activeSpace.root)
+  const trip = await ws.noteFrom(`# Trip\\n\\nThe mountains, and a lighthouse.\\n\\n- [ ] Pack the bags 🛫 ${today}\\n`, ws.activeSpace.root)
   await ws.loadTree()
   window.tasks = await window.nibApp.tasks()
+  if (trip) window.tasks.makeList(trip)
   if (ws.panel !== 'tree') ws.showPanel('tree')
   return ws.spaces.map((one) => one.name)
 }

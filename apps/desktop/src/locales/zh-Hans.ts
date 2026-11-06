@@ -214,6 +214,8 @@ export const zhHans: Dictionary = {
   'Set cover': '设置封面',
   'Change cover': '更换封面',
   'Remove cover': '移除封面',
+  'Use as todo list': '用作待办清单',
+  'Stop using as todo list': '不再用作待办清单',
   Wallpaper: '壁纸',
   Blur: '模糊',
   Dim: '调暗',

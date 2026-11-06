@@ -6,6 +6,7 @@ import { key, plural, t } from './i18n.svelte'
 import {
   archiveEntry,
   coverEntries,
+  listEntry,
   DIVIDER,
   iconEntries,
   searchAgainEntry,
@@ -67,6 +68,7 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     ...moveEntry(entry),
     ...iconEntries(marked.path, entry.is_dir && !own),
     ...coverEntries(marked.path),
+    ...listEntry(marked.path),
     ...wallpaperEntry(entry),
     ...webDataEntry(entry),
     ...searchAgainEntry(entry.path),

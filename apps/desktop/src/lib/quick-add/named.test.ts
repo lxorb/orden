@@ -11,6 +11,8 @@ vi.mock('../workspace.svelte', () => ({
     activeSpace: { id: 'mine', name: 'Mine', root: SPACE },
     notes: [{ path: `${SPACE}/Team.chat`, name: 'Team.chat' }],
     recent: [],
+    rootHolding: () => SPACE,
+    itemMeta: { of: () => null, set: () => undefined },
     loadTree: () => Promise.resolve(),
     fileCame: () => Promise.resolve(),
   },

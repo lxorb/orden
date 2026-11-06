@@ -214,6 +214,8 @@ export const jv: Dictionary = {
   'Set cover': 'Setel sampul',
   'Change cover': 'Ganti sampul',
   'Remove cover': 'Busak sampul',
+  'Use as todo list': 'Gunakaké minangka dhaptar tugas',
+  'Stop using as todo list': 'Mandheg nggunakaké minangka dhaptar tugas',
   Wallpaper: 'Wallpaper aplikasi',
   Blur: 'Burem',
   Dim: 'Surem',

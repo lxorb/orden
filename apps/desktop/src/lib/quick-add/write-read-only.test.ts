@@ -34,6 +34,11 @@ vi.mock('../workspace.svelte', () => ({
     ],
     notes: [{ path: `${SPACE}/Plan.md`, name: 'Plan.md' }],
     recent: [],
+    rootHolding: (path: string) => (path.startsWith(`${MINE}/`) ? MINE : SPACE),
+    itemMeta: {
+      of: (path: string) => (path === `${SPACE}/Plan.md` ? { 'todo-list': 'yes' } : null),
+      set: () => undefined,
+    },
     loadTree: () => Promise.resolve(),
     fileCame: () => Promise.resolve(),
   },

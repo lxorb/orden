@@ -848,19 +848,25 @@ class Drive:
             "() => new Promise((go) => requestAnimationFrame(() => requestAnimationFrame(() => go())))"
         )
 
-    def seed(self, page: Any, *texts: str, folder: str | None = None) -> list[str]:
+    def seed(
+        self, page: Any, *texts: str, folder: str | None = None, lists: bool = False
+    ) -> list[str]:
         return page.evaluate(  # type: ignore[no-any-return]
             """
-            async ([texts, folder]) => {
+            async ([texts, folder, lists]) => {
               const ws = window.nibApp.workspace
               const root = ws.activeSpace.root
               const into = folder ? `${root.replace(/\\/+$/, '')}/${folder}` : root
-              for (const text of texts) await ws.noteFrom(text, into)
+              const tasks = lists ? await window.nibApp.tasks() : null
+              for (const text of texts) {
+                const path = await ws.noteFrom(text, into)
+                if (path && tasks) tasks.makeList(path)
+              }
               await ws.loadTree()
               return ws.notes.map((one) => one.name)
             }
             """,
-            [list(texts), folder],
+            [list(texts), folder, lists],
         )
 
     def open_note(self, page: Any, starts: str, patience: float = PATIENCE) -> None:

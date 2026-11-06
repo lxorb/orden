@@ -214,6 +214,8 @@ export const yue: Dictionary = {
   'Set cover': '設定封面',
   'Change cover': '更換封面',
   'Remove cover': '移除封面',
+  'Use as todo list': '用做待辦清單',
+  'Stop using as todo list': '唔再用做待辦清單',
   Wallpaper: '牆紙',
   Blur: '模糊',
   Dim: '調暗',

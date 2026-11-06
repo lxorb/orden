@@ -24,7 +24,9 @@ afterEach(() => env.close())
 
 async function made(path: string, content: string): Promise<string> {
   const answer = await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
-  return answer.json.note.id
+  const id: string = answer.json.note.id
+  env.db.prepare('update notes set meta = ? where id = ?').run('{"todo-list":"yes"}', id)
+  return id
 }
 
 const prepare = () => call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
@@ -305,7 +307,7 @@ describe('two add_tasks to a note not there yet', () => {
     ])
 
     expect(answers.every((answer) => answer.startsWith('{'))).toBe(true)
-    const rows = env.db.prepare("select id from notes where path like 'Fresh%'").all() as {
+    const rows = env.db.prepare("select id from notes where path like '%Fresh%'").all() as {
       id: string
     }[]
     expect(rows).toHaveLength(1)
@@ -323,7 +325,7 @@ describe('two add_tasks to a note not there yet', () => {
     await rooms.settle()
 
     expect(answers.every((answer) => answer.startsWith('{'))).toBe(true)
-    const rows = env.db.prepare("select id from notes where path like 'Fresh%'").all() as {
+    const rows = env.db.prepare("select id from notes where path like '%Fresh%'").all() as {
       id: string
     }[]
     expect(rows).toHaveLength(1)
@@ -418,7 +420,7 @@ describe('add_task on a v1 note', () => {
     const looking = /^select \* from notes where space_id = \? and path = \?/
     env.justBefore(looking, () => {
       env.justBefore(looking, () => {
-        env.db.prepare("update notes set path = 'Fresh.md' where id = ?").run(id)
+        env.db.prepare("update notes set path = 'Projects/Fresh.md' where id = ?").run(id)
       })
     })
 
