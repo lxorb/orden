@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dropOver } from './drag-paths'
   import { onMount } from 'svelte'
   import { flip } from 'svelte/animate'
   import { cubicOut } from 'svelte/easing'
@@ -381,7 +382,7 @@
         data-bookmark-drop
         aria-label={t('Essentials')}
         onkeydown={(event) => hands?.gridKey(event)}
-        ondragover={(event) => (hands ? hands.overGrid(event) : early(event))}
+        use:dropOver={(event) => (hands ? hands.overGrid(event) : early(event))}
         ondragleave={(event) => hands?.leaving(event)}
         ondrop={(event) =>
           hands ? hands.dropOnGrid(event, (path) => byPath.get(path)) : late(event)}
@@ -455,7 +456,7 @@
                 oncontextmenu={(event) => showMenu(event, row)}
                 use:longPress={(event) => showMenu(event, row)}
                 ondragstart={(event) => startDrag(event, row)}
-                ondragover={(event) => over(event, row)}
+                use:dropOver={(event) => over(event, row)}
                 ondragleave={(event) => hands?.leaving(event)}
                 ondragend={endDrag}
                 ondrop={(event) => drop(event, row)}

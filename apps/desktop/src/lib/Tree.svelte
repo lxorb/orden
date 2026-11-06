@@ -30,7 +30,15 @@
   import { canWriteAt, isSharedItem, othersIn } from './sharing.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { syncMark } from './surfaces.svelte'
-  import { carried, carriedNothing, carry, isBookmarkDrag, landing } from './drag-paths'
+  import {
+    carried,
+    carriedNothing,
+    carry,
+    dropOver,
+    isBookmarkDrag,
+    landing,
+    listenOver,
+  } from './drag-paths'
   import { isDesktop } from './tauri'
   import { dropOnList, fileClipboard, listMotion } from './list-landing.svelte'
   import { dropTarget, targetFor } from './drop-target.svelte'
@@ -633,14 +641,14 @@
       where.refresh()
     }
 
-    box.addEventListener('dragover', onDragOver)
+    const unheard = listenOver(box, onDragOver)
     box.addEventListener('dragleave', offList)
     box.addEventListener('drop', stopRolling)
     box.addEventListener('dragend', stopRolling)
 
     return () => {
       stop?.()
-      box.removeEventListener('dragover', onDragOver)
+      unheard()
       box.removeEventListener('dragleave', offList)
       box.removeEventListener('drop', stopRolling)
       box.removeEventListener('dragend', stopRolling)
@@ -1014,8 +1022,7 @@
       ontouchcancel={endPress}
       ondragstart={(event) => startDrag(event, entry.path)}
       ondragend={endDrag}
-      ondragenter={(event) => overRow(event, entry)}
-      ondragover={(event) => overRow(event, entry)}
+      use:dropOver={(event) => overRow(event, entry)}
       ondragleave={(event) => stillInside(event) || dropTarget.clear()}
       ondrop={(event) => drop(event, entry)}
       onpointerenter={() => entry.evicted && keptAway.ahead(entry.path)}

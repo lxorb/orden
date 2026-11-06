@@ -5,7 +5,7 @@
   import { standing } from './archive-plan'
   import { archiveList } from './archive-list.svelte'
   import { archive, unarchive } from './archiving'
-  import { carriedRows, isTreeDrag } from './drag-paths'
+  import { carriedRows, dropOver, isTreeDrag } from './drag-paths'
   import { fileMark, type FileMark as Mark } from './file-mark'
   import FileMark from './FileMark.svelte'
   import { folderNote, nestedIn } from './folder-notes'
@@ -135,7 +135,7 @@
     class:dropping
     aria-expanded={archiveList.open}
     onclick={() => archiveList.toggle()}
-    ondragover={over}
+    use:dropOver={over}
     ondragleave={() => (dropping = false)}
     ondrop={dropped}
   >

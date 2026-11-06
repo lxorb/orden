@@ -124,7 +124,7 @@ describe('an essential dragged into a strip', () => {
 
   test('and the strip takes it from the moment it comes over the strip, as Safari asks', () => {
     const tabs = readFileSync(new URL('./Tabs.svelte', import.meta.url), 'utf8')
-    expect(tabs).toMatch(/ondragenter=\{over\}\s+ondragover=\{over\}/)
+    expect(tabs).toMatch(/use:dropOver=\{over\}/)
   })
 
   test('and a bookmark that is no note is no tab', async () => {

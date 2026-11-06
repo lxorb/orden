@@ -1,5 +1,12 @@
 <script lang="ts">
-  import { carried, carrySection, draggedSection, isSectionDrag, landing } from './drag-paths'
+  import {
+    carried,
+    carrySection,
+    draggedSection,
+    dropOver,
+    isSectionDrag,
+    landing,
+  } from './drag-paths'
   import { dropOnList } from './list-landing.svelte'
   import { movesSection } from './sections'
   import { onMount, untrack } from 'svelte'
@@ -812,7 +819,7 @@
                 class:dropping={rootDrop}
                 oncontextmenu={showSpaceMenu}
                 onclick={() => workspace.cancelNaming()}
-                ondragover={overRoot}
+                use:dropOver={overRoot}
                 ondragleave={() => dropTarget.clear()}
                 ondrop={dropOnRoot}
               ></div>
@@ -853,7 +860,7 @@
                       use:longPress={(event) =>
                         menu.show(event, headingMenu(index, heading.text), { title: heading.text })}
                       ondragstart={(event) => startSection(event, index)}
-                      ondragover={(event) => overSection(event, index)}
+                      use:dropOver={(event) => overSection(event, index)}
                       ondragleave={() => (dropAt = null)}
                       ondragend={endSection}
                       ondrop={(event) => dropSection(event, index)}

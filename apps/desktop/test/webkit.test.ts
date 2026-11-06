@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { parse } from 'svelte/compiler'
 import { describe, expect, test } from 'vitest'
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
@@ -37,6 +38,64 @@ function blocks(text: string): string[] {
 }
 
 const sheets = files.filter((one) => /\.(css|svelte)$/.test(one.name))
+
+interface Tag {
+  type: string
+  name?: string
+  attributes?: { type: string; name?: string }[]
+}
+
+const DOM_TAGS = new Set([
+  'RegularElement',
+  'SvelteElement',
+  'SvelteWindow',
+  'SvelteDocument',
+  'SvelteBody',
+])
+
+function* tags(node: unknown): Generator<Tag> {
+  if (!node || typeof node !== 'object') return
+  if (Array.isArray(node)) {
+    for (const one of node) yield* tags(one)
+    return
+  }
+  const tag = node as Tag
+  if (DOM_TAGS.has(tag.type)) yield tag
+  for (const [key, value] of Object.entries(node)) if (key !== 'attributes') yield* tags(value)
+}
+
+function hears(tag: Tag, kind: 'dragover' | 'dragenter'): boolean {
+  return (tag.attributes ?? []).some(
+    (one) =>
+      (one.type === 'Attribute' && one.name === `on${kind}`) ||
+      (one.type === 'OnDirective' && one.name === kind),
+  )
+}
+
+function count(text: string, pattern: RegExp): number {
+  return [...text.matchAll(pattern)].length
+}
+
+const LISTENS = (kind: string) => new RegExp(`addEventListener\\(\\s*['"\`]${kind}['"\`]`, 'g')
+const HANDLES = (kind: string) => new RegExp(`^\\s*${kind}\\s*[(:]`, 'gm')
+
+function overWithoutEnter(one: { name: string; text: string }): string[] {
+  const lone: string[] = []
+  if (one.name.endsWith('.svelte')) {
+    const ast = parse(one.text, { modern: true })
+    for (const tag of tags(ast.fragment))
+      if (hears(tag, 'dragover') && !hears(tag, 'dragenter'))
+        lone.push(`${one.name}: <${tag.name}>`)
+  }
+  const body = code(one.text)
+  for (const [what, pattern] of [
+    ['addEventListener', LISTENS],
+    ['handler', HANDLES],
+  ] as const)
+    if (count(body, pattern('dragover')) > count(body, pattern('dragenter')))
+      lone.push(`${one.name}: a dragover ${what} without its dragenter`)
+  return lone
+}
 
 const PREFIXED = ['user-select', 'backdrop-filter']
 
@@ -85,6 +144,15 @@ describe("a Mac's WebKit", () => {
       expect(unasked.map((one) => one.name)).toEqual([])
     })
   }
+
+  test('takes a drop where it hears dragover from dragenter on, as WebKit decides there', () => {
+    expect(files.reduce((sum, one) => sum + count(one.text, /use:dropOver=/g), 0)).toBeGreaterThan(
+      20,
+    )
+    expect(
+      files.filter((one) => /\.(ts|js|svelte)$/.test(one.name)).flatMap(overWithoutEnter),
+    ).toEqual([])
+  })
 
   test('sizes a field to its words only through grow where it cannot itself', () => {
     const fields = files.filter((one) => /field-sizing:\s*content/.test(code(one.text)))

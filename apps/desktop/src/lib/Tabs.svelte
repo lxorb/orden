@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dropOver } from './drag-paths'
   import { onDestroy, onMount, tick, untrack } from 'svelte'
   import { whileHere } from './while-here'
   import { staysOn } from './caret'
@@ -837,8 +838,7 @@
     class:moving={drag.on}
     class:bare
     class:flush
-    ondragenter={over}
-    ondragover={over}
+    use:dropOver={over}
     ondragleave={(event) => {
       const box = event.currentTarget.getBoundingClientRect()
       if (incoming === null || inside(box, event.clientX, event.clientY)) return

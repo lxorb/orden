@@ -90,6 +90,20 @@ export async function receiveImages(
 }
 
 export function imageHandling(sink: ImageSink, carried?: CarriedFiles): Extension {
+  const over = (event: DragEvent, view: EditorView): boolean => {
+    if (view.state.readOnly) return false
+
+    if (
+      carried?.carries(event.dataTransfer) ||
+      [...(event.dataTransfer?.items ?? [])].some(
+        (item) => item.kind === 'file' && item.type !== 'application/pdf',
+      )
+    ) {
+      event.preventDefault()
+    }
+    return false
+  }
+
   return [
     dropPoint,
     EditorView.domEventHandlers({
@@ -130,19 +144,8 @@ export function imageHandling(sink: ImageSink, carried?: CarriedFiles): Extensio
         return true
       },
 
-      dragover(event, view) {
-        if (view.state.readOnly) return false
-
-        if (
-          carried?.carries(event.dataTransfer) ||
-          [...(event.dataTransfer?.items ?? [])].some(
-            (item) => item.kind === 'file' && item.type !== 'application/pdf',
-          )
-        ) {
-          event.preventDefault()
-        }
-        return false
-      },
+      dragenter: over,
+      dragover: over,
     }),
   ]
 }

@@ -8,7 +8,14 @@ import { chrome } from '../glass/chrome.svelte'
 import '@xterm/xterm/css/xterm.css'
 import { untrack } from 'svelte'
 import { copyText } from '../clipboard'
-import { dragged, isExplorerDrag, isFileDrop, isTreeDrag, outsideRows } from '../drag-paths'
+import {
+  dragged,
+  isExplorerDrag,
+  isFileDrop,
+  isTreeDrag,
+  listenOver,
+  outsideRows,
+} from '../drag-paths'
 import { i18n, key, plural, t } from '../i18n.svelte'
 import { identifier } from '../identifier'
 import { notify } from '../notify'
@@ -218,7 +225,7 @@ class Session {
 
     this.host.addEventListener('paste', (event) => this.pasting(event), true)
     this.host.addEventListener('mouseup', () => this.copyChosen())
-    this.host.addEventListener('dragover', (event) => {
+    listenOver(this.host, (event) => {
       if (!takesDrop(event.dataTransfer)) return
       event.preventDefault()
       if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy'

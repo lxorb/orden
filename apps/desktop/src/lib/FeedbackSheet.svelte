@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dropOver } from './drag-paths'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from './backstack.svelte'
@@ -97,7 +98,7 @@
     aria-label={t('Send feedback')}
     tabindex="-1"
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
-    ondragover={(event) => {
+    use:dropOver={(event) => {
       if (!received && carriesFiles(event)) event.preventDefault()
     }}
     ondrop={(event) => {

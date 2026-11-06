@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dropOver } from '../drag-paths'
   import { account } from '../account.svelte'
   import { ACCENTS, accentColour } from '../accents'
   import { chooseFiles, PICTURES } from '../choose-files'
@@ -110,7 +111,7 @@
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
       class="nib-setting setting"
-      ondragover={(event) => event.preventDefault()}
+      use:dropOver={(event) => event.preventDefault()}
       ondrop={(event) => {
         event.preventDefault()
         given(event.dataTransfer?.files)

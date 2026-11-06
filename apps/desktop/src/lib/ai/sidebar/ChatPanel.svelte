@@ -8,7 +8,7 @@
   import { dur } from '../../motion'
   import { hearAgain } from '../../shortcuts/registry'
   import { shortcuts } from '../../shortcuts.svelte'
-  import { isTreeDrag } from '../../drag-paths'
+  import { dropOver, isTreeDrag } from '../../drag-paths'
   import { ai } from '../store.svelte'
   import { following, toggleFollow } from '../review'
   import { agentOpen } from './agent-open.svelte'
@@ -102,7 +102,7 @@
   onfocusin={claim}
   onpointerdown={claim}
   data-chat-drop=""
-  ondragover={(event) => {
+  use:dropOver={(event) => {
     if (isTreeDrag(event.dataTransfer)) event.preventDefault()
   }}
   ondrop={dropRows}

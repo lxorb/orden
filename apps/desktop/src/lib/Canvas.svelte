@@ -82,7 +82,13 @@
   import { facingSide, SIDES, sidePoint } from './canvas/geometry'
   import { CanvasStore } from './canvas/store.svelte'
   import { tools } from './canvas/tools.svelte'
-  import { carriedFiles, carriesFiles, dragged as draggedPaths, isTreeDrag } from './drag-paths'
+  import {
+    carriedFiles,
+    carriesFiles,
+    dragged as draggedPaths,
+    dropOver,
+    isTreeDrag,
+  } from './drag-paths'
   import { t } from './i18n.svelte'
   import { menu } from './menu.svelte'
   import { followNote } from './open-link'
@@ -1519,7 +1525,7 @@
   oncut={onCut}
   onpaste={onPaste}
   oncontextmenu={onContextMenu}
-  ondragover={(event) => {
+  use:dropOver={(event) => {
     if (isTreeDrag(event.dataTransfer) || carriesFiles(event.dataTransfer)) {
       event.preventDefault()
     }

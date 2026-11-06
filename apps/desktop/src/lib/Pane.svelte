@@ -27,7 +27,7 @@
   import type { Landing } from './workspace/panes.svelte'
   import { TAB_KINDS } from './workspace/tab-kinds'
   import { isDesktop } from './tauri'
-  import { dragged, isTreeDrag } from './drag-paths'
+  import { dragged, dropOver, isTreeDrag } from './drag-paths'
   import Editor from './Editor.svelte'
   import { key, message, t } from './i18n.svelte'
   import { keptAway } from './web/away.svelte'
@@ -338,7 +338,7 @@
   class:grounded={modes.flushBottom && !!paneIn(bottomRow(workspace.panes.frame), pane.id)}
   data-pane={pane.id}
   onpointerdowncapture={() => workspace.focusPane(pane.id)}
-  ondragover={over}
+  use:dropOver={over}
   ondragleave={(event) => {
     const box = event.currentTarget.getBoundingClientRect()
     if (landing?.paneId !== pane.id || inside(box, event.clientX, event.clientY)) return
