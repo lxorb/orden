@@ -590,10 +590,12 @@ zbus = { version = "5", default-features = false, features = ["async-io", "block
 # A window class of a test's own, which Windows describes with a brush: the tests in
 # web_wheel.rs build the windows a wheel over a page passes through. The tests' only,
 # so the app never compiles the drawing half of the crate. And a desktop of a test's
-# own, which nobody sees, for the windows foreground.rs's tests show; see there.
+# own, which nobody sees, for the windows foreground.rs's tests show; see there. And the
+# folder Explorer's New menu is built for, in shell_menu.rs's tests.
 [target.'cfg(target_os = "windows")'.dev-dependencies]
 windows = { version = "0.58", features = [
   "Win32_Graphics_Gdi",
+  "Win32_UI_Shell_Common",
   "Win32_System_StationsAndDesktops",
 ] }
 

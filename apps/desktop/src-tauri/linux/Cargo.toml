@@ -312,6 +312,7 @@ zbus = { version = "5", default-features = false, features = ["async-io", "block
 [target.'cfg(target_os = "windows")'.dev-dependencies]
 windows = { version = "0.58", features = [
   "Win32_Graphics_Gdi",
+  "Win32_UI_Shell_Common",
   "Win32_System_StationsAndDesktops",
 ] }
 
