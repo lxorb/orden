@@ -211,6 +211,11 @@ def the_pointer(page: Page) -> None:
 
 def a_quoted_comma(page: Page) -> None:
     page.evaluate("() => window.nibApp.modes.setProperties('properties')")
+    # Out of the strip they are folded into since #1120, which is where a note starts.
+    wait_for(page, "document.querySelector('#write .nib-properties-head')", "the properties strip")
+    folded = page.locator('#write .nib-properties-head[aria-expanded="false"]')
+    if folded.count():
+        folded.first.click()
     wait_for(page, "document.querySelector('#write .property[data-key=\\'tags\\']')", "the rows")
     quiet(page)
 
