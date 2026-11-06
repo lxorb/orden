@@ -130,6 +130,8 @@ export function start(): () => void {
 
   if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./chats/start.svelte'))
 
+  if (!__EVEN_PLUGIN__) void startup.turn('right').then(() => import('./time/start.svelte'))
+
   if (!__EVEN_PLUGIN__) {
     void startup.turn('right').then(() => import('./workspace/blank-tabs.svelte'))
   }
