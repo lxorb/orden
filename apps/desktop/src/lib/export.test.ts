@@ -90,7 +90,7 @@ describe('a styled export', () => {
     expect(html).toContain('#write')
     expect(html).toContain('@media print')
     expect(html).toContain('--accent: #5b4be0')
-    expect(buildHtml(NOTE, 'x.md', { accent: 'teal' })).toContain('--accent: #0d8277')
+    expect(buildHtml(NOTE, 'x.md', { accent: 'teal' })).toContain('--accent: #0d7d73')
   })
 
   test('keeps a heading with its section on paper in WebKit as well', () => {
