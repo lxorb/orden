@@ -470,7 +470,7 @@
                 {:else if row.mark.kind !== 'group'}
                   <svg class="nib-row-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
                 {/if}
-                <span class="nib-row-label">{row.label}</span>
+                <span class="nib-row-label"><bdi>{row.label}</bdi></span>
                 {#if row.note}<span class="nib-row-meta">{row.note}</span>{/if}
               </button>
             </div>

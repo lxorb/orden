@@ -959,7 +959,7 @@
               class:whole={(fits[tab.id] ?? Infinity) <= box.width}
               class:hidden={!parts.title && !icon}
               class:quiet={icon}
-              class:naming={tab.naming}>{tab.shown}</span
+              class:naming={tab.naming}><bdi>{tab.shown}</bdi></span
             >
             {#if isDraft(tab.note) && !icon && parts.title}
               <UnsavedDot pressable />

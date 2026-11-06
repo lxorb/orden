@@ -23,7 +23,7 @@
   >
     {#key card.id}
       <div class="words" in:fade={{ duration: dur(120) }}>
-        <strong class="name">{card.title}</strong>
+        <strong class="name"><bdi>{card.title}</bdi></strong>
         {#if card.where || card.from}
           <span class="where">
             {#if card.where}<span class="site">{card.where}</span>{/if}
